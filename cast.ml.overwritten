@@ -1,0 +1,187 @@
+(*
+  Created 21-Feb-2006
+
+  AST for the core language
+*)
+
+open Globals
+
+module F = Cformula
+module P = Cpure
+
+type typed_ident = (P.typ * ident)
+
+and prog_decl = { prog_data_decls : data_decl list;
+				  prog_view_decls : view_decl list;
+				  prog_proc_decls : proc_decl list }
+	
+and data_decl = { data_name : ident;
+				  data_fields : typed_ident list }
+	
+and view_decl = { view_name : ident; 
+				  view_vars : P.spec_var list;
+				  view_data_name : ident;
+				  view_formula : F.formula;
+				  view_user_inv : P.formula;
+				  mutable view_x_formula : P.formula;
+				  mutable view_addr_vars : P.spec_var list }
+	
+and proc_decl = { proc_name : ident;
+				  proc_coercion : bool;
+				  mutable proc_source_target_list : (ident * ident) list;
+				  proc_args : typed_ident list;
+				  proc_return : P.typ;
+				  proc_pre_post_list : (F.formula * F.formula) list;
+				  proc_by_name_params : P.spec_var list;
+				  proc_body : exp option;
+				  proc_loc : loc }
+
+and exp = (* expressions keep their types *)
+  | Assert of (F.formula option * F.formula option * loc) (* assert don't have type *)
+  | Assign of (ident * exp * loc) (* assign has void type *)
+  | BConst of (bool * loc) (* has type bool (fixed, no need to store) *)
+  | Bind of (P.typ * (ident * P.typ) * (ident * P.typ) list * exp * loc) 
+	  (* same type as exp. Type list argument: list of types of data *)
+  | Block of (P.typ * exp * typed_ident list * loc) 
+	  (* type of body, body, local vars (to be quantified at the end of the block), pos *)
+  | Call of (P.typ * ident * ident list * P.spec_var list * loc) 
+	  (* second last component: list of visible names at location the call is made *)
+  | Cond of (P.typ * ident * exp * exp * loc)
+  | Debug of (bool * loc)
+  | Dprint of loc
+  | FConst of (float * loc)
+  | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
+	  (* v.f --> (type of f, v, (f, position of f in field list), pos *)
+  | FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
+	  (* field assignment is flattened to form x.f = y only *)
+  | IConst of (int * loc)
+  | New of (ident * ident list * P.typ list * loc) (* 3rd param: types of fields  *)
+  | Null of loc
+  | Print of (int * loc)
+  | Return of (P.typ * exp option * loc)
+  | Seq of (P.typ * exp * exp * loc)
+  | Var of (P.typ * ident * loc)
+  | VarDecl of (P.typ * ident * loc)
+  | Unit of loc
+  | While of (ident * exp * ((F.formula * F.formula) list) * ident list * loc)
+
+
+(* type constants *)
+
+let void_type = P.Prim Void
+
+let int_type = P.Prim Int
+
+let float_type = P.Prim Float
+
+let bool_type = P.Prim Bool
+
+let bag_type = P.Prim Bag
+
+let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
+
+(* smart constructors *)
+
+let mkSeq t e1 e2 pos = match e1 with
+  | Unit _ -> e2
+  | _ -> match e2 with
+	  | Unit _ -> e1
+	  | _ -> Seq (t, e1, e2, pos)
+
+(* utility functions *)
+
+let is_var (e : exp) = match e with Var _ -> true | _ -> false
+
+let get_var (e : exp) = match e with Var (_, v, _) -> v | _ -> failwith ("get_var: can't get identifier")
+
+let rec type_of_exp (e : exp) = match e with
+  | Assert _ -> None
+  | Assign _ -> Some void_type
+  | BConst _ -> Some bool_type
+  | Bind (t, _, _, _, _) -> Some t
+  | Block (t, _, _, _) -> Some t
+  | Call (t, _, _, _, _) -> Some t
+  | Cond (t, _, _, _, _) -> Some t
+  | Debug _ -> None
+  | Dprint _ -> None
+  | FConst _ -> Some float_type
+  | FieldRead (t, _, _, _) -> Some t
+  | FieldWrite _ -> Some void_type
+  | IConst _ -> Some int_type
+  | New (c, _, _, _) -> Some (P.OType c)
+  | Null _ -> Some (P.OType "")
+  | Print _ -> None
+  | Return (t, _, _) -> Some t
+  | Seq (t, _, _, _) -> Some t
+  | Var (t, _, _) -> Some t
+  | VarDecl _ -> Some void_type
+  | Unit _ -> Some void_type
+  | While _ -> Some void_type
+
+and is_transparent e = match e with
+  | Assert _ | Assign _ | Debug _ | Print _ -> true
+  | _ -> false
+
+let name_of_type (t : P.typ) = match t with
+  | P.Prim Int -> "int"
+  | P.Prim Bool -> "bool"
+  | P.Prim Void -> "void"
+  | P.Prim Float -> "float"
+  | P.Prim Bag -> "bag"
+  | P.OType c -> c
+
+let mingle_name (m : ident) (targs : P.typ list) = 
+  let param_tnames = String.concat "~" (List.map name_of_type targs) in
+	m ^ "$" ^ param_tnames
+
+let unmingle_name (m : ident) = 
+  try
+	let i = String.index m '$' in
+	  String.sub m 0 i
+  with
+	| Not_found -> m
+
+let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+  | [] -> raise Not_found
+
+let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.view_name = name then d else look_up_view_def pos rest name
+  | [] -> Error.report_error {Error.error_loc = pos;
+							  Error.error_text = name ^ " is not a view definition"}
+
+let rec look_up_proc_def_raw (procs : proc_decl list) (name : string) = match procs with
+  | p :: rest ->
+      if p.proc_name = name then
+		p
+      else
+		look_up_proc_def_raw rest name
+  | [] -> raise Not_found
+	  
+let rec look_up_proc_def pos (procs : proc_decl list) (name : string) = match procs with
+  | p :: rest ->
+      if p.proc_name = name then
+		p
+      else
+		look_up_proc_def_raw rest name
+  | [] -> Error.report_error {Error.error_loc = pos;
+							  Error.error_text = "procedure " ^ name ^ " is not found"}
+
+let rec look_up_coercion_def_raw (coers : proc_decl list) (c1 : ident) (c2 : ident) : (proc_decl * (F.formula * F.formula)) = match coers with
+  | p :: rest -> begin
+	  let rec find_formula source_target_list = match source_target_list with
+		| ((pc1, pc2), (pre, post)) :: rest ->
+			if pc1 = c1 && pc2 = c2 then
+			  Some (pre, post)
+			else
+			  find_formula rest
+		| [] -> None 
+	  in
+		if p.proc_coercion then
+		  match find_formula p.proc_source_target_list with
+			| Some (pre, post) -> (p, (pre, post))
+			| None -> look_up_coercion_def_raw rest c1 c2
+		else
+		  look_up_coercion_def_raw rest c1 c2
+	end
+  | [] -> raise Not_found

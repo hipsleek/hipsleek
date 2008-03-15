@@ -1,0 +1,4 @@
+Link: http://www.microsoft.com/downloads/details.aspx?FamilyId=3A1C93FA-7462-47D0-8E56-8DD34C6292F0&displaylang=en
+This directory contains the implementations of some of the classes from C#
+(io, collections, security, text, threading etc)
+	

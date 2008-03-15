@@ -1,0 +1,4 @@
+let $v1 = x' = 1.
+let $v2 = x' = x + 1.
+let $v3 = compose[x]($v1; $v2).
+print $v3.

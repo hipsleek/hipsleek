@@ -1,0 +1,14 @@
+File Name     Archive            Description
+------------------------------------------------------------------------------
+README.txt       1      ***READ THIS FILE FIRST***
+LICENSE.txt      1      Permission to use/copy this package
+DISCUSSION.txt   1      Discussion of algorithm(s) for AVL trees
+MANIFEST         1      This file
+Makefile         1      Makefile for the library
+Comparable.h     1      Header file defining a generic comparable item
+Avl.h            1      Header file for AVL tree classes
+Avl.cc           1      Implementation file for AVL tree classes
+AvlTest.cc       1      Test driver for AVL tree classes
+TestVals.h       1      A symbolic link to one of the TestVals.h.* files
+TestVals.h.long  1      A (somewhat) large set of test values
+TestVals.h.short 1      A (very) small set of test values

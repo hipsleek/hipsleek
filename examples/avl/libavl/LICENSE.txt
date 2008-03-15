@@ -1,0 +1,64 @@
+_______________________________________________________________________________
+
+                                   LICENSE
+                                   =======
+
+This software is not subject to any license  of  the  American  Telephone  and
+Telegraph Company or of the Regents of the University of California.
+
+Permission is granted to anyone to use this software for any  purpose  on  any
+computer  system,  and  to alter it and redistribute it freely, subject to the
+following restrictions:
+
+  1.  Neither  the  authors  of  the  software  nor  their   employers
+      (including  any of the employers' subsidiaries and subdivisions)
+      are responsible for maintaining & supporting  this  software  or
+      for any consequences resulting from the use of this software, no
+      matter how awful, even if they arise from flaws in the  software
+      (see LIABILITY).
+
+  2.  The origin of this software must not be  misrepresented,  either
+      by  explicit  claim  or  by omission.  Since few users ever read
+      sources, credits must appear in the documentation.
+
+  3.  Altered versions must be plainly marked as such, and must not be
+      misrepresented  as being the original software.  Since few users
+      ever read sources, credits must appear in the documentation.
+
+  4.  This notice may not be removed or altered.
+_______________________________________________________________________________
+
+                                NO WARRANTY
+                                ===========
+
+Because this software is licensed free  of  charge,  we  (the  authors  and/or
+distributors  of  this software) provide absolutely no warranty, to the extent
+permitted by applicable state law.  Except when otherwise stated  in  writing,
+the  authors  and  distributors  of this software and/or other parties provide
+this program "as is"  without  warranty  of  any  kind,  either  expressed  or
+implied,   including,   but   not   limited  to,  the  implied  warranties  of
+merchantability and fitness for a particular purpose.  The entire risk  as  to
+the  quality  and performance of this software lies with the recipients and/or
+users of this software and not with any of the authors and/or distributors  of
+this  software,  nor  with  any  of  their  employers,  including  any  of the
+employers' subsidiaries and subdivisions. Should the program prove  defective,
+the  recipients/users  of  this  software  assume  the  cost  of all necessary
+servicing, repair, or correction.
+_______________________________________________________________________________
+
+                                 LIABILITY
+                                 =========
+
+In no event  unless  required  by  applicable  law  will  the  authors  and/or
+distributors  of  this  software, their employers, and any subsidiaries and/or
+subdivisions of their employers, and/or any other party who  may  redistribute
+this software as permitted in the LICENSE section of this notice, be liable to
+the recipients/users of this software for damages including any lost  profits,
+lost  monies,  or  other special, incidental, or consequential damages arising
+out of the use or inabilty to use (including but not limited to loss  of  data
+or  data  being  rendered inaccurate or lossed sustained by third parties or a
+failure of the software to operate with any other software or  hardware)  this
+software, even if you have been advised of the possibility of such damages, or
+for any claim by any other party.
+_______________________________________________________________________________
+

@@ -1,0 +1,1 @@
+../ss.opt routing.ss -tp co -inline rangecompare,calcd,balancetree -p addnode --no-coercion --log-cvcl routing.cvcl --log-omega

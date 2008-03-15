@@ -1,0 +1,314 @@
+0. Notes
+--------
+Since type information is needed during translation, it may help
+to do type checking/inference and translation together.
+
+- Allow global constant declarations (symbolic constants) via enum
+  declaration.
+- Allow symbolic constants to be used in constraints as well as in
+  expressions.
+
+
+- How to handle enum type?
+  + enum type should only appear in Iast. In Cast, enum's are converted
+	to integer. 
+  + enum types are considered equivalent to int
+
+But after the translation phase, when the program is verified to be
+type-correct, do I need type information any more?
+- Looks like so. Some constraints are generated based on type information
+  (e.g. constraints generated from constants)
+- 
+
+why do i need to distinguish size-var and object-var? (assuming that their
+use are correct) yes. this is to prevent me from making stupid mistakes?
+Is it so? they have the same type, so the type checker has no way to tell
+them apart.
+
+Operations common to both translations:
+---------------------------------------
+- Look up: see if identifiers are visible, of correct type, 
+  or declared as constant (so that they can be replaced by the 
+  defined constant)
+
+- Substitution/Renaming: 
+  + constants/enum var should be replaced by their corresponding 
+	constants.
+  + local variables should be alpha-renamed if they clash with 
+	outer-scope vars.
+	A variable is said to clash if any of the outer scopes 
+	contains a variable of the same name??? (how about 
+	alpha-converted name? -- make sure alpha
+	converted name can't be clashed? by inserting 
+	invalid characters? this won't work because we need to send
+	these names to theorem provers)
+  + 
+
+- Check types: types must be declared
+  + Parameter declaration
+  + Local var declaration
+  + Return type
+  + Data fields
+
+
+1. Formula translation
+----------------------
+
+- linearize heap arguments
+  + arithmetic expressions
+  + null values
+
+- what to do with a variable:
+  + if it is a free var -> insert a fresh var, make equation, quantify the fresh var (if the quantify flag says so)
+  + if it is not a free var and occurs for the first time -> quantify it (if the quantify flag says so)
+  + if it is not a free var and already occurs -> insert a fresh var, make equation, quantify it (if the quantify flag says so)
+
+- when to linearize a variable that is argument of a node:
+  + if it already appears in the arguments of the node.
+  + view formula:
+	. if it appears in the view variable list.
+  + precondition:
+	. if it appears in the method parameter list
+  + postcondition:
+	. if it appears in the method parameter list or as a free
+	  variable in the corresponding precondition
+
+
+- insert existential quantifiers
+  + each disjunct is processed separately
+  + view: 
+	. variables not appearing in view variables.
+  + pre condition: 
+	. no quantification
+  + post condition: 
+	. variables not appearing method params and free in precond.
+  + assert/assume: 
+	. things not available in environment
+
+- convert HeapNode to DataNode or ViewNode
+  + look up the list of view and data declarations (from prog)
+
+- convert some (in)equalities to pure pointer constraints
+  (a=b, a=null, a!=b, a!=null)
+  + look up for type information of spec_var type information
+	--> need type information
+
+- type inference: should this be done before or after linearization?
+  + need to be done first, so that conversion of (in)equalities can
+	be done.
+  + type inference needs to communicate the type information to
+	other phases.
+  + main trouble is with equalities and view nodes: equalities link
+	the types of two variables, but may not dictate them to any specific
+	value. Similarly, view nodes may not fix the types of their arguments,
+	as the type for the view arguments may not be known yet (for example
+	recursive views)
+
+- type information across disjuncts:
+  + quantified variables can appear with different types in different
+	disjuncts.
+  + other variables have to be consistent across disjuncts.
+
+- type information: not only size/pointer var: we can't compare
+  int to bool (both size var), neither can we compare pointers
+  pointing to different kinds of data (all pointer var)
+  + 
+
+* Overall process to translate constraints:
+
+  symtab: hash table
+
+  Can trans_formula share the same environment with trans_exp
+
+   - assert/assume: seems helpful as assert/assume will need the
+   information. Remove all bindings when done.   
+
+   - views: completely no interference --> can share -- just remember
+   to clear the environment when done
+
+   - pre/post: need info about parameters, which should be in env when
+   trans_formula returns, their own bindings for free variables should
+   remain in the env, so that any variables with the same name in the
+   procedure body will be alpha-converted to avoid any confusion later
+   on.
+
+   - a big trouble in sharing the environment: env maps names to I.type,
+   which doesn't distinguish between enum and object type (both are Named
+   type). 
+
+  trans_formula symtab free_vars (Or f1 f2) =
+    let tf1 = trans_formula symtab f1 in	
+	let tf2 = trans_formula symtab f2 in
+	  Or (tf1 tf2)
+  trans_formula symtab (Base f) =
+    type_infer symtab f; (* any type conflicts will be reported here *)
+	let qvars = quantify free_vars in
+	convert_(in)equalities symtab f
+	linearize free_vars f; (* any variables in f appearing in free_vars need linearization *)
+	remove_bindings symtab qvars;
+	return result
+
+
+
+  - type inference --> type information
+  - convert some (in)equalities to pure pointer constraints
+	(this step needs type information)
+  - linearize arguments and variables
+  - insert existential quantifiers
+
+
+2. Method and expression translation
+------------------------------------
+
+Var
+Call
+Binary
+Assign
+AssignOp
+
+Translation order:
+------------------
+
+[VAR]
+I.Var v -> C.Var v
+
+
+[ASSIGNMENT] -- how about multiple assignments
+I.AssignOp (a_op, e1, e2) -> I.Assign(e1, I.Binary (op, e1, e2))
+
+e2 -> ce2
+------------------------------------------------
+I.Assign (I.Var v, e2) -> C.Assign (C.Var v, ce2)
+
+
+[BINARY OPERATOR]
+I.Binary(op, e1, e2) -> I.Call(meth(op), [e1; e2])
+
+
+[CALL]
+vars, init_exp = init_vars(args)
+--------------------------------------------------------------
+I.Call(mn, args) -> Block (C.Seq (init_exp, C.Call(mn, vars)))
+
+[Note I.Call: can't convert to I.Seq as itwill assign 
+I.Call(mn, vars) to dummy var]
+
+
+[SEQ]
+type(e1) = void  e1 -> ce1  e2 -> ce2
+-------------------------------------
+I.Seq (e1, e2) -> C.Seq (ce1, ce2)
+
+type(e1)=t  e1 -> ce1  e2 -> ce2 v=fresh
+----------------------------------------
+I.Seq (e1, e2) -> C.Seq (t v=ce1, ce2)
+
+
+[MEMBER]
+e1=I.Member(e3.g+)
+----------------------------------------------------
+I.Member(e1.f+) -> I.Member(e3.(g+ ++ f+))
+
+/*
+t=type(e1)   v=fresh 
+e3=I.VarDecl(t, [(v, e1)]) e4=I.Member(v.f+)
+--------------------------------------------
+I.Member(e1.f+) -> I.Seq (e3, e4)
+*/
+
+
+[WHILE LOOP] 
+
+me2=to_method(e2)
+params=all_visible_vars_in_env ()
+--------------------------------------------------
+I.While (e1, e2) -> meth
+
+to_method(break) = I.Return ()
+to_method(continue) = I.Call(while_meth, [parameters])
+to_method(e) = e
+
+e++ -> t v = e; e=e+1; v
+
+++e -> e = e + 1; e
+
+ * Method name overloading
+
+ * Method translation:
+   - push one scope
+   - add parameters to environment
+   - translate pre/post
+   - translate body if the method is not a primitive
+   - build method in Cast
+   - pop one scope
+
+ * Variable:
+   - check if the variable is visible
+   - if it is a variable, replace it by its alpha-converted name
+   - if it is a constant/enum, check if a constant is allowed and replace
+	 it by the constant.
+
+ * Variable declaration:
+   - add to environment
+
+ * Constant declaration:
+   - transform its constant expression from Iast.exp to Cast.exp
+   - add to environment
+
+ * Assignment:
+   What can be on the lhs: 
+   - variable
+   - member access 
+   - (will add array later on)
+
+   * Multiple assignments
+   * Op-assignment
+
+   - If lhs is an identifier id
+	 + check if id is visible
+	 + check if id is assignable (i.e. not constant, not enum)
+   - Check that types from both sides match
+
+
+ * If statement
+
+
+
+
+v: variable
+c: constant
+
+trans: translate an input expression to an expression in the core
+language and a subexpression representing the value of the translated
+expression.
+
+trans(e1 op_assign e2) = trans(e1 = e1 op e2)
+
+trans(e1 bin_op e2) = Call ...
+
+trans(if (e1) e2 e3) = bool v = e1; if v then e2 else e3
+
+trans(const type v = e) = <modify environment, so subsequent uses of v is replaced by e)
+
+trans(type v = e) = type v; v = e;
+trans(type v1 = e1, v2 ...) = type v1; v1 = e1; trans(type v2 ...)
+
+trans(e.<f+>) =
+  let t = type(e) in
+  let vf = fresh in
+    t vf = trans(e); v.<f+>
+
+trans(e1 = e2) =
+  let te2, ve2 = trans(e2) in
+  let te1, ve1 = trans(e1) in
+    te2; te1; trans(ve1 = ve2)
+
+trans(return [e]; e2) = trans(return [e])
+
+trans(e1; e2) = 
+  let t = type(e1) in
+    if t = void then
+      trans(e1); trans(e2)
+    else
+      let vf = fresh in
+        t vf = trans(e1); trans(e2)

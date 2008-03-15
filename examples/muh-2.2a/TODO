@@ -1,0 +1,70 @@
+TODO: 
+
+- consider the implications of the way we do logging.. is writing
+  everything as we get it such a good idea?
+
+  should we just fflush() once every 2 minutes?
+
+- add the muh status from the patch
+
+- add usermodes="";
+
+- review the topic code and the -d code, reported problems with both.
+
+- add some form of hash table statistics for the command hash and
+  channel hash, so its known how effective they are, and how
+  many are being hashed to individual entries, how many are just being
+  looped.
+
+  leeh->> a quick one-line change tells me the command hash is actually
+          working quite well.. theres 2 sets of 2 commands that hash
+          to the same value.. but ideally hits/misses could be good..
+
+- merge server_commands() and server_reply_str(), making them both
+  use the hash..
+
+- if we hit a numeric, dont bother searching for a command
+
+- use atoi() to decide if we need to search for a numeric or a command
+
+- split muh.c up, possibly move the command handling stuff -> commands.c
+
+  any logging can be moved to log.c?
+
+- split the dcc stuff out of the commands, into its own function
+
+- check the host allow stuff in relation to ipv6
+
+  leeh->> rip the stuff from ircd-hybrid for formatting of ipv4-in-ipv6?
+
+- cosmetic: split irc.c-stuff into socks.c and make prep-defines for the
+            numeric replies of these functions
+
+- store channel keys so we can rejoin them on connect, using the new
+  channel structure should be very easy, and the hash parsing above
+
+  leeh->> hrm - this may not be worthwhile, as im not sure if parsing
+      the mode is worth the end result, given you have to know
+      what modes take params and make sure you pull the right key.
+
+- add the option for muh not to be permanent on irc, but connect when
+  a user does?
+
+- stop booting off a client when we disconnect from a server, allow 
+  them to connect before we've registered with a server
+
+- an option to make logging only active when a client is not connected
+
+- message flood protection from dronenets
+
+- option to ignore server notices in the messagelog
+
+- a simple message filter - to try to ignore spam.
+
+- vhost changing on the fly?
+
+- if we're set away and we disconnect from a server, resend the away
+  once we've reconnected?
+
+- teach muh the ancient art of alchemy.
+

@@ -1,0 +1,9 @@
+<class>
+	<cname>node</cname>
+	<fields>
+		<field>
+				<fname>val</fname>
+				<type>int</type>
+		</field>
+	</fields>
+</class>

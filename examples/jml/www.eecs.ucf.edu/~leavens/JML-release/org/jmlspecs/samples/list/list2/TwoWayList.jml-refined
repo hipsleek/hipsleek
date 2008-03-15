@@ -1,0 +1,86 @@
+// @(#) $Id: TwoWayList.jml-refined,v 1.1.1.1 2008-03-15 06:55:00 nguyenh2 Exp $
+
+// Copyright (C) 1998, 1999 Iowa State University
+
+// This file is part of JML
+
+// JML is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+
+// JML is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with JML; see the file COPYING.  If not, write to
+// the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Author:  Clyde Ruby
+
+package org.jmlspecs.samples.list.list2;
+
+// FIXME: adapt this file to non-null-by-default and remove the following modifier.
+/*@ nullable_by_default @*/ 
+public class TwoWayList extends E_OneWayList { // Doubly Linked List
+
+   /*@  public normal_behavior
+     @    assignable theList, cursor;
+     @    ensures theList.isEmpty() && cursor == 0;
+     @*/
+   public TwoWayList();
+
+   // NEW iteration methods (for doubly linked list)
+   // ---------------------
+
+   /*@  public normal_behavior
+     @    requires !isOffFront();
+     @    assignable cursor;
+     @    ensures cursor == \old(cursor) - 1;
+     @ implies_that
+     @  public normal_behavior
+     @    requires cursor == 0;
+     @    assignable cursor;
+     @    ensures cursor == -1;
+     @    ensures_redundantly isOffFront();
+     @*/
+   public void decrementCursor();
+
+   /*@ also
+     @ public normal_behavior
+     @   assignable cursor;
+     @   ensures cursor == theList.int_length() - 1;
+     @*/
+   public void lastEntry();
+
+   /*@ also
+     @ public normal_behavior
+     @   requires newEntry != null && isOffEnd();
+     @   assignable theList, cursor;
+     @   ensures theList.equals(\old(theList).insertBack(newEntry))
+     @            && cursor == theList.int_length();
+     @   ensures_redundantly isOffEnd();
+     @*/
+   public void insertAfterCursor(Object newEntry);
+
+   /*@ also
+     @  public normal_behavior
+     @   requires newEntry != null && isOffFront();
+     @   assignable theList, cursor;
+     @   ensures theList.equals(\old(theList).insertFront(newEntry))
+     @            && \not_modified(cursor);
+     @*/
+   public void insertBeforeCursor(Object newEntry);
+
+   /*@ also
+     @ public normal_behavior
+     @   assignable \nothing;
+     @   ensures \result instanceof TwoWayList;
+     @   ensures_redundantly ((TwoWayList)\result).theList.equals(theList)
+     @                        && ((TwoWayList)\result).cursor == 0;
+     @*/
+    public /*@ non_null @*/ Object clone();
+}
+

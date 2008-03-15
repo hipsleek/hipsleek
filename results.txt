@@ -1,0 +1,297 @@
+---------------------------------------------------------------------------------------------------
+Examples without bags:
+---------------------------------------------------------------------------------------------------
+example:					omega time:																		isabelle time:
+check_ref.ss			0.06 sec																			1.18 sec
+
+check_view.ss			0.16 sec																			3.13 sec
+
+check_node.ss			parse error
+
+check_prim.ss			0.32 sec (errors are 													6.1 sec (errors are 
+									detected in methods sum_loop,									detected in methods sum_loop, 
+									f_r_21_examples_check_prim_ss_60 (loop inv))	f_r_21_examples_check_prim_ss_60 (loop inv))
+									
+length.ss					0.08 sec																			2.64 sec
+
+test4.ss					0.05 sec																			1.27 sec
+
+test5.ss					0.02 sec																			0.02 sec	
+
+test_op.ss				0.47 sec																			2.89 sec
+
+test_while1.ss		0.09 sec																			1.31 sec
+
+test_while.ss			0.04 sec																			0.85 sec
+
+avl-orig.ss				0.5 sec (for the rotate_left_child proc)			388.36 sec (for the rotate_left_child proc)
+
+
+---------------------------------------------------------------------------------------------------
+Examples with bags:
+---------------------------------------------------------------------------------------------------
+In the bag_examples directory:
+list_set.ss :
+	- append
+	- comm
+	- tail
+	- head
+	- insert1
+	- insert2
+	- insert3
+	- length 
+	- fold
+	- exist - checked in 6.18 sec
+	- part - checked in 24.15 sec
+
+list_set1.ss
+check_view.ss
+check_ref.ss
+
+Checking the sorting functions:
+*************
+selection.ml:
+*************
+I. without bags:
+		int find_min0(node x)
+		requires x::bnd1<n, s, l, mi> & n>0
+  	ensures x::bnd1<n, s, l, mi> & res = mi;
+  	60.12 sec
+  	---------------------------------------------------------------------------------
+		int find_min(node x)
+		requires x::ll<n> & n>=1
+  	ensures x::ll<n>; 
+  	9.9 sec 
+  	---------------------------------------------------------------------------------
+  	void delete_min0(ref node x, int a)
+		requires x::bnd1<n, s, l, mi> & n >= 1 & a = mi 
+		ensures x' = null & n = 1 & s <= mi < l or 
+                x'::bnd1<n-1, s, l, mi1> & mi1 >= mi & x' != null & n > 1;
+		fails
+		---------------------------------------------------------------------------------
+		void delete_min(ref node x, int a)
+		requires x::ll<n> & n >= 1  
+		ensures x'=null or x'::ll<n1>;
+ 		8.88 sec
+ 		---------------------------------------------------------------------------------
+		node selection_sort0(ref node x)
+		requires x::bnd1<n, sm, lg, mi> & n > 0 
+		ensures res::sll<n, mi, l> & l < lg & x' = null;
+		80.34 sec
+		
+		
+II. with bags and sizes:
+		int find_min_b(node x) - 12.25 sec with in
+		int find_min_b(node x) - 15.95 sec with bagmin
+		void delete_min_b(ref node x, int a) - 16.81 sec with in
+		node selection_sort_b(ref node x) - 8.87 sec
+		node selection_sort_b(ref node x) - 13.26 sec with bagmin
+		
+III. with bags and without sizes:		
+		int find_min1(node x) - 7.79 sec	with bagmin
+		int find_min1(node x) - 5.95 sec	only with in
+		void delete_min1(ref node x, int a) - 7.94 with in
+		void delete_min1(ref node x, int a) - 189.89 sec with bagmin --- problems with theory test6 --- takes very long
+		node selection_sort1(ref node x) - 5.68 sec with bagmin
+		node selection_sort1(ref node x) - 3.58 sec with in
+		
+*************
+qsort.ss:
+*************
+I. without bags:
+		void partition0(int c, node x, ref node y, ref node z) 
+		requires x::bnd<n, sm, bg> & sm <= c <= bg
+  	ensures y'::bnd<a, sm, c> * z'::bnd<b, c, bg> & n = a+b;
+  	fails both with isabelle and omega
+		--------------------------------------------
+		void partition(int a, node x, ref node y, ref node z) 
+		void partition(int a, node x, ref node y, ref node z) 
+		requires x::ll<n> 
+		ensures y'::ll<m> * z'::ll<p> & n=m+p;	
+		7.65 sec
+		--------------------------------------------
+		node append_ll(node x, node y) - 3.29 sec
+		void qsort(ref node xs) - 20.11 (after some modifications - initially it was 64.21 sec)
+		
+II. with bags and sizes:
+		void partition_b(int a, node x, ref node y, ref node z) 
+		requires x::llb<n, S> 
+		ensures y'::llb<m, S1> * z'::llb<p, S2> & n=m+p & S = union(S1, S2) & forall( b : (b notin S1 | b<=a) ) & forall( c : (c notin S2 | b>a) );
+		24.7 sec
+		--------------------------------------------
+		node append_ll_b(node x, node y)
+		requires x::llb<nn, S1> * y::llb<m, S2> 
+		ensures res::llb<nn+m, S3> & S3 = union(S1, S2);
+		5.64 sec
+		--------------------------------------------
+		void qsort_b(ref node xs)
+		requires xs::llb<n, S> 
+		ensures xs'::llb<n, S>;
+		57.11 sec
+		
+III. with bags and without sizes:		
+		void partition1(int a, node x, ref node y, ref node z) 
+		requires x::ll1<S> 
+		ensures y'::ll1<S1> * z'::ll1<S2> & S = union(S1, S2) & forall( b : (b notin S1 | b<=a) ) 
+ 		15.32 sec
+ 		--------------------------------------------
+		node append_ll1(node x, node y)
+		requires x::ll1<S1> * y::ll1<S2> 
+		ensures res::ll1<S3> & S3 = union(S1, S2);
+ 		3.15 sec
+ 		--------------------------------------------
+		void qsort1(ref node xs)
+		requires xs::ll1<S> 
+		ensures xs'::ll1<S>; 
+		26.42 sec
+
+*************
+bubble.ss:
+*************
+I. without bags:
+		bool bubble1(node xs)
+		requires xs::ll<n> & n>0
+		ensures xs::sll<n, s, l> & !res or  xs::ll<n> & res;
+		297.81 sec
+		-----------------------------------------------------
+		bool bubble2(node xs)
+		requires xs::ll<n> & n>0
+		ensures xs::ll<n> ;
+		49.69 sec
+		-----------------------------------------------------
+		void bsort1(node xs)
+		requires xs::ll<n> & n>0
+		ensures xs::sll<n, _, _>;
+		2.71 sec
+		-----------------------------------------------------
+		void bsort2(node xs)
+		requires xs::ll<n> & n>0
+		ensures xs::ll<n>;
+		1.74 sec
+		 
+		
+II. with bags and sizes:
+		bool bubble3(node xs)
+		requires xs::llbs<n, S> 
+		ensures xs::llbs<n, S>;
+		77.56 sec 
+		---------------------------------------------------
+		void bsort3(node xs)
+		requires xs::llbs<n, S>
+		ensures xs::llbs<n, S>;
+		1.27 sec
+		
+		
+III. with bags and without sizes:		
+		 bool bubble4(node xs)
+		 requires xs::llb<S> 
+		 ensures xs::llb<S>;
+		 47.61 sec
+		 --------------------------------------------------------
+		 void bsort4(node xs)
+		 requires xs::llb<S>
+		 ensures xs::llb<S>;
+		 1.05 sec
+
+*************
+insertion.ss:
+*************
+I. without bags:
+			node insert(node x, int v)
+			requires x::sll<n, xs, xl> & n > 0 
+  		ensures res::sll<n+1, sres, lres> & sres = min(v, xs) & lres = max(v,xl);
+			41.51 sec
+			---------------------------------------------------------------------------
+			void insertion_sort(node x, ref node y)
+			requires x::bnd<n1, sm1, bg1> * y::sll<n2, sm2, bg2>
+  		ensures y'::sll<n1+n2, sm, bg> * x::bnd<n1, sm1, bg1> & sm <= sm2 & bg >= bg2;
+			73.29 sec
+			
+II. with bags and sizes:			
+			node insert1(node x, int v)
+			requires x::llbs<n, S>
+  		ensures res::llbs<n+1, S1> & S1 = union(S, {v});
+			10.49 sec
+			---------------------------------------------------------------------------
+			void insertion_sort1(node x, ref node y)
+			requires x::llbs<n1, S1> * y::llbs<n2, S2>
+  		ensures y'::llbs<n1+n2, S3> * x::llbs<n1, S1> & S3 = union(S1, S2) ;
+  		9.18 sec
+  		
+III. with bags and without sizes:		  		  		
+			node insert2(node x, int v)
+			requires x::llb<S>
+  		ensures res::llb<S1> & S1 = union(S, {v});
+			7.32 sec
+			---------------------------------------------------------------------------
+			void insertion_sort2(node x, ref node y)
+			requires x::llb<S1> * y::llb<S2>
+  		ensures y'::llb<S3> * x::llb<S1> & S3 = union(S1, S2) ;
+  		4.35 sec
+
+
+---------------------------------------------------------------------------------------------------
+Modifications:
+---------------------------------------------------------------------------------------------------
+ipure.ml
+cpure.ml
+astsimp.ml
+tpdispatcher.ml --> I added Isabelle to the possibles theorem provers
+								--> I defined simplify, hull and pairwisecheck methods here -> in solver.ml or typechecker.ml there are called
+								the corresponding methods from tpdistpatcher.ml and not directly from omega/isabelle
+solver.ml				--> replaced the direct calls to Omega.simplify/hull/paitwisecheck with calls to TP.corresponding method
+typechecker.ml	--> same as for solver.ml
+main.ml					--> added "--log-isabelle", "--build-image", "-tp isabelle" to the execution possible arguments
+--build-image: Builds a so-called heap image. This heap image contains the preloaded Multiset and Main theories. 
+Afterwards, when invoking Isabelle, everything that is already loaded is instantly available.
+cast.ml 				--> added the bag_type
+ilexer.mll and ilexer.ml --> I introduced the NOTIN, BAGMIN and BAGMAX tokens
+iparser.ml and iparser.mly --> I introduces BagNotIn, BagMin and BagMax into the grammar
+
+---------------------------------------------------------------------------------------------------
+TODO & questions:
+---------------------------------------------------------------------------------------------------
+1. The simplify, hull and pairwisecheck methods from isabelle.ml are not yet implemented (in the current state they just return the 
+input formula)
+2. Problem when collecting the types:
+	a - in trans_pure_formula method from astsimp.ml when the input formula is IP.Exists or IP.Forall we consider the type of the variable 
+	as int, but the problem is that now it can also be bag. I didn't exactly resolve the problem, what I do is that when printing the 
+	isabelle theory file I don't put the type for the variables appearing in exists, forall constructions. Tha variable will surely appear 
+	afterwards with the correct type, therefore there is no need to put its type more than one time. 
+	Another solution can be not to collect any type for these formulas.
+	b - When writing the constraints for a method (let's say for the test6 method in check_view.ss in the bag_examples directory),
+	 if I write ensures res::ll<n+1, union(S, {0})> instead of ensures res::ll<n+1, S1> & S1=union(S, {0}), the newly introduced
+	 variable that is equal to union(S, {0}) is considered as int and not as multiset -> probably I missed collecting type info somewhere
+3. TODO: To modify the parser such that bags of tuples are accepted.
+4. TODO: To clarify the use of the not construction such as to be accepted by the parser.
+5. In Isabelle:
+	lemma "ALL (f_r_231::int). ( EX (f_r_282::int). f_r_282 = f_r_231 + (1::int))" is proved
+	lemma "ALL (f_r_231::int). ( EX (f_r_282::int). f_r_231 = f_r_282 - (1::int))" is not proved
+	I believe this is due to the fact that Isabelle has some restrictions concerning the left-hand side of a rule.
+	"So far we have pretended the simplifier can deal with arbitrary rewrite rules. This is not quite true. For reasons of feasibility,
+the simplifier expects the left-hand side of each rule to be a so-called higher order pattern. This restricts where unknowns may occur."
+However, I have to read more about this.
+
+Because of the above, if we have a view of the form 
+sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or 
+                  self::node<sm, q> * q::sll<n-1, qs, lg> & q != null & sm <= qs
+               		inv n >= 1 & sm <= lg; 
+  
+it is safer if we write it like below: 
+
+sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or 
+                  self::node<sm, q> * q::sll<n1, qs, lg> & n = n1+1 & q != null & sm <= qs
+               		inv n >= 1 & sm <= lg; 
+6. When we have x!=null a constraint n>0 is generated, but I also have to generate S!={}
+
+
+----------------------------------------------------------------------------------------------------------------
+Completeness remarks:
+----------------------------------------------------------------------------------------------------------------
+
+1. The below proof:
+	A \<subset> B ==> A \<subset> (B+C)
+	fails for bags both with all the theorem provers that I've tried.
+	
+	However, for sets the relation is proved.
+	

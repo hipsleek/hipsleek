@@ -1,0 +1,6 @@
+Compose syntax:
+
+compose[v1,v2,..,vn](meta_constr1, meta_constr2)
+
+Compose can only appear as the body of a let declaration.
+

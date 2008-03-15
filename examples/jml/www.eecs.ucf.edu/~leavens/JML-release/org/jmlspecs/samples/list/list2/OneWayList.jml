@@ -1,0 +1,89 @@
+// @(#) $Id: OneWayList.jml,v 1.1.1.1 2008-03-15 06:55:00 nguyenh2 Exp $
+
+// Copyright (C) 1998, 1999 Iowa State University
+
+// This file is part of JML
+
+// JML is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+
+// JML is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with JML; see the file COPYING.  If not, write to
+// the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Author:  Clyde Ruby
+
+package org.jmlspecs.samples.list.list2;
+
+//@ refine "OneWayList.jml-refined";
+
+import org.jmlspecs.samples.list.node.OneWayNode;
+
+//@ model import org.jmlspecs.models.JMLObjectSequence;
+
+// FIXME: adapt this file to non-null-by-default and remove the following modifier.
+/*@ nullable_by_default @*/ 
+public class OneWayList {
+
+    protected OneWayNode theListNode_;
+    /*@                     in theList; 
+      @                     maps theListNode_.entries \into theList;
+      @*/
+
+    // first node is a sentinel
+
+    //@ protected constraint theListNode_ == \old(theListNode_);
+
+   /*@ protected invariant theListNode_ != null
+     @       && theListNode_.entries.int_size() - 1 == theList.int_length();
+     @*/ 
+
+    //@ protected represents theList <- theListNode_.allButFirst;
+
+    protected OneWayNode cursorNode_;
+    //@                  in cursor;
+    //@                  maps cursorNode_.theEntry \into cursorEntry;
+
+    /*@ protected invariant \reach(theListNode_).has(cursorNode_) 
+      @                  || cursorNode_ == null;
+      @*/
+
+    /*@ protected represents cursorEntry <- 
+      @                      (cursorNode_ == null)? 
+      @                      null
+      @                    : cursorNode_.getEntry();
+      @*/
+
+    //@ protected invariant isOffEnd() <==> (cursorNode_ == null);
+    //@ protected invariant isOffFront() <==> (cursorNode_ == theListNode_);
+
+    /*@ protected represents cursor <- 
+      @     (cursorNode_ == null)? 
+      @     (int) (theListNode_.entries.int_size() - 1)
+      @   : (int) (theListNode_.entries.int_size() 
+      @            - cursorNode_.entries.int_size() - 1);
+      @*/
+
+    /*@ protected normal_behavior
+      @   requires othLst != null;
+      @   assignable theList, cursor;
+      @   ensures cursor == 0 && theList.equals(othLst.theList); 
+      @*/
+    protected OneWayList(OneWayList othLst);
+
+    /*@ protected normal_behavior
+      @   requires curr != null;
+      @   assignable \nothing;
+      @   ensures \result.nextNode == node;
+      @*/
+    protected OneWayNode previousNode(OneWayNode curr, OneWayNode node);
+
+}
+

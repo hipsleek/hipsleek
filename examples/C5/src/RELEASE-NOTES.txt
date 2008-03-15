@@ -1,0 +1,65 @@
+RELEASE NOTES FOR C5 GENERIC COLLECTION LIBRARY FOR C#/CLI
+------------------------------
+
+Release 1.0.2 of 2007-06-01
+
+Bugs fixed:
+
+ * SortedDictionaryBase was not marked as [Serializable]
+ 
+ * ArrayList.expand did not update the array field of (other) views
+
+ * IntervalHeap::Replace would throw an exception on one-element heap
+
+------------------------------
+
+Release 1.0.1 of 2006-06-27
+
+Bugs fixed:
+
+ * CircularQueue<T> indexer was wrong
+
+ * Some equality comparers created by C5.EqualityComparer<T>.Default
+   were not marked serializable
+
+ * HashSet<T>.RetainAll could leave internal data inconsistent
+
+ * TreeDictionary<K,V> was not marked serializable
+
+ * HashedLinkedList<T> problem related to tag group implementation
+
+ * Dispose() could fail on newly created lists
+
+New features:
+
+ * A strong name (.snk) is included 
+
+ * C5.IList<T> now derives from System.Collections.Generic.IList<T>
+
+ * Added C5.build file for NAnt, due to Johan Warlander
+
+The technical report has been updated to reflect the above changes.
+
+------------------------------
+
+Release 1.00 of 2006-01-30
+
+First complete release.  There are lots of changes since the
+PreRelease:
+
+ * Interface design has been reorganized and simplified
+
+ * New functionality added (too much to describe here)
+
+ * Updated for Microsoft C#/CLI 2.0 release version
+
+ * Comprehensive documentation in ITU Technical Report ITU-TR-2006-76
+
+------------------------------
+
+PreRelease 0.5 of 2004-08-06
+
+First public release, essentially a preview of the library, for beta 1
+of Microsoft C#/CLI 2.0.
+
+------------------------------

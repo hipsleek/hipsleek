@@ -1,0 +1,16 @@
+File Name     Archive            Description
+------------------------------------------------------------------------------
+README.txt       1      ***READ THIS FILE FIRST***
+LICENSE.txt      1      Permission to use/copy this package
+DISCUSSION.txt   1      Discussion of algorithm(s) for AVL trees
+MANIFEST         1      This file
+Makefile         1      Makefile for the library
+avl.3            1      Documentation for the AVL tree library
+avl.c            2      Source for the entire AVL library
+avl.h            2      Include file for the AVL tree library
+avl_test.c       2      The test program
+avl_typs.h       2      Include file needed by the AVL tree library
+key_gen.c        2      Generates random test values
+rotate.old       2      Old code for AVL rotations (no longer used)
+testvals.h       2      Test values for the test program
+testvals.old     2      Old test values

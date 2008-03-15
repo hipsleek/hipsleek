@@ -1,0 +1,88 @@
+// @(#) $Id: E_OneWayList.jml-refined,v 1.1.1.1 2008-03-15 06:55:00 nguyenh2 Exp $
+
+// Copyright (C) 1998, 1999 Iowa State University
+
+// This file is part of JML
+
+// JML is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+
+// JML is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with JML; see the file COPYING.  If not, write to
+// the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Author:  Clyde Ruby
+
+package org.jmlspecs.samples.list.list2;
+
+// FIXME: adapt this file to non-null-by-default and remove the following modifier.
+/*@ nullable_by_default @*/ 
+public class E_OneWayList extends OneWayList { // Extended Singly Linked List
+
+  /*@  public normal_behavior
+    @    assignable theList, cursor;
+    @    ensures theList.isEmpty() && cursor == 0;
+    @*/
+  public E_OneWayList();
+
+  // accessors
+  // ---------
+
+  /*@  public normal_behavior
+    @    assignable \nothing;
+    @    ensures \result == theList.int_length();
+    @*/
+  public /*@ pure @*/ int length();
+
+  /*@  public normal_behavior
+    @    assignable \nothing;
+    @    ensures \result == theList.isEmpty();
+    @*/
+  public /*@ pure @*/ boolean isEmpty();
+
+  /*@ also
+    @  public normal_behavior
+    @    requires obj instanceof OneWayList;
+    @    assignable \nothing;
+    @    ensures \result == ((OneWayList)obj).theList.equals(this.theList);
+    @   also
+    @    requires !(obj instanceof OneWayList);
+    @    assignable \nothing;
+    @    ensures \result == false;
+    @*/
+  public /*@ pure @*/ boolean equals(/*@ nullable @*/ Object obj);
+
+  // methods for changing the list
+  // -----------------------------
+
+  /*@  public normal_behavior
+    @    requires newEntry != null;
+    @    assignable theList, cursor;
+    @    ensures theList.equals(\old(theList).insertBack(newEntry))
+    @         && cursor == theList.int_length() - 1;
+    @*/
+  public void append(Object newEntry); 
+
+  /*@  public normal_behavior
+    @    assignable theList, cursor;
+    @    ensures theList.isEmpty() && cursor == 0;
+    @*/
+  public void removeAllEntries();
+
+  /*@ also
+    @  public normal_behavior
+    @    assignable \nothing;
+    @    ensures \result instanceof E_OneWayList
+    @         && ((E_OneWayList)\result).theList.equals(theList)
+    @         && ((E_OneWayList)\result).cursor == 0
+    @         && \fresh(\result);
+    @*/
+    public /*@ non_null @*/ Object clone();
+}

@@ -1,0 +1,2 @@
+Link: http://msdn.microsoft.com/vstudio/express/visualcsharp/features/hobby/default.aspx
+The directory contains the implementation in C# of a BlackJack game

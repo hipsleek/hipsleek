@@ -1,0 +1,46 @@
+# auxiliary predicates
+
+pred xor(var0 x,y) = x&~y | ~x&y;
+pred at_least_two(var0 x,y,z) = x&y | x&z | y&z;
+
+# addition relation (P + q = r)
+pred plus(var2 p,q,r) =
+	ex2 c: 0 notin c
+		& all1 t: (t+1 in c <=> at_least_two(t in p, t in q, t in c))
+		& (t in r <=> xor(xor(t in p, t in q), t in c));
+
+# less-than relation (p<q)
+pred less(var2 p,q) = 
+	ex2 t: t ~= empty & plus(p,t,q);
+
+# less-or-equal than relation (p<=q)
+pred lessEq(var2 p, q) = 
+	less(p, q) | (p=q);
+
+# greater-than relation (p>q)
+pred greater(var2 p, q) = 
+	less(q, p);
+
+# greater-or-equal than relation (p>=q)
+pred greaterEq(var2 p, q) = 
+	greater(p, q) | (p=q);
+
+var1 v, f_r_155;
+
+var2 f_r_323, f_r_285, tmp_nullPRMD, f_r_24PRMD, f_r_23PRMD, f_r_152,
+f_r_151, f_r_154, f_r_275, tmpPRMD, f_r_153, f_r_264, f_r_263, res, x,
+f_r_11, f_r_310, f_r_12, f_r_309, S, f_r_311;
+
+( (~((((((f_r_323 = pconst(0))) & ((f_r_311 = {}))) | (ex1 v: (ex2
+S1:(( greater(f_r_323, pconst(0))) & (((f_r_311 = S1 union {v})) &
+(all1 x:((~(x in S1)) | ((v <= x)))) ))) ) ) & ((x = pconst(1)))) &
+(((((((((((((S = f_r_154 union {f_r_155})) & (all1 x:((~(x in
+f_r_154)) | ((f_r_155 <= x)))) ) & (((((f_r_285 = pconst(0))) &
+((tmp_nullPRMD = pconst(0)))) & (f_r_24PRMD = pconst(0) & ( greater(x,
+pconst(0))))) & f_r_24PRMD = pconst(0))) & (((f_r_152 = f_r_11)) &
+((f_r_151 = f_r_12)))) & (((v > f_r_155)) & f_r_23PRMD = pconst(0))) &
+f_r_23PRMD = pconst(0)) & (((f_r_264 = f_r_152)) & ((f_r_263 =
+f_r_151)))) & ((f_r_275 = f_r_154))) & (((f_r_311 = f_r_275 union
+{v})) & ((tmpPRMD = f_r_153)))) & (((f_r_310 = f_r_264)) & ((f_r_309 =
+f_r_263)))) & ((res = x))) & (((f_r_11 = f_r_310)) & ((f_r_12 =
+f_r_309)))))) | ((S union {v} = f_r_311 union {f_r_155})));

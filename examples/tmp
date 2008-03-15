@@ -1,0 +1,20 @@
+var0 f_r_24PRMD, f_r_23PRMD;
+
+var1 f_r_323, f_r_285, tmp_nullPRMD, f_r_152, f_r_151, tmpPRMD,
+f_r_153, f_r_264, f_r_263, res, x, f_r_11, f_r_310, f_r_12, f_r_309,
+v, f_r_155;
+
+var2 f_r_154, f_r_275, S, f_r_311;
+
+(((((f_r_323 = 0 & f_r_311 = {}) | (ex1 v : (ex2 S1 : (f_r_323 > 0 &
+(f_r_311 = S1 union {v} & (all1 x : ((~(x in S1)) | v <= x))))))) & x =
+1) & (((((((((((S = f_r_154 union {f_r_155} & (ex1 x : ((~(x in
+f_r_154)) | f_r_155 <= x))) & (((f_r_285 = 0 & tmp_nullPRMD = 0) &
+((~(f_r_24PRMD)) & x ~= 0)) & (~(f_r_24PRMD)))) & (f_r_152 = f_r_11 &
+f_r_151 = f_r_12)) & (v > f_r_155 & (~(f_r_23PRMD)))) &
+(~(f_r_23PRMD))) & (f_r_264 = f_r_152 & f_r_263 = f_r_151)) & f_r_275
+= f_r_154) & (f_r_311 = f_r_275 union {v} & tmpPRMD = f_r_153)) &
+(f_r_310 = f_r_264 & f_r_309 = f_r_263)) & res = x) & (f_r_11 =
+f_r_310 & f_r_12 = f_r_309)))) 
+=> 
+(S union {v} = f_r_311 union {f_r_155});

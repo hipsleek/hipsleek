@@ -1,0 +1,65 @@
+variables must be declared with types.
+
+input_file ::= (pred_decl | lemma_decl | var_decl | let_cmd | compose_cmd | entail_cmd | print_cmd)*
+
+pred_decl ::= "pred" ["root::"] ident "<" typed_ident_list ">" "==" formula "inv" pure_formula ";"
+
+var_decl ::= "var" typed_ident_list ";"
+
+typed_ident_list :== comma_separated_list ":" type
+
+type ::= int | bool | ident
+
+let_cmd ::= "let" "$" ident "=" v_formula  ";"
+
+
+
+entail v_formula "=>" v_formula ";"
+
+v_formula ::=
+ | "$" ident
+ | compose_cmd
+ | formula
+
+formula ::= (\/ conj_formula)*
+
+conj_formula ::=  ["exists" ident_list "."] sep_formula
+
+sep_formula ::= 
+| pure_formula
+| heap_formula & pure_formula
+
+heap_formula ::= ident "::" 
+
+----------
+
+Examples.
+
+pred ll<n : int> == root = null & n = 0
+	 or exists r : node . root::node<_, next = r> * r::ll<n - 1>
+	 inv n >= 0;
+
+var m : int;
+
+var x : node;
+
+let $F1 = x::node<_, null>;
+
+entail m = 1; // fail
+
+entail $F1 |- x::ll<m>; // ok
+
+entail m = 1; // should it be ok?
+// If m is bound by "entail", should "x" be bound by "let"?
+// this should fail. However, we can refer to the residue to
+// obtain m = 1.
+
+let $F2 = exists r : node . x::node<_, r> * r::node<_, null>;
+
+entail x::ll<m> & x=y |- y::ll<m>;
+
+-----------------------
+
+- explicitly typed
+- no variable binding, no context, everything is encoded in formulas.
+- 

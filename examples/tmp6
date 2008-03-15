@@ -1,0 +1,9 @@
+
+
+checkentail 
+((((x = 0 & S = {}) | (ex v : (ex S1 : (ex1 r : (x > 0 & (S = S1
+union {v} & (all x : (x notin S1 | v <= x)))))))) & ress = 1) &
+(((((tmpPRMD = 0 & tmp_nullPRMD = 0) & (f_r_24PRMD & x = 0)) &
+f_r_24PRMD) & f_r_98 = 0) & (f_r_11 = f_r_95 & f_r_12 = f_r_98)))
+|-
+(S union {v} = {} union {v} & (all1 x : (x notin {} | v <= x))).

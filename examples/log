@@ -1,0 +1,822 @@
+
+
+!!!interactive:2: 
+view lseg<n,p>=true & self = p & n = 0
+or (EX f_r_11, r, f_r_14, f_r_15 . self::node<f_r_11, r> * r::lseg<f_r_14, f_r_15> & f_r_14 = n-1 & f_r_15 = p)
+	inv n >= 0
+	xform n >= 0
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: x::lseg<n, p> & n = 10
+es_pure: 
+es_heap: true
+es_evars: 
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: x::lseg<n, p> & n = 10
+es_pure: 
+es_heap: true
+es_evars: 
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: x::lseg<n, p> & n = 10
+es_pure: 
+es_heap: true
+es_evars: 
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: x::lseg<n, p> & n = 10
+es_pure: 
+es_heap: true
+es_evars: 
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_non_empty_rhs_heap: trying to prove x::lseg<n1, r1>
+
+!!!:0: heap_entail_non_empty_rhs_heap: using x::lseg<n, p> to prove x::lseg<n1, r1>
+
+!!!:0: heap_entail_non_empty_rhs_heap: new_ctx after matching: x
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: heap_entail_non_empty_rhs_heap: to_lhs: n1 = n & r1 = p
+
+!!!:0: heap_entail_non_empty_rhs_heap: new_conseq after matching:
+p::lseg<n2, r2> * r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+p::lseg<n2, r2> * r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+p::lseg<n2, r2> * r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_non_empty_rhs_heap: trying to prove p::lseg<n2, r2>
+
+!!!:0: heap_entail_non_empty_rhs_heap: folding with no node on lhs: p
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+ln2:
+p::lseg<n2, r2>
+rhs_p:
+n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: fold: view_form:
+true & p = r2 & n2 = 0
+or (EX f_r_20, f_r_21, f_r_22, f_r_23 . p::node<f_r_20, f_r_21> * f_r_21::lseg<f_r_22, f_r_23> & f_r_22 = n2-1 & f_r_23 = r2)
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+conseq:
+true & p = r2 & n2 = 0
+or (EX f_r_20, f_r_21, f_r_22, f_r_23 . p::node<f_r_20, f_r_21> * f_r_21::lseg<f_r_22, f_r_23> & f_r_22 = n2-1 & f_r_23 = r2)
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+conseq:
+true & p = r2 & n2 = 0
+or (EX f_r_20, f_r_21, f_r_22, f_r_23 . p::node<f_r_20, f_r_21> * f_r_21::lseg<f_r_22, f_r_23> & f_r_22 = n2-1 & f_r_23 = r2)
+
+!!!:0: heap_entail_conjunct_lhs: 
+ante:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+conseq:
+true & p = r2 & n2 = 0
+or (EX f_r_20, f_r_21, f_r_22, f_r_23 . p::node<f_r_20, f_r_21> * f_r_21::lseg<f_r_22, f_r_23> & f_r_22 = n2-1 & f_r_23 = r2)
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+conseq:
+true & p = r2 & n2 = 0
+
+!!!:0: heap_entail_conjunct: conseq has an empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+conseq:
+true & p = r2 & n2 = 0
+
+!!!:0: heap_entail_empty_heap: checking implication:
+ante:
+n >= 0 & n = 10 & n1 = n & r1 = p
+conseq:
+(ex n2. (ex r2. p = r2 & n2 = 0))
+
+!!!:0: heap_entail_empty_heap: folding: formula is valid
+
+!!!:0: heap_entail_empty_heap: folding: res_ctx:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: p = r2 & n2 = 0
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+conseq:
+(EX f_r_20, f_r_21, f_r_22, f_r_23 . p::node<f_r_20, f_r_21> * f_r_21::lseg<f_r_22, f_r_23> & f_r_22 = n2-1 & f_r_23 = r2)
+
+!!!interactive:2: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: f_r_30, f_r_31, f_r_32, f_r_33, n2, r2
+conseq:
+p::node<f_r_30, f_r_31> * f_r_31::lseg<f_r_32, f_r_33> & f_r_32 = n2-1 & f_r_33 = r2
+
+!!!interactive:2: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: f_r_30, f_r_31, f_r_32, f_r_33, n2, r2
+conseq:
+p::node<f_r_30, f_r_31> * f_r_31::lseg<f_r_32, f_r_33> & f_r_32 = n2-1 & f_r_33 = r2
+
+!!!interactive:2: heap_entail_non_empty_rhs_heap: trying to prove p::node<f_r_30, f_r_31>
+
+!!!interactive:2: heap_entail_non_empty_rhs_heap: no aliased node for data node p::node<f_r_30, f_r_31> is found in LHS
+
+
+!!!:0: fold: rs1:
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: p = r2 & n2 = 0
+es_heap: x::lseg<n, p>
+es_evars: n2, r2
+
+!!!:0: fold: context at beginning of fold: p
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: fold: context at end of fold: p
+es_formula: true & n = 10 & n1 = n & r1 = p
+es_pure: r2 = p & n2 = 0
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: fold: es.es_pure: p = r2 & n2 = 0
+
+!!!:0: split_universal: evars: 
+
+!!!:0: split_universal: vvars: n2, r2
+
+!!!:0: split_universal: to_ante: r2 = p & n2 = 0
+
+!!!:0: split_universal: to_conseq: 
+
+!!!:0: process_fold_result: new_ctx after folding: p
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: process_fold_result: vs2: n2, r2
+
+!!!:0: process_fold_result: to_ante: r2 = p & n2 = 0
+
+!!!:0: process_fold_result: to_conseq: 
+
+!!!:0: process_fold_result: new_conseq:
+r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+r2::lseg<n3, r3> & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_non_empty_rhs_heap: trying to prove r2::lseg<n3, r3>
+
+!!!:0: heap_entail_non_empty_rhs_heap: folding with no node on lhs: r2
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+ln2:
+r2::lseg<n3, r3>
+rhs_p:
+n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: fold: view_form:
+true & r2 = r3 & n3 = 0
+or (EX f_r_34, f_r_35, f_r_36, f_r_37 . r2::node<f_r_34, f_r_35> * f_r_35::lseg<f_r_36, f_r_37> & f_r_36 = n3-1 & f_r_37 = r3)
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+conseq:
+true & r2 = r3 & n3 = 0
+or (EX f_r_34, f_r_35, f_r_36, f_r_37 . r2::node<f_r_34, f_r_35> * f_r_35::lseg<f_r_36, f_r_37> & f_r_36 = n3-1 & f_r_37 = r3)
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+conseq:
+true & r2 = r3 & n3 = 0
+or (EX f_r_34, f_r_35, f_r_36, f_r_37 . r2::node<f_r_34, f_r_35> * f_r_35::lseg<f_r_36, f_r_37> & f_r_36 = n3-1 & f_r_37 = r3)
+
+!!!:0: heap_entail_conjunct_lhs: 
+ante:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+conseq:
+true & r2 = r3 & n3 = 0
+or (EX f_r_34, f_r_35, f_r_36, f_r_37 . r2::node<f_r_34, f_r_35> * f_r_35::lseg<f_r_36, f_r_37> & f_r_36 = n3-1 & f_r_37 = r3)
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+conseq:
+true & r2 = r3 & n3 = 0
+
+!!!:0: heap_entail_conjunct: conseq has an empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+conseq:
+true & r2 = r3 & n3 = 0
+
+!!!:0: heap_entail_empty_heap: checking implication:
+ante:
+n >= 0 & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+conseq:
+(ex n3. (ex r3. r2 = r3 & n3 = 0))
+
+!!!:0: heap_entail_empty_heap: folding: formula is valid
+
+!!!:0: heap_entail_empty_heap: folding: res_ctx:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: r2 = r3 & n3 = 0
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+conseq:
+(EX f_r_34, f_r_35, f_r_36, f_r_37 . r2::node<f_r_34, f_r_35> * f_r_35::lseg<f_r_36, f_r_37> & f_r_36 = n3-1 & f_r_37 = r3)
+
+!!!interactive:2: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: f_r_44, f_r_45, f_r_46, f_r_47, n3, r3
+conseq:
+r2::node<f_r_44, f_r_45> * f_r_45::lseg<f_r_46, f_r_47> & f_r_46 = n3-1 & f_r_47 = r3
+
+!!!interactive:2: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: f_r_44, f_r_45, f_r_46, f_r_47, n3, r3
+conseq:
+r2::node<f_r_44, f_r_45> * f_r_45::lseg<f_r_46, f_r_47> & f_r_46 = n3-1 & f_r_47 = r3
+
+!!!interactive:2: heap_entail_non_empty_rhs_heap: trying to prove r2::node<f_r_44, f_r_45>
+
+!!!interactive:2: heap_entail_non_empty_rhs_heap: no aliased node for data node r2::node<f_r_44, f_r_45> is found in LHS
+
+
+!!!:0: fold: rs1:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: r2 = r3 & n3 = 0
+es_heap: x::lseg<n, p>
+es_evars: n3, r3
+
+!!!:0: fold: context at beginning of fold: r2
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: fold: context at end of fold: r2
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0
+es_pure: r3 = r2 & n3 = 0
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: fold: es.es_pure: r2 = r3 & n3 = 0
+
+!!!:0: split_universal: evars: 
+
+!!!:0: split_universal: vvars: n3, r3
+
+!!!:0: split_universal: to_ante: r3 = r2 & n3 = 0
+
+!!!:0: split_universal: to_conseq: 
+
+!!!:0: process_fold_result: new_ctx after folding: r2
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0 & r3 = r2 & n3 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+
+!!!:0: process_fold_result: vs2: n3, r3
+
+!!!:0: process_fold_result: to_ante: r3 = r2 & n3 = 0
+
+!!!:0: process_fold_result: to_conseq: 
+
+!!!:0: process_fold_result: new_conseq:
+true & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0 & r3 = r2 & n3 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+true & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0 & r3 = r2 & n3 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+true & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0 & r3 = r2 & n3 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+true & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct: conseq has an empty heap component
+context:
+es_formula: true & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0 & r3 = r2 & n3 = 0
+es_pure: 
+es_heap: x::lseg<n, p>
+es_evars: 
+conseq:
+true & n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_empty_heap: checking implication:
+ante:
+n >= 0 & n = 10 & n1 = n & r1 = p & r2 = p & n2 = 0 & r3 = r2 & n3 = 0
+conseq:
+n = 1 & n2 = 3 & n3 = 6
+
+!!!:0: heap_entail_conjunct: formula is not valid
+
+
+!!!:0: process_fold_result: context at end fold: r2
+
+
+!!!:0: process_fold_result: context at end fold: p
+
+
+!!!:0: heap_entail_non_empty_rhs_heap: do_coercion: c1 = lseg, c2 = lseg
+
+
+!!!:0: heap_entail_non_empty_rhs_heap: apply_universal: c1 = lseg, c2 = lseg
+
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: x::lseg<f_r_51, r> * r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10
+es_pure: 
+es_heap: true
+es_evars: f_r_51, f_r_52
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: x::lseg<f_r_51, r> * r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10
+es_pure: 
+es_heap: true
+es_evars: f_r_51, f_r_52
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: x::lseg<f_r_51, r> * r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10
+es_pure: 
+es_heap: true
+es_evars: f_r_51, f_r_52
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: x::lseg<f_r_51, r> * r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10
+es_pure: 
+es_heap: true
+es_evars: f_r_51, f_r_52
+conseq:
+x::lseg<n1, r1> * r1::lseg<n2, r2> * r2::lseg<n3, r3> & n1 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_non_empty_rhs_heap: trying to prove x::lseg<n1, r1>
+
+!!!:0: heap_entail_non_empty_rhs_heap: using x::lseg<f_r_51, r> to prove x::lseg<n1, r1>
+
+!!!:0: heap_entail_non_empty_rhs_heap: new_ctx after matching: x
+es_formula: r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r
+es_pure: 
+es_heap: x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+
+!!!:0: heap_entail_non_empty_rhs_heap: to_lhs: n1 = f_r_51 & r1 = r
+
+!!!:0: heap_entail_non_empty_rhs_heap: new_conseq after matching:
+r::lseg<n2, r2> * r2::lseg<n3, r3> & f_r_51 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r
+es_pure: 
+es_heap: x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+r::lseg<n2, r2> * r2::lseg<n3, r3> & f_r_51 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: r::lseg<f_r_52, f_r_16> & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r
+es_pure: 
+es_heap: x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+r::lseg<n2, r2> * r2::lseg<n3, r3> & f_r_51 = 1 & n2 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_non_empty_rhs_heap: trying to prove r::lseg<n2, r2>
+
+!!!:0: heap_entail_non_empty_rhs_heap: using r::lseg<f_r_52, f_r_16> to prove r::lseg<n2, r2>
+
+!!!:0: heap_entail_non_empty_rhs_heap: new_ctx after matching: r
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+
+!!!:0: heap_entail_non_empty_rhs_heap: to_lhs: n2 = f_r_52 & r2 = f_r_16
+
+!!!:0: heap_entail_non_empty_rhs_heap: new_conseq after matching:
+f_r_16::lseg<n3, r3> & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+f_r_16::lseg<n3, r3> & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+f_r_16::lseg<n3, r3> & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_non_empty_rhs_heap: trying to prove f_r_16::lseg<n3, r3>
+
+!!!:0: heap_entail_non_empty_rhs_heap: folding with no node on lhs: f_r_16
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+ln2:
+f_r_16::lseg<n3, r3>
+rhs_p:
+f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: fold: view_form:
+true & f_r_16 = r3 & n3 = 0
+or (EX f_r_65, f_r_66, f_r_67, f_r_68 . f_r_16::node<f_r_65, f_r_66> * f_r_66::lseg<f_r_67, f_r_68> & f_r_67 = n3-1 & f_r_68 = r3)
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+conseq:
+true & f_r_16 = r3 & n3 = 0
+or (EX f_r_65, f_r_66, f_r_67, f_r_68 . f_r_16::node<f_r_65, f_r_66> * f_r_66::lseg<f_r_67, f_r_68> & f_r_67 = n3-1 & f_r_68 = r3)
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+conseq:
+true & f_r_16 = r3 & n3 = 0
+or (EX f_r_65, f_r_66, f_r_67, f_r_68 . f_r_16::node<f_r_65, f_r_66> * f_r_66::lseg<f_r_67, f_r_68> & f_r_67 = n3-1 & f_r_68 = r3)
+
+!!!:0: heap_entail_conjunct_lhs: 
+ante:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+conseq:
+true & f_r_16 = r3 & n3 = 0
+or (EX f_r_65, f_r_66, f_r_67, f_r_68 . f_r_16::node<f_r_65, f_r_66> * f_r_66::lseg<f_r_67, f_r_68> & f_r_67 = n3-1 & f_r_68 = r3)
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+conseq:
+true & f_r_16 = r3 & n3 = 0
+
+!!!:0: heap_entail_conjunct: conseq has an empty heap component
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+conseq:
+true & f_r_16 = r3 & n3 = 0
+
+!!!:0: heap_entail_empty_heap: checking implication:
+ante:
+f_r_52 >= 0 & f_r_51 >= 0 & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+conseq:
+(ex n3. (ex r3. f_r_16 = r3 & n3 = 0))
+
+!!!:0: heap_entail_empty_heap: folding: formula is valid
+
+!!!:0: heap_entail_empty_heap: folding: res_ctx:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: f_r_16 = r3 & n3 = 0
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+conseq:
+(EX f_r_65, f_r_66, f_r_67, f_r_68 . f_r_16::node<f_r_65, f_r_66> * f_r_66::lseg<f_r_67, f_r_68> & f_r_67 = n3-1 & f_r_68 = r3)
+
+!!!interactive:2: heap_entail_conjunct:
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_78, f_r_79, f_r_80, f_r_81, n3, r3
+conseq:
+f_r_16::node<f_r_78, f_r_79> * f_r_79::lseg<f_r_80, f_r_81> & f_r_80 = n3-1 & f_r_81 = r3
+
+!!!interactive:2: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_78, f_r_79, f_r_80, f_r_81, n3, r3
+conseq:
+f_r_16::node<f_r_78, f_r_79> * f_r_79::lseg<f_r_80, f_r_81> & f_r_80 = n3-1 & f_r_81 = r3
+
+!!!interactive:2: heap_entail_non_empty_rhs_heap: trying to prove f_r_16::node<f_r_78, f_r_79>
+
+!!!interactive:2: heap_entail_non_empty_rhs_heap: no aliased node for data node f_r_16::node<f_r_78, f_r_79> is found in LHS
+
+
+!!!:0: fold: rs1:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: f_r_16 = r3 & n3 = 0
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: n3, r3
+
+!!!:0: fold: context at beginning of fold: f_r_16
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+
+!!!:0: fold: context at end of fold: f_r_16
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16
+es_pure: r3 = f_r_16 & n3 = 0
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+
+!!!:0: fold: es.es_pure: f_r_16 = r3 & n3 = 0
+
+!!!:0: split_universal: evars: f_r_51, f_r_52
+
+!!!:0: split_universal: vvars: n3, r3
+
+!!!:0: split_universal: to_ante: r3 = f_r_16 & n3 = 0
+
+!!!:0: split_universal: to_conseq: 
+
+!!!:0: process_fold_result: new_ctx after folding: f_r_16
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16 & r3 = f_r_16 & n3 = 0
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+
+!!!:0: process_fold_result: vs2: n3, r3
+
+!!!:0: process_fold_result: to_ante: r3 = f_r_16 & n3 = 0
+
+!!!:0: process_fold_result: to_conseq: 
+
+!!!:0: process_fold_result: new_conseq:
+true & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_one_context:
+ctx:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16 & r3 = f_r_16 & n3 = 0
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+true & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16 & r3 = f_r_16 & n3 = 0
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+true & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!:0: heap_entail_conjunct:
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16 & r3 = f_r_16 & n3 = 0
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+true & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_conjunct: conseq has an empty heap component
+context:
+es_formula: true & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16 & r3 = f_r_16 & n3 = 0
+es_pure: 
+es_heap: r::lseg<f_r_52, f_r_16> * x::lseg<f_r_51, r>
+es_evars: f_r_51, f_r_52
+conseq:
+true & f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0
+
+!!!:0: heap_entail_empty_heap: checking implication:
+ante:
+f_r_52 >= 0 & f_r_51 >= 0 & f_r_16 = p & n = 10 & n1 = f_r_51 & r1 = r & n2 = f_r_52 & r2 = f_r_16 & r3 = f_r_16 & n3 = 0
+conseq:
+(ex f_r_51. (ex f_r_52. f_r_51 = 1 & f_r_52 = 3 & n3 = 6 & n = f_r_51+f_r_52 & f_r_51 >= 0 & f_r_52 >= 0))
+
+!!!:0: heap_entail_conjunct: formula is not valid
+
+
+!!!:0: process_fold_result: context at end fold: f_r_16
+
+
+!!!:0: heap_entail_non_empty_rhs_heap: do_coercion: c1 = lseg, c2 = lseg
+
+
+!!!:0: heap_entail_non_empty_rhs_heap: apply_universal: c1 = lseg, c2 = lseg
+
+
+!!!:0: do_universal: coercions make a cycle.
+
+
+!!!:0: heap_entail_non_empty_rhs_heap: do_coercion: c1 = lseg, c2 = lseg
+
+
+!!!:0: heap_entail_non_empty_rhs_heap: apply_universal: c1 = lseg, c2 = lseg
+
+
+!!!:0: do_universal: coercions make a cycle.
+Invalid.
+

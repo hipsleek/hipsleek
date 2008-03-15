@@ -1,0 +1,19 @@
+Link: http://msdn.microsoft.com/vcsharp/programming/datastructures/default.aspx?pull=/library/en-us/dnvs05/html/datastructures20_3.asp#top
+This Directory contains implementations in C# of the following data structures:
+
+- Blocking queue (queue internally synchronized - thread safe) - 364 lines
+- Doubly linked list - 662 lines
+- Insertion sorted list - 178 lines
+- Keyed List - 227 lines  
+- Priority Queue - 275 lines
+- Range (bounded array) - 146 lines
+- Red Black Tree - 772 lines 
+- Sets 
+	- dictionary set - 221 lines
+	- immutable set (read only set) - 243 lines
+	- set (mathematical set) - 417 lines 
+	- synchronized set - 235 lines
+- Singly linked list - 305 lines
+- SkipList - collection of key-and-value pairs - 1057 lines 
+- Treap(tree heap) - heap tree with keys associatd to nodes - 562 lines
+	

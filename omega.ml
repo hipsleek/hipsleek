@@ -1,0 +1,365 @@
+(*
+  Call Omega Calculator, send input to it
+*)
+
+open Globals
+open Cpure
+
+let infilename = "input.oc." ^ (string_of_int (Unix.getpid ()))
+let resultfilename = "result.txt." ^ (string_of_int (Unix.getpid()))
+
+let log_all_flag = ref false
+let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
+
+let omega_of_spec_var (sv : spec_var) = match sv with
+  | SpecVar (_, v, p) -> v ^ (if is_primed sv then Oclexer.primed_str else "")
+
+let rec omega_of_exp e0 = match e0 with
+  | Null _ -> "0"
+  | Var (sv, _) -> omega_of_spec_var sv
+  | IConst (i, _) -> string_of_int i
+  | Add (a1, a2, _) ->  (omega_of_exp a1) ^ " + " ^ (omega_of_exp a2)
+  | Subtract (a1, a2, _) ->  (omega_of_exp a1) ^ " - " ^ (omega_of_exp a2)
+  | Mult (c, a, _) -> (string_of_int c) ^ (omega_of_exp a)
+  | Max _ 
+  | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
+	| _ -> failwith ("Omega.omega_of_exp: bag constraint")
+
+and omega_of_b_formula b = match b with
+  | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
+  | BVar (bv, _) -> (omega_of_spec_var bv) ^ " = 1"
+  | Lt (a1, a2, _) -> (omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
+  | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
+  | Gt (a1, a2, _) -> (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
+  | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
+  | Eq (a1, a2, _) -> (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+  | Neq (a1, a2, _) -> begin
+	  (*
+		if is_null a2 then 
+		(omega_of_exp a1) ^ " > 0"
+		else if is_null a1 then 
+		(omega_of_exp a2) ^ " > 0"
+		else
+	  *)
+	  (omega_of_exp a1) ^ " != " ^ (omega_of_exp a2)
+	end
+  | EqMax (a1, a2, a3, _) ->
+	  let a1str = omega_of_exp a1 in
+	  let a2str = omega_of_exp a2 in
+	  let a3str = omega_of_exp a3 in
+		"((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | (" 
+		^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))"
+  | EqMin (a1, a2, a3, _) ->
+	  let a1str = omega_of_exp a1 in
+	  let a2str = omega_of_exp a2 in
+	  let a3str = omega_of_exp a3 in
+		"((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | (" 
+		^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
+  | _ -> failwith ("Omega.omega_of_exp: bag constraint")
+
+and omega_of_formula f = match f with
+  | BForm b -> "(" ^ (omega_of_b_formula b) ^ ")"
+  | And (p1, p2, _) -> "(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2) ^ ")"
+  | Or (p1, p2, _) -> "(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
+  | Not (p, _) -> begin
+	  match p with
+		| BForm (BVar (bv, _)) -> (omega_of_spec_var bv) ^ " = 0"
+		| _ -> " (not (" ^ (omega_of_formula p) ^ ")) "
+	end
+  | Forall (sv, p, _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
+  | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
+
+
+let omegacalc = "oc" (* TODO: fix oc path *)
+
+let omega_calc_command =
+  if Sys.os_type = "Cygwin" then ("dos2unix " ^ infilename ^ " ; " ^ omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
+  else (omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
+
+let run_omega (input : string) : unit = 
+  begin
+    let chn = open_out infilename in
+			output_string chn (Util.break_lines input);
+			close_out chn;
+			ignore (Sys.command omega_calc_command);
+  end
+
+
+let rec omega_of_var_list (vars : ident list) : string = match vars with
+  | [] -> ""
+  | [v] -> v
+  | v :: rest -> v ^ ", " ^ (omega_of_var_list rest)
+
+let get_vars_formula (p : formula) = 
+  let svars = fv p in
+		List.map omega_of_spec_var svars
+			
+(*
+  Use Omega Calculator to test if a formula is valid -- some other
+  tool may probably be used ... 
+*)
+
+let is_sat (pe : formula) : bool =
+  begin
+		(*	Cvclite.write_CVCLite pe; *)
+		(*	Lash.write pe; *)
+    let fstr = omega_of_formula pe in
+		let pvars = get_vars_formula pe in
+    let vstr = omega_of_var_list (Util.remove_dups pvars) in
+    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+			(*	  Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
+			if !log_all_flag then begin
+				output_string log_all ("#is_sat" ^ Util.new_line_str ^ Util.new_line_str);
+				output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+				flush log_all;
+			end;
+      run_omega fomega;
+      let chn = open_in resultfilename in
+      let quitloop = ref false in
+      let sat = ref true in
+				while not !quitloop do
+					let line = input_line chn in
+					let n = String.length line in
+						if n > 0 then begin
+							if line.[0] != '#' then begin
+								quitloop := true;
+								if n > 7 then
+									let lastchars = String.sub line (n - 7) 7 in
+										if lastchars = "FALSE }" then
+											sat := false
+							end;
+						end;
+				done;
+				close_in chn;
+				begin
+					try
+						ignore (Sys.remove infilename);
+						ignore (Sys.remove resultfilename)
+					with
+						| e -> ignore e
+				end;
+				!sat
+  end
+
+(*
+	let is_valid (pe : pConstr) : bool =
+  begin
+  let fstr = omega_of_formula pe in
+  let vstr = omega_of_var_list (Util.remove_dups (get_vars_pConstr pe)) in
+  let truestr = "{[" ^ vstr ^ "] : 0 = 0 }" in
+  let fomega =  truestr ^ " subset {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";\n" in
+	output_string log_all ("#is_valid\n\n");
+	output_string log_all ((Util.break_lines fomega) ^ "\n\n");
+	flush log_all; 
+  run_omega fomega;
+  let chn = open_in resultfilename in
+  let quitloop = ref false in
+  let result = ref false in
+	while not !quitloop do
+	let line = input_line chn in
+	if String.length line > 0 then 
+	if line.[0] != '#' then
+	begin
+	quitloop := true;
+	if line = "True" || line = "{ TRUE }" then
+	result := true
+	else if line = "False" || line = "{ FALSE }" then
+	result := false
+	end;
+	done;
+	!result
+  end
+*)
+
+let is_valid (pe : formula) : bool =
+  begin
+    let fstr = omega_of_formula pe in
+    let vstr = omega_of_var_list (Util.remove_dups (get_vars_formula pe)) in
+    let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
+			if !log_all_flag then begin
+				output_string log_all ("#is_valid" ^ Util.new_line_str ^ Util.new_line_str);
+				output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+				flush log_all;
+			end;
+      run_omega fomega;
+      let chn = open_in resultfilename in
+      let quitloop = ref false in
+      let result = ref false in
+				while not !quitloop do
+					let line = input_line chn in
+					let n = String.length line in
+						if n > 0 then begin
+							if line.[0] != '#' then begin
+								quitloop := true;
+								if n > 7 then
+									let lastchars = String.sub line (n - 7) 7 in
+										if lastchars = "FALSE }" then
+											result := true
+							end;
+						end;
+				done;
+				close_in chn;
+				begin
+					try
+						ignore (Sys.remove infilename);
+						ignore (Sys.remove resultfilename)
+					with
+						| e -> ignore e
+				end; 
+				!result
+  end
+
+let imply (ante : formula) (conseq : formula) : bool =
+	(*
+		let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
+		let fvars = fv tmp1 in
+		let tmp2 = mkExists fvars tmp1 no_pos in
+		not (is_valid tmp2)
+	*)
+  let tmp_form = mkOr (mkNot ante no_pos) conseq no_pos in
+		is_valid tmp_form
+
+let rec match_vars (vars_list0 : spec_var list) rel = match rel with
+  | ConstRel b ->
+			if b then
+				mkTrue no_pos
+			else
+				mkFalse no_pos
+  | BaseRel (aelist0, f0) ->
+			let rec match_helper vlist aelist f  = match aelist with
+				| [] -> f
+				| ae :: rest ->
+						let v = List.hd vlist in
+						let restvars = List.tl vlist in
+						let restf = match_helper restvars rest f in
+						let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
+						let tmp2 = mkAnd tmp1 restf no_pos in
+							tmp2
+			in
+				if List.length aelist0 != List.length vars_list0 then
+					failwith ("match_var: numbers of arguments do not match")
+				else
+					match_helper vars_list0 aelist0 f0
+  | UnionRel (r1, r2) ->
+			let f1 = match_vars vars_list0 r1 in
+			let f2 = match_vars vars_list0 r2 in
+			let tmp = mkOr f1 f2 no_pos in
+				tmp
+
+let simplify (pe : formula) : formula = 
+  begin
+    let fstr = omega_of_formula pe in
+		let vars_list = get_vars_formula pe in
+    let vstr = omega_of_var_list (Util.remove_dups vars_list) in
+    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+			if !log_all_flag then begin
+				output_string log_all ("#simplify" ^ Util.new_line_str ^ Util.new_line_str);
+				output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+				flush log_all;
+			end;
+      run_omega fomega;
+      let chn = open_in resultfilename in
+			let lex_buf = Lexing.from_channel chn in
+			let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+			let f = match_vars (fv pe) rel in
+				begin
+					try
+						ignore (Sys.remove infilename);
+						ignore (Sys.remove resultfilename)
+					with
+						| e -> ignore e
+				end; 
+				close_in chn;
+				f
+  end
+
+let pairwisecheck (pe : formula) : formula = 
+  begin
+    let fstr = omega_of_formula pe in
+		let vars_list = get_vars_formula pe in
+    let vstr = omega_of_var_list (Util.remove_dups vars_list) in
+    let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+			if !log_all_flag then begin
+				output_string log_all ("#pairwisecheck" ^ Util.new_line_str ^ Util.new_line_str);
+				output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+				flush log_all;
+			end;
+      run_omega fomega;
+      let chn = open_in resultfilename in
+			let lex_buf = Lexing.from_channel chn in
+			let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+			let f = match_vars (fv pe) rel in
+				begin
+					try
+						ignore (Sys.remove infilename);
+						ignore (Sys.remove resultfilename)
+					with
+						| e -> ignore e
+				end; 
+				close_in chn;
+				f
+  end
+
+let hull (pe : formula) : formula = 
+  begin
+    let fstr = omega_of_formula pe in
+		let vars_list = get_vars_formula pe in
+    let vstr = omega_of_var_list (Util.remove_dups vars_list) in
+    let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+			if !log_all_flag then begin
+				output_string log_all ("#hull" ^ Util.new_line_str ^ Util.new_line_str);
+				output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+				flush log_all;
+			end;
+      run_omega fomega;
+      let chn = open_in resultfilename in
+			let lex_buf = Lexing.from_channel chn in
+			let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+			let f = match_vars (fv pe) rel in
+				begin
+					try
+						ignore (Sys.remove infilename);
+						ignore (Sys.remove resultfilename)
+					with
+						| e -> ignore e
+				end; 
+				close_in chn;
+				f
+  end
+
+let gist (pe1 : formula) (pe2 : formula) : formula = 
+  begin
+    let fstr1 = omega_of_formula pe1 in
+		let fstr2 = omega_of_formula pe2 in
+		let vars_list = remove_dups (fv pe1 @ fv pe2) in
+    let vstr = String.concat ", " (List.map omega_of_spec_var vars_list) in
+    let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1 
+			^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Util.new_line_str 
+		in
+			if !log_all_flag then begin
+				output_string log_all ("#gist" ^ Util.new_line_str ^ Util.new_line_str);
+				output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+				flush log_all;
+			end;
+      run_omega fomega;
+      let chn = open_in resultfilename in
+			let lex_buf = Lexing.from_channel chn in
+			let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+			let f = match_vars vars_list rel in
+				begin
+					try
+						ignore (Sys.remove infilename);
+						ignore (Sys.remove resultfilename)
+					with
+						| e -> ignore e
+				end; 
+				close_in chn;
+				f
+  end
+
+let log_mark (mark : string) =
+  if !log_all_flag then begin
+		output_string log_all ("#mark: " ^ mark ^ Util.new_line_str ^ Util.new_line_str);
+		flush log_all;
+  end;
+  

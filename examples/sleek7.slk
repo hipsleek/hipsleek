@@ -1,0 +1,22 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+         or self::node<next = r> * r::ll<n - 1>
+         inv n >= 0.
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred sortl<n, mi> == self = null & n = 0
+         or self::node<v, r> * r::sortl<n - 1, k> & v <= k
+         inv n >= 0.
+
+lemma self::sortl<n, mi> -> self::ll<n>.
+lemma self::lseg<n, p> & p = null <-> self::ll<n>.
+lemma self::lseg<n, p> & n = a + b & a,b >=0  <-> self::lseg<a, r> * r::lseg<b, p>.
+
+
+checkentail x::lseg<n, null> |- x::ll<m>.
+
+print residue.

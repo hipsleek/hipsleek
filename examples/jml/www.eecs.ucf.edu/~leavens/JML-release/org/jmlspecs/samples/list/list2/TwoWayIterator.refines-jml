@@ -1,0 +1,127 @@
+// @(#) $Id: TwoWayIterator.refines-jml,v 1.1.1.1 2008-03-15 06:55:00 nguyenh2 Exp $
+
+// Copyright (C) 1998, 1999 Iowa State University
+
+// This file is part of JML
+
+// JML is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+
+// JML is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with JML; see the file COPYING.  If not, write to
+// the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Author:  Clyde Ruby
+
+package org.jmlspecs.samples.list.list2;
+
+//@ refine "TwoWayIterator.java";
+
+//@ model import org.jmlspecs.models.JMLObjectBag;
+
+import org.jmlspecs.samples.list.node.TwoWayNode;
+import org.jmlspecs.samples.list.iterator.RestartableIterator;
+
+// FIXME: adapt this file to non-null-by-default and remove the following modifier.
+/*@ nullable_by_default @*/ 
+public class TwoWayIterator implements RestartableIterator {
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable currLink_, lastLink_, firstLink_;
+    @    accessible link, currLink_, firstLink_;
+    @    captures link;
+    @    callable  isDone(), first(), next();
+    @*/
+    public TwoWayIterator(TwoWayNode link);
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable currLink_;
+    @    accessible firstLink_;
+    @    captures \nothing;
+    @    callable  firstLink_.getNextNode();
+    @*/
+    public void first();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable currLink_;
+    @    accessible  currLink_;
+    @    captures \nothing;
+    @    callable  currLink_.getNextNode();
+    @*/
+    public void next();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable \nothing;
+    @    accessible  currLink_;
+    @    captures \nothing;
+    @    callable \nothing;
+    @*/
+    public boolean isDone();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable \nothing;
+    @    accessible  currLink_;
+    @    captures \nothing;
+    @    callable  currLink_.getEntry();
+    @*/
+    public Object currentItem();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable currLink_;
+    @    accessible  lastLink_;
+    @    captures \nothing;
+    @    callable \nothing;
+    @*/
+    public void last();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable currLink_;
+    @    accessible currLink_;
+    @    captures \nothing;
+    @    callable  currLink_.getPrevNode();
+    @*/
+    public void previous();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable \nothing;
+    @    accessible firstLink_, currLink_;
+    @    captures \nothing;
+    @    callable firstLink_.getNextNode(),
+    @             currLink_.getPrevNode();
+    @*/
+    public /*@ pure @*/ boolean isAtFront();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    assignable firstLink_, currLink_, lastLink_;
+    @    accessible firstLink_, currLink_;
+    @    captures \nothing;
+    @    callable  new TwoWayNode(), first();
+    @*/
+    protected TwoWayIterator();
+}
+

@@ -1,0 +1,90 @@
+- Maybe it is a good idea not to discharge verification conditions
+  as they are generated. Maybe just collect them in the first phase
+  of verification, and then discharge them all in the second phase.
+  But leave that for now.
+
+- now see of the unfolding idea goes in trying to prove (inductively)
+  the relation between predicates with different names.
+
+
+Major targets
+-------------
+ - intersection type, non-determinism
+
+ - exception handling
+   + can this be handled by intersection type
+
+ - OO features
+   + method overridding
+   + static fields
+   + interfaces
+
+ - view extension/hierarchy
+   + how can the extending view inherit constraints from
+	 the extended view? for example, how can heap skeleton
+	 be inherited?
+
+ - inference
+   + loop invariants
+   + view invariants
+   + method pre/post?
+
+ - better error analysis and reporting
+
+
+Design goals
+------------
+ - keep the design modular
+ - should be easy to add new kinds of constraints (e.g. memory analysis)
+ - arithmetic constraints should be easy to be changed:
+   + 
+
+
+Phases
+------
+1. Parsing
+2. Standard type checking (including constraints)
+3. Constraint linearization
+4. Type inference for constraint variables
+5. Translating to core language
+6. Full type checking
+
+Think more about the order of two steps 3, 4.
+
+
+* Translation from input language to core language:
+---------------------------------------------------
+- Standard type checking
+- Translating expressions
+- 
+
+* Full type checking:
+---------------------
+
+Modules
+-------
+
+
+
+
+Oast: AST of the original language
+ - Data
+ - View
+   + Constraints with syntactic sugars
+ - Method
+
+Cast: AST of the core language. Are any of these different from their counterparts in Oast?
+ - Data
+ - View
+   + constraints in unsugarred form
+ - Method
+
+Formula: constraint
+ - heap component: dependent on AST, actually on view/data 
+   (view/data can be factored out, as they don't depend on
+   other parts of AST, e.g. methods)
+ - pointer component
+ - arithmetic component: should be a separate module
+
+Constraint: also two versions, one for original language, 
+one for core language. This may be useful later on.

@@ -1,0 +1,21 @@
+var1 f_r_1069, f_r_1068, f_r_52, fls, f_r_1148, f_r_1067, fldr, f_r_1116, f_r_1065, 
+f_r_1064, f_r_1114, f_r_1113, f_r_14, f_r_1104, f_r_15, f_r_1115;
+var2 S1, f_r_1070, 
+f_r_1072, S2, f_r_1071;
+(((((f_r_1069 = 0 & f_r_1072 = {}) | (ex2 S3 : (ex2 S2 : 
+(ex2 S1 : (ex1 sb : (ex1 chd : (ex1 fls : (ex1 fldr : (((f_r_1069 > 0 & ((fls = 0 
+& S1 = {}) | (ex2 S1 : (ex1 r : (ex1 fl : (fls > 0 & S1 = S1 union {fls})))))) & 
+f_r_1069 ~= f_r_52) & f_r_1072 = S1 union S2 union S3))))))))) & (((f_r_1068 = 0 
+& f_r_1071 = {}) | (ex2 S3 : (ex2 S2 : (ex2 S1 : (ex1 sb : (ex1 chd : (ex1 fls : 
+(ex1 fldr : (((f_r_1068 > 0 & ((fls = 0 & S1 = {}) | (ex2 S1 : (ex1 r : (ex1 fl :
+ (fls > 0 & S1 = S1 union {fls})))))) & f_r_1068 ~= f_r_52) & f_r_1071 = S1 union 
+S2 union S3))))))))) & (((fls = 0 & S2 = {}) | (ex2 S1 : (ex1 r : (ex1 fl : (fls 
+> 0 & S2 = S1 union {fls}))))) & (f_r_1148 = 1 & (((f_r_1067 = 0 & f_r_1070 = {})
+ | (ex2 S1 : (ex1 r : (ex1 fl : (f_r_1067 > 0 & f_r_1070 = S1 union {f_r_1067})))
+)) & fldr = 2))))) & ((((((S1 = f_r_1070 union f_r_1071 union f_r_1072 & (fldr ~= 
+0 & f_r_1116 = 0)) & (f_r_1065 = f_r_14 & f_r_1064 = f_r_15)) & f_r_1115 = 0) & (
+f_r_1114 = f_r_1065 & f_r_1113 = f_r_1064)) & (f_r_14 = f_r_1114 & f_r_15 = f_r_1113)
+) & (f_r_14 = f_r_1104 & f_r_15 = f_r_1115)))) => ((ex2 f_r_1149 : (f_r_1149 = S1 
+union S2 & (ex2 f_r_1188 : (f_r_1149 = f_r_1070 union f_r_1188 union f_r_1072 & (
+ex2 f_r_1241 : (f_r_1188 = S2 union f_r_1241 union f_r_1071 & f_r_1241 = {}))))))
+);

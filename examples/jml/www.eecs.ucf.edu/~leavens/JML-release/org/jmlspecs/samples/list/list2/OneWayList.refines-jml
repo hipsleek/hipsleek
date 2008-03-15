@@ -1,0 +1,154 @@
+// @(#) $Id: OneWayList.refines-jml,v 1.1.1.1 2008-03-15 06:55:00 nguyenh2 Exp $
+
+// Copyright (C) 1998, 1999 Iowa State University
+
+// This file is part of JML
+
+// JML is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+
+// JML is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with JML; see the file COPYING.  If not, write to
+// the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Author:  Clyde Ruby
+
+package org.jmlspecs.samples.list.list2;
+
+//@ refine "OneWayList.java";
+
+import org.jmlspecs.samples.list.node.OneWayNode;
+
+//@ model import org.jmlspecs.models.JMLObjectSequence;
+
+// FIXME: adapt this file to non-null-by-default and remove the following modifier.
+/*@ nullable_by_default @*/ 
+public class OneWayList {
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible \nothing;
+    @    captures \nothing;
+    @    callable new OneWayNode(Object );
+    @*/
+  public OneWayList();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible theListNode_;
+    @    captures \nothing;
+    @    callable theListNode_.getNextNode();
+    @*/
+  public void firstEntry();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_;
+    @    captures \nothing;
+    @    callable isOffEnd(), cursorNode_.getNextNode();
+    @*/
+  public void incrementCursor();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_;
+    @    captures \nothing;
+    @    callable \nothing;
+    @*/
+  public /*@ pure @*/ boolean isOffEnd();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_, theListNode_;
+    @    captures \nothing;
+    @    callable \nothing;
+    @*/
+  public /*@ pure @*/ boolean isOffFront();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_;
+    @    captures \nothing;
+    @    callable isOffEnd(), isOffFront(), cursorNode_.getEntry();
+    @*/
+  public /*@ pure @*/ Object getEntry();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_;
+    @    captures \nothing;
+    @    callable isOffEnd(), isOffFront(),
+    @             previousNode(OneWayNode, OneWayNode),
+    @             cursorNode_.removeNextNode();
+    @*/
+  public void removeEntry();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_, newEntry;
+    @    captures newEntry;
+    @    callable cursorNode_.setEntry(Object);
+    @*/
+  public void replaceEntry(Object newEntry);
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible cursorNode_;
+    @    captures newEntry;
+    @    callable isOffEnd(), cursorNode_.insertAfter(Object);
+    @*/
+  public void insertAfterCursor(Object newEntry);
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible \nothing;
+    @    captures newEntry;
+    @    callable isOffFront(), previousNode(OneWayNode, OneWayNode),
+    @             insertAfterCursor(Object), incrementCursor();
+    @*/
+  public void insertBeforeCursor(Object newEntry);
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible this;
+    @    captures theListNode_.entries;
+    @    callable new OneWayList(OneWayList );
+    @*/
+  public /*@ non_null @*/ Object clone();
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible curr, node;
+    @    captures \nothing;
+    @    callable curr.getNextNode(), previousNode(OneWayNode, OneWayNode);
+    @*/
+  protected OneWayNode previousNode(OneWayNode curr, OneWayNode node);
+
+  /*@ also
+    @  protected code normal_behavior
+    @    requires \same;
+    @    accessible othLst.theListNode_;
+    @    captures othLst.theListNode_.entries;
+    @    callable othLst.theListNode_.clone(), firstEntry();
+    @*/
+  protected OneWayList(OneWayList othLst);
+}

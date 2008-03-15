@@ -1,0 +1,56 @@
+// @(#) $Id: TwoWayList.jml,v 1.1.1.1 2008-03-15 06:55:00 nguyenh2 Exp $
+
+// Copyright (C) 1998, 1999 Iowa State University
+
+// This file is part of JML
+
+// JML is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2, or (at your option)
+// any later version.
+
+// JML is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with JML; see the file COPYING.  If not, write to
+// the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+// Author:  Clyde Ruby
+
+package org.jmlspecs.samples.list.list2;
+
+//@ refine "TwoWayList.jml-refined";
+
+import org.jmlspecs.samples.list.node.TwoWayNode;
+
+//@ model import org.jmlspecs.models.JMLObjectSequence;
+
+// FIXME: adapt this file to non-null-by-default and remove the following modifier.
+/*@ nullable_by_default @*/ 
+public class TwoWayList extends E_OneWayList { // Doubly Linked List
+
+    protected TwoWayNode lastNode_;
+    /*@                  in theList; 
+      @                  maps lastNode_.entries \into theList;
+      @*/ 
+
+   //@ protected invariant lastNode_ != null;
+   //@ protected invariant lastNode_.entries.int_size() == 1;
+   //@ protected invariant theListNode_.entries.int_size() == theList.int_size() + 1;
+
+   /*@ protected invariant theListNode_ instanceof TwoWayNode
+     @     && (cursorNode_ == null || cursorNode_ instanceof TwoWayNode)
+     @     && lastNode_ instanceof TwoWayNode;
+     @*/ 
+
+   /*@  protected normal_behavior
+     @    requires othLst != null;
+     @    assignable theList, cursor;
+     @    ensures theList.equals(othLst.theList) && cursor == 0;
+     @*/
+    protected TwoWayList(TwoWayList othLst);
+}
+
