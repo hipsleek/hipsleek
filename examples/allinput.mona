@@ -12,8 +12,8 @@
 [mona.ml]: #imply
 # test1
 var1 self, a;
-var2 q, N, N1, f_r_16, S;
- (~(((self = 1)) & ((((q = pconst(0))) & ((N1 = {}))) & ((((N = ({self} union N1))) & (((S inter {a}) ~= {}))) & ((f_r_16 = S)))))) ;
+var2 q, N, N1, f_r_18, S;
+ (~(((self = 1)) & ((((q = pconst(0))) & ((N1 = {}))) & ((((N = ({self} union N1))) & (((S inter {a}) ~= {}))) & ((f_r_18 = S)))))) ;
  [mona.ml]: --> Unable to prove theory test1.mona
 [mona.ml]: is_sat --> true
 
@@ -24,8 +24,8 @@ var2 q, N, N1, f_r_16, S;
 [mona.ml]: #imply
 # test2
 var1 q, self, a;
-var2 N, N1, S, f_r_16;
- (~ (ex1 f_r_48: (ex2 f_r_47:(((((((((self = 1)) & ((q = 2))) & ((N1 = ({q} union f_r_47)))) & (((f_r_16 union {f_r_48}) ~= {}))) & ((N = ({self} union N1)))) & (((S inter {a}) ~= {}))) & ((f_r_16 = S))) & (((f_r_47 = {})) |  (ex1 f_r_45: (ex1 a: (ex2 N1:((((f_r_45 > 0)) & ((f_r_47 = ({f_r_45} union N1)))) & (((f_r_16 union {a}) ~= {})))) ) ) ))) ) ) ;
+var2 N, N1, S, f_r_18;
+ (~ (ex1 f_r_49: (ex2 f_r_48:(((((((((self = 1)) & ((q = 2))) & ((N1 = ({q} union f_r_48)))) & (((f_r_18 union {f_r_49}) ~= {}))) & ((N = ({self} union N1)))) & (((S inter {a}) ~= {}))) & ((f_r_18 = S))) & (((f_r_48 = {})) |  (ex1 f_r_46: (ex1 a: (ex2 N1:((((f_r_46 > 0)) & ((f_r_48 = ({f_r_46} union N1)))) & (((f_r_18 union {a}) ~= {})))) ) ) ))) ) ) ;
  [mona.ml]: --> Unable to prove theory test2.mona
 [mona.ml]: is_sat --> true
 
@@ -49,15 +49,58 @@ var2 q, S, S1;
 # test4
 var1 q, self;
 var2 S, S1;
- (~ (ex2 f_r_64: (ex1 f_r_63:((((self = 1)) & (((q = 2)) & ((((f_r_63 = 0)) & ((f_r_64 = {}))) |  (ex2 S1:(((f_r_63 > 0)) & ((f_r_64 = ({f_r_63} union S1))))) ))) & (((S1 = ({q} union f_r_64))) & ((S = ({self} union S1)))))) ) ) ;
+ (~ (ex2 f_r_65: (ex1 f_r_64:((((self = 1)) & (((q = 2)) & ((((f_r_64 = 0)) & ((f_r_65 = {}))) |  (ex2 S1:(((f_r_64 > 0)) & ((f_r_65 = ({f_r_64} union S1))))) ))) & (((S1 = ({q} union f_r_65))) & ((S = ({self} union S1)))))) ) ) ;
  [mona.ml]: --> Unable to prove theory test4.mona
 [mona.ml]: is_sat --> true
 
 
 [mona.ml]: #imply
 # test5
-var1 STPRMD, ST, SC, sc, st;
-var2 N, f_r_19, S;
-( (~((((((((STPRMD = ST)) & ((st = 1))) & ((((ST = 0)) & ((N = {}))) |  (ex1 a: (ex2 N1:((((ST > 0)) & ((N = ({ST} union N1)))) & (((f_r_19 union {a}) ~= {})))) ) )) & ((((SC = 0)) & ((S = {}))) |  (ex2 S1:(((SC > 0)) & ((S = ({SC} union S1))))) )) & (((N union {st}) = {}))) & (((S union {sc}) ~= {}))) & ((f_r_19 = S))))  | (((N = (N union {st}))) & (((S = S)) & ((f_r_19 = S)))));
+var1 ST;
+var2 N, S, st, STPRMD;
+( (~((((st = pconst(1))) & ((((ST = 0)) & ((N = {}))) |  (ex1 a: (ex2 N1:((((ST > 0)) & ((N = ({ST} union N1)))) & (((S union {a}) ~= {})))) ) )) & ((STPRMD = st))))  | ((STPRMD = pconst(0))));
+ [mona.ml]: --> Unable to prove theory test5.mona
+
+
+[mona.ml]: #imply
+# test6
+var1 ST, f_r_14;
+var2 STPRMD, st, N, S;
+( (~((((st = pconst(1))) & ((STPRMD = st))) & ((((ST = 0)) & ((N = {}))) |  (ex1 a: (ex2 N1:((((ST > 0)) & ((N = ({ST} union N1)))) & (((S union {a}) ~= {})))) ) )))  | (((S union {f_r_14}) ~= {})));
+ [mona.ml]: --> SUCCESS
+Total time: 00:00:00.00
+
+[mona.ml]: #simplify
+
+
+[mona.ml]: #imply
+# test7
+var1 ST, f_r_14, st, STPRMD;
+var2 S, N;
+( (~((((((ST = 0)) & ((N = {}))) |  (ex1 a: (ex2 N1:((((ST > 0)) & ((N = ({ST} union N1)))) & (((S union {a}) ~= {})))) ) ) & ((st = 1))) & ((STPRMD = st))))  | (((((S union {f_r_14}) ~= {})) & ((S = S))) & (((N union {st}) = ({STPRMD} union N)))));
+ [mona.ml]: --> SUCCESS
+Total time: 00:00:00.00
+
+[mona.ml]: #imply
+# test8
+var2 sc, res;
+( (~(((sc = pconst(1))) & ((res = sc))))  | ((res = pconst(0))));
+ [mona.ml]: --> Unable to prove theory test8.mona
+
+
+[mona.ml]: #imply
+# test9
+((0 = 0));
+ [mona.ml]: --> SUCCESS
+Total time: 00:00:00.00
+
+[mona.ml]: #simplify
+
+
+[mona.ml]: #imply
+# test10
+var1 SC, sc, res;
+var2 S;
+( (~((((((SC = 0)) & ((S = {}))) |  (ex2 S1:(((SC > 0)) & ((S = ({SC} union S1))))) ) & ((sc = 1))) & ((res = sc))))  | (((S union {sc}) = ({res} union S))));
  [mona.ml]: --> SUCCESS
 Total time: 00:00:00.00

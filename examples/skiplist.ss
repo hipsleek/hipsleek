@@ -12,14 +12,22 @@ students<N,S> == self= null & N={}
         & intersect(S,{a}) != {} ;
 // list of students attending schools
 
-void insert(elem st, elem sc, ref elem ST, elem SC)
- requires SC::school<S>*ST::students<N,S> * st::elem<_,_> 
-  & intersect(N,{st})={} & intersect(S,{sc}) !={}
- ensures  SC::school<S>*ST'::students<M,S> & M=union(N,{st}) ;
+elem  add_sch(elem sc, elem SC)
+ requires SC::school<S>* sc::elem<_,_> 
+ ensures  res::school<M> & M=union(S,{sc}) ;
 {
-  assert false;
+ sc.next = SC; //null;
+ return sc;
+}
+
+void insert(elem st, elem sc, ref elem ST, elem SC)
+ requires ST::students<N,S> * st::elem<_,_> 
+  //& intersect(N,{st})={} & intersect(S,{sc}) !={}
+ ensures  ST'::students<M,S> & M=union(N,{st}) ;
+{
   //st.attends = sc;
-  st.attends = null;
+  //st.attends = null;
   st.next =ST;
-  //ST = st;
+  ST = st;
+  assert false;
 }
