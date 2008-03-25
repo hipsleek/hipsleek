@@ -1,0 +1,63 @@
+
+
+[mona.ml]: #simplify
+
+
+[mona.ml]: #simplify
+
+
+[mona.ml]: #is_sat
+
+
+[mona.ml]: #imply
+# test1
+var1 self, a;
+var2 q, N, N1, f_r_16, S;
+ (~(((self = 1)) & ((((q = pconst(0))) & ((N1 = {}))) & ((((N = ({self} union N1))) & (((S inter {a}) ~= {}))) & ((f_r_16 = S)))))) ;
+ [mona.ml]: --> Unable to prove theory test1.mona
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat
+
+
+[mona.ml]: #imply
+# test2
+var1 q, self, a;
+var2 N, N1, S, f_r_16;
+ (~ (ex1 f_r_48: (ex2 f_r_47:(((((((((self = 1)) & ((q = 2))) & ((N1 = ({q} union f_r_47)))) & (((f_r_16 union {f_r_48}) ~= {}))) & ((N = ({self} union N1)))) & (((S inter {a}) ~= {}))) & ((f_r_16 = S))) & (((f_r_47 = {})) |  (ex1 f_r_45: (ex1 a: (ex2 N1:((((f_r_45 > 0)) & ((f_r_47 = ({f_r_45} union N1)))) & (((f_r_16 union {a}) ~= {})))) ) ) ))) ) ) ;
+ [mona.ml]: --> Unable to prove theory test2.mona
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat
+
+
+[mona.ml]: #imply
+# test3
+var1 self;
+var2 q, S, S1;
+ (~(((self = 1)) & ((((q = pconst(0))) & ((S1 = {}))) & ((S = ({self} union S1)))))) ;
+ [mona.ml]: --> Unable to prove theory test3.mona
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat
+
+
+[mona.ml]: #imply
+# test4
+var1 q, self;
+var2 S, S1;
+ (~ (ex2 f_r_64: (ex1 f_r_63:((((self = 1)) & (((q = 2)) & ((((f_r_63 = 0)) & ((f_r_64 = {}))) |  (ex2 S1:(((f_r_63 > 0)) & ((f_r_64 = ({f_r_63} union S1))))) ))) & (((S1 = ({q} union f_r_64))) & ((S = ({self} union S1)))))) ) ) ;
+ [mona.ml]: --> Unable to prove theory test4.mona
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #imply
+# test5
+var1 STPRMD, ST, SC, sc, st;
+var2 N, f_r_19, S;
+( (~((((((((STPRMD = ST)) & ((st = 1))) & ((((ST = 0)) & ((N = {}))) |  (ex1 a: (ex2 N1:((((ST > 0)) & ((N = ({ST} union N1)))) & (((f_r_19 union {a}) ~= {})))) ) )) & ((((SC = 0)) & ((S = {}))) |  (ex2 S1:(((SC > 0)) & ((S = ({SC} union S1))))) )) & (((N union {st}) = {}))) & (((S union {sc}) ~= {}))) & ((f_r_19 = S))))  | (((N = (N union {st}))) & (((S = S)) & ((f_r_19 = S)))));
+ [mona.ml]: --> SUCCESS
+Total time: 00:00:00.00
