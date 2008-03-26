@@ -8,7 +8,7 @@ school<S> == self= null & S={}
 // list of schools
 
 students<N,S> == self=null & N = {}
-	or self::elem<a,q> * q::students<N1,S> & N = union({self},N1) & a in S;// intersect(S,{a}) != {} ;
+	or self::elem<a,q> * q::students<N1,S> & N = union({self},N1) & /*a in S;*/ intersect(S,{a}) != {} ;
 // list of students attending schools
 
 elem  add_sch(elem sc, elem SC)
@@ -21,7 +21,7 @@ elem  add_sch(elem sc, elem SC)
 
 void insert(elem st, elem sc, ref elem ST, elem SC)
  requires ST::students<N,S> * st::elem<_,_> 
-  & st notin N & sc in S //& intersect(S,{sc})!={}
+  & intersect (N, {st})= {} /*& sc in S*/ & intersect(S,{sc}) != {}
  ensures  ST'::students<M,S> & M=union(N,{st}); 
 {
   st.attends = sc;

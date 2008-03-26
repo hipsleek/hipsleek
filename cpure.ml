@@ -619,7 +619,7 @@ and e_apply_one (fr, t) e = match e with
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
 	| Bag (alist, pos) -> Bag ((e_apply_one_bag (fr, t) alist), pos)
 	| BagUnion (alist, pos) -> BagUnion ((e_apply_one_bag (fr, t) alist), pos)
-  | BagIntersect (alist, pos) -> BagUnion ((e_apply_one_bag (fr, t) alist), pos)
+  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_bag (fr, t) alist), pos)
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1, 
 							  e_apply_one (fr, t) a2, pos)
 
