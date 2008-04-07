@@ -86,7 +86,10 @@ let process_pred_def pdef =
 	  try
 		iprog.I.prog_view_decls <- pdef :: iprog.I.prog_view_decls;
 		let cpdef = AS.trans_view iprog pdef in
-		  cprog.C.prog_view_decls <- cpdef :: cprog.C.prog_view_decls
+		cprog.C.prog_view_decls <- cpdef :: cprog.C.prog_view_decls;
+(* added 07.04.2008	*)			
+		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);
+(* added 07.04.2008	*)									  
 	  with
 		| _ -> iprog.I.prog_view_decls <- tmp
   else
