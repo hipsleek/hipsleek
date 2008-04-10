@@ -1,7 +1,21 @@
+
+data entry {
+        int v;
+	entry nextsub;
+	entry next;
+}
+
+skiplist<m,S> == self::entry<m,null,null> & S={self}
+	or self::entry<m,p,q> * q::skiplist<m1,S1> & S=union({self},S1)
+           & p in S1;
+
 data elem {
 	elem attends;
 	elem next;
 }
+
+setpair<m,S> == self::entry<m,null,null> & S={self}
+	or self::entry<m,p,q> * q::setpair<m1,S1> & S=union({self},S1);
 
 school<S> == self= null & S={}
 	or self::elem<_,q> * q::school<S1> & S=union({self},S1);

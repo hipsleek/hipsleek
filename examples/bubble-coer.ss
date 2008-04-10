@@ -41,7 +41,7 @@ bool bubble(node xs)
 	}
 	else {
 		tmp = bubble(xs.next);
-		if (xs.val <= xs.next.val) {
+		if (xs.val > xs.next.val) {
 			flag = false;
 		}
 		else {
