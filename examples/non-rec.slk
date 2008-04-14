@@ -1,0 +1,29 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred clist<n> == self::node<_,q> * q::lseg<n-1,self>
+	inv n>0.
+
+
+checkentail x::clist<n> & n=1 |- x::node<_,r> * r::lseg<0,x>.
+print residue.
+checkentail x::clist<n> |- x::node<_,r> * r::lseg<d,x>.
+print residue.
+
+checkentail x::clist<n> & n>2 |- x::clist<d>.
+print residue.
+
+checkentail x::clist<n> & n>2 |- x::clist<d> & d>4.
+checkentail x::clist<n> & n>2 |- x::clist<d> & d>1.
+print residue.
+
+checkentail x::clist<n> & n>2 |-x::node<_,r>*r::lseg<c,x> & d=c+1.
+print residue.
+checkentail x::clist<n> & n>2 |- (exists c : x::node<_,r>*r::lseg<c,x> & d=c+1).
+print residue.
+checkentail x::clist<n> & n>2 |-(exists d : x::node<_,r>*r::lseg<c,x> & d=c+1).
+print residue.
