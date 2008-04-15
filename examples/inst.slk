@@ -1,0 +1,45 @@
+data pair { int val ; int val2 }.
+
+data node { int val ; node next }.
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+pred clist<n> == self::node<_,q> * q::lseg<n-1,self>
+	inv n>0.
+
+
+checkentail x::pair<a,b> |- x::pair<_,_>.
+print residue.
+
+checkentail x::pair<a,b> |- (exists c,d : x::pair<c,d>).
+print residue.
+
+checkentail x::node<a,b> |- x::node<c,d>.
+print residue.
+
+checkentail x::pair<a,b> |- x::pair<b,_>.
+print residue.
+
+checkentail x::node<a,b> |- x::node<a,c>.
+print residue.
+
+checkentail x::node<a,b> |- (exists c : x::node<a,c>).
+print residue.
+
+checkentail x::node<_,r>*r::lseg<3,x> |- x::clist<n>.
+print residue.
+
+checkentail x::node<_,r>*r::lseg<3,x> |- (exists q,m : x::node<_,q>*q::lseg<m,x>& n=m+1).
+print residue.
+
+checkentail x::node<_,r>*r::lseg<3,x> |- (exists q,n,m : x::node<_,q>*q::lseg<m,x>& n=m+1).
+print residue.
+
+checkentail x::node<_,r>*r::lseg<3,x> |- (exists n,m : x::node<_,q>*q::lseg<m,x>& n=m+1).
+print residue.
+
+checkentail x::node<_,r>*r::lseg<3,x> |- (exists n : x::node<_,q>*q::lseg<m,x>& n=m+1).
+print residue.
+
