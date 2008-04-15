@@ -1,3 +1,5 @@
+data cell { int val }.
+
 data pair { int val ; int val2 }.
 
 data node { int val ; node next }.
@@ -9,6 +11,21 @@ pred lseg<n, p> == self = p & n = 0
 pred clist<n> == self::node<_,q> * q::lseg<n-1,self>
 	inv n>0.
 
+
+checkentail x::cell<a> |- x::cell<_>.
+print residue.
+
+checkentail x::cell<2> |- x::cell<_>.
+print residue.
+
+checkentail x::cell<2> |- x::cell<c>.
+print residue.
+
+checkentail x::cell<n> & n=2 |- x::cell<c>.
+print residue.
+
+checkentail x::cell<2> |- (exists p : p::cell<c> & p=x).
+print residue.
 
 checkentail x::pair<a,b> |- x::pair<_,_>.
 print residue.
@@ -26,6 +43,9 @@ checkentail x::node<a,b> |- x::node<a,c>.
 print residue.
 
 checkentail x::node<a,b> |- (exists c : x::node<a,c>).
+print residue.
+
+checkentail x::node<a,b> |- (exists c,atmp : x::node<atmp,c> & atmp=a).
 print residue.
 
 checkentail x::node<_,r>*r::lseg<3,x> |- x::clist<n>.
