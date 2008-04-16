@@ -11,6 +11,23 @@ pred lseg<n, p> == self = p & n = 0
 pred clist<n> == self::node<_,q> * q::lseg<n-1,self>
 	inv n>0.
 
+pred foo<n> == self::cell<_> & n=5
+	inv n>0.
+
+checkentail x=3 |- x>1.
+print residue.
+
+checkentail x::foo<a> & a=1 |- x::foo<d>.
+print residue.
+
+checkentail x::cell<a> & a=1 |- x::cell<d>.
+print residue.
+
+checkentail x::cell<a> |- x::foo<d>.
+print residue.
+
+checkentail x::cell<a> |- x::cell<_> & d=5.
+print residue.
 
 checkentail x::cell<a> |- x::cell<_>.
 print residue.
@@ -51,6 +68,11 @@ print residue.
 checkentail x::node<_,r>*r::lseg<3,x> |- x::clist<n>.
 print residue.
 
+checkentail (exists t : x::node<_,r>*r::lseg<t,x> & t=3) |- x::clist<n>.
+print residue.
+
+checkentail  x::node<_,r>*r::lseg<t,x> & t=3 |- x::clist<n>.
+print residue.
 checkentail x::node<_,r>*r::lseg<3,x> |- (exists q,m : x::node<_,q>*q::lseg<m,x>& n=m+1).
 print residue.
 
