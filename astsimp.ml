@@ -2011,22 +2011,22 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				  let new_v = CP.SpecVar (CP.OType c, v, p) in
 					(* we can use c for tvar. The actual type can be determined later on,
 					   during entailment *)
-				  let t_var = CP.SpecVar (CP.OType c, c(*fresh_name ()*), Unprimed) in
-				  (*--   *)
+				  let t_var = CP.SpecVar (CP.OType c, c(* --change made on 16.04.2008-- fresh_name ()*), Unprimed) in
+				  (*--16.04.2008   *)
 				  (*print_string ("[astsimp.ml]: type var " ^ (Cprinter.string_of_spec_var t_var) ^ "\n");*)
-				  (*   --*)
+				  (*   16.04.2008--*)
 				  let type_constr = CF.TypeSub ({CF.t_formula_sub_type_var = t_var;
 												 CF.t_formula_sub_type_type = c}) in
-					(*--   *)							 
+					(*--16.04.2008   *)							 
 					(*print_string ("[astsimp.ml]: Type " ^ c ^ "\n");	*)											 
-					(*   --*)
+					(*   16.04.2008--*)
 					(* extension pointer *)
 				  let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in
 				  let ext_name = gen_ext_name c pname in
-				  let ext_var = CP.SpecVar (CP.OType ext_name, c (*fresh_name ()*), Unprimed) in
-				  (*--   *)
+				  let ext_var = CP.SpecVar (CP.OType ext_name, c (* --change made on 16.04.2008-- fresh_name ()*), Unprimed) in
+				  (*--16.04.2008   *)
 				  (*print_string ("[astsimp.ml]: extension var " ^ (Cprinter.string_of_spec_var ext_var) ^ "\n");*)
-				  (*   --*)
+				  (*   16.04.2008--*)
 				  let link_f =
 					if full then
 					  let ext_constr = CP.mkNull ext_var pos in

@@ -1,0 +1,76 @@
+********************************************************************************************************************************
+--Date--: 07.04.2008
+--File--: sleekengine.ml
+--Method--: process_pred_def
+--Line--: 91
+
+--Change--:
+Add the line:
+ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);
+
+--Comments--:
+This change is needed in order to compute xpure1 instead of xpure0. 
+The field view_x_formula (the pure approximation) from view_decl was initialized with inv0 without calling
+the method that was supposed to compute the correct approximation according to the provided n 
+(which is method compute_view_x_formula from file astsimp.ml).
+
+--Examples (see file sleek10.slk)--:
+checkentail x::ll<n> & x!=null |- x::ll<m> & m >0.
+print residue.
+Before: Fail.
+After: Valid.
+true & x != null & m = n
+
+********************************************************************************************************************************
+--Date--: 16.04.2008
+--File--: astsimp.ml
+--Method--: linearize_heap
+--Line--: 2014
+
+--Change--:
+let t_var = CP.SpecVar (CP.OType c, fresh_name (), Unprimed) 
+replaced by 
+let t_var = CP.SpecVar (CP.OType c, c(* --change made on 16.04.2008-- fresh_name ()*), Unprimed) 
+
+--Comments--:
+For each data node two more fresh vars were introduced for the actual type
+and the extension record (for the oo extension) (see the declaration of h_formula_data from cformula.ml):
+- first argument: type variable
+- second argument: pointer to the next extension
+Now I don't generate fresh vars for those, I just set them to be the
+actual data node and the additional constraints disappear. 
+
+--Todo--: Check if/where these first two arguments are really used. We should get rid of them. 
+
+--Examples (see file inst.slk)--:
+checkentail x::cell<a> |- x::cell<_>.
+print residue.
+Valid.
+Before: true & f_r_35 = f_r_33 & f_r_36 = f_r_34 & f_r_32 = a
+After: true & f_r_28 = a
+----------------------------------------------------------------
+checkentail x::cell<2> |- x::cell<_>.
+print residue.
+Valid.
+Before: true & f_r_40 = 2 & f_r_44 = f_r_42 & f_r_45 = f_r_43
+After: true & f_r_32 = 2
+----------------------------------------------------------------
+checkentail x::cell<2> |- x::cell<c>.
+print residue.
+Valid.
+Before: true & c = 2 & f_r_53 = f_r_51 & f_r_54 = f_r_52
+After: true & c = 2
+----------------------------------------------------------------
+checkentail x::cell<n> & n=2 |- x::cell<c>.
+print residue.
+Valid.
+Before: true & n = 2 & f_r_61 = f_r_59 & f_r_62 = f_r_60 & c = n
+After: true & n = 2 & c = n
+----------------------------------------------------------------
+checkentail x::cell<2> |- (exists p : p::cell<c> & p=x).
+print residue.
+Valid.
+Before: true & c = 2 & f_r_69 = f_r_67 & f_r_70 = f_r_68
+After: true & c = 2
+
+********************************************************************************************************************************
