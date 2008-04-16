@@ -142,7 +142,8 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 		let tmp2 = List.filter (fun a -> fst a = p) args in
 		let tmp3 = match tmp2 with
 		  | [(_, e)] -> e
-		  | _ -> IP.Var ((fresh_name (), Unprimed), h0.IF.h_formula_heap2_pos) in
+		  | _ -> 
+		  IP.Var ((fresh_name(), Unprimed), h0.IF.h_formula_heap2_pos) in
 		let tmp4 = tmp3 :: tmp1 in
 		  tmp4
 	  end
@@ -1919,6 +1920,9 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 						if List.mem ve fvars || List.mem ve used_names then
 						  (* if ve is a free var or ve already occurs, replace it by a fresh name *)
 						  let fresh_v = CP.fresh_spec_var ve_sv in
+						  (*--
+						  print_string ("[astsimp.ml]: Fresh var " ^ (Cprinter.string_of_spec_var fresh_v) ^ "\n");
+						  --*)
 						  let link_f = CP.mkEqExp (CP.mkVar fresh_v pos_e) (CP.mkVar ve_sv pos_e) pos_e in
 						  let quantified_var = if quantify then [fresh_v] else [] in
 							(* no need to add fresh_v to used_names since it is a fresh variable, 
@@ -1934,7 +1938,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				  end
 				| _ -> begin (* if e is not a Var, it must be either null or arithmetic term (int_type) *)
 					let pos_e = IP.pos_of_exp e in
-					let fresh_n = fresh_name () in
+					let fresh_n = (fresh_name ()) in
 					let fresh_type =
 					  if IP.is_null e then CP.OType "" 
 					  else if IP.is_bag e then C.bag_type
@@ -1999,18 +2003,30 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				(new_used_names, evars, new_h, link_f, CF.TypeTrue)
 			with
 			  | Not_found ->
+			  	(*--
+			  		for data node
+			  	--*)
 				  let ddef = I.look_up_data_def pos prog.I.prog_data_decls c in
 				  let new_used_names, hvars, evars, link_f' = match_exp used_names exps pos in
 				  let new_v = CP.SpecVar (CP.OType c, v, p) in
 					(* we can use c for tvar. The actual type can be determined later on,
 					   during entailment *)
-				  let t_var = CP.SpecVar (CP.OType c, fresh_name (), Unprimed) in
+				  let t_var = CP.SpecVar (CP.OType c, c(*fresh_name ()*), Unprimed) in
+				  (*--   *)
+				  (*print_string ("[astsimp.ml]: type var " ^ (Cprinter.string_of_spec_var t_var) ^ "\n");*)
+				  (*   --*)
 				  let type_constr = CF.TypeSub ({CF.t_formula_sub_type_var = t_var;
 												 CF.t_formula_sub_type_type = c}) in
+					(*--   *)							 
+					(*print_string ("[astsimp.ml]: Type " ^ c ^ "\n");	*)											 
+					(*   --*)
 					(* extension pointer *)
 				  let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in
 				  let ext_name = gen_ext_name c pname in
-				  let ext_var = CP.SpecVar (CP.OType ext_name, fresh_name (), Unprimed) in
+				  let ext_var = CP.SpecVar (CP.OType ext_name, c (*fresh_name ()*), Unprimed) in
+				  (*--   *)
+				  (*print_string ("[astsimp.ml]: extension var " ^ (Cprinter.string_of_spec_var ext_var) ^ "\n");*)
+				  (*   --*)
 				  let link_f =
 					if full then
 					  let ext_constr = CP.mkNull ext_var pos in
