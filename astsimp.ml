@@ -2014,16 +2014,26 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 										 {Err.error_loc = pos_e;
 										  Err.error_text = "couldn't infer type for " ^ ve}) in
 						if List.mem ve fvars || List.mem ve used_names then
+						begin	
+							(*--
+							print_string ("Free var " ^ ve ^ ": " ^ (string_of_bool (List.mem ve fvars)) ^ "\n");
+							print_string ("Used name " ^ ve ^ ": " ^ (string_of_bool (List.mem ve used_names)) ^ "\n");
+							--*)
 						  (* if ve is a free var or ve already occurs, replace it by a fresh name *)
 						  let fresh_v = CP.fresh_spec_var ve_sv in
 						  (*--
 						  print_string ("[astsimp.ml]: Fresh var " ^ (Cprinter.string_of_spec_var fresh_v) ^ "\n");
+						  print_string ("[astsimp.ml]: quantify =  " ^ (string_of_bool quantify) ^ "\n");
 						  --*)
 						  let link_f = CP.mkEqExp (CP.mkVar fresh_v pos_e) (CP.mkVar ve_sv pos_e) pos_e in
-						  let quantified_var = if quantify then [fresh_v] else [] in
+						  (* ------------------ modified 18.04.2008 *)
+						  (* each fresh variable introduced must be existentially quantified *)
+						  let quantified_var = (*if quantify then*) [fresh_v] (*else []*) in
+						  (* modified 18.04.2008 ---------------------- *)
 							(* no need to add fresh_v to used_names since it is a fresh variable, 
 							   there's no other occurences of fresh_v *)
 							(used_names, [fresh_v], quantified_var, link_f)
+						end	
 						else (* ve occurs for the first time *)
 						  let quantified_var = if quantify then [ve_sv] else [] in
 							(ve :: used_names, [ve_sv], quantified_var, CP.mkTrue pos_e)
