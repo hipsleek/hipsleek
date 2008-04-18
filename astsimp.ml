@@ -130,6 +130,98 @@ module NG = Graph.Imperative.Digraph.Concrete(Name)
 module TopoNG = Graph.Topological.Make(NG)
 module DfsNG = Graph.Traverse.Dfs(NG)
 
+(***********************************************)
+(* 17.04.2008 *)
+(* add existential quantifiers for the anonymous vars - those that start with "Anon_" *)
+(***********************************************) 
+let rec look_for_anonymous_h_formula (h0 : IF.h_formula) : (ident * primed) list = 
+(*
+	- added 17.04.2008
+	- checks if the heap formula contains anonymous vars
+*)	
+	match h0 with
+	 | IF.Star (({IF.h_formula_star_h1 = h1;
+			   				IF.h_formula_star_h2 = h2}) as h) ->
+	  	let tmp1 = (look_for_anonymous_h_formula h1) in
+	  	let tmp2 = (look_for_anonymous_h_formula h2) in
+				(List.append tmp1 tmp2)
+	| IF.HeapNode (({IF.h_formula_heap_arguments = args}) as h) -> 
+			let tmp1 = (look_for_anonymous_exp_list args) in
+				tmp1
+	 | _ -> []
+
+and look_for_anonymous_exp_list (args : IP.exp list) : (ident * primed) list =
+	 match args with 
+	 | h::rest -> 
+	 	(List.append (look_for_anonymous_exp h) (look_for_anonymous_exp_list rest))
+	 | _ -> []	
+
+and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list = match arg with
+		| IP.Var ((id, p), _) -> 
+				if ( (String.length id) > 5 && (String.compare (String.sub id 0 5) "Anon_") == 0) then 
+					begin
+						[(id, p)]
+					end	
+				else
+					begin
+						[]
+					end	
+		| IP.Add(e1, e2, _)
+		| IP.Subtract(e1, e2, _) 
+		| IP.Max(e1, e2, _)
+	 	| IP.Min(e1, e2, _) 
+	 	| IP.BagDiff(e1, e2, _)	->
+	  		(List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)) 
+	 	| IP.Mult(_, e1, _)->
+	  		(look_for_anonymous_exp e1)
+	 	| IP.Bag(e1, _)
+	 	| IP.BagUnion(e1, _)
+	 	| IP.BagIntersect(e1, _) ->
+	 		(look_for_anonymous_exp_list e1)
+	 	| _ -> []	
+	  
+and convert_anonym_to_exist (f0 : IF.formula) : IF.formula = match f0 with
+(*
+	- added 17.04.2008
+	- in case the formula contains anonymous vars -> transforms them into existential vars
+	(transforms IF.formula_base to IF.formula_exists)
+*)
+  | IF.Or (({IF.formula_or_f1 = f1;
+			 IF.formula_or_f2 = f2}) as f) ->
+	  let tmp1 = convert_anonym_to_exist f1 in
+	  let tmp2 = convert_anonym_to_exist f2 in
+		IF.Or {f with IF.formula_or_f1 = tmp1;
+				 	IF.formula_or_f2 = tmp2}
+	| IF.Base (({IF.formula_base_heap = h0;
+  						IF.formula_base_pure = p0;
+					 		IF.formula_base_pos = l0}) as f) ->
+  	let tmp1 = (look_for_anonymous_h_formula h0) in
+			if ((List.length tmp1)!= 0) then
+				begin   
+					IF.Exists {f with 
+  									IF.formula_exists_heap = h0;
+  									IF.formula_exists_qvars = tmp1;
+  									IF.formula_exists_pure = p0;
+					   				IF.formula_exists_pos = l0}
+				end	   				
+  		else f0
+  			
+  | IF.Exists (({IF.formula_exists_heap = h0; 
+  							IF.formula_exists_qvars = q0}) as f) ->
+    let tmp1 = (look_for_anonymous_h_formula h0) in
+			if ((List.length tmp1)!= 0) then   
+				begin
+					let rec append_no_duplicates (l1 : (ident * primed) list) (l2 : (ident * primed) list) : 	(ident * primed) list = 
+							match l1 with
+							| h::rest -> if (List.mem	h l2) then (append_no_duplicates rest l2)
+														else h::(append_no_duplicates rest l2)
+							| [] -> l2 
+						in
+	 					IF.Exists {f with IF.formula_exists_heap = h0;
+															IF.formula_exists_qvars = (append_no_duplicates tmp1 q0)} (* make sure that the var is not already there *)
+ 				end			
+  		else f0
+
 let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap = 
   (* 
 	 match named arguments with formal parameters to generate a list
@@ -141,11 +233,13 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 		let tmp1 = match_args rest args in
 		let tmp2 = List.filter (fun a -> fst a = p) args in
 		let tmp3 = match tmp2 with
-		  | [(_, e)] -> e
+		  | [(_, IP.Var ((e1,e2),e3))] -> 
+		  	IP.Var ((e1,e2),e3)
 		  | _ -> 
-		  IP.Var ((fresh_name(), Unprimed), h0.IF.h_formula_heap2_pos) in
-		let tmp4 = tmp3 :: tmp1 in
-		  tmp4
+		  let fn = fresh_name() in
+		   	IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos) in
+			let tmp4 = tmp3 :: tmp1 in
+		  	tmp4
 	  end
 	| [] -> []
   in
@@ -176,7 +270,6 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 					IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos }
 		  in
 			h
-
 (* 
    convert HeapNode2 to HeapNode 
 *)
@@ -199,9 +292,9 @@ and convert_heap2 prog (f0 : IF.formula) : IF.formula = match f0 with
 				 IF.formula_or_f2 = tmp2}
   | IF.Base (({IF.formula_base_heap = h0}) as f) ->
 	  let h = convert_heap2_heap prog h0 in
-		IF.Base {f with IF.formula_base_heap = h}
+	  IF.Base {f with IF.formula_base_heap = h}
   | IF.Exists (({IF.formula_exists_heap = h0}) as f) ->
-	  let h = convert_heap2_heap prog h0 in
+  	let h = convert_heap2_heap prog h0 in
 		IF.Exists {f with IF.formula_exists_heap = h}
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
@@ -1836,7 +1929,10 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp = match ce with
 
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars: ident list) (f0 : IF.formula) stab : CF.formula =
   let f1 = convert_heap2 prog f0 in
-	trans_formula1 prog quantify fvars f1 stab
+  (*-- *)
+  let f2 = convert_anonym_to_exist f1 in
+  (* --*)
+	trans_formula1 prog quantify fvars f2 stab
 
 and trans_formula1 prog quantify fvars f0 stab : CF.formula = match f0 with
   | IF.Or ({IF.formula_or_f1 = f1;

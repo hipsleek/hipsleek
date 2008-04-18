@@ -529,7 +529,7 @@ and __ocaml_lex_tokenizer_rec file_name lexbuf __ocaml_lex_state =
 # 153 "slexer.mll"
    (
 		if idstr = "_" then
-		  IDENTIFIER (fresh_name ())
+		  IDENTIFIER ("Anon_" ^ fresh_name ())
 		else if idstr = "java" then begin
 		  pre_java file_name lexbuf (* search for the first opening brace *)
 		end else

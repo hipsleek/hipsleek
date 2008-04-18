@@ -5,7 +5,7 @@ pred ll<n> == self = null & n = 0
 	inv n >= 0.
 
 pred ll2<n> == self = null & n = 0
-	or self::node<next = r> * r::ll3<n-1>
+	or self::node<next = r> * r::ll2<n-1>
 	inv n >= 0.
 
 pred ll3<n> == self::node<next = r> * r::ll2<n-1>

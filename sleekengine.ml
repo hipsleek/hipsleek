@@ -133,7 +133,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;
 	  if Util.empty rs then
-		print_string ("Unknown.\n")
+		print_string ("Fail.\n")
 	  else
 		print_string ("Valid.\n")
   with
