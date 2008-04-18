@@ -74,3 +74,50 @@ Before: true & c = 2 & f_r_69 = f_r_67 & f_r_70 = f_r_68
 After: true & c = 2
 
 ********************************************************************************************************************************
+--Date--: 18.04.2008
+--File--: astsimp.ml
+--Line--: 132
+
+--Change--:
+Added methods:
+1. look_for_anonymous_h_formula (h0 : IF.h_formula) : (ident * primed) list
+(*
+	- added 17.04.2008
+	- checks if the heap formula contains anonymous vars
+*)	
+2. look_for_anonymous_exp_list (args : IP.exp list) : (ident * primed) list 
+3. look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list 
+4. convert_anonym_to_exist (f0 : IF.formula) : IF.formula 
+  		
+-- Comments --: Added the code to transform the anonymous vars into existential vars. The names given for the anonymous vars 
+start with "Anon_" (see slexer.mll) => Add existential quantifiers for the anonymous vars - those that start with "Anon_".
+
+-- Examples --:
+Before:
+checkentail x::pair<a,b> |- x::pair<_,_>.
+print residue.
+Valid.  		
+true & f_r_68 = a f_r_69 = b
+After:
+Valid.
+true & 
+********************************************************************************************************************************
+--Date--: 18.04.2008
+--File--: astsimp.ml
+--Line--: 2002
+--Method--: match_exp
+--Change--:
+change 						  
+	let quantified_var = if quantify then [fresh_v] else [] in
+into	
+  let quantified_var = [fresh_v]  in
+--Comments--: each fresh variable introduced must be existentially quantified
+--Examples--:
+Before:
+checkentail x::pair<a,a> |- x::pair<c,d>.
+print residue.
+Valid.  		
+true & f_r_68 = a & c = a & d = f_r_68
+After:
+Valid.
+true & c = a & d = a
