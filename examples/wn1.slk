@@ -1,0 +1,17 @@
+data cell { 
+	int val; 
+}
+data pair { 
+	int fst; 
+	int snd; 
+}
+let $v1 = x' = 1.
+print $v1.
+let $v2 = x::cell<n> & x'=x.
+print $v2.
+let $v3 = x' = 1.
+print $v3.
+checkentail $v2 |- x'::cell<r1>.
+print residue.
+let $v4 = residue.
+print $v4.

@@ -1,0 +1,23 @@
+data cell { 
+	int val; 
+}
+data pair { 
+	int fst; 
+	int snd; 
+}
+checkentail x::cell<2> |- x::cell<n>.
+print residue.
+checkentail x::cell<2> |- x::cell<n>.
+print residue.
+checkentail x::cell<2> |- x::cell<n>.
+print residue.
+let $v1 = x'::cell<2>.
+print $v1.
+let $v2 = x'::cell<n>.
+print $v2.
+let $v3 = compose[x]($v1; $v2).
+print $v3.
+checkentail $v1 |- $v2.
+print residue.
+checkentail $v2 |- $v1.
+print residue.

@@ -17,7 +17,7 @@ pred foo<n> == self::cell<_> & n=5
 checkentail x=3 |- x>1.
 print residue.
 
-checkentail x::foo<a> & a=1 |- x::foo<d>.
+checkentail x::cell<a> |- x::foo<d>.
 print residue.
 
 checkentail x::cell<a> & a=1 |- x::cell<d>.
@@ -26,8 +26,33 @@ print residue.
 checkentail x::cell<a> |- x::foo<d>.
 print residue.
 
-checkentail x::cell<a> |- x::cell<_> & d=5.
+checkentail x::cell<a> |- x::cell<d> & d=5.
 print residue.
+
+checkentail x::pair<a,a> |- x::pair<_,_>.
+print residue.
+
+checkentail x::pair<a,a> |- x::pair<c,d>.
+print residue.
+
+checkentail x::pair<a,a> |- x::pair<c,d> & c=d.
+print residue.
+
+checkentail x::pair<a,b> |- x::pair<c,d> & c=d.
+print residue.
+
+checkentail x::pair<a,a> |- x::pair<c,c>.
+print residue.
+
+checkentail x::pair<_,a> |- x::pair<_,d>.
+print residue.
+
+checkentail x::pair<_,_> |- x::pair<_,d>.
+print residue.
+
+checkentail x::pair<_,_> |- x::pair<3,d>.
+print residue.
+
 
 checkentail x::cell<a> |- x::cell<_>.
 print residue.
@@ -84,4 +109,49 @@ print residue.
 
 checkentail x::node<_,r>*r::lseg<3,x> |- (exists n : x::node<_,q>*q::lseg<m,x>& n=m+1).
 print residue.
+
+checkentail x::node<a,b> |- x::node<a,c>.
+print residue.
+
+checkentail x::node<a,b> |- x::node<tmp1,c> & tmp1=a.
+print residue.
+
+checkentail x::node<a,b> |- (exists tmp1 : x::node<tmp1,c> & tmp1=a).
+print residue.
+
+checkentail x::pair<a,b> |- x::pair<_,_>.
+print residue.
+
+checkentail x::pair<a,b> |- x::pair<tmp1,tmp2>.
+print residue.
+
+checkentail x::pair<a,b> |- (exists tmp1,tmp2 : x::pair<tmp1,tmp2>).
+print residue.
+
+checkentail x::pair<a,b> |- x::pair<tmp1,tmp1>.
+print residue.
+
+checkentail x::pair<a,b> |- (exists tmp1,tmp2 : x::pair<tmp1,tmp2> & tmp1=tmp2).
+print residue.
+
+checkentail x::pair<a,a> |- x::pair<tmp1,tmp1>.
+print residue.
+
+checkentail x::pair<a,a> |- (exists tmp1,tmp2 : x::pair<tmp1,tmp2> & tmp1=tmp2).
+print residue.
+
+checkentail (exists tmp : x::pair<a,tmp> & tmp=a) |- (exists tmp1,tmp2 : x::pair<tmp1,tmp2> & tmp1=tmp2).
+print residue.
+
+checkentail (exists tmp : x::pair<tmp,a> & tmp=a) |- (exists tmp2 : x::pair<tmp1,tmp2> & tmp1=tmp2).
+print residue.
+
+pred doo<n> == self::cell<_> & n>3
+	inv n>0.
+
+checkentail x::cell<a> |- x::doo<n> & n>1.
+print residue.
+checkentail x::cell<a> |- x::doo<n> & n>4.
+print residue.
+
 
