@@ -8,15 +8,15 @@ data pair {
 	int snd; 
 }
 
-cell inc(cell x)
- requires x::cell<n>
- ensures res::cell<n+1>&res=x;
+pair inc(pair x)
+ requires x::pair<n,n>
+ ensures res::pair<n+1,n>&res=x;
 {
  dprint;
- int tmp = x.val;
+ int tmp = x.fst;
  tmp++;
  dprint;
- x.val = tmp;
+ x.fst = tmp;
  dprint;
  return x;
 }
