@@ -146,7 +146,7 @@ rule tokenizer file_name = parse
 	  {
 		if idstr = "_" then
 			begin
-				IDENTIFIER (fresh_name ())
+				IDENTIFIER ("Anon_" ^ fresh_name ())
 		  end
 		else if idstr = "java" then begin
 		  pre_java file_name lexbuf (* search for the first opening brace *)

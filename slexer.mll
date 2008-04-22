@@ -30,6 +30,7 @@
 	 ("break", BREAK);
 	 ("by", BY);
 	 ("checkentail", CHECKENTAIL);
+	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
 	 ("compose", COMPOSE);

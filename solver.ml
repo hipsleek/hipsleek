@@ -1185,10 +1185,10 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 					  let tmp_rs, tmp_prf = heap_entail_conjunct prog is_folding new_ctx new_baref pos in
 						if not (U.empty tmp_rs) then
 						  let prf = mkExRight ctx0 conseq qvars ws tmp_prf in
-						  let res_ctx' = List.map (push_exists_context ws) tmp_rs in
+						  let res_ctx_prim = List.map (push_exists_context ws) tmp_rs in
 						  let res_ctx = 
-							if !Globals.elim_exists then List.map elim_exists_ctx res_ctx'
-							else res_ctx'
+							if !Globals.elim_exists then List.map elim_exists_ctx res_ctx_prim
+							else res_ctx_prim
 						  in
 							(res_ctx, prf)
 						else ([], tmp_prf) (* entailment fails *)
@@ -1529,6 +1529,12 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 											*)
 										  let tmp_f = CP.mkAnd rhs_p lhs_guard_new pos in
 										  let filtered = CP.filter_var tmp_f f_univ_vars in
+(*											
+											let _ = print_string ("f_univ_vars: "
+												  ^ (String.concat ", " 
+													   (List.map CP.name_of_spec_var 
+														  f_univ_vars)) ^ "\n") in
+*)	
 										  let filtered_f = formula_of_pure filtered pos in
 										  let new_res = List.map 
 											(fun r -> normalize_context_formula r filtered_f pos) res 
@@ -1596,6 +1602,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 										  let new_f = normalize coer_rhs_new f pos in
 											(true, new_f)
 										else if !Globals.case_split then begin
+										(*
+											Doing case splitting based on the guard.
+										*)
 										  Debug.devel_pprint 
 											("rewrite_coercion: guard is not satisfied, "
 											 ^ "splitting.\n") pos;

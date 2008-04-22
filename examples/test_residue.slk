@@ -1,0 +1,19 @@
+data cell {
+         int val;
+}.
+data pair {
+         int fst;
+         int snd;
+}.
+let $v1 = x' = 1.
+print $v1.
+let $v2 = x::cell<n>*y::cell<m> & x'=x.
+print $v2.
+let $v3 = x' = 1.
+print $v3.
+checkentail $v2 |- x'::cell<r1>.
+capture_residue $v4.
+print residue.
+print $v4.
+checkentail $v4 |- y::cell<r2>.
+print residue.

@@ -39,6 +39,7 @@ type command =
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
+  | CaptureResidue of ident
   | PrintCmd of print_cmd
   | EmptyCmd 
 
@@ -49,6 +50,7 @@ and print_cmd =
 and meta_formula =
   | MetaVar of ident
   | MetaForm of IF.formula
+  | MetaFormCF of CF.formula
   | MetaCompose of (ident list * meta_formula * meta_formula)
 
 (*

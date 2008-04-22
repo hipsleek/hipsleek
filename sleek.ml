@@ -103,6 +103,7 @@ let main () =
 							 | DataDef ddef -> process_data_def ddef
 							 | PredDef pdef -> process_pred_def pdef
 							 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+							 | CaptureResidue lvar -> process_capture_residue lvar
 							 | LemmaDef ldef -> process_lemma ldef
 							 | PrintCmd pcmd -> process_print_command pcmd
 							 | LetDef (lvar, lbody) -> put_var lvar lbody

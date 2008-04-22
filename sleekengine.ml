@@ -96,6 +96,7 @@ let process_pred_def pdef =
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
+	| MetaFormCF mf -> mf
   | MetaForm mf ->
 	  AS.trans_formula iprog quant fv_idents mf stab
   | MetaVar mvar -> begin
@@ -138,6 +139,10 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		print_string ("Valid.\n")
   with
 	| _ -> ()
+		
+let process_capture_residue (lvar : ident) = 
+	let flist = List.map CF.formula_of_context !residues in
+		put_var lvar (Sleekcommons.MetaFormCF(List.hd flist))
 		
 let process_lemma ldef =
   let l2r, r2l = AS.trans_one_coercion iprog ldef in

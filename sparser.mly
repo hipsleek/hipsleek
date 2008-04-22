@@ -94,6 +94,7 @@
 %token CASE
 %token CBRACE
 %token CHECKENTAIL
+%token CAPTURERESIDUE
 %token CLASS
 %token COERCION
 %token COLON
@@ -243,6 +244,9 @@ command
 	}
   | checkentail_cmd {
 	  EntailCheck $1
+	}
+	| captureresidue_cmd {
+	  CaptureResidue $1
 	}
   | print_cmd {
 	  PrintCmd $1
@@ -916,6 +920,12 @@ checkentail_cmd
   }
 ;
 
+captureresidue_cmd
+  : CAPTURERESIDUE DOLLAR IDENTIFIER {
+	($3)
+  }
+;
+
 compose_cmd
   : COMPOSE OSQUARE id_list CSQUARE OPAREN meta_constr SEMICOLON meta_constr CPAREN {
 	($3, $6, $8)
@@ -927,7 +937,7 @@ compose_cmd
 
 print_cmd
   : PRINT IDENTIFIER {
-	PCmd $2
+		PCmd $2
   }
   | PRINT DOLLAR IDENTIFIER {
 	  PVar $3
