@@ -9,8 +9,8 @@ data pair {
 }
 
 pair inc(pair x)
- requires x::pair<n,m>
- ensures res::pair<n+1,m>&res=x;
+ requires x::pair<n,_>
+ ensures res::pair<n+1,_>&res=x;
 {
  //dprint;
  int tmp = x.fst;
@@ -23,7 +23,7 @@ pair inc(pair x)
 
 pair twice(pair x)
  requires x::pair<n,n>
- ensures res::pair<n+2,n>&res=x;
+ ensures res::pair<n+2,_>&res=x;
 {
  dprint;
  pair tmp = inc(x);
