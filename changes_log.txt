@@ -121,3 +121,88 @@ true & f_r_68 = a & c = a & d = f_r_68
 After:
 Valid.
 true & c = a & d = a
+********************************************************************************************************************************
+--Date--: 09.05.2008
+--File--: typechecker.ml
+--Line--: 129
+--Method--: match_exp
+--Change--:
+change 						  
+	let ext_var = CP.SpecVar (CP.OType c, fresh_name (), Unprimed) in
+	let t_var = CP.SpecVar (CP.OType c, fresh_name (), Unprimed) in*)
+into		
+	let ext_var = CP.SpecVar (CP.OType c, c, Unprimed) in
+	 let t_var = CP.SpecVar (CP.OType c, c, Unprimed) in
+	 
+--Comments--: 
+For each data node two more fresh vars were introduced for the actual type and the extension 
+record (for the oo extension) (see the declaration of h_formula_data from cformula.ml):
+- first argument: type variable
+- second argument: pointer to the next extension
+Now I don't generate fresh vars for those, I just set them to be the
+actual data node and the additional constraints disappear. 
+
+-------------------------------------------------------------
+--Examples--:
+data pair {int x; int y;}
+
+int foo(pair p)
+requires p::pair<a,b> & a+b>0
+ensures res = b;
+{
+        //dprint;
+        int temp = p.x + p.y;
+        dprint;
+        if (temp > 0) {
+                dprint;
+                return p.y;
+        }
+        dprint;
+        return -1;
+}
+
+Before:
+print: examples/removeExistVars/ex1.ss:9: ctx:
+es_formula: p'::pair<a, b> & a+b > 0 & p' = p & f_r_25 = pair & f_r_24 = pair & f_r_33 = f_r_25 & f_r_32 = f_r_24 & temp' = a+b
+es_pure: 
+es_heap: true
+es_evars: 
+
+print: examples/removeExistVars/ex1.ss:11: ctx:
+es_formula: (EX f_r_73 . p'::pair<a, b> & a+b > 0 & p' = p & f_r_25 = pair & f_r_24 = pair & f_r_33 = f_r_25 & f_r_32 = f_r_24 & temp' = a+b & f_r_73 = 0 & temp' > f_r_73 & f_r_20' & f_r_20')
+es_pure: 
+es_heap: true
+es_evars: 
+
+[typechecker.ml, line 132]: fresh name = f_r_77!!!!!!!!!!!
+
+[typechecker.ml, line 133]: fresh name = f_r_78!!!!!!!!!!!
+
+print: examples/removeExistVars/ex1.ss:14: ctx:
+es_formula: false & false
+es_pure: 
+es_heap: true
+es_evars: 
+SUCCESS
+-------------------------------------------------------------
+After:
+Checking procedure foo$pair... 
+print: examples/removeExistVars/ex1.ss:9: ctx:
+es_formula: p'::pair<a, b> & a+b > 0 & p' = p & temp' = a+b
+es_pure: 
+es_heap: true
+es_evars: 
+
+print: examples/removeExistVars/ex1.ss:11: ctx:
+es_formula: (EX f_r_69 . p'::pair<a, b> & a+b > 0 & p' = p & temp' = a+b & f_r_69 = 0 & temp' > f_r_69 & f_r_20' & f_r_20')
+es_pure: 
+es_heap: true
+es_evars: 
+
+print: examples/removeExistVars/ex1.ss:14: ctx:
+es_formula: false & false
+es_pure: 
+es_heap: true
+es_evars: 
+SUCCESS
+-------------------------------------------------------------
