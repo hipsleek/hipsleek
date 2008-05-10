@@ -7,13 +7,18 @@ data pair {
 }.
 let $v1 = x' = 1.
 print $v1.
-let $v2 = x::cell<n>*y::cell<m> & x'=x.
+let $v2 = x::cell<n>*y::cell<m> & x'=x & n=n'.
 print $v2.
-let $v3 = x' = 1.
-print $v3.
+let $v3 = n' = n+1.
+let $c = compose[n]($v2; $v3).
+print $c.
 checkentail $v2 |- x'::cell<r1>.
 capture_residue $v4.
 print residue.
 print $v4.
+checkentail $v2 |- x'::cell<a>*y::cell<b>.
+capture_residue $v5.
+print $v5.
+print residue.
 checkentail $v4 |- y::cell<r2>.
 print residue.
