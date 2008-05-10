@@ -99,6 +99,9 @@ let fresh_int () =
 
 let fresh_name () = 
   let str = string_of_int (fresh_int ()) in
+  (*-- 09.05.2008 *)
+	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
+	(* 09.05.2008 --*)
     "f_r_" ^ str
 
 let fresh_names (n : int) = (* number of names to be generated *)

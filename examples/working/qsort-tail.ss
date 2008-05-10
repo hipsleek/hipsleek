@@ -40,7 +40,7 @@ void qsort(ref node x, ref node tx)
 	else {
 		node y, ty, tmp1;
 
-		partition(x, tx, y, ty, x.val);
+		partition1(x, tx, y, ty, x.val);
 
 		// recursive sorting
 
@@ -68,7 +68,7 @@ void qsort(ref node x, ref node tx)
 	two lists. The new x list contains the smaller elements, the y list
 	contains the bigger ones.
 */	
-void partition(ref node x, ref node tx, ref node y, ref node ty, int c)
+void partition1(ref node x, ref node tx, ref node y, ref node ty, int c)
 	requires x::bnd_tail<n, tx, sm, lg> & sm <= c <= lg 
 	ensures x'::bnd_tail<n1, tx', sm, c> * y'::bnd_tail<n2, ty', c, lg> & n=n1+n2;
 {
@@ -91,7 +91,7 @@ void partition(ref node x, ref node tx, ref node y, ref node ty, int c)
 			}
 			else {
 				bind x to (xval, xnext) in {
-					partition(xnext, tx, y, ty, c);
+					partition1(xnext, tx, y, ty, c);
 				}
 
 				if (x.next == null) {
@@ -115,7 +115,7 @@ void partition(ref node x, ref node tx, ref node y, ref node ty, int c)
 			}
 			else {
 				bind x to (xval, xnext) in {
-					partition(xnext, tx, y, ty, c);
+					partition1(xnext, tx, y, ty, c);
 				}
 
 				// xs  belongs to the "greater than" partition, which is pointed

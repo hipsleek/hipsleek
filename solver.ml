@@ -148,6 +148,9 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = match h0 with
 				res_form
 		  | [] -> CP.mkTrue pos in
 	  let vaddrs = CP.fresh_spec_vars vdef.view_addr_vars in
+	  (*--- 09.05.2000 *)
+		(*let _ = (print_string ("\n[solver.ml, line 152]: fresh name = " ^ (Cprinter.string_of_spec_var_list vaddrs) ^ "!!!!!!!!!!!\n")) in*)
+		(*09.05.2000 ---*)
 	  let non_null = helper vaddrs in
 	  let vinv = vdef.view_x_formula in
 	  let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -195,6 +198,9 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) : (CP.formula * CP.s
   | DataNode ({h_formula_data_node = p;
 			   h_formula_data_pos = pos}) ->
 	  let i = fresh_name () in
+	  (*--- 09.05.2000 *)
+	  (*let _ = (print_string ("\n[solver.ml, line 199]: fresh name = " ^ i ^ "!!!!!!!!!!!\n")) in*)
+		(*09.05.2000 ---*)
 	  let vi = CP.SpecVar (CP.type_of_spec_var p, i, Unprimed) in
 	  let non_zero = CP.BForm (CP.Neq (CP.Var (vi, pos), CP.Null pos, pos)) in
 (*
@@ -215,6 +221,9 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) : (CP.formula * CP.s
 	  let tmp1 = CP.subst_avoid_capture from_svs to_svs vinv in
 	  let from_addrs = vdef.view_addr_vars in
 	  let to_addrs = CP.fresh_spec_vars from_addrs in
+	  (*--- 09.05.2000 *)
+		(*let _ = (print_string ("\n[solver.ml, line 225]: fresh name = " ^ (Cprinter.string_of_spec_var_list to_addrs) ^ "!!!!!!!!!!!\n")) in*)
+		(*09.05.2000 ---*)
 	  let tmp2 = CP.subst (List.combine from_addrs to_addrs) tmp1 in (* no capture can happen *)
 		(tmp2, to_addrs)
   | Star ({h_formula_star_h1 = h1;
@@ -275,6 +284,9 @@ and xpure_heap_symbolic_no_exists (prog : prog_decl) (h0 : h_formula) : (CP.form
 	  let tmp1 = CP.subst_avoid_capture from_svs to_svs vinv in
 	  let from_addrs = vdef.view_addr_vars in
 	  let to_addrs = CP.fresh_spec_vars from_addrs in
+	  (*--- 09.05.2000 *)
+		(*let _ = (print_string ("\n[solver.ml, line 288]: fresh name = " ^ (Cprinter.string_of_spec_var_list to_addrs) ^ "!!!!!!!!!!!\n")) in*)
+		(*09.05.2000 ---*)
 	  let tmp2 = CP.subst (List.combine from_addrs to_addrs) tmp1 in (* no capture can happen *)
 		(tmp2, to_addrs)
   | Star ({h_formula_star_h1 = h1;
@@ -772,7 +784,7 @@ and process_fold_result prog is_folding estate fold_rs0 p2 vs2 base2 pos : (cont
 		let new_conseq = normalize tmp_conseq 
 		  (formula_of_pure to_conseq pos) pos in
 		let new_ante = normalize fold_es.es_formula 
-		  (formula_of_pure to_ante pos) pos in
+		  (formula_of_pure to_ante pos) pos in  
 		let new_consumed = fold_es.es_heap in
 		let new_es = {estate with es_heap = new_consumed; 
 						es_formula = new_ante} in
@@ -1160,6 +1172,9 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 					   formula_exists_pos = pos}) ->
 				(* eliminating existential quantifiers from the LHS *)
 				let ws = CP.fresh_spec_vars qvars in
+				(*--- 09.05.2000 *)
+				(*let _ = (print_string ("\n[solver.ml, line 1167]: fresh name = " ^ (Cprinter.string_of_spec_var_list ws) ^ "!!!!!!!!!!!\n")) in*)
+				(*09.05.2000 ---*)
 				let st = List.combine qvars ws in
 				let baref = mkBase qh qp qt pos in
 				let new_baref = subst st baref in
@@ -1178,6 +1193,9 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 							 formula_exists_pos = pos}) ->
 					  (* quantifiers on the RHS. Keep them for later processing *)
 					  let ws = CP.fresh_spec_vars qvars in
+					  (*--- 09.05.2000 *)
+						(*let _ = (print_string ("\n[solver.ml, line 1188]: fresh name = " ^ (Cprinter.string_of_spec_var_list ws) ^ "!!!!!!!!!!!\n")) in*)
+						(*09.05.2000 ---*)
 					  let st = List.combine qvars ws in
 					  let baref = mkBase qh qp qt pos in
 					  let new_baref = subst st baref in
@@ -1443,6 +1461,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 							flush stdout;
 *)
 							let f_univ_vars = CP.fresh_spec_vars coer.coercion_univ_vars in
+							(*--- 09.05.2000 *)
+							(*let _ = (print_string ("\n[solver.ml, line 1456]: fresh name = " ^ (Cprinter.string_of_spec_var_list f_univ_vars) ^ "!!!!!!!!!!!\n")) in*)
+							(*09.05.2000 ---*)
 (*
 							let _ = print_string ("univ_vars: " 
 												  ^ (String.concat ", " 

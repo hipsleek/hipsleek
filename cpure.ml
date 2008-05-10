@@ -517,6 +517,9 @@ and to_int_var (sv : spec_var) : spec_var = match sv with
 
 and fresh_spec_var (sv : spec_var) =
   let name = fresh_name () in
+  (*--- 09.05.2000 *)
+	(*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
+	(*09.05.2000 ---*)
   let t = type_of_spec_var sv in
 	SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
 

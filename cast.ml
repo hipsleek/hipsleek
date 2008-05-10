@@ -98,6 +98,7 @@ and exp_debug = { exp_debug_flag : bool;
 and exp_fconst = { exp_fconst_val : float;
 				   exp_fconst_pos : loc }
 
+(* instance call *)
 and exp_icall = { exp_icall_type : P.typ;
 				  exp_icall_receiver : ident;
 				  exp_icall_receiver_type : P.typ;
@@ -118,6 +119,7 @@ and exp_return = { exp_return_type : P.typ;
 				   exp_return_val : exp option;
 				   exp_return_pos : loc }
 
+(* static call *)
 and exp_scall = { exp_scall_type : P.typ;
 				  exp_scall_method_name : ident;
 				  exp_scall_arguments : ident list;
@@ -551,7 +553,11 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formul
 	  let n = List.length cdef1.data_fields in
 	  let to_sup, rest_fields = U.split_at heap_args n in
 	  let ext_name = gen_ext_name subnode.F.h_formula_data_name cdef1.data_name in
-	  let sup_ext_var = P.SpecVar (P.OType ext_name, fresh_name (), Unprimed) in
+	  (*--- 09.05.2000 *)
+	  let fn1 = fresh_name () in
+		(*let _ = (print_string ("\n[cast.ml, line 556]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
+		(*09.05.2000 ---*)
+	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
@@ -570,7 +576,11 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formul
 				  ext_h
 			  else
 				let ext_link_name = gen_ext_name cdef2.data_name ((List.hd rest).data_name) in
-				let ext_link_p = P.SpecVar (P.OType ext_link_name, fresh_name (), Unprimed) in
+				(*--- 09.05.2000 *)
+	  		let fn2 = fresh_name () in
+				(*let _ = (print_string ("\n[cast.ml, line 579]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
+				(*09.05.2000 ---*)
+				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;

@@ -206,4 +206,150 @@ es_pure:
 es_heap: true
 es_evars: 
 SUCCESS
+********************************************************************************************************************************
+--By--: Cristina 
+--Date--: 10.05.2008
+--File--: typechecker.ml + cformula.ml
+--Line--: 562
+--Method--: process_one in check_exp
+-- Remark--: Only did the change for static calls (not for instance calls)
+--Change in typechecker.ml --:
+add:
+	(* existentially quantify the linking variables *)
+	let tmp_res2 = CF.add_evars_to_ctx tmp_res  free_vars_fresh in
+--Change in cformula.ml --:
+defined new methods:  
+	- add_exist_vars_to_ctx_list (ctx : context list) (evars	: CP.spec_var list) : (context list) 
+	   	* purpose: add a list of existential vars, evars, to each context in the list ctx
+	- add_exist_vars_to_ctx (ctx : context) (evars	: CP.spec_var list) : context
+			* purpose: add a list of existential vars, evars, to ctx.es_formula 	
+
+--Comments--: 
+Free vars are those that appear both in precond and postcond. When a call is performed, the FV in the callee's spec are replaced by fresh 
+names to avoid collision. When the precondition is entailed by the current heap state, these vars need to be considered free 
+such that bindings for them are moved from the consequent to the antecedent. However, after the postcondition is added, they can 
+be existentially quantified such that, if there is a substitution available for them, they will be eliminated. 
+
 -------------------------------------------------------------
+--Examples--:
+data pair{int x; int y;}
+
+int first(pair p)
+requires p::pair<a,_>
+ensures p::pair<a, _> &  res = a;
+{
+        int tmp=p.x;
+        return tmp;
+}
+
+int addtwice(pair p) 
+requires p::pair<a,_>
+ensures res = a;  
+{
+       int t1 = first(p);
+       dprint;
+       return t1; 
+}                
+ 
+-------------------------------------------------------------
+Before:
+Checking procedure addtwice$pair... 
+[typechecker.ml, line 486]: pre (EX Anon_f_r_11 . p::pair<a, Anon_f_r_11> & )
+// rename bound vars
+[typechecker.ml, line 486]: renamed_pre (EX f_r_19 . p::pair<a, f_r_19> & )
+[typechecker.ml, line 486]: post (EX f_r_14, Anon_f_r_12 . p::pair<f_r_14, Anon_f_r_12> & res = a & f_r_14 = a)
+[typechecker.ml, line 486]: renamed_post (EX f_r_20, f_r_21 . p::pair<f_r_20, f_r_21> & res = a & f_r_20 = a)
+// substitute FV by fresh names to avoid collisions
+[typechecker.ml, line 499]: pre after subst (EX f_r_19 . p::pair<f_r_18, f_r_19> & )
+[typechecker.ml, line 500]: post after subst (EX f_r_20, f_r_21 . p::pair<f_r_20, f_r_21> & res = f_r_18 & f_r_20 = f_r_18)
+[typechecker.ml, line 499]: pre to be entailed (EX f_r_19 . p'::pair<f_r_18, f_r_19> & )
+[typechecker.ml, line 476]: context before entailment:
+es_formula: (EX f_r_17 . p::pair<a, f_r_17> & p' = p)
+es_pure: 
+es_heap: true
+es_evars: 
+
+Entailment: EX f_r_17 . p::pair<a, f_r_17> & p' = p |- EX f_r_19 . p'::pair<f_r_18, f_r_19>
+						EX f_r_17 . p' = p |- EX f_r_19 . f_r_18 = a & f_r_19 = f_r_17
+						EX f_r_17 . p' = p & f_r_18 = a |- EX f_r_19 . f_r_19 = f_r_17
+
+[typechecker.ml, line 476]: context after entailment:
+es_formula: true & p' = p & f_r_18 = a
+es_pure: 
+es_heap: p::pair<a, f_r_26>
+es_evars: f_r_27
+
+[typechecker.ml, line 476]: context after adding the post:
+es_formula: (EX f_r_37, f_r_38, f_r_36 . f_r_36::pair<f_r_37, f_r_38> & f_r_36 = p & f_r_18 = a & res = f_r_18 & f_r_37 = f_r_18 & p' = f_r_36)
+es_pure: 
+es_heap: true
+es_evars: 
+
+[typechecker.ml, line 476]: context after removing exist vars:
+es_formula: (EX f_r_38 . p::pair<f_r_18, f_r_38> & f_r_18 = a & res = f_r_18 & p' = p)
+es_pure: 
+es_heap: true
+es_evars: 
+
+
+print: examples/removeExistVars/ex2.ss:32: final ctx (linkink var f_r_18 is still present):
+es_formula: (EX f_r_40 . p::pair<f_r_18, f_r_40> & f_r_18 = a & p' = p & t1' = f_r_18)
+es_pure: 
+es_heap: true
+es_evars: 
+SUCCESS
+Checking procedure first$pair... SUCCESS
+
+
+-------------------------------------------------------------
+After:
+
+Checking procedure addtwice$pair... 
+[typechecker.ml, line 486]: pre (EX Anon_f_r_11 . p::pair<a, Anon_f_r_11> & )
+[typechecker.ml, line 486]: renamed_pre (EX f_r_19 . p::pair<a, f_r_19> & )
+[typechecker.ml, line 486]: post (EX f_r_14, Anon_f_r_12 . p::pair<f_r_14, Anon_f_r_12> & res = a & f_r_14 = a)
+[typechecker.ml, line 486]: renamed_post (EX f_r_20, f_r_21 . p::pair<f_r_20, f_r_21> & res = a & f_r_20 = a)
+[typechecker.ml, line 499]: pre after subst (EX f_r_19 . p::pair<f_r_18, f_r_19> & )
+[typechecker.ml, line 500]: post after subst (EX f_r_20, f_r_21 . p::pair<f_r_20, f_r_21> & res = f_r_18 & f_r_20 = f_r_18)
+[typechecker.ml, line 499]: pre to be entailed (EX f_r_19 . p'::pair<f_r_18, f_r_19> & )
+[typechecker.ml, line 476]: context before entailment:
+es_formula: (EX f_r_17 . p::pair<a, f_r_17> & p' = p)
+es_pure: 
+es_heap: true
+es_evars: 
+
+[typechecker.ml, line 476]: context after entailment:
+es_formula: true & p' = p & f_r_18 = a
+es_pure: 
+es_heap: p::pair<a, f_r_26>
+es_evars: f_r_27
+
+[typechecker.ml, line 476]: context after adding the post:
+es_formula: (EX f_r_37, f_r_38, f_r_36 . f_r_36::pair<f_r_37, f_r_38> & f_r_36 = p & f_r_18 = a & res = f_r_18 & f_r_37 = f_r_18 & p' = f_r_36)
+es_pure: 
+es_heap: true
+es_evars: 
+
+[typechecker.ml, line 476]: context after existentially quantify the linking vars:
+es_formula: (EX f_r_37, f_r_38, f_r_36, f_r_18 . f_r_36::pair<f_r_37, f_r_38> & f_r_36 = p & f_r_18 = a & res = f_r_18 & f_r_37 = f_r_18 & p' = f_r_36)
+es_pure: 
+es_heap: true
+es_evars: 
+
+[typechecker.ml, line 476]: context after removing exist vars:
+es_formula: (EX f_r_38 . p::pair<a, f_r_38> & res = a & p' = p)
+es_pure: 
+es_heap: true
+es_evars: 
+
+
+print: examples/removeExistVars/ex2.ss:32: final ctx:
+es_formula: (EX f_r_40 . p::pair<a, f_r_40> & p' = p & t1' = a)
+es_pure: 
+es_heap: true
+es_evars: 
+SUCCESS
+Checking procedure first$pair... SUCCESS
+
+********************************************************************************************************************************
+

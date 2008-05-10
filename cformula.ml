@@ -92,6 +92,19 @@ and approx_formula_and = { approx_formula_and_a1 : approx_formula;
 
 (* utility functions *)
 
+(*--- 09.05.2000 *)
+(* pretty printing for a spec_var list *)
+let rec string_of_spec_var_list l = match l with 
+  | []               -> ""
+  | h::[]            -> string_of_spec_var h 
+  | h::t             -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list t)
+
+and string_of_spec_var = function 
+  | CP.SpecVar (_, id, p) -> id ^ (match p with 
+    | Primed   -> "'"
+    | Unprimed -> "")
+(*09.05.2000 ---*)
+
 let rec formula_of_heap h pos = mkBase h (CP.mkTrue pos) TypeTrue pos
 
 and formula_of_pure p pos = mkBase HTrue p TypeTrue pos
@@ -303,6 +316,9 @@ and get_formula_pos (f : formula) = match f with
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
+  (*--- 09.05.2000 *)
+	(*let _ = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
+	(*09.05.2000 ---*)
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let f1 = subst st1 f in
@@ -499,11 +515,13 @@ and rename_bound_vars (f : formula) = match f with
   | Exists _ ->
 	  let qvars, base_f = split_quantifiers f in
 	  let new_qvars = CP.fresh_spec_vars qvars in
+	  (*--- 09.05.2000 *)
+		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
+		(*09.05.2000 ---*)
 	  let rho = List.combine qvars new_qvars in
 	  let new_base_f = subst rho base_f in
 	  let resform = add_quantifiers new_qvars new_base_f in
 		resform
-
 
 (* composition operator: it suffices to define composition in terms of  *)
 (* the * operator, as the & operator is just a special case when one of *)
@@ -511,6 +529,9 @@ and rename_bound_vars (f : formula) = match f with
 
 and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) (pos : loc) =
   let rs = CP.fresh_spec_vars x in
+  (*--- 09.05.2000 *)
+	(*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
+	(*09.05.2000 ---*)
   let rho1 = List.combine (List.map CP.to_unprimed x) rs in
   let rho2 = List.combine (List.map CP.to_primed x) rs in
   let new_delta = subst rho2 delta in
@@ -583,6 +604,24 @@ let rec build_context ctx f pos = match f with
 	  let c2 = build_context ctx f2 pos in
 		or_context c1 c2
 
+(*--- 09.05.2008 *)		
+(* add a list of existential vars, evars, to each context in the list ctx *)
+and add_exist_vars_to_ctx_list (ctx : context list) (evars	: CP.spec_var list) : (context list) = match ctx with
+  | [] -> []
+	| h :: r -> (add_exist_vars_to_ctx h evars) :: (add_exist_vars_to_ctx_list r evars)
+
+(* add a list of existential vars, evars, to ctx.es_formula *)
+and add_exist_vars_to_ctx (ctx : context) (evars	: CP.spec_var list) : context = match ctx with
+  | Ctx es -> Ctx {es with 
+  		es_formula = (add_quantifiers evars es.es_formula);
+  		(*es_evars = evars @ es.es_evars*)}
+  | OCtx (c1, c2) ->
+	  let nc1 = add_exist_vars_to_ctx c1 evars in
+	  let nc2 = add_exist_vars_to_ctx c2 evars in
+		OCtx (nc1, nc2)
+	
+(* 09.05.2008 ---*)		
+
 and set_context_formula (ctx : context) (f : formula) : context = match ctx with
   | Ctx es -> begin
 	  match f with
@@ -603,7 +642,7 @@ and set_context_formula (ctx : context) (f : formula) : context = match ctx with
 *)
 and clear_entailment_history (ctx : context) : context = match ctx with
   | Ctx es -> (* Ctx {es with es_heap = HTrue} *)
-	  Ctx {(empty_es no_pos) with es_formula = es.es_formula }
+	  Ctx {(empty_es no_pos) with es_formula = es.es_formula;}
   | OCtx (c1, c2) ->
 	  let nc1 = clear_entailment_history c1 in
 	  let nc2 = clear_entailment_history c2 in

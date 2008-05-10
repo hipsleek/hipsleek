@@ -33,6 +33,9 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 		  (* assign actual arguments to fresh vars *)
 		  let mkfvar param arg = 
 			let fname = fresh_name () in
+			(*-- 09.05.2008 *)
+		  (*let _ = (print_string ("\n[inliner.ml, line 37]: fresh name = " ^ fname ^ "\n")) in*)
+		  (* 09.05.2008 --*)		
 			  (VarDecl { exp_var_decl_type = param.param_type;
 						 exp_var_decl_decls = [(fname, Some arg, pos)];
 						 exp_var_decl_pos = pos }, fname) in
