@@ -11,26 +11,28 @@ sll<n, sm, lg> ==
 	inv n>=1 & sm<=lg;
 
 bnd<n,sm,bg> ==
- 		self=null & n=0
+ 		self=null & n=0 & sm<bg
    	or	self::node<d,p> * p::bnd<n-1,sm,bg> & sm <= d < bg 
-	inv n >= 0;
+	inv n >= 0 & sm<bg;
 
 ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
 
 coercion self::sll<n, sm, lg> -> self::ll<n>;
-/*
-{
-	if (x.next != null) {
-		id3(x.next);
-	}
+
+node id(node xs)
+  requires xs::sll<n,sm,lg>
+  ensures res::ll<n>;
+  requires xs::sll<n,_,_>
+  ensures res::ll<n>;
+{ dprint;
+  return xs;
 }
-*/
 
 bool bubble(node xs)
 	requires xs::ll<n> & n>0
-	ensures xs::sll<n, s, l> & !res
+	ensures xs::sll<n, _, _> & !res
 		or  xs::ll<n> & res;
 {
 	int aux, tmp1;
@@ -41,14 +43,16 @@ bool bubble(node xs)
 	}
 	else {
 		tmp = bubble(xs.next);
-		if (xs.val > xs.next.val) {
+		if (xs.val <= xs.next.val) {
 			flag = false;
 		}
 		else {
-			//aux = xs.val;
-			//xs.val = xs.next.val;
-			//xs.next.val = aux;
+	//assume false;
+			aux = xs.val;
+			xs.val = xs.next.val;
+			xs.next.val = aux;
 			flag = true;
+    	//dprint;
 		}
 		return (flag || tmp);	
 	}

@@ -25,7 +25,7 @@ pair twice(pair x)
  requires x::pair<n,n>
  ensures res::pair<n+2,_>&res=x;
 {
- //dprint;
+ dprint;
  pair tmp = inc(x);
  dprint;
  tmp = inc(x);
