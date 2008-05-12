@@ -876,7 +876,16 @@ and elim_exists_pp (w : spec_var list) (f0 : ppConstr) pos =
 		  let tmp = drop_exists tmp_pp in
 			tmp
 *)
-
+(*added 09-05-2008 , by Cristian, checks that after the RHS existential elimination the newly introduced variables will no appear in the residue*)
+and redundant_existential_check (svs : CP.spec_var list) (ctx0 : context) = 
+   match ctx0 with
+	| Ctx es -> let free_var_list = (fv es.es_formula) in
+					begin if (not ( CP.disjoint svs free_var_list)) then
+						Debug.devel_pprint ("Some variable introduced by existential elimination where found in the residue") no_pos end
+	| OCtx (c1, c2) ->
+	  let _ = redundant_existential_check svs c1 in
+	  (redundant_existential_check svs c2) 
+	  
 and elim_exists_pure (w : CP.spec_var list) (f0 : CP.formula) pos =
   let f = CP.mkExists w f0 pos in
   let simplified_f = TP.simplify f in
@@ -1223,9 +1232,12 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 					  let new_baref = subst st baref in
 					  let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
 					  let tmp_rs, tmp_prf = heap_entail_conjunct prog is_folding new_ctx new_baref pos in
-						if not (U.empty tmp_rs) then
+					  if not (U.empty tmp_rs) then
 						  let prf = mkExRight ctx0 conseq qvars ws tmp_prf in
-						  let res_ctx_prim = List.map (push_exists_context ws) tmp_rs in
+						  (*added 09-05-2008 , by Cristian, checks that after the RHS existential elimination the newly introduced variables will no appear in the residue hence no need to quantify*)
+						  let _ = List.map (redundant_existential_check ws) tmp_rs in
+						  (*let res_ctx_prim = List.map (push_exists_context ws) tmp_rs in*)
+						  let res_ctx_prim  = tmp_rs in 
 						  let res_ctx = 
 							if !Globals.elim_exists then List.map elim_exists_ctx res_ctx_prim
 							else res_ctx_prim

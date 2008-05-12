@@ -453,3 +453,25 @@ es_evars:
 SUCCESS
 ********************************************************************************************************************************
 
+--By--: Cristian 
+--Date--: 12.05.2008
+--File--: solver.ml 
+--Method--: redundant_existential_check
+--Line--: 880
+
+--Change--:
+Add the function definition
+--Comments--:
+This function is needed in order to verify that eliminating the quantification of the newly introduced fresh variables in the residue 
+has no side efects. It tests that those variables actually do no apear in the residue.
+
+--Line--: 1239
+--Change--:
+Call the redundant_existential_check
+
+--File--: Makefile
+--Line--: 94,97,99,102,105,167
+--Change--:
+Changed the name of the rules from ss to hip.
+
+********************************************************************************************************************************

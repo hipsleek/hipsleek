@@ -19,7 +19,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: ss ss.opt sleek sleek.opt
+all: hip hip.opt sleek sleek.opt
 
 sparser.cmo sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -91,15 +91,21 @@ MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo
 
-ss1: $(MAIN_FILES_2)
+hip1: $(MAIN_FILES_2)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
 
-ss: $(MAIN_FILES)
+hipc: 
+	make clean; make hip
+	
+hip: $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
-ss.opt: $(MAIN_FILES:*.cmo=*.cmx)
-	make -f Makefile.opt ss.opt
+hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
+	make -f Makefile.opt hip.opt
 
+sleekc: 
+	make clean; make sleek 
+	
 sleek: $(SLEEK_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
@@ -158,7 +164,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output ss.exe ss ss.opt sleek.opt sleek sleek.exe *~ oo oo.exe
+	rm ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe *~ oo oo.exe
 
 # Dependencies
 beforedepend: ilexer.mli iparser.mli oclexer.ml ocparser.ml

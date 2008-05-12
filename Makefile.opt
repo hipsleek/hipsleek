@@ -18,7 +18,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: ss.opt sleek.opt
+all: hip.opt sleek.opt
 
 sparser.cmx sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -68,10 +68,10 @@ MAIN_FILES_2=util.cmx debug.cmx globals.cmx \
 	iparser.cmx ilexer.cmx \
 	iprinter.cmx
 
-ss1: $(MAIN_FILES_2)
+hip1: $(MAIN_FILES_2)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
 
-ss.opt: $(MAIN_FILES)
+hip.opt: $(MAIN_FILES)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES)
 
 SLEEK_FILES=util.cmx debug.cmx globals.cmx error.cmx \

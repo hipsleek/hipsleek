@@ -8,9 +8,12 @@ GetOptions( "stop"  => \$stop,
 			"opt" => \$optimized,
             "output=s" => \$output_file );
 
-$ss = '../../ss';
+$hip = '../../../hip --no-LHS-wrap-exist';
+$sleek = '../../../sleek';
+
 if ($optimized) {
-  $ss = '../../ss.opt';
+  $hip = '../../hip.opt';
+  $sleek = '../../sleek.opt -ee -filter';
 }
 
 $error_count = 0;
@@ -21,7 +24,11 @@ else { $output_file = "log"; }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 
-find(\&process_file, ".");
+print "Starting hip tests:\n";
+
+find(\&hip_process_file, "./hip");
+print "Starting sleek tests:\n";
+find(\&sleek_process_file, "./sleek");
 
 close(LOGFILE);
 
@@ -32,15 +39,14 @@ if ($error_count > 0) {
 exit(0);
 
 
-sub process_file {
+sub hip_process_file {
   $file = $_;
 
   my $ext = (fileparse($file,'\..*'))[2];
 
   if ($ext eq ".ss") {
 	print "Checking $file\n";
-
-	my $output = `$ss $file 2>&1`;
+	my $output = `$hip $file 2>&1`;
 	
 	print LOGFILE "\n======================================\n";
 	print LOGFILE "$output";
@@ -54,5 +60,28 @@ sub process_file {
 	  }
 	}
   }
+}
 
+sub sleek_process_file  {
+  $file = $_;
+
+  my $ext = (fileparse($file,'\..*'))[2];
+
+  if ($ext eq ".slk") {
+        print "Checking $file\n";
+
+        my $output = `$sleek <$file 2>&1`;
+
+        print LOGFILE "\n======================================\n";
+        print LOGFILE "$output";
+
+        if ($output =~ /.*(e|E)rror.*/) {
+          print "Error found\n";
+          $error_count++;
+          $error_files = $error_files . " " . $file;
+          if ($stop) {
+                exit(0);
+          }
+        }
+  }
 }
