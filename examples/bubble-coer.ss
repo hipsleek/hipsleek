@@ -24,8 +24,10 @@ coercion self::sll<n, sm, lg> -> self::ll<n>;
 node id(node xs)
   requires xs::sll<n,_,_>
   ensures res::ll<n>;
-  requires xs::ll<n>
-  ensures res::sll<n,_,_>;
+  requires xs::sll<n,sm,lg>
+  ensures res::ll<n>;
+  //requires xs::ll<n>
+  //ensures res::sll<n,_,_>;
 { dprint;
   return xs;
 }

@@ -12,7 +12,7 @@ pair inc(pair x)
  requires x::pair<n,_>
  ensures res::pair<n+1,_>&res=x;
 {
- //dprint;
+ dprint;
  int tmp = x.fst;
  tmp++;
  //dprint;
