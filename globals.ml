@@ -66,6 +66,8 @@ let case_split = ref false
 
 let use_set = ref true
 
+let wrap_exist = ref true
+
 let n_xpure = ref 1
 
 let check_coercions = ref false

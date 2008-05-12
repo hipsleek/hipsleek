@@ -210,7 +210,7 @@ SUCCESS
 --By--: Cristina 
 --Date--: 10.05.2008
 --File--: typechecker.ml + cformula.ml
---Line--: 562
+--Line--: 562 (in typechecker.ml)
 --Method--: process_one in check_exp
 -- Remark--: Only did the change for static calls (not for instance calls)
 --Change in typechecker.ml --:
@@ -351,5 +351,105 @@ es_evars:
 SUCCESS
 Checking procedure first$pair... SUCCESS
 
+********************************************************************************************************************************
+--By--: Cristina 
+--Date--: 11.05.2008
+--File--: solver.ml, main.ml, globals.ml
+--Method--: heap_entail_conjunct in solver.ml
+--Change --:
+Added (Line 1195 in solver.ml):
+	let new_rs =
+					if !Globals.wrap_exist then
+						(* the fresh vars - that have been used to substitute the existenaltially quantified vars - need to be existentially quantified after the entailment *)
+						(CF.add_exist_vars_to_ctx_list rs ws)
+					else
+						rs
+	in
+Defined a new method (Line 886 in solver.ml):  
+	elim_exists_ctx_list (ctx0 : context list) : context list
+			* purpose: elim the existentially quantified vars for which there exists a substitution from a list of contexts
+			
+In file globals.ml:
+added a new flag: let wrap_exist = ref true			
+In file main.ml:
+("--no-LHS-wrap-exist", Arg.Clear Globals.wrap_exist,
+	"No existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
+
+Remark: We added this flag because the improvement described above generates problems with the examples using lemmas (files append-tail.ss and bubble.ss).
+Therefore, till we see what is the problem with universal lemma application, we'll use this flag for testing.
+
+--Comments--: 
+Our LHS-EX rule was:
+
+  [v->w] D1 |- D2 * D
+      fresh w
+--------------------
+  ex v. D1 |- D2 * D
+  
+Now it is:
+ [v->w] D1 |- D2 * D
+      fresh w
+--------------------
+  ex v. D1 |- D2 * (ex w. D)
+  
+The fresh vars - w - that have been used to substitute the existentially quantified vars - v - need to be existentially quantified in the residue.
+-------------------------------------------------------------
+--Examples--:
+data pair {
+        int fst;
+        int snd;
+}
+
+pair inc(pair x)
+ requires x::pair<n,_>
+ ensures res::pair<n+1,_>&res=x;
+{
+ int tmp = x.fst;
+ tmp++;
+ x.fst = tmp;
+ return x;
+}
+
+pair twice(pair x)
+ requires x::pair<n,n>
+ ensures res::pair<n+2,_>&res=x;
+{
+ pair tmp = inc(x);
+ dprint;
+ tmp = inc(x);  
+ dprint;  
+ return tmp;
+}
+
+-------------------------------------------------------------
+Before (f_r_33 and f_r_58 have been newly generated and should be existentially quantified):
+Checking procedure twice$pair... 
+print: examples/wn2.ss:30: ctx:
+es_formula: (EX f_r_48, f_r_47 . x::pair<f_r_47, f_r_48> & f_r_33 = n & f_r_47 = n+1 & x' = x & tmp' = x)
+es_pure: 
+es_heap: true
+es_evars: 
+
+print: examples/wn2.ss:32: ctx:
+es_formula: (EX f_r_73, f_r_72 . x::pair<f_r_72, f_r_73> & f_r_33 = n & f_r_58 = n+1 & f_r_72 = f_r_58+1 & x' = x & tmp' = x)
+es_pure: 
+es_heap: true
+es_evars: 
+SUCCESS
+
+After (f_r_33 and f_r_58 have been existentially quantified and eliminated as a substitution was available for them):
+Checking procedure twice$pair... 
+print: examples/wn2.ss:30: ctx:
+es_formula: (EX f_r_49, f_r_48 . x::pair<f_r_48, f_r_49> & f_r_48 = n+1 & x' = x & tmp' = x)
+es_pure: 
+es_heap: true
+es_evars: 
+
+print: examples/wn2.ss:32: ctx:
+es_formula: (EX f_r_76, f_r_75, f_r_74 . x::pair<f_r_74, f_r_75> & f_r_76 = n+1 & f_r_74 = f_r_76+1 & x' = x & tmp' = x)
+es_pure: 
+es_heap: true
+es_evars: 
+SUCCESS
 ********************************************************************************************************************************
 

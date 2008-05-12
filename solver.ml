@@ -148,9 +148,9 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = match h0 with
 				res_form
 		  | [] -> CP.mkTrue pos in
 	  let vaddrs = CP.fresh_spec_vars vdef.view_addr_vars in
-	  (*--- 09.05.2000 *)
+	  (*--- 09.05.2008 *)
 		(*let _ = (print_string ("\n[solver.ml, line 152]: fresh name = " ^ (Cprinter.string_of_spec_var_list vaddrs) ^ "!!!!!!!!!!!\n")) in*)
-		(*09.05.2000 ---*)
+		(*09.05.2008 ---*)
 	  let non_null = helper vaddrs in
 	  let vinv = vdef.view_x_formula in
 	  let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -198,9 +198,9 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) : (CP.formula * CP.s
   | DataNode ({h_formula_data_node = p;
 			   h_formula_data_pos = pos}) ->
 	  let i = fresh_name () in
-	  (*--- 09.05.2000 *)
+	  (*--- 09.05.2008 *)
 	  (*let _ = (print_string ("\n[solver.ml, line 199]: fresh name = " ^ i ^ "!!!!!!!!!!!\n")) in*)
-		(*09.05.2000 ---*)
+		(*09.05.2008 ---*)
 	  let vi = CP.SpecVar (CP.type_of_spec_var p, i, Unprimed) in
 	  let non_zero = CP.BForm (CP.Neq (CP.Var (vi, pos), CP.Null pos, pos)) in
 (*
@@ -221,9 +221,9 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) : (CP.formula * CP.s
 	  let tmp1 = CP.subst_avoid_capture from_svs to_svs vinv in
 	  let from_addrs = vdef.view_addr_vars in
 	  let to_addrs = CP.fresh_spec_vars from_addrs in
-	  (*--- 09.05.2000 *)
+	  (*--- 09.05.2008 *)
 		(*let _ = (print_string ("\n[solver.ml, line 225]: fresh name = " ^ (Cprinter.string_of_spec_var_list to_addrs) ^ "!!!!!!!!!!!\n")) in*)
-		(*09.05.2000 ---*)
+		(*09.05.2008 ---*)
 	  let tmp2 = CP.subst (List.combine from_addrs to_addrs) tmp1 in (* no capture can happen *)
 		(tmp2, to_addrs)
   | Star ({h_formula_star_h1 = h1;
@@ -284,9 +284,9 @@ and xpure_heap_symbolic_no_exists (prog : prog_decl) (h0 : h_formula) : (CP.form
 	  let tmp1 = CP.subst_avoid_capture from_svs to_svs vinv in
 	  let from_addrs = vdef.view_addr_vars in
 	  let to_addrs = CP.fresh_spec_vars from_addrs in
-	  (*--- 09.05.2000 *)
+	  (*--- 09.05.2008 *)
 		(*let _ = (print_string ("\n[solver.ml, line 288]: fresh name = " ^ (Cprinter.string_of_spec_var_list to_addrs) ^ "!!!!!!!!!!!\n")) in*)
-		(*09.05.2000 ---*)
+		(*09.05.2008 ---*)
 	  let tmp2 = CP.subst (List.combine from_addrs to_addrs) tmp1 in (* no capture can happen *)
 		(tmp2, to_addrs)
   | Star ({h_formula_star_h1 = h1;
@@ -882,6 +882,12 @@ and elim_exists_pure (w : CP.spec_var list) (f0 : CP.formula) pos =
   let simplified_f = TP.simplify f in
 	simplified_f
 
+(* --- added 11.05.2008 *)
+and elim_exists_ctx_list (ctx0 : context list) = match ctx0 with
+  | [] -> []
+  | h::rest -> (elim_exists_ctx h)::(elim_exists_ctx_list rest)
+(* end added 11.05.2008 --- *)		
+
 and elim_exists_ctx (ctx0 : context) = match ctx0 with
   | Ctx es -> 
 	  let f = elim_exists es.es_formula in
@@ -1171,19 +1177,35 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 					   formula_exists_type = qt;
 					   formula_exists_pos = pos}) ->
 				(* eliminating existential quantifiers from the LHS *)
+				(* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
 				let ws = CP.fresh_spec_vars qvars in
-				(*--- 09.05.2000 *)
-				(*let _ = (print_string ("\n[solver.ml, line 1167]: fresh name = " ^ (Cprinter.string_of_spec_var_list ws) ^ "!!!!!!!!!!!\n")) in*)
-				(*09.05.2000 ---*)
+				(*--- 09.05.2008 *)
+				(*let _ = (print_string ("\n[solver.ml, line 1183]: fresh name = " ^ (Cprinter.string_of_spec_var_list ws) ^ "!!!!!!!!!!!\n")) in*)
+				(*09.05.2008 ---*)
 				let st = List.combine qvars ws in
 				let baref = mkBase qh qp qt pos in
 				let new_baref = subst st baref in
+				(* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
 				let new_ctx = Ctx {estate with 
 									 es_formula = new_baref;
 									 es_ante_evars = ws @ estate.es_ante_evars } in
+				(* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *) 
 				let rs, prf1 = heap_entail_conjunct prog is_folding new_ctx conseq pos in
+				(* --- added 11.05.2008 *)
+				let new_rs =
+					if !Globals.wrap_exist then
+						(* the fresh vars - that have been used to substitute the existenaltially quantified vars - need to be existentially quantified after the entailment *)
+						(CF.add_exist_vars_to_ctx_list rs ws)
+					else
+						rs
+				in			 
+				(* end added 11.05.2008 --- *)
+				(*let _ = print_string ("[solver.ml, line 1202]: context before mkExLeft:\n" ^ (Cprinter.string_of_context_list new_rs) ^ "\n\n") in*)
+				(*let _ = print_string ("[solver.ml, line 1203]: ctx0:\n" ^ (Cprinter.string_of_context ctx0) ^ "\n\n") in*)
+				(* --- 11.05.2008 *)
+				(* log the transformation for the proof tracere *)
 				let prf = mkExLeft ctx0 conseq qvars ws prf1 in
-				  (rs, prf)
+				  (new_rs, prf)
 			| _ -> begin
 				match conseq with
 				  | Exists ({formula_exists_qvars = qvars;
@@ -1193,9 +1215,9 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (ctx0 : context)
 							 formula_exists_pos = pos}) ->
 					  (* quantifiers on the RHS. Keep them for later processing *)
 					  let ws = CP.fresh_spec_vars qvars in
-					  (*--- 09.05.2000 *)
+					  (*--- 09.05.2008 *)
 						(*let _ = (print_string ("\n[solver.ml, line 1188]: fresh name = " ^ (Cprinter.string_of_spec_var_list ws) ^ "!!!!!!!!!!!\n")) in*)
-						(*09.05.2000 ---*)
+						(*09.05.2008 ---*)
 					  let st = List.combine qvars ws in
 					  let baref = mkBase qh qp qt pos in
 					  let new_baref = subst st baref in
@@ -1461,9 +1483,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 							flush stdout;
 *)
 							let f_univ_vars = CP.fresh_spec_vars coer.coercion_univ_vars in
-							(*--- 09.05.2000 *)
+							(*--- 09.05.2008 *)
 							(*let _ = (print_string ("\n[solver.ml, line 1456]: fresh name = " ^ (Cprinter.string_of_spec_var_list f_univ_vars) ^ "!!!!!!!!!!!\n")) in*)
-							(*09.05.2000 ---*)
+							(*09.05.2008 ---*)
 (*
 							let _ = print_string ("univ_vars: " 
 												  ^ (String.concat ", " 

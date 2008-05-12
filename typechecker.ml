@@ -511,6 +511,9 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 		(*09.05.2008 ---*)
 		let _ = PTracer.log_proof prf in
 		let rs = CF.clear_entailment_history_list rs_prim in
+		(*09.05.2008 ---*)
+		(*let _ = print_string ("[typechecker.ml, line 476]: context after clearing history:\n" ^ (Cprinter.string_of_context_list rs) ^ "\n\n") in*)
+		(*09.05.2008 ---*)
 		  (*
 			let _ = print_string ("\nctx at call: " ^ mn ^ ":\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n") in
 			let _ = print_string ("\nrs at call: " ^ mn ^ ":\n" ^ (Cprinter.string_of_context_list rs) ^ "\n") in
