@@ -38,7 +38,11 @@ void append(node x, node y)
 	//requires x::sortl<sx,lx> * y::sortl<sy,ly> & x!=null & lx<=sy
 	//ensures x::sortl<sx,ly>;
 {
-	if (x.next != null) {
+        dprint;
+        bool t;
+        //t = (x.next!=null) ;
+	if (x.next!=null) {
+		dprint;
 		append(x.next,y);
 		return;
 	}
