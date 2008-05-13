@@ -66,7 +66,9 @@ let case_split = ref false
 
 let use_set = ref true
 
-let wrap_exist = ref true
+let wrap_exist = ref false
+
+let max_renaming = ref false
 
 let n_xpure = ref 1
 

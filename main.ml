@@ -27,8 +27,10 @@ let set_proc_verified arg =
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
 let process_cmd_line () = Arg.parse [
-	("--no-LHS-wrap-exist", Arg.Clear Globals.wrap_exist,
-	"No existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
+	("--max-renaming", Arg.Set Globals.max_renaming,
+	"Always rename the bound variables");
+	("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
+	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
   ("-noee", Arg.Clear Tpdispatcher.elim_exists_flag,
    "No eleminate existential quantifiers before calling TP.");
   ("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,

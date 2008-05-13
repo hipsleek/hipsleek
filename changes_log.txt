@@ -473,5 +473,78 @@ Call the redundant_existential_check
 --Line--: 94,97,99,102,105,167
 --Change--:
 Changed the name of the rules from ss to hip.
-
 ********************************************************************************************************************************
+--By--: Cristina 
+--Date--: 13.05.2008
+--File--:  main.ml, globals.ml
+--Change --:
+Changed the default for the wrap_exist flag: now, by fedault the optimization is disabled.
+--Comments--: 
+This is because the problems seem to outweight the benefits. For example, the formula size is about
+the same, and perhaps some solvers are not too good at handling existential.
+--Examples--:
+append-tail.ss and bubble.ss do not work when the optimization is enabled.
+********************************************************************************************************************************
+--By--: Cristina 
+--Date--: 13.05.2008
+--File--:  cformula.ml, typechecker.ml, main.ml, globals.ml
+--Change --:
+Added in main.ml, globals.ml a new flag: max_renaming
+- when enabled renaming of bound vars is always performed (like it was done before)
+- when disabled renaming of bound vars is performed only when a name clash exists
+
+Added (in cformula.ml):
+normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc)
+- normalizes but only renames the bound variables of f1 that clash with variables from fv(f2) 
+
+rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_var list)
+- rename only those bound vars of f1 which clash with fv(f2) 
+- return the new formula and the list of fresh names
+
+check_name_clash (v : CP.spec_var) (f : formula) : bool 
+
+Added (in typechecker.ml, method check_proc):
+if !Globals.max_renaming then
+			(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
+			(CF.normalize pre nox (CF.pos_of_formula pre)) 
+else	
+   		(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
+  	 	(CF.normalize_only_clash_rename pre nox (CF.pos_of_formula pre)) 
+
+--Comments--: 
+When doing a normalization f1 * f2, we only need to do renaming only for those v in BV(f1) such that v in FV(f2) 
+
+--Example--:
+For the heap state xs::sll<n,_,_>
+
+With max renaming (the anon vars are already renamed):
+es_formula: (EX f_r_107, f_r_108 . xs::sll<n, f_r_107, f_r_108> & xs' = xs)
+es_pure: 
+es_heap: true
+es_evars: 
+
+With min renaming (the anon vars are not renamed):
+print: examples/bubble-coer.ss:29: ctx:
+es_formula: (EX Anon_f_r_12, Anon_f_r_13 . xs::sll<n, Anon_f_r_12, Anon_f_r_13> & xs' = xs)
+es_pure: 
+es_heap: true
+es_evars: 
+********************************************************************************************************************************
+--By--: Cristina 
+--Date--: 13.05.2008
+--File--:  solver.ml
+--Method--: heap_entail_conjunct
+--Change (around line 1193) --:  
+If max_renaming flag is off -> rename only those bound vars from antecedent that clash with the free variables from the consequent or consumed heap 
+not(v in freevars(k*D2) 
+
+--Comments --:
+The change is also related to the renaming of bound vars.
+Now the rule LHS-ENT becomes:
+
+ not(v in freevars(k*D2)}
+    D1 |=^{k} D2 * D3
+ --------------------------
+ (ex v. D1) |=^{k} D2 * D3
+
+meaning that if not(v in freevars(k*D2)} --> there is no need to do a renaming.

@@ -113,9 +113,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 	  let vs_prim = List.map2 (fun v -> fun t -> CP.SpecVar (t, v, Primed)) vs field_types in
 	  let p = CP.fresh_spec_var v_prim in
 	  (*--- 09.05.2000 *)
-	  (*
-		let _ = (print_string ("\n[typechecker.ml, line 116]: fresh name = " ^ (Cprinter.string_of_spec_var p) ^ "!!!!!!!!!!!\n")) in
-		*)
+	  (*let _ = (print_string ("\n[typechecker.ml, line 116]: fresh name = " ^ (Cprinter.string_of_spec_var p) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2000 ---*)
 	  let link_pv = CF.formula_of_pure 
 		(CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos)) pos) pos in
@@ -279,11 +277,8 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 		let check_pre_post (org_pre, org_post) =
 		  let free_vars = CP.difference (CF.fv org_pre) farg_spec_vars in
 		  let free_vars_fresh = CP.fresh_spec_vars free_vars in
-		  (*
-			let _ = (print_string ("\n[typechecker.ml, line 281]: fresh name = " ^ (Cprinter.string_of_spec_var_list free_vars_fresh) ^ "!!!!!!!!!!!\n")) in
-			*)
-			(*09.05.2000 ---*)
-		  let renamed_pre = CF.rename_bound_vars org_pre in
+		  (*let _ = (print_string ("\n[typechecker.ml, line 281]: fresh name = " ^ (Cprinter.string_of_spec_var_list free_vars_fresh) ^ "!!!!!!!!!!!\n")) in*)
+			let renamed_pre = CF.rename_bound_vars org_pre in
 		  let renamed_post = CF.rename_bound_vars org_post in
 		  let st1 = List.combine free_vars free_vars_fresh in
 		  let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
@@ -471,19 +466,17 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 		let free_vars = CP.difference (CF.fv org_pre) farg_spec_vars in
 		(* free vars get to be substituted by fresh vars *)
 		let free_vars_fresh = CP.fresh_spec_vars free_vars in
-		(*--- 09.05.2008 *)
-		(*let _ = (print_string ("\n[typechecker.ml, line 465]: free vars = " ^ (Cprinter.string_of_spec_var_list free_vars) ^ "!!!!!!!!!!!\n")) in
-		let _ = (print_string ("\n[typechecker.ml, line 465]: fresh name = " ^ (Cprinter.string_of_spec_var_list free_vars_fresh) ^ "!!!!!!!!!!!\n")) in*)
-		(*09.05.2008 ---*)
+		(*
+		let _ = (print_string ("\n[typechecker.ml, line 465]: free vars = " ^ (Cprinter.string_of_spec_var_list free_vars) ^ "!!!!!!!!!!!\n")) in
+		let _ = (print_string ("\n[typechecker.ml, line 465]: fresh name = " ^ (Cprinter.string_of_spec_var_list free_vars_fresh) ^ "!!!!!!!!!!!\n")) in
+		*)
 		(* rename bound vars in the callee pre/post *)
 		let renamed_pre = CF.rename_bound_vars org_pre in
 		let renamed_post = CF.rename_bound_vars org_post in
-		(*09.05.2008 ---*)
 		(*let _ = print_string ("[typechecker.ml, line 486]: pre " ^ (Cprinter.string_of_formula org_pre) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 486]: renamed_pre " ^ (Cprinter.string_of_formula renamed_pre) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 486]: post " ^ (Cprinter.string_of_formula org_post) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 486]: renamed_post " ^ (Cprinter.string_of_formula renamed_post) ^ "\n") in*)
-		(*09.05.2008 ---*)
 		let st1 = List.combine free_vars free_vars_fresh in
 		let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
 		let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
@@ -492,29 +485,21 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 		(* substitute the free vars *)
 		let pre = CF.subst_avoid_capture fr_vars to_vars tmp_pre in
 		let post = CF.subst_avoid_capture fr_vars to_vars tmp_post in
-		(*09.05.2008 ---*)
 		(*let _ = print_string ("[typechecker.ml, line 499]: pre after subst " ^ (Cprinter.string_of_formula pre) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 500]: post after subst " ^ (Cprinter.string_of_formula post) ^ "\n") in*)
-		(*09.05.2008 ---*)
 		let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 		(* pre2 is the precondition to be entailed by the current heap state *)
 		(* ctx is the current context *)
 		let pre2 = CF.subst st2 pre in
-		(*09.05.2008 ---*)
 		(*let _ = print_string ("[typechecker.ml, line 499]: pre to be entailed " ^ (Cprinter.string_of_formula pre2) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 476]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in*)
-		(*09.05.2008 ---*)
 		(* rs_prim is the context after entailment *)
 		let rs_prim, prf = heap_entail prog false ctx pre2 pos in
-		(*09.05.2008 ---*)
 		(*let _ = print_string ("[typechecker.ml, line 476]: context after entailment:\n" ^ (Cprinter.string_of_context_list rs_prim) ^ "\n\n") in*)
-		(*09.05.2008 ---*)
 		let _ = PTracer.log_proof prf in
 		let rs = CF.clear_entailment_history_list rs_prim in
-		(*09.05.2008 ---*)
 		(*let _ = print_string ("[typechecker.ml, line 476]: context after clearing history:\n" ^ (Cprinter.string_of_context_list rs) ^ "\n\n") in*)
-		(*09.05.2008 ---*)
-		  (*
+		(*
 			let _ = print_string ("\nctx at call: " ^ mn ^ ":\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n") in
 			let _ = print_string ("\nrs at call: " ^ mn ^ ":\n" ^ (Cprinter.string_of_context_list rs) ^ "\n") in
 			let _ = print_string ("\npre2 at call: " ^ mn ^ ":\n" ^ (Cprinter.string_of_formula pre2) ^ "\n")  in
@@ -557,10 +542,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 			  let _ = print_string ("\nunsat_tmp_f at call: " ^ mn ^ ":\n" 
 			  ^ (Cprinter.string_of_formula (elim_unsat_all prog tmp_f)) ^ "\n") in
 			*)
-			(*09.05.2008 ---*)
 			(*let _ = print_string ("[typechecker.ml, line 476]: context after adding the post:\n" ^ (Cprinter.string_of_context tmp_res) ^ "\n\n") in*)
-			(*09.05.2008 ---*)
-			
 			(*09.05.2008 ---*)
 		  (* existentially quantify linking vars so that they will eliminated if a substitution is available *)
 		  let tmp_res2 = CF.add_exist_vars_to_ctx tmp_res  free_vars_fresh in
@@ -571,9 +553,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : F.context list) p
 		  let tmp_res1 = 
 			if !Globals.elim_exists then elim_exists_ctx tmp_res2 
 			else tmp_res2 in
-			(*09.05.2008 ---*)
 			(*let _ = print_string ("[typechecker.ml, line 476]: context after removing exist vars:\n" ^ (Cprinter.string_of_context tmp_res1) ^ "\n\n") in*)
-			(*09.05.2008 ---*)
 			(*
 			  let _ = print_string ("\ntmp_res1 at call: " ^ mn ^ ":\n" ^ (Cprinter.string_of_context tmp_res1) ^ "\n") in
 			  let _ = Omega.log_mark ("res_unsat: " ^ mn) in
@@ -675,11 +655,29 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			  print_string ("Procedure " ^ proc.proc_name ^ ":\n" 
 							^ (Cprinter.string_of_proc_decl proc) ^ "\n\n");
 			print_string (("Checking procedure ") ^ proc.proc_name ^ "... ");
+			(*print_string ("\n[typechecker.ml, line 658]: free vars(precond)" ^ Cprinter.string_of_spec_var_list (CF.fv (fst (List.hd proc.proc_static_specs))));*)
+			Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
+			Debug.devel_pprint ("Precond : " ^ Cprinter.string_of_formula (fst (List.hd proc.proc_static_specs))) proc.proc_loc;
+			Debug.devel_pprint ("Postcond : " ^ Cprinter.string_of_formula (snd (List.hd proc.proc_static_specs))) proc.proc_loc;
 			let ftypes, fnames = List.split proc.proc_args in
+			(* fsvars are the spec vars corresponding to the parameters *)
 			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
+			(*Debug.devel_pprint ("fsvars : " ^ Cprinter.string_of_spec_var_list fsvars) proc.proc_loc;*)
+			(* forall par. par = par' *)
 			let nox = CF.formula_of_pure (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
 			let check_pre_post (pre, post) = 
-			  let init_form = CF.normalize pre nox (CF.pos_of_formula pre) in
+				(* -- 13.05.2008 *)
+				let init_form =
+					if !Globals.max_renaming then
+						(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
+			   		(CF.normalize pre nox (CF.pos_of_formula pre)) 
+			   	else	
+			   		(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
+			  	 	(CF.normalize_only_clash_rename pre nox (CF.pos_of_formula pre)) 
+			  in
+			  (* 13.05.2008 -- *)
+			  (*Debug.devel_pprint ("Nox : " ^ Cprinter.string_of_formula nox) proc.proc_loc;
+			  Debug.devel_pprint ("Normalized precond : " ^ Cprinter.string_of_formula init_form) proc.proc_loc;*)
 			  let init_ctx1 = CF.empty_ctx proc.proc_loc in
 			  let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 			  let res_ctx = check_exp prog proc [init_ctx] post body in

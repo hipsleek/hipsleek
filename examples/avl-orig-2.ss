@@ -54,6 +54,10 @@ node insert(node t, int x)
 
 		if (height(t.left) - height(t.right) == 2) {
 			if (height(t.left.left) > height(t.left.right)) { 
+				// once we incorpate BST property into the tree, we should be able to
+				// perform this test based on the values of the inserted element (x)
+				// and t.left.val
+
 				t = rotate_left_child(t);
 			}
 			else {

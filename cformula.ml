@@ -435,7 +435,6 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
   | HFalse -> f
 
 (* normalization *)
-
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
 and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
@@ -459,6 +458,32 @@ and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			  resform
 		  end
     end
+
+(* -- 13.05.2008 *)
+(* normalizes but only renames the bound variables of f1 that clash with variables from fv(f2) *)
+and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+      let eo1 = normalize_only_clash_rename o11 f2 pos in
+      let eo2 = normalize_only_clash_rename o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			let eo1 = normalize_only_clash_rename f1 o21 pos in
+			let eo2 = normalize_only_clash_rename f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = (fst (rename_clash_bound_vars f1 f2)) in
+			let rf2 = (*rename_bound_vars*) f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkStar base1 base2 pos in
+			let new_h, new_p, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			  resform
+		  end
+    end
+(* 13.05.2008 -- *)
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
@@ -522,6 +547,32 @@ and rename_bound_vars (f : formula) = match f with
 	  let new_base_f = subst rho base_f in
 	  let resform = add_quantifiers new_qvars new_base_f in
 		resform
+
+(* -- 13.05.2008 *)
+(* rename only those bound vars of f1 which clash with fv(f2) *)
+(* return the new formula and the list of fresh names *)
+and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_var list) = match f1 with
+  | Or ({formula_or_f1 = or1; formula_or_f2 = or2; formula_or_pos = pos}) ->
+	  let (rf1, fvar1) = (rename_clash_bound_vars or1 f2) in
+	  let (rf2, fvar2) = (rename_clash_bound_vars or2 f2) in
+	  let resform = mkOr rf1 rf2 pos in
+		(resform, fvar1@fvar2)
+  | Base _ -> (f1, [])
+  | Exists _ ->
+	  let qvars, base_f = split_quantifiers f1 in
+	  let new_qvars = (List.map (fun v -> (if (check_name_clash v f2) then (CP.fresh_spec_var v) else v)) qvars) in
+	  (* fresh_qvars contains only the freshly generated names *)
+	  let fresh_qvars = (List.filter (fun v1 -> (not (List.exists (fun v2 -> CP.eq_spec_var v1 v2) qvars)))  new_qvars) in
+	  let rho = List.combine qvars new_qvars in
+	  let new_base_f = subst rho base_f in
+	  let resform = add_quantifiers new_qvars new_base_f in
+		(resform, fresh_qvars)
+		
+and check_name_clash (v : CP.spec_var) (f : formula) : bool =
+	let spec_vars = fv f in
+	(*let _ = print_string ("[cformula.ml, line 467]: Spec vars: " ^ (string_of_spec_var_list spec_vars) ^ "\n") in*)
+		(List.exists (fun c -> (CP.eq_spec_var c v)) spec_vars)
+(* 13.05.2008 -- *)
 
 (* composition operator: it suffices to define composition in terms of  *)
 (* the * operator, as the & operator is just a special case when one of *)

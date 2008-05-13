@@ -160,6 +160,7 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list = match arg wi
 		| IP.Var ((id, p), _) -> 
 				if ( (String.length id) > 5 && (String.compare (String.sub id 0 5) "Anon_") == 0) then 
 					begin
+						(*let _ = print_string("[astsimpl.ml, line 163]: anonymous var: " ^ id ^ "\n") in*)
 						[(id, p)]
 					end	
 				else
@@ -237,10 +238,8 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 		  	IP.Var ((e1,e2),e3)
 		  | _ -> 
 		  let fn = fresh_name() in
-		  	(*-- 09.05.2008 *)
-		  	(*let _ = (print_string ("\n[astsiml.ml, line 241]: fresh name = " ^ fn ^ "\n")) in*)
-		  	(* 09.05.2008 --*)		
-		   	IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos) in
+		  	(*let _ = (print_string ("\n[astsimp.ml, line 241]: fresh name = " ^ fn ^ "\n")) in*)
+		  	IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos) in
 			let tmp4 = tmp3 :: tmp1 in
 		  	tmp4
 	  end
@@ -948,12 +947,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 						match rhs_c with
 						  | C.Var ({C.exp_var_name = v}) -> (v, false)
 						  | _ -> 
-						  (*-- 09.05.2008 *)
-		  				let fn = fresh_name() in
-		  					(*let _ = (print_string ("\n[astsiml.ml, line 953]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+						  let fn = fresh_name() in
+		  					(*let _ = (print_string ("\n[astsimp.ml, line 953]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
 		  						(fn, true) in
-		  				(* 09.05.2008 --*)		
-						 let fn_var = C.Var ({C.exp_var_type = rhs_t;
+		  			let fn_var = C.Var ({C.exp_var_type = rhs_t;
 										   C.exp_var_name = fn;
 										   C.exp_var_pos = pos}) in
 					  let tmp_e, tmp_t = flatten_to_bind prog proc base_e 
@@ -1003,9 +1000,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 										  (res_e, C.void_type)
 										  else
 										  let fn = fresh_name () in
-										  (*--- 09.05.2000 *)
-										  (*let _ = (print_string ("\n[astsiml.ml, line 1007]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-										  (*09.05.2000 ---*)
+										  (*let _ = (print_string ("\n[astsimp.ml, line 1007]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
 										  let fn_decl = C.VarDecl ({C.exp_var_decl_type = te;
 										  C.exp_var_decl_name = fn;
 										  C.exp_var_decl_pos = pos}) in
@@ -1032,9 +1027,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 										  but hopefully not too much work *)
 										  let lhs_it = trans_type_back lhs_t in
 										  let fn = fresh_name () in
-										  (*--- 09.05.2000 *)
-										  (*let _ = (print_string ("\n[astsiml.ml, line 1036]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-										  (*09.05.2000 ---*)
+										  (*let _ = (print_string ("\n[astsimp.ml, line 1036]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
 										  let fn_decl = I.VarDecl ({I.exp_var_decl_type = lhs_it;
 										  I.exp_var_decl_decls = [(fn, Some rhs, pos)];
 										  I.exp_var_decl_pos = pos}) in
@@ -1160,9 +1153,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 			| C.Var ({C.exp_var_name = v}) -> (v, C.Unit pos, false)
 			| _ -> 
 				let fname = fresh_name () in
-				(*--- 09.05.2000 *)
-				(*let _ = (print_string ("\n[astsiml.ml, line 1164]: fresh name = " ^ fname ^ "!!!!!!!!!!!\n\n")) in*)
-				(*09.05.2000 ---*)
+				(*let _ = (print_string ("\n[astsimp.ml, line 1164]: fresh name = " ^ fname ^ "!!!!!!!!!!!\n\n")) in*)
 				let fdecl = C.VarDecl ({C.exp_var_decl_type = crecv_t;
 										C.exp_var_decl_name = fname;
 										C.exp_var_decl_pos = pos}) in
@@ -1292,10 +1283,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 														 C.exp_cond_pos = pos}), te2)
 			  | _ -> begin
 				  let fn = fresh_name () in
-				  (*--- 09.05.2000 *)
-					(*let _ = (print_string ("\n[astsiml.ml, line 1296]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-					(*09.05.2000 ---*)
-				  let vd = C.VarDecl ({C.exp_var_decl_type = C.bool_type;
+				  (*let _ = (print_string ("\n[astsimp.ml, line 1296]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+					let vd = C.VarDecl ({C.exp_var_decl_type = C.bool_type;
 									   C.exp_var_decl_name = fn;
 									   C.exp_var_decl_pos = pos}) in
 				  let init_e = C.Assign ({C.exp_assign_lhs = fn;
@@ -1439,10 +1428,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 			end
 		  | I.OpPostInc -> begin (* only integers *)
 			  let fn = fresh_name () in
-			  (*--- 09.05.2000 *)
-				(*let _ = (print_string ("\n[astsiml.ml, line 1443]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-				(*09.05.2000 ---*)
-			  let fn_decl = I.VarDecl ({I.exp_var_decl_type = I.int_type;
+			  (*let _ = (print_string ("\n[astsimp.ml, line 1443]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+				let fn_decl = I.VarDecl ({I.exp_var_decl_type = I.int_type;
 										I.exp_var_decl_decls = [(fn, Some e, pos)];
 										I.exp_var_decl_pos = pos}) in
 			  let add1_e = I.Binary ({I.exp_binary_op = I.OpPlus;
@@ -1465,10 +1452,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 			end
 		  | I.OpPostDec -> begin
 			  let fn = fresh_name () in
-			  (*--- 09.05.2000 *)
-				(*let _ = (print_string ("\n[astsiml.ml, line 1469]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-				(*09.05.2000 ---*)
-			  let fn_decl = I.VarDecl ({I.exp_var_decl_type = I.int_type;
+			  (*let _ = (print_string ("\n[astsimp.ml, line 1469]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+				let fn_decl = I.VarDecl ({I.exp_var_decl_type = I.int_type;
 										I.exp_var_decl_decls = [(fn, Some e, pos)];
 										I.exp_var_decl_pos = pos}) in
 			  let sub1_e = I.Binary ({I.exp_binary_op = I.OpMinus;
@@ -1497,12 +1482,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 																	  I.exp_int_lit_pos = pos});
 									  I.exp_binary_pos = pos}) in
 			  let assign_e = I.Assign ({I.exp_assign_op = I.OpAssign;
-										I.exp_assign_lhs = e;
-										I.exp_assign_rhs = add1_e;
-										I.exp_assign_pos = pos}) in
+																	I.exp_assign_lhs = e;
+																	I.exp_assign_rhs = add1_e;
+																	I.exp_assign_pos = pos}) in
 			  let seq = I.Seq ({I.exp_seq_exp1 = assign_e;
-								I.exp_seq_exp2 = e;
-								I.exp_seq_pos = pos}) in
+													I.exp_seq_exp2 = e;
+													I.exp_seq_pos = pos}) in
 				trans_exp prog proc (I.Block ({I.exp_block_body = seq;
 											   I.exp_block_pos = pos}))
 			end
@@ -1596,10 +1581,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) : trans_exp
 		let tvars = E.visible_names () in
 		let w_args = List.map (fun tv -> I.Var ({I.exp_var_name = snd tv;
 												 I.exp_var_pos = pos})) tvars in
-		(*--- 09.05.2000 *)
 		let fn3 = fresh_name() in
-		(*let _ = (print_string ("\n[astsiml.ml, line 1601]: fresh name = " ^ fn3 ^ "!!!!!!!!!!!\n\n")) in*)
-		(*09.05.2000 ---*)										 
+		(*let _ = (print_string ("\n[astsimp.ml, line 1601]: fresh name = " ^ fn3 ^ "!!!!!!!!!!!\n\n")) in*)
 		let w_name = fn3 ^ "_" ^ (U.replace_path_sep_with_uscore 
 											  (U.replace_dot_with_uscore (string_of_loc pos))) in
 		let w_body_1 = convert_while_body body w_name w_args in
@@ -1682,11 +1665,9 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list) (rhs_o : C.ex
 		match cbase with
 		  | C.Var ({C.exp_var_name = v}) -> (v, false)
 		  | _ -> 
-		  (*--- 09.05.2000 *)
-			let fn2 = fresh_name() in
-			(*let _ = (print_string ("\n[astsiml.ml, line 1687]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
-			(*09.05.2000 ---*)
-		  (fn2, true) in
+		  let fn2 = fresh_name() in
+			(*let _ = (print_string ("\n[astsimp.ml, line 1687]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
+			(fn2, true) in
 	  let fn_decl = 
 		if new_var then 
 		  C.VarDecl ({C.exp_var_decl_type = base_t;
@@ -1708,11 +1689,9 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list) (rhs_o : C.ex
 	  let rec gen_names (fn : ident) (flist : I.typed_ident list) : (I.typed_ident option * ident list) = match flist with
 		| [] -> (None, [])
 		| f::rest -> 
-		(*--- 09.05.2000 *)
 		let fn1 = fresh_name () in
-		(*let _ = (print_string ("\n[astsiml.ml, line 1713]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
-		(*09.05.2000 ---*)
-			let fresh_fn = ((snd f) ^ "_" ^ fn1) in
+		(*let _ = (print_string ("\n[astsimp.ml, line 1713]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
+		let fresh_fn = ((snd f) ^ "_" ^ fn1) in
 			let tmp, new_rest = gen_names fn rest in
 			  if snd f = fn then
 				(Some (fst f, fresh_fn), fresh_fn :: new_rest)
@@ -1767,11 +1746,9 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list) (rhs : C.
 		let rec gen_names (fn : ident) (flist : I.typed_ident list) : (I.typed_ident option * ident list) = match flist with
 		  | [] -> (None, [])
 		  | f::rest -> 
-		  	(*--- 09.05.2000 *)
- 			  let fn = fresh_name () in
-				(*let _ = (print_string ("\n[astsiml.ml, line 1772]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-				(*09.05.2000 ---*)
-			  let fresh_fn = (snd f) ^ "_" ^ (fn) in
+		  	let fn = fresh_name () in
+				(*let _ = (print_string ("\n[astsimp.ml, line 1772]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+				let fresh_fn = (snd f) ^ "_" ^ (fn) in
 			  let tmp, new_rest = gen_names fn rest in
 				if snd f = fn then
 				  (Some (fst f, fresh_fn), fresh_fn :: new_rest)
@@ -1831,10 +1808,8 @@ and trans_args (args : (C.exp * CP.typ * loc) list) : (C.typed_ident list * C.ex
 					 C.exp_var_pos = _}), _, _) -> (rest_local_vars, rest_e, v::rest_names)
 		  | (arg_e, at, pos) -> 
 			  let fn = fresh_name () in
-			  (*--- 09.05.2000 *)
-				(*let _ = (print_string ("\n[astsiml.ml, line 1835]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-				(*09.05.2000 ---*)
-			  let fn_decl = C.VarDecl ({C.exp_var_decl_type = at;
+			  (*let _ = (print_string ("\n[astsimp.ml, line 1835]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+				let fn_decl = C.VarDecl ({C.exp_var_decl_type = at;
 										C.exp_var_decl_name = fn;
 										C.exp_var_decl_pos = pos}) in
 			  let fn_init = C.Assign ({C.exp_assign_lhs = fn;
@@ -1939,10 +1914,8 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp = match ce with
 			  ce
 			else (* non-void e1, store the value to a dummy variable *)
 			  let fn = fresh_name () in
-			  (*--- 09.05.2000 *)
-				(*let _ = (print_string ("\n[astsiml.ml, line 1943]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
-				(*09.05.2000 ---*)
-			  let fn_decl = C.VarDecl ({C.exp_var_decl_type = t;
+			  (*let _ = (print_string ("\n[astsimp.ml, line 1943]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in*)
+				let fn_decl = C.VarDecl ({C.exp_var_decl_type = t;
 										C.exp_var_decl_name = fn;
 										C.exp_var_decl_pos = pos}) in
 			  let assign_e = C.Assign ({C.exp_assign_lhs = fn;
@@ -2093,9 +2066,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				| _ -> begin (* if e is not a Var, it must be either null or arithmetic term (int_type) *)
 					let pos_e = IP.pos_of_exp e in
 					let fresh_n = (fresh_name ()) in
-					(*--- 09.05.2000 *)
-					(*let _ = (print_string ("\n[astsiml.ml, line 2098]: fresh name = " ^ fresh_n ^ "!!!!!!!!!!!\n\n")) in*)
-					(*09.05.2000 ---*)
+					(*let _ = (print_string ("\n[astsimp.ml, line 2098]: fresh name = " ^ fresh_n ^ "!!!!!!!!!!!\n\n")) in*)
 					let fresh_type =
 					  if IP.is_null e then CP.OType "" 
 					  else if IP.is_bag e then C.bag_type
@@ -2169,21 +2140,15 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 					(* we can use c for tvar. The actual type can be determined later on,
 					   during entailment *)
 				  let t_var = CP.SpecVar (CP.OType c, c(* --change made on 16.04.2008-- fresh_name ()*), Unprimed) in
-				  (*--16.04.2008   *)
 				  (*print_string ("[astsimp.ml]: type var " ^ (Cprinter.string_of_spec_var t_var) ^ "\n");*)
-				  (*   16.04.2008--*)
 				  let type_constr = CF.TypeSub ({CF.t_formula_sub_type_var = t_var;
 												 CF.t_formula_sub_type_type = c}) in
-					(*--16.04.2008   *)							 
 					(*print_string ("[astsimp.ml]: Type " ^ c ^ "\n");	*)											 
-					(*   16.04.2008--*)
 					(* extension pointer *)
 				  let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in
 				  let ext_name = gen_ext_name c pname in
 				  let ext_var = CP.SpecVar (CP.OType ext_name, c (* --change made on 16.04.2008-- fresh_name ()*), Unprimed) in
-				  (*--16.04.2008   *)
 				  (*print_string ("[astsimp.ml]: extension var " ^ (Cprinter.string_of_spec_var ext_var) ^ "\n");*)
-				  (*   16.04.2008--*)
 				  let link_f =
 					if full then
 					  let ext_constr = CP.mkNull ext_var pos in
