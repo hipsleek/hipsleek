@@ -1952,7 +1952,8 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp = match ce with
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars: ident list) (f0 : IF.formula) stab : CF.formula =
   let f1 = convert_heap2 prog f0 in
   (*-- *)
-  let f2 = convert_anonym_to_exist f1 in
+  (* TODO: sometimes this is ok --> see when *)
+  let f2 = (*convert_anonym_to_exist*) f1 in
   (* --*)
 	trans_formula1 prog quantify fvars f2 stab
 
@@ -2047,11 +2048,8 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 						  (*print_string ("[astsimp.ml, line 2074]: quantify =  " ^ (string_of_bool quantify) ^ "\n");*)
 						  
 						  let link_f = CP.mkEqExp (CP.mkVar fresh_v pos_e) (CP.mkVar ve_sv pos_e) pos_e in
-						  (* ------------------ modified 18.04.2008 *)
-						  (* each fresh variable introduced must be existentially quantified *)
-						  let quantified_var = (*if quantify then*) [fresh_v] (*else []*) in
-						  (* modified 18.04.2008 ---------------------- *)
-							(* no need to add fresh_v to used_names since it is a fresh variable, 
+						  let quantified_var = if quantify then [fresh_v] else [] in
+						  (* no need to add fresh_v to used_names since it is a fresh variable, 
 							   there's no other occurences of fresh_v *)
 							(used_names, [fresh_v], quantified_var, link_f)
 						end	
@@ -2139,7 +2137,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				  let new_v = CP.SpecVar (CP.OType c, v, p) in
 					(* we can use c for tvar. The actual type can be determined later on,
 					   during entailment *)
-				  let t_var = CP.SpecVar (CP.OType c, c(* --change made on 16.04.2008-- fresh_name ()*), Unprimed) in
+				  let t_var = CP.SpecVar (CP.OType c, c (*--change made on 16.04.2008-- fresh_name ()*), Unprimed) in
 				  (*print_string ("[astsimp.ml]: type var " ^ (Cprinter.string_of_spec_var t_var) ^ "\n");*)
 				  let type_constr = CF.TypeSub ({CF.t_formula_sub_type_var = t_var;
 												 CF.t_formula_sub_type_type = c}) in
@@ -2147,7 +2145,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 					(* extension pointer *)
 				  let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in
 				  let ext_name = gen_ext_name c pname in
-				  let ext_var = CP.SpecVar (CP.OType ext_name, c (* --change made on 16.04.2008-- fresh_name ()*), Unprimed) in
+				  let ext_var = CP.SpecVar (CP.OType ext_name, c (*--change made on 16.04.2008-- fresh_name ()*), Unprimed) in
 				  (*print_string ("[astsimp.ml]: extension var " ^ (Cprinter.string_of_spec_var ext_var) ^ "\n");*)
 				  let link_f =
 					if full then

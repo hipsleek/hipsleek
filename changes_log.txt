@@ -1,4 +1,5 @@
 ********************************************************************************************************************************
+--No--: 1
 --By--: Cristina 
 --Date--: 07.04.2008
 --File--: sleekengine.ml
@@ -23,6 +24,7 @@ After: Valid.
 true & x != null & m = n
 
 ********************************************************************************************************************************
+--No--: 2
 --By--: Cristina 
 --Date--: 16.04.2008
 --File--: astsimp.ml
@@ -76,6 +78,7 @@ Before: true & c = 2 & f_r_69 = f_r_67 & f_r_70 = f_r_68
 After: true & c = 2
 
 ********************************************************************************************************************************
+--No--: 3
 --By--: Cristina 
 --Date--: 18.04.2008
 --File--: astsimp.ml
@@ -105,6 +108,7 @@ After:
 Valid.
 true & 
 ********************************************************************************************************************************
+--No--: 4
 --By--: Cristina 
 --Date--: 18.04.2008
 --File--: astsimp.ml
@@ -126,11 +130,12 @@ After:
 Valid.
 true & c = a & d = a
 ********************************************************************************************************************************
+--No--: 5
 --By--: Cristina 
 --Date--: 09.05.2008
 --File--: typechecker.ml
 --Line--: 129
---Method--: match_exp
+--Method--: check_exp
 --Change--:
 change 						  
 	let ext_var = CP.SpecVar (CP.OType c, fresh_name (), Unprimed) in
@@ -207,6 +212,7 @@ es_heap: true
 es_evars: 
 SUCCESS
 ********************************************************************************************************************************
+--No--: 6
 --By--: Cristina 
 --Date--: 10.05.2008
 --File--: typechecker.ml + cformula.ml
@@ -352,6 +358,7 @@ SUCCESS
 Checking procedure first$pair... SUCCESS
 
 ********************************************************************************************************************************
+--No--: 7
 --By--: Cristina 
 --Date--: 11.05.2008
 --File--: solver.ml, main.ml, globals.ml
@@ -452,7 +459,7 @@ es_heap: true
 es_evars: 
 SUCCESS
 ********************************************************************************************************************************
-
+--No--: 8
 --By--: Cristian 
 --Date--: 12.05.2008
 --File--: solver.ml 
@@ -474,6 +481,7 @@ Call the redundant_existential_check
 --Change--:
 Changed the name of the rules from ss to hip.
 ********************************************************************************************************************************
+--No--: 9
 --By--: Cristina 
 --Date--: 13.05.2008
 --File--:  main.ml, globals.ml
@@ -485,6 +493,7 @@ the same, and perhaps some solvers are not too good at handling existential.
 --Examples--:
 append-tail.ss and bubble.ss do not work when the optimization is enabled.
 ********************************************************************************************************************************
+--No--: 10
 --By--: Cristina 
 --Date--: 13.05.2008
 --File--:  cformula.ml, typechecker.ml, main.ml, globals.ml
@@ -529,7 +538,13 @@ es_formula: (EX Anon_f_r_12, Anon_f_r_13 . xs::sll<n, Anon_f_r_12, Anon_f_r_13> 
 es_pure: 
 es_heap: true
 es_evars: 
+
+Addition to the above: On 17.05.2008 changed more rename_bound_vars to rename_clash_bound_vars
+and normalize to normalize_only_clash_rename. Actually, I did not change them, but made it as a choice 
+based on max_renaming. The default is set to minimize renaming.
+
 ********************************************************************************************************************************
+--No--: 11
 --By--: Cristina 
 --Date--: 13.05.2008
 --File--:  solver.ml
@@ -548,3 +563,25 @@ Now the rule LHS-ENT becomes:
  (ex v. D1) |=^{k} D2 * D3
 
 meaning that if not(v in freevars(k*D2)} --> there is no need to do a renaming.
+
+********************************************************************************************************************************
+--No--: 12
+--By--: Cristina 
+--Date--: 17.05.2008
+--File--:  astsimp.ml
+
+--Change--: Undo changes 3 and 4.
+--Remark--: Free vars from preconditions should not be existentially quantified such that bindings for them are moved to the antecedent! 
+In linearize_formula the flag quantify is true for view definition and postcondition and false for precondition.
+
+--Todo--:  Sometimes 3 is safe --> see when!
+
+--Example--: file qsort-tail.ml, method qsort.
+
+Before:
+[typechecker.ml, line 499]: pre to be entailed (EX f_r_27 . x'::bnd_tail<f_r_490, f_r_27, f_r_491, f_r_492> & f_r_491 <= temp' & temp' <= f_r_492 & f_r_27 = tx')
+
+After:
+[typechecker.ml, line 499]: pre to be entailed x'::bnd_tail<f_r_487, f_r_490, f_r_488, f_r_489> & f_r_488 <= temp' & temp' <= f_r_489 & f_r_490 = tx'
+
+********************************************************************************************************************************

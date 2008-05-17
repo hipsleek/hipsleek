@@ -567,7 +567,7 @@ and rename_clash_bound_vars (f1 : formula) (f2 : formula) : (formula * CP.spec_v
 	  let new_base_f = subst rho base_f in
 	  let resform = add_quantifiers new_qvars new_base_f in
 		(resform, fresh_qvars)
-		
+
 and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 	let spec_vars = fv f in
 	(*let _ = print_string ("[cformula.ml, line 467]: Spec vars: " ^ (string_of_spec_var_list spec_vars) ^ "\n") in*)
@@ -768,12 +768,36 @@ and normalize_context_formula (ctx : context) (f : formula) (pos : loc) : contex
 	  let res = OCtx (nc1, nc2) in
 		res
 
+(* -- 17.05.2008 *)
+and normalize_clash_context_formula (ctx : context) (f : formula) (pos : loc) : context = match ctx with
+  | Ctx es -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos}
+  | OCtx (c1, c2) ->
+	  let nc1 = normalize_clash_context_formula c1 f pos in
+	  let nc2 = normalize_clash_context_formula c2 f pos in
+	  let res = OCtx (nc1, nc2) in
+		res
+(* 17.05.2008 -- *)
+
 and formula_of_context ctx0 = match ctx0 with
   | OCtx (c1, c2) ->
 	  let f1 = formula_of_context c1 in
 	  let f2 = formula_of_context c2 in
 		mkOr f1 f2 no_pos
   | Ctx es -> es.es_formula
+
+(* -- added 16.05.2008 *)  
+and formula_of_context_list (ctx : context list) : formula =  match ctx with
+	| h :: r -> 
+		begin
+			match h with
+			| OCtx (c1, c2) ->
+	  		let f1 = formula_of_context c1 in
+	  		let f2 = formula_of_context c2 in
+				mkOr (mkOr f1 f2 no_pos) (formula_of_context_list r) no_pos
+  		| Ctx es -> mkOr es.es_formula (formula_of_context_list r) no_pos
+  	end	
+  | [] -> (mkFalse no_pos)	
+(* 16.05.2008 -- *)
 
 and disj_count_ctx (ctx0 : context) = match ctx0 with
   | OCtx (c1, c2) ->
