@@ -41,7 +41,9 @@ void qsort(ref node x, ref node tx)
 		node y, ty, tmp1;
 		int temp = x.val;
 
-		//assert x'::bnd_tail<_, tx', sm, lg> & sm <= temp' <= lg;
+		assert x'::bnd_tail<xx, tx', sm, lg> & sm <= temp' <= lg;
+		assert x'::bnd_tail<_, tx', sm, lg> & sm <= temp' <= lg;
+                dprint;
 		partition1(x, tx, y, ty, x.val);
 
 		// recursive sorting
