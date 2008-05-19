@@ -3,18 +3,17 @@ data node {
 	node next;
 }.
 
-pred ll<n,u,sm,lg> == self=null & n=0 & u=1 & sm<=lg
-        or self::node<v, null> & u=2 & n=1 & sm<=v<=lg
-        or self::node<v, q> * q::ll<n-1,_,sm,lg> & q!=null & u=3 & sm<=v<=lg
+pred ll<n,u,sm,lg> == self=null & n=0 &  sm<=lg & u=1
+        or self::node<v, null> &  n=1 & sm<=v<=lg & u=1
+        or self::node<v, q> * q::ll<n-1,_,sm,lg> & q!=null &  sm<=v<=lg & u=1
         inv n>=0 & sm<=lg.
  
 pred ll2<n,u,sm,lg> == self=null & n=0 & u=1 & sm<=lg
         or self::node<v, q> * q::ll2<n-1,_,sm,lg> & u=3 & sm<=v<=lg
         inv n>=0 & sm<=lg.
  
+/*
 checkentail x::node<w,q>*q::ll<_,_,sm,lg> & sm<=w<=lg & q!=null |- x::ll<_,_,s2,l2>.
-print residue.
-checkentail x::node<w,q>*q::ll<a,b,sm,lg> & sm<=w<=lg & q!=null |- (exists c,d: x::ll<c,d,s2,l2>).
 print residue.
 checkentail x::node<w,q>*q::ll<a,b,sm,lg> & sm<=w<=lg & q!=null |- x::ll<c,d,s2,l2>.
 print residue.
@@ -22,3 +21,9 @@ checkentail x::node<w,q>*q::ll2<a,b,sm,lg> & sm<=w<=lg & q!=null |- (exists c,d:
 print residue.
 checkentail x::node<w,q>*q::ll2<a,b,sm,lg> & sm<=w<=lg & q!=null |- x::ll2<c,d,s2,l2>.
 print residue.
+*/
+
+checkentail x::node<w,q>*q::ll<a,b,sm,lg> & sm<=w<=lg & q!=null 
+	|- (exists d: x::ll<c,d,s2,l2>).
+print residue.
+
