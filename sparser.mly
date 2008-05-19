@@ -259,7 +259,7 @@ non_empty_command
   | checkentail_cmd {
 	  EntailCheck $1
 	}
-	| captureresidue_cmd {
+  | captureresidue_cmd {
 	  CaptureResidue $1
 	}
   | print_cmd {
@@ -375,7 +375,7 @@ member
 ;
 
 data_decl
-  : data_header data_body {
+  : data_header data_body DOT{
 	  { data_name = $1;
 		data_fields = $2;
 		data_parent_name = "Object";
@@ -440,7 +440,7 @@ enumerator
 /********** Views **********/
 
 view_decl
-  : view_header EQEQ view_body opt_inv {
+  : view_header EQEQ view_body opt_inv DOT{
 	{ $1 with view_formula = $3; view_invariant = $4 }
   }
   | view_header EQ error {
@@ -930,13 +930,13 @@ constructor_header
 ;
 
 checkentail_cmd
-  : CHECKENTAIL meta_constr DERIVE meta_constr {
+  : CHECKENTAIL meta_constr DERIVE meta_constr DOT{
 	($2, $4)
   }
 ;
 
 captureresidue_cmd
-  : CAPTURERESIDUE DOLLAR IDENTIFIER {
+  : CAPTURERESIDUE DOLLAR IDENTIFIER DOT{
 	($3)
   }
 ;
@@ -951,16 +951,16 @@ compose_cmd
 ;
 
 print_cmd
-  : PRINT IDENTIFIER {
+  : PRINT IDENTIFIER DOT{
 		PCmd $2
   }
-  | PRINT DOLLAR IDENTIFIER {
+  | PRINT DOLLAR IDENTIFIER DOT{
 	  PVar $3
 	}
 ;
 
 let_decl
-  : LET DOLLAR IDENTIFIER EQ meta_constr {
+  : LET DOLLAR IDENTIFIER EQ meta_constr DOT{
 	LetDef ($3, $5)
   }
 ;
@@ -978,7 +978,7 @@ meta_constr
 ;
 
 coercion_decl
-  : LEMMA opt_name constr coercion_direction constr {  
+  : LEMMA opt_name constr coercion_direction constr DOT{  
 	{ coercion_type = $4;
 	  coercion_name = $2;
 	  coercion_head = $3;
