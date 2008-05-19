@@ -508,14 +508,14 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
  	  (* local decl : check_pre_post (org_pre, org_post) *)
  	  (***************************************************)
 	  let check_pre_post (org_pre, org_post) =
-	  (* free vars = linking vars that appear both in pre and post *)
+	  (* free vars = linking vars that appear both in pre and are not formal arguments *)
 		let free_vars = CP.difference (CF.fv org_pre) farg_spec_vars in
 		(* free vars get to be substituted by fresh vars *)
 		let free_vars_fresh = CP.fresh_spec_vars free_vars in
-		(*
-		let _ = (print_string ("\n[typechecker.ml, line 465]: free vars = " ^ (Cprinter.string_of_spec_var_list free_vars) ^ "!!!!!!!!!!!\n")) in
-		let _ = (print_string ("\n[typechecker.ml, line 465]: fresh name = " ^ (Cprinter.string_of_spec_var_list free_vars_fresh) ^ "!!!!!!!!!!!\n")) in
-		*)
+		
+		(*let _ = (print_string ("\n[typechecker.ml, line 465]: free vars = " ^ (Cprinter.string_of_spec_var_list free_vars) ^ "!!!!!!!!!!!\n")) in
+		let _ = (print_string ("\n[typechecker.ml, line 465]: fresh name = " ^ (Cprinter.string_of_spec_var_list free_vars_fresh) ^ "!!!!!!!!!!!\n")) in*)
+		
 		(* rename bound vars in the callee pre/post *)
 		(* -- 16.05.2008 *)
 		let renamed_pre =
@@ -531,7 +531,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		let renamed_post = CF.rename_bound_vars org_post in *)			
 		(* 16.05.2008 -- *)
 		(*let _ = print_string ("[typechecker.ml, line 486]: pre " ^ (Cprinter.string_of_formula org_pre) ^ "\n") in
-		let _ = print_string ("[typechecker.ml, line 486]: renamed_pre " ^ (Cprinter.string_of_formula renamed_pre) ^ "\n") in
+		let _ = print_string ("[typechecker.ml, line 486]: pre after renaming " ^ (Cprinter.string_of_formula renamed_pre) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 486]: post " ^ (Cprinter.string_of_formula org_post) ^ "\n") in
 		let _ = print_string ("[typechecker.ml, line 486]: renamed_post " ^ (Cprinter.string_of_formula renamed_post) ^ "\n") in*)
 		let st1 = List.combine free_vars free_vars_fresh in

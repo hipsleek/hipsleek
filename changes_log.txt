@@ -97,6 +97,8 @@ Added methods:
   		
 -- Comments --: Added the code to transform the anonymous vars into existential vars. The names given for the anonymous vars 
 start with "Anon_" (see slexer.mll) => Add existential quantifiers for the anonymous vars - those that start with "Anon_".
+In preconditions no variables (including anonymous ones) are existential. 
+However, for testing purposes, I added a flag, --anon-exist, which allows the anonymous vars in precond to be existentially quantified. 
 
 -- Examples --:
 Before:

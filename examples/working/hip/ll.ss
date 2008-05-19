@@ -88,7 +88,8 @@ void insert(node x, int a)
 	ensures x::ll<n+1>;
 
 {
-        node tmp = null;
+			//dprint;
+      node tmp = null;
 
 	if (x.next == null)
 		x.next = new node(a, tmp);

@@ -29,6 +29,8 @@ let set_proc_verified arg =
 let process_cmd_line () = Arg.parse [
 	("--max-renaming", Arg.Set Globals.max_renaming,
 	"Always rename the bound variables");
+	("--anon-exist", Arg.Set Globals.anon_exist,
+	"Allow anonymous variables in the precondition to be existential");
 	("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
 	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
   ("-noee", Arg.Clear Tpdispatcher.elim_exists_flag,

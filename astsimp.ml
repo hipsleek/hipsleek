@@ -1933,7 +1933,6 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp = match ce with
 				block_e
 	end
 
-
 (* 
    translating formula
    - constraint type inference
@@ -1948,14 +1947,15 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp = match ce with
    f0: input formula
    
 *)
-
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars: ident list) (f0 : IF.formula) stab : CF.formula =
   let f1 = convert_heap2 prog f0 in
-  (*-- *)
-  (* TODO: sometimes this is ok --> see when *)
-  let f2 = (*convert_anonym_to_exist*) f1 in
+  (*-- 19.05.2008 *)
+  let f2 = 
+  	if (quantify || !Globals.anon_exist) then (convert_anonym_to_exist f1)
+  	else f1
+  in
   (* --*)
-	trans_formula1 prog quantify fvars f2 stab
+	(trans_formula1 prog quantify fvars f2 stab)
 
 and trans_formula1 prog quantify fvars f0 stab : CF.formula = match f0 with
   | IF.Or ({IF.formula_or_f1 = f1;
@@ -2048,7 +2048,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 						  (*print_string ("[astsimp.ml, line 2074]: quantify =  " ^ (string_of_bool quantify) ^ "\n");*)
 						  
 						  let link_f = CP.mkEqExp (CP.mkVar fresh_v pos_e) (CP.mkVar ve_sv pos_e) pos_e in
-						  let quantified_var = if quantify then [fresh_v] else [] in
+						  let quantified_var = (if quantify then [fresh_v] else []) in
 						  (* no need to add fresh_v to used_names since it is a fresh variable, 
 							   there's no other occurences of fresh_v *)
 							(used_names, [fresh_v], quantified_var, link_f)

@@ -522,6 +522,20 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f
 		mkExists new_qvars h p t pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 
+(* 19.05.2008 *)
+and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f with
+  | Base _ -> f
+  | Exists ({formula_exists_qvars = qvs; 
+			 formula_exists_heap = h; 
+			 formula_exists_pure = p; 
+			 formula_exists_type = t;
+			 formula_exists_pos = pos}) -> 
+	  let new_qvars = (List.filter (fun x -> not(List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
+	  	if (List.length new_qvars == 0) then mkBase h p t pos
+	  	else mkExists new_qvars h p t pos
+  | _ -> failwith ("add_quantifiers: invalid argument")
+(* 19.05.2008 *)
+
 and push_exists (qvars : CP.spec_var list) (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
 	  let new_f1 = push_exists qvars f1 in
@@ -529,6 +543,16 @@ and push_exists (qvars : CP.spec_var list) (f : formula) = match f with
 	  let resform = mkOr new_f1 new_f2 pos in
 		resform
   | _ -> add_quantifiers qvars f
+
+(* 19.05.2008 *)
+and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+	  let new_f1 = pop_exists qvars f1 in
+	  let new_f2 = pop_exists qvars f2 in
+	  let resform = mkOr new_f1 new_f2 pos in
+		resform
+  | _ -> remove_quantifiers qvars f
+(* 19.05.2008 *)
 
 and rename_bound_vars (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -743,6 +767,12 @@ and estate_of_context (ctx : context) (pos : loc) = match ctx with
 and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = match ctx with
   | Ctx es -> Ctx {es with es_formula = push_exists qvars es.es_formula}
   | OCtx (c1, c2) -> OCtx (push_exists_context qvars c1, push_exists_context qvars c2)
+
+(*19.05.2008*)
+and pop_exists_context (qvars : CP.spec_var list) (ctx : context) : context = match ctx with
+  | Ctx es -> Ctx {es with es_formula = pop_exists qvars es.es_formula}
+  | OCtx (c1, c2) -> OCtx (pop_exists_context qvars c1, push_exists_context qvars c2)
+(*19.05.2008*)
 
 and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (pos : loc) : context = match ctx with
   | Ctx es -> begin
