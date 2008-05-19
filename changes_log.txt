@@ -587,3 +587,43 @@ After:
 [typechecker.ml, line 499]: pre to be entailed x'::bnd_tail<f_r_487, f_r_490, f_r_488, f_r_489> & f_r_488 <= temp' & temp' <= f_r_489 & f_r_490 = tx'
 
 ********************************************************************************************************************************
+
+--No--: 13
+--By--: Cristian
+--Date--: 19.05.2008
+--File--:  nativefront.ml
+
+--Change--: Added list_parse.
+--Remark--: list_parse will recieve a file name and call Sparser.opt_command_list to obtain the list of parsed commands from the
+input file.
+
+********************************************************************************************************************************
+
+--No--: 14
+--By--: Cristian
+--Date--: 19.05.2008
+--File--:  sparser.mly
+
+--Change--: Added a new start symbol opt_command_list and two other non-terminals :command_list,non_empty_command .
+
+********************************************************************************************************************************
+
+--No--: 15
+--By--: Cristian
+--Date--: 19.05.2008
+--File--:  sleek.ml
+
+--Change--: added the parse_file function .
+--Remark--: will call the parse function on the entire file, treats each command in the result command list.
+
+********************************************************************************************************************************
+--No--: 16
+--By--: Cristian
+--Date--: 19.05.2008
+--File--:  sleek.ml
+
+--Change--: treated the non interactive run situation .
+--Remark--: parse_file function on each of the files passed as input.
+--Modified--: Added lines 146, 147
+
+********************************************************************************************************************************

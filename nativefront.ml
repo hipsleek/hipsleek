@@ -51,3 +51,8 @@ let parse (input : string) : command =
   let inlex = Lexing.from_string input in
   let cmd = Sparser.command (Slexer.tokenizer "interactive") inlex in
 	cmd
+let list_parse (input_file) : command list =
+  let org_in_chnl = open_in input_file in
+  let inlex = Lexing.from_channel org_in_chnl in
+  let cmd = Sparser.opt_command_list (Slexer.tokenizer "interactive") inlex in
+	cmd

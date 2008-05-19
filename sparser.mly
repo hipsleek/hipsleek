@@ -219,17 +219,31 @@
 %nonassoc OP_DEC OP_INC
 %left DOT
 
-%start program,data_decl,view_decl,coercion_decl,constr,command
+%start program,data_decl,view_decl,coercion_decl,constr,command,opt_command_list
 %type <prog_decl> program
 %type <data_decl> data_decl
 %type <view_decl> view_decl
 %type <coercion_decl> coercion_decl
 %type <F.formula> constr
 %type <command> command
-
+%type <command list> opt_command_list
 %%
 
+opt_command_list
+	: {[]}
+	| command_list {List.rev $1}
+;
+
+command_list
+  : non_empty_command { [$1] }
+  | command_list non_empty_command { $2 :: $1 }
+;
+  
 command
+  :non_empty_command{$1}
+  | { EmptyCmd }
+;
+non_empty_command
   : data_decl {
 	DataDef $1
   }
@@ -251,8 +265,9 @@ command
   | print_cmd {
 	  PrintCmd $1
 	}
-  | { EmptyCmd }
 ;
+
+
 
 /*
 program
