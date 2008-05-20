@@ -111,7 +111,7 @@ let main () =
 				| _ -> 
 					try
 					  let term_indx = String.index input terminator in
-					  let s = String.sub input 0 term_indx in
+					  let s = String.sub input 0 (term_indx+1) in
 						Buffer.add_string buffer s;
 						let cts = Buffer.contents buffer in
 						  if cts = "quit" || cts = "quit\n" then quit := true
