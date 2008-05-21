@@ -34,5 +34,8 @@ print residue.
 checkentail x::node<w,r>*r::node<w,q>*q::ll2<a,b> & w=4
 	|- x::ll2<c,d> & c>=1.
 print residue.
+checkentail x::node<w,r>*r::node<w,q>*q::ll3<a,b> & w=4
+	|- x::ll3<c,d> & c>=1.
+print residue.
 
 
