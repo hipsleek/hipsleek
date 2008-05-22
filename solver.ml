@@ -688,12 +688,21 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 			(CP.mkTrue pos, CP.mkTrue pos) (* just ignore the formula in this case as 
 											  it is disjoint
 											  from the set of variables of interest *)
-		  else if not (CP.disjoint evars fvars) then (* to conseq *)
+		  else 
+		   if not (CP.disjoint evars fvars) then (* to conseq *)
 			(CP.mkTrue pos, f)
 		  else (* to ante *)
 			(f, CP.mkTrue pos) in
-  let to_ante, to_conseq = split f0 in
-	Debug.devel_pprint ("split_universal: evars: " 
+	(* -- added on 21.05.2008 *)
+	(* try to obtain as much as a CNF form as possible so that the splitting of bindings between antecedent and consequent is more accurate *)
+	let f = (normalize_to_CNF f0 pos) in		
+	(* added on 21.05.2008 -- *)
+	(*
+	let _ = (print_string ("\n[solver.ml, split_universal]: Pure formula: " ^ (Cprinter.string_of_pure_formula f0) ^ "\n")) in
+  let _ = (print_string ("[solver.ml, split_universal]: Pure formula in simplified cnf: " ^ (Cprinter.string_of_pure_formula f) ^ "\n")) in	
+  *)
+  let to_ante, to_conseq = split f in
+  Debug.devel_pprint ("split_universal: evars: " 
 						^ (String.concat ", " 
 							 (List.map Cprinter.string_of_spec_var evars))) pos;
 	Debug.devel_pprint ("split_universal: vvars: " 
@@ -704,6 +713,110 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 	Debug.devel_pprint ("split_universal: to_conseq: " 
 						^ (Cprinter.string_of_pure_formula to_conseq)) pos;
 	(to_ante, to_conseq)
+
+
+(**************************************************************)
+(**************************************************************)
+(**************************************************************)
+(*
+	We do a simplified translation towards CNF where we only take out the common
+ 	conjuncts from all the disjuncts:
+
+	Ex:
+ (a=1 & b=1) \/ (a=2 & b=2) - nothing common between the two disjuncts
+ (a=1 & b=1 & c=3) \/ (a=2 & b=2 & c=3) ->  c=3 & ((a=1 & b=1) \/ (a=2 & b=2))
+*)
+
+and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
+	| CP.Or (f1, f2, p) -> 
+		let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
+			(*
+			let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: f1: " ^ (Cprinter.string_of_pure_formula f1) ^ "\n")) in
+			let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: f2: " ^ (Cprinter.string_of_pure_formula f2) ^ "\n")) in
+			let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: Conj: " ^ (Cprinter.string_of_pure_formula conj) ^ "\n")) in
+			let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: disj1: " ^ (Cprinter.string_of_pure_formula disj1) ^ "\n")) in
+			let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: disj2: " ^ (Cprinter.string_of_pure_formula disj2) ^ "\n")) in
+			*)
+			(CP.mkAnd conj (CP.mkOr disj1 disj2 p) p)
+  | CP.And (f1, f2, p) -> CP.And(normalize_to_CNF f1 p, normalize_to_CNF f2 p, p) 		
+	| CP.Not (f1, p) -> CP.Not(normalize_to_CNF f1 p, p) 
+	| CP.Forall (sp, f1, p) -> CP.Forall(sp, normalize_to_CNF f1 p, p) 
+	| CP.Exists (sp, f1, p) -> CP.Exists(sp, normalize_to_CNF f1 p, p) 
+  | _ -> f
+  
+(* take two formulas f1 and f2 and returns:
+	- the formula containing the commom conjuncts 
+	- the formula representing what's left of f1  
+	- the formula representing what's left of f2
+*)
+	
+and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP.formula * CP.formula) = match f1 with
+	| CP.BForm(b) -> 
+		if (List.exists (fun c -> (CP.eq_pure_formula c f1)) (CP.list_of_conjs f2)) then 
+			begin
+				(f1, (CP.mkTrue pos), (remove_conj f2 f1 pos))
+			end
+		else 
+			(*
+			let _ = (print_string ("\n[cpure.ml, find_common_conjs]: no common conj between: \n")) in
+			let _ = (print_string ("\t\t " ^ (Cprinter.string_of_pure_formula f1) ^ "\n")) in
+			let _ = (print_string ("\t\t " ^ (Cprinter.string_of_pure_formula f2) ^ "\n")) in
+			let _ = (print_string ("\n[cpure.ml, find_common_conjs]: list of conj for f2: " ^ (Cprinter.string_of_pure_formula_list (CP.list_of_conjs f2)) ^ "\n")) in
+			*)
+			((CP.mkTrue pos), f1, f2)
+	| CP.And(f11, f12, p) -> 
+		let outer_conj, new_f1, new_f2 = (find_common_conjs f11 f2 p) in
+		let outer_conj_prim, new_f1_prim, new_f2_prim  = (find_common_conjs f12 new_f2 p) in
+		((CP.mkAnd outer_conj outer_conj_prim p), (CP.mkAnd new_f1 new_f1_prim p), new_f2_prim)
+	| CP.Or(f11, f12, p) ->
+		let new_f1 = (normalize_to_CNF f1 p) in
+			(find_common_conjs new_f1 f2 p)
+	| _ -> ((CP.mkTrue pos), f1, f2)
+
+and remove_conj (f : CP.formula) (conj : CP.formula) pos : CP.formula = match f with
+	| CP.BForm(b1) -> 
+		begin
+			match conj with
+			|CP.BForm(b2) ->	
+				if (CP.eq_b_formula b1 b2) then 
+					(CP.mkTrue pos) 
+				else f
+			| _ -> f		
+		end	
+	| CP.And(f1, f2, p) -> 
+		(CP.mkAnd (remove_conj f1 conj p) (remove_conj f2 conj p) p) 		
+	| CP.Not(f1, p) -> CP.Not((remove_conj f1 conj p), p) 		
+	| _ -> f
+ 
+(**************************************************************)
+(**************************************************************)
+(**************************************************************)
+
+(* 21.05.2008 *)
+(* 
+	Say we have three kinds of vars
+  f - free, g - global (from the view definition), e - existential
+	Assume, we have expression at the end of folding:
+  E1(f,g) & E2(g) & E3(e,f,g)
+
+	First action is to discard E2(g) which has already been proven 
+	
+ (discard_uninteresting_constraint f vvars) only maintains those vars containing vvars, which are vars of interest
+*)
+(*
+and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) : CP.formula = match f with  
+	| CP.BForm _ -> 
+		if CP.disjoint (CP.fv f) vvars then (CP.mkTrue no_pos)
+		else f
+  | CP.And(f1, f2, l) -> CP.And(discard_uninteresting_constraint f1 vvars, discard_uninteresting_constraint f2 vvars, l)
+  | CP.Or(f1, f2, l) -> CP.Or(discard_uninteresting_constraint f1 vvars, discard_uninteresting_constraint f2 vvars, l)
+  | CP.Not(f1, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, l)
+  | _ -> f 
+*)
+
+(**************************************************************)
+(**************************************************************)
+(**************************************************************)
 
 (* fold some constraints in f1 to view v under pure pointer *)
 (* constraint pp and Presburger constraint pres             *)
@@ -726,6 +839,9 @@ and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) (pos : loc)
 		  let new_ctx = Ctx new_es in
 		  let rs0, fold_prf = heap_entail_one_context prog true new_ctx view_form pos in
 		  let tmp_vars = p :: (estate.es_evars @ vs) in
+		  (**************************************)
+		  (*        process_one 								*)
+		  (**************************************)
 		  let rec process_one rs1 =
 			Debug.devel_pprint ("fold: rs1:\n"
 								^ (Cprinter.string_of_context rs1)) pos;
@@ -778,6 +894,14 @@ and process_fold_result prog is_folding estate fold_rs0 p2 vs2 base2 pos : (cont
 		  (tmp3, prf3)
 	| Ctx fold_es ->
 		(*	let fold_es = estate_of_context fold_rs pos in *)
+		(* remove the constraints involving only global variabls *)
+		(* 20.05.2008 *)
+		(*let _ = print_string ("[solver.ml, process_fold_result]: Context: " ^ Cprinter.string_of_context fold_rs1 ^ "\n") in
+		let _ = (print_string ("\n[solver.ml, process_fold_result]: Pure formula: " ^ (Cprinter.string_of_pure_formula fold_es.es_pure) ^ "\n")) in
+		let new_pure = discard_redundant_constraint fold_es.es_pure vs2 in
+		let _ = (print_string ("[solver.ml, process_fold_result]: Global vars: " ^ (Cprinter.string_of_spec_var_list vs2) ^ "\n")) in
+		let _ = (print_string ("[solver.ml, process_fold_result]: Pure formula after discarding globals: " ^ (Cprinter.string_of_pure_formula new_pure) ^ "\n")) in*)
+		(* 20.05.2008 *)
 		let to_ante, to_conseq = split_universal fold_es.es_pure 
 		  fold_es.es_evars vs2 pos in
 		let tmp_conseq = mkBase resth2 pure2 type2 pos in
@@ -1375,7 +1499,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 				   h_formula_view_pos = pos2}) -> begin
 		  Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: trying to prove " 
 							  ^ (Cprinter.string_of_h_formula ln2)) pos;
-		  
+		  (************************************)
+		  (* the folding process *)
+		  (************************************)
 		  (* process folding. var_to_fold is the variable from the LHS
 			 to fold to *)
 		  let do_fold (var_to_fold : CP.spec_var) =
@@ -1390,13 +1516,16 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 										  h_formula_view_coercible = true;
 										  h_formula_view_origins = get_view_origins ln2;
 										  h_formula_view_pos = pos2}) in
+			(* 21.05.2008 *)
+			(*let _ = (print_string ("[solver.ml, heap_entail_non_empty_rhs_heap]: Global vars: " ^ (Cprinter.string_of_spec_var_list v2) ^ "\n")) in*)
+			(* 21.05.2008 *)
 			let fold_rs, fold_prf = fold prog fold_ctx view_to_fold (P.mkTrue pos) pos in
 			  if not (U.empty fold_rs) then
 				let b = { formula_base_heap = resth2;
 						  formula_base_pure = rhs_p;
 						  formula_base_type = rhs_t;
 						  formula_base_pos = pos } in
-				let tmp, tmp_prf = process_fold_result prog is_folding 
+				let tmp, tmp_prf = process_fold_result prog is_folding
 				  estate fold_rs p2 v2 b pos in
 				let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
 				  (tmp, prf)

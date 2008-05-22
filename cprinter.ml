@@ -131,8 +131,13 @@ let string_of_b_formula = function
 
 ;;
 
+(* pretty printing for a list of pure formulas *)
+let rec string_of_pure_formula_list l = match l with 
+  | []               -> ""
+  | h::t             -> (string_of_pure_formula h) ^ "\n" ^ (string_of_pure_formula_list t)
+
 (* pretty printing for a pure formula *)
-let rec string_of_pure_formula = function 
+and string_of_pure_formula = function 
   | P.BForm bf                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> (string_of_pure_formula f1) ^ " & " ^ (string_of_pure_formula f2)
   | P.Or (f1, f2, l)              -> "((" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ "))"

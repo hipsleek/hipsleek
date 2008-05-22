@@ -525,11 +525,74 @@ and fresh_spec_var (sv : spec_var) =
 
 and fresh_spec_vars (svs : spec_var list) = List.map fresh_spec_var svs
 
+(*
+	22.05.2008 
+	Utilities for equality testing
+*)
+
+and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) = 
+	let rec eq_spec_var_list_helper (sv1 : spec_var list) (sv2 : spec_var list) = match sv1 with
+		| [] -> true
+		| h :: t -> (List.exists (fun c -> eq_spec_var h c) sv2) & (eq_spec_var_list_helper t sv2) 
+	in	
+		(eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
+
 and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> 
 	  (* translation has ensured well-typedness. 
 		 We need only to compare names and primedness *)
 	  v1 = v2 & p1 = p2
+
+and eq_pure_formula (f1 : formula) (f2 : formula) : bool = match (f1, f2) with 
+	| (BForm(b1), BForm(b2)) -> (eq_b_formula b1 b2)
+	| (Or(f1, f2, _), Or(f3, f4, _))  
+  | (And(f1, f2, _), And(f3, f4, _)) -> 
+  	((eq_pure_formula f1 f3) & (eq_pure_formula f2 f4)) or ((eq_pure_formula f1 f4) & (eq_pure_formula f2 f3))
+  | (Not(f1, _), Not(f2, _)) -> (eq_pure_formula f1 f2)
+  | (Exists(sv1, f1, _), Exists(sv2, f2, _)) 
+  | (Forall(sv1, f1, _), Forall(sv2, f2, _)) -> (eq_spec_var sv1 sv2) & (eq_pure_formula f1 f2)
+	| _ -> false
+
+and eq_b_formula (b1 : b_formula) (b2 : b_formula) : bool = match (b1, b2) with
+	| (BConst(c1, _), BConst(c2, _)) -> c1 = c2
+	| (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var sv1 sv2)
+	| (Lte(e1, e2, _), Lte(e3, e4, _))
+	| (Gt(e1, e2, _), Gt(e3, e4, _))
+	| (Gte(e1, e2, _), Gte(e3, e4, _))
+	| (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
+	| (Neq(e1, e2, _), Eq(e3, e4, _))
+	| (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp e1 e3) & (eq_exp e2 e4)) or ((eq_exp e1 e4) & (eq_exp e2 e3))
+	| (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _)) 
+	| (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp e1 e4) & ((eq_exp e2 e5) & (eq_exp e3 e6)) or ((eq_exp e2 e6) & (eq_exp e3 e5))
+	| (BagIn(sv1, e1, _), BagIn(sv2, e2, _)) 
+	| (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq_spec_var sv1 sv2) & (eq_exp e1 e2)
+	| (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _)) 
+	| (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var sv1 sv3) & (eq_spec_var sv2 sv4)
+	| (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
+	| _ -> false
+
+and eq_exp_list (e1 : exp list) (e2 : exp list) : bool = 
+	let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
+		| [] -> true
+		| h :: t -> (List.exists (fun c -> eq_exp h c) e2) & (eq_exp_list_helper t e2) 
+	in	
+		(eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
+
+and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
+	| (Null(_), Null(_)) -> true
+	| (Var(sv1, _), Var(sv2, _)) -> (eq_spec_var sv1 sv2)
+	| (IConst(i1, _), IConst(i2, _)) -> i1 = i2
+	| (Subtract(e11, e12, _), Subtract(e21, e22, _))
+	| (Max(e11, e12, _), Max(e21, e22, _))
+	| (Min(e11, e12, _), Min(e21, e22, _))
+	| (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
+	| (Mult(i1, e11, _), Mult(i2, e21, _)) -> (i1 = i2) & (eq_exp e11 e21) 
+	| (Bag(e1, _), Bag(e2, _))  
+	| (BagUnion(e1, _), BagUnion(e2, _)) 
+	| (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list e1 e2)
+	| (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
+	| _ -> false
+
 
 and remove_spec_var (sv : spec_var) (vars : spec_var list) = 
   List.filter (fun v -> not (eq_spec_var sv v)) vars
@@ -966,6 +1029,21 @@ let rec break_implication (ante : formula) (conseq : formula) : ((formula * form
   let res = List.combine antes conseqs in
 	res
 
+(**************************************************************)
+(**************************************************************)
+(**************************************************************)
+(*
+	MOVED TO SOLVER.ML -> TO USE THE PRINTING METHODS
+
+	We do a simplified translation towards CNF where we only take out the common
+ 	conjuncts from all the disjuncts:
+
+	Ex:
+ (a=1 & b=1) \/ (a=2 & b=2) - nothing common between the two disjuncts
+ (a=1 & b=1 & c=3) \/ (a=2 & b=2 & c=3) ->  c=3 & ((a=1 & b=1) \/ (a=2 & b=2))
+
+	let rec normalize_to_CNF (f : formula) pos : formula 
+ *) 
 (**************************************************************)
 (**************************************************************)
 (**************************************************************)

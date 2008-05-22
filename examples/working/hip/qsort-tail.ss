@@ -73,8 +73,8 @@ void qsort(ref node x, ref node tx)
 	contains the bigger ones.
 */	
 void partition1(ref node x, ref node tx, ref node y, ref node ty, int c)
-	requires x::bnd_tail<_, tx, sm, lg> & sm <= c <= lg 
-	ensures x'::bnd_tail<n1, tx', sm, c> * y'::bnd_tail<n2, ty', c, lg>;// & n=n1+n2;
+	requires x::bnd_tail<n, tx, sm, lg> & sm <= c <= lg 
+	ensures x'::bnd_tail<n1, tx', sm, c> * y'::bnd_tail<n2, ty', c, lg> & n=n1+n2;
 {
 	if (x == null) {
 		tx = null;
