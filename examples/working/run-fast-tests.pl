@@ -5,7 +5,7 @@ use File::Basename;
 use Getopt::Long;
 
 GetOptions( "stop"  => \$stop);
-$exempl_path = 'sleekex/examples/working';
+$exempl_path = ".";
 $exec_path = '../../..';
 %excl_files = ("avl"=>0,"heaps"=>1,"avl-orig-2"=>2);
 $error_count = 0;
