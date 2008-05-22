@@ -72,7 +72,7 @@ sub sleek_process_file  {
         print LOGFILE "\n======================================\n";
         print LOGFILE "$output";
 
-        if ($output =~ /.*(e|E)rror.*/) {
+        if (($output =~ /.*(e|E)rror.*/)||($output =~ /.*(f|F)ail.*/)) {
           print "Error found\n";
           $error_count++;
           $error_files = $error_files . " " . $file;
