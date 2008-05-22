@@ -14,8 +14,9 @@ $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip";
 $sleek = "$exec_path/sleek";
-if ($output_file) {}
-else { $output_file = "log"; }
+$output_file = "log";
+@hip_fail=("pepm08/bsearch","POSSIBLE","+infer +check -o:con1 PostStrong -m:1");
+@sleek_fail=("pepm08/bubblesort","SAFETY","+infer +check -o:con1 PostStrong -m:1");
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 if ($run_hip)
@@ -49,8 +50,9 @@ sub hip_process_file {
 	print LOGFILE "\n======================================\n";
 	print LOGFILE "$output";
 
-	if ($output =~ /.*(e|E)rror.*/) {
-	  print "Error found\n";
+	if (($output =~ /.*(e|E)rror.*/ && not(grep(/^($file_part[0])$/,@hip_fail)))||
+		($output !~ /.*(e|E)rror.*/ &&    (grep(/^($file_part[0])$/,@hip_fail)))){
+	  print "Unexpected result with : $file\n";
 	  $error_count++;
 	  $error_files = $error_files . " " . $file;
 	  if ($stop) {
@@ -72,8 +74,9 @@ sub sleek_process_file  {
         print LOGFILE "\n======================================\n";
         print LOGFILE "$output";
 
-        if (($output =~ /.*(e|E)rror.*/)||($output =~ /.*(f|F)ail.*/)) {
-          print "Error found\n";
+	if (($output =~ /.*(e|E)rror.*/ && not(grep(/^($file_part[0])$/,@sleek_fail)))||
+		($output !~ /.*(e|E)rror.*/ &&    (grep(/^($file_part[0])$/,@sleek_fail)))){
+	  print "Unexpected result with : $file\n";
           $error_count++;
           $error_files = $error_files . " " . $file;
           if ($stop) {
