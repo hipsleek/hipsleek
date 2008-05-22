@@ -4,7 +4,9 @@ use File::Find;
 use File::Basename;
 use Getopt::Long;
 
-GetOptions( "stop"  => \$stop);
+GetOptions( "stop"  => \$stop,
+			"sleek"  => \$run_sleek,
+			"hip"  => \$run_hip			);
 $exempl_path = ".";
 $exec_path = '../../..';
 @excl_files = ("avl","heaps","avl-orig-2");
@@ -16,12 +18,16 @@ if ($output_file) {}
 else { $output_file = "log"; }
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
-
-print "Starting hip tests:\n";
-find(\&hip_process_file, "$exempl_path/hip");
-print "Starting sleek tests:\n";
-find(\&sleek_process_file, "$exempl_path/sleek");
-
+if ($run_hip)
+{
+	print "Starting hip tests:\n";
+	find(\&hip_process_file, "$exempl_path/hip");
+}
+if($run_sleek)
+{
+	print "Starting sleek tests:\n";
+	find(\&sleek_process_file, "$exempl_path/sleek");
+}
 close(LOGFILE);
 
 if ($error_count > 0) {
