@@ -5,18 +5,15 @@ use File::Basename;
 use Getopt::Long;
 
 GetOptions( "stop"  => \$stop);
-$sleek_path = @ARGV[0];
-$exempl_path = "$sleek_path/examples/working";
+$exempl_path = ".";
 $exec_path = '../../..';
-@excl_files = ();
+@excl_files = ("avl","heaps","avl-orig-2","rb");
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip";
 $sleek = "$exec_path/sleek";
 $perf_file = "performances";
-if ($output_file) {}
-else { $output_file = "log"; }
-
+$output_file = "log";
 
 open(LOGFILE, ">> $output_file") || die ("Could not open $output_file.\n");
 
@@ -28,7 +25,9 @@ print "Starting sleek tests:\n";
 find(\&sleek_process_file, "$exempl_path/sleek");
 
 close(LOGFILE);
-
+open(PERF, ">> $perf_file") || die ("Could not open $perf_file.\n");
+print PERF "\n it took: $time\n";
+close(PERF);
 if ($error_count > 0) {
   print "Total number of errors: $error_count in files: $error_files.\n";
 }
@@ -46,9 +45,6 @@ sub hip_process_file {
 	my $output = `$hip $file 2>&1`;
 	if ($output =~/Total verification time: (\d*.\d*) second/){
 		$time = $time + $1;
-		open(PERF, ">> $performances") || die ("Could not open $performances.\n");
-		print PERF "\n it took: $time\n";
-		close(PERF);
 	}
 	
 	print LOGFILE "\n======================================\n";
