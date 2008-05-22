@@ -7,7 +7,7 @@ use Getopt::Long;
 GetOptions( "stop"  => \$stop);
 $exempl_path = ".";
 $exec_path = '../../..';
-%excl_files = ("avl"=>0,"heaps"=>1,"avl-orig-2"=>2);
+@excl_files = ("avl","heaps","avl-orig-2");
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip";
@@ -36,7 +36,7 @@ sub hip_process_file {
 	@file_part = (fileparse($file,'\..*'));
   my $ext = (@file_part)[2];
 
-  if ($ext eq ".ss" && not(exists($excl_files{(@file_part)[0]}))) {
+  if ($ext eq ".ss" && not(grep(/^($file_part[0])$/,@excl_files))) {
 	print "Checking $file\n";
 	my $output = `$hip $file 2>&1`;
 	
@@ -59,7 +59,7 @@ sub sleek_process_file  {
   my $ext = (@file_part)[2];
   my $ext = (fileparse($file,'\..*'))[2];
 
-	if ($ext eq ".slk" && not(exists($excl_files{(@file_part)[0]}))) {
+	if ($ext eq ".slk" && not(grep(/^($file_part[0])$/,@excl_files))) {
 		print "Checking $file\n";
        my $output = `$sleek $file 2>&1`;
 
