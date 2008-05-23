@@ -8,26 +8,30 @@ GetOptions( "stop"  => \$stop,
 			"sleek"  => \$run_sleek,
 			"hip"  => \$run_hip			);
 $exempl_path = ".";
-$exec_path = '../../..';
-@excl_files = ("avl","heaps","avl-orig-2");
+$exec_path = '../..';
+@excl_files = ();
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip";
 $sleek = "$exec_path/sleek";
 $output_file = "log";
-@hip_fail=("pepm08/bsearch","POSSIBLE","+infer +check -o:con1 PostStrong -m:1");
-@sleek_fail=("pepm08/bubblesort","SAFETY","+infer +check -o:con1 PostStrong -m:1");
+# list of file, nr of functions, function name, output, function name, output......
+@hip_files=(["append.ss",1,"append","ERROR"]);
+# list of file, string with result of each entailment....
+@sleek_files=(
+			["sleek1.slk","Valid.Fail."],
+			["sleek2.slk","Valid.Fail."]);
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 if ($run_hip)
 {
 	print "Starting hip tests:\n";
-	find(\&hip_process_file, "$exempl_path/hip");
+	hip_process_file();
 }
 if($run_sleek)
 {
 	print "Starting sleek tests:\n";
-	find(\&sleek_process_file, "$exempl_path/sleek");
+	sleek_process_file();
 }
 close(LOGFILE);
 
@@ -39,49 +43,63 @@ exit(0);
 
 
 sub hip_process_file {
-  $file = $_;
-	@file_part = (fileparse($file,'\..*'));
-  my $ext = (@file_part)[2];
+  foreach $test (@hip_files)
+	{
+		print "Checking $test->[0]\n";
 
-  if ($ext eq ".ss" && not(grep(/^($file_part[0])$/,@excl_files))) {
-	print "Checking $file\n";
-	my $output = `$hip $file 2>&1`;
-	
-	print LOGFILE "\n======================================\n";
-	print LOGFILE "$output";
-
-	if (($output =~ /.*(e|E)rror.*/ && not(grep(/^($file_part[0])$/,@hip_fail)))||
-		($output !~ /.*(e|E)rror.*/ &&    (grep(/^($file_part[0])$/,@hip_fail)))){
-	  print "Unexpected result with : $file\n";
-	  $error_count++;
-	  $error_files = $error_files . " " . $file;
-	  if ($stop) {
-		exit(0);
-	  }
+		$output = `$hip $exempl_path/hip/$test->[0] 2>&1`;
+		print LOGFILE "\n======================================\n";
+		print LOGFILE "$output";
+		$limit = $test->[1]*2+2;
+		for($i = 2; $i<$limit;$i+=2)
+		{
+			if($output !~ /Checking procedure $test->[$i].*$test->[$i+1]/)
+			{
+				$error_count++;
+				$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+			}
+		}
 	}
-  }
 }
+
 sub sleek_process_file  {
-  $file = $_;
-  @file_part = (fileparse($file,'\..*'));
-  my $ext = (@file_part)[2];
-  my $ext = (fileparse($file,'\..*'))[2];
-
-	if ($ext eq ".slk" && not(grep(/^($file_part[0])$/,@excl_files))) {
-		print "Checking $file\n";
-       my $output = `$sleek $file 2>&1`;
-
-        print LOGFILE "\n======================================\n";
+	foreach $test (@sleek_files)
+	{
+		print "Checking $test->[0]\n";
+		$output = `$sleek $exempl_path/sleek/$test->[0] 2>&1`;
+		print LOGFILE "\n======================================\n";
         print LOGFILE "$output";
-
-	if (($output =~ /.*(e|E)rror.*/ && not(grep(/^($file_part[0])$/,@sleek_fail)))||
-		($output !~ /.*(e|E)rror.*/ &&    (grep(/^($file_part[0])$/,@sleek_fail)))){
-	  print "Unexpected result with : $file\n";
-          $error_count++;
-          $error_files = $error_files . " " . $file;
-          if ($stop) {
-                exit(0);
-          }
-        }
-  }
+		$pos = 0;
+		$r = "";
+		while($pos >= 0)
+		{
+			$i = index($output, "Valid",$pos);
+			$j = index($output, "Fail",$pos);
+			if ($i==-1 && $j == -1)
+				{$pos = -1;}
+			else
+			{
+				if(($i<$j || $j==-1)&& ($i>=0))
+				{
+					$pos=$i+3;
+					$r = $r ."Valid.";
+				}
+				else
+				{
+					$pos=$j+3;
+					$r = $r ."Fail.";
+				}
+			}
+			$s = length($output);
+			print "\nl$s\n";
+			if ($pos >=length($output)) 
+			{$pos = -1;}
+		}
+		if($r !~ /^$test->[1]$/)
+		{
+			print "Unexpected result with : $test->[0]\n";
+			$error_count++;
+			$error_files = $error_files . " " . $test->[0];
+		}  
+	}
 }
