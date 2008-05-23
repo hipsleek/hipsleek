@@ -688,9 +688,23 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 			(CP.mkTrue pos, CP.mkTrue pos) (* just ignore the formula in this case as 
 											  it is disjoint
 											  from the set of variables of interest *)
-		  else 
+		  else
+		  (* 
+		  	- 23.05.2008 -
+					  Current actions are:
+		    (i) discard E2(g) which has already been proven
+		    (ii) move E1(f.g) to LHS for implicit instantiation
+		   	(iii) leave E3(e,f,g) to RHS for linking existential var e
+		
+			 	What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.		  
+		  *) 
 		   if not (CP.disjoint evars fvars) then (* to conseq *)
-			(CP.mkTrue pos, f)
+		   	if (Util.empty (CP.difference fvars evars))	then	(* there is no free var *)
+		  		(*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
+					(CP.mkTrue pos, f)
+				else (* there are still free vars --> we wrap an existential and move the bindings to the antecedent *)	
+					(*let _ = print_string("\n[solver.ml, split_universal]: FV in " ^ (Cprinter.string_of_pure_formula f) ^ " : " ^ (Cprinter.string_of_spec_var_list (CP.difference fvars evars)) ^ "\n") in*)
+					(CP.mkExists evars f pos, f)
 		  else (* to ante *)
 			(f, CP.mkTrue pos) in
 	(* -- added on 21.05.2008 *)

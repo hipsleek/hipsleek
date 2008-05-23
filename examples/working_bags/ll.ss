@@ -15,7 +15,7 @@ ll<S> == self = null & S = {}
 
 /* append two singly linked lists */
 void append(node x, node y)
-	requires x::ll<S1> * y::ll<S2> //& x != null
+	requires x::ll<S1> * y::ll<S2> & x != null
 	ensures x::ll<S> & S = union(S1, S2);
 
 {

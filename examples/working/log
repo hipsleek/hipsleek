@@ -1,269 +1,44 @@
 
 ======================================
 
-Processing file "append-tail.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.044003 second(s)
-Checking procedure append$node~node~node~node... SUCCESS
-
-Total verification time: 1.6121 second(s)
-	Time spent in main process: 0.128008 second(s)
-	Time spent in child processes: 1.484092 second(s)
+======================================
 
 ======================================
 
-Processing file "qsort-tail.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.084005 second(s)
-Checking procedure partition1$node~node~node~node~int... SUCCESS
-Checking procedure qsort$node~node... 
-assert:qsort-tail.ss:44: assert ok
-
-
-assert:qsort-tail.ss:45: assert ok
-
-
-print: qsort-tail.ss:46: ctx:
-es_formula: f_r_1956::bnd_tail<f_r_1951, f_r_1952, f_r_1953, f_r_1954> * x'::node<f_r_1955, f_r_1956> & sm <= f_r_1955 & f_r_1955 <= lg & f_r_1956 != null & f_r_1951 = n-1 & f_r_1952 = f_r_57 & f_r_1953 = sm & f_r_1954 = lg & n > 0 & f_r_57 = tx & tx' = tx & !(f_r_76') & x != null & x' = x & !(f_r_76') & !(f_r_75') & f_r_1956 != null & !(f_r_75') & y' = null & ty' = null & tmp1' = null & temp' = f_r_1955
-es_pure: 
-es_heap: true
-es_evars: 
-
-File "qsort-tail.ss", line 60: Post condition (EX f_r_58, sm1, lg1, m . x'::ll_tail<m, f_r_58, sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n & f_r_58 = tx') cannot be derived by the system.
-
-Error(s) detected when checking procedure qsort$node~node
-
-Total verification time: 9.092568 second(s)
-	Time spent in main process: 2.064129 second(s)
-	Time spent in child processes: 7.028439 second(s)
+======================================
 
 ======================================
 
-Processing file "selection.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.036002 second(s)
-Checking procedure selection_sort$node... SUCCESS
-Checking procedure delete_min$node~int... SUCCESS
-Checking procedure find_min$node... SUCCESS
-
-Total verification time: 0.65204 second(s)
-	Time spent in main process: 0.388024 second(s)
-	Time spent in child processes: 0.264016 second(s)
+======================================
 
 ======================================
 
-Processing file "insertion.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.028002 second(s)
-Checking procedure insertion_sort$node~node... SUCCESS
-Checking procedure insert$node~int... SUCCESS
-
-Total verification time: 0.648039 second(s)
-	Time spent in main process: 0.300018 second(s)
-	Time spent in child processes: 0.348021 second(s)
+======================================
 
 ======================================
 
-Processing file "ll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.028001 second(s)
-Checking procedure rev$node~node... SUCCESS
-Checking procedure create_list$int... SUCCESS
-Checking procedure delete$node~int... SUCCESS
-Checking procedure insert$node~int... SUCCESS
-Checking procedure get_next_next$node... SUCCESS
-Checking procedure set_null$node... SUCCESS
-Checking procedure set_next$node~node... SUCCESS
-Checking procedure get_next$node... SUCCESS
-Checking procedure ret_first$node... SUCCESS
-Checking procedure append$node~node... SUCCESS
-
-Total verification time: 0.48803 second(s)
-	Time spent in main process: 0.208013 second(s)
-	Time spent in child processes: 0.280017 second(s)
+======================================
 
 ======================================
 
-Processing file "sll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.044003 second(s)
-Checking procedure id$int... SUCCESS
-Checking procedure insertion_sort$node~node... SUCCESS
-Checking procedure get_tail$node... SUCCESS
-Checking procedure delete$node~int... SUCCESS
-Checking procedure insert2$node~node... SUCCESS
-Checking procedure insert$node~int... SUCCESS
-
-Total verification time: 0.856053 second(s)
-	Time spent in main process: 0.424026 second(s)
-	Time spent in child processes: 0.432027 second(s)
+======================================
 
 ======================================
 
-Processing file "qsort.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.044002 second(s)
-Checking procedure qsort$node... SUCCESS
-Checking procedure append_bll$node~node... SUCCESS
-Checking procedure partition$node~int... SUCCESS
-
-Total verification time: 3.952246 second(s)
-	Time spent in main process: 0.892055 second(s)
-	Time spent in child processes: 3.060191 second(s)
+======================================
 
 ======================================
 
-Processing file "dll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.040003 second(s)
-Checking procedure f2$node2... SUCCESS
-Checking procedure f1$node2... SUCCESS
-Checking procedure append2$node2~node2... SUCCESS
-Checking procedure append1$node2~node2... SUCCESS
-Checking procedure append$node2~node2... SUCCESS
-Checking procedure test_fold$... SUCCESS
-Checking procedure test_del2$node2~node2... SUCCESS
-Checking procedure test_del$node2... SUCCESS
-Checking procedure delete1$node2~int... SUCCESS
-Checking procedure delete$node2~int... SUCCESS
-Checking procedure insert$node2~int... SUCCESS
-
-Total verification time: 1.548096 second(s)
-	Time spent in main process: 0.932058 second(s)
-	Time spent in child processes: 0.616038 second(s)
+======================================
 
 ======================================
 
-Processing file "bubble.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.060003 second(s)
-Checking procedure bsort$node... SUCCESS
-Checking procedure bubble$node... SUCCESS
-Checking procedure id3$node... SUCCESS
-Checking procedure id2$node... SUCCESS
-
-Total verification time: 1.284079 second(s)
-	Time spent in main process: 0.744046 second(s)
-	Time spent in child processes: 0.540033 second(s)
+======================================
 
 ======================================
 
-Processing file "rb.ss"
-Parsing... done in 0.020001 second(s)
-Translating to core language... done in 4.460278 second(s)
-Checking procedure insert$node~int... SUCCESS
-Checking procedure del$node~int... SUCCESS
-Checking procedure remove_min$node... SUCCESS
-Checking procedure del_2r$node~node~node... 
-assert:rb.ss:279: assert ok
-
-
-assert:rb.ss:280: assert ok
-
-
-assert:rb.ss:281: assert ok
-
-SUCCESS
-Checking procedure del_2$node~node~node... SUCCESS
-Checking procedure del_3r$node~node~node... SUCCESS
-Checking procedure del_3$node~node~node... SUCCESS
-Checking procedure del_4r$node~node~node... SUCCESS
-Checking procedure del_4$node~node~node... SUCCESS
-Checking procedure del_5r$node~node~node~node~int... SUCCESS
-Checking procedure del_5$node~node~node~node~int... SUCCESS
-Checking procedure del_6r$node~node~node~int... SUCCESS
-Checking procedure del_6$node~node~node~int... SUCCESS
-Checking procedure is_black$node... SUCCESS
-Checking procedure is_red$node... SUCCESS
-Checking procedure case_2r$node~node~node~node... SUCCESS
-Checking procedure rotate_case_3r$node~node~node... SUCCESS
-Checking procedure case_2$node~node~node~node... SUCCESS
-Checking procedure rotate_case_3$node~node~node... SUCCESS
-
-Total verification time: 33.482092 second(s)
-	Time spent in main process: 11.972748 second(s)
-	Time spent in child processes: 21.509344 second(s)
+======================================
 
 ======================================
 
-Processing file "merge.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.060003 second(s)
-Checking procedure insert$node~int... SUCCESS
-Checking procedure merge$node~node... SUCCESS
-Checking procedure merge_sort$node... SUCCESS
-Checking procedure split_func$node~int... SUCCESS
-Checking procedure count$node... SUCCESS
-
-Total verification time: 3.464216 second(s)
-	Time spent in main process: 0.752047 second(s)
-	Time spent in child processes: 2.712169 second(s)
-
 ======================================
-
-Processing file "perfect.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.060004 second(s)
-Checking procedure insert$node2~int... SUCCESS
-Checking procedure height$node2... SUCCESS
-Checking procedure maxim$int~int... SUCCESS
-Checking procedure create$int... SUCCESS
-Checking procedure simple_insert$node2~int... SUCCESS
-
-Total verification time: 0.500031 second(s)
-	Time spent in main process: 0.208013 second(s)
-	Time spent in child processes: 0.292018 second(s)
-
-======================================
-
-Processing file "bll.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.032002 second(s)
-Checking procedure delete$node... SUCCESS
-Checking procedure insert$node~int... SUCCESS
-
-Total verification time: 0.068004 second(s)
-	Time spent in main process: 0.048003 second(s)
-	Time spent in child processes: 0.020001 second(s)
-
-======================================
-
-Processing file "trees.ss"
-Parsing... done in 0.008001 second(s)
-Translating to core language... done in 1.760109 second(s)
-Checking procedure delete$node2~int... SUCCESS
-Checking procedure remove_min$node2... SUCCESS
-Checking procedure insert$node2~int... SUCCESS
-Checking procedure flatten$node2... SUCCESS
-Checking procedure count$node2... SUCCESS
-Checking procedure append$node2~node2... SUCCESS
-
-Total verification time: 3.996249 second(s)
-	Time spent in main process: 0.824051 second(s)
-	Time spent in child processes: 3.172198 second(s)
-
-======================================
-
-Processing file "append.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.040002 second(s)
-Checking procedure append$node~node... SUCCESS
-
-Total verification time: 0.216013 second(s)
-	Time spent in main process: 0.080005 second(s)
-	Time spent in child processes: 0.136008 second(s)
-
-======================================
-
-Processing file "complete.ss"
-Parsing... done in 0.008 second(s)
-Translating to core language... done in 3.204201 second(s)
-Checking procedure insert$node2~int... SUCCESS
-Checking procedure min_height$node2... SUCCESS
-Checking procedure height$node2... SUCCESS
-Checking procedure minim$int~int... SUCCESS
-Checking procedure maxim$int~int... SUCCESS
-
-Total verification time: 5.736358 second(s)
-	Time spent in main process: 1.456091 second(s)
-	Time spent in child processes: 4.280267 second(s)

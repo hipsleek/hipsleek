@@ -4,9 +4,9 @@ data node {
 }.
 
 pred ll<n,u,sm,lg> == self=null & n=0 &  sm<=lg & u=1
-        or self::node<v, null> &  n=1 & sm<=v<=lg & u=1
-	//or self::node<v, null> & n=1 & sm<=v<=lg & u=2
-        or self::node<v, q> * q::ll<n-1,_,sm,lg> & q!=null &  sm<=v<=lg & u=1
+        or self::node<v, null> &  n=1 & sm<=v<=lg & u=2
+	//or self::node<v, null> & n=1 & sm<=v<=lg & u=1
+        or self::node<v, q> * q::ll<n-1,_,sm,lg> & q!=null  &  sm<=v<=lg & u=2
         inv n>=0 & sm<=lg.
  
 pred ll2<n,u,sm,lg> == self=null & n=0 & u=1 & sm<=lg
