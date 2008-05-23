@@ -14,6 +14,7 @@ $sleek = "$exec_path/sleek";
 $perf_file = "performances";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
+# the file name can contain also some other arguments
 @hip_files=(["append.ss",1,"append","ERROR"]);
 # list of file, string with result of each entailment....
 @sleek_files=(
