@@ -184,8 +184,16 @@ $output_file = "log";
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
-		"s_list_1"=>[["sleek1.slk","Valid.Fail."],
-					["sleek2.slk","Valid.Fail."]]					
+		"s_list_1"=>[["sleek.slk","Valid.Valid.Valid.Fail.Valid."],
+					["sleek1.slk","Valid."],
+					["sleek10.slk","Valid.Fail."],
+					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
+					["sleek3.slk","Fail.Fail.Fail."],
+					["sleek4.slk","Valid.Valid."],
+					["sleek6.slk","Valid.Valid."],
+					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail.Fail."],
+					["sleek8.slk","Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail.Fail."],
+					["sleek9.slk","Fail."]]					
 			);
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
