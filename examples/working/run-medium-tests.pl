@@ -35,7 +35,7 @@ open(PERF, ">> $perf_file") || die ("Could not open $perf_file.\n");
 print PERF "\n it took: $time\n";
 close(PERF);
 if ($error_count > 0) {
-  print "Total number of errors: $error_count in files: $error_files.\n";
+  print "Total number of errors: $error_count in files:\n $error_files.\n";
 }
 
 exit(0);
@@ -92,8 +92,6 @@ sub sleek_process_file  {
 					$r = $r ."Fail.";
 				}
 			}
-			$s = length($output);
-			print "\nl$s\n";
 			if ($pos >=length($output)) 
 			{$pos = -1;}
 		}
