@@ -212,6 +212,8 @@ close(LOGFILE);
 if ($error_count > 0) {
   print "Total number of errors: $error_count in files:\n $error_files.\n";
 }
+else
+	{print "All test results where as expected.";}
 
 exit(0);
 
@@ -219,7 +221,7 @@ exit(0);
 sub hip_process_file {
   foreach $param (@param_list)
   {
-		$t_list = $runs{$hip_files};	
+		$t_list = $hip_files{$param};	
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
@@ -243,7 +245,7 @@ sub hip_process_file {
 sub sleek_process_file  {
   foreach $param (@param_list)
   {
-		$t_list = $runs{$sleek_files};	
+		$t_list = $sleek_files{$param};	
 		foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";
