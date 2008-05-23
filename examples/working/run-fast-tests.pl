@@ -6,7 +6,14 @@ use Getopt::Long;
 
 GetOptions( "stop"  => \$stop,
 			"sleek"  => \$run_sleek,
-			"hip"  => \$run_hip			);
+			"hip"  => \$run_hip,
+			"help" => \$help);
+if($help)
+{
+	print "./run-fast-tests.pl [-sleek][-hip][-help] list_of_test_suites";
+	exit(0);
+}
+@param_list = @ARGV;
 $exempl_path = ".";
 $exec_path = '../..';
 @excl_files = ();
@@ -16,11 +23,170 @@ $hip = "$exec_path/hip";
 $sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
-@hip_files=(["append.ss",1,"append","ERROR"]);
+%hip_files=(
+	"h_list_1" =>[
+				["2-3trees.ss",4,"make_node","SUCCESS",
+								"insert_left","SUCCESS",
+								"insert_middle","SUCCESS",
+								"insert_right","SUCCESS",
+								"insert","SUCCESS"],
+				["append.ss",1,"append","SUCCESS"],
+				["append-tail.ss",1,"append","SUCCESS"],
+				["avl-bind.ss",13,"height","SUCCESS",
+								 "rotate_left","SUCCESS",
+								 "rotate_right","SUCCESS",
+								 "get-max","SUCCESS",
+								 "rotate_double_left","SUCCESS",
+								 "rotate_double_right","SUCCESS",
+								 "build_avl1","SUCCESS",
+								 "build_avl2","SUCCESS",
+								 "insert","SUCCESS",
+								 "node_error","SUCCESS",
+								 "insert_inline","SUCCESS",
+								 "remove_min","SUCCESS",
+								 "delete","SUCCESS"],
+				["avl.ss",13,	 "height","SUCCESS",
+								 "rotate_left","SUCCESS",
+								 "rotate_right","SUCCESS",
+								 "get_max","SUCCESS",
+								 "rotate_double_left","SUCCESS",
+								 "rotate_double_right","SUCCESS",
+								 "build_avl1","SUCCESS",
+								 "build_avl2","SUCCESS",
+								 "node_error","SUCCESS",
+								 "insert","SUCCESS",
+								 "insert_inline","SUCCESS",
+								 "remove_min","SUCCESS",
+								 "delete","SUCCESS"],
+				["avl-orig-2.ss",8,"height","SUCCESS",
+								 "get_max","SUCCESS",
+								 "insert","SUCCESS",
+								 "double_left_child","SUCCESS",
+								 "double_right_child","SUCCESS",
+								 "rotate_left_child","SUCCESS",
+								 "rotate_right_child","SUCCESS",
+								 #"f","SUCCESS","g","SUCCESS","h","SUCCESS","k","SUCCESS","test","SUCCESS",
+								 "rotate_left_child_2","SUCCESS"],
+			    ["bll.ss",2,"insert","SUCCESS",
+							"delete","SUCCESS"],
+				["bubble.ss",5, "id2","SUCCESS",
+								"id3","SUCCESS",
+								"bubble","SUCCESS",
+								"bsort","SUCCESS",
+								"skip","SUCCESS"],
+				["cll",5,"test","SUCCESS",
+						 "insert","SUCCESS",
+						 "count_rest","SUCCESS",
+						 "count","SUCCESS",
+						 "delete","SUCCESS"],
+				["complete.ss",5,"maxim","SUCCESS",
+								 "minim","SUCCESS",
+								 "height","SUCCESS",
+								 "min_height","SUCCESS",
+								 "insert","SUCCESS"],
+				["dll.ss",13,"insert","SUCCESS",
+							 "delete","SUCCESS",
+							 "delete1","ERROR",
+							 "test_del","SUCCESS",
+							 "test_del2","SUCCESS",
+							 "test_fold","SUCCESS",
+							 "append","SUCCESS",
+							 "append1","SUCCESS",
+							 "f1","SUCCESS",
+							 "f2","SUCCESS",
+							 "append3","SUCCESS",
+							 "find_last","SUCCESS",
+							 "id1","SUCCESS"	],
+				["heaps.ss",10,"insert","SUCCESS",
+								"insert1","SUCCESS",
+								"deleteoneel","SUCCESS",
+								"deleteoneel1","SUCCESS",
+								"deleteone","SUCCESS",
+								"deleteone1","SUCCESS",
+								"ripple","SUCCESS",
+								"ripple1","SUCCESS",
+								"deletemax","SUCCESS",
+								"deletemax1","SUCCESS"],
+				["insertion.ss",2,"insert","SUCCESS",
+								  "insertion_sort","SUCCESS"],
+				["ll.ss",13,"append","SUCCESS",
+						  "ret_first","SUCCESS",
+						  "get_next","SUCCESS",
+						  "set_next","SUCCESS",
+						  "set_null","SUCCESS",
+						  "get_next_next","SUCCESS",
+						  "insert","SUCCESS",
+						  "delete","SUCCESS",
+						  "delete1","SUCCESS",
+						  "create_list","SUCCESS",
+						  "rev","SUCCESS",
+						  "reverse1","SUCCESS",
+						  "test","SUCCESS"],
+				["merge.ss",7,"count","SUCCESS",
+							  "split_func","SUCCESS",
+							  "div2","SUCCESS",
+							  "merge_sort","SUCCESS",
+							  "merge","SUCCESS",
+							  "insert","SUCCESS",
+							  "merge_sort_1","SUCCESS"],
+				["perfect.ss",5,"simple_insert","SUCCESS",
+								"create","SUCCESS",
+								"maxim","SUCCESS",
+								"height","SUCCESS",
+								"insert","SUCCESS"],
+				["qsort.ss",3,	"partition","SUCCESS",
+								"append_bll","SUCCESS",
+								"qsort","SUCCESS"],
+				["qsort-tail.ss",2,"qsort","SUCCESS",
+									"partition1","SUCCESS"],
+				["rb.ss",22,"rotate_case_3","SUCCESS",
+							"case_2","SUCCESS",
+							"rotate_case_3r","SUCCESS",
+							"case_2r","SUCCESS",
+							"is_red","SUCCESS",
+							"is_black","SUCCESS",
+							"del_6","SUCCESS",
+							"del_6r","SUCCESS",
+							"del_5","SUCCESS",
+							"del_5r","SUCCESS",
+							"del_4","SUCCESS",
+							"del_4r","SUCCESS",
+							"del_3","SUCCESS",
+							"del_3r","SUCCESS",
+							"del_2","SUCCESS",
+							"del_2r","SUCCESS",
+							"bh","SUCCESS",
+							"remove_min","SUCCESS",
+							"del","SUCCESS",
+							"test_insert","SUCCESS",
+							"node_error","SUCCESS",
+							"insert","SUCCESS"],
+				["selection.ss",3,"find_min","SUCCESS",
+								"delete_min","SUCCESS",
+								"selection_sort","SUCCESS"],
+				["sll.ss",6,"insert","SUCCESS",
+							"insert2","SUCCESS",
+							"delete","SUCCESS",
+							"get_tail","SUCCESS",
+							"insertion_sort","SUCCESS",
+							"id","SUCCESS"],
+				["trees.ss",11,"append","SUCCESS",
+								"append1","SUCCESS",
+								"count","SUCCESS",
+								"flatten","SUCCESS",
+								"flatten1","SUCCESS",
+								"insert","SUCCESS",
+								"insert1","SUCCESS",
+								"remove_min","SUCCESS",
+								"remove_min1","SUCCESS",
+								"delete","SUCCESS",
+								"delete1","SUCCESS"]
+				]);
 # list of file, string with result of each entailment....
-@sleek_files=(
-			["sleek1.slk","Valid.Fail."],
-			["sleek2.slk","Valid.Fail."]);
+%sleek_files=(
+		"s_list_1"=>[["sleek1.slk","Valid.Fail."],
+					["sleek2.slk","Valid.Fail."]]					
+			);
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 if ($run_hip)
@@ -43,61 +209,69 @@ exit(0);
 
 
 sub hip_process_file {
-  foreach $test (@hip_files)
-	{
-		print "Checking $test->[0]\n";
-
-		$output = `$hip $exempl_path/hip/$test->[0] 2>&1`;
-		print LOGFILE "\n======================================\n";
-		print LOGFILE "$output";
-		$limit = $test->[1]*2+2;
-		for($i = 2; $i<$limit;$i+=2)
+  foreach $param (@param_list)
+  {
+		$t_list = $runs{$hip_files};	
+		foreach $test (@{$t_list})
 		{
-			if($output !~ /Checking procedure $test->[$i].*$test->[$i+1]/)
+			print "Checking $test->[0]\n";
+
+			$output = `$hip $exempl_path/hip/$test->[0] 2>&1`;
+			print LOGFILE "\n======================================\n";
+			print LOGFILE "$output";
+			$limit = $test->[1]*2+2;
+			for($i = 2; $i<$limit;$i+=2)
 			{
-				$error_count++;
-				$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+				if($output !~ /Checking procedure $test->[$i].*$test->[$i+1]/)
+				{
+					$error_count++;
+					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+				}
 			}
 		}
 	}
 }
 
 sub sleek_process_file  {
-	foreach $test (@sleek_files)
-	{
-		print "Checking $test->[0]\n";
-		$output = `$sleek $exempl_path/sleek/$test->[0] 2>&1`;
-		print LOGFILE "\n======================================\n";
-        print LOGFILE "$output";
-		$pos = 0;
-		$r = "";
-		while($pos >= 0)
-		{
-			$i = index($output, "Valid",$pos);
-			$j = index($output, "Fail",$pos);
-			if ($i==-1 && $j == -1)
-				{$pos = -1;}
-			else
+  foreach $param (@param_list)
+  {
+		$t_list = $runs{$sleek_files};	
+		foreach $test (@{$t_list})
 			{
-				if(($i<$j || $j==-1)&& ($i>=0))
-				{
-					$pos=$i+3;
-					$r = $r ."Valid.";
-				}
+			print "Checking $test->[0]\n";
+			$output = `$sleek $exempl_path/sleek/$test->[0] 2>&1`;
+			print LOGFILE "\n======================================\n";
+	        print LOGFILE "$output";
+			$pos = 0;
+			$r = "";
+			while($pos >= 0)
+			{
+				$i = index($output, "Valid",$pos);
+				$j = index($output, "Fail",$pos);
+				if ($i==-1 && $j == -1)
+					{$pos = -1;}
 				else
 				{
-					$pos=$j+3;
-					$r = $r ."Fail.";
+					if(($i<$j || $j==-1)&& ($i>=0))
+					{
+						$pos=$i+3;
+						$r = $r ."Valid.";
+					}
+					else
+					{
+						$pos=$j+3;
+						$r = $r ."Fail.";
+					}
 				}
+				if ($pos >=length($output)) 
+				{$pos = -1;}
 			}
-			if ($pos >=length($output)) 
-			{$pos = -1;}
+			if($r !~ /^$test->[1]$/)
+			{
+				print "Unexpected result with : $test->[0]\n";
+				$error_count++;
+				$error_files = $error_files . " " . $test->[0];
+			}  
 		}
-		if($r !~ /^$test->[1]$/)
-		{
-			print "Unexpected result with : $test->[0]\n";
-			$error_count++;
-			$error_files = $error_files . " " . $test->[0];
-		}  
 	}
 }
