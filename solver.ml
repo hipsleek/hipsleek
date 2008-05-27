@@ -699,9 +699,10 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 			 	What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.		  
 		  *) 
 		  if not (CP.disjoint evars fvars) then (* to conseq *)
-		  	CP.mkTrue pos, f)
+		  	(CP.mkTrue pos, f)
 		  else (* to ante *)
-				(f, CP.mkTrue pos) in
+				(f, CP.mkTrue pos) 
+	in
 	(* -- added on 21.05.2008 *)
 	(* try to obtain as much as a CNF form as possible so that the splitting of bindings between antecedent and consequent is more accurate *)
 	let f = (normalize_to_CNF f0 pos) in		
@@ -1916,8 +1917,11 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 								(tmp_res1, tmp_prf1) (* only report the successful branch *)
 							  else
 								(tmp_res2 @ tmp_res1, tmp_prf1 @ tmp_prf2)
-
-						  in (* start the main case analysis *)
+						
+						  in 
+						  (********************************)
+						  (* start the main case analysis *)
+						  (********************************)
 
 							if r_flag = Root then begin (* matching occurs at root *)
 							  if c1 = c2 then begin (* base case reduction *)
