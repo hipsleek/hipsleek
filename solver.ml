@@ -691,22 +691,17 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 		  else
 		  (* 
 		  	- 23.05.2008 -
-					  Current actions are:
+				Current actions are:
 		    (i) discard E2(g) which has already been proven
 		    (ii) move E1(f.g) to LHS for implicit instantiation
 		   	(iii) leave E3(e,f,g) to RHS for linking existential var e
 		
 			 	What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.		  
 		  *) 
-		   if not (CP.disjoint evars fvars) then (* to conseq *)
-		   	if (Util.empty (CP.difference fvars evars))	then	(* there is no free var *)
-		  		(*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
-					(CP.mkTrue pos, f)
-				else (* there are still free vars --> we wrap an existential and move the bindings to the antecedent *)	
-					(*let _ = print_string("\n[solver.ml, split_universal]: FV in " ^ (Cprinter.string_of_pure_formula f) ^ " : " ^ (Cprinter.string_of_spec_var_list (CP.difference fvars evars)) ^ "\n") in*)
-					(CP.mkExists evars f pos, f)
+		  if not (CP.disjoint evars fvars) then (* to conseq *)
+		  	CP.mkTrue pos, f)
 		  else (* to ante *)
-			(f, CP.mkTrue pos) in
+				(f, CP.mkTrue pos) in
 	(* -- added on 21.05.2008 *)
 	(* try to obtain as much as a CNF form as possible so that the splitting of bindings between antecedent and consequent is more accurate *)
 	let f = (normalize_to_CNF f0 pos) in		
@@ -726,7 +721,16 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 						^ (Cprinter.string_of_pure_formula to_ante)) pos;
 	Debug.devel_pprint ("split_universal: to_conseq: " 
 						^ (Cprinter.string_of_pure_formula to_conseq)) pos;
-	(to_ante, to_conseq)
+	let fvars = CP.fv f in
+
+	(* 27.05.2008 *)
+	if !Globals.move_exist_to_LHS & (not(Util.empty (CP.difference fvars evars)) & not(Util.empty evars))	then	
+		(* there still are free vars whose bondings were not moved to the LHS --> existentially quantify the whole formula and move it to the LHS *)
+		(* Ex.:  ex e. f1<e & e<=g or ex e. (f=1 & e=2 \/ f=2 & e=3) *)
+		(*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
+		let new_f = discard_uninteresting_constraint f vvars in	  		
+			((CP.mkAnd to_ante (CP.mkExists evars new_f pos) pos), to_conseq)
+	else (to_ante, to_conseq)
 
 
 (**************************************************************)
@@ -817,7 +821,7 @@ and remove_conj (f : CP.formula) (conj : CP.formula) pos : CP.formula = match f 
 	
  (discard_uninteresting_constraint f vvars) only maintains those vars containing vvars, which are vars of interest
 *)
-(*
+
 and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) : CP.formula = match f with  
 	| CP.BForm _ -> 
 		if CP.disjoint (CP.fv f) vvars then (CP.mkTrue no_pos)
@@ -826,7 +830,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Or(f1, f2, l) -> CP.Or(discard_uninteresting_constraint f1 vvars, discard_uninteresting_constraint f2 vvars, l)
   | CP.Not(f1, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, l)
   | _ -> f 
-*)
+
 
 (**************************************************************)
 (**************************************************************)

@@ -27,6 +27,8 @@ let set_proc_verified arg =
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
 let process_cmd_line () = Arg.parse [
+	("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
+	"Move instantiation (containing existential vars) to the LHS at the end of the folding process");
 	("--max-renaming", Arg.Set Globals.max_renaming,
 	"Always rename the bound variables");
 	("--anon-exist", Arg.Set Globals.anon_exist,

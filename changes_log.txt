@@ -442,7 +442,7 @@ es_evars:
 print: examples/wn2.ss:32: ctx:
 es_formula: (EX f_r_73, f_r_72 . x::pair<f_r_72, f_r_73> & f_r_33 = n & f_r_58 = n+1 & f_r_72 = f_r_58+1 & x' = x & tmp' = x)
 es_pure: 
-es_heap: true
+es_heap: truejoe
 es_evars: 
 SUCCESS
 
@@ -624,4 +624,24 @@ After:
 !!!interactive:17: split_universal: vvars: c, f_r_36, s2, l2
 !!!interactive:17: split_universal: to_ante: c = a+1 & s2 = sm & l2 = lg
 !!!interactive:17: split_universal: to_conseq: f_r_36 = 1
+
+REMARK: I'VE UNDONE THIS CHANGE BECAUSE:
+If E3(e,f,g) is only a simple atomic expression, it is
+probably not important to move to LHS. I was thinking of
+the scenario where we can a disjunct of larger expressions.
+Some examples that are useful to move are:
+
+
+  ex e. f1<e & e<=g
+or ex e. (f=1 & e=2 \/ f=2 & e=3)
+
+So perhaps, we should not move the implicit instantiation
+bit by bit but rather the whole thing that was suppose to
+go to consequent. In that case, it may hit performance.
+
+--> THE NEW CHANGE IS ALSO IN SOLVER.ML:
+method: split_universal
+new flag introduced: move_exist_to_LHS (option --move-exist-to-LHS)
+By default the flag is set to false, meaning that the optimization is not applied (the worry is that it might be expensive
+as it increases the size of the formula in the antecedent).
 ********************************************************************************************************************************

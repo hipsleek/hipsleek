@@ -68,6 +68,8 @@ let use_set = ref true
 
 let wrap_exist = ref false
 
+let move_exist_to_LHS = ref false
+
 let max_renaming = ref false
 
 let anon_exist = ref false
