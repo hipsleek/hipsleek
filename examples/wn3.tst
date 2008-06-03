@@ -14,8 +14,8 @@ pred ll2<n,u,sm,lg> == self=null & n=0 & u=1 & sm<=lg
         inv n>=0 & sm<=lg.
  
 checkentail x::node<w,q> * q::ll<a,b,sm,lg> & sm<=w<=lg & q!=null //& q=null
-	|- (exists d: x::ll<c,d,s2,l2>).  
-//	|- x::ll<c,d,s2,l2>.
+//	|- (exists d: x::ll<c,d,s2,l2>).  
+	|- x::ll<c,d,s2,l2>.
 // 	|- x::ll<n,u,sm,lg>.
 print residue.
 
