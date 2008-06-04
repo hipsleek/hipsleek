@@ -20,7 +20,7 @@ let rec omega_of_exp e0 = match e0 with
   | IConst (i, _) -> string_of_int i
   | Add (a1, a2, _) ->  (omega_of_exp a1) ^ " + " ^ (omega_of_exp a2)
   | Subtract (a1, a2, _) ->  (omega_of_exp a1) ^ " - " ^ (omega_of_exp a2)
-  | Mult (c, a, _) -> (string_of_int c) ^ (omega_of_exp a)
+  | Mult (c, a, _) -> (string_of_int c) ^ "(" ^ (omega_of_exp a) ^ ")"
   | Max _ 
   | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
 	| _ -> failwith ("Omega.omega_of_exp: bag constraint")
