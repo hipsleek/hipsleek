@@ -203,10 +203,22 @@ sub hip_process_file {
 			$limit = $test->[1]*2+2;
 			for($i = 2; $i<$limit;$i+=2)
 			{
-				if($output !~ /Checking procedure $test->[$i].*$test->[$i+1]/)
+				if ($test->[$i+1] eq "SUCCESS")
 				{
-					$error_count++;
-					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+					if($output =~ /Error(s) detected when checking procedure $test->[$i]/)
+					{
+				 		$error_count++;
+						$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+					}
+				}
+				else
+				{
+					 if($output !~ /Error(s) detected when checking procedure $test->[$i]/)
+                                        {
+                                                $error_count++;
+                                                $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+                                        }
+
 				}
 			}
 		}
