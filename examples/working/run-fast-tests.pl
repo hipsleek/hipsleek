@@ -205,7 +205,7 @@ sub hip_process_file {
 			print "$output";
 			for($i = 2; $i<$limit;$i+=2)
 			{
-				if($output !~ /Procedure $test->[$i].* result $test->[$i+1]/)
+				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";

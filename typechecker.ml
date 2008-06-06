@@ -760,10 +760,15 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				  not (U.empty res_ctx) in
 			let pp = proc.proc_static_specs @ proc.proc_dynamic_specs in (*TODO: fix this *)
 			let result = 
+				if List.for_all check_pre_post pp then begin
+				print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
+				true
+				  end else begin print_string ("\nProcedure "^proc.proc_name^" result FAIL\n"); false end in
+			  (*
 			  if List.for_all check_pre_post pp then begin
 				print_string ("SUCCESS\n");
 				true
-			  end else false in
+			  end else false in *)
 			  result
 		  end
 	end else
@@ -775,6 +780,7 @@ let check_proc_wrapper prog proc =
 	check_proc prog proc
   with _ as e ->
 	if !Globals.check_all then begin
+		print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
 	  print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
 	  false
 	end else
