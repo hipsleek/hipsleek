@@ -202,7 +202,7 @@ sub hip_process_file {
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
-			print "$output";
+			#print "$output";
 			for($i = 2; $i<$limit;$i+=2)
 			{
 				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
