@@ -8,7 +8,7 @@ GetOptions( "stop"  => \$stop,
 			"help" => \$help);
 if($help)
 {
-	print "./run-fast-tests.pl [-help] list_of_test_suites";
+	print "./run-fast-tests.pl [-help] hip|sleek|hip sleek";
 	exit(0);
 }
 @param_list = @ARGV;
@@ -22,7 +22,7 @@ $sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
-	"h_list_1" =>[
+	"hip" =>[
 			#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
 				["append-tail.ss",1,"append","SUCCESS"],
@@ -161,7 +161,7 @@ $output_file = "log";
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
-		"s_list_1"=>[["sleek.slk","Valid.Valid.Valid.Fail.Valid."],
+		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail.Valid."],
 					["sleek1.slk","Valid."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
