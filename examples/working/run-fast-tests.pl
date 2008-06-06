@@ -22,6 +22,7 @@ $sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
+	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"hip" =>[
 			#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
@@ -201,28 +202,17 @@ sub hip_process_file {
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
+			print "$output";
 			for($i = 2; $i<$limit;$i+=2)
 			{
-				if ($test->[$i+1] eq "SUCCESS")
+				if($output !~ /Procedure $test->[$i].* result $test->[$i+1]/)
 				{
-					if($output =~ /Error(s) detected when checking procedure $test->[$i]/)
-					{
-				 		$error_count++;
-						$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-					}
-				}
-				else
-				{
-					 if($output !~ /Error(s) detected when checking procedure $test->[$i]/)
-                                        {
-                                                $error_count++;
-                                                $error_files=$error_files."error at: $test->[0] $test->[$i]\n";
-                                        }
-
+			 		$error_count++;
+					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
 				}
 			}
 		}
-	}
+  }
 }
 
 sub sleek_process_file  {
