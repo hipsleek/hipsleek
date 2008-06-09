@@ -8,41 +8,6 @@ module U = Util
 module TP = Tpdispatcher
 module PTracer = Prooftracer
 
-let rec find_spec_type prog (tc : CF.t_formula) tvar mn pos : (proc_decl * ((CF.formula * CF.formula) list)) =
-  let cbot, ctop, exact = find_type tvar tc in
-	if exact then (* exact type, use static specs *)
-	  let cdef = look_up_data_def pos prog.prog_data_decls ctop in
-	  let all_methods = look_up_all_methods prog cdef in
-	  let pdef = look_up_proc_def pos all_methods mn in
-		Debug.devel_pprint ("find_spec_type: found static spec in class " 
-							^ cdef.data_name) pos;
-		Debug.devel_pprint ("find_spec_type: spec found:\n"
-							^ (Cprinter.string_of_specs pdef.proc_static_specs)) pos;
-		(pdef, pdef.proc_static_specs)
-	else if cbot = "" then  (* t <: ctop, use dynamic specs *)
-	  let cdef = look_up_data_def pos prog.prog_data_decls ctop in
-	  let all_methods = look_up_all_methods prog cdef in
-	  let pdef = look_up_proc_def pos all_methods mn in
-		Debug.devel_pprint ("find_spec_type: found dynamic spec in class " 
-							^ cdef.data_name) pos;
-		Debug.devel_pprint ("find_spec_type: spec found:\n"
-							^ (Cprinter.string_of_specs pdef.proc_dynamic_specs)) pos;
-		(pdef, pdef.proc_dynamic_specs)
-	else 
-	  (* 
-		 cbot < t <: ctop: find classes from cbot to ctop, 
-		 use the static specs of the lowest class
-	  *)
-	  let _, cdefs = find_classes cbot ctop in
-	  let cdef = List.hd cdefs in
-	  let all_methods = look_up_all_methods prog cdef in
-	  let pdef = look_up_proc_def pos all_methods mn in
-		Debug.devel_pprint ("find_spec_type: found static spec in class " 
-							^ cdef.data_name) pos;
-		Debug.devel_pprint ("find_spec_type: spec found:\n"
-							^ (Cprinter.string_of_specs pdef.proc_static_specs)) pos;
-		(pdef, pdef.proc_static_specs)
-
 (* checking expression *)
 
 let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post e0 : CF.context list = match e0 with
@@ -156,10 +121,10 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		(*09.05.2008 ---*)
 		(* 09.06.08*)
 		(*let ext_var = CP.SpecVar (CP.OType c, c, Unprimed) in*)
-	  let t_var = CP.SpecVar (CP.OType c, c, Unprimed) in
+	  (*let t_var = CP.SpecVar (CP.OType c, c, Unprimed) in*)
 	  let vdatanode = CF.DataNode ({CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
 									CF.h_formula_data_name = c;
-									CF.h_formula_data_arguments = t_var (*:: ext_var*) :: vs_prim;
+									CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
 									CF.h_formula_data_pos = pos}) in
 	  let vheap = CF.formula_of_heap vdatanode pos in
 	  let rs_prim, prf = heap_entail prog false unfolded vheap pos in
@@ -283,13 +248,18 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		  view, unfold, fold, unfold, fold, etc...
 		  end 
 	  *)
+	  
   | ICall ({exp_icall_receiver = recv;
 			exp_icall_receiver_type = recv_t; (* this is the type of the receiver *)
 			exp_icall_type = ret_t; (* this is the return type *)
 			exp_icall_method_name = mn;
 			exp_icall_arguments = vs_prim;
 			exp_icall_visible_names = p_svars;
-			exp_icall_pos = pos}) -> begin (* mn is mingled name of the method *)
+			exp_icall_pos = pos}) -> 
+									Err.report_error {Err.error_loc = pos;
+								  									Err.error_text = "[typechecker.ml]: We do not support instant calls"}	
+		(* commented out on 09.06.08: we don't care about ICall for now --> it can be removed   
+		begin (* mn is mingled name of the method *)
 	  let check_conjunct ctx proc specs : CF.context list =
 		let vs = recv :: vs_prim in (* actual arguments, including receiver *)
 		let fargs = (recv_t, "this") :: proc.proc_args in (* formal ones, including this *)
@@ -436,6 +406,8 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 	  let tmp2 = List.concat tmp1 in
 		tmp2
 	end
+	*)
+	
   | IConst ({exp_iconst_val = i;
 			 exp_iconst_pos = pos}) -> 
 	  let c_e = CP.IConst (i, pos) in
@@ -461,18 +433,18 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 	  let _ = (print_string ("\n[typechecker.ml, line 410]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n")) in
 	  *)
 		(*09.05.2000 ---*)
-	  let type_var = CP.SpecVar (CP.OType c, fn1, Unprimed) in
+	  (*let type_var = CP.SpecVar (CP.OType c, fn1, Unprimed) in
 	  let type_constr = CF.TypeExact ({CF.t_formula_sub_type_var = type_var;
-									   CF.t_formula_sub_type_type = c}) in
+									   CF.t_formula_sub_type_type = c}) in*)
 	  (*c let ext_var = CP.SpecVar ((CP.OType ("Ext~" ^ pname ^ "~" ^ c)), fn2, Unprimed) in*)
 	  (*let ext_null = CP.mkNull ext_var pos in*)
 	  let heap_node = CF.DataNode ({CF.h_formula_data_node = CP.SpecVar (CP.OType c, res, Unprimed);
 									CF.h_formula_data_name = c;
 									CF.h_formula_data_arguments = 
-									   type_var (*:: ext_var*) :: heap_args;
+									   (*type_var :: ext_var :: *) heap_args;
 									CF.h_formula_data_pos = pos}) in
 	  (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	  let heap_form = CF.mkBase heap_node (CP.mkTrue pos) type_constr pos in
+	  let heap_form = CF.mkBase heap_node (CP.mkTrue pos) CF.TypeTrue pos in
 	  let res = 
 	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c heap_form pos) ctx 
 	  	else List.map (fun c -> CF.normalize_clash_context_formula c heap_form pos) ctx 

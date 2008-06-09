@@ -72,7 +72,7 @@ let move_exist_to_LHS = ref false
 
 let max_renaming = ref false
 
-let anon_exist = ref false
+let anon_exist = ref true
 
 let n_xpure = ref 1
 

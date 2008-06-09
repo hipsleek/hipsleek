@@ -37,7 +37,7 @@ let rec string_of_h_formula h = match h with
       (string_of_h_formula h1) ^ " * " ^ (string_of_h_formula h2)
   | DataNode ({h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs; h_formula_data_pos = pos})  ->
 	  (string_of_spec_var sv) ^ "::" ^ c 
-	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var (List.tl (List.tl svs)))) ^ ">"
+	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var (*(List.tl (List.tl*) svs (*))*))) ^ ">"
   | ViewNode ({h_formula_view_node = sv; 
 			   h_formula_view_name = c; 
 			   h_formula_view_arguments = svs; 
@@ -154,7 +154,8 @@ and string_of_pure_formula = function
 (* pretty printing for a cformula *)                                                         (*NOT DONE*)
 
 let rec string_of_t_formula = function
-  | TypeExact ({t_formula_sub_type_var = v;
+(* commented on 09.06.08
+ | TypeExact ({t_formula_sub_type_var = v;
 				t_formula_sub_type_type = c}) -> 
 	  (string_of_spec_var v) ^ " = " ^ c
   | TypeSub ({t_formula_sub_type_var = v;
@@ -162,7 +163,7 @@ let rec string_of_t_formula = function
 	  (string_of_spec_var v) ^ " <: " ^ c
   | TypeSuper ({t_formula_sub_type_var = v;
 				t_formula_sub_type_type = c}) -> 
-	  (string_of_spec_var v) ^ " > " ^ c
+	  (string_of_spec_var v) ^ " > " ^ c*)
   | TypeAnd ({t_formula_and_f1 = f1;
 			  t_formula_and_f2 = f2}) -> 
 	  (string_of_t_formula f1) ^ " & " ^ (string_of_t_formula f2)

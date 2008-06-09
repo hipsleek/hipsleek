@@ -17,7 +17,7 @@ $exec_path = '../..';
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip";
+$hip = "$exec_path/hip --LHS-wrap-exist";
 $sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
@@ -185,7 +185,7 @@ if ($error_count > 0) {
   print "Total number of errors: $error_count in files:\n $error_files.\n";
 }
 else
-	{print "All test results where as expected.";}
+	{print "All test results were as expected.\n";}
 
 exit(0);
 

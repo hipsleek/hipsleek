@@ -33,65 +33,6 @@ let no_check_outer_vars = ref false (*  *)
    When exact is true, t = ctop and cbot = "".
    When exact is false, cbot < t <: ctop
 *)
-let find_type (tvar0 : CP.spec_var) (tc0 : t_formula) : (ident * ident * bool) = 
-  let rec helper ((cbot, ctop, exact) as cur_type : (ident * ident * bool)) (tc : t_formula) = match tc with
-	| TypeAnd ({t_formula_and_f1 = t1;
-				t_formula_and_f2 = t2}) -> begin
-		let res1 = helper cur_type t1 in
-		let res2 = helper res1 t2 in
-		  res2
-	  end
-	| TypeExact ({t_formula_sub_type_var = tvar;
-				  t_formula_sub_type_type = c}) -> begin  (* assuming the program is well-typed *)
-		if CP.eq_spec_var tvar0 tvar then
-		  let bot_type = CP.OType cbot in
-		  let top_type = CP.OType ctop in
-		  let c_type = CP.OType c in
-			if sub_type bot_type c_type && (not (cbot = c)) && sub_type c_type top_type then
-			  ("", c, true)
-			else
-			  failwith ("find_type: inconsistency")
-		else
-		  cur_type
-	  end
-	| TypeSub ({t_formula_sub_type_var = tvar;
-				t_formula_sub_type_type = c})-> begin (* tc is t <: C *)
-		if CP.eq_spec_var tvar0 tvar then
-		  let bot_type = CP.OType cbot in
-		  let top_type = CP.OType ctop in
-		  let c_type = CP.OType c in
-			if (not (cbot = "")) && sub_type c_type bot_type then
-			  failwith ("find_type: inconsistency")
-			else if exact then
-			  if sub_type c_type top_type && not (c = ctop) then (* t = Ct & t <: C & C < Ct *)
-				failwith ("find_type: inconsistency")
-			  else
-				cur_type
-			else if sub_type c_type top_type then  (* not exact  *)
-			  (cbot, c, exact)
-			else
-			  cur_type
-		else (* tc is not talking about the same var, ignore it *)
-		  cur_type
-	  end
-	| TypeSuper ({t_formula_sub_type_var = tvar;
-				  t_formula_sub_type_type = c})-> begin (* tc is C < t *)
-		if CP.eq_spec_var tvar0 tvar then
-		  let bot_type = CP.OType cbot in
-		  let top_type = CP.OType ctop in
-		  let c_type = CP.OType c in
-			if sub_type top_type c_type then
-			  failwith ("find_type: inconsistency") (* t <: top_type & C < t & top_type <: C *)
-			else if sub_type bot_type c_type then (* "" is also handled here as null type  *)
-			  (c, ctop, exact)
-			else
-			  cur_type
-		else
-		  cur_type
-	  end
-	| TypeTrue | TypeFalse -> cur_type
-  in
-	helper ("", "Object", false) tc0
 
 (* satisfiability check *)
 (* and is_satisfiable (f : constr) : bool = *)
@@ -1649,9 +1590,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 							flush stdout;
 *)
 							let f_univ_vars = CP.fresh_spec_vars coer.coercion_univ_vars in
-							(*--- 09.05.2008 *)
 							(*let _ = (print_string ("\n[solver.ml, line 1456]: fresh name = " ^ (Cprinter.string_of_spec_var_list f_univ_vars) ^ "!!!!!!!!!!!\n")) in*)
-							(*09.05.2008 ---*)
 (*
 							let _ = print_string ("univ_vars: " 
 												  ^ (String.concat ", " 

@@ -540,6 +540,7 @@ es_formula: (EX Anon_f_r_12, Anon_f_r_13 . xs::sll<n, Anon_f_r_12, Anon_f_r_13> 
 es_pure: 
 es_heap: true
 es_evars: 
+********************************************************************************************************************************
 
 Addition to the above: On 17.05.2008 changed more rename_bound_vars to rename_clash_bound_vars
 and normalize to normalize_only_clash_rename. Actually, I did not change them, but made it as a choice 
@@ -645,3 +646,131 @@ new flag introduced: move_exist_to_LHS (option --move-exist-to-LHS)
 By default the flag is set to false, meaning that the optimization is not applied (the worry is that it might be expensive
 as it increases the size of the formula in the antecedent).
 ********************************************************************************************************************************
+--No--: 14
+--By--: Cristina 
+--Date--: 09.06.2008
+--File--: solver.ml + cformula.ml + astsimpl.ml + cprinter.ml + typechecker.ml
+
+--Change--:
+ Remove for now the type and extension fields related to the OO extension.
+
+--Comments--:
+	1. From h_formula_data (in cformula.ml), remove the first two arguments of h_formula_data_arguments representing the type variable 
+	and the pointer to the next extension:
+		and h_formula_data = { h_formula_data_node : CP.spec_var;
+					   h_formula_data_name : ident;
+					   h_formula_data_arguments : CP.spec_var list;
+					   _____________________________________________________
+					   (* first argument: type variable
+						  second argument: pointer to the next extension *)
+						 _____________________________________________________
+					   h_formula_data_pos : loc }
+	2. Make sure to remove these two fields from everywhere!
+	3. Change t_formula (in cformula.ml) such that it only has 3 constructors: 
+	type t_formula = (* type constraint *)
+	___________________________________________________________________________________________________________________
+	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
+	| TypeExact of t_formula_sub_type (* for t = C *)
+	| TypeSub of t_formula_sub_type (* for t <: C *)
+	| TypeSuper of t_formula_sub_type (* for t < C *)
+	*)
+	___________________________________________________________________________________________________________________
+	| TypeAnd of t_formula_and
+	| TypeTrue
+	| TypeFalse
+	4. Everywhere there is something with type t_formula --> use TypeTrue!!
+ 				   
+
+--Examples (see file wn6.ss)--:
+data cell {
+        int val;
+}
+
+pd<x,y> == self::cell<x> & y=2x inv y=2x;
+
+void test2(cell l)
+ requires l::pd<x,y>
+ ensures l::pd<x+1,y+2>;
+{
+ int t;
+ t=l.val;
+ t=t+1;
+ l.val = t;
+ dprint;
+}
+
+void main2()
+{
+ cell n=new cell(0);
+ dprint;
+ test2(n);
+ ---dprint ----- (this is the dprint for which we take the result);
+ test2(n);
+ dprint;
+}
+
+
+BEFORE:
+print: examples/wn6.ss:24: ctx:
+es_formula: (EX f_r_45, f_r_44 . n'::pd<f_r_44, f_r_45> & f_r_29 = 0 & cell = f_r_19 & cell = f_r_20 & f_r_44 = f_r_29+1 & f_r_45 = (2 * f_r_29)+2 & 2 * f_r_29 = 2 * f_r_29)
+es_pure: 
+es_heap: true
+es_evars: 
+-------------------------------------------------------
+AFTER (the constraints related to the type and extension vars, cell = f_r_19 & cell = f_r_20, have disappeared):
+print: examples/wn6.ss:24: ctx:
+es_formula: (EX f_r_43, f_r_42 . n'::pd<f_r_42, f_r_43> & f_r_29 = 0 & f_r_42 = f_r_29+1 & f_r_43 = (2 * f_r_29)+2 & 2 * f_r_29 = 2 * f_r_29)
+es_pure: 
+es_heap: true
+es_evars: 
+********************************************************************************************************************************
+--No--: 15
+--By--: Cristina 
+--Date--: 09.06.2008
+--File--: cformula.ml + cpure.ml +solver.ml
+--Change--:
+	1. Utilities for existential quantifier elimination: 
+	- before we were only searching for substitutions of k form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
+	- now, we want to be more aggressive and search for substitutions of the form v1 = exp2; 
+	however, we can only apply these substitutions to the pure part 	(due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
+	2.(in solver.ml) Add a call to elim_exists_exp in method elim_exists_ctx.
+
+--Comments--:
+Repeat
+ 	- Take the first possible substitution and apply it
+Until no change
+	Remarks:
+ 	- Try only for those existential vars that are not contained in FV(heap part)
+ 	- Check for circularity:
+ 		if v = exp then v \notin FV(e)
+
+--Examples (for wn6.ss)--:
+BEFORE:
+print: examples/wn6.ss:24: ctx:
+es_formula: (EX f_r_46, f_r_47, f_r_25 . n'::pd<f_r_46, f_r_47> & f_r_31 = 0 & f_r_30 = null & cell = f_r_19 & cell = f_r_30 & f_r_25 = 2 * f_r_31 & f_r_46 = f_r_31+1 & f_r_47 = f_r_25+2 & f_r_25 = 2 * f_r_31)
+es_pure: 
+es_heap: true
+es_evars
+
+AFTER:
+print: examples/wn6.ss:24: ctx:
+es_formula: (EX f_r_46, f_r_47, f_r_25 . n'::pd<f_r_46, f_r_47> & f_r_31 = 0 & f_r_30 = null & cell = f_r_19 & cell = f_r_30 & f_r_25 = 2 * f_r_31 & f_r_46 = f_r_31+1 & f_r_47 = f_r_25+2 & f_r_25 = 2 * f_r_31)
+es_pure: 
+es_heap: true
+es_evars 		 		
+******************************************************************************************************************************** 		
+TODO:
+	* In file cpure.ml there are some utilities for simplifications:
+			- we do some basic simplifications: eliminating identities where the LHS is identical to RHS (in method elim_idents defined in cpure.ml)
+	* In file cformula.ml, method apply_one_exp, we have placed a call to elim_idents. However, this call causes some tests to fail.
+	Therefore, we have commented it for now. This needs to be investigated!
+******************************************************************************************************************************** 		
+I've redone	change 4 -- now, after the modifications we have done in the meantime, it seems to work 
+(* each fresh variable introduced must be existentially quantified - quantify them even if they are in precond *)		
+******************************************************************************************************************************** 		
+I've redone change 3:
+- All anonymous vars were made existential vars. Again due to qsort-tail, this change was undone and we've added a flag to 
+enable it. Now, as qsort-tail does not fail anymore, I reversed the flag: whenever it is not added, the optimization is enabled. 
+- change flag --anon-exist into --no-anon-exist.			
+******************************************************************************************************************************** 		
+	

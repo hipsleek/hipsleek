@@ -11,9 +11,11 @@ module CP = Cpure
 module U = Util
 
 type t_formula = (* type constraint *)
+	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
 	| TypeExact of t_formula_sub_type (* for t = C *)
 	| TypeSub of t_formula_sub_type (* for t <: C *)
 	| TypeSuper of t_formula_sub_type (* for t < C *)
+	*)
 	| TypeAnd of t_formula_and
 	| TypeTrue
 	| TypeFalse
@@ -59,8 +61,6 @@ and h_formula_star = { h_formula_star_h1 : h_formula;
 and h_formula_data = { h_formula_data_node : CP.spec_var;
 					   h_formula_data_name : ident;
 					   h_formula_data_arguments : CP.spec_var list;
-					   (* first argument: type variable
-						  second argument: pointer to the next extension *)
 					   h_formula_data_pos : loc }
 
 and h_formula_view = { h_formula_view_node : CP.spec_var;
@@ -280,22 +280,14 @@ and fv (f : formula) : CP.spec_var list = match f with
 	  let res = CP.difference fvars qvars in
 		res
 
-and t_fv (t : t_formula) : CP.spec_var list = match t with
-  | TypeAnd ({t_formula_and_f1 = f1; t_formula_and_f2 = f2}) ->
-	  Util.remove_dups (t_fv f1 @ t_fv f2)
-  | TypeExact ({t_formula_sub_type_var = v})
-  | TypeSuper ({t_formula_sub_type_var = v})
-  | TypeSub ({t_formula_sub_type_var = v}) -> [v]
-  | TypeTrue | TypeFalse -> []
-
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 		   h_formula_star_h2 = h2; 
 		   h_formula_star_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v; 
 			   h_formula_data_arguments = vs0}) ->
-	  let vs = List.tl (List.tl vs0) in
-	  let vs = (List.tl vs0) in
+	  (*let vs = List.tl (List.tl vs0) in*)
+	  let vs = vs0 in
 		if List.mem v vs then vs else v :: vs
   | ViewNode ({h_formula_view_node = v; 
 			   h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
@@ -361,7 +353,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		   formula_base_pos = pos}) -> 
       Base ({formula_base_heap = h_apply_one s h; 
 			 formula_base_pure = CP.apply_one s p; 
-			 formula_base_type = t_apply_one s t;
+			 formula_base_type = t;
 			 formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
@@ -372,37 +364,9 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 	  else Exists ({formula_exists_qvars = qsv; 
 					formula_exists_heap =  h_apply_one s qh; 
 					formula_exists_pure = CP.apply_one s qp; 
-					formula_exists_type = t_apply_one s tconstr;
+					formula_exists_type = tconstr;
 					formula_exists_pos = pos})
 		
-
-and t_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : t_formula) = match f with
-  | TypeExact ({t_formula_sub_type_var = tv;
-				t_formula_sub_type_type = c}) ->
-	  if CP.eq_spec_var tv fr then
-		TypeExact ({t_formula_sub_type_var = t;
-				   t_formula_sub_type_type = c})
-	  else
-		f
-  | TypeSub  ({t_formula_sub_type_var = tv;
-				t_formula_sub_type_type = c}) ->
-	  if CP.eq_spec_var tv fr then
-		TypeSub ({t_formula_sub_type_var = t;
-				 t_formula_sub_type_type = c})
-	  else
-		f
-  | TypeSuper  ({t_formula_sub_type_var = tv;
-				 t_formula_sub_type_type = c}) ->
-	  if CP.eq_spec_var tv fr then
-		TypeSuper ({t_formula_sub_type_var = t;
-					t_formula_sub_type_type = c})
-	  else
-		f
-  | TypeAnd ({t_formula_and_f1 = f1;
-			  t_formula_and_f2 = f2}) ->
-	  TypeAnd ({t_formula_and_f1 = t_apply_one s f1;
-				t_formula_and_f2 = t_apply_one s f2})
-  | TypeTrue | TypeFalse -> f
 
 and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
   | Star ({h_formula_star_h1 = f1; 
@@ -838,6 +802,7 @@ and disj_count_ctx (ctx0 : context) = match ctx0 with
 		1 + t1 + t2
   | Ctx es -> disj_count es.es_formula
 
+(*
 and find_type_var (tc : h_formula) (v : ident) : CP.spec_var option = match tc with
   | Star ({h_formula_star_h1 = h1;
 		   h_formula_star_h2 = h2}) -> begin
@@ -848,7 +813,7 @@ and find_type_var (tc : h_formula) (v : ident) : CP.spec_var option = match tc w
 	end
   | DataNode ({h_formula_data_arguments = args}) -> Some (List.hd args)
   | ViewNode _ | HTrue | HFalse -> None
-
+*)
 (* order nodes in topological order *)
 
 module Node = struct
