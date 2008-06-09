@@ -10,7 +10,7 @@ data pair {
 
 pd<x,y> == self::cell<x> & y=2x inv true;
 
-void test(cell l)
+void test(cell l)  
  requires l::pd<x,y>
  ensures l::pd<x+1,y2>;
 {
@@ -27,13 +27,13 @@ void test2(cell l)
  t=l.val;
  t=t+1;
  l.val = t;
- dprint;
 }
 void main()
 {
  cell n=new cell(0);
  dprint;
  test(n);
+ dprint;
  test(n);
  dprint;
 }
@@ -42,6 +42,7 @@ void main2()
  cell n=new cell(0);
  dprint;
  test2(n);
+ dprint;
  test2(n);
  dprint;
 }

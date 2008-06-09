@@ -525,10 +525,10 @@ and fresh_spec_var (sv : spec_var) =
 
 and fresh_spec_vars (svs : spec_var list) = List.map fresh_spec_var svs
 
-(*
+(******************************************************************************************************************
 	22.05.2008 
 	Utilities for equality testing
-*)
+******************************************************************************************************************)
 
 and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) = 
 	let rec eq_spec_var_list_helper (sv1 : spec_var list) (sv2 : spec_var list) = match sv1 with
@@ -1088,3 +1088,106 @@ and drop_bag_b_formula (bf0 : b_formula) : b_formula = match bf0 with
 	  else
 		bf0
   | _ -> bf0
+
+
+(*************************************************************************************************************************
+	05.06.2008:
+	Utilities for existential quantifier elimination: 
+	- before we were only searching for substitutions of the form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
+	- now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part 
+	(due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
+*************************************************************************************************************************)	 
+
+and apply_one_exp ((fr, t) : spec_var * exp) f = match f with
+  | BForm bf -> BForm (b_apply_one_exp (fr, t) bf) 
+  | And (p1, p2, pos) -> And (apply_one_exp (fr, t) p1, 
+							  apply_one_exp (fr, t) p2, pos)
+  | Or (p1, p2, pos) -> Or (apply_one_exp (fr, t) p1, 
+							apply_one_exp (fr, t) p2, pos)
+  | Not (p, pos) -> Not (apply_one_exp (fr, t) p, pos)
+  | Forall (v, qf, pos) -> 
+	  if eq_spec_var v fr then f 
+	  else Forall (v, apply_one_exp (fr, t) qf, pos)
+  | Exists (v, qf, pos) -> 
+	  if eq_spec_var v fr then f 
+	  else Exists (v, apply_one_exp (fr, t) qf, pos)
+
+and b_apply_one_exp (fr, t) bf = match bf with
+  | BConst _ -> bf
+  | BVar (bv, pos) -> bf
+  | Lt (a1, a2, pos) -> Lt (e_apply_one_exp (fr, t) a1, 
+							e_apply_one_exp (fr, t) a2, pos)
+  | Lte (a1, a2, pos) -> Lte (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+  | Gt (a1, a2, pos) -> Gt (e_apply_one_exp (fr, t) a1, 
+							e_apply_one_exp (fr, t) a2, pos)
+  | Gte (a1, a2, pos) -> Gte (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+  | Eq (a1, a2, pos) -> 
+  		(*
+  		if (eq_b_formula bf (mkEq (mkVar fr pos) t pos)) then 
+  			bf
+  		else*) 
+  		Eq (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Neq (a1, a2, pos) -> Neq (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+  | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_one_exp (fr, t) a1, 
+									  e_apply_one_exp (fr, t) a2, 
+									  e_apply_one_exp (fr, t) a3, pos)
+  | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one_exp (fr, t) a1, 
+									  e_apply_one_exp (fr, t) a2, 
+									  e_apply_one_exp (fr, t) a3, pos)
+	| BagIn (v, a1, pos) -> bf
+	| BagNotIn (v, a1, pos) -> bf
+	(* is it ok?... can i have a set of boolean values?... don't think so..*)
+  | BagSub (a1, a2, pos) -> BagSub (a1, e_apply_one_exp (fr, t) a2, pos) 
+  | BagMax (v1, v2, pos) -> bf
+	| BagMin (v1, v2, pos) -> bf
+
+and e_apply_one_exp (fr, t) e = match e with
+  | Null _ | IConst _ -> e
+  | Var (sv, pos) -> if eq_spec_var sv fr then t else e
+  | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+  | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1, 
+										e_apply_one_exp (fr, t) a2, pos)
+  | Mult (c, a, pos) -> Mult (c, e_apply_one_exp (fr, t) a, pos)
+  | Max (a1, a2, pos) -> Max (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+  | Min (a1, a2, pos) -> Min (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+	(*| BagEmpty (pos) -> BagEmpty (pos)*)
+	| Bag (alist, pos) -> Bag ((e_apply_one_bag_exp (fr, t) alist), pos)
+	| BagUnion (alist, pos) -> BagUnion ((e_apply_one_bag_exp (fr, t) alist), pos)
+  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_bag_exp (fr, t) alist), pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one_exp (fr, t) a1, 
+							  e_apply_one_exp (fr, t) a2, pos)
+							  
+and e_apply_one_bag_exp (fr, t) alist = match alist with
+	|[] -> []
+	|a :: rest -> (e_apply_one_exp (fr, t) a) :: (e_apply_one_bag_exp (fr, t) rest)
+							  
+(******************************************************************************************************************
+	05.06.2008 
+	Utilities for simplifications:
+	- we do some basic simplifications: eliminating identities where the LHS = RHS
+******************************************************************************************************************)							  
+and elim_idents (f : formula) : formula = match f with
+  | And (f1, f2, pos) -> mkAnd (elim_idents f1) (elim_idents f2) pos
+  | Or (f1, f2, pos) -> mkOr (elim_idents f1) (elim_idents f2) pos
+  | Not (f1, pos) -> mkNot (elim_idents f1) pos
+  | Forall (sv, f1, pos) -> mkForall [sv] (elim_idents f1) pos
+  | Exists (sv, f1, pos) -> mkExists [sv] (elim_idents f1) pos
+  | BForm (f1) -> BForm(elim_idents_b_formula f1)
+  
+and elim_idents_b_formula (f : b_formula) : b_formula =  match f with
+  | Lte (e1, e2, pos)
+  | Gte (e1, e2, pos)
+  | Eq (e1, e2, pos) -> 
+  	if (eq_exp e1 e2) then BConst(true, pos)
+  	else f
+	| Neq (e1, e2, pos)
+  | Lt (e1, e2, pos)
+	| Gt (e1, e2, pos) ->
+		if (eq_exp e1 e2) then BConst(false, pos)
+  	else f

@@ -8,7 +8,7 @@ GetOptions( "stop"  => \$stop,
 			"opt" => \$optimized,
             "output=s" => \$output_file );
 
-$ss = '../../hip';
+$ss = '../../ss';
 if ($optimized) {
   $ss = '../../ss.opt';
 }

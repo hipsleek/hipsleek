@@ -258,7 +258,6 @@ and pos_of_formula (f : formula) : loc = match f with
   | Or ({formula_or_pos = pos}) -> pos
   | Exists ({formula_exists_pos = pos}) -> pos
 
-
 and fv (f : formula) : CP.spec_var list = match f with
   | Or ({formula_or_f1 = f1; 
 		 formula_or_f2 = f2}) -> Util.remove_dups (fv f1 @ fv f2)
@@ -867,3 +866,50 @@ module TopoNG = Graph.Topological.Make(NG)
 let topologize_formula (h0 : h_formula) : h_formula =
   let g = NG.create () in
 *)
+
+(*************************************************************************************************************************
+	05.06.2008:
+	Utilities for existential quantifier elimination: 
+	- before we were only searching for substitutions of k form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
+	- now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part 
+	(due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
+*************************************************************************************************************************)	 
+let rec subst_exp sst (f : formula) = match sst with
+  | s :: rest -> 
+	  let new_f = subst_exp rest (apply_one_exp s f) in
+	  (*let fv_new_f = fv new_f in
+		 	if List.mem (fst s) fv_new_f then 
+		 		let f = add_quantifiers [(fst s)] new_f in
+		 		let qvars, base_f = split_quantifiers f in
+		 		let h, p, t = split_components base_f in
+		 	 		mkExists qvars h (CP.mkAnd p (CP.mkEqExp (CP.mkVar (fst s) no_pos) (snd s) no_pos) no_pos) t no_pos 
+			else*) new_f
+  | [] -> f 
+  
+and subst_var_exp (fr, t) (o : CP.spec_var) = if CP.eq_spec_var fr o then t else o
+
+and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) -> 
+      Or ({formula_or_f1 = apply_one_exp s f1; formula_or_f2 =  apply_one_exp s f2; formula_or_pos = pos})
+  | Base ({formula_base_heap = h; 
+		   formula_base_pure = p; 
+		   formula_base_type = t;
+		   formula_base_pos = pos}) -> 
+    Base ({formula_base_heap = h; 
+     	formula_base_pure = CP.apply_one_exp s p;
+     	(* TODO: dolve this *)
+		 	(*formula_base_pure = CP.elim_idents (CP.apply_one_exp s p);*) (* substitute + easy simplification - eliminate identities where LHS identic to RHS *)
+		 	formula_base_type = t;
+		 	formula_base_pos = pos})
+  | Exists ({formula_exists_qvars = qsv; 
+			 formula_exists_heap = qh; 
+			 formula_exists_pure = qp; 
+			 formula_exists_type = tconstr;
+			 formula_exists_pos = pos}) -> 
+	  if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
+	  else Exists ({formula_exists_qvars = qsv; 
+					formula_exists_heap =  qh; 
+					formula_exists_pure = CP.apply_one_exp s qp; 
+					formula_exists_type = tconstr;
+					formula_exists_pos = pos})
+  

@@ -1,44 +1,391 @@
 
 ======================================
 
-======================================
+Processing file "./hip/append.ss"
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.036002 second(s)
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS
+
+Total verification time: 0.184011 second(s)
+	Time spent in main process: 0.120007 second(s)
+	Time spent in child processes: 0.064004 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/append-tail.ss"
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.048003 second(s)
+Checking procedure append$node~node~node~node... 
+Procedure append$node~node~node~node SUCCESS
+
+Total verification time: 1.588098 second(s)
+	Time spent in main process: 0.140008 second(s)
+	Time spent in child processes: 1.44809 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/bll.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.032001 second(s)
+Checking procedure delete$node... 
+Procedure delete$node SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+
+Total verification time: 0.076004 second(s)
+	Time spent in main process: 0.048003 second(s)
+	Time spent in child processes: 0.028001 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/bubble.ss"
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.040002 second(s)
+Checking procedure bsort$node... 
+Procedure bsort$node SUCCESS
+Checking procedure bubble$node... 
+Procedure bubble$node SUCCESS
+Checking procedure id3$node... 
+Procedure id3$node SUCCESS
+Checking procedure id2$node... 
+Procedure id2$node SUCCESS
+
+Total verification time: 1.260078 second(s)
+	Time spent in main process: 0.748046 second(s)
+	Time spent in child processes: 0.512032 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/cll.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.040003 second(s)
+Checking procedure delete$node... 
+Procedure delete$node SUCCESS
+Checking procedure count$node... 
+Procedure count$node SUCCESS
+Checking procedure count_rest$node~node... 
+Procedure count_rest$node~node SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+Checking procedure test$... 
+Procedure test$ SUCCESS
+
+Total verification time: 0.384023 second(s)
+	Time spent in main process: 0.200012 second(s)
+	Time spent in child processes: 0.184011 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/complete.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 3.212201 second(s)
+Checking procedure insert$node2~int... 
+Procedure insert$node2~int SUCCESS
+Checking procedure min_height$node2... 
+Procedure min_height$node2 SUCCESS
+Checking procedure height$node2... 
+Procedure height$node2 SUCCESS
+Checking procedure minim$int~int... 
+Procedure minim$int~int SUCCESS
+Checking procedure maxim$int~int... 
+Procedure maxim$int~int SUCCESS
+
+Total verification time: 5.788361 second(s)
+	Time spent in main process: 1.476092 second(s)
+	Time spent in child processes: 4.312269 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/dll.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.036002 second(s)
+Checking procedure f2$node2... 
+Procedure f2$node2 SUCCESS
+Checking procedure f1$node2... 
+Procedure f1$node2 SUCCESS
+Checking procedure append2$node2~node2... 
+Procedure append2$node2~node2 SUCCESS
+Checking procedure append1$node2~node2... 
+Procedure append1$node2~node2 SUCCESS
+Checking procedure append$node2~node2... 
+Procedure append$node2~node2 SUCCESS
+Checking procedure test_fold$... 
+Procedure test_fold$ SUCCESS
+Checking procedure test_del2$node2~node2... 
+Procedure test_del2$node2~node2 SUCCESS
+Checking procedure test_del$node2... 
+Procedure test_del$node2 SUCCESS
+Checking procedure delete1$node2~int... 
+Procedure delete1$node2~int SUCCESS
+Checking procedure delete$node2~int... 
+Procedure delete$node2~int SUCCESS
+Checking procedure insert$node2~int... 
+Procedure insert$node2~int SUCCESS
+
+Total verification time: 1.6121 second(s)
+	Time spent in main process: 0.956059 second(s)
+	Time spent in child processes: 0.656041 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/heaps.ss"
+Parsing... done in 0.012 second(s)
+Translating to core language... done in 0.208013 second(s)
+Checking procedure deletemax$node... 
+Procedure deletemax$node SUCCESS
+Checking procedure ripple$int~int~int~int~node~node... 
+Procedure ripple$int~int~int~int~node~node SUCCESS
+Checking procedure deleteone$int~int~node~node... 
+Procedure deleteone$int~int~node~node SUCCESS
+Checking procedure deleteoneel$node... 
+Procedure deleteoneel$node SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+
+Total verification time: 41.286579 second(s)
+	Time spent in main process: 5.260328 second(s)
+	Time spent in child processes: 36.026251 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/insertion.ss"
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.036002 second(s)
+Checking procedure insertion_sort$node~node... 
+Procedure insertion_sort$node~node SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+
+Total verification time: 0.680042 second(s)
+	Time spent in main process: 0.360022 second(s)
+	Time spent in child processes: 0.32002 second(s)
 
 ======================================
 
-======================================
+Processing file "./hip/ll.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.020001 second(s)
+Checking procedure rev$node~node... 
+Procedure rev$node~node SUCCESS
+Checking procedure create_list$int... 
+Procedure create_list$int SUCCESS
+Checking procedure delete$node~int... 
+Procedure delete$node~int SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+Checking procedure get_next_next$node... 
+Procedure get_next_next$node SUCCESS
+Checking procedure set_null$node... 
+Procedure set_null$node SUCCESS
+Checking procedure set_next$node~node... 
+Procedure set_next$node~node SUCCESS
+Checking procedure get_next$node... 
+Procedure get_next$node SUCCESS
+Checking procedure ret_first$node... 
+Procedure ret_first$node SUCCESS
+Checking procedure append$node~node... 
+Procedure append$node~node SUCCESS
+
+Total verification time: 0.548033 second(s)
+	Time spent in main process: 0.264016 second(s)
+	Time spent in child processes: 0.284017 second(s)
 
 ======================================
 
+Processing file "./hip/merge.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.048003 second(s)
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+Checking procedure merge$node~node... 
+Procedure merge$node~node SUCCESS
+Checking procedure merge_sort$node... 
+Procedure merge_sort$node SUCCESS
+Checking procedure split_func$node~int... 
+Procedure split_func$node~int SUCCESS
+Checking procedure count$node... 
+Procedure count$node SUCCESS
+
+Total verification time: 3.37221 second(s)
+	Time spent in main process: 0.852053 second(s)
+	Time spent in child processes: 2.520157 second(s)
+
 ======================================
+
+Processing file "./hip/perfect.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.048003 second(s)
+Checking procedure insert$node2~int... 
+Procedure insert$node2~int SUCCESS
+Checking procedure height$node2... 
+Procedure height$node2 SUCCESS
+Checking procedure maxim$int~int... 
+Procedure maxim$int~int SUCCESS
+Checking procedure create$int... 
+Procedure create$int SUCCESS
+Checking procedure simple_insert$node2~int... 
+Procedure simple_insert$node2~int SUCCESS
+
+Total verification time: 0.532032 second(s)
+	Time spent in main process: 0.248015 second(s)
+	Time spent in child processes: 0.284017 second(s)
+
+======================================
+
+Processing file "./hip/qsort.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.044003 second(s)
+Checking procedure qsort$node... 
+Procedure qsort$node SUCCESS
+Checking procedure append_bll$node~node... 
+Procedure append_bll$node~node SUCCESS
+Checking procedure partition$node~int... 
+Procedure partition$node~int SUCCESS
+
+Total verification time: 3.564222 second(s)
+	Time spent in main process: 0.996062 second(s)
+	Time spent in child processes: 2.56816 second(s)
+
+======================================
+
+Processing file "./hip/qsort-tail.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.072004 second(s)
+Checking procedure partition1$node~node~node~node~int... 
+Procedure partition1$node~node~node~node~int SUCCESS
+Checking procedure qsort$node~node... 
+assert:./hip/qsort-tail.ss:44: assert ok
+
+
+assert:./hip/qsort-tail.ss:45: assert ok
+
+
+print: ./hip/qsort-tail.ss:46: ctx:
+es_formula: f_r_1955::bnd_tail<f_r_1950, f_r_1951, f_r_1952, f_r_1953> * x'::node<f_r_1954, f_r_1955> & sm <= f_r_1954 & f_r_1954 <= lg & f_r_1955 != null & f_r_1950 = n-1 & f_r_1951 = f_r_56 & f_r_1952 = sm & f_r_1953 = lg & n > 0 & f_r_56 = tx & tx' = tx & !(f_r_75') & x != null & x' = x & !(f_r_75') & !(f_r_74') & f_r_1955 != null & !(f_r_74') & y' = null & ty' = null & tmp1' = null & temp' = f_r_1954
+es_pure: 
+es_heap: true
+es_evars: 
+
+Procedure qsort$node~node SUCCESS
+
+Total verification time: 56.139507 second(s)
+	Time spent in main process: 3.644227 second(s)
+	Time spent in child processes: 52.49528 second(s)
+
+======================================
+
+Processing file "./hip/rb.ss"
+Parsing... done in 0.020001 second(s)
+Translating to core language... done in 4.384274 second(s)
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+Checking procedure del$node~int... 
+Procedure del$node~int SUCCESS
+Checking procedure remove_min$node... 
+Procedure remove_min$node SUCCESS
+Checking procedure del_2r$node~node~node... 
+assert:./hip/rb.ss:279: assert ok
+
+
+assert:./hip/rb.ss:280: assert ok
+
+
+assert:./hip/rb.ss:281: assert ok
+
+
+Procedure del_2r$node~node~node SUCCESS
+Checking procedure del_2$node~node~node... 
+Procedure del_2$node~node~node SUCCESS
+Checking procedure del_3r$node~node~node... 
+Procedure del_3r$node~node~node SUCCESS
+Checking procedure del_3$node~node~node... 
+Procedure del_3$node~node~node SUCCESS
+Checking procedure del_4r$node~node~node... 
+Procedure del_4r$node~node~node SUCCESS
+Checking procedure del_4$node~node~node... 
+Procedure del_4$node~node~node SUCCESS
+Checking procedure del_5r$node~node~node~node~int... 
+Procedure del_5r$node~node~node~node~int SUCCESS
+Checking procedure del_5$node~node~node~node~int... 
+Procedure del_5$node~node~node~node~int SUCCESS
+Checking procedure del_6r$node~node~node~int... 
+Procedure del_6r$node~node~node~int SUCCESS
+Checking procedure del_6$node~node~node~int... 
+Procedure del_6$node~node~node~int SUCCESS
+Checking procedure is_black$node... 
+Procedure is_black$node SUCCESS
+Checking procedure is_red$node... 
+Procedure is_red$node SUCCESS
+Checking procedure case_2r$node~node~node~node... 
+Procedure case_2r$node~node~node~node SUCCESS
+Checking procedure rotate_case_3r$node~node~node... 
+Procedure rotate_case_3r$node~node~node SUCCESS
+Checking procedure case_2$node~node~node~node... 
+Procedure case_2$node~node~node~node SUCCESS
+Checking procedure rotate_case_3$node~node~node... 
+Procedure rotate_case_3$node~node~node SUCCESS
+
+Total verification time: 35.418213 second(s)
+	Time spent in main process: 14.160885 second(s)
+	Time spent in child processes: 21.257328 second(s)
+
+======================================
+
+Processing file "./hip/selection.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.044003 second(s)
+Checking procedure selection_sort$node... 
+Procedure selection_sort$node SUCCESS
+Checking procedure delete_min$node~int... 
+Procedure delete_min$node~int SUCCESS
+Checking procedure find_min$node... 
+Procedure find_min$node SUCCESS
+
+Total verification time: 0.732045 second(s)
+	Time spent in main process: 0.416026 second(s)
+	Time spent in child processes: 0.316019 second(s)
+
+======================================
+
+Processing file "./hip/sll.ss"
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.056003 second(s)
+Checking procedure id$int... 
+Procedure id$int SUCCESS
+Checking procedure insertion_sort$node~node... 
+Procedure insertion_sort$node~node SUCCESS
+Checking procedure get_tail$node... 
+Procedure get_tail$node SUCCESS
+Checking procedure delete$node~int... 
+Procedure delete$node~int SUCCESS
+Checking procedure insert2$node~node... 
+Procedure insert2$node~node SUCCESS
+Checking procedure insert$node~int... 
+Procedure insert$node~int SUCCESS
+
+Total verification time: 0.97206 second(s)
+	Time spent in main process: 0.540033 second(s)
+	Time spent in child processes: 0.432027 second(s)
+
+======================================
+
+Processing file "./hip/trees.ss"
+Parsing... done in 0.008001 second(s)
+Translating to core language... done in 1.820113 second(s)
+Checking procedure delete$node2~int... 
+Procedure delete$node2~int SUCCESS
+Checking procedure remove_min$node2... 
+Procedure remove_min$node2 SUCCESS
+Checking procedure insert$node2~int... 
+Procedure insert$node2~int SUCCESS
+Checking procedure flatten$node2... 
+Procedure flatten$node2 SUCCESS
+Checking procedure count$node2... 
+Procedure count$node2 SUCCESS
+Checking procedure append$node2~node2... 
+Procedure append$node2~node2 SUCCESS
+
+Total verification time: 4.148259 second(s)
+	Time spent in main process: 0.944059 second(s)
+	Time spent in child processes: 3.2042 second(s)

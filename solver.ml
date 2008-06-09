@@ -1042,7 +1042,14 @@ and elim_exists_ctx_list (ctx0 : context list) = match ctx0 with
 
 and elim_exists_ctx (ctx0 : context) = match ctx0 with
   | Ctx es -> 
-	  let f = elim_exists es.es_formula in
+	  let f_prim = elim_exists es.es_formula in
+	  (* 05.06.08 *)
+	  (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
+	  (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
+	  let f = elim_exists_exp f_prim in
+	  (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula after exp exist elim: " ^ Cprinter.string_of_formula f ^ "\n") in*)
+	  
+	  (* 05.06.08 *)
 		Ctx {es with es_formula = f}
   | OCtx (c1, c2) ->
 	  let sc1 = elim_exists_ctx c1 in
@@ -1535,9 +1542,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 										  h_formula_view_coercible = true;
 										  h_formula_view_origins = get_view_origins ln2;
 										  h_formula_view_pos = pos2}) in
-			(* 21.05.2008 *)
-			(*let _ = (print_string ("[solver.ml, heap_entail_non_empty_rhs_heap]: Global vars: " ^ (Cprinter.string_of_spec_var_list v2) ^ "\n")) in*)
-			(* 21.05.2008 *)
+			(* 21.05.2008 
+			let _ = (print_string ("[solver.ml, heap_entail_non_empty_rhs_heap]: Global vars: " ^ (Cprinter.string_of_spec_var_list v2) ^ "\n")) in
+			21.05.2008 *)
 			let fold_rs, fold_prf = fold prog fold_ctx view_to_fold (P.mkTrue pos) pos in
 			  if not (U.empty fold_rs) then
 				let b = { formula_base_heap = resth2;
@@ -1585,7 +1592,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 										^ (Cprinter.string_of_h_formula ln2) 
 										^ " is found in LHS\n") pos;
 					([], NoAlias)
-				  end else begin (* attempting to fold against the base case *)
+				  end 
+				  else begin (* attempting to fold against the base case *)
 					Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
 										^ "folding with no node on lhs: " 
 										^ (Cprinter.string_of_spec_var p2)
@@ -1595,14 +1603,12 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 										^ (Cprinter.string_of_h_formula ln2)
 										^ "\nrhs_p:\n" 
 										^ (Cprinter.string_of_pure_formula rhs_p)) pos;
-					(* get a variable from the lhs that are aliased
-					   with p2 to use in the folding *)
-					(*
+					(* get a variable from the lhs that are aliased with p2 to use in the folding 
 					  let tmp_vars1 = CP.fv lhs_p in
 					  let tmp_vars2 = List.filter (fun v -> CP.mem v p2aset) tmp_vars1 in
-					  let var_to_fold = List.hd tmp_vars2 in (* there must be at least one *)
+					  let var_to_fold = List.hd tmp_vars2 in (there must be at least one)
 					*)
-					do_fold p2 (* p2 is mentioned in LHS, p2 can be fold target *) 
+						do_fold p2 (* p2 is mentioned in LHS, p2 can be fold target *) 
 					  (* var_to_fold *)
 				  end (* end of emty anodes case *)
 				end
@@ -2072,3 +2078,106 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 		end
 	  | HFalse | HTrue | Star _ -> failwith ("heap_entail_conjunct: "
 											 ^ "something bad has happened to split_linear_node")
+
+(*************************************************************************************************************************
+	05.06.2008:
+	Utilities for existential quantifier elimination: 
+	- before we were only searching for substitutions of the form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
+	- now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part 
+	(due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
+	- also check that v1 is not contained in FV(exp2)
+*************************************************************************************************************************)	
+
+(* apply elim_exist_exp_loop until no change *)
+and elim_exists_exp (f0 : formula) : (formula) = 
+	let f, flag = elim_exists_exp_loop f0 in
+		if flag then (elim_exists_exp f)
+		else f
+
+(* removing existentail using ex x. (x=e & P(x)) <=> P(e) *)
+and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
+  | Or ({formula_or_f1 = f1;
+		 formula_or_f2 = f2;
+		 formula_or_pos = pos}) ->
+	  let ef1, flag1 = elim_exists_exp_loop f1 in
+	  let ef2, flag2 = elim_exists_exp_loop f2 in
+		(mkOr ef1 ef2 pos, flag1 & flag2)
+  | Base _ -> (f0, false)
+  | Exists ({formula_exists_qvars = qvar :: rest_qvars;
+			 formula_exists_heap = h;
+			 formula_exists_pure = p;
+			 formula_exists_type = t;
+			 formula_exists_pos = pos}) ->
+		let fvh = h_fv h in	 
+		(*let _ = print_string("Try to eliminate " ^ Cprinter.string_of_spec_var qvar ^ "\n") in*)
+		if  not(List.exists (fun sv -> CP.eq_spec_var sv qvar) fvh) then
+		(*List.mem qvar fvh)	then*) (* if it does not appear in the heap part --> we try to eliminate *)
+		(*let _ = print_string("fv(h) = " ^ Cprinter.string_of_spec_var_list fvh ^ "\n") in*)
+		  let st, pp1 = get_subst_equation_exp p qvar in
+				if List.length st > 0 then (* if there exists one substitution  - actually we only take the first one -> therefore, the list should only have one elem *)
+		  		(* basically we only apply one substitution *)
+		  		let one_subst = List.hd st in
+		  		(*let _ = print_string ("\nLength = " ^ string_of_int (List.length st) ^ "\n") in
+		  		let _ =  print_string("\n Using the subst var: " ^ Cprinter.string_of_spec_var (fst one_subst) ^ "\texp: " ^ Cprinter.string_of_formula_exp (snd one_subst) ^ "\n") in*)
+		  		let tmp = mkBase h pp1 t pos in
+		  		(*let _ = (print_string (" Base formula: " ^ (Cprinter.string_of_formula tmp) ^ "\n")) in*)
+				  let new_baref = subst_exp [one_subst] tmp in
+ 		  		(*let _ = (print_string (" new_baref: " ^ (Cprinter.string_of_formula new_baref) ^ "\n")) in*)
+				  let tmp2 = add_quantifiers rest_qvars new_baref in
+				  let tmp3, _ = elim_exists_exp_loop tmp2 in
+					(tmp3, true)
+				else (* if qvar is not equated to any variables, try the next one *)
+				  let tmp1 = mkExists rest_qvars h p t pos in
+				  let tmp2, flag = elim_exists_exp_loop tmp1 in
+				  let tmp3 = add_quantifiers [qvar] tmp2 in
+					(tmp3, flag)
+		else (* anyway it's going to stay in the heap part so we can't eliminate --> try eliminate the rest of them, and then add it back to the exist quantified vars *)
+			let tmp1 = mkExists rest_qvars h p t pos in
+		  let tmp2, flag = elim_exists_exp_loop tmp1 in
+		  let tmp3 = add_quantifiers [qvar] tmp2 in
+				((push_exists [qvar] tmp3), flag)
+						
+  | Exists _ -> failwith ("Solver.elim_exists: Exists with an empty list of quantified variables")
+
+and get_subst_equation_exp (f : CP.formula) (v : CP.spec_var) : ((CP.spec_var * CP.exp) list * CP.formula) = match f with
+  | CP.And (f1, f2, pos) ->
+	  let st1, rf1 = get_subst_equation_exp f1 v in
+		if List.length st1 > 0 then (* should never be more than 1 *)
+		  (st1, CP.mkAnd rf1 f2 pos)
+		else
+		  let st2, rf2 = get_subst_equation_exp f2 v in
+			(st2, CP.mkAnd f1 rf2 pos)
+  | CP.BForm bf -> get_subst_equation_b_formula_exp bf v 
+  | _ -> ([], f)
+
+and get_subst_equation_b_formula_exp (f : CP.b_formula) (v : CP.spec_var) : ((CP.spec_var * CP.exp) list * CP.formula) = match f with
+  | CP.Eq (e1, e2, pos) -> begin
+	  match e1 with
+		| CP.Var (sv1, pos1) ->
+			(* check for equality and for circularity -> if v=e then v should not appear in FV(e) *)
+			if (CP.eq_spec_var sv1 v) && (not (List.exists (fun sv -> CP.eq_spec_var sv v) (CP.afv e2)))
+				(*(List.mem v (CP.afv e2))) *)
+				then ([(v, e2)], CP.mkTrue no_pos)
+			else
+			begin
+				match e2 with	
+				| CP.Var (sv2, pos2) ->
+				if CP.eq_spec_var sv2 v && (not (List.exists (fun sv -> CP.eq_spec_var sv v) (CP.afv e1)))
+					(*(not (List.mem v (CP.afv e1))) *)
+					then ([(v, e1)], CP.mkTrue no_pos)
+				else ([], CP.BForm f)
+				| _ -> ([], CP.BForm f)
+			end	
+		| _ -> 
+			begin
+				match e2 with	
+				| CP.Var (sv2, pos2) ->
+				if CP.eq_spec_var sv2 v && (not (List.exists (fun sv -> CP.eq_spec_var sv v) (CP.afv e1)))
+					(*(not (List.mem v (CP.afv e1))) *) 
+					then ([(v, e1)], CP.mkTrue no_pos)
+				else ([], CP.BForm f)
+				| _ -> ([], CP.BForm f)
+			end	
+	end			  
+	| _ -> ([], CP.BForm f)
+
