@@ -127,6 +127,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		(*09.05.2000 ---*)
 	  let link_pv = CF.formula_of_pure 
 		(CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos)) pos) pos in
+		(*let _ = print_string ("[typechecker.ml, check_exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 		(*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
 	  let tmp_ctx = 
 		if !Globals.large_bind then 
@@ -153,11 +154,12 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 	  let ext_var = CP.SpecVar (CP.OType c, fn1, Unprimed) in
 	  let t_var = CP.SpecVar (CP.OType c, fn2, Unprimed) in*)
 		(*09.05.2008 ---*)
-		let ext_var = CP.SpecVar (CP.OType c, c, Unprimed) in
+		(* 09.06.08*)
+		(*let ext_var = CP.SpecVar (CP.OType c, c, Unprimed) in*)
 	  let t_var = CP.SpecVar (CP.OType c, c, Unprimed) in
 	  let vdatanode = CF.DataNode ({CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
 									CF.h_formula_data_name = c;
-									CF.h_formula_data_arguments = t_var :: ext_var :: vs_prim;
+									CF.h_formula_data_arguments = t_var (*:: ext_var*) :: vs_prim;
 									CF.h_formula_data_pos = pos}) in
 	  let vheap = CF.formula_of_heap vdatanode pos in
 	  let rs_prim, prf = heap_entail prog false unfolded vheap pos in
@@ -462,14 +464,15 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 	  let type_var = CP.SpecVar (CP.OType c, fn1, Unprimed) in
 	  let type_constr = CF.TypeExact ({CF.t_formula_sub_type_var = type_var;
 									   CF.t_formula_sub_type_type = c}) in
-	  let ext_var = CP.SpecVar ((CP.OType ("Ext~" ^ pname ^ "~" ^ c)), fn2, Unprimed) in
-	  let ext_null = CP.mkNull ext_var pos in
+	  (*c let ext_var = CP.SpecVar ((CP.OType ("Ext~" ^ pname ^ "~" ^ c)), fn2, Unprimed) in*)
+	  (*let ext_null = CP.mkNull ext_var pos in*)
 	  let heap_node = CF.DataNode ({CF.h_formula_data_node = CP.SpecVar (CP.OType c, res, Unprimed);
 									CF.h_formula_data_name = c;
 									CF.h_formula_data_arguments = 
-									   type_var :: ext_var :: heap_args;
+									   type_var (*:: ext_var*) :: heap_args;
 									CF.h_formula_data_pos = pos}) in
-	  let heap_form = CF.mkExists [(*type_var;*) ext_var] heap_node ext_null type_constr pos in
+	  (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
+	  let heap_form = CF.mkBase heap_node (CP.mkTrue pos) type_constr pos in
 	  let res = 
 	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c heap_form pos) ctx 
 	  	else List.map (fun c -> CF.normalize_clash_context_formula c heap_form pos) ctx 

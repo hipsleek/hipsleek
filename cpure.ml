@@ -8,7 +8,7 @@ open Globals
 
 (* spec var *)
 type spec_var =
-  | SpecVar of (typ * ident * primed)
+  | SpecVar of (typ * ident * primed)  
 	  
 and typ =
   | Prim of prim_type

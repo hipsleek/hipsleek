@@ -24,6 +24,7 @@ and t_formula_sub_type = { t_formula_sub_type_var : CP.spec_var;
 and t_formula_and = { t_formula_and_f1 : t_formula;
 					  t_formula_and_f2 : t_formula }
 
+
 type formula =
   | Base of formula_base
   | Or of formula_or
@@ -135,6 +136,7 @@ and is_coercible (h : h_formula) : bool = match h with
 (*
   perform simplification incrementally
 *)
+
 and mkAndType f1 f2 = match f1 with
   | TypeTrue -> f2
   | TypeFalse -> TypeFalse
@@ -293,6 +295,7 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
   | DataNode ({h_formula_data_node = v; 
 			   h_formula_data_arguments = vs0}) ->
 	  let vs = List.tl (List.tl vs0) in
+	  let vs = (List.tl vs0) in
 		if List.mem v vs then vs else v :: vs
   | ViewNode ({h_formula_view_node = v; 
 			   h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs

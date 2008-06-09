@@ -2137,26 +2137,33 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				  let new_v = CP.SpecVar (CP.OType c, v, p) in
 					(* we can use c for tvar. The actual type can be determined later on,
 					   during entailment *)
-				  let t_var = CP.SpecVar (CP.OType c, c (*--change made on 16.04.2008-- fresh_name ()*), Unprimed) in
+				  let t_var = CP.SpecVar (CP.OType c, c , Unprimed) in
 				  (*print_string ("[astsimp.ml]: type var " ^ (Cprinter.string_of_spec_var t_var) ^ "\n");*)
 				  let type_constr = CF.TypeSub ({CF.t_formula_sub_type_var = t_var;
 												 CF.t_formula_sub_type_type = c}) in
 					(*print_string ("[astsimp.ml]: Type " ^ c ^ "\n");	*)											 
 					(* extension pointer *)
 				  let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in
-				  let ext_name = gen_ext_name c pname in
-				  let ext_var = CP.SpecVar (CP.OType ext_name, c (*--change made on 16.04.2008-- fresh_name ()*), Unprimed) in
+				  (*09.06.08*)
+				  (*c let ext_name = gen_ext_name c pname in*)
+				  (*c let ext_var = CP.SpecVar (CP.OType ext_name, c , Unprimed) in*)
+				  
 				  (*print_string ("[astsimp.ml]: extension var " ^ (Cprinter.string_of_spec_var ext_var) ^ "\n");*)
-				  let link_f =
-					if full then
+				  (* 09.06.08 *)
+				  (*let _ = print_string ("\n\n link_f_prim = " ^ Cprinter.string_of_pure_formula link_f_prim ^ "\n") in*)
+				  (*c -- 09.06.08 -- *)
+				  let link_f = link_f_prim in
+					(*c if full then
 					  let ext_constr = CP.mkNull ext_var pos in
 						CP.mkAnd link_f_prim ext_constr pos
 					else
-					  link_f_prim in
+					  link_f_prim in *)
+					(*let _ = print_string ("link_f = " ^ Cprinter.string_of_pure_formula link_f ^ "\n") in  *)
 				  let new_h = CF.DataNode ({CF.h_formula_data_node = new_v;
 											CF.h_formula_data_name = c;
-											CF.h_formula_data_arguments = t_var :: ext_var :: hvars;
+											CF.h_formula_data_arguments = t_var (*:: ext_var*) :: hvars;
 											CF.h_formula_data_pos = pos}) in
+					(* 09.06.08 *)						
 					(new_used_names, evars, new_h, link_f, type_constr)
 		  end
 		| IF.Star ({IF.h_formula_star_h1 = f1;
