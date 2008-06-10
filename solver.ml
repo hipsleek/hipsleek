@@ -988,10 +988,19 @@ and elim_exists_ctx (ctx0 : context) = match ctx0 with
 	  (* we also try to eliminate exist vars for which a find a substitution of the form v = exp from the pure part *)
 	  (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula before exp exist elim: " ^ Cprinter.string_of_formula f_prim ^ "\n") in*)
 	  let f = elim_exists_exp f_prim in
-	  (*let _ = print_string("[solver.ml, elim_exists_ctx]: Formula after exp exist elim: " ^ Cprinter.string_of_formula f ^ "\n") in*)
 	  
-	  (* 05.06.08 *)
-		Ctx {es with es_formula = f}
+	  (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_formula f ^ "\n") in*)
+
+		let qvar, base = CF.split_quantifiers f in
+		let h, p, t = CF.split_components base in
+		let simpl_p = 
+			(* if the flag is enabled --> simplify the pure part *)
+			if !Globals.simplify_pure then (simpl_pure_formula p) 
+			else p
+		in	
+		let simpl_f = CF.mkExists qvar h simpl_p t no_pos in
+		(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_formula simpl_f ^ "\n") in *)
+	  Ctx {es with es_formula = simpl_f}
   | OCtx (c1, c2) ->
 	  let sc1 = elim_exists_ctx c1 in
 	  let sc2 = elim_exists_ctx c2 in
@@ -2031,7 +2040,15 @@ and heap_entail_non_empty_rhs_heap prog is_folding ctx0 estate ante conseq lhs_b
 and elim_exists_exp (f0 : formula) : (formula) = 
 	let f, flag = elim_exists_exp_loop f0 in
 		if flag then (elim_exists_exp f)
-		else f
+		else begin
+			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_formula f ^ "\n") in
+			let qvar, base = CF.split_quantifiers f in
+			let h, p, t = CF.split_components base in
+			let simpl_p = elim_exists_pure qvar p no_pos in
+			let simpl_f = CF.mkExists qvar h simpl_p t no_pos in
+			let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_formula simpl_f ^ "\n") in
+				simpl_f *) f
+		end		
 
 (* removing existentail using ex x. (x=e & P(x)) <=> P(e) *)
 and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
@@ -2120,3 +2137,78 @@ and get_subst_equation_b_formula_exp (f : CP.b_formula) (v : CP.spec_var) : ((CP
 	end			  
 	| _ -> ([], CP.BForm f)
 
+(******************************************************************************************************************
+	10.06.2008 
+	Utilities for simplifications:
+	- whenever the pure part contains some arithmetic formula that can be further simplified --> call the theorem prover to perform the simplification
+	Ex. x = 1 + 0 --> simplify to x = 1
+******************************************************************************************************************)							  
+and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
+  | CP.And (f1, f2, pos) -> CP.mkAnd (simpl_pure_formula f1) (simpl_pure_formula f2) pos
+  | CP.Or (f1, f2, pos) -> CP.mkOr (simpl_pure_formula f1) (simpl_pure_formula f2) pos
+  | CP.Not (f1, pos) -> CP.mkNot (simpl_pure_formula f1) pos
+  | CP.Forall (sv, f1, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) pos
+  | CP.Exists (sv, f1, pos) -> CP.mkExists [sv] (simpl_pure_formula f1) pos
+  | CP.BForm (f1) -> 
+  		let simpl_f = CP.BForm(simpl_b_formula f1) in
+    	(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_pure_formula f ^ "\n") in
+			let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
+			simpl_f
+
+and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
+	| CP.Lt (e1, e2, pos)
+	| CP.Lte (e1, e2, pos)
+	| CP.Gt (e1, e2, pos)
+	| CP.Gte (e1, e2, pos)
+	| CP.Eq (e1, e2, pos)
+	| CP.Neq (e1, e2, pos)
+	| CP.BagSub (e1, e2, pos) ->
+		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then 
+			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+			let simpl_f = TP.simplify (CP.BForm(f)) in
+  		begin
+  		match simpl_f with
+  		| CP.BForm(simpl_f1) -> 
+  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  			simpl_f1
+  		| _ -> f
+  		end
+  	else f	
+	| CP.EqMax (e1, e2, e3, pos)
+	| CP.EqMin (e1, e2, e3, pos) ->
+		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then 
+			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+			let simpl_f = TP.simplify (CP.BForm(f)) in
+  		begin
+  		match simpl_f with
+  		| CP.BForm(simpl_f1) -> 
+  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  			simpl_f1
+  		| _ -> f
+  		end
+  	else f	
+  | CP.BagIn (sv, e1, pos) 
+  | CP.BagNotIn (sv, e1, pos) ->
+  	if ((count_iconst e1) > 1) then 
+			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+			let simpl_f = TP.simplify (CP.BForm(f)) in
+  		begin
+  		match simpl_f with
+  		| CP.BForm(simpl_f1) -> 
+  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  			simpl_f1
+  		| _ -> f
+  		end
+  	else f	
+	| _ -> f
+
+(* 
+	- count how many int constants are contained in one expression 
+	- if there are more than 1 --> means that we can simplify further (by performing the operation)
+*)
+and count_iconst (f : CP.exp) = match f with
+  | CP.Subtract (e1, e2, _)
+  | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
+  | CP.Mult (_, e2, _) -> (1 + (count_iconst e2))
+	| CP.IConst _ -> 1
+	| _ -> 0

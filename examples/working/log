@@ -2,73 +2,64 @@
 ======================================
 
 Processing file "./hip/append.ss"
-Parsing... done in 0. second(s)
+Parsing... done in 0.004 second(s)
 Translating to core language... done in 0.052003 second(s)
 Checking procedure append$node~node... 
 Procedure append$node~node SUCCESS
 
-Total verification time: 0.268016 second(s)
-	Time spent in main process: 0.100006 second(s)
-	Time spent in child processes: 0.16801 second(s)
+Total verification time: 0.220013 second(s)
+	Time spent in main process: 0.092005 second(s)
+	Time spent in child processes: 0.128008 second(s)
 
 ======================================
 
 Processing file "./hip/append-tail.ss"
 Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.052004 second(s)
+Translating to core language... done in 0.044002 second(s)
 Checking procedure append$node~node~node~node... 
-File "./hip/append-tail.ss", line 34: Post condition (EX f_r_29, f_r_30 . x::ll_tail2<f_r_29, f_r_30> & f_r_29 = ty & f_r_30 = m+n) cannot be derived by the system.
+Procedure append$node~node~node~node SUCCESS
 
-Procedure append$node~node~node~node FAIL
-
-Error(s) detected when checking procedure append$node~node~node~node
-
-Total verification time: 1.812112 second(s)
-	Time spent in main process: 0.140008 second(s)
-	Time spent in child processes: 1.672104 second(s)
+Total verification time: 1.596099 second(s)
+	Time spent in main process: 0.132008 second(s)
+	Time spent in child processes: 1.464091 second(s)
 
 ======================================
 
 Processing file "./hip/bll.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.032002 second(s)
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.024001 second(s)
 Checking procedure delete$node... 
 Procedure delete$node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 0.064003 second(s)
-	Time spent in main process: 0.040002 second(s)
-	Time spent in child processes: 0.024001 second(s)
+Total verification time: 0.088004 second(s)
+	Time spent in main process: 0.044002 second(s)
+	Time spent in child processes: 0.044002 second(s)
 
 ======================================
 
 Processing file "./hip/bubble.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.044003 second(s)
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.056003 second(s)
 Checking procedure bsort$node... 
 Procedure bsort$node SUCCESS
 Checking procedure bubble$node... 
-File "./hip/bubble.ss", line 79: Post condition (EX f_r_24, s, l . xs::sll<f_r_24, s, l> & !(res) & f_r_24 = n)
-or (EX f_r_25 . xs::ll<f_r_25> & res & f_r_25 = n) cannot be derived by the system.
-
-Procedure bubble$node FAIL
-
-Error(s) detected when checking procedure bubble$node
+Procedure bubble$node SUCCESS
 Checking procedure id3$node... 
 Procedure id3$node SUCCESS
 Checking procedure id2$node... 
 Procedure id2$node SUCCESS
 
-Total verification time: 1.716106 second(s)
-	Time spent in main process: 1.29208 second(s)
-	Time spent in child processes: 0.424026 second(s)
+Total verification time: 1.268078 second(s)
+	Time spent in main process: 0.748046 second(s)
+	Time spent in child processes: 0.520032 second(s)
 
 ======================================
 
 Processing file "./hip/cll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.040003 second(s)
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.060003 second(s)
 Checking procedure delete$node... 
 Procedure delete$node SUCCESS
 Checking procedure count$node... 
@@ -80,15 +71,15 @@ Procedure insert$node~int SUCCESS
 Checking procedure test$... 
 Procedure test$ SUCCESS
 
-Total verification time: 0.416025 second(s)
-	Time spent in main process: 0.216013 second(s)
-	Time spent in child processes: 0.200012 second(s)
+Total verification time: 0.392024 second(s)
+	Time spent in main process: 0.200012 second(s)
+	Time spent in child processes: 0.192012 second(s)
 
 ======================================
 
 Processing file "./hip/complete.ss"
 Parsing... done in 0.004 second(s)
-Translating to core language... done in 3.2002 second(s)
+Translating to core language... done in 3.220201 second(s)
 Checking procedure insert$node2~int... 
 Procedure insert$node2~int SUCCESS
 Checking procedure min_height$node2... 
@@ -100,15 +91,15 @@ Procedure minim$int~int SUCCESS
 Checking procedure maxim$int~int... 
 Procedure maxim$int~int SUCCESS
 
-Total verification time: 8.252515 second(s)
-	Time spent in main process: 4.268266 second(s)
-	Time spent in child processes: 3.984249 second(s)
+Total verification time: 5.936371 second(s)
+	Time spent in main process: 1.584099 second(s)
+	Time spent in child processes: 4.352272 second(s)
 
 ======================================
 
 Processing file "./hip/dll.ss"
-Parsing... done in 0.008 second(s)
-Translating to core language... done in 0.024001 second(s)
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.020001 second(s)
 Checking procedure f2$node2... 
 Procedure f2$node2 SUCCESS
 Checking procedure f1$node2... 
@@ -132,15 +123,15 @@ Procedure delete$node2~int SUCCESS
 Checking procedure insert$node2~int... 
 Procedure insert$node2~int SUCCESS
 
-Total verification time: 1.968122 second(s)
-	Time spent in main process: 1.308081 second(s)
-	Time spent in child processes: 0.660041 second(s)
+Total verification time: 1.576098 second(s)
+	Time spent in main process: 0.96406 second(s)
+	Time spent in child processes: 0.612038 second(s)
 
 ======================================
 
 Processing file "./hip/heaps.ss"
 Parsing... done in 0.008001 second(s)
-Translating to core language... done in 0.224013 second(s)
+Translating to core language... done in 0.220013 second(s)
 Checking procedure deletemax$node... 
 Procedure deletemax$node SUCCESS
 Checking procedure ripple$int~int~int~int~node~node... 
@@ -152,23 +143,23 @@ Procedure deleteoneel$node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 31.001936 second(s)
-	Time spent in main process: 13.900868 second(s)
-	Time spent in child processes: 17.101068 second(s)
+Total verification time: 40.426526 second(s)
+	Time spent in main process: 5.224326 second(s)
+	Time spent in child processes: 35.2022 second(s)
 
 ======================================
 
 Processing file "./hip/insertion.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.040003 second(s)
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.036002 second(s)
 Checking procedure insertion_sort$node~node... 
 Procedure insertion_sort$node~node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 0.752046 second(s)
-	Time spent in main process: 0.476029 second(s)
-	Time spent in child processes: 0.276017 second(s)
+Total verification time: 0.712044 second(s)
+	Time spent in main process: 0.360022 second(s)
+	Time spent in child processes: 0.352022 second(s)
 
 ======================================
 
@@ -196,15 +187,15 @@ Procedure ret_first$node SUCCESS
 Checking procedure append$node~node... 
 Procedure append$node~node SUCCESS
 
-Total verification time: 0.588036 second(s)
-	Time spent in main process: 0.308019 second(s)
-	Time spent in child processes: 0.280017 second(s)
+Total verification time: 0.408024 second(s)
+	Time spent in main process: 0.17201 second(s)
+	Time spent in child processes: 0.236014 second(s)
 
 ======================================
 
 Processing file "./hip/merge.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.072004 second(s)
+Parsing... done in 0.008 second(s)
+Translating to core language... done in 0.048003 second(s)
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 Checking procedure merge$node~node... 
@@ -216,15 +207,15 @@ Procedure split_func$node~int SUCCESS
 Checking procedure count$node... 
 Procedure count$node SUCCESS
 
-Total verification time: 2.524157 second(s)
-	Time spent in main process: 1.176073 second(s)
-	Time spent in child processes: 1.348084 second(s)
+Total verification time: 3.460216 second(s)
+	Time spent in main process: 0.816051 second(s)
+	Time spent in child processes: 2.644165 second(s)
 
 ======================================
 
 Processing file "./hip/perfect.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.056002 second(s)
+Parsing... done in 0.004001 second(s)
+Translating to core language... done in 0.036002 second(s)
 Checking procedure insert$node2~int... 
 Procedure insert$node2~int SUCCESS
 Checking procedure height$node2... 
@@ -236,15 +227,15 @@ Procedure create$int SUCCESS
 Checking procedure simple_insert$node2~int... 
 Procedure simple_insert$node2~int SUCCESS
 
-Total verification time: 0.572035 second(s)
-	Time spent in main process: 0.356022 second(s)
-	Time spent in child processes: 0.216013 second(s)
+Total verification time: 0.50003 second(s)
+	Time spent in main process: 0.232014 second(s)
+	Time spent in child processes: 0.268016 second(s)
 
 ======================================
 
 Processing file "./hip/qsort.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.036002 second(s)
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 0.044003 second(s)
 Checking procedure qsort$node... 
 Procedure qsort$node SUCCESS
 Checking procedure append_bll$node~node... 
@@ -252,15 +243,15 @@ Procedure append_bll$node~node SUCCESS
 Checking procedure partition$node~int... 
 Procedure partition$node~int SUCCESS
 
-Total verification time: 2.164134 second(s)
-	Time spent in main process: 1.516094 second(s)
-	Time spent in child processes: 0.64804 second(s)
+Total verification time: 3.652228 second(s)
+	Time spent in main process: 0.976061 second(s)
+	Time spent in child processes: 2.676167 second(s)
 
 ======================================
 
 Processing file "./hip/qsort-tail.ss"
 Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.072005 second(s)
+Translating to core language... done in 0.088005 second(s)
 Checking procedure partition1$node~node~node~node~int... 
 Procedure partition1$node~node~node~node~int SUCCESS
 Checking procedure qsort$node~node... 
@@ -271,26 +262,22 @@ assert:./hip/qsort-tail.ss:45: assert ok
 
 
 print: ./hip/qsort-tail.ss:46: ctx:
-es_formula: (EX f_r_2288, f_r_2289 . f_r_2289::bnd_tail<f_r_2288, tx, sm, lg> * x'::node<temp', f_r_2289> & sm <= temp' & temp' <= lg & f_r_2289 != null & f_r_2288 = n-1 & n > 0 & tx' = tx & !(f_r_75') & x != null & x' = x & !(f_r_75') & !(f_r_74') & f_r_2289 != null & !(f_r_74') & y' = null & ty' = null & tmp1' = null)
+es_formula: f_r_1907::bnd_tail<f_r_1902, f_r_1903, f_r_1904, f_r_1905> * x'::node<f_r_1906, f_r_1907> & sm <= f_r_1906 & f_r_1906 <= lg & f_r_1907 != null & f_r_1902 = n-1 & f_r_1903 = tx & f_r_1904 = sm & f_r_1905 = lg & n > 0 & tx' = tx & !(f_r_75') & x != null & x' = x & !(f_r_75') & !(f_r_74') & f_r_1907 != null & !(f_r_74') & y' = null & ty' = null & tmp1' = null & temp' = f_r_1906
 es_pure: 
 es_heap: true
 es_evars: 
 
-File "./hip/qsort-tail.ss", line 65: Post condition (EX f_r_57, sm1, lg1, m . x'::ll_tail<m, f_r_57, sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n & f_r_57 = tx') cannot be derived by the system.
+Procedure qsort$node~node SUCCESS
 
-Procedure qsort$node~node FAIL
-
-Error(s) detected when checking procedure qsort$node~node
-
-Total verification time: 45.842864 second(s)
-	Time spent in main process: 3.560222 second(s)
-	Time spent in child processes: 42.282642 second(s)
+Total verification time: 54.587411 second(s)
+	Time spent in main process: 3.636227 second(s)
+	Time spent in child processes: 50.951184 second(s)
 
 ======================================
 
 Processing file "./hip/rb.ss"
 Parsing... done in 0.020001 second(s)
-Translating to core language... done in 4.452278 second(s)
+Translating to core language... done in 4.380274 second(s)
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 Checking procedure del$node~int... 
@@ -339,15 +326,15 @@ Procedure case_2$node~node~node~node SUCCESS
 Checking procedure rotate_case_3$node~node~node... 
 Procedure rotate_case_3$node~node~node SUCCESS
 
-Total verification time: 38.346396 second(s)
-	Time spent in main process: 26.293643 second(s)
-	Time spent in child processes: 12.052753 second(s)
+Total verification time: 31.073941 second(s)
+	Time spent in main process: 11.580723 second(s)
+	Time spent in child processes: 19.493218 second(s)
 
 ======================================
 
 Processing file "./hip/selection.ss"
 Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.056003 second(s)
+Translating to core language... done in 0.052003 second(s)
 Checking procedure selection_sort$node... 
 Procedure selection_sort$node SUCCESS
 Checking procedure delete_min$node~int... 
@@ -355,15 +342,15 @@ Procedure delete_min$node~int SUCCESS
 Checking procedure find_min$node... 
 Procedure find_min$node SUCCESS
 
-Total verification time: 0.764047 second(s)
-	Time spent in main process: 0.528033 second(s)
-	Time spent in child processes: 0.236014 second(s)
+Total verification time: 0.708044 second(s)
+	Time spent in main process: 0.404025 second(s)
+	Time spent in child processes: 0.304019 second(s)
 
 ======================================
 
 Processing file "./hip/sll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.044003 second(s)
+Parsing... done in 0. second(s)
+Translating to core language... done in 0.040002 second(s)
 Checking procedure id$int... 
 Procedure id$int SUCCESS
 Checking procedure insertion_sort$node~node... 
@@ -377,15 +364,15 @@ Procedure insert2$node~node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 1.332083 second(s)
-	Time spent in main process: 0.944059 second(s)
-	Time spent in child processes: 0.388024 second(s)
+Total verification time: 0.904056 second(s)
+	Time spent in main process: 0.468029 second(s)
+	Time spent in child processes: 0.436027 second(s)
 
 ======================================
 
 Processing file "./hip/trees.ss"
-Parsing... done in 0.008 second(s)
-Translating to core language... done in 1.800113 second(s)
+Parsing... done in 0.004 second(s)
+Translating to core language... done in 1.804113 second(s)
 Checking procedure delete$node2~int... 
 Procedure delete$node2~int SUCCESS
 Checking procedure remove_min$node2... 
@@ -399,6 +386,6 @@ Procedure count$node2 SUCCESS
 Checking procedure append$node2~node2... 
 Procedure append$node2~node2 SUCCESS
 
-Total verification time: 4.232264 second(s)
-	Time spent in main process: 1.636102 second(s)
-	Time spent in child processes: 2.596162 second(s)
+Total verification time: 4.224263 second(s)
+	Time spent in main process: 0.96806 second(s)
+	Time spent in child processes: 3.256203 second(s)

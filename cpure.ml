@@ -1191,3 +1191,5 @@ and elim_idents_b_formula (f : b_formula) : b_formula =  match f with
 	| Gt (e1, e2, pos) ->
 		if (eq_exp e1 e2) then BConst(false, pos)
   	else f
+  | _ -> f	
+

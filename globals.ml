@@ -74,6 +74,8 @@ let max_renaming = ref false
 
 let anon_exist = ref true
 
+let simplify_pure = ref false
+
 let n_xpure = ref 1
 
 let check_coercions = ref false

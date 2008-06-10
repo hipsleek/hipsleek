@@ -776,14 +776,18 @@ let hull (pe : CP.formula) : CP.formula = begin
 	output_string log_file "\n\n[mona.ml]: #hull\n";
   pe  
 end
+
 let pairwisecheck (pe : CP.formula) : CP.formula = begin
   if !log_all_flag then
 	output_string log_file "\n\n[mona.ml]: #pairwisecheck\n";
   pe  
 end  
+
 let simplify (pe : CP.formula) : CP.formula = begin
-  if !log_all_flag then
-	output_string log_file "\n\n[mona.ml]: #simplify\n";
+  if !log_all_flag then 
+  	begin
+		output_string log_file "\n\n[mona.ml]: #simplify\n"
+		end;
   pe  
 end
   (*| CP.EqMax (a1, a2, a3, _) ->
