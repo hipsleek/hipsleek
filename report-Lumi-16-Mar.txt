@@ -22,3 +22,6 @@
 	- deleteoneel - Fatal error:exception Failure ("hd")
 	- ripple - loops (I think...waited like 10-15 min)
 	- deletemax - precondition not satisfied (for ripple)
+
+
+
