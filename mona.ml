@@ -5,19 +5,19 @@
 open Globals
 module CP = Cpure
 
-module H = Hashtbl
-
 let mona_file_number = ref 0
 let result_file_name = "res"
-let log_all_flag = ref true
+let log_all_flag = ref false
 let log_file = open_out "allinput.mona"
 let first_order_vars = ref ([] : CP.spec_var list)
 let second_order_vars = ref ([] : CP.spec_var list)
 let additional_vars = ref ([] : CP.spec_var list)
+let additional_vars_ = ref ([] : CP.spec_var list)
 let substitution_list = ref ([] : CP.b_formula list) 
 let automaton_completed = ref false
 let cycle = ref false
-  
+
+ 
 (* pretty printing for primitive types *)
 let mona_of_prim_type = function 
   | Bool          -> "int"	
@@ -33,15 +33,16 @@ let rec mkEq l = match l with
   | e :: rest -> CP.And(CP.BForm(e), (mkEq rest), no_pos)
 
 let rec mkEx l f = match l with
-  | [] -> f
-  | sv :: rest -> mkEx rest (CP.Exists(sv, f, no_pos))
+ | [] -> f
+ | sv :: rest -> mkEx rest (CP.Exists(sv, f, no_pos))
 
 (* in Mona, using the set representation for the integers, addition a1 = a2 + a3 is written plus(a2, a3, a1).
-   This is why I have a problem with formulas like a1 < a2 + a3. Therefore, I break all the presburger formulas, 
-   meaning that whenever I find a a2 + a3, I replace it by the variable a2a3 and I add the relation a2a3 = a2 + a3 *)
+This is why I have a problem with formulas like a1 < a2 + a3. Therefore, I break all the presburger formulas, 
+meaning that whenever I find a a2 + a3, I replace it by the variable a2a3 and I add the relation a2a3 = a2 + a3 *)
 let rec break_presburger (f : CP.formula) : CP.formula = 
   begin
     additional_vars := [];
+    additional_vars_ := [];
     (mona_of_formula_break f);
   end
 
@@ -51,38 +52,44 @@ and mona_of_exp_break e0 = match e0 with
       begin
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t1, id1^id2, p1), no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t1, id1^id2, p1) :: !additional_vars;
-		CP.Var(CP.SpecVar(t1, id1 ^ id2, p2), l3);
+	additional_vars_ := CP.SpecVar(t1, id1^id2, p1) :: !additional_vars_;
+	CP.Var(CP.SpecVar(t1, id1 ^ id2, p2), l3);
       end	    
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) -> 
       begin
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1^id2, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t1, id1^id2, p1) :: !additional_vars;
+        additional_vars_ := CP.SpecVar(t1, id1^id2, p1) :: !additional_vars_;
         CP.Var(CP.SpecVar(t1, id1 ^ id2, p2), l3);
       end	      
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3) 
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) -> 
       begin
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t2, (id2 ^ string_of_int i1), p2), no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
-		additional_vars := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars;
-		CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), l3);
+	additional_vars := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars;
+        additional_vars_ := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars_;
+	CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), l3);
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) -> 
       begin
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars;
-		CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), l3);
+        additional_vars_ := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars_;
+	CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), l3);
       end	    
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) -> 
       begin
         substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars;
-		CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), l3);
+        additional_vars_ := CP.SpecVar(t2, id2 ^ (string_of_int i1), p2) :: !additional_vars_;
+	CP.Var(CP.SpecVar(t2, id2 ^ (string_of_int i1), p2), l3);
       end	
   | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> CP.IConst(i1+12, l3) 
   | CP.Subtract( CP.IConst(i1, _), CP.IConst(i2, _), l3) -> 
       begin
         substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(CP.Prim Int, "aux" ^ (string_of_int i1) ^ (string_of_int i2), Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
-		additional_vars := CP.SpecVar(CP.Prim Int, "aux" ^ (string_of_int i1) ^ (string_of_int i2), Globals.Unprimed) :: !additional_vars;
+	additional_vars := CP.SpecVar(CP.Prim Int, "aux" ^ (string_of_int i1) ^ (string_of_int i2), Globals.Unprimed) :: !additional_vars;
+	additional_vars_ := CP.SpecVar(CP.Prim Int, "aux" ^ (string_of_int i1) ^ (string_of_int i2), Globals.Unprimed) :: !additional_vars_;
         CP.Var(CP.SpecVar(CP.Prim Int, "aux" ^ (string_of_int i1) ^ (string_of_int i2), Globals.Unprimed), l3);
       end	
   | CP.Add (a1, a2, l1) -> mona_of_exp_break (CP.Add((mona_of_exp_break a1), (mona_of_exp_break a2), l1)) 
@@ -90,7 +97,7 @@ and mona_of_exp_break e0 = match e0 with
   | CP.Min (a1, a2, l1) ->  CP.Min((mona_of_exp_break a1), (mona_of_exp_break a2), l1) 
   | CP.Max (a1, a2, l1) ->  CP.Max((mona_of_exp_break a1), (mona_of_exp_break a2), l1) 
   | _ -> e0	
-	  
+ 
 (* breaking boolean formulas *)
 and mona_of_b_formula_break b = match b with
   | CP.Lt (a1, a2, l1) -> CP.Lt((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
@@ -106,158 +113,158 @@ and mona_of_b_formula_break b = match b with
 (* breaking formulas *)
 and mona_of_formula_break (f : CP.formula) : CP.formula = 
   let res = match f with 
-	| CP.Or (p1, p2, l1) -> CP.Or((mona_of_formula_break1 p1), (mona_of_formula_break1 p2), l1)
-	| CP.And (p1, p2, l1) -> CP.And((mona_of_formula_break1 p1), (mona_of_formula_break1 p2), l1)
-	| CP.Not (p1, l1) -> CP.Not((mona_of_formula_break1 p1), l1)
-	| CP.Forall(sv1, p1, l1) -> CP.Forall(sv1, (mona_of_formula_break1 p1), l1)
-	| CP.Exists(sv1, p1, l1) -> CP.Exists(sv1, (mona_of_formula_break1 p1), l1)  	
-	| CP.BForm b -> CP.BForm(mona_of_b_formula_break b)
+  | CP.Or (p1, p2, l1) -> CP.Or((mona_of_formula_break1 p1), (mona_of_formula_break1 p2), l1)
+  | CP.And (p1, p2, l1) -> CP.And((mona_of_formula_break1 p1), (mona_of_formula_break1 p2), l1)
+  | CP.Not (p1, l1) -> CP.Not((mona_of_formula_break1 p1), l1)
+  | CP.Forall(sv1, p1, l1) -> CP.Forall(sv1, (mona_of_formula_break1 p1), l1)
+  | CP.Exists(sv1, p1, l1) -> CP.Exists(sv1, (mona_of_formula_break1 p1), l1)  	
+  | CP.BForm b -> CP.BForm(mona_of_b_formula_break b)
   in
-    if (List.length !substitution_list) > 0 then 
-	  let eq = (mkEq !substitution_list) in
-        begin
-          substitution_list := [];
-		  let res1 = (mkEx !additional_vars (CP.And(eq, res, no_pos))) in 
-			begin
-		      additional_vars := [];
-		      res1;
-			end
-        end
-    else res
+      if (List.length !substitution_list) > 0 then 
+	   let eq = (mkEq !substitution_list) in
+               begin
+                 substitution_list := [];
+		 let res1 = (mkEx !additional_vars (CP.And(eq, res, no_pos))) in 
+		   begin
+		     additional_vars := [];
+		     res1;
+		   end
+               end
+      else res
 
 and mona_of_formula_break1 (f : CP.formula) : CP.formula = 
   match f with 
-	  (*| CP.BForm b -> CP.BForm(mona_of_b_formula_break b)*)
-	| _ -> mona_of_formula_break f
+  (*| CP.BForm b -> CP.BForm(mona_of_b_formula_break b)*)
+  | _ -> mona_of_formula_break f
 
 (*------------------------------------------*)
 
 let hd list = match list with
-  | [] -> failwith "[mona.ml] : Error when applying method head"
-  | head :: tail -> head
+ | [] -> failwith "[mona.ml] : Error when applying method head"
+ | head :: tail -> head
 
 let string_of_type (t) = 
   match t with
-	| CP.Prim Int -> "int"
-	| CP.Prim Bool -> "bool"
-	| CP.Prim Void -> "void"	
-	| CP.OType c -> "otype " ^ c
-	| _ -> "smth else"		  
+  | CP.Prim Int -> "int"
+  | CP.Prim Bool -> "bool"
+  | CP.Prim Void -> "void"	
+  | CP.OType c -> "otype " ^ c
+  | _ -> "smth else"		  
 
 
 let equal_types (t1:CP.typ) (t2:CP.typ) : bool = 
-  match t1 with
-    | CP.OType _ ->
-		begin
-	      match t2 with
-			| CP.OType _ -> true
-			| _ -> false	
-		end
-    | _ -> (t1 = t2)	    
+      match t1 with
+      | CP.OType _ ->
+	  begin
+	    match t2 with
+	    | CP.OType _ -> true
+	    | _ -> false	
+	  end
+      | _ -> (t1 = t2)	    
 
 let equal_sv (sv1 : CP.spec_var) (sv2 : CP.spec_var) : bool = 
   match sv1 with
-	| CP.SpecVar(t1, i1, p1) -> begin
-		match sv2 with
-		  | CP.SpecVar(t2, i2, p2) ->
-			  if (* (equal_types t1 t2) (*t1 = t2*) && *) i1 = i2 && p1 = p2 then 
-				begin
-				  true
-				end
-			  else 
-				begin  
-				  false
-				end	  
-		  | _ -> false;
-	  end
-	| _ -> false
+  | CP.SpecVar(t1, i1, p1) ->
+      match sv2 with
+      | CP.SpecVar(t2, i2, p2) ->
+	  if (equal_types t1 t2) (*t1 = t2*) && i1 = i2 && p1 = p2 then 
+	    begin
+	      true
+	    end
+	  else 
+	    begin  
+	      false
+	    end	  
+      | _ -> false;
+ | _ -> false	  
+	    
 
 let rec exists_sv (sv : CP.spec_var) (svlist : CP.spec_var list) : bool = match svlist with
-  | [] -> false	 
-  | sv1 :: rest -> 
-      if (equal_sv sv1 sv) (*sv1 = sv*) then true
-      else (exists_sv sv rest)
+ | [] -> false	 
+ | sv1 :: rest -> 
+     if (equal_sv sv1 sv) (*sv1 = sv*) then true
+     else (exists_sv sv rest)
 
 let rec exists_sv_exp (sv : CP.spec_var) (elist : CP.exp list) : bool = match elist with
-  | [] -> false
-  | CP.Var(sv1, _) :: rest ->  
-      if (equal_sv sv sv1) (*sv1 = sv*) then true
-      else (exists_sv_exp sv rest)
-  | _ :: rest -> (exists_sv_exp sv rest)
+ | [] -> false
+ | CP.Var(sv1, _) :: rest ->  
+     if (equal_sv sv sv1) (*sv1 = sv*) then true
+     else (exists_sv_exp sv rest)
+ | _ :: rest -> (exists_sv_exp sv rest)
 
 let rec is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
   match (hd elem_list) with
-	| CP.Var(sv1, _) ->
-		if (exists_sv sv1 !additional_vars) then 
-		  begin (*if (!mona_file_number =  18) then print_string ("false first_order: " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*) false; end
-		else	 
-		  if (exists_sv sv1 !first_order_vars)  then 
-			begin
-			  true; 
-			end
-		  else 
-			if (is_inside_bag f (hd elem_list)) then 
-			  begin
-				first_order_vars := sv1 :: !first_order_vars;
-				(*if !mona_file_number = 15 then
-				  print_string ("first order:" ^ (mona_of_spec_var sv1)  ^ " in test" ^ string_of_int !mona_file_number ^ "...2\n");*)
-				true;
-			  end
-			else 
-			  if (exists_sv sv1 !second_order_vars) then 
-				begin
-				  (*if !mona_file_number = 15 then
-					print_string ("second order:" ^ (mona_of_spec_var sv1) ^ " in test" ^ string_of_int !mona_file_number ^ "...3\n"); *)
-				  false;
-				end
-			  else
-				let res = (is_first_order_ f elem_list f) in
-				  (*if !mona_file_number = 15 then print_string ("call first_order for " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*)
-				  if res then 
-					begin
-					  first_order_vars := sv1 :: !first_order_vars;
-					  (*if !mona_file_number = 15 then
-						print_string ("first order:" ^ (mona_of_spec_var sv1) ^ "...4\n");*)
-					  true;  
-					end
-				  else 
-					begin
-					  (*if !mona_file_number = 15 then
-						print_string ("second order:" ^ (mona_of_spec_var sv1) ^ " in test" ^ string_of_int !mona_file_number ^ "...5\n");*)
-					  if (!cycle = false) then 
-						begin
-						  second_order_vars := sv1 :: !second_order_vars;
-						end	
-					  else
-						begin
-						  cycle := false;
-						end;	
-					  false;
-					end 
-	| _ -> false
+ | CP.Var(sv1, _) ->
+     if (exists_sv sv1 !additional_vars) then 
+       begin (*if (!mona_file_number =  18) then print_string ("false first_order: " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*) false; end
+     else	 
+     if (exists_sv sv1 !first_order_vars)  then 
+	begin
+	  true; 
+	end
+      else 
+        if (is_inside_bag f (hd elem_list)) then 
+	    begin
+	      first_order_vars := sv1 :: !first_order_vars;
+	      (*if !mona_file_number = 15 then
+	      print_string ("first order:" ^ (mona_of_spec_var sv1)  ^ " in test" ^ string_of_int !mona_file_number ^ "...2\n");*)
+	      true;
+	    end
+	else 
+	  if (exists_sv sv1 !second_order_vars) then 
+	    begin
+	      (*if !mona_file_number = 15 then
+	      print_string ("second order:" ^ (mona_of_spec_var sv1) ^ " in test" ^ string_of_int !mona_file_number ^ "...3\n"); *)
+	      false;
+	    end
+	  else
+	    let res = (is_first_order_ f elem_list f) in
+	      (*if !mona_file_number = 15 then print_string ("call first_order for " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*)
+	      if res then 
+	      begin
+	        first_order_vars := sv1 :: !first_order_vars;
+		(*if !mona_file_number = 15 then
+		print_string ("first order:" ^ (mona_of_spec_var sv1) ^ "...4\n");*)
+		true;  
+	      end
+	      else 
+	      begin
+		(*if !mona_file_number = 15 then
+		    print_string ("second order:" ^ (mona_of_spec_var sv1) ^ " in test" ^ string_of_int !mona_file_number ^ "...5\n");*)
+		if (!cycle = false) then 
+		  begin
+		    second_order_vars := sv1 :: !second_order_vars;
+		  end	
+		else
+		  begin
+		    cycle := false;
+		  end;	
+		false;
+	      end 
+ | _ -> false
 
 and is_first_order_ (f : CP.formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool =
   match f with
-	| CP.And(f1, f2, _) 
-	| CP.Or(f1, f2, _) -> 
-		begin
-		  (*if !mona_file_number = 15 then print_string ("OR FIRST_ORDER for " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*)
-		  (is_first_order_ f1 elem_list initial_f) || (is_first_order_ f2 elem_list initial_f);
-		end
-	| CP.Forall(_, f1, _)
-	| CP.Exists(_, f1, _)
-	| CP.Not(f1, _) -> (is_first_order_ f1 elem_list initial_f)
-	| CP.BForm(bf) -> 
-		begin
-		  (*if !mona_file_number = 15 then 
-			print_string ("BForm:-- " ^ (print_b_formula bf initial_f) ^ "\n");*)
-		  (is_first_order_b_formula bf elem_list initial_f);
-		end	
-	| _ -> 
-		begin 
-		  (*if !mona_file_number = 15 then print_string ("FALSE FIRST_ORDER for " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*)
-		  false;					    
-		end
+  | CP.And(f1, f2, _) 
+  | CP.Or(f1, f2, _) -> 
+      begin
+	(*if !mona_file_number = 15 then print_string ("OR FIRST_ORDER for " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*)
+	(is_first_order_ f1 elem_list initial_f) || (is_first_order_ f2 elem_list initial_f);
+      end
+  | CP.Forall(_, f1, _)
+  | CP.Exists(_, f1, _)
+  | CP.Not(f1, _) -> (is_first_order_ f1 elem_list initial_f)
+  | CP.BForm(bf) -> 
+      begin
+	(*if !mona_file_number = 15 then 
+	  print_string ("BForm:-- " ^ (print_b_formula bf initial_f) ^ "\n");*)
+	(is_first_order_b_formula bf elem_list initial_f);
+      end	
+  | _ -> 
+      begin 
+	(*if !mona_file_number = 15 then print_string ("FALSE FIRST_ORDER for " ^ (mona_of_exp (hd elem_list) f) ^ "\n");*)
+	false;					    
+      end
 
 and is_first_order_b_formula (bf : CP.b_formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool = match bf with
   | CP.Lt(e1, e2, _)
@@ -267,33 +274,33 @@ and is_first_order_b_formula (bf : CP.b_formula) (elem_list : CP.exp list) (init
   | CP.Eq(e1, e2, _) 					   
   | CP.Neq(e1, e2, _) -> 
       begin
-		(*if !mona_file_number = 15 then print_string ("B_FORMULA FIRST_ORDER for " ^ (mona_of_exp (hd elem_list) initial_f) ^ ":" ^ (mona_of_exp e1 initial_f) ^ " and " ^ (mona_of_exp e2 initial_f) ^ "\n");*)
-		if (appears_in_exp e1 (hd elem_list)) || (appears_in_exp e2 (hd elem_list)) then 
-		  begin
-			(*if (!mona_file_number = 15) then print_string ("b_formula: " ^ (mona_of_exp e1 initial_f) ^ " and " ^ (mona_of_exp e2 initial_f) ^ " and the var for which I'm searching is " ^ (mona_of_exp (hd elem_list) initial_f) ^ "\n");*)
-			((is_first_order_exp e1 elem_list initial_f) || (is_first_order_exp e2 elem_list initial_f));
-		  end
+	(*if !mona_file_number = 15 then print_string ("B_FORMULA FIRST_ORDER for " ^ (mona_of_exp (hd elem_list) initial_f) ^ ":" ^ (mona_of_exp e1 initial_f) ^ " and " ^ (mona_of_exp e2 initial_f) ^ "\n");*)
+	if (appears_in_exp e1 (hd elem_list)) || (appears_in_exp e2 (hd elem_list)) then 
+	  begin
+	    (*if (!mona_file_number = 15) then print_string ("b_formula: " ^ (mona_of_exp e1 initial_f) ^ " and " ^ (mona_of_exp e2 initial_f) ^ " and the var for which I'm searching is " ^ (mona_of_exp (hd elem_list) initial_f) ^ "\n");*)
+	    ((is_first_order_exp e1 elem_list initial_f) || (is_first_order_exp e2 elem_list initial_f));
+	  end
         else false;
       end
   | CP.EqMax(e1, e2, e3, _)
   | CP.EqMin(e1, e2, e3, _) -> 	
-      if (appears_in_exp e1 (hd elem_list)) || (appears_in_exp e2 (hd elem_list)) || (appears_in_exp e3 (hd elem_list)) then 
-		((is_first_order_exp e1 elem_list initial_f) || (is_first_order_exp e2 elem_list initial_f) || (is_first_order_exp e3 elem_list initial_f))
-	  else
-		false
+      	if (appears_in_exp e1 (hd elem_list)) || (appears_in_exp e2 (hd elem_list)) || (appears_in_exp e3 (hd elem_list)) then 
+	   ((is_first_order_exp e1 elem_list initial_f) || (is_first_order_exp e2 elem_list initial_f) || (is_first_order_exp e3 elem_list initial_f))
+	else
+	  false
   | _ -> 
       begin
-		(*print_string ("I am here for " ^ (print_b_formula bf initial_f) ^ "\n");*)
-		false;
+	(*print_string ("I am here for " ^ (print_b_formula bf initial_f) ^ "\n");*)
+	false;
       end	
 
 and is_first_order_exp (e : CP.exp) (elem_list : CP.exp list) (initial_f : CP.formula) : bool = match e with 
   | CP.Var(sv1, _) -> 
    	  if (exists_sv_exp sv1 elem_list) then 
 	    begin 
-	      (* if I find a cycle when checking if a var is first order, I consider that one of the two interdependent vars is second order;
-			 however, I make this assumption only when doing the checking for the other var. After finding whether the other var is first/second order, 
-			 I compute again the result for the var I first considered as second order *)
+	       (* if I find a cycle when checking if a var is first order, I consider that one of the two interdependent vars is second order;
+		 however, I make this assumption only when doing the checking for the other var. After finding whether the other var is first/second order, 
+		 I compute again the result for the var I first considered as second order *)
 	      cycle := true; 			
 	      false; 
 	    end
@@ -303,8 +310,8 @@ and is_first_order_exp (e : CP.exp) (elem_list : CP.exp list) (initial_f : CP.fo
   | CP.Max(a1, a2, _)
   | CP.Min(a1, a2, _) -> 
       begin
-		(*if !mona_file_number = 15 then print_string ("Min of " ^ (mona_of_exp a1 initial_f) ^ " and " ^ (mona_of_exp a2 initial_f) ^ "\n");*)
-		(is_first_order_exp a1 elem_list initial_f) || (is_first_order_exp a2 elem_list initial_f);
+	(*if !mona_file_number = 15 then print_string ("Min of " ^ (mona_of_exp a1 initial_f) ^ " and " ^ (mona_of_exp a2 initial_f) ^ "\n");*)
+	(is_first_order_exp a1 elem_list initial_f) || (is_first_order_exp a2 elem_list initial_f);
       end	
   | CP.Mult(i1, a1, _) -> (is_first_order_exp a1 elem_list initial_f)
   | _ -> false
@@ -312,11 +319,11 @@ and is_first_order_exp (e : CP.exp) (elem_list : CP.exp list) (initial_f : CP.fo
 and appears_in_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
   | CP.Var(sv1, _) -> 
       begin
-		match elem with
-		  | CP.Var(sv2, _) -> 
-			  if (*(equal_sv sv1 sv2)*) sv1 = sv2 then true
-			  else false
-		  | _ -> false
+      match elem with
+      | CP.Var(sv2, _) -> 
+	  if (*(equal_sv sv1 sv2)*) sv1 = sv2 then true
+	  else false
+      | _ -> false
       end
   | CP.Add(a1, a2, _)
   | CP.Subtract(a1, a2, _)
@@ -338,46 +345,49 @@ and is_inside_bag_b_formula (bf : CP.b_formula) (elem : CP.exp) : bool = match b
   | CP.BagNotIn(sv1, e1, _)
   | CP.BagIn(sv1, e1, _) -> 
       begin
-		match elem with 
-		  | CP.Var(sv2, _) -> 
-			  if sv1=sv2 then true
-			  else false
-		  | _ -> false
+      match elem with 
+       | CP.Var(sv2, _) -> 
+	   if sv1=sv2 then true
+	   else false
+       | _ -> false
       end
   | CP.BagSub(e1, e2, _)  
   | CP.Eq(e1, e2, _) 					   
   | CP.Neq(e1, e2, _) -> begin
       let res1 = is_inside_bag_exp e1 elem in
       let res2 = is_inside_bag_exp e2 elem in begin
-		  if CP.is_bag(e1) & CP.is_bag(e2) then res1 || res2
-		  else if CP.is_bag(e1) then res1
-		  else if CP.is_bag(e2) then res2
+      if CP.is_bag(e1) & CP.is_bag(e2) then res1 || res2
+      else if CP.is_bag(e1) then res1
+	  else if CP.is_bag(e2) then res2
 	      else false
-		end
-    end
+      end
+      end
   | _ -> false
 
 and is_inside_bag_exp (e : CP.exp) (elem : CP.exp) : bool = match e with 
   | CP.Var(sv1, _) -> begin 
       match elem with
-		| CP.Var(sv2, _) -> 
-			if sv1=sv2 then true
-			else false
-		| _ -> false
-    end
+      | CP.Var(sv2, _) -> 
+	  if sv1=sv2 then true
+	  else false
+      | _ -> false
+      end
   | CP.Bag(e1 :: rest, p) -> (is_inside_bag_exp e1 elem) || (is_inside_bag_exp (CP.Bag(rest, p)) elem)
-  | CP.BagIntersect(e1 :: rest, p) 
+  | CP.BagIntersect(e1 :: rest, p) -> begin
+      if CP.is_bag(e1) then (is_inside_bag_exp e1 elem) || (is_inside_bag_exp (CP.BagIntersect(rest, p)) elem)
+      else  is_inside_bag_exp (CP.BagIntersect(rest, p)) elem
+      end
   | CP.BagUnion(e1 :: rest, p) -> begin
       if CP.is_bag(e1) then (is_inside_bag_exp e1 elem) || (is_inside_bag_exp (CP.BagUnion(rest, p)) elem)
       else  is_inside_bag_exp (CP.BagUnion(rest, p)) elem
-    end
+      end
   | CP.BagDiff(e1, e2, _) -> 
       let res1 = is_inside_bag_exp e1 elem in
       let res2 = is_inside_bag_exp e2 elem in
-		if CP.is_bag(e1) & CP.is_bag(e2) then res1 || res2
-		else if CP.is_bag(e1) then res1
-		else if CP.is_bag(e2) then res2
-	    else false
+      if CP.is_bag(e1) & CP.is_bag(e2) then res1 || res2
+      else if CP.is_bag(e1) then res1
+	  else if CP.is_bag(e2) then res2
+	      else false
   | _ -> begin false; end
 	  
 (* pretty printing for spec_vars *)
@@ -398,11 +408,11 @@ and mona_of_exp e0 f = match e0 with
   | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"  
   | CP.BagUnion ([], _) -> ""
   | CP.BagUnion (e::[], _) -> (mona_of_exp e f) 
-  | CP.BagUnion (e::rest, l) -> "(" ^ (mona_of_exp e f) ^ " union " ^ (mona_of_exp (CP.BagUnion (rest, l)) f) ^ ")"
+  | CP.BagUnion (e::rest, l) -> (mona_of_exp e f) ^ " union " ^ (mona_of_exp (CP.BagUnion (rest, l)) f)
   | CP.BagIntersect ([], _) -> ""
   | CP.BagIntersect (e::[], _) -> (mona_of_exp e f) 
-  | CP.BagIntersect (e::rest, l)-> "(" ^ (mona_of_exp e f) ^ " inter " ^ (mona_of_exp (CP.BagIntersect (rest, l)) f) ^ ")"
-  | CP.BagDiff (e1, e2, _)     -> "(" ^ (mona_of_exp e1 f) ^ "\\" ^ (mona_of_exp e2 f) ^ ")"
+  | CP.BagIntersect (e::rest, l)->(mona_of_exp e f) ^ " inter " ^ (mona_of_exp (CP.BagIntersect (rest, l)) f)
+  | CP.BagDiff (e1, e2, _)     -> (mona_of_exp e1 f) ^ "\\" ^ (mona_of_exp e2 f)
 
 (* pretty printing for a list of expressions *)
 and mona_of_formula_exp_list l f = match l with 
@@ -411,7 +421,7 @@ and mona_of_formula_exp_list l f = match l with
   | h::[]      -> mona_of_exp h f
   | CP.IConst(i, _) :: t -> string_of_int i ^ ", " ^ (mona_of_formula_exp_list t f)
   | h::t       -> (mona_of_exp h f) ^ ", " ^ (mona_of_formula_exp_list t f)
-	  
+  
 (* pretty printing for boolean vars *)
 and mona_of_b_formula b f = match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"	
@@ -432,71 +442,71 @@ and mona_of_b_formula b f = match b with
       let a1str = (mona_of_exp a1 f) in
       let a2str = (mona_of_exp a2 f) in
       let a3str = (mona_of_exp a3 f) in 
-		if (is_first_order f [a1]) || (is_first_order f [a2]) || (is_first_order f [a3]) then 
-		  "(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
-		else	
-          " plus(" ^ a1str ^ ", " ^ a2str ^ ", " ^ a3str ^ ") "
+      if (is_first_order f [a1]) || (is_first_order f [a2]) || (is_first_order f [a3]) then 
+	"(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
+      else	
+        " plus(" ^ a1str ^ ", " ^ a2str ^ ", " ^ a3str ^ ") "
   | CP.Eq (CP.IConst(i, _), a1, _) 
   | CP.Eq (a1, CP.IConst(i, _), _) ->
       if (is_first_order f [a1]) then 
-		"(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
+	"(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
       else  
-		"(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"	
-		  (***********************)
+	"(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"	
+  (***********************)
   | CP.Eq (a1, CP.Null _, _) ->
       if (is_first_order f [a1]) then 
-		"(" ^ (mona_of_exp a1 f) ^ " = 0)"
+	"(" ^ (mona_of_exp a1 f) ^ " = 0)"
       else  
-		"(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
-		  (**********************)
+	"(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
+  (**********************)
   | CP.Eq (a1, a2, _) -> "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"										    
   | CP.Neq (CP.IConst(i, _), a1, _) 
   | CP.Neq (a1, CP.IConst(i, _), _) ->
       if (is_first_order f [a1]) then 
-		"(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
+	"(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
       else  
-		"(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
+	"(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
   | CP.Neq (a1, a2, _) -> 
-	  if (is_first_order f [a1]) then
-		begin
-		  if CP.is_null a2 then 
-			"(" ^ (mona_of_exp a1 f) ^ " > 0)"
-		  else 
-			if CP.is_null a1 then 
-			  "(" ^ (mona_of_exp a2 f) ^ " > 0)"
-			else
-			  "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
-		end								 
-      else 
-		begin
-		  if CP.is_null a2 then 
-			" greater(" ^ (mona_of_exp a1 f) ^ ", pconst(0))"
-		  else 
-			if CP.is_null a1 then 
-			  " greater(" ^ (mona_of_exp a2 f) ^ ",  pconst(0))"
-			else
-			  "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
-		end								 
+	if (is_first_order f [a1]) then
+	  begin
+	  if CP.is_null a2 then 
+	  "(" ^ (mona_of_exp a1 f) ^ " > 0)"
+	  else 
+	    if CP.is_null a1 then 
+	      "(" ^ (mona_of_exp a2 f) ^ " > 0)"
+	    else
+	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
+	  end								 
+        else 
+	  begin
+	  if CP.is_null a2 then 
+	    " greater(" ^ (mona_of_exp a1 f) ^ ", pconst(0))"
+	  else 
+	    if CP.is_null a1 then 
+	      " greater(" ^ (mona_of_exp a2 f) ^ ",  pconst(0))"
+	    else
+	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
+	  end								 
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = mona_of_exp a1 f in
 	  let a2str = mona_of_exp a2 f in
 	  let a3str = mona_of_exp a3 f in
-		if (is_first_order f [a1]) || (is_first_order f [a2]) || (is_first_order f [a3]) then
-		  "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | (" 
-		  ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str 
-        else
-		  "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a3str ^ ") | (less(" 
-		  ^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str 										   
+	  if (is_first_order f [a1]) || (is_first_order f [a2]) || (is_first_order f [a3]) then
+	  "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | (" 
+		^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str 
+          else
+	  "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a3str ^ ") | (less(" 
+		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str 										   
   | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = mona_of_exp a1 f in
 	  let a2str = mona_of_exp a2 f in
 	  let a3str = mona_of_exp a3 f in
-		if (is_first_order f [a1]) || (is_first_order f [a2]) || (is_first_order f [a3]) then
-		  "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | (" 
-	      ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str
-        else
-		  "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a2str ^ ") | (less(" 
-		  ^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a3str ^ "))\n"
+	  if (is_first_order f [a1]) || (is_first_order f [a2]) || (is_first_order f [a3]) then
+	  "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | (" 
+	    ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str
+          else
+	  "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a2str ^ ") | (less(" 
+		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a3str ^ "))\n"
   | CP.BagIn (v, e, l) -> (mona_of_spec_var v) ^ " in " ^ (mona_of_exp e f) 
   | CP.BagNotIn (v, e, l) -> "~(" ^ (mona_of_spec_var v) ^ " in " ^ (mona_of_exp e f) ^")"
   | CP.BagSub (e1, e2, l) -> "(" ^ (mona_of_exp e1 f) ^ " sub " ^ (mona_of_exp e2 f) ^ ")"
@@ -505,64 +515,64 @@ and mona_of_b_formula b f = match b with
 
 and equation a1 a2 f sec_order_symbol first_order_symbol = 
   match a1 with
-	| CP.IConst(i1, _) ->
+  | CP.IConst(i1, _) ->
         if (is_first_order f [a2]) then
-		  "(" ^ (string_of_int i1) ^ first_order_symbol ^ (mona_of_exp a2 f) ^ ")"
+	  "(" ^ (string_of_int i1) ^ first_order_symbol ^ (mona_of_exp a2 f) ^ ")"
         else								
-		  " " ^ sec_order_symbol ^ "(pconst(" ^ (string_of_int i1) ^ "), " ^ (mona_of_exp a2 f) ^ ")"
-	| _ -> 
-		begin
-		  match a2 with
-			| CP.IConst(i2, _) ->
-				if (is_first_order f [a1]) then
-				  "(" ^ (mona_of_exp a1 f) ^ " " ^ first_order_symbol ^ " " ^ (string_of_int i2) ^ ")"
-				else 
-				  begin
-					" " ^ sec_order_symbol ^ "(" ^ (mona_of_exp a1 f) ^ ", pconst(" ^ (string_of_int i2) ^ "))";
-				  end												 
-			| _ ->
-				if (is_first_order f [a1]) || (is_first_order f [a2]) then
-				  "(" ^ (mona_of_exp a1 f) ^ " " ^ first_order_symbol ^ " " ^ (mona_of_exp a2 f) ^ ")"
-				else								     
-				  " " ^ sec_order_symbol ^ "(" ^ (mona_of_exp a1 f) ^ ", " ^ (mona_of_exp a2 f) ^ ")"
-		end												 
-		  
+	  " " ^ sec_order_symbol ^ "(pconst(" ^ (string_of_int i1) ^ "), " ^ (mona_of_exp a2 f) ^ ")"
+  | _ -> 
+      begin
+	match a2 with
+	| CP.IConst(i2, _) ->
+            if (is_first_order f [a1]) then
+	      "(" ^ (mona_of_exp a1 f) ^ " " ^ first_order_symbol ^ " " ^ (string_of_int i2) ^ ")"
+            else 
+	      begin
+		" " ^ sec_order_symbol ^ "(" ^ (mona_of_exp a1 f) ^ ", pconst(" ^ (string_of_int i2) ^ "))";
+	      end												 
+	| _ ->
+	     if (is_first_order f [a1]) || (is_first_order f [a2]) then
+	       "(" ^ (mona_of_exp a1 f) ^ " " ^ first_order_symbol ^ " " ^ (mona_of_exp a2 f) ^ ")"
+             else								     
+	       " " ^ sec_order_symbol ^ "(" ^ (mona_of_exp a1 f) ^ ", " ^ (mona_of_exp a2 f) ^ ")"
+     end												 
+      
 
 (* pretty printing for formulas *)
 and mona_of_formula f initial_f = 
   begin
-	match f with
-	  | CP.BForm b -> "(" ^ (mona_of_b_formula b initial_f) ^ ")"
-	  | CP.And (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f) ^ " & " ^ (mona_of_formula p2 initial_f) ^ ")" 
-	  | CP.Or (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f) ^ " | " ^ (mona_of_formula p2 initial_f) ^ ")" 
-	  | CP.Not (p, _) -> 
-		  begin
-			match p with
-			  | CP.BForm (CP.BVar (bv, _)) -> (mona_of_spec_var bv) ^ (*" = 0"*) " = pconst(0)"
-			  | _ -> " (~" ^ (mona_of_formula p initial_f) ^ ") "
-		  end
-			(*| CP.Forall(CP.SpecVar (CP.Prim Bag, v, p), p1, _) -> 
-			  "(all2 " ^ v ^ " : " ^ (mona_of_formula p1 initial_f) ^ ")"
-			  | CP.Forall (sv, p, _) -> 
-  			  "(all1 " ^ (mona_of_spec_var sv) ^ " : " ^ (mona_of_formula p initial_f) ^ ")"	
-			  | CP.Exists(CP.SpecVar (CP.Prim Bag, v, p), p1, _) ->   	
-			  "(ex2 " ^ v ^ " : " ^ (mona_of_formula p1 initial_f) ^ ")"
-			  | CP.Exists (sv, p, _) -> 
-  			  "(ex1 " ^ (mona_of_spec_var sv) ^ " : " ^ (mona_of_formula p initial_f) ^ ")"*)
-	  | CP.Forall (sv, p, l) -> 
-		  if (is_first_order initial_f [(CP.Var(sv, l))]) then
-			" (all1 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "
-		  else
-			" (all2 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "
-	  | CP.Exists (sv, p, l) ->  
-		  if (is_first_order initial_f [(CP.Var(sv, l))]) then 
-			begin
-			  " (ex1 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "
-			end 									     
-		  else
-			begin
-			  " (ex2 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "											   end
-  end
+  match f with
+  | CP.BForm b -> "(" ^ (mona_of_b_formula b initial_f) ^ ")"
+  | CP.And (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f) ^ " & " ^ (mona_of_formula p2 initial_f) ^ ")" 
+  | CP.Or (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f) ^ " | " ^ (mona_of_formula p2 initial_f) ^ ")" 
+  | CP.Not (p, _) -> 
+      begin
+	  match p with
+		| CP.BForm (CP.BVar (bv, _)) -> (mona_of_spec_var bv) ^ (*" = 0"*) " = pconst(0)"
+		| _ -> " (~" ^ (mona_of_formula p initial_f) ^ ") "
+      end
+  (*| CP.Forall(CP.SpecVar (CP.Prim Bag, v, p), p1, _) -> 
+	"(all2 " ^ v ^ " : " ^ (mona_of_formula p1 initial_f) ^ ")"
+  | CP.Forall (sv, p, _) -> 
+  	"(all1 " ^ (mona_of_spec_var sv) ^ " : " ^ (mona_of_formula p initial_f) ^ ")"	
+  | CP.Exists(CP.SpecVar (CP.Prim Bag, v, p), p1, _) ->   	
+	"(ex2 " ^ v ^ " : " ^ (mona_of_formula p1 initial_f) ^ ")"
+  | CP.Exists (sv, p, _) -> 
+  	"(ex1 " ^ (mona_of_spec_var sv) ^ " : " ^ (mona_of_formula p initial_f) ^ ")"*)
+  | CP.Forall (sv, p, l) -> 
+      if (is_first_order initial_f [(CP.Var(sv, l))]) then
+	" (all1 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "
+     else
+	" (all2 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "
+  | CP.Exists (sv, p, l) ->  
+      if (is_first_order initial_f [(CP.Var(sv, l))]) then 
+	begin
+	  " (ex1 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "
+	end 									     
+      else
+	begin
+	  " (ex2 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f) ^ ") "											   end
+   end
 
 (* pretty printing for boolean vars *)
 and print_b_formula b f = match b with
@@ -583,79 +593,63 @@ and print_b_formula b f = match b with
   | CP.BagMax (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => x0 <= " ^ (mona_of_spec_var v1) ^ " )" 
 
 
-let get_last_line fd : string =
-  let last_line = ref "" in
-	try
-	  while true do
-		let line = input_line fd in
-		  last_line := line
-	  done;
-	  ""
-	with
-	  | End_of_file -> !last_line
-
 (* checking the result given by Mona *)
 let rec check fd mona_file_name : bool = 
-  (*let automaton_completed = ref false in*)
-  try begin
-	let line = input_line fd  in
-	  match line with
-	    | "Formula is valid" -> begin 
-      		if !log_all_flag then begin
-      		  output_string log_file (" [mona.ml]: --> SUCCESS\n");
-			  output_string log_file (get_last_line fd)
-			end;
-(*      		ignore (Sys.remove mona_file_name); *)
-      		true;
-      	  end	 
-	    | "AUTOMATON CONSTRUCTION" -> begin automaton_completed := false; check fd mona_file_name; end 		   	   
-        | "ANALYSIS" -> begin automaton_completed := true; check fd mona_file_name; end 		   
-        | _ -> check fd mona_file_name
-  end	
-  with
+	(*let automaton_completed = ref false in*)
+	try begin
+	  let line = input_line fd  in
+	     match line with
+	     | "Formula is valid" -> 	
+		 begin 
+      		   if !log_all_flag==true then 
+      		     output_string log_file (" [mona.ml]: --> SUCCESS\n");
+     		   (*ignore (Sys.remove mona_file_name);*)
+      		   true;
+      		 end	 
+	     | "AUTOMATON CONSTRUCTION" -> begin automaton_completed := false; check fd mona_file_name; end 		   	   
+             | "ANALYSIS" -> begin automaton_completed := true; check fd mona_file_name; end 		   
+             | _ -> check fd mona_file_name
+	end	
+	with
 	  End_of_file -> 
-      	begin 
+      	    begin 
 	      if !automaton_completed = false then
-			begin
-			  output_string log_file ("\nERROR... Mona is out of memory\n");
-			  (*failwith "[mona.ml] : out of memory";*)
-(*      		  ignore (Sys.remove mona_file_name); *)
-			  false;
-			end
+		begin
+		   print_string "\nERROR... Mona is out of memory\n";		   
+		   (*failwith "[mona.ml] : out of memory";*)
+		   false;
+		 end
 	      else	  
-			begin
-			  if !log_all_flag then begin
-				output_string log_file (" [mona.ml]: --> Unable to prove theory " ^ mona_file_name ^ "\n");
-				output_string log_file (get_last_line fd)
-			  end;
-(*      		  ignore (Sys.remove mona_file_name); *)
-              false;
-			end  
+		begin
+		  if !log_all_flag==true then
+		    output_string log_file (" [mona.ml]: --> Unable to prove theory " ^ mona_file_name ^ "\n");
+                  false;
+		end  
 	    end
 
 
 (*let rec check fd mona_file_name : bool= 
-  try begin
-  let line = input_line fd  in
-  match line with
-  | "Formula is valid" -> 	
-  begin 
-  if !log_all_flag then 
-  output_string log_file (" [mona.ml]: --> SUCCESS\n");
-(*ignore (Sys.remove mona_file_name);*)
-  true;
-  end	
-  | _ -> check fd mona_file_name
-  end	
-  with
-  End_of_file -> 
-  begin 
-  if !log_all_flag then
-  output_string log_file (" [mona.ml]: --> Unable to prove theory " ^ mona_file_name ^ "\n");
-(*ignore (Sys.remove mona_file_name);*)	
-  false;
-  end*)
-      	  
+	try begin
+	  let line = input_line fd  in
+	     match line with
+	     | "Formula is valid" -> 	
+		 begin 
+      		   if !log_all_flag==true then 
+      		     output_string log_file (" [mona.ml]: --> SUCCESS\n");
+      		   (*ignore (Sys.remove mona_file_name);*)
+      		   true;
+      		 end	
+	     | _ -> check fd mona_file_name
+	end	
+	with
+	  End_of_file -> 
+      	    begin 
+	      if !log_all_flag==true then
+		output_string log_file (" [mona.ml]: --> Unable to prove theory " ^ mona_file_name ^ "\n");
+	      (*ignore (Sys.remove mona_file_name);*)	
+	      false;
+	    end*)
+      		
 (* writing the Isabelle's theory file *)
 let write (var_decls:string) (pe : CP.formula) : bool =
   begin
@@ -691,9 +685,9 @@ let write (var_decls:string) (pe : CP.formula) : bool =
 		flush mona_file;
 		close_out mona_file;
 		(* if log_all_flag is on -> writing the formula in the mona log file  *)
-		if !log_all_flag then 
+		if !log_all_flag == true then 
 		  begin
-		    output_string log_file ("# test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
+		    output_string log_file ("test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
     		output_string log_file (fstr ^ ";\n");
 		    flush log_file;
 		  end;
@@ -702,41 +696,31 @@ let write (var_decls:string) (pe : CP.formula) : bool =
 		(* verifying the result returned by Mona *)
 		let result_file = open_in (result_file_name) in
 		let res = check result_file mona_file_name in
-		  (* Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona"); *)
+		  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
 		  res
 	  end		
   end
-
-(*
-let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =
-  let tmp1 = CP.break_implication ante conseq in
-	if (List.length tmp1) <= 1 then
-	  imply1 ante conseq
-	else
-	  let res = List.for_all (fun (a, c) -> imply1 a c) tmp1 in
-		res
-*)
 
 let imply (ante : CP.formula) (conseq : CP.formula) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
   first_order_vars := [];
   second_order_vars := [];
-  if !log_all_flag then
+  if !log_all_flag == true then
     output_string log_file "\n\n[mona.ml]: #imply\n";
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
   let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in 
-	(* let bag_vars, not_bag_vars = (*all_fv  bool_vars =*)List.partition (fun (CP.SpecVar (t, _, _)) -> CP.is_bag_type t) all_fv  in
-	   let bag_var_decls = 
-	   if Util.empty bag_vars then "" 
-	   else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var bag_vars)) ^ ";\n" in
-	   let not_bag_var_decls = 
-	   if Util.empty not_bag_vars then "" 
-	   else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var not_bag_vars)) ^ ";\n" in
-	   let var_decls = bag_var_decls ^ not_bag_var_decls in*)
+   (* let bag_vars, not_bag_vars = (*all_fv  bool_vars =*)List.partition (fun (CP.SpecVar (t, _, _)) -> CP.is_bag_type t) all_fv  in
+  let bag_var_decls = 
+	if Util.empty bag_vars then "" 
+	else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var bag_vars)) ^ ";\n" in
+  let not_bag_var_decls = 
+	if Util.empty not_bag_vars then "" 
+	else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var not_bag_vars)) ^ ";\n" in
+  let var_decls = bag_var_decls ^ not_bag_var_decls in*)
   let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in
   let (part1, part2) = (List.partition (fun (sv) -> (is_first_order tmp_form [(CP.Var(sv, no_pos))] )) all_fv) in
-	
+ 
   let first_order_var_decls = 
     if Util.empty (*!first_order_vars*) part1 then "" 
     else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var (*(!first_order_vars)*)part1)) ^ ";\n" in
@@ -744,56 +728,50 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool = begin
     if Util.empty (*!second_order_vars*) part2 then "" 
     else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var (*!second_order_vars*) part2)) ^ ";\n" in
   let var_decls = first_order_var_decls ^ second_order_var_decls in  
-	(*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
+  (*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
   let simp_form = break_presburger tmp_form in 
     (write var_decls simp_form)
-end   
+ end   
 
 let is_sat (f : CP.formula) : bool = begin 
-  let f = CP.elim_exists f in
-(*  let f = CP.drop_bag_formula f in *)
-	if !log_all_flag then
+	if !log_all_flag == true then
 	  output_string log_file "\n\n[mona.ml]: #is_sat\n";
 	let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos)))) in
-	  match tmp_form with
-		| true -> 
-			begin 
-			  if !log_all_flag then 
-				output_string log_file "[mona.ml]: is_sat --> false\n"; 					
-			  false; 
-			end
-		| false -> 
-			begin 
-			  if !log_all_flag then 
-				output_string log_file "[mona.ml]: is_sat --> true\n"; 
-			  true; 
-			end
-end
+		match tmp_form with
+			| true -> 
+				begin 
+				if !log_all_flag == true then 
+					output_string log_file "[mona.ml]: is_sat --> false\n"; 					
+				false; 
+				end
+			| false -> 
+				begin 
+				if !log_all_flag == true then 
+					output_string log_file "[mona.ml]: is_sat --> true\n"; 
+				true; 
+				end
+	end
   
 (* TODO: implement the following procedures; now they are only dummies *)  
 let hull (pe : CP.formula) : CP.formula = begin
-  if !log_all_flag then
-	output_string log_file "\n\n[mona.ml]: #hull\n";
-  pe  
-end
-
+	if !log_all_flag == true then
+	  output_string log_file "\n\n[mona.ml]: #hull\n";
+	pe  
+	end
 let pairwisecheck (pe : CP.formula) : CP.formula = begin
-  if !log_all_flag then
-	output_string log_file "\n\n[mona.ml]: #pairwisecheck\n";
-  pe  
-end  
-
+	if !log_all_flag == true then
+	  output_string log_file "\n\n[mona.ml]: #pairwisecheck\n";
+	pe  
+	end  
 let simplify (pe : CP.formula) : CP.formula = begin
-  if !log_all_flag then 
-  	begin
-		output_string log_file "\n\n[mona.ml]: #simplify\n"
-		end;
-  pe  
-end
-  (*| CP.EqMax (a1, a2, a3, _) ->
-	let a1str = (mona_of_exp a1 f) in
-	let a2str = (mona_of_exp a2 f) in
-	let a3str = (mona_of_exp a3 f) in
-	("((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | (" 
-	^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))\n")*)
+	if !log_all_flag == true then
+	  output_string log_file "\n\n[mona.ml]: #simplify\n";
+	pe  
+	end
+(*| CP.EqMax (a1, a2, a3, _) ->
+	  let a1str = (mona_of_exp a1 f) in
+	  let a2str = (mona_of_exp a2 f) in
+	  let a3str = (mona_of_exp a3 f) in
+	  ("((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | (" 
+		^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))\n")*)
 
