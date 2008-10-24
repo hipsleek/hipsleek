@@ -5,15 +5,23 @@ use File::Basename;
 use Getopt::Long;
 
 GetOptions( "stop"  => \$stop,
-			"help" => \$help);
+			"help" => \$help,
+			"root=s" => \$root);
 if($help)
 {
-	print "./run-fast-tests.pl [-help] hip|sleek|hip sleek";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] hip_tr|hip sleek";
 	exit(0);
 }
+if($root){
+	$exempl_path = "$root/examples/working";
+	$exec_path = "$root";
+}
+	else
+	{
+		$exempl_path = ".";
+		$exec_path = '../..';
+	}
 @param_list = @ARGV;
-$exempl_path = ".";
-$exec_path = '../..';
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
