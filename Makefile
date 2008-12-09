@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml
+INCLUDES=-I ./xml -I +xml-light
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=$(INCLUDES)    # add other options for ocamlc here
@@ -54,7 +54,7 @@ MAIN_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
 	drawing.cmo \
@@ -72,7 +72,7 @@ SLEEK_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
 	drawing.cmo \
@@ -94,18 +94,18 @@ MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 hip1: $(MAIN_FILES_2)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
 
-hipc: 
+hipc:
 	make clean; make hip
-	
+
 hip: $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
 hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt hip.opt
 
-sleekc: 
+sleekc:
 	make clean; make sleek 
-	
+
 sleek: $(SLEEK_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
@@ -124,7 +124,7 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo omega.cmo mona.cmo\
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
 	cvclite.cmo tpdispatcher.cmo \
 	solver.cmo \
 	env.cmo astsimp.cmo \
@@ -167,7 +167,7 @@ clean:
 	rm ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe *~ oo oo.exe
 
 # Dependencies
-beforedepend: ilexer.mli iparser.mli oclexer.ml ocparser.ml
+beforedepend: iparser.mli ocparser.ml
 
 depend: beforedepend
 	(for d in $(DIRS); \

@@ -15,6 +15,7 @@ type tp_type =
   | OI
   | SetMONA
   | CM (* CVC Lite then MONA *)
+  | Coq
 
 let tp = ref OmegaCalc 
 
@@ -37,6 +38,8 @@ let set_tp tp_str =
 	tp := SetMONA
   else if tp_str = "cm" then
 	tp := CM
+  else if tp_str = "coq" then
+	tp := Coq
   else
 	()
 
@@ -177,6 +180,7 @@ let is_sat (f : CP.formula) =
 			end
 	  | CvcLite -> Cvclite.is_sat f
 	  | Isabelle -> Isabelle.is_sat f
+	  | Coq -> Coq.is_sat f
 	  | Mona -> Mona.is_sat f
 	  | CO -> begin
 		  let result1 = Cvclite.is_sat_raw f in
@@ -219,6 +223,7 @@ let is_sat (f : CP.formula) =
 	
 let simplify (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.simplify f	
+  | Coq -> Coq.simplify f	
   | Mona -> Mona.simplify f	
   | OM ->
 	  if (is_bag_constraint f) then
@@ -242,6 +247,7 @@ let simplify (f : CP.formula) : CP.formula = match !tp with
   
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f	
+  | Coq -> Coq.hull f	
   | Mona -> Mona.hull f	
   | OM -> 
 	  if (is_bag_constraint f) then
@@ -266,6 +272,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
 
 let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.pairwisecheck f	
+  | Coq -> Coq.pairwisecheck f	
   | Mona -> Mona.pairwisecheck f	
   | OM -> 
 	  if (is_bag_constraint f) then
@@ -327,6 +334,7 @@ let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
 				  (Omega.imply ante conseq)
 			  | CvcLite -> Cvclite.imply ante conseq
 			  | Isabelle -> Isabelle.imply ante conseq
+			  | Coq -> Coq.imply ante conseq
 			  | Mona -> Mona.imply ante conseq
 			  | CO -> begin
 				  let result1 = Cvclite.imply_raw ante conseq in
