@@ -130,7 +130,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let conseq = meta_to_formula iconseq0 false fv_idents stab in
 	let ectx = CF.empty_ctx no_pos in
 	let ctx = CF.build_context ectx ante no_pos in
-	let rs, _ = Solver.heap_entail cprog false [ctx] conseq no_pos in
+	let rs, _ = Solver.heap_entail cprog false false [ctx] conseq no_pos in
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;
 	  if Util.empty rs then

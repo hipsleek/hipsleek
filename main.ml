@@ -29,6 +29,8 @@ let set_proc_verified arg =
 let process_cmd_line () = Arg.parse [
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
+	("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic,
+	"Use the combined coerce&match + history heuristic for lemma application");
 	("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
 	"Move instantiation (containing existential vars) to the LHS at the end of the folding process");
 	("--max-renaming", Arg.Set Globals.max_renaming,
@@ -73,8 +75,6 @@ let process_cmd_line () = Arg.parse [
    "Log all formulae sent to Omega Calculator in file allinput.oc");
   ("--log-isabelle", Arg.Set Isabelle.log_all_flag,
    "Log all formulae sent to Isabelle in file allinput.thy");
-  ("--log-coq", Arg.Set Coq.log_all_flag,
-   "Log all formulae sent to Coq in file allinput.v");
   ("--log-mona", Arg.Set Mona.log_all_flag,
    "Log all formulae sent to Mona in file allinput.mona");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
@@ -105,8 +105,8 @@ let process_cmd_line () = Arg.parse [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "set"; "cm"], Tpdispatcher.set_tp),
-   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
+  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "mona"; "om"; "oi"; "set"; "cm"], Tpdispatcher.set_tp),
+   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
   ("--use-field", Arg.Set Globals.use_field,
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,

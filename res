@@ -1,29 +1,13 @@
-MONA v1.4-7 for WS1S/WS2S
-Copyright (C) 1997-2004 BRICS
-
-PARSING
-Time: 00:00:00.00
-
-CODE GENERATION
-DAG hits: 81, nodes: 59
-Time: 00:00:00.00
-
-REDUCTION
-Projections removed: 2 (of 15)
-Products removed: 3 (of 27)
-Other nodes removed: 1 (of 16)
-DAG nodes after reduction: 52
-Time: 00:00:00.00
-
-AUTOMATON CONSTRUCTION
-                                                                            1% completed (1 automata in memory, 1MB memory used)                                                                            3% completed (2 automata in memory, 1MB memory used)                                                                            5% completed (4 automata in memory, 1MB memory used)                                                                            7% completed (6 automata in memory, 1MB memory used)                                                                            9% completed (6 automata in memory, 1MB memory used)                                                                            11% completed (6 automata in memory, 1MB memory used)                                                                            13% completed (6 automata in memory, 1MB memory used)                                                                            15% completed (9 automata in memory, 1MB memory used)                                                                            17% completed (9 automata in memory, 1MB memory used)                                                                            19% completed (9 automata in memory, 1MB memory used)                                                                            21% completed (8 automata in memory, 1MB memory used)                                                                            23% completed (8 automata in memory, 1MB memory used)                                                                            25% completed (8 automata in memory, 1MB memory used)                                                                            26% completed (8 automata in memory, 1MB memory used)                                                                            28% completed (8 automata in memory, 1MB memory used)                                                                            30% completed (8 automata in memory, 1MB memory used)                                                                            32% completed (8 automata in memory, 1MB memory used)                                                                            34% completed (7 automata in memory, 1MB memory used)                                                                            36% completed (7 automata in memory, 1MB memory used)                                                                            38% completed (6 automata in memory, 1MB memory used)                                                                            40% completed (6 automata in memory, 1MB memory used)                                                                            42% completed (7 automata in memory, 1MB memory used)                                                                            44% completed (6 automata in memory, 1MB memory used)                                                                            46% completed (6 automata in memory, 1MB memory used)                                                                            48% completed (6 automata in memory, 1MB memory used)                                                                            50% completed (6 automata in memory, 1MB memory used)                                                                            51% completed (6 automata in memory, 1MB memory used)                                                                            53% completed (6 automata in memory, 1MB memory used)                                                                            55% completed (5 automata in memory, 1MB memory used)                                                                            57% completed (5 automata in memory, 1MB memory used)                                                                            59% completed (6 automata in memory, 1MB memory used)                                                                            61% completed (5 automata in memory, 1MB memory used)                                                                            63% completed (5 automata in memory, 1MB memory used)                                                                            65% completed (5 automata in memory, 1MB memory used)                                                                            67% completed (4 automata in memory, 1MB memory used)                                                                            69% completed (3 automata in memory, 1MB memory used)                                                                            71% completed (3 automata in memory, 1MB memory used)                                                                            73% completed (3 automata in memory, 1MB memory used)                                                                            75% completed (3 automata in memory, 1MB memory used)                                                                            76% completed (4 automata in memory, 1MB memory used)                                                                            78% completed (3 automata in memory, 1MB memory used)                                                                            80% completed (3 automata in memory, 1MB memory used)                                                                            82% completed (3 automata in memory, 1MB memory used)                                                                            84% completed (2 automata in memory, 1MB memory used)                                                                            86% completed (2 automata in memory, 1MB memory used)                                                                            88% completed (2 automata in memory, 1MB memory used)                                                                            90% completed (3 automata in memory, 1MB memory used)                                                                            92% completed (2 automata in memory, 1MB memory used)                                                                            94% completed (2 automata in memory, 1MB memory used)                                                                            96% completed (1 automata in memory, 1MB memory used)                                                                            98% completed (1 automata in memory, 1MB memory used)                                                                            100% completed                                                                         
-Time: 00:00:00.00
-
-Automaton has 1 state and 1 BDD-node
-
-ANALYSIS
-Formula is valid
-A satisfying example of least length (0) is:
-
-
-Total time: 00:00:00.00
+Poly/ML RTS version I386-4.1.4 (14:18:30 Nov 14 2005)
+Copyright (c) 2002-5 CUTS and contributors.
+Running with heap parameters (h=81920K,ib=16384K,ip=100%,mb=20480K,mp=20%)
+Mapping /home/cristina/isabelle/heaps/polyml-4.1.4_x86-linux/MyImage
+Mapping /usr/local/Isabelle2005/../polyml/x86-linux/ML_dbase
+Poly/ML 4.2.0 Release
+> val it = () : unit
+Loading theory "test141"
+*** Failed to finish proof (after successful terminal method)
+*** At command "done" (line 4 of "/home/cristina/sleekex.03.10.08/sleekex/test141.thy").
+Exception- ERROR raised
+Exception- ERROR raised
+> 

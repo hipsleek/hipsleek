@@ -8,7 +8,7 @@ open Cpure
 let infilename = "input.oc." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = "result.txt." ^ (string_of_int (Unix.getpid()))
 
-let log_all_flag = ref false
+let log_all_flag = ref true
 let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 let omega_of_spec_var (sv : spec_var) = match sv with

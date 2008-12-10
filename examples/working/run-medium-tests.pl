@@ -6,7 +6,7 @@ use Getopt::Long;
 
 GetOptions( "stop"  => \$stop);
 $exempl_path = ".";
-$exec_path = '../../..';
+$exec_path = '../..';
 $error_count = 0;
 $error_files = "";
 $hip = "$exec_path/hip";

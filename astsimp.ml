@@ -416,7 +416,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 		 (CF.pos_of_formula vdef.C.view_formula) in *)
 	  (* let xform = Omega.pairwisecheck xform' in *)
 	let ctx = CF.build_context (CF.true_ctx pos) (CF.formula_of_pure xform pos) pos in
-	let rs, _ = Solver.heap_entail prog false [ctx] 
+	let rs, _ = Solver.heap_entail prog false false [ctx] 
 	  (CF.formula_of_pure vdef.C.view_user_inv pos) pos in
 	  if not (U.empty rs) then begin
 		(*TODO: check entailment in the other way *)

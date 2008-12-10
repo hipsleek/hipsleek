@@ -41,9 +41,11 @@ let rec string_of_h_formula h = match h with
   | ViewNode ({h_formula_view_node = sv; 
 			   h_formula_view_name = c; 
 			   h_formula_view_arguments = svs; 
+			   h_formula_view_origins = origins;
 			   h_formula_view_pos = pos}) ->
 	  (string_of_spec_var sv) ^ "::" ^ c 
-	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">"
+	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">" 
+	  (*^ "origins: " ^ (String.concat ";" origins) ^ "--"*)
   | HTrue -> "true"
   | HFalse -> "false"
 
@@ -388,6 +390,8 @@ and string_of_estate (es : entail_state) =
   ^ "\nes_pure: " ^ (string_of_pure_formula es.es_pure)
   ^ "\nes_heap: " ^ (string_of_h_formula es.es_heap)
   ^ "\nes_evars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_evars))
+  ^ "\nes_ivars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_ivars))
+  ^ "\nes_expl_vars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_expl_vars))
 (*
   ^ "\nes_pp_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
 														 ^ ", " ^ (string_of_spec_var t) ^ ")") es.es_pp_subst))

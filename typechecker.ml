@@ -28,7 +28,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		 		let _ = print_string ("[typechecker.ml, line 62, assert]: pre to be entailed " ^ (Cprinter.string_of_formula c1) ^ "\n") in
 				let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 				*)
-			  let rs, prf = heap_entail prog false ctx c1 pos in
+			  let rs, prf = heap_entail prog false false ctx c1 pos in
 			   PTracer.log_proof prf;
 			   Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_formula c1)) pos;
 			   if not (U.empty rs) then
@@ -127,7 +127,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 									CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
 									CF.h_formula_data_pos = pos}) in
 	  let vheap = CF.formula_of_heap vdatanode pos in
-	  let rs_prim, prf = heap_entail prog false unfolded vheap pos in
+	  let rs_prim, prf = heap_entail prog false false unfolded vheap pos in
 	  let _ = PTracer.log_proof prf in
 	  let rs = CF.clear_entailment_history_list rs_prim in
 		if not (U.empty rs) then
@@ -529,7 +529,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		let _ = print_string ("[typechecker.ml, line 476]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 		*)
 		(* rs_prim is the context after entailment *)
-		let rs_prim, prf = heap_entail prog false ctx pre2 pos in
+		let rs_prim, prf = heap_entail prog false false ctx pre2 pos in
 		(*let _ = print_string ("[typechecker.ml, line 476]: context after entailment:\n" ^ (Cprinter.string_of_context_list rs_prim) ^ "\n\n") in*)
 		let _ = PTracer.log_proof prf in
 		let rs = CF.clear_entailment_history_list rs_prim in
@@ -673,7 +673,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) (po
 							(List.map Cprinter.string_of_context final_state)) 
 					   ^ "\n");
 	Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
-	let rs, prf = heap_entail prog false final_state post pos in
+	let rs, prf = heap_entail prog false false final_state post pos in
 	let _ = 
 	  if List.for_all CF.isFalseCtx final_state then () 
 	  else PTracer.log_proof prf 
@@ -790,7 +790,7 @@ let check_coercion (prog : prog_decl) =
   let check_entailment c_lhs c_rhs = 
 	let pos = CF.pos_of_formula c_lhs in
 	let ctx = CF.build_context (CF.empty_ctx pos) c_lhs pos in
-	let rs, prf = heap_entail prog false [ctx] c_rhs pos in
+	let rs, prf = heap_entail prog false false [ctx] c_rhs pos in
 	let _ = PTracer.log_proof prf in
 	  if U.empty rs then begin
 		Error.report_error { Error.error_loc = pos;

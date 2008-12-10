@@ -177,9 +177,9 @@ $output_file = "log";
 					["sleek3.slk","Fail.Fail.Fail."],
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
-					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail.Fail."],
-					["sleek8.slk","Valid.Valid.Valid.Valid.Fail.Valid.Fail.Fail.Fail.Fail.Fail."],
-					["sleek9.slk","Fail."]]					
+					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+					["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+					["sleek9.slk","Valid."]]				
 			);
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");

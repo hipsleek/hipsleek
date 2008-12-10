@@ -110,6 +110,8 @@ let rec formula_of_heap h pos = mkBase h (CP.mkTrue pos) TypeTrue pos
 
 and formula_of_pure p pos = mkBase HTrue p TypeTrue pos
 
+and formula_of_base base = Base(base)
+
 and data_of_h_formula h = match h with
   | DataNode d -> d
   | _ -> failwith ("data_of_h_formula: input is not a data node")
@@ -237,7 +239,7 @@ and h_add_origins (h : h_formula) origs = match h with
 			 h_formula_star_pos = pos})
   | ViewNode vn -> ViewNode {vn with h_formula_view_origins = origs @ vn.h_formula_view_origins}
   | _ -> h
-
+  
 and add_origins (f : formula) origs = match f with
   | Or ({formula_or_f1 = f1;
 		 formula_or_f2 = f2;
@@ -293,6 +295,12 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 			   h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
   | HTrue | HFalse -> []
 
+and f_top_level_vars (f : formula) : CP.spec_var list = match f with
+  | Base ({formula_base_heap = h}) -> (top_level_vars h)
+  | Or ({ formula_or_f1 = f1;
+		formula_or_f2 = f2}) -> (f_top_level_vars f1) @ (f_top_level_vars f2)
+  | Exists ({formula_exists_heap = h}) -> (top_level_vars h)
+  
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 		   h_formula_star_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
@@ -457,13 +465,16 @@ and split_components (f : formula) = match f with
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
 		   formula_base_type = t}) -> (h, p, t)
-  | Exists ({formula_exists_pos = pos}) -> 
+  | Exists ({formula_exists_heap = h; 
+		   formula_exists_pure = p; 
+		   formula_exists_type = t}) -> (h, p, t) 		   
+  (*| Exists ({formula_exists_pos = pos}) -> 
       Err.report_error {Err.error_loc = pos;
-						Err.error_text = "split_components: don't expect EXISTS"}
+						Err.error_text = "split_components: don't expect EXISTS"}*)
   | Or ({formula_or_pos = pos}) -> 
       Err.report_error {Err.error_loc = pos;
 						Err.error_text = "split_components: don't expect OR"}
-
+				
 and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f with
   | Exists ({formula_exists_qvars = qvars; 
 			 formula_exists_heap =  h; 
@@ -602,7 +613,10 @@ type entail_state = {
   es_heap : h_formula; (* consumed nodes *)
   es_pure : CP.formula;
   es_evars : CP.spec_var list;
+  es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
+  es_expl_vars : CP.spec_var list; (* vars to be explicit instantiated *)
   es_ante_evars : CP.spec_var list;
+  es_must_match : bool;
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
   es_arith_subst : (CP.spec_var * CP.exp) list
 }
@@ -617,6 +631,9 @@ let empty_es pos = {
   es_heap = HTrue;
   es_pure = CP.mkTrue pos;
   es_evars = [];
+  es_must_match = false;
+  es_ivars = [];
+  es_expl_vars = [];
   es_ante_evars = [];
   es_pp_subst = [];
   es_arith_subst = []
@@ -677,6 +694,17 @@ and set_context_formula (ctx : context) (f : formula) : context = match ctx with
 	  let nc2 = set_context_formula c2 f in
 		OCtx (nc1, nc2)
 
+and get_estate_must_match (es : entail_state) : bool = 
+	es.es_must_match
+
+and set_estate_must_match (es: entail_state) : entail_state = 	
+	let es_new = {es with es_must_match = true} in
+		es_new
+	
+and set_context_must_match (ctx : context) : context = match ctx with 
+  | Ctx (es) -> Ctx(set_estate_must_match es)
+  | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2))
+	
 (*
   to be used in the type-checker. After every entailment, the history of consumed nodes
   must be cleared.
@@ -739,6 +767,15 @@ and pop_exists_context (qvars : CP.spec_var list) (ctx : context) : context = ma
   | Ctx es -> Ctx {es with es_formula = pop_exists qvars es.es_formula}
   | OCtx (c1, c2) -> OCtx (pop_exists_context qvars c1, push_exists_context qvars c2)
 (*19.05.2008*)
+
+(*23.10.2008*)
+and pop_exists_estate (qvars : CP.spec_var list) (es : entail_state) : entail_state = 
+	let new_es = {es with 
+		es_evars = (List.filter (fun x -> not (List.exists (fun y -> (CP.eq_spec_var x y)) qvars)) es.es_evars);
+		es_formula = pop_exists qvars es.es_formula
+	}
+	in new_es
+(*23.10.2008*)
 
 and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (pos : loc) : context = match ctx with
   | Ctx es -> begin

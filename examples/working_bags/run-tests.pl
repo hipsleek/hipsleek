@@ -8,9 +8,9 @@ GetOptions( "stop"  => \$stop,
 			"opt" => \$optimized,
             "output=s" => \$output_file );
 
-$ss = '../../ss -tp om';
+$ss = '../../hip -tp om';
 if ($optimized) {
-  $ss = '../../ss.opt -tp om';
+  $ss = '../../hip.opt -tp om';
 }
 
 $error_count = 0;

@@ -46,6 +46,8 @@ let verify_callees = ref false
 
 let elim_unsat = ref true
 
+let lemma_heuristic = ref false
+
 let elim_exists = ref true
 
 let print_proc = ref false
