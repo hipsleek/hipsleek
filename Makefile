@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml -I +xml-light
+INCLUDES=-I ./xml
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=$(INCLUDES)    # add other options for ocamlc here
@@ -167,7 +167,7 @@ clean:
 	rm ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe *~ oo oo.exe
 
 # Dependencies
-beforedepend: iparser.mli ocparser.ml
+beforedepend: iparser.ml ocparser.ml
 
 depend: beforedepend
 	(for d in $(DIRS); \

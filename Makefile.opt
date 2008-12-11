@@ -3,7 +3,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml -I +xml-light
+INCLUDES=-I ./xml
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=$(INCLUDES) # add other options for ocamlc here
