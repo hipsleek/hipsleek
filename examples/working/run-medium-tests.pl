@@ -13,9 +13,14 @@ $hip = "$exec_path/hip";
 $sleek = "$exec_path/sleek";
 $perf_file = "performances";
 $output_file = "log";
+@param_list = @ARGV;
 # list of file, nr of functions, function name, output, function name, output......
 # the file name can contain also some other arguments
 %hip_files=(
+	"h_list_avl" =>[["avl.ss",13,	 "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
+								 "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
+								 "build_avl1","SUCCESS","build_avl2","SUCCESS","node_error","SUCCESS",
+								 "insert","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"]],
 	"h_list_1" =>[
 			#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
@@ -23,10 +28,7 @@ $output_file = "log";
 			#	["avl-bind.ss",13,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get-max","SUCCESS", "rotate_double_left","SUCCESS",
 			#		"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
 			#		"node_error","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"],
-			#	["avl.ss",13,	 "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
-			#					 "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
-			#					 "build_avl1","SUCCESS","build_avl2","SUCCESS","node_error","SUCCESS",
-			#					 "insert","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"],
+			#	
 			#	["avl-orig-2.ss",8,"height","SUCCESS","get_max","SUCCESS","insert","SUCCESS",
 			#					 "double_left_child","SUCCESS","double_right_child","SUCCESS",
 			#					 "rotate_left_child","SUCCESS", "rotate_right_child","SUCCESS",
@@ -206,7 +208,7 @@ sub hip_process_file {
 			$limit = $test->[1]*2+2;
 			for($i = 2; $i<$limit;$i+=2)
 			{
-				if($output !~ /Checking procedure $test->[$i].*$test->[$i+1]/)
+				if($output !~ /Procedure $test->[$i].*$test->[$i+1]/)
 				{
 					$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
