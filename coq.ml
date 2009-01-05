@@ -107,7 +107,7 @@ and coq_of_formula f =
     | CP.Forall (sv, p, _) ->
 	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
     | CP.Exists (sv, p, _) ->
-	    " (exists " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
+	    " (exists " ^ (coq_of_spec_var sv) ^ ":Z," ^ (coq_of_formula p) ^ ") "
     | CP.And (p1, p2, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
     | CP.Or (p1, p2, _) ->
@@ -143,9 +143,10 @@ let write (pe : CP.formula) : bool =
   let vstr = coq_of_var_list (Util.remove_dups (get_vars_formula pe)) in
   let fstr = coq_of_formula pe in
   output_string coq_file "Require Import decidez.\n";
+(*  output_string coq_file "Require Import PresTac.\n";*)
   output_string coq_file "Set Firstorder Depth 5.\n";
   output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ fstr ^ ")%Z.\n");
-  output_string coq_file ("intros; decideZ; auto; firstorder.\nQed.\n");
+  output_string coq_file ("intros; try do 10 hyp; auto with *; try do 10 hyp; auto with *;try do 10 hyp; auto with *; repeat hyp; auto with *.\nQed.\n"); (* || prestac *)
   flush coq_file;
   close_out coq_file;
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
@@ -153,7 +154,7 @@ let write (pe : CP.formula) : bool =
     output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ fstr ^ ".\n");
 	flush log_file;
   end;
-  match (Sys.command ("coqc " ^ coq_file_name ^ " > res 2> /dev/null")) with
+  match (Sys.command ("coqc -R ../Presburger Presburger " ^ coq_file_name ^ " > res 2> /dev/null")) with (* -byte *)
   | 0 -> 
       if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
       true
