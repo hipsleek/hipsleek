@@ -364,37 +364,37 @@ let rec trans_prog (prog0 : I.prog_decl) : C.prog_decl =
   let check_field_dup = (Chk.no_field_duplication prog0) in          (* field duplication test *) 
   let check_method_dup = (Chk.no_method_duplication prog0) in        (* method duplication test *) 
   let check_field_hiding = (Chk.no_field_hiding prog0) in            (* field hiding test *) 
-	if check_field_dup && check_method_dup && check_overridding && check_field_hiding then  
-      let prims = gen_primitives prog0 in
-      let prog = {prog0 with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls} in
-		set_mingled_name prog;
-		let all_names = (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) 
-		  @ (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls)
-		  @ (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls) in
-		let dups = U.find_dups all_names in
-		  if not (U.empty dups) then begin
-			print_string ("duplicated top-level name(s): " ^ (String.concat ", " dups) ^ "\n");
-			failwith ("Error detected")
-		  end else
-			let tmp_views = order_views prog.I.prog_view_decls in
-			let cviews = List.map (trans_view prog) tmp_views in
-			let cdata = List.map (trans_data prog) prog.I.prog_data_decls in
-			let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
-			let cprocs = !loop_procs @ cprocs1 in
-			let l2r_coers, r2l_coers = trans_coercions prog0 in
-			let cprog = { C.prog_data_decls = cdata;
-						  C.prog_view_decls = cviews;
-						  C.prog_proc_decls = cprocs;
-						  C.prog_left_coercions = l2r_coers;
-						  C.prog_right_coercions = r2l_coers }
-			in
-			  ignore (List.map (fun vdef -> compute_view_x_formula 
-								  cprog vdef !Globals.n_xpure) cviews);
-			  ignore (List.map (fun vdef -> set_materialized_vars cprog vdef) cviews);
-			  ignore (C.build_hierarchy cprog);
-			  cprog
-	else 
-      failwith ("Error detected")
+  if check_field_dup && check_method_dup && check_overridding && check_field_hiding then  
+    let prims = gen_primitives prog0 in
+    let prog = {prog0 with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls} in
+	set_mingled_name prog;
+	let all_names = (List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) 
+	  @ (List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls)
+	  @ (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls) in
+	let dups = U.find_dups all_names in
+	if not (U.empty dups) then begin
+	  print_string ("duplicated top-level name(s): " ^ (String.concat ", " dups) ^ "\n");
+	  failwith ("Error detected")
+	end else
+	  let tmp_views = order_views prog.I.prog_view_decls in
+	  let cviews = List.map (trans_view prog) tmp_views in
+	  let cdata = List.map (trans_data prog) prog.I.prog_data_decls in
+	  let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
+	  let cprocs = !loop_procs @ cprocs1 in
+	  let l2r_coers, r2l_coers = trans_coercions prog0 in
+	  let cprog = { C.prog_data_decls = cdata;
+					C.prog_view_decls = cviews;
+					C.prog_proc_decls = cprocs;
+					C.prog_left_coercions = l2r_coers;
+					C.prog_right_coercions = r2l_coers }
+	  in
+	  ignore (List.map (fun vdef -> compute_view_x_formula 
+		  cprog vdef !Globals.n_xpure) cviews);
+	  ignore (List.map (fun vdef -> set_materialized_vars cprog vdef) cviews);
+	  ignore (C.build_hierarchy cprog);
+	  cprog
+  else 
+    failwith ("Error detected")
 
 and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl = 
   let trans_field ((t, c), pos) : C.typed_ident = (trans_type prog t pos, c) in
@@ -506,13 +506,13 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 		  cvdef
 
 and set_materialized_vars prog cdef = 
-  let mvars = find_materialized_vars prog cdef.C.view_vars cdef.C.view_formula in
-	if !Globals.print_mvars then begin
-	  print_string ("\nInput parameters of predicate " ^ cdef.C.view_name ^ ": ");
-	  print_string ((String.concat ", " (List.map CP.name_of_spec_var mvars)) ^ "\n")
-	end;
-	cdef.C.view_materialized_vars <- mvars;
-	cdef
+  let mvars = [] in (*find_materialized_vars prog cdef.C.view_vars cdef.C.view_formula in*)
+  if true then begin
+	print_string ("\nInput parameters of predicate " ^ cdef.C.view_name ^ ": ");
+	print_string ((String.concat ", " (List.map CP.name_of_spec_var mvars)) ^ "\n")
+  end;
+  cdef.C.view_materialized_vars <- mvars;
+  cdef
 
 (*
   This function can repeatedly unfold all predicates
@@ -2355,8 +2355,12 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp = match e0 with
 					  Err.error_text = "couldn't infer type for " ^ v}
 					*)
 	  with
-		| Not_found -> Err.report_error {Err.error_loc = pos;
-										 Err.error_text = v ^ " is undefined"}
+		| Not_found ->
+            (* TODO: hack copied from above *)
+            let sv = CP.SpecVar (CP.OType "", v, p) in
+		    CP.Var (sv, pos)
+            (* Err.report_error {Err.error_loc = pos;
+			   Err.error_text = v ^ " is undefined"}*)
 	end
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
   | IP.Add (e1, e2, pos) -> CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
