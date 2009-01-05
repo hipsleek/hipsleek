@@ -616,13 +616,19 @@ and subst_var_list sst (svs : spec_var list) = match svs with
 		new_sv :: new_vars
   | [] -> []
 
+(* The intermediate fresh variables seem redundant; maybe its sufficient to:
+and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
+  let st1 = List.combine fr t in
+  subst st1 f
+*)
+
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) = 
   let fresh_fr = fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let f1 = subst st1 f in
   let f2 = subst st2 f1 in
-	f2
+  f2
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = match sst with
   | s::ss -> subst ss (apply_one s f) 				(* applies one substitution at a time *)
@@ -640,6 +646,9 @@ and apply_one (fr, t) f = match f with
 	  else Forall (v, apply_one (fr, t) qf, pos)
   | Exists (v, qf, pos) -> 
 	  if eq_spec_var v fr then f 
+      else if eq_spec_var v t then
+        let fresh_v = fresh_spec_var v in
+        Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), pos)
 	  else Exists (v, apply_one (fr, t) qf, pos)
 
 and b_apply_one (fr, t) bf = match bf with
