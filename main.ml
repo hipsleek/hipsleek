@@ -65,6 +65,8 @@ let process_cmd_line () = Arg.parse [
    "Procedures to be inlined");
   ("-java", Arg.Set to_java,
    "Convert source code to Java");
+  ("--sat-timeout", Arg.Set_float Globals.sat_timeout,
+   "Timeout for sat checking");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
   ("--trace-all", Arg.Set Globals.trace_all,
@@ -197,7 +199,10 @@ let process_source_full source =
 						^ "\tTime spent in main process: " 
 						^ (string_of_float ptime4.Unix.tms_utime) ^ " second(s)\n"
 						^ "\tTime spent in child processes: " 
-						^ (string_of_float ptime4.Unix.tms_cutime) ^ " second(s)\n")
+						^ (string_of_float ptime4.Unix.tms_cutime) ^ " second(s)\n"
+                        ^ "\t Sat time: " ^ (string_of_float !Tpdispatcher.sat_timer) ^ " sec\n"
+                        ^ "\t Imp time: " ^ (string_of_float !Tpdispatcher.imply_timer) ^ " sec\n"
+                       )
 
 	  
 let main1 () =
