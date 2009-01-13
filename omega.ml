@@ -114,10 +114,7 @@ let get_vars_formula (p : formula) =
   tool may probably be used ...
 *)
 
-let sat_timer = ref 0.;;
-
 let is_sat (pe : formula) : bool =
-  let timer = Unix.gettimeofday () in
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -135,7 +132,7 @@ let is_sat (pe : formula) : bool =
     end;
     let quitloop = ref false in
     let sat = ref true in
-    if (run_omega fomega 30. = false) then (quitloop := true);
+    if (run_omega fomega !Globals.sat_timeout = false) then (quitloop := true);
     let chn = open_in resultfilename in
     while not !quitloop do
       let line = input_line chn in
@@ -161,7 +158,6 @@ let is_sat (pe : formula) : bool =
     if !log_all_flag = true then begin
       if !sat then output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> FAIL\n");
     end else ();
-    sat_timer := !sat_timer +. (Unix.gettimeofday ()) -. timer;
     !sat
   end
 
@@ -195,10 +191,7 @@ let is_sat (pe : formula) : bool =
   end
 *)
 
-let valid_timer = ref 0.;;
-
 let is_valid (pe : formula) : bool =
-  let timer = Unix.gettimeofday () in
   begin
     let fstr = omega_of_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups (get_vars_formula pe)) in
@@ -234,7 +227,6 @@ let is_valid (pe : formula) : bool =
                     with
                         | e -> ignore e
                 end;
-                valid_timer := !valid_timer +. (Unix.gettimeofday ()) -. timer;
                 !result
   end
 
