@@ -141,11 +141,11 @@ let rec look_for_anonymous_h_formula (h0 : IF.h_formula) : (ident * primed) list
 *)	
 	match h0 with
 	 | IF.Star (({IF.h_formula_star_h1 = h1;
-			   				IF.h_formula_star_h2 = h2}) as h) ->
+			   				IF.h_formula_star_h2 = h2})(* as h*)) ->
 	  	let tmp1 = (look_for_anonymous_h_formula h1) in
 	  	let tmp2 = (look_for_anonymous_h_formula h2) in
 				(List.append tmp1 tmp2)
-	| IF.HeapNode (({IF.h_formula_heap_arguments = args}) as h) -> 
+	| IF.HeapNode (({IF.h_formula_heap_arguments = args})(* as h*)) -> 
 			let tmp1 = (look_for_anonymous_exp_list args) in
 				tmp1
 	 | _ -> []
@@ -195,11 +195,11 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula = match f0 with
 				 	IF.formula_or_f2 = tmp2}
 	| IF.Base (({IF.formula_base_heap = h0;
   						IF.formula_base_pure = p0;
-					 		IF.formula_base_pos = l0}) as f) ->
+					 		IF.formula_base_pos = l0}) (*as f*)) ->
   	let tmp1 = (look_for_anonymous_h_formula h0) in
 			if ((List.length tmp1)!= 0) then
 				begin   
-					IF.Exists {f with 
+					IF.Exists {
   									IF.formula_exists_heap = h0;
   									IF.formula_exists_qvars = tmp1;
   									IF.formula_exists_pure = p0;
@@ -2138,7 +2138,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 			  	(*--
 			  		for data node
 			  	--*)
-				  let ddef = I.look_up_data_def pos prog.I.prog_data_decls c in
+				  (*let ddef = I.look_up_data_def pos prog.I.prog_data_decls c in*)
 				  let new_used_names, hvars, evars, link_f_prim = match_exp used_names exps pos in
 				  let new_v = CP.SpecVar (CP.OType c, v, p) in
 					(* we can use c for tvar. The actual type can be determined later on,
@@ -2147,7 +2147,7 @@ and linearize_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list
 				  (*let type_constr = CF.TypeSub ({CF.t_formula_sub_type_var = t_var;
 												 CF.t_formula_sub_type_type = c}) in*)
 					(* extension pointer *)
-				  let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in
+				  (*let pname = I.look_up_parent_name pos prog.I.prog_data_decls c in*)
 				  (* commented out on 09.06.08 : we have decided to remove for now the type and extension information related to the OO extension*)
 				  (* let ext_name = gen_ext_name c pname in*)
 				  (* let ext_var = CP.SpecVar (CP.OType ext_name, c , Unprimed) in*)
