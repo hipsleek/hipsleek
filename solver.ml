@@ -49,6 +49,20 @@ let no_check_outer_vars = ref false (*  *)
   if false then use view_x_formula for invariant
   if true then use view_invariant (user-supplied invariant) to compute view_x_formula
 *)
+
+let rec geq_null = function
+  | CP.And (a,b,x) -> CP.And (geq_null a, geq_null b, x)
+  | CP.Or (a,b,x) -> CP.Or (geq_null a, geq_null b, x)
+  | CP.Not (a,x) -> CP.Not (geq_null a, x)
+  | CP.Forall (z,a,x) -> CP.Forall (z, geq_null a, x)
+  | CP.Exists (z,a,x) -> CP.Exists (z, geq_null a, x)
+  | CP.BForm b -> begin match b with
+    | CP.Neq (a, CP.Null nl, l) -> CP.BForm (CP.Gt (a, CP.Null nl, l))
+(*    | CP.Neq (a, CP.Null nl, l) -> CP.BForm (CP.Neq (a, CP.Null nl, l))*)
+    | x -> CP.BForm x
+  end
+;;
+
 let rec xpure (prog : prog_decl) (f0 : formula) : CP.formula = match f0 with
   | Or ({formula_or_f1 = f1;
 		 formula_or_f2 = f2;
@@ -60,22 +74,22 @@ let rec xpure (prog : prog_decl) (f0 : formula) : CP.formula = match f0 with
   | Base ({formula_base_heap = h;
 		   formula_base_pure = p;
 		   formula_base_pos = pos}) ->
-	  let ph = xpure_heap prog h in
-	  let res_form = CP.mkAnd ph p pos in
+	  let ph = xpure_heap prog h 1 in
+	  let res_form = CP.mkAnd ph (geq_null p) pos in
 		res_form
   | Exists ({formula_exists_qvars = qvars;
 			 formula_exists_heap = qh;
 			 formula_exists_pure = qp;
 			 formula_exists_pos = pos}) ->
-	  let pqh = xpure_heap prog qh in
+	  let pqh = xpure_heap prog qh 1 in
 	  let sqvars = (* List.map CP.to_int_var *) qvars in
-	  let tmp1 = CP.mkAnd pqh qp pos in
+	  let tmp1 = CP.mkAnd pqh (geq_null qp) pos in
 	  let res_form = List.fold_left
 		(fun f -> fun qv -> CP.Exists (qv, f, pos)) tmp1 sqvars
 	  in
 		res_form
 
-and xpure_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = match h0 with
+and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : CP.formula = match h0 with
   | DataNode ({h_formula_data_node = p;
 			   h_formula_data_pos = pos}) ->
 	  let i = fresh_int2 () in
@@ -95,24 +109,29 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) : CP.formula = match h0 with
 			  let res_form = CP.mkAnd non_null rest_f pos in
 				res_form
 		  | [] -> CP.mkTrue pos in
-	  let vaddrs = CP.fresh_spec_vars vdef.view_addr_vars in
+	  (*let vaddrs = CP.fresh_spec_vars vdef.view_addr_vars in*)
 	  (*--- 09.05.2008 *)
 		(*let _ = (print_string ("\n[solver.ml, line 152]: fresh name = " ^ (Cprinter.string_of_spec_var_list vaddrs) ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2008 ---*)
-	  let non_null = helper vaddrs in
-	  let vinv = vdef.view_x_formula in
+	  (*let non_null = helper vaddrs in*)
+	  let vinv = 
+        match use_xpure0 with
+        | -1 -> CP.mkTrue no_pos
+        | 0 -> vdef.view_user_inv
+        | _ -> vdef.view_x_formula
+      in
 	  let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
 	  let to_svs = p :: vs in
 	  let tmp1 = CP.subst_avoid_capture from_svs to_svs vinv in
-	  let tmp2 = CP.mkAnd non_null tmp1 pos in
+	  (*let tmp2 = CP.mkAnd non_null tmp1 pos in*)
 	  (* let tmp3 = CP.mkExists vaddrs tmp2 pos in *)
 		(* tmp3 *)
 		tmp1
   | Star ({h_formula_star_h1 = h1;
 		   h_formula_star_h2 = h2;
 		   h_formula_star_pos = pos}) ->
-	  let ph1 = xpure_heap prog h1 in
-	  let ph2 = xpure_heap prog h2 in
+	  let ph1 = xpure_heap prog h1 use_xpure0 in
+	  let ph2 = xpure_heap prog h2 use_xpure0 in
 	  let res_form = CP.mkAnd ph1 ph2 pos in
 		res_form
   | HTrue -> CP.mkTrue no_pos
@@ -1593,31 +1612,23 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   let lhs_p = lhs.formula_base_pure in
   let lhs_t = lhs.formula_base_type in
   let _ = reset_int2 () in
-  let xpure_lhs_h =
-	(*
-	  if !TP.tp = TP.SetMONA then
-	  fst (xpure_heap_symbolic_no_exists prog (mkStarH lhs_h estate.es_heap pos))
-	  else
-	*)
-	  xpure_heap prog (mkStarH lhs_h estate.es_heap pos)
-  in
-(*
-  let xpure_lhs_h =
-   if CP.should_simplify xpure_lhs_h' then TP.simplify xpure_lhs_h'
-   else xpure_lhs_h' in
-*)
+  let xpure_lhs_h = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
   let tmp1 = CP.mkAnd xpure_lhs_h lhs_p pos in
-	(*let _ = print_string("old ante: " ^ (Cprinter.string_of_pure_formula tmp1) ^ "\n") in
+  let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
+  let xpure_lhs_h0 = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 0 in
+  let tmp2 = CP.mkAnd xpure_lhs_h0 lhs_p pos in
+  let new_ante0, new_conseq0 = heap_entail_build_pure_check estate.es_evars tmp2 rhs_p pos in
+(*	let _ = print_string("old ante: " ^ (Cprinter.string_of_pure_formula tmp1) ^ "\n") in
 	let _ = print_string("old conseq: " ^ (Cprinter.string_of_pure_formula rhs_p) ^ "\n") in*)
-	let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
 	Debug.devel_pprint ("heap_entail_empty_heap: checking implication:\n"
 						^ "ante:\n"
 						^ (Cprinter.string_of_pure_formula new_ante)
 						^ "\nconseq:\n"
 						^ (Cprinter.string_of_pure_formula new_conseq)) pos;
-	(*let _ = print_string("ante: " ^ (Cprinter.string_of_pure_formula new_ante) ^ "\n") in
+(*	let _ = print_string("ante: " ^ (Cprinter.string_of_pure_formula new_ante) ^ "\n") in
 	let _ = print_string("conseq: " ^ (Cprinter.string_of_pure_formula new_conseq) ^ "\n") in*)
-	if CP.isConstTrue rhs_p || TP.imply new_ante new_conseq then begin
+  if CP.isConstTrue rhs_p || TP.imply new_ante0 new_conseq0 || (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && TP.imply new_ante new_conseq) then 
+    begin
 	    let res_delta = mkBase lhs_h lhs_p lhs_t pos in
 		if is_folding then begin
 		  let prf = mkPure estate new_ante new_conseq true None in
@@ -1860,12 +1871,12 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 									  let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
 									  let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in
 									  let _ = reset_int2 () in
-									  let xpure_lhs = xpure prog f in
+									  (*let xpure_lhs = xpure prog f in*)
 (*************************************************************************************************************************************************************************)
 (* delay the guard check *)
 (* for now, just add it to the consequent *)
 (*************************************************************************************************************************************************************************)
-										let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in
+										(*let guard_to_check = CP.mkExists f_univ_vars lhs_guard_new pos in*)
 										(*let _ = print_string("xpure_lhs: " ^ (Cprinter.string_of_pure_formula xpure_lhs) ^ "\n") in
 										let _ = print_string("guard: " ^ (Cprinter.string_of_pure_formula guard_to_check) ^ "\n") in*)
 										let new_f = normalize coer_rhs_new f pos in
