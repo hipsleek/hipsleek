@@ -92,6 +92,8 @@ let print_mvars = ref false
 
 let seq_number = ref 10
 
+let sat_timeout = ref 10.
+
 let report_error (pos : Lexing.position) (msg : string) =
   print_string ("\n" ^ pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.Lexing.pos_lnum) ^ ": " ^ msg ^ "\n");
   failwith "Error detected"
