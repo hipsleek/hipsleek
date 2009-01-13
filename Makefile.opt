@@ -54,7 +54,7 @@ MAIN_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	iparser.cmx ilexer.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx \
+	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx unix_add.cmx mona.cmx omega.cmx setmona.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
@@ -80,7 +80,7 @@ SLEEK_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	iparser.cmx ilexer.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx omega.cmx mona.cmx setmona.cmx \
+	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx omega.cmx unix_add.cmx mona.cmx setmona.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \

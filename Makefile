@@ -4,10 +4,10 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml
+INCLUDES=-I ./xml -dtypes
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
-OCAMLFLAGS=$(INCLUDES)    # add other options for ocamlc here
+OCAMLFLAGS=$(INCLUDES) # add other options for ocamlc here
 OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
@@ -54,7 +54,7 @@ MAIN_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo setmona.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
 	drawing.cmo \
@@ -72,7 +72,7 @@ SLEEK_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo setmona.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
 	drawing.cmo \
@@ -124,7 +124,7 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo\
 	cvclite.cmo tpdispatcher.cmo \
 	solver.cmo \
 	env.cmo astsimp.cmo \
