@@ -5,7 +5,7 @@
 open Globals
 module CP = Cpure
 
-type tp_type = 
+type tp_type =
   | OmegaCalc
   | CvcLite
   | CO (* CVC Lite then Omega combination *)
@@ -17,7 +17,7 @@ type tp_type =
   | CM (* CVC Lite then MONA *)
   | Coq
 
-let tp = ref OmegaCalc 
+let tp = ref OmegaCalc
 
 let set_tp tp_str =
   if tp_str = "omega" then
@@ -33,7 +33,7 @@ let set_tp tp_str =
   else if tp_str = "om" then
 	tp := OM
   else if tp_str = "oi" then
-	tp := OI	    
+	tp := OI
   else if tp_str = "set" then
 	tp := SetMONA
   else if tp_str = "cm" then
@@ -55,10 +55,10 @@ let rec is_bag_constraint(f : CP.formula) : bool = match f with
   | CP.Exists(_, f1, _) -> (is_bag_constraint f1)
 
 and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
-  | CP.BConst _ 
-  | CP.BVar _ 
+  | CP.BConst _
+  | CP.BVar _
 	  -> false
-  | CP.Lt (e1, e2, _) 
+  | CP.Lt (e1, e2, _)
   | CP.Lte (e1, e2, _)
   | CP.Gt (e1, e2, _)
   | CP.Gte (e1, e2, _)
@@ -66,20 +66,20 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
   | CP.EqMin (e1, e2, _, _) (* first is min of second and third *)
 	  -> false
   | CP.Eq (e1, e2, _) (* these two could be arithmetic or pointer *)
-  | CP.Neq (e1, e2, _) 
+  | CP.Neq (e1, e2, _)
 	-> (is_bag_constraint_exp e1) || (is_bag_constraint_exp e2)
 	  (* bag formulas *)
   | CP.BagIn _
   | CP.BagNotIn _
   | CP.BagSub _
   | CP.BagMin _
-  | CP.BagMax _ -> true	
-	  
+  | CP.BagMax _ -> true
+
 and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _
   | CP.Var _
   | CP.IConst _ -> false
-  | CP.Add (e1, e2, _) 
+  | CP.Add (e1, e2, _)
   | CP.Subtract (e1, e2, _) (* ->  (is_bag_constraint_exp e1) || (is_bag_constraint_exp e2) *)
 	  -> false
   | CP.Mult _
@@ -92,7 +92,7 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.BagDiff _ -> true
 
 (*
-let rec is_bag_constraint(f : CP.formula) : bool = 
+let rec is_bag_constraint(f : CP.formula) : bool =
   match f with
   | CP.BForm(bf) -> (is_bag_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
@@ -101,11 +101,11 @@ let rec is_bag_constraint(f : CP.formula) : bool =
   | CP.Forall(_, f1, _) -> (is_bag_constraint f1)
   | CP.Exists(_, f1, _) -> (is_bag_constraint f1)
 
-and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  
+and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =
   match bf with
   | CP.BConst _ -> false
   | CP.BVar _ -> false
-  | CP.Lt (e1, e2, _) 
+  | CP.Lt (e1, e2, _)
   | CP.Lte (e1, e2, _)
   | CP.Gt (e1, e2, _)
   | CP.Gte (e1, e2, _)
@@ -119,14 +119,14 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =
   | CP.BagNotIn _
   | CP.BagSub _
   | CP.BagMin _
-  | CP.BagMax _ -> true	
-	  
+  | CP.BagMax _ -> true
+
 and is_bag_constraint_exp (e :CP.exp) : bool =
   match e with
   | CP.Null _
   | CP.Var _
   | CP.IConst _ -> false
-  | CP.Add (e1, e2, _) 
+  | CP.Add (e1, e2, _)
   | CP.Subtract (e1, e2, _) ->  (is_bag_constraint_exp e1) || (is_bag_constraint_exp e2)
   | CP.Mult _
   | CP.Max _
@@ -143,7 +143,7 @@ let start () = match !tp with
   | OmegaCalc -> ()
   | CvcLite -> Cvclite.start ()
   | Isabelle -> Isabelle.start ()
-  
+
 let stop () = match !tp with
   | OmegaCalc -> ()
   | CvcLite -> let _ = Cvclite.stop () in ()
@@ -151,7 +151,7 @@ let stop () = match !tp with
 
 let elim_exists_flag = ref true
 let filtering_flag = ref true
-  
+
 let elim_exists (f : CP.formula) : CP.formula =
   if !elim_exists_flag then CP.elim_exists f
   else f
@@ -164,16 +164,16 @@ let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula)
   else
 	(ante, conseq)
 
-let is_sat (f : CP.formula) = 
+let is_sat (f : CP.formula) =
   let f = elim_exists f in
 	match !tp with
-	  | OmegaCalc -> 
+	  | OmegaCalc ->
 (*
 		  if (is_bag_constraint f) then
 			begin
 	          failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n");
-			end 
-		  else 
+			end
+		  else
 *)
 			begin
 			  (Omega.is_sat f);
@@ -186,7 +186,7 @@ let is_sat (f : CP.formula) =
 		  let result1 = Cvclite.is_sat_raw f in
 			match result1 with
 			  | Some f -> f
-			  | None -> 
+			  | None ->
 				  omega_count := !omega_count + 1;
 				  Omega.is_sat f
 		end
@@ -197,7 +197,7 @@ let is_sat (f : CP.formula) =
 			let result1 = Cvclite.is_sat_raw f in
 			  match result1 with
 				| Some f -> f
-				| None -> 
+				| None ->
 					omega_count := !omega_count + 1;
 					Omega.is_sat f
 		end
@@ -205,92 +205,92 @@ let is_sat (f : CP.formula) =
           if (is_bag_constraint f) then
 			begin
 			  (Mona.is_sat f);
-			end 
-		  else 
+			end
+		  else
 			begin
 			  (Omega.is_sat f);
-			end  
+			end
 	  | OI ->
           if (is_bag_constraint f) then
 			begin
 			  (Isabelle.is_sat f);
-			end 
-		  else 
+			end
+		  else
 			begin
 			  (Omega.is_sat f);
-			end  	    
+			end
 	  | SetMONA -> Setmona.is_sat f
-	
+
 let simplify (f : CP.formula) : CP.formula = match !tp with
-  | Isabelle -> Isabelle.simplify f	
-  | Coq -> Coq.simplify f	
-  | Mona -> Mona.simplify f	
+  | Isabelle -> Isabelle.simplify f
+  | Coq -> Coq.simplify f
+  | Mona -> Mona.simplify f
   | OM ->
 	  if (is_bag_constraint f) then
-		(Mona.simplify f) 
+		(Mona.simplify f)
 	  else (Omega.simplify f)
   | OI ->
 	  if (is_bag_constraint f) then
-		(Isabelle.simplify f) 
+		(Isabelle.simplify f)
 	  else (Omega.simplify f)
   | SetMONA -> Mona.simplify f
-  | CM -> 
+  | CM ->
 	  if is_bag_constraint f then Mona.simplify f
 	  else Omega.simplify f
-  | _ -> 
+  | _ ->
 (*
 	  if (is_bag_constraint f) then
 		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-	  else 
+	  else
 *)
 	  (Omega.simplify f)
-  
+
 let hull (f : CP.formula) : CP.formula = match !tp with
-  | Isabelle -> Isabelle.hull f	
-  | Coq -> Coq.hull f	
-  | Mona -> Mona.hull f	
-  | OM -> 
+  | Isabelle -> Isabelle.hull f
+  | Coq -> Coq.hull f
+  | Mona -> Mona.hull f
+  | OM ->
 	  if (is_bag_constraint f) then
-		(Mona.hull f) 
+		(Mona.hull f)
 	  else (Omega.hull f)
-  | OI -> 
+  | OI ->
 	  if (is_bag_constraint f) then
-		(Isabelle.hull f) 
+		(Isabelle.hull f)
 	  else (Omega.hull f)
   | SetMONA -> Mona.hull f
   | CM ->
 	  if is_bag_constraint f then Mona.hull f
 	  else Omega.hull f
-  | _ -> 
+  | _ ->
 	  (*
 		if (is_bag_constraint f) then
 		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-	  else 
+	  else
 	  *)
 	  (Omega.hull f)
 
 
 let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
-  | Isabelle -> Isabelle.pairwisecheck f	
-  | Coq -> Coq.pairwisecheck f	
-  | Mona -> Mona.pairwisecheck f	
-  | OM -> 
+  | Isabelle -> Isabelle.pairwisecheck f
+  | Coq -> Coq.pairwisecheck f
+  | Mona -> Mona.pairwisecheck f
+  | OM ->
 	  if (is_bag_constraint f) then
-		(Mona.pairwisecheck f) 
+		(Mona.pairwisecheck f)
 	  else (Omega.pairwisecheck f)
-  | OI -> 
+  | OI ->
 	  if (is_bag_constraint f) then
-		(Isabelle.pairwisecheck f) 
+		(Isabelle.pairwisecheck f)
 	  else (Omega.pairwisecheck f)
   | SetMONA -> Mona.pairwisecheck f
-  | CM -> 
+  | CM ->
 	  if is_bag_constraint f then Mona.pairwisecheck f
 	  else Omega.pairwisecheck f
-  | _ -> 
+  | _ ->
 	  (*
 	  if (is_bag_constraint f) then
-		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n") 
-	  else 
+		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
+	  else
 	  *)
 	  (Omega.pairwisecheck f)
 
@@ -305,69 +305,122 @@ let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =
 		res
 *)
 
-let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool = 
-  let conseq = 
-	if CP.should_simplify conseq0 then simplify conseq0 
-	else conseq0 
+let rec split_conjunctions = function
+  | CP.And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+  | z -> [z]
+;;
+
+let tp_imply ante conseq =
+  match !tp with
+  | OmegaCalc -> (Omega.imply ante conseq)
+  | CvcLite -> Cvclite.imply ante conseq
+  | Isabelle -> Isabelle.imply ante conseq
+  | Coq -> Coq.imply ante conseq
+  | Mona -> Mona.imply ante conseq
+  | CO -> begin
+	  let result1 = Cvclite.imply_raw ante conseq in
+	  match result1 with
+	  | Some f -> f
+	  | None -> (* CVC Lite is not sure is this case, try Omega *)
+		  omega_count := !omega_count + 1;
+		  Omega.imply ante conseq
+  end
+  | CM -> begin
+	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+		Mona.imply ante conseq
+	  else
+		let result1 = Cvclite.imply_raw ante conseq in
+		match result1 with
+		| Some f -> f
+		| None -> (* CVC Lite is not sure is this case, try Omega *)
+			omega_count := !omega_count + 1;
+			Omega.imply ante conseq
+  end
+  | OM ->
+	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+		(Mona.imply ante conseq)
+	  else
+		(Omega.imply ante conseq)
+  | OI ->
+	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+		(Isabelle.imply ante conseq)
+	  else
+		(Omega.imply ante conseq)
+  | SetMONA ->
+	  Setmona.imply ante conseq
+;;
+
+(* renames all quantified variables *)
+let rec requant = function
+  | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
+  | CP.Or (f, g, l) -> CP.Or (requant f, requant g, l)
+  | CP.Not (f, l) -> CP.Not (requant f, l)
+  | CP.Forall (v, f, l) ->
+      let nv = CP.fresh_spec_var v in
+      CP.Forall (nv, (CP.subst [v, nv] (requant f)), l)
+  | CP.Exists (v, f, l) ->
+      let nv = CP.fresh_spec_var v in
+      CP.Exists (nv, (CP.subst [v, nv] (requant f)), l)
+  | x -> x
+;;
+
+let simpl_pair (ante, conseq) =
+  let antes = split_conjunctions ante in
+  let fold_fun (ante, conseq) = function
+    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
+        (CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq)
+    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) ->
+        (CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq)
+    | _ -> (ante, conseq)
+  in
+  List.fold_left fold_fun (ante, conseq) antes
+;;
+
+let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
+  let conseq =
+	if CP.should_simplify conseq0 then simplify conseq0
+	else conseq0
   in
 	(*	print_string ("conseq0: " ^ (Cprinter.string_of_pure_formula conseq0) ^ "\n");
 		print_string ("conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n"); *)
-	if CP.isConstTrue conseq0 then 
+	if CP.isConstTrue conseq0 then
 	  true
 	else
 	  let ante =
 		if CP.should_simplify ante0 then simplify ante0
 		else ante0
 	  in
-		if CP.isConstFalse ante0 || CP.isConstFalse ante then true
-		else
-		  let ante = elim_exists ante in
-		  let conseq = elim_exists conseq in
-		  let ante, conseq = filter ante conseq in
-			match !tp with
-			  | OmegaCalc -> 
-(*
-				  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-					failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-				  else
-*)
-				  (Omega.imply ante conseq)
-			  | CvcLite -> Cvclite.imply ante conseq
-			  | Isabelle -> Isabelle.imply ante conseq
-			  | Coq -> Coq.imply ante conseq
-			  | Mona -> Mona.imply ante conseq
-			  | CO -> begin
-				  let result1 = Cvclite.imply_raw ante conseq in
-					match result1 with
-					  | Some f -> f
-					  | None -> (* CVC Lite is not sure is this case, try Omega *)
-						  omega_count := !omega_count + 1;
-						  Omega.imply ante conseq
-				end		      
-			  | CM -> begin
-				  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-					Mona.imply ante conseq
-				  else
-					let result1 = Cvclite.imply_raw ante conseq in
-					  match result1 with
-						| Some f -> f
-						| None -> (* CVC Lite is not sure is this case, try Omega *)
-							omega_count := !omega_count + 1;
-							Omega.imply ante conseq					
-				end
-              | OM -> 
-				  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-					(Mona.imply ante conseq)
-				  else
-					(Omega.imply ante conseq)					      
-              | OI -> 
-				  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-					(Isabelle.imply ante conseq)
-				  else
-					(Omega.imply ante conseq)
-			  | SetMONA ->
-				  Setmona.imply ante conseq
+	  if CP.isConstFalse ante0 || CP.isConstFalse ante then true
+	  else
+		let ante = elim_exists ante in
+		let conseq = elim_exists conseq in
+        let split_conseq = split_conjunctions conseq in
+        let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair (requant ante, requant cons) in filter ante cons) split_conseq in
+        (*let pairs = [filter ante conseq] in*)
+        (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
+        let fold_fun res (ante, conseq) =
+          if res then tp_imply ante conseq else false
+        in
+        List.fold_left fold_fun true pairs
+;;
 
-let print_stats () = 
+let sat_timer = ref 0.;;
+let imply_timer = ref 0.;;
+
+let imply ante0 conseq0 =
+  let timer = Unix.gettimeofday () in
+  let res = imply ante0 conseq0 in
+  imply_timer := !imply_timer +. (Unix.gettimeofday ()) -. timer;
+  res
+;;
+
+let is_sat f =
+  let timer = Unix.gettimeofday () in
+  let res = is_sat f in
+  sat_timer := !sat_timer +. (Unix.gettimeofday ()) -. timer;
+  res
+;;
+
+let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
