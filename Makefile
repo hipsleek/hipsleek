@@ -115,7 +115,7 @@ xml/xml-light.cmxa:
 sleek: $(SLEEK_FILES) xml/xml-light.cma
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt: xml/xml-light.cmxa
+sleek.opt: $(SLEEK_FILES) xml/xml-light.cmxa
 	make -f Makefile.opt sleek.opt
 
 CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
