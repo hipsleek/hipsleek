@@ -106,7 +106,7 @@ and isabelle_of_formula_exp_list l = match l with
 (* pretty printing for boolean vars *)
 and isabelle_of_b_formula b = match b with
   | CP.BConst (c, _) -> if c then "((0::int) = 0)" else "((0::int) > 0)"
-  | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " = 1)"
+  | CP.BVar (bv, _) -> "(" ^ (isabelle_of_spec_var bv) ^ " > 0)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " < " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " <= " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " > " ^ (isabelle_of_exp a2) ^ ")"
@@ -188,14 +188,14 @@ and isabelle_of_formula f =
 	  if (is_bag_formula f) then
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
-    | CP.Not (p, _) ->
-	begin
+    | CP.Not (p, _) -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
+(*	begin
 	  if (is_bag_formula f) then
 	    match p with
 		| CP.BForm (CP.BVar (bv, _)) -> (isabelle_of_spec_var bv) ^ " = 0"
-		| _ -> " (~ (" ^ (isabelle_of_formula p) ^ ")) "
+		| _ -> 
           else ""
-	end
+	end*)
     | CP.Forall (sv, p, _) ->
 	  if (is_bag_formula f) then
 	    " (ALL " ^ (isabelle_of_spec_var sv) ^ "." ^ (isabelle_of_formula p) ^ ") "
