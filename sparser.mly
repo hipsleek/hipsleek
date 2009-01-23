@@ -12,25 +12,25 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-		
-  type decl = 
+
+  type decl =
     | Type of type_decl
     | Proc of proc_decl
 	| Coercion of coercion_decl
-		
-  type member = 
+
+  type member =
 	| Field of (typed_ident * loc)
 	| Inv of F.formula
 	| Method of proc_decl
-		
+
   type spec_qualifier =
 	| Static
-	| Dynamic 
+	| Dynamic
 
   type ann =
 	| AnnMode of mode
 	| AnnType of typ
-		
+
   let get_pos (i : int) = Parsing.rhs_start_pos i
 
   let rec get_mode (anns : ann list) : mode = match anns with
@@ -41,7 +41,7 @@
 	  end
 	| [] -> ModeOut (* default to ModeOut if there is no annotation. *)
 
-  let rec get_modes (anns : ann list list) : mode list = 
+  let rec get_modes (anns : ann list list) : mode list =
 	match anns with
 	  | alist :: rest ->
 		  let m_rest = get_modes rest in
@@ -49,7 +49,7 @@
 			m :: m_rest
 	| [] -> []
 
-	
+
   let expand_exp_list mk l r pos =
 	let b, oe = l in
 	  match oe with
@@ -207,7 +207,7 @@
 
 /*%nonassoc LOWER_THAN_SEMICOLON*/
 %left SEMICOLON
-%left OR 
+%left OR
 %left AND
 %left STAR
 %right NOT
@@ -220,13 +220,13 @@
 %left DOT
 
 %start program,data_decl,view_decl,coercion_decl,constr,command,opt_command_list
-%type <prog_decl> program
-%type <data_decl> data_decl
-%type <view_decl> view_decl
-%type <coercion_decl> coercion_decl
-%type <F.formula> constr
-%type <command> command
-%type <command list> opt_command_list
+%type <Iast.prog_decl> program
+%type <Iast.data_decl> data_decl
+%type <Iast.view_decl> view_decl
+%type <Iast.coercion_decl> coercion_decl
+%type <Iformula.formula> constr
+%type <Sleekcommons.command> command
+%type <Sleekcommons.command list> opt_command_list
 %%
 
 opt_command_list
@@ -238,7 +238,7 @@ command_list
   : non_empty_command { [$1] }
   | command_list non_empty_command { $2 :: $1 }
 ;
-  
+
 command
   :non_empty_command{$1}
   | { EmptyCmd }
@@ -284,7 +284,7 @@ program
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
 		end
-      | Proc pdef -> proc_defs := pdef :: !proc_defs 
+      | Proc pdef -> proc_defs := pdef :: !proc_defs
 	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose $1 in
 	let obj_def = { data_name = "Object";
@@ -344,8 +344,8 @@ class_decl
 	let cdef = { data_name = $2;
 				 data_parent_name = $3;
 				 data_fields = t1;
-				 data_invs = t2; (*List.fold_left 
-							   (fun f1 -> fun f2 -> F.mkAnd f1 f2 (F.pos_of_formula f2)) (F.mkTrue (get_pos 1)) *) 
+				 data_invs = t2; (*List.fold_left
+							   (fun f1 -> fun f2 -> F.mkAnd f1 f2 (F.pos_of_formula f2)) (F.mkTrue (get_pos 1)) *)
 				 data_methods = t3 } in
 	let _ = List.map (fun d -> set_proc_data_decl d cdef) t3 in
 	  cdef
@@ -404,11 +404,11 @@ opt_semicolon
 
 field_list
   : typ IDENTIFIER { [(($1, $2), get_pos 1)] }
-  | field_list SEMICOLON typ IDENTIFIER { 
+  | field_list SEMICOLON typ IDENTIFIER {
 			if List.mem $4 (List.map (fun f -> snd (fst f)) $1) then
 				report_error (get_pos 4) ($4 ^ " is duplicated")
 			else
-				(($3, $4), get_pos 3) :: $1 
+				(($3, $4), get_pos 3) :: $1
 		}
 ;
 
@@ -456,10 +456,10 @@ opt_inv
 view_header
   : PRED IDENTIFIER LT opt_ann_cid_list GT {
 	let cids, anns = List.split $4 in
-	  if List.exists 
-		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	  if List.exists
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids
 	  then
-		report_error (get_pos 1) 
+		report_error (get_pos 1)
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in
@@ -514,11 +514,11 @@ opt_heap_arg_list2
 
 heap_arg_list2
 	: heap_arg2 { [$1] }
-	| heap_arg_list2 COMMA heap_arg2 { 
+	| heap_arg_list2 COMMA heap_arg2 {
 			if List.mem (fst $3) (List.map fst $1) then
 				report_error (get_pos 3) ((fst $3) ^ " is duplicated")
-			else 
-				$3 :: $1 
+			else
+				$3 :: $1
 		}
 ;
 
@@ -527,17 +527,17 @@ heap_arg2
 ;
 
 opt_cid_list
-  : { 
-	[] : (ident * primed) list 
+  : {
+	[] : (ident * primed) list
   }
   | cid_list {
-	  List.rev $1 : (ident * primed) list 
+	  List.rev $1 : (ident * primed) list
 	}
 ;
 
 cid_list
-  : cid { 
-	([$1]) : (ident * primed) list 
+  : cid {
+	([$1]) : (ident * primed) list
   }
   | cid_list COMMA cid {
 	  if List.mem (fst $3) (List.map fst $1) then
@@ -549,13 +549,13 @@ cid_list
 
 
 /* annotated cid list */
-opt_ann_cid_list 
+opt_ann_cid_list
   : { [] }
   | ann_cid_list {
 	  List.rev $1
 	}
 
-ann_cid_list 
+ann_cid_list
   : ann_cid {
 	[$1]
   }
@@ -564,18 +564,18 @@ ann_cid_list
 	}
 ;
 
-ann_cid 
+ann_cid
   : cid opt_ann_list {
 	($1, $2)
   }
 ;
 
 opt_ann_list
-  : { 
-	[] 
+  : {
+	[]
   }
-  | ann_list { 
-	  List.rev $1 
+  | ann_list {
+	  List.rev $1
 	}
 ;
 
@@ -705,8 +705,8 @@ simple_pure_constr
   : lbconstr {
 	fst $1
   }
-  | OPAREN disjunctive_pure_constr CPAREN { 
-	  $2 
+  | OPAREN disjunctive_pure_constr CPAREN {
+	  $2
 	}
   | EXISTS OPAREN opt_cid_list COLON simple_pure_constr CPAREN {
 	  let qf f v = P.mkExists [v] f (get_pos 1) in
@@ -765,15 +765,15 @@ bconstr
 	  let p = P.build_relation P.mkLte $1 $3 (get_pos 2) in
 		(p, Some $3)
 	}
-  | cexp_list GT cexp_list { 
+  | cexp_list GT cexp_list {
 	  let p = P.build_relation P.mkGt $1 $3 (get_pos 2) in
 		(p, Some $3)
 	}
-  | cexp_list GTE cexp_list { 
+  | cexp_list GTE cexp_list {
 	  let p = P.build_relation P.mkGte $1 $3 (get_pos 2) in
 		(p, Some $3)
 	}
-  | cexp_list EQ cexp_list { 
+  | cexp_list EQ cexp_list {
 	  let p = P.build_relation P.mkEq $1 $3 (get_pos 2) in
 		(p, Some $3)
 	}
@@ -842,7 +842,7 @@ cexp
   | DIFF OPAREN cexp COMMA cexp CPAREN {
 	  P.BagDiff ($3, $5, get_pos 1)
 	}
-	
+
 ;
 
 opt_cexp_list
@@ -851,7 +851,7 @@ opt_cexp_list
 ;
 
 cexp_list
-  : cexp_list_rec { 
+  : cexp_list_rec {
 	List.rev $1
   }
 ;
@@ -860,7 +860,7 @@ cexp_list_rec
   : cexp {
 	[$1]
   }
-  | cexp_list_rec COMMA cexp { 
+  | cexp_list_rec COMMA cexp {
 	  $3 :: $1
 	}
 ;
@@ -873,7 +873,7 @@ proc_decl
   }
   | proc_header { $1 }
 ;
-  
+
 proc_header
   : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
 	  let static_specs, dynamic_specs = split_specs $6 in
@@ -978,7 +978,7 @@ meta_constr
 ;
 
 coercion_decl
-  : LEMMA opt_name constr coercion_direction constr DOT{  
+  : LEMMA opt_name constr coercion_direction constr DOT{
 	{ coercion_type = $4;
 	  coercion_name = $2;
 	  coercion_head = $3;
@@ -1005,7 +1005,7 @@ coercion_direction
 ;
 
 /*
-proof_block 
+proof_block
   : OBRACE proof_script CBRACE {}
 ;
 
@@ -1014,11 +1014,11 @@ proof_script
   | proof_script proof_command {}
 ;
 
- fold is sound when done on the only antecedent 
-proof_command 
+ fold is sound when done on the only antecedent
+proof_command
   : UNFOLD cid SEMICOLON { }
   | CONSEQ UNFOLD cid SEMICOLON {}
-  | FOLD cid SEMICOLON {} 
+  | FOLD cid SEMICOLON {}
   | IF OPAREN pure_constr CPAREN proof_block ELSE proof_block {}
   | IDENTIFIER EQ cid DOT IDENTIFIER IN proof_script {}
 ;
@@ -1213,27 +1213,27 @@ valid_declaration_statement
   | bind_statement { $1 }
   | unfold_statement { $1 }
 /*
-  | fold_statement { $1 } 
+  | fold_statement { $1 }
   | split_statement { $1 }
 */
 ;
 
 /*
 fold_statement
-  : FOLD cid SEMICOLON { 
+  : FOLD cid SEMICOLON {
 	Fold { exp_fold_var = $2;
 		   exp_fold_pos = get_pos 1 } }
 ;
 */
 
-unfold_statement 
-  : UNFOLD cid SEMICOLON { 
+unfold_statement
+  : UNFOLD cid SEMICOLON {
 	Unfold { exp_unfold_var = $2;
 			 exp_unfold_pos = get_pos 1 } }
 ;
 
 /*
-split_statement 
+split_statement
   : SPLIT boolean_expression SEMICOLON {
 	Cond { exp_cond_condition = $2;
 		   exp_cond_then_arm = Empty (get_pos 1);
@@ -1261,7 +1261,7 @@ assert_statement
 	}
 ;
 
-debug_statement 
+debug_statement
   : DDEBUG ON {
 	Debug { exp_debug_flag = true;
 			exp_debug_pos = get_pos 2 }
@@ -1284,7 +1284,7 @@ empty_statement
 ;
 
 bind_statement
-  : BIND IDENTIFIER TO OPAREN id_list_opt CPAREN IN block { 
+  : BIND IDENTIFIER TO OPAREN id_list_opt CPAREN IN block {
 	Bind { exp_bind_bound_var = $2;
 		   exp_bind_fields = $5;
 		   exp_bind_body = $8;
@@ -1302,7 +1302,7 @@ id_list
   | id_list COMMA IDENTIFIER { $3 :: $1 }
 ;
 
-java_statement 
+java_statement
   : JAVA {
 	Java { exp_java_code = $1;
 		   exp_java_pos = get_pos 1 }
@@ -1523,7 +1523,7 @@ relational_expression
 
 shift_expression
   : additive_expression { $1 }
-; 
+;
 
 additive_expression
   : multiplicative_expression { $1 }
@@ -1584,12 +1584,12 @@ post_decrement_expression
 
 unary_expression
   : unary_expression_not_plusminus { $1 }
-  | PLUS unary_expression { 
+  | PLUS unary_expression {
 		let zero = IntLit { exp_int_lit_val = 0;
 							exp_int_lit_pos = get_pos 1 }
 		in
 		  mkBinary OpPlus zero $2 (get_pos 1)
-	  
+
 	  }
   | MINUS unary_expression {
 		let zero = IntLit { exp_int_lit_val = 0;
@@ -1616,24 +1616,24 @@ postfix_expression
 ;
 
 cast_expression
-  : OPAREN expression CPAREN unary_expression_not_plusminus { 
+  : OPAREN expression CPAREN unary_expression_not_plusminus {
 	  match $2 with
 		| Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
 						  exp_cast_body = $4;
 						  exp_cast_pos = get_pos 1 }
 		| _ -> report_error (get_pos 2) ("Expecting a type")
 	}
-  | OPAREN INT CPAREN unary_expression { 
+  | OPAREN INT CPAREN unary_expression {
 		Cast { exp_cast_target_type = Prim Int;
 			   exp_cast_body = $4;
 			   exp_cast_pos = get_pos 1 }
 	  }
-  | OPAREN BOOL CPAREN unary_expression { 
+  | OPAREN BOOL CPAREN unary_expression {
 		Cast { exp_cast_target_type = Prim Bool;
 			   exp_cast_body = $4;
 			   exp_cast_pos = get_pos 1 }
 	  }
-  | OPAREN FLOAT CPAREN unary_expression { 
+  | OPAREN FLOAT CPAREN unary_expression {
 		Cast { exp_cast_target_type = Prim Float;
 			   exp_cast_body = $4;
 			   exp_cast_pos = get_pos 1 }

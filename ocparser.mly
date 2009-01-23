@@ -59,7 +59,7 @@
 %left UMINUS
 
 %start oc_output
-%type <relation> oc_output
+%type <Cpure.relation> oc_output
 
 %%
 

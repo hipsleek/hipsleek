@@ -211,7 +211,7 @@
 %left DOT
 
 %start program
-%type <prog_decl> program
+%type <Iast.prog_decl> program
 
 %%
 
@@ -1143,6 +1143,11 @@ assert_statement
 			   exp_assert_assumed_formula = Some $2;
 			   exp_assert_pos = get_pos 1 }
 	}
+  | ASSERT constr ASSUME constr SEMICOLON {
+	  Assert { exp_assert_asserted_formula = Some $2;
+			   exp_assert_assumed_formula = Some $4;
+			   exp_assert_pos = get_pos 1 }
+    }
 ;
 
 debug_statement 
