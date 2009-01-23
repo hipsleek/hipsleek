@@ -16,6 +16,7 @@ let additional_vars_ = ref ([] : CP.spec_var list)
 let substitution_list = ref ([] : CP.b_formula list)
 let automaton_completed = ref false
 let cycle = ref false
+let sat_optimize = ref false;;
 
 
 (* pretty printing for primitive types *)
@@ -413,7 +414,9 @@ and mona_of_b_formula b f vs =
   let ret =
   match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
-  | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ (*" = 1")*)" = pconst(1))"
+  | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ " = pconst(0))"
+     (*(equation (CP.Var (bv, no_pos)) (CP.IConst (0, no_pos)) f "greater" ">" vs)*)
+     (*"(" ^ (mona_of_spec_var bv) ^ " = pconst(1))"*)
   | CP.Lt (a1, a2, _) -> (equation a1 a2 f "less" "<" vs)
   | CP.Lte (a1, a2, _) -> (equation a1 a2 f "lessEq" "<=" vs)
   | CP.Gt (a1, a2, _) -> (equation a1 a2 f "greater" ">" vs)
@@ -543,10 +546,13 @@ and mona_of_formula f initial_f vs =
   | CP.Or (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f vs) ^ " | " ^ (mona_of_formula p2 initial_f vs) ^ ")"
   | CP.Not (p, _) ->
       begin
-	  match p with
-		| CP.BForm (CP.BVar (bv, _)) -> (mona_of_spec_var bv) ^ (*" = 0"*) " = pconst(0)"
-		| _ -> " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
-      end
+        if !sat_optimize then
+	      match p with
+		  | CP.BForm (CP.BVar (bv, _)) -> (mona_of_spec_var bv) ^ " = pconst(1)"
+(*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
+		  | _ -> " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
+        else " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
+      end 
   (*| CP.Forall(CP.SpecVar (CP.Prim Bag, v, p), p1, _) ->
 	"(all2 " ^ v ^ " : " ^ (mona_of_formula p1 initial_f) ^ ")"
   | CP.Forall (sv, p, _) ->
@@ -730,24 +736,26 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) : bool = begin
   (write var_decls simp_form vs timeout)
  end
 
-let is_sat (f : CP.formula) : bool = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[mona.ml]: #is_sat\n";
-	let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos)))) in
-		match tmp_form with
-			| true ->
-				begin
-				if !log_all_flag == true then
-					output_string log_file "[mona.ml]: is_sat --> false\n";
-				false;
-				end
-			| false ->
-				begin
-				if !log_all_flag == true then
-					output_string log_file "[mona.ml]: is_sat --> true\n";
-				true;
-				end
-	end
+let is_sat (f : CP.formula) : bool =
+  if !log_all_flag == true then
+	output_string log_file "\n\n[mona.ml]: #is_sat\n";
+  sat_optimize := true;
+  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos)))) in
+  sat_optimize := false;
+  match tmp_form with
+  | true ->
+	  begin
+		if !log_all_flag == true then
+		  output_string log_file "[mona.ml]: is_sat --> false\n";
+		false;
+	  end
+  | false ->
+	  begin
+		if !log_all_flag == true then
+		  output_string log_file "[mona.ml]: is_sat --> true\n";
+		true;
+	  end
+;;
 
 let imply = imply (-1.);;
 
