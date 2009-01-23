@@ -50,6 +50,7 @@ let no_check_outer_vars = ref false (*  *)
   if true then use view_invariant (user-supplied invariant) to compute view_x_formula
 *)
 
+(*
 let rec geq_null = function
   | CP.And (a,b,x) -> CP.And (geq_null a, geq_null b, x)
   | CP.Or (a,b,x) -> CP.Or (geq_null a, geq_null b, x)
@@ -62,6 +63,7 @@ let rec geq_null = function
     | x -> CP.BForm x
   end
 ;;
+*)
 
 let rec xpure (prog : prog_decl) (f0 : formula) : CP.formula = match f0 with
   | Or ({formula_or_f1 = f1;
@@ -74,20 +76,57 @@ let rec xpure (prog : prog_decl) (f0 : formula) : CP.formula = match f0 with
   | Base ({formula_base_heap = h;
 		   formula_base_pure = p;
 		   formula_base_pos = pos}) ->
-	  let ph = xpure_heap prog h 1 in
-	  let res_form = CP.mkAnd ph (geq_null p) pos in
+	  let ph = pointers_nonnegative prog h in
+	  let res_form = CP.mkAnd ph p pos in
 		res_form
   | Exists ({formula_exists_qvars = qvars;
 			 formula_exists_heap = qh;
 			 formula_exists_pure = qp;
 			 formula_exists_pos = pos}) ->
-	  let pqh = xpure_heap prog qh 1 in
+	  let pqh = pointers_nonnegative prog qh in
 	  let sqvars = (* List.map CP.to_int_var *) qvars in
-	  let tmp1 = CP.mkAnd pqh (geq_null qp) pos in
+	  let tmp1 = CP.mkAnd pqh qp pos in
 	  let res_form = List.fold_left
 		(fun f -> fun qv -> CP.Exists (qv, f, pos)) tmp1 sqvars
 	  in
 		res_form
+
+and pointers_nonnegative prog h =
+  let pf = xpure_heap prog h 1 in
+  let rec aux_exp = function
+    | CP.Var (v, _) -> [v]
+    | CP.Add (l, r, _)
+    | CP.Subtract (l, r, _)
+    | CP.Max (l, r, _)
+    | CP.Min (l, r, _) -> (aux_exp l) @ (aux_exp r)
+    | CP.Mult (_, r, _) -> (aux_exp r)
+    | _ -> []
+  in
+  let rec aux = function
+    | CP.Not (f, _) -> aux f
+    | CP.Forall (v, f, _)
+    | CP.Exists (v, f, _) -> List.filter (fun e -> e <> v) (aux f)
+    | CP.And (f, g, _) -> (aux f) @ (aux g)
+    | CP.Or (f, g, _) -> (aux f) @ (aux g)
+    | CP.BForm bf -> match bf with
+      | CP.BVar (v, _) -> [v]
+      | CP.Gt (l, r, _)
+      | CP.Gte (l, r, _)
+      | CP.Lte (l, r, _)
+      | CP.Eq (l, r, _)
+      | CP.Neq (l, r, _)
+      | CP.Lt (l, r, _) -> (aux_exp l) @ (aux_exp r)
+      | CP.EqMax (l, r, t, _)
+      | CP.EqMin (l, r, t, _) -> (aux_exp l) @ (aux_exp r) @ (aux_exp t)
+      | _ -> []
+  in
+(*  let fvariables = Util.remove_dups (aux pf) in
+  let pointers = List.filter (fun x -> match x with CP.SpecVar(CP.OType _, _, _) -> true | _ -> false) fvariables in
+  let inequalties = List.map (fun x -> CP.BForm (CP.Gte (CP.Var (x, no_pos), CP.IConst (0, no_pos), no_pos))) pointers in
+  let formula = List.fold_left (fun f ineq -> CP.And (f, ineq, no_pos)) pf inequalties in*)
+  let formula = pf in
+(*  print_endline (String.concat "," (List.map string_of_spec_var (pointers))); flush stdout;*)
+  formula
 
 and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : CP.formula = match h0 with
   | DataNode ({h_formula_data_node = p;
