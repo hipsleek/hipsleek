@@ -803,7 +803,16 @@ and normalize_context_formula (ctx : context) (f : formula) (pos : loc) : contex
 
 (* -- 17.05.2008 *)
 and normalize_clash_context_formula (ctx : context) (f : formula) (pos : loc) : context = match ctx with
-  | Ctx es -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos}
+  | Ctx es ->
+      begin
+	    match f with
+		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
+			let new_c1 = normalize_clash_context_formula ctx phi1 pos in
+			let new_c2 = normalize_clash_context_formula ctx phi2 pos in
+			let res = OCtx (new_c1, new_c2) in
+			res
+		| _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos}
+	  end
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_clash_context_formula c1 f pos in
 	  let nc2 = normalize_clash_context_formula c2 f pos in
