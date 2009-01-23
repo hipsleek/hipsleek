@@ -106,10 +106,16 @@ hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
 sleekc:
 	make clean; make sleek 
 
-sleek: $(SLEEK_FILES)
+xml/xml-light.cma:
+	make -C xml
+
+xml/xml-light.cmxa:
+	make -C xml xml-light.cmxa
+
+sleek: $(SLEEK_FILES) xml/xml-light.cma
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt:
+sleek.opt: xml/xml-light.cmxa
 	make -f Makefile.opt sleek.opt
 
 CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
@@ -164,7 +170,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe *~ oo oo.exe
+	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe *~ oo oo.exe
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
