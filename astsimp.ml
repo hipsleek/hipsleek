@@ -506,7 +506,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 		  cvdef
 
 and set_materialized_vars prog cdef = 
-  let mvars = [] in (*find_materialized_vars prog cdef.C.view_vars cdef.C.view_formula in*)
+  let mvars = find_materialized_vars prog cdef.C.view_vars cdef.C.view_formula in
   if true then begin
 	print_string ("\nInput parameters of predicate " ^ cdef.C.view_name ^ ": ");
 	print_string ((String.concat ", " (List.map CP.name_of_spec_var mvars)) ^ "\n")
