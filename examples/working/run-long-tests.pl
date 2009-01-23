@@ -5,7 +5,7 @@ use File::Basename;
 use Getopt::Long;
 $module = "sleekex";
 $cvs_module_rep = "/home/nguyenh2/cvs-repo";
-$log_file = "/home/cristian/overnight_test/regression_tests/long-tests-result";
+$log_file = "long_test_result";
 $output_file = $log_file;
 $temp_output_dir = ".";
 $crt = system "pwd";

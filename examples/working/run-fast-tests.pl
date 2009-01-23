@@ -7,9 +7,10 @@ use Getopt::Long;
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
 			"root=s" => \$root);
-if($help)
+@param_list = @ARGV;
+if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] hip_tr|hip sleek";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] hip_tr|hip sleek\n";
 	exit(0);
 }
 if($root){
@@ -21,11 +22,10 @@ if($root){
 		$exempl_path = ".";
 		$exec_path = '../..';
 	}
-@param_list = @ARGV;
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip";
+$hip = "$exec_path/hip.opt";
 $sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
@@ -34,7 +34,7 @@ $output_file = "log";
 	"hip" =>[
 			#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
-				["append-tail.ss",1,"append","FAIL"],
+				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
 			#	["avl-bind.ss",13,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get-max","SUCCESS", "rotate_double_left","SUCCESS",
 			#		"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
 			#		"node_error","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"],
@@ -51,7 +51,7 @@ $output_file = "log";
 							"delete","SUCCESS"],
 				["bubble.ss",4, "id2","SUCCESS",
 								"id3","SUCCESS",
-								"bubble","FAIL",
+								"bubble","SUCCESS",
 								"bsort","SUCCESS",
 								#"skip","SUCCESS"
 								],
@@ -122,14 +122,14 @@ $output_file = "log";
 				["qsort.ss",3,	"partition","SUCCESS",
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
-				["qsort-tail.ss",2,"qsort","FAIL",
+				["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS",
 									"partition1","SUCCESS"],
 				["rb.ss",18,"rotate_case_3","SUCCESS",
 							"case_2","SUCCESS",
 							"rotate_case_3r","SUCCESS",
 							"case_2r","SUCCESS",
-							"is_red","FAIL",
-							"is_black","FAIL",
+							"is_red","SUCCESS",
+							"is_black","SUCCESS",
 							"del_6","SUCCESS",
 							"del_6r","SUCCESS",
 							"del_5","SUCCESS",
