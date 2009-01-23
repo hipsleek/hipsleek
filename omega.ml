@@ -28,20 +28,27 @@ let rec omega_of_exp e0 = match e0 with
 
 and omega_of_b_formula b = match b with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
-  | BVar (bv, _) -> (omega_of_spec_var bv) ^ " = 1"
+  | BVar (bv, _) -> (omega_of_spec_var bv) ^ " > 0"
   | Lt (a1, a2, _) -> (omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
   | Gt (a1, a2, _) -> (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
   | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
-  | Eq (a1, a2, _) -> (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+  | Eq (a1, a2, _) -> begin
+        if is_null a2 then
+        (omega_of_exp a1) ^ " < 1"
+        else if is_null a1 then
+        (omega_of_exp a2) ^ " < 1"
+        else
+      (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+  end
   | Neq (a1, a2, _) -> begin
-      (*
+
         if is_null a2 then
         (omega_of_exp a1) ^ " > 0"
         else if is_null a1 then
         (omega_of_exp a2) ^ " > 0"
         else
-      *)
+
       (omega_of_exp a1) ^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
@@ -62,11 +69,7 @@ and omega_of_formula f = match f with
   | BForm b -> "(" ^ (omega_of_b_formula b) ^ ")"
   | And (p1, p2, _) -> "(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2) ^ ")"
   | Or (p1, p2, _) -> "(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
-  | Not (p, _) -> begin
-      match p with
-        | BForm (BVar (bv, _)) -> (omega_of_spec_var bv) ^ " = 0"
-        | _ -> " (not (" ^ (omega_of_formula p) ^ ")) "
-    end
+  | Not (p, _) -> " (not (" ^ (omega_of_formula p) ^ ")) "
   | Forall (sv, p, _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
   | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
