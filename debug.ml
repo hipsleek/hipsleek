@@ -22,4 +22,4 @@ let devel_pprint msg pos =
 
 let print_info prefix str pos = 
   let tmp = "\n" ^ prefix ^ ":" ^ pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.Lexing.pos_lnum) ^ ": " ^ str ^ "\n" in
-	print_string tmp
+	print_string tmp; flush stdout
