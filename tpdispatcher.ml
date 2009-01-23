@@ -164,8 +164,7 @@ let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula)
   else
 	(ante, conseq)
 
-let is_sat (f : CP.formula) =
-  let f = elim_exists f in
+let tp_is_sat (f : CP.formula) =
 	match !tp with
 	  | OmegaCalc ->
 (*
@@ -364,16 +363,101 @@ let rec requant = function
   | x -> x
 ;;
 
-let simpl_pair (ante, conseq) =
+let rewrite_in_list list formula =
+  match formula with
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
+      List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
+  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) ->
+      List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
+  | x -> list
+;;
+
+let rec rewrite_in_and_tree rid formula rform =
+  match formula with
+  | CP.And (x, y, l) ->
+      let (x, fx) = rewrite_in_and_tree rid x rform in
+      let (y, fy) = rewrite_in_and_tree rid y rform in
+      (CP.And (x, y, l), (fun e -> fx (fy e)))
+  | x ->
+      let subst_fun =
+        match rform with
+        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) -> CP.subst [v1, v2]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _)) -> CP.subst_term [v1, term]
+        | _ -> fun x -> x
+      in
+      if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
+;;
+
+let is_irrelevant = function
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) -> v1 = v2
+  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _)) -> i1 = i2
+  | _ -> false
+;;
+
+let rec get_rid_of_eq = function
+  | CP.And (x, y, l) -> 
+      if is_irrelevant x then (get_rid_of_eq y) else
+      if is_irrelevant y then (get_rid_of_eq x) else
+      CP.And (get_rid_of_eq x, get_rid_of_eq y, l)
+  | z -> z
+;;
+
+let rec fold_with_subst fold_fun current = function
+  | [] -> current
+  | h :: t ->
+      let current, subst_fun = fold_fun current h in
+      fold_with_subst fold_fun current (List.map subst_fun t)
+;;
+
+(* TODO goes in just once *)
+let rec simpl_in_quant formula negated rid =
+  match negated with
+  | true ->
+      begin match formula with
+      | CP.Not (f, l) -> CP.Not (simpl_in_quant f false rid, l)
+      | CP.Forall (v, f, l) -> CP.Forall (v, simpl_in_quant f true rid, l)
+      | CP.Exists (v, f, l) -> CP.Exists (v, simpl_in_quant f true rid, l)
+      | CP.Or (f, g, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, l)
+      | CP.And (_, _, _) ->
+          let subfs = split_conjunctions formula in
+          let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
+          let nformula = get_rid_of_eq nformula in
+          nformula
+      | x -> x
+      end
+  | false ->
+      begin match formula with
+      | CP.Not (f, l) -> CP.Not (simpl_in_quant f true true, l)
+      | CP.Forall (v, f, l) -> CP.Forall (v, simpl_in_quant f false rid, l)
+      | CP.Exists (v, f, l) -> CP.Exists (v, simpl_in_quant f false rid, l)
+      | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
+      | x -> x
+      end
+;;
+
+let simpl_pair rid (ante, conseq) =
   let antes = split_conjunctions ante in
   let fold_fun (ante, conseq) = function
     | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
-        (CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq)
+        ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
     | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) ->
-        (CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq)
-    | _ -> (ante, conseq)
+        ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
+    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _)) ->
+        ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
+    | _ -> ((ante, conseq), fun x -> x)
   in
-  List.fold_left fold_fun (ante, conseq) antes
+  let (ante1, conseq) = fold_with_subst fold_fun (ante, conseq) antes in
+  let ante1 = get_rid_of_eq ante1 in
+  let ante2 = simpl_in_quant ante1 true rid in
+  let ante3 = simpl_in_quant ante2 true rid in
+  (ante3, conseq)
+;;
+
+let is_sat (f : CP.formula) : bool =
+  let f = elim_exists f in
+  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+  tp_is_sat f
 ;;
 
 let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
@@ -395,7 +479,7 @@ let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
         let split_conseq = split_conjunctions conseq in
-        let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair (requant ante, requant cons) in filter ante cons) split_conseq in
+        let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
         (*let pairs = [filter ante conseq] in*)
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun res (ante, conseq) =
