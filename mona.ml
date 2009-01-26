@@ -172,34 +172,58 @@ let equal_types (t1:CP.typ) (t2:CP.typ) : bool =
       | _ -> (t1 = t2)
 
 let equal_sv (CP.SpecVar(t1, i1, p1)) (CP.SpecVar(t2, i2, p2)) : bool =
-  (equal_types t1 t2) (*t1 = t2*) && i1 = i2 && p1 = p2
+  t1 = t2 && i1 = i2 && p1 = p2
 
 let rec exists_sv (sv : CP.spec_var) (svlist : CP.spec_var list) : bool = match svlist with
  | [] -> false
  | sv1 :: rest ->
-     if (equal_sv sv1 sv) (*sv1 = sv*) then true
+     if (sv1 = sv) (*sv1 = sv*) then true
      else (exists_sv sv rest)
 
 let rec exists_sv_exp (sv : CP.spec_var) (elist : CP.exp list) : bool = match elist with
  | [] -> false
  | CP.Var(sv1, _) :: rest ->
-     if (equal_sv sv sv1) (*sv1 = sv*) then true
+     if sv1 = sv then true
      else (exists_sv_exp sv rest)
  | _ :: rest -> (exists_sv_exp sv rest)
 
-let rec is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
+let rec appears_in_formula v = function
+  | CP.Not (f, _) -> appears_in_formula v f
+  | CP.Forall (qv, f, _)
+  | CP.Exists (qv, f, _) -> if qv = v then true else appears_in_formula v f
+  | CP.And (f, g, _) -> (appears_in_formula v f) || (appears_in_formula v g)
+  | CP.Or (f, g, _) -> (appears_in_formula v f) || (appears_in_formula v g)
+  | CP.BForm bf -> match bf with
+    | CP.BVar (bv, _) -> v = bv
+    | CP.Gt (l, r, _)
+    | CP.Gte (l, r, _)
+    | CP.Lte (l, r, _)
+    | CP.Eq (l, r, _)
+    | CP.Neq (l, r, _)
+    | CP.BagSub (l, r, _)
+    | CP.Lt (l, r, _) -> (appears_in_exp l (CP.Var (v,no_pos))) || (appears_in_exp r (CP.Var (v,no_pos)))
+    | CP.EqMax (l, r, t, _)
+    | CP.EqMin (l, r, t, _) -> (appears_in_exp l (CP.Var (v,no_pos))) || (appears_in_exp r (CP.Var (v,no_pos))) || (appears_in_exp t (CP.Var (v,no_pos)))
+    | CP.BagNotIn (bv, r, _)
+    | CP.BagIn (bv, r, _) -> v = bv || (appears_in_exp r (CP.Var (v,no_pos)))
+    | CP.BagMin (l, r, _)
+    | CP.BagMax (l, r, _) -> l = v || r = v
+    | CP.BConst _ -> false
+
+and is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
   match (hd elem_list) with
  | CP.Var(sv1, _) ->
      if (exists_sv sv1 !additional_vars) then false else
      if (exists_sv sv1 !first_order_vars) then true else
+	 if (exists_sv sv1 !second_order_vars) then false else
      if (is_inside_bag f (hd elem_list)) then
 	   begin
 	     first_order_vars := sv1 :: !first_order_vars;
 	     true;
 	   end
 	 else
-	   if (exists_sv sv1 !second_order_vars) then false else
 	   let res = (is_first_order_a f elem_list f) in
+       (*if (not (appears_in_formula sv1 f)) then false else*)
 	   if res then
 	     begin
            (*first_order_vars := sv1 :: !first_order_vars;*)
@@ -217,6 +241,8 @@ let rec is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
 		     end
 		   else
 		     begin
+               let iter_fun v = match v with CP.Var(sv1, _) -> second_order_vars := sv1 :: !second_order_vars | _ -> assert false in
+               List.iter iter_fun elem_list;
 		       cycle := false;
 		     end;
 		   false;
@@ -270,7 +296,9 @@ and is_first_order_exp (e : CP.exp) (elem_list : CP.exp list) (initial_f : CP.fo
 	      false;
 	    end
 	  else (
+(*        print_char '<'; flush stdout;*)
         let ret = is_first_order initial_f (e::elem_list) in
+(*        print_char '>'; flush stdout;*)
         ret
        )
   | CP.Add(a1, a2, _)
@@ -285,12 +313,13 @@ and is_first_order_exp (e : CP.exp) (elem_list : CP.exp list) (initial_f : CP.fo
   | _ -> false
 
 and appears_in_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
-  | CP.Var(CP.SpecVar (t1, i1, p1), _) ->
+  | CP.Var(sv1, _) ->
       begin
-        match elem with
-        | CP.Var(CP.SpecVar (t2, i2, p2), _) ->
-            p1 = p2 && i1 = i2 && t1 = t2
-        | _ -> false
+      match elem with
+      | CP.Var(sv2, _) ->
+	  if sv1 = sv2 then true
+	  else false
+      | _ -> false
       end
   | CP.Add(a1, a2, _)
   | CP.Subtract(a1, a2, _)
@@ -712,14 +741,6 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) : bool = begin
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
   let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
-   (* let bag_vars, not_bag_vars = (*all_fv  bool_vars =*)List.partition (fun (CP.SpecVar (t, _, _)) -> CP.is_bag_type t) all_fv  in
-  let bag_var_decls =
-	if Util.empty bag_vars then ""
-	else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var bag_vars)) ^ ";\n" in
-  let not_bag_var_decls =
-	if Util.empty not_bag_vars then ""
-	else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var not_bag_vars)) ^ ";\n" in
-  let var_decls = bag_var_decls ^ not_bag_var_decls in*)
   let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in
   let vs = Hashtbl.create 10 in
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
@@ -732,7 +753,6 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) : bool = begin
   let var_decls = first_order_var_decls ^ second_order_var_decls in
   (*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
   let simp_form = break_presburger tmp_form in
-  (*print_endline ("\nDDD : \n" ^ (Cprinter.string_of_pure_formula tmp_form) ^ "\n" ^ (Cprinter.string_of_pure_formula simp_form));*)
   (write var_decls simp_form vs timeout)
  end
 
