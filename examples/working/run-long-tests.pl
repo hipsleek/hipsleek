@@ -64,7 +64,7 @@ if ($aux!=0){
 		close(LOGFILE);
 		exit(0);		
 	}
-$aux =system "cd $module; make hip;make sleek";
+$aux =system "cd $module; make hip.opt;make sleek.opt";
 if ($aux!=0){
 		print LOGFILE "error making sleekex\n";
 		cleanup();
@@ -73,16 +73,16 @@ if ($aux!=0){
 		exit(0);		
 	}
 	
-if ($optimized) {
-  $hip = "$hip".'.opt';
-  $sleek ="$sleek".'.opt -ee -filter';
-}
+#if ($optimized) {
+$hip = "$hip".'.opt';
+$sleek ="$sleek".'.opt -ee -filter';
+#}
 
 $error_count = 0;
 $error_files = "";
 
 print LOGFILE "Making... OK\n Starting sleek tests:\n";
-$sleek = "../../../sleek";
+$sleek = "../../../sleek.opt";
 $tp = "omega"; $pth = "$examples_path_working/sleek";
 call_find_s();
 
@@ -90,13 +90,13 @@ $tp = "mona";$pth = "$examples_path_working/sleek";
 call_find_s();
 
 print LOGFILE "Starting hip tests:\n";
-$hip = "../../../hip";
+$hip = "../../../hip.opt";
 $tp = "omega";$pth = "$examples_path_working/hip";
 call_find_h();
 $tp = "mona"; $pth = "$examples_path_working/hip";
 call_find_h();
 
-$hip = "../../hip";
+$hip = "../../hip.opt";
 $tp = "mona";$pth = "$examples_path_working_bags";
 call_find_h();
 $tp = "isabelle";$pth = "$examples_path_working_bags";
@@ -149,7 +149,7 @@ sub hip_process_file {
 	print LOGFILE "Checking $file\n";
 	print "$hip -tp $tp $file";
 	eval {
-        local $SIG{ALRM} = sub { `pkill hip;pkill mona;pkill isabelle;pkill hip`;die "alarm clock restart" };
+        local $SIG{ALRM} = sub { `pkill hip;pkill mona;pkill poly;pkill hip`;die "alarm clock restart" };
         alarm 1800;
 		my $output = `$hip -tp $tp $file 2>&1`;
         alarm 0;
@@ -180,7 +180,7 @@ sub sleek_process_file  {
   if ($ext eq ".slk") {
         print LOGFILE "Checking $file\n";
 		eval {
-	        local $SIG{ALRM} = sub { `pkill sleek;pkill mona;pkill isabelle`;die "alarm clock restart" };
+	        local $SIG{ALRM} = sub { `pkill sleek;pkill mona;pkill poly`;die "alarm clock restart" };
 	        alarm 1800;
 			 my $output = `$sleek -tp $tp $file 2>&1`;
 	        alarm 0;
