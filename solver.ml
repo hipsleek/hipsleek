@@ -681,7 +681,7 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
   evars: those involving this will be on the rhs
   otherwise move to the lhs
 *)
-and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spec_var list) (pos : loc) : (CP.formula * CP.formula) =
+and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spec_var list) (pos : loc) : (CP.formula * CP.formula * (CP.spec_var list)) =
   let rec split f = match f with
 	| CP.And (f1, f2, _) ->
 		let app1, cpp1 = split f1 in
@@ -717,6 +717,10 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
   let _ = (print_string ("[solver.ml, split_universal]: Pure formula in simplified cnf: " ^ (Cprinter.string_of_pure_formula f) ^ "\n")) in
   *)
   let to_ante, to_conseq = split f in
+  let ante_fv = CP.fv to_ante in
+  let conseq_fv = CP.fv to_conseq in
+  let explicitly_quantified = List.filter (fun v -> not (List.mem v evars) && not (List.mem v ante_fv)) conseq_fv in
+  let evars = explicitly_quantified @ evars in
   Debug.devel_pprint ("split_universal: evars: "
 						^ (String.concat ", "
 							 (List.map Cprinter.string_of_spec_var evars))) pos;
@@ -735,8 +739,8 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
 		(* Ex.:  ex e. f1<e & e<=g or ex e. (f=1 & e=2 \/ f=2 & e=3) *)
 		(*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
 		let new_f = discard_uninteresting_constraint f vvars in
-			((CP.mkAnd to_ante (CP.mkExists evars new_f pos) pos), to_conseq)
-	else (to_ante, to_conseq)
+			((CP.mkAnd to_ante (CP.mkExists evars new_f pos) pos), to_conseq, evars)
+	else (to_ante, to_conseq, evars)
 
 
 (**************************************************************)
@@ -927,7 +931,7 @@ and process_fold_result prog is_folding estate fold_rs0 p2 vs2 base2 pos : (cont
 		let _ = (print_string ("[solver.ml, process_fold_result]: Global vars: " ^ (Cprinter.string_of_spec_var_list vs2) ^ "\n")) in
 		let _ = (print_string ("[solver.ml, process_fold_result]: Pure formula after discarding globals: " ^ (Cprinter.string_of_pure_formula new_pure) ^ "\n")) in*)
 		(* 20.05.2008 *)
-		let to_ante, to_conseq = split_universal fold_es.es_pure
+		let to_ante, to_conseq, new_evars = split_universal fold_es.es_pure
 		  fold_es.es_evars vs2 pos in
 		let tmp_conseq = mkBase resth2 pure2 type2 pos in
 		let new_conseq = normalize tmp_conseq
@@ -936,7 +940,8 @@ and process_fold_result prog is_folding estate fold_rs0 p2 vs2 base2 pos : (cont
 		  (formula_of_pure to_ante pos) pos in
 		let new_consumed = fold_es.es_heap in
 		let new_es = {estate with es_heap = new_consumed;
-						es_formula = new_ante} in
+						es_formula = new_ante;
+                        es_evars = new_evars } in
 		let new_ctx = Ctx new_es in
 		  Debug.devel_pprint ("process_fold_result: new_ctx after folding: "
 							  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
