@@ -148,10 +148,11 @@ sub hip_process_file {
   if ($ext eq ".ss") {
 	print LOGFILE "Checking $file\n";
 	print "$hip -tp $tp $file";
+    my $output = "";
 	eval {
         local $SIG{ALRM} = sub { `pkill hip;pkill mona;pkill poly;pkill hip`;die "alarm clock restart" };
         alarm 1800;
-		my $output = `$hip -tp $tp $file 2>&1`;
+		$output = `$hip -tp $tp $file 2>&1`;
         alarm 0;
     };
     if ($@ and $@ =~ /alarm clock restart/) {  $error_count++;$error_files = $error_files . "\n " . $file . " timed out ";print LOGFILE "!!!!!!!timed out\n"; print "!!!!!!!timed out"; }
@@ -160,7 +161,7 @@ sub hip_process_file {
 		#print LOGFILE "\n======================================\n";
 		#print LOGFILE "$output";
 
-		if ($output =~ /.*(e|E)rror.*/) {
+		if (($output =~ m/.*error.*/i)||($output =~ m/.*fail.*/i)) {
 		  print LOGFILE "Error found\n";
 		  $error_count++;
 		  $error_files = $error_files . " " . $file;
@@ -178,27 +179,28 @@ sub sleek_process_file  {
   my $ext = (fileparse($file,'\..*'))[2];
 
   if ($ext eq ".slk") {
-        print LOGFILE "Checking $file\n";
-		eval {
-	        local $SIG{ALRM} = sub { `pkill sleek;pkill mona;pkill poly`;die "alarm clock restart" };
-	        alarm 1800;
-			 my $output = `$sleek -tp $tp $file 2>&1`;
-	        alarm 0;
-	    };
-	    if ($@ and $@ =~ /alarm clock restart/) {  $error_count++;$error_files = $error_files . " " . $file;print "!!!!!!!timed out\n"; }
-		else {
-			print "$output";
-	        #print LOGFILE "\n======================================\n";
-	        #print LOGFILE "$output";
+      print LOGFILE "Checking $file\n";
+      my $output = "";
+      eval {
+          local $SIG{ALRM} = sub { `pkill sleek;pkill mona;pkill poly`;die "alarm clock restart" };
+          alarm 1800;
+          $output = `$sleek -tp $tp $file 2>&1`;
+          alarm 0;
+      };
+      if ($@ and $@ =~ /alarm clock restart/) {  $error_count++;$error_files = $error_files . " " . $file;print "!!!!!!!timed out\n"; }
+      else {
+          print "$output";
+          #print LOGFILE "\n======================================\n";
+          #print LOGFILE "$output";
 
-	        if (($output =~ /.*(e|E)rror.*/)||($output =~ /.*(f|F)ail.*/)) {
+          if (($output =~ m/.*error.*/i)||($output =~ m/.*fail.*/i)) {
 	          print LOGFILE "Error found\n";
 	          $error_count++;
 	          $error_files = $error_files . " " . $file;
 	          if ($stop) {
-	                exit(0);
+                  exit(0);
 	          }
-	        }
-		}
+          }
+      }
   }
 }
