@@ -717,10 +717,11 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
   let _ = (print_string ("[solver.ml, split_universal]: Pure formula in simplified cnf: " ^ (Cprinter.string_of_pure_formula f) ^ "\n")) in
   *)
   let to_ante, to_conseq = split f in
-  let ante_fv = CP.fv to_ante in
   let conseq_fv = CP.fv to_conseq in
-  let explicitly_quantified = List.filter (fun v -> not (List.mem v evars) && not (List.mem v ante_fv)) conseq_fv in
-  let evars = explicitly_quantified @ evars in
+  let instantiate = List.filter (fun v -> List.mem v evars) conseq_fv in
+  let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f, pos)) to_conseq instantiate in
+  let to_ante = CP.And (to_ante, wrapped_to_conseq, no_pos) in
+  (*t evars = explicitly_quantified @ evars in*)
   Debug.devel_pprint ("split_universal: evars: "
 						^ (String.concat ", "
 							 (List.map Cprinter.string_of_spec_var evars))) pos;
