@@ -156,16 +156,16 @@ $examples_path_working_mult_specs = "sleekex/examples/working_mult_specs";
 			#					 "SUCCESS","rotate_left_child_2","SUCCESS"],
 			 
 %sleek_files=(
-		"sleek.slk"=>"Valid.Valid.Valid.Fail.Valid.",
-		"sleek1.slk"=>"Valid.",
-		"sleek10.slk"=>"Valid.Fail.",
-		"sleek2.slk"=>"Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail.",
-		"sleek3.slk"=>"Fail.Fail.Fail.",
-		"sleek4.slk"=>"Valid.Valid.",
-		"sleek6.slk"=>"Valid.Valid.",
-		"sleek7.slk"=>"Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.",
-		"sleek8.slk"=>"Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail.",
-		"sleek9.slk"=>"Valid.");
+		"sleek.slk"=>[["Valid.Valid.Valid.Fail.Valid."],["omega","mona"],[""]],
+		"sleek1.slk"=>[["Valid."],["omega","mona"],[""]],
+		"sleek10.slk"=>[["Valid.Fail."],["omega","mona"],[""]],
+		"sleek2.slk"=>[["Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],["omega","mona"],[""]],
+		"sleek3.slk"=>[["Fail.Fail.Fail."],["omega","mona"],[""]],
+		"sleek4.slk"=>[["Valid.Valid."],["omega","mona"],[""]],
+		"sleek6.slk"=>[["Valid.Valid."],["omega","mona"],[""]],
+		"sleek7.slk"=>[["Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],["omega","mona"],[""]],
+		"sleek8.slk"=>[["Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],["omega","mona"],[""]],
+		"sleek9.slk"=>[["Valid."],["omega","mona"],[""]]);
 	
 open(LOGFILE, ">> $log_file") || die ("Could not open $log_file.\n");
 open(PROOFLOGFILE, "> $proof_dump") || die ("Could not open $proof_dump.\n");
@@ -229,10 +229,7 @@ $error_files = "";
 
 print LOGFILE "Making... OK\n Starting sleek tests:\n";
 $sleek = "../../../sleek.opt";
-$tp = "omega"; $pth = "$examples_path_working/sleek";
-call_find_s();
-
-$tp = "mona";$pth = "$examples_path_working/sleek";
+$pth = "$examples_path_working/sleek";
 call_find_s();
 
 print LOGFILE "Starting hip tests:\n";
@@ -342,8 +339,12 @@ sub sleek_process_file  {
   my $ext = (fileparse($file,'\..*'))[2];
 
   if ($ext eq ".slk") {
-      print LOGFILE "Checking $file\n";
       my $output = "";
+	  if($sleek_files{$file}) {$tp_list = $sleek_files{$file}->[1]}
+	  else {$tp_list = ["omega","mona"];}
+	  foreach $tp (@$tp_list)
+	 {
+	  print LOGFILE "Checking $file with $tp\n";
       eval {
           local $SIG{ALRM} = sub { `pkill sleek;pkill mona;pkill poly`;die "alarm clock restart" };
           alarm 1800;
@@ -381,12 +382,12 @@ sub sleek_process_file  {
 							if ($pos >=length($output)) 
 							{$pos = -1;}
 						}
-						if($r !~ /^$sleek_files{$file}$/)
+						if(($r !~ /^$sleek_files{$file}->[0]->[0]$/)||($output =~ m/.*failure.*/i))
 						{
-							print LOGFILE "Unexpected result with : $file got: $r expected $sleek_files{$file}\n";
+							print LOGFILE "Unexpected result with : $file got: $r expected $sleek_files{$file}->[0]->[0]\n";
 							$error_count++;
 							$error_files = $error_files . " " . $file;
-						}  
+						} 
 			}
 		  else{
           if (($output =~ m/.*error.*/i)||($output =~ m/.*fail.*/i)) {
@@ -399,5 +400,6 @@ sub sleek_process_file  {
           }
 		}
       }
+	}
   }
 }
