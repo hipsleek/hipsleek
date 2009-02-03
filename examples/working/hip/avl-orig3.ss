@@ -20,11 +20,13 @@ avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
 /* function to return the height of an avl tree */
 int height(node x)
 // slow when it is addedi - 72s for insert without
-/*
-        requires x=null
+/*        requires x=null
         ensures res=0;
         requires x::node<v,h,l,r>
         ensures x::node<v,h,l,r> & res=h;
+        requires x=null or x::node<v,h,l,r>
+        ensures res=0 & x=null
+            or x::node<v,h,l,r> & res=h & x!=null;
 */
 // fails if last case dropped though it seem redundant
 	requires x::avl<m, n, b>
@@ -110,8 +112,8 @@ node double_left_child(node k3)
 		* k2::node<_, _, b, c> * b::avl<bm, bn, _> * c::avl<cm, cn, _>
                 & bn<=1+an & an<=1+bn // -1<=an-bn<=1
                 & cn<=1+dn & dn<=1+cn // -1<=an-bn<=1
-	ensures res::node<_,h,ss1,ss2> * ss1::avl<am+bm+1,h1,_>
-                * ss2::avl<cm+dm+1,h2,_>
+	ensures res::node<_,h,ss1,ss2> * ss1::avl<am+bm+1,h1,bb1>
+                * ss2::avl<cm+dm+1,h2,bb2>
                 & h=1+t & t=max(h1,h2) & h1=1+t1 & t1=max(an,bn) 
 	        & h2=1+t2 & t2=max(cn,dn);
 /*	requires k3::node<_, _, k1, d> * d::avl<dm, dn, _>
@@ -125,9 +127,9 @@ node double_left_child(node k3)
 {
         node t2 = k3.left;
 	k3.left = rotate_right_child(t2);
-        //dprint;
-	/*
-        assert k3'::node<_,_,kl,kr> * kr::avl<kcm, kcn, _> * kl::node<_, _, kll, klr> * klr::avl<kbm, kbn, _>
+        /*
+        dprint;
+	assert k3'::node<_,_,kl,kr> * kr::avl<kcm, kcn, _> * kl::node<_, _, kll, klr> * klr::avl<kbm, kbn, _>
          * kll::avl<kam, kan, bbb>; 
 	assert k3'::node<_,_,kl,kr> * kr::avl<kcm, kcn, _> * kl::node<_, _, kll, klr> * klr::avl<kbm, kbn, _>
          * kll::avl<kam, kan, _>; 
@@ -147,8 +149,8 @@ node double_right_child(node k1)
 			* k3::node<_,_, b, c> * b::avl<bm, bn, _> * c::avl<cm, cn, _>
                 & bn<=1+an & an<=1+bn // -1<=an-bn<=1
                 & cn<=1+dn & dn<=1+cn // -1<=an-bn<=1
-	ensures res::node<_,h,ss1,ss3> * ss1::avl<am+bm+1,h1,_>
-                * ss3::avl<cm+dm+1,h2,_>
+	ensures res::node<_,h,ss1,ss3> * ss1::avl<am+bm+1,h1,bb1>
+                * ss3::avl<cm+dm+1,h2,bb2>
                 & h=1+t & t=max(h1,h2) & h1=1+t1 & t1=max(an,bn) 
 	        & h2=1+t2 & t2=max(cn,dn);
 {
@@ -165,10 +167,10 @@ node double_right_child(node k1)
 }
 
 node rotate_left_child(node k2)
-	requires k2::node<_, _, l, r> * r::avl<cm, cn, _> * l::node<_, _, ll, lr> 
-		* ll::avl<am, an, _> * lr::avl<bm, bn, _>
-	ensures res::node<_,resn, resl, resr> * resl::avl<am, an, _> * resr::node<_,resrn,resrl,resrr>
-		* resrl::avl<bm,bn, _> * resrr::avl<cm,cn,_>
+	requires k2::node<_, _, l, r> * r::avl<cm, cn, ba3> * l::node<_, _, ll, lr> 
+		* ll::avl<am, an, ba1> * lr::avl<bm, bn, ba2>
+	ensures res::node<_,resn, resl, resr> * resl::avl<am, an, ba1> * resr::node<_,resrn,resrl,resrr>
+		* resrl::avl<bm,bn, ba2> * resrr::avl<cm,cn,ba3>
 		& resrn=tmp1+1 & tmp1=max(cn, bn)
 		& resn=tmp2+1 & tmp2=max(an, resrn);
 {
@@ -191,10 +193,10 @@ node rotate_left_child(node k2)
 }
 
 node rotate_right_child(node k1)
-	requires k1::node<_, _, l, r> * l::avl<am, an, _>
-		* r::node<_, _, rl, rr> * rl::avl<bm, bn, _> * rr::avl<cm, cn, _>
-	ensures res::node<_, resn, resl, resr> * resl::node<_, resln, resll, reslr> * resr::avl<cm, cn, _>
-		* resll::avl<am, an, _> * reslr::avl<bm, bn, _>
+	requires k1::node<_, _, l, r> * l::avl<am, an, ba1>
+		* r::node<_, _, rl, rr> * rl::avl<bm, bn, ba2> * rr::avl<cm, cn, ba3>
+	ensures res::node<_, resn, resl, resr> * resl::node<_, resln, resll, reslr> * resr::avl<cm, cn, ba3>
+		* resll::avl<am, an, ba1> * reslr::avl<bm, bn, ba2>
 		& resln=tmp1+1 & tmp1=max(an, bn)
 		& resn=tmp2+1 & tmp2=max(resln, cn);
 /*

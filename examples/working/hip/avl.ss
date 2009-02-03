@@ -10,7 +10,8 @@ data node {
 
 /* view for avl trees */
 avl<m, n> == self = null & m = 0 & n = 0 
-	or self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = 1+m1+m2 & -1 <= n1-n2 <=1 & tmp=max(n1, n2) & n = tmp + 1 
+	or self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = 1+m1+m2 & 
+        n2<=n1+1 & n1<=n2+1 & tmp=max(n1, n2) & n = tmp + 1 
 	inv m >= 0 & n >= 0;
 
 /* function to return the height of an avl tree */
