@@ -138,13 +138,26 @@ $examples_path_working_mult_specs = "sleekex/examples/working_mult_specs";
 								#"remove_min1","SUCCESS",
 								"delete","SUCCESS",
 								#"delete1","SUCCESS"
-								]);
+								],
+		"avl-bind.ss"=>["",9,"height","SUCCESS", 
+							  "rotate_left","SUCCESS", 
+							  "rotate_right","SUCCESS", 
+							  "get_max","SUCCESS", 
+							  "rotate_double_left","SUCCESS",
+							  "rotate_double_right","SUCCESS",
+							  "build_avl1","SUCCESS",
+							  "build_avl2","SUCCESS",
+							  "insert","SUCCESS",
+							  #"node_error","SUCCESS",
+							  #"insert_inline","SUCCESS",
+							  #"remove_min","SUCCESS",
+							  #"delete","SUCCESS"
+							  ],							
+								);
 			#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 	
 				
-			#	["avl-bind.ss",13,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get-max","SUCCESS", "rotate_double_left","SUCCESS",
-			#		"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
-			#		"node_error","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"],
+			
 			#	["avl.ss",13,	 "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
 			#					 "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
 			#					 "build_avl1","SUCCESS","build_avl2","SUCCESS","node_error","SUCCESS",
@@ -156,22 +169,28 @@ $examples_path_working_mult_specs = "sleekex/examples/working_mult_specs";
 			#					 "SUCCESS","rotate_left_child_2","SUCCESS"],
 			 
 %sleek_files=(
-		"sleek.slk"=>[["Valid.Valid.Valid.Fail.Valid."],["omega","mona"],[""]],
+		"sleek.slk"=>[["Valid.Valid.Valid.Fail.Valid."],["omega"],[""]],
 		"sleek1.slk"=>[["Valid."],["omega","mona"],[""]],
 		"sleek10.slk"=>[["Valid.Fail."],["omega","mona"],[""]],
-		"sleek2.slk"=>[["Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],["omega","mona"],[""]],
-		"sleek3.slk"=>[["Fail.Fail.Fail."],["omega","mona"],[""]],
-		"sleek4.slk"=>[["Valid.Valid."],["omega","mona"],[""]],
+		"sleek2.slk"=>[["Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],["omega"],[""]],
+		"sleek3.slk"=>[["Fail.Fail.Fail."],["omega"],[""]],
+		"sleek4.slk"=>[["Valid.Valid."],["omega"],[""]],
 		"sleek6.slk"=>[["Valid.Valid."],["omega","mona"],[""]],
 		"sleek7.slk"=>[["Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],["omega","mona"],[""]],
 		"sleek8.slk"=>[["Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],["omega","mona"],[""]],
-		"sleek9.slk"=>[["Valid."],["omega","mona"],[""]]);
-	
+		"sleek9.slk"=>[["Valid."],["omega"],[""]]);
+
+		
 open(LOGFILE, ">> $log_file") || die ("Could not open $log_file.\n");
 open(PROOFLOGFILE, "> $proof_dump") || die ("Could not open $proof_dump.\n");
 
+$aux = `export PATH=$PATH:/usr/local/bin`;
+$aux = `date`;
+print LOGFILE "-----------------\n $aux \n";
+
 $aux = `pwd`;
 print LOGFILE "$aux";
+
 
 @yest = `date +"%Y/%m/%d" -d "yesterday"`;$yest  = pop(@yest);$yest  = substr($yest, 0, 10);
 
@@ -307,17 +326,25 @@ sub hip_process_file {
 		#print LOGFILE "$output";
 
 		if($hip_files{$file}) {
-			$limit = $hip_files{$file}->[1]*2+2;
-			#print "$output";
-			for($i = 2; $i<$limit;$i+=2)
+			$count = 0;
+			$count++ while $output =~ /Procedure/g;
+			if ($count == $hip_files{$file}->[1])
 			{
-				if($output !~ /Procedure $hip_files{$file}->[$i].* $hip_files{$file}->[$i+1]/)
+				$limit = $hip_files{$file}->[1]*2+2;
+				#print "$output";
+				for($i = 2; $i<$limit;$i+=2)
 				{
-					print LOGFILE "Error found in $file $hip_files{$file}->[$i]\n";
-			 		$error_count++;
-					$error_files=$error_files."error at: $hip_files{$file}->[0] $hip_files{$file}->[$i]\n";
+					if($output !~ /Procedure $hip_files{$file}->[$i].* $hip_files{$file}->[$i+1]/)
+					{
+						print LOGFILE "Error found in $file $hip_files{$file}->[$i]\n";
+				 		$error_count++;
+						$error_files=$error_files."error at: $hip_files{$file}->[0] $hip_files{$file}->[$i]\n";
+					}
 				}
-			}
+			}else{
+				print LOGFILE "Error found in $file, the procedure count has changed, expected $hip_files{$file}->[1], got $count \n";
+				$error_count++;
+				$error_files=$error_files."the procedure count has changed\n";}
 		}
 		else{
 		if (($output =~ m/.*error.*/i)||($output =~ m/.*fail.*/i)) {
