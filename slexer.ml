@@ -511,22 +511,31 @@ and __ocaml_lex_tokenizer_rec file_name lexbuf __ocaml_lex_state =
 # 512 "slexer.ml"
 
   | 46 ->
-
-  let numstr = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
+let
+# 151 "slexer.mll"
+              numstr
+# 518 "slexer.ml"
+= Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
 # 151 "slexer.mll"
                      ( LITERAL_INTEGER (int_of_string numstr) )
-# 519 "slexer.ml"
+# 522 "slexer.ml"
 
   | 47 ->
-
-  let numstr = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
+let
+# 152 "slexer.mll"
+            numstr
+# 528 "slexer.ml"
+= Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
 # 152 "slexer.mll"
                    ( LITERAL_FLOAT (float_of_string numstr) )
-# 526 "slexer.ml"
+# 532 "slexer.ml"
 
   | 48 ->
-
-  let idstr = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
+let
+# 153 "slexer.mll"
+                             idstr
+# 538 "slexer.ml"
+= Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
 # 154 "slexer.mll"
    (
 		if idstr = "_" then
@@ -537,32 +546,32 @@ and __ocaml_lex_tokenizer_rec file_name lexbuf __ocaml_lex_state =
 		  try Hashtbl.find keywords idstr
 		  with | _ -> IDENTIFIER idstr
 	  )
-# 541 "slexer.ml"
+# 550 "slexer.ml"
 
   | 49 ->
 # 163 "slexer.mll"
                ( tokenizer file_name lexbuf )
-# 546 "slexer.ml"
+# 555 "slexer.ml"
 
   | 50 ->
 # 164 "slexer.mll"
          ( incr_linenum file_name lexbuf; tokenizer file_name lexbuf )
-# 551 "slexer.ml"
+# 560 "slexer.ml"
 
   | 51 ->
 # 165 "slexer.mll"
          ( incr_linenum file_name lexbuf; tokenizer file_name lexbuf )
-# 556 "slexer.ml"
+# 565 "slexer.ml"
 
   | 52 ->
 # 166 "slexer.mll"
            ( incr_linenum file_name lexbuf; tokenizer file_name lexbuf )
-# 561 "slexer.ml"
+# 570 "slexer.ml"
 
   | 53 ->
 # 167 "slexer.mll"
         ( EOF )
-# 566 "slexer.ml"
+# 575 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_tokenizer_rec file_name lexbuf __ocaml_lex_state
 
@@ -577,17 +586,17 @@ and __ocaml_lex_pre_java_rec file_name lexbuf __ocaml_lex_state =
 	  Buffer.clear java_code;
 	  java file_name lexbuf
 	)
-# 581 "slexer.ml"
+# 590 "slexer.ml"
 
   | 1 ->
 # 176 "slexer.mll"
                ( pre_java file_name lexbuf )
-# 586 "slexer.ml"
+# 595 "slexer.ml"
 
   | 2 ->
 # 177 "slexer.mll"
       ( print_error lexbuf "java keyword must be followed by Java code enclosed in {}" )
-# 591 "slexer.ml"
+# 600 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_pre_java_rec file_name lexbuf __ocaml_lex_state
 
@@ -606,7 +615,7 @@ and __ocaml_lex_java_rec file_name lexbuf __ocaml_lex_state =
 		java file_name lexbuf
 	  end
 	)
-# 610 "slexer.ml"
+# 619 "slexer.ml"
 
   | 1 ->
 # 189 "slexer.mll"
@@ -615,7 +624,7 @@ and __ocaml_lex_java_rec file_name lexbuf __ocaml_lex_state =
 	  Buffer.add_char java_code '{';
 	  java file_name lexbuf
 	)
-# 619 "slexer.ml"
+# 628 "slexer.ml"
 
   | 2 ->
 # 194 "slexer.mll"
@@ -624,7 +633,7 @@ and __ocaml_lex_java_rec file_name lexbuf __ocaml_lex_state =
 	  Buffer.add_char java_code '\n'; 
 	  java file_name lexbuf 
 	)
-# 628 "slexer.ml"
+# 637 "slexer.ml"
 
   | 3 ->
 # 199 "slexer.mll"
@@ -633,7 +642,7 @@ and __ocaml_lex_java_rec file_name lexbuf __ocaml_lex_state =
 	  Buffer.add_char java_code '\r'; 
 	  java file_name lexbuf 
 	)
-# 637 "slexer.ml"
+# 646 "slexer.ml"
 
   | 4 ->
 # 204 "slexer.mll"
@@ -642,17 +651,20 @@ and __ocaml_lex_java_rec file_name lexbuf __ocaml_lex_state =
 	  Buffer.add_string java_code "\r\n";
 	  java file_name lexbuf 
 	)
-# 646 "slexer.ml"
+# 655 "slexer.ml"
 
   | 5 ->
-
-  let c = Lexing.sub_lexeme_char lexbuf lexbuf.Lexing.lex_start_pos in
+let
+# 209 "slexer.mll"
+         c
+# 661 "slexer.ml"
+= Lexing.sub_lexeme_char lexbuf lexbuf.Lexing.lex_start_pos in
 # 209 "slexer.mll"
             ( 
 	  Buffer.add_char java_code c;
 	  java file_name lexbuf 
 	)
-# 656 "slexer.ml"
+# 668 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_java_rec file_name lexbuf __ocaml_lex_state
 
@@ -670,7 +682,7 @@ and __ocaml_lex_comment_rec file_name lexbuf __ocaml_lex_state =
 		comment file_name lexbuf
 	  end
 	)
-# 674 "slexer.ml"
+# 686 "slexer.ml"
 
   | 1 ->
 # 224 "slexer.mll"
@@ -678,27 +690,27 @@ and __ocaml_lex_comment_rec file_name lexbuf __ocaml_lex_state =
 	  comment_level := !comment_level + 1;
 	  comment file_name lexbuf
 	)
-# 682 "slexer.ml"
+# 694 "slexer.ml"
 
   | 2 ->
 # 228 "slexer.mll"
          ( incr_linenum file_name lexbuf; comment file_name lexbuf )
-# 687 "slexer.ml"
+# 699 "slexer.ml"
 
   | 3 ->
 # 229 "slexer.mll"
          ( incr_linenum file_name lexbuf; comment file_name lexbuf )
-# 692 "slexer.ml"
+# 704 "slexer.ml"
 
   | 4 ->
 # 230 "slexer.mll"
            ( incr_linenum file_name lexbuf; comment file_name lexbuf )
-# 697 "slexer.ml"
+# 709 "slexer.ml"
 
   | 5 ->
 # 231 "slexer.mll"
        ( comment file_name lexbuf )
-# 702 "slexer.ml"
+# 714 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_comment_rec file_name lexbuf __ocaml_lex_state
 
@@ -709,12 +721,12 @@ and __ocaml_lex_line_comment_rec file_name lexbuf __ocaml_lex_state =
       | 0 ->
 # 234 "slexer.mll"
                          ( incr_linenum file_name lexbuf; tokenizer file_name lexbuf )
-# 713 "slexer.ml"
+# 725 "slexer.ml"
 
   | 1 ->
 # 235 "slexer.mll"
       ( line_comment file_name lexbuf )
-# 718 "slexer.ml"
+# 730 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_line_comment_rec file_name lexbuf __ocaml_lex_state
 
@@ -742,23 +754,26 @@ and __ocaml_lex_preprocess_rec pfile lexbuf __ocaml_lex_state =
 		  output_string pfile (Buffer.contents in_cont);
 		  preprocess pfile lexbuf
       )
-# 746 "slexer.ml"
+# 758 "slexer.ml"
 
   | 1 ->
-
-  let c = Lexing.sub_lexeme_char lexbuf lexbuf.Lexing.lex_start_pos in
+let
+# 257 "slexer.mll"
+         c
+# 764 "slexer.ml"
+= Lexing.sub_lexeme_char lexbuf lexbuf.Lexing.lex_start_pos in
 # 258 "slexer.mll"
       ( (* other character, just copy it over *)
 		output_char pfile c;
 		preprocess pfile lexbuf
 		  
       )
-# 757 "slexer.ml"
+# 772 "slexer.ml"
 
   | 2 ->
 # 263 "slexer.mll"
         (  )
-# 762 "slexer.ml"
+# 777 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_preprocess_rec pfile lexbuf __ocaml_lex_state
 
@@ -767,16 +782,19 @@ and rip_ws lexbuf =
 and __ocaml_lex_rip_ws_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
-
-  let ws = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
+let
+# 266 "slexer.mll"
+                     ws
+# 789 "slexer.ml"
+= Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
 # 266 "slexer.mll"
                         ( ws )
-# 775 "slexer.ml"
+# 793 "slexer.ml"
 
   | 1 ->
 # 267 "slexer.mll"
        ( print_string "There must be whitespace after import directive\n"; exit (-1) )
-# 780 "slexer.ml"
+# 798 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_rip_ws_rec lexbuf __ocaml_lex_state
 
@@ -785,16 +803,19 @@ and get_file_name lexbuf =
 and __ocaml_lex_get_file_name_rec lexbuf __ocaml_lex_state =
   match Lexing.engine __ocaml_lex_tables __ocaml_lex_state lexbuf with
       | 0 ->
-
-  let fn = Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
+let
+# 270 "slexer.mll"
+                                fn
+# 810 "slexer.ml"
+= Lexing.sub_lexeme lexbuf lexbuf.Lexing.lex_start_pos lexbuf.Lexing.lex_curr_pos in
 # 270 "slexer.mll"
                                    ( fn )
-# 793 "slexer.ml"
+# 814 "slexer.ml"
 
   | 1 ->
 # 271 "slexer.mll"
       ( print_string "file name following import must be enclosed in double quotes\n"; exit (-1) )
-# 798 "slexer.ml"
+# 819 "slexer.ml"
 
   | __ocaml_lex_state -> lexbuf.Lexing.refill_buff lexbuf; __ocaml_lex_get_file_name_rec lexbuf __ocaml_lex_state
 

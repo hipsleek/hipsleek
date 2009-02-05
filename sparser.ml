@@ -134,25 +134,25 @@ open Parsing;;
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-		
-  type decl = 
+
+  type decl =
     | Type of type_decl
     | Proc of proc_decl
 	| Coercion of coercion_decl
-		
-  type member = 
+
+  type member =
 	| Field of (typed_ident * loc)
 	| Inv of F.formula
 	| Method of proc_decl
-		
+
   type spec_qualifier =
 	| Static
-	| Dynamic 
+	| Dynamic
 
   type ann =
 	| AnnMode of mode
 	| AnnType of typ
-		
+
   let get_pos (i : int) = Parsing.rhs_start_pos i
 
   let rec get_mode (anns : ann list) : mode = match anns with
@@ -163,7 +163,7 @@ open Parsing;;
 	  end
 	| [] -> ModeOut (* default to ModeOut if there is no annotation. *)
 
-  let rec get_modes (anns : ann list list) : mode list = 
+  let rec get_modes (anns : ann list list) : mode list =
 	match anns with
 	  | alist :: rest ->
 		  let m_rest = get_modes rest in
@@ -171,7 +171,7 @@ open Parsing;;
 			m :: m_rest
 	| [] -> []
 
-	
+
   let expand_exp_list mk l r pos =
 	let b, oe = l in
 	  match oe with
@@ -1015,14 +1015,14 @@ let yyact = [|
 # 233 "sparser.mly"
    ([])
 # 1018 "sparser.ml"
-               : command list))
+               : Sleekcommons.command list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'command_list) in
     Obj.repr(
 # 234 "sparser.mly"
                 (List.rev _1)
 # 1025 "sparser.ml"
-               : command list))
+               : Sleekcommons.command list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'non_empty_command) in
     Obj.repr(
@@ -1044,15 +1044,15 @@ let yyact = [|
 # 243 "sparser.mly"
                     (_1)
 # 1047 "sparser.ml"
-               : command))
+               : Sleekcommons.command))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 244 "sparser.mly"
     ( EmptyCmd )
 # 1053 "sparser.ml"
-               : command))
+               : Sleekcommons.command))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : data_decl) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iast.data_decl) in
     Obj.repr(
 # 247 "sparser.mly"
               (
@@ -1061,7 +1061,7 @@ let yyact = [|
 # 1062 "sparser.ml"
                : 'non_empty_command))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : view_decl) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iast.view_decl) in
     Obj.repr(
 # 250 "sparser.mly"
               (
@@ -1070,7 +1070,7 @@ let yyact = [|
 # 1071 "sparser.ml"
                : 'non_empty_command))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : coercion_decl) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iast.coercion_decl) in
     Obj.repr(
 # 253 "sparser.mly"
                   (
@@ -1125,7 +1125,7 @@ let yyact = [|
 	prog_coercion_decls = []; }
 )
 # 1128 "sparser.ml"
-               : prog_decl))
+               : Iast.prog_decl))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 319 "sparser.mly"
@@ -1162,14 +1162,14 @@ let yyact = [|
 # 1163 "sparser.ml"
                : 'decl))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : coercion_decl) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iast.coercion_decl) in
     Obj.repr(
 # 331 "sparser.mly"
                   ( Coercion _1 )
 # 1170 "sparser.ml"
                : 'decl))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : data_decl) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iast.data_decl) in
     Obj.repr(
 # 335 "sparser.mly"
               ( Data _1 )
@@ -1190,7 +1190,7 @@ let yyact = [|
 # 1191 "sparser.ml"
                : 'type_decl))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : view_decl) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iast.view_decl) in
     Obj.repr(
 # 338 "sparser.mly"
               ( View _1 )
@@ -1207,8 +1207,8 @@ let yyact = [|
 	let cdef = { data_name = _2;
 				 data_parent_name = _3;
 				 data_fields = t1;
-				 data_invs = t2; (*List.fold_left 
-							   (fun f1 -> fun f2 -> F.mkAnd f1 f2 (F.pos_of_formula f2)) (F.mkTrue (get_pos 1)) *) 
+				 data_invs = t2; (*List.fold_left
+							   (fun f1 -> fun f2 -> F.mkAnd f1 f2 (F.pos_of_formula f2)) (F.mkTrue (get_pos 1)) *)
 				 data_methods = t3 } in
 	let _ = List.map (fun d -> set_proc_data_decl d cdef) t3 in
 	  cdef
@@ -1265,7 +1265,7 @@ let yyact = [|
 # 1266 "sparser.ml"
                : 'member))
 ; (fun __caml_parser_env ->
-    let _2 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _2 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 372 "sparser.mly"
                          ( Inv _2 )
@@ -1298,7 +1298,7 @@ let yyact = [|
 		data_methods = [] }
 	)
 # 1301 "sparser.ml"
-               : data_decl))
+               : Iast.data_decl))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
@@ -1353,11 +1353,11 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 407 "sparser.mly"
-                                        ( 
+                                        (
 			if List.mem _4 (List.map (fun f -> snd (fst f)) _1) then
 				report_error (get_pos 4) (_4 ^ " is duplicated")
 			else
-				((_3, _4), get_pos 3) :: _1 
+				((_3, _4), get_pos 3) :: _1
 		)
 # 1363 "sparser.ml"
                : 'field_list))
@@ -1426,7 +1426,7 @@ let yyact = [|
 	{ _1 with view_formula = _3; view_invariant = _4 }
   )
 # 1429 "sparser.ml"
-               : view_decl))
+               : Iast.view_decl))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'view_header) in
     Obj.repr(
@@ -1435,7 +1435,7 @@ let yyact = [|
 	  report_error (get_pos 2) ("use == to define a view")
 	)
 # 1438 "sparser.ml"
-               : view_decl))
+               : Iast.view_decl))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 452 "sparser.mly"
@@ -1456,10 +1456,10 @@ let yyact = [|
 # 457 "sparser.mly"
                                            (
 	let cids, anns = List.split _4 in
-	  if List.exists 
-		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	  if List.exists
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids
 	  then
-		report_error (get_pos 1) 
+		report_error (get_pos 1)
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in
@@ -1509,7 +1509,7 @@ let yyact = [|
 # 1510 "sparser.ml"
                : 'cid))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : F.formula) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iformula.formula) in
     Obj.repr(
 # 485 "sparser.mly"
            ( _1 )
@@ -1569,11 +1569,11 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'heap_arg2) in
     Obj.repr(
 # 517 "sparser.mly"
-                                  ( 
+                                  (
 			if List.mem (fst _3) (List.map fst _1) then
 				report_error (get_pos 3) ((fst _3) ^ " is duplicated")
-			else 
-				_3 :: _1 
+			else
+				_3 :: _1
 		)
 # 1579 "sparser.ml"
                : 'heap_arg_list2))
@@ -1588,8 +1588,8 @@ let yyact = [|
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 530 "sparser.mly"
-    ( 
-	[] : (ident * primed) list 
+    (
+	[] : (ident * primed) list
   )
 # 1595 "sparser.ml"
                : 'opt_cid_list))
@@ -1598,7 +1598,7 @@ let yyact = [|
     Obj.repr(
 # 533 "sparser.mly"
              (
-	  List.rev _1 : (ident * primed) list 
+	  List.rev _1 : (ident * primed) list
 	)
 # 1604 "sparser.ml"
                : 'opt_cid_list))
@@ -1606,8 +1606,8 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'cid) in
     Obj.repr(
 # 539 "sparser.mly"
-        ( 
-	([_1]) : (ident * primed) list 
+        (
+	([_1]) : (ident * primed) list
   )
 # 1613 "sparser.ml"
                : 'cid_list))
@@ -1671,8 +1671,8 @@ let yyact = [|
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 574 "sparser.mly"
-    ( 
-	[] 
+    (
+	[]
   )
 # 1678 "sparser.ml"
                : 'opt_ann_list))
@@ -1680,8 +1680,8 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'ann_list) in
     Obj.repr(
 # 577 "sparser.mly"
-             ( 
-	  List.rev _1 
+             (
+	  List.rev _1
 	)
 # 1687 "sparser.ml"
                : 'opt_ann_list))
@@ -1728,7 +1728,7 @@ let yyact = [|
 # 602 "sparser.mly"
                        ( _1 )
 # 1731 "sparser.ml"
-               : F.formula))
+               : Iformula.formula))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'case_constr) in
     Obj.repr(
@@ -1894,8 +1894,8 @@ let yyact = [|
     let _2 = (Parsing.peek_val __caml_parser_env 1 : 'disjunctive_pure_constr) in
     Obj.repr(
 # 708 "sparser.mly"
-                                          ( 
-	  _2 
+                                          (
+	  _2
 	)
 # 1901 "sparser.ml"
                : 'simple_pure_constr))
@@ -2053,7 +2053,7 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'cexp_list) in
     Obj.repr(
 # 768 "sparser.mly"
-                           ( 
+                           (
 	  let p = P.build_relation P.mkGt _1 _3 (get_pos 2) in
 		(p, Some _3)
 	)
@@ -2064,7 +2064,7 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'cexp_list) in
     Obj.repr(
 # 772 "sparser.mly"
-                            ( 
+                            (
 	  let p = P.build_relation P.mkGte _1 _3 (get_pos 2) in
 		(p, Some _3)
 	)
@@ -2075,7 +2075,7 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'cexp_list) in
     Obj.repr(
 # 776 "sparser.mly"
-                           ( 
+                           (
 	  let p = P.build_relation P.mkEq _1 _3 (get_pos 2) in
 		(p, Some _3)
 	)
@@ -2281,7 +2281,7 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'cexp_list_rec) in
     Obj.repr(
 # 854 "sparser.mly"
-                  ( 
+                  (
 	List.rev _1
   )
 # 2288 "sparser.ml"
@@ -2300,7 +2300,7 @@ let yyact = [|
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'cexp) in
     Obj.repr(
 # 863 "sparser.mly"
-                             ( 
+                             (
 	  _3 :: _1
 	)
 # 2307 "sparser.ml"
@@ -2484,7 +2484,7 @@ let yyact = [|
 # 2485 "sparser.ml"
                : 'meta_constr))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 0 : F.formula) in
+    let _1 = (Parsing.peek_val __caml_parser_env 0 : Iformula.formula) in
     Obj.repr(
 # 972 "sparser.mly"
            (
@@ -2503,12 +2503,12 @@ let yyact = [|
                : 'meta_constr))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 4 : 'opt_name) in
-    let _3 = (Parsing.peek_val __caml_parser_env 3 : F.formula) in
+    let _3 = (Parsing.peek_val __caml_parser_env 3 : Iformula.formula) in
     let _4 = (Parsing.peek_val __caml_parser_env 2 : 'coercion_direction) in
-    let _5 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _5 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 981 "sparser.mly"
-                                                       (  
+                                                       (
 	{ coercion_type = _4;
 	  coercion_name = _2;
 	  coercion_head = _3;
@@ -2518,7 +2518,7 @@ let yyact = [|
 	}
   )
 # 2521 "sparser.ml"
-               : coercion_decl))
+               : Iast.coercion_decl))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 1002 "sparser.mly"
@@ -2580,8 +2580,8 @@ let yyact = [|
                : 'pre_post_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 5 : 'spec_qualifier_opt) in
-    let _3 = (Parsing.peek_val __caml_parser_env 3 : F.formula) in
-    let _5 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _3 = (Parsing.peek_val __caml_parser_env 3 : Iformula.formula) in
+    let _5 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 1043 "sparser.mly"
                                                                 ( (_1, _3, _5) )
@@ -2589,7 +2589,7 @@ let yyact = [|
                : 'pre_post_pair))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 3 : 'spec_qualifier_opt) in
-    let _3 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _3 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 1044 "sparser.mly"
                                                 ( (_1, F.mkTrue (get_pos 1), _3) )
@@ -2597,7 +2597,7 @@ let yyact = [|
                : 'pre_post_pair))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 3 : 'spec_qualifier_opt) in
-    let _3 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _3 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 1045 "sparser.mly"
                                                  ( (_1, _3, F.mkTrue (get_pos 1)) )
@@ -3031,13 +3031,13 @@ let yyact = [|
     let _2 = (Parsing.peek_val __caml_parser_env 1 : 'cid) in
     Obj.repr(
 # 1230 "sparser.mly"
-                         ( 
+                         (
 	Unfold { exp_unfold_var = _2;
 			 exp_unfold_pos = get_pos 1 } )
 # 3038 "sparser.ml"
                : 'unfold_statement))
 ; (fun __caml_parser_env ->
-    let _2 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _2 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 1247 "sparser.mly"
                             (
@@ -3048,7 +3048,7 @@ let yyact = [|
 # 3049 "sparser.ml"
                : 'assert_statement))
 ; (fun __caml_parser_env ->
-    let _2 = (Parsing.peek_val __caml_parser_env 2 : F.formula) in
+    let _2 = (Parsing.peek_val __caml_parser_env 2 : Iformula.formula) in
     Obj.repr(
 # 1252 "sparser.mly"
                                    (
@@ -3059,7 +3059,7 @@ let yyact = [|
 # 3060 "sparser.ml"
                : 'assert_statement))
 ; (fun __caml_parser_env ->
-    let _2 = (Parsing.peek_val __caml_parser_env 1 : F.formula) in
+    let _2 = (Parsing.peek_val __caml_parser_env 1 : Iformula.formula) in
     Obj.repr(
 # 1257 "sparser.mly"
                             (
@@ -3114,7 +3114,7 @@ let yyact = [|
     let _8 = (Parsing.peek_val __caml_parser_env 0 : 'block) in
     Obj.repr(
 # 1287 "sparser.mly"
-                                                          ( 
+                                                          (
 	Bind { exp_bind_bound_var = _2;
 		   exp_bind_fields = _5;
 		   exp_bind_body = _8;
@@ -3774,12 +3774,12 @@ let yyact = [|
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'unary_expression) in
     Obj.repr(
 # 1587 "sparser.mly"
-                          ( 
+                          (
 		let zero = IntLit { exp_int_lit_val = 0;
 							exp_int_lit_pos = get_pos 1 }
 		in
 		  mkBinary OpPlus zero _2 (get_pos 1)
-	  
+
 	  )
 # 3785 "sparser.ml"
                : 'unary_expression))
@@ -3858,7 +3858,7 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : 'unary_expression_not_plusminus) in
     Obj.repr(
 # 1619 "sparser.mly"
-                                                            ( 
+                                                            (
 	  match _2 with
 		| Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
 						  exp_cast_body = _4;
@@ -3871,7 +3871,7 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : 'unary_expression) in
     Obj.repr(
 # 1626 "sparser.mly"
-                                       ( 
+                                       (
 		Cast { exp_cast_target_type = Prim Int;
 			   exp_cast_body = _4;
 			   exp_cast_pos = get_pos 1 }
@@ -3882,7 +3882,7 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : 'unary_expression) in
     Obj.repr(
 # 1631 "sparser.mly"
-                                        ( 
+                                        (
 		Cast { exp_cast_target_type = Prim Bool;
 			   exp_cast_body = _4;
 			   exp_cast_pos = get_pos 1 }
@@ -3893,7 +3893,7 @@ let yyact = [|
     let _4 = (Parsing.peek_val __caml_parser_env 0 : 'unary_expression) in
     Obj.repr(
 # 1636 "sparser.mly"
-                                         ( 
+                                         (
 		Cast { exp_cast_target_type = Prim Float;
 			   exp_cast_body = _4;
 			   exp_cast_pos = get_pos 1 }
@@ -4105,17 +4105,17 @@ let yytables =
     Parsing.names_const=yynames_const;
     Parsing.names_block=yynames_block }
 let program (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 1 lexfun lexbuf : prog_decl)
+   (Parsing.yyparse yytables 1 lexfun lexbuf : Iast.prog_decl)
 let data_decl (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 2 lexfun lexbuf : data_decl)
+   (Parsing.yyparse yytables 2 lexfun lexbuf : Iast.data_decl)
 let view_decl (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 3 lexfun lexbuf : view_decl)
+   (Parsing.yyparse yytables 3 lexfun lexbuf : Iast.view_decl)
 let coercion_decl (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 4 lexfun lexbuf : coercion_decl)
+   (Parsing.yyparse yytables 4 lexfun lexbuf : Iast.coercion_decl)
 let constr (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 5 lexfun lexbuf : F.formula)
+   (Parsing.yyparse yytables 5 lexfun lexbuf : Iformula.formula)
 let command (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 6 lexfun lexbuf : command)
+   (Parsing.yyparse yytables 6 lexfun lexbuf : Sleekcommons.command)
 let opt_command_list (lexfun : Lexing.lexbuf -> token) (lexbuf : Lexing.lexbuf) =
-   (Parsing.yyparse yytables 7 lexfun lexbuf : command list)
+   (Parsing.yyparse yytables 7 lexfun lexbuf : Sleekcommons.command list)
 ;;
