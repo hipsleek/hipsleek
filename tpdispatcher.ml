@@ -19,7 +19,37 @@ type tp_type =
 
 let tp = ref OmegaCalc
 
+let prover_arg = ref "omega"
+type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
+let external_prover = ref false
+
+module Netprover = struct
+	let use_pipe = ref false
+	let in_ch = ref stdin
+	let out_ch = ref stdout
+	
+	let set_use_pipe pipe_name =
+		external_prover := true;
+		use_pipe := true;
+		let i, o = Net.Pipe.init_client pipe_name in
+		in_ch := i; out_ch := o
+	
+	let set_use_socket host_port =
+		external_prover := true ;
+		use_pipe := false;
+		let i, o = Net.Socket.init_client host_port in
+		in_ch := i; out_ch := o
+	
+	let call_prover (data : prove_type) =
+		let _ = Net.write !out_ch ([!prover_arg], data) in
+		match Net.read !in_ch with
+		| Some result_str ->
+				Net.from_string result_str
+		| None -> failwith "Call prover error!!"
+end
+
 let set_tp tp_str =
+  prover_arg := tp_str;
   if tp_str = "omega" then
 	tp := OmegaCalc
   else if tp_str = "cvcl" then
@@ -220,7 +250,11 @@ let tp_is_sat (f : CP.formula) =
 			end
 	  | SetMONA -> Setmona.is_sat f
 
-let simplify (f : CP.formula) : CP.formula = match !tp with
+let simplify (f : CP.formula) : CP.formula =
+	if !external_prover then 
+		Netprover.call_prover (Simplify f)
+	else	 
+	match !tp with
   | Isabelle -> Isabelle.simplify f
   | Coq -> Coq.simplify f
   | Mona -> Mona.simplify f
@@ -455,13 +489,19 @@ let simpl_pair rid (ante, conseq) =
 ;;
 
 let is_sat (f : CP.formula) : bool =
+	if !external_prover then 
+	    Netprover.call_prover (Simplify f)
+	else     
   let f = elim_exists f in
   let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
   tp_is_sat f
 ;;
 
 let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
-  let conseq =
+  if !external_prover then 
+    Netprover.call_prover (Imply (ante0,conseq0))
+  else begin 
+	let conseq =
 	if CP.should_simplify conseq0 then simplify conseq0
 	else conseq0
   in
@@ -486,6 +526,7 @@ let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
           if res then tp_imply ante conseq else false
         in
         List.fold_left fold_fun true pairs
+  end
 ;;
 
 let sat_timer = ref 0.;;
@@ -499,6 +540,10 @@ let imply ante0 conseq0 =
 ;;
 
 let is_sat f =
+  if !external_prover then 
+    Netprover.call_prover (Sat f)
+  else     
+	
   let timer = Unix.gettimeofday () in
   let res = is_sat f in
   sat_timer := !sat_timer +. (Unix.gettimeofday ()) -. timer;

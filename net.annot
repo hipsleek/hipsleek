@@ -1,0 +1,2019 @@
+"net.ml" 1 0 4 "net.ml" 1 0 9
+type(
+  bool
+)
+"net.ml" 1 0 12 "net.ml" 1 0 17
+type(
+  bool
+)
+"net.ml" 2 19 23 "net.ml" 2 19 28
+type(
+  string -> unit
+)
+"net.ml" 2 19 29 "net.ml" 2 19 30
+type(
+  string
+)
+"net.ml" 2 19 36 "net.ml" 2 19 41
+type(
+  bool
+)
+"net.ml" 2 19 48 "net.ml" 2 19 61
+type(
+  string -> unit
+)
+"net.ml" 2 19 63 "net.ml" 2 19 73
+type(
+  string
+)
+"net.ml" 2 19 73 "net.ml" 2 19 74
+type(
+  string -> string -> string
+)
+"net.ml" 2 19 74 "net.ml" 2 19 75
+type(
+  string
+)
+"net.ml" 2 19 62 "net.ml" 2 19 76
+type(
+  string
+)
+"net.ml" 2 19 48 "net.ml" 2 19 76
+type(
+  unit
+)
+"net.ml" 2 19 78 "net.ml" 2 19 83
+type(
+  out_channel -> unit
+)
+"net.ml" 2 19 84 "net.ml" 2 19 90
+type(
+  out_channel
+)
+"net.ml" 2 19 78 "net.ml" 2 19 90
+type(
+  unit
+)
+"net.ml" 2 19 47 "net.ml" 2 19 91
+type(
+  unit
+)
+"net.ml" 2 19 97 "net.ml" 2 19 99
+type(
+  unit
+)
+"net.ml" 2 19 33 "net.ml" 2 19 99
+type(
+  unit
+)
+"net.ml" 4 103 107 "net.ml" 4 103 116
+type(
+  'a -> string
+)
+"net.ml" 4 103 117 "net.ml" 4 103 121
+type(
+  'a
+)
+"net.ml" 4 103 124 "net.ml" 4 103 141
+type(
+  'a -> Marshal.extern_flags list -> string
+)
+"net.ml" 4 103 142 "net.ml" 4 103 146
+type(
+  'a
+)
+"net.ml" 4 103 147 "net.ml" 4 103 149
+type(
+  Marshal.extern_flags list
+)
+"net.ml" 4 103 124 "net.ml" 4 103 149
+type(
+  string
+)
+"net.ml" 6 153 157 "net.ml" 6 153 168
+type(
+  string -> 'a
+)
+"net.ml" 6 153 169 "net.ml" 6 153 170
+type(
+  string
+)
+"net.ml" 8 181 183 "net.ml" 8 181 202
+type(
+  string -> int -> 'a
+)
+"net.ml" 8 181 203 "net.ml" 8 181 204
+type(
+  string
+)
+"net.ml" 8 181 205 "net.ml" 8 181 206
+type(
+  int
+)
+"net.ml" 8 181 183 "net.ml" 8 181 206
+type(
+  'a
+)
+"net.ml" 9 208 214 "net.ml" 9 208 215
+type(
+  exn
+)
+"net.ml" 9 208 219 "net.ml" 9 208 224
+type(
+  string -> unit
+)
+"net.ml" 9 208 225 "net.ml" 9 208 244
+type(
+  string
+)
+"net.ml" 9 208 219 "net.ml" 9 208 244
+type(
+  unit
+)
+"net.ml" 9 208 246 "net.ml" 9 208 251
+type(
+  exn -> 'a
+)
+"net.ml" 9 208 252 "net.ml" 9 208 253
+type(
+  exn
+)
+"net.ml" 9 208 246 "net.ml" 9 208 253
+type(
+  'a
+)
+"net.ml" 9 208 219 "net.ml" 9 208 253
+type(
+  'a
+)
+"net.ml" 7 175 176 "net.ml" 9 208 253
+type(
+  'a
+)
+"net.ml" 11 257 261 "net.ml" 11 257 270
+type(
+  in_channel -> string -> int -> unit
+)
+"net.ml" 11 257 271 "net.ml" 11 257 273
+type(
+  in_channel
+)
+"net.ml" 11 257 274 "net.ml" 11 257 277
+type(
+  string
+)
+"net.ml" 11 257 278 "net.ml" 11 257 281
+type(
+  int
+)
+"net.ml" 13 292 294 "net.ml" 13 292 306
+type(
+  in_channel -> string -> int -> int -> unit
+)
+"net.ml" 13 292 307 "net.ml" 13 292 309
+type(
+  in_channel
+)
+"net.ml" 13 292 310 "net.ml" 13 292 313
+type(
+  string
+)
+"net.ml" 13 292 314 "net.ml" 13 292 315
+type(
+  int
+)
+"net.ml" 13 292 316 "net.ml" 13 292 319
+type(
+  int
+)
+"net.ml" 13 292 294 "net.ml" 13 292 319
+type(
+  unit
+)
+"net.ml" 14 321 327 "net.ml" 14 321 338
+type(
+  exn
+)
+"net.ml" 14 321 342 "net.ml" 14 321 347
+type(
+  string -> unit
+)
+"net.ml" 14 321 348 "net.ml" 14 321 362
+type(
+  string
+)
+"net.ml" 14 321 342 "net.ml" 14 321 362
+type(
+  unit
+)
+"net.ml" 15 364 367 "net.ml" 15 364 368
+type(
+  exn
+)
+"net.ml" 15 364 372 "net.ml" 15 364 377
+type(
+  string -> unit
+)
+"net.ml" 15 364 378 "net.ml" 15 364 397
+type(
+  string
+)
+"net.ml" 15 364 372 "net.ml" 15 364 397
+type(
+  unit
+)
+"net.ml" 16 400 403 "net.ml" 16 400 408
+type(
+  string -> unit
+)
+"net.ml" 16 400 410 "net.ml" 16 400 423
+type(
+  int -> string
+)
+"net.ml" 16 400 424 "net.ml" 16 400 427
+type(
+  int
+)
+"net.ml" 16 400 409 "net.ml" 16 400 428
+type(
+  string
+)
+"net.ml" 16 400 403 "net.ml" 16 400 428
+type(
+  unit
+)
+"net.ml" 16 400 430 "net.ml" 16 400 435
+type(
+  exn -> unit
+)
+"net.ml" 16 400 436 "net.ml" 16 400 437
+type(
+  exn
+)
+"net.ml" 16 400 430 "net.ml" 16 400 437
+type(
+  unit
+)
+"net.ml" 16 400 403 "net.ml" 16 400 437
+type(
+  unit
+)
+"net.ml" 15 364 372 "net.ml" 16 400 437
+type(
+  unit
+)
+"net.ml" 12 285 286 "net.ml" 16 400 437
+type(
+  unit
+)
+"net.ml" 18 441 445 "net.ml" 18 441 449
+type(
+  in_channel -> 'a option
+)
+"net.ml" 18 441 450 "net.ml" 18 441 452
+type(
+  in_channel
+)
+"net.ml" 19 456 461 "net.ml" 19 456 469
+type(
+  int
+)
+"net.ml" 19 456 472 "net.ml" 19 456 488
+type(
+  in_channel -> int
+)
+"net.ml" 19 456 489 "net.ml" 19 456 491
+type(
+  in_channel
+)
+"net.ml" 19 456 472 "net.ml" 19 456 491
+type(
+  int
+)
+"net.ml" 20 496 497 "net.ml" 20 496 502
+type(
+  string -> unit
+)
+"net.ml" 20 496 504 "net.ml" 20 496 520
+type(
+  string
+)
+"net.ml" 20 496 520 "net.ml" 20 496 521
+type(
+  string -> string -> string
+)
+"net.ml" 20 496 522 "net.ml" 20 496 535
+type(
+  int -> string
+)
+"net.ml" 20 496 536 "net.ml" 20 496 544
+type(
+  int
+)
+"net.ml" 20 496 521 "net.ml" 20 496 545
+type(
+  string
+)
+"net.ml" 20 496 503 "net.ml" 20 496 546
+type(
+  string
+)
+"net.ml" 20 496 497 "net.ml" 20 496 546
+type(
+  unit
+)
+"net.ml" 21 549 553 "net.ml" 21 549 561
+type(
+  int
+)
+"net.ml" 21 549 562 "net.ml" 21 549 563
+type(
+  int -> int -> bool
+)
+"net.ml" 21 549 564 "net.ml" 21 549 565
+type(
+  int
+)
+"net.ml" 21 549 553 "net.ml" 21 549 565
+type(
+  bool
+)
+"net.ml" 22 578 584 "net.ml" 22 578 592
+type(
+  string
+)
+"net.ml" 22 578 595 "net.ml" 22 578 608
+type(
+  int -> string
+)
+"net.ml" 22 578 609 "net.ml" 22 578 617
+type(
+  int
+)
+"net.ml" 22 578 595 "net.ml" 22 578 617
+type(
+  string
+)
+"net.ml" 23 622 628 "net.ml" 23 622 629
+type(
+  unit
+)
+"net.ml" 23 622 632 "net.ml" 23 622 641
+type(
+  in_channel -> string -> int -> unit
+)
+"net.ml" 23 622 642 "net.ml" 23 622 644
+type(
+  in_channel
+)
+"net.ml" 23 622 645 "net.ml" 23 622 653
+type(
+  string
+)
+"net.ml" 23 622 654 "net.ml" 23 622 662
+type(
+  int
+)
+"net.ml" 23 622 632 "net.ml" 23 622 662
+type(
+  unit
+)
+"net.ml" 24 667 675 "net.ml" 24 667 686
+type(
+  string -> 'a
+)
+"net.ml" 24 667 687 "net.ml" 24 667 695
+type(
+  string
+)
+"net.ml" 24 667 674 "net.ml" 24 667 696
+type(
+  'a
+)
+"net.ml" 24 667 669 "net.ml" 24 667 696
+type(
+  'a option
+)
+"net.ml" 23 622 624 "net.ml" 24 667 696
+type(
+  'a option
+)
+"net.ml" 21 549 571 "net.ml" 25 698 702
+type(
+  'a option
+)
+"net.ml" 26 715 717 "net.ml" 26 715 722
+type(
+  string -> unit
+)
+"net.ml" 26 715 723 "net.ml" 26 715 740
+type(
+  string
+)
+"net.ml" 26 715 717 "net.ml" 26 715 740
+type(
+  unit
+)
+"net.ml" 27 743 745 "net.ml" 27 743 749
+type(
+  'a option
+)
+"net.ml" 25 698 708 "net.ml" 28 751 755
+type(
+  'a option
+)
+"net.ml" 21 549 550 "net.ml" 28 751 755
+type(
+  'a option
+)
+"net.ml" 20 496 497 "net.ml" 28 751 755
+type(
+  'a option
+)
+"net.ml" 19 456 457 "net.ml" 28 751 755
+type(
+  'a option
+)
+"net.ml" 30 759 763 "net.ml" 30 759 768
+type(
+  out_channel -> 'a -> unit
+)
+"net.ml" 30 759 769 "net.ml" 30 759 771
+type(
+  out_channel
+)
+"net.ml" 30 759 772 "net.ml" 30 759 776
+type(
+  'a
+)
+"net.ml" 31 780 785 "net.ml" 31 780 793
+type(
+  string
+)
+"net.ml" 31 780 796 "net.ml" 31 780 805
+type(
+  'a -> string
+)
+"net.ml" 31 780 806 "net.ml" 31 780 810
+type(
+  'a
+)
+"net.ml" 31 780 796 "net.ml" 31 780 810
+type(
+  string
+)
+"net.ml" 32 815 820 "net.ml" 32 815 828
+type(
+  int
+)
+"net.ml" 32 815 831 "net.ml" 32 815 844
+type(
+  string -> int
+)
+"net.ml" 32 815 845 "net.ml" 32 815 853
+type(
+  string
+)
+"net.ml" 32 815 831 "net.ml" 32 815 853
+type(
+  int
+)
+"net.ml" 33 858 859 "net.ml" 33 858 864
+type(
+  string -> unit
+)
+"net.ml" 33 858 866 "net.ml" 33 858 883
+type(
+  string
+)
+"net.ml" 33 858 883 "net.ml" 33 858 884
+type(
+  string -> string -> string
+)
+"net.ml" 33 858 885 "net.ml" 33 858 898
+type(
+  int -> string
+)
+"net.ml" 33 858 899 "net.ml" 33 858 907
+type(
+  int
+)
+"net.ml" 33 858 884 "net.ml" 33 858 908
+type(
+  string
+)
+"net.ml" 33 858 865 "net.ml" 33 858 909
+type(
+  string
+)
+"net.ml" 33 858 859 "net.ml" 33 858 909
+type(
+  unit
+)
+"net.ml" 34 912 913 "net.ml" 34 912 930
+type(
+  out_channel -> int -> unit
+)
+"net.ml" 34 912 931 "net.ml" 34 912 933
+type(
+  out_channel
+)
+"net.ml" 34 912 934 "net.ml" 34 912 942
+type(
+  int
+)
+"net.ml" 34 912 913 "net.ml" 34 912 942
+type(
+  unit
+)
+"net.ml" 35 945 946 "net.ml" 35 945 952
+type(
+  out_channel -> string -> int -> int -> unit
+)
+"net.ml" 35 945 953 "net.ml" 35 945 955
+type(
+  out_channel
+)
+"net.ml" 35 945 956 "net.ml" 35 945 964
+type(
+  string
+)
+"net.ml" 35 945 965 "net.ml" 35 945 966
+type(
+  int
+)
+"net.ml" 35 945 967 "net.ml" 35 945 975
+type(
+  int
+)
+"net.ml" 35 945 946 "net.ml" 35 945 975
+type(
+  unit
+)
+"net.ml" 36 978 979 "net.ml" 36 978 984
+type(
+  out_channel -> unit
+)
+"net.ml" 36 978 985 "net.ml" 36 978 987
+type(
+  out_channel
+)
+"net.ml" 36 978 979 "net.ml" 36 978 987
+type(
+  unit
+)
+"net.ml" 36 978 989 "net.ml" 36 978 994
+type(
+  out_channel -> unit
+)
+"net.ml" 36 978 995 "net.ml" 36 978 997
+type(
+  out_channel
+)
+"net.ml" 36 978 989 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 36 978 979 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 35 945 946 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 34 912 913 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 33 858 859 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 32 815 816 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 31 780 781 "net.ml" 36 978 997
+type(
+  unit
+)
+"net.ml" 39 1023 1028 "net.ml" 39 1023 1041
+type(
+  string ref
+)
+"net.ml" 39 1023 1044 "net.ml" 39 1023 1047
+type(
+  string -> string ref
+)
+"net.ml" 39 1023 1048 "net.ml" 39 1023 1050
+type(
+  string
+)
+"net.ml" 39 1023 1044 "net.ml" 39 1023 1050
+type(
+  string ref
+)
+"net.ml" 40 1052 1057 "net.ml" 40 1052 1071
+type(
+  string ref
+)
+"net.ml" 40 1052 1074 "net.ml" 40 1052 1077
+type(
+  string -> string ref
+)
+"net.ml" 40 1052 1078 "net.ml" 40 1052 1080
+type(
+  string
+)
+"net.ml" 40 1052 1074 "net.ml" 40 1052 1080
+type(
+  string ref
+)
+"net.ml" 41 1082 1087 "net.ml" 41 1082 1094
+type(
+  string -> in_channel
+)
+"net.ml" 41 1082 1097 "net.ml" 41 1082 1108
+type(
+  open_flag list -> int -> string -> in_channel
+)
+"net.ml" 41 1082 1110 "net.ml" 41 1082 1121
+type(
+  open_flag
+)
+"net.ml" 41 1082 1123 "net.ml" 41 1082 1134
+type(
+  open_flag
+)
+"net.ml" 41 1082 1109 "net.ml" 41 1082 1135
+type(
+  open_flag list
+)
+"net.ml" 41 1082 1136 "net.ml" 41 1082 1141
+type(
+  int
+)
+"net.ml" 41 1082 1097 "net.ml" 41 1082 1141
+type(
+  string -> in_channel
+)
+"net.ml" 42 1143 1148 "net.ml" 42 1143 1156
+type(
+  string -> out_channel
+)
+"net.ml" 42 1143 1159 "net.ml" 42 1143 1171
+type(
+  open_flag list -> int -> string -> out_channel
+)
+"net.ml" 42 1143 1173 "net.ml" 42 1143 1184
+type(
+  open_flag
+)
+"net.ml" 42 1143 1186 "net.ml" 42 1143 1197
+type(
+  open_flag
+)
+"net.ml" 42 1143 1199 "net.ml" 42 1143 1209
+type(
+  open_flag
+)
+"net.ml" 42 1143 1172 "net.ml" 42 1143 1210
+type(
+  open_flag list
+)
+"net.ml" 42 1143 1211 "net.ml" 42 1143 1216
+type(
+  int
+)
+"net.ml" 42 1143 1159 "net.ml" 42 1143 1216
+type(
+  string -> out_channel
+)
+"net.ml" 44 1221 1226 "net.ml" 44 1221 1234
+type(
+  string -> unit
+)
+"net.ml" 44 1221 1235 "net.ml" 44 1221 1245
+type(
+  string
+)
+"net.ml" 45 1249 1255 "net.ml" 45 1249 1261
+type(
+  string -> unit
+)
+"net.ml" 45 1249 1262 "net.ml" 45 1249 1263
+type(
+  string
+)
+"net.ml" 45 1249 1269 "net.ml" 45 1249 1284
+type(
+  string -> bool
+)
+"net.ml" 45 1249 1285 "net.ml" 45 1249 1286
+type(
+  string
+)
+"net.ml" 45 1249 1269 "net.ml" 45 1249 1286
+type(
+  bool
+)
+"net.ml" 45 1249 1287 "net.ml" 45 1249 1288
+type(
+  bool -> bool -> bool
+)
+"net.ml" 45 1249 1289 "net.ml" 45 1249 1294
+type(
+  bool
+)
+"net.ml" 45 1249 1269 "net.ml" 45 1249 1294
+type(
+  bool
+)
+"net.ml" 45 1249 1301 "net.ml" 45 1249 1306
+type(
+  string -> unit
+)
+"net.ml" 45 1249 1308 "net.ml" 45 1249 1320
+type(
+  string
+)
+"net.ml" 45 1249 1320 "net.ml" 45 1249 1321
+type(
+  string -> string -> string
+)
+"net.ml" 45 1249 1321 "net.ml" 45 1249 1322
+type(
+  string
+)
+"net.ml" 45 1249 1307 "net.ml" 45 1249 1323
+type(
+  string
+)
+"net.ml" 45 1249 1301 "net.ml" 45 1249 1323
+type(
+  unit
+)
+"net.ml" 45 1249 1325 "net.ml" 45 1249 1336
+type(
+  string -> Unix.file_perm -> unit
+)
+"net.ml" 45 1249 1337 "net.ml" 45 1249 1338
+type(
+  string
+)
+"net.ml" 45 1249 1339 "net.ml" 45 1249 1344
+type(
+  Unix.file_perm
+)
+"net.ml" 45 1249 1325 "net.ml" 45 1249 1344
+type(
+  unit
+)
+"net.ml" 45 1249 1300 "net.ml" 45 1249 1345
+type(
+  unit
+)
+"net.ml" 45 1249 1266 "net.ml" 45 1249 1345
+type(
+  unit
+)
+"net.ml" 46 1350 1352 "net.ml" 46 1350 1365
+type(
+  string ref
+)
+"net.ml" 46 1350 1366 "net.ml" 46 1350 1368
+type(
+  string ref -> string -> unit
+)
+"net.ml" 46 1350 1369 "net.ml" 46 1350 1379
+type(
+  string
+)
+"net.ml" 46 1350 1379 "net.ml" 46 1350 1380
+type(
+  string -> string -> string
+)
+"net.ml" 46 1350 1380 "net.ml" 46 1350 1389
+type(
+  string
+)
+"net.ml" 46 1350 1369 "net.ml" 46 1350 1389
+type(
+  string
+)
+"net.ml" 46 1350 1352 "net.ml" 46 1350 1389
+type(
+  unit
+)
+"net.ml" 47 1392 1394 "net.ml" 47 1392 1408
+type(
+  string ref
+)
+"net.ml" 47 1392 1409 "net.ml" 47 1392 1411
+type(
+  string ref -> string -> unit
+)
+"net.ml" 47 1392 1412 "net.ml" 47 1392 1422
+type(
+  string
+)
+"net.ml" 47 1392 1422 "net.ml" 47 1392 1423
+type(
+  string -> string -> string
+)
+"net.ml" 47 1392 1423 "net.ml" 47 1392 1432
+type(
+  string
+)
+"net.ml" 47 1392 1412 "net.ml" 47 1392 1432
+type(
+  string
+)
+"net.ml" 47 1392 1394 "net.ml" 47 1392 1432
+type(
+  unit
+)
+"net.ml" 48 1435 1437 "net.ml" 48 1435 1443
+type(
+  string -> unit
+)
+"net.ml" 48 1435 1444 "net.ml" 48 1435 1445
+type(
+  string ref -> string
+)
+"net.ml" 48 1435 1445 "net.ml" 48 1435 1458
+type(
+  string ref
+)
+"net.ml" 48 1435 1444 "net.ml" 48 1435 1458
+type(
+  string
+)
+"net.ml" 48 1435 1437 "net.ml" 48 1435 1458
+type(
+  unit
+)
+"net.ml" 49 1461 1463 "net.ml" 49 1461 1469
+type(
+  string -> unit
+)
+"net.ml" 49 1461 1470 "net.ml" 49 1461 1471
+type(
+  string ref -> string
+)
+"net.ml" 49 1461 1471 "net.ml" 49 1461 1485
+type(
+  string ref
+)
+"net.ml" 49 1461 1470 "net.ml" 49 1461 1485
+type(
+  string
+)
+"net.ml" 49 1461 1463 "net.ml" 49 1461 1485
+type(
+  unit
+)
+"net.ml" 50 1488 1491 "net.ml" 50 1488 1493
+type(
+  unit
+)
+"net.ml" 49 1461 1463 "net.ml" 50 1488 1493
+type(
+  unit
+)
+"net.ml" 48 1435 1437 "net.ml" 50 1488 1493
+type(
+  unit
+)
+"net.ml" 47 1392 1394 "net.ml" 50 1488 1493
+type(
+  unit
+)
+"net.ml" 46 1350 1352 "net.ml" 50 1488 1493
+type(
+  unit
+)
+"net.ml" 45 1249 1251 "net.ml" 50 1488 1493
+type(
+  unit
+)
+"net.ml" 52 1501 1506 "net.ml" 52 1501 1517
+type(
+  string -> in_channel * out_channel
+)
+"net.ml" 52 1501 1518 "net.ml" 52 1501 1528
+type(
+  string
+)
+"net.ml" 53 1532 1536 "net.ml" 53 1532 1544
+type(
+  string -> unit
+)
+"net.ml" 53 1532 1545 "net.ml" 53 1532 1555
+type(
+  string
+)
+"net.ml" 53 1532 1536 "net.ml" 53 1532 1555
+type(
+  unit
+)
+"net.ml" 54 1558 1560 "net.ml" 54 1558 1573
+type(
+  string -> unit
+)
+"net.ml" 54 1558 1575 "net.ml" 54 1558 1609
+type(
+  string
+)
+"net.ml" 54 1558 1609 "net.ml" 54 1558 1610
+type(
+  string -> string -> string
+)
+"net.ml" 54 1558 1610 "net.ml" 54 1558 1620
+type(
+  string
+)
+"net.ml" 54 1558 1574 "net.ml" 54 1558 1621
+type(
+  string
+)
+"net.ml" 54 1558 1560 "net.ml" 54 1558 1621
+type(
+  unit
+)
+"net.ml" 56 1633 1640 "net.ml" 56 1633 1646
+type(
+  out_channel
+)
+"net.ml" 56 1633 1649 "net.ml" 56 1633 1657
+type(
+  string -> out_channel
+)
+"net.ml" 56 1633 1658 "net.ml" 56 1633 1659
+type(
+  string ref -> string
+)
+"net.ml" 56 1633 1659 "net.ml" 56 1633 1672
+type(
+  string ref
+)
+"net.ml" 56 1633 1658 "net.ml" 56 1633 1672
+type(
+  string
+)
+"net.ml" 56 1633 1649 "net.ml" 56 1633 1672
+type(
+  out_channel
+)
+"net.ml" 57 1677 1684 "net.ml" 57 1677 1689
+type(
+  in_channel
+)
+"net.ml" 57 1677 1692 "net.ml" 57 1677 1699
+type(
+  string -> in_channel
+)
+"net.ml" 57 1677 1700 "net.ml" 57 1677 1701
+type(
+  string ref -> string
+)
+"net.ml" 57 1677 1701 "net.ml" 57 1677 1715
+type(
+  string ref
+)
+"net.ml" 57 1677 1700 "net.ml" 57 1677 1715
+type(
+  string
+)
+"net.ml" 57 1677 1692 "net.ml" 57 1677 1715
+type(
+  in_channel
+)
+"net.ml" 58 1720 1724 "net.ml" 58 1720 1729
+type(
+  in_channel
+)
+"net.ml" 58 1720 1731 "net.ml" 58 1720 1737
+type(
+  out_channel
+)
+"net.ml" 58 1720 1723 "net.ml" 58 1720 1738
+type(
+  in_channel * out_channel
+)
+"net.ml" 57 1677 1680 "net.ml" 58 1720 1738
+type(
+  in_channel * out_channel
+)
+"net.ml" 56 1633 1636 "net.ml" 58 1720 1738
+type(
+  in_channel * out_channel
+)
+"net.ml" 59 1740 1763 "net.ml" 59 1740 1766
+type(
+  Unix.error
+)
+"net.ml" 59 1740 1768 "net.ml" 59 1740 1772
+type(
+  string
+)
+"net.ml" 59 1740 1774 "net.ml" 59 1740 1778
+type(
+  string
+)
+"net.ml" 59 1740 1747 "net.ml" 59 1740 1779
+type(
+  exn
+)
+"net.ml" 59 1740 1747 "net.ml" 59 1740 1786
+type(
+  exn
+)
+"net.ml" 60 1791 1795 "net.ml" 60 1791 1808
+type(
+  (string -> string -> string -> unit, out_channel, unit) format ->
+  string -> string -> string -> unit
+)
+"net.ml" 60 1791 1809 "net.ml" 60 1791 1835
+type(
+  (string -> string -> string -> unit, out_channel, unit) format
+)
+"net.ml" 60 1791 1837 "net.ml" 60 1791 1855
+type(
+  Unix.error -> string
+)
+"net.ml" 60 1791 1856 "net.ml" 60 1791 1859
+type(
+  Unix.error
+)
+"net.ml" 60 1791 1836 "net.ml" 60 1791 1860
+type(
+  string
+)
+"net.ml" 60 1791 1861 "net.ml" 60 1791 1865
+type(
+  string
+)
+"net.ml" 60 1791 1866 "net.ml" 60 1791 1870
+type(
+  string
+)
+"net.ml" 60 1791 1795 "net.ml" 60 1791 1870
+type(
+  unit
+)
+"net.ml" 61 1873 1877 "net.ml" 61 1873 1882
+type(
+  exn -> in_channel * out_channel
+)
+"net.ml" 61 1873 1883 "net.ml" 61 1873 1886
+type(
+  exn
+)
+"net.ml" 61 1873 1877 "net.ml" 61 1873 1886
+type(
+  in_channel * out_channel
+)
+"net.ml" 60 1791 1795 "net.ml" 61 1873 1886
+type(
+  in_channel * out_channel
+)
+"net.ml" 55 1624 1628 "net.ml" 61 1873 1886
+type(
+  in_channel * out_channel
+)
+"net.ml" 54 1558 1560 "net.ml" 61 1873 1886
+type(
+  in_channel * out_channel
+)
+"net.ml" 53 1532 1536 "net.ml" 61 1873 1886
+type(
+  in_channel * out_channel
+)
+"net.ml" 63 1891 1896 "net.ml" 63 1891 1907
+type(
+  string -> (in_channel -> out_channel -> unit) -> unit
+)
+"net.ml" 63 1891 1908 "net.ml" 63 1891 1918
+type(
+  string
+)
+"net.ml" 63 1891 1919 "net.ml" 63 1891 1928
+type(
+  in_channel -> out_channel -> unit
+)
+"net.ml" 64 1932 1936 "net.ml" 64 1932 1944
+type(
+  string -> unit
+)
+"net.ml" 64 1932 1945 "net.ml" 64 1932 1955
+type(
+  string
+)
+"net.ml" 64 1932 1936 "net.ml" 64 1932 1955
+type(
+  unit
+)
+"net.ml" 65 1958 1960 "net.ml" 65 1958 1973
+type(
+  string -> unit
+)
+"net.ml" 65 1958 1975 "net.ml" 65 1958 2009
+type(
+  string
+)
+"net.ml" 65 1958 2009 "net.ml" 65 1958 2010
+type(
+  string -> string -> string
+)
+"net.ml" 65 1958 2010 "net.ml" 65 1958 2020
+type(
+  string
+)
+"net.ml" 65 1958 1974 "net.ml" 65 1958 2021
+type(
+  string
+)
+"net.ml" 65 1958 1960 "net.ml" 65 1958 2021
+type(
+  unit
+)
+"net.ml" 67 2030 2040 "net.ml" 67 2030 2044
+type(
+  bool
+)
+"net.ml" 69 2060 2067 "net.ml" 69 2060 2072
+type(
+  in_channel
+)
+"net.ml" 69 2060 2075 "net.ml" 69 2060 2082
+type(
+  string -> in_channel
+)
+"net.ml" 69 2060 2083 "net.ml" 69 2060 2084
+type(
+  string ref -> string
+)
+"net.ml" 69 2060 2084 "net.ml" 69 2060 2097
+type(
+  string ref
+)
+"net.ml" 69 2060 2083 "net.ml" 69 2060 2097
+type(
+  string
+)
+"net.ml" 69 2060 2075 "net.ml" 69 2060 2097
+type(
+  in_channel
+)
+"net.ml" 70 2102 2109 "net.ml" 70 2102 2115
+type(
+  out_channel
+)
+"net.ml" 70 2102 2118 "net.ml" 70 2102 2126
+type(
+  string -> out_channel
+)
+"net.ml" 70 2102 2127 "net.ml" 70 2102 2128
+type(
+  string ref -> string
+)
+"net.ml" 70 2102 2128 "net.ml" 70 2102 2142
+type(
+  string ref
+)
+"net.ml" 70 2102 2127 "net.ml" 70 2102 2142
+type(
+  string
+)
+"net.ml" 70 2102 2118 "net.ml" 70 2102 2142
+type(
+  out_channel
+)
+"net.ml" 71 2147 2150 "net.ml" 71 2147 2159
+type(
+  in_channel -> out_channel -> unit
+)
+"net.ml" 71 2147 2160 "net.ml" 71 2147 2165
+type(
+  in_channel
+)
+"net.ml" 71 2147 2166 "net.ml" 71 2147 2172
+type(
+  out_channel
+)
+"net.ml" 71 2147 2150 "net.ml" 71 2147 2172
+type(
+  unit
+)
+"net.ml" 70 2102 2105 "net.ml" 71 2147 2172
+type(
+  unit
+)
+"net.ml" 69 2060 2063 "net.ml" 71 2147 2172
+type(
+  unit
+)
+"net.ml" 72 2174 2185 "net.ml" 72 2174 2196
+type(
+  exn
+)
+"net.ml" 72 2174 2200 "net.ml" 72 2174 2205
+type(
+  string -> unit
+)
+"net.ml" 72 2174 2206 "net.ml" 72 2174 2222
+type(
+  string
+)
+"net.ml" 72 2174 2200 "net.ml" 72 2174 2222
+type(
+  unit
+)
+"net.ml" 68 2049 2055 "net.ml" 72 2174 2222
+type(
+  unit
+)
+"net.ml" 67 2030 2034 "net.ml" 73 2224 2232
+type(
+  unit
+)
+"net.ml" 65 1958 1960 "net.ml" 73 2224 2232
+type(
+  unit
+)
+"net.ml" 64 1932 1936 "net.ml" 73 2224 2232
+type(
+  unit
+)
+"net.ml" 75 2236 2241 "net.ml" 75 2236 2249
+type(
+  in_channel -> unit
+)
+"net.ml" 75 2236 2250 "net.ml" 75 2236 2255
+type(
+  in_channel
+)
+"net.ml" 76 2262 2268 "net.ml" 76 2262 2276
+type(
+  in_channel -> unit
+)
+"net.ml" 76 2262 2277 "net.ml" 76 2262 2282
+type(
+  in_channel
+)
+"net.ml" 76 2262 2268 "net.ml" 76 2262 2283
+type(
+  unit
+)
+"net.ml" 76 2262 2289 "net.ml" 76 2262 2290
+type(
+  exn
+)
+"net.ml" 76 2262 2294 "net.ml" 76 2262 2296
+type(
+  unit
+)
+"net.ml" 76 2262 2264 "net.ml" 76 2262 2296
+type(
+  unit
+)
+"net.ml" 81 2331 2337 "net.ml" 81 2331 2349
+type(
+  int
+)
+"net.ml" 81 2331 2352 "net.ml" 81 2331 2356
+type(
+  int
+)
+"net.ml" 82 2358 2363 "net.ml" 82 2358 2374
+type(
+  string -> Unix.inet_addr
+)
+"net.ml" 82 2358 2375 "net.ml" 82 2358 2379
+type(
+  string
+)
+"net.ml" 82 2358 2383 "net.ml" 82 2358 2401
+type(
+  string -> Unix.host_entry
+)
+"net.ml" 82 2358 2401 "net.ml" 82 2358 2407
+type(
+  string
+)
+"net.ml" 82 2358 2382 "net.ml" 82 2358 2408
+type(
+  Unix.host_entry
+)
+"net.ml" 82 2358 2382 "net.ml" 82 2358 2425
+type(
+  Unix.inet_addr array
+)
+"net.ml" 82 2358 2427 "net.ml" 82 2358 2428
+type(
+  int
+)
+"net.ml" 82 2358 2382 "net.ml" 82 2358 2429
+type(
+  Unix.inet_addr
+)
+"net.ml" 84 2435 2440 "net.ml" 84 2435 2453
+type(
+  string -> string * int
+)
+"net.ml" 84 2435 2454 "net.ml" 84 2435 2455
+type(
+  string
+)
+"net.ml" 85 2459 2467 "net.ml" 85 2459 2468
+type(
+  string list
+)
+"net.ml" 85 2459 2471 "net.ml" 85 2459 2486
+type(
+  Str.regexp -> string -> string list
+)
+"net.ml" 85 2459 2488 "net.ml" 85 2459 2498
+type(
+  string -> Str.regexp
+)
+"net.ml" 85 2459 2499 "net.ml" 85 2459 2502
+type(
+  string
+)
+"net.ml" 85 2459 2487 "net.ml" 85 2459 2503
+type(
+  Str.regexp
+)
+"net.ml" 85 2459 2504 "net.ml" 85 2459 2505
+type(
+  string
+)
+"net.ml" 85 2459 2471 "net.ml" 85 2459 2505
+type(
+  string list
+)
+"net.ml" 86 2510 2520 "net.ml" 86 2510 2521
+type(
+  string list
+)
+"net.ml" 87 2528 2537 "net.ml" 87 2528 2541
+type(
+  string
+)
+"net.ml" 87 2528 2543 "net.ml" 87 2528 2547
+type(
+  string
+)
+"net.ml" 87 2528 2536 "net.ml" 87 2528 2548
+type(
+  string list
+)
+"net.ml" 87 2528 2553 "net.ml" 87 2528 2557
+type(
+  string
+)
+"net.ml" 87 2528 2559 "net.ml" 87 2528 2572
+type(
+  string -> int
+)
+"net.ml" 87 2528 2573 "net.ml" 87 2528 2577
+type(
+  string
+)
+"net.ml" 87 2528 2559 "net.ml" 87 2528 2577
+type(
+  int
+)
+"net.ml" 87 2528 2552 "net.ml" 87 2528 2578
+type(
+  string * int
+)
+"net.ml" 88 2580 2589 "net.ml" 88 2580 2593
+type(
+  string
+)
+"net.ml" 88 2580 2588 "net.ml" 88 2580 2594
+type(
+  string list
+)
+"net.ml" 88 2580 2599 "net.ml" 88 2580 2603
+type(
+  string
+)
+"net.ml" 88 2580 2605 "net.ml" 88 2580 2617
+type(
+  int
+)
+"net.ml" 88 2580 2598 "net.ml" 88 2580 2618
+type(
+  string * int
+)
+"net.ml" 89 2620 2628 "net.ml" 89 2620 2630
+type(
+  string list
+)
+"net.ml" 89 2620 2635 "net.ml" 89 2620 2651
+type(
+  unit -> string
+)
+"net.ml" 89 2620 2652 "net.ml" 89 2620 2654
+type(
+  unit
+)
+"net.ml" 89 2620 2635 "net.ml" 89 2620 2654
+type(
+  string
+)
+"net.ml" 89 2620 2656 "net.ml" 89 2620 2668
+type(
+  int
+)
+"net.ml" 89 2620 2634 "net.ml" 89 2620 2669
+type(
+  string * int
+)
+"net.ml" 90 2672 2680 "net.ml" 90 2672 2681
+type(
+  string list
+)
+"net.ml" 90 2672 2685 "net.ml" 90 2672 2693
+type(
+  string -> string * int
+)
+"net.ml" 90 2672 2694 "net.ml" 90 2672 2721
+type(
+  string
+)
+"net.ml" 90 2672 2685 "net.ml" 90 2672 2721
+type(
+  string * int
+)
+"net.ml" 86 2510 2514 "net.ml" 90 2672 2721
+type(
+  string * int
+)
+"net.ml" 85 2459 2463 "net.ml" 90 2672 2721
+type(
+  string * int
+)
+"net.ml" 92 2726 2731 "net.ml" 92 2726 2742
+type(
+  string -> in_channel * out_channel
+)
+"net.ml" 92 2726 2743 "net.ml" 92 2726 2752
+type(
+  string
+)
+"net.ml" 93 2756 2764 "net.ml" 93 2756 2770
+type(
+  string
+)
+"net.ml" 93 2756 2771 "net.ml" 93 2756 2775
+type(
+  int
+)
+"net.ml" 93 2756 2764 "net.ml" 93 2756 2775
+type(
+  string * int
+)
+"net.ml" 93 2756 2778 "net.ml" 93 2756 2791
+type(
+  string -> string * int
+)
+"net.ml" 93 2756 2792 "net.ml" 93 2756 2801
+type(
+  string
+)
+"net.ml" 93 2756 2778 "net.ml" 93 2756 2801
+type(
+  string * int
+)
+"net.ml" 95 2813 2816 "net.ml" 95 2813 2828
+type(
+  string -> unit
+)
+"net.ml" 95 2813 2830 "net.ml" 95 2813 2851
+type(
+  string
+)
+"net.ml" 95 2813 2852 "net.ml" 95 2813 2853
+type(
+  string -> string -> string
+)
+"net.ml" 95 2813 2854 "net.ml" 95 2813 2860
+type(
+  string
+)
+"net.ml" 95 2813 2861 "net.ml" 95 2813 2862
+type(
+  string -> string -> string
+)
+"net.ml" 95 2813 2863 "net.ml" 95 2813 2866
+type(
+  string
+)
+"net.ml" 95 2813 2867 "net.ml" 95 2813 2868
+type(
+  string -> string -> string
+)
+"net.ml" 95 2813 2870 "net.ml" 95 2813 2883
+type(
+  int -> string
+)
+"net.ml" 95 2813 2884 "net.ml" 95 2813 2888
+type(
+  int
+)
+"net.ml" 95 2813 2869 "net.ml" 95 2813 2889
+type(
+  string
+)
+"net.ml" 95 2813 2863 "net.ml" 95 2813 2889
+type(
+  string
+)
+"net.ml" 95 2813 2854 "net.ml" 95 2813 2889
+type(
+  string
+)
+"net.ml" 95 2813 2829 "net.ml" 95 2813 2890
+type(
+  string
+)
+"net.ml" 95 2813 2816 "net.ml" 95 2813 2890
+type(
+  unit
+)
+"net.ml" 96 2893 2900 "net.ml" 96 2893 2907
+type(
+  Unix.inet_addr
+)
+"net.ml" 96 2893 2910 "net.ml" 96 2893 2921
+type(
+  string -> Unix.inet_addr
+)
+"net.ml" 96 2893 2922 "net.ml" 96 2893 2928
+type(
+  string
+)
+"net.ml" 96 2893 2910 "net.ml" 96 2893 2928
+type(
+  Unix.inet_addr
+)
+"net.ml" 97 2933 2940 "net.ml" 97 2933 2954
+type(
+  Unix.sockaddr
+)
+"net.ml" 97 2933 2973 "net.ml" 97 2933 2980
+type(
+  Unix.inet_addr
+)
+"net.ml" 97 2933 2982 "net.ml" 97 2933 2986
+type(
+  int
+)
+"net.ml" 97 2933 2957 "net.ml" 97 2933 2987
+type(
+  Unix.sockaddr
+)
+"net.ml" 98 2992 2999 "net.ml" 98 2992 3002
+type(
+  in_channel * out_channel
+)
+"net.ml" 98 2992 3005 "net.ml" 98 2992 3025
+type(
+  Unix.sockaddr -> in_channel * out_channel
+)
+"net.ml" 98 2992 3026 "net.ml" 98 2992 3040
+type(
+  Unix.sockaddr
+)
+"net.ml" 98 2992 3005 "net.ml" 98 2992 3040
+type(
+  in_channel * out_channel
+)
+"net.ml" 99 3045 3048 "net.ml" 99 3045 3060
+type(
+  string -> unit
+)
+"net.ml" 99 3045 3061 "net.ml" 99 3045 3073
+type(
+  string
+)
+"net.ml" 99 3045 3048 "net.ml" 99 3045 3073
+type(
+  unit
+)
+"net.ml" 100 3076 3079 "net.ml" 100 3076 3082
+type(
+  in_channel * out_channel
+)
+"net.ml" 99 3045 3048 "net.ml" 100 3076 3082
+type(
+  in_channel * out_channel
+)
+"net.ml" 98 2992 2995 "net.ml" 100 3076 3082
+type(
+  in_channel * out_channel
+)
+"net.ml" 97 2933 2936 "net.ml" 100 3076 3082
+type(
+  in_channel * out_channel
+)
+"net.ml" 96 2893 2896 "net.ml" 100 3076 3082
+type(
+  in_channel * out_channel
+)
+"net.ml" 95 2813 2816 "net.ml" 100 3076 3082
+type(
+  in_channel * out_channel
+)
+"net.ml" 101 3084 3107 "net.ml" 101 3084 3110
+type(
+  Unix.error
+)
+"net.ml" 101 3084 3112 "net.ml" 101 3084 3116
+type(
+  string
+)
+"net.ml" 101 3084 3118 "net.ml" 101 3084 3122
+type(
+  string
+)
+"net.ml" 101 3084 3091 "net.ml" 101 3084 3123
+type(
+  exn
+)
+"net.ml" 101 3084 3091 "net.ml" 101 3084 3130
+type(
+  exn
+)
+"net.ml" 102 3135 3139 "net.ml" 102 3135 3152
+type(
+  (string -> string -> string -> unit, out_channel, unit) format ->
+  string -> string -> string -> unit
+)
+"net.ml" 102 3135 3153 "net.ml" 102 3135 3179
+type(
+  (string -> string -> string -> unit, out_channel, unit) format
+)
+"net.ml" 102 3135 3181 "net.ml" 102 3135 3199
+type(
+  Unix.error -> string
+)
+"net.ml" 102 3135 3200 "net.ml" 102 3135 3203
+type(
+  Unix.error
+)
+"net.ml" 102 3135 3180 "net.ml" 102 3135 3204
+type(
+  string
+)
+"net.ml" 102 3135 3205 "net.ml" 102 3135 3209
+type(
+  string
+)
+"net.ml" 102 3135 3210 "net.ml" 102 3135 3214
+type(
+  string
+)
+"net.ml" 102 3135 3139 "net.ml" 102 3135 3214
+type(
+  unit
+)
+"net.ml" 103 3217 3221 "net.ml" 103 3217 3226
+type(
+  exn -> in_channel * out_channel
+)
+"net.ml" 103 3217 3227 "net.ml" 103 3217 3230
+type(
+  exn
+)
+"net.ml" 103 3217 3221 "net.ml" 103 3217 3230
+type(
+  in_channel * out_channel
+)
+"net.ml" 102 3135 3139 "net.ml" 103 3217 3230
+type(
+  in_channel * out_channel
+)
+"net.ml" 94 2806 2808 "net.ml" 103 3217 3230
+type(
+  in_channel * out_channel
+)
+"net.ml" 93 2756 2760 "net.ml" 103 3217 3230
+type(
+  in_channel * out_channel
+)
+"net.ml" 105 3235 3240 "net.ml" 105 3235 3251
+type(
+  string -> (in_channel -> out_channel -> unit) -> unit
+)
+"net.ml" 105 3235 3252 "net.ml" 105 3235 3260
+type(
+  string
+)
+"net.ml" 105 3235 3261 "net.ml" 105 3235 3269
+type(
+  in_channel -> out_channel -> unit
+)
+"net.ml" 106 3273 3281 "net.ml" 106 3273 3285
+type(
+  int
+)
+"net.ml" 106 3273 3291 "net.ml" 106 3273 3299
+type(
+  string
+)
+"net.ml" 106 3273 3300 "net.ml" 106 3273 3301
+type(
+  string -> string -> bool
+)
+"net.ml" 106 3273 3302 "net.ml" 106 3273 3304
+type(
+  string
+)
+"net.ml" 106 3273 3291 "net.ml" 106 3273 3304
+type(
+  bool
+)
+"net.ml" 106 3273 3310 "net.ml" 106 3273 3322
+type(
+  int
+)
+"net.ml" 106 3273 3328 "net.ml" 106 3273 3341
+type(
+  string -> int
+)
+"net.ml" 106 3273 3342 "net.ml" 106 3273 3350
+type(
+  string
+)
+"net.ml" 106 3273 3328 "net.ml" 106 3273 3350
+type(
+  int
+)
+"net.ml" 106 3273 3288 "net.ml" 106 3273 3350
+type(
+  int
+)
+"net.ml" 108 3364 3371 "net.ml" 108 3364 3380
+type(
+  string
+)
+"net.ml" 108 3364 3383 "net.ml" 108 3364 3399
+type(
+  unit -> string
+)
+"net.ml" 108 3364 3400 "net.ml" 108 3364 3402
+type(
+  unit
+)
+"net.ml" 108 3364 3383 "net.ml" 108 3364 3402
+type(
+  string
+)
+"net.ml" 109 3407 3414 "net.ml" 109 3407 3421
+type(
+  Unix.inet_addr
+)
+"net.ml" 109 3407 3424 "net.ml" 109 3407 3435
+type(
+  string -> Unix.inet_addr
+)
+"net.ml" 109 3407 3436 "net.ml" 109 3407 3445
+type(
+  string
+)
+"net.ml" 109 3407 3424 "net.ml" 109 3407 3445
+type(
+  Unix.inet_addr
+)
+"net.ml" 110 3450 3457 "net.ml" 110 3450 3471
+type(
+  Unix.sockaddr
+)
+"net.ml" 110 3450 3490 "net.ml" 110 3450 3497
+type(
+  Unix.inet_addr
+)
+"net.ml" 110 3450 3499 "net.ml" 110 3450 3503
+type(
+  int
+)
+"net.ml" 110 3450 3474 "net.ml" 110 3450 3504
+type(
+  Unix.sockaddr
+)
+"net.ml" 111 3509 3512 "net.ml" 111 3509 3524
+type(
+  string -> unit
+)
+"net.ml" 111 3509 3526 "net.ml" 111 3509 3547
+type(
+  string
+)
+"net.ml" 111 3509 3548 "net.ml" 111 3509 3549
+type(
+  string -> string -> string
+)
+"net.ml" 111 3509 3550 "net.ml" 111 3509 3559
+type(
+  string
+)
+"net.ml" 111 3509 3560 "net.ml" 111 3509 3561
+type(
+  string -> string -> string
+)
+"net.ml" 111 3509 3562 "net.ml" 111 3509 3565
+type(
+  string
+)
+"net.ml" 111 3509 3566 "net.ml" 111 3509 3567
+type(
+  string -> string -> string
+)
+"net.ml" 111 3509 3569 "net.ml" 111 3509 3582
+type(
+  int -> string
+)
+"net.ml" 111 3509 3583 "net.ml" 111 3509 3587
+type(
+  int
+)
+"net.ml" 111 3509 3568 "net.ml" 111 3509 3588
+type(
+  string
+)
+"net.ml" 111 3509 3562 "net.ml" 111 3509 3588
+type(
+  string
+)
+"net.ml" 111 3509 3550 "net.ml" 111 3509 3588
+type(
+  string
+)
+"net.ml" 111 3509 3525 "net.ml" 111 3509 3589
+type(
+  string
+)
+"net.ml" 111 3509 3512 "net.ml" 111 3509 3589
+type(
+  unit
+)
+"net.ml" 112 3592 3595 "net.ml" 112 3592 3616
+type(
+  (in_channel -> out_channel -> unit) -> Unix.sockaddr -> unit
+)
+"net.ml" 112 3592 3617 "net.ml" 112 3592 3625
+type(
+  in_channel -> out_channel -> unit
+)
+"net.ml" 112 3592 3626 "net.ml" 112 3592 3640
+type(
+  Unix.sockaddr
+)
+"net.ml" 112 3592 3595 "net.ml" 112 3592 3640
+type(
+  unit
+)
+"net.ml" 111 3509 3512 "net.ml" 112 3592 3640
+type(
+  unit
+)
+"net.ml" 110 3450 3453 "net.ml" 112 3592 3640
+type(
+  unit
+)
+"net.ml" 109 3407 3410 "net.ml" 112 3592 3640
+type(
+  unit
+)
+"net.ml" 108 3364 3367 "net.ml" 112 3592 3640
+type(
+  unit
+)
+"net.ml" 113 3642 3665 "net.ml" 113 3642 3668
+type(
+  Unix.error
+)
+"net.ml" 113 3642 3670 "net.ml" 113 3642 3674
+type(
+  string
+)
+"net.ml" 113 3642 3676 "net.ml" 113 3642 3680
+type(
+  string
+)
+"net.ml" 113 3642 3649 "net.ml" 113 3642 3681
+type(
+  exn
+)
+"net.ml" 113 3642 3649 "net.ml" 113 3642 3688
+type(
+  exn
+)
+"net.ml" 114 3693 3697 "net.ml" 114 3693 3710
+type(
+  (string -> string -> string -> unit, out_channel, unit) format ->
+  string -> string -> string -> unit
+)
+"net.ml" 114 3693 3711 "net.ml" 114 3693 3737
+type(
+  (string -> string -> string -> unit, out_channel, unit) format
+)
+"net.ml" 114 3693 3739 "net.ml" 114 3693 3757
+type(
+  Unix.error -> string
+)
+"net.ml" 114 3693 3758 "net.ml" 114 3693 3761
+type(
+  Unix.error
+)
+"net.ml" 114 3693 3738 "net.ml" 114 3693 3762
+type(
+  string
+)
+"net.ml" 114 3693 3763 "net.ml" 114 3693 3767
+type(
+  string
+)
+"net.ml" 114 3693 3768 "net.ml" 114 3693 3772
+type(
+  string
+)
+"net.ml" 114 3693 3697 "net.ml" 114 3693 3772
+type(
+  unit
+)
+"net.ml" 115 3775 3779 "net.ml" 115 3775 3784
+type(
+  exn -> unit
+)
+"net.ml" 115 3775 3785 "net.ml" 115 3775 3788
+type(
+  exn
+)
+"net.ml" 115 3775 3779 "net.ml" 115 3775 3788
+type(
+  unit
+)
+"net.ml" 114 3693 3697 "net.ml" 115 3775 3788
+type(
+  unit
+)
+"net.ml" 107 3356 3358 "net.ml" 115 3775 3788
+type(
+  unit
+)
+"net.ml" 106 3273 3277 "net.ml" 115 3775 3788
+type(
+  unit
+)
+"net.ml" 117 3793 3799 "net.ml" 117 3793 3807
+type(
+  in_channel -> unit
+)
+"net.ml" 117 3793 3808 "net.ml" 117 3793 3813
+type(
+  in_channel
+)
+"net.ml" 119 3825 3828 "net.ml" 119 3825 3852
+type(
+  in_channel -> unit
+)
+"net.ml" 119 3825 3853 "net.ml" 119 3825 3858
+type(
+  in_channel
+)
+"net.ml" 119 3825 3828 "net.ml" 119 3825 3858
+type(
+  unit
+)
+"net.ml" 120 3860 3883 "net.ml" 120 3860 3884
+type(
+  Unix.error
+)
+"net.ml" 120 3860 3886 "net.ml" 120 3860 3896
+type(
+  string
+)
+"net.ml" 120 3860 3898 "net.ml" 120 3860 3900
+type(
+  string
+)
+"net.ml" 120 3860 3867 "net.ml" 120 3860 3901
+type(
+  exn
+)
+"net.ml" 120 3860 3905 "net.ml" 120 3860 3907
+type(
+  unit
+)
+"net.ml" 118 3818 3820 "net.ml" 120 3860 3907
+type(
+  unit
+)

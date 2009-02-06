@@ -539,7 +539,7 @@ let
 # 154 "slexer.mll"
    (
 		if idstr = "_" then
-		  IDENTIFIER ("Anon_" ^ fresh_name ())
+		  IDENTIFIER ("Anon" ^ fresh_trailer ())
 		else if idstr = "java" then begin
 		  pre_java file_name lexbuf (* search for the first opening brace *)
 		end else

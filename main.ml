@@ -115,8 +115,10 @@ let process_cmd_line () = Arg.parse [
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
-  ("-v", Arg.Set Debug.debug_on, 
-   "Verbose")] set_source_file usage_msg
+  ("-v", Arg.Set Debug.debug_on, "Verbose");
+  ("-pipe", Arg.String Tpdispatcher.Netprover.set_use_pipe, "-pipe <name>: use external provers via pipe");
+  ("-socket", Arg.String Tpdispatcher.Netprover.set_use_socket, "-socket <host:port>: use external provers via socket");
+	] set_source_file usage_msg
 
 (******************************************)
 (* main function                          *)
@@ -134,7 +136,7 @@ let parse_file_full file_name =
 		  let ptime2 = Unix.times () in
 		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n");
-			prog
+			prog 
     with
 		End_of_file -> exit 0	  
 

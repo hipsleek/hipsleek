@@ -18,7 +18,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip.opt sleek.opt
+all: hip.opt sleek.opt prove.opt
 
 sparser.cmx sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -49,6 +49,7 @@ oclexer.cmx oclexer.ml: oclexer.mll ocparser.ml
 
 
 MAIN_FILES=util.cmx debug.cmx globals.cmx error.cmx \
+	net.cmx \
 	cpure.cmx ipure.cmx \
 	iformula.cmx iast.cmx \
 	iparser.cmx ilexer.cmx \
@@ -81,6 +82,7 @@ SLEEK_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
 	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx omega.cmx unix_add.cmx mona.cmx setmona.cmx \
+    net.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
@@ -98,6 +100,25 @@ SLEEK_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 sleek.opt: $(SLEEK_FILES)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES)
 
+
+PROVE_FILES=util.cmx debug.cmx globals.cmx error.cmx \
+	cpure.cmx ipure.cmx \
+	iformula.cmx iast.cmx \
+	iparser.cmx ilexer.cmx \
+	iprinter.cmx \
+	cformula.cmx cast.cmx cprinter.cmx \
+	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx unix_add.cmx mona.cmx omega.cmx setmona.cmx \
+    net.cmx \
+	cvclite.cmx tpdispatcher.cmx \
+	prooftracer.cmx solver.cmx \
+	drawing.cmx \
+	env.cmx checks.cmx inliner.cmx astsimp.cmx \
+	typechecker.cmx \
+	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
+	prove.cmx
+
+prove.opt: $(PROVE_FILES)
+	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES)
 # ------------------------------------------------------------
 # Common rules
 # ------------------------------------------------------------
