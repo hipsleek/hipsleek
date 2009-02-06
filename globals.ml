@@ -111,11 +111,18 @@ let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
 
-let fresh_name () = 
+let fresh_var_name (tn:string)(ln:int):string = 
+	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
+
+let fresh_trailer () = 
   let str = string_of_int (fresh_int ()) in
   (*-- 09.05.2008 *)
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
+    "_" ^ str
+		
+let fresh_name () = 
+  let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str
 
 let fresh_names (n : int) = (* number of names to be generated *)

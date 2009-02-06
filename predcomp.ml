@@ -173,7 +173,7 @@ let main_result = Var ({exp_var_name = "main_result";
 *)
 let rec compile_view (prog : C.prog_decl) (vdef : C.view_decl) : data_decl =
   let pos = pos_of_formula vdef.C.view_formula in
-  let fields = ((Named vdef.C.view_data_name, self), pos) :: (gen_fields vdef pos) in
+  let fields = ((Named vdef.C.view_data_name, self), pos) :: (gen_fields vdef pos) intype filter text
   let in_params, out_params = split_params_mode vdef.C.view_vars vdef.C.view_modes in
   let in_names = List.map CP.name_of_spec_var in_params in
   let out_names = List.map CP.name_of_spec_var out_params in
@@ -1629,7 +1629,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 		 call the disjunct procedure, assign the returned 
 		 value to bvar_name 
 	  *)
-	  let bvar_name = fresh_name () in
+	  let bvar_name = fresh_var_name "xxx" pos.Lexing.pos_lnum in
 	  let disj_res = Var ({exp_var_name = bvar_name;
 						   exp_var_pos = pos}) in
 	  let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
@@ -1639,7 +1639,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_pos = pos}) in
 	  let undo_call = VarDecl {exp_var_decl_type = Prim Bool;
-							   exp_var_decl_decls = [(fresh_name (), Some undo_call', pos)];
+							   exp_var_decl_decls = [(fresh_var_name "bool" pos.Lexing.pos_lnum, Some undo_call', pos)];
 							   exp_var_decl_pos = pos } in
 	  let call_disj = VarDecl {exp_var_decl_type = Prim Bool;
 							   exp_var_decl_decls = [(bvar_name, Some call, pos)];

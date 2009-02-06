@@ -515,8 +515,17 @@ and to_unprimed (sv : spec_var) : spec_var = match sv with
 and to_int_var (sv : spec_var) : spec_var = match sv with
   | SpecVar (_, v, p) -> SpecVar (Prim Int, v, p)
 
+
+and fresh_old_name (s: string):string = 
+	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
+	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+	(*let _ = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
+	n
+	
+
 and fresh_spec_var (sv : spec_var) =
-  let name = fresh_name () in
+	let old_name = name_of_spec_var sv in
+  let name = fresh_old_name old_name in
   (*--- 09.05.2000 *)
 	(*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
 	(*09.05.2000 ---*)

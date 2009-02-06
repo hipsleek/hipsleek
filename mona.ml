@@ -53,7 +53,7 @@ and mona_of_exp_break e0 =
   match e0 with
   | CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_name () in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.Lexing.pos_lnum in
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t1, tmp, p1) :: !additional_vars;
 	additional_vars_ := CP.SpecVar(t1, tmp, p1) :: !additional_vars_;
@@ -61,7 +61,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_name () in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.Lexing.pos_lnum in
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t1, tmp, p1) :: !additional_vars;
         additional_vars_ := CP.SpecVar(t1, tmp, p1) :: !additional_vars_;
@@ -70,7 +70,7 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3)
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_name () in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
 	additional_vars := CP.SpecVar(t2, tmp, p2) :: !additional_vars;
         additional_vars_ := CP.SpecVar(t2, tmp, p2) :: !additional_vars_;
@@ -78,7 +78,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_name () in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
         substitution_list := CP.Eq(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t2, tmp, p2) :: !additional_vars;
         additional_vars_ := CP.SpecVar(t2, tmp , p2) :: !additional_vars_;
@@ -86,7 +86,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_name () in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
         substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := CP.SpecVar(t2, tmp, p2) :: !additional_vars;
         additional_vars_ := CP.SpecVar(t2, tmp, p2) :: !additional_vars_;
@@ -95,7 +95,7 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> CP.IConst(i1+12, l3)
   | CP.Subtract( CP.IConst(i1, _), CP.IConst(i2, _), l3) ->
       begin
-        let tmp = fresh_name () in
+        let tmp = fresh_var_name "int" 0 in
         substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
 	additional_vars := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
 	additional_vars_ := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
@@ -414,12 +414,12 @@ and mona_of_exp e0 f = match e0 with
   | CP.BagDiff (e1, e2, _)     -> (mona_of_exp e1 f) ^ "\\" ^ (mona_of_exp e2 f)
   | _ -> failwith ("mona.mona_of_exp: mona doesn't support subtraction/...")
 
-and mona_of_exp_secondorder e0 f = match e0 with
+and mona_of_exp_secondorder e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
   | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
-  | CP.Add (a1, a2, _) ->  
-      let tmp = fresh_name () in
+  | CP.Add (a1, a2, pos) ->  
+      let tmp = fresh_var_name "int" pos.Lexing.pos_lnum in
 (*      print_endline ("\nCCC: " ^ tmp); *)
       let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
       let (exs2, a2name, a2str) = mona_of_exp_secondorder a2 f in
@@ -428,6 +428,12 @@ and mona_of_exp_secondorder e0 f = match e0 with
       ((tmp :: (exs1 @ exs2)), tmp, add_string2)
   | CP.Max _
   | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
+	| CP.Mult (i,a,p) -> if (i>10 || i<0) then failwith ("mona.mona_of_exp_secondorder: mona doesn't support multiplication and the constant is too big")
+												else 
+													let rec mult i = if i==0 then a else CP.Add( (mult (i-1)), a,p)  in
+													let sum = if (i>0) then (mult i)	else CP.IConst (0, p) in
+														mona_of_exp_secondorder sum f 
+	| CP.Subtract _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/...")
 
 (* pretty printing for a list of expressions *)

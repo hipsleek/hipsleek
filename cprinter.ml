@@ -16,17 +16,17 @@ let rec string_of_ident_list l c = match l with
 
 (* pretty printing for primitive types *)
 let string_of_prim_type = function 
-  | Bool          -> "boolean "
-  | Float         -> "float "
-  | Int           -> "int "
-  | Void          -> "void "
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
   | Bag           -> "multiset"
 ;;
 
 (* pretty printing for types *)
 let string_of_typ = function 
   | P.Prim t        -> string_of_prim_type t 
-  | P.OType ot      -> ot ^ " "
+  | P.OType ot      -> if ((String.compare ot "") ==0) then "ptr" else ot
 ;;
 
 let string_of_spec_var sv = match sv with
@@ -123,8 +123,8 @@ let string_of_b_formula = function
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") != (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") != " ^ (string_of_formula_exp e2)
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
-  | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-  | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
+  | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = emax(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
+  | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = emin(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
 	| P.BagIn (v, e, l)					-> (string_of_spec_var v) ^ " <in> " ^ (string_of_formula_exp e)
 	| P.BagNotIn (v, e, l)			-> (string_of_spec_var v) ^ " <notin> " ^ (string_of_formula_exp e)
   | P.BagSub (e1, e2, l)			-> (string_of_formula_exp e1) ^ " <subset> " ^ (string_of_formula_exp e2)
@@ -241,7 +241,7 @@ let rec string_of_exp = function
 	   r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" 
   | Cast ({exp_cast_target_type = t;
 		   exp_cast_body = body}) -> begin
-	  "(" ^ (string_of_typ t) ^ ")" ^ string_of_exp body
+	  "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
 	end
   | Cond ({exp_cond_type = _;
 	   exp_cond_condition = id;
@@ -285,7 +285,7 @@ let rec string_of_exp = function
   | VarDecl ({exp_var_decl_type = t;
 	      exp_var_decl_name = id;
 	      exp_var_decl_pos = _}) -> 
-	      (string_of_typ t) ^ id (*^ (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)*)
+	      (string_of_typ t) ^" "^ id (*^ (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)*)
   | Unit l                     -> ""
   | While ({exp_while_condition = id;
 	    exp_while_body = e;

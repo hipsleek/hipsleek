@@ -203,7 +203,7 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) : (CP.formula * CP.spec_var
 and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) : (CP.formula * CP.spec_var list) = match h0 with
   | DataNode ({h_formula_data_node = p;
 			   h_formula_data_pos = pos}) ->
-	  let i = fresh_name () in
+	  let i = ("addr"^(fresh_trailer ())) in
 	  (*--- 09.05.2008 *)
 	  (*let _ = (print_string ("\n[solver.ml, line 199]: fresh name = " ^ i ^ "!!!!!!!!!!!\n")) in*)
 		(*09.05.2008 ---*)

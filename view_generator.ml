@@ -23,9 +23,9 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
       begin
       (* the closest parent is where we extend from *)
       let parent = (C.look_up_data_def no_pos prog.C.prog_data_decls c.C.data_parent_name) in 
-      let fn1 = fresh_name() in
-      let fn2 = fresh_name() in
-      let actual_type_var = fresh_name() in
+      let fn1 = fresh_var_name parent.C.data_name 0 in
+      let fn2 = fresh_var_name c.C.data_name 0 in
+      let actual_type_var = fresh_var_name c.C.data_name 0 in
 
 (* prelucrating the lhs *)
 (* this is considered as the precondition *)
@@ -57,7 +57,7 @@ let rec gen_ext_view (prog : C.prog_decl) (c : C.data_decl) : C.proc_decl =
 
 (* prelucrating the rhs *)
 (* this is considered as the postcondition *)
-      let extension_var = fresh_name() in  
+      let extension_var = fresh_var_name ("Ext" ^parent.C.data_name) 0 in  
       let extension_arg = CP.SpecVar(CP.OType("Ext" ^ c.C.data_name), 
 				     extension_var, 
 				     Unprimed) in 
@@ -149,9 +149,9 @@ and equal_types (t1 : CP.typ) (t2 : CP.typ) : bool =
 and gen_ext_all_view (prog : C.prog_decl) ( c : C.data_decl) : C.view_decl =
 (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
-  let fn1 = fresh_name() in
-  let t1 = fresh_name() in
-  let t2 = fresh_name() in
+  let fn1 = fresh_var_name "ExtAll" 0 in
+  let t2 = fresh_var_name "" 0 in
+  let t1 = fresh_var_name c.C.data_name 0 in
 (*******************************)
 (* prelucrating the lhs *)
       let view_name = "ExtAll" in
@@ -213,7 +213,7 @@ and local_gen_formula (prog : C.prog_decl) (c : C.data_decl) (subclasses : C.dat
 	  Error.report_error {Error.error_loc = no_pos;
 				  Error.error_text = "error when computing ExtAll"}
       | subc :: rest -> 
-	  let extension_var = fresh_name() in  
+	  let extension_var = fresh_var_name "ExtAll" 0 in  
 	  let extension_arg = CP.SpecVar(CP.OType("ExtAll"), 
 					 extension_var, 
 					 Unprimed) in 

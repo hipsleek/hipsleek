@@ -554,7 +554,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formul
 	  let to_sup, rest_fields = U.split_at heap_args n in
 	  let ext_name = gen_ext_name subnode.F.h_formula_data_name cdef1.data_name in
 	  (*--- 09.05.2000 *)
-	  let fn1 = fresh_name () in
+	  let fn1 = fresh_var_name ext_name pos.Lexing.pos_lnum in
 		(*let _ = (print_string ("\n[cast.ml, line 556]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
 		(*09.05.2000 ---*)
 	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
@@ -577,7 +577,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formul
 			  else
 				let ext_link_name = gen_ext_name cdef2.data_name ((List.hd rest).data_name) in
 				(*--- 09.05.2000 *)
-	  		let fn2 = fresh_name () in
+	  		let fn2 = fresh_var_name ext_name pos.Lexing.pos_lnum in
 				(*let _ = (print_string ("\n[cast.ml, line 579]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
 				(*09.05.2000 ---*)
 				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
