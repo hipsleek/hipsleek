@@ -126,10 +126,10 @@ let main () =
 	let port = ref "" in
 	let named_pipe = ref "" in
 	Arg.parse [
-		"-socket", Arg.String (fun s -> port := s; use_pipe := false), 
-      "-socket port: start prove server at socket the port";
-		"-pipe", Arg.String (fun s  -> named_pipe := s),
-      "-pipe <name>: use external provers via pipe 'name'"
+		"--socket", Arg.String (fun s -> port := s; use_pipe := false), 
+      " <port>: start prove server at socket 'port' on local host";
+		"--pipe", Arg.String (fun s  -> named_pipe := s),
+      " <name>: use external provers via pipe 'name'"
 		]
 		(fun s -> ())
 		("Usage: " ^ Sys.argv.(0) ^ " -[socket [port_no] | pipe [name]]");

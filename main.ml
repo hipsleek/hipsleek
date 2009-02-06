@@ -116,8 +116,8 @@ let process_cmd_line () = Arg.parse [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-v", Arg.Set Debug.debug_on, "Verbose");
-  ("-pipe", Arg.String Tpdispatcher.Netprover.set_use_pipe, "-pipe <name>: use external provers via pipe");
-  ("-socket", Arg.String Tpdispatcher.Netprover.set_use_socket, "-socket <host:port>: use external provers via socket");
+  ("--pipe", Arg.String Tpdispatcher.Netprover.set_use_pipe, " <name>: use external provers via pipe");
+  ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, " <host:port>: use external provers via socket");
 	] set_source_file usage_msg
 
 (******************************************)
