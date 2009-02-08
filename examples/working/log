@@ -1,401 +1,460 @@
 
 ======================================
-
-Processing file "./hip/append.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.060003 second(s)
-Checking procedure append$node~node... 
-Procedure append$node~node SUCCESS
-
-Total verification time: 0.248014 second(s)
-	Time spent in main process: 0.124007 second(s)
-	Time spent in child processes: 0.124007 second(s)
-
-======================================
-
-Processing file "./hip/append-tail.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.048003 second(s)
-Checking procedure append$node~node~node~node... 
-File "./hip/append-tail.ss", line 36: Post condition (EX f_r_28, f_r_29 . x::ll_tail2<f_r_28, f_r_29> & f_r_28 = ty & f_r_29 = m+n) cannot be derived by the system.
-
-Procedure append$node~node~node~node FAIL
-
-Error(s) detected when checking procedure append$node~node~node~node
-
-Total verification time: 0.068004 second(s)
-	Time spent in main process: 0.052003 second(s)
-	Time spent in child processes: 0.016001 second(s)
-
-======================================
-
-Processing file "./hip/bll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.032002 second(s)
-Checking procedure delete$node... 
-Procedure delete$node SUCCESS
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
-
-Total verification time: 0.076004 second(s)
-	Time spent in main process: 0.056003 second(s)
-	Time spent in child processes: 0.020001 second(s)
+pre: (self = null) & (n = 0)
+or(self::node<Anon_16, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_16, r>) * (r::ll<v_ptr_4_17>))*(() & (v_ptr_4_17 = n-1))
+pre: x = null
+ post: x = null
+pre: x::ll<0>
+ post: x::ll<0>
+Valid.
+pre: x::node<Anon_11, null>
+ post: x::node<Anon_11, null>
+pre: (x::ll<m>)*(m = 1)
+ post: (x::ll<m>)*(m = 1)
+Valid.
+pre: ((x::node<Anon_12, r>) * (r::node<Anon_13, r2>)) * (r2::ll<n>)
+ post: ((x::node<Anon_12, r>) * (r::node<Anon_13, r2>)) * (r2::ll<n>)
+pre: x::ll<n+2>
+ post: (x::ll<v_ptr_11_50>)*(() & (v_ptr_11_50 = n+2))
+Valid.
+pre: ((x::node<Anon_14, r>) * (r::node<Anon_15, r2>)) * (r2::ll<n>)
+ post: ((x::node<Anon_14, r>) * (r::node<Anon_15, r2>)) * (r2::ll<n>)
+pre: x::ll<n+1>
+ post: (x::ll<v_ptr_12_80>)*(() & (v_ptr_12_80 = n+1))
+Fail.
+pre: x' = 1
+ post: x' = 1
+pre: x' = x+1
+ post: x' = x+1
+pre: x' = 2
+ post: x' = 2
+Valid.
+(EX x_111 . true & x_111 = 1 & x' = 1+x_111)
 
 ======================================
-
-Processing file "./hip/bubble.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.048003 second(s)
-Checking procedure bsort$node... 
-Procedure bsort$node SUCCESS
-Checking procedure bubble$node... 
-Procedure bubble$node SUCCESS
-Checking procedure id3$node... 
-Procedure id3$node SUCCESS
-Checking procedure id2$node... 
-Procedure id2$node SUCCESS
-
-Total verification time: 1.396087 second(s)
-	Time spent in main process: 0.880055 second(s)
-	Time spent in child processes: 0.516032 second(s)
+pre: (self = null) & (n = 0)
+or(self::node<Anon_11, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_11, r>) * (r::ll<v_ptr_3_12>))*(() & (v_ptr_3_12 = n-1))
+pre: (x::ll<n>)*(n > 0)
+ post: (x::ll<n>)*(n > 0)
+pre: (x::ll<m>)*(m > 0)
+ post: (x::ll<m>)*(m > 0)
+Valid.
+true & n > 0 & m = n
 
 ======================================
-
-Processing file "./hip/cll.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.048003 second(s)
-Checking procedure delete$node... 
-Procedure delete$node SUCCESS
-Checking procedure count$node... 
-Procedure count$node SUCCESS
-Checking procedure count_rest$node~node... 
-Procedure count_rest$node~node SUCCESS
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
-Checking procedure test$... 
-Procedure test$ SUCCESS
-
-Total verification time: 0.408025 second(s)
-	Time spent in main process: 0.208013 second(s)
-	Time spent in child processes: 0.200012 second(s)
+pre: (self = null) & (n = 0)
+or(self::node<Anon_11, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_11, r>) * (r::ll<v_ptr_5_12>))*(() & (v_ptr_5_12 = n-1))
+pre: (x::ll<n>)*(x != null)
+ post: (x::ll<n>)*(x != null)
+pre: (x::ll<m>)*(m > 0)
+ post: (x::ll<m>)*(m > 0)
+Valid.
+true & x != null & m = n
+pre: x::ll<n>
+ post: x::ll<n>
+pre: (x::ll<m>)*(m > 0)
+ post: (x::ll<m>)*(m > 0)
+Fail.
 
 ======================================
+pre: (self = null) & (n = 0)
+or(self::node<Anon_19, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_19, r>) * (r::ll<v_ptr_4_20>))*(() & (v_ptr_4_20 = n-1))
+pre: (self = null) & (n = 0)
+or(self::node<Anon_21, r>) * (r::ll2<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_21, r>) * (r::ll2<v_ptr_8_22>))*(() & (v_ptr_8_22 = n-1))
+pre: (self::node<Anon_24, r>) * (r::ll2<n-1>)
+ post: ((self::node<Anon_24, r>) * (r::ll2<v_ptr_11_25>))*(() & (v_ptr_11_25 = n-1))
+pre: ((x::node<Anon_11, null>) * (z::node<Anon_31, Anon_30>)) * (y::ll<Anon_32>)
+ post: ((x::node<Anon_11, null>) * (z::node<Anon_31, Anon_30>)) * (y::ll<Anon_32>)
+pre: (x::ll<m>)*(m = 2)
+ post: (x::ll<m>)*(m = 2)
+Fail.
 
-Processing file "./hip/complete.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 3.184199 second(s)
-Checking procedure insert$node2~int... 
-Procedure insert$node2~int SUCCESS
-Checking procedure min_height$node2... 
-Procedure min_height$node2 SUCCESS
-Checking procedure height$node2... 
-Procedure height$node2 SUCCESS
-Checking procedure minim$int~int... 
-Procedure minim$int~int SUCCESS
-Checking procedure maxim$int~int... 
-Procedure maxim$int~int SUCCESS
+pre: (((x::node<Anon_12, null>) * (z::node<Anon_63, Anon_62>)) * (y::ll<Anon_64>))*(m = 1)
+ post: (((x::node<Anon_12, null>) * (z::node<Anon_63, Anon_62>)) * (y::ll<Anon_64>))*(m = 1)
+pre: x::ll<m>
+ post: x::ll<m>
+Valid.
+(EX Anon_71, Anon_70, Anon_69, v_ptr_17_67 . z::node<Anon_69, Anon_70> * y::ll<Anon_71> & m = 1 & v_ptr_17_67 = null)
+pre: (((x::node<Anon_13, null>) * (z::node<Anon_97, Anon_96>)) * (y::ll<Anon_98>))*(m = 0)
+ post: (((x::node<Anon_13, null>) * (z::node<Anon_97, Anon_96>)) * (y::ll<Anon_98>))*(m = 0)
+pre: x::ll<m>
+ post: x::ll<m>
+Fail.
 
-Total verification time: 5.93237 second(s)
-	Time spent in main process: 1.696106 second(s)
-	Time spent in child processes: 4.236264 second(s)
+pre: (x::node<Anon_14, null>) * (y::ll<1>)
+ post: (x::node<Anon_14, null>) * (y::ll<1>)
+pre: (x::ll<m>)*(m = 0)
+ post: (x::ll<m>)*(m = 0)
+Fail.
 
-======================================
-
-Processing file "./hip/dll.ss"
-Parsing... done in 0.008001 second(s)
-Translating to core language... done in 0.028001 second(s)
-Checking procedure f2$node2... 
-Procedure f2$node2 SUCCESS
-Checking procedure f1$node2... 
-Procedure f1$node2 SUCCESS
-Checking procedure append2$node2~node2... 
-Procedure append2$node2~node2 SUCCESS
-Checking procedure append1$node2~node2... 
-Procedure append1$node2~node2 SUCCESS
-Checking procedure append$node2~node2... 
-Procedure append$node2~node2 SUCCESS
-Checking procedure test_fold$... 
-Procedure test_fold$ SUCCESS
-Checking procedure test_del2$node2~node2... 
-Procedure test_del2$node2~node2 SUCCESS
-Checking procedure test_del$node2... 
-Procedure test_del$node2 SUCCESS
-Checking procedure delete1$node2~int... 
-Procedure delete1$node2~int SUCCESS
-Checking procedure delete$node2~int... 
-Procedure delete$node2~int SUCCESS
-Checking procedure insert$node2~int... 
-Procedure insert$node2~int SUCCESS
-
-Total verification time: 1.672104 second(s)
-	Time spent in main process: 1.12807 second(s)
-	Time spent in child processes: 0.544034 second(s)
-
-======================================
-
-Processing file "./hip/heaps.ss"
-Parsing... done in 0.008001 second(s)
-Translating to core language... done in 0.228014 second(s)
-Checking procedure deletemax$node... 
-Procedure deletemax$node SUCCESS
-Checking procedure ripple$int~int~int~int~node~node... 
-Procedure ripple$int~int~int~int~node~node SUCCESS
-Checking procedure deleteone$int~int~node~node... 
-Procedure deleteone$int~int~node~node SUCCESS
-Checking procedure deleteoneel$node... 
-Procedure deleteoneel$node SUCCESS
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
-
-Total verification time: 40.542533 second(s)
-	Time spent in main process: 5.436339 second(s)
-	Time spent in child processes: 35.106194 second(s)
+pre: ((x::node<Anon_15, r>) * (r::node<Anon_16, r2>)) * (r2::ll<n>)
+ post: ((x::node<Anon_15, r>) * (r::node<Anon_16, r2>)) * (r2::ll<n>)
+pre: x::ll<n+2>
+ post: (x::ll<v_ptr_27_158>)*(() & (v_ptr_27_158 = n+2))
+Valid.
+true &  & (ex v_ptr_4_168. v_ptr_4_168 = n+1) & n = v_ptr_27_158-2
+pre: ((x::node<Anon_17, r>) * (r::node<Anon_18, r2>)) * (r2::ll<n>)
+ post: ((x::node<Anon_17, r>) * (r::node<Anon_18, r2>)) * (r2::ll<n>)
+pre: (x::ll<m>)*(m >= n+1)
+ post: (x::ll<m>)*(m >= n+1)
+Valid.
+true &  & (ex v_ptr_4_197. v_ptr_4_197 = n+1) & n = m-2
+pre: (x::ll<n>)*(n > 0)
+ post: (x::ll<n>)*(n > 0)
+pre: (x::ll<m>)*(m > 0)
+ post: (x::ll<m>)*(m > 0)
+Valid.
+true & n > 0 & m = n
+pre: (x::ll<n>)*(n > 3)
+ post: (x::ll<n>)*(n > 3)
+pre: ((x::node<Anon_218, r1>) * (r1::node<Anon_219, r2>))*(r2 = null)
+ post: ((x::node<Anon_218, r1>) * (r1::node<Anon_219, r2>))*(r2 = null)
+Fail.
 
 ======================================
+pre: (self = null) & (n = 0)
+or(self::node<Anon_12, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_12, r>) * (r::ll<v_ptr_4_13>))*(() & (v_ptr_4_13 = n-1))
+pre: (self = null) & (n = 0)
+or((self::node<mi, r>) * (r::sortl<n-1, k>))*(mi <= k)
+ post: (self = null) & (n = 0)
+or((self::node<mi, r>) * (r::sortl<v_ptr_8_14, k>))*((mi <= k) & (v_ptr_8_14 = n-1))
+pre: x::sortl<a, b>
+ post: x::sortl<a, b>
+pre: x::ll<a>
+ post: x::ll<a>
+Fail.
 
-Processing file "./hip/insertion.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.032002 second(s)
-Checking procedure insertion_sort$node~node... 
-Procedure insertion_sort$node~node SUCCESS
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
+pre: self::sortl<n, mi>
+ post: self::sortl<n, mi>
+pre: self::ll<n>
+ post: self::ll<n>
+pre: self::sortl<n, mi>
+ post: self::sortl<n, mi>
+pre: x::sortl<10, Anon_11>
+ post: x::sortl<10, Anon_11>
+pre: (x::ll<n>)*(n > 11)
+ post: (x::ll<n>)*(n > 11)
+Fail.
+pre: (((x::node<Anon_36, r1>) * (r1::node<Anon_37, aa>)) * (y::node<Anon_39, Anon_38>))*(b > 10)
+ post: (((x::node<Anon_36, r1>) * (r1::node<Anon_37, aa>)) * (y::node<Anon_39, Anon_38>))*(b > 10)
+pre: x::ll<c>
+ post: x::ll<c>
+Fail.
 
-Total verification time: 0.744046 second(s)
-	Time spent in main process: 0.424026 second(s)
-	Time spent in child processes: 0.32002 second(s)
 
 ======================================
-
-Processing file "./hip/ll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.028001 second(s)
-Checking procedure rev$node~node... 
-Procedure rev$node~node SUCCESS
-Checking procedure create_list$int... 
-Procedure create_list$int SUCCESS
-Checking procedure delete$node~int... 
-Procedure delete$node~int SUCCESS
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
-Checking procedure get_next_next$node... 
-Procedure get_next_next$node SUCCESS
-Checking procedure set_null$node... 
-Procedure set_null$node SUCCESS
-Checking procedure set_next$node~node... 
-Procedure set_next$node~node SUCCESS
-Checking procedure get_next$node... 
-Procedure get_next$node SUCCESS
-Checking procedure ret_first$node... 
-Procedure ret_first$node SUCCESS
-Checking procedure append$node~node... 
-Procedure append$node~node SUCCESS
-
-Total verification time: 0.548033 second(s)
-	Time spent in main process: 0.268016 second(s)
-	Time spent in child processes: 0.280017 second(s)
+pre: (self = null) & (n = 0)
+or(self::node<Anon_11, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_11, r>) * (r::ll<v_ptr_4_12>))*(() & (v_ptr_4_12 = n-1))
+pre: (self = null) & (n = 0)
+or((self::node<v, r>) * (r::sortl<n-1, k>))*(v <= k)
+ post: (self = null) & (n = 0)
+or((self::node<v, r>) * (r::sortl<v_ptr_8_13, k>))*((v <= k) & (v_ptr_8_13 = n-1))
+pre: x::ll<m>
+ post: x::ll<m>
+pre: x::ll<m>
+ post: x::ll<m>
+Valid.
+true & 
+pre: x::sortl<a, b>
+ post: x::sortl<a, b>
+pre: x::sortl<d, c>
+ post: x::sortl<d, c>
+Valid.
+true & d = a & c = b
 
 ======================================
-
-Processing file "./hip/merge.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.064004 second(s)
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
-Checking procedure merge$node~node... 
-Procedure merge$node~node SUCCESS
-Checking procedure merge_sort$node... 
-Procedure merge_sort$node SUCCESS
-Checking procedure split_func$node~int... 
-Procedure split_func$node~int SUCCESS
-Checking procedure count$node... 
-Procedure count$node SUCCESS
-
-Total verification time: 3.54022 second(s)
-	Time spent in main process: 0.952059 second(s)
-	Time spent in child processes: 2.588161 second(s)
+pre: (self = null) & (n = 0)
+or(self::node<Anon_12, r>) * (r::ll<n-1>)
+ post: (self = null) & (n = 0)
+or((self::node<Anon_12, r>) * (r::ll<v_ptr_3_13>))*(() & (v_ptr_3_13 = n-1))
+pre: (EX r1, r2, r3 . ((x::node<r1, null>) * (z::node<r2, r3>)) * (y::ll<n>))
+ post: (EX r1, r2, r3 . ((x::node<r1, null>) * (z::node<r2, r3>)) * (y::ll<n>))
+pre: (x::ll<m>)*(m = 1)
+ post: (x::ll<m>)*(m = 1)
+Valid.
+(EX r3_18, r2_17, v_ptr_6_15 . z::node<r2_17, r3_18> * y::ll<n> & v_ptr_6_15 = null & m = 1)
+pre: ((x::node<Anon_11, null>) * (z::node<Anon_43, Anon_42>)) * (y::ll<Anon_44>)
+ post: ((x::node<Anon_11, null>) * (z::node<Anon_43, Anon_42>)) * (y::ll<Anon_44>)
+pre: (EX m . x::ll<m>)
+ post: (EX m . x::ll<m>)
+Valid.
+(EX Anon_50, Anon_49, Anon_48, v_ptr_9_46 . z::node<Anon_48, Anon_49> * y::ll<Anon_50> & v_ptr_9_46 = null)
 
 ======================================
+pre: (self = p) & (n = 0)
+or(self::node<Anon_11, r>) * (r::lseg<n-1, p>)
+ post: (self = p) & (n = 0)
+or((self::node<Anon_11, r>) * (r::lseg<v_ptr_5_12, p>))*(() & (v_ptr_5_12 = n-1))
+pre: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+ post: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+pre: (self::lseg<a, r>) * (r::lseg<b, p>)
+ post: (self::lseg<a, r>) * (r::lseg<b, p>)
+pre: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+ post: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 4))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 4))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 1) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 1) & (n2 >= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 9)
+ post: (x::lseg<n, p>)*(n > 9)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+Fail.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 10) & (n2 <= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 10) & (n2 <= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 <= 1) & (n2 <= 2)) & (n3 >= 5))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 <= 1) & (n2 <= 2)) & (n3 >= 5))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 5))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 5))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 1))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 1))
+Valid.
+(EX b_1526, a_1525, b_1709, b_1770, b_1798 . r_1799::lseg<b_1798, r_1527> * r_1527::lseg<b_1526, p> & n > 10 & r1 = r_1710 & r2 = r_1771 & r3 = r_1799 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+a_1525 & a_1525 >= 0 & b_1526 >= 0 & a_1525 = b_1709+n1 & n1 >= 0 & b_1709 >= 0 & b_1709 = b_1770+n2 & n2 >= 0 & b_1770 >= 0 & b_1770 = b_1798+n3 & n3 >= 0 & b_1798 >= 0)
 
-Processing file "./hip/perfect.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.040002 second(s)
-Checking procedure insert$node2~int... 
-Procedure insert$node2~int SUCCESS
-Checking procedure height$node2... 
-Procedure height$node2 SUCCESS
-Checking procedure maxim$int~int... 
-Procedure maxim$int~int SUCCESS
-Checking procedure create$int... 
-Procedure create$int SUCCESS
-Checking procedure simple_insert$node2~int... 
-Procedure simple_insert$node2~int SUCCESS
+;
 
-Total verification time: 0.488029 second(s)
-	Time spent in main process: 0.236014 second(s)
-	Time spent in child processes: 0.252015 second(s)
+(EX b_1526, a_1525, b_1709 . r_1527::lseg<b_1526, p> & n > 10 & r1 = r_1710 & r2 = r_1771 & r3 = r_1527 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+a_1525 & a_1525 >= 0 & b_1526 >= 0 & a_1525 = b_1709+n1 & n1 >= 0 & b_1709 >= 0 & b_1709 = n3+n2 & n2 >= 0 & n3 >= 0)
 
-======================================
+;
 
-Processing file "./hip/qsort.ss"
-Parsing... done in 0. second(s)
-Translating to core language... done in 0.044002 second(s)
-Checking procedure qsort$node... 
-Procedure qsort$node SUCCESS
-Checking procedure append_bll$node~node... 
-Procedure append_bll$node~node SUCCESS
-Checking procedure partition$node~int... 
-Procedure partition$node~int SUCCESS
+(EX b_1526, a_1525, b_1742 . r_1743::lseg<b_1742, p> & n > 10 & r1 = r_1710 & r2 = r_1527 & r3 = r_1743 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+a_1525 & a_1525 >= 0 & b_1526 >= 0 & a_1525 = n2+n1 & n1 >= 0 & n2 >= 0 & b_1526 = b_1742+n3 & n3 >= 0 & b_1742 >= 0)
 
-Total verification time: 3.69223 second(s)
-	Time spent in main process: 1.036064 second(s)
-	Time spent in child processes: 2.656166 second(s)
+;
 
-======================================
+(EX a_1525 . true & n > 10 & r1 = r_1710 & r2 = r_1527 & r3 = p & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = n3+a_1525 & a_1525 >= 0 & n3 >= 0 & a_1525 = n2+n1 & n1 >= 0 & n2 >= 0)
 
-Processing file "./hip/qsort-tail.ss"
-Parsing... done in 0.008001 second(s)
-Translating to core language... done in 0.072003 second(s)
-Checking procedure partition1$node~node~node~node~int... 
-Procedure partition1$node~node~node~node~int SUCCESS
-Checking procedure qsort$node~node... 
-assert:./hip/qsort-tail.ss:44: assert ok
+;
 
+(EX b_1526, b_1567, a_1566, b_1640, b_1668 . r_1669::lseg<b_1668, r_1568> * r_1568::lseg<b_1567, p> & n > 10 & r1 = r_1527 & r2 = r_1641 & r3 = r_1669 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+n1 & n1 >= 0 & b_1526 >= 0 & b_1526 = b_1567+a_1566 & a_1566 >= 0 & b_1567 >= 0 & a_1566 = b_1640+n2 & n2 >= 0 & b_1640 >= 0 & b_1640 = b_1668+n3 & n3 >= 0 & b_1668 >= 0)
 
-assert:./hip/qsort-tail.ss:45: assert ok
+;
 
+(EX b_1526, b_1567, a_1566 . r_1568::lseg<b_1567, p> & n > 10 & r1 = r_1527 & r2 = r_1641 & r3 = r_1568 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+n1 & n1 >= 0 & b_1526 >= 0 & b_1526 = b_1567+a_1566 & a_1566 >= 0 & b_1567 >= 0 & a_1566 = n3+n2 & n2 >= 0 & n3 >= 0)
 
-print: ./hip/qsort-tail.ss:46: ctx:
-es_formula: f_r_1907::bnd_tail<f_r_1902, f_r_1903, f_r_1904, f_r_1905> * x'::node<f_r_1906, f_r_1907> & sm <= f_r_1906 & f_r_1906 <= lg & f_r_1907 != null & f_r_1902 = n-1 & f_r_1903 = tx & f_r_1904 = sm & f_r_1905 = lg & n > 0 & tx' = tx & !(f_r_75') & x != null & x' = x & !(f_r_75') & !(f_r_74') & f_r_1907 != null & !(f_r_74') & y' = null & ty' = null & tmp1' = null & temp' = f_r_1906
-es_pure: 
-es_heap: true
-es_evars: 
-es_ivars: 
-es_expl_vars: 
+;
 
-File "./hip/qsort-tail.ss", line 65: Post condition (EX f_r_57, sm1, lg1, m . x'::ll_tail<m, f_r_57, sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n & f_r_57 = tx') cannot be derived by the system.
+(EX b_1526, b_1567, b_1591, a_1590, b_1610 . r_1611::lseg<b_1610, r_1592> * r_1592::lseg<b_1591, p> & n > 10 & r1 = r_1527 & r2 = r_1568 & r3 = r_1611 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+n1 & n1 >= 0 & b_1526 >= 0 & b_1526 = b_1567+n2 & n2 >= 0 & b_1567 >= 0 & b_1567 = b_1591+a_1590 & a_1590 >= 0 & b_1591 >= 0 & a_1590 = b_1610+n3 & n3 >= 0 & b_1610 >= 0)
 
-Procedure qsort$node~node FAIL
+;
 
-Error(s) detected when checking procedure qsort$node~node
+(EX b_1526, b_1567, b_1591 . r_1592::lseg<b_1591, p> & n > 10 & r1 = r_1527 & r2 = r_1568 & r3 = r_1592 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+n1 & n1 >= 0 & b_1526 >= 0 & b_1526 = b_1567+n2 & n2 >= 0 & b_1567 >= 0 & b_1567 = b_1591+n3 & n3 >= 0 & b_1591 >= 0)
 
-Total verification time: 6.26039 second(s)
-	Time spent in main process: 1.864116 second(s)
-	Time spent in child processes: 4.396274 second(s)
+;
 
-======================================
+(EX b_1526 . true & n > 10 & r1 = r_1527 & r2 = r_1568 & r3 = p & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1526+n1 & n1 >= 0 & b_1526 >= 0 & b_1526 = n3+n2 & n2 >= 0 & n3 >= 0)
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 5))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 5))
+Fail.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 3))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 3))
+Valid.
+(EX b_2020, a_2019, b_2093, b_2121 . r_2122::lseg<b_2121, r_2021> * r_2021::lseg<b_2020, p> & n = 7 & r1 = r_2094 & r2 = r_2122 & n1 = 3 & n2 = 3 & n = b_2020+a_2019 & a_2019 >= 0 & b_2020 >= 0 & a_2019 = b_2093+n1 & n1 >= 0 & b_2093 >= 0 & b_2093 = b_2121+n2 & n2 >= 0 & b_2121 >= 0)
 
-Processing file "./hip/rb.ss"
-Parsing... done in 0.020001 second(s)
-Translating to core language... done in 4.416276 second(s)
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
-Checking procedure del$node~int... 
-Procedure del$node~int SUCCESS
-Checking procedure remove_min$node... 
-Procedure remove_min$node SUCCESS
-Checking procedure del_2r$node~node~node... 
-assert:./hip/rb.ss:279: assert ok
+;
 
+(EX b_2020, a_2019 . r_2021::lseg<b_2020, p> & n = 7 & r1 = r_2094 & r2 = r_2021 & n1 = 3 & n2 = 3 & n = b_2020+a_2019 & a_2019 >= 0 & b_2020 >= 0 & a_2019 = n2+n1 & n1 >= 0 & n2 >= 0)
 
-assert:./hip/rb.ss:280: assert ok
+;
 
+(EX b_2020, b_2044, a_2043, b_2063 . r_2064::lseg<b_2063, r_2045> * r_2045::lseg<b_2044, p> & n = 7 & r1 = r_2021 & r2 = r_2064 & n1 = 3 & n2 = 3 & n = b_2020+n1 & n1 >= 0 & b_2020 >= 0 & b_2020 = b_2044+a_2043 & a_2043 >= 0 & b_2044 >= 0 & a_2043 = b_2063+n2 & n2 >= 0 & b_2063 >= 0)
 
-assert:./hip/rb.ss:281: assert ok
+;
 
-
-Procedure del_2r$node~node~node SUCCESS
-Checking procedure del_2$node~node~node... 
-Procedure del_2$node~node~node SUCCESS
-Checking procedure del_3r$node~node~node... 
-Procedure del_3r$node~node~node SUCCESS
-Checking procedure del_3$node~node~node... 
-Procedure del_3$node~node~node SUCCESS
-Checking procedure del_4r$node~node~node... 
-Procedure del_4r$node~node~node SUCCESS
-Checking procedure del_4$node~node~node... 
-Procedure del_4$node~node~node SUCCESS
-Checking procedure del_5r$node~node~node~node~int... 
-Procedure del_5r$node~node~node~node~int SUCCESS
-Checking procedure del_5$node~node~node~node~int... 
-Procedure del_5$node~node~node~node~int SUCCESS
-Checking procedure del_6r$node~node~node~int... 
-Procedure del_6r$node~node~node~int SUCCESS
-Checking procedure del_6$node~node~node~int... 
-Procedure del_6$node~node~node~int SUCCESS
-Checking procedure is_black$node... 
-Procedure is_black$node SUCCESS
-Checking procedure is_red$node... 
-Procedure is_red$node SUCCESS
-Checking procedure case_2r$node~node~node~node... 
-Procedure case_2r$node~node~node~node SUCCESS
-Checking procedure rotate_case_3r$node~node~node... 
-Procedure rotate_case_3r$node~node~node SUCCESS
-Checking procedure case_2$node~node~node~node... 
-Procedure case_2$node~node~node~node SUCCESS
-Checking procedure rotate_case_3$node~node~node... 
-Procedure rotate_case_3$node~node~node SUCCESS
-
-Total verification time: 31.793987 second(s)
-	Time spent in main process: 12.336771 second(s)
-	Time spent in child processes: 19.457216 second(s)
+(EX b_2020, b_2044 . r_2045::lseg<b_2044, p> & n = 7 & r1 = r_2021 & r2 = r_2045 & n1 = 3 & n2 = 3 & n = b_2020+n1 & n1 >= 0 & b_2020 >= 0 & b_2020 = b_2044+n2 & n2 >= 0 & b_2044 >= 0)
 
 ======================================
-
-Processing file "./hip/selection.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.048003 second(s)
-Checking procedure selection_sort$node... 
-Procedure selection_sort$node SUCCESS
-Checking procedure delete_min$node~int... 
-Procedure delete_min$node~int SUCCESS
-Checking procedure find_min$node... 
-Procedure find_min$node SUCCESS
-
-Total verification time: 0.684042 second(s)
-	Time spent in main process: 0.472029 second(s)
-	Time spent in child processes: 0.212013 second(s)
+pre: (self = p) & (n = 0)
+or(self::node<Anon_11, r>) * (r::lseg<n-1, p>)
+ post: (self = p) & (n = 0)
+or((self::node<Anon_11, r>) * (r::lseg<v_ptr_5_12, p>))*(() & (v_ptr_5_12 = n-1))
+pre: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+ post: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+pre: (self::lseg<a, r>) * (r::lseg<b, p>)
+ post: (self::lseg<a, r>) * (r::lseg<b, p>)
+pre: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+ post: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 4))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 4))
+Valid.
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*((n1 = 3) & (n2 = 4))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*((n1 = 3) & (n2 = 4))
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+Fail.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*((n1 = 4) & (n2 = 3))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*((n1 = 4) & (n2 = 3))
+Valid.
+pre: (x::lseg<n, p>)*(n = 6)
+ post: (x::lseg<n, p>)*(n = 6)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*(n1 = n2)
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*(n1 = n2)
+Valid.
+pre: ((x::lseg<n, p>) * (t1::lseg<x1, y1>))*(n = 6)
+ post: ((x::lseg<n, p>) * (t1::lseg<x1, y1>))*(n = 6)
+pre: (((x::lseg<n1, r1>) * (t1::lseg<x2, y2>)) * (r1::lseg<n2, p>))*(n1 = n2)
+ post: (((x::lseg<n1, r1>) * (t1::lseg<x2, y2>)) * (r1::lseg<n2, p>))*(n1 = n2)
+Valid.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 4))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 4))
+Valid.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 1) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 1) & (n2 >= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 1) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 1) & (n2 >= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 9)
+ post: (x::lseg<n, p>)*(n > 9)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 9) & (n2 >= 2))
+Fail.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 10) & (n2 <= 2))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 >= 10) & (n2 <= 2))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 <= 1) & (n2 <= 2)) & (n3 >= 5))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 <= 1) & (n2 <= 2)) & (n3 >= 5))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 5))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 5))
+Valid.
+pre: (x::lseg<n, p>)*(n > 10)
+ post: (x::lseg<n, p>)*(n > 10)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 1))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 >= 1) & (n2 >= 2)) & (n3 >= 1))
+Valid.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 5))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 5))
+Fail.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 3))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, r2>))*((n1 = 3) & (n2 = 3))
+Valid.
+pre: (x::lseg<n, p>)*(n = 7)
+ post: (x::lseg<n, p>)*(n = 7)
+pre: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*((n1 = 3) & (n2 = 3))
+ post: ((x::lseg<n1, r1>) * (r1::lseg<n2, p>))*((n1 = 3) & (n2 = 3))
+Fail.
 
 ======================================
+pre: (self = p) & (n = 0)
+or(self::node<Anon_14, r>) * (r::lseg<n-1, p>)
+ post: (self = p) & (n = 0)
+or((self::node<Anon_14, r>) * (r::lseg<v_ptr_5_15, p>))*(() & (v_ptr_5_15 = n-1))
+pre: (self::node<Anon_11, null>)*((tx = self) & (n = 1))
+or((self::node<Anon_12, r>) * (r::ll_tail<tx, n-1>))*(r != null)
+ post: (self::node<Anon_11, null>)*((tx = self) & (n = 1))
+or((self::node<Anon_12, r>) * (r::ll_tail<tx, v_ptr_9_17>))*((r != null) & (v_ptr_9_17 = n-1))
+pre: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+ post: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+pre: (self::lseg<a, r>) * (r::lseg<b, p>)
+ post: (self::lseg<a, r>) * (r::lseg<b, p>)
+pre: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+ post: (self::lseg<n, p>)*((n = a+b) & ((a >= 0) & (b >= 0)))
+pre: self::ll_tail<t, n>
+ post: self::ll_tail<t, n>
+pre: (self::lseg<n-1, t>) * (t::node<Anon_13, null>)
+ post: ((self::lseg<v_ptr_13_23, t>) * (t::node<Anon_13, null>))*(() & (v_ptr_13_23 = n-1))
+pre: self::ll_tail<t, n>
+ post: self::ll_tail<t, n>
+pre: (x::ll_tail<p, n>)*(n = 11)
+ post: (x::ll_tail<p, n>)*(n = 11)
+pre: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 = 3) & (n2 = 4)) & (n3 = 3))
+ post: (((x::lseg<n1, r1>) * (r1::lseg<n2, r2>)) * (r2::lseg<n3, r3>))*(((n1 = 3) & (n2 = 4)) & (n3 = 3))
+Valid.
+(EX b_111, a_110, b_303, b_364, b_392, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_393::lseg<b_392, r_112> * r_112::lseg<b_111, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_304 & r2 = r_365 & r3 = r_393 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+a_110 & a_110 >= 0 & b_111 >= 0 & a_110 = b_303+n1 & n1 >= 0 & b_303 >= 0 & b_303 = b_364+n2 & n2 >= 0 & b_364 >= 0 & b_364 = b_392+n3 & n3 >= 0 & b_392 >= 0)
 
-Processing file "./hip/sll.ss"
-Parsing... done in 0.004 second(s)
-Translating to core language... done in 0.036002 second(s)
-Checking procedure id$int... 
-Procedure id$int SUCCESS
-Checking procedure insertion_sort$node~node... 
-Procedure insertion_sort$node~node SUCCESS
-Checking procedure get_tail$node... 
-Procedure get_tail$node SUCCESS
-Checking procedure delete$node~int... 
-Procedure delete$node~int SUCCESS
-Checking procedure insert2$node~node... 
-Procedure insert2$node~node SUCCESS
-Checking procedure insert$node~int... 
-Procedure insert$node~int SUCCESS
+;
 
-Total verification time: 0.932058 second(s)
-	Time spent in main process: 0.564035 second(s)
-	Time spent in child processes: 0.368023 second(s)
+(EX b_111, a_110, b_303, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_112::lseg<b_111, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_304 & r2 = r_365 & r3 = r_112 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+a_110 & a_110 >= 0 & b_111 >= 0 & a_110 = b_303+n1 & n1 >= 0 & b_303 >= 0 & b_303 = n3+n2 & n2 >= 0 & n3 >= 0)
 
-======================================
+;
 
-Processing file "./hip/trees.ss"
-Parsing... done in 0.008001 second(s)
-Translating to core language... done in 1.820113 second(s)
-Checking procedure delete$node2~int... 
-Procedure delete$node2~int SUCCESS
-Checking procedure remove_min$node2... 
-Procedure remove_min$node2 SUCCESS
-Checking procedure insert$node2~int... 
-Procedure insert$node2~int SUCCESS
-Checking procedure flatten$node2... 
-Procedure flatten$node2 SUCCESS
-Checking procedure count$node2... 
-Procedure count$node2 SUCCESS
-Checking procedure append$node2~node2... 
-Procedure append$node2~node2 SUCCESS
+(EX b_111, a_110, b_336, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_337::lseg<b_336, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_304 & r2 = r_112 & r3 = r_337 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+a_110 & a_110 >= 0 & b_111 >= 0 & a_110 = n2+n1 & n1 >= 0 & n2 >= 0 & b_111 = b_336+n3 & n3 >= 0 & b_336 >= 0)
 
-Total verification time: 4.212262 second(s)
-	Time spent in main process: 1.052065 second(s)
-	Time spent in child processes: 3.160197 second(s)
+;
+
+(EX a_110, Anon_48, v_ptr_13_47, v_ptr_13_46 . p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_304 & r2 = r_112 & r3 = p & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = n3+a_110 & a_110 >= 0 & n3 >= 0 & a_110 = n2+n1 & n1 >= 0 & n2 >= 0)
+
+;
+
+(EX b_111, b_161, a_160, b_234, b_262, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_263::lseg<b_262, r_162> * r_162::lseg<b_161, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_112 & r2 = r_235 & r3 = r_263 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+n1 & n1 >= 0 & b_111 >= 0 & b_111 = b_161+a_160 & a_160 >= 0 & b_161 >= 0 & a_160 = b_234+n2 & n2 >= 0 & b_234 >= 0 & b_234 = b_262+n3 & n3 >= 0 & b_262 >= 0)
+
+;
+
+(EX b_111, b_161, a_160, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_162::lseg<b_161, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_112 & r2 = r_235 & r3 = r_162 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+n1 & n1 >= 0 & b_111 >= 0 & b_111 = b_161+a_160 & a_160 >= 0 & b_161 >= 0 & a_160 = n3+n2 & n2 >= 0 & n3 >= 0)
+
+;
+
+(EX b_111, b_161, b_185, a_184, b_204, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_205::lseg<b_204, r_186> * r_186::lseg<b_185, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_112 & r2 = r_162 & r3 = r_205 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+n1 & n1 >= 0 & b_111 >= 0 & b_111 = b_161+n2 & n2 >= 0 & b_161 >= 0 & b_161 = b_185+a_184 & a_184 >= 0 & b_185 >= 0 & a_184 = b_204+n3 & n3 >= 0 & b_204 >= 0)
+
+;
+
+(EX b_111, b_161, b_185, Anon_48, v_ptr_13_47, v_ptr_13_46 . r_186::lseg<b_185, p> * p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_112 & r2 = r_162 & r3 = r_186 & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+n1 & n1 >= 0 & b_111 >= 0 & b_111 = b_161+n2 & n2 >= 0 & b_161 >= 0 & b_161 = b_185+n3 & n3 >= 0 & b_185 >= 0)
+
+;
+
+(EX b_111, Anon_48, v_ptr_13_47, v_ptr_13_46 . p::node<Anon_48, v_ptr_13_46> & v_ptr_13_47+1 = n & v_ptr_13_46 = null & n = 11 & r1 = r_112 & r2 = r_162 & r3 = p & n1 = 3 & n2 = 4 & n3 = 3 & v_ptr_13_47 = b_111+n1 & n1 >= 0 & b_111 >= 0 & b_111 = n3+n2 & n2 >= 0 & n3 >= 0)

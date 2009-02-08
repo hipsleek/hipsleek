@@ -2809,6 +2809,7 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
   (f0 : IF.formula) stab : CF.formula =
   let f3 = convert_heap2 prog f0 in
   let f1 = float_out_min_max f3 in
+	(*let _ = print_string ("pre: "^(Iprinter.string_of_formula f3)^"\n post: "^(Iprinter.string_of_formula f1)^"\n") in*)
   let f2 =
     if quantify || !Globals.anon_exist
     then convert_anonym_to_exist f1
@@ -3978,9 +3979,10 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 			let r, ev = match np1 with
 							| None -> (t,[])
 							| Some (p1, ev1) -> (Ipure.And (t, p1, l), ev1) in
-						let r, ev2 = match np2 with 
+			let r, ev2 = match np2 with 
 							| None -> (r, ev)
-							| Some (p1, ev1) -> (Ipure.And(r, p1, l), (List.rev_append ev1 ev)) in List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, l))) r ev2 in
+							| Some (p1, ev1) -> (Ipure.And(r, p1, l), (List.rev_append ev1 ev)) in 
+		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, l))) r ev2 in
 							
 				
 		let rec float_out_b_formula_min_max (b: Ipure.b_formula): Ipure.formula = match b with
@@ -4151,7 +4153,7 @@ and float_out_heap_min_max (h : Iformula.h_formula) :
 				(nv:: a, match c with
 												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
 												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l)))), s, l)))) ([], None) args in
-        ((Iformula.HeapNode { h1 with Iformula.h_formula_heap_arguments = nl;}), new_p)
+        ((Iformula.HeapNode { h1 with Iformula.h_formula_heap_arguments = (List.rev nl);}), new_p)
   | Iformula.HeapNode2 h1 ->
 			let args = h1.Iformula.h_formula_heap2_arguments in
 			let l = h1.Iformula.h_formula_heap2_pos in
@@ -4168,7 +4170,7 @@ and float_out_heap_min_max (h : Iformula.h_formula) :
 				((d1,nv):: a, match c with
 												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) )
 												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) ), s, l)))) ([], None) args in
-        ((Iformula.HeapNode2 { h1 with Iformula.h_formula_heap2_arguments = nl;}), new_p)
+        ((Iformula.HeapNode2 { h1 with Iformula.h_formula_heap2_arguments = (List.rev nl);}), new_p)
   | Iformula.HTrue -> (h, None)
   | Iformula.HFalse -> (h, None)
 
