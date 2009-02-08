@@ -160,11 +160,11 @@ module DfsNG = Graph.Traverse.Dfs(NG)
 (***********************************************)
 let rec
 
-  (* - added 17.04.2008 - checks if the heap formula contains anonymous    *)
-  (* vars                                                                  *)
+	(* - added 17.04.2008 - checks if the heap formula contains anonymous    *)
+	(* vars                                                                  *)
   (* as h*) (* as h*)
-  (* let _ = print_string("[astsimpl.ml, line 163]: anonymous var: *)
-					(* " ^ id ^ "\n") in                                             *)
+	(* let _ = print_string("[astsimpl.ml, line 163]: anonymous var: " ^ id  *)
+	(* ^ "\n") in                                                            *)
   look_for_anonymous_h_formula (h0 : IF.h_formula) : (ident * primed) list =
   match h0 with
   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
@@ -201,8 +201,8 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
   match f0 with
   | (* - added 17.04.2008 - in case the formula contains anonymous vars ->   *)
-      (* transforms them into existential vars (transforms IF.formula_base to  *)
-      (* IF.formula_exists)                                                    *)
+			(* transforms them into existential vars (transforms IF.formula_base *)
+			(* to IF.formula_exists)                                             *)
       IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
       let tmp1 = convert_anonym_to_exist f1 in
       let tmp2 = convert_anonym_to_exist f2
@@ -251,9 +251,9 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         else (* make sure that the var is not already there *) f0
   
 let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
-  (* match named arguments with formal parameters to generate a list of    *)
-  (* position-based arguments. If a parameter does not appear in args,     *)
-  (* then it is instantiated to a fresh name.                              *)
+	(* match named arguments with formal parameters to generate a list of    *)
+	(* position-based arguments. If a parameter does not appear in args,     *)
+	(* then it is instantiated to a fresh name.                              *)
   let rec match_args (params : ident list) args : IP.exp list =
     match params with
     | p :: rest ->
@@ -265,7 +265,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
            | _ ->
                let fn = ("Anon"^(fresh_trailer()))
                in
-                 (* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
+								(* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
 								(* name = " ^ fn ^ "\n")) in                               *)
                  IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos)) in
         let tmp4 = tmp3 :: tmp1 in tmp4
@@ -339,8 +339,8 @@ and convert_heap2 prog (f0 : IF.formula) : IF.formula =
       in IF.Exists { (f) with IF.formula_exists_heap = h; }
   
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
-  (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
-  (* vdef                                                                  *)
+	(* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
+	(* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
     match h with
     | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
@@ -374,12 +374,12 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
      if DfsNG.has_cycle g
      then failwith "View definitions are mutually recursive"
      else ();
-     (* take out the view names in reverse order *)
+		(* take out the view names in reverse order *)
      let view_names = ref ([] : ident list) in
      let store_name n = view_names := n :: !view_names
      in
        (TopoNG.iter store_name g;
-        (* now reorder the views *)
+				(* now reorder the views *)
         let rec
           reorder_views (view_decls : I.view_decl list)
                         (ordered_names : ident list) =
@@ -390,7 +390,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
               let (rest_views, new_rest_decls) =
                 reorder_views rest_decls rest
               in
-                (* n_view should contain only one views *)
+								(* n_view should contain only one views *)
                 ((n_view @ rest_views), new_rest_decls)
           | [] -> ([], view_decls) in
         let (r1, r2) = reorder_views view_decls0 !view_names in r1 @ r2))
@@ -407,225 +407,183 @@ let loop_procs : (C.proc_decl list) ref = ref []
 let rec (* overriding test *) (* field duplication test *)
   (* method duplication test *) (* field hiding test *) (*TODO: fix this *)
   (* keep the quantifiers generated by xpure *) (*Omega.pairwisecheck*)
-  (*Isabelle.pairwisecheck*)
-  (* let xform = CP.mkExists addr_vars new_xform' (CF.pos_of_formula     *)
-  (* vdef.C.view_formula) in let xform = Omega.pairwisecheck xform' in   *)
-  (* TODO: check entailment in the other way print_string ("\nxform'   *)
-			(* for view: " ^ vdef.C.view_name ^ "\n" ^                           *)
-  (* (Cprinter.string_of_pure_formula xform') ^ "\n"); print_string    *)
-  (* ("\noriginal formula:\n" ^ (Cprinter.string_of_formula            *)
-  (* vdef.C.view_formula));                                            *)
-  (* print_string ("\nxform':\n" ^ (Cprinter.string_of_pure_formula      *)
-  (* vdef.C.view_x_formula) ^ "\n");                                     *)
-  (* H.add stab self {sv_info_kind = Unknown}; *)
-  (* setting view_typed_vars *)
-  (* find_materialized_vars prog view_sv_vars cf *)
-  (* let _ = print_string ("mvars for " ^ vdef.I.view_name ^ ": " ^      *)
-  (* (String.concat ", " (List.map CP.name_of_spec_var mvars)) ^ "\n")   *)
-  (* in                                                                  *)
-  (* set by Predcomp.gen_view *)
-  (* print_string ("\n\nView " ^ cvdef.C.view_name ^ ":\n"); print_stab  *)
-  (* stab;                                                               *)
-  (* This function can repeatedly unfold all predicates used in the          *)
-  (* definition until no more parameter is materialized or all parameters    *)
-  (* are materialized. Since there is a finite number of parameters, the     *)
-  (* process terminates.                                                     *)
-  (* if the heap part if non-empty, by well-founded condition, self  *)
-  (* must be pointing to a node                                      *)
-  (* find the alias set containing p *)
-  (* the body of while may be skipped, so may the returns in there *)
-  (* add parameter to the new scope *)
-  (* check pre/post list: build list of free vars and initial stab *)
-  (* check if res has the correct type, pre/post don't contain self *)
-  (* check method body *)
-  (* if U.empty dynamic_specs_list then [(CF.mkTrue proc.I.proc_loc,   *)
-  (* CF.mkTrue proc.I.proc_loc)] else                                  *)
-  (* translating coercions, split them to left to right and right to left    *)
-  (* coercions                                                               *)
-  (* translation of pre/post condition: different translations for 2         *)
-  (* directions. left-to-right direction: LHS: precond, RHS: postcond        *)
-  (* right-to-left direction: RHS: precond, LHS: postcond ???                *)
+	(* Isabelle.pairwisecheck let xform = CP.mkExists addr_vars new_xform'   *)
+	(* (CF.pos_of_formula vdef.C.view_formula) in let xform =                *)
+	(* Omega.pairwisecheck xform' in TODO: check entailment in the other way *)
+	(* print_string ("\nxform' for view: " ^ vdef.C.view_name ^ "\n" ^       *)
+	(* (Cprinter.string_of_pure_formula xform') ^ "\n"); print_string        *)
+	(* ("\noriginal formula:\n" ^ (Cprinter.string_of_formula                *)
+	(* vdef.C.view_formula)); print_string ("\nxform':\n" ^                  *)
+	(* (Cprinter.string_of_pure_formula vdef.C.view_x_formula) ^ "\n");      *)
+	(* H.add stab self {sv_info_kind = Unknown}; setting view_typed_vars     *)
+	(* find_materialized_vars prog view_sv_vars cf let _ = print_string      *)
+	(* ("mvars for " ^ vdef.I.view_name ^ ": " ^ (String.concat ", "         *)
+	(* (List.map CP.name_of_spec_var mvars)) ^ "\n") in set by               *)
+	(* Predcomp.gen_view print_string ("\n\nView " ^ cvdef.C.view_name ^     *)
+	(* ":\n"); print_stab stab; This function can repeatedly unfold all      *)
+	(* predicates used in the definition until no more parameter is          *)
+	(* materialized or all parameters are materialized. Since there is a     *)
+	(* finite number of parameters, the process terminates. if the heap part *)
+	(* if non-empty, by well-founded condition, self must be pointing to a   *)
+	(* node find the alias set containing p the body of while may be         *)
+	(* skipped, so may the returns in there add parameter to the new scope   *)
+	(* check pre/post list: build list of free vars and initial stab check   *)
+	(* if res has the correct type, pre/post don't contain self check method *)
+	(* body if U.empty dynamic_specs_list then [(CF.mkTrue proc.I.proc_loc,  *)
+	(* CF.mkTrue proc.I.proc_loc)] else translating coercions, split them to *)
+	(* left to right and right to left coercions translation of pre/post     *)
+	(* condition: different translations for 2 directions. left-to-right     *)
+	(* direction: LHS: precond, RHS: postcond right-to-left direction: RHS:  *)
+	(* precond, LHS: postcond ???                                            *)
   (* translate the formulae *) (* compute universally quantified variables *)
-  (* we only existentially quantify variables that are not already         *)
-  (* universally quantified in the antecedent.                             *)
-  (* find the names of the predicates from the LHS and RHS of the coercion *)
-  (* TODO: FIX IT else if rhs_name = "" then Error.report_error {          *)
-  (* Err.error_loc = IF.pos_of_formula coer.I.coercion_body;               *)
-  (* Err.error_text = "self must point to a node in RHS" }                 *)
-  (* print_string ("\ncoercion_head: " ^ (Cprinter.string_of_formula     *)
-  (* c_lhs) ^ "\n"); print_string ("\ncoercion_body: " ^                 *)
-  (* (Cprinter.string_of_formula c_rhs) ^ "\n");                         *)
-  (* and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :  *)
-  (* (C.coercion_decl list * C.coercion_decl list) = let stab1 = H.create    *)
-  (* 103 in for left-to-right direction let l2r_pre = trans_formula prog     *)
-  (* false [self] coer.I.coercion_head stab1 in let l2r_fnames = List.map    *)
-  (* CP.name_of_spec_var (CF.fv l2r_pre) in let l2r_post = trans_formula     *)
-  (* prog true (self :: l2r_fnames) coer.I.coercion_body stab1 in for        *)
-  (* right-to-left direction let stab2 = H.create 103 in let r2l_pre =       *)
-  (* trans_formula prog false [self] coer.I.coercion_body stab2 in let       *)
-  (* r2l_fnames = List.map CP.name_of_spec_var (CF.fv r2l_pre) in let        *)
-  (* r2l_post = trans_formula prog true (self :: r2l_fnames)                 *)
-  (* coer.I.coercion_head stab2 in find the names of the predicates from the *)
-  (* LHS and RHS of the coercion let lhs_name = find_view_name l2r_pre self  *)
-  (* (IF.pos_of_formula coer.I.coercion_head) in let rhs_name =              *)
-  (* find_view_name l2r_post self (IF.pos_of_formula coer.I.coercion_body)   *)
-  (* in if lhs_name = "" then Error.report_error { Err.error_loc =           *)
-  (* IF.pos_of_formula coer.I.coercion_head; Err.error_text = "root pointer  *)
-(* of node on LHS must be self" } else if rhs_name = "" then               *)
-  (* Error.report_error { Err.error_loc = IF.pos_of_formula                  *)
-  (* coer.I.coercion_body; Err.error_text = "self must point to a node in    *)
-(* RHS" } else let l2r = { C.coercion_head = l2r_pre; C.coercion_body =    *)
-  (* l2r_post; C.coercion_head_view = lhs_name; C.coercion_body_view =       *)
-  (* rhs_name } in let r2l = { C.coercion_head = r2l_pre; C.coercion_body =  *)
-  (* r2l_post; C.coercion_head_view = rhs_name; C.coercion_body_view =       *)
-  (* lhs_name } in print_string ("\ncoercion_head: " ^                       *)
-  (* (Cprinter.string_of_formula c_lhs) ^ "\n"); print_string                *)
-  (* ("\ncoercion_body: " ^ (Cprinter.string_of_formula c_rhs) ^ "\n");      *)
-  (* match coer.I.coercion_type with | I.Left -> ([l2r], []) | I.Equiv ->    *)
-  (* ([l2r], [r2l]) | I.Right -> ([], [r2l])                                 *)
-  (* find the name of the view pointed by v in f0 *)
-  (* What are done by this function: - standard type checking - flattening   *)
-  (* AST - alpha-renaming - substitute constant in -- too much stuff inside  *)
-  (* one function What does it need to do its job: - environment return      *)
-  (* value: - translated expression (having type C.exp (in second            *)
-  (* component)) - type of expression - whether this can be assignment       *)
-  (* target, and if so, what is the target. used with translating e1 = e2    *)
-  (* translate two formulae using all visible names *)
+	(* we only existentially quantify variables that are not already         *)
+	(* universally quantified in the antecedent. find the names of the       *)
+	(* predicates from the LHS and RHS of the coercion TODO: FIX IT else if  *)
+	(* rhs_name = "" then Error.report_error { Err.error_loc =               *)
+	(* IF.pos_of_formula coer.I.coercion_body; Err.error_text = "self must   *)
+	(* point to a node in RHS" } print_string ("\ncoercion_head: " ^         *)
+	(* (Cprinter.string_of_formula c_lhs) ^ "\n"); print_string              *)
+	(* ("\ncoercion_body: " ^ (Cprinter.string_of_formula c_rhs) ^ "\n");    *)
+	(* and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl)  *)
+	(* : (C.coercion_decl list * C.coercion_decl list) = let stab1 =         *)
+	(* H.create 103 in for left-to-right direction let l2r_pre =             *)
+	(* trans_formula prog false [self] coer.I.coercion_head stab1 in let     *)
+	(* l2r_fnames = List.map CP.name_of_spec_var (CF.fv l2r_pre) in let      *)
+	(* l2r_post = trans_formula prog true (self :: l2r_fnames)               *)
+	(* coer.I.coercion_body stab1 in for right-to-left direction let stab2 = *)
+	(* H.create 103 in let r2l_pre = trans_formula prog false [self]         *)
+	(* coer.I.coercion_body stab2 in let r2l_fnames = List.map               *)
+	(* CP.name_of_spec_var (CF.fv r2l_pre) in let r2l_post = trans_formula   *)
+	(* prog true (self :: r2l_fnames) coer.I.coercion_head stab2 in find the *)
+	(* names of the predicates from the LHS and RHS of the coercion let      *)
+	(* lhs_name = find_view_name l2r_pre self (IF.pos_of_formula             *)
+	(* coer.I.coercion_head) in let rhs_name = find_view_name l2r_post self  *)
+	(* (IF.pos_of_formula coer.I.coercion_body) in if lhs_name = "" then     *)
+	(* Error.report_error { Err.error_loc = IF.pos_of_formula                *)
+	(* coer.I.coercion_head; Err.error_text = "root pointer of node on LHS   *)
+	(* must be self" } else if rhs_name = "" then Error.report_error {       *)
+	(* Err.error_loc = IF.pos_of_formula coer.I.coercion_body;               *)
+	(* Err.error_text = "self must point to a node in RHS" } else let l2r =  *)
+	(* { C.coercion_head = l2r_pre; C.coercion_body = l2r_post;              *)
+	(* C.coercion_head_view = lhs_name; C.coercion_body_view = rhs_name } in *)
+	(* let r2l = { C.coercion_head = r2l_pre; C.coercion_body = r2l_post;    *)
+	(* C.coercion_head_view = rhs_name; C.coercion_body_view = lhs_name } in *)
+	(* print_string ("\ncoercion_head: " ^ (Cprinter.string_of_formula       *)
+	(* c_lhs) ^ "\n"); print_string ("\ncoercion_body: " ^                   *)
+	(* (Cprinter.string_of_formula c_rhs) ^ "\n"); match                     *)
+	(* coer.I.coercion_type with | I.Left -> ([l2r], []) | I.Equiv ->        *)
+	(* ([l2r], [r2l]) | I.Right -> ([], [r2l]) find the name of the view     *)
+	(* pointed by v in f0 What are done by this function: - standard type    *)
+	(* checking - flattening AST - alpha-renaming - substitute constant in   *)
+	(* -- too much stuff inside one function What does it need to do its     *)
+	(* job: - environment return value: - translated expression (having type *)
+	(* C.exp (in second component)) - type of expression - whether this can  *)
+	(* be assignment target, and if so, what is the target. used with        *)
+	(* translating e1 = e2 translate two formulae using all visible names    *)
   (* build initial stab *) (* v0 could be alpha-converted *)
-  (* let _ = (print_string ("\n[astsimp.ml, line   *)
-													(* 953]: fresh name = " ^ fn ^                   *)
-  (* "!!!!!!!!!!!\n\n")) in                        *)
-  (* if not (I.contains_field rhs) then begin if         *)
-  (* I.is_var rhs then begin match base_e with |         *)
-  (* I.Member ({I.exp_member_base = e1;                  *)
-  (* I.exp_member_fields = fs1; I.exp_member_pos =       *)
-  (* pos1}) -> let new_ie = I.Assign ({I.exp_assign_op = *)
-  (* aop; I.exp_assign_lhs = I.Member                    *)
-  (* ({I.exp_member_base = e1; I.exp_member_fields = fs1 *)
-  (* @ fs; I.exp_member_pos = pos}); I.exp_assign_rhs =  *)
-  (* rhs; I.exp_assign_pos = pos_a}) in trans_exp prog   *)
-  (* proc new_ie | _ -> begin let ce, te = trans_exp     *)
-  (* prog proc base_e in let ce2, te2 = trans_exp prog   *)
-  (* proc rhs in let dname = C.name_of_type te in if     *)
-  (* C.is_var ce then let res_e,_ = convert_to_bind prog *)
-  (* (C.get_var ce) dname fs (Some ce2) pos in (res_e,   *)
-  (* C.void_type) else let fn = fresh_name () in let _ = *)
-  (* (print_string ("\n[astsimp.ml, line 1007]: fresh    *)
-										(* name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in let fn_decl  *)
-  (* = C.VarDecl ({C.exp_var_decl_type = te;             *)
-  (* C.exp_var_decl_name = fn; C.exp_var_decl_pos =      *)
-  (* pos}) in let init_fn = C.Assign ({C.exp_assign_lhs  *)
-  (* = fn; C.exp_assign_rhs = ce; C.exp_assign_pos =     *)
-  (* pos}) in let fn_e, fn_t = convert_to_bind prog fn   *)
-  (* dname fs (Some ce2) pos in let seq1 = C.Seq         *)
-  (* ({C.exp_seq_type = fn_t; C.exp_seq_exp1 = init_fn;  *)
-  (* C.exp_seq_exp2 = fn_e; C.exp_seq_pos = pos}) in let *)
-  (* local_vars = [(te, fn)] in this is the newly        *)
-  (* introduced variable in this block let seq2 =        *)
-  (* C.Block ({C.exp_block_type = fn_t; C.exp_block_body *)
-  (* = C.Seq ({C.exp_seq_type = fn_t; C.exp_seq_exp1 =   *)
-  (* fn_decl; C.exp_seq_exp2 = seq1; C.exp_seq_pos =     *)
-  (* pos}); C.exp_block_local_vars = local_vars;         *)
-  (* C.exp_block_pos = pos}) in (seq2, fn_t) end end     *)
-  (* else begin in case RHS is a complex expression,     *)
-  (* like x.f = y.g, introduce a local variable: tmp =   *)
-  (* y.g; x.f = tmp let _, lhs_t = trans_exp prog proc   *)
-  (* lhs in I know this causes lhs to be re-translated,  *)
-  (* but hopefully not too much work let lhs_it =        *)
-  (* trans_type_back lhs_t in let fn = fresh_name () in  *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1036]:  *)
-										(* fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in let    *)
-  (* fn_decl = I.VarDecl ({I.exp_var_decl_type = lhs_it; *)
-  (* I.exp_var_decl_decls = [(fn, Some rhs, pos)];       *)
-  (* I.exp_var_decl_pos = pos}) in let lhs_a = I.Assign  *)
-  (* ({I.exp_assign_op = aop; I.exp_assign_lhs = lhs;    *)
-  (* I.exp_assign_rhs = (I.Var ({I.exp_var_name = fn;    *)
-  (* I.exp_var_pos = pos})); I.exp_assign_pos = pos}) in *)
-  (* let seq = I.Seq ({I.exp_seq_exp1 = fn_decl;         *)
-  (* I.exp_seq_exp2 = lhs_a; I.exp_seq_pos = pos}) in    *)
-  (* trans_exp prog proc seq end                         *)
-  (* receiver identifier and how to initialize it *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1164]: fresh  *)
-							(* name = " ^ fname ^ "!!!!!!!!!!!\n\n")) in                 *)
-  (* finding if "this" is the potential receiver *)
-  (* only static methods need to be considered *)
-  (* if not (CP.are_same_types te2 te3) then Err.report_error      *)
-  (* {Error.error_loc = pos; Error.error_text = "two branches of   *)
-					(* if do not match"} else                                        *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1296]:      *)
-								(* fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in            *)
-  (* only integers *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1443]: fresh  *)
-							(* name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in                    *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1469]: fresh  *)
-							(* name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in                    *)
+	(* let _ = (print_string ("\n[astsimp.ml, line 953]: fresh name = " ^ fn *)
+	(* ^ "!!!!!!!!!!!\n\n")) in if not (I.contains_field rhs) then begin if  *)
+	(* I.is_var rhs then begin match base_e with | I.Member                  *)
+	(* ({I.exp_member_base = e1; I.exp_member_fields = fs1; I.exp_member_pos *)
+	(* = pos1}) -> let new_ie = I.Assign ({I.exp_assign_op = aop;            *)
+	(* I.exp_assign_lhs = I.Member ({I.exp_member_base = e1;                 *)
+	(* I.exp_member_fields = fs1 @ fs; I.exp_member_pos = pos});             *)
+	(* I.exp_assign_rhs = rhs; I.exp_assign_pos = pos_a}) in trans_exp prog  *)
+	(* proc new_ie | _ -> begin let ce, te = trans_exp prog proc base_e in   *)
+	(* let ce2, te2 = trans_exp prog proc rhs in let dname = C.name_of_type  *)
+	(* te in if C.is_var ce then let res_e,_ = convert_to_bind prog          *)
+	(* (C.get_var ce) dname fs (Some ce2) pos in (res_e, C.void_type) else   *)
+	(* let fn = fresh_name () in let _ = (print_string ("\n[astsimp.ml, line *)
+	(* 1007]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in let fn_decl =     *)
+	(* C.VarDecl ({C.exp_var_decl_type = te; C.exp_var_decl_name = fn;       *)
+	(* C.exp_var_decl_pos = pos}) in let init_fn = C.Assign                  *)
+	(* ({C.exp_assign_lhs = fn; C.exp_assign_rhs = ce; C.exp_assign_pos =    *)
+	(* pos}) in let fn_e, fn_t = convert_to_bind prog fn dname fs (Some ce2) *)
+	(* pos in let seq1 = C.Seq ({C.exp_seq_type = fn_t; C.exp_seq_exp1 =     *)
+	(* init_fn; C.exp_seq_exp2 = fn_e; C.exp_seq_pos = pos}) in let          *)
+	(* local_vars = [(te, fn)] in this is the newly introduced variable in   *)
+	(* this block let seq2 = C.Block ({C.exp_block_type = fn_t;              *)
+	(* C.exp_block_body = C.Seq ({C.exp_seq_type = fn_t; C.exp_seq_exp1 =    *)
+	(* fn_decl; C.exp_seq_exp2 = seq1; C.exp_seq_pos = pos});                *)
+	(* C.exp_block_local_vars = local_vars; C.exp_block_pos = pos}) in       *)
+	(* (seq2, fn_t) end end else begin in case RHS is a complex expression,  *)
+	(* like x.f = y.g, introduce a local variable: tmp = y.g; x.f = tmp let  *)
+	(* _, lhs_t = trans_exp prog proc lhs in I know this causes lhs to be    *)
+	(* re-translated, but hopefully not too much work let lhs_it =           *)
+	(* trans_type_back lhs_t in let fn = fresh_name () in let _ =            *)
+	(* (print_string ("\n[astsimp.ml, line 1036]: fresh name = " ^ fn ^      *)
+	(* "!!!!!!!!!!!\n\n")) in let fn_decl = I.VarDecl ({I.exp_var_decl_type  *)
+	(* = lhs_it; I.exp_var_decl_decls = [(fn, Some rhs, pos)];               *)
+	(* I.exp_var_decl_pos = pos}) in let lhs_a = I.Assign ({I.exp_assign_op  *)
+	(* = aop; I.exp_assign_lhs = lhs; I.exp_assign_rhs = (I.Var              *)
+	(* ({I.exp_var_name = fn; I.exp_var_pos = pos})); I.exp_assign_pos =     *)
+	(* pos}) in let seq = I.Seq ({I.exp_seq_exp1 = fn_decl; I.exp_seq_exp2 = *)
+	(* lhs_a; I.exp_seq_pos = pos}) in trans_exp prog proc seq end receiver  *)
+	(* identifier and how to initialize it let _ = (print_string             *)
+	(* ("\n[astsimp.ml, line 1164]: fresh name = " ^ fname ^                 *)
+	(* "!!!!!!!!!!!\n\n")) in finding if "this" is the potential receiver    *)
+	(* only static methods need to be considered if not (CP.are_same_types   *)
+	(* te2 te3) then Err.report_error {Error.error_loc = pos;                *)
+	(* Error.error_text = "two branches of if do not match"} else let _ =    *)
+	(* (print_string ("\n[astsimp.ml, line 1296]: fresh name = " ^ fn ^      *)
+	(* "!!!!!!!!!!!\n\n")) in only integers let _ = (print_string            *)
+	(* ("\n[astsimp.ml, line 1443]: fresh name = " ^ fn ^                    *)
+	(* "!!!!!!!!!!!\n\n")) in let _ = (print_string ("\n[astsimp.ml, line    *)
+	(* 1469]: fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in                   *)
   (* only integers *) (* only integers *) (* decls can't be empty *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1601]: fresh name = *)
-				(* " ^ fn3 ^ "!!!!!!!!!!!\n\n")) in                                *)
-  (* rev_fs: the reversed of the list of field names. rhs_o: the optional    *)
-  (* rhs if the member access in on the lhs of an assignment. This parameter *)
-  (* is only significant for the last field access, i.e. the first in        *)
-  (* rev_fs. Any recursive call will have a None for rhs_o.                  *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1687]: fresh  *)
-							(* name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in                   *)
-  (* now we have fn.f as the field access *)
-  (* gen_names: generates fresh names for fields. It also returns    *)
-  (* the name generated for the field being accessed (fn) as the     *)
-  (* first component of the returned value                           *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1713]: fresh  *)
-							(* name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in                   *)
-  (* gen_names: generates fresh names for fields. It also returns  *)
-  (* the name generated for the field being accessed (fn) as the   *)
-  (* first component of the returned value                         *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1772]:      *)
-								(* fresh name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in            *)
-  (* flattening call arguments: - assuming args and typs have the same       *)
-  (* length - introduce variables for arguments that are complex expressions *)
-  (* (not variables) - initialize the variables to expression that the       *)
-  (* variable substitutes - return the newly introduced variable as a local  *)
-  (* variable (can be quantified after the call)                             *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1835]: fresh    *)
-						(* name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in                      *)
-  (* rest_e, init_e are assignments, so they have type void *)
-  (* found an enum with type c, treat it as int *)
-  (* assuming data otherwise *)
-  (* convert subexpression e of ce to v=e if e is non-void *)
-  (* we don't need to go down ce1 here, as trans_exp already does    *)
-  (* that                                                            *)
-  (* non-void e1, store the value to a dummy variable *)
-  (* let _ = (print_string ("\n[astsimp.ml, line 1943]: fresh    *)
-						(* name = " ^ fn ^ "!!!!!!!!!!!\n\n")) in                      *)
-  (* translating formula - constraint type inference - convert complex heap  *)
-  (* arguments to variables and equalities - quantify: true for              *)
-  (* post/view/assert/assume: some variables will be exist. quant. false for *)
-  (* view: no variables in precondition will be exist. quant. fvars: when    *)
-  (* quantify is true, variables appearing in fvars are not quantified. f0:  *)
-  (* input formula                                                           *)
+	(* let _ = (print_string ("\n[astsimp.ml, line 1601]: fresh name = " ^   *)
+	(* fn3 ^ "!!!!!!!!!!!\n\n")) in rev_fs: the reversed of the list of      *)
+	(* field names. rhs_o: the optional rhs if the member access in on the   *)
+	(* lhs of an assignment. This parameter is only significant for the last *)
+	(* field access, i.e. the first in rev_fs. Any recursive call will have  *)
+	(* a None for rhs_o. let _ = (print_string ("\n[astsimp.ml, line 1687]:  *)
+	(* fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in now we have fn.f as the *)
+	(* field access gen_names: generates fresh names for fields. It also     *)
+	(* returns the name generated for the field being accessed (fn) as the   *)
+	(* first component of the returned value let _ = (print_string           *)
+	(* ("\n[astsimp.ml, line 1713]: fresh name = " ^ fn1 ^                   *)
+	(* "!!!!!!!!!!!\n\n")) in gen_names: generates fresh names for fields.   *)
+	(* It also returns the name generated for the field being accessed (fn)  *)
+	(* as the first component of the returned value let _ = (print_string    *)
+	(* ("\n[astsimp.ml, line 1772]: fresh name = " ^ fn ^                    *)
+	(* "!!!!!!!!!!!\n\n")) in flattening call arguments: - assuming args and *)
+	(* typs have the same length - introduce variables for arguments that    *)
+	(* are complex expressions (not variables) - initialize the variables to *)
+	(* expression that the variable substitutes - return the newly           *)
+	(* introduced variable as a local variable (can be quantified after the  *)
+	(* call) let _ = (print_string ("\n[astsimp.ml, line 1835]: fresh name = *)
+	(* " ^ fn ^ "!!!!!!!!!!!\n\n")) in rest_e, init_e are assignments, so    *)
+	(* they have type void found an enum with type c, treat it as int        *)
+	(* assuming data otherwise convert subexpression e of ce to v=e if e is  *)
+	(* non-void we don't need to go down ce1 here, as trans_exp already does *)
+	(* that non-void e1, store the value to a dummy variable let _ =         *)
+	(* (print_string ("\n[astsimp.ml, line 1943]: fresh name = " ^ fn ^      *)
+	(* "!!!!!!!!!!!\n\n")) in translating formula - constraint type          *)
+	(* inference - convert complex heap arguments to variables and           *)
+	(* equalities - quantify: true for post/view/assert/assume: some         *)
+	(* variables will be exist. quant. false for view: no variables in       *)
+	(* precondition will be exist. quant. fvars: when quantify is true,      *)
+	(* variables appearing in fvars are not quantified. f0: input formula    *)
   (* -- 19.05.2008 *) (* -- *)
-  (* remove all keys but keys in fvars if quantify is true *)
-  (* remove all keys but keys in fvars if quantify is true *)
-  (* linearize heap/view variables quantify is true for view definition and  *)
-  (* postcondition and false for precondition. fvars are free variables, any *)
-  (* occurrences of fvars inside formula need linearized The function        *)
-  (* returns a linearized formula with additional constraints for the        *)
-  (* newly-introduced variables. It also returns a list of variables to be   *)
-  (* quantified.                                                             *)
-  (* this function process the list of arguments of a heap node and        *)
-  (* determine which one should be linearized. idents in used_names        *)
-  (* include parameters/view vars and heap args and must be quantified     *)
-  (* return value: new_used_names, vars to be heap args, vars to be      *)
-  (* quantified, linking formula                                         *)
-  (* -- print_string ("Free var " ^ ve ^ ": " ^      *)
-  (* (string_of_bool (List.mem ve fvars)) ^ "\n");   *)
-  (* print_string ("Used name " ^ ve ^ ": " ^        *)
-  (* (string_of_bool (List.mem ve used_names)) ^     *)
-  (* "\n"); -- if ve is a free var or ve already     *)
-  (* occurs, replace it by a fresh name              *)
-  (* print_string ("[astsimp.ml, line 2073]: Fresh   *)
-												(* var " ^ (Cprinter.string_of_spec_var fresh_v) ^ *)
-  (* "\n"); print_string ("[astsimp.ml, line 2074]:  *)
-												(* quantify = " ^ (string_of_bool quantify) ^      *)
-  (* "\n");                                          *)
+	(* remove all keys but keys in fvars if quantify is true remove all keys *)
+	(* but keys in fvars if quantify is true linearize heap/view variables   *)
+	(* quantify is true for view definition and postcondition and false for  *)
+	(* precondition. fvars are free variables, any occurrences of fvars      *)
+	(* inside formula need linearized The function returns a linearized      *)
+	(* formula with additional constraints for the newly-introduced          *)
+	(* variables. It also returns a list of variables to be quantified. this *)
+	(* function process the list of arguments of a heap node and determine   *)
+	(* which one should be linearized. idents in used_names include          *)
+	(* parameters/view vars and heap args and must be quantified return      *)
+	(* value: new_used_names, vars to be heap args, vars to be quantified,   *)
+	(* linking formula -- print_string ("Free var " ^ ve ^ ": " ^            *)
+	(* (string_of_bool (List.mem ve fvars)) ^ "\n"); print_string ("Used     *)
+	(* name " ^ ve ^ ": " ^ (string_of_bool (List.mem ve used_names)) ^      *)
+	(* "\n"); -- if ve is a free var or ve already occurs, replace it by a   *)
+	(* fresh name print_string ("[astsimp.ml, line 2073]: Fresh var " ^      *)
+	(* (Cprinter.string_of_spec_var fresh_v) ^ "\n"); print_string           *)
+	(* ("[astsimp.ml, line 2074]: quantify = " ^ (string_of_bool quantify) ^ *)
+	(* "\n");                                                                *)
   (*****************************************************) (* 09.06.08 *)
   (* each fresh variable introduced must be existentially quantified - quantify them even if they are in precond *)
   (*(if quantify then*) (*else []) *)
@@ -856,9 +814,11 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
        trans_formula prog true (self :: res :: vdef.I.view_vars) view_formula
          stab in
      let pf = trans_pure_formula vdef.I.view_invariant stab in
-		 (*let _ = print_string ("pre:  "^(Cprinter.string_of_pure_formula pf)^"\n") in *)
+		(* let _ = print_string ("pre: "^(Cprinter.string_of_pure_formula      *)
+		(* pf)^"\n") in                                                        *)
      let pf = arith_simplify pf in
-		 (*let _ = print_string ("post:  "^(Cprinter.string_of_pure_formula pf)^"\n") in*)
+		(* let _ = print_string ("post: "^(Cprinter.string_of_pure_formula     *)
+		(* pf)^"\n") in                                                        *)
      let cf_fv = List.map CP.name_of_spec_var (CF.fv cf) in
      let pf_fv = List.map CP.name_of_spec_var (CP.fv pf)
      in
@@ -3062,9 +3022,11 @@ and
       linearize_heap used_names h pos in
     let cp = trans_pure_formula p stab in
     let new_p = CP.mkAnd cp link_f pos in
-	(*	let _ = print_string ("pre:  "^(Cprinter.string_of_pure_formula new_p)^"\n") in*)
+	(* let _ = print_string ("pre: "^(Cprinter.string_of_pure_formula        *)
+	(* new_p)^"\n") in                                                       *)
     let new_p = arith_simplify new_p in
-		(*let _ = print_string ("post:  "^(Cprinter.string_of_pure_formula new_p)^"\n") in*)
+		(* let _ = print_string ("post: "^(Cprinter.string_of_pure_formula     *)
+		(* new_p)^"\n") in                                                     *)
     let tmp_evars4 =
       if quantify
       then
@@ -3672,7 +3634,7 @@ and simp_mult (e : Cpure.exp) : Cpure.exp =
         normalize_add None l
           (Cpure.Add (acc_mult m e1,
              acc_mult
-               (match m with | None -> Some (-1) | Some c -> Some (- c)) e2,
+               (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
              l))
     | Cpure.Mult (c, e1, l) ->
         let r =
@@ -3794,28 +3756,28 @@ and move_lr (lhs : Cpure.exp option) (lsm : Cpure.exp option)
   in (nl, nr)
 	
 	
-and purge_mult (e : Cpure.exp):Cpure.exp = match e with
+and purge_mult (e : Cpure.exp): Cpure.exp = match e with
 	| Cpure.Null _ -> e
-  | Cpure.Var  _ -> e
+  | Cpure.Var _ -> e
   | Cpure.IConst _ -> e
-  | Cpure.Add (e1,e2,l) -> Cpure.Add((purge_mult e1),(purge_mult e2), l)
-  | Cpure.Subtract (e1,e2,l) -> Cpure.Subtract((purge_mult e1),(purge_mult e2), l)
-  | Cpure.Mult (i,a,l) -> if (i==0) then Cpure.IConst (0,l)
-										else if (i==1) then (purge_mult a) 
+  | Cpure.Add (e1, e2, l) -> Cpure.Add((purge_mult e1), (purge_mult e2), l)
+  | Cpure.Subtract (e1, e2, l) -> Cpure.Subtract((purge_mult e1), (purge_mult e2), l)
+  | Cpure.Mult (i, a, l) -> if (i == 0) then Cpure.IConst (0, l)
+										else if (i == 1) then (purge_mult a) 
 													else 
 														let inter = purge_mult a in
 														let r = 
 														match inter with
-														| Cpure.IConst(v,_)-> if (v==0) then inter
-																									else Cpure.IConst(i*v,l)
-														| _ -> Cpure.Mult(i,inter,l) in r
+														| Cpure.IConst(v, _) -> if (v == 0) then inter
+																									else Cpure.IConst(i * v, l)
+														| _ -> Cpure.Mult(i, inter, l) in r
 													 
-  | Cpure.Max (e1,e2,l) -> Cpure.Max((purge_mult e1), (purge_mult e2),l)
-  | Cpure.Min (e1,e2,l) -> Cpure.Min((purge_mult e1), (purge_mult e2),l)
-  | Cpure.Bag (el, l) -> Cpure.Bag ((List.map purge_mult el),l)
-  | Cpure.BagUnion (el, l) -> Cpure.BagUnion ((List.map purge_mult el),l)
-  | Cpure.BagIntersect (el, l) -> Cpure.BagIntersect ((List.map purge_mult el),l)
-  | Cpure.BagDiff (e1,e2, l) -> Cpure.BagDiff ((purge_mult e1),(purge_mult e2),l)
+  | Cpure.Max (e1, e2, l) -> Cpure.Max((purge_mult e1), (purge_mult e2), l)
+  | Cpure.Min (e1, e2, l) -> Cpure.Min((purge_mult e1), (purge_mult e2), l)
+  | Cpure.Bag (el, l) -> Cpure.Bag ((List.map purge_mult el), l)
+  | Cpure.BagUnion (el, l) -> Cpure.BagUnion ((List.map purge_mult el), l)
+  | Cpure.BagIntersect (el, l) -> Cpure.BagIntersect ((List.map purge_mult el), l)
+  | Cpure.BagDiff (e1, e2, l) -> Cpure.BagDiff ((purge_mult e1), (purge_mult e2), l)
 
 and arith_simplify (pf : Cpure.formula) : Cpure.formula = 
 
@@ -3827,7 +3789,7 @@ and arith_simplify (pf : Cpure.formula) : Cpure.formula =
       let (lh, rh) = move_lr lhs lsm rhs rsm l in
 			let lh = purge_mult lh in
 			let rh = purge_mult rh in
-			 (lh,rh) in
+			 (lh, rh) in
 
   match pf with
   | Cpure.BForm b ->
@@ -3836,76 +3798,76 @@ and arith_simplify (pf : Cpure.formula) : Cpure.formula =
          | Cpure.BConst _ -> b
          | Cpure.BVar _ -> b
          | Cpure.Lt (e1, e2, l) ->
-             let lh,rh = do_all e1 e2 l in
+             let lh, rh = do_all e1 e2 l in
 						 Cpure.Lt (lh, rh, l)
          | Cpure.Lte (e1, e2, l) ->
-             let lh,rh = do_all e1 e2 l in
+             let lh, rh = do_all e1 e2 l in
              Cpure.Lte (lh, rh, l)
          | Cpure.Gt (e1, e2, l) ->
-             let lh,rh = do_all e1 e2 l in
+             let lh, rh = do_all e1 e2 l in
 						 Cpure.Gt (lh, rh, l)
          | Cpure.Gte (e1, e2, l) ->
-             let lh,rh = do_all e1 e2 l in
+             let lh, rh = do_all e1 e2 l in
 						 Cpure.Gte (lh, rh, l)
          | Cpure.Eq (e1, e2, l) ->
-             let lh,rh = do_all e1 e2 l in
+             let lh, rh = do_all e1 e2 l in
 						 Cpure.Eq (lh, rh, l)
          | Cpure.Neq (e1, e2, l) ->
-             let lh,rh = do_all e1 e2 l in
+             let lh, rh = do_all e1 e2 l in
 						 Cpure.Neq (lh, rh, l)
          | Cpure.EqMax (e1, e2, e3, l) ->
 						 let ne1 = simp_mult e1 in
 						 let ne2 = simp_mult e2 in
 						 let ne3 = simp_mult e3 in
-						 let ne1= purge_mult ne1 in
-						 let ne2= purge_mult ne2 in
-						 let ne3= purge_mult ne3 in
+						 let ne1 = purge_mult ne1 in
+						 let ne2 = purge_mult ne2 in
+						 let ne3 = purge_mult ne3 in
 						 if (!Tpdispatcher.tp == Tpdispatcher.Mona) then
 							  let (s1, m1) = split_sums ne1 in
 								let (s2, m2) = split_sums ne2 in
 								let (s3, m3) = split_sums ne3 in
-								match (s1,s2,s3,m1,m2,m3) with
-									| None,None,None,None,None,None -> Cpure.BConst (true,l)
-									| Some e11,Some e12,Some e13,None,None,None -> 
-										let e11= purge_mult e11 in
-										let e12= purge_mult e12 in
-										let e13= purge_mult e13 in
-										Cpure.EqMax (e11, e12,e13, l)
-									| None,None,None, Some e11,Some e12, Some e13 -> 
-										let e11= purge_mult e11 in
-										let e12= purge_mult e12 in
-										let e13= purge_mult e13 in
-										Cpure.EqMin (e11, e12,e13, l)
+								match (s1, s2, s3, m1, m2, m3) with
+									| None, None, None, None, None, None -> Cpure.BConst (true, l)
+									| Some e11, Some e12, Some e13, None, None, None -> 
+										let e11 = purge_mult e11 in
+										let e12 = purge_mult e12 in
+										let e13 = purge_mult e13 in
+										Cpure.EqMax (e11, e12, e13, l)
+									| None, None, None, Some e11, Some e12, Some e13 -> 
+										let e11 = purge_mult e11 in
+										let e12 = purge_mult e12 in
+										let e13 = purge_mult e13 in
+										Cpure.EqMin (e11, e12, e13, l)
 									| _ -> 
-										 Cpure.EqMax (ne1, ne2,ne3, l)
-							else										
-             		Cpure.EqMax (ne1, ne2,ne3, l)
+										 Cpure.EqMax (ne1, ne2, ne3, l)
+							else 
+             		Cpure.EqMax (ne1, ne2, ne3, l)
          | Cpure.EqMin (e1, e2, e3, l) ->
 						 let ne1 = simp_mult e1 in
 						 let ne2 = simp_mult e2 in
 						 let ne3 = simp_mult e3 in
-						 let ne1= purge_mult ne1 in
-						 let ne2= purge_mult ne2 in
-						 let ne3= purge_mult ne3 in
+						 let ne1 = purge_mult ne1 in
+						 let ne2 = purge_mult ne2 in
+						 let ne3 = purge_mult ne3 in
 						 if (!Tpdispatcher.tp == Tpdispatcher.Mona) then
 							  let (s1, m1) = split_sums ne1 in
 								let (s2, m2) = split_sums ne2 in
 								let (s3, m3) = split_sums ne3 in
-								match (s1,s2,s3,m1,m2,m3) with
-									| None,None,None,None,None,None -> Cpure.BConst (true,l)
-									| Some e11,Some e12,Some e13,None,None,None -> 
-											let e11= purge_mult e11 in
-											let e12= purge_mult e12 in
-											let e13= purge_mult e13 in
-											Cpure.EqMin (e11, e12,e13, l)
-									| None,None,None, Some e11,Some e12,Some e13 -> 
-											let e11= purge_mult e11 in
-											let e12= purge_mult e12 in
-											let e13= purge_mult e13 in
-											Cpure.EqMax (e11, e12,e13, l)
-									| _ ->  Cpure.EqMin (ne1, ne2,ne3, l)
+								match (s1, s2, s3, m1, m2, m3) with
+									| None, None, None, None, None, None -> Cpure.BConst (true, l)
+									| Some e11, Some e12, Some e13, None, None, None -> 
+											let e11 = purge_mult e11 in
+											let e12 = purge_mult e12 in
+											let e13 = purge_mult e13 in
+											Cpure.EqMin (e11, e12, e13, l)
+									| None, None, None, Some e11, Some e12, Some e13 -> 
+											let e11 = purge_mult e11 in
+											let e12 = purge_mult e12 in
+											let e13 = purge_mult e13 in
+											Cpure.EqMax (e11, e12, e13, l)
+									| _ -> Cpure.EqMin (ne1, ne2, ne3, l)
 							else
-             		Cpure.EqMin (ne1, ne2,ne3, l)
+             		Cpure.EqMin (ne1, ne2, ne3, l)
          | Cpure.BagIn (v, e1, l) -> Cpure.BagIn (v, purge_mult (simp_mult e1), l)
          | Cpure.BagNotIn (v, e1, l) -> Cpure.BagNotIn (v, purge_mult (simp_mult e1), l)
          | Cpure.BagSub (e1, e2, l) ->
@@ -3922,216 +3884,230 @@ and arith_simplify (pf : Cpure.formula) : Cpure.formula =
   | Cpure.Exists (v, f1, loc) -> Cpure.Exists (v, arith_simplify f1, loc)
 
 
-and float_out_exp_min_max (e:Ipure.exp):(Ipure.exp * Ipure.formula option) = match e with 
+and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string list) ) option) = match e with 
 	| Ipure.Null _ -> (e, None)
-  | Ipure.Var _ -> (e,None)
-  | Ipure.IConst _ -> (e,None)
-  | Ipure.Add (e1,e2,l)->
-			let ne1,np1 = float_out_exp_min_max e1 in
-			let ne2,np2 = float_out_exp_min_max e2 in
+  | Ipure.Var _ -> (e, None)
+  | Ipure.IConst _ -> (e, None)
+  | Ipure.Add (e1, e2, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
 			let r = match (np1, np2) with
 					| None, None -> None
 					| Some p, None -> Some p
 					| None, Some p -> Some p
-					| Some p1, Some p2 -> Some (Ipure.And (p1,p2,l))in
-			(Ipure.Add (ne1,ne2,l),r) 
-  | Ipure.Subtract (e1,e2,l)->
-			let ne1,np1 = float_out_exp_min_max e1 in
-			let ne2,np2 = float_out_exp_min_max e2 in
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))in
+			(Ipure.Add (ne1, ne2, l), r) 
+  | Ipure.Subtract (e1, e2, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
 			let r = match (np1, np2) with
 					| None, None -> None
 					| Some p, None -> Some p
 					| None, Some p -> Some p
-					| Some p1, Some p2 -> Some (Ipure.And (p1,p2,l))in
-			(Ipure.Subtract (ne1,ne2,l),r) 
-  | Ipure.Mult (c,e1,l)->
-			let ne1,np1 = float_out_exp_min_max e1 in
-			(Ipure.Mult (c,ne1,l),np1)
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))in
+			(Ipure.Subtract (ne1, ne2, l), r) 
+  | Ipure.Mult (c, e1, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			(Ipure.Mult (c, ne1, l), np1)
 						 
-  | Ipure.Max (e1,e2,l)->
-			let ne1,np1 = float_out_exp_min_max e1 in
-			let ne2,np2 = float_out_exp_min_max e2 in
-			let nv = Ipure.Var((("max"^(fresh_trailer())),Unprimed),l) in
-			let t = Ipure.BForm (Ipure.EqMax(nv,ne1,ne2,l)) in  
+  | Ipure.Max (e1, e2, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
+			let new_name = ("max"^(fresh_trailer())) in
+			let nv = Ipure.Var((new_name, Unprimed), l) in
+			let t = Ipure.BForm (Ipure.EqMax(nv, ne1, ne2, l)) in 
 			let r = match (np1, np2) with
-					| None, None -> Some t
-					| Some p, None -> Some (Ipure.And(p,t,l))
-					| None, Some p -> Some (Ipure.And(p,t,l))
-					| Some p1, Some p2 -> Some (Ipure.And ((Ipure.And (p1,t,l)),p2,l)) in
-			(nv,r)			
+					| None, None -> Some (t,[new_name])
+					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
+					| None, Some (p1, l1) -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And ((Ipure.And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
+			(nv, r) 
 			
 			
-  | Ipure.Min (e1,e2,l)->
-			let ne1,np1 = float_out_exp_min_max e1 in
-			let ne2,np2 = float_out_exp_min_max e2 in
-			let nv = Ipure.Var((("min"^(fresh_trailer())),Unprimed),l) in
-			let t = Ipure.BForm (Ipure.EqMin(nv,ne1,ne2,l)) in  
+  | Ipure.Min (e1, e2, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
+			let new_name = ("min"^(fresh_trailer())) in
+			let nv = Ipure.Var((new_name, Unprimed), l) in
+			let t = Ipure.BForm (Ipure.EqMin(nv, ne1, ne2, l)) in 
 			let r = match (np1, np2) with
-					| None, None -> Some t
-					| Some p, None -> Some (Ipure.And(p,t,l))
-					| None, Some p -> Some (Ipure.And(p,t,l))
-					| Some p1, Some p2 -> Some (Ipure.And ((Ipure.And (p1,t,l)),p2,l)) in
-			(nv,r)			
+					| None, None -> Some (t,[new_name])
+					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
+					| None, Some (p2, l2) -> Some ((Ipure.And(p2, t, l)), (new_name:: l2))
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And ((Ipure.And (p1, t, l)), p2, l)), new_name:: (List.rev_append l1 l2)) in
+			(nv, r) 
 	
-	  (* bag expressions *)
-  | Ipure.Bag (le,l)->
-			let ne1,np1 = List.split (List.map float_out_exp_min_max le) in
-			let r = List.fold_left (fun a c-> match (a,c)with
+		(* bag expressions *)
+  | Ipure.Bag (le, l) ->
+			let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+			let r = List.fold_left (fun a c -> match (a, c)with
 				  | None, None -> None
 					| Some p, None -> Some p
 					| None, Some p -> Some p
-					| Some p1, Some p2 -> Some (Ipure.And (p1,p2,l))) None np1 in
-			(Ipure.Bag (ne1,l), r)
-  | Ipure.BagUnion (le,l)->
-			let ne1,np1 = List.split (List.map float_out_exp_min_max le) in
-			let r = List.fold_left (fun a c-> match (a,c)with
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+			(Ipure.Bag (ne1, l), r)
+  | Ipure.BagUnion (le, l) ->
+			let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+			let r = List.fold_left (fun a c -> match (a, c)with
 				  | None, None -> None
 					| Some p, None -> Some p
 					| None, Some p -> Some p
-					| Some p1, Some p2 -> Some (Ipure.And (p1,p2,l))) None np1 in
-			(Ipure.BagUnion (ne1,l), r)
-  | Ipure.BagIntersect (le,l)->
-			let ne1,np1 = List.split (List.map float_out_exp_min_max le) in
-			let r = List.fold_left (fun a c-> match (a,c)with
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))) None np1 in
+			(Ipure.BagUnion (ne1, l), r)
+  | Ipure.BagIntersect (le, l) ->
+			let ne1, np1 = List.split (List.map float_out_exp_min_max le) in
+			let r = List.fold_left (fun a c -> match (a, c)with
 				  | None, None -> None
 					| Some p, None -> Some p
 					| None, Some p -> Some p
-					| Some p1, Some p2 -> Some (Ipure.And (p1,p2,l))) None np1 in
-			(Ipure.BagIntersect (ne1,l), r)
-  | Ipure.BagDiff (e1,e2,l)->
-			let ne1,np1 = float_out_exp_min_max e1 in
-			let ne2,np2 = float_out_exp_min_max e2 in
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), List.rev_append l1 l2)) None np1 in
+			(Ipure.BagIntersect (ne1, l), r)
+  | Ipure.BagDiff (e1, e2, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
 			let r = match (np1, np2) with
 					| None, None -> None
 					| Some p, None -> Some p
 					| None, Some p -> Some p
-					| Some p1, Some p2 -> Some (Ipure.And (p1,p2,l))in
-			(Ipure.BagDiff (ne1,ne2,l),r) 
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2)) in
+			(Ipure.BagDiff (ne1, ne2, l), r) 
 
-and float_out_pure_min_max (p : Ipure.formula) :Ipure.formula =
+and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		
-		let rec float_out_b_formula_min_max (b: Ipure.b_formula):Ipure.formula = match b with
+		let add_exists (t: Ipure.formula)(np1: (Ipure.formula * (string list))option)(np2: (Ipure.formula * (string list))option) l: Ipure.formula = 
+			let r, ev = match np1 with
+							| None -> (t,[])
+							| Some (p1, ev1) -> (Ipure.And (t, p1, l), ev1) in
+						let r, ev2 = match np2 with 
+							| None -> (r, ev)
+							| Some (p1, ev1) -> (Ipure.And(r, p1, l), (List.rev_append ev1 ev)) in List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, l))) r ev2 in
+							
+				
+		let rec float_out_b_formula_min_max (b: Ipure.b_formula): Ipure.formula = match b with
 			| Ipure.BConst _ -> Ipure.BForm b
 		  | Ipure.BVar _ -> Ipure.BForm b
-		  | Ipure.Lt (e1,e2,l) ->
+		  | Ipure.Lt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Lt (ne1,ne2,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
-		  | Ipure.Lte (e1,e2,l) ->
+						let t = Ipure.BForm (Ipure.Lt (ne1, ne2, l)) in
+						add_exists t np1 np2 l
+		  | Ipure.Lte (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Lte (ne1,ne2,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
-		  | Ipure.Gt (e1,e2,l) ->
+						let t = Ipure.BForm (Ipure.Lte (ne1, ne2, l)) in
+						add_exists t np1 np2 l
+		  | Ipure.Gt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Gt (ne1,ne2,l)) in
-							let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
-		  | Ipure.Gte (e1,e2,l) ->
+						let t = Ipure.BForm (Ipure.Gt (ne1, ne2, l)) in
+						add_exists t np1 np2 l
+		  | Ipure.Gte (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Gte (ne1,ne2,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
-		  | Ipure.Eq (e1,e2,l) ->
+						let t = Ipure.BForm (Ipure.Gte (ne1, ne2, l)) in
+						add_exists t np1 np2 l
+		  | Ipure.Eq (e1, e2, l) ->
+						let r = match e1 with
+							| Ipure.Min(v1, v2, v3) -> let r2 = match e2 with
+																	| Ipure.Null _
+																	| Ipure.IConst _
+																	| Ipure.Var _ ->
+																			 let ne1 , np1 = float_out_exp_min_max v1 in
+																			 let ne2 , np2 = float_out_exp_min_max v2 in
+																			 let t = Ipure.BForm(Ipure.EqMin(e2, ne1, ne2, l)) in
+																			 add_exists t np1 np2 l
+																	| _ -> 
+																			 let ne1, np1 = float_out_exp_min_max e1 in
+																			 let ne2, np2 = float_out_exp_min_max e2 in
+																			 let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+																			 add_exists t np1 np2 l  in r2
+							| Ipure.Max(v1, v2, v3) -> let r2 = match e2 with
+																						| Ipure.Null _
+																						| Ipure.IConst _
+																						| Ipure.Var _ ->
+																								 let ne1 , np1 = float_out_exp_min_max v1 in
+																								 let ne2 , np2 = float_out_exp_min_max v2 in
+																								 let t = Ipure.BForm(Ipure.EqMax(e2, ne1, ne2, l)) in
+																								 add_exists t np1 np2 l
+																						| _ -> 
+																							let ne1, np1 = float_out_exp_min_max e1 in
+																							let ne2, np2 = float_out_exp_min_max e2 in
+																							let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+																							add_exists t np1 np2 l 
+																			in r2
+							| Ipure.Null _
+							| Ipure.IConst _
+							| Ipure.Var _ -> let r2 = match e2 with
+																					| Ipure.Min (v1, v2, v3) ->
+																						 	 let ne1 , np1 = float_out_exp_min_max v1 in
+																							 let ne2 , np2 = float_out_exp_min_max v2 in
+																							 let t = Ipure.BForm(Ipure.EqMin(e1, ne1, ne2, l)) in
+																							 add_exists t np1 np2 l
+																					| Ipure.Max (v1, v2, v3) ->
+																							 let ne1 , np1 = float_out_exp_min_max v1 in
+																							 let ne2 , np2 = float_out_exp_min_max v2 in
+																							 let t = Ipure.BForm(Ipure.EqMax(e1, ne1, ne2, l)) in
+																							 add_exists t np1 np2 l
+																					| _ -> 
+																						let ne1, np1 = float_out_exp_min_max e1 in
+																						let ne2, np2 = float_out_exp_min_max e2 in
+																						let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+																						add_exists t np1 np2 l 
+																in r2
+							| _ ->
+									let ne1, np1 = float_out_exp_min_max e1 in
+									let ne2, np2 = float_out_exp_min_max e2 in
+									let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+									add_exists t np1 np2 l 
+							in r
+		  | Ipure.Neq (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Eq (ne1,ne2,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
-		  | Ipure.Neq (e1,e2,l) ->
-						let ne1, np1 = float_out_exp_min_max e1 in
-						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Neq (ne1,ne2,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
-		  | Ipure.EqMax (e1,e2,e3,l) ->
+						let t = Ipure.BForm (Ipure.Neq (ne1, ne2, l)) in
+						add_exists t np1 np2 l
+		  | Ipure.EqMax (e1, e2, e3, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
 						let ne3, np3 = float_out_exp_min_max e3 in
-						let t = Ipure.BForm (Ipure.EqMax (ne1,ne2,ne3,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in
+						let t = Ipure.BForm (Ipure.EqMax (ne1, ne2, ne3, l)) in
+						let t = add_exists t np1 np2 l in
 						let r = match np3 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in  r
-		  | Ipure.EqMin (e1,e2,e3,l) ->
+							| None -> t
+							| Some (p1, l1) -> List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, l))) (Ipure.And(t, p1, l)) l1 in r
+		  | Ipure.EqMin (e1, e2, e3, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
 						let ne3, np3 = float_out_exp_min_max e3 in
-						let t = Ipure.BForm (Ipure.EqMin (ne1,ne2,ne3,l)) in
-						let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in
+						let t = Ipure.BForm (Ipure.EqMin (ne1, ne2, ne3, l)) in
+						let t = add_exists t np1 np2 l in
 						let r = match np3 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in  r
-		  | Ipure.BagIn (v,e,l)-> 
+							| None -> t
+							| Some (p1, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, l)) (Ipure.And(t, p1, l)) l1 in r
+		  | Ipure.BagIn (v, e, l) -> 
 							let ne1, np1 = float_out_exp_min_max e in
 							let r = match np1 with
-								| None -> Ipure.BForm (Ipure.BagIn(v,ne1,l))
-								| Some r -> Ipure.And(Ipure.BForm (Ipure.BagIn(v,ne1,l)), r, l) in r 
-		  | Ipure.BagNotIn (v,e,l)-> 
+								| None -> Ipure.BForm (Ipure.BagIn(v, ne1, l))
+								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l)), r, l)) l1 in r 
+		  | Ipure.BagNotIn (v, e, l) -> 
 							let ne1, np1 = float_out_exp_min_max e in
 							let r = match np1 with
-								| None -> Ipure.BForm (Ipure.BagNotIn(v,ne1,l))
-								| Some r -> Ipure.And(Ipure.BForm (Ipure.BagNotIn(v,ne1,l)), r, l) in r
-		  | Ipure.BagSub (e1,e2,l) ->
+								| None -> Ipure.BForm (Ipure.BagNotIn(v, ne1, l))
+								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l)), r, l)) l1 in r
+		  | Ipure.BagSub (e1, e2, l) ->
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.BagSub (ne1,ne2,l)) in
-					let r = match np1 with
-							| None -> t
-							| Some p1-> Ipure.And (t,p1,l) in
-						let r = match np2 with 
-							| None -> r
-							| Some p1 -> Ipure.And(r,p1,l) in r
+					let t = Ipure.BForm (Ipure.BagSub (ne1, ne2, l)) in
+					add_exists t np1 np2 l
 		  | Ipure.BagMin _ -> Ipure.BForm b
 		  | Ipure.BagMax _ -> Ipure.BForm b	
-			in
-		 
+			in		 
 		match p with
 			| Ipure.BForm b -> (float_out_b_formula_min_max b)
-  		| Ipure.And (f1,f2,l) -> Ipure.And((float_out_pure_min_max f1),(float_out_pure_min_max f2),l)
-  		| Ipure.Or (f1,f2,l) -> Ipure.Or((float_out_pure_min_max f1),(float_out_pure_min_max f2),l)
-  		| Ipure.Not (f1,l) -> Ipure.Not((float_out_pure_min_max f1),l)
-  		| Ipure.Forall (v,f1,l) -> Ipure.Forall (v,(float_out_pure_min_max f1),l)
-  		| Ipure.Exists (v,f1,l) -> Ipure.Exists (v,(float_out_pure_min_max f1),l)
+  		| Ipure.And (f1, f2, l) -> Ipure.And((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
+  		| Ipure.Or (f1, f2, l) -> Ipure.Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
+  		| Ipure.Not (f1, l) -> Ipure.Not((float_out_pure_min_max f1), l)
+  		| Ipure.Forall (v, f1, l) -> Ipure.Forall (v, (float_out_pure_min_max f1), l)
+  		| Ipure.Exists (v, f1, l) -> Ipure.Exists (v, (float_out_pure_min_max f1), l)
 		
 
 and float_out_heap_min_max (h : Iformula.h_formula) :
@@ -4159,47 +4135,40 @@ and float_out_heap_min_max (h : Iformula.h_formula) :
               Iformula.h_formula_star_pos = l;
             }),
          np)
-  | Iformula.HeapNode h1 ->
+  | Iformula.HeapNode h1->
+		  let args = h1.Iformula.h_formula_heap_arguments in
+			let l = h1.Iformula.h_formula_heap_pos in
       let nl, new_p =
-        List.split
-          (List.map
-             (fun d -> float_out_exp_min_max d)
-             h1.Iformula.h_formula_heap_arguments) in
-      let np =
-        List.fold_left
-          (fun a c ->
-             match (a, c) with
-             | (None, None) -> None
-             | (Some e, None) -> a
-             | (None, Some e) -> c
-             | (Some e1, Some e2) ->
-                 Some (Ipure.And (e1, e2, h1.Iformula.h_formula_heap_pos)))
-          None new_p
-      in
-        ((Iformula.HeapNode
-            { (h1) with Iformula.h_formula_heap_arguments = nl; }),
-         np)
+				List.fold_left
+             (fun (a, c) d -> 
+	        match d with
+		| Ipure.Null _ 
+		| Ipure.IConst _
+		| Ipure.Var _ -> (d:: a, c)
+		| _ -> 
+				let new_name = fresh_var_name "ptr" l.Lexing.pos_lnum in 
+				let nv = Ipure.Var((new_name, Unprimed), l) in
+				(nv:: a, match c with
+												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
+												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l)))), s, l)))) ([], None) args in
+        ((Iformula.HeapNode { h1 with Iformula.h_formula_heap_arguments = nl;}), new_p)
   | Iformula.HeapNode2 h1 ->
-      let (nl, np) =
-        List.split
-          (List.map
-             (fun (i, d) ->
-                let (ne, np) = float_out_exp_min_max d in ((i, ne), np))
-             h1.Iformula.h_formula_heap2_arguments) in
-      let np =
-        List.fold_left
-          (fun a c ->
-             match (a, c) with
-             | (None, None) -> None
-             | (Some e, None) -> a
-             | (None, Some e) -> c
-             | (Some e1, Some e2) ->
-                 Some (Ipure.And (e1, e2, h1.Iformula.h_formula_heap2_pos)))
-          None np
-      in
-        ((Iformula.HeapNode2
-            { (h1) with Iformula.h_formula_heap2_arguments = nl; }),
-         np)
+			let args = h1.Iformula.h_formula_heap2_arguments in
+			let l = h1.Iformula.h_formula_heap2_pos in
+      let nl, new_p =
+				List.fold_left
+             (fun (a, c) (d1,d2) -> 
+	        match d2 with
+		| Ipure.Null _ 
+		| Ipure.IConst _
+		| Ipure.Var _ -> ((d1,d2):: a, c)
+		| _ -> 
+				let new_name = fresh_var_name "ptr" l.Lexing.pos_lnum in 
+				let nv = Ipure.Var((new_name, Unprimed), l) in
+				((d1,nv):: a, match c with
+												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) )
+												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) ), s, l)))) ([], None) args in
+        ((Iformula.HeapNode2 { h1 with Iformula.h_formula_heap2_arguments = nl;}), new_p)
   | Iformula.HTrue -> (h, None)
   | Iformula.HFalse -> (h, None)
 
@@ -4220,7 +4189,7 @@ and float_out_min_max (f : Iformula.formula) : Iformula.formula =
             Iformula.formula_base_pure =
               (match nhpf with
                | None -> np
-               | Some e1-> Ipure.And (np, e1, l));
+               | Some e1 -> Ipure.And (np, e1, l));
           }
   | Iformula.Exists
       {
@@ -4230,7 +4199,7 @@ and float_out_min_max (f : Iformula.formula) : Iformula.formula =
         Iformula.formula_exists_pos = l
       } ->
       let (nh, nhpf) = float_out_heap_min_max h0 in
-      let np  = float_out_pure_min_max p0 in
+      let np = float_out_pure_min_max p0 in
         Iformula.Exists
           {
             Iformula.formula_exists_qvars = qv;
@@ -4238,7 +4207,7 @@ and float_out_min_max (f : Iformula.formula) : Iformula.formula =
             Iformula.formula_exists_pure =
               (match nhpf with
                | None -> np
-               | Some e1 ->(Ipure.And (np, e1, l)));
+               | Some e1 -> (Ipure.And (np, e1, l)));
             Iformula.formula_exists_pos = l;
           }
   | Iformula.Or
@@ -4253,4 +4222,4 @@ and float_out_min_max (f : Iformula.formula) : Iformula.formula =
           Iformula.formula_or_f2 = float_out_min_max f2;
           Iformula.formula_or_pos = l;
         }
-  
+				
