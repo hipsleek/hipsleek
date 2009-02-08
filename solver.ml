@@ -720,7 +720,9 @@ and split_universal (f0 : CP.formula) (evars : CP.spec_var list) (vvars : CP.spe
   let conseq_fv = CP.fv to_conseq in
   let instantiate = List.filter (fun v -> List.mem v evars) conseq_fv in
   let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f, pos)) to_conseq instantiate in
-  let to_ante = CP.And (to_ante, wrapped_to_conseq, no_pos) in
+  let to_ante =
+    if CP.fv wrapped_to_conseq <> [] then CP.And (to_ante, wrapped_to_conseq, no_pos) else to_ante
+  in
   (*t evars = explicitly_quantified @ evars in*)
   Debug.devel_pprint ("split_universal: evars: "
 						^ (String.concat ", "
