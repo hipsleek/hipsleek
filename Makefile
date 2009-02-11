@@ -19,7 +19,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip hip.opt sleek sleek.opt prove prove.opt
+all: hip hip.opt sleek sleek.opt prover prover.opt
 
 sparser.cmo sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -124,11 +124,11 @@ hip: $(MAIN_FILES)
 hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt hip.opt
 
-prove: $(PROVE_FILES)
+prover: $(PROVE_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
-prove.opt: $(PROVE_FILES:*.cmo=*.cmx)
-	make -f Makefile.opt prove.opt
+prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
+	make -f Makefile.opt prover.opt
 	
 sleekc:
 	make clean; make sleek 
@@ -197,7 +197,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prove prove.opt *~ oo oo.exe
+	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt *~ oo oo.exe
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

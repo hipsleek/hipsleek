@@ -27,8 +27,26 @@ module Netprover = struct
 	let use_pipe = ref false
 	let in_ch = ref stdin
 	let out_ch = ref stdout
-	
+  
+  let start_prover_process () = 
+    let is_running cmd =  
+      let ch = Unix.open_process_in ("ps -u$USER -f |grep '"^cmd^"'") in
+      let count = ref 0 in
+      (try
+	      while !count < 2 do 
+	          let _ = input_line ch in
+	         incr count
+	      done;
+      with End_of_file -> ());
+      !count >= 2
+    in 
+(*    let cmd = "prover --dpipe 1>prove.log 2>prove.log" in*)
+    let cmd = "prover --dpipe" in
+    if is_running cmd = false then
+      ignore(Unix.open_process_in cmd)
+    
 	let set_use_pipe pipe_name =
+    if pipe_name = "" then start_prover_process ();
 		external_prover := true;
 		use_pipe := true;
 		let i, o = Net.Pipe.init_client pipe_name in
@@ -41,18 +59,16 @@ module Netprover = struct
 		in_ch := i; out_ch := o
 	
 	let call_prover (data : prove_type) =
-		let _ = Net.write !out_ch ([!prover_arg], data) in
-		match Net.read !in_ch with
-		| Some result_str ->
+		let _ = Net.write_job !out_ch 0 !prover_arg data in
+		let seq, result_str = Net.read_result !in_ch in
 				Net.from_string result_str
-		| None -> failwith "Call prover error!!"
 end
 
 let set_tp tp_str =
-  prover_arg := tp_str;
+  prover_arg := tp_str;  
   if tp_str = "omega" then
 	tp := OmegaCalc
-  else if tp_str = "cvcl" then
+  else if tp_str = "cvcl" then 
 	tp := CvcLite
   else if tp_str = "co" then
 	tp := CO

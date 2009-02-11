@@ -18,7 +18,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip.opt sleek.opt prove.opt
+all: hip.opt sleek.opt prover.opt
 
 sparser.cmx sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -117,7 +117,7 @@ PROVE_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
 	prove.cmx
 
-prove.opt: $(PROVE_FILES)
+prover.opt: $(PROVE_FILES)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES)
 # ------------------------------------------------------------
 # Common rules
