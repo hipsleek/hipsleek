@@ -3103,6 +3103,7 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
   | IP.Forall ((v, p), f, pos) ->
       let pf = trans_pure_formula f stab in
       let v_type =
+				try 
         let v_info = H.find stab v
         in
           (match v_info.sv_info_kind with
@@ -3112,11 +3113,17 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
                  {
                    Err.error_loc = pos;
                    Err.error_text = "couldn't infer type for " ^ v;
-                 }) in
+                 })
+				with Not_found -> Err.report_error
+                 {
+                   Err.error_loc = pos;
+                   Err.error_text = "couldn't infer type for " ^ v;
+                 } in
       let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf pos
   | IP.Exists ((v, p), f, pos) ->
       let pf = trans_pure_formula f stab in
       let v_type =
+				try
         let v_info = H.find stab v
         in
           (match v_info.sv_info_kind with
@@ -3126,7 +3133,13 @@ and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
                  {
                    Err.error_loc = pos;
                    Err.error_text = "couldn't infer type for " ^ v;
-                 }) in
+                 })
+				with Not_found ->  
+					Err.report_error
+                 {
+                   Err.error_loc = pos;
+                   Err.error_text = "couldn't infer type for " ^ v;
+                 } in
       let sv = CP.SpecVar (v_type, v, p) in CP.mkExists [ sv ] pf pos
 
 and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =

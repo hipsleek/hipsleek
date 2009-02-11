@@ -152,7 +152,10 @@ let process_lemma ldef =
 let process_print_command pcmd0 = match pcmd0 with
   | PVar pvar ->
 	  let stab = H.create 103 in
-	  let mf = get_var pvar in
+	  let mf = try get_var pvar with Not_found->  Error.report_error {
+                   Error.error_loc = no_pos;
+                   Error.error_text = "couldn't find " ^ pvar;
+                 }in
 	  let pf = meta_to_formula mf false [] stab in
 		print_string ((Cprinter.string_of_formula pf) ^ "\n")
   | PCmd pcmd -> 
