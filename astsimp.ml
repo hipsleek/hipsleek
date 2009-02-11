@@ -2814,7 +2814,9 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
     if quantify || !Globals.anon_exist
     then convert_anonym_to_exist f1
     else f1
-  in trans_formula1 prog quantify fvars f2 stab
+  in 
+		trans_formula1 prog quantify fvars f2 stab 
+
 
 and trans_formula1 prog quantify fvars f0 stab : CF.formula =
   match f0 with
@@ -2853,6 +2855,7 @@ and trans_formula1 prog quantify fvars f0 stab : CF.formula =
       (collect_type_info_pure p stab;
        collect_type_info_heap prog h stab;
        let helper1 (ve, pe) stab =
+				try
          let ve_info = H.find stab ve
          in
            (match ve_info.sv_info_kind with
@@ -2862,7 +2865,14 @@ and trans_formula1 prog quantify fvars f0 stab : CF.formula =
                   {
                     Err.error_loc = pos;
                     Err.error_text = "couldn't infer type for " ^ ve;
-                  }) in
+                  })
+				with Not_found ->   
+					Err.report_error
+                  {
+                    Err.error_loc = pos;
+                    Err.error_text = "couldn't infer type for " ^ ve^", could it be an unused var?";
+                  }			
+			 in
        let f1 =
          IF.Base
            {
@@ -2872,8 +2882,7 @@ and trans_formula1 prog quantify fvars f0 stab : CF.formula =
            } in
        let ch = linearize_formula prog quantify fvars f1 stab in
        let qsvars = List.map (fun qv -> helper1 qv stab) qvars in
-       let ch = CF.push_exists qsvars ch
-       in
+       let ch = CF.push_exists qsvars ch in
          (if quantify
           then
             (let tmp_stab = H.create 103 in

@@ -98,7 +98,7 @@ let process_pred_def pdef =
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
 	| MetaFormCF mf -> mf
   | MetaForm mf ->
-	  AS.trans_formula iprog quant fv_idents mf stab
+		AS.trans_formula iprog quant fv_idents mf stab
   | MetaVar mvar -> begin
 	  try 
 		let mf = get_var mvar in
@@ -138,7 +138,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	  else
 		print_string ("Valid.\n")
   with
-	| _ -> ()
+	| _ -> (print_string "exception in entail check\n")
 		
 let process_capture_residue (lvar : ident) = 
 	let flist = List.map CF.formula_of_context !residues in

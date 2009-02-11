@@ -79,7 +79,8 @@ let terminator = '.'
 let parse_file (parse) (source_file : string) =
 	try
 		let cmd = parse source_file in 
-		let _ = (List.map (fun c -> (match c with
+		let _ = (List.map (fun c -> (
+							match c with
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq

@@ -12,44 +12,53 @@ let test_number = ref 0
 let log_all_flag = ref false
 let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
-let omega_of_spec_var (sv : spec_var) = match sv with
-  | SpecVar (_, v, p) -> v ^ (if is_primed sv then Oclexer.primed_str else "")
+let omega_of_spec_var (sv : spec_var):string = match sv with
+  | SpecVar (_, v, p) -> 
+		let ln = (String.length v) in
+		let r =  
+				if (ln<15) then v 
+						else  
+						match (List.filter (fun (a,b)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
+								| []-> let r_c = String.sub v (ln-15)  15 in
+											 let r_c = if((String.get r_c 0)=='_') then String.sub r_c 1 ((String.length r_c)-1) else r_c in
+											begin
+											Ocparser.subst_lst := (r_c,v)::!Ocparser.subst_lst; 
+											r_c end
+					| (a,b)::h->  a
+						in 
+						r ^ (if is_primed sv then Oclexer.primed_str else "")
+		
+	
 
 let rec omega_of_exp e0 = match e0 with
   | Null _ -> "0"
   | Var (sv, _) -> omega_of_spec_var sv
-  | IConst (i, _) -> string_of_int i
-  | Add (a1, a2, _) ->  (omega_of_exp a1) ^ " + " ^ (omega_of_exp a2)
-  | Subtract (a1, a2, _) ->  (omega_of_exp a1) ^ " - " ^ (omega_of_exp a2)
-  | Mult (c, a, _) -> (string_of_int c) ^ "(" ^ (omega_of_exp a) ^ ")"
+  | IConst (i, _) -> string_of_int i 
+  | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
+  | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^(omega_of_exp a2)
+  | Mult (c, a, _) ->  (string_of_int c) ^ "(" ^ (omega_of_exp a) ^ ")"
   | Max _
   | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
     | _ -> failwith ("Omega.omega_of_exp: bag constraint")
 
 and omega_of_b_formula b = match b with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
-  | BVar (bv, _) -> (omega_of_spec_var bv) ^ " > 0"
-  | Lt (a1, a2, _) -> (omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
+  | BVar (bv, _) ->  (omega_of_spec_var bv) ^ " > 0"
+  | Lt (a1, a2, _) ->(omega_of_exp a1) ^ " < " ^ (omega_of_exp a2)
   | Lte (a1, a2, _) -> (omega_of_exp a1) ^ " <= " ^ (omega_of_exp a2)
-  | Gt (a1, a2, _) -> (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
+  | Gt (a1, a2, _) ->  (omega_of_exp a1) ^ " > " ^ (omega_of_exp a2)
   | Gte (a1, a2, _) -> (omega_of_exp a1) ^ " >= " ^ (omega_of_exp a2)
   | Eq (a1, a2, _) -> begin
-        if is_null a2 then
-        (omega_of_exp a1) ^ " < 1"
-        else if is_null a1 then
-        (omega_of_exp a2) ^ " < 1"
-        else
-      (omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
+        if is_null a2 then	(omega_of_exp a1)^ " < 1"
+        else if is_null a1 then (omega_of_exp a2) ^ " < 1"
+        else  				(omega_of_exp a1) ^ " = " ^ (omega_of_exp a2)
   end
   | Neq (a1, a2, _) -> begin
-
         if is_null a2 then
-        (omega_of_exp a1) ^ " > 0"
-        else if is_null a1 then
-        (omega_of_exp a2) ^ " > 0"
-        else
-
-      (omega_of_exp a1) ^ " != " ^ (omega_of_exp a2)
+        				(omega_of_exp a1) ^ " > 0"
+        else if is_null a1 then						
+        				(omega_of_exp a2) ^ " > 0"
+        else		(omega_of_exp a1)^ " != " ^ (omega_of_exp a2)
     end
   | EqMax (a1, a2, a3, _) ->
       let a1str = omega_of_exp a1 in
@@ -58,18 +67,18 @@ and omega_of_b_formula b = match b with
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))"
   | EqMin (a1, a2, a3, _) ->
-      let a1str = omega_of_exp a1 in
-      let a2str = omega_of_exp a2 in
-      let a3str = omega_of_exp a3 in
+      let a1str = omega_of_exp a1  in
+      let a2str = omega_of_exp a2  in
+      let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | _ -> failwith ("Omega.omega_of_exp: bag constraint")
 
-and omega_of_formula f = match f with
-  | BForm b -> "(" ^ (omega_of_b_formula b) ^ ")"
-  | And (p1, p2, _) -> "(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2) ^ ")"
-  | Or (p1, p2, _) -> "(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
-  | Not (p, _) -> " (not (" ^ (omega_of_formula p) ^ ")) "
+and omega_of_formula f  = match f with
+  | BForm b -> 		"(" ^ (omega_of_b_formula b) ^ ")"
+  | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
+  | Or (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
+  | Not (p, _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
   | Forall (sv, p, _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
   | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
@@ -110,7 +119,7 @@ let rec omega_of_var_list (vars : ident list) : string = match vars with
 
 let get_vars_formula (p : formula) =
   let svars = fv p in
-        List.map omega_of_spec_var svars
+    List.map omega_of_spec_var svars
 
 (*
   Use Omega Calculator to test if a formula is valid -- some other
@@ -122,8 +131,9 @@ let is_sat (pe : formula) : bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
+		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
-        let pvars = get_vars_formula pe in
+    let pvars = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups pvars) in
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
@@ -196,6 +206,7 @@ let is_sat (pe : formula) : bool =
 
 let is_valid (pe : formula) : bool =
   begin
+		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups (get_vars_formula pe)) in
     let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
@@ -277,6 +288,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 
 let simplify (pe : formula) : formula =
   begin
+		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -305,6 +317,7 @@ let simplify (pe : formula) : formula =
 
 let pairwisecheck (pe : formula) : formula =
   begin
+		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -332,6 +345,7 @@ let pairwisecheck (pe : formula) : formula =
 
 let hull (pe : formula) : formula =
   begin
+		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -359,10 +373,12 @@ let hull (pe : formula) : formula =
 
 let gist (pe1 : formula) (pe2 : formula) : formula =
   begin
+		Ocparser.subst_lst := [];
     let fstr1 = omega_of_formula pe1 in
         let fstr2 = omega_of_formula pe2 in
         let vars_list = remove_dups (fv pe1 @ fv pe2) in
-    let vstr = String.concat ", " (List.map omega_of_spec_var vars_list) in
+				let l1 = List.map omega_of_spec_var vars_list  in
+    let vstr = String.concat ", " l1  in
     let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
             ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Util.new_line_str
         in

@@ -18,5 +18,5 @@ let add_error e = all_errors := e :: !all_errors
 let report_error e =
   print_string ("\nFile \"" ^ e.error_loc.Lexing.pos_fname 
 				^ "\", line " ^ (string_of_int e.error_loc.Lexing.pos_lnum) ^ ": "
-				^ e.error_text ^ "\n");
+				^ e.error_text ^ "\n");flush stdout;
   failwith "Error detected"
