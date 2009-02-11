@@ -26,6 +26,7 @@ clean:
 	$(OCAMLBUILD) -clean 
 	rm -f prover prover.opt hip hip.opt
 	rm -f *.i_pipe *.o_pipe result.txt.* input.*.* allinput.*
+	rm -f sparser.ml
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

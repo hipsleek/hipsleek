@@ -59,10 +59,10 @@ module Netprover = struct
 		in_ch := i; out_ch := o
 	
 	let call_prover (data : prove_type) =
-		let _ = Net.write_job !out_ch 0 !prover_arg data in
-		let seq, result_str = Net.read_result !in_ch in
-				Net.from_string result_str
-end
+		let _ = Net.IO.write_job !out_ch 0 !prover_arg data in
+		let seq, result_str = Net.IO.read_result !in_ch in
+				 Net.IO.from_string result_str
+end 
 
 let set_tp tp_str =
   prover_arg := tp_str;  

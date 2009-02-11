@@ -42,7 +42,8 @@ module Utils = struct
         | Tpdispatcher.Imply (f, g) -> "Imply" in
       let s = Printf.sprintf "\nTime used: %2.3f, prover: %s type: %s" time prover_arg prove_type in
       output_string ch s;
-      flush ch
+      flush ch;
+      print_string " logged."
     end
   
   let kill_child parent_str =
@@ -55,9 +56,9 @@ let do_dispatch prover formula =
   Tpdispatcher.set_tp prover;
   let result =
     match formula with
-    | Tpdispatcher.Sat f -> Net.to_string (Tpdispatcher.is_sat f)
-    | Tpdispatcher.Simplify f -> Net.to_string (Tpdispatcher.simplify f)
-    | Tpdispatcher.Imply (f, g) -> Net.to_string (Tpdispatcher.imply f g)
+    | Tpdispatcher.Sat f -> Net.IO.to_string (Tpdispatcher.is_sat f)
+    | Tpdispatcher.Simplify f -> Net.IO.to_string (Tpdispatcher.simplify f)
+    | Tpdispatcher.Imply (f, g) -> Net.IO.to_string (Tpdispatcher.imply f g)
   in
   result
 
@@ -82,6 +83,8 @@ let expand prover_arg =
     !provers_list
   end
 
+(* Spawn itself in slave mode, connecting to the current process via fresh *)
+(* pipes. Return the list of pipe names and IO channels                    *)
 let spawn_slaves nslaves =
   (* parallel mode with num_slaves workers *)
   trace ("spawning slaves" ^ (string_of_int nslaves));
@@ -101,7 +104,9 @@ let spawn_slaves nslaves =
   let pipe_ios = Array.map Net.Pipe.init_client pipe_names in
   (Array.to_list pipe_names, Array.to_list pipe_ios)
 
+(* Terminate other unused running provers. *)
 let kill_others () =
+  (* TODO kill the right ones *)
   let patterns = ["'oc input.oc'"; "'/usr/bin/mona -q'"] in
   let cmd = "pkill -9 -u" ^ (Unix.getenv("LOGNAME")) ^ " -f " in
   List.iter (fun s -> ignore(Sys.command (cmd ^ s))) patterns
@@ -115,26 +120,27 @@ let do_par_or channels prover_lst data =
   incr job_seq_no;
   let wait_fds =
     List.map2 (fun prover (ich, och) ->
-            Net.write_job och !job_seq_no prover data;
+            Net.IO.write_job och !job_seq_no prover data;
             Unix.descr_of_in_channel ich)
       prover_lst channels in
   
   show_progress " wait result";
-  let result = ref "" in
+  let result = ref "" in 
   while !result = "" do
     show_progress ".";
     let (lst, _, _) = Unix.select wait_fds [] [] 5.0 in
     if lst <> [] then begin
       List.iter (fun fd ->
-              let seqno, res = Net.read_result (Unix.in_channel_of_descr fd) in
+              let seqno, res = Net.IO.read_result (Unix.in_channel_of_descr fd) in
               if seqno = !job_seq_no && !result = "" then begin
                 result := res;
-                
-(*                show_progress " got from: ";                                       *)
-(*                let i = ref (- 1) in                                               *)
-(*                List.iter (fun c -> incr i; if c = fd then print_int !i ) wait_fds;*)
-                
-                (* kill_others (); *)
+(*                show_progress " got from: ";                          *)
+(*                let i = ref (- 1) in                                  *)
+(*                List.iter (fun c ->                                   *)
+(*                        incr i;                                       *)
+(*                        if c = fd then                                *)
+(*                          show_progress (string_of_int !i) ) wait_fds;*)
+                (* TODO kill other provers process *)                
               end) lst;
     end
   done;
@@ -148,11 +154,11 @@ let server_process in_ch out_ch =
     Utils.log_str "\n\n======= new session =======\n";
     if !is_slave then
       while true do
-        show_progress "\nwait job..";
-        let (seq_no, prover_arg, formula) = Net.read_job in_ch in
+        show_progress "\npipe:wait job..";
+        let (seq_no, prover_arg, formula) = Net.IO.read_job in_ch in
         show_progress " proving..";
         let result, time_used = Utils.time_used (do_dispatch prover_arg) formula in
-        Net.write_result out_ch seq_no result;
+        Net.IO.write_result out_ch seq_no result;
         
         Printf.printf " time used: %02.3f" time_used;
         Utils.log_info time_used prover_arg formula;
@@ -161,16 +167,18 @@ let server_process in_ch out_ch =
       let slave_pipe_names = ref [] and slave_channels = ref [] in
       try
         while true do
-          show_progress "\nwait job..";
-          let (seq_no, prover_arg, formula) = Net.read_job in_ch in
+          show_progress "\nsock: wait job..";
+          let (seq_no, prover_arg, formula) = Net.IO.read_job in_ch in
           let prover_list = expand prover_arg in
-          if !slave_pipe_names = [] then begin
+          
+          if !slave_pipe_names = [] then begin (* spawn slaves if they are not created yet *)
             let n, c = spawn_slaves (List.length prover_list) in
             slave_pipe_names := n; slave_channels := c;
           end;
+          
           let result, time_used = Utils.time_used (do_par_or !slave_channels prover_list) formula in
-          Net.write_result out_ch seq_no result;
-          Printf.printf " time used: %2.3f" time_used;
+          Net.IO.write_result out_ch seq_no result;
+          Printf.printf " time used: %02.3f" time_used;
           Utils.log_info time_used prover_arg formula;
         done;
       with e ->
@@ -184,7 +192,7 @@ let server_process in_ch out_ch =
     Utils.close_log ();
   with
   | End_of_file ->
-      trace "EOF. Done!";
+      print_string "EOF. Done!";
       Utils.close_log ();
       close_in in_ch;
       flush out_ch
@@ -196,38 +204,35 @@ let main () =
   let named_pipe = ref "" in
   Arg.parse [
     "--socket", Arg.String (fun s -> port := s; use_pipe := false), " <port>: start prove server at socket 'port' on local host";
-    "--dpipe", Arg.Unit (fun () -> named_pipe := ""), " use default pipe";
-    "--pipe", Arg.String (fun s -> named_pipe := s), " <name>: use pipe <name>";
-    (* "--nslave", Arg.Set_int num_slaves , "number of slaves"; *)
+    "--dpipe", Arg.Unit (fun () -> named_pipe := ""; is_slave := true), " use default pipe";
+    "--pipe", Arg.String (fun s -> named_pipe := s; is_slave := true), " <name>: use the named pipe";
     "--child", Arg.Set is_slave, "internal parameter, for child mode."
     ]
     (fun s -> ())
-    ("Usage: " ^ Sys.argv.(0) ^ " --socket [port] | --pipe [name]");
+    ("Usage: " ^ Sys.argv.(0) ^ " --socket [port] |  | --pipe [name]");
   
   (* daemonize the process *)
   if Unix.fork() > 0 then begin
     print_endline "Server daemon started.";
     exit 0 (* spawn a child and parent exits *)
   end else begin
-    ignore(Unix.setsid());
-    
-    (* if not !is_slave then begin (* && !num_slaves > 0*) (* spawn_slaves     *)
-    (* !num_slaves*) () end else begin is_slave := true; (* if there is no     *)
-    (* slaves, it is slave itself. *) end; *)
-    
+    ignore(Unix.setsid()); (* detach from terminal *)
     (* both slaves and manager need to start server to listen to jobs      *)
     (* while true do                                                       *)
     try
-      if !use_pipe then
+      if !use_pipe then begin
+        print_string "Pipe server.";
         Net.Pipe.init_server !named_pipe server_process
-      else
+      end else begin
+        print_string "Socket server.";
         Net.Socket.init_server !port server_process;
+      end
     with
     | End_of_file -> print_endline "END OF FILE"
     | Unix.Unix_error (err, _, _) ->
         print_endline (Unix.error_message err);
   end;
-  
+
 ;;
 
 main ()

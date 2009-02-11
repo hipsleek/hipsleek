@@ -1,50 +1,53 @@
 let debug = false
 let trace s = if debug then (prerr_endline ((string_of_int (Unix.getpid ()))^" - "^s); flush stderr) else ()
 
-let to_string data = Marshal.to_string data []
-
-let from_string s =
-  try
-    Marshal.from_string s 0
-  with e -> trace "Unmashaled failed"; raise e
-
-let input_len ch str len =
-  try
-    really_input ch str 0 len
-  with End_of_file -> trace "End of file!"
-  | e -> trace "Unmashaled failed";
-      trace (string_of_int len); raise e
-
-let read ch =
-	let data_len = input_binary_int ch in
-(*	trace ("read data len="^(string_of_int data_len));*)
-	if data_len > 0 then begin
-	  let data_str = String.create data_len in
-	  let _ = input_len ch data_str data_len in
-	  from_string data_str
-	end else begin
-	  failwith "Bad input data to Net!" 
-	end
-
-let read_job ch = read ch
-
-let read_result ch = read ch
-
-let write ch data =
-  let data_str = to_string data in
-  let data_len = String.length data_str in
-(*  trace ("write data len="^(string_of_int data_len));*)
-  output_binary_int ch data_len;
-  output ch data_str 0 data_len;
-  flush ch
-
-let write_job ch seqno prover_arg formula = 
-  write ch (seqno, prover_arg, formula) 
-
-let write_result ch seqno result = 
-  write ch (seqno, result) 
+(* marshalling data and format of in/out data. *)
+module IO = struct
+  let to_string data = Marshal.to_string data []
   
-    
+  let from_string s =
+    try
+      Marshal.from_string s 0
+    with e -> trace "Unmashaled failed"; raise e
+  
+  let input_len ch str len =
+    try
+      really_input ch str 0 len
+    with End_of_file -> trace "End of file!"
+    | e -> trace "Unmashaled failed";
+        trace (string_of_int len); raise e
+  
+  (* read data from channel, the format is: (4 bytes data length | data) *)
+  let read ch =
+    let data_len = input_binary_int ch in
+    (* trace ("read data len="^(string_of_int data_len)); *)
+    if data_len > 0 then begin
+      let data_str = String.create data_len in
+      let _ = input_len ch data_str data_len in
+      from_string data_str
+    end else begin
+      failwith "Bad input data to Net!"
+    end
+  
+  let read_job ch = read ch
+  
+  let read_result ch = read ch
+  
+  let write ch data =
+    let data_str = to_string data in
+    let data_len = String.length data_str in
+    (* trace ("write data len="^(string_of_int data_len)); *)
+    output_binary_int ch data_len;
+    output ch data_str 0 data_len;
+    flush ch
+  
+  let write_job ch seqno prover_arg formula =
+    write ch (seqno, prover_arg, formula)
+  
+  let write_result ch seqno result =
+    write ch (seqno, result)
+end
+
 module Pipe = struct
   let pipe_prove_in = ref ""
   let pipe_prove_out = ref ""
@@ -55,14 +58,14 @@ module Pipe = struct
     let s = if named_pipe = "" then (Unix.getenv "HOME") ^ "/" else named_pipe in
     pipe_prove_in := s^".i_pipe";
     pipe_prove_out := s^".o_pipe";
-    let mkpipe p = if Sys.file_exists p = false then 
-      try Unix.mkfifo p 0o666 with 
-      e -> print_string "\n\nFATAL: Cannot make pipe!!!!!!!!!!!!!!!!!\n"; exit 0;
-      in
+    let mkpipe p = if Sys.file_exists p = false then
+        try Unix.mkfifo p 0o666 with
+          e -> print_string "\n\nFATAL: Cannot make pipe!!!!!!!!!!!!!!!!!\n"; exit 0;
+    in
     mkpipe !pipe_prove_in;
     mkpipe !pipe_prove_out;
     ()
-   
+  
   let init_client named_pipe =
     set_pipe named_pipe;
     try
