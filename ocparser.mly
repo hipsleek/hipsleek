@@ -3,7 +3,7 @@
   open Cpure
 
   module Err = Error
-
+  let subst_lst = ref ([]:(string*string)list)
   let spec_var_of_string s = 
 	let n = String.length s in
 	  if String.get s (n-1) = '\'' then 
@@ -205,6 +205,10 @@ var_list_rec: cid { ([$1]) : (ident * primed) list }
 ;
 
 /* identifiers appearing in constraints */
-cid: ID { ($1, Unprimed) }
-| IDPRIMED { ($1, Primed) }
+cid: ID { match (List.filter (fun (a,b)->((String.compare $1 a)==0)) !subst_lst) with 
+					|  [] -> ($1, Unprimed)
+					| (a,b)::h-> (b,Unprimed) }
+| IDPRIMED { match (List.filter (fun (a,b)->((String.compare $1 a)==0)) !subst_lst) with 
+					|  [] -> ($1, Primed)
+					| (a,b)::h-> (b,Primed) }
 ;
