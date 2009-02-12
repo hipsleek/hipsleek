@@ -1,7 +1,7 @@
 OCAMLBUILD = ocamlbuild
 OB_FLAGS = -libs unix,str,graph
 
-all: byte native
+all: clean_mly byte native
 byte: hip prover  
 native: hip.opt prover.opt
 
@@ -27,6 +27,9 @@ clean:
 	rm -f prover prover.opt hip hip.opt
 	rm -f *.i_pipe *.o_pipe result.txt.* input.*.* allinput.*
 	rm -f sparser.ml
+
+clean_mly:
+	rm -f slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

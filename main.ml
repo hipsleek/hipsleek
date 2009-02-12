@@ -116,10 +116,11 @@ let process_cmd_line () = Arg.parse [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-v", Arg.Set Debug.debug_on, "Verbose");
-  ("--dpipe", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_pipe ""), " use external prover via default pipes");
-  ("--pipe", Arg.String Tpdispatcher.Netprover.set_use_pipe, " <name>: use external prover via the named pipe");
-  ("--dsocket", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_socket "loris-7:8888"), " <host:port>: use external prover via loris-7:8888");
-  ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, " <host:port>: use external prover via socket");
+  ("--dpipe", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_pipe ""), "use external prover via default pipes");
+  ("--pipe", Arg.String Tpdispatcher.Netprover.set_use_pipe, "<name>: use external prover via the named pipe");
+  ("--dsocket", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_socket "loris-7:8888"), "<host:port>: use external prover via loris-7:8888");
+  ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, "<host:port>: use external prover via socket");
+  ("--prover", Arg.String Tpdispatcher.set_tp, "<p,q,..> comma-separated list of provers to try in parallel");
 	] set_source_file usage_msg
 
 (******************************************)

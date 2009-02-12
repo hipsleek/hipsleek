@@ -21,6 +21,7 @@ let tp = ref OmegaCalc
 
 let prover_arg = ref "omega"
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
+(*type result_type = ResultBool of bool | ResultFormula of CP.formula *)
 let external_prover = ref false
 
 module Netprover = struct
@@ -59,9 +60,10 @@ module Netprover = struct
 		in_ch := i; out_ch := o
 	
 	let call_prover (data : prove_type) =
+    
 		let _ = Net.IO.write_job !out_ch 0 !prover_arg data in
-		let seq, result_str = Net.IO.read_result !in_ch in
-				 Net.IO.from_string result_str
+		let seq, result = Net.IO.read_result !in_ch in
+			Net.IO.from_string result 
 end 
 
 let set_tp tp_str =
