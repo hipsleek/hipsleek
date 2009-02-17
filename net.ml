@@ -1,4 +1,4 @@
-let debug = false
+let debug = true
 let trace s = if debug then (prerr_endline ((string_of_int (Unix.getpid ()))^" - "^s); flush stderr) else ()
 
 (* marshalling data and format of in/out data. *)
@@ -112,7 +112,7 @@ module Socket = struct
       let address = get_address server in
       let socket_address = Unix.ADDR_INET (address, port) in
       let res = Unix.open_connection socket_address in
-      print_string "..connected.";
+      print_string "..connected.\n";
       res
     with Unix.Unix_error(err, ctx1, ctx2) as exn ->
         Printf.printf "Unix error: %s, %s, %s\n" (Unix.error_message err) ctx1 ctx2;

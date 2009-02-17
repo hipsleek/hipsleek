@@ -1,4 +1,4 @@
-/* $Id: tools.c,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+/* $Id: tools.c,v 1.2 2009-02-17 08:55:22 chinwn Exp $
  * -------------------------------------------------------
  * Copyright (c) 1998-2002 Sebastian Kienzl <zap@riot.org>
  *           (c) 2002 Lee Hardy <lee@leeh.co.uk>

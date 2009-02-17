@@ -1,7 +1,7 @@
 /*  muh/src/dlink.c by fl
  *  Copyright (C) 2002 Lee Hardy <lee@leeh.co.uk>
  *
- *  $Id: dlink.c,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+ *  $Id: dlink.c,v 1.2 2009-02-17 08:55:21 chinwn Exp $
  */
 
 #include <stdlib.h>

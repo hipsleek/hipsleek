@@ -1,4 +1,4 @@
-## $Id: Makefile.am,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+## $Id: Makefile.am,v 1.2 2009-02-17 08:55:21 chinwn Exp $
 
 bin_SCRIPTS = muh-check muh-rotatelog
 data_DATA = muhrc

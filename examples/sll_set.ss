@@ -26,12 +26,14 @@ sll<n, sm, lg> == self = null & n = 0 //& sm <= lg
 
 sll1<S> == self = null & S = {}
 	or self::node<v, r> * r::sll1<S1>  & S = union(S1, {v}) & 
-	forall (x: (x notin S1 | v <= x)); // | is "or", not bounded quantification
+	forall (x: (x notin S1 | v <= x)) inv true; 
+   // | is "or", not bounded quantification 
 
 
 /* insert a number into a sorted list */
 node insert_int1(node x, int v)
 	requires x::sll1<S>
+	//ensures res::sll1<{v}>;
 	ensures res::sll1<S1> & S1 = union(S, {v}); 
 
 {
@@ -39,19 +41,23 @@ node insert_int1(node x, int v)
         node tmp_null = null;
 
 	if (x == null) {
+                dprint;
 		return new node(v, tmp_null);
 	}
 	else
 	{
+assume false;
+return x;
+/*
 		if (v <= x.val)
 			return new node(v, x);
 		else
 		{
-assume false;
 			tmp = x.next;
 			x.next = insert_int1(tmp, v);	
 			return x;
 		}
+*/
 	}
 }
 

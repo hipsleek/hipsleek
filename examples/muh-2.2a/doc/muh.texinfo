@@ -4,7 +4,7 @@
 @settitle Muh Manual
 @c %**end of header
 
-@comment $Id: muh.texinfo,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+@comment $Id: muh.texinfo,v 1.2 2009-02-17 08:55:21 chinwn Exp $
 
 @include version.texi
 

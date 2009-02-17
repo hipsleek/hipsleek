@@ -3,7 +3,7 @@
 # see muh-check on how to put this in your crontab
 # make sure this corresponds with your muhrc-settings
 #
-# $Id: muh-rotatelog,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+# $Id: muh-rotatelog,v 1.2 2009-02-17 08:55:21 chinwn Exp $
 #
 
 LOGDIR=$HOME/muh-logs

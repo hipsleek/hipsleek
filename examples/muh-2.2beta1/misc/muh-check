@@ -4,7 +4,7 @@
 # 0,10,20,30,40,50 * * * * /path/to/muh-check >/dev/null 2>&1
 # this will check for a running muh every 10 minutes
 #
-# $Id: muh-check,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+# $Id: muh-check,v 1.2 2009-02-17 08:55:21 chinwn Exp $
 #
 
 MUHBIN=muh
