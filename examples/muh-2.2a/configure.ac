@@ -1,4 +1,4 @@
-dnl $Id: configure.ac,v 1.1.1.1 2008-03-15 06:55:01 nguyenh2 Exp $
+dnl $Id: configure.ac,v 1.2 2009-02-17 08:55:21 chinwn Exp $
 
 AC_INIT
 AC_CONFIG_SRCDIR([src/muh.c])

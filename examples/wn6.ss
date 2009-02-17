@@ -6,8 +6,9 @@ data cell {
 pd<x,y> == self::cell<x> & y=2x inv y=2x;
 
 void test2(cell l)
- requires l::pd<x,y>
- ensures l::pd<x+1,y+2>;
+ requires l::pd<a,b>
+ ensures l::pd<a+1,b+2>;
+/*
 {
  int t;
  t=l.val;
@@ -15,6 +16,7 @@ void test2(cell l)
  l.val = t;
  dprint;
 }
+*/
 
 void main2()
 {
