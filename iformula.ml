@@ -16,11 +16,13 @@ type formula =
 
 and formula_base = { formula_base_heap : h_formula;
 					 formula_base_pure : P.formula;
+                     formula_base_branches : (branch_label * P.formula) list;
 					 formula_base_pos : loc }
 
 and formula_exists = { formula_exists_qvars : (ident * primed) list;
 					   formula_exists_heap : h_formula;
 					   formula_exists_pure : P.formula;
+                       formula_exists_branches : (branch_label * P.formula) list;
 					   formula_exists_pos : loc }
 
 and formula_or = { formula_or_f1 : formula;
@@ -59,9 +61,9 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 
 (* constructors *)
 
-let rec formula_of_heap h pos = mkBase h (P.mkTrue pos) pos
+let rec formula_of_heap h pos = mkBase h (P.mkTrue pos) [] pos
 
-and formula_of_pure p pos = mkBase HTrue p pos
+and formula_of_pure p pos = mkBase HTrue p [] pos
 
 and isConstFalse f0 = match f0 with
   | Base f -> begin
@@ -89,10 +91,12 @@ and isConstTrue f0 = match f0 with
 
 and mkTrue pos = Base { formula_base_heap = HTrue;
 						formula_base_pure = P.mkTrue pos;
+                        formula_base_branches = [];
 						formula_base_pos = pos }
 
 and mkFalse pos = Base { formula_base_heap = HFalse;
 						 formula_base_pure = P.mkFalse pos;
+                         formula_base_branches = [];
 						 formula_base_pos = pos }
 
 and mkOr f1 f2 pos =
@@ -104,7 +108,7 @@ and mkOr f1 f2 pos =
 			formula_or_f2 = f2;
 			formula_or_pos = pos }
 
-and mkBase (h : h_formula) (p : P.formula) pos = match h with
+and mkBase (h : h_formula) (p : P.formula) br pos = match h with
   | HFalse -> mkFalse pos
   | _ -> 
 	  if P.isConstFalse p then 
@@ -112,9 +116,10 @@ and mkBase (h : h_formula) (p : P.formula) pos = match h with
 	  else 
 		Base { formula_base_heap = h;
 			   formula_base_pure = p;
+               formula_base_branches = br;
 			   formula_base_pos = pos }
 
-and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) pos = match h with
+and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) br pos = match h with
   | HFalse -> mkFalse pos
   | _ ->
 	  if P.isConstFalse p then
@@ -123,6 +128,7 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) pos
 		Exists { formula_exists_qvars = qvars;
 				 formula_exists_heap = h;
 				 formula_exists_pure = p;
+                 formula_exists_branches = br;
 				 formula_exists_pos = pos }
 
 and mkStar f1 f2 pos = match f1 with
@@ -139,3 +145,13 @@ and pos_of_formula f0 = match f0 with
   | Base f -> f.formula_base_pos
   | Or f -> f.formula_or_pos
   | Exists f -> f.formula_exists_pos
+
+let replace_branches b = function
+  | Or f -> failwith "replace_branches doesn't expect an Or"
+  | Base f -> Base {f with formula_base_branches = b;}
+  | Exists f -> Exists {f with formula_exists_branches = b;}
+;;
+
+let flatten_branches p br =
+  List.fold_left (fun p (l, f) -> P.And (p, f,no_pos)) p br
+;;

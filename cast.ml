@@ -27,13 +27,14 @@ and data_decl = { data_name : ident;
 	
 and view_decl = { view_name : ident; 
 				  view_vars : P.spec_var list;
+				  view_labels : branch_label list;
 				  view_modes : mode list;
 				  mutable view_partially_bound_vars : bool list;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
 				  view_formula : F.formula;
-				  view_user_inv : P.formula;
-				  mutable view_x_formula : P.formula;
+				  view_user_inv : (P.formula * (branch_label * P.formula) list);
+				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
 				  mutable view_addr_vars : P.spec_var list }
 	
 and proc_decl = { proc_name : ident;

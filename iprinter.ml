@@ -383,7 +383,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant)                    (* incomplete *)
+                            (string_of_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
 ;;
 
 (* pretty printing for one parameter *) 

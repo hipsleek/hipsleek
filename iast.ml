@@ -33,9 +33,10 @@ and data_decl = { data_name : ident;
 and view_decl = { view_name : ident; 
 				  mutable view_data_name : ident;
 				  view_vars : ident list;
+				  view_labels : branch_label list;
 				  view_modes : mode list;
 				  mutable view_typed_vars : (CP.typ * ident) list;
-				  view_invariant : P.formula;
+				  view_invariant : (P.formula * (branch_label * P.formula) list);
 				  view_formula : F.formula }
 
 and enum_decl = { enum_name : ident;

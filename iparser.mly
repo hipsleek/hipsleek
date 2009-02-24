@@ -384,13 +384,29 @@ view_decl
 ;
 
 opt_inv
-  : { P.mkTrue no_pos }
-  | INV pure_constr { $2 }
+  : { (P.mkTrue no_pos, []) }
+  | INV pure_constr opt_branches { ($2, $3) }
 ;
+
+opt_branches
+  : { [] }
+  | AND OSQUARE branches CSQUARE { $3 }
+
+branches
+  : branch {[$1]}
+  | branch SEMICOLON branches { $1 :: $3 }
+
+opt_branch
+  : { "" }
+  | DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON { $2 }
+
+branch
+  : DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON pure_constr { ($2, $5) }
 
 view_header
   : IDENTIFIER LT opt_ann_cid_list GT {
 	let cids, anns = List.split $3 in
+    let cids, br_labels = List.split cids in
 	  if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
 	  then
@@ -401,10 +417,11 @@ view_header
 		  { view_name = $1;
 			view_data_name = "";
 			view_vars = List.map fst cids;
+            view_labels = br_labels;
 			view_modes = modes;
 			view_typed_vars = [];
 			view_formula = F.mkTrue (get_pos 1);
-			view_invariant = P.mkTrue (get_pos 1) }
+			view_invariant = (P.mkTrue (get_pos 1), []) }
   }
 ;
 
@@ -500,8 +517,8 @@ ann_cid_list
 ;
 
 ann_cid 
-  : cid opt_ann_list {
-	($1, $2)
+  : opt_branch cid opt_ann_list {
+	(($2, $1), $3)
   }
 ;
 
@@ -558,9 +575,9 @@ case_constr
 ;
 
 core_constr
-  : heap_constr { F.formula_of_heap $1 (get_pos 1) }
-  | pure_constr { F.formula_of_pure $1 (get_pos 1) }
-  | heap_constr AND pure_constr { F.mkBase $1 $3 (get_pos 2) }
+  : heap_constr opt_branches { F.replace_branches $2 (F.formula_of_heap $1 (get_pos 1)) }
+  | pure_constr opt_branches { F.replace_branches $2 (F.formula_of_pure $1 (get_pos 1)) }
+  | heap_constr AND pure_constr opt_branches { F.mkBase $1 $3 $4 (get_pos 2) }
 ;
 
 heap_constr

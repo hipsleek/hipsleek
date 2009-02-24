@@ -63,14 +63,17 @@ let process_cmd_line () = Arg.parse [
    "Choose frontend:\n\tnative: Native (default)\n\txml: XML");
   ("-int", Arg.Set inter,
    "Run in interactive mode.");
-  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "mona"; "om"; "oi"], Tpdispatcher.set_tp),
-   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle");
+  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"], Tpdispatcher.set_tp),
+   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle");
   ("-v", Arg.Set print_version_flag,
    "Print version information");
   ("-version", Arg.Set print_version_flag,
    "Print version information");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
+  ("--log-omega", Arg.Set Omega.log_all_flag,
+   "Log all formulae sent to Omega Calculator in file allinput.oc");
+
 ] set_source_file usage_msg
 
 let prompt = ref "SLEEK> "

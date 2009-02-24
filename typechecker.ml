@@ -193,16 +193,16 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 			if !Globals.max_renaming then CF.normalize_context_formula c then_cond pos
 			else CF.normalize_clash_context_formula c then_cond pos
 		in
-		  (* Debug.devel_pprint ("conditional: then_delta1:\n" ^ (string_of_constr then_delta1)) pos; *)
+		Debug.devel_pprint ("conditional: then_delta1:\n" ^ (Cprinter.string_of_context then_ctx1)) pos;
 		let then_ctx = if !Globals.elim_unsat then Solver.elim_unsat_ctx prog then_ctx1 else then_ctx1 in
-		  (* Debug.devel_pprint ("conditional: then_delta:\n" ^ (string_of_constr then_delta)) pos; *)
+		Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_context then_ctx)) pos;
 		let else_ctx1 =
 			if !Globals.max_renaming then CF.normalize_context_formula c else_cond pos
 			else CF.normalize_clash_context_formula c else_cond pos
 		in
-		  (* Debug.devel_pprint ("conditional: else_delta1:\n" ^ (string_of_constr else_delta1)) pos; *)
+		Debug.devel_pprint ("conditional: else_delta1:\n" ^ (Cprinter.string_of_context else_ctx1)) pos;
 		let else_ctx = if !Globals.elim_unsat then Solver.elim_unsat_ctx prog else_ctx1 else else_ctx1 in
-		  (*  Debug.devel_pprint ("conditional: else_delta:\n" ^ (string_of_constr else_delta)) pos; *)
+		Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_context else_ctx)) pos;
 		let then_ctx2 = check_exp prog proc [then_ctx] post e1 in
 		let else_ctx2 = check_exp prog proc [else_ctx] post e2 in
 		let res = CF.or_context_list then_ctx2 else_ctx2 in
@@ -450,7 +450,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 									   (*type_var :: ext_var :: *) heap_args;
 									CF.h_formula_data_pos = pos}) in
 	  (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	  let heap_form = CF.mkBase heap_node (CP.mkTrue pos) CF.TypeTrue pos in
+	  let heap_form = CF.mkBase heap_node (CP.mkTrue pos) CF.TypeTrue [] pos in
 	  let res =
 	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c heap_form pos) ctx
 	  	else List.map (fun c -> CF.normalize_clash_context_formula c heap_form pos) ctx
@@ -508,10 +508,21 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		let post = CF.subst_avoid_capture fr_vars to_vars tmp_post in
 		let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 		let pre2 = CF.subst st2 pre in
+        (*print_endline ("SC: opr" ^ Cprinter.string_of_formula org_pre);
+        print_endline ("SC: rpr" ^ Cprinter.string_of_formula pre2);
+        print_endline ("SC: opo" ^ Cprinter.string_of_formula org_post);
+        print_endline ("SC: post" ^ Cprinter.string_of_formula post);*)
 		let rs_prim, prf = heap_entail prog false false [sctx] pre2 pos in
+        (*print_endline ("SC: rs " ^ Cprinter.string_of_context_list rs_prim);*)
 		let _ = PTracer.log_proof prf in
 		let rs = CF.clear_entailment_history_list rs_prim in
-		let xpure_pre2_prim = xpure_consumed_pre prog pre2 in
+(*        print_endline ("SC: sctx" ^ Cprinter.string_of_context sctx);
+        print_endline ("SC: rs " ^ Cprinter.string_of_context_list rs);
+        print_endline ("SC: pre2 " ^ Cprinter.string_of_formula (pre2));*)
+		let (xpure_pre2_prim, xpure_pre2_prim_b) = xpure_consumed_pre prog pre2 in
+(*        print_endline ("SC: xpure " ^ Cprinter.string_of_pure_formula_branches (xpure_pre2_prim, xpure_pre2_prim_b));*)
+        let post = CF.normalize post (CF.replace_branches xpure_pre2_prim_b (CF.formula_of_pure xpure_pre2_prim pos)) pos in
+        (*print_endline ("SC: rpo" ^ Cprinter.string_of_formula post);*)
 		let xpure_pre2_sec = CP.mkExists p_svars xpure_pre2_prim pos in
 		let xpure_pre2 =
 		  if !Globals.hull_pre_inv then TP.hull xpure_pre2_sec
@@ -526,10 +537,11 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		  let w = actual_spec_vars in
 		  let v = CP.difference w r in
 		  let nox_v = CF.no_change v pos in
-		  let nox_v_pre = CP.mkAnd nox_v xpure_pre2 pos in
+		  (*let nox_v_pre = CP.mkAnd nox_v xpure_pre2 pos in*)
+          let formula = CF.formula_of_pure nox_v pos in
 		  let tmp_f =
-		  	if !Globals.max_renaming then CF.normalize post (CF.formula_of_pure nox_v_pre pos) pos
-		  	else CF.normalize_only_clash_rename post (CF.formula_of_pure nox_v_pre pos) pos
+		  	if !Globals.max_renaming then CF.normalize post formula pos
+		  	else CF.normalize_only_clash_rename post formula pos
 		  in
 		  (* tmp_res is the context after adding the postcondition of the callee *)
 		  let tmp_res = CF.compose_context_formula c tmp_f w pos in

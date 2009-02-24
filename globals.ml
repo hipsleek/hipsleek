@@ -2,6 +2,8 @@
 
 type ident = string
 
+and branch_label = string
+
 and loc = Lexing.position (* might be expanded to contain more information *)
 
 and primed =

@@ -1214,3 +1214,40 @@ and elim_idents_b_formula (f : b_formula) : b_formula =  match f with
   	else f
   | _ -> f
 
+
+let combine_branch b (f, l) =
+  match b with 
+  | "" -> f
+  | s -> try And (f, List.assoc b l, no_pos) with Not_found -> f
+;;
+
+let merge_branches l1 l2 =
+  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let map_fun branch =
+    try 
+      let l1 = List.assoc branch l1 in
+      try
+        let l2 = List.assoc branch l2 in
+        (branch, mkAnd l1 l2 no_pos)
+      with Not_found -> (branch, l1)
+    with Not_found -> (branch, List.assoc branch l2)
+  in
+  List.map map_fun branches
+;;
+
+(*let rec merge_branches l1 = function
+  | [] -> l1
+  | (l, f) :: t ->
+      try 
+        let f1 = List.assoc l l1 in
+        let l1n = List.remove_assoc l l1 in
+        merge_branches ((l, mkAnd f f1 no_pos) :: l1n) t
+      with Not_found -> merge_branches ((l, f) :: l1) t
+;;*)
+
+let add_to_branches label form branches =
+  try 
+    (label, (And (form, List.assoc label branches, no_pos))) :: (List.remove_assoc label branches) 
+  with Not_found -> (label, form) :: branches
+;;
+

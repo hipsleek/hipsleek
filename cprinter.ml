@@ -150,8 +150,12 @@ and string_of_pure_formula = function
   | P.Exists (x, f, l)            -> "(ex " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
     | Primed    -> "'"
     | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")"
-;;
 
+and string_of_pure_formula_branches (f, l) =
+  match l with
+  | [] -> string_of_pure_formula f
+  | _ -> string_of_pure_formula f ^ " & [" ^ (String.concat "; " (List.map (fun (l, f) -> "\"" ^ l ^ "\" : " ^ string_of_pure_formula f) l)) ^ "]"
+;;
 
 (* pretty printing for a cformula *)                                                         (*NOT DONE*)
 
@@ -177,16 +181,18 @@ let rec string_of_formula = function
       (string_of_formula f1) ^ "\nor " ^ (string_of_formula f2)
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
+		   formula_base_branches = b; 
 		   formula_base_type = t;
 		   formula_base_pos = pos}) -> 
-      (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula p) (* ^ " & " ^ (string_of_t_formula t) *)
+      (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b)) (* ^ " & " ^ (string_of_t_formula t) *)
   | Exists ({formula_exists_qvars = svs; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
+		     formula_exists_branches = b; 
 			 formula_exists_type = t;
 			 formula_exists_pos = pos}) -> 
       "(EX " ^ (String.concat ", " (List.map string_of_spec_var svs)) 
-      ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula p)
+      ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b))
 	  ^ (* " & " ^ (string_of_t_formula t)^ *) ")"
 
 (* function to print a list of type F.formula * F.formula *)
@@ -328,8 +334,8 @@ let rec string_of_spec_var_list l = match l with
 (* pretty printing for a view *)
 let string_of_view_decl v = "view " ^ v.view_name ^ "<" ^ (string_of_spec_var_list v.view_vars) ^ ">=" ^
                             (string_of_formula v.view_formula) 
-  ^ "\n\tinv " ^ (string_of_pure_formula v.view_user_inv)
-  ^ "\n\txform " ^ (string_of_pure_formula v.view_x_formula)
+  ^ "\n\tinv " ^ (string_of_pure_formula (fst v.view_user_inv))
+  ^ "\n\txform " ^ (string_of_pure_formula (fst v.view_x_formula))
     
 
 (* pretty printing for a procedure *)
@@ -387,7 +393,7 @@ and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_conte
 
 and string_of_estate (es : entail_state) = 
   "es_formula: " ^ (string_of_formula es.es_formula)
-  ^ "\nes_pure: " ^ (string_of_pure_formula es.es_pure)
+  ^ "\nes_pure: " ^ (string_of_pure_formula_branches es.es_pure)
   ^ "\nes_heap: " ^ (string_of_h_formula es.es_heap)
   ^ "\nes_evars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_evars))
   ^ "\nes_ivars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_ivars))
