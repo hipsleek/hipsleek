@@ -43,7 +43,7 @@ int get_max_height_add1(node x, node y)
 }
 
 
-bool lesseq_height(node x, node y)
+bool lesseq_h(node x, node y)
   requires x::avl<m,n,S>*y::avl<m2,n2,S2>
   ensures x::avl<m,n,S>*y::avl<m2,n2,S2> 
          & ["n" : 
@@ -52,6 +52,39 @@ bool lesseq_height(node x, node y)
 {
   return height(x)<=height(y);
 }
+
+bool less_h(node x, node y)
+  requires x::avl<m,n,S>*y::avl<m2,n2,S2>
+  ensures x::avl<m,n,S>*y::avl<m2,n2,S2> 
+         & ["n" : (res & n<n2 | !res & n>=n2) ];
+{
+  return height(x)<height(y);
+}
+
+bool eq_h(node x, node y)
+  requires x::avl<m,n,S>*y::avl<m2,n2,S2>
+  ensures x::avl<m,n,S>*y::avl<m2,n2,S2> 
+         & ["n" : (res & n=n2 | !res & n!=n2) ];
+{
+  return height(x)==height(y);
+}
+
+bool diff_h_by_1(node x, node y)
+  requires x::avl<m,n,S>*y::avl<m2,n2,S2>
+  ensures x::avl<m,n,S>*y::avl<m2,n2,S2> 
+         & ["n" : (res & n=n2+1 | !res & n!=n2+1) ];
+{
+  return height(x)==height(y)+1;
+}
+
+bool diff_h_by_2(node x, node y)
+  requires x::avl<m,n,S>*y::avl<m2,n2,S2>
+  ensures x::avl<m,n,S>*y::avl<m2,n2,S2> 
+         & ["n" : (res & n=n2+2 | !res & n!=n2+2) ];
+{
+  return height(x)==height(y)+2;
+}
+
 
 /*  function to rotate left */
 node rotate_left(node l, node rl, node rr, int v, int vr)
@@ -189,7 +222,7 @@ node insert(node x, int a)
       x.height = get_max_height_add1(x.left, x.right) ;
       return x;
     } else {
-      if (lesseq_height(x.right,x.left)) {
+      if (lesseq_h(x.right,x.left)) {
         x.right = insert(x.right, a);
         x.height = get_max_height_add1(x.left, x.right);
         return x;
@@ -216,7 +249,7 @@ node insert(node x, int a)
       x.height = get_max_height_add1(x.left, x.right);
       return x;
     } else {
-      if (lesseq_height(x.left,x.right)) {
+      if (lesseq_h(x.left,x.right)) {
         x.left = insert(x.left, a);
         x.height = get_max_height_add1(x.left, x.right) ;
         return x;
@@ -392,7 +425,7 @@ node remove_min(node x, ref myint a)
     a.val = x.val;
     return x.right;
   } else {
-    if (height(x.left) < height(x.right)) {
+    if (less_h(x.left,x.right)) {
       // assert x.right != null;
       ret.val = x.val;
       x.left = remove_min_add(x.left, ret);
@@ -427,11 +460,11 @@ node delete_top(node x)
     x.right = remove_min(x.right, ti);
     x.val = ti.val;
     //rebalance
-    if ((height(x.left) - height(x.right)) == 2) {
-      if ((height(x.left.left) - 1) == height(x.left.right)) {
+    if (diff_h_by_2(x.left,x.right)) {
+      if (diff_h_by_1(x.left.left,x.left.right)) {
         x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
         return x;
-      } else if (height(x.left.left) == height(x.left.right)) {
+      } else if (eq_h(x.left.left,x.left.right)) {
         x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
         return x;
       } else {
@@ -443,7 +476,7 @@ node delete_top(node x)
         return tmp;
       }
     } else {
-      x.height = get_max(height(x.left), height(x.right)) + 1;
+      x.height = get_max_height_add1(x.left, x.right);
       return x;
     }
   }
@@ -466,13 +499,13 @@ node delete(node x, int a)
       return x;
     else {
       x.right = delete(x.right, a);
-      if ((height(x.left) - height(x.right)) == 2) {
+      if (diff_h_by_2(x.left,x.right)) {
         tmp = x.left;
         //assert tmp'!=null; //'
-        if ((height(x.left.left) - 1) == height(x.left.right)) {
+        if (diff_h_by_1(x.left.left,x.left.right)) {
           x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
           return x;
-        } else if (height(x.left.left) == height(x.left.right)) {
+        } else if (eq_h(x.left.left,x.left.right)) {
           x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
           return x;
         } else {
@@ -482,7 +515,7 @@ node delete(node x, int a)
           return tmp;
         }
       } else {
-        x.height = get_max(height(x.left), height(x.right)) + 1;
+        x.height = get_max_height_add1(x.left, x.right) ;
         return x;
       }
     }
@@ -491,23 +524,25 @@ node delete(node x, int a)
       return x;
     else {
       x.left = delete(x.left, a);
-      if ((height(x.right) - height(x.left)) == 2) {
+      if (diff_h_by_2(x.right,x.left)) {
         tmp = x.right;
         //assert tmp'!=null; //'
-        if ((height(x.right.left)) == height(x.right.right) - 1) {
-          x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
+        assume tmp'=null or tmp'!=null;
+        if (diff_h_by_1(x.right.right,x.right.left)) {
+           x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
           return x;
-        } else if (height(x.right.left) == height(x.right.right)) {
+        } else if (eq_h(x.right.left,x.right.right)) {
           x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
           return x;
         } else {
           tmp = x.right.left;
           //assert tmp'!=null; //'
+          assume tmp'=null or tmp'!=null;
           tmp = rotate_double_left(x.left, x.right.left.left, x.right.left.right, x.right.right, x.val, x.right.left.val, x.right.val); // DRR
           return tmp;
         }
       } else {
-        x.height = get_max(height(x.left), height(x.right)) + 1;
+        x.height = get_max_height_add1(x.left, x.right) ;
         return x;
       }
     }
