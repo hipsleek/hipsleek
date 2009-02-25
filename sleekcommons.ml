@@ -50,6 +50,7 @@ and print_cmd =
 and meta_formula =
   | MetaVar of ident
   | MetaForm of IF.formula
+	| MetaEForm of Iformula.struc_formula
   | MetaFormCF of CF.formula
   | MetaCompose of (ident list * meta_formula * meta_formula)
 

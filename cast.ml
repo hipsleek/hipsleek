@@ -12,6 +12,34 @@ module Err = Error
 module U = Util
 
 type typed_ident = (P.typ * ident)
+				
+and multi_spec = spec list
+
+and spec = 
+	| SCase of scase_spec
+	| SRequires of srequires_spec
+	| SEnsure of sensures_spec
+	
+and scase_spec = 
+	{
+			scase_branches : (Cpure.formula * multi_spec ) list ;
+			scase_pos : loc 
+		}
+	
+and srequires_spec = 
+	{
+		srequires_explicit_inst : Cpure.spec_var list;
+		srequires_implicit_inst : Cpure.spec_var list;
+		srequires_base : Cformula.formula;
+		srequires_continuation : multi_spec;
+		srequires_pos : loc
+		}	
+	
+and sensures_spec = 
+	{
+		sensures_base : Cformula.formula;
+		sensures_pos : loc
+	}
 
 and prog_decl = { mutable prog_data_decls : data_decl list;
 				  mutable prog_view_decls : view_decl list;
@@ -22,7 +50,7 @@ and prog_decl = { mutable prog_data_decls : data_decl list;
 and data_decl = { data_name : ident;
 				  data_fields : typed_ident list;
 				  data_parent_name : ident;
-				  data_invs : F.formula list;
+				  data_invs : Cformula.struc_formula;
 				  data_methods : proc_decl list }
 	
 and view_decl = { view_name : ident; 
@@ -31,7 +59,7 @@ and view_decl = { view_name : ident;
 				  mutable view_partially_bound_vars : bool list;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
-				  view_formula : F.formula;
+				  view_formula : Cformula.struc_formula;
 				  view_user_inv : P.formula;
 				  mutable view_x_formula : P.formula;
 				  mutable view_addr_vars : P.spec_var list }
@@ -39,8 +67,8 @@ and view_decl = { view_name : ident;
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
 				  proc_return : P.typ;
-				  proc_static_specs : (F.formula * F.formula) list;
-				  proc_dynamic_specs : (F.formula * F.formula) list;
+				  proc_static_specs : multi_spec;
+				  proc_dynamic_specs : multi_spec;
 				  proc_by_name_params : P.spec_var list;
 				  proc_body : exp option;
 				  proc_loc : loc }
@@ -60,7 +88,7 @@ and coercion_type =
   | Equiv
   | Right
 
-and exp_assert = { exp_assert_asserted_formula : F.formula option;
+and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
 
@@ -144,7 +172,7 @@ and exp_var_decl = { exp_var_decl_type : P.typ;
 
 and exp_while = { exp_while_condition : ident;
 				  exp_while_body : exp;
-				  exp_while_spec : (F.formula * F.formula) list;
+				  exp_while_spec : multi_spec;
 				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : ident;
@@ -217,6 +245,13 @@ let bag_type = P.Prim Bag
 let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 
 (* smart constructors *)
+
+
+let mkMultiSpec pos = [ SEnsure {
+		sensures_base = Cformula.mkTrue pos;
+		sensures_pos = pos;
+	}]
+
 
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -639,3 +674,48 @@ and sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
 				  true
 			  with
 				| Not_found -> false
+
+
+and m_spec_to_formula (f0:multi_spec):(Cformula.formula*Cformula.formula) list = 
+	let rec helper (acc1:Cformula.formula)(f1:multi_spec):(Cformula.formula*Cformula.formula) list =
+	let rec struc_to_formula (acc:Cformula.formula)(f:spec):(Cformula.formula*Cformula.formula) list= match f with
+		| SCase b-> 
+			List.concat (List.map (fun (c1,c2)-> helper (Cformula.normalize acc (Cformula.formula_of_pure c1 b.scase_pos) b.scase_pos) c2) b.scase_branches)
+		| SRequires b->
+			let r = Cformula.normalize acc b.srequires_base b.srequires_pos in
+			(helper r b.srequires_continuation)
+		| SEnsure b->
+					[(acc,b.sensures_base)]
+		in
+		List.concat (List.map (struc_to_formula acc1) f1)	in
+	helper (Cformula.mkTrue no_pos) f0
+	
+	
+let rec spec_fv (f: multi_spec) : Cpure.spec_var list = 	
+	let rec s_spec_fv (f:spec): Cpure.spec_var list = match f with
+		| SCase b-> List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(spec_fv c2)) [] b.scase_branches
+		| SRequires b-> (Cformula.fv b.srequires_base)@(spec_fv b.srequires_continuation)	
+		| SEnsure b-> (Cformula.fv b.sensures_base)
+		in	
+List.fold_left (fun a c-> a@(s_spec_fv c)) [] f
+
+and spec_post_fv (f:multi_spec):Cpure.spec_var list =
+		let rec s_spec_fv (f:spec): Cpure.spec_var list = match f with
+		| SCase b-> List.fold_left (fun a (c1,c2)-> a@(spec_post_fv c2)) [] b.scase_branches
+		| SRequires b->	spec_post_fv b.srequires_continuation
+		| SEnsure b->	Cformula.fv b.sensures_base
+		in	
+List.fold_left (fun a c-> a@(s_spec_fv c)) [] f
+	
+	
+	
+and pos_of_specs (f:multi_spec):loc = 
+	if (List.length f) ==0 then no_pos
+	else match (List.hd f) with
+		| SCase b-> b.scase_pos
+		| SRequires b -> b.srequires_pos
+		| SEnsure b -> b.sensures_pos
+	
+	
+	
+	

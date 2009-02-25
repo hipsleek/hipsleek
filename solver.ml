@@ -175,7 +175,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : CP.formul
 		res_form
   | HTrue -> CP.mkTrue no_pos
   | HFalse -> CP.mkFalse no_pos
-
+(*
 and xpure_symbolic (prog : prog_decl) (f0 : formula) : (CP.formula * CP.spec_var list) = match f0 with
   | Or ({formula_or_f1 = f1;
 		 formula_or_f2 = f2;
@@ -245,6 +245,32 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) : (CP.formula * CP.s
 		(res_form, addrs1 @ addrs2)
   | HTrue -> (P.mkTrue no_pos, [])
   | HFalse -> (P.mkFalse no_pos, [])
+*)
+and xpure_symbolic_no_exists_struc (prog : prog_decl) (f0 : struc_formula) : (CP.formula * CP.spec_var list) =
+
+let rec xpure_symbolic_no_exists_ext (prog : prog_decl) (f0 : ext_formula) : (CP.formula * CP.spec_var list) = match f0 with
+	| EBase b->
+			let pqh1, addrs1 = xpure_symbolic_no_exists prog b.formula_ext_base in
+			let res_form,addrs = if ((List.length b.formula_ext_continuation)==0) then  (pqh1,addrs1)
+												else let pqh2,addrs2 = xpure_symbolic_no_exists_struc prog b.formula_ext_continuation in
+	  												((CP.mkAnd pqh1 pqh2 b.formula_ext_pos),addrs1@addrs2) in
+			(res_form, addrs)	
+	| ECase b->	
+			let helper ((c1,c2):(Cpure.formula * struc_formula )):(CP.formula * CP.spec_var list) = 
+				let r1,r2 = xpure_symbolic_no_exists_struc prog c2 in
+				((CP.mkAnd c1 r1 b.formula_case_pos),r2)in 
+			if (List.length b.formula_case_branches)==0 then Err.report_error {Err.error_loc =  b.formula_case_pos;
+						Err.error_text = "xpure: got empty case structure\n"}
+			else List.fold_left (fun (a1,a2) c-> 
+							let b1,b2 = helper c in
+							((CP.mkOr b1 a1 b.formula_case_pos),b2@a2)			
+			) (helper (List.hd b.formula_case_branches)) (List.tl b.formula_case_branches) in		
+ 
+	List.fold_left (fun (a1,a2) c -> 
+		let r1,r2 = xpure_symbolic_no_exists_ext prog c in
+		((CP.mkOr r1 a1 no_pos),r2@a2)
+		) (xpure_symbolic_no_exists_ext prog (List.hd f0))(List.tl f0)
+
 
 and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (CP.formula * CP.spec_var list) = match f0 with
   | Or ({formula_or_f1 = f1;
@@ -545,7 +571,8 @@ and get_aliased_node prog (f0 : h_formula) (aset : CP.spec_var list) : ((h_formu
 
 
 (* expand all predicates in a definition *)
-
+and expand_all_struc_preds prog (f0:struc_formula) : struc_formula = f0
+	
 and expand_all_preds prog f0 : formula = match f0 with
   | Or (({formula_or_f1 = f1;
 		  formula_or_f2 = f2}) as or_f) -> begin
@@ -657,14 +684,15 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 			   h_formula_view_arguments = vs}) ->
 	  if CP.mem p aset then
 		let vdef = Cast.look_up_view_def pos prog.prog_view_decls c in
-		let renamed_view_formula = rename_bound_vars vdef.view_formula in
+		let renamed_view_formula = rename_bound_vars_struc vdef.view_formula in
 		let fr_vars = (CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed))
 		  :: vdef.view_vars in
 		let to_vars = v :: vs in
 		(* let tmp_form = normalize renamed_view_formula
 		   (formula_of_pure vdef.Cast.view_x_formula pos) pos in
 		   let res_form = subst_avoid_capture fr_vars to_vars tmp_form in *)
-		let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
+		let res_form = subst_avoid_capture_struc fr_vars to_vars renamed_view_formula in
+		let res_form = stub_struc_formula res_form in
 		let res_form = add_origins res_form origs in
 		  res_form
 	  else
@@ -858,11 +886,12 @@ and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) (pos : loc)
 			   h_formula_view_arguments = vs}) -> begin
 	  try
 		let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c in
-		let renamed_view_formula = rename_bound_vars vdef.Cast.view_formula in
+		let renamed_view_formula = rename_bound_vars_struc vdef.Cast.view_formula in
 		let fr_vars = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed))
 		  :: vdef.view_vars in
 		let to_vars = p :: vs in
-		let view_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
+		let view_form = subst_avoid_capture_struc fr_vars to_vars renamed_view_formula in
+		let view_form = stub_struc_formula view_form in
 		let view_form = add_origins view_form (get_view_origins view) in
 		  Debug.devel_pprint ("fold: view_form:\n"
 							  ^ (Cprinter.string_of_formula view_form)) pos;
@@ -1259,6 +1288,12 @@ and filter_set (cl : context list) : context list =
 (* each entailment should produce one proof, be it failure or *)
 (* success. *)
 
+and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : context list) (conseq : struc_formula) pos : (context list * proof) =
+		heap_entail prog is_folding is_universal cl (to_formula conseq) pos
+
+and heap_entail_spec (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : context list) (conseq : spec) pos : (context list * proof) =
+	heap_entail prog is_folding is_universal cl (fst(List.hd (m_spec_to_formula [conseq]))) pos
+	
 and heap_entail (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : context list) (conseq : formula) pos : (context list * proof) =
   if !Globals.use_set || U.empty cl then
 	let tmp1 = List.map (fun c -> heap_entail_one_context prog is_folding is_universal c conseq pos) cl in
@@ -2178,7 +2213,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 								let new_es = {estate with es_formula = new_ante;
 											(* add the new vars to be explicitly instantiated *)
 											es_expl_vars = estate.es_expl_vars@expl_vars';
-											(* update ivars - basically, those univ vars for which binsings have been found will be removed:
+											(* update ivars - basically, those univ vars for which bindings have been found will be removed:
 												for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
 											es_ivars = ivars';
 											es_heap = new_consumed} in

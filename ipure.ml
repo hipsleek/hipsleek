@@ -348,3 +348,153 @@ and pos_of_exp (e : exp) = match e with
   | BagIntersect (_, p) -> p
   | BagDiff (_, _, p) -> p
   
+	
+	
+and fresh_old_name (s: string):string = 
+	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
+	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+	n
+	
+
+and fresh_var (sv : (ident*primed)):(ident*primed) =
+	let old_name = fst sv in
+  let name = fresh_old_name old_name in
+	(name, Unprimed) (* fresh names are unprimed *)
+
+and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_var svs
+
+
+and eq_var (f: (ident*primed))(t:(ident*primed)):bool = ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
+
+and subst sst (f : formula) = match sst with
+  | s :: rest -> subst rest (apply_one s f)
+  | [] -> f 
+
+and apply_one (fr, t) f = match f with
+  | BForm bf -> BForm (b_apply_one (fr, t) bf)
+  | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
+							  apply_one (fr, t) p2, pos)
+  | Or (p1, p2, pos) -> Or (apply_one (fr, t) p1,
+							apply_one (fr, t) p2, pos)
+  | Not (p, pos) -> Not (apply_one (fr, t) p, pos)
+  | Forall (v, qf, pos) ->
+	  if eq_var v fr then f
+      else if eq_var v t then
+        let fresh_v = fresh_var v in
+        Forall (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), pos)
+	  else Forall (v, apply_one (fr, t) qf, pos)
+  | Exists (v, qf, pos) ->
+	  if eq_var v fr then f
+      else if eq_var v t then
+        let fresh_v = fresh_var v in
+        Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), pos)
+	  else Exists (v, apply_one (fr, t) qf, pos)
+
+and b_apply_one (fr, t) bf = match bf with
+  | BConst _ -> bf
+  | BVar (bv, pos) -> BVar ((if eq_var bv fr then t else bv), pos)
+  | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
+							e_apply_one (fr, t) a2, pos)
+  | Lte (a1, a2, pos) -> Lte (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+  | Gt (a1, a2, pos) -> Gt (e_apply_one (fr, t) a1,
+							e_apply_one (fr, t) a2, pos)
+  | Gte (a1, a2, pos) -> Gte (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+  | Eq (a1, a2, pos) -> Eq (e_apply_one (fr, t) a1,
+							e_apply_one (fr, t) a2, pos)
+  | Neq (a1, a2, pos) -> Neq (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+  | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_one (fr, t) a1,
+									  e_apply_one (fr, t) a2,
+									  e_apply_one (fr, t) a3, pos)
+  | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one (fr, t) a1,
+									  e_apply_one (fr, t) a2,
+									  e_apply_one (fr, t) a3, pos)
+	| BagIn (v, a1, pos) -> BagIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+	| BagNotIn (v, a1, pos) -> BagNotIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+	(* is it ok?... can i have a set of boolean values?... don't think so..*)
+  | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | BagMax (v1, v2, pos) -> BagMax ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
+	| BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
+
+and e_apply_one (fr, t) e = match e with
+  | Null _ | IConst _ -> e
+  | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
+  | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+  | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
+										e_apply_one (fr, t) a2, pos)
+  | Mult (c, a, pos) -> Mult (c, e_apply_one (fr, t) a, pos)
+  | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+  | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+	(*| BagEmpty (pos) -> BagEmpty (pos)*)
+	| Bag (alist, pos) -> Bag ((e_apply_one_bag (fr, t) alist), pos)
+	| BagUnion (alist, pos) -> BagUnion ((e_apply_one_bag (fr, t) alist), pos)
+  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_bag (fr, t) alist), pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
+							  e_apply_one (fr, t) a2, pos)
+
+and e_apply_one_bag (fr, t) alist = match alist with
+	|[] -> []
+	|a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_bag (fr, t) rest)
+
+
+and look_for_anonymous_exp_list (args : exp list) :
+  (ident * primed) list =
+  match args with
+  | h :: rest ->
+      List.append (look_for_anonymous_exp h)
+        (look_for_anonymous_exp_list rest)
+  | _ -> []
+
+
+and look_for_anonymous_exp (arg : exp) : (ident * primed) list =
+  match arg with
+  | Var ((id, p), _) ->
+      if
+        ((String.length id) > 5) &&
+          ((String.compare (String.sub id 0 5) "Anon_") == 0)
+      then [ (id, p) ]
+      else []
+  | Add (e1, e2, _) | Subtract (e1, e2, _) | Max (e1, e2, _) |
+      Min (e1, e2, _) | BagDiff (e1, e2, _) ->
+      List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
+  | Mult (_, e1, _) -> look_for_anonymous_exp e1
+  | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) ->
+      look_for_anonymous_exp_list e1
+  | _ -> []
+
+
+and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
+  | BForm b -> look_for_anonymous_b_formula b
+  | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
+  | Or  (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
+  | Not (b1,_) -> (look_for_anonymous_pure_formula b1)
+  | Forall (_,b1,_)-> (look_for_anonymous_pure_formula b1)
+  | Exists (_,b1,_)-> (look_for_anonymous_pure_formula b1)
+	
+and anon_var  (id,p) = 
+        if ((String.length id) > 5) &&
+          ((String.compare (String.sub id 0 5) "Anon_") == 0)
+      then [ (id, p) ]
+      else []
+
+and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match f with
+  | BConst _ -> []
+  | BVar (b1,_) -> anon_var b1
+  | Lt (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | Lte (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | Gt (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | Gte (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | Eq (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | Neq (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | EqMax (b1,b2,b3,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)@(look_for_anonymous_exp b3)
+  | EqMin(b1,b2,b3,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)@(look_for_anonymous_exp b3)
+  | BagIn (b1,b2,_)-> (anon_var b1)@(look_for_anonymous_exp b2)
+  | BagNotIn (b1,b2,_)-> (anon_var b1)@(look_for_anonymous_exp b2)
+  | BagSub (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
+  | BagMin (b1,b2,_)-> (anon_var b1)@(anon_var b2)
+  | BagMax (b1,b2,_)-> (anon_var b1)@(anon_var b2)	

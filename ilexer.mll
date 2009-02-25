@@ -28,6 +28,7 @@
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
+	 ("case",CASE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
 	 ("conseq", CONSEQ);
@@ -82,7 +83,7 @@
 	 ("view", VIEW);
 	 ("void", VOID);
 	 ("where", WHERE);
-	 ("while", WHILE)]
+	 ("while", WHILE);]
 }
 
 let alpha = ['a'-'z' 'A'-'Z' '_']

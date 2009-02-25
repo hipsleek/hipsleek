@@ -1696,7 +1696,7 @@ and gen_formula (prog : C.prog_decl) (f0 : formula) (vmap : var_map) (output_var
 	(seq, disj_results, pbvars)
 
 and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_var list)  =
-  let pos = pos_of_formula vdef.C.view_formula in
+  let pos = pos_of_struc_formula vdef.C.view_formula in
   let in_params, out_params = 
 	split_params_mode vdef.C.view_vars vdef.C.view_modes in
 	(* 
@@ -1707,11 +1707,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let vmap = H.create 103 in
   let _ = List.iter 
 	(fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
-  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_formula in
+  let pbvars0 = gen_partially_bound_params_struc out_params vdef.C.view_formula in
 	(* update partially bound vars for vdef *)
   let _ = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
-	gen_formula prog vdef.C.view_formula vmap out_params in
+	gen_formula prog (to_formula vdef.C.view_formula) vmap out_params in
 	(* generate fields *)
   let fields = ((Named vdef.C.view_data_name, self), pos) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in
@@ -1806,6 +1806,19 @@ and gen_bound_params (output_vars : CP.spec_var list) (p0 : CP.formula) : CP.spe
 
   CP.spec_var is used so that we know the type of the variable.
 *)
+
+and gen_partially_bound_params_struc (output_vars : CP.spec_var list) (f0 : struc_formula) : CP.spec_var list =
+	let rec helper (f:ext_formula):Cpure.spec_var list  = match f with
+		| ECase b->(List.fold_left (fun a (c1,c2)-> a@
+																							(CP.difference output_vars (gen_bound_params output_vars c1))@
+																							(gen_partially_bound_params_struc output_vars c2) )
+															[] b.formula_case_branches)			
+		| EBase b->
+				( gen_partially_bound_params output_vars b.formula_ext_base)@
+		 		( gen_partially_bound_params_struc output_vars b.formula_ext_continuation) in	
+		Util.remove_dups (List.fold_left(fun a c -> a@(helper c))[] f0 )
+	
+
 and gen_partially_bound_params (output_vars : CP.spec_var list) (f0 : formula) : CP.spec_var list = match f0 with
   | Or ({formula_or_f1 = f1;
 		 formula_or_f2 = f2}) ->

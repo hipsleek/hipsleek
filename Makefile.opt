@@ -59,7 +59,7 @@ MAIN_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
-	env.cmx checks.cmx inliner.cmx astsimp.cmx \
+	env.cmx checks.cmx inliner.cmx 	linearise.cmx astsimp.cmx \
 	typechecker.cmx \
 	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
 	main.cmx
@@ -88,6 +88,7 @@ SLEEK_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	drawing.cmx \
 	env.cmx checks.cmx \
 	inliner.cmx \
+	linearise.cmx\
 	astsimp.cmx \
 	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
 	typechecker.cmx \
@@ -112,7 +113,7 @@ PROVE_FILES=util.cmx debug.cmx globals.cmx error.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
-	env.cmx checks.cmx inliner.cmx astsimp.cmx \
+	env.cmx checks.cmx inliner.cmx linearise.cmx astsimp.cmx \
 	typechecker.cmx \
 	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
 	prove.cmx

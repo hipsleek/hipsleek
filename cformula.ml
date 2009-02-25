@@ -20,6 +20,7 @@ type t_formula = (* type constraint *)
 	| TypeTrue
 	| TypeFalse
 
+
 and t_formula_sub_type = { t_formula_sub_type_var : CP.spec_var;
 						   t_formula_sub_type_type : ident }
 
@@ -27,7 +28,28 @@ and t_formula_and = { t_formula_and_f1 : t_formula;
 					  t_formula_and_f2 : t_formula }
 
 
-type formula =
+and struc_formula = ext_formula list
+
+and ext_formula = 
+	| ECase of ext_case_formula
+	| EBase of ext_base_formula
+
+
+and ext_case_formula =
+	{
+		formula_case_branches : (Cpure.formula * struc_formula ) list;
+		formula_case_pos : loc 		
+	}
+
+and ext_base_formula =
+	{
+		 formula_ext_explicit_inst : Cpure.spec_var list;
+		 formula_ext_implicit_inst : Cpure.spec_var list;
+		 formula_ext_base : formula;
+		 formula_ext_continuation : struc_formula;
+		 formula_ext_pos : loc
+	}
+and formula =
   | Base of formula_base
   | Or of formula_or
   | Exists of formula_exists
@@ -127,6 +149,16 @@ and isConstTrue f = match f with
 	  (* don't need to care about formula_base_type  *)
   | _ -> false
 
+
+and isEConstFalse f0 = match f0 with
+  | [EBase b] -> isConstFalse b.formula_ext_base
+  | _ -> false
+
+and isEConstTrue f0 = match f0 with
+ 	| [EBase b] -> isConstTrue b.formula_ext_base
+  | _ -> false
+
+
 and is_complex_heap (h : h_formula) : bool = match h with
   | HTrue | HFalse -> false
   | _ -> true
@@ -165,6 +197,29 @@ and mkOr f1 f2 pos =
   else if isConstFalse f1 then f2
   else if isConstFalse f2 then f1
   else Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
+
+
+and mkETrue pos = [EBase {
+		 formula_ext_explicit_inst = [];
+		 formula_ext_implicit_inst = [];
+		 formula_ext_base =mkTrue pos;
+		 formula_ext_continuation = [];
+		 formula_ext_pos = pos	}]
+
+and mkEFalse pos =[EBase {
+		 formula_ext_explicit_inst = [];
+		 formula_ext_implicit_inst = [];
+		 formula_ext_base =mkTrue pos;
+		 formula_ext_continuation = [];
+		 formula_ext_pos = pos	}]
+																				
+and mkEOr f1 f2 pos = 
+	if isEConstTrue f1 || isEConstTrue f2 then
+	mkETrue pos
+  else if isEConstFalse f1 then f2
+  else if isEConstFalse f2 then f1
+  else List.rev_append f1 f2
+
 
 and mkBase (h : h_formula) (p : CP.formula) (t : t_formula) (pos : loc) = 
   if CP.isConstFalse p || h = HFalse then 
@@ -257,10 +312,27 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
 
+and pos_of_struc_formula (f:struc_formula) : loc = match f with
+	| [] -> no_pos
+	| x :: h -> match x with
+		| ECase b -> b.formula_case_pos
+		| EBase b -> b.formula_ext_pos
+	
+
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
   | Or ({formula_or_pos = pos}) -> pos
   | Exists ({formula_exists_pos = pos}) -> pos
+
+
+and struc_fv (f: struc_formula) : CP.spec_var list = 
+	let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
+		| ECase b -> Util.remove_dups (List.fold_left (fun a (c1,c2) -> a@(CP.fv c1)@(struc_fv c2) ) [] b.formula_case_branches)
+		| EBase b -> 
+			let e = struc_fv b.formula_ext_continuation in
+			let be = fv b.formula_ext_base in
+			CP.difference (Util.remove_dups (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst)				
+	in Util.remove_dups (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
 
 and fv (f : formula) : CP.spec_var list = match f with
   | Or ({formula_or_f1 = f1; 
@@ -316,6 +388,32 @@ and get_formula_pos (f : formula) = match f with
 
 (* substitution *)
 
+and subst_avoid_capture_struc (fr : CP.spec_var list) (t : CP.spec_var list) (f : struc_formula):struc_formula =
+		let fresh_fr = CP.fresh_spec_vars fr in
+	  let st1 = List.combine fr fresh_fr in
+  	let st2 = List.combine fresh_fr t in
+  	let f1 = subst_struc st1 f in
+  	let f2 = subst_struc st2 f1 in
+	f2
+
+and subst_struc sst (f : struc_formula) = match sst with
+  | s :: rest -> subst_struc rest (apply_one_struc s f)
+  | [] -> f 
+
+and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_formula):struc_formula = 
+	let rec helper (f:ext_formula):ext_formula = match f with
+		| ECase b -> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> ((CP.apply_one s c1),(apply_one_struc s c2)) ) b.formula_case_branches})
+		| EBase b ->
+			EBase ({
+				 formula_ext_explicit_inst = List.map (subst_var s)  b.formula_ext_explicit_inst;
+				 formula_ext_implicit_inst = List.map (subst_var s)  b.formula_ext_implicit_inst;
+				 formula_ext_base = apply_one s  b.formula_ext_base;
+				 formula_ext_continuation = apply_one_struc s b.formula_ext_continuation;
+				 formula_ext_pos = b.formula_ext_pos	
+				})in	
+		List.map helper f
+
+	
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
   (*--- 09.05.2000 *)
@@ -530,6 +628,16 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
 		resform
   | _ -> remove_quantifiers qvars f
 (* 19.05.2008 *)
+
+and rename_bound_vars_struc (f:struc_formula):struc_formula =
+	let rec helper (f:ext_formula):ext_formula = match f with
+		| ECase b-> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(rename_bound_vars_struc c2))) b.formula_case_branches})
+		| EBase b-> 
+			let new_base_f = rename_bound_vars b.formula_ext_base in
+			let new_cont_f = rename_bound_vars_struc b.formula_ext_continuation in
+			EBase ({b with formula_ext_base=new_base_f; formula_ext_continuation=new_cont_f})			
+			in
+	List.map helper f
 
 and rename_bound_vars (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -927,3 +1035,15 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 					formula_exists_type = tconstr;
 					formula_exists_pos = pos})
   
+
+and to_formula (f0:struc_formula):formula = 
+	let rec ext_to_formula (f:ext_formula):formula = match f with
+		| ECase b-> List.fold_left (fun a (c1,c2)-> (mkOr a (normalize (mkBase HTrue c1 TypeTrue b.formula_case_pos ) (to_formula c2)b.formula_case_pos)b.formula_case_pos)) (mkTrue b.formula_case_pos) b.formula_case_branches 
+		| EBase b-> normalize b.formula_ext_base (to_formula b.formula_ext_continuation) b.formula_ext_pos
+				(*	let h,p,t = split_components e in	(mkExists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst) h p t  b.formula_ext_pos)*)
+			in	
+	List.fold_left (fun a c-> mkOr a (ext_to_formula c) no_pos) (mkTrue no_pos)f0
+	
+(*stubs to be removed*)
+and stub_struc_formula (f0:struc_formula):formula = to_formula f0
+	

@@ -31,6 +31,7 @@
 	 ("by", BY);
 	 ("checkentail", CHECKENTAIL);
 	 ("capture_residue", CAPTURERESIDUE);
+	 ("case",CASE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
 	 ("compose", COMPOSE);

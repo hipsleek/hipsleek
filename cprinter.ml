@@ -189,6 +189,54 @@ let rec string_of_formula = function
       ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula p)
 	  ^ (* " & " ^ (string_of_t_formula t)^ *) ")"
 
+
+let rec string_of_ext_formula = function
+	| ECase {
+			formula_case_branches  =  case_list ;
+		} -> let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^ 
+		
+		( List.fold_left  (fun a c -> a ^" "^(string_of_ext_formula c )) "" c2)^"\n") "" case_list in
+			("case {"^impl^"}")
+	|EBase {
+		 	formula_ext_implicit_inst = ii;
+			formula_ext_explicit_inst = ei;
+		 	formula_ext_base = fb;
+		 	formula_ext_continuation = cont;	
+		} -> 
+				let l1 = List.fold_left (fun a c -> a^" "^ (string_of_spec_var c)) "" ii in
+				let l2 = List.fold_left (fun a c -> a^" "^ (string_of_spec_var c)) "" ei in
+				let b = string_of_formula fb in
+				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
+				"["^l1^"]["^l2^"]"^b^" "^c
+;;
+
+let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
+;;
+
+
+let rec string_of_spec = function
+	| SCase {scase_branches= br;} ->
+		 (List.fold_left (fun a (c1,c2)->a^"\n"^(string_of_pure_formula c1)^"-> "^
+		( List.fold_left  (fun a c -> a ^"\n "^(string_of_spec c )) "" c2)) "case { " br)^"}\n"
+	| SRequires 	{
+			srequires_implicit_inst = ii;
+			srequires_explicit_inst = ei;
+			srequires_base = fb;
+			srequires_continuation = cont;
+			}	 ->
+				let l2 = List.fold_left (fun a c -> a^ " " ^(string_of_spec_var c)) "" ei in
+				let l1 = List.fold_left (fun a c -> a^ " " ^(string_of_spec_var c)) "" ii in
+				let b = string_of_formula fb in				
+				"requires ["^l1^"]["^l2^"]"^b^" "^((List.fold_left (fun a d -> a^"\n"^(string_of_spec d)) "{" cont)^"}")
+	| SEnsure{ sensures_base = fb } -> ("ensures "^(string_of_formula fb))
+;;
+
+
+let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c )) "" d 
+;;
+
+
+
 (* function to print a list of type F.formula * F.formula *)
 let rec string_of_formulae_list l = match l with 
   | []               -> ""
@@ -211,7 +259,7 @@ let rec string_of_exp = function
 	  let str1 = 
 		match f1o with
 		  | None -> ""
-		  | Some f1 -> "assert " ^ (string_of_formula f1) in
+		  | Some f1 -> "assert " ^ (string_of_struc_formula f1) in
 	  let str2 =
 		match f2o with
 		  | None -> ""
@@ -291,7 +339,7 @@ let rec string_of_exp = function
 	    exp_while_body = e;
 	    exp_while_spec = fl;
 	    exp_while_pos = l})  -> 
-	    "while " ^ id ^ (string_of_formulae_list fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n"
+	    "while " ^ id ^ (string_of_specs fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n"
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
 ;;
 
@@ -327,7 +375,7 @@ let rec string_of_spec_var_list l = match l with
 
 (* pretty printing for a view *)
 let string_of_view_decl v = "view " ^ v.view_name ^ "<" ^ (string_of_spec_var_list v.view_vars) ^ ">=" ^
-                            (string_of_formula v.view_formula) 
+                            (string_of_struc_formula v.view_formula) 
   ^ "\n\tinv " ^ (string_of_pure_formula v.view_user_inv)
   ^ "\n\txform " ^ (string_of_pure_formula v.view_x_formula)
     
@@ -335,8 +383,8 @@ let string_of_view_decl v = "view " ^ v.view_name ^ "<" ^ (string_of_spec_var_li
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
   (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
-  ^ "static " ^ (string_of_formulae_list p.proc_static_specs) ^ "\n"
-  ^ "dynamic " ^ (string_of_formulae_list p.proc_dynamic_specs) ^ "\n"
+  ^ "static " ^ (string_of_specs p.proc_static_specs) ^ "\n"
+  ^ "dynamic " ^ (string_of_specs p.proc_dynamic_specs) ^ "\n"
   ^ (if U.empty p.proc_by_name_params then "" 
 	 else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
   ^ (match p.proc_body with 
@@ -398,7 +446,7 @@ and string_of_estate (es : entail_state) =
   ^ "\nes_pres_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
 														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
 *)
-
+(*
 let string_of_spec (sp : (formula * formula)) =
   "requires " ^ (string_of_formula (fst sp)) 
   ^ "\nensures " ^ (string_of_formula (snd sp))
@@ -407,3 +455,4 @@ let string_of_specs (specs : (formula * formula) list) =
   let tmp1 = List.map string_of_spec specs in
   let tmp2 = String.concat ";\n" tmp1 in
 	tmp2
+*)

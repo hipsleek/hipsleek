@@ -27,7 +27,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
 and data_decl = { data_name : ident;
 				  data_fields : (typed_ident * loc) list;
 				  data_parent_name : ident;
-				  data_invs : F.formula list;
+				  data_invs : Iformula.formula list;
 				  data_methods : proc_decl list }
 
 and view_decl = { view_name : ident; 
@@ -36,7 +36,7 @@ and view_decl = { view_name : ident;
 				  view_modes : mode list;
 				  mutable view_typed_vars : (CP.typ * ident) list;
 				  view_invariant : P.formula;
-				  view_formula : F.formula }
+				  view_formula : Iformula.struc_formula }
 
 and enum_decl = { enum_name : ident;
 				  enum_fields : (ident * int option) list } 
@@ -50,6 +50,34 @@ and param = { param_type : typ;
 			  param_name : ident;
 			  param_mod : param_modifier;
 			  param_loc : loc }
+				
+and multi_spec = spec list
+
+and spec = 
+	| SCase of scase_spec
+	| SRequires of srequires_spec
+	| SEnsure of sensures_spec
+	
+and scase_spec = 
+	{
+			scase_branches : (Ipure.formula * multi_spec ) list ;
+			scase_pos : loc 
+		}
+	
+and srequires_spec = 
+	{		
+		srequires_explicit_inst : (ident * primed) list;
+		srequires_implicit_inst : (ident * primed) list;
+		srequires_base : Iformula.formula;
+		srequires_continuation : multi_spec;
+		srequires_pos : loc
+		}	
+	
+and sensures_spec = 
+	{
+		sensures_base : Iformula.formula;
+		sensures_pos : loc
+	}
 
 and proc_decl = { proc_name : ident;
 				  mutable proc_mingled_name : ident;
@@ -57,8 +85,8 @@ and proc_decl = { proc_name : ident;
 				  proc_constructor : bool;
 				  proc_args : param list;
 				  proc_return : typ;
-				  proc_static_specs : (F.formula * F.formula) list;
-				  proc_dynamic_specs : (F.formula * F.formula) list;
+				  proc_static_specs : multi_spec;(*(F.formula * F.formula) list;*)
+				  proc_dynamic_specs : multi_spec;(*(F.formula * F.formula) list;*)
 				  proc_body : exp option;
 				  proc_loc : loc }
 
@@ -105,7 +133,7 @@ and assign_op =
   | OpDivAssign
   | OpModAssign
 
-and exp_assert = { exp_assert_asserted_formula : F.formula option;
+and exp_assert = { exp_assert_asserted_formula : Iformula.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
 
@@ -197,7 +225,7 @@ and exp_var_decl = { exp_var_decl_type : typ;
 
 and exp_while = { exp_while_condition : exp;
 				  exp_while_body : exp;
-				  exp_while_specs : (F.formula * F.formula) list;
+				  exp_while_specs : multi_spec;
 				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
@@ -379,7 +407,38 @@ and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) 
   If there are conflicts, report as errors.
 *)
 
-and data_name_of_view (view_decls : view_decl list) (f0 : F.formula) : ident = 
+and mkSpecTrue pos = 
+	[SRequires {
+		srequires_explicit_inst = [];
+		srequires_implicit_inst = [];
+		srequires_base  = Iformula.mkTrue pos;
+		srequires_continuation =  [SEnsure{
+			sensures_base =  Iformula.mkTrue pos;
+			sensures_pos = pos
+			}];
+		srequires_pos = pos
+		}]	
+
+and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
+
+		let handle_list_res  (e:string list): string = 
+					let r = List.filter (fun c-> (String.length c)>0) e in
+						if (List.length r == 0 ) then ""
+							else
+								let h = List.hd r in
+								let tl = List.tl r in
+								if (List.for_all (fun c-> (String.compare c h)==0 ) tl) then (List.hd r)
+													else "" in
+		
+		let rec data_name_in_ext (f:Iformula.ext_formula):ident = match f with
+			| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view  view_decls c2) b.Iformula.formula_case_branches)
+			| Iformula.EBase b->	 data_name_of_view1 view_decls b.Iformula.formula_ext_base
+			in
+			handle_list_res (List.map data_name_in_ext f0) 
+	
+	 
+
+and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident = 
   let rec get_name_from_heap (h0 : F.h_formula) : ident option = match h0 with
 	| F.HeapNode h ->
 		let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
@@ -581,3 +640,116 @@ let sub_type (t1 : typ) (t2 : typ) =
 	  *)
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
+
+
+
+
+let rec rename_bound_vars_specs (f:multi_spec):multi_spec =
+	let rec helper (f:spec):spec = match f with
+		| SCase b-> SCase({b with scase_branches = List.map (fun (c1,c2)-> (c1,(rename_bound_vars_specs c2))) b.scase_branches})
+		| SRequires b->
+			let sst2 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.srequires_explicit_inst in
+			let sst1 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.srequires_implicit_inst in
+			let sst = sst1@sst2 in
+			let nb = Iformula.subst sst b.srequires_base in
+			let nc = subst_spec sst b.srequires_continuation in			
+			SRequires ({b with 
+				srequires_explicit_inst = snd(List.split sst2);
+				srequires_implicit_inst = snd(List.split sst1);
+				srequires_base =  Iformula.rename_bound_vars nb; 
+				srequires_continuation = rename_bound_vars_specs nc})
+		| SEnsure b->SEnsure({b with sensures_base = Iformula.rename_bound_vars b.sensures_base}) in
+	List.map helper f
+	
+	
+	
+and subst_spec (sst:((ident * primed)*(ident * primed)) list) (f:multi_spec):multi_spec = 
+	
+	let rec helper (f:spec):spec = match f with
+		| SCase b ->
+			let r = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_spec sst c2))) b.scase_branches in
+			SCase ({scase_branches = r; scase_pos = b.scase_pos})
+		| SRequires b->
+			let sb = Iformula.subst sst b.srequires_base in
+			let sc = subst_spec sst b.srequires_continuation in
+			let se = List.map (Iformula.subst_var_list sst) b.srequires_explicit_inst in
+			let si = List.map (Iformula.subst_var_list sst) b.srequires_implicit_inst in		
+			SRequires ({
+					srequires_implicit_inst = si;
+					srequires_explicit_inst = se;
+				  srequires_base = sb;
+					srequires_continuation = sc;
+					srequires_pos = b.srequires_pos	})			
+		| SEnsure b-> 
+			SEnsure ({sensures_base = Iformula.subst sst b.sensures_base ; sensures_pos = b.sensures_pos})		
+		in	
+	List.map helper f
+	
+	
+and normalize_spec 	((hp1,hp2):((ident*primed)list * (ident*primed)list)) (f0: multi_spec):multi_spec*((ident*primed)list) =   
+	let rec helper (f0:spec): spec*((ident*primed)list) = match f0 with 
+			| SEnsure b -> 
+				let onb = Iformula.convert_anonym_to_exist b.sensures_base in
+				let nb,nh = Iformula.norm_formula (hp1@hp2) false onb in
+				(SEnsure ({b with sensures_base = nb}),(Util.difference nh hp2)) 
+			| SCase b ->
+				let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
+									let r12 = Util.intersect (Ipure.fv c1) hp1 in
+									let r21,r22 = normalize_spec (hp1,hp2) c2 in
+									(((c1,r21)::a1),r12::r22::a2)
+					) ([],[]) b.scase_branches in				
+					(SCase ({
+						scase_branches = r1;
+						scase_pos = b.scase_pos
+						}),(Util.remove_dups (List.concat r2)))
+			| SRequires b ->  				
+				(*let sst = List.map (fun (c1,c2)-> ((c1,c2),((fresh_old_name c1),c2)))b.srequires_explicit_inst in
+				let nb = subst sst b.srequires_base in
+				let nc = subst_spec sst b.srequires_continuation in
+				let _,nh0 = List.split sst in*)
+				let onb = Iformula.convert_anonym_to_exist b.srequires_base in
+				let nh0 = b.srequires_explicit_inst in
+				let _ = if (List.length (Util.intersect hp1 nh0))>0 then 
+						Error.report_error {Error.error_loc = b.srequires_pos; Error.error_text = "the late instantiation variables collide with the used vars"}
+					else true in
+				let h1 = Util.remove_dups (hp1@nh0) in
+				let h0prm = Util.difference (Iformula.fv onb) h1 in
+				let h0h0prm = Util.remove_dups (nh0@h0prm) in
+				let h1prm = Util.remove_dups (h1@h0prm) in
+				let _ = if (List.length (List.filter (fun (c1,c2)-> c2==Primed) h0h0prm))>0 then
+						Error.report_error {Error.error_loc = b.srequires_pos; Error.error_text = "should not have prime vars"} else true in
+				let _ = if (List.length (Util.intersect(h0h0prm) hp2))>0 then 	
+						Error.report_error {Error.error_loc = b.srequires_pos; Error.error_text = "post variables should not appear here"} else true in
+				let nc,h2 = normalize_spec (h1prm,hp2) b.srequires_continuation in	
+				let implvar = Util.difference h2 h1 in
+				let nb,h3 = Iformula.norm_formula (Util.remove_dups(h1@implvar)) false onb in
+				let _ = if (List.length (Util.difference implvar (Iformula.fv b.srequires_base)))>0 then 
+						Error.report_error {Error.error_loc = b.srequires_pos; Error.error_text = "malfunction: some implicit vars are heap_vars"} else true in
+				(SRequires ({
+					srequires_base = nb;
+					srequires_implicit_inst =implvar;					
+					srequires_explicit_inst = b.srequires_explicit_inst;
+					srequires_continuation = nc;
+					srequires_pos = b.srequires_pos}),(Util.remove_dups (h2@h3))) in
+
+	let f0, nhp = List.split (List.map helper f0) in 
+	let nhp = List.concat nhp in
+	(f0,(Util.remove_dups nhp))
+	
+	
+	
+and float_out_exps_from_heap_spec  (f:multi_spec):multi_spec = 
+	let rec helper (f:spec):spec = match f with
+		| SCase b -> SCase ({scase_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_spec c2))) b.scase_branches ; scase_pos=b.scase_pos})
+		| SRequires b->
+			SRequires ({
+					srequires_explicit_inst = b.srequires_explicit_inst;
+					srequires_implicit_inst = b.srequires_implicit_inst;
+					srequires_base = Iformula.float_out_exps_from_heap b.srequires_base;
+					srequires_continuation = float_out_exps_from_heap_spec b.srequires_continuation;
+					srequires_pos = b.srequires_pos			
+				})
+		| SEnsure b-> 
+			SEnsure({	sensures_base = Iformula.float_out_exps_from_heap b.sensures_base;
+		sensures_pos = b.sensures_pos })in	
+	List.map helper f

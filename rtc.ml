@@ -108,7 +108,7 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
   let _ = Buffer.clear java_code in
 	(* Compile specs *)
   let _ = List.map 
-	(fun pdef -> compile_proc_spec prog pdef java_code) prog.C.prog_proc_decls in
+	(fun pdef -> compile_proc_struc_spec prog pdef java_code) prog.C.prog_proc_decls in
 	(* Compile bodies *)
 	(* add class declaration *)
   let tmp = Filename.chop_extension (Filename.basename source) in
@@ -163,7 +163,10 @@ and compile_proc_body (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit
 	  Cjava.java_of_proc_decl prog cproc java_code
   end
 
-and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit = match proc.C.proc_static_specs with
+and compile_proc_struc_spec (prog:C.prog_decl)(proc:C.proc_decl) java_code: unit = 
+	compile_proc_spec prog proc (Cast.m_spec_to_formula proc.Cast.proc_static_specs) java_code	
+
+and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl)(specs:(Cformula.formula*Cformula.formula)list) java_code : unit = match specs with
   | [] -> 
 	  let pre = CF.mkTrue no_pos in
 	  let post = CF.mkTrue no_pos in
@@ -400,7 +403,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 		else
 		  let pdef = C.look_up_proc_def_raw prog.C.prog_proc_decls mn0 in
 		  let pre = 
-			match pdef.C.proc_static_specs with
+			match (Cast.m_spec_to_formula pdef.C.proc_static_specs) with
 			  | [(pre, post)] -> pre
 			  | [] -> CF.mkTrue pos 
 			  | _ -> failwith ("compile_call: currently support only one pair of pre/post: " ^ mn)

@@ -61,6 +61,7 @@ MAIN_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
 	inliner.cmo \
+	linearise.cmo\
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
@@ -80,6 +81,7 @@ SLEEK_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
 	inliner.cmo \
+	linearise.cmo\
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
@@ -107,6 +109,7 @@ PROVE_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
 	inliner.cmo \
+	linearise.cmo\
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \

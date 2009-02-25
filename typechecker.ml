@@ -28,9 +28,9 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
 		 		let _ = print_string ("[typechecker.ml, line 62, assert]: pre to be entailed " ^ (Cprinter.string_of_formula c1) ^ "\n") in
 				let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 				*)
-			 let rs, prf = heap_entail prog false false ctx c1 pos in
+			 let rs, prf = heap_entail_struc prog false false ctx c1 pos in
 			 PTracer.log_proof prf;
-			 Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_formula c1)) pos;
+			 Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
 			 if not (U.empty rs) then
 			   let resstr = String.concat "\n;\n" (List.map (fun c -> Cprinter.string_of_context c) rs) in
 			   Debug.print_info "assert" ("assert ok\n") pos;
@@ -545,7 +545,7 @@ let rec check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) 
         List.map process_one rs
       in
       let check_one_small_context preposts sctx =
-        let tmp_res = List.map (check_pre_post sctx) proc.proc_static_specs in
+        let tmp_res = List.map (check_pre_post sctx) (m_spec_to_formula proc.proc_static_specs) in
 	    let res = List.concat tmp_res in
         (*print_string "\nRES_SMALL_LEN: "; print_int (List.length res); flush stdout;*)
         if res = [] then raise Exit else res
@@ -662,8 +662,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
 			(*print_string ("\n[typechecker.ml, line 658]: free vars(precond)" ^ Cprinter.string_of_spec_var_list (CF.fv (fst (List.hd proc.proc_static_specs))));*)
 			Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
-			Debug.devel_pprint ("Precond : " ^ Cprinter.string_of_formula (fst (List.hd proc.proc_static_specs))) proc.proc_loc;
-			Debug.devel_pprint ("Postcond : " ^ Cprinter.string_of_formula (snd (List.hd proc.proc_static_specs))) proc.proc_loc;
+			Debug.devel_pprint ("Precond : " ^ Cprinter.string_of_specs proc.proc_static_specs) proc.proc_loc;
+			(*Debug.devel_pprint ("Postcond : " ^ Cprinter.string_of_formula (snd (List.hd proc.proc_static_specs))) proc.proc_loc;*)
 			let ftypes, fnames = List.split proc.proc_args in
 			(* fsvars are the spec vars corresponding to the parameters *)
 			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
@@ -695,7 +695,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 				  not (U.empty res_ctx) in
 			let pp = proc.proc_static_specs @ proc.proc_dynamic_specs in (*TODO: fix this *)
 			let result =
-				if List.for_all check_pre_post pp then begin
+				if List.for_all check_pre_post (m_spec_to_formula pp) then begin
 				print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
 				true
 				  end else begin print_string ("\nProcedure "^proc.proc_name^" result FAIL\n"); false end in
