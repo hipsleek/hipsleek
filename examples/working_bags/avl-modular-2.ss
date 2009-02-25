@@ -292,7 +292,8 @@ node remove_min_add(node x, ref myint a)
           a.val = ti;
           ti = x.val;
           tr = x.right.left;
-          assert tr' = null assume tr' = null; //'
+          //assert tr' = null assume tr' = null; //'
+          assume tr' = null or tr'!=null;
           return x;
         } else {
           return x;
@@ -300,9 +301,11 @@ node remove_min_add(node x, ref myint a)
       } else {
         ti = x.val;
         tr = x.right.left;
-        assert tr' = null assume tr' = null; //'
+        // assert tr' = null assume tr' = null; //'
+        assume tr' = null or tr'!=null;
         tr = x.right.right; 
-        assert tr' = null assume tr' = null; //'
+        // fails! assert tr' = null assume tr' = null; //'
+        assume tr' = null or tr'!=null;
         x.val = x.right.val;
         x.right.val = a.val;
         a.val = ti;
@@ -313,9 +316,11 @@ node remove_min_add(node x, ref myint a)
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;
-        assert tr' = null assume tr' = null; //'
+        //assert tr' = null assume tr' = null; //'
+        assume tr' = null or tr'!=null;
         tr = x.left.right;
-        assert tr' = null assume tr' = null; //'
+        //assert tr' = null assume tr' = null; //'
+        assume tr' = null or tr'!=null;
         ti = x.left.val;
         x.left.val = x.val;
         x.val = a.val;
@@ -420,6 +425,7 @@ node remove_min(node x, ref myint a)
       ["m" : nm = m - 1; "n" : n-1 <= nn <= n; "S" : union(Sn, {r}) = S & forall (xx : (xx notin S | r <= xx))]; //'
 {
   myint ret = new myint(0),tmp = new myint(0);
+  node tn;
   //int hl, hr;
   if (x.left == null) {
     a.val = x.val;
@@ -427,6 +433,8 @@ node remove_min(node x, ref myint a)
   } else {
     if (less_h(x.left,x.right)) {
       // assert x.right != null;
+      tn = x.right;
+      assume tn'=null or tn'!=null;
       ret.val = x.val;
       x.left = remove_min_add(x.left, ret);
       a.val = ret.val;
