@@ -637,8 +637,8 @@ and subst_var_list sst (svs : spec_var list) = match svs with
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
   let st1 = List.combine fr t in
   (* let f2 = subst st1 f in *) 
-  (* changing to a parallel substitution below 
-  let f2 = apply_subs st1 f in *)
+  (* changing to a parallel substitution below *)
+  (* let f2 = apply_subs st1 f in *)
   let f2 = subst st1 f in  
   f2
 
@@ -667,9 +667,9 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
       else Exists  (v, apply_subs sst qf, pos)
 
 
-and diff sst v = List.filter (fun (a,_) -> a!=v) sst
+and diff sst v = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
 
-and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (t==v)) false sst
+and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_spec_var t v)) false sst
 
 and b_apply_subs sst bf = match bf with
   | BConst _ -> bf
@@ -699,7 +699,7 @@ and b_apply_subs sst bf = match bf with
   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
 	| BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
 
-and subs_one sst v = List.fold_left (fun old -> fun  (fr,t) -> if fr==v then t else old) v sst
+and subs_one sst v = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ -> e
