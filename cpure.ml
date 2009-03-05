@@ -636,9 +636,10 @@ and subst_var_list sst (svs : spec_var list) = match svs with
 
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
   let st1 = List.combine fr t in
-  (* let f2 = subst st1 f in *)
-  (* changing to a parallel substitution below *)
-  let f2 = apply_subs st1 f in
+  (* let f2 = subst st1 f in *) 
+  (* changing to a parallel substitution below 
+  let f2 = apply_subs st1 f in *)
+  let f2 = subst st1 f in  
   f2
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = match sst with
@@ -646,7 +647,7 @@ and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = match sst
   | [] -> f
 
 and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
-  | BForm bf -> BForm (b_apply_subs subs bf)
+  | BForm bf -> BForm (b_apply_subs sst bf)
   | And (p1, p2, pos) -> And (apply_subs sst p1,
 							  apply_subs sst p2, pos)
   | Or (p1, p2, pos) -> Or (apply_subs sst p1,
@@ -666,9 +667,9 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
       else Exists  (v, apply_subs sst qf, pos)
 
 
-and diff sst v = filter (fun (a,_) -> a==v) sst
+and diff sst v = List.filter (fun (a,_) -> a!=v) sst
 
-and var_in_target v sst = foldl (fun (_,t) curr -> curr or t==v) false sst
+and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (t==v)) false sst
 
 and b_apply_subs sst bf = match bf with
   | BConst _ -> bf
@@ -698,7 +699,7 @@ and b_apply_subs sst bf = match bf with
   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
 	| BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
 
-subs_one sst v = foldl (fun (fr,t) old -> if fr==v then t else old) v sst
+and subs_one sst v = List.fold_left (fun old -> fun  (fr,t) -> if fr==v then t else old) v sst
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ -> e
@@ -719,7 +720,7 @@ and e_apply_subs sst e = match e with
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_subs sst a1,
 							  e_apply_subs sst a2, pos)
 
-and e_apply_subs_bag sst alist = map (e_apply_subs sst) alist
+and e_apply_subs_bag sst alist = List.map (e_apply_subs sst) alist
 
 and apply_one (fr, t) f = match f with
   | BForm bf -> BForm (b_apply_one (fr, t) bf)
