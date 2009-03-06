@@ -15,7 +15,7 @@ data myint {
 /* view for avl trees */
 avl<n> == self = null & n = 0
   or self::node<v, n, p, q> * p::avl<n1> * q::avl<n2> &
-  n <= n1 + 2 & n <= n2 + 2 & tmp=max(n1, n2) & n = tmp + 1
+  -1 <= n1-n2 <= 1 & n=1+max(n1, n2) 
   inv n >= 0;
 
 /* function to return the height of an avl tree */

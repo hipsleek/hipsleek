@@ -75,8 +75,8 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (CP.formula * (branch_label * 
       else*)
       let branches = Util.remove_dups (fst (List.split pf1b) @ (fst (List.split pf2b))) in
       let map_fun branch =
+        let l1 = List.assoc branch pf1b in
         try 
-          let l1 = List.assoc branch pf1b in
           try
             let l2 = List.assoc branch pf2b in
             CP.mkOr l1 l2 pos
@@ -1185,6 +1185,7 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
         let (pf, pfb) = xpure prog f in
         let fold_fun (is_ok, ctx) (_, pf1b) =
           if not is_ok then (false, ctx) else
+	  let _ = reset_int2 () in
           if TP.is_sat (*(CP.And (pf,*) pf1b(*, no_pos))*) then (true, ctx) else
 		  (false, false_ctx no_pos)
         in

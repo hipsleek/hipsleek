@@ -293,6 +293,7 @@ node remove_min_add(node x, ref myint a)
           ti = x.val;
           tr = x.right.left;
           //assert tr' = null assume tr' = null; //'
+          assert tr'=null;
           assume tr' = null or tr'!=null;
           return x;
         } else {
@@ -304,7 +305,7 @@ node remove_min_add(node x, ref myint a)
         // assert tr' = null assume tr' = null; //'
         assume tr' = null or tr'!=null;
         tr = x.right.right; 
-        // fails! assert tr' = null assume tr' = null; //'
+        assert tr' = null assume tr' = null; //'
         assume tr' = null or tr'!=null;
         x.val = x.right.val;
         x.right.val = a.val;

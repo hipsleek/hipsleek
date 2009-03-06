@@ -125,7 +125,7 @@ node double_left_child(node k3)
 {
         node t2 = k3.left;
 	k3.left = rotate_right_child(t2);
-        //dprint;
+        dprint;
 	/*
         assert k3'::node<_,_,kl,kr> * kr::avl<kcm, kcn, _> * kl::node<_, _, kll, klr> * klr::avl<kbm, kbn, _>
          * kll::avl<kam, kan, bbb>; 

@@ -53,18 +53,62 @@ Valid.
 (EX Anon_50, Anon_49, Anon_48, v_ptr_9_46 . z::node<Anon_48, Anon_49> * y::ll<Anon_50> & v_ptr_9_46 = null)
 
 ======================================
-Fail.
-Fail.
-Fail.
-Fail.
+Valid.
+Valid.
 Valid.
 Fail.
-Fail.
-Fail.
+Valid.
+Valid.
+Valid.
+Valid.
+(EX b_1531, a_1530, b_1714, b_1775, b_1803 . r_1804::lseg<b_1803, r_1532> * r_1532::lseg<b_1531, p> & n > 10 & r1 = r_1715 & r2 = r_1776 & r3 = r_1804 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+a_1530 & a_1530 >= 0 & b_1531 >= 0 & a_1530 = b_1714+n1 & n1 >= 0 & b_1714 >= 0 & b_1714 = b_1775+n2 & n2 >= 0 & b_1775 >= 0 & b_1775 = b_1803+n3 & n3 >= 0 & b_1803 >= 0)
 
-Fail.
-Fail.
+;
 
+(EX b_1531, a_1530, b_1714 . r_1532::lseg<b_1531, p> & n > 10 & r1 = r_1715 & r2 = r_1776 & r3 = r_1532 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+a_1530 & a_1530 >= 0 & b_1531 >= 0 & a_1530 = b_1714+n1 & n1 >= 0 & b_1714 >= 0 & b_1714 = n3+n2 & n2 >= 0 & n3 >= 0)
+
+;
+
+(EX b_1531, a_1530, b_1747 . r_1748::lseg<b_1747, p> & n > 10 & r1 = r_1715 & r2 = r_1532 & r3 = r_1748 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+a_1530 & a_1530 >= 0 & b_1531 >= 0 & a_1530 = n2+n1 & n1 >= 0 & n2 >= 0 & b_1531 = b_1747+n3 & n3 >= 0 & b_1747 >= 0)
+
+;
+
+(EX a_1530 . true & n > 10 & r1 = r_1715 & r2 = r_1532 & r3 = p & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = n3+a_1530 & a_1530 >= 0 & n3 >= 0 & a_1530 = n2+n1 & n1 >= 0 & n2 >= 0)
+
+;
+
+(EX b_1531, b_1572, a_1571, b_1645, b_1673 . r_1674::lseg<b_1673, r_1573> * r_1573::lseg<b_1572, p> & n > 10 & r1 = r_1532 & r2 = r_1646 & r3 = r_1674 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+n1 & n1 >= 0 & b_1531 >= 0 & b_1531 = b_1572+a_1571 & a_1571 >= 0 & b_1572 >= 0 & a_1571 = b_1645+n2 & n2 >= 0 & b_1645 >= 0 & b_1645 = b_1673+n3 & n3 >= 0 & b_1673 >= 0)
+
+;
+
+(EX b_1531, b_1572, a_1571 . r_1573::lseg<b_1572, p> & n > 10 & r1 = r_1532 & r2 = r_1646 & r3 = r_1573 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+n1 & n1 >= 0 & b_1531 >= 0 & b_1531 = b_1572+a_1571 & a_1571 >= 0 & b_1572 >= 0 & a_1571 = n3+n2 & n2 >= 0 & n3 >= 0)
+
+;
+
+(EX b_1531, b_1572, b_1596, a_1595, b_1615 . r_1616::lseg<b_1615, r_1597> * r_1597::lseg<b_1596, p> & n > 10 & r1 = r_1532 & r2 = r_1573 & r3 = r_1616 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+n1 & n1 >= 0 & b_1531 >= 0 & b_1531 = b_1572+n2 & n2 >= 0 & b_1572 >= 0 & b_1572 = b_1596+a_1595 & a_1595 >= 0 & b_1596 >= 0 & a_1595 = b_1615+n3 & n3 >= 0 & b_1615 >= 0)
+
+;
+
+(EX b_1531, b_1572, b_1596 . r_1597::lseg<b_1596, p> & n > 10 & r1 = r_1532 & r2 = r_1573 & r3 = r_1597 & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+n1 & n1 >= 0 & b_1531 >= 0 & b_1531 = b_1572+n2 & n2 >= 0 & b_1572 >= 0 & b_1572 = b_1596+n3 & n3 >= 0 & b_1596 >= 0)
+
+;
+
+(EX b_1531 . true & n > 10 & r1 = r_1532 & r2 = r_1573 & r3 = p & n1 >= 1 & n2 >= 2 & n3 >= 1 & n = b_1531+n1 & n1 >= 0 & b_1531 >= 0 & b_1531 = n3+n2 & n2 >= 0 & n3 >= 0)
+Fail.
+Valid.
+(EX b_2025, a_2024, b_2098, b_2126 . r_2127::lseg<b_2126, r_2026> * r_2026::lseg<b_2025, p> & n = 7 & r1 = r_2099 & r2 = r_2127 & n1 = 3 & n2 = 3 & n = b_2025+a_2024 & a_2024 >= 0 & b_2025 >= 0 & a_2024 = b_2098+n1 & n1 >= 0 & b_2098 >= 0 & b_2098 = b_2126+n2 & n2 >= 0 & b_2126 >= 0)
+
+;
+
+(EX b_2025, a_2024 . r_2026::lseg<b_2025, p> & n = 7 & r1 = r_2099 & r2 = r_2026 & n1 = 3 & n2 = 3 & n = b_2025+a_2024 & a_2024 >= 0 & b_2025 >= 0 & a_2024 = n2+n1 & n1 >= 0 & n2 >= 0)
+
+;
+
+(EX b_2025, b_2049, a_2048, b_2068 . r_2069::lseg<b_2068, r_2050> * r_2050::lseg<b_2049, p> & n = 7 & r1 = r_2026 & r2 = r_2069 & n1 = 3 & n2 = 3 & n = b_2025+n1 & n1 >= 0 & b_2025 >= 0 & b_2025 = b_2049+a_2048 & a_2048 >= 0 & b_2049 >= 0 & a_2048 = b_2068+n2 & n2 >= 0 & b_2068 >= 0)
+
+;
+
+(EX b_2025, b_2049 . r_2050::lseg<b_2049, p> & n = 7 & r1 = r_2026 & r2 = r_2050 & n1 = 3 & n2 = 3 & n = b_2025+n1 & n1 >= 0 & b_2025 >= 0 & b_2025 = b_2049+n2 & n2 >= 0 & b_2049 >= 0)
 
 ======================================
 Valid.
@@ -131,15 +175,15 @@ Input parameters of predicate lseg:
 Input parameters of predicate clist: 
 
 Input parameters of predicate ll: 
- done in 0.02 second(s)
+ done in 0.03 second(s)
 Checking procedure append$node~node... 
 Procedure append$node~node SUCCESS
 
-Total verification time: 0.21 second(s)
-	Time spent in main process: 0.06 second(s)
-	Time spent in child processes: 0.15 second(s)
-	 Sat time: 0.169685840607 sec
-	 Imp time: 0.233775138855 sec
+Total verification time: 0.13 second(s)
+	Time spent in main process: 0.03 second(s)
+	Time spent in child processes: 0.1 second(s)
+	 Sat time: 0.159444093704 sec
+	 Imp time: 0.225640535355 sec
 
 ======================================
 
@@ -153,15 +197,15 @@ Input parameters of predicate ll_tail2: tx
 Input parameters of predicate lseg: 
 
 Input parameters of predicate ll_tail: tx
- done in 0.03 second(s)
+ done in 0.05 second(s)
 Checking procedure append$node~node~node~node... 
 Procedure append$node~node~node~node SUCCESS
 
-Total verification time: 1.4 second(s)
-	Time spent in main process: 0.28 second(s)
-	Time spent in child processes: 1.12 second(s)
-	 Sat time: 0.235871076584 sec
-	 Imp time: 2.20612692833 sec
+Total verification time: 1.53 second(s)
+	Time spent in main process: 0.44 second(s)
+	Time spent in child processes: 1.09 second(s)
+	 Sat time: 0.236324071884 sec
+	 Imp time: 2.22845292091 sec
 
 ======================================
 
@@ -169,7 +213,7 @@ Processing file "./hip/bll.ss"
 Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate bndl: 
- done in 0. second(s)
+ done in 0.03 second(s)
 Checking procedure delete$node... 
 Procedure delete$node SUCCESS
 Checking procedure insert$node~int... 
@@ -178,8 +222,8 @@ Procedure insert$node~int SUCCESS
 Total verification time: 0.05 second(s)
 	Time spent in main process: 0.02 second(s)
 	Time spent in child processes: 0.03 second(s)
-	 Sat time: 0.0245628356934 sec
-	 Imp time: 0.0821344852448 sec
+	 Sat time: 0.0248742103577 sec
+	 Imp time: 0.0826840400696 sec
 
 ======================================
 
@@ -191,7 +235,7 @@ Input parameters of predicate ll:
 Input parameters of predicate bnd: 
 
 Input parameters of predicate sll: 
- done in 0.05 second(s)
+ done in 0.01 second(s)
 Checking procedure bsort$node... 
 Procedure bsort$node SUCCESS
 Checking procedure bubble$node... 
@@ -201,21 +245,21 @@ Procedure id3$node SUCCESS
 Checking procedure id2$node... 
 Procedure id2$node SUCCESS
 
-Total verification time: 1.04 second(s)
+Total verification time: 0.99 second(s)
 	Time spent in main process: 0.41 second(s)
-	Time spent in child processes: 0.63 second(s)
-	 Sat time: 0.62087225914 sec
-	 Imp time: 1.26508116722 sec
+	Time spent in child processes: 0.58 second(s)
+	 Sat time: 0.589394569397 sec
+	 Imp time: 1.18608641624 sec
 
 ======================================
 
 Processing file "./hip/cll.ss"
-Parsing... done in 0.01 second(s)
+Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate cll: 
 
 Input parameters of predicate hd: 
- done in 0.02 second(s)
+ done in 0.01 second(s)
 Checking procedure delete$node... 
 Procedure delete$node SUCCESS
 Checking procedure count$node... 
@@ -227,16 +271,16 @@ Procedure insert$node~int SUCCESS
 Checking procedure test$... 
 Procedure test$ SUCCESS
 
-Total verification time: 0.27 second(s)
+Total verification time: 0.16 second(s)
 	Time spent in main process: 0.04 second(s)
-	Time spent in child processes: 0.23 second(s)
-	 Sat time: 0.308645248413 sec
-	 Imp time: 0.305217981339 sec
+	Time spent in child processes: 0.12 second(s)
+	 Sat time: 0.243002414703 sec
+	 Imp time: 0.267770051956 sec
 
 ======================================
 
 Processing file "./hip/complete.ss"
-Parsing... done in 0.01 second(s)
+Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate complete: 
  done in 0.19 second(s)
@@ -251,16 +295,16 @@ Procedure minim$int~int SUCCESS
 Checking procedure maxim$int~int... 
 Procedure maxim$int~int SUCCESS
 
-Total verification time: 1.35 second(s)
-	Time spent in main process: 0.51 second(s)
-	Time spent in child processes: 0.84 second(s)
-	 Sat time: 1.74166679382 sec
-	 Imp time: 1.45454454422 sec
+Total verification time: 1.64 second(s)
+	Time spent in main process: 0.63 second(s)
+	Time spent in child processes: 1.01 second(s)
+	 Sat time: 1.28850769997 sec
+	 Imp time: 1.12696051598 sec
 
 ======================================
 
 Processing file "./hip/dll.ss"
-Parsing... done in 0.01 second(s)
+Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate dll: 
  done in 0. second(s)
@@ -287,11 +331,11 @@ Procedure delete$node2~int SUCCESS
 Checking procedure insert$node2~int... 
 Procedure insert$node2~int SUCCESS
 
-Total verification time: 0.96 second(s)
-	Time spent in main process: 0.3 second(s)
-	Time spent in child processes: 0.66 second(s)
-	 Sat time: 0.869833946228 sec
-	 Imp time: 1.27321887016 sec
+Total verification time: 1.17 second(s)
+	Time spent in main process: 0.35 second(s)
+	Time spent in child processes: 0.82 second(s)
+	 Sat time: 0.856363534927 sec
+	 Imp time: 1.16426229477 sec
 
 ======================================
 
@@ -299,7 +343,7 @@ Processing file "./hip/heaps.ss"
 Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate pq: 
- done in 0.09 second(s)
+ done in 0.1 second(s)
 Checking procedure deletemax$node... 
 Procedure deletemax$node SUCCESS
 Checking procedure ripple$int~int~int~int~node~node... 
@@ -311,39 +355,39 @@ Procedure deleteoneel$node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 10.73 second(s)
-	Time spent in main process: 1.99 second(s)
-	Time spent in child processes: 8.74 second(s)
-	 Sat time: 8.68956112862 sec
-	 Imp time: 3.22388625145 sec
+Total verification time: 10.25 second(s)
+	Time spent in main process: 1.79 second(s)
+	Time spent in child processes: 8.46 second(s)
+	 Sat time: 8.60654354095 sec
+	 Imp time: 3.0930378437 sec
 
 ======================================
 
 Processing file "./hip/insertion.ss"
-Parsing... done in 0. second(s)
+Parsing... done in 0.01 second(s)
 Translating to core language...
 Input parameters of predicate sll: 
 
 Input parameters of predicate bnd: 
- done in 0. second(s)
+ done in 0.05 second(s)
 Checking procedure insertion_sort$node~node... 
 Procedure insertion_sort$node~node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 0.32 second(s)
-	Time spent in main process: 0.08 second(s)
+Total verification time: 0.43 second(s)
+	Time spent in main process: 0.19 second(s)
 	Time spent in child processes: 0.24 second(s)
-	 Sat time: 0.267529726028 sec
-	 Imp time: 0.499315500259 sec
+	 Sat time: 0.268206357956 sec
+	 Imp time: 0.459940671921 sec
 
 ======================================
 
 Processing file "./hip/ll.ss"
-Parsing... done in 0. second(s)
+Parsing... done in 0.01 second(s)
 Translating to core language...
 Input parameters of predicate ll: 
- done in 0.02 second(s)
+ done in 0.01 second(s)
 Checking procedure rev$node~node... 
 Procedure rev$node~node SUCCESS
 Checking procedure create_list$int... 
@@ -365,21 +409,21 @@ Procedure ret_first$node SUCCESS
 Checking procedure append$node~node... 
 Procedure append$node~node SUCCESS
 
-Total verification time: 0.28 second(s)
-	Time spent in main process: 0.05 second(s)
-	Time spent in child processes: 0.23 second(s)
-	 Sat time: 0.396383523941 sec
-	 Imp time: 0.432540655136 sec
+Total verification time: 0.39 second(s)
+	Time spent in main process: 0.09 second(s)
+	Time spent in child processes: 0.3 second(s)
+	 Sat time: 0.398202419281 sec
+	 Imp time: 0.417602539062 sec
 
 ======================================
 
 Processing file "./hip/merge.ss"
-Parsing... done in 0. second(s)
+Parsing... done in 0.01 second(s)
 Translating to core language...
 Input parameters of predicate sll: 
 
 Input parameters of predicate bnd: 
- done in 0.03 second(s)
+ done in 0.02 second(s)
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 Checking procedure merge$node~node... 
@@ -391,11 +435,11 @@ Procedure split_func$node~int SUCCESS
 Checking procedure count$node... 
 Procedure count$node SUCCESS
 
-Total verification time: 0.89 second(s)
-	Time spent in main process: 0.28 second(s)
+Total verification time: 0.86 second(s)
+	Time spent in main process: 0.25 second(s)
 	Time spent in child processes: 0.61 second(s)
-	 Sat time: 0.788676977158 sec
-	 Imp time: 1.16967773438 sec
+	 Sat time: 0.701916456223 sec
+	 Imp time: 1.04490947723 sec
 
 ======================================
 
@@ -403,7 +447,7 @@ Processing file "./hip/perfect.ss"
 Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate perfect: 
- done in 0.04 second(s)
+ done in 0.02 second(s)
 Checking procedure insert$node2~int... 
 Procedure insert$node2~int SUCCESS
 Checking procedure height$node2... 
@@ -415,29 +459,45 @@ Procedure create$int SUCCESS
 Checking procedure simple_insert$node2~int... 
 Procedure simple_insert$node2~int SUCCESS
 
-Total verification time: 0.35 second(s)
-	Time spent in main process: 0.1 second(s)
-	Time spent in child processes: 0.25 second(s)
-	 Sat time: 0.4699177742 sec
-	 Imp time: 0.304328918457 sec
+Total verification time: 0.32 second(s)
+	Time spent in main process: 0.11 second(s)
+	Time spent in child processes: 0.21 second(s)
+	 Sat time: 0.375757455826 sec
+	 Imp time: 0.242296934128 sec
 
 ======================================
 
 Processing file "./hip/qsort.ss"
 Parsing... done in 0. second(s)
-Translating to core language...Fatal error: exception Failure("Omega.omega_of_exp: bag constraint")
+Translating to core language...
+Input parameters of predicate sll: 
+
+Input parameters of predicate bnd: 
+ done in 0.01 second(s)
+Checking procedure qsort$node... 
+Procedure qsort$node SUCCESS
+Checking procedure append_bll$node~node... 
+Procedure append_bll$node~node SUCCESS
+Checking procedure partition$node~int... 
+Procedure partition$node~int SUCCESS
+
+Total verification time: 0.77 second(s)
+	Time spent in main process: 0.34 second(s)
+	Time spent in child processes: 0.43 second(s)
+	 Sat time: 0.517690896988 sec
+	 Imp time: 0.908811807632 sec
 
 ======================================
 
 Processing file "./hip/qsort-tail.ss"
-Parsing... done in 0.01 second(s)
+Parsing... done in 0. second(s)
 Translating to core language...
 Input parameters of predicate bnd_tail: t
 
 Input parameters of predicate ll_tail: t
 
 Input parameters of predicate lseg: 
- done in 0.03 second(s)
+ done in 0.02 second(s)
 Checking procedure partition1$node~node~node~node~int... 
 Procedure partition1$node~node~node~node~int SUCCESS
 Checking procedure qsort$node~node... 
@@ -457,19 +517,19 @@ es_expl_vars:
 
 Procedure qsort$node~node SUCCESS
 
-Total verification time: 25.95 second(s)
-	Time spent in main process: 10.05 second(s)
-	Time spent in child processes: 15.9 second(s)
-	 Sat time: 8.4310131073 sec
-	 Imp time: 22.2993965149 sec
+Total verification time: 25.79 second(s)
+	Time spent in main process: 10.19 second(s)
+	Time spent in child processes: 15.6 second(s)
+	 Sat time: 8.54720687866 sec
+	 Imp time: 22.3808259964 sec
 
 ======================================
 
 Processing file "./hip/rb.ss"
-Parsing... done in 0. second(s)
+Parsing... done in 0.01 second(s)
 Translating to core language...
 Input parameters of predicate rb: 
- done in 0.2 second(s)
+ done in 0.23 second(s)
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 Checking procedure del$node~int... 
@@ -518,11 +578,11 @@ Procedure case_2$node~node~node~node SUCCESS
 Checking procedure rotate_case_3$node~node~node... 
 Procedure rotate_case_3$node~node~node SUCCESS
 
-Total verification time: 8.33 second(s)
-	Time spent in main process: 4.16 second(s)
-	Time spent in child processes: 4.17 second(s)
-	 Sat time: 3.90267443657 sec
-	 Imp time: 10.1526095867 sec
+Total verification time: 8.39 second(s)
+	Time spent in main process: 4.4 second(s)
+	Time spent in child processes: 3.99 second(s)
+	 Sat time: 3.78284716606 sec
+	 Imp time: 9.97027683258 sec
 
 ======================================
 
@@ -532,7 +592,7 @@ Translating to core language...
 Input parameters of predicate sll: 
 
 Input parameters of predicate bnd1: 
- done in 0. second(s)
+ done in 0.04 second(s)
 Checking procedure selection_sort$node... 
 Procedure selection_sort$node SUCCESS
 Checking procedure delete_min$node~int... 
@@ -540,11 +600,11 @@ Procedure delete_min$node~int SUCCESS
 Checking procedure find_min$node... 
 Procedure find_min$node SUCCESS
 
-Total verification time: 0.36 second(s)
-	Time spent in main process: 0.14 second(s)
-	Time spent in child processes: 0.22 second(s)
-	 Sat time: 0.36851477623 sec
-	 Imp time: 0.805518865585 sec
+Total verification time: 0.3 second(s)
+	Time spent in main process: 0.09 second(s)
+	Time spent in child processes: 0.21 second(s)
+	 Sat time: 0.351095914841 sec
+	 Imp time: 0.652694225311 sec
 
 ======================================
 
@@ -554,7 +614,7 @@ Translating to core language...
 Input parameters of predicate sll: 
 
 Input parameters of predicate ll: 
- done in 0.02 second(s)
+ done in 0.05 second(s)
 Checking procedure id$int... 
 Procedure id$int SUCCESS
 Checking procedure insertion_sort$node~node... 
@@ -568,11 +628,11 @@ Procedure insert2$node~node SUCCESS
 Checking procedure insert$node~int... 
 Procedure insert$node~int SUCCESS
 
-Total verification time: 0.62 second(s)
-	Time spent in main process: 0.2 second(s)
-	Time spent in child processes: 0.42 second(s)
-	 Sat time: 0.588869333267 sec
-	 Imp time: 0.921014785767 sec
+Total verification time: 0.59 second(s)
+	Time spent in main process: 0.19 second(s)
+	Time spent in child processes: 0.4 second(s)
+	 Sat time: 0.519023180008 sec
+	 Imp time: 0.780534744263 sec
 
 ======================================
 
@@ -586,7 +646,7 @@ Input parameters of predicate dll:
 Input parameters of predicate tree: 
 
 Input parameters of predicate tree1: 
- done in 0.23 second(s)
+ done in 0.2 second(s)
 Checking procedure delete$node2~int... 
 Procedure delete$node2~int SUCCESS
 Checking procedure remove_min$node2... 
@@ -600,8 +660,8 @@ Procedure count$node2 SUCCESS
 Checking procedure append$node2~node2... 
 Procedure append$node2~node2 SUCCESS
 
-Total verification time: 1.07 second(s)
-	Time spent in main process: 0.34 second(s)
-	Time spent in child processes: 0.73 second(s)
-	 Sat time: 1.16846394539 sec
-	 Imp time: 0.90615439415 sec
+Total verification time: 1.14 second(s)
+	Time spent in main process: 0.28 second(s)
+	Time spent in child processes: 0.86 second(s)
+	 Sat time: 1.01391077042 sec
+	 Imp time: 0.718617677689 sec

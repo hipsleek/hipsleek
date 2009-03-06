@@ -638,13 +638,14 @@ and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
   let st1 = List.combine fr t in
   (* let f2 = subst st1 f in *) 
   (* changing to a parallel substitution below *)
-  (* let f2 = apply_subs st1 f in *)
-  let f2 = subst st1 f in  
+  let f2 = par_subst st1 f in 
   f2
 
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = match sst with
   | s::ss -> subst ss (apply_one s f) 				(* applies one substitution at a time *)
   | [] -> f
+
+and par_subst sst f = apply_subs sst f
 
 and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
   | BForm bf -> BForm (b_apply_subs sst bf)
