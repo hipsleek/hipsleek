@@ -609,13 +609,23 @@ and remove_spec_var (sv : spec_var) (vars : spec_var list) =
 (* substitution *)
 
 and subst_var_list_avoid_capture fr t svs =
+  let st1 = List.combine fr t in
+  let svs1 = subst_var_list st1 svs in
+	svs1
+
+(* renaming seems redundant
+and subst_var_list_avoid_capture fr t svs =
   let fresh_fr = fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let svs1 = subst_var_list st1 svs in
   let svs2 = subst_var_list st2 svs1 in
 	svs2
+*)
 
+and subst_var_list sst (svs : spec_var list) = subst_var_list_par sst svs
+
+(* filter does not support multiple occurrences of domain 
 and subst_var_list sst (svs : spec_var list) = match svs with
   | sv :: rest ->
       let new_vars = subst_var_list sst rest in
@@ -623,6 +633,13 @@ and subst_var_list sst (svs : spec_var list) = match svs with
 		| [(fr, t)] -> t
 		| _ -> sv in
 		new_sv :: new_vars
+  | [] -> []
+*)
+
+and subst_var_list_par sst (svs : spec_var list) = match svs with
+  | sv :: rest ->
+      let new_vars = subst_var_list sst rest in
+      let new_sv = subs_one sst sv in new_sv :: new_vars
   | [] -> []
 
 (* The intermediate fresh variables seem redundant. *)
