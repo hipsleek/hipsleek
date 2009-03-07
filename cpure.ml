@@ -686,7 +686,9 @@ and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = matc
       else Exists  (v, apply_subs sst qf, pos)
 
 
-and diff sst v = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
+(* cannot change to a let, why? *)
+and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
+ = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
 
 and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_spec_var t v)) false sst
 
@@ -815,6 +817,7 @@ and e_apply_one_bag (fr, t) alist = match alist with
 (* substituting terms for variables: can name-capturing happen?
    yes. What to do? *)
 
+(* remove redundant renaming
 and subst_term_avoid_capture (sst : (spec_var * exp) list) (f : formula) : formula =
   let fr = List.map fst sst in
   let t = List.map snd sst in
@@ -824,10 +827,90 @@ and subst_term_avoid_capture (sst : (spec_var * exp) list) (f : formula) : formu
   let f1 = subst st1 f in
   let f2 = subst_term st2 f1 in
 	f2
+*)
+
+and subst_term_avoid_capture (sst : (spec_var * exp) list) (f : formula) : formula =
+  let f2 = subst_term_par sst f in
+	f2
 
 and subst_term (sst : (spec_var * exp) list) (f : formula) : formula = match sst with
   | s :: ss -> subst_term ss (apply_one_term s f)
   | [] -> f
+
+and subst_term_par (sst : (spec_var * exp) list) (f : formula) : formula = 
+  apply_par_term sst f
+
+(* wasn't able to make diff/diff_term polymorphic! how come? *)
+
+and diff_term (sst : (spec_var * exp) list) (v:spec_var) : (spec_var * exp) list
+ = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
+
+and apply_par_term (sst : (spec_var * exp) list) f = match f with
+  | BForm bf -> BForm (b_apply_par_term sst bf)
+  | And (p1, p2, pos) -> And (apply_par_term sst p1, apply_par_term sst p2, pos)
+  | Or (p1, p2, pos) -> Or (apply_par_term sst p1, apply_par_term sst p2, pos)
+  | Not (p, pos) -> Not (apply_par_term sst p, pos)
+  | Forall (v, qf, pos) ->
+      let sst = diff_term sst v in
+      if (var_in_target_term v sst) then
+        let fresh_v = fresh_spec_var v in
+           Forall (fresh_v, apply_par_term sst (apply_one (v, fresh_v) qf), pos)
+      else if sst==[] then f else 
+           Forall (v, apply_par_term sst qf, pos)
+  | Exists (v, qf, pos) ->
+      let sst = diff_term sst v in
+      if (var_in_target_term v sst) then
+        let fresh_v = fresh_spec_var v in
+           Exists  (fresh_v, apply_par_term sst (apply_one (v, fresh_v) qf), pos)
+      else if sst==[] then f else 
+           Exists  (v, apply_par_term sst qf, pos)
+
+and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (is_member v t)) false sst
+
+and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr or (eq_spec_var v nv)) false vl
+
+and b_apply_par_term (sst : (spec_var * exp) list) bf = match bf with
+  | BConst _ -> bf
+  | BVar (bv, pos) ->
+	  if List.fold_left (fun curr -> fun (fr,_) -> curr or eq_spec_var bv fr) false sst   then
+		failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+	  else
+		bf
+  | Lt (a1, a2, pos) -> Lt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Lte (a1, a2, pos) -> Lte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Gt (a1, a2, pos) -> Gt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Gte (a1, a2, pos) -> Gte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Eq (a1, a2, pos) -> Eq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Neq (a1, a2, pos) -> Neq (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | EqMax (a1, a2, a3, pos) -> EqMax (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+  | EqMin (a1, a2, a3, pos) -> EqMin (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+  | BagIn (v, a1, pos) -> BagIn (v, a_apply_par_term sst a1, pos)
+  | BagNotIn (v, a1, pos) -> BagNotIn (v, a_apply_par_term sst a1, pos)
+  | BagSub (a1, a2, pos) -> BagSub (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | BagMax (v1, v2, pos) -> BagMax (v1, v2, pos)
+  | BagMin (v1, v2, pos) -> BagMin (v1, v2, pos)
+
+and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
+
+and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
+  | Null _ -> e
+  | IConst _ -> e
+  | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Mult (c, a, pos) -> Mult (c, a_apply_par_term sst a, pos)
+  | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
+  | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+	  (*| BagEmpty (pos) -> BagEmpty (pos)*)
+  | Bag (alist, pos) -> Bag ((a_apply_par_term_bag sst alist), pos)
+  | BagUnion (alist, pos) -> BagUnion ((a_apply_par_term_bag sst alist), pos)
+  | BagIntersect (alist, pos) -> BagIntersect ((a_apply_par_term_bag sst alist), pos)
+  | BagDiff (a1, a2, pos) -> BagDiff (a_apply_par_term sst a1,
+									  a_apply_par_term sst a2, pos)
+
+and a_apply_par_term_bag sst alist = match alist with
+  |[] -> []
+  |a :: rest -> (a_apply_par_term sst a) :: (a_apply_par_term_bag sst rest)
 
 and apply_one_term (fr, t) f = match f with
   | BForm bf -> BForm (b_apply_one_term (fr, t) bf)
