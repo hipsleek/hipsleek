@@ -639,7 +639,8 @@ and subst_var_list sst (svs : spec_var list) = match svs with
 and subst_var_list_par sst (svs : spec_var list) = match svs with
   | sv :: rest ->
       let new_vars = subst_var_list sst rest in
-      let new_sv = subs_one sst sv in new_sv :: new_vars
+      let new_sv = subs_one sst sv in 
+	  new_sv :: new_vars
   | [] -> []
 
 (* The intermediate fresh variables seem redundant. *)
