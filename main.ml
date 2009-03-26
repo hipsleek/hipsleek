@@ -115,7 +115,7 @@ let process_cmd_line () = Arg.parse [
    "Use field construct instead of bind");
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
-  ("-v", Arg.Set Debug.debug_on, "Verbose"); 
+  ("-v", Arg.Set Debug.debug_on, "Verbose");
   ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe, "use external prover via pipe");
   ("--dsocket", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_socket "loris-7:8888"), "<host:port>: use external prover via loris-7:8888");
   ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, "<host:port>: use external prover via socket");
@@ -198,6 +198,7 @@ let process_source_full source =
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime in
+		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" "^(string_of_int c.Lexing.pos_lnum)) "" !Globals.false_ctx_line_list)^")\n");
 		  print_string ("\nTotal verification time: " 
 						^ (string_of_float t4) ^ " second(s)\n"
 						^ "\tTime spent in main process: " 
