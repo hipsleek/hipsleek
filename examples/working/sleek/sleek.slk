@@ -14,7 +14,5 @@ checkentail x::node<_, r> * r::node<_, r2> * r2::ll<n> |- x::ll<n + 1>.
 let $a = x' = 1.
 let $b = x' = x + 1.
 let $c = compose[x]($a; $b).
-let $d = x' = 2.
+let $d = x' = 3.
 
-checkentail $c |- $d.
-print residue.
