@@ -15,7 +15,9 @@ data myint {
 /* view for avl trees */
 avl<m, n, S> == self = null & m = 0 & n = 0 & S = {}
   or self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> & m = 1+m1+m2 &
-  n <= n1 + 2 & n <= n2 + 2 & tmp=max(n1, n2) & n = tmp + 1 & S = union(S1, S2, {v}) &
+  -1<=n1-n2<=1  & n=1+max(n1,n2) &
+// n <= n1 + 2 & n <= n2 + 2 & tmp=max(n1, n2) & n = tmp + 1 
+  S = union(S1, S2, {v}) &
   forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))
   inv m >= 0 & n >= 0;
 

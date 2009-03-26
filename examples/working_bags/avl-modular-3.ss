@@ -12,16 +12,26 @@ data myint {
   int val;
 }
 
+tree<h,bal> == case { self=null  -> [] h=0 & bal=1 ;          
+                      self!=null -> [] self::node<_,h,lt,rt>* lt::tree<h1,_>* rt::tree<h2,_
+> & h=1+max(h1,h2) 
+              case { h1<h2 -> [] bal=0 ;
+                     h1=h2 -> [] bal=1 ;
+                     h1>h2 -> [] bal=2 ;
+                                   };
+                        } inv h>=0&bal>=0&bal<=2 ;
+
 /* view for avl trees */
-avl<"m":m, "n":n, "S":S> == 
-  self = null & [
+avl<"m":m, "n":n, "S":S> == case { self=null ->
+   [] true & [
     "m":m = 0; 
     "n": n = 0; 
-    "S": S = {}]
-  or self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> & [
+    "S": S = {}] ;
+  self!=null ->
+   [] self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> & [
     "m" : m = 1+m1+m2 ; 
     "n" : -1 <= n1 - n2 <= 1 & n = 1 + max(n1, n2) ;
-    "S" : S = union(S1, S2, {v}) & forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))]
+    "S" : S = union(S1, S2, {v}) & forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))] ; }
   inv true & [
     "m" : m >= 0;
     "n" : n >= 0];
