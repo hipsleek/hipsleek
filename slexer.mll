@@ -29,6 +29,7 @@
 	 ("bool", BOOL);
 	 ("break", BREAK);
 	 ("by", BY);
+	 ("case",CASE);
 	 ("checkentail", CHECKENTAIL);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);

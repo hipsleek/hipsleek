@@ -77,29 +77,75 @@ let process_data_def ddef =
 	print_string (ddef.I.data_name ^ " is already defined.\n")
 
 let process_pred_def pdef = 
-  (*
-	print_string (Iprinter.string_of_view_decl pdef);
-	print_string ("\n");
-  *)
+    
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		iprog.I.prog_view_decls <- pdef :: iprog.I.prog_view_decls;
-		let cpdef = AS.trans_view iprog pdef in
-		cprog.C.prog_view_decls <- cpdef :: cprog.C.prog_view_decls;
-(* added 07.04.2008	*)			
-		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);
+		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false in
+		let new_pdef = {pdef with Iast.view_formula = wf} in
+		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
+		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
+		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
+		let cpdef = AS.trans_view iprog new_pdef in
+		cprog.C.prog_view_decls <- (cpdef :: cprog.C.prog_view_decls);
+(* added 07.04.2008	*)	
+		(*ignore (print_string ("init: "^(Iprinter.string_of_struc_formula "" pdef.Iast.view_formula )^"\n normalized: "^
+							 (Iprinter.string_of_struc_formula "" wf )^"\n translated: "^
+							 (Cprinter.string_of_struc_formula cpdef.Cast.view_formula)
+							 ^"\n"
+							 )
+				)*)
+		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
+		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
+		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
+		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
 	  with
 		| _ -> iprog.I.prog_view_decls <- tmp
   else
 	print_string (pdef.I.view_name ^ " is already defined.\n")
 
+	
+let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
+	| MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
+	| MetaForm mf -> 
+		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
+		let p = List.map (fun c-> (c,Primed)) fv_idents in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) true in
+			AS.trans_struc_formula iprog quant fv_idents wf stab false (Cpure.Prim Void)
+	| MetaVar mvar -> begin
+	  try 
+		let mf = get_var mvar in
+		  meta_to_struc_formula mf quant fv_idents stab
+	  with
+		| Not_found ->
+			print_string (mvar ^ " is undefined.\n");
+			raise SLEEK_Exception
+	end
+	| MetaCompose (vs, mf1, mf2) -> begin
+	  let cf1 = meta_to_struc_formula mf1 quant fv_idents stab in
+	  let cf2 = meta_to_struc_formula mf2 quant fv_idents stab in
+	  let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
+	  let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
+		res
+	end
+	| MetaEForm b -> 
+		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
+		let p = List.map (fun c-> (c,Primed)) fv_idents in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p b true in
+		(*let _ = print_string ("old_conseq: "^(Iprinter.string_of_struc_formula "" wf)^"\n") in*)
+			AS.trans_struc_formula iprog quant fv_idents wf stab false (Cpure.Prim Void)
+	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
 	| MetaFormCF mf -> mf
-  | MetaForm mf ->
-		AS.trans_formula iprog quant fv_idents mf stab
-  | MetaVar mvar -> begin
+	| MetaForm mf ->
+		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
+		let wf,_ = AS.case_normalize_formula iprog h false mf in
+		let _ = Astsimp.collect_type_info_formula iprog wf stab in
+		AS.trans_formula iprog quant fv_idents false wf stab
+	| MetaVar mvar -> begin
 	  try 
 		let mf = get_var mvar in
 		  meta_to_formula mf quant fv_idents stab
@@ -108,13 +154,14 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 			print_string (mvar ^ " is undefined.\n");
 			raise SLEEK_Exception
 	end
-  | MetaCompose (vs, mf1, mf2) -> begin
+	| MetaCompose (vs, mf1, mf2) -> begin
 	  let cf1 = meta_to_formula mf1 quant fv_idents stab in
 	  let cf2 = meta_to_formula mf2 quant fv_idents stab in
 	  let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
-	  let res = CF.compose_formula cf1 cf2 svs no_pos in
+	  let res = Cformula.compose_formula cf1 cf2 svs no_pos in
 		res
 	end
+	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
 	  
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try
@@ -127,10 +174,11 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 *)
 	let fvs = CF.fv ante in
 	let fv_idents = List.map CP.name_of_spec_var fvs in
-	let conseq = meta_to_formula iconseq0 false fv_idents stab in
+	let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
 	let ectx = CF.empty_ctx no_pos in
 	let ctx = CF.build_context ectx ante no_pos in
-	let rs, _ = Solver.heap_entail cprog false false [ctx] conseq no_pos in
+	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^"\n"^(Cprinter.string_of_struc_formula conseq)^"\n") in*)
+	let rs, _ = Solver.heap_entail_struc cprog false false false [ctx] conseq no_pos in
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;
 	  if Util.empty rs then
@@ -145,6 +193,7 @@ let process_capture_residue (lvar : ident) =
 		put_var lvar (Sleekcommons.MetaFormCF(List.hd flist))
 		
 let process_lemma ldef =
+  let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
 	cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
 	cprog.C.prog_right_coercions <- r2l @ cprog.C.prog_right_coercions
@@ -156,8 +205,8 @@ let process_print_command pcmd0 = match pcmd0 with
                    Error.error_loc = no_pos;
                    Error.error_text = "couldn't find " ^ pvar;
                  }in
-	  let pf = meta_to_formula mf false [] stab in
-		print_string ((Cprinter.string_of_formula pf) ^ "\n")
+	  let pf = meta_to_struc_formula mf false [] stab in
+		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
 	  if pcmd = "residue" then
 		let flist = List.map CF.formula_of_context !residues in

@@ -99,6 +99,7 @@ let parse_file (parse) (source_file : string) =
 
 let main () = 
   let quit = ref false in
+  wrap_exists_implicit_explicit := false ;
   let parse =
 	match !fe with
 	  | NativeFE -> NF.parse

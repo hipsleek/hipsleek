@@ -70,16 +70,6 @@
 	  end
 	| [] -> ([], [], [])
 
-  let rec split_specs specs = match specs with
-	| sp :: rest -> begin
-		let sspecs, dspecs = split_specs rest in
-		  match sp with
-			| (Static, pre, post) -> ((pre, post) :: sspecs, dspecs)
-			| (Dynamic, pre, post) -> (sspecs, (pre, post) :: dspecs)
-	  end
-	| [] -> ([], [])
-
-  let rec remove_spec_qualifier (_, pre, post) = (pre, post)
 %}
 
 %token AND
@@ -219,12 +209,12 @@
 %nonassoc OP_DEC OP_INC
 %left DOT
 
-%start program,data_decl,view_decl,coercion_decl,constr,command,opt_command_list
+%start program,data_decl,view_decl,coercion_decl,formulas,command,opt_command_list
 %type <Iast.prog_decl> program
 %type <Iast.data_decl> data_decl
 %type <Iast.view_decl> view_decl
 %type <Iast.coercion_decl> coercion_decl
-%type <Iformula.formula> constr
+%type <Iformula.struc_formula> formulas
 %type <Sleekcommons.command> command
 %type <Sleekcommons.command list> opt_command_list
 %%
@@ -269,43 +259,6 @@ non_empty_command
 
 
 
-/*
-program
-  : opt_decl_list {
-    let data_defs = ref ([] : data_decl list) in
-	let enum_defs = ref ([] : enum_decl list) in
-	let view_defs = ref ([] : view_decl list) in
-    let proc_defs = ref ([] : proc_decl list) in
-	let coercion_defs = ref ([] : coercion_decl list) in
-    let choose d = match d with
-      | Type tdef -> begin
-		  match tdef with
-			| Data ddef -> data_defs := ddef :: !data_defs
-			| Enum edef -> enum_defs := edef :: !enum_defs
-			| View vdef -> view_defs := vdef :: !view_defs
-		end
-      | Proc pdef -> proc_defs := pdef :: !proc_defs
-	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
-    let _ = List.map choose $1 in
-	let obj_def = { data_name = "Object";
-					data_fields = [];
-					data_parent_name = "";
-					data_invs = []; (* F.mkTrue no_pos; *)
-					data_methods = [] } in
-	let string_def = { data_name = "String";
-					   data_fields = [];
-					   data_parent_name = "";
-					   data_invs = []; (* F.mkTrue no_pos; *)
-					   data_methods = [] } in
-      { prog_data_decls = obj_def :: string_def :: !data_defs;
-		prog_enum_decls = !enum_defs;
-		prog_view_decls = !view_defs;
-		prog_proc_decls = !proc_defs;
-		prog_coercion_decls = !coercion_defs; }
-  }
-;
-*/
-
 program : {
   { prog_data_decls = [];
 	prog_enum_decls = [];
@@ -313,65 +266,6 @@ program : {
 	prog_proc_decls = [];
 	prog_coercion_decls = []; }
 }
-;
-
-opt_decl_list
-  : { [] }
-  | decl_list { List.rev $1 }
-;
-
-decl_list
-  : decl { [$1] }
-  | decl_list decl { $2 :: $1 }
-;
-
-decl
-  : type_decl { Type $1 }
-/*  | proc_decl { Proc $1 } */
-  | coercion_decl { Coercion $1 }
-;
-
-type_decl
-  : data_decl { Data $1 }
-  | class_decl { Data $1 }
-  | enum_decl { Enum $1 }
-  | view_decl { View $1 }
-;
-
-class_decl
-  : CLASS IDENTIFIER extends_opt OBRACE member_list_opt CBRACE {
-	let t1, t2, t3 = split_members $5 in
-	let cdef = { data_name = $2;
-				 data_parent_name = $3;
-				 data_fields = t1;
-				 data_invs = t2; (*List.fold_left
-							   (fun f1 -> fun f2 -> F.mkAnd f1 f2 (F.pos_of_formula f2)) (F.mkTrue (get_pos 1)) *)
-				 data_methods = t3 } in
-	let _ = List.map (fun d -> set_proc_data_decl d cdef) t3 in
-	  cdef
-  }
-;
-
-extends_opt
-  : { "Object" }
-  | EXTENDS IDENTIFIER { $2 }
-;
-
-member_list_opt
-  : { [] }
-  | member_list { List.rev $1 }
-;
-
-member_list
-  : member { [$1] }
-  | member_list member { $2 :: $1 }
-;
-
-member
-  : typ IDENTIFIER SEMICOLON { Field (($1, $2), get_pos 2) }
-  | INV constr SEMICOLON { Inv $2 }
-  | proc_decl { Method $1 }
-  | constructor_decl { Method $1 }
 ;
 
 data_decl
@@ -412,31 +306,6 @@ field_list
 		}
 ;
 
-enum_decl
-  : enum_header enum_body {
-	{ enum_name = $1;
-	  enum_fields = $2 }
-  }
-;
-
-enum_header
-  : ENUM IDENTIFIER { $2 }
-;
-
-enum_body
-  : OBRACE enum_list CBRACE { List.rev $2 }
-;
-
-enum_list
-  : enumerator { [$1] }
-  | enum_list COMMA enumerator { $3 :: $1 }
-;
-
-enumerator
-  : IDENTIFIER { ($1, None) }
-  | IDENTIFIER EQ LITERAL_INTEGER { ($1, Some $3) }
-;
-
 /********** Views **********/
 
 view_decl
@@ -452,10 +321,10 @@ opt_inv
   : { (P.mkTrue no_pos, []) }
   | INV pure_constr opt_branches { ($2, $3) }
 ;
-
 opt_branches
   : { [] }
   | AND OSQUARE branches CSQUARE { $3 }
+;
 
 branches
   : branch {[$1]}
@@ -467,15 +336,17 @@ opt_branch
 
 branch
   : DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON pure_constr { ($2, $5) }
+ ;
+
 
 view_header
   : PRED IDENTIFIER LT opt_ann_cid_list GT {
 	let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
-	  if List.exists
-		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids
+	  if List.exists 
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
 	  then
-		report_error (get_pos 1)
+		report_error (get_pos 1) 
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in
@@ -485,7 +356,7 @@ view_header
             view_labels = br_labels;
 			view_modes = modes;
 			view_typed_vars = [];
-			view_formula = F.mkTrue (get_pos 1);
+			view_formula = F.mkETrue (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []) }
   }
 ;
@@ -499,7 +370,7 @@ cid
 ;
 
 view_body
-  : constr { $1 }
+  : formulas { $1 }
 ;
 
 /********** Constraints **********/
@@ -581,9 +452,9 @@ ann_cid_list
 	}
 ;
 
-ann_cid
+ann_cid 
   : opt_branch cid opt_ann_list {
-    (($2, $1), $3)
+	(($2, $1), $3)
   }
 ;
 
@@ -614,26 +485,74 @@ ann
 	else report_error (get_pos 2) ("unrecognized mode: " ^ $2)
   }
 ;
-
-constr
-  : disjunctive_constr { $1 }
+sq_clist
+	:OSQUARE opt_cid_list CSQUARE {$2}
 ;
 
+formulas 
+	: extended_constr{$1}
+	| disjunctive_constr {Iformula.formula_to_struc_formula $1}
+	;
+
+
+extended_constr
+	: r_constr {[$1]}
+	| extended_constr ORWORD r_constr {$3::$1}
+	;
+	
+r_constr_opt
+	: {[]}	
+	| r_constr {[$1]}
+	| OSQUARE extended_constr CSQUARE {$2}
+	;
+	
+impl_list
+	: pure_constr LEFTARROW extended_constr SEMICOLON 
+		{
+			let _ = if(List.length (Ipure.look_for_anonymous_pure_formula $1))>0 then 
+				report_error (get_pos 1) ("anonimous variables in case guard are disalowed")
+				else true in 
+			[($1,$3)]}
+	| impl_list pure_constr LEFTARROW extended_constr SEMICOLON {(($2,$4)::$1)}
+;
+
+r_constr 
+	: CASE OBRACE impl_list CBRACE 
+	{
+		Iformula.ECase 
+			{
+				Iformula.formula_case_branches = $3;
+				Iformula.formula_case_pos = (get_pos 3) 
+			}
+	}
+	| sq_clist one_constr r_constr_opt
+	{Iformula.EBase 
+						{
+						 	Iformula.formula_ext_explicit_inst = $1;
+						 	Iformula.formula_ext_implicit_inst = [];
+						 	Iformula.formula_ext_base = $2;				
+						 	Iformula.formula_ext_continuation = $3;
+						 	Iformula.formula_ext_pos = (get_pos 2);
+							} 
+		} 
+;
+
+
+
 disjunctive_constr
-  : case_constr { (* each case of a view definition *)
+  : one_constr { (* each case of a view definition *)
 	$1
   }
-  | disjunctive_constr ORWORD case_constr {
+  | disjunctive_constr ORWORD one_constr {
 	  F.mkOr $1 $3 (get_pos 2)
 	}
   | error {
 	  report_error (get_pos 1) ("parse error in constraints")
 	}
 ;
-
-case_constr
-  : core_constr { $1 }
-  |  OPAREN EXISTS opt_cid_list COLON core_constr CPAREN {
+one_constr
+	: core_constr { $1 }
+	|  OPAREN EXISTS opt_cid_list COLON core_constr CPAREN {
 	  match $5 with
 		| F.Base ({F.formula_base_heap = h;
 				   F.formula_base_pure = p;
@@ -675,38 +594,6 @@ simple_heap_constr
 							F.h_formula_heap2_pos = get_pos 2 } in
 		h
 	}
-/*
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT DOLLAR {
-		let h = F.HeapNode { F.h_formula_heap_node = $1;
-							 F.h_formula_heap_name = $3;
-							 F.h_formula_heap_full = true;
-							 F.h_formula_heap_with_inv = false;
-							 F.h_formula_heap_pseudo_data = false;
-							 F.h_formula_heap_arguments = $5;
-							 F.h_formula_heap_pos = get_pos 2 } in
-		  h
-	  }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT HASH {
-		let h = F.HeapNode { F.h_formula_heap_node = $1;
-							 F.h_formula_heap_name = $3;
-							 F.h_formula_heap_full = false;
-							 F.h_formula_heap_with_inv = true;
-							 F.h_formula_heap_pseudo_data = false;
-							 F.h_formula_heap_arguments = $5;
-							 F.h_formula_heap_pos = get_pos 2 } in
-		  h
-	  }
-  | cid COLONCOLON IDENTIFIER HASH LT opt_heap_arg_list GT {
-		let h = F.HeapNode { F.h_formula_heap_node = $1;
-							 F.h_formula_heap_name = $3;
-							 F.h_formula_heap_full = false;
-							 F.h_formula_heap_with_inv = false;
-							 F.h_formula_heap_pseudo_data = true;
-							 F.h_formula_heap_arguments = $6;
-							 F.h_formula_heap_pos = get_pos 2 } in
-		  h
-	  }
-*/
 ;
 
 pure_constr
@@ -885,70 +772,9 @@ cexp_list_rec
 
 /********** Procedures and Coercion **********/
 
-proc_decl
-  : proc_header proc_body {
-	{ $1 with proc_body = Some $2 }
-  }
-  | proc_header { $1 }
-;
-
-proc_header
-  : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
-	  let static_specs, dynamic_specs = split_specs $6 in
-		{ proc_name = $2;
-		  proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
-		  proc_data_decl = None;
-		  proc_constructor = false;
-		  proc_args = $4;
-		  proc_return = $1;
-		  proc_static_specs = static_specs;
-		  proc_dynamic_specs = dynamic_specs;
-		  proc_loc = get_pos 1;
-		  proc_body = None }
-	}
-  | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
-		let static_specs, dynamic_specs = split_specs $6 in
-		  { proc_name = $2;
-			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
-			proc_data_decl = None;
-			proc_constructor = false;
-			proc_args = $4;
-			proc_return = void_type;
-			proc_static_specs = static_specs;
-			proc_dynamic_specs = dynamic_specs;
-			proc_loc = get_pos 1;
-			proc_body = None }
-  }
-;
-
-constructor_decl
-  : constructor_header proc_body {
-	  { $1 with proc_body = Some $2 }
-	}
-  | constructor_header { $1 }
-;
-
-constructor_header
-  : IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
-	  let static_specs, dynamic_specs = split_specs $5 in
-		if Util.empty dynamic_specs then
-		  { proc_name = $1;
-			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
-			proc_data_decl = None;
-			proc_constructor = true;
-			proc_args = $3;
-			proc_return = Named $1;
-			proc_static_specs = static_specs;
-			proc_dynamic_specs = dynamic_specs;
-			proc_loc = get_pos 1;
-			proc_body = None }
-		else
-		  report_error (get_pos 1) ("constructors have only static speficiations");
-	}
-;
 
 checkentail_cmd
-  : CHECKENTAIL meta_constr DERIVE meta_constr DOT{
+  : CHECKENTAIL meta_constr DERIVE extended_meta_constr DOT{
 	($2, $4)
   }
 ;
@@ -983,11 +809,22 @@ let_decl
   }
 ;
 
+extended_meta_constr
+  : DOLLAR IDENTIFIER {
+	MetaVar $2
+  }
+  | formulas {
+	  MetaEForm $1
+	}
+  | compose_cmd {
+	  MetaCompose $1
+	}
+;
 meta_constr
   : DOLLAR IDENTIFIER {
 	MetaVar $2
   }
-  | constr {
+  | disjunctive_constr {
 	  MetaForm $1
 	}
   | compose_cmd {
@@ -996,7 +833,7 @@ meta_constr
 ;
 
 coercion_decl
-  : LEMMA opt_name constr coercion_direction constr DOT{
+  : LEMMA opt_name disjunctive_constr coercion_direction disjunctive_constr DOT{
 	{ coercion_type = $4;
 	  coercion_name = $2;
 	  coercion_head = $3;
@@ -1005,15 +842,6 @@ coercion_decl
 								 exp_return_pos = get_pos 1 })
 	}
   }
-/*
-  | COERCION opt_name constr coercion_direction constr proof_block {
-	  { coercion_type = $4;
-		coercion_name = $2;
-		coercion_head = $3;
-		coercion_body = $5;
-		coercion_proof = $6 }
-	}
-*/
 ;
 
 coercion_direction
@@ -1022,93 +850,10 @@ coercion_direction
   | RIGHTARROW { Right }
 ;
 
-/*
-proof_block
-  : OBRACE proof_script CBRACE {}
-;
-
-proof_script
-  : proof_command {}
-  | proof_script proof_command {}
-;
-
- fold is sound when done on the only antecedent
-proof_command
-  : UNFOLD cid SEMICOLON { }
-  | CONSEQ UNFOLD cid SEMICOLON {}
-  | FOLD cid SEMICOLON {}
-  | IF OPAREN pure_constr CPAREN proof_block ELSE proof_block {}
-  | IDENTIFIER EQ cid DOT IDENTIFIER IN proof_script {}
-;
-*/
-
 opt_name
   : { "" }
   | DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE { $2 }
 ;
-
-opt_pre_post_list
-  : { [] }
-  | pre_post_list /*%prec LOWER_THAN_SEMICOLON*/ { List.rev $1 }
-;
-
-pre_post_list
-  : pre_post_pair { [$1] }
-  | pre_post_list pre_post_pair { $2 :: $1 }
-;
-
-pre_post_pair
-  : spec_qualifier_opt REQUIRES constr ENSURES constr SEMICOLON { ($1, $3, $5) }
-  | spec_qualifier_opt ENSURES constr SEMICOLON { ($1, F.mkTrue (get_pos 1), $3) }
-  | spec_qualifier_opt REQUIRES constr SEMICOLON { ($1, $3, F.mkTrue (get_pos 1)) }
-;
-
-spec_qualifier_opt
-  : { Static }
-  | STATIC { Static }
-  | DYNAMIC { Dynamic }
-;
-
-opt_formal_parameter_list
-  : { [] }
-  | formal_parameter_list { List.rev $1 }
-;
-
-formal_parameter_list
-  : formal_parameter { [$1] }
-  | formal_parameter_list COMMA formal_parameter { $3 :: $1 }
-;
-
-formal_parameter
-  : fixed_parameter { $1 }
-;
-
-fixed_parameter
-  : opt_parameter_modifier typ IDENTIFIER {
-	{ param_mod = $1;
-	  param_type = $2;
-	  param_loc = get_pos 3;
-	  param_name = $3 }
-  }
-;
-
-opt_parameter_modifier
-  : { NoMod }
-  | REF { RefMod }
-;
-
-proc_body
-  : block { $1 }
-;
-
-/*
-typ
-  : INT { int_type }
-  | FLOAT { float_type }
-  | BOOL { bool_type }
-  | IDENTIFIER { Named $1 }
-;
-*/
 
 typ
   : non_array_type { $1 }
@@ -1141,593 +886,9 @@ comma_list
   | comma_list COMMA {}
 ;
 
-/********** Statements **********/
-
-block
-  : OBRACE opt_statement_list CBRACE {
-	match $2 with
-	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
-						   exp_block_pos = get_pos 1 }
-	  | _ -> Block { exp_block_body = $2;
-					 exp_block_pos = get_pos 1 }
-  }
-;
-
-opt_statement_list
-  : { Empty no_pos }
-  | statement_list { $1 }
-;
-
-statement_list
-  : statement { $1 }
-  | statement_list statement { Seq { exp_seq_exp1 = $1;
-									 exp_seq_exp2 = $2;
-									 exp_seq_pos = get_pos 1 } }
-  | error { report_error (get_pos 1) ("parse error") }
-;
-
-statement
-  : declaration_statement { $1 }
-  | valid_declaration_statement { $1 }
-;
-
-declaration_statement
-  : local_variable_declaration SEMICOLON { $1 }
-  | local_constant_declaration SEMICOLON { $1 }
-;
-
-local_variable_type
-  : typ { $1 }
-;
-
-local_variable_declaration
-  : local_variable_type variable_declarators {
-	let var_decls = List.rev $2 in
-	  mkVarDecl $1 var_decls (get_pos 1)
-  }
-;
-
-local_constant_declaration
-  : CONST local_variable_type constant_declarators {
-	let const_decls = List.rev $3  in
-	  mkConstDecl $2 const_decls (get_pos 1)
-  }
-;
-
-variable_declarators
-  : variable_declarator { [$1] }
-  | variable_declarators COMMA variable_declarator { $3 :: $1 }
-;
-
-variable_declarator
-  : IDENTIFIER EQ variable_initializer { ($1, Some $3, get_pos 1) }
-  | IDENTIFIER { ($1, None, get_pos 1) }
-;
-
-variable_initializer
-  : expression { $1 }
-;
-
-constant_declarators
-  : constant_declarator { [$1] }
-  | constant_declarators COMMA constant_declarator { $3 :: $1 }
-;
-
-constant_declarator
-  : IDENTIFIER EQ constant_expression { ($1, $3, get_pos 1) }
-;
-
-valid_declaration_statement
-  : block { $1 }
-  | empty_statement { $1 }
-  | expression_statement { $1 }
-  | selection_statement { $1 }
-  | iteration_statement { $1 }
-  | java_statement { $1 }
-  | jump_statement { $1 }
-  | assert_statement { $1 }
-  | dprint_statement { $1 }
-  | debug_statement { $1 }
-  | bind_statement { $1 }
-  | unfold_statement { $1 }
-/*
-  | fold_statement { $1 }
-  | split_statement { $1 }
-*/
-;
-
-/*
-fold_statement
-  : FOLD cid SEMICOLON {
-	Fold { exp_fold_var = $2;
-		   exp_fold_pos = get_pos 1 } }
-;
-*/
-
-unfold_statement
-  : UNFOLD cid SEMICOLON {
-	Unfold { exp_unfold_var = $2;
-			 exp_unfold_pos = get_pos 1 } }
-;
-
-/*
-split_statement
-  : SPLIT boolean_expression SEMICOLON {
-	Cond { exp_cond_condition = $2;
-		   exp_cond_then_arm = Empty (get_pos 1);
-		   exp_cond_else_arm = Empty (get_pos 1);
-		   exp_cond_pos = get_pos 1 }
-  }
-;
-*/
-
-assert_statement
-  : ASSERT constr SEMICOLON {
-	Assert { exp_assert_asserted_formula = Some $2;
-			 exp_assert_assumed_formula = None;
-			 exp_assert_pos = get_pos 1 }
-  }
-  | ASSERT constr ASSUME SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some $2;
-			   exp_assert_assumed_formula = Some $2;
-			   exp_assert_pos = get_pos 1 }
-	}
-  | ASSUME constr SEMICOLON {
-	  Assert { exp_assert_asserted_formula = None;
-			   exp_assert_assumed_formula = Some $2;
-			   exp_assert_pos = get_pos 1 }
-	}
-;
-
-debug_statement
-  : DDEBUG ON {
-	Debug { exp_debug_flag = true;
-			exp_debug_pos = get_pos 2 }
-  }
-  | DDEBUG OFF {
-	  Debug { exp_debug_flag = false;
-			  exp_debug_pos = get_pos 2 }
-	}
-;
-
-dprint_statement
-  : PRINT SEMICOLON { Dprint ({exp_dprint_string = "";
-							   exp_dprint_pos = (get_pos 1)}) }
-  | PRINT IDENTIFIER SEMICOLON { Dprint ({exp_dprint_string = $2;
-							   exp_dprint_pos = (get_pos 1)}) }
-;
-
-empty_statement
-  : SEMICOLON { Empty (get_pos 1) }
-;
-
-bind_statement
-  : BIND IDENTIFIER TO OPAREN id_list_opt CPAREN IN block {
-	Bind { exp_bind_bound_var = $2;
-		   exp_bind_fields = $5;
-		   exp_bind_body = $8;
-		   exp_bind_pos = get_pos 1 }
-  }
-;
-
-id_list_opt
-  : { [] }
-  | id_list { List.rev $1 }
-;
-
 id_list
   : IDENTIFIER { [$1] }
   | id_list COMMA IDENTIFIER { $3 :: $1 }
-;
-
-java_statement
-  : JAVA {
-	Java { exp_java_code = $1;
-		   exp_java_pos = get_pos 1 }
-  }
-
-expression_statement
-  : statement_expression SEMICOLON { $1 }
-;
-
-statement_expression
-  : invocation_expression { $1 }
-  | object_creation_expression { $1 }
-  | assignment_expression { $1 }
-  | post_increment_expression { $1 }
-  | post_decrement_expression { $1 }
-  | pre_increment_expression { $1 }
-  | pre_decrement_expression { $1 }
-;
-
-selection_statement
-  : if_statement { $1 }
-;
-
-embedded_statement
-  : valid_declaration_statement { $1 }
-;
-
-if_statement
-  : IF OPAREN boolean_expression CPAREN embedded_statement %prec LOWER_THAN_ELSE {
-	  Cond { exp_cond_condition = $3;
-			 exp_cond_then_arm = $5;
-			 exp_cond_else_arm = Empty (get_pos 1);
-			 exp_cond_pos = get_pos 1 }
-	}
-  | IF OPAREN boolean_expression CPAREN embedded_statement ELSE embedded_statement {
-		Cond { exp_cond_condition = $3;
-			   exp_cond_then_arm = $5;
-			   exp_cond_else_arm = $7;
-			   exp_cond_pos = get_pos 1 }
-	  }
-;
-
-iteration_statement
-  : while_statement { $1 }
-;
-
-while_statement
-  : WHILE OPAREN boolean_expression CPAREN embedded_statement {
-	  While { exp_while_condition = $3;
-			  exp_while_body = $5;
-			  exp_while_specs = [(F.mkTrue no_pos, F.mkTrue no_pos)];
-			  exp_while_pos = get_pos 1 }
-	}
-  | WHILE OPAREN boolean_expression CPAREN OSQUARE pre_post_list CSQUARE embedded_statement {
-		While { exp_while_condition = $3;
-				exp_while_body = $8;
-				exp_while_specs = List.map remove_spec_qualifier $6;
-				exp_while_pos = get_pos 1 }
-	  }
-;
-
-jump_statement
-  : return_statement { $1 }
-  | break_statement { $1 }
-  | continue_statement { $1 }
-;
-
-break_statement
-  : BREAK SEMICOLON { Break (get_pos 1) }
-;
-
-continue_statement
-  : CONTINUE SEMICOLON { Continue (get_pos 1) }
-;
-
-return_statement
-  : RETURN opt_expression SEMICOLON { Return { exp_return_val = $2;
-											   exp_return_pos = get_pos 1 } }
-;
-
-opt_expression
-  : { None }
-  | expression { Some $1 }
-;
-
-/********** Expressions **********/
-
-object_creation_expression
-  : object_or_delegate_creation_expression { $1 }
-;
-
-object_or_delegate_creation_expression
-  : NEW IDENTIFIER OPAREN opt_argument_list CPAREN {
-	New { exp_new_class_name = $2;
-		  exp_new_arguments = $4;
-		  exp_new_pos = get_pos 1 }
-  }
-;
-
-new_expression
-  : object_or_delegate_creation_expression { $1 }
-;
-
-opt_argument_list
-  : { [] }
-  | argument_list { List.rev $1 }
-;
-
-argument_list
-  : argument { [$1] }
-  | argument_list COMMA argument { $3 :: $1 }
-;
-
-argument
-  : expression { $1 }
-;
-
-expression
-  : conditional_expression { $1 }
-  | assignment_expression { $1 }
-;
-
-constant_expression
-  : expression {
-	$1
-  }
-;
-
-boolean_expression
-  : expression {
-	(* check type *)
-	$1
-  }
-;
-
-assignment_expression
-  : prefixed_unary_expression EQ expression {
-	  mkAssign OpAssign $1 $3 (get_pos 2)
-	}
-  | prefixed_unary_expression OP_MULT_ASSIGN expression {
-		mkAssign OpMultAssign $1 $3 (get_pos 2)
-	  }
-  | prefixed_unary_expression OP_DIV_ASSIGN expression {
-		mkAssign OpDivAssign $1 $3 (get_pos 2)
-	  }
-  | prefixed_unary_expression OP_MOD_ASSIGN expression {
-		mkAssign OpModAssign $1 $3 (get_pos 2)
-	  }
-  | prefixed_unary_expression OP_ADD_ASSIGN expression {
-		mkAssign OpPlusAssign $1 $3 (get_pos 2)
-	  }
-  | prefixed_unary_expression OP_SUB_ASSIGN expression {
-		mkAssign OpMinusAssign $1 $3 (get_pos 2)
-	  }
-;
-
-conditional_expression
-  : conditional_or_expression { $1 }
-  | conditional_or_expression INTERR expression COLON expression {
-	  Cond { exp_cond_condition = $1;
-			 exp_cond_then_arm = $3;
-			 exp_cond_else_arm = $5;
-			 exp_cond_pos = get_pos 2 }
-	}
-;
-
-conditional_or_expression
-  : conditional_and_expression { $1 }
-  | conditional_or_expression OROR conditional_and_expression {
-	  mkBinary OpLogicalOr $1 $3 (get_pos 2)
-	}
-;
-
-conditional_and_expression
-  : inclusive_or_expression { $1 }
-  | conditional_and_expression ANDAND inclusive_or_expression {
-		mkBinary OpLogicalAnd $1 $3 (get_pos 2)
-	  }
-;
-
-inclusive_or_expression /* bitwise, not used */
-  : exclusive_or_expression { $1 }
-;
-
-exclusive_or_expression /* bitwise */
-  : and_expression { $1 }
-;
-
-and_expression /* bitwise */
-  : equality_expression { $1 }
-;
-
-equality_expression
-  : relational_expression { $1 }
-  | equality_expression EQEQ relational_expression {
-		mkBinary OpEq $1 $3 (get_pos 2)
-	  }
-  | equality_expression NEQ relational_expression {
-		mkBinary OpNeq $1 $3 (get_pos 2)
-	  }
-;
-
-relational_expression
-  : shift_expression { $1 }
-  | relational_expression LT shift_expression {
-		mkBinary OpLt $1 $3 (get_pos 2)
-	  }
-  | relational_expression GT shift_expression {
-		mkBinary OpGt $1 $3 (get_pos 2)
-	  }
-  | relational_expression LTE shift_expression {
-		mkBinary OpLte $1 $3 (get_pos 2)
-	  }
-  | relational_expression GTE shift_expression {
-		mkBinary OpGte $1 $3 (get_pos 2)
-	  }
-;
-
-shift_expression
-  : additive_expression { $1 }
-;
-
-additive_expression
-  : multiplicative_expression { $1 }
-  | additive_expression PLUS multiplicative_expression {
-	  mkBinary OpPlus $1 $3 (get_pos 2)
-	}
-  | additive_expression MINUS multiplicative_expression {
-	  mkBinary OpMinus $1 $3 (get_pos 2)
-	}
-;
-
-multiplicative_expression
-  : unary_expression { $1 }
-  | multiplicative_expression STAR prefixed_unary_expression {
-	  mkBinary OpMult $1 $3 (get_pos 2)
-	}
-  | multiplicative_expression DIV prefixed_unary_expression {
-	  mkBinary OpDiv $1 $3 (get_pos 2)
-	}
-  | multiplicative_expression PERCENT prefixed_unary_expression {
-	  mkBinary OpMod $1 $3 (get_pos 2)
-	}
-;
-
-prefixed_unary_expression
-  : unary_expression { $1 }
-/*
-  | MINUS prefixed_unary_expression {
-	  mkBinary OpMinus (IntLit { exp_int_lit_val = 0; exp_int_lit_pos = get_pos 1}) $2 (get_pos 1)
-	  (* Unary (OpUMinus, $2, get_pos 1) *)
-	}
-*/
-;
-
-pre_increment_expression
-  : OP_INC prefixed_unary_expression {
-	  mkUnary OpPreInc $2 (get_pos 1)
-	}
-;
-
-pre_decrement_expression
-  : OP_DEC prefixed_unary_expression {
-	  mkUnary OpPreDec $2 (get_pos 1)
-	}
-;
-
-post_increment_expression
-  : primary_expression OP_INC {
-	  mkUnary OpPostInc $1 (get_pos 2)
-	}
-;
-
-post_decrement_expression
-  : primary_expression OP_DEC {
-	  mkUnary OpPostDec $1 (get_pos 2)
-	}
-;
-
-unary_expression
-  : unary_expression_not_plusminus { $1 }
-  | PLUS unary_expression {
-		let zero = IntLit { exp_int_lit_val = 0;
-							exp_int_lit_pos = get_pos 1 }
-		in
-		  mkBinary OpPlus zero $2 (get_pos 1)
-
-	  }
-  | MINUS unary_expression {
-		let zero = IntLit { exp_int_lit_val = 0;
-							exp_int_lit_pos = get_pos 1 }
-		in
-		  mkBinary OpMinus zero $2 (get_pos 1)
-	  }
-  | pre_increment_expression { $1 }
-  | pre_decrement_expression { $1 }
-;
-
-unary_expression_not_plusminus
-  : postfix_expression { $1 }
-  | NOT prefixed_unary_expression {
-		mkUnary OpNot $2 (get_pos 1)
-	  }
-  | cast_expression { $1 }
-;
-
-postfix_expression
-  : primary_expression { $1 }
-  | post_increment_expression { $1 }
-  | post_decrement_expression { $1}
-;
-
-cast_expression
-  : OPAREN expression CPAREN unary_expression_not_plusminus {
-	  match $2 with
-		| Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
-						  exp_cast_body = $4;
-						  exp_cast_pos = get_pos 1 }
-		| _ -> report_error (get_pos 2) ("Expecting a type")
-	}
-  | OPAREN INT CPAREN unary_expression {
-		Cast { exp_cast_target_type = Prim Int;
-			   exp_cast_body = $4;
-			   exp_cast_pos = get_pos 1 }
-	  }
-  | OPAREN BOOL CPAREN unary_expression {
-		Cast { exp_cast_target_type = Prim Bool;
-			   exp_cast_body = $4;
-			   exp_cast_pos = get_pos 1 }
-	  }
-  | OPAREN FLOAT CPAREN unary_expression {
-		Cast { exp_cast_target_type = Prim Float;
-			   exp_cast_body = $4;
-			   exp_cast_pos = get_pos 1 }
-	  }
-;
-
-invocation_expression
-  : qualified_identifier OPAREN opt_argument_list CPAREN {
-	  CallRecv { exp_call_recv_receiver = fst $1;
-				 exp_call_recv_method = snd $1;
-				 exp_call_recv_arguments = $3;
-				 exp_call_recv_pos = get_pos 1 }
-	}
-  | IDENTIFIER OPAREN opt_argument_list CPAREN {
-		CallNRecv { exp_call_nrecv_method = $1;
-					exp_call_nrecv_arguments = $3;
-					exp_call_nrecv_pos = get_pos 1 }
-	  }
-;
-
-qualified_identifier
-  : primary_expression DOT IDENTIFIER { ($1, $3) }
-;
-
-member_access
-  : primary_expression DOT IDENTIFIER {
-	Member { exp_member_base = $1;
-			 exp_member_fields = [$3];
-			 exp_member_pos = get_pos 3 }
-  }
-;
-
-literal
-  : boolean_literal { BoolLit { exp_bool_lit_val = $1;
-								exp_bool_lit_pos = get_pos 1 } }
-  | integer_literal { IntLit { exp_int_lit_val = $1;
-							   exp_int_lit_pos = get_pos 1 } }
-  | real_literal { FloatLit { exp_float_lit_val = $1;
-							  exp_float_lit_pos = get_pos 1 } }
-  | NULL { Null (get_pos 1) }
-;
-
-real_literal
-  : LITERAL_FLOAT { $1 }
-;
-
-integer_literal
-  : LITERAL_INTEGER { $1 }
-;
-
-boolean_literal
-  : TRUE { true }
-  | FALSE { false }
-;
-
-primary_expression
-  : parenthesized_expression { $1 }
-  | primary_expression_no_parenthesis { $1 }
-;
-
-parenthesized_expression
-  : OPAREN expression CPAREN { $2 }
-;
-
-primary_expression_no_parenthesis
-  : literal { $1 }
-  | member_name { $1 }
-  | member_access { $1 }
-  | invocation_expression { $1 }
-  | new_expression { $1}
-;
-
-member_name
-  : IDENTIFIER { Var { exp_var_name = $1;
-					   exp_var_pos = get_pos 1 } }
-  | THIS { This ({exp_this_pos = get_pos 1}) }
 ;
 
 %%

@@ -1543,7 +1543,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	  let vmap = H.create 103 in
 	*)
   let vmap = H.copy vmap0 in
-  let v_order = gen_bindings_heap prog h unbound_vars vmap in
+  let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
   let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) pure0 branches in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
 (*  let _ = print_vmap vmap in *)
@@ -1697,7 +1697,7 @@ and gen_formula (prog : C.prog_decl) (f0 : formula) (vmap : var_map) (output_var
 	(seq, disj_results, pbvars)
 
 and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_var list)  =
-  let pos = pos_of_formula vdef.C.view_formula in
+  let pos = pos_of_struc_formula vdef.C.view_formula in
   let in_params, out_params = 
 	split_params_mode vdef.C.view_vars vdef.C.view_modes in
 	(* 
@@ -1708,11 +1708,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let vmap = H.create 103 in
   let _ = List.iter 
 	(fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
-  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_formula in
+  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_un_struc_formula in
 	(* update partially bound vars for vdef *)
   let _ = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
-	gen_formula prog vdef.C.view_formula vmap out_params in
+	gen_formula prog vdef.C.view_un_struc_formula vmap out_params in
 	(* generate fields *)
   let fields = ((Named vdef.C.view_data_name, self), pos) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in

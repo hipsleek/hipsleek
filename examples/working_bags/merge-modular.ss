@@ -22,11 +22,10 @@ int count1(node x)
 {
 	int tmp;
 	if (x == null) {
-      // dprint;
       return 0;
 	} else {
-      tmp = 1 + count1(x.next);
-      // dprint;
+	   tmp = 1 + count1(x.next);
+       //dprint;
       return tmp;
     }
 }

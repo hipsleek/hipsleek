@@ -44,6 +44,8 @@ let source_files = ref ([] : string list)
 
 let procs_verified = ref ([] : string list)
 
+let false_ctx_line_list = ref ([] : Lexing.position list)
+
 let verify_callees = ref false
 
 let elim_unsat = ref true
@@ -89,6 +91,9 @@ let show_gist = ref false
 let trace_all = ref false
 
 let print_mvars = ref false
+
+let wrap_exists_implicit_explicit = ref true
+
 
 (* utility functions *)
 

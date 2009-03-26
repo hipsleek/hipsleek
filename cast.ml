@@ -32,16 +32,19 @@ and view_decl = { view_name : ident;
 				  mutable view_partially_bound_vars : bool list;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
-				  view_formula : F.formula;
+				  view_formula : F.struc_formula;
 				  view_user_inv : (P.formula * (branch_label * P.formula) list);
 				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
-				  mutable view_addr_vars : P.spec_var list }
+				  mutable view_addr_vars : P.spec_var list;
+				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multimple transformations*)}
 	
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
 				  proc_return : P.typ;
-				  proc_static_specs : (F.formula * F.formula) list;
-				  proc_dynamic_specs : (F.formula * F.formula) list;
+				  proc_static_specs : Cformula.struc_formula;
+				  proc_static_specs_with_pre : Cformula.struc_formula;
+				  proc_dynamic_specs : Cformula.struc_formula;
+				  proc_dynamic_specs_with_pre : Cformula.struc_formula;
 				  proc_by_name_params : P.spec_var list;
 				  proc_body : exp option;
 				  proc_loc : loc }
@@ -61,7 +64,7 @@ and coercion_type =
   | Equiv
   | Right
 
-and exp_assert = { exp_assert_asserted_formula : F.formula option;
+and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
 
@@ -145,7 +148,7 @@ and exp_var_decl = { exp_var_decl_type : P.typ;
 
 and exp_while = { exp_while_condition : ident;
 				  exp_while_body : exp;
-				  exp_while_spec : (F.formula * F.formula) list;
+				  exp_while_spec : Cformula.struc_formula (*multi_spec*);
 				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : ident;
@@ -218,7 +221,13 @@ let bag_type = P.Prim Bag
 let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 
 (* smart constructors *)
-
+(*let mkMultiSpec pos = [ SEnsure {
+		sensures_base = Cformula.mkTrue pos;
+		sensures_pos = pos;
+	}]*)
+	
+let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue pos))]
+	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
   | _ -> match e2 with
@@ -640,3 +649,63 @@ and sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
 				  true
 			  with
 				| Not_found -> false
+
+				
+				
+and exp_to_check (e:exp) :bool = match e with
+  | CheckRef _
+  | Debug _
+  | Dprint _
+  | Bind _
+  | Seq _
+  | Unfold _
+  | Unit _
+  | Print _
+  | VarDecl _
+  | Cast _
+  | Block _
+  | FConst _
+  | Assert _ 
+  | Cond _
+  | Java _ -> false
+  
+  | BConst _
+  | Assign _
+  | ICall _
+  | IConst _
+  | While _ 
+  | This _
+  | Var _
+  | Null _
+  | New _
+  | Return _
+  | SCall _ -> true
+  
+  
+and pos_of_exp (e:exp) :Lexing.position = match e with
+  | CheckRef b -> b.exp_check_ref_pos
+  | BConst b -> b.exp_bconst_pos
+  | Bind b -> b.exp_bind_pos
+  | Cast b -> b.exp_cast_pos
+  | Debug b -> b.exp_debug_pos
+  | Dprint b -> b.exp_dprint_pos
+  | Assign b -> b.exp_assign_pos
+  | FConst b -> b.exp_fconst_pos
+  | ICall b -> b.exp_icall_pos
+  | IConst b -> b.exp_iconst_pos
+  | Print (_,b) -> b
+  | Seq b -> b.exp_seq_pos
+  | VarDecl b -> b.exp_var_decl_pos
+  | Unfold b -> b.exp_unfold_pos
+  | Unit b -> b
+  | This b -> b.exp_this_pos
+  | Var b -> b.exp_var_pos
+  | Null b -> b
+  | Cond b -> b.exp_cond_pos
+  | Block b -> b.exp_block_pos
+  | Java b  -> b.exp_java_pos
+  | Assert b -> b.exp_assert_pos
+  | New b -> b.exp_new_pos
+  | Return b -> b.exp_return_pos
+  | SCall b -> b.exp_scall_pos
+  | While b -> b.exp_while_pos
