@@ -613,12 +613,12 @@ simple_pure_constr
   | OPAREN disjunctive_pure_constr CPAREN {
 	  $2
 	}
-  | EXISTS OPAREN opt_cid_list COLON simple_pure_constr CPAREN {
+  | EXISTS OPAREN opt_cid_list COLON pure_constr CPAREN {
 	  let qf f v = P.mkExists [v] f (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res
 	}
-  | FORALL OPAREN opt_cid_list COLON simple_pure_constr CPAREN {
+  | FORALL OPAREN opt_cid_list COLON pure_constr CPAREN {
 	  let qf f v = P.mkForall [v] f (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res

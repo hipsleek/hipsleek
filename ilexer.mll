@@ -28,6 +28,7 @@
 	 ("bind", BIND);
 	 ("bool", BOOL);
 	 ("break", BREAK);
+	 ("case",CASE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
 	 ("conseq", CONSEQ);

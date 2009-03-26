@@ -391,6 +391,7 @@ opt_inv
 opt_branches
   : { [] }
   | AND OSQUARE branches CSQUARE { $3 }
+;
 
 branches
   : branch {[$1]}
@@ -619,15 +620,20 @@ disjunctive_constr
 	  F.mkOr $1 $3 (get_pos 2)
 	}
   | error {
-	  report_error (get_pos 1) ("parse error in constraints")
+	  report_error (get_pos 1) ("parse error in constraints disjunctive")
 	}
 ;
 
 one_constr
   : core_constr { $1 }
-  | EXISTS error { (* opt_typed_cid_list DOT OPAREN core_constr CPAREN *)
-	  report_error (get_pos 1)
-		("explicit existential quantifiers are disallowed as they are inserted automatically")
+  |  OPAREN EXISTS opt_cid_list COLON core_constr CPAREN {
+	  match $5 with
+		| F.Base ({F.formula_base_heap = h;
+				   F.formula_base_pure = p;
+                   F.formula_base_branches = b}) ->
+			F.mkExists $3 h p b (get_pos 1)
+		| _ -> report_error (get_pos 4) ("only Base is expected here.")
+
 	}
 ;
 

@@ -13,8 +13,7 @@ data myint {
 }
 
 tree<h,bal> == case { self=null  -> [] h=0 & bal=1 ;          
-                      self!=null -> [] self::node<_,h,lt,rt>* lt::tree<h1,_>* rt::tree<h2,_
-> & h=1+max(h1,h2) 
+                      self!=null -> [] self::node<_,h,lt,rt>* lt::tree<h1,_>* rt::tree<h2,_> & h=1+max(h1,h2) 
               case { h1<h2 -> [] bal=0 ;
                      h1=h2 -> [] bal=1 ;
                      h1>h2 -> [] bal=2 ;
@@ -331,9 +330,12 @@ node remove_min_add(node x, ref myint a)
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;
-        //assert tr' = null assume tr' = null; //'
+        dprint;
+		//assert tr' = null assume tr' = null; //'
         assume tr' = null or tr'!=null;
+		dprint;
         tr = x.left.right;
+
         //assert tr' = null assume tr' = null; //'
         assume tr' = null or tr'!=null;
         ti = x.left.val;
@@ -468,7 +470,10 @@ node remove_min(node x, ref myint a)
 /* function to delete the top node in a an avl tree */
 node delete_top(node x)
   requires x::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2>
-  & ["n" : n <= n1 + 2 & n <= n2 + 2 & exists (tmps : tmps=max(n1, n2) & n = tmps + 1);
+  & ["n" : n <= n1 + 2 & n <= n2 + 2 & 
+	exists (tmps : 
+			tmps=max(n1, n2) & 
+			n = tmps + 1);
      "S" : forall (xx : (xx notin S1 | xx <= v)) & forall (y : (y notin S2 | y >= v))]
   ensures res::avl<nm, nn, Sn> & ["m": nm = m1 + m2; "S" : Sn = union(S1, S2); "n" : n <= nn + 1 & nn <= n];
 {
@@ -580,20 +585,20 @@ void main()
 {
   node tmp = new node(1,1,null,null);
   tmp=insert(tmp, 3);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=insert(tmp, 11);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=insert(tmp, 5);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=insert(tmp, 7);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=insert(tmp, 9);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=delete(tmp,3);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=delete(tmp,7);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=delete(tmp,9);
-  assume tmp'=null or tmp'!=null;
+  //assume tmp'=null or tmp'!=null;
   tmp=delete(tmp,11);
 }
