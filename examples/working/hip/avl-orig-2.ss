@@ -125,7 +125,7 @@ node double_left_child(node k3)
 {
         node t2 = k3.left;
 	k3.left = rotate_right_child(t2);
-        dprint;
+        //dprint;
 	/*
         assert k3'::node<_,_,kl,kr> * kr::avl<kcm, kcn, _> * kl::node<_, _, kll, klr> * klr::avl<kbm, kbn, _>
          * kll::avl<kam, kan, bbb>; 
@@ -216,8 +216,19 @@ node rotate_right_child(node k1)
 	k2.height = get_max( height(k2.right), k1.height) + 1;
 	return k2;
 }
-
-
+/*
+node rotate_left_child_2(node k2)
+	requires k2::node<_, _, l, r> * r::avl<rm, rn> * l::node<_, _, ll, lr> * 
+			ll::avl<llm, lln> * lr::avl<lrm, lrn> & rn=lrn & lrn+1>=lln>=lrn
+	ensures res::avl<rm+llm+lrm+2, rn+2>;
+{
+	node k1 = k2.left;
+	k2.left = k1.right;
+	k1.right = k2;
+	k2.height = get_max( height(k2.left), height(k2.right) ) + 1;
+	k1.height = get_max( height(k1.left), height(k2) ) + 1;
+	return k1;
+}*/
 /*
 void f(node x)
 	requires x::avl<m, n> & m>0
@@ -232,19 +243,6 @@ void g(node x)
 	ensures x::avl<m,n>;
 {
 	int h = height(x.left);
-}
-
-node rotate_left_child_2(node k2)
-	requires k2::node<_, _, l, r> * r::avl<rm, rn> * l::node<_, _, ll, lr> * 
-			ll::avl<llm, lln> * lr::avl<lrm, lrn> & rn=lrn & lrn+1>=lln>=lrn
-	ensures res::avl<rm+llm+lrm+2, rn+2>;
-{
-	node k1 = k2.left;
-	k2.left = k1.right;
-	k1.right = k2;
-	k2.height = get_max( height(k2.left), height(k2.right) ) + 1;
-	k1.height = get_max( height(k1.left), height(k2) ) + 1;
-	return k1;
 }
 
 void h(node x)

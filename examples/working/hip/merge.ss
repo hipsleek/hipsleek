@@ -12,6 +12,7 @@ bnd<n, sm, bg> == self = null & n = 0 or
 
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
                   self::node<sm, q> * q::sll<n-1, qs, lg> & q != null & sm <= qs
+				  
                inv n >= 1 & sm <= lg;
  
 /* function to count the number of elements of a list */
@@ -91,7 +92,12 @@ node merge(node x1, node x2)
 		{
 			x1 = insert(x1, x2.val);
 			if (x2.next != null)
-				return merge(x1, x2.next);
+			{
+				node tmp = merge(x1, x2.next);
+				dprint;
+				assert tmp'::sll<n1+n2,_,max(b1,b2)>  ;
+				return tmp;
+			}
 			else
 				return x1;
 		}

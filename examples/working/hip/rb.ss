@@ -173,7 +173,6 @@ node del_5r(node a, node b, node c, node d, int color)
 	node tmp;
 
 	tmp = new node(0, 1, a, b);
-
 	return del_6r(tmp, c, d, color);
 }
 
