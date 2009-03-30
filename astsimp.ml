@@ -4069,7 +4069,9 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 	let nf = convert_struc2 prog f in
 	let nf = Iformula.float_out_exps_from_heap_struc nf in
 	let nf = Iformula.float_out_struc_min_max nf in
+	(*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
 	let nf = Iformula.rename_bound_var_struc_formula nf in
+	(*let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula "" nf)^"\n") in*)
 	(*convert anonym to exists*)
 	let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula):Iformula.struc_formula* ((ident*primed)list) = 
 		let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with

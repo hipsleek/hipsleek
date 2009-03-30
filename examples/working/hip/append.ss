@@ -21,16 +21,12 @@ void append(node x, node y)
 	ensures x::clist<n>;
 {
 	node tmp = x.next;
-	dprint;
 	bool fl = tmp != null;
-	dprint;
 	if (fl) {
-		dprint;
 		append(x.next, y);
 		return;
 	}
 	else {
-		dprint;
 		x.next = y;
 		return;
 	}

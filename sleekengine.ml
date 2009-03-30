@@ -135,8 +135,8 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
 		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
 		let p = List.map (fun c-> (c,Primed)) fv_idents in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p b true in
-		(*let _ = print_string ("old_conseq: "^(Iprinter.string_of_struc_formula "" wf)^"\n") in*)
-			AS.trans_struc_formula iprog quant fv_idents wf stab false (Cpure.Prim Void)
+		let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (Cpure.Prim Void) in
+		res
 	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
 	| MetaFormCF mf -> mf
@@ -177,7 +177,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
 	let ectx = CF.empty_ctx no_pos in
 	let ctx = CF.build_context ectx ante no_pos in
-	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^"\n"^(Cprinter.string_of_struc_formula conseq)^"\n") in*)
+	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^"\n"^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
 	let rs, _ = Solver.heap_entail_struc cprog false false false [ctx] conseq no_pos in
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;

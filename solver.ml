@@ -1923,8 +1923,8 @@ and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) 
 *)
  
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs rhs_p rhs_p_br pos : (context list * proof) =
-(*  print_endline ("RHS: " ^ Cprinter.string_of_pure_formula_branches (rhs_p, rhs_p_br));*)
-(*  print_endline ("LHS: " ^ Cprinter.string_of_formula (CF.formula_of_base lhs));*)
+  (*print_endline ("RHS: " ^ Cprinter.string_of_pure_formula_branches (rhs_p, rhs_p_br));*)
+  (*print_endline ("LHS: " ^ Cprinter.string_of_formula (CF.formula_of_base lhs));*)
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let lhs_t = lhs.formula_base_type in
@@ -1938,9 +1938,9 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   let fold_fun is_ok (branch_id, rhs_p) =
 	if (is_ok = false) then false else begin
       let tmp1 = CP.mkAnd (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id (lhs_p, lhs_b)) pos in
-      let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
+      let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
       let tmp2 = CP.mkAnd (CP.combine_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) (CP.combine_branch branch_id (lhs_p, lhs_b)) pos in
-      let new_ante0, new_conseq0 = heap_entail_build_pure_check estate.es_evars tmp2 rhs_p pos in
+      let new_ante0, new_conseq0 = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp2 rhs_p pos in
       (*(print_endline ("branch: " ^ branch_id ^ (Cprinter.string_of_pure_formula (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b))));*)
       let res = CP.isConstTrue rhs_p || TP.imply new_ante0 new_conseq0 || 
 	  (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && TP.imply new_ante new_conseq) in
@@ -1950,7 +1950,9 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
           let fold_fun is_ok branch_id_added =
             if is_ok then true else
             let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
-            let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
+            let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp1 rhs_p pos in
+			let _ = print_string ("\n new ante: "^(Cprinter.string_of_pure_formula new_ante)^"\n new conseq: "^
+				(Cprinter.string_of_pure_formula new_conseq)^"\n") in
             TP.imply new_ante new_conseq
           in
           List.fold_left fold_fun false branches

@@ -470,15 +470,15 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 		| EAssume b -> EAssume (rename_bound_vars b)
 		| ECase b-> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(rename_bound_var_struc_formula c2))) b.formula_case_branches})
 		| EBase b-> 
-			let sst1 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.formula_ext_explicit_inst in
+			(*let sst1 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.formula_ext_explicit_inst in*)
 			let sst2 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.formula_ext_implicit_inst in
-			let sst = sst1@sst2 in
+			let sst = (*sst1@*)sst2 in
 			let nb = subst sst b.formula_ext_base in
 			let nc = subst_struc sst b.formula_ext_continuation in		
 			let new_base_f = rename_bound_vars nb in
 			let new_cont_f = rename_bound_var_struc_formula nc in
 			EBase ({b with 
-				formula_ext_explicit_inst = snd (List.split sst1);
+				formula_ext_explicit_inst = (*snd (List.split sst1)*) b.formula_ext_explicit_inst;
 		 		formula_ext_implicit_inst = snd (List.split sst2);
 				formula_ext_base=new_base_f; formula_ext_continuation=new_cont_f})			
 			in
