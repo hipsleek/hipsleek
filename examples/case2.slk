@@ -1,0 +1,98 @@
+data node { int val ; node next }.
+
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred lB<n,S> == self = null & n = 0 & S={}
+	or self::node<v,r> * r::lB<n - 1,S1> & S=union({v},S1)
+	inv n >= 0.
+
+pred lsB<p,n,S> == self = p & n = 0 & S={}
+	or self::node<v,r> * r::lsB<p,n - 1,S1> & S=union({v},S1) & self!=p
+	inv n >= 0.
+
+/*
+checkentail x::ll<m> & m>8 & c=m+1 |-  x::ll<n> & c=1+n.
+print residue.
+
+checkentail x::ll<m> & m>8 & c=m+1 |- (exists b: x::ll<n> & b=n+n+1).
+print residue.
+
+checkentail x::ll<m> & m>8 & c=m+1 |- (exists b: x::ll<n> & c=n+n+1).
+print residue.
+
+
+*/
+
+checkentail x::lsB<p,m,S1> & p=x |-  x::lsB<p,n,S2>.
+print residue.
+// Valid.
+// true & p = x & n = m & S2 = S1 & p = p
+// Problem : unable to instantiate S1,S2={} & n=m=0
+
+checkentail x::lB<m,S1> & x=null  |- x::lB<n,S2>.
+print residue.
+// Valid.
+// x::lB<m, S1> & x = null & x = null & n = 0 & S2 = {}
+// OK
+
+checkentail x::lsB<p,m,S1> & m=0 & x=p  |- x::lsB<p,n,S2>.
+print residue.
+// Valid.
+// true & m = 0 & x = p & n = m & S2 = S1 & p = p
+// Problem : unable to instantiate S1,S2={}
+
+
+checkentail x::lsB<p,m,S1> & m=0  |- x::lsB<p,n,S2>.
+// Valid.
+// true & m = 0 & n = m & S2 = S1 & p = p
+print residue.
+// Problem : unable to instantiate S1,S2={}
+
+
+checkentail x::lsB<p,m,S1> & m=0  |-  [n,S2] x=p & n=0 & S2={}.
+print residue.
+// Fail
+// Problem : explicit instantiation failed for n,S2
+
+checkentail x::lsB<p,m,S1> & m=0  |-  x=p.
+print residue.
+// Valid.
+// x::lsB<p, m, S1> & m = 0 & x = p
+// Problem : unable to instantiate S1,S2={}
+
+checkentail x::lB<m,S1> & m=0  |- x::lB<n,S2>.
+print residue.
+// Valid.
+// true & m = 0 & n = m & S2 = S1
+// Problem : unable to instantiate S1,S2={}
+
+checkentail x::lB<m,S1> & S1={}  |- x::lB<n,S2>.
+print residue.
+// Valid.
+// true & S1 = {} & n = m & S2 = S1
+// Problem : unable to instantiate m,S1=0
+
+
+
+
+checkentail x::lB<m,S1> & x=null  |- [m] S1={} & m=3.
+print residue.
+// Fail
+// should report a static error since m exists
+
+checkentail x::lB<m,S1> & x=null  |- [n] S1={} & n=3.
+print residue.
+// Fail
+// should succeed with explicit instantiation n=3
+
+checkentail x::lB<m,S1> & x=null  |- (exists n: S1={} & n=3).
+print residue.
+// Valid.
+// x::lB<m, S1> & x = null & S1 = {}
+// OK
+
+
+
