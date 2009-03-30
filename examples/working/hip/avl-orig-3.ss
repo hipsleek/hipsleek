@@ -8,10 +8,12 @@ data node {
 // m: number of elements, n: height
 // bal: 0: left is higher, 1: balanced, 2: right is higher
 
-avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
-	or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
+avl<m, n, bal> == 
+ case {
+  self = null -> [] m = 0 & n = 0 & bal=1;
+  self!=null -> [] self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
 		& m = 1+m1+m2 & n=1+max(n1, n2) 
-		& -1 <= n1-n2 <=1 & bal=n1-n2+1
+  & -1 <= n1-n2 <=1 & bal=n1-n2+1; }
 		//& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
 		// & (n1=n2 & bal=0 | n1>n2 & bal=1 | n1<n2 & bal=2)
 	inv m >= 0 & n >= 0 & 0<=bal<=2;
@@ -68,7 +70,8 @@ node insert(node t, int x)
 		return new node(x, 1, tmp, tmp);
 	else if (x < t.ele) {		
                 dprint;
-		t.left = insert(t.left, x);
+                tmp = t.left;
+		t.left = insert(tmp, x);
 
 		if (height(t.left) - height(t.right) == 2) {
 			if (height(t.left.left) > height(t.left.right)) { 
