@@ -275,9 +275,10 @@ node del_2r(node a, node b, node c)
 	}
 	else 
 		tmp = del_6r(b.left, b.right, c, 1);
-	assert tmp'::rb<nb+nc+1, _, h>;
-	assert a'::rb<nb, 0, h>;
-	assert a'::rb<na, 0, h+1>;
+        dprint;
+	assert tmp'::rb<nb+nc+1, _, ha> & h=ha;
+	assert a'::rb<n_1, 0, hb> & hb=h & n_1=nb;
+	assert a'::rb<n_2, 0, hc> & hc=h+1 & n_2=na;
 	f = new node(0, 0, a, tmp);
 	//assert f'::rb<_,_,_>;	
 	return f;
@@ -532,6 +533,7 @@ node insert(node x, int v)
 				{
 					if (is_red(x.left.left))
 					{
+						dprint;
 						if (is_red(x.right))
 						{
 							x.left.color = 0;

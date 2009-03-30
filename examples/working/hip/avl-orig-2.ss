@@ -50,11 +50,14 @@ int get_max(int a, int b)
 
 node insert(node t, int x) 
 /* cannot be verified without case analysis
-  requires t=null
-  ensures res::avl<1,1,1>;
-  requires t::avl<tm, tn, b> & t!=null
-  ensures res::avl<tm+1, resn, resb> & tm>0 &tn>0 &  
+  case { 
+    t=null ->
+      ensures res::avl<1,1,1>;
+   t!=null ->
+      requires t::avl<tm, tn, b> 
+      ensures res::avl<tm+1, resn, resb> & tm>0 &tn>0 &  
                      (tn=resn | resn=tn+1 & resb!=1);
+  }
 */
   requires t::avl<tm, tn, b>
   ensures res::avl<tm+1, resn, resb> & t!=null & tm>0 & tn>0 & (tn=resn | resn=tn+1 & resb!=1)
