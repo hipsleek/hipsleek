@@ -158,6 +158,9 @@ and data_of_h_formula h = match h with
   | _ -> failwith ("data_of_h_formula: input is not a data node")
 
 and isConstFalse f = match f with
+  | Exists ({formula_exists_heap = h;
+		   formula_exists_pure = p;
+           formula_exists_branches = br; })
   | Base ({formula_base_heap = h;
 		   formula_base_pure = p;
            formula_base_branches = br; }) ->
@@ -165,6 +168,9 @@ and isConstFalse f = match f with
   | _ -> false
 
 and isConstTrue f = match f with
+  | Exists ({formula_exists_heap = HTrue;
+		   formula_exists_pure = p;
+           formula_exists_branches = br; })
   | Base ({formula_base_heap = HTrue;
 		   formula_base_pure = p;
            formula_base_branches = br}) -> 
@@ -1046,8 +1052,46 @@ and normalize_context_formula (ctx : context) (f : formula) (pos : loc) : contex
 	  let nc2 = normalize_context_formula c2 f pos in
 	  let res = OCtx (nc1, nc2) in
 		res
+
+and combine_context_and (ctx : context) (f : Cpure.formula) : context = match ctx with
+  | Ctx es -> Ctx {es with es_formula = combine_and es.es_formula f }
+  | OCtx (c1, c2) ->
+	  let nc1 = combine_context_and c1 f in
+	  let nc2 = combine_context_and c2 f in
+	  let res = OCtx (nc1, nc2) in
+		res
 		
+and combine_and (f1:formula) (f2:Cpure.formula) :formula = match f1 with
+	| Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
+	 print_string ("malfunction: inner or has not been converted to a CtxOr!");
+      Error.report_error {
+		Error.error_loc = pos;
+		Error.error_text = ("malfunction: inner or has not been converted to a CtxOr!") }
+	| Base ({ formula_base_pure = p;} as b) -> 
+			Base{b with formula_base_pure = (combine_and_pure f1 p f2)}
+					 
+	| Exists ({formula_exists_qvars = evars;
+			   formula_exists_pure = p ;} as b) -> 
+			if (List.length (Util.difference (Cpure.fv f2) evars))=0 then
+				Exists {b with formula_exists_pure = (combine_and_pure f1 p f2)}	  
+				else 
+					let rf1 = rename_bound_vars f1 in
+					(combine_and rf1 f2)
 		
+and combine_and_pure (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula = 
+	if (isConstFalse f1) then Cpure.mkFalse no_pos
+		else if (isConstTrue f1) then f2
+			else (sem_and f1 p f2)
+and sem_and (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula = 
+	let ys =  Cpure.split_conjunctions f2 in
+	let ys' = List.filter (fun c-> not (Cpure.is_member_pure c p)) ys in
+	let y = Cpure.join_conjunctions ys' in
+	if (Cpure.isConstFalse y) then Cpure.mkFalse no_pos
+		else if (Cpure.isConstTrue y) then p
+			else  (Cpure.mkAnd p y no_pos)
+			(*if (Tpdispatcher.is_sat_fast (normalize f1 (formula_of_pure y no_pos))) then (Cpure.mkAnd p y no_pos)
+				else Cpure.mkFalse no_pos*)
+			
 and normalize_no_rename_context_formula (ctx : context) (p : Cpure.formula) : context = 
 	let rec push_pure (f:formula):formula = match f with
 		| Base b-> Base {b with formula_base_pure = Cpure.mkAnd p b.formula_base_pure b.formula_base_pos}

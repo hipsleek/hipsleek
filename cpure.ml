@@ -416,6 +416,46 @@ and mkForall (vs : spec_var list) (f : formula) pos = match vs with
 		else
 		  ef
 
+and split_conjunctions = function
+  | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+  | z -> [z]
+  
+and join_conjunctions f = 
+	List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) f
+		  
+and is_member_pure (f:formula) (p:formula):bool = 
+	let y = split_conjunctions p in
+	List.exists (fun c-> equalFormula f c) y
+	
+and equalFormula (f1:formula)(f2:formula):bool = match (f1,f2) with
+  | ((BForm b1),(BForm b2)) -> equalBFormula b1 b2
+  | ((Not (b1,_)),(Not (b2,_))) -> equalFormula b1 b2
+  | _ -> false	
+
+and equalBFormula (f1:b_formula)(f2:b_formula):bool = match (f1,f2) with
+  | ((BVar v1),(BVar v2))-> (eq_spec_var (fst v1) (fst v2))
+  | ((Lte (v1,v2,_)),(Lte (w1,w2,_)))
+  | ((Lt (v1,v2,_)),(Lt (w1,w2,_)))-> (eqExp w1 v1)&&(eqExp w2 v2)
+  | ((Neq (v1,v2,_)) , (Neq (w1,w2,_)))
+  | ((Eq (v1,v2,_)) , (Eq (w1,w2,_))) -> ((eqExp w1 v1)&&(eqExp w2 v2))|| ((eqExp w1 v2)&&(eqExp w2 v1))
+  | ((BagNotIn (v1,e1,_)),(BagNotIn (v2,e2,_)))
+  | ((BagIn (v1,e1,_)),(BagIn (v2,e2,_))) -> (eq_spec_var v1 v2)&&(eqExp e1 e2)
+  | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
+  | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq_spec_var v1 w1)&& (eq_spec_var v2 w2)
+  | _ -> false
+  
+and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
+	| (Null _ ,Null _ ) -> true
+	| (Var (v1,_), Var (v2,_)) -> (eq_spec_var v1 v2)
+    | (IConst (v1,_), IConst (v2,_)) -> v1=v2
+    | (Max (e1,e2,_),Max (d1,d2,_)) 
+	| (Min (e1,e2,_),Min (d1,d2,_)) 
+	| (Add (e1,e2,_),Add (d1,d2,_)) -> (((eqExp e1 d1)&&(eqExp e2 d2))||((eqExp e1 d2)&&(eqExp e2 d1)))
+    | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp e1 d1)&&(eqExp e2 d2))
+    | (Mult (c1,e1,_),Mult (c2,e2,_)) -> (c1=c2)&&(eqExp e1 e2)
+    | _ -> false
+	
+	
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 pos =
   let rec helper1 ae alist =

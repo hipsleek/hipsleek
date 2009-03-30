@@ -3855,10 +3855,10 @@ and arith_simplify (pf : Cpure.formula) : Cpure.formula =
              Cpure.Lte (lh, rh, l)
          | Cpure.Gt (e1, e2, l) ->
              let lh, rh = do_all e1 e2 l in
-						 Cpure.Gt (lh, rh, l)
+						 Cpure.Lt (rh, lh, l)
          | Cpure.Gte (e1, e2, l) ->
              let lh, rh = do_all e1 e2 l in
-						 Cpure.Gte (lh, rh, l)
+						 Cpure.Lte (rh, lh, l)
          | Cpure.Eq (e1, e2, l) ->
              let lh, rh = do_all e1 e2 l in
 						 Cpure.Eq (lh, rh, l)

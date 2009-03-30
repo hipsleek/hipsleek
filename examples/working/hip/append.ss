@@ -20,11 +20,17 @@ void append(node x, node y)
 	requires x::ll<n> & y=x & n>0
 	ensures x::clist<n>;
 {
-	if (x.next != null) {
+	node tmp = x.next;
+	dprint;
+	bool fl = tmp != null;
+	dprint;
+	if (fl) {
+		dprint;
 		append(x.next, y);
 		return;
 	}
 	else {
+		dprint;
 		x.next = y;
 		return;
 	}

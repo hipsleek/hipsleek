@@ -454,12 +454,6 @@ let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	  let res = List.for_all (fun (a, c) -> imply1 a c) tmp1 in
 		res
 *)
-
-let rec split_conjunctions = function
-  | CP.And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
-  | z -> [z]
-;;
-
 let tp_imply ante conseq =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq)
@@ -571,7 +565,7 @@ let rec simpl_in_quant formula negated rid =
       | CP.Exists (v, f, l) -> CP.Exists (v, simpl_in_quant f true rid, l)
       | CP.Or (f, g, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, l)
       | CP.And (_, _, _) ->
-          let subfs = split_conjunctions formula in
+          let subfs = Cpure.split_conjunctions formula in
           let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
           let nformula = get_rid_of_eq nformula in
           nformula
@@ -588,7 +582,7 @@ let rec simpl_in_quant formula negated rid =
 ;;
 
 let simpl_pair rid (ante, conseq) =
-  let antes = split_conjunctions ante in
+  let antes = Cpure.split_conjunctions ante in
   let fold_fun (ante, conseq) = function
     | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
@@ -634,7 +628,7 @@ let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
-        let split_conseq = split_conjunctions conseq in
+        let split_conseq = Cpure.split_conjunctions conseq in
         let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
         (*let pairs = [filter ante conseq] in*)
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
@@ -665,6 +659,11 @@ let is_sat f =
     let res = is_sat f in
     sat_timer := !sat_timer +. (Unix.gettimeofday ()) -. timer;
     res end
+;;
+
+let is_sat_fast f = 
+	let y = !sat_timeout in
+	sat_timeout := 2. ; is_sat f ; sat_timeout:=y
 ;;
 
 let print_stats () =

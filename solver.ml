@@ -1402,7 +1402,7 @@ let rec inner_entailer (ctx : context) (conseq : struc_formula): (context list) 
 						 (nc,(mkEexStep ctx [f] np))
 				    else 
 					let r = List.map (fun (c1,c2)-> 
-							let n_ctx = normalize_context_formula ctx (mkBase HTrue c1 TypeTrue [] b.formula_case_pos) b.formula_case_pos in
+							let n_ctx = combine_context_and ctx c1 in
 							let n_ctx = elim_unsat_ctx prog n_ctx in
 							(* let _ = print_string ("\n\n for branch "^(Cprinter.string_of_struc_formula c2)^"\n got context: "^
 							 (Cprinter.string_of_context n_ctx)^" \n for which: "^(string_of_bool (isFalseCtx n_ctx)) ^"\n") in*)

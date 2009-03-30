@@ -14,12 +14,12 @@ module PTracer = Prooftracer
 let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) spec e0 : bool = 
 	let rec do_spec_verification (spec: Cformula.ext_formula):bool = match spec with
 		| Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
-					let c1 = Cformula.formula_of_pure c1 b.Cformula.formula_case_pos in
-					let nctx = List.map (fun c-> 
-						if !Globals.max_renaming then(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
+					(*let c1 = Cformula.formula_of_pure c1 b.Cformula.formula_case_pos in*)
+					let nctx = List.map (fun c-> Cformula.combine_context_and c c1
+						(*if !Globals.max_renaming then(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
 				   		(CF.normalize_context_formula c c1 b.Cformula.formula_case_pos)
 						else(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
-				  	 	(CF.normalize_clash_context_formula c c1 b.Cformula.formula_case_pos)) ctx in
+				  	 	(CF.normalize_clash_context_formula c c1 b.Cformula.formula_case_pos)*)) ctx in
 					check_specs prog proc nctx c2 e0) b.Cformula.formula_case_branches
 		| Cformula.EBase b ->
 					let nctx = List.map (fun c-> 
@@ -219,27 +219,27 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		   exp_cond_pos = pos}) -> begin
 	  let then_cond_prim = CP.BForm (CP.mkBVar v Primed pos) in
 	  let else_cond_prim = CP.mkNot then_cond_prim pos in
-	  let then_cond = CF.formula_of_pure then_cond_prim pos in
-	  let else_cond = CF.formula_of_pure else_cond_prim pos in
+	 (* let then_cond = CF.formula_of_pure then_cond_prim pos in
+	  let else_cond = CF.formula_of_pure else_cond_prim pos in*)
 	  let process_one c =
-		let then_ctx1 =
-			if !Globals.max_renaming then CF.normalize_context_formula c then_cond pos
+		let then_ctx1 = CF.combine_context_and c then_cond_prim in
+			(*if !Globals.max_renaming then CF.combine_context_and c then_cond pos
 			else CF.normalize_clash_context_formula c then_cond pos
-		in
+		in*)
 		Debug.devel_pprint ("conditional: then_delta1:\n" ^ (Cprinter.string_of_context then_ctx1)) pos;
-		let then_ctx = if !Globals.elim_unsat then Solver.elim_unsat_ctx prog then_ctx1 else then_ctx1 in
+		let then_ctx =  Solver.elim_unsat_ctx prog then_ctx1 in
 
 		(*let _ = print_string ("\nbefore: \t\t" ^ (Cprinter.string_of_context c)^"\n cond: "^(Cprinter.string_of_formula then_cond)^"\n after: "^
 		(Cprinter.string_of_context then_ctx1)^"\n after elim: "^
 		(Cprinter.string_of_context then_ctx)^"\n") in*)
 		
 		Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_context then_ctx)) pos;
-		let else_ctx1 =
-			if !Globals.max_renaming then CF.normalize_context_formula c else_cond pos
+		let else_ctx1 =CF.combine_context_and c else_cond_prim in
+			(*if !Globals.max_renaming then CF.normalize_context_formula c else_cond pos
 			else CF.normalize_clash_context_formula c else_cond pos
-		in
+		in*)
 		Debug.devel_pprint ("conditional: else_delta1:\n" ^ (Cprinter.string_of_context else_ctx1)) pos;
-		let else_ctx = if !Globals.elim_unsat then Solver.elim_unsat_ctx prog else_ctx1 else else_ctx1 in
+		let else_ctx = Solver.elim_unsat_ctx prog else_ctx1 in
 		Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_context else_ctx)) pos;
 		
 		

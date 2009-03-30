@@ -25,6 +25,24 @@ print residue.
 
 
 */
+checkentail x::lsB<p,m,S1> & m=0  |-   x=p .
+print residue.
+
+
+checkentail x::lB<m,S1> & m=0  |-   x=null .
+print residue.
+
+checkentail x::lsB<p,m,S1> & m=0  |-  (exists n,S2: x=p & n=0 & S2={}).
+print residue.
+
+
+checkentail x::lsB<p,m,S1> & m=0  |-  [n,S2] x=p & n=0 & S2={}.
+print residue.
+// Fail
+
+checkentail x::lB<m,S1> & m=0  |-  [n,S2] x=null & n=0 & S2={}.
+print residue.
+// Fail
 
 checkentail x::lsB<p,m,S1> & p=x |-  x::lsB<p,n,S2>.
 print residue.
@@ -52,9 +70,6 @@ print residue.
 // Problem : unable to instantiate S1,S2={}
 
 
-checkentail x::lsB<p,m,S1> & m=0  |-  [n,S2] x=p & n=0 & S2={}.
-print residue.
-// Fail
 // Problem : explicit instantiation failed for n,S2
 
 checkentail x::lsB<p,m,S1> & m=0  |-  x=p.
