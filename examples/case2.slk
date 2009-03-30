@@ -32,7 +32,7 @@ print residue.
 checkentail x::lB<m,S1> & m=0  |-   x=null .
 print residue.
 
-checkentail x::lsB<p,m,S1> & m=0  |-  (exists n,S2: x=p & n=0 & S2={}).
+checkentail x::lsB<p,m,S1> & m=0 & n=2 |-  x=p & n=0 & S2={}.
 print residue.
 
 

@@ -1072,7 +1072,7 @@ and combine_and (f1:formula) (f2:Cpure.formula) :formula = match f1 with
 					 
 	| Exists ({formula_exists_qvars = evars;
 			   formula_exists_pure = p ;} as b) -> 
-			if (List.length (Util.difference (Cpure.fv f2) evars))=0 then
+			if (List.length (Util.intersect (Cpure.fv f2) evars))=0 then
 				Exists {b with formula_exists_pure = (combine_and_pure f1 p f2)}	  
 				else 
 					let rf1 = rename_bound_vars f1 in
