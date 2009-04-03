@@ -36,7 +36,8 @@ and view_decl = { view_name : ident;
 				  view_user_inv : (P.formula * (branch_label * P.formula) list);
 				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
 				  mutable view_addr_vars : P.spec_var list;
-				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multimple transformations*)}
+				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+				  view_base_case : (Cformula.struc_formula*Cformula.formula) option;}
 	
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;

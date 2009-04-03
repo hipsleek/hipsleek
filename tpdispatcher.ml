@@ -134,7 +134,7 @@ module Netprover = struct
                   let res = Net.IO.from_string s in
                   Array.set result_arr idx s;
                   if stopper res then begin
-                    show_info "pmap: discard others";
+                    show_info "pmap: discard others" "";
                     send_stop seqno;
                     Array.set result_arr 0 s; (* will return the first element only *)
                     raise ParStop
@@ -663,7 +663,10 @@ let is_sat f =
 
 let is_sat_fast f = 
 	let y = !sat_timeout in
-	sat_timeout := 2. ; is_sat f ; sat_timeout:=y
+	sat_timeout := 2. ; 
+	let r = is_sat f in
+	sat_timeout:=y;
+	r
 ;;
 
 let print_stats () =

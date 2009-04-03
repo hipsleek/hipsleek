@@ -178,6 +178,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let ectx = CF.empty_ctx no_pos in
 	let ctx = CF.build_context ectx ante no_pos in
 	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^"\n"^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
+	
 	let rs, _ = Solver.heap_entail_struc cprog false false false [ctx] conseq no_pos in
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;

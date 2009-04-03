@@ -923,3 +923,22 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula =
 						 formula_ext_continuation = float_out_struc_min_max b.formula_ext_continuation}in
 	List.map helper f0
 		
+
+and view_node_types_struc (f:struc_formula):ident list = 
+	let helper (f:ext_formula):ident list = match f with
+	| ECase b -> List.concat (List.map (fun (c1,c2)-> view_node_types_struc c2) b.formula_case_branches)
+	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
+	| EAssume b -> view_node_types b
+	in
+	Util.remove_dups (List.concat (List.map helper f))
+		
+and view_node_types (f:formula):ident list = 
+	let rec helper (f:h_formula):ident list =  match f with
+		| Star b -> Util.remove_dups ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
+		| HeapNode b -> [b.h_formula_heap_name]
+		| HeapNode2 b -> [b.h_formula_heap2_name]
+		| _ -> [] in
+	match f with
+	| Or b-> Util.remove_dups ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
+	| Base b -> helper b.formula_base_heap
+	| Exists b -> helper b.formula_exists_heap

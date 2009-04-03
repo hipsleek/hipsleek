@@ -307,7 +307,7 @@ node remove_min_add(node x, ref myint a)
           ti = x.val;
           tr = x.right.left;
           //assert tr' = null assume tr' = null; //'
-          assume tr' = null or tr'!=null;
+          //assume tr' = null or tr'!=null;
           return x;
         } else {
           return x;
@@ -316,10 +316,10 @@ node remove_min_add(node x, ref myint a)
         ti = x.val;
         tr = x.right.left;
         // assert tr' = null assume tr' = null; //'
-        assume tr' = null or tr'!=null;
+        //assume tr' = null or tr'!=null;
         tr = x.right.right; 
         // fails! assert tr' = null assume tr' = null; //'
-        assume tr' = null or tr'!=null;
+        //assume tr' = null or tr'!=null;
         x.val = x.right.val;
         x.right.val = a.val;
         a.val = ti;
@@ -330,14 +330,14 @@ node remove_min_add(node x, ref myint a)
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;
-        dprint;
+       // dprint;
 		//assert tr' = null assume tr' = null; //'
-        assume tr' = null or tr'!=null;
-		dprint;
+        //assume tr' = null or tr'!=null;
+		//dprint;
         tr = x.left.right;
 
         //assert tr' = null assume tr' = null; //'
-        assume tr' = null or tr'!=null;
+        //assume tr' = null or tr'!=null;
         ti = x.left.val;
         x.left.val = x.val;
         x.val = a.val;
@@ -389,7 +389,7 @@ node remove_max_add(node x, ref myint a)
           ti = x.val;
           tr = x.left.right;
           //assert tr' = null assume tr' = null; //'
-	  assume tr'=null or tr'!=null;
+	  //assume tr'=null or tr'!=null;
           return x;
         } else {
           return x;
@@ -397,9 +397,9 @@ node remove_max_add(node x, ref myint a)
       } else {
         ti = x.val;
         tr = x.left.right;
-	assume tr'=null or tr'!=null;
+	//assume tr'=null or tr'!=null;
         tr = x.left.left;
-	assume tr'=null or tr'!=null;
+	//assume tr'=null or tr'!=null;
         x.val = x.left.val;
         x.left.val = a.val;
         a.val = ti;
@@ -410,9 +410,9 @@ node remove_max_add(node x, ref myint a)
     if (a.val <= x.val) {
       if (x.left == null) {
         tr = x.right.right;
-	assume tr'=null or tr'!=null;
+	//assume tr'=null or tr'!=null;
         tr = x.right.left;
-	assume tr'=null or tr'!=null;
+	//assume tr'=null or tr'!=null;
         ti = x.right.val;
         x.right.val = x.val;
         x.val = a.val;
@@ -451,7 +451,7 @@ node remove_min(node x, ref myint a)
     if (less_h(x.left,x.right)) {
       // assert x.right != null;
       tn = x.right;
-      assume tn'=null or tn'!=null;
+//      assume tn'=null or tn'!=null;
       ret.val = x.val;
       x.left = remove_min_add(x.left, ret);
       a.val = ret.val;
@@ -521,7 +521,10 @@ node delete(node x, int a)
 // forall xx .  xx in S -> xx=a \/ xx in Sn
 {
   node tmp;
-  if (x == null) return x; else {
+  bool tmp1 = (x==null);
+  dprint;
+  if (tmp1) return x; else {
+  dprint;
   if (x.val == a)
     return delete_top (x);
   else if (x.val < a) {
@@ -557,7 +560,7 @@ node delete(node x, int a)
       if (diff_h_by_2(x.right,x.left)) {
         tmp = x.right;
         //assert tmp'!=null; //'
-        assume tmp'=null or tmp'!=null;
+        //assume tmp'=null or tmp'!=null;
         if (diff_h_by_1(x.right.right,x.right.left)) {
            x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
           return x;
@@ -567,7 +570,7 @@ node delete(node x, int a)
         } else {
           tmp = x.right.left;
           //assert tmp'!=null; //'
-          assume tmp'=null or tmp'!=null;
+//          assume tmp'=null or tmp'!=null;
           tmp = rotate_double_left(x.left, x.right.left.left, x.right.left.right, x.right.right, x.val, x.right.left.val, x.right.val); // DRR
           return tmp;
         }

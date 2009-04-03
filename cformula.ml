@@ -167,6 +167,20 @@ and isConstFalse f = match f with
              h = HFalse || CP.isConstFalse p || (List.filter (fun (_,f) -> CP.isConstFalse f) br <> [])
   | _ -> false
 
+and isConstETrue f = 
+	if (List.length f)<>1 then false
+	else
+	match (List.hd f) with
+	  | EBase b -> (isConstTrue b.formula_ext_base) &&(List.length b.formula_ext_continuation)==0
+	  | _ -> false
+  
+and isConstEFalse f = 
+	if (List.length f)<>1 then false
+	else
+	match (List.hd f) with
+	  | EBase b -> (isConstFalse b.formula_ext_base)  
+	  | _ -> false
+  					   
 and isConstTrue f = match f with
   | Exists ({formula_exists_heap = HTrue;
 		   formula_exists_pure = p;
@@ -211,6 +225,14 @@ and mkFalse pos = Base ({formula_base_heap = HFalse;
 						 formula_base_type = TypeFalse;
                          formula_base_branches = [];
 						 formula_base_pos = pos})
+						 
+and mkEFalse pos = EBase({
+		 formula_ext_explicit_inst = [];
+		 formula_ext_implicit_inst = [];
+		 formula_ext_exists = [];
+		 formula_ext_base = mkFalse pos;
+		 formula_ext_continuation = [];
+		 formula_ext_pos = pos})
 
 and mkOr f1 f2 pos =
   if isConstTrue f1 || isConstTrue f2 then
@@ -247,7 +269,30 @@ let rec mkStar (f1 : formula) (f2 : formula) (pos : loc) =
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   mkBase h p t b pos
-
+   
+and combine_and_pure (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula*bool = 
+	if (isConstFalse f1) then (Cpure.mkFalse no_pos,false)
+		else if (isConstTrue f1) then (f2,true)
+			else (sem_and f1 p f2)
+and sem_and (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):(Cpure.formula*bool) = 
+	let ys =  Cpure.split_conjunctions f2 in
+	let ys' = List.filter (fun c-> not (Cpure.is_member_pure c p)) ys in
+	let y = Cpure.join_conjunctions ys' in
+	if (Cpure.isConstFalse y) then (Cpure.mkFalse no_pos,false)
+		else if (Cpure.isConstTrue y) then (p,false)
+			else  ((Cpure.mkAnd p y no_pos),true)
+			(*if (Tpdispatcher.is_sat_fast (normalize f1 (formula_of_pure y no_pos))) then (Cpure.mkAnd p y no_pos)
+				else Cpure.mkFalse no_pos*)
+	
+and mkStar_combine (f1 : formula) (f2 : formula) (pos : loc) = 
+  let h1, p1, b1, t1 = split_components f1 in
+  let h2, p2, b2, t2 = split_components f2 in
+  let h = mkStarH h1 h2 pos in
+  let p,_ = combine_and_pure f1 p1 p2 in
+  let t = mkAndType t1 t2 in
+  let b = CP.merge_branches b1 b2 in
+  mkBase h p t b pos
+   
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : CP.formula) (t : t_formula) b (pos : loc) =
   let tmp = Base ({formula_base_heap = h;
 				   formula_base_pure = p;
@@ -586,7 +631,29 @@ and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			  resform
 		  end
     end
-
+and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+      let eo1 = normalize_combine o11 f2 pos in
+      let eo2 = normalize_combine o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			let eo1 = normalize_combine f1 o21 pos in
+			let eo2 = normalize_combine f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkStar_combine base1 base2 pos in
+			let new_h, new_p, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			  resform
+		  end
+    end
+	
 (* -- 13.05.2008 *)
 (* normalizes but only renames the bound variables of f1 that clash with variables from fv(f2) *)
 and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
@@ -615,7 +682,9 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
-and split_components (f : formula) = match f with
+and split_components (f : formula) = 
+if (isConstFalse f) then (HFalse,(Cpure.mkFalse no_pos),[],TypeFalse)
+else match f with
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
            formula_base_branches = b;
@@ -816,7 +885,16 @@ and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) (po
   let new_f = normalize new_delta new_phi pos in
   let resform = push_exists rs new_f in
 	resform
-
+	
+and view_node_types (f:formula):ident list = 
+	let rec helper (f:h_formula):ident list =  match f with
+		| Star b -> Util.remove_dups ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
+		| ViewNode b -> [b.h_formula_view_name]
+		| _ -> [] in
+	match f with
+	| Or b-> Util.remove_dups ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
+	| Base b -> helper b.formula_base_heap
+	| Exists b -> helper b.formula_exists_heap
 
 (*
   Other utilities.
@@ -1035,14 +1113,14 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
 			let new_c1 = compose_context_formula ctx phi1 x pos in
 			let new_c2 = compose_context_formula ctx phi2 x pos in
-			let res = OCtx (new_c1, new_c2) in
+			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
 		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x pos}
 	end
   | OCtx (c1, c2) -> 
 	  let new_c1 = compose_context_formula c1 phi x pos in
 	  let new_c2 = compose_context_formula c2 phi x pos in
-	  let res = OCtx (new_c1, new_c2) in
+	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
 
 and normalize_context_formula (ctx : context) (f : formula) (pos : loc) : context = match ctx with
@@ -1050,48 +1128,36 @@ and normalize_context_formula (ctx : context) (f : formula) (pos : loc) : contex
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_context_formula c1 f pos in
 	  let nc2 = normalize_context_formula c2 f pos in
-	  let res = OCtx (nc1, nc2) in
+	  let res = (mkOCtx nc1 nc2 pos) in
 		res
 
-and combine_context_and (ctx : context) (f : Cpure.formula) : context = match ctx with
-  | Ctx es -> Ctx {es with es_formula = combine_and es.es_formula f }
+and normalize_context_formula_combine (ctx : context) (f : formula) (pos : loc) : context =
+match ctx with
+  | Ctx es -> Ctx {es with es_formula = normalize_combine es.es_formula f pos}
   | OCtx (c1, c2) ->
-	  let nc1 = combine_context_and c1 f in
-	  let nc2 = combine_context_and c2 f in
-	  let res = OCtx (nc1, nc2) in
+	  let nc1 = normalize_context_formula_combine c1 f pos in
+	  let nc2 = normalize_context_formula_combine c2 f pos in
+	  let res = (mkOCtx nc1 nc2 pos) in
 		res
 		
-and combine_and (f1:formula) (f2:Cpure.formula) :formula = match f1 with
+and combine_and (f1:formula) (f2:Cpure.formula) :formula*bool = match f1 with
 	| Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
 	 print_string ("malfunction: inner or has not been converted to a CtxOr!");
       Error.report_error {
 		Error.error_loc = pos;
 		Error.error_text = ("malfunction: inner or has not been converted to a CtxOr!") }
 	| Base ({ formula_base_pure = p;} as b) -> 
-			Base{b with formula_base_pure = (combine_and_pure f1 p f2)}
-					 
+			let r1,r2 = (combine_and_pure f1 p f2) in
+			(Base{b with formula_base_pure = r1}, r2)					 
 	| Exists ({formula_exists_qvars = evars;
 			   formula_exists_pure = p ;} as b) -> 
 			if (List.length (Util.intersect (Cpure.fv f2) evars))=0 then
-				Exists {b with formula_exists_pure = (combine_and_pure f1 p f2)}	  
+				let r1,r2 = (combine_and_pure f1 p f2) in
+				(Exists {b with formula_exists_pure = r1},r2)	  
 				else 
 					let rf1 = rename_bound_vars f1 in
 					(combine_and rf1 f2)
 		
-and combine_and_pure (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula = 
-	if (isConstFalse f1) then Cpure.mkFalse no_pos
-		else if (isConstTrue f1) then f2
-			else (sem_and f1 p f2)
-and sem_and (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula = 
-	let ys =  Cpure.split_conjunctions f2 in
-	let ys' = List.filter (fun c-> not (Cpure.is_member_pure c p)) ys in
-	let y = Cpure.join_conjunctions ys' in
-	if (Cpure.isConstFalse y) then Cpure.mkFalse no_pos
-		else if (Cpure.isConstTrue y) then p
-			else  (Cpure.mkAnd p y no_pos)
-			(*if (Tpdispatcher.is_sat_fast (normalize f1 (formula_of_pure y no_pos))) then (Cpure.mkAnd p y no_pos)
-				else Cpure.mkFalse no_pos*)
-			
 and normalize_no_rename_context_formula (ctx : context) (p : Cpure.formula) : context = 
 	let rec push_pure (f:formula):formula = match f with
 		| Base b-> Base {b with formula_base_pure = Cpure.mkAnd p b.formula_base_pure b.formula_base_pos}
@@ -1117,14 +1183,14 @@ and normalize_clash_context_formula (ctx : context) (f : formula) (pos : loc) : 
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
 			let new_c1 = normalize_clash_context_formula ctx phi1 pos in
 			let new_c2 = normalize_clash_context_formula ctx phi2 pos in
-			let res = OCtx (new_c1, new_c2) in
+			let res = (mkOCtx new_c1 new_c2 pos) in
 			res
 		| _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos}
 	  end
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_clash_context_formula c1 f pos in
 	  let nc2 = normalize_clash_context_formula c2 f pos in
-	  let res = OCtx (nc1, nc2) in
+	  let res = (mkOCtx nc1 nc2 pos) in
 		res
 (* 17.05.2008 -- *)
 
@@ -1278,7 +1344,9 @@ let rec struc_to_formula (f0:struc_formula):formula =
 			List.fold_left 
 			(fun a (c1,c2)-> 
 				(*let ng = Cpure.Not (c1,b.formula_case_pos) in*)
-				(mkOr a (normalize 
+				if (isConstEFalse c2) then a
+				else
+				(mkOr a (normalize_combine 
 							(mkBase HTrue c1 TypeTrue [] b.formula_case_pos ) 
 							(struc_to_formula c2)
 							b.formula_case_pos
@@ -1290,7 +1358,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
 			else mkTrue b.formula_case_pos in
 			push_exists b.formula_case_exists r 
 		| EBase b-> 
-				let e = normalize b.formula_ext_base (struc_to_formula b.formula_ext_continuation) b.formula_ext_pos in
+				let e = normalize_combine b.formula_ext_base (struc_to_formula b.formula_ext_continuation) b.formula_ext_pos in
 				let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
 				nf
 		| EAssume (_,b)-> b 
@@ -1332,3 +1400,7 @@ and count_or c = match c with
 			
 and find_false_ctx ctx pos =
 	if (List.exists isFalseCtx ctx) then false_ctx_line_list := pos::!false_ctx_line_list else ()
+	
+	
+and check_unsat_struc (cf:struc_formula):bool = false
+	

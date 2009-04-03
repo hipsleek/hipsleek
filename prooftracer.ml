@@ -35,6 +35,7 @@ type proof =
   | ExLeft of ex_step
   | ExRight of ex_step
   | OrLeft of or_left
+  | OrStrucLeft of or_struc_left
   | OrRight of or_right
   | Match of match_step
   | MMatch of mmatch_step (* if one node from the consequent matches multiple nodes from antecedent *)
@@ -65,7 +66,11 @@ and or_left = { or_left_ante : CF.context;
 				or_left_conseq : CF.formula;
 				or_left_proofs : proof list (* all proofs here must succeed *) }
 	
+and or_struc_left = { or_struc_left_ante : CF.context;
+					or_struc_left_conseq : CF.struc_formula;
+					or_struc_left_proofs : proof list (* all proofs here must succeed *) }
 
+	
 and or_right = { or_right_ante : CF.context;
 				 or_right_conseq : CF.formula;
 				 or_right_proofs : proof list (* at least one must succeed *) }
@@ -147,6 +152,11 @@ let mkCoercion2 ctx conseq prfs = Coercion2 { coercion2_step_ante = ctx;
 let mkOrLeft ctx conseq prfs = OrLeft { or_left_ante = ctx;
 										or_left_conseq = conseq;
 										or_left_proofs = prfs }
+										
+let mkOrStrucLeft ctx conseq prfs = OrStrucLeft {   or_struc_left_ante = ctx;
+													or_struc_left_conseq = conseq;
+													or_struc_left_proofs = prfs }
+
 
 let mkOrRight ctx conseq prfs = OrRight { or_right_ante = ctx;
 										  or_right_conseq = conseq;
@@ -231,6 +241,13 @@ let rec string_of_proof prf0 : string =
 		Buffer.add_string buffer "<OrLeft>\n";
 		ignore (List.map (to_string buffer) prfs);
 		Buffer.add_string buffer "</OrLeft>\n"
+	  end
+	| OrStrucLeft ({ or_struc_left_ante = ctx;
+				or_struc_left_conseq = conseq;
+				or_struc_left_proofs = prfs }) -> begin
+		Buffer.add_string buffer "<OrStrucLeft>\n";
+		ignore (List.map (to_string buffer) prfs);
+		Buffer.add_string buffer "</OrStrucLeft>\n"
 	  end
 	| OrRight ({ or_right_ante = ctx;
 				 or_right_conseq = conseq;

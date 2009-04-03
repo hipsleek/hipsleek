@@ -15,7 +15,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list
 	let rec do_spec_verification (spec: Cformula.ext_formula):bool = match spec with
 		| Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
 					(*let c1 = Cformula.formula_of_pure c1 b.Cformula.formula_case_pos in*)
-					let nctx = List.map (fun c-> Cformula.combine_context_and c c1
+					let nctx = List.map (fun c-> combine_context_and prog c c1
 						(*if !Globals.max_renaming then(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
 				   		(CF.normalize_context_formula c c1 b.Cformula.formula_case_pos)
 						else(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
@@ -222,24 +222,24 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	 (* let then_cond = CF.formula_of_pure then_cond_prim pos in
 	  let else_cond = CF.formula_of_pure else_cond_prim pos in*)
 	  let process_one c =
-		let then_ctx1 = CF.combine_context_and c then_cond_prim in
+		let then_ctx = combine_context_and prog c then_cond_prim in
 			(*if !Globals.max_renaming then CF.combine_context_and c then_cond pos
 			else CF.normalize_clash_context_formula c then_cond pos
 		in*)
-		Debug.devel_pprint ("conditional: then_delta1:\n" ^ (Cprinter.string_of_context then_ctx1)) pos;
-		let then_ctx =  Solver.elim_unsat_ctx prog then_ctx1 in
+		(*Debug.devel_pprint ("conditional: then_delta1:\n" ^ (Cprinter.string_of_context then_ctx1)) pos;*)
+		(*let then_ctx =  Solver.elim_unsat_ctx prog then_ctx1 in*)
 
 		(*let _ = print_string ("\nbefore: \t\t" ^ (Cprinter.string_of_context c)^"\n cond: "^(Cprinter.string_of_formula then_cond)^"\n after: "^
 		(Cprinter.string_of_context then_ctx1)^"\n after elim: "^
 		(Cprinter.string_of_context then_ctx)^"\n") in*)
 		
 		Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_context then_ctx)) pos;
-		let else_ctx1 =CF.combine_context_and c else_cond_prim in
+		let else_ctx =combine_context_and prog c else_cond_prim in
 			(*if !Globals.max_renaming then CF.normalize_context_formula c else_cond pos
 			else CF.normalize_clash_context_formula c else_cond pos
 		in*)
-		Debug.devel_pprint ("conditional: else_delta1:\n" ^ (Cprinter.string_of_context else_ctx1)) pos;
-		let else_ctx = Solver.elim_unsat_ctx prog else_ctx1 in
+		(*Debug.devel_pprint ("conditional: else_delta1:\n" ^ (Cprinter.string_of_context else_ctx1)) pos;
+		let else_ctx = Solver.elim_unsat_ctx prog else_ctx1 in*)
 		Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_context else_ctx)) pos;
 		
 		
@@ -579,7 +579,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
           | [] -> h
           | t ->
             let subcall = join_ctx_or t in
-            let fold_fun l f = List.rev_append (List.map (fun c-> CF.OCtx(f,c) ) subcall) l in
+            let fold_fun l f = List.rev_append (List.map (fun c-> (CF.mkOCtx f c pos) ) subcall) l in
             List.fold_left fold_fun [] h
         end
         | [] -> assert false

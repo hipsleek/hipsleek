@@ -453,6 +453,8 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
 	| (Add (e1,e2,_),Add (d1,d2,_)) -> (((eqExp e1 d1)&&(eqExp e2 d2))||((eqExp e1 d2)&&(eqExp e2 d1)))
     | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp e1 d1)&&(eqExp e2 d2))
     | (Mult (c1,e1,_),Mult (c2,e2,_)) -> (c1=c2)&&(eqExp e1 e2)
+	| (Bag (l1,_),Bag (l2,_)) -> if (List.length l1)=(List.length l1) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
+										else false
     | _ -> false
 	
 	

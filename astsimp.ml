@@ -27,6 +27,17 @@ module Chk = Checks
   
 (* module VG = View_generator *)
 
+(*
+module VHD = struct
+			type t = ident
+			let compare c1 c2 = String.compare c1 c2
+			let hash c = Hashtbl.hash c
+			let equal c1 c2 = (String.compare c1 c2) = 0
+		end
+module VH = Graph.Persistent.Digraph.Concrete(VHD)
+module SVH = Graph.Components.Make(VH)			
+*)
+
 type trans_exp_type =
   (C.exp * CP.typ)
 
@@ -886,6 +897,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
+  let recs = rec_grp prog in
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.data_name_of_view prog.I.prog_view_decls view_formula1
 					else vdef.I.view_data_name in
     (vdef.I.view_data_name <- data_name;
@@ -920,6 +932,10 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           let _ = vdef.I.view_typed_vars <- typed_vars in
           let mvars = [] in
 		  let n_un_str =  Cformula.struc_to_formula cf in
+		  let bc = match (compute_base_case recs cf) with
+				| None -> None
+				| Some s -> Some (s,Cformula.struc_to_formula s)in
+		  
 		(*  let _ = print_string ("\n\ngott: "^(Cprinter.string_of_formula n_un_str)^"\n fromt: "^(Cprinter.string_of_struc_formula cf)^"\n\n") in*)
           let cvdef =
             {
@@ -935,12 +951,74 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
               C.view_addr_vars = [];
               C.view_user_inv = (pf, pf_b);
 			  C.view_un_struc_formula = n_un_str;
+			  C.view_base_case = bc;
             }
           in
+		  let _ = if (Cformula.check_unsat_struc cf) then 
+				print_string ("\n warning: "^vdef.I.view_name^" has unsatisfiable branches \n") else () in 
+		  (*let _ = print_string ("\n n view: "^(Cprinter.string_of_view_decl cvdef)^"\n") in*)
             (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef))
                (CF.pos_of_struc_formula cf);
              cvdef)))
 
+and rec_grp prog :ident list =
+	let r = List.map (fun c-> (c.Iast.view_name, (Iformula.view_node_types_struc c.Iast.view_formula))) prog.Iast.prog_view_decls in	
+	(*let vh = VH.empty in
+	let vh = List.fold_left  (fun a (c1,c2)-> 
+		(List.fold_left (fun b c -> VH.add_edge b c1 c) a c2)) vh r in	
+	let sccs = SVH.scc_list vh in
+	let sccs = List.filter (fun c-> (List.length c)>1)sccs in
+	let _ = print_string ("\n gf:"^(string_of_int (List.length sccs))^"\n") in
+	let sccs = List.fold_left (fun a (c1,c2)-> if (List.mem c1 c2) then a else [c1]::a)sccs r in
+	let _ = print_string ("\n sscs:"^(List.fold_left (fun a c-> a^"\n"^(Cprinter.string_of_ident_list c " "))"" sccs)^"\n") in*)
+	let sccs = List.fold_left (fun a (c1,c2)-> if (List.mem c1 c2) then c1::a else a) [] r in
+	let rec trans_cl (l:ident list):ident list =
+		let int_l = List.fold_left (fun a (c1,c2)-> if (List.exists (fun c-> List.mem c l) c2) then c1::a else a) l r in
+		let int_l = Util.remove_dups int_l in
+		if (List.length int_l)=(List.length l) then int_l
+		else trans_cl int_l in
+	let recs = trans_cl sccs in
+	let recs = Util.difference recs (List.map (fun c-> c.Iast.data_name)prog.Iast.prog_data_decls) in
+	(*let _ = print_string ("\n recs: "^(Cprinter.string_of_ident_list recs " ")^"\n") in*)
+	recs
+			 
+and compute_base_case recs (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
+ let isRec (d:Cformula.formula): bool = 
+		(List.length(List.filter (fun c -> List.mem c recs)(Cformula.view_node_types d)))>0 in
+ let rec helper (cf:Cformula.ext_formula) : Cformula.struc_formula option = match cf with
+	| Cformula.ECase b -> 
+		let pos = b.Cformula.formula_case_pos in
+		let l = List.map (fun (c1,c2) -> 
+								match (compute_base_case recs c2 ) with
+									| None -> (c1,[(Cformula.mkEFalse pos)]) 
+									| Some s ->(c1,s)) b.Cformula.formula_case_branches in
+		(*let l = List.filter (fun (c1,c2,c3)-> match c with | None -> false | Some s -> true) l in*)
+		(*let l = List.map (fun c->match c with | None -> 
+			Err.report_error{ Err.error_loc = pos; Err.error_text = "filter malfunction"}|Some x -> x) l in*)
+		if 
+			((List.length l) > 0) then Some [(Cformula.ECase {b with Cformula.formula_case_branches = l})]
+		else None		
+	| Cformula.EBase b -> begin
+		match (compute_base_case recs b.Cformula.formula_ext_continuation ) with
+		| None -> None
+		| Some s -> if not(isRec b.Cformula.formula_ext_base ) then 
+						 Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = s})]
+					else None
+		end
+	| Cformula.EAssume b-> 
+					if (isRec (snd b)) then None
+									 else Some [Cformula.EAssume b ] in
+	match (List.length cf) with
+	| 0 -> Some []
+	| 1 -> helper (List.hd cf)
+	| _ -> List.fold_left (fun a c-> 
+								match a with 
+								| None -> None
+								| Some b -> 
+									match helper c with 
+									| None -> None
+									| Some d -> Some (d@b)) (Some []) cf 
+						
 and set_materialized_vars prog cdef =
   let mvars =
     find_materialized_vars prog cdef.C.view_vars (*cdef.C.view_formula*) cdef.C.view_un_struc_formula
@@ -1113,6 +1191,10 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 			 let static_specs_list = trans_struc_formula prog true free_vars proc.I.proc_static_specs stab true cret_type in
 			(* let _ = print_string ("\n new specs: "^(Cprinter.string_of_struc_formula static_specs_list)^"\n") in*)
 			 let dynamic_specs_list = trans_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true cret_type in
+			 let _ = if (Cformula.check_unsat_struc static_specs_list) then 
+				print_string ("\n warning: "^proc.I.proc_mingled_name^" has unsatisfiable static pre_conditions \n") else () in 
+			 let _ = if (Cformula.check_unsat_struc dynamic_specs_list) then 
+				print_string ("\n warning: "^proc.I.proc_mingled_name^" has unsatisfiable dynamic pre_conditions \n") else () in 
 			 let _ = H.remove stab res in
              let body =
                match proc.I.proc_body with
