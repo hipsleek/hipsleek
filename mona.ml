@@ -653,7 +653,7 @@ let continue f arg tsecs =
 let rec check fd timeout pid : bool =
   try begin
     if (Unix.select [Unix.descr_of_in_channel fd] [] [] timeout) = ([],[],[]) then begin
-        print_endline "\nTimout reached."; flush stdout; false
+        print_endline "\nMona timeout reached."; flush stdout; false
     end else match input_line fd with
 	| "Formula is valid" ->
 		begin
@@ -759,7 +759,8 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) : bool = begin
   let var_decls = first_order_var_decls ^ second_order_var_decls in
   (*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
   let simp_form = break_presburger tmp_form in
-  (write var_decls simp_form vs timeout)
+  if (timeout = 0.) then (write var_decls simp_form vs (-1.))
+  else (write var_decls simp_form vs timeout)
  end
 
 let is_sat (f : CP.formula) : bool =
@@ -783,7 +784,7 @@ let is_sat (f : CP.formula) : bool =
 	  end
 ;;
 
-let imply = imply (-1.);;
+(*let imply = imply (-1.);;*)
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin

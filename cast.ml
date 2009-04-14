@@ -19,6 +19,10 @@ and prog_decl = { mutable prog_data_decls : data_decl list;
 				  mutable prog_left_coercions : coercion_decl list;
 				  mutable prog_right_coercions : coercion_decl list }
 	
+and prog_or_branches = 
+		| Prog of prog_decl
+		| Branches of (Cpure.formula * ((string*Cpure.formula)list)*(Cpure.spec_var list))
+	
 and data_decl = { data_name : ident;
 				  data_fields : typed_ident list;
 				  data_parent_name : ident;
@@ -27,6 +31,7 @@ and data_decl = { data_name : ident;
 	
 and view_decl = { view_name : ident; 
 				  view_vars : P.spec_var list;
+				  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
 				  view_labels : branch_label list;
 				  view_modes : mode list;
 				  mutable view_partially_bound_vars : bool list;
@@ -37,7 +42,7 @@ and view_decl = { view_name : ident;
 				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (Cformula.struc_formula*Cformula.formula) option;}
+				  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option;}
 	
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;

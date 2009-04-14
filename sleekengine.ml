@@ -164,7 +164,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
 	  
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  try
+ (* try*)
 	let _ = residues := [] in
 	let stab = H.create 103 in
 	let ante = meta_to_formula iante0 false [] stab in
@@ -186,8 +186,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		print_string ("Fail.\n")
 	  else
 		print_string ("Valid.\n")
-  with
-	| _ -> (print_string "exception in entail check\n")
+ (* with
+	| _ -> (print_string "exception in entail check\n")*)
 		
 let process_capture_residue (lvar : ident) = 
 	let flist = List.map CF.formula_of_context !residues in

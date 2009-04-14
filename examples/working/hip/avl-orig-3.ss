@@ -22,6 +22,13 @@ avl<m, n, bal> ==
 /* function to return the height of an avl tree */
 int height(node x)
 // slow when it is addedi - 72s for insert without
+
+case { 
+  x=null ->   requires true 
+              ensures res=0 ;
+  x!=null ->  requires x::node<v,h,l,r>
+              ensures x::node<v,h,l,r> & res=h;
+}
 /*
         requires x=null
         ensures res=0;
@@ -29,8 +36,9 @@ int height(node x)
         ensures x::node<v,h,l,r> & res=h;
 */
 // fails if last case dropped though it seem redundant
-	requires x::avl<m, n, b>
+/*	requires x::avl<m, n, b>
 	ensures x::avl<m, n, b> & res = n;
+*/
 //	requires x::node<a, n, l, r> 
 //		or x=null
 //	ensures x::node<a, n, l, r> & res=n 

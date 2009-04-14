@@ -72,7 +72,7 @@ and formula_exists = { formula_exists_qvars : CP.spec_var list;
 					   formula_exists_pure : CP.formula;
 					   formula_exists_type : t_formula;
                        formula_exists_branches : (branch_label * CP.formula) list;
-					   formula_exists_pos : loc }
+ 					   formula_exists_pos : loc }
 	  
 and h_formula = (* heap formula *)
   | Star of h_formula_star
@@ -150,6 +150,8 @@ and struc_formula_of_formula f pos = [EBase {
 		 
 
 and formula_of_pure p pos = mkBase HTrue p TypeTrue [] pos
+
+and formula_of_pure_with_branches p br pos = mkBase HTrue p TypeTrue br pos
 
 and formula_of_base base = Base(base)
 
@@ -273,17 +275,22 @@ let rec mkStar (f1 : formula) (f2 : formula) (pos : loc) =
 and combine_and_pure (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula*bool = 
 	if (isConstFalse f1) then (Cpure.mkFalse no_pos,false)
 		else if (isConstTrue f1) then (f2,true)
-			else (sem_and f1 p f2)
-and sem_and (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):(Cpure.formula*bool) = 
+			else (sem_and p f2)
+and sem_and (p:Cpure.formula)(f2:Cpure.formula):(Cpure.formula*bool) = 
 	let ys =  Cpure.split_conjunctions f2 in
 	let ys' = List.filter (fun c-> not (Cpure.is_member_pure c p)) ys in
 	let y = Cpure.join_conjunctions ys' in
 	if (Cpure.isConstFalse y) then (Cpure.mkFalse no_pos,false)
 		else if (Cpure.isConstTrue y) then (p,false)
 			else  ((Cpure.mkAnd p y no_pos),true)
-			(*if (Tpdispatcher.is_sat_fast (normalize f1 (formula_of_pure y no_pos))) then (Cpure.mkAnd p y no_pos)
-				else Cpure.mkFalse no_pos*)
-	
+
+and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
+	| Or b-> false		
+	| Base _					
+	| Exists _-> 
+		let _, pl, br, _ = split_components f in		
+		(Cpure.is_member_pure p pl) || (List.exists (fun (_,c)->Cpure.is_member_pure p c) br)
+		
 and mkStar_combine (f1 : formula) (f2 : formula) (pos : loc) = 
   let h1, p1, b1, t1 = split_components f1 in
   let h2, p2, b2, t2 = split_components f2 in
@@ -292,6 +299,15 @@ and mkStar_combine (f1 : formula) (f2 : formula) (pos : loc) =
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   mkBase h p t b pos
+
+
+and mkAnd_pure_and_branch (f1 : formula) (p2 : Cpure.formula) b2 (pos : loc):formula = 
+  if (isConstFalse f1) then f1
+   else 
+		let h1, p1, b1, t1 = split_components f1 in		
+		if (Cpure.isConstTrue p1) then mkBase h1 p2 t1 (CP.merge_branches b1 b2) pos
+			else mkBase h1 (Cpure.mkAnd p1 p2 pos) t1 (CP.merge_branches b1 b2)  pos
+
    
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : CP.formula) (t : t_formula) b (pos : loc) =
   let tmp = Base ({formula_base_heap = h;
@@ -924,7 +940,7 @@ type entail_state = {
   (*used by late instantiation*)
   es_gen_expl_vars: CP.spec_var list; 
   es_gen_impl_vars: CP.spec_var list; 
-  
+  es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
   es_arith_subst : (CP.spec_var * CP.exp) list
 }
@@ -946,6 +962,7 @@ let empty_es pos = {
   es_gen_expl_vars = []; 
   es_gen_impl_vars = []; 
   es_pp_subst = [];
+  es_unsat_flag = true;
   es_arith_subst = []
 }
 
@@ -973,7 +990,7 @@ let mkOCtx ctx1 ctx2 pos =
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
-		Ctx ({es with es_formula = f})
+		Ctx ({es with es_formula = f;es_unsat_flag =false;})
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = _}) -> 
 	  let c1 = build_context ctx f1 pos in
 	  let c2 = build_context ctx f2 pos in
@@ -1004,7 +1021,7 @@ and set_context_formula (ctx : context) (f : formula) : context = match ctx with
 			let cf1 = set_context_formula ctx f1 in
 			let cf2 = set_context_formula ctx f2 in
 			  OCtx (cf1, cf2)
-		| _ -> Ctx {es with es_formula = f}
+		| _ -> Ctx {es with es_formula = f;es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) ->
 	  let nc1 = set_context_formula c1 f in
@@ -1115,7 +1132,7 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 			let new_c2 = compose_context_formula ctx phi2 x pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x pos}
+		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x pos;es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) -> 
 	  let new_c1 = compose_context_formula c1 phi x pos in
@@ -1123,20 +1140,20 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
 
-and normalize_context_formula (ctx : context) (f : formula) (pos : loc) : context = match ctx with
-  | Ctx es -> Ctx {es with es_formula = normalize es.es_formula f pos}
+and normalize_context_formula (ctx : context) (f : formula) (pos : loc) (result_is_sat:bool): context = match ctx with
+  | Ctx es -> Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat}
   | OCtx (c1, c2) ->
-	  let nc1 = normalize_context_formula c1 f pos in
-	  let nc2 = normalize_context_formula c2 f pos in
+	  let nc1 = normalize_context_formula c1 f pos result_is_sat in
+	  let nc2 = normalize_context_formula c2 f pos result_is_sat in
 	  let res = (mkOCtx nc1 nc2 pos) in
 		res
 
-and normalize_context_formula_combine (ctx : context) (f : formula) (pos : loc) : context =
+and normalize_context_formula_combine (ctx : context) (f : formula) (result_is_sat:bool)(pos : loc) : context =
 match ctx with
-  | Ctx es -> Ctx {es with es_formula = normalize_combine es.es_formula f pos}
+  | Ctx es -> Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;}
   | OCtx (c1, c2) ->
-	  let nc1 = normalize_context_formula_combine c1 f pos in
-	  let nc2 = normalize_context_formula_combine c2 f pos in
+	  let nc1 = normalize_context_formula_combine c1 f result_is_sat pos in
+	  let nc2 = normalize_context_formula_combine c2 f result_is_sat pos in
 	  let res = (mkOCtx nc1 nc2 pos) in
 		res
 		
@@ -1168,7 +1185,7 @@ and normalize_no_rename_context_formula (ctx : context) (p : Cpure.formula) : co
 				   formula_or_pos = b.formula_or_pos
 				}in
 match ctx with
-  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula}
+  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =false;}
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_no_rename_context_formula c1 p in
 	  let nc2 = normalize_no_rename_context_formula c2 p in
@@ -1176,20 +1193,20 @@ match ctx with
 		res
 		
 (* -- 17.05.2008 *)
-and normalize_clash_context_formula (ctx : context) (f : formula) (pos : loc) : context = match ctx with
+and normalize_clash_context_formula (ctx : context) (f : formula) (pos : loc) (result_is_sat:bool): context = match ctx with
   | Ctx es ->
       begin
 	    match f with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = normalize_clash_context_formula ctx phi1 pos in
-			let new_c2 = normalize_clash_context_formula ctx phi2 pos in
+			let new_c1 = normalize_clash_context_formula ctx phi1 pos result_is_sat in
+			let new_c2 = normalize_clash_context_formula ctx phi2 pos result_is_sat in
 			let res = (mkOCtx new_c1 new_c2 pos) in
 			res
-		| _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos}
+		| _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
 	  end
   | OCtx (c1, c2) ->
-	  let nc1 = normalize_clash_context_formula c1 f pos in
-	  let nc2 = normalize_clash_context_formula c2 f pos in
+	  let nc1 = normalize_clash_context_formula c1 f pos result_is_sat in
+	  let nc2 = normalize_clash_context_formula c2 f pos result_is_sat in
 	  let res = (mkOCtx nc1 nc2 pos) in
 		res
 (* 17.05.2008 -- *)
@@ -1401,6 +1418,94 @@ and count_or c = match c with
 and find_false_ctx ctx pos =
 	if (List.exists isFalseCtx ctx) then false_ctx_line_list := pos::!false_ctx_line_list else ()
 	
+	(*
+and filter_node (c: context) (p1:spec_var):context = 
+	let rec helper_filter (f:formula):formula = match f with
+		| Or b -> 
+		| Base b ->
+		| Exists b ->
+	in match c with
+		|OCtx (c1,c2) -> OCtx ((filter_node c1 p1),(filter_node c2 p2))
+		| Ctx c -> Ctx {c with es_formula = (helper_filter c.es_formula)}
+*)
+
+and guard_vars f = Util.remove_dups (List.fold_left (fun a f-> a@(match f with
+	| ECase b-> Util.remove_dups (List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(guard_vars c2)) [] b.formula_case_branches)
+	| EBase b -> Util.difference (guard_vars b.formula_ext_continuation) b.formula_ext_exists
+	| EAssume b-> [])) [] f)
 	
-and check_unsat_struc (cf:struc_formula):bool = false
+and set_unsat_flag ctx nf = match ctx with
+| OCtx(c1,c2)-> OCtx ((set_unsat_flag c1 nf),(set_unsat_flag c2 nf))
+| Ctx c-> Ctx {c with es_unsat_flag = nf}
+
+and filter_heap (f:formula):formula option = match f with
+	| Or b-> begin 
+				match (filter_heap b.formula_or_f1) with
+					| None -> None (*(filter_heap b.formula_or_f2)*)
+					| Some d1-> match (filter_heap b.formula_or_f2) with
+								| None -> None
+								| Some d2 -> Some (mkOr d1 d2 b.formula_or_pos)
+			 end
+	| Base b-> begin
+					match b.formula_base_heap with
+					 | Star _
+					 | DataNode _ 
+					 | ViewNode _ -> None
+					 | HTrue 
+					 | HFalse -> Some f
+				end
+	| Exists b-> 
+				begin
+					match b.formula_exists_heap with
+					 | Star _
+					 | DataNode _ 
+					 | ViewNode _ -> None
+					 | HTrue 
+					 | HFalse -> Some f
+				end
+				
+and flatten_base_case (f:struc_formula):(Cpure.formula * (Cpure.formula*((string*Cpure.formula)list))) option = 
+
+	let rec get_pure (f:formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
+		| Or b->
+				let b1,br1 = (get_pure b.formula_or_f1) in
+				let b2,br2 = (get_pure b.formula_or_f2) in
+				((Cpure.mkOr b1 b2 no_pos), Cpure.or_branches br1 br2)
+		| Base b -> (b.formula_base_pure, b.formula_base_branches)
+		| Exists b-> let l = List.map (fun (c1,c2)-> (c1, Cpure.mkExists b.formula_exists_qvars c2 no_pos)) b.formula_exists_branches in
+					(Cpure.mkExists b.formula_exists_qvars b.formula_exists_pure no_pos, l)
+
+	and symp_struc_to_formula (f0:struc_formula):(Cpure.formula*((string*Cpure.formula) list)) = 
+		let rec ext_to_formula (f:ext_formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
+			| ECase b-> 
+				if (List.length b.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
+				else 
+					let c1,c2 = List.hd b.formula_case_branches in (*push existential dismissed*)
+					let b2,br2 = (symp_struc_to_formula c2) in
+					 ((Cpure.mkOr (Cpure.Not (c1,no_pos)) b2 no_pos),br2)
+			| EBase b-> 
+					let b1,br1 = (get_pure b.formula_ext_base) in
+					let b2,br2 = (symp_struc_to_formula b.formula_ext_continuation) in
+					let r1 = Cpure.mkAnd b1 b2 no_pos in
+					let r2 = Cpure.merge_branches br1 br2 in
+					let ev = b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists in
+					let r2 = List.map (fun (c1,c2)-> (c1,(Cpure.mkExists ev c2 no_pos))) r2 in
+					let r1 = (Cpure.mkExists ev r1 no_pos) in
+					(r1,r2)
+			| _ -> Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}in	
+		if (List.length f0)<>1 then ((Cpure.mkTrue no_pos),[])
+		else ext_to_formula (List.hd f0)  in
 	
+	match (List.hd f) with
+	| EBase b-> None
+	| ECase b-> if (List.length b.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
+				else 
+					let (c1,c2) = List.hd b.formula_case_branches in
+					Some(c1,(symp_struc_to_formula c2))
+	| _ -> Error.report_error 
+	{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
+
+	
+and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
+	| OCtx (c1,c2)-> OCtx ((set_es_evars c1 v),(set_es_evars c2 v))
+	| Ctx e -> Ctx {e with es_evars = v}

@@ -67,6 +67,8 @@ let process_cmd_line () = Arg.parse [
    "Convert source code to Java");
   ("--sat-timeout", Arg.Set_float Globals.sat_timeout,
    "Timeout for sat checking");
+  ("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+   "Timeout for imply checking");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
   ("--trace-all", Arg.Set Globals.trace_all,
@@ -120,6 +122,10 @@ let process_cmd_line () = Arg.parse [
   ("--dsocket", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_socket "loris-7:8888"), "<host:port>: use external prover via loris-7:8888");
   ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, "<host:port>: use external prover via socket");
   ("--prover", Arg.String Tpdispatcher.set_tp, "<p,q,..> comma-separated list of provers to try in parallel");
+  ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
+  ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
+  ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
+  
 	] set_source_file usage_msg
 
 (******************************************)
@@ -144,6 +150,7 @@ let parse_file_full file_name =
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n");
+  let _ = Util.push_time "Preprocessing" in
   let prog = parse_file_full source in
 	if !to_java then begin
 	  print_string ("Converting to Java...");
@@ -195,20 +202,18 @@ let process_source_full source =
 		  exit 0
 		end
 	  in
+	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
-		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime in
+		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" "^(string_of_int c.Lexing.pos_lnum)) "" !Globals.false_ctx_line_list)^")\n");
 		  print_string ("\nTotal verification time: " 
 						^ (string_of_float t4) ^ " second(s)\n"
 						^ "\tTime spent in main process: " 
-						^ (string_of_float ptime4.Unix.tms_utime) ^ " second(s)\n"
+						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 						^ "\tTime spent in child processes: " 
-						^ (string_of_float ptime4.Unix.tms_cutime) ^ " second(s)\n"
-                        ^ "\t Sat time: " ^ (string_of_float !Tpdispatcher.sat_timer) ^ " sec\n"
-                        ^ "\t Imp time: " ^ (string_of_float !Tpdispatcher.imply_timer) ^ " sec\n"
-                       )
-
+						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	else Util.pop_time "Preprocessing"
 	  
 let main1 () =
   process_cmd_line ();
@@ -217,9 +222,34 @@ let main1 () =
 	Globals.procs_verified := ["f3"];
 	Globals.source_files := ["examples/test5.ss"]
   end;
+  let _ = Util.push_time "Overall" in
   let _ = List.map process_source_full !Globals.source_files in
+  let _ = Util.pop_time "Overall" in
 	(* Tpdispatcher.print_stats (); *)
 	()
 	  
 let _ = 
-  main1 ()
+  main1 ();
+  let _ = if (!Globals.profiling) then 
+	let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
+	let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+	let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+	let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+	let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+	let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+	let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+		(if (List.length l)>0 then 
+			let l = (List.sort compare l) in		
+			(List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+		else "")^"],  "^(fp (t/.ot))^"%)") in
+	((a1+1),r) 
+	) (0,"") str_list in
+  print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) in
+  if (!Globals.enable_sat_statistics) then 
+  print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
+				"\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
+				"\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
+				)
+  else ()
+
+  

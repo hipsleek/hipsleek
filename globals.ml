@@ -91,8 +91,21 @@ let show_gist = ref false
 let trace_all = ref false
 
 let print_mvars = ref false
+let enable_sat_statistics = ref false
 
 let wrap_exists_implicit_explicit = ref true
+
+let profiling = ref false
+let enable_syn_base_case = ref false
+
+let profile_threshold = 0.5 
+
+let true_imply_count = ref 0
+let false_imply_count = ref 0
+let true_sat_count = ref 0
+
+let add_count (t: int ref) = 
+	t := !t+1
 
 
 (* utility functions *)
@@ -100,6 +113,7 @@ let wrap_exists_implicit_explicit = ref true
 let seq_number = ref 10
 
 let sat_timeout = ref 10.
+let imply_timeout = ref 10.
 
 let report_error (pos : Lexing.position) (msg : string) =
   print_string ("\n" ^ pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.Lexing.pos_lnum) ^ ": " ^ msg ^ "\n");

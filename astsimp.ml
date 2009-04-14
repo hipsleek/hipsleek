@@ -803,7 +803,9 @@ let rec (* overriding test *) (* field duplication test *)
                     (List.map (fun vdef -> set_materialized_vars cprog vdef)
                        cviews);
                   ignore (C.build_hierarchy cprog);
-                  (add_pre_to_cprog cprog)))))
+                  let cprog = (add_pre_to_cprog cprog) in
+				  sat_warnings cprog ;
+				  cprog))))
     else failwith "Error detected"
 
 and add_pre_to_cprog cprog = 
@@ -814,6 +816,16 @@ and add_pre_to_cprog cprog =
 	}
 
 ) cprog.C.prog_proc_decls;}	
+
+and sat_warnings cprog = 
+
+	let _ = List.map (fun c -> 
+		let unsat_list = Solver.find_unsat cprog c.Cast.view_un_struc_formula in
+		if ((List.length unsat_list)> 0) then print_string ("the view body for "^c.Cast.view_name^" contains unsat branch(es) :"^
+					(List.fold_left (fun a c-> a^"\n   "^(Cprinter.string_of_formula c)) "" unsat_list)^"\n") else ()) cprog.Cast.prog_view_decls in
+	()
+	
+	
 	
 and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
   let trans_field ((t, c), pos) : C.typed_ident =
@@ -897,7 +909,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
-  let recs = rec_grp prog in
+  (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.data_name_of_view prog.I.prog_view_decls view_formula1
 					else vdef.I.view_data_name in
     (vdef.I.view_data_name <- data_name;
@@ -932,10 +944,9 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           let _ = vdef.I.view_typed_vars <- typed_vars in
           let mvars = [] in
 		  let n_un_str =  Cformula.struc_to_formula cf in
-		  let bc = match (compute_base_case recs cf) with
+		  let bc = match (compute_base_case cf) with
 				| None -> None
-				| Some s -> Some (s,Cformula.struc_to_formula s)in
-		  
+				| Some s -> (Cformula.flatten_base_case s) in		  
 		(*  let _ = print_string ("\n\ngott: "^(Cprinter.string_of_formula n_un_str)^"\n fromt: "^(Cprinter.string_of_struc_formula cf)^"\n\n") in*)
           let cvdef =
             {
@@ -952,11 +963,10 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
               C.view_user_inv = (pf, pf_b);
 			  C.view_un_struc_formula = n_un_str;
 			  C.view_base_case = bc;
+			  C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf)
             }
           in
-		  let _ = if (Cformula.check_unsat_struc cf) then 
-				print_string ("\n warning: "^vdef.I.view_name^" has unsatisfiable branches \n") else () in 
-		  (*let _ = print_string ("\n n view: "^(Cprinter.string_of_view_decl cvdef)^"\n") in*)
+		  (*let _ = print_string ("\n "^(Cprinter.string_of_view_decl cvdef)^"\n") in*)
             (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef))
                (CF.pos_of_struc_formula cf);
              cvdef)))
@@ -982,56 +992,44 @@ and rec_grp prog :ident list =
 	(*let _ = print_string ("\n recs: "^(Cprinter.string_of_ident_list recs " ")^"\n") in*)
 	recs
 			 
-and compute_base_case recs (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
- let isRec (d:Cformula.formula): bool = 
-		(List.length(List.filter (fun c -> List.mem c recs)(Cformula.view_node_types d)))>0 in
+and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
+ (*let isRec (d:Cformula.formula): bool = 
+		(List.length(List.filter (fun c -> List.mem c recs)(Cformula.view_node_types d)))>0 in*)
  let rec helper (cf:Cformula.ext_formula) : Cformula.struc_formula option = match cf with
 	| Cformula.ECase b -> 
-		let pos = b.Cformula.formula_case_pos in
-		let l = List.map (fun (c1,c2) -> 
-								match (compute_base_case recs c2 ) with
-									| None -> (c1,[(Cformula.mkEFalse pos)]) 
-									| Some s ->(c1,s)) b.Cformula.formula_case_branches in
-		(*let l = List.filter (fun (c1,c2,c3)-> match c with | None -> false | Some s -> true) l in*)
-		(*let l = List.map (fun c->match c with | None -> 
-			Err.report_error{ Err.error_loc = pos; Err.error_text = "filter malfunction"}|Some x -> x) l in*)
-		if 
-			((List.length l) > 0) then Some [(Cformula.ECase {b with Cformula.formula_case_branches = l})]
+		let l = List.fold_left (fun a (c1,c2) -> 
+								match (compute_base_case c2 ) with
+									| None -> a (*(c1,[(Cformula.mkEFalse pos)]) *)
+									| Some s ->(c1,s)::a) [] b.Cformula.formula_case_branches in
+		if ((List.length l) > 0) then Some [(Cformula.ECase {b with Cformula.formula_case_branches = [List.hd l]})]
 		else None		
 	| Cformula.EBase b -> begin
-		match (compute_base_case recs b.Cformula.formula_ext_continuation ) with
+		match (Cformula.filter_heap b.Cformula.formula_ext_base) with
 		| None -> None
-		| Some s -> if not(isRec b.Cformula.formula_ext_base ) then 
-						 Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = s})]
-					else None
+		| Some d-> 
+			if (List.length b.Cformula.formula_ext_continuation )>0 then
+			match (compute_base_case b.Cformula.formula_ext_continuation ) with
+				| None -> None
+				| Some s -> Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = s; Cformula.formula_ext_base=d })]
+			else Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = []; Cformula.formula_ext_base=d })]
 		end
-	| Cformula.EAssume b-> 
-					if (isRec (snd b)) then None
-									 else Some [Cformula.EAssume b ] in
-	match (List.length cf) with
-	| 0 -> Some []
+	| Cformula.EAssume b-> Err.report_error{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"} in
+ match (List.length cf) with
+	| 0 -> None
 	| 1 -> helper (List.hd cf)
-	| _ -> List.fold_left (fun a c-> 
-								match a with 
-								| None -> None
-								| Some b -> 
-									match helper c with 
-									| None -> None
-									| Some d -> Some (d@b)) (Some []) cf 
-						
+	| _ -> let l = List.fold_left (fun a c-> 
+								match helper c with 
+									| None -> a
+									| Some d -> d@a ) [] cf in
+			match (List.length l) with
+			| 1 -> Some l
+			| _ -> None
+
 and set_materialized_vars prog cdef =
   let mvars =
     find_materialized_vars prog cdef.C.view_vars (*cdef.C.view_formula*) cdef.C.view_un_struc_formula
   in
-    (if true
-     then
-       (print_string
-          ("\nInput parameters of predicate " ^ (cdef.C.view_name ^ ": "));
-        print_string
-          ((String.concat ", " (List.map CP.name_of_spec_var mvars)) ^ "\n"))
-     else ();
-     cdef.C.view_materialized_vars <- mvars;
-     cdef)
+ (cdef.C.view_materialized_vars <- mvars; cdef)
 
 and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   let tmp0 = find_mvars prog params f0 in
@@ -1039,7 +1037,7 @@ and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   let ef = ref f0 in
   let quit_loop = ref false
   in
-    (while not !quit_loop do ef := Solver.expand_all_preds prog !ef;
+    (while not !quit_loop do ef := Solver.expand_all_preds prog !ef true;
        (let tmp1 = find_mvars prog params !ef in
         let tmp2 = CP.remove_dups (tmp1 @ !all_mvars) in
         let tmp3 = CP.difference tmp2 !all_mvars
@@ -1191,10 +1189,6 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 			 let static_specs_list = trans_struc_formula prog true free_vars proc.I.proc_static_specs stab true cret_type in
 			(* let _ = print_string ("\n new specs: "^(Cprinter.string_of_struc_formula static_specs_list)^"\n") in*)
 			 let dynamic_specs_list = trans_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true cret_type in
-			 let _ = if (Cformula.check_unsat_struc static_specs_list) then 
-				print_string ("\n warning: "^proc.I.proc_mingled_name^" has unsatisfiable static pre_conditions \n") else () in 
-			 let _ = if (Cformula.check_unsat_struc dynamic_specs_list) then 
-				print_string ("\n warning: "^proc.I.proc_mingled_name^" has unsatisfiable dynamic pre_conditions \n") else () in 
 			 let _ = H.remove stab res in
              let body =
                match proc.I.proc_body with

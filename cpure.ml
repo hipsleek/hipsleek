@@ -1460,15 +1460,19 @@ let merge_branches l1 l2 =
   List.map map_fun branches
 ;;
 
-(*let rec merge_branches l1 = function
-  | [] -> l1
-  | (l, f) :: t ->
-      try 
-        let f1 = List.assoc l l1 in
-        let l1n = List.remove_assoc l l1 in
-        merge_branches ((l, mkAnd f f1 no_pos) :: l1n) t
-      with Not_found -> merge_branches ((l, f) :: l1) t
-;;*)
+let or_branches l1 l2 =
+  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let map_fun branch =
+    try 
+      let l1 = List.assoc branch l1 in
+      try
+        let l2 = List.assoc branch l2 in
+        (branch, mkOr l1 l2 no_pos)
+      with Not_found -> (branch, l1)
+    with Not_found -> (branch, List.assoc branch l2)
+  in
+  List.map map_fun branches
+;;
 
 let add_to_branches label form branches =
   try 

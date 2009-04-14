@@ -11,32 +11,42 @@ module PTracer = Prooftracer
 (* checking expression *)
 
 (* assumes the pre, and starts the simbolic execution*)
-let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) spec e0 : bool = 
-	let rec do_spec_verification (spec: Cformula.ext_formula):bool = match spec with
-		| Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
-					(*let c1 = Cformula.formula_of_pure c1 b.Cformula.formula_case_pos in*)
-					let nctx = List.map (fun c-> combine_context_and prog c c1
-						(*if !Globals.max_renaming then(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
-				   		(CF.normalize_context_formula c c1 b.Cformula.formula_case_pos)
-						else(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
-				  	 	(CF.normalize_clash_context_formula c c1 b.Cformula.formula_case_pos)*)) ctx in
-					check_specs prog proc nctx c2 e0) b.Cformula.formula_case_branches
-		| Cformula.EBase b ->
-					let nctx = List.map (fun c-> 
-						if !Globals.max_renaming 
-							then (CF.normalize_context_formula c b.Cformula.formula_ext_base b.Cformula.formula_ext_pos)
-							else (CF.normalize_clash_context_formula c b.Cformula.formula_ext_base b.Cformula.formula_ext_pos)) ctx in
-					check_specs prog proc nctx b.Cformula.formula_ext_continuation e0		
-		| Cformula.EAssume (x,b) ->
-					let res_ctx = check_exp prog proc ctx b e0 in
-					if CP.are_same_types proc.proc_return void_type then
-					  (* void procedures may not contain a return in all branches,
-						 so we need to make a catch-all check at the end of the body *)
-					  let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) in
-						not (U.empty tmp_ctx)
-					else
-					  not (U.empty res_ctx) in	
-	List.for_all do_spec_verification spec
+let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
+
+				let rec do_spec_verification (spec: Cformula.ext_formula):bool = match spec with
+					| Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
+								let nctx = combine_context_and prog ctx c1 true  in
+								check_specs prog proc nctx c2 e0) b.Cformula.formula_case_branches
+					| Cformula.EBase b ->
+								let nctx = 
+									if !Globals.max_renaming 
+										then (CF.normalize_context_formula ctx b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false)
+										else (CF.normalize_clash_context_formula ctx b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) in
+								check_specs prog proc nctx b.Cformula.formula_ext_continuation e0
+					| Cformula.EAssume (x,b) ->
+								let ctx1 = elim_unsat_ctx prog ctx in
+								if (Cformula.isFalseCtx ctx1) then
+									let _ = print_string ("False precondition detected in procedure "^proc.proc_name^"\n with context: "^
+										(Cprinter.string_of_context ctx)) in 
+									true
+								else
+								let _ = Util.push_time ("method "^proc.proc_name) in
+								try 
+								let r = 
+									let res_ctx = check_exp prog proc [ctx1] b e0 in
+									if CP.are_same_types proc.proc_return void_type then
+									  (* void procedures may not contain a return in all branches,
+										 so we need to make a catch-all check at the end of the body *)
+									  let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) in
+										not (U.empty tmp_ctx)
+									else
+									  not (U.empty res_ctx)  in
+								let _ = Util.pop_time ("method "^proc.proc_name) in
+								 r
+								 with _ as e -> 
+									let _ = Util.pop_time ("method "^proc.proc_name) in raise e
+								  in	
+	List.for_all do_spec_verification spec_list
 	
 and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post e0 : CF.context list = 
   if (exp_to_check e0) then 
@@ -47,7 +57,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	(* for theorem proving *)
   | Unfold ({exp_unfold_var = sv;
 			 exp_unfold_pos = pos}) -> begin
-	  let res = List.map (fun c -> unfold_context prog c sv pos) ctx in
+	  let res = List.map (fun c -> unfold_context (Prog prog) c sv true pos) ctx in
 		res
 	end
 (* for code *)
@@ -78,8 +88,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	  | Some c ->
 		  Debug.pprint ("assume condition:\n" ^ (Cprinter.string_of_formula c)) pos;
 		  let assumed_ctx =
-			if !Globals.max_renaming then List.map (fun cc -> (*CF.set_context_formula*) CF.normalize_context_formula cc c pos) new_ctx
-			else List.map (fun cc -> (*CF.set_context_formula*) CF.normalize_clash_context_formula cc c pos) new_ctx
+			if !Globals.max_renaming then List.map (fun cc -> (*CF.set_context_formula*) CF.normalize_context_formula cc c pos false) new_ctx
+			else List.map (fun cc -> (*CF.set_context_formula*) CF.normalize_clash_context_formula cc c pos false) new_ctx
 		  in
           (*print_int (!Omega.test_number);*)
           let ret = List.map (elim_unsat_ctx prog) assumed_ctx in
@@ -111,8 +121,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		else CP.Not (tmp1, pos) in
 	  let f = CF.formula_of_pure tmp2 pos in
 	  let res_ctx =
-	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos) ctx
-	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos) ctx
+	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos true) ctx
+	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos true) ctx
 	  in
 		res_ctx
 	end
@@ -136,11 +146,11 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	  let tmp_ctx =
 		if !Globals.large_bind then
 			begin
-			if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c link_pv pos) ctx
-			else List.map (fun c -> CF.normalize_clash_context_formula c link_pv pos) ctx
+			if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c link_pv pos false) ctx
+			else List.map (fun c -> CF.normalize_clash_context_formula c link_pv pos false) ctx
 			end
 		else ctx in
-	  let unfolded = List.map (fun c -> unfold_context prog c v_prim pos) tmp_ctx in
+	  let unfolded = List.map (fun c -> unfold_context (Prog prog) c v_prim true pos) tmp_ctx in
 		(* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
 	  let _ = Debug.devel_pprint ("bind: unfolded context:\n"
 								  ^ (String.concat "\n;;\n" (List.map (fun c -> Cprinter.string_of_context c) unfolded))
@@ -173,8 +183,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		  let process_one cc =
 			let tmp_res1 = check_exp prog proc [cc] post body in
 			let tmp_res2 =
-				if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c vheap pos) tmp_res1
-				else List.map (fun c -> CF.normalize_clash_context_formula c vheap pos) tmp_res1
+				if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c vheap pos true) tmp_res1
+				else List.map (fun c -> CF.normalize_clash_context_formula c vheap pos true) tmp_res1
 			in
 			let tmp_res3 = List.map (fun c -> CF.push_exists_context vs_prim c) tmp_res2 in
 			let res =
@@ -222,10 +232,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	 (* let then_cond = CF.formula_of_pure then_cond_prim pos in
 	  let else_cond = CF.formula_of_pure else_cond_prim pos in*)
 	  let process_one c =
-		let then_ctx = combine_context_and prog c then_cond_prim in
-			(*if !Globals.max_renaming then CF.combine_context_and c then_cond pos
-			else CF.normalize_clash_context_formula c then_cond pos
-		in*)
+		let then_ctx = combine_context_and_unsat_now prog c then_cond_prim in
+
 		(*Debug.devel_pprint ("conditional: then_delta1:\n" ^ (Cprinter.string_of_context then_ctx1)) pos;*)
 		(*let then_ctx =  Solver.elim_unsat_ctx prog then_ctx1 in*)
 
@@ -234,7 +242,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		(Cprinter.string_of_context then_ctx)^"\n") in*)
 		
 		Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_context then_ctx)) pos;
-		let else_ctx =combine_context_and prog c else_cond_prim in
+		let else_ctx =combine_context_and_unsat_now prog c else_cond_prim in
 			(*if !Globals.max_renaming then CF.normalize_context_formula c else_cond pos
 			else CF.normalize_clash_context_formula c else_cond pos
 		in*)
@@ -464,8 +472,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	  let res_v = CP.Var (CP.mkRes int_type, pos) in
 	  let f = CF.formula_of_pure (CP.mkEqExp res_v c_e pos) pos in
 	  let res_ctx =
-	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos) ctx
-	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos) ctx
+	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos true) ctx
+	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos true) ctx
 	  in
 		res_ctx
   | New ({exp_new_class_name = c;
@@ -496,8 +504,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	  (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
 	  let heap_form = CF.mkBase heap_node (CP.mkTrue pos) CF.TypeTrue [] pos in
 	  let res =
-	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c heap_form pos) ctx
-	  	else List.map (fun c -> CF.normalize_clash_context_formula c heap_form pos) ctx
+	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c heap_form pos true) ctx
+	  	else List.map (fun c -> CF.normalize_clash_context_formula c heap_form pos true) ctx
 	  in
 		res
     end;
@@ -505,8 +513,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	  let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (CP.OType "", res, Unprimed)) pos) (CP.Null pos) pos in
 	  let f = CF.formula_of_pure p pos in
 	  let res =
-	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos) ctx
-	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos) ctx
+	  	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos true) ctx
+	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos true) ctx
 	  in
 		res
   | Return ({exp_return_type = t;
@@ -614,8 +622,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		   exp_this_pos = pos}) -> begin
       let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos) pos in
       let ctx1 =
-      	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c tmp pos) ctx
-      	else List.map (fun c -> CF.normalize_clash_context_formula c tmp pos) ctx
+      	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c tmp pos true) ctx
+      	else List.map (fun c -> CF.normalize_clash_context_formula c tmp pos true) ctx
       in
 		ctx1
 	end
@@ -624,8 +632,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		  exp_var_pos = pos}) -> begin
       let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos) pos in
       let ctx1 =
-      	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c tmp pos) ctx
-      	else List.map (fun c -> CF.normalize_clash_context_formula c tmp pos) ctx
+      	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c tmp pos true) ctx
+      	else List.map (fun c -> CF.normalize_clash_context_formula c tmp pos true) ctx
      	in
 		ctx1
     end;
@@ -703,7 +711,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
  		    let init_ctx1 = CF.empty_ctx proc.proc_loc in
 			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 			(*let _ = print_string ("\n trans proc body: "^(Cprinter.string_of_exp body)^"\n") in*)
-			let pp = check_specs prog proc [init_ctx] (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
+			let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 			let result =
 				if pp then begin
 				print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
@@ -770,14 +778,14 @@ let check_coercion (prog : prog_decl) =
 	(*let unfold_head_pred hname f0 : int = *)
   let check_left_coercion coer =
 	let pos = CF.pos_of_formula coer.coercion_head in
-	let lhs = unfold prog coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) pos in
-	let rhs = unfold prog coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) pos in
+	let lhs = unfold (Prog prog) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+	let rhs = unfold (Prog prog) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
 	  check_entailment lhs rhs in
 	  (* check_entailment lhs coer.coercion_body in *)
   let check_right_coercion coer =
 	let pos = CF.pos_of_formula coer.coercion_head in
-	let rhs = unfold prog coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) pos in
-	let lhs = unfold prog coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) pos in
+	let rhs = unfold (Prog prog) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+	let lhs = unfold (Prog prog) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
 	  check_entailment lhs rhs
 	  (* check_entailment coer.coercion_body rhs *)
   in

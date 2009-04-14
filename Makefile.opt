@@ -48,14 +48,14 @@ oclexer.cmx oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLC) $(OCAMLFLAGS) -c oclexer.ml
 
 
-MAIN_FILES=util.cmx debug.cmx globals.cmx error.cmx \
+MAIN_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	net.cmx \
 	cpure.cmx ipure.cmx \
 	iformula.cmx iast.cmx \
 	iparser.cmx ilexer.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx unix_add.cmx mona.cmx omega.cmx setmona.cmx \
+	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
@@ -75,13 +75,13 @@ hip1: $(MAIN_FILES_2)
 hip.opt: $(MAIN_FILES)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES)
 
-SLEEK_FILES=util.cmx debug.cmx globals.cmx error.cmx \
+SLEEK_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	cpure.cmx ipure.cmx \
 	iformula.cmx iast.cmx \
 	iparser.cmx ilexer.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx omega.cmx unix_add.cmx mona.cmx setmona.cmx \
+	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx omega.cmx mona.cmx setmona.cmx \
     net.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
@@ -101,13 +101,13 @@ sleek.opt: $(SLEEK_FILES)
 	$(OCAMLC) -o $@ $(OCAMLFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES)
 
 
-PROVE_FILES=util.cmx debug.cmx globals.cmx error.cmx \
+PROVE_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	cpure.cmx ipure.cmx \
 	iformula.cmx iast.cmx \
 	iparser.cmx ilexer.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx isabelle.cmx coq.cmx unix_add.cmx mona.cmx omega.cmx setmona.cmx \
+	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx \
     net.cmx \
 	cvclite.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \

@@ -11,15 +11,16 @@ data node {
 data myint {
   int val;
 }
-
-tree<h,bal> == case { self=null  -> [] h=0 & bal=1 ;          
-                      self!=null -> [] self::node<_,h,lt,rt>* lt::tree<h1,_>* rt::tree<h2,_> & h=1+max(h1,h2) 
-              case { h1<h2 -> [] bal=0 ;
-                     h1=h2 -> [] bal=1 ;
-                     h1>h2 -> [] bal=2 ;
-                                   };
-                        } inv h>=0&bal>=0&bal<=2 ;
-
+/*
+avl<"m":m, "n":n, "S":S> == self = null & ["m":m = 0; "n": n = 0; "S": S = {}]
+  or self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> & [
+  "m" : m = 1+m1+m2 ; 
+  "n" : -1 <= n1 - n2 <= 1 & n = 1 + max(n1, n2) ;
+  "S" : S = union(S1, S2, {v}) & forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))]
+  inv true & ["m" : m >= 0;
+    "n" : n >= 0];
+*/
+						
 /* view for avl trees */
 avl<"m":m, "n":n, "S":S> == case { self=null ->
    [] true & [
@@ -308,6 +309,7 @@ node remove_min_add(node x, ref myint a)
           tr = x.right.left;
           //assert tr' = null assume tr' = null; //'
           //assume tr' = null or tr'!=null;
+		  dprint;
           return x;
         } else {
           return x;
@@ -521,10 +523,7 @@ node delete(node x, int a)
 // forall xx .  xx in S -> xx=a \/ xx in Sn
 {
   node tmp;
-  bool tmp1 = (x==null);
-  dprint;
-  if (tmp1) return x; else {
-  dprint;
+  if (x==null) return x; else {
   if (x.val == a)
     return delete_top (x);
   else if (x.val < a) {

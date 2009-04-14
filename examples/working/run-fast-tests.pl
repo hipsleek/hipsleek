@@ -32,7 +32,7 @@ $output_file = "log";
 %hip_files=(
 	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"hip" =>[
-				["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
+#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
 				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
 				["avl-bind.ss",9,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",

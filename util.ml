@@ -379,5 +379,34 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
 	Hashtbl.fold append_val tab []
 
+let profiling_stack = ref []
+let tasks = ref (Hashtbl.create 10)  
 	
-	 
+let get_time () = 
+	let r = Unix.times () in
+	(*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
+	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+	
+let add_task_instance msg time = 	
+ try 
+	let (t1,cnt1,max1) = Hashtbl.find !tasks msg in
+	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
+ with Not_found -> 
+	Hashtbl.add !tasks msg (time,1,[time])
+
+let push_time msg = 
+if (!Globals.profiling) then
+ let timer = get_time () in
+	profiling_stack := (msg, timer) :: !profiling_stack 
+else ()
+	
+let pop_time msg = 
+	if (!Globals.profiling) then
+		let m1,t1 = List.hd !profiling_stack in
+		if (String.compare m1 msg)==0 then 
+			let t2 = get_time () in
+			 add_task_instance m1 (t2-.t1) ;
+			 profiling_stack := List.tl !profiling_stack 
+		else 
+			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
+	else ()

@@ -83,7 +83,7 @@ and omega_of_formula f  = match f with
   | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "oc" (* TODO: fix oc path *)
+let omegacalc = "/usr/local/bin/oc" (* TODO: fix oc path *)
 
 let omega_calc_command =
   if Sys.os_type = "Cygwin" then ("dos2unix " ^ infilename ^ " ; " ^ omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
@@ -93,7 +93,7 @@ let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
             { Unix.it_interval = 0.0; Unix.it_value = tsecs })
 
-let continue f arg tsecs =
+(*let continue f arg tsecs pid =
   let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in
   try
     set_timer tsecs;
@@ -102,15 +102,29 @@ let continue f arg tsecs =
     Sys.set_signal Sys.sigalrm oldsig; true
   with Exit ->
     Sys.set_signal Sys.sigalrm oldsig; false
+(*  begin continue Sys.command omega_calc_command timeout end*)
+	*)
 
-let run_omega (input : string) (timeout : float) : bool =
-  begin
-    let chn = open_out infilename in
-    output_string chn (Util.break_lines input);
+let run_omega (input : string) (timeout : float):bool = begin
+	let chn = open_out infilename in
+	output_string chn (Util.break_lines input);
     close_out chn;
-    continue Sys.command omega_calc_command timeout
-  end
-
+	let pid = Unix_add.open_proc omegacalc [|omegacalc;infilename|] resultfilename in
+	let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in	
+	let r =	try 			
+			begin
+			set_timer timeout;
+			ignore (Unix.waitpid [] pid);
+			true end
+		with Exit ->
+			begin
+			print_endline "\nOmega timeout reached."; flush stdout; 
+			Unix.kill pid 9;
+			ignore (Unix.waitpid [] pid);
+			false end in
+	set_timer 0.0;
+	Sys.set_signal Sys.sigalrm oldsig;
+	r end
 
 let rec omega_of_var_list (vars : ident list) : string = match vars with
   | [] -> ""
@@ -204,7 +218,7 @@ let is_sat (pe : formula) : bool =
   end
 *)
 
-let is_valid (pe : formula) : bool =
+let is_valid (pe : formula) timeout: bool =
   begin
 		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
@@ -216,7 +230,7 @@ let is_valid (pe : formula) : bool =
                 output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
                 flush log_all;
             end;
-      ignore (run_omega fomega 0.);
+      ignore (run_omega fomega timeout);
       let chn = open_in resultfilename in
       let quitloop = ref false in
       let result = ref false in
@@ -244,7 +258,7 @@ let is_valid (pe : formula) : bool =
                 !result
   end
 
-let imply (ante : formula) (conseq : formula) : bool =
+let imply (ante : formula) (conseq : formula) timeout : bool =
   incr test_number;
     (*
         let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
@@ -253,7 +267,7 @@ let imply (ante : formula) (conseq : formula) : bool =
         not (is_valid tmp2)
     *)
   let tmp_form = mkOr (mkNot ante no_pos) conseq no_pos in
-  let result = is_valid tmp_form in
+  let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
     if result then output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
   end else ();

@@ -454,44 +454,44 @@ let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	  let res = List.for_all (fun (a, c) -> imply1 a c) tmp1 in
 		res
 *)
-let tp_imply ante conseq =
+let tp_imply ante conseq timeout =
   match !tp with
-  | OmegaCalc -> (Omega.imply ante conseq)
-  | CvcLite -> Cvclite.imply ante conseq
-  | Isabelle -> Isabelle.imply ante conseq
-  | Coq -> Coq.imply ante conseq
-  | Mona -> Mona.imply ante conseq
+  | OmegaCalc -> (Omega.imply ante conseq timeout)
+  | CvcLite -> Cvclite.imply ante conseq 
+  | Isabelle -> Isabelle.imply ante conseq 
+  | Coq -> Coq.imply ante conseq 
+  | Mona -> Mona.imply timeout ante conseq 
   | CO -> begin
-	  let result1 = Cvclite.imply_raw ante conseq in
+	  let result1 = Cvclite.imply_raw ante conseq  in
 	  match result1 with
 	  | Some f -> f
 	  | None -> (* CVC Lite is not sure is this case, try Omega *)
 		  omega_count := !omega_count + 1;
-		  Omega.imply ante conseq
+		  Omega.imply ante conseq timeout
   end
   | CM -> begin
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		Mona.imply ante conseq
+		Mona.imply timeout ante conseq 
 	  else
 		let result1 = Cvclite.imply_raw ante conseq in
 		match result1 with
 		| Some f -> f
 		| None -> (* CVC Lite is not sure is this case, try Omega *)
 			omega_count := !omega_count + 1;
-			Omega.imply ante conseq
+			Omega.imply ante conseq timeout
   end
   | OM ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(Mona.imply ante conseq)
+		(Mona.imply timeout ante conseq)
 	  else
-		(Omega.imply ante conseq)
+		(Omega.imply ante conseq timeout)
   | OI ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(Isabelle.imply ante conseq)
+		(Isabelle.imply ante conseq )
 	  else
-		(Omega.imply ante conseq)
+		(Omega.imply ante conseq timeout)
   | SetMONA ->
-	  Setmona.imply ante conseq
+	  Setmona.imply ante conseq 
 ;;
 
 (* renames all quantified variables *)
@@ -605,7 +605,7 @@ let is_sat (f : CP.formula) : bool =
   tp_is_sat f
 ;;
 
-let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) timeout: bool =
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> res       
@@ -633,20 +633,21 @@ let imply (ante0 : CP.formula) (conseq0 : CP.formula) : bool =
         (*let pairs = [filter ante conseq] in*)
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun res (ante, conseq) =
-          if res then tp_imply ante conseq else false
+          if res then tp_imply ante conseq timeout else false
         in
         List.fold_left fold_fun true pairs
   end
 ;;
 
-let sat_timer = ref 0.;;
-let imply_timer = ref 0.;;
-
-let imply ante0 conseq0 =
-  let timer = Unix.gettimeofday () in
-  let res = imply ante0 conseq0 in
-  imply_timer := !imply_timer +. (Unix.gettimeofday ()) -. timer;
+let imply_timeout ante0 conseq0 timeout =
+  let _ = Util.push_time "imply" in
+  let res = imply_timeout ante0 conseq0 timeout in
+  let _ = Util.pop_time "imply" in
+  if res  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
   res
+;;
+
+let imply ante0 conseq0 = imply_timeout ante0 conseq0 0.
 ;;
 
 let is_sat f =
@@ -655,19 +656,19 @@ let is_sat f =
       Some res -> res       
       | None -> false
   else  begin   
-    let timer = Unix.gettimeofday () in
+	let _ = Util.push_time "is_sat" in
     let res = is_sat f in
-    sat_timer := !sat_timer +. (Unix.gettimeofday ()) -. timer;
-    res end
+	let _ = Util.pop_time "is_sat" in
+	res end
 ;;
-
+(*
 let is_sat_fast f = 
 	let y = !sat_timeout in
 	sat_timeout := 2. ; 
 	let r = is_sat f in
 	sat_timeout:=y;
 	r
-;;
+;;*)
 
 let print_stats () =
   print_string ("\nTP statistics:\n");
