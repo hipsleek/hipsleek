@@ -17,28 +17,43 @@ avl<m, n, bal> ==
 		//& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
 		// & (n1=n2 & bal=0 | n1>n2 & bal=1 | n1<n2 & bal=2)
 	inv m >= 0 & n >= 0 & 0<=bal<=2;
-
-
+/*
+avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
+	or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
+		& m = 1+m1+m2 & n=1+max(n1, n2) 
+		& -1 <= n1-n2 <=1 & bal=n1-n2+1
+		//& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
+		// & (n1=n2 & bal=0 | n1>n2 & bal=1 | n1<n2 & bal=2)
+	inv m >= 0 & n >= 0 & 0<=bal<=2;
+	*/
+	
 /* function to return the height of an avl tree */
 int height(node x)
 // slow when it is addedi - 72s for insert without
-
+/*
 case { 
   x=null ->   requires true 
               ensures res=0 ;
   x!=null ->  requires x::node<v,h,l,r>
               ensures x::node<v,h,l,r> & res=h;
 }
-/*
-        requires x=null
-        ensures res=0;
-        requires x::node<v,h,l,r>
-        ensures x::node<v,h,l,r> & res=h;
+
+avl<m, n, bal> == 
+case {
+  self = null -> [] m = 0 & n = 0 & bal=1;
+  self!=null -> [] self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
+		& m = 1+m1+m2 & n=1+max(n1, n2) 
+  & -1 <= n1-n2 <=1 & bal=n1-n2+1; }
+	inv m >= 0 & n >= 0 & 0<=bal<=2;
+
+
+
+
 */
 // fails if last case dropped though it seem redundant
-/*	requires x::avl<m, n, b>
+	requires x::avl<m, n, b>
 	ensures x::avl<m, n, b> & res = n;
-*/
+
 //	requires x::node<a, n, l, r> 
 //		or x=null
 //	ensures x::node<a, n, l, r> & res=n 
@@ -67,7 +82,8 @@ node insert(node t, int x)
      requires t::avl<tm, tn, b> 
      ensures res::avl<tm+1, resn, resb> &  (tn=resn | resn=tn+1 & resb!=1);
   }
-/* cannot be verified without case analysis
+// cannot be verified without case analysis
+/*
   requires t::avl<tm, tn, b>
   ensures res::avl<tm+1, resn, resb> & t!=null & tm>0 & tn>0 & (tn=resn | resn=tn+1 & resb!=1)
 		or res::avl<1,1,1> & tn=0 & tm=0 & t=null;
