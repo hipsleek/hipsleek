@@ -230,6 +230,16 @@ let main1 () =
 	  
 let _ = 
   main1 ();
+  (*let rec check_aux (t1,t2,t3,t4) l = match l with
+  | [] -> true
+  | (p1,p2,p3,p4)::l1 -> if (p1<=t1 && p2<=t2&& p3<=t3&& p4<=t4) then check_aux (p1,p2,p3,p4) l1
+						 else false in
+  let check_sorted l = match l with
+	  | a::b -> check_aux a b
+	  | [] -> true  in
+  let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
+  let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
+  (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
   let _ = if (!Globals.profiling) then 
 	let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
 	let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in

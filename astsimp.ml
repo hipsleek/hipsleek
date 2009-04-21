@@ -805,7 +805,8 @@ let rec (* overriding test *) (* field duplication test *)
                   ignore (C.build_hierarchy cprog);
                   let cprog = (add_pre_to_cprog cprog) in
 				  sat_warnings cprog ;
-				  cprog))))
+				  cprog 
+				  (*case_inference prog cprog *)))))
     else failwith "Error detected"
 
 and add_pre_to_cprog cprog = 
@@ -946,8 +947,14 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 		  let n_un_str =  Cformula.struc_to_formula cf in
 		  let bc = match (compute_base_case cf) with
 				| None -> None
-				| Some s -> (Cformula.flatten_base_case s) in		  
-		(*  let _ = print_string ("\n\ngott: "^(Cprinter.string_of_formula n_un_str)^"\n fromt: "^(Cprinter.string_of_struc_formula cf)^"\n\n") in*)
+				| Some s -> let r = (flatten_base_case s (Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed))) in
+							let _ = match r with
+							| None -> print_string (" got "^(vdef.I.view_name)^"no base case\n"^(Cprinter.string_of_struc_formula cf)^"\n") 
+							| Some r -> 
+								print_string (" got "^(vdef.I.view_name)^" "^(Cprinter.string_of_struc_formula cf)^"\n"^data_name^" "^
+									(Cprinter.string_of_pure_formula (fst r))^"\n"^
+									(Cprinter.string_of_pure_formula_branches (snd r))^"\n\n") in
+							r in
           let cvdef =
             {
               C.view_name = vdef.I.view_name;
@@ -991,7 +998,62 @@ and rec_grp prog :ident list =
 	let recs = Util.difference recs (List.map (fun c-> c.Iast.data_name)prog.Iast.prog_data_decls) in
 	(*let _ = print_string ("\n recs: "^(Cprinter.string_of_ident_list recs " ")^"\n") in*)
 	recs
-			 
+		
+				
+and flatten_base_case (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.formula * (Cpure.formula*((string*Cpure.formula)list))) option = 
+
+	let rec get_pure (f:Cformula.formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
+		| Cformula.Or b->
+				let b1,br1 = (get_pure b.Cformula.formula_or_f1) in
+				let b2,br2 = (get_pure b.Cformula.formula_or_f2) in
+				((Cpure.mkOr b1 b2 no_pos), Cpure.or_branches br1 br2)
+		| Cformula.Base b -> (b.Cformula.formula_base_pure, b.Cformula.formula_base_branches)
+		| Cformula.Exists b-> let l = List.map (fun (c1,c2)-> (c1, Cpure.mkExists b.Cformula.formula_exists_qvars c2 no_pos)) b.Cformula.formula_exists_branches in
+					(Cpure.mkExists b.Cformula.formula_exists_qvars b.Cformula.formula_exists_pure no_pos, l)
+
+	and symp_struc_to_formula (f0:Cformula.struc_formula):(Cpure.formula*((string*Cpure.formula) list)) = 
+		let rec ext_to_formula (f:Cformula.ext_formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
+			| Cformula.ECase b-> 
+				if (List.length b.Cformula.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
+				else 
+					let c1,c2 = List.hd b.Cformula.formula_case_branches in (*push existential dismissed*)
+					let b2,br2 = (symp_struc_to_formula c2) in
+					 ((Cpure.mkOr (Cpure.Not (c1,no_pos)) b2 no_pos),br2)
+			| Cformula.EBase b-> 
+					let b1,br1 = (get_pure b.Cformula.formula_ext_base) in
+					let b2,br2 = (symp_struc_to_formula b.Cformula.formula_ext_continuation) in
+					let r1 = Cpure.mkAnd b1 b2 no_pos in
+					let r2 = Cpure.merge_branches br1 br2 in
+					let ev = b.Cformula.formula_ext_explicit_inst@b.Cformula.formula_ext_implicit_inst@b.Cformula.formula_ext_exists in
+					let r2 = List.map (fun (c1,c2)-> (c1,(Cpure.mkExists ev c2 no_pos))) r2 in
+					let r1 = (Cpure.mkExists ev r1 no_pos) in
+					(r1,r2)
+			| _ -> Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}in	
+		if (List.length f0)<>1 then ((Cpure.mkTrue no_pos),[])
+		else ext_to_formula (List.hd f0)  in
+	
+	match (List.hd f) with
+	| Cformula.EBase b-> 
+		let ba,br = symp_struc_to_formula f in
+		let ba' = Cpure.add_null ba self in
+		let is_sat = if br = [] then TP.is_sat ba' 
+        else if not (TP.is_sat ba') then false
+			else List.for_all (fun (_,c)-> TP.is_sat (Cpure.add_null c self)) br in
+		if (not is_sat) then None
+		else
+		(*let saset = Solver.get_aset (Solver.alias(Solver.ptr_equations ba)) self in*)
+			let ba' = Cpure.drop_null ba self false in
+			let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
+			let base_case = Cpure.BForm (Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)) in
+			Some (base_case,(ba',br'))		
+	| Cformula.ECase b-> if (List.length b.Cformula.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
+				else 
+					let (c1,c2) = List.hd b.Cformula.formula_case_branches in
+					Some(c1,(symp_struc_to_formula c2))
+	| _ -> Error.report_error 
+	{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
+
+		
 and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
  (*let isRec (d:Cformula.formula): bool = 
 		(List.length(List.filter (fun c -> List.mem c recs)(Cformula.view_node_types d)))>0 in*)
@@ -1388,7 +1450,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               all_names);
          let assert_cf_o =
            (match assert_f_o with
-            | Some f -> Some (trans_struc_formula prog false free_vars f stab false (Cpure.Prim Void))
+            | Some f -> Some (trans_struc_formula prog false free_vars (fst f) stab false (Cpure.Prim Void))
             | None -> None) in
          let assume_cf_o =
            (match assume_f_o with
@@ -4199,9 +4261,9 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 								(Util.difference implvar ((Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc))))>0 then 
 						(*let _ = print_string ("\n--> "^
 							(Iprinter.string_of_var_list h1prm)^"\n"^
-							"\n impl: "^(Iprinter.string_of_var_list implvar)^"\n"^
-							(Iprinter.string_of_formula onb)^"\n"^
-							(Iprinter.string_of_formula nb)^"\n"^
+							"\n impl: "^(Iprinter.string_of_var_list implvar)^"\nanon to exist base: "^
+							(Iprinter.string_of_formula onb)^"\n new_base: "^
+							(Iprinter.string_of_formula nb)^"\n new_cont: "^
 							(Iprinter.string_of_struc_formula "" nc)^"\n") in*)
 						Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
 				let r = (Iformula.EBase ({
@@ -4246,7 +4308,12 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 	  | Iast.Assert b ->
 		Iast.Assert{Iast.exp_assert_asserted_formula = (match b.Iast.exp_assert_asserted_formula with
 									| None -> None
-									| Some f-> Some (Iformula.subst_struc (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) f));
+									| Some f-> Some 
+										((Iformula.subst_struc 
+											(List.fold_left(fun a (c1,c2)-> 
+																((c1,Unprimed),(c2,Unprimed))::
+																((c1,Primed),(c2,Primed))::a
+															) [] ren) (fst f)),(snd f)));
 		 Iast.exp_assert_assumed_formula = (match b.Iast.exp_assert_assumed_formula with
 			| None -> None
 			| Some f -> Some (Iformula.subst (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) f));
@@ -4326,9 +4393,8 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
 				let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
 					| None -> (None,h)
 					| Some f -> 
-						let r, _ = case_normalize_struc_formula prog h p f true in
-						
-						(Some r,h) in
+						let r, _ = case_normalize_struc_formula prog h p (fst f) true in
+						(Some (r,(snd f)),h) in
 				let assm_nf  = match b.Iast.exp_assert_assumed_formula with
 					| None-> None 
 					| Some f -> 
@@ -4479,3 +4545,116 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
 		Iast.prog_view_decls = tmp_views;
 		Iast.prog_proc_decls = procs1;
 		Iast.prog_coercion_decls = coer1 }
+	
+(*
+and splitter (v:Cpure.spec_var list)(disjuncts:(Cformula.ext_formula*((Cpure.spec_var list list)*
+																		   ((Cpure.spec_var*Cpure.spec_var) list )*
+																		   ((Cpure.spec_var*int) list )*
+																		   ((Cpure.spec_var*int) list )
+																		   )) list ):Cformula.struc_formula list= 
+	if (List.length disjuncts)<=1 then [(fst(List.split disjuncts))]
+		else match v with
+			| [] -> [(fst(List.split disjuncts))]
+			| v1::rvs ->
+				if (List.for_all (fun (_,(c1,c2,c3,c4))->
+						(List.exists (fun c-> List.exists (fun c-> (Cpure.eq_spec_var c v1))c) c1)||
+						(List.exists (fun (c1,c2)-> (Cpure.eq_spec_var c1 v1)||(Cpure.eq_spec_var c2 v1)) c2)||
+						(List.exists (fun (c,_)-> (Cpure.eq_spec_var c v1)) c3)||
+						(List.exists (fun (c,_)-> (Cpure.eq_spec_var c v1)) c4)) disjuncts) then
+						
+							let (crt_br,(veq,vneq,ceq,cneq)) = List.hd disjuncts in
+							let un_checked_brs = List.tl disjuncts in
+							let aset = Solver.get_aset veq v1 in
+							let aset_null = Cpure.get_aset_val aset ceq cneq in
+							(*do splitting of disjuncts*)
+							let (l1,case1),(l2,case2) = match aset_null with
+								| None -> (*there is no reference to nullness*)
+									(([],(Cpure.mkTrue no_pos)),([],(Cpure.mkTrue no_pos)))
+								| Some true -> (*the aset points to null*)
+									(([],(Cpure.mkTrue no_pos)),([],(Cpure.mkTrue no_pos)))
+								| Some false -> (*the aset points to not null*) 
+									(([],(Cpure.mkTrue no_pos)),([],(Cpure.mkTrue no_pos)))
+								in								
+							if ((List.length l1)=0)||((List.length l2)=0) then  []
+								else (*construct case*)
+									let f1 = splitter rvs l1 in
+									let f2 = splitter rvs l2 in
+									if ((List.length f1)=0)|| ((List.length f2)=0) then []
+									else 
+										List.concat (List.map (fun c-> List.map (fun d->
+										[Cformula.ECase {
+											Cformula.formula_case_branches = [(case1,c);(case2,d)];
+											Cformula.formula_case_exists = [] ;
+											Cformula.formula_case_pos = no_pos}]	) f2) f1)
+				else splitter rvs disjuncts
+	*)
+	
+and splitter cp (f_list:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.spec_var list) : Cformula.struc_formula list =
+	if (List.length v1)<1 then [(snd (List.split f_list))]
+		else match (List.length f_list) with
+			| 0 -> raise Not_found
+			| 1 -> [[(snd (List.hd f_list))]]
+			| _ ->
+				let crt_v = List.hd v1 in
+				let rest_vars = List.tl v1 in	
+				let f_list = List.map (fun (c1,c2)-> 
+					let aset = Solver.get_aset ( Solver.alias (Solver.ptr_equations c1)) crt_v in
+					let eqs = (Solver.get_equations_sets c1 aset)in
+					(c1,c2,aset,eqs)) f_list in
+				let rec num l i = match l with
+				| (a1,a2,a3,a4)::b -> (i,a1,a2,a3,a4)::(num b (i+1))
+				| [] -> [] in
+				let f_list = num f_list 0 in
+				let sz = List.length f_list in
+				let matr = Array.make_matrix sz sz 0 in
+				raise Not_found
+
+								(*let eqns = Solver.fill_in_contradictions eqns in*)
+								(*int var filtering*)
+								(*let veq = List.filter (fun (c1,c2)->(not (Cpure.is_int_type (Cpure.type_of_spec_var c1)))&&
+																	   (not (Cpure.is_int_type (Cpure.type_of_spec_var c2)))) veq in
+								let vneq = List.filter (fun (c1,c2)->  (not (Cpure.is_int_type (Cpure.type_of_spec_var c1)))&&
+																	   (not (Cpure.is_int_type (Cpure.type_of_spec_var c2)))) vneq in
+								let ceq = List.filter (fun (c1,_)->  (not (Cpure.is_int_type (Cpure.type_of_spec_var c1)))) ceq in
+								let cneq = List.filter (fun (c1,_)->  (not (Cpure.is_int_type (Cpure.type_of_spec_var c1)))) cneq in
+								let eqns = ((Solver.alias veq),vneq,ceq,cneq)in
+								(d,eqns)) f_ext in
+							let possible_formulas = splitter v f_list in
+							let possible_formulas = List.filter (fun c-> (List.length c)>0)possible_formulas in
+							let res = if (List.length possible_formulas)>0 then List.hd possible_formulas else f_ext in
+							res*)
+	
+and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var list) : Cformula.struc_formula = 
+		(*int var filtering*)
+		try 
+			let f_list = List.map (fun c->
+				let d = match c with
+						| Cformula.EBase b-> if (List.length b.Cformula.formula_ext_continuation)>0 then
+							   Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+								else b.Cformula.formula_ext_base 
+						| _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+						in
+				let not_fact,nf_br = (Solver.xpure cp d) in
+				let fact =  Solver.normalize_to_CNF not_fact no_pos in
+				let fact = Cpure.drop_disjunct fact in
+				let fact = Cpure.rename_top_level_bound_vars fact in
+				let fact,_,_(*all,exist*) = Cpure.float_out_quantif fact in
+				let fact = Cpure.check_not fact in
+				(fact,c)
+				) f_ext in
+			List.hd (splitter cp f_list v1)
+		with _ -> f_ext
+	
+and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.view_decl = 
+		try
+			let iv = List.find (fun c->c.Iast.view_name = cv.Cast.view_name) ivl in
+			if (iv.Iast.try_case_inference) then
+				{cv with 
+					Cast.view_formula = formula_case_inference cp cv.Cast.view_formula
+					[(CP.SpecVar (CP.OType cv.Cast.view_data_name, self, Unprimed))]; 
+					Cast.view_case_vars =Util.intersect cv.C.view_vars (Cformula.guard_vars cv.Cast.view_formula); }
+			else cv
+		with _ -> cv 	
+	
+and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
+	{cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}

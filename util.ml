@@ -385,6 +385,7 @@ let tasks = ref (Hashtbl.create 10)
 let get_time () = 
 	let r = Unix.times () in
 	(*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
+	(*time_list := (r.Unix.tms_utime , r.Unix.tms_stime , r.Unix.tms_cutime , r.Unix.tms_cstime):: !time_list ;*)
 	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
 	
 let add_task_instance msg time = 	
@@ -392,7 +393,7 @@ let add_task_instance msg time =
 	let (t1,cnt1,max1) = Hashtbl.find !tasks msg in
 	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
  with Not_found -> 
-	Hashtbl.add !tasks msg (time,1,[time])
+	Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
 
 let push_time msg = 
 if (!Globals.profiling) then
@@ -405,8 +406,13 @@ let pop_time msg =
 		let m1,t1 = List.hd !profiling_stack in
 		if (String.compare m1 msg)==0 then 
 			let t2 = get_time () in
-			 add_task_instance m1 (t2-.t1) ;
-			 profiling_stack := List.tl !profiling_stack 
+			 if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+			else
+			profiling_stack := List.tl !profiling_stack;
+			if (List.exists (fun (c1,_)-> (String.compare c1 msg)=0) !profiling_stack) then 
+				print_string ("\n double accounting for "^msg^"\n")
+			 else add_task_instance m1 (t2-.t1) 
+			 
 		else 
 			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
 	else ()

@@ -89,6 +89,7 @@ let process_pred_def pdef =
 		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
 		let cpdef = AS.trans_view iprog new_pdef in
+		let old_vdec = cprog.C.prog_view_decls in
 		cprog.C.prog_view_decls <- (cpdef :: cprog.C.prog_view_decls);
 (* added 07.04.2008	*)	
 		(*ignore (print_string ("init: "^(Iprinter.string_of_struc_formula "" pdef.Iast.view_formula )^"\n normalized: "^
@@ -100,6 +101,8 @@ let process_pred_def pdef =
 		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
+		let n_cpdef = AS.view_case_inference cprog iprog.I.prog_view_decls cpdef in
+		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
 	  with

@@ -539,7 +539,54 @@ and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f 
 		| _ -> []
 	end
   | _ -> []
+  
+  
+  (*assume that f does not contain any disjunctions and quantifiers*)
+and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP.b_formula list) = match f with
+  | CP.And (f1, f2, pos) -> 
+	let l1 = get_equations_sets f1 interest_vars in
+	let l2 = get_equations_sets f2 interest_vars in
+	l1@l2
+  | CP.BForm bf -> begin
+	  match bf with
+	    | Cpure.BVar (v,l)-> [bf]
+		| Cpure.Lt (e1,e2,l)-> 
+			if (Cpure.of_interest e1 e2 interest_vars) then [Cpure.Lt(e1,e2,l)]
+			else []
+		| Cpure.Lte (e1,e2,l) -> 
+			if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Lte(e1,e2,l)]
+			else []
+		| Cpure.Gt (e1,e2,l) -> 
+			if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Lt(e2,e1,l)]
+			else []
+		| Cpure.Gte(e1,e2,l)-> 
+			if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Lte(e2,e1,l)]
+			else []
+		| Cpure.Eq (e1,e2,l) -> 
+			if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Eq(e1,e2,l)]
+			else []
+		| Cpure.Neq (e1,e2,l)-> 
+			if (Cpure.of_interest e1 e2 interest_vars)  then [Cpure.Neq(e1,e2,l)]
+			else []
+		| _ -> []
+		end	
+  | CP.Not (f1,_) -> List.map (fun c-> match c with
+									  | Cpure.BVar (v,l)-> c
+									  | Cpure.Lt (e1,e2,l)-> Cpure.Lt (e2,e1,l)
+									  | Cpure.Lte (e1,e2,l) -> Cpure.Lte (e2,e1,l)
+									  | Cpure.Eq (e1,e2,l) -> Cpure.Neq (e1,e2,l) 
+									  | Cpure.Neq (e1,e2,l)-> Cpure.Eq (e1,e2,l)
+									  |_ ->Error.report_error { 
+											Error.error_loc = no_pos; 
+											Error.error_text ="malfunction:get_equations_sets must return only bvars, inequalities and equalities"}
+									  ) (get_equations_sets f1 interest_vars)
+  | _ ->Error.report_error { 
+			Error.error_loc = no_pos; 
+			Error.error_text ="malfunction:get_equations_sets can be called only with conjuncts and without quantifiers"}
+  
+  
 
+  
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
 and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = match ptr_eqs with
@@ -560,7 +607,7 @@ and get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 	  | [] -> []
 	  | [s] -> s
 	  | _ -> failwith ((Cprinter.string_of_spec_var v) ^ " appears in more than one alias sets")
-
+	  
 (* return a list of nodes from heap f that appears in *)
 (* alias set aset. The flag associated with each node *)
 (* lets us know if the match is at the root pointer,  *)
@@ -2676,8 +2723,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 							if r_flag = Root then begin (* matching occurs at root *)
 								 
 							  if c1 = c2 then 
-							  let _ = Util.push_time "empty_predicate_testing" in
 							  let ans = if (not(is_data ln2)) then 
+							  				let _ = Util.push_time "empty_predicate_testing" in
 											let vd = (look_up_view_def_raw prog.prog_view_decls c2) in
 											let fold_ctx = Ctx {(empty_es pos) with es_formula = ante;
 														  es_heap = estate.es_heap;
@@ -2687,13 +2734,13 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 														  es_ante_evars = estate.es_ante_evars;
 														  es_unsat_flag = false;} in
 											let na,prf = match vd.view_base_case with
-												| None ->  
-													let null_formula = Cpure.BForm (Cpure.Eq ((Cpure.Var (p2,no_pos)),(Cpure.Null no_pos),no_pos))in
+												| None ->  ([],UnsatConseq)
+													(*let null_formula = Cpure.BForm (Cpure.Eq ((Cpure.Var (p2,no_pos)),(Cpure.Null no_pos),no_pos))in
 													let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx null_formula !Globals.enable_syn_base_case in
 													if b then 
 														(*let cx = unfold_context prog [nctx] p1 true pos in*)														
 														([nctx],TrueConseq)
-													    else  ([],UnsatConseq)
+													    else  ([],UnsatConseq)*)
 												| Some (bc1,(base1,branches1)) -> 
 													begin
 														let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
@@ -2707,10 +2754,13 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 															([ctx],TrueConseq)
 														else  ([],TrueConseq)
 													end in
+											let _ = Util.pop_time "empty_predicate_testing" in
 											if (List.length na) <>1 then None
 											else 
 												let cx = List.hd na in
+												let _ = Util.push_time "fold_after_base_case" in
 												let do_fold_result,prf = do_fold_w_ctx cx p2 in
+												let _ = Util.pop_time "fold_after_base_case" in
 												if (List.length do_fold_result)>0 then Some (do_fold_result,prf)
 													else 
 														match cx with
@@ -2721,7 +2771,6 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 													if (List.length r1)>0 then Some (r1,p1)
 														else None
 										else None in
-							  let _ = Util.pop_time "empty_predicate_testing" in
 							  match ans with 
 							  | Some x -> x
 							  | _ -> 

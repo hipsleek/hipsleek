@@ -214,7 +214,7 @@
 %type <Iast.data_decl> data_decl
 %type <Iast.view_decl> view_decl
 %type <Iast.coercion_decl> coercion_decl
-%type <Iformula.struc_formula> formulas
+%type <Iformula.struc_formula*bool> formulas
 %type <Sleekcommons.command> command
 %type <Sleekcommons.command list> opt_command_list
 %%
@@ -310,7 +310,7 @@ field_list
 
 view_decl
   : view_header EQEQ view_body opt_inv DOT{
-	{ $1 with view_formula = $3; view_invariant = $4 }
+	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3) }
   }
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
@@ -357,7 +357,9 @@ view_header
 			view_modes = modes;
 			view_typed_vars = [];
 			view_formula = F.mkETrue (get_pos 1);
-			view_invariant = (P.mkTrue (get_pos 1), []) }
+			view_invariant = (P.mkTrue (get_pos 1), []);
+			try_case_inference = false;
+			}
   }
 ;
 
@@ -490,8 +492,8 @@ sq_clist
 ;
 
 formulas 
-	: extended_constr{$1}
-	| disjunctive_constr {Iformula.formula_to_struc_formula $1}
+	: extended_constr{($1,false)}
+	| disjunctive_constr {((Iformula.formula_to_struc_formula $1),true)}
 	;
 
 
@@ -814,7 +816,7 @@ extended_meta_constr
 	MetaVar $2
   }
   | formulas {
-	  MetaEForm $1
+	  MetaEForm (fst $1)
 	}
   | compose_cmd {
 	  MetaCompose $1

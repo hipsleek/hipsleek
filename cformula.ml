@@ -1446,7 +1446,7 @@ and filter_heap (f:formula):formula option = match f with
 								| None -> None
 								| Some d2 -> Some (mkOr d1 d2 b.formula_or_pos)
 			 end
-	| Base b-> begin
+	| Base b-> begin 
 					match b.formula_base_heap with
 					 | Star _
 					 | DataNode _ 
@@ -1463,49 +1463,43 @@ and filter_heap (f:formula):formula option = match f with
 					 | HTrue 
 					 | HFalse -> Some f
 				end
-				
-and flatten_base_case (f:struc_formula):(Cpure.formula * (Cpure.formula*((string*Cpure.formula)list))) option = 
 
-	let rec get_pure (f:formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
-		| Or b->
-				let b1,br1 = (get_pure b.formula_or_f1) in
-				let b2,br2 = (get_pure b.formula_or_f2) in
-				((Cpure.mkOr b1 b2 no_pos), Cpure.or_branches br1 br2)
-		| Base b -> (b.formula_base_pure, b.formula_base_branches)
-		| Exists b-> let l = List.map (fun (c1,c2)-> (c1, Cpure.mkExists b.formula_exists_qvars c2 no_pos)) b.formula_exists_branches in
-					(Cpure.mkExists b.formula_exists_qvars b.formula_exists_pure no_pos, l)
-
-	and symp_struc_to_formula (f0:struc_formula):(Cpure.formula*((string*Cpure.formula) list)) = 
-		let rec ext_to_formula (f:ext_formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
-			| ECase b-> 
-				if (List.length b.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
-				else 
-					let c1,c2 = List.hd b.formula_case_branches in (*push existential dismissed*)
-					let b2,br2 = (symp_struc_to_formula c2) in
-					 ((Cpure.mkOr (Cpure.Not (c1,no_pos)) b2 no_pos),br2)
-			| EBase b-> 
-					let b1,br1 = (get_pure b.formula_ext_base) in
-					let b2,br2 = (symp_struc_to_formula b.formula_ext_continuation) in
-					let r1 = Cpure.mkAnd b1 b2 no_pos in
-					let r2 = Cpure.merge_branches br1 br2 in
-					let ev = b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists in
-					let r2 = List.map (fun (c1,c2)-> (c1,(Cpure.mkExists ev c2 no_pos))) r2 in
-					let r1 = (Cpure.mkExists ev r1 no_pos) in
-					(r1,r2)
-			| _ -> Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}in	
-		if (List.length f0)<>1 then ((Cpure.mkTrue no_pos),[])
-		else ext_to_formula (List.hd f0)  in
-	
-	match (List.hd f) with
-	| EBase b-> None
-	| ECase b-> if (List.length b.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
-				else 
-					let (c1,c2) = List.hd b.formula_case_branches in
-					Some(c1,(symp_struc_to_formula c2))
-	| _ -> Error.report_error 
-	{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
-
-	
 and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
 	| OCtx (c1,c2)-> OCtx ((set_es_evars c1 v),(set_es_evars c2 v))
 	| Ctx e -> Ctx {e with es_evars = v}
+	
+	
+	(*
+and to_dnf_no_quantif (f:formula):formula = 
+	let rec helper f = match f with
+	| Or b -> 
+		let l1,e_h1,e_p1,a_p1 = helper b.formula_or_f1 in
+		let l2,e_h2,e_p2,a_p2 = helper b.formula_or_f2 in
+		(l1@l2,e_h1@e_h2,e_p1@e_p2,a_p1@a_p2)
+	| Base b->
+		let l1,e_p1,a_p1 = Cpure.to_dnf b.formula_base_pure in
+		let l_br = List.map (fun (c1,c2) ->(c1,(Cpure.to_dnf c2))) b.formula_base_branches in
+		let 
+		in
+	let f = rename_bound_vars f in
+	let f_list,e_h,e_p,a_p = helper f in
+	let f = List.fold_left (fun a c-> mkOr a c no_pos) (mkFalse no_pos) f_list in
+	f,e_h,e_p,a_p
+	
+and formula_base = { formula_base_heap : h_formula;
+					 formula_base_pure : CP.formula;
+					 formula_base_type : t_formula;
+                     formula_base_branches : (branch_label * CP.formula) list;
+					 formula_base_pos : loc }
+
+and formula_or = { formula_or_f1 : formula;
+				   formula_or_f2 : formula;
+				   formula_or_pos : loc }
+
+and formula_exists = { formula_exists_qvars : CP.spec_var list;
+					   formula_exists_heap : h_formula;
+					   formula_exists_pure : CP.formula;
+					   formula_exists_type : t_formula;
+                       formula_exists_branches : (branch_label * CP.formula) list;
+ 					   formula_exists_pos : loc }
+	*)

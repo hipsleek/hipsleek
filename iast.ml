@@ -37,7 +37,8 @@ and view_decl = { view_name : ident;
 				  view_modes : mode list;
 				  mutable view_typed_vars : (CP.typ * ident) list;
 				  view_invariant : (P.formula * (branch_label * P.formula) list);
-				  view_formula : Iformula.struc_formula }
+				  view_formula : Iformula.struc_formula;
+				  try_case_inference: bool}
 
 and enum_decl = { enum_name : ident;
 				  enum_fields : (ident * int option) list } 
@@ -135,7 +136,7 @@ and assign_op =
   | OpDivAssign
   | OpModAssign
 
-and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
+and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
 

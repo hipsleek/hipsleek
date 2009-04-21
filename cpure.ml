@@ -64,7 +64,14 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
   | ConstRel of bool
   | BaseRel of (exp list * formula)
   | UnionRel of (relation * relation)
-
+  
+and constraint_rel = 
+  | Unknown
+  | Subsumed
+  | Subsuming
+  | Equal
+  | Incompatible
+  
 let get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
   | Var (SpecVar (t, _, _), _) -> t
@@ -180,6 +187,10 @@ and is_var (e : exp) : bool = match e with
 and is_num (e : exp) : bool = match e with
   | IConst _ -> true
   | _ -> false
+  
+and get_num (e : exp) : int = match e with
+  | IConst (b,_) -> b
+  | _ -> 0
 
 and is_var_num (e : exp) : bool = match e with
   | Var _ -> true
@@ -1479,4 +1490,115 @@ let add_to_branches label form branches =
     (label, (And (form, List.assoc label branches, no_pos))) :: (List.remove_assoc label branches) 
   with Not_found -> (label, form) :: branches
 ;;
-
+ 
+  let rec drop_disjunct (f:formula) : formula = 
+  match f with
+	  | BForm _ -> f
+	  | And (f1,f2,l) -> mkAnd (drop_disjunct f1) (drop_disjunct f2) l
+	  | Or (_,_,l) -> mkTrue l
+	  | Not (f,l) -> Not ((drop_disjunct f),l)
+	  | Forall (q,f,l) -> Forall (q,(drop_disjunct f), l)
+	  | Exists (q,f,l) -> Exists (q,(drop_disjunct f), l) 
+  
+  
+and float_out_quantif f = match f with
+		| BForm b-> (f,[],[])
+		| And (b1,b2,l) -> 
+			let l1,l2,l3 = float_out_quantif b1 in
+			let q1,q2,q3 = float_out_quantif b2 in
+			((mkAnd l1 q1 l), l2@q2, l3@q3)
+		| Or (b1,b2,l) ->
+			let l1,l2,l3 = float_out_quantif b1 in
+			let q1,q2,q3 = float_out_quantif b2 in
+			((mkOr l1 q1 l), l2@q2, l3@q3)
+		| Not (b,l) ->
+			let l1,l2,l3 = float_out_quantif b in
+			(Not (l1,l), l2,l3)
+		| Forall (q,b,l)->
+			let l1,l2,l3 = float_out_quantif b in
+			(l1,q::l2,l3)
+		| Exists (q,b,l)->
+			let l1,l2,l3 = float_out_quantif b in
+			(l1,l2,q::l3)
+			
+and check_not (f:formula):formula = 
+		let rec inner (f:formula):formula*bool = match f with
+			  | BForm b -> (f,false)
+			  | And (b1,b2,l) -> 
+					let l1,r1 = inner b1 in
+					let l2,r2 = inner b2 in
+					((mkAnd l1 l2 l),r1&r2)
+			  | Or (b1,b2,l) -> 
+					let l1,r1 = inner b1 in
+					let l2,r2 = inner b2 in
+					((mkOr l1 l2 l),r1&r2)
+			  | Not (b,l) -> begin
+								match b with
+								| BForm _ -> (f,false)
+								| And (b1,b2,l) -> 
+									let l1,_ = inner (Not (b1,l)) in
+									let l2,_ = inner (Not (b2,l)) in
+									((mkOr l1 l2 l),true)
+								| Or (b1,b2,l) ->
+									let l1,_ = inner (Not (b1,l)) in
+									let l2,_ = inner (Not (b2,l)) in
+									((mkAnd l1 l2 l),true)
+								| Not (b,l) ->
+									let l1,r1 = inner b in
+									(l1,true)
+								| _ -> (f,false)
+							 end
+			  | _ ->  (f,false) in
+		let f,r = inner f in
+		if r then check_not f
+			else f 
+	
+and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool = 
+				let is_simple e = match e with
+					  | Null _ 
+					  | Var _ 
+					  | IConst _ -> true
+					  | Add (e1,e2,_)
+					  | Subtract (e1,e2,_) -> begin
+							match (e1,e2) with
+								| (Var _, (IConst (1,_)))
+								| ((IConst (1,_)), Var _) -> true
+								| _ -> false end	  
+					  | Mult _(*(_,c,_) -> begin match c with | Var _ -> true | _ -> false end*)
+					  | Max _ 
+					  | Min _
+					  | Bag _
+					  | BagUnion _
+					  | BagIntersect _ 
+					  | BagDiff _ -> false in
+	((is_simple e1)&& match e2 with
+				  | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
+				  | _ -> false
+	)||((is_simple e2)&& match e1 with
+				  | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
+				  | _ -> false) 
+				  
+				  
+and drop_null (f:formula) self neg:formula = 
+	let helper(f:b_formula) neg:b_formula = match f with
+	  | Eq (e1,e2,l) -> if neg then f
+						else begin match (e1,e2) with
+							| (Var(self,_),Null _ )
+							| (Null _ ,Var(self,_))-> BConst (true,l)
+							| _ -> f end
+	  | Neq (e1,e2,l) -> if (not neg) then f
+						 else begin match (e1,e2) with
+							| (Var(self,_),Null _ )
+							| (Null _ ,Var(self,_))-> BConst (true,l)
+							| _ -> f end
+	  | _ -> f in
+	match f with
+	  | BForm b-> BForm (helper b neg)
+	  | And (b1,b2,l) -> And ((drop_null b1 self neg),(drop_null b2 self neg),l)
+	  | Or _ -> f
+	  | Not (b,l)-> Not ((drop_null b self (not neg)),l)
+	  | Forall (q,f,l) -> Forall (q,(drop_null f self neg),l)
+	  | Exists (q,f,l) -> Exists (q,(drop_null f self neg),l)
+	  
+and add_null f self : formula =  
+	mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos)) no_pos
