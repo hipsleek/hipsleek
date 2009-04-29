@@ -236,6 +236,13 @@ and mkEFalse pos = EBase({
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos})
 
+and mkETrue pos = EBase({
+		 formula_ext_explicit_inst = [];
+		 formula_ext_implicit_inst = [];
+		 formula_ext_exists = [];
+		 formula_ext_base = mkTrue pos;
+		 formula_ext_continuation = [];
+		 formula_ext_pos = pos})
 and mkOr f1 f2 pos =
   if isConstTrue f1 || isConstTrue f2 then
 	mkTrue pos
@@ -641,7 +648,7 @@ and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let rf2 = rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar base1 base2 pos in
+			let new_base = mkStar_combine base1 base2 pos in
 			let new_h, new_p, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -688,7 +695,7 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 			let rf2 = (*rename_bound_vars*) f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar base1 base2 pos in
+			let new_base = mkStar_combine base1 base2 pos in
 			let new_h, new_p, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -1468,38 +1475,54 @@ and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
 	| OCtx (c1,c2)-> OCtx ((set_es_evars c1 v),(set_es_evars c2 v))
 	| Ctx e -> Ctx {e with es_evars = v}
 	
+and purge_f_pures f l = 
+	let rec purge_pures f = match f with 
+	  | Cpure.BForm b-> 
+			if List.exists (fun c->  b = c) l then Cpure.mkTrue no_pos 
+					else f 
+	  | Cpure.And (f1,f2,l)-> Cpure.mkAnd (purge_pures f1) (purge_pures f2) l
+	  | Cpure.Or _ 
+	  | Cpure.Not _ -> f
+	  | Cpure.Forall (q,f,l) -> Cpure.Forall (q,(purge_pures f),l) 
+	  | Cpure.Exists (q,f,l) -> Cpure.Exists (q,(purge_pures f),l)
+	in
+	match f with
+	| Base b-> Base {b with formula_base_pure = purge_pures b.formula_base_pure}
+	| Exists b-> Exists {b with formula_exists_pure = purge_pures b.formula_exists_pure}
+	| Or b-> Or {  formula_or_f1 = purge_f_pures b.formula_or_f1 l;
+				   formula_or_f2 = purge_f_pures b.formula_or_f2 l;
+				   formula_or_pos = b.formula_or_pos}
 	
-	(*
-and to_dnf_no_quantif (f:formula):formula = 
-	let rec helper f = match f with
-	| Or b -> 
-		let l1,e_h1,e_p1,a_p1 = helper b.formula_or_f1 in
-		let l2,e_h2,e_p2,a_p2 = helper b.formula_or_f2 in
-		(l1@l2,e_h1@e_h2,e_p1@e_p2,a_p1@a_p2)
-	| Base b->
-		let l1,e_p1,a_p1 = Cpure.to_dnf b.formula_base_pure in
-		let l_br = List.map (fun (c1,c2) ->(c1,(Cpure.to_dnf c2))) b.formula_base_branches in
-		let 
-		in
-	let f = rename_bound_vars f in
-	let f_list,e_h,e_p,a_p = helper f in
-	let f = List.fold_left (fun a c-> mkOr a c no_pos) (mkFalse no_pos) f_list in
-	f,e_h,e_p,a_p
+and clean_case_guard_redundancy f l:struc_formula = List.map (fun c-> 
+	match c with
+	| EBase b -> EBase{b with 
+		formula_ext_base = (purge_f_pures b.formula_ext_base l);	
+		formula_ext_continuation = clean_case_guard_redundancy b.formula_ext_continuation l}
+
+	| ECase b -> ECase{b with formula_case_branches = (
+		List.map (fun (c1,c2)-> 
+			let n_l = ((Cpure.b_form_list c1)@l) in
+			(c1,(clean_case_guard_redundancy c2 n_l))) b.formula_case_branches) }	
+	| _ -> c
+	) f
+
+and case_to_disjunct f  =
+let rec push_pure c f =  match f with
+	| ECase _ -> f (*this should never occur*) 
+	| EBase b-> EBase {b with formula_ext_base = normalize_combine b.formula_ext_base (formula_of_pure c no_pos) no_pos}
+	| _ -> EBase {
+		 formula_ext_explicit_inst = [];
+		 formula_ext_implicit_inst = [];
+		 formula_ext_exists = [];
+		 formula_ext_base = formula_of_pure c no_pos;
+		 formula_ext_continuation = [f];
+		 formula_ext_pos = no_pos;
+	}
 	
-and formula_base = { formula_base_heap : h_formula;
-					 formula_base_pure : CP.formula;
-					 formula_base_type : t_formula;
-                     formula_base_branches : (branch_label * CP.formula) list;
-					 formula_base_pos : loc }
-
-and formula_or = { formula_or_f1 : formula;
-				   formula_or_f2 : formula;
-				   formula_or_pos : loc }
-
-and formula_exists = { formula_exists_qvars : CP.spec_var list;
-					   formula_exists_heap : h_formula;
-					   formula_exists_pure : CP.formula;
-					   formula_exists_type : t_formula;
-                       formula_exists_branches : (branch_label * CP.formula) list;
- 					   formula_exists_pos : loc }
-	*)
+and helper f = match f with
+	| ECase b-> List.concat (List.map (fun (c1,c2)-> 
+										let f = case_to_disjunct c2 in 
+										List.map (push_pure c1) f) b.formula_case_branches)
+	| EBase b-> [EBase {b with formula_ext_continuation = (case_to_disjunct b.formula_ext_continuation)}]
+	| _ -> [f] in
+List.concat (List.map helper f)

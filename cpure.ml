@@ -70,7 +70,7 @@ and constraint_rel =
   | Subsumed
   | Subsuming
   | Equal
-  | Incompatible
+  | Contradicting
   
 let get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
@@ -215,7 +215,9 @@ and get_alias (e : exp) : spec_var = match e with
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (OType _, _, _) -> true
   | _ -> false
-
+and exp_is_object_var (sv : exp) = match sv with
+  | Var(SpecVar (OType _, _, _),_) -> true
+  | _ -> false
 and is_bag (e : exp) : bool = match e with
   | Bag (_, _)
   | BagUnion (_, _)
@@ -1584,12 +1586,8 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 					  | Var _ 
 					  | IConst _ -> true
 					  | Add (e1,e2,_)
-					  | Subtract (e1,e2,_) -> begin
-							match (e1,e2) with
-								| (Var _, (IConst (1,_)))
-								| ((IConst (1,_)), Var _) -> true
-								| _ -> false end	  
-					  | Mult _(*(_,c,_) -> begin match c with | Var _ -> true | _ -> false end*)
+					  | Subtract (e1,e2,_) -> false
+					  | Mult _
 					  | Max _ 
 					  | Min _
 					  | Bag _
@@ -1601,8 +1599,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 				  | _ -> false
 	)||((is_simple e2)&& match e1 with
 				  | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
-				  | _ -> false) 
-				  
+				  | _ -> false) 				  
 				  
 and drop_null (f:formula) self neg:formula = 
 	let helper(f:b_formula) neg:b_formula = match f with
@@ -1628,7 +1625,57 @@ and drop_null (f:formula) self neg:formula =
 and add_null f self : formula =  
 	mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos)) no_pos
 	
+(*to fully extend*)
+and rel_compute e1 e2:constraint_rel = match (e1,e2) with
+	| Null _, Null _ -> Equal
+	| Null _, Var (v1,_)  -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
+	| Null _, IConst (i,_) -> if i=0 then Equal else Contradicting
+	| Var (v1,_), Null _ -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
+	| Var (v1,_), Var (v2,_) -> if (String.compare (name_of_spec_var v1)(name_of_spec_var v2))=0 then Equal else Unknown
+	| Var _, IConst _ -> Unknown
+	| IConst (i,_) , Null _ -> if i=0 then Equal else Contradicting
+	| IConst _ ,Var _ -> Unknown
+	| IConst (i1,_) ,IConst (i2,_) -> if (i1<i2) then Subsumed else if (i1=i2) then Equal else Subsuming
+	| _ -> Unknown
 	
+	and compute_constraint_relation ((a1,a3,a4):(int* b_formula *(spec_var list)))
+								((b1,b3,b4):(int* b_formula *(spec_var list)))
+								:constraint_rel= match (a3,b3) with
+	| ((BVar v1),(BVar v2))-> if (v1=v2) then Equal else Unknown
+	| (Neq (e1,e2,_), Neq (d1,d2,_))
+	| (Eq (e1,e2,_), Eq  (d1,d2,_)) -> begin match ((rel_compute e1 d1),(rel_compute e2 d2)) with
+										| Equal,Equal-> Equal
+										| _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
+												| Equal,Equal-> Equal
+												| _ ->  Unknown end
+	| (Eq  (e1,e2,_), Neq (d1,d2,_)) 
+	| (Neq (e1,e2,_), Eq  (d1,d2,_)) ->  begin 
+		match ((rel_compute e1 d1),(rel_compute e2 d2)) with
+										| Equal,Equal-> Contradicting
+										| _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
+												| Equal,Equal-> Contradicting
+												| _ ->  Unknown end 
+	| (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
+	| (Lt (e1,e2,_), Lte (d1,d2,_)) 
+	| (Lt (e1,e2,_), Eq  (d1,d2,_)) 
+	| (Lt (e1,e2,_), Neq (d1,d2,_)) 
+	| (Lte (e1,e2,_), Lt  (d1,d2,_)) 
+	| (Lte (e1,e2,_), Lte (d1,d2,_)) 
+	| (Lte (e1,e2,_), Eq  (d1,d2,_)) 
+	| (Lte (e1,e2,_), Neq (d1,d2,_)) 
+	| (Eq (e1,e2,_), Lt  (d1,d2,_)) 
+	| (Eq (e1,e2,_), Lte (d1,d2,_)) 
+	| (Neq (e1,e2,_), Lt  (d1,d2,_)) 
+	| (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown
+	| _ -> Unknown
+	
+and b_form_list f: b_formula list = match f with
+  | BForm b -> [b]
+  | And (b1,b2,_)-> (b_form_list b1)@(b_form_list b2)
+  | Or _ -> []
+  | Not _ -> []
+  | Forall (_,f,_)
+  | Exists (_,f,_) -> (b_form_list f)
 
 and simp_mult (e : exp) :  exp =
   let rec normalize_add m lg (x :  exp) :  exp =

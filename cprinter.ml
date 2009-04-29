@@ -29,6 +29,13 @@ let string_of_typ = function
   | P.OType ot      -> if ((String.compare ot "") ==0) then "ptr" else ot
 ;;
 
+let string_of_constraint_relation m = match m with
+  | Cpure.Unknown -> " ?  "
+  | Cpure.Subsumed -> " <  "
+  | Cpure.Subsuming -> " >  "
+  | Cpure.Equal -> " =  "
+  | Cpure.Contradicting -> "!= "
+  
 let string_of_spec_var sv = match sv with
   | P.SpecVar (_, v, p) -> v ^ (if p = Primed then "'" else "")
 
