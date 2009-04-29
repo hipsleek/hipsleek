@@ -27,6 +27,8 @@ let set_proc_verified arg =
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
 let process_cmd_line () = Arg.parse [
+	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
+	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
 	("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic,

@@ -257,7 +257,7 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	end;
 	result
 
-and is_sat_raw (f : CP.formula) : bool option =
+and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
   let all_fv = CP.remove_dups (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
@@ -280,7 +280,7 @@ and is_sat_raw (f : CP.formula) : bool option =
 	(* talk to CVC Lite *)
   let f_cvcl = Util.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
 	if !log_cvcl_formula then begin
-	  output_string !cvcl_log "%%% is_sat\n";
+	  output_string !cvcl_log ("%%% is_sat " ^ sat_no ^ "\n");
 	  output_string !cvcl_log f_cvcl;
 	  flush !cvcl_log
 	end;
@@ -327,8 +327,8 @@ and is_sat_raw (f : CP.formula) : bool option =
 		  end
 	  end
 		
-and is_sat (f : CP.formula) : bool =
-  let result0 = is_sat_raw f in
+and is_sat (f : CP.formula) (sat_no : string) : bool =
+  let result0 = is_sat_raw f sat_no in
   let result = match result0 with
 	  | Some f -> f
 	  | None -> begin

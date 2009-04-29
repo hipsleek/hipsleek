@@ -140,7 +140,7 @@ let get_vars_formula (p : formula) =
   tool may probably be used ...
 *)
 
-let is_sat (pe : formula) : bool =
+let is_sat (pe : formula)  (sat_no : string): bool =
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -153,7 +153,7 @@ let is_sat (pe : formula) : bool =
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
     if !log_all_flag then begin
 (*      output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-      output_string log_all ("#is_sat" ^ Util.new_line_str ^ Util.new_line_str);
+      output_string log_all ("#is_sat " ^ sat_no ^ " " ^ Util.new_line_str ^ Util.new_line_str);
       output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
       flush log_all;
     end;
@@ -258,7 +258,7 @@ let is_valid (pe : formula) timeout: bool =
                 !result
   end
 
-let imply (ante : formula) (conseq : formula) timeout : bool =
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   incr test_number;
     (*
         let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
@@ -269,7 +269,7 @@ let imply (ante : formula) (conseq : formula) timeout : bool =
   let tmp_form = mkOr (mkNot ante no_pos) conseq no_pos in
   let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
-    if result then output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
+    if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
 

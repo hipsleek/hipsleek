@@ -13,6 +13,8 @@ module Err = Error
 module TP = Tpdispatcher
 
 let enable_distribution = ref true
+let sat_no = ref 1
+let imp_no = ref 1
 
 type find_node_result =
   | Failed (* p2 (of p2::c2<V2> coming from the RHS) is not in FV(LHS) *)
@@ -898,6 +900,47 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) (vvars :
  (a=1 & b=1 & c=3) \/ (a=2 & b=2 & c=3) ->  c=3 & ((a=1 & b=1) \/ (a=2 & b=2))
 *)
 
+(*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
+(*17.04.2009*)
+and normalize_to_CNF_new (f : CP.formula) pos : CP.formula = 
+	let disj_list = (CP.list_of_disjs) f in
+	let dc_list = List.map CP.list_of_conjs disj_list in
+		match dc_list with
+		| conj_list :: rest -> 
+			let first_disj, res_conj, res_disj_list = (filter_common_conj conj_list rest pos) in
+				let res_disj = List.map (fun c -> (CP.conj_of_list c pos)) res_disj_list in
+					(CP.mkAnd (CP.conj_of_list res_conj pos) (CP.mkOr (CP.conj_of_list first_disj pos) (CP.disj_of_list res_disj pos) pos) pos)
+		| [] -> (print_string("[solver.ml, normalize_to_CNF]: should not be here!!"); (CP.mkTrue pos)) 
+
+and filter_common_conj (conj_list : CP.formula list) (dc_list : (CP.formula list) list) pos : (CP.formula list *  CP.formula list * (CP.formula list list)) = 
+	match conj_list with
+	| h :: rest -> 
+		let b, new_dc_list = remove_conj_list dc_list h pos in
+			if b then 
+				let first_disj, conj, new_dc_list2 = filter_common_conj rest new_dc_list pos in
+				(first_disj, h::conj, new_dc_list2)
+			else
+				let first_disj, conj, new_dc_list2 = filter_common_conj rest dc_list pos in
+				(h::first_disj, conj, new_dc_list2)
+	| [] -> ([], [], dc_list)	
+
+and remove_conj_list (f : (CP.formula list) list) (conj : CP.formula) pos : (bool * (CP.formula list list)) = match f with
+	| h :: rest ->
+		let b1, l1 = remove_conj_new h conj pos in
+		let b2, l2 = remove_conj_list rest conj pos in
+			(b1 & b2, l1::l2)
+	| [] -> (true, [])		
+	
+and remove_conj_new (f : CP.formula list) (conj : CP.formula) pos : (bool * CP.formula list) = match f with
+    | h :: rest -> 
+		if (CP.eq_pure_formula h conj) then (true, rest)
+		else
+			let b1, l1 = remove_conj_new rest conj pos in (b1, h::l1)
+	| [] -> (false, [])			
+	
+(*17.04.2009*)	
+(*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
+
 and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
 	| CP.Or (f1, f2, p) ->
 		let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
@@ -1250,6 +1293,7 @@ and elim_ante_evars (ctx : context) : context = match ctx with
 
 and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 (*  print_endline "elim_unsat_ctx";*)
+  let sat_subno = ref 1 in 	
   let rec unsat_helper ctx = match ctx with
 	| Ctx es ->
 		if (es.es_unsat_flag) then (true,Ctx es)
@@ -1260,14 +1304,23 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 		let fold_fun (is_ok, ctx) (_, pf1b) =
 		    if not is_ok then (false, ctx) else
 			let _ = reset_int2 () in
-		    if TP.is_sat (*(CP.And (pf,*) pf1b(*, no_pos))*) then (true, ctx) else
-		  (false, false_ctx no_pos) in
-        if pfb = [] then 
-          let is_ok = TP.is_sat pf in
-          (is_ok, if is_ok then Ctx{es with es_unsat_flag = true } else false_ctx no_pos)
+			let sat = TP.is_sat pf1b ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+				Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+				sat_subno := !sat_subno+1;
+				if sat then (true, ctx) else
+					(false, false_ctx no_pos)
+		in
+
+   if pfb = [] then 
+          let is_ok = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+			Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+			sat_subno := !sat_subno+1;
+
+			 (is_ok, if is_ok then Ctx{es with es_unsat_flag = true } else false_ctx no_pos)
         else
 			let r1,r2 = List.fold_left fold_fun (true, ctx) pfb in
           (r1,(set_unsat_flag r2 true))
+
 	| OCtx (c1, c2) ->
 		let b1, sc1 = unsat_helper c1 in
 		let b2, sc2 = unsat_helper c2 in
@@ -1282,6 +1335,7 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 			else
 			  (false, false_ctx no_pos) in
   let b, sc = unsat_helper ctx0 in
+	sat_no := !sat_no + 1;	
 	sc
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) = match f with
@@ -1289,17 +1343,25 @@ and elim_unsat_for_unfold (prog : prog_decl) (f : formula) = match f with
   | _ -> f
 
 and find_unsat (prog : prog_decl) (f : formula):formula list =  
+  let sat_subno = ref 1 in 
 match f with
   | Base _ | Exists _ ->
 	  let _ = reset_int2 () in
 	  let pf, pfb = xpure prog f in
 					  let fold_fun is_ok (label, pf1b) =
 						if not is_ok then false else
-						if TP.is_sat (CP.And (pf, pf1b, no_pos)) then true else false
+						let  sat = if TP.is_sat (CP.And (pf, pf1b, no_pos)) ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) then true else false in
+						(Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+						 sat_subno := !sat_subno+1;
+						 sat)
 					  in
-      let is_ok =
-        
-		if pfb = [] then TP.is_sat pf 	else
+      let is_ok =        
+		if pfb = [] then 
+		let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+			(Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+			 sat_subno := !sat_subno+1;
+			 sat)		
+		else
         List.fold_left fold_fun true pfb
       in	  
       if is_ok then [] else [f]
@@ -1313,6 +1375,7 @@ match f with
  
 and elim_unsat_all prog (f : formula) = match f with
   | Base _ | Exists _ ->
+	  let sat_subno = ref 1 in	
 	  let _ = reset_int2 () in
 (*      print_endline (Cprinter.string_of_formula f);*)
 	  let pf, pfb = xpure prog f in
@@ -1321,12 +1384,20 @@ and elim_unsat_all prog (f : formula) = match f with
         print_endline (Cprinter.string_of_pure_formula pf);
         print_endline (Cprinter.string_of_pure_formula pf1b);*)
         if not is_ok then false else
-        if TP.is_sat (CP.And (pf, pf1b, no_pos)) then true else false
+	let sat = TP.is_sat (CP.And (pf, pf1b, no_pos)) ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+			Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+			sat_subno := !sat_subno + 1;
+			if sat then true else false
       in
       let is_ok =
-        if pfb = [] then TP.is_sat pf else
+	  let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+		Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+		sat_subno := !sat_subno + 1;
+        if pfb = [] then sat else
+
         List.fold_left fold_fun true pfb
       in
+	  sat_no := !sat_no + 1;
 (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)
       if is_ok then f else mkFalse (pos_of_formula f)
   | Or ({formula_or_f1 = f1;
@@ -2094,6 +2165,7 @@ and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) 
 *)
 	
 and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lhs rhs_p timeout : bool = 
+  let sat_subno = ref 0 in
   let estate = lhs in
   let pos = no_pos in
   let r,c = match lhs.es_formula with
@@ -2114,7 +2186,9 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
       (*let new_ante0, new_conseq0 = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp2 rhs_p pos in*)
       (*(print_endline ("branch: " ^ branch_id ^ (Cprinter.string_of_pure_formula (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b))));*)
       let res = (*CP.isConstTrue rhs_p || TP.imply new_ante0 new_conseq0 || 
-	  (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && *) TP.imply_timeout new_ante new_conseq timeout in
+	  (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && *) TP.imply_timeout new_ante new_conseq ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) timeout in
+	  	Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+		sat_subno := !sat_subno+1;  
       let res = 
         if res = false && branch_id = "" then
           let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
@@ -2122,7 +2196,10 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
             if is_ok then true else
             let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
             let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp1 rhs_p pos in
-           TP.imply_timeout new_ante new_conseq timeout
+            let res = TP.imply_timeout new_ante new_conseq ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) timeout in
+				(Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+				sat_subno := !sat_subno+1; 
+				res)
           in
           List.fold_left fold_fun false branches
         else res
@@ -2137,6 +2214,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs rhs_p rhs_p_br pos : (context list * proof) =
   (*print_endline ("RHS: " ^ Cprinter.string_of_pure_formula_branches (rhs_p, rhs_p_br));*)
   (*print_endline ("LHS: " ^ Cprinter.string_of_formula (CF.formula_of_base lhs));*)
+  let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let lhs_t = lhs.formula_base_type in
@@ -2148,35 +2226,92 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   (*print_endline ("consumed: "^(Cprinter.string_of_context (Cformula.Ctx estate)));
   print_endline ("XPURE0: " ^ Cprinter.string_of_pure_formula_branches (xpure_lhs_h0, xpure_lhs_h0_b));*)
   let fold_fun is_ok (branch_id, rhs_p) =
-	if (is_ok = false) then false else begin
+	if (is_ok = false) then false else 
       let tmp1 = CP.mkAnd (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id (lhs_p, lhs_b)) pos in
       let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
       let tmp2 = CP.mkAnd (CP.combine_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) (CP.combine_branch branch_id (lhs_p, lhs_b)) pos in
       let new_ante0, new_conseq0 = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp2 rhs_p pos in
-      (*(print_endline ("branch: " ^ branch_id ^ (Cprinter.string_of_pure_formula (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b))));*)
-      let res = CP.isConstTrue rhs_p || TP.imply new_ante0 new_conseq0 || 
-	  (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && TP.imply new_ante new_conseq) in
+	(* 26.03.2009 simplify the pure part *) 		 
+(*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)				
+(* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
+(*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)				
+	  let new_ante0 =
+		if !Globals.omega_simpl && not(TP.is_bag_constraint new_ante0) then 
+			let simp_ante = 
+				(Debug.devel_pprint ("simplify the antecedent with omega") no_pos;	
+				CP.arith_simplify ((*Omega.simplify*) new_ante0))  (* todo: remove the comment from omega.simplify after solving the problem in omega.ml with the collection of the error output *)
+			in
+				(* check wheather Omega raised any error; if it did then use the ante before simplification *)
+			if !Globals.omega_err = false then 
+					simp_ante
+				else 
+					(Globals.omega_err := false; (* reset the error flag *)
+					new_ante0)	
+		else new_ante0
+	  in
+	  let new_conseq0 = 
+		if !Globals.omega_simpl && not(TP.is_bag_constraint new_conseq0) then 
+			let simp_conseq = 
+				(Debug.devel_pprint ("simplify the consequent with omega") no_pos;	
+				(*Omega.simplify*) new_conseq0) 				
+			in
+			let simp_conseq1 = 
+				if !Globals.omega_err = false then 
+					simp_conseq
+				else 
+					(Globals.omega_err := false; (* reset the error flag *)
+					new_conseq0)	(* use the previous conseq *)
+			in		
+			let norm_conseq = normalize_to_CNF_new (CP.arith_simplify simp_conseq1) pos in
+				((*print_string("\nConseq before simpl with omega: " ^ (Cprinter.string_of_pure_formula new_conseq0) ^ "\n");
+				print_string("\nConseq after simpl with omega: " ^ (Cprinter.string_of_pure_formula simp_conseq) ^ "\n");
+				print_string("\nConseq after norm: " ^ (Cprinter.string_of_pure_formula norm_conseq) ^ "\n");*)
+				norm_conseq) 
+		else new_conseq0
+	  in
+	(*
+	BEFORE:
+	TP.imply new_ante0 new_conseq0 ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))) || (* first try XPure0 *)
+	(((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && 
+	(imp_subno := !imp_subno+1; Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno) ^ " with XPure1") no_pos;
+	TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)))) 	(* if XPure0  fails, then try XPure1 *)
+	in
+	*)
+	let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
+	let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in
+	let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in
+	let split_ante1 = Tpdispatcher.split_disjunctions new_ante in
+(* first try for xpure 0 and see what conjuncts can be discharged *)
+	let res = CP.isConstTrue rhs_p || (imply_conj split_ante0 split_ante1 split_conseq) in	
+	(* added by cezary  for branches *)
+
+
+
       let res = 
         if res = false && branch_id = "" then
-          let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
+		  let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
           let fold_fun is_ok branch_id_added =
             if is_ok then true else
             let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
-            let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp1 rhs_p pos in
-			(*let _ = print_string ("\n new ante: "^(Cprinter.string_of_pure_formula new_ante)^"\n new conseq: "^
-				(Cprinter.string_of_pure_formula new_conseq)^"\n") in*)
-            TP.imply new_ante new_conseq
+            let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
+			imp_subno := !imp_subno+1; 
+			Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;
+			TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
+
+
+
           in
           List.fold_left fold_fun false branches
         else res
       in
       (*print_endline branch_id;
-      print_endline ("RHS_P: " ^ Cprinter.string_of_pure_formula rhs_p);
-      print_endline ("ANTE: " ^ Cprinter.string_of_pure_formula new_ante);
-      print_endline ("CONSEQ: " ^ Cprinter.string_of_pure_formula new_conseq);
-      if res then print_endline "ok" else print_endline "notok";*)
-      res
-    end
+		print_endline ("RHS_P: " ^ Cprinter.string_of_pure_formula rhs_p);
+		print_endline ("ANTE: " ^ Cprinter.string_of_pure_formula new_ante);
+		print_endline ("CONSEQ: " ^ Cprinter.string_of_pure_formula new_conseq);
+		if res then print_endline "ok" else print_endline "notok";*)
+	  (imp_no := !imp_no+1;
+      res)
+
   in
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   if List.fold_left fold_fun true (("", rhs_p) :: rhs_p_br) then begin
@@ -2197,8 +2332,77 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	Debug.devel_pprint ("heap_entail_conjunct: formula is not valid\n") pos;
 	([], prf)
   end
+(****************************************************************)  
+(* 20.04.2009 *)
+(* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)
+(****************************************************************)  
+and imply_conj ante_disj0 ante_disj1 conseq_conj = 
+	match conseq_conj with
+	| h :: rest -> (imply_one_conj ante_disj0 ante_disj1 h) && (imply_conj ante_disj0 ante_disj1 rest)
+	| [] -> true
 
-  
+and imply_one_conj ante_disj0 ante_disj1 conseq : bool = 
+	(*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
+	let xp0 = imply_disj ante_disj0 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") in  
+	(*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
+		if (not(xp0) (*&& (ante_disj0 <> ante_disj1)*)) then
+			let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+			let xp1 = imply_disj ante_disj1 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 2(*!imp_subno*)) ^ " with XPure1") in
+			let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+				xp1
+		else true	
+	
+and imply_disj ante_disj conseq str =
+		match ante_disj with
+		| h :: rest -> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+			let _ = Debug.devel_pprint str no_pos in
+				(TP.imply h conseq (string_of_int !imp_no)) && (imply_disj rest conseq str)
+		| [] -> true
+
+
+
+
+
+
 and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos=
 	Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: using " ^ (Cprinter.string_of_h_formula l_node)	^ " to prove " ^ (Cprinter.string_of_h_formula r_node)) pos;
 	let l_h,l_p,l_b,l_t = split_components estate.es_formula in
@@ -2580,7 +2784,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 - for now we only revise the universal lemmas handled by apply_universal --> the check stays here as it is *)
 (*******************************************************************************************************************************************************************************************)
 										(* is it necessary to xpure (node * f) instead ? *)
-										if TP.imply xpure_lhs lhs_guard_new then
+										Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;
+										imp_no := !imp_no+1;
+										if TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) then
 										  let new_f = normalize coer_rhs_new f pos in
 											(if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
 											((*print_string("disable distribution\n"); *)enable_distribution := false);
@@ -3116,13 +3322,17 @@ and count_iconst (f : CP.exp) = match f with
 	| _ -> 0
 
 and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
+	let sat_subno = ref 0 in
 	let rec combine_ext_struc (f1:ext_formula)(f2:ext_formula):ext_formula = match f1 with
 	| ECase b -> let r = match f2 with
 					| ECase d ->
 						let comb = (List.fold_left (fun a1 (c11,c12)-> a1@(List.map (fun (c21,c22)-> 
 						((Cpure.mkAnd c11 c21 d.formula_case_pos),c12,c22)) b.formula_case_branches) ) [] d.formula_case_branches) in
 						let comb = List.fold_left (fun a (c1,c2,c3)-> 
-							if (Tpdispatcher.is_sat c1) then a
+							let sat = (Tpdispatcher.is_sat c1 ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno))) in
+							 Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+							 sat_subno := !sat_subno + 1;
+							if sat then a
 							else (c1,(combine_struc c2 c3))::a)[] comb in
 						ECase {b with 
 							formula_case_exists = b.formula_case_exists@d.formula_case_exists;

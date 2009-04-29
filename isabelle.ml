@@ -113,6 +113,19 @@ and isabelle_of_b_formula b = match b with
   | CP.Gte (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " >= " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Eq (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Neq (a1, a2, _) -> "( " ^ (isabelle_of_exp a1) ^ " ~= " ^ (isabelle_of_exp a2) ^ ")"
+ (* optimization below is not working for isabelle due to incompletness *)
+  (*| CP.Eq (a1, a2, _) -> begin
+        if CP.is_null a2 then	(isabelle_of_exp a1)^ " < 1"
+        else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < 1"
+        else (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2)
+  end
+  | CP.Neq (a1, a2, _) -> begin
+        if CP.is_null a2 then
+        	(isabelle_of_exp a1) ^ " > 0"
+        else if CP.is_null a1 then						
+        	(isabelle_of_exp a2) ^ " > 0"
+        else (isabelle_of_exp a1)^ " ~= " ^ (isabelle_of_exp a2)
+  end*)
   | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
 	  let a2str = isabelle_of_exp a2 in
@@ -297,8 +310,23 @@ let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)
 
 let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ ". ") l)
 
+let isabelle_command isabelle_file_name = ("isabelle -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
+
+let set_timer tsecs =
+  ignore (Unix.setitimer Unix.ITIMER_REAL
+            { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+
+let continue f arg tsecs : bool =
+  let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in
+  try
+    set_timer tsecs;
+    ignore (f arg);
+    set_timer 0.0;
+    Sys.set_signal Sys.sigalrm oldsig; true
+  with Exit ->
+    Sys.set_signal Sys.sigalrm oldsig; false
 (* writing the Isabelle's theory file *)
-let write (pe : CP.formula) : bool =
+let write (pe : CP.formula) (timeout : float) : bool =
   begin
   		isabelle_file_number.contents <- !isabelle_file_number + 1;
   		let isabelle_file_name = "test" ^ string_of_int !isabelle_file_number ^ ".thy" in
@@ -346,36 +374,48 @@ let write (pe : CP.formula) : bool =
 		(*ignore(Sys.command "isabelle -u -q > res");*)
 		(* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
  		and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
-		ignore(Sys.command ("isabelle -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null"));
+		(*ignore(Sys.command ("isabelle -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null"));*)
 
-		(* verifying the result returned by Isabelle *)
-		let result_file = open_in (result_file_name) in
-		  check result_file isabelle_file_name;
+		if (continue Sys.command (isabelle_command isabelle_file_name) timeout) then  
+			(* verifying the result returned by Isabelle *)
+			let result_file = open_in (result_file_name) in
+				check result_file isabelle_file_name
+		else 
+			let _ = print_string("Timeout while sat checking\n") in
+				true	
 		end
   end
 
-let imply (ante : CP.formula) (conseq : CP.formula) : bool =
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if !log_all_flag == true then
-	output_string log_file "\n\n[isabelle.ml]: #imply\n";
+	output_string log_file ("\n\n[isabelle.ml]: imply#" ^ imp_no ^ "\n");
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in
-    let res =  write tmp_form in
-        (*if (!max_flag = true & res = false) then
-	  begin
-	    print_string ("recomputing for test" ^ (string_of_int !isabelle_file_number) ^ " \n");
-	    choice := 2;
-	    write tmp_form;
-	  end
-        else begin*)
-	  (*print_string ("no need for recomputing in test" ^ (string_of_int !isabelle_file_number) ^ " \n");*)
-          res
-        (*end*)
+  let res =  write tmp_form 0. in
 
-let is_sat (f : CP.formula) : bool = begin
+
+
+
+
+
+
+
+	res
+
+
+let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
+  if !log_all_flag == true then
+	output_string log_file ("\n\n[isabelle.ml]: imply#from sat#" ^ sat_no ^ "\n");
+  max_flag := false;
+  choice := 1;
+  let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in
+    (write tmp_form timeout)
+
+let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
-				output_string log_file "\n\n[isabelle.ml]: #is_sat\n";
-	let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos)))) in
+				output_string log_file ("\n\n[isabelle.ml]: #is_sat " ^ sat_no ^ "\n");
+	let tmp_form = (imply_sat f (CP.BForm(CP.BConst(false, no_pos))) !Globals.sat_timeout sat_no) in
 		match tmp_form with
 			| true ->
 				begin
@@ -414,17 +454,17 @@ end
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[isabelle.ml]: #hull\n";
+	(*if !log_all_flag == true then
+	  output_string log_file "\n\n[isabelle.ml]: #hull\n";*)
 	pe
 	end
 let pairwisecheck (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[isabelle.ml]: #pairwisecheck\n";
+	(*if !log_all_flag == true then
+	  output_string log_file "\n\n[isabelle.ml]: #pairwisecheck\n";*)
 	pe
 	end
 let simplify (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[isabelle.ml]: #simplify\n";
+	(*if !log_all_flag == true then
+	  output_string log_file "\n\n[isabelle.ml]: #simplify\n";*)
 	pe
 	end

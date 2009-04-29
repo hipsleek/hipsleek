@@ -41,11 +41,12 @@ let rec mkEx l f = match l with
 (* in Mona, using the set representation for the integers, addition a1 = a2 + a3 is written plus(a2, a3, a1).
 This is why I have a problem with formulas like a1 < a2 + a3. Therefore, I break all the presburger formulas,
 meaning that whenever I find a a2 + a3, I replace it by the variable a2a3 and I add the relation a2a3 = a2 + a3 *)
-let rec break_presburger (f : CP.formula) : CP.formula =
+(* w = weaken *)
+let rec break_presburger (f : CP.formula) (w : bool) : CP.formula =
   begin
     additional_vars := [];
     additional_vars_ := [];
-    (mona_of_formula_break f);
+    (mona_of_formula_break f w);
   end
 
 (* breaking expressions *)
@@ -54,51 +55,56 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
         let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.Lexing.pos_lnum in
-        substitution_list := CP.Eq(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
-        additional_vars := CP.SpecVar(t1, tmp, p1) :: !additional_vars;
-	additional_vars_ := CP.SpecVar(t1, tmp, p1) :: !additional_vars_;
-	CP.Var(CP.SpecVar(t1, tmp, p2), l3);
+		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
+		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
+        additional_vars := (new_tmp_var :: !additional_vars);
+		additional_vars_ := (new_tmp_var :: !additional_vars_);
+		CP.Var(new_tmp_var, l3);
       end
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
         let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.Lexing.pos_lnum in
-        substitution_list := CP.Eq(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
-        additional_vars := CP.SpecVar(t1, tmp, p1) :: !additional_vars;
-        additional_vars_ := CP.SpecVar(t1, tmp, p1) :: !additional_vars_;
-        CP.Var(CP.SpecVar(t1, tmp, p2), l3);
+		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
+		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
+        additional_vars := new_tmp_var :: !additional_vars;
+        additional_vars_ := new_tmp_var :: !additional_vars_;
+        CP.Var(new_tmp_var, l3);
       end
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3)
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
         let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
-        substitution_list := CP.Eq(CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
-	additional_vars := CP.SpecVar(t2, tmp, p2) :: !additional_vars;
-        additional_vars_ := CP.SpecVar(t2, tmp, p2) :: !additional_vars_;
-	CP.Var(CP.SpecVar(t2, tmp, p2), l3);
+		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
+		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
+		additional_vars := new_tmp_var :: !additional_vars;
+        additional_vars_ := new_tmp_var :: !additional_vars_;
+		CP.Var(new_tmp_var, l3);
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
         let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
-        substitution_list := CP.Eq(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
-        additional_vars := CP.SpecVar(t2, tmp, p2) :: !additional_vars;
-        additional_vars_ := CP.SpecVar(t2, tmp , p2) :: !additional_vars_;
-	CP.Var(CP.SpecVar(t2, tmp, p2), l3);
+		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
+		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
+        additional_vars := new_tmp_var :: !additional_vars;
+        additional_vars_ := new_tmp_var :: !additional_vars_;
+		CP.Var(new_tmp_var, l3);
       end
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
         let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
-        substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
-        additional_vars := CP.SpecVar(t2, tmp, p2) :: !additional_vars;
-        additional_vars_ := CP.SpecVar(t2, tmp, p2) :: !additional_vars_;
-	CP.Var(CP.SpecVar(t2, tmp, p2), l3);
+		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
+		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
+        additional_vars := new_tmp_var :: !additional_vars;
+        additional_vars_ := new_tmp_var :: !additional_vars_;
+		CP.Var(new_tmp_var, l3);
       end
   | CP.Add(CP.IConst(i1, _), CP.IConst(12, _) , l3) -> CP.IConst(i1+12, l3)
   | CP.Subtract( CP.IConst(i1, _), CP.IConst(i2, _), l3) ->
       begin
         let tmp = fresh_var_name "int" 0 in
-        substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
-	additional_vars := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
-	additional_vars_ := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
+		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
+		additional_vars := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
+		additional_vars_ := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
         CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), l3);
       end
   | CP.Add (a1, a2, l1) -> CP.Add((mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* Removed an outer recursive call to mona_of_exp_break *)
@@ -108,26 +114,52 @@ and mona_of_exp_break e0 =
   | _ -> e0
 
 (* breaking boolean formulas *)
-and mona_of_b_formula_break b = match b with
+and mona_of_b_formula_break b w = match b with
   | CP.Lt (a1, a2, l1) -> CP.Lt((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
   | CP.Lte (a1, a2, l1) -> CP.Lte((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
   | CP.Gt (a1, a2, l1) -> CP.Gt((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
   | CP.Gte (a1, a2, l1) -> CP.Gte((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
+  (*-- try 02.04.09 *)
+  (*| CP.Neq(CP.Add(CP.Mult _, _, _), _, _) 
+  | CP.Neq(CP.Add(_, CP.Mult _, _), _, _) 
+  | CP.Neq(CP.Add(_, _, _), CP.Mult _, _)
+  | CP.Neq(CP.Add(CP.Add _, _, _), _, _) 
+  | CP.Neq(CP.Add(_, CP.Add _, _), _, _) 
+  | CP.Neq(_, CP.Add(_, CP.Add _ , _), _)
+  | CP.Neq(_, CP.Add(CP.Add _ , _, _), _)*)
+  (*commenting the weakening part*)
+  (*| CP.Eq(CP.Add(CP.Mult _, _, _), _, _) 
+  | CP.Eq(CP.Add(_, CP.Mult _, _), _, _) 
+  | CP.Eq(CP.Add(_, _, _), CP.Mult _, _)
+  | CP.Eq(CP.Add(CP.Add _, _, _), _, _) 
+  | CP.Eq(CP.Add(_, CP.Add _, _), _, _) 
+  | CP.Eq(_, CP.Add(_, CP.Add _ , _), _)
+  | CP.Eq(_, CP.Add(CP.Add _ , _, _), _)  -> 
+	if w then 
+		(print_string("[mona.mona_of_b_formula_break]: weakening to true in test " ^ (string_of_int !mona_file_number) ^ "\n"); CP.BConst(true, no_pos))
+	else	
+	    mona_of_b_formula_break1 b
+  *)		
+  (*-- try 02.04.09 *)
   | CP.Eq(a1, a2, l1) -> CP.Eq((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
   | CP.Neq(a1, a2, l1) -> CP.Neq((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
   | CP.EqMin (a1, a2, a3, l1) -> CP.EqMin((mona_of_exp_break a1), (mona_of_exp_break a2), (mona_of_exp_break a3), l1)
   | CP.EqMax (a1, a2, a3, l1) -> CP.EqMax((mona_of_exp_break a1), (mona_of_exp_break a2), (mona_of_exp_break a3), l1)
   | _ -> b
-
+  
+and mona_of_b_formula_break1 b = match b with
+  | CP.Eq(a1, a2, l1) -> CP.Eq((mona_of_exp_break a1), (mona_of_exp_break a2), l1)
+  | _ -> b
+  
 (* breaking formulas *)
-and mona_of_formula_break (f : CP.formula) : CP.formula =
+and mona_of_formula_break (f : CP.formula) (w : bool) : CP.formula =
   let res = match f with
-  | CP.Or (p1, p2, l1) -> CP.Or((mona_of_formula_break1 p1), (mona_of_formula_break1 p2), l1)
-  | CP.And (p1, p2, l1) -> CP.And((mona_of_formula_break1 p1), (mona_of_formula_break1 p2), l1)
-  | CP.Not (p1, l1) -> CP.Not((mona_of_formula_break1 p1), l1)
-  | CP.Forall(sv1, p1, l1) -> CP.Forall(sv1, (mona_of_formula_break1 p1), l1)
-  | CP.Exists(sv1, p1, l1) -> CP.Exists(sv1, (mona_of_formula_break1 p1), l1)
-  | CP.BForm b -> CP.BForm(mona_of_b_formula_break b)
+  | CP.Or (p1, p2, l1) -> CP.Or((mona_of_formula_break1 p1 w), (mona_of_formula_break1 p2 w), l1)
+  | CP.And (p1, p2, l1) -> CP.And((mona_of_formula_break1 p1 w), (mona_of_formula_break1 p2 w), l1)
+  | CP.Not (p1, l1) -> CP.Not((mona_of_formula_break1 p1 w), l1)
+  | CP.Forall(sv1, p1, l1) -> CP.Forall(sv1, (mona_of_formula_break1 p1 w), l1)
+  | CP.Exists(sv1, p1, l1) -> CP.Exists(sv1, (mona_of_formula_break1 p1 w), l1)
+  | CP.BForm b -> CP.BForm(mona_of_b_formula_break b w)
   in
       if (List.length !substitution_list) > 0 then
 	   let eq = (mkEq !substitution_list) in
@@ -135,16 +167,16 @@ and mona_of_formula_break (f : CP.formula) : CP.formula =
                  substitution_list := [];
 		 let res1 = (mkEx !additional_vars (CP.And(eq, res, no_pos))) in
 		   begin
-		     additional_vars := [];
-		     res1;
+     		additional_vars := [];
+			res1;
 		   end
                end
       else res
 
-and mona_of_formula_break1 (f : CP.formula) : CP.formula =
+and mona_of_formula_break1 (f : CP.formula) (w : bool) : CP.formula =
   match f with
   (*| CP.BForm b -> CP.BForm(mona_of_b_formula_break b)*)
-  | _ -> mona_of_formula_break f
+  | _ -> mona_of_formula_break f w
 
 (*------------------------------------------*)
 
@@ -391,7 +423,9 @@ and is_firstorder_mem f e vs =
 
 (* pretty printing for spec_vars *)
 and mona_of_spec_var (sv : CP.spec_var) = match sv with
-  | CP.SpecVar (_, v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+  | CP.SpecVar (_, v, p) -> 
+	(*let _ = print_string("var " ^ (Cprinter.string_of_spec_var sv) ^ "\n") in*)
+		v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = match e0 with
@@ -415,10 +449,10 @@ and mona_of_exp e0 f = match e0 with
   | _ -> failwith ("mona.mona_of_exp: mona doesn't support subtraction/...")
 
 and mona_of_exp_secondorder e0 f = 	match e0 with
-  | CP.Null _ -> ([], "pconst(0)", "")
-  | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
-  | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
-  | CP.Add (a1, a2, pos) ->  
+	| CP.Null _ -> ([], "pconst(0)", "")
+	| CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
+	| CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
+	| CP.Add (a1, a2, pos) ->  
       let tmp = fresh_var_name "int" pos.Lexing.pos_lnum in
 (*      print_endline ("\nCCC: " ^ tmp); *)
       let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
@@ -426,15 +460,17 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
       let add_string = " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ tmp ^ ")" in
       let add_string2 = add_string ^ (if a1str <> "" then (" & " ^ a1str) else "") ^ (if a2str <> "" then (" & " ^ a2str) else "") in
       ((tmp :: (exs1 @ exs2)), tmp, add_string2)
-  | CP.Max _
-  | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
-	| CP.Mult (i,a,p) -> if (i>10 || i<0) then failwith ("mona.mona_of_exp_secondorder: mona doesn't support multiplication and the constant is too big")
+	| CP.Max _
+	| CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
+	| CP.Mult (i,a,p) -> if (i>10 || i<1) then failwith ("mona.mona_of_exp_secondorder: mona doesn't support multiplication and the constant is too big")
 												else 
-													let rec mult i = if i==0 then a else CP.Add( (mult (i-1)), a,p)  in
-													let sum = if (i>0) then (mult i)	else CP.IConst (0, p) in
+													let rec mult i = if i==1 then a else CP.Add( (mult (i-1)), a,p)  in
+													let sum = if (i>1) then (mult i)	else CP.IConst (1, p) in
 														mona_of_exp_secondorder sum f 
-	| CP.Subtract _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
-  | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/...")
+	| CP.Subtract (e1, e2, p) -> 	
+		let _ = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in
+		failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
+	| _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/...")
 
 (* pretty printing for a list of expressions *)
 and mona_of_formula_exp_list l f = match l with
@@ -450,19 +486,70 @@ and mona_of_b_formula b f vs =
   match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
   | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ " = pconst(0))"
-     (*(equation (CP.Var (bv, no_pos)) (CP.IConst (0, no_pos)) f "greater" ">" vs)*)
-     (*"(" ^ (mona_of_spec_var bv) ^ " = pconst(1))"*)
+  (* CP.Lt *)   
+  (*| CP.Lt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Lt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lt (a1, a2, _) -> (equation a1 a2 f "less" "<" vs)
+  (* CP.Lte *)   
+  (*| CP.Lte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Lte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lte (a1, a2, _) -> (equation a1 a2 f "lessEq" "<=" vs)
+  (* CP.Gt *)   
+  (*| CP.Gt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Gt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Gt (a1, a2, _) -> (equation a1 a2 f "greater" ">" vs)
+  (* CP.Gte *)   
+  (*| CP.Gte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
+  (* CP.Neq *)   
   | CP.Neq((CP.Add(a1, a2, l1)), a3, l2)
   | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2)
-  | CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
-  | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)
+  (*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
+  | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*)
     -> "(~" ^ (mona_of_b_formula (CP.Eq((CP.Subtract(a3, a1, l1)), a2, l2)) f vs) ^ ")"
-  | CP.Eq((CP.Subtract(a3, a1, _)), a2, _)
-  | CP.Eq(a2, (CP.Subtract(a3, a1, _)), _)
+  | CP.Neq (CP.IConst(i, _), a1, _)
+  | CP.Neq (a1, CP.IConst(i, _), _) ->
+      if (is_firstorder_mem f a1 vs) then
+	"(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
+      else
+	"(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
+  | CP.Neq (a1, a2, _) ->
+	if (is_firstorder_mem f a1 vs) then
+	  begin
+	  if CP.is_null a2 then
+	  "(" ^ (mona_of_exp a1 f) ^ " > 0)"
+	  else
+	    if CP.is_null a1 then
+	      "(" ^ (mona_of_exp a2 f) ^ " > 0)"
+	    else
+	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
+	  end
+        else
+	  begin
+	  if CP.is_null a2 then
+	    " greater(" ^ (mona_of_exp a1 f) ^ ", pconst(0))"
+	  else
+	    if CP.is_null a1 then
+	      " greater(" ^ (mona_of_exp a2 f) ^ ",  pconst(0))"
+	    else
+	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
+	  end
+  (* CP.Eq *)
+  (*| CP.Eq((CP.Subtract(a1, a2, pos1)), (CP.Subtract(a3, a4, pos2)), pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a4, pos1), CP.Add(a2, a3, pos2), pos3)) f vs)	 
+  | CP.Eq(a1,CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), pos3)  
+  | CP.Eq(CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), a1, pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a3, pos1), CP.Add(a2, a4, pos2), pos3)) f vs)
+  | CP.Eq((CP.Subtract(a3, a1, pos1)), a2, pos2)
+  | CP.Eq(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Eq(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 
+  *)
+  (* try: todo: I think it's not the best place cause the existentials are already introduced *)
+  (*| CP.Eq(CP.Add(CP.Mult _, _, _), _, _) 
+  | CP.Eq(CP.Add(_, CP.Mult _, _), _, _) 
+  | CP.Eq(CP.Add(_, _, _), CP.Mult _, _)
+  | CP.Eq(CP.Add(CP.Add _, _, _), _, _) 
+  | CP.Eq(CP.Add(_, CP.Add _, _), _, _) 
+  | CP.Eq(_, CP.Add(_, CP.Add _ , _), _)
+  | CP.Eq(_, CP.Add(CP.Add _ , _, _), _)  -> ((*print_string("[mona]: weakening to true\n");*) "true")*)
   | CP.Eq((CP.Add(a1, a2, _)), a3, _)
   | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
       if (is_firstorder_mem f a1 vs) || (is_firstorder_mem f a2 vs) || (is_firstorder_mem f a3 vs) then
@@ -491,35 +578,8 @@ and mona_of_b_formula b f vs =
 	"(" ^ (mona_of_exp a1 f) ^ " = 0)"
       else
 	"(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
-  (**********************)
-  | CP.Eq (a1, a2, _) -> "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"
-  | CP.Neq (CP.IConst(i, _), a1, _)
-  | CP.Neq (a1, CP.IConst(i, _), _) ->
-      if (is_firstorder_mem f a1 vs) then
-	"(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
-      else
-	"(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
-  | CP.Neq (a1, a2, _) ->
-	if (is_firstorder_mem f a1 vs) then
-	  begin
-	  if CP.is_null a2 then
-	  "(" ^ (mona_of_exp a1 f) ^ " > 0)"
-	  else
-	    if CP.is_null a1 then
-	      "(" ^ (mona_of_exp a2 f) ^ " > 0)"
-	    else
-	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
-	  end
-        else
-	  begin
-	  if CP.is_null a2 then
-	    " greater(" ^ (mona_of_exp a1 f) ^ ", pconst(0))"
-	  else
-	    if CP.is_null a1 then
-	      " greater(" ^ (mona_of_exp a2 f) ^ ",  pconst(0))"
-	    else
-	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
-	  end
+  (**********************)	
+  | CP.Eq (a1, a2, _) -> "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"	 
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = mona_of_exp a1 f in
 	  let a2str = mona_of_exp a2 f in
@@ -653,7 +713,7 @@ let continue f arg tsecs =
 let rec check fd timeout pid : bool =
   try begin
     if (Unix.select [Unix.descr_of_in_channel fd] [] [] timeout) = ([],[],[]) then begin
-        print_endline "\nMona timeout reached."; flush stdout; false
+        print_endline "\nTimout reached."; flush stdout; false
     end else match input_line fd with
 	| "Formula is valid" ->
 		begin
@@ -738,12 +798,13 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   flush log_file;
   res
 
-let imply timeout (ante : CP.formula) (conseq : CP.formula) : bool = begin
+let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
   first_order_vars := [];
   second_order_vars := [];
   if !log_all_flag == true then
-    output_string log_file "\n\n[mona.ml]: #imply\n";
+    output_string log_file ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
+  (*	
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
   let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
@@ -759,15 +820,35 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) : bool = begin
   let var_decls = first_order_var_decls ^ second_order_var_decls in
   (*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
   let simp_form = break_presburger tmp_form in
-  if (timeout = 0.) then (write var_decls simp_form vs (-1.))
-  else (write var_decls simp_form vs timeout)
+  (write var_decls simp_form vs timeout)
+  *)
+  (* try 02.04.09 *)
+  (* ante *)
+  
+  let simp_ante = (break_presburger ante true) in
+  let simp_conseq = (break_presburger conseq false) in
+  let ante_fv = CP.fv simp_ante in
+  let conseq_fv = CP.fv simp_conseq in
+  let tmp_form = CP.mkOr (CP.mkNot simp_ante no_pos) simp_conseq no_pos in
+  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+  let vs = Hashtbl.create 10 in
+  let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
+  let first_order_var_decls =
+    if Util.empty (*!first_order_vars*) part1 then ""
+    else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var (*(!first_order_vars)*)part1)) ^ ";\n" in
+  let second_order_var_decls =
+    if Util.empty (*!second_order_vars*) part2 then ""
+    else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var (*!second_order_vars*) part2)) ^ ";\n" in
+  let var_decls = first_order_var_decls ^ second_order_var_decls in
+  if (timeout = 0.) then (write var_decls tmp_form vs (-1.))
+  else (write var_decls tmp_form vs timeout)
  end
 
-let is_sat (f : CP.formula) : bool =
+let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
-	output_string log_file "\n\n[mona.ml]: #is_sat\n";
+	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos)))) in
+  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos))) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with
   | true ->
@@ -788,18 +869,18 @@ let is_sat (f : CP.formula) : bool =
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[mona.ml]: #hull\n";
+	(*if !log_all_flag == true then
+	  output_string log_file "\n\n[mona.ml]: #hull\n";*)
 	pe
 	end
 let pairwisecheck (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[mona.ml]: #pairwisecheck\n";
+	(*if !log_all_flag == true then
+	  output_string log_file "\n\n[mona.ml]: #pairwisecheck\n";*)
 	pe
 	end
 let simplify (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n\n[mona.ml]: #simplify\n";
+	(*if !log_all_flag == true then
+	  output_string log_file "\n\n[mona.ml]: #simplify\n";*)
 	pe
 	end
 (*| CP.EqMax (a1, a2, a3, _) ->

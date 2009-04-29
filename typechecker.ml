@@ -8,21 +8,31 @@ module U = Util
 module TP = Tpdispatcher
 module PTracer = Prooftracer
 
+let log_spec = ref ""
+
 (* checking expression *)
 
 (* assumes the pre, and starts the simbolic execution*)
 let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
 
-				let rec do_spec_verification (spec: Cformula.ext_formula):bool = match spec with
+				let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
+				
+				let pos_spec = CF.pos_of_struc_formula [spec] in
+				log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.Lexing.pos_lnum);	 
+				match spec with
 					| Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
 								let nctx = combine_context_and prog ctx c1 true  in
-								check_specs prog proc nctx c2 e0) b.Cformula.formula_case_branches
+								let r = check_specs prog proc nctx c2 e0 in
+								(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
+								r) b.Cformula.formula_case_branches
 					| Cformula.EBase b ->
 								let nctx = 
 									if !Globals.max_renaming 
 										then (CF.normalize_context_formula ctx b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false)
 										else (CF.normalize_clash_context_formula ctx b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) in
-								check_specs prog proc nctx b.Cformula.formula_ext_continuation e0
+								let r = check_specs prog proc nctx b.Cformula.formula_ext_continuation e0 in
+								(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
+								r
 					| Cformula.EAssume (x,b) ->
 								let ctx1 = elim_unsat_ctx prog ctx in
 								if (Cformula.isFalseCtx ctx1) then
@@ -37,10 +47,11 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 									if CP.are_same_types proc.proc_return void_type then
 									  (* void procedures may not contain a return in all branches,
 										 so we need to make a catch-all check at the end of the body *)
-									  let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) in
+									let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) in
 										not (U.empty tmp_ctx)
 									else
 									  not (U.empty res_ctx)  in
+								(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 								let _ = Util.pop_time ("method "^proc.proc_name) in
 								 r
 								 with _ as e -> 
@@ -71,6 +82,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		 		let _ = print_string ("[typechecker.ml, line 62, assert]: pre to be entailed " ^ (Cprinter.string_of_formula c1) ^ "\n") in
 				let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 				*)
+			 let to_print = "Proving assert in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in	
+			 Debug.devel_pprint to_print pos;
 			 let rs,prf = heap_entail_struc prog false false false ctx c1 pos in
 			 let _ = PTracer.log_proof prf in
 			 Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
@@ -176,6 +189,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 									CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
 									CF.h_formula_data_pos = pos}) in
 	  let vheap = CF.formula_of_heap vdatanode pos in
+	  let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
+	  Debug.devel_pprint to_print pos;
 	  let rs_prim, prf = heap_entail prog false false unfolded vheap pos in
 	  let _ = PTracer.log_proof prf in
 	  let rs = CF.clear_entailment_history_list rs_prim in
@@ -564,6 +579,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 		print_endline ("SC: renamed " ^ Cprinter.string_of_struc_formula renamed_spec);
 		print_endline ("SC: pre2 " ^ Cprinter.string_of_struc_formula pre2);
 		print_endline ("SC: ctx " ^ Cprinter.string_of_context sctx);*)
+		let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
+		Debug.devel_pprint to_print pos;
 		let rs,prf = heap_entail_struc prog false false true [sctx] pre2 pos in
 		(*let _ = print_string ("\n finishing scall at line "^(string_of_int (pos.Lexing.pos_lnum))^"\n") in *)
 		(*let _ = print_string ("\n before call: "^(Cprinter.string_of_context sctx)^"\n pre: "^
@@ -660,6 +677,8 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) (po
 							(List.map Cprinter.string_of_context final_state))
 					   ^ "\n");
 	Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
+	let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
+	Debug.devel_pprint to_print pos;	
 	let rs, prf = heap_entail prog false false final_state post pos in
 	let _ =
 	  if List.for_all CF.isFalseCtx final_state then ()
@@ -687,16 +706,13 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			  print_string ("Procedure " ^ proc.proc_name ^ ":\n"
 							^ (Cprinter.string_of_proc_decl proc) ^ "\n\n");
 			print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
-			(*print_string ("\n[typechecker.ml, line 658]: free vars(precond)" ^ Cprinter.string_of_spec_var_list (CF.fv (fst (List.hd proc.proc_static_specs))));*)
 			Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
 			Debug.devel_pprint ("Specs : " ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
 			let ftypes, fnames = List.split proc.proc_args in
 			(* fsvars are the spec vars corresponding to the parameters *)
 			let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
 			(*Debug.devel_pprint ("fsvars : " ^ Cprinter.string_of_spec_var_list fsvars) proc.proc_loc;*)
-			(* forall par. par = par' *)
 			let nox = CF.formula_of_pure (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
-			(* -- 13.05.2008 *)
 			let init_form = nox in(*
 					if !Globals.max_renaming then
 						(* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
@@ -705,12 +721,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			   		(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
 			  	 	(CF.normalize_only_clash_rename pre nox (CF.pos_of_formula pre))
 			  in*)
-			  (* 13.05.2008 -- *)
-			  (*Debug.devel_pprint ("Nox : " ^ Cprinter.string_of_formula nox) proc.proc_loc;
-			  Debug.devel_pprint ("Normalized precond : " ^ Cprinter.string_of_formula init_form) proc.proc_loc;*)
- 		    let init_ctx1 = CF.empty_ctx proc.proc_loc in
+			let init_ctx1 = CF.empty_ctx proc.proc_loc in
 			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
-			(*let _ = print_string ("\n trans proc body: "^(Cprinter.string_of_exp body)^"\n") in*)
 			let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 			let result =
 				if pp then begin

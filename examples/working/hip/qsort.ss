@@ -93,6 +93,8 @@ node append_bll(node x, node y)
 
 
 void qsort(ref node xs)
+    requires xs=null
+	ensures  xs'=null;
 	requires xs::bnd<n, sm, bg> & n>0 
 	ensures xs'::sll<n, smres, bgres> & smres >= sm & bgres < bg;
 /*

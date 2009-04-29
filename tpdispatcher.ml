@@ -1,5 +1,6 @@
 (*
-  Choose with theorem prover to prove formula  
+
+  Choose with theorem prover to prove formula
 *)
 
 open Globals
@@ -309,7 +310,7 @@ let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula)
   else
 	(ante, conseq)
 
-let tp_is_sat (f : CP.formula) =
+let tp_is_sat (f : CP.formula) (sat_no : string) =
 	match !tp with
 	  | OmegaCalc ->
 (*
@@ -320,48 +321,48 @@ let tp_is_sat (f : CP.formula) =
 		  else
 *)
 			begin
-			  (Omega.is_sat f);
+			  (Omega.is_sat f sat_no);
 			end
-	  | CvcLite -> Cvclite.is_sat f
-	  | Isabelle -> Isabelle.is_sat f
-	  | Coq -> Coq.is_sat f
-	  | Mona -> Mona.is_sat f
+	  | CvcLite -> Cvclite.is_sat f sat_no
+	  | Isabelle -> Isabelle.is_sat f sat_no
+	  | Coq -> Coq.is_sat f sat_no
+	  | Mona -> Mona.is_sat f sat_no
 	  | CO -> begin
-		  let result1 = Cvclite.is_sat_raw f in
+		  let result1 = (Cvclite.is_sat_raw f sat_no) in
 			match result1 with
 			  | Some f -> f
 			  | None ->
 				  omega_count := !omega_count + 1;
-				  Omega.is_sat f
+				  (Omega.is_sat f sat_no)
 		end
 	  | CM -> begin
 		  if (is_bag_constraint f) then
-			Mona.is_sat f
+			(Mona.is_sat f sat_no)
 		  else
-			let result1 = Cvclite.is_sat_raw f in
+			let result1 = (Cvclite.is_sat_raw f sat_no) in
 			  match result1 with
 				| Some f -> f
 				| None ->
 					omega_count := !omega_count + 1;
-					Omega.is_sat f
+					(Omega.is_sat f sat_no)
 		end
 	  | OM ->
           if (is_bag_constraint f) then
 			begin
-			  (Mona.is_sat f);
+			  (Mona.is_sat f sat_no);
 			end
 		  else
 			begin
-			  (Omega.is_sat f);
+			  (Omega.is_sat f sat_no);
 			end
 	  | OI ->
           if (is_bag_constraint f) then
 			begin
-			  (Isabelle.is_sat f);
+			  (Isabelle.is_sat f sat_no);
 			end
 		  else
 			begin
-			  (Omega.is_sat f);
+			  (Omega.is_sat f sat_no);
 			end
 	  | SetMONA -> Setmona.is_sat f
 
@@ -454,42 +455,53 @@ let rec imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	  let res = List.for_all (fun (a, c) -> imply1 a c) tmp1 in
 		res
 *)
-let tp_imply ante conseq timeout =
+
+let rec split_conjunctions = function
+  | CP.And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
+  | z -> [z]
+;;
+
+let rec split_disjunctions = function
+  | CP.Or (x, y, _) -> (split_disjunctions x) @ (split_disjunctions y)
+  | z -> [z]
+;;
+
+let tp_imply ante conseq imp_no timeout =
   match !tp with
-  | OmegaCalc -> (Omega.imply ante conseq timeout)
-  | CvcLite -> Cvclite.imply ante conseq 
-  | Isabelle -> Isabelle.imply ante conseq 
-  | Coq -> Coq.imply ante conseq 
-  | Mona -> Mona.imply timeout ante conseq 
+  | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
+  | CvcLite -> Cvclite.imply ante conseq
+  | Isabelle -> Isabelle.imply ante conseq imp_no
+  | Coq -> Coq.imply ante conseq
+  | Mona -> Mona.imply timeout ante conseq imp_no 
   | CO -> begin
-	  let result1 = Cvclite.imply_raw ante conseq  in
+	  let result1 = Cvclite.imply_raw ante conseq in
 	  match result1 with
 	  | Some f -> f
 	  | None -> (* CVC Lite is not sure is this case, try Omega *)
 		  omega_count := !omega_count + 1;
-		  Omega.imply ante conseq timeout
+		  Omega.imply ante conseq imp_no timeout
   end
   | CM -> begin
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		Mona.imply timeout ante conseq 
+		Mona.imply timeout ante conseq imp_no
 	  else
 		let result1 = Cvclite.imply_raw ante conseq in
 		match result1 with
 		| Some f -> f
 		| None -> (* CVC Lite is not sure is this case, try Omega *)
 			omega_count := !omega_count + 1;
-			Omega.imply ante conseq timeout
+			Omega.imply ante conseq imp_no timeout
   end
   | OM ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(Mona.imply timeout ante conseq)
+		(Mona.imply timeout ante conseq imp_no)
 	  else
-		(Omega.imply ante conseq timeout)
+		(Omega.imply ante conseq imp_no timeout)
   | OI ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(Isabelle.imply ante conseq )
+		(Isabelle.imply ante conseq imp_no)
 	  else
-		(Omega.imply ante conseq timeout)
+		(Omega.imply ante conseq imp_no timeout)
   | SetMONA ->
 	  Setmona.imply ante conseq 
 ;;
@@ -565,7 +577,7 @@ let rec simpl_in_quant formula negated rid =
       | CP.Exists (v, f, l) -> CP.Exists (v, simpl_in_quant f true rid, l)
       | CP.Or (f, g, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, l)
       | CP.And (_, _, _) ->
-          let subfs = Cpure.split_conjunctions formula in
+          let subfs = split_conjunctions formula in
           let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
           let nformula = get_rid_of_eq nformula in
           nformula
@@ -582,7 +594,7 @@ let rec simpl_in_quant formula negated rid =
 ;;
 
 let simpl_pair rid (ante, conseq) =
-  let antes = Cpure.split_conjunctions ante in
+  let antes = split_conjunctions ante in
   let fold_fun (ante, conseq) = function
     | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
@@ -599,13 +611,13 @@ let simpl_pair rid (ante, conseq) =
   (ante3, conseq)
 ;;
 
-let is_sat (f : CP.formula) : bool =
+let is_sat (f : CP.formula) (sat_no : string) : bool =
   let f = elim_exists f in
   let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
-  tp_is_sat f
+  tp_is_sat f sat_no
 ;;
 
-let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) timeout: bool =
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout : bool =
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> res       
@@ -628,47 +640,43 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) timeout: bool =
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
-        let split_conseq = Cpure.split_conjunctions conseq in
-        let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
+        let split_conseq = split_conjunctions conseq in
+		let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
         (*let pairs = [filter ante conseq] in*)
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun res (ante, conseq) =
-          if res then tp_imply ante conseq timeout else false
+          if res then tp_imply ante conseq imp_no timeout else false
         in
         List.fold_left fold_fun true pairs
   end
 ;;
 
-let imply_timeout ante0 conseq0 timeout =
+let imply_timeout ante0 conseq0 imp_no timeout =
+
   let _ = Util.push_time "imply" in
-  let res = imply_timeout ante0 conseq0 timeout in
+  let res = imply_timeout ante0 conseq0 imp_no timeout in
+
   let _ = Util.pop_time "imply" in
   if res  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
   res
 ;;
 
-let imply ante0 conseq0 = imply_timeout ante0 conseq0 0.
+let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
-let is_sat f =
+let is_sat f sat_no =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
       Some res -> res       
       | None -> false
   else  begin   
+
 	let _ = Util.push_time "is_sat" in
-    let res = is_sat f in
+    let res = is_sat f sat_no in
+
 	let _ = Util.pop_time "is_sat" in
 	res end
 ;;
-(*
-let is_sat_fast f = 
-	let y = !sat_timeout in
-	sat_timeout := 2. ; 
-	let r = is_sat f in
-	sat_timeout:=y;
-	r
-;;*)
 
 let print_stats () =
   print_string ("\nTP statistics:\n");

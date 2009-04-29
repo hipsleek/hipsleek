@@ -40,6 +40,8 @@ let this = "this"
 
 (* command line options *)
 
+let omega_simpl = ref true
+
 let source_files = ref ([] : string list)
 
 let procs_verified = ref ([] : string list)
@@ -109,6 +111,8 @@ let add_count (t: int ref) =
 
 
 (* utility functions *)
+
+let omega_err = ref false
 
 let seq_number = ref 10
 

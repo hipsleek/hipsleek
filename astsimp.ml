@@ -924,7 +924,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
      let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
 		(* let _ = print_string ("pre: "^(Cprinter.string_of_pure_formula      *)
 		(* pf)^"\n") in                                                        *)
-     let pf = arith_simplify pf in
+     let pf = Cpure.arith_simplify pf in
 		(* let _ = print_string ("post: "^(Cprinter.string_of_pure_formula     *)
 		(* pf)^"\n") in                                                        *)
      let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
@@ -1001,7 +1001,7 @@ and rec_grp prog :ident list =
 		
 				
 and flatten_base_case (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.formula * (Cpure.formula*((string*Cpure.formula)list))) option = 
-
+    let sat_subno = ref 0 in
 	let rec get_pure (f:Cformula.formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
 		| Cformula.Or b->
 				let b1,br1 = (get_pure b.Cformula.formula_or_f1) in
@@ -1036,9 +1036,22 @@ and flatten_base_case (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.for
 	| Cformula.EBase b-> 
 		let ba,br = symp_struc_to_formula f in
 		let ba' = Cpure.add_null ba self in
-		let is_sat = if br = [] then TP.is_sat ba' 
-        else if not (TP.is_sat ba') then false
-			else List.for_all (fun (_,c)-> TP.is_sat (Cpure.add_null c self)) br in
+		let is_sat = if br = [] then 
+			let sat = TP.is_sat ba' ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+			(Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+			sat_subno := !sat_subno+1;
+			sat)
+        else 
+			let sat = (TP.is_sat ba' ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno))) in
+			Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+			sat_subno := !sat_subno+1;
+			if not sat then 
+				false
+			else List.for_all (fun (_,c)-> 
+				let sat = TP.is_sat (Cpure.add_null c self) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+				Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+				sat_subno := !sat_subno+1;
+				sat) br in
 		if (not is_sat) then None
 		else
 		(*let saset = Solver.get_aset (Solver.alias(Solver.ptr_equations ba)) self in*)
@@ -2955,6 +2968,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
               in block_e))
 
 and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool =
+	let sat_subno  = ref 0 in
 	let rec ext_case_coverage (instant:Cpure.spec_var list)(f1:Cformula.ext_formula):bool = match f1 with
 		| Cformula.EAssume b ->  true
 		| Cformula.EBase b -> case_coverage (instant@
@@ -2971,12 +2985,20 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 					(List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "instant:" instant)^"\n")in			
 			Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
                     	Err.error_text = "all guard free vars must be instantiated";} in
-			let _ = if (Tpdispatcher.is_sat(Cpure.Not (all,no_pos))) then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
+			let _ = 
+				let sat = Tpdispatcher.is_sat(Cpure.Not (all,no_pos)) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+				Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+				sat_subno := !sat_subno+1;
+				if sat then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
                     	Err.error_text = "the guards don't cover the whole domain";} 	in
 											
 			let rec p_check (p:Cpure.formula list):bool = match p with
 				| [] -> false 
-				| p1::p2 -> if (List.fold_left (fun a c-> a ||(Tpdispatcher.is_sat(Cpure.mkAnd p1 c no_pos))) false p2 ) then true else p_check p2 in
+				| p1::p2 -> if (List.fold_left (fun a c-> 
+					let sat =  Tpdispatcher.is_sat(Cpure.mkAnd p1 c no_pos) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+					Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+					sat_subno := !sat_subno+1;
+					a ||sat) false p2 ) then true else p_check p2 in
 				
 			let _ = if (p_check r1) then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
                     	Err.error_text = "the guards are not disjoint";} in
@@ -3044,7 +3066,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
 			| Iformula.ECase b-> 	
 				Cformula.ECase {
 					Cformula.formula_case_exists = [];
-					Cformula.formula_case_branches = List.map (fun (c1,c2)-> ((arith_simplify (trans_pure_formula c1 stab)),
+					Cformula.formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.arith_simplify (trans_pure_formula c1 stab)),
 						(trans_struc_formula_hlp c2 fvars)))
 						 b.Iformula.formula_case_branches;
 					Cformula.formula_case_pos = b.Iformula.formula_case_pos}			
@@ -3243,9 +3265,9 @@ and
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
-    let new_p = arith_simplify new_p in
+    let new_p = Cpure.arith_simplify new_p in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
-    let new_br = List.map (fun (l, f) -> (l, arith_simplify f)) new_br in
+    let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify f)) new_br in
     (new_h, new_p, type_f, new_br) in
     match f0 with
     | IF.Or
@@ -3799,277 +3821,6 @@ and print_stab (stab : spec_var_table) =
     print_string
       (k ^ (" --> " ^ ((print_spec_var_kind i.sv_info_kind) ^ "\n")))
   in (print_string "\n"; H.iter p stab; print_string "\n")
-
-and simp_mult (e : Cpure.exp) : Cpure.exp =
-  let rec normalize_add m lg (x : Cpure.exp) : Cpure.exp =
-    match x with
-    | Cpure.Add (e1, e2, l) ->
-        let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
-    | _ -> (match m with | None -> x | Some e -> Cpure.Add (e, x, lg)) in
-  let rec acc_mult m e0 =
-    match e0 with
-    | Cpure.Null _ -> e0
-    | Cpure.Var (v, l) ->
-        let r = (match m with | None -> e0 | Some c -> Cpure.Mult (c, e0, l))
-        in r
-    | Cpure.IConst (v, l) ->
-        let r =
-          (match m with | None -> e0 | Some c -> Cpure.IConst (c * v, l))
-        in r
-    | Cpure.Add (e1, e2, l) ->
-        normalize_add None l (Cpure.Add (acc_mult m e1, acc_mult m e2, l))
-    | Cpure.Subtract (e1, e2, l) ->
-        normalize_add None l
-          (Cpure.Add (acc_mult m e1,
-             acc_mult
-               (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
-             l))
-    | Cpure.Mult (c, e1, l) ->
-        let r =
-          (match m with
-           | None -> acc_mult (Some c) e1
-           | Some c1 -> acc_mult (Some (c1 * c)) e1)
-        in r
-    | Cpure.Max (e1, e2, l) ->
-        Err.report_error
-          {
-            Err.error_loc = l;
-            Err.error_text =
-              "got Max !! (Should have already been simplified )";
-          }
-    | Cpure.Min (e1, e2, l) ->
-        Err.report_error
-          {
-            Err.error_loc = l;
-            Err.error_text =
-              "got Min !! (Should have already been simplified )";
-          }
-    | Cpure.Bag (el, l) -> Cpure.Bag (List.map (acc_mult m) el, l)
-    | Cpure.BagUnion (el, l) -> Cpure.BagUnion (List.map (acc_mult m) el, l)
-    | Cpure.BagIntersect (el, l) ->
-        Cpure.BagIntersect (List.map (acc_mult m) el, l)
-    | Cpure.BagDiff (e1, e2, l) ->
-        Cpure.BagDiff (acc_mult m e1, acc_mult m e2, l)
-  in acc_mult None e
-
-and split_sums (e : Cpure.exp) : ((Cpure.exp option) * (Cpure.exp option)) =
-  match e with
-  | Cpure.Null _ -> ((Some e), None)
-  | Cpure.Var _ -> ((Some e), None)
-  | Cpure.IConst (v, l) ->
-      if v > 0
-      then ((Some e), None)
-      else
-        if v < 0
-        then (None, (Some (Cpure.IConst (- v, l))))
-        else (None, None)
-  | Cpure.Add (e1, e2, l) ->
-      let (ts1, tm1) = split_sums e1 in
-      let (ts2, tm2) = split_sums e2 in
-      let tsr =
-        (match (ts1, ts2) with
-         | (None, None) -> None
-         | (None, Some r1) -> ts2
-         | (Some r1, None) -> ts1
-         | (Some r1, Some r2) -> Some (Cpure.Add (r1, r2, l))) in
-      let tmr =
-        (match (tm1, tm2) with
-         | (None, None) -> None
-         | (None, Some r1) -> tm2
-         | (Some r1, None) -> tm1
-         | (Some r1, Some r2) -> Some (Cpure.Add (r1, r2, l)))
-      in (tsr, tmr)
-  | Cpure.Subtract (e1, e2, l) ->
-      Err.report_error
-        {
-          Err.error_loc = l;
-          Err.error_text =
-            "got subtraction !! (Should have already been simplified )";
-        }
-  | Cpure.Mult (v, e1, l) ->
-      let (ts, tm) = split_sums e1 in
-      let r =
-        (match (ts, tm) with
-         | (None, None) -> (None, None)
-         | (Some r1, None) ->
-             if v > 0
-             then ((Some (Cpure.Mult (v, r1, l))), None)
-             else
-               if v == 0
-               then (None, None)
-               else (None, (Some (Cpure.Mult (- v, r1, l))))
-         | (None, Some r1) ->
-             if v > 0
-             then (None, (Some (Cpure.Mult (v, r1, l))))
-             else
-               if v == 0
-               then (None, None)
-               else ((Some (Cpure.Mult (- v, r1, l))), None)
-         | _ -> ((Some e), None))
-      in r
-  | Cpure.Max (e1, e2, l) ->
-      Err.report_error
-        {
-          Err.error_loc = l;
-          Err.error_text =
-            "got Max !! (Should have already been simplified )";
-        }
-  | Cpure.Min (e1, e2, l) ->
-      Err.report_error
-        {
-          Err.error_loc = l;
-          Err.error_text =
-            "got Min !! (Should have already been simplified )";
-        }
-  | Cpure.Bag (e1, l) -> ((Some e), None)
-  | Cpure.BagUnion (e1, l) -> ((Some e), None)
-  | Cpure.BagIntersect (e1, l) -> ((Some e), None)
-  | Cpure.BagDiff (e1, e2, l) -> ((Some e), None)
-
-and move_lr (lhs : Cpure.exp option) (lsm : Cpure.exp option)
-  (rhs : Cpure.exp option) (rsm : Cpure.exp option) l :
-  (Cpure.exp * Cpure.exp) =
-  let nl =
-    match (lhs, rsm) with
-    | (None, None) -> Cpure.IConst (0, l)
-    | (Some e, None) -> e
-    | (None, Some e) -> e
-    | (Some e1, Some e2) -> Cpure.Add (e1, e2, l) in
-  let nr =
-    match (rhs, lsm) with
-    | (None, None) -> Cpure.IConst (0, l)
-    | (Some e, None) -> e
-    | (None, Some e) -> e
-    | (Some e1, Some e2) -> Cpure.Add (e1, e2, l)
-  in (nl, nr)
-	
-	
-and purge_mult (e : Cpure.exp): Cpure.exp = match e with
-	| Cpure.Null _ -> e
-  | Cpure.Var _ -> e
-  | Cpure.IConst _ -> e
-  | Cpure.Add (e1, e2, l) -> Cpure.Add((purge_mult e1), (purge_mult e2), l)
-  | Cpure.Subtract (e1, e2, l) -> Cpure.Subtract((purge_mult e1), (purge_mult e2), l)
-  | Cpure.Mult (i, a, l) -> if (i == 0) then Cpure.IConst (0, l)
-										else if (i == 1) then (purge_mult a) 
-													else 
-														let inter = purge_mult a in
-														let r = 
-														match inter with
-														| Cpure.IConst(v, _) -> if (v == 0) then inter
-																									else Cpure.IConst(i * v, l)
-														| _ -> Cpure.Mult(i, inter, l) in r
-													 
-  | Cpure.Max (e1, e2, l) -> Cpure.Max((purge_mult e1), (purge_mult e2), l)
-  | Cpure.Min (e1, e2, l) -> Cpure.Min((purge_mult e1), (purge_mult e2), l)
-  | Cpure.Bag (el, l) -> Cpure.Bag ((List.map purge_mult el), l)
-  | Cpure.BagUnion (el, l) -> Cpure.BagUnion ((List.map purge_mult el), l)
-  | Cpure.BagIntersect (el, l) -> Cpure.BagIntersect ((List.map purge_mult el), l)
-  | Cpure.BagDiff (e1, e2, l) -> Cpure.BagDiff ((purge_mult e1), (purge_mult e2), l)
-
-and arith_simplify (pf : Cpure.formula) : Cpure.formula = 
-
-	let do_all e1 e2 l =
-			let t1 = simp_mult e1 in
-      let t2 = simp_mult e2 in
-      let (lhs, lsm) = split_sums t1 in
-      let (rhs, rsm) = split_sums t2 in
-      let (lh, rh) = move_lr lhs lsm rhs rsm l in
-			let lh = purge_mult lh in
-			let rh = purge_mult rh in
-			 (lh, rh) in
-
-  match pf with
-  | Cpure.BForm b ->
-      let r =
-        (match b with
-         | Cpure.BConst _ -> b
-         | Cpure.BVar _ -> b
-         | Cpure.Lt (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						 Cpure.Lt (lh, rh, l)
-         | Cpure.Lte (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-             Cpure.Lte (lh, rh, l)
-         | Cpure.Gt (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						 Cpure.Lt (rh, lh, l)
-         | Cpure.Gte (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						 Cpure.Lte (rh, lh, l)
-         | Cpure.Eq (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						 Cpure.Eq (lh, rh, l)
-         | Cpure.Neq (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						 Cpure.Neq (lh, rh, l)
-         | Cpure.EqMax (e1, e2, e3, l) ->
-						 let ne1 = simp_mult e1 in
-						 let ne2 = simp_mult e2 in
-						 let ne3 = simp_mult e3 in
-						 let ne1 = purge_mult ne1 in
-						 let ne2 = purge_mult ne2 in
-						 let ne3 = purge_mult ne3 in
-						 if (!Tpdispatcher.tp == Tpdispatcher.Mona) then
-							  let (s1, m1) = split_sums ne1 in
-								let (s2, m2) = split_sums ne2 in
-								let (s3, m3) = split_sums ne3 in
-								match (s1, s2, s3, m1, m2, m3) with
-									| None, None, None, None, None, None -> Cpure.BConst (true, l)
-									| Some e11, Some e12, Some e13, None, None, None -> 
-										let e11 = purge_mult e11 in
-										let e12 = purge_mult e12 in
-										let e13 = purge_mult e13 in
-										Cpure.EqMax (e11, e12, e13, l)
-									| None, None, None, Some e11, Some e12, Some e13 -> 
-										let e11 = purge_mult e11 in
-										let e12 = purge_mult e12 in
-										let e13 = purge_mult e13 in
-										Cpure.EqMin (e11, e12, e13, l)
-									| _ -> 
-										 Cpure.EqMax (ne1, ne2, ne3, l)
-							else 
-             		Cpure.EqMax (ne1, ne2, ne3, l)
-         | Cpure.EqMin (e1, e2, e3, l) ->
-						 let ne1 = simp_mult e1 in
-						 let ne2 = simp_mult e2 in
-						 let ne3 = simp_mult e3 in
-						 let ne1 = purge_mult ne1 in
-						 let ne2 = purge_mult ne2 in
-						 let ne3 = purge_mult ne3 in
-						 if (!Tpdispatcher.tp == Tpdispatcher.Mona) then
-							  let (s1, m1) = split_sums ne1 in
-								let (s2, m2) = split_sums ne2 in
-								let (s3, m3) = split_sums ne3 in
-								match (s1, s2, s3, m1, m2, m3) with
-									| None, None, None, None, None, None -> Cpure.BConst (true, l)
-									| Some e11, Some e12, Some e13, None, None, None -> 
-											let e11 = purge_mult e11 in
-											let e12 = purge_mult e12 in
-											let e13 = purge_mult e13 in
-											Cpure.EqMin (e11, e12, e13, l)
-									| None, None, None, Some e11, Some e12, Some e13 -> 
-											let e11 = purge_mult e11 in
-											let e12 = purge_mult e12 in
-											let e13 = purge_mult e13 in
-											Cpure.EqMax (e11, e12, e13, l)
-									| _ -> Cpure.EqMin (ne1, ne2, ne3, l)
-							else
-             		Cpure.EqMin (ne1, ne2, ne3, l)
-         | Cpure.BagIn (v, e1, l) -> Cpure.BagIn (v, purge_mult (simp_mult e1), l)
-         | Cpure.BagNotIn (v, e1, l) -> Cpure.BagNotIn (v, purge_mult (simp_mult e1), l)
-         | Cpure.BagSub (e1, e2, l) ->
-             Cpure.BagSub (simp_mult e1, simp_mult e2, l)
-         | Cpure.BagMin _ -> b
-         | Cpure.BagMax _ -> b)
-      in Cpure.BForm r
-  | Cpure.And (f1, f2, loc) ->
-      Cpure.And (arith_simplify f1, arith_simplify f2, loc)
-  | Cpure.Or (f1, f2, loc) ->
-      Cpure.Or (arith_simplify f1, arith_simplify f2, loc)
-  | Cpure.Not (f1, loc) -> Cpure.Not (arith_simplify f1, loc)
-  | Cpure.Forall (v, f1, loc) -> Cpure.Forall (v, arith_simplify f1, loc)
-  | Cpure.Exists (v, f1, loc) -> Cpure.Exists (v, arith_simplify f1, loc)
 
 and ilinearize_formula (f:Iformula.formula)(h:(ident*primed) list): Iformula.formula*((ident*primed) list) = 
 	let fe = Iformula.all_fv f in

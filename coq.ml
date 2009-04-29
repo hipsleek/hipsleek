@@ -169,9 +169,9 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   choice := 1;
   write (CP.mkOr (CP.mkNot ante no_pos) conseq no_pos)
 
-let is_sat (f : CP.formula) : bool =
+let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then
-	output_string log_file "\n[coq.ml]: #is_sat\n";
+	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
   let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos)))) in
   match tmp_form with
   | true ->
