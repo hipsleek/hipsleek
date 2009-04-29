@@ -532,6 +532,7 @@ r_constr
 						{
 						 	Iformula.formula_ext_explicit_inst = $1;
 						 	Iformula.formula_ext_implicit_inst = [];
+							Iformula.formula_ext_exists = [];
 						 	Iformula.formula_ext_base = $2;				
 						 	Iformula.formula_ext_continuation = $3;
 						 	Iformula.formula_ext_pos = (get_pos 2);

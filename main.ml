@@ -127,6 +127,8 @@ let process_cmd_line () = Arg.parse [
   ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
   ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
+  ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
+  ("--pcp", Arg.Set Globals.print_core,"print core representation");
   
 	] set_source_file usage_msg
 

@@ -93,12 +93,19 @@ let show_gist = ref false
 let trace_all = ref false
 
 let print_mvars = ref false
+
 let enable_sat_statistics = ref false
 
 let wrap_exists_implicit_explicit = ref true
 
 let profiling = ref false
+
 let enable_syn_base_case = ref false
+
+let enable_case_inference = ref false
+
+let print_core = ref false
+
 
 let profile_threshold = 0.5 
 

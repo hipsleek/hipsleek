@@ -1035,13 +1035,15 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 
 (* fold some constraints in f1 to view v under pure pointer *)
 (* constraint pp and Presburger constraint pres             *)
-and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) (pos : loc): (context list * proof) = match view with
+and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (context list * proof) = match view with
   | ViewNode ({h_formula_view_node = p;
 			   h_formula_view_name = c;
 			   h_formula_view_arguments = vs}) -> begin
 	  try
 		let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c in
-		let renamed_view_formula = rename_struc_bound_vars vdef.Cast.view_formula in
+		let renamed_view_formula = rename_struc_bound_vars 
+			(if use_case then vdef.Cast.view_formula
+					else Cformula.case_to_disjunct vdef.Cast.view_formula) in
 					(*(if use_base_case then match vdef.Cast.view_base_case with 
 							| None -> vdef.Cast.view_formula
 							| Some s -> s
@@ -1390,10 +1392,9 @@ and elim_unsat_all prog (f : formula) = match f with
 			if sat then true else false
       in
       let is_ok =
-	  let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+        if pfb = [] then let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
 		Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
-		sat_subno := !sat_subno + 1;
-        if pfb = [] then sat else
+		sat_subno := !sat_subno + 1;sat else
 
         List.fold_left fold_fun true pfb
       in
@@ -1408,19 +1409,29 @@ and elim_unsat_all prog (f : formula) = match f with
 		mkOr nf1 nf2 pos
 
 (* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
-and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) pos : (CP.formula * (branch_label * CP.formula) list) = match st with
+(*NOTE: should (fr,t) be added for (CP.mem fr expl_inst)*)
+and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+		(struc_expl_inst : CP.spec_var list) pos : (CP.formula * (branch_label * CP.formula) list)*(CP.formula * (branch_label * CP.formula) list)*
+		(CP.spec_var * CP.spec_var) list = match st with
   | ((fr, t), br_label) :: rest ->
-	  let (rest_eqns, rest_eqns_br) = get_eqns_free rest evars expl_inst pos in
+	  let ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list) = get_eqns_free rest evars expl_inst struc_expl_inst pos in
 		if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
-		  (rest_eqns, rest_eqns_br)
+		  ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),(fr, t)::s_list)
+		else if (CP.mem fr struc_expl_inst) then
+		 let tmp = CP.mkEqVar fr t pos in
+          if br_label = "" then
+		    let res = CP.mkAnd tmp rest_right_eqns pos in
+            ((rest_left_eqns, rest_left_eqns_br),(res, rest_right_eqns_br),s_list)
+          else
+            ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, CP.add_to_branches br_label tmp rest_right_eqns_br),s_list)
 		else
 		  let tmp = CP.mkEqVar fr t pos in
           if br_label = "" then
-		    let res = CP.mkAnd tmp rest_eqns pos in
-            (res, rest_eqns_br)
+		    let res = CP.mkAnd tmp rest_left_eqns pos in
+            ((res, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list)
           else
-            (rest_eqns, CP.add_to_branches br_label tmp rest_eqns_br)
-  | [] -> (CP.mkTrue pos, [])
+            ((rest_left_eqns, CP.add_to_branches br_label tmp rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list)
+  | [] -> ((CP.mkTrue pos, []),(CP.mkTrue pos, []),[])
 
 (*
 	- extract the equations for the variables that are to be explicitly instantiated
@@ -2415,16 +2426,18 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
 	let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho estate.es_ivars pos) in
 	(* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
 	let rho = List.combine rho label_list in
-	let to_lhs, to_lhs_br = get_eqns_free rho estate.es_evars (estate.es_expl_vars@expl_vars'@estate.es_gen_expl_vars) pos in
+	let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = get_eqns_free rho estate.es_evars (estate.es_expl_vars@expl_vars') estate.es_gen_expl_vars pos in
 		(*********************************************************************)
 		(* handle both explicit and implicit instantiation *)
 		(* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
 		(* explicit instantiation is like delaying the movement of the bindings for the free vars from the RHS to the LHS *)
 		(********************************************************************)
 	let new_ante = (mkBase l_h (CP.mkAnd l_p to_lhs pos) l_t (CP.merge_branches l_b to_lhs_br) pos) in
-	let tmp_conseq = mkBase r_h r_p r_t r_b pos in
+	let tmp_conseq = (mkBase r_h (CP.mkAnd r_p to_rhs pos) r_t (CP.merge_branches r_b to_rhs_br) pos) in
 		(* apply the new bindings to the consequent *)
-	let tmp_conseq' = subst_avoid_capture r_args l_args tmp_conseq in
+	let r_subs, l_sub = List.split ext_subst in
+	(*IMPORTANT TODO: global existential not took into consideration*)
+	let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
 	let tmp_h2, tmp_p2, tmp_b2, _ = split_components tmp_conseq' in
 	let new_conseq = mkBase tmp_h2 tmp_p2 r_t tmp_b2 pos in
 	let new_consumed = mkStarH l_node estate.es_heap pos in
@@ -2478,16 +2491,40 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 (****************************************************************************************************************************************************************************)
 (* do_fold *)
 (****************************************************************************************************************************************************************************)
-		  let do_fold_w_ctx fold_ctx var_to_fold = 
-			let view_to_fold = ViewNode ({h_formula_view_node = var_to_fold;
+		    let do_fold_w_ctx fold_ctx var_to_fold = 
+			let estate = estate_of_context fold_ctx pos2 in
+			let existential_eliminator_helper = 
+				let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
+				let pure = rhs_p in
+				let ptr_eq = ptr_equations pure in
+			    let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
+				let asets = alias ptr_eq in
+
+				try
+					let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in
+					let subs_vars = List.combine vdef.view_vars v2 in
+					let sf = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed)) in
+					let subs_vars = (sf,var_to_fold)::subs_vars in
+					((List.map (fun (c1,c2)-> 
+						if (List.exists (comparator c1) vdef.view_case_vars) then
+							if (List.exists (comparator c2) estate.es_evars) then
+								let paset = get_aset asets c2 in
+								List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset 
+							else c2
+						else c2					
+					) subs_vars),true)
+				with | Not_found -> (var_to_fold::v2,false) in
+			let (new_v2,use_case) = existential_eliminator_helper in
+			let view_to_fold = ViewNode ({h_formula_view_node = List.hd new_v2 (*var_to_fold*);
 										  h_formula_view_name = c2;
-										  h_formula_view_arguments = v2;
+										  h_formula_view_arguments = List.tl new_v2;
 										  h_formula_view_modes = get_view_modes ln2;
 										  h_formula_view_coercible = true;
 										  h_formula_view_origins = get_view_origins ln2;
 										  h_formula_view_pos = pos2}) in
-			let estate = estate_of_context fold_ctx pos2 in
-			let fold_rs, fold_prf = fold prog fold_ctx view_to_fold (P.mkTrue pos) pos in
+
+			
+			let fold_rs, fold_prf = fold prog fold_ctx view_to_fold (P.mkTrue pos) use_case pos in
 			  if not (U.empty fold_rs) then
 				let b = { formula_base_heap = resth2;
 						  formula_base_pure = rhs_p;
@@ -3104,6 +3141,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                   let pure_ctx = set_context_formula ctx0 pure_lhs in
 						 let ln2_f = formula_of_heap ln2 pos in
 						   let rs1 = heap_entail_conjunct prog is_folding pure_ctx ln2_f pos in 
+						if uncommented update the case vars
                   let rs1, fold_prf = fold prog pure_ctx ln2 (CP.mkTrue pos) pos in
                   if U.empty rs1 then
 					  let fold_prf = mkFold ctx0 conseq p2 fold_prf [] in
@@ -3374,6 +3412,28 @@ and compose_struc_formula (delta : struc_formula) (phi : struc_formula) (x : CP.
   let resform = push_struc_exists rs new_f in
 	resform	
 	
+and transform_null (eqs) :(CP.b_formula list) = List.map (fun c-> match c with
+	| Cpure.BVar _ 
+	| Cpure.Lt _
+	| Cpure.Lte _ -> c
+	| Cpure.Eq (e1,e2,l) -> 
+		if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
+			if (Cpure.is_zero e2) then Cpure.Eq (e1,(Cpure.Null l),l)
+				else Cpure.Neq (e1,(Cpure.Null l),l)
+		else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
+			if (Cpure.is_zero e1) then Cpure.Eq (e2,(Cpure.Null l),l)
+				else Cpure.Neq (e2,(Cpure.Null l),l)
+		else c
+	| Cpure.Neq (e1,e2,l)-> 
+		if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
+			if (Cpure.is_zero e2) then Cpure.Neq (e1,(Cpure.Null l),l)
+				else c
+		else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
+			if (Cpure.is_zero e1) then Cpure.Neq (e2,(Cpure.Null l),l)
+				else c
+		else c
+	| _ -> c
+) eqs
 	
 (*returns true if exists one unsat branch*)(*
 and check_unsat_struc prog (cf:struc_formula):bool = 

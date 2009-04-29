@@ -26,6 +26,7 @@ and ext_base_formula =
 	{
 		 formula_ext_explicit_inst : (ident * primed) list;
 		 formula_ext_implicit_inst : (ident * primed) list;
+		 formula_ext_exists :  (ident * primed) list;
 		 formula_ext_base : formula;
 		 formula_ext_continuation : struc_formula;
 		 formula_ext_pos : loc
@@ -133,6 +134,7 @@ and mkFalse pos = Base { formula_base_heap = HFalse;
 and mkETrue pos = [EBase {
 		 formula_ext_explicit_inst = [];
 		 formula_ext_implicit_inst = [];
+		 formula_ext_exists = [];
 		 formula_ext_base = mkTrue pos;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos	}]
@@ -140,6 +142,7 @@ and mkETrue pos = [EBase {
 and mkEFalse pos =[EBase {
 		 formula_ext_explicit_inst = [];
 		 formula_ext_implicit_inst = [];
+		 formula_ext_exists = [];
 		 formula_ext_base = mkFalse pos;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos	}]
@@ -275,7 +278,18 @@ and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 		Util.difference (h_fv b.formula_exists_heap) b.formula_exists_qvars
 	| Or b-> Util.remove_dups ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
-	
+and struc_free_vars (f0:struc_formula):(ident*primed) list= 
+	let helper f = match f with
+		| EBase b -> 
+					let fvb = all_fv b.formula_ext_base in
+					let fvc = struc_free_vars b.formula_ext_continuation in
+					Util.remove_dups (Util.difference (fvb@fvc) (b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst @ b.formula_ext_exists))
+		| ECase b -> 
+				let fvc = List.fold_left (fun a (c1,c2)-> 
+				a@(struc_free_vars c2)@(Ipure.fv c1)) [] b.formula_case_branches in
+				Util.remove_dups fvc		
+		| EAssume b-> all_fv b in
+	Util.remove_dups (List.concat (List.map helper f0))
 and all_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> Util.remove_dups 
 			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))
@@ -314,12 +328,14 @@ let formula_to_struc_formula (f:formula):struc_formula =
 		| Base b-> [EBase ({
 			 		formula_ext_explicit_inst =[];
 		 			formula_ext_implicit_inst = [];
+					formula_ext_exists = [];
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
 		 			formula_ext_pos = b.formula_base_pos})]
 		| Exists b-> [EBase ({
 			 		formula_ext_explicit_inst =[];
 		 			formula_ext_implicit_inst = [];
+					formula_ext_exists = [];
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
 		 			formula_ext_pos = b.formula_exists_pos})]
@@ -456,10 +472,12 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 			let sc = subst_struc sst b.formula_ext_continuation in
 			let se = List.map (subst_var_list sst) b.formula_ext_explicit_inst in
 			let si = List.map (subst_var_list sst) b.formula_ext_implicit_inst in
+			let s_exist = List.map (subst_var_list sst) b.formula_ext_exists in
 			EBase ({
 					formula_ext_implicit_inst = si;
 					formula_ext_explicit_inst = se;
-				  formula_ext_base = sb;
+					formula_ext_exists = s_exist;
+					formula_ext_base = sb;
 					formula_ext_continuation = sc;
 					formula_ext_pos = b.formula_ext_pos	})	in	
 	List.map helper f
@@ -558,6 +576,7 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 		| EBase b-> 	EBase ({
 					formula_ext_explicit_inst = b.formula_ext_explicit_inst;
 					formula_ext_implicit_inst = b.formula_ext_implicit_inst;
+					formula_ext_exists = b.formula_ext_exists ;
 					formula_ext_base = float_out_exps_from_heap b.formula_ext_base;
 					formula_ext_continuation = float_out_exps_from_heap_struc b.formula_ext_continuation;
 					formula_ext_pos = b.formula_ext_pos			

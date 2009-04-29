@@ -713,7 +713,7 @@ let continue f arg tsecs =
 let rec check fd timeout pid : bool =
   try begin
     if (Unix.select [Unix.descr_of_in_channel fd] [] [] timeout) = ([],[],[]) then begin
-        print_endline "\nTimout reached."; flush stdout; false
+        print_endline "\nMOna timeout reached."; flush stdout; false
     end else match input_line fd with
 	| "Formula is valid" ->
 		begin
