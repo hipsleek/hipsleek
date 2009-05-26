@@ -1106,13 +1106,16 @@ and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = m
 and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = match ctx with
   | Ctx es -> Ctx {es with 
 				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
-				es_gen_impl_vars = es.es_gen_impl_vars @ impvars}
+				es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
+				(*es_evars = es.es_evars@ expvars;*)}
   | OCtx (c1, c2) -> OCtx (push_expl_impl_context expvars impvars c1, push_expl_impl_context expvars impvars c2)
 
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = match ctx with
   | Ctx es -> Ctx {es with 
 				es_gen_expl_vars = Util.difference es.es_gen_expl_vars expvars; 
-				es_gen_impl_vars = Util.difference es.es_gen_impl_vars impvars}
+				es_gen_impl_vars = Util.difference es.es_gen_impl_vars impvars;
+				es_evars = Util.difference es.es_evars expvars;
+				}
   | OCtx (c1, c2) -> OCtx (pop_expl_impl_context expvars impvars c1, pop_expl_impl_context expvars impvars c2)
 
   
@@ -1354,7 +1357,7 @@ let rec split_struc_formula (f0:struc_formula):(formula*formula) list =
 		| EBase b-> 
 				let ll = split_struc_formula b.formula_ext_continuation in
 				let e = List.map (fun (c1,c2)-> ((normalize c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
-				let nf = (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) in
+				let nf = ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) in
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
 		| EAssume (x,b)-> [((mkTrue no_pos),b)]
@@ -1383,7 +1386,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
 			push_exists b.formula_case_exists r 
 		| EBase b-> 
 				let e = normalize_combine b.formula_ext_base (struc_to_formula b.formula_ext_continuation) b.formula_ext_pos in
-				let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
+				let nf = push_exists ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) e in
 				nf
 		| EAssume (_,b)-> b 
 			in	

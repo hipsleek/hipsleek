@@ -1630,7 +1630,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 		 call the disjunct procedure, assign the returned 
 		 value to bvar_name 
 	  *)
-	  let bvar_name = fresh_var_name "xxx" pos.Lexing.pos_lnum in
+	  let bvar_name = fresh_var_name "xxx" pos.start_pos.Lexing.pos_lnum in
 	  let disj_res = Var ({exp_var_name = bvar_name;
 						   exp_var_pos = pos}) in
 	  let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
@@ -1640,7 +1640,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_pos = pos}) in
 	  let undo_call = VarDecl {exp_var_decl_type = Prim Bool;
-							   exp_var_decl_decls = [(fresh_var_name "bool" pos.Lexing.pos_lnum, Some undo_call', pos)];
+							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
 							   exp_var_decl_pos = pos } in
 	  let call_disj = VarDecl {exp_var_decl_type = Prim Bool;
 							   exp_var_decl_decls = [(bvar_name, Some call, pos)];

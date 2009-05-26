@@ -1415,15 +1415,15 @@ and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evar
 		(CP.spec_var * CP.spec_var) list = match st with
   | ((fr, t), br_label) :: rest ->
 	  let ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list) = get_eqns_free rest evars expl_inst struc_expl_inst pos in
-		if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
-		  ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),(fr, t)::s_list)
-		else if (CP.mem fr struc_expl_inst) then
+	  if (CP.mem fr struc_expl_inst) then
 		 let tmp = CP.mkEqVar fr t pos in
           if br_label = "" then
 		    let res = CP.mkAnd tmp rest_right_eqns pos in
             ((rest_left_eqns, rest_left_eqns_br),(res, rest_right_eqns_br),s_list)
           else
             ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, CP.add_to_branches br_label tmp rest_right_eqns_br),s_list)
+		else if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
+		  ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),(fr, t)::s_list)		
 		else
 		  let tmp = CP.mkEqVar fr t pos in
           if br_label = "" then
@@ -1861,7 +1861,7 @@ and move_lemma_expl_inst_ctx	(ctx : context) (f : formula) : context =
 and move_expl_inst_ctx_list (ctx:context list)(f:CP.formula):context list = 
 	let rec helper (c:context):context = match c with
 		| CF.Ctx es  ->
-			let f1 = CP.mkExists (es.es_gen_impl_vars@es.es_evars) f no_pos in
+			let f1 = CP.mkExists ((*es.es_gen_impl_vars@es.es_gen_expl_vars@*)es.es_evars) f no_pos in
 			(*let _ = print_string ("\n push before:"^(Cprinter.string_of_pure_formula f)^"\n after: "
 			^(Cprinter.string_of_pure_formula f1)^"\n") in*)
 			let f1 = CP.elim_exists f1 in
@@ -2366,53 +2366,9 @@ and imply_one_conj ante_disj0 ante_disj1 conseq : bool =
 and imply_disj ante_disj conseq str =
 		match ante_disj with
 		| h :: rest -> 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 			let _ = Debug.devel_pprint str no_pos in
 				(TP.imply h conseq (string_of_int !imp_no)) && (imply_disj rest conseq str)
 		| [] -> true
-
-
-
-
-
 
 and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos=
 	Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: using " ^ (Cprinter.string_of_h_formula l_node)	^ " to prove " ^ (Cprinter.string_of_h_formula r_node)) pos;

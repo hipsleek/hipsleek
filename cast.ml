@@ -558,7 +558,7 @@ let build_hierarchy (prog : prog_decl) =
            extesions
   cdefs: list of class definition, going from super class to sub class
 *)
-let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formula = match cdefs0 with
+let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_formula = match cdefs0 with
   | cdef1 :: _ -> begin
 	  (* generate the first node *)
 	  let sub_tvar = List.hd subnode.F.h_formula_data_arguments in
@@ -570,7 +570,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formul
 	  let to_sup, rest_fields = U.split_at heap_args n in
 	  let ext_name = gen_ext_name subnode.F.h_formula_data_name cdef1.data_name in
 	  (*--- 09.05.2000 *)
-	  let fn1 = fresh_var_name ext_name pos.Lexing.pos_lnum in
+	  let fn1 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
 		(*let _ = (print_string ("\n[cast.ml, line 556]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
 		(*09.05.2000 ---*)
 	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
@@ -593,7 +593,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 pos : F.h_formul
 			  else
 				let ext_link_name = gen_ext_name cdef2.data_name ((List.hd rest).data_name) in
 				(*--- 09.05.2000 *)
-	  		let fn2 = fresh_var_name ext_name pos.Lexing.pos_lnum in
+	  		let fn2 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
 				(*let _ = (print_string ("\n[cast.ml, line 579]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
 				(*09.05.2000 ---*)
 				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
@@ -688,7 +688,7 @@ and exp_to_check (e:exp) :bool = match e with
   | SCall _ -> true
   
   
-and pos_of_exp (e:exp) :Lexing.position = match e with
+and pos_of_exp (e:exp) :loc = match e with
   | CheckRef b -> b.exp_check_ref_pos
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos

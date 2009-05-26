@@ -31,7 +31,11 @@
 	| AnnMode of mode
 	| AnnType of typ
 
-  let get_pos (i : int) = Parsing.rhs_start_pos i
+let get_pos x = 
+				{start_pos = Parsing.symbol_start_pos ();
+				 end_pos = Parsing. symbol_end_pos ();
+				 mid_pos = Parsing.rhs_start_pos x;
+				}	
 
   let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin

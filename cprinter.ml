@@ -396,6 +396,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 let string_of_view_decl v = "view " ^ v.view_name ^ "<" ^ (string_of_spec_var_list v.view_vars) ^ ">=" ^
                             (string_of_struc_formula v.view_formula) 
   ^ "\n\tinv " ^ (string_of_pure_formula (fst v.view_user_inv))
+  ^ "\n\tunstruc_f" ^(string_of_formula v.view_un_struc_formula)
   ^ "\n\txform " ^ (string_of_pure_formula (fst v.view_x_formula))
   ^ "\n\t view_base_case: "^
   (match v.view_base_case with 

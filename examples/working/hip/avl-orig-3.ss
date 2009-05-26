@@ -90,8 +90,11 @@ node insert(node t, int x)
 */
 {
 	node tmp = null;
+	dprint;
 	if (t==null) 
+		{dprint;
 		return new node(x, 1, tmp, tmp);
+		}
 	else if (x < t.ele) {		
                 dprint;
                 tmp = t.left;

@@ -54,7 +54,7 @@ and mona_of_exp_break e0 =
   match e0 with
   | CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := (new_tmp_var :: !additional_vars);
@@ -63,7 +63,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -73,7 +73,7 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3)
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
 		additional_vars := new_tmp_var :: !additional_vars;
@@ -82,7 +82,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -91,7 +91,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -453,7 +453,7 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
 	| CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
 	| CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
 	| CP.Add (a1, a2, pos) ->  
-      let tmp = fresh_var_name "int" pos.Lexing.pos_lnum in
+      let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 (*      print_endline ("\nCCC: " ^ tmp); *)
       let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
       let (exs2, a2name, a2str) = mona_of_exp_secondorder a2 f in

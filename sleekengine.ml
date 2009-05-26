@@ -70,6 +70,7 @@ let process_data_def ddef =
 	  try
 		iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
 		let cddef = AS.trans_data iprog ddef in
+		let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 		  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls
 	  with
 		| _ -> iprog.I.prog_data_decls <- tmp
@@ -102,6 +103,7 @@ let process_pred_def pdef =
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
 		let n_cpdef = AS.view_case_inference cprog iprog.I.prog_view_decls cpdef in
+		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
@@ -167,7 +169,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
 	  
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
- (* try*)
+  try
 	let _ = residues := [] in
 	let stab = H.create 103 in
 	let ante = meta_to_formula iante0 false [] stab in
@@ -180,8 +182,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
 	let ectx = CF.empty_ctx no_pos in
 	let ctx = CF.build_context ectx ante no_pos in
-	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^"\n"^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
-	
+	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
+	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
 	let rs, _ = Solver.heap_entail_struc cprog false false false [ctx] conseq no_pos in
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;
@@ -189,8 +191,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		print_string ("Fail.\n")
 	  else
 		print_string ("Valid.\n")
- (* with
-	| _ -> (print_string "exception in entail check\n")*)
+  with
+	| _ -> (print_string "exception in entail check\n")
 		
 let process_capture_residue (lvar : ident) = 
 	let flist = List.map CF.formula_of_context !residues in

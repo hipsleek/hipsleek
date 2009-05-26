@@ -449,7 +449,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 		else if is_zero e2 then flatten_list (e1 :: rest)
 		else
 		  let pos = pos_of_exp e1 in
-			let fn = fresh_var_name "int" pos.Lexing.pos_lnum in
+			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 		  let sv = SpecVar (Prim Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
 		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos)) in

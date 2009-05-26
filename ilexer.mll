@@ -16,9 +16,10 @@
 	    Lexing.pos_bol = pos.Lexing.pos_cnum;
 	}
 
+	
   let print_error lexbuf msg =
 	let pos = lexbuf.Lexing.lex_curr_p in
-	  Error.report_error {Error.error_loc = pos;
+	  Error.report_error {Error.error_loc = {start_pos = pos;mid_pos = pos; end_pos = pos;};
 						  Error.error_text = msg}
 
   let keywords = Hashtbl.create 100

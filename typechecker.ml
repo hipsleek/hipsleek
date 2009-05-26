@@ -18,7 +18,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 				let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
 				
 				let pos_spec = CF.pos_of_struc_formula [spec] in
-				log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.Lexing.pos_lnum);	 
+				log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
 				match spec with
 					| Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
 								let nctx = combine_context_and prog ctx c1 true  in
@@ -288,8 +288,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) post
 	  if str = "" then begin
 		let str1 = String.concat "\n;;\n" (List.map (fun c-> 
 				"\n\n context length: "^(string_of_int (Cformula.count_or c))^"\n"^(Cprinter.string_of_context c)) ctx)  in
-		let tmp1 = "\nprint: " ^ pos.Lexing.pos_fname
-		  ^ ":" ^ (string_of_int pos.Lexing.pos_lnum) ^ ": ctx: "^(string_of_int (List.length ctx))^"\n" ^ str1 ^ "\n" in
+		let tmp1 = "\nprint: " ^ pos.start_pos.Lexing.pos_fname
+		  ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: "^(string_of_int (List.length ctx))^"\n" ^ str1 ^ "\n" in
 	
 	
 		  (*

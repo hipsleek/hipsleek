@@ -1017,7 +1017,7 @@ and flatten_base_case (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.for
 					let b2,br2 = (symp_struc_to_formula b.Cformula.formula_ext_continuation) in
 					let r1 = Cpure.mkAnd b1 b2 no_pos in
 					let r2 = Cpure.merge_branches br1 br2 in
-					let ev = b.Cformula.formula_ext_explicit_inst@b.Cformula.formula_ext_implicit_inst@b.Cformula.formula_ext_exists in
+					let ev = (*b.Cformula.formula_ext_explicit_inst@b.Cformula.formula_ext_implicit_inst@*)b.Cformula.formula_ext_exists in
 					let r2 = List.map (fun (c1,c2)-> (c1,(Cpure.mkExists ev c2 no_pos))) r2 in
 					let r1 = (Cpure.mkExists ev r1 no_pos) in
 					(r1,r2)
@@ -1523,7 +1523,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 let (fn, new_var) =
                   (match rhs_c with
                    | C.Var { C.exp_var_name = v } -> (v, false)
-                   | _ -> let fn = (fresh_var_name (Cprinter.string_of_typ rhs_t) pos.Lexing.pos_lnum) in (fn, true)) in
+                   | _ -> let fn = (fresh_var_name (Cprinter.string_of_typ rhs_t) pos.start_pos.Lexing.pos_lnum) in (fn, true)) in
                 let fn_var =
                   C.Var
                     {
@@ -1749,7 +1749,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         (match crecv with
          | C.Var { C.exp_var_name = v } -> (v, (C.Unit pos), false)
          | _ ->
-             let fname = (fresh_var_name (Cprinter.string_of_typ crecv_t) (pos.Lexing.pos_lnum)) in
+             let fname = (fresh_var_name (Cprinter.string_of_typ crecv_t) (pos.start_pos.Lexing.pos_lnum)) in
              let fdecl =
                C.VarDecl
                  {
@@ -1982,7 +1982,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                      }),
                   te2)
              | _ ->
-                 let fn = (fresh_var_name "bool" pos.Lexing.pos_lnum) in
+                 let fn = (fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum) in
                  let vd =
                    C.VarDecl
                      {
@@ -2190,7 +2190,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in trans_exp prog proc call_e
        | I.OpPostInc ->
-           let fn = (fresh_var_name "int" pos.Lexing.pos_lnum) in
+           let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
            let fn_decl =
              I.VarDecl
                {
@@ -2235,7 +2235,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
              trans_exp prog proc
                (I.Block { I.exp_block_body = seq2; I.exp_block_pos = pos; })
        | I.OpPostDec ->
-           let fn = (fresh_var_name "int" pos.Lexing.pos_lnum) in
+           let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
            let fn_decl =
              I.VarDecl
                {
@@ -2586,7 +2586,7 @@ and
       let (fn, new_var) =
         (match cbase with
          | C.Var { C.exp_var_name = v } -> (v, false)
-         | _ -> let fn2 = (fresh_var_name (Cprinter.string_of_typ base_t) pos.Lexing.pos_lnum) in (fn2, true)) in
+         | _ -> let fn2 = (fresh_var_name (Cprinter.string_of_typ base_t) pos.start_pos.Lexing.pos_lnum) in (fn2, true)) in
       let fn_decl =
         if new_var
         then
@@ -2615,7 +2615,7 @@ and
          | [] -> (None, [])
          | f :: rest ->
              let fn1 = fresh_trailer () in
-             let fresh_fn = (snd f) ^"_"^(string_of_int pos.Lexing.pos_lnum)^ fn1 in
+             let fresh_fn = (snd f) ^"_"^(string_of_int pos.start_pos.Lexing.pos_lnum)^ fn1 in
              let (tmp, new_rest) = gen_names fn rest
              in
                if (snd f) = fn
@@ -2701,7 +2701,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
            | [] -> (None, [])
            | f :: rest ->
                let fn = fresh_name () in
-               let fresh_fn = (snd f)^(string_of_int pos.Lexing.pos_lnum) ^ fn in
+               let fresh_fn = (snd f)^(string_of_int pos.start_pos.Lexing.pos_lnum) ^ fn in
                let (tmp, new_rest) = gen_names fn rest
                in
                  if (snd f) = fn
@@ -2792,7 +2792,7 @@ and trans_args (args : (C.exp * CP.typ * loc) list) :
               },
             _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
          | (arg_e, at, pos) ->
-             let fn = fresh_var_name (Cprinter.string_of_typ at) pos.Lexing.pos_lnum in
+             let fn = fresh_var_name (Cprinter.string_of_typ at) pos.start_pos.Lexing.pos_lnum in
              let fn_decl =
                C.VarDecl
                  {
@@ -2926,7 +2926,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
            if CP.are_same_types t C.void_type
            then ce
            else
-             (let fn = fresh_var_name (Cprinter.string_of_typ t) pos.Lexing.pos_lnum in
+             (let fn = fresh_var_name (Cprinter.string_of_typ t) pos.start_pos.Lexing.pos_lnum in
               let fn_decl =
                 C.VarDecl
                   {
@@ -3818,8 +3818,9 @@ and print_stab (stab : spec_var_table) =
 
 and ilinearize_formula (f:Iformula.formula)(h:(ident*primed) list): Iformula.formula*((ident*primed) list) = 
 	let fe = Iformula.all_fv f in
-	(*let fh = Iformula.fv f in*)
-	let ex = Util.difference fe h in
+	let fh = Iformula.heap_fv f in
+	let ex = Util.difference fh h in
+	let need_quant = Util.difference fe (fh@h) in
 	(*let _ = print_string ("\n\n rr: "^(Iprinter.string_of_formula f)^"\n"^
 										(List.fold_left(fun a (c,d)-> a^" "^c^(Iprinter.string_of_primed d)) "" h)^"\n"
 				) in
@@ -3831,10 +3832,12 @@ and ilinearize_formula (f:Iformula.formula)(h:(ident*primed) list): Iformula.for
 													Err.error_loc = Iformula.pos_of_formula f; 
 													Err.error_text = "existential vars should not be primed"; } in
 	(*let h1 = Util.difference fe ex in*)	
-	((Iformula.push_exists ex f),ex)
-
-
-
+	let f= Iformula.push_exists need_quant f in
+	(match !Globals.instantiation_variants with 
+		| 0
+		| 3 
+		| 5 ->((Iformula.push_exists ex f),ex) 
+		| _ ->(f,ex))
 
 and case_normalize_pure_formula hp b f = f
 
@@ -4007,9 +4010,25 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 							(Iprinter.string_of_var_list global_ex)^"\n")else () in
 				let nb,ex = ilinearize_formula nb (h@implvar@nh0@global_ex) in
 				
+				let heap_vars = (Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc) in
+				let global_ex_non_heap = Util.difference global_ex heap_vars in
+				let global_ex_heap  = Util.intersect global_ex heap_vars in
+				let ex_non_heap = Util.difference ex heap_vars in
+				let ex_heap  = Util.intersect ex heap_vars in				
+				
+				let (global_ex,implvar,expl,ex) = match !Globals.instantiation_variants with
+				| 1 -> (global_ex_non_heap,implvar,b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,ex_non_heap)
+				| 2 -> (global_ex_non_heap,[],implvar@b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,ex_non_heap)				
+				| 4 -> (global_ex_non_heap,implvar@b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,[],ex_non_heap)				
+				| 0 -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
+				| 3 -> (global_ex,implvar@b.Iformula.formula_ext_explicit_inst, [] ,ex)				
+				| 5 -> (global_ex,[], implvar@b.Iformula.formula_ext_explicit_inst,ex)				
+				| _ -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
+				in
+				
 				let h3 = Util.difference h3 ex in
-				let _ = if (List.length (*(Util.difference implvar (Iformula.fv onb))*)
-								(Util.difference implvar ((Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc))))>0 then 
+				let _ = if (*(!Globals.instantiation_variants=0 || !Globals.instantiation_variants=3 || !Globals.instantiation_variants=5)&&*)(List.length (*(Util.difference implvar (Iformula.fv onb))*)
+								(Util.difference implvar heap_vars))>0 then 
 						let _ = print_string ("h2 vars: "^(Iprinter.string_of_var_list h2)^"\n") in
 						let _ = print_string ("h1 vars: "^(Iprinter.string_of_var_list h1)^"\n") in
 						let _ = print_string ("h1 vars: "^(Iprinter.string_of_var_list h3)^"\n") in
@@ -4023,7 +4042,7 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 				let r = (Iformula.EBase ({
 					Iformula.formula_ext_base = nb;
 					Iformula.formula_ext_implicit_inst =implvar;					
-					Iformula.formula_ext_explicit_inst = b.Iformula.formula_ext_explicit_inst;
+					Iformula.formula_ext_explicit_inst = expl;
 					Iformula.formula_ext_exists = global_ex;
 					Iformula.formula_ext_continuation = nc;
 					Iformula.formula_ext_pos = b.Iformula.formula_ext_pos}),(Util.remove_dups (h2@h3)))in
@@ -4438,7 +4457,40 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 					}]) nf2) nf1)					
 				) splitting_constraints)
 				else splitter f_list_init rest_vars
-	
+
+and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure.spec_var list) = 
+	let rec helper (f:Cformula.ext_formula):Cformula.ext_formula*(Cpure.spec_var list) = match f with
+	| Cformula.EBase b->
+		let nc, vars = move_instantiations b.Cformula.formula_ext_continuation in
+		let qvars, nf = Cformula.split_quantifiers b.Cformula.formula_ext_base in
+		let global_ex, imp_inst = (b.Cformula.formula_ext_exists, b.Cformula.formula_ext_implicit_inst) in
+		let n_qvars = Util.difference qvars vars in
+		let n_globals = Util.difference global_ex vars in
+		let inst_from_qvars = Util.difference vars qvars in
+		let inst_from_global = Util.difference vars global_ex in
+		(Cformula.EBase {b with 
+			Cformula.formula_ext_continuation = nc;
+			Cformula.formula_ext_base = Cformula.push_exists n_qvars nf ;
+			Cformula.formula_ext_exists = n_globals;
+			Cformula.formula_ext_implicit_inst = b.Cformula.formula_ext_implicit_inst @ inst_from_global @ inst_from_qvars;
+		},(Util.difference vars (inst_from_qvars@inst_from_global)))
+	| Cformula.ECase b-> 
+		let new_cases, var_list = 
+			List.split 
+				(List.map 
+					(fun (c1,c2)-> 
+						let nf , vars = move_instantiations c2 in
+						((c1,nf), (vars@(Cpure.fv c1)))
+					) 
+					b.Cformula.formula_case_branches) in
+		(
+		(Cformula.ECase {b with 
+		Cformula.formula_case_branches = new_cases}),
+		(List.concat var_list))			
+	| Cformula.EAssume b-> (f,[]) in
+	let forms, vars = List.split (List.map helper f) in
+	(forms, (List.concat vars))
+				
 and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var list) : Cformula.struc_formula = 
 
 
@@ -4461,7 +4513,7 @@ and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var l
 				) f_ext in
 			
 			let r = List.hd (splitter f_list v1) in
-			(Cformula.clean_case_guard_redundancy r [])
+			fst (move_instantiations (Cformula.clean_case_guard_redundancy r []))
 			
 		with _ -> f_ext in
 		(*let _ = print_string ("final f: "^(Cprinter.string_of_struc_formula r)^"\n") in*)

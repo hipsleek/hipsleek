@@ -4,7 +4,11 @@ type ident = string
 
 and branch_label = string
 
-and loc = Lexing.position (* might be expanded to contain more information *)
+and loc = {
+			start_pos : Lexing.position (* might be expanded to contain more information *);
+			mid_pos : Lexing.position;
+			end_pos : Lexing.position;
+			}
 
 and primed =
   | Primed
@@ -27,10 +31,12 @@ type mode =
 
 (* global constants *)
 
-let no_pos = { Lexing.pos_fname = "";
-			   Lexing.pos_lnum = 0;
-			   Lexing.pos_bol = 0; 
-			   Lexing.pos_cnum = 0 }
+let no_pos = 
+	let no_pos1 = { Lexing.pos_fname = "";
+				   Lexing.pos_lnum = 0;
+				   Lexing.pos_bol = 0; 
+				   Lexing.pos_cnum = 0 } in
+	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
 let res = "res"
 
@@ -46,7 +52,7 @@ let source_files = ref ([] : string list)
 
 let procs_verified = ref ([] : string list)
 
-let false_ctx_line_list = ref ([] : Lexing.position list)
+let false_ctx_line_list = ref ([] : loc list)
 
 let verify_callees = ref false
 
@@ -106,6 +112,8 @@ let enable_case_inference = ref false
 
 let print_core = ref false
 
+let instantiation_variants = ref 0
+
 
 let profile_threshold = 0.5 
 
@@ -126,8 +134,9 @@ let seq_number = ref 10
 let sat_timeout = ref 10.
 let imply_timeout = ref 10.
 
-let report_error (pos : Lexing.position) (msg : string) =
-  print_string ("\n" ^ pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.Lexing.pos_lnum) ^ ": " ^ msg ^ "\n");
+let report_error (pos : loc) (msg : string) =
+  print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
+	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
   failwith "Error detected"
 
 let seq_number2 = ref 0
@@ -167,4 +176,5 @@ let fresh_names (n : int) = (* number of names to be generated *)
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
-let string_of_loc (p : loc) = p.Lexing.pos_fname ^ "_" ^ (string_of_int p.Lexing.pos_lnum)
+let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
+	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))

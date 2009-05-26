@@ -129,7 +129,7 @@ let process_cmd_line () = Arg.parse [
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
-  
+  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
 (******************************************)
@@ -210,7 +210,7 @@ let process_source_full source =
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" "^(string_of_int c.Lexing.pos_lnum)) "" !Globals.false_ctx_line_list)^")\n");
+		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
 		  print_string ("\nTotal verification time: " 
 						^ (string_of_float t4) ^ " second(s)\n"
 						^ "\tTime spent in main process: " 

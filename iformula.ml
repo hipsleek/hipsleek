@@ -517,7 +517,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 								match c with
 									| Ipure.Var _ -> (c,[])
 									| _ -> 
-										let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+										let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 										let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
 										let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos)) in																
 										(nv,[(nn,npf)])) b.h_formula_heap_arguments) in
@@ -527,7 +527,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 								match (snd c) with
 									| Ipure.Var _ -> (c,[])
 									| _ -> 
-										let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+										let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 										let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
 										let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos)) in																
 										(((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
@@ -902,7 +902,7 @@ and float_out_heap_min_max (h :  h_formula) :
 		| Ipure.IConst _
 		| Ipure.Var _ -> (d:: a, c)
 		| _ -> 
-				let new_name = fresh_var_name "ptr" l.Lexing.pos_lnum in 
+				let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 				let nv = Ipure.Var((new_name, Unprimed), l) in
 				(nv:: a, match c with
 												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
@@ -919,7 +919,7 @@ and float_out_heap_min_max (h :  h_formula) :
 		| Ipure.IConst _
 		| Ipure.Var _ -> ((d1,d2):: a, c)
 		| _ -> 
-				let new_name = fresh_var_name "ptr" l.Lexing.pos_lnum in 
+				let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 				let nv = Ipure.Var((new_name, Unprimed), l) in
 				((d1,nv):: a, match c with
 												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) )

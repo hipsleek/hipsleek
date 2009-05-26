@@ -76,8 +76,11 @@ let process_cmd_line () = Arg.parse [
   ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
   ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
-  ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference")
-
+  ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
+  ("--pcp", Arg.Set Globals.print_core,"print core representation");
+  ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"existentially wrap instantiations after the entailment");
+  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit;
+  3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 ] set_source_file usage_msg
 
 let prompt = ref "SLEEK> "
@@ -103,7 +106,6 @@ let parse_file (parse) (source_file : string) =
 
 let main () = 
   let quit = ref false in
-  wrap_exists_implicit_explicit := false ;
   let parse =
 	match !fe with
 	  | NativeFE -> NF.parse
@@ -159,6 +161,7 @@ let main () =
 		  print_string ("\n")
 
 let _ = 
+  wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
   if !print_version_flag then begin
 	print_version ()
