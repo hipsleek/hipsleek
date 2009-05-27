@@ -1,4 +1,0 @@
-Link: http://research.microsoft.com/specsharp/
-This directory contains the following
-- specsharp.zip     --> examples using Spec# (arraylist, Bag)
-- documentation dir --> documentation for spec#

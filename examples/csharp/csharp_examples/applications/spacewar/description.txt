@@ -1,2 +1,0 @@
-Link: http://www.gotdotnet.com/community/usersamples/details.aspx?sampleguid=93a92944-59f8-4e19-bca2-8b98194023b7
-The directory contains the implementation in C# of the spacewar game

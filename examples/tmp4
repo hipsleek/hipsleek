@@ -1,7 +1,0 @@
-var1 x, v;
-var2 S;
-
-(((x = 0 & S = {}) | (ex1 v : (ex2 S1 : (x > 0 & (S = S1 union {v} &
-(all1 x : (x notin S1 | v <= x)))))))) & (x = 0)
-=> 
-((S union {v} = {} union {v} & (all1 x : (x notin {} | v <= x))));

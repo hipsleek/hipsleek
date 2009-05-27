@@ -1,3 +1,0 @@
-Link: http://www.gotdotnet.com/community/usersamples/details.aspx?sampleguid=d8ed903c-4efd-483d-92f2-c07e5d3f68ed
-The directory contains the implementation in C# of a physics screensaver written in C# that simulates collisions
-between massive balls, both with and without gravity. 
