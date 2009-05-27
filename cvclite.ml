@@ -4,6 +4,7 @@ module CP = Cpure
 let log_cvcl_formula = ref false
 
 (*
+test
 let cvcl_in = ref stdin
 let cvcl_out = ref stdout
 *)
