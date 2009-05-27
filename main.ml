@@ -169,7 +169,10 @@ let process_source_full source =
 		print_string (" done.\n");
 		exit 0
 	end;
-	if not (!parse_only) then
+  	if (!parse_only) then 
+      let _ = Util.pop_time "Preprocessing" in
+      print_string (Iprinter.string_of_program prog)
+	else 
 	  (* Global variables translating *)
 	  let global_ptime1 = Unix.times () in
 	  let global_t1 = global_ptime1.Unix.tms_utime +. global_ptime1.Unix.tms_cutime in
@@ -227,7 +230,7 @@ let process_source_full source =
 						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 						^ "\tTime spent in child processes: " 
 						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
-	else Util.pop_time "Preprocessing"
+
 	  
 let main1 () =
   process_cmd_line ();
