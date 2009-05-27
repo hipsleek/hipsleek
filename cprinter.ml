@@ -406,14 +406,15 @@ let string_of_view_decl v = "view " ^ v.view_name ^ "<" ^ (string_of_spec_var_li
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
-  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
+  let locstr = (string_of_full_loc p.proc_loc)  
+  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
   ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
   ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
   ^ (if U.empty p.proc_by_name_params then "" 
 	 else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
   ^ (match p.proc_body with 
        | Some e -> (string_of_exp e) ^ "\n\n"
-	   | None   -> "\n") 
+	   | None   -> "\n") ^ locstr
 ;; 
 
 (* pretty printing for a list of data_decl *)

@@ -9,7 +9,6 @@ and loc = {
 			mid_pos : Lexing.position;
 			end_pos : Lexing.position;
 			}
-
 and primed =
   | Primed
   | Unprimed
@@ -178,3 +177,9 @@ let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
 	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+
+let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
+;;
+
+let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+

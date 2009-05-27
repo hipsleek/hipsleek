@@ -888,7 +888,8 @@ cexp_list_rec
 
 proc_decl
   : proc_header proc_body {
-	{ $1 with proc_body = Some $2 }
+    let l = $1.proc_loc in
+	{ $1 with proc_body = Some $2 ; proc_loc = {l with end_pos = Parsing.symbol_end_pos()} }
   }
   | proc_header { $1 }
 ;

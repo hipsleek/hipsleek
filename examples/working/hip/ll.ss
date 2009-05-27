@@ -27,8 +27,11 @@ void append(node x, node y)
 	if (x.next == null)
 		x.next = y;
 	else
+      { node z;
+        z = null;
 		append(x.next, y);
-}
+      }
+    }
 
 /* return the first element of a singly linked list */
 node ret_first(node x)

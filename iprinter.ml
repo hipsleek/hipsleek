@@ -464,12 +464,13 @@ let rec string_of_param_list l = match l with
 let string_of_proc_decl p = 
   let body = match p.proc_body with 
 	| None     -> ""
-	| Some e   -> "{\n" ^ (string_of_exp e) ^ "\n}" 
+	| Some e   -> "{\n" ^ (string_of_exp e) ^ "\n}" in
+  let locstr = (string_of_full_loc p.proc_loc)  
   in	
     (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
 	^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")\n" 
 	^ ( "static " ^ (string_of_struc_formula "" p.proc_static_specs)
-		^ "\ndynamic " ^ (string_of_struc_formula "" p.proc_dynamic_specs) ^ "\n" ^ body)
+		^ "\ndynamic " ^ (string_of_struc_formula "" p.proc_dynamic_specs) ^ "\n" ^ body ^ locstr)
 ;;
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
