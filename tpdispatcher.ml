@@ -371,7 +371,7 @@ let simplify (f : CP.formula) : CP.formula =
     match Netprover.call_prover (Simplify f) with
       Some res -> res
       | None -> f
-	else	 
+	else
 	match !tp with
   | Isabelle -> Isabelle.simplify f
   | Coq -> Coq.simplify f

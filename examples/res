@@ -1,9 +1,0 @@
-MONA v1.4-8 for WS1S/WS2S
-Copyright (C) 1997-2007 BRICS
-
-PARSING
-Error in file 'test12.mona' line 31 column 10
-  ( (~(((x = 0)) & ((((x = 0)) & ((S = {}))) |  (ex1 v: (ex2 S1:(((x > 0)) & (
-           ^
-Type mismatch at '='
-Execution aborted

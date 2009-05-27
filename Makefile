@@ -64,6 +64,7 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
+	globalvars.cmo \
 	main.cmo
 
 SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
@@ -129,7 +130,7 @@ prover: $(PROVE_FILES)
 
 prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt prover.opt
-	
+
 sleekc:
 	make clean; make sleek 
 

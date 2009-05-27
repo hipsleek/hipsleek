@@ -14,6 +14,7 @@
 		
   type decl = 
     | Type of type_decl
+    | Global_var of exp_var_decl
     | Proc of proc_decl
 	| Coercion of coercion_decl
 		
@@ -197,6 +198,7 @@
 %token UNION
 %token WHERE
 %token WHILE
+%token GLOBAL
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -223,6 +225,7 @@
 program
   : opt_decl_list {
     let data_defs = ref ([] : data_decl list) in
+    let global_var_defs = ref ([] : exp_var_decl list) in
 	let enum_defs = ref ([] : enum_decl list) in
 	let view_defs = ref ([] : view_decl list) in
     let proc_defs = ref ([] : proc_decl list) in
@@ -234,6 +237,7 @@ program
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
 		end
+      | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
 	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose $1 in
@@ -248,6 +252,7 @@ program
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
       { prog_data_decls = obj_def :: string_def :: !data_defs;
+        prog_global_var_decls = !global_var_defs;
 		prog_enum_decls = !enum_defs;
 		prog_view_decls = !view_defs;
 		prog_proc_decls = !proc_defs;
@@ -267,6 +272,7 @@ decl_list
 
 decl
   : type_decl { Type $1 }
+  | global_var_decl { Global_var $1 }
   | proc_decl { Proc $1 }
   | coercion_decl { Coercion $1 }
 ;
@@ -277,6 +283,43 @@ type_decl
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
 ;
+
+/***************** Global_variable **************/
+
+global_var_decl
+  : GLOBAL local_variable_type variable_declarators SEMICOLON {
+	let var_decls = List.rev $3  in
+	  mkGlobalVarDecl $2 var_decls (get_pos 1)
+  }
+;
+
+/*
+global_var_type global_var_declarators {
+	let var_decls = List.rev $3 in
+	  mkGlobalVarDecl $2 var_decls (get_pos 1)
+  }
+;
+
+global_var_type
+  : typ { $1 }
+;
+
+global_var_declarators
+  : global_var_declarator { [$1] }
+  | global_var_declarators COMMA global_var_declarator { $3 :: $1 }
+;
+
+global_var_declarator
+  : IDENTIFIER EQ variable_initializer { ($1, Some $3, get_pos 1) }
+  | IDENTIFIER { ($1, None, get_pos 1) }
+;
+
+variable_initializer
+  : expression { $1 }
+;
+*/
+
+/**************** Class ******************/
 
 class_decl
   : CLASS IDENTIFIER extends_opt OBRACE member_list_opt CBRACE {
@@ -313,6 +356,8 @@ member
   | proc_decl { Method $1 }
   | constructor_decl { Method $1 }
 ;
+
+/************ Data *************/
 
 data_decl
   : data_header data_body {
@@ -351,6 +396,8 @@ field_list
 				(($3, $4), get_pos 3) :: $1 
 		}
 ;
+
+/*************** Enums ******************/
 
 enum_decl
   : enum_header enum_body {

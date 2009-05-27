@@ -94,7 +94,7 @@ let process_cmd_line () = Arg.parse [
   ("--no-diff", Arg.Set Solver.no_diff,
    "Drop disequalities generated from the separating conjunction");
   ("--no-set", Arg.Clear Globals.use_set,
-   "Turn of set-of-states search");
+   "Turn off set-of-states search");
   ("--no-unsat-elim", Arg.Clear Globals.elim_unsat,
    "Turn off unsatisfiable formulae elimination during type-checking");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
@@ -129,6 +129,7 @@ let process_cmd_line () = Arg.parse [
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
+  ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
@@ -169,10 +170,19 @@ let process_source_full source =
 		exit 0
 	end;
 	if not (!parse_only) then
+	  (* Global variables translating *)
+	  let global_ptime1 = Unix.times () in
+	  let global_t1 = global_ptime1.Unix.tms_utime +. global_ptime1.Unix.tms_cutime in
+	  let _ = print_string ("Translating global variables to procedure parameters...") in
+	  let intermediate_prog = Globalvars.trans_global_to_param prog in
+	  let global_ptime2 = Unix.times () in
+	  let global_t2 = global_ptime2.Unix.tms_utime +. global_ptime2.Unix.tms_cutime in
+	  let _ = print_string (" done in " ^ (string_of_float (global_t2 -. global_t1)) ^ " second(s)\n") in
+	  (* Global variables translated *)
 	  let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
 	  let _ = print_string ("Translating to core language...") in
-	  let cprog = Astsimp.trans_prog prog in
+	  let cprog = Astsimp.trans_prog intermediate_prog in
 	  let _ = 
 		if !Globals.verify_callees then begin
 		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in

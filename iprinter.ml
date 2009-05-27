@@ -438,6 +438,10 @@ let rec string_of_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
+(* pretty printing for a global variable declaration *)
+let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
+;;
+
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
                             (string_of_struc_formula "" v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
@@ -528,6 +532,13 @@ let rec string_of_enum_decl_list l = match l with
  | h::t     -> (string_of_enum_decl h) ^ "\n" ^ (string_of_enum_decl_list t)
 ;;   
 
+(* pretty printing for a list of global variable declarations *)
+let rec string_of_global_var_decl_list l = 
+  match l with
+  | []    -> ""
+  | h::[] -> string_of_global_var_decl h
+  | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
+;;
 
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
@@ -540,6 +551,7 @@ let string_of_data cdef =
 (* pretty printing for program *)
 let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
   (String.concat "\n\n" (List.map string_of_data p.prog_data_decls)) ^ "\n\n" ^
+  (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
   (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 

@@ -736,14 +736,13 @@ let rec (* overriding test *) (* field duplication test *)
   (* returns a pair of expressions-> to_stay, to_move (signs already         *)
   (* changed)                                                                *)
   (* bag expressions *) (* first is max of second and third *)
-  (* first is min of second and third *) (* bag formulas *) trans_prog
-  (prog0 : I.prog_decl) : C.prog_decl =
+  (* first is min of second and third *) (* bag formulas *) 
+  trans_prog (prog0 : I.prog_decl) : C.prog_decl =
   let _ = I.build_hierarchy prog0 in
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
   let check_method_dup = Chk.no_method_duplication prog0 in
-  let check_field_hiding = Chk.no_field_hiding prog0
-  in
+  let check_field_hiding = Chk.no_field_hiding prog0 in
     if
       check_field_dup &&
         (check_method_dup && (check_overridding && check_field_hiding))
@@ -4318,6 +4317,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
 	 let prog = {prog with Iast.prog_proc_decls = procs1} in
 	 let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in	 
 	 {  Iast.prog_data_decls = cdata;
+		Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; (* Global variable *)
 	    Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
 		Iast.prog_view_decls = tmp_views;
 		Iast.prog_proc_decls = procs1;

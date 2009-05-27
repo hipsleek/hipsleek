@@ -31,11 +31,11 @@
 	| AnnMode of mode
 	| AnnType of typ
 
-let get_pos x = 
-				{start_pos = Parsing.symbol_start_pos ();
-				 end_pos = Parsing. symbol_end_pos ();
-				 mid_pos = Parsing.rhs_start_pos x;
-				}	
+  let get_pos x = 
+	{ start_pos = Parsing.symbol_start_pos ();
+	  end_pos = Parsing. symbol_end_pos ();
+	  mid_pos = Parsing.rhs_start_pos x;
+	}	
 
   let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
@@ -265,6 +265,7 @@ non_empty_command
 
 program : {
   { prog_data_decls = [];
+	prog_global_var_decls = [];
 	prog_enum_decls = [];
 	prog_view_decls = [];
 	prog_proc_decls = [];

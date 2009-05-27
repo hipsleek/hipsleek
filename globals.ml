@@ -9,6 +9,7 @@ and loc = {
 			mid_pos : Lexing.position;
 			end_pos : Lexing.position;
 			}
+
 and primed =
   | Primed
   | Unprimed
@@ -113,6 +114,7 @@ let print_core = ref false
 
 let instantiation_variants = ref 0
 
+let pass_global_by_value = ref false
 
 let profile_threshold = 0.5 
 
@@ -183,3 +185,19 @@ let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^
 
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
+let seq_local_number = ref 0
+
+let fresh_local_int () =
+  seq_local_number := !seq_local_number + 1;
+  !seq_local_number
+
+let fresh_local_var_name (tn : string) : string =
+  tn ^ "_local_" ^ (string_of_int (fresh_local_int ()))
+
+let join2 a b = (a,b)
+
+let fst3 (x,_,_) = x
+
+let snd3 (_,x,_) = x
+
+let change_fst3 (_,b,c) a = (a,b,c)

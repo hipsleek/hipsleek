@@ -62,6 +62,7 @@ MAIN_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	env.cmx checks.cmx inliner.cmx astsimp.cmx \
 	typechecker.cmx \
 	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
+	globalvars.cmx \
 	main.cmx
 
 MAIN_FILES_2=util.cmx debug.cmx globals.cmx \

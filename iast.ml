@@ -19,6 +19,7 @@ type typ =
 and typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
+                   mutable prog_global_var_decls : exp_var_decl list;
 				   prog_enum_decls : enum_decl list;
 				   mutable prog_view_decls : view_decl list;
 				   prog_proc_decls : proc_decl list;
@@ -29,6 +30,12 @@ and data_decl = { data_name : ident;
 				  data_parent_name : ident;
 				  data_invs : F.formula list;
 				  data_methods : proc_decl list }
+
+(*
+and global_var_decl = { global_var_decl_type : typ;
+					    global_var_decl_decls : (ident * exp option * loc) list;
+                        global_var_decl_pos : loc }
+*)
 
 and view_decl = { view_name : ident; 
 				  mutable view_data_name : ident;
@@ -82,6 +89,7 @@ and sensures_spec =
 		sensures_pos : loc
 	}
 *)
+
 and proc_decl = { proc_name : ident;
 				  mutable proc_mingled_name : ident;
 				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
@@ -551,6 +559,10 @@ let mkConstDecl t d p = ConstDecl { exp_const_decl_type = t;
 and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
 								exp_var_decl_decls = d;
 								exp_var_decl_pos = p }
+
+and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
+							  exp_var_decl_decls = d;
+							  exp_var_decl_pos = p }
 
 and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2

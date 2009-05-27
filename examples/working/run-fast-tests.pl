@@ -173,7 +173,22 @@ $output_file = "log";
 								#"remove_min1","SUCCESS",
 								"delete","SUCCESS",
 								#"delete1","SUCCESS"
-								]
+								],
+		        ["global1.ss",1,"increase","SUCCESS"],
+                ["global2.ss",1,"increase","SUCCESS"],
+                ["global3.ss",2,"increase","SUCCESS",
+                                "increase_n","SUCCESS"],
+                ["global4.ss",2,"increase_n","SUCCESS",
+                                "main", "SUCCESS"],
+                ["global5.ss",2,"increase","SUCCESS",
+                                "decrease","SUCCESS"],
+		        ["global-ll.ss",5,"insert_rec","SUCCESS",
+                                  "delete_last_rec","SUCCESS",
+                                  "insert","SUCCESS",
+                                  "delete_last","SUCCESS",
+                                  "main","SUCCESS"],
+		        ["global-mutual-rec.ss",2,"decrease1","SUCCESS",
+                                          "decrease2","SUCCESS"]
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
