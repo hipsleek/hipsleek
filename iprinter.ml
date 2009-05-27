@@ -74,11 +74,19 @@ let string_of_assign_op = function
   | OpModAssign   -> " %= "
 ;;
 
+let string_of_primed = function 
+	| Unprimed -> ""
+	| Primed -> "'";;
+
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis = function 
     | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _  -> false
     | _                                                    -> true
 ;; 
+
+
+let string_of_var_list vl = (List.fold_left (fun a (c1,c2)-> a^" "^c1^(match c2 with | Primed -> "'"| _ -> "")) "" vl);;
+
 
 (* pretty printing for an expression for a formula *)
 let rec string_of_formula_exp = function 
@@ -203,6 +211,8 @@ let rec string_of_h_formula = function
   | F.HFalse                        -> "false"
 ;;
  
+let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "'" | Unprimed -> "");; 
+
 (* pretty printing for formulae *) 
 let rec string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
@@ -241,6 +251,53 @@ let rec string_of_formula = function
               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")"))
 	  ^ ")"
 ;;
+
+let rec string_of_ext_formula = function
+	| Iformula.ECase {
+			Iformula.formula_case_branches  =  case_list ;
+		} -> 
+			let impl = List.fold_left (fun a (c1,c2) -> a^"\n\t "^(string_of_pure_formula c1)^"->"^ 		
+		( List.fold_left  (fun a c -> a ^" "^(string_of_ext_formula c )) "" c2)^"\n") "" case_list in
+			("case{"^impl^"}")
+	|Iformula.EBase {
+		 	Iformula.formula_ext_implicit_inst = ii;
+			Iformula.formula_ext_explicit_inst = ei;
+		 	Iformula.formula_ext_base = fb;
+		 	Iformula.formula_ext_continuation = cont;	
+		} -> 
+				let l1 = List.fold_left (fun a (c1,c2) -> a^" "^ c1) "" ii in
+				let l2 = List.fold_left (fun a (c1,c2) -> a^" "^ c1) "" ei in
+				let b = string_of_formula fb in
+				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
+				"["^l1^"]["^l2^"]"^b^" "^c
+	| Iformula.EAssume b-> "EAssume "^(string_of_formula b)
+;;
+
+let string_of_struc_formula s d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
+;;
+(*
+let rec string_of_spec = function
+	| SCase {scase_branches= br;} ->
+		 (List.fold_left (fun a (c1,c2)->a^"\n"^(string_of_pure_formula c1)^"-> "^
+		( List.fold_left  (fun a c -> a ^"\n "^(string_of_spec c )) "" c2)) "case { " br)^"}\n"
+	| SRequires 	{
+			(*srequires_exists_vars = ev;*)
+			srequires_explicit_inst = ei;
+			srequires_base = fb;
+			srequires_continuation = cont;
+			}	 ->
+				(*let l1 = List.fold_left (fun a c -> a^ ","^(string_of_identifier c)) "" ev in*)
+				let l2 = List.fold_left (fun a c -> a^ (string_of_identifier c)) "" ei in
+				let b = string_of_formula fb in
+				let c = (List.fold_left (fun a  c1-> a^"\n"^string_of_spec c1) "{" cont)^"}\n" in
+				(*"["^l1^"],"*)"["^l2^"]"^b^" "^c
+	| SEnsure{sensures_base = fb } ->(string_of_formula fb)
+;;
+
+
+let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c )) "" d 
+;;*)
+
 
 (* pretty printing for a list of formulae (f * f) list *)
 let rec string_of_form_list l = match l with 
@@ -381,10 +438,17 @@ let rec string_of_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
+(* pretty printing for a global variable declaration *)
+let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
+;;
+
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula v.view_invariant)                    (* incomplete *)
+                            (string_of_struc_formula "" v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
 ;;
+
+let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
+							 (string_of_formula c.coercion_body)^"\n" 
 
 (* pretty printing for one parameter *) 
 let string_of_param par = match par.param_mod with 
@@ -404,12 +468,13 @@ let rec string_of_param_list l = match l with
 let string_of_proc_decl p = 
   let body = match p.proc_body with 
 	| None     -> ""
-	| Some e   -> "{\n" ^ (string_of_exp e) ^ "\n}" 
+	| Some e   -> "{\n" ^ (string_of_exp e) ^ "\n}" in
+  let locstr = (string_of_full_loc p.proc_loc)  
   in	
     (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
 	^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")\n" 
-	^ ( "static " ^ (string_of_form_list p.proc_static_specs)
-		^ "\ndynamic " ^ (string_of_form_list p.proc_dynamic_specs) ^ "\n" ^ body)
+	^ ( "static " ^ (string_of_struc_formula "" p.proc_static_specs)
+		^ "\ndynamic " ^ (string_of_struc_formula "" p.proc_dynamic_specs) ^ "\n" ^ body ^ locstr)
 ;;
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
@@ -433,6 +498,13 @@ let rec string_of_view_decl_list l = match l with
  | []        -> ""
  | h::[]     -> (string_of_view_decl h) 
  | h::t      -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
+;;
+
+(* pretty printing for a list of coerc_decl *)
+let rec string_of_coerc_decl_list l = match l with 
+ | []        -> ""
+ | h::[]     -> (string_of_coerc_decl h) 
+ | h::t      -> (string_of_coerc_decl h) ^ "\n" ^ (string_of_coerc_decl_list t)
 ;;
 
 (* pretty printing for an element of type (ident * int option) *)
@@ -460,6 +532,13 @@ let rec string_of_enum_decl_list l = match l with
  | h::t     -> (string_of_enum_decl h) ^ "\n" ^ (string_of_enum_decl_list t)
 ;;   
 
+(* pretty printing for a list of global variable declarations *)
+let rec string_of_global_var_decl_list l = 
+  match l with
+  | []    -> ""
+  | h::[] -> string_of_global_var_decl h
+  | h::t  -> (string_of_global_var_decl h) ^ "\n" ^ (string_of_global_var_decl_list t)
+;;
 
 let string_of_data cdef = 
   let meth_str = String.concat "\n" (List.map string_of_proc_decl cdef.data_methods) in
@@ -472,8 +551,10 @@ let string_of_data cdef =
 (* pretty printing for program *)
 let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^  *)
   (String.concat "\n\n" (List.map string_of_data p.prog_data_decls)) ^ "\n\n" ^
-  (string_of_enum_decl_list p.prog_enum_decls) ^ 
-  (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+  (string_of_global_var_decl_list p.prog_global_var_decls) ^ "\n" ^
+  (string_of_enum_decl_list p.prog_enum_decls) ^"\n" ^
+  (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
+  (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 

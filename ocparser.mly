@@ -11,8 +11,12 @@
 	  else
 		SpecVar (Prim Int, s, Unprimed)
 
-  let get_pos p = Parsing.rhs_start_pos p
-
+  (*let get_pos p = Parsing.rhs_start_pos p*)
+  let get_pos x = 
+				{start_pos = Parsing.symbol_start_pos ();
+				 end_pos = Parsing. symbol_end_pos ();
+				 mid_pos = Parsing.rhs_start_pos x;
+				}	
 %}
 
 %token AND

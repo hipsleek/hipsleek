@@ -25,28 +25,35 @@ if($root){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip.opt";
-$sleek = "$exec_path/sleek";
+$hip = "$exec_path/hip.opt ";
+$sleek = "$exec_path/sleek.opt ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
 	"hip_tr"=>[["trees.ss",1,"insert"]],
 	"hip" =>[
-			#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
+#	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
 				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
-			#	["avl-bind.ss",13,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get-max","SUCCESS", "rotate_double_left","SUCCESS",
-			#		"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
-			#		"node_error","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"],
-			#	["avl.ss",13,	 "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
-			#					 "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
-			#					 "build_avl1","SUCCESS","build_avl2","SUCCESS","node_error","SUCCESS",
-			#					 "insert","SUCCESS","insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"],
-			#	["avl-orig-2.ss",8,"height","SUCCESS","get_max","SUCCESS","insert","SUCCESS",
-			#					 "double_left_child","SUCCESS","double_right_child","SUCCESS",
-			#					 "rotate_left_child","SUCCESS", "rotate_right_child","SUCCESS",
-			#					 "f","SUCCESS","g","SUCCESS","h","SUCCESS","k","SUCCESS","test",
-			#					 "SUCCESS","rotate_left_child_2","SUCCESS"],
+				["avl-bind.ss",9,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
+					"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
+					#"insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"
+					],
+				["avl.ss",10,	 "height","SUCCESS","rotate_left","SUCCESS","rotate_right","SUCCESS",
+								 "get_max","SUCCESS","rotate_double_left","SUCCESS","rotate_double_right","SUCCESS",
+								 "build_avl1","SUCCESS","build_avl2","SUCCESS",
+								 "insert","SUCCESS","insert_inline","SUCCESS",
+								 #"remove_min","SUCCESS","delete","SUCCESS"
+								 ],
+				["avl-orig-2.ss",7,"height","SUCCESS","get_max","SUCCESS","insert","SUCCESS",
+								 "double_left_child","SUCCESS","double_right_child","SUCCESS",
+								 "rotate_left_child","SUCCESS", "rotate_right_child","SUCCESS",
+								 #"f","SUCCESS","g","SUCCESS","h","SUCCESS","k","SUCCESS","test","SUCCESS",  "rotate_left_child_2","SUCCESS"
+								 ],
+				["avl-orig3.ss",7,"height","SUCCESS","get_max","SUCCESS",
+				"insert","SUCCESS",	"double_left_child","SUCCESS",
+				"double_right_child","SUCCESS",	"rotate_left_child","SUCCESS",
+				"rotate_right_child","SUCCESS"],
 			    ["bll.ss",2,"insert","SUCCESS",
 							"delete","SUCCESS"],
 				["bubble.ss",4, "id2","SUCCESS",
@@ -166,11 +173,26 @@ $output_file = "log";
 								#"remove_min1","SUCCESS",
 								"delete","SUCCESS",
 								#"delete1","SUCCESS"
-								]
+								],
+		        ["global1.ss",1,"increase","SUCCESS"],
+                ["global2.ss",1,"increase","SUCCESS"],
+                ["global3.ss",2,"increase","SUCCESS",
+                                "increase_n","SUCCESS"],
+                ["global4.ss",2,"increase_n","SUCCESS",
+                                "main", "SUCCESS"],
+                ["global5.ss",2,"increase","SUCCESS",
+                                "decrease","SUCCESS"],
+		        ["global-ll.ss",5,"insert_rec","SUCCESS",
+                                  "delete_last_rec","SUCCESS",
+                                  "insert","SUCCESS",
+                                  "delete_last","SUCCESS",
+                                  "main","SUCCESS"],
+		        ["global-mutual-rec.ss",2,"decrease1","SUCCESS",
+                                          "decrease2","SUCCESS"]
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
-		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail.Valid."],
+		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
 					["sleek1.slk","Valid."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],

@@ -19,6 +19,7 @@ type typ =
 and typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
+                   mutable prog_global_var_decls : exp_var_decl list;
 				   prog_enum_decls : enum_decl list;
 				   mutable prog_view_decls : view_decl list;
 				   prog_proc_decls : proc_decl list;
@@ -30,13 +31,21 @@ and data_decl = { data_name : ident;
 				  data_invs : F.formula list;
 				  data_methods : proc_decl list }
 
+(*
+and global_var_decl = { global_var_decl_type : typ;
+					    global_var_decl_decls : (ident * exp option * loc) list;
+                        global_var_decl_pos : loc }
+*)
+
 and view_decl = { view_name : ident; 
 				  mutable view_data_name : ident;
 				  view_vars : ident list;
+				  view_labels : branch_label list;
 				  view_modes : mode list;
 				  mutable view_typed_vars : (CP.typ * ident) list;
-				  view_invariant : P.formula;
-				  view_formula : F.formula }
+				  view_invariant : (P.formula * (branch_label * P.formula) list);
+				  view_formula : Iformula.struc_formula;
+				  try_case_inference: bool}
 
 and enum_decl = { enum_name : ident;
 				  enum_fields : (ident * int option) list } 
@@ -51,14 +60,44 @@ and param = { param_type : typ;
 			  param_mod : param_modifier;
 			  param_loc : loc }
 
+(*
+and multi_spec = spec list
+
+and spec = 
+	| SCase of scase_spec
+	| SRequires of srequires_spec
+	| SEnsure of sensures_spec
+	
+and scase_spec = 
+	{
+			scase_branches : (Ipure.formula * multi_spec ) list ;
+			scase_pos : loc 
+		}
+	
+and srequires_spec = 
+	{		
+		srequires_explicit_inst : (ident * primed) list;
+		srequires_implicit_inst : (ident * primed) list;
+		srequires_base : Iformula.formula;
+		srequires_continuation : multi_spec;
+		srequires_pos : loc
+		}	
+	
+and sensures_spec = 
+	{
+		sensures_base : Iformula.formula;
+		sensures_pos : loc
+	}
+*)
+
 and proc_decl = { proc_name : ident;
 				  mutable proc_mingled_name : ident;
 				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
 				  proc_constructor : bool;
 				  proc_args : param list;
 				  proc_return : typ;
-				  proc_static_specs : (F.formula * F.formula) list;
-				  proc_dynamic_specs : (F.formula * F.formula) list;
+				  proc_static_specs : Iformula.struc_formula;
+				  proc_dynamic_specs : Iformula.struc_formula;
 				  proc_body : exp option;
 				  proc_loc : loc }
 
@@ -105,7 +144,7 @@ and assign_op =
   | OpDivAssign
   | OpModAssign
 
-and exp_assert = { exp_assert_asserted_formula : F.formula option;
+and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
 
@@ -197,7 +236,7 @@ and exp_var_decl = { exp_var_decl_type : typ;
 
 and exp_while = { exp_while_condition : exp;
 				  exp_while_body : exp;
-				  exp_while_specs : (F.formula * F.formula) list;
+				  exp_while_specs : Iformula.struc_formula (*multi_spec*);
 				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
@@ -308,6 +347,21 @@ let get_exp_pos (e0 : exp) : loc = match e0 with
   | While e -> e.exp_while_pos
   | Unfold e -> e.exp_unfold_pos
 	  
+		
+
+and mkSpecTrue pos = Iformula.mkETrue pos
+	(*[SRequires {
+		srequires_explicit_inst = [];
+		srequires_implicit_inst = [];
+		srequires_base  = Iformula.mkTrue pos;
+		srequires_continuation =  [SEnsure{
+			sensures_base =  Iformula.mkTrue pos;
+			sensures_pos = pos
+			}];
+		srequires_pos = pos
+		}]	*)
+		
+		
 (* look up functions *)
 
 let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
@@ -379,7 +433,26 @@ and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) 
   If there are conflicts, report as errors.
 *)
 
-and data_name_of_view (view_decls : view_decl list) (f0 : F.formula) : ident = 
+and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
+
+		let handle_list_res  (e:string list): string = 
+					let r = List.filter (fun c-> (String.length c)>0) e in
+						if (List.length r == 0 ) then ""
+							else
+								let h = List.hd r in
+								let tl = List.tl r in
+								if (List.for_all (fun c-> (String.compare c h)==0 ) tl) then (List.hd r)
+													else "" in
+		
+		let rec data_name_in_ext (f:Iformula.ext_formula):ident = match f with
+			| Iformula.EAssume b -> data_name_of_view1 view_decls b
+			| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view  view_decls c2) b.Iformula.formula_case_branches)
+			| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
+												  [(data_name_of_view view_decls b.Iformula.formula_ext_continuation)])
+			in
+			handle_list_res (List.map data_name_in_ext f0) 
+
+and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident = 
   let rec get_name_from_heap (h0 : F.h_formula) : ident option = match h0 with
 	| F.HeapNode h ->
 		let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
@@ -486,6 +559,10 @@ let mkConstDecl t d p = ConstDecl { exp_const_decl_type = t;
 and mkVarDecl t d p = VarDecl { exp_var_decl_type = t;
 								exp_var_decl_decls = d;
 								exp_var_decl_pos = p }
+
+and mkGlobalVarDecl t d p = { exp_var_decl_type = t;
+							  exp_var_decl_decls = d;
+							  exp_var_decl_pos = p }
 
 and mkSeq e1 e2 l = match e1 with
   | Empty _ -> e2

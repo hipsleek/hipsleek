@@ -45,6 +45,11 @@ let rec remove_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
+let rec remove_dups_f n f= 
+  match n with
+    [] -> []
+  | q::qs -> if (List.exists (fun c-> f q c) qs) then remove_dups_f qs f else q::(remove_dups_f qs f)
+  
 let rec find_dups n = 
   match n with
     [] -> []
@@ -66,7 +71,7 @@ let intersect l1 l2 =
 
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
-
+  
 let spacify i = 
   let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
   function [] -> ""
@@ -378,3 +383,50 @@ let copy_keys (keys : 'a list) (fr_tab : ('a, 'b) Hashtbl.t) (to_tab : ('a, 'b) 
 let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
 	Hashtbl.fold append_val tab []
+
+let profiling_stack = ref []
+let tasks = ref (Hashtbl.create 10)  
+	
+let get_time () = 
+	let r = Unix.times () in
+	(*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
+	(*time_list := (r.Unix.tms_utime , r.Unix.tms_stime , r.Unix.tms_cutime , r.Unix.tms_cstime):: !time_list ;*)
+	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
+	
+let add_task_instance msg time = 	
+ try 
+	let (t1,cnt1,max1) = Hashtbl.find !tasks msg in
+	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
+ with Not_found -> 
+	Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
+let push_time msg = 
+if (!Globals.profiling) then
+ let timer = get_time () in
+	profiling_stack := (msg, timer,true) :: !profiling_stack 
+else ()
+	
+let pop_time msg = 
+	if (!Globals.profiling) then
+		let m1,t1,_ = List.hd !profiling_stack in
+		if (String.compare m1 msg)==0 then 
+			let t2 = get_time () in
+			 if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+			else
+			profiling_stack := List.tl !profiling_stack;
+			if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) !profiling_stack) then begin
+				if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin
+					profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack;
+					print_string ("\n double accounting for "^msg^"\n")
+				end	else ()
+				end else add_task_instance m1 (t2-.t1) 
+			 
+		else 
+			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
+	else ()
+	
+	
+let add_index l = 
+	let rec ff i l = match l with
+		| [] -> []
+		| a::b-> (i,a)::(ff (i+1) b) in
+	(ff 0 l)

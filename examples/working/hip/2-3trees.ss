@@ -13,7 +13,7 @@ tree2_3<n> == self = null & n = 0
 	or self::node3<_, _, l, m, r> * l::tree2_3<ln> * m::tree2_3<mn> * r::tree2_3<rn> 
 	& r != null & ln = mn & ln = rn & n = ln + 1
 	or self::node3<_, _, l, m, r> * l::tree2_3<ln> * m::tree2_3<mn> 
-	& r = null & ln = mn & ln = lr & n = ln + 1
+	& r = null & ln = mn & n = ln + 1
 	inv n >= 0;
 
 /*tree2_3<n> == self = null & n = 0
@@ -31,9 +31,9 @@ tree2_3<n> == self = null & n = 0
 
 
 
-void  make_node(ref node3 tmp1, int a) 
+void  make_node(node3 tmp1, int a) 
 	requires tmp1::node3<_, _, l, m, r> * l::tree2_3<n> * m::tree2_3<n> & r = null & n = 1 
-	ensures tmp1'::tree2_3<2> & tmp1' = tmp1;	
+	ensures tmp1::tree2_3<2> ;	
 {
 	if (a < tmp1.maxl) {
 		tmp1.right = tmp1.middle;
@@ -53,19 +53,19 @@ void  make_node(ref node3 tmp1, int a)
 
 node3 insert_left(ref node3 x, int a, int type)
 	requires x::tree2_3<n> & n > 1
-	ensures	res::tree2_3<n+1> & x' = null or
-	x'::tree2_3<n> & x = x' & res = null;
+	ensures	res::tree2_3<n+1> & x' = null & n>1 or
+	        x'::tree2_3<n> & x = x' & res = null & n>1;
 	requires x::node3<_, _, l, m, r> * l::tree2_3<n1> * m::tree2_3<n1> & n1 > 0 & r = null 
-	ensures x'::tree2_3<n1+1> & x = x' & res = null;
+	ensures x'::tree2_3<n1+1> & x = x' & res = null & n1>0;
 {
-
 	node3 tmp1, tmp2;
 	if (type == 1)
 		tmp1 = x.left;
 	else
 		tmp1 = x.middle;
-	if(tmp1.left != null && tmp1.right == null) {
+	if(tmp1.left != null && tmp1.right == null) {		
 		insert(tmp1, a);
+		//dprint;
 		return null;
 	}
 	else {	
@@ -135,10 +135,10 @@ node3 insert_left(ref node3 x, int a, int type)
 
 node3 insert_middle(ref node3 x, int a)
 	requires x::tree2_3<n> & n > 1
-	ensures	res::tree2_3<n+1> & x' = null or
-	x'::tree2_3<n> & x = x' & res = null;
+	ensures	res::tree2_3<n+1> & x' = null & n>1 or
+	x'::tree2_3<n> & x = x' & res = null & n>1;
 	requires x::node3<_, _, l, m, r> * l::tree2_3<n1> * m::tree2_3<n1> & n1 > 0 & r = null 
-	ensures x'::tree2_3<n1+1> & x = x' & res = null;
+	ensures x'::tree2_3<n1+1> & x = x' & res = null & n1>0;
 {
 
 	node3 tmp1, tmp2;
@@ -193,8 +193,8 @@ node3 insert_middle(ref node3 x, int a)
 
 node3 insert_right(ref node3 x, int a)
 	requires x::node3<_, _, l, m, r> * l::tree2_3<n1> * m::tree2_3<n1> * r::tree2_3<n1>  & n1 > 0
-	ensures	res::tree2_3<n1+2> & x' = null or
-	x'::tree2_3<n1+1> & x = x' & res = null;
+	ensures	res::tree2_3<n1+2> & x' = null & n1>0 or
+	x'::tree2_3<n1+1> & x = x' & res = null & n1>0;
 {
 
 	node3 tmp1, tmp2;
@@ -242,9 +242,9 @@ node3 insert_right(ref node3 x, int a)
 node3 insert(ref node3 x, int a)
 	requires x::tree2_3<n> 
 	ensures res::tree2_3<n+1> & x' = null or
-	x'::tree2_3<n> & x = x' & res = null & x' != null;
+	        x'::tree2_3<n> & x = x' & res = null & x' != null ;
 	requires x::node3<_, _, l, m, r> * l::tree2_3<n> * m::tree2_3<n> & n>0 & r = null 
-	ensures x'::tree2_3<n+1> & x = x' & res = null;
+	ensures  x'::tree2_3<n+1> & x = x' & res = null & n>0;
 {
 	node3 leaf = new node3(a, 0, null, null, null);		// creating a new leaf node
 	if (x == null) {					// x is empty

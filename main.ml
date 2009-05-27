@@ -27,6 +27,8 @@ let set_proc_verified arg =
 	Globals.procs_verified := procs @ !Globals.procs_verified
 
 let process_cmd_line () = Arg.parse [
+	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
+	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
 	("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic,
@@ -67,6 +69,8 @@ let process_cmd_line () = Arg.parse [
    "Convert source code to Java");
   ("--sat-timeout", Arg.Set_float Globals.sat_timeout,
    "Timeout for sat checking");
+  ("--imply-timeout", Arg.Set_float Globals.imply_timeout,
+   "Timeout for imply checking");
   ("--log-proof", Arg.String Prooftracer.set_proof_file,
    "Log (failed) proof to file");
   ("--trace-all", Arg.Set Globals.trace_all,
@@ -90,7 +94,7 @@ let process_cmd_line () = Arg.parse [
   ("--no-diff", Arg.Set Solver.no_diff,
    "Drop disequalities generated from the separating conjunction");
   ("--no-set", Arg.Clear Globals.use_set,
-   "Turn of set-of-states search");
+   "Turn off set-of-states search");
   ("--no-unsat-elim", Arg.Clear Globals.elim_unsat,
    "Turn off unsatisfiable formulae elimination during type-checking");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
@@ -116,11 +120,17 @@ let process_cmd_line () = Arg.parse [
   ("--use-large-bind", Arg.Set Globals.large_bind,
    "Use large bind construct, where the bound variable may be changed in the body of bind");
   ("-v", Arg.Set Debug.debug_on, "Verbose");
-  ("--dpipe", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_pipe ""), "use external prover via default pipes");
-  ("--pipe", Arg.String Tpdispatcher.Netprover.set_use_pipe, "<name>: use external prover via the named pipe");
+  ("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe, "use external prover via pipe");
   ("--dsocket", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_socket "loris-7:8888"), "<host:port>: use external prover via loris-7:8888");
   ("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, "<host:port>: use external prover via socket");
   ("--prover", Arg.String Tpdispatcher.set_tp, "<p,q,..> comma-separated list of provers to try in parallel");
+  ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
+  ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
+  ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
+  ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
+  ("--pcp", Arg.Set Globals.print_core,"print core representation");
+  ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
+  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
 (******************************************)
@@ -145,6 +155,7 @@ let parse_file_full file_name =
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n");
+  let _ = Util.push_time "Preprocessing" in
   let prog = parse_file_full source in
 	if !to_java then begin
 	  print_string ("Converting to Java...");
@@ -159,10 +170,19 @@ let process_source_full source =
 		exit 0
 	end;
 	if not (!parse_only) then
+	  (* Global variables translating *)
+	  let global_ptime1 = Unix.times () in
+	  let global_t1 = global_ptime1.Unix.tms_utime +. global_ptime1.Unix.tms_cutime in
+	  let _ = print_string ("Translating global variables to procedure parameters...") in
+	  let intermediate_prog = Globalvars.trans_global_to_param prog in
+	  let global_ptime2 = Unix.times () in
+	  let global_t2 = global_ptime2.Unix.tms_utime +. global_ptime2.Unix.tms_cutime in
+	  let _ = print_string (" done in " ^ (string_of_float (global_t2 -. global_t1)) ^ " second(s)\n") in
+	  (* Global variables translated *)
 	  let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
 	  let _ = print_string ("Translating to core language...") in
-	  let cprog = Astsimp.trans_prog prog in
+	  let cprog = Astsimp.trans_prog intermediate_prog in
 	  let _ = 
 		if !Globals.verify_callees then begin
 		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -196,19 +216,18 @@ let process_source_full source =
 		  exit 0
 		end
 	  in
+	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
-		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime in
+		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
 		  print_string ("\nTotal verification time: " 
 						^ (string_of_float t4) ^ " second(s)\n"
 						^ "\tTime spent in main process: " 
-						^ (string_of_float ptime4.Unix.tms_utime) ^ " second(s)\n"
+						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 						^ "\tTime spent in child processes: " 
-						^ (string_of_float ptime4.Unix.tms_cutime) ^ " second(s)\n"
-                        ^ "\t Sat time: " ^ (string_of_float !Tpdispatcher.sat_timer) ^ " sec\n"
-                        ^ "\t Imp time: " ^ (string_of_float !Tpdispatcher.imply_timer) ^ " sec\n"
-                       )
-
+						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	else Util.pop_time "Preprocessing"
 	  
 let main1 () =
   process_cmd_line ();
@@ -217,9 +236,44 @@ let main1 () =
 	Globals.procs_verified := ["f3"];
 	Globals.source_files := ["examples/test5.ss"]
   end;
+  let _ = Util.push_time "Overall" in
   let _ = List.map process_source_full !Globals.source_files in
+  let _ = Util.pop_time "Overall" in
 	(* Tpdispatcher.print_stats (); *)
 	()
 	  
 let _ = 
-  main1 ()
+  main1 ();
+  (*let rec check_aux (t1,t2,t3,t4) l = match l with
+  | [] -> true
+  | (p1,p2,p3,p4)::l1 -> if (p1<=t1 && p2<=t2&& p3<=t3&& p4<=t4) then check_aux (p1,p2,p3,p4) l1
+						 else false in
+  let check_sorted l = match l with
+	  | a::b -> check_aux a b
+	  | [] -> true  in
+  let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
+  let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
+  (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
+  let _ = if (!Globals.profiling) then 
+	let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
+	let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+	let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+	let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+	let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+	let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+	let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+		(if (List.length l)>0 then 
+			let l = (List.sort compare l) in		
+			(List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+		else "")^"],  "^(fp (t/.ot))^"%)") in
+	((a1+1),r) 
+	) (0,"") str_list in
+  print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) in
+  if (!Globals.enable_sat_statistics) then 
+  print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
+				"\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
+				"\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
+				)
+  else ()
+
+  

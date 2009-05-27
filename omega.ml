@@ -83,7 +83,7 @@ and omega_of_formula f  = match f with
   | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "oc" (* TODO: fix oc path *)
+let omegacalc = "/usr/local/bin/oc" (* TODO: fix oc path *)
 
 let omega_calc_command =
   if Sys.os_type = "Cygwin" then ("dos2unix " ^ infilename ^ " ; " ^ omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
@@ -93,7 +93,7 @@ let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
             { Unix.it_interval = 0.0; Unix.it_value = tsecs })
 
-let continue f arg tsecs =
+(*let continue f arg tsecs pid =
   let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in
   try
     set_timer tsecs;
@@ -102,15 +102,30 @@ let continue f arg tsecs =
     Sys.set_signal Sys.sigalrm oldsig; true
   with Exit ->
     Sys.set_signal Sys.sigalrm oldsig; false
+(*  begin continue Sys.command omega_calc_command timeout end*)
+	*)
 
-let run_omega (input : string) (timeout : float) : bool =
-  begin
-    let chn = open_out infilename in
-    output_string chn (Util.break_lines input);
+let run_omega (input : string) (timeout : float):bool = begin
+	let chn = open_out infilename in
+	output_string chn (Util.break_lines input);
     close_out chn;
-    continue Sys.command omega_calc_command timeout
-  end
-
+    (* flush_all(); *)
+ 	let pid = Unix_add.open_proc omegacalc [|omegacalc;infilename|] resultfilename in
+	let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in	
+	let r =	try 			
+			begin
+			set_timer timeout;
+			ignore (Unix.waitpid [] pid);
+			true end
+		with Exit ->
+			begin
+			print_endline "\nOmega timeout reached."; flush stdout; 
+			Unix.kill pid 9;
+			ignore (Unix.waitpid [] pid);
+			false end in
+	set_timer 0.0;
+	Sys.set_signal Sys.sigalrm oldsig;
+	r end
 
 let rec omega_of_var_list (vars : ident list) : string = match vars with
   | [] -> ""
@@ -126,7 +141,7 @@ let get_vars_formula (p : formula) =
   tool may probably be used ...
 *)
 
-let is_sat (pe : formula) : bool =
+let is_sat (pe : formula)  (sat_no : string): bool =
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -139,7 +154,7 @@ let is_sat (pe : formula) : bool =
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
     if !log_all_flag then begin
 (*      output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-      output_string log_all ("#is_sat" ^ Util.new_line_str ^ Util.new_line_str);
+      output_string log_all ("#is_sat " ^ sat_no ^ " " ^ Util.new_line_str ^ Util.new_line_str);
       output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
       flush log_all;
     end;
@@ -204,7 +219,7 @@ let is_sat (pe : formula) : bool =
   end
 *)
 
-let is_valid (pe : formula) : bool =
+let is_valid (pe : formula) timeout: bool =
   begin
 		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
@@ -216,7 +231,7 @@ let is_valid (pe : formula) : bool =
                 output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
                 flush log_all;
             end;
-      ignore (run_omega fomega 0.);
+      ignore (run_omega fomega timeout);
       let chn = open_in resultfilename in
       let quitloop = ref false in
       let result = ref false in
@@ -244,75 +259,75 @@ let is_valid (pe : formula) : bool =
                 !result
   end
 
-let imply (ante : formula) (conseq : formula) : bool =
+let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   incr test_number;
-    (*
-        let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
-        let fvars = fv tmp1 in
-        let tmp2 = mkExists fvars tmp1 no_pos in
-        not (is_valid tmp2)
-    *)
+  (*
+    let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
+    let fvars = fv tmp1 in
+    let tmp2 = mkExists fvars tmp1 no_pos in
+    not (is_valid tmp2)
+   *)
   let tmp_form = mkOr (mkNot ante no_pos) conseq no_pos in
-  let result = is_valid tmp_form in
+  let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
-    if result then output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
+    if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
 
 let rec match_vars (vars_list0 : spec_var list) rel = match rel with
-  | ConstRel b ->
-            if b then
-                mkTrue no_pos
-            else
-                mkFalse no_pos
-  | BaseRel (aelist0, f0) ->
-            let rec match_helper vlist aelist f  = match aelist with
-                | [] -> f
-                | ae :: rest ->
-                        let v = List.hd vlist in
-                        let restvars = List.tl vlist in
-                        let restf = match_helper restvars rest f in
-                        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
-                        let tmp2 = mkAnd tmp1 restf no_pos in
-                            tmp2
-            in
-                if List.length aelist0 != List.length vars_list0 then
-                    failwith ("match_var: numbers of arguments do not match")
-                else
-                    match_helper vars_list0 aelist0 f0
-  | UnionRel (r1, r2) ->
-            let f1 = match_vars vars_list0 r1 in
-            let f2 = match_vars vars_list0 r2 in
-            let tmp = mkOr f1 f2 no_pos in
-                tmp
+| ConstRel b ->
+    if b then
+      mkTrue no_pos
+    else
+      mkFalse no_pos
+| BaseRel (aelist0, f0) ->
+    let rec match_helper vlist aelist f  = match aelist with
+    | [] -> f
+    | ae :: rest ->
+        let v = List.hd vlist in
+        let restvars = List.tl vlist in
+        let restf = match_helper restvars rest f in
+        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
+        let tmp2 = mkAnd tmp1 restf no_pos in
+        tmp2
+    in
+    if List.length aelist0 != List.length vars_list0 then
+      failwith ("match_var: numbers of arguments do not match")
+    else
+      match_helper vars_list0 aelist0 f0
+| UnionRel (r1, r2) ->
+    let f1 = match_vars vars_list0 r1 in
+    let f2 = match_vars vars_list0 r2 in
+    let tmp = mkOr f1 f2 no_pos in
+    tmp
 
 let simplify (pe : formula) : formula =
   begin
-		Ocparser.subst_lst := [];
+    Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
-        let vars_list = get_vars_formula pe in
+    let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
-            if !log_all_flag then begin
+    if !log_all_flag then begin
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-                output_string log_all ("#simplify" ^ Util.new_line_str ^ Util.new_line_str);
-                output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
-                flush log_all;
-            end;
-      ignore (run_omega fomega 0.);
-      let chn = open_in resultfilename in
-            let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
-            let f = match_vars (fv pe) rel in
-                begin
-                    try
-                        ignore (Sys.remove infilename);
-                        ignore (Sys.remove resultfilename)
-                    with
-                        | e -> ignore e
-                end;
-                close_in chn;
-                f
+      output_string log_all ("#simplify" ^ Util.new_line_str ^ Util.new_line_str);
+      output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+      flush log_all;
+    end;
+    ignore (run_omega fomega 0.);
+    let chn = open_in resultfilename in
+    let lex_buf = Lexing.from_channel chn in
+    let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+    let f = match_vars (fv pe) rel in
+    begin
+      try
+        ignore (Sys.remove infilename);
+        ignore (Sys.remove resultfilename)
+      with
+      | e -> ignore e
+    end;
+    close_in chn;
+    f
   end
 
 let pairwisecheck (pe : formula) : formula =
@@ -405,7 +420,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 
 let log_mark (mark : string) =
   if !log_all_flag then begin
-        output_string log_all ("#mark: " ^ mark ^ Util.new_line_str ^ Util.new_line_str);
-        flush log_all;
+    output_string log_all ("#mark: " ^ mark ^ Util.new_line_str ^ Util.new_line_str);
+    flush log_all;
   end;
 

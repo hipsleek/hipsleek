@@ -2,7 +2,13 @@
 
 type ident = string
 
-and loc = Lexing.position (* might be expanded to contain more information *)
+and branch_label = string
+
+and loc = {
+			start_pos : Lexing.position (* might be expanded to contain more information *);
+			mid_pos : Lexing.position;
+			end_pos : Lexing.position;
+			}
 
 and primed =
   | Primed
@@ -25,10 +31,12 @@ type mode =
 
 (* global constants *)
 
-let no_pos = { Lexing.pos_fname = "";
-			   Lexing.pos_lnum = 0;
-			   Lexing.pos_bol = 0; 
-			   Lexing.pos_cnum = 0 }
+let no_pos = 
+	let no_pos1 = { Lexing.pos_fname = "";
+				   Lexing.pos_lnum = 0;
+				   Lexing.pos_bol = 0; 
+				   Lexing.pos_cnum = 0 } in
+	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
 let res = "res"
 
@@ -38,9 +46,13 @@ let this = "this"
 
 (* command line options *)
 
+let omega_simpl = ref true
+
 let source_files = ref ([] : string list)
 
 let procs_verified = ref ([] : string list)
+
+let false_ctx_line_list = ref ([] : loc list)
 
 let verify_callees = ref false
 
@@ -88,14 +100,44 @@ let trace_all = ref false
 
 let print_mvars = ref false
 
+let enable_sat_statistics = ref false
+
+let wrap_exists_implicit_explicit = ref true
+
+let profiling = ref false
+
+let enable_syn_base_case = ref false
+
+let enable_case_inference = ref false
+
+let print_core = ref false
+
+let instantiation_variants = ref 0
+
+let pass_global_by_value = ref false
+
+let profile_threshold = 0.5 
+
+let true_imply_count = ref 0
+let false_imply_count = ref 0
+let true_sat_count = ref 0
+
+let add_count (t: int ref) = 
+	t := !t+1
+
+
 (* utility functions *)
+
+let omega_err = ref false
 
 let seq_number = ref 10
 
 let sat_timeout = ref 10.
+let imply_timeout = ref 10.
 
-let report_error (pos : Lexing.position) (msg : string) =
-  print_string ("\n" ^ pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.Lexing.pos_lnum) ^ ": " ^ msg ^ "\n");
+let report_error (pos : loc) (msg : string) =
+  print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
+	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
   failwith "Error detected"
 
 let seq_number2 = ref 0
@@ -135,4 +177,27 @@ let fresh_names (n : int) = (* number of names to be generated *)
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
-let string_of_loc (p : loc) = p.Lexing.pos_fname ^ "_" ^ (string_of_int p.Lexing.pos_lnum)
+let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
+	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
+
+let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"
+;;
+
+let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+
+let seq_local_number = ref 0
+
+let fresh_local_int () =
+  seq_local_number := !seq_local_number + 1;
+  !seq_local_number
+
+let fresh_local_var_name (tn : string) : string =
+  tn ^ "_local_" ^ (string_of_int (fresh_local_int ()))
+
+let join2 a b = (a,b)
+
+let fst3 (x,_,_) = x
+
+let snd3 (_,x,_) = x
+
+let change_fst3 (_,b,c) a = (a,b,c)

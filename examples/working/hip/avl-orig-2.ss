@@ -8,6 +8,7 @@ data node {
 // m: number of elements, n: height
 // bal: 0: left is higher, 1: balanced, 2: right is higher
 
+/*
 avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
 	or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
 		& m = 1+m1+m2 & n=1+max(n1, n2) 
@@ -15,6 +16,17 @@ avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
 		//& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
 		// & (n1=n2 & bal=0 | n1>n2 & bal=1 | n1<n2 & bal=2)
 	inv m >= 0 & n >= 0 & 0<=bal<=2;
+*/
+avl<m, n, bal> ==
+ case {
+  self = null -> [] m = 0 & n = 0 & bal=1;
+  self!=null -> [] self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
+                & m = 1+m1+m2 & n=1+max(n1, n2)
+  & -1 <= n1-n2 <=1 & bal=n1-n2+1; }
+                //& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
+                // & (n1=n2 & bal=0 | n1>n2 & bal=1 | n1<n2 & bal=2)
+        inv m >= 0 & n >= 0 & 0<=bal<=2;
+
 
 
 /* function to return the height of an avl tree */
@@ -50,11 +62,14 @@ int get_max(int a, int b)
 
 node insert(node t, int x) 
 /* cannot be verified without case analysis
-  requires t=null
-  ensures res::avl<1,1,1>;
-  requires t::avl<tm, tn, b> & t!=null
-  ensures res::avl<tm+1, resn, resb> & tm>0 &tn>0 &  
+  case { 
+    t=null ->
+      ensures res::avl<1,1,1>;
+   t!=null ->
+      requires t::avl<tm, tn, b> 
+      ensures res::avl<tm+1, resn, resb> & tm>0 &tn>0 &  
                      (tn=resn | resn=tn+1 & resb!=1);
+  }
 */
   requires t::avl<tm, tn, b>
   ensures res::avl<tm+1, resn, resb> & t!=null & tm>0 & tn>0 & (tn=resn | resn=tn+1 & resb!=1)
@@ -216,8 +231,19 @@ node rotate_right_child(node k1)
 	k2.height = get_max( height(k2.right), k1.height) + 1;
 	return k2;
 }
-
-
+/*
+node rotate_left_child_2(node k2)
+	requires k2::node<_, _, l, r> * r::avl<rm, rn> * l::node<_, _, ll, lr> * 
+			ll::avl<llm, lln> * lr::avl<lrm, lrn> & rn=lrn & lrn+1>=lln>=lrn
+	ensures res::avl<rm+llm+lrm+2, rn+2>;
+{
+	node k1 = k2.left;
+	k2.left = k1.right;
+	k1.right = k2;
+	k2.height = get_max( height(k2.left), height(k2.right) ) + 1;
+	k1.height = get_max( height(k1.left), height(k2) ) + 1;
+	return k1;
+}*/
 /*
 void f(node x)
 	requires x::avl<m, n> & m>0
@@ -232,19 +258,6 @@ void g(node x)
 	ensures x::avl<m,n>;
 {
 	int h = height(x.left);
-}
-
-node rotate_left_child_2(node k2)
-	requires k2::node<_, _, l, r> * r::avl<rm, rn> * l::node<_, _, ll, lr> * 
-			ll::avl<llm, lln> * lr::avl<lrm, lrn> & rn=lrn & lrn+1>=lln>=lrn
-	ensures res::avl<rm+llm+lrm+2, rn+2>;
-{
-	node k1 = k2.left;
-	k2.left = k1.right;
-	k1.right = k2;
-	k2.height = get_max( height(k2.left), height(k2.right) ) + 1;
-	k1.height = get_max( height(k1.left), height(k2) ) + 1;
-	return k1;
 }
 
 void h(node x)

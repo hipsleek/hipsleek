@@ -66,15 +66,6 @@ bool bubble(node xs)
 			xs.val = xs.next.val; //ERROR: lhs and rhs do not match
 			//xs.next.val = aux;
 			flag = true; 
-/*
-			if (!tmp) {
-				if (xs.next.next != null) { // this is the coercion step
-					//node tmp2 = xs.next.next;
-					//xs.next.next = id(tmp2);
-					id3(xs.next.next);
-				}
-			}
-*/
 		}
 		return (flag || tmp);	
 	}

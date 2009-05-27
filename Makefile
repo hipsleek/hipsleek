@@ -8,7 +8,7 @@ INCLUDES=-I ./xml -dtypes
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=$(INCLUDES) # add other options for ocamlc here
-OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
+OCAMLOPTFLAGS=$(INCLUDES) -p # add other options for ocamlopt here
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
 OCAMLLEX=ocamllex -q
@@ -48,13 +48,13 @@ oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLLEX) oclexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
 
-MAIN_FILES=util.cmo debug.cmo globals.cmo error.cmo \
+MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
@@ -64,16 +64,17 @@ MAIN_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
+	globalvars.cmo \
 	main.cmo
 
-SLEEK_FILES=util.cmo debug.cmo globals.cmo error.cmo \
+SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
 	sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
@@ -94,13 +95,13 @@ MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 	iprinter.cmo
 
 
-PROVE_FILES=util.cmo debug.cmo globals.cmo error.cmo \
+PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
 	cvclite.cmo tpdispatcher.cmo \
 	prooftracer.cmo solver.cmo \
@@ -129,7 +130,7 @@ prover: $(PROVE_FILES)
 
 prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt prover.opt
-	
+
 sleekc:
 	make clean; make sleek 
 
@@ -157,7 +158,7 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo unix_add.cmo mona.cmo\
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
 	cvclite.cmo tpdispatcher.cmo \
 	solver.cmo \
 	env.cmo astsimp.cmo \

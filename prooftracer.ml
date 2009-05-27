@@ -35,6 +35,7 @@ type proof =
   | ExLeft of ex_step
   | ExRight of ex_step
   | OrLeft of or_left
+  | OrStrucLeft of or_struc_left
   | OrRight of or_right
   | Match of match_step
   | MMatch of mmatch_step (* if one node from the consequent matches multiple nodes from antecedent *)
@@ -50,6 +51,10 @@ type proof =
   | UnsatConseq
   | TrueConseq
   | Failure 
+  | PECase of case_step
+  | PEBase of base_step
+  | PEAssume of assume_step
+  | PEEx of eex_step
 
 and ex_step = { ex_step_ante : CF.context;
 				ex_step_conseq : CF.formula;
@@ -61,7 +66,11 @@ and or_left = { or_left_ante : CF.context;
 				or_left_conseq : CF.formula;
 				or_left_proofs : proof list (* all proofs here must succeed *) }
 	
+and or_struc_left = { or_struc_left_ante : CF.context;
+					or_struc_left_conseq : CF.struc_formula;
+					or_struc_left_proofs : proof list (* all proofs here must succeed *) }
 
+	
 and or_right = { or_right_ante : CF.context;
 				 or_right_conseq : CF.formula;
 				 or_right_proofs : proof list (* at least one must succeed *) }
@@ -105,9 +114,25 @@ and coercion2_step = { coercion2_step_ante : CF.context;
 					   coercion2_step_proofs : proof list }
 
 and context_list = { context_list_ante : CF.context list;
-					 context_list_conseq : CF.formula;
+					 context_list_conseq : CF.struc_formula;
 					 context_list_proofs : proof list }
 
+and case_step = { case_context: CF.context;
+				  case_form: CF.struc_formula;
+				  case_proofs: proof list}
+
+and base_step = { base_context: CF.context;
+				  base_form: CF.struc_formula;
+				  base_proof: proof;
+				  cont_proof: proof}
+
+and assume_step = { assume_context : CF.context;
+					assume_formula : CF.formula}
+and eex_step = {eex_context: CF.context;
+				eex_formula: CF.struc_formula;
+				eex_proof: proof}
+					 
+					 
 let mkCoercionLeft ctx conseq clhs crhs prf name = CoercionLeft { coercion_step_name = name;
 																  coercion_step_ante = ctx;
 																  coercion_step_conseq = conseq;
@@ -127,6 +152,11 @@ let mkCoercion2 ctx conseq prfs = Coercion2 { coercion2_step_ante = ctx;
 let mkOrLeft ctx conseq prfs = OrLeft { or_left_ante = ctx;
 										or_left_conseq = conseq;
 										or_left_proofs = prfs }
+										
+let mkOrStrucLeft ctx conseq prfs = OrStrucLeft {   or_struc_left_ante = ctx;
+													or_struc_left_conseq = conseq;
+													or_struc_left_proofs = prfs }
+
 
 let mkOrRight ctx conseq prfs = OrRight { or_right_ante = ctx;
 										  or_right_conseq = conseq;
@@ -175,6 +205,15 @@ let mkContextList cl conseq prfs = ContextList { context_list_ante = cl;
 												 context_list_conseq = conseq;
 												 context_list_proofs = prfs }
 
+												 
+let mkCaseStep cc cf cp = PECase{ case_context=cc;case_form=cf; case_proofs=cp}
+
+let mkBaseStep bc bf bp cp = PEBase{ base_context=bc; base_form=bf; base_proof=bp;  cont_proof= cp}
+
+let mkAssumeStep ac af = PEAssume{ assume_context=ac; assume_formula=af}
+
+let mkEexStep ec ef ep = PEEx{eex_context=ec; eex_formula=ef; eex_proof=ep}
+												 
 
 let rec string_of_proof prf0 : string =
   let rec to_string buffer prf1 = match prf1 with
@@ -202,6 +241,13 @@ let rec string_of_proof prf0 : string =
 		Buffer.add_string buffer "<OrLeft>\n";
 		ignore (List.map (to_string buffer) prfs);
 		Buffer.add_string buffer "</OrLeft>\n"
+	  end
+	| OrStrucLeft ({ or_struc_left_ante = ctx;
+				or_struc_left_conseq = conseq;
+				or_struc_left_proofs = prfs }) -> begin
+		Buffer.add_string buffer "<OrStrucLeft>\n";
+		ignore (List.map (to_string buffer) prfs);
+		Buffer.add_string buffer "</OrStrucLeft>\n"
 	  end
 	| OrRight ({ or_right_ante = ctx;
 				 or_right_conseq = conseq;
@@ -296,7 +342,7 @@ let rec string_of_proof prf0 : string =
 					 context_list_proofs = prfs }) -> begin
 		Buffer.add_string buffer "<ContextList>\n";
 		Buffer.add_string buffer ("<Info>CtxList: <![CDATA[" ^ (Cprinter.string_of_context_list cl) ^ "]]></Info>\n");
-		Buffer.add_string buffer ("<Info>Conseq: <![CDATA[" ^ (Cprinter.string_of_formula conseq) ^ "]]></Info>\n");
+		Buffer.add_string buffer ("<Info>Conseq: <![CDATA[" ^ (Cprinter.string_of_struc_formula conseq) ^ "]]></Info>\n");
 		ignore (List.map (to_string buffer) prfs);
 		Buffer.add_string buffer "</ContextList>\n";
 	  end
@@ -304,7 +350,9 @@ let rec string_of_proof prf0 : string =
 	| UnsatAnte -> Buffer.add_string buffer "<UnsatAnte></UnsatAnte>"
 	| UnsatConseq -> Buffer.add_string buffer "<UnsatConseq></UnsatConseq>"
 	| TrueConseq -> Buffer.add_string buffer "<TrueConseq></TrueConseq>"
-	| Failure -> Buffer.add_string buffer "<Failure></Failure>" in
+	| Failure -> Buffer.add_string buffer "<Failure></Failure>" 
+	| _ -> Buffer.add_string buffer "<Failure></Failure>" 
+	in
   let buffer = Buffer.create 1024 in
 	to_string buffer prf0;
 	Buffer.contents buffer

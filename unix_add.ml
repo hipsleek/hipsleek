@@ -30,3 +30,12 @@ let open_process_full cmd args =
   Unix.close err_write;
   (inchan, outchan, errchan, id)
 ;;
+
+let open_proc cmd args out_file:int  =
+  match Unix.fork() with
+  |  0 -> begin 
+			let output = Unix.openfile out_file [Unix.O_CREAT;Unix.O_WRONLY] 0o640 in
+			Unix.dup2 output Unix.stdout; Unix.close output;
+			try Unix.execv cmd args with _ -> exit 127 end
+  | id -> id
+;;

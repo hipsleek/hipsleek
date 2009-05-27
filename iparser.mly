@@ -14,6 +14,7 @@
 		
   type decl = 
     | Type of type_decl
+    | Global_var of exp_var_decl
     | Proc of proc_decl
 	| Coercion of coercion_decl
 		
@@ -30,7 +31,12 @@
 	| AnnMode of mode
 	| AnnType of typ
 		
-  let get_pos (i : int) = Parsing.rhs_start_pos i
+  let get_pos x = 
+				{start_pos = Parsing.symbol_start_pos ();
+				 end_pos = Parsing. symbol_end_pos ();
+				 mid_pos = Parsing.rhs_start_pos x;
+				}				
+  let get_pos_ith (i:int) = Parsing.rhs_start_pos i
 
   let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
@@ -192,6 +198,7 @@
 %token UNION
 %token WHERE
 %token WHILE
+%token GLOBAL
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -218,6 +225,7 @@
 program
   : opt_decl_list {
     let data_defs = ref ([] : data_decl list) in
+    let global_var_defs = ref ([] : exp_var_decl list) in
 	let enum_defs = ref ([] : enum_decl list) in
 	let view_defs = ref ([] : view_decl list) in
     let proc_defs = ref ([] : proc_decl list) in
@@ -229,6 +237,7 @@ program
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
 		end
+      | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
 	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose $1 in
@@ -243,6 +252,7 @@ program
 					   data_invs = []; (* F.mkTrue no_pos; *)
 					   data_methods = [] } in
       { prog_data_decls = obj_def :: string_def :: !data_defs;
+        prog_global_var_decls = !global_var_defs;
 		prog_enum_decls = !enum_defs;
 		prog_view_decls = !view_defs;
 		prog_proc_decls = !proc_defs;
@@ -262,6 +272,7 @@ decl_list
 
 decl
   : type_decl { Type $1 }
+  | global_var_decl { Global_var $1 }
   | proc_decl { Proc $1 }
   | coercion_decl { Coercion $1 }
 ;
@@ -272,6 +283,43 @@ type_decl
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
 ;
+
+/***************** Global_variable **************/
+
+global_var_decl
+  : GLOBAL local_variable_type variable_declarators SEMICOLON {
+	let var_decls = List.rev $3  in
+	  mkGlobalVarDecl $2 var_decls (get_pos 1)
+  }
+;
+
+/*
+global_var_type global_var_declarators {
+	let var_decls = List.rev $3 in
+	  mkGlobalVarDecl $2 var_decls (get_pos 1)
+  }
+;
+
+global_var_type
+  : typ { $1 }
+;
+
+global_var_declarators
+  : global_var_declarator { [$1] }
+  | global_var_declarators COMMA global_var_declarator { $3 :: $1 }
+;
+
+global_var_declarator
+  : IDENTIFIER EQ variable_initializer { ($1, Some $3, get_pos 1) }
+  | IDENTIFIER { ($1, None, get_pos 1) }
+;
+
+variable_initializer
+  : expression { $1 }
+;
+*/
+
+/**************** Class ******************/
 
 class_decl
   : CLASS IDENTIFIER extends_opt OBRACE member_list_opt CBRACE {
@@ -304,10 +352,12 @@ member_list
 
 member
   : typ IDENTIFIER SEMICOLON { Field (($1, $2), get_pos 2) }
-  | INV constr SEMICOLON { Inv $2 }
+  | INV disjunctive_constr SEMICOLON { Inv $2 }
   | proc_decl { Method $1 }
   | constructor_decl { Method $1 }
 ;
+
+/************ Data *************/
 
 data_decl
   : data_header data_body {
@@ -347,6 +397,8 @@ field_list
 		}
 ;
 
+/*************** Enums ******************/
+
 enum_decl
   : enum_header enum_body {
 	{ enum_name = $1;
@@ -376,7 +428,7 @@ enumerator
 
 view_decl
   : view_header EQEQ view_body opt_inv SEMICOLON {
-	{ $1 with view_formula = $3; view_invariant = $4 }
+	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3)}
   }
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
@@ -384,13 +436,30 @@ view_decl
 ;
 
 opt_inv
-  : { P.mkTrue no_pos }
-  | INV pure_constr { $2 }
+  : { (P.mkTrue no_pos, []) }
+  | INV pure_constr opt_branches { ($2, $3) }
 ;
+
+opt_branches
+  : { [] }
+  | AND OSQUARE branches CSQUARE { $3 }
+;
+
+branches
+  : branch {[$1]}
+  | branch SEMICOLON branches { $1 :: $3 }
+
+opt_branch
+  : { "" }
+  | DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON { $2 }
+
+branch
+  : DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON pure_constr { ($2, $5) }
 
 view_header
   : IDENTIFIER LT opt_ann_cid_list GT {
 	let cids, anns = List.split $3 in
+    let cids, br_labels = List.split cids in
 	  if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
 	  then
@@ -401,10 +470,12 @@ view_header
 		  { view_name = $1;
 			view_data_name = "";
 			view_vars = List.map fst cids;
+            view_labels = br_labels;
 			view_modes = modes;
 			view_typed_vars = [];
-			view_formula = F.mkTrue (get_pos 1);
-			view_invariant = P.mkTrue (get_pos 1) }
+			view_formula = F.mkETrue (get_pos 1);
+			view_invariant = (P.mkTrue (get_pos 1), []);
+			try_case_inference = false;}
   }
 ;
 
@@ -416,9 +487,12 @@ cid
   | THIS { (this, Unprimed) }
 ;
 
+
+
 view_body
-  : constr { $1 }
+  : formulas { $1 }
 ;
+
 
 /********** Constraints **********/
 
@@ -500,8 +574,8 @@ ann_cid_list
 ;
 
 ann_cid 
-  : cid opt_ann_list {
-	($1, $2)
+  : opt_branch cid opt_ann_list {
+	(($2, $1), $3)
   }
 ;
 
@@ -533,34 +607,94 @@ ann
   }
 ;
 
-constr
-  : disjunctive_constr { $1 }
+
+opt_sq_clist
+	: sq_clist {$1}
+	| {[]}
+;
+
+sq_clist
+	:OSQUARE opt_cid_list CSQUARE {$2}
+;
+
+formulas 
+	: extended_constr{($1,false)}
+	| disjunctive_constr {((Iformula.formula_to_struc_formula $1),true)}
+	;
+
+
+extended_constr
+	: r_constr {[$1]}
+	| extended_constr ORWORD r_constr {$3::$1}
+	;
+	
+r_constr_opt
+	: {[]}	
+	| r_constr {[$1]}
+	| OSQUARE extended_constr CSQUARE {$2}
+	;
+	
+impl_list
+	: pure_constr LEFTARROW extended_constr SEMICOLON 
+		{
+			let _ = if(List.length (Ipure.look_for_anonymous_pure_formula $1))>0 then 
+				report_error (get_pos 1) ("anonimous variables in case guard are disalowed")
+				else true in 
+			[($1,$3)]}
+	| impl_list pure_constr LEFTARROW extended_constr SEMICOLON {(($2,$4)::$1)}
+;
+
+r_constr 
+	: CASE OBRACE impl_list CBRACE 
+	{
+		Iformula.ECase 
+			{
+				Iformula.formula_case_branches = $3;
+				Iformula.formula_case_pos = (get_pos 3) 
+			}
+	}
+	| sq_clist one_constr r_constr_opt
+	{Iformula.EBase 
+						{
+						 	Iformula.formula_ext_explicit_inst = $1;
+						 	Iformula.formula_ext_implicit_inst = [];
+							Iformula.formula_ext_exists = [];
+						 	Iformula.formula_ext_base = $2;				
+						 	Iformula.formula_ext_continuation = $3;
+						 	Iformula.formula_ext_pos = (get_pos 2);
+							} 
+		} 
 ;
 
 disjunctive_constr
-  : case_constr { (* each case of a view definition *)
+  : one_constr { (* each case of a view definition *)
 	$1
   }
-  | disjunctive_constr ORWORD case_constr {
+  | disjunctive_constr ORWORD one_constr {
 	  F.mkOr $1 $3 (get_pos 2)
 	}
   | error {
-	  report_error (get_pos 1) ("parse error in constraints")
+	  report_error (get_pos 1) ("parse error in constraints disjunctive")
 	}
 ;
 
-case_constr
+one_constr
   : core_constr { $1 }
-  | EXISTS error { (* opt_typed_cid_list DOT OPAREN core_constr CPAREN *)
-	  report_error (get_pos 1)
-		("explicit existential quantifiers are disallowed as they are inserted automatically")
+  |  OPAREN EXISTS opt_cid_list COLON core_constr CPAREN {
+	  match $5 with
+		| F.Base ({F.formula_base_heap = h;
+				   F.formula_base_pure = p;
+                   F.formula_base_branches = b}) ->
+			F.mkExists $3 h p b (get_pos 1)
+		| _ -> report_error (get_pos 4) ("only Base is expected here.")
+
 	}
 ;
 
 core_constr
-  : heap_constr { F.formula_of_heap $1 (get_pos 1) }
-  | pure_constr { F.formula_of_pure $1 (get_pos 1) }
-  | heap_constr AND pure_constr { F.mkBase $1 $3 (get_pos 2) }
+  : heap_constr opt_branches { F.replace_branches $2 (F.formula_of_heap $1 (get_pos 1)) }
+  | pure_constr opt_branches { F.replace_branches $2 (F.formula_of_pure $1 (get_pos 1)) }
+  | heap_constr AND pure_constr opt_branches { F.mkBase $1 $3 $4 (get_pos 2) }
 ;
 
 heap_constr
@@ -801,35 +935,36 @@ cexp_list_rec
 
 proc_decl
   : proc_header proc_body {
-	{ $1 with proc_body = Some $2 }
+    let l = $1.proc_loc in
+	{ $1 with proc_body = Some $2 ; proc_loc = {l with end_pos = Parsing.symbol_end_pos()} }
   }
   | proc_header { $1 }
 ;
   
 proc_header
-  : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
-	  let static_specs, dynamic_specs = split_specs $6 in
+  : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_spec_list {
+	  (*let static_specs, dynamic_specs = split_specs $6 in*)
 		{ proc_name = $2;
 		  proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 		  proc_data_decl = None;
 		  proc_constructor = false;
 		  proc_args = $4;
 		  proc_return = $1;
-		  proc_static_specs = static_specs;
-		  proc_dynamic_specs = dynamic_specs;
+		  proc_static_specs = $6;
+		  proc_dynamic_specs = [];
 		  proc_loc = get_pos 1;
 		  proc_body = None }
 	}
-  | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
-		let static_specs, dynamic_specs = split_specs $6 in
+  | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_spec_list {
+		(*let static_specs, dynamic_specs = split_specs $6 in*)
 		  { proc_name = $2;
 			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 			proc_data_decl = None;
 			proc_constructor = false;
 			proc_args = $4;
 			proc_return = void_type;
-			proc_static_specs = static_specs;
-			proc_dynamic_specs = dynamic_specs;
+			proc_static_specs = $6;
+			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
 			proc_body = None }
   }
@@ -843,26 +978,26 @@ constructor_decl
 ;
 
 constructor_header
-  : IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_pre_post_list {
-	  let static_specs, dynamic_specs = split_specs $5 in
-		if Util.empty dynamic_specs then
+  : IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_spec_list {
+	  (*let static_specs, dynamic_specs = split_specs $5 in*)
+		(*if Util.empty dynamic_specs then*)
 		  { proc_name = $1;
 			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 			proc_data_decl = None;
 			proc_constructor = true;
 			proc_args = $3;
 			proc_return = Named $1;
-			proc_static_specs = static_specs;
-			proc_dynamic_specs = dynamic_specs;
+			proc_static_specs = $5;
+			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
 			proc_body = None }
-		else
-		  report_error (get_pos 1) ("constructors have only static speficiations");
+	(*	else
+		  report_error (get_pos 1) ("constructors have only static speficiations");*)
 	}
 ;
 
 coercion_decl
-  : COERCION opt_name constr coercion_direction constr SEMICOLON {  
+  : COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr SEMICOLON {  
 	{ coercion_type = $4;
 	  coercion_name = $2;
 	  coercion_head = $3;
@@ -872,7 +1007,7 @@ coercion_decl
 	}
   }
 /*
-  | COERCION opt_name constr coercion_direction constr proof_block {
+  | COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr proof_block {
 	  { coercion_type = $4;
 		coercion_name = $2;
 		coercion_head = $3;
@@ -912,28 +1047,88 @@ opt_name
   : { "" }
   | DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE { $2 }
 ;
-
-opt_pre_post_list
+opt_spec_list
   : { [] }
-  | pre_post_list /*%prec LOWER_THAN_SEMICOLON*/ { List.rev $1 }
+  | spec_list /*%prec LOWER_THAN_SEMICOLON*/ { List.rev $1 }
 ;
 
-pre_post_list
-  : pre_post_pair { [$1] }
-  | pre_post_list pre_post_pair { $2 :: $1 }
+spec_list
+  : spec { [$1] }
+  | spec_list spec { $2 :: $1 }
 ;
 
-pre_post_pair
-  : spec_qualifier_opt REQUIRES constr ENSURES constr SEMICOLON { ($1, $3, $5) }
-  | spec_qualifier_opt ENSURES constr SEMICOLON { ($1, F.mkTrue (get_pos 1), $3) }
-  | spec_qualifier_opt REQUIRES constr SEMICOLON { ($1, $3, F.mkTrue (get_pos 1)) }
+spec
+  : REQUIRES opt_sq_clist disjunctive_constr spec 
+		{
+			Iformula.EBase {
+			 Iformula.formula_ext_explicit_inst =$2;
+			 Iformula.formula_ext_implicit_inst = [];
+			 Iformula.formula_ext_exists = [];
+			 Iformula.formula_ext_base = $3;
+			 Iformula.formula_ext_continuation = [$4];
+			 Iformula.formula_ext_pos = (get_pos 1)
+			}
+			(*Iast.SRequires 
+						{
+							Iast.srequires_explicit_inst = $2;
+							Iast.srequires_implicit_inst = [];
+							Iast.srequires_base = $3;
+							Iast.srequires_continuation = [$4];
+							Iast.srequires_pos = (get_pos 1)
+							}*)
+		}
+	| REQUIRES opt_sq_clist disjunctive_constr OBRACE spec_list CBRACE
+		{
+			Iformula.EBase {
+			 Iformula.formula_ext_explicit_inst =$2;
+			 Iformula.formula_ext_implicit_inst = [];
+			 Iformula.formula_ext_exists = [];
+			 Iformula.formula_ext_base = $3;
+			 Iformula.formula_ext_continuation = if ((List.length $5)==0) then 
+											Error.report_error	{Error.error_loc = (get_pos 1); Error.error_text = "spec must contain ensures"}
+																							else $5;
+			 Iformula.formula_ext_pos = (get_pos 1)
+			}
+			(*Iast.SRequires 
+						{
+							Iast.srequires_explicit_inst = $2;
+							Iast.srequires_implicit_inst = [];
+							Iast.srequires_base = $3;
+							Iast.srequires_continuation =  if ((List.length $5)==0) then 
+											Error.report_error	{Error.error_loc = (get_pos 1); Error.error_text = "spec must contain ensures"}
+																							else $5;
+							Iast.srequires_pos = (get_pos 1)
+							}*)
+		} 	 	
+	| ENSURES disjunctive_constr SEMICOLON {
+		Iformula.EAssume $2
+		(*	Iast.SEnsure 
+					{
+						Iast.sensures_base =  $2;
+						Iast.sensures_pos = get_pos 2 ;
+					}		*)
+		}
+	| CASE OBRACE branch_list CBRACE 
+		{
+			Iformula.ECase 
+				{
+						Iformula.formula_case_branches = $3; 
+						Iformula.formula_case_pos = get_pos 1; 
+				}
+			} 
 ;
 
+branch_list 
+	:pure_constr LEFTARROW spec_list {[($1,$3)]	}
+	| branch_list pure_constr LEFTARROW spec_list {($2,$4)::$1}
+	;
+
+/*
 spec_qualifier_opt
   : { Static }
   | STATIC { Static }
   | DYNAMIC { Dynamic }
-;
+;*/
 
 opt_formal_parameter_list
   : { [] }
@@ -1028,7 +1223,7 @@ statement_list
   : statement { $1 }
   | statement_list statement { Seq { exp_seq_exp1 = $1;
 									 exp_seq_exp2 = $2;
-									 exp_seq_pos = get_pos 1 } }
+									 exp_seq_pos = get_pos 1 } (*astsimp relies on this to be left recursive, if changed be sure to modify astsimp*)}
   | error { report_error (get_pos 1) ("parse error") }
 ;
 
@@ -1128,22 +1323,22 @@ split_statement
 */
 
 assert_statement
-  : ASSERT constr SEMICOLON {
+  : ASSERT formulas SEMICOLON {
 	Assert { exp_assert_asserted_formula = Some $2;
 			 exp_assert_assumed_formula = None;
 			 exp_assert_pos = get_pos 1 }
   }
-  | ASSERT constr ASSUME SEMICOLON {
+/*  | ASSERT disjunctive_constr ASSUME SEMICOLON {
 	  Assert { exp_assert_asserted_formula = Some $2;
 			   exp_assert_assumed_formula = Some $2;
 			   exp_assert_pos = get_pos 1 }
-	}
-  | ASSUME constr SEMICOLON {
+	}*/
+  | ASSUME disjunctive_constr SEMICOLON {
 	  Assert { exp_assert_asserted_formula = None;
 			   exp_assert_assumed_formula = Some $2;
 			   exp_assert_pos = get_pos 1 }
 	}
-  | ASSERT constr ASSUME constr SEMICOLON {
+  | ASSERT formulas ASSUME disjunctive_constr SEMICOLON {
 	  Assert { exp_assert_asserted_formula = Some $2;
 			   exp_assert_assumed_formula = Some $4;
 			   exp_assert_pos = get_pos 1 }
@@ -1242,13 +1437,13 @@ while_statement
   : WHILE OPAREN boolean_expression CPAREN embedded_statement {
 	  While { exp_while_condition = $3;
 			  exp_while_body = $5;
-			  exp_while_specs = [(F.mkTrue no_pos, F.mkTrue no_pos)];
+			  exp_while_specs = Iast.mkSpecTrue (get_pos 1);
 			  exp_while_pos = get_pos 1 }
 	}
-  | WHILE OPAREN boolean_expression CPAREN pre_post_list embedded_statement {
+  | WHILE OPAREN boolean_expression CPAREN spec_list embedded_statement {
 		While { exp_while_condition = $3;
 				exp_while_body = $6;
-				exp_while_specs = List.map remove_spec_qualifier $5;
+				exp_while_specs = $5;(*List.map remove_spec_qualifier $5;*)
 				exp_while_pos = get_pos 1 }
 	  }
 ;

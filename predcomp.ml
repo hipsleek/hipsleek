@@ -1534,7 +1534,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0, _ = split_components base in
+  let h, pure0, branches, _ = split_components base in
   let pos = pos_of_formula disj in
 	(* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
@@ -1543,7 +1543,8 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	  let vmap = H.create 103 in
 	*)
   let vmap = H.copy vmap0 in
-  let v_order = gen_bindings_heap prog h unbound_vars vmap in
+  let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
+  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) pure0 branches in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
 (*  let _ = print_vmap vmap in *)
 	(* compile *)
@@ -1629,7 +1630,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 		 call the disjunct procedure, assign the returned 
 		 value to bvar_name 
 	  *)
-	  let bvar_name = fresh_var_name "xxx" pos.Lexing.pos_lnum in
+	  let bvar_name = fresh_var_name "xxx" pos.start_pos.Lexing.pos_lnum in
 	  let disj_res = Var ({exp_var_name = bvar_name;
 						   exp_var_pos = pos}) in
 	  let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
@@ -1639,7 +1640,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_pos = pos}) in
 	  let undo_call = VarDecl {exp_var_decl_type = Prim Bool;
-							   exp_var_decl_decls = [(fresh_var_name "bool" pos.Lexing.pos_lnum, Some undo_call', pos)];
+							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
 							   exp_var_decl_pos = pos } in
 	  let call_disj = VarDecl {exp_var_decl_type = Prim Bool;
 							   exp_var_decl_decls = [(bvar_name, Some call, pos)];
@@ -1696,7 +1697,7 @@ and gen_formula (prog : C.prog_decl) (f0 : formula) (vmap : var_map) (output_var
 	(seq, disj_results, pbvars)
 
 and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_var list)  =
-  let pos = pos_of_formula vdef.C.view_formula in
+  let pos = pos_of_struc_formula vdef.C.view_formula in
   let in_params, out_params = 
 	split_params_mode vdef.C.view_vars vdef.C.view_modes in
 	(* 
@@ -1707,11 +1708,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let vmap = H.create 103 in
   let _ = List.iter 
 	(fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
-  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_formula in
+  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_un_struc_formula in
 	(* update partially bound vars for vdef *)
   let _ = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
-	gen_formula prog vdef.C.view_formula vmap out_params in
+	gen_formula prog vdef.C.view_un_struc_formula vmap out_params in
 	(* generate fields *)
   let fields = ((Named vdef.C.view_data_name, self), pos) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in
