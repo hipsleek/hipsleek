@@ -56,7 +56,7 @@ MAIN_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	iprinter.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
 	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx \
-	cvclite.cmx tpdispatcher.cmx \
+	cvclite.cmx smtsolver.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
 	env.cmx checks.cmx inliner.cmx astsimp.cmx \
@@ -84,7 +84,7 @@ SLEEK_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
 	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx omega.cmx mona.cmx setmona.cmx \
     net.cmx \
-	cvclite.cmx tpdispatcher.cmx \
+	cvclite.cmx smtsolver.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
 	env.cmx checks.cmx \
@@ -110,7 +110,7 @@ PROVE_FILES=globals.cmx error.cmx util.cmx debug.cmx \
 	cformula.cmx cast.cmx cprinter.cmx \
 	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx \
     net.cmx \
-	cvclite.cmx tpdispatcher.cmx \
+	cvclite.cmx smtsolver.cmx tpdispatcher.cmx \
 	prooftracer.cmx solver.cmx \
 	drawing.cmx \
 	env.cmx checks.cmx inliner.cmx astsimp.cmx \

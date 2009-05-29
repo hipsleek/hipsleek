@@ -63,22 +63,22 @@ let process_cmd_line () = Arg.parse [
    "Choose frontend:\n\tnative: Native (default)\n\txml: XML");
   ("-int", Arg.Set inter,
    "Run in interactive mode.");
-  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"], Tpdispatcher.set_tp),
-   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle");
+  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "z3"], Tpdispatcher.set_tp),
+   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tz3: Z3");
   ("-v", Arg.Set print_version_flag,
-   "Print version information");
+   "\t\t\tPrint version information");
   ("-version", Arg.Set print_version_flag,
-   "Print version information");
+   "\t\tPrint version information");
   ("-dd", Arg.Set Debug.devel_debug_on,
-   "Turn on devel_debug");
+   "\t\t\tTurn on devel_debug");
   ("--log-omega", Arg.Set Omega.log_all_flag,
-   "Log all formulae sent to Omega Calculator in file allinput.oc");
-  ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
-  ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
-  ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
-  ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
-  ("--pcp", Arg.Set Globals.print_core,"print core representation");
-  ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"existentially wrap instantiations after the entailment");
+   "\t\tLog all formulae sent to Omega Calculator in file allinput.oc");
+  ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "\tenable sat statistics");
+  ("--epi", Arg.Set Globals.profiling, "\t\tenable profiling statistics");
+  ("--sbc", Arg.Set Globals.enable_syn_base_case, "\t\tuse only syntactic base case detection");
+  ("--eci", Arg.Set Globals.enable_case_inference,"\t\tenable struct formula inference");
+  ("--pcp", Arg.Set Globals.print_core,"\t\tprint core representation");
+  ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"\t\t\texistentially wrap instantiations after the entailment");
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit;
   3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 ] set_source_file usage_msg

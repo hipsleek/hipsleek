@@ -83,7 +83,7 @@ and omega_of_formula f  = match f with
   | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "/usr/local/bin/oc" (* TODO: fix oc path *)
+let omegacalc = "oc" (* TODO: fix oc path *)
 
 let omega_calc_command =
   if Sys.os_type = "Cygwin" then ("dos2unix " ^ infilename ^ " ; " ^ omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
