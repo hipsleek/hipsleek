@@ -1,6 +1,8 @@
-(*
+(**
  * Author           : Wong Choon Teng Justin
  * Last modified    : Fri May 29 22:03:13 SGT 2009
+ *
+ * Tests for validity and satisfiability of a core pure formula using various SMT solvers
  *
  * TODO:
  * Error checking(runProver)
@@ -22,111 +24,104 @@ let string_of_logic arg =
         | QF_LIA -> "QF_LIA"
         | AUFLIA -> "AUFLIA"
 
-(*
+(**
  * Temp files used to feed input and capture output from z3
  *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 
 
-(*
+(**
  * Command used with Windows version of Z3
  * Ensure wine is installed and z3 and Microsoft.VC90.CRT is in path and linked with their respective files
  *)
 let command = "z3 `winepath -w " ^ infile ^ "` | tr -d '\r' > " ^ outfile
 
 
-(*
- * z3 of spec_var
+(**
+ * smt of spec_var
  *)
-let z3_of_spec_var (sv : CP.spec_var) =(*{{{{*)
+let smt_of_spec_var (sv : CP.spec_var) =(*{{{{*)
     match sv with
         | CP.SpecVar (_, var, p) -> var ^ (if p=Primed then "'" else "")(*}}}*)
 
-(*
- * z3 of spec_var
+(**
+ * smt of spec_var
  *)
-let rec z3_of_exp a =(*{{{*)
+let rec smt_of_exp a =(*{{{*)
     match a with
         | CP.Null _               -> "0"
-        | CP.Var (sv, _)          -> z3_of_spec_var sv
+        | CP.Var (sv, _)          -> smt_of_spec_var sv
         | CP.IConst (i, _)        -> string_of_int i
-        | CP.Add (a1, a2, _)      -> "(+ " ^(z3_of_exp a1)^ " " ^ (z3_of_exp a2)^")"
-        | CP.Subtract (a1, a2, _) -> "(- " ^(z3_of_exp a1)^ " " ^ (z3_of_exp a2)^")"
-        | CP.Mult (c, a, _)       -> "( * " ^(z3_of_exp a)^ " " ^ (string_of_int c)^")"
+        | CP.Add (a1, a2, _)      -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+        | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
+        | CP.Mult (c, a, _)       -> "( * " ^(smt_of_exp a)^ " " ^ (string_of_int c)^")"
         (* UNHANDLED *)
         | CP.Bag ([], _) -> "0"
         | CP.Max _
-        | CP.Min _ -> failwith ("Z3.z3_of_exp: min/max should not appear here")
+        | CP.Min _ -> failwith ("Smtsolver.smt_of_exp: min/max should not appear here")
         | CP.Bag _
         | CP.BagUnion _
         | CP.BagIntersect _
-        | CP.BagDiff _ -> failwith ("[z3.ml]: ERROR in constraints (set should not appear here)")(*}}}*)
+        | CP.BagDiff _ -> failwith ("[smtsolver.ml]: ERROR in constraints (set should not appear here)")(*}}}*)
 
-(*
- * z3 of spec_var
+(**
+ * smt of spec_var
  *)
-let rec z3_of_b_formula b (*{{{*)=
+let rec smt_of_b_formula b (*{{{*)=
     match b with
         | CP.BConst (c, _)    -> if c then "true" else "false"
-        | CP.BVar (sv, _)     -> "(= 1 " ^(z3_of_spec_var sv) ^ ")"
-        | CP.Lt (a1, a2, _)   -> "(< " ^(z3_of_exp a1) ^ " " ^ (z3_of_exp a2) ^ ")"
-        | CP.Lte (a1, a2, _)  -> "(<= " ^(z3_of_exp a1) ^ " " ^ (z3_of_exp a2) ^ ")"
-        | CP.Gt (a1, a2, _)   -> "(> " ^(z3_of_exp a1) ^ " " ^ (z3_of_exp a2) ^ ")"
-        | CP.Gte (a1, a2, _)  -> "(>= " ^(z3_of_exp a1) ^ " " ^ (z3_of_exp a2) ^ ")"
-        | CP.Eq (a1, a2, _)   -> "(= " ^(z3_of_exp a1) ^ " " ^ (z3_of_exp a2) ^ ")"
+        | CP.BVar (sv, _)     -> "(= 1 " ^(smt_of_spec_var sv) ^ ")"
+        | CP.Lt (a1, a2, _)   -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+        | CP.Lte (a1, a2, _)  -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+        | CP.Gt (a1, a2, _)   -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+        | CP.Gte (a1, a2, _)  -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+        | CP.Eq (a1, a2, _)   -> "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
         | CP.Neq (a1, a2, _)  ->
               if CP.is_null a2 then
-                  "(> " ^(z3_of_exp a1)^ " 0)"
+                  "(> " ^(smt_of_exp a1)^ " 0)"
               else if CP.is_null a1 then
-                  "(> " ^(z3_of_exp a2)^ " 0)"
+                  "(> " ^(smt_of_exp a2)^ " 0)"
               else
-                  "(not (= " ^(z3_of_exp a1) ^ " " ^ (z3_of_exp a2) ^ "))"
+                  "(not (= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ "))"
         | CP.EqMax (a1, a2, a3, _) ->
-              let a1str = z3_of_exp a1 in
-              let a2str = z3_of_exp a2 in
-              let a3str = z3_of_exp a3 in
+              let a1str = smt_of_exp a1 in
+              let a2str = smt_of_exp a2 in
+              let a3str = smt_of_exp a3 in
                   "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (>= "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (< "^a2str^" "^a3str^")))"
         | CP.EqMin (a1, a2, a3, _) ->
-              let a1str = z3_of_exp a1 in
-              let a2str = z3_of_exp a2 in
-              let a3str = z3_of_exp a3 in
+              let a1str = smt_of_exp a1 in
+              let a2str = smt_of_exp a2 in
+              let a3str = smt_of_exp a3 in
                   "(or (and (= " ^ a1str ^ " " ^ a2str ^ ") (< "^a2str^" "^a3str^")) (and (= " ^ a1str ^ " " ^ a3str ^ ") (>= "^a2str^" "^a3str^")))"
         (* UNHANDLED *)
-        | CP.BagIn (v, e, l)    -> " in(" ^ (z3_of_spec_var v) ^ ", " ^ (z3_of_exp e) ^ ")"
-        | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (z3_of_spec_var v) ^ ", " ^ (z3_of_exp e) ^"))"
-        | CP.BagSub (e1, e2, l) -> " subset(" ^ z3_of_exp e1 ^ ", " ^ z3_of_exp e2 ^ ")"
-        | CP.BagMax _ | CP.BagMin _ -> failwith ("z3_of_b_formula: BagMax/BagMin should not appear here.\n")(*}}}*)
+        | CP.BagIn (v, e, l)    -> " in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^ ")"
+        | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
+        | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
+        | CP.BagMax _ | CP.BagMin _ -> failwith ("smt_of_b_formula: BagMax/BagMin should not appear here.\n")(*}}}*)
 
 
-(*
- * z3 of spec_var
+(**
+ * smt of spec_var
  *)
-let rec z3_of_formula f =(*{{{*)
+let rec smt_of_formula f =(*{{{*)
     match f with
-        | CP.BForm b -> (z3_of_b_formula b)
-        | CP.And (p1, p2, _) -> "(and " ^ (z3_of_formula p1) ^ " " ^ (z3_of_formula p2) ^ ")"
-        | CP.Or (p1, p2, _) -> "(or " ^ (z3_of_formula p1) ^ " " ^ (z3_of_formula p2) ^ ")"
+        | CP.BForm b -> (smt_of_b_formula b)
+        | CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
+        | CP.Or (p1, p2, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
         | CP.Not (p, _) ->
               (match p with
-                   | CP.BForm (CP.BVar (bv, _)) -> "(= 0 " ^ (z3_of_spec_var bv) ^ ")"
-                   | _ -> "(not " ^ (z3_of_formula p) ^ ")")
+                   | CP.BForm (CP.BVar (bv, _)) -> "(= 0 " ^ (smt_of_spec_var bv) ^ ")"
+                   | _ -> "(not " ^ (smt_of_formula p) ^ ")")
         | CP.Forall (sv, p, _) ->
               logic := AUFLIA;
-              "(forall (" ^ (z3_of_spec_var sv) ^ " Int) " ^ (z3_of_formula p) ^ ")"
+              "(forall (" ^ (smt_of_spec_var sv) ^ " Int) " ^ (smt_of_formula p) ^ ")"
         | CP.Exists (sv, p, _) ->
               logic := AUFLIA;
-              "(exists (" ^ (z3_of_spec_var sv) ^ " Int) " ^ (z3_of_formula p) ^ ")"(*}}}*)
+              "(exists (" ^ (smt_of_spec_var sv) ^ " Int) " ^ (smt_of_formula p) ^ ")"(*}}}*)
 
-(* UNUSED *)
-(*
- and z3_of_sv_type sv = match sv with(*{{{*)
- (*| CP.SpecVar (CP.Prim Bag, _, _) -> "SET" (*UNKNOWN*)*)
- | CP.SpecVar (CP.Prim Bool, _, _) -> "INT" (* "BOOLEAN" *)
- | _ -> "INT"(*}}}*)
- *)
 
-(*
+(**
  * Converts a core pure formula into SMT-LIB format which can be run through various SMT provers.
  *)
 let toSMT (ante : CP.formula) (conseq : CP.formula) : string =(*{{{*)
@@ -135,12 +130,12 @@ let toSMT (ante : CP.formula) (conseq : CP.formula) : string =(*{{{*)
     let conseq_fv = CP.fv conseq in
     let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
 
-    let ante_str = (z3_of_formula ante) in
-    let conseq_str = (z3_of_formula conseq) in
+    let ante_str = (smt_of_formula ante) in
+    let conseq_str = (smt_of_formula conseq) in
 
     let extrafuns =
         if (all_fv = []) then ""
-        else ":extrafuns (" ^ (List.fold_left (fun x y -> x ^ "(" ^ y ^ " Int)") "" (List.map z3_of_spec_var all_fv)) ^")\n" in
+        else ":extrafuns (" ^ (List.fold_left (fun x y -> x ^ "(" ^ y ^ " Int)") "" (List.map smt_of_spec_var all_fv)) ^")\n" in
     let test_out = (
         "(benchmark in.smt\n" ^
         ":logic " ^ (string_of_logic !logic) ^ "\n" ^
@@ -151,7 +146,7 @@ let toSMT (ante : CP.formula) (conseq : CP.formula) : string =(*{{{*)
         test_out(*}}}*)
 
 
-(*
+(**
  * Runs the specified prover and returns output
  *)
 let runProver (inString : string) : string =(*{{{*)
@@ -167,7 +162,7 @@ let runProver (inString : string) : string =(*{{{*)
             result(*}}}*)
 
 
-(*
+(**
  * Test for validity
  *)
 let imply (ante : Cpure.formula) (conseq : Cpure.formula) : bool =(*{{{*)
@@ -197,7 +192,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) : bool =(*{{{*)
         )(*}}}*)
 
 
-(*
+(**
  * Test for satisfiability
  *)
 let is_sat (f : Cpure.formula) (sat_no : string) : bool =(*{{{*)
@@ -224,3 +219,12 @@ let is_sat (f : Cpure.formula) (sat_no : string) : bool =(*{{{*)
         ) else ( (* res_str = "unknown" *)
             false
         )(*}}}*)
+
+
+(* UNUSED *)
+(*
+ and smt_of_sv_type sv = match sv with(*{{{*)
+ (*| CP.SpecVar (CP.Prim Bag, _, _) -> "SET" (*UNKNOWN*)*)
+ | CP.SpecVar (CP.Prim Bool, _, _) -> "INT" (* "BOOLEAN" *)
+ | _ -> "INT"(*}}}*)
+ *)
