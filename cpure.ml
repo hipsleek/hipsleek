@@ -40,8 +40,9 @@ and b_formula =
   | BagSub of (exp * exp * loc)
   | BagMin of (spec_var * spec_var * loc)
   | BagMax of (spec_var * spec_var * loc)
-
-
+	  (* list formulas *)
+  | ListIn of (spec_var * exp * loc)
+  | ListNotIn of (spec_var * exp * loc)
 
 (* Expression *)
 and exp =
@@ -58,7 +59,14 @@ and exp =
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
-
+	  (* list expressions *)
+  | List of (exp list * loc)
+  | ListCons of (spec_var * exp * loc)
+  | ListHead of (exp * loc)
+  | ListTail of (exp * loc)
+  | ListLength of (exp * loc)
+  | ListAppend of (exp list * loc)
+  | ListReverse of (exp * loc)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -75,8 +83,9 @@ and constraint_rel =
 let get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
   | Var (SpecVar (t, _, _), _) -> t
-  | IConst _ | Add _ | Subtract _ | Mult _ | Max _ | Min _  -> Prim Int
+  | IConst _ | Add _ | Subtract _ | Mult _ | Max _ | Min _ | ListHead _ | ListLength _ -> Prim Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
+  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Prim Globals.List
 
 (* free variables *)
 
@@ -123,15 +132,21 @@ and bfv (bf : b_formula) = match bf with
 	  let fv2 = afv a2 in
 	  let fv3 = afv a3 in
 		Util.remove_dups (fv1 @ fv2 @ fv3)
-	| BagIn (v, a1, _) ->
+  | BagIn (v, a1, _) ->
 		let fv1 = afv a1 in
 		[v] @ fv1
-	| BagNotIn (v, a1, _) ->
+  | BagNotIn (v, a1, _) ->
 		let fv1 = afv a1 in
 		[v] @ fv1
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-	| BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
-	| BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | ListIn (v, a1, _) ->
+	  let fv1 = afv a1 in
+		[v] @ fv1
+  | ListNotIn (v, a1, _) ->
+	  let fv1 = afv a1 in
+		[v] @ fv1
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
@@ -148,17 +163,28 @@ and afv (af : exp) : spec_var list = match af with
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   (*| BagEmpty (_) -> []*)
-  | Bag (alist, _) -> let svlist = afv_bag alist in
+  | Bag (alist, _) -> let svlist = afv_list alist in
   		Util.remove_dups svlist
-  | BagUnion (alist, _) -> let svlist = afv_bag alist in
+  | BagUnion (alist, _) -> let svlist = afv_list alist in
   		Util.remove_dups svlist
-  | BagIntersect (alist, _) -> let svlist = afv_bag alist in
+  | BagIntersect (alist, _) -> let svlist = afv_list alist in
   		Util.remove_dups svlist
   | BagDiff(a1, a2, _) -> combine_avars a1 a2
+  | List (alist, _) -> let svlist = afv_list alist in
+  		Util.remove_dups svlist
+  | ListAppend (alist, _) -> let svlist = afv_list alist in
+  		Util.remove_dups svlist
+  | ListCons (sv, a, _) ->
+	  let fv = afv a in
+		Util.remove_dups ([sv] @ fv)  
+  | ListHead (a, _)
+  | ListTail (a, _)
+  | ListLength (a, _)
+  | ListReverse (a, _) -> afv a
 
-and afv_bag (alist : exp list) : spec_var list = match alist with
+and afv_list (alist : exp list) : spec_var list = match alist with
 	|[] -> []
-	|a :: rest -> afv a @ afv_bag rest
+	|a :: rest -> afv a @ afv_list rest
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -215,9 +241,11 @@ and get_alias (e : exp) : spec_var = match e with
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (OType _, _, _) -> true
   | _ -> false
+  
 and exp_is_object_var (sv : exp) = match sv with
   | Var(SpecVar (OType _, _, _),_) -> true
   | _ -> false
+  
 and is_bag (e : exp) : bool = match e with
   | Bag (_, _)
   | BagUnion (_, _)
@@ -225,16 +253,30 @@ and is_bag (e : exp) : bool = match e with
   | BagDiff (_, _, _) -> true
   | _ -> false
 
+and is_list (e : exp) : bool = match e with
+  | List (_, _)
+  | ListCons (_, _, _)
+  | ListTail (_, _)
+  | ListAppend (_, _)
+  | ListReverse (_, _) -> true
+  | _ -> false
+
 and is_arith (e : exp) : bool = match e with
   | Add _
   | Subtract _
   | Mult _
   | Min _
-  | Max _ -> true
+  | Max _
+  | ListHead _
+  | ListLength _ -> true
   | _ -> false
 
 and is_bag_type (t : typ) = match t with
   | Prim Globals.Bag  -> true
+  | _ -> false
+  
+and is_list_type (t : typ) = match t with
+  | Prim Globals.List  -> true
   | _ -> false
 
 and is_int_type (t : typ) = match t with
@@ -445,7 +487,9 @@ and is_member_pure (f:formula) (p:formula):bool =
 and equalFormula (f1:formula)(f2:formula):bool = match (f1,f2) with
   | ((BForm b1),(BForm b2)) -> equalBFormula b1 b2
   | ((Not (b1,_)),(Not (b2,_))) -> equalFormula b1 b2
-  | _ -> false	
+  | _ -> false
+
+(* TODO de continuat de aici *)
 
 and equalBFormula (f1:b_formula)(f2:b_formula):bool = match (f1,f2) with
   | ((BVar v1),(BVar v2))-> (eq_spec_var (fst v1) (fst v2))

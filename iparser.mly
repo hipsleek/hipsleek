@@ -89,6 +89,7 @@
 
 %token AND
 %token ANDAND
+%token APPEND
 %token ASSERT
 %token ASSUME
 %token AT
@@ -101,10 +102,12 @@
 %token COERCION
 %token COLON
 %token COLONCOLON
+%token COLONCOLONCOLON
 %token COMMA
 %token CONSEQ
 %token CONST
 %token CONTINUE
+%token CLIST
 %token CPAREN
 %token CSQUARE
 %token DATA
@@ -131,17 +134,21 @@
 %token GT
 %token GTE
 %token HASH
+%token HEAD
 %token <string> IDENTIFIER
 %token IF
 %token IMPLIES
 %token IMPLY
 %token IMPORT
 %token IN
+%token INLIST
 %token <string> JAVA
 %token LEFTARROW
+%token LENGTH
 %token <float> LITERAL_FLOAT
 %token <int> LITERAL_INTEGER
 %token NOTIN
+%token NOTINLIST
 %token BAGMAX
 %token BAGMIN
 %token FOLD
@@ -160,6 +167,7 @@
 %token NULL
 %token OBRACE
 %token OFF
+%token OLIST
 %token OPAREN
 %token ON
 %token OP_ADD_ASSIGN
@@ -178,6 +186,7 @@
 %token PRIME
 %token PRINT
 %token REF
+%token REVERSE
 %token REQUIRES
 %token <string> RES
 %token RETURN
@@ -188,6 +197,7 @@
 %token STAR
 %token STATIC
 %token SUBSET
+%token TAIL
 %token THEN
 %token <string> THIS
 %token TO
@@ -210,6 +220,7 @@
 %left STAR
 %right NOT
 %left EQ NEQ GT GTE LT LTE
+%right COLONCOLONCOLON
 %left PLUS MINUS
 %left UMINUS
 
@@ -863,6 +874,13 @@ bconstr
   | BAGMIN OPAREN cid COMMA cid CPAREN {
 	  (P.BForm (P.BagMin ($3, $5, get_pos 2)), None)
 	}
+	/* list_constr */
+  | cid INLIST cexp {
+	  (P.BForm (P.ListIn ($1, $3, get_pos 2)), None)
+	}
+  | cid NOTINLIST cexp {
+	  (P.BForm (P.ListNotIn ($1, $3, get_pos 2)), None)
+	}
 ;
 
 /* constraint expressions */
@@ -908,7 +926,28 @@ cexp
   | DIFF OPAREN cexp COMMA cexp CPAREN {
 	  P.BagDiff ($3, $5, get_pos 1)
 	}
-	
+	/* lists */
+  | OLIST opt_cexp_list CLIST {
+	  P.List ($2, get_pos 1)
+	}
+  | cid COLONCOLONCOLON cexp {
+	  P.ListCons ($1, $3, get_pos 2)
+	}
+  | HEAD OPAREN cexp CPAREN {
+	  P.ListHead ($3, get_pos 1)
+	}
+  | TAIL OPAREN cexp CPAREN {
+	  P.ListTail ($3, get_pos 1)
+	}
+  | LENGTH OPAREN cexp CPAREN {
+	  P.ListLength ($3, get_pos 1)
+	}
+  | APPEND OPAREN opt_cexp_list CPAREN {
+	  P.ListAppend ($3, get_pos 1)
+	}
+  | REVERSE OPAREN cexp CPAREN {
+	  P.ListReverse ($3, get_pos 1)
+	}
 ;
 
 opt_cexp_list

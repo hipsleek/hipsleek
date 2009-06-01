@@ -22,7 +22,7 @@ and b_formula =
   | Lte of (exp * exp * loc)
   | Gt of (exp * exp * loc)
   | Gte of (exp * exp * loc)
-  | Eq of (exp * exp * loc) (* these two could be arithmetic or pointer or bags *)
+  | Eq of (exp * exp * loc) (* these two could be arithmetic or pointer or bags or lists *)
   | Neq of (exp * exp * loc)
   | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
   | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
@@ -32,12 +32,15 @@ and b_formula =
   | BagSub of (exp * exp * loc)
   | BagMin of ((ident * primed) * (ident * primed) * loc)
   | BagMax of ((ident * primed) * (ident * primed) * loc)	
+	  (* lists and list formulae *)
+  | ListIn of ((ident * primed) * exp * loc)
+  | ListNotIn of ((ident * primed) * exp * loc)
 
 (* Expression *)
 and exp = 
   | Null of loc
   | Var of ((ident * primed) * loc) 
-	  (* variables could be of type pointer, int, sets, etc *)
+	  (* variables could be of type pointer, int, bags, lists etc *)
   | IConst of (int * loc)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
@@ -50,7 +53,15 @@ and exp =
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
-    
+ 	  (* list expressions *)
+  | List of (exp list * loc)
+  | ListCons of ((ident * primed) * exp * loc)
+  | ListHead of (exp * loc)
+  | ListTail of (exp * loc)
+  | ListLength of (exp * loc)
+  | ListAppend of (exp list * loc)
+  | ListReverse of (exp * loc)
+
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -95,16 +106,21 @@ and bfv (bf : b_formula) = match bf with
 	  let fv2 = afv a2 in
 	  let fv3 = afv a3 in
 		Util.remove_dups (fv1 @ fv2 @ fv3)
-	| BagIn (v, a, _) -> 
+  | BagIn (v, a, _) -> 
 		let fv = afv a in
 		Util.remove_dups ([v] @ fv)
-	| BagNotIn (v, a, _) -> 
+  | BagNotIn (v, a, _) -> 
 		let fv = afv a in
 		Util.remove_dups ([v] @ fv)	
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-	| BagMax (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
-	| BagMin (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
-
+  | BagMax (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
+  | BagMin (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
+  | ListIn (v, a, _) -> 
+	  let fv = afv a in
+		Util.remove_dups ([v] @ fv)
+  | ListNotIn (v, a, _) -> 
+	  let fv = afv a in
+		Util.remove_dups ([v] @ fv)	
 
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -125,6 +141,15 @@ and afv (af : exp) : (ident * primed) list = match af with
   | BagIntersect (d,_)
   | BagUnion (d,_) ->  Util.remove_dups (List.fold_left (fun a c-> a@(afv c)) [] d)
   (*| BagDiff _|BagIntersect _|BagUnion _|Bag _ -> failwith ("afv: bag constraints are not expected")*)
+  | List (d, _)
+  | ListAppend (d, _) -> Util.remove_dups (List.fold_left (fun a c -> a@(afv c)) [] d)
+  | ListCons (v, a, _) ->
+	  let fv = afv a in
+		Util.remove_dups ([v] @ fv)  
+  | ListHead (a, _)
+  | ListTail (a, _)
+  | ListLength (a, _)
+  | ListReverse (a, _) -> afv a
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -145,6 +170,13 @@ and is_bag (e : exp) : bool = match e with
   | BagDiff (_, _, _) -> true
   | _ -> false
   
+and is_list (e : exp) : bool = match e with
+  | List (_, _)
+  | ListCons (_, _, _)
+  | ListTail (_, _)
+  | ListAppend (_, _)
+  | ListReverse (_, _) -> true
+  | _ -> false
 
 and name_of_var (e : exp) : ident = match e with
   | Var ((v, p), pos) -> v
@@ -351,6 +383,13 @@ and pos_of_exp (e : exp) = match e with
   | BagUnion (_, p) -> p
   | BagIntersect (_, p) -> p
   | BagDiff (_, _, p) -> p
+  | List (_, p) -> p
+  | ListAppend (_, p) -> p
+  | ListCons (_, _, p) -> p
+  | ListHead (_, p) -> p
+  | ListTail (_, p) -> p
+  | ListLength (_, p) -> p
+  | ListReverse (_, p) -> p
   
 	
 	
@@ -415,12 +454,14 @@ and b_apply_one (fr, t) bf = match bf with
   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one (fr, t) a1,
 									  e_apply_one (fr, t) a2,
 									  e_apply_one (fr, t) a3, pos)
-	| BagIn (v, a1, pos) -> BagIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
-	| BagNotIn (v, a1, pos) -> BagNotIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
-	(* is it ok?... can i have a set of boolean values?... don't think so..*)
+  | BagIn (v, a1, pos) -> BagIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+  | BagNotIn (v, a1, pos) -> BagNotIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+	(* is it ok?... can i have a set of boolean values?... don't think so... *)
   | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> BagMax ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
-	| BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
+  | BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
+  | ListIn (v, a1, pos) -> ListIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+  | ListNotIn (v, a1, pos) -> ListNotIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -435,15 +476,22 @@ and e_apply_one (fr, t) e = match e with
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
-	| Bag (alist, pos) -> Bag ((e_apply_one_bag (fr, t) alist), pos)
-	| BagUnion (alist, pos) -> BagUnion ((e_apply_one_bag (fr, t) alist), pos)
-  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_bag (fr, t) alist), pos)
+  | Bag (alist, pos) -> Bag ((e_apply_one_list (fr, t) alist), pos)
+  | BagUnion (alist, pos) -> BagUnion ((e_apply_one_list (fr, t) alist), pos)
+  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_list (fr, t) alist), pos)
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
+  | List (alist, pos) -> List ((e_apply_one_list (fr, t) alist), pos)
+  | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list (fr, t) alist), pos)
+  | ListCons (v, a1, pos) -> ListCons ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+  | ListHead (a1, pos) -> ListHead (e_apply_one (fr, t) a1, pos)
+  | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
+  | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
+  | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
 
-and e_apply_one_bag (fr, t) alist = match alist with
-	|[] -> []
-	|a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_bag (fr, t) rest)
+and e_apply_one_list (fr, t) alist = match alist with
+  |[] -> []
+  |a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_list (fr, t) rest)
 	
 
 and look_for_anonymous_exp_list (args : exp list) :
@@ -454,54 +502,50 @@ and look_for_anonymous_exp_list (args : exp list) :
         (look_for_anonymous_exp_list rest)
   | _ -> []
 
-
-and look_for_anonymous_exp (arg : exp) : (ident * primed) list =
-  match arg with
-  | Var ((id, p), _) ->
-      if
-        ((String.length id) > 5) &&
+and anon_var (id, p) = 
+      if ((String.length id) > 5) &&
           ((String.compare (String.sub id 0 5) "Anon_") == 0)
       then [ (id, p) ]
       else []
+
+and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
+  | Var (b1, _) -> anon_var b1
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Max (e1, e2, _) |
       Min (e1, e2, _) | BagDiff (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
-  | Mult (_, e1, _) -> look_for_anonymous_exp e1
-  | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) ->
+  | Mult (_, e1, _) | ListHead (e1, _) | ListTail (e1, _) |
+      ListLength (e1, _) | ListReverse (e1, _) -> look_for_anonymous_exp e1
+  | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) | List (e1, _) | ListAppend (e1, _) ->
       look_for_anonymous_exp_list e1
+  | ListCons (e1, e2, _) -> (anon_var e1) @ (look_for_anonymous_exp e2)
   | _ -> []
-
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
   | BForm b -> look_for_anonymous_b_formula b
-  | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
-  | Or  (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
-  | Not (b1,_) -> (look_for_anonymous_pure_formula b1)
-  | Forall (_,b1,_)-> (look_for_anonymous_pure_formula b1)
-  | Exists (_,b1,_)-> (look_for_anonymous_pure_formula b1)
+  | And (b1, b2, _) -> (look_for_anonymous_pure_formula b1) @ (look_for_anonymous_pure_formula b1)
+  | Or  (b1, b2, _) -> (look_for_anonymous_pure_formula b1) @ (look_for_anonymous_pure_formula b1)
+  | Not (b1, _) -> (look_for_anonymous_pure_formula b1)
+  | Forall (_, b1, _)-> (look_for_anonymous_pure_formula b1)
+  | Exists (_, b1, _)-> (look_for_anonymous_pure_formula b1)
 	
-and anon_var  (id,p) = 
-        if ((String.length id) > 5) &&
-          ((String.compare (String.sub id 0 5) "Anon_") == 0)
-      then [ (id, p) ]
-      else []
-
 and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match f with
   | BConst _ -> []
-  | BVar (b1,_) -> anon_var b1
-  | Lt (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | Lte (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | Gt (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | Gte (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | Eq (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | Neq (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | EqMax (b1,b2,b3,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)@(look_for_anonymous_exp b3)
-  | EqMin(b1,b2,b3,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)@(look_for_anonymous_exp b3)
-  | BagIn (b1,b2,_)-> (anon_var b1)@(look_for_anonymous_exp b2)
-  | BagNotIn (b1,b2,_)-> (anon_var b1)@(look_for_anonymous_exp b2)
-  | BagSub (b1,b2,_) -> (look_for_anonymous_exp b1)@(look_for_anonymous_exp b2)
-  | BagMin (b1,b2,_)-> (anon_var b1)@(anon_var b2)
-  | BagMax (b1,b2,_)-> (anon_var b1)@(anon_var b2)	
+  | BVar (b1, _) -> anon_var b1
+  | Lt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | Lte (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | Gt (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | Gte (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | Eq (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | Neq (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | EqMax (b1, b2, b3, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2) @ (look_for_anonymous_exp b3)
+  | EqMin(b1, b2, b3, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2) @ (look_for_anonymous_exp b3)
+  | BagIn (b1, b2, _)-> (anon_var b1) @ (look_for_anonymous_exp b2)
+  | BagNotIn (b1, b2, _)-> (anon_var b1) @ (look_for_anonymous_exp b2)
+  | BagSub (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | BagMin (b1, b2, _)-> (anon_var b1) @ (anon_var b2)
+  | BagMax (b1, b2, _)-> (anon_var b1) @ (anon_var b2)	
+  | ListIn (b1, b2,  _)-> (anon_var b1) @ (look_for_anonymous_exp b2)
+  | ListNotIn (b1, b2, _)-> (anon_var b1) @ (look_for_anonymous_exp b2)
   
 let merge_branches l1 l2 =
   let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in

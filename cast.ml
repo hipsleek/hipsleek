@@ -224,6 +224,8 @@ let bool_type = P.Prim Bool
 
 let bag_type = P.Prim Bag
 
+let list_type = P.Prim List
+
 let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 
 (* smart constructors *)
@@ -321,6 +323,7 @@ let name_of_type (t : P.typ) = match t with
   | P.Prim Void -> "void"
   | P.Prim Float -> "float"
   | P.Prim Bag -> "bag"
+  | P.Prim List -> "list"
   | P.OType c -> c
 
 let mingle_name (m : ident) (targs : P.typ list) = 

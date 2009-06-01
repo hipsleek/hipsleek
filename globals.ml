@@ -20,6 +20,7 @@ and prim_type =
   | Int
   | Void
   | Bag
+  | List
 
 (*
   Data types for code gen

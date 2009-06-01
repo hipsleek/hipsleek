@@ -26,6 +26,7 @@ let string_of_prim_type = function
   | Int           -> "int "
   | Void          -> "void "
   | Bag           -> "bag "
+  | List          -> "list "
 ;;
 
 (* pretty printing for types *)
@@ -118,7 +119,7 @@ let rec string_of_formula_exp = function
 			^ (if need_parenthesis e then "(" ^ (string_of_formula_exp e) ^ ")" else string_of_formula_exp e)
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
-	| _ -> "bag constraint"
+	| _ -> "bag or list constraint"
 ;;
 
 (* pretty printing for a list of pure formulae *)
@@ -161,7 +162,7 @@ let string_of_b_formula = function
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
   | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-	| _ -> "bag constraint"
+	| _ -> "bag or list constraint"
 ;;
 
 (* pretty printing for a pure formula *)
