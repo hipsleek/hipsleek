@@ -141,14 +141,17 @@ let parse_file_full file_name =
   let org_in_chnl = open_in file_name in
   let input = Lexing.from_channel org_in_chnl in
     try
-	  let ptime1 = Unix.times () in
+    (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-		print_string "Parsing... ";
+     *)
+		print_string "Parsing...\n";
+        let _ = Util.push_time "Parsing" in
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
-		  let ptime2 = Unix.times () in
+         let _ = Util.pop_time "Parsing" in
+    (*		  let ptime2 = Unix.times () in
 		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n");
+			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
 			prog 
     with
 		End_of_file -> exit 0	  
@@ -169,28 +172,36 @@ let process_source_full source =
 		print_string (" done.\n");
 		exit 0
 	end;
-	if not (!parse_only) then
+  	if (!parse_only) then 
+      let _ = Util.pop_time "Preprocessing" in
+      print_string (Iprinter.string_of_program prog)
+	else 
 	  (* Global variables translating *)
+       let _ = Util.push_time "Translating global var" in
+     (*
 	  let global_ptime1 = Unix.times () in
-	  let global_t1 = global_ptime1.Unix.tms_utime +. global_ptime1.Unix.tms_cutime in
-	  let _ = print_string ("Translating global variables to procedure parameters...") in
+	  let global_t1 = global_ptime1.Unix.tms_utime +. global_ptime1.Unix.tms_cutime in *)
+	  let _ = print_string ("Translating global variables to procedure parameters...\n") in
 	  let intermediate_prog = Globalvars.trans_global_to_param prog in
-	  let global_ptime2 = Unix.times () in
+      let _ = Util.pop_time "Translating global var" in
+	  (* let global_ptime2 = Unix.times () in
 	  let global_t2 = global_ptime2.Unix.tms_utime +. global_ptime2.Unix.tms_cutime in
-	  let _ = print_string (" done in " ^ (string_of_float (global_t2 -. global_t1)) ^ " second(s)\n") in
+	  let _ = print_string (" done in " ^ (string_of_float (global_t2 -. global_t1)) ^ " second(s)\n") in *)
 	  (* Global variables translated *)
-	  let ptime1 = Unix.times () in
-	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
-	  let _ = print_string ("Translating to core language...") in
+	  (* let ptime1 = Unix.times () in
+	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
+      let _ = Util.push_time "Translating to Core" in
+	  let _ = print_string ("Translating to core language...\n") in
 	  let cprog = Astsimp.trans_prog intermediate_prog in
 	  let _ = 
 		if !Globals.verify_callees then begin
 		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
 			Globals.procs_verified := tmp
 		end in
-	  let ptime2 = Unix.times () in
+      let _ = Util.pop_time "Translating to Core" in
+	  (* let ptime2 = Unix.times () in
 	  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-	  let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in
+	  let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
 	  let _ =
 		if !comp_pred then begin
 		  let _ = print_string ("Compiling predicates to Java...") in
@@ -227,7 +238,7 @@ let process_source_full source =
 						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 						^ "\tTime spent in child processes: " 
 						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
-	else Util.pop_time "Preprocessing"
+
 	  
 let main1 () =
   process_cmd_line ();
