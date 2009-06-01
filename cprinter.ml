@@ -21,6 +21,7 @@ let string_of_prim_type = function
   | Int           -> "int"
   | Void          -> "void"
   | Bag           -> "multiset"
+  | List           -> "list"
 ;;
 
 (* pretty printing for types *)
@@ -44,7 +45,7 @@ let rec string_of_h_formula h = match h with
       (string_of_h_formula h1) ^ " * " ^ (string_of_h_formula h2)
   | DataNode ({h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs; h_formula_data_pos = pos})  ->
 	  (string_of_spec_var sv) ^ "::" ^ c 
-	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var (*(List.tl (List.tl*) svs (*))*))) ^ ">"
+	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var (* (List.tl (List.tl *) svs (* )) *) )) ^ ">"
   | ViewNode ({h_formula_view_node = sv; 
 			   h_formula_view_name = c; 
 			   h_formula_view_arguments = svs; 
@@ -91,6 +92,15 @@ let rec string_of_formula_exp = function
   | P.BagIntersect (e::[], l)	-> (string_of_formula_exp e) 
   | P.BagIntersect (e::rest, l)->(string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (P.BagIntersect (rest, l)))
   | P.BagDiff (e1, e2, l)     -> (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2) 
+  | P.List (elist, l) 					-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
+  | P.ListAppend ([], l) 				-> ""
+  | P.ListAppend (e::[], l)			-> (string_of_formula_exp e) 
+  | P.ListAppend (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " append " ^ (string_of_formula_exp (P.ListAppend (rest, l))) ^ ")"
+  | P.ListCons (v, e, l)     -> (string_of_spec_var v) ^ " ::: " ^ (string_of_formula_exp e)
+  | P.ListHead (e, l)     -> "head(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListTail (e, l)     -> "tail(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListLength (e, l)     -> "length(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListReverse (e, l)     -> "reverse(" ^ (string_of_formula_exp e) ^ ")"
 
   
 (* pretty printing for a list of pure formulae *)
@@ -133,11 +143,13 @@ let string_of_b_formula = function
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
   | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-	| P.BagIn (v, e, l)					-> (string_of_spec_var v) ^ " <in> " ^ (string_of_formula_exp e)
-	| P.BagNotIn (v, e, l)			-> (string_of_spec_var v) ^ " <notin> " ^ (string_of_formula_exp e)
+  | P.BagIn (v, e, l)					-> (string_of_spec_var v) ^ " <in> " ^ (string_of_formula_exp e)
+  | P.BagNotIn (v, e, l)			-> (string_of_spec_var v) ^ " <notin> " ^ (string_of_formula_exp e)
   | P.BagSub (e1, e2, l)			-> (string_of_formula_exp e1) ^ " <subset> " ^ (string_of_formula_exp e2)
-	| P.BagMin (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <min> (" ^ (string_of_spec_var v2) ^ ")"
-	| P.BagMax (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <max> (" ^ (string_of_spec_var v2) ^ ")"
+  | P.BagMin (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <min> (" ^ (string_of_spec_var v2) ^ ")"
+  | P.BagMax (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <max> (" ^ (string_of_spec_var v2) ^ ")"
+  | P.ListIn (v, e, l)					-> (string_of_spec_var v) ^ " <inlist> " ^ (string_of_formula_exp e)
+  | P.ListNotIn (v, e, l)			-> (string_of_spec_var v) ^ " <notinlist> " ^ (string_of_formula_exp e)
 
 ;;
 
