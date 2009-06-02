@@ -21,7 +21,7 @@ let string_of_prim_type = function
   | Int           -> "int"
   | Void          -> "void"
   | Bag           -> "multiset"
-  | List           -> "list"
+  | List          -> "list"
 ;;
 
 (* pretty printing for types *)
@@ -90,7 +90,7 @@ let rec string_of_formula_exp = function
   | P.BagUnion (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " union " ^ (string_of_formula_exp (P.BagUnion (rest, l))) ^ ")"
   | P.BagIntersect ([], l) 		-> ""
   | P.BagIntersect (e::[], l)	-> (string_of_formula_exp e) 
-  | P.BagIntersect (e::rest, l)->(string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (P.BagIntersect (rest, l)))
+  | P.BagIntersect (e::rest, l) -> (string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (P.BagIntersect (rest, l)))
   | P.BagDiff (e1, e2, l)     -> (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2) 
   | P.List (elist, l) 					-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend ([], l) 				-> ""

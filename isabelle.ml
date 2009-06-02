@@ -22,6 +22,7 @@ let isabelle_of_prim_type = function
   | Bag		  ->
       if !bag_flag then "int multiset"
       else "int set"
+  | List           -> "list"	(* lists are not supported *)
 ;;
 
 (* pretty printing for spec_vars *)
@@ -93,7 +94,14 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.BagIntersect (e::[], _) -> (isabelle_of_exp e)
   | CP.BagIntersect (e::rest, l) ->(isabelle_of_exp e) ^ "\\<intersect>" ^ (isabelle_of_exp (CP.BagIntersect (rest, l)))
   | CP.BagDiff (e1, e2, _) -> (isabelle_of_exp e1) ^ "-" ^ (isabelle_of_exp e2)
-
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> failwith ("Lists are not supported in Isabelle")
+  
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with
   | []         -> ""
@@ -193,7 +201,9 @@ and isabelle_of_b_formula b = match b with
 	(isabelle_of_spec_var v1) ^ " \\<in> set_of(" ^ (isabelle_of_spec_var v2) ^") & (ALL x0. x0:#" ^ (isabelle_of_spec_var v2) ^ " --> x0 <= " ^ (isabelle_of_spec_var v2) ^ ")"
       else
 	(isabelle_of_spec_var v1) ^ " \\<in> " ^ (isabelle_of_spec_var v2) ^" & (ALL x0. x0 \\<in>" ^ (isabelle_of_spec_var v2) ^ " --> x0 <= " ^ (isabelle_of_spec_var v1) ^ " )"
-
+  | CP.ListIn _
+  | CP.ListNotIn _ -> failwith ("Lists are not supported in Isabelle")
+  
 (* pretty printing for formulas *)
 and isabelle_of_formula f =
     match f with
@@ -325,6 +335,7 @@ let continue f arg tsecs : bool =
     Sys.set_signal Sys.sigalrm oldsig; true
   with Exit ->
     Sys.set_signal Sys.sigalrm oldsig; false
+	
 (* writing the Isabelle's theory file *)
 let write (pe : CP.formula) (timeout : float) : bool =
   begin
