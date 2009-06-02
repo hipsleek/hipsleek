@@ -220,6 +220,9 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _ -> true
+ 	  (* list formulas *)
+  | CP.ListIn _
+  | CP.ListNotIn _ -> false
 
 and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _
@@ -236,6 +239,14 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> true
+	  (* list expressions *)
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> false
 
 (*
 let rec is_bag_constraint(f : CP.formula) : bool =
