@@ -100,6 +100,8 @@ and cvcl_of_exp a = match a with
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	  failwith ("[cvcLite.ml]: ERROR in constraints (set should not appear here)");
+  | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
+      failwith ("Lists are not supported in cvclite")
   
 and cvcl_of_b_formula b = match b with
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
@@ -133,6 +135,8 @@ and cvcl_of_b_formula b = match b with
   | CP.BagNotIn (v, e, l)	-> " NOT(in(" ^ (cvcl_of_spec_var v) ^ ", " ^ (cvcl_of_exp e) ^"))"
   | CP.BagSub (e1, e2, l)	-> " subset(" ^ cvcl_of_exp e1 ^ ", " ^ cvcl_of_exp e2 ^ ")"
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
+  | CP.ListIn _
+  | CP.ListNotIn _ -> failwith ("Lists are not supported in cvclite")
 	  
 and cvcl_of_sv_type sv = match sv with
   | CP.SpecVar (CP.Prim Bag, _, _) -> "SET"

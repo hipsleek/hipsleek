@@ -39,7 +39,7 @@ let rec omega_of_exp e0 = match e0 with
   | Mult (c, a, _) ->  (string_of_int c) ^ "(" ^ (omega_of_exp a) ^ ")"
   | Max _
   | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
-    | _ -> failwith ("Omega.omega_of_exp: bag constraint")
+  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_b_formula b = match b with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
@@ -72,7 +72,7 @@ and omega_of_b_formula b = match b with
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | _ -> failwith ("Omega.omega_of_exp: bag constraint")
+  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_formula f  = match f with
   | BForm b -> 		"(" ^ (omega_of_b_formula b) ^ ")"

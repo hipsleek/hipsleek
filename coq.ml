@@ -20,6 +20,7 @@ let coq_of_prim_type = function
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | Bag		      -> "int set"
+  | List		  -> "list"
 ;;
 
 (* pretty printing for spec_vars *)
@@ -62,7 +63,17 @@ let rec coq_of_exp e0 = match e0 with
   | CP.Mult (c, a, _) -> " ( " ^ (string_of_int c) ^ " * " ^ (coq_of_exp a)	^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
-  | _ -> failwith ("No bags in Coq yet")
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _ -> failwith ("No bags in Coq yet")
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> failwith ("Lists will be implemented soon")
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
@@ -93,7 +104,13 @@ and coq_of_b_formula b = match b with
 	  let a3str = coq_of_exp a3 in
           "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a2str ^ " >= " ^ a3str ^ ") \\/ ("
 	   ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
-  | _ -> failwith ("No bags in Coq yet")
+  | CP.BagIn _
+  | CP.BagNotIn _
+  | CP.BagSub _
+  | CP.BagMin _
+  | CP.BagMax _ -> failwith ("No bags in Coq yet")
+  | CP.ListIn _
+  | CP.ListNotIn _ -> failwith ("Lists will be implemented soon")
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
