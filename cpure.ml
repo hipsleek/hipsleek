@@ -247,20 +247,18 @@ and exp_is_object_var (sv : exp) = match sv with
   | _ -> false
   
 and is_bag (e : exp) : bool = match e with
-  | Bag (_, _)
-  | BagUnion (_, _)
-  | BagIntersect (_, _)
-  | BagDiff (_, _, _) -> true
+  | Bag _
+  | BagUnion _
+  | BagIntersect _
+  | BagDiff _ -> true
   | _ -> false
 
 and is_list (e : exp) : bool = match e with
-  | List (_, _)
-  | ListCons (_, _, _)
-  | ListTail (_, _)
-  | ListAppend (_, _)
-  | ListReverse (_, _)
-  | ListHead _
-  | ListLength _ -> true
+  | List _
+  | ListCons _
+  | ListTail _
+  | ListAppend _
+  | ListReverse _ -> true
   | _ -> false
 
 and is_arith (e : exp) : bool = match e with
@@ -268,7 +266,9 @@ and is_arith (e : exp) : bool = match e with
   | Subtract _
   | Mult _
   | Min _
-  | Max _ -> true
+  | Max _
+  | ListHead _
+  | ListLength _ -> true
   | _ -> false
 
 and is_bag_type (t : typ) = match t with

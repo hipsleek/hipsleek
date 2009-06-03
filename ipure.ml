@@ -175,9 +175,7 @@ and is_list (e : exp) : bool = match e with
   | ListCons _
   | ListTail _
   | ListAppend _
-  | ListReverse _
-  | ListHead _
-  | ListLength _ -> true
+  | ListReverse _ -> true
   | _ -> false
 
 and name_of_var (e : exp) : ident = match e with

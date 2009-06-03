@@ -2548,6 +2548,8 @@ and default_value (t : CP.typ) pos : C.exp =
         "default_value: void in variable declaration should have been rejected by parser"
   | CP.Prim Bag ->
       failwith "default_value: bag can only be used for constraints"
+  | CP.Prim List ->
+      failwith "default_value: list can only be used for constraints"
   | CP.OType c -> C.Null pos
 
 and sub_type (t1 : CP.typ) (t2 : CP.typ) =
@@ -3360,11 +3362,17 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   | IP.BagMin ((v1, p1), (v2, p2), pos) ->
       CP.BagMin (CP.SpecVar (C.int_type, v1, p1),
         CP.SpecVar (C.bag_type, v2, p2), pos)
+  | IP.ListIn ((v, p), e, pos) ->
+      let pe = trans_pure_exp e stab
+      in CP.ListIn ((trans_var (v, p) stab pos), pe, pos)
+  | IP.ListNotIn ((v, p), e, pos) ->
+      let pe = trans_pure_exp e stab
+      in CP.ListNotIn ((trans_var (v, p) stab pos), pe, pos)
 
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
   | IP.Null pos -> CP.Null pos
-  | IP.Var ((v, p), pos) -> CP.Var ((trans_var (v,p) stab pos),pos)
+  | IP.Var ((v, p), pos) -> CP.Var ((trans_var (v,p) stab pos), pos)
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
   | IP.Add (e1, e2, pos) ->
       CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
@@ -3382,7 +3390,20 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
       CP.BagIntersect (trans_pure_exp_list elist stab, pos)
   | IP.BagDiff (e1, e2, pos) ->
       CP.BagDiff (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
-
+  | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist stab, pos)
+  | IP.ListAppend (elist, pos) ->
+      CP.ListAppend (trans_pure_exp_list elist stab, pos)
+  | IP.ListCons ((v, p), e, pos) ->
+      CP.ListCons (trans_var (v,p) stab pos, trans_pure_exp e stab, pos)
+  | IP.ListHead (e, pos) ->
+      CP.ListHead (trans_pure_exp e stab, pos)
+  | IP.ListTail (e, pos) ->
+      CP.ListTail (trans_pure_exp e stab, pos)
+  | IP.ListLength (e, pos) ->
+      CP.ListLength (trans_pure_exp e stab, pos)
+  | IP.ListReverse (e, pos) ->
+      CP.ListReverse (trans_pure_exp e stab, pos)
+ 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
   | [] -> []
@@ -3488,6 +3509,12 @@ and collect_type_info_b_formula b0 stab =
   | IP.BagMin ((v1, p1), (v2, p2), pos) ->
       (collect_type_info_var v1 stab (Known C.int_type) pos;
        collect_type_info_var v2 stab (Known C.bag_type) pos)
+  | IP.ListIn ((v, p), e, pos) ->
+      (collect_type_info_var v stab Unknown pos;
+       collect_type_info_list e stab)
+  | IP.ListNotIn ((v, p), e, pos) ->
+      (collect_type_info_var v stab Unknown pos;
+       collect_type_info_list e stab)
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
 	let _ = 
       if (IP.is_var a1) && (IP.is_var a2)
@@ -3526,6 +3553,8 @@ and collect_type_info_b_formula b0 stab =
              else
                if IP.is_bag a2'
                then ((Known C.bag_type), (collect_type_info_bag a2' stab))
+			   else if IP.is_list a2'
+               then ((Known C.list_type), (collect_type_info_list a2' stab))
                else ((Known C.int_type), (collect_type_info_arith a2' stab)) in
            let r = unify_var_kind k1 k2
            in
@@ -3549,6 +3578,10 @@ and collect_type_info_b_formula b0 stab =
               then
                 (collect_type_info_bag a1 stab;
                  collect_type_info_bag a2 stab)
+              else if (IP.is_list a1) && (IP.is_list a2)
+              then
+                (collect_type_info_list a1 stab;
+                 collect_type_info_list a2 stab)
               else
                 (collect_type_info_arith a1 stab;
                  collect_type_info_arith a2 stab)
@@ -3577,10 +3610,14 @@ and collect_type_info_arith a0 stab =
       IP.Min (a1, a2, pos) ->
       (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
   | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
+  | IP.ListHead (a, pos)
+  | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_arith: encountered bag constraint"
+  | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+      failwith "collect_type_info_arith: encountered list constraint"
 
-and collect_type_info_bag_content a0 stab =
+and collect_type_info_bag_list_content a0 stab =
   match a0 with
   | IP.Null pos ->
       Err.report_error
@@ -3595,14 +3632,16 @@ and collect_type_info_bag_content a0 stab =
       (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
   | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
-      failwith "collect_type_info_arith: encountered bag constraint"
+      failwith "collect_type_info_bag_list_content: encountered bag constraint"
+  | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+      failwith "collect_type_info_bag_list_content: encountered list constraint"
 
 and collect_type_info_bag (e0 : IP.exp) stab =
   match e0 with
   | IP.Var ((sv, sp), pos) ->
       collect_type_info_var sv stab (Known C.bag_type) pos
   | IP.Bag ((a :: rest), pos) ->
-      (collect_type_info_bag_content a stab;
+      (collect_type_info_bag_list_content a stab;
        collect_type_info_bag (IP.Bag (rest, pos)) stab)
   | IP.Bag ([], pos) -> ()
   | IP.BagUnion ((a :: rest), pos) ->
@@ -3618,6 +3657,33 @@ and collect_type_info_bag (e0 : IP.exp) stab =
   | IP.Min _ | IP.Max _ | IP.Mult _ | IP.Subtract _ | IP.Add _ | IP.IConst _
       | IP.Null _ ->
       failwith "collect_type_info_bag: encountered arithmetic constraint"
+  | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+      failwith "collect_type_info_bag: encountered list constraint"
+
+and collect_type_info_list (e0 : IP.exp) stab =
+  match e0 with
+  | IP.Var ((sv, sp), pos) ->
+      collect_type_info_var sv stab (Known C.list_type) pos
+  | IP.List ((a :: rest), pos) ->
+      (collect_type_info_bag_list_content a stab;
+       collect_type_info_list (IP.List (rest, pos)) stab)
+  | IP.List ([], pos) -> ()
+  | IP.ListAppend ((a :: rest), pos) ->
+      (collect_type_info_list a stab;
+       collect_type_info_list (IP.ListAppend (rest, pos)) stab)
+  | IP.ListAppend ([], pos) -> ()
+  | IP.ListCons ((sv, sp), a, pos) -> 
+      (collect_type_info_var sv stab Unknown pos;
+	  collect_type_info_list a stab)
+  | IP.ListTail (a, pos) ->
+      (collect_type_info_list a stab)
+  | IP.ListReverse (a, pos) ->
+      (collect_type_info_list a stab)
+  | IP.Min _ | IP.Max _ | IP.Mult _ | IP.Subtract _ | IP.Add _ | IP.IConst _
+      | IP.Null _ | IP.ListHead _ | IP.ListLength _ ->
+      failwith "collect_type_info_list: encountered arithmetic constraint"
+  | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
+      failwith "collect_type_info_list: encountered bag constraint"
 
 and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
   match e0 with
