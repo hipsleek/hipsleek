@@ -210,20 +210,23 @@ and look_for_anonymous_exp_list (args : IP.exp list) :
         (look_for_anonymous_exp_list rest)
   | _ -> []
 
+and anon_var (id, p) = 
+  if ((String.length id) > 5) &&
+	  ((String.compare (String.sub id 0 5) "Anon_") == 0)
+  then [ (id, p) ]
+  else []
+
 and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   match arg with
-  | IP.Var ((id, p), _) ->
-      if
-        ((String.length id) > 5) &&
-          ((String.compare (String.sub id 0 5) "Anon_") == 0)
-      then [ (id, p) ]
-      else []
+  | IP.Var (b1, _) -> anon_var b1
   | IP.Add (e1, e2, _) | IP.Subtract (e1, e2, _) | IP.Max (e1, e2, _) |
       IP.Min (e1, e2, _) | IP.BagDiff (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
-  | IP.Mult (_, e1, _) -> look_for_anonymous_exp e1
-  | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) ->
+  | IP.Mult (_, e1, _) | IP.ListHead (e1, _) | IP.ListTail (e1, _) |
+      IP.ListLength (e1, _) | IP.ListReverse (e1, _) -> look_for_anonymous_exp e1
+  | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) | IP.List (e1, _) | IP.ListAppend (e1, _) ->
       look_for_anonymous_exp_list e1
+  | IP.ListCons (e1, e2, _) -> (anon_var e1) @ (look_for_anonymous_exp e2)
   | _ -> []
 
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
