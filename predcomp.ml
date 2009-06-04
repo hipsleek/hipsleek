@@ -113,6 +113,7 @@ and aug_class_name (t : CP.typ) = match t with
   | CP.Prim Float -> "FloatAug"
   | CP.Prim Void -> "void"
   | CP.Prim Bag -> "Set"
+  | CP.Prim List -> "List"
 
 (*
   split view parameters according to their modes:
