@@ -2247,7 +2247,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
 (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)				
 	  let new_ante0 =
-		if !Globals.omega_simpl && not(TP.is_bag_constraint new_ante0) then 
+		if !Globals.omega_simpl && not(TP.is_bag_constraint new_ante0) && not(TP.is_list_constraint new_ante0) then 
 			let simp_ante = 
 				(Debug.devel_pprint ("simplify the antecedent with omega") no_pos;	
 				CP.arith_simplify ((*Omega.simplify*) new_ante0))  (* todo: remove the comment from omega.simplify after solving the problem in omega.ml with the collection of the error output *)
@@ -2261,7 +2261,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 		else new_ante0
 	  in
 	  let new_conseq0 = 
-		if !Globals.omega_simpl && not(TP.is_bag_constraint new_conseq0) then 
+		if !Globals.omega_simpl && not(TP.is_bag_constraint new_conseq0) && not(TP.is_list_constraint new_conseq0) then 
 			let simp_conseq = 
 				(Debug.devel_pprint ("simplify the consequent with omega") no_pos;	
 				(*Omega.simplify*) new_conseq0) 				
@@ -3290,7 +3290,9 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
   		end
   	else f
   | CP.BagIn (sv, e1, pos)
-  | CP.BagNotIn (sv, e1, pos) ->
+  | CP.BagNotIn (sv, e1, pos) 
+  | CP.ListIn (sv, e1, pos)
+  | CP.ListNotIn (sv, e1, pos) ->
   	if ((count_iconst e1) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
 			let simpl_f = TP.simplify (CP.BForm(f)) in
@@ -3312,8 +3314,8 @@ and count_iconst (f : CP.exp) = match f with
   | CP.Subtract (e1, e2, _)
   | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
   | CP.Mult (_, e2, _) -> (1 + (count_iconst e2))
-	| CP.IConst _ -> 1
-	| _ -> 0
+  | CP.IConst _ -> 1
+  | _ -> 0
 
 and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
 	let sat_subno = ref 0 in
