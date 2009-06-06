@@ -1,7 +1,13 @@
 (* global types and utility functions *)
 
 type ident = string
+type constant_flow = ident
 
+
+type nflow = (int*int)(*numeric representation of flow*)
+
+	
+	
 and branch_label = string
 
 and loc = {
@@ -37,6 +43,26 @@ let no_pos =
 				   Lexing.pos_bol = 0; 
 				   Lexing.pos_cnum = 0 } in
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
+
+let flow = "flow"
+let top_flow = "__flow"
+(*let any_flow = "__Any"*)
+let n_flow = "__norm"
+let cont_top = "__Cont_top"
+let brk_top = "__Brk_top"
+let c_flow = "__c-flow"
+let raisable_class = "__Exc"
+let ret_flow = "__Ret"
+let spec_flow = "__Spec"
+let false_flow = "__false"
+let abnormal_flow = "__abnormal"
+
+let n_flow_int = ref ((-1,-1):nflow)
+let ret_flow_int = ref ((-1,-1):nflow)
+let spec_flow_int = ref ((-1,-1):nflow)
+let top_flow_int = ref ((-2,-2):nflow)
+let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
+let false_flow_int = (0,0)
 
 let res = "res"
 
@@ -112,6 +138,10 @@ let enable_case_inference = ref false
 
 let print_core = ref false
 
+let seq_to_try = ref false
+
+let print_input = ref false
+
 let instantiation_variants = ref 0
 
 
@@ -166,6 +196,10 @@ let fresh_name () =
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str
 
+let fresh_label pos = 
+ (* let str = string_of_int (fresh_int ()) in*)
+    "f_l_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)^"_"^(string_of_int (fresh_int ()))
+	
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
     for i = 1 to n do

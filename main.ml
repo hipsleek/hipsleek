@@ -65,8 +65,8 @@ let process_cmd_line () = Arg.parse [
    "Hull precondition invariant at call sites");
   ("-inline", Arg.String Inliner.set_inlined,
    "Procedures to be inlined");
-  ("-java", Arg.Set to_java,
-   "Convert source code to Java");
+  (*("-java", Arg.Set to_java,
+   "Convert source code to Java");*)
   ("--sat-timeout", Arg.Set_float Globals.sat_timeout,
    "Timeout for sat checking");
   ("--imply-timeout", Arg.Set_float Globals.imply_timeout,
@@ -129,6 +129,8 @@ let process_cmd_line () = Arg.parse [
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
+  ("--pip", Arg.Set Globals.print_input,"print input representation");
+  ("--sqt", Arg.Set Globals.seq_to_try,"translate seq to try");
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
@@ -173,6 +175,8 @@ let process_source_full source =
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
 	  let _ = print_string ("Translating to core language...") in
 	  let cprog = Astsimp.trans_prog prog in
+	  let _ = if (!Globals.print_input) then print_string ((Iprinter.string_of_program prog)^"\n") else () in
+	  (*let _ = print_string ((Cprinter.string_of_program cprog)^"\n") in*)
 	  let _ = 
 		if !Globals.verify_callees then begin
 		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
@@ -210,7 +214,9 @@ let process_source_full source =
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
+		( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
 		  print_string ("\nTotal verification time: " 
 						^ (string_of_float t4) ^ " second(s)\n"
 						^ "\tTime spent in main process: " 

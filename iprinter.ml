@@ -84,6 +84,11 @@ let need_parenthesis = function
     | _                                                    -> true
 ;; 
 
+let string_of_label = function 
+  | NoLabel      -> ""
+  | Label l  -> l^" : "
+;;
+
 
 let string_of_var_list vl = (List.fold_left (fun a (c1,c2)-> a^" "^c1^(match c2 with | Primed -> "'"| _ -> "")) "" vl);;
 
@@ -217,17 +222,18 @@ let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "'" | Unprimed 
 let rec string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
 				  F.formula_base_pure = pf;
+				  F.formula_base_flow = fl;
 				  F.formula_base_pos = l}) ->  
 	  if hf = F.HTrue then 
 		string_of_pure_formula pf
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
-            else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")")
+            else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
 	  else 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
-            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")")
+            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
@@ -237,6 +243,7 @@ let rec string_of_formula = function
 		  | Unprimed  -> id ) ^ ".(" ^ (string_of_formula f) ^ ")" *)
   | Iast.F.Exists ({F.formula_exists_qvars = qvars;
 					F.formula_exists_heap = hf;
+					F.formula_exists_flow = fl;
 					F.formula_exists_pure = pf}) ->
 	  "(EX " ^ (String.concat ", " (List.map fst qvars)) ^ " . "
 	  ^ (if hf = F.HTrue then 
@@ -244,11 +251,11 @@ let rec string_of_formula = function
 		 else if hf = F.HFalse then 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
-              else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")")
+              else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")")
 		 else 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
-              else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")"))
+              else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
 	  ^ ")"
 ;;
 
@@ -273,7 +280,7 @@ let rec string_of_ext_formula = function
 	| Iformula.EAssume b-> "EAssume "^(string_of_formula b)
 ;;
 
-let string_of_struc_formula s d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
+let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
 ;;
 (*
 let rec string_of_spec = function
@@ -330,9 +337,9 @@ let rec string_of_exp = function
 		   exp_bind_fields = vs;
 		   exp_bind_body = e})      -> "bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }"
   | Block ({exp_block_body = e})    -> "{" ^ (string_of_exp e) ^ "}\n"
-  | Break _ -> "break"
+  | Break b -> "break "^(string_of_label b.exp_break_to_label)
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
-  | Continue _ -> "continue"
+  | Continue b -> "continue "^(string_of_label b.exp_continue_to_label)
   | Empty l                         -> ""
   | Unary ({exp_unary_op = o;
 			exp_unary_exp = e;
@@ -374,7 +381,8 @@ let rec string_of_exp = function
                                           | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}")
   | While ({exp_while_condition = e1;
 			exp_while_body = e2;
-			exp_while_specs = li}) -> "while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ "{\n"
+			exp_while_label = lb;
+			exp_while_specs = li}) -> (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ "{\n"
                                        ^ (string_of_exp e2) ^ "\n}"          
   | Return ({exp_return_val = v})  -> "return " ^ (match v with 
 	  | None   -> ""
@@ -397,6 +405,18 @@ let rec string_of_exp = function
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"
+  | Raise ({exp_raise_type = tb;
+			exp_raise_val = b;})
+				-> "raise "^(match b with | None -> let r = match tb with | Const_flow cf-> cf | Var_flow cf -> cf in r | Some bs-> (string_of_exp bs))^ "\n"
+  | Try ({	exp_try_block = bl;
+			exp_catch_clauses = cl;
+			exp_finally_clause = fl;})
+				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_catch b)) "" cl)^
+									(List.fold_left (fun a b -> a^"\n"^(string_of_finally b)) "" fl)
+									
+and string_of_catch c  = "catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body)
+
+and string_of_finally c = "finally "^(string_of_exp c.exp_finally_body)
 
 and 
    (* function to transform a list of expression in a string *)
@@ -440,7 +460,7 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula "" v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
 ;;
 
 let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
@@ -468,8 +488,8 @@ let string_of_proc_decl p =
   in	
     (if p.proc_constructor then "" else (string_of_typ p.proc_return) ^ " ")
 	^ p.proc_name ^ "(" ^ (string_of_param_list p.proc_args) ^ ")\n" 
-	^ ( "static " ^ (string_of_struc_formula "" p.proc_static_specs)
-		^ "\ndynamic " ^ (string_of_struc_formula "" p.proc_dynamic_specs) ^ "\n" ^ body)
+	^ ( "static " ^ (string_of_struc_formula  p.proc_static_specs)
+		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
 
 (* proc_pre_post_list : (F.formula * F.formula) list; *)

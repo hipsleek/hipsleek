@@ -265,12 +265,12 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
   | Null l -> 
 	  Buffer.add_string java_code "null";
 	  null_vars
-  | Return ({exp_return_val = eo}) -> begin
+  | Sharp ({exp_sharp_val = eo}) -> begin
 	  Buffer.add_string java_code "return";
 	  match eo with 
 	    |Some e -> 
-		   Buffer.add_string java_code (" ");
-			ignore (java_of_exp prog bmap null_vars e java_code);
+		   Buffer.add_string java_code (" "^(snd e));
+			(*ignore (java_of_exp prog bmap null_vars e java_code);*)
 			Buffer.add_string java_code (";\n");
 			null_vars
 	    | None -> null_vars
@@ -387,10 +387,11 @@ and string_of_proc_decl prog p =
 	Buffer.contents java_code
 
 and convert_to_java prog main_class =
-  let java_code = Buffer.create 10240 in
+ Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction conversion to java is no longer supported"}
+ (* let java_code = Buffer.create 10240 in
 	ignore (List.map (fun ddef -> java_of_data_decl prog ddef java_code) prog.prog_data_decls);
 	convert_methods prog prog.prog_proc_decls main_class java_code;
-	Buffer.contents java_code
+	Buffer.contents java_code*)
 
 and convert_methods prog (pdefs : proc_decl list) main_class java_code =
   Buffer.add_string java_code ("public class " ^ main_class ^ " {\n");

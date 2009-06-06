@@ -13,11 +13,12 @@ module IP = Ipure
 
 let to_data xml : I.data_decl =
   let dname = ref "" in
-  let fld_list = ref [] in
-  let f cld = 
+  (*let fld_list = ref [] in*)
+  (*let f cld = 
 	match Xml.tag cld with
 	  | "cname" -> dname := (Xml.pcdata cld) (* (List.hd (Xml.children cld))) *)
-  in
+	  | "" -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction, pattern mismatch in to_data"}
+  in*)
 	{ I.data_name = !dname;
 	  I.data_fields = [];
 	  I.data_parent_name = "";

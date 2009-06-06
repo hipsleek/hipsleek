@@ -60,6 +60,7 @@ and formula =
 and formula_base = { formula_base_heap : h_formula;
 					 formula_base_pure : CP.formula;
 					 formula_base_type : t_formula;
+					 formula_base_flow : flow_formula;
                      formula_base_branches : (branch_label * CP.formula) list;
 					 formula_base_pos : loc }
 
@@ -71,9 +72,17 @@ and formula_exists = { formula_exists_qvars : CP.spec_var list;
 					   formula_exists_heap : h_formula;
 					   formula_exists_pure : CP.formula;
 					   formula_exists_type : t_formula;
+					   formula_exists_flow : flow_formula;
                        formula_exists_branches : (branch_label * CP.formula) list;
  					   formula_exists_pos : loc }
-	  
+
+and flow_formula = { formula_flow_interval : nflow;
+					 formula_flow_link : (ident option)}
+and flow_store = {
+		formula_store_name : ident;
+		formula_store_value : flow_formula;		
+	}
+					 
 and h_formula = (* heap formula *)
   | Star of h_formula_star
   | DataNode of h_formula_data
@@ -133,7 +142,8 @@ and string_of_spec_var = function
     | Unprimed -> "")
 (*09.05.2000 ---*)
 
-let rec formula_of_heap h pos = mkBase h (CP.mkTrue pos) TypeTrue [] pos
+let rec formula_of_heap h pos = mkBase h (CP.mkTrue pos) TypeTrue (mkTrueFlow ()) [] pos
+and formula_of_heap_fl h fl pos = mkBase h (CP.mkTrue pos) TypeTrue fl [] pos
 
 and struc_formula_of_heap h pos = [EBase { 
 		 formula_ext_explicit_inst = [];	 formula_ext_implicit_inst = []; formula_ext_exists = [];
@@ -148,11 +158,19 @@ and struc_formula_of_formula f pos = [EBase {
 		 formula_ext_pos = pos}]
 		 
 		 
+and mkTrueFlow () = 
+	{formula_flow_interval = !top_flow_int; formula_flow_link = None;}
+	
 
-and formula_of_pure p pos = mkBase HTrue p TypeTrue [] pos
+and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = None;}
 
-and formula_of_pure_with_branches p br pos = mkBase HTrue p TypeTrue br pos
+and formula_of_pure p pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
+(*and mkTrueFlowTest = {formula_flow_interval = (-3,-3); formula_flow_link = None;}
+and formula_of_pure_test p pos = mkBase HTrue p TypeTrue (mkTrueFlow) [] pos*)
+and formula_of_pure_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos
+
+and formula_of_pure_with_branches_fl p br fl pos = mkBase HTrue p TypeTrue fl br pos
 and formula_of_base base = Base(base)
 
 and data_of_h_formula h = match h with
@@ -216,15 +234,120 @@ and mkAndType f1 f2 = match f1 with
 		| _ -> TypeAnd ({t_formula_and_f1 = f1; t_formula_and_f2 = f2})
 	end
 
+	
+(*let flow_eqs_n (p1,p2) pos:formula = 
+	mkAnd (BForm (Lte ((mkVar flow_var pos), (IConst (p2,pos)), pos)))
+		  (BForm (Lte ((IConst (p1,pos)), (mkVar flow_var pos), pos))) pos
+
+	
+let flow_eqs (s:string) pos:formula = 
+	let (p1,p2) = (Util.get_hash_of_exc s) in
+	flow_eqs_n (p1,p2) pos*)
+	
+(*and equal_flows1 f1 (f2:Globals.nflow) : bool =  is_member_pure f1 (flow_eqs_n f2 no_pos)*)
+(*and equal_flows ((n11,n12):Globals.nflow)((n21,n22):Globals.nflow) : bool =  (n11==n21)&&(n12==n22)*)
+
+
+(*assume none is invalid*)
+and overlapping (n1,n2) (p1,p2) : bool = not(((n2<p1)||(p2<n1))&&(n1<n2)&&(p1<p2))
+and intersection (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
+
+and is_false_flow (p1,p2) :bool = (p1==p2)&&(p1==0)
+
+and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2) 
+
+(*first subsumes the second*)
+and subsume_flow (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+
+and subsume_flow_f (n1,n2) f :bool = subsume_flow (n1,n2) f.formula_flow_interval
+
+and subsume_flow_ff f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
+
+and get_flow_from_stack c l pos = match l with
+	| [] -> Err.report_error { Err.error_loc = pos;Err.error_text = "the flow var stack does not contain "^c}
+	| h::t -> if ((String.compare h.formula_store_name c)==0) then h.formula_store_value
+				else get_flow_from_stack c t pos
+		
+and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f with
+	| Base b-> Base {b with formula_base_flow = n}
+	| Exists b-> Exists {b with formula_exists_flow = n}
+	| Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
+				 formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
+				 formula_or_pos = b.formula_or_pos}
+				 
+and set_flow_in_formula (n:flow_formula) (f:formula):formula = match f with
+	| Base b-> Base {b with formula_base_flow = if (subsume_flow_f !n_flow_int b.formula_base_flow) then n else b.formula_base_flow}
+	| Exists b-> Exists {b with formula_exists_flow = if (subsume_flow_f !n_flow_int b.formula_exists_flow) then n else b.formula_exists_flow}
+	| Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
+				 formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
+				 formula_or_pos = b.formula_or_pos}
+				 
+and set_flow_to_link_f flow_store f pos = match f with
+	| Base b-> Base {b with formula_base_flow = 
+								if (subsume_flow !n_flow_int b.formula_base_flow.formula_flow_interval ) then
+									match b.formula_base_flow.formula_flow_link with
+									| None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
+									| Some v -> get_flow_from_stack v flow_store pos
+								else b.formula_base_flow}
+	| Exists b-> Exists {b with formula_exists_flow = 
+								if (subsume_flow !n_flow_int b.formula_exists_flow.formula_flow_interval ) then 
+									match b.formula_exists_flow.formula_flow_link with
+									| None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
+									| Some v -> get_flow_from_stack v flow_store pos
+								else b.formula_exists_flow}
+	| Or b-> Or {formula_or_f1 = set_flow_to_link_f flow_store b.formula_or_f1 pos;
+				 formula_or_f2 = set_flow_to_link_f flow_store b.formula_or_f2 pos;
+				 formula_or_pos = b.formula_or_pos}
+
+and flow_formula_of_formula (f:formula) pos : flow_formula = match f with
+	| Base b-> b.formula_base_flow
+	| Exists b-> b.formula_exists_flow
+	| Or b-> Err.report_error { Err.error_loc = pos;
+								Err.error_text = "flow_formula_of_formula: disjunctive formula"}
+
+and substitute_flow_in_f to_flow from_flow (f:formula):formula = match f with
+	| Base b-> Base {b with formula_base_flow = 
+		if (equal_flow_interval from_flow b.formula_base_flow.formula_flow_interval) then 
+		{formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link}
+		else b.formula_base_flow;}
+	| Exists b-> Exists{b with formula_exists_flow = 
+		if (equal_flow_interval from_flow b.formula_exists_flow.formula_flow_interval) then 
+		{formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link}
+		else b.formula_exists_flow;}	
+	| Or b-> Or {formula_or_f1 = substitute_flow_in_f to_flow from_flow b.formula_or_f1;
+				 formula_or_f2 = substitute_flow_in_f to_flow from_flow b.formula_or_f2;
+				 formula_or_pos = b.formula_or_pos}
+								
+(*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
+and mkAndFlow (fl1:flow_formula) (fl2:flow_formula):flow_formula = 
+	let int1 = fl1.formula_flow_interval in
+	let int2 = fl2.formula_flow_interval in
+	let r = if (is_false_flow int1) then {fl1 with formula_flow_link = None}
+		else if (is_false_flow int2) then {fl2 with formula_flow_link = None}
+		else if (overlapping int1 int2) then 
+			{	formula_flow_interval = intersection int1 int2;
+				formula_flow_link = fl1.formula_flow_link;}
+		else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
+	(*let string_of_flow_formula f c = 
+	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
+	")="^(Util.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
+
+	let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^
+							   (string_of_flow_formula "f2 " fl2)^"\n"^
+								(string_of_flow_formula "r " r)^"\n") in*)
+	r
+				
 and mkTrue pos = Base ({formula_base_heap = HTrue; 
 						formula_base_pure = CP.mkTrue pos; 
 						formula_base_type = TypeTrue; 
+						formula_base_flow = (mkTrueFlow ());
                         formula_base_branches = [];
 						formula_base_pos = pos})
 
 and mkFalse pos = Base ({formula_base_heap = HFalse; 
 						 formula_base_pure = CP.mkFalse pos; 
 						 formula_base_type = TypeFalse;
+						 formula_base_flow = mkFalseFlow; (*Cpure.flow_eqs any_flow pos;*)
                          formula_base_branches = [];
 						 formula_base_pos = pos})
 						 
@@ -250,13 +373,14 @@ and mkOr f1 f2 pos =
   else if isConstFalse f2 then f1
   else Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
 
-and mkBase (h : h_formula) (p : CP.formula) (t : t_formula) b (pos : loc) = 
-  if CP.isConstFalse p || h = HFalse then 
+and mkBase (h : h_formula) (p : CP.formula) (t : t_formula) (fl : flow_formula) b (pos : loc) = 
+  if CP.isConstFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval) then 
 	mkFalse pos
   else 
 	Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
 		   formula_base_type = t;
+		   formula_base_flow = fl;
            formula_base_branches = b;
 		   formula_base_pos = pos})
 
@@ -270,14 +394,16 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
 					h_formula_star_h2 = f2; 
 					h_formula_star_pos = pos})
 
+				
 let rec mkStar (f1 : formula) (f2 : formula) (pos : loc) =
-  let h1, p1, b1, t1 = split_components f1 in
-  let h2, p2, b2, t2 = split_components f2 in
+  let h1, p1, fl1, b1, t1 = split_components f1 in
+  let h2, p2, fl2, b2, t2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
   let p = CP.mkAnd p1 p2 pos in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
-  mkBase h p t b pos
+  let fl = mkAndFlow fl1 fl2 in
+  mkBase h p t fl b pos
    
 and combine_and_pure (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula*bool = 
 	if (isConstFalse f1) then (Cpure.mkFalse no_pos,false)
@@ -295,31 +421,33 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 	| Or b-> false		
 	| Base _					
 	| Exists _-> 
-		let _, pl, br, _ = split_components f in		
-		(Cpure.is_member_pure p pl) || (List.exists (fun (_,c)->Cpure.is_member_pure p c) br)
+		let _, pl, _, br, _ = split_components f in		
+		(Cpure.is_member_pure p pl) ||(List.exists (fun (_,c)->Cpure.is_member_pure p c) br)
 		
 and mkStar_combine (f1 : formula) (f2 : formula) (pos : loc) = 
-  let h1, p1, b1, t1 = split_components f1 in
-  let h2, p2, b2, t2 = split_components f2 in
+  let h1, p1, fl1, b1, t1 = split_components f1 in
+  let h2, p2, fl2, b2, t2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
-  mkBase h p t b pos
+  let fl =  mkAndFlow fl1 fl2 in
+  mkBase h p t fl b pos
 
 
 and mkAnd_pure_and_branch (f1 : formula) (p2 : Cpure.formula) b2 (pos : loc):formula = 
   if (isConstFalse f1) then f1
    else 
-		let h1, p1, b1, t1 = split_components f1 in		
-		if (Cpure.isConstTrue p1) then mkBase h1 p2 t1 (CP.merge_branches b1 b2) pos
-			else mkBase h1 (Cpure.mkAnd p1 p2 pos) t1 (CP.merge_branches b1 b2)  pos
+		let h1, p1, fl1, b1, t1 = split_components f1 in		
+		if (Cpure.isConstTrue p1) then mkBase h1 p2 t1 fl1 (CP.merge_branches b1 b2) pos
+			else mkBase h1 (Cpure.mkAnd p1 p2 pos) t1 fl1 (CP.merge_branches b1 b2)  pos
 
    
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : CP.formula) (t : t_formula) b (pos : loc) =
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : CP.formula) (t : t_formula) (fl:flow_formula) b (pos : loc) =
   let tmp = Base ({formula_base_heap = h;
 				   formula_base_pure = p;
 				   formula_base_type = t;
+				   formula_base_flow = fl;
                    formula_base_branches = b;
 				   formula_base_pos = pos}) in
   let fvars = fv tmp in
@@ -331,6 +459,7 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : CP.formula) (t : t_fo
 			   formula_exists_heap =  h; 
 			   formula_exists_pure = p;
 			   formula_exists_type = t;
+			   formula_exists_flow = fl;
                formula_exists_branches = b;
 			   formula_exists_pos = pos})
 
@@ -440,16 +569,18 @@ and fv (f : formula) : CP.spec_var list = match f with
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
 			 formula_exists_type = t;
+			 formula_exists_flow = fl;
 			 formula_exists_branches = br;
 			 formula_exists_pos = pos}) -> 
 	  let fvars = fv (Base ({formula_base_heap = h; 
 							 formula_base_pure = p; 
 							 formula_base_type = t;
+							 formula_base_flow = fl;
                              formula_base_branches = br;
 							 formula_base_pos = pos})) in
 	  let res = CP.difference fvars qvars in
 		res
-
+	
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 		   h_formula_star_h2 = h2; 
@@ -576,17 +707,20 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
 		   formula_base_type = t;
+		   formula_base_flow = fl;
            formula_base_branches = b;
 		   formula_base_pos = pos}) -> 
       Base ({formula_base_heap = h_apply_one s h; 
 			 formula_base_pure = CP.apply_one s p; 
 			 formula_base_type = t;
+			 formula_base_flow = fl;
              formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
 			 formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
 			 formula_exists_pure = qp; 
 			 formula_exists_type = tconstr;
+			 formula_exists_flow = fl;
              formula_exists_branches = b;
 			 formula_exists_pos = pos}) -> 
 	  if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
@@ -594,6 +728,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 					formula_exists_heap =  h_apply_one s qh; 
 					formula_exists_pure = CP.apply_one s qp; 
 					formula_exists_type = tconstr;
+					formula_exists_flow = fl;
                     formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
 					formula_exists_pos = pos})
 		
@@ -649,8 +784,8 @@ and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 pos in
-			let new_h, new_p, b, new_t = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
     end
@@ -671,8 +806,8 @@ and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 pos in
-			let new_h, new_p, b, new_t = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
     end
@@ -696,8 +831,8 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 pos in
-			let new_h, new_p, b, new_t = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
     end
@@ -706,16 +841,18 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 and split_components (f : formula) = 
-if (isConstFalse f) then (HFalse,(Cpure.mkFalse no_pos),[],TypeFalse)
+if (isConstFalse f) then (HFalse,(Cpure.mkFalse no_pos),(mkFalseFlow),[],TypeFalse)
 else match f with
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
            formula_base_branches = b;
-		   formula_base_type = t}) -> (h, p, b, t)
+		   formula_base_flow =fl;
+		   formula_base_type = t}) -> (h, p, fl, b, t)
   | Exists ({formula_exists_heap = h; 
 		   formula_exists_pure = p; 
            formula_exists_branches = b;
-		   formula_exists_type = t}) -> (h, p, b, t) 		   
+		   formula_exists_flow = fl;
+		   formula_exists_type = t}) -> (h, p, fl, b, t) 		   
   (*| Exists ({formula_exists_pos = pos}) -> 
       Err.report_error {Err.error_loc = pos;
 						Err.error_text = "split_components: don't expect EXISTS"}*)
@@ -728,9 +865,10 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
 			 formula_exists_heap =  h; 
 			 formula_exists_pure = p; 
 			 formula_exists_type = t;
+			 formula_exists_flow = fl;
 			 formula_exists_branches = b;
 			 formula_exists_pos = pos}) -> 
-      (qvars, mkBase h p t b pos)
+      (qvars, mkBase h p t fl b pos)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
 
@@ -738,16 +876,18 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
 		   formula_base_type = t;
+		   formula_base_flow = fl;
            formula_base_branches = b;
-		   formula_base_pos = pos}) -> mkExists qvars h p t b pos
+		   formula_base_pos = pos}) -> mkExists qvars h p t fl b pos
   | Exists ({formula_exists_qvars = qvs; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
 			 formula_exists_type = t;
+			 formula_exists_flow = fl;
              formula_exists_branches = b;
 			 formula_exists_pos = pos}) -> 
 	  let new_qvars = U.remove_dups (qvs @ qvars) in
-		mkExists new_qvars h p t b pos
+		mkExists new_qvars h p t fl b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 
 (* 19.05.2008 *)
@@ -757,11 +897,12 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
 			 formula_exists_type = t;
+			 formula_exists_flow = fl;
              formula_exists_branches = b;
 			 formula_exists_pos = pos}) -> 
 	  let new_qvars = (List.filter (fun x -> not(List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
-	  	if (List.length new_qvars == 0) then mkBase h p t b pos
-	  	else mkExists new_qvars h p t b pos
+	  	if (List.length new_qvars == 0) then mkBase h p t fl b pos
+	  	else mkExists new_qvars h p t fl b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 (* 19.05.2008 *)
 
@@ -922,6 +1063,14 @@ and view_node_types (f:formula):ident list =
 (*
   Other utilities.
 *)
+
+and get_result_type (f: formula): (CP.typ*bool) = 
+	let fv_list = fv f in
+	let res_list = Util.remove_dups (List.filter (fun c-> ((String.compare res (CP.name_of_spec_var c))==0)) fv_list) in
+	match List.length res_list with
+	| 0 -> (CP.Prim Void,false)
+	| 1 -> (CP.type_of_spec_var (List.hd res_list),true)
+	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "could not find a coherent res type"}
 
 and disj_count (f0 : formula) = match f0 with
   | Or ({formula_or_f1 = f1;
@@ -1097,6 +1246,31 @@ and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | _ -> Err.report_error {Err.error_loc = pos;
 						   Err.error_text = "estate_of_context: disjunctive context"}
 
+						   
+and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with
+  | Ctx es -> flow_formula_of_formula es.es_formula pos
+  | _ -> Err.report_error {Err.error_loc = pos;
+						   Err.error_text = "flow_of_context: disjunctive context"}
+
+and set_flow_in_ctx_override (c:context) (f:flow_formula) :context = match c with
+	| Ctx c1-> Ctx {c1 with es_formula = set_flow_in_formula_override f c1.es_formula}
+	| OCtx (c1,c2) -> OCtx ((set_flow_in_ctx_override c1 f),(set_flow_in_ctx_override c2 f))
+						
+and set_flow_in_ctx (c:context) (f:flow_formula):context = match c with 
+	| Ctx c1-> Ctx {c1 with es_formula = set_flow_in_formula f c1.es_formula}
+	| OCtx (c1,c2) -> OCtx ((set_flow_in_ctx c1 f),(set_flow_in_ctx c2 f))
+	
+and set_flow_to_link flow_store ctx pos = match ctx with 
+	| Ctx c1-> Ctx {c1 with es_formula = set_flow_to_link_f flow_store c1.es_formula pos}
+	| OCtx (c1,c2) -> OCtx ((set_flow_to_link flow_store c1 pos),(set_flow_to_link flow_store c2 pos))
+	
+and change_ret_flow_ctx ctx_list = 
+	let rec helper c = match c with
+		| Ctx c -> Ctx {c with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int c.es_formula;}
+		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
+	List.map helper ctx_list
+
+	
 (* simplication and manipulation *)
 
 and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = match ctx with
@@ -1311,9 +1485,11 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 		   formula_base_pure = p; 
 		   formula_base_type = t;
            formula_base_branches = b;
+		   formula_base_flow = fl;
 		   formula_base_pos = pos}) -> 
     Base ({formula_base_heap = h; 
-     	formula_base_pure = CP.apply_one_exp s p;
+			formula_base_pure = CP.apply_one_exp s p;
+			formula_base_flow = fl;
      	(* TODO: dolve this *)
 		 	(*formula_base_pure = CP.elim_idents (CP.apply_one_exp s p);*) (* substitute + easy simplification - eliminate identities where LHS identic to RHS *)
 		 	formula_base_type = t;
@@ -1324,12 +1500,14 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 			 formula_exists_pure = qp; 
 			 formula_exists_type = tconstr;
              formula_exists_branches = b;
+			 formula_exists_flow = fl;
 			 formula_exists_pos = pos}) -> 
 	  if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	  else Exists ({formula_exists_qvars = qsv; 
 					formula_exists_heap =  qh; 
 					formula_exists_pure = CP.apply_one_exp s qp; 
 					formula_exists_type = tconstr;
+					formula_exists_flow = fl;
                     formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one_exp s p1)) b;
 					formula_exists_pos = pos})
 
@@ -1374,7 +1552,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
 				if (isConstEFalse c2) then a
 				else
 				(mkOr a (normalize_combine 
-							(mkBase HTrue c1 TypeTrue [] b.formula_case_pos ) 
+							(mkBase HTrue c1 TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) 
 							(struc_to_formula c2)
 							b.formula_case_pos
 						) 
@@ -1529,3 +1707,22 @@ and helper f = match f with
 	| EBase b-> [EBase {b with formula_ext_continuation = (case_to_disjunct b.formula_ext_continuation)}]
 	| _ -> [f] in
 List.concat (List.map helper f)
+
+
+and res_retrieve stab clean_res fl =
+	if clean_res then  
+		try 
+			let r = Some (Hashtbl.find stab res) in
+			(if (subsume_flow !exc_flow_int (Util.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
+			r
+		with Not_found -> None
+	else None
+
+	
+and res_replace stab rl clean_res fl =
+	if clean_res&&(subsume_flow !exc_flow_int (Util.get_hash_of_exc fl)) then 
+		((Hashtbl.remove stab res);
+		match rl with 
+			| None -> () 
+			| Some e-> Hashtbl.add stab res e) 
+	else ()

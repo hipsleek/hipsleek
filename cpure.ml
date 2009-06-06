@@ -82,6 +82,10 @@ let get_exp_type (e : exp) : typ = match e with
 
 let null_var = SpecVar (OType "", "null", Unprimed)
 
+let flow_var = SpecVar ((Prim Int), flow , Unprimed)
+
+let is_void_type t = match t with | Prim Void -> true | _ -> false
+
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = remove_dups tmp in
@@ -629,7 +633,7 @@ and eq_b_formula (b1 : b_formula) (b2 : b_formula) : bool = match (b1, b2) with
 	| (Gt(e1, e2, _), Gt(e3, e4, _))
 	| (Gte(e1, e2, _), Gte(e3, e4, _))
 	| (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
-	| (Neq(e1, e2, _), Eq(e3, e4, _))
+	| (Neq(e1, e2, _), Neq(e3, e4, _))
 	| (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp e1 e3) & (eq_exp e2 e4)) or ((eq_exp e1 e4) & (eq_exp e2 e3))
 	| (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
 	| (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp e1 e4) & ((eq_exp e2 e5) & (eq_exp e3 e6)) or ((eq_exp e2 e6) & (eq_exp e3 e5))
@@ -1953,6 +1957,4 @@ and arith_simplify (pf : formula) :  formula =
   |  Not (f1, loc) ->  Not (arith_simplify f1, loc)
   |  Forall (v, f1, loc) ->  Forall (v, arith_simplify f1, loc)
   |  Exists (v, f1, loc) ->  Exists (v, arith_simplify f1, loc)
-	
-	
 	

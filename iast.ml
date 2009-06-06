@@ -47,6 +47,15 @@ and enum_decl = { enum_name : ident;
 and param_modifier =
   | NoMod
   | RefMod
+   
+  
+and label_type =
+	| NoLabel 
+	| Label of ident
+	
+and rise_type = 
+	| Const_flow of constant_flow
+	| Var_flow of ident
 
 and param = { param_type : typ;
 			  param_name : ident;
@@ -90,6 +99,7 @@ and proc_decl = { proc_name : ident;
 				  proc_return : typ;
 				  proc_static_specs : Iformula.struc_formula;
 				  proc_dynamic_specs : Iformula.struc_formula;
+				  proc_exceptions : ident list;
 				  proc_body : exp option;
 				  proc_loc : loc }
 
@@ -154,8 +164,12 @@ and exp_bind = { exp_bind_bound_var : ident;
 				 exp_bind_fields : ident list;
 				 exp_bind_body : exp;
 				 exp_bind_pos : loc }
+	
+and exp_break = { exp_break_to_label : label_type;
+				  exp_break_pos : loc }	
 
 and exp_block = { exp_block_body : exp;
+				  exp_block_label : label_type;
 				  exp_block_pos : loc }
 
 and exp_bool_lit = { exp_bool_lit_val : bool;
@@ -170,6 +184,12 @@ and exp_call_recv = { exp_call_recv_receiver : exp;
 					  exp_call_recv_arguments : exp list;
 					  exp_call_recv_pos : loc }
 
+and exp_catch = { exp_catch_var : ident option ;
+				  exp_catch_flow_type : constant_flow;
+				  exp_catch_flow_var : ident option;
+				  exp_catch_body : exp;																					   
+				  exp_catch_pos : loc }
+				  
 and exp_cast = { exp_cast_target_type : typ;
 				 exp_cast_body : exp;
 				 exp_cast_pos : loc }
@@ -183,8 +203,14 @@ and exp_const_decl = { exp_const_decl_type : typ;
 					   exp_const_decl_decls : (ident * exp * loc) list;
 					   exp_const_decl_pos : loc }
 
+and exp_continue = { exp_continue_to_label : label_type;
+				  exp_continue_pos : loc }
+					   
 and exp_debug = { exp_debug_flag : bool;
 				  exp_debug_pos : loc }
+
+and exp_finally = { exp_finally_body : exp;
+					exp_finally_pos : loc }
 
 and exp_float_lit = { exp_float_lit_val : float;
 					  exp_float_lit_pos : loc }
@@ -203,6 +229,10 @@ and exp_new = { exp_new_class_name : ident;
 				exp_new_arguments : exp list;
 				exp_new_pos : loc }
 
+and exp_raise = { exp_raise_type : rise_type;
+				  exp_raise_val : exp option;
+				  exp_raise_pos : loc }
+				
 and exp_return = { exp_return_val : exp option;
 				   exp_return_pos : loc }
 
@@ -212,9 +242,14 @@ and exp_seq = { exp_seq_exp1 : exp;
 
 and exp_this = { exp_this_pos : loc }
 
-and exp_throw = { exp_throw_type : ident;
-				  exp_throw_pos : loc }
+and exp_try = { exp_try_block : exp;
+				exp_catch_clauses : exp_catch list;
+				exp_finally_clause : exp_finally list;
+				exp_try_pos : loc}
 
+(*and exp_throw = { exp_throw_type : ident;
+				  exp_throw_pos : loc }
+*)
 and exp_unary = { exp_unary_op : uni_op;
 				  exp_unary_exp : exp;
 				  exp_unary_pos : loc }
@@ -229,6 +264,9 @@ and exp_var_decl = { exp_var_decl_type : typ;
 and exp_while = { exp_while_condition : exp;
 				  exp_while_body : exp;
 				  exp_while_specs : Iformula.struc_formula (*multi_spec*);
+				  exp_while_label : label_type;
+				  exp_while_f_name: ident;
+				  exp_while_wrappings: exp option;(*used temporary to store the break wrappers*)
 				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
@@ -244,13 +282,13 @@ and exp =
   | Bind of exp_bind
   | Block of exp_block
   | BoolLit of exp_bool_lit
-  | Break of loc
+  | Break of exp_break
   | CallRecv of exp_call_recv
   | CallNRecv of exp_call_nrecv
   | Cast of exp_cast
   | Cond of exp_cond
   | ConstDecl of exp_const_decl
-  | Continue of loc
+  | Continue of exp_continue
   | Debug of exp_debug
   | Dprint of exp_dprint
   | Empty of loc
@@ -260,16 +298,17 @@ and exp =
   | Member of exp_member
   | New of exp_new
   | Null of loc
+  | Raise of exp_raise 
   | Return of exp_return
   | Seq of exp_seq
   | This of exp_this
-(*  | Throw of exp_throw *)
+  | Try of exp_try
   | Unary of exp_unary
   | Unfold of exp_unfold
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
-
+  
 (* type constants *)
 
 let void_type = Prim Void
@@ -314,13 +353,13 @@ let get_exp_pos (e0 : exp) : loc = match e0 with
   | Bind e -> e.exp_bind_pos
   | Block e -> e.exp_block_pos
   | BoolLit e -> e.exp_bool_lit_pos
-  | Break p -> p
+  | Break p -> p.exp_break_pos
   | CallRecv e -> e.exp_call_recv_pos
   | CallNRecv e -> e.exp_call_nrecv_pos
   | Cast e -> e.exp_cast_pos
   | Cond e -> e.exp_cond_pos
   | ConstDecl e -> e.exp_const_decl_pos
-  | Continue p -> p
+  | Continue p -> p.exp_continue_pos
   | Debug e -> e.exp_debug_pos
   | Dprint e -> e.exp_dprint_pos
   | Empty p -> p
@@ -338,6 +377,8 @@ let get_exp_pos (e0 : exp) : loc = match e0 with
   | VarDecl e -> e.exp_var_decl_pos
   | While e -> e.exp_while_pos
   | Unfold e -> e.exp_unfold_pos
+  | Try e -> e.exp_try_pos
+  | Raise e -> e.exp_raise_pos
 	  
 		
 
@@ -540,8 +581,11 @@ and contains_field (e0 : exp) : bool = match e0 with
   | VarDecl _ -> false (* this can't happen on RHS anyway *)
   | While e -> (contains_field e.exp_while_condition) || (contains_field e.exp_while_body)
   | Unfold _ -> false
-
-
+  | Raise e -> begin match e.exp_raise_val with | None -> false | Some e -> contains_field e end
+  | Try e -> (contains_field e.exp_try_block) ||
+			 (List.exists (fun c-> contains_field c.exp_catch_body  ) e.exp_catch_clauses)||
+			 (List.exists (fun c-> contains_field c.exp_finally_body) e.exp_finally_clause)
+  
 (* smart constructors *)
 
 let mkConstDecl t d p = ConstDecl { exp_const_decl_type = t;
@@ -646,3 +690,23 @@ let sub_type (t1 : typ) (t2 : typ) =
 	  *)
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
+
+let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
+  (* build the class hierarchy *)
+    
+  let _ = (Util.add_edge c_flow top_flow) in
+  let _ = (Util.add_edge "__abort" top_flow) in
+  let _ = (Util.add_edge n_flow c_flow) in
+  let _ = (Util.add_edge abnormal_flow c_flow) in
+  let _ = (Util.add_edge raisable_class abnormal_flow) in
+  let _ = (Util.add_edge "__others" abnormal_flow) in
+  let _ = (Util.add_edge ret_flow "__others") in
+  let _ = (Util.add_edge cont_top "__others") in
+  let _ = (Util.add_edge brk_top "__others") in
+  let _ = (Util.add_edge spec_flow "__others") in
+  let _ = List.map (fun c-> (Util.add_edge c.data_name c.data_parent_name)) prog.prog_data_decls in
+  let _ = if clean then (Util.clean_duplicates ()) in
+	if (Util.has_cycles ()) then begin
+	  print_string ("Error: Exception hierarchy has cycles\n");
+	  failwith ("Exception hierarchy has cycles\n");
+	end 

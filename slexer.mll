@@ -90,7 +90,8 @@
 	 ("view", VIEW);
 	 ("void", VOID);
 	 ("where", WHERE);
-	 ("while", WHILE)]
+	 ("while", WHILE);
+	 (flow, FLOW flow);]
 }
 
 let alpha = ['a'-'z' 'A'-'Z' '_']
