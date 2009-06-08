@@ -732,32 +732,11 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
   failwith 
   ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
 let rec helper c = match c with
-	| CF.Ctx b -> 
+	| CF.Ctx b -> if Cformula.isFalseCtx c then [c]
+					else 
 				let ff =(Cformula.flow_formula_of_ctx c no_pos) in	
 				if (Cformula.subsume_flow !n_flow_int ff.CF.formula_flow_interval) then  check_exp1 [c]
-				else (*
-				 match e0 with
-				    | Dprint ({ exp_dprint_string = str;
-								exp_dprint_visible_names = visib_names;
-								exp_dprint_pos = pos}) -> begin
-										if str = "" then begin
-											let str1 = String.concat "\n;;\n" (List.map (fun c-> 
-											"\n\n context length: "^(string_of_int (Cformula.count_or c))^"\n"^(Cprinter.string_of_context c)) [c])  in
-											let tmp1 = "\nprint: " ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ 
-														": ctx: "^(string_of_int (List.length [c]))^"\n" ^ str1 ^ "\n" in
-											print_string tmp1;
-											[c]
-										 end else if str = "disj_count" then begin
-											let tmp1 = List.map CF.disj_count_ctx [c] in
-											let tmp = List.fold_left (+) 0 tmp1 in
-												Debug.print_info "dprint"("number of disjuncts: " ^ (string_of_int tmp) ^ "\n") pos;
-											[c]
-										 end else begin
-												ignore (Drawing.dot_of_context_file prog [c] visib_names str);
-												[c]
-												end
-									end
-					| _ ->*) [c]
+				else  [c]
 	| CF.OCtx (b1,b2) -> 
 		let r1 = helper b1 in
 		let r2 = helper b2 in
