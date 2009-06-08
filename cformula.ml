@@ -263,11 +263,18 @@ and subsume_flow_f (n1,n2) f :bool = subsume_flow (n1,n2) f.formula_flow_interva
 
 and subsume_flow_ff f1 f2 :bool = subsume_flow f1.formula_flow_interval f2.formula_flow_interval
 
-and get_flow_from_stack c l pos = match l with
-	| [] -> Err.report_error { Err.error_loc = pos;Err.error_text = "the flow var stack does not contain "^c}
-	| h::t -> if ((String.compare h.formula_store_name c)==0) then h.formula_store_value
-				else get_flow_from_stack c t pos
-		
+and get_flow_from_stack c l pos = 
+	try
+		let r = List.find (fun h-> ((String.compare h.formula_store_name c)==0)) l in
+		r.formula_store_value
+	with Not_found -> Err.report_error { 
+				Err.error_loc = pos;
+				Err.error_text = "the flow var stack \n"^
+					(String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
+						(let rr = h.formula_store_value.formula_flow_interval in
+							(string_of_int (fst rr))^(string_of_int (snd rr)))^" ")) l))^
+					"\ndoes not contain "^c}
+
 and set_flow_in_formula_override (n:flow_formula) (f:formula):formula = match f with
 	| Base b-> Base {b with formula_base_flow = n}
 	| Exists b-> Exists {b with formula_exists_flow = n}
@@ -284,12 +291,16 @@ and set_flow_in_formula (n:flow_formula) (f:formula):formula = match f with
 				 
 and set_flow_to_link_f flow_store f pos = match f with
 	| Base b-> Base {b with formula_base_flow = 
+								if (equal_flow_interval b.formula_base_flow.formula_flow_interval false_flow_int) then b.formula_base_flow
+								else
 								if (subsume_flow !n_flow_int b.formula_base_flow.formula_flow_interval ) then
 									match b.formula_base_flow.formula_flow_link with
 									| None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
 									| Some v -> get_flow_from_stack v flow_store pos
 								else b.formula_base_flow}
 	| Exists b-> Exists {b with formula_exists_flow = 
+								if (equal_flow_interval b.formula_exists_flow.formula_flow_interval false_flow_int) then b.formula_exists_flow
+								else
 								if (subsume_flow !n_flow_int b.formula_exists_flow.formula_flow_interval ) then 
 									match b.formula_exists_flow.formula_flow_link with
 									| None -> Error.report_error { Error.error_loc = pos;Error.error_text = "simple flow where link required"}
@@ -322,11 +333,15 @@ and substitute_flow_in_f to_flow from_flow (f:formula):formula = match f with
 and mkAndFlow (fl1:flow_formula) (fl2:flow_formula):flow_formula = 
 	let int1 = fl1.formula_flow_interval in
 	let int2 = fl2.formula_flow_interval in
-	let r = if (is_false_flow int1) then {fl1 with formula_flow_link = None}
-		else if (is_false_flow int2) then {fl2 with formula_flow_link = None}
+	let r = if (is_false_flow int1) then fl1
+		else if (is_false_flow int2) then fl2
 		else if (overlapping int1 int2) then 
 			{	formula_flow_interval = intersection int1 int2;
-				formula_flow_link = fl1.formula_flow_link;}
+				formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
+					| None,None -> None
+					| Some s,None-> Some s
+					| None, Some s -> Some s
+					| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
 		else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
 	(*let string_of_flow_formula f c = 
 	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^

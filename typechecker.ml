@@ -10,6 +10,8 @@ module PTracer = Prooftracer
 
 let log_spec = ref ""
 (* checking expression *)
+let flow_store = ref ([] : CF.flow_store list)
+
 
 (* assumes the pre, and starts the simbolic execution*)
 let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
@@ -42,7 +44,8 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 						let _ = Util.push_time ("method "^proc.proc_name) in
 						try 
 						let r = 
-							let res_ctx = check_exp prog proc [ctx1] e0 [] in
+							flow_store := [];
+							let res_ctx = check_exp prog proc [ctx1] e0 in
 							(*if CP.are_same_types proc.proc_return void_type then*)
 							  (* void procedures may not contain a return in all branches,
 								 so we need to make a catch-all check at the end of the body *)
@@ -60,7 +63,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 						  in	
 	List.for_all do_spec_verification spec_list
 
-and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) e0 ( flow_store : CF.flow_store list): CF.context list = 
+and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) e0 : CF.context list = 
 	if (exp_to_check e0) then 
 		(*let _ = if (List.exists Cformula.isFalseCtx ctx) then 
 			print_string ("\n false ctx: "^(Cprinter.string_of_pos (Cast.pos_of_exp e0))^" "^(Cprinter.string_of_context_list ctx)^"\n") in*)
@@ -115,7 +118,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
   | Assign ({exp_assign_lhs = v;
 			 exp_assign_rhs = rhs;
 			 exp_assign_pos = pos}) -> begin
-      let ctx1 = check_exp prog proc ctx rhs flow_store in
+      let ctx1 = check_exp prog proc ctx rhs (*flow_store*) in
 		(* Debug.devel_pprint ("delta at beginning of assignment to " ^ v ^ ":\n" ^ (string_of_constr delta) ^ "\n") pos; *)
 	  let rec process_one c = match c with
 	  | CF.OCtx (c1,c2) -> CF.OCtx ((process_one c1),(process_one c2))
@@ -202,7 +205,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 	  let rs = CF.clear_entailment_history_list rs_prim in
 		if not (U.empty rs) then
 		  let process_one cc =
-			let tmp_res1 = check_exp prog proc [cc] body flow_store in (*the following should be happening irespective of the flow*)
+			let tmp_res1 = check_exp prog proc [cc] body (*flow_store*) in (*the following should be happening irespective of the flow*)
 			let tmp_res2 =
 				if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c vheap pos true) tmp_res1
 				else List.map (fun c -> CF.normalize_clash_context_formula c vheap pos true) tmp_res1
@@ -229,7 +232,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 			exp_block_body = e;
 			exp_block_local_vars = local_vars;
 			exp_block_pos = pos}) -> begin
-	  let ctx1 = check_exp prog proc ctx e flow_store in
+	  let ctx1 = check_exp prog proc ctx e (*flow_store*) in
 	  let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
 	  let ctx2 = List.map (fun c -> CF.push_exists_context svars c) ctx1 in
 	  let ctx3 = if !Globals.elim_exists then List.map (fun c -> elim_exists_ctx c) ctx2 else ctx2 in
@@ -272,9 +275,9 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_context else_ctx)) pos;
 		
 		
-		let then_ctx2 = check_exp prog proc [then_ctx] e1 flow_store in
+		let then_ctx2 = check_exp prog proc [then_ctx] e1 (*flow_store*) in
 		
-		let else_ctx2 = check_exp prog proc [else_ctx] e2 flow_store in
+		let else_ctx2 = check_exp prog proc [else_ctx] e2 (*flow_store*) in
 		let res = CF.or_context_list then_ctx2 else_ctx2 in
 		  res in
 	  let tmp_res = List.map process_one ctx in
@@ -638,8 +641,8 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		  exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2;
 		  exp_seq_pos = pos}) -> begin
-      let ctx1 = check_exp prog proc ctx e1 flow_store in (* Astsimp ensures that e1 is of type void *)
-		check_exp prog proc ctx1 e2 flow_store
+      let ctx1 = check_exp prog proc ctx e1 (*flow_store*) in (* Astsimp ensures that e1 is of type void *)
+		check_exp prog proc ctx1 e2 (*flow_store*)
     end
   | This ({exp_this_type = t;
 		   exp_this_pos = pos}) -> begin
@@ -678,15 +681,15 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 					| None -> ctx in
 				let r = List.map (fun nctx ->(match ft with 
 					| Sharp_ct nf -> if not un then (CF.set_flow_in_ctx nctx nf)
-											   else (CF.set_flow_to_link flow_store nctx pos)
-					| Sharp_v v -> CF.set_flow_in_ctx nctx (CF.get_flow_from_stack v flow_store pos))) nctx in
+											   else (CF.set_flow_to_link !flow_store nctx pos)
+					| Sharp_v v -> CF.set_flow_in_ctx nctx (CF.get_flow_from_stack v !flow_store pos))) nctx in
 				(*let _ =print_string ("sharp result ctx: "^ (Cprinter.string_of_context_list r)) in*)
 				r
 				
   | Try ({exp_try_body = body;
 		 exp_catch_clause = cc;
 		 exp_try_pos = pos })->
-		let ctx1 = check_exp prog proc ctx body flow_store in(*!!!!! local flow vars*)
+		let ctx1 = check_exp prog proc ctx body (*flow_store*) in(*!!!!! local flow vars*)
 		let rec apply_catch_context (ctx_crt : CF.context):CF.context list = match ctx_crt with
 			|CF.OCtx (c1,c2)-> 
 				let r1 = apply_catch_context c1 in
@@ -701,10 +704,11 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 				let nf  =  CF.flow_formula_of_formula c1.CF.es_formula pos in
 				if not (CF.subsume_flow_f cc.exp_catch_flow_type nf) then [ctx_crt]
 				else				
-					let nctx = CF.set_flow_in_ctx_override ctx_crt {CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} in 
-					let n_flow_store = match cc.exp_catch_flow_var with
-						| None -> flow_store 
-						| Some v -> {CF.formula_store_name = v; CF.formula_store_value = nf;}::flow_store in
+					let nctx = CF.set_flow_in_ctx_override ctx_crt {CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = nf.CF.formula_flow_link} in 
+					flow_store := (match cc.exp_catch_flow_var with
+						| None -> !flow_store 
+						| Some v -> {CF.formula_store_name = v; CF.formula_store_value = nf;}::!flow_store) ;
+					(*let _ = print_string ((Cprinter.string_of_flow_store !flow_store)^"\n") in*)
 					match cc.exp_catch_var with
 							|Some (cvt,cvn) ->
 								let rest, b_rez = CF.get_result_type c1.CF.es_formula in
@@ -717,12 +721,12 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 										if !Globals.elim_exists then elim_exists_ctx ctx1 else ctx1
 									else nctx in
 								(*let _ = print_string("\n catch ctx1: "^(Cprinter.string_of_context ctx)^"\n") in*)
-								let ctx1 = check_exp prog proc [ctx] cc.exp_catch_body n_flow_store in 
+								let ctx1 = check_exp prog proc [ctx] cc.exp_catch_body (*n_flow_store*) in 
 								(*let _ = print_string("\n catch ctx2: "^(Cprinter.string_of_context ctx)^"\n") in*)
 								if b_rez then List.map (fun c->CF.push_exists_context [(CP.SpecVar (rest, cvn, Primed))] c) ctx1 
 									else ctx1
 							| None -> 
-								check_exp prog proc [nctx] cc.exp_catch_body n_flow_store in
+								check_exp prog proc [nctx] cc.exp_catch_body (*n_flow_store*) in
 		List.concat (List.map apply_catch_context ctx1)	
   | _ -> 
   failwith 

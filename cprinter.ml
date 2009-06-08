@@ -172,9 +172,15 @@ and string_of_pure_formula_branches (f, l) =
 
 (* pretty printing for a cformula *)                                                         (*NOT DONE*)
 
+let string_of_flow_store l = (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
+						(let rr = h.formula_store_value.formula_flow_interval in
+							(string_of_int (fst rr))^"-"^(string_of_int (snd rr)))^" ")) l))
+
 let rec string_of_flow_formula f c = 
 	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
 	")="^(Util.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
+	
+
 
 and string_of_t_formula = function
 (* commented on 09.06.08

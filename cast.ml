@@ -761,7 +761,10 @@ let rec check_proper_return cret_type exc_list f =
 				else if not(sub_flow_type fl_int res_t) then
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
 				else ()			
-		else if not((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t)) then 
+		else 
+			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
+									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
+			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
 				Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()
 	| F.Exists b->
@@ -778,7 +781,10 @@ let rec check_proper_return cret_type exc_list f =
 				else if not(sub_flow_type fl_int res_t) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
 				else ()			
-		else if not((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t)) then 
+		else 
+			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
+									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
+			 if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
 				Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
 			else ()			
 	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
