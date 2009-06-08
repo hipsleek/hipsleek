@@ -27,6 +27,12 @@ let coq_of_prim_type = function
 let coq_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
+let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
+  | CP.SpecVar (t, _, _) -> begin match t with
+    | CP.Prim List -> "list Z"
+    | _ -> "Z"
+	end
+
 (*----------------------------------*)
 (* checking if exp contains bags *)
 let rec is_bag_exp e0 = match e0 with
@@ -67,13 +73,22 @@ let rec coq_of_exp e0 = match e0 with
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> failwith ("No bags in Coq yet")
-  | CP.List _
-  | CP.ListCons _
-  | CP.ListHead _
-  | CP.ListTail _
-  | CP.ListLength _
-  | CP.ListAppend _
-  | CP.ListReverse _ -> failwith ("Lists will be implemented soon")
+  | CP.List (alist, pos) -> 
+      begin match alist with
+      | [] -> "(nil : list Z)"
+	  | a::t -> "(" ^ (coq_of_exp a) ^ " :: " ^ (coq_of_exp (CP.List (t, pos))) ^ ")"
+	  end
+  | CP.ListAppend (alist, pos) ->
+      begin match alist with
+      | [] -> "(nil : list Z)"
+	  | a::[] -> coq_of_exp a
+	  | a::t -> "(" ^ (coq_of_exp a) ^ " ++ " ^ (coq_of_exp (CP.ListAppend (t, pos))) ^ ")"
+	  end
+  | CP.ListCons (sv, a, _) -> " ( " ^ (coq_of_spec_var sv) ^ " :: " ^ (coq_of_exp a) ^ ")"
+  | CP.ListHead (a, pos) -> " ( hd 0%Z " ^ (coq_of_exp a) ^ ")"
+  | CP.ListTail (a, pos) -> " ( tail " ^ (coq_of_exp a) ^ ")"
+  | CP.ListLength (a, pos) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
+  | CP.ListReverse (a, pos) -> " ( rev " ^ (coq_of_exp a) ^ ")"
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
@@ -109,26 +124,30 @@ and coq_of_b_formula b = match b with
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _ -> failwith ("No bags in Coq yet")
-  | CP.ListIn _
-  | CP.ListNotIn _ -> failwith ("Lists will be implemented soon")
+  | CP.ListIn (sv, a, _) -> " ( In " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ ")"
+  | CP.ListNotIn (sv, a, _) ->  " ( not ( In " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ "))"
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
-    match f with
+print_endline ("formula: " ^ (Cprinter.string_of_pure_formula f));
+coq_of_formula2 f
+
+and coq_of_formula2 f =
+match f with
     | CP.BForm b -> "(" ^ (coq_of_b_formula b) ^ ")"
     | CP.Not (p, _) ->
 	    begin match p with
 		| CP.BForm (CP.BVar (bv, _)) -> (coq_of_spec_var bv) ^ " = 0"
-		| _ -> " (~ (" ^ (coq_of_formula p) ^ ")) "
+		| _ -> " (~ (" ^ (coq_of_formula2 p) ^ ")) "
         end
     | CP.Forall (sv, p, _) ->
-	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
+	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula2 p) ^ ") "
     | CP.Exists (sv, p, _) ->
-	    " (exists " ^ (coq_of_spec_var sv) ^ ":Z," ^ (coq_of_formula p) ^ ") "
+	    " (exists " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ "," ^ (coq_of_formula2 p) ^ ") "
     | CP.And (p1, p2, _) ->
-	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
+	    "(" ^ (coq_of_formula2 p1) ^ " /\\ " ^ (coq_of_formula2 p2) ^ ")"
     | CP.Or (p1, p2, _) ->
-	    "(" ^ (coq_of_formula p1) ^ " \\/ " ^ (coq_of_formula p2) ^ ")"
+	    "(" ^ (coq_of_formula2 p1) ^ " \\/ " ^ (coq_of_formula2 p2) ^ ")"
 
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
@@ -148,22 +167,23 @@ let rec check fd coq_file_name : bool=
 	  false
 ;;
 
-let get_vars_formula p = List.map coq_of_spec_var (CP.fv p)
+(* let get_vars_formula p = List.map coq_of_spec_var (CP.fv p) *)
 
-let coq_of_var_list l = String.concat "" (List.map (fun s -> "forall " ^ s ^ ":Z, ") l)
+let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
 (* writing the Coq file *)
 let write (pe : CP.formula) : bool =
   coq_file_number.contents <- !coq_file_number + 1;
   let coq_file_name = "test" ^ string_of_int !coq_file_number ^ ".v" in
   let coq_file = open_out coq_file_name in
-  let vstr = coq_of_var_list (Util.remove_dups (get_vars_formula pe)) in
+  let vstr = coq_of_var_list (Util.remove_dups (CP.fv pe)) in
   let fstr = coq_of_formula pe in
   output_string coq_file "Require Import decidez.\n";
+  output_string coq_file "Require Import List.\n";
 (*  output_string coq_file "Require Import PresTac.\n";*)
   output_string coq_file "Set Firstorder Depth 5.\n";
   output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ fstr ^ ")%Z.\n");
-  output_string coq_file ("intros; try do 10 hyp; auto with *; try do 10 hyp; auto with *;try do 10 hyp; auto with *; repeat hyp; auto with *.\nQed.\n"); (* || prestac *)
+  output_string coq_file ("intros; try do 10 hyp; auto with *; try do 10 hyp; auto with *; try do 10 hyp; auto with *; repeat hyp; auto with *; elimtype False; auto.\nQed.\n"); (* || prestac *)
   flush coq_file;
   close_out coq_file;
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
@@ -171,7 +191,7 @@ let write (pe : CP.formula) : bool =
     output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ fstr ^ ".\n");
 	flush log_file;
   end;
-  match (Sys.command ("coqc -R ../Presburger Presburger " ^ coq_file_name ^ " > res 2> /dev/null")) with (* -byte *)
+  match (Sys.command ("coqc -R ../Presburger Presburger " ^ coq_file_name ^ " > res"^ string_of_int !coq_file_number ^".out 2> /dev/null")) with (* -byte *)
   | 0 -> 
       if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
       true

@@ -119,11 +119,21 @@ let rec string_of_formula_exp = function
 			^ (if need_parenthesis e then "(" ^ (string_of_formula_exp e) ^ ")" else string_of_formula_exp e)
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
-	| _ -> "bag or list constraint"
-;;
+  | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
+  | P.ListAppend (elist, l) -> "append(" ^ (string_of_formula_exp_list elist) ^ ")"
+  | P.ListCons (x, e, l)	-> (match x with 
+															|(id, p) -> id ^ (match p with 
+																									| Primed    -> "'" 
+																									| Unprimed  -> "" ))
+								^ ":::" ^ (string_of_formula_exp e)
+  | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListLength (e, l)		-> "length(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListReverse (e, l)	-> "reverse(" ^ (string_of_formula_exp e) ^ ")"
+	| _ -> "bag constraint"
 
 (* pretty printing for a list of pure formulae *)
-let rec string_of_formula_exp_list l = match l with 
+and string_of_formula_exp_list l = match l with 
   | []                         -> ""
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
@@ -162,7 +172,19 @@ let string_of_b_formula = function
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
   | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-	| _ -> "bag or list constraint"
+  | P.ListIn (x, e, l)			-> begin (match x with 
+    |(id, p) -> id ^ (match p with 
+      | Primed    -> "'" 
+      | Unprimed  -> "" ))
+  ^ " inlist " ^ (string_of_formula_exp e)
+  end
+  | P.ListNotIn (x, e, l)		-> begin (match x with 
+    |(id, p) -> id ^ (match p with 
+      | Primed    -> "'" 
+      | Unprimed  -> "" ))
+  ^ " notinlist " ^ (string_of_formula_exp e)
+  end
+  | _ -> "bag constraint"
 ;;
 
 (* pretty printing for a pure formula *)
@@ -190,8 +212,8 @@ let rec string_of_h_formula = function
 			 F.h_formula_star_h2 = f2;
 			 F.h_formula_star_pos = l} ) -> 
 	  if is_bool_f f1 then 
-		if is_bool_f f2 then (string_of_h_formula f1) ^ "*" ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ "*(" ^ (string_of_h_formula f2) ^ ")" 
+		if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")" 
 	  else
 		"(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"    
   | F.HeapNode ({F.h_formula_heap_node = x;
@@ -224,11 +246,11 @@ let rec string_of_formula = function
       else if hf = F.HFalse then 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
-            else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")")
+            else (string_of_h_formula hf) ^ " * (" ^ (string_of_pure_formula pf) ^ ")")
 	  else 
 		let s = string_of_pure_formula pf in 
           (if s = "" then  (string_of_h_formula hf)
-            else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")")
+            else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ (string_of_pure_formula pf) ^ ")")
   | Iast.F.Or ({F.formula_or_f1 = f1;
 				F.formula_or_f2 = f2;
 				F.formula_or_pos = l}) -> (string_of_formula f1) ^ "\nor" ^ (string_of_formula f2)
@@ -245,11 +267,11 @@ let rec string_of_formula = function
 		 else if hf = F.HFalse then 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
-              else (string_of_h_formula hf) ^ "*(" ^ (string_of_pure_formula pf) ^ ")")
+              else (string_of_h_formula hf) ^ " * (" ^ (string_of_pure_formula pf) ^ ")")
 		 else 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
-              else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")"))
+              else "(" ^ (string_of_h_formula hf) ^ ") * (" ^ (string_of_pure_formula pf) ^ ")"))
 	  ^ ")"
 ;;
 

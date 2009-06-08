@@ -3279,7 +3279,7 @@ and
         let result = CF.mkOr lf1 lf2 pos in result
     | IF.Base base -> 
 		let nh,np,nt,nb = (linearize_base base base.Iformula.formula_base_pos) in
-		CF.mkBase nh np nt nb base.Iformula.formula_base_pos 
+		CF.mkBase nh np nt nb base.Iformula.formula_base_pos
     | IF.Exists
         {
           IF.formula_exists_heap = h; 
@@ -3633,9 +3633,10 @@ and collect_type_info_bag_list_content a0 stab =
   | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_bag_list_content: encountered bag constraint"
-  | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+  | IP.ListHead (a, pos) | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
+  | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
       failwith "collect_type_info_bag_list_content: encountered list constraint"
-
+  
 and collect_type_info_bag (e0 : IP.exp) stab =
   match e0 with
   | IP.Var ((sv, sp), pos) ->

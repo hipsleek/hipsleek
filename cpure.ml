@@ -1934,11 +1934,11 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   |  BagDiff (e1, e2, l) -> ((Some e), None)
   |  List (el, l) -> ((Some e), None)
   |  ListAppend (el, l) -> ((Some e), None)
-  |  ListCons (v, e, l) -> ((Some e), None)
-  |  ListHead (e, l) -> ((Some e), None)
-  |  ListTail (e, l) -> ((Some e), None)
-  |  ListLength (e, l) -> ((Some e), None)
-  |  ListReverse (e, l) -> ((Some e), None)
+  |  ListCons (v, e1, l) -> ((Some e), None)
+  |  ListHead (e1, l) -> ((Some e), None)
+  |  ListTail (e1, l) -> ((Some e), None)
+  |  ListLength (e1, l) -> ((Some e), None)
+  |  ListReverse (e1, l) -> ((Some e), None)
 
 and move_lr (lhs :  exp option) (lsm :  exp option)
   (rhs :  exp option) (rsm :  exp option) l :
