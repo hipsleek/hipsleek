@@ -82,6 +82,10 @@ and flow_store = {
 		formula_store_name : ident;
 		formula_store_value : flow_formula;		
 	}
+	
+and flow_treatment = 
+	| Flow_combine
+	| Flow_replace
 					 
 and h_formula = (* heap formula *)
   | Star of h_formula_star
@@ -330,19 +334,28 @@ and substitute_flow_in_f to_flow from_flow (f:formula):formula = match f with
 				 formula_or_pos = b.formula_or_pos}
 								
 (*this is used for adding formulas, links will be ignored since the only place where links can appear is in the context, the first one will be kept*)
-and mkAndFlow (fl1:flow_formula) (fl2:flow_formula):flow_formula = 
+and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula = 
 	let int1 = fl1.formula_flow_interval in
 	let int2 = fl2.formula_flow_interval in
 	let r = if (is_false_flow int1) then fl1
 		else if (is_false_flow int2) then fl2
-		else if (overlapping int1 int2) then 
-			{	formula_flow_interval = intersection int1 int2;
-				formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
+		else match flow_tr with
+			| Flow_replace -> 
+				{	formula_flow_interval = int2;
+					formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
 					| None,None -> None
 					| Some s,None-> Some s
 					| None, Some s -> Some s
 					| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
-		else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
+			| Flow_combine ->
+				if (overlapping int1 int2) then 
+					{	formula_flow_interval = intersection int1 int2;
+						formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
+							| None,None -> None
+							| Some s,None-> Some s
+							| None, Some s -> Some s
+							| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
+				else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
 	(*let string_of_flow_formula f c = 
 	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
 	")="^(Util.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
@@ -410,14 +423,14 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
 					h_formula_star_pos = pos})
 
 				
-let rec mkStar (f1 : formula) (f2 : formula) (pos : loc) =
+let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, b1, t1 = split_components f1 in
   let h2, p2, fl2, b2, t2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
   let p = CP.mkAnd p1 p2 pos in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
-  let fl = mkAndFlow fl1 fl2 in
+  let fl = mkAndFlow fl1 fl2 flow_tr in
   mkBase h p t fl b pos
    
 and combine_and_pure (f1:formula)(p:Cpure.formula)(f2:Cpure.formula):Cpure.formula*bool = 
@@ -439,14 +452,14 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 		let _, pl, _, br, _ = split_components f in		
 		(Cpure.is_member_pure p pl) ||(List.exists (fun (_,c)->Cpure.is_member_pure p c) br)
 		
-and mkStar_combine (f1 : formula) (f2 : formula) (pos : loc) = 
+and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, b1, t1 = split_components f1 in
   let h2, p2, fl2, b2, t2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
-  let fl =  mkAndFlow fl1 fl2 in
+  let fl =  mkAndFlow fl1 fl2 flow_tr in
   mkBase h p t fl b pos
 
 
@@ -782,7 +795,33 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
-and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+      let eo1 = normalize o11 f2 pos in
+      let eo2 = normalize o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			let eo1 = normalize f1 o21 pos in
+			let eo2 = normalize f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkStar_combine base1 base2 flow_tr pos in
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			  resform
+		  end
+    end
+	
+and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
+	normalize_keep_flow f1 f2 Flow_combine pos
+(*
+match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
       let eo1 = normalize o11 f2 pos in
       let eo2 = normalize o12 f2 pos in
@@ -803,7 +842,7 @@ and normalize (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
-    end
+    end*)
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
       let eo1 = normalize_combine o11 f2 pos in
@@ -820,7 +859,7 @@ and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let rf2 = rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar_combine base1 base2 pos in
+			let new_base = mkStar_combine base1 base2 Flow_combine pos in
 			let new_h, new_p, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -845,7 +884,7 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 			let rf2 = (*rename_bound_vars*) f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar_combine base1 base2 pos in
+			let new_base = mkStar_combine base1 base2 Flow_combine pos in
 			let new_h, new_p, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -1052,7 +1091,7 @@ and check_name_clash (v : CP.spec_var) (f : formula) : bool =
 (* the * operator, as the & operator is just a special case when one of *)
 (* the term is pure                                                     *)
 
-and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) (pos : loc) =
+and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) =
   let rs = CP.fresh_spec_vars x in
   (*--- 09.05.2000 *)
 	(*let _ = (print_string ("\n[cformula.ml, line 533]: fresh name = " ^ (string_of_spec_var_list rs) ^ "!!!!!!!!!!!\n")) in*)
@@ -1061,7 +1100,7 @@ and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) (po
   let rho2 = List.combine (List.map CP.to_primed x) rs in
   let new_delta = subst rho2 delta in
   let new_phi = subst rho1 phi in
-  let new_f = normalize new_delta new_phi pos in
+  let new_f = normalize_keep_flow new_delta new_phi flow_tr pos in
   let resform = push_exists rs new_f in
 	resform
 	
@@ -1323,19 +1362,19 @@ and pop_exists_estate (qvars : CP.spec_var list) (es : entail_state) : entail_st
 	in new_es
 (*23.10.2008*)
 
-and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) (pos : loc) : context = match ctx with
+and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = compose_context_formula ctx phi1 x pos in
-			let new_c2 = compose_context_formula ctx phi2 x pos in
+			let new_c1 = compose_context_formula ctx phi1 x flow_tr pos in
+			let new_c2 = compose_context_formula ctx phi2 x flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x pos;es_unsat_flag =false;}
+		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos;es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) -> 
-	  let new_c1 = compose_context_formula c1 phi x pos in
-	  let new_c2 = compose_context_formula c2 phi x pos in
+	  let new_c1 = compose_context_formula c1 phi x flow_tr pos in
+	  let new_c2 = compose_context_formula c2 phi x flow_tr pos in
 	  let res = (mkOCtx new_c1 new_c2 pos) in
 		res
 

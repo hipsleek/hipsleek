@@ -11,8 +11,7 @@ int testExc1()
             if (x != 47) raise(new arith_exc());
             x = -1;
         } catch (arith_exc exc) {
-            if (x == 1) x = 2; 
-				else x = -1;
+            if (x == 1) x = 2; else x = -1;
         };
         if (x != 2) return -1;
         else return 0;
@@ -141,6 +140,7 @@ int testExc6()
         } catch (arith_exc exc) {
             if (x != 1) x = -1; else x = 4;
         };
+		dprint;
         if (x == 4)
             return 0;
         else
@@ -177,7 +177,6 @@ int loopExitContinueInExceptionHandler()
                 if (i % 100 == 0)
                     raise(new arith_exc ());
                 if (i == 9990)
-					dprint;
                     break tr;
                 if (i % 2 == 0)
                     continue tr;

@@ -127,7 +127,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 			let t = U.unsome (type_of_exp rhs) in
 			let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
 			let link = CF.formula_of_pure (CP.mkEqVar vsv (P.mkRes t) pos) pos in
-			let tmp_ctx1 = CF.compose_context_formula c link [vsv] pos in
+			let tmp_ctx1 = CF.compose_context_formula c link [vsv] CF.Flow_combine pos in
 			let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
 			let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
 			resctx 

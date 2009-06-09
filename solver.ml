@@ -1718,7 +1718,9 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 	| EAssume (ref_vars, post) -> if not has_post then report_error pos "malfunction: this formula can not have a post condition!"
 					else
 						let rs = CF.clear_entailment_history ctx in
-						let rs1 = CF.compose_context_formula rs post ref_vars pos in
+						(*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
+						let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
+						(*let _ =print_string ("after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
 						let rs2 = elim_unsat_ctx prog rs1 in
 						(*let _ = print_string (
 						"\n rs1:"^
@@ -1857,7 +1859,7 @@ and move_lemma_expl_inst_ctx	(ctx : context) (f : formula) : context =
 			let new_es' = {new_es with
 				(* existential vars from conseq are made existential in the entecedent *)
 				es_ante_evars = new_es.es_ante_evars @ new_es.es_evars;
-				es_formula = (CF.mkStar new_es.es_formula f no_pos);
+				es_formula = (CF.mkStar new_es.es_formula f Flow_combine no_pos);
 				es_unsat_flag = false;
 			}
 			in CF.Ctx(new_es')
@@ -1878,7 +1880,7 @@ and move_expl_inst_ctx_list (ctx:context list)(f:CP.formula):context list =
 				es_gen_expl_vars = []; 
 				es_gen_impl_vars = [];
 				es_ante_evars = es.es_ante_evars @ es.es_evars;
-				es_formula = (CF.mkStar es.es_formula f1 no_pos);
+				es_formula = (CF.mkStar es.es_formula f1 Flow_combine no_pos);
 				es_unsat_flag = false;
 			}
 			in CF.Ctx(new_es')
