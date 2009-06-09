@@ -1540,9 +1540,11 @@ and set_pre_flow f =
 	
 and check_valid_flows f = 
 	let rec check_valid_flows_f f = match f with
-		| Iformula.Base b -> if (Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_base_flow))then 
+		| Iformula.Base b -> if ((Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_base_flow))&&
+								  ((String.compare b.Iformula.formula_base_flow false_flow)<>0))then 
 				Error.report_error {Error.error_loc = b.Iformula.formula_base_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_base_flow;}
-		| Iformula.Exists b -> if (Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_exists_flow))then 
+		| Iformula.Exists b -> if (Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_exists_flow))&&
+									((String.compare b.Iformula.formula_exists_flow false_flow)<>0)then 
 				Error.report_error {Error.error_loc = b.Iformula.formula_exists_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_exists_flow;}
 		| Iformula.Or b-> (check_valid_flows_f b.Iformula.formula_or_f1);(check_valid_flows_f b.Iformula.formula_or_f2)
 	in
