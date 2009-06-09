@@ -165,7 +165,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	  let cf1 = meta_to_formula mf1 quant fv_idents stab in
 	  let cf2 = meta_to_formula mf2 quant fv_idents stab in
 	  let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
-	  let res = Cformula.compose_formula cf1 cf2 svs no_pos in
+	  let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
 		res
 	end
 	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")

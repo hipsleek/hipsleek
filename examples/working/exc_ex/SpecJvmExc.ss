@@ -140,7 +140,6 @@ int testExc6()
         } catch (arith_exc exc) {
             if (x != 1) x = -1; else x = 4;
         };
-		dprint;
         if (x == 4)
             return 0;
         else
@@ -171,18 +170,18 @@ int loopExitContinueInExceptionHandler()
         
 		tr:while
 			(i < 10000)
-		requires true ensures i'=9990& flow __Brk_top;{
+			case {i<9990 -> requires true ensures i'=9990& flow __Brk_top;
+				  i>=9990 &	i<10000 -> requires true ensures i' = 10000;
+				  i>=10000 -> requires true ensures i'=i;}
+			{
             i++;
             try {
-                if (i % 100 == 0)
+                if (i >9990)
                     raise(new arith_exc ());
                 if (i == 9990)
                     break tr;
-                if (i % 2 == 0)
-                    continue tr;
+              
             } catch (arith_exc e) {
-                if (i %2 != 0)
-                    break tr;
             };
         };
         if (i != 9990)

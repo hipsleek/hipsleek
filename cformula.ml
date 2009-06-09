@@ -1646,8 +1646,14 @@ and formula_to_struc_formula (f:formula):struc_formula =
 	(helper f)
 
 and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula = 
+	let rec filter_quantifiers w f = match f with
+	| Base _ -> f
+	| Exists b -> Exists {b with formula_exists_qvars = Util.difference b.formula_exists_qvars w;}
+	| Or b -> Or {b with 
+						formula_or_f1 = filter_quantifiers w b.formula_or_f1;
+						formula_or_f2 = filter_quantifiers w b.formula_or_f2;}in
 	let rec helper (f0:ext_formula):ext_formula = match f0 with
-	| EAssume (_,b)->  EAssume (w,b)
+	| EAssume (_,b)->  EAssume (w,(filter_quantifiers  w b))
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(plug_ref_vars c2 w))) b.formula_case_branches}
 	| EBase b -> EBase {b with formula_ext_continuation = plug_ref_vars b.formula_ext_continuation w}in 
 	List.map helper f0

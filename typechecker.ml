@@ -567,6 +567,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
 		(* rename bound vars in the callee pre/post *)
 		(* -- 16.05.2008 *)
+		(*let _ = print_string ("\n rtr "^(Cprinter.string_of_struc_formula org_spec)^"\n") in*)
 		let renamed_spec =
 		  if !Globals.max_renaming then (Cformula.rename_struc_bound_vars org_spec)
 		  else (Cformula.rename_struc_clash_bound_vars org_spec (CF.formula_of_context_list ctx))
@@ -574,8 +575,8 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		let st1 = List.combine pre_free_vars pre_free_vars_fresh in
 		let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
 		let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
-		(*let _ = print_string ("\n from: "^(Cprinter.string_of_spec_var_list fr_vars)^"\n"^
-		"\n  to: "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
+		(*let _ = print_string ("\n trt from: "^(Cprinter.string_of_spec_var_list fr_vars)^"\n"^
+		"\n  to: "^(Cprinter.string_of_spec_var_list to_vars)^"\n in: "^(Cprinter.string_of_struc_formula renamed_spec)^"\n") in*)
 		let renamed_spec = CF.subst_struc st1 renamed_spec in
 		let renamed_spec= CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
 		let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
