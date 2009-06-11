@@ -7,13 +7,13 @@ data node {
 }
 
 /* view for a singly linked list */
-ll<L1> == self=null & L1=[||]
-	or self::node<v, r> * r::ll<L2> & L1=v:::L2;
+ll<L1> == self = null & L1 = [||]
+	or self::node<v, r> * r::ll<L2> & L1 = v:::L2;
 
 /* append two singly linked lists */
 void append(node x, node y)
 
-	requires x::ll<L1> * y::ll<L2> & length(L1) > 0
+	requires x::ll<L1> * y::ll<L2> & len(L1) > 0
 	ensures x::ll<L> & L = app(L1, L2) ;
 
 {
@@ -27,7 +27,7 @@ void append(node x, node y)
 /* return the first element of a singly linked list */
 int ret_first(node x)
 
-	requires x::ll<L> & length(L) > 0
+	requires x::ll<L> & len(L) > 0
 	ensures res = head(L);
 	
 {
@@ -37,7 +37,7 @@ int ret_first(node x)
 /* return the tail of a singly linked list */
 node get_next(node x)
 
-	requires x::ll<L> & length(L) > 0
+	requires x::ll<L> & len(L) > 0
 	ensures x::ll<L1> * res::ll<L2> & L1 = [|head(L)|] & L2 = tail(L);
 	
 {
@@ -49,7 +49,7 @@ node get_next(node x)
 /* function to set the tail of a list */
  void set_next(node x, node y)
 
-	requires x::ll<L1> * y::ll<L2> & length(L1) > 0
+	requires x::ll<L1> * y::ll<L2> & len(L1) > 0
 	ensures x::ll<L> & L = app([|head(L1)|], L2);
 	
 {
@@ -59,7 +59,7 @@ node get_next(node x)
 /* function to set null the tail of a list */
 void set_null(node x)
 
-	requires x::ll<L1> & length(L1) > 0
+	requires x::ll<L1> & len(L1) > 0
 	ensures x::ll<L2> & L2 = [|head(L1)|];
 
 {
@@ -69,7 +69,7 @@ void set_null(node x)
 /* function to get the third element of a list */
 node get_next_next(node x) 
 
-	requires x::ll<L1> & length(L1) > 1
+	requires x::ll<L1> & len(L1) > 1
 	ensures res::ll<L2> & L2 = tail(tail(L1));
 	
 {
@@ -79,7 +79,7 @@ node get_next_next(node x)
 /* function to insert a node in a singly linked list */
 void insert(node x, int a)
 
-	requires x::ll<L1> & length(L1) > 0
+	requires x::ll<L1> & len(L1) > 0
 	ensures x::ll<L2> & L2 = app(L1, [|a|]);
 	
 {
@@ -93,8 +93,8 @@ void insert(node x, int a)
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
 
-	requires x::ll<L1> & length(L1) > a & a > 0 
-	ensures x::ll<L2> & length(L2) = length(L1) - 1; /* incomplete */
+	requires x::ll<L1> & len(L1) > a & a > 0 
+	ensures x::ll<L2> & len(L2) = len(L1) - 1; /* incomplete */
 
 {
 	if (a == 1) {
@@ -108,7 +108,7 @@ void delete(node x, int a)
 node delete_val(node x, int a)
 
 	requires x::ll<L1>
-	ensures res::ll<L2> & (a inlist L1 & length(L2) = length(L1) - 1 | a notinlist L1 & L1 = L2);
+	ensures res::ll<L2> & (a inlist L1 & len(L2) = len(L1) - 1 | a notinlist L1 & L1 = L2);
 	
 {
 	if (x == null) {
@@ -123,7 +123,7 @@ node delete_val(node x, int a)
 node create_list(int a)
 
 	requires a >= 0 
-	ensures res::ll<L> & length(L) = a;
+	ensures res::ll<L> & len(L) = a;
 
 {
 	if (a == 0) {

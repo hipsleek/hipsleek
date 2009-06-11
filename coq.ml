@@ -183,7 +183,7 @@ let write (pe : CP.formula) : bool =
 (*  output_string coq_file "Require Import PresTac.\n";*)
   output_string coq_file "Set Firstorder Depth 5.\n";
   output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ fstr ^ ")%Z.\n");
-  output_string coq_file ("intros; try do 10 hyp; auto with *; try do 10 hyp; auto with *; try do 10 hyp; auto with *; repeat hyp; auto with *; elimtype False; auto.\nQed.\n"); (* || prestac *)
+  output_string coq_file ("intros; try do 10 hyp; auto with *; try do 10 hyp; auto with *; try do 10 hyp; auto with *; repeat hyp; auto with *; simpl; simpl in *; eauto; try omega; try discriminate; elimtype False; auto.\nQed.\n"); (* || prestac *)
   flush coq_file;
   close_out coq_file;
   (* if log_all_flag is on -> writing the formula in the coq log file  *)

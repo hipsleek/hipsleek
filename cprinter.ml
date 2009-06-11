@@ -93,14 +93,15 @@ let rec string_of_formula_exp = function
   | P.BagIntersect (e::rest, l) -> (string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (P.BagIntersect (rest, l)))
   | P.BagDiff (e1, e2, l)     -> (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2) 
   | P.List (elist, l) 					-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
-  | P.ListAppend ([], l) 				-> ""
+  | P.ListAppend (elist, l) 			-> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
+(*  | P.ListAppend ([], l) 				-> ""
   | P.ListAppend (e::[], l)			-> (string_of_formula_exp e) 
-  | P.ListAppend (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " append " ^ (string_of_formula_exp (P.ListAppend (rest, l))) ^ ")"
+  | P.ListAppend (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " ++ " ^ (string_of_formula_exp (P.ListAppend (rest, l))) ^ ")" *)
   | P.ListCons (v, e, l)     -> (string_of_spec_var v) ^ " ::: " ^ (string_of_formula_exp e)
   | P.ListHead (e, l)     -> "head(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListTail (e, l)     -> "tail(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListLength (e, l)     -> "length(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListReverse (e, l)     -> "reverse(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListLength (e, l)     -> "len(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListReverse (e, l)     -> "rev(" ^ (string_of_formula_exp e) ^ ")"
 
   
 (* pretty printing for a list of pure formulae *)
@@ -148,7 +149,7 @@ let string_of_b_formula = function
   | P.BagSub (e1, e2, l)			-> (string_of_formula_exp e1) ^ " <subset> " ^ (string_of_formula_exp e2)
   | P.BagMin (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <min> (" ^ (string_of_spec_var v2) ^ ")"
   | P.BagMax (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <max> (" ^ (string_of_spec_var v2) ^ ")"
-  | P.ListIn (v, e, l)					-> (string_of_spec_var v) ^ " inlist " ^ (string_of_formula_exp e)
+  | P.ListIn (v, e, l)				-> (string_of_spec_var v) ^ " inlist " ^ (string_of_formula_exp e)
   | P.ListNotIn (v, e, l)			-> (string_of_spec_var v) ^ " notinlist " ^ (string_of_formula_exp e)
 
 ;;

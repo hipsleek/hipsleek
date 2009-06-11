@@ -58,7 +58,7 @@
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
-	 ("length", LENGTH);
+	 ("len", LENGTH);
 	 ("max", MAX);
 	 ("min", MIN);
 	 ("bagmax", BAGMAX);

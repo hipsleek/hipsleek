@@ -120,7 +120,7 @@ let rec string_of_formula_exp = function
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
   | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
-  | P.ListAppend (elist, l) -> "append(" ^ (string_of_formula_exp_list elist) ^ ")"
+  | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
   | P.ListCons (x, e, l)	-> (match x with 
 															|(id, p) -> id ^ (match p with 
 																									| Primed    -> "'" 
@@ -128,8 +128,8 @@ let rec string_of_formula_exp = function
 								^ ":::" ^ (string_of_formula_exp e)
   | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListLength (e, l)		-> "length(" ^ (string_of_formula_exp e) ^ ")"
-  | P.ListReverse (e, l)	-> "reverse(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
 	| _ -> "bag constraint"
 
 (* pretty printing for a list of pure formulae *)
