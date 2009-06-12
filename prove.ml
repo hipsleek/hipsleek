@@ -1,13 +1,13 @@
-(*|This module is code for both Workers/Slave or Manager/Master.                           *)
-(*|Since they share common messages and utilities, relevant submodules are included:       *)
-(*| - [Utils] contains some utility functions.                                             *)
-(*| - [DBCache] stores formulas that has been proved, and can be retrieved later for speed.*)
-(*| - [Log] writes some logging information about long running tasks.                      *)
-(*| - [Worker] receives messages from Managers and calls to Tpdispatcher for proving,      *)
-(*|      then returns the result to the Managers.                                          *)
-(*| - [Managers] receives job from clients, creates Workers, and send out jobs to Workers. *)
-(*|      When a Worker returns a good result, it returns the result to clients             *)
-(*|      and tell Workers to cancel unneccessary tasks.                                    *)
+(**This module is code for both Workers/Slave or Manager/Master.                           *)
+(**Since they share common messages and utilities, relevant submodules are included:       *)
+(** - [Utils] contains some utility functions.                                             *)
+(** - [DBCache] stores formulas that has been proved, and can be retrieved later for speed.*)
+(** - [Log] writes some logging information about long running tasks.                      *)
+(** - [Worker] receives messages from Managers and calls to Tpdispatcher for proving,      *)
+(**      then returns the result to the Managers.                                          *)
+(** - [Managers] receives job from clients, creates Workers, and send out jobs to Workers. *)
+(**      When a Worker returns a good result, it returns the result to clients             *)
+(**      and tell Workers to cancel unneccessary tasks.                                    *)
 
 let debug = ref false and debuginfo = false
 let trace f s = if !debug then (prerr_endline (f ^ ": "^s); flush stderr)
@@ -21,43 +21,39 @@ let is_cluster () = !remote_locations <> []
 let user_name = Unix.getenv("LOGNAME")
 let default_num_slaves = 2
 
+(**[Utils] contains some utility functions.*)
 module Utils = struct
-  let sleep f = 
+  (** [sleep f] sleeps for [f] miliseconds *)
+  let sleep (f:float) : unit = 
     let start = Unix.gettimeofday () in
     while (Unix.gettimeofday ()) -. start < f do
       let _ = Unix.select [] [] [Unix.stderr] f in ();
-    done
+    done  
   
-  
-  let time_used func arg =
-    (** apply the [func] to [arg] and return the result with time it takes. *)
+  (** [time_used f a] applies the [f] to argument [a] and returns the result with duration it takes. *)
+  let time_used (func: 'a -> 'b) (arg: 'a) : 'b * float =
     let start_time = Unix.gettimeofday() in
     let res = func arg in     (* apply the function *)
     let time_str = (Unix.gettimeofday()) -. start_time in
     (res, time_str)
   
+  (** [ignore_exn e] evaluate [e] and prevent exceptions from being thrown out. *)
   let ignore_exn e = try ignore(e) with e -> trace "ignored exception" (Printexc.to_string e)
+  
+  (** [index_of elem lst] returns the first index of [elem] in the list [lst] *)
   let index_of elem lst =
-    (** return the first index of [elem] in the list [lst] *)
     let rec find i elem lst =
       match lst with
       | [] -> - 1
       | hd:: tl -> if elem = hd then i else find (i + 1) elem tl
     in find 0 elem lst
   
-  let expand prover =
+  (** [expand s] expands a comma separated string [s] to the list of the elements in [s]. *)
+  let expand (prover:string) : string list =
     Str.split (Str.regexp ",") prover
-  (* (* expand to list of provers [om] -> [omega;mona] *) let expand       *)
-  (* prover_arg = if String.length prover_arg > 2 then (* if it is a       *)
-  (* shorthand for a combination of provers *) [prover_arg] else begin let *)
-  (* get_prover_name c = if c = 'o' then "omega" else if c = 'm' then      *)
-  (* "mona" else if c = 'i' then "isabelle" else if c = 'c' then "cvcl"    *)
-  (* else "omega" (* TODO unknown..*) in let provers_list = ref [] in      *)
-  (* String.iter (fun c -> provers_list := !provers_list @                 *)
-  (* [get_prover_name c]) prover_arg; !provers_list end                    *)
   
-  let run_get_output cmd args =
-    (** run the shell command [cmd] with the [args] and return the output as a list of strings *)
+  (** [run_get_output cmd args] runs the shell command [cmd] with the arguments [args] and returns the output as a list of strings *)
+  let run_get_output (cmd:string) (args : string array) : string list =
     let rd, wr = Unix.pipe () in
     let pid = Unix.create_process cmd args Unix.stdin wr Unix.stderr in
     Unix.close wr;
@@ -73,8 +69,8 @@ module Utils = struct
     ignore_exn(Unix.waitpid [] pid);
     List.rev !lines
   
+  (** [trim s] removes spaces from the beginning and end of a string *)
   let trim s =
-    (* removes spaces from the beginning and end of a string *)
     let l = String.length s in
     let k1 = ref 0 in
     while !k1 < l & s.[!k1] = ' ' do incr k1 done;
@@ -85,16 +81,15 @@ module Utils = struct
     else
       ""
   
-  let int_of_str s =
-    (* return int value of string [s] which allows leading and trailing '  *)
-    (* '                                                                   *)
+  (** [int_of_str s] returns int value of string [s] that may contains leading/trailing spaces *)
+  let int_of_str (s:string) : int =
     let s1 = trim s in
     (* Printf.printf "\n s1 = %s" s1; flush stdout; *)
     if s1 <> "" then int_of_string (s1) else 0
   
-  let get_pids cmd_pattern_lst =
-    (* this command print out string "PID" in the first line and pid of    *)
-    (* process that its parent command line contains the [pattern]         *)
+  (** [get_pids pat] gets pids of processes that its parent command line contains one of the element in [pat].         
+    *)
+  let get_pids (cmd_pattern_lst:string list) : int list =
     let get_pid s = int_of_str(String.sub s 0 5) in
     let output = run_get_output "ps" [|"ps"; "-opid,ppid,command"; "-u"^ user_name; "--no-header" |] in
     (* trace "output"; List.iter trace output; *)
@@ -106,7 +101,7 @@ module Utils = struct
                         try Str.search_forward regexp s 0 >= 0
                         with Not_found -> false) output in
               assert (List.length prover_lines < 2);
-              if prover_lines <> [] then begin (* shoud be one <=1 *)
+              if prover_lines <> [] then begin (* shoud be <=1 *)
                 let first_line = List.hd prover_lines in
                 let prover_pid = get_pid first_line in
                 prover_pids := prover_pid :: !prover_pids;
@@ -151,10 +146,14 @@ end;;
 (*|    end                                                               *)
 (*|end;;                                                                 *)
 
+(**[Log] contains some logging functions.*)
 module Log = struct
+(**Log provides some logging utilities.*)
+
   let log_ch = ref stdout
+  
+  (** [open_log] opens a daily log file for storing information long runing tasks. It is called once at start up. *)
   let open_log () =
-    (** open a daily log file for storing information long runing tasks *)
     (* automatic create one log filename per day *)
     let t = Unix.localtime (Unix.time ()) in
     let filename = Printf.sprintf "%02d%02d%02d.log" (t.Unix.tm_year + 1900) (t.Unix.tm_mon + 1) t.Unix.tm_mday in
@@ -164,20 +163,21 @@ module Log = struct
     else
       log_ch := open_out_gen [Open_wronly; Open_append; Open_creat]  0o664 filename
   
+  (** [close_log] should be called to actually save the log data opened by [open_log]. *)
   let close_log () =
-    (** [close log] should be called to actually save the log data. *)
     (*|    DBCache.close_db ();*)
     Utils.ignore_exn (close_out !log_ch)
   
+  (** [log_str s] writes string [s] to the log. *)
   let log_str s =
-    (** write a string to the log *)
     output_string !log_ch s; flush !log_ch
   
   let time_to_log = 3. (** threshold to log the formula to a file *)
-  let log_info time prover job_info =
+
+  (** [log_info time prover job] log information about the proving task. *)
+  let log_info (time : float) (prover:string) (job_info: Tpdispatcher.prove_type) : unit =
     try
     (* List.iter (fun job_info -> *)
-    (** log information about proving task *)
       if time >= time_to_log then begin
         let prove_type =
           match job_info with
@@ -193,13 +193,19 @@ module Log = struct
     with e -> trace "log_info" (Printexc.to_string e)
 end;;
 
+(**[Worker] waits job requests to do the task, and returns results via channels. 
+If it receives a cancel task request, it will kill the child if any.*)
 module Worker = struct
   let is_calling_external_prover = ref false
   
-  (* when there are no slaves, use this function to serve the client       *)
-  (* directly                                                              *)
-  let do_dispatch prover formula =
-    let encode = Net.IO.to_string in
+  (** Call Tpdispatcher of HIP that starts external solvers to find solutions. 
+  When there are no slaves, use this function to serve the client directly.
+  @param prover string that specifies the prover to be used.
+  @param formula the formula and type of prove to be solved.
+  @return encoded string containing the result. 
+  *)
+  let do_dispatch (prover:string) (formula:Tpdispatcher.prove_type) : string =
+	let encode = Net.IO.to_string in
     (*|    if !use_cache && DBCache.is_cached (encode formula) then begin*)
     (*|      encode (true)                                               *)
     (*|    end else                                                      *)
@@ -215,8 +221,10 @@ module Worker = struct
           encode (false) (* failed *)
     end
   
-  let get_childchild_pid parent_pid =
-    (* get youngest child of parent [ppid] *)
+  (** [get_childchild_pid ppid] returns pid of the youngest child of the process with pid of [ppid].
+    @param parent_pid pid of the parent.
+    @return pid of the youngest child process. *)
+  let get_childchild_pid (parent_pid:int) : int =
     let get_pid s = Utils.int_of_str(String.sub s 0 5) in
     let get_ppid s = Utils.int_of_str(String.sub s 6 5) in
     let ps_output = Array.of_list(Utils.run_get_output "ps" [|"ps"; "-opid,ppid"; "-u"^ user_name; "--no-header" |]) in
@@ -229,9 +237,12 @@ module Worker = struct
     while !i < len && ppids.(!i + 1) = pids.(!i) do incr i done; (* loop through descendants to get the smallest *)
     if !i < len then pids.(!i) else - 1
   
-  let main_slave_loop in_ch out_ch =
-    (* main slave's loop: wait for requests in the in_ch, do the task, and *)
-    (* write result to out_ch .                                            *)
+  (** [main_slave_loop in_ch out_ch] waits for requests in the [in_ch], do the task specified in the request, and 
+    write result to [out_ch].
+    @param in_ch input channel. 
+    @param out_ch output channel. 
+    *)
+  let main_slave_loop (in_ch : in_channel) (out_ch : out_channel) : unit =
     let kill_child_proceses _ =
       (* prover slave receives stop signal will trigger this function to   *)
       (* kill the running tp solvers                                       *)
@@ -294,29 +305,32 @@ module Worker = struct
         exit 0
 end;;
 
+(**[Manager] receives requests from clients (HIP), distributes the requests to workers and wait for the results. 
+A request may be one task but want several solvers to try in parallel.
+If a result came back and it sends the result to the client and cancel other tasks if they become redundant.*)
 module Manager = struct
   exception Obsoleted_Seqno
   exception GroupDone of int (* raise when jobs in the group is done, the int value is the group/client_seqno *)
   
-  type slave_info = int * in_channel * out_channel * string
   (* pid, input channel, output channel, pipename *)
+  type slave_info = int * in_channel * out_channel * string
   
-  type client_job_info = int * int * float * string * Tpdispatcher.prove_type list * string
   (* client_seqno, index, timeout, prover, formulas, stopper *)
+  type client_job_info = int * int * float * string * Tpdispatcher.prove_type list * string
   
-  type slave_job_info = int * int * float * string * Tpdispatcher.prove_type * string
   (* client_seqno, idx, timeout, prover, formulas * stopper *)
+  type slave_job_info = int * int * float * string * Tpdispatcher.prove_type * string
   
   let slaves_idle: slave_info list ref = ref []
   let slaves_busy: (slave_info * slave_job_info) list ref = ref []
-  let jobs_queue: slave_job_info list ref = ref [] (* job queue for slaves *)
+  let jobs_queue: slave_job_info list ref = ref [] (** job queue for slaves *)
   
-(*  let wait_slave_fds = ref []*)
-  let remote_channels = ref []
+	(*  let wait_slave_fds = ref []*)
+  let remote_channels :(in_channel * out_channel) list ref = ref [] (** channels of remote provers*)
   
-  let connect_remote_slaves num locations =
-    (* create [num] connections to servers at [locations], some location   *)
-    (* may have none or more than one server                               *)
+  (** [connect_remote_slaves num locations] creates [num] connections to servers in [locations]. 
+  Some location may have none or more than one connections. *)
+  let connect_remote_slaves (num: int) (locations: string list) : (in_channel * out_channel) list =
     try
       if locations <> [] then begin
         let res = ref [] in
@@ -329,10 +343,10 @@ module Manager = struct
       end else []
     with e -> trace "connect_remote_slaves" "Cannot connect with cluster servers"; []
   
-  (* Spawn itself in slave mode, connecting to the current process via     *)
-  (* fresh pipes. Return the list of pipe names and IO channels            *)
-  let spawn_slaves num_local_slaves =
-    (* parallel mode with num_slaves workers create temporary channels *)
+  (** [spawn_slaves num_local_slaves] spawns [num_local_slaves] processes and connects to these processes via fresh pipes. 
+  @return a list of process ids, pipes, and pipe names. *)
+  let spawn_slaves (num_local_slaves : int) : int list * (in_channel * out_channel) list * string list =
+    (* create temporary channels *)
     let pipe_name_arr = Array.make num_local_slaves "" in
     for i = 0 to num_local_slaves - 1 do
       let temp_name = Filename.temp_file (user_name^".") ("." ^ (string_of_int (Unix.getpid ()))) in
@@ -345,15 +359,14 @@ module Manager = struct
             let cmd = Sys.executable_name ^ " --slave --pipe " ^ name in
             ignore(Unix.system cmd);
       ) pipe_names;
-    (* create IO channels to communicates with the local slaves just       *)
-    (* spawned                                                             *)
+    (* create IO channels to communicates with the local slaves just spawned *)
     let pipes = List.map Net.Pipe.init_client pipe_names in
     let pids = Utils.get_pids pipe_names in
     (pids, pipes, pipe_names)
   
-  let cleanup () =
+  (** clean up child slaves *)
+  let cleanup () : unit =
     try
-    (* clean up child slaves *)
       List.iter (fun (id, ic, oc, fn) ->
               close_in ic; flush oc; close_out oc;
               Sys.remove (fn ^ ".i_pipe");
@@ -361,7 +374,11 @@ module Manager = struct
         (!slaves_idle); (* @ !slaves_busy TODO *)
     with e -> trace "cleanup" (Printexc.to_string e)
   
-  let create_slaves num_slaves =
+  (** [create_slaves num_slaves] creates/connects to [num_slaves] slaves. 
+  Depending on the configuration (parameters) some remote slaves are connected 
+  and the remaining are created locally. 
+  @param num_slaves number of slaves needed. *)
+  let create_slaves (num_slaves: int) : unit =
     let num_remote_slaves = num_slaves / 2 in
     remote_channels := connect_remote_slaves num_remote_slaves !remote_locations;
     let num_remote_channels = (List.length !remote_channels) in
@@ -376,8 +393,9 @@ module Manager = struct
     if num_remote_channels > 0 then  show_info (Printf.sprintf "Connected to %d remote server(s)." num_remote_channels);
     show_info (Printf.sprintf "Spawned %d slave(s)." (List.length pids))
   
-  let send_jobs_to_slaves () =
-    (* sending out formula to all provers to do in parallel *)
+  
+  (** [send_jobs_to_slaves ] sends jobs in queue [jobs_queue] to all idle slaves to do in parallel *)
+  let send_jobs_to_slaves () : unit =
     while !slaves_idle <> [] && !jobs_queue <> [] do
       let slave:: slave_tl = !slaves_idle in
       let job:: job_tl = !jobs_queue in
@@ -390,7 +408,9 @@ module Manager = struct
       jobs_queue := job_tl;
     done
   
-  let cancel_jobs_of id =
+  (** [cancel_jobs_of id] cancels the executing job [id].
+  @param id the id of the job.*)
+  let cancel_jobs_of (id: int) : unit =
     slaves_busy :=
     List.flatten (List.map (fun (slave, job) ->
                 let (pid, i, o, fn) = slave in
@@ -402,10 +422,14 @@ module Manager = struct
                 end else [(slave, job)]
           ) !slaves_busy)
   
-  let get_busy_fds () =  
+  (** [get_busy_fds ()] extracts the list of file descriptors of busy (working) slaves.*)
+  let get_busy_fds () : Unix.file_descr list =  
     List.map (fun ((pid, i, o, fn), job) -> Unix.descr_of_in_channel i) !slaves_busy
           
-  let process_client_msg msg_type data =
+  (** [process_client_msg msg_type data] process the message of type [msg_type] sent from a client. 
+  @param msg_type type of message.
+  @param data message content. *)
+  let process_client_msg (msg_type: int) (data: int * float * string * Tpdispatcher.prove_type list * string ) : unit =
     if msg_type = Net.IO.msg_type_job_list then begin
       show_info "job";
       let (seq_no, timeout, prover, formulas, stopper) = data in
@@ -425,8 +449,14 @@ module Manager = struct
     end else
       failwith "Not implemented!!"
   
-  let process_slave_msg manager_out_ch client_seqno idx slave_result =
-    (* return true if a result is sent to client, false otherwise *)
+
+  (** process message sent from a slave (worker). 
+  @param manager_out_ch output channel of the manager.
+  @param client_seqno client sequence number of the message.
+  @param idx message id.
+  @param slave_result type of result sent from slave. 
+  @return true if a result is sent to client, false otherwise. *)
+  let process_slave_msg (manager_out_ch: out_channel) (client_seqno:int) (idx:int) (slave_result: string option) : bool =
     let result_sent_to_client = ref false in
 (*    show_info (Printf.sprintf "\n - process_slave_msg idles = %d busy =%d" (List.length !slaves_idle) (List.length !slaves_busy) );*)
     slaves_busy := List.filter (fun (slv, job) ->
@@ -440,7 +470,7 @@ module Manager = struct
                   
                   (* trick to sleep *)
                   show_info " m:sending..\n";
-                  Net.IO.write_result manager_out_ch client_seqno id (Tpdispatcher.Result res);
+                  Net.IO.write_result manager_out_ch client_seqno id (Some (Tpdispatcher.Result res));
                   Utils.sleep 0.001;
                   show_info " m:sent\n";
                   (* check if should stop other tasks *)
@@ -456,9 +486,11 @@ module Manager = struct
       failwith (Printf.sprintf "process_slave_msg: #idles=%d #busy=%d" (List.length !slaves_idle) (List.length !slaves_busy));
     if !result_sent_to_client then true else raise Obsoleted_Seqno
   
-  (* main manager function: wait for requests in the in_ch, do the task,   *)
-  (* and write result to out_ch .                                          *)
-  let main_manager_loop manager_in_ch manager_out_ch =
+  (** [main_manager_loop in_ch out_ch] starts a loop that waits for requests in the in_ch, do the task in the request,
+  and write result to out_ch.
+  @param manager_in_ch input channel of the manager (master).
+  @param manager_out_ch output channel of the manager (master).*)
+  let main_manager_loop (manager_in_ch: in_channel) (manager_out_ch: out_channel) : unit =
     let manager_in_fd = Unix.descr_of_in_channel manager_in_ch in
     let start_time = ref 0. in
     (* let wait_job_ids = ref [] in let is_waiting_slaves () =             *)
@@ -511,10 +543,11 @@ module Manager = struct
           raise Exit
 end;;
 
-(* program's starting point *)
+
+(** program's entry *)
 let main () =
-  let use_pipe = ref true in
-  let port = ref "" in
+  let use_pipe = ref true in (*flag specifies if pipe or socket is used (set by command line option --pipe)*)
+  let port = ref "" in 
   let named_pipe = ref "" in
   let cluster_arg = ref "" in
   Arg.parse [
