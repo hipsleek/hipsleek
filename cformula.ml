@@ -1118,14 +1118,17 @@ and view_node_types (f:formula):ident list =
   Other utilities.
 *)
 
-and get_result_type (f: formula): (CP.typ*bool) = 
+and get_var_type v (f: formula): (CP.typ*bool) = 
 	let fv_list = fv f in
-	let res_list = Util.remove_dups (List.filter (fun c-> ((String.compare res (CP.name_of_spec_var c))==0)) fv_list) in
+	let res_list = Util.remove_dups (List.filter (fun c-> ((String.compare v (CP.name_of_spec_var c))==0)) fv_list) in
 	match List.length res_list with
 	| 0 -> (CP.Prim Void,false)
 	| 1 -> (CP.type_of_spec_var (List.hd res_list),true)
-	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "could not find a coherent res type"}
+	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "could not find a coherent "^v^" type"}
 
+and get_result_type (f: formula): (CP.typ*bool) = get_var_type res f
+
+	
 and disj_count (f0 : formula) = match f0 with
   | Or ({formula_or_f1 = f1;
 		 formula_or_f2 = f2}) ->

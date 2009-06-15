@@ -231,6 +231,7 @@ and exp_new = { exp_new_class_name : ident;
 
 and exp_raise = { exp_raise_type : rise_type;
 				  exp_raise_val : exp option;
+				  exp_raise_from_final :bool; (*if so the result can have any type...*)
 				  exp_raise_pos : loc }
 				
 and exp_return = { exp_return_val : exp option;

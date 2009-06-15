@@ -118,7 +118,9 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
   | Assign ({exp_assign_lhs = v;
 			 exp_assign_rhs = rhs;
 			 exp_assign_pos = pos}) -> begin
+	  (*let _ = print_string ("-> pre ass : "^(Cprinter.string_of_pos pos)^" "^(Cprinter.string_of_context_list ctx)^"\n") in*)
       let ctx1 = check_exp prog proc ctx rhs (*flow_store*) in
+	(*  let _ = print_string ("-> pre assert : "^(Cprinter.string_of_pos pos)^"\n"^(Cprinter.string_of_context_list ctx1)^"\n") in*)
 		(* Debug.devel_pprint ("delta at beginning of assignment to " ^ v ^ ":\n" ^ (string_of_constr delta) ^ "\n") pos; *)
 	  let rec process_one c = match c with
 	  | CF.OCtx (c1,c2) -> CF.OCtx ((process_one c1),(process_one c2))
@@ -132,7 +134,9 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 			let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
 			resctx 
 		else c in
-		List.map process_one ctx1
+		let r = List.map process_one ctx1 in
+		(*let _ = print_string ("-> post assert : "^(Cprinter.string_of_context_list r)^"\n") in*)
+		r
     end
   | BConst ({exp_bconst_val = b;
 			 exp_bconst_pos = pos}) -> begin
@@ -591,7 +595,9 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		print_endline ("SC: ctx " ^ Cprinter.string_of_context sctx);*)
 		let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 		Debug.devel_pprint to_print pos;
+		(*let _ = print_string ("checking specs for: "^mn^"\n"^(Cprinter.string_of_struc_formula pre2)^"\n") in*)
 		let rs,prf = heap_entail_struc prog false false true [sctx] pre2 pos in
+		(*let _ = print_string ("result "^(Cprinter.string_of_context_list rs)^"\n") in*)
 		(*let _ = print_string ("\n finishing scall at line "^(string_of_int (pos.Lexing.pos_lnum))^"\n") in *)
 		(*let _ = print_string ("\n before call: "^(Cprinter.string_of_context sctx)^"\n pre: "^
 		(Cprinter.string_of_struc_formula pre2)
@@ -674,12 +680,32 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 				(*let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_context_list ctx)^"\n") in
 				let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in*)
 				let nctx = match v with 
-					| Some (t,v) -> 
+					| Sharp_prog_var (t,v) -> 
 							let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos) pos in
 							let ctx1 = 	if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c tmp pos true) ctx
 																 else List.map (fun c -> CF.normalize_clash_context_formula c tmp pos true) ctx in
 							ctx1
-					| None -> ctx in
+					| Sharp_finally v -> 
+								let rec helper c1 = match c1 with
+								| CF.Ctx c -> 
+									let rest, b_rez = CF.get_var_type v c.CF.es_formula in
+									if b_rez then
+										(*let rest2, b_rez2 = CF.get_result_type c.CF.es_formula in
+										let nctx = if b_rez2 then CF.push_exists_context [CP.mkRes rest2] c1
+														   else c1 in*)
+										let nctx = c1 in
+										let vsv_f = CF.formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos) pos in
+										let ctx1 = 	if !Globals.max_renaming then  CF.normalize_context_formula nctx vsv_f pos true
+													else  CF.normalize_clash_context_formula nctx vsv_f pos true in
+										ctx1
+										(*let ctx1 = CF.push_exists_context [(CP.SpecVar (rest, v, Primed))] ctx1 in
+										if !Globals.elim_exists then elim_exists_ctx ctx1 else ctx1*)
+									else c1
+										(*let _ = print_string("\n ff: "^v^"\n"^((Cprinter.string_of_formula c.CF.es_formula))^"\n") in
+										Err.report_error { Err.error_loc = pos; Err.error_text = "can not raise properly (probably from the finally translation)"}*)
+								| CF.OCtx (c1,c2) -> CF.mkOCtx (helper c1) (helper c2) pos in								
+								List.map helper ctx 
+					| Sharp_no_val -> ctx in
 				let r = List.map (fun nctx ->(match ft with 
 					| Sharp_ct nf -> if not un then (CF.set_flow_in_ctx nctx nf)
 											   else (CF.set_flow_to_link !flow_store nctx pos)
@@ -777,7 +803,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) (po
 		Err.report_error {Err.error_loc = pos;
 						  Err.error_text = "Post condition "
 			^ (Cprinter.string_of_formula post)
-			^ " cannot be derived by the system."}
+			^ " cannot be derived by the system.\n By: "^(Cprinter.string_of_context_list final_state)}
 
 (* checking procedure *)
 and check_proc (prog : prog_decl) (proc : proc_decl) : bool =

@@ -268,12 +268,12 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
   | Sharp ({exp_sharp_val = eo}) -> begin
 	  Buffer.add_string java_code "return";
 	  match eo with 
-	    |Some e -> 
+	    |Sharp_prog_var e -> 
 		   Buffer.add_string java_code (" "^(snd e));
 			(*ignore (java_of_exp prog bmap null_vars e java_code);*)
 			Buffer.add_string java_code (";\n");
 			null_vars
-	    | None -> null_vars
+		| _ -> null_vars
 	end
   | Seq ({exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2}) -> 

@@ -73,7 +73,12 @@ and coercion_type =
 and sharp_flow = 
 	| Sharp_ct of F.flow_formula
 	| Sharp_v of ident
-
+	
+and sharp_val = 
+	| Sharp_no_val 
+	| Sharp_finally of ident
+	| Sharp_prog_var of typed_ident
+	
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
@@ -148,7 +153,7 @@ and exp_seq = { exp_seq_type : P.typ;
 and exp_sharp = {
 				   exp_sharp_type : P.typ;
 				   exp_sharp_flow_type :sharp_flow;(*the new flow*)
-				   exp_sharp_val : typed_ident option;(*returned value*)
+				   exp_sharp_val :sharp_val;(*returned value*)
 				   exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
 				   exp_sharp_pos : loc;
 				}

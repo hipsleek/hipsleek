@@ -447,7 +447,7 @@ let add_index l =
     (get !exc_list)
 	
 	
-  (*t2 is a subtype of t1*)
+  (*t1 is a subtype of t2*)
  let exc_sub_type (t1 : Globals.constant_flow) (t2 : Globals.constant_flow): bool = 
 	let r11,r12 = get_hash_of_exc t1 in
 	if ((r11==0) && (r12==0)) then false

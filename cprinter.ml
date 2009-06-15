@@ -366,14 +366,16 @@ let rec string_of_exp = function
 		 match st with
 		 | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
 									 (match eo with 
-										|Some e -> "return " ^ (snd e)
-										| None   -> "return")
+										|Sharp_prog_var e -> "return " ^ (snd e)
+										| _   -> "return")
 						 else  (match eo with 
-					| Some e -> "throw " ^ (snd e)
-					| None   -> "throw "^(string_of_sharp st))
+					| Sharp_prog_var e -> "throw " ^ (snd e)
+					| Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
+					| _   -> "throw "^(string_of_sharp st))
 		 | _ -> (match eo with 
-					| Some e -> "throw " ^ (snd e)
-					| None   -> "throw "^(string_of_sharp st))end 
+					| Sharp_prog_var e -> "throw " ^ (snd e)
+					| Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
+					| _   -> "throw "^(string_of_sharp st))end 
   | SCall ({exp_scall_type = _;
 	   exp_scall_method_name = id;
 	   exp_scall_arguments = idl;

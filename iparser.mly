@@ -1494,6 +1494,7 @@ return_statement
 raise_statement
 	: RAISE expression SEMICOLON{ Raise { exp_raise_type = Const_flow "" ;
 										  exp_raise_val = Some $2;
+										  exp_raise_from_final = false;
 										  exp_raise_pos = get_pos 1 } }
 ;
 try_statement

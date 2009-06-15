@@ -511,6 +511,7 @@ let rec label_breaks lb e :I.exp = match e with
   | I.BoolLit _ -> e
   | I.Break b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_to_label with | I.NoLabel -> "brk_"^lb | I.Label l-> "brk_"^l);
 						   I.exp_raise_val = None;
+						   I.exp_raise_from_final = false;
 						   I.exp_raise_pos = b.I.exp_break_pos;}
   | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (label_breaks lb  b.I.exp_call_recv_receiver);
 									   I.exp_call_recv_arguments  = List.map (label_breaks lb)  b.I.exp_call_recv_arguments;}
@@ -523,6 +524,7 @@ let rec label_breaks lb e :I.exp = match e with
   | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(label_breaks lb  b),c)) b.I.exp_const_decl_decls}
   | I.Continue b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_to_label with | I.NoLabel -> "cnt_"^lb | I.Label l-> "cnt_"^l);
 						   I.exp_raise_val = None;
+						   I.exp_raise_from_final = false;
 						   I.exp_raise_pos = b.I.exp_continue_pos;}
   | I.Debug _ 
   | I.Dprint _
@@ -628,6 +630,7 @@ and need_break_continue lb ne non_generated_label :bool =
 													| I.NoLabel -> Error.report_error {Error.error_loc = b.I.exp_break_pos; Error.error_text = ("there is no loop/block to break out of")}
 													| I.Label l-> l);
 						   I.exp_raise_val = None;
+						   I.exp_raise_from_final = false;
 						   I.exp_raise_pos = b.I.exp_break_pos;}						
   | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (while_labelling b.I.exp_call_recv_receiver);
 									   I.exp_call_recv_arguments  = List.map while_labelling b.I.exp_call_recv_arguments;}
@@ -672,6 +675,7 @@ and need_break_continue lb ne non_generated_label :bool =
 													| I.NoLabel -> Error.report_error {Error.error_loc = b.I.exp_continue_pos; Error.error_text = ("there is no loop to continue")}
 													| I.Label l-> l);
 							   I.exp_raise_val = None;
+							   I.exp_raise_from_final = false;
 						       I.exp_raise_pos = b.I.exp_continue_pos;}	
   | I.Debug _ 
   | I.Dprint _
@@ -707,6 +711,7 @@ and need_break_continue lb ne non_generated_label :bool =
 																					I.exp_seq_exp1 = f_body;
 																					I.exp_seq_exp2 = I.Raise({
 																								I.exp_raise_type = I.Var_flow new_flow_var_name;
+																								I.exp_raise_from_final = true;
 																								I.exp_raise_val =  Some (I.Var ({
 																												I.exp_var_name = new_name;
 																												I.exp_var_pos = b.I.exp_try_pos;}));
@@ -1063,6 +1068,7 @@ let rec (* overriding test *) (* field duplication test *)
    let prog0 = { prog2 with			
 					I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
 					I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+    (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
   let _ = I.build_hierarchy prog0 in
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
@@ -2503,7 +2509,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				if CP.are_same_types cret_type C.void_type then
 				  (C.Sharp ({ C.exp_sharp_type = C.void_type;
 							  C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
-							  C.exp_sharp_val = None;
+							  C.exp_sharp_val = Cast.Sharp_no_val;
 							  C.exp_sharp_unpack = false;
 							  C.exp_sharp_pos = pos}), C.void_type)
 				else
@@ -2522,7 +2528,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 					 let shar = C.Sharp ({ C.exp_sharp_type = C.void_type;
 								C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
 								C.exp_sharp_unpack = false;
-								C.exp_sharp_val = Some (ct,fn);
+								C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
 								C.exp_sharp_pos = pos}) in
 					 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
 										  C.exp_seq_exp1 = init_e;
@@ -2945,37 +2951,53 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
   | Iast.Continue _ -> failwith (Iprinter.string_of_exp ie)
   | I.Raise ({ I.exp_raise_type = ot;
 			   I.exp_raise_val = oe;
+			   I.exp_raise_from_final = ff;
 			   I.exp_raise_pos = pos })->
+			   (*let _ = print_string ("\n trt : "^(string_of_bool ff)^"\n") in*)
 			   let r = match oe with
-				| Some oe ->
-					let ce, ct = trans_exp prog proc oe in
-					if Util.exc_sub_type (C.name_of_type ct) raisable_class then 
-							 let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
-							 let vd = C.VarDecl { C.exp_var_decl_type = ct;
-												  C.exp_var_decl_name = fn;
-												  C.exp_var_decl_pos = pos;} in
-							 let init_e = C.Assign { C.exp_assign_lhs = fn;
-													 C.exp_assign_rhs = ce;
-													 C.exp_assign_pos = pos;} in
-							 let shar = C.Sharp ({	C.exp_sharp_type = C.void_type;
-													C.exp_sharp_flow_type = C.Sharp_ct (match ct with 
-																| CP.OType ot -> 
-																	{CF.formula_flow_interval = (Util.get_hash_of_exc ot); CF.formula_flow_link = None}
-																| _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
-													C.exp_sharp_unpack = false;
-													C.exp_sharp_val = Some (ct,fn);
-													C.exp_sharp_pos = pos }) in
-							 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
-												  C.exp_seq_exp1 = init_e;
-												  C.exp_seq_exp2 = shar;
-												  C.exp_seq_pos = pos;} in
-							 let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
-												  C.exp_seq_exp1 = vd;
-												  C.exp_seq_exp2 = tmp_e1;
-												  C.exp_seq_pos = pos;} in 
-							(tmp_e2, Cpure.Prim Void)
-					else
-						Err.report_error { Err.error_loc = pos; 
+				| Some oe -> 
+					if ff then 
+							(C.Sharp({C.exp_sharp_type = C.void_type;
+									C.exp_sharp_unpack = false;
+									C.exp_sharp_flow_type = (match ot with 
+																| I.Const_flow c -> (C.Sharp_ct 
+																{CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
+																| I.Var_flow c -> (C.Sharp_v c));
+									C.exp_sharp_val = Cast.Sharp_finally 
+											(match oe with	
+												| I.Var ve -> ve.I.exp_var_name
+												| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation error, raise from finally raises"^
+													(Iprinter.string_of_exp oe)}
+												);
+									C.exp_sharp_pos = pos }), C.void_type)
+						else
+							let ce, ct = trans_exp prog proc oe in						
+							if Util.exc_sub_type (C.name_of_type ct) raisable_class then 							 
+								 let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
+								 let vd = C.VarDecl { C.exp_var_decl_type = ct;
+													  C.exp_var_decl_name = fn;
+													  C.exp_var_decl_pos = pos;} in
+								 let init_e = C.Assign { C.exp_assign_lhs = fn;
+														 C.exp_assign_rhs = ce;
+														 C.exp_assign_pos = pos;} in
+								 let shar = C.Sharp ({	C.exp_sharp_type = C.void_type;
+														C.exp_sharp_flow_type = C.Sharp_ct (match ct with 
+																	| CP.OType ot -> 
+																		{CF.formula_flow_interval = (Util.get_hash_of_exc ot); CF.formula_flow_link = None}
+																	| _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
+														C.exp_sharp_unpack = false;
+														C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+														C.exp_sharp_pos = pos }) in
+								 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
+													  C.exp_seq_exp1 = init_e;
+													  C.exp_seq_exp2 = shar;
+													  C.exp_seq_pos = pos;} in
+								 let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
+													  C.exp_seq_exp1 = vd;
+													  C.exp_seq_exp2 = tmp_e1;
+													  C.exp_seq_pos = pos;} in 
+								(tmp_e2, Cpure.Prim Void)
+							else Err.report_error { Err.error_loc = pos; 
 										   Err.error_text = "can not raise a not raisable object" }
 				| None -> (C.Sharp({C.exp_sharp_type = C.void_type;
 									C.exp_sharp_unpack = false;
@@ -2983,7 +3005,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 																| I.Const_flow c -> (C.Sharp_ct 
 																{CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
 																| I.Var_flow c -> (C.Sharp_v c));
-									C.exp_sharp_val = None;
+									C.exp_sharp_val = Cast.Sharp_no_val;
 									C.exp_sharp_pos = pos }), C.void_type)
 				in r				
   | Iast.Try {  
@@ -3020,7 +3042,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 															   C.exp_sharp_type = (CP.Prim Void);
 															   C.exp_sharp_flow_type = C.Sharp_ct 
 															   {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = Some fl_var};
-															   C.exp_sharp_val = None;
+															   C.exp_sharp_val = Cast.Sharp_no_val;
 															   C.exp_sharp_unpack = false;
 															   C.exp_sharp_pos = pos;
 															});
@@ -3040,7 +3062,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 														 C.exp_sharp_type = (CP.Prim Void);
 														 C.exp_sharp_flow_type = C.Sharp_ct 
 														 {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
-														 C.exp_sharp_val = None;
+														 C.exp_sharp_val = Cast.Sharp_no_val;
 														 C.exp_sharp_unpack = true;
 														 C.exp_sharp_pos = pos;});
 													C.exp_catch_pos = pos};
@@ -3059,20 +3081,32 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 																  Err.error_text = "can not catch a not raisable object" }
 				else begin
 			   match cv with
-			   | Some x -> 
+			   | Some x ->
+					if (String.compare cvt c_flow)=0 then  begin
+						E.push_scope();
+						let new_bd, ct2 = trans_exp prog proc cb in
+						E.pop_scope();
+						{C.exp_catch_flow_type = (Util.get_hash_of_exc c_flow);
+						 C.exp_catch_flow_var = cfv;
+						 C.exp_catch_var = Some (Cpure.Prim Void,x);
+						 C.exp_catch_body = new_bd;																					   
+						 C.exp_catch_pos = pos} end
+					else begin
 					E.push_scope();
 					let alpha = E.alpha_name x in
 					E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
+					(*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
 					let new_bd, ct2 = trans_exp prog proc cb in
-					let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType top_flow in
+					(*let _ = print_string ("\n rrr2 -> \n") in*)
+					let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
 					E.pop_scope();
-						{C.exp_catch_flow_type = (match ct with 
+						let r = {C.exp_catch_flow_type = (match ct with 
 								| CP.OType ot-> (Util.get_hash_of_exc ot) 
 								| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
 						 C.exp_catch_flow_var = cfv;
 						 C.exp_catch_var = Some (ct,alpha);
 						 C.exp_catch_body = new_bd;																					   
-						 C.exp_catch_pos = pos}
+						 C.exp_catch_pos = pos} in r end
 		       | None ->  
 					E.push_scope();
 					let new_bd, ct2 = trans_exp prog proc cb in
@@ -4697,7 +4731,10 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 			Iast.Raise {b with
 				Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
 										| None -> None 
-										| Some e -> Some (rename_exp ren e))}
+										| Some e -> Some (rename_exp ren e));
+				Iast.exp_raise_type = (match b.Iast.exp_raise_type with
+					| Iast.Const_flow _ -> b.Iast.exp_raise_type
+					| Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))}
 	  in
  helper ren f 
 
