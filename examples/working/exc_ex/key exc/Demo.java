@@ -8,8 +8,8 @@ int mul(int y, int MAX)
 	int z=0;
 	l:while (y>0)
 		requires true case{
-			y>0 & z+1>MAX -> ensures z'=z & y'=y & flow brk_l;
-			y>0 & z+1<=MAX -> ensures z'=z+y & y'=0;
+			y>0 & z+y>MAX -> ensures z'=z & y'=y &  flow brk_l;
+			y>0 & z+y<=MAX -> ensures z'=z+y & y'=0;
 			y<=0 -> ensures y'=y & z'=z;
 		}
 	{
