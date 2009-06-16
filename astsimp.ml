@@ -2850,6 +2850,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_while_pos = pos
       } ->
       let tvars = E.visible_names () in
+	  let tvars = Util.remove_dups tvars in
       let w_args =
         List.map
           (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; })

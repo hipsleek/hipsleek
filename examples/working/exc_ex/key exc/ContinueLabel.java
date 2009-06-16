@@ -1,23 +1,27 @@
-// This file is part of KeY - Integrated Deductive Software Design
-// Copyright (C) 2001-2009 Universitaet Karlsruhe, Germany
-//                         Universitaet Koblenz-Landau, Germany
-//                         Chalmers University of Technology, Sweden
-//
-// The KeY system is protected by the GNU General Public License. 
-// See LICENSE.TXT for details.
-public class ContinueLabel {
+class Exception extends __Exc{}
 
-    public static void main(String args[]) {
-	System.out.println(test2());
-    }
-
-    static int test() {
-	
-	int x=1,y=1,z=0;
-	lll:while (x>0) {
+int test() 
+  requires true ensures res = 6;
+  { int x=1,y=1,z=0;
+	lll:while (x>0) 
+		requires true case{
+			x>0 -> case {
+				y=1  -> ensures y'=y-1 & z'=z+3 & flow cnt_lll;
+				y>1  -> ensures y'=y-1 & z'=z+4 & x'=x-1;
+				y<=0 ->
+					ensures 
+						z'=z+3 & 
+							x'=x-1;
+						}
+			x<=0 -> ensures true;}
+	{
 	    z++;
 	    try {
-		b:l4:while (y>0)
+		b:while (y>0)
+			requires true case {
+				y=1  -> ensures y'=y-1 & z'=z+1 & flow cnt_lll;
+				y>1  -> ensures y'=y-1 & z'=z+1 & flow cnt_b;
+				y<=0 -> ensures true;}
 		    {
 			y--;
 			z++;
@@ -25,18 +29,20 @@ public class ContinueLabel {
 			continue b;
 		    }
 	    } catch (Exception e){}
-	    finally{z++;}
+	    finally{z++;};
 	    x--;
 	    z++;
-	}
-	
+	}	
 	return z;
-    }
+ }
 
-    static int test1() {
-	
+int test1() 
+	requires true ensures z=2;
+	{	
 	int x=1,y=1,z=0;
-	lll:while (x>0) {
+	lll:while (x>0) 
+		requires true case{x>0 -> ensures z'=z+2& x=x-1 & flow __Cont_top; x<=0 -> ensures true;}
+		{
 	    z++;
 
 	    x--;
@@ -47,23 +53,39 @@ public class ContinueLabel {
 	return z;
     }
 
-    static int test2() {
+int test2() 
+	requires true ensures res= 6;
+	{
 	int x=1,y=1,z=0;
-	l1:while (x>0) {
+	l1:while (x>0) 
+	requires true case {
+		x>0 -> case{ y>0 -> case{ x=1 -> ensures y'=y-1 & z'=z+3& flow cnt_l1;
+								 x!=1 -> ensures y'=y-1 & z'=z+4& x'=x-1;
+								 }
+					y<=0 -> ensures z'=z+3&x'=x-1;}
+		x<=0 -> ensures true;}
+	{
 	    z++;
 	    try {
 	  	l2:while (y>0)
+			requires true case{ y>0 -> case{ x=1 -> ensures y'=y-1 & z'=z+1& flow cnt_l1;
+											x!=1 -> ensures y'=y-1 & z'=z+1;}
+								y<=0 -> ensures true ;}
 		    {
 			y--;
 			try{
-			    l3:while (x==1) {
+			    l3:while (x==1)
+					requires true 
+						case {x=1 ->ensures true & flow cnt_l1;
+							  x!=1 ->ensures true ;}
+				{
 				continue l1;
 			    }
 			} catch (Exception e){}
-			finally {z++;}
+			finally {z++;};
 		    }
 	    } catch (Exception e){}
-	    finally{z++;}
+	    finally{z++;};
 	    x--;
 	    z++;
 	}
@@ -71,5 +93,3 @@ public class ContinueLabel {
 	return z;
     
     }
-
-}
