@@ -5,8 +5,7 @@ data PayCard{
     int limit;
     int unsuccessfulOperations;
     int id;
-    int balance;}
-    
+    int balance;}  
 
 
 PayCard n_PayCard(int l) 
