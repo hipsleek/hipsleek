@@ -14,12 +14,15 @@ Ltac decideZin X :=
   | eq (?Y) (?Z) => destruct (dec_eq Y Z)
   | ?Z => idtac
 end.
+
 Ltac decideZ :=
   match goal with
    | |- ?X => decideZin X
 end.
+
 Require Import ZArith.
 Require Import Classical.
+
 Ltac hyp :=
   match goal with
   | H : ?A = Z0 |- _ => try rewrite H in *; clear H A
@@ -31,24 +34,6 @@ Ltac hyp :=
   | H : exists A : _, _ |- _ => destruct H
   | H : ?A \/ ?B |- _ => destruct H
   | H : ~ ~ _ |- _ => let X := fresh "H" in assert (X := NNPP _ H); clear H
-  | H1 : ?x = ?y, H2 : ?x <> ?y |- _ => contradict H2
-  | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H
-  | H : nil = _ ++ _ |- _ => symmetry in H; apply app_eq_nil in H; destruct H
-  | H : _ :: _ = nil |- _ => symmetry in H; elimtype False; contradict H
-  | H : nil = _ :: _ |- _ => elimtype False; contradict H
-  | H : In ?x nil |- _ => contradict H
-  | H : In ?x ?L |- nil = ?L => elimtype False
-  | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
-  | H : length ?L1 + 1 = length ?L2 |- ?L1 = ?L2 => elimtype False
-  | H : length ?L1 + 1 = length ?L2 |- ?L2 = ?L1 => elimtype False
-  | H : length ?L1 = length ?L2 + 1 |- ?L1 = ?L2 => elimtype False
-  | H : length ?L1 = length ?L2 + 1 |- ?L2 = ?L1 => elimtype False
-  | |- nil <> _ :: _ => apply nil_cons
-  | |- _ :: _ <> nil => symmetry; apply nil_cons
-  | |- nil = _ :: _ => elimtype False
-  | |- _ :: _ = nil => elimtype False
-  | |- ?x :: ?L = ?L => elimtype False
-  | |- ?L = ?x :: ?L => elimtype False
   | |- forall A : _, _=> intro
   | |- ~ ?X => intro
   | |- ?A \/ ?B => elim (classic A); intro; [left; assumption | right]
@@ -63,50 +48,126 @@ Ltac hyp :=
        | X : Z |- _ =>
          exists X%Z; repeat hyp; auto with *; reflexivity
        end
-  | |- Z_of_nat _ = Z_of_nat _ => f_equal
-  | |- ?x :: _ = ?x :: _ => f_equal
-  | |- rev ?L1 ++ ?x :: ?L2 = rev (?x :: ?L1) ++ ?L2 =>
-	change (x :: L1) with ((x :: nil) ++ L1);
-	change (x :: L2) with ((x :: nil) ++ L2);
-	change (rev((x :: nil) ++ L1)) with (rev L1 ++ rev (x :: nil));
-	change (rev(x::nil)) with (x::nil);
-	generalize (x :: nil); intro;
-	generalize (rev L1); intro
-  | |- rev (?x :: ?L1) ++ ?L2 = rev ?L1 ++ ?x :: ?L2 =>
-	change (x :: L1) with ((x :: nil) ++ L1);
-	change (x :: L2) with ((x :: nil) ++ L2);
-	change (rev((x :: nil) ++ L1)) with (rev L1 ++ rev (x :: nil));
-	change (rev(x::nil)) with (x::nil);
-	generalize (x :: nil); intro;
-	generalize (rev L1); intro
-  | H : (?x + 1 < Z_of_nat (length (?y :: ?L)))%Z |- (?x < Z_of_nat (length (?L)))%Z =>
-    change (length (y :: L)) with (1 + length L) in H;
-    replace (Z_of_nat (1 + length L)) with (Z_of_nat 1 + Z_of_nat (length L))%Z in H;
-    change (Z_of_nat 1) with 1%Z in H
- | |- ?L1 ++ ?L2 ++ ?L3 = (?L1 ++ ?L2) ++ ?L3 =>
-	apply ass_app
-  | |- (?L1 ++ ?L2) ++ ?L3 = ?L1 ++ ?L2 ++ ?L3 =>
-	apply app_ass
-  | |- Z_of_nat (?x + ?y) = (Z_of_nat (?x) + Z_of_nat (?y))%Z =>
-    apply inj_plus
-  | |- (Z_of_nat (?x) + Z_of_nat (?y))%Z = Z_of_nat (?x + ?y) =>
-    symmetry; apply inj_plus
+
+  | H1 : ?x = ?y, H2 : ?x <> ?y |- _ => contradict H2; assumption
+  
+  | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H
+  | H : nil = _ ++ _ |- _ => symmetry in H; apply app_eq_nil in H; destruct H
+
+  | H : _ :: _ = nil |- _ => symmetry in H; elimtype False; contradict H; apply nil_cons
+  | H : nil = _ :: _ |- _ => elimtype False; contradict H; apply nil_cons
+  
+  | H : In ?x nil |- _ => contradict H
+  | H : In ?x ?L |- nil = ?L => elimtype False
+  | H : In ?x ?L |- ?L = nil => elimtype False
+  | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
+  
+  | |- nil <> _ :: _ => apply nil_cons
+  | |- _ :: _ <> nil => symmetry; apply nil_cons
+  | |- nil = _ :: _ => elimtype False
+  | |- _ :: _ = nil => elimtype False
+  
+  | |- ?x :: ?L = ?L => elimtype False
+  | |- ?L = ?x :: ?L => elimtype False
+
   | H : ~ _ |- False => contradict H
 end.
+
 Ltac hyp2 :=
   match goal with
   | H : (?X = ?X) |- _ => clear H
   end.
+  
 Lemma helper : (forall a b:Z, a < b -> b <= a + 1 -> b = a + 1)%Z.
 auto with *.
 Qed.
+
 Ltac hyp3 :=
   match goal with
   | H : (Zlt ?X ?Y), H2: (Zle ?Y (Zplus ?X (Zpos xH))) |- _ => 
     let Z := fresh "H" in assert (Z := helper _ _ H H2); clear H H2
   end.
+  
 Ltac hyp4 :=
   match goal with
   | H : ?X, H2: ?X |- _ => clear H2
   end.
+
+Ltac sim :=
+  let apply_rev_unit x L :=
+    replace (rev (L ++ x :: (@nil Z))) with (x :: rev L) in * by ( symmetry; apply rev_unit ) in
+  let apply_app_ass L1 L2 L3 :=
+    replace ((L1 ++ L2) ++ L3) with (L1 ++ L2 ++ L3) in * by ( apply ass_app ) in
+  let simpl_x_nil_app x L :=
+    replace ((x :: (@nil Z)) ++ L) with (x :: L) in * by ( auto ) in
+  let apply_app_nil L :=
+    replace (L ++ (@nil Z)) with (L) in * by ( apply app_nil_end ) in
+  let apply_nil_app L :=
+    replace ((@nil Z) ++ L) with (L) in * by ( auto ) in
+  let simpl_head_cons x L :=
+    replace (hd 0%Z (x :: L)) with (x) in * by ( auto ) in
+  let simpl_tail_nil :=
+    replace (tail (@nil Z)) with (@nil Z) in * by ( auto ) in
+  let simpl_tail_cons x L :=
+    replace (tail (x :: L)) with (L) in * by ( auto ) in
+  let simpl_length_nil :=
+    replace (length (@nil Z)) with (0) in * by ( auto ) in
+  let simpl_length_cons x L :=
+    replace (length (x :: L)) with (1 + length L) in * by ( auto ) in
+  let apply_app_length L1 L2 :=
+    replace (length (L1 ++ L2)) with (length L1 + length L2) in * by ( symmetry; apply app_length ) in
+  let apply_rev_length L :=
+    replace (length (rev L)) with (length L) in * by ( symmetry; apply rev_length ) in
+  let simpl_rev_nil :=
+    replace (rev (@nil Z)) with (@nil Z) in * by ( auto ) in
+  let simpl_rev_cons x L :=
+    replace (rev(x :: L)) with (rev L ++ x :: (@nil Z)) in * by ( auto ) in
+  let apply_distr_rev L1 L2 :=
+    replace (rev (L1 ++ L2)) with (rev L2 ++ rev L1) in * by ( symmetry; apply distr_rev ) in
+  let apply_rev_involutive L :=
+    replace (rev (rev L)) with (L) in * by ( symmetry; apply rev_involutive ) in
+  let simpl_Z_of_nat_const x :=
+    simpl (Z_of_nat x) in * in
+  let apply_inj_plus x1 x2 :=
+    replace (Z_of_nat (x1 + x2)) with (Z_of_nat x1 + Z_of_nat x2)%Z in * by ( symmetry; apply inj_plus ) in
+  match goal with
+    | H : context f [rev (?L ++ ?x :: (@nil Z))] |- _ => apply_rev_unit x L
+    | |- context f [rev (?L ++ ?x :: (@nil Z))] => apply_rev_unit x L
+    | H : context f [(?L1 ++ ?L2) ++ ?L3] |- _ => apply_app_ass L1 L2 L3
+    | |- context f [(?L1 ++ ?L2) ++ ?L3] => apply_app_ass L1 L2 L3
+    | H : context f [(?x :: (@nil Z)) ++ ?L] |- _ => simpl_x_nil_app x L
+    | |- context f [(?x :: (@nil Z)) ++ ?L] => simpl_x_nil_app x L
+    | H : context f [?L ++ (@nil Z)] |- _ => apply_app_nil L
+    | |- context f [?L ++ (@nil Z)] => apply_app_nil L
+    | H : context f [(@nil Z) ++ ?L] |- _ => apply_nil_app L
+    | |- context f [(@nil Z) ++ ?L] => apply_nil_app L
+    | H : context f [hd 0%Z (?x :: ?L)] |- _ => simpl_head_cons x L
+    | |- context f [hd 0%Z (?x :: ?L)] => simpl_head_cons x L
+    | H : context f [tail (@nil Z)] |- _ => simpl_tail_nil
+    | |- context f [tail (@nil Z)] => simpl_tail_nil
+    | H : context f [tail (?x :: ?L)] |- _ => simpl_tail_cons x L
+    | |- context f [tail (?x :: ?L)] => simpl_tail_cons x L
+    | H : context f [length (@nil Z)] |- _ => simpl_length_nil
+    | |- context f [length (@nil Z)] => simpl_length_nil
+    | H : context f [length (?x :: ?L)] |- _ => simpl_length_cons x L
+    | |- context f [length (?x :: ?L)] => simpl_length_cons x L
+    | H : context f [length (?L1 ++ ?L2)] |- _ => apply_app_length L1 L2
+    | |- context f [length (?L1 ++ ?L2)] => apply_app_length L1 L2
+    | H : context f [length (rev ?L)] |- _ => apply_rev_length L
+    | |- context f [length (rev ?L)] => apply_rev_length L
+    | H : context f [rev (@nil Z)] |- _ => simpl_rev_nil
+    | |- context f [rev (@nil Z)] => simpl_rev_nil
+    | H : context f [rev (?x :: ?L)] |- _ => simpl_rev_cons x L
+    | |- context f [rev (?x :: ?L)] => simpl_rev_cons x L
+    | H : context f [rev (?L1 ++ ?L2)] |- _ => apply_distr_rev L1 L2
+    | |- context f [rev (?L1 ++ ?L2)] => apply_distr_rev L1 L2
+    | H : context f [rev (rev ?L)] |- _ => apply_rev_involutive L
+    | |- context f [rev (rev ?L)] => apply_rev_involutive L
+    | H : context f [Z_of_nat 0] |- _ => simpl_Z_of_nat_const 0
+    | |- context f [Z_of_nat 0] => simpl_Z_of_nat_const 0
+    | H : context f [Z_of_nat 1] |- _ => simpl_Z_of_nat_const 1
+    | |- context f [Z_of_nat 1] => simpl_Z_of_nat_const 1
+    | H : context f [Z_of_nat (?x1 + ?x2)] |- _ => apply_inj_plus x1 x2
+    | |- context f [Z_of_nat (?x1 + ?x2)] => apply_inj_plus x1 x2
+end.
   
