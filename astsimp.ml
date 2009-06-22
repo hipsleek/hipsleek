@@ -1138,9 +1138,9 @@ and find_mvars_heap prog params hf pf =
   | CF.HTrue | CF.HFalse -> []
   | _ ->
       let eqns = Solver.ptr_equations pf in
-      let asets = Solver.alias eqns in
+      let asets = Context.alias eqns in
       let self_aset =
-        Solver.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))
+        Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))
       in self_aset
 
 and all_paths_return (e0 : I.exp) : bool =
@@ -4396,7 +4396,7 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 				let rest_vars = List.tl v1 in	
 				let br_cnt = List.length f_list_init in
 				let f_list = List.map (fun (c1,c2)-> 
-					let aset = Solver.get_aset ( Solver.alias ((crt_v, crt_v) :: (Solver.ptr_equations c1))) crt_v in
+					let aset = Context.get_aset ( Context.alias ((crt_v, crt_v) :: (Solver.ptr_equations c1))) crt_v in
 					let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
 					let eqs = (Solver.get_equations_sets c1 aset)in
 					let eqs = (Solver.transform_null eqs) in
