@@ -199,7 +199,13 @@
 %token WHERE
 %token WHILE
 %token GLOBAL
-
+/*exception related*/
+%token <string> FLOW
+%token TRY
+%token CATCH
+%token FINALLY
+%token THROWS
+%token RAISE
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
@@ -684,19 +690,27 @@ one_constr
 	  match $5 with
 		| F.Base ({F.formula_base_heap = h;
 				   F.formula_base_pure = p;
+				   F.formula_base_flow = fl ;
                    F.formula_base_branches = b}) ->
-			F.mkExists $3 h p b (get_pos 1)
+			F.mkExists $3 h p fl b (get_pos 1)
 		| _ -> report_error (get_pos 4) ("only Base is expected here.")
 
 	}
 ;
 
 core_constr
-  : heap_constr opt_branches { F.replace_branches $2 (F.formula_of_heap $1 (get_pos 1)) }
-  | pure_constr opt_branches { F.replace_branches $2 (F.formula_of_pure $1 (get_pos 1)) }
-  | heap_constr AND pure_constr opt_branches { F.mkBase $1 $3 $4 (get_pos 2) }
+  : heap_constr flows_and_branches { F.replace_branches (snd $2) (F.formula_of_heap_with_flow $1 (fst $2) (get_pos 1)) }
+  | pure_constr flows_and_branches { F.replace_branches (snd $2) (F.formula_of_pure_with_flow $1 (fst $2) (get_pos 1)) }
+  | heap_constr AND pure_constr flows_and_branches { F.mkBase $1 $3 (fst $4) (snd $4) (get_pos 2) }
 ;
 
+flows_and_branches
+	: flow_constraints opt_branches { ($1,$2)}
+	| opt_branches {(top_flow,$1)}
+
+flow_constraints :
+	AND FLOW IDENTIFIER {$3} 
+	
 heap_constr
   : simple_heap_constr { $1 }
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
@@ -942,28 +956,30 @@ proc_decl
 ;
   
 proc_header
-  : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_spec_list {
+  : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
 	  (*let static_specs, dynamic_specs = split_specs $6 in*)
 		{ proc_name = $2;
 		  proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 		  proc_data_decl = None;
 		  proc_constructor = false;
+		  proc_exceptions = $6;
 		  proc_args = $4;
 		  proc_return = $1;
-		  proc_static_specs = $6;
+		  proc_static_specs = $7;
 		  proc_dynamic_specs = [];
 		  proc_loc = get_pos 1;
 		  proc_body = None }
 	}
-  | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_spec_list {
+  | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
 		(*let static_specs, dynamic_specs = split_specs $6 in*)
 		  { proc_name = $2;
 			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 			proc_data_decl = None;
 			proc_constructor = false;
+			proc_exceptions = $6;
 			proc_args = $4;
 			proc_return = void_type;
-			proc_static_specs = $6;
+			proc_static_specs = $7;
 			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
 			proc_body = None }
@@ -978,16 +994,17 @@ constructor_decl
 ;
 
 constructor_header
-  : IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_spec_list {
+  : IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
 	  (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
 		  { proc_name = $1;
 			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 			proc_data_decl = None;
 			proc_constructor = true;
+			proc_exceptions = $5;
 			proc_args = $3;
 			proc_return = Named $1;
-			proc_static_specs = $5;
+			proc_static_specs = $6;
 			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
 			proc_body = None }
@@ -1023,6 +1040,10 @@ coercion_direction
   | RIGHTARROW { Right }
 ;
 
+opt_throws 
+	:	{[]}
+	| THROWS cid_list {List.map fst $2}
+;
 /*
 proof_block 
   : OBRACE proof_script CBRACE {}
@@ -1176,6 +1197,12 @@ typ
   | array_type { $1 }
 ;
 
+/*
+typ_list
+	: typ {[$1]}
+	| typ COMMA typ_list {$1::$3}
+	*/
+	
 non_array_type
   : INT { int_type }
   | FLOAT { float_type }
@@ -1208,8 +1235,10 @@ block
   : OBRACE opt_statement_list CBRACE {
 	match $2 with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
+						   exp_block_label = NoLabel;
 						   exp_block_pos = get_pos 1 }
 	  | _ -> Block { exp_block_body = $2;
+					 exp_block_label = NoLabel;
 					 exp_block_pos = get_pos 1 }
   }
 ;
@@ -1229,7 +1258,7 @@ statement_list
 
 statement
   : declaration_statement { $1 }
-  | valid_declaration_statement { $1 }
+  | labeled_valid_declaration_statement { $1 }
 ;
 
 declaration_statement
@@ -1278,12 +1307,39 @@ constant_declarator
   : IDENTIFIER EQ constant_expression { ($1, $3, get_pos 1) }
 ;
 
+labeled_valid_declaration_statement
+	: IDENTIFIER COLON valid_declaration_statement {
+		match $3 with
+		| Block	b -> Block { b with exp_block_label = Label $1; }
+		(*| Empty b -> Empty { b with exp_empty_label = Label $1; }
+		| Unfold b -> Unfold { b with exp_unfold_label = Label $1; }
+		| Bind 	b -> Bind 	{ b with exp_bind_label = Label $1; } 
+		| Debug b -> Debug 	{ b with exp_debug_label = Label $1; } 
+		| Dprint b -> Dprint { b with exp_dprint_label = Label $1; }
+		| Assert b -> Assert { b with exp_assert_label = Label $1; }
+		| Raise b -> Raise { b with exp_raise_label = Label $1; }
+		| Return b -> Return { b with exp_return_label = Label $1; }
+		| Break b -> Break { b with exp_break_label = Label $1; }
+		| Continue b -> Continue { b with exp_continue_label = Label $1; }
+		| Java b -> Java { b with exp_java_label = Label $1; }
+		| Cond b -> Cond { b with exp_cond_label = Label $1; }
+		| CallRecv b -> CallRecv {b with exp_call_recv_label = Label $1;}
+		| CallNRecv b -> CallNRecv {b with exp_call_nrecv_label = Label $1;}
+		| New b -> New {b with exp_new_label = Label $1;}
+		| Assign b -> Assign {b with exp_assign_label = Label $1;}
+		| Unary b -> Unary {b with exp_unary_label = Label $1;}
+		| Try b -> Try { b with exp_try_label = Label $1; }*)
+		| While b -> While { b with exp_while_label = Label $1; }		
+		| _ -> report_error (get_pos 1) ("only blocks try and while statements can have labels")
+		}
+	| valid_declaration_statement {$1}
 valid_declaration_statement
   : block { $1 }
   | empty_statement { $1 }
   | expression_statement { $1 }
   | selection_statement { $1 }
   | iteration_statement { $1 }
+  | try_statement {$1}
   | java_statement { $1 }
   | jump_statement { $1 }
   | assert_statement { $1 }
@@ -1438,12 +1494,18 @@ while_statement
 	  While { exp_while_condition = $3;
 			  exp_while_body = $5;
 			  exp_while_specs = Iast.mkSpecTrue (get_pos 1);
+			  exp_while_label = NoLabel;
+			  exp_while_f_name = "";
+			  exp_while_wrappings = None;
 			  exp_while_pos = get_pos 1 }
 	}
   | WHILE OPAREN boolean_expression CPAREN spec_list embedded_statement {
 		While { exp_while_condition = $3;
 				exp_while_body = $6;
 				exp_while_specs = $5;(*List.map remove_spec_qualifier $5;*)
+				exp_while_label = NoLabel;
+				exp_while_f_name = "";
+				exp_while_wrappings = None;
 				exp_while_pos = get_pos 1 }
 	  }
 ;
@@ -1452,14 +1514,24 @@ jump_statement
   : return_statement { $1 }
   | break_statement { $1 }
   | continue_statement { $1 }
+  | raise_statement {$1}
 ;
 
 break_statement
-  : BREAK SEMICOLON { Break (get_pos 1) }
+  : BREAK SEMICOLON { Break {
+					    exp_break_to_label = NoLabel;
+						exp_break_pos = (get_pos 1);} }
+	| BREAK IDENTIFIER SEMICOLON { Break {exp_break_to_label = (Label $2);
+										exp_break_pos = get_pos 1} }
 ;
 
 continue_statement
-  : CONTINUE SEMICOLON { Continue (get_pos 1) }
+  : CONTINUE SEMICOLON { Continue 
+							{exp_continue_to_label = NoLabel;
+							 exp_continue_pos = get_pos 1} }
+  | CONTINUE IDENTIFIER SEMICOLON { Continue 
+							{exp_continue_to_label = (Label $2);
+							 exp_continue_pos = get_pos 1} }
 ;
 
 return_statement
@@ -1467,6 +1539,39 @@ return_statement
 											   exp_return_pos = get_pos 1 } }
 ;
 
+raise_statement
+	: RAISE expression SEMICOLON{ Raise { exp_raise_type = Const_flow "" ;
+										  exp_raise_val = Some $2;
+										  exp_raise_from_final = false;
+										  exp_raise_pos = get_pos 1 } }
+;
+try_statement
+	: TRY valid_declaration_statement opt_catch_list opt_finally SEMICOLON
+	{ Try { exp_try_block = $2;
+			exp_catch_clauses = $3;
+			exp_finally_clause = $4;
+			exp_try_pos = get_pos 1 } }
+;
+
+opt_catch_list 
+	: {[]}
+	|catch_clause opt_catch_list { $1::$2 }
+;
+
+catch_clause
+	: CATCH OPAREN IDENTIFIER IDENTIFIER CPAREN valid_declaration_statement 
+		{ { exp_catch_var = Some $4;
+			exp_catch_flow_type = $3 (*(Named $3) *);
+			exp_catch_flow_var = None;
+			exp_catch_body = $6;																					   
+			exp_catch_pos = get_pos 1 } } 
+;
+
+opt_finally
+	: {[]}
+	| FINALLY valid_declaration_statement {let f = {exp_finally_body = $2;
+												   exp_finally_pos = get_pos 1 } in f::[] }
+;
 opt_expression
   : { None }
   | expression { Some $1 }

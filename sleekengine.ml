@@ -70,6 +70,8 @@ let process_data_def ddef =
 	let tmp = iprog.I.prog_data_decls in
 	  try
 		iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
+		let _ = Iast.build_exc_hierarchy true iprog in
+		let _ = Util.c_h () in
 		let cddef = AS.trans_data iprog ddef in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 		  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls
@@ -120,7 +122,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
 		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
 		let p = List.map (fun c-> (c,Primed)) fv_idents in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) true in
-			AS.trans_struc_formula iprog quant fv_idents wf stab false (Cpure.Prim Void)
+			AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
 	| MetaVar mvar -> begin
 	  try 
 		let mf = get_var mvar in
@@ -141,7 +143,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
 		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
 		let p = List.map (fun c-> (c,Primed)) fv_idents in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p b true in
-		let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (Cpure.Prim Void) in
+		let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
 		res
 	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
@@ -149,8 +151,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	| MetaForm mf ->
 		let h = List.map (fun c-> (c,Unprimed)) fv_idents in
 		let wf,_ = AS.case_normalize_formula iprog h false mf in
-		let _ = Astsimp.collect_type_info_formula iprog wf stab in
-		AS.trans_formula iprog quant fv_idents false wf stab
+		let _ = Astsimp.collect_type_info_formula iprog wf stab false in
+		AS.trans_formula iprog quant fv_idents false wf stab false
 	| MetaVar mvar -> begin
 	  try 
 		let mf = get_var mvar in
@@ -164,7 +166,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	  let cf1 = meta_to_formula mf1 quant fv_idents stab in
 	  let cf2 = meta_to_formula mf2 quant fv_idents stab in
 	  let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
-	  let res = Cformula.compose_formula cf1 cf2 svs no_pos in
+	  let res = Cformula.compose_formula cf1 cf2 svs Cformula.Flow_combine no_pos in
 		res
 	end
 	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")

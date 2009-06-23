@@ -1534,7 +1534,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0, branches, _ = split_components base in
+  let h, pure0,_, branches, _ = split_components base in
   let pos = pos_of_formula disj in
 	(* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
@@ -1618,6 +1618,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_return = Prim Bool;
 					proc_static_specs = [];
 					proc_dynamic_specs = [];
+					proc_exceptions = [];
 					proc_body = Some seq2;
 					proc_loc = pos } 
   in
@@ -1726,6 +1727,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_static_specs = [];
 					 proc_dynamic_specs = [];
 					 proc_body = Some combined_exp;
+					 proc_exceptions = [];
 					 proc_loc = no_pos } in
   let ddef = { data_name = class_name_of_view vdef.C.view_name;
 			   data_fields = fields;

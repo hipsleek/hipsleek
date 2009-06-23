@@ -195,6 +195,7 @@
 %token UNION
 %token WHERE
 %token WHILE
+%token <string> FLOW
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -564,17 +565,27 @@ one_constr
 	  match $5 with
 		| F.Base ({F.formula_base_heap = h;
 				   F.formula_base_pure = p;
+				   F.formula_base_flow = fl;
                    F.formula_base_branches = b}) ->
-			F.mkExists $3 h p b (get_pos 1)
+			F.mkExists $3 h p fl b (get_pos 1)
 		| _ -> report_error (get_pos 4) ("only Base is expected here.")
 	}
 ;
 
+
 core_constr
-  : heap_constr opt_branches { F.replace_branches $2 (F.formula_of_heap $1 (get_pos 1)) }
-  | pure_constr opt_branches { F.replace_branches $2 (F.formula_of_pure $1 (get_pos 1)) }
-  | heap_constr AND pure_constr opt_branches { F.mkBase $1 $3 $4 (get_pos 2) }
+  : heap_constr flows_and_branches { F.replace_branches (snd $2) (F.formula_of_heap_with_flow $1 (fst $2) (get_pos 1)) }
+  | pure_constr flows_and_branches { F.replace_branches (snd $2) (F.formula_of_pure_with_flow $1 (fst $2) (get_pos 1)) }
+  | heap_constr AND pure_constr flows_and_branches { F.mkBase $1 $3 (fst $4) (snd $4) (get_pos 2) }
 ;
+
+flows_and_branches
+	: flow_constraints opt_branches { ($1,$2)}
+	| opt_branches {(top_flow,$1)}
+
+flow_constraints :
+	AND FLOW IDENTIFIER {$3} 
+	
 
 heap_constr
   : simple_heap_constr { $1 }

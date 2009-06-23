@@ -240,6 +240,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
         IF.formula_base_branches = br0;
+		IF.formula_base_flow = fl0;
         IF.formula_base_pos = l0
       } -> (*as f*)
       let tmp1 = look_for_anonymous_h_formula h0
@@ -251,6 +252,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_heap = h0;
               IF.formula_exists_qvars = tmp1;
               IF.formula_exists_pure = p0;
+			  IF.formula_exists_flow = fl0;
               IF.formula_exists_branches = br0;
               IF.formula_exists_pos = l0;
             }
@@ -450,6 +452,326 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
         let (r1, r2) = reorder_views view_decls0 !view_names in r1 @ r2))
   
 let loop_procs : (C.proc_decl list) ref = ref []
+   
+let rec seq_elim (e:C.exp):C.exp = match e with
+  | C.Assert _ -> e
+  | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }  
+  | C.Bind b ->  C.Bind {b with C.exp_bind_body = (seq_elim b.C.exp_bind_body);}
+  | C.ICall _ -> e
+  | C.SCall _ -> e
+  | C.Block b-> Cast.Block {b with Cast.exp_block_body = seq_elim b.C.exp_block_body}
+  | C.Cast b -> C.Cast {b with C.exp_cast_body = (seq_elim b.C.exp_cast_body)}
+  | C.Cond b -> C.Cond {b with C.exp_cond_then_arm  = (seq_elim b.C.exp_cond_then_arm);
+							   C.exp_cond_else_arm  = (seq_elim b.C.exp_cond_else_arm);}
+  | C.CheckRef _ -> e
+  | C.BConst _ -> e
+  | C.Debug _ 
+  | C.Dprint _
+  | C.FConst _
+  | C.IConst _ 
+  | C.Print _ 
+  | C.Java _ -> e
+  | C.New _ -> e
+  | C.Null _ -> e
+  | C.Sharp _ -> e
+  | C.Seq b -> if (!seq_to_try) then 
+					  C.Try ({	C.exp_try_type = b.C.exp_seq_type;
+								C.exp_try_body =  (seq_elim b.C.exp_seq_exp1);
+								C.exp_catch_clause = ({
+														  C.exp_catch_flow_type = !n_flow_int;
+														  C.exp_catch_flow_var = None;
+														  C.exp_catch_var = Some (CP.Prim Void, 
+														  (fresh_var_name "_sq_" b.C.exp_seq_pos.start_pos.Lexing.pos_lnum));
+														  C.exp_catch_body = (seq_elim b.C.exp_seq_exp2);
+														  C.exp_catch_pos = b.C.exp_seq_pos});
+								C.exp_try_pos = b.C.exp_seq_pos })
+				else C.Seq {b with C.exp_seq_exp1 = seq_elim b.C.exp_seq_exp1 ;
+							 C.exp_seq_exp2 = seq_elim b.C.exp_seq_exp2 ;}
+  | C.This _ -> e
+  | C.Try b ->  C.Try {b with  
+				C.exp_try_body = seq_elim b.C.exp_try_body;
+				C.exp_catch_clause = {b.C.exp_catch_clause with C.exp_catch_body = (seq_elim b.C.exp_catch_clause.C.exp_catch_body)};}
+  | C.Unit _ -> e 
+  | C.Unfold _ -> e
+  | C.Var _ -> e
+  | C.VarDecl _ -> e
+  | C.While b -> C.While {b with Cast.exp_while_body = seq_elim b.Cast.exp_while_body}
+   
+(*transform labels into exceptions, remove the finally clause,
+should also check that 
+*)
+let rec while_labelling (e:I.exp):I.exp = 
+let rec label_breaks lb e :I.exp = match e with
+  | I.Assert _ -> e
+  | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (label_breaks lb b.I.exp_assign_lhs);
+								   I.exp_assign_rhs = (label_breaks lb  b.I.exp_assign_rhs); }  
+  | I.Binary b -> I.Binary {b with I.exp_binary_oper1 = (label_breaks lb  b.I.exp_binary_oper1);
+								   I.exp_binary_oper2 = (label_breaks lb  b.I.exp_binary_oper2);}
+  | I.Bind b ->  I.Bind {b with I.exp_bind_body = (label_breaks lb  b.I.exp_bind_body);}
+  | I.BoolLit _ -> e
+  | I.Break b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_to_label with | I.NoLabel -> "brk_"^lb | I.Label l-> "brk_"^l);
+						   I.exp_raise_val = None;
+						   I.exp_raise_from_final = false;
+						   I.exp_raise_pos = b.I.exp_break_pos;}
+  | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (label_breaks lb  b.I.exp_call_recv_receiver);
+									   I.exp_call_recv_arguments  = List.map (label_breaks lb)  b.I.exp_call_recv_arguments;}
+  | I.CallNRecv b -> I.CallNRecv {b with I.exp_call_nrecv_arguments = List.map (label_breaks lb)  b.I.exp_call_nrecv_arguments;}
+  | I.Block b-> e  
+  | I.Cast b -> I.Cast {b with I.exp_cast_body = (label_breaks lb  b.I.exp_cast_body)}
+  | I.Cond b -> I.Cond {b with I.exp_cond_condition = (label_breaks lb  b.I.exp_cond_condition);
+							   I.exp_cond_then_arm  = (label_breaks lb  b.I.exp_cond_then_arm);
+							   I.exp_cond_else_arm  = (label_breaks lb  b.I.exp_cond_else_arm);}
+  | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(label_breaks lb  b),c)) b.I.exp_const_decl_decls}
+  | I.Continue b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_to_label with | I.NoLabel -> "cnt_"^lb | I.Label l-> "cnt_"^l);
+						   I.exp_raise_val = None;
+						   I.exp_raise_from_final = false;
+						   I.exp_raise_pos = b.I.exp_continue_pos;}
+  | I.Debug _ 
+  | I.Dprint _
+  | I.Empty _ 
+  | I.FloatLit _
+  | I.IntLit _ 
+  | I.Java _ -> e
+  | I.Member b -> I.Member {b with I.exp_member_base = (label_breaks lb  b.I.exp_member_base)}
+  | I.New b -> I.New {b with I.exp_new_arguments = List.map (label_breaks lb)  b.I.exp_new_arguments}
+  | I.Null _ -> e
+  | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (label_breaks lb  b)}
+  | I.Return b -> I.Return {b with I.exp_return_val = match b.I.exp_return_val with | None -> None | Some b -> Some (label_breaks lb  b)}
+  | I.Seq b -> I.Seq {b with I.exp_seq_exp1 = label_breaks lb b.I.exp_seq_exp1 ;
+							 I.exp_seq_exp2 = label_breaks lb b.I.exp_seq_exp2 ;}
+  | I.This _ -> e
+  | I.Try b -> I.Try {b with  
+				I.exp_try_block = label_breaks lb  b.I.exp_try_block;
+				I.exp_catch_clauses = List.map (fun c-> {c with I.exp_catch_body = (label_breaks lb  c.I.exp_catch_body)}) b.I.exp_catch_clauses;
+				I.exp_finally_clause = List.map (fun c-> {c with I.exp_finally_body = (label_breaks lb  c.I.exp_finally_body)}) b.I.exp_finally_clause;}
+  | I.Unary b -> I.Unary {b with I.exp_unary_exp = (label_breaks lb  b.I.exp_unary_exp)}
+  | I.Unfold _ -> e
+  | I.Var _ -> e
+  | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None | Some b-> Some (label_breaks lb  b)),c)) b.I.exp_var_decl_decls}
+  | I.While b -> e(*I.While {b with I.exp_while_condition = (label_breaks lb  b.I.exp_while_condition);	 I.exp_while_body = (label_breaks lb  b.I.exp_while_body);}	*)
+    
+and need_break_continue lb ne non_generated_label :bool = 
+	if not (non_generated_label) then 
+		match ne with 
+		| I.Break b-> (match b.I.exp_break_to_label with 
+				| I.NoLabel -> true
+				| I.Label l -> false)
+		| I.Continue b-> (match b.I.exp_continue_to_label with 
+				| I.NoLabel -> true
+				| I.Label l -> false)
+		| I.Seq b -> (need_break_continue lb b.I.exp_seq_exp1 false) ||(need_break_continue lb b.I.exp_seq_exp2 false)
+		| _ -> false 
+	else match ne with
+		  | I.Assert _ -> false
+		  | I.Assign b -> (need_break_continue lb b.I.exp_assign_lhs true)||(need_break_continue lb  b.I.exp_assign_rhs true)
+		  | I.Binary b -> (need_break_continue lb  b.I.exp_binary_oper1 true)||(need_break_continue lb  b.I.exp_binary_oper2 true)
+		  | I.Bind b -> (need_break_continue lb  b.I.exp_bind_body true)
+		  | I.BoolLit _ -> false
+		  | I.Break b -> (match b.I.exp_break_to_label with 
+				| I.NoLabel -> false
+				| I.Label l -> ((String.compare lb l)==0))
+		  | I.CallRecv b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) 
+									(need_break_continue lb  b.I.exp_call_recv_receiver true) 
+									b.I.exp_call_recv_arguments
+		  | I.CallNRecv b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) false b.I.exp_call_nrecv_arguments
+		  | I.Block b-> begin (match b.I.exp_block_label with
+							| I.NoLabel -> ()
+							| I.Label l -> if (String.compare l lb) ==0 then 
+									Error.report_error {Error.error_loc = b.I.exp_block_pos; Error.error_text = ("label"^l^" is duplicated")}
+								else ());
+						(need_break_continue lb b.I.exp_block_body true)
+						end
+		  | I.Cast b -> (need_break_continue lb  b.I.exp_cast_body true)
+		  | I.Cond b -> (need_break_continue lb  b.I.exp_cond_condition true )||
+						(need_break_continue lb  b.I.exp_cond_then_arm true)||
+						(need_break_continue lb  b.I.exp_cond_else_arm true)
+		  | I.ConstDecl b -> List.fold_left (fun a (_,b,_)-> a||(need_break_continue lb b true)) false b.I.exp_const_decl_decls
+		  | I.Continue b ->(match b.I.exp_continue_to_label with 
+				| I.NoLabel -> false
+				| I.Label l -> ((String.compare lb l)==0))
+		  | I.Debug _ 
+		  | I.Dprint _
+		  | I.Empty _ 
+		  | I.FloatLit _
+		  | I.IntLit _ 
+		  | I.Java _ -> false
+		  | I.Member b -> (need_break_continue lb  b.I.exp_member_base true)
+		  | I.New b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_new_arguments
+		  | I.Null _ -> false
+		  | I.Raise b -> (match b.I.exp_raise_val with | None -> false | Some b ->(need_break_continue lb b true))
+		  | I.Return b -> (match b.I.exp_return_val with | None -> false | Some b ->(need_break_continue lb b true))
+		  | I.Seq b -> (need_break_continue lb b.I.exp_seq_exp1 true) ||(need_break_continue lb b.I.exp_seq_exp2 true)
+		  | I.This _ -> false
+		  | I.Try b -> (need_break_continue lb  b.I.exp_try_block true)|| 
+					(List.fold_left (fun a c-> a||(need_break_continue lb c.I.exp_catch_body true)) false b.I.exp_catch_clauses)||
+					(List.fold_left (fun a c-> a||(need_break_continue lb c.I.exp_finally_body true)) false b.I.exp_finally_clause)
+		  | I.Unary b -> (need_break_continue lb b.I.exp_unary_exp true)
+		  | I.Unfold _ -> false
+		  | I.Var _ -> false
+		  | I.VarDecl b -> List.fold_left (fun a (_,b,_)-> match b with | None -> a | Some b-> a||(need_break_continue lb b true)) false b.I.exp_var_decl_decls
+		  | I.While b -> begin 
+		    (match b.I.exp_while_label with
+					| I.NoLabel -> ()
+					| I.Label l -> 
+						if (String.compare l lb) ==0 then 
+							Error.report_error {Error.error_loc = b.I.exp_while_pos; Error.error_text = ("label"^l^" is duplicated")}
+						else ());
+			(need_break_continue lb b.I.exp_while_body true)||(need_break_continue lb  b.I.exp_while_condition true)
+						end in
+ match e with
+  | I.Assert _ -> e
+  | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (while_labelling b.I.exp_assign_lhs);
+								   I.exp_assign_rhs = (while_labelling b.I.exp_assign_rhs); }  
+  | I.Binary b -> I.Binary {b with I.exp_binary_oper1 = (while_labelling b.I.exp_binary_oper1);
+								   I.exp_binary_oper2 = (while_labelling b.I.exp_binary_oper2);}
+  | I.Bind b ->  I.Bind {b with I.exp_bind_body = (while_labelling b.I.exp_bind_body);}
+  | I.BoolLit _ -> e
+  | I.Break b ->I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_to_label with 
+													| I.NoLabel -> Error.report_error {Error.error_loc = b.I.exp_break_pos; Error.error_text = ("there is no loop/block to break out of")}
+													| I.Label l-> l);
+						   I.exp_raise_val = None;
+						   I.exp_raise_from_final = false;
+						   I.exp_raise_pos = b.I.exp_break_pos;}						
+  | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (while_labelling b.I.exp_call_recv_receiver);
+									   I.exp_call_recv_arguments  = List.map while_labelling b.I.exp_call_recv_arguments;}
+  | I.CallNRecv b -> I.CallNRecv {b with I.exp_call_nrecv_arguments = List.map while_labelling b.I.exp_call_nrecv_arguments;}
+  | I.Block b-> 
+	let nl,b_rez = match b.I.exp_block_label with
+				| I.NoLabel -> ((fresh_label b.I.exp_block_pos),false)
+				| I.Label l -> (l ,true)in
+	if (need_break_continue nl b.I.exp_block_body b_rez) then
+		let ne = while_labelling (label_breaks nl b.I.exp_block_body) in
+		let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
+		let _  = Util.add_edge nb brk_top in
+		let _  = Util.add_edge nc cont_top in
+		let nit= I.Try ({
+						I.exp_try_block = ne;
+						I.exp_catch_clauses = [
+									 {  I.exp_catch_var = None;(*fresh_name();*)
+										I.exp_catch_flow_type = nc;
+										I.exp_catch_flow_var = None;
+										I.exp_catch_body = I.Empty b.I.exp_block_pos;	
+										I.exp_catch_pos = b.I.exp_block_pos };];
+						I.exp_finally_clause = [];
+						I.exp_try_pos = b.I.exp_block_pos;}) in
+		let ne = I.Try ({
+						I.exp_try_block = nit;
+						I.exp_catch_clauses = [
+									 {  I.exp_catch_var = None;(*fresh_name();*)
+										I.exp_catch_flow_type = nb;
+										I.exp_catch_flow_var = None;
+										I.exp_catch_body = I.Empty b.I.exp_block_pos;	
+										I.exp_catch_pos = b.I.exp_block_pos };];
+						I.exp_finally_clause = [];
+						I.exp_try_pos = b.I.exp_block_pos;})in		
+		ne
+	else while_labelling (label_breaks nl b.I.exp_block_body)
+  | I.Cast b -> I.Cast {b with I.exp_cast_body = (while_labelling b.I.exp_cast_body)}
+  | I.Cond b -> I.Cond {b with I.exp_cond_condition = (while_labelling b.I.exp_cond_condition);
+							   I.exp_cond_then_arm  = (while_labelling b.I.exp_cond_then_arm);
+							   I.exp_cond_else_arm  = (while_labelling b.I.exp_cond_else_arm);}
+  | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(while_labelling b),c)) b.I.exp_const_decl_decls}
+  | I.Continue b ->  I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_to_label with 
+													| I.NoLabel -> Error.report_error {Error.error_loc = b.I.exp_continue_pos; Error.error_text = ("there is no loop to continue")}
+													| I.Label l-> l);
+							   I.exp_raise_val = None;
+							   I.exp_raise_from_final = false;
+						       I.exp_raise_pos = b.I.exp_continue_pos;}	
+  | I.Debug _ 
+  | I.Dprint _
+  | I.Empty _ 
+  | I.FloatLit _
+  | I.IntLit _ 
+  | I.Java _ -> e
+  | I.Member b -> I.Member {b with I.exp_member_base = (while_labelling b.I.exp_member_base)}
+  | I.New b -> I.New {b with I.exp_new_arguments = List.map while_labelling b.I.exp_new_arguments}
+  | I.Null _ -> e
+  | I.Raise b -> I.Raise {b with I.exp_raise_val = match b.I.exp_raise_val with | None -> None | Some b -> Some (while_labelling b)}
+  | I.Return b -> I.Return {b with I.exp_return_val = match b.I.exp_return_val with | None -> None | Some b -> Some (while_labelling b)}
+  | I.Seq b -> I.Seq {b with I.exp_seq_exp1 = while_labelling b.I.exp_seq_exp1 ;
+							 I.exp_seq_exp2 = while_labelling b.I.exp_seq_exp2 ;}
+  | I.This _ -> e
+  | I.Try b -> let ob = I.Try {b with  
+				I.exp_try_block = while_labelling b.I.exp_try_block;
+				I.exp_catch_clauses = (List.map (fun c-> {c with I.exp_catch_body = (while_labelling c.I.exp_catch_body)}) b.I.exp_catch_clauses); 
+				I.exp_finally_clause = [];} in
+				let nt = if (List.length b.I.exp_finally_clause)==0 then ob
+				else I.Try { 
+						I.exp_try_block = ob;
+						I.exp_catch_clauses =
+						(List.map (fun c-> 
+						let f_body = (while_labelling c.I.exp_finally_body) in
+						let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
+						let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
+						{
+							I.exp_catch_var = Some new_name;
+							I.exp_catch_flow_type = c_flow;
+							I.exp_catch_flow_var = Some new_flow_var_name;
+							I.exp_catch_body = (I.Block ({I.exp_block_body = (I.Seq({
+																					I.exp_seq_exp1 = f_body;
+																					I.exp_seq_exp2 = I.Raise({
+																								I.exp_raise_type = I.Var_flow new_flow_var_name;
+																								I.exp_raise_from_final = true;
+																								I.exp_raise_val =  Some (I.Var ({
+																												I.exp_var_name = new_name;
+																												I.exp_var_pos = b.I.exp_try_pos;}));
+																											I.exp_raise_pos = b.I.exp_try_pos });
+																						I.exp_seq_pos = b.I.exp_try_pos;
+																					}));
+																				I.exp_block_label = I.NoLabel;
+																				I.exp_block_pos = b.I.exp_try_pos}));
+							I.exp_catch_pos = b.I.exp_try_pos   }
+				) b.I.exp_finally_clause );
+						I.exp_finally_clause =[];
+						I.exp_try_pos = b.I.exp_try_pos} in
+				nt
+  | I.Unary b -> I.Unary {b with I.exp_unary_exp = (while_labelling b.I.exp_unary_exp)}
+  | I.Unfold _ -> e
+  | I.Var _ -> e
+  | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None |Some b-> Some(while_labelling b)),c)) b.I.exp_var_decl_decls}
+  | I.While b -> 
+				let nl,b_rez = match b.I.exp_while_label with
+					| I.NoLabel -> ((fresh_label b.I.exp_while_pos),false)
+					| I.Label l -> (l,true) in
+				let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
+				let r = if (need_break_continue nl b.I.exp_while_body b_rez) then				
+					 let ne  = while_labelling (label_breaks nl b.I.exp_while_body) in
+					 let _  = Util.add_edge nb brk_top in
+					 let _  = Util.add_edge nc cont_top in 
+					 let continue_try = I.Try ({
+						I.exp_try_block = ne;
+						I.exp_catch_clauses = [
+									 {  I.exp_catch_var = None;(*fresh_name();*)
+										I.exp_catch_flow_type = nc;
+										I.exp_catch_flow_var = None;
+										I.exp_catch_body = I.Empty b.I.exp_while_pos;	
+										I.exp_catch_pos = b.I.exp_while_pos }];
+						I.exp_finally_clause = [];
+						I.exp_try_pos = b.I.exp_while_pos;}) in	
+					 let break_try = I.Try {
+							I.exp_try_block = I.This ({I.exp_this_pos = b.I.exp_while_pos});
+							I.exp_catch_clauses = [
+											{ I.exp_catch_var = None;
+											  I.exp_catch_flow_type = nb;
+											  I.exp_catch_flow_var = None;
+											  I.exp_catch_body = I.Empty b.I.exp_while_pos;
+											  I.exp_catch_pos = b.I.exp_while_pos }];
+							I.exp_finally_clause = [];
+							I.exp_try_pos = b.I.exp_while_pos; } in
+					(*let _ = print_string ("\n needed: "^(string_of_bool (need_break_continue nl b.I.exp_while_body b_rez))^"\n") in*)
+					I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some break_try}
+				else I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None} in
+				r
+						
+   
+and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
+	| None -> fct
+	| Some e-> {fct with I.proc_body = Some (while_labelling e)}
+
+and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
+	| None -> fct
+	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
+	
   
 (* let rec pick_coercions (procs : C.proc_decl list) : (C.proc_decl list * *)
 (* C.proc_decl list) = match procs with | proc :: rest -> begin let        *)
@@ -736,8 +1058,17 @@ let rec (* overriding test *) (* field duplication test *)
   (* returns a pair of expressions-> to_stay, to_move (signs already         *)
   (* changed)                                                                *)
   (* bag expressions *) (* first is max of second and third *)
-  (* first is min of second and third *) (* bag formulas *) 
-  trans_prog (prog0 : I.prog_decl) : C.prog_decl =
+  (* first is min of second and third *) (* bag formulas *) trans_prog
+  (prog3 : I.prog_decl) : C.prog_decl =
+   let _ = I.build_exc_hierarchy false prog3 in
+   let _ = (Util.add_edge raisable_class "Object") in
+   let prog2 = { prog3 with I.prog_data_decls = 
+			({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+			::prog3.I.prog_data_decls;} in  
+   let prog0 = { prog2 with			
+					I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
+					I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+    (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
   let _ = I.build_hierarchy prog0 in
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
@@ -747,7 +1078,9 @@ let rec (* overriding test *) (* field duplication test *)
       check_field_dup &&
         (check_method_dup && (check_overridding && check_field_hiding))
     then
-      (let prims = gen_primitives prog0 in
+      ( begin
+	    Util.c_h (); 
+	   let prims = gen_primitives prog0 in
        let prog =
          { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
          }
@@ -793,6 +1126,9 @@ let rec (* overriding test *) (* field duplication test *)
                    C.prog_right_coercions = r2l_coers;
                  }
                in
+				let cprog = { cprog with			
+					C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
+					C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
                  (ignore
                     (List.map
                        (fun vdef ->
@@ -806,11 +1142,12 @@ let rec (* overriding test *) (* field duplication test *)
 				  sat_warnings cprog ;
 				  let c = if !Globals.enable_case_inference then case_inference prog cprog else cprog in
 				  let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
-				  c))))
+				  c)))
+	 end)
     else failwith "Error detected"
 
 and add_pre_to_cprog cprog = 
-{cprog with C.prog_proc_decls = List.map (fun c-> 
+	{cprog with C.prog_proc_decls = List.map (fun c-> 
 	{c with 
 	 Cast.proc_static_specs_with_pre = add_pre cprog c.Cast.proc_static_specs;
 	 Cast.proc_dynamic_specs_with_pre = add_pre cprog c.Cast.proc_dynamic_specs;
@@ -910,14 +1247,14 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
+  let _ = Iformula.has_top_flow_struc view_formula1 in
   (*let recs = rec_grp prog in*)
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.data_name_of_view prog.I.prog_view_decls view_formula1
 					else vdef.I.view_data_name in
     (vdef.I.view_data_name <- data_name;
      H.add stab self { sv_info_kind = Known (CP.OType data_name);id = fresh_int () };
      let cf =
-       trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula
-         stab false (Cpure.Prim Void) in
+       trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
      let (inv, inv_b) = vdef.I.view_invariant in
      let pf = trans_pure_formula inv stab in
      let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
@@ -1179,6 +1516,11 @@ and all_paths_return (e0 : I.exp) : bool =
   | I.VarDecl _ -> false
   | I.While _ -> false
   | I.Unfold _ -> false
+  | I.Raise _ -> true
+  | I.Try e -> (all_paths_return e.I.exp_try_block) || (List.fold_left (fun a b-> a && (all_paths_return b.I.exp_catch_body)) true e.I.exp_catch_clauses)
+			|| match e.I.exp_finally_clause with 
+				| [] -> false
+				| h::t -> (all_paths_return h.I.exp_finally_body)
 
 and check_return (proc : I.proc_decl) : bool =
   match proc.I.proc_body with
@@ -1190,7 +1532,36 @@ and check_return (proc : I.proc_decl) : bool =
       then false
       else true
 
+and set_pre_flow f = 
+	let nf = {	Cformula.formula_flow_interval = !n_flow_int;
+				Cformula.formula_flow_link =None} in
+	let helper f0 = match f0 with
+	| Cformula.EBase b-> Cformula.EBase {b with
+							Cformula.formula_ext_base = Cformula.set_flow_in_formula_override nf b.Cformula.formula_ext_base;
+							Cformula.formula_ext_continuation = set_pre_flow b.Cformula.formula_ext_continuation}
+	| Cformula.ECase b-> Cformula.ECase {b with Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow c2))) b.Cformula.formula_case_branches}
+	| Cformula.EAssume (b1,b2)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2))in
+	List.map helper f
+	
+and check_valid_flows f = 
+	let rec check_valid_flows_f f = match f with
+		| Iformula.Base b -> if ((Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_base_flow))&&
+								  ((String.compare b.Iformula.formula_base_flow false_flow)<>0))then 
+				Error.report_error {Error.error_loc = b.Iformula.formula_base_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_base_flow;}
+		| Iformula.Exists b -> if (Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_exists_flow))&&
+									((String.compare b.Iformula.formula_exists_flow false_flow)<>0)then 
+				Error.report_error {Error.error_loc = b.Iformula.formula_exists_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_exists_flow;}
+		| Iformula.Or b-> (check_valid_flows_f b.Iformula.formula_or_f1);(check_valid_flows_f b.Iformula.formula_or_f2)
+	in
+	let helper f0 = match f0 with
+		| Iformula.EBase b-> (check_valid_flows_f b.Iformula.formula_ext_base); check_valid_flows b.Iformula.formula_ext_continuation
+		| Iformula.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.Iformula.formula_case_branches)
+		| Iformula.EAssume b-> check_valid_flows_f b in
+List.iter helper f
+	
+	  
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
+  (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
   let dup_names =
     U.find_one_dup (fun a1 a2 -> a1.I.param_name = a2.I.param_name)
       proc.I.proc_args
@@ -1253,14 +1624,33 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           in
             (ignore (List.map add_param all_args);
 			 let _ = H.add stab res { sv_info_kind = Known cret_type;id = fresh_int () } in
-			 let static_specs_list = trans_struc_formula prog true free_vars proc.I.proc_static_specs stab true cret_type in
-			(* let _ = print_string ("\n new specs: "^(Cprinter.string_of_struc_formula static_specs_list)^"\n") in*)
-			 let dynamic_specs_list = trans_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true cret_type in
+			(*let _ = print_string ("\n proc:"^proc.I.proc_name^"\n") in	*)		
+			let _ = check_valid_flows proc.I.proc_static_specs in
+			let _ = check_valid_flows proc.I.proc_dynamic_specs in
+			let static_specs_list = set_pre_flow (trans_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+			 (*
+			 let _ = print_string ("\n old specs: "^(Iprinter.string_of_struc_formula proc.I.proc_static_specs)^"\n") in
+			 let _ = print_string ("\n new specs: "^(Cprinter.string_of_struc_formula static_specs_list)^"\n") in
+			 *)
+			 let dynamic_specs_list = set_pre_flow (trans_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+			(*let _ = print_string ("\n proc:"^proc.I.proc_name^"\n") in	 *)
+			 let exc_list = (List.map Util.get_hash_of_exc proc.I.proc_exceptions) in
+			 let r_int = Util.get_hash_of_exc abnormal_flow in
+			(* let _ = print_string ((String.concat "  " (List.map (fun (d1,d2)-> 
+					(string_of_int d1)^"-"^(string_of_int d2)) exc_list))^"\n "^
+					(string_of_int (fst r_int))^"-"^(string_of_int (snd r_int))^"\n") in*)
+			 (if (List.exists CF.is_false_flow exc_list)||
+				(List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
+				Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
+				else ()) ;
+			 (*let _ = print_string ("\n cproc specs: "^(Cprinter.string_of_struc_formula (dynamic_specs_list@static_specs_list) )^"\n") in*)
+			 let _ = Cast.check_proper_return cret_type exc_list (dynamic_specs_list@static_specs_list) in
 			 let _ = H.remove stab res in
              let body =
                match proc.I.proc_body with
                | None -> None
-               | Some e -> let (b, tb) = trans_exp prog proc e in Some b in
+               | Some e -> 
+					let (b, tb) = trans_exp prog proc e in Some b in
              let args =
                List.map
                  (fun p ->
@@ -1296,7 +1686,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                  C.proc_body = body;
                  C.proc_loc = proc.I.proc_loc;
                }
-             in (E.pop_scope (); cproc))))
+             in 
+			 (E.pop_scope (); cproc))))
 
 and trans_coercions (prog : I.prog_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
@@ -1309,13 +1700,13 @@ and trans_coercions (prog : I.prog_decl) :
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
   ((C.coercion_decl list) * (C.coercion_decl list)) =
   let stab = H.create 103 in
-  let _ = collect_type_info_formula prog coer.I.coercion_head stab in
-  let _ = collect_type_info_formula prog coer.I.coercion_body stab in
+  let _ = collect_type_info_formula prog coer.I.coercion_head stab false in
+  let _ = collect_type_info_formula prog coer.I.coercion_body stab false in
   (*let _ = print_string ("\n"^(string_of_stab stab)^"\n") in*)
-  let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab in
+  let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
   let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
   let compute_univ () =
-    let (h, p, _, _) = CF.split_components c_lhs in
+    let (h, p, _,_, _) = CF.split_components c_lhs in
     let pvars = CP.fv p in
     let hvars = CF.h_fv h in
     let univ_vars = CP.difference pvars hvars in CP.remove_dups univ_vars in
@@ -1324,10 +1715,10 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
     Util.difference lhs_fnames (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs =
     trans_formula prog (U.empty univ_vars) (self :: lhs_fnames) false
-      coer.I.coercion_body stab in
+      coer.I.coercion_body stab false in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   let c_lhs_exist =
-    trans_formula prog true (self :: rhs_fnames) false coer.I.coercion_head stab in
+    trans_formula prog true (self :: rhs_fnames) false coer.I.coercion_head stab false in
   let lhs_name =
     find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
   let rhs_name =
@@ -1455,12 +1846,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               all_names);
          let assert_cf_o =
            (match assert_f_o with
-            | Some f -> Some (trans_struc_formula prog false free_vars (fst f) stab false (Cpure.Prim Void))
+            | Some f -> Some (trans_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Prim Void) [])*) )
             | None -> None) in
          let assume_cf_o =
            (match assume_f_o with
             | None -> None
-            | Some f -> Some (trans_formula prog false free_vars true f stab)) in
+            | Some f -> Some (trans_formula prog false free_vars true f stab false)) in
          let assert_e =
            C.Assert
              {
@@ -2108,45 +2499,49 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       }),
                    new_t)))
   | I.Null pos -> ((C.Null pos), (CP.OType ""))
-  | I.Return { I.exp_return_val = oe; I.exp_return_pos = pos } ->
-      let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc
-      in
-        (match oe with
-         | None ->
-             if CP.are_same_types cret_type C.void_type
-             then
-               ((C.Return
-                   {
-                     C.exp_return_type = C.void_type;
-                     C.exp_return_val = None;
-                     C.exp_return_pos = pos;
-                   }),
-                C.void_type)
-             else
-               Err.report_error
-                 {
-                   Err.error_loc = proc.I.proc_loc;
-                   Err.error_text =
-                     "return statement for procedures with non-void return type need a value";
-                 }
-         | Some e ->
-             let (ce, ct) = trans_exp prog proc e
-             in
-               if sub_type ct cret_type
-               then
-                 ((C.Return
-                     {
-                       C.exp_return_type = C.void_type;
-                       C.exp_return_val = Some ce;
-                       C.exp_return_pos = pos;
-                     }),
-                  C.void_type)
-               else
-                 Err.report_error
-                   {
-                     Err.error_loc = proc.I.proc_loc;
-                     Err.error_text = "return type doesn't match";
-                   })
+  | I.Return ({I.exp_return_val = oe;
+			   I.exp_return_pos = pos}) -> 
+	  begin
+		let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
+		  match oe with
+			| None -> 
+				if CP.are_same_types cret_type C.void_type then
+				  (C.Sharp ({ C.exp_sharp_type = C.void_type;
+							  C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
+							  C.exp_sharp_val = Cast.Sharp_no_val;
+							  C.exp_sharp_unpack = false;
+							  C.exp_sharp_pos = pos}), C.void_type)
+				else
+				  Err.report_error { Err.error_loc = proc.I.proc_loc; 
+									 Err.error_text = "return statement for procedures with non-void return type need a value" }
+			| Some e -> 
+				let ce, ct = trans_exp prog proc e in
+				  if sub_type ct cret_type then
+					 let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
+					 let vd = C.VarDecl { C.exp_var_decl_type = ct;
+										  C.exp_var_decl_name = fn;
+										  C.exp_var_decl_pos = pos;} in
+					 let init_e = C.Assign { C.exp_assign_lhs = fn;
+										     C.exp_assign_rhs = ce;
+											 C.exp_assign_pos = pos;} in
+					 let shar = C.Sharp ({ C.exp_sharp_type = C.void_type;
+								C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
+								C.exp_sharp_unpack = false;
+								C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+								C.exp_sharp_pos = pos}) in
+					 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
+										  C.exp_seq_exp1 = init_e;
+										  C.exp_seq_exp2 = shar;
+										  C.exp_seq_pos = pos;} in
+					 let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
+										  C.exp_seq_exp1 = vd;
+										  C.exp_seq_exp2 = tmp_e1;
+										  C.exp_seq_pos = pos;} in 
+					(tmp_e2, C.void_type)
+				  else
+					Err.report_error { Err.error_loc = proc.I.proc_loc; 
+									   Err.error_text = "return type doesn't match" }
+	  end
   | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_pos = pos }
       ->
       let (ce1', te1) = trans_exp prog proc e1 in
@@ -2232,7 +2627,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq2; I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq2; I.exp_block_label = I.NoLabel; I.exp_block_pos = pos; })
        | I.OpPostDec ->
            let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
            let fn_decl =
@@ -2277,7 +2672,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq2; I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq2;I.exp_block_label = I.NoLabel;  I.exp_block_pos = pos; })
        | I.OpPreInc ->
            let add1_e =
              I.Binary
@@ -2306,7 +2701,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq; I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq;I.exp_block_label = I.NoLabel;  I.exp_block_pos = pos; })
        | I.OpPreDec ->
            let sub1_e =
              I.Binary
@@ -2335,7 +2730,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq; I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq;I.exp_block_label = I.NoLabel;  I.exp_block_pos = pos; })
        | _ -> failwith "u_op not supported yet")
   | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
       (try
@@ -2450,9 +2845,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_while_condition = cond;
         I.exp_while_body = body;
         I.exp_while_specs = prepost;
+		I.exp_while_wrappings = wrap;
         I.exp_while_pos = pos
       } ->
       let tvars = E.visible_names () in
+	  let tvars = Util.remove_dups tvars in
       let w_args =
         List.map
           (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; })
@@ -2463,10 +2860,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           ("_" ^
              (U.replace_path_sep_with_uscore
                 (U.replace_dot_with_uscore (string_of_loc pos)))) in
-      let w_body_1 = convert_while_body body w_name w_args in
+      let w_body_1 = body in
       let w_body_2 =
         I.Block
           {
+		    I.exp_block_label = I.NoLabel; 
             I.exp_block_body =
               I.Seq
                 {
@@ -2485,6 +2883,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       let w_body =
         I.Block
           {
+			I.exp_block_label = I.NoLabel; 
             I.exp_block_body =
               I.Cond
                 {
@@ -2515,23 +2914,211 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.proc_args = w_formal_args;
           I.proc_return = I.void_type;
           I.proc_static_specs = prepost;
+		  I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
           I.proc_dynamic_specs = [];
           I.proc_body = Some w_body;
           I.proc_loc = pos;
         } in
-      let w_call =
-        I.CallNRecv
+	  let temp_call =  I.CallNRecv
           {
             I.exp_call_nrecv_method = w_name;
             I.exp_call_nrecv_arguments = w_args;
             I.exp_call_nrecv_pos = pos;
           } in
+		  
+      let w_call = match wrap with
+	  | None -> temp_call
+	  | Some e -> 
+		(*let e,et = trans_exp prog proc e in*)
+		match e with
+		| I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
+		| _ ->  Err.report_error
+                  {
+                    Err.error_loc = pos;
+                    Err.error_text = "Translation of loop break wrapping failed";
+                  }
+       in
       let new_prog =
         { (prog) with I.prog_proc_decls = w_proc :: prog.I.prog_proc_decls; } in
       let (iw_call, _) = trans_exp new_prog w_proc w_call in
       let cw_proc = trans_proc new_prog w_proc
       in (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
-  | _ -> failwith (Iprinter.string_of_exp ie)
+	  
+  | Iast.FloatLit _ -> failwith (Iprinter.string_of_exp ie)
+  | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
+  | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
+  | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)
+  | Iast.Continue _ -> failwith (Iprinter.string_of_exp ie)
+  | I.Raise ({ I.exp_raise_type = ot;
+			   I.exp_raise_val = oe;
+			   I.exp_raise_from_final = ff;
+			   I.exp_raise_pos = pos })->
+			   (*let _ = print_string ("\n trt : "^(string_of_bool ff)^"\n") in*)
+			   let r = match oe with
+				| Some oe -> 
+					if ff then 
+							(C.Sharp({C.exp_sharp_type = C.void_type;
+									C.exp_sharp_unpack = false;
+									C.exp_sharp_flow_type = (match ot with 
+																| I.Const_flow c -> (C.Sharp_ct 
+																{CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
+																| I.Var_flow c -> (C.Sharp_v c));
+									C.exp_sharp_val = Cast.Sharp_finally 
+											(match oe with	
+												| I.Var ve -> ve.I.exp_var_name
+												| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation error, raise from finally raises"^
+													(Iprinter.string_of_exp oe)}
+												);
+									C.exp_sharp_pos = pos }), C.void_type)
+						else
+							let ce, ct = trans_exp prog proc oe in						
+							if Util.exc_sub_type (C.name_of_type ct) raisable_class then 							 
+								 let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
+								 let vd = C.VarDecl { C.exp_var_decl_type = ct;
+													  C.exp_var_decl_name = fn;
+													  C.exp_var_decl_pos = pos;} in
+								 let init_e = C.Assign { C.exp_assign_lhs = fn;
+														 C.exp_assign_rhs = ce;
+														 C.exp_assign_pos = pos;} in
+								 let shar = C.Sharp ({	C.exp_sharp_type = C.void_type;
+														C.exp_sharp_flow_type = C.Sharp_ct (match ct with 
+																	| CP.OType ot -> 
+																		{CF.formula_flow_interval = (Util.get_hash_of_exc ot); CF.formula_flow_link = None}
+																	| _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
+														C.exp_sharp_unpack = false;
+														C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+														C.exp_sharp_pos = pos }) in
+								 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
+													  C.exp_seq_exp1 = init_e;
+													  C.exp_seq_exp2 = shar;
+													  C.exp_seq_pos = pos;} in
+								 let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
+													  C.exp_seq_exp1 = vd;
+													  C.exp_seq_exp2 = tmp_e1;
+													  C.exp_seq_pos = pos;} in 
+								(tmp_e2, Cpure.Prim Void)
+							else Err.report_error { Err.error_loc = pos; 
+										   Err.error_text = "can not raise a not raisable object" }
+				| None -> (C.Sharp({C.exp_sharp_type = C.void_type;
+									C.exp_sharp_unpack = false;
+									C.exp_sharp_flow_type = (match ot with 
+																| I.Const_flow c -> (C.Sharp_ct 
+																{CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
+																| I.Var_flow c -> (C.Sharp_v c));
+									C.exp_sharp_val = Cast.Sharp_no_val;
+									C.exp_sharp_pos = pos }), C.void_type)
+				in r				
+  | Iast.Try {  
+	 I.exp_try_block = body;
+	 I.exp_catch_clauses = cl_list;
+	 I.exp_finally_clause = fl_list;
+	 I.exp_try_pos = pos}-> 
+		if ((List.length fl_list)>0) then
+			Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, i still found a finally clause" }
+		else
+			let new_clauses = List.map (translate_catch prog proc pos) cl_list in
+			let new_body , ct1 = trans_exp prog proc body in
+			(match (List.length cl_list) with
+				| 0 -> (new_body,ct1)
+				| 1 -> (C.Try({ C.exp_try_type = ct1;
+								 C.exp_try_body = new_body;
+								 C.exp_catch_clause = (List.hd new_clauses) ;
+								 C.exp_try_pos = pos}),C.void_type)
+				| _ -> let r1 = List.fold_left (fun a c ->
+							let fl_var = fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum in
+							C.Try({ C.exp_try_type = ct1;
+									C.exp_try_body = a;
+									C.exp_try_pos = pos;
+									C.exp_catch_clause =
+										({ c with C.exp_catch_body =
+											C.Try({C.exp_try_type = CP.Prim Void;
+												   C.exp_try_body = c.C.exp_catch_body;
+												   C.exp_try_pos = c.C.exp_catch_pos;		   
+												   C.exp_catch_clause = {
+															C.exp_catch_flow_type = Util.get_hash_of_exc c_flow;
+															C.exp_catch_flow_var = Some fl_var;
+															C.exp_catch_var = None;
+															C.exp_catch_body = C.Sharp({
+															   C.exp_sharp_type = (CP.Prim Void);
+															   C.exp_sharp_flow_type = C.Sharp_ct 
+															   {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = Some fl_var};
+															   C.exp_sharp_val = Cast.Sharp_no_val;
+															   C.exp_sharp_unpack = false;
+															   C.exp_sharp_pos = pos;
+															});
+															C.exp_catch_pos = pos;
+														};
+												});
+										});
+									})
+							) new_body new_clauses in
+						let r = C.Try({C.exp_try_type = (match r1 with | C.Try t -> t.C.exp_try_type | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, compacting case's failed" });
+									   C.exp_try_body = r1;
+									   C.exp_catch_clause = {
+													C.exp_catch_flow_type = !spec_flow_int;
+													C.exp_catch_flow_var = None (*Some (fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum)*);
+													C.exp_catch_var = None;
+													C.exp_catch_body = C.Sharp({
+														 C.exp_sharp_type = (CP.Prim Void);
+														 C.exp_sharp_flow_type = C.Sharp_ct 
+														 {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
+														 C.exp_sharp_val = Cast.Sharp_no_val;
+														 C.exp_sharp_unpack = true;
+														 C.exp_sharp_pos = pos;});
+													C.exp_catch_pos = pos};
+									   C.exp_try_pos = pos}) in
+							(r, C.void_type)
+				)
+  (*| _ -> failwith (Iprinter.string_of_exp ie)*)
+  
+and translate_catch prog proc pos c :C.exp_catch = match c with 
+	 | { I.exp_catch_var = cv;
+		 I.exp_catch_flow_type = cvt;
+		 I.exp_catch_flow_var = cfv;
+		 I.exp_catch_body = cb;																					   
+		 I.exp_catch_pos = pos}->	
+				if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
+																  Err.error_text = "can not catch a not raisable object" }
+				else begin
+			   match cv with
+			   | Some x ->
+					if (String.compare cvt c_flow)=0 then  begin
+						E.push_scope();
+						let new_bd, ct2 = trans_exp prog proc cb in
+						E.pop_scope();
+						{C.exp_catch_flow_type = (Util.get_hash_of_exc c_flow);
+						 C.exp_catch_flow_var = cfv;
+						 C.exp_catch_var = Some (Cpure.Prim Void,x);
+						 C.exp_catch_body = new_bd;																					   
+						 C.exp_catch_pos = pos} end
+					else begin
+					E.push_scope();
+					let alpha = E.alpha_name x in
+					E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
+					(*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
+					let new_bd, ct2 = trans_exp prog proc cb in
+					(*let _ = print_string ("\n rrr2 -> \n") in*)
+					let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
+					E.pop_scope();
+						let r = {C.exp_catch_flow_type = (match ct with 
+								| CP.OType ot-> (Util.get_hash_of_exc ot) 
+								| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
+						 C.exp_catch_flow_var = cfv;
+						 C.exp_catch_var = Some (ct,alpha);
+						 C.exp_catch_body = new_bd;																					   
+						 C.exp_catch_pos = pos} in r end
+		       | None ->  
+					E.push_scope();
+					let new_bd, ct2 = trans_exp prog proc cb in
+					E.pop_scope();
+					{	C.exp_catch_flow_type = Util.get_hash_of_exc cvt;
+						C.exp_catch_flow_var = cfv;
+						C.exp_catch_var = None;
+						C.exp_catch_body = new_bd;																					   
+						C.exp_catch_pos = pos}
+			   end
+	(*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
+ 
 
 and default_value (t : CP.typ) pos : C.exp =
   match t with
@@ -2842,64 +3429,6 @@ and set_mingled_name (prog : I.prog_decl) =
     | [] -> ()
   in (helper1 prog.I.prog_proc_decls; helper2 prog.I.prog_data_decls)
 
-and convert_while_body (body0 : I.exp) (w_call : ident)
-  (w_args : I.exp list) : I.exp =
-  match body0 with
-  | I.Break pos ->
-      I.Return { I.exp_return_val = None; I.exp_return_pos = pos; }
-  | I.Continue pos ->
-      I.CallNRecv
-        {
-          I.exp_call_nrecv_method = w_call;
-          I.exp_call_nrecv_arguments = w_args;
-          I.exp_call_nrecv_pos = pos;
-        }
-  | I.Block { I.exp_block_body = e; I.exp_block_pos = pos } ->
-      let ce = convert_while_body e w_call w_args
-      in I.Block { I.exp_block_body = ce; I.exp_block_pos = pos; }
-  | I.Cond
-      {
-        I.exp_cond_condition = e1;
-        I.exp_cond_then_arm = e2;
-        I.exp_cond_else_arm = e3;
-        I.exp_cond_pos = pos
-      } ->
-      let ce2 = convert_while_body e2 w_call w_args in
-      let ce3 = convert_while_body e3 w_call w_args
-      in
-        I.Cond
-          {
-            I.exp_cond_condition = e1;
-            I.exp_cond_then_arm = ce2;
-            I.exp_cond_else_arm = ce3;
-            I.exp_cond_pos = pos;
-          }
-  | I.Seq { I.exp_seq_exp1 = e1; I.exp_seq_exp2 = e2; I.exp_seq_pos = pos }
-      ->
-      let ce1 = convert_while_body e1 w_call w_args in
-      let ce2 = convert_while_body e2 w_call w_args
-      in
-        I.Seq
-          { I.exp_seq_exp1 = ce1; I.exp_seq_exp2 = ce2; I.exp_seq_pos = pos;
-          }
-  | I.While
-      {
-        I.exp_while_condition = e1;
-        I.exp_while_body = e2;
-        I.exp_while_specs = prepost;
-        I.exp_while_pos = pos
-      } ->
-      let ce2 = convert_while_body e2 w_call w_args
-      in
-        I.While
-          {
-            I.exp_while_condition = e1;
-            I.exp_while_body = ce2;
-            I.exp_while_specs = prepost;
-            I.exp_while_pos = pos;
-          }
-  | _ -> body0
-
 and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
   match ce with
   | C.Seq
@@ -3023,13 +3552,9 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 				| Cformula.ECase ({
 							Cformula.formula_case_branches = cb;				
 							} as b) ->
-					Cformula.ECase
-						{
-							b 
-							with 
+					Cformula.ECase{	b with 
 								Cformula.formula_case_branches = List.map (fun (c1,c2)->
 									(c1,(inner_add_pre (Cpure.mkAnd c1 pf no_pos) branches c2))) cb}
-				 
 				| Cformula.EBase({
 					 Cformula.formula_ext_exists = ext_exists_vars;
 					 Cformula.formula_ext_base = fb;
@@ -3046,13 +3571,13 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
     in inner_add_pre (Cpure.mkTrue no_pos) [] f
   
 and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
-  (f0 : Iformula.struc_formula) stab (sp:bool)(cret_type:Cpure.typ): Cformula.struc_formula = 
+  (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
 	let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
 	(*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula "" f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
 		let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
 			| Iformula.EAssume b->	(*add res, self*)
 					 (*let _ = H.add stab res { sv_info_kind = Known cret_type; } in*)
-					 let nb = trans_formula prog true (self::res::fvars) false b stab in				
+					 let nb = trans_formula prog true (self::res::fvars) false b stab true in				
 					 (*let _ = H.remove stab res in*)
 					Cformula.EAssume ([],nb)
 			| Iformula.ECase b-> 	
@@ -3065,7 +3590,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
 			| Iformula.EBase b-> 			
 				let nc = trans_struc_formula_hlp b.Iformula.formula_ext_continuation 
 								(fvars @ (fst (List.split(Iformula.heap_fv b.Iformula.formula_ext_base))))in
-				let nb = trans_formula prog quantify fvars false b.Iformula.formula_ext_base stab in
+				let nb = trans_formula prog quantify fvars false b.Iformula.formula_ext_base stab false in
 				let ex_inst = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_explicit_inst in
 				let ext_impl = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_implicit_inst in
 				let ext_exis = List.map (fun c-> trans_var c stab b.Iformula.formula_ext_pos) b.Iformula.formula_ext_exists in
@@ -3091,7 +3616,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
                    Err.report_error { Err.error_loc = Cformula.pos_of_struc_formula r; Err.error_text ="self is not allowed in pre/postcondition";}
                  else if List.mem res pre_fv then
                      Err.report_error{ Err.error_loc = Cformula.pos_of_struc_formula r; Err.error_text = "res is not allowed in precondition";}
-                   else if sp then
+                   else (*if sp then
 						(try
                         let resinfo = H.find stab res in
                           match resinfo.sv_info_kind with
@@ -3102,12 +3627,12 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
                                 Err.report_error{Err.error_loc = Cformula.pos_of_struc_formula r;Err.error_text ="res is used inconsistently";}
                           | Unknown ->Err.report_error{Err.error_loc = Cformula.pos_of_struc_formula r;Err.error_text = "can't infer type for res";}
                       with | Not_found -> r)
-					  else r  in
+					  else *)r  in
 	let _ = type_store_clean_up r stab in
 	r
 			  
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
-  (f0 : IF.formula) stab : CF.formula =
+  (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   (*let f3 = convert_heap2 prog f0 in*)
 	(*let _ = print_string ("pre: "^(Iprinter.string_of_formula f3)^"\n post: "^(Iprinter.string_of_formula f1)^"\n") in*)
   (*let f2 =
@@ -3123,45 +3648,53 @@ and trans_formula1 prog quantify fvars sep_collect f0 stab : CF.formula =*)
   | IF.Or
       { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2; IF.formula_or_pos = pos
       } ->
-      let tf1 = trans_formula prog quantify fvars sep_collect f1 stab in
-      let tf2 = trans_formula prog quantify fvars sep_collect f2 stab
+      let tf1 = trans_formula prog quantify fvars sep_collect f1 stab clean_res in
+      let tf2 = trans_formula prog quantify fvars sep_collect f2 stab clean_res
       in CF.mkOr tf1 tf2 pos
   | IF.Base
       {
         IF.formula_base_heap = h;
         IF.formula_base_pure = p;
+		IF.formula_base_flow = fl;
         IF.formula_base_branches = br;
         IF.formula_base_pos = pos
       } ->
-      (let _ = if sep_collect then 
-	   (collect_type_info_pure (IF.flatten_branches p br) stab;
-		collect_type_info_heap prog h stab) else () in 
-       let ch = linearize_formula prog f0 stab in
-       (*let ch1 = linearize_formula prog false [] f0 stab in*)
-         let _ = if sep_collect then (if quantify
-          then
-            (let tmp_stab = H.create 103
-             in
-               (U.copy_keys fvars stab tmp_stab;
-                H.clear stab;
-                U.copy_keys fvars tmp_stab stab))
-          else ()) else () in 
-          ch)
+      (
+		
+		 let rl = Cformula.res_retrieve stab clean_res fl in
+ 	     let _ = if sep_collect then 
+		   (collect_type_info_pure (IF.flatten_branches p br) stab;
+			collect_type_info_heap prog h stab) else () in 
+		   let ch = linearize_formula prog f0 stab in
+		   (*let ch1 = linearize_formula prog false [] f0 stab in*)
+			 let _ = if sep_collect then (if quantify
+			  then
+				(let tmp_stab = H.create 103
+				 in
+				   (U.copy_keys fvars stab tmp_stab;
+					H.clear stab;
+					U.copy_keys fvars tmp_stab stab;))
+			  else ()) else () in 
+			 (Cformula.res_replace stab rl clean_res fl);ch)
   | IF.Exists
       {
         IF.formula_exists_qvars = qvars;
         IF.formula_exists_heap = h;
         IF.formula_exists_pure = p;
+		IF.formula_exists_flow = fl;
         IF.formula_exists_branches = br;
         IF.formula_exists_pos = pos
       } ->
-      (let _ = if sep_collect then (collect_type_info_pure (IF.flatten_branches p br) stab;
+      (
+	 	let rl = Cformula.res_retrieve stab clean_res fl in
+		let _ = if sep_collect then (collect_type_info_pure (IF.flatten_branches p br) stab;
 		collect_type_info_heap prog h stab) else () in 
        let f1 =
          IF.Base
            {
              IF.formula_base_heap = h;
              IF.formula_base_pure = p;
+			 IF.formula_base_flow = fl;
              IF.formula_base_branches = br;
              IF.formula_base_pos = pos;
            } in
@@ -3175,9 +3708,9 @@ and trans_formula1 prog quantify fvars sep_collect f0 stab : CF.formula =*)
              in
                (U.copy_keys fvars stab tmp_stab;
                 H.clear stab;
-                U.copy_keys fvars tmp_stab stab))
+                U.copy_keys fvars tmp_stab stab;))
           else ())else () in
-          ch)
+		  (Cformula.res_replace stab rl clean_res fl);ch)
 and
   linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =		
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
@@ -3255,13 +3788,15 @@ and
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
     let br = base.IF.formula_base_branches in
+	let fl = base.IF.formula_base_flow in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
     let new_p = Cpure.arith_simplify new_p in
+	let new_fl = trans_flow_formula fl pos in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
     let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify f)) new_br in
-    (new_h, new_p, type_f, new_br) in
+    (new_h, new_p, type_f, new_fl, new_br) in
     match f0 with
     | IF.Or
         {
@@ -3273,26 +3808,32 @@ and
         let lf2 = linearize_formula prog f2 stab in
         let result = CF.mkOr lf1 lf2 pos in result
     | IF.Base base -> 
-		let nh,np,nt,nb = (linearize_base base base.Iformula.formula_base_pos) in
-		CF.mkBase nh np nt nb base.Iformula.formula_base_pos 
+		let nh,np,nt,nfl,nb = (linearize_base base base.Iformula.formula_base_pos) in
+		CF.mkBase nh np nt nfl nb base.Iformula.formula_base_pos 
     | IF.Exists
         {
           IF.formula_exists_heap = h; 
           IF.formula_exists_pure = p;
           IF.formula_exists_branches = br;
+		  IF.formula_exists_flow = fl;
 		  IF.formula_exists_qvars = qvars;
           IF.formula_exists_pos = pos
         } ->
         let base ={
             IF.formula_base_heap = h;
             IF.formula_base_pure = p;
+			IF.formula_base_flow = fl;
             IF.formula_base_branches = br;
             IF.formula_base_pos = pos;
           } in 
-		let nh,np,nt,nb = linearize_base base pos in
-		CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nb pos 
+		let nh,np,nt,nfl,nb = linearize_base base pos in
+		CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
 		
 
+and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
+	{ Cformula.formula_flow_interval = Util.get_hash_of_exc f0;
+			   Cformula.formula_flow_link = None} 
+		
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
   match f0 with
   | IP.BForm bf -> CP.BForm (trans_pure_b_formula bf stab)
@@ -3440,7 +3981,9 @@ and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
     in
       match tmp with
       | Some tmp_k -> k.sv_info_kind <- tmp_k
-      | None -> report_error pos (var ^ " is used inconsistently")
+      | None -> 
+	  ((print_stab stab);
+		report_error pos (var ^ " is used inconsistently: "^(print_spec_var_kind k.sv_info_kind)^" "^(print_spec_var_kind var_kind)^"\n"))
   with | Not_found -> H.add stab var { sv_info_kind = var_kind; id = fresh_int ()}
 
 and collect_type_info_pure (p0 : IP.formula) (stab : spec_var_table) : unit =
@@ -3627,29 +4170,35 @@ and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
           Err.error_text = "arithmetic is not allowed in pointer term";
         }
 
-and collect_type_info_formula prog f0 stab = 
+and collect_type_info_formula prog f0 stab filter_res = 
 	(*let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in*)
+	let helper pure  branches heap = 
+		(collect_type_info_pure pure stab;
+		let _ = List.map (fun (c1,c2)->collect_type_info_pure c2 stab) branches in
+		collect_type_info_heap prog heap stab)	in
 	match f0 with
-	| Iformula.Or b-> ( collect_type_info_formula prog b.Iformula.formula_or_f1 stab;
-						collect_type_info_formula prog b.Iformula.formula_or_f2 stab)
-	| Iformula.Exists b -> (collect_type_info_pure b.Iformula.formula_exists_pure stab;
-							let _ = List.map (fun (c1,c2)->collect_type_info_pure c2 stab) b.Iformula.formula_exists_branches in
-							collect_type_info_heap prog b.Iformula.formula_exists_heap stab)
-	| Iformula.Base b ->(collect_type_info_pure b.Iformula.formula_base_pure stab;
-							let _ = List.map (fun (c1,c2)->collect_type_info_pure c2 stab) b.Iformula.formula_base_branches in
-							collect_type_info_heap prog b.Iformula.formula_base_heap stab)
+	| Iformula.Or b-> ( collect_type_info_formula prog b.Iformula.formula_or_f1 stab filter_res;
+						collect_type_info_formula prog b.Iformula.formula_or_f2 stab filter_res)
+	| Iformula.Exists b -> 
+		let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_exists_flow in
+		(helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap);	
+		(Cformula.res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
+	| Iformula.Base b ->
+		let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
+		(helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
+		(Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow) 
 
 and type_store_clean_up (f:Cformula.struc_formula) stab = () (*if stab to big,  -> get list of quantified vars, remove them from stab*)
 							
 and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab = 
 	let rec inner_collector (f0:Iformula.struc_formula) = 
 		let rec helper (f0:Iformula.ext_formula) = match f0 with
-			| Iformula.EAssume b-> let _ = collect_type_info_formula prog b stab in ()
+			| Iformula.EAssume b-> let _ = collect_type_info_formula prog b stab true in ()
 			| Iformula.ECase b ->  let _ = List.map (fun (c1,c2)->
 											let _ = collect_type_info_pure c1 stab in
 											inner_collector c2) b.Iformula.formula_case_branches in ()
 			| Iformula.EBase b ->  
-								   let _ = collect_type_info_formula prog b.Iformula.formula_ext_base stab in
+								   let _ = collect_type_info_formula prog b.Iformula.formula_ext_base stab false in
 								   let _ = inner_collector b.Iformula.formula_ext_continuation in ()								
 			in
 		let _ = List.map helper f0 in 
@@ -3906,7 +4455,7 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
 	    | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
 		
 	
-	let normalize_base heap p br pos : Iformula.formula* ((ident*primed)list) =
+	let normalize_base heap p fl br pos : Iformula.formula* ((ident*primed)list) =
 	    let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
 	    let cp = case_normalize_pure_formula h b p in
 	    let new_p = Ipure.mkAnd cp link_f pos in
@@ -3917,7 +4466,7 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
 	         let excluded_evars = h in
 	         let tmp_evars2 = List.filter(fun c-> (not(List.mem c excluded_evars))&&((fst c)!=self)) (if b then h_evars @tmp_evars1 else h_evars) in
 	         let tmp_evars3 = U.remove_dups tmp_evars2 in tmp_evars3)in
-	    let result = Iformula.mkExists tmp_evars new_h new_p new_br pos in
+	    let result = Iformula.mkExists tmp_evars new_h new_p fl new_br pos in
 		let used_vars = Util.difference nu tmp_evars in
 	      if not (Util.empty tmp_evars)  then
 	         Debug.pprint ("linearize_constraint: " ^
@@ -3934,10 +4483,12 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
 		(Iformula.Or {b with Iformula.formula_or_f1 = f1; Iformula.formula_or_f2 = f2}, (Util.remove_dups (l1@l2)))
 	    | Iformula.Base b -> normalize_base  b.Iformula.formula_base_heap 
 											   b.Iformula.formula_base_pure 
+											   b.Iformula.formula_base_flow
 											   b.Iformula.formula_base_branches 
 											   b.Iformula.formula_base_pos
 	    | Iformula.Exists b-> normalize_base b.Iformula.formula_exists_heap 
-											 b.Iformula.formula_exists_pure 
+											 b.Iformula.formula_exists_pure
+											 b.Iformula.formula_exists_flow
 											 b.Iformula.formula_exists_branches 
 											 b.Iformula.formula_exists_pos in
 	helper f
@@ -4036,7 +4587,7 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 							"\n impl: "^(Iprinter.string_of_var_list implvar)^"\nanon to exist base: "^
 							(Iprinter.string_of_formula onb)^"\n new_base: "^
 							(Iprinter.string_of_formula nb)^"\n new_cont: "^
-							(Iprinter.string_of_struc_formula "" nc)^"\n") in
+							(Iprinter.string_of_struc_formula nc)^"\n") in
 						Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
 				let r = (Iformula.EBase ({
 					Iformula.formula_ext_base = nb;
@@ -4155,11 +4706,35 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 	  | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = rename_exp ren b.Iast.exp_unary_exp}
 	  | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
 	  | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
-	  | Iast.While b-> Iast.While{
+	  | Iast.While b-> 
+		let nw = match b.Iast.exp_while_wrappings with
+						| None -> None
+						| Some e -> Some (rename_exp ren e)  in
+			Iast.While{
 				  Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
 				  Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
+				  Iast.exp_while_label = b.Iast.exp_while_label;
+				  Iast.exp_while_f_name = b.Iast.exp_while_f_name;
+				  Iast.exp_while_wrappings = nw;
 				  Iast.exp_while_specs = Iformula.subst_struc (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) b.Iast.exp_while_specs;
 				  Iast.exp_while_pos = b.Iast.exp_while_pos}
+	  | Iast.Try b -> 
+			Iast.Try { b with
+				Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
+				Iast.exp_catch_clauses = List.map (fun c-> {c with
+												  Iast.exp_catch_flow_var = (match c.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
+												  Iast.exp_catch_var = (match c.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
+												  Iast.exp_catch_body = rename_exp ren c.Iast.exp_catch_body;}
+				) b.Iast.exp_catch_clauses;
+				Iast.exp_finally_clause = List.map (fun c-> {c with Iast.exp_finally_body = rename_exp ren c.Iast.exp_finally_body;}) b.Iast.exp_finally_clause;}
+	 | Iast.Raise b-> 
+			Iast.Raise {b with
+				Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
+										| None -> None 
+										| Some e -> Some (rename_exp ren e));
+				Iast.exp_raise_type = (match b.Iast.exp_raise_type with
+					| Iast.Const_flow _ -> b.Iast.exp_raise_type
+					| Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))}
 	  in
  helper ren f 
 
@@ -4280,6 +4855,36 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
 			let nb,nh,np,_ = case_normalize_exp prog nh np b.Iast.exp_while_body in
 			let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false in
 			(Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p,[])
+  | Iast.Try b-> 
+			let nb,nh,np,_ = case_normalize_exp prog h p b.Iast.exp_try_block in
+			let ncl = List.map (fun c-> 
+									let ncv,nh,np,ren = match c.Iast.exp_catch_var with
+											| None -> (None,h,p,[])
+											| Some e-> let nn = (Ipure.fresh_old_name e) in
+													((Some nn),(nn,Primed)::h,(nn,Primed)::p,[(e,nn)])in
+									let ncfv,nh,np,ren = match c.Iast.exp_catch_flow_var with
+											| None -> (None,nh,np,ren)
+											| Some e-> let nn = (Ipure.fresh_old_name e) in
+													((Some nn),(nn,Primed)::nh,(nn,Primed)::np,(e,nn)::ren)in
+									let nb = rename_exp ren c.Iast.exp_catch_body in			
+									let nb,_,_,_ = case_normalize_exp prog nh np nb in									
+								{c with 
+									  Iast.exp_catch_var = ncv ;
+									  Iast.exp_catch_flow_type = c.Iast.exp_catch_flow_type;
+									  Iast.exp_catch_flow_var = ncfv;
+									  Iast.exp_catch_body = nb;}) b.Iast.exp_catch_clauses in 
+			let nfl = List.map (fun c-> let nf,_,_,_ = case_normalize_exp prog nh np c.Iast.exp_finally_body in
+										{c with Iast.exp_finally_body = nf}) b.Iast.exp_finally_clause in
+				(Iast.Try {b with 
+								Iast.exp_try_block = nb;
+								Iast.exp_catch_clauses = ncl;
+								Iast.exp_finally_clause = nfl;
+							},h,p,[])
+  | Iast.Raise b-> (Iast.Raise {b with 
+						Iast.exp_raise_val = (match b.Iast.exp_raise_val with
+												| None -> None
+												| Some e -> let nc,_,_,_ = (case_normalize_exp prog h p e) in
+													Some nc)},h,p,[])
 
 
 

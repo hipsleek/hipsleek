@@ -85,7 +85,15 @@
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
-     ("global", GLOBAL)]
+     ("global", GLOBAL);
+	 (*exception related*)
+	 (flow, FLOW flow);
+	 ("try", TRY);
+	 ("catch", CATCH);
+	 ("finally", FINALLY);
+	 ("throws", THROWS);
+	 ("raise",RAISE);
+	]
 }
 
 let alpha = ['a'-'z' 'A'-'Z' '_']

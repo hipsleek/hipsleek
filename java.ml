@@ -22,9 +22,10 @@ module CP = Cpure
 let java_code = Buffer.create 1000
 
 let rec convert_to_java (prog : prog_decl) (main_class : string) : string = 
-  ignore (List.map convert_data prog.prog_data_decls);
+  Error.report_error{Error.error_loc = no_pos; Error.error_text = "feature discontinued"}
+  (*ignore (List.map convert_data prog.prog_data_decls);
   convert_methods main_class prog.prog_proc_decls;
-  Buffer.contents java_code
+  Buffer.contents java_code*)
 
 and convert_data (ddef : data_decl) : unit = 
   if (not (ddef.data_name = "Object")) && (not (ddef.data_name = "String")) then begin
@@ -193,7 +194,7 @@ and convert_field ((t, v), l) =
   of this class
 *)
 and convert_methods main_class (pdefs : proc_decl list) =
-  Buffer.add_string java_code ("public class " ^ main_class ^ " {\n");
+	Buffer.add_string java_code ("public class " ^ main_class ^ " {\n");
   ignore (List.map convert_method pdefs);
   Buffer.add_char java_code '}'
 
@@ -229,7 +230,8 @@ and java_of_proc_decl p =
 	^ (String.concat ", " (List.map 
 							 (fun pr -> (Iprinter.string_of_typ pr.param_type) 
 								^ " " ^ pr.param_name) p.proc_args)) 
-	^ ") "
+	^ ") "^
+	"throws "^(String.concat "," p.proc_exceptions)
 	^ "\n" ^ body
 
 and java_of_exp = function
@@ -333,7 +335,11 @@ and java_of_exp = function
   | Dprint l                       -> ""
   | Debug ({exp_debug_flag = f})   -> ""
   | This _ -> "this"
-
+  | Raise b -> (match b.exp_raise_val with 
+				| Some b1-> "throw "^(java_of_exp b1)
+				| None -> Error.report_error{Error.error_loc = b.exp_raise_pos; Error.error_text = "can not translate properly into java code (raise with no expression)"})
+  | Try b -> ""
+				
 and add_semicolon (str : string) : string =
   let l = String.length str in
 	if l = 0 then str

@@ -29,6 +29,11 @@ let string_of_typ = function
   | P.OType ot      -> if ((String.compare ot "") ==0) then "ptr" else ot
 ;;
 
+let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
+				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
+
+
+
 let string_of_constraint_relation m = match m with
   | Cpure.Unknown -> " ?  "
   | Cpure.Subsumed -> " <  "
@@ -44,7 +49,7 @@ let rec string_of_h_formula h = match h with
       (string_of_h_formula h1) ^ " * " ^ (string_of_h_formula h2)
   | DataNode ({h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs; h_formula_data_pos = pos})  ->
 	  (string_of_spec_var sv) ^ "::" ^ c 
-	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var (*(List.tl (List.tl*) svs (*))*))) ^ ">"
+	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">"
   | ViewNode ({h_formula_view_node = sv; 
 			   h_formula_view_name = c; 
 			   h_formula_view_arguments = svs; 
@@ -167,7 +172,17 @@ and string_of_pure_formula_branches (f, l) =
 
 (* pretty printing for a cformula *)                                                         (*NOT DONE*)
 
-let rec string_of_t_formula = function
+let string_of_flow_store l = (String.concat " " (List.map (fun h-> (h.formula_store_name^"= "^
+						(let rr = h.formula_store_value.formula_flow_interval in
+							(string_of_int (fst rr))^"-"^(string_of_int (snd rr)))^" ")) l))
+
+let rec string_of_flow_formula f c = 
+	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
+	")="^(Util.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
+	
+
+
+and string_of_t_formula = function
 (* commented on 09.06.08
  | TypeExact ({t_formula_sub_type_var = v;
 				t_formula_sub_type_type = c}) -> 
@@ -191,16 +206,18 @@ let rec string_of_formula = function
 		   formula_base_pure = p; 
 		   formula_base_branches = b; 
 		   formula_base_type = t;
+		   formula_base_flow = fl;
 		   formula_base_pos = pos}) -> 
-      (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b)) (* ^ " & " ^ (string_of_t_formula t) *)
+      (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b))^"&"^(string_of_flow_formula "FLOW" fl) (* ^ " & " ^ (string_of_t_formula t) *)
   | Exists ({formula_exists_qvars = svs; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
 		     formula_exists_branches = b; 
 			 formula_exists_type = t;
+			 formula_exists_flow = fl;
 			 formula_exists_pos = pos}) -> 
       "(EX " ^ (String.concat ", " (List.map string_of_spec_var svs)) 
-      ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b))
+      ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b))^"&"^(string_of_flow_formula "FLOW" fl)
 	  ^ (* " & " ^ (string_of_t_formula t)^ *) ")"
 
 (* function to print a list of type F.formula * F.formula *)
@@ -281,6 +298,9 @@ let need_parenthesis e = match e with
   | _                                                        -> true
 ;;
 
+let string_of_sharp st = match st with
+	| Sharp_ct t -> string_of_flow_formula "" t
+	| Sharp_v  f -> "flow_var "^f
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
   | Java ({exp_java_code = code}) -> code
@@ -340,12 +360,22 @@ let rec string_of_exp = function
 	  "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
   | Print (i, l)-> "print " ^ (string_of_int i) 
-  | Return ({exp_return_type = _;
-	     exp_return_val = eo;
-	     exp_return_pos = l}) -> 
-	     (match eo with 
-	     |Some e -> "return " ^ (string_of_exp e) 
-	     | None   -> "return")
+  | Sharp ({exp_sharp_flow_type = st;
+	     exp_sharp_val = eo;
+	     exp_sharp_pos = l}) ->begin
+		 match st with
+		 | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
+									 (match eo with 
+										|Sharp_prog_var e -> "return " ^ (snd e)
+										| _   -> "return")
+						 else  (match eo with 
+					| Sharp_prog_var e -> "throw " ^ (snd e)
+					| Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
+					| _   -> "throw "^(string_of_sharp st))
+		 | _ -> (match eo with 
+					| Sharp_prog_var e -> "throw " ^ (snd e)
+					| Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
+					| _   -> "throw "^(string_of_sharp st))end 
   | SCall ({exp_scall_type = _;
 	   exp_scall_method_name = id;
 	   exp_scall_arguments = idl;
@@ -372,6 +402,15 @@ let rec string_of_exp = function
 	    exp_while_pos = l})  -> 
 	    "while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n"
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
+  | Try b -> 
+	let c = b.exp_catch_clause.exp_catch_flow_type in
+	"try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
+				(match b.exp_catch_clause.exp_catch_flow_var with 
+					| Some c -> (" @"^c^" ")
+					| _ -> " ")^
+				 (match b.exp_catch_clause.exp_catch_var with 
+					| Some (a,b) -> ((string_of_typ a)^":"^b^" ")
+					| _ -> " ")^") \n\t"^(string_of_exp b.exp_catch_clause.exp_catch_body)
 ;;
 
 

@@ -69,7 +69,16 @@ and coercion_type =
   | Left
   | Equiv
   | Right
-
+   
+and sharp_flow = 
+	| Sharp_ct of F.flow_formula
+	| Sharp_v of ident
+	
+and sharp_val = 
+	| Sharp_no_val 
+	| Sharp_finally of ident
+	| Sharp_prog_var of typed_ident
+	
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
 				   exp_assert_pos : loc }
@@ -126,7 +135,7 @@ and exp_new = { exp_new_class_name : ident;
 				exp_new_pos : loc }
 
 and exp_return = { exp_return_type : P.typ;
-				   exp_return_val : exp option;
+				   exp_return_val : ident option;
 				   exp_return_pos : loc }
 
 (* static call *)
@@ -140,6 +149,26 @@ and exp_seq = { exp_seq_type : P.typ;
 				exp_seq_exp1 : exp;
 				exp_seq_exp2 : exp;
 				exp_seq_pos : loc }
+				
+and exp_sharp = {
+				   exp_sharp_type : P.typ;
+				   exp_sharp_flow_type :sharp_flow;(*the new flow*)
+				   exp_sharp_val :sharp_val;(*returned value*)
+				   exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
+				   exp_sharp_pos : loc;
+				}
+				
+and exp_catch = { 
+				  exp_catch_flow_type : nflow ;
+				  exp_catch_flow_var : ident option;
+				  exp_catch_var : typed_ident option;
+				  exp_catch_body : exp;																					   
+				  exp_catch_pos : loc }
+				  				  
+and exp_try = { exp_try_type : P.typ;
+				exp_try_body : exp;
+				exp_catch_clause : exp_catch ;
+				exp_try_pos : loc }
 
 and exp_this = { exp_this_type : P.typ;
 				 exp_this_pos : loc }
@@ -196,7 +225,7 @@ and exp = (* expressions keep their types *)
   | New of exp_new
   | Null of loc
   | Print of (int * loc)
-  | Return of exp_return
+ (* | Return of exp_return*)
   | SCall of exp_scall
   | Seq of exp_seq
   | This of exp_this
@@ -205,6 +234,8 @@ and exp = (* expressions keep their types *)
   | Unfold of exp_unfold
   | Unit of loc
   | While of exp_while
+  | Sharp of exp_sharp
+  | Try of exp_try
 
 let distributive_views : string list ref = ref ([])
 
@@ -295,9 +326,9 @@ let rec type_of_exp (e : exp) = match e with
 		  exp_new_pos = _}) -> Some (P.OType c) (*---- ok? *)
   | Null _ -> Some (P.OType "")
   | Print _ -> None
-  | Return ({exp_return_type = t; 
+ (* | Return ({exp_return_type = t; 
 			 exp_return_val = _; 
-			 exp_return_pos = _}) -> Some t
+			 exp_return_pos = _}) -> Some t*)
   | SCall ({exp_scall_type = t;
 			exp_scall_method_name = _;
 			exp_scall_arguments = _;
@@ -310,6 +341,8 @@ let rec type_of_exp (e : exp) = match e with
   | Unit _ -> Some void_type
   | While _ -> Some void_type
   | Unfold _ -> Some void_type
+  | Try _ -> Some void_type
+  | Sharp b -> Some b.exp_sharp_type
 
 and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
@@ -464,14 +497,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | New _ -> []
   | Null _ -> []
   | Print _ -> []
-  | Return ({exp_return_type = _;
-			 exp_return_val = oe;
-			 exp_return_pos = _}) -> 
-	  begin
-		match oe with
-		  | Some e -> callees_of_exp e
-		  | None -> []
-	  end
+  | Sharp b -> []
   | SCall ({exp_scall_type = _;
 			exp_scall_method_name = n;
 			exp_scall_arguments = _;
@@ -489,6 +515,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_while_body = e;
 			exp_while_spec = _;
 			exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
+  | Try b -> U.remove_dups ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause.exp_catch_body))
   | Unfold _ -> []
 
 let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
@@ -673,6 +700,7 @@ and exp_to_check (e:exp) :bool = match e with
   | FConst _
   | Assert _ 
   | Cond _
+  | Try _ 
   | Java _ -> false
   
   | BConst _
@@ -684,8 +712,9 @@ and exp_to_check (e:exp) :bool = match e with
   | Var _
   | Null _
   | New _
-  | Return _
-  | SCall _ -> true
+  | Sharp _
+  | SCall _
+  -> true
   
   
 and pos_of_exp (e:exp) :loc = match e with
@@ -712,6 +741,61 @@ and pos_of_exp (e:exp) :loc = match e with
   | Java b  -> b.exp_java_pos
   | Assert b -> b.exp_assert_pos
   | New b -> b.exp_new_pos
-  | Return b -> b.exp_return_pos
+  | Sharp b -> b.exp_sharp_pos
   | SCall b -> b.exp_scall_pos
   | While b -> b.exp_while_pos
+  | Try b -> b.exp_try_pos
+  
+  
+let rec check_proper_return cret_type exc_list f = 
+	let sub_flow_type fl res_t = match res_t with 
+		| Cpure.OType ot -> F.subsume_flow fl (Util.get_hash_of_exc ot)
+		| _ -> false in
+	let rec check_proper_return_f f0 = match f0 with
+	| F.Base b->
+		let res_t,b_rez = F.get_result_type f0 in
+		let fl_int = b.F.formula_base_flow.F.formula_flow_interval in
+		if b_rez then
+			if (F.equal_flow_interval !n_flow_int fl_int) then 
+				if not (sub_type res_t cret_type) then 					
+					Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
+				else ()
+			else 
+				if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
+				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
+				else if not(sub_flow_type fl_int res_t) then
+				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
+				else ()			
+		else 
+			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
+									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
+			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+				Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
+			else ()
+	| F.Exists b->
+		let res_t,b_rez = F.get_result_type f0 in
+		let fl_int = b.F.formula_exists_flow.F.formula_flow_interval in
+		if b_rez then
+			if (F.equal_flow_interval !n_flow_int fl_int) then 
+				if not (sub_type res_t cret_type) then 					
+					Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
+				else ()
+			else 
+				if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
+				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
+				else if not(sub_flow_type fl_int res_t) then
+				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
+				else ()			
+		else 
+			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
+									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
+			 if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
+				Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}
+			else ()			
+	| F.Or b-> check_proper_return_f b.F.formula_or_f1 ; check_proper_return_f b.F.formula_or_f2 in
+	let helper f0 = match f0 with 
+		| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
+		| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
+		| F.EAssume (_,b)-> if (F.isConstFalse b)||(F.isConstTrue b) then () else check_proper_return_f b
+		in
+	List.iter helper f
