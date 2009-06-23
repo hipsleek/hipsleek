@@ -130,25 +130,21 @@ and coq_of_b_formula b =
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
-print_endline ("formula: " ^ (Cprinter.string_of_pure_formula f));
-coq_of_formula2 f
-
-and coq_of_formula2 f =
 match f with
     | CP.BForm b -> "(" ^ (coq_of_b_formula b) ^ ")"
     | CP.Not (p, _) ->
 	    begin match p with
 		| CP.BForm (CP.BVar (bv, _)) -> (coq_of_spec_var bv) ^ " = 0"
-		| _ -> " (~ (" ^ (coq_of_formula2 p) ^ ")) "
+		| _ -> " (~ (" ^ (coq_of_formula p) ^ ")) "
         end
     | CP.Forall (sv, p, _) ->
-	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula2 p) ^ ") "
+	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
     | CP.Exists (sv, p, _) ->
-	    " (exists " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ "," ^ (coq_of_formula2 p) ^ ") "
+	    " (exists " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
     | CP.And (p1, p2, _) ->
-	    "(" ^ (coq_of_formula2 p1) ^ " /\\ " ^ (coq_of_formula2 p2) ^ ")"
+	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
     | CP.Or (p1, p2, _) ->
-	    "(" ^ (coq_of_formula2 p1) ^ " \\/ " ^ (coq_of_formula2 p2) ^ ")"
+	    "(" ^ (coq_of_formula p1) ^ " \\/ " ^ (coq_of_formula p2) ^ ")"
 
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
@@ -171,22 +167,27 @@ let rec check fd coq_file_name : bool=
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
 (* writing the Coq file *)
-let write (pe : CP.formula) : bool =
+let write (ante : CP.formula) (conseq : CP.formula) : bool =
+  print_string "*"; flush stdout;
+(*
+print_endline ("formula: " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq));
+*)
   coq_file_number.contents <- !coq_file_number + 1;
   let coq_file_name = "test" ^ string_of_int !coq_file_number ^ ".v" in
   let coq_file = open_out coq_file_name in
-  let vstr = coq_of_var_list (Util.remove_dups (CP.fv pe)) in
-  let fstr = coq_of_formula pe in
+  let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
+  let astr = coq_of_formula ante in
+  let cstr = coq_of_formula conseq in
   output_string coq_file "Require Import decidez.\n";
 (*  output_string coq_file "Require Import PresTac.\n";*)
   output_string coq_file "Set Firstorder Depth 5.\n";
-  output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ fstr ^ ")%Z.\n");
-  output_string coq_file ("intros; try do 10 hyp; repeat sim; auto with *; try do 10 hyp; repeat sim; auto with *; try do 10 hyp; repeat sim; auto with *; repeat hyp; repeat sim; auto with *; simpl; simpl in *; eauto; try omega; try discriminate; try congruence; elimtype False; auto.\nQed.\n"); (* || prestac *)
+  output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
+  output_string coq_file ("intros; try do 10 hyp; repeat sim; auto with *; try do 10 hyp; repeat sim; auto with *; try do 10 hyp; repeat sim; auto with *; repeat hyp; repeat sim; auto with *; simpl in *; eauto; try omega; try discriminate; try congruence; elimtype False; auto.\nQed.\n"); (* || prestac *)
   flush coq_file;
   close_out coq_file;
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
   if !log_all_flag == true then	begin
-    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ fstr ^ ".\n");
+    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ astr ^ " -> " ^ cstr ^ ".\n");
 	flush log_file;
   end;
   match (Sys.command ("coqc -R ../Presburger Presburger " ^ coq_file_name ^ " > res"^ string_of_int !coq_file_number ^".out 2> /dev/null")) with (* -byte *)
@@ -202,7 +203,8 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	output_string log_file "\n[coq.ml]: #imply\n";
   max_flag := false;
   choice := 1;
-  write (CP.mkOr (CP.mkNot ante no_pos) conseq no_pos)
+  write ante conseq
+(*  write (CP.mkOr (CP.mkNot ante no_pos) conseq no_pos) *)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then

@@ -23,76 +23,6 @@ end.
 Require Import ZArith.
 Require Import Classical.
 
-Ltac hyp :=
-  match goal with
-  | H : ?A = Z0 |- _ => try rewrite H in *; clear H A
-  | H : ?A = Zpos _ |- _ => compute in H; try rewrite H in *; clear H A
-  | H : ?A = ?B |- _ => try rewrite H in *; clear H A
-  | H : ?A = _ |- _ => try rewrite -> H in *; clear H A
-  | H : _ = ?A |- _ => try rewrite <- H in *; clear H A
-  | H : ?A /\ ?B |- _ => destruct H
-  | H : exists A : _, _ |- _ => destruct H
-  | H : ?A \/ ?B |- _ => destruct H
-  | H : ~ ~ _ |- _ => let X := fresh "H" in assert (X := NNPP _ H); clear H
-  | |- forall A : _, _=> intro
-  | |- ~ ?X => intro
-  | |- ?A \/ ?B => elim (classic A); intro; [left; assumption | right]
-(*  | |- ?A \/ ?B => elim (classic B); intro; [right; assumption | left]*)
-  | |- ?A /\ ?B => split
-  | |- exists A : _, _ =>
-       try (exists 0%Z; repeat hyp; auto with *; reflexivity );
-       try (exists 1%Z; repeat hyp; auto with *; reflexivity );
-       try (exists 2%Z; repeat hyp; auto with *; reflexivity );
-       try (exists 3%Z; repeat hyp; auto with *; reflexivity );
-       match goal with
-       | X : Z |- _ =>
-         exists X%Z; repeat hyp; auto with *; reflexivity
-       end
-
-  | H1 : ?x = ?y, H2 : ?x <> ?y |- _ => contradict H2; assumption
-  
-  | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H
-  | H : nil = _ ++ _ |- _ => symmetry in H; apply app_eq_nil in H; destruct H
-
-  | H : _ :: _ = nil |- _ => symmetry in H; elimtype False; contradict H; apply nil_cons
-  | H : nil = _ :: _ |- _ => elimtype False; contradict H; apply nil_cons
-  
-  | H : In ?x nil |- _ => contradict H
-  | H : In ?x ?L |- nil = ?L => elimtype False
-  | H : In ?x ?L |- ?L = nil => elimtype False
-  | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
-  
-  | |- nil <> _ :: _ => apply nil_cons
-  | |- _ :: _ <> nil => symmetry; apply nil_cons
-  | |- nil = _ :: _ => elimtype False
-  | |- _ :: _ = nil => elimtype False
-  
-  | |- ?x :: ?L = ?L => elimtype False
-  | |- ?L = ?x :: ?L => elimtype False
-
-  | H : ~ _ |- False => contradict H
-end.
-
-Ltac hyp2 :=
-  match goal with
-  | H : (?X = ?X) |- _ => clear H
-  end.
-  
-Lemma helper : (forall a b:Z, a < b -> b <= a + 1 -> b = a + 1)%Z.
-auto with *.
-Qed.
-
-Ltac hyp3 :=
-  match goal with
-  | H : (Zlt ?X ?Y), H2: (Zle ?Y (Zplus ?X (Zpos xH))) |- _ => 
-    let Z := fresh "H" in assert (Z := helper _ _ H H2); clear H H2
-  end.
-  
-Ltac hyp4 :=
-  match goal with
-  | H : ?X, H2: ?X |- _ => clear H2
-  end.
-
 Ltac sim :=
   let apply_rev_unit x L :=
     replace (rev (L ++ x :: (@nil Z))) with (x :: rev L) in * by ( symmetry; apply rev_unit ) in
@@ -170,4 +100,83 @@ Ltac sim :=
     | H : context f [Z_of_nat (?x1 + ?x2)] |- _ => apply_inj_plus x1 x2
     | |- context f [Z_of_nat (?x1 + ?x2)] => apply_inj_plus x1 x2
 end.
+
+Ltac hyp :=
+  match goal with
+  | H : ?A = Z0 |- _ => try rewrite H in *; clear H A
+  | H : ?A = Zpos _ |- _ => compute in H; try rewrite H in *; clear H A
+  | H : ?A = ?B |- _ => try rewrite H in *; clear H A
+  | H : ?A = _ |- _ => try rewrite -> H in *; clear H A
+  | H : _ = ?A |- _ => try rewrite <- H in *; clear H A
+  | H : ?A /\ ?B |- _ => destruct H
+  | H : exists A : _, _ |- _ => destruct H
+  | H : ?A \/ ?B |- _ => destruct H
+  | H : ~ ~ _ |- _ => let X := fresh "H" in assert (X := NNPP _ H); clear H
+  | |- forall A : _, _=> intro
+  | |- ~ ?X => intro
+  | |- ?A \/ ?B => elim (classic A); intro; [left; assumption | right]
+(*  | |- ?A \/ ?B => elim (classic B); intro; [right; assumption | left]*)
+  | |- ?A /\ ?B => split
+  | |- exists A : Z, _ =>
+       try (exists 0%Z; repeat hyp; auto with *; reflexivity );
+       try (exists 1%Z; repeat hyp; auto with *; reflexivity );
+       try (exists 2%Z; repeat hyp; auto with *; reflexivity );
+       try (exists 3%Z; repeat hyp; auto with *; reflexivity );
+       match goal with
+       | X : Z |- _ =>
+         exists X%Z; repeat hyp; auto with *; reflexivity
+       end
+  | |- exists L1 : list Z, _  /\ L1 = ?L2 =>
+	   exists L2
+(*  | |- exists L : list Z, _ =>
+       try (exists (@nil Z); repeat hyp; repeat sim; auto with * );
+       match goal with
+       | X : list Z |- _ =>
+         try (exists X; repeat hyp; repeat sim; auto with * )
+       end
+*)
+
+  | H1 : ?x = ?y, H2 : ?x <> ?y |- _ => contradict H2; assumption
+  
+  | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H
+  | H : nil = _ ++ _ |- _ => symmetry in H; apply app_eq_nil in H; destruct H
+
+  | H : _ :: _ = nil |- _ => symmetry in H; elimtype False; contradict H; apply nil_cons
+  | H : nil = _ :: _ |- _ => elimtype False; contradict H; apply nil_cons
+  
+  | H : In ?x nil |- _ => contradict H
+  | H : In ?x ?L |- nil = ?L => elimtype False
+  | H : In ?x ?L |- ?L = nil => elimtype False
+  | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
+  
+  | |- nil <> _ :: _ => apply nil_cons
+  | |- _ :: _ <> nil => symmetry; apply nil_cons
+  | |- nil = _ :: _ => elimtype False
+  | |- _ :: _ = nil => elimtype False
+  
+  | |- ?x :: ?L = ?L => elimtype False
+  | |- ?L = ?x :: ?L => elimtype False
+
+  | H : ~ _ |- False => contradict H
+end.
+
+Ltac hyp2 :=
+  match goal with
+  | H : (?X = ?X) |- _ => clear H
+  end.
+  
+Lemma helper : (forall a b:Z, a < b -> b <= a + 1 -> b = a + 1)%Z.
+auto with *.
+Qed.
+
+Ltac hyp3 :=
+  match goal with
+  | H : (Zlt ?X ?Y), H2: (Zle ?Y (Zplus ?X (Zpos xH))) |- _ => 
+    let Z := fresh "H" in assert (Z := helper _ _ H H2); clear H H2
+  end.
+  
+Ltac hyp4 :=
+  match goal with
+  | H : ?X, H2: ?X |- _ => clear H2
+  end.
   

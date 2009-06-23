@@ -1849,13 +1849,13 @@ and simp_mult (e : exp) :  exp =
     |  BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
     |  BagIntersect (el, l) -> BagIntersect (List.map (acc_mult m) el, l)
     |  BagDiff (e1, e2, l) -> BagDiff (acc_mult m e1, acc_mult m e2, l)
-    |  List (el, l) -> List (List.map (acc_mult m) el, l)
-    |  ListAppend (el, l) -> ListAppend (List.map (acc_mult m) el, l)
-	|  ListCons (v, e, l) -> ListCons (v, acc_mult m e, l)
-	|  ListHead (e, l) -> ListHead (acc_mult m e, l)
-	|  ListTail (e, l) -> ListTail (acc_mult m e, l)
-	|  ListLength (e, l) -> ListLength (acc_mult m e, l)
-	|  ListReverse (e, l) -> ListReverse (acc_mult m e, l)
+    |  List (_, l)
+    |  ListAppend (_, l)
+	|  ListCons (_, _, l)
+	|  ListTail (_, l)
+	|  ListReverse (_, l)
+	|  ListHead (_, l)
+	|  ListLength (_, l) -> match m with | None -> e0 | Some c ->  Mult (c, e0, l)
 
   in acc_mult None e
 
