@@ -2331,7 +2331,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				  end (* end of emty anodes case *)
 				end
 			  | Match (matches) -> begin
-				  let _ = print_string("check the aliases") in	
+				 (* let _ = print_string("check the aliases") in	*)
 			 	  (* one or more aliased nodes are found, try all of them one by one. *)
 				  (* When trying a node, add the remaining back to resth1. *)
 (*******************************************************************************************************************************************************************************************)
@@ -2404,7 +2404,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 (*******************************************************************************************************************************************************************************************)
 												if is_view anode then
 													(Debug.devel_pprint ("do_coercion for " ^ (Cprinter.string_of_h_formula anode) ^ "\n") pos;
-													do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_br rhs_p rhs_t lhs_b rhs_b ln2 is_folding pos)
+													do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos)
 												else ([], []) in
 											enable_distribution := copy_enable_distribution;
 											let prf1 = mkMatch ctx0 conseq ln2 [prf1] in
@@ -2444,7 +2444,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 							  end else if !Globals.use_coercion then begin
 								(* two different predicates match, try coercion *)
 								Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion") pos;
-								let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_br rhs_p rhs_t lhs_b rhs_b ln2 is_folding pos in
+								let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos in
 								let prf = mkCoercion2 ctx0 conseq prfs in
 								  (res, prf)
 							  end else begin
@@ -2460,7 +2460,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 								([], NoAlias) (* there no hope an alias at
 												 non-materialized arg would expose an object *)
 							  end else*)
-								let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_br rhs_p rhs_t lhs_b rhs_b ln2 is_folding pos in
+								let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos in
 								let prf = mkCoercion2 ctx0 conseq prfs in
 								  (res, prf)
 							else
@@ -2476,9 +2476,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				  (* check one match *)
 				let rec check_node_helper (all_nodes : Context.context list) : (context list * proof list) = match all_nodes with
 					| (anode, r_flag, _, rest_heap) :: rest ->
-						let _ = print_string("check alias for " ^ (Cprinter.string_of_h_formula anode) ^ "and rest_heap = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in
+						(*let _ = print_string("check alias for " ^ (Cprinter.string_of_h_formula anode) ^ "and rest_heap = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in*)
 						let rs1, prf1 = check_aliased_node (anode, r_flag) rest_heap in
-						let _ = print_string("result of check alias: " ^ (Cprinter.string_of_context_list rs1) ^ "\n") in
+(*						let _ = print_string("result of check alias: " ^ (Cprinter.string_of_context_list rs1) ^ "\n") in*)
 						let rs2, prfs2 =
 						  if !Globals.use_set then check_node_helper rest 
 						  else ([], [])
@@ -2490,9 +2490,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				let rs, prfs = check_node_helper matches in
 					let prf =
 						if U.empty (List.tl prfs) then List.hd prfs
-						else let _ = print_string("can do match\n") in mkMMatch ctx0 conseq ln2 prfs
+						else (*let _ = print_string("can do match\n") in*) mkMMatch ctx0 conseq ln2 prfs
 					in
-						let _ = print_string("result of check node: " ^ (Cprinter.string_of_context_list rs) ^ "\n") in
+					(*	let _ = print_string("result of check node: " ^ (Cprinter.string_of_context_list rs) ^ "\n") in*)
 						(rs, prf)
 				end
 		end
@@ -2555,7 +2555,7 @@ begin
 	let tmp_rho = List.combine lhs_fv fresh_lhs_fv in
 	let coer_lhs = CF.subst tmp_rho coer_lhs in
 	let coer_rhs = CF.subst tmp_rho coer_rhs in
-	let lhs_heap, lhs_guard, lhs_branches, _ = split_components coer_lhs in
+	let lhs_heap, lhs_guard,lhs_fl, lhs_branches, _ = split_components coer_lhs in
 	  match node, lhs_heap with
 		| ViewNode ({h_formula_view_node = p1;
 					 h_formula_view_name = c1;
@@ -2637,7 +2637,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 (******************** here it was the test for coerce&match *************************)
 	let coer_lhs = coer.coercion_head in
 	let coer_rhs = coer.coercion_body in
-	let lhs_heap, lhs_guard, lhs_branches, _ = split_components coer_lhs in
+	let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
 	  match node, lhs_heap with
 		| ViewNode ({h_formula_view_node = p1;
 					 h_formula_view_name = c1;
@@ -2728,12 +2728,12 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 	(*end	*)
 	
 (*******************************************************************************************************************************************************************************************)
-and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos =
+and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos =
 (*******************************************************************************************************************************************************************************************)
 	flush stdout;
 	if Util.empty coer.coercion_univ_vars then ([], Failure)
 	else begin
-	  let f = mkBase resth1 lhs_p lhs_t lhs_br pos in (* Assume coercions have no branches *)
+	  let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in(* Assume coercions have no branches *)
 	  let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: apply_universal: "
 								  ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos in
 		(*do_universal anode f coer*)
@@ -2743,18 +2743,18 @@ and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_br lhs_b rhs_b
 (*******************************************************************************************************************************************************************************************)
 (* do_coercion *)
 (*******************************************************************************************************************************************************************************************)
-and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_br rhs_p rhs_t lhs_b rhs_b ln2 is_folding pos =
+and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos =
 	Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
 	let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in
 	let coers1, univ_coers = List.partition (fun c -> Util.empty c.coercion_univ_vars) coers1 in
 	  (* universal coercions *)
 	(*let _ = print_string("[do_coercion]: number of univ coer " ^ (string_of_int (List.length univ_coers)) ^ "--> call apply universal \n") in*)
-	let univ_res_tmp = List.map (fun coer -> apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
+	let univ_res_tmp = List.map (fun coer -> apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos) univ_coers in
 	let univ_res, _ = List.split univ_res_tmp in
 	let univ_res = List.concat univ_res in
 	  (* left coercions *)
 	(*let _ = print_string("[do_coercion]: number of univ coer " ^ (string_of_int (List.length coers1)) ^ "--> call apply_left_coercion\n") in  *)
-	let tmp1 = List.map (*apply_left_coercion coers1 *) (fun coer -> apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_br lhs_b rhs_b c1 is_folding pos) coers1 in
+	let tmp1 = List.map (*apply_left_coercion coers1 *) (fun coer -> apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 is_folding pos) coers1 in
 	let tmp_res1, tmp_prf1 = List.split tmp1 in
 	let tmp_res1 = List.concat tmp_res1 in
 	let tmp_prf1 = List.concat tmp_prf1 in
@@ -2762,7 +2762,7 @@ and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lh
 	let tmp_res1 = univ_res @ tmp_res1 in
 	  (* right coercions *)
 	let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
-	let tmp2 = List.map (*apply_right_coercion coers2 *) (fun coer -> apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t lhs_b rhs_b c2 is_folding pos) coers2 in
+	let tmp2 = List.map (*apply_right_coercion coers2 *) (fun coer -> apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t rhs_fl lhs_b rhs_b c2 is_folding pos) coers2 in
 	let tmp_res2, tmp_prf2 = List.split tmp2 in
 	let tmp_res2 = List.concat tmp_res2 in
 	let tmp_prf2 = List.concat tmp_prf2 in
@@ -2781,9 +2781,9 @@ and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lh
 (*******************************************************************************************************************************************************************************************)
 (* apply_left_coercion *)
 (*******************************************************************************************************************************************************************************************)
-and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_br lhs_b rhs_b c1 is_folding pos =
+and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 is_folding pos =
 	(*let _ = print_string("left coercion\n") in*)
-	let f = mkBase resth1 lhs_p lhs_t lhs_br pos in
+	let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
 	let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
 								^ "left_coercion: c1 = "
 								^ c1 ^ "\n") pos in
@@ -2801,9 +2801,9 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lh
 (*******************************************************************************************************************************************************************************************)
 (* apply_right_coercion *)
 (*******************************************************************************************************************************************************************************************)
-and apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t lhs_b rhs_b c2 is_folding pos =
+and apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t rhs_fl lhs_b rhs_b c2 is_folding pos =
 (*let _ = print_string("right coercion\n") in*)
-let f = mkBase resth2 rhs_p rhs_t [] pos in
+let f = mkBase resth2 rhs_p rhs_t rhs_fl [] pos in
 let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
 							^ "right_coercion: c2 = "
 							^ c2 ^ "\n") pos in

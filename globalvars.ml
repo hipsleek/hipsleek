@@ -276,8 +276,29 @@ let rec find_read_write_global_var
 		let w = IdentSet.union wc wb in
 		(r,w)
 	  end
-
-
+  | I.Try e ->	
+		let (rb,wb) = find_read_write_global_var global_vars local_vars e.I.exp_try_block in
+		let l_catch = List.map (fun c ->
+					let ident_list = match (c.I.exp_catch_var, c.I.exp_catch_flow_var) with
+						| None, None -> []
+						| None, Some v -> [v]
+						| Some v, None -> [v]
+						| Some v1, Some v2 -> v1::[v2] in			
+					let ident_set = to_IdentSet ident_list in
+					let new_global = IdentSet.diff global_vars ident_set in
+					let new_local = IdentSet.union local_vars ident_set in
+					(find_read_write_global_var new_global new_local c.I.exp_catch_body)
+				) e.I.exp_catch_clauses  in
+		let l_final = List.map (fun c -> find_read_write_global_var global_vars local_vars c.I.exp_finally_body) e.I.exp_finally_clause  in
+		let all_r, all_w = List.split ((rb,wb)::(l_catch @ l_final)) in
+		((union_all all_r),(union_all all_w))
+  | I.Raise e -> 
+	begin 
+		match e.I.exp_raise_val with 
+		| None  -> (IdentSet.empty, IdentSet.empty)
+		| Some e -> find_read_write_global_var global_vars local_vars e
+		end
+  
 (* Construct the read/write variable declarations from the read/write sets *)
 let rec to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
 	(I.exp_var_decl list * I.exp_var_decl list) =
@@ -542,7 +563,18 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_while_condition = new_cond; exp_while_body = new_body } in
 		I.While new_exp
 	  end
-
+  | I.Try e ->
+		I.Try {e with 
+			I.exp_try_block = extend_body temp_procs e.I.exp_try_block;
+			I.exp_catch_clauses = List.map (fun c -> 
+				{c with I.exp_catch_body = extend_body temp_procs c.I.exp_catch_body}) e.I.exp_catch_clauses;
+			I.exp_finally_clause = List.map (fun c-> 
+				{c with I.exp_finally_body = (extend_body temp_procs c.I.exp_finally_body)}) e.I.exp_finally_clause;
+			}
+  | I.Raise e -> I.Raise {e with 
+		I.exp_raise_val = match e.I.exp_raise_val with 
+			| None -> None
+			| Some e -> Some (extend_body temp_procs e)}
 
 
 (********* Rename local variables when there is conflict ********)
@@ -665,6 +697,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 			let new_ident_list = List.map (create_new_ids global_vars) ident_list in
 			let renlist = List.map2 join2 ident_list new_ident_list in
 			let new_exp2 = Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
+			let new_exp2 = check_and_change global_vars new_exp2 in
 			let new_var_decls = List.map2 change_fst3 e1.I.exp_var_decl_decls new_ident_list in
 			let new_exp1 = I.VarDecl { e1 with I.exp_var_decl_decls = new_var_decls } in
 			let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
@@ -674,6 +707,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 			let new_ident_list = List.map (create_new_ids global_vars) ident_list in
 			let renlist = List.map2 join2 ident_list new_ident_list in
 			let new_exp2 = Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
+			let new_exp2 = check_and_change global_vars new_exp2 in
 			let new_const_decls = List.map2 change_fst3 e1.I.exp_const_decl_decls new_ident_list in
 			let new_exp1 = I.ConstDecl { e1 with I.exp_const_decl_decls = new_const_decls } in
 			let new_exp = { e with I.exp_seq_exp1 = new_exp1; I.exp_seq_exp2 = new_exp2 } in
@@ -697,8 +731,40 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_while_condition = new_cond; exp_while_body = new_body } in
 		I.While new_exp
 	  end
-		
-
+ | I.Try e ->
+		I.Try {e with 
+			I.exp_try_block = check_and_change global_vars e.I.exp_try_block;
+			I.exp_catch_clauses = List.map (fun c-> 			
+				let (f_catch_var, int_catch_var ) = match c.I.exp_catch_var with
+					| None -> (None , [])
+					| Some v ->
+						let s = (create_new_ids global_vars v) in
+						(Some s, [s]) in
+				let (f_flow_var, int_flow_var ) = match c.I.exp_catch_flow_var with
+					| None -> (None , [])
+					| Some v ->
+						let s = (create_new_ids global_vars v) in
+						(Some s, [s]) in				
+				let ident_list = int_catch_var @ int_flow_var in
+				let new_ident_list = List.map (create_new_ids global_vars) ident_list in
+				let renlist = List.combine ident_list new_ident_list in
+				let new_exp2 = Astsimp.rename_exp renlist c.I.exp_catch_body in
+					{c with 
+						I.exp_catch_var = f_catch_var;
+						I.exp_catch_flow_var = f_flow_var;
+						I.exp_catch_body = (check_and_change global_vars new_exp2);
+					}
+			) e.I.exp_catch_clauses;
+			
+			I.exp_finally_clause = List.map (fun c -> 
+				let nf_b = (check_and_change global_vars c.I.exp_finally_body) in			
+				{c with I.exp_finally_body = nf_b}) e.I.exp_finally_clause;
+			}
+  | I.Raise e -> I.Raise {e with 
+		I.exp_raise_val = match e.I.exp_raise_val with 
+			| None -> None
+			| Some e -> Some (check_and_change global_vars e)}
+  
 (* Rename the parameters and local variables if there is conflict with global variables *)
 let resolve_name_conflict (proc : I.proc_decl) : I.proc_decl =
   match proc.I.proc_body with
