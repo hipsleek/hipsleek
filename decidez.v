@@ -105,7 +105,7 @@ Ltac hyp :=
   match goal with
   | H : ?A = Z0 |- _ => try rewrite H in *; clear H A
   | H : ?A = Zpos _ |- _ => compute in H; try rewrite H in *; clear H A
-  | H : ?A = ?B |- _ => try rewrite H in *; clear H A
+(*  | H : ?A = ?B |- _ => try rewrite H in *; clear H A *)
   | H : ?A = _ |- _ => try rewrite -> H in *; clear H A
   | H : _ = ?A |- _ => try rewrite <- H in *; clear H A
   | H : ?A /\ ?B |- _ => destruct H
@@ -126,8 +126,8 @@ Ltac hyp :=
        | X : Z |- _ =>
          exists X%Z; repeat hyp; auto with *; reflexivity
        end
-  | |- exists L1 : list Z, _  /\ L1 = ?L2 =>
-	   exists L2
+  | |- exists L1 : list Z, _ =>
+	   eexists
 (*  | |- exists L : list Z, _ =>
        try (exists (@nil Z); repeat hyp; repeat sim; auto with * );
        match goal with
@@ -136,6 +136,7 @@ Ltac hyp :=
        end
 *)
 
+  | H : ?x <> ?x |- _ => contradict H; reflexivity
   | H1 : ?x = ?y, H2 : ?x <> ?y |- _ => contradict H2; assumption
   
   | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H

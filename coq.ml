@@ -168,11 +168,9 @@ let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_o
 
 (* writing the Coq file *)
 let write (ante : CP.formula) (conseq : CP.formula) : bool =
-  print_string "*"; flush stdout;
-(*
-print_endline ("formula: " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq));
-*)
   coq_file_number.contents <- !coq_file_number + 1;
+(* print_string "*"; flush stdout; *)
+  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq));
   let coq_file_name = "test" ^ string_of_int !coq_file_number ^ ".v" in
   let coq_file = open_out coq_file_name in
   let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
@@ -189,8 +187,8 @@ print_endline ("formula: " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (
   if !log_all_flag == true then	begin
     output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ astr ^ " -> " ^ cstr ^ ".\n");
 	flush log_file;
-  end;
-  match (Sys.command ("coqc -R ../Presburger Presburger " ^ coq_file_name ^ " > res"^ string_of_int !coq_file_number ^".out 2> /dev/null")) with (* -byte *)
+  end;						(* -R ../Presburger Presburger *)
+  match (Sys.command ("coqc " ^ coq_file_name ^ " > res"^ string_of_int !coq_file_number ^".out 2> /dev/null")) with (* -byte *)
   | 0 -> 
       if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
       true
