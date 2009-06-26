@@ -226,7 +226,7 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
       IP.ListLength (e1, _) | IP.ListReverse (e1, _) -> look_for_anonymous_exp e1
   | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) | IP.List (e1, _) | IP.ListAppend (e1, _) ->
       look_for_anonymous_exp_list e1
-  | IP.ListCons (e1, e2, _) -> (anon_var e1) @ (look_for_anonymous_exp e2)
+  | IP.ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | _ -> []
 
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
@@ -3393,8 +3393,8 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist stab, pos)
   | IP.ListAppend (elist, pos) ->
       CP.ListAppend (trans_pure_exp_list elist stab, pos)
-  | IP.ListCons ((v, p), e, pos) ->
-      CP.ListCons (trans_var (v,p) stab pos, trans_pure_exp e stab, pos)
+  | IP.ListCons (e1, e2, pos) ->
+      CP.ListCons (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.ListHead (e, pos) ->
       CP.ListHead (trans_pure_exp e stab, pos)
   | IP.ListTail (e, pos) ->
@@ -3673,9 +3673,9 @@ and collect_type_info_list (e0 : IP.exp) stab =
       (collect_type_info_list a stab;
        collect_type_info_list (IP.ListAppend (rest, pos)) stab)
   | IP.ListAppend ([], pos) -> ()
-  | IP.ListCons ((sv, sp), a, pos) -> 
-      (collect_type_info_var sv stab Unknown pos;
-	  collect_type_info_list a stab)
+  | IP.ListCons (a1, a2, pos) -> 
+      (collect_type_info_arith a1 stab;
+	  collect_type_info_list a2 stab)
   | IP.ListTail (a, pos) ->
       (collect_type_info_list a stab)
   | IP.ListReverse (a, pos) ->

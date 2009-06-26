@@ -55,7 +55,7 @@ and exp =
   | BagDiff of (exp * exp * loc)
  	  (* list expressions *)
   | List of (exp list * loc)
-  | ListCons of ((ident * primed) * exp * loc)
+  | ListCons of (exp * exp * loc)
   | ListHead of (exp * loc)
   | ListTail of (exp * loc)
   | ListLength of (exp * loc)
@@ -143,9 +143,10 @@ and afv (af : exp) : (ident * primed) list = match af with
   (*| BagDiff _|BagIntersect _|BagUnion _|Bag _ -> failwith ("afv: bag constraints are not expected")*)
   | List (d, _)
   | ListAppend (d, _) -> Util.remove_dups (List.fold_left (fun a c -> a@(afv c)) [] d)
-  | ListCons (v, a, _) ->
-	  let fv = afv a in
-		Util.remove_dups ([v] @ fv)  
+  | ListCons (a1, a2, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		Util.remove_dups (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
@@ -483,7 +484,7 @@ and e_apply_one (fr, t) e = match e with
 							  e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List ((e_apply_one_list (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list (fr, t) alist), pos)
-  | ListCons (v, a1, pos) -> ListCons ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+  | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListHead (a1, pos) -> ListHead (e_apply_one (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
@@ -517,7 +518,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
       ListLength (e1, _) | ListReverse (e1, _) -> look_for_anonymous_exp e1
   | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) | List (e1, _) | ListAppend (e1, _) ->
       look_for_anonymous_exp_list e1
-  | ListCons (e1, e2, _) -> (anon_var e1) @ (look_for_anonymous_exp e2)
+  | ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | _ -> []
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with

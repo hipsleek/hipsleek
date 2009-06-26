@@ -930,7 +930,7 @@ cexp
   | OLIST opt_cexp_list CLIST {
 	  P.List ($2, get_pos 1)
 	}
-  | cid COLONCOLONCOLON cexp {
+  | cexp COLONCOLONCOLON cexp {
 	  P.ListCons ($1, $3, get_pos 2)
 	}
   | HEAD OPAREN cexp CPAREN {

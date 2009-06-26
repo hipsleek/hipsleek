@@ -85,7 +85,7 @@ and coq_of_exp e0 =
 	  | a::[] -> coq_of_exp a
 	  | a::t -> "(" ^ (coq_of_exp a) ^ " ++ " ^ (coq_of_exp (CP.ListAppend (t, pos))) ^ ")"
 	  end
-  | CP.ListCons (sv, a, _) -> " ( " ^ (coq_of_spec_var sv) ^ " :: " ^ (coq_of_exp a) ^ ")"
+  | CP.ListCons (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
   | CP.ListHead (a, pos) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
   | CP.ListLength (a, pos) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
   | CP.ListTail (a, pos) -> " ( tail " ^ (coq_of_exp a) ^ ")"

@@ -61,7 +61,7 @@ and exp =
   | BagDiff of (exp * exp * loc)
 	  (* list expressions *)
   | List of (exp list * loc)
-  | ListCons of (spec_var * exp * loc)
+  | ListCons of (exp * exp * loc)
   | ListHead of (exp * loc)
   | ListTail of (exp * loc)
   | ListLength of (exp * loc)
@@ -174,9 +174,10 @@ and afv (af : exp) : spec_var list = match af with
   		Util.remove_dups svlist
   | ListAppend (alist, _) -> let svlist = afv_list alist in
   		Util.remove_dups svlist
-  | ListCons (sv, a, _) ->
-	  let fv = afv a in
-		Util.remove_dups ([sv] @ fv)  
+  | ListCons (a1, a2, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		Util.remove_dups (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
@@ -516,7 +517,7 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
   | (List (l1,_),List (l2,_))
   | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
                     else false
-  | (ListCons (v1,e1,_),ListCons (v2,e2,_)) -> (eq_spec_var v1 v2)&&(eqExp e1 e2)
+  | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
   | (ListHead (e1,_),ListHead (e2,_))
   | (ListTail (e1,_),ListTail (e2,_))
   | (ListLength (e1,_),ListLength (e2,_))
@@ -724,7 +725,7 @@ and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
   | (List (l1, _), List (l2, _))
   | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
           else false
-  | (ListCons (v1, e1, _), ListCons (v2, e2, _)) -> (eq_spec_var v1 v2) && (eq_exp e1 e2)
+  | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eq_exp e1 d1) && (eq_exp e2 d2)
   | (ListHead (e1, _), ListHead (e2, _))
   | (ListTail (e1, _), ListTail (e2, _))
   | (ListLength (e1, _), ListLength (e2, _))
@@ -873,7 +874,7 @@ and e_apply_subs sst e = match e with
 							  e_apply_subs sst a2, pos)
   | List (alist, pos) -> List (e_apply_subs_list sst alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_subs_list sst alist, pos)
-  | ListCons (sv, a, pos) -> ListCons (subs_one sst sv, e_apply_subs sst a, pos)
+  | ListCons (a1, a2, pos) -> ListCons (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListHead (a, pos) -> ListHead (e_apply_subs sst a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
@@ -951,7 +952,7 @@ and e_apply_one (fr, t) e = match e with
 							  e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List (e_apply_one_list (fr, t) alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_one_list (fr, t) alist, pos)
-  | ListCons (sv, a, pos) -> ListCons ((if eq_spec_var sv fr then t else sv), e_apply_one (fr, t) a, pos)
+  | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListHead (a, pos) -> ListHead (e_apply_one (fr, t) a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
@@ -1058,7 +1059,7 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
 									  a_apply_par_term sst a2, pos)
   | List (alist, pos) -> List ((a_apply_par_term_list sst alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_par_term_list sst alist), pos)
-  | ListCons (v, a1, pos) -> ListCons (v, a_apply_par_term sst a1, pos)
+  | ListCons (a1, a2, pos) -> ListCons (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | ListHead (a1, pos) -> ListHead (a_apply_par_term sst a1, pos)
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
@@ -1116,7 +1117,7 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
 									  a_apply_one_term (fr, t) a2, pos)
   | List (alist, pos) -> List ((a_apply_one_term_list (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_one_term_list (fr, t) alist), pos)
-  | ListCons (v, a1, pos) -> ListCons (v, a_apply_one_term (fr, t) a1, pos)
+  | ListCons (a1, a2, pos) -> ListCons (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListHead (a1, pos) -> ListHead (a_apply_one_term (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
@@ -1559,7 +1560,7 @@ and e_apply_one_exp (fr, t) e = match e with
 							  e_apply_one_exp (fr, t) a2, pos)
   | List (alist, pos) -> List ((e_apply_one_list_exp (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list_exp (fr, t) alist), pos)
-  | ListCons (v, a1, pos) -> ListCons (v, e_apply_one_exp (fr, t) a1, pos)
+  | ListCons (a1, a2, pos) -> ListCons (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | ListHead (a1, pos) -> ListHead (e_apply_one_exp (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
@@ -1934,7 +1935,7 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   |  BagDiff (e1, e2, l) -> ((Some e), None)
   |  List (el, l) -> ((Some e), None)
   |  ListAppend (el, l) -> ((Some e), None)
-  |  ListCons (v, e1, l) -> ((Some e), None)
+  |  ListCons (e1, e2, l) -> ((Some e), None)
   |  ListHead (e1, l) -> ((Some e), None)
   |  ListTail (e1, l) -> ((Some e), None)
   |  ListLength (e1, l) -> ((Some e), None)
@@ -1982,7 +1983,7 @@ and purge_mult (e :  exp):  exp = match e with
   |  BagDiff (e1, e2, l) ->  BagDiff ((purge_mult e1), (purge_mult e2), l)
   |  List (el, l) -> List ((List.map purge_mult el), l)
   |  ListAppend (el, l) -> ListAppend ((List.map purge_mult el), l)
-  |  ListCons (v, e, l) -> ListCons (v, purge_mult e, l)
+  |  ListCons (e1, e2, l) -> ListCons (purge_mult e1, purge_mult e2, l)
   |  ListHead (e, l) -> ListHead (purge_mult e, l)
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)

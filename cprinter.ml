@@ -97,7 +97,7 @@ let rec string_of_formula_exp = function
 (*  | P.ListAppend ([], l) 				-> ""
   | P.ListAppend (e::[], l)			-> (string_of_formula_exp e) 
   | P.ListAppend (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " ++ " ^ (string_of_formula_exp (P.ListAppend (rest, l))) ^ ")" *)
-  | P.ListCons (v, e, l)     -> (string_of_spec_var v) ^ " ::: " ^ (string_of_formula_exp e)
+  | P.ListCons (e1, e2, l)     -> (string_of_formula_exp e1) ^ " ::: " ^ (string_of_formula_exp e2)
   | P.ListHead (e, l)     -> "head(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListTail (e, l)     -> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)     -> "len(" ^ (string_of_formula_exp e) ^ ")"

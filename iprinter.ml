@@ -121,11 +121,7 @@ let rec string_of_formula_exp = function
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
   | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
-  | P.ListCons (x, e, l)	-> (match x with 
-															|(id, p) -> id ^ (match p with 
-																									| Primed    -> "'" 
-																									| Unprimed  -> "" ))
-								^ ":::" ^ (string_of_formula_exp e)
+  | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
   | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
