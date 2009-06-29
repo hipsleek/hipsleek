@@ -125,8 +125,8 @@ and coq_of_b_formula b =
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _ -> failwith ("No bags in Coq yet")
-  | CP.ListIn (sv, a, _) -> " ( In " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ ")"
-  | CP.ListNotIn (sv, a, _) ->  " ( not ( In " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ "))"
+  | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
 
 (* pretty printing for formulas *)
 and coq_of_formula f =

@@ -33,8 +33,8 @@ and b_formula =
   | BagMin of ((ident * primed) * (ident * primed) * loc)
   | BagMax of ((ident * primed) * (ident * primed) * loc)	
 	  (* lists and list formulae *)
-  | ListIn of ((ident * primed) * exp * loc)
-  | ListNotIn of ((ident * primed) * exp * loc)
+  | ListIn of (exp * exp * loc)
+  | ListNotIn of (exp * exp * loc)
 
 (* Expression *)
 and exp = 
@@ -115,12 +115,14 @@ and bfv (bf : b_formula) = match bf with
   | BagSub (a1, a2, _) -> combine_avars a1 a2
   | BagMax (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
   | BagMin (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
-  | ListIn (v, a, _) -> 
-	  let fv = afv a in
-		Util.remove_dups ([v] @ fv)
-  | ListNotIn (v, a, _) -> 
-	  let fv = afv a in
-		Util.remove_dups ([v] @ fv)	
+  | ListIn (a1, a2, _) -> 
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		Util.remove_dups (fv1 @ fv2)
+  | ListNotIn (a1, a2, _) -> 
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		Util.remove_dups (fv1 @ fv2)
 
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -461,8 +463,8 @@ and b_apply_one (fr, t) bf = match bf with
   | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> BagMax ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
   | BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
-  | ListIn (v, a1, pos) -> ListIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
-  | ListNotIn (v, a1, pos) -> ListNotIn ((if eq_var v fr then t else v), e_apply_one (fr, t) a1, pos)
+  | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -545,8 +547,8 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match
   | BagSub (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | BagMin (b1, b2, _)-> (anon_var b1) @ (anon_var b2)
   | BagMax (b1, b2, _)-> (anon_var b1) @ (anon_var b2)	
-  | ListIn (b1, b2,  _)-> (anon_var b1) @ (look_for_anonymous_exp b2)
-  | ListNotIn (b1, b2, _)-> (anon_var b1) @ (look_for_anonymous_exp b2)
+  | ListIn (b1, b2,  _)-> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | ListNotIn (b1, b2, _)-> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   
 let merge_branches l1 l2 =
   let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in

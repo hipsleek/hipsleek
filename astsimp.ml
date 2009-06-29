@@ -3362,12 +3362,12 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   | IP.BagMin ((v1, p1), (v2, p2), pos) ->
       CP.BagMin (CP.SpecVar (C.int_type, v1, p1),
         CP.SpecVar (C.bag_type, v2, p2), pos)
-  | IP.ListIn ((v, p), e, pos) ->
-      let pe = trans_pure_exp e stab
-      in CP.ListIn ((trans_var (v, p) stab pos), pe, pos)
-  | IP.ListNotIn ((v, p), e, pos) ->
-      let pe = trans_pure_exp e stab
-      in CP.ListNotIn ((trans_var (v, p) stab pos), pe, pos)
+  | IP.ListIn (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListIn (pe1, pe2, pos)
+  | IP.ListNotIn (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListNotIn (pe1, pe2, pos)
 
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
@@ -3509,12 +3509,12 @@ and collect_type_info_b_formula b0 stab =
   | IP.BagMin ((v1, p1), (v2, p2), pos) ->
       (collect_type_info_var v1 stab (Known C.int_type) pos;
        collect_type_info_var v2 stab (Known C.bag_type) pos)
-  | IP.ListIn ((v, p), e, pos) ->
-      (collect_type_info_var v stab Unknown pos;
-       collect_type_info_list e stab)
-  | IP.ListNotIn ((v, p), e, pos) ->
-      (collect_type_info_var v stab Unknown pos;
-       collect_type_info_list e stab)
+  | IP.ListIn (e1, e2, pos) ->
+      (collect_type_info_arith e1 stab;
+       collect_type_info_list e2 stab)
+  | IP.ListNotIn (e1, e2, pos) ->
+      (collect_type_info_arith e1 stab;
+       collect_type_info_list e2 stab)
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
 	let _ = 
       if (IP.is_var a1) && (IP.is_var a2)
@@ -3625,7 +3625,7 @@ and collect_type_info_bag_list_content a0 stab =
           Err.error_loc = pos;
           Err.error_text = "null is not allowed in arithmetic term";
         }
-  | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab Unknown pos
+  | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab (Known C.int_type) pos
   | IP.IConst _ -> ()
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
       IP.Min (a1, a2, pos) ->

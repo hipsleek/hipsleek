@@ -875,10 +875,10 @@ bconstr
 	  (P.BForm (P.BagMin ($3, $5, get_pos 2)), None)
 	}
 	/* list_constr */
-  | cid INLIST cexp {
+  | cexp INLIST cexp {
 	  (P.BForm (P.ListIn ($1, $3, get_pos 2)), None)
 	}
-  | cid NOTINLIST cexp {
+  | cexp NOTINLIST cexp {
 	  (P.BForm (P.ListNotIn ($1, $3, get_pos 2)), None)
 	}
 ;

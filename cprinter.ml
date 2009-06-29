@@ -149,8 +149,8 @@ let string_of_b_formula = function
   | P.BagSub (e1, e2, l)			-> (string_of_formula_exp e1) ^ " <subset> " ^ (string_of_formula_exp e2)
   | P.BagMin (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <min> (" ^ (string_of_spec_var v2) ^ ")"
   | P.BagMax (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <max> (" ^ (string_of_spec_var v2) ^ ")"
-  | P.ListIn (v, e, l)				-> (string_of_spec_var v) ^ " inlist " ^ (string_of_formula_exp e)
-  | P.ListNotIn (v, e, l)			-> (string_of_spec_var v) ^ " notinlist " ^ (string_of_formula_exp e)
+  | P.ListIn (e1, e2, l)			-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
+  | P.ListNotIn (e1, e2, l)			-> (string_of_formula_exp e2) ^ " notinlist " ^ (string_of_formula_exp e2)
 
 ;;
 

@@ -168,18 +168,8 @@ let string_of_b_formula = function
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
   | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-  | P.ListIn (x, e, l)			-> begin (match x with 
-    |(id, p) -> id ^ (match p with 
-      | Primed    -> "'" 
-      | Unprimed  -> "" ))
-  ^ " inlist " ^ (string_of_formula_exp e)
-  end
-  | P.ListNotIn (x, e, l)		-> begin (match x with 
-    |(id, p) -> id ^ (match p with 
-      | Primed    -> "'" 
-      | Unprimed  -> "" ))
-  ^ " notinlist " ^ (string_of_formula_exp e)
-  end
+  | P.ListIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
+  | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
   | _ -> "bag constraint"
 ;;
 
