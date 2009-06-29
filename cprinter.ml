@@ -150,7 +150,7 @@ let string_of_b_formula = function
   | P.BagMin (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <min> (" ^ (string_of_spec_var v2) ^ ")"
   | P.BagMax (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <max> (" ^ (string_of_spec_var v2) ^ ")"
   | P.ListIn (e1, e2, l)			-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
-  | P.ListNotIn (e1, e2, l)			-> (string_of_formula_exp e2) ^ " notinlist " ^ (string_of_formula_exp e2)
+  | P.ListNotIn (e1, e2, l)			-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
 
 ;;
 
