@@ -181,3 +181,74 @@ Ltac hyp4 :=
   | H : ?X, H2: ?X |- _ => clear H2
   end.
   
+(*
+Lemma simpl_x_nil_app : forall (A : Type) (L : list A) (x : A), x :: (@nil A) ++ L = x :: L.
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_app_nil : forall (A : Type) (L : list A), L ++ (@nil A) = L.
+Proof.
+  symmetry; simple apply app_nil_end.
+Qed.
+
+Lemma simpl_nil_app : forall (A : Type) (L : list A), (@nil A) ++ L = L.
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_head_cons : forall (A : Type) (L : list A) (x d : A), hd d (x :: L) = x.
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_tail_nil : forall (A : Type), tail (@nil A) = (@nil A).
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_tail_cons : forall (A : Type) (L : list A) (x : A), tail (x :: L) = L.
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_length_nil : forall (A : Type), length (@nil A) = 0.
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_length_cons : forall (A : Type) (L : list A) (x : A), length (x :: L) = 1 + length L.
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_rev_nil : forall (A : Type), rev (@nil A) = (@nil A).
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Lemma simpl_rev_cons : forall (A : Type) (L : list A) (x : A), rev(x :: L) = rev L ++ x :: (@nil A).
+Proof.
+  intros; simple apply refl_equal.
+Qed.
+
+Hint Rewrite
+  rev_unit
+  app_ass
+  simpl_x_nil_app
+  simpl_app_nil
+  simpl_nil_app
+  simpl_head_cons
+  simpl_tail_nil
+  simpl_tail_cons
+  simpl_length_nil
+  simpl_length_cons
+  app_length
+  rev_length
+  simpl_rev_nil
+  simpl_rev_cons
+  distr_rev
+  rev_involutive
+  inj_0 inj_S
+  inj_plus
+    : simpl_lists. *)
