@@ -22,7 +22,7 @@ end.
 
 Require Import ZArith.
 Require Import Classical.
-
+(*
 Ltac sim :=
   let apply_rev_unit x L :=
     replace (rev (L ++ x :: (@nil Z))) with (x :: rev L) in * by ( symmetry; apply rev_unit ) in
@@ -100,7 +100,7 @@ Ltac sim :=
     | H : context f [Z_of_nat (?x1 + ?x2)] |- _ => apply_inj_plus x1 x2
     | |- context f [Z_of_nat (?x1 + ?x2)] => apply_inj_plus x1 x2
 end.
-
+*)
 Ltac hyp :=
   match goal with
   | H : ?A = Z0 |- _ => try rewrite H in *; clear H A
@@ -126,9 +126,9 @@ Ltac hyp :=
        | X : Z |- _ =>
          exists X%Z; repeat hyp; auto with *; reflexivity
        end
-  | |- exists L1 : list Z, _ =>
+(*  | |- exists L1 : list Z, _ =>
 	   eexists
-(*  | |- exists L : list Z, _ =>
+  | |- exists L : list Z, _ =>
        try (exists (@nil Z); repeat hyp; repeat sim; auto with * );
        match goal with
        | X : list Z |- _ =>
@@ -181,7 +181,7 @@ Ltac hyp4 :=
   | H : ?X, H2: ?X |- _ => clear H2
   end.
   
-(*
+
 Lemma simpl_x_nil_app : forall (A : Type) (L : list A) (x : A), x :: (@nil A) ++ L = x :: L.
 Proof.
   intros; simple apply refl_equal.
@@ -251,4 +251,4 @@ Hint Rewrite
   rev_involutive
   inj_0 inj_S
   inj_plus
-    : simpl_lists. *)
+    : simpl_lists.
