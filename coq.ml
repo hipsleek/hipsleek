@@ -12,6 +12,8 @@ let log_file = open_out "allinput.v"
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
+let coq_running = ref false
+let coq_channels = ref (stdin, stdout)
 
 (* pretty printing for primitive types *)
 let coq_of_prim_type = function
@@ -166,35 +168,58 @@ let rec check fd coq_file_name : bool=
 
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
+(* starting Coq in interactive mode *)
+let start_prover () =
+  coq_channels := Unix.open_process "coqtop -require decidez 2> /dev/null";
+  coq_running := true;
+  print_string "Coq started\n"; flush stdout
+
+(* stopping Coq *)
+let stop_prover () =
+  output_string (snd !coq_channels) ("Quit.\n");
+  flush (snd !coq_channels);
+  ignore (Unix.close_process !coq_channels);
+  coq_running := false;
+  print_string "Coq stopped\n"; flush stdout
+
 (* writing the Coq file *)
 let write (ante : CP.formula) (conseq : CP.formula) : bool =
-  coq_file_number.contents <- !coq_file_number + 1;
-(* print_string "*"; flush stdout; *)
-  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq));
-  let coq_file_name = "test" ^ string_of_int !coq_file_number ^ ".v" in
-  let coq_file = open_out coq_file_name in
+(*  print_string "*"; flush stdout; *)
+(*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
   let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
   let astr = coq_of_formula ante in
   let cstr = coq_of_formula conseq in
-  output_string coq_file "Require Import decidez.\n";
-(*  output_string coq_file "Require Import PresTac.\n";*)
-  output_string coq_file "Set Firstorder Depth 5.\n";
-  output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
-  output_string coq_file ("intros; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; repeat hyp; autorewrite with simpl_lists in *; auto with *; simpl in *; eauto; try omega; try discriminate; try congruence; elimtype False; auto.\nQed.\n"); (* || prestac *)
-  flush coq_file;
-  close_out coq_file;
+  
+  coq_file_number.contents <- !coq_file_number + 1;
+  if !coq_running == false then start_prover ();
+
+  output_string (snd !coq_channels) ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
+  output_string (snd !coq_channels) ("intros; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; repeat hyp; autorewrite with simpl_lists in *; auto with *; simpl in *; eauto; try omega; try discriminate; try congruence; elimtype False; auto.\nQed.\n"); (* || prestac *)
+  flush (snd !coq_channels);
+
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
   if !log_all_flag == true then	begin
-    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ astr ^ " -> " ^ cstr ^ ".\n");
+    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
 	flush log_file;
-  end;						(* -R ../Presburger Presburger *)
-  match (Sys.command ("coqc " ^ coq_file_name ^ " > res"^ string_of_int !coq_file_number ^".out 2> /dev/null")) with (* -byte *)
-  | 0 -> 
+  end;
+  
+  let result = ref false in
+  let finished = ref false in  
+  while not !finished do 
+    let line = input_line (fst !coq_channels) in
+    if line = "test" ^ string_of_int !coq_file_number ^ " is defined" then begin
+	  result := true;
+	  finished := true;
       if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
-      true
-  | _ ->
+	end else if String.length line > 5 && String.sub line 0 5 = "Error" then begin
+	  result := false;
+	  finished := true;
+	  output_string (snd !coq_channels) ("Abort.\n");
+	  flush (snd !coq_channels);
       if !log_all_flag==true then output_string log_file ("[coq.ml]: --> FAIL\n");
-      false
+	end;
+  done;
+  !result
 
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   if !log_all_flag == true then

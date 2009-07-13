@@ -144,7 +144,7 @@ let parse_file_full file_name =
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-		print_string "Parsing...\n";
+		print_string "Parsing...\n"; flush stdout;
         let _ = Util.push_time "Parsing" in
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
@@ -157,11 +157,11 @@ let parse_file_full file_name =
 		End_of_file -> exit 0	  
 
 let process_source_full source =
-  print_string ("\nProcessing file \"" ^ source ^ "\"\n");
+  print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
   let _ = Util.push_time "Preprocessing" in
   let prog = parse_file_full source in
 	if !to_java then begin
-	  print_string ("Converting to Java...");
+	  print_string ("Converting to Java..."); flush stdout;
 	  let tmp = Filename.chop_extension (Filename.basename source) in
 	  let main_class = Util.replace_minus_with_uscore tmp in
 	  let java_str = Java.convert_to_java prog main_class in
@@ -169,19 +169,22 @@ let process_source_full source =
 	  let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
 		output_string jfile java_str;
 		close_out jfile;
-		print_string (" done.\n");
+		print_string (" done.\n"); flush stdout;
 		exit 0
 	end;
   	if (!parse_only) then 
       let _ = Util.pop_time "Preprocessing" in
       print_string (Iprinter.string_of_program prog)
-	else 
-	  (* Global variables translating *)
-       let _ = Util.push_time "Translating global var" in
-     (*
+	else
+	(* Starting the prover (in case of Coq) *)
+	  let _ = Tpdispatcher.start_prover () in
+	  
+	(* Global variables translating *)
+      let _ = Util.push_time "Translating global var" in
+    (*
 	  let global_ptime1 = Unix.times () in
 	  let global_t1 = global_ptime1.Unix.tms_utime +. global_ptime1.Unix.tms_cutime in *)
-	  let _ = print_string ("Translating global variables to procedure parameters...\n") in
+	  let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 	  let intermediate_prog = Globalvars.trans_global_to_param prog in
       let _ = Util.pop_time "Translating global var" in
 	  (* let global_ptime2 = Unix.times () in
@@ -191,7 +194,7 @@ let process_source_full source =
 	  (* let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
-	  let _ = print_string ("Translating to core language...\n") in
+	  let _ = print_string ("Translating to core language...\n"); flush stdout in
 	  let cprog = Astsimp.trans_prog intermediate_prog in
 	  let _ = 
 		if !Globals.verify_callees then begin
@@ -204,7 +207,7 @@ let process_source_full source =
 	  let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
 	  let _ =
 		if !comp_pred then begin
-		  let _ = print_string ("Compiling predicates to Java...") in
+		  let _ = print_string ("Compiling predicates to Java..."); flush stdout in
 		  let compile_one_view vdef = 
 			if (!pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !pred_to_compile) then
 			  let data_def, pbvars = Predcomp.gen_view cprog vdef in
@@ -217,7 +220,7 @@ let process_source_full source =
 			  ()
 		  in
 			ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-			print_string ("\nDone.\n");
+			print_string ("\nDone.\n"); flush stdout;
 			exit 0
 		end 
 	  in
@@ -229,6 +232,10 @@ let process_source_full source =
 	  in
 	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
+		
+		(* Stopping the prover (in case of Coq) *)
+		let _ = Tpdispatcher.stop_prover () in
+		
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");

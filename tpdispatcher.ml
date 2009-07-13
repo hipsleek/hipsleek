@@ -749,3 +749,14 @@ let is_sat f sat_no =
 let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
+
+let start_prover () =
+  match !tp with
+  | Coq -> Coq.start_prover ()
+  | _ -> ()
+  
+let stop_prover () =
+  match !tp with
+  | Coq -> Coq.stop_prover ()
+  | _ -> ()
+
