@@ -181,25 +181,10 @@ let stop_prover () =
   coq_running := false;
   print_string "Coq stopped\n"; flush stdout
 
-(* writing the Coq file *)
-let write (ante : CP.formula) (conseq : CP.formula) : bool =
-(*  print_string "*"; flush stdout; *)
-(*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
-  let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
-  let astr = coq_of_formula ante in
-  let cstr = coq_of_formula conseq in
-  
-  coq_file_number.contents <- !coq_file_number + 1;
-  if !coq_running == false then start_prover ();
-
-  (* if log_all_flag is on -> writing the formula in the coq log file  *)
-  if !log_all_flag == true then	begin
-    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
-	flush log_file;
-  end;
-
+(* sending Coq a formula; nr = nr. of retries *)
+let rec send_formula (f : string) (nr : int) : bool =
   try
-	  output_string (snd !coq_channels) ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
+	  output_string (snd !coq_channels) f;
 	  output_string (snd !coq_channels) ("intros; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; try do 10 hyp; autorewrite with simpl_lists in *; auto with *; repeat hyp; autorewrite with simpl_lists in *; auto with *; simpl in *; eauto; try omega; try discriminate; try congruence; elimtype False; auto.\nQed.\n"); (* || prestac *)
 	  flush (snd !coq_channels);
 	  
@@ -225,8 +210,27 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
 		coq_running := false;
 		print_string "\nCoq crashed\n"; flush stdout;
 		start_prover ();
-		false
-	
+		if nr > 1 then send_formula f (nr - 1) else false
+  
+(* writing the Coq file *)
+let write (ante : CP.formula) (conseq : CP.formula) : bool =
+(*  print_string "*"; flush stdout; *)
+(*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
+  let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
+  let astr = coq_of_formula ante in
+  let cstr = coq_of_formula conseq in
+  
+  coq_file_number.contents <- !coq_file_number + 1;
+  if !coq_running == false then start_prover ();
+
+  (* if log_all_flag is on -> writing the formula in the coq log file  *)
+  if !log_all_flag == true then	begin
+    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
+	flush log_file;
+  end;
+
+  send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
+  
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   if !log_all_flag == true then
 	output_string log_file "\n[coq.ml]: #imply\n";
