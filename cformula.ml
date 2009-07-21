@@ -1193,6 +1193,10 @@ let isTrueCtx ctx = match ctx with
   | Ctx es -> isConstTrue es.es_formula
   | _ -> false
 
+let rec allFalseCtx ctx = match ctx with
+	| Ctx es -> isFalseCtx ctx
+	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
+  
 let mkOCtx ctx1 ctx2 pos =
   if isTrueCtx ctx1 || isTrueCtx ctx2 then
 	true_ctx pos

@@ -57,6 +57,7 @@ bool bubble(node xs)
 	else {
 		tmp = bubble(xs.next);
 		if (xs.val <= xs.next.val) {
+			assert false;
 			flag = false;
 		}
 		else {
