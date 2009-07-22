@@ -202,7 +202,8 @@ and isabelle_of_b_formula b = match b with
       else
 	(isabelle_of_spec_var v1) ^ " \\<in> " ^ (isabelle_of_spec_var v2) ^" & (ALL x0. x0 \\<in>" ^ (isabelle_of_spec_var v2) ^ " --> x0 <= " ^ (isabelle_of_spec_var v1) ^ " )"
   | CP.ListIn _
-  | CP.ListNotIn _ -> failwith ("Lists are not supported in Isabelle")
+  | CP.ListNotIn _
+  | CP.ListAllZero _ -> failwith ("Lists are not supported in Isabelle")
   
 (* pretty printing for formulas *)
 and isabelle_of_formula f =

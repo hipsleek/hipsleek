@@ -147,7 +147,8 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 						else
 						  next_bforms := bf :: !next_bforms
 				  | ListIn _
-				  | ListNotIn _ -> failwith ("Lists are not supported in Mona")
+				  | ListNotIn _
+				  | ListAllZero _ -> failwith ("Lists are not supported in Mona")
 
 			  end (* end of bf :: rest case *)
 			| [] ->
@@ -403,7 +404,8 @@ and normalize_b_formula (bf0 : b_formula) : formula =
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
 	  | ListIn _
-	  | ListNotIn _ -> failwith ("Lists are not supported in Mona")
+	  | ListNotIn _
+	  | ListAllZero _ -> failwith ("Lists are not supported in Mona")
 		  
 (*
   return value:

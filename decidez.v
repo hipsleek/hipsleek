@@ -156,6 +156,50 @@ Hint Rewrite
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
+Lemma count_occ_le_len : forall (L : list Z), count_occ Z_eq_dec L 0%Z <= length L.
+Proof.
+  intro L; induction L as [| a L].
+    simple apply le_n.
+    change (length (a :: L)) with (1 + length L); destruct a as [| p | p].
+	  simpl; omega.
+	  assert (Zpos p > 0)%Z.
+	    simple apply Zgt_pos_0.
+	    assert (Zpos p <> 0)%Z.
+		  omega.
+		  change (count_occ Z_eq_dec (Zpos p :: L) 0%Z) with (count_occ Z_eq_dec L 0%Z); omega.
+	  assert (Zneg p < 0)%Z.
+	    simple apply Zlt_neg_0.
+	    assert (Zneg p <> 0)%Z.
+		  omega.
+		  change (count_occ Z_eq_dec (Zneg p :: L) 0%Z) with (count_occ Z_eq_dec L 0%Z); omega.
+Qed.
+
+Lemma count_occ_cons_eq_len : forall (x : Z) (L : list Z), count_occ Z_eq_dec (x :: L) 0%Z = length (x :: L) -> x = 0%Z /\ count_occ Z_eq_dec L 0%Z = length L.
+Proof.
+  intros x L H; change (length (x :: L)) with (1 + length L) in H; assert (exists y : Z, y = x) as H0.
+    exists x; simple apply refl_equal.
+	destruct H0 as [ x0 ]; destruct x0 as [| p | p] in H0.
+      rewrite <- H0 in *; split.
+	    simple apply refl_equal.
+		change (count_occ Z_eq_dec (0%Z :: L) 0%Z) with (1 + count_occ Z_eq_dec L 0%Z) in H; simple apply eq_add_S; exact H.
+	  assert (Zpos p > 0)%Z as H1.
+	    simple apply Zgt_pos_0.
+		rewrite H0 in H1; assert (x <> 0)%Z as H2.
+		  omega.
+		  apply count_occ_cons_neq with Z Z_eq_dec L x 0%Z in H2; rewrite H2 in H; assert (count_occ Z_eq_dec L 0%Z <= length L).
+		    simple apply count_occ_le_len.
+			omega.
+	  assert (Zneg p < 0)%Z as H1.
+	    simple apply Zlt_neg_0.
+		rewrite H0 in H1; assert (x <> 0)%Z as H2.
+		  omega.
+		  apply count_occ_cons_neq with Z Z_eq_dec L x 0%Z in H2; rewrite H2 in H; assert (count_occ Z_eq_dec L 0%Z <= length L).
+		    simple apply count_occ_le_len.
+			omega.	  
+Qed.
+
+(* ------------------------------------------------------------------------------------------------------------ *)
+
 Ltac hyp :=
   match goal with
  
@@ -183,6 +227,8 @@ Ltac hyp :=
 
   | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
 
+  | H : count_occ Z_eq_dec (?x :: ?L) 0%Z = length (?x :: ?L) |- _ => apply count_occ_cons_eq_len in H; destruct H
+  
   
   | H : _ :: _ = nil |- _ => symmetry in H; contradict H; simple apply nil_cons (* Qed *)
   | H : nil = _ :: _ |- _ => contradict H; simple apply nil_cons (* Qed *)
