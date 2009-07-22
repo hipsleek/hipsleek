@@ -181,10 +181,11 @@ Ltac hyp :=
   | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H
   | H : nil = _ ++ _ |- _ => symmetry in H; apply app_eq_nil in H; destruct H
 
-  | H : _ :: _ = nil |- _ => symmetry in H; elimtype False; contradict H; apply nil_cons
-  | H : nil = _ :: _ |- _ => elimtype False; contradict H; apply nil_cons
-
   | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
+
+  
+  | H : _ :: _ = nil |- _ => symmetry in H; contradict H; simple apply nil_cons (* Qed *)
+  | H : nil = _ :: _ |- _ => contradict H; simple apply nil_cons (* Qed *)
   
   | |- ?x :: _ = ?x :: _ => f_equal
   
