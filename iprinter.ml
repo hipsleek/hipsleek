@@ -109,8 +109,8 @@ let rec string_of_formula_exp = function
 																	| P.Min _   -> (string_of_formula_exp e1) ^ "+"   			      
 																	| _  -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
 			^ (match e2 with 
-					 | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
-					 | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
+					 | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ | P.PrimFuncCall _ -> string_of_formula_exp e2
+					 | _                                                                      -> "(" ^ (string_of_formula_exp e2) ^ ")")
   | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
     then 
       if need_parenthesis e2
@@ -119,22 +119,30 @@ let rec string_of_formula_exp = function
     else 
 			(string_of_formula_exp e1) 
 			^ "-" ^ (string_of_formula_exp e2)										    
-	| P.Mult (i, e, l)          -> (string_of_int i) ^ " * " 
-			^ (if need_parenthesis e then "(" ^ (string_of_formula_exp e) ^ ")" else string_of_formula_exp e)
+(*  | P.Mult (i, e, l)          -> (string_of_int i) ^ " * " 
+			^ (if need_parenthesis e then "(" ^ (string_of_formula_exp e) ^ ")" else string_of_formula_exp e) *)
+  | P.Mult (e1, e2, l) -> 
+	  (if need_parenthesis e1 then 
+		"(" ^ (string_of_formula_exp e1) ^ ")" 
+	  else string_of_formula_exp e1) ^ "*" ^
+	  (if need_parenthesis e2 then 
+		"(" ^ (string_of_formula_exp e2) ^ ")" 
+	  else string_of_formula_exp e2)
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
-	| _ -> "bag constraint"
-;;
+  | P.PrimFuncCall (name, args, l) -> name ^ "(" ^ (string_of_ident_list args) ^ ")"
+  | _ -> "bag constraint"
+
 
 (* pretty printing for a list of pure formulae *)
-let rec string_of_formula_exp_list l = match l with 
+and string_of_formula_exp_list l = match l with 
   | []                         -> ""
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
-;;
-  
+
+
 (* pretty printing for boolean constraints *)
-let string_of_b_formula = function 
+and string_of_b_formula = function 
   | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
   | P.BVar (x, l)               -> (match x with 
     |(id, p) -> id ^ (match p with 
@@ -167,10 +175,10 @@ let string_of_b_formula = function
   | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
 	| _ -> "bag constraint"
-;;
+
 
 (* pretty printing for a pure formula *)
-let rec string_of_pure_formula = function 
+and string_of_pure_formula = function 
   | P.BForm bf                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
   | P.Or (f1, f2, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
@@ -181,15 +189,26 @@ let rec string_of_pure_formula = function
   | P.Exists (x, f, l)            -> "ex " ^ (match x with (id, p) -> id ^ (match p with 
     | Primed    -> "'"
     | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
-;;    
+ 
 
-let is_bool_f = function 
+and is_bool_f = function 
   | F.HTrue | F.HFalse -> true 
   | _                  -> false 
-;;
+
+
+and string_of_apf_type t =
+  (match t with
+  | None -> ""
+  | Some t1 -> "[" ^
+	  (match (fst t1) with
+	  | Exact -> "="
+	  | Allsubtype -> "<:"
+	  | Noscope -> "")
+	  ^ (snd t1) ^ "]")
+
 
 (* pretty printing for a heap formula *)
-let rec string_of_h_formula = function 
+and string_of_h_formula = function 
   | F.Star ({F.h_formula_star_h1 = f1;
 			 F.h_formula_star_h2 = f2;
 			 F.h_formula_star_pos = l} ) -> 
@@ -200,26 +219,45 @@ let rec string_of_h_formula = function
 		"(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"    
   | F.HeapNode ({F.h_formula_heap_node = x;
 				 F.h_formula_heap_name = id;
-				 F.h_formula_heap_arguments = pl;
-				 F.h_formula_heap_pos = l}) -> (match x with 
-				   | (id, p) -> match p with 
+				 F.h_formula_heap_arguments = apfargs;
+				 F.h_formula_heap_pos = l;
+				 F.h_formula_heap_offset = offs;
+			     F.h_formula_heap_apf_type = t;}) -> 
+				   (match x with 
+				   | (id, p) -> 
+					   match p with 
 					   | Primed   -> id ^ "'"  
-					   | Unprimed -> id ) ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">"  
-	| F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
-									F.h_formula_heap2_name = id;
-									F.h_formula_heap2_arguments = args}) ->
-			let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
-			let tmp2 = String.concat ", " tmp1 in
-				v ^ (if p = Primed then "'" else "") ^ "::" ^ id 
-				^ "<" ^ tmp2 ^ ">"
+					   | Unprimed -> id ) ^
+				   (match offs with
+				   | None -> ""
+				   | Some addr_offs ->
+					   (match addr_offs with
+					   | F.ObjField f -> "." ^ f
+					   | F.PlusExp e -> "+" ^ (string_of_formula_exp e)))
+				   ^ "::" ^ id ^ (string_of_apf_type t) ^
+				   "<" ^ (string_of_formula_ext_exp_list apfargs.F.apf_args_head) ^
+				   (match apfargs.F.apf_args_tail with
+				   | None -> ""
+				   | Some e -> "," ^ "$" ^ e )
+				   ^ ">"
+  | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
+				  F.h_formula_heap2_name = id;
+				  F.h_formula_heap2_arguments = args}) ->
+					let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_ext_exp e)) args in
+					let tmp2 = String.concat ", " tmp1 in
+					v ^ (if p = Primed then "'" else "") ^ "::" ^ id 
+					^ "<" ^ tmp2 ^ ">"
   | F.HTrue                         -> ""                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
-;;
+  | F.LambdaFunc ({F.h_formula_func_name = id;
+				   F.h_formula_func_arguments = pl;
+				   F.h_formula_func_pos = l}) 
+	-> id ^ "<" ^ (string_of_formula_ext_exp_list pl) ^ ">"
  
-let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "'" | Unprimed -> "");; 
+and string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "'" | Unprimed -> "")
 
 (* pretty printing for formulae *) 
-let rec string_of_formula = function 
+and string_of_formula = function 
   | Iast.F.Base ({F.formula_base_heap = hf;
 				  F.formula_base_pure = pf;
 				  F.formula_base_flow = fl;
@@ -257,9 +295,8 @@ let rec string_of_formula = function
 			 (if s = "" then  (string_of_h_formula hf)
               else "(" ^ (string_of_h_formula hf) ^ ")*(" ^ (string_of_pure_formula pf) ^ ")( FLOW "^fl^")"))
 	  ^ ")"
-;;
 
-let rec string_of_ext_formula = function
+and string_of_ext_formula = function
 	| Iformula.ECase {
 			Iformula.formula_case_branches  =  case_list ;
 		} -> 
@@ -278,9 +315,43 @@ let rec string_of_ext_formula = function
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
 	| Iformula.EAssume b-> "EAssume "^(string_of_formula b)
-;;
 
-let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
+and string_of_formula_ext_exp_list l = 
+  match l with
+  | [] -> ""
+  | h::[] -> string_of_formula_ext_exp h
+  | h::t -> (string_of_formula_ext_exp h) ^ ", " ^ (string_of_formula_ext_exp_list t)
+
+and string_of_formula_ext_exp e =
+  match e with
+  |	F.Pure pure_exp -> string_of_formula_exp pure_exp
+  | F.LambdaExp lambda_exp -> string_of_formula_lambda_exp lambda_exp
+
+and string_of_formula_lambda_exp e =
+  match e with
+  | F.LDef ldef -> string_of_formula_lambda_def ldef
+  | F.LApply lapply -> string_of_formula_lambda_apply lapply
+
+and string_of_formula_lambda_def ldef =
+  "(\\<" ^ (string_of_ident_list ldef.F.lambda_def_params) ^ "> " ^
+  (string_of_l_ext_formula ldef.F.lambda_def_body) ^ ")"
+
+and string_of_formula_lambda_apply lapply =
+  (string_of_formula_lambda_exp lapply.F.lambda_apply_func) ^ "<" ^
+  (string_of_formula_ext_exp_list lapply.F.lambda_apply_args) ^ ">"
+
+and string_of_l_ext_formula e =
+  match e with
+  | F.HeapFormula hf -> string_of_struc_formula hf
+  | F.LambdaFormula lf -> string_of_formula_lambda_exp lf
+
+and string_of_ident_list l =
+  match l with
+  | [] -> ""
+  | h::[] -> h
+  | h::t -> h ^ ", " ^ (string_of_ident_list t)
+
+and string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
 ;;
 (*
 let rec string_of_spec = function
@@ -413,6 +484,14 @@ let rec string_of_exp = function
 			exp_finally_clause = fl;})
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_catch b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_finally b)) "" fl)
+  | ArrAccess ({exp_arr_access_name = name;
+			    exp_arr_access_args = args;})
+	  -> name ^ (string_of_array_args args)
+
+and string_of_array_args (args : exp list) =
+  match args with 
+  | [] -> ""
+  | h::t -> "[" ^ (string_of_exp h) ^ "]" ^ (string_of_array_args t)
 									
 and string_of_catch c  = "catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body)
 
@@ -462,9 +541,25 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 ;;
 
-(* pretty printig for view declaration *)
-let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
+(* pretty printing for apf params list *)
+let string_of_apf_param apf_param =
+  let s = (concatenate_string_list apf_param.apf_param_head ",") in
+  match apf_param.apf_param_tail with
+  | None -> s
+  | Some d -> 
+	  if s = "" then
+		"$" ^ d 
+	  else
+		s ^ "," ^ d ^ "$"
+;;
+
+(* pretty printing for view declaration *)
+let string_of_view_decl v = v.view_name ^ 
+  (string_of_apf_type v.view_apf_type) ^
+  "<" ^ (string_of_apf_param v.view_vars) ^ "> == " ^ 
+  (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant)) ^
+  " mem {" ^ (fst v.view_mem) ^ " | " ^ (string_of_pure_formula (snd v.view_mem)) ^ "}" 
+  (* incomplete *)
 ;;
 
 let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^

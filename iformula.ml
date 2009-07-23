@@ -7,14 +7,12 @@
 open Globals
 module P = Ipure
 
-
 type struc_formula = ext_formula list
 
 and ext_formula = 
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
 	| EAssume of formula
-
 
 and ext_case_formula =
 	{
@@ -66,6 +64,7 @@ and h_formula = (* heap formula *)
 	  (* pointer * base type * list of dimensions *)
   | HTrue 
   | HFalse
+  | LambdaFunc of h_formula_func
 	  
 and h_formula_star = { h_formula_star_h1 : h_formula;
 					   h_formula_star_h2 : h_formula;
@@ -75,17 +74,62 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 					   h_formula_heap_name : ident;
 					   h_formula_heap_full : bool;
 					   h_formula_heap_with_inv : bool;
-					   h_formula_heap_arguments : P.exp list;
+					   h_formula_heap_arguments : apf_args;
 					   h_formula_heap_pseudo_data : bool;
-					   h_formula_heap_pos : loc }
+					   h_formula_heap_pos : loc;
+					   h_formula_heap_offset : addr_offset option;
+					   h_formula_heap_apf_type : (scope * ident) option}
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 						h_formula_heap2_name : ident;
 						h_formula_heap2_full : bool;
 						h_formula_heap2_with_inv : bool;
-						h_formula_heap2_arguments : (ident * P.exp) list;
+						h_formula_heap2_arguments : (ident*ext_exp) list;
 						h_formula_heap2_pseudo_data : bool;
-						h_formula_heap2_pos : loc }
+						h_formula_heap2_pos : loc;
+						h_formula_heap2_offset : addr_offset option; }
+
+and h_formula_func = { h_formula_func_name : ident;
+					   h_formula_func_arguments : ext_exp list;
+					   h_formula_func_pos : loc; }
+
+and addr_offset =
+  | ObjField of ident
+  | PlusExp of P.exp
+
+and apf_args = { apf_args_head : ext_exp list;
+				 apf_args_tail : ident option; }
+
+and ext_exp =
+  | Pure of P.exp
+  | LambdaExp of lambda_exp
+
+and lambda_def = { lambda_def_params : ident list;
+				   lambda_def_body : l_ext_formula;
+				   lambda_def_pos : loc; }
+
+and lambda_apply = { lambda_apply_func : lambda_exp; 
+				     lambda_apply_args : ext_exp list; 
+				     lambda_apply_pos : loc; }
+
+and lambda_exp =
+  | LDef of lambda_def
+  | LApply of lambda_apply
+
+and l_ext_formula =
+  | HeapFormula of struc_formula
+  | LambdaFormula of lambda_exp
+
+let is_pure (e : ext_exp) =
+  match e with
+  | Pure _ -> true
+  | _ -> false
+
+let to_pure (e : ext_exp) =
+  match e with
+  | Pure exp -> exp
+  | _ -> Error.report_error {Error.error_loc = no_pos;
+							 Error.error_text = "Pure exp list contains non-pure exp"}
 
 (* constructors *)
 
@@ -231,17 +275,53 @@ let flatten_branches p br =
   List.fold_left (fun p (l, f) -> P.And (p, f,no_pos)) p br
 ;;
 
-let rec h_fv (f:h_formula):(ident*primed) list = match f with   
+(*
+	  match lexp with
+	  | LDef ldef ->
+	  | LApply { lambda_apply_ = name;
+		    lambda_formula_arguments = args} 
+	-> Util.remove_dups ((name, Unprimed):: (List.concat (List.map ext_exp_fv args)))
+*)
+
+let rec l_ext_formula_fv (lextf:l_ext_formula) : (ident*primed) list =
+  match lextf with
+  | HeapFormula hf -> struc_hp_fv hf
+  | LambdaFormula lf -> lambda_exp_fv lf
+
+and lambda_apply_fv (lapply:lambda_apply) : (ident*primed) list =
+  let l1 = lambda_exp_fv lapply.lambda_apply_func in
+  let l2 = Util.remove_dups (List.concat (List.map ext_exp_fv lapply.lambda_apply_args)) in
+  Util.remove_dups (l1@l2)
+
+and lambda_def_fv (ldef:lambda_def) : (ident*primed) list =
+  let l = l_ext_formula_fv ldef.lambda_def_body in
+  List.filter (fun c -> not (List.mem (fst c) ldef.lambda_def_params)) l
+
+and lambda_exp_fv (lexp:lambda_exp) : (ident*primed) list =
+  match lexp with 
+  | LDef ldef -> lambda_def_fv ldef
+  | LApply lapply -> lambda_apply_fv lapply
+
+and ext_exp_fv (e:ext_exp) : (ident*primed) list =
+  match e with 
+  | Pure pure_exp -> P.afv pure_exp
+  | LambdaExp lexp -> lambda_exp_fv lexp;
+
+and apf_args_fv (args:apf_args) : (ident*primed) list =
+  Util.remove_dups (List.concat (List.map ext_exp_fv args.apf_args_head))
+
+and h_fv (f:h_formula):(ident*primed) list = match f with   
   | Star ({h_formula_star_h1 = h1; 
 		   h_formula_star_h2 = h2; 
 		   h_formula_star_pos = pos}) ->  Util.remove_dups ((h_fv h1)@(h_fv h2))
   | HeapNode {h_formula_heap_node = name ; 
-				h_formula_heap_arguments = b} -> Util.remove_dups (name:: (List.concat (List.map Ipure.afv b)))
-  | HeapNode2 { h_formula_heap2_node = name ;
-				h_formula_heap2_arguments = b}-> Util.remove_dups (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
+			  h_formula_heap_arguments = b} -> Util.remove_dups (name:: (apf_args_fv b))
+  | HeapNode2 {h_formula_heap2_node = name ;
+			   h_formula_heap2_arguments = b}-> Util.remove_dups (name:: (List.concat (List.map (fun c-> (ext_exp_fv (snd c))) b) ))
   | HTrue -> [] 
   | HFalse -> [] 
-;;
+  | LambdaFunc {h_formula_func_arguments = b}
+	  -> Util.remove_dups (List.concat (List.map ext_exp_fv b))
 
 
 (*
@@ -267,9 +347,7 @@ let rec h_arg_fv (f:h_formula):(ident*primed) list =
 	Util.remove_dups r1 (*(Util.difference r1 r2)*)
 ;;*)
 
-
-
-let rec struc_hp_fv (f:struc_formula): (ident*primed) list = 
+and struc_hp_fv (f:struc_formula): (ident*primed) list = 
 						let rec helper (f:ext_formula):(ident*primed) list = Util.remove_dups ( match f with
 							| EBase b-> Util.difference 
 													((struc_hp_fv b.formula_ext_continuation)@(heap_fv b.formula_ext_base)) 
@@ -354,7 +432,7 @@ let formula_to_struc_formula (f:formula):struc_formula =
 		 			formula_ext_base = f;
 					formula_ext_continuation = [];
 		 			formula_ext_pos = b.formula_exists_pos})]
-		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in			
+		| Or b->  (helper b.formula_or_f1)@(helper b.formula_or_f2) in
 	(helper f);;
 
 
@@ -406,6 +484,38 @@ and apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : formula) =
 					formula_exists_branches = List.map (fun (c1,c2)-> (c1,(Ipure.apply_one s c2))) br;
 					formula_exists_pos = pos})		
 
+and l_ext_formula_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (lextf : l_ext_formula) =
+  match lextf with
+  | HeapFormula hf -> HeapFormula (subst_struc [s] hf)
+  | LambdaFormula lf -> LambdaFormula (lambda_exp_apply_one s lf)
+
+and lambda_def_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (ldef : lambda_def) =
+  let new_body = l_ext_formula_apply_one s ldef.lambda_def_body in
+  { lambda_def_params = ldef.lambda_def_params;
+	lambda_def_body = new_body;
+	lambda_def_pos = ldef.lambda_def_pos; }
+
+and lambda_apply_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (lapply : lambda_apply) =
+  let new_func = lambda_exp_apply_one s lapply.lambda_apply_func in
+  let new_args = List.map (ext_exp_apply_one s) lapply.lambda_apply_args in
+  { lambda_apply_func = new_func;
+	lambda_apply_args = new_args;
+	lambda_apply_pos = lapply.lambda_apply_pos; }
+
+and lambda_exp_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (lexp : lambda_exp) =
+  match lexp with
+  | LDef ldef -> LDef (lambda_def_apply_one s ldef)
+  | LApply lapply -> LApply (lambda_apply_apply_one s lapply)
+
+and ext_exp_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (e : ext_exp) =
+	match e with
+	| Pure pure_exp -> Pure (Ipure.e_apply_one s pure_exp)
+	| LambdaExp lexp -> LambdaExp (lambda_exp_apply_one s lexp)
+
+and apf_args_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (args : apf_args) =
+  { apf_args_head = List.map (ext_exp_apply_one s) args.apf_args_head;
+	apf_args_tail = args.apf_args_tail; }
+
 and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formula) = match f with
   | Star ({h_formula_star_h1 = f1; 
 		   h_formula_star_h2 = f2; 
@@ -419,34 +529,42 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 			   h_formula_heap_with_inv = winv;
 			   h_formula_heap_arguments = args;
 			   h_formula_heap_pseudo_data = ps_data;
-			   h_formula_heap_pos = pos}) -> 
-      HeapNode ({h_formula_heap_node = subst_var s x; 
-				 h_formula_heap_name = c; 
-				 h_formula_heap_full = full;
-				 h_formula_heap_with_inv = winv;
-				 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
-				 h_formula_heap_pseudo_data = ps_data;
-				 h_formula_heap_pos = pos})
-  | HeapNode2 ({
-		 				h_formula_heap2_node = x;
-						h_formula_heap2_name = c;
-						h_formula_heap2_full = full;
-						h_formula_heap2_with_inv = winv;
-						h_formula_heap2_arguments = args;
-						h_formula_heap2_pseudo_data = ps_data;
-						h_formula_heap2_pos= pos}) -> 
-      HeapNode2 ({
-				 		h_formula_heap2_node = subst_var s x;
-						h_formula_heap2_name =c;
-						h_formula_heap2_full =full;
-						h_formula_heap2_with_inv = winv;
-						h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
-						h_formula_heap2_pseudo_data =ps_data;
-						h_formula_heap2_pos = pos})
+			   h_formula_heap_pos = pos;
+			   h_formula_heap_offset = offs;
+			   h_formula_heap_apf_type = t;}) 
+	-> HeapNode ({h_formula_heap_node = subst_var s x; 
+				  h_formula_heap_name = c; 
+				  h_formula_heap_full = full;
+				  h_formula_heap_with_inv = winv;
+				  h_formula_heap_arguments = apf_args_apply_one s args;
+				  h_formula_heap_pseudo_data = ps_data;
+				  h_formula_heap_pos = pos;
+				  h_formula_heap_offset = offs;
+				  h_formula_heap_apf_type = t;})
+  | HeapNode2 ({h_formula_heap2_node = x;
+				h_formula_heap2_name = c;
+				h_formula_heap2_full = full;
+				h_formula_heap2_with_inv = winv;
+				h_formula_heap2_arguments = args;
+				h_formula_heap2_pseudo_data = ps_data;
+				h_formula_heap2_pos= pos;
+				h_formula_heap2_offset = offs;}) 
+	-> HeapNode2 ({h_formula_heap2_node = subst_var s x;
+				   h_formula_heap2_name =c;
+				   h_formula_heap2_full =full;
+				   h_formula_heap2_with_inv = winv;
+				   h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(ext_exp_apply_one s c2))) args;
+				   h_formula_heap2_pseudo_data =ps_data;
+				   h_formula_heap2_pos = pos;
+				   h_formula_heap2_offset = offs;})
   | HTrue -> f
   | HFalse -> f
-	  
-
+  | LambdaFunc {h_formula_func_name = c;
+			    h_formula_func_arguments = args;
+			    h_formula_func_pos = pos;}
+	  -> LambdaFunc {h_formula_func_name = c;
+				     h_formula_func_arguments = List.map (ext_exp_apply_one s) args;
+				     h_formula_func_pos = pos;}
 
 
 and rename_bound_vars (f : formula) = 
@@ -479,8 +597,6 @@ and rename_bound_vars (f : formula) =
 	  let new_base_f = subst rho base_f in
 	  let resform = add_quantifiers new_qvars new_base_f in
 		resform 
-
-
 	
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = 
 	
@@ -524,39 +640,80 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 			in
 	List.map helper f
 
-
-
 and float_out_exps_from_heap (f:formula ):formula = 
-	
+
 	let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
 		 | Star b-> 
 				let r11,r12 = float_out_exps b.h_formula_star_h1 in
 				let r21,r22 = float_out_exps b.h_formula_star_h2 in
-				(Star ({h_formula_star_h1  =r11; h_formula_star_h2=r21;h_formula_star_pos = b.h_formula_star_pos}), 
+				(Star ({h_formula_star_h1=r11; h_formula_star_h2=r21; h_formula_star_pos = b.h_formula_star_pos}), 
 				(r12@r22))
  		 | HeapNode b-> 
-				let na,ls = List.split (List.map (fun c->
-								match c with
-									| Ipure.Var _ -> (c,[])
-									| _ -> 
-										let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-										let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-										let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos)) in																
-										(nv,[(nn,npf)])) b.h_formula_heap_arguments) in
-				(HeapNode ({b with h_formula_heap_arguments = na}),(List.concat ls))
-  	 | HeapNode2 b ->	 
-				let na,ls = List.split (List.map (fun c->
-								match (snd c) with
-									| Ipure.Var _ -> (c,[])
-									| _ -> 
-										let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
-										let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
-										let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos)) in																
-										(((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
-				(HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
-  	 | HTrue -> (f,[])
-     | HFalse -> (f,[]) in
-	
+			 let float_out_pure_heap_arg = fun c ->
+			   match c with
+			   | Ipure.Var _ -> (c,[])
+			   | _ -> 
+				   let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				   let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
+				   let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos)) in
+				   (nv,[(nn,npf)])
+			 in
+			 let rec float_out_heap_arg (e:ext_exp):(ext_exp * (((ident*primed)*Ipure.formula)list)) =
+			   match e with 
+			   | Pure pure_exp -> 
+				   let new_pure_exp = float_out_pure_heap_arg pure_exp in
+				   (Pure (fst new_pure_exp), snd new_pure_exp)
+			   | LambdaExp lf_exp ->
+				   (LambdaExp lf_exp, [])
+			 in
+			 let na,ls = List.split (List.map float_out_heap_arg  b.h_formula_heap_arguments.apf_args_head) in
+			 let new_args = {apf_args_head = na;
+						     apf_args_tail = b.h_formula_heap_arguments.apf_args_tail}
+			 in
+			 (HeapNode ({b with h_formula_heap_arguments = new_args}),(List.concat ls))
+  	     | HeapNode2 b -> 
+			 let float_out_pure_heap2_arg = fun c ->
+			   match c with
+			   | Ipure.Var _ -> (c,[])
+			   | _ -> 
+				   let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				   let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
+				   let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap2_pos)) in
+				   (nv,[(nn,npf)])
+			 in
+			 let float_out_heap2_arg ((id,e) :ident*ext_exp):((ident*ext_exp) * (((ident*primed)*Ipure.formula)list)) =
+			   match e with
+			   | Pure pure_exp -> 
+				   let new_pure_exp = float_out_pure_heap2_arg pure_exp in
+				   ((id,Pure (fst new_pure_exp)), snd new_pure_exp)
+			   | LambdaExp lf_exp ->
+				   ((id,LambdaExp lf_exp), [])
+			 in
+			 let na,ls = List.split (List.map float_out_heap2_arg b.h_formula_heap2_arguments) in
+			 (HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
+  		 | HTrue -> (f,[])
+		 | HFalse -> (f,[]) 
+		 | LambdaFunc b ->
+			 let float_out_pure_func_arg = fun c ->
+			   match c with
+			   | Ipure.Var _ -> (c,[])
+			   | _ -> 
+				   let nn = (("flted_"^(string_of_int b.h_formula_func_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+				   let nv = Ipure.Var (nn,b.h_formula_func_pos) in
+				   let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_func_pos)) in
+				   (nv,[(nn,npf)])
+			 in
+			 let rec float_out_func_arg (e:ext_exp):(ext_exp * (((ident*primed)*Ipure.formula)list)) =
+			   match e with 
+			   | Pure pure_exp -> 
+				   let new_pure_exp = float_out_pure_func_arg pure_exp in
+				   (Pure (fst new_pure_exp), snd new_pure_exp)
+			   | LambdaExp lf_exp ->
+				   (LambdaExp lf_exp, [])
+			 in
+			 let na,ls = List.split (List.map float_out_func_arg b.h_formula_func_arguments) in
+			 (LambdaFunc ({b with h_formula_func_arguments = na}),(List.concat ls))
+	in
 	let rec helper (f:formula):formula =	match f with
 	| Base b-> let rh,rl = float_out_exps b.formula_base_heap in
 						 if (List.length rl)== 0 then f
@@ -768,7 +925,7 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 							
 				
 		let rec float_out_b_formula_min_max (b: Ipure.b_formula): Ipure.formula = match b with
-			| Ipure.BConst _ -> Ipure.BForm b
+		  | Ipure.BConst _ -> Ipure.BForm b
 		  | Ipure.BVar _ -> Ipure.BForm b
 		  | Ipure.Lt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
@@ -886,76 +1043,121 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		  | Ipure.BagMax _ -> Ipure.BForm b	
 			in		 
 		match p with
-			| Ipure.BForm b -> (float_out_b_formula_min_max b)
+		| Ipure.BForm b -> (float_out_b_formula_min_max b)
   		| Ipure.And (f1, f2, l) -> Ipure.And((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
   		| Ipure.Or (f1, f2, l) -> Ipure.Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
   		| Ipure.Not (f1, l) -> Ipure.Not((float_out_pure_min_max f1), l)
   		| Ipure.Forall (v, f1, l) -> Ipure.Forall (v, (float_out_pure_min_max f1), l)
   		| Ipure.Exists (v, f1, l) -> Ipure.Exists (v, (float_out_pure_min_max f1), l)
-		
+
 
 and float_out_heap_min_max (h :  h_formula) :
   ( h_formula * (Ipure.formula option)) =
   match h with
-  |  Star
-      {
-         h_formula_star_h1 = f1;
-         h_formula_star_h2 = f2;
-         h_formula_star_pos = l
-      } ->
-      let (nf1, np1) = float_out_heap_min_max f1 in
+  |  Star { h_formula_star_h1 = f1;
+			h_formula_star_h2 = f2;
+			h_formula_star_pos = l
+		  } 
+	->
+	  let (nf1, np1) = float_out_heap_min_max f1 in
       let (nf2, np2) = float_out_heap_min_max f2 in
       let np =
         (match (np1, np2) with
-         | (None, None) -> None
-         | (Some _, None) -> np1
-         | (None, Some _) -> np2
-         | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
+        | (None, None) -> None
+        | (Some _, None) -> np1
+        | (None, Some _) -> np2
+        | (Some e1, Some e2) -> Some (Ipure.And (e1, e2, l)))
       in
-        (( Star
-            {
-               h_formula_star_h1 = nf1;
-               h_formula_star_h2 = nf2;
-               h_formula_star_pos = l;
-            }),
-         np)
+      (( Star
+           {
+            h_formula_star_h1 = nf1;
+            h_formula_star_h2 = nf2;
+            h_formula_star_pos = l;
+          }),
+       np)
   |  HeapNode h1->
-		  let args = h1. h_formula_heap_arguments in
-			let l = h1. h_formula_heap_pos in
+	  let apfargs = h1.h_formula_heap_arguments in
+	  let l = h1.h_formula_heap_pos in
+	  let args = apfargs.apf_args_head in
       let nl, new_p =
-				List.fold_left
-             (fun (a, c) d -> 
-	        match d with
-		| Ipure.Null _ 
-		| Ipure.IConst _
-		| Ipure.Var _ -> (d:: a, c)
-		| _ -> 
-				let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
-				let nv = Ipure.Var((new_name, Unprimed), l) in
-				(nv:: a, match c with
-												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
-												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l)))), s, l)))) ([], None) args in
-        (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
+		List.fold_left
+          (fun (a, c) ext_d -> 
+			match ext_d with
+			| Pure d ->
+				begin
+				  match d with
+				  | Ipure.Null _ 
+				  | Ipure.IConst _
+				  | Ipure.Var _ -> ((Pure d):: a, c)
+				  | _ -> 
+					  let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+					  let nv = Ipure.Var((new_name, Unprimed), l) in
+					  ((Pure nv):: a, 
+					   match c with
+					   | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
+					   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l)))), s, l))
+					  )
+				end
+			| LambdaExp d -> ((LambdaExp d)::a,c)
+		  ) ([], None) args 
+	  in
+	  let new_apfargs = { apf_args_head = List.rev nl;
+						  apf_args_tail = apfargs.apf_args_tail; } 
+	  in
+      (( HeapNode { h1 with  h_formula_heap_arguments = new_apfargs}), new_p)
   |  HeapNode2 h1 ->
-			let args = h1. h_formula_heap2_arguments in
-			let l = h1. h_formula_heap2_pos in
+	  let args = h1. h_formula_heap2_arguments in
+	  let l = h1. h_formula_heap2_pos in
       let nl, new_p =
-				List.fold_left
-             (fun (a, c) (d1,d2) -> 
-	        match d2 with
-		| Ipure.Null _ 
-		| Ipure.IConst _
-		| Ipure.Var _ -> ((d1,d2):: a, c)
-		| _ -> 
-				let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
-				let nv = Ipure.Var((new_name, Unprimed), l) in
-				((d1,nv):: a, match c with
-												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) )
-												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) ), s, l)))) ([], None) args in
+		List.fold_left
+          (fun (a, c) (d1,ext_d2) -> 
+			match ext_d2 with
+			| Pure d2 ->
+				begin
+				  match d2 with
+				  | Ipure.Null _ 
+				  | Ipure.IConst _
+				  | Ipure.Var _ -> ((d1,Pure d2) :: a, c)
+				  | _ -> 
+					  let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+					  let nv = Ipure.Var((new_name, Unprimed), l) in
+					  ((d1,Pure nv):: a, 
+					   match c with
+					   | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) )
+					   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) ), s, l))
+					  )
+				end
+			| LambdaExp d2 -> ((d1, LambdaExp d2) :: a, c)
+		  ) ([], None) args in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);}), new_p)
   |  HTrue -> (h, None)
   |  HFalse -> (h, None)
-  
+  |  LambdaFunc h1 ->
+	  let args = h1.h_formula_func_arguments in
+	  let l = h1.h_formula_func_pos in
+      let nl, new_p =
+		List.fold_left
+          (fun (a, c) ext_d -> 
+			match ext_d with
+			| Pure d ->
+				begin
+				  match d with
+				  | Ipure.Null _ 
+				  | Ipure.IConst _
+				  | Ipure.Var _ -> ((Pure d):: a, c)
+				  | _ -> 
+					  let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
+					  let nv = Ipure.Var((new_name, Unprimed), l) in
+					  ((Pure nv):: a, 
+					   match c with
+					   | None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
+					   | Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l)))), s, l))
+					  )
+				end
+			| LambdaExp d -> ((LambdaExp d)::a,c)
+		  ) ([], None) args 
+	  in
+      (( LambdaFunc { h1 with h_formula_func_arguments = (List.rev nl);}), new_p)
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = 
 	let rec helper (f0: ext_formula):ext_formula = match f0 with
@@ -1005,6 +1207,3 @@ and has_top_flow_struc (f:struc_formula) =
 		| EAssume b-> (has_top_flow b)
 		in
 List.iter helper f
-	
-	
-	

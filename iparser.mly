@@ -17,6 +17,7 @@
     | Global_var of exp_var_decl
     | Proc of proc_decl
 	| Coercion of coercion_decl
+	| Func of func_decl
 		
   type member = 
 	| Field of (typed_ident * loc)
@@ -79,8 +80,8 @@
 	| sp :: rest -> begin
 		let sspecs, dspecs = split_specs rest in
 		  match sp with
-			| (Static, pre, post) -> ((pre, post) :: sspecs, dspecs)
-			| (Dynamic, pre, post) -> (sspecs, (pre, post) :: dspecs)
+			| (Static, spec) -> (spec :: sspecs, dspecs)
+			| (Dynamic, spec) -> (sspecs, spec :: dspecs)
 	  end
 	| [] -> ([], [])
 
@@ -208,15 +209,21 @@
 %token RAISE
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
+/* lambda function, array, field breaking, abstract predicates */
+%token MEM
+%token SUBTYPE
+%token FUNCTION
+%token BACKSLASH
+
 
 /*%nonassoc LOWER_THAN_SEMICOLON*/
 %left SEMICOLON
 %left OR 
 %left AND
-%left STAR
 %right NOT
 %left EQ NEQ GT GTE LT LTE
 %left PLUS MINUS
+%left STAR
 %left UMINUS
 
 %nonassoc LOWER_THAN_DOT_OP
@@ -236,6 +243,7 @@ program
 	let view_defs = ref ([] : view_decl list) in
     let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
+	let func_defs = ref ([] : func_decl list) in
     let choose d = match d with
       | Type tdef -> begin
 		  match tdef with
@@ -245,7 +253,8 @@ program
 		end
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
-	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs 
+	  | Func fdef -> func_defs := fdef :: !func_defs in
     let _ = List.map choose $1 in
 	let obj_def = { data_name = "Object";
 					data_fields = [];
@@ -262,7 +271,8 @@ program
 		prog_enum_decls = !enum_defs;
 		prog_view_decls = !view_defs;
 		prog_proc_decls = !proc_defs;
-		prog_coercion_decls = !coercion_defs; }
+		prog_coercion_decls = !coercion_defs; 
+	    prog_func_decls = !func_defs; }
   }
 ;
 
@@ -281,6 +291,7 @@ decl
   | global_var_decl { Global_var $1 }
   | proc_decl { Proc $1 }
   | coercion_decl { Coercion $1 }
+  | func_decl { Func $1 }
 ;
 
 type_decl
@@ -288,6 +299,68 @@ type_decl
   | class_decl { Data $1 }
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
+;
+
+/***************** Lambda_function **************/
+
+opt_ident_list
+  : { [] }
+  | ident_list { List.rev $1 } 
+;
+
+ident_list
+  : IDENTIFIER { [$1] }
+  | ident_list COMMA IDENTIFIER { $3::$1 }
+;
+
+func_decl
+  : FUNCTION IDENTIFIER EQEQ lambda_def SEMICOLON {
+	{ func_decl_name = $2; 
+	  func_decl_def = $4;
+	  func_decl_pos = get_pos 2; }
+  }
+;
+
+lambda_def
+  : OPAREN BACKSLASH LT opt_ident_list GT lambda_def_body CPAREN {
+	{ F.lambda_def_params = $4;
+	  F.lambda_def_body = $6;
+	  F.lambda_def_pos = get_pos 2;
+	}
+  }
+;
+
+lambda_def_body 
+  : formulas { F.HeapFormula (fst $1) }
+  | lambda_exp { F.LambdaFormula $1 }
+;
+
+lambda_exp
+  : lambda_def { F.LDef $1 }
+  | lambda_apply { F.LApply $1 }
+;
+
+lambda_apply
+  : lambda_exp LT opt_ext_exp_list GT {
+	{ F.lambda_apply_func = $1;
+	  F.lambda_apply_args = $3;
+	  F.lambda_apply_pos = get_pos 1; }
+  }
+;
+
+opt_ext_exp_list 
+  : { [] }
+  | ext_exp_list { List.rev $1 }
+;
+
+ext_exp_list
+  : ext_exp { [$1] }
+  | ext_exp_list COMMA ext_exp { $3::$1 }
+;
+
+ext_exp 
+  : cexp { F.Pure $1 }
+  | lambda_exp { F.LambdaExp $1 }
 ;
 
 /***************** Global_variable **************/
@@ -366,13 +439,13 @@ member
 /************ Data *************/
 
 data_decl
-  : data_header data_body {
-	  { data_name = $1;
-		data_fields = $2;
-		data_parent_name = "Object";
-		data_invs = []; (* F.mkTrue (get_pos 1); *)
-		data_methods = [] }
-	}
+  : data_header extends_opt data_body {
+	{ data_name = $1;
+	  data_fields = $3;
+	  data_parent_name = $2;
+	  data_invs = []; (* F.mkTrue (get_pos 1); *)
+	  data_methods = [] }
+  }
 ;
 
 data_header
@@ -396,12 +469,13 @@ opt_semicolon
 field_list
   : typ IDENTIFIER { [(($1, $2), get_pos 1)] }
   | field_list SEMICOLON typ IDENTIFIER { 
-			if List.mem $4 (List.map (fun f -> snd (fst f)) $1) then
-				report_error (get_pos 4) ($4 ^ " is duplicated")
-			else
-				(($3, $4), get_pos 3) :: $1 
-		}
+	if List.mem $4 (List.map (fun f -> snd (fst f)) $1) then
+	  report_error (get_pos 4) ($4 ^ " is duplicated")
+	else
+	  (($3, $4), get_pos 3) :: $1 
+  }
 ;
+
 
 /*************** Enums ******************/
 
@@ -433,12 +507,16 @@ enumerator
 /********** Views **********/
 
 view_decl
-  : view_header EQEQ view_body opt_inv SEMICOLON {
-	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3)}
+  : view_header EQEQ view_body opt_inv opt_mem SEMICOLON {
+	{ $1 with 
+	  view_formula = (fst $3); 
+	  view_invariant = $4; 
+	  try_case_inference = (snd $3);
+	  view_mem = $5; }
   }
   | view_header EQ error {
-	  report_error (get_pos 2) ("use == to define a view")
-	}
+	report_error (get_pos 2) ("use == to define a view")
+  }
 ;
 
 opt_inv
@@ -466,22 +544,56 @@ view_header
   : IDENTIFIER LT opt_ann_cid_list GT {
 	let cids, anns = List.split $3 in
     let cids, br_labels = List.split cids in
-	  if List.exists 
+	if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
-	  then
-		report_error (get_pos 1) 
-		  ("variables in view header are not allowed to be primed")
-	  else
-		let modes = get_modes anns in
-		  { view_name = $1;
-			view_data_name = "";
-			view_vars = List.map fst cids;
-            view_labels = br_labels;
-			view_modes = modes;
-			view_typed_vars = [];
-			view_formula = F.mkETrue (get_pos 1);
-			view_invariant = (P.mkTrue (get_pos 1), []);
-			try_case_inference = false;}
+	then
+	  report_error (get_pos 1) 
+		("variables in view header are not allowed to be primed")
+	else
+	  let modes = get_modes anns in
+	  let vars = { apf_param_head = (List.map fst cids); 
+				   apf_param_tail = None; } 
+	  in
+	  { view_name = $1;
+		view_data_name = "";
+		view_vars = vars;
+        view_labels = br_labels;
+		view_modes = modes;
+		view_typed_vars = [];
+		view_formula = F.mkETrue (get_pos 1);
+		view_invariant = (P.mkTrue (get_pos 1), []);
+		try_case_inference = false;
+		view_mem = ("",P.mkTrue no_pos);
+		view_apf_type = None;
+		view_apf = [];
+	  }
+  }
+  | IDENTIFIER OSQUARE apf CSQUARE LT opt_ann_cid_list_apf_tail GT {
+	let cids, anns = List.split (fst $6) in
+    let cids, br_labels = List.split cids in
+	if List.exists 
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	then
+	  report_error (get_pos 1) 
+		("variables in view header are not allowed to be primed")
+	else
+	  let modes = get_modes anns in
+	  let vars = { apf_param_head = (List.map fst cids); 
+				   apf_param_tail = (snd $6); } 
+	  in
+	  { view_name = $1;
+		view_data_name = "";
+		view_vars = vars;
+        view_labels = br_labels;
+		view_modes = modes;
+		view_typed_vars = [];
+		view_formula = F.mkETrue (get_pos 1);
+		view_invariant = (P.mkTrue (get_pos 1), []);
+		try_case_inference = false;
+		view_mem = ("",P.mkTrue no_pos);
+		view_apf_type = Some $3;
+		view_apf = [];
+	  }
   }
 ;
 
@@ -493,10 +605,37 @@ cid
   | THIS { (this, Unprimed) }
 ;
 
+addr_arith
+  : cid { ($1, None) }
+  | cid DOT IDENTIFIER { ($1, Some (F.ObjField $3)) }
+  | OPAREN cid PLUS addr_offset CPAREN { ($2, Some $4) }
+;
 
+addr_offset
+  : cexp { F.PlusExp $1 }
+;
 
 view_body
   : formulas { $1 }
+;
+
+opt_mem
+  : { ("",P.mkTrue no_pos) }
+  | MEM OBRACE IDENTIFIER OR pure_constr CBRACE {
+	($3,$5)
+  }
+;
+
+apf
+  : non_array_type {
+	(Noscope, name_of_type $1)
+  }
+  | EQ non_array_type {
+	(Exact, name_of_type $2)
+  }
+  | SUBTYPE non_array_type {
+	(Allsubtype, name_of_type $2)
+  }
 ;
 
 
@@ -507,7 +646,7 @@ opt_heap_arg_list
   : { [] }
   | heap_arg_list { List.rev $1 }
 ;
-*/
+
 
 heap_arg_list
   : heap_arg_list_aux { List.rev $1 }
@@ -540,6 +679,50 @@ heap_arg_list2
 heap_arg2
 	: IDENTIFIER EQ cexp { ($1, $3) }
 ;
+*/
+
+apf_heap_arg_list
+  : opt_heap_arg_list {
+	{ F.apf_args_head = $1;
+	  F.apf_args_tail = None; }
+  } 
+  | apf_tail {
+	{ F.apf_args_head = [];
+	  F.apf_args_tail = Some $1; }
+  }
+  | heap_arg_list COMMA apf_tail {
+	{ F.apf_args_head = $1;
+	  F.apf_args_tail = Some $3; }
+  }
+;
+
+opt_heap_arg_list
+  : { [] }
+  | heap_arg_list { $1 }
+;
+
+heap_arg_list 
+  : ext_exp_list { List.rev $1 }
+;
+
+opt_heap_arg_list2
+  : { [] }
+  | heap_arg_list2 { List.rev $1 }
+;
+
+heap_arg_list2
+	: heap_arg2 { [$1] }
+	| heap_arg_list2 COMMA heap_arg2 { 
+			if List.mem (fst $3) (List.map fst $1) then
+				report_error (get_pos 3) ((fst $3) ^ " is duplicated")
+			else 
+				$3 :: $1 
+		}
+;
+
+heap_arg2
+	: IDENTIFIER EQ ext_exp { ($1, $3) }
+;
 
 opt_cid_list
   : { 
@@ -562,6 +745,15 @@ cid_list
 	}
 ;
 
+opt_ann_cid_list_apf_tail
+  : opt_ann_cid_list { ($1, None) }
+  | apf_tail { ([], Some $1) }
+  | ann_cid_list COMMA apf_tail { (List.rev $1, Some $3) }
+;
+
+apf_tail 
+  :  DOLLAR IDENTIFIER {$2}
+;
 
 /* annotated cid list */
 opt_ann_cid_list 
@@ -717,26 +909,64 @@ heap_constr
 ;
 
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT {
-	let h = F.HeapNode { F.h_formula_heap_node = $1;
-						 F.h_formula_heap_name = $3;
-						 F.h_formula_heap_full = false;
-						 F.h_formula_heap_with_inv = false;
-						 F.h_formula_heap_pseudo_data = false;
-						 F.h_formula_heap_arguments = $5;
-						 F.h_formula_heap_pos = get_pos 2 } in
+  : addr_arith COLONCOLON IDENTIFIER LT heap_arg_list GT {
+	  let args = { F.apf_args_head = $5;
+				   F.apf_args_tail = None; } 
+	  in
+	  let h = F.HeapNode { F.h_formula_heap_node = fst $1;
+						   F.h_formula_heap_name = $3;
+						   F.h_formula_heap_full = false;
+						   F.h_formula_heap_with_inv = false;
+						   F.h_formula_heap_pseudo_data = false;
+						   F.h_formula_heap_arguments = args;
+						   F.h_formula_heap_pos = get_pos 2;
+						   F.h_formula_heap_offset = snd $1; 
+						   F.h_formula_heap_apf_type = None;} in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT {
-	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
+  | addr_arith COLONCOLON apf_heap_name OSQUARE apf CSQUARE LT apf_heap_arg_list GT {
+	  let h = F.HeapNode { F.h_formula_heap_node = fst $1;
+						   F.h_formula_heap_name = $3;
+						   F.h_formula_heap_full = false;
+						   F.h_formula_heap_with_inv = false;
+						   F.h_formula_heap_pseudo_data = false;
+						   F.h_formula_heap_arguments = $8;
+						   F.h_formula_heap_pos = get_pos 2;
+						   F.h_formula_heap_offset = snd $1; 
+						   F.h_formula_heap_apf_type = Some $5;} in
+	  h
+  }
+  | addr_arith COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT {
+	  let h = F.HeapNode2 { F.h_formula_heap2_node = fst $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
 							F.h_formula_heap2_arguments = $5;
-							F.h_formula_heap2_pos = get_pos 2 } in
-		h
-	}
+							F.h_formula_heap2_pos = get_pos 2;
+							F.h_formula_heap2_offset = snd $1; } in
+	  h
+  }
+  | addr_arith COLONCOLON non_array_type LT heap_arg_list GT {
+	  let args = {F.apf_args_head = $5;
+				  F.apf_args_tail = None;} 
+	  in
+	  let h = F.HeapNode { F.h_formula_heap_node = fst $1;
+						   F.h_formula_heap_name = name_of_type $3;
+						   F.h_formula_heap_full = false;
+						   F.h_formula_heap_with_inv = false;
+						   F.h_formula_heap_pseudo_data = false;
+						   F.h_formula_heap_arguments = args;
+						   F.h_formula_heap_pos = get_pos 2;
+						   F.h_formula_heap_offset = snd $1;
+						   F.h_formula_heap_apf_type = None;} in
+	  h
+  }
+  | IDENTIFIER LT opt_ext_exp_list GT {
+      F.LambdaFunc { F.h_formula_func_name = $1;
+                     F.h_formula_func_arguments = $3;
+				     F.h_formula_func_pos = get_pos 1; }
+  }
 /*
   | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT DOLLAR {
 		let h = F.HeapNode { F.h_formula_heap_node = $1;
@@ -769,6 +999,11 @@ simple_heap_constr
 		  h
 	  }
 */
+;
+
+apf_heap_name
+  : IDENTIFIER { $1 }
+  | DATA { "data" }
 ;
 
 pure_constr
@@ -888,15 +1123,20 @@ cexp
   | LITERAL_INTEGER {
 	  P.IConst ($1, get_pos 1)
 	}
+/*
   | LITERAL_INTEGER cid {
 	  P.mkMult $1 (P.Var ($2, get_pos 2)) (get_pos 1)
 	}
+*/
   | cexp PLUS cexp {
 	  P.mkAdd $1 $3 (get_pos 2)
 	}
   | cexp MINUS cexp {
 	  P.mkSubtract $1 $3 (get_pos 2)
 	}
+  | cexp STAR cexp {
+	  P.mkMult $1 $3 (get_pos 2)
+    }
   | MINUS cexp %prec UMINUS {
 	  P.mkSubtract (P.IConst (0, get_pos 1)) $2 (get_pos 1)
 	}
@@ -922,7 +1162,10 @@ cexp
   | DIFF OPAREN cexp COMMA cexp CPAREN {
 	  P.BagDiff ($3, $5, get_pos 1)
 	}
-	
+	/* primitive_function_call */
+  | IDENTIFIER OPAREN ident_list CPAREN {
+	  P.PrimFuncCall ($1, $3, get_pos 1)
+    }
 ;
 
 opt_cexp_list
@@ -957,7 +1200,7 @@ proc_decl
   
 proc_header
   : typ IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
-	  (*let static_specs, dynamic_specs = split_specs $6 in*)
+      let static_specs, dynamic_specs = split_specs $7 in
 		{ proc_name = $2;
 		  proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 		  proc_data_decl = None;
@@ -965,22 +1208,22 @@ proc_header
 		  proc_exceptions = $6;
 		  proc_args = $4;
 		  proc_return = $1;
-		  proc_static_specs = $7;
-		  proc_dynamic_specs = [];
+		  proc_static_specs = static_specs;
+		  proc_dynamic_specs = dynamic_specs;
 		  proc_loc = get_pos 1;
 		  proc_body = None }
-	}
+  }
   | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
-		(*let static_specs, dynamic_specs = split_specs $6 in*)
-		  { proc_name = $2;
+        let static_specs, dynamic_specs = split_specs $7 in
+          { proc_name = $2;
 			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
 			proc_data_decl = None;
 			proc_constructor = false;
 			proc_exceptions = $6;
 			proc_args = $4;
 			proc_return = void_type;
-			proc_static_specs = $7;
-			proc_dynamic_specs = [];
+			proc_static_specs = static_specs;
+			proc_dynamic_specs = dynamic_specs;
 			proc_loc = get_pos 1;
 			proc_body = None }
   }
@@ -995,7 +1238,7 @@ constructor_decl
 
 constructor_header
   : IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
-	  (*let static_specs, dynamic_specs = split_specs $5 in*)
+	  let static_specs, dynamic_specs = split_specs $6 in
 		(*if Util.empty dynamic_specs then*)
 		  { proc_name = $1;
 			proc_mingled_name = ""; (* mingle_name $2 (List.map (fun p -> p.param_type) $4); *)
@@ -1004,8 +1247,8 @@ constructor_header
 			proc_exceptions = $5;
 			proc_args = $3;
 			proc_return = Named $1;
-			proc_static_specs = $6;
-			proc_dynamic_specs = [];
+			proc_static_specs = static_specs;
+			proc_dynamic_specs = dynamic_specs;
 			proc_loc = get_pos 1;
 			proc_body = None }
 	(*	else
@@ -1079,16 +1322,16 @@ spec_list
 ;
 
 spec
-  : REQUIRES opt_sq_clist disjunctive_constr spec 
-		{
+  : spec_qualifier_opt REQUIRES opt_sq_clist disjunctive_constr spec 
+		{ ( $1,
 			Iformula.EBase {
-			 Iformula.formula_ext_explicit_inst =$2;
+			 Iformula.formula_ext_explicit_inst =$3;
 			 Iformula.formula_ext_implicit_inst = [];
 			 Iformula.formula_ext_exists = [];
-			 Iformula.formula_ext_base = $3;
-			 Iformula.formula_ext_continuation = [$4];
+			 Iformula.formula_ext_base = $4;
+			 Iformula.formula_ext_continuation = [snd $5];
 			 Iformula.formula_ext_pos = (get_pos 1)
-			}
+			} )
 			(*Iast.SRequires 
 						{
 							Iast.srequires_explicit_inst = $2;
@@ -1098,18 +1341,18 @@ spec
 							Iast.srequires_pos = (get_pos 1)
 							}*)
 		}
-	| REQUIRES opt_sq_clist disjunctive_constr OBRACE spec_list CBRACE
-		{
+	| spec_qualifier_opt REQUIRES opt_sq_clist disjunctive_constr OBRACE spec_list CBRACE
+		{ ( $1,
 			Iformula.EBase {
-			 Iformula.formula_ext_explicit_inst =$2;
+			 Iformula.formula_ext_explicit_inst =$3;
 			 Iformula.formula_ext_implicit_inst = [];
 			 Iformula.formula_ext_exists = [];
-			 Iformula.formula_ext_base = $3;
-			 Iformula.formula_ext_continuation = if ((List.length $5)==0) then 
+			 Iformula.formula_ext_base = $4;
+			 Iformula.formula_ext_continuation = if ((List.length $6)==0) then 
 											Error.report_error	{Error.error_loc = (get_pos 1); Error.error_text = "spec must contain ensures"}
-																							else $5;
+																							else (List.map snd $6);
 			 Iformula.formula_ext_pos = (get_pos 1)
-			}
+			} )
 			(*Iast.SRequires 
 						{
 							Iast.srequires_explicit_inst = $2;
@@ -1122,34 +1365,34 @@ spec
 							}*)
 		} 	 	
 	| ENSURES disjunctive_constr SEMICOLON {
-		Iformula.EAssume $2
+	  ( Static,
+		Iformula.EAssume $2)
 		(*	Iast.SEnsure 
 					{
 						Iast.sensures_base =  $2;
 						Iast.sensures_pos = get_pos 2 ;
 					}		*)
 		}
-	| CASE OBRACE branch_list CBRACE 
-		{
+	| spec_qualifier_opt CASE OBRACE branch_list CBRACE 
+		{ ( $1,
 			Iformula.ECase 
 				{
-						Iformula.formula_case_branches = $3; 
+						Iformula.formula_case_branches = $4; 
 						Iformula.formula_case_pos = get_pos 1; 
-				}
+				} )
 			} 
 ;
 
 branch_list 
-	:pure_constr LEFTARROW spec_list {[($1,$3)]	}
-	| branch_list pure_constr LEFTARROW spec_list {($2,$4)::$1}
+	: pure_constr LEFTARROW spec_list {[$1,List.map snd $3]}
+	| branch_list pure_constr LEFTARROW spec_list {($2,List.map snd $4)::$1}
 	;
 
-/*
 spec_qualifier_opt
   : { Static }
   | STATIC { Static }
   | DYNAMIC { Dynamic }
-;*/
+;
 
 opt_formal_parameter_list
   : { [] }
@@ -1502,7 +1745,7 @@ while_statement
   | WHILE OPAREN boolean_expression CPAREN spec_list embedded_statement {
 		While { exp_while_condition = $3;
 				exp_while_body = $6;
-				exp_while_specs = $5;(*List.map remove_spec_qualifier $5;*)
+				exp_while_specs = List.map snd $5;(*List.map remove_spec_qualifier $5;*)
 				exp_while_label = NoLabel;
 				exp_while_f_name = "";
 				exp_while_wrappings = None;
@@ -1892,7 +2135,20 @@ primary_expression_no_parenthesis
   | member_name { $1 }
   | member_access { $1 }
   | invocation_expression { $1 }
-  | new_expression { $1}
+  | new_expression { $1 }
+  | array_expression { $1 }
+;
+
+array_expression
+  : IDENTIFIER arr_argument_list {
+	  ArrAccess { exp_arr_access_name = $1;
+				  exp_arr_access_args = List.rev $2; } 
+  }
+;
+
+arr_argument_list
+  : OSQUARE expression CSQUARE { [$2] }
+  | arr_argument_list OSQUARE expression CSQUARE { $3 :: $1 }
 ;
 
 member_name

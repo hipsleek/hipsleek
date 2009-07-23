@@ -23,7 +23,8 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
 				   prog_enum_decls : enum_decl list;
 				   mutable prog_view_decls : view_decl list;
 				   prog_proc_decls : proc_decl list;
-				   mutable prog_coercion_decls : coercion_decl list }
+				   mutable prog_coercion_decls : coercion_decl list; 
+				   prog_func_decls : func_decl list; }
 
 and data_decl = { data_name : ident;
 				  data_fields : (typed_ident * loc) list;
@@ -39,14 +40,34 @@ and global_var_decl = { global_var_decl_type : typ;
 
 and view_decl = { view_name : ident; 
 				  mutable view_data_name : ident;
-				  view_vars : ident list;
+				  view_vars : apf_param;
 				  view_labels : branch_label list;
 				  view_modes : mode list;
 				  mutable view_typed_vars : (CP.typ * ident) list;
 				  view_invariant : (P.formula * (branch_label * P.formula) list);
 				  view_formula : Iformula.struc_formula;
-				  try_case_inference: bool}
+				  try_case_inference: bool;
+				  mutable view_mem : ident * P.formula;
+				  view_apf_type : (scope * ident) option;
+				  mutable view_apf : apf_extn list; }
 
+and apf_extn = {
+	apf_class : CP.typ;
+	mutable apf_typed_vars : (CP.typ * ident * branch_label) list;
+	apf_invariant : (P.formula * (branch_label * P.formula) list);
+	apf_mem : ident * P.formula;
+	apf_formula : Iformula.struc_formula;
+  }
+
+and apf_param = { apf_param_head : ident list;
+				  apf_param_tail : ident option; }
+
+and func_decl = {
+	mutable func_decl_name : ident;
+	func_decl_def : Iformula.lambda_def;
+	mutable func_decl_pos : loc;
+  }
+  
 and enum_decl = { enum_name : ident;
 				  enum_fields : (ident * int option) list } 
 	(* a field of an enum may optionally be initialized by an integer *)
@@ -284,6 +305,9 @@ and exp_dprint = { exp_dprint_string : string;
 and exp_unfold = { exp_unfold_var : (string * primed);
 				   exp_unfold_pos : loc } 
 
+and exp_arr_access = { exp_arr_access_name : ident;
+					   exp_arr_access_args : exp list; }
+
 and exp =
   | Assert of exp_assert
   | Assign of exp_assign
@@ -317,6 +341,7 @@ and exp =
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
+  | ArrAccess of exp_arr_access
   
 (* type constants *)
 

@@ -3,11 +3,8 @@
 type ident = string
 type constant_flow = ident
 
-
 type nflow = (int*int)(*numeric representation of flow*)
 
-	
-	
 and branch_label = string
 
 and loc = {
@@ -15,6 +12,11 @@ and loc = {
 			mid_pos : Lexing.position;
 			end_pos : Lexing.position;
 			}
+
+and scope =
+  | Exact
+  | Allsubtype
+  | Noscope
 
 and primed =
   | Primed
@@ -233,5 +235,7 @@ let join2 a b = (a,b)
 let fst3 (x,_,_) = x
 
 let snd3 (_,x,_) = x
+
+let thrd3 (_,_,x) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)

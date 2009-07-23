@@ -14,6 +14,7 @@ type formula =
   | Forall of ((ident * primed) * formula * loc)
   | Exists of ((ident * primed) * formula * loc)
 
+
 (* Boolean constraints *)
 and b_formula = 
   | BConst of (bool * loc)
@@ -42,7 +43,8 @@ and exp =
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
-  | Mult of (int * exp * loc)
+(*  | Mult of (int * exp * loc) *)
+  | Mult of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
 	  (* bag expressions *)
@@ -50,7 +52,9 @@ and exp =
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
-    
+	  (* primitive function call *)
+  | PrimFuncCall of (ident * ident list * loc)
+
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
   | ConstRel of bool
@@ -71,7 +75,7 @@ and combine_pvars p1 p2 =
   let fv1 = fv p1 in
   let fv2 = fv p2 in
     Util.remove_dups (fv1 @ fv2)
-	
+
 and remove_qvar qid qf =
   let qfv = fv qf in
     Util.remove_elem qid qfv
@@ -164,7 +168,9 @@ and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
-and mkMult c a pos = Mult (c, a, pos)
+(* and mkMult c a pos = Mult (c, a, pos) *)
+
+and mkMult a1 a2 pos = Mult (a1, a2, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 

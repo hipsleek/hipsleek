@@ -32,7 +32,8 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_enum_decls = [];
 			  I.prog_view_decls = [];
 			  I.prog_proc_decls = [];
-			  I.prog_coercion_decls = [] }
+			  I.prog_coercion_decls = [];
+			  I.prog_func_decls = []; }
 
 let cobj_def = { C.data_name = "Object";
 				 C.data_fields = [];
@@ -85,8 +86,8 @@ let process_pred_def pdef =
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars.I.apf_param_head ) in
+		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars.I.apf_param_head ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);

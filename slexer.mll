@@ -91,7 +91,10 @@
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
-	 (flow, FLOW flow);]
+	 (flow, FLOW flow);
+	 ("mem", MEM);
+	 ("func", FUNCTION);
+   ]
 }
 
 let alpha = ['a'-'z' 'A'-'Z' '_']
@@ -150,6 +153,8 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | '*' { STAR }
+  | "<:" { SUBTYPE }
+  | '\\' { BACKSLASH }
   | intnum as numstr { LITERAL_INTEGER (int_of_string numstr) }
   | fnum as numstr { LITERAL_FLOAT (float_of_string numstr) }
   | alpha(alpha | digit)* as idstr 

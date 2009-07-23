@@ -93,6 +93,9 @@
 	 ("finally", FINALLY);
 	 ("throws", THROWS);
 	 ("raise",RAISE);
+	 (*lambda function, array, field breaking, abstract predicates*)
+	 ("mem",MEM);
+	 ("func",FUNCTION);
 	]
 }
 
@@ -151,6 +154,8 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | '*' { STAR }
+  | "<:" { SUBTYPE }
+  | '\\' { BACKSLASH }
   | intnum as numstr { LITERAL_INTEGER (int_of_string numstr) }
   | fnum as numstr { LITERAL_FLOAT (float_of_string numstr) }
   | alpha(alpha | digit)* as idstr 
@@ -159,6 +164,10 @@ rule tokenizer file_name = parse
 			begin
 				IDENTIFIER ("Anon" ^ fresh_trailer ())
 		  end
+		(* else if idstr = "?" then
+		  begin
+			IDENTIFIER ("LambdaParam" ^ fresh_trailer ())
+		  end *)
 		else if idstr = "java" then begin
 		  pre_java file_name lexbuf (* search for the first opening brace *)
 		end else

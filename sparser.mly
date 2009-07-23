@@ -196,6 +196,11 @@
 %token WHERE
 %token WHILE
 %token <string> FLOW
+/* lambda function, array, field breaking, abstract predicates */
+%token MEM
+%token SUBTYPE
+%token FUNCTION
+%token BACKSLASH
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -270,7 +275,8 @@ program : {
 	prog_enum_decls = [];
 	prog_view_decls = [];
 	prog_proc_decls = [];
-	prog_coercion_decls = []; }
+	prog_coercion_decls = [];
+    prog_func_decls = []; }
 }
 ;
 
@@ -312,11 +318,70 @@ field_list
 		}
 ;
 
+/***************** Lambda_function **************/
+
+opt_ident_list
+  : { [] }
+  | ident_list { List.rev $1 } 
+;
+
+ident_list
+  : IDENTIFIER { [$1] }
+  | ident_list COMMA IDENTIFIER { $3::$1 }
+;
+
+lambda_def
+  : OPAREN BACKSLASH LT opt_ident_list GT lambda_def_body CPAREN {
+	{ F.lambda_def_params = $4;
+	  F.lambda_def_body = $6;
+	  F.lambda_def_pos = get_pos 2;
+	}
+  }
+;
+
+lambda_def_body 
+  : formulas { F.HeapFormula (fst $1) }
+  | lambda_exp { F.LambdaFormula $1 }
+;
+
+lambda_exp
+  : lambda_def { F.LDef $1 }
+  | lambda_apply { F.LApply $1 }
+;
+
+lambda_apply
+  : lambda_exp LT opt_ext_exp_list GT {
+	{ F.lambda_apply_func = $1;
+	  F.lambda_apply_args = $3;
+	  F.lambda_apply_pos = get_pos 1; }
+  }
+;
+
+opt_ext_exp_list 
+  : { [] }
+  | ext_exp_list { List.rev $1 }
+;
+
+ext_exp_list
+  : ext_exp { [$1] }
+  | ext_exp_list COMMA ext_exp { $3::$1 }
+;
+
+ext_exp 
+  : cexp { F.Pure $1 }
+  | lambda_exp { F.LambdaExp $1 }
+;
+
+
 /********** Views **********/
 
 view_decl
-  : view_header EQEQ view_body opt_inv DOT{
-	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3) }
+  : view_header EQEQ view_body opt_inv opt_mem DOT{
+	{ $1 with 
+	  view_formula = (fst $3); 
+	  view_invariant = $4; 
+	  try_case_inference = (snd $3);
+	  view_mem = $5; }
   }
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
@@ -356,16 +421,49 @@ view_header
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in
+		let vars = { apf_param_head = (List.map fst cids);
+				     apf_param_tail = None; }
+		in
 		  { view_name = $2;
 			view_data_name = "";
-			view_vars = List.map fst cids;
+			view_vars = vars;
             view_labels = br_labels;
 			view_modes = modes;
 			view_typed_vars = [];
 			view_formula = F.mkETrue (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
 			try_case_inference = false;
-			}
+			view_mem = ("",P.mkTrue no_pos);
+			view_apf_type = None;
+			view_apf = [];
+		  }
+  }
+  | PRED IDENTIFIER OSQUARE apf CSQUARE LT opt_ann_cid_list_apf_tail GT {
+	let cids, anns = List.split (fst $7) in
+    let cids, br_labels = List.split cids in
+	if List.exists 
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	then
+	  report_error (get_pos 1) 
+		("variables in view header are not allowed to be primed")
+	else
+	  let modes = get_modes anns in
+	  let vars = { apf_param_head = (List.map fst cids); 
+				   apf_param_tail = (snd $7); } 
+	  in
+	  { view_name = $2;
+		view_data_name = "";
+		view_vars = vars;
+        view_labels = br_labels;
+		view_modes = modes;
+		view_typed_vars = [];
+		view_formula = F.mkETrue (get_pos 1);
+		view_invariant = (P.mkTrue (get_pos 1), []);
+		try_case_inference = false;
+		view_mem = ("",P.mkTrue no_pos);
+		view_apf_type = Some $4;
+		view_apf = [];
+	  }
   }
 ;
 
@@ -377,9 +475,40 @@ cid
   | THIS { (this, Unprimed) }
 ;
 
+addr_arith
+  : cid { ($1, None) }
+  | cid DOT IDENTIFIER { ($1, Some (F.ObjField $3)) }
+  | OPAREN cid PLUS addr_offset CPAREN { ($2, Some $4) }
+;
+
+addr_offset
+  : cexp { F.PlusExp $1 }
+;
+
+
 view_body
   : formulas { $1 }
 ;
+
+opt_mem
+  : { ("",P.mkTrue no_pos) }
+  | MEM OBRACE IDENTIFIER OR pure_constr CBRACE {
+	($3,$5)
+  }
+;
+
+apf
+  : non_array_type {
+	(Noscope, name_of_type $1)
+  }
+  | EQ non_array_type {
+	(Exact, name_of_type $2)
+  }
+  | SUBTYPE non_array_type {
+	(Allsubtype, name_of_type $2)
+  }
+;
+
 
 /********** Constraints **********/
 
@@ -388,7 +517,6 @@ opt_heap_arg_list
   : { [] }
   | heap_arg_list { List.rev $1 }
 ;
-*/
 
 heap_arg_list
   : heap_arg_list_aux { List.rev $1 }
@@ -421,6 +549,50 @@ heap_arg_list2
 heap_arg2
 	: IDENTIFIER EQ cexp { ($1, $3) }
 ;
+*/
+
+apf_heap_arg_list
+  : opt_heap_arg_list {
+	{ F.apf_args_head = $1;
+	  F.apf_args_tail = None; }
+  }
+  | apf_tail {
+	{ F.apf_args_head = [];
+	  F.apf_args_tail = Some $1; }
+  }
+  | heap_arg_list COMMA apf_tail {
+	{ F.apf_args_head = $1;
+	  F.apf_args_tail = Some $3; }
+  }
+;
+
+opt_heap_arg_list
+  : { [] }
+  | heap_arg_list { $1 }
+;
+
+heap_arg_list 
+  : ext_exp_list { List.rev $1 }
+;
+
+opt_heap_arg_list2
+  : { [] }
+  | heap_arg_list2 { List.rev $1 }
+;
+
+heap_arg_list2
+	: heap_arg2 { [$1] }
+	| heap_arg_list2 COMMA heap_arg2 { 
+			if List.mem (fst $3) (List.map fst $1) then
+				report_error (get_pos 3) ((fst $3) ^ " is duplicated")
+			else 
+				$3 :: $1 
+		}
+;
+
+heap_arg2
+	: IDENTIFIER EQ ext_exp { ($1, $3) }
+;
 
 opt_cid_list
   : {
@@ -442,6 +614,15 @@ cid_list
 		($3 :: $1) : (ident * primed) list
 	}
 ;
+
+opt_ann_cid_list_apf_tail
+  : opt_ann_cid_list { ($1, None) }
+  | apf_tail { ([], Some $1) }
+  | ann_cid_list COMMA apf_tail { (List.rev $1, Some $3) }
+;
+
+apf_tail 
+  : IDENTIFIER DOLLAR {$1}
 
 
 /* annotated cid list */
@@ -546,8 +727,6 @@ r_constr
 		} 
 ;
 
-
-
 disjunctive_constr
   : one_constr { (* each case of a view definition *)
 	$1
@@ -593,26 +772,69 @@ heap_constr
 ;
 
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT {
-	let h = F.HeapNode { F.h_formula_heap_node = $1;
-						 F.h_formula_heap_name = $3;
-						 F.h_formula_heap_full = false;
-						 F.h_formula_heap_with_inv = false;
-						 F.h_formula_heap_pseudo_data = false;
-						 F.h_formula_heap_arguments = $5;
-						 F.h_formula_heap_pos = get_pos 2 } in
+  : addr_arith COLONCOLON IDENTIFIER LT heap_arg_list GT {
+	  let args = { F.apf_args_head = $5;
+				   F.apf_args_tail = None; } 
+	  in
+	  let h = F.HeapNode { F.h_formula_heap_node = fst $1;
+						   F.h_formula_heap_name = $3;
+						   F.h_formula_heap_full = false;
+						   F.h_formula_heap_with_inv = false;
+						   F.h_formula_heap_pseudo_data = false;
+						   F.h_formula_heap_arguments = args;
+						   F.h_formula_heap_pos = get_pos 2;
+						   F.h_formula_heap_offset = snd $1; 
+						   F.h_formula_heap_apf_type = None;} in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT {
-	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
+  | addr_arith COLONCOLON apf_heap_name apf LT apf_heap_arg_list GT {
+	  let h = F.HeapNode { F.h_formula_heap_node = fst $1;
+						   F.h_formula_heap_name = $3;
+						   F.h_formula_heap_full = false;
+						   F.h_formula_heap_with_inv = false;
+						   F.h_formula_heap_pseudo_data = false;
+						   F.h_formula_heap_arguments = $6;
+						   F.h_formula_heap_pos = get_pos 2;
+						   F.h_formula_heap_offset = snd $1; 
+						   F.h_formula_heap_apf_type = Some $4;} in
+	  h
+  }
+  | addr_arith COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT {
+	  let h = F.HeapNode2 { F.h_formula_heap2_node = fst $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
 							F.h_formula_heap2_arguments = $5;
-							F.h_formula_heap2_pos = get_pos 2 } in
-		h
-	}
+							F.h_formula_heap2_pos = get_pos 2;
+							F.h_formula_heap2_offset = snd $1; } in
+	  h
+  }
+  | addr_arith COLONCOLON non_array_type LT heap_arg_list GT {
+	  let args = {F.apf_args_head = $5;
+				  F.apf_args_tail = None;} 
+	  in
+	  let h = F.HeapNode { F.h_formula_heap_node = fst $1;
+						   F.h_formula_heap_name = name_of_type $3;
+						   F.h_formula_heap_full = false;
+						   F.h_formula_heap_with_inv = false;
+						   F.h_formula_heap_pseudo_data = false;
+						   F.h_formula_heap_arguments = args;
+						   F.h_formula_heap_pos = get_pos 2;
+						   F.h_formula_heap_offset = snd $1;
+						   F.h_formula_heap_apf_type = None;} in
+	  h
+  }
+  | IDENTIFIER LT opt_ext_exp_list GT {
+      F.LambdaFunc { F.h_formula_func_name = $1;
+                     F.h_formula_func_arguments = $3;
+				     F.h_formula_func_pos = get_pos 1; }
+  }
+;
+
+apf_heap_name
+  : IDENTIFIER { $1 }
+  | DATA { "data" }
 ;
 
 pure_constr
@@ -732,9 +954,14 @@ cexp
   | LITERAL_INTEGER {
 	  P.IConst ($1, get_pos 1)
 	}
+/*
   | LITERAL_INTEGER cid {
 	  P.mkMult $1 (P.Var ($2, get_pos 2)) (get_pos 1)
 	}
+*/
+  | cexp STAR cexp {
+	  P.mkMult $1 $3 (get_pos 2)
+    }
   | cexp PLUS cexp {
 	  P.mkAdd $1 $3 (get_pos 2)
 	}

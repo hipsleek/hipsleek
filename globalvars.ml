@@ -4,8 +4,6 @@
   Convert global variables into reference parameters
 *)
 
-(* testing *)
-
 open Globals
 
 module I = Iast

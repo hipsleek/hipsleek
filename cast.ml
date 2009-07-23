@@ -17,7 +17,7 @@ and prog_decl = { mutable prog_data_decls : data_decl list;
 				  mutable prog_view_decls : view_decl list;
 				  prog_proc_decls : proc_decl list;
 				  mutable prog_left_coercions : coercion_decl list;
-				  mutable prog_right_coercions : coercion_decl list }
+				  mutable prog_right_coercions : coercion_decl list; }
 	
 and prog_or_branches = 
 		| Prog of prog_decl

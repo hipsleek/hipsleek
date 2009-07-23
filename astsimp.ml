@@ -199,8 +199,32 @@ let rec
       let tmp1 = look_for_anonymous_h_formula h1 in
       let tmp2 = look_for_anonymous_h_formula h2 in List.append tmp1 tmp2
   | IF.HeapNode { IF.h_formula_heap_arguments = args } ->
-      let tmp1 = look_for_anonymous_exp_list args in tmp1
+      let tmp1 = look_for_anonymous_ext_exp_list args.IF.apf_args_head in tmp1
+  | IF.LambdaFunc { IF.h_formula_func_arguments = args } ->
+	  let tmp1 = look_for_anonymous_ext_exp_list args in tmp1
   | _ -> []
+
+and look_for_anonymous_ext_exp_list (args : IF.ext_exp list) : (ident*primed) list =
+  match args with
+  | h::rest ->
+	  List.append (look_for_anonymous_ext_exp h) 
+		(look_for_anonymous_ext_exp_list rest)
+  | _ -> []
+
+and look_for_anonymous_ext_exp (arg : IF.ext_exp) : (ident*primed) list =
+  match arg with
+  | IF.Pure pure_exp -> look_for_anonymous_exp pure_exp
+  | IF.LambdaExp lambda_exp -> look_for_anonymous_lambda_exp lambda_exp
+
+and look_for_anonymous_lambda_exp (arg : IF.lambda_exp) : (ident*primed) list =
+  match arg with
+  | IF.LDef ldef -> []
+  | IF.LApply lapply -> look_for_anonymous_lambda_apply lapply
+
+and look_for_anonymous_lambda_apply (arg : IF.lambda_apply) : (ident*primed) list =
+  let l1 = look_for_anonymous_lambda_exp arg.IF.lambda_apply_func in
+  let l2 = look_for_anonymous_ext_exp_list arg.IF.lambda_apply_args in
+  l1 @ l2
 
 and look_for_anonymous_exp_list (args : IP.exp list) :
   (ident * primed) list =
@@ -286,20 +310,20 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
 	(* match named arguments with formal parameters to generate a list of    *)
 	(* position-based arguments. If a parameter does not appear in args,     *)
 	(* then it is instantiated to a fresh name.                              *)
-  let rec match_args (params : ident list) args : IP.exp list =
+  let rec match_args (params : ident list) args : IF.ext_exp list =
     match params with
     | p :: rest ->
         let tmp1 = match_args rest args in
         let tmp2 = List.filter (fun a -> (fst a) = p) args in
         let tmp3 =
           (match tmp2 with
-           | [ (_, IP.Var ((e1, e2), e3)) ] -> IP.Var ((e1, e2), e3)
+           | [ (_, IF.Pure (IP.Var ((e1, e2), e3))) ] -> IF.Pure (IP.Var ((e1, e2), e3))
            | _ ->
                let fn = ("Anon"^(fresh_trailer()))
                in
 								(* let _ = (print_string ("\n[astsimp.ml, line 241]: fresh *)
 								(* name = " ^ fn ^ "\n")) in                               *)
-                 IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos)) in
+                 IF.Pure (IP.Var ((fn, Unprimed), h0.IF.h_formula_heap2_pos))) in
         let tmp4 = tmp3 :: tmp1 in tmp4
     | [] -> []
   in
@@ -307,17 +331,20 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
       let vdef =
         I.look_up_view_def_raw prog.I.prog_view_decls
           h0.IF.h_formula_heap2_name in
-      let hargs =
-        match_args vdef.I.view_vars h0.IF.h_formula_heap2_arguments in
+	  let vars = vdef.I.view_vars in
+      let hargs = match_args vars.I.apf_param_head h0.IF.h_formula_heap2_arguments in
+	  let new_hargs = { IF.apf_args_head = hargs; IF.apf_args_tail = None; } in
       let h =
         {
           IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
           IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-          IF.h_formula_heap_arguments = hargs;
+          IF.h_formula_heap_arguments = new_hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+		  IF.h_formula_heap_offset = h0.IF.h_formula_heap2_offset;
+		  IF.h_formula_heap_apf_type = None;
         }
       in h
     with
@@ -327,15 +354,18 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             h0.IF.h_formula_heap2_name in
         let params = List.map (fun ((t, v), p) -> v) ddef.I.data_fields in
         let hargs = match_args params h0.IF.h_formula_heap2_arguments in
+	    let new_hargs = { IF.apf_args_head = hargs; IF.apf_args_tail = None; } in
         let h =
           {
             IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
             IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
             IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
             IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
-            IF.h_formula_heap_arguments = hargs;
+            IF.h_formula_heap_arguments = new_hargs;
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+		    IF.h_formula_heap_offset = h0.IF.h_formula_heap2_offset;
+			IF.h_formula_heap_apf_type = None;
           }
         in h
   
@@ -1237,7 +1267,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 		  let nstab = H.create 103 in
 		  let _ = H.add nstab self { sv_info_kind = Known (CP.OType vdef.I.view_data_name);id = fresh_int ()} in
 		  let _ = collect_type_info_struc_f prog vdef.I.view_formula nstab in
-          let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) nstab pos) vdef.I.view_vars in
+          let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) nstab pos) vdef.I.view_vars.I.apf_param_head in
 		  let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
 		  let _ = H.clear nstab in
           let _ = vdef.I.view_typed_vars <- typed_vars in
@@ -1254,7 +1284,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
     (vdef.I.view_data_name <- data_name;
      H.add stab self { sv_info_kind = Known (CP.OType data_name);id = fresh_int () };
      let cf =
-       trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+       trans_struc_formula prog true (self :: vdef.I.view_vars.I.apf_param_head) vdef.I.view_formula stab false in
      let (inv, inv_b) = vdef.I.view_invariant in
      let pf = trans_pure_formula inv stab in
      let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
@@ -1277,7 +1307,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
            }
        else(
 		  let pos = IF.pos_of_struc_formula view_formula1 in
-          let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
+          let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars.I.apf_param_head in
 		  let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
           let _ = vdef.I.view_typed_vars <- typed_vars in
           let mvars = [] in
@@ -3713,11 +3743,11 @@ and trans_formula1 prog quantify fvars sep_collect f0 stab : CF.formula =*)
 		  (Cformula.res_replace stab rl clean_res fl);ch)
 and
   linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =		
-  let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
+  let rec match_exp (hargs : (IF.ext_exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
     | (e, label) :: rest ->
         let e_hvars = match e with
-           | IP.Var ((ve, pe), pos_e) -> trans_var (ve, pe) stab pos_e
+           | IF.Pure (IP.Var ((ve, pe), pos_e)) -> trans_var (ve, pe) stab pos_e
            | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = ("malfunction with float out exp: "^(Iprinter.string_of_formula f0)); }in
         let rest_hvars = match_exp rest pos in
         let hvars = e_hvars :: rest_hvars in
@@ -3737,7 +3767,7 @@ and
            let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
            let labels = vdef.I.view_labels in
            (*let tmpp = List.combine exps labels in*)
-           let hvars = match_exp (List.combine exps labels) pos in
+           let hvars = match_exp (List.combine exps.IF.apf_args_head labels) pos in
            let c0 =
              if vdef.I.view_data_name = "" then 
 				(fill_view_param_types prog vdef;
@@ -3759,8 +3789,8 @@ and
            in (new_h, CF.TypeTrue)
          with
          | Not_found ->
-             let labels = List.map (fun _ -> "") exps in
-             let hvars = match_exp (List.combine exps labels) pos in
+             let labels = List.map (fun _ -> "") exps.IF.apf_args_head in
+             let hvars = match_exp (List.combine exps.IF.apf_args_head labels) pos in
              let new_v = CP.SpecVar (CP.OType c, v, p) in
              let new_h =
                CF.DataNode
@@ -3908,7 +3938,7 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
       CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Subtract (e1, e2, pos) ->
       CP.Subtract (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
-  | IP.Mult (c, e, pos) -> CP.Mult (c, trans_pure_exp e stab, pos)
+(*  | IP.Mult (c, e, pos) -> CP.Mult (c, trans_pure_exp e stab, pos) *)
   | IP.Max (e1, e2, pos) ->
       CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Min (e1, e2, pos) ->
@@ -4241,7 +4271,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                        let tmp = helper rest1 rest2
                        in
                          (match e with
-                          | IP.Var ((v, p), pos) -> ((fst t), v) :: tmp
+                          | IF.Pure (IP.Var ((v, p), pos)) -> ((fst t), v) :: tmp
                           | _ -> tmp)
                    | _ ->
                        Err.report_error
@@ -4251,7 +4281,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                              "number of arguments for view " ^
                                (c ^ " does not match");
                          } in
-                 let tmp = helper ies vdef.I.view_typed_vars
+                 let tmp = helper ies.IF.apf_args_head vdef.I.view_typed_vars
                  in
                    ignore
                      (List.map
@@ -4298,11 +4328,13 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
             let fields = I.look_up_all_fields prog ddef
             in
-              if (List.length ies) = (List.length fields)
+              if (List.length ies.IF.apf_args_head) = (List.length fields)
               then
                 (let typs =
                    List.map (fun f -> trans_type prog (fst (fst f)) pos)
                      fields in
+				 let ies = List.filter IF.is_pure ies.IF.apf_args_head in
+				 let ies = List.map IF.to_pure ies in
                  let _ = List.fold_left2 check_ie stab ies typs in ())
               else
                 Err.report_error
@@ -4317,12 +4349,12 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
               (try
                  let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
                  in
-                   if (List.length ies) = (List.length vdef.I.view_vars)
+                   if (List.length ies.IF.apf_args_head) = (List.length vdef.I.view_vars.I.apf_param_head)
                    then
                      (let mk_eq v ie =
                         let pos = IP.pos_of_exp ie
                         in IP.mkEqExp (IP.Var ((v, Unprimed), pos)) ie pos in
-                      let all_eqns = List.map2 mk_eq vdef.I.view_vars ies in
+                      let all_eqns = List.map2 mk_eq vdef.I.view_vars.I.apf_param_head (List.map IF.to_pure ies.IF.apf_args_head) in
                       let tmp_form =
                         List.fold_left (fun f1 f2 -> IP.mkAnd f1 f2 pos)
                           (IP.mkTrue pos) all_eqns
@@ -4428,15 +4460,18 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
 	           let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
 	           vdef.I.view_labels
 			   with
-				| Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments in	
-			let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
+				| Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments.IF.apf_args_head in	
+			let _ = if (List.length b.Iformula.h_formula_heap_arguments.IF.apf_args_head) != (List.length labels) then
 				Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
 				in
+			let tmp_pure_vars = List.map IF.to_pure b.Iformula.h_formula_heap_arguments.IF.apf_args_head in
 	        let (new_used_names, hvars, evars, (link_f, link_f_br)) =
-	             match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
-			let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-	           let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
-	           in (new_used_names, evars, new_h, (link_f, link_f_br))
+	             match_exp used_names (List.combine tmp_pure_vars labels) pos in
+			let hvars = List.map (fun c-> IF.Pure (Ipure.Var (c,pos))) hvars in
+			let new_hvars = { IF.apf_args_head = hvars;
+							  IF.apf_args_tail = b.IF.h_formula_heap_arguments.IF.apf_args_tail } in
+	        let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = new_hvars} in 
+			(new_used_names, evars, new_h, (link_f, link_f_br))
 	    | IF.Star
 	        {
 	          IF.h_formula_star_h1 = f1;
@@ -4911,10 +4946,10 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
 	 let tmp_views = order_views prog.I.prog_view_decls in
 	 let tmp_views = List.map (fun c-> 
-					let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
-					let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
-					let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false in
-					{ c with Iast.view_formula = 	wf;}) tmp_views in
+	   let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars.I.apf_param_head ) in
+	   let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars.I.apf_param_head ) in
+	   let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false in
+	   { c with Iast.view_formula = 	wf;}) tmp_views in
 	 let prog = {prog with Iast.prog_view_decls = tmp_views} in
 	 let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
 	 let prog = {prog with Iast.prog_data_decls = cdata} in
@@ -4922,12 +4957,12 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
 	 let prog = {prog with Iast.prog_proc_decls = procs1} in
 	 let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in	 
 	 {  Iast.prog_data_decls = cdata;
-		Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; (* Global variable *)
+		Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls;
 	    Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
 		Iast.prog_view_decls = tmp_views;
 		Iast.prog_proc_decls = procs1;
-		Iast.prog_coercion_decls = coer1 }
-	
+		Iast.prog_coercion_decls = coer1;
+	    Iast.prog_func_decls = prog.Iast.prog_func_decls; }
 
 
 and line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_rel*(int* Cpure.b_formula *(Cpure.spec_var list))) list)
