@@ -332,7 +332,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 		else
 		  let chk = C.CheckRef ({C.exp_check_ref_var = v;
 								 C.exp_check_ref_pos = pos}) in
-		  let seq = C.mkSeq t_e0 chk e0 pos in
+		  let seq = C.mkSeq t_e0 chk e0 pos.C.pos in
 			seq
   | C.Assign ({C.exp_assign_lhs = lhs;
 			   C.exp_assign_rhs = rhs;
@@ -353,7 +353,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 			else
 			  let chk = C.CheckRef ({C.exp_check_ref_var = bv;
 									 C.exp_check_ref_pos = pos}) in
-			  let seq = C.mkSeq C.void_type chk e pos in
+			  let seq = C.mkSeq C.void_type chk e pos.C.pos in
 				seq
 		  in
 		  let res = List.fold_left helper e0 bind_vars in
@@ -378,8 +378,8 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 				let new_assign = C.Assign ({C.exp_assign_lhs = lhs;
 											C.exp_assign_rhs = result_e;
 											C.exp_assign_pos = pos}) in
-				let seq1 = C.mkSeq C.void_type call new_assign pos in
-				let seq2 = C.mkSeq C.void_type result_decl seq1 pos in
+				let seq1 = C.mkSeq C.void_type call new_assign pos.C.pos in
+				let seq2 = C.mkSeq C.void_type result_decl seq1 pos.C.pos in
 				  seq2
 		  else
 		  normal_compile ()
@@ -407,7 +407,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			let r = Cformula.split_struc_formula pdef.C.proc_static_specs in 
 			match r with
 			  | [(pre, post)] -> pre
-			  | [] -> CF.mkTrue pos 
+			  | [] -> CF.mkTrue pos.C.pos 
 			  | _ -> failwith ("compile_call: currently support only one pair of pre/post: " ^ mn)
 		  in
 		  let pre_fv = CF.fv pre in
@@ -424,7 +424,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			(fun farg -> fun aarg -> pre_chkr ^ "." ^ farg ^ " = " ^ aarg ^ ";") 
 			farg_names vs in
 		  let pre_init = String.concat "\n" pre_init_tmp in
-		  let pos_str = Debug.string_of_pos pos in
+		  let pos_str = Debug.string_of_pos pos.C.pos in
 		  let pre_traverse_call = 
 			"\nRTC.call();\n"
 			^ "if (!(" ^ pre_chkr ^ ".traverse(RTC.callStack[RTC.size - 1], RTC.curColor))) {\n"
@@ -481,8 +481,8 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			(*
 			  Combine them.
 			*)
-		  let seq1 = C.mkSeq C.void_type call java_post pos in
-		  let seq2 = C.mkSeq C.void_type java_pre seq1 pos in
+		  let seq1 = C.mkSeq C.void_type call java_post pos.C.pos in
+		  let seq2 = C.mkSeq C.void_type java_pre seq1 pos.C.pos in
 			(seq2, result)
 	end
   | _ -> failwith ("compile_call: " ^ (Cprinter.string_of_exp e0) ^ " unsupported.")

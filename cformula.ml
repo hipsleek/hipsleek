@@ -32,7 +32,7 @@ and struc_formula = ext_formula list
 and ext_formula = 
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
-	| EAssume of ((Cpure.spec_var list) *formula)
+	| EAssume of ((Cpure.spec_var list) *formula *(int*string))
 
 
 and ext_case_formula =
@@ -160,8 +160,7 @@ and struc_formula_of_formula f pos = [EBase {
 		 formula_ext_base = f;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos}]
-		 
-		 
+		 	 
 and mkTrueFlow () = 
 	{formula_flow_interval = !top_flow_int; formula_flow_link = None;}
 	
@@ -539,7 +538,7 @@ and add_struc_origins (f:struc_formula) origs =
 		| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2) -> (c1,(helper c2))) b.formula_case_branches}
 		| EBase b -> EBase {b with formula_ext_base = add_origins b.formula_ext_base origs ; 
 								   formula_ext_continuation = helper b.formula_ext_continuation}
-		| EAssume (x,b) ->  EAssume (x,(add_origins b origs))
+		| EAssume (x,b,c) ->  EAssume (x,(add_origins b origs),c)
 		in
 	List.map ext_f f in	
     helper f
@@ -556,7 +555,7 @@ and pos_of_struc_formula (f:struc_formula): loc =
 		else match (List.hd f) with
 		| ECase b -> b.formula_case_pos
 		| EBase b -> b.formula_ext_pos
-		| EAssume (x,b)-> pos_of_formula b
+		| EAssume (x,b,_)-> pos_of_formula b
 
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
@@ -572,7 +571,7 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
 			let e = struc_fv b.formula_ext_continuation in
 			let be = fv b.formula_ext_base in
 			CP.difference (Util.remove_dups (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
-		| EAssume (x,b) -> fv b
+		| EAssume (x,b,_) -> fv b
 	in Util.remove_dups (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
 
 	
@@ -580,7 +579,7 @@ and struc_post_fv (f:struc_formula):Cpure.spec_var list =
 		let rec helper (f:ext_formula): Cpure.spec_var list = match f with
 		| ECase b-> List.fold_left (fun a (c1,c2)-> a@(struc_post_fv c2)) [] b.formula_case_branches
 		| EBase b->	struc_post_fv b.formula_ext_continuation
-		| EAssume (x,b)-> fv b
+		| EAssume (x,b,_)-> fv b
 		in	
 List.fold_left (fun a c-> a@(helper c)) [] f
 	
@@ -701,8 +700,8 @@ and apply_one_struc_pre  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc
 				 formula_ext_continuation = apply_one_struc_pre s b.formula_ext_continuation;
 				 formula_ext_pos = b.formula_ext_pos	
 				})
-		| EAssume (x,b)-> if (List.mem fr x) then f
-						  else EAssume (x, (apply_one s b))
+		| EAssume (x,b,c)-> if (List.mem fr x) then f
+						  else EAssume (x, (apply_one s b),c)
 		in	
 		List.map helper f
   
@@ -720,7 +719,7 @@ and apply_one_struc  ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : struc_for
 				 formula_ext_continuation = apply_one_struc s b.formula_ext_continuation;
 				 formula_ext_pos = b.formula_ext_pos	
 				})
-		| EAssume (x,b)-> EAssume((subst_var_list [s] x),(apply_one s b)) in	
+		| EAssume (x,b,c)-> EAssume((subst_var_list [s] x),(apply_one s b),c) in	
 		List.map helper f
 	
 and subst sst (f : formula) = match sst with
@@ -964,7 +963,7 @@ and push_struc_exists (qvars : CP.spec_var list) (f : struc_formula) =
 	List.map (fun c-> match c with
 	| EBase b -> EBase {b with formula_ext_exists = b.formula_ext_exists @ qvars}
 	| ECase b -> ECase {b with formula_case_exists = b.formula_case_exists @ qvars}
-	| EAssume (x,b) -> EAssume (x,(push_exists qvars b))) f 
+	| EAssume (x,b,c) -> EAssume (x,(push_exists qvars b),c)) f 
 
 
 and push_exists (qvars : CP.spec_var list) (f : formula) = match f with
@@ -1007,7 +1006,7 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula =
 				}in
 			let f = subst_struc sst [f] in
 			(List.hd f)
-		| EAssume (x,b)-> EAssume (x,(rename_bound_vars b))
+		| EAssume (x,b,c)-> EAssume (x,(rename_bound_vars b),c)
 			in
 	List.map helper f
 
@@ -1034,7 +1033,7 @@ and rename_bound_vars (f : formula) = match f with
 (* return the new formula and the list of fresh names *)
 and rename_struc_clash_bound_vars (f1 : struc_formula) (f2 : formula) : struc_formula  = 
 	let rec helper (f1:ext_formula):(ext_formula) = match f1 with
-		| EAssume (x,b)-> EAssume (x,(fst(rename_clash_bound_vars b f2)))
+		| EAssume (x,b,c)-> EAssume (x,(fst(rename_clash_bound_vars b f2)),c)
 		| ECase b ->  
 			let r = List.map (fun (c1,c2) -> (c1,(rename_struc_clash_bound_vars c2 f2))) b.formula_case_branches in
 			let new_exs = List.map (fun v -> (if (check_name_clash v f2) then (v,(CP.fresh_spec_var v)) else (v,v))) b.formula_case_exists in
@@ -1599,7 +1598,7 @@ let rec split_struc_formula (f0:struc_formula):(formula*formula) list =
 				let nf = ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) in
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
-		| EAssume (x,b)-> [((mkTrue no_pos),b)]
+		| EAssume (x,b,_)-> [((mkTrue no_pos),b)]
 			in	
 	List.fold_left (fun a c-> a@(ext_to_formula c)) [] f0	;;
 
@@ -1627,7 +1626,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
 				let e = normalize_combine b.formula_ext_base (struc_to_formula b.formula_ext_continuation) b.formula_ext_pos in
 				let nf = push_exists ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) e in
 				nf
-		| EAssume (_,b)-> b 
+		| EAssume (_,b,_)-> b 
 			in	
 	if (List.length f0)>0 then
 		List.fold_left (fun a c-> mkOr a (ext_to_formula c) no_pos) (mkFalse no_pos)f0
@@ -1660,7 +1659,7 @@ and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula =
 						formula_or_f1 = filter_quantifiers w b.formula_or_f1;
 						formula_or_f2 = filter_quantifiers w b.formula_or_f2;}in
 	let rec helper (f0:ext_formula):ext_formula = match f0 with
-	| EAssume (_,b)->  EAssume (w,(filter_quantifiers  w b))
+	| EAssume (_,b,c)->  EAssume (w,(filter_quantifiers  w b),c)
 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(plug_ref_vars c2 w))) b.formula_case_branches}
 	| EBase b -> EBase {b with formula_ext_continuation = plug_ref_vars b.formula_ext_continuation w}in 
 	List.map helper f0

@@ -263,7 +263,7 @@ let rec string_of_ext_formula = function
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"ex.["^l3^"]["^l1^"]["^l2^"]"^b^" "^c
-	| EAssume (x,b)-> "EAssume ref["^(string_of_spec_var_list x)^"] "^(string_of_formula b)
+	| EAssume (x,b,(c1,c2))-> "EAssume"^(string_of_int c1)^" "^ c2^" ref["^(string_of_spec_var_list x)^"] "^(string_of_formula b)
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 

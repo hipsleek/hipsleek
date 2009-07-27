@@ -1121,14 +1121,8 @@ spec
 							Iast.srequires_pos = (get_pos 1)
 							}*)
 		} 	 	
-	| ENSURES disjunctive_constr SEMICOLON {
-		Iformula.EAssume $2
-		(*	Iast.SEnsure 
-					{
-						Iast.sensures_base =  $2;
-						Iast.sensures_pos = get_pos 2 ;
-					}		*)
-		}
+	| ENSURES DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE disjunctive_constr SEMICOLON {	Iformula.EAssume ($5,((fresh_int_label ()),$3))}
+	| ENSURES disjunctive_constr SEMICOLON {	Iformula.EAssume ($2,((fresh_int_label ()),""))}
 	| CASE OBRACE branch_list CBRACE 
 		{
 			Iformula.ECase 
@@ -1379,27 +1373,29 @@ split_statement
 */
 
 assert_statement
-  : ASSERT formulas SEMICOLON {
-	Assert { exp_assert_asserted_formula = Some $2;
+  : ASSERT opt_assert_label formulas SEMICOLON {
+	Assert { exp_assert_asserted_formula = Some $3;
 			 exp_assert_assumed_formula = None;
-			 exp_assert_pos = get_pos 1 }
+			 exp_assert_pos = get_pos 1;
+			 exp_assert_label = $2; }
   }
-/*  | ASSERT disjunctive_constr ASSUME SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some $2;
-			   exp_assert_assumed_formula = Some $2;
-			   exp_assert_pos = get_pos 1 }
-	}*/
-  | ASSUME disjunctive_constr SEMICOLON {
+  | ASSUME opt_assert_label disjunctive_constr SEMICOLON {
 	  Assert { exp_assert_asserted_formula = None;
-			   exp_assert_assumed_formula = Some $2;
-			   exp_assert_pos = get_pos 1 }
+			   exp_assert_assumed_formula = Some $3;
+			   exp_assert_pos = get_pos 1;
+			   exp_assert_label = $2;}
 	}
-  | ASSERT formulas ASSUME disjunctive_constr SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some $2;
-			   exp_assert_assumed_formula = Some $4;
-			   exp_assert_pos = get_pos 1 }
+  | ASSERT opt_assert_label formulas ASSUME disjunctive_constr SEMICOLON {
+	  Assert { exp_assert_asserted_formula = Some $3;
+			   exp_assert_assumed_formula = Some $5;
+			   exp_assert_pos = get_pos 1;
+			   exp_assert_label = $2;}
     }
 ;
+
+opt_assert_label
+	: DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE {$2}
+	| {""}
 
 debug_statement 
   : DDEBUG ON {
@@ -1475,13 +1471,15 @@ if_statement
 	  Cond { exp_cond_condition = $3;
 			 exp_cond_then_arm = $5;
 			 exp_cond_else_arm = Empty (get_pos 1);
-			 exp_cond_pos = get_pos 1 }
+			 exp_cond_pos = get_pos 1;
+			 exp_cond_id = (fresh_int_label()); }
 	}
   | IF OPAREN boolean_expression CPAREN embedded_statement ELSE embedded_statement {
 		Cond { exp_cond_condition = $3;
 			   exp_cond_then_arm = $5;
 			   exp_cond_else_arm = $7;
-			   exp_cond_pos = get_pos 1 }
+			   exp_cond_pos = get_pos 1;
+			   exp_cond_id = (fresh_int_label()); 			   }
 	  }
 ;
 
@@ -1564,7 +1562,8 @@ catch_clause
 			exp_catch_flow_type = $3 (*(Named $3) *);
 			exp_catch_flow_var = None;
 			exp_catch_body = $6;																					   
-			exp_catch_pos = get_pos 1 } } 
+			exp_catch_pos = get_pos 1;
+			exp_catch_id = (fresh_int_label()); } } 
 ;
 
 opt_finally
@@ -1654,7 +1653,8 @@ conditional_expression
 	  Cond { exp_cond_condition = $1;
 			 exp_cond_then_arm = $3;
 			 exp_cond_else_arm = $5;
-			 exp_cond_pos = get_pos 2 }
+			 exp_cond_pos = get_pos 2;
+			 exp_cond_id = (fresh_int_label ())}
 	}
 ;
 
@@ -1834,12 +1834,16 @@ invocation_expression
 	  CallRecv { exp_call_recv_receiver = fst $1;
 				 exp_call_recv_method = snd $1;
 				 exp_call_recv_arguments = $3;
-				 exp_call_recv_pos = get_pos 1 }
+				 exp_call_recv_pos = get_pos 1;
+				 exp_call_recv_id = (fresh_int_label());
+				 }
 	}
   | IDENTIFIER OPAREN opt_argument_list CPAREN {
 		CallNRecv { exp_call_nrecv_method = $1;
 					exp_call_nrecv_arguments = $3;
-					exp_call_nrecv_pos = get_pos 1 }
+					exp_call_nrecv_pos = get_pos 1;
+					exp_call_nrecv_id = (fresh_int_label());
+					}
 	  }
 ;
 
