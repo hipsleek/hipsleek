@@ -1466,7 +1466,7 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 								  else n_ctx_list in
 						(*let _ = print_string ("\nresidue: "^(Cprinter.string_of_context_list res)^"\n  "^(string_of_bool (isFalseCtx (List.hd res)))^"\n") in*)
 						(res,prf)
-	| EAssume (ref_vars, post) -> if not has_post then report_error pos "malfunction: this formula can not have a post condition!"
+	| EAssume (ref_vars, post,_) -> if not has_post then report_error pos "malfunction: this formula can not have a post condition!"
 					else
 						let rs = CF.clear_entailment_history ctx in
 						(*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
@@ -3040,10 +3040,10 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 					 formula_ext_pos = b.formula_ext_pos
 					}
 					| EAssume _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]}) in r
-	| EAssume (x1,b)-> let r = match f2 with
+	| EAssume (x1,b,c)-> let r = match f2 with
 					| ECase d -> combine_ext_struc f2 f1
 					| EBase d -> combine_ext_struc f2 f1 
-					| EAssume (x2,d) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d))) in r in
+					| EAssume (x2,d,_) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),c) in r in
 List.fold_left (fun b c1->b@(List.map (fun c2->(combine_ext_struc c1 c2)) f2)) [] f1
 
 
