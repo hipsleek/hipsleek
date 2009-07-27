@@ -13,7 +13,7 @@ type struc_formula = ext_formula list
 and ext_formula = 
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
-	| EAssume of formula*(int*string)
+	| EAssume of formula
 
 
 and ext_case_formula =
@@ -219,7 +219,7 @@ if (List.length f0)==0 then no_pos
 	else match (List.hd f0) with 
 	| ECase b -> b.formula_case_pos
 	| EBase b -> b.formula_ext_pos
-	| EAssume (b,_) -> pos_of_formula b
+	| EAssume b -> pos_of_formula b
 
 let replace_branches b = function
   | Or f -> failwith "replace_branches doesn't expect an Or"
@@ -276,7 +276,7 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 													(b.formula_ext_explicit_inst@b.formula_ext_implicit_inst)
 							| ECase b-> List.fold_left (fun a (c1,c2)->
 											a@ (struc_hp_fv c2)) [] b.formula_case_branches
-							| EAssume (b,_)-> heap_fv b) in
+							| EAssume b-> heap_fv b) in
 						List.concat (List.map helper f)
 
 and heap_fv (f:formula):(ident*primed) list = match f with
@@ -301,7 +301,7 @@ and struc_free_vars (f0:struc_formula):(ident*primed) list=
 				let fvc = List.fold_left (fun a (c1,c2)-> 
 				a@(struc_free_vars c2)@(Ipure.fv c1)) [] b.formula_case_branches in
 				Util.remove_dups fvc		
-		| EAssume (b,_)-> all_fv b in
+		| EAssume b-> all_fv b in
 	Util.remove_dups (List.concat (List.map helper f0))
 and all_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> Util.remove_dups 
@@ -485,7 +485,7 @@ and rename_bound_vars (f : formula) =
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = 
 	
 	let rec helper (f:ext_formula):ext_formula = match f with
-		| EAssume (b,c) -> EAssume ((subst sst b),c)
+		| EAssume b -> EAssume (subst sst b)
 		| ECase b ->
 			let r = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_struc sst c2))) b.formula_case_branches in
 			ECase ({formula_case_branches = r; formula_case_pos = b.formula_case_pos})
@@ -507,7 +507,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	let rec helper (f:ext_formula):ext_formula = match f with
-		| EAssume (b,c) -> EAssume ((rename_bound_vars b),c)
+		| EAssume b -> EAssume (rename_bound_vars b)
 		| ECase b-> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(rename_bound_var_struc_formula c2))) b.formula_case_branches})
 		| EBase b-> 
 			(*let sst1 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.formula_ext_explicit_inst in*)
@@ -595,7 +595,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 	
 and float_out_exps_from_heap_struc (f:struc_formula):struc_formula = 
 	let rec helper (f:ext_formula):ext_formula = match f with
-		| EAssume (b,c) -> EAssume ((float_out_exps_from_heap b),c)
+		| EAssume b -> EAssume (float_out_exps_from_heap b)
 		| ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
 		| EBase b-> 	EBase ({
 					formula_ext_explicit_inst = b.formula_ext_explicit_inst;
@@ -959,7 +959,7 @@ and float_out_heap_min_max (h :  h_formula) :
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = 
 	let rec helper (f0: ext_formula):ext_formula = match f0 with
-		| EAssume (b,c) -> EAssume ((float_out_min_max b),c)
+		| EAssume b -> EAssume (float_out_min_max b)
 		| ECase b-> ECase {
 						 formula_case_branches = (List.map (fun (c1,c2)->
 								((float_out_pure_min_max c1),(float_out_struc_min_max c2)))
@@ -975,7 +975,7 @@ and view_node_types_struc (f:struc_formula):ident list =
 	let helper (f:ext_formula):ident list = match f with
 	| ECase b -> List.concat (List.map (fun (c1,c2)-> view_node_types_struc c2) b.formula_case_branches)
 	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
-	| EAssume (b,_) -> view_node_types b
+	| EAssume b -> view_node_types b
 	in
 	Util.remove_dups (List.concat (List.map helper f))
 		
@@ -1002,7 +1002,7 @@ and has_top_flow_struc (f:struc_formula) =
 	let rec helper f0 = match f0 with
 		| EBase b->   (has_top_flow b.formula_ext_base); (has_top_flow_struc b.formula_ext_continuation)
 		| ECase b->   List.iter (fun (_,b1)-> (has_top_flow_struc b1)) b.formula_case_branches
-		| EAssume (b,_)-> (has_top_flow b)
+		| EAssume b-> (has_top_flow b)
 		in
 List.iter helper f
 	

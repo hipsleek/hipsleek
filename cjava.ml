@@ -155,7 +155,7 @@ and add_semicolon java_code : unit =
 and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_code : IdentSet.t  = match e0 with
   | CheckRef ({exp_check_ref_var = v;
 			   exp_check_ref_pos = pos}) ->
-	  let pstr = (Debug.string_of_pos pos.pos) ^ v ^ " is not accessible." in
+	  let pstr = (Debug.string_of_pos pos) ^ v ^ " is not accessible." in
 		Buffer.add_string java_code ("\n");
 		(* Buffer.add_string java_code ("if (" ^ v ^ " == null || " ^ v ^ ".color != RTC.curColor) {\n"); *)
 		Buffer.add_string java_code ("if (" ^ v ^ " == null || " ^ v ^ ".color != RTC.curColor) {\n");

@@ -156,8 +156,7 @@ and assign_op =
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 				   exp_assert_assumed_formula : F.formula option;
-				   exp_assert_pos : loc;
-				   exp_assert_label : string;}
+				   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
 				   exp_assign_lhs : exp;
@@ -186,21 +185,18 @@ and exp_bool_lit = { exp_bool_lit_val : bool;
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
 					   exp_call_nrecv_arguments : exp list;
-					   exp_call_nrecv_pos : loc;
-					   exp_call_nrecv_id : int;}
+					   exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
 					  exp_call_recv_method : ident;
 					  exp_call_recv_arguments : exp list;
-					  exp_call_recv_pos : loc;
-					  exp_call_recv_id : int; }
+					  exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
 				  exp_catch_flow_type : constant_flow;
 				  exp_catch_flow_var : ident option;
 				  exp_catch_body : exp;																					   
-				  exp_catch_pos : loc;
-				  exp_catch_id : int;}
+				  exp_catch_pos : loc }
 				  
 and exp_cast = { exp_cast_target_type : typ;
 				 exp_cast_body : exp;
@@ -209,8 +205,7 @@ and exp_cast = { exp_cast_target_type : typ;
 and exp_cond = { exp_cond_condition : exp;
 				 exp_cond_then_arm : exp;
 				 exp_cond_else_arm : exp;
-				 exp_cond_pos : loc;
-				 exp_cond_id : int;}
+				 exp_cond_pos : loc }
 
 and exp_const_decl = { exp_const_decl_type : typ;
 					   exp_const_decl_decls : (ident * exp * loc) list;
@@ -492,7 +487,7 @@ and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula
 													else "" in
 		
 		let rec data_name_in_ext (f:Iformula.ext_formula):ident = match f with
-			| Iformula.EAssume (b,_) -> data_name_of_view1 view_decls b
+			| Iformula.EAssume b -> data_name_of_view1 view_decls b
 			| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view  view_decls c2) b.Iformula.formula_case_branches)
 			| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 												  [(data_name_of_view view_decls b.Iformula.formula_ext_continuation)])

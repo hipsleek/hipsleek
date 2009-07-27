@@ -1106,8 +1106,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 	  let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
 	  let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.max";
 						   exp_call_nrecv_arguments = [ce1; ce2];
-						   exp_call_nrecv_pos = pos;
-						   exp_call_nrecv_id = (fresh_int_label ());}) in
+						   exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
 	end
   | CP.Min (e1, e2, pos) -> begin
@@ -1115,8 +1114,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
 	  let ce2, p2 = gen_pure_exp e2 vmap unbound_vars in
 	  let ce = CallNRecv ({exp_call_nrecv_method = "IntAug.min";
 						   exp_call_nrecv_arguments = [ce1; ce2];
-						   exp_call_nrecv_pos = pos;
-						   exp_call_nrecv_id = (fresh_int_label ());}) in
+						   exp_call_nrecv_pos = pos}) in
 		(ce, p1 || p2)
 	end
   | CP.Var (sv, pos) -> begin
@@ -1210,28 +1208,25 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "EQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb1 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "EQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "EQ";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else 
 		  let ce = Binary ({exp_binary_op = OpEq;
 							exp_binary_oper1 = ce1;
 							exp_binary_oper2 = ce2;
-							exp_binary_pos = pos;}) in
+							exp_binary_pos = pos}) in
 			ce
 	end
   | CP.Neq (e1, e2, pos) -> begin
@@ -1241,28 +1236,25 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "NEQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb1 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "NEQ";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "NEQ";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else 
 		  let ce = Binary ({exp_binary_op = OpNeq;
 							exp_binary_oper1 = ce1;
 							exp_binary_oper2 = ce2;
-							exp_binary_pos = pos;}) in
+							exp_binary_pos = pos}) in
 			ce
 	end
   | CP.Lte (e1, e2, pos) -> begin
@@ -1272,28 +1264,25 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "LTE";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb1 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "LTE";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "GTE";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else
 		  let ce = Binary ({exp_binary_op = OpLte;
 							exp_binary_oper1 = ce1;
 							exp_binary_oper2 = ce2;
-							exp_binary_pos = pos;}) in
+							exp_binary_pos = pos}) in
 			ce
 	end
   | CP.Lt (e1, e2, pos) -> begin
@@ -1306,21 +1295,19 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "LT";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "GT";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else
 		  let ce = Binary ({exp_binary_op = OpLt;
 							exp_binary_oper1 = ce1;
 							exp_binary_oper2 = ce2;
-							exp_binary_pos = pos;}) in
+							exp_binary_pos = pos}) in
 			ce
 	end
   | CP.Gte (e1, e2, pos) -> begin
@@ -1333,21 +1320,19 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "GTE";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "LTE";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else
 		  let ce = Binary ({exp_binary_op = OpGte;
 							exp_binary_oper1 = ce1;
 							exp_binary_oper2 = ce2;
-							exp_binary_pos = pos;}) in
+							exp_binary_pos = pos}) in
 			ce
 	end
   | CP.Gt (e1, e2, pos) -> begin
@@ -1360,21 +1345,19 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 		  let ce = CallRecv ({exp_call_recv_receiver = ce1;
 							  exp_call_recv_method = "GT";
 							  exp_call_recv_arguments = [ce2];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else if pb2 then
 		  let ce = CallRecv ({exp_call_recv_receiver = ce2;
 							  exp_call_recv_method = "LT";
 							  exp_call_recv_arguments = [ce1];
-							  exp_call_recv_pos = pos;
-							  exp_call_recv_id = (fresh_int_label ());}) in
+							  exp_call_recv_pos = pos}) in
 			ce
 		else
 		  let ce = Binary ({exp_binary_op = OpGt;
 							exp_binary_oper1 = ce1;
 							exp_binary_oper2 = ce2;
-							exp_binary_pos = pos;}) in
+							exp_binary_pos = pos}) in
 			ce
 	end
   | CP.EqMax (emax, e1, e2, pos) -> begin
@@ -1383,8 +1366,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	  let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
 	  let maxe = CallNRecv ({exp_call_nrecv_method = "Math.max";
 							 exp_call_nrecv_arguments = [ce1; ce2];
-							 exp_call_nrecv_pos = pos;
-							 exp_call_nrecv_id = (fresh_int_label ());}) in
+							 exp_call_nrecv_pos = pos}) in
 	  let ce = Binary ({exp_binary_op = OpEq;
 						exp_binary_oper1 = cem;
 						exp_binary_oper2 = maxe;
@@ -1397,8 +1379,7 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 	  let ce2, pb2 = gen_pure_exp e2 vmap unbound_vars in
 	  let mine = CallNRecv ({exp_call_nrecv_method = "Math.min";
 							 exp_call_nrecv_arguments = [ce1; ce2];
-							 exp_call_nrecv_pos = pos;
-							 exp_call_nrecv_id = (fresh_int_label ());}) in
+							 exp_call_nrecv_pos = pos}) in
 	  let ce = Binary ({exp_binary_op = OpEq;
 						exp_binary_oper1 = cem;
 						exp_binary_oper2 = mine;
@@ -1454,8 +1435,7 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 	  let cond = Cond ({exp_cond_condition = test;
 						exp_cond_then_arm = pnewcolor;
 						exp_cond_else_arm = return_false pos;
-						exp_cond_pos = pos;
-						exp_cond_id = (fresh_int_label ());}) 
+						exp_cond_pos = pos}) 
 	  in
 		cond
 	end
@@ -1489,16 +1469,14 @@ and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var 
 									exp_call_recv_method = "traverse";
 									exp_call_recv_arguments = 
 									   [cur_color_exp pos; new_color_exp pos];
-									exp_call_recv_pos = pos;
-									exp_call_recv_id  =(fresh_int_label ())}) in
+									exp_call_recv_pos = pos}) in
 	  let neg_call = Unary ({exp_unary_op = OpNot;
 							 exp_unary_exp = call_checker;
 							 exp_unary_pos = pos}) in
 	  let call_cond = Cond ({exp_cond_condition = neg_call;
 							 exp_cond_then_arm = return_false pos;
 							 exp_cond_else_arm = Empty pos;
-							 exp_cond_pos = pos;
-							 exp_cond_id = (fresh_int_label ());}) in
+							 exp_cond_pos = pos}) in
 		(* Set up inputs *)
 		(* helper: Constructs a list of assignments to set up inputs *)
 	  let rec helper fargs params modes : exp list = match fargs, params, modes with
@@ -1625,8 +1603,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
   let cond = Cond ({exp_cond_condition = pure_exp;
 					exp_cond_then_arm = seq1;
 					exp_cond_else_arm = return_false pos;
-					exp_cond_pos = pos;
-					exp_cond_id = (fresh_int_label ());}) in
+					exp_cond_pos = pos}) in
 	(* code for the entire disjunct procedure body *)
   let seq2 = Seq ({exp_seq_exp1 = h_exp;
 				   exp_seq_exp2 = cond;
@@ -1659,12 +1636,10 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 						   exp_var_pos = pos}) in
 	  let call = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
 							 exp_call_nrecv_arguments = [cur_color_exp pos; new_color_exp pos];
-							 exp_call_nrecv_pos = pos;
-							 exp_call_nrecv_id = (fresh_int_label ());}) in
+							 exp_call_nrecv_pos = pos}) in
 	  let undo_call' = CallNRecv ({exp_call_nrecv_method = disj_proc.proc_name;
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
-								  exp_call_nrecv_pos = pos;
-								  exp_call_nrecv_id = (fresh_int_label ());}) in
+								  exp_call_nrecv_pos = pos}) in
 	  let undo_call = VarDecl {exp_var_decl_type = Prim Bool;
 							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
 							   exp_var_decl_pos = pos } in
@@ -1677,8 +1652,7 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 	  let cond = Cond ({exp_cond_condition = disj_res;
 						exp_cond_then_arm = return_true pos;
 						exp_cond_else_arm = undo_call;
-						exp_cond_pos = pos;
-						exp_cond_id = (fresh_int_label ());}) in
+						exp_cond_pos = pos}) in
 	  let seq1 = Seq ({exp_seq_exp1 = call_disj;
 					   exp_seq_exp2 = cond;
 					   exp_seq_pos = pos}) in

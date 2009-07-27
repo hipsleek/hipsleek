@@ -277,7 +277,7 @@ let rec string_of_ext_formula = function
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
-	| Iformula.EAssume (b,(c1,c2))-> "EAssume "^ (string_of_int c1)^" "^ c2^" "^ (string_of_formula b)
+	| Iformula.EAssume b-> "EAssume "^(string_of_formula b)
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 

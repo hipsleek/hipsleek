@@ -10,16 +10,8 @@ module F = Cformula
 module P = Cpure
 module Err = Error
 module U = Util
-module H = Hashtbl
 
 type typed_ident = (P.typ * ident)
-
-and label_map = (spec_label , Cformula.context list) H.t
-
-and core_loc = {
-			pos: loc;
-			state: label_map;	
-			}
 
 and prog_decl = { mutable prog_data_decls : data_decl list;
 				  mutable prog_view_decls : view_decl list;
@@ -89,41 +81,41 @@ and sharp_val =
 	
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
-				   exp_assert_pos : core_loc }
+				   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_lhs : ident;
 				   exp_assign_rhs : exp;
-				   exp_assign_pos : core_loc }
+				   exp_assign_pos : loc }
 
 and exp_bconst = { exp_bconst_val : bool;
-				   exp_bconst_pos : core_loc }
+				   exp_bconst_pos : loc }
 
 and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct, i.e. the type of the body *)
 				 exp_bind_bound_var : typed_ident;
 				 exp_bind_fields : typed_ident list;
 				 exp_bind_body : exp;
-				 exp_bind_pos : core_loc }
+				 exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : P.typ;
 				  exp_block_body : exp;
 				  exp_block_local_vars : typed_ident list;
-				  exp_block_pos : core_loc }
+				  exp_block_pos : loc }
 
 and exp_cast = { exp_cast_target_type : P.typ;
 				 exp_cast_body : exp;
-				 exp_cast_pos : core_loc }
+				 exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_type : P.typ;
 				 exp_cond_condition : ident;
 				 exp_cond_then_arm : exp;
 				 exp_cond_else_arm : exp;
-				 exp_cond_pos : core_loc }
+				 exp_cond_pos : loc }
 
 and exp_debug = { exp_debug_flag : bool;
-				  exp_debug_pos : core_loc }
+				  exp_debug_pos : loc }
 
 and exp_fconst = { exp_fconst_val : float;
-				   exp_fconst_pos : core_loc }
+				   exp_fconst_pos : loc }
 
 (* instance call *)
 and exp_icall = { exp_icall_type : P.typ;
@@ -132,38 +124,38 @@ and exp_icall = { exp_icall_type : P.typ;
 				  exp_icall_method_name : ident;
 				  exp_icall_arguments : ident list;
 				  exp_icall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
-				  exp_icall_pos : core_loc }
+				  exp_icall_pos : loc }
 
 and exp_iconst = { exp_iconst_val : int;
-				   exp_iconst_pos : core_loc }
+				   exp_iconst_pos : loc }
 
 and exp_new = { exp_new_class_name : ident;
 				exp_new_parent_name : ident;
 				exp_new_arguments : typed_ident list;
-				exp_new_pos : core_loc }
+				exp_new_pos : loc }
 
 and exp_return = { exp_return_type : P.typ;
 				   exp_return_val : ident option;
-				   exp_return_pos : core_loc }
+				   exp_return_pos : loc }
 
 (* static call *)
 and exp_scall = { exp_scall_type : P.typ;
 				  exp_scall_method_name : ident;
 				  exp_scall_arguments : ident list;
 				  exp_scall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
-				  exp_scall_pos : core_loc }
+				  exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : P.typ;
 				exp_seq_exp1 : exp;
 				exp_seq_exp2 : exp;
-				exp_seq_pos : core_loc }
+				exp_seq_pos : loc }
 				
 and exp_sharp = {
 				   exp_sharp_type : P.typ;
 				   exp_sharp_flow_type :sharp_flow;(*the new flow*)
 				   exp_sharp_val :sharp_val;(*returned value*)
 				   exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
-				   exp_sharp_pos : core_loc;
+				   exp_sharp_pos : loc;
 				}
 				
 and exp_catch = { 
@@ -171,41 +163,41 @@ and exp_catch = {
 				  exp_catch_flow_var : ident option;
 				  exp_catch_var : typed_ident option;
 				  exp_catch_body : exp;																					   
-				  exp_catch_pos : core_loc }
+				  exp_catch_pos : loc }
 				  				  
 and exp_try = { exp_try_type : P.typ;
 				exp_try_body : exp;
 				exp_catch_clause : exp_catch ;
-				exp_try_pos : core_loc }
+				exp_try_pos : loc }
 
 and exp_this = { exp_this_type : P.typ;
-				 exp_this_pos : core_loc }
+				 exp_this_pos : loc }
 
 and exp_var = { exp_var_type : P.typ;
 				exp_var_name : ident;
-				exp_var_pos : core_loc }
+				exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : P.typ;
 					 exp_var_decl_name : ident;
-					 exp_var_decl_pos : core_loc }
+					 exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : ident;
 				  exp_while_body : exp;
 				  exp_while_spec : Cformula.struc_formula (*multi_spec*);
-				  exp_while_pos : core_loc }
+				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : ident;
 				   exp_dprint_visible_names : ident list;
-				   exp_dprint_pos : core_loc }
+				   exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : P.spec_var;
-				   exp_unfold_pos : core_loc }
+				   exp_unfold_pos : loc }
 
 and exp_check_ref = { exp_check_ref_var : ident;
-					  exp_check_ref_pos : core_loc }
+					  exp_check_ref_pos : loc }
 
 and exp_java = { exp_java_code : string;
-				 exp_java_pos : core_loc}
+				 exp_java_pos : loc}
 
 and exp = (* expressions keep their types *)
 	(* for runtime checking *)
@@ -231,8 +223,8 @@ and exp = (* expressions keep their types *)
   | ICall of exp_icall
   | IConst of exp_iconst
   | New of exp_new
-  | Null of core_loc
-  | Print of (int * core_loc)
+  | Null of loc
+  | Print of (int * loc)
  (* | Return of exp_return*)
   | SCall of exp_scall
   | Seq of exp_seq
@@ -240,7 +232,7 @@ and exp = (* expressions keep their types *)
   | Var of exp_var
   | VarDecl of exp_var_decl
   | Unfold of exp_unfold
-  | Unit of core_loc
+  | Unit of loc
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
@@ -270,16 +262,14 @@ let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 		sensures_base = Cformula.mkTrue pos;
 		sensures_pos = pos;
 	}]*)
-
-let mkCorePos p = {pos = p ; state = (H.create 2);}
 	
-let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue pos),((fresh_int_label ()),""))]
+let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue pos))]
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
   | _ -> match e2 with
 	  | Unit _ -> e1
-	  | _ -> Seq ({exp_seq_type = t; exp_seq_exp1= e1; exp_seq_exp2 = e2; exp_seq_pos = mkCorePos pos})
+	  | _ -> Seq ({exp_seq_type = t; exp_seq_exp1= e1; exp_seq_exp2 = e2; exp_seq_pos = pos})
 
 (* utility functions *)
 
@@ -728,64 +718,33 @@ and exp_to_check (e:exp) :bool = match e with
   
   
 and pos_of_exp (e:exp) :loc = match e with
-  | CheckRef b -> b.exp_check_ref_pos.pos
-  | BConst b -> b.exp_bconst_pos.pos
-  | Bind b -> b.exp_bind_pos.pos
-  | Cast b -> b.exp_cast_pos.pos
-  | Debug b -> b.exp_debug_pos.pos
-  | Dprint b -> b.exp_dprint_pos.pos
-  | Assign b -> b.exp_assign_pos.pos
-  | FConst b -> b.exp_fconst_pos.pos
-  | ICall b -> b.exp_icall_pos.pos
-  | IConst b -> b.exp_iconst_pos.pos
-  | Print (_,b) -> b.pos
-  | Seq b -> b.exp_seq_pos.pos
-  | VarDecl b -> b.exp_var_decl_pos.pos
-  | Unfold b -> b.exp_unfold_pos.pos
-  | Unit b -> b.pos
-  | This b -> b.exp_this_pos.pos
-  | Var b -> b.exp_var_pos.pos
-  | Null b -> b.pos
-  | Cond b -> b.exp_cond_pos.pos
-  | Block b -> b.exp_block_pos.pos
-  | Java b  -> b.exp_java_pos.pos
-  | Assert b -> b.exp_assert_pos.pos
-  | New b -> b.exp_new_pos.pos
-  | Sharp b -> b.exp_sharp_pos.pos
-  | SCall b -> b.exp_scall_pos.pos
-  | While b -> b.exp_while_pos.pos
-  | Try b -> b.exp_try_pos.pos
-  
-and set_pos_context (e:exp) c (lbl1,lbl2) =
-	let label = (string_of_int lbl1)^" "^lbl2 in
-	match e with
-  | CheckRef b -> (H.add b.exp_check_ref_pos.state label c)
-  | BConst b -> (H.add b.exp_bconst_pos.state label c)
-  | Bind b -> (H.add b.exp_bind_pos.state label c)
-  | Cast b -> (H.add b.exp_cast_pos.state label c)
-  | Debug b -> (H.add b.exp_debug_pos.state label c)
-  | Dprint b -> (H.add b.exp_dprint_pos.state label c)
-  | Assign b -> (H.add b.exp_assign_pos.state label c)
-  | FConst b -> (H.add b.exp_fconst_pos.state label c)
-  | ICall b -> (H.add b.exp_icall_pos.state label c)
-  | IConst b -> (H.add b.exp_iconst_pos.state label c)
-  | Print (_,b) -> (H.add b.state label c)
-  | Seq b -> (H.add b.exp_seq_pos.state label c)
-  | VarDecl b -> (H.add b.exp_var_decl_pos.state label c)
-  | Unfold b -> (H.add b.exp_unfold_pos.state label c)
-  | Unit b -> (H.add b.state label c)
-  | This b -> (H.add b.exp_this_pos.state label c)
-  | Var b -> (H.add b.exp_var_pos.state label c)
-  | Null b -> (H.add b.state label c)
-  | Cond b -> (H.add b.exp_cond_pos.state label c)
-  | Block b -> (H.add b.exp_block_pos.state label c)
-  | Java b  -> (H.add b.exp_java_pos.state label c)
-  | Assert b -> (H.add b.exp_assert_pos.state label c)
-  | New b -> (H.add b.exp_new_pos.state label c)
-  | Sharp b -> (H.add b.exp_sharp_pos.state label c)
-  | SCall b -> (H.add b.exp_scall_pos.state label c)
-  | While b -> (H.add b.exp_while_pos.state label c)
-  | Try b -> (H.add b.exp_try_pos.state label c)
+  | CheckRef b -> b.exp_check_ref_pos
+  | BConst b -> b.exp_bconst_pos
+  | Bind b -> b.exp_bind_pos
+  | Cast b -> b.exp_cast_pos
+  | Debug b -> b.exp_debug_pos
+  | Dprint b -> b.exp_dprint_pos
+  | Assign b -> b.exp_assign_pos
+  | FConst b -> b.exp_fconst_pos
+  | ICall b -> b.exp_icall_pos
+  | IConst b -> b.exp_iconst_pos
+  | Print (_,b) -> b
+  | Seq b -> b.exp_seq_pos
+  | VarDecl b -> b.exp_var_decl_pos
+  | Unfold b -> b.exp_unfold_pos
+  | Unit b -> b
+  | This b -> b.exp_this_pos
+  | Var b -> b.exp_var_pos
+  | Null b -> b
+  | Cond b -> b.exp_cond_pos
+  | Block b -> b.exp_block_pos
+  | Java b  -> b.exp_java_pos
+  | Assert b -> b.exp_assert_pos
+  | New b -> b.exp_new_pos
+  | Sharp b -> b.exp_sharp_pos
+  | SCall b -> b.exp_scall_pos
+  | While b -> b.exp_while_pos
+  | Try b -> b.exp_try_pos
   
   
 let rec check_proper_return cret_type exc_list f = 
@@ -837,6 +796,6 @@ let rec check_proper_return cret_type exc_list f =
 	let helper f0 = match f0 with 
 		| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
 		| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
-		| F.EAssume (_,b,_)-> if (F.isConstFalse b)||(F.isConstTrue b) then () else check_proper_return_f b
+		| F.EAssume (_,b)-> if (F.isConstFalse b)||(F.isConstTrue b) then () else check_proper_return_f b
 		in
 	List.iter helper f

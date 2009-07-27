@@ -3,26 +3,18 @@
 type ident = string
 type constant_flow = ident
 
+
 type nflow = (int*int)(*numeric representation of flow*)
 
 	
 	
 and branch_label = string
-and spec_label = string
 
 and loc = {
 			start_pos : Lexing.position (* might be expanded to contain more information *);
 			mid_pos : Lexing.position;
 			end_pos : Lexing.position;
 			}
-			
-		(*	
-and loc = (*location specific info*)
-	{
-		pos: position;
-		
-	}
-*)
 
 and primed =
   | Primed
@@ -160,8 +152,6 @@ let true_imply_count = ref 0
 let false_imply_count = ref 0
 let true_sat_count = ref 0
 
-let spec_label_count = ref 0
-
 let add_count (t: int ref) = 
 	t := !t+1
 
@@ -192,10 +182,6 @@ let reset_int2 () =
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
-  
-let fresh_int_label () =
-  spec_label_count := !spec_label_count + 1;
-  !spec_label_count
 
 let fresh_var_name (tn:string)(ln:int):string = 
 	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
