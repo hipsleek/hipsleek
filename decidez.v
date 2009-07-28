@@ -269,7 +269,7 @@ Ltac hyp :=
   | |- forall A : _, _=> intro
   | |- ~ ?X => intro
  
-  | H : ?A = _ |- _ => try rewrite -> H in *; clear H A
+(*  | H : ?A = _ |- _ => try rewrite -> H in *; clear H A *)
  
   | H : ?A /\ ?B |- _ => destruct H
   | H : ?A \/ ?B |- _ => destruct H
@@ -285,7 +285,7 @@ with solve_exists :=
     | _ => idtac
 end
 
-with solve_all := repeat (repeat hyp; repeat sim); auto with *
+with solve_all := repeat (repeat hyp; repeat sim; subst); auto with *
 
 with solve_with_ltac := intros; solve_exists; solve_all; elimtype False; auto.
 
