@@ -87,7 +87,7 @@
   let rec remove_spec_qualifier (_, pre, post) = (pre, post)
 %}
 
-%token ALLZERO
+%token ALLN
 %token AND
 %token ANDAND
 %token APPEND
@@ -882,8 +882,8 @@ bconstr
   | cexp NOTINLIST cexp {
 	  (P.BForm (P.ListNotIn ($1, $3, get_pos 2)), None)
 	}
-  | ALLZERO OPAREN cexp CPAREN {
-	  (P.BForm (P.ListAllZero ($3, get_pos 1)), None)
+  | ALLN OPAREN cexp COMMA cexp CPAREN {
+	  (P.BForm (P.ListAllN ($3, $5, get_pos 1)), None)
 	}
 ;
 

@@ -170,7 +170,7 @@ let string_of_b_formula = function
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.ListIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
   | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
-  | P.ListAllZero (e, l)		-> "allzero(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListAllN (e1, e2, l)		-> "allzero(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | _ -> "bag constraint"
 ;;
 

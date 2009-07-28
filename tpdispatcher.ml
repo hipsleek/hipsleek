@@ -223,7 +223,7 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
  	  (* list formulas *)
   | CP.ListIn _
   | CP.ListNotIn _
-  | CP.ListAllZero _ -> false
+  | CP.ListAllN _ -> false
 
 and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _
@@ -281,7 +281,7 @@ and is_list_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
  	  (* list formulas *)
   | CP.ListIn _
   | CP.ListNotIn _
-  | CP.ListAllZero _ -> true
+  | CP.ListAllN _ -> true
 
 and is_list_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _

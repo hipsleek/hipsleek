@@ -3368,9 +3368,9 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   | IP.ListNotIn (e1, e2, pos) ->
       let pe1 = trans_pure_exp e1 stab in
       let pe2 = trans_pure_exp e2 stab in CP.ListNotIn (pe1, pe2, pos)
-  | IP.ListAllZero (e, pos) ->
-      let pe = trans_pure_exp e stab
-      in CP.ListAllZero (pe, pos)
+  | IP.ListAllN (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListAllN (pe1, pe2, pos)
   
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
@@ -3518,8 +3518,9 @@ and collect_type_info_b_formula b0 stab =
   | IP.ListNotIn (e1, e2, pos) ->
       (collect_type_info_arith e1 stab;
        collect_type_info_list e2 stab)
-  | IP.ListAllZero (e, pos) ->
-	  (collect_type_info_list e stab)
+  | IP.ListAllN (e1, e2, pos) ->
+      (collect_type_info_arith e1 stab;
+       collect_type_info_list e2 stab)
   | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
 	let _ = 
       if (IP.is_var a1) && (IP.is_var a2)

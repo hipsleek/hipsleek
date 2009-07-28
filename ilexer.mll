@@ -23,7 +23,7 @@
 
   let keywords = Hashtbl.create 100
   let _ = List.map (fun (k, t) -> Hashtbl.add keywords k t)
-	[("allzero", ALLZERO);
+	[("alln", ALLN);
 	 ("app", APPEND);
 	 ("assert", ASSERT);
 	 ("assume", ASSUME);

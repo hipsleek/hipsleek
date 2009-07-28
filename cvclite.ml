@@ -137,7 +137,7 @@ and cvcl_of_b_formula b = match b with
   | CP.BagMax _ | CP.BagMin _ -> failwith ("cvcl_of_b_formula: BagMax/BagMin should not appear here.\n")
   | CP.ListIn _
   | CP.ListNotIn _
-  | CP.ListAllZero _ -> failwith ("Lists are not supported in cvclite")
+  | CP.ListAllN _ -> failwith ("Lists are not supported in cvclite")
 	  
 and cvcl_of_sv_type sv = match sv with
   | CP.SpecVar (CP.Prim Bag, _, _) -> "SET"

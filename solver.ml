@@ -3303,7 +3303,8 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
   		end
   	else f
   | CP.ListIn (e1, e2, pos)
-  | CP.ListNotIn (e1, e2, pos) ->
+  | CP.ListNotIn (e1, e2, pos)
+  | CP.ListAllN (e1, e2, pos) ->
 		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
 			let simpl_f = TP.simplify (CP.BForm(f)) in
@@ -3315,19 +3316,7 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
   		| _ -> f
   		end
   	else f
-  | CP.ListAllZero (e1, pos) ->
-  	if ((count_iconst e1) > 1) then
-			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-			let simpl_f = TP.simplify (CP.BForm(f)) in
-  		begin
-  		match simpl_f with
-  		| CP.BForm(simpl_f1) ->
-  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  			simpl_f1
-  		| _ -> f
-  		end
-  	else f
-	| _ -> f
+ 	| _ -> f
 
 (*
 	- count how many int constants are contained in one expression
