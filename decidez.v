@@ -244,35 +244,6 @@ Hint Resolve alln_nil alln_cons alln_app alln_rev : datatypes.
 
 Ltac hyp :=
   match goal with
-
-(*  | |- exists A : Z, _ =>
-       try (exists 0%Z; repeat hyp; auto with *; reflexivity );
-       try (exists 1%Z; repeat hyp; auto with *; reflexivity );
-       try (exists 2%Z; repeat hyp; auto with *; reflexivity );
-       try (exists 3%Z; repeat hyp; auto with *; reflexivity );
-       match goal with
-       | X : Z |- _ =>
-         exists X%Z; repeat hyp; auto with *; reflexivity
-       end
-*)
-
-(*
-  | |- exists L : list Z, _ /\ L = ?V1 => exists V1
-  | |- exists L : list Z, _ /\ _ /\ L = ?V1 => exists V1
-  | |- exists L1: list Z, (exists L2: list Z, (L1 = _ :: L2 /\ L2 = ?L)) => eexists; exists L; auto
-  | |- exists L1: list Z, _ /\ (exists L2: list Z, ((_ /\ L1 = _ :: L2) /\ L2 = ?L)) => eexists; split; [ simple apply refl_equal | exists L; auto ]
-*)
-
-(*  
-  | |- exists L1 : list Z, _ =>
-       eexists
-  | |- exists L : list Z, _ =>
-       try (exists (@nil Z); repeat hyp; repeat sim; auto with * );
-       match goal with
-       | X : list Z |- _ =>
-         try (exists X; repeat hyp; repeat sim; auto with * )
-       end
-*)
   
   | H : _ ++ _ = nil |- _ => apply app_eq_nil in H; destruct H
   | H : nil = _ ++ _ |- _ => symmetry in H; apply app_eq_nil in H; destruct H
@@ -287,10 +258,6 @@ Ltac hyp :=
   | H : alln (rev ?L) ?n |- _ => rewrite alln_rev in H
   | |- alln (rev ?L) ?n => rewrite alln_rev
   | |- alln (@nil Z) ?n => apply alln_nil (* Qed *)
-
-(*
-  | H : count_occ Z_eq_dec (?x :: ?L) 0%Z = length (?x :: ?L) |- _ => apply count_occ_cons_eq_len in H; destruct H
-*)
   
   | H : _ :: _ = nil |- _ => symmetry in H; contradict H; simple apply nil_cons (* Qed *)
   | H : nil = _ :: _ |- _ => contradict H; simple apply nil_cons (* Qed *)
@@ -308,7 +275,7 @@ Ltac hyp :=
   | H : ?A \/ ?B |- _ => destruct H
  
   | |- ?A /\ ?B => split
-  | |- ?A \/ ?B => try solve [ left; solve_with_ltac | right; solve_with_ltac ]; elimtype False
+  | |- ?A \/ ?B => try solve [ left; solve_all | right; solve_all ]; elimtype False
 
 end
 
@@ -320,12 +287,7 @@ end
 
 with solve_all := repeat (repeat hyp; repeat sim); auto with *
 
-with solve_with_ltac :=
-intros;
-solve_exists;
-solve_all;
-elimtype False; auto.
-(*simpl in *; try omega; try discriminate; try congruence.*)
+with solve_with_ltac := intros; solve_exists; solve_all; elimtype False; auto.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
