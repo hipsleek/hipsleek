@@ -324,7 +324,8 @@ with solve_with_ltac :=
 intros;
 solve_exists;
 solve_all;
-simpl in *; try omega; try discriminate; try congruence; elimtype False; auto.
+elimtype False; auto.
+(*simpl in *; try omega; try discriminate; try congruence.*)
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
