@@ -265,15 +265,13 @@ Ltac hyp :=
   | |- ?x :: _ = ?x :: _ => f_equal
   
   
-  | H : exists A : _, _ |- _ => destruct H
-  | |- forall A : _, _=> intro
   | |- ~ ?X => intro
- 
-(*  | H : ?A = _ |- _ => try rewrite -> H in *; clear H A *)
- 
+  | |- forall A : _, _=> intro
+  | H : exists A : _, _ |- _ => destruct H
+  
   | H : ?A /\ ?B |- _ => destruct H
   | H : ?A \/ ?B |- _ => destruct H
- 
+
   | |- ?A /\ ?B => split
   | |- ?A \/ ?B => try solve [ left; solve_all | right; solve_all ]; elimtype False
 
