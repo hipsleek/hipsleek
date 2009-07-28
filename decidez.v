@@ -41,44 +41,44 @@ Ltac sim :=
   let apply_inj_plus x1 x2 :=
     replace (Z_of_nat (x1 + x2)) with (Z_of_nat x1 + Z_of_nat x2)%Z in * by ( symmetry; apply inj_plus ) in
   match goal with
-    | H : context f [rev (?L ++ ?x :: (@nil Z))] |- _ => apply_rev_unit x L
-    | |- context f [rev (?L ++ ?x :: (@nil Z))] => apply_rev_unit x L
-    | H : context f [(?L1 ++ ?L2) ++ ?L3] |- _ => apply_app_ass L1 L2 L3
-    | |- context f [(?L1 ++ ?L2) ++ ?L3] => apply_app_ass L1 L2 L3
-    | H : context f [(?x :: (@nil Z)) ++ ?L] |- _ => simpl_x_nil_app x L
-    | |- context f [(?x :: (@nil Z)) ++ ?L] => simpl_x_nil_app x L
-    | H : context f [?L ++ (@nil Z)] |- _ => apply_app_nil L
-    | |- context f [?L ++ (@nil Z)] => apply_app_nil L
-    | H : context f [(@nil Z) ++ ?L] |- _ => apply_nil_app L
-    | |- context f [(@nil Z) ++ ?L] => apply_nil_app L
-    | H : context f [hd 0%Z (?x :: ?L)] |- _ => simpl_head_cons x L
-    | |- context f [hd 0%Z (?x :: ?L)] => simpl_head_cons x L
-    | H : context f [tail (@nil Z)] |- _ => simpl_tail_nil
-    | |- context f [tail (@nil Z)] => simpl_tail_nil
-    | H : context f [tail (?x :: ?L)] |- _ => simpl_tail_cons x L
-    | |- context f [tail (?x :: ?L)] => simpl_tail_cons x L
-    | H : context f [length (@nil Z)] |- _ => simpl_length_nil
-    | |- context f [length (@nil Z)] => simpl_length_nil
-    | H : context f [length (?x :: ?L)] |- _ => simpl_length_cons x L
-    | |- context f [length (?x :: ?L)] => simpl_length_cons x L
-    | H : context f [length (?L1 ++ ?L2)] |- _ => apply_app_length L1 L2
-    | |- context f [length (?L1 ++ ?L2)] => apply_app_length L1 L2
-    | H : context f [length (rev ?L)] |- _ => apply_rev_length L
-    | |- context f [length (rev ?L)] => apply_rev_length L
-    | H : context f [rev (@nil Z)] |- _ => simpl_rev_nil
-    | |- context f [rev (@nil Z)] => simpl_rev_nil
-    | H : context f [rev (?x :: ?L)] |- _ => simpl_rev_cons x L
-    | |- context f [rev (?x :: ?L)] => simpl_rev_cons x L
-    | H : context f [rev (?L1 ++ ?L2)] |- _ => apply_distr_rev L1 L2
-    | |- context f [rev (?L1 ++ ?L2)] => apply_distr_rev L1 L2
-    | H : context f [rev (rev ?L)] |- _ => apply_rev_involutive L
-    | |- context f [rev (rev ?L)] => apply_rev_involutive L
-    | H : context f [Z_of_nat 0] |- _ => simpl_Z_of_nat_const 0
-    | |- context f [Z_of_nat 0] => simpl_Z_of_nat_const 0
-    | H : context f [Z_of_nat 1] |- _ => simpl_Z_of_nat_const 1
-    | |- context f [Z_of_nat 1] => simpl_Z_of_nat_const 1
-    | H : context f [Z_of_nat (?x1 + ?x2)] |- _ => apply_inj_plus x1 x2
-    | |- context f [Z_of_nat (?x1 + ?x2)] => apply_inj_plus x1 x2
+    | H : context [rev (?L ++ ?x :: (@nil Z))] |- _ => apply_rev_unit x L
+    | |- context [rev (?L ++ ?x :: (@nil Z))] => apply_rev_unit x L
+    | H : context [(?L1 ++ ?L2) ++ ?L3] |- _ => apply_app_ass L1 L2 L3
+    | |- context [(?L1 ++ ?L2) ++ ?L3] => apply_app_ass L1 L2 L3
+    | H : context [(?x :: (@nil Z)) ++ ?L] |- _ => simpl_x_nil_app x L
+    | |- context [(?x :: (@nil Z)) ++ ?L] => simpl_x_nil_app x L
+    | H : context [?L ++ (@nil Z)] |- _ => apply_app_nil L
+    | |- context [?L ++ (@nil Z)] => apply_app_nil L
+    | H : context [(@nil Z) ++ ?L] |- _ => apply_nil_app L
+    | |- context [(@nil Z) ++ ?L] => apply_nil_app L
+    | H : context [hd 0%Z (?x :: ?L)] |- _ => simpl_head_cons x L
+    | |- context [hd 0%Z (?x :: ?L)] => simpl_head_cons x L
+    | H : context [tail (@nil Z)] |- _ => simpl_tail_nil
+    | |- context [tail (@nil Z)] => simpl_tail_nil
+    | H : context [tail (?x :: ?L)] |- _ => simpl_tail_cons x L
+    | |- context [tail (?x :: ?L)] => simpl_tail_cons x L
+    | H : context [length (@nil Z)] |- _ => simpl_length_nil
+    | |- context [length (@nil Z)] => simpl_length_nil
+    | H : context [length (?x :: ?L)] |- _ => simpl_length_cons x L
+    | |- context [length (?x :: ?L)] => simpl_length_cons x L
+    | H : context [length (?L1 ++ ?L2)] |- _ => apply_app_length L1 L2
+    | |- context [length (?L1 ++ ?L2)] => apply_app_length L1 L2
+    | H : context [length (rev ?L)] |- _ => apply_rev_length L
+    | |- context [length (rev ?L)] => apply_rev_length L
+    | H : context [rev (@nil Z)] |- _ => simpl_rev_nil
+    | |- context [rev (@nil Z)] => simpl_rev_nil
+    | H : context [rev (?x :: ?L)] |- _ => simpl_rev_cons x L
+    | |- context [rev (?x :: ?L)] => simpl_rev_cons x L
+    | H : context [rev (?L1 ++ ?L2)] |- _ => apply_distr_rev L1 L2
+    | |- context [rev (?L1 ++ ?L2)] => apply_distr_rev L1 L2
+    | H : context [rev (rev ?L)] |- _ => apply_rev_involutive L
+    | |- context [rev (rev ?L)] => apply_rev_involutive L
+    | H : context [Z_of_nat 0] |- _ => simpl_Z_of_nat_const 0
+    | |- context [Z_of_nat 0] => simpl_Z_of_nat_const 0
+    | H : context [Z_of_nat 1] |- _ => simpl_Z_of_nat_const 1
+    | |- context [Z_of_nat 1] => simpl_Z_of_nat_const 1
+    | H : context [Z_of_nat (?x1 + ?x2)] |- _ => apply_inj_plus x1 x2
+    | |- context [Z_of_nat (?x1 + ?x2)] => apply_inj_plus x1 x2
 end.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
@@ -156,54 +156,96 @@ Hint Rewrite
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
-Lemma count_occ_le_len : forall (L : list Z), count_occ Z_eq_dec L 0%Z <= length L.
+Lemma count_occ_le_len : forall (L : list Z) (n : Z), count_occ Z_eq_dec L n <= length L.
 Proof.
-  intro L; induction L as [| a L].
+  intros L n; induction L as [| a L].
     simple apply le_n.
-    change (length (a :: L)) with (1 + length L); destruct a as [| p | p].
-	  simpl; omega.
-	  assert (Zpos p > 0)%Z.
-	    simple apply Zgt_pos_0.
-	    assert (Zpos p <> 0)%Z.
-		  omega.
-		  change (count_occ Z_eq_dec (Zpos p :: L) 0%Z) with (count_occ Z_eq_dec L 0%Z); omega.
-	  assert (Zneg p < 0)%Z.
-	    simple apply Zlt_neg_0.
-	    assert (Zneg p <> 0)%Z.
-		  omega.
-		  change (count_occ Z_eq_dec (Zneg p :: L) 0%Z) with (count_occ Z_eq_dec L 0%Z); omega.
+    simpl (length (a :: L)); generalize (Z_eq_dec a n); intro H; destruct H as [H | H0].
+      rewrite count_occ_cons_eq.
+        omega.
+        exact H.
+      rewrite count_occ_cons_neq.
+        omega.
+        exact H0.
 Qed.
 
-Lemma count_occ_cons_eq_len : forall (x : Z) (L : list Z), count_occ Z_eq_dec (x :: L) 0%Z = length (x :: L) -> x = 0%Z /\ count_occ Z_eq_dec L 0%Z = length L.
+Lemma count_occ_cons_eq_len : forall (x : Z) (L : list Z) (n : Z), count_occ Z_eq_dec (x :: L) n = length (x :: L) -> x = n /\ count_occ Z_eq_dec L n = length L.
 Proof.
-  intros x L H; change (length (x :: L)) with (1 + length L) in H; assert (exists y : Z, y = x) as H0.
-    exists x; simple apply refl_equal.
-	destruct H0 as [ x0 ]; destruct x0 as [| p | p] in H0.
-      rewrite <- H0 in *; split.
-	    simple apply refl_equal.
-		change (count_occ Z_eq_dec (0%Z :: L) 0%Z) with (1 + count_occ Z_eq_dec L 0%Z) in H; simple apply eq_add_S; exact H.
-	  assert (Zpos p > 0)%Z as H1.
-	    simple apply Zgt_pos_0.
-		rewrite H0 in H1; assert (x <> 0)%Z as H2.
-		  omega.
-		  apply count_occ_cons_neq with Z Z_eq_dec L x 0%Z in H2; rewrite H2 in H; assert (count_occ Z_eq_dec L 0%Z <= length L).
-		    simple apply count_occ_le_len.
-			omega.
-	  assert (Zneg p < 0)%Z as H1.
-	    simple apply Zlt_neg_0.
-		rewrite H0 in H1; assert (x <> 0)%Z as H2.
-		  omega.
-		  apply count_occ_cons_neq with Z Z_eq_dec L x 0%Z in H2; rewrite H2 in H; assert (count_occ Z_eq_dec L 0%Z <= length L).
-		    simple apply count_occ_le_len.
-			omega.	  
+  intros x L n H; simpl (length (x :: L)) in H; generalize (Z_eq_dec x n); intro H0; destruct H0 as [H0 | H1].
+    split.
+      exact H0.
+      rewrite count_occ_cons_eq in H.
+        simple apply eq_add_S; exact H.
+        exact H0.
+    rewrite count_occ_cons_neq in H.
+      generalize (count_occ_le_len L n); intro H2; omega.
+      exact H1.
 Qed.
+
+Definition alln (l : list Z) (n : Z) := count_occ Z_eq_dec l n = length l.
+
+Theorem alln_nil : forall (n : Z), alln (@nil Z) n.
+Proof.
+  intro n; unfold alln; simple apply refl_equal.
+Qed.
+
+Theorem alln_cons : forall (x : Z) (L : list Z) (n : Z), alln (x :: L) n <-> x = n /\ alln L n.
+Proof.
+  intros x L n; split.
+    intro H; unfold alln in H; apply count_occ_cons_eq_len in H; destruct H as [H0]; split.
+      exact H0.
+      exact H.
+    intro H; destruct H as [H0]; unfold alln; rewrite count_occ_cons_eq.
+      simpl (length (x :: L)); f_equal; exact H.
+      exact H0.
+Qed.
+
+Theorem alln_app : forall (L1 : list Z) (L2 : list Z) (n : Z), alln (L1 ++ L2) n <-> alln L1 n /\ alln L2 n.
+Proof.
+  intros L1 L2 n; split.
+    intro H; induction L1 as [| a L1 IHL1].
+      split.
+        simple apply alln_nil.
+        exact H.
+      simpl in H; rewrite alln_cons in H; destruct H as [H0]; apply IHL1 in H; destruct H as [H1]; split.
+        rewrite alln_cons; split.
+          exact H0.
+          exact H1.
+        exact H.
+    intro H; destruct H as [H0]; induction L1 as [| a L1 IHL1].
+      exact H.
+      simpl; rewrite alln_cons; rewrite alln_cons in H0; destruct H0 as [H1]; split.
+        exact H1.
+        apply IHL1 in H0; exact H0.
+Qed.
+
+Theorem alln_rev : forall (L : list Z) (n : Z), alln (rev L) n <-> alln L n.
+Proof.
+  intros L n; split.
+    intro H; induction L as [| a L IHL].
+      apply alln_nil.
+      change (rev (a :: L)) with (rev L ++ a :: nil) in H; rewrite alln_app in H; destruct H as [H0]; rewrite alln_cons; split.
+        rewrite alln_cons in H; destruct H as [H1]; exact H1.
+        apply IHL in H0; exact H0.
+    intro H; induction L as [| a L IHL].
+      exact H.
+      rewrite alln_cons in H; destruct H as [H0]; change (rev (a :: L)) with (rev L ++ a :: nil); rewrite alln_app; split.
+        apply IHL; exact H.
+        rewrite alln_cons; split.
+          exact H0.
+          apply alln_nil.
+Qed.
+
+(*
+Hint Resolve alln_nil alln_cons alln_app alln_rev : datatypes.
+*)
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
 Ltac hyp :=
   match goal with
- 
-  | |- exists A : Z, _ =>
+
+(*  | |- exists A : Z, _ =>
        try (exists 0%Z; repeat hyp; auto with *; reflexivity );
        try (exists 1%Z; repeat hyp; auto with *; reflexivity );
        try (exists 2%Z; repeat hyp; auto with *; reflexivity );
@@ -212,9 +254,19 @@ Ltac hyp :=
        | X : Z |- _ =>
          exists X%Z; repeat hyp; auto with *; reflexivity
        end
- | |- exists L1 : list Z, _ =>
-	   eexists
-(*   | |- exists L : list Z, _ =>
+*)
+
+(*
+  | |- exists L : list Z, _ /\ L = ?V1 => exists V1
+  | |- exists L : list Z, _ /\ _ /\ L = ?V1 => exists V1
+  | |- exists L1: list Z, (exists L2: list Z, (L1 = _ :: L2 /\ L2 = ?L)) => eexists; exists L; auto
+  | |- exists L1: list Z, _ /\ (exists L2: list Z, ((_ /\ L1 = _ :: L2) /\ L2 = ?L)) => eexists; split; [ simple apply refl_equal | exists L; auto ]
+*)
+
+(*  
+  | |- exists L1 : list Z, _ =>
+       eexists
+  | |- exists L : list Z, _ =>
        try (exists (@nil Z); repeat hyp; repeat sim; auto with * );
        match goal with
        | X : list Z |- _ =>
@@ -227,8 +279,18 @@ Ltac hyp :=
 
   | H : In ?x (?y :: ?L) |- _ => apply in_inv in H; destruct H
 
-  | H : count_occ Z_eq_dec (?x :: ?L) 0%Z = length (?x :: ?L) |- _ => apply count_occ_cons_eq_len in H; destruct H
   
+  | H : alln (?x :: ?L) ?n |- _ => rewrite alln_cons in H; destruct H
+  | |- alln (?x :: ?L) ?n => rewrite alln_cons; split
+  | H : alln (?L1 ++ ?L2) ?n |- _ => rewrite alln_app in H; destruct H
+  | |- alln (?L1 ++ ?L2) ?n => rewrite alln_app; split
+  | H : alln (rev ?L) ?n |- _ => rewrite alln_rev in H
+  | |- alln (rev ?L) ?n => rewrite alln_rev
+  | |- alln (@nil Z) ?n => apply alln_nil (* Qed *)
+
+(*
+  | H : count_occ Z_eq_dec (?x :: ?L) 0%Z = length (?x :: ?L) |- _ => apply count_occ_cons_eq_len in H; destruct H
+*)
   
   | H : _ :: _ = nil |- _ => symmetry in H; contradict H; simple apply nil_cons (* Qed *)
   | H : nil = _ :: _ |- _ => contradict H; simple apply nil_cons (* Qed *)
@@ -247,13 +309,22 @@ Ltac hyp :=
  
   | |- ?A /\ ?B => split
   | |- ?A \/ ?B => try solve [ left; solve_with_ltac | right; solve_with_ltac ]; elimtype False
-  
+
 end
+
+with solve_exists :=
+  match goal with
+    | |- context [ ex _ ] => repeat eexists; solve_all; instantiate
+    | _ => idtac
+end
+
+with solve_all := repeat (repeat hyp; repeat sim); auto with *
 
 with solve_with_ltac :=
 intros;
-repeat progress (repeat hyp; repeat sim);
-auto with *; simpl in *; eauto; try omega; try discriminate; try congruence; elimtype False; auto.
+solve_exists;
+solve_all;
+simpl in *; try omega; try discriminate; try congruence; elimtype False; auto.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 

@@ -129,7 +129,16 @@ and coq_of_b_formula b =
   | CP.BagMax _ -> failwith ("No bags in Coq yet")
   | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
   | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
-  | CP.ListAllZero (a, _) -> " ( count_occ Z_eq_dec " ^ (coq_of_exp a) ^ " 0%Z = length " ^ (coq_of_exp a) ^ ")"
+  | CP.ListAllZero (a, _) -> " ( alln " ^ (coq_of_exp a) ^ " 0%Z)"
+(*  | CP.ListAllZero (CP.ListAppend (alist, pos1), pos2) -> 
+      begin match alist with
+      | [] -> coq_of_b_formula (CP.ListAllZero (CP.List ([], pos1), pos2))
+	  | a::[] -> coq_of_b_formula (CP.ListAllZero (a, pos2))
+	  | a::t -> coq_of_formula (CP.And (CP.BForm (CP.ListAllZero (a, pos2)), CP.BForm (CP.ListAllZero (CP.ListAppend (t, pos1), pos2)), pos1))
+	  end
+  | CP.ListAllZero (CP.ListReverse (a, _), pos) -> coq_of_b_formula (CP.ListAllZero (a, pos))
+  | CP.ListAllZero (a, _) -> " ( count_occ Z_eq_dec " ^ (coq_of_exp a) ^ " 0%Z = length " ^ (coq_of_exp a) ^ ")" *)
+
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
