@@ -152,7 +152,7 @@ Hint Rewrite
   rev_involutive
   inj_0 inj_S
   inj_plus
-    : simpl_lists.
+    : simpl_lists_db.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
@@ -277,13 +277,15 @@ Ltac hyp :=
 
 end
 
+with simpl_lists := repeat sim
+
 with solve_exists :=
   match goal with
     | |- context [ ex _ ] => repeat eexists; solve_all; instantiate
     | _ => idtac
 end
 
-with solve_all := repeat (repeat hyp; repeat sim; subst); auto with *
+with solve_all := repeat (repeat hyp; simpl_lists; subst); auto with *
 
 with solve_with_ltac := intros; solve_exists; solve_all; elimtype False; auto.
 
