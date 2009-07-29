@@ -186,7 +186,7 @@ let stop_prover () =
 let rec send_formula (f : string) (nr : int) : bool =
   try
 	  output_string (snd !coq_channels) f;
-	  output_string (snd !coq_channels) ("solve_with_ltac.\nQed.\n");
+	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
 	  flush (snd !coq_channels);
 	  
 	  let result = ref false in
