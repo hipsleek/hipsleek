@@ -909,6 +909,11 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 					let ne2, np2 = float_out_exp_min_max e2 in
 					let t = Ipure.BForm (Ipure.ListAllN (ne1, ne2, l)) in
 					add_exists t np1 np2 l
+		  | Ipure.ListPerm (e1, e2, l) ->
+					let ne1, np1 = float_out_exp_min_max e1 in
+					let ne2, np2 = float_out_exp_min_max e2 in
+					let t = Ipure.BForm (Ipure.ListPerm (ne1, ne2, l)) in
+					add_exists t np1 np2 l
 			in		 
 		match p with
 			| Ipure.BForm b -> (float_out_b_formula_min_max b)

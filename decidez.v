@@ -24,7 +24,7 @@ Proof.
     intro H; f_equal; exact H.
 Qed.
 
-Lemma simpl_x_nil_app : forall (A : Type) (L : list A) (x : A), x :: (@nil A) ++ L = x :: L.
+Lemma simpl_x_cons_app : forall (A : Type) (L1 L2 : list A) (x : A), (x :: L1) ++ L2 = x :: L1 ++ L2.
 Proof.
   intros; simple apply refl_equal.
 Qed.
@@ -92,6 +92,27 @@ Lemma in_x_cons : forall (A : Type) (x y : A) (L : list A), In x (y :: L) <-> y 
 Proof.
   intros A x y L; split; intro H; exact H.
 Qed.
+
+Hint Constructors Permutation : datatypes.
+
+Hint Resolve
+  Permutation_nil
+  Permutation_nil_cons 
+  Permutation_refl
+  Permutation_sym
+  Permutation_trans
+  Permutation_in
+  Permutation_app
+  Permutation_app_swap
+  Permutation_cons_app
+  Permutation_length
+  Permutation_rev
+  Permutation_app_inv
+  Permutation_cons_inv
+  Permutation_cons_app_inv
+  Permutation_app_inv_l
+  Permutation_app_inv_r
+    : datatypes.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
@@ -175,7 +196,7 @@ Proof.
           apply alln_nil.
 Qed.
 
-Hint Resolve alln_nil alln_cons alln_app alln_rev : datatypes.
+Hint Resolve alln_nil (* alln_cons alln_app alln_rev *) : datatypes.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
@@ -185,7 +206,7 @@ Hint Rewrite
   cons_eq_cons
   rev_unit
   app_ass
-  simpl_x_nil_app
+  simpl_x_cons_app
   simpl_app_nil
   simpl_nil_app
   list_app_eq_nil
@@ -220,7 +241,7 @@ Ltac sim :=
     | |- context [?x :: _ = ?x :: _] => rewrite cons_eq_cons in |- *
     | |- context [rev (?L ++ ?x :: (@nil Z))] => rewrite rev_unit in |- *
     | |- context [(?L1 ++ ?L2) ++ ?L3] => rewrite app_ass in |- *
-    | |- context [(?x :: (@nil Z)) ++ ?L] => rewrite simpl_x_nil_app in |- *
+    | |- context [(?x :: ?L1) ++ ?L2] => rewrite simpl_x_cons_app in |- *
     | |- context [?L ++ (@nil Z)] => rewrite simpl_app_nil in |- *
     | |- context [(@nil Z) ++ ?L] => rewrite simpl_nil_app in |- *
     | |- context [?L1 ++ ?L2 = (@nil Z)] => rewrite list_app_eq_nil in |- *
@@ -248,7 +269,7 @@ Ltac sim :=
     | H: context [?x :: _ = ?x :: _] |- _ => rewrite cons_eq_cons in H
     | H: context [rev (?L ++ ?x :: (@nil Z))] |- _ => rewrite rev_unit in H
     | H: context [(?L1 ++ ?L2) ++ ?L3] |- _ => rewrite app_ass in H
-    | H: context [(?x :: (@nil Z)) ++ ?L] |- _ => rewrite simpl_x_nil_app in H
+    | H: context [(?x :: ?L1) ++ ?L2] |- _ => rewrite simpl_x_cons_app in H
     | H: context [?L ++ (@nil Z)] |- _ => rewrite simpl_app_nil in H
     | H: context [(@nil Z) ++ ?L] |- _ => rewrite simpl_nil_app in H
     | H: context [?L1 ++ ?L2 = (@nil Z)] |- _ => rewrite list_app_eq_nil in H
@@ -278,6 +299,8 @@ end.
 
 Ltac hyp :=
   match goal with
+  
+  | H: context [hd 0%Z (@nil Z)] |- _ => admit
 
   | |- ~ ?X => intro
   | |- forall A : _, _=> intro

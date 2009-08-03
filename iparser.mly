@@ -183,6 +183,7 @@
 %token ORWORD
 %token OSQUARE
 %token PERCENT
+%token PERM
 %token PLUS
 %token PRIME
 %token PRINT
@@ -884,6 +885,9 @@ bconstr
 	}
   | ALLN OPAREN cexp COMMA cexp CPAREN {
 	  (P.BForm (P.ListAllN ($3, $5, get_pos 1)), None)
+	}
+  | PERM OPAREN cexp COMMA cexp CPAREN {
+	  (P.BForm (P.ListPerm ($3, $5, get_pos 1)), None)
 	}
 ;
 

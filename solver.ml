@@ -3304,7 +3304,8 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
   	else f
   | CP.ListIn (e1, e2, pos)
   | CP.ListNotIn (e1, e2, pos)
-  | CP.ListAllN (e1, e2, pos) ->
+  | CP.ListAllN (e1, e2, pos)
+  | CP.ListPerm (e1, e2, pos) ->
 		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
 			let simpl_f = TP.simplify (CP.BForm(f)) in

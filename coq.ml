@@ -130,6 +130,7 @@ and coq_of_b_formula b =
   | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
   | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
   | CP.ListAllN (a1, a2, _) -> " ( alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
+  | CP.ListPerm (a1, a2, _) -> " ( Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
 
 (* pretty printing for formulas *)
 and coq_of_formula f =

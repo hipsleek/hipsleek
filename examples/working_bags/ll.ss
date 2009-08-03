@@ -11,7 +11,7 @@ ll<S> == self = null & S = {}
 	or self::node<v, q> * q::ll<S1> & S = union(S1, {v});
 
 /*ll2<n, S> == self=null & n=0 & S={}
-	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
+	or self::node<v, r> * r::ll2<m, S1> & n=m+1 & S=union(S1, {v});*/
 
 /* append two singly linked lists */
 void append(node x, node y)

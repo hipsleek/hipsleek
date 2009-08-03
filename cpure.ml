@@ -44,6 +44,7 @@ and b_formula =
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
+  | ListPerm of (exp * exp * loc)
 
 (* Expression *)
 and exp =
@@ -151,6 +152,10 @@ and bfv (bf : b_formula) = match bf with
 	  let fv2 = afv a2 in
 		fv1 @ fv2
   | ListAllN (a1, a2, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		fv1 @ fv2
+  | ListPerm (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		fv1 @ fv2
@@ -508,6 +513,7 @@ and equalBFormula (f1:b_formula)(f2:b_formula):bool = match (f1,f2) with
   | ((ListIn (e1,e2,_)),(ListIn (d1,d2,_)))
   | ((ListNotIn (e1,e2,_)),(ListNotIn (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
   | ((ListAllN (e1,e2,_)),(ListAllN (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+  | ((ListPerm (e1,e2,_)),(ListPerm (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
   | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
   | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq_spec_var v1 w1)&& (eq_spec_var v2 w2)
   | _ -> false
@@ -706,6 +712,7 @@ and eq_b_formula (b1 : b_formula) (b2 : b_formula) : bool = match (b1, b2) with
   | (ListIn(e1, e2, _), ListIn(d1, d2, _))
   | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
   | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
+  | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
   | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
   | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var sv1 sv3) & (eq_spec_var sv2 sv4)
   | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
@@ -861,6 +868,7 @@ and b_apply_subs sst bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
 
 and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
 
@@ -942,6 +950,7 @@ and b_apply_one (fr, t) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -1051,6 +1060,7 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
 
@@ -1112,6 +1122,7 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ -> e
@@ -1488,7 +1499,8 @@ and drop_bag_b_formula (bf0 : b_formula) : b_formula = match bf0 with
   | BagMax _
   | ListIn _
   | ListNotIn _
-  | ListAllN _ -> BConst (true, no_pos)
+  | ListAllN _
+  | ListPerm _ -> BConst (true, no_pos)
   | Eq (e1, e2, pos)
   | Neq (e1, e2, pos) ->
 	  if (is_bag e1) || (is_bag e2) || (is_list e1) || (is_list e2) then
@@ -1554,6 +1566,7 @@ and b_apply_one_exp (fr, t) bf = match bf with
   | ListIn (a1, a2, pos) -> bf
   | ListNotIn (a1, a2, pos) -> bf
   | ListAllN (a1, a2, pos) -> bf
+  | ListPerm (a1, a2, pos) -> bf
 
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -2104,6 +2117,7 @@ and arith_simplify (pf : formula) :  formula =
          |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
          |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
          |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+         |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
          |  BagSub (e1, e2, l) ->
               BagSub (simp_mult e1, simp_mult e2, l)
          |  BagMin _ -> b

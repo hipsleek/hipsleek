@@ -71,6 +71,7 @@
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
+   ("perm", PERM);
 	 ("dprint", PRINT);
 	 ("ref", REF);
 	 ("requires", REQUIRES);
@@ -92,7 +93,7 @@
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
-     ("global", GLOBAL)]
+   ("global", GLOBAL)]
 }
 
 let alpha = ['a'-'z' 'A'-'Z' '_']

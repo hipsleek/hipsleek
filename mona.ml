@@ -623,7 +623,8 @@ and mona_of_b_formula b f vs =
   | CP.BagMax (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => x0 <= " ^ (mona_of_spec_var v1) ^ " )"
   | CP.ListIn _
   | CP.ListNotIn _
-  | CP.ListAllN _ -> failwith ("Lists are not supported in Mona")
+  | CP.ListAllN _
+  | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   in
   ret
 
@@ -711,7 +712,8 @@ and print_b_formula b f = match b with
   | CP.BagMax (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => x0 <= " ^ (mona_of_spec_var v1) ^ " )"
   | CP.ListIn _
   | CP.ListNotIn _
-  | CP.ListAllN _ -> failwith ("Lists are not supported in Mona")
+  | CP.ListAllN _
+  | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
 
 
 
