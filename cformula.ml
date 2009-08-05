@@ -33,6 +33,7 @@ and ext_formula =
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
 	| EAssume of ((Cpure.spec_var list) *formula *(int*string))
+	(*existentials, postcondition, label( id+ assert assume label)     *)
 
 
 and ext_case_formula =
@@ -1138,7 +1139,11 @@ and disj_count (f0 : formula) = match f0 with
   | _ -> 1
 
 (* context functions *)
-
+type taken_branch =	
+	| Then_taken of bool
+	| Catch_taken of bool
+	| Call_taken of (int*string) 
+	
 type entail_state = {
   es_formula : formula; (* can be any formula *)
   es_heap : h_formula; (* consumed nodes *)
@@ -1154,7 +1159,8 @@ type entail_state = {
   es_gen_impl_vars: CP.spec_var list; 
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
-  es_arith_subst : (CP.spec_var * CP.exp) list
+  es_arith_subst : (CP.spec_var * CP.exp) list;
+  es_label_list : (int*taken_branch) list; (* program point, second alternative taken*)
 }
 
 and context = 
@@ -1175,14 +1181,19 @@ let empty_es pos = {
   es_gen_impl_vars = []; 
   es_pp_subst = [];
   es_unsat_flag = true;
-  es_arith_subst = []
+  es_arith_subst = [];
+  es_label_list = [];
 }
 
 let empty_ctx pos = Ctx (empty_es pos)
 
-let false_ctx pos = Ctx ({(empty_es pos) with es_formula = mkFalse pos})
+let false_ctx pos lbl_list = Ctx ({(empty_es pos) with 
+											es_formula = mkFalse pos;
+											es_label_list = lbl_list;})
 
-let true_ctx pos = Ctx ({(empty_es pos) with es_formula = mkTrue pos})
+let true_ctx pos lbl_list = Ctx ({(empty_es pos) with 
+											es_formula = mkTrue pos;
+											es_label_list = lbl_list;})
 
 let isFalseCtx ctx = match ctx with
   | Ctx es -> isConstFalse es.es_formula
@@ -1197,8 +1208,8 @@ let rec allFalseCtx ctx = match ctx with
 	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
   
 let mkOCtx ctx1 ctx2 pos =
-  if isTrueCtx ctx1 || isTrueCtx ctx2 then
-	true_ctx pos
+  if isTrueCtx ctx1 then ctx1
+  else if isTrueCtx  ctx2 then ctx2
   else if isFalseCtx ctx1 then ctx2
   else if isFalseCtx ctx2 then ctx1
   else OCtx(ctx1,ctx2)
@@ -1261,7 +1272,7 @@ and set_context_must_match (ctx : context) : context = match ctx with
 *)
 and clear_entailment_history (ctx : context) : context = match ctx with
   | Ctx es -> (* Ctx {es with es_heap = HTrue} *)
-	  Ctx {(empty_es no_pos) with es_formula = es.es_formula;}
+	  Ctx {(empty_es no_pos) with es_formula = es.es_formula; es_label_list = es.es_label_list}
   | OCtx (c1, c2) ->
 	  let nc1 = clear_entailment_history c1 in
 	  let nc2 = clear_entailment_history c2 in
@@ -1306,6 +1317,13 @@ and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | _ -> Err.report_error {Err.error_loc = pos;
 						   Err.error_text = "estate_of_context: disjunctive context"}
 
+and l_u c = match c with
+	| Ctx es -> es.es_label_list
+	| OCtx (d1,d2) -> Util.remove_dups ((l_u d1)@(l_u d2))
+						   
+and add_context_label c l = match c with
+	| Ctx es -> Ctx ({es with es_label_list = l::es.es_label_list})
+	| OCtx (c1,c2) -> OCtx ((add_context_label c1 l),(add_context_label c2 l))
 						   
 and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> flow_formula_of_formula es.es_formula pos

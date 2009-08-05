@@ -227,6 +227,40 @@ let rec string_of_formulae_list l = match l with
   | (f1, f2)::t      -> "\nrequires " ^ (string_of_formula f1) ^ "\nensures " ^ (string_of_formula f2) ^ (string_of_formulae_list t)
 ;;
 
+let rec string_of_context (ctx: context) = match ctx with
+  | Ctx es -> string_of_estate es
+  | OCtx (c1, c2) -> (string_of_context c1) ^ "\nCtxOR\n" ^ (string_of_context c2)
+  
+and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_context ctx)
+
+and string_of_taken_br c = match c with
+  	| Then_taken c -> if c then "then_taken" else "else_taken"
+	| Catch_taken c -> if c then "catch_taken" else "catch_not_taken"
+	| Call_taken (c1,c2) -> "pre_"^(string_of_int c1)^" "^c2
+	
+
+and string_of_estate (es : entail_state) = 
+  "es_formula: " ^ (string_of_formula es.es_formula)
+  ^ "\nes_pure: " ^ (string_of_pure_formula_branches es.es_pure)
+  ^ "\nes_heap: " ^ (string_of_h_formula es.es_heap)
+  ^ "\nes_evars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_evars))
+  ^ "\nes_ivars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_ivars))
+  ^ "\nes_expl_vars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_expl_vars))
+  ^"\n es_gen_expl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_expl_vars))
+  ^"\n es_gen_impl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_impl_vars))
+  ^"\n es_label_list:"^(String.concat ", " (List.map (fun (c1,c2) -> 
+		(string_of_int c1)^"-"^(string_of_taken_br c2)) es.es_label_list))
+(*
+  ^ "\nes_pp_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
+														 ^ ", " ^ (string_of_spec_var t) ^ ")") es.es_pp_subst))
+  ^ "\nes_pres_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
+														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
+*)
+and string_of_label_map (t:label_map):string = 
+	Hashtbl.fold (fun e v a -> e^" "^(string_of_context_list v)^"\n") t ""  
+;;
+
+
 (* pretty printing for a spec_var *)
 let string_of_spec_var = function 
   | P.SpecVar (_, id, p) -> id ^ (match p with 
@@ -318,7 +352,8 @@ let rec string_of_exp = function
 		str1 ^ " " ^ str2
       end
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
-      id ^ " = " ^ (string_of_exp e)
+		"{"^ (string_of_label_map l.state) ^"} \n"^
+		id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
       string_of_bool b 
   | Bind ({exp_bind_type = _; 
@@ -490,28 +525,6 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   Pretty printing fo the AST for the core language
 *)
 
-
-let rec string_of_context (ctx: context) = match ctx with
-  | Ctx es -> string_of_estate es
-  | OCtx (c1, c2) -> (string_of_context c1) ^ "\nCtxOR\n" ^ (string_of_context c2)
-
-and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_context ctx)
-
-and string_of_estate (es : entail_state) = 
-  "es_formula: " ^ (string_of_formula es.es_formula)
-  ^ "\nes_pure: " ^ (string_of_pure_formula_branches es.es_pure)
-  ^ "\nes_heap: " ^ (string_of_h_formula es.es_heap)
-  ^ "\nes_evars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_evars))
-  ^ "\nes_ivars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_ivars))
-  ^ "\nes_expl_vars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_expl_vars))
-  ^"\n es_gen_expl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_expl_vars))
-  ^"\n es_gen_impl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_impl_vars))
-(*
-  ^ "\nes_pp_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
-														 ^ ", " ^ (string_of_spec_var t) ^ ")") es.es_pp_subst))
-  ^ "\nes_pres_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
-														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
-*)
 (*
 let string_of_spec (sp : (formula * formula)) =
   "requires " ^ (string_of_formula (fst sp)) 

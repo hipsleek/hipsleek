@@ -89,6 +89,7 @@ and sharp_val =
 	
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
+				   exp_assert_label : string;
 				   exp_assert_pos : core_loc }
 
 and exp_assign = { exp_assign_lhs : ident;
@@ -117,7 +118,8 @@ and exp_cond = { exp_cond_type : P.typ;
 				 exp_cond_condition : ident;
 				 exp_cond_then_arm : exp;
 				 exp_cond_else_arm : exp;
-				 exp_cond_pos : core_loc }
+				 exp_cond_pos : core_loc;
+				 exp_cond_id : int;}
 
 and exp_debug = { exp_debug_flag : bool;
 				  exp_debug_pos : core_loc }
@@ -132,7 +134,8 @@ and exp_icall = { exp_icall_type : P.typ;
 				  exp_icall_method_name : ident;
 				  exp_icall_arguments : ident list;
 				  exp_icall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
-				  exp_icall_pos : core_loc }
+				  exp_icall_pos : core_loc;
+				  exp_icall_id : int;}
 
 and exp_iconst = { exp_iconst_val : int;
 				   exp_iconst_pos : core_loc }
@@ -151,7 +154,8 @@ and exp_scall = { exp_scall_type : P.typ;
 				  exp_scall_method_name : ident;
 				  exp_scall_arguments : ident list;
 				  exp_scall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
-				  exp_scall_pos : core_loc }
+				  exp_scall_pos : core_loc;
+				  exp_scall_id : int;}
 
 and exp_seq = { exp_seq_type : P.typ;
 				exp_seq_exp1 : exp;
@@ -171,7 +175,8 @@ and exp_catch = {
 				  exp_catch_flow_var : ident option;
 				  exp_catch_var : typed_ident option;
 				  exp_catch_body : exp;																					   
-				  exp_catch_pos : core_loc }
+				  exp_catch_pos : core_loc;
+				  exp_catch_id : int;}
 				  				  
 and exp_try = { exp_try_type : P.typ;
 				exp_try_body : exp;
@@ -758,6 +763,7 @@ and pos_of_exp (e:exp) :loc = match e with
   
 and set_pos_context (e:exp) c (lbl1,lbl2) =
 	let label = (string_of_int lbl1)^" "^lbl2 in
+	(*let _ = print_string ("adding: "^label^"\n") in*)
 	match e with
   | CheckRef b -> (H.add b.exp_check_ref_pos.state label c)
   | BConst b -> (H.add b.exp_bconst_pos.state label c)

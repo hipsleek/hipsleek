@@ -877,7 +877,7 @@ and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (p
 		  let new_es = {estate with es_evars = vs (*Util.remove_dups (vs @ estate.es_evars)*)} in
 		  let new_ctx = Ctx new_es in
 		  (*let new_ctx = set_es_evars ctx vs in*)
-		  let rs0, fold_prf = heap_entail_one_context_struc prog true false false new_ctx view_form pos in
+		  let rs0, fold_prf = heap_entail_one_context_struc prog true false false new_ctx view_form pos None in
 		  let tmp_vars = p :: (estate.es_evars @ vs) in
 		  (**************************************)
 		  (*        process_one 								*)
@@ -1067,7 +1067,7 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 				Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
 				sat_subno := !sat_subno+1;
 				if sat then (true, ctx) else
-					(false, false_ctx no_pos)
+					(false, (false_ctx no_pos es.es_label_list))
 		in
 
    if pfb = [] then 
@@ -1075,7 +1075,7 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 			Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
 			sat_subno := !sat_subno+1;
 
-			 (is_ok, if is_ok then Ctx{es with es_unsat_flag = true } else false_ctx no_pos)
+			 (is_ok, if is_ok then Ctx{es with es_unsat_flag = true } else (false_ctx no_pos es.es_label_list))
         else
 			let r1,r2 = List.fold_left fold_fun (true, ctx) pfb in
           (r1,(set_unsat_flag r2 true))
@@ -1092,7 +1092,7 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 			if b2 then
 			  (true, sc2)
 			else
-			  (false, false_ctx no_pos) in
+			  (false, false_ctx no_pos (Util.remove_dups (l_u c1)@(l_u c2))) in
   let b, sc = unsat_helper ctx0 in
 	sat_no := !sat_no + 1;	
 	sc
@@ -1288,27 +1288,29 @@ and filter_set (cl : context list) : context list =
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
 (* success. *)
-and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : context list) (conseq : struc_formula) pos : (context list * proof) =
+and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) 
+					  (has_post: bool)(cl : context list) (conseq : struc_formula) pos call_site_id
+					  : (context list * proof) =
 	let r = 
 	if !Globals.use_set || U.empty cl then
-	let tmp1 = List.map (fun c -> heap_entail_one_context_struc prog is_folding is_universal has_post c conseq pos) cl in
+	let tmp1 = List.map (fun c -> heap_entail_one_context_struc prog is_folding is_universal has_post c conseq pos call_site_id) cl in
 	let tmp2, tmp_prfs = List.split tmp1 in
 	let prf = mkContextList cl conseq tmp_prfs in
 	let tmp = List.concat tmp2 in
     (tmp, prf)
   else
-	let tmp1, tmp2 = heap_entail_one_context_struc prog is_folding is_universal has_post (List.hd cl) conseq pos in
+	let tmp1, tmp2 = heap_entail_one_context_struc prog is_folding is_universal has_post (List.hd cl) conseq pos call_site_id in
 	  (tmp1, tmp2) in
 	r
 		  
 
-and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos : (context list * proof) =
+and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos call_site_id : (context list * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
 					  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 					  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
   if isFalseCtx ctx then
 	(* check this first so that false => false is true (with false residual) *)
-	([false_ctx pos], UnsatAnte)
+	([false_ctx pos (l_u ctx)], UnsatAnte)
   else(* if isConstFalse conseq then
 	([], UnsatConseq)
   else *)if isConstETrue conseq then
@@ -1316,20 +1318,20 @@ and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_uni
   else
 	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
 	  if isFalseCtx ctx1 then
-		([false_ctx pos], UnsatAnte)
+		([false_ctx pos (l_u ctx1)], UnsatAnte)
 	  else
-		let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx1 conseq pos in
+		let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx1 conseq pos call_site_id in
 
 		  (result, prf)
 
-and heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos : (context list * proof) = match ctx with
+and heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos call_site_id : (context list * proof) = match ctx with
   | OCtx (c1, c2) ->
 	  Debug.devel_pprint ("heap_entail_after_sat_struc:"
 						  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 						  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
-	  let rs1, prf1 = heap_entail_after_sat_struc prog is_folding is_universal has_post c1 conseq pos in
+	  let rs1, prf1 = heap_entail_after_sat_struc prog is_folding is_universal has_post c1 conseq pos call_site_id in
 		if not (U.empty rs1) then
-		  let rs2, prf2 = heap_entail_after_sat_struc prog is_folding is_universal has_post c2 conseq pos in
+		  let rs2, prf2 = heap_entail_after_sat_struc prog is_folding is_universal has_post c2 conseq pos call_site_id in
 			if not (U.empty rs2) then
 			  let rs = or_context_list rs1 rs2 in
 				(* there's no need to do filtering here as rs1 and rs2
@@ -1344,7 +1346,7 @@ and heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq
 	  Debug.devel_pprint ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
 						  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
 						  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
-	  let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding is_universal has_post ctx conseq pos in
+	  let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding is_universal has_post ctx conseq pos call_site_id in
 		(filter_set tmp, prf)
 	end
   
@@ -1367,7 +1369,7 @@ and heap_entail_conjunct_lhs_struc
 (is_universal : bool) 
 (has_post:bool)
 (ctx : context) 
-(conseq : struc_formula) pos : (context list * proof) =
+(conseq : struc_formula) pos (call_site_id : int option): (context list * proof) =
 
 let rec syn_imply ctx p :bool = match ctx with
 	| OCtx _ -> report_error no_pos ("syn_imply:OCtx encountered \n")
@@ -1466,9 +1468,13 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 								  else n_ctx_list in
 						(*let _ = print_string ("\nresidue: "^(Cprinter.string_of_context_list res)^"\n  "^(string_of_bool (isFalseCtx (List.hd res)))^"\n") in*)
 						(res,prf)
-	| EAssume (ref_vars, post,_) -> if not has_post then report_error pos "malfunction: this formula can not have a post condition!"
+	| EAssume (ref_vars, post,lbl) -> if not has_post then report_error pos "malfunction: this formula can not have a post condition!"
 					else
 						let rs = CF.clear_entailment_history ctx in
+						let rs = match call_site_id with
+									| None -> rs 
+									| Some id ->
+										CF.add_context_label rs (id,CF.Call_taken lbl) in
 						(*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
 						let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
 						(*let _ =print_string ("after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
@@ -1515,7 +1521,7 @@ and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal
 					  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
   if isFalseCtx ctx then
 	(* check this first so that false => false is true (with false residual) *)
-	([false_ctx pos], UnsatAnte)
+	([false_ctx pos (l_u ctx)], UnsatAnte)
   else (*if isConstFalse conseq then
 	([], UnsatConseq)
   else *)if isConstTrue conseq then
@@ -1523,7 +1529,7 @@ and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal
   else
 	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog*) ctx in
 	  if isFalseCtx ctx1 then
-		([false_ctx pos], UnsatAnte)
+		([false_ctx pos (l_u ctx1)], UnsatAnte)
 	  else
 		let result, prf = heap_entail_after_sat prog is_folding is_universal ctx1 conseq pos in
 
@@ -2286,7 +2292,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 								  es_gen_expl_vars = estate.es_gen_expl_vars; 
 								  es_gen_impl_vars = estate.es_gen_impl_vars; 
 								  es_ante_evars = estate.es_ante_evars;
-								  es_unsat_flag  = false;} in
+								  es_unsat_flag  = false;
+								  es_label_list = estate.es_label_list} in
 			do_fold_w_ctx fold_ctx var_to_fold  in
 			
 		  
@@ -2358,7 +2365,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 														  es_gen_expl_vars = estate.es_gen_expl_vars; 
 														  es_gen_impl_vars = estate.es_gen_impl_vars; 
 														  es_ante_evars = estate.es_ante_evars;
-														  es_unsat_flag = false;} in
+														  es_unsat_flag = false;
+														  es_label_list = estate.es_label_list} in
 											let na,prf = match vd.view_base_case with
 												| None ->  ([],UnsatConseq)
 												| Some (bc1,(base1,branches1)) -> 

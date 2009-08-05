@@ -483,7 +483,8 @@ let rec seq_elim (e:C.exp):C.exp = match e with
 														  C.exp_catch_var = Some (CP.Prim Void, 
 														  (fresh_var_name "_sq_" b.C.exp_seq_pos.C.pos.start_pos.Lexing.pos_lnum));
 														  C.exp_catch_body = (seq_elim b.C.exp_seq_exp2);
-														  C.exp_catch_pos = b.C.exp_seq_pos});
+														  C.exp_catch_pos = b.C.exp_seq_pos;
+														  C.exp_catch_id = (fresh_int_label ());});
 								C.exp_try_pos = b.C.exp_seq_pos })
 				else C.Seq {b with C.exp_seq_exp1 = seq_elim b.C.exp_seq_exp1 ;
 							 C.exp_seq_exp2 = seq_elim b.C.exp_seq_exp2 ;}
@@ -749,7 +750,7 @@ and need_break_continue lb ne non_generated_label :bool =
 										I.exp_catch_flow_var = None;
 										I.exp_catch_body = I.Empty b.I.exp_while_pos;	
 										I.exp_catch_pos = b.I.exp_while_pos;
-										I.exp_catch_id  = -1;}];
+										I.exp_catch_id  = (fresh_int_label ());}];
 						I.exp_finally_clause = [];
 						I.exp_try_pos = b.I.exp_while_pos;}) in	
 					 let break_try = I.Try {
@@ -1197,7 +1198,7 @@ and
       let xform = new_xform' in
       let formula1 = CF.replace_branches xform_b (CF.formula_of_pure xform pos) in
       let ctx =
-        CF.build_context (CF.true_ctx pos) formula1 pos in
+        CF.build_context (CF.true_ctx pos []) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_pure (fst vdef.C.view_user_inv) pos) in
       let (rs, _) =
         Solver.heap_entail prog false false [ ctx ] formula pos
@@ -1838,6 +1839,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       {
         I.exp_assert_asserted_formula = assert_f_o;
         I.exp_assert_assumed_formula = assume_f_o;
+		I.exp_assert_label = assume_lb;
         I.exp_assert_pos = pos
       } ->
       let tmp_names = E.visible_names () in
@@ -1863,6 +1865,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                C.exp_assert_asserted_formula = assert_cf_o;
                C.exp_assert_assumed_formula = assume_cf_o;
                C.exp_assert_pos = C.mkCorePos pos;
+			   C.exp_assert_label = assume_lb;
              }
          in (assert_e, C.void_type))
   | I.Assign
@@ -2138,7 +2141,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_call_recv_receiver = recv;
         I.exp_call_recv_method = mn;
         I.exp_call_recv_arguments = args;
-        I.exp_call_recv_pos = pos
+        I.exp_call_recv_pos = pos;
+		I.exp_call_recv_id = id;
       } ->
       let (crecv, crecv_t) = trans_exp prog proc recv in
       let (recv_ident, recv_init, new_recv_ident) =
@@ -2217,6 +2221,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                            C.exp_icall_arguments = arg_vars;
                            C.exp_icall_visible_names = visi_svars;
                            C.exp_icall_pos = C.mkCorePos pos;
+						   C.exp_icall_id = id;
                          } in
                      let seq1 = C.mkSeq ret_ct init_seq call_e pos in
                      let seq2 = C.mkSeq ret_ct recv_init seq1 pos in
@@ -2325,6 +2330,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                C.exp_scall_arguments = arg_vars;
                                C.exp_scall_visible_names = visi_svars;
                                C.exp_scall_pos = C.mkCorePos pos;
+							   C.exp_scall_id = id;
                              } in
                          let seq_1 = C.mkSeq ret_ct init_seq call_e pos
                          in
@@ -2349,7 +2355,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_cond_condition = e1;
         I.exp_cond_then_arm = e2;
         I.exp_cond_else_arm = e3;
-        I.exp_cond_pos = pos
+        I.exp_cond_pos = pos;
+		I.exp_cond_id = id;
       } ->
       let (ce1, te1) = trans_exp prog proc e1
       in
@@ -2377,6 +2384,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        C.exp_cond_then_arm = ce2;
                        C.exp_cond_else_arm = ce3;
                        C.exp_cond_pos = C.mkCorePos pos;
+					   C.exp_cond_id = id;
                      }),
                   te2)
              | _ ->
@@ -2404,6 +2412,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        C.exp_cond_then_arm = ce2;
                        C.exp_cond_else_arm = ce3;
                        C.exp_cond_pos = C.mkCorePos pos;
+					   C.exp_cond_id = id ;
                      } in
                  let tmp_e1 =
                    C.Seq
@@ -3062,6 +3071,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 															   C.exp_sharp_pos = C.mkCorePos pos;
 															});
 															C.exp_catch_pos = C.mkCorePos pos;
+															C.exp_catch_id = c.C.exp_catch_id;
 														};
 												});
 										});
@@ -3080,7 +3090,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 														 C.exp_sharp_val = Cast.Sharp_no_val;
 														 C.exp_sharp_unpack = true;
 														 C.exp_sharp_pos = C.mkCorePos pos;});
-													C.exp_catch_pos = C.mkCorePos pos};
+													C.exp_catch_pos = C.mkCorePos pos;
+													C.exp_catch_id = (fresh_int_label())};
 									   C.exp_try_pos = C.mkCorePos pos}) in
 							(r, C.void_type)
 				)
@@ -3091,7 +3102,8 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 		 I.exp_catch_flow_type = cvt;
 		 I.exp_catch_flow_var = cfv;
 		 I.exp_catch_body = cb;																					   
-		 I.exp_catch_pos = pos}->	
+		 I.exp_catch_pos = pos;
+		 I.exp_catch_id = id;}->	
 				if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
 																  Err.error_text = "can not catch a not raisable object" }
 				else begin
@@ -3105,7 +3117,8 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 						 C.exp_catch_flow_var = cfv;
 						 C.exp_catch_var = Some (Cpure.Prim Void,x);
 						 C.exp_catch_body = new_bd;																					   
-						 C.exp_catch_pos = C.mkCorePos pos} end
+						 C.exp_catch_pos = C.mkCorePos pos;
+						 C.exp_catch_id = id;} end
 					else begin
 					E.push_scope();
 					let alpha = E.alpha_name x in
@@ -3121,7 +3134,8 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 						 C.exp_catch_flow_var = cfv;
 						 C.exp_catch_var = Some (ct,alpha);
 						 C.exp_catch_body = new_bd;																					   
-						 C.exp_catch_pos = C.mkCorePos pos} in r end
+						 C.exp_catch_pos = C.mkCorePos pos;
+						 C.exp_catch_id = id;} in r end
 		       | None ->  
 					E.push_scope();
 					let new_bd, ct2 = trans_exp prog proc cb in
@@ -3130,7 +3144,8 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 						C.exp_catch_flow_var = cfv;
 						C.exp_catch_var = None;
 						C.exp_catch_body = new_bd;																					   
-						C.exp_catch_pos = C.mkCorePos pos}
+						C.exp_catch_pos = C.mkCorePos pos;
+						C.exp_catch_id = id;}
 			   end
 	(*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
  
