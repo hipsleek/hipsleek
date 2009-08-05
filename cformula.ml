@@ -33,7 +33,7 @@ and ext_formula =
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
 	| EAssume of ((Cpure.spec_var list) *formula *(int*string))
-	(*existentials, postcondition, label( id+ assert assume label)     *)
+	(*pass by reference vars, postcondition, label( id+ assert assume label)     *)
 
 
 and ext_case_formula =

@@ -257,7 +257,8 @@ and string_of_estate (es : entail_state) =
 														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
 *)
 and string_of_label_map (t:label_map):string = 
-	Hashtbl.fold (fun e v a -> e^" "^(string_of_context_list v)^"\n") t ""  
+	Hashtbl.fold (fun e (v_pre,v_post) a -> e^" pre:\n"^
+		(string_of_context_list v_post)^"\n post: "^ (string_of_context_list v_pre)^"\n"^a) t ""  
 ;;
 
 
@@ -339,7 +340,10 @@ let string_of_sharp st = match st with
 let rec string_of_exp = function 
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
-  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l}) -> 
+  | Assert ({exp_assert_asserted_formula = f1o; 
+			 exp_assert_assumed_formula = f2o; 
+			 exp_assert_pos = l;
+			 exp_assert_label =  lbl;}) -> 
       begin
 	  let str1 = 
 		match f1o with
@@ -349,7 +353,7 @@ let rec string_of_exp = function
 		match f2o with
 		  | None -> ""
 		  | Some f2 -> "assume " ^ (string_of_formula f2) in
-		str1 ^ " " ^ str2
+		lbl^": "^str1 ^ " " ^ str2
       end
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
 		"{"^ (string_of_label_map l.state) ^"} \n"^
@@ -381,8 +385,9 @@ let rec string_of_exp = function
 	   exp_cond_condition = id;
 	   exp_cond_then_arm = e1;
 	   exp_cond_else_arm = e2;
-	   exp_cond_pos = l}) -> 
-	   "if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" 
+	   exp_cond_pos = l;
+	   exp_cond_id = br_id}) -> 
+	   (string_of_int br_id)^" if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" 
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _                   -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
@@ -415,8 +420,9 @@ let rec string_of_exp = function
 	   exp_scall_method_name = id;
 	   exp_scall_arguments = idl;
 	   exp_scall_visible_names = _;
-	   exp_scall_pos = l}) -> 
-	   id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" 
+	   exp_scall_pos = l;
+	   exp_scall_id = scall_id}) -> 
+	   (string_of_int scall_id)^" "^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" 
   | Seq ({exp_seq_type = _;
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;
@@ -439,7 +445,9 @@ let rec string_of_exp = function
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> 
 	let c = b.exp_catch_clause.exp_catch_flow_type in
-	"try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
+	"try \n"^(string_of_exp b.exp_try_body)^"\n"^
+	(string_of_int  b.exp_catch_clause.exp_catch_id)^" catch ("^ (string_of_int (fst c))^","^
+	(string_of_int (snd c))^")="^(Util.get_closest c)^ 
 				(match b.exp_catch_clause.exp_catch_flow_var with 
 					| Some c -> (" @"^c^" ")
 					| _ -> " ")^

@@ -14,7 +14,7 @@ module H = Hashtbl
 
 type typed_ident = (P.typ * ident)
 
-and label_map = (spec_label , Cformula.context list) H.t
+and label_map = (spec_label , ((Cformula.context list)* (Cformula.context list))) H.t
 
 and core_loc = {
 			pos: loc;
