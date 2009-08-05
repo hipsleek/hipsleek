@@ -358,12 +358,16 @@ let rec string_of_exp = function
                                                                     else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
                                        else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
-				exp_call_nrecv_arguments = el})
-                                    -> id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+				exp_call_nrecv_arguments = el;
+				exp_call_nrecv_id = nrecv_id;})
+                                    -> (string_of_int nrecv_id)^": "^
+									id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
-			   exp_call_recv_arguments = el})
-                                    -> (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+			   exp_call_recv_arguments = el;
+			   exp_call_recv_id = recv_id;})
+                                    -> (string_of_int recv_id)^": "^
+									(string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
   | Var ({exp_var_name = v})        -> v
@@ -375,7 +379,9 @@ let rec string_of_exp = function
 			 exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
   | Cond ({exp_cond_condition = e1;
 		   exp_cond_then_arm = e2;
-		   exp_cond_else_arm = e3}) -> "if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
+		   exp_cond_else_arm = e3;
+		   exp_cond_id = id;}) -> (string_of_int id)^
+		   ": if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
                                         (match e3 with 
 										  | Empty ll -> ""
                                           | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}")
@@ -414,7 +420,9 @@ let rec string_of_exp = function
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_catch b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_finally b)) "" fl)
 									
-and string_of_catch c  = "catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body)
+and string_of_catch c  = (string_of_int c.exp_catch_id)^
+					"catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ 
+					": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body)
 
 and string_of_finally c = "finally "^(string_of_exp c.exp_finally_body)
 

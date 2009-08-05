@@ -9,12 +9,14 @@ void withdraw(account ac, int sum) throws NoCreditException
 
 	requires ac::account<i,b> & b>sum ensures ac::account<i,q>&b=q+sum ;
 	requires ac::account<i,b> & b<=sum  ensures ac::account<i,b>*res::NoCreditException<q>&b=q+sum&flow NoCreditException ;
+	requires ac::account<i,b>  ensures true;
 {
 	if 
 		(ac.balance > sum )
 			ac.balance = ac.balance - sum;
 	else 
 		raise new NoCreditException(ac.balance - sum);
+	int i;
 }
 
 int remove10 (account ac1) 

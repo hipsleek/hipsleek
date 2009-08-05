@@ -183,6 +183,8 @@ let process_source_full source =
        let _ = Util.push_time "Translating global var" in
    	  let _ = print_string ("Translating global variables to procedure parameters...\n") in
 	  let intermediate_prog = Globalvars.trans_global_to_param prog in
+	  let _ = if (!Globals.print_input) then 
+			(print_string (Iprinter.string_of_program intermediate_prog)) in
       let _ = Util.pop_time "Translating global var" in
 	  (* Global variables translated *)
 	  (* let ptime1 = Unix.times () in

@@ -65,7 +65,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 	List.for_all do_spec_verification spec_list
 
 and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) e0 assume_label : CF.context list = 
-	set_pos_context e0 ctx assume_label;
+	(*set_pos_context e0 ctx assume_label;*)
 	if (exp_to_check e0) then 
 		(*let _ = if (List.exists Cformula.isFalseCtx ctx) then 
 			print_string ("\n expr: "^
@@ -648,7 +648,9 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		| Some cl,None -> cl
 		| None, Some c -> [c]
 		| Some cl,Some c -> List.map (fun d-> CF.mkOCtx c d no_pos) cl in
-List.concat (List.map helper ctx)
+	let res = List.concat (List.map helper ctx) in
+	set_pos_context e0 (res,ctx) assume_label;
+	res
   
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) (post : CF.formula) pos =

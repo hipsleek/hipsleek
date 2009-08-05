@@ -427,6 +427,7 @@ let rec string_of_exp = function
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;
 	  exp_seq_pos = l}) -> 
+	  "{"^ (string_of_label_map l.state) ^"} \n"^
 	  (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
   | This _ -> "this"
   | Var ({exp_var_type = _;
