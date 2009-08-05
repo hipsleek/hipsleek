@@ -132,7 +132,7 @@ let process_cmd_line () = Arg.parse [
   ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   ("--pip", Arg.Set Globals.print_input,"print input representation");
   ("--sqt", Arg.Set Globals.seq_to_try,"translate seq to try");
-  
+  ("--pvp", Arg.Set Globals.print_verified_core,"print core program after verification");
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
@@ -227,6 +227,8 @@ let process_source_full source =
 	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
+		let _ = if (!Globals.print_verified_core) then 
+	print_string ("Verified code: \n"^ (Cprinter.string_of_program cprog))  in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
@@ -264,7 +266,7 @@ let _ =
   let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
   let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
   (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
-  let _ = if (!Globals.profiling) then 
+    let _ = if (!Globals.profiling) then 
 	let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
 	let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
 	let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
