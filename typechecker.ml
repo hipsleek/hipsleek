@@ -84,7 +84,11 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 (* for code *)
   | Assert ({exp_assert_asserted_formula = c1_o;
 			 exp_assert_assumed_formula = c2;
-			 exp_assert_pos = pos}) -> begin
+			 exp_assert_pos = pos;
+			 exp_assert_label = lbl;}) -> 
+	if (((String.length lbl)>0) && not ((String.compare lbl (snd assume_label))==0)) then
+		ctx
+	else begin
 	  let pos = pos.pos in
 	  let new_ctx = match c1_o with
 		 | None -> ctx
@@ -639,8 +643,11 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 				(r1,r2) in	
 		let r1,r2 = splitter c in
 		let r1 = match r1 with
-			| Some c-> if (Cformula.allFalseCtx c) then Some (check_exp1 [(Cformula.false_ctx no_pos (CF.l_u c))])
-												   else  Some (check_exp1 [c])
+			| Some c-> 
+				let res = if (Cformula.allFalseCtx c) then 
+						(check_exp1 [(Cformula.false_ctx no_pos (CF.l_u c))])
+						else  (check_exp1 [c]) in
+				set_pos_context e0 ([c],res) assume_label;Some res
 			| None -> None in
 		match (r1,r2) with
 		| None, None -> Err.report_error {Err.error_loc = no_pos;
@@ -649,7 +656,6 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 		| None, Some c -> [c]
 		| Some cl,Some c -> List.map (fun d-> CF.mkOCtx c d no_pos) cl in
 	let res = List.concat (List.map helper ctx) in
-	set_pos_context e0 (res,ctx) assume_label;
 	res
   
 

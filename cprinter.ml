@@ -258,7 +258,7 @@ and string_of_estate (es : entail_state) =
 *)
 and string_of_label_map (t:label_map):string = 
 	Hashtbl.fold (fun e (v_pre,v_post) a -> e^" pre:\n"^
-		(string_of_context_list v_post)^"\n post: "^ (string_of_context_list v_pre)^"\n"^a) t ""  
+		(string_of_context_list v_pre)^"\n post: "^ (string_of_context_list v_post)^"\n"^a) t ""  
 ;;
 
 
