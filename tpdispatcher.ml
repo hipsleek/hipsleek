@@ -17,6 +17,7 @@ type tp_type =
   | SetMONA
   | CM (* CVC Lite then MONA *)
   | Coq
+  | Z3
 
 let tp = ref OmegaCalc
 
@@ -186,6 +187,8 @@ let set_tp tp_str =
 	tp := CM
   else if tp_str = "coq" then
 	tp := Coq
+  else if tp_str = "z3" then 
+	tp := Z3
   else
 	()
 
@@ -324,6 +327,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			  (Omega.is_sat f sat_no);
 			end
 	  | CvcLite -> Cvclite.is_sat f sat_no
+	  | Z3 -> Smtsolver.is_sat f sat_no
 	  | Isabelle -> Isabelle.is_sat f sat_no
 	  | Coq -> Coq.is_sat f sat_no
 	  | Mona -> Mona.is_sat f sat_no
@@ -470,6 +474,7 @@ let tp_imply ante conseq imp_no timeout =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
   | CvcLite -> Cvclite.imply ante conseq
+  | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> Coq.imply ante conseq
   | Mona -> Mona.imply timeout ante conseq imp_no 
