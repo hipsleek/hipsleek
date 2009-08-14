@@ -15,7 +15,7 @@ module H = Hashtbl
 type typed_ident = (P.typ * ident)
 
 and label_map = (spec_label , ((Cformula.context list)* (Cformula.context list)*
-	(F.branch_trace option)(*in case of a fail this will show which was the path that failed*))) H.t
+	(F.branch_trace list option)(*in case of a fail this will show which was the path that failed*))) H.t
 
 and core_loc = {
 			pos: loc;

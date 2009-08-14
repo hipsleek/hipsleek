@@ -238,8 +238,8 @@ and string_of_taken_br c = match c with
 	| Catch_taken c -> if c then "catch_taken" else "catch_not_taken"
 	| Call_taken (c1,c2) -> "pre_"^(string_of_int c1)^" "^c2
 
-and string_of_branch_trace c = 	(String.concat ", " (List.map (fun (c1,c2) -> 
-		(string_of_int c1)^"-"^(string_of_taken_br c2)) c))
+and string_of_branch_trace c = 	"["^(String.concat ", " (List.map (fun (c1,c2) -> 
+		(string_of_int c1)^"-"^(string_of_taken_br c2)) c))^"]"
 
 and string_of_estate (es : entail_state) = 
   "es_formula: " ^ (string_of_formula es.es_formula)
@@ -261,7 +261,7 @@ and string_of_label_map (t:label_map):string =
 	"["^(Hashtbl.fold (fun e (v_pre,v_post,fail_trace) a -> 
 		let fts = match fail_trace with
 			| None -> "none"
-			| Some s -> "some ["^(string_of_branch_trace s)^"]" in	
+			| Some s -> "some ["^(String.concat "," (List.map string_of_branch_trace s))^"]" in	
 		(e^" pre:\n"^ (string_of_context_list v_pre)^
 		"\n post: "^ (string_of_context_list v_post)^
 		"\n fail_trace: "^fts^"\n"^a) ) t "")^"]\n"
