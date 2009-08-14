@@ -237,7 +237,9 @@ and string_of_taken_br c = match c with
   	| Then_taken c -> if c then "then_taken" else "else_taken"
 	| Catch_taken c -> if c then "catch_taken" else "catch_not_taken"
 	| Call_taken (c1,c2) -> "pre_"^(string_of_int c1)^" "^c2
-	
+
+and string_of_branch_trace c = 	(String.concat ", " (List.map (fun (c1,c2) -> 
+		(string_of_int c1)^"-"^(string_of_taken_br c2)) c))
 
 and string_of_estate (es : entail_state) = 
   "es_formula: " ^ (string_of_formula es.es_formula)
@@ -248,8 +250,7 @@ and string_of_estate (es : entail_state) =
   ^ "\nes_expl_vars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_expl_vars))
   ^"\n es_gen_expl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_expl_vars))
   ^"\n es_gen_impl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_impl_vars))
-  ^"\n es_label_list:"^(String.concat ", " (List.map (fun (c1,c2) -> 
-		(string_of_int c1)^"-"^(string_of_taken_br c2)) es.es_label_list))
+  ^"\n es_label_list:"^(string_of_branch_trace es.es_label_list)
 (*
   ^ "\nes_pp_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
 														 ^ ", " ^ (string_of_spec_var t) ^ ")") es.es_pp_subst))
@@ -257,8 +258,13 @@ and string_of_estate (es : entail_state) =
 														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
 *)
 and string_of_label_map (t:label_map):string = 
-	Hashtbl.fold (fun e (v_pre,v_post) a -> e^" pre:\n"^
-		(string_of_context_list v_pre)^"\n post: "^ (string_of_context_list v_post)^"\n"^a) t ""  
+	"["^(Hashtbl.fold (fun e (v_pre,v_post,fail_trace) a -> 
+		let fts = match fail_trace with
+			| None -> "none"
+			| Some s -> "some ["^(string_of_branch_trace s)^"]" in	
+		(e^" pre:\n"^ (string_of_context_list v_pre)^
+		"\n post: "^ (string_of_context_list v_post)^
+		"\n fail_trace: "^fts^"\n"^a) ) t "")^"]\n"
 ;;
 
 

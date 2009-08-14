@@ -877,7 +877,7 @@ and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (p
 		  let new_es = {estate with es_evars = vs (*Util.remove_dups (vs @ estate.es_evars)*)} in
 		  let new_ctx = Ctx new_es in
 		  (*let new_ctx = set_es_evars ctx vs in*)
-		  let rs0, fold_prf = heap_entail_one_context_struc prog true false false new_ctx view_form pos None in
+		  let rs0, fold_prf,_ = heap_entail_one_context_struc prog true false false new_ctx view_form pos None in
 		  let tmp_vars = p :: (estate.es_evars @ vs) in
 		  (**************************************)
 		  (*        process_one 								*)
@@ -967,7 +967,7 @@ and process_fold_result prog is_folding estate fold_rs0 p2 vs2 base2 pos : (cont
 							  ^ (Cprinter.string_of_pure_formula to_conseq)) pos;
 		  Debug.devel_pprint ("process_fold_result: new_conseq:\n"
 							  ^ (Cprinter.string_of_formula new_conseq)) pos;
-		  let rest_rs, prf = heap_entail_one_context prog is_folding false
+		  let rest_rs, prf,_ = heap_entail_one_context prog is_folding false
 			new_ctx new_conseq pos
 		  in
 			Debug.devel_pprint ("process_fold_result: context at end fold: "
@@ -1290,64 +1290,66 @@ and filter_set (cl : context list) : context list =
 (* success. *)
 and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) 
 					  (has_post: bool)(cl : context list) (conseq : struc_formula) pos call_site_id
-					  : (context list * proof) =
+					  : (context list * proof*branch_trace) =
 	let r = 
 	if !Globals.use_set || U.empty cl then
 	let tmp1 = List.map (fun c -> heap_entail_one_context_struc prog is_folding is_universal has_post c conseq pos call_site_id) cl in
-	let tmp2, tmp_prfs = List.split tmp1 in
+	let tmp2, tmp_prfs, fail_br = List.fold_left (fun (a1,a2,a3) (c1,c2,c3)->
+		(c1::a1,c2::a2,c3::a3) ) ([],[],[]) tmp1 in
 	let prf = mkContextList cl conseq tmp_prfs in
 	let tmp = List.concat tmp2 in
-    (tmp, prf)
+    (tmp, prf, if (List.length fail_br)==0 then [] else List.hd (fail_br))
   else
-	let tmp1, tmp2 = heap_entail_one_context_struc prog is_folding is_universal has_post (List.hd cl) conseq pos call_site_id in
-	  (tmp1, tmp2) in
+	let tmp1, tmp2,lst = heap_entail_one_context_struc prog is_folding is_universal has_post (List.hd cl) conseq pos call_site_id in
+	  (tmp1, tmp2,lst) in
 	r
 		  
 
-and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos call_site_id : (context list * proof) =
+and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos call_site_id 
+	: (context list * proof * branch_trace) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
 					  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 					  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
   if isFalseCtx ctx then
 	(* check this first so that false => false is true (with false residual) *)
-	([false_ctx pos (l_u ctx)], UnsatAnte)
+	([false_ctx pos (l_u ctx)], UnsatAnte,[])
   else(* if isConstFalse conseq then
 	([], UnsatConseq)
   else *)if isConstETrue conseq then
-	([ctx], TrueConseq)
+	([ctx], TrueConseq, [])
   else
 	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
 	  if isFalseCtx ctx1 then
-		([false_ctx pos (l_u ctx1)], UnsatAnte)
+		([false_ctx pos (l_u ctx1)], UnsatAnte, [])
 	  else
-		let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx1 conseq pos call_site_id in
+		let result, prf,lst = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx1 conseq pos call_site_id in
+		  (result, prf, lst)
 
-		  (result, prf)
-
-and heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos call_site_id : (context list * proof) = match ctx with
+and heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos call_site_id 
+	: (context list * proof* branch_trace ) = match ctx with
   | OCtx (c1, c2) ->
 	  Debug.devel_pprint ("heap_entail_after_sat_struc:"
 						  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 						  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
-	  let rs1, prf1 = heap_entail_after_sat_struc prog is_folding is_universal has_post c1 conseq pos call_site_id in
+	  let rs1, prf1,l1 = heap_entail_after_sat_struc prog is_folding is_universal has_post c1 conseq pos call_site_id in
 		if not (U.empty rs1) then
-		  let rs2, prf2 = heap_entail_after_sat_struc prog is_folding is_universal has_post c2 conseq pos call_site_id in
+		  let rs2, prf2,l2 = heap_entail_after_sat_struc prog is_folding is_universal has_post c2 conseq pos call_site_id in
 			if not (U.empty rs2) then
 			  let rs = or_context_list rs1 rs2 in
 				(* there's no need to do filtering here as rs1 and rs2
 				   only contain one set each if the flag is set *)
 			  let prf = mkOrStrucLeft ctx conseq [prf1; prf2] in
-				(rs, prf)
+				(rs, prf,[])
 			else
-			  ([], mkOrStrucLeft ctx conseq [prf2]) (* failure is caused by second branch *)
+			  ([], mkOrStrucLeft ctx conseq [prf2], l2) (* failure is caused by second branch *)
 		else
-		  ([], mkOrStrucLeft ctx conseq [prf1]) (* failure is caused by first branch *)
-  | _ -> begin
+		  ([], mkOrStrucLeft ctx conseq [prf1], l1) (* failure is caused by first branch *)
+  | Ctx es -> begin
 	  Debug.devel_pprint ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
 						  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
 						  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
 	  let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding is_universal has_post ctx conseq pos call_site_id in
-		(filter_set tmp, prf)
+		(filter_set tmp, prf, es.es_label_list)
 	end
   
 and sem_imply_add prog is_folding is_universal ctx p only_syn:(context*bool) = match ctx with
@@ -1441,7 +1443,7 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 						 (nc,(mkEexStep ctx [f] np))
 				    else 
 					let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx ) in
-					let n_ctx_list, prf = heap_entail_one_context prog is_folding  is_universal n_ctx formula_base pos in
+					let n_ctx_list, prf,_ = heap_entail_one_context prog is_folding  is_universal n_ctx formula_base pos in
 					(*let _ = print_string ("pp: "^(Cprinter.string_of_spec_var_list b.formula_ext_explicit_inst)^"\n"^
 					(Cprinter.string_of_spec_var_list b.formula_ext_implicit_inst)^"\n"^
 					(Cprinter.string_of_context n_ctx)^"\n conseqqq: "^
@@ -1500,65 +1502,69 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 	r
 
 	
-and heap_entail (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : context list) (conseq : formula) pos : (context list * proof) =
+and heap_entail (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : context list) (conseq : formula) pos 
+		: (context list * proof* branch_trace) =
   let r = 
   if !Globals.use_set || U.empty cl then
 	let tmp1 = List.map (fun c -> heap_entail_one_context prog is_folding is_universal c conseq pos) cl in
 	(*let _ = print_string ("\n init: "^(string_of_int (List.length cl))^"\n final: "^(string_of_int (List.length cl))^"\n("^
 	(List.fold_left (fun a (c,_)-> a^","^(string_of_int(List.length c))) " " tmp1)^"\n") in*)
-	let tmp2, tmp_prfs = List.split tmp1 in
+	let tmp2, tmp_prfs, fail_br = List.fold_left (fun (a1,a2,a3) (c1,c2,c3)->
+		(c1::a1,c2::a2,c3::a3) ) ([],[],[]) tmp1 in
 	let prf = mkContextList cl (Cformula.formula_to_struc_formula conseq) tmp_prfs in
 	let tmp = List.concat tmp2 in
-    (tmp, prf)
+    (tmp, prf, if (List.length fail_br)==0 then [] else List.hd (fail_br))
   else
-	let tmp1, tmp2 = heap_entail_one_context prog is_folding is_universal (List.hd cl) conseq pos in
-	  (tmp1, tmp2) in
+	let tmp1, tmp2, l1 = heap_entail_one_context prog is_folding is_universal (List.hd cl) conseq pos in
+	  (tmp1, tmp2,l1) in
   r
 
-and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx : context) (conseq : formula) pos : (context list * proof) =
+and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx : context) (conseq : formula) pos 
+	: (context list * proof*branch_trace) =
   Debug.devel_pprint ("heap_entail_one_context:"
 					  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 					  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
   if isFalseCtx ctx then
 	(* check this first so that false => false is true (with false residual) *)
-	([false_ctx pos (l_u ctx)], UnsatAnte)
+	([false_ctx pos (l_u ctx)], UnsatAnte, [])
   else (*if isConstFalse conseq then
 	([], UnsatConseq)
   else *)if isConstTrue conseq then
-	([ctx], TrueConseq)
+	([ctx], TrueConseq, [])
   else
 	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog*) ctx in
 	  if isFalseCtx ctx1 then
-		([false_ctx pos (l_u ctx1)], UnsatAnte)
+		([false_ctx pos (l_u ctx1)], UnsatAnte, [])
 	  else
-		let result, prf = heap_entail_after_sat prog is_folding is_universal ctx1 conseq pos in
+		let result, prf, l1 = heap_entail_after_sat prog is_folding is_universal ctx1 conseq pos in
 
-		  (result, prf)
+		  (result, prf, l1)
 
-and heap_entail_after_sat prog is_folding is_universal ctx conseq pos : (context list * proof) = match ctx with
+and heap_entail_after_sat prog is_folding is_universal ctx conseq pos 
+	: (context list * proof*branch_trace) = match ctx with
   | OCtx (c1, c2) ->
 	  Debug.devel_pprint ("heap_entail_after_sat:"
 						  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 						  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
-	  let rs1, prf1 = heap_entail_after_sat prog is_folding is_universal c1 conseq pos in
+	  let rs1, prf1,l1 = heap_entail_after_sat prog is_folding is_universal c1 conseq pos in
 		if not (U.empty rs1) then
-		  let rs2, prf2 = heap_entail_after_sat prog is_folding is_universal c2 conseq pos in
+		  let rs2, prf2, l2 = heap_entail_after_sat prog is_folding is_universal c2 conseq pos in
 			if not (U.empty rs2) then
 			  let rs = or_context_list rs1 rs2 in
 				(* there's no need to do filtering here as rs1 and rs2
 				   only contain one set each if the flag is set *)
 			  let prf = mkOrLeft ctx conseq [prf1; prf2] in
-				(rs, prf)
+				(rs, prf, [])
 			else
-			  ([], mkOrLeft ctx conseq [prf2]) (* failure is caused by second branch *)
+			  ([], mkOrLeft ctx conseq [prf2], l2) (* failure is caused by second branch *)
 		else
-		  ([], mkOrLeft ctx conseq [prf1]) (* failure is caused by first branch *)
-  | _ -> begin
+		  ([], mkOrLeft ctx conseq [prf1], l1) (* failure is caused by first branch *)
+  | Ctx es -> begin
 	  Debug.devel_pprint ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"
 						  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
 						  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
 	  let tmp, prf = heap_entail_conjunct_lhs prog is_folding is_universal ctx conseq pos in
-		(filter_set tmp, prf)
+		(filter_set tmp, prf, es.es_label_list)
 	end
 
 
@@ -2445,7 +2451,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 								let delta1 = unfold (Prog prog) ante p1 true pos in
 								let ctx1 = build_context ctx0 delta1 pos in
 								let ctx1 = set_unsat_flag ctx1 true in
-								let res_rs, prf1 = heap_entail_one_context prog
+								let res_rs, prf1,_ = heap_entail_one_context prog
 								  is_folding is_universal ctx1 conseq pos in
 								let prf = mkUnfold ctx0 conseq anode prf1 in
 								  (res_rs, prf)
@@ -2619,7 +2625,7 @@ begin
 									es_must_match = true
 								} in
 				let new_ctx = Ctx new_estate in
-				let res, prf = heap_entail prog is_folding true [new_ctx] new_conseq pos in
+				let res, prf,_ = heap_entail prog is_folding true [new_ctx] new_conseq pos in
 				(res, prf)
 		  end
 		end
@@ -2800,7 +2806,7 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lh
 			let new_ctx1 = build_context ctx0 new_lhs pos in
 			  (* let new_ctx = set_context_formula ctx0 new_lhs in *)
 			let new_ctx = (set_context_must_match new_ctx1) in
-			let res, tmp_prf = heap_entail prog is_folding false [new_ctx] conseq pos in
+			let res, tmp_prf,_ = heap_entail prog is_folding false [new_ctx] conseq pos in
 			let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
 			  coer.coercion_body tmp_prf coer.coercion_name
 			in
@@ -2819,7 +2825,7 @@ let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
 		let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b pos in
 		  if ok then begin
 			let new_ctx = (set_context_must_match ctx0) in
-			let res, tmp_prf = heap_entail prog is_folding false [new_ctx] new_rhs pos in
+			let res, tmp_prf,_ = heap_entail prog is_folding false [new_ctx] new_rhs pos in
 			let prf = mkCoercionRight ctx0 conseq coer.coercion_head
 			  coer.coercion_body tmp_prf  coer.coercion_name
 			in

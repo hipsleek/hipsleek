@@ -1200,7 +1200,7 @@ and
       let ctx =
         CF.build_context (CF.true_ctx pos []) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_pure (fst vdef.C.view_user_inv) pos) in
-      let (rs, _) =
+      let (rs, _,_) =
         Solver.heap_entail prog false false [ ctx ] formula pos
       in
         if not (U.empty rs)

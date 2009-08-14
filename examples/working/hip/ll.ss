@@ -33,6 +33,16 @@ void append(node x, node y)
       }
     }
 
+void tst(node x)
+requires true ensures true;
+{
+	int i;
+	i = x.val;
+	i=2;
+	i=3;
+}
+
+
 /* return the first element of a singly linked list */
 node ret_first(node x)
 

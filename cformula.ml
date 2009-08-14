@@ -1143,6 +1143,10 @@ type taken_branch =
 	| Then_taken of bool
 	| Catch_taken of bool
 	| Call_taken of (int*string) 
+
+type branch_trace = (int*taken_branch) list
+
+exception No_precond_satisfied of branch_trace option 
 	
 type entail_state = {
   es_formula : formula; (* can be any formula *)
@@ -1160,7 +1164,7 @@ type entail_state = {
   es_unsat_flag : bool; (* true - unsat already performed; false - requires unsat test *)
   es_pp_subst : (CP.spec_var * CP.spec_var) list;
   es_arith_subst : (CP.spec_var * CP.exp) list;
-  es_label_list : (int*taken_branch) list; (* program point, second alternative taken*)
+  es_label_list : branch_trace; (* program point, second alternative taken*)
 }
 
 and context = 

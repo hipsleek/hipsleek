@@ -14,7 +14,8 @@ module H = Hashtbl
 
 type typed_ident = (P.typ * ident)
 
-and label_map = (spec_label , ((Cformula.context list)* (Cformula.context list))) H.t
+and label_map = (spec_label , ((Cformula.context list)* (Cformula.context list)*
+	(F.branch_trace option)(*in case of a fail this will show which was the path that failed*))) H.t
 
 and core_loc = {
 			pos: loc;
@@ -762,36 +763,38 @@ and pos_of_exp (e:exp) :loc = match e with
   | Try b -> b.exp_try_pos.pos
   
 and set_pos_context (e:exp) c (lbl1,lbl2) =
-	let label = (string_of_int lbl1)^" "^lbl2 in
+	if (!Globals.print_verified_core) then
+	let label = (string_of_int lbl1)^" "^lbl2 in (*both the fresh int code and the supplied assume tag if any*)
 	(*let _ = print_string ("adding: "^label^"\n") in*)
 	match e with
-  | CheckRef b -> (H.add b.exp_check_ref_pos.state label c)
-  | BConst b -> (H.add b.exp_bconst_pos.state label c)
-  | Bind b -> (H.add b.exp_bind_pos.state label c)
-  | Cast b -> (H.add b.exp_cast_pos.state label c)
-  | Debug b -> (H.add b.exp_debug_pos.state label c)
-  | Dprint b -> (H.add b.exp_dprint_pos.state label c)
-  | Assign b -> (H.add b.exp_assign_pos.state label c)
-  | FConst b -> (H.add b.exp_fconst_pos.state label c)
-  | ICall b -> (H.add b.exp_icall_pos.state label c)
-  | IConst b -> (H.add b.exp_iconst_pos.state label c)
-  | Print (_,b) -> (H.add b.state label c)
-  | Seq b -> (H.add b.exp_seq_pos.state label c)
-  | VarDecl b -> (H.add b.exp_var_decl_pos.state label c)
-  | Unfold b -> (H.add b.exp_unfold_pos.state label c)
-  | Unit b -> (H.add b.state label c)
-  | This b -> (H.add b.exp_this_pos.state label c)
-  | Var b -> (H.add b.exp_var_pos.state label c)
-  | Null b -> (H.add b.state label c)
-  | Cond b -> (H.add b.exp_cond_pos.state label c)
-  | Block b -> (H.add b.exp_block_pos.state label c)
-  | Java b  -> (H.add b.exp_java_pos.state label c)
-  | Assert b -> (H.add b.exp_assert_pos.state label c)
-  | New b -> (H.add b.exp_new_pos.state label c)
-  | Sharp b -> (H.add b.exp_sharp_pos.state label c)
-  | SCall b -> (H.add b.exp_scall_pos.state label c)
-  | While b -> (H.add b.exp_while_pos.state label c)
-  | Try b -> (H.add b.exp_try_pos.state label c)
+	  | CheckRef b -> (H.add b.exp_check_ref_pos.state label c)
+	  | BConst b -> (H.add b.exp_bconst_pos.state label c)
+	  | Bind b -> (H.add b.exp_bind_pos.state label c)
+	  | Cast b -> (H.add b.exp_cast_pos.state label c)
+	  | Debug b -> (H.add b.exp_debug_pos.state label c)
+	  | Dprint b -> (H.add b.exp_dprint_pos.state label c)
+	  | Assign b -> (H.add b.exp_assign_pos.state label c)
+	  | FConst b -> (H.add b.exp_fconst_pos.state label c)
+	  | ICall b -> (H.add b.exp_icall_pos.state label c)
+	  | IConst b -> (H.add b.exp_iconst_pos.state label c)
+	  | Print (_,b) -> (H.add b.state label c)
+	  | Seq b -> (H.add b.exp_seq_pos.state label c)
+	  | VarDecl b -> (H.add b.exp_var_decl_pos.state label c)
+	  | Unfold b -> (H.add b.exp_unfold_pos.state label c)
+	  | Unit b -> (H.add b.state label c)
+	  | This b -> (H.add b.exp_this_pos.state label c)
+	  | Var b -> (H.add b.exp_var_pos.state label c)
+	  | Null b -> (H.add b.state label c)
+	  | Cond b -> (H.add b.exp_cond_pos.state label c)
+	  | Block b -> (H.add b.exp_block_pos.state label c)
+	  | Java b  -> (H.add b.exp_java_pos.state label c)
+	  | Assert b -> (H.add b.exp_assert_pos.state label c)
+	  | New b -> (H.add b.exp_new_pos.state label c)
+	  | Sharp b -> (H.add b.exp_sharp_pos.state label c)
+	  | SCall b -> (H.add b.exp_scall_pos.state label c)
+	  | While b -> (H.add b.exp_while_pos.state label c)
+	  | Try b -> (H.add b.exp_try_pos.state label c)
+  else ()
   
   
 let rec check_proper_return cret_type exc_list f = 
