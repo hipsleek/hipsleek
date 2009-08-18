@@ -14,8 +14,9 @@ module H = Hashtbl
 
 type typed_ident = (P.typ * ident)
 
-and label_map = (spec_label , ((Cformula.context list)* (Cformula.context list)*
-	(F.branch_trace list option)(*in case of a fail this will show which was the path that failed*))) H.t
+and label_map = (spec_label , ((Cformula.context list)*(Cformula.context list)*(Cformula.context list)*
+	((F.branch_trace*bool) list)
+	(*in case of a fail this will show which was the path that failed and whether this is the failure point*))) H.t
 
 and core_loc = {
 			pos: loc;
@@ -762,7 +763,9 @@ and pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos.pos
   | Try b -> b.exp_try_pos.pos
   
-and set_pos_context (e:exp) c (lbl1,lbl2) =
+and set_pos_context (e:exp) (c1,c2,c3,c4) (lbl1,lbl2) =
+	let c2 = match c2 with	| None -> [] | Some d-> [d] in
+	let c = (c1,c2,c3,c4) in
 	if (!Globals.print_verified_core) then
 	let label = (string_of_int lbl1)^" "^lbl2 in (*both the fresh int code and the supplied assume tag if any*)
 	(*let _ = print_string ("adding: "^label^"\n") in*)

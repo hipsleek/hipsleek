@@ -258,11 +258,12 @@ and string_of_estate (es : entail_state) =
 														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
 *)
 and string_of_label_map (t:label_map):string = 
-	"["^(Hashtbl.fold (fun e (v_pre,v_post,fail_trace) a -> 
-		let fts = match fail_trace with
-			| None -> "none"
-			| Some s -> "some ["^(String.concat "," (List.map string_of_branch_trace s))^"]" in	
+	"["^(Hashtbl.fold (fun e (v_pre,v_exc, v_post,fail_trace) a -> 
+		let fts = "["^(String.concat "," (List.map (fun (c1,c2)->
+				(if c2 then "new fail" else "old fail")^ 
+				(string_of_branch_trace c1)) fail_trace))^"]" in	
 		(e^" pre:\n"^ (string_of_context_list v_pre)^
+		"\n escaping input: "^(string_of_context_list v_exc)^
 		"\n post: "^ (string_of_context_list v_post)^
 		"\n fail_trace: "^fts^"\n"^a) ) t "")^"]\n"
 ;;
@@ -362,8 +363,8 @@ let rec string_of_exp = function
 		lbl^": "^str1 ^ " " ^ str2
       end
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
-		"{"^ (string_of_label_map l.state) ^"} \n"^
-		id ^ " = " ^ (string_of_exp e)
+		id ^ " = " ^ (string_of_exp e)^
+		"\n{"^ (string_of_label_map l.state) ^"} \n"
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
       string_of_bool b 
   | Bind ({exp_bind_type = _; 
@@ -433,8 +434,8 @@ let rec string_of_exp = function
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;
 	  exp_seq_pos = l}) -> 
-	  "{"^ (string_of_label_map l.state) ^"} \n"^
-	  (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
+	  (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)^
+	  "\n{"^ (string_of_label_map l.state) ^"} \n"
   | This _ -> "this"
   | Var ({exp_var_type = _;
 	  exp_var_name = id;

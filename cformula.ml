@@ -1146,7 +1146,7 @@ type taken_branch =
 
 type branch_trace = (int*taken_branch) list
 
-exception No_precond_satisfied of branch_trace list option 
+exception No_precond_satisfied of (branch_trace*bool) list 
 	
 type entail_state = {
   es_formula : formula; (* can be any formula *)
