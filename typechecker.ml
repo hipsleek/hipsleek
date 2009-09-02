@@ -65,8 +65,10 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 
 and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) e0 : CF.context list = 
 	if (exp_to_check e0) then 
-		(*let _ = if (List.exists Cformula.isFalseCtx ctx) then 
-			print_string ("\n false ctx: "^(Cprinter.string_of_pos (Cast.pos_of_exp e0))^" "^(Cprinter.string_of_context_list ctx)^"\n") in*)
+		let _ = if (List.exists Cformula.isFalseCtx ctx) then 
+			print_string ("\n expr: "^
+			(Cprinter.string_of_exp e0)
+			^"\n false ctx: "^(Cprinter.string_of_pos (Cast.pos_of_exp e0))^" "^(Cprinter.string_of_context_list ctx)^"\n") in
 	Cformula.find_false_ctx ctx (Cast.pos_of_exp e0)
 		else ();
 let check_exp1 (ctx : CF.context list) : CF.context list = 
@@ -758,16 +760,40 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
   | _ -> 
   failwith 
   ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
-let rec helper c = match c with
-	| CF.Ctx b -> if Cformula.isFalseCtx c then [c]
-					else 
-				let ff =(Cformula.flow_formula_of_ctx c no_pos) in	
-				if (Cformula.subsume_flow !n_flow_int ff.CF.formula_flow_interval) then  check_exp1 [c]
-				else  [c]
-	| CF.OCtx (b1,b2) -> 
-		let r1 = helper b1 in
-		let r2 = helper b2 in
-		List.concat (List.map (fun c-> (List.map (fun d-> (CF.mkOCtx c d no_pos)) r2)) r1) in
+  
+	let rec helper c = 
+		let rec splitter c = match c with
+			| CF.Ctx b -> 
+					let ff =(Cformula.flow_formula_of_ctx c no_pos) in	
+					if (Cformula.subsume_flow !n_flow_int ff.CF.formula_flow_interval) then  (Some c,None)
+					else  (None,Some c)
+			| CF.OCtx (b1,b2) -> 
+				let (r11,r12) = splitter b1 in
+				let (r21,r22) = splitter b2 in
+				let r1 = match (r11,r21) with 
+					| None, None -> None
+					| Some c, None -> Some c
+					| None, Some c -> Some c
+					| Some c1, Some c2 -> Some (Cformula.mkOCtx c1 c2 no_pos)
+					in
+				let r2 = match (r12,r22) with 
+					| None, None -> None
+					| Some c, None -> Some c
+					| None, Some c -> Some c
+					| Some c1, Some c2 -> Some (Cformula.mkOCtx c1 c2 no_pos)
+					in
+				(r1,r2) in	
+		let r1,r2 = splitter c in
+		let r1 = match r1 with
+			| Some c-> if (Cformula.allFalseCtx c) then Some (check_exp1 [(Cformula.false_ctx no_pos)])
+												   else  Some (check_exp1 [c])
+			| None -> None in
+		match (r1,r2) with
+		| None, None -> Err.report_error {Err.error_loc = no_pos;
+										  Err.error_text = "Split can not return both empty contexts\n"}
+		| Some cl,None -> cl
+		| None, Some c -> [c]
+		| Some cl,Some c -> List.map (fun d-> CF.mkOCtx c d no_pos) cl in
 List.concat (List.map helper ctx)
   
 

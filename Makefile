@@ -56,7 +56,7 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
-	cvclite.cmo tpdispatcher.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -76,7 +76,7 @@ SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	iprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
-	cvclite.cmo tpdispatcher.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -103,7 +103,7 @@ PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
-	cvclite.cmo tpdispatcher.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -113,6 +113,23 @@ PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	typechecker.cmo \
 	prove.cmo
 
+WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
+	cpure.cmo ipure.cmo \
+	iformula.cmo iast.cmo \
+	iparser.cmo ilexer.cmo \
+	iprinter.cmo \
+	cformula.cmo cast.cmo cprinter.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
+    net.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
+	prooftracer.cmo context.cmo solver.cmo \
+	drawing.cmo \
+	env.cmo checks.cmo \
+	inliner.cmo \
+	astsimp.cmo \
+	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
+	typechecker.cmo \
+	web.cmo
 hip1: $(MAIN_FILES_2)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
 
@@ -131,6 +148,10 @@ prover: $(PROVE_FILES)
 prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt prover.opt
 	
+web: $(WEB_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
+	#$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+
 sleekc:
 	make clean; make sleek 
 
@@ -159,7 +180,7 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
-	cvclite.cmo tpdispatcher.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo \
 	context.cmo \
 	solver.cmo \
 	env.cmo astsimp.cmo \
@@ -199,7 +220,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt *~ oo oo.exe
+	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

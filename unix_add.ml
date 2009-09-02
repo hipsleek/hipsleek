@@ -11,7 +11,7 @@ let open_proc_full cmd args input output error toclose =
           Unix.dup2 output Unix.stdout; Unix.close output;
           Unix.dup2 error Unix.stderr; Unix.close error;
           if not cloexec then List.iter Unix.close toclose;
-          begin try Unix.execv cmd args
+          begin try Unix.execvp cmd args
           with _ -> exit 127
           end
   | id -> id
@@ -36,6 +36,6 @@ let open_proc cmd args out_file:int  =
   |  0 -> begin 
 			let output = Unix.openfile out_file [Unix.O_CREAT;Unix.O_WRONLY] 0o640 in
 			Unix.dup2 output Unix.stdout; Unix.close output;
-			try Unix.execv cmd args with _ -> exit 127 end
+			try Unix.execvp cmd args with _ -> exit 127 end
   | id -> id
 ;;

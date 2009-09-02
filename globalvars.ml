@@ -1,13 +1,12 @@
-(*
-  Created 20-May-2009
-
-  Convert global variables into reference parameters
+(** Created 20-May-2009
+	Convert global variables into reference parameters
 *)
 
 open Globals
 
 module I = Iast
 
+(* Data structure for set of identifiers *)
 module Ident = struct
   type t = ident
   let compare = compare
@@ -15,6 +14,7 @@ end
 
 module IdentSet = Set.Make(Ident)
 
+(* Data structure for graph of identifiers *)
 module Name =
   struct
     type t = ident
@@ -32,57 +32,85 @@ module NGComponents = Graph.Components.Make(NG)
 
 module NGPathCheck = Graph.Path.Check(NG)
 
-
-(******************** Global variables *********************)
-
+(* Global variables *)
 let g = NG.create ()
 
 let h = Hashtbl.create 200
 
 let curr_proc = ref ""
 
+(* Utility functions *)
 
-(***************** Utility functions ***********************)
-
+(** Convert a list of identifiers into a set of identifiers 
+	@param l list of identifiers 
+	@return the set of identifiers in l *)
 let rec to_IdentSet (l : ident list) : IdentSet.t =
   match l with
 	[] -> IdentSet.empty
   | _  -> IdentSet.add (List.hd l) (to_IdentSet (List.tl l))
 
+(** Union a list of identifier sets into a unique identifier set 
+	@param l list of identifier sets
+	@return the union of all the sets in l *)
 let rec union_all (l : IdentSet.t list) : IdentSet.t =
   match l with
 	[] -> IdentSet.empty
   | _  -> IdentSet.union (List.hd l) (union_all (List.tl l))
 
+(** Get the variable expression in a variable declaration expression.
+	Inputs are of type (ident * exp option * loc)
+	@return the variable expression *)
 let get_exp_var (_, exp_op, l)  = 
   match exp_op with
 	Some e -> e
   | None -> I.Empty l
 
+(** Get the set of global identifiers in a global variable declaration expression 
+	@param decl variable declaration expression 
+	@return the set of identifiers in the declaration *)
 let get_global_id (decl : I.exp_var_decl) : IdentSet.t =
   let ident_list = List.map fst3 decl.I.exp_var_decl_decls in
   to_IdentSet ident_list
-
+  
+(** Get the identifier name of a parameter
+	@param parameter the parameter of a method 
+	@return the identifier name of the input parameter *)
 let get_local_id (parameter : I.param) : ident =
   parameter.I.param_name 
 
+(** Check whether an identifier in a variable declaration belongs to an identifier set 
+	@param set a set of identifiers
+	@param decl a variable declaration
+	@return true if the identifier in decl is inside set, false otherwise *)
 let inIdentSet (set : IdentSet.t) (decl : ident * I.exp option * loc) : bool =
   IdentSet.mem (fst3 decl) set
 
+(** Construct a variable declaration expression from its contents 
+	@param t type of the variables
+	@param pos position of the variables in the program 
+	@param decl an identifier declaration 
+	@return the variable declaration expression constructed from the inputs *)
 let to_var_decl (t : I.typ) (pos : loc) (decl : ident * I.exp option * loc) : I.exp_var_decl =
   { I.exp_var_decl_type = t; I.exp_var_decl_decls = [decl]; I.exp_var_decl_pos = pos }
 
+  
+(** Get the procedure name from a procedure declaration 
+	@param proc procedure declaration
+	@return the procedure name *)
 let get_proc_name (proc : I.proc_decl) : ident =
   proc.I.proc_name
 
+(** Add Primed/Unprimed into a pair of identifiers *)
 let addp (p : primed) ((id1,id2) : ident*ident) : (ident*primed)*(ident*primed) =
   ((id1,p),(id2,p))
-  
 
+(* Funtions to find read/write global variables *)
 
-(******* Funtions to find read/write global variables ******)
-
-(* Find read/write global variables in a block of codes *)
+(** Find read/write global variables in a block of codes
+	@param global_vars set of global variables
+	@param local_vars set of local variables
+	@param block the input block of codes
+	@return a pair of read/write global variables *)
 let rec find_read_write_global_var 
 	(global_vars : IdentSet.t) (local_vars : IdentSet.t) (block : I.exp) : (IdentSet.t * IdentSet.t) =
   match block with
@@ -299,7 +327,11 @@ let rec find_read_write_global_var
 		| Some e -> find_read_write_global_var global_vars local_vars e
 		end
   
-(* Construct the read/write variable declarations from the read/write sets *)
+(** Construct the read/write variable declarations from the read/write sets 
+	@param global_var_decls list of global variable declarations 
+	@param readSet the set of read-only global variables
+	@param writeSet the set of read/write global variables 
+	@return a pair of read and write variable declaration lists *)
 let rec to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : IdentSet.t) (writeSet : IdentSet.t) :
 	(I.exp_var_decl list * I.exp_var_decl list) =
   match global_var_decls with
@@ -314,8 +346,11 @@ let rec to_var_decl_list (global_var_decls : I.exp_var_decl list) (readSet : Ide
 	  let new_write_list = add_write @ writelist in
 	  (new_read_list, new_write_list)
 
-
-(* Find read/write global variables in a procedure *)
+(** Find read/write global variables in a procedure. 
+	The method put the pair of read/write sets into the global hash table h
+	@param global_id_set set of global identifiers
+	@param proc input procedure declaration 
+	@return unit *)
 let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_decl) : unit =
   (ignore 
 	 (curr_proc := proc.I.proc_name;
@@ -333,27 +368,28 @@ let find_read_write_global_var_proc (global_id_set : IdentSet.t) (proc : I.proc_
 		Hashtbl.replace h proc.I.proc_name (readSet,writeSet)
 	  end
 
-
-(* Get the read/write global variables of a procedure from the hash table *)
+(** Get the read/write global variables of a procedure from the hash table 
+	@param global_var_decls list of global variable declarations
+	@param proc input procedure declaration
+	@return a pair of read and write variable declaration lists *)
 let get_read_write_global_var (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : 
 	(I.exp_var_decl list * I.exp_var_decl list) =
   let (reads,writes) = Hashtbl.find h proc.I.proc_name in
   let readSet = IdentSet.diff reads writes in
   let writeSet = writes in
-(*  let _ = print_string (proc.I.proc_name ^ " - Read : ") in
-  let _ = IdentSet.iter print_string readSet in
-  let _ = print_string " - Write : " in
-  let _ = IdentSet.iter print_string writeSet in
-  let _ = print_string "\n" in *)
   to_var_decl_list global_var_decls readSet writeSet
 
-
-(* Set the read/write sets for one vertex *)
+(** Set the read/write sets for one vertex. The method changes the global hash table h.
+	@param readSet set of read-only identifiers 
+	@param writeSet set of read/write identifiers
+	@param vertex a procedure name
+	@return unit *)
 let set_read_write_set (readSet : IdentSet.t) (writeSet : IdentSet.t) (vertex : NG.V.t) : unit =
   Hashtbl.replace h vertex (readSet,writeSet)
 
-
-(* Merge the read/write variables in one scc *)
+(** Merge the read/write variables in one strongly connected component
+	@param scc strongly connected component of a graph
+	@return unit *)
 let merge_scc (scc : NG.V.t list ) : unit =
   let read_write_list = List.map (Hashtbl.find h) scc in
   let read_list = List.map fst read_write_list in
@@ -362,8 +398,10 @@ let merge_scc (scc : NG.V.t list ) : unit =
   let writeSet = union_all write_list in
   List.iter (set_read_write_set readSet writeSet) scc
 
-
-(* Check the connection and merge two scc's *)		
+(** Check the connection and merge two strongly connected components
+	@param scc1 the first strongly connected component
+	@param scc2 the second strongly connected component
+	@return unit *)		
 let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
   let pc = NGPathCheck.create g in
   let v1 = List.hd scc1 in
@@ -376,8 +414,9 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
 	let _ = Hashtbl.replace h v1 (r,w) in
 	merge_scc scc1	  
 
-
-(* Find read write global variables for all procedures using graph data structure *)
+(** Find read write global variables for all procedures using graph data structure 
+	@param prog program declaration
+	@return unit *)
 let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
   let global_var_decls = prog.I.prog_global_var_decls in
   let global_id_set = union_all (List.map get_global_id global_var_decls) in
@@ -395,24 +434,34 @@ let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
 	  done
 	done
   done
-	
 
+(* Extend body of procedures *)
 
-(************** Extend body of procedures ******************)
-
-
-(* Find a method declaration with a given identifier *)
+(** Find a method declaration with a given identifier 
+	@param temp_procs list of temporary procedure declarations 
+	@param id an identifier
+	@return the procedure declaration that has name id *)
 let rec find_method (temp_procs : I.proc_decl list) (id : ident) : I.proc_decl =
   let head = List.hd temp_procs in
   if head.I.proc_name = id then head
   else find_method (List.tl temp_procs) id
 
-(* Change the expression in a constant declaration *)
+(** Change the expression in a constant declaration 
+	@param temp_procs list of temporary procedure declaration 
+	@param i an identifier
+	@param e the expression in the constant declaration
+	@param l location of the declaration
+	@return the constant declaration with new expression *)
 let rec change_decl (temp_procs : I.proc_decl list) ((i,e,l) : ident * I.exp * loc) : ident * I.exp * loc =
   let new_exp = extend_body temp_procs e in
   (i,new_exp,l)
 
-(* Change the expression in a variable declaration *)
+(** Change the expression in a variable declaration 
+	@param temp_procs list of temporary procedure declaration
+	@param i an identifier
+	@param e_opt the expression in the variable declaration
+	@param l location of the declaration
+	@return the variable declaration with new expression *)
 and change_opt_decl (temp_procs : I.proc_decl list) ((i,e_opt,l) : ident * I.exp option * loc) : ident * I.exp option * loc =
   match e_opt with
 	None -> (i,e_opt,l)
@@ -420,7 +469,11 @@ and change_opt_decl (temp_procs : I.proc_decl list) ((i,e_opt,l) : ident * I.exp
 	  let new_exp = extend_body temp_procs e in
 	  (i, Some new_exp, l)
 
-(* Extend the arguments of a function call *)
+(** Extend the arguments of a function call 
+	@param temp_procs list of temporary procedure declaration
+	@param params list of additional parameters 
+	@param args list of arguments 
+	@return new list of arguments *)
 and change_args (temp_procs : I.proc_decl list) (params : I.param list) (args : I.exp list) : I.exp list =
   match params with
 	[] -> []
@@ -438,7 +491,10 @@ and change_args (temp_procs : I.proc_decl list) (params : I.param list) (args : 
 			new_ha::new_ta
 	  end
 
-(* Extend the body of the procedure to the new one *)
+(** Extend the body of the procedure to the new one 
+	@param temp_procs list of temporary procedure declaration
+	@param exp current body of a procedure 
+	@return new body of the procedure *)
 and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   match exp with
 	I.Assert _
@@ -576,24 +632,32 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 			| None -> None
 			| Some e -> Some (extend_body temp_procs e)}
 
+(* Rename local variables when there is conflict *)
 
-(********* Rename local variables when there is conflict ********)
-
-(* Create a new identifier if there is conflict *)
+(** Create a new identifier if there is conflict 
+	@param global_vars set of global variable identifiers 
+	@param id an identifier
+	@return id if id is not in global_vars, otherwise return a new name *)
 let create_new_ids (global_vars : IdentSet.t) (id : ident) : ident =
   if (IdentSet.mem id global_vars) then
 	fresh_local_var_name id
   else 
 	id
 
-(* Create a new parameter name if there is conflict *)
+(** Create a new parameter name if there is conflict 
+	@param global_vars set of global variable identifiers
+	@param p a parameter 
+	@return p if p is not in global_vars, otherwise return a new name *)
 let create_new_params (global_vars : IdentSet.t) (p : I.param) : I.param =
   if (IdentSet.mem p.I.param_name global_vars) then
 	{ p with I.param_name = (fresh_local_var_name p.I.param_name) }
   else
 	p
 
-(* Check the local variables name and change them if necessary *)
+(** Check the local variables name and change them if necessary 
+	@param global_vars set of global variable identifiers 
+	@param exp an expression
+	@return a new expression *)
 let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   match exp with
 	I.Assert _
@@ -765,7 +829,9 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 			| None -> None
 			| Some e -> Some (check_and_change global_vars e)}
   
-(* Rename the parameters and local variables if there is conflict with global variables *)
+(** Rename the parameters and local variables if there is conflict with global variables 
+	@param proc procedure declaration
+	@return the new procedure declaration without name conflict *)
 let resolve_name_conflict (proc : I.proc_decl) : I.proc_decl =
   match proc.I.proc_body with
 	None -> proc
@@ -788,11 +854,12 @@ let resolve_name_conflict (proc : I.proc_decl) : I.proc_decl =
 		{ proc with I.proc_args = new_proc_args; I.proc_static_specs = new_static_specs; I.proc_dynamic_specs = new_dynamic_specs; I.proc_body = new_body }
 	  end
 
+(* Functions to translate the program *)
 
-
-(************ Functions to translate the program ****************)
-
-(* Convert a global variable into a parameter *)
+(** Convert a global variable into a parameter 
+	@param modifier the modifier of the new parameter
+	@param var_decl the variable declaration 
+	@return the new parameter *)
 let global_to_param (modifier : I.param_modifier) (var_decl : I.exp_var_decl) : I.param =
   let (id, exp, loc) = List.hd var_decl.I.exp_var_decl_decls in
   { I.param_type = var_decl.I.exp_var_decl_type;
@@ -800,8 +867,11 @@ let global_to_param (modifier : I.param_modifier) (var_decl : I.exp_var_decl) : 
     I.param_mod = modifier;
     I.param_loc = loc; }
 	
-
-(* Add the global variables into the parameter list *)
+(** Add the global variables into the parameter list 
+	@param read_global_var list of read-only global variable declaration
+	@param write_global_var list of read/write global variable declaration
+	@param args list of current parameters
+	@return new list of parameters *)
 let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_var : I.exp_var_decl list) (args : I.param list) : I.param list =
   let read_param_ext = 
 	if (!Globals.pass_global_by_value) then
@@ -813,16 +883,20 @@ let add_global_as_param (read_global_var : I.exp_var_decl list) (write_global_va
   let param_ext = read_param_ext @ write_param_ext in
   args @ param_ext
 	
-
-(* Extend the parameter list of a procedure with global variables *)
+(** Extend the parameter list of a procedure with global variables 
+	@param global_var_decls list of global variable declaration 
+	@param proc current procedure declaration
+	@return new procedure declaration *)
 let extend_args (global_var_decls : I.exp_var_decl list) (proc : I.proc_decl) : I.proc_decl =
   let (read_global_var, write_global_var) = 
 	get_read_write_global_var global_var_decls proc in
   let new_param_list = add_global_as_param read_global_var write_global_var proc.I.proc_args in
   { proc with I.proc_args = new_param_list }
   	
-
-(* Extend the old procedure declaration to the new one *)
+(** Extend the old procedure declaration to the new one 
+	@param temp_procs list of temporary procedure declarations
+	@param decl current procedure declaration
+	@return new procedure declaration *)
 let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_decl =
   let new_body = 
 	match decl.I.proc_body with
@@ -831,8 +905,9 @@ let extend_proc (temp_procs : I.proc_decl list) (decl : I.proc_decl) : I.proc_de
   in
   { decl with I.proc_body = new_body }
 
-
-(* Translate an input program into an intermediate input program with global variables as parameters *)
+(** Translate an input program into an intermediate input program with global variables as parameters 
+	@param prog current program declaration
+	@return new program declaration *)
 let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
   let new_prog =
 	match prog.I.prog_global_var_decls with
@@ -844,5 +919,4 @@ let trans_global_to_param (prog : I.prog_decl) : I.prog_decl =
 		let new_proc_decls = List.map (extend_proc temp_decls2) temp_decls2 in
 		{ prog with I.prog_proc_decls = new_proc_decls }
   in
-(* let _ = print_string (Iprinter.string_of_program new_prog) in *)
   new_prog

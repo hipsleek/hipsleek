@@ -17,6 +17,7 @@ type tp_type =
   | SetMONA
   | CM (* CVC Lite then MONA *)
   | Coq
+  | Z3
 
 let tp = ref OmegaCalc
 
@@ -25,6 +26,13 @@ type result_type = Timeout | Result of string | Failure of string
 
 let prover_arg = ref "omega"
 let external_prover = ref false
+let external_host_ports = ref []
+let webserver = ref false
+let formulae_count = ref 0
+let priority = ref 1
+let decr_priority = ref false
+let set_priority = ref false
+let prio_list = ref []
 
 module Netprover = struct
   let debuglevel = 0 
@@ -82,6 +90,25 @@ module Netprover = struct
     let i, o = Net.Socket.init_client host_port in
     in_ch := i; out_ch := o
   
+	let set_use_socket_map host_port =
+		external_prover := true ;
+		use_pipe := false;
+		let i, o = Net.Socket.init_client host_port in
+		in_ch := i; out_ch := o
+		
+	let set_use_socket_for_web host_port =
+	    external_host_ports := [host_port];
+	    external_prover := true;
+	    use_pipe := false;
+	    let i, o = Net.Socket.init_client host_port in
+		in_ch := i; out_ch := o
+		
+	let set_prio_list str =
+	  try
+	    set_priority := true;
+	    let lst = Str.split (Str.regexp ";") str in
+	    prio_list := List.map (fun name_prio -> let l = Str.split (Str.regexp ":") name_prio in ((List.hd l),int_of_string(List.nth l 1))) lst
+	  with e -> print_endline "set_prio_list error"; raise e
  
   let index_of elem lst =
     (** return the first index of [elem] in the list [lst] *)
@@ -153,6 +180,19 @@ module Netprover = struct
     | ServerTimeout -> trace "pmap" "\npmap timed out."; Unknown
     | e -> trace "pmap" (Printexc.to_string e); Unknown
   
+	let call_prover (data : prove_type) =
+    
+	  try
+		let _ = if !webserver then 
+		          Net.IO.write_job_web !out_ch 0 !prover_arg data !priority 
+		        else Net.IO.write_job !out_ch 0 !prover_arg data 
+		in
+		let _ = if !decr_priority then decr priority else () in
+		let seq, result = Net.IO.read_result !in_ch in
+			Net.IO.from_string result 
+	  with e -> print_endline "callprover error"; raise e
+
+    (* replaced with dileep's version above
   let call_prover ( f : prove_type) = 
     (** send message to external prover to get the result. *)
     try
@@ -162,6 +202,7 @@ module Netprover = struct
       | All results -> let s = (List.hd results) in
         if s <> "" then Some (Net.IO.from_string s) else None
     with e -> trace "pmap" (Printexc.to_string e); None
+    *)
 end
 
 let set_tp tp_str =
@@ -186,6 +227,8 @@ let set_tp tp_str =
 	tp := CM
   else if tp_str = "coq" then
 	tp := Coq
+  else if tp_str = "z3" then 
+	tp := Z3
   else
 	()
 
@@ -324,6 +367,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			  (Omega.is_sat f sat_no);
 			end
 	  | CvcLite -> Cvclite.is_sat f sat_no
+	  | Z3 -> Smtsolver.is_sat f sat_no
 	  | Isabelle -> Isabelle.is_sat f sat_no
 	  | Coq -> Coq.is_sat f sat_no
 	  | Mona -> Mona.is_sat f sat_no
@@ -470,6 +514,7 @@ let tp_imply ante conseq imp_no timeout =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
   | CvcLite -> Cvclite.imply ante conseq
+  | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> Coq.imply ante conseq
   | Mona -> Mona.imply timeout ante conseq imp_no 

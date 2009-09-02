@@ -2372,20 +2372,21 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                      }),
                   te2)
              | _ ->
-                 let fn = (fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum) in
+				 let e_pos = Iast.get_exp_pos e1 in
+                 let fn = (fresh_var_name "bool" e_pos.start_pos.Lexing.pos_lnum) in
                  let vd =
                    C.VarDecl
                      {
                        C.exp_var_decl_type = C.bool_type;
                        C.exp_var_decl_name = fn;
-                       C.exp_var_decl_pos = pos;
+                       C.exp_var_decl_pos = e_pos;
                      } in
                  let init_e =
                    C.Assign
                      {
                        C.exp_assign_lhs = fn;
                        C.exp_assign_rhs = ce1;
-                       C.exp_assign_pos = pos;
+                       C.exp_assign_pos = e_pos;
                      } in
                  let cond_e =
                    C.Cond
@@ -2402,7 +2403,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        C.exp_seq_type = te2;
                        C.exp_seq_exp1 = init_e;
                        C.exp_seq_exp2 = cond_e;
-                       C.exp_seq_pos = pos;
+                       C.exp_seq_pos = e_pos;
                      } in
                  let tmp_e2 =
                    C.Seq
@@ -2515,15 +2516,16 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				  Err.report_error { Err.error_loc = proc.I.proc_loc; 
 									 Err.error_text = "return statement for procedures with non-void return type need a value" }
 			| Some e -> 
+				let e_pos = Iast.get_exp_pos e in
 				let ce, ct = trans_exp prog proc e in
 				  if sub_type ct cret_type then
-					 let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
+					 let fn = (fresh_var_name (Cprinter.string_of_typ ct) e_pos.start_pos.Lexing.pos_lnum) in
 					 let vd = C.VarDecl { C.exp_var_decl_type = ct;
 										  C.exp_var_decl_name = fn;
-										  C.exp_var_decl_pos = pos;} in
+										  C.exp_var_decl_pos = e_pos;} in
 					 let init_e = C.Assign { C.exp_assign_lhs = fn;
 										     C.exp_assign_rhs = ce;
-											 C.exp_assign_pos = pos;} in
+											 C.exp_assign_pos = e_pos;} in
 					 let shar = C.Sharp ({ C.exp_sharp_type = C.void_type;
 								C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
 								C.exp_sharp_unpack = false;
@@ -2532,11 +2534,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 					 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
 										  C.exp_seq_exp1 = init_e;
 										  C.exp_seq_exp2 = shar;
-										  C.exp_seq_pos = pos;} in
+										  C.exp_seq_pos = e_pos;} in
 					 let tmp_e2 = C.Seq { C.exp_seq_type = C.void_type;
 										  C.exp_seq_exp1 = vd;
 										  C.exp_seq_exp2 = tmp_e1;
-										  C.exp_seq_pos = pos;} in 
+										  C.exp_seq_pos = e_pos;} in 
 					(tmp_e2, C.void_type)
 				  else
 					Err.report_error { Err.error_loc = proc.I.proc_loc; 
@@ -2971,15 +2973,16 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 												);
 									C.exp_sharp_pos = pos }), C.void_type)
 						else
+							let e_pos = Iast.get_exp_pos oe in
 							let ce, ct = trans_exp prog proc oe in						
 							if Util.exc_sub_type (C.name_of_type ct) raisable_class then 							 
 								 let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
 								 let vd = C.VarDecl { C.exp_var_decl_type = ct;
 													  C.exp_var_decl_name = fn;
-													  C.exp_var_decl_pos = pos;} in
+													  C.exp_var_decl_pos = e_pos;} in
 								 let init_e = C.Assign { C.exp_assign_lhs = fn;
 														 C.exp_assign_rhs = ce;
-														 C.exp_assign_pos = pos;} in
+														 C.exp_assign_pos = e_pos;} in
 								 let shar = C.Sharp ({	C.exp_sharp_type = C.void_type;
 														C.exp_sharp_flow_type = C.Sharp_ct (match ct with 
 																	| CP.OType ot -> 

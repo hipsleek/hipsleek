@@ -46,6 +46,11 @@ module IO = struct
 		with
 		| End_of_file -> trace "read" "EOF"; raise End_of_file
 		| e -> trace "read" (Printexc.to_string e); raise Read_error
+
+  let read_job ch = read ch
+  
+  let read_job_web ch = read ch
+
 	
 	(** [read_result ch] reads data from channel [ch] and check if data is of type {!Net.IO.msg_type_result}.
    	 @return data. *)
@@ -87,6 +92,12 @@ module IO = struct
 		(prover_arg:string) (*(formula: Tpdispatcher.prove_type)*) formula stopper =
 		write ch (msg_type_job_list, (seqno, timeout, prover_arg, formula, stopper))
 	
+
+  let write_job ch seqno prover_arg formula =
+    write ch (seqno, prover_arg, formula)
+  let write_job_web ch seqno prover_arg formula prio =
+    write ch (seqno, prover_arg, formula, prio)
+
 	(** [write_result ch seqno idx result] writes a tuple of (seqno, idx, result) to the channel [ch].
 	The type of message is {!Net.IO.msg_type_result}. 
 	@param ch output channel to be written
@@ -251,6 +262,20 @@ module Socket = struct
 			| id -> Unix.close s; ignore(Unix.waitpid [] id) (* Reclaim the son *); ()
 		done
 	
+  let init_client_fd (host_port: string): Unix.file_descr = (* connects to the host and returns a socket file descriptor*)
+    let server, port = get_host_port host_port in
+    try
+      print_string ("Connect to server: " ^ server ^ ":" ^ (string_of_int port));
+      let address = get_address server in
+      let socket_address = Unix.ADDR_INET (address, port) in
+      let sockfd = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
+      let _ = Unix.connect sockfd socket_address in
+      print_string "..connected.\n";
+      sockfd
+    with Unix.Unix_error(err, ctx1, ctx2) as exn ->
+        Printf.printf "Unix error: %s, %s, %s\n" (Unix.error_message err) ctx1 ctx2;
+        raise exn
+
 	(** [init_server port_str processing_func] start the server at port [port_str]. 
 	@param port_str string of port number. If empty, default_port is used. 
 	@return none. *)
