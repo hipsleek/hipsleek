@@ -1,5 +1,6 @@
 (* Simple tactic that tried to decide (in)equalities on Z *)
-Require Export ZArith List.
+Require Export ZArith List FSets.
+Module ZSets := Make(Z_as_OT).
 
 (* ------------------------------------------------------------------------------------------------------------ *)
 
@@ -299,9 +300,9 @@ end.
 
 Ltac hyp :=
   match goal with
-  
+(*
   | H: context [hd 0%Z (@nil Z)] |- _ => admit
-
+*)
   | |- ~ ?X => intro
   | |- forall A : _, _=> intro
   | H : exists A : _, _ |- _ => destruct H

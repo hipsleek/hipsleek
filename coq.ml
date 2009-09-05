@@ -72,26 +72,42 @@ and coq_of_exp e0 =
   | CP.Mult (c, a, _) -> " ( " ^ (string_of_int c) ^ " * " ^ (coq_of_exp a)	^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
-  | CP.Bag _
-  | CP.BagUnion _
-  | CP.BagIntersect _
-  | CP.BagDiff _ -> failwith ("No bags in Coq yet")
+  (* lists *)
   | CP.List (alist, pos) -> 
-      begin match alist with
-      | [] -> "(@nil Z)"
+    begin match alist with
+    | [] -> "(@nil Z)"
 	  | a::t -> "(" ^ (coq_of_exp a) ^ " :: " ^ (coq_of_exp (CP.List (t, pos))) ^ ")"
 	  end
   | CP.ListAppend (alist, pos) ->
-      begin match alist with
-      | [] -> "(@nil Z)"
+    begin match alist with
+    | [] -> "(@nil Z)"
 	  | a::[] -> coq_of_exp a
 	  | a::t -> "(" ^ (coq_of_exp a) ^ " ++ " ^ (coq_of_exp (CP.ListAppend (t, pos))) ^ ")"
 	  end
   | CP.ListCons (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
-  | CP.ListHead (a, pos) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
-  | CP.ListLength (a, pos) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
-  | CP.ListTail (a, pos) -> " ( tail " ^ (coq_of_exp a) ^ ")"
-  | CP.ListReverse (a, pos) -> " ( rev " ^ (coq_of_exp a) ^ ")"
+  | CP.ListHead (a, _) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
+  | CP.ListLength (a, _) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
+  | CP.ListTail (a, _) -> " ( tail " ^ (coq_of_exp a) ^ ")"
+  | CP.ListReverse (a, _) -> " ( rev " ^ (coq_of_exp a) ^ ")"
+  (* bags *)
+  | CP.Bag (alist, pos) -> 
+    begin match alist with
+    | [] -> "ZSets.empty"
+	  | a::t -> "( ZSets.add " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.Bag (t, pos))) ^ ")"
+	  end
+  | CP.BagUnion (alist, pos) ->
+    begin match alist with
+    | [] -> "ZSets.empty"
+	  | a::[] -> coq_of_exp a
+	  | a::t -> "( ZSets.union " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagUnion (t, pos))) ^ ")"
+	  end
+  | CP.BagIntersect (alist, pos) ->
+    begin match alist with
+    | [] -> "ZSets.empty"
+	  | a::[] -> coq_of_exp a
+	  | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
+	  end
+  | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
@@ -122,15 +138,17 @@ and coq_of_b_formula b =
 	  let a3str = coq_of_exp a3 in
           "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a2str ^ " >= " ^ a3str ^ ") \\/ ("
 		  ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
-  | CP.BagIn _
-  | CP.BagNotIn _
-  | CP.BagSub _
-  | CP.BagMin _
-  | CP.BagMax _ -> failwith ("No bags in Coq yet")
+  (* lists *)
   | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
   | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
   | CP.ListAllN (a1, a2, _) -> " ( alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
   | CP.ListPerm (a1, a2, _) -> " ( Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  (* bags *)
+  | CP.BagIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = true)"
+  | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
+  | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
+  | CP.BagMin _
+  | CP.BagMax _ -> failwith ("No bags in Coq yet")
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
