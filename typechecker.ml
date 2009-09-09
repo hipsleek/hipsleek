@@ -12,6 +12,12 @@ let log_spec = ref ""
 (* checking expression *)
 let flow_store = ref ([] : CF.flow_store list)
 
+let num_para = ref (1)
+let sort_input = ref false
+let webserver = ref false
+
+let parallelize num =
+    num_para := num
 
 (* assumes the pre, and starts the simbolic execution*)
 let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
@@ -944,6 +950,73 @@ let check_coercion (prog : prog_decl) =
 	List.map (fun coer -> check_right_coercion coer) prog.prog_right_coercions
 
 
+let rec size (expr : exp) =
+  match expr with
+  | CheckRef ex -> 1
+  | Java ex -> 1
+  | Assert ex -> 1
+  | Assign ex -> 1 + (size ex.exp_assign_rhs)
+  | BConst ex -> 1
+  | Bind ex -> 1 + (size ex.exp_bind_body)
+  | Block ex -> 1 + (size ex.exp_block_body)
+  | Cond ex -> 1 + (size ex.exp_cond_then_arm) + (size ex.exp_cond_else_arm)
+  | Cast ex -> 1 + (size ex.exp_cast_body)
+  | Debug ex -> 1
+  | Dprint ex -> 1
+  | FConst ex -> 1
+  | ICall ex -> 1 + (List.length ex.exp_icall_arguments)
+  | IConst ex -> 1
+  | New ex -> 1
+  | Null ex -> 1
+  | Print ex -> 1
+  (*| Return ex -> 1 + (match ex.exp_return_val with | None -> 1 | Some ex1 -> (size ex1))*)
+  | SCall ex -> 1 + (List.length ex.exp_scall_arguments)
+  | Seq ex -> 1 + (size ex.exp_seq_exp1) + (size ex.exp_seq_exp2)
+  | This ex -> 1
+  | Var ex -> 1
+  | VarDecl ex -> 1
+  | Unfold ex -> 1
+  | Unit ex -> 1
+  | While ex -> 1 + 2*(List.length ex.exp_while_spec) + (size ex.exp_while_body)
+  | _ -> 1
+
+let size_proc_decl (proc_d : proc_decl) =
+  (match proc_d.proc_body with
+  | None -> 0
+  | Some ex -> (size ex)) + 2*((List.length proc_d.proc_static_specs) + (List.length proc_d.proc_dynamic_specs))
+
+let compare_proc_decl (proc1 : proc_decl) (proc2 : proc_decl) =
+  (size_proc_decl proc2) - (size_proc_decl proc1)
+
+let init_files () =
+  begin
+	Omega.init_files ();
+	Setmona.init_files ();
+  end
+
+let check_proc_wrapper_map prog (proc,num) =
+  if !Tpdispatcher.external_prover then Tpdispatcher.Netprover.set_use_socket_map (List.nth !Tpdispatcher.external_host_ports (num mod (List.length !Tpdispatcher.external_host_ports))); (* make this dynamic according to availability of server machines*)
+  try
+      check_proc prog proc
+  with _ as e ->
+	if !Globals.check_all then begin
+		print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
+	  print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+	  false
+	end else
+	  raise e
+
+let check_proc_wrapper_map_net prog (proc,num) =
+  try
+	check_proc prog proc
+  with _ as e ->
+	if !Globals.check_all then begin
+		print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
+	  print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+	  false
+	end else
+	  raise e
+
 let check_prog (prog : prog_decl) =
   if !Globals.check_coercions then begin
 	print_string "Checking coercions... ";
@@ -951,5 +1024,25 @@ let check_prog (prog : prog_decl) =
 	print_string "DONE."
   end else begin
 	ignore (List.map (check_data prog) prog.prog_data_decls);
-	ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls)
+	ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
+	let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
+	let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
+	let num_list = numbers (List.length filtered_proc) in
+	let prog_proc_decls_num = if !sort_input then
+	                            List.map2 (fun a b -> (a,b)) (List.sort compare_proc_decl filtered_proc) num_list
+	                          else 
+	                            List.map2 (fun a b -> (a,b)) filtered_proc num_list in
+	if (!num_para = 0) then
+	    ignore(Paralib1.map_para init_files (check_proc_wrapper_map prog) prog_proc_decls_num)
+	else if (!num_para > 1) then
+	  if !Tpdispatcher.external_prover then
+	    ignore(Paralib1v2.map_para_net init_files (check_proc_wrapper_map_net prog) prog_proc_decls_num !num_para)
+	  else
+	    ignore(Paralib1v2.map_para init_files (check_proc_wrapper_map prog) prog_proc_decls_num !num_para)
+	else if (!num_para = 1) then begin
+	  ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
+      if !webserver then Net.IO.write_job_web (!Tpdispatcher.Netprover.out_ch) (-1) "" "" 1 else ()
+    end
+	else
+	  ()
   end

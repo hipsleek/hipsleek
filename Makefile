@@ -76,7 +76,7 @@ SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	iprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
-	cvclite.cmo smtsolver.cmo tpdispatcher.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \

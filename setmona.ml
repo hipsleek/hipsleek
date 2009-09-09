@@ -4,8 +4,19 @@
 open Globals
 open Cpure
 
+let infilename = ref ("input.mona." ^ (string_of_int (Unix.getpid ())))
+let resultfilename = ref ("result.mona." ^ (string_of_int (Unix.getpid())))
+
+let init_files () =
+  begin
+	infilename := "input.mona." ^ (string_of_int (Unix.getpid ()));
+	resultfilename := "result.mona." ^ (string_of_int (Unix.getpid()));
+  end
+
+  (*
 let infilename = "input.mona." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = "result.mona." ^ (string_of_int (Unix.getpid()))
+*)
 
 let log_all_flag = ref true
 let log_all = open_out ("allinput.set" (* ^ (string_of_int (Unix.getpid ())) *) )
@@ -660,10 +671,10 @@ and mona_of_formula_helper f0 = match f0 with
 
 let mona = "mona"
 
-let mona_command = mona ^ " " ^ infilename ^ " > " ^ resultfilename
+let mona_command = mona ^ " " ^ !infilename ^ " > " ^ !resultfilename
 
 let run_mona (input : string) : unit = 
-  let chn = open_out infilename in
+  let chn = open_out !infilename in
 	if !log_all_flag then
 	  (output_string log_all "\n#setmona:\n"; output_string log_all input; flush log_all);
 	output_string chn (Util.break_lines input);
@@ -736,7 +747,7 @@ let imply (ante : formula) (conseq : formula) : bool =
   let conseq_str = mona_of_formula conseq in
   let mona_str = presPred ^ "\n\n" ^ var_decls ^ "(" ^ ante_str ^ ") => (" ^ conseq_str ^ ");\n" in
   let _ = run_mona mona_str in
-  let fd = open_in resultfilename in
+  let fd = open_in !resultfilename in
   let quit = ref false in
   let automaton_completed = ref false in
   let result = ref false in

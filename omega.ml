@@ -5,8 +5,15 @@
 open Globals
 open Cpure
 
-let infilename = "input.oc." ^ (string_of_int (Unix.getpid ()))
-let resultfilename = "result.txt." ^ (string_of_int (Unix.getpid()))
+
+let infilename = ref ("input.oc." ^ (string_of_int (Unix.getpid ())))
+let resultfilename = ref ("result.txt." ^ (string_of_int (Unix.getpid())))
+
+let init_files () =
+  begin
+	infilename := "input.oc." ^ (string_of_int (Unix.getpid ()));
+	resultfilename := "result.txt." ^ (string_of_int (Unix.getpid()));
+  end
 
 let test_number = ref 0
 let log_all_flag = ref false
@@ -83,11 +90,11 @@ and omega_of_formula f  = match f with
   | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
-let omegacalc = "/usr/local/bin/oc" (* TODO: fix oc path *)
+let omegacalc = "oc" (* TODO: fix oc path *)
 
 let omega_calc_command =
-  if Sys.os_type = "Cygwin" then ("dos2unix " ^ infilename ^ " ; " ^ omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
-  else (omegacalc ^ " " ^ infilename ^ " > " ^ resultfilename)
+  if Sys.os_type = "Cygwin" then ("dos2unix " ^ !infilename ^ " ; " ^ omegacalc ^ " " ^ !infilename ^ " > " ^ !resultfilename)
+  else (omegacalc ^ " " ^ !infilename ^ " > " ^ !resultfilename)
 
 let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
@@ -106,11 +113,11 @@ let set_timer tsecs =
 	*)
 
 let run_omega (input : string) (timeout : float):bool = begin
-	let chn = open_out infilename in
+	let chn = open_out !infilename in
 	output_string chn (Util.break_lines input);
     close_out chn;
     (* flush_all(); *)
- 	let pid = Unix_add.open_proc omegacalc [|omegacalc;infilename|] resultfilename in
+ 	let pid = Unix_add.open_proc omegacalc [|omegacalc;!infilename|] !resultfilename in
 	let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in	
 	let r =	try 			
 			begin
@@ -161,7 +168,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     let quitloop = ref false in
     let sat = ref true in
     if (run_omega fomega !Globals.sat_timeout = false) then (quitloop := true);
-    let chn = open_in resultfilename in
+    let chn = open_in !resultfilename in
     while not !quitloop do
       let line = input_line chn in
       let n = String.length line in
@@ -178,8 +185,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     close_in chn;
     begin
       try
-        ignore (Sys.remove infilename);
-        ignore (Sys.remove resultfilename)
+        ignore (Sys.remove !infilename);
+        ignore (Sys.remove !resultfilename)
       with
       | e -> ignore e
     end;
@@ -232,7 +239,7 @@ let is_valid (pe : formula) timeout: bool =
                 flush log_all;
             end;
       ignore (run_omega fomega timeout);
-      let chn = open_in resultfilename in
+      let chn = open_in !resultfilename in
       let quitloop = ref false in
       let result = ref false in
                 while not !quitloop do
@@ -251,8 +258,8 @@ let is_valid (pe : formula) timeout: bool =
                 close_in chn;
                 begin
                     try
-                        ignore (Sys.remove infilename);
-                        ignore (Sys.remove resultfilename)
+                        ignore (Sys.remove !infilename);
+                        ignore (Sys.remove !resultfilename)
                     with
                         | e -> ignore e
                 end;
@@ -315,14 +322,14 @@ let simplify (pe : formula) : formula =
       flush log_all;
     end;
     ignore (run_omega fomega 0.);
-    let chn = open_in resultfilename in
+    let chn = open_in !resultfilename in
     let lex_buf = Lexing.from_channel chn in
-    let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+    let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
     let f = match_vars (fv pe) rel in
     begin
       try
-        ignore (Sys.remove infilename);
-        ignore (Sys.remove resultfilename)
+        ignore (Sys.remove !infilename);
+        ignore (Sys.remove !resultfilename)
       with
       | e -> ignore e
     end;
@@ -343,14 +350,14 @@ let pairwisecheck (pe : formula) : formula =
                 flush log_all;
             end;
       ignore (run_omega fomega 0.);
-      let chn = open_in resultfilename in
+      let chn = open_in !resultfilename in
             let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+            let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
             let f = match_vars (fv pe) rel in
                 begin
                     try
-                        ignore (Sys.remove infilename);
-                        ignore (Sys.remove resultfilename)
+                        ignore (Sys.remove !infilename);
+                        ignore (Sys.remove !resultfilename)
                     with
                         | e -> ignore e
                 end;
@@ -371,14 +378,14 @@ let hull (pe : formula) : formula =
                 flush log_all;
             end;
       ignore (run_omega fomega 0.);
-      let chn = open_in resultfilename in
+      let chn = open_in !resultfilename in
             let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+            let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
             let f = match_vars (fv pe) rel in
                 begin
                     try
-                        ignore (Sys.remove infilename);
-                        ignore (Sys.remove resultfilename)
+                        ignore (Sys.remove !infilename);
+                        ignore (Sys.remove !resultfilename)
                     with
                         | e -> ignore e
                 end;
@@ -403,14 +410,14 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
                 flush log_all;
             end;
       ignore (run_omega fomega 0.);
-      let chn = open_in resultfilename in
+      let chn = open_in !resultfilename in
             let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer resultfilename) lex_buf in
+            let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
             let f = match_vars vars_list rel in
                 begin
                     try
-                        ignore (Sys.remove infilename);
-                        ignore (Sys.remove resultfilename)
+                        ignore (Sys.remove !infilename);
+                        ignore (Sys.remove !resultfilename)
                     with
                         | e -> ignore e
                 end;

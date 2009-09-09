@@ -132,6 +132,10 @@ let process_cmd_line () = Arg.parse [
   ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   ("--pip", Arg.Set Globals.print_input,"print input representation");
   ("--sqt", Arg.Set Globals.seq_to_try,"translate seq to try");
+  ("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) , "<host:port>: use external web service via socket");
+  ("-para", Arg.Int Typechecker.parallelize, "Use Paralib map_para instead of List.map in typecheker");
+  ("--priority",Arg.String Tpdispatcher.Netprover.set_prio_list, "<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
+  ("--decrprio",Arg.Set Tpdispatcher.decr_priority , "use a decreasing priority scheme");
   
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
