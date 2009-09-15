@@ -18,6 +18,7 @@ type tp_type =
   | CM (* CVC Lite then MONA *)
   | Coq
   | Z3
+  | Redlog
 
 let tp = ref OmegaCalc
 
@@ -229,6 +230,8 @@ let set_tp tp_str =
 	tp := Coq
   else if tp_str = "z3" then 
 	tp := Z3
+  else if tp_str = "redlog" then
+    tp := Redlog
   else
 	()
 
@@ -409,6 +412,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			  (Omega.is_sat f sat_no);
 			end
 	  | SetMONA -> Setmona.is_sat f
+      | Redlog -> Redlog.is_sat f sat_no
 
 let simplify (f : CP.formula) : CP.formula =
 	if !external_prover then 
@@ -432,6 +436,7 @@ let simplify (f : CP.formula) : CP.formula =
   | CM ->
 	  if is_bag_constraint f then Mona.simplify f
 	  else Omega.simplify f
+  | Redlog -> Redlog.simplify f
   | _ ->
 (*
 	  if (is_bag_constraint f) then
@@ -456,6 +461,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.hull f
 	  else Omega.hull f
+  | Redlog -> Redlog.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -481,6 +487,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.pairwisecheck f
 	  else Omega.pairwisecheck f
+  | Redlog -> Redlog.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -549,6 +556,7 @@ let tp_imply ante conseq imp_no timeout =
 		(Omega.imply ante conseq imp_no timeout)
   | SetMONA ->
 	  Setmona.imply ante conseq 
+  | Redlog -> Redlog.imply ante conseq imp_no
 ;;
 
 (* renames all quantified variables *)
