@@ -213,7 +213,7 @@
 %left SEMICOLON
 %left OR 
 %left AND
-%left STAR
+%left STAR DIV
 %right NOT
 %left EQ NEQ GT GTE LT LTE
 %left PLUS MINUS
@@ -882,47 +882,63 @@ bconstr
 /* constraint expressions */
 
 cexp
-  : cid {
-		P.Var ($1, get_pos 1)
-  }
-  | LITERAL_INTEGER {
-	  P.IConst ($1, get_pos 1)
-	}
-  | LITERAL_INTEGER cid {
-	  P.mkMult $1 (P.Var ($2, get_pos 2)) (get_pos 1)
-	}
-  | cexp PLUS cexp {
-	  P.mkAdd $1 $3 (get_pos 2)
-	}
-  | cexp MINUS cexp {
-	  P.mkSubtract $1 $3 (get_pos 2)
-	}
-  | MINUS cexp %prec UMINUS {
-	  P.mkSubtract (P.IConst (0, get_pos 1)) $2 (get_pos 1)
-	}
-  | MAX OPAREN cexp COMMA cexp CPAREN {
-	  P.mkMax $3 $5 (get_pos 1)
-	}
-  | MIN OPAREN cexp COMMA cexp CPAREN {
-	  P.mkMin $3 $5 (get_pos 1)
-	}
-  | NULL {
-	  P.Null (get_pos 1)
-	}
-	/* bags */
+  : additive_cexp { $1 }
   | OBRACE opt_cexp_list CBRACE {
-	  P.Bag ($2, get_pos 1)
-	}
+      P.Bag ($2, get_pos 1)
+    }
   | UNION OPAREN opt_cexp_list CPAREN {
-	  P.BagUnion ($3, get_pos 1)
-	}
+      P.BagUnion ($3, get_pos 1)
+    }
   | INTERSECT OPAREN opt_cexp_list CPAREN {
-	  P.BagIntersect ($3, get_pos 1)
-	}
+      P.BagIntersect ($3, get_pos 1)
+    }
   | DIFF OPAREN cexp COMMA cexp CPAREN {
-	  P.BagDiff ($3, $5, get_pos 1)
-	}
-	
+      P.BagDiff ($3, $5, get_pos 1)
+    }
+;
+
+additive_cexp 
+  : multiplicative_cexp { $1 }
+  | additive_cexp PLUS multiplicative_cexp {
+      P.mkAdd $1 $3 (get_pos 2)
+    }
+  | additive_cexp MINUS multiplicative_cexp {
+      P.mkSubtract $1 $3 (get_pos 2)
+    }
+;
+
+multiplicative_cexp
+  : unary_cexp { $1 }
+  | multiplicative_cexp STAR unary_cexp {
+      P.mkMult $1 $3 (get_pos 2)
+    }
+  | multiplicative_cexp DIV unary_cexp {
+      P.mkDiv $1 $3 (get_pos 2)
+    }
+  ;
+
+unary_cexp
+  : cid {
+      P.Var ($1, get_pos 1)
+    }
+  | LITERAL_INTEGER {
+      P.IConst ($1, get_pos 1)
+    }
+  | OPAREN cexp CPAREN {
+      $2
+    }
+  | NULL {
+      P.Null (get_pos 1)
+    }
+  | MINUS unary_cexp %prec UMINUS {
+      P.mkSubtract (P.IConst (0, get_pos 1)) $2 (get_pos 1)
+    }
+  | MAX OPAREN cexp COMMA cexp CPAREN {
+      P.mkMax $3 $5 (get_pos 1)
+    }
+  | MIN OPAREN cexp COMMA cexp CPAREN {
+      P.mkMin $3 $5 (get_pos 1)
+    }
 ;
 
 opt_cexp_list

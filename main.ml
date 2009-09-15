@@ -85,6 +85,8 @@ let process_cmd_line () = Arg.parse [
    "Log all formulae sent to Coq in file allinput.v");
   ("--log-mona", Arg.Set Mona.log_all_flag,
    "Log all formulae sent to Mona in file allinput.mona");
+  ("--log-redlog", Arg.Set Redlog.is_log_all,
+    "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--no-coercion", Arg.Clear Globals.use_coercion,

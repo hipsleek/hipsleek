@@ -94,7 +94,8 @@ and cvcl_of_exp a = match a with
   | CP.IConst (i, _) -> string_of_int i
   | CP.Add (a1, a2, _) ->  (cvcl_of_exp a1) ^ " + " ^ (cvcl_of_exp a2)
   | CP.Subtract (a1, a2, _) ->  (cvcl_of_exp a1) ^ " - " ^ (cvcl_of_exp a2)
-  | CP.Mult (c, a, _) -> (string_of_int c) ^ " * " ^ (cvcl_of_exp a)
+  | CP.Mult (a1, a2, _) -> (cvcl_of_exp a1) ^ " * " ^ (cvcl_of_exp a2)
+  | CP.Div (a1, a2, _) -> failwith ("[cvclite.ml]: divide is not supported.")
   | CP.Max _ 
   | CP.Min _ -> failwith ("Cvclite.cvcl_of_exp: min/max should not appear here")
   | CP.Bag ([], _) -> ""

@@ -58,8 +58,8 @@ Primitives handling stuff
 let prim_str =
   "int add___(int a, int b) requires true ensures res = a + b;
 int minus___(int a, int b) requires true ensures res = a - b;
-int mult___(int a, int b) requires true ensures true;
-int div___(int a, int b) requires true ensures true;
+int mult___(int a, int b) requires true ensures res = a * b;
+int div___(int a, int b) requires b != 0 ensures res = a / b;
 int mod___(int a, int b) requires true ensures - b < res < b;
 bool eq___(int a, int b) requires true ensures res & a = b or !res & a!= b;
 bool eq___(bool a, bool b) requires true ensures res & a = b or !res & a!= b;
@@ -221,7 +221,8 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   | IP.Add (e1, e2, _) | IP.Subtract (e1, e2, _) | IP.Max (e1, e2, _) |
       IP.Min (e1, e2, _) | IP.BagDiff (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
-  | IP.Mult (_, e1, _) -> look_for_anonymous_exp e1
+  | IP.Mult (e1, e2, _) | IP.Div (e1, e2, _) ->
+      List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) ->
       look_for_anonymous_exp_list e1
   | _ -> []
@@ -3911,7 +3912,8 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
       CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Subtract (e1, e2, pos) ->
       CP.Subtract (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
-  | IP.Mult (c, e, pos) -> CP.Mult (c, trans_pure_exp e stab, pos)
+  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
+  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Max (e1, e2, pos) ->
       CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Min (e1, e2, pos) ->
@@ -4119,7 +4121,8 @@ and collect_type_info_arith a0 stab =
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
       IP.Min (a1, a2, pos) ->
       (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
-  | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
+  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
+      (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_arith: encountered bag constraint"
 
@@ -4136,7 +4139,8 @@ and collect_type_info_bag_content a0 stab =
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
       IP.Min (a1, a2, pos) ->
       (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
-  | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
+  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
+      (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_arith: encountered bag constraint"
 
@@ -4158,7 +4162,7 @@ and collect_type_info_bag (e0 : IP.exp) stab =
   | IP.BagIntersect ([], pos) -> ()
   | IP.BagDiff (a1, a2, pos) ->
       (collect_type_info_bag a1 stab; collect_type_info_bag a2 stab)
-  | IP.Min _ | IP.Max _ | IP.Mult _ | IP.Subtract _ | IP.Add _ | IP.IConst _
+  | IP.Min _ | IP.Max _ | IP.Mult _ | IP.Div _ | IP.Subtract _ | IP.Add _ | IP.IConst _
       | IP.Null _ ->
       failwith "collect_type_info_bag: encountered arithmetic constraint"
 

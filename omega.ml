@@ -36,7 +36,23 @@ let rec omega_of_exp e0 = match e0 with
   | IConst (i, _) -> string_of_int i 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
   | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^(omega_of_exp a2)
-  | Mult (c, a, _) ->  (string_of_int c) ^ "(" ^ (omega_of_exp a) ^ ")"
+  | Mult (a1, a2, l) ->
+      let r = match a1 with
+        | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
+        | _ -> let rr = match a2 with
+            | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
+            | _ -> 
+                Error.report_error {
+                  Error.error_loc = l;
+                  Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
+                }
+            in rr
+      in r
+  | Div (_, _, l) -> 
+      Error.report_error {
+        Error.error_loc = l;
+        Error.error_text ="[omega.ml] Divide is not supported."
+      }
   | Max _
   | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
     | _ -> failwith ("Omega.omega_of_exp: bag constraint")

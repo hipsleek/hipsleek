@@ -275,6 +275,7 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Subtract (e1, e2, _) (* ->  (is_bag_constraint_exp e1) || (is_bag_constraint_exp e2) *)
 	  -> false
   | CP.Mult _
+  | CP.Div _
   | CP.Max _
   | CP.Min _ -> false
 	  (* bag expressions *)

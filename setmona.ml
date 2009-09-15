@@ -223,8 +223,16 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
 	  let r1 = compute_fo_exp e1 order var_map in
 	  let r2 = compute_fo_exp e2 order var_map in
 		r1 || r2
-  | Mult (_, e1, _) ->
-	  compute_fo_exp e1 order var_map
+  | Mult (e1, e2, _) ->
+      let r = match e1 with
+        | IConst _ ->
+            compute_fo_exp e2 order var_map
+        | _ -> let rr = match e2 with
+                 | IConst _ -> compute_fo_exp e1 order var_map
+                 | _ -> failwith "[monaset.ml]: nonlinear arithmetic is not suportted."
+               in rr
+      in r
+  | Div (e1, e2, _) -> failwith "[setmona.ml]: divide is not suported."
   | Bag (es, _) ->
 	  if order = SO then
 		let r =	List.map (fun e -> compute_fo_exp e FO var_map) es in
@@ -414,10 +422,21 @@ and split_add_subtract (e0 : exp) : (exp list * exp list) = match e0 with
 	  let a1, s1 = split_add_subtract e1 in
 	  let a2, s2 = split_add_subtract e2 in
 		(a1 @ s2, s1 @ a2)
-  | Mult (i, e1, pos) ->
-	  if i = 1 then ([e1], [])
-	  else if i = -1 then ([], [e1])
-	  else failwith ("split_add_subtract: Mult with unsupported coefficent: " ^ (string_of_int i))
+  | Mult (e1, e2, pos) ->
+      (match e1 with
+      | IConst(i, _) ->
+          if i = 1 then ([e2], [])
+	      else if i = -1 then ([], [e2])
+	      else failwith ("split_add_subtract: Mult with unsupported coefficent: " ^ (string_of_int i))
+      | _ -> 
+          (match e2 with
+          | IConst(i, _) ->
+              if i = 1 then ([e1], [])
+	          else if i = -1 then ([], [e1])
+	          else failwith ("split_add_subtract: Mult with unsupported coefficent: " ^ (string_of_int i))
+          | _ -> failwith ("split_add_subtract: Mult with unsupported coefficent"))
+      )
+  | Div _ -> failwith "[setmona.ml]: divide is not supported."
   | _ -> ([e0], [])
 
 

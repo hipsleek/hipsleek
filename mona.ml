@@ -435,7 +435,8 @@ and mona_of_exp e0 f = match e0 with
   | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
   | CP.Add (a1, a2, _) ->  " ( " ^ (mona_of_exp a1 f) ^ " + " ^ (mona_of_exp a2 f) ^ ")"
   | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
-  | CP.Mult (i, a, p) -> " ( " ^ (mona_of_exp (CP.IConst(i, p)) f) ^ " * " ^ (mona_of_exp a f)	^ ")"
+  | CP.Mult (a1, a2, p) -> "(" ^ (mona_of_exp a1 f) ^ " * " ^ (mona_of_exp a2 f) ^ ")"
+  | CP.Div (a1, a2, p) -> failwith "[mona.ml]: divide is not supported."
   | CP.Max _
   | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
   | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
@@ -462,11 +463,16 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
       ((tmp :: (exs1 @ exs2)), tmp, add_string2)
 	| CP.Max _
 	| CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
-	| CP.Mult (i,a,p) -> if (i>10 || i<1) then failwith ("mona.mona_of_exp_secondorder: mona doesn't support multiplication and the constant is too big")
-												else 
-													let rec mult i = if i==1 then a else CP.Add( (mult (i-1)), a,p)  in
-													let sum = if (i>1) then (mult i)	else CP.IConst (1, p) in
-														mona_of_exp_secondorder sum f 
+  | CP.Mult (a1, a2, p) ->
+      (match a1 with
+      | CP.IConst(i, _) -> 
+          if (i > 10 || i < 1) then 
+            failwith ("mona.mona_of_exp_secondorder: mona doesn't support multiplication and the constant is too big")
+          else
+            let rec mult i = if i==1 then a2 else CP.Add ((mult (i-1)), a2, p) in
+            let sum = if (i>1) then (mult i) else CP.IConst (1, p) in
+            mona_of_exp_secondorder sum f
+      | _ -> failwith ("mona.mona_of_exp_secondorder: nonlinear arithmetic isn't supported."))
 	| CP.Subtract (e1, e2, p) -> 	
 		let _ = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in
 		failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")

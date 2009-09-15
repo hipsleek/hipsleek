@@ -111,9 +111,8 @@ let rec rl_of_exp e0 =
   | CP.IConst (i, _) -> string_of_int i
   | CP.Add (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " + " ^ (rl_of_exp e2) ^ ")"
   | CP.Subtract (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " - " ^ (rl_of_exp e2) ^ ")"
-  | CP.Mult (i, e, _) -> "(" ^ (string_of_int i) ^ " * " ^ (rl_of_exp e) ^ ")"
-(*  | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")" *)
-(*  | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")" *)
+  | CP.Mult (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " * " ^ (rl_of_exp e2) ^ ")"
+  | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
   | _ -> failwith ("redlog: bags is not supported")

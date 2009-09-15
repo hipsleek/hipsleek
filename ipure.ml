@@ -42,7 +42,8 @@ and exp =
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
-  | Mult of (int * exp * loc)
+  | Mult of (exp * exp * loc)
+  | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
 	  (* bag expressions *)
@@ -117,7 +118,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | IConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
-  | Mult (c, a, _) -> afv a
+  | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
@@ -164,7 +165,9 @@ and mkAdd a1 a2 pos = Add (a1, a2, pos)
 
 and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
-and mkMult c a pos = Mult (c, a, pos)
+and mkMult a1 a2 pos = Mult (a1, a2, pos)
+
+and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 
@@ -345,6 +348,7 @@ and pos_of_exp (e : exp) = match e with
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
+  | Div (_, _, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
   | Bag (_, p) -> p
@@ -429,7 +433,10 @@ and e_apply_one (fr, t) e = match e with
 							  e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
 										e_apply_one (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_one (fr, t) a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
@@ -466,7 +473,8 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list =
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Max (e1, e2, _) |
       Min (e1, e2, _) | BagDiff (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
-  | Mult (_, e1, _) -> look_for_anonymous_exp e1
+  | Mult (e1, e2, _) | Div (e1, e2, _) ->
+      List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) ->
       look_for_anonymous_exp_list e1
   | _ -> []

@@ -50,7 +50,8 @@ and exp =
   | IConst of (int * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
-  | Mult of (int * exp * loc)
+  | Mult of (exp * exp * loc)
+  | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
 	  (* bag expressions *)
@@ -76,6 +77,7 @@ let get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ | Add _ | Subtract _ | Mult _ | Max _ | Min _  -> Prim Int
+  | Div _ -> Prim Int (* FIX IT: should be float type *)
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
 
 (* free variables *)
@@ -148,7 +150,7 @@ and afv (af : exp) : spec_var list = match af with
   | IConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
-  | Mult (c, a, _) -> afv a
+  | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   (*| BagEmpty (_) -> []*)
@@ -233,6 +235,7 @@ and is_arith (e : exp) : bool = match e with
   | Add _
   | Subtract _
   | Mult _
+  | Div _
   | Min _
   | Max _ -> true
   | _ -> false
@@ -263,7 +266,9 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkIConst a pos = IConst (a, pos)
 
-and mkMult c a pos = Mult (c, a, pos)
+and mkMult a1 a2 pos = Mult (a1, a2, pos)
+
+and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 
@@ -471,7 +476,10 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
 	| (Min (e1,e2,_),Min (d1,d2,_)) 
 	| (Add (e1,e2,_),Add (d1,d2,_)) -> (((eqExp e1 d1)&&(eqExp e2 d2))||((eqExp e1 d2)&&(eqExp e2 d1)))
     | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp e1 d1)&&(eqExp e2 d2))
-    | (Mult (c1,e1,_),Mult (c2,e2,_)) -> (c1=c2)&&(eqExp e1 e2)
+  (* I'm not sure about this *)
+  | (Mult (e1, e2, _), Mult(d1, d2, _)) ->
+      (((eqExp e1 d1)&&(eqExp e2 d2)) || ((eqExp e1 d2)&&(eqExp e2 d1)))
+  | (Div _, Div _) -> false (* FIX IT *)
 	| (Bag (l1,_),Bag (l2,_)) -> if (List.length l1)=(List.length l1) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
 										else false
     | _ -> false
@@ -550,6 +558,7 @@ and pos_of_exp (e : exp) = match e with
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
+  | Div (_, _, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
   (*| BagEmpty (p) -> p*)
@@ -659,7 +668,9 @@ and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
 	| (Max(e11, e12, _), Max(e21, e22, _))
 	| (Min(e11, e12, _), Min(e21, e22, _))
 	| (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
-	| (Mult(i1, e11, _), Mult(i2, e21, _)) -> (i1 = i2) & (eq_exp e11 e21)
+  (* FIX IT: i'm not sure about multiply and divide, again *)
+  | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
+  | (Div(e11, e12, _), Div(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
 	| (Bag(e1, _), Bag(e2, _))
 	| (BagUnion(e1, _), BagUnion(e2, _))
 	| (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list e1 e2)
@@ -793,7 +804,10 @@ and e_apply_subs sst e = match e with
 							  e_apply_subs sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1,
 										e_apply_subs sst a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_subs sst a, pos)
+  | Mult (a1, a2, pos) -> 
+      Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_subs sst a1,
 							  e_apply_subs sst a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_subs sst a1,
@@ -862,7 +876,10 @@ and e_apply_one (fr, t) e = match e with
 							  e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
 										e_apply_one (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_one (fr, t) a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
@@ -960,7 +977,10 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | IConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-  | Mult (c, a, pos) -> Mult (c, a_apply_par_term sst a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -1009,7 +1029,10 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | IConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, a_apply_one_term (fr, t) a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -1439,7 +1462,10 @@ and e_apply_one_exp (fr, t) e = match e with
 							  e_apply_one_exp (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1,
 										e_apply_one_exp (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_one_exp (fr, t) a, pos)
+  | Mult (a1, a2, pos) -> 
+      Mult (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one_exp (fr, t) a1,
@@ -1592,6 +1618,7 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 					  | Add (e1,e2,_)
 					  | Subtract (e1,e2,_) -> false
 					  | Mult _
+            | Div _
 					  | Max _ 
 					  | Min _
 					  | Bag _
@@ -1691,7 +1718,7 @@ and simp_mult (e : exp) :  exp =
     match e0 with
     |  Null _ -> e0
     |  Var (v, l) ->
-        let r = (match m with | None -> e0 | Some c ->  Mult (c, e0, l))
+        let r = (match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l))
         in r
     |  IConst (v, l) ->
         let r =
@@ -1705,12 +1732,8 @@ and simp_mult (e : exp) :  exp =
              acc_mult
                (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
              l))
-    |  Mult (c, e1, l) ->
-        let r =
-          (match m with
-           | None -> acc_mult (Some c) e1
-           | Some c1 -> acc_mult (Some (c1 * c)) e1)
-        in r
+    | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
+    | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
     |  Max (e1, e2, l) ->
         Error.report_error
           {
@@ -1767,26 +1790,32 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
           Error.error_text =
             "got subtraction !! (Should have already been simplified )";
         }
-  |  Mult (v, e1, l) ->
-      let (ts, tm) = split_sums e1 in
+  | Mult (e1, e2, l) ->
+      let ts1, tm1 = split_sums e1 in
+      let ts2, tm2 = split_sums e2 in
       let r =
-        (match (ts, tm) with
-         | (None, None) -> (None, None)
-         | (Some r1, None) ->
-             if v > 0
-             then ((Some ( Mult (v, r1, l))), None)
-             else
-               if v == 0
-               then (None, None)
-               else (None, (Some ( Mult (- v, r1, l))))
-         | (None, Some r1) ->
-             if v > 0
-             then (None, (Some ( Mult (v, r1, l))))
-             else
-               if v == 0
-               then (None, None)
-               else ((Some ( Mult (- v, r1, l))), None)
-         | _ -> ((Some e), None))
+        match ts1, tm1, ts2, tm2 with
+        | None, None, _, _ -> None, None
+        | _, _, None, None -> None, None
+        | Some r1, None, Some r2, None -> Some (Mult (r1, r2, l)), None
+        | Some r1, None, None, Some r2 -> None, Some (Mult (r1, r2, l))
+        | None, Some r1, Some r2, None -> None, Some (Mult (r1, r2, l))
+        | None, Some r1, None, Some r2 -> Some (Mult (r1, r2, l)), None
+        | _ -> ((Some e), None) (* Undecidable cases *)
+      in r
+  | Div (e1, e2, l) ->
+      (* IMO, this implementation is useless *)
+      let ts1, tm1 = split_sums e1 in
+      let ts2, tm2 = split_sums e2 in
+      let r =
+        match ts1, tm1, ts2, tm2 with
+        | None, None, _, _ -> None, None
+        | _, _, None, None -> failwith "[cpure.ml] split_sums: divide by zero"
+        | Some r1, None, Some r2, None -> Some (Div (r1, r2, l)), None
+        | Some r1, None, None, Some r2 -> None, Some (Div (r1, r2, l))
+        | None, Some r1, Some r2, None -> None, Some (Div (r1, r2, l))
+        | None, Some r1, None, Some r2 -> Some (Div (r1, r2, l)), None
+        | _ -> Some e, None
       in r
   |  Max (e1, e2, l) ->
       Error.report_error
@@ -1831,16 +1860,55 @@ and purge_mult (e :  exp):  exp = match e with
   |  IConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
-  |  Mult (i, a, l) -> if (i == 0) then  IConst (0, l)
-										else if (i == 1) then (purge_mult a) 
-													else 
-														let inter = purge_mult a in
-														let r = 
-														match inter with
-														|  IConst(v, _) -> if (v == 0) then inter
-																									else  IConst(i * v, l)
-														| _ ->  Mult(i, inter, l) in r
-													 
+  | Mult (e1, e2, l) ->
+      let t1 = purge_mult e1 in
+      let t2 = purge_mult e2 in
+      let r = match t1 with
+        | IConst (v1, _) -> 
+            if (v1 == 0) then t1 else
+            if (v1 == 1) then t2 else
+            let rr = match t2 with
+              | IConst (v2, _) -> IConst (v1 * v2, l)
+              | _ -> Mult (t1, t2, l) in
+            rr
+        | _ -> 
+            let rr = match t2 with
+              | IConst (v2, _) -> 
+                  if (v2 == 0) then t2 else
+                  if (v2 == 1) then t1 else
+                  Mult (t1, t2, l)
+              | _ -> Mult (t1, t2, l) in
+            rr
+      in r
+  | Div (e1, e2, l) ->
+      let t1 = purge_mult e1 in
+      let t2 = purge_mult e2 in
+      let r = match t1 with
+        | IConst (v1, _) ->
+            if (v1 == 0) then t1 else
+            let rr = match t2 with
+              | IConst (v2, _) ->
+                  if (v2 == 0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else IConst(v1 / v2, l)
+              | _ -> Div (t1, t2, l) 
+            in rr
+        | _ -> 
+            let rr = match t2 with
+              | IConst (v2, _) ->
+                  if (v2 == 0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else if (v2 == 1) then t1
+                  else Div (t1, t2, l)
+              | _ -> Div (t1, t2, l)
+            in rr
+      in r											 
   |  Max (e1, e2, l) ->  Max((purge_mult e1), (purge_mult e2), l)
   |  Min (e1, e2, l) ->  Min((purge_mult e1), (purge_mult e2), l)
   |  Bag (el, l) ->  Bag ((List.map purge_mult el), l)
