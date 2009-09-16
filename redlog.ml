@@ -150,7 +150,7 @@ let rec rl_of_var_list (vars : ident list) : string =
 
 let rl_of_spec_var (sv: CP.spec_var) = 
   match sv with
-  | CP.SpecVar (_, v, _) -> v
+  | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 let get_vars_formula (p : CP.formula) =
   let svars = Cpure.fv p in List.map rl_of_spec_var svars
