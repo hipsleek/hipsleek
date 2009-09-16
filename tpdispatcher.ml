@@ -735,3 +735,11 @@ let is_sat f sat_no =
 let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
+
+let prepare () = match !tp with
+  | Redlog -> Redlog.start_red ()
+  | _ -> ()
+
+let finalize () = match !tp with
+  | Redlog -> Redlog.stop_red ()
+  | _ -> ()

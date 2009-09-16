@@ -6,12 +6,14 @@
 open Globals
 module CP = Cpure
 
-let is_log_all = ref true
+let is_log_all = ref false
 let is_presburger = ref false
+let is_reduce_running = ref false
 let log_file = open_out ("allinput.rl")
 let reduce = "redcsl"
 let in_filename = "input.red." ^ (string_of_int (Unix.getpid ()))
 let re_filename = "result.txt." ^ (string_of_int (Unix.getpid ()))
+let channels = ref (stdin, stdout)
 
 (**********************
  * auxiliari function *
@@ -32,6 +34,55 @@ let remove_tmp_file () =
     ignore (Sys.remove in_filename);
     ignore (Sys.remove re_filename)
   with e -> ignore e
+
+(* start Reduce system in a separated process *)
+let start_red () =
+  if not !is_reduce_running then begin
+    print_string "Starting Reduce/Redlog...\n";
+    flush stdout;
+    channels := Unix.open_process (reduce ^ " -w 2>/dev/null");
+    is_reduce_running := true;
+    output_string (snd !channels) "load_package redlog;\n";
+    if !is_presburger then
+      output_string (snd !channels) "rlset pasf;\n"
+    else
+      output_string (snd !channels) "rlset ofsf;\n";
+    output_string (snd !channels) "on rlnzden;\n"
+  end
+
+(* stop Reduce system *)
+let stop_red () = 
+  if !is_reduce_running then begin
+    output_string (snd !channels) "quit;\n";
+    flush (snd !channels);
+    ignore (Unix.close_process !channels);
+    is_reduce_running := false;
+  end
+
+(* send formula to reduce/redlog and receive result *)
+let rec check_formula f =
+  try
+    output_string (snd !channels) f;
+    flush (snd !channels);
+    let result = ref false in
+    let finished = ref false in
+    while not !finished do
+      let line = input_line (fst !channels) in
+      if line = "true" then begin
+        result := true;
+        finished := true
+      end else if line = "false" then begin
+        result := false;
+        finished := true
+      end
+    done;
+    !result
+  with _ -> 
+    ignore (Unix.close_process !channels);
+    is_reduce_running := false;
+    print_endline "Reduce crashed or something really bad happenned! Restarting...";
+    start_red ();
+    false
 
 (* parse reduce/redlog's output file *)
 let get_result () =
@@ -170,7 +221,8 @@ let is_sat (f: CP.formula) (sat_no: string) : bool =
   let vars_str = rl_of_var_list (Util.remove_dups vars) in
   let rl_input = "rlqe ex({" ^ vars_str ^ "}, " ^ frl ^ ");" in
   log_all ("[reduce/redlog] " ^ rl_input);
-  let sat = run_reduce rl_input in
+  (* let sat = run_reduce rl_input in *)
+  let sat = send_formula (rl_input ^ "\n") in
   log_all (if sat then "SUCCESS" else "FAIL");
   sat
 
@@ -185,7 +237,8 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   let vars_str = rl_of_var_list (Util.remove_dups vars) in
   let rl_input = "rlqe all({" ^ vars_str ^ "}, " ^ frl ^ ");" in
   log_all ("[reduce/redlog] " ^ rl_input);
-  let sat = run_reduce rl_input in
+  (* let sat = run_reduce rl_input in *)
+  let sat = send_formula (rl_input ^ "\n") in
   log_all (if sat then "SUCCESS" else "FAIL");
   sat
 

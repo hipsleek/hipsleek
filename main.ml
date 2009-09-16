@@ -183,6 +183,9 @@ let process_source_full source =
       let _ = Util.pop_time "Preprocessing" in
       print_string (Iprinter.string_of_program prog)
 	else 
+    (* i.e. pre-start Reduce/Redlog if it is used. *)
+    let _ = Tpdispatcher.prepare () in
+
 	  (* Global variables translating *)
        let _ = Util.push_time "Translating global var" in
    	  let _ = print_string ("Translating global variables to procedure parameters...\n") in
@@ -230,6 +233,10 @@ let process_source_full source =
 	  in
 	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
+
+    (* i.e. stop Reduce/Redlog if it is running. *)
+    let _ = Tpdispatcher.finalize () in
+
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
