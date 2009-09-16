@@ -222,7 +222,7 @@ let is_sat (f: CP.formula) (sat_no: string) : bool =
   let rl_input = "rlqe ex({" ^ vars_str ^ "}, " ^ frl ^ ");" in
   log_all ("[reduce/redlog] " ^ rl_input);
   (* let sat = run_reduce rl_input in *)
-  let sat = send_formula (rl_input ^ "\n") in
+  let sat = check_formula (rl_input ^ "\n") in
   log_all (if sat then "SUCCESS" else "FAIL");
   sat
 
@@ -238,7 +238,7 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   let rl_input = "rlqe all({" ^ vars_str ^ "}, " ^ frl ^ ");" in
   log_all ("[reduce/redlog] " ^ rl_input);
   (* let sat = run_reduce rl_input in *)
-  let sat = send_formula (rl_input ^ "\n") in
+  let sat = check_formula (rl_input ^ "\n") in
   log_all (if sat then "SUCCESS" else "FAIL");
   sat
 
