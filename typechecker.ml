@@ -1025,7 +1025,7 @@ let check_prog (prog : prog_decl) =
   end else begin
 	ignore (List.map (check_data prog) prog.prog_data_decls);
 	ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
+	(*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
 	let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
 	let num_list = numbers (List.length filtered_proc) in
 	let prog_proc_decls_num = if !sort_input then
@@ -1044,5 +1044,5 @@ let check_prog (prog : prog_decl) =
       if !webserver then Net.IO.write_job_web (!Tpdispatcher.Netprover.out_ch) (-1) "" "" 1 else ()
     end
 	else
-	  ()
+	  () *)
   end

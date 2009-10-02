@@ -180,6 +180,9 @@ module Netprover = struct
     | ServerTimeout -> trace "pmap" "\npmap timed out."; Unknown
     | e -> trace "pmap" (Printexc.to_string e); Unknown
   
+	
+
+    (* replaced with dileep's version above
 	let call_prover (data : prove_type) =
     
 	  try
@@ -190,9 +193,7 @@ module Netprover = struct
 		let _ = if !decr_priority then decr priority else () in
 		let seq, result = Net.IO.read_result !in_ch in
 			Net.IO.from_string result 
-	  with e -> print_endline "callprover error"; raise e
-
-    (* replaced with dileep's version above
+	  with e -> print_endline "callprover error"; raise e *)
   let call_prover ( f : prove_type) = 
     (** send message to external prover to get the result. *)
     try
@@ -202,7 +203,7 @@ module Netprover = struct
       | All results -> let s = (List.hd results) in
         if s <> "" then Some (Net.IO.from_string s) else None
     with e -> trace "pmap" (Printexc.to_string e); None
-    *)
+   
 end
 
 let set_tp tp_str =

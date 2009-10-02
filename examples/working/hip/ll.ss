@@ -1,16 +1,21 @@
 /* singly linked lists */
 
 /* representation of a node */
+
 data node {
 	int val; 
 	node next;	
 }
 
+
 /* view for a singly linked list */
+
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n1> & n = n1 + 1
 	inv n >= 0;
 
+	
+	
 /*ll1<S> == self = null & S = {} 
 	or self::node<v, q> * q::ll1<S1> & S = union(S1, {v});*/
 
@@ -88,12 +93,12 @@ node get_next_next(node x)
 /* function to insert a node in a singly linked list */
 void insert(node x, int a)
 	requires x::ll<n> & n > 0 
-	ensures x::ll<n+1>;
+	ensures x::ll<n+2>;
 
 {
 			//dprint;
       node tmp = null;
-
+	
 	if (x.next == null)
 		x.next = new node(a, tmp);
 	else 
