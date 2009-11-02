@@ -51,6 +51,8 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 						try 
 						let r = 
 							flow_store := [];
+							let ctx1 = CF.set_flow_in_context_override
+									{ CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} ctx1 in
 							let res_ctx = check_exp prog proc [ctx1] e0 in
 							(*if CP.are_same_types proc.proc_return void_type then*)
 							  (* void procedures may not contain a return in all branches,
@@ -71,10 +73,10 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 
 and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) e0 : CF.context list = 
 	if (exp_to_check e0) then 
-		let _ = if (List.exists Cformula.isFalseCtx ctx) then 
+		(*let _ = if (List.exists Cformula.isFalseCtx ctx) then 
 			print_string ("\n expr: "^
 			(Cprinter.string_of_exp e0)
-			^"\n false ctx: "^(Cprinter.string_of_pos (Cast.pos_of_exp e0))^" "^(Cprinter.string_of_context_list ctx)^"\n") in
+			^"\n false ctx: "^(Cprinter.string_of_pos (Cast.pos_of_exp e0))^" "^(Cprinter.string_of_context_list ctx)^"\n") in*)
 	Cformula.find_false_ctx ctx (Cast.pos_of_exp e0)
 		else ();
 let check_exp1 (ctx : CF.context list) : CF.context list = 

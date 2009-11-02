@@ -1497,6 +1497,14 @@ and find_type_var (tc : h_formula) (v : ident) : CP.spec_var option = match tc w
   | ViewNode _ | HTrue | HFalse -> None
 *)
 
+let rec set_flow_in_context_override f_f ctx = match ctx with
+	| Ctx es -> Ctx {es with es_formula = (set_flow_in_formula_override f_f es.es_formula)}
+	| OCtx (c1,c2) -> OCtx ((set_flow_in_context_override f_f c1),(set_flow_in_context_override f_f c2))
+
+
+
+
+
 (* order nodes in topological order *)
 
 module Node = struct
