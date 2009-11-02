@@ -347,6 +347,31 @@ and split_linear_node (h : h_formula) : (h_formula * h_formula) = match h with
 			let ln1, r1 = split_linear_node h1 in
 			  (ln1, mkStarH r1 h2 pos)
 	end
+	
+
+and split_linear_node_guided (vars : CP.spec_var list) (h : h_formula) : (h_formula * h_formula) = 
+	(*let _ = print_string ("starting split with : "^(String.concat ";" (List.map Cprinter.string_of_spec_var vars))^"} \n") in*)
+match h with
+ | HTrue -> (HTrue, HTrue)
+ | HFalse -> (HFalse, HFalse)
+ | DataNode {h_formula_data_node = root} | ViewNode {h_formula_view_node = root} ->
+       if (List.exists (CP.eq_spec_var root) vars) then (h, HTrue)
+       else (HTrue,h)
+ | Star ({h_formula_star_h1 = h1;
+                  h_formula_star_h2 = h2;
+                  h_formula_star_pos = pos}) -> begin
+         match h1 with
+               | HTrue -> print_string ("\n\n!!!This shouldn't happen!!!\n\n"); split_linear_node_guided vars h2 (* this shouldn't happen anyway *)
+               | _ ->
+                       let ln1, r1 = split_linear_node_guided vars h1 in
+                       match ln1 with
+                          | HTrue -> let ln2, r2 = split_linear_node_guided vars h2 in
+                                      (ln2, mkStarH h1 r2 pos)
+                          | _     ->  (ln1, mkStarH r1 h2 pos)
+       end
+	
+
+	
 
 (* find a node from the left hand side *)
 and find_node prog lhs_h lhs_p (ps : CP.spec_var list) pos : find_node_result =
@@ -2205,7 +2230,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
   let rhs_t = rhs_b.formula_base_type in
   let rhs_br = rhs_b.formula_base_branches in
   let rhs_fl = rhs_b.formula_base_flow in
-  let ln2, resth2 = split_linear_node rhs_h in
+  (*let ln2, resth2 = split_linear_node rhs_h in*)
+   let ln2, resth2 = split_linear_node_guided ( Util.remove_dups (h_fv lhs_h @ CP.fv lhs_p)) rhs_h in
+   let ln2,resth2 = if (Cformula.is_complex_heap ln2) then (ln2,resth2) else split_linear_node rhs_h in
 	match ln2 with
 	  | DataNode ({h_formula_data_node = p2;
 				   h_formula_data_name = c2;
