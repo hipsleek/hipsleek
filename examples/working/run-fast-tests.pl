@@ -227,7 +227,7 @@ sub hip_process_file {
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
-
+			#print "$hip $exempl_path/hip/$test->[0] 2>&1";
 			$output = `$hip $exempl_path/hip/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
@@ -239,6 +239,7 @@ sub hip_process_file {
 				{
 			 		$error_count++;
 					$error_files=$error_files."error at: $test->[0] $test->[$i]\n";
+					print "error at: $test->[0] $test->[$i]\n";
 				}
 			}
 		}

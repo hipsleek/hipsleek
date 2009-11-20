@@ -130,44 +130,44 @@ and isEConstTrue f0 = match f0 with
  	| [EBase b] -> isConstTrue b.formula_ext_base
   | _ -> false
 
-and mkTrue pos = Base { formula_base_heap = HTrue;
+and mkTrue flow pos = Base { formula_base_heap = HTrue;
 						formula_base_pure = P.mkTrue pos;
-						formula_base_flow = top_flow;
+						formula_base_flow = flow;
                         formula_base_branches = [];
 						formula_base_pos = pos }
 
-and mkFalse pos = Base { formula_base_heap = HFalse;
+and mkFalse flow pos = Base { formula_base_heap = HFalse;
 						 formula_base_pure = P.mkFalse pos;
-						 formula_base_flow = false_flow;
+						 formula_base_flow = flow;
                          formula_base_branches = [];
 						 formula_base_pos = pos }
 
-and mkETrue pos = [EBase {
+and mkETrue flow pos = [EBase {
 		 formula_ext_explicit_inst = [];
 		 formula_ext_implicit_inst = [];
 		 formula_ext_exists = [];
-		 formula_ext_base = mkTrue pos;
+		 formula_ext_base = mkTrue flow pos;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos	}]
 
-and mkEFalse pos =[EBase {
+and mkEFalse flow pos =[EBase {
 		 formula_ext_explicit_inst = [];
 		 formula_ext_implicit_inst = [];
 		 formula_ext_exists = [];
-		 formula_ext_base = mkFalse pos;
+		 formula_ext_base = mkFalse flow pos;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos	}]
 																				
 and mkEOr f1 f2 pos = 
 	if isEConstTrue f1 || isEConstTrue f2 then
-	mkETrue pos
+	mkETrue top_flow pos
   else if isEConstFalse f1 then f2
   else if isEConstFalse f2 then f1
   else List.rev_append f1 f2
 
 and mkOr f1 f2 pos =
   if isConstTrue f1 || isConstTrue f2 then
-	mkTrue pos
+	mkTrue top_flow pos
   else if isConstFalse f1 then f2
   else if isConstFalse f2 then f1
   else Or { formula_or_f1 = f1;
@@ -175,10 +175,10 @@ and mkOr f1 f2 pos =
 			formula_or_pos = pos }
 
 and mkBase (h : h_formula) (p : P.formula) flow br pos = match h with
-  | HFalse -> mkFalse pos
+  | HFalse -> mkFalse flow pos
   | _ -> 
 	  if P.isConstFalse p then 
-		mkFalse pos 
+		mkFalse flow pos 
 	  else 
 		Base { formula_base_heap = h;
 			   formula_base_pure = p;
@@ -187,10 +187,10 @@ and mkBase (h : h_formula) (p : P.formula) flow br pos = match h with
 			   formula_base_pos = pos }
 
 and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flow br pos = match h with
-  | HFalse -> mkFalse pos
+  | HFalse -> mkFalse flow pos
   | _ ->
 	  if P.isConstFalse p then
-		mkFalse pos
+		mkFalse flow pos
 	  else
 		Exists { formula_exists_qvars = qvars;
 				 formula_exists_heap = h;
@@ -994,10 +994,10 @@ and has_top_flow_struc (f:struc_formula) =
 	let rec has_top_flow (f:formula) = match f with
 		| Base b-> if (String.compare b.formula_base_flow top_flow)<>0 then Error.report_error {
 						Error.error_loc = b.formula_base_pos;
-						Error.error_text = ("view formula can not have a non top flow")} else ()
+						Error.error_text = ("view formula can not have a non top flow( "^b.formula_base_flow^")")} else ()
 		| Exists b-> if (String.compare b.formula_exists_flow top_flow)<>0 then Error.report_error {
 						Error.error_loc = b.formula_exists_pos;
-						Error.error_text = ("view formula can not have a non top flow")} else ()
+						Error.error_text = ("view formula can not have a non top flow("^b.formula_exists_flow^")")} else ()
 		| Or b -> (has_top_flow b.formula_or_f1);(has_top_flow b.formula_or_f2) in
 	let rec helper f0 = match f0 with
 		| EBase b->   (has_top_flow b.formula_ext_base); (has_top_flow_struc b.formula_ext_continuation)
@@ -1005,6 +1005,28 @@ and has_top_flow_struc (f:struc_formula) =
 		| EAssume b-> (has_top_flow b)
 		in
 List.iter helper f
+
+and subst_flow_of_formula fr t (f:formula):formula = match f with
+	| Base b-> Base {b with formula_base_flow = 
+		if (String.compare fr b.formula_base_flow)==0 then t else b.formula_base_flow;}
+	| Exists b-> Exists {b with formula_exists_flow = 
+		if (String.compare fr b.formula_exists_flow)==0 then t else b.formula_exists_flow;}
+	| Or b -> Or {b with formula_or_f1 = (subst_flow_of_formula fr t b.formula_or_f1);
+					  formula_or_f2 = (subst_flow_of_formula fr t b.formula_or_f2);}
 	
-	
+and subst_stub_flow t f = subst_flow_of_formula stub_flow t f	
+
+and subst_flow_of_struc_formula  fr t (f:struc_formula):struc_formula = 
+
+let rec helper f = match f with
+		| EBase b ->EBase {b with 
+						 formula_ext_base = subst_flow_of_formula fr t b.formula_ext_base;
+						 formula_ext_continuation = subst_flow_of_struc_formula fr t b.formula_ext_continuation}
+		| ECase b ->ECase {b with
+						 formula_case_branches = (List.map (fun (c1,c2)->
+								(c1,(subst_flow_of_struc_formula fr t c2)))b.formula_case_branches)}
+		| EAssume b-> EAssume (subst_flow_of_formula fr t b)in
+List.map helper f 
+
+and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
 	

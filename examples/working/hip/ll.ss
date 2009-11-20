@@ -93,7 +93,7 @@ node get_next_next(node x)
 /* function to insert a node in a singly linked list */
 void insert(node x, int a)
 	requires x::ll<n> & n > 0 
-	ensures x::ll<n+2>;
+	ensures x::ll<n+1>;
 
 {
 			//dprint;

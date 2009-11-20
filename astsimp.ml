@@ -1192,7 +1192,7 @@ and
       let xform = new_xform' in
       let formula1 = CF.replace_branches xform_b (CF.formula_of_pure xform pos) in
       let ctx =
-        CF.build_context (CF.true_ctx pos) formula1 pos in
+        CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_pure (fst vdef.C.view_user_inv) pos) in
       let (rs, _) =
         Solver.heap_entail prog false false [ ctx ] formula pos

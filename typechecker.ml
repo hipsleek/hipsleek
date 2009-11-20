@@ -42,7 +42,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 			| Cformula.EAssume (x,b) ->
 						let ctx1 = elim_unsat_ctx prog ctx in
 						(*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
-						if (Cformula.isFalseCtx ctx1) then
+						if (Cformula.isAnyFalseCtx ctx1) then
 							let _ = print_string ("False precondition detected in procedure "^proc.proc_name^"\n with context: "^
 								(Cprinter.string_of_context ctx)) in 
 							true
@@ -214,9 +214,12 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 	  let vheap = CF.formula_of_heap vdatanode pos in
 	  let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	  Debug.devel_pprint to_print pos;
+	(*  let _ = print_string "pint ++2\n" in*)
 	  let rs_prim, prf = heap_entail prog false false unfolded vheap pos in
+	  (*let _ = print_string "pint 2\n" in*)
 	  let _ = PTracer.log_proof prf in
 	  let rs = CF.clear_entailment_history_list rs_prim in
+	  
 		if not (U.empty rs) then
 		  let process_one cc =
 			let tmp_res1 = check_exp prog proc [cc] body (*flow_store*) in (*the following should be happening irespective of the flow*)
@@ -235,6 +238,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 				 ^ (string_of_constr resform) ^ "\n") pos; *)
 			  res in
 		  let tmp_res = List.map process_one rs in
+		  (*let _ = print_string "pint 3\n" in*)
 		  let res = List.concat tmp_res in
 			res
 		else
@@ -738,7 +742,7 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 				  exp_catch_var : typed_ident option;
 				  exp_catch_body : exp;																					   
 				  exp_catch_pos : loc *)
-				let nf  =  CF.flow_formula_of_formula c1.CF.es_formula pos in
+				let nf  =  CF.flow_formula_of_formula c1.CF.es_formula in
 				if not (CF.subsume_flow_f cc.exp_catch_flow_type nf) then [ctx_crt]
 				else				
 					let nctx = CF.set_flow_in_ctx_override ctx_crt {CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = nf.CF.formula_flow_link} in 
@@ -793,8 +797,11 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 				(r1,r2) in	
 		let r1,r2 = splitter c in
 		let r1 = match r1 with
-			| Some c-> if (Cformula.allFalseCtx c) then Some (check_exp1 [(Cformula.false_ctx no_pos)])
-												   else  Some (check_exp1 [c])
+			| Some c-> 
+				Some (check_exp1 [(CF.simplify_context c)]) (*
+			
+				if (Cformula.allFalseCtx c) then Some (check_exp1 [(Cformula.false_ctx (Cformula.mkFalseFlow ()) no_pos)])
+												   else  Some (check_exp1 [c])*)
 			| None -> None in
 		match (r1,r2) with
 		| None, None -> Err.report_error {Err.error_loc = no_pos;
@@ -828,7 +835,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) (po
 	Debug.devel_pprint to_print pos;	
 	let rs, prf = heap_entail prog false false final_state post pos in
 	let _ =
-	  if List.for_all CF.isFalseCtx final_state then ()
+	  if List.for_all CF.isAnyFalseCtx final_state then ()
 	  else PTracer.log_proof prf
 	in
 	  if not (U.empty rs) then begin
@@ -868,7 +875,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			   		(* if the max_renaming flag is off --> rename only the bound vars from pre which clash with the free vars of nox *)
 			  	 	(CF.normalize_only_clash_rename pre nox (CF.pos_of_formula pre))
 			  in*)
-			let init_ctx1 = CF.empty_ctx proc.proc_loc in
+			let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc.proc_loc in
 			let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 			let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 			let result =
@@ -926,7 +933,7 @@ let check_data (prog : prog_decl) (cdef : data_decl) =
 let check_coercion (prog : prog_decl) =
   let check_entailment c_lhs c_rhs =
 	let pos = CF.pos_of_formula c_lhs in
-	let ctx = CF.build_context (CF.empty_ctx pos) c_lhs pos in
+	let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in
 	let rs, prf = heap_entail prog false false [ctx] c_rhs pos in
 	let _ = PTracer.log_proof prf in
 	  if U.empty rs then begin

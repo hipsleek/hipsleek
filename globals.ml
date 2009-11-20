@@ -56,6 +56,7 @@ let ret_flow = "__Ret"
 let spec_flow = "__Spec"
 let false_flow = "__false"
 let abnormal_flow = "__abnormal"
+let stub_flow = "__stub"
 
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
@@ -63,6 +64,7 @@ let spec_flow_int = ref ((-1,-1):nflow)
 let top_flow_int = ref ((-2,-2):nflow)
 let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let false_flow_int = (0,0)
+(*let stub_flow_int = (-3,-3)*)
 
 let res = "res"
 
@@ -82,7 +84,7 @@ let false_ctx_line_list = ref ([] : loc list)
 
 let verify_callees = ref false
 
-let elim_unsat = ref true
+let elim_unsat = ref false
 
 let lemma_heuristic = ref false
 

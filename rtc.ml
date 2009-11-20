@@ -167,8 +167,8 @@ and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit
 	let r = Cformula.split_struc_formula proc.C.proc_static_specs in
 	match r with
 	  | [] -> 
-		  let pre = CF.mkTrue no_pos in
-		  let post = CF.mkTrue no_pos in
+		  let pre = CF.mkTrue ( CF.mkNormalFlow ()) no_pos in
+		  let post = CF.mkTrue ( CF.mkNormalFlow ()) no_pos in
 		  let pre_outvars, pbvars = compile_pre prog proc pre java_code in
 			compile_post prog proc post pre_outvars pbvars java_code		
 	  | [(pre, post)] -> 
@@ -407,7 +407,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			let r = Cformula.split_struc_formula pdef.C.proc_static_specs in 
 			match r with
 			  | [(pre, post)] -> pre
-			  | [] -> CF.mkTrue pos 
+			  | [] -> CF.mkTrue (CF.mkNormalFlow ()) pos 
 			  | _ -> failwith ("compile_call: currently support only one pair of pre/post: " ^ mn)
 		  in
 		  let pre_fv = CF.fv pre in

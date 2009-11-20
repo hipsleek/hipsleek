@@ -1092,15 +1092,16 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 				Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
 				sat_subno := !sat_subno+1;
 				if sat then (true, ctx) else
-					(false, false_ctx no_pos)
+					(false, false_ctx (flow_formula_of_formula es.es_formula) no_pos)
 		in
 
    if pfb = [] then 
+		(*  let _ = print_string ("--> "^(Cprinter.string_of_pure_formula pf )^"\n") in*)
           let is_ok = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
 			Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
 			sat_subno := !sat_subno+1;
 
-			 (is_ok, if is_ok then Ctx{es with es_unsat_flag = true } else false_ctx no_pos)
+			 (is_ok, if is_ok then Ctx{es with es_unsat_flag = true } else false_ctx (flow_formula_of_formula es.es_formula) no_pos)
         else
 			let r1,r2 = List.fold_left fold_fun (true, ctx) pfb in
           (r1,(set_unsat_flag r2 true))
@@ -1108,7 +1109,8 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 	| OCtx (c1, c2) ->
 		let b1, sc1 = unsat_helper c1 in
 		let b2, sc2 = unsat_helper c2 in
-		  if b1 then
+		 (true, or_context sc1 sc2)
+		 (*if b1 then
 			if b2 then
 			  (true, or_context sc1 sc2)
 			else
@@ -1117,7 +1119,7 @@ and elim_unsat_ctx (prog : prog_decl) (ctx0 : context) =
 			if b2 then
 			  (true, sc2)
 			else
-			  (false, false_ctx no_pos) in
+			  (false, false_ctx no_pos) *)in
   let b, sc = unsat_helper ctx0 in
 	sat_no := !sat_no + 1;	
 	sc
@@ -1182,7 +1184,7 @@ and elim_unsat_all prog (f : formula) = match f with
       in
 	  sat_no := !sat_no + 1;
 (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)
-      if is_ok then f else mkFalse (pos_of_formula f)
+      if is_ok then f else mkFalse (flow_formula_of_formula f) (pos_of_formula f)
   | Or ({formula_or_f1 = f1;
 		 formula_or_f2 = f2;
 		 formula_or_pos = pos}) ->
@@ -1331,19 +1333,19 @@ and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_uni
   Debug.devel_pprint ("heap_entail_one_context_struc:"
 					  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
 					  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
-  if isFalseCtx ctx then
+  if isAnyFalseCtx ctx then
 	(* check this first so that false => false is true (with false residual) *)
-	([false_ctx pos], UnsatAnte)
+	([ctx], UnsatAnte)
   else(* if isConstFalse conseq then
 	([], UnsatConseq)
   else *)if isConstETrue conseq then
 	([ctx], TrueConseq)
   else
-	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
-	  if isFalseCtx ctx1 then
+	(*let ctx = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog *)ctx in
+	  if isAnyFalseCtx ctx then
 		([false_ctx pos], UnsatAnte)
-	  else
-		let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx1 conseq pos in
+	  else*)
+		let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos in
 
 		  (result, prf)
 
@@ -1426,7 +1428,7 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 							| None -> begin
 							 List.map (fun (c1,c2)-> 
 									let n_ctx = combine_context_and_unsat_now prog ctx c1 in (*this unsat check is essential for completeness of result*)
-									if (isFalseCtx n_ctx) then ([n_ctx],UnsatAnte)
+									if (isAnyFalseCtx n_ctx) then ([n_ctx],UnsatAnte)
 											else inner_entailer n_ctx c2 ) b.formula_case_branches 
 							end
 							| Some (p,e) -> begin [inner_entailer ctx e]end in
@@ -1537,21 +1539,20 @@ and heap_entail (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl
 and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx : context) (conseq : formula) pos : (context list * proof) =
   Debug.devel_pprint ("heap_entail_one_context:"
 					  ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
-					  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
-  if isFalseCtx ctx then
+					  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\ndgdfg") pos;
+	 if isAnyFalseCtx ctx then
 	(* check this first so that false => false is true (with false residual) *)
-	([false_ctx pos], UnsatAnte)
+	([(*false_ctx pos*) ctx], UnsatAnte)
   else (*if isConstFalse conseq then
 	([], UnsatConseq)
-  else *)if isConstTrue conseq then
+  else *)if isStrictConstTrue conseq then
 	([ctx], TrueConseq)
   else
-	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *) (*elim_unsat_ctx prog*) ctx in
-	  if isFalseCtx ctx1 then
-		([false_ctx pos], UnsatAnte)
+	let ctx1 = (*if !Globals.elim_unsat then elim_unsat_ctx prog ctx else *)(*elim_unsat_ctx prog*) ctx in
+	  if isAnyFalseCtx ctx1 then
+		([ctx1], UnsatAnte)
 	  else
-		let result, prf = heap_entail_after_sat prog is_folding is_universal ctx1 conseq pos in
-
+	 	let result, prf = heap_entail_after_sat prog is_folding is_universal ctx1 conseq pos in
 		  (result, prf)
 
 and heap_entail_after_sat prog is_folding is_universal ctx conseq pos : (context list * proof) = match ctx with
@@ -1814,6 +1815,7 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
   Debug.devel_pprint ("heap_entail_conjunct:"
 					  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
 					  ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
+	(*let _ = print_string "pp 4\n" in*)
   match ctx0 with
 	| Ctx estate -> begin
 		let ante = estate.es_formula in
@@ -1886,15 +1888,30 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
 						else ctx0 in
 					  if (isFalseCtx n_ctx) then ([false_ctx pos], UnsatAnte)
 					  else*)
+					  (*print_string "pp 311\n";*)
+					 (* let x = Scanf.bscanf  Scanf.Scanning.stdib "%d" (fun c->c) in
+					  print_string ((string_of_int x)^"pp 3\n");*)
 					  let h1, p1, fl1, br1, t1 = split_components ante in
 					  let h2, p2, fl2, br2, t2 = split_components conseq in
-					  if not(CF.subsume_flow_ff fl2 fl1) then begin
+					 (* let _ = print_string "pp 1\n" in*)
+					  if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 
+					  let _ = print_string ("got: "^(Cprinter.string_of_formula ante)^"|-"^(Cprinter.string_of_formula conseq)^"\n\n") in					  
+					  ([false_ctx fl1 pos], UnsatAnte)
+					  else					  
+					(*  let _ = print_string "pp 2\n" in*)
+					 (* let _ = print_string ("bol : "^(string_of_bool ((CF.is_false_flow fl2.formula_flow_interval)))^"\n") in*)
+					  if (not(CF.is_false_flow fl2.formula_flow_interval)) && not(CF.subsume_flow_ff fl2 fl1) then begin
 							Debug.devel_pprint ("heap_entail_conjunct: "
 												  ^ "conseq has an incompatible flow type"
 												  ^ "\ncontext:\n"
 												  ^ (Cprinter.string_of_context ctx0)
 												  ^ "\nconseq:\n"
-												  ^ (Cprinter.string_of_formula conseq)) pos;
+												  ^ (Cprinter.string_of_formula conseq)
+												  (*^"("^(string_of_int (fst fl1.CF.formula_flow_interval))
+												  ^"("^(string_of_int (snd fl1.CF.formula_flow_interval))
+												  ^"("^(string_of_int (fst fl2.CF.formula_flow_interval))
+												  ^"("^(string_of_int (snd fl2.CF.formula_flow_interval))^")"*)
+												  ) pos;
 							([], UnsatConseq) 
 						end
 					  else 
@@ -2307,7 +2324,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				([], fold_prf)
 			  end in
 		  let do_fold (var_to_fold : CP.spec_var) =
-			let fold_ctx = Ctx {(empty_es pos) with es_formula = ante;
+			let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with es_formula = ante;
 								  es_heap = estate.es_heap;
 								  es_evars = estate.es_evars;
 								  es_gen_expl_vars = estate.es_gen_expl_vars; 
@@ -2379,7 +2396,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 							  let ans = if (not(is_data ln2)) then 
 							  				let _ = Util.push_time "empty_predicate_testing" in
 											let vd = (look_up_view_def_raw prog.prog_view_decls c2) in
-											let fold_ctx = Ctx {(empty_es pos) with es_formula = ante;
+											let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with es_formula = ante;
 														  es_heap = estate.es_heap;
 														  es_evars = estate.es_evars;
 														  es_gen_expl_vars = estate.es_gen_expl_vars; 
@@ -2698,7 +2715,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 			or not(is_distributive coer))))) (* coercion is not distributive *)
 			then
 
-			(Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; (false, mkTrue no_pos))
+			(Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; (false, mkTrue (mkTrueFlow ())no_pos))
 		else
 		(* we can apply coercion *)
 		begin
@@ -2747,11 +2764,11 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 				  Debug.devel_pprint
 					("rewrite_coercion: guard is not satisfied, "
 					 ^ "no splitting.\n") pos;
-				  (false, mkTrue no_pos)
+				  (false, mkTrue (mkTrueFlow ()) no_pos)
 				end
 		  end
 	end
-		| _ -> (false, mkTrue no_pos)
+		| _ -> (false, mkTrue (mkTrueFlow ()) no_pos)
 	(*end	*)
 	
 (*******************************************************************************************************************************************************************************************)

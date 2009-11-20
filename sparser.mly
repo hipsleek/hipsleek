@@ -362,7 +362,7 @@ view_header
             view_labels = br_labels;
 			view_modes = modes;
 			view_typed_vars = [];
-			view_formula = F.mkETrue (get_pos 1);
+			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
 			try_case_inference = false;
 			}
@@ -378,7 +378,7 @@ cid
 ;
 
 view_body
-  : formulas { $1 }
+  : formulas { ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) }
 ;
 
 /********** Constraints **********/
@@ -581,7 +581,7 @@ core_constr
 
 flows_and_branches
 	: flow_constraints opt_branches { ($1,$2)}
-	| opt_branches {(top_flow,$1)}
+	| opt_branches {(stub_flow,$1)}
 
 flow_constraints :
 	AND FLOW IDENTIFIER {$3} 
@@ -833,7 +833,7 @@ extended_meta_constr
 	MetaVar $2
   }
   | formulas {
-	  MetaEForm (fst $1)
+	  MetaEForm (F.subst_stub_flow_struc n_flow (fst $1))
 	}
   | compose_cmd {
 	  MetaCompose $1
@@ -844,7 +844,7 @@ meta_constr
 	MetaVar $2
   }
   | disjunctive_constr {
-	  MetaForm $1
+	  MetaForm (F.subst_stub_flow n_flow $1)
 	}
   | compose_cmd {
 	  MetaCompose $1
@@ -855,8 +855,8 @@ coercion_decl
   : LEMMA opt_name disjunctive_constr coercion_direction disjunctive_constr DOT{
 	{ coercion_type = $4;
 	  coercion_name = $2;
-	  coercion_head = $3;
-	  coercion_body = $5;
+	  coercion_head = (F.subst_stub_flow top_flow $3);
+	  coercion_body = (F.subst_stub_flow top_flow $5);
 	  coercion_proof = Return ({ exp_return_val = None;
 								 exp_return_pos = get_pos 1 })
 	}

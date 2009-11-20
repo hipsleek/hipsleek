@@ -438,8 +438,9 @@ let add_index l =
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
   			 
  let get_hash_of_exc (f:string): Globals.nflow = 
-	(*if ((String.compare f Globals.top_flow)==0) then !Globals.top_flow_int
-	else*)
+	if ((String.compare f Globals.stub_flow)==0) then 
+		Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error found stub flow")}
+	else
 	let rec get (lst:(string*string*Globals.nflow)list):Globals.nflow = match lst with
 		| [] -> Globals.false_flow_int
 		| (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)

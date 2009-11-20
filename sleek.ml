@@ -73,6 +73,8 @@ let process_cmd_line () = Arg.parse [
    "Turn on devel_debug");
   ("--log-omega", Arg.Set Omega.log_all_flag,
    "Log all formulae sent to Omega Calculator in file allinput.oc");
+   ("--unsat-elim", Arg.Set Globals.elim_unsat,
+   "Turn on unsatisfiable formulae elimination during type-checking");
   ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
   ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");

@@ -358,7 +358,7 @@ member_list
 
 member
   : typ IDENTIFIER SEMICOLON { Field (($1, $2), get_pos 2) }
-  | INV disjunctive_constr SEMICOLON { Inv $2 }
+  | INV disjunctive_constr SEMICOLON { Inv (F.subst_stub_flow top_flow $2) }
   | proc_decl { Method $1 }
   | constructor_decl { Method $1 }
 ;
@@ -479,7 +479,7 @@ view_header
             view_labels = br_labels;
 			view_modes = modes;
 			view_typed_vars = [];
-			view_formula = F.mkETrue (get_pos 1);
+			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
 			try_case_inference = false;}
   }
@@ -496,7 +496,7 @@ cid
 
 
 view_body
-  : formulas { $1 }
+  : formulas {((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1))}
 ;
 
 
@@ -706,7 +706,7 @@ core_constr
 
 flows_and_branches
 	: flow_constraints opt_branches { ($1,$2)}
-	| opt_branches {(top_flow,$1)}
+	| opt_branches {(stub_flow,$1)}
 
 flow_constraints :
 	AND FLOW IDENTIFIER {$3} 
@@ -1017,8 +1017,8 @@ coercion_decl
   : COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr SEMICOLON {  
 	{ coercion_type = $4;
 	  coercion_name = $2;
-	  coercion_head = $3;
-	  coercion_body = $5;
+	  coercion_head =  (F.subst_stub_flow top_flow $3);
+	  coercion_body =  (F.subst_stub_flow top_flow $5);
 	  coercion_proof = Return ({ exp_return_val = None;
 								 exp_return_pos = get_pos 1 })
 	}
@@ -1085,18 +1085,10 @@ spec
 			 Iformula.formula_ext_explicit_inst =$2;
 			 Iformula.formula_ext_implicit_inst = [];
 			 Iformula.formula_ext_exists = [];
-			 Iformula.formula_ext_base = $3;
+			 Iformula.formula_ext_base = (F.subst_stub_flow n_flow $3);
 			 Iformula.formula_ext_continuation = [$4];
 			 Iformula.formula_ext_pos = (get_pos 1)
 			}
-			(*Iast.SRequires 
-						{
-							Iast.srequires_explicit_inst = $2;
-							Iast.srequires_implicit_inst = [];
-							Iast.srequires_base = $3;
-							Iast.srequires_continuation = [$4];
-							Iast.srequires_pos = (get_pos 1)
-							}*)
 		}
 	| REQUIRES opt_sq_clist disjunctive_constr OBRACE spec_list CBRACE
 		{
@@ -1104,30 +1096,15 @@ spec
 			 Iformula.formula_ext_explicit_inst =$2;
 			 Iformula.formula_ext_implicit_inst = [];
 			 Iformula.formula_ext_exists = [];
-			 Iformula.formula_ext_base = $3;
+			 Iformula.formula_ext_base =  (F.subst_stub_flow n_flow $3);
 			 Iformula.formula_ext_continuation = if ((List.length $5)==0) then 
 											Error.report_error	{Error.error_loc = (get_pos 1); Error.error_text = "spec must contain ensures"}
 																							else $5;
 			 Iformula.formula_ext_pos = (get_pos 1)
 			}
-			(*Iast.SRequires 
-						{
-							Iast.srequires_explicit_inst = $2;
-							Iast.srequires_implicit_inst = [];
-							Iast.srequires_base = $3;
-							Iast.srequires_continuation =  if ((List.length $5)==0) then 
-											Error.report_error	{Error.error_loc = (get_pos 1); Error.error_text = "spec must contain ensures"}
-																							else $5;
-							Iast.srequires_pos = (get_pos 1)
-							}*)
 		} 	 	
 	| ENSURES disjunctive_constr SEMICOLON {
-		Iformula.EAssume $2
-		(*	Iast.SEnsure 
-					{
-						Iast.sensures_base =  $2;
-						Iast.sensures_pos = get_pos 2 ;
-					}		*)
+		Iformula.EAssume(F.subst_stub_flow n_flow $2)
 		}
 	| CASE OBRACE branch_list CBRACE 
 		{
@@ -1380,23 +1357,23 @@ split_statement
 
 assert_statement
   : ASSERT formulas SEMICOLON {
-	Assert { exp_assert_asserted_formula = Some $2;
+	Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $2)),(snd $2));
 			 exp_assert_assumed_formula = None;
 			 exp_assert_pos = get_pos 1 }
   }
 /*  | ASSERT disjunctive_constr ASSUME SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some $2;
-			   exp_assert_assumed_formula = Some $2;
+	  Assert { exp_assert_asserted_formula = Some (F.subst_stub_flow n_flow $2);
+			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $2);
 			   exp_assert_pos = get_pos 1 }
 	}*/
   | ASSUME disjunctive_constr SEMICOLON {
 	  Assert { exp_assert_asserted_formula = None;
-			   exp_assert_assumed_formula = Some $2;
+			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $2);
 			   exp_assert_pos = get_pos 1 }
 	}
   | ASSERT formulas ASSUME disjunctive_constr SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some $2;
-			   exp_assert_assumed_formula = Some $4;
+	  Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $2)),(snd $2));
+			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $4);
 			   exp_assert_pos = get_pos 1 }
     }
 ;
@@ -1493,7 +1470,7 @@ while_statement
   : WHILE OPAREN boolean_expression CPAREN embedded_statement {
 	  While { exp_while_condition = $3;
 			  exp_while_body = $5;
-			  exp_while_specs = Iast.mkSpecTrue (get_pos 1);
+			  exp_while_specs = Iast.mkSpecTrue n_flow (get_pos 1);
 			  exp_while_label = NoLabel;
 			  exp_while_f_name = "";
 			  exp_while_wrappings = None;

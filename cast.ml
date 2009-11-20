@@ -263,7 +263,7 @@ let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 		sensures_pos = pos;
 	}]*)
 	
-let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue pos))]
+let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos))]
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -796,6 +796,6 @@ let rec check_proper_return cret_type exc_list f =
 	let helper f0 = match f0 with 
 		| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
 		| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
-		| F.EAssume (_,b)-> if (F.isConstFalse b)||(F.isConstTrue b) then () else check_proper_return_f b
+		| F.EAssume (_,b)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 		in
 	List.iter helper f

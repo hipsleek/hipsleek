@@ -95,8 +95,8 @@ let process_cmd_line () = Arg.parse [
    "Drop disequalities generated from the separating conjunction");
   ("--no-set", Arg.Clear Globals.use_set,
    "Turn off set-of-states search");
-  ("--no-unsat-elim", Arg.Clear Globals.elim_unsat,
-   "Turn off unsatisfiable formulae elimination during type-checking");
+  ("--unsat-elim", Arg.Set Globals.elim_unsat,
+   "Turn on unsatisfiable formulae elimination during type-checking");
   ("-nxpure", Arg.Set_int Globals.n_xpure,
    "Number of unfolding using XPure");
   ("-p", Arg.String set_proc_verified, 
