@@ -39,6 +39,7 @@ and exp =
   | Var of ((ident * primed) * loc) 
 	  (* variables could be of type pointer, int, sets, etc *)
   | IConst of (int * loc)
+  | FConst of (float * loc)
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
@@ -116,6 +117,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | Null _ -> []
   | Var (sv, _) -> [sv]
   | IConst _ -> []
+  | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
@@ -146,6 +148,13 @@ and is_bag (e : exp) : bool = match e with
   | BagDiff (_, _, _) -> true
   | _ -> false
   
+and is_integer e =
+  match e with
+  | IConst _ -> true
+  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
+  | Max (e1, e2, _) | Min (e1, e2, _) ->
+      is_integer e1 && is_integer e2
+  | _ -> false
 
 and name_of_var (e : exp) : ident = match e with
   | Var ((v, p), pos) -> v
@@ -345,6 +354,7 @@ and pos_of_exp (e : exp) = match e with
   | Null pos -> pos
   | Var (_, p) -> p
   | IConst (_, p) -> p
+  | FConst (_, p) -> p
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
@@ -428,6 +438,7 @@ and b_apply_one (fr, t) bf = match bf with
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
+  | FConst _ -> e
   | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)

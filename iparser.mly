@@ -112,6 +112,8 @@
 %token DIFF
 %token DISTR
 %token DIV
+%token DIVBYTEN
+%token MODTEN
 %token DOLLAR
 %token DOT
 %token DOUBLEQUOTE
@@ -213,10 +215,10 @@
 %left SEMICOLON
 %left OR 
 %left AND
-%left STAR DIV
 %right NOT
 %left EQ NEQ GT GTE LT LTE
 %left PLUS MINUS
+%left STAR DIV
 %left UMINUS
 
 %nonassoc LOWER_THAN_DOT_OP
@@ -923,6 +925,9 @@ unary_cexp
     }
   | LITERAL_INTEGER {
       P.IConst ($1, get_pos 1)
+    }
+  | LITERAL_FLOAT {
+      P.FConst ($1, get_pos 1)
     }
   | OPAREN cexp CPAREN {
       $2

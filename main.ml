@@ -115,7 +115,8 @@ let process_cmd_line () = Arg.parse [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-   ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "set"; "cm"; "redlog"], Tpdispatcher.set_tp),
+   ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om";
+   "oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
   ("--use-field", Arg.Set Globals.use_field,
    "Use field construct instead of bind");
@@ -134,8 +135,7 @@ let process_cmd_line () = Arg.parse [
   ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   ("--pip", Arg.Set Globals.print_input,"print input representation");
   ("--sqt", Arg.Set Globals.seq_to_try,"translate seq to try");
-  ("--redlog-int", Arg.Set Redlog.is_presburger, "use redlog with presburber
-    arithmetic (i.e. reasoning with integer) *experiment*");
+  ("--redlog-int-relax", Arg.Set Redlog.integer_mode, "use redlog real q.e for reasoning about integer *experiment*");
   
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
@@ -183,8 +183,6 @@ let process_source_full source =
       let _ = Util.pop_time "Preprocessing" in
       print_string (Iprinter.string_of_program prog)
 	else 
-    (* i.e. pre-start Reduce/Redlog if it is used. *)
-    let _ = Tpdispatcher.prepare () in
 
 	  (* Global variables translating *)
        let _ = Util.push_time "Translating global var" in
@@ -252,6 +250,10 @@ let process_source_full source =
 	  
 let main1 () =
   process_cmd_line ();
+  
+  (* i.e. pre-start Reduce/Redlog if it will be used. *)
+  let _ = Tpdispatcher.prepare () in
+  
   if List.length (!Globals.source_files) = 0 then begin
 	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
 	Globals.procs_verified := ["f3"];

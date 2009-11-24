@@ -101,6 +101,7 @@ let rec string_of_formula_exp = function
 																									| Primed    -> "'" 
 																									| Unprimed  -> "" ))
   | P.IConst (i, l)           -> string_of_int i
+  | P.FConst (f, _) -> string_of_float f
   | P.Add (e1, e2, l)	      -> (match e1 with 
 																	| P.Null _ 
 																	| P.Var _ 

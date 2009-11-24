@@ -19,6 +19,8 @@ type tp_type =
   | Coq
   | Z3
   | Redlog
+  | OR (* Omega then Redlog? *)
+  | RM (* Redlog and Mona *)
 
 let tp = ref OmegaCalc
 
@@ -232,6 +234,10 @@ let set_tp tp_str =
 	tp := Z3
   else if tp_str = "redlog" then
     tp := Redlog
+  else if tp_str = "rm" then
+    tp := RM
+  else if tp_str = "prm" then
+    (Redlog.is_presburger := true; tp := RM)
   else
 	()
 
@@ -270,6 +276,7 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
 and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _
   | CP.Var _
+  | CP.FConst _
   | CP.IConst _ -> false
   | CP.Add (e1, e2, _)
   | CP.Subtract (e1, e2, _) (* ->  (is_bag_constraint_exp e1) || (is_bag_constraint_exp e2) *)
@@ -414,6 +421,11 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			end
 	  | SetMONA -> Setmona.is_sat f
       | Redlog -> Redlog.is_sat f sat_no
+      | RM ->
+          if (is_bag_constraint f) then
+            Mona.is_sat f sat_no
+          else
+            Redlog.is_sat f sat_no
 
 let simplify (f : CP.formula) : CP.formula =
 	if !external_prover then 
@@ -438,6 +450,11 @@ let simplify (f : CP.formula) : CP.formula =
 	  if is_bag_constraint f then Mona.simplify f
 	  else Omega.simplify f
   | Redlog -> Redlog.simplify f
+  | RM -> 
+      if is_bag_constraint f then
+        Mona.simplify f
+      else
+        Redlog.simplify f
   | _ ->
 (*
 	  if (is_bag_constraint f) then
@@ -463,6 +480,11 @@ let hull (f : CP.formula) : CP.formula = match !tp with
 	  if is_bag_constraint f then Mona.hull f
 	  else Omega.hull f
   | Redlog -> Redlog.hull f
+  | RM ->
+      if is_bag_constraint f then
+        Mona.hull f
+      else
+        Redlog.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -489,6 +511,9 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
 	  if is_bag_constraint f then Mona.pairwisecheck f
 	  else Omega.pairwisecheck f
   | Redlog -> Redlog.pairwisecheck f
+  | RM ->
+      if is_bag_constraint f then Mona.pairwisecheck f
+      else Redlog.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -558,6 +583,11 @@ let tp_imply ante conseq imp_no timeout =
   | SetMONA ->
 	  Setmona.imply ante conseq 
   | Redlog -> Redlog.imply ante conseq imp_no
+  | RM -> 
+      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+        Mona.imply timeout ante conseq imp_no
+      else
+        Redlog.imply ante conseq imp_no
 ;;
 
 (* renames all quantified variables *)
@@ -737,9 +767,9 @@ let print_stats () =
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
 
 let prepare () = match !tp with
-  | Redlog -> Redlog.start_red ()
+  | Redlog | RM -> Redlog.start_red ()
   | _ -> ()
 
 let finalize () = match !tp with
-  | Redlog -> Redlog.stop_red ()
+  | Redlog | RM -> Redlog.stop_red ()
   | _ -> ()
