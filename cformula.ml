@@ -443,10 +443,10 @@ and mkETrue flowt pos = EBase({
 		 formula_ext_pos = pos})
 		 
 and mkOr f1 f2 pos =
-	let f_comp c1 c2 = 
+(*	let f_comp c1 c2 = 
 		let f1 = flow_formula_of_formula c1 in
 		let f2 = flow_formula_of_formula c2 in
-		equal_flow_interval f1.formula_flow_interval f2.formula_flow_interval in
+		equal_flow_interval f1.formula_flow_interval f2.formula_flow_interval in*)
 	let rec liniarize_or c = match c with
 		| Or f -> 
 			let p11,p12,p13 = liniarize_or f.formula_or_f1 in
@@ -1295,10 +1295,10 @@ let rec allFalseCtx ctx = match ctx with
 	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
   
 let mkOCtx ctx1 ctx2 pos =
-	let f_comp c1 c2 = 
+(*	let f_comp c1 c2 = 
 		let f1 = (flow_formula_of_formula c1.es_formula) in
 		let f2 = (flow_formula_of_formula c2.es_formula) in
-		equal_flow_interval f1.formula_flow_interval f2.formula_flow_interval in
+		equal_flow_interval f1.formula_flow_interval f2.formula_flow_interval in*)
 	let rec liniarize_ctx c = match c with
 		| OCtx(c1,c2) -> 
 			let p11,p12,p13 = liniarize_ctx c1 in
