@@ -135,7 +135,8 @@ let process_cmd_line () = Arg.parse [
   ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   ("--pip", Arg.Set Globals.print_input,"print input representation");
   ("--sqt", Arg.Set Globals.seq_to_try,"translate seq to try");
-  ("--redlog-int-relax", Arg.Set Redlog.integer_mode, "use redlog real q.e for reasoning about integer *experiment*");
+  ("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");
+  ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination")
   
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg

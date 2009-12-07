@@ -19,7 +19,6 @@ type tp_type =
   | Coq
   | Z3
   | Redlog
-  | OR (* Omega then Redlog? *)
   | RM (* Redlog and Mona *)
 
 let tp = ref OmegaCalc
@@ -353,8 +352,16 @@ let elim_exists_flag = ref true
 let filtering_flag = ref true
 
 let elim_exists (f : CP.formula) : CP.formula =
-  if !elim_exists_flag then CP.elim_exists f
-  else f
+  let ef = if !elim_exists_flag then CP.elim_exists f else f in
+  if !Redlog.integer_relax_mode then
+    (*
+    print_endline "** Existential quantifiers elimination:";
+    print_endline (Cprinter.string_of_pure_formula f);
+    print_endline (Cprinter.string_of_pure_formula (CP.elim_exists_with_ineq f));
+    *)
+    CP.elim_exists_with_ineq ef
+  else
+    ef
 
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
   if !filtering_flag then
@@ -711,8 +718,6 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	if CP.should_simplify conseq0 then simplify conseq0
 	else conseq0
   in
-	(*	print_string ("conseq0: " ^ (Cprinter.string_of_pure_formula conseq0) ^ "\n");
-		print_string ("conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n"); *)
 	if CP.isConstTrue conseq0 then
 	  true
 	else

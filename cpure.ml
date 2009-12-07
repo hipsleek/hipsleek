@@ -73,6 +73,10 @@ and constraint_rel =
   | Subsuming
   | Equal
   | Contradicting
+
+and rounding_func = 
+  | Ceil
+  | Floor
   
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
@@ -216,6 +220,17 @@ and is_num (e : exp) : bool = match e with
   | IConst _ -> true
   | FConst _ -> true
   | _ -> false
+
+and to_int_const e t =
+  match e with
+  | IConst (i, _) -> i
+  | FConst (f, _) ->
+      begin
+        match t with
+        | Ceil -> int_of_float (ceil f)
+        | Floor -> int_of_float (floor f)
+      end
+  | _ -> 0
 
 and is_int (e : exp) : bool = match e with
   | IConst _ -> true
@@ -713,7 +728,6 @@ and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
 	| (Max(e11, e12, _), Max(e21, e22, _))
 	| (Min(e11, e12, _), Min(e21, e22, _))
 	| (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
-  (* FIX IT: i'm not sure about multiply and divide, again *)
   | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
   | (Div(e11, e12, _), Div(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
 	| (Bag(e1, _), Bag(e2, _))
@@ -1198,9 +1212,136 @@ and disj_of_list (disj_list : formula list) pos : formula =
 	| [] -> mkTrue pos
 	| h :: [] -> h
 	| h :: rest -> mkOr h (disj_of_list rest pos) pos
-(* 16.04.09 *)	
+(* 16.04.09 *)
 
-and elim_exists (f0 : formula) : formula = match f0 with
+and find_bound v f0 =
+  match f0 with
+  | And (f1, f2, pos) ->
+      begin
+      let min1, max1 = find_bound v f1 in
+      let min2, max2 = find_bound v f2 in
+      let min = 
+        match min1, min2 with
+        | None, None -> None
+        | Some m1, Some m2 -> if m1 < m2 then min1 else min2 
+        | Some m, None -> min1
+        | None, Some m -> min2
+      in
+      let max =
+        match max1, max2 with
+        | None, None -> None
+        | Some m1, Some m2 -> if m1 > m2 then max1 else max2 
+        | Some m, None -> max1 
+        | None, Some m -> max2
+      in
+      (min, max)
+      end
+  | BForm bf -> find_bound_b_formula v bf
+  | _ -> None, None
+
+  (*
+and find_bound_b_formula_redlog v f0 =
+  let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in
+  let res = Redlog.send_and_receive cmd in
+  print_endline res
+  *)
+
+and find_bound_b_formula v f0 =
+  let val_for_max e included =
+    if included then
+      (* x <= e --> max(x) = floor(e) *)
+      to_int_const e Floor
+    else
+      (* x < e --> max(x) = ceil(e) - 1 *)
+      (to_int_const e Ceil) - 1
+  in
+  let val_for_min e included = 
+    if included then
+      (* x >= e --> min(x) = ceil(e) *)
+      to_int_const e Ceil
+    else
+      (* x > e --> min(x) = floor(e) + 1 *)
+      (to_int_const e Floor) + 1
+  in
+  let helper e1 e2 is_lt is_eq =
+    if (is_var e1) && (is_num e2) then
+      let v1 = to_var e1 in
+      if eq_spec_var v1 v then
+        if is_lt then
+          let max = val_for_max e2 is_eq in
+          (None, Some max)
+        else
+          let min = val_for_min e2 is_eq in
+          (Some min, None)
+      else
+        (None, None)
+    else if (is_var e2) && (is_num e1) then
+      let v2 = to_var e2 in
+      if eq_spec_var v2 v then
+        if is_lt then
+          let min = val_for_min e1 is_eq in
+          (Some min, None)
+        else
+          let max = val_for_max e1 is_eq in
+          (None, Some max)
+      else
+        (None, None)
+    else
+      (None, None)
+  in
+  match f0 with
+  | Lt (e1, e2, pos) -> helper e1 e2 true false
+  | Lte (e1, e2, pos) -> helper e1 e2 true true
+  | Gt (e1, e2, pos) -> helper e1 e2 false false
+  | Gte (e1, e2, pos) -> helper e1 e2 false true
+  | _ -> (None, None)
+
+and elim_exists_with_ineq (f0: formula): formula =
+  match f0 with
+  | Exists (qvar, qf, pos) ->
+      begin
+        match qf with
+        | Or (qf1, qf2, qpos) ->
+            let new_qf1 = mkExists [qvar] qf1 qpos in
+            let new_qf2 = mkExists [qvar] qf2 qpos in
+            let eqf1 = elim_exists_with_ineq new_qf1 in
+            let eqf2 = elim_exists_with_ineq new_qf2 in
+            let res = mkOr eqf1 eqf2 pos in
+            res
+        | _ ->
+            let eqqf = elim_exists qf in
+            let min, max = find_bound qvar eqqf in
+            begin
+              match min, max with
+              | Some mi, Some ma -> 
+                  let res = ref (mkFalse pos) in
+                  begin
+                    for i = mi to ma do
+                      res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) pos
+                    done;
+                    !res
+                  end
+              | _ -> f0
+            end
+      end
+  | And (f1, f2, pos) ->
+      let ef1 = elim_exists_with_ineq f1 in
+      let ef2 = elim_exists_with_ineq f2 in
+      mkAnd ef1 ef2 pos
+  | Or (f1, f2, pos) ->
+      let ef1 = elim_exists_with_ineq f1 in
+      let ef2 = elim_exists_with_ineq f2 in
+      mkOr ef1 ef2 pos
+  | Not (f1, pos) ->
+      let ef1 = elim_exists_with_ineq f1 in
+      mkNot ef1 pos
+  | Forall (qvar, qf, pos) ->
+      let eqf = elim_exists_with_ineq qf in
+      mkForall [qvar] eqf pos
+  | BForm _ -> f0
+
+and elim_exists (f0 : formula) : formula = 
+  match f0 with
   | Exists (qvar, qf, pos) -> begin
 	  match qf with
 		| Or (qf1, qf2, qpos) ->
@@ -1211,6 +1352,7 @@ and elim_exists (f0 : formula) : formula = match f0 with
 			let res = mkOr eqf1 eqf2 pos in
 			  res
 		| _ ->
+      let qf = elim_exists qf in
 			let qvars0, bare_f = split_ex_quantifiers qf in
 			let qvars = qvar :: qvars0 in
 			let conjs = list_of_conjs bare_f in
@@ -1222,13 +1364,13 @@ and elim_exists (f0 : formula) : formula = match f0 with
 			let with_qvars = conj_of_list with_qvars_list pos in
 			  (* now eliminate the top existential variable. *)
 			let st, pp1 = get_subst_equation with_qvars qvar in
-			  if not (Util.empty st) then
+			if not (Util.empty st) then
 				let new_qf = subst_term st pp1 in
 				let new_qf = mkExists qvars0 new_qf pos in
 				let tmp3 = elim_exists new_qf in
 				let tmp4 = mkAnd no_qvars tmp3 pos in
 				  tmp4
-			  else (* if qvar is not equated to any variables, try the next one *)
+			else (* if qvar is not equated to any variables, try the next one *)
 				let tmp1 = elim_exists qf in
 				let tmp2 = mkExists [qvar] tmp1 pos in
 				  tmp2
@@ -1256,7 +1398,6 @@ and elim_exists (f0 : formula) : formula = match f0 with
 		res
 	end
   | BForm _ -> f0
-
 
 (**************************************************************)
 (**************************************************************)
@@ -1758,7 +1899,7 @@ and b_form_list f: b_formula list = match f with
   | Exists (_,f,_) -> (b_form_list f)
 
 and simp_mult (e : exp) :  exp =
-  let rec normalize_add m lg (x :  exp) :  exp =
+  let rec normalize_add m lg (x: exp):  exp =
     match x with
     |  Add (e1, e2, l) ->
         let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
