@@ -651,7 +651,7 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
   evars: those involving this will be on the rhs
   otherwise move to the lhs
 *)
-and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) (vvars : CP.spec_var list) (pos : loc) 
+and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) (expl_inst_vars : CP.spec_var list)(vvars : CP.spec_var list) (pos : loc) 
     : ((CP.formula * (branch_label * CP.formula) list) * (CP.formula * (branch_label * CP.formula) list) * (CP.spec_var list)) =
   let rec split f = match f with
 	| CP.And (f1, f2, _) ->
@@ -674,7 +674,7 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) (vvars :
 
 		 What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.
 		  *)
-		  if not (CP.disjoint evars fvars) then (* to conseq *)
+		  if not (CP.disjoint (evars@expl_inst_vars) fvars) then (* to conseq *)
 		  	(CP.mkTrue pos, f)
 		  else (* to ante *)
 				(f, CP.mkTrue pos)
@@ -696,8 +696,8 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) (vvars :
 
   let conseq_fv = CP.fv to_conseq in
   let conseq_fv_b = (List.map (fun (l,f) -> CP.fv f) to_conseq_b) in
-  let instantiate = List.filter (fun v -> List.mem v evars) conseq_fv in
-  let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v evars) fv_list) conseq_fv_b in
+  let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars)) conseq_fv in
+  let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v (evars@expl_inst_vars)) fv_list) conseq_fv_b in
   let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f, pos)) to_conseq instantiate in
   let wrapped_to_conseq_b = List.map2 (fun to_conseq instantiate -> List.fold_left (fun f v -> CP.Exists (v, f, pos)) to_conseq instantiate) to_conseq_f instantiate_b in
   let to_ante =
@@ -711,6 +711,10 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) (vvars :
   Debug.devel_pprint ("split_universal: evars: "
 						^ (String.concat ", "
 							 (List.map Cprinter.string_of_spec_var evars))) pos;
+	Debug.devel_pprint ("split_universal: expl_inst_vars: "
+						^ (String.concat ", "
+							 (List.map Cprinter.string_of_spec_var expl_inst_vars))) pos;
+	
 	Debug.devel_pprint ("split_universal: vvars: "
 						^ (String.concat ", "
 							 (List.map Cprinter.string_of_spec_var vvars))) pos;
@@ -969,7 +973,7 @@ and process_fold_result prog is_folding estate fold_rs0 p2 vs2 base2 pos : (cont
 		let _ = (print_string ("[solver.ml, process_fold_result]: Global vars: " ^ (Cprinter.string_of_spec_var_list vs2) ^ "\n")) in
 		let _ = (print_string ("[solver.ml, process_fold_result]: Pure formula after discarding globals: " ^ (Cprinter.string_of_pure_formula new_pure) ^ "\n")) in*)
 		(* 20.05.2008 *)
-		let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = split_universal fold_es.es_pure fold_es.es_evars vs2 pos in
+		let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = split_universal fold_es.es_pure fold_es.es_evars fold_es.es_gen_expl_vars vs2 pos in
 		let tmp_conseq = mkBase resth2 pure2 type2 flow2 branches2 pos in
 		let new_conseq = normalize tmp_conseq
 		  (CF.replace_branches to_conseq_br (formula_of_pure to_conseq pos)) pos in
@@ -1466,7 +1470,7 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 						 (nc,(mkEexStep ctx [f] np))
 				    else 
 					let n_ctx = (push_expl_impl_context expl_inst impl_inst ctx ) in
-					let n_ctx_list, prf = heap_entail_one_context prog is_folding  is_universal n_ctx formula_base pos in
+					let n_ctx_list, prf = heap_entail_one_context prog (if (List.length formula_cont)>0 then true else is_folding)  is_universal n_ctx formula_base pos in
 					(*let _ = print_string ("pp: "^(Cprinter.string_of_spec_var_list b.formula_ext_explicit_inst)^"\n"^
 					(Cprinter.string_of_spec_var_list b.formula_ext_implicit_inst)^"\n"^
 					(Cprinter.string_of_context n_ctx)^"\n conseqqq: "^
@@ -1654,7 +1658,7 @@ and move_expl_inst_ctx_list (ctx:context list)(f:CP.formula):context list =
 			let f1 = formula_of_pure f1 no_pos in
 			let new_es' = {es with
 				(* existential vars from conseq are made existential in the entecedent *)
-				es_gen_expl_vars = []; 
+				(*es_gen_expl_vars = []; *)
 				es_gen_impl_vars = [];
 				es_ante_evars = es.es_ante_evars @ es.es_evars;
 				es_formula = (CF.mkStar es.es_formula f1 Flow_combine no_pos);
@@ -2144,7 +2148,10 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   if List.fold_left fold_fun true (("", rhs_p) :: rhs_p_br) then begin
 	let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
 	if is_folding then begin
-	  let res_es = {estate with es_formula = res_delta; es_pure = (rhs_p, rhs_p_br);es_unsat_flag = false;} in
+	  let res_es = {estate with es_formula = res_delta; 
+								es_pure = ((Cpure.mkAnd rhs_p (fst estate.es_pure) no_pos),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br));
+								(*es_pure = (rhs_p, rhs_p_br);*)
+								es_unsat_flag = false;} in
 	  let res_ctx = Ctx res_es in
 	  Debug.devel_pprint ("heap_entail_empty_heap: folding: formula is valid") pos;
 	  Debug.devel_pprint ("heap_entail_empty_heap: folding: res_ctx:\n" ^ (Cprinter.string_of_context res_ctx)) pos;
@@ -2330,6 +2337,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 								  es_gen_expl_vars = estate.es_gen_expl_vars; 
 								  es_gen_impl_vars = estate.es_gen_impl_vars; 
 								  es_ante_evars = estate.es_ante_evars;
+								  es_pure = estate.es_pure;
 								  es_unsat_flag  = false;} in
 			do_fold_w_ctx fold_ctx var_to_fold  in
 			
