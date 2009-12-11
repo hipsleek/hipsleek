@@ -21,18 +21,23 @@ let rec concatenate_string_list l c = match l with
 
 (* pretty printing for primitive types *)
 let string_of_prim_type = function 
-  | Bool          -> "boolean "
-  | Float         -> "float "
-  | Int           -> "int "
-  | Void          -> "void "
-  | Bag           -> "bag "
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | Bag           -> "bag"
 ;;
 
 (* pretty printing for types *)
-let string_of_typ = function 
-  | Prim t        -> string_of_prim_type t 
-  | Named ot      -> ot ^ " "
-  | Array _ -> "array"
+let rec string_of_typ = function 
+  | Prim t -> string_of_prim_type t 
+  | Named ot -> ot
+  | Array (typ1,_) -> (string_of_typ typ1) ^ "[] "	
+  | FuncType (typ1,typ2) -> "(" ^ (string_of_typ typ1) ^ ")" ^ " -> " ^ "(" ^ (string_of_typ typ2) ^ ")"	
+  | Pointer -> "ptr"
+	| TypPointer typ1 -> "ptr_" ^ (string_of_typ typ1)
+  | VarType ot -> ot
+  | PolyBag typ1 -> "Bag of " ^ (string_of_typ typ1)
 ;;
 
 (* pretty printing for unary operators *)
@@ -252,7 +257,7 @@ and string_of_h_formula = function
   | F.LambdaFunc ({F.h_formula_func_name = id;
 				   F.h_formula_func_arguments = pl;
 				   F.h_formula_func_pos = l}) 
-	-> id ^ "<" ^ (string_of_formula_ext_exp_list pl) ^ ">"
+	-> id ^ "<<" ^ (string_of_formula_ext_exp_list pl) ^ ">>"
  
 and string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "'" | Unprimed -> "")
 
@@ -558,7 +563,7 @@ let string_of_view_decl v = v.view_name ^
   (string_of_apf_type v.view_apf_type) ^
   "<" ^ (string_of_apf_param v.view_vars) ^ "> == " ^ 
   (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant)) ^
-  " mem {" ^ (fst v.view_mem) ^ " | " ^ (string_of_pure_formula (snd v.view_mem)) ^ "}" 
+  " mem {}" 
   (* incomplete *)
 ;;
 

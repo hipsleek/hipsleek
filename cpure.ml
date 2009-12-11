@@ -13,6 +13,12 @@ type spec_var =
 and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
+  | Array of (typ * int option) (* array type *)
+  | FuncType of (typ * typ) (* lambda function type *)
+  | Pointer (* general pointer type *)
+  | TypPointer of typ (* Pointer type *)
+  | VarType of ident (* for polymorphic types *)
+  | PolyBag of typ (* Polymorphic types for bag - not used for now *)
 
 type formula =
   | BForm of b_formula
@@ -58,6 +64,8 @@ and exp =
   | BagUnion of (exp list * loc)
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
+	  (* primitive function call *)
+  | PrimFuncCall of (ident * ident list * loc)
 
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
@@ -77,6 +85,12 @@ let get_exp_type (e : exp) : typ = match e with
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ | Add _ | Subtract _ | Mult _ | Max _ | Min _  -> Prim Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
+  | PrimFuncCall (_,_,l) ->
+	  Error.report_error 
+		{ 
+		  Error.error_loc = l;
+		  Error.error_text = "Primitive functions are not supported at this moment!" 
+		}
 
 (* free variables *)
 
@@ -159,6 +173,12 @@ and afv (af : exp) : spec_var list = match af with
   | BagIntersect (alist, _) -> let svlist = afv_bag alist in
   		Util.remove_dups svlist
   | BagDiff(a1, a2, _) -> combine_avars a1 a2
+  | PrimFuncCall (_,_,l) ->
+	  Error.report_error 
+		{ 
+		  Error.error_loc = l;
+		  Error.error_text = "Primitive functions are not supported at this moment!" 
+		}
 
 and afv_bag (alist : exp list) : spec_var list = match alist with
 	|[] -> []
@@ -1806,6 +1826,12 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   |  BagUnion (e1, l) -> ((Some e), None)
   |  BagIntersect (e1, l) -> ((Some e), None)
   |  BagDiff (e1, e2, l) -> ((Some e), None)
+  |  PrimFuncCall (_,_,l) ->
+	  Error.report_error 
+		{ 
+		  Error.error_loc = l;
+		  Error.error_text = "Primitive functions are not supported at this moment!" 
+		}
 
 and move_lr (lhs :  exp option) (lsm :  exp option)
   (rhs :  exp option) (rsm :  exp option) l :
@@ -1826,7 +1852,7 @@ and move_lr (lhs :  exp option) (lsm :  exp option)
 	
 	
 and purge_mult (e :  exp):  exp = match e with
-	|  Null _ -> e
+  |  Null _ -> e
   |  Var _ -> e
   |  IConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)

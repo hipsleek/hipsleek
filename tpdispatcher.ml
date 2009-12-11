@@ -236,6 +236,8 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> true
+	  (* Primitive functions *)
+  | CP.PrimFuncCall _ -> false
 
 (*
 let rec is_bag_constraint(f : CP.formula) : bool =

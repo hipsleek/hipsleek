@@ -96,6 +96,8 @@ let rec string_of_formula_exp = function
   | P.BagIntersect (e::[], l)	-> (string_of_formula_exp e) 
   | P.BagIntersect (e::rest, l)->(string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (P.BagIntersect (rest, l)))
   | P.BagDiff (e1, e2, l)     -> (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2) 
+  | P.PrimFuncCall (id, idlist, l) ->
+	  id ^ "(" ^ (string_of_ident_list idlist ",") ^ ")"
 
   
 (* pretty printing for a list of pure formulae *)

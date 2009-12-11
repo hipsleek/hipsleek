@@ -61,6 +61,7 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
 	inliner.cmo \
+	typeinference.cmo \
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
@@ -81,6 +82,7 @@ SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
 	inliner.cmo \
+	typeinference.cmo newxpure.cmo \
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
@@ -108,6 +110,7 @@ PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
 	inliner.cmo \
+	typeinference.cmo \
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
@@ -130,7 +133,7 @@ prover: $(PROVE_FILES)
 
 prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt prover.opt
-	
+
 sleekc:
 	make clean; make sleek 
 

@@ -93,6 +93,12 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.BagIntersect (e::[], _) -> (isabelle_of_exp e)
   | CP.BagIntersect (e::rest, l) ->(isabelle_of_exp e) ^ "\\<intersect>" ^ (isabelle_of_exp (CP.BagIntersect (rest, l)))
   | CP.BagDiff (e1, e2, _) -> (isabelle_of_exp e1) ^ "-" ^ (isabelle_of_exp e2)
+  | CP.PrimFuncCall (_, _, l) ->
+	  Error.report_error 
+		{ 
+		  Error.error_loc = l;
+		  Error.error_text = "Primitive functions are not supported at this moment!" 
+		}
 
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with

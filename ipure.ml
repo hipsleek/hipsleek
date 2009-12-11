@@ -43,7 +43,6 @@ and exp =
   (*| Tuple of (exp list * loc)*)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
-(*  | Mult of (int * exp * loc) *)
   | Mult of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
@@ -121,7 +120,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | IConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
-  | Mult (c, a, _) -> afv a
+  | Mult (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
@@ -129,6 +128,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | BagIntersect (d,_)
   | BagUnion (d,_) ->  Util.remove_dups (List.fold_left (fun a c-> a@(afv c)) [] d)
   (*| BagDiff _|BagIntersect _|BagUnion _|Bag _ -> failwith ("afv: bag constraints are not expected")*)
+  | PrimFuncCall (_, a, _) -> (List.map (fun t -> (t, Primed)) a)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -429,23 +429,24 @@ and b_apply_one (fr, t) bf = match bf with
 	| BagMin (v1, v2, pos) -> BagMin ((if eq_var v1 fr then t else v1), (if eq_var v2 fr then t else v2), pos)
 
 and e_apply_one (fr, t) e = match e with
-  | Null _ | IConst _ -> e
-  | Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
-  | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
-  | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
-										e_apply_one (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_one (fr, t) a, pos)
-  | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
-  | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	| Null _ | IConst _ | PrimFuncCall _ -> e
+	| Var (sv, pos) -> Var ((if eq_var sv fr then t else sv), pos)
+	| Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
+								e_apply_one (fr, t) a2, pos)
+	| Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
+											e_apply_one (fr, t) a2, pos)
+	| Mult (a1, a2, pos) -> Mult (e_apply_one (fr, t) a1, 
+								  e_apply_one (fr, t) a2, pos)
+	| Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
+								e_apply_one (fr, t) a2, pos)
+	| Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
+								e_apply_one (fr, t) a2, pos)
 	(*| BagEmpty (pos) -> BagEmpty (pos)*)
 	| Bag (alist, pos) -> Bag ((e_apply_one_bag (fr, t) alist), pos)
 	| BagUnion (alist, pos) -> BagUnion ((e_apply_one_bag (fr, t) alist), pos)
-  | BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_bag (fr, t) alist), pos)
-  | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	| BagIntersect (alist, pos) -> BagIntersect ((e_apply_one_bag (fr, t) alist), pos)
+	| BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
+										e_apply_one (fr, t) a2, pos)
 
 and e_apply_one_bag (fr, t) alist = match alist with
 	|[] -> []

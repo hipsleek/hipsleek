@@ -245,6 +245,12 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
 		  r1 || r2
 	  end else
 		failwith ("compute_fo_exp: invalid parameters: non SO bag expression.")
+  | PrimFuncCall (_, _, l) ->
+	  Error.report_error 
+		{ 
+		  Error.error_loc = l;
+		  Error.error_text = "Primitive functions are not supported at this moment!" 
+		}
 
 (* 
    Transformations: 

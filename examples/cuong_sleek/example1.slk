@@ -1,0 +1,10 @@
+
+pred Elem<u> == self::int<u>
+	inv self > 0
+	mem (self,self,true).
+
+pred Arr<p> == emp & p=self
+	or self::Elem<_> * t::Arr<p> & p>self & t = self+1
+	inv self >= 0 & p >= self
+	mem (self,p-1,true).
+

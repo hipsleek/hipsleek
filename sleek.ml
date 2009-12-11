@@ -29,6 +29,7 @@ module AS = Astsimp
 
 module XF = Xmlfront
 module NF = Nativefront
+module NX = Newxpure
 
 type front_end =
   | XmlFE
@@ -89,6 +90,7 @@ let terminator = '.'
 let parse_file (parse) (source_file : string) =
 	try
 		let cmd = parse source_file in 
+		let _ = (NX.process_cmd_and_check cmd) in
 		let _ = (List.map (fun c -> (
 							match c with
 								 | DataDef ddef -> process_data_def ddef

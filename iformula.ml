@@ -825,9 +825,10 @@ and float_out_min_max (f :  formula) :  formula =
         }
 
 and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string list) ) option) = match e with 
-	| Ipure.Null _ -> (e, None)
+  | Ipure.Null _ -> (e, None)
   | Ipure.Var _ -> (e, None)
   | Ipure.IConst _ -> (e, None)
+  | Ipure.PrimFuncCall _ -> (e, None)
   | Ipure.Add (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in

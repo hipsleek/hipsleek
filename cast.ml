@@ -42,7 +42,20 @@ and view_decl = { view_name : ident;
 				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option;}
+				  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option;
+				  view_apf_type : (scope * ident) option;
+				  (* view_apf : apf_extn list; *)
+				}
+
+(*
+and apf_extn = {
+	apf_class : CP.typ;
+	mutable apf_typed_vars : (CP.typ * ident * branch_label) list;
+	apf_invariant : (P.formula * (branch_label * P.formula) list);
+	apf_mem : ident * P.formula;
+	apf_formula : Iformula.struc_formula;
+  }
+*)
 	
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;

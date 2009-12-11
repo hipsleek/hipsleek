@@ -72,6 +72,8 @@ let self = "self"
 
 let this = "this"
 
+let primitive_pred = [ "bool"; "float"; "int"; "void"; "bag" ]
+
 (* command line options *)
 
 let omega_simpl = ref true
@@ -239,3 +241,13 @@ let snd3 (_,x,_) = x
 let thrd3 (_,_,x) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
+
+let seq_type_var_number = ref 0
+
+let fresh_type_var_int () =
+  seq_type_var_number := !seq_type_var_number + 1;
+  !seq_type_var_number
+
+let fresh_type_var_name () =
+  "TypeVar_" ^ (string_of_int (fresh_type_var_int ()))
+

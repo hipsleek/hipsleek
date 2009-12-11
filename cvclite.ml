@@ -100,6 +100,12 @@ and cvcl_of_exp a = match a with
   | CP.Bag ([], _) -> ""
   | CP.Bag _ | CP.BagUnion _ | CP.BagIntersect _ | CP.BagDiff _ ->
   	  failwith ("[cvcLite.ml]: ERROR in constraints (set should not appear here)");
+  | CP.PrimFuncCall (_, _, l) ->
+	  Error.report_error 
+		{ 
+		  Error.error_loc = l;
+		  Error.error_text = "Primitive functions are not supported at this moment!" 
+		}
   
 and cvcl_of_b_formula b = match b with
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"

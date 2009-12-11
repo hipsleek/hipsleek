@@ -28,6 +28,7 @@ void append(node x, node y)
 		x.next = y;
 	else
       { node z;
+		dprint;	 
         z = null;
 		append(x.next, y);
       }

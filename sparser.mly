@@ -201,6 +201,8 @@
 %token SUBTYPE
 %token FUNCTION
 %token BACKSLASH
+%token LTLT
+%token GTGT
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
@@ -433,9 +435,8 @@ view_header
 			view_formula = F.mkETrue (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
 			try_case_inference = false;
-			view_mem = ("",P.mkTrue no_pos);
+			view_mem = (P.Null no_pos, P.Null no_pos, P.mkTrue no_pos);
 			view_apf_type = None;
-			view_apf = [];
 		  }
   }
   | PRED IDENTIFIER OSQUARE apf CSQUARE LT opt_ann_cid_list_apf_tail GT {
@@ -460,9 +461,8 @@ view_header
 		view_formula = F.mkETrue (get_pos 1);
 		view_invariant = (P.mkTrue (get_pos 1), []);
 		try_case_inference = false;
-		view_mem = ("",P.mkTrue no_pos);
+		view_mem = (P.Null no_pos, P.Null no_pos, P.mkTrue no_pos);
 		view_apf_type = Some $4;
-		view_apf = [];
 	  }
   }
 ;
@@ -491,9 +491,9 @@ view_body
 ;
 
 opt_mem
-  : { ("",P.mkTrue no_pos) }
-  | MEM OBRACE IDENTIFIER OR pure_constr CBRACE {
-	($3,$5)
+  : { (P.Null no_pos, P.Null no_pos, P.mkTrue no_pos) }
+  | MEM OPAREN cexp COMMA cexp COMMA pure_constr CPAREN {
+	($3,$5,$7)
   }
 ;
 
@@ -825,7 +825,7 @@ simple_heap_constr
 						   F.h_formula_heap_apf_type = None;} in
 	  h
   }
-  | IDENTIFIER LT opt_ext_exp_list GT {
+  | IDENTIFIER LTLT opt_ext_exp_list GTGT {
       F.LambdaFunc { F.h_formula_func_name = $1;
                      F.h_formula_func_arguments = $3;
 				     F.h_formula_func_pos = get_pos 1; }
