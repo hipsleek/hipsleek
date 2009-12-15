@@ -276,18 +276,14 @@ let rec weaken_formula f0 =
 
 let find_bound_b_formula v f0 =
   let parse s = 
-    print_endline s;
     if s.[0] = '{' then
       let end_pos = String.index s ',' in
       let num = remove_spaces (String.sub s 1 (end_pos - 1)) in
-      begin
-      print_endline num;
       let res = float_of_string num in
       if (abs_float res) = infinity then
         None
       else
         Some res
-      end
     else
       None
   in
@@ -329,15 +325,12 @@ let rec elim_exists f0 =
             begin
               match min, max with
               | Some mi, Some ma ->
-                  begin
-                  print_endline ("min = " ^ (string_of_int mi) ^ " & max = " ^ (string_of_int ma));
                   let res = ref (CP.mkFalse pos) in
                   begin
                     for i = mi to ma do
                       res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) eqqf) pos
                     done;
                     !res
-                  end
                   end
               | _ -> f0
             end
@@ -408,7 +401,7 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   let ante = if !is_ee then elim_exists ante else ante in
   let conseq = if !is_ee then elim_exists conseq else conseq in
   let _ = if (has_existential_quantifier ante true) || (has_existential_quantifier conseq false) then 
-    log_all "## Warning: Found formula with existential quantified var(s), result may be unsound!" in
+    print_endline "## Warning: Found formula with existential quantified var(s), result may be unsound!" in
   let s_ante = if !integer_relax_mode then strengthen_formula ante else ante in
   let w_conseq = if !integer_relax_mode then weaken_formula conseq else conseq in
   let rl_of_ante = rl_of_formula s_ante in

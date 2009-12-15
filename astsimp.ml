@@ -73,7 +73,19 @@ int div___(int a, int b) case {
     }
 }
 
-int mod___(int a, int b) requires true ensures - b < res < b;
+int mod___(int a, int b) case {
+  a >= 0 -> case {
+    b >= 1 -> requires true ensures a = b*q + res & q >= 0 & 0 <= res <= b-1;
+    b <= -1 -> requires true ensures a = b*q + res & q <= 0 & 0 <= res <= -b-1;
+    -1 < b < 1 -> requires false ensures false;
+  }
+  a < 0 -> case {
+    b >= 1 -> requires true ensures a = b*q + res & q <= -1 & 0 <= res <= b-1;
+    b <= -1 -> requires true ensures a = b*q + res & q >= 1 & 0 <= res <= -b-1;
+    -1 < b < 1 -> requires false ensures false;
+  }
+}
+
 float add___(float a, float b) requires true ensures res = a + b;
 float minus___(float a, float b) requires true ensures res = a - b;
 float mult___(float a, float b) requires true ensures res = a * b;
