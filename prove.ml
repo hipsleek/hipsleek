@@ -397,8 +397,10 @@ module Manager = struct
   (** [send_jobs_to_slaves ] sends jobs in queue [jobs_queue] to all idle slaves to do in parallel *)
   let send_jobs_to_slaves () : unit =
     while !slaves_idle <> [] && !jobs_queue <> [] do
-      let slave:: slave_tl = !slaves_idle in
-      let job:: job_tl = !jobs_queue in
+      let slave = List.hd !slaves_idle in
+	  let slave_tl = List.tail !slaves_idle in
+      let job = List.hd !jobs_queue in
+	  let job_tl = List.tail !jobs_queue in
       let (_, ich, och, _) = slave in
       let (seqno, idx, timeout, prover, formula, stopper) = job in
       Net.IO.write_job_to_slave och seqno idx timeout prover formula;

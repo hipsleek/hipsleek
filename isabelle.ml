@@ -76,6 +76,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.Null _ -> "(0::int)"
   | CP.Var (sv, _) -> isabelle_of_spec_var sv
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
+  | CP.FConst _ -> failwith ("[isabelle.ml]: ERROR in constraints (float should not appear here)")
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
