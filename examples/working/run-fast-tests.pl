@@ -25,7 +25,7 @@ if($root){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip.opt --sqt -tp redlog --redlog-int-relax ";
+$hip = "$exec_path/hip.opt";
 $sleek = "$exec_path/sleek.opt ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
