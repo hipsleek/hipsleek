@@ -518,6 +518,15 @@ let check_exp1 (ctx : CF.context list) : CF.context list =
 	  	else List.map (fun c -> CF.normalize_clash_context_formula c f pos true) ctx
 	  in
 		res_ctx
+  | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
+      let c_e = CP.FConst (f, pos) in
+      let res_v = CP.Var (CP.mkRes float_type, pos) in
+      let f = CF.formula_of_pure (CP.mkEqExp res_v c_e pos) pos in
+      let res_ctx =
+        if !Globals.max_renaming then List.map (fun c -> CF.normalize_context_formula c f pos true) ctx
+        else List.map (fun c -> CF.normalize_clash_context_formula c f pos true) ctx
+      in
+      res_ctx
   | New ({exp_new_class_name = c;
 		  exp_new_parent_name = pname;
 		  exp_new_arguments = args;

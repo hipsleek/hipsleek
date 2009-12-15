@@ -54,7 +54,7 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
@@ -74,7 +74,7 @@ SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
@@ -101,7 +101,7 @@ PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \

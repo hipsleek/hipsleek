@@ -151,6 +151,7 @@ rule tokenizer file_name = parse
   | '\'' { PRIME }
   | ';' { SEMICOLON }
   | '*' { STAR }
+  | '/' { DIV }
   | intnum as numstr { LITERAL_INTEGER (int_of_string numstr) }
   | fnum as numstr { LITERAL_FLOAT (float_of_string numstr) }
   | alpha(alpha | digit)* as idstr 

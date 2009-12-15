@@ -389,7 +389,80 @@ let get_exp_pos (e0 : exp) : loc = match e0 with
   | Try e -> e.exp_try_pos
   | Raise e -> e.exp_raise_pos
 	  
-		
+(*
+let rec type_of_exp e = match e with
+  | Assert _ -> None
+  | Assign _ -> Some void_type
+  | Binary { 
+      exp_binary_op = op;
+      exp_binary_oper1 = e1;
+      exp_binary_oper2 = e2;
+      exp_binary_pos = _ 
+    } ->
+        begin
+          let t1 = type_of_exp e1 in
+          let t2 = type_of_exp e2 in
+          let typ = match op with
+            | OpEq | OpNeq | OpLt | OpLte | OpGt | OpGte
+            | OpLogicalAnd | OpLogicalOr | OpIsNull | OpIsNotNull -> 
+                bool_type
+            | OpPlus | OpMinus | OpMult ->
+                begin
+                  match t1, t2 with
+                  | Some Prim Int, Some Prim Int -> int_type 
+                  | _ -> float_type
+                end
+            | OpDiv -> float_type
+            | OpMod -> int_type
+          in Some typ
+        end
+  | Bind {
+      exp_bind_bound_var = _;
+      exp_bind_fields = _;
+      exp_bind_body = e1;
+      exp_bind_pos = _
+    } -> type_of_exp e1
+  | Block _ -> Some void_type
+  | BoolLit _ -> Some bool_type
+  | Break _ -> Some void_type
+  | CallRecv _ -> None (* FIX-IT *)
+  | CallNRecv _ -> Some void_type
+  | Cast {
+      exp_cast_target_type = typ;
+      exp_cast_body = _;
+      exp_cast_pos = _
+    } -> Some typ
+  | Cond _ -> Some void_type
+  | ConstDecl _ -> Some void_type
+  | Continue _ -> Some void_type
+  | Debug _ -> None
+  | Dprint _ -> None
+  | Empty _ -> None
+  | FloatLit _ -> Some float_type
+  | IntLit _ -> Some int_type
+  | Java _ -> None
+  | Member _ -> None (* FIX-IT *)
+  | New {
+      exp_new_class_name = name;
+      exp_new_arguments = _;
+      exp_new_pos = _
+    } -> Some (Named name)
+  | Null _ -> Some void_type
+  | Raise _ -> Some void_type
+  | Return _ -> Some void_type
+  | Seq _ -> Some void_type
+  | This _ -> None
+  | Try _ -> Some void_type
+  | Unary {
+      exp_unary_op = op;
+      exp_unary_exp = e1;
+      exp_unary_pos = _
+    } -> type_of_exp e1
+  | Unfold _ -> None
+  | Var _ -> None
+  | VarDecl _ -> Some void_type
+  | While _ -> Some void_type
+*)
 
 and mkSpecTrue pos = Iformula.mkETrue pos
 	(*[SRequires {

@@ -3055,7 +3055,8 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
 and count_iconst (f : CP.exp) = match f with
   | CP.Subtract (e1, e2, _)
   | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
-  | CP.Mult (_, e2, _) -> (1 + (count_iconst e2))
+  | CP.Mult (e1, e2, _)
+  | CP.Div (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
 	| CP.IConst _ -> 1
 	| _ -> 0
 

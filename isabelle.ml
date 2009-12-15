@@ -78,7 +78,8 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.IConst (i, _) -> "(" ^ string_of_int i ^ "::int)"
   | CP.Add (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " + " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (isabelle_of_exp a1) ^ " - " ^ (isabelle_of_exp a2) ^ ")"
-  | CP.Mult (c, a, _) -> " ( " ^ (string_of_int c) ^ " * " ^ (isabelle_of_exp a)	^ ")"
+  | CP.Mult (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " * " ^ (isabelle_of_exp a2) ^ ")"
+  | CP.Div (a1, a2, _) -> failwith "[isabelle.ml]: divide is not supported."
   | CP.Max _
   | CP.Min _ -> failwith ("isabelle.isabelle_of_exp: min/max can never appear here")
   | CP.Bag (elist, _) ->

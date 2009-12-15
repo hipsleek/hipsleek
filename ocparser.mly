@@ -179,7 +179,7 @@ aexp: cid {
 	IConst ($1, get_pos 1)
   }
 | ICONST cid {
-	Mult ($1, (Var (SpecVar (Prim Int, fst $2, snd $2), get_pos 2)), get_pos 1)
+	Mult (IConst ($1, get_pos 1), (Var (SpecVar (Prim Int, fst $2, snd $2), get_pos 2)), get_pos 1)
   }
 | aexp PLUS aexp {
 	Add ($1, $3, get_pos 2)

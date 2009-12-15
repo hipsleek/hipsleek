@@ -59,7 +59,8 @@ let rec coq_of_exp e0 = match e0 with
   | CP.IConst (i, _) -> string_of_int i
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
-  | CP.Mult (c, a, _) -> " ( " ^ (string_of_int c) ^ " * " ^ (coq_of_exp a)	^ ")"
+  | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
+  | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
   | _ -> failwith ("No bags in Coq yet")

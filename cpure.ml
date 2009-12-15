@@ -48,9 +48,11 @@ and exp =
   | Null of loc
   | Var of (spec_var * loc)
   | IConst of (int * loc)
+  | FConst of (float * loc)
   | Add of (exp * exp * loc)
   | Subtract of (exp * exp * loc)
-  | Mult of (int * exp * loc)
+  | Mult of (exp * exp * loc)
+  | Div of (exp * exp * loc)
   | Max of (exp * exp * loc)
   | Min of (exp * exp * loc)
 	  (* bag expressions *)
@@ -71,12 +73,36 @@ and constraint_rel =
   | Subsuming
   | Equal
   | Contradicting
+
+and rounding_func = 
+  | Ceil
+  | Floor
   
-let get_exp_type (e : exp) : typ = match e with
+(* TODO: determine correct type of an exp *)
+let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
   | Var (SpecVar (t, _, _), _) -> t
-  | IConst _ | Add _ | Subtract _ | Mult _ | Max _ | Min _  -> Prim Int
+  | IConst _ -> Prim Int
+  | FConst _ -> Prim Float
+  | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
+  | Max (e1, e2, _) | Min (e1, e2, _) ->
+      begin
+        match get_exp_type e1, get_exp_type e2 with
+        | Prim Int, Prim Int -> Prim Int
+        | _ -> Prim Float
+      end
+  | Div _ -> Prim Float
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
+
+(* type constants *)
+
+let bool_type = Prim Bool
+
+let int_type = Prim Int
+
+let float_type = Prim Float
+
+let void_type = Prim Void
 
 (* free variables *)
 
@@ -146,9 +172,10 @@ and afv (af : exp) : spec_var list = match af with
   | Null _ -> []
   | Var (sv, _) -> [sv]
   | IConst _ -> []
+  | FConst _ -> []
   | Add (a1, a2, _) -> combine_avars a1 a2
   | Subtract (a1, a2, _) -> combine_avars a1 a2
-  | Mult (c, a, _) -> afv a
+  | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
   (*| BagEmpty (_) -> []*)
@@ -182,6 +209,7 @@ and is_null (e : exp) : bool = match e with
 
 and is_zero (e : exp) : bool = match e with
   | IConst (0, _) -> true
+  | FConst (0.0, _) -> true
   | _ -> false
 
 and is_var (e : exp) : bool = match e with
@@ -190,15 +218,40 @@ and is_var (e : exp) : bool = match e with
 
 and is_num (e : exp) : bool = match e with
   | IConst _ -> true
+  | FConst _ -> true
+  | _ -> false
+
+and to_int_const e t =
+  match e with
+  | IConst (i, _) -> i
+  | FConst (f, _) ->
+      begin
+        match t with
+        | Ceil -> int_of_float (ceil f)
+        | Floor -> int_of_float (floor f)
+      end
+  | _ -> 0
+
+and is_int (e : exp) : bool = match e with
+  | IConst _ -> true
+  | _ -> false
+
+and is_float (e : exp) : bool = match e with
+  | FConst _ -> true
   | _ -> false
   
-and get_num (e : exp) : int = match e with
+and get_num_int (e : exp) : int = match e with
   | IConst (b,_) -> b
   | _ -> 0
+
+and get_num_float (e : exp) : float = match e with
+  | FConst (f, _) -> f
+  | _ -> 0.0
 
 and is_var_num (e : exp) : bool = match e with
   | Var _ -> true
   | IConst _ -> true
+  | FConst _ -> true
   | _ -> false
 
 and to_var (e : exp) : spec_var = match e with
@@ -233,6 +286,7 @@ and is_arith (e : exp) : bool = match e with
   | Add _
   | Subtract _
   | Mult _
+  | Div _
   | Min _
   | Max _ -> true
   | _ -> false
@@ -243,6 +297,10 @@ and is_bag_type (t : typ) = match t with
 
 and is_int_type (t : typ) = match t with
   | Prim Int -> true
+  | _ -> false
+
+and is_float_type (t : typ) = match t with
+  | Prim Float -> true
   | _ -> false
 
 and is_object_type (t : typ) = match t with
@@ -263,7 +321,11 @@ and mkSubtract a1 a2 pos = Subtract (a1, a2, pos)
 
 and mkIConst a pos = IConst (a, pos)
 
-and mkMult c a pos = Mult (c, a, pos)
+and mkFConst a pos = FConst (a, pos)
+
+and mkMult a1 a2 pos = Mult (a1, a2, pos)
+
+and mkDiv a1 a2 pos = Div (a1, a2, pos)
 
 and mkMax a1 a2 pos = Max (a1, a2, pos)
 
@@ -467,11 +529,15 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
 	| (Null _ ,Null _ ) -> true
 	| (Var (v1,_), Var (v2,_)) -> (eq_spec_var v1 v2)
     | (IConst (v1,_), IConst (v2,_)) -> v1=v2
+    | (FConst (v1,_), FConst (v2,_)) -> v1=v2
     | (Max (e1,e2,_),Max (d1,d2,_)) 
 	| (Min (e1,e2,_),Min (d1,d2,_)) 
 	| (Add (e1,e2,_),Add (d1,d2,_)) -> (((eqExp e1 d1)&&(eqExp e2 d2))||((eqExp e1 d2)&&(eqExp e2 d1)))
     | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp e1 d1)&&(eqExp e2 d2))
-    | (Mult (c1,e1,_),Mult (c2,e2,_)) -> (c1=c2)&&(eqExp e1 e2)
+  (* I'm not sure about this *)
+  | (Mult (e1, e2, _), Mult(d1, d2, _)) ->
+      (((eqExp e1 d1)&&(eqExp e2 d2)) || ((eqExp e1 d2)&&(eqExp e2 d1)))
+  | (Div _, Div _) -> false (* FIX IT *)
 	| (Bag (l1,_),Bag (l2,_)) -> if (List.length l1)=(List.length l1) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
 										else false
     | _ -> false
@@ -547,9 +613,11 @@ and pos_of_exp (e : exp) = match e with
   | Null pos -> pos
   | Var (_, p) -> p
   | IConst (_, p) -> p
+  | FConst (_, p) -> p
   | Add (_, _, p) -> p
   | Subtract (_, _, p) -> p
   | Mult (_, _, p) -> p
+  | Div (_, _, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
   (*| BagEmpty (p) -> p*)
@@ -655,11 +723,13 @@ and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
 	| (Null(_), Null(_)) -> true
 	| (Var(sv1, _), Var(sv2, _)) -> (eq_spec_var sv1 sv2)
 	| (IConst(i1, _), IConst(i2, _)) -> i1 = i2
+  | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
 	| (Subtract(e11, e12, _), Subtract(e21, e22, _))
 	| (Max(e11, e12, _), Max(e21, e22, _))
 	| (Min(e11, e12, _), Min(e21, e22, _))
 	| (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
-	| (Mult(i1, e11, _), Mult(i2, e21, _)) -> (i1 = i2) & (eq_exp e11 e21)
+  | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
+  | (Div(e11, e12, _), Div(e21, e22, _)) -> (eq_exp e11 e21) & (eq_exp e12 e22)
 	| (Bag(e1, _), Bag(e2, _))
 	| (BagUnion(e1, _), BagUnion(e2, _))
 	| (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list e1 e2)
@@ -787,13 +857,16 @@ and b_apply_subs sst bf = match bf with
 and subs_one sst v = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
 
 and e_apply_subs sst e = match e with
-  | Null _ | IConst _ -> e
+  | Null _ | IConst _ | FConst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
 							  e_apply_subs sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1,
 										e_apply_subs sst a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_subs sst a, pos)
+  | Mult (a1, a2, pos) -> 
+      Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_subs sst a1,
 							  e_apply_subs sst a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_subs sst a1,
@@ -856,13 +929,16 @@ and b_apply_one (fr, t) bf = match bf with
 	| BagMin (v1, v2, pos) -> BagMin ((if eq_spec_var v1 fr then t else v1), (if eq_spec_var v2 fr then t else v2), pos)
 
 and e_apply_one (fr, t) e = match e with
-  | Null _ | IConst _ -> e
+  | Null _ | IConst _ | FConst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
 										e_apply_one (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_one (fr, t) a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
@@ -958,9 +1034,13 @@ and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq
 and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Null _ -> e
   | IConst _ -> e
+  | FConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-  | Mult (c, a, pos) -> Mult (c, a_apply_par_term sst a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -1007,9 +1087,13 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf = match bf with
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ -> e
   | IConst _ -> e
+  | FConst _ -> e
   | Add (a1, a2, pos) -> Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, a_apply_one_term (fr, t) a, pos)
+  | Mult (a1, a2, pos) ->
+      Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -1128,9 +1212,136 @@ and disj_of_list (disj_list : formula list) pos : formula =
 	| [] -> mkTrue pos
 	| h :: [] -> h
 	| h :: rest -> mkOr h (disj_of_list rest pos) pos
-(* 16.04.09 *)	
+(* 16.04.09 *)
 
-and elim_exists (f0 : formula) : formula = match f0 with
+and find_bound v f0 =
+  match f0 with
+  | And (f1, f2, pos) ->
+      begin
+      let min1, max1 = find_bound v f1 in
+      let min2, max2 = find_bound v f2 in
+      let min = 
+        match min1, min2 with
+        | None, None -> None
+        | Some m1, Some m2 -> if m1 < m2 then min1 else min2 
+        | Some m, None -> min1
+        | None, Some m -> min2
+      in
+      let max =
+        match max1, max2 with
+        | None, None -> None
+        | Some m1, Some m2 -> if m1 > m2 then max1 else max2 
+        | Some m, None -> max1 
+        | None, Some m -> max2
+      in
+      (min, max)
+      end
+  | BForm bf -> find_bound_b_formula v bf
+  | _ -> None, None
+
+  (*
+and find_bound_b_formula_redlog v f0 =
+  let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in
+  let res = Redlog.send_and_receive cmd in
+  print_endline res
+  *)
+
+and find_bound_b_formula v f0 =
+  let val_for_max e included =
+    if included then
+      (* x <= e --> max(x) = floor(e) *)
+      to_int_const e Floor
+    else
+      (* x < e --> max(x) = ceil(e) - 1 *)
+      (to_int_const e Ceil) - 1
+  in
+  let val_for_min e included = 
+    if included then
+      (* x >= e --> min(x) = ceil(e) *)
+      to_int_const e Ceil
+    else
+      (* x > e --> min(x) = floor(e) + 1 *)
+      (to_int_const e Floor) + 1
+  in
+  let helper e1 e2 is_lt is_eq =
+    if (is_var e1) && (is_num e2) then
+      let v1 = to_var e1 in
+      if eq_spec_var v1 v then
+        if is_lt then
+          let max = val_for_max e2 is_eq in
+          (None, Some max)
+        else
+          let min = val_for_min e2 is_eq in
+          (Some min, None)
+      else
+        (None, None)
+    else if (is_var e2) && (is_num e1) then
+      let v2 = to_var e2 in
+      if eq_spec_var v2 v then
+        if is_lt then
+          let min = val_for_min e1 is_eq in
+          (Some min, None)
+        else
+          let max = val_for_max e1 is_eq in
+          (None, Some max)
+      else
+        (None, None)
+    else
+      (None, None)
+  in
+  match f0 with
+  | Lt (e1, e2, pos) -> helper e1 e2 true false
+  | Lte (e1, e2, pos) -> helper e1 e2 true true
+  | Gt (e1, e2, pos) -> helper e1 e2 false false
+  | Gte (e1, e2, pos) -> helper e1 e2 false true
+  | _ -> (None, None)
+
+and elim_exists_with_ineq (f0: formula): formula =
+  match f0 with
+  | Exists (qvar, qf, pos) ->
+      begin
+        match qf with
+        | Or (qf1, qf2, qpos) ->
+            let new_qf1 = mkExists [qvar] qf1 qpos in
+            let new_qf2 = mkExists [qvar] qf2 qpos in
+            let eqf1 = elim_exists_with_ineq new_qf1 in
+            let eqf2 = elim_exists_with_ineq new_qf2 in
+            let res = mkOr eqf1 eqf2 pos in
+            res
+        | _ ->
+            let eqqf = elim_exists qf in
+            let min, max = find_bound qvar eqqf in
+            begin
+              match min, max with
+              | Some mi, Some ma -> 
+                  let res = ref (mkFalse pos) in
+                  begin
+                    for i = mi to ma do
+                      res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) pos
+                    done;
+                    !res
+                  end
+              | _ -> f0
+            end
+      end
+  | And (f1, f2, pos) ->
+      let ef1 = elim_exists_with_ineq f1 in
+      let ef2 = elim_exists_with_ineq f2 in
+      mkAnd ef1 ef2 pos
+  | Or (f1, f2, pos) ->
+      let ef1 = elim_exists_with_ineq f1 in
+      let ef2 = elim_exists_with_ineq f2 in
+      mkOr ef1 ef2 pos
+  | Not (f1, pos) ->
+      let ef1 = elim_exists_with_ineq f1 in
+      mkNot ef1 pos
+  | Forall (qvar, qf, pos) ->
+      let eqf = elim_exists_with_ineq qf in
+      mkForall [qvar] eqf pos
+  | BForm _ -> f0
+
+and elim_exists (f0 : formula) : formula = 
+  match f0 with
   | Exists (qvar, qf, pos) -> begin
 	  match qf with
 		| Or (qf1, qf2, qpos) ->
@@ -1141,6 +1352,7 @@ and elim_exists (f0 : formula) : formula = match f0 with
 			let res = mkOr eqf1 eqf2 pos in
 			  res
 		| _ ->
+      let qf = elim_exists qf in
 			let qvars0, bare_f = split_ex_quantifiers qf in
 			let qvars = qvar :: qvars0 in
 			let conjs = list_of_conjs bare_f in
@@ -1152,13 +1364,13 @@ and elim_exists (f0 : formula) : formula = match f0 with
 			let with_qvars = conj_of_list with_qvars_list pos in
 			  (* now eliminate the top existential variable. *)
 			let st, pp1 = get_subst_equation with_qvars qvar in
-			  if not (Util.empty st) then
+			if not (Util.empty st) then
 				let new_qf = subst_term st pp1 in
 				let new_qf = mkExists qvars0 new_qf pos in
 				let tmp3 = elim_exists new_qf in
 				let tmp4 = mkAnd no_qvars tmp3 pos in
 				  tmp4
-			  else (* if qvar is not equated to any variables, try the next one *)
+			else (* if qvar is not equated to any variables, try the next one *)
 				let tmp1 = elim_exists qf in
 				let tmp2 = mkExists [qvar] tmp1 pos in
 				  tmp2
@@ -1186,7 +1398,6 @@ and elim_exists (f0 : formula) : formula = match f0 with
 		res
 	end
   | BForm _ -> f0
-
 
 (**************************************************************)
 (**************************************************************)
@@ -1433,13 +1644,16 @@ and b_apply_one_exp (fr, t) bf = match bf with
 	| BagMin (v1, v2, pos) -> bf
 
 and e_apply_one_exp (fr, t) e = match e with
-  | Null _ | IConst _ -> e
+  | Null _ | IConst _ | FConst _ -> e
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Add (a1, a2, pos) -> Add (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one_exp (fr, t) a1,
 										e_apply_one_exp (fr, t) a2, pos)
-  | Mult (c, a, pos) -> Mult (c, e_apply_one_exp (fr, t) a, pos)
+  | Mult (a1, a2, pos) -> 
+      Mult (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+  | Div (a1, a2, pos) ->
+      Div (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one_exp (fr, t) a1,
 							  e_apply_one_exp (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one_exp (fr, t) a1,
@@ -1589,9 +1803,11 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 					  | Null _ 
 					  | Var _ 
 					  | IConst _ -> true
+            | FConst _ -> true
 					  | Add (e1,e2,_)
 					  | Subtract (e1,e2,_) -> false
 					  | Mult _
+            | Div _
 					  | Max _ 
 					  | Min _
 					  | Bag _
@@ -1630,6 +1846,7 @@ and add_null f self : formula =
 	mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos)) no_pos
 	
 (*to fully extend*)
+(* TODO: double check this func *)
 and rel_compute e1 e2:constraint_rel = match (e1,e2) with
 	| Null _, Null _ -> Equal
 	| Null _, Var (v1,_)  -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
@@ -1682,21 +1899,26 @@ and b_form_list f: b_formula list = match f with
   | Exists (_,f,_) -> (b_form_list f)
 
 and simp_mult (e : exp) :  exp =
-  let rec normalize_add m lg (x :  exp) :  exp =
+  let rec normalize_add m lg (x: exp):  exp =
     match x with
     |  Add (e1, e2, l) ->
         let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
     | _ -> (match m with | None -> x | Some e ->  Add (e, x, lg)) in
   let rec acc_mult m e0 =
     match e0 with
-    |  Null _ -> e0
-    |  Var (v, l) ->
-        let r = (match m with | None -> e0 | Some c ->  Mult (c, e0, l))
-        in r
-    |  IConst (v, l) ->
-        let r =
-          (match m with | None -> e0 | Some c ->  IConst (c * v, l))
-        in r
+    | Null _ -> e0
+    | Var (v, l) ->
+        (match m with 
+        | None -> e0 
+        | Some c ->  Mult (IConst (c, l), e0, l))
+    | IConst (v, l) ->
+        (match m with 
+        | None -> e0 
+        | Some c ->  IConst (c * v, l))
+    | FConst (v, l) ->
+        (match m with
+        | None -> e0
+        | Some c -> FConst (v *. (float_of_int c), l))
     |  Add (e1, e2, l) ->
         normalize_add None l ( Add (acc_mult m e1, acc_mult m e2, l))
     |  Subtract (e1, e2, l) ->
@@ -1705,12 +1927,8 @@ and simp_mult (e : exp) :  exp =
              acc_mult
                (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
              l))
-    |  Mult (c, e1, l) ->
-        let r =
-          (match m with
-           | None -> acc_mult (Some c) e1
-           | Some c1 -> acc_mult (Some (c1 * c)) e1)
-        in r
+    | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
+    | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
     |  Max (e1, e2, l) ->
         Error.report_error
           {
@@ -1738,12 +1956,17 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   |  Null _ -> ((Some e), None)
   |  Var _ -> ((Some e), None)
   |  IConst (v, l) ->
-      if v > 0
-      then ((Some e), None)
-      else
-        if v < 0
-        then (None, (Some ( IConst (- v, l))))
-        else (None, None)
+      if v > 0 then 
+        ((Some e), None)
+      else if v < 0 then 
+        (None, (Some ( IConst (- v, l))))
+      else (None, None)
+  | FConst (v, l) ->
+      if v > 0.0 then
+        ((Some e), None)
+      else if v < 0.0 then
+        ((None, (Some (FConst (-. v, l)))))
+      else (None, None)
   |  Add (e1, e2, l) ->
       let (ts1, tm1) = split_sums e1 in
       let (ts2, tm2) = split_sums e2 in
@@ -1767,26 +1990,32 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
           Error.error_text =
             "got subtraction !! (Should have already been simplified )";
         }
-  |  Mult (v, e1, l) ->
-      let (ts, tm) = split_sums e1 in
+  | Mult (e1, e2, l) ->
+      let ts1, tm1 = split_sums e1 in
+      let ts2, tm2 = split_sums e2 in
       let r =
-        (match (ts, tm) with
-         | (None, None) -> (None, None)
-         | (Some r1, None) ->
-             if v > 0
-             then ((Some ( Mult (v, r1, l))), None)
-             else
-               if v == 0
-               then (None, None)
-               else (None, (Some ( Mult (- v, r1, l))))
-         | (None, Some r1) ->
-             if v > 0
-             then (None, (Some ( Mult (v, r1, l))))
-             else
-               if v == 0
-               then (None, None)
-               else ((Some ( Mult (- v, r1, l))), None)
-         | _ -> ((Some e), None))
+        match ts1, tm1, ts2, tm2 with
+        | None, None, _, _ -> None, None
+        | _, _, None, None -> None, None
+        | Some r1, None, Some r2, None -> Some (Mult (r1, r2, l)), None
+        | Some r1, None, None, Some r2 -> None, Some (Mult (r1, r2, l))
+        | None, Some r1, Some r2, None -> None, Some (Mult (r1, r2, l))
+        | None, Some r1, None, Some r2 -> Some (Mult (r1, r2, l)), None
+        | _ -> ((Some e), None) (* Undecidable cases *)
+      in r
+  | Div (e1, e2, l) ->
+      (* IMHO, this implementation is useless *)
+      let ts1, tm1 = split_sums e1 in
+      let ts2, tm2 = split_sums e2 in
+      let r =
+        match ts1, tm1, ts2, tm2 with
+        | None, None, _, _ -> None, None
+        | _, _, None, None -> failwith "[cpure.ml] split_sums: divide by zero"
+        | Some r1, None, Some r2, None -> Some (Div (r1, r2, l)), None
+        | Some r1, None, None, Some r2 -> None, Some (Div (r1, r2, l))
+        | None, Some r1, Some r2, None -> None, Some (Div (r1, r2, l))
+        | None, Some r1, None, Some r2 -> Some (Div (r1, r2, l)), None
+        | _ -> Some e, None
       in r
   |  Max (e1, e2, l) ->
       Error.report_error
@@ -1829,18 +2058,109 @@ and purge_mult (e :  exp):  exp = match e with
 	|  Null _ -> e
   |  Var _ -> e
   |  IConst _ -> e
+  | FConst _ -> e
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
-  |  Mult (i, a, l) -> if (i == 0) then  IConst (0, l)
-										else if (i == 1) then (purge_mult a) 
-													else 
-														let inter = purge_mult a in
-														let r = 
-														match inter with
-														|  IConst(v, _) -> if (v == 0) then inter
-																									else  IConst(i * v, l)
-														| _ ->  Mult(i, inter, l) in r
-													 
+  | Mult (e1, e2, l) ->
+      let t1 = purge_mult e1 in
+      let t2 = purge_mult e2 in
+      begin
+        match t1 with
+        | IConst (v1, _) -> 
+            if (v1 = 0) then t1 
+            else if (v1 = 1) then t2 
+            else begin 
+              match t2 with
+              | IConst (v2, _) -> IConst (v1 * v2, l)
+              | FConst (v2, _) -> FConst ((float_of_int v1) *. v2, l)
+              | _ -> Mult (t1, t2, l)
+            end
+        | FConst (v1, _) ->
+            if (v1 = 0.0) then t1 
+            else begin
+              match t2 with
+              | IConst (v2, _) -> FConst (v1 *. (float_of_int v2), l)
+              | FConst (v2, _) -> FConst (v1 *. v2, l)
+              | _ -> Mult (t1, t2, l)
+            end
+        | _ -> 
+            begin
+              match t2 with
+              | IConst (v2, _) -> 
+                  if (v2 = 0) then t2 
+                  else if (v2 = 1) then t1 
+                  else Mult (t1, t2, l)
+              | FConst (v2, _) ->
+                  if (v2 = 0.0) then t2 
+                  else Mult (t1, t2, l)
+              | _ -> Mult (t1, t2, l) 
+            end
+      end
+  | Div (e1, e2, l) ->
+      let t1 = purge_mult e1 in
+      let t2 = purge_mult e2 in
+      begin
+        match t1 with
+        | IConst (v1, _) ->
+            if (v1 = 0) then FConst (0.0, l) 
+            else begin
+             match t2 with
+              | IConst (v2, _) ->
+                  if (v2 = 0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else FConst((float_of_int v1) /. (float_of_int v2), l)
+              | FConst (v2, _) ->
+                  if (v2 = 0.0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else FConst((float_of_int v1) /. v2, l)
+              | _ -> Div (t1, t2, l) 
+            end
+        | FConst (v1, _) ->
+            if (v1 = 0.0) then FConst (0.0, l)
+            else begin
+              match t2 with
+              | IConst (v2, _) ->
+                  if (v2 = 0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else FConst(v1 /. (float_of_int v2), l)
+              | FConst (v2, _) ->
+                  if (v2 = 0.0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else FConst(v1 /. v2, l)
+              | _ -> Div (t1, t2, l)
+            end
+        | _ -> 
+            begin
+              match t2 with
+              | IConst (v2, _) ->
+                  if (v2 = 0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else Div (t1, t2, l)
+              | FConst (v2, _) ->
+                  if (v2 = 0.0) then
+                    Error.report_error {
+                      Error.error_loc = l;
+                      Error.error_text = "divided by zero";
+                    }
+                  else Div (t1, t2, l)
+              | _ -> Div (t1, t2, l)
+            end
+      end
   |  Max (e1, e2, l) ->  Max((purge_mult e1), (purge_mult e2), l)
   |  Min (e1, e2, l) ->  Min((purge_mult e1), (purge_mult e2), l)
   |  Bag (el, l) ->  Bag ((List.map purge_mult el), l)

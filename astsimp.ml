@@ -58,20 +58,56 @@ Primitives handling stuff
 let prim_str =
   "int add___(int a, int b) requires true ensures res = a + b;
 int minus___(int a, int b) requires true ensures res = a - b;
-int mult___(int a, int b) requires true ensures true;
-int div___(int a, int b) requires true ensures true;
-int mod___(int a, int b) requires true ensures - b < res < b;
+int mult___(int a, int b) requires true ensures res = a * b;
+
+int div___(int a, int b) case {
+  a >= 0 -> case {
+    b >= 1 -> requires true ensures a = b*res + r & res >= 0 & 0 <= r <= b-1;
+    b <= -1 -> requires true ensures a = b*res + r & res <= 0 & 0 <= r <= -b-1;
+    -1 < b < 1 -> requires false ensures false;
+    }
+  a < 0 -> case {
+    b >= 1 -> requires true ensures a = b*res + r & res <= -1 & 0 <= r <= b-1;
+    b <= -1 -> requires true ensures a = b*res + r & res >= 1 & 0 <= r <= -b-1;
+    -1 < b < 1 -> requires false ensures false;
+    }
+}
+
+int mod___(int a, int b) case {
+  a >= 0 -> case {
+    b >= 1 -> requires true ensures a = b*q + res & q >= 0 & 0 <= res <= b-1;
+    b <= -1 -> requires true ensures a = b*q + res & q <= 0 & 0 <= res <= -b-1;
+    -1 < b < 1 -> requires false ensures false;
+  }
+  a < 0 -> case {
+    b >= 1 -> requires true ensures a = b*q + res & q <= -1 & 0 <= res <= b-1;
+    b <= -1 -> requires true ensures a = b*q + res & q >= 1 & 0 <= res <= -b-1;
+    -1 < b < 1 -> requires false ensures false;
+  }
+}
+
+float add___(float a, float b) requires true ensures res = a + b;
+float minus___(float a, float b) requires true ensures res = a - b;
+float mult___(float a, float b) requires true ensures res = a * b;
+float div___(float a, float b) requires b != 0.0 ensures res = a / b;
 bool eq___(int a, int b) requires true ensures res & a = b or !res & a!= b;
 bool eq___(bool a, bool b) requires true ensures res & a = b or !res & a!= b;
+bool eq___(float a, float b) requires true ensures res & a = b or !res & a != b;
 bool neq___(int a, int b) requires true ensures !res & a = b or res & a!= b;
 bool neq___(bool a, bool b) requires true ensures !res & a = b or res & a!= b;
+bool neq___(float a, float b) requires true ensures !res & a = b or res & a != b;
 bool lt___(int a, int b) requires true ensures res & a < b or a >= b & !res;
+bool lt___(float a, float b) requires true ensures res & a < b or a >= b & !res;
 bool lte___(int a, int b) requires true ensures res & a <= b or a > b & !res;
+bool lte___(float a, float b) requires true ensures res & a <= b or a > b & !res;
 bool gt___(int a, int b) requires true ensures a > b & res or a <= b & !res;
+bool gt___(float a, float b) requires true ensures a > b & res or a <= b & !res;
 bool gte___(int a, int b) requires true ensures a >= b & res or a < b & !res;
+bool gte___(float a, float b) requires true ensures a >= b & res or a < b & !res;
 bool land___(bool a, bool b) requires true ensures a & b & res or !a & !res or !b & !res;
 bool lor___(bool a, bool b) requires true ensures a & res or b & res or !a & !b & !res;
 bool not___(bool a) requires true ensures a & !res or !a & res;
+int pow___(int a, int b) requires true ensures true;
 "
 and string_of_stab stab = Hashtbl.fold 
 		(fun c1 c2 a -> 
@@ -143,7 +179,8 @@ let _ =
       (I.OpNeq, "neq___"); (I.OpLt, "lt___"); (I.OpLte, "lte___");
       (I.OpGt, "gt___"); (I.OpGte, "gte___"); (I.OpLogicalAnd, "land___");
       (I.OpLogicalOr, "lor___"); (I.OpIsNull, "is_null___");
-      (I.OpIsNotNull, "is_not_null___") ]
+      (I.OpIsNotNull, "is_not_null___");
+    ]
   
 let get_binop_call (bop : I.bin_op) : ident =
   try Hashtbl.find op_map bop
@@ -221,7 +258,8 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   | IP.Add (e1, e2, _) | IP.Subtract (e1, e2, _) | IP.Max (e1, e2, _) |
       IP.Min (e1, e2, _) | IP.BagDiff (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
-  | IP.Mult (_, e1, _) -> look_for_anonymous_exp e1
+  | IP.Mult (e1, e2, _) | IP.Div (e1, e2, _) ->
+      List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) ->
       look_for_anonymous_exp_list e1
   | _ -> []
@@ -2946,7 +2984,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       let cw_proc = trans_proc new_prog w_proc
       in (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
 	  
-  | Iast.FloatLit _ -> failwith (Iprinter.string_of_exp ie)
+  | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
+      (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
   | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
   | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
   | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)
@@ -3907,11 +3946,13 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   | IP.Null pos -> CP.Null pos
   | IP.Var ((v, p), pos) -> CP.Var ((trans_var (v,p) stab pos),pos)
   | IP.IConst (c, pos) -> CP.IConst (c, pos)
+  | IP.FConst (c, pos) -> CP.FConst (c, pos)
   | IP.Add (e1, e2, pos) ->
       CP.Add (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Subtract (e1, e2, pos) ->
       CP.Subtract (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
-  | IP.Mult (c, e, pos) -> CP.Mult (c, trans_pure_exp e stab, pos)
+  | IP.Mult (e1, e2, pos) -> CP.Mult (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
+  | IP.Div (e1, e2, pos) -> CP.Div (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Max (e1, e2, pos) ->
       CP.Max (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
   | IP.Min (e1, e2, pos) ->
@@ -3976,7 +4017,6 @@ and set_var_kind2 (var1 : ident) (var2 : ident) (k : spec_var_kind) (stab : spec
 							let _ = List.map (fun c-> Hashtbl.replace stab c a1) a2_keys in ()) in ()
 (*H.find stab var let r = set_var_kind va1 k stab in H.replace stab va2 r*)
 
-  
 and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
   try
     let k = H.find stab var in
@@ -4012,11 +4052,22 @@ and collect_type_info_b_formula b0 stab =
       collect_type_info_var bv stab (Known C.bool_type) pos
   | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
       IP.Gte (a1, a2, pos) ->
-      (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
+        let t1 = guess_type_of_exp_arith a1 stab in
+        let t2 = guess_type_of_exp_arith a2 stab in
+        begin
+          match t1, t2 with
+          | Unknown, Known _ ->
+              (collect_type_info_arith a1 stab t2; collect_type_info_arith a2 stab t2)
+          | Known _, Unknown ->
+              (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t1)
+          | _ ->
+              (* TODO: check for type consistency *)
+              (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t2)
+        end
   | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) ->
-      (collect_type_info_arith a1 stab;
-       collect_type_info_arith a2 stab;
-       collect_type_info_arith a3 stab)
+      (collect_type_info_arith a1 stab Unknown;
+       collect_type_info_arith a2 stab Unknown;
+       collect_type_info_arith a3 stab Unknown)
   | IP.BagIn ((v, p), e, pos) ->
       (collect_type_info_var v stab Unknown pos;
        collect_type_info_bag e stab)
@@ -4067,21 +4118,24 @@ and collect_type_info_b_formula b0 stab =
                ((Known (CP.OType "")),
                 (collect_type_info_pointer a1' (Known (CP.OType "")) stab))
              else
-               if IP.is_bag a2'
-               then ((Known C.bag_type), (collect_type_info_bag a2' stab))
-               else ((Known C.int_type), (collect_type_info_arith a2' stab)) in
-           let r = unify_var_kind k1 k2
+               if IP.is_bag a2' then 
+                 ((Known C.bag_type), (collect_type_info_bag a2' stab))
+               else
+                 let expected_type = guess_type_of_exp_arith a2' stab in
+                 (expected_type, collect_type_info_arith a2' stab expected_type)
            in
+           let r = unify_var_kind k1 k2 in
              match r with
              | Some k -> ignore (set_var_kind va1' k stab)
              | None ->
+                 (print_stab stab;
                  Err.report_error
                    {
                      Err.error_loc = pos;
                      Err.error_text =
                        "type-mismatch in equation (2): " ^
                          (Iprinter.string_of_b_formula b0);
-                   })
+                   }))
         else
           if (IP.is_null a1) && (IP.is_null a2)
           then ()
@@ -4093,8 +4147,8 @@ and collect_type_info_b_formula b0 stab =
                 (collect_type_info_bag a1 stab;
                  collect_type_info_bag a2 stab)
               else
-                (collect_type_info_arith a1 stab;
-                 collect_type_info_arith a2 stab)
+                (collect_type_info_arith a1 stab Unknown;
+                 collect_type_info_arith a2 stab Unknown)
             else
               Err.report_error
                 {
@@ -4105,7 +4159,43 @@ and collect_type_info_b_formula b0 stab =
                 } in
 	(*let _ = print_string ("\n new stab: "^(string_of_stab stab)^"\n") in *)()
 
-and collect_type_info_arith a0 stab =
+and guess_type_of_exp_arith a0 stab =
+  match a0 with
+  | IP.Null _ -> Unknown
+  | IP.Var ((sv, sp), pos) ->
+      begin
+        try
+          let info = Hashtbl.find stab sv in
+          info.sv_info_kind
+        with Not_found -> Unknown
+      end
+  | IP.Add (e1, e2, pos) | IP.Subtract (e1, e2, pos) | IP.Mult (e1, e2, pos)
+  | IP.Max (e1, e2, pos) | IP.Min (e1, e2, pos) | IP.Div (e1, e2, pos) ->
+      let t1 = guess_type_of_exp_arith e1 stab in
+      let t2 = guess_type_of_exp_arith e2 stab in
+      begin
+        match t1, t2 with
+        | Known (CP.Prim Int), Known (CP.Prim Int) -> t1
+        | Known (CP.Prim Int), Unknown -> t1
+        | Unknown, Known (CP.Prim Int) -> t2
+        | Known (CP.Prim Float), Known (CP.Prim Float) -> t1
+        | Known (CP.Prim Float), Unknown -> t1
+        | Unknown, Known (CP.Prim Float) -> t2
+        | Known (CP.Prim Int), Known (CP.Prim Float)
+        | Known (CP.Prim Float), Known (CP.Prim Int) ->
+            Err.report_error
+              {
+                Err.error_loc = pos;
+                Err.error_text = "int<>float: type-mismatch in expression: " ^ (Iprinter.string_of_formula_exp a0);
+              }
+        | _ -> Unknown
+      end
+  (* | IP.Div _ -> Known (CP.Prim Float) *)
+  | IP.IConst _ -> Known (CP.Prim Int)
+  | IP.FConst _ -> Known (CP.Prim Float)
+  | _ -> Unknown
+
+and collect_type_info_arith a0 stab expected_type =
   match a0 with
   | IP.Null pos ->
       Err.report_error
@@ -4114,12 +4204,22 @@ and collect_type_info_arith a0 stab =
           Err.error_text = "null is not allowed in arithmetic term";
         }
   | IP.Var ((sv, sp), pos) ->
-      collect_type_info_var sv stab (Known C.int_type) pos
+      begin
+        match expected_type with
+        | Known typ ->
+            begin
+              collect_type_info_var sv stab expected_type pos;
+            end
+        | Unknown ->
+            collect_type_info_var sv stab expected_type pos;
+      end
   | IP.IConst _ -> ()
+  | IP.FConst _ -> ()
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
       IP.Min (a1, a2, pos) ->
-      (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
-  | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
+      (collect_type_info_arith a1 stab expected_type; collect_type_info_arith a2 stab expected_type)
+  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
+      (collect_type_info_arith a1 stab expected_type; collect_type_info_arith a2 stab expected_type)
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_arith: encountered bag constraint"
 
@@ -4133,10 +4233,12 @@ and collect_type_info_bag_content a0 stab =
         }
   | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab Unknown pos
   | IP.IConst _ -> ()
+  | IP.FConst _ -> ()
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
       IP.Min (a1, a2, pos) ->
-      (collect_type_info_arith a1 stab; collect_type_info_arith a2 stab)
-  | IP.Mult (c, a1, pos) -> collect_type_info_arith a1 stab
+      (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
+  | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
+      (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_arith: encountered bag constraint"
 
@@ -4158,8 +4260,9 @@ and collect_type_info_bag (e0 : IP.exp) stab =
   | IP.BagIntersect ([], pos) -> ()
   | IP.BagDiff (a1, a2, pos) ->
       (collect_type_info_bag a1 stab; collect_type_info_bag a2 stab)
-  | IP.Min _ | IP.Max _ | IP.Mult _ | IP.Subtract _ | IP.Add _ | IP.IConst _
-      | IP.Null _ ->
+  | IP.Min _ | IP.Max _ 
+  | IP.Mult _ | IP.Div _ | IP.Subtract _ | IP.Add _ 
+  | IP.IConst _ | IP.FConst _ | IP.Null _ ->
       failwith "collect_type_info_bag: encountered arithmetic constraint"
 
 and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
@@ -4175,11 +4278,13 @@ and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
 
 and collect_type_info_formula prog f0 stab filter_res = 
 	(*let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in*)
-	let helper pure  branches heap = 
-		(collect_type_info_pure pure stab;
-		let _ = List.map (fun (c1,c2)->collect_type_info_pure c2 stab) branches in
-		collect_type_info_heap prog heap stab)	in
-	match f0 with
+  let helper pure branches heap = 
+    (
+      collect_type_info_heap prog heap stab;
+      collect_type_info_pure pure stab;
+      ignore (List.map (fun (c1,c2) -> collect_type_info_pure c2 stab) branches)
+    )	in
+  match f0 with
 	| Iformula.Or b-> ( collect_type_info_formula prog b.Iformula.formula_or_f1 stab filter_res;
 						collect_type_info_formula prog b.Iformula.formula_or_f2 stab filter_res)
 	| Iformula.Exists b -> 
@@ -4288,7 +4393,8 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                     Err.error_loc = IP.pos_of_exp ie;
                     Err.error_text = "expecting type bool";
                   }
-          | CP.Prim Int -> collect_type_info_arith ie st
+          | CP.Prim Int -> collect_type_info_arith ie st (Known C.int_type)
+          | CP.Prim Float -> collect_type_info_arith ie st (Known C.float_type)
           | CP.Prim _ -> ()
           | CP.OType _ -> collect_type_info_pointer ie (Known t) st);
          st)

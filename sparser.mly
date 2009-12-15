@@ -733,7 +733,7 @@ cexp
 	  P.IConst ($1, get_pos 1)
 	}
   | LITERAL_INTEGER cid {
-	  P.mkMult $1 (P.Var ($2, get_pos 2)) (get_pos 1)
+	  P.mkMult (P.IConst ($1, get_pos 1)) (P.Var ($2, get_pos 2)) (get_pos 1)
 	}
   | cexp PLUS cexp {
 	  P.mkAdd $1 $3 (get_pos 2)

@@ -62,9 +62,9 @@ let rec string_of_h_formula h = match h with
   | HFalse -> "false"
 
 let need_parenthesis = function 
-(*    | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _  -> false 
-    | _                                                    -> true *)
-	_ -> false
+    | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _  -> false 
+    | _                                                    -> true
+	(* _ -> false *)
 ;; 
 
 (* pretty printing for an expression for a formula *)
@@ -75,17 +75,41 @@ let rec string_of_formula_exp = function
 														 | Primed    -> "'" 
 														 | Unprimed  -> "" ))
   | P.IConst (i, l)           -> string_of_int i
-  | P.Add (e1, e2, l)	      -> (match e1 with 
-    | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _        -> (string_of_formula_exp e1) ^ "+"   			      
-    | _                                                          -> "(" ^ (string_of_formula_exp e1) ^ ")+") ^ (match e2 with 
-           | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> string_of_formula_exp e2
-	   | _                                                   -> "(" ^ (string_of_formula_exp e2) ^ ")")
-  | P.Subtract (e1, e2, l)    -> if need_parenthesis e1
-    then 
-      if need_parenthesis e2
-      then  "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
-	  else "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
-    else (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2)										    | P.Mult (i, e, l)          -> (string_of_int i) ^ " * " ^ (if need_parenthesis e then "(" ^ (string_of_formula_exp e) ^ ")" else string_of_formula_exp e)
+  | P.FConst (f, l) -> string_of_float f
+  | P.Add (e1, e2, l) -> 
+      (match e1 with 
+      | P.Null _ | P.Var _ | P.IConst _ | P.FConst _ | P.Max _ | P.Min _ -> 
+          (string_of_formula_exp e1) ^ "+"   			      
+      | _ -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
+      ^ 
+      (match e2 with 
+      | P.Null _ | P.Var _ | P.IConst _ | P.FConst _ | P.Max _ | P.Min _ -> 
+          string_of_formula_exp e2
+	    | _ -> "(" ^ (string_of_formula_exp e2) ^ ")")
+  | P.Subtract (e1, e2, l) ->
+      if need_parenthesis e1 then 
+        if need_parenthesis e2 then
+          "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
+	      else 
+          "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
+      else 
+        (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2)
+  | P.Mult (e1, e2, l) ->
+      (if need_parenthesis e1 then
+        "(" ^ (string_of_formula_exp e1) ^ ")"
+      else string_of_formula_exp e1)
+      ^ "*" ^
+      (if need_parenthesis e2 then
+        "(" ^ (string_of_formula_exp e2) ^ ")"
+      else string_of_formula_exp e2)
+  | P.Div (e1, e2, l) -> 
+      (if need_parenthesis e1 then
+        "(" ^ (string_of_formula_exp e1) ^ ")"
+      else string_of_formula_exp e1)
+      ^ "/" ^
+      (if need_parenthesis e2 then
+        "(" ^ (string_of_formula_exp e2) ^ ")"
+      else string_of_formula_exp e2)
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
   | P.Bag (elist, l) 					-> "{" ^ (string_of_formula_exp_list elist) ^ "}"

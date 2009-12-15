@@ -55,8 +55,9 @@ let rec smt_of_exp a =(*{{{*)
         | CP.IConst (i, _)        -> string_of_int i
         | CP.Add (a1, a2, _)      -> "(+ " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
         | CP.Subtract (a1, a2, _) -> "(- " ^(smt_of_exp a1)^ " " ^ (smt_of_exp a2)^")"
-        | CP.Mult (c, a, _)       -> "( * " ^(smt_of_exp a)^ " " ^ (string_of_int c)^")"
+        | CP.Mult (a1, a2, _) -> "( * " ^ (smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
         (* UNHANDLED *)
+        | CP.Div _ -> failwith "[smtsolver.ml]: divide is not supported."
         | CP.Bag ([], _) -> "0"
         | CP.Max _
         | CP.Min _ -> failwith ("Smtsolver.smt_of_exp: min/max should not appear here")

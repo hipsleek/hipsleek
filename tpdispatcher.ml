@@ -18,6 +18,8 @@ type tp_type =
   | CM (* CVC Lite then MONA *)
   | Coq
   | Z3
+  | Redlog
+  | RM (* Redlog and Mona *)
 
 let tp = ref OmegaCalc
 
@@ -230,6 +232,12 @@ let set_tp tp_str =
 	tp := Coq
   else if tp_str = "z3" then 
 	tp := Z3
+  else if tp_str = "redlog" then
+    tp := Redlog
+  else if tp_str = "rm" then
+    tp := RM
+  else if tp_str = "prm" then
+    (Redlog.is_presburger := true; tp := RM)
   else
 	()
 
@@ -268,11 +276,13 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
 and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _
   | CP.Var _
+  | CP.FConst _
   | CP.IConst _ -> false
   | CP.Add (e1, e2, _)
   | CP.Subtract (e1, e2, _) (* ->  (is_bag_constraint_exp e1) || (is_bag_constraint_exp e2) *)
 	  -> false
   | CP.Mult _
+  | CP.Div _
   | CP.Max _
   | CP.Min _ -> false
 	  (* bag expressions *)
@@ -343,8 +353,16 @@ let elim_exists_flag = ref true
 let filtering_flag = ref true
 
 let elim_exists (f : CP.formula) : CP.formula =
-  if !elim_exists_flag then CP.elim_exists f
-  else f
+  let ef = if !elim_exists_flag then CP.elim_exists f else f in
+  if !Redlog.integer_relax_mode then
+    (*
+    print_endline "** Existential quantifiers elimination:";
+    print_endline (Cprinter.string_of_pure_formula f);
+    print_endline (Cprinter.string_of_pure_formula (CP.elim_exists_with_ineq f));
+    *)
+    CP.elim_exists_with_ineq ef
+  else
+    ef
 
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
   if !filtering_flag then
@@ -410,6 +428,12 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			  (Omega.is_sat f sat_no);
 			end
 	  | SetMONA -> Setmona.is_sat f
+      | Redlog -> Redlog.is_sat f sat_no
+      | RM ->
+          if (is_bag_constraint f) then
+            Mona.is_sat f sat_no
+          else
+            Redlog.is_sat f sat_no
 
 let simplify (f : CP.formula) : CP.formula =
 	if !external_prover then 
@@ -433,6 +457,12 @@ let simplify (f : CP.formula) : CP.formula =
   | CM ->
 	  if is_bag_constraint f then Mona.simplify f
 	  else Omega.simplify f
+  | Redlog -> Redlog.simplify f
+  | RM -> 
+      if is_bag_constraint f then
+        Mona.simplify f
+      else
+        Redlog.simplify f
   | _ ->
 (*
 	  if (is_bag_constraint f) then
@@ -457,6 +487,12 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.hull f
 	  else Omega.hull f
+  | Redlog -> Redlog.hull f
+  | RM ->
+      if is_bag_constraint f then
+        Mona.hull f
+      else
+        Redlog.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -482,6 +518,10 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.pairwisecheck f
 	  else Omega.pairwisecheck f
+  | Redlog -> Redlog.pairwisecheck f
+  | RM ->
+      if is_bag_constraint f then Mona.pairwisecheck f
+      else Redlog.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -550,6 +590,12 @@ let tp_imply ante conseq imp_no timeout =
 		(Omega.imply ante conseq imp_no timeout)
   | SetMONA ->
 	  Setmona.imply ante conseq 
+  | Redlog -> Redlog.imply ante conseq imp_no
+  | RM -> 
+      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+        Mona.imply timeout ante conseq imp_no
+      else
+        Redlog.imply ante conseq imp_no
 ;;
 
 (* renames all quantified variables *)
@@ -673,8 +719,6 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	if CP.should_simplify conseq0 then simplify conseq0
 	else conseq0
   in
-	(*	print_string ("conseq0: " ^ (Cprinter.string_of_pure_formula conseq0) ^ "\n");
-		print_string ("conseq: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n"); *)
 	if CP.isConstTrue conseq0 then
 	  true
 	else
@@ -727,3 +771,11 @@ let is_sat f sat_no =
 let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
+
+let prepare () = match !tp with
+  | Redlog | RM -> Redlog.start_red ()
+  | _ -> ()
+
+let finalize () = match !tp with
+  | Redlog | RM -> Redlog.stop_red ()
+  | _ -> ()

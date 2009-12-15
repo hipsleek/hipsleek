@@ -671,6 +671,7 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 	| Ipure.Null _ -> (e, None)
   | Ipure.Var _ -> (e, None)
   | Ipure.IConst _ -> (e, None)
+  | Ipure.FConst _ -> (e, None)
   | Ipure.Add (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in
@@ -689,10 +690,24 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 					| None, Some p -> Some p
 					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))in
 			(Ipure.Subtract (ne1, ne2, l), r) 
-  | Ipure.Mult (c, e1, l) ->
-			let ne1, np1 = float_out_exp_min_max e1 in
-			(Ipure.Mult (c, ne1, l), np1)
-						 
+  | Ipure.Mult (e1, e2, l) ->
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match np1, np2 with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+      in (Ipure.Mult (ne1, ne2, l), r)
+  | Ipure.Div (e1, e2, l) ->
+      let ne1, np1 = float_out_exp_min_max e1 in
+      let ne2, np2 = float_out_exp_min_max e2 in
+      let r = match np1, np2 with
+        | None, None -> None
+        | Some p, None -> Some p
+        | None, Some p -> Some p
+        | Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+      in (Ipure.Div (ne1, ne2, l), r)						 
   | Ipure.Max (e1, e2, l) ->
 			let ne1, np1 = float_out_exp_min_max e1 in
 			let ne2, np2 = float_out_exp_min_max e2 in
@@ -795,6 +810,7 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 							| Ipure.Min(v1, v2, v3) -> let r2 = match e2 with
 																	| Ipure.Null _
 																	| Ipure.IConst _
+                                  | Ipure.FConst _
 																	| Ipure.Var _ ->
 																			 let ne1 , np1 = float_out_exp_min_max v1 in
 																			 let ne2 , np2 = float_out_exp_min_max v2 in
@@ -808,6 +824,7 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 							| Ipure.Max(v1, v2, v3) -> let r2 = match e2 with
 																						| Ipure.Null _
 																						| Ipure.IConst _
+                                            | Ipure.FConst _
 																						| Ipure.Var _ ->
 																								 let ne1 , np1 = float_out_exp_min_max v1 in
 																								 let ne2 , np2 = float_out_exp_min_max v2 in
@@ -821,6 +838,7 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																			in r2
 							| Ipure.Null _
 							| Ipure.IConst _
+              | Ipure.FConst _
 							| Ipure.Var _ -> let r2 = match e2 with
 																					| Ipure.Min (v1, v2, v3) ->
 																						 	 let ne1 , np1 = float_out_exp_min_max v1 in
@@ -1029,4 +1047,3 @@ let rec helper f = match f with
 List.map helper f 
 
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
-	

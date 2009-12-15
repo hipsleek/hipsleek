@@ -85,6 +85,8 @@ let process_cmd_line () = Arg.parse [
    "Log all formulae sent to Coq in file allinput.v");
   ("--log-mona", Arg.Set Mona.log_all_flag,
    "Log all formulae sent to Mona in file allinput.mona");
+  ("--log-redlog", Arg.Set Redlog.is_log_all,
+    "Log all formulae sent to Reduce/Redlog in file allinput.rl");
   ("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
    "Use the bag theory from Isabelle, instead of the set theory");
   ("--no-coercion", Arg.Clear Globals.use_coercion,
@@ -113,7 +115,8 @@ let process_cmd_line () = Arg.parse [
    "Stop checking on erroneous procedure");
   ("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
    "Build the image theory in Isabelle - default false");
-  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "set"; "cm"], Tpdispatcher.set_tp),
+   ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om";
+   "oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
    "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
   ("--use-field", Arg.Set Globals.use_field,
    "Use field construct instead of bind");
@@ -136,6 +139,8 @@ let process_cmd_line () = Arg.parse [
   ("-para", Arg.Int Typechecker.parallelize, "Use Paralib map_para instead of List.map in typecheker");
   ("--priority",Arg.String Tpdispatcher.Netprover.set_prio_list, "<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
   ("--decrprio",Arg.Set Tpdispatcher.decr_priority , "use a decreasing priority scheme");
+  ("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");
+  ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination")
   
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
@@ -183,6 +188,7 @@ let process_source_full source =
       let _ = Util.pop_time "Preprocessing" in
       print_string (Iprinter.string_of_program prog)
 	else 
+
 	  (* Global variables translating *)
        let _ = Util.push_time "Translating global var" in
    	  let _ = print_string ("Translating global variables to procedure parameters...\n") in
@@ -230,6 +236,10 @@ let process_source_full source =
 	  in
 	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
+
+    (* i.e. stop Reduce/Redlog if it is running. *)
+    let _ = Tpdispatcher.finalize () in
+
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
@@ -245,6 +255,10 @@ let process_source_full source =
 	  
 let main1 () =
   process_cmd_line ();
+  
+  (* i.e. pre-start Reduce/Redlog if it will be used. *)
+  let _ = Tpdispatcher.prepare () in
+  
   if List.length (!Globals.source_files) = 0 then begin
 	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
 	Globals.procs_verified := ["f3"];
