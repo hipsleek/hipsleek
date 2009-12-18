@@ -197,6 +197,8 @@ let assign_op_to_bin_op_map =
   
 let bin_op_of_assign_op (aop : I.assign_op) =
   List.assoc aop assign_op_to_bin_op_map
+
+let check_shallow_var = ref true
   
 (************************************************************
 AST translation
@@ -4033,10 +4035,10 @@ and collect_type_info_pure (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
   | IP.BForm b -> collect_type_info_b_formula b stab
   | IP.And (p1, p2, pos) | IP.Or (p1, p2, pos) ->
-      (collect_type_info_pure p1 stab; collect_type_info_pure p2 stab)
-  | IP.Not (p1, pos) -> collect_type_info_pure p1 stab
+        (collect_type_info_pure p1 stab; collect_type_info_pure p2 stab)
+  | IP.Not (p1, pos) -> collect_type_info_pure p1 stab 
   | IP.Forall ((qv, qp), qf, pos) | IP.Exists ((qv, qp), qf, pos) ->
-      if H.mem stab qv
+      if (H.mem stab qv) && !check_shallow_var
       then
         Err.report_error
           {
@@ -4065,9 +4067,20 @@ and collect_type_info_b_formula b0 stab =
               (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t2)
         end
   | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) ->
-      (collect_type_info_arith a1 stab Unknown;
-       collect_type_info_arith a2 stab Unknown;
-       collect_type_info_arith a3 stab Unknown)
+      let t1 = guess_type_of_exp_arith a1 stab in
+      let t2 = guess_type_of_exp_arith a2 stab in
+      let t3 = guess_type_of_exp_arith a3 stab in
+      let helper typ = 
+        (collect_type_info_arith a1 stab typ;
+         collect_type_info_arith a2 stab typ;
+         collect_type_info_arith a3 stab typ)
+      in begin
+        match t1, t2, t3 with
+        | Known _, Unknown, Unknown -> helper t1
+        | Unknown, Known _, Unknown -> helper t2
+        | Unknown, Unknown, Known _ -> helper t3
+        | _ -> helper Unknown
+      end
   | IP.BagIn ((v, p), e, pos) ->
       (collect_type_info_var v stab Unknown pos;
        collect_type_info_bag e stab)
@@ -4121,8 +4134,11 @@ and collect_type_info_b_formula b0 stab =
                if IP.is_bag a2' then 
                  ((Known C.bag_type), (collect_type_info_bag a2' stab))
                else
-                 let expected_type = guess_type_of_exp_arith a2' stab in
-                 (expected_type, collect_type_info_arith a2' stab expected_type)
+                 begin
+                   let typ = guess_type_of_exp_arith a2' stab in
+                   let a2_typ = if typ = Unknown then k1 else typ in
+                   (a2_typ, collect_type_info_arith a2' stab a2_typ)
+                 end
            in
            let r = unify_var_kind k1 k2 in
              match r with
@@ -4203,16 +4219,7 @@ and collect_type_info_arith a0 stab expected_type =
           Err.error_loc = pos;
           Err.error_text = "null is not allowed in arithmetic term";
         }
-  | IP.Var ((sv, sp), pos) ->
-      begin
-        match expected_type with
-        | Known typ ->
-            begin
-              collect_type_info_var sv stab expected_type pos;
-            end
-        | Unknown ->
-            collect_type_info_var sv stab expected_type pos;
-      end
+  | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab expected_type pos;
   | IP.IConst _ -> ()
   | IP.FConst _ -> ()
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
@@ -4236,7 +4243,7 @@ and collect_type_info_bag_content a0 stab =
   | IP.FConst _ -> ()
   | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
       IP.Min (a1, a2, pos) ->
-      (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
+          (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
   | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
       (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
   | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
@@ -4277,7 +4284,8 @@ and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
         }
 
 and collect_type_info_formula prog f0 stab filter_res = 
-	(*let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in*)
+	 (* let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in 
+   let _ = print_string ("stab: " ^ (string_of_stab stab) ^ "\n") in *)
   let helper pure branches heap = 
     (
       collect_type_info_heap prog heap stab;
@@ -4305,14 +4313,18 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 			| Iformula.ECase b ->  let _ = List.map (fun (c1,c2)->
 											let _ = collect_type_info_pure c1 stab in
 											inner_collector c2) b.Iformula.formula_case_branches in ()
-			| Iformula.EBase b ->  
-								   let _ = collect_type_info_formula prog b.Iformula.formula_ext_base stab false in
+			| Iformula.EBase b ->  let _ = collect_type_info_formula prog b.Iformula.formula_ext_base stab false in
 								   let _ = inner_collector b.Iformula.formula_ext_continuation in ()								
 			in
 		let _ = List.map helper f0 in 
 		() in
-	inner_collector f0
-
+  begin
+    inner_collector f0;
+    (* re-collect type info, don't check for shallowing outer var this time *)
+    check_shallow_var := false;
+    inner_collector f0;
+    check_shallow_var := true
+  end
 		
 and collect_type_info_heap prog (h0 : IF.h_formula) stab =
   match h0 with
