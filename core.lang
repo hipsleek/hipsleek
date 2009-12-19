@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language _name="SS" version="1.0" _section="Sources" mimetypes="text/x-ss">
+
+	<escape-char>\</escape-char>
+
+	<block-comment _name = "Comment" style= "Comment" end-at-line-end = "FALSE">
+		<start-regex>\/\*</start-regex>
+		<end-regex>\*\/</end-regex>
+	</block-comment>
+
+	<line-comment _name = "Line Comment" style= "Comment" end-at-line-end = "TRUE">
+		<start-regex>\/\/</start-regex>
+	</line-comment>
+
+	<pattern-item _name = "Decimal" style = "Decimal">
+		<regex>\b[-]?[0-9][0-9_]*[lL]?\b</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Hex Number" style = "Base-N Integer">
+		<regex>\b[-]?0[xX][0-9A-Fa-f][0-9A-Fa-f_]*[lL]?\b</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Octal Number" style = "Base-N Integer">
+		<regex>\b[-]?0[oO][0-7][0-7_]*[lL]?\b</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Binary Number" style = "Base-N Integer">
+		<regex>\b[-]?0[bB][01][01_]*[lL]?\b</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Floating Point Number" style = "Floating Point">
+		<regex>\b[-]?[0-9][0-9_]*(\.[0-9_]*)?([Ee][+-]?[0-9][0-9_]*)?</regex>
+	</pattern-item>
+<!--
+	<string _name = "Character Constant" style = "String" end-at-line-end = "TRUE">
+		<start-regex>&apos;</start-regex>
+		<end-regex>&apos;</end-regex>
+
+	</string>
+-->
+	<string _name = "String" style = "String" end-at-line-end = "FALSE">
+		<start-regex>&quot;</start-regex>
+		<end-regex>&quot;</end-regex>
+	</string>
+
+	<keyword-list _name = "Boolean Constant" style = "String" case-sensitive="FALSE">
+		<keyword>true</keyword>
+		<keyword>false</keyword>
+	</keyword-list>
+
+	<pattern-item _name = "Modules" style = "Data Type" case-sensitive="TRUE">
+		<regex>\b[A-Z][A-Za-z0-9_']*</regex>
+	</pattern-item>
+
+	<pattern-item _name = "Labels" style = "Data Type" case-sensitive="TRUE">
+		<regex>[~?][a-z][A-Za-z0-9_']*</regex>
+	</pattern-item>
+
+	<keyword-list _name = "Definition keyword" style = "Keyword" case-sensitive="TRUE">
+		<keyword>assume</keyword>
+		<keyword>class</keyword>
+		<keyword>coercion</keyword>
+		<keyword>conseq</keyword>
+		<keyword>const</keyword>
+		<keyword>exception</keyword>
+		<!--<keyword>external</keyword>
+		<keyword>let</keyword>
+		<keyword>fun</keyword>
+		<keyword>function</keyword>
+		<keyword>functor</keyword>-->
+		<keyword>import</keyword>
+		<keyword>in</keyword>
+		<!--<keyword>include</keyword>
+		<keyword>inherit</keyword>
+		<keyword>initializer</keyword>
+		<keyword>method</keyword>
+		<keyword>module</keyword>
+		<keyword>mutable</keyword>-->
+		<keyword>of</keyword>
+		<!--<keyword>open</keyword>
+		<keyword>private</keyword>
+		<keyword>rec</keyword>
+		<keyword>type</keyword>
+		<keyword>val</keyword>
+		<keyword>virtual</keyword>-->
+		<keyword>global</keyword>
+		<keyword>requires</keyword>
+		<keyword>ensures</keyword>
+		<keyword>debug</keyword>
+		<keyword>diff</keyword>
+		<keyword>dynamic</keyword>
+		<keyword>static</keyword>
+		<keyword>this</keyword>
+	</keyword-list>
+	<keyword-list _name = "Expression keyword" style = "Keyword" case-sensitive="TRUE">
+		<keyword>break</keyword>
+		<keyword>case</keyword>
+		<keyword>continue</keyword>
+		<keyword>do</keyword>
+      		<keyword>else</keyword>
+		<keyword>for</keyword>
+		<keyword>if</keyword>
+		<keyword>while</keyword>
+		<keyword>as</keyword>
+		<keyword>assert</keyword>
+		<!--<keyword>begin</keyword>-->
+		<keyword>do</keyword>
+<!--		<keyword>done</keyword>
+		<keyword>downto</keyword>-->
+		<keyword>else</keyword>
+<!--		<keyword>end</keyword>-->
+		<keyword>for</keyword>
+		<keyword>land</keyword>
+<!--		<keyword>lazy</keyword>
+		<keyword>lor</keyword>
+		<keyword>lsl</keyword>
+		<keyword>lsr</keyword>
+		<keyword>lxor</keyword>
+		<keyword>match</keyword>
+		<keyword>mod</keyword>-->
+		<keyword>new</keyword>
+		<keyword>object</keyword>
+		<keyword>or</keyword>
+<!--		<keyword>sig</keyword>
+		<keyword>struct</keyword>-->
+		<keyword>then</keyword>
+		<keyword>to</keyword>
+		<keyword>try</keyword>
+		<keyword>where</keyword>
+		<keyword>while</keyword>
+<!--		<keyword>with</keyword>
+		<keyword>#</keyword>-->
+		<keyword>inv</keyword>
+		<keyword>ex</keyword>
+		<keyword>exists</keyword>
+		<keyword>extends</keyword>
+		<keyword>fold</keyword>
+		<keyword>forall</keyword>
+		<keyword>intersect</keyword>
+		<keyword>max</keyword>
+		<keyword>min</keyword>
+		<keyword>bagmax</keyword>
+		<keyword>bagmin</keyword>
+		<keyword>notin</keyword>
+		<keyword>off</keyword>
+		<keyword>on</keyword>
+		<keyword>dprint</keyword>
+		<keyword>ref</keyword>
+		<keyword>res</keyword>
+		<keyword>return</keyword>
+		<keyword>self</keyword>
+		<keyword>split</keyword>
+		<keyword>unfold</keyword>
+		<keyword>union</keyword>
+	</keyword-list>
+
+	<pattern-item _name = "Keywordsign" style = "Keyword">
+		<regex>(\||-&gt;)</regex>
+	</pattern-item>
+
+	<keyword-list _name = "Types" style = "Data Type" case-sensitive="TRUE">
+		<keyword>bind</keyword>
+		<keyword>bool</keyword>
+		<keyword>int</keyword>
+		<keyword>string</keyword>
+		<keyword>list</keyword>
+		<keyword>array</keyword>
+		<keyword>float</keyword>
+		<keyword>char</keyword>
+		<keyword>data</keyword>
+		<keyword>null</keyword>
+		<keyword>enum</keyword>
+		<keyword>subset</keyword>
+		<keyword>view</keyword>
+		<keyword>void</keyword>
+	</keyword-list>
+</language>
