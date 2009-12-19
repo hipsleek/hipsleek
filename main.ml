@@ -229,8 +229,7 @@ let process_source_full source =
 	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
 		let ptime4 = Unix.times () in
-		let _ = if (!Globals.print_verified_core) then 
-	print_string ("Verified code: \n"^ (Cprinter.string_of_program cprog))  in
+		let _ = if (!Globals.print_verified_core) then print_string ("Verified code: \n"^ (Cprinter.string_of_program cprog))in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^

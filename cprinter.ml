@@ -496,15 +496,35 @@ let string_of_view_decl v = "view " ^ v.view_name ^ "<" ^ (string_of_spec_var_li
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
-  let locstr = (string_of_full_loc p.proc_loc)  
-  in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
+  let locstr = (string_of_full_loc p.proc_loc) in 
+  let s = (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
   ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
   ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
   ^ (if U.empty p.proc_by_name_params then "" 
 	 else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
   ^ (match p.proc_body with 
        | Some e -> (string_of_exp e) ^ "\n\n"
-	   | None   -> "\n") ^ locstr
+	   | None   -> "\n") ^ locstr in
+	let s2 = match p.proc_body with
+		|Some e ->
+			let rec lbl_list f : string list  = List.concat (List.map (fun c-> match c with 
+				| ECase e -> 
+						List.concat (List.map (fun (_,c)-> lbl_list c) e.formula_case_branches)
+				| EBase e -> lbl_list e.formula_ext_continuation
+				| EAssume (_,_,(i,s)) -> [(string_of_int i)^" "^s]) f) in				
+			let l_spec = lbl_list p.proc_static_specs in
+			let s =  List.map (fun c-> 
+				let l_e,l_d = err_fail_list e c ([],[]) in			
+				"Our lists: \n error list "^ c ^": "^	(String.concat "\n--------\n" 
+					(List.map (fun c-> 
+						(string_of_pos (pos_of_exp c))^(string_of_label_map (label_of_exp c))
+					
+					
+					) l_e))^
+		"\n dead list "^ c ^": "^(String.concat "\n--------\n" (List.map (fun c-> string_of_pos (pos_of_exp c)) l_d))) l_spec in
+			(String.concat "\n+++++\n" s)		
+		| None -> ""in
+	s^"\n----\n"^s2
 ;; 
 
 (* pretty printing for a list of data_decl *)

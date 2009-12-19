@@ -695,8 +695,7 @@ let check_exp1 (ctx : CF.context list): CF.context list *((CF.branch_trace*bool)
 				Err.report_error {Err.error_loc = no_pos;
 								  Err.error_text = "Fail trace present but context list is not empty\n"}
 			else 
-			  let res,_ = check_exp1 [] in
-			  set_pos_context e0 ([],None,[],fail_trace) assume_label;(res,fail_trace)
+			  begin set_fail e0 ([],None,[],fail_trace) assume_label;([],fail_trace) end
 		else ([],fail_trace)
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.context list) (post : CF.formula) pos =

@@ -14,8 +14,7 @@ module H = Hashtbl
 
 type typed_ident = (P.typ * ident)
 
-and label_map = (spec_label , ((Cformula.context list)*(Cformula.context list)*(Cformula.context list)*
-	((F.branch_trace*bool) list)
+and label_map = (spec_label , ((Cformula.context list)*(Cformula.context list)*(Cformula.context list)*((F.branch_trace*bool) list)
 	(*in case of a fail this will show which was the path that failed and whether this is the failure point*))) H.t
 
 and core_loc = {
@@ -763,6 +762,36 @@ and pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos.pos
   | Try b -> b.exp_try_pos.pos
   
+  
+and label_of_exp (e:exp) = match e with
+  | CheckRef b -> b.exp_check_ref_pos.state
+  | BConst b -> b.exp_bconst_pos.state
+  | Bind b -> b.exp_bind_pos.state
+  | Cast b -> b.exp_cast_pos.state
+  | Debug b -> b.exp_debug_pos.state
+  | Dprint b -> b.exp_dprint_pos.state
+  | Assign b -> b.exp_assign_pos.state
+  | FConst b -> b.exp_fconst_pos.state
+  | ICall b -> b.exp_icall_pos.state
+  | IConst b -> b.exp_iconst_pos.state
+  | Print (_,b) -> b.state
+  | Seq b -> b.exp_seq_pos.state
+  | VarDecl b -> b.exp_var_decl_pos.state
+  | Unfold b -> b.exp_unfold_pos.state
+  | Unit b -> b.state
+  | This b -> b.exp_this_pos.state
+  | Var b -> b.exp_var_pos.state
+  | Null b -> b.state
+  | Cond b -> b.exp_cond_pos.state
+  | Block b -> b.exp_block_pos.state
+  | Java b  -> b.exp_java_pos.state
+  | Assert b -> b.exp_assert_pos.state
+  | New b -> b.exp_new_pos.state
+  | Sharp b -> b.exp_sharp_pos.state
+  | SCall b -> b.exp_scall_pos.state
+  | While b -> b.exp_while_pos.state
+  | Try b -> b.exp_try_pos.state
+  
 and set_pos_context (e:exp) (c1,c2,c3,c4) (lbl1,lbl2) =
 	let c2 = match c2 with	| None -> [] | Some d-> [d] in
 	let c = (c1,c2,c3,c4) in
@@ -852,3 +881,94 @@ let rec check_proper_return cret_type exc_list f =
 		| F.EAssume (_,b,_)-> if (F.isConstFalse b)||(F.isConstTrue b) then () else check_proper_return_f b
 		in
 	List.iter helper f
+	
+let find_err spec (l_err:exp list) l_dead e e_state = try
+		let c_pre,c_esc,c_post,f_tr = (Hashtbl.find e_state spec ) in
+		let l_dead = if (List.exists Cformula.isFalseCtx c_pre) then e::l_dead else l_dead in
+		let l_err = if ((List.length f_tr) >0) then e::l_err else l_err in
+		(l_err,l_dead)
+		with Not_found -> (l_err,l_dead)
+	
+let rec err_fail_list e spec (l_err,l_dead): (exp list * exp list) = match e with
+  | CheckRef e1 -> 
+		(find_err spec l_err l_dead e e1.exp_check_ref_pos.state)
+  | Java e1 ->
+		(find_err spec l_err l_dead e e1.exp_java_pos.state)  
+  | Assert e1 ->
+		(find_err spec l_err l_dead e e1.exp_assert_pos.state)   
+  | Assign e1 ->  
+		let l_err1,l_dead1 = err_fail_list e1.exp_assign_rhs spec (l_err,l_dead) in
+		(find_err spec l_err1 l_dead1 e e1.exp_assign_pos.state)   
+  | BConst e1 -> 
+		(find_err spec l_err l_dead e e1.exp_bconst_pos.state)   
+  | Bind e1 ->
+		let l_err1,l_dead1 = err_fail_list e1.exp_bind_body spec (l_err,l_dead) in
+		(find_err spec l_err1 l_dead1 e e1.exp_bind_pos.state)   
+  | Block e1 ->
+		let l_err1,l_dead1 = err_fail_list e1.exp_block_body spec (l_err,l_dead) in
+		(find_err spec l_err1 l_dead1 e e1.exp_block_pos.state)   
+  | Cond e1 ->
+		let l_err,l_dead = err_fail_list e1.exp_cond_then_arm spec (l_err,l_dead) in
+		let l_err,l_dead = err_fail_list e1.exp_cond_else_arm spec (l_err,l_dead) in
+		(find_err spec l_err l_dead e e1.exp_cond_pos.state)   
+  | Cast e1 ->
+		let l_err,l_dead = err_fail_list e1.exp_cast_body spec (l_err,l_dead) in
+		(find_err spec l_err l_dead e e1.exp_cast_pos.state)   
+  | Debug e1 -> (find_err spec l_err l_dead e e1.exp_debug_pos.state)   
+  | Dprint e1 ->(find_err spec l_err l_dead e e1.exp_dprint_pos.state)   
+  | FConst e1 ->(find_err spec l_err l_dead e e1.exp_fconst_pos.state)     
+  | ICall e1 -> (find_err spec l_err l_dead e e1.exp_icall_pos.state)   
+  | IConst e1 -> (find_err spec l_err l_dead e e1.exp_iconst_pos.state)   
+  | New e1 -> (find_err spec l_err l_dead e e1.exp_new_pos.state)     
+  | Null e1 -> (find_err spec l_err l_dead e e1.state)     
+  | Print (_,e1) -> (find_err spec l_err l_dead e e1.state)     
+  | SCall e1 -> (find_err spec l_err l_dead e e1.exp_scall_pos.state)      
+  | Seq e1 -> 
+		let l_err,l_dead = err_fail_list e1.exp_seq_exp1 spec (l_err,l_dead) in
+		let l_err,l_dead = err_fail_list e1.exp_seq_exp2 spec (l_err,l_dead) in
+		(*(find_err spec l_err l_dead e e1.exp_seq_pos.state)    *)
+		(l_err,l_dead)
+  | This e1 -> (find_err spec l_err l_dead e e1.exp_this_pos.state)    
+  | Var e1 -> (find_err spec l_err l_dead e e1.exp_var_pos.state)    
+  | VarDecl e1 -> (find_err spec l_err l_dead e e1.exp_var_decl_pos.state)    
+  | Unfold e1 -> (find_err spec l_err l_dead e e1.exp_unfold_pos.state)    
+  | Unit e1 ->(find_err spec l_err l_dead e e1.state)
+  | While e1 -> 
+		let l_err,l_dead = err_fail_list e1.exp_while_body spec (l_err,l_dead) in
+		(find_err spec l_err l_dead e e1.exp_while_pos.state)
+  | Sharp e1 -> (find_err spec l_err l_dead e e1.exp_sharp_pos.state)    
+  | Try e1 -> 
+		let l_err,l_dead = err_fail_list e1.exp_try_body spec (l_err,l_dead) in
+		let l_err,l_dead = err_fail_list e1.exp_catch_clause.exp_catch_body spec (l_err,l_dead) in
+		let l_err,l_dead = (find_err spec l_err l_dead e e1.exp_catch_clause.exp_catch_pos.state) in
+		(find_err spec l_err l_dead e e1.exp_try_pos.state)
+	
+let rec set_fail e c_l a_l = 
+		set_pos_context e c_l a_l ;
+	match e with
+  | Assign e1 ->
+		set_fail e1.exp_assign_rhs c_l a_l
+  | Bind e1 ->
+  		set_fail e1.exp_bind_body c_l a_l
+  | Block e1 ->
+  		set_fail e1.exp_block_body c_l a_l
+  | Cond e1 ->
+  		set_fail e1.exp_cond_then_arm c_l a_l;
+		set_fail e1.exp_cond_else_arm c_l a_l
+  | Cast e1 ->
+  		set_fail e1.exp_cast_body c_l a_l
+  | Seq e1 -> 
+  		set_fail e1.exp_seq_exp1 c_l a_l;
+		set_fail e1.exp_seq_exp2 c_l a_l
+  | While e1 -> 
+  		set_fail e1.exp_while_body c_l a_l
+  | Try e1 -> 
+  		set_fail e1.exp_try_body c_l a_l;
+		set_fail e1.exp_catch_clause.exp_catch_body c_l a_l
+   | _ -> ()
+		
+		
+		
+		
+	
+			 
