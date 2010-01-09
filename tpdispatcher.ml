@@ -686,17 +686,19 @@ let rec simpl_in_quant formula negated rid =
 ;;
 
 let simpl_pair rid (ante, conseq) =
+  let l1 = CP.bag_vars_formula ante in
+  let l1 = Util.remove_dups (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
-  let fold_fun (ante, conseq) = function
+  let fold_fun l_f_vars (ante, conseq)  = function
     | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) ->
-        ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
+    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _))
     | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _)) ->
-        ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
+		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
+		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
     | _ -> ((ante, conseq), fun x -> x)
   in
-  let (ante1, conseq) = fold_with_subst fold_fun (ante, conseq) antes in
+  let (ante1, conseq) = fold_with_subst (fold_fun l1) (ante, conseq) antes in
   let ante1 = get_rid_of_eq ante1 in
   let ante2 = simpl_in_quant ante1 true rid in
   let ante3 = simpl_in_quant ante2 true rid in
@@ -715,6 +717,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
       Some res -> res       
       | None -> false
   else begin 
+	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
 	let conseq =
 	if CP.should_simplify conseq0 then simplify conseq0
 	else conseq0

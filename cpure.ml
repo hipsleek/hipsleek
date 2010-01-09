@@ -1589,6 +1589,27 @@ and drop_bag_b_formula (bf0 : b_formula) : b_formula = match bf0 with
   | _ -> bf0
 
 
+(**************************************************************)
+(**************************************************************)
+(**************************************************************)
+
+(*
+  List of bag variables.
+*)
+let rec bag_vars_formula (f0 : formula) : spec_var list = match f0 with
+  | BForm bf -> (bag_vars_b_formula bf)
+  | And (f1, f2, pos) -> (bag_vars_formula f1) @ (bag_vars_formula f2)
+  | Or (f1, f2, pos)  -> (bag_vars_formula f1) @ (bag_vars_formula f2)
+  | Not (f1, pos) -> (bag_vars_formula f1)
+  | Forall (qvar, qf, pos) -> (bag_vars_formula qf)
+  | Exists (qvar, qf, pos) -> (bag_vars_formula qf)
+and bag_vars_b_formula (bf0 : b_formula) : spec_var list = match bf0 with
+  | BagIn (v1,_,_)
+  | BagNotIn (v1,_,_) -> [v1]
+  | BagMin (v1,v2,_)
+  | BagMax (v1,v2,_) -> [v1;v2]
+  | _ -> []
+   
 (*************************************************************************************************************************
 	05.06.2008:
 	Utilities for existential quantifier elimination:
