@@ -1,0 +1,4 @@
+Date		Reporter	Description					Solved 	Date Solved	Solution
+-----------------------------------------------------------------------------------------------------------------------
+2010.02.04 	Cristian 	for examples/working_bags/avl-all hip		N	
+				loops for
