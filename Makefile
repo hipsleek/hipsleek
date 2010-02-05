@@ -19,7 +19,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip hip.opt sleek sleek.opt prover prover.opt
+all: hip hip.opt sleek sleek.opt prover prover.opt viewer
 
 sparser.cmo sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -180,6 +180,16 @@ JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 j: $(JAVA_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(JAVA_FILES)
 
+viewer:
+	ocamlc -o editor -I ./xml -I lablgtk.cma unix.cma str.cma graph.cma lablgtksourceview.cma gtkInit.cmo \
+	globals.cmo error.cmo util.cmo debug.cmo cpure.cmo ipure.cmo iformula.cmo iast.cmo iparser.cmo \
+	ilexer.cmo iprinter.cmo cformula.cmo cast.cmo cprinter.cmo ocparser.cmo oclexer.cmo unix_add.cmo \
+	isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo net.cmo cvclite.cmo tpdispatcher.cmo \
+	prooftracer.cmo context.cmo solver.cmo drawing.cmo env.cmo checks.cmo inliner.cmo astsimp.cmo \
+	java.cmo cjava.cmo predcomp.cmo rtc.cmo typechecker.cmo globalvars.cmo \
+	cprinter3.ml cslink.ml islink.ml editor_test4.ml
+
+	
 # ------------------------------------------------------------
 # Common rules
 # ------------------------------------------------------------
@@ -199,7 +209,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt *~ oo oo.exe
+	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt *~ oo oo.exe viewer
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

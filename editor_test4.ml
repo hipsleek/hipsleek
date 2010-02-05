@@ -121,25 +121,25 @@ let next_button = GButton.button ~relief:`NONE ~packing:(button_hbox#pack (*~pad
 let focus_spec_button = GButton.toggle_button ~relief:`NONE ~packing:(button_hbox#pack) ();;
 let show_result_button = GButton.button ~relief:`NONE ~packing:(button_hbox#pack) ();;
 
-let _= xpm_label_box ~file:"/home/qiao/icon png files/folder-open-small.png" ~text:"open" ~packing:open_file_button#add ();
+let _= xpm_label_box ~file:"icon png files/folder-open-small.png" ~text:"open" ~packing:open_file_button#add ();
 tooltips#set_tip open_file_button#coerce ~text:"open a file";
-xpm_label_box ~file:"/home/qiao/icon png files/document-save-as-small.png" ~text:"save" ~packing:save_file_button#add ();
+xpm_label_box ~file:"icon png files/document-save-as-small.png" ~text:"save" ~packing:save_file_button#add ();
 tooltips#set_tip save_file_button#coerce ~text:"save current file";
-xpm_label_box ~file:"/home/qiao/icon png files/go-next-small.png" ~text:"core" ~packing:link_core_button#add ();
+xpm_label_box ~file:"icon png files/go-next-small.png" ~text:"core" ~packing:link_core_button#add ();
 tooltips#set_tip link_core_button#coerce ~text:"highlight the relevant procedure in core according to current cursor position";
-xpm_label_box ~file:"/home/qiao/icon png files/zoom-in-small.png" ~text:"zoom in" ~packing:zoom_in_button#add ();
+xpm_label_box ~file:"icon png files/zoom-in-small.png" ~text:"zoom in" ~packing:zoom_in_button#add ();
 tooltips#set_tip zoom_in_button#coerce ~text:"move to a smaller sub-expression inclusive of this position";
-xpm_label_box ~file:"/home/qiao/icon png files/zoom-out-small.png" ~text:"zoom out" ~packing:zoom_out_button#add ();
+xpm_label_box ~file:"icon png files/zoom-out-small.png" ~text:"zoom out" ~packing:zoom_out_button#add ();
 tooltips#set_tip zoom_out_button#coerce ~text:"move to a bigger sub-expression inclusive of this position";
-xpm_label_box ~file:"/home/qiao/icon png files/arrow-right-small.png" ~text:"step down" ~packing:next_button#add ();
+xpm_label_box ~file:"icon png files/arrow-right-small.png" ~text:"step down" ~packing:next_button#add ();
 tooltips#set_tip next_button#coerce ~text:"move to the next sub-expression";
-xpm_label_box ~file:"/home/qiao/icon png files/arrow-left-small.png" ~text:"step up" ~packing:previous_button#add ();
+xpm_label_box ~file:"icon png files/arrow-left-small.png" ~text:"step up" ~packing:previous_button#add ();
 tooltips#set_tip previous_button#coerce ~text:"move to the previous sub-expression";
-xpm_label_box ~file:"/home/qiao/icon png files/arrow-down-double-small.png" ~text:"focus" ~packing:focus_spec_button#add ();
+xpm_label_box ~file:"icon png files/arrow-down-double-small.png" ~text:"focus" ~packing:focus_spec_button#add ();
 (*previous_button#unset_image();
-xpm_label_box ~file:"/home/qiao/icon png files/arrow-down-double-small.png" ~text:"Reset" ~packing:focus_spec_button#add ();*)
+xpm_label_box ~file:"icon png files/arrow-down-double-small.png" ~text:"Reset" ~packing:focus_spec_button#add ();*)
 tooltips#set_tip focus_spec_button#coerce ~text:"select one specification and only information regarding the specification will be displayed";
-xpm_label_box ~file:"/home/qiao/icon png files/emblem-important-small.png" ~text:"results" ~packing:show_result_button#add ();
+xpm_label_box ~file:"icon png files/emblem-important-small.png" ~text:"results" ~packing:show_result_button#add ();
 tooltips#set_tip show_result_button#coerce ~text:"show verification results";
 tooltips#set_tip core_close_button#coerce ~text:"maximize/minimize core window"
 ;;

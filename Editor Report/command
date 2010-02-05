@@ -1,0 +1,3 @@
+ ocamlc -g -o hip -I ./xml -I /usr/lib/ocaml/3.10.2/lablgtk2 -dtypes  unix.cma str.cma graph.cma globals.cmo error.cmo util.cmo debug.cmo cpure.cmo ipure.cmo iformula.cmo iast.cmo iparser.cmo ilexer.cmo iprinter.cmo cformula.cmo cast.cmo cprinter.cmo ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo net.cmo cvclite.cmo tpdispatcher.cmo prooftracer.cmo context.cmo solver.cmo drawing.cmo env.cmo checks.cmo inliner.cmo astsimp.cmo java.cmo cjava.cmo predcomp.cmo rtc.cmo typechecker.cmo globalvars.cmo lablgtk.cma lablgtksourceview.cma gtkInit.cmo cprinter3.ml cslink.ml islink.ml editor_test4.ml -o editor
+
+

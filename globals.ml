@@ -64,7 +64,7 @@ let ret_flow = "__Ret"
 let spec_flow = "__Spec"
 let false_flow = "__false"
 let abnormal_flow = "__abnormal"
-
+let failed_proc_string = ref ([] :string list)
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
 let spec_flow_int = ref ((-1,-1):nflow)
