@@ -181,7 +181,7 @@ j: $(JAVA_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(JAVA_FILES)
 
 viewer:
-	ocamlc -o editor -I ./xml -I lablgtk.cma unix.cma str.cma graph.cma lablgtksourceview.cma gtkInit.cmo \
+	ocamlc -o editor -I ./xml lablgtk.cma lablgtksourceview.cma unix.cma str.cma graph.cma gtkInit.cmo \
 	globals.cmo error.cmo util.cmo debug.cmo cpure.cmo ipure.cmo iformula.cmo iast.cmo iparser.cmo \
 	ilexer.cmo iprinter.cmo cformula.cmo cast.cmo cprinter.cmo ocparser.cmo oclexer.cmo unix_add.cmo \
 	isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo net.cmo cvclite.cmo tpdispatcher.cmo \
