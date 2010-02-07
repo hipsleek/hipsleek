@@ -191,15 +191,16 @@ let process_source_full source =
 
 	  (* Global variables translating *)
        let _ = Util.push_time "Translating global var" in
-   	  let _ = print_string ("Translating global variables to procedure parameters...\n") in
+   	  let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 	  let intermediate_prog = Globalvars.trans_global_to_param prog in
       let _ = Util.pop_time "Translating global var" in
 	  (* Global variables translated *)
 	  (* let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
-	  let _ = print_string ("Translating to core language...\n") in
+	  let _ = print_string ("Translating to core language..."); flush stdout in
 	  let cprog = Astsimp.trans_prog intermediate_prog in
+	  let _ = print_string (" done\n"); flush stdout in
 	  let _ = 
 		if !Globals.verify_callees then begin
 		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in

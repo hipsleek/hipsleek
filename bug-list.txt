@@ -1,4 +1,4 @@
 Date		Reporter	Description					Solved 	Date Solved	Solution
 -----------------------------------------------------------------------------------------------------------------------
-2010.02.04 	Cristian 	for examples/working_bags/avl-all hip		N	
-				loops for
+2010.02.04 	Cristian 	for examples/working_bags/avl-all		Y	2010.02.07	Eliminate the loop in Cpure.exist_elim	
+				hip loops forever							

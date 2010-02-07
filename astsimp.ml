@@ -1155,7 +1155,6 @@ let rec (* overriding test *) (* field duplication test *)
 			   let cprocs1 =
                  List.map (trans_proc prog) prog.I.prog_proc_decls in
                let cprocs = !loop_procs @ cprocs1 in
-			   
                let (l2r_coers, r2l_coers) = trans_coercions prog in
                let cprog =
                  {
@@ -1283,7 +1282,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
           let _ = vdef.I.view_typed_vars <- typed_vars in
 		())
 	else ()
-   
+
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
@@ -1481,7 +1480,8 @@ and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   let ef = ref f0 in
   let quit_loop = ref false
   in
-    (while not !quit_loop do ef := Solver.expand_all_preds prog !ef true;
+    (while not !quit_loop do 
+		ef := Solver.expand_all_preds prog !ef true;		
        (let tmp1 = find_mvars prog params !ef in
         let tmp2 = CP.remove_dups (tmp1 @ !all_mvars) in
         let tmp3 = CP.difference tmp2 !all_mvars
@@ -1496,10 +1496,12 @@ and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
       let mvars1 = find_mvars prog params f1 in
       let mvars2 = find_mvars prog params f2 in
       let mvars = CP.remove_dups (mvars1 @ mvars2) in
-      let tmp = CP.intersect mvars params in tmp
+      let tmp = CP.intersect mvars params in 
+		tmp
   | CF.Base { CF.formula_base_heap = hf; CF.formula_base_pure = pf } ->
       let mvars = find_mvars_heap prog params hf pf in
-      let tmp = CP.intersect mvars params in tmp
+      let tmp = CP.intersect mvars params in 
+	tmp
   | CF.Exists
       {
         CF.formula_exists_qvars = qvars;
@@ -1508,7 +1510,8 @@ and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
       } ->
       let mvars1 = find_mvars_heap prog params hf pf in
       let mvars = CP.difference mvars1 qvars in
-      let tmp = CP.intersect mvars params in tmp
+      let tmp = CP.intersect mvars params in 
+	  tmp
 
 and find_mvars_heap prog params hf pf =
   match hf with

@@ -586,6 +586,7 @@ and difference (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
+  
 
 and remove_dups n = match n with
     [] -> []
@@ -1352,7 +1353,7 @@ and elim_exists (f0 : formula) : formula =
 			let res = mkOr eqf1 eqf2 pos in
 			  res
 		| _ ->
-      let qf = elim_exists qf in
+			let qf = elim_exists qf in
 			let qvars0, bare_f = split_ex_quantifiers qf in
 			let qvars = qvar :: qvars0 in
 			let conjs = list_of_conjs bare_f in
@@ -1371,7 +1372,7 @@ and elim_exists (f0 : formula) : formula =
 				let tmp4 = mkAnd no_qvars tmp3 pos in
 				  tmp4
 			else (* if qvar is not equated to any variables, try the next one *)
-				let tmp1 = elim_exists qf in
+				let tmp1 = qf (*elim_exists qf*) in
 				let tmp2 = mkExists [qvar] tmp1 pos in
 				  tmp2
 	end

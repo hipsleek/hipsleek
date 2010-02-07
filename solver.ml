@@ -505,7 +505,8 @@ and combine_context_and_unsat_now prog (ctx : context) (f : Cpure.formula) : con
 		
 (* expand all predicates in a definition *)
 
-and expand_all_preds prog f0 do_unsat: formula = match f0 with
+and expand_all_preds prog f0 do_unsat: formula = 
+	match f0 with
   | Or (({formula_or_f1 = f1;
 		  formula_or_f2 = f2}) as or_f) -> begin
 	  let ef1 = expand_all_preds prog f1 do_unsat in
@@ -515,7 +516,7 @@ and expand_all_preds prog f0 do_unsat: formula = match f0 with
   | Base ({formula_base_heap = h;
 		   formula_base_pure = p;
 		   formula_base_pos =pos}) -> begin
-	  let proots = find_pred_roots_heap h in
+	  let proots = find_pred_roots_heap h in 
 	  let ef0 = List.fold_left (fun f -> fun v -> unfold (Prog prog) f v do_unsat pos ) f0 proots in
 		ef0
 	end
@@ -531,7 +532,7 @@ and expand_all_preds prog f0 do_unsat: formula = match f0 with
 					 formula_base_flow = fl;
                      formula_base_branches = [];
 					 formula_base_pos = pos}) in
-	  let ef = List.fold_left (fun f -> fun v -> unfold (Prog prog) f v do_unsat pos ) f proots in
+	  let ef = List.fold_left (fun f -> fun v -> unfold (Prog prog) f v do_unsat pos  ) f proots in
 	  let ef0 = push_exists qvars ef in
 		ef0
 	end
@@ -556,7 +557,8 @@ and find_pred_roots f0 = match f0 with
 		tmp2
 	end
 
-and find_pred_roots_heap h0 = match h0 with
+and find_pred_roots_heap h0 = 
+	match h0 with
   | Star ({h_formula_star_h1 = h1;
 		   h_formula_star_h2 = h2;
 		   h_formula_star_pos = pos}) -> begin
@@ -1170,21 +1172,22 @@ and elim_unsat_all prog (f : formula) = match f with
 (*      print_endline (Cprinter.string_of_formula f);*)
 	  let pf, pfb = xpure prog f in
       let fold_fun is_ok (label, pf1b) =
-(*        print_endline (label);
+		(*print_endline (label);
         print_endline (Cprinter.string_of_pure_formula pf);
         print_endline (Cprinter.string_of_pure_formula pf1b);*)
         if not is_ok then false else
-	let sat = TP.is_sat (CP.And (pf, pf1b, no_pos)) ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-			Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
-			sat_subno := !sat_subno + 1;
-			if sat then true else false
-      in
+			let sat = TP.is_sat (CP.And (pf, pf1b, no_pos)) ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+				Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+				sat_subno := !sat_subno + 1;
+				if sat then true else false
+		in
       let is_ok =
-        if pfb = [] then let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+        if pfb = [] then 
+			let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
 		Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
 		sat_subno := !sat_subno + 1;sat else
-
-        List.fold_left fold_fun true pfb
+			let sat = List.fold_left fold_fun true pfb in
+			sat
       in
 	  sat_no := !sat_no + 1;
 (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)
