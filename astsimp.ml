@@ -1481,7 +1481,7 @@ and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   let quit_loop = ref false
   in
     (while not !quit_loop do 
-		ef := Solver.expand_all_preds prog !ef true;		
+		ef := Solver.expand_all_preds prog !ef false;		
        (let tmp1 = find_mvars prog params !ef in
         let tmp2 = CP.remove_dups (tmp1 @ !all_mvars) in
         let tmp3 = CP.difference tmp2 !all_mvars
