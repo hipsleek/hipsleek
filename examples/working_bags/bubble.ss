@@ -17,7 +17,7 @@ sll1<S> == self = null & S = {}
 	or self::node<v2, r> * r::sll1<S1> & S = union(S1, {v2}) & 
 	forall(x: (x notin S1 | v2 <= x));
 
-
+//insert to last
 void id1(node x)
 	requires x::sll1<S> & S != {}
 	ensures x::ll1<S>;
@@ -33,7 +33,7 @@ void id1(node x)
 bool bubble1(node xs)
 	requires xs::ll1<S> & S != {}
 	ensures xs::sll1<S> & !res
-		or  xs::ll1<S> & res;
+		or  xs::ll1<S> & res ;
 {
 	int aux;
 	bool tmp, flag; 
