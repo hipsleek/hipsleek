@@ -7,33 +7,33 @@ data node {
 
 
 
-sll<"n":n, "sm":sm, "sm":lg, "S":S> ==
-		self::node<sm, null> & ["n": n=1; "sm": sm =lg; "S": S = {sm}]
-	or	self::node<sm, q> * q::sll<n1, qs, lg, S1> & q!=null & ["n": n1 = n-1; "sm": sm <= qs; "S": S = union(S1,{sm})] 
-	inv true & ["n": n>=1; "sm": sm<=lg];
+sll<n, sm, lg, S> ==
+		self::node<sm, null> & n=1 & sm =lg & S = {sm}
+	or	self::node<sm, q> * q::sll<n1, qs, lg, S1> & q!=null &  n1 = n-1 & sm <= qs & S = union(S1,{sm})
+	inv n>=1 & sm<=lg;
 
-bnd<"n":n, "sn":sn, "bg":bg, "Sb":Sb> == 
-	    self=null  & ["n": n=0; "Sb": Sb = {}]
-	or  self::node<d,p> * p::bnd<n2,sn,bg,Sb1> & ["n": n2 = n-1; "sn": sn <= d < bg; "Sb": Sb = union(Sb1,{d})]
-	inv true & ["n": n>=0];
+bnd<n, sn, bg, Sb> == 
+	    self=null  &  n=0 & Sb = {}
+	or  self::node<d,p> * p::bnd<n2,sn,bg,Sb1> & n2 = n-1 & sn <= d < bg & Sb = union(Sb1,{d})
+	inv n>=0;
 
 ll<n, S> == self=null & n=0 & S={}
-	or self::node<_, r> * r::ll<n-1,_>
+	or self::node<d, r> * r::ll<n-1,S2> & S=union(S2,{d}) 
 	inv n>=0;
 	
 	
 
 //coercion self::sll<n, sm, lg, S> -> self::bnd<n,_,_, _>;
-coercion self::sll<n, sm, lg, S> -> self::ll<n,_>;
+coercion self::sll<n, sm, lg, S> -> self::ll<n,S>;
 
 //------------------------------------------------------------
 
 // ------------------ FUNTIONS -----------------------------//
 
 bool bubble(node xs)
-	requires xs::bnd<n, sn, bg, Sb> & n>0 or xs:: ll <n,_> & n >0
-	ensures xs::sll<n, sm, lg, S> & !res & Sb = S
-	or xs::sll<n,_, _, S1> & n>=0 & res ;
+	requires xs:: ll <n,S> & n >0
+	ensures xs::sll<n, sm, lg, S> & !res
+	or xs::ll<n, S> & res ;
 {
 	int aux, tmp1;
 	bool tmp, flag; 
@@ -52,8 +52,7 @@ bool bubble(node xs)
 			aux = xs.val;
 			tmp1 = xs.next.val;
 			xs.val = tmp1;
-			xs.val = xs.next.val; 
-			//xs.next.val = aux;
+			xs.next.val = aux;
 			flag = true; 
 		}
 		
@@ -62,8 +61,8 @@ bool bubble(node xs)
 }
 
 void bsort(node xs)
-	requires xs::bnd<n, _,_,S> & n>10 & ["Sb": Sb!={}] or xs::ll<n,_> & n >0
-	ensures xs::sll<n, _, _,Sb>;
+	requires xs::ll<n, S> & n>0 
+	ensures xs::sll<n, _, _,S>;
 {
 	bool b;
 
