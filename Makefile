@@ -19,7 +19,9 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip hip.opt sleek sleek.opt prover prover.opt
+all: hip sleek prover
+
+opt: hip.opt sleek.opt prover.opt
 
 sparser.cmo sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly
@@ -67,6 +69,28 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	globalvars.cmo \
 	main.cmo
 
+MAIN_FILES_OPT=globals.cmx error.cmx util.cmx debug.cmx \
+	net.cmx \
+	cpure.cmx ipure.cmx \
+	iformula.cmx iast.cmx \
+	iparser.cmx ilexer.cmx \
+	iprinter.cmx \
+	cformula.cmx cast.cmx cprinter.cmx \
+	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx redlog.cmx \
+	cvclite.cmx smtsolver.cmx tpdispatcher.cmx paralib1.cmx paralib1v2.cmx\
+	prooftracer.cmx context.cmx solver.cmx \
+	drawing.cmx \
+	env.cmx checks.cmx inliner.cmx astsimp.cmx \
+	typechecker.cmx \
+	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
+	globalvars.cmx \
+	main.cmx
+
+MAIN_FILES_2=util.cmx debug.cmx globals.cmx \
+	ipure.cmx iformula.cmx iast.cmx \
+	iparser.cmx ilexer.cmx \
+	iprinter.cmx
+
 SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
@@ -88,6 +112,27 @@ SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	sleekengine.cmo \
 	sleek.cmo
 
+SLEEK_FILES_OPT=globals.cmx error.cmx util.cmx debug.cmx \
+	cpure.cmx ipure.cmx \
+	iformula.cmx iast.cmx \
+	iparser.cmx ilexer.cmx \
+	iprinter.cmx \
+	cformula.cmx cast.cmx cprinter.cmx \
+	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx omega.cmx mona.cmx setmona.cmx redlog.cmx \
+    net.cmx \
+	cvclite.cmx smtsolver.cmx tpdispatcher.cmx paralib1.cmx paralib1v2.cmx\
+	prooftracer.cmx context.cmx solver.cmx \
+	drawing.cmx \
+	env.cmx checks.cmx \
+	inliner.cmx \
+	astsimp.cmx \
+	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
+	typechecker.cmx \
+	sleekcommons.cmx \
+	sparser.cmx slexer.cmx \
+	xmlfront.cmx nativefront.cmx \
+	sleekengine.cmx \
+	sleek.cmx
 
 MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 	ipure.cmo iformula.cmo iast.cmo \
@@ -112,6 +157,23 @@ PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	prove.cmo
+
+PROVE_FILES_OPT=globals.cmx error.cmx util.cmx debug.cmx \
+	cpure.cmx ipure.cmx \
+	iformula.cmx iast.cmx \
+	iparser.cmx ilexer.cmx \
+	iprinter.cmx \
+	cformula.cmx cast.cmx cprinter.cmx \
+	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx redlog.cmx \
+    net.cmx \
+	cvclite.cmx smtsolver.cmx tpdispatcher.cmx paralib1.cmx paralib1v2.cmx\
+	prooftracer.cmx context.cmx solver.cmx \
+	drawing.cmx \
+	env.cmx checks.cmx inliner.cmx astsimp.cmx \
+	typechecker.cmx \
+	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
+	prove.cmx
+
 
 WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
@@ -139,17 +201,22 @@ hipc:
 hip: $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
-hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
-	make -f Makefile.opt hip.opt
+#hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
+#	make -f Makefile.opt hip.opt
+
+hip.opt: $(MAIN_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
 
 prover: $(PROVE_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
-prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
-	make -f Makefile.opt prover.opt
+prover.opt: $(PROVE_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
+
 	
 web: $(WEB_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
+
 #$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
 sleekc:
@@ -164,8 +231,11 @@ xml/xml-light.cmxa:
 sleek: xml/xml-light.cma $(SLEEK_FILES) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES) 
-	make -f Makefile.opt sleek.opt
+sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES_OPT) 
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
+
+#sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
+#	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
 
 CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	cpure.cmo cformula.cmo cast.cmo
