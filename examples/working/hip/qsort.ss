@@ -5,15 +5,15 @@ data node {
 	node next; 
 }
 
-bnd<n, sm, bg> == self = null & n = 0 or 
+bnd<n, sm, bg> == self = null & n = 0 & sm<=bg or 
                   self::node<d, p> * p::bnd<n1, sm, bg> & n= n1+1 & sm <= d < bg 
-               inv n >= 0;
+               inv n >= 0 & sm<=bg;
 
-/*
 bnd2<n,S> == self=null & n=0 & S={}
       or self::node<v,q> * q::bnd2<n1,S1> & n1+1=n & S=union({v},S1) 
       inv n>=0;
  
+/*
 sll2<n,S> == self=null & n=0 & S={}
       or self::node<v,q> * q::sll2<n1,S1> & n1+1=n & S=union({v},S1) & forall (x : (x notin S1 | v<=x))
       inv n>=0;
@@ -25,13 +25,12 @@ sll<n, sm, lg> == self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 or
 
 node partition(ref node xs, int c)
 	requires xs::bnd<n, sm, bg> & sm <= c <= bg
-        ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
-/*
+        //ensures xs'::bnd<a, sm, b2> * res::bnd<b, s3, bg> & n = a+b & b2<=c<=s3;
+        ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b ;
         requires xs::bnd2<n,S>
         ensures xs'::bnd2<a,S1> * res::bnd2<b,S2> & S=union(S1,S2) & n=a+b
 	   & forall(x : (x notin S1 | x<c)) 
 	   & forall(y : (y notin S2 | y>=c)) ;
-*/
 {
 	node tmp1;
 	int v; 
@@ -40,6 +39,7 @@ node partition(ref node xs, int c)
 		return null;
 	else
 	{
+      //assert xs=null;
 		if (xs.val >= c)
 		{
             v = xs.val;
