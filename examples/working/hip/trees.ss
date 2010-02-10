@@ -277,8 +277,10 @@ void delete(ref node2 x, int a)
 		{
 			if (xval == a) 
 			{
-				if (xright == null)
+				if (xright == null) {
+                                        assert true;
 					x = xleft; 
+				}
 				else
 				{
 					tmp = remove_min(xright);

@@ -121,8 +121,8 @@ and string_of_var_kind k = (match k with
 		| Unknown -> "unknown" 
 		| Known d-> 
 	("known "^(Cprinter.string_of_typ d)) )
-	
 let prim_buffer = Buffer.create 1024
+	
   
 (* search prog and generate all eq, neq for all the data declaration,      *)
 (* along with the ones in prim_str                                         *)

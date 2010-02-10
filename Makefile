@@ -4,10 +4,10 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml -dtypes
+INCLUDES=-I ./xml
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
-OCAMLFLAGS=$(INCLUDES) # add other options for ocamlc here
+OCAMLFLAGS= -dtypes $(INCLUDES) # add other options for ocamlc here
 OCAMLOPTFLAGS=$(INCLUDES) -p # add other options for ocamlopt here
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
@@ -150,7 +150,7 @@ prover.opt: $(PROVE_FILES:*.cmo=*.cmx)
 	
 web: $(WEB_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
-	#$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+#$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
 sleekc:
 	make clean; make sleek 
@@ -161,10 +161,10 @@ xml/xml-light.cma:
 xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
-sleek: $(SLEEK_FILES) xml/xml-light.cma
+sleek: xml/xml-light.cma $(SLEEK_FILES) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt: $(SLEEK_FILES) xml/xml-light.cmxa
+sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES) 
 	make -f Makefile.opt sleek.opt
 
 CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \

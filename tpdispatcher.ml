@@ -552,6 +552,9 @@ let rec split_disjunctions = function
 ;;
 
 let tp_imply ante conseq imp_no timeout =
+  (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
+                  ^(Cprinter.string_of_pure_formula conseq)^"\n") in
+   *)
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
   | CvcLite -> Cvclite.imply ante conseq

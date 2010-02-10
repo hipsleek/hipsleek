@@ -1,27 +1,38 @@
+(*
+ created 21-Feb-2006
 
-module ViewNode = struct
-  type t = string
-  let compare = compare
-  let hash = Hashtbl.hash
-  let equal = (=)
-end
+  Formula
+*)
+open Globals
 
-module G = Graph.Imperative.Digraph.Concrete(ViewNode)
-module TG = Graph.Topological.Make(G)
-module CG = Graph.Traverse.Dfs(G)
+module Err = Error
+module CP = Cpure
+module U = Util
 
-open G
+type ('a,'b,'c) f =  ('a list * 'b list * 'c )
 
-let edges = [("d", "c"); ("a", "b"); ("b", "c"); ("a", "d"); ("e", "b"); ("b", "e")]
-(*let edges = [(1,2);(3,4);(1,3)]*)
+(*
+let r ((q1,q2,q3):f (int,int,bool)):f = (q1,[],q3)
+*)
 
-let g = create ()
+type 'a eq = {eq: 'a ->'a -> 'a; neq: 'a ->'a -> 'a}
 
-let _ =
-  print_string ("testing ocamlgraph\n");
-  ignore (List.map (fun (v1, v2) -> add_edge g (V.create v1) (V.create v2)) edges);
-  TG.iter (fun s -> print_string (s ^ "\n")) g;
-  if CG.has_cycle g then
-	print_string ("g has cycle\n")
-  else
-	print_string ("acylic\n")
+type 'a numb = {add: 'a ->'a -> 'a; shw: 'a -> string}
+
+let numb_i = {add =(+); shw = string_of_int}
+
+let numb_l numb_e = {add = List.map2 numb_e.add;
+                     shw = fun a ->
+                       "[" ^ List.fold_right
+                            (fun e z ->" " ^ numb_e.shw e ^ z) a "]" };;
+(*
+let summ numb (h::t) = List.fold_left numb.add h t
+*)
+
+let f ~x ~y = x - y;;
+
+let bump ?(step=1) x = x + step
+
+
+let g x = x
+

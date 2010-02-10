@@ -86,8 +86,10 @@ void qsort1(ref node xs)
         int v;
 	bool b;
 
-	if (xs == null)
-		skip();
+        assert xs=null ;
+	if (xs == null) {
+                assert false;
+		skip(); }
 	else
 	{
         v = xs.val;
