@@ -1368,7 +1368,7 @@ and rec_grp prog :ident list =
 	recs
 		
 				
-and flatten_base_case (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.formula * (Cpure.formula*((string*Cpure.formula)list))) option = 
+and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.formula * (Cpure.formula*((string*Cpure.formula)list))) option = 
     let sat_subno = ref 0 in
 	let rec get_pure (f:Cformula.formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
 		| Cformula.Or b->

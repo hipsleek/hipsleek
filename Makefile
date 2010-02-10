@@ -69,27 +69,9 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	globalvars.cmo \
 	main.cmo
 
-MAIN_FILES_OPT=globals.cmx error.cmx util.cmx debug.cmx \
-	net.cmx \
-	cpure.cmx ipure.cmx \
-	iformula.cmx iast.cmx \
-	iparser.cmx ilexer.cmx \
-	iprinter.cmx \
-	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx redlog.cmx \
-	cvclite.cmx smtsolver.cmx tpdispatcher.cmx paralib1.cmx paralib1v2.cmx\
-	prooftracer.cmx context.cmx solver.cmx \
-	drawing.cmx \
-	env.cmx checks.cmx inliner.cmx astsimp.cmx \
-	typechecker.cmx \
-	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
-	globalvars.cmx \
-	main.cmx
+MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
-MAIN_FILES_2=util.cmx debug.cmx globals.cmx \
-	ipure.cmx iformula.cmx iast.cmx \
-	iparser.cmx ilexer.cmx \
-	iprinter.cmx
+
 
 SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
@@ -112,32 +94,15 @@ SLEEK_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	sleekengine.cmo \
 	sleek.cmo
 
-SLEEK_FILES_OPT=globals.cmx error.cmx util.cmx debug.cmx \
-	cpure.cmx ipure.cmx \
-	iformula.cmx iast.cmx \
-	iparser.cmx ilexer.cmx \
-	iprinter.cmx \
-	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx omega.cmx mona.cmx setmona.cmx redlog.cmx \
-    net.cmx \
-	cvclite.cmx smtsolver.cmx tpdispatcher.cmx paralib1.cmx paralib1v2.cmx\
-	prooftracer.cmx context.cmx solver.cmx \
-	drawing.cmx \
-	env.cmx checks.cmx \
-	inliner.cmx \
-	astsimp.cmx \
-	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
-	typechecker.cmx \
-	sleekcommons.cmx \
-	sparser.cmx slexer.cmx \
-	xmlfront.cmx nativefront.cmx \
-	sleekengine.cmx \
-	sleek.cmx
+SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
+
 
 MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 	ipure.cmo iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo
+
+MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
 
 
 PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
@@ -158,22 +123,7 @@ PROVE_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	typechecker.cmo \
 	prove.cmo
 
-PROVE_FILES_OPT=globals.cmx error.cmx util.cmx debug.cmx \
-	cpure.cmx ipure.cmx \
-	iformula.cmx iast.cmx \
-	iparser.cmx ilexer.cmx \
-	iprinter.cmx \
-	cformula.cmx cast.cmx cprinter.cmx \
-	ocparser.cmx oclexer.cmx unix_add.cmx isabelle.cmx coq.cmx mona.cmx omega.cmx setmona.cmx redlog.cmx \
-    net.cmx \
-	cvclite.cmx smtsolver.cmx tpdispatcher.cmx paralib1.cmx paralib1v2.cmx\
-	prooftracer.cmx context.cmx solver.cmx \
-	drawing.cmx \
-	env.cmx checks.cmx inliner.cmx astsimp.cmx \
-	typechecker.cmx \
-	java.cmx cjava.cmx predcomp.cmx rtc.cmx \
-	prove.cmx
-
+PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
 WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \

@@ -36,7 +36,7 @@ type front_end =
 
 let fe = ref NativeFE
 
-let set_frontend fe_str = match fe_str with
+let set_frontend fe_str = match fe_str  with
   | "native" -> fe := NativeFE
   | "xml" -> fe := XmlFE
   | _ -> failwith ("Unsupported frontend: " ^ fe_str)
