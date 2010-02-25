@@ -142,19 +142,19 @@ WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	web.cmo
-hip1: $(MAIN_FILES_2)
+hip1: $(MAIN_FILES_2) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
 
 hipc:
 	make clean; make hip
 
-hip: $(MAIN_FILES)
+hip: $(MAIN_FILES) decidez.vo
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
 #	make -f Makefile.opt hip.opt
 
-hip.opt: $(MAIN_FILES_OPT)
+hip.opt: $(MAIN_FILES_OPT) decidez.vo
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
 
 prover: $(PROVE_FILES)
@@ -178,10 +178,10 @@ xml/xml-light.cma:
 xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
-sleek: xml/xml-light.cma $(SLEEK_FILES) 
+sleek: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES_OPT) 
+sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
@@ -221,6 +221,9 @@ JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 j: $(JAVA_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(JAVA_FILES)
 
+decidez.vo:
+	coqtop -compile decidez
+
 # ------------------------------------------------------------
 # Common rules
 # ------------------------------------------------------------
@@ -240,7 +243,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe
+	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
