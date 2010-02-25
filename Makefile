@@ -119,10 +119,10 @@ hip1: $(MAIN_FILES_2)
 hipc:
 	make clean; make hip
 
-hip: $(MAIN_FILES)
+hip: decidez.vo $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
-hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
+hip.opt: decidez.vo $(MAIN_FILES:*.cmo=*.cmx)
 	make -f Makefile.opt hip.opt
 
 prover: $(PROVE_FILES)
@@ -140,10 +140,10 @@ xml/xml-light.cma:
 xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
-sleek: $(SLEEK_FILES) xml/xml-light.cma
+sleek: decidez.vo $(SLEEK_FILES) xml/xml-light.cma
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt: $(SLEEK_FILES) xml/xml-light.cmxa
+sleek.opt: decidez.vo $(SLEEK_FILES) xml/xml-light.cmxa
 	make -f Makefile.opt sleek.opt
 
 CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
@@ -184,6 +184,9 @@ j: $(JAVA_FILES)
 # ------------------------------------------------------------
 .SUFFIXES: .ml .mli .cmo .cmi .cmx .mly .mll
 
+decidez.vo:
+	coqtop -compile decidez
+
 .ml.annot:
 	$(OCAMLC) $(OCAMLFLAGS) -c -g $<
 
@@ -198,7 +201,7 @@ j: $(JAVA_FILES)
 
 # Clean up
 clean: 
-	rm -f slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt *~ oo oo.exe
+	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt *~ oo oo.exe
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
