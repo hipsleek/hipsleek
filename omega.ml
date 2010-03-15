@@ -98,12 +98,12 @@ and omega_of_b_formula b = match b with
   | _ -> failwith ("Omega.omega_of_exp: bag constraint")
 
 and omega_of_formula f  = match f with
-  | BForm b -> 		"(" ^ (omega_of_b_formula b) ^ ")"
+  | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
   | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
-  | Or (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
-  | Not (p, _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
-  | Forall (sv, p, _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
-  | Exists (sv, p, _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
+  | Or (p1, p2,_ , _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
+  | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
+  | Forall (sv, p,_ , _) -> " (forall (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
+  | Exists (sv, p,_ , _) -> " (exists (" ^ (omega_of_spec_var sv) ^ ":" ^ (omega_of_formula p) ^ ")) "
 
 
 let omegacalc = "oc" (* TODO: fix oc path *)
@@ -290,7 +290,7 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
     let tmp2 = mkExists fvars tmp1 no_pos in
     not (is_valid tmp2)
    *)
-  let tmp_form = mkOr (mkNot ante no_pos) conseq no_pos in
+  let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
     if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
@@ -321,7 +321,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 | UnionRel (r1, r2) ->
     let f1 = match_vars vars_list0 r1 in
     let f2 = match_vars vars_list0 r2 in
-    let tmp = mkOr f1 f2 no_pos in
+    let tmp = mkOr f1 f2 None no_pos in
     tmp
 
 let simplify (pe : formula) : formula =

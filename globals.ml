@@ -8,7 +8,12 @@ type nflow = (int*int)(*numeric representation of flow*)
 
 	
 	
-and branch_label = string
+and branch_label = string	(*formula branches*)
+type formula_label = (int*string)
+and control_path_id_strict = formula_label
+and control_path_id = control_path_id_strict  option(*identifier for if, catch, call*)
+type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
+type path_trace = (control_path_id_strict * path_label) list 
 
 and loc = {
 			start_pos : Lexing.position (* might be expanded to contain more information *);
@@ -166,11 +171,26 @@ let seq_number = ref 10
 
 let sat_timeout = ref 10.
 let imply_timeout = ref 10.
-
+  
 let report_error (pos : loc) (msg : string) =
   print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
   failwith "Error detected"
+
+let branch_point_id = ref 1
+let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label) list)*loc) list)
+
+
+let fresh_formula_label (s:string) :formula_label = 
+	branch_point_id := !branch_point_id + 1;
+	(!branch_point_id,s)
+  
+let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
+
+
+let fresh_int () =
+  seq_number := !seq_number + 1;
+  !seq_number
 
 let seq_number2 = ref 0
 

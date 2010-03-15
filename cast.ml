@@ -55,6 +55,7 @@ and proc_decl = { proc_name : ident;
 				  proc_body : exp option;
 				  proc_loc : loc }
 
+(*TODO: does lemma need struc formulas?*)
 and coercion_decl = { coercion_name : ident;
 					  coercion_head : F.formula;
 					  coercion_body : F.formula;
@@ -81,6 +82,7 @@ and sharp_val =
 	
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 				   exp_assert_assumed_formula : F.formula option;
+				   exp_assert_path_id : formula_label;
 				   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_lhs : ident;
@@ -94,6 +96,7 @@ and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct
 				 exp_bind_bound_var : typed_ident;
 				 exp_bind_fields : typed_ident list;
 				 exp_bind_body : exp;
+				 exp_bind_path_id : control_path_id;
 				 exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : P.typ;
@@ -109,6 +112,7 @@ and exp_cond = { exp_cond_type : P.typ;
 				 exp_cond_condition : ident;
 				 exp_cond_then_arm : exp;
 				 exp_cond_else_arm : exp;
+				 exp_cond_path_id : control_path_id;
 				 exp_cond_pos : loc }
 
 and exp_debug = { exp_debug_flag : bool;
@@ -124,6 +128,7 @@ and exp_icall = { exp_icall_type : P.typ;
 				  exp_icall_method_name : ident;
 				  exp_icall_arguments : ident list;
 				  exp_icall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
+				  exp_icall_path_id : control_path_id;
 				  exp_icall_pos : loc }
 
 and exp_iconst = { exp_iconst_val : int;
@@ -143,6 +148,7 @@ and exp_scall = { exp_scall_type : P.typ;
 				  exp_scall_method_name : ident;
 				  exp_scall_arguments : ident list;
 				  exp_scall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
+				  exp_scall_path_id : control_path_id;
 				  exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : P.typ;
@@ -155,6 +161,7 @@ and exp_sharp = {
 				   exp_sharp_flow_type :sharp_flow;(*the new flow*)
 				   exp_sharp_val :sharp_val;(*returned value*)
 				   exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
+				   exp_sharp_path_id : control_path_id;
 				   exp_sharp_pos : loc;
 				}
 				
@@ -162,11 +169,12 @@ and exp_catch = {
 				  exp_catch_flow_type : nflow ;
 				  exp_catch_flow_var : ident option;
 				  exp_catch_var : typed_ident option;
-				  exp_catch_body : exp;																					   
+				  exp_catch_body : exp;			
 				  exp_catch_pos : loc }
 				  				  
 and exp_try = { exp_try_type : P.typ;
 				exp_try_body : exp;
+				exp_try_path_id : control_path_id;
 				exp_catch_clause : exp_catch ;
 				exp_try_pos : loc }
 
@@ -184,6 +192,7 @@ and exp_var_decl = { exp_var_decl_type : P.typ;
 and exp_while = { exp_while_condition : ident;
 				  exp_while_body : exp;
 				  exp_while_spec : Cformula.struc_formula (*multi_spec*);
+				  exp_while_path_id : control_path_id;
 				  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : ident;
@@ -198,9 +207,14 @@ and exp_check_ref = { exp_check_ref_var : ident;
 
 and exp_java = { exp_java_code : string;
 				 exp_java_pos : loc}
-
+and exp_label = {
+				exp_label_type : P.typ;
+				exp_label_path_id : (control_path_id * path_label);
+				exp_label_exp: exp;}
+			 
 and exp = (* expressions keep their types *)
 	(* for runtime checking *)
+  | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
 	  (* standard expressions *)
@@ -262,8 +276,8 @@ let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 		sensures_base = Cformula.mkTrue pos;
 		sensures_pos = pos;
 	}]*)
-	
-let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos))]
+let stub_branch_point_id s = (-1,s)
+let mkEAssume pos = [Cformula.EAssume  ([],(Cformula.mkTrue (Cformula.mkTrueFlow ()) pos),(stub_branch_point_id ""))]
 	
 let mkSeq t e1 e2 pos = match e1 with
   | Unit _ -> e2
@@ -289,6 +303,7 @@ let is_unit (e : exp) : bool = match e with Unit _ -> true | _ -> false
 let is_cond (e : exp) : bool = match e with Cond _ -> true | _ -> false
 
 let rec type_of_exp (e : exp) = match e with
+  | Label b -> type_of_exp b.exp_label_exp
   | CheckRef _ -> None
   | Java _ -> None
   | Assert _ -> None
@@ -460,6 +475,7 @@ let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
 	callees
 
 and callees_of_exp (e0 : exp) : ident list = match e0 with
+  | Label e -> callees_of_exp e.exp_label_exp
   | CheckRef _ -> []
   | Java _ -> []
   | Assert _ -> []
@@ -604,6 +620,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
+							   F.h_formula_data_label = subnode.F.h_formula_data_label;
 							   F.h_formula_data_pos = pos}) in
 		(* generate extensions for the rest of the fields *)
 	  let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
@@ -615,6 +632,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = link_p :: to_ext;
+										 F.h_formula_data_label = subnode.F.h_formula_data_label;
 										 F.h_formula_data_pos = pos}) in
 				  ext_h
 			  else
@@ -627,6 +645,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
+										 F.h_formula_data_label = subnode.F.h_formula_data_label;
 										 F.h_formula_data_pos = pos}) in
 				let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
 				let ext = F.mkStarH ext_h rest_exts pos in
@@ -714,10 +733,11 @@ and exp_to_check (e:exp) :bool = match e with
   | New _
   | Sharp _
   | SCall _
+  | Label _
   -> true
   
   
-and pos_of_exp (e:exp) :loc = match e with
+let rec pos_of_exp (e:exp) :loc = match e with
   | CheckRef b -> b.exp_check_ref_pos
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos
@@ -745,6 +765,7 @@ and pos_of_exp (e:exp) :loc = match e with
   | SCall b -> b.exp_scall_pos
   | While b -> b.exp_while_pos
   | Try b -> b.exp_try_pos
+  | Label b -> pos_of_exp b.exp_label_exp
   
   
 let rec check_proper_return cret_type exc_list f = 
@@ -796,6 +817,6 @@ let rec check_proper_return cret_type exc_list f =
 	let helper f0 = match f0 with 
 		| F.EBase b-> check_proper_return cret_type exc_list  b.F.formula_ext_continuation
 		| F.ECase b-> List.iter (fun (_,c)-> check_proper_return cret_type exc_list c) b.F.formula_case_branches
-		| F.EAssume (_,b)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
+		| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 		in
 	List.iter helper f

@@ -128,6 +128,7 @@ let rec find_read_write_global_var
   | I.This _ 
   | I.Unfold _ -> 
 	  (IdentSet.empty, IdentSet.empty)
+  | I.Label (_,b)-> find_read_write_global_var global_vars local_vars b
   | I.Assign e ->
 	  begin
 		let (rr,wr) = find_read_write_global_var global_vars local_vars e.I.exp_assign_rhs in
@@ -512,6 +513,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.Unfold _
   | I.Var _ -> 
 	  exp
+  | I.Label (p,b)-> I.Label (p, extend_body temp_procs b)
   | I.Assign e -> 
 	  begin
 		let new_lhs = extend_body temp_procs e.I.exp_assign_lhs in
@@ -677,6 +679,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.Var _
   | I.VarDecl _ -> 
 	  exp
+  | I.Label (p,b) -> I.Label (p, check_and_change global_vars b)
   | I.Assign e ->
 	  begin
 		let new_lhs = check_and_change global_vars e.I.exp_assign_lhs in

@@ -55,11 +55,11 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 		  let seq1 = List.fold_left (fun s -> fun vd -> mkSeq vd s pos) new_proc_body var_defs in
 			(* make a block to localize formal args *)
 		  let block1 = Block { exp_block_body = seq1;
-							   exp_block_label = NoLabel;
+							   exp_block_jump_label = NoJumpLabel;
 							   exp_block_pos = pos } in
 		  let seq2 = List.fold_left (fun s -> fun vd -> mkSeq vd s pos) block1 fresh_args in
 		  let block2 = Block { exp_block_body = seq2;
-							   exp_block_label = NoLabel;
+							   exp_block_jump_label = NoJumpLabel;
 							   exp_block_pos = pos } in
 			(*
 			  print_string ("\nblock1:\n" ^ (Iprinter.string_of_exp block1) ^ "\n");

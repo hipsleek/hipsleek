@@ -32,7 +32,10 @@ let string_of_typ = function
 let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
-
+let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
+let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
+let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
 let string_of_constraint_relation m = match m with
   | Cpure.Unknown -> " ?  "
@@ -47,16 +50,17 @@ let string_of_spec_var sv = match sv with
 let rec string_of_h_formula h = match h with
   | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 
       (string_of_h_formula h1) ^ " * " ^ (string_of_h_formula h2)
-  | DataNode ({h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs; h_formula_data_pos = pos})  ->
-	  (string_of_spec_var sv) ^ "::" ^ c 
-	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">"
+  | DataNode ({h_formula_data_node = sv; h_formula_data_name = c; h_formula_data_arguments = svs; h_formula_data_pos = pos;h_formula_data_label = pid})  ->
+	  string_of_formula_label_opt pid ((string_of_spec_var sv) ^ "::" ^ c 
+	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">")
   | ViewNode ({h_formula_view_node = sv; 
 			   h_formula_view_name = c; 
 			   h_formula_view_arguments = svs; 
 			   h_formula_view_origins = origins;
+			   h_formula_view_label = pid;
 			   h_formula_view_pos = pos}) ->
-	  (string_of_spec_var sv) ^ "::" ^ c 
-	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">" 
+	  string_of_formula_label_opt pid ((string_of_spec_var sv) ^ "::" ^ c 
+	  ^ "<" ^ (String.concat ", " (List.map string_of_spec_var svs)) ^ ">" )
 	  (*^ "origins: " ^ (String.concat ";" origins) ^ "--"*)
   | HTrue -> "true"
   | HFalse -> "false"
@@ -174,20 +178,24 @@ let string_of_b_formula = function
 let rec string_of_pure_formula_list l = match l with 
   | []               -> ""
   | h::t             -> (string_of_pure_formula h) ^ "\n" ^ (string_of_pure_formula_list t)
-
+  
+  
 (* pretty printing for a pure formula *)
 and string_of_pure_formula = function 
-  | P.BForm bf                    -> string_of_b_formula bf 
+  | P.BForm (bf,lbl)              -> string_of_formula_label_opt lbl (string_of_b_formula bf)
   | P.And (f1, f2, l)             -> (string_of_pure_formula f1) ^ " & " ^ (string_of_pure_formula f2)
-  | P.Or (f1, f2, l)              -> "((" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ "))"
-  | P.Not (f, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
-  | P.Forall (x, f, l)            -> "(all " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
+  | P.Or (f1, f2, lbl,l)          -> string_of_formula_label_opt lbl ("((" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ "))")
+  | P.Not (f, lbl, l)             -> string_of_formula_label_opt lbl ("!(" ^ (string_of_pure_formula f) ^ ")")
+  | P.Forall (x, f,lbl, l)            -> 
+	let s = "(all " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
     | Primed    -> "'"
-    | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")"
-  | P.Exists (x, f, l)            -> "(ex " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
+    | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")" in
+	string_of_formula_label_opt lbl s
+  | P.Exists (x, f, lbl, l)            -> 
+	let s = "(ex " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
     | Primed    -> "'"
-    | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")"
-
+    | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")" in
+	string_of_formula_label_opt lbl s
 and string_of_pure_formula_branches (f, l) =
   match l with
   | [] -> string_of_pure_formula f
@@ -287,7 +295,7 @@ let rec string_of_ext_formula = function
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"ex.["^l3^"]["^l1^"]["^l2^"]"^b^" "^c
-	| EAssume (x,b)-> "EAssume ref["^(string_of_spec_var_list x)^"] "^(string_of_formula b)
+	| EAssume (x,b,(_,y2))-> "EAssume "^y2^": ref["^(string_of_spec_var_list x)^"] "^(string_of_formula b)
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
@@ -327,9 +335,11 @@ let string_of_sharp st = match st with
 	| Sharp_v  f -> "flow_var "^f
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
+  | Label l-> string_of_control_path_id_opt (fst l.exp_label_path_id) (string_of_exp l.exp_label_exp)
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
-  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l}) -> 
+  | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_path_id = pid}) -> 
+	let s = 
       begin
 	  let str1 = 
 		match f1o with
@@ -340,7 +350,8 @@ let rec string_of_exp = function
 		  | None -> ""
 		  | Some f2 -> "assume " ^ (string_of_formula f2) in
 		str1 ^ " " ^ str2
-      end
+      end in
+	  string_of_formula_label pid s 
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
       id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -349,8 +360,9 @@ let rec string_of_exp = function
 	   exp_bind_bound_var = (_, id); 
 	   exp_bind_fields = idl;
 	   exp_bind_body = e;
+	   exp_bind_path_id = pid;
 	   exp_bind_pos = l}) -> 
-	   "bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}"
+	   string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}")
   | Block ({exp_block_type = _;
 	    exp_block_body = e;
 	    exp_block_local_vars = _;
@@ -360,8 +372,9 @@ let rec string_of_exp = function
 	   exp_icall_method_name = id;
 	   exp_icall_arguments = idl;
 	   exp_icall_visible_names = _;
+	   exp_icall_path_id = pid;
 	   exp_icall_pos = l}) -> 
-	   r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" 
+	   string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
   | Cast ({exp_cast_target_type = t;
 		   exp_cast_body = body}) -> begin
 	  "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
@@ -370,8 +383,9 @@ let rec string_of_exp = function
 	   exp_cond_condition = id;
 	   exp_cond_then_arm = e1;
 	   exp_cond_else_arm = e2;
+	   exp_cond_path_id = pid;
 	   exp_cond_pos = l}) -> 
-	   "if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" 
+	   string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _                   -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
@@ -386,7 +400,9 @@ let rec string_of_exp = function
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
 	     exp_sharp_val = eo;
+		 exp_sharp_path_id =pid;
 	     exp_sharp_pos = l}) ->begin
+		 string_of_control_path_id_opt pid (
 		 match st with
 		 | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
 									 (match eo with 
@@ -399,13 +415,14 @@ let rec string_of_exp = function
 		 | _ -> (match eo with 
 					| Sharp_prog_var e -> "throw " ^ (snd e)
 					| Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
-					| _   -> "throw "^(string_of_sharp st))end 
+					| _   -> "throw "^(string_of_sharp st)))end 
   | SCall ({exp_scall_type = _;
 	   exp_scall_method_name = id;
 	   exp_scall_arguments = idl;
 	   exp_scall_visible_names = _;
+	   exp_scall_path_id = pid;
 	   exp_scall_pos = l}) -> 
-	   id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" 
+	   string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")
   | Seq ({exp_seq_type = _;
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;
@@ -423,8 +440,9 @@ let rec string_of_exp = function
   | While ({exp_while_condition = id;
 	    exp_while_body = e;
 	    exp_while_spec = fl;
+		exp_while_path_id = pid;
 	    exp_while_pos = l})  -> 
-	    "while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n"
+	    string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> 
 	let c = b.exp_catch_clause.exp_catch_flow_type in
@@ -516,10 +534,18 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
 
 
 let rec string_of_context (ctx: context) = match ctx with
+  | FailCtx es -> "Fail context: [ \n"^(String.concat "," (List.map string_of_fail_estate es))^"\n]\n"
   | Ctx es -> string_of_estate es
   | OCtx (c1, c2) -> (string_of_context c1) ^ "\nCtxOR\n" ^ (string_of_context c2)
 
 and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_context ctx)
+
+and string_of_fail_estate (es:fail_context) : string = "{"^
+  "\n fc_message: "^es.fc_message ^
+  "\n fc_current_lhs: "^ (string_of_estate es.fc_current_lhs) ^
+  "\n fc_orig_conseq: "^ (string_of_struc_formula es.fc_orig_conseq )^ 
+  "\n fc_failure_pts: ["^ (String.concat "," (List.map (fun c-> string_of_formula_label c "")es.fc_failure_pts))^"]}\n"
+
 
 and string_of_estate (es : entail_state) = 
   "es_formula: " ^ (string_of_formula es.es_formula)
@@ -530,19 +556,7 @@ and string_of_estate (es : entail_state) =
   ^ "\nes_expl_vars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_expl_vars))
   ^"\n es_gen_expl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_expl_vars))
   ^"\n es_gen_impl_vars:"^(String.concat ", " (List.map string_of_spec_var es.es_gen_impl_vars))
-(*
-  ^ "\nes_pp_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
-														 ^ ", " ^ (string_of_spec_var t) ^ ")") es.es_pp_subst))
-  ^ "\nes_pres_subst: " ^ (String.concat ", " (List.map (fun (fr, t) -> "(" ^ (string_of_spec_var fr) 
-														 ^ ", " ^ (Presburger.string_of_aExp t) ^ ")") es.es_pres_subst))*
-*)
-(*
-let string_of_spec (sp : (formula * formula)) =
-  "requires " ^ (string_of_formula (fst sp)) 
-  ^ "\nensures " ^ (string_of_formula (snd sp))
-
-let string_of_specs (specs : (formula * formula) list) =
-  let tmp1 = List.map string_of_spec specs in
-  let tmp2 = String.concat ";\n" tmp1 in
-	tmp2
-*)
+  ^"\n es_success_pts:"^(String.concat ", " (List.map (fun (c1,c2)-> "("^(string_of_formula_label c1 "")^","^(string_of_formula_label c2 "")^")") es.es_success_pts))
+  ^"\n es_residue_pts:"^(String.concat ", " (List.map (fun c-> string_of_formula_label c "") es.es_residue_pts))
+  ^"\n es_path_label:"^(String.concat ", " (List.map (fun (c1,c3)-> "("^(string_of_formula_label c1 "")^","^(string_of_int c3)^")") es.es_path_label))
+    

@@ -719,68 +719,76 @@ heap_constr
 ;
 
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT {
+  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label {
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
 						 F.h_formula_heap_full = false;
 						 F.h_formula_heap_with_inv = false;
 						 F.h_formula_heap_pseudo_data = false;
 						 F.h_formula_heap_arguments = $5;
+						 F.h_formula_heap_label = $7;
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT {
+  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
 							F.h_formula_heap2_arguments = $5;
+							F.h_formula_heap2_label = $7;
 							F.h_formula_heap2_pos = get_pos 2 } in
 		h
 	}
 /*
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT DOLLAR {
-		let h = F.HeapNode { F.h_formula_heap_node = $1;
-							 F.h_formula_heap_name = $3;
-							 F.h_formula_heap_full = true;
-							 F.h_formula_heap_with_inv = false;
-							 F.h_formula_heap_pseudo_data = false;
-							 F.h_formula_heap_arguments = $5;
-							 F.h_formula_heap_pos = get_pos 2 } in
-		  h
-	  }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT HASH {
-		let h = F.HeapNode { F.h_formula_heap_node = $1;
-							 F.h_formula_heap_name = $3;
-							 F.h_formula_heap_full = false;
-							 F.h_formula_heap_with_inv = true;
-							 F.h_formula_heap_pseudo_data = false;
-							 F.h_formula_heap_arguments = $5;
-							 F.h_formula_heap_pos = get_pos 2 } in
-		  h
-	  }
-  | cid COLONCOLON IDENTIFIER HASH LT opt_heap_arg_list GT {
-		let h = F.HeapNode { F.h_formula_heap_node = $1;
-							 F.h_formula_heap_name = $3;
-							 F.h_formula_heap_full = false;
-							 F.h_formula_heap_with_inv = false;
-							 F.h_formula_heap_pseudo_data = true;
-							 F.h_formula_heap_arguments = $6;
-							 F.h_formula_heap_pos = get_pos 2 } in
-		  h
-	  }
+				  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT DOLLAR {
+						let h = F.HeapNode { F.h_formula_heap_node = $1;
+											 F.h_formula_heap_name = $3;
+											 F.h_formula_heap_full = true;
+											 F.h_formula_heap_with_inv = false;
+											 F.h_formula_heap_pseudo_data = false;
+											 F.h_formula_heap_arguments = $5;
+											 F.h_formula_heap_pos = get_pos 2 } in
+						  h
+					  }
+				  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list GT HASH {
+						let h = F.HeapNode { F.h_formula_heap_node = $1;
+											 F.h_formula_heap_name = $3;
+											 F.h_formula_heap_full = false;
+											 F.h_formula_heap_with_inv = true;
+											 F.h_formula_heap_pseudo_data = false;
+											 F.h_formula_heap_arguments = $5;
+											 F.h_formula_heap_pos = get_pos 2 } in
+						  h
+					  }
+				  | cid COLONCOLON IDENTIFIER HASH LT opt_heap_arg_list GT {
+						let h = F.HeapNode { F.h_formula_heap_node = $1;
+											 F.h_formula_heap_name = $3;
+											 F.h_formula_heap_full = false;
+											 F.h_formula_heap_with_inv = false;
+											 F.h_formula_heap_pseudo_data = true;
+											 F.h_formula_heap_arguments = $6;
+											 F.h_formula_heap_pos = get_pos 2 } in
+						  h
+					  }
 */
 ;
 
 pure_constr
-  : simple_pure_constr { $1 }
+  : simple_pure_constr opt_formula_label { match $1 with 
+	| P.BForm (b,_) -> P.BForm (b,$2)
+    | P.And _ -> $1
+    | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
+    | P.Not (b1,_,l) -> P.Not(b1,$2,l)
+    | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
+    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
   | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
 disjunctive_pure_constr
-  : pure_constr OR pure_constr { P.mkOr $1 $3 (get_pos 2) }
-  | disjunctive_pure_constr OR pure_constr { P.mkOr $1 $3 (get_pos 2) }
+  : pure_constr OR pure_constr { P.mkOr $1 $3 None (get_pos 2) }
+  | disjunctive_pure_constr OR pure_constr { P.mkOr $1 $3 None (get_pos 2) }
 ;
 
 simple_pure_constr
@@ -791,12 +799,12 @@ simple_pure_constr
 	  $2 
 	}
   | EXISTS OPAREN opt_cid_list COLON pure_constr CPAREN {
-	  let qf f v = P.mkExists [v] f (get_pos 1) in
+	  let qf f v = P.mkExists [v] f None (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res
 	}
   | FORALL OPAREN opt_cid_list COLON pure_constr CPAREN {
-	  let qf f v = P.mkForall [v] f (get_pos 1) in
+	  let qf f v = P.mkForall [v] f None (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res
 	}
@@ -807,10 +815,10 @@ simple_pure_constr
 	  P.mkFalse (get_pos 1)
 	}
   | cid {
-	  P.BForm (P.mkBVar $1 (get_pos 1))
+	  P.BForm (P.mkBVar $1 (get_pos 1), None )
 	}
   | NOT cid {
-	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2))) (get_pos 1)
+	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None)) None (get_pos 1)
 	}
 ;
 
@@ -865,19 +873,19 @@ bconstr
 	}
 	/* bag_constr */
   | cid IN cexp {
-	  (P.BForm (P.BagIn ($1, $3, get_pos 2)), None)
+	  (P.BForm (P.BagIn ($1, $3, get_pos 2),None), None)
 	}
   | cid NOTIN cexp {
-	  (P.BForm (P.BagNotIn ($1, $3, get_pos 2)), None)
+	  (P.BForm (P.BagNotIn ($1, $3, get_pos 2),None), None)
 	}
   | cexp SUBSET cexp {
-	  (P.BForm (P.BagSub ($1, $3, get_pos 2)), None)
+	  (P.BForm (P.BagSub ($1, $3, get_pos 2),None), None)
 	}
   | BAGMAX OPAREN cid COMMA cid CPAREN {
-	  (P.BForm (P.BagMax ($3, $5, get_pos 2)), None)
+	  (P.BForm (P.BagMax ($3, $5, get_pos 2),None), None)
 	}
   | BAGMIN OPAREN cid COMMA cid CPAREN {
-	  (P.BForm (P.BagMin ($3, $5, get_pos 2)), None)
+	  (P.BForm (P.BagMin ($3, $5, get_pos 2),None), None)
 	}
 ;
 
@@ -1041,6 +1049,7 @@ coercion_decl
 	  coercion_head =  (F.subst_stub_flow top_flow $3);
 	  coercion_body =  (F.subst_stub_flow top_flow $5);
 	  coercion_proof = Return ({ exp_return_val = None;
+								 exp_return_path_id = None ;
 								 exp_return_pos = get_pos 1 })
 	}
   }
@@ -1124,8 +1133,8 @@ spec
 			 Iformula.formula_ext_pos = (get_pos 1)
 			}
 		} 	 	
-	| ENSURES disjunctive_constr SEMICOLON {
-		Iformula.EAssume(F.subst_stub_flow n_flow $2)
+	| ENSURES opt_label disjunctive_constr SEMICOLON {
+		Iformula.EAssume ((F.subst_stub_flow n_flow $3),(fresh_formula_label $2))
 		}
 	| CASE OBRACE branch_list CBRACE 
 		{
@@ -1233,10 +1242,10 @@ block
   : OBRACE opt_statement_list CBRACE {
 	match $2 with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
-						   exp_block_label = NoLabel;
+						   exp_block_jump_label = NoJumpLabel;
 						   exp_block_pos = get_pos 1 }
 	  | _ -> Block { exp_block_body = $2;
-					 exp_block_label = NoLabel;
+					 exp_block_jump_label = NoJumpLabel;
 					 exp_block_pos = get_pos 1 }
   }
 ;
@@ -1308,15 +1317,17 @@ constant_declarator
 labeled_valid_declaration_statement
 	: IDENTIFIER COLON valid_declaration_statement {
 		match $3 with
-		| Block	b -> Block { b with exp_block_label = Label $1; }
-		(*| Empty b -> Empty { b with exp_empty_label = Label $1; }
+		| Block	b -> Block { b with exp_block_jump_label = JumpLabel $1; }
+		| While b -> While { b with exp_while_jump_label = JumpLabel $1; }	
+		(*
+		| Raise b -> Raise { b with exp_raise_label = Label $1; }
+		| Return b -> Return { b with exp_return_label = Label $1; }
+		| Empty b -> Empty { b with exp_empty_label = Label $1; }
 		| Unfold b -> Unfold { b with exp_unfold_label = Label $1; }
 		| Bind 	b -> Bind 	{ b with exp_bind_label = Label $1; } 
 		| Debug b -> Debug 	{ b with exp_debug_label = Label $1; } 
 		| Dprint b -> Dprint { b with exp_dprint_label = Label $1; }
 		| Assert b -> Assert { b with exp_assert_label = Label $1; }
-		| Raise b -> Raise { b with exp_raise_label = Label $1; }
-		| Return b -> Return { b with exp_return_label = Label $1; }
 		| Break b -> Break { b with exp_break_label = Label $1; }
 		| Continue b -> Continue { b with exp_continue_label = Label $1; }
 		| Java b -> Java { b with exp_java_label = Label $1; }
@@ -1326,8 +1337,7 @@ labeled_valid_declaration_statement
 		| New b -> New {b with exp_new_label = Label $1;}
 		| Assign b -> Assign {b with exp_assign_label = Label $1;}
 		| Unary b -> Unary {b with exp_unary_label = Label $1;}
-		| Try b -> Try { b with exp_try_label = Label $1; }*)
-		| While b -> While { b with exp_while_label = Label $1; }		
+		| Try b -> Try { b with exp_try_label = Label $1; }*)	
 		| _ -> report_error (get_pos 1) ("only blocks try and while statements can have labels")
 		}
 	| valid_declaration_statement {$1}
@@ -1376,25 +1386,30 @@ split_statement
 ;
 */
 
+opt_formula_label : AT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE {(fresh_branch_point_id $3)}
+|{None (*Some (fresh_branch_point_id "")*)}
+
+opt_label : 
+	 DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON {$2}
+	|{""}
+
 assert_statement
-  : ASSERT formulas SEMICOLON {
-	Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $2)),(snd $2));
+  : ASSERT opt_label formulas SEMICOLON {
+	Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $3)),(snd $3));
 			 exp_assert_assumed_formula = None;
+			 exp_assert_path_id = (fresh_formula_label $2);
 			 exp_assert_pos = get_pos 1 }
   }
-/*  | ASSERT disjunctive_constr ASSUME SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some (F.subst_stub_flow n_flow $2);
-			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $2);
-			   exp_assert_pos = get_pos 1 }
-	}*/
-  | ASSUME disjunctive_constr SEMICOLON {
+  | ASSUME opt_label disjunctive_constr SEMICOLON {
 	  Assert { exp_assert_asserted_formula = None;
-			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $2);
+			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $3);
+			   exp_assert_path_id = (fresh_formula_label $2);
 			   exp_assert_pos = get_pos 1 }
 	}
-  | ASSERT formulas ASSUME disjunctive_constr SEMICOLON {
-	  Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $2)),(snd $2));
-			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $4);
+  | ASSERT opt_label formulas ASSUME disjunctive_constr SEMICOLON {
+	  Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $3)),(snd $3));
+			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $5);
+			   exp_assert_path_id = (fresh_formula_label $2);
 			   exp_assert_pos = get_pos 1 }
     }
 ;
@@ -1426,6 +1441,7 @@ bind_statement
 	Bind { exp_bind_bound_var = $2;
 		   exp_bind_fields = $5;
 		   exp_bind_body = $8;
+		   exp_bind_path_id = None ;
 		   exp_bind_pos = get_pos 1 }
   }
 ;
@@ -1473,12 +1489,14 @@ if_statement
 	  Cond { exp_cond_condition = $3;
 			 exp_cond_then_arm = $5;
 			 exp_cond_else_arm = Empty (get_pos 1);
+			 exp_cond_path_id = None; 
 			 exp_cond_pos = get_pos 1 }
 	}
   | IF OPAREN boolean_expression CPAREN embedded_statement ELSE embedded_statement {
 		Cond { exp_cond_condition = $3;
 			   exp_cond_then_arm = $5;
 			   exp_cond_else_arm = $7;
+			   exp_cond_path_id = None; 
 			   exp_cond_pos = get_pos 1 }
 	  }
 ;
@@ -1492,7 +1510,8 @@ while_statement
 	  While { exp_while_condition = $3;
 			  exp_while_body = $5;
 			  exp_while_specs = Iast.mkSpecTrue n_flow (get_pos 1);
-			  exp_while_label = NoLabel;
+			  exp_while_jump_label = NoJumpLabel;
+			  exp_while_path_id = None ;
 			  exp_while_f_name = "";
 			  exp_while_wrappings = None;
 			  exp_while_pos = get_pos 1 }
@@ -1501,7 +1520,8 @@ while_statement
 		While { exp_while_condition = $3;
 				exp_while_body = $6;
 				exp_while_specs = $5;(*List.map remove_spec_qualifier $5;*)
-				exp_while_label = NoLabel;
+				exp_while_jump_label = NoJumpLabel;
+				exp_while_path_id = None ;
 				exp_while_f_name = "";
 				exp_while_wrappings = None;
 				exp_while_pos = get_pos 1 }
@@ -1517,23 +1537,28 @@ jump_statement
 
 break_statement
   : BREAK SEMICOLON { Break {
-					    exp_break_to_label = NoLabel;
+					    exp_break_jump_label = NoJumpLabel;
+						exp_break_path_id = None;
 						exp_break_pos = (get_pos 1);} }
-	| BREAK IDENTIFIER SEMICOLON { Break {exp_break_to_label = (Label $2);
+	| BREAK IDENTIFIER SEMICOLON { Break {exp_break_jump_label = (JumpLabel $2);
+										exp_break_path_id = None; 
 										exp_break_pos = get_pos 1} }
 ;
 
 continue_statement
   : CONTINUE SEMICOLON { Continue 
-							{exp_continue_to_label = NoLabel;
+							{exp_continue_jump_label = NoJumpLabel;
+							 exp_continue_path_id = None; 
 							 exp_continue_pos = get_pos 1} }
   | CONTINUE IDENTIFIER SEMICOLON { Continue 
-							{exp_continue_to_label = (Label $2);
+							{exp_continue_jump_label = (JumpLabel $2);
+							 exp_continue_path_id = None;
 							 exp_continue_pos = get_pos 1} }
 ;
 
 return_statement
   : RETURN opt_expression SEMICOLON { Return { exp_return_val = $2;
+											   exp_return_path_id = None;
 											   exp_return_pos = get_pos 1 } }
 ;
 
@@ -1541,6 +1566,7 @@ raise_statement
 	: RAISE expression SEMICOLON{ Raise { exp_raise_type = Const_flow "" ;
 										  exp_raise_val = Some $2;
 										  exp_raise_from_final = false;
+										  exp_raise_path_id = None; 
 										  exp_raise_pos = get_pos 1 } }
 ;
 try_statement
@@ -1548,6 +1574,7 @@ try_statement
 	{ Try { exp_try_block = $2;
 			exp_catch_clauses = $3;
 			exp_finally_clause = $4;
+			exp_try_path_id = None;
 			exp_try_pos = get_pos 1 } }
 ;
 
@@ -1568,7 +1595,7 @@ catch_clause
 opt_finally
 	: {[]}
 	| FINALLY valid_declaration_statement {let f = {exp_finally_body = $2;
-												   exp_finally_pos = get_pos 1 } in f::[] }
+												    exp_finally_pos = get_pos 1 } in f::[] }
 ;
 opt_expression
   : { None }
@@ -1652,6 +1679,7 @@ conditional_expression
 	  Cond { exp_cond_condition = $1;
 			 exp_cond_then_arm = $3;
 			 exp_cond_else_arm = $5;
+			 exp_cond_path_id = None ;
 			 exp_cond_pos = get_pos 2 }
 	}
 ;
@@ -1832,11 +1860,13 @@ invocation_expression
 	  CallRecv { exp_call_recv_receiver = fst $1;
 				 exp_call_recv_method = snd $1;
 				 exp_call_recv_arguments = $3;
+				 exp_call_recv_path_id = None;
 				 exp_call_recv_pos = get_pos 1 }
 	}
   | IDENTIFIER OPAREN opt_argument_list CPAREN {
 		CallNRecv { exp_call_nrecv_method = $1;
 					exp_call_nrecv_arguments = $3;
+					exp_call_nrecv_path_id = None;
 					exp_call_nrecv_pos = get_pos 1 }
 	  }
 ;
@@ -1849,6 +1879,7 @@ member_access
   : primary_expression DOT IDENTIFIER {
 	Member { exp_member_base = $1;
 			 exp_member_fields = [$3];
+			 exp_member_path_id = None ;
 			 exp_member_pos = get_pos 3 }
   }
 ;

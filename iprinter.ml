@@ -85,9 +85,15 @@ let need_parenthesis = function
 ;; 
 
 let string_of_label = function 
-  | NoLabel      -> ""
-  | Label l  -> l^" : "
+  | NoJumpLabel      -> ""
+  | JumpLabel l  -> l^" : "
 ;;
+
+let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
+let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
+let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
+
 
 
 let string_of_var_list vl = (List.fold_left (fun a (c1,c2)-> a^" "^c1^(match c2 with | Primed -> "'"| _ -> "")) "" vl);;
@@ -174,14 +180,14 @@ let string_of_b_formula = function
 
 (* pretty printing for a pure formula *)
 let rec string_of_pure_formula = function 
-  | P.BForm bf                    -> string_of_b_formula bf 
+  | P.BForm (bf,lbl)                    -> string_of_b_formula bf 
   | P.And (f1, f2, l)             -> "(" ^ (string_of_pure_formula f1) ^ ") & (" ^ (string_of_pure_formula f2) ^ ")"  
-  | P.Or (f1, f2, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
-  | P.Not (f, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
-  | P.Forall (x, f, l)            -> "all " ^ (match x with (id, p) -> id ^ (match p with 
+  | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
+  | P.Not (f,lbl, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
+  | P.Forall (x, f,lbl, l)            -> "all " ^ (match x with (id, p) -> id ^ (match p with 
     | Primed    -> "'"
     | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
-  | P.Exists (x, f, l)            -> "ex " ^ (match x with (id, p) -> id ^ (match p with 
+  | P.Exists (x, f,lbl, l)            -> "ex " ^ (match x with (id, p) -> id ^ (match p with 
     | Primed    -> "'"
     | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
 ;;    
@@ -204,17 +210,19 @@ let rec string_of_h_formula = function
   | F.HeapNode ({F.h_formula_heap_node = x;
 				 F.h_formula_heap_name = id;
 				 F.h_formula_heap_arguments = pl;
-				 F.h_formula_heap_pos = l}) -> (match x with 
-				   | (id, p) -> match p with 
-					   | Primed   -> id ^ "'"  
-					   | Unprimed -> id ) ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">"  
+				 F.h_formula_heap_label = pi;
+				 F.h_formula_heap_pos = l}) -> 				 
+				 string_of_formula_label_opt pi				 
+				 ((fst x)^(if (snd x)=Primed then  "'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
+									
 	| F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
 									F.h_formula_heap2_name = id;
+									F.h_formula_heap2_label = pi;
 									F.h_formula_heap2_arguments = args}) ->
 			let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
 			let tmp2 = String.concat ", " tmp1 in
-				v ^ (if p = Primed then "'" else "") ^ "::" ^ id 
-				^ "<" ^ tmp2 ^ ">"
+				string_of_formula_label_opt pi
+				(v ^ (if p = Primed then "'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
   | F.HTrue                         -> ""                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 ;;
@@ -280,7 +288,7 @@ let rec string_of_ext_formula = function
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
-	| Iformula.EAssume b-> "EAssume "^(string_of_formula b)
+	| Iformula.EAssume (b,(n1,n2))-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
@@ -336,13 +344,15 @@ let need_parenthesis2 = function
 let rec string_of_exp = function 
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
+  | Label ((pid,_),e) -> string_of_control_path_id_opt pid(string_of_exp e)
   | Bind ({exp_bind_bound_var = v;
 		   exp_bind_fields = vs;
-		   exp_bind_body = e})      -> "bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }"
-  | Block ({exp_block_body = e})    -> "{" ^ (string_of_exp e) ^ "}\n"
-  | Break b -> "break "^(string_of_label b.exp_break_to_label)
+		   exp_bind_path_id = pid;
+		   exp_bind_body = e})      -> string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
+  | Block ({exp_block_body = e;})    -> "{" ^ (string_of_exp e) ^ "}\n"
+  | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
-  | Continue b -> "continue "^(string_of_label b.exp_continue_to_label)
+  | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
   | Empty l                         -> ""
   | Unary ({exp_unary_op = o;
 			exp_unary_exp = e;
@@ -361,12 +371,14 @@ let rec string_of_exp = function
                                                                     else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
                                        else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
+				exp_call_nrecv_path_id = pid;
 				exp_call_nrecv_arguments = el})
-                                    -> id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+                                    -> string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
+			   exp_call_recv_path_id = pid;
 			   exp_call_recv_arguments = el})
-                                    -> (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")"
+                                    -> string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
   | Var ({exp_var_name = v})        -> v
@@ -378,18 +390,19 @@ let rec string_of_exp = function
 			 exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
   | Cond ({exp_cond_condition = e1;
 		   exp_cond_then_arm = e2;
-		   exp_cond_else_arm = e3}) -> "if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
+		   exp_cond_path_id = pid;
+		   exp_cond_else_arm = e3}) -> string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
                                         (match e3 with 
 										  | Empty ll -> ""
-                                          | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}")
+                                          | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}"))
   | While ({exp_while_condition = e1;
 			exp_while_body = e2;
-			exp_while_label = lb;
+			exp_while_jump_label = lb;
 			exp_while_specs = li}) -> (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ "{\n"
                                        ^ (string_of_exp e2) ^ "\n}"          
-  | Return ({exp_return_val = v})  -> "return " ^ (match v with 
+  | Return ({exp_return_val = v; exp_return_path_id = pid})  -> string_of_control_path_id_opt pid ("return " ^ (match v with 
 	  | None   -> ""
-	  | Some e -> (string_of_exp e)) 
+	  | Some e -> (string_of_exp e)) )
   | Seq ({exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2})      -> (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2) ^ ";"  
   | VarDecl ({exp_var_decl_type = t;
@@ -409,17 +422,19 @@ let rec string_of_exp = function
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"
   | Raise ({exp_raise_type = tb;
-			exp_raise_val = b;})
-				-> "raise "^(match b with | None -> let r = match tb with | Const_flow cf-> cf | Var_flow cf -> cf in r | Some bs-> (string_of_exp bs))^ "\n"
+			exp_raise_path_id = pid;
+			exp_raise_val = b;}) -> string_of_control_path_id_opt pid 
+				("raise "^(match b with | None -> let r = match tb with | Const_flow cf-> cf | Var_flow cf -> cf in r | Some bs-> (string_of_exp bs))^ "\n")
   | Try ({	exp_try_block = bl;
 			exp_catch_clauses = cl;
 			exp_finally_clause = fl;})
 				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_catch b)) "" cl)^
 									(List.fold_left (fun a b -> a^"\n"^(string_of_finally b)) "" fl)
 									
-and string_of_catch c  = "catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body)
+and string_of_catch c  = 
+		("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
 
-and string_of_finally c = "finally "^(string_of_exp c.exp_finally_body)
+and string_of_finally c = ("finally "^(string_of_exp c.exp_finally_body))
 
 and 
    (* function to transform a list of expression in a string *)

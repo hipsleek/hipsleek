@@ -358,6 +358,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+		  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
         }
       in h
     with
@@ -376,6 +377,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             IF.h_formula_heap_arguments = hargs;
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+			IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
           }
         in h
   
@@ -411,7 +413,7 @@ and convert_heap2 prog (f0 : IF.formula) : IF.formula =
       in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
 and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 with
-	| Iformula.EAssume b-> Iformula.EAssume (convert_heap2 prog b)
+	| Iformula.EAssume (b,tag)-> Iformula.EAssume ((convert_heap2 prog b),tag)
 	| Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
 	| Iformula.EBase b -> Iformula.EBase{b with 
 		 Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
@@ -445,7 +447,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
         gen_name_pairs_heap vname h in
 				
 	let rec gen_name_pairs_ext vname (f:Iformula.ext_formula): (ident * ident) list = match f with
-		| Iformula.EAssume b-> (gen_name_pairs vname b)
+		| Iformula.EAssume (b,_)-> (gen_name_pairs vname b)
 		| Iformula.ECase {Iformula.formula_case_branches = b}-> 
 			List.fold_left (fun d (e1,e2) -> List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c)) d e2) [] b 
 		| Iformula.EBase {Iformula.formula_ext_base =fb;
@@ -494,6 +496,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 let loop_procs : (C.proc_decl list) ref = ref []
    
 let rec seq_elim (e:C.exp):C.exp = match e with
+  | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
   | C.Assert _ -> e
   | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }  
   | C.Bind b ->  C.Bind {b with C.exp_bind_body = (seq_elim b.C.exp_bind_body);}
@@ -516,6 +519,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Sharp _ -> e
   | C.Seq b -> if (!seq_to_try) then 
 					  C.Try ({	C.exp_try_type = b.C.exp_seq_type;
+								C.exp_try_path_id = None;
 								C.exp_try_body =  (seq_elim b.C.exp_seq_exp1);
 								C.exp_catch_clause = ({
 														  C.exp_catch_flow_type = !n_flow_int;
@@ -542,6 +546,7 @@ should also check that
 *)
 let rec while_labelling (e:I.exp):I.exp = 
 let rec label_breaks lb e :I.exp = match e with
+  | I.Label (l,e)-> I.Label(l, label_breaks lb e)
   | I.Assert _ -> e
   | I.Assign b -> I.Assign {b with I.exp_assign_lhs = (label_breaks lb b.I.exp_assign_lhs);
 								   I.exp_assign_rhs = (label_breaks lb  b.I.exp_assign_rhs); }  
@@ -549,9 +554,10 @@ let rec label_breaks lb e :I.exp = match e with
 								   I.exp_binary_oper2 = (label_breaks lb  b.I.exp_binary_oper2);}
   | I.Bind b ->  I.Bind {b with I.exp_bind_body = (label_breaks lb  b.I.exp_bind_body);}
   | I.BoolLit _ -> e
-  | I.Break b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_to_label with | I.NoLabel -> "brk_"^lb | I.Label l-> "brk_"^l);
+  | I.Break b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_jump_label with | I.NoJumpLabel -> "brk_"^lb | I.JumpLabel l-> "brk_"^l);
 						   I.exp_raise_val = None;
 						   I.exp_raise_from_final = false;
+						   I.exp_raise_path_id = b.I.exp_break_path_id;
 						   I.exp_raise_pos = b.I.exp_break_pos;}
   | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (label_breaks lb  b.I.exp_call_recv_receiver);
 									   I.exp_call_recv_arguments  = List.map (label_breaks lb)  b.I.exp_call_recv_arguments;}
@@ -562,9 +568,10 @@ let rec label_breaks lb e :I.exp = match e with
 							   I.exp_cond_then_arm  = (label_breaks lb  b.I.exp_cond_then_arm);
 							   I.exp_cond_else_arm  = (label_breaks lb  b.I.exp_cond_else_arm);}
   | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(label_breaks lb  b),c)) b.I.exp_const_decl_decls}
-  | I.Continue b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_to_label with | I.NoLabel -> "cnt_"^lb | I.Label l-> "cnt_"^l);
+  | I.Continue b -> I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_jump_label with | I.NoJumpLabel -> "cnt_"^lb | I.JumpLabel l-> "cnt_"^l);
 						   I.exp_raise_val = None;
 						   I.exp_raise_from_final = false;
+						   I.exp_raise_path_id = b.I.exp_continue_path_id;
 						   I.exp_raise_pos = b.I.exp_continue_pos;}
   | I.Debug _ 
   | I.Dprint _
@@ -593,13 +600,14 @@ let rec label_breaks lb e :I.exp = match e with
 and need_break_continue lb ne non_generated_label :bool = 
 	if not (non_generated_label) then 
 		match ne with 
-		| I.Break b-> (match b.I.exp_break_to_label with 
-				| I.NoLabel -> true
-				| I.Label l -> false)
-		| I.Continue b-> (match b.I.exp_continue_to_label with 
-				| I.NoLabel -> true
-				| I.Label l -> false)
+		| I.Break b-> (match b.I.exp_break_jump_label with 
+				| I.NoJumpLabel -> true
+				| I.JumpLabel l -> false)
+		| I.Continue b-> (match b.I.exp_continue_jump_label with 
+				| I.NoJumpLabel -> true
+				| I.JumpLabel l -> false)
 		| I.Seq b -> (need_break_continue lb b.I.exp_seq_exp1 false) ||(need_break_continue lb b.I.exp_seq_exp2 false)
+		| I.Label (_,e) -> need_break_continue lb e false
 		| _ -> false 
 	else match ne with
 		  | I.Assert _ -> false
@@ -607,16 +615,16 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.Binary b -> (need_break_continue lb  b.I.exp_binary_oper1 true)||(need_break_continue lb  b.I.exp_binary_oper2 true)
 		  | I.Bind b -> (need_break_continue lb  b.I.exp_bind_body true)
 		  | I.BoolLit _ -> false
-		  | I.Break b -> (match b.I.exp_break_to_label with 
-				| I.NoLabel -> false
-				| I.Label l -> ((String.compare lb l)==0))
+		  | I.Break b -> (match b.I.exp_break_jump_label with 
+				| I.NoJumpLabel -> false
+				| I.JumpLabel l -> ((String.compare lb l)==0))
 		  | I.CallRecv b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) 
 									(need_break_continue lb  b.I.exp_call_recv_receiver true) 
 									b.I.exp_call_recv_arguments
 		  | I.CallNRecv b -> List.fold_left (fun a c-> a || (need_break_continue lb c true)) false b.I.exp_call_nrecv_arguments
-		  | I.Block b-> begin (match b.I.exp_block_label with
-							| I.NoLabel -> ()
-							| I.Label l -> if (String.compare l lb) ==0 then 
+		  | I.Block b-> begin (match b.I.exp_block_jump_label with
+							| I.NoJumpLabel -> ()
+							| I.JumpLabel l -> if (String.compare l lb) ==0 then 
 									Error.report_error {Error.error_loc = b.I.exp_block_pos; Error.error_text = ("label"^l^" is duplicated")}
 								else ());
 						(need_break_continue lb b.I.exp_block_body true)
@@ -626,15 +634,16 @@ and need_break_continue lb ne non_generated_label :bool =
 						(need_break_continue lb  b.I.exp_cond_then_arm true)||
 						(need_break_continue lb  b.I.exp_cond_else_arm true)
 		  | I.ConstDecl b -> List.fold_left (fun a (_,b,_)-> a||(need_break_continue lb b true)) false b.I.exp_const_decl_decls
-		  | I.Continue b ->(match b.I.exp_continue_to_label with 
-				| I.NoLabel -> false
-				| I.Label l -> ((String.compare lb l)==0))
+		  | I.Continue b ->(match b.I.exp_continue_jump_label with 
+				| I.NoJumpLabel -> false
+				| I.JumpLabel l -> ((String.compare lb l)==0))
 		  | I.Debug _ 
 		  | I.Dprint _
 		  | I.Empty _ 
 		  | I.FloatLit _
 		  | I.IntLit _ 
 		  | I.Java _ -> false
+		  | I.Label (_,e) -> need_break_continue lb e true
 		  | I.Member b -> (need_break_continue lb  b.I.exp_member_base true)
 		  | I.New b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_new_arguments
 		  | I.Null _ -> false
@@ -650,9 +659,9 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.Var _ -> false
 		  | I.VarDecl b -> List.fold_left (fun a (_,b,_)-> match b with | None -> a | Some b-> a||(need_break_continue lb b true)) false b.I.exp_var_decl_decls
 		  | I.While b -> begin 
-		    (match b.I.exp_while_label with
-					| I.NoLabel -> ()
-					| I.Label l -> 
+		    (match b.I.exp_while_jump_label with
+					| I.NoJumpLabel -> ()
+					| I.JumpLabel l -> 
 						if (String.compare l lb) ==0 then 
 							Error.report_error {Error.error_loc = b.I.exp_while_pos; Error.error_text = ("label"^l^" is duplicated")}
 						else ());
@@ -666,41 +675,46 @@ and need_break_continue lb ne non_generated_label :bool =
 								   I.exp_binary_oper2 = (while_labelling b.I.exp_binary_oper2);}
   | I.Bind b ->  I.Bind {b with I.exp_bind_body = (while_labelling b.I.exp_bind_body);}
   | I.BoolLit _ -> e
-  | I.Break b ->I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_to_label with 
-													| I.NoLabel -> Error.report_error {Error.error_loc = b.I.exp_break_pos; Error.error_text = ("there is no loop/block to break out of")}
-													| I.Label l-> l);
+  | I.Break b ->I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_break_jump_label with 
+													| I.NoJumpLabel -> Error.report_error {Error.error_loc = b.I.exp_break_pos; Error.error_text = ("there is no loop/block to break out of")}
+													| I.JumpLabel l-> l);
 						   I.exp_raise_val = None;
 						   I.exp_raise_from_final = false;
+						   I.exp_raise_path_id = b.I.exp_break_path_id;
 						   I.exp_raise_pos = b.I.exp_break_pos;}						
   | I.CallRecv b -> I.CallRecv {b with I.exp_call_recv_receiver = (while_labelling b.I.exp_call_recv_receiver);
 									   I.exp_call_recv_arguments  = List.map while_labelling b.I.exp_call_recv_arguments;}
   | I.CallNRecv b -> I.CallNRecv {b with I.exp_call_nrecv_arguments = List.map while_labelling b.I.exp_call_nrecv_arguments;}
   | I.Block b-> 
-	let nl,b_rez = match b.I.exp_block_label with
-				| I.NoLabel -> ((fresh_label b.I.exp_block_pos),false)
-				| I.Label l -> (l ,true)in
+	let nl,b_rez = match b.I.exp_block_jump_label with
+				| I.NoJumpLabel -> ((fresh_label b.I.exp_block_pos),false)
+				| I.JumpLabel l -> (l ,true)in
 	if (need_break_continue nl b.I.exp_block_body b_rez) then
 		let ne = while_labelling (label_breaks nl b.I.exp_block_body) in
 		let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
 		let _  = Util.add_edge nb brk_top in
 		let _  = Util.add_edge nc cont_top in
+		let nl = fresh_branch_point_id "" in
+		let nl2 = fresh_branch_point_id "" in
 		let nit= I.Try ({
 						I.exp_try_block = ne;
 						I.exp_catch_clauses = [
 									 {  I.exp_catch_var = None;(*fresh_name();*)
 										I.exp_catch_flow_type = nc;
 										I.exp_catch_flow_var = None;
-										I.exp_catch_body = I.Empty b.I.exp_block_pos;	
+										I.exp_catch_body = I.Label((nl,1),I.Empty b.I.exp_block_pos);	
 										I.exp_catch_pos = b.I.exp_block_pos };];
 						I.exp_finally_clause = [];
+						I.exp_try_path_id = nl;
 						I.exp_try_pos = b.I.exp_block_pos;}) in
 		let ne = I.Try ({
 						I.exp_try_block = nit;
+						I.exp_try_path_id = nl2;
 						I.exp_catch_clauses = [
 									 {  I.exp_catch_var = None;(*fresh_name();*)
 										I.exp_catch_flow_type = nb;
 										I.exp_catch_flow_var = None;
-										I.exp_catch_body = I.Empty b.I.exp_block_pos;	
+										I.exp_catch_body = I.Label((nl2,1),I.Empty b.I.exp_block_pos);	
 										I.exp_catch_pos = b.I.exp_block_pos };];
 						I.exp_finally_clause = [];
 						I.exp_try_pos = b.I.exp_block_pos;})in		
@@ -711,11 +725,12 @@ and need_break_continue lb ne non_generated_label :bool =
 							   I.exp_cond_then_arm  = (while_labelling b.I.exp_cond_then_arm);
 							   I.exp_cond_else_arm  = (while_labelling b.I.exp_cond_else_arm);}
   | I.ConstDecl b -> I.ConstDecl {b with I.exp_const_decl_decls = List.map (fun (a,b,c)-> (a,(while_labelling b),c)) b.I.exp_const_decl_decls}
-  | I.Continue b ->  I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_to_label with 
-													| I.NoLabel -> Error.report_error {Error.error_loc = b.I.exp_continue_pos; Error.error_text = ("there is no loop to continue")}
-													| I.Label l-> l);
+  | I.Continue b ->  I.Raise { I.exp_raise_type = I.Const_flow (match b.I.exp_continue_jump_label with 
+													| I.NoJumpLabel -> Error.report_error {Error.error_loc = b.I.exp_continue_pos; Error.error_text = ("there is no loop to continue")}
+													| I.JumpLabel l-> l);
 							   I.exp_raise_val = None;
 							   I.exp_raise_from_final = false;
+							   I.exp_raise_path_id = b.I.exp_continue_path_id;
 						       I.exp_raise_pos = b.I.exp_continue_pos;}	
   | I.Debug _ 
   | I.Dprint _
@@ -723,6 +738,7 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.FloatLit _
   | I.IntLit _ 
   | I.Java _ -> e
+  | I.Label (pid, e) -> I.Label (pid, (while_labelling e))
   | I.Member b -> I.Member {b with I.exp_member_base = (while_labelling b.I.exp_member_base)}
   | I.New b -> I.New {b with I.exp_new_arguments = List.map while_labelling b.I.exp_new_arguments}
   | I.Null _ -> e
@@ -737,6 +753,7 @@ and need_break_continue lb ne non_generated_label :bool =
 				I.exp_finally_clause = [];} in
 				let nt = if (List.length b.I.exp_finally_clause)==0 then ob
 				else I.Try { 
+						I.exp_try_path_id = None;
 						I.exp_try_block = ob;
 						I.exp_catch_clauses =
 						(List.map (fun c-> 
@@ -751,6 +768,7 @@ and need_break_continue lb ne non_generated_label :bool =
 																					I.exp_seq_exp1 = f_body;
 																					I.exp_seq_exp2 = I.Raise({
 																								I.exp_raise_type = I.Var_flow new_flow_var_name;
+																								I.exp_raise_path_id = None;
 																								I.exp_raise_from_final = true;
 																								I.exp_raise_val =  Some (I.Var ({
 																												I.exp_var_name = new_name;
@@ -758,7 +776,7 @@ and need_break_continue lb ne non_generated_label :bool =
 																											I.exp_raise_pos = b.I.exp_try_pos });
 																						I.exp_seq_pos = b.I.exp_try_pos;
 																					}));
-																				I.exp_block_label = I.NoLabel;
+																				I.exp_block_jump_label = I.NoJumpLabel;
 																				I.exp_block_pos = b.I.exp_try_pos}));
 							I.exp_catch_pos = b.I.exp_try_pos   }
 				) b.I.exp_finally_clause );
@@ -770,9 +788,11 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.Var _ -> e
   | I.VarDecl b -> I.VarDecl {b with I.exp_var_decl_decls = List.map (fun (a,b,c)-> (a,(match b with | None -> None |Some b-> Some(while_labelling b)),c)) b.I.exp_var_decl_decls}
   | I.While b -> 
-				let nl,b_rez = match b.I.exp_while_label with
-					| I.NoLabel -> ((fresh_label b.I.exp_while_pos),false)
-					| I.Label l -> (l,true) in
+				let nl1 = fresh_branch_point_id "" in
+				let nl2 = fresh_branch_point_id "" in
+				let nl,b_rez = match b.I.exp_while_jump_label with
+					| I.NoJumpLabel -> ((fresh_label b.I.exp_while_pos),false)
+					| I.JumpLabel l -> (l,true) in
 				let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
 				let r = if (need_break_continue nl b.I.exp_while_body b_rez) then				
 					 let ne  = while_labelling (label_breaks nl b.I.exp_while_body) in
@@ -780,21 +800,23 @@ and need_break_continue lb ne non_generated_label :bool =
 					 let _  = Util.add_edge nc cont_top in 
 					 let continue_try = I.Try ({
 						I.exp_try_block = ne;
+						I.exp_try_path_id = nl1;	
 						I.exp_catch_clauses = [
 									 {  I.exp_catch_var = None;(*fresh_name();*)
 										I.exp_catch_flow_type = nc;
 										I.exp_catch_flow_var = None;
-										I.exp_catch_body = I.Empty b.I.exp_while_pos;	
+										I.exp_catch_body = I.Label ((nl1,1),I.Empty b.I.exp_while_pos);	
 										I.exp_catch_pos = b.I.exp_while_pos }];
 						I.exp_finally_clause = [];
 						I.exp_try_pos = b.I.exp_while_pos;}) in	
 					 let break_try = I.Try {
 							I.exp_try_block = I.This ({I.exp_this_pos = b.I.exp_while_pos});
+							I.exp_try_path_id = nl2; (*b.I.exp_while_path_id;	*)
 							I.exp_catch_clauses = [
 											{ I.exp_catch_var = None;
 											  I.exp_catch_flow_type = nb;
 											  I.exp_catch_flow_var = None;
-											  I.exp_catch_body = I.Empty b.I.exp_while_pos;
+											  I.exp_catch_body = I.Label ((nl2,1),I.Empty b.I.exp_while_pos);	
 											  I.exp_catch_pos = b.I.exp_while_pos }];
 							I.exp_finally_clause = [];
 							I.exp_try_pos = b.I.exp_while_pos; } in
@@ -1234,9 +1256,14 @@ and
         CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_pure (fst vdef.C.view_user_inv) pos) in
       let (rs, _) =
-        Solver.heap_entail prog false false [ ctx ] formula pos
+        Solver.heap_entail_init prog false false [ ctx ] formula pos
       in
-        if not (U.empty rs)
+	  Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ;
+		if (U.empty rs) then  Err.report_error
+            {
+              Err.error_loc = pos;
+              Err.error_text = "entailment returned an empty context list\n";}
+        else if not(CF.isFailCtx_list rs)
         then
           (vdef.C.view_x_formula <- (xform, xform_b);
            vdef.C.view_addr_vars <- addr_vars;
@@ -1374,10 +1401,10 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.fo
 		| Cformula.Or b->
 				let b1,br1 = (get_pure b.Cformula.formula_or_f1) in
 				let b2,br2 = (get_pure b.Cformula.formula_or_f2) in
-				((Cpure.mkOr b1 b2 no_pos), Cpure.or_branches br1 br2)
+				((Cpure.mkOr b1 b2 None no_pos), Cpure.or_branches br1 br2)
 		| Cformula.Base b -> (b.Cformula.formula_base_pure, b.Cformula.formula_base_branches)
-		| Cformula.Exists b-> let l = List.map (fun (c1,c2)-> (c1, Cpure.mkExists b.Cformula.formula_exists_qvars c2 no_pos)) b.Cformula.formula_exists_branches in
-					(Cpure.mkExists b.Cformula.formula_exists_qvars b.Cformula.formula_exists_pure no_pos, l)
+		| Cformula.Exists b-> let l = List.map (fun (c1,c2)-> (c1, Cpure.mkExists b.Cformula.formula_exists_qvars c2 None no_pos)) b.Cformula.formula_exists_branches in
+					(Cpure.mkExists b.Cformula.formula_exists_qvars b.Cformula.formula_exists_pure None no_pos, l)
 
 	and symp_struc_to_formula (f0:Cformula.struc_formula):(Cpure.formula*((string*Cpure.formula) list)) = 
 		let rec ext_to_formula (f:Cformula.ext_formula):(Cpure.formula*((string*Cpure.formula) list)) = match f with
@@ -1386,15 +1413,15 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.fo
 				else 
 					let c1,c2 = List.hd b.Cformula.formula_case_branches in (*push existential dismissed*)
 					let b2,br2 = (symp_struc_to_formula c2) in
-					 ((Cpure.mkOr (Cpure.Not (c1,no_pos)) b2 no_pos),br2)
+					 ((Cpure.mkOr (Cpure.Not (c1, None, no_pos)) b2 None no_pos),br2)
 			| Cformula.EBase b-> 
 					let b1,br1 = (get_pure b.Cformula.formula_ext_base) in
 					let b2,br2 = (symp_struc_to_formula b.Cformula.formula_ext_continuation) in
 					let r1 = Cpure.mkAnd b1 b2 no_pos in
 					let r2 = Cpure.merge_branches br1 br2 in
 					let ev = (*b.Cformula.formula_ext_explicit_inst@b.Cformula.formula_ext_implicit_inst@*)b.Cformula.formula_ext_exists in
-					let r2 = List.map (fun (c1,c2)-> (c1,(Cpure.mkExists ev c2 no_pos))) r2 in
-					let r1 = (Cpure.mkExists ev r1 no_pos) in
+					let r2 = List.map (fun (c1,c2)-> (c1,(Cpure.mkExists ev c2 None no_pos))) r2 in
+					let r1 = (Cpure.mkExists ev r1 None no_pos) in
 					(r1,r2)
 			| _ -> Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}in	
 		if (List.length f0)<>1 then ((Cpure.mkTrue no_pos),[])
@@ -1425,7 +1452,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.fo
 		(*let saset = Solver.get_aset (Solver.alias(Solver.ptr_equations ba)) self in*)
 			let ba' = Cpure.drop_null ba self false in
 			let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
-			let base_case = Cpure.BForm (Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)) in
+			let base_case = Cpure.BForm ((Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)),None) in
 			Some (base_case,(ba',br'))		
 	| Cformula.ECase b-> if (List.length b.Cformula.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
 				else 
@@ -1546,6 +1573,7 @@ and all_paths_return (e0 : I.exp) : bool =
   | I.FloatLit _ -> false
   | I.IntLit _ -> false
   | I.Java _ -> false
+  | I.Label (_,e)-> all_paths_return e
   | I.Member _ -> false
   | I.New _ -> false
   | I.Null _ -> false
@@ -1583,7 +1611,7 @@ and set_pre_flow f =
 							Cformula.formula_ext_base = Cformula.set_flow_in_formula_override nf b.Cformula.formula_ext_base;
 							Cformula.formula_ext_continuation = set_pre_flow b.Cformula.formula_ext_continuation}
 	| Cformula.ECase b-> Cformula.ECase {b with Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow c2))) b.Cformula.formula_case_branches}
-	| Cformula.EAssume (b1,b2)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2))in
+	| Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2),b3)in
 	List.map helper f
 	
 and check_valid_flows f = 
@@ -1599,7 +1627,7 @@ and check_valid_flows f =
 	let helper f0 = match f0 with
 		| Iformula.EBase b-> (check_valid_flows_f b.Iformula.formula_ext_base); check_valid_flows b.Iformula.formula_ext_continuation
 		| Iformula.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.Iformula.formula_case_branches)
-		| Iformula.EAssume b-> check_valid_flows_f b in
+		| Iformula.EAssume (b,_)-> check_valid_flows_f b in
 List.iter helper f
 	
 	  
@@ -1693,7 +1721,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                match proc.I.proc_body with
                | None -> None
                | Some e -> 
-					let (b, tb) = trans_exp prog proc e in Some b in
+					let (b, tb) = trans_exp prog proc e in
+					Some b in
              let args =
                List.map
                  (fun p ->
@@ -1865,6 +1894,8 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
   trans_exp_type =
   match ie with
+  | I.Label (pid, e)-> let e1,t1 = (trans_exp prog proc e) in
+			(C.Label {C.exp_label_type = t1; C.exp_label_path_id = pid; C.exp_label_exp = e1;},t1)
   | I.Unfold { I.exp_unfold_var = (v, p); I.exp_unfold_pos = pos } ->
       ((C.Unfold
           {
@@ -1876,6 +1907,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       {
         I.exp_assert_asserted_formula = assert_f_o;
         I.exp_assert_assumed_formula = assume_f_o;
+		I.exp_assert_path_id = pi;
         I.exp_assert_pos = pos
       } ->
       let tmp_names = E.visible_names () in
@@ -1900,6 +1932,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
              {
                C.exp_assert_asserted_formula = assert_cf_o;
                C.exp_assert_assumed_formula = assume_cf_o;
+			   C.exp_assert_path_id = pi;
                C.exp_assert_pos = pos;
              }
          in (assert_e, C.void_type))
@@ -1908,6 +1941,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_assign_op = aop;
         I.exp_assign_lhs = lhs;
         I.exp_assign_rhs = rhs;
+		I.exp_assign_path_id = pid;
         I.exp_assign_pos = pos_a
       } ->
       (match aop with
@@ -1950,6 +1984,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 {
                   I.exp_member_base = base_e;
                   I.exp_member_fields = fs;
+				  I.exp_member_path_id = pid;
                   I.exp_member_pos = pos
                 } ->
                 let (rhs_c, rhs_t) = trans_exp prog proc rhs in
@@ -1966,7 +2001,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     } in
                 let (tmp_e, tmp_t) =
                   flatten_to_bind prog proc base_e (List.rev fs)
-                    (Some fn_var) pos in
+                    (Some fn_var) pid pos in
                 let fn_decl =
                   if new_var
                   then
@@ -2015,6 +2050,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_binary_op = bop;
                  I.exp_binary_oper1 = lhs;
                  I.exp_binary_oper2 = rhs;
+				 I.exp_binary_path_id = pid;
                  I.exp_binary_pos = pos_a;
                } in
            let new_assign =
@@ -2023,6 +2059,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_assign_op = I.OpAssign;
                  I.exp_assign_lhs = lhs;
                  I.exp_assign_rhs = new_rhs;
+				 I.exp_assign_path_id = pid;
                  I.exp_assign_pos = pos_a;
                }
            in trans_exp prog proc new_assign)
@@ -2031,6 +2068,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_binary_op = b_op;
         I.exp_binary_oper1 = e1;
         I.exp_binary_oper2 = e2;
+		I.exp_binary_path_id = pid;
         I.exp_binary_pos = pos
       } ->
       if (I.is_null e1) || (I.is_null e2)
@@ -2053,6 +2091,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
              {
                I.exp_call_nrecv_method = b_call;
                I.exp_call_nrecv_arguments = [ e1_prim ];
+			   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                I.exp_call_nrecv_pos = pos;
              }
          in trans_exp prog proc new_e)
@@ -2063,6 +2102,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
              {
                I.exp_call_nrecv_method = b_call;
                I.exp_call_nrecv_arguments = [ e1; e2 ];
+			   I.exp_call_nrecv_path_id = pid (*stub_branch_point_id ("primitive "^b_call)*);
                I.exp_call_nrecv_pos = pos;
              }
          in trans_exp prog proc new_e)
@@ -2071,7 +2111,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_bind_bound_var = v;
         I.exp_bind_fields = vs;
         I.exp_bind_body = e;
-        I.exp_bind_pos = pos
+        I.exp_bind_pos = pos;
+		I.exp_bind_path_id = pid;
       } ->
       (try
          let vinfo_tmp = E.look_up v
@@ -2127,6 +2168,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                     List.combine vs_types vs;
                                   C.exp_bind_body = ce;
                                   C.exp_bind_pos = pos;
+								  C.exp_bind_path_id = pid;
                                 }),
                              te)))
                 | I.Prim _ ->
@@ -2175,6 +2217,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_call_recv_receiver = recv;
         I.exp_call_recv_method = mn;
         I.exp_call_recv_arguments = args;
+		I.exp_call_recv_path_id = pi;
         I.exp_call_recv_pos = pos
       } ->
       let (crecv, crecv_t) = trans_exp prog proc recv in
@@ -2253,6 +2296,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                            C.exp_icall_method_name = mingled_mn;
                            C.exp_icall_arguments = arg_vars;
                            C.exp_icall_visible_names = visi_svars;
+						   C.exp_icall_path_id = pi;
                            C.exp_icall_pos = pos;
                          } in
                      let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2281,6 +2325,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       {
         I.exp_call_nrecv_method = mn;
         I.exp_call_nrecv_arguments = args;
+		I.exp_call_nrecv_path_id = pi;
         I.exp_call_nrecv_pos = pos
       } ->
       let tmp = List.map (trans_exp prog proc) args in
@@ -2304,6 +2349,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_call_recv_receiver = I.This { I.exp_this_pos = pos; };
                  I.exp_call_recv_method = mingled_mn;
                  I.exp_call_recv_arguments = args;
+				 I.exp_call_recv_path_id = pi;
                  I.exp_call_recv_pos = pos;
                }
            in trans_exp prog proc call_recv)
@@ -2360,6 +2406,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                C.exp_scall_arguments = arg_vars;
                                C.exp_scall_visible_names = visi_svars;
                                C.exp_scall_pos = pos;
+							   C.exp_scall_path_id = pi;
                              } in
                          let seq_1 = C.mkSeq ret_ct init_seq call_e pos
                          in
@@ -2384,6 +2431,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_cond_condition = e1;
         I.exp_cond_then_arm = e2;
         I.exp_cond_else_arm = e3;
+		I.exp_cond_path_id = pi;
         I.exp_cond_pos = pos
       } ->
       let (ce1, te1) = trans_exp prog proc e1
@@ -2412,6 +2460,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        C.exp_cond_then_arm = ce2;
                        C.exp_cond_else_arm = ce3;
                        C.exp_cond_pos = pos;
+					   C.exp_cond_path_id = pi;
                      }),
                   te2)
              | _ ->
@@ -2439,6 +2488,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        C.exp_cond_then_arm = ce2;
                        C.exp_cond_else_arm = ce3;
                        C.exp_cond_pos = pos;
+					   C.exp_cond_path_id = pi;
                      } in
                  let tmp_e1 =
                    C.Seq
@@ -2484,8 +2534,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       {
         I.exp_member_base = e;
         I.exp_member_fields = fs;
+		I.exp_member_path_id = pid;
         I.exp_member_pos = pos
-      } -> flatten_to_bind prog proc e (List.rev fs) None pos
+      } -> flatten_to_bind prog proc e (List.rev fs) None pid pos
   | I.New
       {
         I.exp_new_class_name = c;
@@ -2544,6 +2595,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                    new_t)))
   | I.Null pos -> ((C.Null pos), (CP.OType ""))
   | I.Return ({I.exp_return_val = oe;
+			   I.exp_return_path_id = pi;
 			   I.exp_return_pos = pos}) -> 
 	  begin
 		let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
@@ -2554,6 +2606,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							  C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
 							  C.exp_sharp_val = Cast.Sharp_no_val;
 							  C.exp_sharp_unpack = false;
+							  C.exp_sharp_path_id = pi;
 							  C.exp_sharp_pos = pos}), C.void_type)
 				else
 				  Err.report_error { Err.error_loc = proc.I.proc_loc; 
@@ -2573,6 +2626,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 								C.exp_sharp_flow_type = C.Sharp_ct {CF.formula_flow_interval = !ret_flow_int;CF.formula_flow_link = None};
 								C.exp_sharp_unpack = false;
 								C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+								C.exp_sharp_path_id = pi;
 								C.exp_sharp_pos = pos}) in
 					 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
 										  C.exp_seq_exp1 = init_e;
@@ -2615,8 +2669,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               "\"this\" can only be used in members of a class";
           }
   | I.Unary
-      { I.exp_unary_op = u_op; I.exp_unary_exp = e; I.exp_unary_pos = pos }
+      { I.exp_unary_op = u_op; I.exp_unary_exp = e; I.exp_unary_path_id = pid; I.exp_unary_pos = pos;}
       ->
+	  (*let pi = stub_branch_point_id "fresh_unary_call" in*)
       (match u_op with
        | I.OpNot ->
            let u_call = "not___" in
@@ -2625,6 +2680,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                {
                  I.exp_call_nrecv_method = u_call;
                  I.exp_call_nrecv_arguments = [ e ];
+				 I.exp_call_nrecv_path_id = pid;
                  I.exp_call_nrecv_pos = pos;
                }
            in trans_exp prog proc call_e
@@ -2645,6 +2701,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_binary_oper2 =
                    I.IntLit
                      { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+				 I.exp_binary_path_id = pid;
                  I.exp_binary_pos = pos;
                } in
            let assign_e =
@@ -2653,6 +2710,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_assign_op = I.OpAssign;
                  I.exp_assign_lhs = e;
                  I.exp_assign_rhs = add1_e;
+				 I.exp_assign_path_id = None;
                  I.exp_assign_pos = pos;
                } in
            let seq1 =
@@ -2672,8 +2730,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq2; I.exp_block_label = I.NoLabel; I.exp_block_pos = pos; })
-       | I.OpPostDec ->
+               (I.Block { I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+       | I.OpPostDec -> 
            let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
            let fn_decl =
              I.VarDecl
@@ -2690,6 +2748,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_binary_oper2 =
                    I.IntLit
                      { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+				 I.exp_binary_path_id = pid;
                  I.exp_binary_pos = pos;
                } in
            let assign_e =
@@ -2698,6 +2757,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_assign_op = I.OpAssign;
                  I.exp_assign_lhs = e;
                  I.exp_assign_rhs = sub1_e;
+				 I.exp_assign_path_id = None;
                  I.exp_assign_pos = pos;
                } in
            let seq1 =
@@ -2717,7 +2777,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq2;I.exp_block_label = I.NoLabel;  I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
        | I.OpPreInc ->
            let add1_e =
              I.Binary
@@ -2727,6 +2787,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_binary_oper2 =
                    I.IntLit
                      { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+				 I.exp_binary_path_id = pid;
                  I.exp_binary_pos = pos;
                } in
            let assign_e =
@@ -2735,6 +2796,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_assign_op = I.OpAssign;
                  I.exp_assign_lhs = e;
                  I.exp_assign_rhs = add1_e;
+				 I.exp_assign_path_id = None;
                  I.exp_assign_pos = pos;
                } in
            let seq =
@@ -2746,7 +2808,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq;I.exp_block_label = I.NoLabel;  I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
        | I.OpPreDec ->
            let sub1_e =
              I.Binary
@@ -2756,6 +2818,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_binary_oper2 =
                    I.IntLit
                      { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+				 I.exp_binary_path_id = pid;
                  I.exp_binary_pos = pos;
                } in
            let assign_e =
@@ -2764,6 +2827,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                  I.exp_assign_op = I.OpAssign;
                  I.exp_assign_lhs = e;
                  I.exp_assign_rhs = sub1_e;
+				 I.exp_assign_path_id = None;
                  I.exp_assign_pos = pos;
                } in
            let seq =
@@ -2775,7 +2839,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                }
            in
              trans_exp prog proc
-               (I.Block { I.exp_block_body = seq;I.exp_block_label = I.NoLabel;  I.exp_block_pos = pos; })
+               (I.Block { I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
        | _ -> failwith "u_op not supported yet")
   | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
       (try
@@ -2891,6 +2955,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
         I.exp_while_body = body;
         I.exp_while_specs = prepost;
 		I.exp_while_wrappings = wrap;
+		I.exp_while_path_id = pi;
         I.exp_while_pos = pos
       } ->
       let tvars = E.visible_names () in
@@ -2909,7 +2974,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       let w_body_2 =
         I.Block
           {
-		    I.exp_block_label = I.NoLabel; 
+		    I.exp_block_jump_label = I.NoJumpLabel; 
             I.exp_block_body =
               I.Seq
                 {
@@ -2920,6 +2985,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                         I.exp_call_nrecv_method = w_name;
                         I.exp_call_nrecv_arguments = w_args;
                         I.exp_call_nrecv_pos = pos;
+						I.exp_call_nrecv_path_id = pi;
                       };
                   I.exp_seq_pos = pos;
                 };
@@ -2928,7 +2994,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       let w_body =
         I.Block
           {
-			I.exp_block_label = I.NoLabel; 
+			I.exp_block_jump_label = I.NoJumpLabel; 
             I.exp_block_body =
               I.Cond
                 {
@@ -2936,6 +3002,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   I.exp_cond_then_arm = w_body_2;
                   I.exp_cond_else_arm = I.Empty pos;
                   I.exp_cond_pos = pos;
+				  I.exp_cond_path_id = pi;
                 };
             I.exp_block_pos = pos;
           } in
@@ -2969,6 +3036,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             I.exp_call_nrecv_method = w_name;
             I.exp_call_nrecv_arguments = w_args;
             I.exp_call_nrecv_pos = pos;
+			I.exp_call_nrecv_path_id = pi;
           } in
 		  
       let w_call = match wrap with
@@ -2998,6 +3066,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
   | I.Raise ({ I.exp_raise_type = ot;
 			   I.exp_raise_val = oe;
 			   I.exp_raise_from_final = ff;
+			   I.exp_raise_path_id = pi;
 			   I.exp_raise_pos = pos })->
 			   (*let _ = print_string ("\n trt : "^(string_of_bool ff)^"\n") in*)
 			   let r = match oe with
@@ -3015,7 +3084,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 												| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation error, raise from finally raises"^
 													(Iprinter.string_of_exp oe)}
 												);
-									C.exp_sharp_pos = pos }), C.void_type)
+									C.exp_sharp_pos = pos;
+									C.exp_sharp_path_id = pi;}), C.void_type)
 						else
 							let e_pos = Iast.get_exp_pos oe in
 							let ce, ct = trans_exp prog proc oe in						
@@ -3034,6 +3104,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 																	| _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
 														C.exp_sharp_unpack = false;
 														C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
+														C.exp_sharp_path_id = pi;
 														C.exp_sharp_pos = pos }) in
 								 let tmp_e1 = C.Seq { C.exp_seq_type = C.void_type;
 													  C.exp_seq_exp1 = init_e;
@@ -3053,10 +3124,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 																{CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
 																| I.Var_flow c -> (C.Sharp_v c));
 									C.exp_sharp_val = Cast.Sharp_no_val;
-									C.exp_sharp_pos = pos }), C.void_type)
+									C.exp_sharp_pos = pos;
+									C.exp_sharp_path_id = pi;}), C.void_type)
 				in r				
   | Iast.Try {  
 	 I.exp_try_block = body;
+	 I.exp_try_path_id = pid;
 	 I.exp_catch_clauses = cl_list;
 	 I.exp_finally_clause = fl_list;
 	 I.exp_try_pos = pos}-> 
@@ -3068,6 +3141,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			(match (List.length cl_list) with
 				| 0 -> (new_body,ct1)
 				| 1 -> (C.Try({ C.exp_try_type = ct1;
+								C.exp_try_path_id = pid;
 								 C.exp_try_body = new_body;
 								 C.exp_catch_clause = (List.hd new_clauses) ;
 								 C.exp_try_pos = pos}),C.void_type)
@@ -3075,10 +3149,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							let fl_var = fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum in
 							C.Try({ C.exp_try_type = ct1;
 									C.exp_try_body = a;
+									C.exp_try_path_id = None;
 									C.exp_try_pos = pos;
 									C.exp_catch_clause =
 										({ c with C.exp_catch_body =
 											C.Try({C.exp_try_type = CP.Prim Void;
+												   C.exp_try_path_id = None;
 												   C.exp_try_body = c.C.exp_catch_body;
 												   C.exp_try_pos = c.C.exp_catch_pos;		   
 												   C.exp_catch_clause = {
@@ -3092,8 +3168,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 															   C.exp_sharp_val = Cast.Sharp_no_val;
 															   C.exp_sharp_unpack = false;
 															   C.exp_sharp_pos = pos;
+															   C.exp_sharp_path_id =None (* c.C.exp_catch_path_id*);
 															});
 															C.exp_catch_pos = pos;
+															(*C.exp_catch_path_id = c.C.exp_catch_path_id;*)
 														};
 												});
 										});
@@ -3101,6 +3179,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 							) new_body new_clauses in
 						let r = C.Try({C.exp_try_type = (match r1 with | C.Try t -> t.C.exp_try_type | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, compacting case's failed" });
 									   C.exp_try_body = r1;
+									   C.exp_try_path_id = pid;
 									   C.exp_catch_clause = {
 													C.exp_catch_flow_type = !spec_flow_int;
 													C.exp_catch_flow_var = None (*Some (fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum)*);
@@ -3111,9 +3190,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 														 {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
 														 C.exp_sharp_val = Cast.Sharp_no_val;
 														 C.exp_sharp_unpack = true;
-														 C.exp_sharp_pos = pos;});
-													C.exp_catch_pos = pos};
-									   C.exp_try_pos = pos}) in
+														 C.exp_sharp_pos = pos;
+														 C.exp_sharp_path_id = None (*stub_branch_point_id "_spec_catch"*);
+														 });
+													C.exp_catch_pos = pos;};
+									   C.exp_try_pos = pos};) in
 							(r, C.void_type)
 				)
   (*| _ -> failwith (Iprinter.string_of_exp ie)*)
@@ -3122,7 +3203,7 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 	 | { I.exp_catch_var = cv;
 		 I.exp_catch_flow_type = cvt;
 		 I.exp_catch_flow_var = cfv;
-		 I.exp_catch_body = cb;																					   
+		 I.exp_catch_body = cb;	
 		 I.exp_catch_pos = pos}->	
 				if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
 																  Err.error_text = "can not catch a not raisable object" }
@@ -3137,7 +3218,7 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 						 C.exp_catch_flow_var = cfv;
 						 C.exp_catch_var = Some (Cpure.Prim Void,x);
 						 C.exp_catch_body = new_bd;																					   
-						 C.exp_catch_pos = pos} end
+						 C.exp_catch_pos = pos;} end
 					else begin
 					E.push_scope();
 					let alpha = E.alpha_name x in
@@ -3153,7 +3234,8 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 						 C.exp_catch_flow_var = cfv;
 						 C.exp_catch_var = Some (ct,alpha);
 						 C.exp_catch_body = new_bd;																					   
-						 C.exp_catch_pos = pos} in r end
+						 C.exp_catch_pos = pos;
+						 } in r end
 		       | None ->  
 					E.push_scope();
 					let new_bd, ct2 = trans_exp prog proc cb in
@@ -3162,7 +3244,7 @@ and translate_catch prog proc pos c :C.exp_catch = match c with
 						C.exp_catch_flow_var = cfv;
 						C.exp_catch_var = None;
 						C.exp_catch_body = new_bd;																					   
-						C.exp_catch_pos = pos}
+						C.exp_catch_pos = pos;}
 			   end
 	(*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
  
@@ -3212,10 +3294,10 @@ and trans_type (prog : I.prog_decl) (t : I.typ) (pos : loc) : CP.typ =
         }
 and
   flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
-                  (rhs_o : C.exp option) pos =
+                  (rhs_o : C.exp option) (pid:control_path_id) pos =
   match rev_fs with
   | f :: rest ->
-      let (cbase, base_t) = flatten_to_bind prog proc base rest None pos in
+      let (cbase, base_t) = flatten_to_bind prog proc base rest None pid pos in
       let (fn, new_var) =
         (match cbase with
          | C.Var { C.exp_var_name = v } -> (v, false)
@@ -3305,6 +3387,7 @@ and
                  C.exp_bind_fields = List.combine field_types fresh_names;
                  C.exp_bind_body = bind_body;
                  C.exp_bind_pos = pos;
+				 C.exp_bind_path_id = pid;
                } in
            let seq1 = C.mkSeq bind_type init_fn bind_e pos in
            let seq2 = C.mkSeq bind_type fn_decl seq1 pos
@@ -3323,7 +3406,7 @@ and
   | [] -> trans_exp prog proc base
 
 and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
-  (rhs : C.exp option) pos : trans_exp_type =
+  (rhs : C.exp option) pid pos : trans_exp_type =
   match fs with
   | f :: rest ->
       (try
@@ -3389,7 +3472,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
                                Err.error_text = "lhs and rhs do not match";
                              })
                 else
-                  convert_to_bind prog fresh_v (I.name_of_type vt) rest rhs
+                  convert_to_bind prog fresh_v (I.name_of_type vt) rest rhs pid
                     pos
               in
                 ((C.Bind
@@ -3399,6 +3482,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
                       C.exp_bind_fields =
                         List.combine field_types fresh_names;
                       C.exp_bind_body = bind_body;
+					  C.exp_bind_path_id = pid;
                       C.exp_bind_pos = pos;
                     }),
                  bind_type))
@@ -3546,7 +3630,7 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 											)b.Cformula.formula_ext_continuation
 		| Cformula.ECase b -> 
 			let r1,r2 = List.split b.Cformula.formula_case_branches in
-			let all = List.fold_left (fun a c->(Cpure.mkOr a c no_pos) ) (Cpure.mkFalse b.Cformula.formula_case_pos) r1  in
+			let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.Cformula.formula_case_pos) r1  in
 			let _ = if not(Util.subset (Cpure.fv all) instant) then 
 					let _ = print_string (
 					(List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^
@@ -3554,7 +3638,7 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 			Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
                     	Err.error_text = "all guard free vars must be instantiated";} in
 			let _ = 
-				let sat = Tpdispatcher.is_sat(Cpure.Not (all,no_pos)) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+				let sat = Tpdispatcher.is_sat(Cpure.Not (all,None,no_pos)) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
 				Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
 				sat_subno := !sat_subno+1;
 				if sat then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
@@ -3607,13 +3691,13 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 					 Cformula.formula_ext_base = fb;
 					 Cformula.formula_ext_continuation = fc;} as b)	->
 					 let (xpure_pre2_prim, xpure_pre2_prim_b) = Solver.xpure_consumed_pre prog fb in
-					 let new_pf = Cpure.mkAnd pf (Cpure.mkExists ext_exists_vars xpure_pre2_prim no_pos) no_pos in
-					 let new_branches = Cpure.merge_branches (Cpure.mkExistsBranches ext_exists_vars xpure_pre2_prim_b no_pos) branches in
+					 let new_pf = Cpure.mkAnd pf (Cpure.mkExists ext_exists_vars xpure_pre2_prim None no_pos) no_pos in
+					 let new_branches = Cpure.merge_branches (Cpure.mkExistsBranches ext_exists_vars xpure_pre2_prim_b None no_pos) branches in
 					 Cformula.EBase{b with 
 						Cformula.formula_ext_continuation = inner_add_pre new_pf new_branches fc;
 					 }
-				| Cformula.EAssume (ref_vars, bf) ->
-					Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure pf no_pos)) no_pos))
+				| Cformula.EAssume (ref_vars, bf,y) ->
+					Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure pf no_pos)) no_pos),y)
 			in	List.map (helper pf branches ) f 
     in inner_add_pre (Cpure.mkTrue no_pos) [] f
   
@@ -3622,11 +3706,11 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
 	let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
 	(*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula "" f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
 		let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
-			| Iformula.EAssume b->	(*add res, self*)
+			| Iformula.EAssume (b,y)->	(*add res, self*)
 					 (*let _ = H.add stab res { sv_info_kind = Known cret_type; } in*)
 					 let nb = trans_formula prog true (self::res::fvars) false b stab true in				
 					 (*let _ = H.remove stab res in*)
-					Cformula.EAssume ([],nb)
+					Cformula.EAssume ([],nb,y)
 			| Iformula.ECase b-> 	
 				Cformula.ECase {
 					Cformula.formula_case_exists = [];
@@ -3778,7 +3862,8 @@ and
           IF.h_formula_heap_name = c;
           IF.h_formula_heap_arguments = exps;
           IF.h_formula_heap_full = full;
-          IF.h_formula_heap_pos = pos
+          IF.h_formula_heap_pos = pos;
+		  IF.h_formula_heap_label = pi;
         } ->
         (try
            let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
@@ -3801,6 +3886,7 @@ and
                  CF.h_formula_view_modes = vdef.I.view_modes;
                  CF.h_formula_view_coercible = true;
                  CF.h_formula_view_origins = [];
+				 CF.h_formula_view_label = pi;
                  CF.h_formula_view_pos = pos;
                }
            in (new_h, CF.TypeTrue)
@@ -3815,6 +3901,7 @@ and
                    CF.h_formula_data_node = new_v;
                    CF.h_formula_data_name = c;
                    CF.h_formula_data_arguments = hvars;
+				   CF.h_formula_data_label = pi;
                    CF.h_formula_data_pos = pos;
                  }
              in ( new_h, CF.TypeTrue))
@@ -3883,22 +3970,22 @@ and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula =
 		
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
   match f0 with
-  | IP.BForm bf -> CP.BForm (trans_pure_b_formula bf stab)
+  | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl)
   | IP.And (f1, f2, pos) ->
       let pf1 = trans_pure_formula f1 stab in
       let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
-  | IP.Or (f1, f2, pos) ->
+  | IP.Or (f1, f2,lbl, pos) ->
       let pf1 = trans_pure_formula f1 stab in
-      let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 pos
-  | IP.Not (f, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf pos
-  | IP.Forall ((v, p), f, pos) ->
+      let pf2 = trans_pure_formula f2 stab in CP.mkOr pf1 pf2 lbl pos
+  | IP.Not (f, lbl, pos) -> let pf = trans_pure_formula f stab in CP.mkNot pf lbl pos
+  | IP.Forall ((v, p), f, lbl, pos) ->
       let pf = trans_pure_formula f stab in
       let v_type = Cpure.type_of_spec_var (trans_var (v,Unprimed) stab pos) in
-      let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf pos
-  | IP.Exists ((v, p), f, pos) ->
+      let sv = CP.SpecVar (v_type, v, p) in CP.mkForall [ sv ] pf lbl pos
+  | IP.Exists ((v, p), f, lbl, pos) ->
       let pf = trans_pure_formula f stab in
       let sv = trans_var (v,p) stab pos in
-	  CP.mkExists [ sv ] pf pos
+	  CP.mkExists [ sv ] pf lbl pos
 
 and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
   match b0 with
@@ -4036,11 +4123,11 @@ and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
 
 and collect_type_info_pure (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
-  | IP.BForm b -> collect_type_info_b_formula b stab
-  | IP.And (p1, p2, pos) | IP.Or (p1, p2, pos) ->
+  | IP.BForm (b,_) -> collect_type_info_b_formula b stab
+  | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
         (collect_type_info_pure p1 stab; collect_type_info_pure p2 stab)
-  | IP.Not (p1, pos) -> collect_type_info_pure p1 stab 
-  | IP.Forall ((qv, qp), qf, pos) | IP.Exists ((qv, qp), qf, pos) ->
+  | IP.Not (p1, _, pos) -> collect_type_info_pure p1 stab 
+  | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
       if (H.mem stab qv) && !check_shallow_var
       then
         Err.report_error
@@ -4312,7 +4399,7 @@ and type_store_clean_up (f:Cformula.struc_formula) stab = () (*if stab to big,  
 and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab = 
 	let rec inner_collector (f0:Iformula.struc_formula) = 
 		let rec helper (f0:Iformula.ext_formula) = match f0 with
-			| Iformula.EAssume b-> let _ = collect_type_info_formula prog b stab true in ()
+			| Iformula.EAssume (b,_)-> let _ = collect_type_info_formula prog b stab true in ()
 			| Iformula.ECase b ->  let _ = List.map (fun (c1,c2)->
 											let _ = collect_type_info_pure c1 stab in
 											inner_collector c2) b.Iformula.formula_case_branches in ()
@@ -4635,7 +4722,7 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 	(*convert anonym to exists*)
 	let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula):Iformula.struc_formula* ((ident*primed)list) = 
 		let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
-		| Iformula.EAssume b-> 
+		| Iformula.EAssume (b,y)-> 
 					let onb = convert_anonym_to_exist b in
 					let hp = (Util.remove_dups(h@p))in
 					let nb,nh = case_normalize_renamed_formula prog hp false onb in
@@ -4647,7 +4734,7 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 						(List.fold_left(fun a (c,d)-> a^" "^c^(Iprinter.string_of_primed d)) "" nh)^"\n"^
 						(List.fold_left(fun a (c,d)-> a^" "^c^(Iprinter.string_of_primed d)) "" ne)^"\n"
 						) in*)
-					(Iformula.EAssume nb,(Util.difference vars_list p)) 
+					(Iformula.EAssume (nb,y),(Util.difference vars_list p)) 
 		| Iformula.ECase b->
 			let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
 									let r12 = Util.intersect (Ipure.fv c1) h in
@@ -4756,6 +4843,7 @@ and subid (ren:(ident*ident) list) (i:ident) :ident =
 and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp = 
 	
 	let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
+	  | Iast.Label (pid, b) -> Iast.Label (pid, (helper ren b))
 	  | Iast.Assert b ->
 		Iast.Assert{Iast.exp_assert_asserted_formula = (match b.Iast.exp_assert_asserted_formula with
 									| None -> None
@@ -4768,11 +4856,13 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 		 Iast.exp_assert_assumed_formula = (match b.Iast.exp_assert_assumed_formula with
 			| None -> None
 			| Some f -> Some (Iformula.subst (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) f));
-		 Iast.exp_assert_pos = b.Iast.exp_assert_pos}
+		 Iast.exp_assert_pos = b.Iast.exp_assert_pos;
+		 Iast.exp_assert_path_id = b.Iast.exp_assert_path_id}
 	  | Iast.Assign b->
 		Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
 					   Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
 					   Iast.exp_assign_rhs = helper ren b.Iast.exp_assign_rhs;
+					   Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
 					   Iast.exp_assign_pos = b.Iast.exp_assign_pos}
 	  | Iast.Binary b->
 		Iast.Binary { b with 
@@ -4837,11 +4927,12 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 			Iast.While{
 				  Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
 				  Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
-				  Iast.exp_while_label = b.Iast.exp_while_label;
+				  Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
 				  Iast.exp_while_f_name = b.Iast.exp_while_f_name;
 				  Iast.exp_while_wrappings = nw;
 				  Iast.exp_while_specs = Iformula.subst_struc (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) b.Iast.exp_while_specs;
-				  Iast.exp_while_pos = b.Iast.exp_while_pos}
+				  Iast.exp_while_path_id = b.Iast.exp_while_path_id;
+				  Iast.exp_while_pos = b.Iast.exp_while_pos;}
 	  | Iast.Try b -> 
 			Iast.Try { b with
 				Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
@@ -4876,13 +4967,16 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
 							Some (fst (case_normalize_formula prog nh false f))in
 				(Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
 				   	Iast.exp_assert_assumed_formula = assm_nf;
-				    Iast.exp_assert_pos = b.Iast.exp_assert_pos}, h, p, [])
+				    Iast.exp_assert_pos = b.Iast.exp_assert_pos;
+					Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;
+					}, h, p, [])
   | Iast.Assign b-> 
 					let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
 					let l2,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
 		    (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
 				   Iast.exp_assign_lhs = l1;
 				   Iast.exp_assign_rhs = l2;
+				   Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
 				   Iast.exp_assign_pos = b.Iast.exp_assign_pos},h,p,[])
   | Iast.Binary b->
 					let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper1 in
@@ -4890,6 +4984,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
 					(Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
 				   Iast.exp_binary_oper1 = l1;
 				   Iast.exp_binary_oper2 = l2;
+				   Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
 				   Iast.exp_binary_pos = b.Iast.exp_binary_pos},h,p,[])
   | Iast.Bind b ->
 				let r,nh,np,_ =   case_normalize_exp prog h p b.Iast.exp_bind_body in
@@ -4940,6 +5035,8 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
 				let nh = nvlprm@h in
 				let np = (List.map (fun c->(c,Primed))nvl)@p in
 				(Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nh,np,nren)
+  | Iast.Label (pid,b)-> let nb,_,_,_ =  case_normalize_exp prog h p b in 
+		(Iast.Label (pid, nb),h,p,[])
   | Iast.Member b ->
 				let nb,_,_,_ = case_normalize_exp prog h p b.Iast.exp_member_base in
 				(Iast.Member {b with Iast.exp_member_base = nb},h,p,[]) 
@@ -5167,7 +5264,7 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 					let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
 					let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
 					let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
-					((Cpure.BForm cons),(Cpure.BForm neg_cons),l1_br,l2_br)
+					((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
 					) constr_array in
 					
 					
@@ -5223,7 +5320,7 @@ and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure
 and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var list) : Cformula.struc_formula = 
 
 
-		(*let _ = print_string ("init f: "^(Cprinter.string_of_struc_formula f_ext)^"\n") in*)
+		(*let _ = print_string (" case inference, this feature needs to be revisited \n") in*)
 		let r = try 
 			let f_list = List.map (fun c->
 				let d = match c with

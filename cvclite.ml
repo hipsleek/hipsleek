@@ -142,20 +142,20 @@ and cvcl_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvcl_of_formula f = match f with
-  | CP.BForm b -> "(" ^ (cvcl_of_b_formula b) ^ ")"
+  | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")"
   | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1) ^ " AND " ^ (cvcl_of_formula p2) ^ ")"
-  | CP.Or (p1, p2, _) -> "(" ^ (cvcl_of_formula p1) ^ " OR " ^ (cvcl_of_formula p2) ^ ")"
-  | CP.Not (p, _) ->
+  | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1) ^ " OR " ^ (cvcl_of_formula p2) ^ ")"
+  | CP.Not (p,_, _) ->
 (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)
 	  begin
 		match p with
-		  | CP.BForm (CP.BVar (bv, _)) -> (cvcl_of_spec_var bv) ^ " = 0"
+		  | CP.BForm (CP.BVar (bv, _),_) -> (cvcl_of_spec_var bv) ^ " = 0"
 		  | _ -> "(NOT (" ^ (cvcl_of_formula p) ^ "))"
 	  end
-  | CP.Forall (sv, p, _) ->
+  | CP.Forall (sv, p,_, _) ->
 	  let typ_str = cvcl_of_sv_type sv in
   		"(FORALL (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p) ^ ")"
-  | CP.Exists (sv, p, _) -> 
+  | CP.Exists (sv, p, _,_) -> 
 	  let typ_str = cvcl_of_sv_type sv in
   		"(EXISTS (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p) ^ ")"
 

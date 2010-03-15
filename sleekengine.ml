@@ -172,7 +172,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
 	  
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  try
+   try
 	let _ = residues := [] in
 	let stab = H.create 103 in
 	let ante = meta_to_formula iante0 false [] stab in
@@ -191,15 +191,15 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
 	let ctx = Solver.elim_unsat_ctx cprog ctx in
 (*	let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-	let rs, _ = Solver.heap_entail_struc cprog false false false [ctx] conseq no_pos in
+	let rs, _ = Solver.heap_entail_struc_init cprog false false false [ctx] conseq no_pos None in
 	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
 	  residues := rs;
-	  if Util.empty rs then
+	  if CF.isFailCtx_list rs then
 		print_string ("Fail.\n")
 	  else
 		print_string ("Valid.\n")
   with
-	| _ -> (print_string "exception in entail check\n")
+	| _ -> (print_string "exception in entail check\n")	
 		
 let process_capture_residue (lvar : ident) = 
 	let flist = List.map CF.formula_of_context !residues in
@@ -222,10 +222,12 @@ let process_print_command pcmd0 = match pcmd0 with
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
 	  if pcmd = "residue" then
-		let flist = List.map CF.formula_of_context !residues in
-		let fstr = List.map Cprinter.string_of_formula flist in
-		let tmp = String.concat "\n\n;\n\n" fstr in
-		  print_string tmp;
-		  print_string "\n"
-	  else
-		print_string ("unsupported print command: " ^ pcmd)
+		if (CF.isFailCtx_list !residues) then print_string ": no residue \n"
+		else 
+			let flist = List.map CF.formula_of_context !residues in
+			let fstr = List.map Cprinter.string_of_formula flist in
+			let tmp = String.concat "\n\n;\n\n" fstr in
+			  print_string tmp;
+			  print_string "\n"
+		else
+			print_string ("unsupported print command: " ^ pcmd)

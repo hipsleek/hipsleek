@@ -235,6 +235,7 @@ and java_of_proc_decl p =
 	^ "\n" ^ body
 
 and java_of_exp = function
+  | Label (_,b) -> java_of_exp b
   | Unfold _ -> ""
   | Java ({exp_java_code = code}) -> code
   | Bind ({exp_bind_bound_var = v;
