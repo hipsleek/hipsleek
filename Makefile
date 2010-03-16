@@ -5,9 +5,11 @@ OCAMLDOC=ocamldoc
 
 DIRS=.
 INCLUDES=-I ./xml
+GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS= -dtypes $(INCLUDES) # add other options for ocamlc here
+GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
 OCAMLOPTFLAGS=$(INCLUDES) -p # add other options for ocamlopt here
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
@@ -19,7 +21,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip sleek prover
+all: hip sleek prover hipgui
 
 opt: hip.opt sleek.opt prover.opt
 
@@ -70,6 +72,26 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	main.cmo
 
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
+
+
+GUI_FILES=globals.cmo error.cmo util.cmo debug.cmo \
+	cpure.cmo ipure.cmo \
+	iformula.cmo iast.cmo \
+	iparser.cmo ilexer.cmo \
+	iprinter.cmo \
+	cformula.cmo cast.cmo cprinter.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
+    net.cmo \
+	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
+	prooftracer.cmo context.cmo solver.cmo \
+	drawing.cmo \
+	env.cmo checks.cmo \
+	inliner.cmo \
+	astsimp.cmo \
+	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
+	typechecker.cmo \
+	globalvars.cmo 
+
 
 
 
@@ -150,6 +172,11 @@ hipc:
 
 hip: $(MAIN_FILES) decidez.vo
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+
+
+hipgui: $(GUI_FILES) decidez.vo gui.ml maingui.ml
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) gui.ml maingui.ml
+
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
 #	make -f Makefile.opt hip.opt
