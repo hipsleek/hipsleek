@@ -55,7 +55,7 @@ class mainwindow title namef =
   let col_obl_stat = obl_cols#add Gobject.Data.string in
   let obl_store = GTree.tree_store obl_cols in 
   let obl_view_c1 = GTree.view_column ~title:"Obligations" ~renderer:(GTree.cell_renderer_text [], ["text", col_obl_name]) () in
-  let obl_view_c2 = GTree.view_column ~title:"Status" ~renderer:(GTree.cell_renderer_text [], ["text", col_obl_stat]) () in
+  let obl_view_c2 = GTree.view_column ~title:"Status" ~renderer:(GTree.cell_renderer_text [`FOREGROUND "RED"; `FOREGROUND_SET true], ["text", col_obl_stat]) () in
 object (self)
   val filename = namef
   val font_name = "Monospace 10"
@@ -65,6 +65,7 @@ object (self)
   val mutable counter = 0
   val mutable prog = None
   val mutable  source_code_bookmark = None
+
 
 
   method private init_source_view () =
@@ -207,14 +208,38 @@ object (self)
       try
 	let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl} = Hashtbl.find infotbl crt_id in
 	  match crt_kind with
-	      ItemProc -> begin
-		Printf.printf "START ANALYIS on Procedure (all specs) = (%d, %s)\n" crt_id crt_name;
+	    | ItemProc -> begin
+		Printf.printf "(NO SUPPORT) START ANALYIS on Procedure (all specs) = (%d, %s)\n" crt_id crt_name;
 		flush stdout
 	      end
 	    |ItemPrec -> begin
-		Printf.printf "START ANALYIS on Procedure with one spec= (%d, %s)\n" crt_id crt_name;
-		flush stdout
+		match crt_pre with
+		  | None -> begin
+		      Printf.printf "CANNOT START ANALYIS on Procedure with one spec= %s. NO PRECONDITION\n" crt_name;
+		      flush stdout
+		    end
+		  | Some pre1 -> begin 
+		      match crt_proc.proc_body with
+			| None -> ()
+			| Some body -> begin
+			    self#upd_obl_status row "  WORKING";  
+			    let status =  obl_store#get ~row ~column:col_obl_stat in
+			      Printf.printf "%s.....START ANALYIS on Procedure with one spec =  %s\n"  status crt_name;
+			      flush stdout;
+			      let result = Typechecker.check_specs (self#get_prog ()) crt_proc pre1.ctx [pre1.spec] body in
+				if result then begin	
+				  print_string ("\nProcedure "^crt_proc.proc_name^" SUCCESS\n"); flush stdout;
+				  self#upd_obl_status row "  SUCCESS";  
+				end
+				else begin	
+				  print_string ("\nProcedure "^crt_proc.proc_name^" FAIL\n");
+				  self#upd_obl_status row "  FAIL";
+				  flush stdout
+				end
+			  end
+		    end
 	      end
+	       
 	    |ItemPost
 	    |ItemLbl
 	    |ItemLblCall
@@ -245,6 +270,11 @@ object (self)
 	  exit 1
 	end
       |Some p -> p
+
+
+  method upd_obl_status  (row: Gtk.tree_iter) (name : string)  =
+    obl_store#set ~row ~column:col_obl_stat name
+    
 
   method add_proc name (proc1 : proc_decl) :Gtk.tree_iter = 
     let crt_row = obl_store#append () in
