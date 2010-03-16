@@ -54,8 +54,8 @@ class mainwindow title namef =
   let col_obl_name = obl_cols#add Gobject.Data.string in
   let col_obl_stat = obl_cols#add Gobject.Data.string in
   let obl_store = GTree.tree_store obl_cols in 
-  let obl_view_c1 = GTree.view_column ~title:"Obligations" ~renderer:(GTree.cell_renderer_text [], ["text", col_obl_name]) () in
-  let obl_view_c2 = GTree.view_column ~title:"Status" ~renderer:(GTree.cell_renderer_text [`FOREGROUND "RED"; `FOREGROUND_SET true], ["text", col_obl_stat]) () in
+  let obl_view_c1 = GTree.view_column ~title:"Obligations" ~renderer:(GTree.cell_renderer_text [`FONT "Monospace 11"], ["text", col_obl_name]) () in
+  let obl_view_c2 = GTree.view_column ~title:"Status" ~renderer:(GTree.cell_renderer_text [`FOREGROUND "RED"; `FOREGROUND_SET true; `FONT "Monospace 12"], ["text", col_obl_stat]) () in
 object (self)
   val filename = namef
   val font_name = "Monospace 10"
@@ -223,8 +223,8 @@ object (self)
 			| None -> ()
 			| Some body -> begin
 			    self#upd_obl_status row "  WORKING";  
-			    let status =  obl_store#get ~row ~column:col_obl_stat in
-			      Printf.printf "%s.....START ANALYIS on Procedure with one spec =  %s\n"  status crt_name;
+			    try
+			      Printf.printf "START ANALYIS on Procedure with one spec =  %s\n" crt_name;
 			      flush stdout;
 			      let result = Typechecker.check_specs (self#get_prog ()) crt_proc pre1.ctx [pre1.spec] body in
 				if result then begin	
@@ -232,10 +232,13 @@ object (self)
 				  self#upd_obl_status row "  SUCCESS";  
 				end
 				else begin	
-				  print_string ("\nProcedure "^crt_proc.proc_name^" FAIL\n");
-				  self#upd_obl_status row "  FAIL";
-				  flush stdout
+				  print_string ("\nProcedure "^crt_proc.proc_name^" FAIL\n"); flush stdout;
+				  self#upd_obl_status row "  FAIL"
+				    
 				end
+			    with _ ->
+			      print_string ("\nProcedure "^crt_proc.proc_name^" FAIL\n"); flush stdout;
+			      self#upd_obl_status row "  FAIL"
 			  end
 		    end
 	      end
@@ -274,7 +277,7 @@ object (self)
 
   method upd_obl_status  (row: Gtk.tree_iter) (name : string)  =
     obl_store#set ~row ~column:col_obl_stat name
-    
+      
 
   method add_proc name (proc1 : proc_decl) :Gtk.tree_iter = 
     let crt_row = obl_store#append () in
