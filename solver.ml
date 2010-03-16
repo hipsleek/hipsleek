@@ -1342,6 +1342,10 @@ and filter_set (cl : context list) : context list =
   (* setup the labeling in conseq and the fail context in cl *)
   
 and heap_entail_struc_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : context list) (conseq : struc_formula) pos (pid:control_path_id): (context list * proof) = 
+	reset_formula_point_id();
+	let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
+	let cl = List.map (transform_context (rename_es, (fun c-> c))) cl in
+	let conseq = rename_labels_struc conseq in
 	let rec prepare_ctx c = match c with
 		| OCtx (c1,c2) -> OCtx((prepare_ctx c1),(prepare_ctx c2))
 		| Ctx es -> Ctx {es with 
@@ -1569,6 +1573,10 @@ and inner_entailer (ctx : context) (conseq : struc_formula): (context list) * pr
 	r
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : context list) (conseq : formula) pos : (context list * proof) =
+	reset_formula_point_id();
+	let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
+	let cl = List.map (transform_context (rename_es, (fun c-> c))) cl in
+	let conseq = rename_labels_formula conseq in
 	let rec prepare_ctx c = match c with
 		| OCtx (c1,c2) -> OCtx((prepare_ctx c1),(prepare_ctx c2))
 		| Ctx es -> Ctx {es with 

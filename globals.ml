@@ -178,6 +178,9 @@ let report_error (pos : loc) (msg : string) =
   failwith "Error detected"
 
 let branch_point_id = ref 1
+
+let reset_formula_point_id () = branch_point_id:=1
+
 let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label) list)*loc) list)
 
 

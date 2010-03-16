@@ -2181,7 +2181,16 @@ let rec transform_ext_formula f (e:ext_formula) :ext_formula =
 and transform_struc_formula f (e:struc_formula)	:struc_formula = 
 	List.map (transform_ext_formula f) e
 		
-let rename_labels  e=
+		
+let rec transform_context f (c:context):context = 
+	let f_c,f_f = f in
+	match c with
+	| Ctx e -> Ctx (f_c e)
+	| OCtx (c1,c2) -> OCtx ((transform_context f c1),(transform_context f c2))
+	| FailCtx fl -> FailCtx (List.map f_f fl)
+		
+
+let rename_labels transformer e=
 	let n_l_f n_l = match n_l with
 				| None -> (fresh_branch_point_id "")
 				| Some (_,s) -> (fresh_branch_point_id s) in	
@@ -2203,8 +2212,26 @@ let rename_labels  e=
 		| CP.Not (e1,f_l, l) -> (Some (CP.Not (e1,(n_l_f f_l),l)))
 		| CP.Forall (v,e1,f_l, l) -> (Some (CP.Forall (v,e1,(n_l_f f_l),l)))
 		| CP.Exists (v,e1,f_l, l) -> (Some (CP.Exists (v,e1,(n_l_f f_l),l)))in
-			
-	transform_struc_formula (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
-			
-  
+	 transformer (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
+
+let rename_labels_struc e = rename_labels transform_struc_formula e
+let rename_labels_formula e = rename_labels transform_formula e
+		 		
+let rename_labels_formula_ante  e=
+	let n_l_f n_l = match n_l with
+				| None -> (fresh_branch_point_id "")
+				| Some (_,s) -> (fresh_branch_point_id s) in	
+    let f_e_f e = None in
+	let f_f e = None in
+	let rec f_h_f e = match e with 
+		| Star s -> None
+	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
+	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
+	    | HTrue
+	    | HFalse -> Some e in
+	let f_b e = Some e in
+	let f_e e = Some e in
+	let f_p_f e = Some e in			
+	transform_formula (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
+			 
   
