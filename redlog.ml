@@ -18,6 +18,8 @@ let channels = ref (stdin, stdout)
 (**********************
  * auxiliari function *
  **********************)
+let start_with str prefix =
+  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
 
 let log_all string = 
   if !is_log_all then begin
@@ -52,7 +54,7 @@ let start_red () =
     let finished = ref false in
     while not !finished do
       let line = input_line (fst !channels) in
-      if (String.length line > 6 && String.sub line 0 6 = "Reduce") then finished := true;
+      if (start_with line "Reduce") then finished := true;
     done;
   end
 
@@ -80,7 +82,7 @@ let check_formula f =
       end else if line = "false" then begin
         result := false;
         finished := true
-      end else if String.length line > 5 & (String.sub line 0 5) = "*****" then begin
+      end else if start_with line "*****" then begin
         print_endline ("UNKNOWN Reduce output: " ^ line);
         result := false;
         finished := true
@@ -103,7 +105,7 @@ let send_and_receive f =
       let finished = ref false in
       while not !finished do
         result := input_line (fst !channels);
-        if (String.length !result > 5 && (String.sub !result 0 5) = "*****") || (String.length !result > 0 && (String.get !result 0) = '{') then
+        if (start_with !result "*****") || (start_with !result "{") || (start_with !result "infeasible") then
           finished := true
       done;
       !result
@@ -275,7 +277,7 @@ let rec weaken_formula f0 =
  **********************************)
 
 let find_bound_b_formula v f0 =
-  let parse s = 
+  let parse s =
     if s.[0] = '{' then
       let end_pos = String.index s ',' in
       let num = remove_spaces (String.sub s 1 (end_pos - 1)) in
@@ -299,7 +301,7 @@ let find_bound_b_formula v f0 =
   in
   let find_min_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, " ^ (rl_of_spec_var v) ^ ");\n" in
   let find_max_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, -" ^ (rl_of_spec_var v) ^ ");\n" in
-  send_cmd "on rounded;"; 
+  send_cmd "on rounded;";
   let min_out = send_and_receive find_min_cmd in
   let max_out = send_and_receive find_max_cmd in
   send_cmd "off rounded;";
@@ -307,7 +309,7 @@ let find_bound_b_formula v f0 =
   let max = floor2 (parse max_out) in
   (min, max)
 
-let rec elim_exists f0 = 
+let rec elim_exists_with_ineq f0 =
   match f0 with
   | CP.Exists (qvar, qf, pos) ->
       begin
@@ -315,12 +317,12 @@ let rec elim_exists f0 =
         | CP.Or (qf1, qf2, qpos) ->
             let new_qf1 = CP.mkExists [qvar] qf1 qpos in
             let new_qf2 = CP.mkExists [qvar] qf2 qpos in
-            let eqf1 = elim_exists new_qf1 in
-            let eqf2 = elim_exists new_qf2 in
+            let eqf1 = elim_exists_with_ineq new_qf1 in
+            let eqf2 = elim_exists_with_ineq new_qf2 in
             let res = CP.mkOr eqf1 eqf2 pos in
             res
         | _ ->
-            let eqqf = elim_exists qf in
+            let eqqf = elim_exists_with_ineq qf in
             let min, max = find_bound qvar eqqf in
             begin
               match min, max with
@@ -336,18 +338,18 @@ let rec elim_exists f0 =
             end
       end
   | CP.And (f1, f2, pos) ->
-      let ef1 = elim_exists f1 in
-      let ef2 = elim_exists f2 in
+      let ef1 = elim_exists_with_ineq f1 in
+      let ef2 = elim_exists_with_ineq f2 in
       CP.mkAnd ef1 ef2 pos
   | CP.Or (f1, f2, pos) ->
-      let ef1 = elim_exists f1 in
-      let ef2 = elim_exists f2 in
+      let ef1 = elim_exists_with_ineq f1 in
+      let ef2 = elim_exists_with_ineq f2 in
       CP.mkOr ef1 ef2 pos
   | CP.Not (f1, pos) ->
-      let ef1 = elim_exists f1 in
+      let ef1 = elim_exists_with_ineq f1 in
       CP.mkNot ef1 pos
   | CP.Forall (qvar, qf, pos) ->
-      let eqf = elim_exists qf in
+      let eqf = elim_exists_with_ineq qf in
       CP.mkForall [qvar] eqf pos
   | CP.BForm _ -> f0
 
@@ -374,6 +376,176 @@ and find_bound v f0 =
       end
   | CP.BForm bf -> find_bound_b_formula v bf
   | _ -> None, None
+  
+and get_subst_min f0 v = match f0 with
+  | CP.And (f1, f2, pos) ->
+    let st1, rf1 = get_subst_min f1 v in
+    if not (Util.empty st1) then
+      (st1, CP.mkAnd rf1 f2 pos)
+    else
+      let st2, rf2 = get_subst_min f2 v in
+      (st2, CP.mkAnd f1 rf2 pos)
+  | CP.BForm bf -> get_subst_min_b_formula bf v
+  | _ -> ([], f0)
+
+and get_subst_min_b_formula bf0 v = match bf0 with
+  | CP.EqMin (e0, e1, e2, pos) ->
+    if CP.is_var e0 then
+      let v0 = CP.to_var e0 in
+      if CP.eq_spec_var v0 v then
+        ([v, e1, e2], CP.mkTrue no_pos)
+      else ([], CP.BForm bf0)
+    else ([], CP.BForm bf0)
+  | _ -> ([], CP.BForm bf0)
+  
+and get_subst_max f0 v = match f0 with
+  | CP.And (f1, f2, pos) ->
+    let st1, rf1 = get_subst_max f1 v in
+    if not (Util.empty st1) then
+      (st1, CP.mkAnd rf1 f2 pos)
+    else
+      let st2, rf2 = get_subst_max f2 v in
+      (st2, CP.mkAnd f1 rf2 pos)
+  | CP.BForm bf -> get_subst_max_b_formula bf v
+  | _ -> ([], f0)
+  
+and get_subst_max_b_formula bf0 v = match bf0 with
+  | CP.EqMax (e0, e1, e2, pos) ->
+    if CP.is_var e0 then
+      let v0 = CP.to_var e0 in
+      if CP.eq_spec_var v0 v then
+        ([v, e1, e2], CP.mkTrue no_pos)
+      else ([], CP.BForm bf0)
+    else ([], CP.BForm bf0)
+  | _ -> ([], CP.BForm bf0)
+    
+and elim_exists_min f0 =
+  match f0 with
+  | CP.Exists (qvar, qf, pos) -> begin
+    match qf with
+    | CP.Or (qf1, qf2, qpos) ->
+      let new_qf1 = CP.mkExists [qvar] qf1 qpos in
+      let new_qf2 = CP.mkExists [qvar] qf2 qpos in
+      let eqf1 = elim_exists_min new_qf1 in
+      let eqf2 = elim_exists_min new_qf2 in
+      let res = CP.mkOr eqf1 eqf2 pos in
+      res
+    | _ ->
+      let qf = elim_exists_min qf in
+      let qvars0, bare_f = CP.split_ex_quantifiers qf in
+      let qvars = qvar :: qvars0 in
+      let conjs = CP.list_of_conjs qf in
+      let no_qvars_list, with_qvars_list = List.partition
+        (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
+      let no_qvars_f = CP.conj_of_list no_qvars_list pos in
+      let with_qvars_f = CP.conj_of_list with_qvars_list pos in
+      let st, pp1 = get_subst_min with_qvars_f qvar in
+      if not (Util.empty st) then
+        let v, e1, e2 = List.hd st in
+        let tmp1 = 
+          CP.mkOr 
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (CP.mkLte e1 e2 pos)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (CP.mkGt e1 e2 pos)) pos) pp1 pos)
+            pos
+          in
+        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 pos) in
+        let tmp3 = CP.mkExists qvars0 tmp2 pos in
+        let tmp4 = elim_exists_min tmp3 in
+        let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
+        new_qf
+      else
+        CP.mkExists [qvar] qf pos
+    end
+  | CP.And (f1, f2, pos) -> begin
+	  let ef1 = elim_exists_min f1 in
+	  let ef2 = elim_exists_min f2 in
+	  let res = CP.mkAnd ef1 ef2 pos in
+		res
+	end
+  | CP.Or (f1, f2, pos) -> begin
+	  let ef1 = elim_exists_min f1 in
+	  let ef2 = elim_exists_min f2 in
+	  let res = CP.mkOr ef1 ef2 pos in
+		res
+	end
+  | CP.Not (f1, pos) -> begin
+	  let ef1 = elim_exists_min f1 in
+	  let res = CP.mkNot ef1 pos in
+		res
+	end
+  | CP.Forall (qvar, qf, pos) -> begin
+	  let eqf = elim_exists_min qf in
+	  let res = CP.mkForall [qvar] eqf pos in
+		res
+	end
+  | CP.BForm _ -> f0
+  
+and elim_exists_max f0 =
+  match f0 with
+  | CP.Exists (qvar, qf, pos) -> begin
+    match qf with
+    | CP.Or (qf1, qf2, qpos) ->
+      let new_qf1 = CP.mkExists [qvar] qf1 qpos in
+      let new_qf2 = CP.mkExists [qvar] qf2 qpos in
+      let eqf1 = elim_exists_max new_qf1 in
+      let eqf2 = elim_exists_max new_qf2 in
+      let res = CP.mkOr eqf1 eqf2 pos in
+      res
+    | _ ->
+      let qf = elim_exists_max qf in
+      let qvars0, bare_f = CP.split_ex_quantifiers qf in
+      let qvars = qvar :: qvars0 in
+      let conjs = CP.list_of_conjs qf in
+      let no_qvars_list, with_qvars_list = List.partition
+        (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
+      let no_qvars_f = CP.conj_of_list no_qvars_list pos in
+      let with_qvars_f = CP.conj_of_list with_qvars_list pos in
+      let st, pp1 = get_subst_max with_qvars_f qvar in
+      if not (Util.empty st) then
+        let v, e1, e2 = List.hd st in
+        let tmp1 = 
+          CP.mkOr 
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (CP.mkGte e1 e2 pos)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (CP.mkLt e1 e2 pos)) pos) pp1 pos)
+            pos
+          in
+        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 pos) in
+        let tmp3 = CP.mkExists qvars0 tmp2 pos in
+        let tmp4 = elim_exists_max tmp3 in
+        let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
+        new_qf
+      else
+        CP.mkExists [qvar] qf pos
+    end
+  | CP.And (f1, f2, pos) -> begin
+	  let ef1 = elim_exists_max f1 in
+	  let ef2 = elim_exists_max f2 in
+	  let res = CP.mkAnd ef1 ef2 pos in
+		res
+	end
+  | CP.Or (f1, f2, pos) -> begin
+	  let ef1 = elim_exists_max f1 in
+	  let ef2 = elim_exists_max f2 in
+	  let res = CP.mkOr ef1 ef2 pos in
+		res
+	end
+  | CP.Not (f1, pos) -> begin
+	  let ef1 = elim_exists_max f1 in
+	  let res = CP.mkNot ef1 pos in
+		res
+	end
+  | CP.Forall (qvar, qf, pos) -> begin
+	  let eqf = elim_exists_max qf in
+	  let res = CP.mkForall [qvar] eqf pos in
+		res
+	end
+  | CP.BForm _ -> f0
+  
+let elim_exists f0 =
+  let f1 = elim_exists_with_ineq f0 in
+  let f2 = elim_exists_min f1 in
+  let f3 = elim_exists_max f2 in
+  f3
 
 (**********************
    Verification works  
@@ -401,7 +573,8 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   let ante = if !is_ee then elim_exists ante else ante in
   let conseq = if !is_ee then elim_exists conseq else conseq in
   let _ = if (has_existential_quantifier ante true) || (has_existential_quantifier conseq false) then 
-    print_endline "## Warning: Found formula with existential quantified var(s), result may be unsound!" in
+      print_string (Util.new_line_str ^ "WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")")
+    in
   let s_ante = if !integer_relax_mode then strengthen_formula ante else ante in
   let w_conseq = if !integer_relax_mode then weaken_formula conseq else conseq in
   let rl_of_ante = rl_of_formula s_ante in
