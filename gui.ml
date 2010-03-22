@@ -35,7 +35,9 @@ type item_entry = {
 
 
 let is_obl_fail (ctx_list : Cformula.list_context list) : bool =
-List.for_all Cformula.isFailCtx ctx_list
+  if ctx_list = [] then false
+  else
+    List.for_all Cformula.isFailCtx ctx_list
 
 
 class mainwindow title namef = 
@@ -205,10 +207,10 @@ object (self)
       let flag = ref true in
   	while !flag do
 	  let crt_id = obl_store#get ~row:crt_row ~column:col_obl_id in
-	  let crt_name = obl_store#get ~row:crt_row ~column:col_obl_name in
+	  (* let crt_name = obl_store#get ~row:crt_row ~column:col_obl_name in *)
 	  let rs_list = Solver.entail_hist#get crt_id in
-	    print_string ("\nOBLIGATION: " ^ crt_name ^ ": entries in entail_hist: " ^ (string_of_int (List.length rs_list)) ^"\n\n");
-	    flush stdout;
+	    (* print_string ("\nOBLIGATION: " ^ crt_name ^ ": entries in entail_hist: " ^ (string_of_int (List.length rs_list)) ^"\n\n"); *)
+	    (* flush stdout; *)
 	    if not (is_obl_fail rs_list) then self#upd_obl_status crt_row "SUCCES" else self#upd_obl_status crt_row "FAIL";
   	    flag := obl_store#iter_next crt_row
   	done
@@ -327,7 +329,7 @@ object (self)
 	    let post_row = obl_store#append ~parent:crt_row () in
 	      Hashtbl.add infotbl counter post_item;
   	      obl_store#set ~row:post_row ~column:col_obl_id counter;
-  	      obl_store#set ~row:post_row ~column:col_obl_name (name ^ " Label(" ^ (string_of_int counter) ^ ")");
+  	      obl_store#set ~row:post_row ~column:col_obl_name  name; (*(name ^ " Label(" ^ (string_of_int counter) ^ ")"); *)
   	      obl_store#set ~row:post_row ~column:col_obl_stat " ";
 	      post_row
 	  end
@@ -368,7 +370,7 @@ object (self)
     let obl_id = fst pid in
       Hashtbl.add infotbl obl_id obl_item;
       obl_store#set ~row:obl_row ~column:col_obl_id obl_id;
-      obl_store#set ~row:obl_row ~column:col_obl_name (name ^ " Label(" ^ (string_of_int obl_id) ^ ")");
+      obl_store#set ~row:obl_row ~column:col_obl_name name; (* (name ^ " Label(" ^ (string_of_int obl_id) ^ ")"); *)
       obl_store#set ~row:obl_row ~column:col_obl_stat " ";  
       obl_row
 
