@@ -1260,18 +1260,27 @@ type entail_state = {
   es_path_label : path_trace;
 }
 
-and fail_context = {
-  fc_message : string;          (* error message *)
-  fc_current_lhs : entail_state;     (* LHS context with success points *)
-  fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
-  fc_failure_pts : formula_label list;     (* failure points in conseq *) 
-	}
-
 and context = 
   | Ctx of entail_state
   | OCtx of (context * context) (* disjunctive context *)
-  | FailCtx of (fail_context list)
+  (*| FailCtx of (fail_context list)*)
 
+and fail_context = {
+      fc_message : string;          (* error message *)
+      fc_current_lhs : entail_state;     (* LHS context with success points *)
+      fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
+      fc_failure_pts : formula_label list;     (* failure points in conseq *) 
+      }  
+  
+and fail_type =
+  | Basic_Reason of fail_context option
+  | Or_Reason of (fail_type * fail_type)
+  | And_Reason of (fail_type * fail_type)
+  
+and list_context = 
+  | FailCtx of fail_type 
+  | SuccCtx of context list
+  
 
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in
@@ -1313,6 +1322,10 @@ let isAnyFalseCtx ctx = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false  
   
+let isAnyFalseListCtx ctx = match ctx with
+  | SuccCtx lc ->List.exists isAnyFalseCtx lc
+  | FailCtx _ -> false
+  
 let isStrictTrueCtx ctx = match ctx with
   | Ctx es -> isStrictConstTrue es.es_formula
   | _ -> false
@@ -1323,23 +1336,64 @@ let isAnyTrueCtx ctx = match ctx with
   
 let rec allFalseCtx ctx = match ctx with
 	| Ctx es -> isAnyFalseCtx ctx
-	| FailCtx _ ->  false
 	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
 
-let isFailCtx (ctx:context):bool = match ctx with
+let mkOCtx ctx1 ctx2 pos =
+  (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
+  else*)  if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then
+	true_ctx (mkTrueFlow ()) pos
+  else if isAnyFalseCtx ctx1 then ctx2
+  else if isAnyFalseCtx ctx2 then ctx1
+  else OCtx (ctx1,ctx2) 
+
+let or_context c1 c2 = mkOCtx c1 c2 no_pos 
+  
+let rec or_context_list (cl10 : context list) (cl20 : context list) : context list = 
+  let rec helper cl1 cl2 = match cl1 with
+	| c1 :: rest ->
+		let tmp1 = or_context_list rest cl2 in
+		let tmp2 = List.map (or_context c1) cl2 in
+		  tmp2 @ tmp1 
+	| [] -> []
+  in
+	if Util.empty cl20 then
+	  []
+	else
+	  let tmp = helper cl10 cl20 in
+		tmp
+  
+let fold_context_left c_l = match (List.length c_l) with
+  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
+              Err.error_text = "folding empty context list \n"}
+  | 1 -> (List.hd c_l)
+  | _ ->  List.fold_left (fun a c-> 
+    match a,c with
+     | FailCtx(t1),FailCtx(t2) -> FailCtx(Or_Reason (t1,t2))
+     | FailCtx(t1),SuccCtx(t2) -> SuccCtx(t2)
+     | SuccCtx(t1),FailCtx(t2) -> SuccCtx(t1)
+     | SuccCtx(t1),SuccCtx(t2) -> SuccCtx(t1@t2)) (List.hd c_l) (List.tl c_l)
+  
+let or_list_context c1 c2 = match c1,c2 with
+     | FailCtx(t1),FailCtx(t2) -> FailCtx(And_Reason (t1,t2))
+     | FailCtx(t1),SuccCtx(t2) -> FailCtx(t1)
+     | SuccCtx(t1),FailCtx(t2) -> FailCtx(t2)
+     | SuccCtx(t1),SuccCtx(t2) -> SuccCtx(or_context_list t1 t2)
+
+let isFailCtx cl = match cl with 
+	| FailCtx _ -> true
+	| SuccCtx _ -> false
+
+  
+(*let isFailCtx (ctx:context):bool = match ctx with
   | FailCtx es -> true
-  | _ -> false	
+  | _ -> false
   
 let rec isAnyFailCtx c = match c with
-	| FailCtx _ -> true
 	| OCtx (c1,c2) -> (isAnyFailCtx c1) || (isAnyFailCtx c2) 
 	| Ctx _ -> false
   
 let isAnyFailCtx_list cl = List.exists isAnyFailCtx cl
     
-let isFailCtx_list cl = match cl with 
-	| h::_ -> (isFailCtx h)
-	| [] -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction found empty list in isFailCtx_list \n"}
   
 let merge_two_fail_ctx (ctx1:context list) (ctx2:context list) :context list = match ctx1, ctx2 with
 	| [FailCtx fs1], [FailCtx fs2] -> [FailCtx (fs1 @ fs2)]
@@ -1362,54 +1416,8 @@ let normalize_fail_ctx_list (cl:context list) : context list =  if cl==[] then [
 let remove_empty_fail_ctx c : context list = match c with 
 	| [] -> [FailCtx[]]
 	| _ -> c
-	 
-let mkOCtx ctx1 ctx2 pos =
-  if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
-  else  if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then
-	true_ctx (mkTrueFlow ()) pos
-  else if isAnyFalseCtx ctx1 then ctx2
-  else if isAnyFalseCtx ctx2 then ctx1
-  else OCtx (ctx1,ctx2) 
-(*	let f_comp c1 c2 = 
-		let f1 = (flow_formula_of_formula c1.es_formula) in
-		let f2 = (flow_formula_of_formula c2.es_formula) in
-		equal_flow_interval f1.formula_flow_interval f2.formula_flow_interval in
-	let rec liniarize_ctx c = match c with
-		| OCtx(c1,c2) -> 
-			let p11,p12,p13 = liniarize_ctx c1 in
-			let p21,p22,p23 = liniarize_ctx c2 in
-			(p11@p21, p12@p22, p13@p23)
-		| Ctx es ->
-			if (isAnyFalseCtx c) then ([],[es],[])
-			else if (isAnyTrueCtx c) then ([es],[],[])
-			else ([],[],[es])
-			let fl = flow_formula_of_formula es.es_formula in
-			if (equal_flow_interval fl.formula_flow_interval !top_flow_int) then ([es],[],[])
-			else if (equal_flow_interval fl.formula_flow_interval false_flow_int) then ([],[es],[])
-			else ([],[],[es]) in *)
+	*) 
 
-(*	let ctx1_t,ctx1_f,ctx1_o = liniarize_ctx ctx1 in
-	let ctx2_t,ctx2_f,ctx2_o = liniarize_ctx ctx2 in
-	let ctx_t = Util.remove_dups_f (ctx1_t@ctx2_t) f_comp in
-	let ctx_f = Util.remove_dups_f (ctx1_f@ctx2_f) f_comp in
-	let ctx_o = ctx1_o@ctx2_o in
-	let ctx_f = List.filter (fun c-> 
-		let fl_c = flow_formula_of_formula c.es_formula in
-		not (List.exists (fun d-> 
-			let fl_d = flow_formula_of_formula d.es_formula in
-			subsume_flow_ff fl_d fl_c ) (ctx_o@ctx_t))) ctx_f in
-	let ctx_o = List.filter (fun c->
-		let fl_c = flow_formula_of_formula c.es_formula in
-		not (List.exists (fun d-> 
-			let fl_d = flow_formula_of_formula d.es_formula in
-			subsume_flow_ff fl_d fl_c ) ctx_t)) ctx_o in
-	let ctx_l = ctx_t@ctx_f@ctx_o in
-	if (List.length ctx_l)<1 then 
-		Err.report_error {Err.error_loc = pos;
-						  Err.error_text = "Concatenating two empty contexts"}
-	else List.fold_left (fun a c -> OCtx (a,(Ctx c))) (Ctx (List.hd ctx_l)) (List.tl ctx_l)*)
-	
-  
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
@@ -1418,28 +1426,10 @@ let rec build_context ctx f pos = match f with
 	  let c1 = build_context ctx f1 pos in
 	  let c2 = build_context ctx f2 pos in
 		or_context c1 c2
-
-(*--- 09.05.2008 *)		
-(* add a list of existential vars, evars, to each context in the list ctx *)
-and add_exist_vars_to_ctx_list (ctx : context list) (evars	: CP.spec_var list) : (context list) = match ctx with
-  | [] -> []
-	| h :: r -> (add_exist_vars_to_ctx h evars) :: (add_exist_vars_to_ctx_list r evars)
-
-(* add a list of existential vars, evars, to ctx.es_formula *)
-and add_exist_vars_to_ctx (ctx : context) (evars	: CP.spec_var list) : context = match ctx with
-  |  FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with 
-  		es_formula = (add_quantifiers evars es.es_formula);
-  		(*es_evars = evars @ es.es_evars*)}
-  | OCtx (c1, c2) ->
-	  let nc1 = add_exist_vars_to_ctx c1 evars in
-	  let nc2 = add_exist_vars_to_ctx c2 evars in
-		OCtx (nc1, nc2)
 	
 (* 09.05.2008 ---*)		
 
 and set_context_formula (ctx : context) (f : formula) : context = match ctx with
-  |  FailCtx _ -> ctx
   | Ctx es -> begin
 	  match f with
 		| Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
@@ -1461,56 +1451,9 @@ and set_estate_must_match (es: entail_state) : entail_state =
 		es_new
 	
 and set_context_must_match (ctx : context) : context = match ctx with 
-  | FailCtx _ -> ctx
   | Ctx (es) -> Ctx(set_estate_must_match es)
   | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2))
-	
-(*
-  to be used in the type-checker. After every entailment, the history of consumed nodes
-  must be cleared.
-*)
-and clear_entailment_history (ctx : context) : context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> (* Ctx {es with es_heap = HTrue} *)
-	  Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula = es.es_formula; es_path_label = es.es_path_label;}
-  | OCtx (c1, c2) ->
-	  let nc1 = clear_entailment_history c1 in
-	  let nc2 = clear_entailment_history c2 in
-	  let res = OCtx (nc1, nc2) in
-		res
 
-and clear_entailment_history_list (ctx : context list) : context list = 
-  List.map (fun c -> clear_entailment_history c) ctx
-
-and or_context_list (cl10 : context list) (cl20 : context list) : context list = 
-  let rec helper cl1 cl2 = match cl1 with
-	| c1 :: rest ->
-		let tmp1 = or_context_list rest cl2 in
-		let tmp2 = List.map (or_context c1) cl2 in
-		  tmp2 @ tmp1 
-	| [] -> []
-  in
-	if Util.empty cl20 then
-	  []
-	else
-	  let tmp = helper cl10 cl20 in
-		tmp
-			
-and or_context c1 c2 = mkOCtx c1 c2 no_pos (*match c1 with
-  | Ctx {es_formula = Base ({formula_base_heap = HFalse; 
-							 formula_base_pure = _; 
-							 formula_base_pos = _})} -> c2
-  | Ctx {es_formula = Base ({formula_base_heap = HTrue; 
-							 formula_base_pure = CP.BForm (CP.BConst (true, _)); 
-							 formula_base_pos = _})} -> c1
-  | _ -> match c2 with 
-	  | Ctx {es_formula = Base ({formula_base_heap = HFalse; 
-								 formula_base_pure = _; 
-								 formula_base_pos = _})} -> c1
-	  | Ctx {es_formula = Base ({formula_base_heap = HTrue; 
-								 formula_base_pure =  CP.BForm (CP.BConst (true, _)); 
-								 formula_base_pos = _})} -> c2
-	  | _ -> OCtx (c1, c2)*)
 
 and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> es
@@ -1524,78 +1467,18 @@ and flow_formula_of_ctx (ctx : context) (pos : loc) = match ctx with
 						   Err.error_text = "flow_of_context: disjunctive or fail context"}
 
 and set_flow_in_ctx_override (c:context) (f:flow_formula) :context = match c with
-	| FailCtx _ -> c
 	| Ctx c1-> Ctx {c1 with es_formula = set_flow_in_formula_override f c1.es_formula}
 	| OCtx (c1,c2) -> OCtx ((set_flow_in_ctx_override c1 f),(set_flow_in_ctx_override c2 f))
-						
-and set_flow_in_ctx (c:context) (f:flow_formula):context = match c with 
-	| FailCtx _ -> c
-	| Ctx c1-> Ctx {c1 with es_formula = set_flow_in_formula f c1.es_formula}
-	| OCtx (c1,c2) -> OCtx ((set_flow_in_ctx c1 f),(set_flow_in_ctx c2 f))
-	
+		
 and change_flow_ctx from_fl to_fl ctx_list = 
 	let rec helper c = match c with
-		| FailCtx _ -> c
 		| Ctx c -> Ctx {c with es_formula = substitute_flow_in_f to_fl from_fl c.es_formula;}
 		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
 	List.map helper ctx_list
 	
-and set_flow_to_link flow_store ctx pos = match ctx with 
-	| FailCtx _ -> ctx
-	| Ctx c1-> Ctx {c1 with es_formula = set_flow_to_link_f flow_store c1.es_formula pos}
-	| OCtx (c1,c2) -> OCtx ((set_flow_to_link flow_store c1 pos),(set_flow_to_link flow_store c2 pos))
-	
-and change_ret_flow_ctx ctx_list = 
-	let rec helper c = match c with
-		| FailCtx _ -> c
-		| Ctx c -> Ctx {c with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int c.es_formula;}
-		| OCtx (c1,c2)-> OCtx ((helper c1), (helper c2)) in
-	List.map helper ctx_list
-
-	
-(* simplication and manipulation *)
-
-and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with es_formula = push_exists qvars es.es_formula}
-  | OCtx (c1, c2) -> OCtx (push_exists_context qvars c1, push_exists_context qvars c2)
-
-and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with 
-				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
-				es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
-				(*es_evars = es.es_evars@ expvars;*)}
-  | OCtx (c1, c2) -> OCtx (push_expl_impl_context expvars impvars c1, push_expl_impl_context expvars impvars c2)
-
-and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with 
-				es_gen_expl_vars = Util.difference es.es_gen_expl_vars expvars; 
-				es_gen_impl_vars = Util.difference es.es_gen_impl_vars impvars;
-				es_evars = Util.difference es.es_evars expvars;
-				}
-  | OCtx (c1, c2) -> OCtx (pop_expl_impl_context expvars impvars c1, pop_expl_impl_context expvars impvars c2)
-
-  
-(*19.05.2008*)
-and pop_exists_context (qvars : CP.spec_var list) (ctx : context) : context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with es_formula = pop_exists qvars es.es_formula}
-  | OCtx (c1, c2) -> OCtx (pop_exists_context qvars c1, push_exists_context qvars c2)
-(*19.05.2008*)
-
-(*23.10.2008*)
-and pop_exists_estate (qvars : CP.spec_var list) (es : entail_state) : entail_state = 
-	let new_es = {es with 
-		es_evars = (List.filter (fun x -> not (List.exists (fun y -> (CP.eq_spec_var x y)) qvars)) es.es_evars);
-		es_formula = pop_exists qvars es.es_formula
-	}
-	in new_es
 (*23.10.2008*)
 
 and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var list) flow_tr (pos : loc) : context = match ctx with
-  | FailCtx _ -> ctx
   | Ctx es -> begin
 	  match phi with
 		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
@@ -1615,24 +1498,11 @@ and simplify_context (ctx:context):context =
 	if (allFalseCtx ctx) then (false_ctx (mkFalseFlow) no_pos)
 								else  ctx
 		
-and normalize_context_formula (ctx : context) (f : formula) (pos : loc) (result_is_sat:bool): context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat}
-  | OCtx (c1, c2) ->
-	  let nc1 = normalize_context_formula c1 f pos result_is_sat in
-	  let nc2 = normalize_context_formula c2 f pos result_is_sat in
-	  let res = (mkOCtx nc1 nc2 pos) in
-		res
+and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_state): context = 
+	Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
-and normalize_context_formula_combine (ctx : context) (f : formula) (result_is_sat:bool)(pos : loc) : context =
-match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es -> Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;}
-  | OCtx (c1, c2) ->
-	  let nc1 = normalize_context_formula_combine c1 f result_is_sat pos in
-	  let nc2 = normalize_context_formula_combine c2 f result_is_sat pos in
-	  let res = (mkOCtx nc1 nc2 pos) in
-		res
+and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
+	Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 		
 and combine_and (f1:formula) (f2:Cpure.formula) :formula*bool = match f1 with
 	| Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -1662,7 +1532,6 @@ and normalize_no_rename_context_formula (ctx : context) (p : Cpure.formula) : co
 				   formula_or_pos = b.formula_or_pos
 				}in
 match ctx with
-  | FailCtx _ -> ctx
   | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =false;}
   | OCtx (c1, c2) ->
 	  let nc1 = normalize_no_rename_context_formula c1 p in
@@ -1671,23 +1540,14 @@ match ctx with
 		res
 		
 (* -- 17.05.2008 *)
-and normalize_clash_context_formula (ctx : context) (f : formula) (pos : loc) (result_is_sat:bool): context = match ctx with
-  | FailCtx _ -> ctx
-  | Ctx es ->
-      begin
-	    match f with
-		| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
-			let new_c1 = normalize_clash_context_formula ctx phi1 pos result_is_sat in
-			let new_c2 = normalize_clash_context_formula ctx phi2 pos result_is_sat in
-			let res = (mkOCtx new_c1 new_c2 pos) in
-			res
-		| _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
-	  end
-  | OCtx (c1, c2) ->
-	  let nc1 = normalize_clash_context_formula c1 f pos result_is_sat in
-	  let nc2 = normalize_clash_context_formula c2 f pos result_is_sat in
-	  let res = (mkOCtx nc1 nc2 pos) in
+and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context = match f with
+	| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
+		let new_c1 = normalize_clash_es phi1 pos result_is_sat es in
+		let new_c2 = normalize_clash_es phi2 pos result_is_sat es in
+		let res = (mkOCtx new_c1 new_c2 pos) in
 		res
+	| _ -> Ctx {es with es_formula = normalize_only_clash_rename es.es_formula f pos; es_unsat_flag =es.es_unsat_flag&&result_is_sat}
+	
 (* 17.05.2008 -- *)
 
 and formula_of_context ctx0 = match ctx0 with
@@ -1696,25 +1556,12 @@ and formula_of_context ctx0 = match ctx0 with
 	  let f2 = formula_of_context c2 in
 		mkOr f1 f2 no_pos
   | Ctx es -> es.es_formula
-  | FailCtx _ -> Err.report_error { 
-				Err.error_loc = no_pos;
-				Err.error_text = "not expecting a fail context in formula_of_context in cformula.ml\n"}
-
+  
 (* -- added 16.05.2008 *)  
-and formula_of_context_list (ctx : context list) : formula =  match ctx with
-	| h :: r -> 
-		begin
-			match h with
-			| OCtx (c1, c2) ->
-				let f1 = formula_of_context c1 in
-				let f2 = formula_of_context c2 in
-					mkOr (mkOr f1 f2 no_pos) (formula_of_context_list r) no_pos
-			| Ctx es -> mkOr es.es_formula (formula_of_context_list r) no_pos
-			| FailCtx _ -> Err.report_error { 
-				Err.error_loc = no_pos;
-				Err.error_text = "not expecting a fail context in formula_of_context_list in cformula.ml\n"}
-  	end	
-  | [] -> (mkFalse (mkTrueFlow ()) no_pos)	
+and formula_of_list_context (ctx : list_context) : formula =  match ctx with
+  | FailCtx _ -> mkTrue (mkTrueFlow()) no_pos
+  | SuccCtx ls -> List.fold_left (fun a c-> mkOr (formula_of_context c) a no_pos)
+          (mkFalse (mkTrueFlow ()) no_pos) ls
 (* 16.05.2008 -- *)
 
 and disj_count_ctx (ctx0 : context) = match ctx0 with
@@ -1723,7 +1570,6 @@ and disj_count_ctx (ctx0 : context) = match ctx0 with
 	  let t2 = disj_count_ctx c2 in
 		1 + t1 + t2
   | Ctx es -> disj_count es.es_formula
-  | FailCtx _ -> 0 
 
 (*
 and find_type_var (tc : h_formula) (v : ident) : CP.spec_var option = match tc with
@@ -1739,7 +1585,6 @@ and find_type_var (tc : h_formula) (v : ident) : CP.spec_var option = match tc w
 *)
 
 let rec set_flow_in_context_override f_f ctx = match ctx with
-	| FailCtx _ -> ctx 
 	| Ctx es -> Ctx {es with es_formula = (set_flow_in_formula_override f_f es.es_formula)}
 	| OCtx (c1,c2) -> OCtx ((set_flow_in_context_override f_f c1),(set_flow_in_context_override f_f c2))
 
@@ -1919,10 +1764,13 @@ and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula =
 and count_or c = match c with
 			| Ctx _ -> 1
 			| OCtx (c1,c2) -> (count_or c1)+(count_or c2)		
-			| FailCtx _ -> 1
 			
 and find_false_ctx ctx pos =
-	if (List.exists isAnyFalseCtx ctx) then false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) else ()
+  match ctx with
+   | FailCtx _ -> ()
+   | SuccCtx ctx ->
+	if (List.exists isAnyFalseCtx ctx) then 
+    false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) else ()
 	
 	(*
 and filter_node (c: context) (p1:spec_var):context = 
@@ -1940,10 +1788,9 @@ and guard_vars f = Util.remove_dups (List.fold_left (fun a f-> a@(match f with
 	| EBase b -> Util.difference (guard_vars b.formula_ext_continuation) b.formula_ext_exists
 	| EAssume b-> [])) [] f)
 	
-and set_unsat_flag ctx nf = match ctx with
+and set_unsat_flag (ctx:context) (nf:bool):context = match ctx with
 | OCtx(c1,c2)-> OCtx ((set_unsat_flag c1 nf),(set_unsat_flag c2 nf))
 | Ctx c-> Ctx {c with es_unsat_flag = nf}
-| FailCtx _ -> ctx
 
 and filter_heap (f:formula):formula option = match f with
 	| Or b-> begin 
@@ -1974,7 +1821,6 @@ and filter_heap (f:formula):formula option = match f with
 and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
 	| OCtx (c1,c2)-> OCtx ((set_es_evars c1 v),(set_es_evars c2 v))
 	| Ctx e -> Ctx {e with es_evars = v}
-	| FailCtx _ -> c
 	
 and purge_f_pures f l = 
 	let rec purge_pures f = match f with 
@@ -2048,28 +1894,13 @@ and res_replace stab rl clean_res fl =
 	else ()
 	
 	
-let  add_path_id ctx (pi1,pi2) = match pi1 with
-	| None -> ctx
-	| Some s -> 
-	let rec add_path_id_h ctx = match ctx with
-	| Ctx e -> (*if (List.length>0)&&((fst pi1) == (fst (fst(List.hd e.es_path_label)))) then ctx
-		else *)Ctx{e with es_path_label = (s,pi2)::e.es_path_label}
-	| FailCtx f -> ctx
-	| OCtx (c1,c2) -> OCtx ((add_path_id_h c1),(add_path_id_h c2)) in
-	add_path_id_h ctx
-	
-let add_path_id_ctx_list c (pi1,pi2)  = match pi1 with
-	| None -> c
-	| Some _ ->	List.map (fun c-> add_path_id c (pi1,pi2)) c
-	
-let get_start_label ctx = 
-	let rec helper c= match c with
-		| Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Util.list_last e.es_path_label))
-		| FailCtx f-> if (List.length f)==0 then "" else
-			let f = List.hd f in
-			if (List.length f.fc_current_lhs.es_path_label)==0 then "" else snd (fst (Util.list_last f.fc_current_lhs.es_path_label))
-		| OCtx (c1,c2) -> helper c1 in
-	helper (List.hd ctx)
+let get_start_label ctx = match ctx with
+  | FailCtx _ -> ""
+  | SuccCtx sl -> 
+    let rec helper c= match c with
+      | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Util.list_last e.es_path_label))
+      | OCtx (c1,c2) -> helper c1 in
+	helper (List.hd sl)
 	
 let rec replace_heap_formula_label nl f = match f with
 	| Star b -> Star {b with 
@@ -2165,11 +1996,11 @@ let rec transform_formula f (e:formula):formula =
 		
 		
 let rec transform_ext_formula f (e:ext_formula) :ext_formula = 
-    let (f_e_f, f_f, f_h_f, f_p_t)=f in
-	let r =  f_e_f e in 
+  let (f_e_f, f_f, f_h_f, f_p_t) = f in
+	let r = f_e_f e in 
 	match r with
 	| Some e1 -> e1
-	| None  -> match e with
+	| None -> match e with
 		| ECase c -> ECase {c with 
 			formula_case_branches = List.map (fun (c1,c2)-> 
 				((CP.transform_formula f_p_t c1),(transform_struc_formula f c2))) c.formula_case_branches}
@@ -2178,19 +2009,42 @@ let rec transform_ext_formula f (e:ext_formula) :ext_formula =
 				 formula_ext_continuation = transform_struc_formula f b.formula_ext_continuation;
 				}
 		| EAssume (v,e,pid)-> EAssume (v,(transform_formula f e),pid)
+    
 and transform_struc_formula f (e:struc_formula)	:struc_formula = 
 	List.map (transform_ext_formula f) e
 		
-		
+    
 let rec transform_context f (c:context):context = 
-	let f_c,f_f = f in
 	match c with
-	| Ctx e -> Ctx (f_c e)
-	| OCtx (c1,c2) -> OCtx ((transform_context f c1),(transform_context f c2))
-	| FailCtx fl -> FailCtx (List.map f_f fl)
+	| Ctx e -> (f e)
+	| OCtx (c1,c2) -> mkOCtx (transform_context f c1)(transform_context f c2) no_pos
 		
-
-let rename_labels transformer e=
+let rec transform_fail_ctx f (c:fail_type) : fail_type = 
+  match c with
+    | Basic_Reason br ->Basic_Reason (f br)
+    | Or_Reason (ft1,ft2) ->Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
+    | And_Reason (ft1,ft2) ->And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
+  
+let transform_list_context f (c:list_context):list_context = 
+  let f_c,f_f = f in
+  match c with
+    | FailCtx fc -> FailCtx (transform_fail_ctx f_f fc)
+    | SuccCtx sc -> SuccCtx ((List.map (transform_context f_c)) sc)
+    
+let rec fold_fail_context f (c:fail_type) = 
+  (*let f_br,f_or,f_and = f in*)
+  match c with
+    | Basic_Reason br -> f c []
+    | Or_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
+    | And_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
+    
+(*let rec fold_list_context f (c:list_context) = 
+  let f_f,f_c = f in
+  match c with
+    | FailCtx fc -> fold_fail_context f_f fc
+    | SuccCtx sc -> List.map (fold_context f_c) sc*)
+    
+let rename_labels transformer e =
 	let n_l_f n_l = match n_l with
 				| None -> (fresh_branch_point_id "")
 				| Some (_,s) -> (fresh_branch_point_id s) in	
@@ -2234,4 +2088,83 @@ let rename_labels_formula_ante  e=
 	let f_p_f e = Some e in			
 	transform_formula (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
 			 
+  
+
+and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
+  transform_list_context ((fun es -> Ctx{es with 
+				es_gen_expl_vars = Util.difference es.es_gen_expl_vars expvars; 
+				es_gen_impl_vars = Util.difference es.es_gen_impl_vars impvars;
+				es_evars = Util.difference es.es_evars expvars;
+				}), fun c->c) ctx
+
+and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
+  transform_list_context ((fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}),(fun c->c)) ctx
+
+and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = 
+  transform_context (fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}) ctx
+
+and push_expl_impl_list_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
+ transform_list_context ((fun es -> Ctx{es with 
+				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
+				es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
+				(*es_evars = es.es_evars@ expvars;*)}),(fun c->c)) ctx
+        
+and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = 
+ transform_context (fun es -> Ctx{es with 
+				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
+				es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
+				(*es_evars = es.es_evars@ expvars;*)}) ctx
+        
+and pop_exists_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
+transform_list_context ((fun es -> Ctx{es with es_formula = pop_exists qvars es.es_formula}),(fun c->c)) ctx
+
+and pop_exists_estate (qvars : CP.spec_var list) (es : entail_state) : entail_state = 
+	let new_es = {es with 
+		es_evars = (List.filter (fun x -> not (List.exists (fun y -> (CP.eq_spec_var x y)) qvars)) es.es_evars);
+		es_formula = pop_exists qvars es.es_formula
+	}
+	in new_es
+  
+ (* add a list of existential vars, evars, to each context in the list ctx *)
+and add_exist_vars_to_ctx_list (ctx : list_context) (evars	: CP.spec_var list) : list_context = 
+  transform_list_context ((fun es-> Ctx{es with es_formula = (add_quantifiers evars es.es_formula)}),(fun c->c)) ctx
+
+and change_ret_flow_ctx ctx_list = 
+  transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
+    ,(fun c->c)) ctx_list
+
+let add_path_id ctx (pi1,pi2) = match pi1 with
+	| None -> ctx
+	| Some s -> 
+    let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
+    transform_context fct ctx
+	
+let add_path_id_ctx_list c (pi1,pi2)  = match pi1 with
+	| None -> c
+	| Some s ->	      
+    let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
+    transform_list_context (fct,(fun c-> c)) c
+    
+let normalize_max_renaming f pos b ctx = 
+  if !Globals.max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
+  else transform_list_context ((normalize_clash_es f pos b),(fun c->c)) ctx
+
+let normalize_max_renaming_s f pos b ctx = 
+  if !Globals.max_renaming then transform_context (normalize_es f pos b) ctx
+  else transform_context (normalize_clash_es f pos b) ctx
+
+  
+(*
+  to be used in the type-checker. After every entailment, the history of consumed nodes
+  must be cleared.
+*)
+let clear_entailment_history_es (es :entail_state) :context = 
+ Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula = es.es_formula; es_path_label = es.es_path_label;} 
+ 
+let clear_entailment_history (ctx : context) : context =  
+  transform_context clear_entailment_history_es ctx
+  
+let clear_entailment_history_list (ctx : list_context) : list_context = 
+  transform_list_context (clear_entailment_history_es,(fun c->c)) ctx 
+
   

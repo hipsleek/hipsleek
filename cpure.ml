@@ -1174,7 +1174,11 @@ and get_subst_equation_b_formula (f0 : b_formula) (v : spec_var) lbl: ((spec_var
 			  if eq_spec_var v2 v then ([(v, e1)], mkTrue no_pos)
 			  else ([], BForm (f0,lbl))
 		  else ([], BForm (f0,lbl))
-	  else ([], BForm (f0,lbl))
+	  else if is_var e2 then
+			let v2 = to_var e2 in
+			  if eq_spec_var v2 v then ([(v, e1)], mkTrue no_pos)
+			  else ([], BForm (f0,lbl))
+		  else ([], BForm (f0,lbl))
 	end
   | _ -> ([], BForm (f0,lbl))
 

@@ -1256,23 +1256,15 @@ and
         CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
       let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_pure (fst vdef.C.view_user_inv) pos) in
       let (rs, _) =
-        Solver.heap_entail_init prog false false [ ctx ] formula pos
+        Solver.heap_entail_init prog false false (CF.SuccCtx [ ctx ]) formula pos
       in
 	  Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ;
-		if (U.empty rs) then  Err.report_error
-            {
-              Err.error_loc = pos;
-              Err.error_text = "entailment returned an empty context list\n";}
-        else if not(CF.isFailCtx_list rs)
+		if not(CF.isFailCtx rs)
         then
           (vdef.C.view_x_formula <- (xform, xform_b);
            vdef.C.view_addr_vars <- addr_vars;
            compute_view_x_formula prog vdef (n - 1))
         else
-			(*let _ = print_string 
-				(
-					(Cprinter.string_of_formula vdef.Cast.view_un_struc_formula)^"\n"^
-					(Cprinter.string_of_formula formula1)^"\n"^(Cprinter.string_of_formula formula)) in*)
           Err.report_error
             {
               Err.error_loc = pos;

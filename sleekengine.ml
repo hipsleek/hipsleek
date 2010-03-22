@@ -46,7 +46,7 @@ let cprog = { C.prog_data_decls = [];
 			  C.prog_left_coercions = [];
 			  C.prog_right_coercions = [] }
 
-let residues = ref ([] : CF.context list)
+let residues = ref (None : CF.list_context option)
 
 let check_data_pred_name name : bool =
   try 
@@ -172,8 +172,8 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 	| MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
 	  
 let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-   try
-	let _ = residues := [] in
+  try
+	let _ = residues := None in
 	let stab = H.create 103 in
 	let ante = meta_to_formula iante0 false [] stab in
 (*
@@ -189,21 +189,24 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	(*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
 	(*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
 	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-	let ctx = Solver.elim_unsat_ctx cprog ctx in
+	let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
 (*	let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-	let rs, _ = Solver.heap_entail_struc_init cprog false false false [ctx] conseq no_pos None in
-	let rs = List.map (fun r -> Solver.elim_ante_evars r) rs in
-	  residues := rs;
-	  if CF.isFailCtx_list rs then
-		print_string ("Fail.\n")
+	let rs, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
+	let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs in
+  residues := Some rs;
+	  if CF.isFailCtx rs then
+		(print_string (Cprinter.string_of_list_context rs);
+		print_string ("Fail.\n"))
 	  else
 		print_string ("Valid.\n")
   with
 	| _ -> (print_string "exception in entail check\n")	
-		
+	
 let process_capture_residue (lvar : ident) = 
-	let flist = List.map CF.formula_of_context !residues in
-		put_var lvar (Sleekcommons.MetaFormCF(List.hd flist))
+	let flist = match !residues with 
+      | None -> (CF.mkTrue (CF.mkTrueFlow()) no_pos)
+      | Some s -> CF.formula_of_list_context s in
+		put_var lvar (Sleekcommons.MetaFormCF flist)
 		
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
@@ -222,12 +225,9 @@ let process_print_command pcmd0 = match pcmd0 with
 		print_string ((Cprinter.string_of_struc_formula pf) ^ "\n")
   | PCmd pcmd -> 
 	  if pcmd = "residue" then
-		if (CF.isFailCtx_list !residues) then print_string ": no residue \n"
-		else 
-			let flist = List.map CF.formula_of_context !residues in
-			let fstr = List.map Cprinter.string_of_formula flist in
-			let tmp = String.concat "\n\n;\n\n" fstr in
-			  print_string tmp;
-			  print_string "\n"
+      match !residues with
+        | None -> print_string ": no residue \n"
+        | Some s -> print_string ((Cprinter.string_of_formula 
+              (CF.formula_of_list_context s))^"\n")
 		else
 			print_string ("unsupported print command: " ^ pcmd)

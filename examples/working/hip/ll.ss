@@ -71,6 +71,19 @@ node get_next(node x)
 	x.next = y;
 }
 
+void set_null2(node x)
+
+	requires x::ll<i> & i > 0 
+	ensures x::ll<1>;
+
+{
+	if (2>1) 
+		x.next = null;
+	else 
+		x.next = null;
+}	
+
+
 /* function to set null the tail of a list */
 void set_null(node x)
 

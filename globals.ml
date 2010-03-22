@@ -177,9 +177,9 @@ let report_error (pos : loc) (msg : string) =
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
   failwith "Error detected"
 
-let branch_point_id = ref 1
+let branch_point_id = ref 0
 
-let reset_formula_point_id () = branch_point_id:=1
+let reset_formula_point_id () = () (*branch_point_id:=0*)
 
 let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label) list)*loc) list)
 

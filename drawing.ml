@@ -22,8 +22,8 @@ let rec dot_of_context_file prog ctx visib_names file0 =
 	if Sys.file_exists file then
 	  ignore (print_string ("\ndprint: File " ^ file ^ " exists.\n"))
 	else
-	  let tmp1 = List.map (fun c -> dot_of_context prog c visib_names) ctx in
-	  let tmp2 = String.concat "\n\n" tmp1 in
+	  let tmp2 = dot_of_context prog ctx visib_names in
+	  (*let tmp2 = String.concat "\n\n" tmp1 in*)
 	  let ochn = open_out file in
 		output_string ochn tmp2;
 		close_out ochn;
@@ -37,7 +37,7 @@ let rec dot_of_context_file prog ctx visib_names file0 =
 		  Sys.remove file
  
 
-and dot_of_context prog ctx visib_names = dot_of_formula prog (formula_of_context ctx) visib_names
+and dot_of_context prog ctx visib_names = dot_of_formula prog (formula_of_list_context ctx) visib_names
 
 and dot_of_formula prog f visib_names =
   let buffer = Buffer.create 1024 in

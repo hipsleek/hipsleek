@@ -47,7 +47,6 @@ void delete(node2 x, int a)
 		}
 		else
 			x.next = tmp_null;
-
 	}
 	else {
 		delete(x.next, a-1);

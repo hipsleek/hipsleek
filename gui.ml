@@ -416,13 +416,10 @@ end
    let rec do_spec_verification (spec: Cformula.ext_formula) : pre_entry list = 
      match spec with
        | Cformula.ECase b -> List.concat (List.map (fun (c1,c2)-> 
-					  let nctx = combine_context_and prog ctx c1 true  in
+					  let nctx = CF.transform_context (combine_es_and prog c1 true) ctx in
 					  check_specs prog proc nctx c2) b.Cformula.formula_case_branches)
        | Cformula.EBase b ->
-	   let nctx =
-	     if !Globals.max_renaming
-	     then (CF.normalize_context_formula ctx b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false)
-	     else (CF.normalize_clash_context_formula ctx b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) in
+	   let nctx = Cformula.normalize_max_renaming_s b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false ctx in
 	     check_specs prog proc nctx b.Cformula.formula_ext_continuation 
 	       
        | Cformula.EAssume (x,b,y) -> [{ctx=ctx; spec=spec}]

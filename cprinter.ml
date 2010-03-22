@@ -532,24 +532,10 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   Pretty printing fo the AST for the core language
 *)
 
-
-let rec string_of_context (ctx: context) = match ctx with
-  | FailCtx es -> "Fail context: [ \n"^(String.concat "," (List.map string_of_fail_estate es))^"\n]\n"
-  | Ctx es -> string_of_estate es
-  | OCtx (c1, c2) -> (string_of_context c1) ^ "\nCtxOR\n" ^ (string_of_context c2)
-
-and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_context ctx)
-
-and string_of_fail_estate (es:fail_context) : string = "{"^
-  "\n fc_message: "^es.fc_message ^
-  "\n fc_current_lhs: "^ (string_of_estate es.fc_current_lhs) ^
-  "\n fc_orig_conseq: "^ (string_of_struc_formula es.fc_orig_conseq )^ 
-  "\n fc_failure_pts: ["^ (String.concat "," (List.map (fun c-> string_of_formula_label c "")es.fc_failure_pts))^"]}\n"
-
-
-and string_of_estate (es : entail_state) = 
+let string_of_estate (es : entail_state) = 
   "es_formula: " ^ (string_of_formula es.es_formula)
   ^ "\nes_pure: " ^ (string_of_pure_formula_branches es.es_pure)
+  ^ "\nes_orig_conseq: " ^ (string_of_struc_formula es.es_orig_conseq)
   ^ "\nes_heap: " ^ (string_of_h_formula es.es_heap)
   ^ "\nes_evars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_evars))
   ^ "\nes_ivars: " ^ (String.concat ", " (List.map string_of_spec_var es.es_ivars))
@@ -559,4 +545,27 @@ and string_of_estate (es : entail_state) =
   ^"\n es_success_pts:"^(String.concat ", " (List.map (fun (c1,c2)-> "("^(string_of_formula_label c1 "")^","^(string_of_formula_label c2 "")^")") es.es_success_pts))
   ^"\n es_residue_pts:"^(String.concat ", " (List.map (fun c-> string_of_formula_label c "") es.es_residue_pts))
   ^"\n es_path_label:"^(String.concat ", " (List.map (fun (c1,c3)-> "("^(string_of_formula_label c1 "")^","^(string_of_int c3)^")") es.es_path_label))
+  
+let string_of_fail_estate (es:fail_context) : string = "{"^
+  "\n fc_message: "^es.fc_message ^
+  "\n fc_current_lhs: "^ (string_of_estate es.fc_current_lhs) ^
+  "\n fc_orig_conseq: "^ (string_of_struc_formula es.fc_orig_conseq )^ 
+  "\n fc_failure_pts: ["^ (String.concat "," (List.map (fun c-> string_of_formula_label c "")es.fc_failure_pts))^"]}\n"
+
+let rec string_of_context (ctx: context) = match ctx with
+  | Ctx es -> string_of_estate es
+  | OCtx (c1, c2) -> (string_of_context c1) ^ "\nCtxOR\n" ^ (string_of_context c2)
+
+and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_context ctx)
+
+  
+  
+let string_of_list_context (ctx:list_context): string = 
+  let f = (fun c l-> match c with
+      | Basic_Reason br -> (match br with | None -> "" | Some br -> string_of_fail_estate br)
+      | Or_Reason _ -> "fail_Or(\n" ^(String.concat "\n,\n" l)^")\n"
+      | And_Reason _ -> "fail_And(\n" ^(String.concat "\n,\n" l)^")\n") in
+  match ctx with
+    | FailCtx ft -> "fail context: \n"^(fold_fail_context f ft) ^"\n"
+    | SuccCtx sc -> "success context: ["^(string_of_context_list sc)^"]\n"
     
