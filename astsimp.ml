@@ -1258,7 +1258,7 @@ and
       let (rs, _) =
         Solver.heap_entail_init prog false false (CF.SuccCtx [ ctx ]) formula pos
       in
-	  Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ;
+	  (* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
 		if not(CF.isFailCtx rs)
         then
           (vdef.C.view_x_formula <- (xform, xform_b);
