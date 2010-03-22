@@ -199,6 +199,15 @@ object (self)
       end
 
 
+  method private obl_reasons (crt_row: Gtk.tree_iter) =
+    let crt_id = obl_store#get ~row:crt_row ~column:col_obl_id in
+      (* let crt_name = obl_store#get ~row:crt_row ~column:col_obl_name in *)
+    let rs_list = Solver.entail_hist#get crt_id in
+      (* print_string ("\nOBLIGATION: " ^ crt_name ^ ": entries in entail_hist: " ^ (string_of_int (List.length rs_list)) ^"\n\n"); *)
+      (* flush stdout; *)
+      if not (is_obl_fail rs_list) then self#upd_obl_status crt_row "SUCCESS" else self#upd_obl_status crt_row "FAIL";
+
+
   method private upd_all_obls_status (prec_row: Gtk.tree_iter) = 
     (* print_string ("\nUpdating all the obligations\n");  *)
     (* flush stdout; *)
@@ -206,13 +215,8 @@ object (self)
       let crt_row = obl_store#iter_children (Some prec_row) in
       let flag = ref true in
   	while !flag do
-	  let crt_id = obl_store#get ~row:crt_row ~column:col_obl_id in
-	  (* let crt_name = obl_store#get ~row:crt_row ~column:col_obl_name in *)
-	  let rs_list = Solver.entail_hist#get crt_id in
-	    (* print_string ("\nOBLIGATION: " ^ crt_name ^ ": entries in entail_hist: " ^ (string_of_int (List.length rs_list)) ^"\n\n"); *)
-	    (* flush stdout; *)
-	    if not (is_obl_fail rs_list) then self#upd_obl_status crt_row "SUCCES" else self#upd_obl_status crt_row "FAIL";
-  	    flag := obl_store#iter_next crt_row
+	  self#obl_reasons crt_row;
+  	  flag := obl_store#iter_next crt_row
   	done
     end else begin
       print_string ("\nNO Obligations for the current SPEC\n"); 
@@ -363,7 +367,7 @@ object (self)
 	      pre_row
 	end
 
-	  	  
+	  
   method add_obl (k:item_kind) (name:string) (proc1 : proc_decl) (obl1 : Cformula.struc_formula) (pos1 : loc) (pid:formula_label) (crt_row : Gtk.tree_iter) : Gtk.tree_iter =
     let obl_row = obl_store#append ~parent:crt_row () in
     let obl_item = {kind = k; pos = pos1; proc=proc1; pre = None; obl = (Some obl1)} in
