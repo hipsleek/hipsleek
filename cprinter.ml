@@ -566,6 +566,8 @@ let string_of_list_context (ctx:list_context): string =
       | Or_Reason _ -> "fail_Or(\n" ^(String.concat "\n,\n" l)^")\n"
       | And_Reason _ -> "fail_And(\n" ^(String.concat "\n,\n" l)^")\n") in
   match ctx with
-    | FailCtx ft -> "fail context: \n"^(fold_fail_context f ft) ^"\n"
+    | FailCtx (ft,lc) -> "fail context: \n"^(fold_fail_context f ft) ^
+            "\n successful states within fail context: \n"^
+             (string_of_context_list lc)^"\n"
     | SuccCtx sc -> "success context: ["^(string_of_context_list sc)^"]\n"
     

@@ -60,11 +60,6 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 			   so we need to make a catch-all check at the end of the body *)
 			(*let _ = print_string ("finalr : "^(Cprinter.string_of_context_list res_ctx)^"\n") in*)
 		      let res_ctx = Cformula.change_ret_flow_ctx res_ctx in
-			if  (CF.isFailCtx res_ctx) then 
-			  begin 
-			    print_string "found a fail context before checking the postcondition\n";
-			    false
-			  end else 
 			    let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
 			      not (CF.isFailCtx tmp_ctx) in
 		      (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
@@ -242,7 +237,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) e0 :
 			     Debug.devel_pprint ("bind: after existential quantifier elimination:\n"
 			     ^ (string_of_constr resform) ^ "\n") pos; *)
 			  res in
-		      let tmp_res = CF.fold_context_left (List.map process_one sl) in
+		      let tmp_res = CF.fold_context_left_outer (List.map process_one sl) in
 			tmp_res
 	      )
 	end;
@@ -279,7 +274,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) e0 :
 	      Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_context else_ctx)) pos;
 	      let then_ctx2 = check_exp prog proc then_ctx e1 in
 	      let else_ctx2 = check_exp prog proc else_ctx e2 in
-	      let res = CF.or_list_context then_ctx2 else_ctx2 in
+	      let res = CF.or_list_context_outer then_ctx2 else_ctx2 in
 		res
 	end;
       | Debug ({exp_debug_flag = flag;
@@ -296,6 +291,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) e0 :
 	    let str1 = (Cprinter.string_of_list_context ctx)  in
 	    let tmp1 = "\nprint: " ^ pos.start_pos.Lexing.pos_fname
 	      ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
+      let tmp1 = if (previous_failure ()) then ("partial context: "^tmp1) else tmp1 in
 	      print_string tmp1;
 	      ctx
 	  end else begin
@@ -643,7 +639,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) e0 :
 	      exp_try_pos = pos })->
 	  let ctx1 = check_exp prog proc ctx body in 
 	  let rec apply_catch_context (ctx_crt : CF.context):CF.list_context = match ctx_crt with
-	    |CF.OCtx (c1,c2)-> CF.or_list_context (apply_catch_context c1) (apply_catch_context c1)
+	    |CF.OCtx (c1,c2)-> CF.or_list_context_outer (apply_catch_context c1) (apply_catch_context c1)
 	    |CF.Ctx c1 -> 
 	       let nf  =  CF.flow_formula_of_formula c1.CF.es_formula in
 		 if not (CF.subsume_flow_f cc.exp_catch_flow_type nf) then 
@@ -671,13 +667,21 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) e0 :
 	    (match ctx1 with 
 	       | CF.FailCtx _ -> ctx1 
 	       | CF.SuccCtx cl -> 
-		   CF.fold_context_left 
+		   CF.fold_context_left_outer 
 		     (List.map apply_catch_context cl))	
       | _ -> 
 	  failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
     
-  let helper c = match c with
-    | CF.FailCtx _ -> c
+  let rec helper c = match c with
+    | CF.FailCtx (fr,fcl) -> 
+      if (List.length fcl)==0 then c
+      else begin 
+        push_fail_ctx (fr, fcl);
+        let sc =CF.SuccCtx fcl in        
+        let r = helper sc in
+        pop_fail_ctx ();
+        CF.or_list_context_outer r (CF.mkFailCtx_in fr)      
+        end
     | CF.SuccCtx cl ->
 	let rec splitter c = match c with
 	  | CF.Ctx b -> 
@@ -708,12 +712,25 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) e0 :
 								  Err.error_text = "Split can not return both empty contexts\n"}
 				| Some cl,None -> cl
 				| None, Some c -> (CF.SuccCtx [c])
-				| Some cl,Some c -> CF.or_list_context cl (CF.SuccCtx [c])) cl in
-          CF.fold_context_left r in
+				| Some cl,Some c -> CF.or_list_context_outer cl (CF.SuccCtx [c])) cl in
+          CF.fold_context_left_outer r in
     (helper ctx)
       
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_context) (post : CF.formula) pos (pid:formula_label) =
+ match ctx with
+| CF.FailCtx(fr, fcl) ->
+    let _ = print_string "found a fail context before checking the postcondition\n" in
+    if (U.empty fcl) then ctx
+     else begin
+      push_fail_ctx (fr,fcl);
+      let r =(check_post prog proc (CF.SuccCtx fcl) post pos pid) in
+      pop_fail_ctx ();
+      let _ = print_string ("got into check_post on the failCtx branch"^(string_of_bool (CF.isFailCtx r))^"\n") in
+      (CF.or_list_context_outer r (CF.mkFailCtx_in fr))
+     end
+  | CF.SuccCtx _ -> 
+    (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in
