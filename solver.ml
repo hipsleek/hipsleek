@@ -15,7 +15,39 @@ module TP = Tpdispatcher
 let enable_distribution = ref true
 let sat_no = ref 1
 let imp_no = ref 1
-let entail_hist = ref ([] : (string*list_context) list)
+
+let entail_hist = new entailhist 
+(* let entail_hist = ref ([] : (string*list_context) list) *)
+
+
+
+class entailhist =
+object (self)
+  val en_hist = Hastbl.create 40
+   
+  method init () = Hashtbl.clear en_hist
+ 
+  method upd_opt (pid : control_path_id) (rs: list_context) (errmsg: string) =
+    match pid with 
+	None -> failwith errmsg;
+      | Some (pid_i,_) -> Hashtbl.add en_hist pid_i rs
+
+  method upd (pid : formula_label) (rs: list_context) =
+    let pid_i,_ = pid in
+      Hashtbl.add en_hist pid_i rs
+
+  method get (id : int) : list_context list =
+  Hashtbl.find en_hist id
+
+end
+
+
+
+
+
+let 
+
+
 
 type find_node_result =
   | Failed (* p2 (of p2::c2<V2> coming from the RHS) is not in FV(LHS) *)

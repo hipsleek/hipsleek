@@ -16,9 +16,9 @@ type item_kind =
   |ItemProc
   |ItemPrec
   |ItemPost
-  |ItemObl
-  |ItemLbl
-  |ItemLblCall
+  |ItemAssert
+  |ItemScall
+  |ItemBind
 
 type pre_entry = {
 ctx:Cformula.context;
@@ -34,8 +34,12 @@ type item_entry = {
 }
 
 
+let is_obl_fail (ctx_list : Cformula.list_context list) : bool =
+List.for_all Cformula.isFailCtx ctx_list
+
+
 class mainwindow title namef = 
-  let infotbl = Hashtbl.create 20 in
+  let infotbl = Hashtbl.create 30 in
   let window =  GWindow.window ~title ~border_width:5  ~width:980 ~height:730 () in
   let h_main_paned = GPack.paned `HORIZONTAL ~packing:window#add () in 
   let left_scrolled_window = GBin.scrolled_window ~hpolicy:`AUTOMATIC ~vpolicy:`AUTOMATIC () in
@@ -62,7 +66,7 @@ object (self)
   val lang_mime_type = "text/x-ss"
   val mutable obl_view = GTree.view ~model:obl_store ~packing:(left_scrolled_window#add_with_viewport) ()
   val mutable view_source = GText.view ()
-  val mutable counter = 0
+    (* val mutable counter = 0 *)
   val mutable prog = None
   val mutable  source_code_bookmark = None
 
@@ -92,12 +96,16 @@ object (self)
       code_source_view#source_buffer#set_text text;
       self#init_source_code_bookmark ()
 
+
+
   method private init_source_code_bookmark () =
     let category = "curent" in
       source_code_bookmark <- Some (code_source_view#source_buffer#create_source_mark ~category (code_source_view#source_buffer#get_iter `START)); 
       let pixbuf =  code_source_view#misc#render_icon ~size:`DIALOG `ZOOM_IN in
 	code_source_view#set_mark_category_background ~category (Some (GDraw.color (`NAME "light green")));
 	code_source_view#set_mark_category_pixbuf ~category (Some pixbuf);
+
+
 
   method private set_code_source_pos line  =
     let nr_lines = code_source_view#source_buffer#line_count in
@@ -112,13 +120,10 @@ object (self)
 	| Some crt_bookmark -> 	code_source_view#source_buffer#move_mark crt_bookmark#coerce ~where:(code_source_view#source_buffer#get_iter (`LINE line))
 	    
 	    
-	    
-	    
-	    
-
 
   method private set_left () = 
     h_main_paned#pack1 ?resize:(Some true) ?shrink:(Some true) (left_scrolled_window#coerce)
+
 
   method private set_right () = 
     self#init_source_view ();
@@ -131,6 +136,7 @@ object (self)
   method private display_top_right txt = 
     let buffer = top_right_view#buffer in
       buffer#set_text txt
+
 
   method private obl_sel_changed () =
     let selection = obl_view#selection in
@@ -158,16 +164,7 @@ object (self)
 		|Some pre1 -> 
 		   self#display_top_right (crt_name ^ "\n\n" ^ (Cprinter.string_of_context pre1.ctx))
 	    end
-	  |ItemLblCall ->  begin
-	      (* Printf.printf "Precondition = (%d, %s)\n" crt_id crt_name; *)
-              (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
-	      (* flush stdout; *)
-	      match crt_pre with
-		  None -> 
-		    self#display_top_right (crt_name ^ "\n\n")
-		|Some pre1 -> 
-		   self#display_top_right (crt_name ^ "\n\n" ^ (Cprinter.string_of_context pre1.ctx)  ^  "\n\n" ^(Cprinter.string_of_ext_formula pre1.spec) )
-	    end
+	     
 	  |ItemPost ->  begin
 	      (* Printf.printf "Postcondition = (%d, %s)\n" crt_id crt_name; *)
               (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
@@ -178,7 +175,9 @@ object (self)
 		|Some pre1 -> 
 		   self#display_top_right (crt_name ^ "\n\n" ^ (Cprinter.string_of_ext_formula pre1.spec))
 	    end
-	  |ItemObl -> begin
+	  |ItemAssert
+	  |ItemScall
+	  |ItemBind -> begin
 	      (* Printf.printf "Obligation = (%d, %s)\n" crt_id crt_name; *)
               (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
 	      (* flush stdout *)
@@ -187,9 +186,6 @@ object (self)
 		    self#display_top_right (crt_name ^ "\n\n")
 		|Some obl1 -> 
 		   self#display_top_right (crt_name ^ "\n\n" ^ (Cprinter.string_of_struc_formula obl1))
-	    end
-	  |ItemLbl -> begin
-	      self#display_top_right (crt_name ^ "\n\n")
 	    end
 	     
     in
@@ -200,6 +196,32 @@ object (self)
 	exit 1
       end
 
+
+  method private upd_all_obls_status (prec_row: Gtk.tree_iter) = 
+    (* print_string ("\nUpdating all the obligations\n");  *)
+    (* flush stdout; *)
+    if (obl_store#iter_has_child prec_row) then begin
+      let crt_row = obl_store#iter_children (Some prec_row) in
+      let flag = ref true in
+  	while !flag do
+	  let crt_id = obl_store#get ~row:crt_row ~column:col_obl_id in
+	  let crt_name = obl_store#get ~row:crt_row ~column:col_obl_name in
+	  let rs_list = Solver.entail_hist#get crt_id in
+	    print_string ("\nOBLIGATION: " ^ crt_name ^ ": entries in entail_hist: " ^ (string_of_int (List.length rs_list)) ^"\n\n");
+	    flush stdout;
+	    if not (is_obl_fail rs_list) then self#upd_obl_status crt_row "SUCCES" else self#upd_obl_status crt_row "FAIL";
+  	    flag := obl_store#iter_next crt_row
+  	done
+    end else begin
+      print_string ("\nNO Obligations for the current SPEC\n"); 
+      flush stdout
+    end
+
+
+
+
+
+      
 
   method private obl_sel_double_click path col1 =
     let row = obl_store#get_iter path in
@@ -222,7 +244,8 @@ object (self)
 		      match crt_proc.proc_body with
 			| None -> ()
 			| Some body -> begin
-			    self#upd_obl_status row "  WORKING";  
+			    self#upd_obl_status row "  WORKING";
+			    Solver.entail_hist#init ();  
 			    try
 			      Printf.printf "START ANALYIS on Procedure with one spec =  %s\n" crt_name;
 			      flush stdout;
@@ -234,19 +257,21 @@ object (self)
 				else begin	
 				  print_string ("\nProcedure "^crt_proc.proc_name^" FAIL\n"); flush stdout;
 				  self#upd_obl_status row "  FAIL"
-				    
-				end
-			    with _ ->
-			      print_string ("\nProcedure "^crt_proc.proc_name^" FAIL\n"); flush stdout;
-			      self#upd_obl_status row "  FAIL"
+				end;
+				self#upd_all_obls_status row
+			    with _ -> begin
+			      print_string ("\nProcedure "^crt_proc.proc_name^" FAIL (exception)\n"); flush stdout;
+			      self#upd_obl_status row "  FAIL";
+			      self#upd_all_obls_status row
+			    end
 			  end
 		    end
 	      end
 	       
 	    |ItemPost
-	    |ItemLbl
-	    |ItemLblCall
-	    |ItemObl -> begin
+	    |ItemAssert
+	    |ItemScall
+	    |ItemBind -> begin
 		Printf.printf "CANNOT START ANALYIS on an obligation (%d, %s)\n" crt_id crt_name;
 		flush stdout
 	      end
@@ -282,12 +307,13 @@ object (self)
   method add_proc name (proc1 : proc_decl) :Gtk.tree_iter = 
     let crt_row = obl_store#append () in
     let proc_item = {kind = ItemProc; pos = proc1.proc_loc; proc=proc1; pre = None; obl = None} in
-      counter <- counter + 1;
-      Hashtbl.add infotbl counter proc_item;
-      obl_store#set ~row:crt_row ~column:col_obl_id counter; 
-      obl_store#set ~row:crt_row ~column:col_obl_name ("PROCEDURE  "^ name);
-      obl_store#set ~row:crt_row ~column:col_obl_stat " ";
-      crt_row
+      Globals.branch_point_id :=  !Globals.branch_point_id + 1;
+      let counter = !Globals.branch_point_id in 
+	Hashtbl.add infotbl counter proc_item;
+	obl_store#set ~row:crt_row ~column:col_obl_id counter; 
+	obl_store#set ~row:crt_row ~column:col_obl_name ("PROCEDURE  "^ name);
+	obl_store#set ~row:crt_row ~column:col_obl_stat " ";
+	crt_row
 
 
   method add_post (crt_row : Gtk.tree_iter) : Gtk.tree_iter = 
@@ -295,13 +321,21 @@ object (self)
     let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl} = Hashtbl.find infotbl crt_id in
     let name = "POSTCONDITION " in 
     let post_item = {kind = ItemPost; pos = crt_pos; proc=crt_proc; pre = crt_pre; obl = crt_obl } in
-      counter <- counter + 1;
-      let post_row = obl_store#append ~parent:crt_row () in
-	Hashtbl.add infotbl counter post_item;
-  	obl_store#set ~row:post_row ~column:col_obl_id counter;
-  	obl_store#set ~row:post_row ~column:col_obl_name name;
-  	obl_store#set ~row:post_row ~column:col_obl_stat " ";
-	post_row
+      match crt_pre with
+	| Some {ctx=_;spec=Cformula.EAssume (x,b,y)} -> begin
+	    let counter = fst y in
+	    let post_row = obl_store#append ~parent:crt_row () in
+	      Hashtbl.add infotbl counter post_item;
+  	      obl_store#set ~row:post_row ~column:col_obl_id counter;
+  	      obl_store#set ~row:post_row ~column:col_obl_name (name ^ " Label(" ^ (string_of_int counter) ^ ")");
+  	      obl_store#set ~row:post_row ~column:col_obl_stat " ";
+	      post_row
+	  end
+	| _ -> begin 
+	    print_string "spec is invalid\n"; 
+	    exit 1
+	  end
+
 
   method add_spec (proc1 : proc_decl) (crt_row : Gtk.tree_iter) (pre1 : pre_entry) : Gtk.tree_iter =    
     match pre1.spec with
@@ -317,7 +351,8 @@ object (self)
 	  let pos1 = Cformula.pos_of_formula b in
 	  let name = "PRECONDITION at Line " ^ (string_of_int pos1.start_pos.Lexing.pos_lnum) in 
 	  let pre_item = {kind = ItemPrec; pos = pos1; proc=proc1; pre = (Some pre1); obl = None } in
-	    counter <- counter + 1;
+	    Globals.branch_point_id :=  !Globals.branch_point_id + 1; 
+	    let counter = !Globals.branch_point_id * 1000 in 
 	    let pre_row = obl_store#append ~parent:crt_row () in
 	      Hashtbl.add infotbl counter pre_item;
   	      obl_store#set ~row:pre_row ~column:col_obl_id counter;
@@ -326,54 +361,17 @@ object (self)
 	      pre_row
 	end
 
-
-  method add_label_call name (proc1 : proc_decl) (pos1: loc) (pre1 : pre_entry)  (crt_row : Gtk.tree_iter): Gtk.tree_iter =    
-    match pre1.spec with
-      | Cformula.ECase b -> begin 
-	  print_string "spec is invalid\n"; 
-	  exit 1
-	end
-      | Cformula.EBase b -> begin 
-	  print_string "spec is invalid\n"; 
-	  exit 1
-	end
-      | Cformula.EAssume (x,b,y)-> begin 
-	  let call_item = {kind = ItemLblCall; pos = pos1; proc=proc1; pre = (Some pre1); obl = None } in
-	    counter <- counter + 1;
-	    let call_row = obl_store#append ~parent:crt_row () in
-	      Hashtbl.add infotbl counter call_item;
-  	      obl_store#set ~row:call_row ~column:col_obl_id counter;
-  	      obl_store#set ~row:call_row ~column:col_obl_name name;
-  	      obl_store#set ~row:call_row ~column:col_obl_stat " ";
-	      call_row
-	end
-
-
-	  
-	  
-  method add_obl name (proc1 : proc_decl) (obl1 : Cformula.struc_formula) (pos1 : loc) (crt_row : Gtk.tree_iter) : Gtk.tree_iter =
+	  	  
+  method add_obl (k:item_kind) (name:string) (proc1 : proc_decl) (obl1 : Cformula.struc_formula) (pos1 : loc) (pid:formula_label) (crt_row : Gtk.tree_iter) : Gtk.tree_iter =
     let obl_row = obl_store#append ~parent:crt_row () in
-    let obl_item = {kind = ItemObl; pos = pos1; proc=proc1; pre = None; obl = (Some obl1)} in
-      counter <- counter + 1;
-      Hashtbl.add infotbl counter obl_item;
-      obl_store#set ~row:obl_row ~column:col_obl_id counter;
-      obl_store#set ~row:obl_row ~column:col_obl_name name;
+    let obl_item = {kind = k; pos = pos1; proc=proc1; pre = None; obl = (Some obl1)} in
+    let obl_id = fst pid in
+      Hashtbl.add infotbl obl_id obl_item;
+      obl_store#set ~row:obl_row ~column:col_obl_id obl_id;
+      obl_store#set ~row:obl_row ~column:col_obl_name (name ^ " Label(" ^ (string_of_int obl_id) ^ ")");
       obl_store#set ~row:obl_row ~column:col_obl_stat " ";  
       obl_row
 
-
-
-
-
-  method add_label name (proc1 : proc_decl) (pos1 : loc) (crt_row : Gtk.tree_iter) : Gtk.tree_iter =
-    let lbl_row = obl_store#append ~parent:crt_row () in
-    let lbl_item = {kind = ItemLbl; pos = pos1; proc=proc1; pre = None; obl = None} in
-      counter <- counter + 1;
-      Hashtbl.add infotbl counter lbl_item;
-      obl_store#set ~row:lbl_row ~column:col_obl_id counter;
-      obl_store#set ~row:lbl_row ~column:col_obl_name name;
-      obl_store#set ~row:lbl_row ~column:col_obl_stat " ";  
-      lbl_row
 
   method private init () =
     window#set_allow_shrink true;
@@ -416,14 +414,14 @@ end
    let rec do_spec_verification (spec: Cformula.ext_formula) : pre_entry list = 
      match spec with
        | Cformula.ECase b -> List.concat (List.map (fun (c1,c2)-> 
-					  let nctx = CF.transform_context (combine_es_and prog c1 true) ctx in
-					  check_specs prog proc nctx c2) b.Cformula.formula_case_branches)
+						      let nctx = CF.transform_context (combine_es_and prog c1 true) ctx in
+							check_specs prog proc nctx c2) b.Cformula.formula_case_branches)
        | Cformula.EBase b ->
 	   let nctx = Cformula.normalize_max_renaming_s b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false ctx in
 	     check_specs prog proc nctx b.Cformula.formula_ext_continuation 
 	       
        | Cformula.EAssume (x,b,y) -> [{ctx=ctx; spec=spec}]
-	  
+	   
    in	
      List.concat (List.map do_spec_verification spec_list)
 
@@ -432,11 +430,13 @@ end
    match e0 with
      |Assert ({exp_assert_asserted_formula = c1_o;
    	       exp_assert_assumed_formula = c2;
+	       exp_assert_path_id = (pid,s);
    	       exp_assert_pos = pos}) -> begin
+	 (* print_string (Cprinter.string_of_formula_label (pidi,s) (("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum))  ^ "\n\n"));flush stdout; *)
    	 match c1_o with
    	   | None -> ()
    	   | Some c1 -> begin
-   	       ignore (List.map (w#add_obl ("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc c1 pos) spec_iter_list)
+   	       ignore (List.map (w#add_obl ItemAssert ("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc c1 pos (pid,s)) spec_iter_list)
    	     end
        end
 
@@ -448,6 +448,7 @@ end
    	      exp_bind_bound_var = (v_t, v);
    	      exp_bind_fields = lvars;
    	      exp_bind_body = body;
+	      exp_bind_path_id = pid;
    	      exp_bind_pos = pos}) -> begin
    	 let field_types, vs = List.split lvars in
    	 let v_prim = CP.SpecVar (v_t, v, Primed) in
@@ -465,9 +466,17 @@ end
 				       CF.h_formula_data_label = None;
 				       CF.h_formula_data_pos = pos}) in
    	 let vheap = CF.formula_of_heap vdatanode pos in
+	   match pid with
+	       None -> begin
+		 print_string ("no LABEL for Bind at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum));
+		 exit 1
+	       end
+	     | Some ppid -> begin
+		 (* print_string (Cprinter.string_of_formula_label ppid (("BIND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) ^ "\n\n"));flush stdout; *)
+   		 ignore (List.map (w#add_obl ItemBind ("BIND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc (CF.formula_to_struc_formula vheap) pos ppid) spec_iter_list);
+   		 check_exp w spec_iter_list prog proc body
+	       end
 
-   	   ignore (List.map (w#add_obl ("BIND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc (CF.formula_to_struc_formula vheap) pos) spec_iter_list);
-   	   check_exp w spec_iter_list prog proc body
        end
 
      | Block ({exp_block_type = t;
@@ -479,6 +488,7 @@ end
    	      exp_cond_condition = v;
    	      exp_cond_then_arm = e1;
    	      exp_cond_else_arm = e2;
+	      exp_cond_path_id =pid;
    	      exp_cond_pos = pos}) -> begin
 	 (* label_counter := !label_counter +1; *)
 	 (* let nA = (string_of_int !label_counter) ^ "A: IF at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
@@ -493,29 +503,38 @@ end
      	       exp_scall_method_name = mn;
      	       exp_scall_arguments = vs;
      	       exp_scall_visible_names = p_svars;
+	       exp_scall_path_id = pid;
      	       exp_scall_pos = pos}) -> begin
      	 let proc1 = look_up_proc_def pos prog.prog_proc_decls mn in
      	   (* let l_iter_list = *)
-	   ignore (List.map (w#add_obl ("CALL method " ^ mn ^ " at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc proc1.proc_static_specs_with_pre pos) spec_iter_list) 
-	     (* in () *)
-	     (* let ftypes, fnames = List.split proc1.proc_args in *)
-	     (* let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in *)
-	     (* let nox = CF.formula_of_pure (CF.no_change fsvars proc1.proc_loc) proc1.proc_loc in *)
-	     (* let init_form = nox in *)
-	     (* let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc1.proc_loc in *)
-	     (* let init_ctx = CF.build_context init_ctx1 init_form proc1.proc_loc in *)
-	     (* let spec_list = check_specs prog proc1 init_ctx (proc1.proc_static_specs_with_pre) in *)
-             (*   (\* let spec_list = Cformula.split_struc_formula proc1.proc_static_specs_with_pre  *\) *)
-	     (*   label_counter := !label_counter +1; *)
-	     (*   let ch = int_of_char 'A' in *)
-	     (*   let do_one_iter  iter =  *)
-	     (*     let rec do_one_spec lst c = *)
-	     (*       match lst with *)
-	     (* 	   [] -> () *)
-	     (* 	 |s::ls ->  begin *)
-	     (* 	     ignore(w#add_label_call ((string_of_int !label_counter) ^ (String.make 1 (char_of_int c)) ^ ": Specification") proc pos s iter); *)
-	     (* 	     do_one_spec ls (c+1) *)
-	     (* 	   end *)
+	   match pid with
+	       None -> begin
+		 print_string ("no LABEL for CALL at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum));
+		 exit 1
+	       end
+	     | Some ppid -> begin
+		 (* print_string (Cprinter.string_of_formula_label ppid (("CALL at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) ^ "\n\n"));flush stdout; *)
+		 ignore (List.map (w#add_obl ItemScall ("CALL method " ^ mn ^ " at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc proc1.proc_static_specs_with_pre pos ppid) spec_iter_list) 
+	       end
+		 (* in () *)
+		 (* let ftypes, fnames = List.split proc1.proc_args in *)
+		 (* let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in *)
+		 (* let nox = CF.formula_of_pure (CF.no_change fsvars proc1.proc_loc) proc1.proc_loc in *)
+		 (* let init_form = nox in *)
+		 (* let init_ctx1 = CF.empty_ctx (CF.mkTrueFlow ()) proc1.proc_loc in *)
+		 (* let init_ctx = CF.build_context init_ctx1 init_form proc1.proc_loc in *)
+		 (* let spec_list = check_specs prog proc1 init_ctx (proc1.proc_static_specs_with_pre) in *)
+		 (*   (\* let spec_list = Cformula.split_struc_formula proc1.proc_static_specs_with_pre  *\) *)
+		 (*   label_counter := !label_counter +1; *)
+		 (*   let ch = int_of_char 'A' in *)
+		 (*   let do_one_iter  iter =  *)
+		 (*     let rec do_one_spec lst c = *)
+		 (*       match lst with *)
+		 (* 	   [] -> () *)
+		 (* 	 |s::ls ->  begin *)
+		 (* 	     ignore(w#add_label_call ((string_of_int !label_counter) ^ (String.make 1 (char_of_int c)) ^ ": Specification") proc pos s iter); *)
+		 (* 	     do_one_spec ls (c+1) *)
+		 (* 	   end *)
 
        (*     in *)
        (*       do_one_spec spec_list ch *)
@@ -534,6 +553,7 @@ end
 
      | Try ({exp_try_body = body;
      	     exp_catch_clause = cc;
+	     exp_try_path_id = pid;
      	     exp_try_pos = pos })-> begin
 	 (* label_counter := !label_counter +1; *)
 	 (* let nA = (string_of_int !label_counter) ^ "A: TRY-CATCH at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
