@@ -60,11 +60,13 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 								 so we need to make a catch-all check at the end of the body *)
 							(*let _ = print_string ("finalr : "^(Cprinter.string_of_context_list res_ctx)^"\n") in*)
 							let res_ctx = Cformula.change_ret_flow_ctx res_ctx in
-							if  (CF.isFailCtx res_ctx) then print_string "found a fail context before checking the postcondition\n" else ();
-							let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
-								not (CF.isFailCtx tmp_ctx)
-							(*else
-							  not (U.empty res_ctx) *) in
+							if  (CF.isFailCtx res_ctx) then 
+              begin 
+                print_string "found a fail context before checking the postcondition\n";
+                false
+              end else 
+                let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
+                  not (CF.isFailCtx tmp_ctx) in
 						(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 						let _ = Util.pop_time ("method "^proc.proc_name) in
 						 r
@@ -119,16 +121,18 @@ let check_exp1 (ctx : CF.list_context) : CF.list_context =
 			   (Debug.print_info "assert" ("assert ok\n") pos;
 			   Debug.pprint ("Residual:\n" ^ (Cprinter.string_of_list_context rs)) pos;
                rs)
-			 else (Debug.print_info "assert" ("assert failed\n") pos;ctx) in
+			 else (Debug.print_info "assert" ("assert failed\n") pos;rs (*ctx*)) in
 	  match c2 with
 	  | None -> ctx
 	  | Some c ->
 		  Debug.pprint ("assume condition:\n" ^ (Cprinter.string_of_formula c)) pos;
-		  let assumed_ctx = CF.normalize_max_renaming c pos false new_ctx in
+      if not(CF.isFailCtx new_ctx) then
+        let assumed_ctx = CF.normalize_max_renaming c pos false new_ctx in
           (*print_int (!Omega.test_number);*)
-      let ret =CF.transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) assumed_ctx in
+        let ret =CF.transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) assumed_ctx in
           (*print_int (!Omega.test_number);*)
-      ret
+        ret
+      else new_ctx
 	end
   | Assign ({exp_assign_lhs = v;
 			 exp_assign_rhs = rhs;
