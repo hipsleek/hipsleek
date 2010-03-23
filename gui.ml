@@ -30,9 +30,15 @@ type item_entry = {
   pos:loc;
   proc:proc_decl;
   pre: pre_entry option;
-  obl:Cformula.struc_formula option
+  obl:Cformula.struc_formula option;
+  lpath : path_trace list
 }
 
+
+let string_of_path_trace (p_tr: path_trace) : string =
+  "[" ^ (String.concat "," (List.map (fun (c1,c3)-> "(" ^ (Cprinter.string_of_formula_label c1 "") ^ " " ^ (string_of_int c3) ^ ")" ) p_tr)) ^ "]  "
+
+let invappend l1 l2 = List.append l2 l1
 
 let is_obl_fail (ctx_list : Cformula.list_context list) : bool =
   if ctx_list = [] then false
@@ -140,25 +146,30 @@ object (self)
       buffer#set_text txt
 
 
+
+
+
   method private obl_sel_changed () =
     let selection = obl_view#selection in
     let pr path =
       let row = obl_store#get_iter path in
       let crt_id = obl_store#get ~row ~column:col_obl_id in
       let crt_name = obl_store#get ~row ~column:col_obl_name in
-      let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl} = Hashtbl.find infotbl crt_id in
+      let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl;lpath=paths} = Hashtbl.find infotbl crt_id in
       let crt_line = crt_pos.start_pos.Lexing.pos_lnum in
 	self#set_code_source_pos (crt_line -1); 
+	Printf.printf "\n\nPATHS at LINE %s  :  %s"  (string_of_int crt_pos.start_pos.Lexing.pos_lnum) (String.concat " " (List.map string_of_path_trace paths)); 
+        flush stdout;
 	match crt_kind with
 	    ItemProc -> begin
 	      (* Printf.printf "Procedure = (%d, %s)\n" crt_id crt_name; *)
-              (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
+	      (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
 	      (* flush stdout; *)
 	      self#display_top_right (crt_name ^ "\n\n" ^ (Cprinter.string_of_struc_formula crt_proc.proc_static_specs))
 	    end
 	  |ItemPrec ->  begin
 	      (* Printf.printf "Precondition = (%d, %s)\n" crt_id crt_name; *)
-              (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
+	      (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
 	      (* flush stdout; *)
 	      match crt_pre with
 		  None -> 
@@ -169,7 +180,7 @@ object (self)
 	     
 	  |ItemPost ->  begin
 	      (* Printf.printf "Postcondition = (%d, %s)\n" crt_id crt_name; *)
-              (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
+	      (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
 	      (* flush stdout *)
 	      match crt_pre with
 		  None -> 
@@ -181,7 +192,7 @@ object (self)
 	  |ItemScall
 	  |ItemBind -> begin
 	      (* Printf.printf "Obligation = (%d, %s)\n" crt_id crt_name; *)
-              (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
+	      (* Printf.printf "DISPLAY POSITION (in left bottom win) %s\n" (Debug.string_of_pos crt_pos); *)
 	      (* flush stdout *)
 	      match crt_obl with
 		  None -> 
@@ -234,7 +245,7 @@ object (self)
     let crt_id = obl_store#get ~row ~column:col_obl_id in
     let crt_name = obl_store#get ~row ~column:col_obl_name in
       try
-	let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl} = Hashtbl.find infotbl crt_id in
+	let { kind=crt_kind; pos=crt_pos; proc=crt_proc; pre=crt_pre; obl=crt_obl; lpath=paths } = Hashtbl.find infotbl crt_id in
 	  match crt_kind with
 	    | ItemProc -> begin
 		Printf.printf "(NO SUPPORT) START ANALYIS on Procedure (all specs) = (%d, %s)\n" crt_id crt_name;
@@ -312,7 +323,7 @@ object (self)
 
   method add_proc name (proc1 : proc_decl) :Gtk.tree_iter = 
     let crt_row = obl_store#append () in
-    let proc_item = {kind = ItemProc; pos = proc1.proc_loc; proc=proc1; pre = None; obl = None} in
+    let proc_item = {kind = ItemProc; pos = proc1.proc_loc; proc=proc1; pre = None; obl = None; lpath =[]} in
       Globals.branch_point_id :=  !Globals.branch_point_id + 1;
       let counter = !Globals.branch_point_id in 
 	Hashtbl.add infotbl counter proc_item;
@@ -322,11 +333,11 @@ object (self)
 	crt_row
 
 
-  method add_post (crt_row : Gtk.tree_iter) : Gtk.tree_iter = 
+  method add_post (paths: path_trace list) (crt_row : Gtk.tree_iter) : Gtk.tree_iter = 
     let crt_id = obl_store#get ~row:crt_row ~column:col_obl_id in
-    let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl} = Hashtbl.find infotbl crt_id in
+    let { kind=crt_kind; pos=crt_pos; proc=crt_proc;pre=crt_pre;obl=crt_obl;lpath=_} = Hashtbl.find infotbl crt_id in
     let name = "POSTCONDITION " in 
-    let post_item = {kind = ItemPost; pos = crt_pos; proc=crt_proc; pre = crt_pre; obl = crt_obl } in
+    let post_item = {kind = ItemPost; pos = crt_pos; proc=crt_proc; pre = crt_pre; obl = crt_obl; lpath=paths } in
       match crt_pre with
 	| Some {ctx=_;spec=Cformula.EAssume (x,b,y)} -> begin
 	    let counter = fst y in
@@ -356,21 +367,22 @@ object (self)
       | Cformula.EAssume (x,b,y)-> begin 
 	  let pos1 = Cformula.pos_of_formula b in
 	  let name = "PRECONDITION at Line " ^ (string_of_int pos1.start_pos.Lexing.pos_lnum) in 
-	  let pre_item = {kind = ItemPrec; pos = pos1; proc=proc1; pre = (Some pre1); obl = None } in
+	  let pre_item = {kind = ItemPrec; pos = pos1; proc=proc1; pre = (Some pre1); obl = None; lpath=[] } in
 	    Globals.branch_point_id :=  !Globals.branch_point_id + 1; 
 	    let counter = !Globals.branch_point_id * 1000 in 
-	    let pre_row = obl_store#append ~parent:crt_row () in
-	      Hashtbl.add infotbl counter pre_item;
-  	      obl_store#set ~row:pre_row ~column:col_obl_id counter;
-  	      obl_store#set ~row:pre_row ~column:col_obl_name name;
-  	      obl_store#set ~row:pre_row ~column:col_obl_stat " ";
-	      pre_row
+	      iast_label_table := ((Some (counter,"")),"proc_spec",[],pos1) ::!iast_label_table;
+	      let pre_row = obl_store#append ~parent:crt_row () in
+		Hashtbl.add infotbl counter pre_item;
+  		obl_store#set ~row:pre_row ~column:col_obl_id counter;
+  		obl_store#set ~row:pre_row ~column:col_obl_name name;
+  		obl_store#set ~row:pre_row ~column:col_obl_stat " ";
+		pre_row
 	end
 
 	  
-  method add_obl (k:item_kind) (name:string) (proc1 : proc_decl) (obl1 : Cformula.struc_formula) (pos1 : loc) (pid:formula_label) (crt_row : Gtk.tree_iter) : Gtk.tree_iter =
+  method add_obl (k:item_kind) (name:string) (proc1 : proc_decl) (obl1 : Cformula.struc_formula) (pos1 : loc) (pid:formula_label) (paths: path_trace list) (crt_row : Gtk.tree_iter) : Gtk.tree_iter =
     let obl_row = obl_store#append ~parent:crt_row () in
-    let obl_item = {kind = k; pos = pos1; proc=proc1; pre = None; obl = (Some obl1)} in
+    let obl_item = {kind = k; pos = pos1; proc=proc1; pre = None; obl = (Some obl1); lpath=paths} in
     let obl_id = fst pid in
       Hashtbl.add infotbl obl_id obl_item;
       obl_store#set ~row:obl_row ~column:col_obl_id obl_id;
@@ -432,7 +444,7 @@ end
      List.concat (List.map do_spec_verification spec_list)
 
 
- let rec check_exp (w:mainwindow) (spec_iter_list :Gtk.tree_iter list) (prog : prog_decl) (proc : proc_decl) e0  = 
+ let rec check_exp (w:mainwindow) (spec_iter_list :Gtk.tree_iter list) (prog : prog_decl) (proc : proc_decl) (crt_paths: path_trace list) e0  : path_trace list = 
    match e0 with
      |Assert ({exp_assert_asserted_formula = c1_o;
    	       exp_assert_assumed_formula = c2;
@@ -440,15 +452,16 @@ end
    	       exp_assert_pos = pos}) -> begin
 	 (* print_string (Cprinter.string_of_formula_label (pidi,s) (("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum))  ^ "\n\n"));flush stdout; *)
    	 match c1_o with
-   	   | None -> ()
+   	   | None -> crt_paths
    	   | Some c1 -> begin
-   	       ignore (List.map (w#add_obl ItemAssert ("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc c1 pos (pid,s)) spec_iter_list)
+   	       ignore (List.map (w#add_obl ItemAssert ("ASSERT at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc c1 pos (pid,s) crt_paths) spec_iter_list);
+	       crt_paths
    	     end
        end
 
      | Assign ({exp_assign_lhs = v;
    		exp_assign_rhs = rhs;
-   		exp_assign_pos = pos}) -> check_exp w spec_iter_list prog proc rhs
+   		exp_assign_pos = pos}) -> check_exp w spec_iter_list prog proc crt_paths rhs
 
      | Bind ({exp_bind_type = body_t;
    	      exp_bind_bound_var = (v_t, v);
@@ -479,8 +492,8 @@ end
 	       end
 	     | Some ppid -> begin
 		 (* print_string (Cprinter.string_of_formula_label ppid (("BIND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) ^ "\n\n"));flush stdout; *)
-   		 ignore (List.map (w#add_obl ItemBind ("BIND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc (CF.formula_to_struc_formula vheap) pos ppid) spec_iter_list);
-   		 check_exp w spec_iter_list prog proc body
+   		 ignore (List.map (w#add_obl ItemBind ("BIND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc (CF.formula_to_struc_formula vheap) pos ppid crt_paths) spec_iter_list);
+   		 check_exp w spec_iter_list prog proc crt_paths body
 	       end
 
        end
@@ -488,7 +501,7 @@ end
      | Block ({exp_block_type = t;
    	       exp_block_body = e;
    	       exp_block_local_vars = local_vars;
-   	       exp_block_pos = pos}) ->  check_exp w spec_iter_list prog proc e
+   	       exp_block_pos = pos}) ->  check_exp w spec_iter_list prog proc crt_paths e
 
      | Cond ({exp_cond_type = t;
    	      exp_cond_condition = v;
@@ -496,15 +509,27 @@ end
    	      exp_cond_else_arm = e2;
 	      exp_cond_path_id =pid;
    	      exp_cond_pos = pos}) -> begin
-	 (* label_counter := !label_counter +1; *)
-	 (* let nA = (string_of_int !label_counter) ^ "A: IF at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
-	 (* let nB = (string_of_int !label_counter) ^ "B: IF at line "  ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
-	 (* let a_iter_list = List.map (w#add_label nA proc pos) spec_iter_list in *)
-	 (* let b_iter_list = List.map (w#add_label nB proc pos) spec_iter_list in *)
-   	 check_exp w spec_iter_list prog proc e1;
-   	 check_exp w spec_iter_list prog proc e2
+	 match pid with 
+	     None -> begin
+	       print_string ("no LABEL for COND at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum));
+	       exit 1
+	     end
+	   | Some ppid -> begin 
+	       (* label_counter := !label_counter +1; *)
+	       (* let nA = (string_of_int !label_counter) ^ "A: IF at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
+	       (* let nB = (string_of_int !label_counter) ^ "B: IF at line "  ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
+	       (* let a_iter_list = List.map (w#add_label nA proc pos) spec_iter_list in *)
+	       (* let b_iter_list = List.map (w#add_label nB proc pos) spec_iter_list in *)
+	       
+   	       let paths1 = check_exp w spec_iter_list prog proc (List.map (invappend [(ppid,0)]) crt_paths) e1 in
+		 (* Printf.printf "COND 1PATHS: %d\n\n"  (List.length paths1); (\* (String.concat ";" (List.map string_of_path_trace paths)); *\) *)
+		 (* flush stdout; *)
+	       let paths2 = check_exp w spec_iter_list prog proc (List.map (invappend [(ppid,1)]) crt_paths) e2 in
+		 (* Printf.printf "COND 2PATHS: %d\n\n"  (List.length paths2); (\* (String.concat ";" (List.map string_of_path_trace paths)); *\) *)
+		 (* flush stdout; *)
+		 paths1 @ paths2
+	     end
        end
-
      | SCall ({exp_scall_type = ret_t;
      	       exp_scall_method_name = mn;
      	       exp_scall_arguments = vs;
@@ -520,7 +545,8 @@ end
 	       end
 	     | Some ppid -> begin
 		 (* print_string (Cprinter.string_of_formula_label ppid (("CALL at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) ^ "\n\n"));flush stdout; *)
-		 ignore (List.map (w#add_obl ItemScall ("CALL method " ^ mn ^ " at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc proc1.proc_static_specs_with_pre pos ppid) spec_iter_list) 
+		 ignore (List.map (w#add_obl ItemScall ("CALL method " ^ mn ^ " at line " ^ (string_of_int pos.start_pos.Lexing.pos_lnum)) proc proc1.proc_static_specs_with_pre pos ppid crt_paths) spec_iter_list);
+		 crt_paths 
 	       end
 		 (* in () *)
 		 (* let ftypes, fnames = List.split proc1.proc_args in *)
@@ -553,8 +579,8 @@ end
    	     exp_seq_exp1 = e1;
    	     exp_seq_exp2 = e2;
    	     exp_seq_pos = pos}) -> begin
-   	 check_exp w spec_iter_list prog proc e1;
-   	 check_exp w spec_iter_list prog proc e2
+   	 let paths1= check_exp w spec_iter_list prog proc crt_paths e1 in
+   	   check_exp w spec_iter_list prog proc paths1 e2
        end
 
      | Try ({exp_try_body = body;
@@ -566,14 +592,15 @@ end
 	 (* let nB = (string_of_int !label_counter) ^ "B: TRY-CATCH at line "  ^ (string_of_int pos.start_pos.Lexing.pos_lnum) in *)
 	 (* let a_iter_list = List.map (w#add_label nA proc pos) spec_iter_list in *)
 	 (* let b_iter_list = List.map (w#add_label nB proc pos) spec_iter_list in *)
-   	 check_exp w spec_iter_list prog proc body;
-   	 check_exp w spec_iter_list prog proc cc.exp_catch_body
+   	 let paths_1 = check_exp w spec_iter_list prog proc crt_paths body in
+   	 let paths_2 = check_exp w spec_iter_list prog proc paths_1 cc.exp_catch_body in
+	   paths_1 @ paths_2
        end
 
      | Label e -> 
-	 check_exp w spec_iter_list prog proc e.exp_label_exp
+	 check_exp w spec_iter_list prog proc crt_paths e.exp_label_exp
 
-     | _ -> ()
+     | _ -> crt_paths
 
 
 
@@ -595,8 +622,8 @@ end
 	     let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 	     let spec_list = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) in
 	     let spec_iter_list =  List.map (w#add_spec proc proc_iter) spec_list in 
-	       check_exp w spec_iter_list prog proc body;
-	       ignore (List.map w#add_post spec_iter_list)
+	     let crt_paths = check_exp w spec_iter_list prog proc [[]] body in 
+	       ignore (List.map (w#add_post crt_paths) spec_iter_list)
 	   end 
      end
 
