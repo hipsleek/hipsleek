@@ -1278,7 +1278,7 @@ and fail_type =
   | And_Reason of (fail_type * fail_type)
   
 and list_context = 
-  | FailCtx of (fail_type * context list)
+  | FailCtx of fail_type 
   | SuccCtx of context list
   
 
@@ -1362,52 +1362,25 @@ let rec or_context_list (cl10 : context list) (cl20 : context list) : context li
 	  let tmp = helper cl10 cl20 in
 		tmp
   
-let or_fail_context_list  (cl10 : context list) (cl20 : context list) : context list = 
-  if (List.length cl10)==0 then cl20
-    else if (List.length cl20)==0 then cl10
-    else (or_context_list cl10 cl20)
+let mkFailCtx_in t1 = FailCtx t1
   
-let mkFailCtx_in t1 = FailCtx(t1,[])
-  
-let fold_context_left_outer c_l = match (List.length c_l) with
+let fold_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "folding empty context list \n"}
   | 1 -> (List.hd c_l)
   | _ ->  List.fold_left (fun a c-> 
     match a,c with
-     | FailCtx(t1,l1),FailCtx(t2,l2) -> FailCtx(Or_Reason (t1,t2),(l1@l2))
-     | FailCtx(t1),SuccCtx(t2) -> SuccCtx(t2)
-     | SuccCtx(t1),FailCtx(t2) -> SuccCtx(t1)
-     | SuccCtx(t1),SuccCtx(t2) -> SuccCtx(t1@t2)) (List.hd c_l) (List.tl c_l)
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
+     | FailCtx t1,SuccCtx t2 -> SuccCtx t2
+     | SuccCtx t1,FailCtx t2 -> SuccCtx t1
+     | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l)
   
-let fold_context_left_inner (c_l:list_context list):list_context = match (List.length c_l) with
-  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "folding empty context list \n"}
-  | 1 -> (List.hd c_l)
-  | _ ->  List.fold_left (fun a c-> 
-    match a,c with
-     | FailCtx(t1,[]),FailCtx(t2,[]) -> FailCtx(Or_Reason (t1,t2),[])
-     | FailCtx(t1),SuccCtx(t2) -> SuccCtx(t2)
-     | SuccCtx(t1),FailCtx(t2) -> SuccCtx(t1)
-     | SuccCtx(t1),SuccCtx(t2) -> SuccCtx(t1@t2)
-     | _ ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "fold_context_left_inner: patterns do not match \n"} ) (List.hd c_l) (List.tl c_l)
-  
-  
-let or_list_context_outer c1 c2 = match c1,c2 with
-     | FailCtx(t1,l1),FailCtx(t2,l2) -> FailCtx(And_Reason (t1,t2), (or_fail_context_list l1 l2))
-     | FailCtx(t1,l1),SuccCtx(t2) -> FailCtx(t1, (or_fail_context_list l1 t2))
-     | SuccCtx(t1),FailCtx(t2,l2) -> FailCtx(t2, (or_fail_context_list l2 t1))
-     | SuccCtx(t1),SuccCtx(t2) -> SuccCtx(or_context_list t1 t2)
+let or_list_context c1 c2 = match c1,c2 with
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
+     | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
+     | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
+     | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
-let or_list_context_inner c1 c2 = match c1,c2 with
-     | FailCtx(t1,[]),FailCtx(t2,[]) -> FailCtx(And_Reason (t1,t2), [])
-     | FailCtx(t1,[]),SuccCtx(t2) -> FailCtx(t1, [])
-     | SuccCtx(t1),FailCtx(t2,[]) -> FailCtx(t2, [])
-     | SuccCtx(t1),SuccCtx(t2) -> SuccCtx(or_context_list t1 t2)
-     | _ -> Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "or_list_context_inner: patterns do not match \n"}
-     
 let isFailCtx cl = match cl with 
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
@@ -2057,7 +2030,7 @@ let rec transform_fail_ctx f (c:fail_type) : fail_type =
 let transform_list_context f (c:list_context):list_context = 
   let f_c,f_f = f in
   match c with
-    | FailCtx (fc,fl) -> FailCtx ((transform_fail_ctx f_f fc),(List.map (transform_context f_c) fl))
+    | FailCtx fc -> FailCtx (transform_fail_ctx f_f fc)
     | SuccCtx sc -> SuccCtx ((List.map (transform_context f_c)) sc)
     
 let rec fold_fail_context f (c:fail_type) = 
