@@ -2128,8 +2128,8 @@ let rename_labels transformer e =
 		| CP.Exists (v,e1,f_l, l) -> (Some (CP.Exists (v,e1,(n_l_f f_l),l)))in
 	 transformer (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
 
-let rename_labels_struc e = rename_labels transform_struc_formula e
-let rename_labels_formula e = rename_labels transform_formula e
+let rename_labels_struc (e:struc_formula):struc_formula = rename_labels transform_struc_formula e
+let rename_labels_formula (e:formula):formula = rename_labels transform_formula e
 		 		
 let rename_labels_formula_ante  e=
 	let n_l_f n_l = match n_l with

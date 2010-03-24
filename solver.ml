@@ -1324,49 +1324,45 @@ and filter_set (cl : list_context) : list_context =
     | FailCtx _ -> cl
     | SuccCtx l -> if U.empty l then cl else SuccCtx [(List.hd l)]
   (* setup the labeling in conseq and the fail context in cl *)
-
-and heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
-        (conseq : struc_formula) pos (pid:control_path_id): (list_partial_context * proof) = 
-  Debug.devel_pprint ("heap_entail_struc_list_partial_context_init:"
-    ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
-		^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos; 
+  
+and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
+        (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), 
+        (f: prog_decl->bool->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof))
+        ) : (list_partial_context * proof) = 
   if (List.length cl)<1 then report_error pos ("heap_entail_struc_list_partial_context_init : encountered an empty list_partial_context \n")
   else
     reset_formula_point_id();
     let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
-    let conseq = rename_labels_struc conseq in
+    let conseq = rename_f conseq in
     let rec prepare_ctx es = {es with 
         es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
         es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
         es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
         es_orig_ante   = es.es_formula;
-        es_orig_conseq = conseq ;}in	
+        (*es_orig_conseq = conseq ;*)}in	
     let cl_new = transform_list_partial_context ((fun c-> None),(fun c-> None),(fun c->c), (fun es-> Ctx(prepare_ctx (rename_es es)))) cl in
-    heap_entail_struc_list_partial_context prog is_folding is_universal has_post cl_new conseq pos pid
-       
-
-
+    heap_entail_struc_list_partial_context prog is_folding is_universal has_post cl_new conseq pos pid f
        
 and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
-        (conseq : struc_formula) pos (pid:control_path_id): (list_partial_context * proof) =           
+        (conseq) pos (pid:control_path_id) f: (list_partial_context * proof) =           
   let l = List.map 
-    (fun c-> heap_entail_struc_partial_context prog is_folding is_universal has_post c conseq pos pid ) cl in
+    (fun c-> heap_entail_struc_partial_context prog is_folding is_universal has_post c conseq pos pid f) cl in
   let l_ctx , prf_l = List.split l in
   let result = List.fold_left list_partial_context_union (List.hd l_ctx) (List.tl l_ctx) in
   let proof = ContextList { 
       context_list_ante = [];
-      context_list_conseq = conseq;
+      context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
       context_list_proofs = prf_l; } in
   (result, proof)
         
 and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : partial_context)
-        (conseq : struc_formula) pos (pid:control_path_id): (list_partial_context * proof) = 
+        (conseq) pos (pid:control_path_id) f: (list_partial_context * proof) = 
         Debug.devel_pprint ("heap_entail_struc_partial_context:"
 					  ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
-					  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos; 
+					  ^ "\nconseq:\n" (*^ (Cprinter.string_of_struc_formula conseq)*)) pos; 
         let fail_branches, succ_branches  = cl in
         let res = List.map (fun (lbl,c2)-> 
-          let list_context_res,prf = heap_entail_one_context_struc prog is_folding is_universal has_post c2 conseq pos pid in
+          let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding is_universal has_post c2 conseq pos pid in
           let res = match list_context_res with
                       | FailCtx t -> [([(lbl,t)],[])]
                       | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in
@@ -1375,7 +1371,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is
         let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
          let proof = ContextList { 
             context_list_ante = [];
-            context_list_conseq = conseq;
+            context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
             context_list_proofs = prf_l; } in
         (res, proof)
         
@@ -1596,6 +1592,8 @@ and inner_entailer (ctx : context) (conseq : struc_formula): list_context * proo
 	r
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =
+
+
 match cl with
   | FailCtx fr -> (cl,Failure)
     (*if (U.empty fcl) then (cl,Failure)
@@ -3292,3 +3290,22 @@ and check_unsat_struc prog (cf:struc_formula):bool =
 					(not(Tpdispatcher.is_sat pf false)) || (List.exists (fun (_,c2) -> not(Tpdispatcher.is_sat (Cpure.And (pf,c2,no_pos)) false)) pfb)
 		else List.exists (helper f) cf in
 	(*inner (mkTrue no_pos) cf*) false*)
+
+let heap_entail_one_context_new (prog : prog_decl) (is_folding : bool) (is_universal : bool)   (b1:bool)  (ctx : context) (conseq : formula) pos (b2:control_path_id): (list_context * proof) =
+      heap_entail_one_context prog is_folding is_universal ctx conseq pos
+  
+let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
+        (conseq:struc_formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
+  Debug.devel_pprint ("heap_entail_struc_list_partial_context_init:"
+         ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
+          ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) ^"\n") pos; 
+  heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,heap_entail_one_context_struc)
+  
+let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
+        (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
+  Debug.devel_pprint ("heap_entail_list_partial_context_init:"
+         ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
+          ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
+  heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_formula ,heap_entail_one_context_new)  
+
+  
