@@ -1281,6 +1281,14 @@ and list_context =
   | FailCtx of fail_type 
   | SuccCtx of context list
   
+and branch_fail = path_trace * fail_type
+
+and branch_ctx =  path_trace * context
+  
+and partial_context = (branch_fail list) * (branch_ctx list)
+
+and list_partial_context = partial_context list
+   
 
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in
@@ -1364,6 +1372,8 @@ let rec or_context_list (cl10 : context list) (cl20 : context list) : context li
   
 let mkFailCtx_in t1 = FailCtx t1
   
+  
+  (*context set union*)
 let fold_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "folding empty context list \n"}
@@ -1375,6 +1385,7 @@ let fold_context_left c_l = match (List.length c_l) with
      | SuccCtx t1,FailCtx t2 -> SuccCtx t1
      | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l)
   
+  (*list_context or*)
 let or_list_context c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
@@ -1385,6 +1396,37 @@ let isFailCtx cl = match cl with
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
 
+  
+let rank (t:partial_context):float = match t with
+  | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}
+  | ( [] , _ ) -> 1.
+  | ( _  ,[] ) -> 0.
+  | ( l1 , l2) -> 
+    let fn,sn =float (List.length(l1)), float(List.length(l2)) in
+    sn /.(fn +. sn)
+  
+let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = l1 @ l2
+
+let select n l = 
+  if n<=0 then l 
+    else (U.take n l) @(List.filter (fun c-> (rank c)==1.) (U.drop n l))
+
+let list_partial_context_union_n (l1:list_partial_context) (l2:list_partial_context) n :list_partial_context = 
+    select n  (List.sort (fun a1 a2 -> 
+      truncate 
+        (
+          (
+            (rank a2)-.
+              (rank a1)
+          )
+          *.
+          1000.
+        )) (l1 @ l2))
+      
+let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
+  List.concat (List.map (fun (c1,c2)-> (List.map (fun (d1,d2)-> (c1@d1, c2@d2)) l2)) l1)
+
+  
   
 (*let isFailCtx (ctx:context):bool = match ctx with
   | FailCtx es -> true
@@ -2033,6 +2075,22 @@ let transform_list_context f (c:list_context):list_context =
     | FailCtx fc -> FailCtx (transform_fail_ctx f_f fc)
     | SuccCtx sc -> SuccCtx ((List.map (transform_context f_c)) sc)
     
+let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_context = 
+  let f_b_f, f_b_c, f_fail_ctx,f_ctx =f in
+  let r1,r2 = (f_b_f fail_c, f_b_c succ_c) in
+  let f_res = match (r1) with
+    | Some s -> s
+    | None  -> List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_fail_ctx f_t )) fail_c in
+  let s_res = match (r2) with
+    | Some s -> s
+    | None  -> List.map (fun (lbl, ctx) -> (lbl, transform_context f_ctx ctx) ) succ_c in
+  (f_res,s_res)
+    
+    
+let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
+  List.map (transform_partial_context f) c
+    
+    
 let rec fold_fail_context f (c:fail_type) = 
   (*let f_br,f_or,f_and = f in*)
   match c with
@@ -2146,6 +2204,11 @@ let add_path_id_ctx_list c (pi1,pi2)  = match pi1 with
 	| Some s ->	      
     let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
     transform_list_context (fct,(fun c-> c)) c
+    
+let normalize_max_renaming_list_partial_context f pos b ctx = 
+    if !Globals.max_renaming then transform_list_partial_context ((fun c-> None),(fun c-> None),(fun c->c), (normalize_es f pos b)) ctx
+      else transform_list_partial_context ((fun c-> None),(fun c-> None),(fun c->c), (normalize_clash_es f pos b)) ctx
+    
     
 let normalize_max_renaming f pos b ctx = 
   if !Globals.max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx

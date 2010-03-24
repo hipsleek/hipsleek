@@ -101,6 +101,18 @@ let rec firsts_last xs = match xs with
     let (fs,l) = firsts_last xs1 in
     (x::fs,l)
 
+let rec take n l  = if n<=0 then []
+  else match l with
+    | h::t -> h::(take (n-1) t)
+    | [] -> []
+    
+let rec drop n l  = if n<=0 then l
+  else match l with
+    | h::t -> (drop (n-1) t)
+    | [] -> []
+
+    
+    
 (** String-handling utility functions. *)
 
 let trim_quotes s = 
