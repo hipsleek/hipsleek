@@ -14,6 +14,9 @@ open Cformula
   disjuncts.
 *)
 
+(* TO BE IMPLEMENTED *)
+let dot_of_partial_context_file prog ctx visib_names file0 = ()
+
 let rec dot_of_context_file prog ctx visib_names file0 =
   let file = 
 	if Filename.check_suffix file0 "_ps" then Filename.chop_suffix file0 "_ps"

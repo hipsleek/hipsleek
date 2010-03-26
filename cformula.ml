@@ -290,7 +290,7 @@ let flow_eqs (s:string) pos:formula =
 
 (*assume none is invalid*)
 and overlapping (n1,n2) (p1,p2) : bool = not(((n2<p1)||(p2<n1))&&(n1<n2)&&(p1<p2))
-and intersection (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
+and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
 and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
 and is_true_flow p :bool = (equal_flow_interval !Globals.n_flow_int p)
@@ -299,6 +299,15 @@ and equal_flow_interval (n1,n2) (p1,p2) : bool = (n1==p1)&&(n2==p2)
 
 (*first subsumes the second*)
 and subsume_flow (n1,n2)(p1,p2) : bool = if (is_false_flow (p1,p2)) then true else (n1<=p1)&&(p2<=n2) 
+
+and overlap_flow t1 t2 : bool = (subsume_flow t1 t2) || (subsume_flow t2 t1)
+
+and subtract_flow (n1,n2) (p1,p2)  : (nflow list) = 
+  if n1<p1 then (n1,p1-1)::(subtract_flow (p1,n2) (p1,p2))
+  else if n2>p2 then [(p2+1,n2)]
+  else []
+
+and disjoint_flow t1 t2 : bool = not(overlap_flow t1 t2) 
 
 and subsume_flow_f (n1,n2) f :bool = subsume_flow (n1,n2) f.formula_flow_interval
 
@@ -373,6 +382,15 @@ and substitute_flow_in_f to_flow from_flow (f:formula):formula = match f with
 	| Or b-> Or {formula_or_f1 = substitute_flow_in_f to_flow from_flow b.formula_or_f1;
 				 formula_or_f2 = substitute_flow_in_f to_flow from_flow b.formula_or_f2;
 				 formula_or_pos = b.formula_or_pos}
+
+and substitute_flow_into_f to_flow (f:formula):formula = match f with
+	| Base b-> Base {b with formula_base_flow = 
+		{formula_flow_interval = to_flow; formula_flow_link = b.formula_base_flow.formula_flow_link}}
+	| Exists b-> Exists{b with formula_exists_flow = 
+		{formula_flow_interval = to_flow; formula_flow_link = b.formula_exists_flow.formula_flow_link}}
+	| Or b-> Or {formula_or_f1 = substitute_flow_into_f to_flow b.formula_or_f1;
+				 formula_or_f2 = substitute_flow_into_f to_flow b.formula_or_f2;
+				 formula_or_pos = b.formula_or_pos}
 				 
 and substitute_flow_in_struc_f to_flow from_flow (f:struc_formula):struc_formula = 
 let helper (f:ext_formula) = match f with
@@ -399,7 +417,7 @@ and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 					| _ ->  Err.report_error { Err.error_loc = no_pos; Err.error_text = "mkAndFlow: can not and two flows with two links"};}
 			| Flow_combine ->
 				if (overlapping int1 int2) then 
-					{	formula_flow_interval = intersection int1 int2;
+					{	formula_flow_interval = intersect_flow int1 int2;
 						formula_flow_link = match (fl1.formula_flow_link,fl2.formula_flow_link)with
 							| None,None -> None
 							| Some s,None-> Some s
@@ -1329,7 +1347,18 @@ let true_ctx flowt pos = Ctx (empty_es flowt pos)
 let isAnyFalseCtx ctx = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false  
-  
+
+let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
+  List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
+
+let isSuccessPartialCtx ((fc,sc):partial_context) = (fc=[]) 
+
+let isFailPartialCtx (pc:partial_context) = not(isSuccessPartialCtx pc)
+ 
+let isAnySuccessListPartialCtx (cl:list_partial_context) =  List.exists isSuccessPartialCtx cl
+
+let isFailListPartialCtx (cl:list_partial_context) =  List.for_all isFailPartialCtx cl
+ 
 let isAnyFalseListCtx ctx = match ctx with
   | SuccCtx lc ->List.exists isAnyFalseCtx lc
   | FailCtx _ -> false
@@ -1371,9 +1400,27 @@ let rec or_context_list (cl10 : context list) (cl20 : context list) : context li
 		tmp
   
 let mkFailCtx_in t1 = FailCtx t1
+
+let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] ) 
+
+let mk_partial_context_label (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
+ 
+let mk_list_partial_context_label (c:list_context) (lab:path_trace): (list_partial_context) =
+  match c with
+    | FailCtx fr ->  [( [(lab,fr)] ,[])]
+    | SuccCtx cl -> List.map (fun c -> mk_partial_context_label c lab) cl
+
+let mk_list_partial_context (c:list_context) : (list_partial_context) =
+  mk_list_partial_context_label c []
+
+
+
+let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
+    = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
   
   
   (*context set union*)
+
 let fold_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "folding empty context list \n"}
@@ -1396,6 +1443,11 @@ let isFailCtx cl = match cl with
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
 
+let isFailPartialCtx (fs,ss) =
+if (U.empty fs) then false else true
+
+let isFailListPartialCtx cl =
+  List.for_all isFailPartialCtx cl 
   
 let rank (t:partial_context):float = match t with
   | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}
@@ -1608,6 +1660,14 @@ and formula_of_list_context (ctx : list_context) : formula =  match ctx with
           (mkFalse (mkTrueFlow ()) no_pos) ls
 (* 16.05.2008 -- *)
 
+and formula_of_list_partial_context (ls : list_partial_context) : formula =  
+  List.fold_left (fun a c-> mkOr (formula_of_partial_context c) a no_pos)
+          (mkFalse (mkTrueFlow ()) no_pos) ls
+
+and formula_of_partial_context ((fl,sl) : partial_context) : formula =  
+  List.fold_left (fun a (_,c)-> mkOr (formula_of_context c) a no_pos)
+          (mkFalse (mkTrueFlow ()) no_pos) sl
+
 and disj_count_ctx (ctx0 : context) = match ctx0 with
   | OCtx (c1, c2) ->
 	  let t1 = disj_count_ctx c1 in
@@ -1815,6 +1875,11 @@ and find_false_ctx ctx pos =
    | SuccCtx ctx ->
 	if (List.exists isAnyFalseCtx ctx) then 
     false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) else ()
+
+and find_false_list_partial_ctx ctx pos =
+    if (List.exists isAnyFalsePartialCtx ctx) then 
+      false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) 
+    else ()
 	
 	(*
 and filter_node (c: context) (p1:spec_var):context = 
@@ -1937,7 +2002,7 @@ and res_replace stab rl clean_res fl =
 			| Some e-> Hashtbl.add stab res e) 
 	else ()
 	
-	
+(* start label - can be simplified *)	
 let get_start_label ctx = match ctx with
   | FailCtx _ -> ""
   | SuccCtx sl -> 
@@ -1945,6 +2010,16 @@ let get_start_label ctx = match ctx with
       | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Util.list_last e.es_path_label))
       | OCtx (c1,c2) -> helper c1 in
 	helper (List.hd sl)
+
+let get_start_partial_label (ctx:list_partial_context) =
+  let rec helper c= match c with
+    | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Util.list_last e.es_path_label))
+    | OCtx (c1,c2) -> helper c1 in
+  let pc = List.hd ctx in
+    if (rank pc) < 1. then ""
+    else let (_,ls) = pc in
+      helper (snd (List.hd ls))
+
 	
 let rec replace_heap_formula_label nl f = match f with
 	| Star b -> Star {b with 
@@ -2076,15 +2151,20 @@ let transform_list_context f (c:list_context):list_context =
     | SuccCtx sc -> SuccCtx ((List.map (transform_context f_c)) sc)
     
 let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_context = 
-  let f_b_f, f_b_c, f_fail_ctx,f_ctx =f in
-  let r1,r2 = (f_b_f fail_c, f_b_c succ_c) in
-  let f_res = match (r1) with
-    | Some s -> s
-    | None  -> List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_fail_ctx f_t )) fail_c in
-  let s_res = match (r2) with
-    | Some s -> s
-    | None  -> List.map (fun (lbl, ctx) -> (lbl, transform_context f_ctx ctx) ) succ_c in
-  (f_res,s_res)
+  let f_c,f_f = f in
+  let f_res = List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_f f_t )) fail_c in
+  let s_res = List.map (fun (lbl, ctx) -> (lbl, transform_context f_c ctx) ) succ_c in
+    (f_res,s_res)
+
+  (* let f_b_f, f_b_c, f_fail_ctx,f_ctx =f in  *)
+  (* let r1,r2 = (f_b_f fail_c, f_b_c succ_c) in *)
+  (* let f_res = match (r1) with *)
+  (*   | Some s -> s *)
+  (*   | None  -> List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_fail_ctx f_t )) fail_c in *)
+  (* let s_res = match (r2) with *)
+  (*   | Some s -> s *)
+  (*   | None  -> List.map (fun (lbl, ctx) -> (lbl, transform_context f_ctx ctx) ) succ_c in *)
+  (* (f_res,s_res) *)
     
     
 let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
@@ -2160,6 +2240,10 @@ and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var li
 and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
   transform_list_context ((fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}),(fun c->c)) ctx
 
+
+and push_exists_list_partial_context (qvars : CP.spec_var list) (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context ((fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}),(fun c->c)) ctx
+
 and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = 
   transform_context (fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}) ctx
 
@@ -2189,8 +2273,13 @@ and pop_exists_estate (qvars : CP.spec_var list) (es : entail_state) : entail_st
 and add_exist_vars_to_ctx_list (ctx : list_context) (evars	: CP.spec_var list) : list_context = 
   transform_list_context ((fun es-> Ctx{es with es_formula = (add_quantifiers evars es.es_formula)}),(fun c->c)) ctx
 
+(* lctx->pctx *)
+(* and change_ret_flow_ctx ctx_list =  *)
+(*   transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;}) *)
+(*     ,(fun c->c)) ctx_list *)
+
 and change_ret_flow_ctx ctx_list = 
-  transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
+  transform_list_partial_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
     ,(fun c->c)) ctx_list
 
 let add_path_id ctx (pi1,pi2) = match pi1 with
@@ -2204,10 +2293,16 @@ let add_path_id_ctx_list c (pi1,pi2)  = match pi1 with
 	| Some s ->	      
     let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
     transform_list_context (fct,(fun c-> c)) c
-    
+ 
+let add_path_id_ctx_partial_list (c:list_partial_context) (pi1,pi2) : list_partial_context = match pi1 with
+	| None -> c
+	| Some s ->	      
+    let fct e = Ctx{e with es_path_label = (s,pi2)::e.es_path_label} in    
+    transform_list_partial_context (fct,(fun c-> c)) c
+   
 let normalize_max_renaming_list_partial_context f pos b ctx = 
-    if !Globals.max_renaming then transform_list_partial_context ((fun c-> None),(fun c-> None),(fun c->c), (normalize_es f pos b)) ctx
-      else transform_list_partial_context ((fun c-> None),(fun c-> None),(fun c->c), (normalize_clash_es f pos b)) ctx
+    if !Globals.max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
+      else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
     
     
 let normalize_max_renaming f pos b ctx = 
@@ -2232,4 +2327,68 @@ let clear_entailment_history (ctx : context) : context =
 let clear_entailment_history_list (ctx : list_context) : list_context = 
   transform_list_context (clear_entailment_history_es,(fun c->c)) ctx 
 
+let clear_entailment_history_partial_list (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context (clear_entailment_history_es,(fun c->c)) ctx 
+
   
+let fold_partial_context_left (c_l:(list_partial_context list)) = match (List.length c_l) with
+  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
+              Err.error_text = "folding empty partial context list \n"}
+  | 1 -> (List.hd c_l)
+  | _ -> List.fold_left (fun a c->  list_partial_context_union a c) (List.hd c_l) (List.tl c_l)
+
+let conv (c:entail_state) (nf:nflow) = (Ctx {c 
+with es_formula = 
+(substitute_flow_into_f nf c.es_formula) } )
+
+let conv_lst (c:entail_state) (nf_lst:nflow list) = 
+  match nf_lst with
+    | [] -> None
+    | x::xs -> Some (List.fold_left (fun acc_ctx y -> OCtx (conv c y,acc_ctx)) (conv c x)  xs)
+
+let rec splitter (c:context) 
+    (nf:nflow) 
+    (* : (context option, context option) (\* caught, escaped *\)   *)
+    =
+  match c with
+    | Ctx b -> 
+	let ff =(flow_formula_of_ctx c no_pos) in	
+	  if (subsume_flow nf ff.formula_flow_interval) then  (Some c,None)
+	  else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
+          else let t_caught = intersect_flow nf ff.formula_flow_interval in
+	  let t_escape_lst = subtract_flow nf ff.formula_flow_interval in
+             (Some (conv b t_caught), conv_lst b t_escape_lst)
+    | OCtx (b1,b2) -> 
+	let (r11,r12) = splitter b1 nf in
+	let (r21,r22) = splitter b2 nf in
+	let r1 = match (r11,r21) with 
+	  | None, None -> None
+	  | Some c, None -> Some c
+	  | None, Some c -> Some c
+	  | Some c1, Some c2 -> Some (mkOCtx c1 c2 no_pos)	in
+	let r2 = match (r12,r22) with 
+	  | None, None -> None
+	  | Some c, None -> Some c
+	  | None, Some c -> Some c
+	  | Some c1, Some c2 -> Some (mkOCtx c1 c2 no_pos) in
+	  (r1,r2) 
+
+let splitter_partial_context  (nf:nflow) 
+    (fn:  list_partial_context ->  list_partial_context) (fn_esc: context -> context) ((fl,sl):partial_context) : list_partial_context = 
+  let r = List.map (fun (l,c)-> 
+		      let r1,r2 = splitter c nf in 
+		      let r1 = match r1 with
+			| Some c-> Some (repl_label_list_partial_context l (fn [mk_partial_context c] ))  (* CF.SuccCtx[(CF.simplify_context c)] *)
+			| None -> None in
+			match (r1,r2) with
+			  | None, None -> Err.report_error {Err.error_loc = no_pos;
+							    Err.error_text = "Split can not return both empty contexts\n"}
+			  | Some cl,None -> cl
+			  | None, Some c -> [mk_partial_context (fn_esc c)]
+			  | Some cl,Some c -> 
+			      list_partial_context_or cl 
+				[(mk_partial_context 
+				    (fn_esc c))] 
+		   ) sl 
+  in
+    list_partial_context_or [ (fl, []) ] (fold_partial_context_left r)

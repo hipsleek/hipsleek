@@ -580,6 +580,10 @@ let string_of_partial_context (l1,l2) =
   String.concat "\n;\n"(List.map (fun (lbl,fs)-> "\n( lbl : "^(string_of_path_trace lbl)^"\n state:"^ (string_of_fail_type fs)) l1) ^
   "];\n Succesfull states:[ "^
   String.concat "\n;\n"(List.map (fun (lbl,fs)-> "\n( lbl : "^(string_of_path_trace lbl)^"\n state:"^ (string_of_context fs)) l2) ^"]\n"
-    
+ 
+   
 let string_of_list_partial_context lc = String.concat "\n;;\n" (List.map string_of_partial_context lc)
-    
+ 
+let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)^")"
+   
+let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"

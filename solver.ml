@@ -541,6 +541,14 @@ and combine_list_context_and_unsat_now prog (ctx : list_context) (f : Cpure.form
 	let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
   sat_no := !sat_no + 1; r
 
+
+and combine_list_partial_context_and_unsat_now prog (ctx : list_partial_context) (f : Cpure.formula) : list_partial_context = 
+	let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in
+	let r = transform_list_partial_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
+  sat_no := !sat_no + 1; r
+
+
+
 and combine_context_and_unsat_now prog (ctx : context) (f : Cpure.formula) : context = 
 	let r = transform_context (combine_es_and prog f true) ctx in
 	let r = transform_context (elim_unsat_es prog (ref 1)) r in
@@ -621,6 +629,14 @@ and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var
       if do_unsat then set_unsat_flag res true
       else res in 
     transform_list_context (fct,(fun c->c)) ctx 
+
+and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_partial_context =
+    let fct es = 
+      let unfolded_f = unfold prog es.es_formula v do_unsat pos in
+      let res = build_context (Ctx es) unfolded_f pos in
+      if do_unsat then set_unsat_flag res true
+      else res in 
+    transform_list_partial_context (fct,(fun c->c)) ctx 
   
 		
 and unfold (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = match f with
@@ -1096,6 +1112,10 @@ and entail_state_elim_exists es =
     
 and elim_exists_ctx_list (ctx0 : list_context) = 
   transform_list_context (entail_state_elim_exists, (fun c-> c)) ctx0
+
+and elim_exists_partial_ctx_list (ctx0 : list_partial_context) = 
+  transform_list_partial_context (entail_state_elim_exists, (fun c-> c)) ctx0
+
   
 and elim_exists_ctx (ctx0:context) =
   transform_context entail_state_elim_exists ctx0
@@ -1340,7 +1360,7 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool) (is_universal
         es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
         es_orig_ante   = es.es_formula;
         (*es_orig_conseq = conseq ;*)}in	
-    let cl_new = transform_list_partial_context ((fun c-> None),(fun c-> None),(fun c->c), (fun es-> Ctx(prepare_ctx (rename_es es)))) cl in
+    let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
     heap_entail_struc_list_partial_context prog is_folding is_universal has_post cl_new conseq pos pid f
        
 and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
@@ -3301,11 +3321,11 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) ^"\n") pos; 
   heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,heap_entail_one_context_struc)
   
-let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
+let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
   Debug.devel_pprint ("heap_entail_list_partial_context_init:"
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
-  heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_formula ,heap_entail_one_context_new)  
+  heap_entail_prefix_init prog is_folding is_universal false cl conseq pos pid (rename_labels_formula ,heap_entail_one_context_new)  
 
   
