@@ -54,14 +54,18 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 		      let ctx1 = CF.set_flow_in_context_override
 			{ CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} ctx1 in
 		      let ctx1 = CF.add_path_id ctx1 (Some y,-1) in
-		      let res_ctx = check_exp prog proc ( [CF.mk_partial_context ctx1] ) e0 y in
+		      let lpc = [CF.mk_partial_context ctx1] in 
+			(* print_string ("\n ***PRECOND as partial context:" ^ (Cprinter.string_of_list_partial_context lpc) ^ "\n"); *)
+		      let res_ctx = check_exp prog proc lpc e0 y in
 			(*if CP.are_same_types proc.proc_return void_type then*)
 			(* void procedures may not contain a return in all branches,
 			   so we need to make a catch-all check at the end of the body *)
 			(*let _ = print_string ("finalr : "^(Cprinter.string_of_context_list res_ctx)^"\n") in*)
-		      let res_ctx = Cformula.change_ret_flow_ctx res_ctx in
+		      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
+			(* print_string ("\n ***List of partial ctx before POST-CHECK:" ^ (Cprinter.string_of_list_partial_context lpc) ^ "\n"); *)
 		      let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
-			not (CF.isFailListPartialCtx tmp_ctx) in
+			not (CF.isFailListPartialCtx tmp_ctx) 
+		    in
 		      (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 		    let _ = Util.pop_time ("method "^proc.proc_name) in
 		      r
@@ -81,9 +85,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
   let check_exp1 (ctx : CF.list_partial_context) : CF.list_partial_context = 
     match e0 with
 	(* for theorem proving *)
-      | Label e -> 
-	  let ctx = CF.add_path_id_ctx_partial_list ctx e.exp_label_path_id in
-	    (check_exp prog proc ctx e.exp_label_exp post_start_label)
+      (* | Label e ->  *)
+      (* 	  let ctx = CF.add_path_id_ctx_partial_list ctx e.exp_label_path_id in *)
+      (* 	    (check_exp prog proc ctx e.exp_label_exp post_start_label) *)
       | Unfold ({exp_unfold_var = sv;
 		 exp_unfold_pos = pos}) -> begin
 	  let res = unfold_partial_context (Prog prog) ctx sv true pos in
@@ -291,6 +295,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	      let then_ctx2 = check_exp prog proc then_ctx e1 post_start_label in
 	      let else_ctx2 = check_exp prog proc else_ctx e2 post_start_label in
 	      let res = CF.list_partial_context_or then_ctx2 else_ctx2 in
+		(* print_string ("THEN "^Cprinter.string_of_list_partial_context(then_ctx2)); *)
+		(* print_string ("ELSE "^Cprinter.string_of_list_partial_context(else_ctx2)); *)
+		(* print_string ("JOIN "^Cprinter.string_of_list_partial_context(res)); *)
+ 		(* print_string ("End JOIN"); *)
 		res
 	end;
       | Debug ({exp_debug_flag = flag;
@@ -300,30 +308,6 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	  Debug.devel_debug_on := flag;
 	  ctx
 	end;
-      | Dprint ({exp_dprint_string = str;
-		 exp_dprint_visible_names = visib_names;
-		 exp_dprint_pos = pos}) -> begin
-	  if str = "" then begin
-	    let str1 = (Cprinter.string_of_list_partial_context ctx)  in
-	    let tmp1 = "\nprint: " ^ pos.start_pos.Lexing.pos_fname
-	      ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
-	    let tmp1 = if (previous_failure ()) then ("partial context: "^tmp1) else tmp1 in
-	      print_string tmp1;
-	      ctx
-	  end else begin
-	    ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
-	    ctx
-	  end
-	end;
-	  (*  | FieldRead (tf, (v, tv), (f, idx), pos) -> begin
-	      let c = CP.name_of_type tv in
-	      i need a special check that
-	      - checks if node v::c<...> is in ctx, perform unfolding if necessary
-	      - returns that node??? For field read, I just need to add res=a to every branch
-	      - the worst combination is x.f; g(x); x.f; g(x). i.e. start with
-	      view, unfold, fold, unfold, fold, etc...
-	      end
-	  *)
 
       | ICall ({exp_icall_receiver = recv;
 		exp_icall_receiver_type = recv_t; (* this is the type of the receiver *)
@@ -529,7 +513,16 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	  let res = CF.normalize_max_renaming_list_partial_context heap_form pos true ctx in
 	    res
 	end;
-      | Null pos ->
+ 	  (*  | FieldRead (tf, (v, tv), (f, idx), pos) -> begin
+	      let c = CP.name_of_type tv in
+	      i need a special check that
+	      - checks if node v::c<...> is in ctx, perform unfolding if necessary
+	      - returns that node??? For field read, I just need to add res=a to every branch
+	      - the worst combination is x.f; g(x); x.f; g(x). i.e. start with
+	      view, unfold, fold, unfold, fold, etc...
+	      end
+	  *)
+     | Null pos ->
 	  let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (CP.OType "", res, Unprimed)) pos) (CP.Null pos) pos in
 	  let f = CF.formula_of_pure p pos in
 	  let res = CF.normalize_max_renaming_list_partial_context f pos true ctx in
@@ -655,11 +648,11 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
       	      exp_try_path_id = pid;
       	      exp_try_pos = pos })->
       	  let ctx1 = check_exp prog proc ctx body post_start_label in
-	  let fn (lpc:CF.list_partial_context) : CF.list_partial_context =
-	    (check_exp prog proc lpc cc.exp_catch_body post_start_label) in
+	  let fn (lpc:CF.context) : CF.list_partial_context =
+	    (check_exp prog proc [CF.mk_partial_context lpc] cc.exp_catch_body post_start_label) in
 
 	  let apply_catch_partial_context2 (pc : CF.partial_context) :CF.list_partial_context =
-	     CF.splitter_partial_context (cc.exp_catch_flow_type) fn (fun c -> CF.add_path_id c (pid,0)) pc in
+	    CF.splitter_partial_context (cc.exp_catch_flow_type) fn (fun c -> CF.add_path_id c (pid,0)) pc in
 
       	  let rec apply_catch_context (ctx_crt : CF.context) (lab:path_trace) :CF.list_partial_context =
             match ctx_crt with
@@ -703,11 +696,35 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
   in
   let helper (cl:CF.list_partial_context) : CF.list_partial_context = 
     (* print list of partial context first *)
-    print_string ("\n list of partial context "^Cprinter.summary_list_partial_context ctx);
-    let r = List.map (CF.splitter_partial_context !n_flow_int check_exp1 (fun x -> x)) cl in
-      CF.fold_partial_context_left r in
-    (helper ctx)
-      
+    (* print_string ("\n ***HELPER_IN-list of partial context "^Cprinter.summary_list_partial_context ctx); *)
+    let r = List.map (CF.splitter_partial_context !n_flow_int (fun c -> check_exp1 [CF.mk_partial_context c]) (fun x -> x)) cl in
+    let r1 = CF.fold_partial_context_left r in
+      (* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx); *)
+      r1 
+  in
+    (* check for dprint and assert first ..*)
+    match e0 with
+      | Label e -> 
+	  let ctx = CF.add_path_id_ctx_partial_list ctx e.exp_label_path_id in
+	    (check_exp prog proc ctx e.exp_label_exp post_start_label)
+      | Dprint ({exp_dprint_string = str;
+		 exp_dprint_visible_names = visib_names;
+		 exp_dprint_pos = pos}) -> begin
+	  if str = "" then begin
+	    let str1 = (Cprinter.string_of_list_partial_context ctx)  in
+	    let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
+	      ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
+	    let tmp1 = if (previous_failure ()) then ("partial context: "^tmp1) else tmp1 in
+	      print_string tmp1;
+	      ctx
+	  end else begin
+	    ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
+	    ctx
+	  end
+	end;
+      (* to handle assert here *)
+      |  _ -> (helper ctx)
+	    
 
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* match ctx with *)

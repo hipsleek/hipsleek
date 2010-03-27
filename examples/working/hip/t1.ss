@@ -15,17 +15,21 @@ node f(int x)
 requires true
 ensures res::ll<1> & x>0
     or res::ll<2> & x<=0;
+/*
 case {
  x>0 -> ensures res::ll<1>;
  x<=0 -> ensures res::ll<2>;
  }
+*/
 {
  node y;
+ y = null;
  if (x>0) {
         y=new node(1,null);
  }
  else {
     y=new node(5,new node(6,null));
  }
+dprint;
 return y;
 }

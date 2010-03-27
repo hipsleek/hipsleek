@@ -1302,7 +1302,7 @@ and list_context =
 and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
-  
+
 and partial_context = (branch_fail list) * (branch_ctx list)
 
 and list_partial_context = partial_context list
@@ -1474,9 +1474,44 @@ let list_partial_context_union_n (l1:list_partial_context) (l2:list_partial_cont
           *.
           1000.
         )) (l1 @ l2))
-      
+
+let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail list * path_trace list) =
+  match f1,f2 with
+    | [],xs -> xs, (List.map (fun (p,_)->p) xs)
+    | xs,[] -> xs, (List.map (fun (p,_)->p) xs)
+    | (l1,b1)::z1,(l2,b2)::z2 -> 
+	if path_trace_eq l1 l2 then 
+	  let res,pt = merge_fail z1 z2 in
+	    ((l1,And_Reason (b1,b2))::res, l1::pt)
+	else if path_trace_lt l1 l2 then 
+	  let res,pt = merge_fail z1 f2 in
+	    ((l1,b1)::res, l1::pt)
+	else let res,pt = merge_fail f1 z2 in
+	  ((l2,b2)::res, l2::pt)
+
+let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context) : partial_context =
+  let (res_f,pt_fail_list) = merge_fail f1 f2 in
+  let rec merge_success s1 s2 = match s1,s2 with
+    | [],xs | xs,[] -> List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs
+    | (l1,b1)::z1,(l2,b2)::z2 -> 
+	if path_trace_eq l1 l2 then 
+	  let res = merge_success z1 z2 in
+	    ((l1,OCtx (b1,b2))::res)
+	else if path_trace_lt l1 l2 then 
+	  let res = merge_success z1 s2 in
+	    (l1,b1)::res
+	else let res = merge_success s1 z2 in
+	  (l2,b2)::res in
+    (res_f,merge_success s1 s2)
+
+let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2), (snd pc1)@(snd pc2) ) 
+
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
-  List.concat (List.map (fun (c1,c2)-> (List.map (fun (d1,d2)-> (c1@d1, c2@d2)) l2)) l1)
+  (* List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1) *)
+  List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1)
+
+
+
 
   
   
@@ -2273,12 +2308,12 @@ and pop_exists_estate (qvars : CP.spec_var list) (es : entail_state) : entail_st
 and add_exist_vars_to_ctx_list (ctx : list_context) (evars	: CP.spec_var list) : list_context = 
   transform_list_context ((fun es-> Ctx{es with es_formula = (add_quantifiers evars es.es_formula)}),(fun c->c)) ctx
 
-(* lctx->pctx *)
-(* and change_ret_flow_ctx ctx_list =  *)
-(*   transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;}) *)
-(*     ,(fun c->c)) ctx_list *)
 
-and change_ret_flow_ctx ctx_list = 
+and change_ret_flow_ctx ctx_list =
+  transform_list_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
+    ,(fun c->c)) ctx_list
+
+and change_ret_flow_partial_ctx ctx_list = 
   transform_list_partial_context ((fun es -> Ctx{es with es_formula = substitute_flow_in_f !n_flow_int !ret_flow_int es.es_formula;})
     ,(fun c->c)) ctx_list
 
@@ -2374,11 +2409,11 @@ let rec splitter (c:context)
 	  (r1,r2) 
 
 let splitter_partial_context  (nf:nflow) 
-    (fn:  list_partial_context ->  list_partial_context) (fn_esc: context -> context) ((fl,sl):partial_context) : list_partial_context = 
+    (fn:  context ->  list_partial_context) (fn_esc: context -> context) ((fl,sl):partial_context) : list_partial_context = 
   let r = List.map (fun (l,c)-> 
 		      let r1,r2 = splitter c nf in 
 		      let r1 = match r1 with
-			| Some c-> Some (repl_label_list_partial_context l (fn [mk_partial_context c] ))  (* CF.SuccCtx[(CF.simplify_context c)] *)
+			| Some c-> Some (repl_label_list_partial_context l (fn c ))  (* CF.SuccCtx[(CF.simplify_context c)] *)
 			| None -> None in
 			match (r1,r2) with
 			  | None, None -> Err.report_error {Err.error_loc = no_pos;
@@ -2392,3 +2427,31 @@ let splitter_partial_context  (nf:nflow)
 		   ) sl 
   in
     list_partial_context_or [ (fl, []) ] (fold_partial_context_left r)
+
+(* let splitter_partial_context_pc  (nf:nflow) 
+
+    context -> partial_context_list
+    list_partial_context -> partial_context_list
+
+    branch_ctx list -> partial_context_list
+    partial_context -> partial_context_list
+
+   *)
+(*     (fn:  Partial_context ->  list_partial_context) (fn_esc: context -> context) ((fl,sl):partial_context) : list_partial_context =  *)
+(*   let r = List.map (fun (l,c)->  *)
+(* 		      let r1,r2 = splitter c nf in  *)
+(* 		      let r1 = match r1 with *)
+(* 			| Some c-> Some (repl_label_list_partial_context l (fn c ))  (\* CF.SuccCtx[(CF.simplify_context c)] *\) *)
+(* 			| None -> None in *)
+(* 			match (r1,r2) with *)
+(* 			  | None, None -> Err.report_error {Err.error_loc = no_pos; *)
+(* 							    Err.error_text = "Split can not return both empty contexts\n"} *)
+(* 			  | Some cl,None -> cl *)
+(* 			  | None, Some c -> [mk_partial_context (fn_esc c)] *)
+(* 			  | Some cl,Some c ->  *)
+(* 			      list_partial_context_or cl  *)
+(* 				[(mk_partial_context  *)
+(* 				    (fn_esc c))]  *)
+(* 		   ) sl  *)
+(*   in *)
+(*     list_partial_context_or [ (fl, []) ] (fold_partial_context_left r) *)

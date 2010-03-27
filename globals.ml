@@ -261,3 +261,28 @@ let snd3 (_,x,_) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
 
+let path_trace_eq p1 p2 =
+  let rec eq pt1 pt2 = match pt1,pt2 with
+    | [],[] -> true
+    | [],xs -> false
+    |  xs,[] -> false
+    |  ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> a1=a2 && b1=b2 && (eq zt1 zt2)
+  in eq (List.rev p1) (List.rev p2)
+
+let path_trace_lt p1 p2 =
+  let rec lt pt1 pt2 = match pt1,pt2 with
+    | [],[] -> false
+    | [],xs -> true
+    | xs,[] -> false
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
+  in lt (List.rev p1) (List.rev p2)
+
+let path_trace_gt p1 p2 =
+  let rec gt pt1 pt2 = match pt1,pt2 with
+    | [],[] -> false
+    | [],xs -> false
+    |  xs,[] -> true
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
+  in gt (List.rev p1) (List.rev p2)
+
+ 
