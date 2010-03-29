@@ -26,13 +26,15 @@ ensures res::ll<1> & 4<x
  } else {
       y=new node(5,new node(6,null));
 };
+dprint;
  if (x>4) {
        y=y;
-       dprint;
+//       dprint;
 } else{
    y=new node(2,y);
-   dprint;
-}
+//   dprint;
+};
+dprint;
  return y;
 }
 

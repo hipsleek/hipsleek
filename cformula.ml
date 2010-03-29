@@ -1501,7 +1501,8 @@ let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail li
 let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context) : partial_context =
   let (res_f,pt_fail_list) = merge_fail f1 f2 in
   let rec merge_success s1 s2 = match s1,s2 with
-    | [],xs | xs,[] -> List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs
+    | [],xs | xs,[] -> xs   
+        (* List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs *)
     | (l1,b1)::z1,(l2,b2)::z2 -> 
 	if path_trace_eq l1 l2 then 
 	  let res = merge_success z1 z2 in
