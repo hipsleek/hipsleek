@@ -716,11 +716,11 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	  in
 	  let rec apply_catch_partial_context ((fl,sl) : CF.partial_context):CF.list_partial_context =
 	    let res_sl = List.map (fun (l,c) -> apply_catch_context c l) sl  in
-	    let res = CF.fold_partial_context_left res_sl in
+	    let res = CF.fold_partial_context_left_or res_sl in
               if (U.empty fl) then res
               else CF.list_partial_context_or [(fl,[])] res
 	  in
-	    CF.fold_partial_context_left (List.map apply_catch_partial_context2 ctx1)
+	    CF.fold_partial_context_left_or (List.map apply_catch_partial_context2 ctx1)
 
       | _ -> 
 	  failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  
@@ -731,7 +731,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
     if CF.isFailListPartialCtx cl then cl
     else
       let r = List.map (CF.splitter_partial_context !n_flow_int (fun c -> check_exp1 [CF.mk_partial_context c]) (fun x -> x)) cl in
-      let r1 = CF.fold_partial_context_left r in
+      let r1 = CF.fold_partial_context_left_union r in
 	(* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx); *)
 	r1 
   in

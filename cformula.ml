@@ -2378,7 +2378,14 @@ let clear_entailment_history_partial_list (ctx : list_partial_context) : list_pa
   transform_list_partial_context (clear_entailment_history_es,(fun c->c)) ctx 
 
   
-let fold_partial_context_left (c_l:(list_partial_context list)) = match (List.length c_l) with
+let fold_partial_context_left_or (c_l:(list_partial_context list)) = match (List.length c_l) with
+  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
+              Err.error_text = "folding empty partial context list \n"}
+  | 1 -> (List.hd c_l)
+  | _ -> List.fold_left (fun a c->  list_partial_context_or a c)
+      (List.hd c_l) (List.tl c_l)
+
+let fold_partial_context_left_union (c_l:(list_partial_context list)) = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "folding empty partial context list \n"}
   | 1 -> (List.hd c_l)
@@ -2438,7 +2445,7 @@ let splitter_partial_context  (nf:nflow)
 				    (fn_esc c))] 
 		   ) sl 
   in
-    list_partial_context_or [ (fl, []) ] (fold_partial_context_left r)
+    list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
 
 (* let splitter_partial_context_pc  (nf:nflow) 
 
