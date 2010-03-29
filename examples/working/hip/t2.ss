@@ -28,8 +28,10 @@ ensures res::ll<1> & 4<x
 };
  if (x>4) {
        y=y;
+       dprint;
 } else{
    y=new node(2,y);
+   dprint;
 }
  return y;
 }

@@ -576,13 +576,21 @@ let string_of_list_context (ctx:list_context): string = match ctx with
     | SuccCtx sc -> "success context: ["^(string_of_context_list sc)^"]\n"
     
 let string_of_partial_context (l1,l2) = 
-  "failed states: "^ 
+  "failed states:[ "^ 
   String.concat "\n;\n"(List.map (fun (lbl,fs)-> "\n( lbl : "^(string_of_path_trace lbl)^"\n state:"^ (string_of_fail_type fs)) l1) ^
   "];\n Succesfull states:[ "^
   String.concat "\n;\n"(List.map (fun (lbl,fs)-> "\n( lbl : "^(string_of_path_trace lbl)^"\n state:"^ (string_of_context fs)) l2) ^"]\n"
  
    
-let string_of_list_partial_context lc = String.concat "\n;;\n" (List.map string_of_partial_context lc)
+let get_label_partial_context (fs,ss) : string =
+if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
+
+let get_label_list_partial_context (cl:Cformula.list_partial_context) : string =
+if (U.empty cl) then "" else get_label_partial_context (List.hd cl)
+
+let string_of_list_partial_context lc = "\n;List of Partial Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_partial_context lc)
+
+let string_of_list_list_partial_context lc = "\n;List List of Partial Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_list_partial_context lc)
  
 let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)^")"
    

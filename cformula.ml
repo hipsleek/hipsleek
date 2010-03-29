@@ -1351,13 +1351,13 @@ let isAnyFalseCtx ctx = match ctx with
 let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
 
-let isSuccessPartialCtx ((fc,sc):partial_context) = (fc=[]) 
+(* let isSuccessPartialCtx ((fc,sc):partial_context) = (fc=[])  *)
 
-let isFailPartialCtx (pc:partial_context) = not(isSuccessPartialCtx pc)
+(* let isFailPartialCtx (pc:partial_context) = not(isSuccessPartialCtx pc) *)
  
-let isAnySuccessListPartialCtx (cl:list_partial_context) =  List.exists isSuccessPartialCtx cl
+(* let isAnySuccessListPartialCtx (cl:list_partial_context) =  List.exists isSuccessPartialCtx cl *)
 
-let isFailListPartialCtx (cl:list_partial_context) =  List.for_all isFailPartialCtx cl
+(* let isFailListPartialCtx (cl:list_partial_context) =  List.for_all isFailPartialCtx cl *)
  
 let isAnyFalseListCtx ctx = match ctx with
   | SuccCtx lc ->List.exists isAnyFalseCtx lc
@@ -1399,7 +1399,9 @@ let rec or_context_list (cl10 : context list) (cl20 : context list) : context li
 	  let tmp = helper cl10 cl20 in
 		tmp
   
-let mkFailCtx_in t1 = FailCtx t1
+let mkFailCtx_in (ft:fail_type) = FailCtx ft
+
+let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
 let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] ) 
 
@@ -1443,11 +1445,18 @@ let isFailCtx cl = match cl with
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
 
+
 let isFailPartialCtx (fs,ss) =
-if (U.empty fs) then false else true
+if (U.empty ss) then true else false
 
 let isFailListPartialCtx cl =
   List.for_all isFailPartialCtx cl 
+
+let isSuccessPartialCtx (fs,ss) =
+if (U.empty fs) then true else false
+
+let isSuccessListPartialCtx cl =
+  List.exists isSuccessPartialCtx cl 
   
 let rank (t:partial_context):float = match t with
   | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}
@@ -1506,8 +1515,11 @@ let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context)
 
 let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2), (snd pc1)@(snd pc2) ) 
 
+let list_partial_context_or_naive (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
+  List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1)
+  (* List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1) *)
+
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
-  (* List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1) *)
   List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1)
 
 

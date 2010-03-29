@@ -26,10 +26,12 @@ case {
  y = null;
  if (x>0) {
         y=new node(1,null);
+        dprint;
  }
  else {
     y=new node(5,new node(6,null));
+       dprint;
  }
-dprint;
+// dprint;
 return y;
 }
