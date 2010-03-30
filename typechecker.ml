@@ -54,11 +54,11 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 		      let ctx1 = CF.set_flow_in_context_override
 			{ CF.formula_flow_interval = !n_flow_int; CF.formula_flow_link = None} ctx1 in
 		      let ctx1 = CF.add_path_id ctx1 (Some y,-1) in
-		      let lpc = [CF.mk_partial_context ctx1] in 
+		      let lpc = [CF.mk_partial_context ctx1 []] in 
 			(* print_string ("\n ***PRECOND as partial context:" ^ (Cprinter.string_of_list_partial_context lpc) ^ "\n"); *)
-                 (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(lpc)));  *)
+			(* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(lpc)));  *)
 		      let res_ctx = check_exp prog proc lpc e0 y in
-                (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(res_ctx)));  *)
+			(* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(res_ctx)));  *)
 			(*if CP.are_same_types proc.proc_return void_type then*)
 			(* void procedures may not contain a return in all branches,
 			   so we need to make a catch-all check at the end of the body *)
@@ -320,12 +320,16 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	    Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_partial_context then_ctx)) pos;
 	    let else_ctx =combine_list_partial_context_and_unsat_now prog ctx else_cond_prim in
 	      Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_partial_context else_ctx)) pos;
-	      let then_ctx2 = check_exp prog proc then_ctx e1 post_start_label in
-	      let else_ctx2 = check_exp prog proc else_ctx e2 post_start_label in
-	      let res = CF.list_partial_context_or_naive then_ctx2 else_ctx2 in
-		(* print_string ("THEN "^Cprinter.string_of_list_partial_context(then_ctx2)); *)
-		(* print_string ("ELSE "^Cprinter.string_of_list_partial_context(else_ctx2)); *)
-		(* print_string ("JOIN "^Cprinter.string_of_list_partial_context(res)); *)
+	      let then_ctx1 = CF.add_cond_label_list_partial_context pid 0 then_ctx in
+	      let else_ctx1 = CF.add_cond_label_list_partial_context pid 1 else_ctx in
+	      let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
+	      let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
+	      let res = CF.list_partial_context_or then_ctx2 else_ctx2 in
+              (* print_string ("\nBefore THEN  :"^(Cprinter.summary_list_partial_context then_ctx)); *)
+	      (* print_string ("\nBefore THEN  :"^(Cprinter.summary_list_partial_context then_ctx2)); *)
+	      (* 	(\* print_string ("THEN "^Cprinter.string_of_list_partial_context(then_ctx2)); *\) *)
+	      (* 	(\* print_string ("ELSE "^Cprinter.string_of_list_partial_context(else_ctx2)); *\) *)
+	      (* 	print_string ("\nJOIN "^Cprinter.summary_list_partial_context(res)); *)
  		(* print_string ("End JOIN"); *)
 		res
 	end;
@@ -679,8 +683,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
       	      exp_try_path_id = pid;
       	      exp_try_pos = pos })->
 	  let ctx1 = check_exp prog proc ctx body post_start_label in
-	  let fn (lpc:CF.context) : CF.list_partial_context =
-	    (check_exp prog proc [CF.mk_partial_context lpc] cc.exp_catch_body post_start_label) in
+	  let fn (l:path_trace) (lpc:CF.context) : CF.list_partial_context =
+	    (check_exp prog proc [CF.mk_partial_context lpc l] cc.exp_catch_body post_start_label) in
 
 	  let apply_catch_partial_context2 (pc : CF.partial_context) :CF.list_partial_context =
 	    CF.splitter_partial_context (cc.exp_catch_flow_type) fn (fun c -> CF.add_path_id c (pid,0)) pc in
@@ -712,7 +716,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
       			      if b_rez then CF.push_exists_list_partial_context [(CP.SpecVar (rest, cvn, Primed))] ctx1
       			      else ctx1
       			 | None ->
-      			     CF.repl_label_list_partial_context lab (check_exp prog proc [(CF.mk_partial_context_label nctx lab)] cc.exp_catch_body post_start_label)
+      			     CF.repl_label_list_partial_context lab (check_exp prog proc [(CF.mk_partial_context nctx lab)] cc.exp_catch_body post_start_label)
 	  in
 	  let rec apply_catch_partial_context ((fl,sl) : CF.partial_context):CF.list_partial_context =
 	    let res_sl = List.map (fun (l,c) -> apply_catch_context c l) sl  in
@@ -730,7 +734,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
     (* print_string ("\n ***HELPER_IN-list of partial context "^Cprinter.summary_list_partial_context ctx); *)
     if CF.isFailListPartialCtx cl then cl
     else
-      let r = List.map (CF.splitter_partial_context !n_flow_int (fun c -> check_exp1 [CF.mk_partial_context c]) (fun x -> x)) cl in
+      let r = List.map (CF.splitter_partial_context !n_flow_int (fun l c -> check_exp1 [CF.mk_partial_context c l]) (fun x -> x)) cl in
       let r1 = CF.fold_partial_context_left_union r in
 	(* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx); *)
 	r1 
@@ -812,9 +816,9 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
     proc.proc_args in
   let r = proc.proc_by_name_params in
   let w = List.map CP.to_primed (CP.difference vsvars r) in
-  (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
+    (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
-  (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
+    (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
   let final_state = 
     if !Globals.elim_exists then elim_exists_partial_ctx_list final_state_prim else final_state_prim in
     Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n");
@@ -836,19 +840,19 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
       let rs, prf = heap_entail_list_partial_context_init prog false false final_state post pos (Some pid) 
       in
 	(* print_string ("\nPOST after entail: " ^ (Cprinter.string_of_list_partial_context rs)); *)
-	let _ = (* match final_state with  *)
-	  (* |CF.SuccCtx cl -> if List.for_all CF.isAnyFalseCtx cl then () else  *)
-	  PTracer.log_proof prf
-	    (* | _ -> ()	 *)
-	in
-	  (* Solver.entail_hist#upd pid rs; *)
-	  if (CF.isSuccessListPartialCtx rs) then rs
-	  else
-	    Err.report_error {Err.error_loc = pos;
-			      Err.error_text = "Post condition "
-		^ (Cprinter.string_of_formula post)
-		^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
-		^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
+      let _ = (* match final_state with  *)
+	(* |CF.SuccCtx cl -> if List.for_all CF.isAnyFalseCtx cl then () else  *)
+	PTracer.log_proof prf
+	  (* | _ -> ()	 *)
+      in
+	(* Solver.entail_hist#upd pid rs; *)
+	if (CF.isSuccessListPartialCtx rs) then rs
+	else
+	  Err.report_error {Err.error_loc = pos;
+			    Err.error_text = "Post condition "
+	      ^ (Cprinter.string_of_formula post)
+	      ^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
+	      ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
 
 
 

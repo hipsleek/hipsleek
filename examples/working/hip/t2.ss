@@ -18,7 +18,7 @@ node f(int x)
 requires true
 ensures res::ll<1> & 4<x
     or res::ll<2> & 0<x<=4
-    or res::ll<4> & x<=0;
+    or res::ll<3> & x<=0;
 {
  node y;
  if (x>0) {
