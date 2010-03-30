@@ -28,13 +28,15 @@ void m0 (ref int i, e4 z) throws e1
 	
 }
 
+// problem e1 -> e2 after catching!
+// w
 
-void m1 (ref int i, e1 z) throws e1
+void m1 (ref int i, e1 z) throws e4,e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures //res::e5<> & i'=2 & flow e1 or 
-		eres::e1<> & i>0 & i'=4 & flow e2 or  // why must use eres instead of res
-		res::e1<> & i>0 & flow e1 or
+		res::e4<> & i>0 & flow e1 or
+		res::e1<> & i>0 & i'=4 & flow e2 or  // why must use eres instead of res
 		i<=0 & i'=-3;
 {
 	try{
@@ -45,8 +47,8 @@ void m1 (ref int i, e1 z) throws e1
 		i=4;
 		//dprint;
 		//assert false;
-		raise v;
-		//raise new e4();
+		//raise v;
+		raise new e4();
 	};
 	i=-3;
         dprint;
