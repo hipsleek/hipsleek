@@ -1377,9 +1377,11 @@ let rec allFalseCtx ctx = match ctx with
 
 let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
-  else*)  if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then
-	true_ctx (mkTrueFlow ()) pos
-  else if isAnyFalseCtx ctx1 then ctx2
+  else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
+  (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
+                                         for true *)
+  (* else *) 
+  if isAnyFalseCtx ctx1 then ctx2
   else if isAnyFalseCtx ctx2 then ctx1
   else OCtx (ctx1,ctx2) 
 
