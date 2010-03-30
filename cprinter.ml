@@ -32,8 +32,9 @@ let string_of_typ = function
 let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
-let string_of_formula_label (i,s) s2:string = (string_of_int i)^s2
-(* let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2) *)
+let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
+let string_of_int_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_int_label s s2
+let string_of_formula_label (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2) 
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
@@ -534,7 +535,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
 *)
 
 let string_of_path_trace pt =
-  (String.concat ", " (List.map (fun (c1,c3)-> "("^(string_of_formula_label c1 "")^","^(string_of_int c3)^")") pt))
+  (String.concat ", " (List.map (fun (c1,c3)-> "("^(string_of_int_label c1 "")^","^(string_of_int c3)^")") pt))
 
 let string_of_estate (es : entail_state) = 
   "es_formula: " ^ (string_of_formula es.es_formula)
