@@ -772,6 +772,9 @@ let rec check_proper_return cret_type exc_list f =
 	let sub_flow_type fl res_t = match res_t with 
 		| Cpure.OType ot -> F.subsume_flow fl (Util.get_hash_of_exc ot)
 		| _ -> false in
+	let overlap_flow_type fl res_t = match res_t with 
+		| Cpure.OType ot -> F.overlapping fl (Util.get_hash_of_exc ot)
+		| _ -> false in
 	let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
 		let res_t,b_rez = F.get_result_type f0 in
@@ -784,8 +787,8 @@ let rec check_proper_return cret_type exc_list f =
 			else 
 				if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
-				else if not(sub_flow_type fl_int res_t) then
-				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond with the return type";}
+				else if not(overlap_flow_type fl_int res_t) then
+				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 				else ()			
 		else 
 			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
@@ -804,8 +807,8 @@ let rec check_proper_return cret_type exc_list f =
 			else 
 				if not (List.exists (fun c-> F.subsume_flow c fl_int) exc_list) then
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="not all specified flow types are covered by the throw list";}
-				else if not(sub_flow_type fl_int res_t) then
-				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the return type";}
+				else if not(overlap_flow_type fl_int res_t) then
+				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
 				else ()			
 		else 
 			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^

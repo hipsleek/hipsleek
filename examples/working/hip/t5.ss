@@ -35,8 +35,8 @@ void m1 (ref int i, e1 z) throws e4,e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures //res::e5<> & i'=2 & flow e1 or 
-		res::e4<> & i>0 & flow e1 or
-		res::e1<> & i>0 & i'=4 & flow e2 or  // why must use eres instead of res
+		res::e4<> & i>0 & i'=4 & flow e4 or
+		res::e1<> & i>0 & flow e1 or  
 		i<=0 & i'=-3;
 {
 	try{
@@ -58,7 +58,7 @@ void m1a (ref int i, e1 z) throws e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures //res::e5<> & i'=2 & flow e1 or 
-        eres::e1<> & i>0 & i'=4 & flow e2 or  // why must use eres instead of res
+        res::e1<> & i>0 & i'=4 & flow e2 or  
 		res::e1<> & i>0 & i'=1 & flow e1 or
 		i<=0 & i'=-3;
 {
@@ -73,10 +73,10 @@ void m1a (ref int i, e1 z) throws e1
 		raise v;
 // state:es_formula: (137, ):z::e1<> & z' = z & (134, ):0 < i & (135, ):v_bool_64_242' & v_e1_64_241' = z' 
 // & v_46' = v_e1_64_241' & i' = 4 & v_e2_71_239' = v_46' & res = v_e2_71_239'&{FLOW,(33,34)=e2,}
-// cannot prove: eres::e2<> & i>0 & i'=4 & flow e2
-// cannot prove: eres::e1<> & i>0 & i'=4 & flow e2
-
-        // res should be an e2 - can we refine?
+// cannot prove: res::e2<> & i>0 & i'=4 & flow e2
+// good if we can refine res to becomde e2 
+// type error for: res::e2<> & i>0 & i'=4 & flow e1
+//   -> ok now; change to checking for overlap instead
 	};
 	i=-3;
         dprint;
