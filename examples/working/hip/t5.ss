@@ -33,19 +33,48 @@ void m1 (ref int i, e1 z) throws e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures //res::e5<> & i'=2 & flow e1 or 
-		res::e4<> & i>0 & i'=4 & flow e4 or  // error i'=2
+		eres::e1<> & i>0 & i'=4 & flow e2 or  // why must use eres instead of res
 		res::e1<> & i>0 & flow e1 or
 		i<=0 & i'=-3;
 {
 	try{
 		if (i>0) raise z; // new e1();
-		dprint;
+		//dprint;
 	}catch (e2 v){
-                dprint;
+        // dprint;
 		i=4;
-		dprint;
+		//dprint;
 		//assert false;
-		raise new e4();
+		raise v;
+		//raise new e4();
+	};
+	i=-3;
+        dprint;
+}
+
+void m1a (ref int i, e1 z) throws e1
+	requires z::e1<>
+	//ensures i'=3 or eres::e1<> & i>0;
+	ensures //res::e5<> & i'=2 & flow e1 or 
+        eres::e1<> & i>0 & i'=4 & flow e2 or  // why must use eres instead of res
+		res::e1<> & i>0 & i'=1 & flow e1 or
+		i<=0 & i'=-3;
+{
+	try{
+      if (i>0) {i=1; raise z;}; // new e1();
+		//dprint;
+	}catch (e2 v){
+        // dprint;
+		i=4;
+		//dprint;
+		//assert false;
+		raise v;
+// state:es_formula: (137, ):z::e1<> & z' = z & (134, ):0 < i & (135, ):v_bool_64_242' & v_e1_64_241' = z' 
+// & v_46' = v_e1_64_241' & i' = 4 & v_e2_71_239' = v_46' & res = v_e2_71_239'&{FLOW,(33,34)=e2,}
+// cannot prove: eres::e2<> & i>0 & i'=4 & flow e2
+// cannot prove: eres::e1<> & i>0 & i'=4 & flow e2
+
+        // res should be an e2 - can we refine?
 	};
 	i=-3;
         dprint;

@@ -10,6 +10,8 @@ module Err = Error
 module CP = Cpure
 module U = Util
 
+type typed_ident = (CP.typ * ident)
+
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
 	| TypeExact of t_formula_sub_type (* for t = C *)
@@ -2426,13 +2428,23 @@ let fold_partial_context_left_union (c_l:(list_partial_context list)) = match (L
 (* convert entail state to ctx with nf flow and quantify res
    variable *)
 (* need also a binding to catch handler's bound var *)
-let conv_elim_res (c:entail_state) = 
+let conv_elim_res (cvar:typed_ident option)  (c:entail_state) = 
   let rest, b_rez = get_result_type c.es_formula in
   let ctx = (Ctx {c with es_formula = 
       (substitute_flow_into_f !n_flow_int c.es_formula) } )  in
-  if b_rez then push_exists_context [CP.mkRes rest] ctx
-  else ctx 
- 
+  match cvar with
+    | None -> ctx
+    | Some (cvt,cvn) ->        
+        if not(b_rez) then ctx
+        else begin
+      	  let vsv_f = formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
+      	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
+      	  let ctx1 = push_exists_context [CP.mkRes rest] ctx1 in
+      	  (* if !Globals.elim_exists then elim_exists_ctx ctx1 else  *)
+          (* can move elim_exists to cformula? *)
+          ctx1
+        end
+          
 (* convert entail state to ctx with nf flow *)
 let conv (c:entail_state) (nf:nflow) = (Ctx {c 
 with es_formula = 
@@ -2444,22 +2456,23 @@ let conv_lst (c:entail_state) (nf_lst:nflow list) =
     | x::xs -> Some (List.fold_left (fun acc_ctx y -> OCtx (conv c y,acc_ctx)) (conv c x)  xs)
 
 let rec splitter (c:context) 
-    (nf:nflow) 
+    (nf:nflow) (cvar:typed_ident option)  
     (* : (context option, context option) (\* caught under nf flow, escaped from nf flow*\)   *)
     =
   match c with
     | Ctx b -> 
 	let ff =(flow_formula_of_ctx c no_pos) in	
-	  if (subsume_flow nf ff.formula_flow_interval) then  (Some (conv_elim_res b),None) (* change caught item to normal flow *)
+	if (subsume_flow nf ff.formula_flow_interval) then  (Some
+      (conv_elim_res cvar b),None) (* change caught item to normal flow *)
 	  else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
       else (* let t_caught = intersect_flow nf
               ff.formula_flow_interval in *)
 	  let t_escape_lst = subtract_flow ff.formula_flow_interval nf in
-            (Some (conv_elim_res b), (* change caught item to normal flow *)
+      (Some (conv_elim_res cvar b), (* change caught item to normal flow *)
 	     conv_lst b t_escape_lst)
     | OCtx (b1,b2) -> 
-	let (r11,r12) = splitter b1 nf in
-	let (r21,r22) = splitter b2 nf in
+	    let (r11,r12) = splitter b1 nf cvar in
+	    let (r21,r22) = splitter b2 nf cvar in
 	let r1 = match (r11,r21) with 
 	  | None, None -> None
 	  | Some c, None -> Some c
@@ -2475,25 +2488,25 @@ let rec splitter (c:context)
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
-let splitter_partial_context  (nf:nflow) 
+let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc: context -> context) ((fl,sl):partial_context) : list_partial_context = 
   let r = List.map (fun (l,c)-> 
-		      let r1,r2 = splitter c nf in 
-		      let r1 = match r1 with
-			| Some c-> Some (fn l c )  (* CF.SuccCtx[(CF.simplify_context c)] *)
-			| None -> None in
-			match (r1,r2) with
-			  | None, None -> Err.report_error {Err.error_loc = no_pos;
-							    Err.error_text = "Split can not return both empty contexts\n"}
-			  | Some cl,None -> cl
-			  | None, Some c -> [mk_partial_context   (fn_esc c) l]
-			  | Some cl,Some c -> 
-			      list_partial_context_or cl 
-				[(mk_partial_context
-				    (fn_esc c) l)] 
-		   ) sl 
+	let r1,r2 = splitter c nf cvar in 
+	let r1 = match r1 with
+	  | Some c-> Some (fn l c )  (* CF.SuccCtx[(CF.simplify_context c)] *)
+	  | None -> None in
+	match (r1,r2) with
+	  | None, None -> Err.report_error {Err.error_loc = no_pos;
+		Err.error_text = "Split can not return both empty contexts\n"}
+	  | Some cl,None -> cl
+	  | None, Some c -> [mk_partial_context   (fn_esc c) l]
+	  | Some cl,Some c -> 
+		  list_partial_context_or cl 
+			[(mk_partial_context
+			  (fn_esc c) l)] 
+  ) sl 
   in
-    list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
+  list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
 
 (* let splitter_partial_context_pc  (nf:nflow) 
 

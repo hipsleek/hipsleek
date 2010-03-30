@@ -12,16 +12,15 @@ ll<n> == self=null & n=0
 // is the selective assert testing working?
 
 node f(int x)
-
+/*
 requires true
 ensures res::ll<1> & x>0
-    or res::ll<3> & x<=0; 
-/*
- case {
- x>0 -> ensures  "post1": res::ll<4 >;
- x<=0 -> ensures "post2": res::ll<3>;
- }
+    or res::ll<2> & x<=0; 
 */
+ case {
+ x>0 -> ensures  "post1": res::ll<1 >;
+ x<=0 -> ensures "post2": res::ll<2>;
+ }
 {
  node y;
  if (x>0) {
