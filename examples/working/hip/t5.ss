@@ -33,20 +33,21 @@ void m1 (ref int i, e1 z) throws e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures //res::e5<> & i'=2 & flow e1 or 
-		res::e4<> & i>0 & flow e4 or  // error i'=2
+		res::e4<> & i>0 & i'=4 & flow e4 or  // error i'=2
 		res::e1<> & i>0 & flow e1 or
-		i<=0 & i'=3;
+		i<=0 & i'=-3;
 {
 	try{
 		if (i>0) raise z; // new e1();
-		// dprint;
+		dprint;
 	}catch (e2 v){
-		i=2;
+                dprint;
+		i=4;
 		dprint;
 		//assert false;
 		raise new e4();
 	};
-	i=3;
+	i=-3;
         dprint;
 }
 

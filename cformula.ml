@@ -289,7 +289,10 @@ let flow_eqs (s:string) pos:formula =
 
 
 (*assume none is invalid*)
-and overlapping (n1,n2) (p1,p2) : bool = not(((n2<p1)||(p2<n1))&&(n1<n2)&&(p1<p2))
+and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2
+  (* and overlapping (n1,n2) (p1,p2) : bool =
+     not(((n2<p1)||(p2<n1))&&(n1<n2)&&(p1<p2)) *)
+and overlapping n p : bool = not(non_overlapping n p)
 and intersect_flow (n1,n2)(p1,p2) : (int*int)= ((if (n1<p1) then p1 else n1),(if (n2<p2) then n2 else p2))
 
 and is_false_flow (p1,p2) :bool = (p2==0)&&(p1==0)
@@ -2420,6 +2423,17 @@ let fold_partial_context_left_union (c_l:(list_partial_context list)) = match (L
   | 1 -> (List.hd c_l)
   | _ -> List.fold_left (fun a c->  list_partial_context_union a c) (List.hd c_l) (List.tl c_l)
 
+(* convert entail state to ctx with nf flow and quantify res
+   variable *)
+(* need also a binding to catch handler's bound var *)
+let conv_elim_res (c:entail_state) = 
+  let rest, b_rez = get_result_type c.es_formula in
+  let ctx = (Ctx {c with es_formula = 
+      (substitute_flow_into_f !n_flow_int c.es_formula) } )  in
+  if b_rez then push_exists_context [CP.mkRes rest] ctx
+  else ctx 
+ 
+(* convert entail state to ctx with nf flow *)
 let conv (c:entail_state) (nf:nflow) = (Ctx {c 
 with es_formula = 
 (substitute_flow_into_f nf c.es_formula) } )   
@@ -2436,11 +2450,12 @@ let rec splitter (c:context)
   match c with
     | Ctx b -> 
 	let ff =(flow_formula_of_ctx c no_pos) in	
-	  if (subsume_flow nf ff.formula_flow_interval) then  (Some (conv b !n_flow_int),None) (* change caught item to normal flow *)
+	  if (subsume_flow nf ff.formula_flow_interval) then  (Some (conv_elim_res b),None) (* change caught item to normal flow *)
 	  else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
-          else let t_caught = intersect_flow nf ff.formula_flow_interval in
+      else (* let t_caught = intersect_flow nf
+              ff.formula_flow_interval in *)
 	  let t_escape_lst = subtract_flow ff.formula_flow_interval nf in
-            (Some (conv b !n_flow_int), (* change caught item to normal flow *)
+            (Some (conv_elim_res b), (* change caught item to normal flow *)
 	     conv_lst b t_escape_lst)
     | OCtx (b1,b2) -> 
 	let (r11,r12) = splitter b1 nf in
