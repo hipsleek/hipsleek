@@ -1365,8 +1365,8 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool) (is_universal
       
 and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
     (conseq) pos (pid:control_path_id) f to_string : (list_partial_context * proof) =           
-  print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl));
-  print_string (Cprinter.string_of_list_partial_context cl);
+  (* print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl)); *)
+  (* print_string (Cprinter.string_of_list_partial_context cl); *)
   let l = List.map 
     (fun c-> heap_entail_struc_partial_context prog is_folding is_universal has_post c conseq pos pid f to_string) cl in
   let l_ctx , prf_l = List.split l in
@@ -1379,7 +1379,7 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
       
 and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : partial_context)
     (conseq) pos (pid:control_path_id) f to_string: (list_partial_context * proof) = 
-  print_string "\ncalling struct_partial_context ..";
+  (* print_string "\ncalling struct_partial_context .."; *)
   Debug.devel_pprint ("heap_entail_struc_partial_context:"
 		      ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
 		      ^ "\nconseq:\n" (*^ (Cprinter.string_of_struc_formula conseq)*)) pos; 
@@ -1394,9 +1394,9 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is
 			    | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in
 			    (res, prf)) succ_branches in
   let res_l,prf_l =List.split res in
-  print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l));
+  (* print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)
   let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
-  print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res));
+  (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)
   let proof = ContextList { 
     context_list_ante = [];
     context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;

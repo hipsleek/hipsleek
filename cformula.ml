@@ -1504,24 +1504,27 @@ let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context)
     | [],xs | xs,[] -> xs   
         (* List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs *)
     | (l1,b1)::z1,(l2,b2)::z2 -> 
-	if path_trace_eq l1 l2 then 
-	  let res = merge_success z1 z2 in
-	    ((l1,OCtx (b1,b2))::res)
-	else if path_trace_lt l1 l2 then 
-	  let res = merge_success z1 s2 in
-	    (l1,b1)::res
-	else let res = merge_success s1 z2 in
-	  (l2,b2)::res in
-    (res_f,merge_success s1 s2)
+	    if path_trace_eq l1 l2 then 
+	      let res = merge_success z1 z2 in
+	      ((l1,or_context b1 b2)::res)
+	    else if path_trace_lt l1 l2 then 
+	      let res = merge_success z1 s2 in
+	      (l1,b1)::res
+	    else let res = merge_success s1 z2 in
+	    (l2,b2)::res in
+  (res_f,merge_success s1 s2)
 
-let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2), (snd pc1)@(snd pc2) ) 
+let remove_dupl_false sl = List.hd(sl)::(List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) (List.tl sl))
+
+let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  remove_dupl_false ((snd pc1)@(snd pc2)) ) 
 
 let list_partial_context_or_naive (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1)
   (* List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1) *)
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
-  List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1)
+  List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1)
+  (* List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1) *)
 
 
 

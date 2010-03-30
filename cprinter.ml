@@ -588,10 +588,11 @@ if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
 let get_label_list_partial_context (cl:Cformula.list_partial_context) : string =
 if (U.empty cl) then "" else get_label_partial_context (List.hd cl)
 
-let string_of_list_partial_context lc = "\n;List of Partial Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_partial_context lc)
-
-let string_of_list_list_partial_context lc = "\n;List List of Partial Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_list_partial_context lc)
- 
 let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)^")"
    
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
+
+let string_of_list_partial_context lc = "\n;List of Partial Context:"^(summary_list_partial_context lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_partial_context lc)
+
+let string_of_list_list_partial_context lc = "\n;List List of Partial Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_list_partial_context lc)
+ 

@@ -56,9 +56,9 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 		      let ctx1 = CF.add_path_id ctx1 (Some y,-1) in
 		      let lpc = [CF.mk_partial_context ctx1] in 
 			(* print_string ("\n ***PRECOND as partial context:" ^ (Cprinter.string_of_list_partial_context lpc) ^ "\n"); *)
-                      print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(lpc))); 
+                 (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(lpc)));  *)
 		      let res_ctx = check_exp prog proc lpc e0 y in
-                      print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(res_ctx))); 
+                (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.string_of_list_partial_context(res_ctx)));  *)
 			(*if CP.are_same_types proc.proc_return void_type then*)
 			(* void procedures may not contain a return in all branches,
 			   so we need to make a catch-all check at the end of the body *)
@@ -812,9 +812,9 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
     proc.proc_args in
   let r = proc.proc_by_name_params in
   let w = List.map CP.to_primed (CP.difference vsvars r) in
-  print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx))); 
+  (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
-  print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim))); 
+  (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
   let final_state = 
     if !Globals.elim_exists then elim_exists_partial_ctx_list final_state_prim else final_state_prim in
     Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n");
@@ -832,7 +832,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
 	else () | CF.FailCtx _ ->print_string ("\n fail:
 	"^(Cprinter.string_of_context c)^"\n") | CF.OCtx (c1,c2) ->
 	((fct c1);(fct c2)) in fct c) final_state in *)
-      print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state))); 
+      (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state)));  *)
       let rs, prf = heap_entail_list_partial_context_init prog false false final_state post pos (Some pid) 
       in
 	(* print_string ("\nPOST after entail: " ^ (Cprinter.string_of_list_partial_context rs)); *)

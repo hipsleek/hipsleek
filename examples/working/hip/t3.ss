@@ -36,7 +36,7 @@ ensures res::ll<1> & x>0
   }
 //assert true ;
 //assert true assume false;
-g();
+//g();
 //assert false assume true;
 //dprint;
 //assert false;
