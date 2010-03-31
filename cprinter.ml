@@ -337,23 +337,23 @@ let string_of_sharp st = match st with
 	| Sharp_v  f -> "flow_var "^f
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
-  | Label l-> "LABEL! :"^((string_of_int (snd l.exp_label_path_id))^(string_of_exp l.exp_label_exp))
+  | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
   | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_path_id = pid}) -> 
-	let s = 
-      begin
+      let s = 
+	begin
 	  let str1 = 
-		match f1o with
-		  | None -> ""
-		  | Some f1 -> "assert " ^ (string_of_struc_formula f1) in
+	    match f1o with
+	      | None -> ""
+	      | Some f1 -> "assert " ^ (string_of_struc_formula f1) in
 	  let str2 =
-		match f2o with
-		  | None -> ""
-		  | Some f2 -> "assume " ^ (string_of_formula f2) in
-		str1 ^ " " ^ str2
-      end in
-	  string_of_formula_label pid s 
+	    match f2o with
+	      | None -> ""
+	      | Some f2 -> "assume " ^ (string_of_formula f2) in
+	    str1 ^ " " ^ str2
+	end in
+	string_of_formula_label pid s 
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
       id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -364,72 +364,72 @@ let rec string_of_exp = function
 	   exp_bind_body = e;
 	   exp_bind_path_id = pid;
 	   exp_bind_pos = l}) -> 
-	   string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}")
+      string_of_control_path_id_opt pid ("bind " ^ id ^ " to (" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ") in \n{" ^ (string_of_exp e) ^ "\n}")
   | Block ({exp_block_type = _;
 	    exp_block_body = e;
 	    exp_block_local_vars = _;
 	    exp_block_pos = _}) -> "{\n" ^ (string_of_exp e) ^ "\n}"
   | ICall ({exp_icall_type = _;
-	   exp_icall_receiver = r;
-	   exp_icall_method_name = id;
-	   exp_icall_arguments = idl;
-	   exp_icall_visible_names = _;
-	   exp_icall_path_id = pid;
-	   exp_icall_pos = l}) -> 
-	   string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
+	    exp_icall_receiver = r;
+	    exp_icall_method_name = id;
+	    exp_icall_arguments = idl;
+	    exp_icall_visible_names = _;
+	    exp_icall_path_id = pid;
+	    exp_icall_pos = l}) -> 
+      string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
   | Cast ({exp_cast_target_type = t;
-		   exp_cast_body = body}) -> begin
-	  "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
-	end
+	   exp_cast_body = body}) -> begin
+      "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
+    end
   | Cond ({exp_cond_type = _;
 	   exp_cond_condition = id;
 	   exp_cond_then_arm = e1;
 	   exp_cond_else_arm = e2;
 	   exp_cond_path_id = pid;
 	   exp_cond_pos = l}) -> 
-	   string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
+      string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _                   -> "dprint"
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
-  (*| FieldRead (_, (v, _), (f, _), _) -> v ^ "." ^ f*)
-  (*| FieldWrite ((v, _), (f, _), r, _) -> v ^ "." ^ f ^ " = " ^ r*)
+      (*| FieldRead (_, (v, _), (f, _), _) -> v ^ "." ^ f*)
+      (*| FieldWrite ((v, _), (f, _), r, _) -> v ^ "." ^ f ^ " = " ^ r*)
   | IConst ({exp_iconst_val = i; exp_iconst_pos = l}) -> string_of_int i 
   | New ({exp_new_class_name = id;
 	  exp_new_arguments = idl;
 	  exp_new_pos = l}) -> 
-	  "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
+      "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
-	     exp_sharp_val = eo;
-		 exp_sharp_path_id =pid;
-	     exp_sharp_pos = l}) ->begin
-		 string_of_control_path_id_opt pid (
-		 match st with
-		 | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
-									 (match eo with 
-										|Sharp_prog_var e -> "return " ^ (snd e)
-										| _   -> "return")
-						 else  (match eo with 
-					| Sharp_prog_var e -> "throw " ^ (snd e)
-					| Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
-					| _   -> "throw "^(string_of_sharp st))
-		 | _ -> (match eo with 
-					| Sharp_prog_var e -> "throw " ^ (snd e)
-					| Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
-					| _   -> "throw "^(string_of_sharp st)))end 
+	    exp_sharp_val = eo;
+	    exp_sharp_path_id =pid;
+	    exp_sharp_pos = l}) ->begin
+      string_of_control_path_id_opt pid (
+	match st with
+	  | Sharp_ct f ->  if (Cformula.equal_flow_interval f.formula_flow_interval !ret_flow_int) then
+	      (match eo with 
+		 |Sharp_prog_var e -> "return " ^ (snd e)
+		 | _   -> "return")
+	    else  (match eo with 
+		     | Sharp_prog_var e -> "throw " ^ (snd e)
+		     | Sharp_finally e -> "throw " ^ e ^":"^(string_of_sharp st)
+		     | _   -> "throw "^(string_of_sharp st))
+	  | _ -> (match eo with 
+		    | Sharp_prog_var e -> "throw " ^ (snd e)
+		    | Sharp_finally e -> "throw " ^ e ^":" ^(string_of_sharp st)
+		    | _   -> "throw "^(string_of_sharp st)))end 
   | SCall ({exp_scall_type = _;
-	   exp_scall_method_name = id;
-	   exp_scall_arguments = idl;
-	   exp_scall_visible_names = _;
-	   exp_scall_path_id = pid;
-	   exp_scall_pos = l}) -> 
-	   string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")
+	    exp_scall_method_name = id;
+	    exp_scall_arguments = idl;
+	    exp_scall_visible_names = _;
+	    exp_scall_path_id = pid;
+	    exp_scall_pos = l}) -> 
+      string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")
   | Seq ({exp_seq_type = _;
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;
 	  exp_seq_pos = l}) -> 
-	  (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
+      (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
   | This _ -> "this"
   | Var ({exp_var_type = _;
 	  exp_var_name = id;
@@ -437,24 +437,25 @@ let rec string_of_exp = function
   | VarDecl ({exp_var_decl_type = t;
 	      exp_var_decl_name = id;
 	      exp_var_decl_pos = _}) -> 
-	      (string_of_typ t) ^" "^ id (*^ (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)*)
+      (string_of_typ t) ^" "^ id (*^ (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)*)
   | Unit l                     -> ""
   | While ({exp_while_condition = id;
 	    exp_while_body = e;
 	    exp_while_spec = fl;
-		exp_while_path_id = pid;
+	    exp_while_path_id = pid;
 	    exp_while_pos = l})  -> 
-	    string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
+      string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> 
-	let c = b.exp_catch_clause.exp_catch_flow_type in
-	"try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
-				(match b.exp_catch_clause.exp_catch_flow_var with 
-					| Some c -> (" @"^c^" ")
-					| _ -> " ")^
-				 (match b.exp_catch_clause.exp_catch_var with 
-					| Some (a,b) -> ((string_of_typ a)^":"^b^" ")
-					| _ -> " ")^") \n\t"^(string_of_exp b.exp_catch_clause.exp_catch_body)
+      let c = b.exp_catch_clause.exp_catch_flow_type in
+	string_of_control_path_id_opt b.exp_try_path_id  
+	  "try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
+	  (match b.exp_catch_clause.exp_catch_flow_var with 
+	     | Some c -> (" @"^c^" ")
+	     | _ -> " ")^
+	  (match b.exp_catch_clause.exp_catch_var with 
+	     | Some (a,b) -> ((string_of_typ a)^":"^b^" ")
+	     | _ -> " ")^") \n\t"^(string_of_exp b.exp_catch_clause.exp_catch_body)
 ;;
 
 
