@@ -145,6 +145,9 @@ let enable_case_inference = ref false
 
 let print_core = ref false
 
+let print_err_sleek = ref false
+
+
 let seq_to_try = ref false
 
 let print_input = ref false

@@ -1983,7 +1983,7 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
 						^ (Cprinter.string_of_context ctx0)
 						^ "\nconseq:\n"
 						^ (Cprinter.string_of_formula conseq)) pos;
-			            (CF.mkFailCtx_in (Basic_Reason (Some {fc_message ="incompatible flow type"; 
+			            (CF.mkFailCtx_in (Basic_Reason ({fc_message ="incompatible flow type"; 
 						fc_current_lhs = estate;
 						fc_orig_conseq = struc_formula_of_formula conseq pos;
 						fc_failure_pts =[];})), UnsatConseq) 
@@ -2237,7 +2237,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	end
   end else begin
     Debug.devel_pprint ("heap_entail_conjunct: formula is not valid\n") pos;
-    (CF.mkFailCtx_in (Basic_Reason (Some {
+    (CF.mkFailCtx_in (Basic_Reason ({
 	  fc_message = "failed in entailing pure";
 	  fc_current_lhs  = estate;
 	  fc_orig_conseq  = struc_formula_of_formula (formula_of_pure_with_branches rhs_p rhs_p_br pos) pos;
@@ -2461,7 +2461,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	  let fnode_results = find_node_one prog lhs_h lhs_p p2 pos in
 	    (************************* match_all_nodes ******************)
 	    match fnode_results with 
-	      | Failed -> (CF.mkFailCtx_in (Basic_Reason (Some {
+	      | Failed -> (CF.mkFailCtx_in (Basic_Reason ( {
 							    fc_message = "failed 1 ?? to find a match";
 							    fc_current_lhs = estate;
 							    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
@@ -2473,7 +2473,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 		  			^ "no aliased node for data node "
 		  			^ (Cprinter.string_of_h_formula ln2)
 		  			^ " is found in LHS\n") pos;
-		    (CF.mkFailCtx_in (Basic_Reason (Some {
+		    (CF.mkFailCtx_in (Basic_Reason ( {
 						      fc_message = "failed 2 ?? to find a match";
 						      fc_current_lhs = estate;
 						      fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
@@ -2526,7 +2526,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 						      es_path_label = estate.es_path_label;} in
 				let na,prf = match vd.view_base_case with
 				    (* | None ->  (CF.mkFailCtx_in(Basic_Reason None),UnsatConseq) *)
-				  | None ->  (CF.mkFailCtx_in(Basic_Reason (Some { 
+				  | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
 									      fc_message ="failure 1 ?? when checking for aliased node";
 									      fc_current_lhs = estate;
 									      fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
@@ -2542,7 +2542,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					  if b then 
 					    let ctx = unfold_context (Branches (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
 					      (ctx,TrueConseq)
-					  else  (CF.mkFailCtx_in(Basic_Reason  (Some { 
+					  else  (CF.mkFailCtx_in(Basic_Reason  ( { 
 										  fc_message ="failure 2 ?? when checking for aliased node";
 										  fc_current_lhs = estate;
 										  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
@@ -2633,7 +2633,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 						  end else 
 						    begin
 						      Debug.devel_pprint ("heap_entail_conjunct: " ^ "can't reduce, fold, unfold") pos;
-						      (CF.mkFailCtx_in (Basic_Reason (Some {
+						      (CF.mkFailCtx_in (Basic_Reason ( {
 											fc_message = "can't reduce, fold, unfold";
 											fc_current_lhs = estate;
 											fc_orig_conseq = estate.es_orig_conseq;
@@ -2657,7 +2657,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				(res, prf)
 			    end
 			  else
-			    (CF.mkFailCtx_in (Basic_Reason (Some{
+			    (CF.mkFailCtx_in (Basic_Reason ({
 							      fc_message = "there is a match at some node, not at root";
 							      fc_current_lhs = estate;
 							      fc_orig_conseq = estate.es_orig_conseq;
@@ -2678,7 +2678,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			  (*						let _ = print_string("result of check alias: " ^ (Cprinter.string_of_context_list rs1) ^ "\n") in*)
 			let rs2, prfs2 =
 			  if !Globals.use_set then check_node_helper rest 
-			  else (CF.mkFailCtx_in(Basic_Reason (Some { 
+			  else (CF.mkFailCtx_in(Basic_Reason ( { 
 								fc_message ="failure  4 ?? under node helper when checking for aliased node";
 								fc_current_lhs = estate;
 								fc_orig_conseq = struc_formula_of_formula conseq pos; 
@@ -2787,7 +2787,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 				   or not(is_distributive coer))))) 	(* coercion is not distributive *)
 	      then
 		(Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; 
-		 (CF.mkFailCtx_in(Basic_Reason(Some { 
+		 (CF.mkFailCtx_in(Basic_Reason( { 
 						 fc_message ="failed coercion application";
 						 fc_current_lhs = estate;
 						 fc_orig_conseq = estate.es_orig_conseq;
@@ -2826,7 +2826,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		    (res, prf)
 		end
 	  end
-	| _ -> (CF.mkFailCtx_in(Basic_Reason (Some { 
+	| _ -> (CF.mkFailCtx_in(Basic_Reason ( { 
 						fc_message ="failed coercion application, found data expected view";
 						fc_current_lhs = estate;
 						fc_orig_conseq = estate.es_orig_conseq;
@@ -2946,7 +2946,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos pid =
   (*******************************************************************************************************************************************************************************************)
   flush stdout;
-  if Util.empty coer.coercion_univ_vars then (CF.mkFailCtx_in ( Basic_Reason ( Some {
+  if Util.empty coer.coercion_univ_vars then (CF.mkFailCtx_in ( Basic_Reason (  {
 										 fc_message = "failed apply_universal";
 										 fc_current_lhs = estate;
 										 fc_orig_conseq = estate.es_orig_conseq;
@@ -2994,7 +2994,7 @@ and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lh
   else None in
     match univ_r,left_r,right_r with
 	(* | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), []) *)
-      | None,None,None -> (CF.mkFailCtx_in(Basic_Reason (Some { 
+      | None,None,None -> (CF.mkFailCtx_in(Basic_Reason ( { 
 							   fc_message ="cannot find matching node in antecedent (do coercion) ";
 							   fc_current_lhs = estate;
 							   fc_orig_conseq = struc_formula_of_formula conseq pos;
@@ -3039,7 +3039,7 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lh
 	coer.coercion_body tmp_prf coer.coercion_name
       in
 	(res, [prf])
-    end else (CF.mkFailCtx_in( Basic_Reason (Some { 
+    end else (CF.mkFailCtx_in( Basic_Reason ( { 
 					       fc_message ="failed coercion application";
 					       fc_current_lhs = estate;
 					       fc_orig_conseq = estate.es_orig_conseq;
@@ -3062,11 +3062,11 @@ and apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t rhs
 	    coer.coercion_body tmp_prf  coer.coercion_name
 	  in
 	    (res, [prf])
-	end else (CF.mkFailCtx_in(Basic_Reason (Some {fc_message ="failed right coercion application";
+	end else (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
 						      fc_current_lhs = estate;
 						      fc_orig_conseq = estate.es_orig_conseq;
 						      fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
-    else (CF.mkFailCtx_in(Basic_Reason (Some{fc_message ="failed right coercion application";
+    else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application";
 					     fc_current_lhs = estate;
 					     fc_orig_conseq = estate.es_orig_conseq;
 					     fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) 

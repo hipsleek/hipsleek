@@ -1296,7 +1296,7 @@ and fail_context = {
       }  
   
 and fail_type =
-  | Basic_Reason of fail_context option
+  | Basic_Reason of fail_context
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type)
