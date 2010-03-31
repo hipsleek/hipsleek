@@ -1389,14 +1389,14 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is
                         (* print_string ("\nConseq ==> :"^(to_string conseq)); *)
 			let list_context_res,prf = f (*heap_entail_one_context_struc*) prog is_folding is_universal has_post c2 conseq pos pid in
 			  (* print_string ("\nOutcome ==> "^(Cprinter.string_of_list_context list_context_res)) ; *)
-			  let res = match list_context_res with
-			    | FailCtx t -> [([(lbl,t)],[])]
-			    | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in
-			    (res, prf)) succ_branches in
+			let res = match list_context_res with
+			  | FailCtx t -> [([(lbl,t)],[])]
+			  | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in
+			  (res, prf)) succ_branches in
   let res_l,prf_l =List.split res in
-  (* print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)
+    (* print_string ("\nCombining ==> :"^(Cprinter.string_of_list_list_partial_context res_l)); *)
   let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
-  (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)
+    (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)
   let proof = ContextList { 
     context_list_ante = [];
     context_list_conseq = struc_formula_of_formula (mkTrue (mkTrueFlow ()) pos) pos;
@@ -2524,7 +2524,12 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 						      es_unsat_flag = false;
 						      es_path_label = estate.es_path_label;} in
 				let na,prf = match vd.view_base_case with
-				  | None ->  (CF.mkFailCtx_in(Basic_Reason None),UnsatConseq)
+				    (* | None ->  (CF.mkFailCtx_in(Basic_Reason None),UnsatConseq) *)
+				  | None ->  (CF.mkFailCtx_in(Basic_Reason (Some { 
+									      fc_message ="failure 1 ?? when checking for aliased node";
+									      fc_current_lhs = estate;
+									      fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+									      fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), UnsatConseq)
 				  | Some (bc1,(base1,branches1)) -> 
 				      begin
 					let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
@@ -2536,7 +2541,11 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					  if b then 
 					    let ctx = unfold_context (Branches (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
 					      (ctx,TrueConseq)
-					  else  (CF.mkFailCtx_in(Basic_Reason None),TrueConseq)
+					  else  (CF.mkFailCtx_in(Basic_Reason  (Some { 
+										  fc_message ="failure 2 ?? when checking for aliased node";
+										  fc_current_lhs = estate;
+										  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+										  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
 				      end in
 				let _ = Util.pop_time "empty_predicate_testing" in
 				  if (isFailCtx na) then None
@@ -2569,60 +2578,66 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					if is_view anode then
 					  (Debug.devel_pprint ("do_coercion for " ^ (Cprinter.string_of_h_formula anode) ^ "\n") pos;
 					   do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid)
-					else (CF.mkFailCtx_in (Basic_Reason None), []) in
-					enable_distribution := copy_enable_distribution;
-					let prf1 = mkMatch ctx0 conseq ln2 [prf1] in
-					let prf = mkMatch ctx0 conseq ln2 (prf1 :: prf2) in
-					let res = (fold_context_left [res_es1;res_es2]) in
-					  (*let _ = print_string ("\nmatch "^(string_of_bool(isFailCtx res_es1))^
-					    "\n coerc: "^(string_of_bool(isFailCtx res_es2))^"\n result :"^
-					    (string_of_bool(isFailCtx res_es1))^"\n") in*)
-					let prf = match isFailCtx res_es1, isFailCtx res_es2 with
-					  | true,true -> prf
-					  | true,false ->  mkCoercion2 ctx0 conseq prf2
-					  | false ,true -> enable_distribution := true; prf1
-					  | false , false -> prf in
-					  (res,prf)
-			    else (* c1 not equal c2  *)
-			      begin
-				if is_view ln2 && is_data anode then 
-				  begin (* fold *)
-				    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: folding: "
-							^ (Cprinter.string_of_spec_var p2)
-							^ "\nante:\n"
-							^ (Cprinter.string_of_formula ante)
-							^ "\nln2:\n"
-							^ (Cprinter.string_of_h_formula ln2)
-							^ "\nrhs_p:\n"
-							^ (Cprinter.string_of_pure_formula rhs_p)) pos;
-				    do_fold p2
-				  end else if is_data ln2 && is_view anode then 
-				    begin (* unfold *)
-				      let delta1 = unfold (Prog prog) ante p1 true pos in
-				      let ctx1 = build_context ctx0 delta1 pos in
-				      let ctx1 = set_unsat_flag ctx1 true in
-				      let res_rs, prf1 = heap_entail_one_context prog
-					is_folding is_universal ctx1 conseq pos in
-				      let prf = mkUnfold ctx0 conseq anode prf1 in
-					(res_rs, prf)
-				    end else if !Globals.use_coercion then 
-				      begin
-					(* two different predicates match, try coercion *)
-					Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion") pos;
-					let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid in
-					let prf = mkCoercion2 ctx0 conseq prfs in
-					  (res, prf)
-				      end else 
-					begin
-					  Debug.devel_pprint ("heap_entail_conjunct: " ^ "can't reduce, fold, unfold") pos;
-					  (CF.mkFailCtx_in (Basic_Reason (Some {
-									    fc_message = "can't reduce, fold, unfold";
-									    fc_current_lhs = estate;
-									    fc_orig_conseq = estate.es_orig_conseq;
-									    fc_failure_pts =match pid with | Some s-> [s] | _ -> []; 
-									  })), Failure)
-					end
-			      end (*end for c1 not equal c2*)
+					    (* else (CF.mkFailCtx_in (Basic_Reason None), []) in *)
+					else (CF.mkFailCtx_in (Basic_Reason 
+								 (Some {
+ 								    fc_message ="failure 3 ?? when checking for aliased node";
+ 								    fc_current_lhs = estate;
+ 								    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+ 								    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),[]) in
+					  enable_distribution := copy_enable_distribution;
+					  let prf1 = mkMatch ctx0 conseq ln2 [prf1] in
+					  let prf = mkMatch ctx0 conseq ln2 (prf1 :: prf2) in
+					  let res = (fold_context_left [res_es1;res_es2]) in
+					    (*let _ = print_string ("\nmatch "^(string_of_bool(isFailCtx res_es1))^
+					      "\n coerc: "^(string_of_bool(isFailCtx res_es2))^"\n result :"^
+					      (string_of_bool(isFailCtx res_es1))^"\n") in*)
+					  let prf = match isFailCtx res_es1, isFailCtx res_es2 with
+					    | true,true -> prf
+					    | true,false ->  mkCoercion2 ctx0 conseq prf2
+					    | false ,true -> enable_distribution := true; prf1
+					    | false , false -> prf in
+					    (res,prf)
+					else (* c1 not equal c2  *)
+					  begin
+					    if is_view ln2 && is_data anode then 
+					      begin (* fold *)
+						Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: folding: "
+								    ^ (Cprinter.string_of_spec_var p2)
+								    ^ "\nante:\n"
+								    ^ (Cprinter.string_of_formula ante)
+								    ^ "\nln2:\n"
+								    ^ (Cprinter.string_of_h_formula ln2)
+								    ^ "\nrhs_p:\n"
+								    ^ (Cprinter.string_of_pure_formula rhs_p)) pos;
+						do_fold p2
+					      end else if is_data ln2 && is_view anode then 
+						begin (* unfold *)
+						  let delta1 = unfold (Prog prog) ante p1 true pos in
+						  let ctx1 = build_context ctx0 delta1 pos in
+						  let ctx1 = set_unsat_flag ctx1 true in
+						  let res_rs, prf1 = heap_entail_one_context prog
+						    is_folding is_universal ctx1 conseq pos in
+						  let prf = mkUnfold ctx0 conseq anode prf1 in
+						    (res_rs, prf)
+						end else if !Globals.use_coercion then 
+						  begin
+						    (* two different predicates match, try coercion *)
+						    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion") pos;
+						    let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid in
+						    let prf = mkCoercion2 ctx0 conseq prfs in
+						      (res, prf)
+						  end else 
+						    begin
+						      Debug.devel_pprint ("heap_entail_conjunct: " ^ "can't reduce, fold, unfold") pos;
+						      (CF.mkFailCtx_in (Basic_Reason (Some {
+											fc_message = "can't reduce, fold, unfold";
+											fc_current_lhs = estate;
+											fc_orig_conseq = estate.es_orig_conseq;
+											fc_failure_pts =match pid with | Some s-> [s] | _ -> []; 
+										      })), Failure)
+						    end
+					  end (*end for c1 not equal c2*)
 			  end (*end of match at root*)
 			  else if !Globals.use_coercion then (* there is a match at some node, but not at root *)
 			    
@@ -2660,10 +2675,18 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			  (*						let _ = print_string("result of check alias: " ^ (Cprinter.string_of_context_list rs1) ^ "\n") in*)
 			let rs2, prfs2 =
 			  if !Globals.use_set then check_node_helper rest 
-			  else (CF.mkFailCtx_in(Basic_Reason None), [])
+			  else (CF.mkFailCtx_in(Basic_Reason (Some { 
+								fc_message ="failure  4 ?? under node helper when checking for aliased node";
+								fc_current_lhs = estate;
+								fc_orig_conseq = struc_formula_of_formula conseq pos; 
+								fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
 			in
 			  ((fold_context_left [rs1;rs2]), prf1 :: prfs2)
-		    | [] -> (CF.mkFailCtx_in(Basic_Reason None), []) in						
+		    | [] -> (CF.mkFailCtx_in(Basic_Reason (Some { 
+								fc_message ="failure  5 ?? under node helper when checking for aliased node";
+								fc_current_lhs = estate;
+								fc_orig_conseq = struc_formula_of_formula conseq pos; 
+								fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) in						
 		    
 		  (* finally, check all matches  *)
 		  let rs, prfs = check_node_helper matches in
@@ -2966,7 +2989,12 @@ and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lh
       Some (right_res,right_prf)
   else None in
     match univ_r,left_r,right_r with
-      | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), [])
+	(* | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), []) *)
+      | None,None,None -> (CF.mkFailCtx_in(Basic_Reason (Some { 
+							   fc_message ="failure 0 ?? nothing found in do coercion ";
+							   fc_current_lhs = estate;
+							   fc_orig_conseq = struc_formula_of_formula conseq pos;
+							   fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
       | Some (c1,c2), None, None 
       | None, Some (c1,c2), None  
       | None, None, Some (c1,c2) -> ((fold_context_left c1),c2)

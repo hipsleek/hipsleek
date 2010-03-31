@@ -58,7 +58,7 @@ void m1a (ref int i, e1 z) throws e1
 	requires z::e1<>
 	//ensures i'=3 or eres::e1<> & i>0;
 	ensures //res::e5<> & i'=2 & flow e1 or 
-        res::e1<> & i>0 & i'=4 & flow e2 or  
+        res::e2<> & i>0 & i'=4 & flow e2 or  
 		res::e1<> & i>0 & i'=1 & flow e1 or
 		i<=0 & i'=-3;
 {
