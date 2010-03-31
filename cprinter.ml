@@ -566,7 +566,7 @@ and string_of_context_list ctx = String.concat "\n;\n" (List.map string_of_conte
 
 and string_of_fail_type ft :string = 
   let f = (fun c l-> match c with
-    | Trivial_Reason s -> " Trivial Fail : "^s^"\n"
+    | Trivial_Reason s -> " Trivial fail : "^s^"\n"
       | Basic_Reason br -> (string_of_fail_estate br)
       | Or_Reason _ -> "fail_Or(\n" ^(String.concat "\n,\n" l)^")\n"
       | And_Reason _ -> "fail_And(\n" ^(String.concat "\n,\n" l)^")\n") in

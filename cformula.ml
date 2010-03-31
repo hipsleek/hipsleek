@@ -1431,7 +1431,7 @@ let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) :
   
   (*context set union*)
 
-let fold_context_left c_l = match (List.length c_l) with
+let union_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "folding empty context list \n"}
   | 1 -> (List.hd c_l)
@@ -1441,6 +1441,8 @@ let fold_context_left c_l = match (List.length c_l) with
      | FailCtx t1,SuccCtx t2 -> SuccCtx t2
      | SuccCtx t1,FailCtx t2 -> SuccCtx t1
      | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l)
+
+let fold_context_left c_l = union_context_left c_l 
   
   (*list_context or*)
 let or_list_context c1 c2 = match c1,c2 with
