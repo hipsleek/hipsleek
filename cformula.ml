@@ -2428,7 +2428,8 @@ let fold_partial_context_left_union (c_l:(list_partial_context list)) = match (L
 (* convert entail state to ctx with nf flow and quantify res
    variable *)
 (* need also a binding to catch handler's bound var *)
-let conv_elim_res (cvar:typed_ident option)  (c:entail_state) = 
+let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
+    (elim_ex_fn: context -> context) = 
   let rest, b_rez = get_result_type c.es_formula in
   let ctx = (Ctx {c with es_formula = 
       (substitute_flow_into_f !n_flow_int c.es_formula) } )  in
@@ -2440,9 +2441,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state) =
       	  let vsv_f = formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkRes rest] ctx1 in
-      	  (* if !Globals.elim_exists then elim_exists_ctx ctx1 else  *)
-          (* can move elim_exists to cformula? *)
-          ctx1
+      	  if !Globals.elim_exists then elim_ex_fn ctx1 else  ctx1
         end
           
 (* convert entail state to ctx with nf flow *)
@@ -2456,42 +2455,45 @@ let conv_lst (c:entail_state) (nf_lst:nflow list) =
     | x::xs -> Some (List.fold_left (fun acc_ctx y -> OCtx (conv c y,acc_ctx)) (conv c x)  xs)
 
 let rec splitter (c:context) 
-    (nf:nflow) (cvar:typed_ident option)  
+    (nf:nflow) (cvar:typed_ident option)  (elim_ex_fn: context -> context)
     (* : (context option, context option) (\* caught under nf flow, escaped from nf flow*\)   *)
     =
-  match c with
-    | Ctx b -> 
-	let ff =(flow_formula_of_ctx c no_pos) in	
-	if (subsume_flow nf ff.formula_flow_interval) then  (Some
-      (conv_elim_res cvar b),None) (* change caught item to normal flow *)
-	  else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
-      else (* let t_caught = intersect_flow nf
-              ff.formula_flow_interval in *)
-	  let t_escape_lst = subtract_flow ff.formula_flow_interval nf in
-      (Some (conv_elim_res cvar b), (* change caught item to normal flow *)
-	     conv_lst b t_escape_lst)
-    | OCtx (b1,b2) -> 
-	    let (r11,r12) = splitter b1 nf cvar in
-	    let (r21,r22) = splitter b2 nf cvar in
-	let r1 = match (r11,r21) with 
-	  | None, None -> None
-	  | Some c, None -> Some c
-	  | None, Some c -> Some c
-	  | Some c1, Some c2 -> Some (mkOCtx c1 c2 no_pos)	in
-	let r2 = match (r12,r22) with 
-	  | None, None -> None
-	  | Some c, None -> Some c
-	  | None, Some c -> Some c
-	  | Some c1, Some c2 -> Some (mkOCtx c1 c2 no_pos) in
-	  (r1,r2) 
+  let rec helper c = 
+    match c with
+      | Ctx b -> 
+	      let ff =(flow_formula_of_ctx c no_pos) in	
+	      if (subsume_flow nf ff.formula_flow_interval) then  (Some
+            (conv_elim_res cvar b elim_ex_fn),None) (* change caught item to normal flow *)
+	      else if not(overlapping nf ff.formula_flow_interval) then (None,Some c)
+          else (* let t_caught = intersect_flow nf
+                  ff.formula_flow_interval in *)
+	        let t_escape_lst = subtract_flow ff.formula_flow_interval nf in
+            (Some (conv_elim_res cvar b elim_ex_fn), (* change caught item to normal flow *)
+	        conv_lst b t_escape_lst)
+      | OCtx (b1,b2) -> 
+	      let (r11,r12) = helper b1 in
+	      let (r21,r22) = helper b2 in
+	      let r1 = match (r11,r21) with 
+	        | None, None -> None
+	        | Some c, None -> Some c
+	        | None, Some c -> Some c
+	        | Some c1, Some c2 -> Some (mkOCtx c1 c2 no_pos)	in
+	      let r2 = match (r12,r22) with 
+	        | None, None -> None
+	        | Some c, None -> Some c
+	        | None, Some c -> Some c
+	        | Some c1, Some c2 -> Some (mkOCtx c1 c2 no_pos) in
+	      (r1,r2) in
+  helper c
 
 (* fn transforms context to list of partial context *)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
 let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
-    (fn:  path_trace -> context ->  list_partial_context) (fn_esc: context -> context) ((fl,sl):partial_context) : list_partial_context = 
+    (fn:  path_trace -> context ->  list_partial_context) (fn_esc:
+      context -> context) (elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
   let r = List.map (fun (l,c)-> 
-	let r1,r2 = splitter c nf cvar in 
+	let r1,r2 = splitter c nf cvar elim_ex_fn in 
 	let r1 = match r1 with
 	  | Some c-> Some (fn l c )  (* CF.SuccCtx[(CF.simplify_context c)] *)
 	  | None -> None in

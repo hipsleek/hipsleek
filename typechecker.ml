@@ -687,8 +687,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	        (check_exp prog proc [CF.mk_partial_context lpc l] cc.exp_catch_body post_start_label) in
 
 	      let apply_catch_partial_context2 (pc : CF.partial_context) :CF.list_partial_context =
-	        CF.splitter_partial_context (cc.exp_catch_flow_type)
-	          (cc.exp_catch_var) fn (fun c -> CF.add_path_id c (pid,0)) pc in
+	        (CF.splitter_partial_context (cc.exp_catch_flow_type)
+	          (cc.exp_catch_var) fn (fun c -> CF.add_path_id c (pid,0)) elim_exists_ctx) pc in
 
 	      let rec apply_catch_context (ctx_crt : CF.context) (lab:path_trace) :CF.list_partial_context =
 	        match ctx_crt with
@@ -735,7 +735,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
     (* print_string ("\n ***HELPER_IN-list of partial context "^Cprinter.summary_list_partial_context ctx); *)
     if CF.isFailListPartialCtx cl then cl
     else
-      let r = List.map (CF.splitter_partial_context !n_flow_int None (fun l c -> check_exp1 [CF.mk_partial_context c l]) (fun x -> x)) cl in
+      let r = List.map (CF.splitter_partial_context !n_flow_int None
+	    (fun l c -> check_exp1 [CF.mk_partial_context c l]) (fun x
+	      -> x) (fun x -> x)) cl in
       let r1 = CF.fold_partial_context_left_union r in
 	  (* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx); *)
 	  r1 
