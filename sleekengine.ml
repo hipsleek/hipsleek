@@ -195,8 +195,9 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 	let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs in
   residues := Some rs;
 	  if CF.isFailCtx rs then
-		(print_string (Cprinter.string_of_list_context rs);
-		print_string ("Fail.\n"))
+        (* need flag to toggle printing of error mesage *)       
+		(* (print_string (Cprinter.string_of_list_context rs); *)
+		print_string ("Fail.\n")
 	  else
 		print_string ("Valid.\n")
   with
