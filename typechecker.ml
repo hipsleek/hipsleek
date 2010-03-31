@@ -320,10 +320,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	      Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_partial_context then_ctx)) pos;
 	      let else_ctx =combine_list_partial_context_and_unsat_now prog ctx else_cond_prim in
 	      Debug.devel_pprint ("conditional: else_delta:\n" ^ (Cprinter.string_of_list_partial_context else_ctx)) pos;
-	      let then_ctx1 = CF.add_cond_label_list_partial_context pid 0 then_ctx in
-	      let else_ctx1 = CF.add_cond_label_list_partial_context pid 1 else_ctx in
-	      let then_ctx2 = check_exp prog proc then_ctx1 e1 post_start_label in
-	      let else_ctx2 = check_exp prog proc else_ctx1 e2 post_start_label in
+	      (* let then_ctx1 = CF.add_cond_label_list_partial_context pid 0 then_ctx in *)
+	      (* let else_ctx1 = CF.add_cond_label_list_partial_context pid 1 else_ctx in *)
+	      let then_ctx2 = check_exp prog proc then_ctx e1 post_start_label in
+	      let else_ctx2 = check_exp prog proc else_ctx e2 post_start_label in
 	      let res = CF.list_partial_context_or then_ctx2 else_ctx2 in
           (* print_string ("\nBefore THEN  :"^(Cprinter.summary_list_partial_context then_ctx)); *)
 	      (* print_string ("\nBefore THEN  :"^(Cprinter.summary_list_partial_context then_ctx2)); *)
@@ -746,6 +746,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
   match e0 with
     | Label e -> 
 	    let ctx = CF.add_path_id_ctx_partial_list ctx e.exp_label_path_id in
+	    let ctx = CF.add_cond_label_list_partial_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	    (check_exp prog proc ctx e.exp_label_exp post_start_label)
     | Dprint ({exp_dprint_string = str;
 	  exp_dprint_visible_names = visib_names;

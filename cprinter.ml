@@ -337,7 +337,7 @@ let string_of_sharp st = match st with
 	| Sharp_v  f -> "flow_var "^f
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
-  | Label l-> string_of_control_path_id_opt (fst l.exp_label_path_id) (string_of_exp l.exp_label_exp)
+  | Label l-> "LABEL! :"^((string_of_int (snd l.exp_label_path_id))^(string_of_exp l.exp_label_exp))
   | Java ({exp_java_code = code}) -> code
   | CheckRef _ -> ""
   | Assert ({exp_assert_asserted_formula = f1o; exp_assert_assumed_formula = f2o; exp_assert_pos = l; exp_assert_path_id = pid}) -> 
