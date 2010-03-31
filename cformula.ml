@@ -1297,6 +1297,7 @@ and fail_context = {
   
 and fail_type =
   | Basic_Reason of fail_context option
+  | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type)
   
@@ -2220,6 +2221,7 @@ let rec transform_context f (c:context):context =
 		
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
+    | Trivial_Reason s -> c
     | Basic_Reason br ->Basic_Reason (f br)
     | Or_Reason (ft1,ft2) ->Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | And_Reason (ft1,ft2) ->And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
@@ -2254,6 +2256,7 @@ let transform_list_partial_context f (c:list_partial_context):list_partial_conte
 let rec fold_fail_context f (c:fail_type) = 
   (*let f_br,f_or,f_and = f in*)
   match c with
+    | Trivial_Reason br -> f c []
     | Basic_Reason br -> f c []
     | Or_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     | And_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
