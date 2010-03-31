@@ -2462,21 +2462,21 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	    (************************* match_all_nodes ******************)
 	    match fnode_results with 
 	      | Failed -> (CF.mkFailCtx_in (Basic_Reason (Some {
-							    fc_message = "failed to find a match";
+							    fc_message = "failed 1 ?? to find a match";
 							    fc_current_lhs = estate;
-							    fc_orig_conseq = estate.es_orig_conseq;
+							    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 							    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) (* p2 is not mentioned in LHS, failure *)
 	      | NoMatch -> begin (* p2 is mentioned in LHS, but no matching
 				    node/predicate is found *)
 		  if is_data ln2 then begin (* fail *)
 		    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
-					^ "no aliased node for data node "
-					^ (Cprinter.string_of_h_formula ln2)
-					^ " is found in LHS\n") pos;
+		  			^ "no aliased node for data node "
+		  			^ (Cprinter.string_of_h_formula ln2)
+		  			^ " is found in LHS\n") pos;
 		    (CF.mkFailCtx_in (Basic_Reason (Some {
-						      fc_message = "failed to find a match";
+						      fc_message = "failed 2 ?? to find a match";
 						      fc_current_lhs = estate;
-						      fc_orig_conseq = estate.es_orig_conseq;
+						      fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 						      fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) 
 		  end
 		  else begin (* attempting to fold against the base case *)
@@ -2578,13 +2578,13 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					if is_view anode then
 					  (Debug.devel_pprint ("do_coercion for " ^ (Cprinter.string_of_h_formula anode) ^ "\n") pos;
 					   do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid)
-					    (* else (CF.mkFailCtx_in (Basic_Reason None), []) in *)
-					else (CF.mkFailCtx_in (Basic_Reason 
-								 (Some {
- 								    fc_message ="failure 3 ?? when checking for aliased node";
- 								    fc_current_lhs = estate;
- 								    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
- 								    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),[]) in
+					    else (CF.mkFailCtx_in (Basic_Reason None), []) in
+					(* else (CF.mkFailCtx_in (Basic_Reason  *)
+					(* 			 (Some { *)
+ 					(* 			    fc_message ="failure 3 ?? when checking for aliased node"; *)
+ 					(* 			    fc_current_lhs = estate; *)
+ 					(* 			    fc_orig_conseq = struc_formula_of_formula conseq pos; (\* estate.es_orig_conseq; *\) *)
+ 					(* 			    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),[]) in *)
 					  enable_distribution := copy_enable_distribution;
 					  let prf1 = mkMatch ctx0 conseq ln2 [prf1] in
 					  let prf = mkMatch ctx0 conseq ln2 (prf1 :: prf2) in
@@ -2682,11 +2682,12 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 								fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
 			in
 			  ((fold_context_left [rs1;rs2]), prf1 :: prfs2)
-		    | [] -> (CF.mkFailCtx_in(Basic_Reason (Some { 
-								fc_message ="failure  5 ?? under node helper when checking for aliased node";
-								fc_current_lhs = estate;
-								fc_orig_conseq = struc_formula_of_formula conseq pos; 
-								fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) in						
+		    | [] -> (CF.mkFailCtx_in(Basic_Reason None),[]) in
+(* (Some {  *)
+(* 								fc_message ="failure  5 ?? under node helper when checking for aliased node"; *)
+(* 								fc_current_lhs = estate; *)
+(* 								fc_orig_conseq = struc_formula_of_formula conseq pos;  *)
+(* 								fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) in	 *)					
 		    
 		  (* finally, check all matches  *)
 		  let rs, prfs = check_node_helper matches in
@@ -2991,7 +2992,7 @@ and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lh
     match univ_r,left_r,right_r with
 	(* | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), []) *)
       | None,None,None -> (CF.mkFailCtx_in(Basic_Reason (Some { 
-							   fc_message ="failure 0 ?? nothing found in do coercion ";
+							   fc_message ="cannot find matching node in antecedent (do coercion) ";
 							   fc_current_lhs = estate;
 							   fc_orig_conseq = struc_formula_of_formula conseq pos;
 							   fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])

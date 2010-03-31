@@ -346,7 +346,7 @@ let rec string_of_exp = function
 	  let str1 = 
 	    match f1o with
 	      | None -> ""
-	      | Some f1 -> "assert " ^ (string_of_struc_formula f1) in
+	      | Some f1 -> "assert " ^(string_of_control_path_id pid (":"^(string_of_struc_formula f1))) in
 	  let str2 =
 	    match f2o with
 	      | None -> ""

@@ -25,6 +25,7 @@ case {
  node y;
  y = null;
  if (x>0) {
+y.val=0;
         y=new node(1,null);
  }
  else {

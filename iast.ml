@@ -820,7 +820,7 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 
 let rec label_exp e = match e with
   | Assert e -> 
-		let nl = fresh_formula_label "" in
+		let nl = fresh_formula_label (snd e.exp_assert_path_id) in
 		iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
 		Assert {e with exp_assert_path_id = nl }
   | Assign e -> 

@@ -1397,7 +1397,8 @@ assert_statement
   : ASSERT opt_label formulas SEMICOLON {
 	Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $3)),(snd $3));
 			 exp_assert_assumed_formula = None;
-			 exp_assert_path_id = (fresh_formula_label $2);
+			 exp_assert_path_id = begin (* print_string ("XXX"^$2); *)
+                                               fresh_formula_label $2 end;
 			 exp_assert_pos = get_pos 1 }
   }
   | ASSUME opt_label disjunctive_constr SEMICOLON {
@@ -1409,7 +1410,9 @@ assert_statement
   | ASSERT opt_label formulas ASSUME disjunctive_constr SEMICOLON {
 	  Assert { exp_assert_asserted_formula = Some ((F.subst_stub_flow_struc n_flow (fst $3)),(snd $3));
 			   exp_assert_assumed_formula = Some (F.subst_stub_flow n_flow $5);
-			   exp_assert_path_id = (fresh_formula_label $2);
+			   exp_assert_path_id = begin (* print_string ("XXX"^$2); *)
+						  fresh_formula_label $2
+                                                  end ;
 			   exp_assert_pos = get_pos 1 }
     }
 ;

@@ -417,7 +417,7 @@ let rec string_of_exp = function
   | FloatLit ({exp_float_lit_val = f})
                                    -> string_of_float f
   | Null l                         -> "null"
-  | Assert _                       -> "assert <incomplete>"
+  | Assert l                       -> snd(l.exp_assert_path_id)^" :assert "
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"
