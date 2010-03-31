@@ -1,0 +1,27 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll2<n> == self = null & n = 0
+	or self::node<next = r> * r::ll2<n-1>
+	inv n >= 0.
+
+pred ll3<n> == self::node<next = r> * r::ll2<n-1>
+	inv n >= 1.
+
+checkentail x::ll<n> & n > 3 |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+
+checkentail x::ll<n> & n <=1 |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+
+checkentail x=null |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+
+checkentail x=null or x::node<_,null> |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+
+checkentail x::node<_,null> |- x=null or x::node<next = r1> * r1::node<next = r2> & r2=null.
+
+checkentail x::ll<2> or x::node<_,null> |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+
+
+
