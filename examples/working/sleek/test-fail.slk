@@ -23,5 +23,7 @@ checkentail x::node<_,null> |- x=null or x::node<next = r1> * r1::node<next = r2
 
 checkentail x::ll<2> or x::node<_,null> |- x::node<next = r1> * r1::node<next = r2> & r2=null.
 
+checkentail x::ll<2> or x::node<_,null> |- x::ll<n> & n>2.
+
 
 
