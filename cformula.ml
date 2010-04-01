@@ -1281,30 +1281,34 @@ type entail_state = {
   es_orig_ante   : formula        ;  (* original antecedent formula *) 
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
+  es_prior_steps : steps; (* prior steps in reverse order *)
 }
 
 and context = 
   | Ctx of entail_state
   | OCtx of (context * context) (* disjunctive context *)
-  (*| FailCtx of (fail_context list)*)
+      (*| FailCtx of (fail_context list)*)
+
+and steps = string list
 
 and fail_context = {
-      fc_message : string;          (* error message *)
-      fc_current_lhs : entail_state;     (* LHS context with success points *)
-      fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
-      fc_failure_pts : formula_label list;     (* failure points in conseq *) 
-      }  
-  
+  fc_prior_steps : steps; (* prior steps in reverse order *)
+  fc_message : string;          (* error message *)
+  fc_current_lhs : entail_state;     (* LHS context with success points *)
+  fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
+  fc_failure_pts : formula_label list;     (* failure points in conseq *) 
+}  
+    
 and fail_type =
   | Basic_Reason of fail_context
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
   | And_Reason of (fail_type * fail_type)
-  
+      
 and list_context = 
   | FailCtx of fail_type 
   | SuccCtx of context list
-  
+      
 and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
@@ -1336,6 +1340,7 @@ let empty_es flowt pos =
   es_orig_ante = x;
   es_orig_conseq = [mkETrue flowt pos] ;
   es_path_label  =[];
+  es_prior_steps  = [];
 }
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)
@@ -2405,7 +2410,8 @@ let normalize_max_renaming_s f pos b ctx =
   must be cleared.
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
- Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula = es.es_formula; es_path_label = es.es_path_label;} 
+  Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula =
+      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
  
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -2514,6 +2520,28 @@ let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)
   ) sl 
   in
   list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
+
+let add_to_steps (ss:steps) (s:string) = s::ss ;;
+
+let get_prior_steps (c:context) = 
+  match c with
+    | Ctx es -> es.es_prior_steps 
+    | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] ;;
+
+let add_to_context (c:context) (s:string) = 
+  match c with
+    | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
+    | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c ;;
+
+let add_to_estate (es:entail_state) (s:string) = 
+  {es with es_prior_steps = s::es.es_prior_steps; }
+
+let overwrite_estate_with_steps (es:entail_state) (ss:steps) = 
+  {es with es_prior_steps = ss; }
+
+let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
+  {es with es_prior_steps = ss@es.es_prior_steps; }
+
 
 (* let splitter_partial_context_pc  (nf:nflow) 
 

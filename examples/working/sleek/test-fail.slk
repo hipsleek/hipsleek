@@ -27,21 +27,58 @@ checkentail x::ll<2> or x::node<_,null> |- x::node<next = r1> * r1::node<next = 
 checkentail x::ll<n> & n<2 |- case { x=null -> [] x=null;
                                     x!=null ->  [] x::node<_,null>; }.
 
-checkentail x::ll<2> or x::node<_,null> |- x::ll<n> & n>2.
-
 checkentail x::ll<2> or x::node<_,null> |- x::ll2<n> & n>2.
 
 checkentail x::ll<n> & n<2 |- case { x=null -> [] x=null;
                                     x!=null ->  [] x::node<_,null>; }.
 
+checkentail x::ll<n> & n<2 |- x=null or x::node<_,null>.
 */
+/*
+
+ left OR on ante
+ para OR on conseq
+ matching view/node
+ fail to entail pure x=null in conseq;
+  x::ll<n> & n<2 |- x=null 
+
+OR 
+
+ right OR on ante
+ para OR on conseq; 
+ folding x::ll<n> with n=1 (to add)
+ fail to match x::node<_,null> of conseq
+ x=null &n=0 |-/ x::node<_,null>
+
+checkentail x::ll<2> or x::node<_,null> |- x::ll<n> & n>2.
+
+*/
+
+checkentail x::ll<2> or x::node<_,null> |- x::ll<n> & n>2.
+
+
+/*
+
+
+ left \/ on ante;
+ match x::ll<2> with x::ll<m>;
+ fail to entail pure n>2;
+ n=2 |- n>2
+
+AND
+
+ right \/ on ante;
+ fold x::ll<n> with x::node<_,null> inst n=1
+ fail to entail pure n>2
+ x!=null & n=1 |- n>2
+
+
+checkentail x::ll<n> & n<2 |- case { x=null -> [] x=null;
+                                    x!=null ->  [] x::node<_,null>; }.
+
+checkentail x::ll<2> or x::node<_,null> |- x::ll2<n> & n>2.
 
 checkentail x::ll<n> & n<2 |- x=null or x::node<_,null>.
 
-
-
-
-
-
-
+*/
 

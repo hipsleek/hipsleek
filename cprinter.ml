@@ -535,7 +535,10 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
   Pretty printing fo the AST for the core language
 *)
 
-let string_of_path_trace pt =
+let string_of_prior_steps pt =
+  (String.concat "\n " (List.rev pt))
+
+let string_of_path_trace  pt =
   (String.concat ", " (List.map (fun (c1,c3)-> "("^(string_of_int_label c1 "")^","^(string_of_int c3)^")") pt))
 
 let string_of_estate (es : entail_state) = 
@@ -553,6 +556,7 @@ let string_of_estate (es : entail_state) =
   ^"\n es_path_label:"^ (string_of_path_trace es.es_path_label)
   
 let string_of_fail_estate (es:fail_context) : string = "{"^
+  "\n fc_prior_steps:\n "^(string_of_prior_steps es.fc_prior_steps)  ^
   "\n fc_message: "^es.fc_message ^
   "\n fc_current_lhs: "^ (string_of_estate es.fc_current_lhs) ^
   "\n fc_orig_conseq: "^ (string_of_struc_formula es.fc_orig_conseq )^ 
