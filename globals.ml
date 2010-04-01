@@ -289,3 +289,5 @@ let path_trace_gt p1 p2 =
   in gt (List.rev p1) (List.rev p2)
 
  
+let dummy_exception () = ()
+

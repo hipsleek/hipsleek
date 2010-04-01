@@ -917,6 +917,7 @@ let check_proc_wrapper prog proc =
     check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
+      dummy_exception();
       print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
