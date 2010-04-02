@@ -1350,7 +1350,8 @@ and filter_set (cl : list_context) : list_context =
 	    
 and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
     (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
-	(f: prog_decl->bool->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof))
+	(f: prog_decl->bool->bool->bool->context->'a -> loc
+    ->control_path_id->(list_context * proof))
 	) : (list_partial_context * proof) = 
   if (List.length cl)<1 then report_error pos ("heap_entail_struc_list_partial_context_init : encountered an empty list_partial_context \n")
   else
@@ -1472,6 +1473,9 @@ and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_uni
     let result, prf = heap_entail_after_sat_struc prog is_folding
       is_universal has_post ctx conseq pos pid []  in
     (result, prf)
+
+
+(* hello *)
 
 and heap_entail_after_sat_struc prog is_folding is_universal has_post
     ctx conseq pos pid (ss:steps) : (list_context * proof) =     

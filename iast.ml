@@ -367,6 +367,7 @@ let is_null (e : exp) : bool = match e with
   | Null _ -> true
   | _ -> false
 
+
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
