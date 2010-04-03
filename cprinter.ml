@@ -8,7 +8,7 @@ open Cformula
 
 module P = Cpure
 
-(* the formatter that fmt_ commands will use *)
+(* the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
 
 let fmt_string x = pp_print_string (!fmt) x
@@ -51,11 +51,9 @@ let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
  else (fmt_string "("; pr_elem e; fmt_string ")")
 
 (* this command invokes
-    f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close
-*)
+    f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close *)
 let pr_list_open_sep (f_open:unit -> unit) 
-    (f_close:unit -> unit) 
-    (f_sep:unit->unit)
+    (f_close:unit -> unit) (f_sep:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
   let rec helper xs = match xs with
     | [] -> failwith "cannot be [] here (pr_list_open_sep)"
@@ -83,15 +81,17 @@ let pr_brk_before op = (fun () -> fmt_cut() ; (fmt_string op))
 (*   fmt_space x *)
 
 
-let pr_args open_str close_str sep_str f xs = pr_list_open_sep 
-  (fun () -> fmt_open 1; fmt_string open_str)
-  (fun () -> fmt_string close_str; fmt_close();) 
-  (pr_brk_after sep_str) f xs
+let pr_args open_str close_str sep_str f xs = 
+  pr_list_open_sep 
+    (fun () -> fmt_open 1; fmt_string open_str)
+    (fun () -> fmt_string close_str; fmt_close();) 
+    (pr_brk_after sep_str) f xs
 
-let pr_op_args op open_str close_str sep_str f xs = pr_list_open_sep 
-  (fun () -> fmt_open 1; fmt_string op; fmt_string open_str)
-  (fun () -> fmt_string close_str; fmt_close();) 
-  (pr_brk_after sep_str) f xs
+let pr_op_args op open_str close_str sep_str f xs = 
+  pr_list_open_sep 
+    (fun () -> fmt_open 1; fmt_string op; fmt_string open_str)
+    (fun () -> fmt_string close_str; fmt_close();) 
+    (pr_brk_after sep_str) f xs
 
 let pr_tuple op f xs = pr_op_args op "(" ")" "," f xs
 
@@ -148,32 +148,34 @@ let pr_list_op op f xs = pr_list_open_sep
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
  
-let string_of_specvar x = match x with
-  | P.SpecVar (t, id, p) -> id ^ (match p with 
-	  | Primed    -> "'" 
-	  | Unprimed  -> "" )
+let string_of_specvar x = 
+  match x with
+    | P.SpecVar (t, id, p) -> id ^ (match p with 
+	    | Primed    -> "'" 
+	    | Unprimed  -> "" )
 
 (* check if top operator of e is associative and 
    return its list of arguments if so *)
-let exp_assoc_op (e:P.exp) : (string * P.exp list) option = match e with
-  | P.Add (e1,e2,_) -> Some (op_add_short,[e1;e2])
-  | P.Mult (e1,e2,_) -> Some (op_mult_short,[e1;e2])
-  | P.Max (e1,e2,_) -> Some (op_max_short,[e1;e2])
-  | P.Min (e1,e2,_) -> Some (op_min_short,[e1;e2])
-  | P.BagUnion (es,_) -> Some (op_union_short,es)
-  | P.BagIntersect (es,_) -> Some (op_intersect_short,es)
-  | _ -> None
+let exp_assoc_op (e:P.exp) : (string * P.exp list) option = 
+  match e with
+    | P.Add (e1,e2,_) -> Some (op_add_short,[e1;e2])
+    | P.Mult (e1,e2,_) -> Some (op_mult_short,[e1;e2])
+    | P.Max (e1,e2,_) -> Some (op_max_short,[e1;e2])
+    | P.Min (e1,e2,_) -> Some (op_min_short,[e1;e2])
+    | P.BagUnion (es,_) -> Some (op_union_short,es)
+    | P.BagIntersect (es,_) -> Some (op_intersect_short,es)
+    | _ -> None
 
-(* check if exp can be without a parenthesis,
-     e.g. trivial expr and prefix form
-*)
-let exp_wo_paren (e:P.exp) = match e with
-  | P.Null _ 
-  | P.Var _ 
-  | P.IConst _ 
-  | P.FConst _ | P.Max _ | P.Min _ | P.BagUnion _ | P.BagIntersect _ 
-    -> true
-  | _ -> false
+(* check if exp can be printed without a parenthesis,
+     e.g. trivial expr and prefix forms *)
+let exp_wo_paren (e:P.exp) = 
+  match e with
+    | P.Null _ 
+    | P.Var _ 
+    | P.IConst _ 
+    | P.FConst _ | P.Max _ | P.Min _ | P.BagUnion _ | P.BagIntersect _ 
+        -> true
+    | _ -> false
 
 (* print a formula exp to formatter *)
 let rec pr_formula_exp (e:P.exp) =
