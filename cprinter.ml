@@ -1,11 +1,183 @@
 (* pretty printing for cast *)
 
+open Format
 open Globals 
 open Lexing 
 open Cast 
 open Cformula
 
 module P = Cpure
+
+let fmt = ref (std_formatter)
+
+let fmt_string x = pp_print_string (!fmt) x
+let fmt_space x = pp_print_space (!fmt) x
+let fmt_break x = pp_print_break (!fmt) x
+let fmt_cut x = pp_print_cut (!fmt) x
+
+let fmt_open_box n = pp_open_box (!fmt) n
+let fmt_close_box x = pp_close_box (!fmt) x
+
+let fmt_open x = fmt_open_box x
+let fmt_close x = fmt_close_box x
+
+let pr_bracket_one pr_elem e =
+ (fmt_string "("; pr_elem e; fmt_string ")")
+
+let pr_bracket isSimple pr_elem e =
+ if (isSimple e) then pr_elem e
+ else (fmt_string "("; pr_elem e; fmt_string ")")
+
+let pr_list_open_sep (pr_open:unit -> unit) 
+    (pr_close:unit -> unit) 
+    (pr_sep:unit->unit)
+    (pr_elem:'a -> unit) (xs:'a list) : unit =
+  let rec helper xs = match xs with
+    | [x] -> (pr_elem x)
+    | y::ys -> (pr_elem y; pr_sep(); helper ys) 
+  in match xs with
+    | [] -> ()
+    | [x] -> (pr_elem x)
+    | xs -> pr_open(); (helper xs); pr_close() 
+
+let pr_brk_after op = (fun () -> fmt_string (op); fmt_cut() )
+let pr_brk_before op = (fun () -> fmt_cut() ; (fmt_string op))
+
+let pr_list_sep x = pr_list_open_sep (fun x -> x) (fun x -> x) x 
+
+let pr_list x = pr_list_sep fmt_space x;;
+
+let pr_list_comma x = pr_list_sep (fun () -> fmt_string ","; fmt_space()) x 
+
+let pr_list_args x = pr_list_open_sep 
+  (fun () -> fmt_open 1; fmt_string "(")
+  (fun () -> fmt_string ")"; fmt_close();) 
+  fmt_space x
+
+let pr_args open_str close_str sep_str = pr_list_open_sep 
+  (fun () -> fmt_open 1; fmt_string open_str)
+  (fun () -> fmt_string close_str; fmt_close();) 
+  (pr_brk_after sep_str)
+
+let pr_tuple x = pr_args "(" ")" "," x
+
+let pr_set x = pr_args "{" "}" "," x
+
+let pr_fn_args f op args = match args with
+  | [x] -> f x
+  | _ -> fmt_string op; (pr_tuple f args)
+
+let pr_list_op op = pr_list_open_sep 
+  (fun () -> fmt_open 1) fmt_close 
+  (pr_brk_after op) 
+
+let pr_op_sep  
+    (pr_sep: unit -> unit ) 
+    (isSimple: 'a -> bool)
+    (pr_elem: 'a -> unit)
+    (x:'a) (y:'a) 
+    =  (pr_bracket isSimple pr_elem x); pr_sep(); 
+       (pr_bracket isSimple pr_elem y)
+
+
+let pr_op op = pr_op_sep (pr_brk_after op)
+
+let pr_call  (isSimple:'a->bool) (pr_elem: 'a -> unit) (fn:string) (args:'a list)  
+    = fmt_string fn; (pr_list_args pr_elem args)  
+
+(* this op printing has no break *)
+let pr_op f = pr_op_sep (fun () -> fmt_string " ") f
+
+let pr_op_no f = pr_op_sep (fun () -> fmt_string " ") (fun x -> true) f
+
+(* this op printing allows break *)
+let pr_op_brk f = pr_op_sep fmt_space f
+
+(* this op do not require bracket *)
+let pr_op_brk_no f = pr_op_sep fmt_space (fun x -> true) f
+
+
+
+
+
+
+let precedence (op:string) : int =
+  match op with
+  | "&" -> 0
+  | _ -> -1
+
+ 
+let is_no_bracket (op:string) (trivial:'a->bool) 
+    (split:'a -> (string * 'a * 'a) option) (elem:'a) : bool  = 
+  if (trivial elem) then true
+  else 
+    match (split elem) with
+      | None -> false
+      | Some (op2,_,_) -> 
+         if (precedence op2) > (precedence op) then true
+         else false
+ 
+let string_of_specvar x = match x with
+  | P.SpecVar (t, id, p) -> id ^ (match p with 
+	  | Primed    -> "'" 
+	  | Unprimed  -> "" )
+
+let exp_assoc_op (e:P.exp) = match e with
+  | P.Add (e1,e2,_) -> Some ("+",e1,e2)
+  | P.Mult (e1,e2,_) -> Some ("*",e1,e2)
+  | P.Max (e1,e2,_) -> Some ("max",e1,e2)
+  | P.Min (e1,e2,_) -> Some ("min",e1,e2)
+  | _ -> None
+
+let exp_need_paren (e:P.exp) = match e with
+  | P.Null _ 
+  | P.Var _ 
+  | P.IConst _ 
+  | P.FConst _ | P.Max _ | P.Min _
+    -> true
+  | _ -> false
+
+let rec pr_formula_exp (e:P.exp) =
+  let pr_bk e =  pr_bracket exp_need_paren pr_formula_exp e in
+  match e with
+  | P.Null l -> fmt_string "null"
+  | P.Var (x, l) -> fmt_string (string_of_specvar x)
+  | P.IConst (i, l) -> fmt_string (string_of_int i)
+  | P.FConst (f, l) -> fmt_string (string_of_float f)
+  | P.Add (e1, e2, l) -> 
+      let args = bin_op_to_list "+" exp_assoc_op e in
+      pr_list_op "+" pr_bk args
+  | P.Mult (e1, e2, l) -> 
+      let args = bin_op_to_list "*" exp_assoc_op e in
+      pr_list_op "*" pr_bk  args
+  | P.Max (e1, e2, l) -> 
+      let args = bin_op_to_list "max" exp_assoc_op e in
+      pr_fn_args pr_formula_exp "max"  args
+  | P.Min (e1, e2, l) -> 
+      let args = bin_op_to_list "min" exp_assoc_op e in
+      pr_fn_args pr_formula_exp "min"  args
+  | P.Bag (elist, l) 	-> pr_set pr_formula_exp elist
+  | P.BagUnion (args, l) -> 
+      let args = bin_op_to_list "union" exp_assoc_op e in
+      pr_fn_args pr_formula_exp "union"  args
+  | P.BagIntersect (args, l) -> 
+      let args = bin_op_to_list "intersect" exp_assoc_op e in
+      pr_fn_args pr_formula_exp "intersect"  args
+  | P.Subtract (e1, e2, l) ->
+      pr_bk e1; pr_brk_after "-"; pr_bk e2
+  | P.Div (e1, e2, l) ->
+      pr_bk e1; pr_brk_after "/"; pr_bk e2
+  | P.BagDiff (e1, e2, l)     -> pr_formula_exp e1; pr_brk_after "-"; pr_formula_exp e2
+
+let string_of_formula_exp (e:P.exp) =
+  let old_fmt = !fmt in
+  begin
+    fmt := str_formatter;
+    pr_formula_exp e;
+    (let s = flush_str_formatter()in
+    fmt := old_fmt; s)
+  end    
+  
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
@@ -74,7 +246,7 @@ let need_parenthesis = function
 ;; 
 
 (* pretty printing for an expression for a formula *)
-let rec string_of_formula_exp = function 
+let rec string_of_formula_exp_old = function 
   | P.Null l -> "null"
   | P.Var (x, l) -> (match x with 
 					   | P.SpecVar (t, id, p) -> id ^ (match p with 
@@ -85,47 +257,47 @@ let rec string_of_formula_exp = function
   | P.Add (e1, e2, l) -> 
       (match e1 with 
       | P.Null _ | P.Var _ | P.IConst _ | P.FConst _ | P.Max _ | P.Min _ -> 
-          (string_of_formula_exp e1) ^ "+"   			      
-      | _ -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
+          (string_of_formula_exp_old e1) ^ "+"   			      
+      | _ -> "(" ^ (string_of_formula_exp_old e1) ^ ")+") 
       ^ 
       (match e2 with 
       | P.Null _ | P.Var _ | P.IConst _ | P.FConst _ | P.Max _ | P.Min _ -> 
-          string_of_formula_exp e2
-	    | _ -> "(" ^ (string_of_formula_exp e2) ^ ")")
+          string_of_formula_exp_old e2
+	    | _ -> "(" ^ (string_of_formula_exp_old e2) ^ ")")
   | P.Subtract (e1, e2, l) ->
       if need_parenthesis e1 then 
         if need_parenthesis e2 then
-          "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
+          "(" ^ (string_of_formula_exp_old e1) ^ ")-(" ^ (string_of_formula_exp_old e2) ^ ")"  			      
 	      else 
-          "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
+          "(" ^ (string_of_formula_exp_old e1) ^ ")-" ^ (string_of_formula_exp_old e2)
       else 
-        (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2)
+        (string_of_formula_exp_old e1) ^ "-" ^ (string_of_formula_exp_old e2)
   | P.Mult (e1, e2, l) ->
       (if need_parenthesis e1 then
-        "(" ^ (string_of_formula_exp e1) ^ ")"
-      else string_of_formula_exp e1)
+        "(" ^ (string_of_formula_exp_old e1) ^ ")"
+      else string_of_formula_exp_old e1)
       ^ "*" ^
       (if need_parenthesis e2 then
-        "(" ^ (string_of_formula_exp e2) ^ ")"
-      else string_of_formula_exp e2)
+        "(" ^ (string_of_formula_exp_old e2) ^ ")"
+      else string_of_formula_exp_old e2)
   | P.Div (e1, e2, l) -> 
       (if need_parenthesis e1 then
-        "(" ^ (string_of_formula_exp e1) ^ ")"
-      else string_of_formula_exp e1)
+        "(" ^ (string_of_formula_exp_old e1) ^ ")"
+      else string_of_formula_exp_old e1)
       ^ "/" ^
       (if need_parenthesis e2 then
-        "(" ^ (string_of_formula_exp e2) ^ ")"
-      else string_of_formula_exp e2)
-  | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
-  | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
+        "(" ^ (string_of_formula_exp_old e2) ^ ")"
+      else string_of_formula_exp_old e2)
+  | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp_old e1) ^ "," ^ (string_of_formula_exp_old e2) ^ ")"
+  | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp_old e1) ^ "," ^ (string_of_formula_exp_old e2) ^ ")" 
   | P.Bag (elist, l) 					-> "{" ^ (string_of_formula_exp_list elist) ^ "}"
   | P.BagUnion ([], l) 				-> ""
-  | P.BagUnion (e::[], l)			-> (string_of_formula_exp e) 
-  | P.BagUnion (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " union " ^ (string_of_formula_exp (P.BagUnion (rest, l))) ^ ")"
+  | P.BagUnion (e::[], l)			-> (string_of_formula_exp_old e) 
+  | P.BagUnion (e::rest, l) 	-> "(" ^ (string_of_formula_exp_old e) ^ " union " ^ (string_of_formula_exp_old (P.BagUnion (rest, l))) ^ ")"
   | P.BagIntersect ([], l) 		-> ""
-  | P.BagIntersect (e::[], l)	-> (string_of_formula_exp e) 
-  | P.BagIntersect (e::rest, l)->(string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (P.BagIntersect (rest, l)))
-  | P.BagDiff (e1, e2, l)     -> (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2) 
+  | P.BagIntersect (e::[], l)	-> (string_of_formula_exp_old e) 
+  | P.BagIntersect (e::rest, l)->(string_of_formula_exp_old e) ^ "<intersect>" ^ (string_of_formula_exp_old (P.BagIntersect (rest, l)))
+  | P.BagDiff (e1, e2, l)     -> (string_of_formula_exp_old e1) ^ "-" ^ (string_of_formula_exp_old e2) 
 
   
 (* pretty printing for a list of pure formulae *)
@@ -605,5 +777,9 @@ let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_
 
 let string_of_list_partial_context lc = "\n;List of Partial Context:"^(summary_list_partial_context lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_partial_context lc)
 
-let string_of_list_list_partial_context lc = "\n;List List of Partial Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n") (List.map string_of_list_partial_context lc)
+let string_of_list_list_partial_context lc = "\n;List List of Partial
+Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n")
+  (List.map string_of_list_partial_context lc)
+
+
  
