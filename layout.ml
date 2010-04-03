@@ -16,7 +16,6 @@ let fmt_close = fmt_close_box
 let pr_bracket_one pr_elem e =
  (fmt_string "("; pr_elem e; fmt_string ")")
 
-
 let pr_bracket isSimple pr_elem e =
  if (isSimple e) then pr_elem e
  else (fmt_string "("; pr_elem e; fmt_string ")")
@@ -35,7 +34,7 @@ let pr_list_open_sep (pr_open:unit -> unit)
   match xs with
     | [] -> ()
     | [x] -> (pr_elem x)
-    | xs -> pr_open(); (helper xs); pr_close() 
+b    | xs -> pr_open(); (helper xs); pr_close() 
 
 let pr_list_sep x = pr_list_open_sep (fun x -> x) (fun x -> x) x 
 
@@ -48,7 +47,10 @@ let pr_list_args f = pr_list_open_sep
   (fun () -> fmt_open 1; fmt_string "(")
   (fun () -> fmt_string ")"; fmt_close();) 
   fmt_space f
-;;
+
+let pr_list_op f = pr_list_open_sep 
+  (fun () -> fmt_open 1) fmt_close 
+  (fmt () -> fmt_string op; fmt_space) 
 
 let pr_op_sep  
     (pr_sep: unit -> unit ) 
@@ -95,13 +97,26 @@ pr x "+" y
 let pr_minus isS pr x y = pr_op isS pr x "-" y
 
 (* convert a tree-like binary object into a list of objects *)
-
-let binary_to_list (bin_fn : 'a -> (('a *'a) option)) (t:'a) : ('a list) =
+let bin_op_to_list (op:string)
+  (fn : 'a -> (string * 'a * 'a) option) 
+  (t:'a) : string * ('a list) =
   let rec helper t =
-    match (bin_fn t) with
-      | None -> [t]
-      | Some (x,y) -> (helper x)@(helper y)
+    match (fn t) with
+      | None -> op,[t]
+      | Some (op2, a1, a2) -> 
+          if (op=op2) then 
+            let (_,r1)=(helper a1) in
+            let (_,r2)=(helper a2) in
+            op,(r1@r1)
+          else op,[t]
   in (helper t)
+
+let bin_to_list (fn : 'a -> (string * 'a * 'a) option) 
+  (t:'a) : string * ('a list) =
+  match (fn t) with
+    | None -> "", [t]
+    | Some (op, a1, a2) -> bin_op_to_list op fn t
+
 
 
 
@@ -111,13 +126,34 @@ should we make this more general by using formatter?
 can we avoid a ref type?
 
 
+
+e1+e2+e3
+
+e1 & e2 & e3 
+e1 | e2 | e3
+
+a+b+c=a*2+3+d 
+e1<e2
+
+
 *)
 
+let precedence (op:string) : int =
+  match op with
+  | "&" -> 0
+  | _ -> -1
 
-
-
-
-
+ 
+let is_no_bracket (op:string) (trivial:'a->bool) 
+    (split:'a -> (string * 'a * 'a) option) (elem:'a) : bool  = 
+  if (trivial elem) then true
+  else 
+    match (split elem) with
+      | None -> false
+      | Some (op2,_,_) -> 
+         if (precedence op2) > (precedence op) then true
+         else falccse
+ 
   
 
 
