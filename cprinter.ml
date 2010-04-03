@@ -21,8 +21,8 @@ let fmt_close_box x = pp_close_box (!fmt) x
 let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
 
-let pr_bracket_one pr_elem e =
- (fmt_string "("; pr_elem e; fmt_string ")")
+(* let pr_bracket_one pr_elem e = *)
+(*  (fmt_string "("; pr_elem e; fmt_string ")") *)
 
 let pr_bracket isSimple pr_elem e =
  if (isSimple e) then pr_elem e
@@ -36,8 +36,7 @@ let pr_list_open_sep (pr_open:unit -> unit)
     | [x] -> (pr_elem x)
     | y::ys -> (pr_elem y; pr_sep(); helper ys) 
   in match xs with
-    | [] -> ()
-    | [x] -> (pr_elem x)
+    | [] -> pr_open();pr_close()
     | xs -> pr_open(); (helper xs); pr_close() 
 
 let pr_brk_after op = (fun () -> fmt_string (op); fmt_cut() )
@@ -59,9 +58,9 @@ let pr_args open_str close_str sep_str = pr_list_open_sep
   (fun () -> fmt_string close_str; fmt_close();) 
   (pr_brk_after sep_str)
 
-let pr_tuple x = pr_args "(" ")" "," x
+let pr_tuple xs = pr_args "(" ")" "," xs
 
-let pr_set x = pr_args "{" "}" "," x
+let pr_set xs = pr_args "{" "}" "," xs
 
 let pr_fn_args f op args = match args with
   | [x] -> f x
@@ -96,16 +95,10 @@ let pr_op_brk f = pr_op_sep fmt_space f
 (* this op do not require bracket *)
 let pr_op_brk_no f = pr_op_sep fmt_space (fun x -> true) f
 
-
-
-
-
-
 let precedence (op:string) : int =
   match op with
   | "&" -> 0
   | _ -> -1
-
  
 let is_no_bracket (op:string) (trivial:'a->bool) 
     (split:'a -> (string * 'a * 'a) option) (elem:'a) : bool  = 
@@ -129,16 +122,16 @@ let exp_assoc_op (e:P.exp) = match e with
   | P.Min (e1,e2,_) -> Some ("min",e1,e2)
   | _ -> None
 
-let exp_need_paren (e:P.exp) = match e with
+let exp_wo_paren (e:P.exp) = match e with
   | P.Null _ 
   | P.Var _ 
   | P.IConst _ 
-  | P.FConst _ | P.Max _ | P.Min _
+  | P.FConst _ | P.Max _ | P.Min _ | P.BagUnion _ | P.BagIntersect _ 
     -> true
   | _ -> false
 
 let rec pr_formula_exp (e:P.exp) =
-  let pr_bk e =  pr_bracket exp_need_paren pr_formula_exp e in
+  let pr_bk e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
   | P.Null l -> fmt_string "null"
   | P.Var (x, l) -> fmt_string (string_of_specvar x)
