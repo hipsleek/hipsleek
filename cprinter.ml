@@ -156,7 +156,7 @@ let exp_wo_paren (e:P.exp) = match e with
   | _ -> false
 
 let rec pr_formula_exp (e:P.exp) =
-  let pr_bk e =  pr_bracket exp_wo_paren pr_formula_exp e in
+  let pr_opt_bracket e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
   | P.Null l -> fmt_string "null"
   | P.Var (x, l) -> fmt_string (string_of_specvar x)
@@ -164,27 +164,27 @@ let rec pr_formula_exp (e:P.exp) =
   | P.FConst (f, l) -> fmt_string (string_of_float f)
   | P.Add (e1, e2, l) -> 
       let args = bin_op_to_list op_add_short exp_assoc_op e in
-      pr_list_op op_add pr_bk args
+      pr_list_op op_add pr_opt_bracket args
   | P.Mult (e1, e2, l) -> 
       let args = bin_op_to_list op_mult_short exp_assoc_op e in
-      pr_list_op op_mult pr_bk  args
+      pr_list_op op_mult pr_opt_bracket  args
   | P.Max (e1, e2, l) -> 
       let args = bin_op_to_list op_max_short exp_assoc_op e in
-      pr_fn_args op_max pr_formula_exp   args
+      pr_fn_args op_max pr_formula_exp args
   | P.Min (e1, e2, l) -> 
       let args = bin_op_to_list op_min_short exp_assoc_op e in
       pr_fn_args op_min pr_formula_exp  args
   | P.Bag (elist, l) 	-> pr_set pr_formula_exp elist
   | P.BagUnion (args, l) -> 
       let args = bin_op_to_list op_union_short exp_assoc_op e in
-      pr_fn_args op_union pr_formula_exp  args
+      pr_fn_args op_union pr_formula_exp args
   | P.BagIntersect (args, l) -> 
       let args = bin_op_to_list op_intersect_short exp_assoc_op e in
-      pr_fn_args op_intersect pr_formula_exp   args
+      pr_fn_args op_intersect pr_formula_exp args
   | P.Subtract (e1, e2, l) ->
-      pr_bk e1; pr_brk_after op_sub; pr_bk e2
+      pr_opt_bracket e1; pr_brk_after op_sub; pr_opt_bracket e2
   | P.Div (e1, e2, l) ->
-      pr_bk e1; pr_brk_after op_div; pr_bk e2
+      pr_opt_bracket e1; pr_brk_after op_div; pr_opt_bracket e2
   | P.BagDiff (e1, e2, l)     -> pr_formula_exp e1; pr_brk_after "-"; pr_formula_exp e2
 
 let string_of_formula_exp (e:P.exp) =
