@@ -93,45 +93,45 @@ let pr_list_op op = pr_list_open_sep
   (fun () -> fmt_open 1) fmt_close 
   (pr_brk_after op) 
 
-let pr_op_sep  
-    (pr_sep: unit -> unit ) 
-    (isSimple: 'a -> bool)
-    (pr_elem: 'a -> unit)
-    (x:'a) (y:'a) 
-    =  (pr_bracket isSimple pr_elem x); pr_sep(); 
-       (pr_bracket isSimple pr_elem y)
+(* let pr_op_sep   *)
+(*     (pr_sep: unit -> unit )  *)
+(*     (isSimple: 'a -> bool) *)
+(*     (pr_elem: 'a -> unit) *)
+(*     (x:'a) (y:'a)  *)
+(*     =  (pr_bracket isSimple pr_elem x); pr_sep();  *)
+(*        (pr_bracket isSimple pr_elem y) *)
 
 
-let pr_op op = pr_op_sep (pr_brk_after op)
+(* let pr_op op = pr_op_sep (pr_brk_after op) *)
 
-(* let pr_call  (isSimple:'a->bool) (pr_elem: 'a -> unit) (fn:string) (args:'a list)   *)
-(*     = fmt_string fn; (pr_list_args pr_elem args)   *)
+(* (\* let pr_call  (isSimple:'a->bool) (pr_elem: 'a -> unit) (fn:string) (args:'a list)   *\) *)
+(* (\*     = fmt_string fn; (pr_list_args pr_elem args)   *\) *)
 
-(* this op printing has no break *)
-let pr_op f = pr_op_sep (fun () -> fmt_string " ") f
+(* (\* this op printing has no break *\) *)
+(* let pr_op f = pr_op_sep (fun () -> fmt_string " ") f *)
 
-let pr_op_no f = pr_op_sep (fun () -> fmt_string " ") (fun x -> true) f
+(* let pr_op_no f = pr_op_sep (fun () -> fmt_string " ") (fun x -> true) f *)
 
-(* this op printing allows break *)
-let pr_op_brk f = pr_op_sep fmt_space f
+(* (\* this op printing allows break *\) *)
+(* let pr_op_brk f = pr_op_sep fmt_space f *)
 
-(* this op do not require bracket *)
-let pr_op_brk_no f = pr_op_sep fmt_space (fun x -> true) f
+(* (\* this op do not require bracket *\) *)
+(* let pr_op_brk_no f = pr_op_sep fmt_space (fun x -> true) f *)
 
-let precedence (op:string) : int =
-  match op with
-  | "&" -> 0
-  | _ -> -1
+(* let precedence (op:string) : int = *)
+(*   match op with *)
+(*   | "&" -> 0 *)
+(*   | _ -> -1 *)
  
-let is_no_bracket (op:string) (trivial:'a->bool) 
-    (split:'a -> (string * 'a * 'a) option) (elem:'a) : bool  = 
-  if (trivial elem) then true
-  else 
-    match (split elem) with
-      | None -> false
-      | Some (op2,_,_) -> 
-         if (precedence op2) > (precedence op) then true
-         else false
+(* let is_no_bracket (op:string) (trivial:'a->bool)  *)
+(*     (split:'a -> (string * 'a * 'a) option) (elem:'a) : bool  =  *)
+(*   if (trivial elem) then true *)
+(*   else  *)
+(*     match (split elem) with *)
+(*       | None -> false *)
+(*       | Some (op2,_,_) ->  *)
+(*          if (precedence op2) > (precedence op) then true *)
+(*          else false *)
  
 let string_of_specvar x = match x with
   | P.SpecVar (t, id, p) -> id ^ (match p with 
