@@ -2,15 +2,15 @@ open Format
 
 let fmt = ref (std_formatter)
 
-let fmt_string = pp_print_string (!fmt)
-let fmt_space = pp_print_space (!fmt)
-let fmt_break = pp_print_break (!fmt)
+let fmt_string x = pp_print_string (!fmt) x
+let fmt_space x = pp_print_space (!fmt) x
+let fmt_break x = pp_print_break (!fmt) x
 
 let fmt_open_box n = pp_open_box (!fmt) n
-let fmt_close_box = pp_close_box (!fmt)
+let fmt_close_box x = pp_close_box (!fmt) x
 
-let fmt_open = fmt_open_box
-let fmt_close = fmt_close_box
+let fmt_open x = fmt_open_box x
+let fmt_close x = fmt_close_box x
 
 
 let pr_bracket_one pr_elem e =
@@ -34,7 +34,7 @@ let pr_list_open_sep (pr_open:unit -> unit)
   match xs with
     | [] -> ()
     | [x] -> (pr_elem x)
-b    | xs -> pr_open(); (helper xs); pr_close() 
+    | xs -> pr_open(); (helper xs); pr_close() 
 
 let pr_list_sep x = pr_list_open_sep (fun x -> x) (fun x -> x) x 
 
@@ -48,9 +48,9 @@ let pr_list_args f = pr_list_open_sep
   (fun () -> fmt_string ")"; fmt_close();) 
   fmt_space f
 
-let pr_list_op f = pr_list_open_sep 
+let pr_list_op op = pr_list_open_sep 
   (fun () -> fmt_open 1) fmt_close 
-  (fmt () -> fmt_string op; fmt_space) 
+  (fun () -> fmt_string op; fmt_space ()) 
 
 let pr_op_sep  
     (pr_sep: unit -> unit ) 
@@ -152,7 +152,7 @@ let is_no_bracket (op:string) (trivial:'a->bool)
       | None -> false
       | Some (op2,_,_) -> 
          if (precedence op2) > (precedence op) then true
-         else falccse
+         else false
  
   
 
