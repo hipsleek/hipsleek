@@ -293,19 +293,19 @@ let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * 'a * 'a) option) 
+  (fn : 'a -> (string * ('a list)) option) 
   (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with
       | None -> [t]
-      | Some (op2, a1, a2) -> 
+      | Some (op2, xs) -> 
           if (op=op2) then 
-            (helper a1)@(helper a2)
+            List.concat (List.map helper xs)
           else [t]
   in (helper t)
 
-let bin_to_list (fn : 'a -> (string * 'a * 'a) option) 
+let bin_to_list (fn : 'a -> (string * ('a list)) option) 
   (t:'a) : string * ('a list) =
   match (fn t) with
     | None -> "", [t]
-    | Some (op, a1, a2) -> op,(bin_op_to_list op fn t)
+    | Some (op, _) -> op,(bin_op_to_list op fn t)

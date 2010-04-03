@@ -10,6 +10,24 @@ module P = Cpure
 
 let fmt = ref (std_formatter)
 
+let op_add_short = "+" 
+let op_sub_short = "-" 
+let op_mult_short = "*" 
+let op_div_short = "/" 
+let op_max_short = "mx" 
+let op_min_short = "mi" 
+let op_union_short = "U" 
+let op_intersect_short = "I" 
+
+let op_add = "+" 
+let op_sub = "-" 
+let op_mult = "*" 
+let op_div = "/" 
+let op_max = "max" 
+let op_min = "min" 
+let op_union = "union" 
+let op_intersect = "intersect" 
+
 let fmt_string x = pp_print_string (!fmt) x
 let fmt_space x = pp_print_space (!fmt) x
 let fmt_break x = pp_print_break (!fmt) x
@@ -48,23 +66,28 @@ let pr_list x = pr_list_sep fmt_space x;;
 
 let pr_list_comma x = pr_list_sep (fun () -> fmt_string ","; fmt_space()) x 
 
-let pr_list_args x = pr_list_open_sep 
-  (fun () -> fmt_open 1; fmt_string "(")
-  (fun () -> fmt_string ")"; fmt_close();) 
-  fmt_space x
+(* let pr_list_args op x = pr_list_open_sep  *)
+(*   (fun () -> fmt_open 1; fmt_string op; fmt_string "(") *)
+(*   (fun () -> fmt_string ")"; fmt_close();)  *)
+(*   fmt_space x *)
 
 let pr_args open_str close_str sep_str = pr_list_open_sep 
   (fun () -> fmt_open 1; fmt_string open_str)
   (fun () -> fmt_string close_str; fmt_close();) 
   (pr_brk_after sep_str)
 
-let pr_tuple xs = pr_args "(" ")" "," xs
+let pr_op_args op open_str close_str sep_str = pr_list_open_sep 
+  (fun () -> fmt_open 1; fmt_string op; fmt_string open_str)
+  (fun () -> fmt_string close_str; fmt_close();) 
+  (pr_brk_after sep_str)
+
+let pr_tuple op xs = pr_op_args op "(" ")" "," xs
 
 let pr_set xs = pr_args "{" "}" "," xs
 
-let pr_fn_args f op args = match args with
+let pr_fn_args op f args = match args with
   | [x] -> f x
-  | _ -> fmt_string op; (pr_tuple f args)
+  | _ -> fmt_string op; (pr_tuple op f args)
 
 let pr_list_op op = pr_list_open_sep 
   (fun () -> fmt_open 1) fmt_close 
@@ -81,8 +104,8 @@ let pr_op_sep
 
 let pr_op op = pr_op_sep (pr_brk_after op)
 
-let pr_call  (isSimple:'a->bool) (pr_elem: 'a -> unit) (fn:string) (args:'a list)  
-    = fmt_string fn; (pr_list_args pr_elem args)  
+(* let pr_call  (isSimple:'a->bool) (pr_elem: 'a -> unit) (fn:string) (args:'a list)   *)
+(*     = fmt_string fn; (pr_list_args pr_elem args)   *)
 
 (* this op printing has no break *)
 let pr_op f = pr_op_sep (fun () -> fmt_string " ") f
@@ -115,11 +138,13 @@ let string_of_specvar x = match x with
 	  | Primed    -> "'" 
 	  | Unprimed  -> "" )
 
-let exp_assoc_op (e:P.exp) = match e with
-  | P.Add (e1,e2,_) -> Some ("+",e1,e2)
-  | P.Mult (e1,e2,_) -> Some ("*",e1,e2)
-  | P.Max (e1,e2,_) -> Some ("max",e1,e2)
-  | P.Min (e1,e2,_) -> Some ("min",e1,e2)
+let exp_assoc_op (e:P.exp) : (string * P.exp list) option = match e with
+  | P.Add (e1,e2,_) -> Some (op_add_short,[e1;e2])
+  | P.Mult (e1,e2,_) -> Some (op_mult_short,[e1;e2])
+  | P.Max (e1,e2,_) -> Some (op_max_short,[e1;e2])
+  | P.Min (e1,e2,_) -> Some (op_min_short,[e1;e2])
+  | P.BagUnion (es,_) -> Some (op_union_short,es)
+  | P.BagIntersect (es,_) -> Some (op_intersect_short,es)
   | _ -> None
 
 let exp_wo_paren (e:P.exp) = match e with
@@ -138,28 +163,28 @@ let rec pr_formula_exp (e:P.exp) =
   | P.IConst (i, l) -> fmt_string (string_of_int i)
   | P.FConst (f, l) -> fmt_string (string_of_float f)
   | P.Add (e1, e2, l) -> 
-      let args = bin_op_to_list "+" exp_assoc_op e in
-      pr_list_op "+" pr_bk args
+      let args = bin_op_to_list op_add_short exp_assoc_op e in
+      pr_list_op op_add pr_bk args
   | P.Mult (e1, e2, l) -> 
-      let args = bin_op_to_list "*" exp_assoc_op e in
-      pr_list_op "*" pr_bk  args
+      let args = bin_op_to_list op_mult_short exp_assoc_op e in
+      pr_list_op op_mult pr_bk  args
   | P.Max (e1, e2, l) -> 
-      let args = bin_op_to_list "max" exp_assoc_op e in
-      pr_fn_args pr_formula_exp "max"  args
+      let args = bin_op_to_list op_max_short exp_assoc_op e in
+      pr_fn_args op_max pr_formula_exp   args
   | P.Min (e1, e2, l) -> 
-      let args = bin_op_to_list "min" exp_assoc_op e in
-      pr_fn_args pr_formula_exp "min"  args
+      let args = bin_op_to_list op_min_short exp_assoc_op e in
+      pr_fn_args op_min pr_formula_exp  args
   | P.Bag (elist, l) 	-> pr_set pr_formula_exp elist
   | P.BagUnion (args, l) -> 
-      let args = bin_op_to_list "union" exp_assoc_op e in
-      pr_fn_args pr_formula_exp "union"  args
+      let args = bin_op_to_list op_union_short exp_assoc_op e in
+      pr_fn_args op_union pr_formula_exp  args
   | P.BagIntersect (args, l) -> 
-      let args = bin_op_to_list "intersect" exp_assoc_op e in
-      pr_fn_args pr_formula_exp "intersect"  args
+      let args = bin_op_to_list op_intersect_short exp_assoc_op e in
+      pr_fn_args op_intersect pr_formula_exp   args
   | P.Subtract (e1, e2, l) ->
-      pr_bk e1; pr_brk_after "-"; pr_bk e2
+      pr_bk e1; pr_brk_after op_sub; pr_bk e2
   | P.Div (e1, e2, l) ->
-      pr_bk e1; pr_brk_after "/"; pr_bk e2
+      pr_bk e1; pr_brk_after op_div; pr_bk e2
   | P.BagDiff (e1, e2, l)     -> pr_formula_exp e1; pr_brk_after "-"; pr_formula_exp e2
 
 let string_of_formula_exp (e:P.exp) =
