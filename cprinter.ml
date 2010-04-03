@@ -56,7 +56,7 @@ let pr_list_open_sep (f_open:unit -> unit)
     (f_close:unit -> unit) (f_sep:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
   let rec helper xs = match xs with
-    | [] -> failwith "cannot be [] here (pr_list_open_sep)"
+    | [] -> failwith "cannot be [] (pr_list_open_sep)"
     | [x] -> (f_elem x)
     | y::ys -> (f_elem y; f_sep(); helper ys) 
   in match xs with
@@ -97,7 +97,7 @@ let pr_tuple op f xs = pr_op_args op "(" ")" "," f xs
 
 let pr_set f xs = pr_args "{" "}" "," f xs
 
-(* print op(x1..xn) but argument alone if n=1 *)
+(* print op(x1..xn) but just x1 alone if n=1 *)
 let pr_fn_args op f xs = match xs with
   | [x] -> f x
   | _ -> (pr_tuple op f xs)
