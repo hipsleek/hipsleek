@@ -31,7 +31,7 @@ let op_max_short = "mx"
 let op_min_short = "mi" 
 let op_union_short = "U" 
 let op_intersect_short = "I" 
-let op_diff_short = "I" 
+let op_diff_short = "D" 
 
 (* op code that will be printed *)
 let op_add = "+" 
@@ -97,12 +97,12 @@ let pr_tuple op f xs = pr_op_args op "(" ")" "," f xs
 
 let pr_set f xs = pr_args "{" "}" "," f xs
 
-(* print op(x1..xn) but just x1 alone if n=1 *)
+(* print prefix op(x1..xn) but use x1 alone if n=1 *)
 let pr_fn_args op f xs = match xs with
   | [x] -> f x
   | _ -> (pr_tuple op f xs)
 
-(* print in infix form : x1 op .. op xn *)
+(* print infix form : x1 op .. op xn *)
 let pr_list_op op f xs = pr_list_open_sep 
   (fun () -> fmt_open 1) fmt_close 
   (pr_brk_after op) f xs
