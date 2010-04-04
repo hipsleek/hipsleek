@@ -211,16 +211,24 @@ let rec pr_formula_exp (e:P.exp) =
     | P.BagDiff (e1, e2, l) -> 
         pr_formula_exp e1; pr_brk_after op_diff (); pr_formula_exp e2
 
-(* convert formula exp to a string via pr_formula_exp *)
-let string_of_formula_exp (e:P.exp) =
+(* polymorhic convertion to a string *)
+let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
     fmt := str_formatter;
-    pr_formula_exp e;
+    pr e;
     (let s = flush_str_formatter()in
     fmt := old_fmt; s)
   end    
   
+
+(* convert formula exp to a string via pr_formula_exp *)
+let string_of_formula_exp (e:P.exp) =  poly_string_of_pr  pr_formula_exp e
+
+ 
+  
+
+
 
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
