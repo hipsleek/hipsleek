@@ -256,7 +256,7 @@ let rec pr_formula_exp (e:P.exp) =
         pr_formula_exp e1; pr_brk_after op_diff (); pr_formula_exp e2
 
 
-(* print a formula exp to formatter *)
+(* print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let f_brkt e =  pr_bracket exp_wo_paren pr_formula_exp e in
     match e with
