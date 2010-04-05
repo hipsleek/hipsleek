@@ -286,6 +286,42 @@ let rec pr_b_formula (e:P.b_formula) =
 ;;
   
 
+let pr_formula_label (i,s)  = fmt_string "("; fmt_int i; fmt_string (", "^s^") : ")
+let pr_formula_label_opt l = match l with |None -> () |Some s -> pr_formula_label s
+
+(* print a pure formula to formatter *)
+
+let rec pr_pure_formula  (e:P.formula) = 
+  match e with 
+    | P.BForm (bf,lbl)              -> pr_formula_label_opt lbl;pr_b_formula bf
+    | P.And (f1, f2, l)             ->  pr_op pr_pure_formula f1 "&" f2
+    | P.Or (f1, f2, lbl,l)          -> pr_formula_label_opt lbl; 
+	fmt_string "((";
+	pr_op pr_pure_formula f1 ") | (" f2; 
+	fmt_string "))"
+    | P.Not (f, lbl, l)             -> pr_formula_label_opt lbl; 
+	fmt_string "!(";
+	pr_pure_formula f;
+	fmt_string ")"	  
+    | P.Forall (x, f,lbl, l)   -> pr_formula_label_opt lbl; 
+	fmt_string "(all ";
+	pr_spec_var x;
+	fmt_string ".";
+	pr_pure_formula f;
+	fmt_string ")"
+ | P.Exists (x, f,lbl, l)   -> pr_formula_label_opt lbl; 
+	fmt_string "(ex ";
+	pr_spec_var x;
+	fmt_string ".";
+	pr_pure_formula f;
+	fmt_string ")"
+;;
+
+
+
+
+
+
 (* convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 
