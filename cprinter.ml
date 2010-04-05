@@ -293,6 +293,13 @@ let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
   poly_printer_of_pr crt_fmt pr_formula_exp e
 
 
+(* convert b_formula exp to a string via pr_formula_exp *)
+let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_formula e
+
+let printer_of_b_formula (crt_fmt: Format.formatter) (e:P.b_formula) : unit =
+  poly_printer_of_pr crt_fmt pr_b_formula e
+
+
 
 (* OLD CODE IS STARTING FROM HERE *)
   
@@ -425,7 +432,7 @@ and string_of_formula_exp_list l = match l with
 ;;
   
 (* pretty printing for boolean constraints *)
-let string_of_b_formula = function 
+let string_of_b_formula_old = function 
   | P.BConst (b,l)              -> (*if b <> true then*) string_of_bool b (*else ""*)
   | P.BVar (x, l)               -> (match x with 
     | P.SpecVar (_, id, p) -> id ^ (match p with 
