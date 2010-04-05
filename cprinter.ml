@@ -12,6 +12,10 @@ module P = Cpure
 let fmt = ref (std_formatter)
 
 let fmt_string x = pp_print_string (!fmt) x
+let fmt_bool x = pp_print_bool (!fmt) x
+let fmt_int x = pp_print_int (!fmt) x
+let fmt_float x = pp_print_float (!fmt) x
+let fmt_char x = pp_print_char (!fmt) x
 let fmt_space x = pp_print_space (!fmt) x
 let fmt_break x = pp_print_break (!fmt) x
 let fmt_cut x = pp_print_cut (!fmt) x
@@ -21,6 +25,29 @@ let fmt_close_box x = pp_close_box (!fmt) x
 
 let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
+
+
+
+(* polymorphic convertion to a string *)
+let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
+  let old_fmt = !fmt in
+  begin
+    fmt := str_formatter;
+    pr e;
+    (let s = flush_str_formatter()in
+    fmt := old_fmt; s)
+  end    
+
+(* polymorphic function for debugging printer *)
+let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : unit =
+  let old_fmt = !fmt in
+  begin
+    fmt := crt_fmt;
+    pr e;
+    fmt := old_fmt;
+  end    
+
+
 
 
 (* shorter op code used internally *)
@@ -44,6 +71,12 @@ let op_min = "min"
 let op_union = "union" 
 let op_intersect = "intersect" 
 let op_diff = "-" 
+let op_lt = "<" 
+let op_lte = "<=" 
+let op_gt = ">" 
+let op_gte = ">=" 
+let op_eq = "=" 
+let op_neq = "!=" 
 
 (* this command will add a bracket around e if
    is simple yields false *)
@@ -108,6 +141,14 @@ let pr_list_op op f xs = pr_list_open_sep
   (fun () -> fmt_open 1) fmt_close 
   (pr_brk_after op) f xs
 
+
+let pr_op_adhoc (f_1:unit -> unit) (op:string) (f_2:unit -> unit) =
+  f_1(); fmt_string op ; f_2(); fmt_space()
+
+let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
+  (f e1); fmt_string op ; (f e2); fmt_space ()
+
+
 (* let pr_op_sep   *)
 (*     (pr_sep: unit -> unit )  *)
 (*     (isSimple: 'a -> bool) *)
@@ -149,11 +190,13 @@ let pr_list_op op f xs = pr_list_open_sep
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
  
-let string_of_specvar x = 
+let string_of_spec_var x = 
   match x with
     | P.SpecVar (t, id, p) -> id ^ (match p with 
 	    | Primed    -> "'" 
 	    | Unprimed  -> "" )
+
+let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 (* check if top operator of e is associative and 
    return its list of arguments if so *)
@@ -183,9 +226,9 @@ let rec pr_formula_exp (e:P.exp) =
   let f_brkt e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
     | P.Null l -> fmt_string "null"
-    | P.Var (x, l) -> fmt_string (string_of_specvar x)
-    | P.IConst (i, l) -> fmt_string (string_of_int i)
-    | P.FConst (f, l) -> fmt_string (string_of_float f)
+    | P.Var (x, l) -> fmt_string (string_of_spec_var x)
+    | P.IConst (i, l) -> fmt_int i
+    | P.FConst (f, l) -> fmt_float f
     | P.Add (e1, e2, l) -> 
         let args = bin_op_to_list op_add_short exp_assoc_op e in
         pr_list_op op_add f_brkt args
@@ -212,25 +255,47 @@ let rec pr_formula_exp (e:P.exp) =
     | P.BagDiff (e1, e2, l) -> 
         pr_formula_exp e1; pr_brk_after op_diff (); pr_formula_exp e2
 
-(* polymorhic convertion to a string *)
-let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
-  let old_fmt = !fmt in
-  begin
-    fmt := str_formatter;
-    pr e;
-    (let s = flush_str_formatter()in
-    fmt := old_fmt; s)
-  end    
+
+(* print a formula exp to formatter *)
+let rec pr_b_formula (e:P.b_formula) =
+  let f_brkt e =  pr_bracket exp_wo_paren pr_formula_exp e in
+    match e with
+      | P.BConst (b,l)              -> fmt_bool b 
+      | P.BVar (x, l)               -> fmt_string (string_of_spec_var x)
+      | P.Lt (e1, e2, l)            -> f_brkt e1; pr_brk_after op_lt (); f_brkt e2
+      | P.Lte (e1, e2, l)            -> f_brkt e1; pr_brk_after op_lte (); f_brkt e2
+      | P.Gt (e1, e2, l)            -> f_brkt e1; pr_brk_after op_gt (); f_brkt e2
+      | P.Gte (e1, e2, l)            -> f_brkt e1; pr_brk_after op_gte (); f_brkt e2
+      | P.Eq (e1, e2, l)            -> f_brkt e1; pr_brk_after op_eq (); f_brkt e2
+      | P.Neq (e1, e2, l)            -> f_brkt e1; pr_brk_after op_neq (); f_brkt e2
+      | P.EqMax (e1, e2, e3, l)       ->   
+          let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_max_short exp_assoc_op e2 in
+          let arg = arg2@arg3 in
+            (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
+      | P.EqMin (e1, e2, e3, l)       ->   
+          let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_min_short exp_assoc_op e2 in
+          let arg = arg2@arg3 in
+            (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
+      | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)
+      | P.BagNotIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <notin> "  (fun ()-> pr_formula_exp e)
+      | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
+      | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
+      | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
+;;
   
 
 (* convert formula exp to a string via pr_formula_exp *)
-let string_of_formula_exp (e:P.exp) =  poly_string_of_pr  pr_formula_exp e
+let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 
- 
+let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
+  poly_printer_of_pr crt_fmt pr_formula_exp e
+
+
+
+(* OLD CODE IS STARTING FROM HERE *)
   
-
-
-
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
   | []               -> ""
@@ -270,8 +335,8 @@ let string_of_constraint_relation m = match m with
   | Cpure.Equal -> " =  "
   | Cpure.Contradicting -> "!= "
   
-let string_of_spec_var sv = match sv with
-  | P.SpecVar (_, v, p) -> v ^ (if p = Primed then "'" else "")
+(* let string_of_spec_var sv = match sv with *)
+(*   | P.SpecVar (_, v, p) -> v ^ (if p = Primed then "'" else "") *)
 
 let rec string_of_h_formula h = match h with
   | Star ({h_formula_star_h1 = h1; h_formula_star_h2 = h2; h_formula_star_pos = pos}) -> 

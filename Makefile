@@ -71,6 +71,15 @@ MAIN_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	globalvars.cmo \
 	main.cmo
 
+
+PP_FILES=globals.cmo error.cmo util.cmo debug.cmo \
+	cpure.cmo ipure.cmo \
+	iformula.cmo iast.cmo \
+	iparser.cmo ilexer.cmo \
+	iprinter.cmo \
+	cformula.cmo cast.cmo cprinter.cmo
+
+
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
@@ -173,6 +182,12 @@ hipc:
 hip: $(MAIN_FILES) decidez.vo
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
+
+mytop: $(MAIN_FILES) decidez.vo
+	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+
+myp:  $(PP_FILES) 
+	$(OCAMLC) -a -o $@ unix.cma str.cma graph.cma $(PP_FILES)
 
 hipgui: $(GUI_FILES) decidez.vo gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) gui.ml maingui.ml
