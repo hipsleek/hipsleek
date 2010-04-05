@@ -180,7 +180,7 @@ let exp_wo_paren (e:P.exp) =
 
 (* print a formula exp to formatter *)
 let rec pr_formula_exp (e:P.exp) =
-  let pr_opt_bracket e =  pr_bracket exp_wo_paren pr_formula_exp e in
+  let f_brkt e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
     | P.Null l -> fmt_string "null"
     | P.Var (x, l) -> fmt_string (string_of_specvar x)
@@ -188,10 +188,10 @@ let rec pr_formula_exp (e:P.exp) =
     | P.FConst (f, l) -> fmt_string (string_of_float f)
     | P.Add (e1, e2, l) -> 
         let args = bin_op_to_list op_add_short exp_assoc_op e in
-        pr_list_op op_add pr_opt_bracket args
+        pr_list_op op_add f_brkt args
     | P.Mult (e1, e2, l) -> 
         let args = bin_op_to_list op_mult_short exp_assoc_op e in
-        pr_list_op op_mult pr_opt_bracket  args
+        pr_list_op op_mult f_brkt  args
     | P.Max (e1, e2, l) -> 
         let args = bin_op_to_list op_max_short exp_assoc_op e in
         pr_fn_args op_max pr_formula_exp args
@@ -206,9 +206,9 @@ let rec pr_formula_exp (e:P.exp) =
         let args = bin_op_to_list op_intersect_short exp_assoc_op e in
         pr_fn_args op_intersect pr_formula_exp args
     | P.Subtract (e1, e2, l) ->
-        pr_opt_bracket e1; pr_brk_after op_sub (); pr_opt_bracket e2
+        f_brkt e1; pr_brk_after op_sub (); f_brkt e2
     | P.Div (e1, e2, l) ->
-        pr_opt_bracket e1; pr_brk_after op_div (); pr_opt_bracket e2
+        f_brkt e1; pr_brk_after op_div (); f_brkt e2
     | P.BagDiff (e1, e2, l) -> 
         pr_formula_exp e1; pr_brk_after op_diff (); pr_formula_exp e2
 
