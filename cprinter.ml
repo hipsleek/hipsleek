@@ -687,8 +687,7 @@ Context:"^string_of_int(List.length lc)^"\n"^String.concat ("\n;;\n")
   (List.map string_of_list_partial_context lc)
     
 
-    
-(* OLD CODE IS BELOW THIS LINE *)
+
   
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
