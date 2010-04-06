@@ -259,21 +259,40 @@ let process_source_full source =
 
 	  
 let main1 () =
+  (* Cprinter.fmt_set_margin 40; *)
+  (* Cprinter.fmt_string "TEST1.................................."; *)
+  (* Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST2...............................................................'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''............"; *)
+  (* Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST3....."; *)
+  (*  Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST3....."; *)
+  (*  Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST3....."; *)
+  (*    Cprinter.fmt_string "TEST3....."; *)
+  (* Cprinter.fmt_string "TEST4..............................."; *)
+  (* Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST5.................................."; *)
+  (* Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST6.................................."; *)
+  (* Cprinter.fmt_cut (); *)
+  (* Cprinter.fmt_string "TEST7.................................."; *)
+  (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
   
   (* i.e. pre-start Reduce/Redlog if it will be used. *)
   let _ = Tpdispatcher.prepare () in
-  
-  if List.length (!Globals.source_files) = 0 then begin
-	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
-	Globals.procs_verified := ["f3"];
-	Globals.source_files := ["examples/test5.ss"]
-  end;
-  let _ = Util.push_time "Overall" in
-  let _ = List.map process_source_full !Globals.source_files in
-  let _ = Util.pop_time "Overall" in
-	(* Tpdispatcher.print_stats (); *)
-	()
+    
+    if List.length (!Globals.source_files) = 0 then begin
+      (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
+      Globals.procs_verified := ["f3"];
+      Globals.source_files := ["examples/test5.ss"]
+    end;
+    let _ = Util.push_time "Overall" in
+    let _ = List.map process_source_full !Globals.source_files in
+    let _ = Util.pop_time "Overall" in
+      (* Tpdispatcher.print_stats (); *)
+      ()
 	  
 let _ = 
   main1 ();
