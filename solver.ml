@@ -2357,7 +2357,6 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
   let res_es1, prf1 = heap_entail_conjunct prog is_folding is_universal new_ctx new_conseq pos in
   (res_es1,prf1)
 	
-
 and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   let lhs_h = lhs_b.formula_base_heap in
   let lhs_p = lhs_b.formula_base_pure in
