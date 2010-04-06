@@ -28,6 +28,7 @@ let fmt_close x = fmt_close_box x
 
 
 
+
 (* polymorphic convertion to a string *)
 let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
