@@ -114,7 +114,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		      let _ = print_string ("[typechecker.ml, line 62, assert]: pre to be entailed " ^ (Cprinter.string_of_formula c1) ^ "\n") in
 		      let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 		    *)
-		    let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in	
+		    let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
 		      Debug.devel_pprint to_print pos;
 		      let rs,prf = heap_entail_struc_list_partial_context_init prog false false false ctx c1 pos None in
 			(* print_string ("AAA :"^Cprinter.string_of_list_partial_context rs); *)
@@ -598,7 +598,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	    let renamed_spec= CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
 	    let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 	    let pre2 = CF.subst_struc_pre st2 renamed_spec in
-	    let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
+	    let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ !log_spec ^ "\n" in
 	      Debug.devel_pprint to_print pos;
 	      let rs,prf = heap_entail_struc_list_partial_context_init prog false false true sctx pre2 pos pid in
 		(* Solver.entail_hist#upd_opt pid rs ("No label for SCALL at line"  ^ (string_of_int pos.start_pos.Lexing.pos_lnum)); *)
@@ -785,7 +785,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 			      let _ = print_string ("[typechecker.ml, line 62, assert]: pre to be entailed " ^ (Cprinter.string_of_formula c1) ^ "\n") in
 			      let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 			    *)
-			    let to_print = "Proving assert in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in	
+			    let to_print = "Proving assert in method " ^ proc.proc_name ^ " for spec:\n" ^ !log_spec ^ "\n" in	
 			      Debug.devel_pprint to_print pos;
                               (* print_string ("\n***CRT STATE : " ^ (Cprinter.string_of_list_partial_context ctx) ^ "\n"); *)
 			      (* print_string ("\n***ASSERT COND : " ^ (Cprinter.string_of_struc_formula c1) ^ "\n\n\n\n"); *)
@@ -832,7 +832,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
     Debug.devel_print ("Final state after existential quantifier elimination:\n"
 		       ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n");
     Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
-    let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
+    let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
       Debug.devel_pprint to_print pos;	
       (*print_string ("context list: " ^ (Cprinter.string_of_context_list final_state ) ^ "\n");*)
       (*print_string ("tr:"^(string_of_int (List.length
@@ -879,7 +879,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 			    ^ (Cprinter.string_of_proc_decl proc) ^ "\n\n");
 	    print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
 	    Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
-	    Debug.devel_pprint ("Specs : " ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
+	    Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
 	    let ftypes, fnames = List.split proc.proc_args in
 	      (* fsvars are the spec vars corresponding to the parameters *)
 	    let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in

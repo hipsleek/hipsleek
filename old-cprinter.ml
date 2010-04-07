@@ -178,8 +178,8 @@ let string_of_b_formula = function
 let rec string_of_pure_formula_list l = match l with 
   | []               -> ""
   | h::t             -> (string_of_pure_formula h) ^ "\n" ^ (string_of_pure_formula_list t)
-  
-  
+        
+        
 (* pretty printing for a pure formula *)
 and string_of_pure_formula = function 
   | P.BForm (bf,lbl)              -> string_of_formula_label_opt lbl (string_of_b_formula bf)
@@ -187,19 +187,19 @@ and string_of_pure_formula = function
   | P.Or (f1, f2, lbl,l)          -> string_of_formula_label_opt lbl ("((" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ "))")
   | P.Not (f, lbl, l)             -> string_of_formula_label_opt lbl ("!(" ^ (string_of_pure_formula f) ^ ")")
   | P.Forall (x, f,lbl, l)            -> 
-	let s = "(all " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
-    | Primed    -> "'"
-    | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")" in
-	string_of_formula_label_opt lbl s
+	    let s = "(all " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
+          | Primed    -> "'"
+          | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")" in
+	    string_of_formula_label_opt lbl s
   | P.Exists (x, f, lbl, l)            -> 
-	let s = "(ex " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
-    | Primed    -> "'"
-    | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")" in
-	string_of_formula_label_opt lbl s
+	    let s = "(ex " ^ (match x with P.SpecVar (_, id, p) -> id ^ (match p with 
+          | Primed    -> "'"
+          | Unprimed  -> "")) ^ ". " ^ (string_of_pure_formula f) ^ ")" in
+	    string_of_formula_label_opt lbl s
 and string_of_pure_formula_branches (f, l) =
   match l with
-  | [] -> string_of_pure_formula f
-  | _ -> string_of_pure_formula f ^ " & [" ^ (String.concat "; " (List.map (fun (l, f) -> "\"" ^ l ^ "\" : " ^ string_of_pure_formula f) l)) ^ "]"
+    | [] -> string_of_pure_formula f
+    | _ -> string_of_pure_formula f ^ " & [" ^ (String.concat "; " (List.map (fun (l, f) -> "\"" ^ l ^ "\" : " ^ string_of_pure_formula f) l)) ^ "]"
 ;;
 
 (* pretty printing for a cformula *)                                                         (*NOT DONE*)
