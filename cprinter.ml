@@ -20,7 +20,7 @@ let fmt_space x = pp_print_space (!fmt) x
 let fmt_break x = pp_print_break (!fmt) x
 let fmt_cut x = pp_print_cut (!fmt) x
 let fmt_set_margin x = pp_set_margin (!fmt) x
-
+let fmt_print_newline x = pp_print_newline (!fmt) x
 let fmt_open_box n = pp_open_box (!fmt) n
 let fmt_open_vbox n = pp_open_vbox (!fmt) n
 let fmt_open_hbox n = pp_open_hbox (!fmt) n
@@ -37,7 +37,8 @@ let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
     fmt := str_formatter;
-    fmt_string " "; fmt_open_box 0; pr e; fmt_close();
+    fmt_string " "; fmt_open_vbox 0; pr e; fmt_close();
+    fmt_print_newline();
     (let s = flush_str_formatter()in
     fmt := old_fmt; s)
   end    
