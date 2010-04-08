@@ -21,6 +21,7 @@ let fmt_break x = pp_print_break (!fmt) x
 let fmt_cut x = pp_print_cut (!fmt) x
 let fmt_set_margin x = pp_set_margin (!fmt) x
 let fmt_print_newline x = pp_print_newline (!fmt) x
+let fmt_print_flush x = pp_print_flush (!fmt) x
 let fmt_open_box n = pp_open_box (!fmt) n
 let fmt_open_vbox n = pp_open_vbox (!fmt) n
 let fmt_open_hbox n = pp_open_hbox (!fmt) n
@@ -39,9 +40,17 @@ let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
     fmt := str_formatter;
-    fmt_string " "; fmt_open_box 0; pr e; fmt_close();
-    (let s = flush_str_formatter()in
-    fmt := old_fmt; s)
+    let b = (Buffer.create 80) in
+    begin
+      fmt := formatter_of_buffer (b);
+      (* fmt_string " ";  *)
+      fmt_open_box 0; pr e; fmt_close();
+      fmt_print_flush();
+      (* (let s = flush_str_formatter()in *)
+      (* fmt := old_fmt; s) *)
+      (let s = Buffer.contents(b) in
+      fmt := old_fmt; s)
+    end
   end    
 
 (* polymorphic function for debugging printer *)
@@ -52,7 +61,6 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
     pr e;
     fmt := old_fmt;
   end    
-
 
 
 
@@ -242,10 +250,8 @@ let pr_list_vbox_wrap sep f xs =
       (fun x -> fmt_string " "; wrap_box ("B",0) f x) xs
   else   pr_args (Some ("V",0)) (Some "B") "" "" "" sep (wrap_box ("B",0) f) xs
 
-
-
-  let pr_op_adhoc (f_1:unit -> unit) (op:string) (f_2:unit -> unit) =
-    f_1(); fmt_string op ; f_2(); fmt_space()
+let pr_op_adhoc (f_1:unit -> unit) (op:string) (f_2:unit -> unit) =
+  f_1(); fmt_string op ; f_2(); fmt_space()
 
 let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
   (f e1); fmt_string op ; (f e2); fmt_space()
@@ -699,25 +705,34 @@ let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else (fmt_string hdr; (wrap_box ("B",0) f x))
 
-let pr_wrap hdr (f: 'a -> unit) (x:'a) =
+
+let pr_wrap_nocut hdr (f: 'a -> unit) (x:'a) =
   if (String.length hdr)>7 then
     begin
-      fmt_cut (); 
-      fmt_string hdr; 
-      fmt_cut (); 
-      fmt_string "  ";
-      wrap_box ("B",0) f  x
+      let s = poly_string_of_pr f x in
+      if (String.length s) < 70 then (* to improve *)
+        fmt_string (hdr^s)
+      else begin
+        fmt_string hdr; 
+        fmt_cut (); 
+        fmt_string "  ";
+        wrap_box ("B",0) f  x
+      end
     end
   else  begin 
-    fmt_cut (); 
     fmt_string hdr; 
     wrap_box ("B",2) f  x
   end
 
-let pr_wrap_nocut hdr (f: 'a -> unit) (x:'a) =
-  if String.length(hdr)>7 then
-    ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x)
-  else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x)
+let pr_wrap hdr (f: 'a -> unit) (x:'a) =
+  begin
+    fmt_cut();
+    pr_wrap_nocut hdr f x
+  end
+
+  (* if String.length(hdr)>7 then *)
+  (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
+  (* else  (wrap_box ("B",0) (fun x -> fmt_string hdr; f x)  x) *)
 
 
 let pr_estate (es : entail_state) =
