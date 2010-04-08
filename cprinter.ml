@@ -37,8 +37,8 @@ let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
     fmt := str_formatter;
-    fmt_string " "; fmt_open_vbox 0; pr e; fmt_close();
-    fmt_print_newline();
+    fmt_string " "; fmt_open_box 0; pr e; fmt_close();
+    (* fmt_print_newline(); *)
     (let s = flush_str_formatter()in
     fmt := old_fmt; s)
   end    
@@ -150,9 +150,10 @@ let pr_cut_before_no op = fmt_cut(); fmt_string op
 (* sep_opt = "B","A" *)
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
   let f_o x = match x with
-    | Some(s,i) -> if s="V" then fmt_open_vbox i
-      else if s="H" then fmt_open_hbox ()
-      else  fmt_open_box i; (* must be B *)
+    | Some(s,i) -> 
+          if s="V" then fmt_open_vbox i
+          else if s="H" then fmt_open_hbox ()
+          else  fmt_open_box i; (* must be B *)
     | None -> () in
   let f_c x = match x with
     | Some(s,i) -> fmt_close();
@@ -620,8 +621,12 @@ and pr_ext_formula  (e:ext_formula) =
 	              pr_seq "(ex)" pr_spec_var ei;
 	            end;
 	          pr_formula fb) fb;
-	      fmt_cut();
-	      wrap_box ("B",0) pr_struc_formula cont
+          if not(U.empty(cont)) then
+	        begin
+	          fmt_cut();
+	          wrap_box ("B",0) pr_struc_formula cont;
+            end;
+          fmt_close();
     | EAssume (x,b,(y1,y2))->
           wrap_box ("B",0)
               (fun b ->
@@ -670,7 +675,7 @@ let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   else (fmt_cut (); fmt_string hdr; (wrap_box ("B",2) f x))
 
 let pr_wrap hdr (f: 'a -> unit) (x:'a) =
-  if (String.length hdr)>6 then
+  if (String.length hdr)>7 then
     begin
       fmt_cut (); 
       fmt_string hdr; 
@@ -678,8 +683,11 @@ let pr_wrap hdr (f: 'a -> unit) (x:'a) =
       fmt_string "  ";
       wrap_box ("B",2) f  x
     end
-  else  (fmt_cut (); fmt_string hdr; 
-  wrap_box ("B",2) f  x)
+  else  begin 
+    fmt_cut (); 
+    fmt_string hdr; 
+    wrap_box ("B",2) f  x
+  end
 
 let pr_wrap_no_cut hdr (f: 'a -> unit) (x:'a) =
   if String.length(hdr)>7 then
@@ -719,7 +727,8 @@ let pr_fail_estate (es:fail_context) =
   pr_wrap "current_lhs: " pr_estate es.fc_current_lhs;
   pr_wrap "orig_conseq: " pr_struc_formula es.fc_orig_conseq;
   pr_wrap_test "failure_pts: "U.empty (pr_seq "" pr_formula_label) es.fc_failure_pts;
-  fmt_string "}"; fmt_close ()
+  fmt_string "}"; 
+  fmt_close ()
       
 let string_of_fail_estate (es:fail_context) : string =  poly_string_of_pr  pr_fail_estate es
 let printer_of_fail_estate (fmt: Format.formatter) (es: fail_context) : unit =
@@ -846,7 +855,7 @@ let pr_view_decl v =
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_wrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
-  pr_wrap  "unst: " pr_formula v.view_un_struc_formula;
+  pr_wrap  "unstuctured formula: " pr_formula v.view_un_struc_formula;
   pr_wrap  "xform: " pr_pure_formula (fst v.view_x_formula);
   f v.view_base_case;
   fmt_close_box ()
