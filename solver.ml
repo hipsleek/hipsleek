@@ -1382,12 +1382,12 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
     context_list_proofs = prf_l; } in
   (result, proof)
     
-and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : partial_context)
-    (conseq) pos (pid:control_path_id) f to_string: (list_partial_context * proof) = 
+and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is_universal : bool)
+      (has_post: bool)(cl : partial_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_partial_context * proof) = 
   (* print_string "\ncalling struct_partial_context .."; *)
   Debug.devel_pprint ("heap_entail_struc_partial_context:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_partial_context cl)
-  ^ "\nconseq:\n" (*^ (Cprinter.string_of_struc_formula conseq)*)) pos; 
+  ^ "\nconseq:\n" ^ (to_string conseq)) pos; 
   let fail_branches, succ_branches  = cl in
   let res = List.map (fun (lbl,c2)-> 
 	(* print_string ("\nInput ==> :"^(Cprinter.string_of_context c2)); *)
