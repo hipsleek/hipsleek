@@ -1,4 +1,4 @@
-(* pretty printing for cast *)
+(** pretty printing for formula and cast *)
 
 open Format
 open Globals 
@@ -8,10 +8,10 @@ open Cformula
 
 module P = Cpure
 
-(* the formatter that fmt- commands will use *)
+(** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
 
-(* primitive formatter comands *)
+(** primitive formatter comands *)
 let fmt_string x = pp_print_string (!fmt) x
 let fmt_bool x = pp_print_bool (!fmt) x
 let fmt_int x = pp_print_int (!fmt) x
@@ -35,7 +35,7 @@ let fmt_close x = fmt_close_box x
 (*   if not(U.empty lst) then f a *)
 (*   else (); *)
 
-(* polymorphic conversion to a string with -i- spaces identation*)
+(** polymorphic conversion to a string with -i- spaces identation*)
 let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
@@ -55,11 +55,11 @@ let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
     end
   end    
 
-(* conversion to a string with a 1-space indentation *)    
+(** conversion to a string with a 1-space indentation *)    
 let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
   poly_string_of_pr_gen 1 pr e
 
-(* polymorphic function for debugging printer *)
+(** polymorphic function for debugging printer *)
 let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : unit =
   let old_fmt = !fmt in
   begin
@@ -69,7 +69,7 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
   end    
 
 
-(* shorter op code used internally *)
+(** shorter op code used internally *)
 let op_add_short = "+" 
 let op_sub_short = "-" 
 let op_mult_short = "*" 
@@ -86,7 +86,7 @@ let op_star_short = "*"
 let op_f_or_short = "or"  
 
 
-(* op code that will be printed *)
+(** op code that will be printed *)
 let op_add = "+" 
 let op_sub = "-" 
 let op_mult = "*" 
@@ -109,13 +109,12 @@ let op_star = " * "
 let op_f_or = "or" 
 
 
-(* this command will add a bracket around e if
-   is simple yields false *)
+(** this command will add a bracket around e if is simple yields false *)
 let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
  if (isSimple e) then pr_elem e
  else (fmt_string "("; pr_elem e; fmt_string ")")
 
-(* this command invokes
+(** this command invokes
     f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close *)
 let pr_list_open_sep (f_open:unit -> unit) 
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
@@ -129,8 +128,8 @@ let pr_list_open_sep (f_open:unit -> unit)
     | xs -> f_open(); (helper xs); f_close() 
 
 
-(* sep_opt = "SAB","SA","SB" *)
-(* sep_opt = "AB","A","B", "S", "" *)
+(** sep_opt = "SAB","SA","SB" 
+ sep_opt = "AB","A","B", "S", "" *)
 let pr_op_sep_gen sep op =
   if sep="A" then (fmt_string op; fmt_cut())
   else if sep="B" then (fmt_cut();fmt_string op)
@@ -141,19 +140,19 @@ let pr_op_sep_gen sep op =
   else if sep="S" then fmt_string (" "^op^" ")
   else fmt_string op (* assume sep="" *)
 
-(* print op and a break after *)
+(** print op and a break after *)
 let pr_cut_after op = pr_op_sep_gen "SA" op
   (* fmt_string (" "^op); fmt_space()  *)
 
-  (* print op and a break after *)
+  (** print op and a break after *)
 let pr_cut_before op = pr_op_sep_gen "SB" op
   (* fmt_space(); fmt_string (op^" ") *)
 
-  (* print op and a break after *)
+  (** print op and a break after *)
 let pr_cut_after_no op =  pr_op_sep_gen "A" op
   (* fmt_string op; fmt_cut() *) 
 
-  (* print op and a break after *)
+  (** print op and a break after *)
 let pr_cut_before_no op =  pr_op_sep_gen "B" op
   (* fmt_cut(); fmt_string op *)
 
@@ -177,8 +176,8 @@ let pr_cut_before_no op =  pr_op_sep_gen "B" op
 (*   (fun () -> fmt_string ")"; fmt_close();)  *)
 (*   fmt_space x *)
 
-(* box_opt = "V","H","B" *)
-(* sep_opt = "B","A", "AB" *) 
+(** @param box_opt Some(s,i) for boxing options "V" -vertical,"H"-horizontal,"B"-box 
+    @param sep_opt (Some s) for breaks at separator where "B"-before, "A"-after, "AB"-both  *) 
 let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   let f_o x = match x with
     | Some(s,i) -> 
@@ -200,6 +199,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
       (fun () -> f_s sep_opt sep_str) 
       f_empty  f xs
 
+    
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> fmt_string (open_str^close_str)) box_opt sep_opt op open_str close_str sep_str f xs
     
@@ -224,10 +224,7 @@ let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else (fmt_string hdr; (wrap_box ("B",0) f x))
 
-(* this wrap is to be used in a vbox setting
-   if hdr is big and the size of printing exceeds
-   margin, it will do a cut and indent before continuing
-*)
+
 
 let pr_vwrap_naive_nocut hdr (f: 'a -> unit) (x:'a) =
   begin
@@ -241,6 +238,10 @@ let pr_vwrap_naive hdr (f: 'a -> unit) (x:'a) =
      pr_vwrap_naive_nocut hdr f x;
   end
 
+(** this wrap is to be used in a vbox setting
+   if hdr is big and the size of printing exceeds
+   margin, it will do a cut and indent before continuing
+*)
 let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
   if (String.length hdr)>7 then
     begin
@@ -303,15 +304,15 @@ let pr_set f xs = pr_args None (Some "A") "" "{" "}" "," f xs
 
 let pr_set_vbox f xs = pr_args (Some ("V",1)) (Some "A") "{" "}" "," f xs
 
-(* print prefix op(x1..xn) but use x1 alone if n=1 *)
+(** print prefix op(x1..xn) but use x1 alone if n=1 *)
 let pr_fn_args op f xs = match xs with
   | [x] -> f x
   | _ -> (pr_tuple op f xs)
 
-(* print infix form : x1 op .. op xn *)
+(** print infix form : x1 op .. op xn *)
 let pr_list_op sep f xs = pr_args None (Some "A") "" "" "" sep f xs
   
-  (* print infix form : x1 op .. op xn *)
+  (** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox sep f xs = pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
 
 let pr_list_op_none sep f xs = pr_args None (Some "B") "" "" "" sep f xs
@@ -381,7 +382,7 @@ let pr_spec_var x = fmt_string (string_of_spec_var x)
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 
-(* check if top operator of e is associative and 
+(** check if top operator of e is associative and 
    return its list of arguments if so *)
 let exp_assoc_op (e:P.exp) : (string * P.exp list) option = 
   match e with
@@ -393,7 +394,7 @@ let exp_assoc_op (e:P.exp) : (string * P.exp list) option =
     | P.BagIntersect (es,_) -> Some (op_intersect_short,es)
     | _ -> None
 
-(* check if exp can be printed without a parenthesis,
+(** check if exp can be printed without a parenthesis,
      e.g. trivial expr and prefix forms *)
 let exp_wo_paren (e:P.exp) = 
   match e with
@@ -473,7 +474,7 @@ let ft_assoc_op (e:fail_type) : (string * fail_type list) option =
      e.g. trivial expr and prefix forms *)
 let ft_wo_paren (e:fail_type) = true
 
-(* print a formula exp to formatter *)
+(** print a formula exp to formatter *)
 let rec pr_formula_exp (e:P.exp) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   match e with
@@ -508,7 +509,7 @@ let rec pr_formula_exp (e:P.exp) =
         pr_formula_exp e1; pr_cut_after op_diff ; pr_formula_exp e2
 
 
-(* print a b_formula  to formatter *)
+(** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
@@ -549,8 +550,7 @@ let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
 
-(* print a pure formula to formatter *)
-
+(** print a pure formula to formatter *)
 let rec pr_pure_formula  (e:P.formula) = 
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
@@ -609,28 +609,28 @@ let rec pr_h_formula h =
       | HFalse -> fmt_bool false
 
 
-(* convert formula exp to a string via pr_formula_exp *)
+(** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
 
 let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
   poly_printer_of_pr crt_fmt pr_formula_exp e
 
 
-(* convert b_formula to a string via pr_b_formula *)
+(** convert b_formula to a string via pr_b_formula *)
 let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_formula e
 
 let printer_of_b_formula (crt_fmt: Format.formatter) (e:P.b_formula) : unit =
   poly_printer_of_pr crt_fmt pr_b_formula e
 
 
-(* convert pure_formula  to a string via pr_pure_formula *)
+(** convert pure_formula  to a string via pr_pure_formula *)
 let string_of_pure_formula (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula e
 
 let printer_of_pure_formula (crt_fmt: Format.formatter) (e:P.formula) : unit =
   poly_printer_of_pr crt_fmt pr_pure_formula e
 
  
-(* convert h_formula  to a string via pr_h_formula *)
+(** convert h_formula  to a string via pr_h_formula *)
 let string_of_h_formula (e:h_formula) : string =  poly_string_of_pr  pr_h_formula e
 
 let printer_of_h_formula (crt_fmt: Format.formatter) (e:h_formula) : unit =
