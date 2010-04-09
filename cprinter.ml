@@ -209,6 +209,19 @@ let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
    if hdr is big and the size of printing exceeds
    margin, it will do a cut and indent before continuing
 *)
+
+let pr_vwrap_naive_nocut hdr (f: 'a -> unit) (x:'a) =
+  begin
+    fmt_string (hdr); fmt_cut();
+    wrap_box ("B",2) f  x
+  end
+
+let pr_vwrap_naive hdr (f: 'a -> unit) (x:'a) =
+  begin
+    fmt_cut();
+     pr_vwrap_naive_nocut hdr f x;
+  end
+
 let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
   if (String.length hdr)>7 then
     begin
@@ -257,6 +270,8 @@ let pr_tuple op f xs = pr_args None (Some "A") op "(" ")" "," f xs
 let pr_angle op f xs = pr_args None (Some "A") op "<" ">" "," f xs
 
 let pr_seq op f xs = pr_args None (Some "A") op "[" "]" ";" f xs
+
+let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
 
 let pr_seq_nocut op f xs = pr_args None None op "[" "]" ";" f xs
 
@@ -480,12 +495,12 @@ let rec pr_b_formula (e:P.b_formula) =
     match e with
       | P.BConst (b,l) -> fmt_bool b 
       | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
-      | P.Lt (e1, e2, l) -> f_b e1; pr_cut_after_no op_lt ; f_b e2
-      | P.Lte (e1, e2, l) -> f_b e1; pr_cut_after_no op_lte ; f_b e2
-      | P.Gt (e1, e2, l) -> f_b e1; pr_cut_after_no op_gt ; f_b e2
-      | P.Gte (e1, e2, l) -> f_b e1; pr_cut_after_no op_gte ; f_b e2
-      | P.Eq (e1, e2, l) -> f_b_no e1; pr_cut_after_no op_eq ; f_b_no e2
-      | P.Neq (e1, e2, l) -> f_b e1; pr_cut_after_no op_neq ; f_b e2
+      | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
+      | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
+      | P.Gt (e1, e2, l) -> f_b e1; fmt_string op_gt ; f_b e2
+      | P.Gte (e1, e2, l) -> f_b e1; fmt_string op_gte ; f_b e2
+      | P.Eq (e1, e2, l) -> f_b_no e1; fmt_string op_eq ; f_b_no e2
+      | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
       | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
           let arg3 = bin_op_to_list op_max_short exp_assoc_op e2 in
@@ -838,10 +853,12 @@ let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
 
 let pr_partial_context ((l1,l2): partial_context) =
   fmt_open_vbox 0;
-  pr_vwrap_nocut "Failed States: "
-      (pr_seq "" (fun (lbl,fs)-> pr_vwrap "   Label: " pr_path_trace lbl; pr_vwrap "State: " pr_fail_type fs)) l1;
-  pr_vwrap "Successful States: "
-      (pr_seq "" (fun (lbl,fs)-> pr_vwrap " Label: " pr_path_trace lbl; pr_vwrap "State: " pr_context fs)) l2;
+  pr_vwrap_naive_nocut "Failed States:"
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_fail_type fs)) l1;
+  pr_vwrap_naive "Successful States:"
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_context fs)) l2;
   fmt_close_box ()
 
 
