@@ -35,16 +35,16 @@ let fmt_close x = fmt_close_box x
 (*   if not(U.empty lst) then f a *)
 (*   else (); *)
 
-(* polymorphic convertion to a string *)
-let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
+(* polymorphic conversion to a string *)
+let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
-    fmt := str_formatter;
+    (* fmt := str_formatter; *)
     let b = (Buffer.create 80) in
     begin
       fmt := formatter_of_buffer (b);
       fmt_open_box 0;
-      fmt_string " ";
+      fmt_string (String.make i ' ');
       pr e;
       fmt_close();
       fmt_print_flush();
@@ -54,6 +54,10 @@ let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
       fmt := old_fmt; s)
     end
   end    
+
+(* conversion to a string with a 1-space indentation *)    
+let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
+  poly_string_of_pr_gen 1 pr e
 
 (* polymorphic function for debugging printer *)
 let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : unit =
@@ -225,13 +229,14 @@ let pr_vwrap_naive hdr (f: 'a -> unit) (x:'a) =
 let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
   if (String.length hdr)>7 then
     begin
-      let s = poly_string_of_pr f x in
+      let s = poly_string_of_pr_gen 0 f x in
       if (String.length s) < 70 then (* to improve *)
         fmt_string (hdr^s)
       else begin
         fmt_string hdr; 
-        fmt_cut (); 
-        fmt_string "  ";
+        fmt_cut ();
+	(* fmt_string s; *)
+        fmt_string " ";
         wrap_box ("B",0) f  x
       end
     end
@@ -917,7 +922,7 @@ let pr_view_decl v =
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
-  pr_vwrap  "unstuctured formula: " pr_formula v.view_un_struc_formula;
+  pr_vwrap  "unstructured formula: " pr_formula v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_pure_formula (fst v.view_x_formula);
   f v.view_base_case;
   fmt_close_box ()
