@@ -21,7 +21,7 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip
+all: hip # sleek prover hipgui
 
 rest: sleek prover hipgui
 

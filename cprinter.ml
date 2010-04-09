@@ -43,8 +43,10 @@ let poly_string_of_pr (pr: 'a -> unit) (e:'a) : string =
     let b = (Buffer.create 80) in
     begin
       fmt := formatter_of_buffer (b);
-      (* fmt_string " ";  *)
-      fmt_open_box 0; pr e; fmt_close();
+      fmt_open_box 0;
+      fmt_string " ";
+      pr e;
+      fmt_close();
       fmt_print_flush();
       (* (let s = flush_str_formatter()in *)
       (* fmt := old_fmt; s) *)
@@ -195,6 +197,41 @@ let wrap_box box_opt f x =
     f_o box_opt; f x; fmt_close()
 
 
+let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
+  if (e x) then ()
+  else (fmt_cut (); fmt_string hdr; (wrap_box ("B",0) f x))
+
+let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
+  if (e x) then ()
+  else (fmt_string hdr; (wrap_box ("B",0) f x))
+
+(* this wrap is to be used in a vbox setting
+   if hdr is big and the size of printing exceeds
+   margin, it will do a cut and indent before continuing
+*)
+let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
+  if (String.length hdr)>7 then
+    begin
+      let s = poly_string_of_pr f x in
+      if (String.length s) < 70 then (* to improve *)
+        fmt_string (hdr^s)
+      else begin
+        fmt_string hdr; 
+        fmt_cut (); 
+        fmt_string "  ";
+        wrap_box ("B",0) f  x
+      end
+    end
+  else  begin 
+    fmt_string hdr; 
+    wrap_box ("B",2) f  x
+  end
+
+let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
+  begin
+    fmt_cut();
+    pr_vwrap_nocut hdr f x
+  end
 
 (* let pr_args open_str close_str sep_str f xs =  *)
 (*   pr_list_open_sep  *)
@@ -544,7 +581,7 @@ let printer_of_formula_exp (crt_fmt: Format.formatter) (e:P.exp) : unit =
   poly_printer_of_pr crt_fmt pr_formula_exp e
 
 
-(* convert b_formula  to a string via pr_b_formula *)
+(* convert b_formula to a string via pr_b_formula *)
 let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_formula e
 
 let printer_of_b_formula (crt_fmt: Format.formatter) (e:P.b_formula) : unit =
@@ -697,38 +734,6 @@ let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
 
-let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
-  if (e x) then ()
-  else (fmt_cut (); fmt_string hdr; (wrap_box ("B",0) f x))
-
-let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
-  if (e x) then ()
-  else (fmt_string hdr; (wrap_box ("B",0) f x))
-
-
-let pr_wrap_nocut hdr (f: 'a -> unit) (x:'a) =
-  if (String.length hdr)>7 then
-    begin
-      let s = poly_string_of_pr f x in
-      if (String.length s) < 70 then (* to improve *)
-        fmt_string (hdr^s)
-      else begin
-        fmt_string hdr; 
-        fmt_cut (); 
-        fmt_string "  ";
-        wrap_box ("B",0) f  x
-      end
-    end
-  else  begin 
-    fmt_string hdr; 
-    wrap_box ("B",2) f  x
-  end
-
-let pr_wrap hdr (f: 'a -> unit) (x:'a) =
-  begin
-    fmt_cut();
-    pr_wrap_nocut hdr f x
-  end
 
   (* if String.length(hdr)>7 then *)
   (*   ( fmt_string hdr;  fmt_cut (); fmt_string "  "; wrap_box ("B",2) f  x) *)
@@ -737,10 +742,10 @@ let pr_wrap hdr (f: 'a -> unit) (x:'a) =
 
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
-  pr_wrap_nocut "es_formula: " pr_formula  es.es_formula; 
-  pr_wrap "es_pure: " pr_pure_formula_branches es.es_pure; 
-  pr_wrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq; 
-  pr_wrap "es_heap: " pr_h_formula es.es_heap;
+  pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
+  pr_vwrap "es_pure: " pr_pure_formula_branches es.es_pure; 
+  pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq; 
+  pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   pr_wrap_test "es_evars: " U.empty (pr_seq "" pr_spec_var) es.es_evars; 
   pr_wrap_test "es_ivars: "  U.empty (pr_seq "" pr_spec_var) es.es_ivars;
   pr_wrap_test "es_expl_vars: " U.empty (pr_seq "" pr_spec_var) es.es_expl_vars;
@@ -763,9 +768,9 @@ let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit =
 let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
   pr_wrap_test_nocut "fc_prior_steps: " U.empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;
-  pr_wrap "fc_message: "  fmt_string es.fc_message;
-  pr_wrap "fc_current_lhs: " pr_estate es.fc_current_lhs;
-  pr_wrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq;
+  pr_vwrap "fc_message: "  fmt_string es.fc_message;
+  pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;
+  pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq;
   pr_wrap_test "fc_failure_pts: "U.empty (pr_seq "" pr_formula_label) es.fc_failure_pts;
   fmt_string "}"; 
   fmt_close ()
@@ -833,10 +838,10 @@ let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
 
 let pr_partial_context ((l1,l2): partial_context) =
   fmt_open_vbox 0;
-  pr_wrap_nocut "Failed States: "
-      (pr_seq "" (fun (lbl,fs)-> pr_wrap "   Label: " pr_path_trace lbl; pr_wrap "State: " pr_fail_type fs)) l1;
-  pr_wrap "Successful States: "
-      (pr_seq "" (fun (lbl,fs)-> pr_wrap " Label: " pr_path_trace lbl; pr_wrap "State: " pr_context fs)) l2;
+  pr_vwrap_nocut "Failed States: "
+      (pr_seq "" (fun (lbl,fs)-> pr_vwrap "   Label: " pr_path_trace lbl; pr_vwrap "State: " pr_fail_type fs)) l1;
+  pr_vwrap "Successful States: "
+      (pr_seq "" (fun (lbl,fs)-> pr_vwrap " Label: " pr_path_trace lbl; pr_vwrap "State: " pr_context fs)) l2;
   fmt_close_box ()
 
 
@@ -888,15 +893,15 @@ let pr_view_decl v =
     match bc with
 	  | None -> ()
       | Some (s1,(s3,s2)) -> 
-            pr_wrap "base case: "
+            pr_vwrap "base case: "
 	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_pure_formula_branches (s3, s2)) ()
   in
   fmt_open_vbox 1;
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
-  pr_wrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
-  pr_wrap  "unstuctured formula: " pr_formula v.view_un_struc_formula;
-  pr_wrap  "xform: " pr_pure_formula (fst v.view_x_formula);
+  pr_vwrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
+  pr_vwrap  "unstuctured formula: " pr_formula v.view_un_struc_formula;
+  pr_vwrap  "xform: " pr_pure_formula (fst v.view_x_formula);
   f v.view_base_case;
   fmt_close_box ()
 
