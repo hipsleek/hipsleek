@@ -21,9 +21,9 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip # sleek prover hipgui
+all: hip sleek prover prdebug hipgui
 
-rest: sleek prover hipgui
+rest: sleek prover prdebug hipgui
 
 opt: hip.opt sleek.opt prover.opt
 
@@ -188,8 +188,8 @@ hip: $(MAIN_FILES) decidez.vo
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
-myp:  $(PP_FILES) 
-	$(OCAMLC) -a -o $@ unix.cma str.cma graph.cma $(PP_FILES)
+prdebug: $(PP_FILES) 
+	 $(OCAMLC) -a -o $@ unix.cma str.cma graph.cma $(PP_FILES)
 
 hipgui: $(GUI_FILES) decidez.vo gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) gui.ml maingui.ml

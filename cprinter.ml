@@ -905,7 +905,7 @@ fmt_string ("List List of Partial Context: " ^ string_of_int(List.length lc));
 let string_of_list_list_partial_context (lc:list_partial_context list) =
   poly_string_of_pr pr_list_list_partial_context lc
 
-let printer_of_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context list) : unit =
+let printer_of_list_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context list) : unit =
   poly_printer_of_pr fmt pr_list_list_partial_context ctx   
 
 
@@ -934,8 +934,6 @@ let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =
   poly_printer_of_pr fmt pr_view_decl v 
       
 
-
-(* TEMP LINE------------------ *)
   
 (* function to print a list of strings *) 
 let rec string_of_ident_list l c = match l with 
