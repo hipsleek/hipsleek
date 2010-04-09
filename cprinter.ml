@@ -11,6 +11,7 @@ module P = Cpure
 (* the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
 
+(* primitive formatter comands *)
 let fmt_string x = pp_print_string (!fmt) x
 let fmt_bool x = pp_print_bool (!fmt) x
 let fmt_int x = pp_print_int (!fmt) x
@@ -26,7 +27,6 @@ let fmt_open_box n = pp_open_box (!fmt) n
 let fmt_open_vbox n = pp_open_vbox (!fmt) n
 let fmt_open_hbox n = pp_open_hbox (!fmt) n
 let fmt_close_box x = pp_close_box (!fmt) x
-
 let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
 
@@ -35,7 +35,7 @@ let fmt_close x = fmt_close_box x
 (*   if not(U.empty lst) then f a *)
 (*   else (); *)
 
-(* polymorphic conversion to a string *)
+(* polymorphic conversion to a string with -i- spaces identation*)
 let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
   let old_fmt = !fmt in
   begin
@@ -67,7 +67,6 @@ let poly_printer_of_pr (crt_fmt: Format.formatter) (pr: 'a -> unit) (e:'a) : uni
     pr e;
     fmt := old_fmt;
   end    
-
 
 
 (* shorter op code used internally *)
@@ -129,17 +128,34 @@ let pr_list_open_sep (f_open:unit -> unit)
     | [] -> f_empty()
     | xs -> f_open(); (helper xs); f_close() 
 
+
+(* sep_opt = "SAB","SA","SB" *)
+(* sep_opt = "AB","A","B", "S", "" *)
+let pr_op_sep_gen sep op =
+  if sep="A" then (fmt_string op; fmt_cut())
+  else if sep="B" then (fmt_cut();fmt_string op)
+  else if sep="AB" then (fmt_cut();fmt_string op;fmt_cut())
+  else if sep="SB" then (fmt_space();fmt_string op;fmt_string(" "))
+  else if sep="SA" then (fmt_string(" "); fmt_string op; fmt_space())
+  else if sep="SAB" then (fmt_space();fmt_string op; fmt_space())
+  else if sep="S" then fmt_string (" "^op^" ")
+  else fmt_string op (* assume sep="" *)
+
 (* print op and a break after *)
-let pr_cut_after op = fmt_string (" "^op); fmt_space() 
+let pr_cut_after op = pr_op_sep_gen "SA" op
+  (* fmt_string (" "^op); fmt_space()  *)
 
   (* print op and a break after *)
-let pr_cut_before op = fmt_space(); fmt_string (op^" ")
+let pr_cut_before op = pr_op_sep_gen "SB" op
+  (* fmt_space(); fmt_string (op^" ") *)
 
   (* print op and a break after *)
-let pr_cut_after_no op = fmt_string op; fmt_cut() 
+let pr_cut_after_no op =  pr_op_sep_gen "A" op
+  (* fmt_string op; fmt_cut() *) 
 
   (* print op and a break after *)
-let pr_cut_before_no op = fmt_cut(); fmt_string op
+let pr_cut_before_no op =  pr_op_sep_gen "B" op
+  (* fmt_cut(); fmt_string op *)
 
 (*   (\* print op and a break after *\) *)
 (* let pr_vbrk_after op = (fun () -> fmt_string (op); fmt_cut() ) *)
@@ -162,8 +178,7 @@ let pr_cut_before_no op = fmt_cut(); fmt_string op
 (*   fmt_space x *)
 
 (* box_opt = "V","H","B" *)
-(* sep_opt = "B","A" *)
-  
+(* sep_opt = "B","A", "AB" *) 
 let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
   let f_o x = match x with
     | Some(s,i) -> 
@@ -1065,6 +1080,7 @@ let string_of_specs d =  List.fold_left  (fun a c -> a ^" "^(string_of_spec c ))
 let string_of_sharp st = match st with
 	| Sharp_ct t -> string_of_flow_formula "" t
 	| Sharp_v  f -> "flow_var "^f
+
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
   | Label l-> "LABEL! "^( (string_of_int_label_opt (fst  l.exp_label_path_id) (","^((string_of_int (snd l.exp_label_path_id))^": "^(string_of_exp l.exp_label_exp)))))
