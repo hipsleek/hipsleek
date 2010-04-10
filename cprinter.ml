@@ -109,13 +109,12 @@ let op_star = " * "
 let op_f_or = "or" 
 
 
-(** this command will add a bracket around e if is simple yields false *)
+(** add a bracket around e if is simple yields false *)
 let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
  if (isSimple e) then pr_elem e
  else (fmt_string "("; pr_elem e; fmt_string ")")
 
-(** this command invokes
-    f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close *)
+(** invoke f_open ; f_elem x1; f_sep .. f_sep; f_elem xn; f_close *)
 let pr_list_open_sep (f_open:unit -> unit) 
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
@@ -128,8 +127,8 @@ let pr_list_open_sep (f_open:unit -> unit)
     | xs -> f_open(); (helper xs); f_close() 
 
 
-(** sep_opt = "SAB","SA","SB" 
- sep_opt = "AB","A","B", "S", "" *)
+(** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before 
+ "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
 let pr_op_sep_gen sep op =
   if sep="A" then (fmt_string op; fmt_cut())
   else if sep="B" then (fmt_cut();fmt_string op)
