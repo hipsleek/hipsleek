@@ -198,14 +198,16 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
       (fun () -> f_s sep_opt sep_str) 
       f_empty  f xs
 
-    
+ (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> fmt_string (open_str^close_str)) box_opt sep_opt op open_str close_str sep_str f xs
-    
+
+ (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
   pr_args_gen (fun () -> ()) box_opt sep_opt op open_str close_str sep_str f xs
 
 
+(** @param box_opt (s,i) wrap a "V" (vertical),"H" (horizontal) or just a box *)    
 let wrap_box box_opt f x =  
   let f_o (s,i) = 
     if s="V" then fmt_open_vbox i
@@ -214,23 +216,25 @@ let wrap_box box_opt f x =
   in
     f_o box_opt; f x; fmt_close()
 
-
+(** if f e  is not true print with a cut in front of  hdr*)    
 let pr_wrap_test hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else (fmt_cut (); fmt_string hdr; (wrap_box ("B",0) f x))
 
+(** if f e  is not true print without cut in front of  hdr*)      
 let pr_wrap_test_nocut hdr (e:'a -> bool) (f: 'a -> unit) (x:'a) =
   if (e x) then ()
   else (fmt_string hdr; (wrap_box ("B",0) f x))
 
 
-
+(** print hdr , a cut and a boxed  f a  *)  
 let pr_vwrap_naive_nocut hdr (f: 'a -> unit) (x:'a) =
   begin
     fmt_string (hdr); fmt_cut();
     wrap_box ("B",2) f  x
   end
 
+(** call pr_wrap_naive_nocut with a cut in front of *)
 let pr_vwrap_naive hdr (f: 'a -> unit) (x:'a) =
   begin
     fmt_cut();
@@ -260,6 +264,7 @@ let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
     wrap_box ("B",2) f  x
   end
 
+(** call pr_wrap_nocut with a cut in front of*)    
 let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
   begin
     fmt_cut();
@@ -284,23 +289,30 @@ let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
 (*     (fun () -> fmt_string close_str; (\* fmt_close(); *\))  *)
 (*     (pr_brk_after sep_str) f xs *)
 
-
+(** print a tuple with cut after separator*)
 let pr_tuple op f xs = pr_args None (Some "A") op "(" ")" "," f xs
 
+(** print an angle list with cut after separator*)  
 let pr_angle op f xs = pr_args None (Some "A") op "<" ">" "," f xs
 
+(** print a sequence with cut after separator*)  
 let pr_seq op f xs = pr_args None (Some "A") op "[" "]" ";" f xs
 
+(** print a sequence with cut after separator in a VBOX*)    
 let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
 
+(** print a sequence without cut and box *)    
 let pr_seq_nocut op f xs = pr_args None None op "[" "]" ";" f xs
 
 let pr_seq_option op f xs = pr_args_option None (Some "A") op "[" "]" ";" f xs
 
+(** print a list with cut after separator*)    
 let pr_list_none f xs = pr_args None (Some "A") "" "" "" "," f xs
 
+ (** print a set with cut after separator*)  
 let pr_set f xs = pr_args None (Some "A") "" "{" "}" "," f xs
 
+ (** print a set with cut after separator in a VBOX*)  
 let pr_set_vbox f xs = pr_args (Some ("V",1)) (Some "A") "{" "}" "," f xs
 
 (** print prefix op(x1..xn) but use x1 alone if n=1 *)
@@ -314,17 +326,21 @@ let pr_list_op sep f xs = pr_args None (Some "A") "" "" "" sep f xs
   (** print infix form : x1 op .. op xn *)
 let pr_list_op_vbox sep f xs = pr_args (Some ("V",0)) (Some "B") "" "" "" sep f xs
 
+(**a list with a cut before separator *)  
 let pr_list_op_none sep f xs = pr_args None (Some "B") "" "" "" sep f xs
 
+(** print a list in a vbox and each element is in a box*)  
 let pr_list_vbox_wrap sep f xs =
   if (String.length sep > 3) then
     pr_args (Some ("V",0)) (Some "AB") "" "" "" sep
       (fun x -> fmt_string " "; wrap_box ("B",0) f x) xs
   else   pr_args (Some ("V",0)) (Some "B") "" "" "" sep (wrap_box ("B",0) f) xs
 
+ (**print f_1 op  f_2 and a space *)   
 let pr_op_adhoc (f_1:unit -> unit) (op:string) (f_2:unit -> unit) =
   f_1(); fmt_string op ; f_2(); fmt_space()
 
+(**print  f e1  op f e2 and a space *)
 let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
   (f e1); fmt_string op ; (f e2); fmt_space()
 
