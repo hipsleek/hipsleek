@@ -108,17 +108,17 @@ let rec smt_of_b_formula b (*{{{*)=
  *)
 let rec smt_of_formula f =(*{{{*)
     match f with
-        | CP.BForm b -> (smt_of_b_formula b)
+        | CP.BForm (b,_) -> (smt_of_b_formula b)
         | CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
-        | CP.Or (p1, p2, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
-        | CP.Not (p, _) ->
+        | CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
+        | CP.Not (p,_, _) ->
               (match p with
-                   | CP.BForm (CP.BVar (bv, _)) -> "(= 0 " ^ (smt_of_spec_var bv) ^ ")"
+                   | CP.BForm (CP.BVar (bv, _),_) -> "(= 0 " ^ (smt_of_spec_var bv) ^ ")"
                    | _ -> "(not " ^ (smt_of_formula p) ^ ")")
-        | CP.Forall (sv, p, _) ->
+        | CP.Forall (sv, p, _,_) ->
               logic := AUFLIA;
               "(forall (" ^ (smt_of_spec_var sv) ^ " Int) " ^ (smt_of_formula p) ^ ")"
-        | CP.Exists (sv, p, _) ->
+        | CP.Exists (sv, p, _,_) ->
               logic := AUFLIA;
               "(exists (" ^ (smt_of_spec_var sv) ^ " Int) " ^ (smt_of_formula p) ^ ")"(*}}}*)
 
@@ -173,7 +173,7 @@ let imply (ante : Cpure.formula) (conseq : Cpure.formula) : bool =(*{{{*)
      print_string ("ante:: " ^ (Cprinter.string_of_pure_formula ante) ^ "\n");
      print_string ("conseq:: " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n\n");
      *)
-    let inString = (toSMT ante (Cpure.mkNot conseq no_pos)) in
+    let inString = (toSMT ante (Cpure.mkNot conseq None no_pos)) in
     let outString = (runProver inString) in
         (*
          if !Logging.isLogging then (

@@ -149,20 +149,20 @@ let is_linear_bformula b =
   
 let rec is_linear_formula f0 = 
   match f0 with
-  | CP.BForm b -> is_linear_bformula b
-  | CP.Not (f, _) | CP.Forall (_, f, _) | CP.Exists (_, f, _) -> is_linear_formula f;
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _) -> (is_linear_formula f1) & (is_linear_formula f2)
+  | CP.BForm (b,_) -> is_linear_bformula b
+  | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) -> is_linear_formula f;
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) -> (is_linear_formula f1) & (is_linear_formula f2)
 
 let rec has_existential_quantifier f0 negation_bounded =
   match f0 with 
-  | CP.Exists (_, f, _) -> 
+  | CP.Exists (_, f, _,_) -> 
       if negation_bounded then 
         has_existential_quantifier f negation_bounded 
       else 
         true
-  | CP.Forall (_, f, _) -> has_existential_quantifier f negation_bounded
-  | CP.Not (f, _) -> has_existential_quantifier f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _) -> 
+  | CP.Forall (_, f, _,_) -> has_existential_quantifier f negation_bounded
+  | CP.Not (f, _,_) -> has_existential_quantifier f (not negation_bounded)
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) -> 
       (has_existential_quantifier f1 negation_bounded) ||
       (has_existential_quantifier f2 negation_bounded)
   | CP.BForm _ -> false
@@ -232,45 +232,45 @@ let rl_of_b_formula b =
 
 let rec rl_of_formula f0 = 
   match f0 with
-  | CP.BForm b -> rl_of_b_formula b 
-  | CP.Not (f, _) -> "(not " ^ (rl_of_formula f) ^ ")"
-  | CP.Forall (sv, f, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
-  | CP.Exists (sv, f, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
+  | CP.BForm (b,_) -> rl_of_b_formula b 
+  | CP.Not (f, _,_) -> "(not " ^ (rl_of_formula f) ^ ")"
+  | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
+  | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
   | CP.And (f1, f2, _) -> "(" ^ (rl_of_formula f1) ^ " and " ^ (rl_of_formula f2) ^ ")"
-  | CP.Or (f1, f2, _) -> "(" ^ (rl_of_formula f1) ^ " or " ^ (rl_of_formula f2) ^ ")"
+  | CP.Or (f1, f2, _, _) -> "(" ^ (rl_of_formula f1) ^ " or " ^ (rl_of_formula f2) ^ ")"
   
 let rec strengthen_formula f0 = 
   match f0 with
-  | CP.BForm b -> 
+  | CP.BForm (b,lbl) -> 
       let r = match b with
-        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
-        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
+        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
         | _ -> f0 
       in r
-  | CP.Not (f, l) -> CP.Not (strengthen_formula f, l)
-  | CP.Forall (sv, f, l) -> CP.Forall (sv, strengthen_formula f, l)
-  | CP.Exists (sv, f, l) -> CP.Exists (sv, strengthen_formula f, l)
+  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
+  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
+  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
-  | CP.Or (f1, f2, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, l)
+  | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
 
 let rec weaken_formula f0 = 
   match f0 with
-  | CP.BForm b ->
+  | CP.BForm (b,lbl) ->
       let r = match b with
-        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
-        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
+        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
         | CP.Eq (e1, e2, l) ->
             (* e1 = e2 => e2 - 1 < e1 < e2 + 1 *)
             let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
             let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.And (CP.BForm lp, CP.BForm rp, l)
+            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
         | _ -> f0 
       in r
-  | CP.Not (f, l) -> CP.Not (weaken_formula f, l)
-  | CP.Forall (sv, f, l) -> CP.Forall (sv, weaken_formula f, l)
-  | CP.Exists (sv, f, l) -> CP.Exists (sv, weaken_formula f, l)
+  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
+  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
+  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
-  | CP.Or (f1, f2, l) -> CP.Or (weaken_formula f1, weaken_formula f2, l)
+  | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
   
 (***********************************
  existential quantifier elimination 
@@ -311,7 +311,7 @@ let find_bound_b_formula v f0 =
 
 let rec elim_exists_with_ineq f0 =
   match f0 with
-  | CP.Exists (qvar, qf, pos) ->
+  | CP.Exists (qvar, qf,lbl, pos) ->
       begin
         match qf with
         | CP.Or (qf1, qf2, qpos) ->
@@ -330,7 +330,7 @@ let rec elim_exists_with_ineq f0 =
                   let res = ref (CP.mkFalse pos) in
                   begin
                     for i = mi to ma do
-                      res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) eqqf) pos
+                      res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) eqqf) lbl pos
                     done;
                     !res
                   end
@@ -374,7 +374,7 @@ and find_bound v f0 =
         in
         (min, max)
       end
-  | CP.BForm bf -> find_bound_b_formula v bf
+  | CP.BForm (bf,_) -> find_bound_b_formula v bf
   | _ -> None, None
   
 and get_subst_min f0 v = match f0 with

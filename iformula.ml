@@ -13,7 +13,7 @@ type struc_formula = ext_formula list
 and ext_formula = 
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
-	| EAssume of formula
+	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
 
 
 and ext_case_formula =
@@ -77,6 +77,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 					   h_formula_heap_with_inv : bool;
 					   h_formula_heap_arguments : P.exp list;
 					   h_formula_heap_pseudo_data : bool;
+					   h_formula_heap_label : formula_label option;
 					   h_formula_heap_pos : loc }
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
@@ -85,6 +86,7 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 						h_formula_heap2_with_inv : bool;
 						h_formula_heap2_arguments : (ident * P.exp) list;
 						h_formula_heap2_pseudo_data : bool;
+						h_formula_heap2_label : formula_label option;
 						h_formula_heap2_pos : loc }
 
 (* constructors *)
@@ -103,9 +105,7 @@ and isConstFalse f0 = match f0 with
 	  let h, p = f.formula_base_heap, f.formula_base_pure in
 		match h with
 		  | HFalse -> true
-		  | _ -> match p with
-			  | P.BForm (P.BConst (false, _)) -> true
-			  | _ -> false
+		  | _ -> (P.isConstFalse p)
 	end
   | _ -> false
 
@@ -113,11 +113,7 @@ and isConstTrue f0 = match f0 with
   | Base f -> begin
 	  let h, p = f.formula_base_heap, f.formula_base_pure in
 		match h with
-		  | HTrue -> begin
-			  match p with
-				| P.BForm (P.BConst (true, _)) -> true
-				| _ -> false
-			end
+		  | HTrue -> (P.isConstTrue p)
 		  | _ -> false
 	end
   | _ -> false
@@ -219,7 +215,7 @@ if (List.length f0)==0 then no_pos
 	else match (List.hd f0) with 
 	| ECase b -> b.formula_case_pos
 	| EBase b -> b.formula_ext_pos
-	| EAssume b -> pos_of_formula b
+	| EAssume (b,_) -> pos_of_formula b
 
 let replace_branches b = function
   | Or f -> failwith "replace_branches doesn't expect an Or"
@@ -276,7 +272,7 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 													(b.formula_ext_explicit_inst@b.formula_ext_implicit_inst)
 							| ECase b-> List.fold_left (fun a (c1,c2)->
 											a@ (struc_hp_fv c2)) [] b.formula_case_branches
-							| EAssume b-> heap_fv b) in
+							| EAssume (b,_)-> heap_fv b) in
 						List.concat (List.map helper f)
 
 and heap_fv (f:formula):(ident*primed) list = match f with
@@ -301,7 +297,7 @@ and struc_free_vars (f0:struc_formula):(ident*primed) list=
 				let fvc = List.fold_left (fun a (c1,c2)-> 
 				a@(struc_free_vars c2)@(Ipure.fv c1)) [] b.formula_case_branches in
 				Util.remove_dups fvc		
-		| EAssume b-> all_fv b in
+		| EAssume (b,_)-> all_fv b in
 	Util.remove_dups (List.concat (List.map helper f0))
 and all_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> Util.remove_dups 
@@ -419,6 +415,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 			   h_formula_heap_with_inv = winv;
 			   h_formula_heap_arguments = args;
 			   h_formula_heap_pseudo_data = ps_data;
+			   h_formula_heap_label = l;
 			   h_formula_heap_pos = pos}) -> 
       HeapNode ({h_formula_heap_node = subst_var s x; 
 				 h_formula_heap_name = c; 
@@ -426,6 +423,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 				 h_formula_heap_with_inv = winv;
 				 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 				 h_formula_heap_pseudo_data = ps_data;
+				 h_formula_heap_label = l;
 				 h_formula_heap_pos = pos})
   | HeapNode2 ({
 		 				h_formula_heap2_node = x;
@@ -434,6 +432,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 						h_formula_heap2_with_inv = winv;
 						h_formula_heap2_arguments = args;
 						h_formula_heap2_pseudo_data = ps_data;
+						h_formula_heap2_label = l;
 						h_formula_heap2_pos= pos}) -> 
       HeapNode2 ({
 				 		h_formula_heap2_node = subst_var s x;
@@ -442,6 +441,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 						h_formula_heap2_with_inv = winv;
 						h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 						h_formula_heap2_pseudo_data =ps_data;
+						h_formula_heap2_label = l;
 						h_formula_heap2_pos = pos})
   | HTrue -> f
   | HFalse -> f
@@ -485,7 +485,7 @@ and rename_bound_vars (f : formula) =
 and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula):struc_formula = 
 	
 	let rec helper (f:ext_formula):ext_formula = match f with
-		| EAssume b -> EAssume (subst sst b)
+		| EAssume (b,tag) -> EAssume ((subst sst b),tag)
 		| ECase b ->
 			let r = List.map (fun (c1,c2)-> ((Ipure.subst sst c1),(subst_struc sst c2))) b.formula_case_branches in
 			ECase ({formula_case_branches = r; formula_case_pos = b.formula_case_pos})
@@ -507,7 +507,7 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 
 let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 	let rec helper (f:ext_formula):ext_formula = match f with
-		| EAssume b -> EAssume (rename_bound_vars b)
+		| EAssume (b,tag) -> EAssume ((rename_bound_vars b),tag)
 		| ECase b-> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(rename_bound_var_struc_formula c2))) b.formula_case_branches})
 		| EBase b-> 
 			(*let sst1 = List.map (fun (c1,c2)-> ((c1,c2),((Ipure.fresh_old_name c1),c2)))b.formula_ext_explicit_inst in*)
@@ -541,7 +541,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 									| _ -> 
 										let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 										let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
-										let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos)) in																
+										let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos), None) in																
 										(nv,[(nn,npf)])) b.h_formula_heap_arguments) in
 				(HeapNode ({b with h_formula_heap_arguments = na}),(List.concat ls))
   	 | HeapNode2 b ->	 
@@ -551,7 +551,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 									| _ -> 
 										let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
 										let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
-										let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos)) in																
+										let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None) in																
 										(((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
 				(HeapNode2 ({b with h_formula_heap2_arguments = na}),(List.concat ls))
   	 | HTrue -> (f,[])
@@ -595,7 +595,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 	
 and float_out_exps_from_heap_struc (f:struc_formula):struc_formula = 
 	let rec helper (f:ext_formula):ext_formula = match f with
-		| EAssume b -> EAssume (float_out_exps_from_heap b)
+		| EAssume (b,tag) -> EAssume ((float_out_exps_from_heap b),tag)
 		| ECase b -> ECase ({formula_case_branches = List.map (fun (c1,c2)-> (c1,(float_out_exps_from_heap_struc c2))) b.formula_case_branches ; formula_case_pos=b.formula_case_pos})
 		| EBase b-> 	EBase ({
 					formula_ext_explicit_inst = b.formula_ext_explicit_inst;
@@ -713,7 +713,7 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let new_name = ("max"^(fresh_trailer())) in
 			let nv = Ipure.Var((new_name, Unprimed), l) in
-			let t = Ipure.BForm (Ipure.EqMax(nv, ne1, ne2, l)) in 
+			let t = Ipure.BForm (Ipure.EqMax(nv, ne1, ne2, l), None) in 
 			let r = match (np1, np2) with
 					| None, None -> Some (t,[new_name])
 					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
@@ -727,7 +727,7 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 			let ne2, np2 = float_out_exp_min_max e2 in
 			let new_name = ("min"^(fresh_trailer())) in
 			let nv = Ipure.Var((new_name, Unprimed), l) in
-			let t = Ipure.BForm (Ipure.EqMin(nv, ne1, ne2, l)) in 
+			let t = Ipure.BForm (Ipure.EqMin(nv, ne1, ne2, l), None) in 
 			let r = match (np1, np2) with
 					| None, None -> Some (t,[new_name])
 					| Some (p1, l1), None -> Some ((Ipure.And(p1, t, l)), (new_name:: l1))
@@ -779,31 +779,31 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 			let r, ev2 = match np2 with 
 							| None -> (r, ev)
 							| Some (p1, ev1) -> (Ipure.And(r, p1, l), (List.rev_append ev1 ev)) in 
-		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, l))) r ev2 in
+		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, None,l))) r ev2 in
 							
 				
-		let rec float_out_b_formula_min_max (b: Ipure.b_formula): Ipure.formula = match b with
-			| Ipure.BConst _ -> Ipure.BForm b
-		  | Ipure.BVar _ -> Ipure.BForm b
+		let rec float_out_b_formula_min_max (b: Ipure.b_formula) lbl: Ipure.formula = match b with
+			| Ipure.BConst _ -> Ipure.BForm (b,lbl)
+		  | Ipure.BVar _ -> Ipure.BForm (b,lbl)
 		  | Ipure.Lt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Lt (ne1, ne2, l)) in
+						let t = Ipure.BForm (Ipure.Lt (ne1, ne2, l), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Lte (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Lte (ne1, ne2, l)) in
+						let t = Ipure.BForm (Ipure.Lte (ne1, ne2, l),lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Gt (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Gt (ne1, ne2, l)) in
+						let t = Ipure.BForm (Ipure.Gt (ne1, ne2, l), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Gte (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Gte (ne1, ne2, l)) in
+						let t = Ipure.BForm (Ipure.Gte (ne1, ne2, l), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.Eq (e1, e2, l) ->
 						let r = match e1 with
@@ -814,12 +814,12 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																	| Ipure.Var _ ->
 																			 let ne1 , np1 = float_out_exp_min_max v1 in
 																			 let ne2 , np2 = float_out_exp_min_max v2 in
-																			 let t = Ipure.BForm(Ipure.EqMin(e2, ne1, ne2, l)) in
+																			 let t = Ipure.BForm(Ipure.EqMin(e2, ne1, ne2, l), lbl) in
 																			 add_exists t np1 np2 l
 																	| _ -> 
 																			 let ne1, np1 = float_out_exp_min_max e1 in
 																			 let ne2, np2 = float_out_exp_min_max e2 in
-																			 let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+																			 let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
 																			 add_exists t np1 np2 l  in r2
 							| Ipure.Max(v1, v2, v3) -> let r2 = match e2 with
 																						| Ipure.Null _
@@ -828,12 +828,12 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																						| Ipure.Var _ ->
 																								 let ne1 , np1 = float_out_exp_min_max v1 in
 																								 let ne2 , np2 = float_out_exp_min_max v2 in
-																								 let t = Ipure.BForm(Ipure.EqMax(e2, ne1, ne2, l)) in
+																								 let t = Ipure.BForm(Ipure.EqMax(e2, ne1, ne2, l), lbl) in
 																								 add_exists t np1 np2 l
 																						| _ -> 
 																							let ne1, np1 = float_out_exp_min_max e1 in
 																							let ne2, np2 = float_out_exp_min_max e2 in
-																							let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+																							let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
 																							add_exists t np1 np2 l 
 																			in r2
 							| Ipure.Null _
@@ -843,73 +843,73 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 																					| Ipure.Min (v1, v2, v3) ->
 																						 	 let ne1 , np1 = float_out_exp_min_max v1 in
 																							 let ne2 , np2 = float_out_exp_min_max v2 in
-																							 let t = Ipure.BForm(Ipure.EqMin(e1, ne1, ne2, l)) in
+																							 let t = Ipure.BForm(Ipure.EqMin(e1, ne1, ne2, l), lbl) in
 																							 add_exists t np1 np2 l
 																					| Ipure.Max (v1, v2, v3) ->
 																							 let ne1 , np1 = float_out_exp_min_max v1 in
 																							 let ne2 , np2 = float_out_exp_min_max v2 in
-																							 let t = Ipure.BForm(Ipure.EqMax(e1, ne1, ne2, l)) in
+																							 let t = Ipure.BForm(Ipure.EqMax(e1, ne1, ne2, l), lbl) in
 																							 add_exists t np1 np2 l
 																					| _ -> 
 																						let ne1, np1 = float_out_exp_min_max e1 in
 																						let ne2, np2 = float_out_exp_min_max e2 in
-																						let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+																						let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
 																						add_exists t np1 np2 l 
 																in r2
 							| _ ->
 									let ne1, np1 = float_out_exp_min_max e1 in
 									let ne2, np2 = float_out_exp_min_max e2 in
-									let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l)) in
+									let t = Ipure.BForm (Ipure.Eq (ne1, ne2, l), lbl) in
 									add_exists t np1 np2 l 
 							in r
 		  | Ipure.Neq (e1, e2, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
-						let t = Ipure.BForm (Ipure.Neq (ne1, ne2, l)) in
+						let t = Ipure.BForm (Ipure.Neq (ne1, ne2, l), lbl) in
 						add_exists t np1 np2 l
 		  | Ipure.EqMax (e1, e2, e3, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
 						let ne3, np3 = float_out_exp_min_max e3 in
-						let t = Ipure.BForm (Ipure.EqMax (ne1, ne2, ne3, l)) in
+						let t = Ipure.BForm (Ipure.EqMax (ne1, ne2, ne3, l), lbl) in
 						let t = add_exists t np1 np2 l in
 						let r = match np3 with 
 							| None -> t
-							| Some (p1, l1) -> List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, l))) (Ipure.And(t, p1, l)) l1 in r
+							| Some (p1, l1) -> List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, lbl, l))) (Ipure.And(t, p1, l)) l1 in r
 		  | Ipure.EqMin (e1, e2, e3, l) ->
 						let ne1, np1 = float_out_exp_min_max e1 in
 						let ne2, np2 = float_out_exp_min_max e2 in
 						let ne3, np3 = float_out_exp_min_max e3 in
-						let t = Ipure.BForm (Ipure.EqMin (ne1, ne2, ne3, l)) in
+						let t = Ipure.BForm (Ipure.EqMin (ne1, ne2, ne3, l), lbl) in
 						let t = add_exists t np1 np2 l in
 						let r = match np3 with 
 							| None -> t
-							| Some (p1, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, l)) (Ipure.And(t, p1, l)) l1 in r
+							| Some (p1, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl, l)) (Ipure.And(t, p1, l)) l1 in r
 		  | Ipure.BagIn (v, e, l) -> 
 							let ne1, np1 = float_out_exp_min_max e in
 							let r = match np1 with
-								| None -> Ipure.BForm (Ipure.BagIn(v, ne1, l))
-								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l)), r, l)) l1 in r 
+								| None -> Ipure.BForm (Ipure.BagIn(v, ne1, l), lbl)
+								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl, l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l),lbl), r, l)) l1 in r 
 		  | Ipure.BagNotIn (v, e, l) -> 
 							let ne1, np1 = float_out_exp_min_max e in
 							let r = match np1 with
-								| None -> Ipure.BForm (Ipure.BagNotIn(v, ne1, l))
-								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l)), r, l)) l1 in r
+								| None -> Ipure.BForm (Ipure.BagNotIn(v, ne1, l), lbl)
+								| Some (r, l1) -> List.fold_left (fun a c -> Ipure.Exists ((c, Unprimed), a, lbl,  l)) (Ipure.And(Ipure.BForm (Ipure.BagIn(v, ne1, l),lbl), r, l)) l1 in r
 		  | Ipure.BagSub (e1, e2, l) ->
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
-					let t = Ipure.BForm (Ipure.BagSub (ne1, ne2, l)) in
+					let t = Ipure.BForm (Ipure.BagSub (ne1, ne2, l),lbl) in
 					add_exists t np1 np2 l
-		  | Ipure.BagMin _ -> Ipure.BForm b
-		  | Ipure.BagMax _ -> Ipure.BForm b	
+		  | Ipure.BagMin _ -> Ipure.BForm (b,lbl)
+		  | Ipure.BagMax _ -> Ipure.BForm (b,lbl)	
 			in		 
 		match p with
-			| Ipure.BForm b -> (float_out_b_formula_min_max b)
+			| Ipure.BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
   		| Ipure.And (f1, f2, l) -> Ipure.And((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
-  		| Ipure.Or (f1, f2, l) -> Ipure.Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
-  		| Ipure.Not (f1, l) -> Ipure.Not((float_out_pure_min_max f1), l)
-  		| Ipure.Forall (v, f1, l) -> Ipure.Forall (v, (float_out_pure_min_max f1), l)
-  		| Ipure.Exists (v, f1, l) -> Ipure.Exists (v, (float_out_pure_min_max f1), l)
+  		| Ipure.Or (f1, f2, lbl, l) -> Ipure.Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), lbl,l)
+  		| Ipure.Not (f1,lbl, l) -> Ipure.Not((float_out_pure_min_max f1), lbl, l)
+  		| Ipure.Forall (v, f1, lbl, l) -> Ipure.Forall (v, (float_out_pure_min_max f1), lbl, l)
+  		| Ipure.Exists (v, f1, lbl, l) -> Ipure.Exists (v, (float_out_pure_min_max f1), lbl, l)
 		
 
 and float_out_heap_min_max (h :  h_formula) :
@@ -951,8 +951,8 @@ and float_out_heap_min_max (h :  h_formula) :
 				let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 				let nv = Ipure.Var((new_name, Unprimed), l) in
 				(nv:: a, match c with
-												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l))) )
-												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l)))), s, l)))) ([], None) args in
+												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l), None)) )
+												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d, l), None))), s, l)))) ([], None) args in
         (( HeapNode { h1 with  h_formula_heap_arguments = (List.rev nl);}), new_p)
   |  HeapNode2 h1 ->
 			let args = h1. h_formula_heap2_arguments in
@@ -968,8 +968,8 @@ and float_out_heap_min_max (h :  h_formula) :
 				let new_name = fresh_var_name "ptr" l.start_pos.Lexing.pos_lnum in 
 				let nv = Ipure.Var((new_name, Unprimed), l) in
 				((d1,nv):: a, match c with
-												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) )
-												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l))) ), s, l)))) ([], None) args in
+												| None -> Some (float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) )
+												| Some s -> Some (Ipure.And ((float_out_pure_min_max (Ipure.BForm (Ipure.Eq (nv, d2, l), None)) ), s, l)))) ([], None) args in
         (( HeapNode2 { h1 with  h_formula_heap2_arguments = (List.rev nl);}), new_p)
   |  HTrue -> (h, None)
   |  HFalse -> (h, None)
@@ -977,7 +977,7 @@ and float_out_heap_min_max (h :  h_formula) :
   
 and float_out_struc_min_max (f0 : struc_formula): struc_formula = 
 	let rec helper (f0: ext_formula):ext_formula = match f0 with
-		| EAssume b -> EAssume (float_out_min_max b)
+		| EAssume (b,tag) -> EAssume ((float_out_min_max b),tag)
 		| ECase b-> ECase {
 						 formula_case_branches = (List.map (fun (c1,c2)->
 								((float_out_pure_min_max c1),(float_out_struc_min_max c2)))
@@ -993,7 +993,7 @@ and view_node_types_struc (f:struc_formula):ident list =
 	let helper (f:ext_formula):ident list = match f with
 	| ECase b -> List.concat (List.map (fun (c1,c2)-> view_node_types_struc c2) b.formula_case_branches)
 	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
-	| EAssume b -> view_node_types b
+	| EAssume (b,_) -> view_node_types b
 	in
 	Util.remove_dups (List.concat (List.map helper f))
 		
@@ -1020,7 +1020,7 @@ and has_top_flow_struc (f:struc_formula) =
 	let rec helper f0 = match f0 with
 		| EBase b->   (has_top_flow b.formula_ext_base); (has_top_flow_struc b.formula_ext_continuation)
 		| ECase b->   List.iter (fun (_,b1)-> (has_top_flow_struc b1)) b.formula_case_branches
-		| EAssume b-> (has_top_flow b)
+		| EAssume (b,_)-> (has_top_flow b)
 		in
 List.iter helper f
 
@@ -1043,7 +1043,7 @@ let rec helper f = match f with
 		| ECase b ->ECase {b with
 						 formula_case_branches = (List.map (fun (c1,c2)->
 								(c1,(subst_flow_of_struc_formula fr t c2)))b.formula_case_branches)}
-		| EAssume b-> EAssume (subst_flow_of_formula fr t b)in
+		| EAssume (b,tag)-> EAssume ((subst_flow_of_formula fr t b),tag) in
 List.map helper f 
 
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	

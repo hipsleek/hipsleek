@@ -87,6 +87,11 @@ let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) =
   in
 	helper xs0 0
 
+let rec list_last l = match l with
+	| h::[] -> h
+	| _::t -> (list_last t)
+	| [] -> failwith "Util.list_last: empty list"
+	
 (** Split the list of length k>=1 into a pair consisting of
    the list of first k-1 elements and the last element. *)
 let rec firsts_last xs = match xs with
@@ -96,6 +101,18 @@ let rec firsts_last xs = match xs with
     let (fs,l) = firsts_last xs1 in
     (x::fs,l)
 
+let rec take n l  = if n<=0 then []
+  else match l with
+    | h::t -> h::(take (n-1) t)
+    | [] -> []
+    
+let rec drop n l  = if n<=0 then l
+  else match l with
+    | h::t -> (drop (n-1) t)
+    | [] -> []
+
+    
+    
 (** String-handling utility functions. *)
 
 let trim_quotes s = 

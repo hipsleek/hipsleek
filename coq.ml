@@ -99,19 +99,19 @@ and coq_of_b_formula b = match b with
 (* pretty printing for formulas *)
 and coq_of_formula f =
     match f with
-    | CP.BForm b -> "(" ^ (coq_of_b_formula b) ^ ")"
-    | CP.Not (p, _) ->
+    | CP.BForm (b,_) -> "(" ^ (coq_of_b_formula b) ^ ")"
+    | CP.Not (p, _,_) ->
 	    begin match p with
-		| CP.BForm (CP.BVar (bv, _)) -> (coq_of_spec_var bv) ^ " = 0"
+		| CP.BForm (CP.BVar (bv, _),_) -> (coq_of_spec_var bv) ^ " = 0"
 		| _ -> " (~ (" ^ (coq_of_formula p) ^ ")) "
         end
-    | CP.Forall (sv, p, _) ->
+    | CP.Forall (sv, p, _, _) ->
 	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
-    | CP.Exists (sv, p, _) ->
+    | CP.Exists (sv, p,  _,_) ->
 	    " (exists " ^ (coq_of_spec_var sv) ^ ":Z," ^ (coq_of_formula p) ^ ") "
     | CP.And (p1, p2, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
-    | CP.Or (p1, p2, _) ->
+    | CP.Or (p1, p2, _, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " \\/ " ^ (coq_of_formula p2) ^ ")"
 
 (* checking the result given by Coq *)
@@ -168,12 +168,12 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	output_string log_file "\n[coq.ml]: #imply\n";
   max_flag := false;
   choice := 1;
-  write (CP.mkOr (CP.mkNot ante no_pos) conseq no_pos)
+  write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
-  let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos)))) in
+  let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos), None))) in
   match tmp_form with
   | true ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> false\n";

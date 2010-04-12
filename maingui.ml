@@ -135,14 +135,13 @@ let process_cmd_line () = Arg.parse [
   ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   ("--pip", Arg.Set Globals.print_input,"print input representation");
   ("--sqt", Arg.Set Globals.seq_to_try,"translate seq to try");
-   ("--slk-err", Arg.Set Globals.print_err_sleek,"print sleek errors");
   ("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) , "<host:port>: use external web service via socket");
   ("-para", Arg.Int Typechecker.parallelize, "Use Paralib map_para instead of List.map in typecheker");
   ("--priority",Arg.String Tpdispatcher.Netprover.set_prio_list, "<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
   ("--decrprio",Arg.Set Tpdispatcher.decr_priority , "use a decreasing priority scheme");
   ("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");
-  ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination")
-  
+  ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
+   ("--gui", Arg.Set Gui.enable_gui, "enable GUI")  
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
@@ -173,159 +172,167 @@ let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n");
   let _ = Util.push_time "Preprocessing" in
   let prog = parse_file_full source in
-	if !to_java then begin
-	  print_string ("Converting to Java...");
-	  let tmp = Filename.chop_extension (Filename.basename source) in
-	  let main_class = Util.replace_minus_with_uscore tmp in
-	  let java_str = Java.convert_to_java prog main_class in
-	  let tmp2 = Util.replace_minus_with_uscore (Filename.chop_extension source) in
-	  let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
-		output_string jfile java_str;
-		close_out jfile;
-		print_string (" done.\n");
-		exit 0
-	end;
-  	if (!parse_only) then 
+    if !to_java then begin
+      print_string ("Converting to Java...");
+      let tmp = Filename.chop_extension (Filename.basename source) in
+      let main_class = Util.replace_minus_with_uscore tmp in
+      let java_str = Java.convert_to_java prog main_class in
+      let tmp2 = Util.replace_minus_with_uscore (Filename.chop_extension source) in
+      let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
+	output_string jfile java_str;
+	close_out jfile;
+	print_string (" done.\n");
+	exit 0
+    end;
+    if (!parse_only) then 
       let _ = Util.pop_time "Preprocessing" in
-      print_string (Iprinter.string_of_program prog)
-	else 
+	print_string (Iprinter.string_of_program prog)
+    else 
 
-	  (* Global variables translating *)
+      (* Global variables translating *)
       let _ = Util.push_time "Translating global var" in
-   	  let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-	  let intermediate_prog = Globalvars.trans_global_to_param prog in
-	  let intermediate_prog = Iast.label_procs_prog intermediate_prog in
-	  let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
+      let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
+      let intermediate_prog = Globalvars.trans_global_to_param prog in
+      let intermediate_prog = Iast.label_procs_prog intermediate_prog in
+      let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
       let _ = Util.pop_time "Translating global var" in
-	  (* Global variables translated *)
-	  (* let ptime1 = Unix.times () in
-	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
+	(* Global variables translated *)
+	(* let ptime1 = Unix.times () in
+	   let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
-	  let _ = print_string ("Translating to core language..."); flush stdout in
-	  let cprog = Astsimp.trans_prog intermediate_prog in
-	  let _ = print_string (" done\n"); flush stdout in
-	  let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
-	  let _ = 
-		if !Globals.verify_callees then begin
-		  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
-			Globals.procs_verified := tmp
-		end in
+      let _ = print_string ("Translating to core language..."); flush stdout in
+      let cprog = Astsimp.trans_prog intermediate_prog in
+      let _ = print_string (" done\n"); flush stdout in
+      let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
+      let _ = 
+	if !Globals.verify_callees then begin
+	  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
+	    Globals.procs_verified := tmp
+	end in
       let _ = Util.pop_time "Translating to Core" in
-	  (* let ptime2 = Unix.times () in
-	  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
-	  let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
-	  let _ =
-		if !comp_pred then begin
-		  let _ = print_string ("Compiling predicates to Java...") in
-		  let compile_one_view vdef = 
-			if (!pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !pred_to_compile) then
-			  let data_def, pbvars = Predcomp.gen_view cprog vdef in
-			  let java_str = Java.java_of_data data_def pbvars in
-			  let jfile = open_out (vdef.Cast.view_name ^ ".java") in
-				print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
-				output_string jfile java_str;
-				close_out jfile
-			else
-			  ()
-		  in
-			ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-			print_string ("\nDone.\n");
-			exit 0
-		end 
+	(* let ptime2 = Unix.times () in
+	   let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
+	   let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
+      let _ =
+	if !comp_pred then begin
+	  let _ = print_string ("Compiling predicates to Java...") in
+	  let compile_one_view vdef = 
+	    if (!pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !pred_to_compile) then
+	      let data_def, pbvars = Predcomp.gen_view cprog vdef in
+	      let java_str = Java.java_of_data data_def pbvars in
+	      let jfile = open_out (vdef.Cast.view_name ^ ".java") in
+		print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
+		output_string jfile java_str;
+		close_out jfile
+	    else
+	      ()
 	  in
-	  let _ =
-		if !rtc then begin
-		  Rtc.compile_prog cprog source;
-		  exit 0
-		end
-	  in
-	    let _ = Util.pop_time "Preprocessing" in
-		ignore (Typechecker.check_prog cprog);
+	    ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
+	    print_string ("\nDone.\n");
+	    exit 0
+	end 
+      in
+      let _ =
+	if !rtc then begin
+	  Rtc.compile_prog cprog source;
+	  exit 0
+	end
+      in
+      let _ = Util.pop_time "Preprocessing" in
+	if !Gui.enable_gui then begin
+	  ignore (Gui.check_prog (Gui.get_win ()) cprog)
+	end
+	else 
+	  ignore (Typechecker.check_prog cprog);
 
-    (* i.e. stop Reduce/Redlog if it is running. *)
-    let _ = Tpdispatcher.finalize () in
+	(* i.e. stop Reduce/Redlog if it is running. *)
+	let _ = Tpdispatcher.finalize () in
 
-		let ptime4 = Unix.times () in
-		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
-		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
-		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
-		( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
-		  print_string ("\nTotal verification time: " 
-						^ (string_of_float t4) ^ " second(s)\n"
-						^ "\tTime spent in main process: " 
-						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-						^ "\tTime spent in child processes: " 
-						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
+	let ptime4 = Unix.times () in
+	let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+	  print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
+			  (List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
+					     ( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
+	  print_string ("\nTotal verification time: " 
+			^ (string_of_float t4) ^ " second(s)\n"
+			^ "\tTime spent in main process: " 
+			^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+			^ "\tTime spent in child processes: " 
+			^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 
-	  
-let main1 () =
-  (* Cprinter.fmt_set_margin 40; *)
-  (* Cprinter.fmt_string "TEST1.................................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST2...............................................................'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''............"; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (*  Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (*  Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST3....."; *)
-  (*    Cprinter.fmt_string "TEST3....."; *)
-  (* Cprinter.fmt_string "TEST4..............................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST5.................................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST6.................................."; *)
-  (* Cprinter.fmt_cut (); *)
-  (* Cprinter.fmt_string "TEST7.................................."; *)
-  (*  Cprinter.fmt_cut (); *)
-  process_cmd_line ();
-  
-  (* i.e. pre-start Reduce/Redlog if it will be used. *)
+
+
+let main_gui () = 
+  (* process_cmd_line (); *)
+  let _ = GMain.init () in
   let _ = Tpdispatcher.prepare () in
-    
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
       Globals.procs_verified := ["f3"];
       Globals.source_files := ["examples/test5.ss"]
     end;
-    let _ = Util.push_time "Overall" in
-    let _ = List.map process_source_full !Globals.source_files in
-    let _ = Util.pop_time "Overall" in
-      (* Tpdispatcher.print_stats (); *)
-      ()
+    let _ = Gui.set_win (new Gui.mainwindow "HIP VIEWER" (List.hd !Globals.source_files)) in 
+      Util.push_time "Overall";
+      ignore (List.map process_source_full !Globals.source_files);
+      Util.pop_time "Overall";
+      (Gui.get_win ())#show ();
+      GMain.Main.main ()
+
+
+
 	  
-let _ = 
-  main1 ();
+let main1 () =
+  (* process_cmd_line (); *)
+  
+  (* i.e. pre-start Reduce/Redlog if it will be used. *)
+  let _ = Tpdispatcher.prepare () in
+  
+  if List.length (!Globals.source_files) = 0 then begin
+	(* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
+	Globals.procs_verified := ["f3"];
+	Globals.source_files := ["examples/test5.ss"]
+  end;
+  let _ = Util.push_time "Overall" in
+  let _ = List.map process_source_full !Globals.source_files in
+  let _ = Util.pop_time "Overall" in
+	(* Tpdispatcher.print_stats (); *)
+	()
+	  
+let _ =  
+  process_cmd_line ();
+  if !Gui.enable_gui then main_gui () 
+  else 
+    main1 ();
   (*let rec check_aux (t1,t2,t3,t4) l = match l with
-  | [] -> true
-  | (p1,p2,p3,p4)::l1 -> if (p1<=t1 && p2<=t2&& p3<=t3&& p4<=t4) then check_aux (p1,p2,p3,p4) l1
-						 else false in
-  let check_sorted l = match l with
-	  | a::b -> check_aux a b
-	  | [] -> true  in
-  let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
-  let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
-  (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
+    | [] -> true
+    | (p1,p2,p3,p4)::l1 -> if (p1<=t1 && p2<=t2&& p3<=t3&& p4<=t4) then check_aux (p1,p2,p3,p4) l1
+    else false in
+    let check_sorted l = match l with
+    | a::b -> check_aux a b
+    | [] -> true  in
+    let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
+    let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
+    (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
   let _ = if (!Globals.profiling) then 
-	let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
-	let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-	let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
-	let f a = (string_of_float ((floor(100. *.a))/.100.)) in
-	let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-	let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
-	let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
-		(if (List.length l)>0 then 
-			let l = (List.sort compare l) in		
-			(List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
-		else "")^"],  "^(fp (t/.ot))^"%)") in
-	((a1+1),r) 
-	) (0,"") str_list in
-  print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) in
-  if (!Globals.enable_sat_statistics) then 
-  print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
-				"\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
-				"\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
-				)
-  else ()
+    let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
+    let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+    let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+    let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+    let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+				      let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+						 (if (List.length l)>0 then 
+						    let l = (List.sort compare l) in		
+						      (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+						  else "")^"],  "^(fp (t/.ot))^"%)") in
+					((a1+1),r) 
+				   ) (0,"") str_list in
+      print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) in
+    if (!Globals.enable_sat_statistics) then 
+      print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
+		      "\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
+		      "\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
+		   )
+    else ()
 
   

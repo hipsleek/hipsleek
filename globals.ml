@@ -8,7 +8,12 @@ type nflow = (int*int)(*numeric representation of flow*)
 
 	
 	
-and branch_label = string
+and branch_label = string	(*formula branches*)
+type formula_label = (int*string)
+and control_path_id_strict = formula_label
+and control_path_id = control_path_id_strict  option(*identifier for if, catch, call*)
+type path_label = int (*which path at the current point has been taken 0 -> then branch or not catch or first spec, 1-> else or catch taken or snd spec...*)
+type path_trace = (control_path_id_strict * path_label) list 
 
 and loc = {
 			start_pos : Lexing.position (* might be expanded to contain more information *);
@@ -140,6 +145,9 @@ let enable_case_inference = ref false
 
 let print_core = ref false
 
+let print_err_sleek = ref false
+
+
 let seq_to_try = ref false
 
 let print_input = ref false
@@ -166,11 +174,29 @@ let seq_number = ref 10
 
 let sat_timeout = ref 10.
 let imply_timeout = ref 10.
-
+  
 let report_error (pos : loc) (msg : string) =
   print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
   failwith "Error detected"
+
+let branch_point_id = ref 0
+
+let reset_formula_point_id () = () (*branch_point_id:=0*)
+
+let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label) list)*loc) list)
+
+
+let fresh_formula_label (s:string) :formula_label = 
+	branch_point_id := !branch_point_id + 1;
+	(!branch_point_id,s)
+  
+let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
+
+
+let fresh_int () =
+  seq_number := !seq_number + 1;
+  !seq_number
 
 let seq_number2 = ref 0
 
@@ -237,3 +263,49 @@ let fst3 (x,_,_) = x
 let snd3 (_,x,_) = x
 
 let change_fst3 (_,b,c) a = (a,b,c)
+
+let path_trace_eq p1 p2 =
+  let rec eq pt1 pt2 = match pt1,pt2 with
+    | [],[] -> true
+    | [],xs -> false
+    |  xs,[] -> false
+    |  ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> a1=a2 && b1=b2 && (eq zt1 zt2)
+  in eq (List.rev p1) (List.rev p2)
+
+let path_trace_lt p1 p2 =
+  let rec lt pt1 pt2 = match pt1,pt2 with
+    | [],[] -> false
+    | [],xs -> true
+    | xs,[] -> false
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1<a2) || (a1=a2 && b1<b2) || (a1=a2 & b1=b2 && lt zt1 zt2)
+  in lt (List.rev p1) (List.rev p2)
+
+let path_trace_gt p1 p2 =
+  let rec gt pt1 pt2 = match pt1,pt2 with
+    | [],[] -> false
+    | [],xs -> false
+    |  xs,[] -> true
+    | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
+  in gt (List.rev p1) (List.rev p2)
+
+ 
+let dummy_exception () = ()
+
+(* convert a tree-like binary object into a list of objects *)
+let bin_op_to_list (op:string)
+  (fn : 'a -> (string * ('a list)) option) 
+  (t:'a) : ('a list) =
+  let rec helper t =
+    match (fn t) with
+      | None -> [t]
+      | Some (op2, xs) -> 
+          if (op=op2) then 
+            List.concat (List.map helper xs)
+          else [t]
+  in (helper t)
+
+let bin_to_list (fn : 'a -> (string * ('a list)) option) 
+  (t:'a) : string * ('a list) =
+  match (fn t) with
+    | None -> "", [t]
+    | Some (op, _) -> op,(bin_op_to_list op fn t)
