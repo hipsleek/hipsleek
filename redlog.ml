@@ -314,12 +314,12 @@ let rec elim_exists_with_ineq f0 =
   | CP.Exists (qvar, qf,lbl, pos) ->
       begin
         match qf with
-        | CP.Or (qf1, qf2, qpos) ->
-            let new_qf1 = CP.mkExists [qvar] qf1 qpos in
-            let new_qf2 = CP.mkExists [qvar] qf2 qpos in
+        | CP.Or (qf1, qf2, lbl2, qpos) ->
+            let new_qf1 = CP.mkExists [qvar] qf1 None qpos in
+            let new_qf2 = CP.mkExists [qvar] qf2 None qpos in
             let eqf1 = elim_exists_with_ineq new_qf1 in
             let eqf2 = elim_exists_with_ineq new_qf2 in
-            let res = CP.mkOr eqf1 eqf2 pos in
+            let res = CP.mkOr eqf1 eqf2 lbl2 pos in
             res
         | _ ->
             let eqqf = elim_exists_with_ineq qf in
@@ -341,16 +341,16 @@ let rec elim_exists_with_ineq f0 =
       let ef1 = elim_exists_with_ineq f1 in
       let ef2 = elim_exists_with_ineq f2 in
       CP.mkAnd ef1 ef2 pos
-  | CP.Or (f1, f2, pos) ->
+  | CP.Or (f1, f2,lbl, pos) ->
       let ef1 = elim_exists_with_ineq f1 in
       let ef2 = elim_exists_with_ineq f2 in
-      CP.mkOr ef1 ef2 pos
-  | CP.Not (f1, pos) ->
+      CP.mkOr ef1 ef2 lbl pos
+  | CP.Not (f1, lbl, pos) ->
       let ef1 = elim_exists_with_ineq f1 in
-      CP.mkNot ef1 pos
-  | CP.Forall (qvar, qf, pos) ->
+      CP.mkNot ef1 lbl pos
+  | CP.Forall (qvar, qf, lbl, pos) ->
       let eqf = elim_exists_with_ineq qf in
-      CP.mkForall [qvar] eqf pos
+      CP.mkForall [qvar] eqf lbl pos
   | CP.BForm _ -> f0
 
 and find_bound v f0 =
@@ -388,15 +388,15 @@ and get_subst_min f0 v = match f0 with
   | CP.BForm bf -> get_subst_min_b_formula bf v
   | _ -> ([], f0)
 
-and get_subst_min_b_formula bf0 v = match bf0 with
+and get_subst_min_b_formula (bf,lbl) v = match bf with
   | CP.EqMin (e0, e1, e2, pos) ->
     if CP.is_var e0 then
       let v0 = CP.to_var e0 in
       if CP.eq_spec_var v0 v then
         ([v, e1, e2], CP.mkTrue no_pos)
-      else ([], CP.BForm bf0)
-    else ([], CP.BForm bf0)
-  | _ -> ([], CP.BForm bf0)
+      else ([], CP.BForm (bf,lbl))
+    else ([], CP.BForm (bf,lbl))
+  | _ -> ([], CP.BForm (bf,lbl))
   
 and get_subst_max f0 v = match f0 with
   | CP.And (f1, f2, pos) ->
@@ -409,26 +409,26 @@ and get_subst_max f0 v = match f0 with
   | CP.BForm bf -> get_subst_max_b_formula bf v
   | _ -> ([], f0)
   
-and get_subst_max_b_formula bf0 v = match bf0 with
+and get_subst_max_b_formula (bf,lbl) v = match bf with
   | CP.EqMax (e0, e1, e2, pos) ->
     if CP.is_var e0 then
       let v0 = CP.to_var e0 in
       if CP.eq_spec_var v0 v then
         ([v, e1, e2], CP.mkTrue no_pos)
-      else ([], CP.BForm bf0)
-    else ([], CP.BForm bf0)
-  | _ -> ([], CP.BForm bf0)
+      else ([], CP.BForm (bf,lbl))
+    else ([], CP.BForm (bf,lbl))
+  | _ -> ([], CP.BForm (bf,lbl))
     
 and elim_exists_min f0 =
   match f0 with
-  | CP.Exists (qvar, qf, pos) -> begin
+  | CP.Exists (qvar, qf, lbl1, pos) -> begin
     match qf with
-    | CP.Or (qf1, qf2, qpos) ->
-      let new_qf1 = CP.mkExists [qvar] qf1 qpos in
-      let new_qf2 = CP.mkExists [qvar] qf2 qpos in
+    | CP.Or (qf1, qf2, lbl2, qpos) ->
+      let new_qf1 = CP.mkExists [qvar] qf1 lbl1 qpos in
+      let new_qf2 = CP.mkExists [qvar] qf2 lbl1 qpos in
       let eqf1 = elim_exists_min new_qf1 in
       let eqf2 = elim_exists_min new_qf2 in
-      let res = CP.mkOr eqf1 eqf2 pos in
+      let res = CP.mkOr eqf1 eqf2 lbl2 pos in
       res
     | _ ->
       let qf = elim_exists_min qf in
@@ -444,17 +444,18 @@ and elim_exists_min f0 =
         let v, e1, e2 = List.hd st in
         let tmp1 = 
           CP.mkOr 
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (CP.mkLte e1 e2 pos)) pos) pp1 pos)
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (CP.mkGt e1 e2 pos)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkLte e1 e2 pos),None)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkGt e1 e2 pos),None)) pos) pp1 pos)
+            None
             pos
           in
-        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 pos) in
-        let tmp3 = CP.mkExists qvars0 tmp2 pos in
+        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl1 pos) in
+        let tmp3 = CP.mkExists qvars0 tmp2 None pos in
         let tmp4 = elim_exists_min tmp3 in
         let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
         new_qf
       else
-        CP.mkExists [qvar] qf pos
+        CP.mkExists [qvar] qf lbl1 pos
     end
   | CP.And (f1, f2, pos) -> begin
 	  let ef1 = elim_exists_min f1 in
@@ -462,34 +463,34 @@ and elim_exists_min f0 =
 	  let res = CP.mkAnd ef1 ef2 pos in
 		res
 	end
-  | CP.Or (f1, f2, pos) -> begin
+  | CP.Or (f1, f2, lbl, pos) -> begin
 	  let ef1 = elim_exists_min f1 in
 	  let ef2 = elim_exists_min f2 in
-	  let res = CP.mkOr ef1 ef2 pos in
+	  let res = CP.mkOr ef1 ef2 lbl pos in
 		res
 	end
-  | CP.Not (f1, pos) -> begin
+  | CP.Not (f1, lbl, pos) -> begin
 	  let ef1 = elim_exists_min f1 in
-	  let res = CP.mkNot ef1 pos in
+	  let res = CP.mkNot ef1 lbl pos in
 		res
 	end
-  | CP.Forall (qvar, qf, pos) -> begin
+  | CP.Forall (qvar, qf, lbl, pos) -> begin
 	  let eqf = elim_exists_min qf in
-	  let res = CP.mkForall [qvar] eqf pos in
+	  let res = CP.mkForall [qvar] eqf lbl pos in
 		res
 	end
   | CP.BForm _ -> f0
   
 and elim_exists_max f0 =
   match f0 with
-  | CP.Exists (qvar, qf, pos) -> begin
+  | CP.Exists (qvar, qf,lbl1, pos) -> begin
     match qf with
-    | CP.Or (qf1, qf2, qpos) ->
-      let new_qf1 = CP.mkExists [qvar] qf1 qpos in
-      let new_qf2 = CP.mkExists [qvar] qf2 qpos in
+    | CP.Or (qf1, qf2,lbl2, qpos) ->
+      let new_qf1 = CP.mkExists [qvar] qf1 lbl1 qpos in
+      let new_qf2 = CP.mkExists [qvar] qf2 lbl1 qpos in
       let eqf1 = elim_exists_max new_qf1 in
       let eqf2 = elim_exists_max new_qf2 in
-      let res = CP.mkOr eqf1 eqf2 pos in
+      let res = CP.mkOr eqf1 eqf2 lbl2 pos in
       res
     | _ ->
       let qf = elim_exists_max qf in
@@ -505,17 +506,18 @@ and elim_exists_max f0 =
         let v, e1, e2 = List.hd st in
         let tmp1 = 
           CP.mkOr 
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm (CP.mkGte e1 e2 pos)) pos) pp1 pos)
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm (CP.mkLt e1 e2 pos)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkGte e1 e2 pos),None) ) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkLt e1 e2 pos),None) ) pos) pp1 pos)
+            None
             pos
           in
-        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 pos) in
-        let tmp3 = CP.mkExists qvars0 tmp2 pos in
+        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl1 pos) in
+        let tmp3 = CP.mkExists qvars0 tmp2 None pos in
         let tmp4 = elim_exists_max tmp3 in
         let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
         new_qf
       else
-        CP.mkExists [qvar] qf pos
+        CP.mkExists [qvar] qf lbl1 pos
     end
   | CP.And (f1, f2, pos) -> begin
 	  let ef1 = elim_exists_max f1 in
@@ -523,20 +525,20 @@ and elim_exists_max f0 =
 	  let res = CP.mkAnd ef1 ef2 pos in
 		res
 	end
-  | CP.Or (f1, f2, pos) -> begin
+  | CP.Or (f1, f2,lbl, pos) -> begin
 	  let ef1 = elim_exists_max f1 in
 	  let ef2 = elim_exists_max f2 in
-	  let res = CP.mkOr ef1 ef2 pos in
+	  let res = CP.mkOr ef1 ef2 lbl pos in
 		res
 	end
-  | CP.Not (f1, pos) -> begin
+  | CP.Not (f1,lbl, pos) -> begin
 	  let ef1 = elim_exists_max f1 in
-	  let res = CP.mkNot ef1 pos in
+	  let res = CP.mkNot ef1 lbl pos in
 		res
 	end
-  | CP.Forall (qvar, qf, pos) -> begin
+  | CP.Forall (qvar, qf, lbl, pos) -> begin
 	  let eqf = elim_exists_max qf in
-	  let res = CP.mkForall [qvar] eqf pos in
+	  let res = CP.mkForall [qvar] eqf lbl pos in
 		res
 	end
   | CP.BForm _ -> f0
