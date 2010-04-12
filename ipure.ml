@@ -7,12 +7,12 @@
 open Globals
 
 type formula = 
-  | BForm of b_formula
+  | BForm of (b_formula*(formula_label option))
   | And of (formula * formula * loc)
-  | Or of (formula * formula * loc)
-  | Not of (formula * loc)
-  | Forall of ((ident * primed) * formula * loc)
-  | Exists of ((ident * primed) * formula * loc)
+  | Or of (formula * formula *(formula_label option) * loc)
+  | Not of (formula *(formula_label option)* loc)
+  | Forall of ((ident * primed) * formula *(formula_label option)* loc)
+  | Exists of ((ident * primed) * formula *(formula_label option)* loc)
 
 (* Boolean constraints *)
 and b_formula = 
@@ -62,12 +62,12 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
 (* free variables *)
 
 let rec fv (f : formula) : (ident * primed) list = match f with 
-  | BForm b -> bfv b
+  | BForm (b,_) -> bfv b
   | And (p1, p2, _) -> combine_pvars p1 p2
-  | Or (p1, p2, _) -> combine_pvars p1 p2
-  | Not (nf, _) -> fv nf
-  | Forall (qid, qf, _) -> remove_qvar qid qf
-  | Exists (qid, qf, _) -> remove_qvar qid qf
+  | Or (p1, p2, _,_) -> combine_pvars p1 p2
+  | Not (nf, _,_) -> fv nf
+  | Forall (qid, qf, _,_) -> remove_qvar qid qf
+  | Exists (qid, qf, _,_) -> remove_qvar qid qf
 
 and combine_pvars p1 p2 = 
   let fv1 = fv p1 in
@@ -161,11 +161,11 @@ and name_of_var (e : exp) : ident = match e with
   | _ -> failwith ("parameter to name_of_var is not a variable")
  
 and isConstTrue p = match p with
-  | BForm (BConst (true, pos)) -> true
+  | BForm (BConst (true, pos),_) -> true
   | _ -> false
 
 and isConstFalse p = match p with
-  | BForm (BConst (false, pos)) -> true
+  | BForm (BConst (false, pos),_) -> true
   | _ -> false
 
 (* smart constructor *)
@@ -231,38 +231,38 @@ and mkEq a1 a2 pos =
 	Eq (a1, a2, pos)
 
 and mkAnd f1 f2 pos = match f1 with
-  | BForm (BConst (false, _)) -> f1
-  | BForm (BConst (true, _)) -> f2
+  | BForm (BConst (false, _),_) -> f1
+  | BForm (BConst (true, _),_) -> f2
   | _ -> match f2 with
-      | BForm (BConst (false, _)) -> f2
-      | BForm (BConst (true, _)) -> f1
+      | BForm (BConst (false, _),_) -> f2
+      | BForm (BConst (true, _),_) -> f1
       | _ -> And (f1, f2, pos)
 
-and mkOr f1 f2 pos = match f1 with
-  | BForm (BConst (false, _)) -> f2
-  | BForm (BConst (true, _)) -> f1
+and mkOr f1 f2 lbl pos = match f1 with
+  | BForm (BConst (false, _),_) -> f2
+  | BForm (BConst (true, _),_) -> f1
   | _ -> match f2 with
-      | BForm (BConst (false, _)) -> f1
-      | BForm (BConst (true, _)) -> f2
-      | _ -> Or (f1, f2, pos)
+      | BForm (BConst (false, _),_) -> f1
+      | BForm (BConst (true, _),_) -> f2
+      | _ -> Or (f1, f2, lbl, pos)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
 	  if v1 = v2 then
 		mkTrue pos
 	  else
-		BForm (Eq (ae1, ae2, pos))
-  | _ ->  BForm (Eq (ae1, ae2, pos))
+		BForm (Eq (ae1, ae2, pos), None)
+  | _ ->  BForm (Eq (ae1, ae2, pos), None)
 
 and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
 	  if v1 = v2 then
 		mkFalse pos
 	  else
-		BForm (Neq (ae1, ae2, pos))
-  | _ ->  BForm (Neq (ae1, ae2, pos))
+		BForm (Neq (ae1, ae2, pos), None)
+  | _ ->  BForm (Neq (ae1, ae2, pos), None)
 
-and mkNot f pos = Not (f, pos)
+and mkNot f lbl pos = Not (f, lbl, pos)
 
 (*
 and mkEqualVar (sv1 : spec_var) (sv2 : spec_var) =
@@ -300,25 +300,25 @@ and mkNEqualVarInt (sv : spec_var) (i : int) =
   BForm (ANeq (AVar (force_to_svar sv), IConst i))
 *)
 
-and mkTrue pos = BForm (BConst (true, pos))
+and mkTrue pos = BForm (BConst (true, pos), None)
 
-and mkFalse pos = BForm (BConst (false, pos))
+and mkFalse pos = BForm (BConst (false, pos),None )
 
-and mkExists (vs : (ident * primed) list) (f : formula) pos = match vs with
+and mkExists (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
   | [] -> f
   | v :: rest -> 
-      let ef = mkExists rest f pos in
+      let ef = mkExists rest f lbl pos in
 		if List.mem v (fv ef) then
-		  Exists (v, ef, pos)
+		  Exists (v, ef,lbl,  pos)
 		else
 		  ef
 
-and mkForall (vs : (ident * primed) list) (f : formula) pos = match vs with
+and mkForall (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
   | [] -> f
   | v :: rest -> 
-      let ef = mkForall rest f pos in
+      let ef = mkForall rest f lbl pos in
 		if List.mem v (fv ef) then
-		  Forall (v, ef, pos)
+		  Forall (v, ef, lbl, pos)
 		else
 		  ef
 
@@ -327,7 +327,7 @@ and build_relation relop alist10 alist20 pos =
   let rec helper1 ae alist = 
 	let a = List.hd alist in
 	let rest = List.tl alist in
-	let tmp = BForm (relop ae a pos) in
+	let tmp = BForm ((relop ae a pos),None) in
 	  if Util.empty rest then
 		tmp
 	  else
@@ -389,25 +389,25 @@ and subst sst (f : formula) = match sst with
   | [] -> f 
 
 and apply_one (fr, t) f = match f with
-  | BForm bf -> BForm (b_apply_one (fr, t) bf)
+  | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf, lbl)
   | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
 							  apply_one (fr, t) p2, pos)
-  | Or (p1, p2, pos) -> Or (apply_one (fr, t) p1,
-							apply_one (fr, t) p2, pos)
-  | Not (p, pos) -> Not (apply_one (fr, t) p, pos)
-  | Forall (v, qf, pos) ->
+  | Or (p1, p2, lbl, pos) -> Or (apply_one (fr, t) p1,
+							apply_one (fr, t) p2, lbl, pos)
+  | Not (p, lbl, pos) -> Not (apply_one (fr, t) p, lbl, pos)
+  | Forall (v, qf, lbl, pos) ->
 	  if eq_var v fr then f
       else if eq_var v t then
         let fresh_v = fresh_var v in
-        Forall (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), pos)
-	  else Forall (v, apply_one (fr, t) qf, pos)
-  | Exists (v, qf, pos) ->
+        Forall (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
+	  else Forall (v, apply_one (fr, t) qf, lbl, pos)
+  | Exists (v, qf, lbl, pos) ->
 	  if eq_var v fr then f
       else if eq_var v t then
         let fresh_v = fresh_var v in
-        Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), pos)
-	  else Exists (v, apply_one (fr, t) qf, pos)
-
+        Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
+	  else Exists (v, apply_one (fr, t) qf, lbl, pos)
+  
 and b_apply_one (fr, t) bf = match bf with
   | BConst _ -> bf
   | BVar (bv, pos) -> BVar ((if eq_var bv fr then t else bv), pos)
@@ -492,12 +492,12 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list =
 
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
-  | BForm b -> look_for_anonymous_b_formula b
+  | BForm (b,_) -> look_for_anonymous_b_formula b
   | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
-  | Or  (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
-  | Not (b1,_) -> (look_for_anonymous_pure_formula b1)
-  | Forall (_,b1,_)-> (look_for_anonymous_pure_formula b1)
-  | Exists (_,b1,_)-> (look_for_anonymous_pure_formula b1)
+  | Or  (b1,b2,_,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
+  | Not (b1,_,_) -> (look_for_anonymous_pure_formula b1)
+  | Forall (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
+  | Exists (_,b1,_,_)-> (look_for_anonymous_pure_formula b1)
 	
 and anon_var  (id,p) = 
         if ((String.length id) > 5) &&

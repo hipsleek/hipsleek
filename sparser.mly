@@ -586,6 +586,9 @@ flows_and_branches
 flow_constraints :
 	AND FLOW IDENTIFIER {$3} 
 	
+	
+opt_formula_label : AT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE {(fresh_branch_point_id $3)}
+|{(fresh_branch_point_id "")}
 
 heap_constr
   : simple_heap_constr { $1 }
@@ -593,36 +596,44 @@ heap_constr
 ;
 
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT {
+  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label{
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
 						 F.h_formula_heap_full = false;
 						 F.h_formula_heap_with_inv = false;
 						 F.h_formula_heap_pseudo_data = false;
 						 F.h_formula_heap_arguments = $5;
+						 F.h_formula_heap_label = $7;
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT {
+  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
 							F.h_formula_heap2_arguments = $5;
+							F.h_formula_heap2_label = $7;
 							F.h_formula_heap2_pos = get_pos 2 } in
 		h
 	}
 ;
 
 pure_constr
-  : simple_pure_constr { $1 }
+  : simple_pure_constr opt_formula_label { match $1 with 
+	| P.BForm (b,_) -> P.BForm (b,$2)
+    | P.And _ -> $1
+    | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
+    | P.Not (b1,_,l) -> P.Not(b1,$2,l)
+    | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
+    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
   | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
 disjunctive_pure_constr
-  : pure_constr OR pure_constr { P.mkOr $1 $3 (get_pos 2) }
-  | disjunctive_pure_constr OR pure_constr { P.mkOr $1 $3 (get_pos 2) }
+  : pure_constr OR pure_constr { P.mkOr $1 $3 None (get_pos 2) }
+  | disjunctive_pure_constr OR pure_constr { P.mkOr $1 $3 None (get_pos 2) }
 ;
 
 simple_pure_constr
@@ -633,12 +644,12 @@ simple_pure_constr
 	  $2
 	}
   | EXISTS OPAREN opt_cid_list COLON pure_constr CPAREN {
-	  let qf f v = P.mkExists [v] f (get_pos 1) in
+	  let qf f v = P.mkExists [v] f None (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res
 	}
   | FORALL OPAREN opt_cid_list COLON pure_constr CPAREN {
-	  let qf f v = P.mkForall [v] f (get_pos 1) in
+	  let qf f v = P.mkForall [v] f None (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res
 	}
@@ -649,10 +660,10 @@ simple_pure_constr
 	  P.mkFalse (get_pos 1)
 	}
   | cid {
-	  P.BForm (P.mkBVar $1 (get_pos 1))
+	  P.BForm (P.mkBVar $1 (get_pos 1), None )
 	}
   | NOT cid {
-	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2))) (get_pos 1)
+	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None )) None (get_pos 1)
 	}
 ;
 
@@ -707,19 +718,19 @@ bconstr
 	}
 	/* bag_constr */
   | cid IN cexp {
-	  (P.BForm (P.BagIn ($1, $3, get_pos 2)), None)
+	  (P.BForm (P.BagIn ($1, $3, get_pos 2), None), None)
 	}
   | cid NOTIN cexp {
-	  (P.BForm (P.BagNotIn ($1, $3, get_pos 2)), None)
+	  (P.BForm (P.BagNotIn ($1, $3, get_pos 2), None), None)
 	}
   | cexp SUBSET cexp {
-	  (P.BForm (P.BagSub ($1, $3, get_pos 2)), None)
+	  (P.BForm (P.BagSub ($1, $3, get_pos 2), None), None)
 	}
   | BAGMAX OPAREN cid COMMA cid CPAREN {
-	  (P.BForm (P.BagMax ($3, $5, get_pos 2)), None)
+	  (P.BForm (P.BagMax ($3, $5, get_pos 2), None), None)
 	}
   | BAGMIN OPAREN cid COMMA cid CPAREN {
-	  (P.BForm (P.BagMin ($3, $5, get_pos 2)), None)
+	  (P.BForm (P.BagMin ($3, $5, get_pos 2), None), None)
 	}
 ;
 
@@ -858,6 +869,7 @@ coercion_decl
 	  coercion_head = (F.subst_stub_flow top_flow $3);
 	  coercion_body = (F.subst_stub_flow top_flow $5);
 	  coercion_proof = Return ({ exp_return_val = None;
+								 exp_return_path_id = None ;
 								 exp_return_pos = get_pos 1 })
 	}
   }

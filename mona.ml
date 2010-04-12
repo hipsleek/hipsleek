@@ -30,13 +30,13 @@ let mona_of_prim_type = function
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
-  | e :: [] -> CP.BForm(e)
-  | e :: rest -> CP.And(CP.BForm(e), (mkEq rest), no_pos)
+  | e :: [] -> CP.BForm(e,None)
+  | e :: rest -> CP.And(CP.BForm(e,None), (mkEq rest), no_pos)
   | _ -> assert false
 
 let rec mkEx l f = match l with
  | [] -> f
- | sv :: rest -> mkEx rest (CP.Exists(sv, f, no_pos))
+ | sv :: rest -> mkEx rest (CP.Exists(sv, f, None, no_pos))
 
 (* in Mona, using the set representation for the integers, addition a1 = a2 + a3 is written plus(a2, a3, a1).
 This is why I have a problem with formulas like a1 < a2 + a3. Therefore, I break all the presburger formulas,
@@ -154,12 +154,12 @@ and mona_of_b_formula_break1 b = match b with
 (* breaking formulas *)
 and mona_of_formula_break (f : CP.formula) (w : bool) : CP.formula =
   let res = match f with
-  | CP.Or (p1, p2, l1) -> CP.Or((mona_of_formula_break1 p1 w), (mona_of_formula_break1 p2 w), l1)
-  | CP.And (p1, p2, l1) -> CP.And((mona_of_formula_break1 p1 w), (mona_of_formula_break1 p2 w), l1)
-  | CP.Not (p1, l1) -> CP.Not((mona_of_formula_break1 p1 w), l1)
-  | CP.Forall(sv1, p1, l1) -> CP.Forall(sv1, (mona_of_formula_break1 p1 w), l1)
-  | CP.Exists(sv1, p1, l1) -> CP.Exists(sv1, (mona_of_formula_break1 p1 w), l1)
-  | CP.BForm b -> CP.BForm(mona_of_b_formula_break b w)
+  | CP.Or (p1, p2,lbl, l1) -> CP.Or((mona_of_formula_break p1 w), (mona_of_formula_break p2 w),lbl, l1)
+  | CP.And (p1, p2, l1) -> CP.And((mona_of_formula_break p1 w), (mona_of_formula_break p2 w), l1)
+  | CP.Not (p1,lbl, l1) -> CP.Not((mona_of_formula_break p1 w),lbl, l1)
+  | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (mona_of_formula_break p1 w),lbl, l1)
+  | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (mona_of_formula_break p1 w),lbl, l1)
+  | CP.BForm (b,lbl) -> CP.BForm((mona_of_b_formula_break b w),lbl)
   in
       if (List.length !substitution_list) > 0 then
 	   let eq = (mkEq !substitution_list) in
@@ -172,11 +172,6 @@ and mona_of_formula_break (f : CP.formula) (w : bool) : CP.formula =
 		   end
                end
       else res
-
-and mona_of_formula_break1 (f : CP.formula) (w : bool) : CP.formula =
-  match f with
-  (*| CP.BForm b -> CP.BForm(mona_of_b_formula_break b)*)
-  | _ -> mona_of_formula_break f w
 
 (*------------------------------------------*)
 
@@ -220,12 +215,12 @@ let rec exists_sv_exp (sv : CP.spec_var) (elist : CP.exp list) : bool = match el
  | _ :: rest -> (exists_sv_exp sv rest)
 
 let rec appears_in_formula v = function
-  | CP.Not (f, _) -> appears_in_formula v f
-  | CP.Forall (qv, f, _)
-  | CP.Exists (qv, f, _) -> if qv = v then true else appears_in_formula v f
+  | CP.Not (f, _,_) -> appears_in_formula v f
+  | CP.Forall (qv, f, _,_)
+  | CP.Exists (qv, f, _,_) -> if qv = v then true else appears_in_formula v f
   | CP.And (f, g, _) -> (appears_in_formula v f) || (appears_in_formula v g)
-  | CP.Or (f, g, _) -> (appears_in_formula v f) || (appears_in_formula v g)
-  | CP.BForm bf -> match bf with
+  | CP.Or (f, g, _,_) -> (appears_in_formula v f) || (appears_in_formula v g)
+  | CP.BForm (bf,_) -> match bf with
     | CP.BVar (bv, _) -> v = bv
     | CP.Gt (l, r, _)
     | CP.Gte (l, r, _)
@@ -284,11 +279,11 @@ and is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
 and is_first_order_a (f : CP.formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool =
   match f with
   | CP.And(f1, f2, _)
-  | CP.Or(f1, f2, _) -> (is_first_order_a f1 elem_list initial_f) || (is_first_order_a f2 elem_list initial_f);
-  | CP.Forall(_, f1, _)
-  | CP.Exists(_, f1, _)
-  | CP.Not(f1, _) -> (is_first_order_a f1 elem_list initial_f)
-  | CP.BForm(bf) -> (is_first_order_b_formula bf elem_list initial_f);
+  | CP.Or(f1, f2,_, _) -> (is_first_order_a f1 elem_list initial_f) || (is_first_order_a f2 elem_list initial_f);
+  | CP.Forall(_, f1, _,_)
+  | CP.Exists(_, f1,_, _)
+  | CP.Not(f1,_, _) -> (is_first_order_a f1 elem_list initial_f)
+  | CP.BForm(bf,_) -> (is_first_order_b_formula bf elem_list initial_f);
 (*  | _ -> false;*)
 
 and is_first_order_b_formula (bf : CP.b_formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool = match bf with
@@ -363,11 +358,11 @@ and appears_in_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
 
 and is_inside_bag (f : CP.formula) (elem : CP.exp) : bool = match f with
   | CP.And(f1, f2, _)
-  | CP.Or(f1, f2, _) -> (is_inside_bag f1 elem) || (is_inside_bag f2 elem)
-  | CP.Forall(_, f1, _)
-  | CP.Exists(_, f1, _)
-  | CP.Not(f1, _) -> (is_inside_bag f1 elem)
-  | CP.BForm(bf) -> (is_inside_bag_b_formula bf elem)
+  | CP.Or(f1, f2, _,_) -> (is_inside_bag f1 elem) || (is_inside_bag f2 elem)
+  | CP.Forall(_, f1, _,_)
+  | CP.Exists(_, f1, _,_)
+  | CP.Not(f1, _,_) -> (is_inside_bag f1 elem)
+  | CP.BForm(bf,_) -> (is_inside_bag_b_formula bf elem)
 
 and is_inside_bag_b_formula (bf : CP.b_formula) (elem : CP.exp) : bool = match bf with
   | CP.BagNotIn(sv1, e1, _)
@@ -642,14 +637,14 @@ and equation a1 a2 f sec_order_symbol first_order_symbol vs =
 and mona_of_formula f initial_f vs =
   let ret = begin
   match f with
-  | CP.BForm b -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
+  | CP.BForm (b,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
   | CP.And (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f vs) ^ " & " ^ (mona_of_formula p2 initial_f vs) ^ ")"
-  | CP.Or (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f vs) ^ " | " ^ (mona_of_formula p2 initial_f vs) ^ ")"
-  | CP.Not (p, _) ->
+  | CP.Or (p1, p2, _,_) -> "(" ^ (mona_of_formula p1 initial_f vs) ^ " | " ^ (mona_of_formula p2 initial_f vs) ^ ")"
+  | CP.Not (p, _,_) ->
       begin
         if !sat_optimize then
 	      match p with
-		  | CP.BForm (CP.BVar (bv, _)) -> (mona_of_spec_var bv) ^ " = pconst(1)"
+		  | CP.BForm (CP.BVar (bv, _),_) -> (mona_of_spec_var bv) ^ " = pconst(1)"
 (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		  | _ -> " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
         else " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
@@ -662,12 +657,12 @@ and mona_of_formula f initial_f vs =
 	"(ex2 " ^ v ^ " : " ^ (mona_of_formula p1 initial_f) ^ ")"
   | CP.Exists (sv, p, _) ->
   	"(ex1 " ^ (mona_of_spec_var sv) ^ " : " ^ (mona_of_formula p initial_f) ^ ")"*)
-  | CP.Forall (sv, p, l) ->
+  | CP.Forall (sv, p, _,l) ->
       if (is_firstorder_mem initial_f (CP.Var(sv, l)) vs) then
 	" (all1 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f vs) ^ ") "
      else
 	" (all2 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f vs) ^ ") "
-  | CP.Exists (sv, p, l) ->
+  | CP.Exists (sv, p, _,l) ->
       if (is_firstorder_mem initial_f (CP.Var(sv, l)) vs) then
 	begin
 	  " (ex1 " ^ (mona_of_spec_var sv) ^ ":" ^ (mona_of_formula p initial_f vs) ^ ") "
@@ -835,7 +830,7 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   let simp_conseq = (break_presburger conseq false) in
   let ante_fv = CP.fv simp_ante in
   let conseq_fv = CP.fv simp_conseq in
-  let tmp_form = CP.mkOr (CP.mkNot simp_ante no_pos) simp_conseq no_pos in
+  let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
   let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
   let vs = Hashtbl.create 10 in
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
@@ -854,7 +849,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos))) ("from sat#" ^ sat_no)) in
+  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with
   | true ->

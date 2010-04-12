@@ -245,12 +245,12 @@ let omega_count = ref 0
 
 (* Method checking whether a formula contains bag constraints *)
 let rec is_bag_constraint(f : CP.formula) : bool = match f with
-  | CP.BForm(bf) -> (is_bag_constraint_b_formula bf)
+  | CP.BForm(bf,_) -> (is_bag_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
-  | CP.Or(f1, f2, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
-  | CP.Not(f1, _) -> (is_bag_constraint f1)
-  | CP.Forall(_, f1, _) -> (is_bag_constraint f1)
-  | CP.Exists(_, f1, _) -> (is_bag_constraint f1)
+  | CP.Or(f1, f2,_, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
+  | CP.Not(f1,_, _) -> (is_bag_constraint f1)
+  | CP.Forall(_, f1,_, _) -> (is_bag_constraint f1)
+  | CP.Exists(_, f1,_, _) -> (is_bag_constraint f1)
 
 and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
   | CP.BConst _
@@ -547,7 +547,7 @@ let rec split_conjunctions = function
 ;;
 
 let rec split_disjunctions = function
-  | CP.Or (x, y, _) -> (split_disjunctions x) @ (split_disjunctions y)
+  | CP.Or (x, y, _,_) -> (split_disjunctions x) @ (split_disjunctions y)
   | z -> [z]
 ;;
 
@@ -604,22 +604,22 @@ let tp_imply ante conseq imp_no timeout =
 (* renames all quantified variables *)
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
-  | CP.Or (f, g, l) -> CP.Or (requant f, requant g, l)
-  | CP.Not (f, l) -> CP.Not (requant f, l)
-  | CP.Forall (v, f, l) ->
+  | CP.Or (f, g, lbl, l) -> CP.Or (requant f, requant g, lbl, l)
+  | CP.Not (f, lbl, l) -> CP.Not (requant f, lbl, l)
+  | CP.Forall (v, f, lbl, l) ->
       let nv = CP.fresh_spec_var v in
-      CP.Forall (nv, (CP.subst [v, nv] (requant f)), l)
-  | CP.Exists (v, f, l) ->
+      CP.Forall (nv, (CP.subst [v, nv] (requant f)), lbl, l)
+  | CP.Exists (v, f, lbl, l) ->
       let nv = CP.fresh_spec_var v in
-      CP.Exists (nv, (CP.subst [v, nv] (requant f)), l)
+      CP.Exists (nv, (CP.subst [v, nv] (requant f)), lbl, l)
   | x -> x
 ;;
 
 let rewrite_in_list list formula =
   match formula with
-  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
       List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
-  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) ->
+  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_) ->
       List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
   | x -> list
 ;;
@@ -633,17 +633,17 @@ let rec rewrite_in_and_tree rid formula rform =
   | x ->
       let subst_fun =
         match rform with
-        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) -> CP.subst [v1, v2]
-        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _)) -> CP.subst_term [v1, term]
-        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _)) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) -> CP.subst [v1, v2]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_) -> CP.subst_term [v1, term]
         | _ -> fun x -> x
       in
       if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
 ;;
 
 let is_irrelevant = function
-  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) -> v1 = v2
-  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _)) -> i1 = i2
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) -> v1 = v2
+  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _),_) -> i1 = i2
   | _ -> false
 ;;
 
@@ -667,10 +667,10 @@ let rec simpl_in_quant formula negated rid =
   match negated with
   | true ->
       begin match formula with
-      | CP.Not (f, l) -> CP.Not (simpl_in_quant f false rid, l)
-      | CP.Forall (v, f, l) -> CP.Forall (v, simpl_in_quant f true rid, l)
-      | CP.Exists (v, f, l) -> CP.Exists (v, simpl_in_quant f true rid, l)
-      | CP.Or (f, g, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, l)
+      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f false rid, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f true rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f true rid, lbl, l)
+      | CP.Or (f, g, lbl, l) -> CP.Or (simpl_in_quant f false false, simpl_in_quant g false false, lbl, l)
       | CP.And (_, _, _) ->
           let subfs = split_conjunctions formula in
           let nformula = fold_with_subst (rewrite_in_and_tree rid) formula subfs in
@@ -680,9 +680,9 @@ let rec simpl_in_quant formula negated rid =
       end
   | false ->
       begin match formula with
-      | CP.Not (f, l) -> CP.Not (simpl_in_quant f true true, l)
-      | CP.Forall (v, f, l) -> CP.Forall (v, simpl_in_quant f false rid, l)
-      | CP.Exists (v, f, l) -> CP.Exists (v, simpl_in_quant f false rid, l)
+      | CP.Not (f, lbl, l) -> CP.Not (simpl_in_quant f true true, lbl, l)
+      | CP.Forall (v, f, lbl, l) -> CP.Forall (v, simpl_in_quant f false rid, lbl, l)
+      | CP.Exists (v, f, lbl, l) -> CP.Exists (v, simpl_in_quant f false rid, lbl, l)
       | CP.And (f, g, l) -> CP.And (simpl_in_quant f true false, simpl_in_quant g true false, l)
       | x -> x
       end
@@ -693,10 +693,10 @@ let simpl_pair rid (ante, conseq) =
   let l1 = Util.remove_dups (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
-    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _)) ->
+    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _))
-    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _)) ->
+    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_)
+    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_) ->
 		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
 		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
     | _ -> ((ante, conseq), fun x -> x)
@@ -714,11 +714,12 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
   tp_is_sat f sat_no
 ;;
 
-let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout : bool =
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
+	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
-      Some res -> res       
-      | None -> false
+      Some res -> (res,[],None)       
+      | None -> (false,[],None)
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
 	let conseq =
@@ -726,13 +727,13 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	else conseq0
   in
 	if CP.isConstTrue conseq0 then
-	  true
+	  (true, [],None)
 	else
 	  let ante =
 		if CP.should_simplify ante0 then simplify ante0
 		else ante0
 	  in
-	  if CP.isConstFalse ante0 || CP.isConstFalse ante then true
+	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
 	  else
 		let ante = elim_exists ante in
 		let conseq = elim_exists conseq in
@@ -740,21 +741,28 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 		let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
         (*let pairs = [filter ante conseq] in*)
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
-        let fold_fun res (ante, conseq) =
-          if res then tp_imply ante conseq imp_no timeout else false
+        let fold_fun (res1,res2,res3) (ante, conseq) =
+          if res1 then 
+			let res1 = tp_imply ante conseq imp_no timeout in
+			let l1 = CP.get_pure_label ante in
+			let l2 = CP.get_pure_label conseq in
+			if res1 then 
+			(res1,(l1,l2)::res2,None)
+			else (res1,res2,l2)
+		   else (res1,res2,res3)
         in
-        List.fold_left fold_fun true pairs
+        List.fold_left fold_fun (true,[],None) pairs
   end
 ;;
 
 let imply_timeout ante0 conseq0 imp_no timeout =
 
   let _ = Util.push_time "imply" in
-  let res = imply_timeout ante0 conseq0 imp_no timeout in
+  let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout in
 
   let _ = Util.pop_time "imply" in
-  if res  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
-  res
+  if res1  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
+  (res1,res2,res3)
 ;;
 
 let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.

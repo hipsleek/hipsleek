@@ -25,8 +25,8 @@ if($root){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip.opt";
-$sleek = "$exec_path/sleek.opt ";
+$hip = "$exec_path/hip";
+$sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
@@ -196,7 +196,7 @@ $output_file = "log";
 					["sleek1.slk","Valid."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
-					["sleek3.slk","Fail.Fail.Fail."],
+					["sleek3.slk","Valid.Fail.Valid."],
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
 					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],

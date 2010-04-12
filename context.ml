@@ -93,7 +93,7 @@ and compute_heap_rest (l : (h_formula * match_type * (h_formula list) * h_formul
 (* assume that f is a satisfiable conjunct *)
 and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f with
   | CP.And (f1, f2, pos) -> (ptr_equations f1) @ (ptr_equations f2)
-  | CP.BForm bf -> begin
+  | CP.BForm (bf,_) -> begin
 	  match bf with
 		| CP.Eq (e1, e2, _) ->
 			if CP.can_be_aliased e1 && CP.can_be_aliased e2 then
