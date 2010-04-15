@@ -73,7 +73,7 @@ node append_bll(node x, node y)
 {
         node xn; 
 
-        if (x==null) return y;
+        if (x==null) return x;
         else {
          xn = append_bll(x.next,y);
          x.next = xn;
