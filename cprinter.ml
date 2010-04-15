@@ -8,6 +8,9 @@ open Cformula
 
 module P = Cpure
 
+module type TypeVar = sig type t end
+module XInt = struct type t = int end
+
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)  
 
@@ -72,6 +75,154 @@ end
 
 let foo(o:<length:'b;..> as 'a) : ('b * 'a) = (o#length, o)
 
+
+module type EQ_m =
+sig
+  type a
+  val eq: a -> a -> bool
+end
+
+module type ORD_m =
+sig
+  include EQ_m
+  val lt: a -> a -> bool
+end
+
+module EQ_E (M : EQ_m) = struct
+  include M
+  let neq x y = not(eq x y)
+  let member (y:a) (xs : a list) =
+  let rec helper xs = match xs with
+    | [] -> false
+    | x::xs -> if (eq x y) then true else  helper xs in
+    helper xs
+end
+
+module I_Int_EQ = struct
+  type a = int
+  let eq = (=)
+end
+  
+module I_Int_EQ_E = EQ_E(I_Int_EQ)
+
+
+module ORD_E (M : ORD_m) = struct
+  include M
+  let leq x y = (lt x y) || (eq x y)
+  let max (xs : a list) =
+  let rec helper xs = match xs with
+    | [x] -> x
+    | x::xs -> let y=helper xs in
+	if lt x y then x else y in
+    helper xs
+end
+
+module I_Int_ORD = struct
+  include I_Int_EQ
+  let lt = (<)
+end
+
+module I_Int_ORD_E = ORD_E(I_Int_ORD)
+
+
+(* module NEQ_m = *)
+(*   functor (E: EQ_m) ->  *)
+(* struct *)
+(*    type a = E.a *)
+(*    let eq = E.eq  *)
+(*    let neq x y = not (E.eq x y)   *)
+(* end *)
+
+let neq_fn eq = fun x y -> not (eq x y)
+  
+
+
+(* module type ORD_m = *)
+(* sig *)
+(*   type a *)
+(*   val lt: a -> a -> bool *)
+(*   val leq: a -> a -> bool *)
+(* end *)
+
+(* module type BOTH_m = *)
+(* sig *)
+(*   strutc E: EQ_m *)
+(*   struct L: ORD_m *)
+(*   type E.a = L.a *)
+(* end *)
+
+
+
+
+
+class virtual ['a] eq_c =
+object (s)
+  method virtual eq : 'a -> 'a -> bool
+  method neq x y = not(s#eq x y)
+end
+
+class virtual ['a] ord_c =
+object (s)
+  inherit ['a] eq_c
+  method virtual lt : 'a -> 'a -> bool
+  method leq x y = (s#eq x y) || (s#lt x y)
+end
+
+class virtual ['a] monad_c =
+object (s)
+  method virtual return : 'a -> 'a monad_c
+  method virtual bind : 'a monad_c -> ('a -> 'b monad_c) -> 'b monad_c
+end
+
+class ['a] id_m_c =
+object (s)
+  inherit ['a] monad_c
+  method return x = x
+  method bind x f = f x
+end
+
+(* class virtual md_m_c = *)
+(* object (s) *)
+(*   inherit ['a] monad_c *)
+(*   method return x = new [x] *)
+(*   (\* method bind x f = List.concat (List.map f x) *\) *)
+(* end *)
+      
+
+(* class int_eq_i = *)
+(* object *)
+(*   inherit [int] eq_c *)
+(*   method eq = (=) *)
+(* end *)
+
+class int_ord_i =
+object
+  inherit [int] ord_c
+  method eq = (=)
+  method lt = (<)
+  method leq = (<=)
+end
+
+let int_eq_i_val = ((new int_ord_i) :> int eq_c)
+
+let int_ord_i_val = ((new int_ord_i) :> int ord_c)
+
+let max (d:'a ord_c) (xs : 'a list) =
+  let rec helper xs = match xs with
+    | [x] -> x
+    | x::xs -> let y=helper xs in
+	if d#lt x y then x else y in
+    helper xs
+
+let member (d:'a eq_c) (y:'a) (xs : 'a list) =
+  let rec helper xs = match xs with
+    | [] -> false
+    | x::xs -> if (d#eq x y) then true else  helper xs in
+    helper xs
+
+let r = max int_ord_i_val [1;2;3]
+
+let r = member int_eq_i_val 2 [1;2;3]
 
 (** polymorphic conversion to a string with -i- spaces identation*)
 let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
@@ -1379,5 +1530,126 @@ let rec formula_exp_e_i : P.exp e_c =
   } in
   self
 
+
+type 'a eq_cc = {
+    eq : 'a -> 'a -> bool;
+    neq : 'a -> 'a -> bool;  
+}
+
+type 'a ord_cc = {
+    ord_eq : 'a eq_cc;
+    lt : 'a -> 'a -> bool;
+    leq : 'a -> 'a -> bool;  
+}
+
+let member (d:'a eq_cc) (y:'a) (xs : 'a list) =
+  let rec helper xs = match xs with
+    | [] -> false
+    | x::xs -> if (d.eq x y) then true else  helper xs in
+    helper xs
+
+let max (d:'a ord_cc) (xs : 'a list) =
+  let rec helper xs = match xs with
+    | [x] -> x
+    | x::xs -> let y=helper xs in
+	if d.lt x y then x else y in
+    helper xs
+
+let neq_of (c:'a eq_cc) (x:'a) (y:'a) : bool = not(c.eq x y)
+
+let int_eq_i : int eq_cc =
+    let rec self = {
+      eq = (=) ;
+      neq = (fun x -> neq_of self x); 
+  } in
+  self
+
+
+module type Monad_B = sig
+    type 'a m
+    val return : 'a -> 'a m
+    val bind : 'a m -> ('a -> 'b m) -> 'b m
+end
+
+module OptionMonad = struct
+    type 'a t = 'a option;;
+    let bind opt f =
+        match opt with
+            | Some(x) -> f x
+            | None -> None
+    ;;
+
+    let return x = Some x;;
+end;;
+
+(* let mapM (d:monad_cc) (f : 'a ->  ('b (monad_cc))) *)
+(*     (xs:'a list) : (('b list) (monad_cc)) = *)
+(*   let rec helper xs = match xs with *)
+(*     | [] -> d.return [] *)
+(*     | x::xs -> d.bind (f x) *)
+(* 	(fun b -> d.bind (helper xs) *)
+(* 	     (fun bs -> d.return (b::bs))) *)
+(* in helper xs *)
+
+
+module Monad (M : Monad_B) = struct
+  include M 
+  let seq m f = bind m (fun _ -> f)
+  let join m = bind m (fun m -> m)
+  let fmap f m = bind m (fun x -> return (f x))
+  let liftm = fmap
+  let liftm2 f m m' =
+    bind m  (fun x ->
+    bind m' (fun y ->
+    return (f x y)))
+  let liftm3 f m m' m'' =
+    bind m   (fun x ->
+    bind m'  (fun y ->
+    bind m'' (fun z ->
+    return (f x y z))))
+  let mapm f l =
+    List.fold_right (liftm2 (fun x xs -> f x :: xs)) l (return [])
+  let sequence l = mapm (fun x -> x) l
+  let mapm_ f l =
+    List.fold_right (fun x -> seq (f x)) l (return ())
+  let sequence_ l = mapm_ (fun x -> x) l
+    let ( >>= ) = bind
+    let ( >>  ) = seq
+end
+
+
+module StateM_B (S : TypeVar) = struct
+  include S
+  type 'a m = St of (S.t -> 'a * S.t)
+  let return a = St (fun s -> (a, s))
+  let bind (St m) f = St (fun s ->
+			    let (x, s') = m s in
+			    let (St m') = f x in
+			      m' s')
+
+end
+
+module StateM_E(S : sig
+		  type t
+		  type 'a m = St of (t -> 'a * t) end) = struct
+    let get = S.St (fun s -> (s, s))
+    let put = fun s -> S.St (fun _ -> ((), s))
+    let eval (S.St m) = fun s -> fst (m s)
+    let run  (S.St m) = fun s -> snd (m s)
+end
+
+module StateM(S : TypeVar)  = struct
+  include Monad (StateM_B(S))
+  include StateM_E(StateM_B(S))
+    (* include State(S) *)
+end
+
+module StateM_i = StateM(XInt)
+
+let incr = StateM_i.bind StateM_i.get (fun s -> StateM_i.put (succ s))
   
- 
+let ( +! ) mx my =
+  StateM_i.bind mx   (fun x ->
+  StateM_i.bind my   (fun y ->
+  StateM_i.bind incr (fun _ -> StateM_i.return (x + y))))
+  
