@@ -64,8 +64,6 @@
 ./isabelle.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx 
 ./java.cmo: util.cmo iprinter.cmo iast.cmo globals.cmo error.cmo cpure.cmo 
 ./java.cmx: util.cmx iprinter.cmx iast.cmx globals.cmx error.cmx cpure.cmx 
-./layout.cmo: globals.cmo cpure.cmo 
-./layout.cmx: globals.cmx cpure.cmx 
 ./main.cmo: util.cmo typechecker.cmo tpdispatcher.cmo solver.cmo rtc.cmo \
     redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo paralib1.cmo \
     omega.cmo mona.cmo java.cmo isabelle.cmo iprinter.cmo iparser.cmo \
@@ -96,6 +94,10 @@
     iformula.cmo iast.cmo globals.cmo 
 ./nativefront.cmx: sparser.cmx slexer.cmx sleekcommons.cmx ipure.cmx \
     iformula.cmx iast.cmx globals.cmx 
+./net-old.cmo: tpdispatcher.cmo 
+./net-old.cmx: tpdispatcher.cmx 
+./net-old2.cmo: 
+./net-old2.cmx: 
 ./net.cmo: 
 ./net.cmx: 
 ./oast.cmo: 
@@ -164,6 +166,10 @@
     debug.cmx cprinter.cmx astsimp.cmx 
 ./test.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
 ./test.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
+./test2.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
+./test2.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
+./test3.cmo: 
+./test3.cmx: 
 ./tpdispatcher.cmo: util.cmo smtsolver.cmo setmona.cmo redlog.cmo omega.cmo \
     net.cmo mona.cmo isabelle.cmo globals.cmo cvclite.cmo cpure.cmo coq.cmo 
 ./tpdispatcher.cmx: util.cmx smtsolver.cmx setmona.cmx redlog.cmx omega.cmx \
