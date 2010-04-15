@@ -1,6 +1,12 @@
 (* module to introduce typevar t *)
 module type TypeVar = sig type t end
 
+(* module to introduce typevar t1 *)
+module type TypeVar1 = sig type t1 end
+
+(* module to introduce typevar t2 *)
+module type TypeVar2 = sig type t2 end
+
 (* module to introduce basics of monad m *)
 module type Monad_B = sig
   type 'a m
@@ -63,10 +69,10 @@ module StateM(S : TypeVar)  = struct
   include StateM_E(StateM_B(S))
 end
 
-module XInt = struct type t = int end
+module Int4t = struct type t = int end
 
 (* instance state monad int *)
-module StateM_int = StateM(XInt)
+module StateM_int = StateM(Int4t)
 
 let incr = StateM_int.bind StateM_int.get (fun s -> StateM_int.put (succ s))
   
