@@ -1,6 +1,4 @@
 module type TypeVar = sig type t end
-module XInt = struct type t = int end
-
 
 module type Monad_B = sig
   type 'a m
@@ -62,11 +60,14 @@ module StateM(S : TypeVar)  = struct
     (* include State(S) *)
 end
 
+module XInt = struct type t = int end
+
 module StateM_i = StateM(XInt)
 
 let incr = StateM_i.bind StateM_i.get (fun s -> StateM_i.put (succ s))
   
 let ( +! ) mx my =
-  StateM_i.bind mx (fun x -> StateM_i.bind my
-		      (fun y -> StateM_i.bind incr (fun _ -> StateM_i.return (x + y))))
+  StateM_i.bind mx (fun x ->
+		      StateM_i.bind my
+			(fun y -> StateM_i.bind incr (fun _ -> StateM_i.return (x + y))))
     
