@@ -1,20 +1,20 @@
-(* module to introduce typevar t *)
+(* module for typevar t *)
 module type TypeVar = sig type t end
 
-(* module to introduce typevar t1 *)
+(* module for typevar t1 *)
 module type TypeVar1 = sig type t1 end
 
-(* module to introduce typevar t2 *)
+(* module for typevar t2 *)
 module type TypeVar2 = sig type t2 end
 
-(* module to introduce basics of monad m *)
+(* monad m basics *)
 module type Monad_B = sig
   type 'a m
   val return : 'a -> 'a m
   val bind : 'a m -> ('a -> 'b m) -> 'b m
 end
 
-(* module for monad m with extensions *)
+(* monad m with extensions *)
 module Monad (M : Monad_B) = struct
   include M 
   let seq m f = bind m (fun _ -> f)
@@ -40,44 +40,53 @@ module Monad (M : Monad_B) = struct
   let ( >>  ) = seq
 end
 
-(* instance state monad basic wo wrapper *)
+(* instance state monad basic *)
 module StateM_B (S : TypeVar) = struct
   include S
-  type 'a m = (S.t -> 'a * S.t)
+  type 'a m = S.t -> 'a * S.t
   let return a = (fun s -> (a, s))
   let bind (m) f = (fun s ->
-			    let (x, s') = m s in
-			    let m' = f x in
-			      m' s')
+	  let (x, s') = m s in f x s')
 end
 
 
-
-(* instance state monad with extension *)
+(* instance state monad extension *)
 module StateM_E(S : sig
 		  type t
-		  type 'a m = (t -> 'a * t) end) = struct
+		  type 'a m = t -> 'a * t end) = 
+struct
   let get = (fun s -> (s, s))
-  let put = fun s ->  (fun _ -> ((), s))
+  let put s = (fun _ -> ((), s))
+  (* evaluate and get value *)
   let eval (m) = fun s -> fst (m s)
+  (* run and get state *)
   let run  (m) = fun s -> snd (m s)
 end
 
-(* instance state monad with all extensions *)
+(* instance state monad with everything *)
 module StateM(S : TypeVar)  = struct
   include Monad (StateM_B(S))
   include StateM_E(StateM_B(S))
 end
 
+(* instantiating int for t *)
 module Int4t = struct type t = int end
 
-(* instance state monad int *)
+(* instance state monad with int for t *)
 module StateM_int = StateM(Int4t)
 
 let incr = StateM_int.bind StateM_int.get (fun s -> StateM_int.put (succ s))
   
 let ( +! ) mx my =
   StateM_int.bind mx (fun x ->
-		      StateM_int.bind my
-			(fun y -> StateM_int.bind incr (fun _ -> StateM_int.return (x + y))))
+	  StateM_int.bind my (fun y -> 
+          StateM_int.bind incr (fun _ -> 
+              StateM_int.return (x + y))))
     
+(* to implement List Monad - MonadPlus*)
+
+(* to implement Option Monad *)
+
+(* to implement Error Monad *)
+
+
