@@ -6,12 +6,15 @@
 
 open Globals
 
+
 module F = Cformula
 module P = Cpure
 module Err = Error
 module U = Util
 
 type typed_ident = (P.typ * ident)
+
+
 
 and prog_decl = { mutable prog_data_decls : data_decl list;
 				  mutable prog_view_decls : view_decl list;
@@ -56,6 +59,7 @@ and proc_decl = { proc_name : ident;
 				  proc_loc : loc }
 
 (*TODO: does lemma need struc formulas?*)
+
 and coercion_decl = { coercion_name : ident;
 					  coercion_head : F.formula;
 					  coercion_body : F.formula;

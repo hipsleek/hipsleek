@@ -345,6 +345,7 @@ and set_flow_in_formula (n:flow_formula) (f:formula):formula = match f with
 	| Or b-> Or {formula_or_f1 = set_flow_in_formula_override n b.formula_or_f1;
 				 formula_or_f2 = set_flow_in_formula_override n b.formula_or_f2;
 				 formula_or_pos = b.formula_or_pos}
+
 				 
 and set_flow_to_link_f flow_store f pos = match f with
 	| Base b-> Base {b with formula_base_flow = 

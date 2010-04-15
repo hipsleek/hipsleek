@@ -57,7 +57,7 @@ bool bubble(node xs)
 	else {
 		tmp = bubble(xs.next);
 		if (xs.val <= xs.next.val) {
-			assert false;
+			assert xs=null;
 			flag = false;
 		}
 		else {
@@ -73,7 +73,7 @@ bool bubble(node xs)
 }
 
 void bsort(node xs)
-	requires xs::ll<n> & n>10
+	requires xs::ll<n> & n>0
 	ensures xs::sll<n, _, _>;
 {
 	bool b;
