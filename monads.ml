@@ -14,6 +14,7 @@ module type Monad_B = sig
   val bind : 'a m -> ('a -> 'b m) -> 'b m
 end
 
+  
 (* monad m with extensions *)
 module Monad (M : Monad_B) = struct
   include M 
