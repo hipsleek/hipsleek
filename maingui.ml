@@ -342,7 +342,7 @@ open Typeclass
 (* type 'a err = Success of 'a | Error of string *)
   
 module MonadE_B (S:SHOW_B) = struct
-  module A=SHOW(S)
+  module A=SHOW(S) 
   type 'a m = Success of 'a | Error of string
   let return a = Success a
   let bind er f =  match er with
@@ -361,6 +361,7 @@ end
     
 module MonadM_B(S:SHOW_B)  = struct
   module E=MonadE_B(S)
+  module B=SHOW(S)  
   type 'a m = (int -> ('a E.m * int)) 
   let return a =  (fun s -> ((E.return a),s) )
   let bind (m1) k = (fun s ->
@@ -370,7 +371,36 @@ module MonadM_B(S:SHOW_B)  = struct
 			   | (E.Error s) -> (E.Error s,s1)
 		    )
   let errorM m = fun s -> (E.Error m, s)
+  let showM m = let (a,s) = m 0 in
+    E.showE a ^" ; "^" Count: " ^ (B.show s)
 end
 
+
+
+
+
+ module I_EV_SHOW_B = struct
+  type a = int
+  let shows = fun x s -> (string_of_int x) ^ s
+  end
+
+module EValue_MonadM_B = MonadM_B(I_EV_SHOW_B)  
+
   
+type evalue = ENum of int | EFun of (evalue  EValue_MonadM_B.m -> evalue  EValue_MonadM_B.m) 
+
+type environment = (string * (evalue  EValue_MonadM_B.m)) list
+
+type eTerm = EVar of string | ECon of int
+| EAdd of eTerm * eTerm
+| ELam of string * eTerm
+|EApp of eTerm * eTerm
+    
+
+   
+  
+
+
+
+
   
