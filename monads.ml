@@ -1,8 +1,6 @@
 (* module for typevar t *)
 module type TypeVar = sig type t end
 
-(* module for typevar t1 *)
-module type TypeVar1 = sig type t1 end
 
 (* module for typevar t2 *)
 module type TypeVar2 = sig type t2 end
@@ -94,6 +92,7 @@ module type MonadPlus_B = sig
   val bind : 'a m -> ('a -> 'b m) -> 'b m
 end
 
+
 (* instance state monad basic *)
 module MonadList_B  = struct
   type 'a m = 'a list
@@ -103,6 +102,7 @@ module MonadList_B  = struct
   let bind m f = List.concat (List.map f m)
 end
 
+
 (* to implement Option Monad *)
 module MonadOption_B  = struct
   type 'a m = 'a option
@@ -111,6 +111,12 @@ module MonadOption_B  = struct
     | None -> None
     | Some v -> f v
 end
+
+(* instance state monad with everything *)
+module MonadList  = Monad (MonadList_B)
+
+(* instance state monad with everything *)
+module MonadOption  = Monad (MonadOption_B)
 
 
 (* to implement Error Monad *)
