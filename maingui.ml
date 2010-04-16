@@ -336,3 +336,41 @@ let _ =
     else ()
 
   
+open Monads
+open Typeclass
+
+(* type 'a err = Success of 'a | Error of string *)
+  
+module MonadE_B (S:SHOW_B) = struct
+  module A=SHOW(S)
+  type 'a m = Success of 'a | Error of string
+  let return a = Success a
+  let bind er f =  match er with
+    |	Success v -> f v
+    |   Error s -> Error s
+  let showE e = match e with
+    | (Success v) -> "Value: "^(A.show v)
+    | (Error s) -> "Error: "^s
+end
+
+(* type 'a m_t = S_m_t of (int -> ('a err_t * int))   *)
+
+(* module I_MonadE_Show_B = struct *)
+(*   type a = 'a err *)
+(* end *)
+    
+module MonadM_B(S:SHOW_B)  = struct
+  module E=MonadE_B(S)
+  type 'a m = (int -> ('a E.m * int)) 
+  let return a =  (fun s -> ((E.return a),s) )
+  let bind (m1) k = (fun s ->
+		       let (e1,s1) = m1 s in
+			 match e1 with
+			   | (E.Success v) -> let m2 = k v in (m2 s1)
+			   | (E.Error s) -> (E.Error s,s1)
+		    )
+  let errorM m = fun s -> (E.Error m, s)
+end
+
+  
+  
