@@ -86,7 +86,32 @@ let ( +! ) mx my =
     
 (* to implement List Monad - MonadPlus*)
 
+module type MonadPlus_B = sig
+  type 'a m
+  val zeroM : 'a m
+  val plusM : 'a m -> 'a m -> 'a m
+  val return : 'a -> 'a m
+  val bind : 'a m -> ('a -> 'b m) -> 'b m
+end
+
+(* instance state monad basic *)
+module MonadList_B  = struct
+  type 'a m = 'a list
+  let return a = [a]
+  let zeroM = []
+  let plusM x y = x@y
+  let bind m f = List.concat (List.map f m)
+end
+
 (* to implement Option Monad *)
+module MonadOption_B  = struct
+  type 'a m = 'a option
+  let return a = Some a
+  let bind m f = match m with
+    | None -> None
+    | Some v -> f v
+end
+
 
 (* to implement Error Monad *)
 
