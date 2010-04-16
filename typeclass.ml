@@ -70,7 +70,7 @@ end
 module SHOW (M : SHOW_B) = struct
   (* type "a" imported from M *)
   include M
-  let show (x:a) string  = shows x ""
+  let show (x:a) : string  = shows x ""
 end
 
 
