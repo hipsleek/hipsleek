@@ -26,7 +26,7 @@ module EQ (M : EQ_B) = struct
     end
 end
 
-(* instance (Eq a, Eq b) Eq (a,b)
+(* instance (Eq a, Eq b) => Eq (a,b)
    eq (x1,y1) (x2,y2) = (eq x1 x2) & (eq y1 y2)
 *)
 module TUPLE_EQ_B (M1 : EQ_B) (M2 : EQ_B) = struct
@@ -34,6 +34,11 @@ module TUPLE_EQ_B (M1 : EQ_B) (M2 : EQ_B) = struct
   let eq (x1,x2) (y1,y2) = (M1.eq x1 y1) && (M2.eq x2 y2)
 end
 
+(* instance Eq a => Eq [a]
+   eq [] [] = true
+   eq (x:xs) (y:ys) = (eq x y) && (eq xs ys)
+   eq _ _ = false
+*)
 module LIST_EQ_B (M : EQ_B) = struct
   type a = M.a list
   let rec eq xs ys = match xs,ys with
@@ -41,7 +46,6 @@ module LIST_EQ_B (M : EQ_B) = struct
     | (x::xs), (y::ys) -> (M.eq x y) && (eq xs ys)
     | _, _ -> false
 end
-
 
 (* Class ORD Extended with defaults and other operators *)
 module ORD (M : ORD_B) = struct
