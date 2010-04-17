@@ -339,7 +339,7 @@ let _ =
 open Monads
 open Typeclass
 
-(* type 'a err = Success of 'a | Error of string *)
+
   
 module MonadE_B (S:SHOW_B) = struct
   module A=SHOW(S) 
@@ -349,15 +349,11 @@ module MonadE_B (S:SHOW_B) = struct
     |	Success v -> f v
     |   Error s -> Error s
   let showE e = match e with
-    | (Success v) -> "Value: "^(A.show v)
+    | (Success v) -> "Value: " (* ^(A.show v) *)
     | (Error s) -> "Error: "^s
 end
 
-(* type 'a m_t = S_m_t of (int -> ('a err_t * int))   *)
 
-(* module I_MonadE_Show_B = struct *)
-(*   type a = 'a err *)
-(* end *)
     
 module MonadM_B(S:SHOW_B)  = struct
   module E=MonadE_B(S)
@@ -369,35 +365,88 @@ module MonadM_B(S:SHOW_B)  = struct
 			 match e1 with
 			   | (E.Success v) -> let m2 = k v in (m2 s1)
 			   | (E.Error s) -> (E.Error s,s1)
-		    )
+  		    )
+  let bind1 m k = bind m (fun _ -> k)
   let errorM m = fun s -> (E.Error m, s)
-  let showM m = let (a,s) = m 0 in
-    E.showE a ^" ; "^" Count: " ^ (B.show s)
+
+   let showM m = let (a,s) = m 0 in
+    E.showE a (*^"  ; "^" Count: " ^ (B.show s)	 *)   
+  let tickS () : unit m = fun s -> (E.Success (),s+1)
+
+end
+
+
+  module I_EV_SHOW_B = struct
+  type a = int 				(* Evalue.a *)
+  let shows = fun x s -> (string_of_int x) ^ s
+  end    
+
+  
+module Evalue =  struct
+  module M=MonadM_B(I_EV_SHOW_B)
+ 
+  type a = ENum of int | EFun of (a  M.m -> a  M.m)
+    
+  let shows v s= match v with
+      ENum i -> (string_of_int i) ^ s
+    | EFun f -> "<function>" ^s
+  let show (v:a) : string = shows v ""
+    
+  type environment = (string * (a  M.m)) list
+
+  let rec lookup (n:string) (ev:environment) : a M.m =
+    match ev with
+	[] -> M.errorM ("unbound variable: "^n)
+      |(e,v)::evs -> if n=e then v else (lookup n evs)
+
+  let add (x:a) (y:a) : a M.m =
+    match (x,y) with
+  	((ENum i),(ENum j)) -> M.bind1 (M.tickS ()) (M.return (ENum (i+j)))
+      |  _ -> M.errorM ("should be numbers: ")
+
+  let apply (x:a) (y: a M.m) : a M.m =
+    match x with
+	(EFun k) -> M.bind1 (M.tickS ()) (k y)
+      | _ -> M.errorM ("should be function: "^ show x)
+	  
+  type eTerm = EVar of string | ECon of int
+	       | EAdd of eTerm * eTerm
+	       | ELam of string * eTerm
+	       |EApp of eTerm * eTerm
+		   
+  let rec interp (t:eTerm) (ev:environment) : a M.m =
+    match t with
+      | (EVar x) -> lookup x ev
+      | (ECon i) -> M.return (ENum i)
+      | (EAdd (u,v)) -> M.bind (interp u ev) (fun a -> (M.bind (interp v ev) (fun b -> (add a b))))
+      | (ELam (x,v)) -> M.return (EFun (fun a -> interp v ((x,a)::ev)))
+      | EApp (u,v) -> M.bind (interp u ev) (fun a -> (apply a (interp v ev)))
+
+ 
+  let test (t:eTerm) : string = M.showM (interp t [])
+
+   let _ = print_string ("\n" ^ (test (ECon 2)) ^"\n");print_string ("\n" ^ (test (EApp ((ECon 2),(ECon 2)))) ^"\n")
+     
 end
 
 
 
 
-
- module I_EV_SHOW_B = struct
-  type a = int
-  let shows = fun x s -> (string_of_int x) ^ s
-  end
-
-module EValue_MonadM_B = MonadM_B(I_EV_SHOW_B)  
-
   
-type evalue = ENum of int | EFun of (evalue  EValue_MonadM_B.m -> evalue  EValue_MonadM_B.m) 
+(* type evalue = ENum of int | EFun of (evalue  EValue_MonadM_B.m -> evalue  EValue_MonadM_B.m)  *)
 
-type environment = (string * (evalue  EValue_MonadM_B.m)) list
+(* type environment = (string * (evalue  EValue_MonadM_B.m)) list *)
 
-type eTerm = EVar of string | ECon of int
-| EAdd of eTerm * eTerm
-| ELam of string * eTerm
-|EApp of eTerm * eTerm
+(* type eTerm = EVar of string | ECon of int *)
+(* | EAdd of eTerm * eTerm *)
+(* | ELam of string * eTerm *)
+(* |EApp of eTerm * eTerm *)
     
 
-   
+
+
+    
+
   
 
 

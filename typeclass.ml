@@ -18,10 +18,33 @@ module EQ (M : EQ_B) = struct
   include M
   let neq x y = not(eq x y)
   let member (y:a) (xs : a list) : bool =
-  let rec helper xs = match xs with
-    | [] -> false
-    | x::xs -> if (eq x y) then true else  helper xs in
-    helper xs
+    begin
+      let rec helper xs = match xs with
+        | [] -> false
+        | x::xs -> if (eq x y) then true else  helper xs in
+      helper xs
+    end
+end
+
+(* instance (Eq a, Eq b) => Eq (a,b)
+   eq (x1,y1) (x2,y2) = (eq x1 x2) & (eq y1 y2)
+*)
+module TUPLE_EQ_B (M1 : EQ_B) (M2 : EQ_B) = struct
+  type a = (M1.a * M2.a)
+  let eq (x1,x2) (y1,y2) = (M1.eq x1 y1) && (M2.eq x2 y2)
+end
+
+(* instance Eq a => Eq [a]
+   eq [] [] = true
+   eq (x:xs) (y:ys) = (eq x y) && (eq xs ys)
+   eq _ _ = false
+*)
+module LIST_EQ_B (M : EQ_B) = struct
+  type a = M.a list
+  let rec eq xs ys = match xs,ys with
+    | [], [] -> true
+    | (x::xs), (y::ys) -> (M.eq x y) && (eq xs ys)
+    | _, _ -> false
 end
 
 (* Class ORD Extended with defaults and other operators *)
@@ -32,12 +55,14 @@ module ORD (M : ORD_B) = struct
   let gt x y = (lt y x) 
   let geq x y = (leq x y) 
   let max (xs : a list) : a =
-  let rec helper xs = match xs with
-    | [] -> failwith "[] for max argument"
-    | [x] -> x
-    | x::xs -> let y=helper xs in
-	if lt x y then x else y in
-    helper xs
+    begin
+      let rec helper xs = match xs with
+        | [] -> failwith "[] for max argument"
+        | [x] -> x
+        | x::xs -> let y=helper xs in
+	      if lt x y then x else y in
+      helper xs
+    end
 end
 
   
@@ -72,13 +97,6 @@ module SHOW (M : SHOW_B) = struct
   include M
   let show (x:a) : string  = shows x ""
 end
-
-(* module SHOW_map(M : SHOW_B) = struct *)
-(*   include M *)
-(*   type 'a m = a m *)
-  
-(* end *)
-    
 
 
 

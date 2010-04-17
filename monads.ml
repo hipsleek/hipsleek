@@ -1,8 +1,6 @@
 (* module for typevar t *)
 module type TypeVar = sig type t end
 
-(* module for typevar t1 *)
-module type TypeVar1 = sig type t1 end
 
 (* module for typevar t2 *)
 module type TypeVar2 = sig type t2 end
@@ -12,17 +10,10 @@ module type Monad_B = sig
   type 'a m
   val return : 'a -> 'a m
   val bind : 'a m -> ('a -> 'b m) -> 'b m
+  (* val bind1 m k = bind m (fun _ -> k) *)
 end
 
-
-  (* monad m basics *)
-module type M  = sig
-  type t
-  type 'a m
-  val return : 'a -> 'a m
-  val bind : 'a m -> ('a -> 'b m) -> 'b m
-end
-
+  
 (* monad m with extensions *)
 module Monad (M : Monad_B) = struct
   include M 
@@ -94,9 +85,41 @@ let ( +! ) mx my =
     
 (* to implement List Monad - MonadPlus*)
 
+module type MonadPlus_B = sig
+  type 'a m
+  val zeroM : 'a m
+  val plusM : 'a m -> 'a m -> 'a m
+  val return : 'a -> 'a m
+  val bind : 'a m -> ('a -> 'b m) -> 'b m
+end
+
+
+(* instance state monad basic *)
+module MonadList_B  = struct
+  type 'a m = 'a list
+  let return a = [a]
+  let zeroM = []
+  let plusM x y = x@y
+  let bind m f = List.concat (List.map f m)
+end
+
+
 (* to implement Option Monad *)
+module MonadOption_B  = struct
+  type 'a m = 'a option
+  let return a = Some a
+  let bind m f = match m with
+    | None -> None
+    | Some v -> f v
+end
+
+(* instance state monad with everything *)
+module MonadList  = Monad (MonadList_B)
+
+(* instance state monad with everything *)
+module MonadOption  = Monad (MonadOption_B)
+
 
 (* to implement Error Monad *)
 
 
- 
