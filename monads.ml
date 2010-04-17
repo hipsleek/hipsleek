@@ -1,3 +1,5 @@
+open Typeclass
+
 (* module for typevar t *)
 module type TypeVar = sig type t end
 
@@ -11,6 +13,7 @@ module type Monad_B = sig
   val return : 'a -> 'a m
   val bind : 'a m -> ('a -> 'b m) -> 'b m
 end
+
 
   
 (* monad m with extensions *)
@@ -122,3 +125,14 @@ module MonadOption  = Monad (MonadOption_B)
 (* to implement Error Monad *)
 
 
+module MonadE_B (S:SHOW_B) = struct
+module A=SHOW(S)
+type 'a m = Success of 'a | Error of string
+let return a = Success a
+let bind er f = match er with
+| Success v -> f v
+| Error s -> Error s
+let showE e = match e with
+| (Success v) -> "Value: "  ^(A.show v) 
+| (Error s) -> "Error: "^s
+end
