@@ -440,11 +440,15 @@ module I_SHOW_B2 = struct
     | EFun _ -> "<function>"^s
 end
 
-  
+(* below exposes the Show s type *)
+module I_SHOW_B3 = struct 
+  include I_SHOW_B2
+  include SHOW_E(I_SHOW_B2)
+end
+
 module Evalue =  struct
   (* module M=MonadM_B(I_EV_SHOW_B) *)
-  module S=I_SHOW_B2
-  module S2=SHOW_E(S)
+  module S=I_SHOW_B3
   (* module S=SHOW(I_SHOW_B2) *)
   module M=MonadState_E(SHOW(S))
  
@@ -471,7 +475,7 @@ module Evalue =  struct
   let apply (x:S.s) (y: S.s M.m) : S.s M.m =
     match x with
 	(S.EFun k) -> M.bind1 (M.tickS ()) (k y)
-      | _ -> M.errorM ("should be function: "^ S2.show x)
+      | _ -> M.errorM ("should be function: "^ S.show x)
 	  
   type eTerm = EVar of string | ECon of int
 	       | EAdd of eTerm * eTerm
