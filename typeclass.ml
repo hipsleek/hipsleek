@@ -87,15 +87,22 @@ module I_Int_ORD = ORD(I_Int_ORD_B)
 (* Class Show Basic *)
 module type SHOW_B =
 sig
-  type a
-  val shows: a -> string -> string
+  type s
+  val shows: s -> string -> string
+end
+
+module type SHOW_sig =
+sig
+  type s
+  val shows: s -> string -> string
+  val show: s -> string
 end
 
 (* Class SHOW Extended with defaults and other operators *)
 module SHOW (M : SHOW_B) = struct
-  (* type "a" imported from M *)
+  (* type "s" imported from M *)
   include M
-  let show (x:a) : string  = shows x ""
+  let show (x:s) : string  = shows x ""
 end
 
 
