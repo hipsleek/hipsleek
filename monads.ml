@@ -152,12 +152,17 @@ module MonadErr_E2 (S:SHOW_B) = struct
     | (Error s) -> "Error: "^s
 end
 
-module Interpret = struct
+module I_Show_B = struct
   module M = MonadErr_B
-  type t1 = ENum of int | EFun of (t1 M.m -> t1 M.m)
+  type s = ENum of int | EFun of (s M.m -> s M.m)
   let shows x s = match x with
     | ENum i -> (string_of_int i) ^ s
     | EFun _ -> "a function!"^s
+end
+
+module Interp = struct
+  module M=MonadErr_E2(I_Show_B)
+  open M
 end
 
 
