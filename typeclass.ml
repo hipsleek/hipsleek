@@ -91,6 +91,13 @@ sig
   val shows: a -> string -> string
 end
 
+module type SHOW_sig =
+sig
+  type a
+  val shows: a -> string -> string
+  val show: a -> string
+end
+
 (* Class SHOW Extended with defaults and other operators *)
 module SHOW (M : SHOW_B) = struct
   (* type "a" imported from M *)

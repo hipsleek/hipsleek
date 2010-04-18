@@ -120,25 +120,48 @@ module MonadList  = Monad (MonadList_B)
 (* instance state monad with everything *)
 module MonadOption  = Monad (MonadOption_B)
 
-
 (* to implement Error Monad *)
+module type MonadErr_B_sig = sig
+  type 'a m = Success of 'a | Error of string
+  val return : 'a -> 'a m
+  val bind : 'a m -> ('a -> 'b m) -> 'b m
+end
 
 module MonadErr_B = struct
-type 'a m = Success of 'a | Error of string
-let return a = Success a
-let bind er f = match er with
-| Success v -> f v
-| Error s -> Error s
+  type 'a m = Success of 'a | Error of string
+  let return a = Success a
+  let bind er f = match er with
+    | Success v -> f v
+    | Error s -> Error s
 end
 
 
-module MonadErr_E (M:Monad_B) (S:SHOW_B) = struct
-module A=SHOW(S)
-type 'a m = Success of 'a | Error of string
-let showE e = match e with
-| (Success v) -> "Value: "  ^(A.show v) 
-| (Error s) -> "Error: "^s
+module MonadErr_E (M:MonadErr_B_sig) (S:SHOW_B) = struct
+  module A=SHOW(S)
+  let showE e = match e with
+    | (M.Success v) -> "Value: "  ^(A.show v) 
+    | (M.Error s) -> "Error: "^s
 end
+
+(* maybe below can replace MonadErr_E *)
+module MonadErr_E2 (S:SHOW_B) = struct
+  include MonadErr_B
+  module A=SHOW(S)
+  let showE e = match e with
+    | (Success v) -> "Value: "  ^(A.show v) 
+    | (Error s) -> "Error: "^s
+end
+
+module Interpret = struct
+  module M = MonadErr_B
+  type t1 = ENum of int | EFun of (t1 M.m -> t1 M.m)
+  let shows x s = match x with
+    | ENum i -> (string_of_int i) ^ s
+    | EFun _ -> "a function!"^s
+end
+
+
+
 
 
 (* let test (t:eTerm) : string = M.showM (interp t []) *)
