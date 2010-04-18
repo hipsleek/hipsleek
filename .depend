@@ -76,22 +76,24 @@
     omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
     inliner.cmx ilexer.cmx iast.cmx globalvars.cmx globals.cmx debug.cmx \
     cvclite.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
-./maingui.cmo: util.cmo typechecker.cmo tpdispatcher.cmo solver.cmo rtc.cmo \
-    redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo paralib1.cmo \
-    omega.cmo mona.cmo java.cmo isabelle.cmo iprinter.cmo iparser.cmo \
-    inliner.cmo ilexer.cmo iast.cmo gui.cmo globalvars.cmo globals.cmo \
-    debug.cmo cvclite.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
-./maingui.cmx: util.cmx typechecker.cmx tpdispatcher.cmx solver.cmx rtc.cmx \
-    redlog.cmx prooftracer.cmx predcomp.cmx paralib1v2.cmx paralib1.cmx \
-    omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
-    inliner.cmx ilexer.cmx iast.cmx gui.cmx globalvars.cmx globals.cmx \
-    debug.cmx cvclite.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
+./maingui.cmo: util.cmo typeclass.cmo typechecker.cmo tpdispatcher.cmo \
+    solver.cmo rtc.cmo redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo \
+    paralib1.cmo omega.cmo monads.cmo mona.cmo java.cmo isabelle.cmo \
+    iprinter.cmo iparser.cmo inliner.cmo ilexer.cmo iast.cmo gui.cmo \
+    globalvars.cmo globals.cmo debug.cmo cvclite.cmo cprinter.cmo coq.cmo \
+    cast.cmo astsimp.cmo 
+./maingui.cmx: util.cmx typeclass.cmx typechecker.cmx tpdispatcher.cmx \
+    solver.cmx rtc.cmx redlog.cmx prooftracer.cmx predcomp.cmx paralib1v2.cmx \
+    paralib1.cmx omega.cmx monads.cmx mona.cmx java.cmx isabelle.cmx \
+    iprinter.cmx iparser.cmx inliner.cmx ilexer.cmx iast.cmx gui.cmx \
+    globalvars.cmx globals.cmx debug.cmx cvclite.cmx cprinter.cmx coq.cmx \
+    cast.cmx astsimp.cmx 
 ./mona.cmo: util.cmo unix_add.cmo oclexer.cmo globals.cmo cpure.cmo \
     cprinter.cmo 
 ./mona.cmx: util.cmx unix_add.cmx oclexer.cmx globals.cmx cpure.cmx \
     cprinter.cmx 
-./monads.cmo: 
-./monads.cmx: 
+./monads.cmo: typeclass.cmo 
+./monads.cmx: typeclass.cmx 
 ./nativefront.cmo: sparser.cmo slexer.cmo sleekcommons.cmo ipure.cmo \
     iformula.cmo iast.cmo globals.cmo 
 ./nativefront.cmx: sparser.cmx slexer.cmx sleekcommons.cmx ipure.cmx \

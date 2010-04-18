@@ -443,9 +443,10 @@ end
   
 module Evalue =  struct
   (* module M=MonadM_B(I_EV_SHOW_B) *)
-  module S=I_SHOW_B
+  module S=I_SHOW_B2
+  module S2=SHOW_E(S)
   (* module S=SHOW(I_SHOW_B2) *)
-  module M=MonadState_E(S)
+  module M=MonadState_E(SHOW(S))
  
   (* type s = ENum of int | EFun of (s  M.m -> s  M.m) *)
     
@@ -470,7 +471,7 @@ module Evalue =  struct
   let apply (x:S.s) (y: S.s M.m) : S.s M.m =
     match x with
 	(S.EFun k) -> M.bind1 (M.tickS ()) (k y)
-      | _ -> M.errorM ("should be function: "^ S.show x)
+      | _ -> M.errorM ("should be function: "^ S2.show x)
 	  
   type eTerm = EVar of string | ECon of int
 	       | EAdd of eTerm * eTerm

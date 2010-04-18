@@ -106,5 +106,8 @@ module SHOW (M : SHOW_B) = struct
   let show (x:s) : string  = shows x ""
 end
 
+module SHOW_E (S : SHOW_B) = struct
+  let show (x:S.s) : string  = S.shows x ""
+end
 
 
