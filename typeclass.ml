@@ -13,9 +13,9 @@ sig
 end
 
 (* Class EQ Extended with defaults and other operators *)
-module EQ (M : EQ_B) = struct
+module EQ_E (M : EQ_B) = struct
   (* type "a" imported from M *)
-  include M
+  open M
   let neq x y = not(eq x y)
   let member (y:a) (xs : a list) : bool =
     begin
@@ -24,6 +24,13 @@ module EQ (M : EQ_B) = struct
         | x::xs -> if (eq x y) then true else  helper xs in
       helper xs
     end
+end
+
+
+module EQ (M : EQ_B) = struct
+  (* type "a" imported from M  but abstract *)
+  include M
+  include EQ_E(M)
 end
 
 (* instance (Eq a, Eq b) => Eq (a,b)
@@ -84,6 +91,7 @@ end
 (* instance Int ORD Extension *)
 module I_Int_ORD = ORD(I_Int_ORD_B)
 
+
 (* Class Show Basic *)
 module type SHOW_B =
 sig
@@ -98,12 +106,19 @@ sig
   val show: s -> string
 end
 
-(* Class SHOW Extended with defaults and other operators *)
-module SHOW (M : SHOW_B) = struct
-  (* type "s" imported from M *)
-  include M
+module SHOW_E (S : SHOW_B) = struct
+  open S
   let show (x:s) : string  = shows x ""
 end
+
+(* Class SHOW Extended with defaults and other operators *)
+module SHOW (M : SHOW_B) = struct
+  (* type "s" imported from M but abstract! *)
+  include M
+  include SHOW_E(M)
+  (* let show (x:s) : string  = shows x "" *)
+end
+
 
 
 
