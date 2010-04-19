@@ -449,7 +449,7 @@ end
 module Evalue =  struct
   (* module M=MonadM_B(I_EV_SHOW_B) *)
   module S=I_SHOW_B3
-  (* module S=SHOW(I_SHOW_B2) *)
+  (* module S=SHOW_E(I_SHOW_B2) *)
   module M=MonadState_E(SHOW(S))
  
   (* type s = ENum of int | EFun of (s  M.m -> s  M.m) *)
