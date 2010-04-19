@@ -55,9 +55,9 @@ module LIST_EQ_B (M : EQ_B) = struct
 end
 
 (* Class ORD Extended with defaults and other operators *)
-module ORD (M : ORD_B) = struct
+module ORD_E (M : ORD_B) = struct
   (* type "a" imported from M *)
-  include M
+  open M
   let leq x y = (lt x y) || (eq x y)
   let gt x y = (lt y x) 
   let geq x y = (leq x y) 
@@ -72,6 +72,11 @@ module ORD (M : ORD_B) = struct
     end
 end
 
+module ORD (M : ORD_B) = struct
+  (* type "a" imported from M *)
+  include M
+  include ORD_E(M)
+end
   
 (* instance Int EQ Base *)
 module I_Int_EQ_B = struct
@@ -118,6 +123,11 @@ module SHOW (M : SHOW_B) = struct
   include SHOW_E(M)
   (* let show (x:s) : string  = shows x "" *)
 end
+
+(* module SHOW_E (S : SHOW_B) = struct *)
+(*   (\* type "s" imported from M *\) *)
+(*   let show (x:S.s) : string  = S.shows x "" *)
+(* end *)
 
 
 

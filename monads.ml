@@ -16,8 +16,8 @@ end
 
   
 (* monad m with extensions *)
-module Monad (M : Monad_B) = struct
-  include M 
+module Monad_E (M : Monad_B) = struct
+  open M 
   let seq m f = bind m (fun _ -> f)
   let join m = bind m (fun m -> m)
   let fmap f m = bind m (fun x -> return (f x))
@@ -39,6 +39,11 @@ module Monad (M : Monad_B) = struct
   let sequence_ l = mapm_ (fun x -> x) l
   let ( >>= ) = bind
   let ( >>  ) = seq
+end
+
+module Monad (M : Monad_B) = struct
+  include M 
+  include Monad_E(M)
 end
 
 (* instance state monad basic *)
