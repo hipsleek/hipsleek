@@ -43,6 +43,7 @@ void id3(node x)
 	}
 }
 
+
 bool bubble(node xs)
 	requires xs::ll<n> & n>0
 	ensures xs::sll<n, s, l> & !res
@@ -71,6 +72,8 @@ bool bubble(node xs)
 		return (flag || tmp);	
 	}
 }
+
+
 
 void bsort(node xs)
 	requires xs::ll<n> & n>0

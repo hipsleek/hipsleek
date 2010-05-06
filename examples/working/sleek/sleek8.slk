@@ -30,7 +30,7 @@ checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- x::lseg<n1, r1> * t1::ls
 
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
 // valid
-//print residue.
+print residue.
 
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 >= 1 & n2 >= 2.
 // valid
