@@ -157,6 +157,11 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 						  cont := true
 						else
 						  next_bforms := bf :: !next_bforms
+				  | ListIn _
+				  | ListNotIn _
+				  | ListAllN _
+				  | ListPerm _ -> failwith ("Lists are not supported in Mona")
+
 			  end (* end of bf :: rest case *)
 			| [] ->
 				cont2 := false;
@@ -265,6 +270,13 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
 		  r1 || r2
 	  end else
 		failwith ("compute_fo_exp: invalid parameters: non SO bag expression.")
+  | List _
+  | ListCons _
+  | ListHead _
+  | ListTail _
+  | ListLength _
+  | ListAppend _
+  | ListReverse _ -> failwith ("Lists are not supported in Mona")
 
 (* 
    Transformations: 
@@ -412,6 +424,10 @@ and normalize_b_formula (bf0 : b_formula) lbl: formula =
 	  | Lte (e1, e2, pos) -> helper2 mkLte e1 e2 pos
 	  | Gt (e1, e2, pos) -> helper2 mkGt e1 e2 pos
 	  | Gte (e1, e2, pos) -> helper2 mkGte e1 e2 pos
+	  | ListIn _
+	  | ListNotIn _
+	  | ListAllN _
+	  | ListPerm _ -> failwith ("Lists are not supported in Mona")
 		  
 (*
   return value:
