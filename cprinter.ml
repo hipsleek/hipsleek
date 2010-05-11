@@ -84,7 +84,8 @@ let op_or_short = "|"
 let op_not_short = "!"  
 let op_star_short = "*"  
 let op_f_or_short = "or"  
-
+let op_lappend_short = "APP"
+let op_cons_short = ":::"
 
 (** op code that will be printed *)
 let op_add = "+" 
@@ -107,6 +108,8 @@ let op_or = " | "
 let op_not = "!"  
 let op_star = " * "  
 let op_f_or = "or" 
+let op_lappend = "append"
+let op_cons = ":::"
 
 
 (** add a bracket around e if is simple yields false *)
@@ -311,6 +314,8 @@ let pr_list_none f xs = pr_args None (Some "A") "" "" "" "," f xs
 
  (** print a set with cut after separator*)  
 let pr_set f xs = pr_args None (Some "A") "" "{" "}" "," f xs
+
+let pr_coq_list f xs = pr_args None (Some "A") "" "[|" "|]" "," f xs
 
  (** print a set with cut after separator in a VBOX*)  
 let pr_set_vbox f xs = pr_args (Some ("V",1)) (Some "A") "{" "}" "," f xs
@@ -522,7 +527,16 @@ let rec pr_formula_exp (e:P.exp) =
         f_b e1; pr_cut_after op_div ; f_b e2
     | P.BagDiff (e1, e2, l) -> 
         pr_formula_exp e1; pr_cut_after op_diff ; pr_formula_exp e2
-
+    | P.List (elist, l) -> pr_coq_list pr_formula_exp elist 
+    | P.ListAppend (elist, l) -> 
+        let args = bin_op_to_list op_lappend_short exp_assoc_op e in
+        pr_fn_args op_lappend pr_formula_exp args
+    | P.ListCons (e1, e2, l)  ->  f_b e1; pr_cut_after op_cons; f_b e2
+    | P.ListHead (e, l)     -> fmt_string ("head("); pr_formula_exp e; fmt_string  (")")
+    | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
+    | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
+    | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
+    
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -552,6 +566,10 @@ let rec pr_b_formula (e:P.b_formula) =
       | P.BagSub (e1, e2, l) -> pr_op pr_formula_exp e1  "<subset> " e2
       | P.BagMin (v1, v2, l) -> pr_op pr_spec_var v1  " = <min> " v2
       | P.BagMax (v1, v2, l) -> pr_op pr_spec_var v1  " = <max> " v2
+      | P.ListIn (e1, e2, l)			  ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
+      | P.ListNotIn (e1, e2, l)			->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
+      | P.ListAllN (e1, e2, l)			->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
+      | P.ListPerm (e1, e2, l)			-> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
 ;;
   
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -974,11 +992,12 @@ let rec string_of_ident_list l c = match l with
 
 (* pretty printing for primitive types *)
 let string_of_prim_type = function 
-  | Bool -> "boolean"
-  | Float -> "float"
-  | Int -> "int"
-  | Void -> "void"
-  | Bag -> "multiset"
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | Bag           -> "multiset"
+  | List          -> "list"
 ;;
 
 (* pretty printing for types *)
@@ -997,17 +1016,6 @@ let string_of_constraint_relation m = match m with
   | Cpure.Equal -> " =  "
   | Cpure.Contradicting -> "!= "
   
-
-
-
-
-(* let need_parenthesis = function  *)
-(*     | P.Null _ | P.Var _ | P.IConst _ | P.Max _ | P.Min _ -> false  *)
-(*     | _ -> true *)
-(* 	(\* _ -> false *\) *)
-(* ;;  *)
-
-
   
 (* pretty printing for a list of pure formulae *)
 let rec string_of_formula_exp_list l = match l with 
@@ -1015,10 +1023,7 @@ let rec string_of_formula_exp_list l = match l with
   | h::[] -> string_of_formula_exp h
   | h::t -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
 ;;
-  
-
-
-
+ 
 
 (* pretty printing for a cformula *)                                                         (*NOT DONE*)
 
