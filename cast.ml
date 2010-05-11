@@ -273,6 +273,8 @@ let bool_type = P.Prim Bool
 
 let bag_type = P.Prim Bag
 
+let list_type = P.Prim List
+
 let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 
 (* smart constructors *)
@@ -373,6 +375,7 @@ let name_of_type (t : P.typ) = match t with
   | P.Prim Void -> "void"
   | P.Prim Float -> "float"
   | P.Prim Bag -> "bag"
+  | P.Prim List -> "list"
   | P.OType c -> c
 
 let mingle_name (m : ident) (targs : P.typ list) = 
@@ -773,9 +776,6 @@ let rec pos_of_exp (e:exp) :loc = match e with
   
   
 let rec check_proper_return cret_type exc_list f = 
-	let sub_flow_type fl res_t = match res_t with 
-		| Cpure.OType ot -> F.subsume_flow fl (Util.get_hash_of_exc ot)
-		| _ -> false in
 	let overlap_flow_type fl res_t = match res_t with 
 		| Cpure.OType ot -> F.overlapping fl (Util.get_hash_of_exc ot)
 		| _ -> false in
