@@ -66,6 +66,13 @@ let rec smt_of_exp a =
         | CP.BagUnion _
         | CP.BagIntersect _
         | CP.BagDiff _ -> failwith ("[smtsolver.ml]: ERROR in constraints (set should not appear here)")
+        | CP.List _ 
+        | CP.ListCons _
+        | CP.ListHead _
+        | CP.ListTail _
+        | CP.ListLength _
+        | CP.ListAppend _
+        | CP.ListReverse _ -> failwith ("[smtsolver.ml]: ERROR in constraints (lists should not appear here)")
 
 (**
  * smt of b_formula
@@ -101,6 +108,8 @@ let rec smt_of_b_formula b (*{{{*)=
         | CP.BagNotIn (v, e, l) -> " NOT(in(" ^ (smt_of_spec_var v) ^ ", " ^ (smt_of_exp e) ^"))"
         | CP.BagSub (e1, e2, l) -> " subset(" ^ smt_of_exp e1 ^ ", " ^ smt_of_exp e2 ^ ")"
         | CP.BagMax _ | CP.BagMin _ -> failwith ("smt_of_b_formula: BagMax/BagMin should not appear here.\n")(*}}}*)
+        | CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _  
+        | CP.ListPerm _ -> failwith ("smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")(*}}}*)
 
 
 (**

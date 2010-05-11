@@ -12,6 +12,8 @@ let log_file = open_out "allinput.v"
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
+let coq_running = ref false
+let coq_channels = ref (stdin, stdout)
 
 (* pretty printing for primitive types *)
 let coq_of_prim_type = function
@@ -20,11 +22,18 @@ let coq_of_prim_type = function
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
   | Bag		      -> "int set"
+  | List		  -> "list"
 ;;
 
 (* pretty printing for spec_vars *)
 let coq_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+
+let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
+  | CP.SpecVar (t, _, _) -> begin match t with
+    | CP.Prim List -> "list Z"
+    | _ -> "Z"
+	end
 
 (*----------------------------------*)
 (* checking if exp contains bags *)
@@ -53,29 +62,66 @@ and is_bag_b_formula b = match b with
 (*----------------------------------*)
 
 (* pretty printing for expressions *)
-let rec coq_of_exp e0 = match e0 with
+and coq_of_exp e0 =
+  match e0 with
   | CP.Null _ -> "0"
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
+  | CP.FConst (f, _) -> failwith ("coq.coq_of_exp: float can never appear here")
   | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
   | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
   | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
-  | _ -> failwith ("No bags in Coq yet")
+  (* lists *)
+  | CP.List (alist, pos) -> 
+    begin match alist with
+    | [] -> "(@nil Z)"
+	  | a::t -> "(" ^ (coq_of_exp a) ^ " :: " ^ (coq_of_exp (CP.List (t, pos))) ^ ")"
+	  end
+  | CP.ListAppend (alist, pos) ->
+    begin match alist with
+    | [] -> "(@nil Z)"
+	  | a::[] -> coq_of_exp a
+	  | a::t -> "(" ^ (coq_of_exp a) ^ " ++ " ^ (coq_of_exp (CP.ListAppend (t, pos))) ^ ")"
+	  end
+  | CP.ListCons (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListHead (a, _) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
+  | CP.ListLength (a, _) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
+  | CP.ListTail (a, _) -> " ( tail " ^ (coq_of_exp a) ^ ")"
+  | CP.ListReverse (a, _) -> " ( rev " ^ (coq_of_exp a) ^ ")"
+  (* bags *)
+  | CP.Bag (alist, pos) -> 
+    begin match alist with
+    | [] -> "ZSets.empty"
+	  | a::t -> "( ZSets.add " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.Bag (t, pos))) ^ ")"
+	  end
+  | CP.BagUnion (alist, pos) ->
+    begin match alist with
+    | [] -> "ZSets.empty"
+	  | a::[] -> coq_of_exp a
+	  | a::t -> "( ZSets.union " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagUnion (t, pos))) ^ ")"
+	  end
+  | CP.BagIntersect (alist, pos) ->
+    begin match alist with
+    | [] -> "ZSets.empty"
+	  | a::[] -> coq_of_exp a
+	  | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
+	  end
+  | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
   | []         -> ""
   | h::[]      -> coq_of_exp h
   | h::t       -> (coq_of_exp h) ^ ", " ^ (coq_of_formula_exp_list t)
-
-
+ 
 (* pretty printing for boolean vars *)
-and coq_of_b_formula b = match b with
+and coq_of_b_formula b = 
+  match b with
   | CP.BConst (c, _) -> if c then "True" else "False"
-  | CP.BVar (bv, _) -> "(" ^ (coq_of_spec_var bv) ^ " = 1)"
+  | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
   | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " > " ^ (coq_of_exp a2) ^ ")"
@@ -87,14 +133,24 @@ and coq_of_b_formula b = match b with
 	  let a2str = coq_of_exp a2 in
 	  let a3str = coq_of_exp a3 in
 	      "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a3str ^ " > " ^ a2str ^ ") \\/ ("
-	      ^ a2str ^ " >= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str;
+	      ^ a2str ^ " >= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = coq_of_exp a1 in
 	  let a2str = coq_of_exp a2 in
 	  let a3str = coq_of_exp a3 in
           "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a2str ^ " >= " ^ a3str ^ ") \\/ ("
-	   ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
-  | _ -> failwith ("No bags in Coq yet")
+		  ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
+  (* lists *)
+  | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
+  | CP.ListAllN (a1, a2, _) -> " ( alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
+  | CP.ListPerm (a1, a2, _) -> " ( Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  (* bags *)
+  | CP.BagIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = true)"
+  | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
+  | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
+  | CP.BagMin _
+  | CP.BagMax _ -> failwith ("No bags in Coq yet")
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
@@ -132,43 +188,78 @@ let rec check fd coq_file_name : bool=
 	  false
 ;;
 
-let get_vars_formula p = List.map coq_of_spec_var (CP.fv p)
+let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
-let coq_of_var_list l = String.concat "" (List.map (fun s -> "forall " ^ s ^ ":Z, ") l)
+(* starting Coq in interactive mode *)
+let start_prover () =
+  coq_channels := Unix.open_process "coqtop -require decidez 2> /dev/null";
+  coq_running := true;
+  print_string "Coq started\n"; flush stdout
 
+(* stopping Coq *)
+let stop_prover () =
+  output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
+  ignore (Unix.close_process !coq_channels);
+  coq_running := false;
+  print_string "Coq stopped\n"; flush stdout
+
+(* sending Coq a formula; nr = nr. of retries *)
+let rec send_formula (f : string) (nr : int) : bool =
+  try
+	  output_string (snd !coq_channels) f;
+	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
+	  flush (snd !coq_channels);
+	  
+	  let result = ref false in
+	  let finished = ref false in  
+	  while not !finished do 
+		let line = input_line (fst !coq_channels) in
+		if line = "test" ^ string_of_int !coq_file_number ^ " is defined" then begin
+		  result := true;
+		  finished := true;
+		  if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
+		end else if String.length line > 5 && String.sub line 0 5 = "Error" then begin
+		  result := false;
+		  finished := true;
+		  output_string (snd !coq_channels) ("Abort.\n");
+		  flush (snd !coq_channels);
+		  if !log_all_flag==true then output_string log_file ("[coq.ml]: --> FAIL\n");
+		end;
+	  done;
+	  !result
+  with
+	_ -> ignore (Unix.close_process !coq_channels);
+		coq_running := false;
+		print_string "\nCoq crashed\n"; flush stdout;
+		start_prover ();
+		if nr > 1 then send_formula f (nr - 1) else false
+  
 (* writing the Coq file *)
-let write (pe : CP.formula) : bool =
+let write (ante : CP.formula) (conseq : CP.formula) : bool =
+(*  print_string "*"; flush stdout; *)
+(*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
+  let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
+  let astr = coq_of_formula ante in
+  let cstr = coq_of_formula conseq in
+  
   coq_file_number.contents <- !coq_file_number + 1;
-  let coq_file_name = "test" ^ string_of_int !coq_file_number ^ ".v" in
-  let coq_file = open_out coq_file_name in
-  let vstr = coq_of_var_list (Util.remove_dups (get_vars_formula pe)) in
-  let fstr = coq_of_formula pe in
-  output_string coq_file "Require Import decidez.\n";
-(*  output_string coq_file "Require Import PresTac.\n";*)
-  output_string coq_file "Set Firstorder Depth 5.\n";
-  output_string coq_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ fstr ^ ")%Z.\n");
-  output_string coq_file ("intros; try do 10 hyp; auto with *; try do 10 hyp; auto with *;try do 10 hyp; auto with *; repeat hyp; auto with *.\nQed.\n"); (* || prestac *)
-  flush coq_file;
-  close_out coq_file;
+  if !coq_running == false then start_prover ();
+
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
   if !log_all_flag == true then	begin
-    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " :\n  " ^ vstr ^ "\n  " ^ fstr ^ ".\n");
+    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
 	flush log_file;
   end;
-  match (Sys.command ("coqc -R ../Presburger Presburger " ^ coq_file_name ^ " > res 2> /dev/null")) with (* -byte *)
-  | 0 -> 
-      if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
-      true
-  | _ ->
-      if !log_all_flag==true then output_string log_file ("[coq.ml]: --> FAIL\n");
-      false
 
+  send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
+  
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   if !log_all_flag == true then
 	output_string log_file "\n[coq.ml]: #imply\n";
   max_flag := false;
   choice := 1;
-  write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)
+    write ante conseq
+    (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then

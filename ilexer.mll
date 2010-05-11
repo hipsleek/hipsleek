@@ -15,7 +15,6 @@
 	    Lexing.pos_lnum = pos.Lexing.pos_lnum + 1;
 	    Lexing.pos_bol = pos.Lexing.pos_cnum;
 	}
-
 	
   let print_error lexbuf msg =
 	let pos = lexbuf.Lexing.lex_curr_p in
@@ -24,7 +23,9 @@
 
   let keywords = Hashtbl.create 100
   let _ = List.map (fun (k, t) -> Hashtbl.add keywords k t)
-	[("assert", ASSERT);
+	[("alln", ALLN);
+	 ("app", APPEND);
+	 ("assert", ASSERT);
 	 ("assume", ASSUME);
 	 ("bind", BIND);
 	 ("bool", BOOL);
@@ -49,32 +50,39 @@
 	 ("float", FLOAT);
 	 ("fold", FOLD);
 	 ("forall", FORALL);
+	 ("head", HEAD);
 	 ("if", IF);
 	 ("implies", IMPLIES);
 	 ("import", IMPORT);
 	 ("in", IN);
+	 ("inlist", INLIST);
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+	 ("len", LENGTH);
 	 ("max", MAX);
 	 ("min", MIN);
 	 ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
 	 ("new", NEW);
 	 ("notin", NOTIN);
+	 ("notinlist", NOTINLIST);
 	 ("null", NULL);
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
+   ("perm", PERM);
 	 ("dprint", PRINT);
 	 ("ref", REF);
 	 ("requires", REQUIRES);
 	 ("res", RES "res");
+	 ("rev", REVERSE);
 	 ("return", RETURN);
 	 ("self", SELF "self");
 	 ("split", SPLIT);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
+	 ("tail", TAIL);
 	 ("then", THEN);
 	 ("this", THIS "this");
 	 ("to", TO);
@@ -85,7 +93,7 @@
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
-     ("global", GLOBAL);
+   ("global", GLOBAL);
 	 (*exception related*)
 	 (flow, FLOW flow);
 	 ("try", TRY);
@@ -114,7 +122,9 @@ rule tokenizer file_name = parse
   | '}' { CBRACE }
   | ':' { COLON }
   | "::" { COLONCOLON }
+  | ":::" { COLONCOLONCOLON }
   | ',' { COMMA }
+  | "|]" { CLIST }
   | ')' { CPAREN }
   | ']' { CSQUARE }
   | '$' { DOLLAR }
@@ -135,6 +145,7 @@ rule tokenizer file_name = parse
   | "!=" { NEQ }
   | "!" { NOT }
   | '{' { OBRACE }
+  | "[|" { OLIST }
   | '(' { OPAREN }
   | "+=" { OP_ADD_ASSIGN }
   | "--" { OP_DEC }
@@ -216,7 +227,6 @@ and java file_name = parse
 	  Buffer.add_char java_code c;
 	  java file_name lexbuf 
 	}
-
 
 and comment file_name = parse
   | "*/" { 
