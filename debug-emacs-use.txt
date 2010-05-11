@@ -1,0 +1,90 @@
+
+1. Compile the printer library used by ocamldebug
+--------------------------------------------------
+"make prdebug"
+
+
+2. Set command-line arguments for the debugged program
+(namely HIP)  
+--------------------------------------------------------
+$ "emacs debug.cfg" and edit the line starting with "set arguments"
+
+e.g. set arguments examples/working/hip/append.ss
+set "append.ss" as the input file of hip for the
+debugging session
+
+
+3. Start ocamldebug in emacs
+-------------------------------
+a. cd sleekex
+b. emacs "one of the ml source file" 
+c. M-x camldebug <enter>
+d. the system is asking for the program that is going to be debugged
+type:  hip<enter>
+e. the system is asking whether to run ocamldebug
+type:  ocamldebug<enter>
+
+f. a new buffer called *camldebug-hip* is opened. There is a prompt (ocd).
+Use the arrows to move after the prompt (ocd) in order to be able to
+introduce a command.
+e.g.
+(ocd) help    
+displays all the available commands
+
+g. load debugger initial commands from the script:
+(ocd) source debug.cfg
+
+4. Running the debugger under emacs
+--------------------------------------
+the list of all commands can be found at:
+http://caml.inria.fr/pub/docs/manual-ocaml/manual030.html
+
+
+a. Execute the program forward
+(ocd) run
+
+b. Go to the beginning of the program
+(ocd) goto 0
+
+c. Set a breakpoint
+
+- open the source file in one emacs buffer: C-x C-f "source-file.ml"
+- go to the position where the breakpoint has to be set
+- set the breakpoint: C-x C-a C-b
+
+d. Display the current breakpoints
+- go to buffer *camldebug-hip* and then type the following command:
+(ocd) info breakpoints
+
+e. Run the debugger with the breakpoints
+(ocd) goto 0
+(ocd) run
+
+- the debugger stops at the first breakpoint
+- in order to print the values of the identifiers at that
+breakpoint, go to the source code buffer where the breakpoint
+has been set
+- move on the identifier and type the following:
+C-x C-a C-p
+
+
+
+5. Exit from debugging session
+------------------------------
+
+(ocd) quit
+The program is running. Quit anyway ? (y or n) y
+
+
+
+
+
+
+
+
+
+
+
+
+
+
