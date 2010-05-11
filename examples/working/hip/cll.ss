@@ -73,19 +73,19 @@ void insert(node x, int v)
 */
 
 /* functions to count the number of nodes in a circular list */
-int count_rest(node rest, node head)
+int count_rest(node rest, node h)
 
-	requires rest::cll<p, n> & head = p 
+	requires rest::cll<p, n> & h = p 
 	ensures rest::cll<p, n> & res = n; 
 
 {
 	int n;
 	
-	if (rest == head)
+	if (rest == h)
 		return 0; 
 	else
 	{
-		n = count_rest(rest.next, head);
+		n = count_rest(rest.next, h);
 		n = n + 1;
 
 		return n;
