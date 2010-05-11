@@ -354,15 +354,7 @@ let filtering_flag = ref true
 
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
-  if !Redlog.integer_relax_mode then
-    (*
-    print_endline "** Existential quantifiers elimination:";
-    print_endline (Cprinter.string_of_pure_formula f);
-    print_endline (Cprinter.string_of_pure_formula (CP.elim_exists_with_ineq f));
-    *)
-    CP.elim_exists_with_ineq ef
-  else
-    ef
+  ef
 
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
   if !filtering_flag then
