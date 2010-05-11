@@ -25,7 +25,8 @@ let mona_of_prim_type = function
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		  -> "int set"
+  | Bag		      -> "int set"
+  | List          -> "list"	(* lists are not supported *)
 
 
 (*------------------------------------------*)
@@ -236,6 +237,7 @@ let rec appears_in_formula v = function
     | CP.BagMin (l, r, _)
     | CP.BagMax (l, r, _) -> l = v || r = v
     | CP.BConst _ -> false
+    | _ -> false
 
 and is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
   match (hd elem_list) with
@@ -442,13 +444,20 @@ and mona_of_exp e0 f = match e0 with
   | CP.BagIntersect (e::[], _) -> (mona_of_exp e f)
   | CP.BagIntersect (e::rest, l)->(mona_of_exp e f) ^ " inter " ^ (mona_of_exp (CP.BagIntersect (rest, l)) f)
   | CP.BagDiff (e1, e2, _)     -> (mona_of_exp e1 f) ^ "\\" ^ (mona_of_exp e2 f)
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
   | _ -> failwith ("mona.mona_of_exp: mona doesn't support subtraction/...")
 
 and mona_of_exp_secondorder e0 f = 	match e0 with
-	| CP.Null _ -> ([], "pconst(0)", "")
-	| CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
-	| CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
-	| CP.Add (a1, a2, pos) ->  
+  | CP.Null _ -> ([], "pconst(0)", "")
+  | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
+  | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
+  | CP.Add (a1, a2, pos) ->  
       let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 (*      print_endline ("\nCCC: " ^ tmp); *)
       let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
@@ -471,7 +480,15 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
 	| CP.Subtract (e1, e2, p) -> 	
 		let _ = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in
 		failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
 	| _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/...")
+
 
 (* pretty printing for a list of expressions *)
 and mona_of_formula_exp_list l f = match l with
@@ -606,6 +623,10 @@ and mona_of_b_formula b f vs =
   | CP.BagSub (e1, e2, l) -> "(" ^ (mona_of_exp e1 f) ^ " sub " ^ (mona_of_exp e2 f) ^ ")"
   | CP.BagMin (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => " ^ (mona_of_spec_var v1) ^ " <= x0)"
   | CP.BagMax (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => x0 <= " ^ (mona_of_spec_var v1) ^ " )"
+  | CP.ListIn _
+  | CP.ListNotIn _
+  | CP.ListAllN _
+  | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
   in
   ret
 
@@ -691,6 +712,10 @@ and print_b_formula b f = match b with
   | CP.BagSub (e1, e2, l) -> "(" ^ (mona_of_exp e1 f) ^ " sub " ^ (mona_of_exp e2 f) ^ ")"
   | CP.BagMin (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => " ^ (mona_of_spec_var v1) ^ " <= x0)"
   | CP.BagMax (v1, v2, l) -> (mona_of_spec_var v1) ^ " in " ^ (mona_of_spec_var v2) ^" & (all1 x0: x0 in " ^ (mona_of_spec_var v2) ^ " => x0 <= " ^ (mona_of_spec_var v1) ^ " )"
+  | CP.ListIn _
+  | CP.ListNotIn _
+  | CP.ListAllN _
+  | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
 
 
 
