@@ -141,7 +141,10 @@ let process_cmd_line () = Arg.parse [
   ("--priority",Arg.String Tpdispatcher.Netprover.set_prio_list, "<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
   ("--decrprio",Arg.Set Tpdispatcher.decr_priority , "use a decreasing priority scheme");
   ("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");
-  ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination")
+  ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
+  ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
+  ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+  ("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog")
   
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
