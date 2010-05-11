@@ -6,10 +6,14 @@
 open Globals
 module CP = Cpure
 
+exception Timeout
+
+let manual_mode = ref false
 let is_log_all = ref false
 let is_presburger = ref false
 let is_ee = ref false
 let integer_relax_mode = ref false
+let timeout = ref 15 (* default timeout is 15 seconds *)
 let is_hybrid = ref true
 let is_reduce_running = ref false
 let log_file = open_out ("allinput.rl")
@@ -18,6 +22,9 @@ let channels = ref (stdin, stdout)
 (**********************
  * auxiliari function *
  **********************)
+ 
+let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
+
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
 
@@ -37,7 +44,7 @@ let rec remove_spaces s =
     else (String.make 1 s.[0]) ^ rest
   else s
 
-(* start Reduce system in a separated process *)
+(* start Reduce system in a separated process and load redlog package *)
 let start_red () =
   if not !is_reduce_running then begin
     print_string "Starting Reduce/Redlog...\n";
@@ -45,6 +52,7 @@ let start_red () =
     channels := Unix.open_process "redcsl -w 2>/dev/null";
     is_reduce_running := true;
     send_cmd "load_package redlog;";
+    (* integer or real mode? *)
     if !is_presburger then
       send_cmd "rlset pasf;"
     else
@@ -66,10 +74,16 @@ let stop_red () =
     ignore (Unix.close_process !channels);
     is_reduce_running := false;
   end
+  
+let restart_red reason =
+  print_string reason;
+  print_endline " Restarting REDUCE/REDLOG...";
+  stop_red();
+  start_red()
 
 (* send formula to reduce/redlog and receive result *)
 let check_formula f =
-  try
+(*  try*)
     output_string (snd !channels) f;
     flush (snd !channels);
     let result = ref false in
@@ -89,12 +103,13 @@ let check_formula f =
       end
     done;
     !result
-  with _ -> 
-    ignore (Unix.close_process !channels);
-    is_reduce_running := false;
-    print_endline "Reduce crashed or something really bad happenned! Restarting...";
-    start_red ();
-    false
+(* Exceptions now are handled directly in is_sat and imply functions *)
+(*  with _ ->*)
+(*    ignore (Unix.close_process !channels);*)
+(*    is_reduce_running := false;*)
+(*    print_endline "Reduce crashed or something really bad happenned! Restarting...";*)
+(*    start_red ();*)
+(*    false*)
 
 let send_and_receive f =
   if !is_reduce_running then
@@ -155,14 +170,18 @@ let rec is_linear_formula f0 =
 
 let rec has_existential_quantifier f0 negation_bounded =
   match f0 with 
-  | CP.Exists (_, f, _,_) -> 
+  | CP.Exists (_, f, _, _) -> 
       if negation_bounded then 
         has_existential_quantifier f negation_bounded 
       else 
         true
-  | CP.Forall (_, f, _,_) -> has_existential_quantifier f negation_bounded
-  | CP.Not (f, _,_) -> has_existential_quantifier f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) -> 
+  | CP.Forall (_, f, _, _) ->
+      if negation_bounded then
+        true
+      else
+        has_existential_quantifier f negation_bounded
+  | CP.Not (f, _,  _) -> has_existential_quantifier f (not negation_bounded)
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (has_existential_quantifier f1 negation_bounded) ||
       (has_existential_quantifier f2 negation_bounded)
   | CP.BForm _ -> false
@@ -544,9 +563,9 @@ and elim_exists_max f0 =
   | CP.BForm _ -> f0
   
 let elim_exists f0 =
-  let f1 = elim_exists_with_ineq f0 in
-  let f2 = elim_exists_min f1 in
-  let f3 = elim_exists_max f2 in
+  let f1 = elim_exists_min f0 in
+  let f2 = elim_exists_max f1 in
+  let f3 = elim_exists_with_ineq f2 in 
   f3
 
 (**********************
@@ -561,45 +580,159 @@ let is_sat (f: CP.formula) (sat_no: string) : bool =
   let vars_str = rl_of_var_list (Util.remove_dups vars) in
   let rl_input = "rlqe ex({" ^ vars_str ^ "}, " ^ frl ^ ");" in
   log_all ("[reduce/redlog] " ^ rl_input);
-  (* let sat = run_reduce rl_input in *)
-  let sat = check_formula (rl_input ^ "\n") in
+  (* send the formula to redlog with timeout *)
+  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+  ignore (Unix.alarm !timeout);
+  let sat = 
+    try
+      let res = check_formula (rl_input ^ "\n") in
+      res
+    with
+    | Timeout ->
+        log_all ("TIMEOUT");
+        restart_red ("Timeout when checking #is_sat " ^ sat_no ^ "!");
+        true
+    | exc -> stop_red (); raise exc 
+  in
+  reset_sigalrm ();
   log_all (if sat then "FAIL" else "SUCCESS");
   sat
+  
+type redlog_context =
+  | PASF
+  | OFSF
+  
+let set_context context = match context with
+  | OFSF -> send_cmd "rlset ofsf;"
+  | PASF -> send_cmd "rlset pasf;"
+  
+let imply_helper ante conseq context imp_no =
+  let rl_of_ante = rl_of_formula ante in
+  let rl_of_conseq = rl_of_formula conseq in
+  let frl = rl_of_ante ^ " impl " ^ rl_of_conseq in
+  let vars_ante = get_vars_formula ante in
+  let vars_conseq = get_vars_formula conseq in
+  let vars = List.append vars_ante vars_conseq in
+  let vars_str = rl_of_var_list (Util.remove_dups vars) in
+  let rl_input = "rlqe all({" ^ vars_str ^ "}, " ^ frl ^ ");" in
+  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+  ignore (Unix.alarm !timeout);
+  let _ = match context with
+    | OFSF -> log_all ("[OFSF]")
+    | PASF -> log_all ("[PASF]")
+  in
+  log_all ("[reduce/redlog] " ^ rl_input);
+  set_context context;
+  let sat = 
+    try
+      check_formula (rl_input ^ "\n")
+    with
+    | Timeout ->
+        log_all ("TIMEOUT");
+        restart_red ("Timeout when checking #imply " ^ imp_no ^ "!");
+        false
+    | exc -> stop_red (); raise exc
+  in
+  reset_sigalrm ();
+  log_all (if sat then "SUCCESS" else "FAIL");
+  sat
+  
+let presburger_optimized_imply ante conseq imp_no =
+  let new_ante, ante_context =
+    (* We use ofsf context if the formula doesn't has any existential quantifier.
+       If it has existential quantifiers, we try to eliminate those existential quantifiers and use the result formula in ofsf context.
+       We only use PASF context if cannot eliminate all existential quantifiers.
+    *) 
+    if has_existential_quantifier ante true then
+      let ante_ee = elim_exists ante in 
+      if has_existential_quantifier ante_ee true then
+        (ante_ee, PASF)
+      else 
+        (strengthen_formula ante_ee, OFSF)
+    else
+      (strengthen_formula ante, OFSF)
+  in
+  let new_conseq, conseq_context =
+    if has_existential_quantifier conseq false then
+      let conseq_ee = elim_exists conseq in
+      if has_existential_quantifier conseq_ee false then
+        (conseq_ee, PASF)
+      else
+        (weaken_formula conseq_ee, OFSF)
+    else
+      (weaken_formula conseq, OFSF)
+  in
+  let context = match ante_context, conseq_context with
+    | OFSF, OFSF -> OFSF
+    | _, _ -> PASF
+  in
+  imply_helper new_ante new_conseq context imp_no
+(*  match context with*)
+(*    | OFSF -> imply_helper new_ante new_conseq context imp_no*)
+(*    | PASF -> imply_helper ante conseq context imp_no*)
 
 let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   log_all (Util.new_line_str ^ "#imply " ^ imp_no);
   log_all ("ante: " ^ (Cprinter.string_of_pure_formula ante));
   log_all ("conseq: " ^ (Cprinter.string_of_pure_formula conseq));
-  (* TODO: only weakening and strengthening the formula if it's an integer
-   * formula *)
-  let ante = if !is_ee then elim_exists ante else ante in
-  let conseq = if !is_ee then elim_exists conseq else conseq in
-  let _ = if (has_existential_quantifier ante true) || (has_existential_quantifier conseq false) then 
-      print_string (Util.new_line_str ^ "WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")")
+  if not !manual_mode then
+    presburger_optimized_imply ante conseq imp_no
+  else begin  
+    (* existential quantifiers elimination  *)
+    let ante = if !is_ee then elim_exists ante else ante in
+    let conseq = if !is_ee then elim_exists conseq else conseq in
+    let _ =
+      if not !is_presburger then
+        if (has_existential_quantifier ante true) || (has_existential_quantifier conseq false) then 
+          print_string (Util.new_line_str ^ "WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")")
     in
-  let s_ante = if !integer_relax_mode then strengthen_formula ante else ante in
-  let w_conseq = if !integer_relax_mode then weaken_formula conseq else conseq in
-  let rl_of_ante = rl_of_formula s_ante in
-  let rl_of_conseq = rl_of_formula w_conseq in
-  if (rl_of_ante = "false" || rl_of_conseq = "true") then begin
-    log_all ("obvious case: SUCCESS.");
-    true
-  end else begin
-    let frl = 
-      if rl_of_ante = "true" then rl_of_conseq
-      else rl_of_ante ^ " impl " ^ rl_of_conseq 
-    in
-    let vars_ante = get_vars_formula ante in
-    let vars_conseq = get_vars_formula conseq in
-    let vars = List.append vars_ante vars_conseq in
-    let vars_str = rl_of_var_list (Util.remove_dups vars) in
-    let rl_input = "rlqe all({" ^ vars_str ^ "}, " ^ frl ^ ");" in
-    log_all ("[reduce/redlog] " ^ rl_input);
-    (* let sat = run_reduce rl_input in *)
-    let sat = check_formula (rl_input ^ "\n") in
-    log_all (if sat then "SUCCESS" else "FAIL");
-    sat
+    (* integer relaxations: strengthening and weakening of implication *)
+    let s_ante = if !integer_relax_mode then strengthen_formula ante else ante in
+    let w_conseq = if !integer_relax_mode then weaken_formula conseq else conseq in
+    if !is_presburger then
+      imply_helper s_ante w_conseq PASF imp_no
+    else
+      imply_helper s_ante w_conseq OFSF imp_no
   end
+  
+(*    let rl_of_ante = rl_of_formula s_ante in*)
+(*    let rl_of_conseq = rl_of_formula w_conseq in*)
+(*    if (rl_of_ante = "false" || rl_of_conseq = "true") then begin*)
+(*      log_all ("obvious case: SUCCESS.");*)
+(*      true*)
+(*    end else begin*)
+(*      let frl = *)
+(*        if rl_of_ante = "true" then rl_of_conseq*)
+(*        else rl_of_ante ^ " impl " ^ rl_of_conseq *)
+(*      in*)
+(*      let vars_ante = get_vars_formula ante in*)
+(*      let vars_conseq = get_vars_formula conseq in*)
+(*      let vars = List.append vars_ante vars_conseq in*)
+(*      let vars_str = rl_of_var_list (Util.remove_dups vars) in*)
+(*      let rl_input = "rlqe all({" ^ vars_str ^ "}, " ^ frl ^ ");" in*)
+(*      log_all ("[reduce/redlog] " ^ rl_input);*)
+(*      (* send the formula to redlog with timeout *)*)
+(*      let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in*)
+(*      let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in*)
+(*      ignore (Unix.alarm !timeout);    *)
+(*      let sat = *)
+(*        try*)
+(*          let res = check_formula (rl_input ^ "\n") in*)
+(*          res*)
+(*        with*)
+(*        | Timeout ->*)
+(*            log_all ("TIMEOUT");*)
+(*            restart_red ("Timeout when checking #imply " ^ imp_no ^ "!");*)
+(*            false*)
+(*        | exc -> stop_red (); raise exc*)
+(*      in*)
+(*      reset_sigalrm ();*)
+(*      log_all (if sat then "SUCCESS" else "FAIL");*)
+(*      sat*)
+(*    end*)
+(*  end*)
 
 (* just prototype *)
 let simplify (f: CP.formula) : CP.formula =
