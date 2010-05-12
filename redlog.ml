@@ -1,6 +1,6 @@
 (*
  * Interact with reduce/redlog
- * Created on Aug 31, 2009
+ * Created on Aug 31, 2009 
  *)
 
 open Globals
