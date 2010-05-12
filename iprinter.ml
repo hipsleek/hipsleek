@@ -26,6 +26,7 @@ let string_of_prim_type = function
   | Int           -> "int "
   | Void          -> "void "
   | Bag           -> "bag "
+  | List          -> "list "
 ;;
 
 (* pretty printing for types *)
@@ -132,11 +133,17 @@ let rec string_of_formula_exp = function
       "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
+  | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
+  | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
+  | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
+  | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
+  | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
 	| _ -> "bag constraint"
-;;
 
 (* pretty printing for a list of pure formulae *)
-let rec string_of_formula_exp_list l = match l with 
+and string_of_formula_exp_list l = match l with 
   | []                         -> ""
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
@@ -175,7 +182,11 @@ let string_of_b_formula = function
                                    else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
   | P.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
   | P.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
-	| _ -> "bag constraint"
+  | P.ListIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
+  | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
+  | P.ListAllN (e1, e2, l)		-> "alln(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
+  | P.ListPerm (e1, e2, l)		-> "perm(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
+  | _ -> "bag constraint"
 ;;
 
 (* pretty printing for a pure formula *)
@@ -203,8 +214,8 @@ let rec string_of_h_formula = function
 			 F.h_formula_star_h2 = f2;
 			 F.h_formula_star_pos = l} ) -> 
 	  if is_bool_f f1 then 
-		if is_bool_f f2 then (string_of_h_formula f1) ^ "*" ^ (string_of_h_formula f2)
-        else (string_of_h_formula f1) ^ "*(" ^ (string_of_h_formula f2) ^ ")" 
+		if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")" 
 	  else
 		"(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"    
   | F.HeapNode ({F.h_formula_heap_node = x;

@@ -181,9 +181,8 @@ hip1: $(MAIN_FILES_2)
 hipc:
 	make clean; make hip
 
-hip: $(MAIN_FILES) decidez.vo
+hip: decidez.vo $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
-
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)

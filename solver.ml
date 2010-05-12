@@ -2154,7 +2154,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	  (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
 	  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)				
       let new_ante0 =
-	    if !Globals.omega_simpl && not(TP.is_bag_constraint new_ante0) then 
+	    if !Globals.omega_simpl && not(TP.is_bag_constraint new_ante0)&& not(TP.is_list_constraint new_ante0)  then 
 	      let simp_ante = 
 	        (Debug.devel_pprint ("simplify the antecedent with omega") no_pos;	
 	        CP.arith_simplify ((*Omega.simplify*) new_ante0))  (* todo: remove the comment from omega.simplify after solving the problem in omega.ml with the collection of the error output *)
@@ -2168,7 +2168,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	    else new_ante0
       in
       let new_conseq0 = 
-	    if !Globals.omega_simpl && not(TP.is_bag_constraint new_conseq0) then 
+	    if !Globals.omega_simpl && not(TP.is_bag_constraint new_conseq0)&& not(TP.is_list_constraint new_conseq0)  then 
 	      let simp_conseq = 
 	        (Debug.devel_pprint ("simplify the consequent with omega") no_pos;	
 	        (*Omega.simplify*) new_conseq0) 				
@@ -2202,9 +2202,6 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	  (* first try for xpure 0 and see what conjuncts can be discharged *)
       let res1,res2,res3 = if (CP.isConstTrue rhs_p) then (true,[],None) else (imply_conj split_ante0 split_ante1 split_conseq) in	
 	  (* added by cezary  for branches *)
-
-
-
       let res1,res2,re3 = 
         if res1 = false && branch_id = "" then
 	      let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
@@ -2372,7 +2369,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
   let ln2, resth2 = split_linear_node_guided ( Util.remove_dups (h_fv lhs_h @ CP.fv lhs_p)) rhs_h in
   let ln2,resth2 = if (Cformula.is_complex_heap ln2) then (ln2,resth2)
   else split_linear_node rhs_h in
-  let estate_steps = estate.es_prior_steps in 
+  (*let estate_steps = estate.es_prior_steps in *)
   match ln2 with
     | DataNode ({h_formula_data_node = p2;
 	  h_formula_data_name = c2;
@@ -2395,7 +2392,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	    (****************************************************************************************************************************************************************************)
 	    let do_fold_w_ctx fold_ctx var_to_fold = 
 	      let estate = estate_of_context fold_ctx pos2 in
-          let estate_steps = estate.es_prior_steps in
+          (*let estate_steps = estate.es_prior_steps in*)
 	      (*************************** existential_eliminator_helper *************************************************)
 	      let existential_eliminator_helper = 
 	        let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
@@ -3308,7 +3305,22 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
   	        | _ -> f
   	    end
       else f
-  | _ -> f
+  | CP.ListIn (e1, e2, pos)
+  | CP.ListNotIn (e1, e2, pos)
+  | CP.ListAllN (e1, e2, pos)
+  | CP.ListPerm (e1, e2, pos) ->
+		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
+			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+			let simpl_f = TP.simplify (CP.BForm(f,None)) in
+  		begin
+  		match simpl_f with
+  		| CP.BForm(simpl_f1,_) ->
+  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  			simpl_f1
+  		| _ -> f
+  		end
+  	else f
+ 	| _ -> f
 
 (*
   - count how many int constants are contained in one expression

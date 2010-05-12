@@ -48,6 +48,7 @@ let string_of_prim_type = function
   | Int           -> "int "
   | Void          -> "void "
   | Bag           -> "multiset"
+  | List          -> "list"
 
 (* pretty printing for types *)
 let string_of_typ = function 

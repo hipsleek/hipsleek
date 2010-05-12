@@ -249,21 +249,24 @@ and look_for_anonymous_exp_list (args : IP.exp list) :
         (look_for_anonymous_exp_list rest)
   | _ -> []
 
+and anon_var (id, p) = 
+  if ((String.length id) > 5) &&
+	  ((String.compare (String.sub id 0 5) "Anon_") == 0)
+  then [ (id, p) ]
+  else []
+
 and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   match arg with
-  | IP.Var ((id, p), _) ->
-      if
-        ((String.length id) > 5) &&
-          ((String.compare (String.sub id 0 5) "Anon_") == 0)
-      then [ (id, p) ]
-      else []
+  | IP.Var (b1, _) -> anon_var b1
   | IP.Add (e1, e2, _) | IP.Subtract (e1, e2, _) | IP.Max (e1, e2, _) |
       IP.Min (e1, e2, _) | IP.BagDiff (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | IP.Mult (e1, e2, _) | IP.Div (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
-  | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) ->
-      look_for_anonymous_exp_list e1
+  | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) -> look_for_anonymous_exp_list e1
+  | IP.ListHead (e1, _) | IP.ListTail (e1, _) | IP.ListLength (e1, _) | IP.ListReverse (e1, _) -> look_for_anonymous_exp e1
+  | IP.List (e1, _) | IP.ListAppend (e1, _) -> look_for_anonymous_exp_list e1
+  | IP.ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | _ -> []
 
 and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
@@ -3253,6 +3256,8 @@ and default_value (t : CP.typ) pos : C.exp =
           "default_value: void in variable declaration should have been rejected by parser"
     | CP.Prim Bag ->
 	failwith "default_value: bag can only be used for constraints"
+    | CP.Prim List ->
+      failwith "default_value: list can only be used for constraints"
     | CP.OType c -> C.Null pos
 
 and sub_type (t1 : CP.typ) (t2 : CP.typ) =
@@ -3948,7 +3953,7 @@ and
           let base ={
             IF.formula_base_heap = h;
             IF.formula_base_pure = p;
-	    IF.formula_base_flow = fl;
+            IF.formula_base_flow = fl;
             IF.formula_base_branches = br;
             IF.formula_base_pos = pos;
           } in 
@@ -4024,6 +4029,18 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.BagMin ((v1, p1), (v2, p2), pos) ->
 	CP.BagMin (CP.SpecVar (C.int_type, v1, p1),
 		   CP.SpecVar (C.bag_type, v2, p2), pos)
+    | IP.ListIn (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListIn (pe1, pe2, pos)
+    | IP.ListNotIn (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListNotIn (pe1, pe2, pos)
+    | IP.ListAllN (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListAllN (pe1, pe2, pos)
+    | IP.ListPerm (e1, e2, pos) ->
+      let pe1 = trans_pure_exp e1 stab in
+      let pe2 = trans_pure_exp e2 stab in CP.ListPerm (pe1, pe2, pos)
 
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
@@ -4048,6 +4065,20 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
 	CP.BagIntersect (trans_pure_exp_list elist stab, pos)
     | IP.BagDiff (e1, e2, pos) ->
 	CP.BagDiff (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
+    | IP.List (elist, pos) -> CP.List (trans_pure_exp_list elist stab, pos)
+    | IP.ListAppend (elist, pos) ->
+      CP.ListAppend (trans_pure_exp_list elist stab, pos)
+    | IP.ListCons (e1, e2, pos) ->
+      CP.ListCons (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
+    | IP.ListHead (e, pos) ->
+      CP.ListHead (trans_pure_exp e stab, pos)
+    | IP.ListTail (e, pos) ->
+      CP.ListTail (trans_pure_exp e stab, pos)
+    | IP.ListLength (e, pos) ->
+      CP.ListLength (trans_pure_exp e stab, pos)
+    | IP.ListReverse (e, pos) ->
+      CP.ListReverse (trans_pure_exp e stab, pos)
+ 
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -4177,7 +4208,19 @@ and collect_type_info_b_formula b0 stab =
     | IP.BagMin ((v1, p1), (v2, p2), pos) ->
 	(collect_type_info_var v1 stab (Known C.int_type) pos;
 	 collect_type_info_var v2 stab (Known C.bag_type) pos)
-    | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
+  | IP.ListIn (e1, e2, pos) ->
+      (collect_type_info_arith e1 stab Unknown;
+       collect_type_info_list e2 stab)
+  | IP.ListNotIn (e1, e2, pos) ->
+      (collect_type_info_arith e1 stab Unknown ;
+       collect_type_info_list e2 stab)
+  | IP.ListAllN (e1, e2, pos) ->
+      (collect_type_info_arith e1 stab Unknown;
+       collect_type_info_list e2 stab)
+  | IP.ListPerm (e1, e2, pos) ->
+      (collect_type_info_list e1 stab;
+       collect_type_info_list e2 stab)
+  | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
 	let _ = 
 	  if (IP.is_var a1) && (IP.is_var a2)
 	  then
@@ -4203,51 +4246,56 @@ and collect_type_info_b_formula b0 stab =
 			}))
 	  else
             if (IP.is_var a1) || (IP.is_var a2)
-            then
-              (let (a1', a2') = if IP.is_var a1 then (a1, a2) else (a2, a1) in
-               let va1' = IP.name_of_var a1' in
-               let k1 = get_var_kind va1' stab in
-               let (k2, _) =
-		 if IP.is_null a2'
-		 then
-		   ((Known (CP.OType "")),
-                    (collect_type_info_pointer a1' (Known (CP.OType "")) stab))
-		 else
-		   if IP.is_bag a2' then 
-                     ((Known C.bag_type), (collect_type_info_bag a2' stab))
-		   else
-                     begin
+        then
+          (let (a1', a2') = if IP.is_var a1 then (a1, a2) else (a2, a1) in
+           let va1' = IP.name_of_var a1' in
+           let k1 = get_var_kind va1' stab in
+           let (k2, _) =
+             if IP.is_null a2'
+             then
+               ((Known (CP.OType "")),
+                (collect_type_info_pointer a1' (Known (CP.OType "")) stab))
+             else
+               if IP.is_bag a2'
+               then ((Known C.bag_type), (collect_type_info_bag a2' stab))
+			   else if IP.is_list a2'
+               then ((Known C.list_type), (collect_type_info_list a2' stab))
+               else   begin
                        let typ = guess_type_of_exp_arith a2' stab in
                        let a2_typ = if typ = Unknown then k1 else typ in
 			 (a2_typ, collect_type_info_arith a2' stab a2_typ)
                      end
                in
-               let r = unify_var_kind k1 k2 in
-		 match r with
-		   | Some k -> ignore (set_var_kind va1' k stab)
-		   | None ->
-                       (print_stab stab;
-			Err.report_error
-			  {
-			    Err.error_loc = pos;
-			    Err.error_text =
-			      "type-mismatch in equation (2): " ^
-				(Iprinter.string_of_b_formula b0);
-			  }))
-            else
-              if (IP.is_null a1) && (IP.is_null a2)
-              then ()
+           let r = unify_var_kind k1 k2
+           in
+             match r with
+             | Some k -> ignore (set_var_kind va1' k stab)
+             | None ->
+                 Err.report_error
+                   {
+                     Err.error_loc = pos;
+                     Err.error_text =
+                       "type-mismatch in equation (2): " ^
+                         (Iprinter.string_of_b_formula b0);
+                   })
+        else
+          if (IP.is_null a1) && (IP.is_null a2)
+          then ()
+          else
+            if (not (IP.is_null a1)) && (not (IP.is_null a2))
+            then
+              if (IP.is_bag a1) && (IP.is_bag a2)
+              then
+                            (collect_type_info_bag a1 stab;
+                             collect_type_info_bag a2 stab)
+              else if (IP.is_list a1) && (IP.is_list a2)
+              then
+                            (collect_type_info_list a1 stab;
+                             collect_type_info_list a2 stab)
               else
-		if (not (IP.is_null a1)) && (not (IP.is_null a2))
-		then
-		  if (IP.is_bag a1) && (IP.is_bag a2)
-		  then
-                    (collect_type_info_bag a1 stab;
-                     collect_type_info_bag a2 stab)
-		  else
-                    (collect_type_info_arith a1 stab Unknown;
-                     collect_type_info_arith a2 stab Unknown)
-		else
+                            (collect_type_info_arith a1 stab Unknown;
+                             collect_type_info_arith a2 stab Unknown)
+            else
 		  Err.report_error
                     {
                       Err.error_loc = pos;
@@ -4309,8 +4357,13 @@ and collect_type_info_arith a0 stab expected_type =
 	(collect_type_info_arith a1 stab expected_type; collect_type_info_arith a2 stab expected_type)
     | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
 	(collect_type_info_arith a1 stab expected_type; collect_type_info_arith a2 stab expected_type)
+    | IP.ListHead (a, pos)
+    | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
+    
     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
-	failwith "collect_type_info_arith: encountered bag constraint"
+      failwith "collect_type_info_arith: encountered bag constraint"
+    | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+      failwith "collect_type_info_arith: encountered list constraint"
 
 and collect_type_info_bag_content a0 stab =
   match a0 with
@@ -4330,6 +4383,9 @@ and collect_type_info_bag_content a0 stab =
 	(collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
 	failwith "collect_type_info_arith: encountered bag constraint"
+  | IP.ListHead (a, pos) | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
+  | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+      failwith "collect_type_info_bag_content: encountered list constraint"
 
 and collect_type_info_bag (e0 : IP.exp) stab =
   match e0 with
@@ -4353,6 +4409,33 @@ and collect_type_info_bag (e0 : IP.exp) stab =
     | IP.Mult _ | IP.Div _ | IP.Subtract _ | IP.Add _ 
     | IP.IConst _ | IP.FConst _ | IP.Null _ ->
 	failwith "collect_type_info_bag: encountered arithmetic constraint"
+  | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+      failwith "collect_type_info_bag: encountered list constraint"
+
+and collect_type_info_list (e0 : IP.exp) stab =
+  match e0 with
+  | IP.Var ((sv, sp), pos) ->
+      collect_type_info_var sv stab (Known C.list_type) pos
+  | IP.List ((a :: rest), pos) ->
+      (collect_type_info_bag_content a stab;
+       collect_type_info_list (IP.List (rest, pos)) stab)
+  | IP.List ([], pos) -> ()
+  | IP.ListAppend ((a :: rest), pos) ->
+      (collect_type_info_list a stab;
+       collect_type_info_list (IP.ListAppend (rest, pos)) stab)
+  | IP.ListAppend ([], pos) -> ()
+  | IP.ListCons (a1, a2, pos) -> 
+      (collect_type_info_arith a1 stab Unknown;
+	  collect_type_info_list a2 stab)
+  | IP.ListTail (a, pos) ->
+      (collect_type_info_list a stab)
+  | IP.ListReverse (a, pos) ->
+      (collect_type_info_list a stab)
+  | IP.Min _ | IP.Max _ | IP.Mult _ | IP.FConst _ | IP.Div _ | IP.Subtract _ | IP.Add _ | IP.IConst _
+      | IP.Null _ | IP.ListHead _ | IP.ListLength _ ->
+      failwith "collect_type_info_list: encountered arithmetic constraint"
+  | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
+      failwith "collect_type_info_list: encountered bag constraint"
 
 and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
   match e0 with
