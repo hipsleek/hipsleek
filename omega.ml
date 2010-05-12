@@ -189,6 +189,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       let line = input_line chn in
       let n = String.length line in
       if n > 0 then begin
+        (if !log_all_flag then 
+          output_string log_all ("[omega.ml]: >> "^line^"\n") );
         if line.[0] != '#' then begin
           quitloop := true;
           if n > 7 then
@@ -261,6 +263,8 @@ let is_valid (pe : formula) timeout: bool =
                 while not !quitloop do
                     let line = input_line chn in
                     let n = String.length line in
+                       (if !log_all_flag then 
+                          output_string log_all ("[omega.ml]: >> "^line^"\n") );
                         if n > 0 then begin
                             if line.[0] != '#' then begin
                                 quitloop := true;
