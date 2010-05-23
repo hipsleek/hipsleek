@@ -21,9 +21,9 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip sleek prover prdebug hipgui decidez.vo
+all: hip sleek prover prdebug decidez.vo
 
-rest: sleek prover prdebug hipgui
+rest: sleek prover prdebug
 
 opt: hip.opt sleek.opt prover.opt
 
@@ -286,7 +286,7 @@ decidez.vo:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe
+	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
