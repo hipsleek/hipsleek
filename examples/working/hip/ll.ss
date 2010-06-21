@@ -170,7 +170,7 @@ node create_list(int a)
 }
 
 /* function to reverse a singly linked list */
-void rev(ref node xs, ref node ys)
+void reverse(ref node xs, ref node ys)
 	requires xs::ll<n> * ys::ll<m> 
 	ensures ys'::ll<n+m> & xs' = null;
 {
@@ -180,7 +180,7 @@ void rev(ref node xs, ref node ys)
 		xs.next = ys;
 		ys = xs;
 		xs = tmp;
-		rev(xs, ys);
+		reverse(xs, ys);
 	}
 }
 /*

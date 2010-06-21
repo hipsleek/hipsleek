@@ -41,6 +41,7 @@ type command =
   | EntailCheck of (meta_formula * meta_formula)
   | CaptureResidue of ident
   | PrintCmd of print_cmd
+  | Time of (bool*string*loc)
   | EmptyCmd 
 
 and print_cmd =

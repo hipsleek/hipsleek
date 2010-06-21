@@ -101,6 +101,7 @@ let parse_file (parse) (source_file : string) =
 								 | LemmaDef ldef -> process_lemma ldef
 								 | PrintCmd pcmd -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
+                 | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
 								 | EmptyCmd -> ())) cmd) in ()
 	with
 	  | End_of_file ->
@@ -139,6 +140,7 @@ let main () =
 			       | LemmaDef ldef -> process_lemma ldef
 			       | PrintCmd pcmd -> process_print_command pcmd
 			       | LetDef (lvar, lbody) -> put_var lvar lbody
+             | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
 			       | EmptyCmd -> ());
 			    Buffer.clear buffer;
 			    if !inter then

@@ -719,12 +719,12 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
       			 | None ->
       			     CF.repl_label_list_partial_context lab (check_exp prog proc [(CF.mk_partial_context nctx lab)] cc.exp_catch_body post_start_label)
 	  in
-	  let rec apply_catch_partial_context ((fl,sl) : CF.partial_context):CF.list_partial_context =
+	 (* let rec apply_catch_partial_context ((fl,sl) : CF.partial_context):CF.list_partial_context =
 	    let res_sl = List.map (fun (l,c) -> apply_catch_context c l) sl  in
 	    let res = CF.fold_partial_context_left_or res_sl in
               if (U.empty fl) then res
               else CF.list_partial_context_or [(fl,[])] res
-	  in
+	  in*)
 	    CF.fold_partial_context_left_or (List.map apply_catch_partial_context2 ctx1)
 
       | _ -> 
@@ -763,6 +763,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	    ctx
 	  end
 	end;
+      | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s;
+          ctx
       | Assert ({exp_assert_asserted_formula = c1_o;
 		 exp_assert_assumed_formula = c2;
 		 exp_assert_path_id = (pidi,s);
@@ -778,7 +780,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		    (* print_string ("\n\nLABEL PRECOND: " ^ s1 ^ "\nLabel ASSERT: " ^ s ^"\n\n"); *)
 		    if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ((* print_string "inside label missmatch \n"; *)ctx)
 		    else
-		      let new_ctx = match c1_o with
+		      (*let new_ctx = match c1_o with
 			| None -> ctx
 			| Some c1 ->
 			    (*
@@ -786,7 +788,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 			      let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
 			    *)
 			    let to_print = "Proving assert in method " ^ proc.proc_name ^ " for spec:\n" ^ !log_spec ^ "\n" in	
-			      Debug.devel_pprint to_print pos;
+			      ebug.devel_pprint to_print pos;
                               (* print_string ("\n***CRT STATE : " ^ (Cprinter.string_of_list_partial_context ctx) ^ "\n"); *)
 			      (* print_string ("\n***ASSERT COND : " ^ (Cprinter.string_of_struc_formula c1) ^ "\n\n\n\n"); *)
 			      let rs,prf = heap_entail_struc_list_partial_context_init prog false false false ctx c1 pos None in
@@ -798,7 +800,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 				  (Debug.print_info "assert" (s ^" : ok\n") pos;
 				   Debug.pprint ("Residual:\n" ^ (Cprinter.string_of_list_partial_context rs)) pos;
 				   rs)
-				else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in ctx
+				else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in*) ctx
 	end
       |  _ -> (helper ctx)
 	   
@@ -992,6 +994,7 @@ let rec size (expr : exp) =
     | Cond ex -> 1 + (size ex.exp_cond_then_arm) + (size ex.exp_cond_else_arm)
     | Cast ex -> 1 + (size ex.exp_cast_body)
     | Debug ex -> 1
+    | Time _ -> 1
     | Dprint ex -> 1
     | FConst ex -> 1
     | ICall ex -> 1 + (List.length ex.exp_icall_arguments)

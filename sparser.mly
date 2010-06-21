@@ -102,6 +102,7 @@
 %token CSQUARE
 %token DATA
 %token DDEBUG
+%token DTIME
 %token DIFF
 %token DISTR
 %token DIV
@@ -260,6 +261,7 @@ non_empty_command
   | print_cmd {
 	  PrintCmd $1
 	}
+  | time_cmd {$1}
 ;
 
 
@@ -832,6 +834,10 @@ print_cmd
 	  PVar $3
 	}
 ;
+
+time_cmd 
+  : DTIME ON IDENTIFIER {Time(true, $3, get_pos 1)}
+  | DTIME OFF IDENTIFIER {Time(false, $3, get_pos 1)}
 
 let_decl
   : LET DOLLAR IDENTIFIER EQ meta_constr DOT{

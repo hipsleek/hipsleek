@@ -272,6 +272,11 @@ and is_bag_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
   | CP.BagSub _
   | CP.BagMin _
   | CP.BagMax _ -> true
+ 	  (* list formulas *)
+  | CP.ListIn _
+  | CP.ListNotIn _
+  | CP.ListAllN _
+  | CP.ListPerm _ -> false
 
 and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.Null _
@@ -290,6 +295,75 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.BagUnion _
   | CP.BagIntersect _
   | CP.BagDiff _ -> true
+	  (* list expressions *)
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> false
+
+(* Method checking whether a formula contains list constraints *)
+let rec is_list_constraint(f : CP.formula) : bool = match f with
+  | CP.BForm(bf,_) -> (is_list_constraint_b_formula bf)
+  | CP.And(f1, f2, _) -> (is_list_constraint f1) || (is_list_constraint f2)
+  | CP.Or(f1, f2, _,_) -> (is_list_constraint f1) || (is_list_constraint f2)
+  | CP.Not(f1, _,_) -> (is_list_constraint f1)
+  | CP.Forall(_, f1, _ ,_) -> (is_list_constraint f1)
+  | CP.Exists(_, f1, _, _) -> (is_list_constraint f1)
+
+and is_list_constraint_b_formula (bf : CP.b_formula) : bool =  match bf with
+  | CP.BConst _
+  | CP.BVar _
+	  -> false
+  | CP.Lt (e1, e2, _)
+  | CP.Lte (e1, e2, _)
+  | CP.Gt (e1, e2, _)
+  | CP.Gte (e1, e2, _)
+  | CP.EqMax (e1, e2, _, _) (* first is max of second and third *)
+  | CP.EqMin (e1, e2, _, _) (* first is min of second and third *)
+	  -> false
+  | CP.Eq (e1, e2, _) (* these two could be arithmetic or pointer *)
+  | CP.Neq (e1, e2, _)
+	-> (is_list_constraint_exp e1) || (is_list_constraint_exp e2)
+	  (* bag formulas *)
+  | CP.BagIn _
+  | CP.BagNotIn _
+  | CP.BagSub _
+  | CP.BagMin _
+  | CP.BagMax _ -> false
+ 	  (* list formulas *)
+  | CP.ListIn _
+  | CP.ListNotIn _
+  | CP.ListAllN _
+  | CP.ListPerm _ -> true
+
+and is_list_constraint_exp (e :CP.exp) : bool = match e with
+  | CP.Null _
+  | CP.Var _
+  | CP.FConst _
+  | CP.IConst _ -> false
+  | CP.Add (e1, e2, _)
+  | CP.Subtract (e1, e2, _) (* ->  (is_list_constraint_exp e1) || (is_list_constraint_exp e2) *)
+	  -> false
+  | CP.Mult _
+  | CP.Div _ 
+  | CP.Max _
+  | CP.Min _ -> false
+	  (* bag expressions *)
+  | CP.Bag _
+  | CP.BagUnion _
+  | CP.BagIntersect _
+  | CP.BagDiff _ -> false
+	  (* list expressions *)
+  | CP.List _
+  | CP.ListCons _
+  | CP.ListHead _
+  | CP.ListTail _
+  | CP.ListLength _
+  | CP.ListAppend _
+  | CP.ListReverse _ -> true
 
 (*
 let rec is_bag_constraint(f : CP.formula) : bool =
@@ -354,15 +428,7 @@ let filtering_flag = ref true
 
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
-  if !Redlog.integer_relax_mode then
-    (*
-    print_endline "** Existential quantifiers elimination:";
-    print_endline (Cprinter.string_of_pure_formula f);
-    print_endline (Cprinter.string_of_pure_formula (CP.elim_exists_with_ineq f));
-    *)
-    CP.elim_exists_with_ineq ef
-  else
-    ef
+  ef
 
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
   if !filtering_flag then
@@ -793,3 +859,14 @@ let prepare () = match !tp with
 let finalize () = match !tp with
   | Redlog | RM -> Redlog.stop_red ()
   | _ -> ()
+
+let start_prover () =
+  match !tp with
+  | Coq -> Coq.start_prover ()
+  | _ -> ()
+  
+let stop_prover () =
+  match !tp with
+  | Coq -> Coq.stop_prover ()
+  | _ -> ()
+
