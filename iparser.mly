@@ -113,6 +113,7 @@
 %token CSQUARE
 %token DATA
 %token DDEBUG
+%token DTIME
 %token DIFF
 %token DISTR
 %token DIV
@@ -1400,6 +1401,7 @@ valid_declaration_statement
   | assert_statement { $1 }
   | dprint_statement { $1 }
   | debug_statement { $1 }
+  | time_statement {$1}
   | bind_statement { $1 }
   | unfold_statement { $1 }
 /*
@@ -1473,6 +1475,11 @@ debug_statement
 	  Debug { exp_debug_flag = false;
 			  exp_debug_pos = get_pos 2 }
 	}
+;
+
+time_statement 
+  : DTIME ON IDENTIFIER{Time (true,$3,get_pos 1)}
+  | DTIME OFF IDENTIFIER{Time (false,$3,get_pos 1)}
 ;
 
 dprint_statement

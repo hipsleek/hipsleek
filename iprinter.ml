@@ -432,6 +432,7 @@ let rec string_of_exp = function
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"
+  | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Raise ({exp_raise_type = tb;
 			exp_raise_path_id = pid;
 			exp_raise_val = b;}) -> string_of_control_path_id_opt pid 

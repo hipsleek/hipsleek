@@ -1195,6 +1195,7 @@ let rec string_of_exp = function
 	  exp_seq_pos = l}) -> 
       (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
   | This _ -> "this"
+  | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Var ({exp_var_type = _;
 	  exp_var_name = id;
 	  exp_var_pos = l}) -> id 

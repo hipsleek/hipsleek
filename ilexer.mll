@@ -85,6 +85,7 @@
 	 ("tail", TAIL);
 	 ("then", THEN);
 	 ("this", THIS "this");
+   ("time", DTIME);
 	 ("to", TO);
 	 ("true", TRUE);
 	 ("unfold", UNFOLD);

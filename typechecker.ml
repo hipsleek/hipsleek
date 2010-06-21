@@ -763,6 +763,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	    ctx
 	  end
 	end;
+      | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s;
+          ctx
       | Assert ({exp_assert_asserted_formula = c1_o;
 		 exp_assert_assumed_formula = c2;
 		 exp_assert_path_id = (pidi,s);
@@ -992,6 +994,7 @@ let rec size (expr : exp) =
     | Cond ex -> 1 + (size ex.exp_cond_then_arm) + (size ex.exp_cond_else_arm)
     | Cast ex -> 1 + (size ex.exp_cast_body)
     | Debug ex -> 1
+    | Time _ -> 1
     | Dprint ex -> 1
     | FConst ex -> 1
     | ICall ex -> 1 + (List.length ex.exp_icall_arguments)

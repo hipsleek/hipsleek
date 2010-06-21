@@ -327,6 +327,7 @@ and exp =
   | Return of exp_return
   | Seq of exp_seq
   | This of exp_this
+  | Time of (bool*string*loc)
   | Try of exp_try
   | Unary of exp_unary
   | Unfold of exp_unfold
@@ -406,6 +407,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | While e -> e.exp_while_pos
   | Unfold e -> e.exp_unfold_pos
   | Try e -> e.exp_try_pos
+  | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
 	  
 (*
@@ -687,6 +689,7 @@ and contains_field (e0 : exp) : bool = match e0 with
   | Try e -> (contains_field e.exp_try_block) ||
 			 (List.exists (fun c-> contains_field c.exp_catch_body  ) e.exp_catch_clauses)||
 			 (List.exists (fun c-> contains_field c.exp_finally_body) e.exp_finally_clause)
+  | Time _ -> false
   
 (* smart constructors *)
 
@@ -914,6 +917,7 @@ let rec label_exp e = match e with
 		exp_seq_exp1 = label_exp e.exp_seq_exp1;
 		exp_seq_exp2 = label_exp e.exp_seq_exp2;}
   | This _ -> e
+  | Time _ -> e
   | Try e -> 
 		let nl = fresh_branch_point_id "" in
 		let rec lbl_list_constr n = if n==0 then [] else (nl,n)::(lbl_list_constr (n-1)) in

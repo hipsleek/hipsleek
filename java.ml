@@ -334,6 +334,7 @@ and java_of_exp = function
   | Null l                         -> "null"
   | Assert _                       -> ""
   | Dprint l                       -> ""
+  | Time _                         -> ""
   | Debug ({exp_debug_flag = f})   -> ""
   | This _ -> "this"
   | Raise b -> (match b.exp_raise_val with 
