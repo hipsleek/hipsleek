@@ -62,7 +62,7 @@ let rec omega_of_exp e0 = match e0 with
       }
   | Max _
   | Min _ -> failwith ("Omega.omega_of_exp: min/max should not appear here")
-    | _ -> failwith ("Omega.omega_of_exp: bag constraint")
+  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_b_formula b = match b with
   | BConst (c, _) -> if c then "(0=0)" else "(0>0)"
@@ -95,7 +95,7 @@ and omega_of_b_formula b = match b with
       let a3str = omega_of_exp a3  in
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
-  | _ -> failwith ("Omega.omega_of_exp: bag constraint")
+  | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
 
 and omega_of_formula f  = match f with
   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
@@ -189,6 +189,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       let line = input_line chn in
       let n = String.length line in
       if n > 0 then begin
+        (if !log_all_flag then 
+          output_string log_all ("[omega.ml]: >> "^line^"\n") );
         if line.[0] != '#' then begin
           quitloop := true;
           if n > 7 then
@@ -261,6 +263,8 @@ let is_valid (pe : formula) timeout: bool =
                 while not !quitloop do
                     let line = input_line chn in
                     let n = String.length line in
+                       (if !log_all_flag then 
+                          output_string log_all ("[omega.ml]: >> "^line^"\n") );
                         if n > 0 then begin
                             if line.[0] != '#' then begin
                                 quitloop := true;

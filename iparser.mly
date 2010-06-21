@@ -87,8 +87,10 @@
   let rec remove_spec_qualifier (_, pre, post) = (pre, post)
 %}
 
+%token ALLN
 %token AND
 %token ANDAND
+%token APPEND
 %token ASSERT
 %token ASSUME
 %token AT
@@ -101,14 +103,17 @@
 %token COERCION
 %token COLON
 %token COLONCOLON
+%token COLONCOLONCOLON
 %token COMMA
 %token CONSEQ
 %token CONST
 %token CONTINUE
+%token CLIST
 %token CPAREN
 %token CSQUARE
 %token DATA
 %token DDEBUG
+%token DTIME
 %token DIFF
 %token DISTR
 %token DIV
@@ -133,17 +138,21 @@
 %token GT
 %token GTE
 %token HASH
+%token HEAD
 %token <string> IDENTIFIER
 %token IF
 %token IMPLIES
 %token IMPLY
 %token IMPORT
 %token IN
+%token INLIST
 %token <string> JAVA
 %token LEFTARROW
+%token LENGTH
 %token <float> LITERAL_FLOAT
 %token <int> LITERAL_INTEGER
 %token NOTIN
+%token NOTINLIST
 %token BAGMAX
 %token BAGMIN
 %token FOLD
@@ -162,6 +171,7 @@
 %token NULL
 %token OBRACE
 %token OFF
+%token OLIST
 %token OPAREN
 %token ON
 %token OP_ADD_ASSIGN
@@ -176,10 +186,12 @@
 %token ORWORD
 %token OSQUARE
 %token PERCENT
+%token PERM
 %token PLUS
 %token PRIME
 %token PRINT
 %token REF
+%token REVERSE
 %token REQUIRES
 %token <string> RES
 %token RETURN
@@ -190,6 +202,7 @@
 %token STAR
 %token STATIC
 %token SUBSET
+%token TAIL
 %token THEN
 %token <string> THIS
 %token TO
@@ -217,6 +230,7 @@
 %left AND
 %right NOT
 %left EQ NEQ GT GTE LT LTE
+%right COLONCOLONCOLON
 %left PLUS MINUS
 %left STAR DIV
 %left UMINUS
@@ -823,9 +837,7 @@ simple_pure_constr
 ;
 
 lbconstr
-  : bconstr {
-	(fst $1, snd $1)
-  }
+  : bconstr { $1  }
   | lbconstr NEQ cexp_list {
 	  expand_exp_list P.mkNeq $1 $3 (get_pos 2)
 	}
@@ -887,12 +899,26 @@ bconstr
   | BAGMIN OPAREN cid COMMA cid CPAREN {
 	  (P.BForm (P.BagMin ($3, $5, get_pos 2),None), None)
 	}
+	/* list_constr */
+  | cexp INLIST cexp {
+	  (P.BForm (P.ListIn ($1, $3, get_pos 2),None), None)
+	}
+  | cexp NOTINLIST cexp {
+	  (P.BForm (P.ListNotIn ($1, $3, get_pos 2),None), None)
+	}
+  | ALLN OPAREN cexp COMMA cexp CPAREN {
+	  (P.BForm (P.ListAllN ($3, $5, get_pos 1),None), None)
+	}
+  | PERM OPAREN cexp COMMA cexp CPAREN {
+	  (P.BForm (P.ListPerm ($3, $5, get_pos 1),None), None)
+	}
 ;
 
 /* constraint expressions */
 
 cexp
   : additive_cexp { $1 }
+  /* bags */
   | OBRACE opt_cexp_list CBRACE {
       P.Bag ($2, get_pos 1)
     }
@@ -905,6 +931,22 @@ cexp
   | DIFF OPAREN cexp COMMA cexp CPAREN {
       P.BagDiff ($3, $5, get_pos 1)
     }
+	/* lists */
+  | OLIST opt_cexp_list CLIST {
+	  P.List ($2, get_pos 1)
+	}
+  | cexp COLONCOLONCOLON cexp {
+	  P.ListCons ($1, $3, get_pos 2)
+	}
+  | TAIL OPAREN cexp CPAREN {
+	  P.ListTail ($3, get_pos 1)
+	}
+  | APPEND OPAREN opt_cexp_list CPAREN {
+	  P.ListAppend ($3, get_pos 1)
+	}
+  | REVERSE OPAREN cexp CPAREN {
+	  P.ListReverse ($3, get_pos 1)
+	}
 ;
 
 additive_cexp 
@@ -952,6 +994,12 @@ unary_cexp
   | MIN OPAREN cexp COMMA cexp CPAREN {
       P.mkMin $3 $5 (get_pos 1)
     }
+  | HEAD OPAREN cexp CPAREN {
+	  P.ListHead ($3, get_pos 1)
+	}
+  | LENGTH OPAREN cexp CPAREN {
+	  P.ListLength ($3, get_pos 1)
+	}
 ;
 
 opt_cexp_list
@@ -1353,6 +1401,7 @@ valid_declaration_statement
   | assert_statement { $1 }
   | dprint_statement { $1 }
   | debug_statement { $1 }
+  | time_statement {$1}
   | bind_statement { $1 }
   | unfold_statement { $1 }
 /*
@@ -1426,6 +1475,11 @@ debug_statement
 	  Debug { exp_debug_flag = false;
 			  exp_debug_pos = get_pos 2 }
 	}
+;
+
+time_statement 
+  : DTIME ON IDENTIFIER{Time (true,$3,get_pos 1)}
+  | DTIME OFF IDENTIFIER{Time (false,$3,get_pos 1)}
 ;
 
 dprint_statement

@@ -388,6 +388,7 @@ let rec string_of_exp = function
 	   string_of_control_path_id_opt pid ("if (" ^ id ^ ") " ^(string_of_exp e1) ^ "\nelse " ^ (string_of_exp e2) ^ "\n" )
   | Debug ({exp_debug_flag = b; exp_debug_pos = l}) -> if b then "debug" else ""
   | Dprint _                   -> "dprint"
+  | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | FConst ({exp_fconst_val = f; exp_fconst_pos = l}) -> string_of_float f 
   (*| FieldRead (_, (v, _), (f, _), _) -> v ^ "." ^ f*)
   (*| FieldWrite ((v, _), (f, _), r, _) -> v ^ "." ^ f ^ " = " ^ r*)

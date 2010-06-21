@@ -48,44 +48,24 @@ void insert(node x, int v)
 	tmp = new node(v, x.next);
 
 	x.next = tmp;
-
-	
-
-
-	//assert tmp'::cll<x',n>;
-	//debug on;
-	//assert x'::hd<_>;
-	//assert x'::node<_, r> * r::cll<x', _>;
-	//debug off;
 }
 
- 
-/*
-/* insert a node in a circular list after the head */
-void insert(node x, int v)
-	
-	requires x::hd<n> & n > 0 
-	ensures x::hd<n+1>;
 
-{
-	x.next = new node(v, x.next);
-}
-*/
 
 /* functions to count the number of nodes in a circular list */
-int count_rest(node rest, node head)
+int count_rest(node rest, node h)
 
-	requires rest::cll<p, n> & head = p 
+	requires rest::cll<p, n> & h = p 
 	ensures rest::cll<p, n> & res = n; 
 
 {
 	int n;
 	
-	if (rest == head)
+	if (rest == h)
 		return 0; 
 	else
 	{
-		n = count_rest(rest.next, head);
+		n = count_rest(rest.next, h);
 		n = n + 1;
 
 		return n;
