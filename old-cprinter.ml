@@ -584,3 +584,112 @@ let string_of_partial_context (l1,l2) =
     
 let string_of_list_partial_context lc = String.concat "\n;;\n" (List.map string_of_partial_context lc)
     
+
+    
+(*portable b_formula printer 
+ let string_of_spec_var sv = match sv with
+    | CP.SpecVar (_, v, p) -> v ^ (if p = Primed then "'" else "") in
+ let rec string_of_formula_exp = function 
+  | CP.Null l -> "null"
+  | CP.Var (x, l) -> (match x with 
+					   | CP.SpecVar (t, id, p) -> id ^ (match p with 
+														 | Primed    -> "'" 
+														 | Unprimed  -> "" ))
+  | CP.IConst (i, l)           -> string_of_int i
+  | CP.FConst (f, l) -> string_of_float f
+  | CP.Add (e1, e2, l) -> 
+      (match e1 with 
+      | CP.Null _ | CP.Var _ | CP.IConst _ |CP.FConst _ | CP.Max _ | CP.Min _ -> 
+          (string_of_formula_exp e1) ^ "+"   			      
+      | _ -> "(" ^ (string_of_formula_exp e1) ^ ")+") 
+      ^ 
+      (match e2 with 
+      | CP.Null _ | CP.Var _ | CP.IConst _ | CP.FConst _ | CP.Max _ | CP.Min _ -> 
+          string_of_formula_exp e2
+	    | _ -> "(" ^ (string_of_formula_exp e2) ^ ")")
+  | CP.Subtract (e1, e2, l) ->
+      if need_parenthesis e1 then 
+        if need_parenthesis e2 then
+          "(" ^ (string_of_formula_exp e1) ^ ")-(" ^ (string_of_formula_exp e2) ^ ")"  			      
+	      else 
+          "(" ^ (string_of_formula_exp e1) ^ ")-" ^ (string_of_formula_exp e2)
+      else 
+        (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2)
+  | CP.Mult (e1, e2, l) ->
+      (if need_parenthesis e1 then
+        "(" ^ (string_of_formula_exp e1) ^ ")"
+      else string_of_formula_exp e1)
+      ^ "*" ^
+      (if need_parenthesis e2 then
+        "(" ^ (string_of_formula_exp e2) ^ ")"
+      else string_of_formula_exp e2)
+  | CP.Div (e1, e2, l) -> 
+      (if need_parenthesis e1 then
+        "(" ^ (string_of_formula_exp e1) ^ ")"
+      else string_of_formula_exp e1)
+      ^ "/" ^
+      (if need_parenthesis e2 then
+        "(" ^ (string_of_formula_exp e2) ^ ")"
+      else string_of_formula_exp e2)
+  | CP.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+  | CP.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
+  | CP.Bag (elist, l) 					-> "{" ^ (string_of_formula_exp_list elist) ^ "}"
+  | CP.BagUnion ([], l) 				-> ""
+  | CP.BagUnion (e::[], l)			-> (string_of_formula_exp e) 
+  | CP.BagUnion (e::rest, l) 	-> "(" ^ (string_of_formula_exp e) ^ " union " ^ (string_of_formula_exp (CP.BagUnion (rest, l))) ^ ")"
+  | CP.BagIntersect ([], l) 		-> ""
+  | CP.BagIntersect (e::[], l)	-> (string_of_formula_exp e) 
+  | CP.BagIntersect (e::rest, l)->(string_of_formula_exp e) ^ "<intersect>" ^ (string_of_formula_exp (CP.BagIntersect (rest, l)))
+  | CP.BagDiff (e1, e2, l)     -> (string_of_formula_exp e1) ^ "-" ^ (string_of_formula_exp e2)  
+  | _ -> "list constraints"
+(* pretty printing for a list of pure formulae *)
+and string_of_formula_exp_list l = match l with 
+  | []                         -> ""
+  | h::[]                      -> string_of_formula_exp h
+  | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
+and need_parenthesis = function 
+    | CP.Null _ | CP.Var _ | CP.IConst _ | CP.Max _ | CP.Min _  -> false 
+    | _                                                    -> true in
+(* pretty printing for boolean constraints *)
+let string_of_b_formula b = match b with
+  | CP.BConst (b,l)              -> (*if b <> true then*) string_of_bool b (*else ""*)
+  | CP.BVar (x, l)               -> (match x with 
+    | CP.SpecVar (_, id, p) -> id ^ (match p with 
+      | Primed    -> "'" 
+      | Unprimed  -> "" ))
+  | CP.Lt (e1, e2, l)            -> if need_parenthesis e1 
+                                   then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
+                                                               else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
+                                   else (string_of_formula_exp e1) ^ " < " ^ (string_of_formula_exp e2)
+  | CP.Lte (e1, e2, l)           -> if need_parenthesis e1 
+                                   then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") <= (" ^ (string_of_formula_exp e2) ^ ")"
+                                                               else "(" ^ (string_of_formula_exp e1) ^ ") <= " ^ (string_of_formula_exp e2)
+                                   else (string_of_formula_exp e1) ^ " <= " ^ (string_of_formula_exp e2)
+  | CP.Gt (e1, e2, l)            -> if need_parenthesis e1 
+                                   then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") > (" ^ (string_of_formula_exp e2) ^ ")"
+                                                               else "(" ^ (string_of_formula_exp e1) ^ ") > " ^ (string_of_formula_exp e2)
+                                   else (string_of_formula_exp e1) ^ " > " ^ (string_of_formula_exp e2)
+  | CP.Gte (e1, e2, l)           -> if need_parenthesis e1 
+                                   then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") >= (" ^ (string_of_formula_exp e2) ^ ")"
+                                                               else "(" ^ (string_of_formula_exp e1) ^ ") >= " ^ (string_of_formula_exp e2)
+                                   else (string_of_formula_exp e1) ^ " >= " ^ (string_of_formula_exp e2)
+  | CP.Eq (e1, e2, l)            -> if need_parenthesis e1 
+                                   then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") = (" ^ (string_of_formula_exp e2) ^ ")"
+                                                               else "(" ^ (string_of_formula_exp e1) ^ ") = " ^ (string_of_formula_exp e2)
+                                   else (string_of_formula_exp e1) ^ " = " ^ (string_of_formula_exp e2)	
+  | CP.Neq (e1, e2, l)           -> if need_parenthesis e1 
+                                   then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") != (" ^ (string_of_formula_exp e2) ^ ")"
+                                                               else "(" ^ (string_of_formula_exp e1) ^ ") != " ^ (string_of_formula_exp e2)
+                                   else (string_of_formula_exp e1) ^ " != " ^ (string_of_formula_exp e2)
+  | CP.EqMax (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = max(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
+  | CP.EqMin (e1, e2, e3, l)     -> (string_of_formula_exp e1) ^" = min(" ^ (string_of_formula_exp e2) ^ "," ^ (string_of_formula_exp e3) ^ ")"
+	| CP.BagIn (v, e, l)					-> (string_of_spec_var v) ^ " <in> " ^ (string_of_formula_exp e)
+	| CP.BagNotIn (v, e, l)			-> (string_of_spec_var v) ^ " <notin> " ^ (string_of_formula_exp e)
+  | CP.BagSub (e1, e2, l)			-> (string_of_formula_exp e1) ^ " <subset> " ^ (string_of_formula_exp e2)
+	| CP.BagMin (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <min> (" ^ (string_of_spec_var v2) ^ ")"
+	| CP.BagMax (v1, v2, l)			-> (string_of_spec_var v1) ^ " = <max> (" ^ (string_of_spec_var v2) ^ ")" in
+  
+  print_string ("\n addd: "^(String.concat " , " (List.map string_of_b_formula l))^"\n");
+
+*)
+    

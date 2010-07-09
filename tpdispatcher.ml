@@ -245,7 +245,7 @@ let omega_count = ref 0
 
 (* Method checking whether a formula contains bag constraints *)
 let rec is_bag_constraint(f : CP.formula) : bool = match f with
-  | CP.BForm(bf,_) -> (is_bag_constraint_b_formula bf)
+  | CP.BForm(bf,_,_) -> (is_bag_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
   | CP.Or(f1, f2,_, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
   | CP.Not(f1,_, _) -> (is_bag_constraint f1)
@@ -306,7 +306,7 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
 
 (* Method checking whether a formula contains list constraints *)
 let rec is_list_constraint(f : CP.formula) : bool = match f with
-  | CP.BForm(bf,_) -> (is_list_constraint_b_formula bf)
+  | CP.BForm(bf,_,_) -> (is_list_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_list_constraint f1) || (is_list_constraint f2)
   | CP.Or(f1, f2, _,_) -> (is_list_constraint f1) || (is_list_constraint f2)
   | CP.Not(f1, _,_) -> (is_list_constraint f1)
@@ -683,9 +683,9 @@ let rec requant = function
 
 let rewrite_in_list list formula =
   match formula with
-  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) ->
       List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
-  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_) ->
+  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_,_) ->
       List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
   | x -> list
 ;;
@@ -699,17 +699,17 @@ let rec rewrite_in_and_tree rid formula rform =
   | x ->
       let subst_fun =
         match rform with
-        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) -> CP.subst [v1, v2]
-        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_) -> CP.subst_term [v1, term]
-        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) -> CP.subst [v1, v2]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_,_) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_,_) -> CP.subst_term [v1, term]
         | _ -> fun x -> x
       in
       if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
 ;;
 
 let is_irrelevant = function
-  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) -> v1 = v2
-  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _),_) -> i1 = i2
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) -> v1 = v2
+  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _),_,_) -> i1 = i2
   | _ -> false
 ;;
 
@@ -759,10 +759,10 @@ let simpl_pair rid (ante, conseq) =
   let l1 = Util.remove_dups (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
-    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
+    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_)
-    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_) ->
+    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_,_)
+    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_,_) ->
 		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
 		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
     | _ -> ((ante, conseq), fun x -> x)
@@ -782,6 +782,7 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+  let conseq0 = CP.redundant_b_f conseq0 in
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -833,7 +834,6 @@ let imply_timeout ante0 conseq0 imp_no timeout =
 
 let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.
 ;;
-
 let is_sat f sat_no =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
@@ -846,6 +846,19 @@ let is_sat f sat_no =
 
 	let _ = Util.pop_time "is_sat" in
 	res end
+;;
+
+let sat_no = ref 1
+;;
+let incr_sat_no () = 
+ sat_no := !sat_no +1 
+;;
+
+let is_sat_sub_no (f : CP.formula) sat_subno : bool = 
+  let sat = is_sat f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+  Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+  sat_subno := !sat_subno+1;
+  sat
 ;;
 
 let print_stats () =

@@ -164,7 +164,7 @@ let is_linear_bformula b =
   
 let rec is_linear_formula f0 = 
   match f0 with
-  | CP.BForm (b,_) -> is_linear_bformula b
+  | CP.BForm (b,_,_) -> is_linear_bformula b
   | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) -> is_linear_formula f;
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) -> (is_linear_formula f1) & (is_linear_formula f2)
 
@@ -251,7 +251,7 @@ let rl_of_b_formula b =
 
 let rec rl_of_formula f0 = 
   match f0 with
-  | CP.BForm (b,_) -> rl_of_b_formula b 
+  | CP.BForm (b,_,_) -> rl_of_b_formula b 
   | CP.Not (f, _,_) -> "(not " ^ (rl_of_formula f) ^ ")"
   | CP.Forall (sv, f, _, _) -> "(all (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
   | CP.Exists (sv, f, _, _) -> "(ex (" ^ (rl_of_spec_var sv) ^ ", " ^ (rl_of_formula f) ^ "))"
@@ -260,10 +260,10 @@ let rec rl_of_formula f0 =
   
 let rec strengthen_formula f0 = 
   match f0 with
-  | CP.BForm (b,lbl) -> 
+  | CP.BForm (b,lbl,an) -> 
       let r = match b with
-        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
-        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
+        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl,an)
+        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl,an)
         | _ -> f0 
       in r
   | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
@@ -274,15 +274,15 @@ let rec strengthen_formula f0 =
 
 let rec weaken_formula f0 = 
   match f0 with
-  | CP.BForm (b,lbl) ->
+  | CP.BForm (b,lbl,an) ->
       let r = match b with
-        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
-        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
+        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl,an)
+        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl,an)
         | CP.Eq (e1, e2, l) ->
             (* e1 = e2 => e2 - 1 < e1 < e2 + 1 *)
             let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
             let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
+            CP.And (CP.BForm (lp,lbl,an), CP.BForm (rp,lbl,an), l)
         | _ -> f0 
       in r
   | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
@@ -393,7 +393,7 @@ and find_bound v f0 =
         in
         (min, max)
       end
-  | CP.BForm (bf,_) -> find_bound_b_formula v bf
+  | CP.BForm (bf,_,_) -> find_bound_b_formula v bf
   | _ -> None, None
   
 and get_subst_min f0 v = match f0 with
@@ -407,15 +407,15 @@ and get_subst_min f0 v = match f0 with
   | CP.BForm bf -> get_subst_min_b_formula bf v
   | _ -> ([], f0)
 
-and get_subst_min_b_formula (bf,lbl) v = match bf with
+and get_subst_min_b_formula (bf,lbl,an) v = match bf with
   | CP.EqMin (e0, e1, e2, pos) ->
     if CP.is_var e0 then
       let v0 = CP.to_var e0 in
       if CP.eq_spec_var v0 v then
         ([v, e1, e2], CP.mkTrue no_pos)
-      else ([], CP.BForm (bf,lbl))
-    else ([], CP.BForm (bf,lbl))
-  | _ -> ([], CP.BForm (bf,lbl))
+      else ([], CP.BForm (bf,lbl,an))
+    else ([], CP.BForm (bf,lbl,an))
+  | _ -> ([], CP.BForm (bf,lbl,an))
   
 and get_subst_max f0 v = match f0 with
   | CP.And (f1, f2, pos) ->
@@ -428,15 +428,15 @@ and get_subst_max f0 v = match f0 with
   | CP.BForm bf -> get_subst_max_b_formula bf v
   | _ -> ([], f0)
   
-and get_subst_max_b_formula (bf,lbl) v = match bf with
+and get_subst_max_b_formula (bf,lbl,an) v = match bf with
   | CP.EqMax (e0, e1, e2, pos) ->
     if CP.is_var e0 then
       let v0 = CP.to_var e0 in
       if CP.eq_spec_var v0 v then
         ([v, e1, e2], CP.mkTrue no_pos)
-      else ([], CP.BForm (bf,lbl))
-    else ([], CP.BForm (bf,lbl))
-  | _ -> ([], CP.BForm (bf,lbl))
+      else ([], CP.BForm (bf,lbl,an))
+    else ([], CP.BForm (bf,lbl,an))
+  | _ -> ([], CP.BForm (bf,lbl,an))
     
 and elim_exists_min f0 =
   match f0 with
@@ -463,8 +463,8 @@ and elim_exists_min f0 =
         let v, e1, e2 = List.hd st in
         let tmp1 = 
           CP.mkOr 
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkLte e1 e2 pos),None)) pos) pp1 pos)
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkGt e1 e2 pos),None)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos None) (CP.BForm ((CP.mkLte e1 e2 pos),None,None)) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos None) (CP.BForm ((CP.mkGt e1 e2 pos),None,None)) pos) pp1 pos)
             None
             pos
           in
@@ -525,8 +525,8 @@ and elim_exists_max f0 =
         let v, e1, e2 = List.hd st in
         let tmp1 = 
           CP.mkOr 
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkGte e1 e2 pos),None) ) pos) pp1 pos)
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkLt e1 e2 pos),None) ) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos None) (CP.BForm ((CP.mkGte e1 e2 pos),None,None) ) pos) pp1 pos)
+            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos None) (CP.BForm ((CP.mkLt e1 e2 pos),None,None) ) pos) pp1 pos)
             None
             pos
           in
@@ -574,7 +574,7 @@ let elim_exists f0 =
 
 let is_sat (f: CP.formula) (sat_no: string) : bool =
   log_all (Util.new_line_str ^ "#is_sat " ^ sat_no);
-  log_all (Cprinter.string_of_pure_formula f);
+  (*log_all (Cprinter.string_of_pure_formula f);*)
   let frl = rl_of_formula f in
   let vars = get_vars_formula f in
   let vars_str = rl_of_var_list (Util.remove_dups vars) in
@@ -675,8 +675,8 @@ let presburger_optimized_imply ante conseq imp_no =
 
 let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   log_all (Util.new_line_str ^ "#imply " ^ imp_no);
-  log_all ("ante: " ^ (Cprinter.string_of_pure_formula ante));
-  log_all ("conseq: " ^ (Cprinter.string_of_pure_formula conseq));
+  log_all ("ante: " ^ (rl_of_formula ante));
+  log_all ("conseq: " ^ (rl_of_formula conseq));
   if not !manual_mode then
     presburger_optimized_imply ante conseq imp_no
   else begin  

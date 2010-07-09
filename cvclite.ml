@@ -148,22 +148,22 @@ and cvcl_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvcl_of_formula f = match f with
-  | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")"
-  | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1) ^ " AND " ^ (cvcl_of_formula p2) ^ ")"
-  | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1) ^ " OR " ^ (cvcl_of_formula p2) ^ ")"
+  | CP.BForm (b,_,l) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
+  | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " AND " ^ (cvcl_of_formula p2 ) ^ ")"
+  | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " OR " ^ (cvcl_of_formula p2 ) ^ ")"
   | CP.Not (p,_, _) ->
 (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)
 	  begin
 		match p with
-		  | CP.BForm (CP.BVar (bv, _),_) -> (cvcl_of_spec_var bv) ^ " = 0"
-		  | _ -> "(NOT (" ^ (cvcl_of_formula p) ^ "))"
+		  | CP.BForm (CP.BVar (bv, _),_,l) -> (cvcl_of_spec_var bv) ^ " = 0" 
+		  | _ -> "(NOT (" ^ (cvcl_of_formula p ) ^ "))"
 	  end
   | CP.Forall (sv, p,_, _) ->
 	  let typ_str = cvcl_of_sv_type sv in
-  		"(FORALL (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p) ^ ")"
+  		"(FORALL (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p ) ^ ")"
   | CP.Exists (sv, p, _,_) -> 
 	  let typ_str = cvcl_of_sv_type sv in
-  		"(EXISTS (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p) ^ ")"
+  		"(EXISTS (" ^ (cvcl_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvcl_of_formula p ) ^ ")"
 
 (*
   split a list of spec_vars to three lists:
@@ -200,10 +200,10 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
 	else (String.concat ", " (List.map cvcl_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   let ante_str = (* (cvcl_of_formula_decl ante) ^ (cvcl_of_formula_decl conseq) ^ *)
-	"ASSERT (" ^ (cvcl_of_formula ante) ^ ");\n" in
+	"ASSERT (" ^ (cvcl_of_formula ante ) ^ ");\n" in
 	(*  let conseq_str =  "QUERY (FORALL (S1: SET): FORALL (S2: SET): EXISTS (S3: SET): union(S1, S2, S3)) 
 		=> (" ^ (cvcl_of_formula conseq) ^ ");\n" in *)
-  let conseq_str =  "QUERY (" ^ (cvcl_of_formula conseq) ^ ");\n" in
+  let conseq_str =  "QUERY (" ^ (cvcl_of_formula conseq ) ^ ");\n" in
 	(* talk to CVC Lite *)
   let f_cvcl = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
 	if !log_cvcl_formula then begin
@@ -283,7 +283,7 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 	"ASSERT (" ^ (cvcl_of_formula f) ^ ");\n" in
   let query_str = "QUERY (1<0);\n" in
 *)
-  let f_str = cvcl_of_formula f in
+  let f_str = cvcl_of_formula f  in
   let query_str = "CHECKSAT (" ^ f_str ^ ");\n" in
 	(* talk to CVC Lite *)
   let f_cvcl = Util.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in

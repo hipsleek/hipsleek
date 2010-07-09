@@ -107,7 +107,7 @@ let process_pred_def pdef =
 		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
-		let n_cpdef = AS.view_case_inference cprog iprog.I.prog_view_decls cpdef in
+		let n_cpdef = AS.view_case_inference cprog cpdef in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)

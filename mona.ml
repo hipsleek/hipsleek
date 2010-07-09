@@ -28,11 +28,17 @@ let mona_of_prim_type = function
   | Bag		      -> "int set"
   | List          -> "list"	(* lists are not supported *)
 
+let mona_of_typ = function 
+  | CP.Prim t -> mona_of_prim_type t 
+  | CP.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+;;
+
+  
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
-  | e :: [] -> CP.BForm(e,None)
-  | e :: rest -> CP.And(CP.BForm(e,None), (mkEq rest), no_pos)
+  | e :: [] -> CP.BForm(e,None,None)
+  | e :: rest -> CP.And(CP.BForm(e,None, None), (mkEq rest), no_pos)
   | _ -> assert false
 
 let rec mkEx l f = match l with
@@ -55,7 +61,7 @@ and mona_of_exp_break e0 =
   match e0 with
   | CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (mona_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := (new_tmp_var :: !additional_vars);
@@ -64,7 +70,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (mona_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -74,7 +80,7 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3)
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (mona_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
 		additional_vars := new_tmp_var :: !additional_vars;
@@ -83,7 +89,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (mona_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -92,7 +98,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (mona_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -160,7 +166,7 @@ and mona_of_formula_break (f : CP.formula) (w : bool) : CP.formula =
   | CP.Not (p1,lbl, l1) -> CP.Not((mona_of_formula_break p1 w),lbl, l1)
   | CP.Forall(sv1, p1,lbl, l1) -> CP.Forall(sv1, (mona_of_formula_break p1 w),lbl, l1)
   | CP.Exists(sv1, p1,lbl, l1) -> CP.Exists(sv1, (mona_of_formula_break p1 w),lbl, l1)
-  | CP.BForm (b,lbl) -> CP.BForm((mona_of_b_formula_break b w),lbl)
+  | CP.BForm (b,lbl,an) -> CP.BForm((mona_of_b_formula_break b w),lbl,an)
   in
       if (List.length !substitution_list) > 0 then
 	   let eq = (mkEq !substitution_list) in
@@ -221,7 +227,7 @@ let rec appears_in_formula v = function
   | CP.Exists (qv, f, _,_) -> if qv = v then true else appears_in_formula v f
   | CP.And (f, g, _) -> (appears_in_formula v f) || (appears_in_formula v g)
   | CP.Or (f, g, _,_) -> (appears_in_formula v f) || (appears_in_formula v g)
-  | CP.BForm (bf,_) -> match bf with
+  | CP.BForm (bf,_,_) -> match bf with
     | CP.BVar (bv, _) -> v = bv
     | CP.Gt (l, r, _)
     | CP.Gte (l, r, _)
@@ -285,7 +291,7 @@ and is_first_order_a (f : CP.formula) (elem_list : CP.exp list) (initial_f : CP.
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1,_, _)
   | CP.Not(f1,_, _) -> (is_first_order_a f1 elem_list initial_f)
-  | CP.BForm(bf,_) -> (is_first_order_b_formula bf elem_list initial_f);
+  | CP.BForm(bf,_,_) -> (is_first_order_b_formula bf elem_list initial_f);
 (*  | _ -> false;*)
 
 and is_first_order_b_formula (bf : CP.b_formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool = match bf with
@@ -364,7 +370,7 @@ and is_inside_bag (f : CP.formula) (elem : CP.exp) : bool = match f with
   | CP.Forall(_, f1, _,_)
   | CP.Exists(_, f1, _,_)
   | CP.Not(f1, _,_) -> (is_inside_bag f1 elem)
-  | CP.BForm(bf,_) -> (is_inside_bag_b_formula bf elem)
+  | CP.BForm(bf,_,_) -> (is_inside_bag_b_formula bf elem)
 
 and is_inside_bag_b_formula (bf : CP.b_formula) (elem : CP.exp) : bool = match bf with
   | CP.BagNotIn(sv1, e1, _)
@@ -421,7 +427,6 @@ and is_firstorder_mem f e vs =
 (* pretty printing for spec_vars *)
 and mona_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> 
-	(*let _ = print_string("var " ^ (Cprinter.string_of_spec_var sv) ^ "\n") in*)
 		v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 (* pretty printing for expressions *)
@@ -477,9 +482,7 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
             let sum = if (i>1) then (mult i) else CP.IConst (1, p) in
             mona_of_exp_secondorder sum f
       | _ -> failwith ("mona.mona_of_exp_secondorder: nonlinear arithmetic isn't supported."))
-	| CP.Subtract (e1, e2, p) -> 	
-		let _ = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in
-		failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
+	| CP.Subtract (e1, e2, p) -> 	failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
   | CP.List _
   | CP.ListCons _
   | CP.ListHead _
@@ -658,14 +661,14 @@ and equation a1 a2 f sec_order_symbol first_order_symbol vs =
 and mona_of_formula f initial_f vs =
   let ret = begin
   match f with
-  | CP.BForm (b,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
+  | CP.BForm (b,_,_) -> "(" ^ (mona_of_b_formula b initial_f vs) ^ ")"
   | CP.And (p1, p2, _) -> "(" ^ (mona_of_formula p1 initial_f vs) ^ " & " ^ (mona_of_formula p2 initial_f vs) ^ ")"
   | CP.Or (p1, p2, _,_) -> "(" ^ (mona_of_formula p1 initial_f vs) ^ " | " ^ (mona_of_formula p2 initial_f vs) ^ ")"
   | CP.Not (p, _,_) ->
       begin
         if !sat_optimize then
 	      match p with
-		  | CP.BForm (CP.BVar (bv, _),_) -> (mona_of_spec_var bv) ^ " = pconst(1)"
+		  | CP.BForm (CP.BVar (bv, _),_,_) -> (mona_of_spec_var bv) ^ " = pconst(1)"
 (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		  | _ -> " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
         else " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
@@ -874,7 +877,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
+  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None,None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with
   | true ->

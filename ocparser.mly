@@ -4,12 +4,15 @@
 
   module Err = Error
   let subst_lst = ref ([]:(string*string)list)
+  let typ_lst = ref ([]:(string*typ)list)
+  let get_typ s = List.fold_left (fun a (c,t)-> if (c=s) then t else a) (Prim Int) !typ_lst
   let spec_var_of_string s = 
 	let n = String.length s in
 	  if String.get s (n-1) = '\'' then 
-		SpecVar (Prim Int, String.sub s 0 (n-1), Primed)
+    let name = String.sub s 0 (n-1) in
+		SpecVar ((get_typ name), name, Primed)
 	  else
-		SpecVar (Prim Int, s, Unprimed)
+		SpecVar ((get_typ s), s, Unprimed)
 
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
@@ -96,7 +99,7 @@ pconstr: pconstr AND pconstr {
 	fst $1 
   }
 | EXISTS OPAREN var_list COLON pconstr CPAREN { 
-	let svars = List.map (fun x -> SpecVar (Prim Int, fst x, snd x)) $3 in
+	let svars = List.map (fun x -> SpecVar ((get_typ (fst x)), fst x, snd x)) $3 in
 	let qf f v = mkExists [v] f None (get_pos 1) in
 	let res = List.fold_left qf $5 svars in
 	  res
@@ -110,7 +113,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkLt ae $3 None (get_pos 2) in
+			let tmp = build_relation mkLt ae $3 None (get_pos 2) None in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of <"}
@@ -119,7 +122,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkLte ae $3 None (get_pos 2) in
+			let tmp = build_relation mkLte ae $3 None (get_pos 2) None in
 			  (mkAnd b tmp (get_pos 2) , Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of <="}
@@ -128,7 +131,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkGt ae $3 None (get_pos 2) in
+			let tmp = build_relation mkGt ae $3 None (get_pos 2) None in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of >"}
@@ -137,7 +140,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkGte ae $3 None (get_pos 2) in
+			let tmp = build_relation mkGte ae $3 None (get_pos 2) None in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of >="}
@@ -146,7 +149,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkEq ae $3 None (get_pos 2) in
+			let tmp = build_relation mkEq ae $3 None (get_pos 2) None in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of ="}
@@ -155,31 +158,31 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkNeq ae $3 None (get_pos 2) in
+			let tmp = build_relation mkNeq ae $3 None (get_pos 2) None in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of !="}
 }
 ;
 
-bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2), Some $3) }
-| aexp_list LTE aexp_list { (build_relation mkLte $1 $3 None (get_pos 2), Some $3) }
-| aexp_list GT aexp_list { (build_relation mkGt $1 $3 None (get_pos 2), Some $3) }
-| aexp_list GTE aexp_list { (build_relation mkGte $1 $3 None (get_pos 2), Some $3) }
-| aexp_list EQ aexp_list { (build_relation mkEq $1 $3 None (get_pos 2), Some $3) }
-| aexp_list NEQ aexp_list { (build_relation mkNeq $1 $3 None (get_pos 2), Some $3) }
-| TRUE { (BForm (BConst (true, get_pos 1) , None), None) }
-| FALSE { (BForm (BConst (false, get_pos 1) , None), None) }
+bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2) None, Some $3) }
+| aexp_list LTE aexp_list { (build_relation mkLte $1 $3 None (get_pos 2) None, Some $3) }
+| aexp_list GT aexp_list { (build_relation mkGt $1 $3 None (get_pos 2) None, Some $3) }
+| aexp_list GTE aexp_list { (build_relation mkGte $1 $3 None (get_pos 2) None, Some $3) }
+| aexp_list EQ aexp_list { (build_relation mkEq $1 $3 None (get_pos 2) None, Some $3) }
+| aexp_list NEQ aexp_list { (build_relation mkNeq $1 $3 None (get_pos 2) None, Some $3) }
+| TRUE { (BForm (BConst (true, get_pos 1) , None , None), None) }
+| FALSE { (BForm (BConst (false, get_pos 1) , None , None), None) }
 ;
 
 aexp: cid {
-	Var (SpecVar (Prim Int, fst $1, snd $1), get_pos 1)
+	Var (SpecVar ((get_typ (fst $1)), fst $1, snd $1), get_pos 1)
   }
 | ICONST {
 	IConst ($1, get_pos 1)
   }
 | ICONST cid {
-	Mult (IConst ($1, get_pos 1), (Var (SpecVar (Prim Int, fst $2, snd $2), get_pos 2)), get_pos 1)
+	Mult (IConst ($1, get_pos 1), (Var (SpecVar ((get_typ (fst $2)), fst $2, snd $2), get_pos 2)), get_pos 1)
   }
 | aexp PLUS aexp {
 	Add ($1, $3, get_pos 2)

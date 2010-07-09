@@ -40,7 +40,7 @@ and prim_type =
 type mode = 
   | ModeIn
   | ModeOut
-
+     
 (* global constants *)
 
 let no_pos = 
@@ -156,6 +156,8 @@ let print_input = ref false
 let instantiation_variants = ref 0
 
 let pass_global_by_value = ref false
+
+let allow_pruning = ref false
 
 let profile_threshold = 0.5 
 

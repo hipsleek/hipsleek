@@ -45,7 +45,12 @@ and view_decl = { view_name : ident;
 				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option;}
+				  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+          view_prune_branches: (formula_label * Cformula.struc_formula ) list;
+          view_prune_conditions: (Cpure.b_formula * (formula_label list)) list;
+          view_prune_invariants : (formula_label list * Cpure.b_formula list) list ;}
+   
+   
 	
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
@@ -631,6 +636,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
+                 F.h_formula_data_remaining_branches = None;
+                 F.h_formula_data_pruning_conditions = [];
 							   F.h_formula_data_pos = pos}) in
 		(* generate extensions for the rest of the fields *)
 	  let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
@@ -643,6 +650,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
+                     F.h_formula_data_remaining_branches = None;
+                     F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				  ext_h
 			  else
@@ -656,6 +665,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
+                     F.h_formula_data_remaining_branches = None;
+                     F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
 				let ext = F.mkStarH ext_h rest_exts pos in

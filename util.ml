@@ -72,6 +72,9 @@ let intersect l1 l2 =
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
   
+let list_equal l1 l2 = 
+  (List.length l1) = (List.length (intersect l1 l2))
+  
 let spacify i = 
   let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
   function [] -> ""

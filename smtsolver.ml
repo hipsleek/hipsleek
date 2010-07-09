@@ -117,12 +117,12 @@ let rec smt_of_b_formula b (*{{{*)=
  *)
 let rec smt_of_formula f =(*{{{*)
     match f with
-        | CP.BForm (b,_) -> (smt_of_b_formula b)
+        | CP.BForm (b,_,_) -> (smt_of_b_formula b)
         | CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
         | CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1) ^ " " ^ (smt_of_formula p2) ^ ")"
         | CP.Not (p,_, _) ->
               (match p with
-                   | CP.BForm (CP.BVar (bv, _),_) -> "(= 0 " ^ (smt_of_spec_var bv) ^ ")"
+                   | CP.BForm (CP.BVar (bv, _),_,_) -> "(= 0 " ^ (smt_of_spec_var bv) ^ ")"
                    | _ -> "(not " ^ (smt_of_formula p) ^ ")")
         | CP.Forall (sv, p, _,_) ->
               logic := AUFLIA;

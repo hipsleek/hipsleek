@@ -79,6 +79,7 @@ let process_cmd_line () = Arg.parse [
   ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
+  ("--eprun", Arg.Set Globals.allow_pruning,"enable predicate pruning");
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
   ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"existentially wrap instantiations after the entailment");
   ("--slk-err", Arg.Set Globals.print_err_sleek,"print sleek errors");

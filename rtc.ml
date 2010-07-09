@@ -90,6 +90,7 @@ let write_to_file java_code file_name : unit =
   - All input files are put in a subdirectory of the working directory.
   The name of the subdirectory is "output".
 *)
+
 let rec compile_prog (prog : C.prog_decl) source : unit =
   let java_code = Buffer.create 10240 in
 	(* Compile data declarations *)
@@ -162,7 +163,7 @@ and compile_proc_body (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit
 				   C.proc_body = Some cbody} in
 	  Cjava.java_of_proc_decl prog cproc java_code
   end
-
+  
 and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit = 
 	let r = Cformula.split_struc_formula proc.C.proc_static_specs in
 	match r with

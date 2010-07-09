@@ -96,9 +96,9 @@ and omega_of_b_formula b = match b with
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
-
+ 
 and omega_of_formula f  = match f with
-  | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
+  | BForm (b,_,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
   | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
@@ -297,7 +297,10 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
-    if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
+    if result then 
+      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
+    else 
+      output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
 
@@ -314,7 +317,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
         let v = List.hd vlist in
         let restvars = List.tl vlist in
         let restf = match_helper restvars rest f in
-        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
+        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos None in
         let tmp2 = mkAnd tmp1 restf no_pos in
         tmp2
     in
@@ -331,6 +334,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 let simplify (pe : formula) : formula =
   begin
     Ocparser.subst_lst := [];
+    Ocparser.typ_lst := types_of_vars pe;
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -388,6 +392,7 @@ let pairwisecheck (pe : formula) : formula =
 let hull (pe : formula) : formula =
   begin
 		Ocparser.subst_lst := [];
+    Ocparser.typ_lst := types_of_vars pe;
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in

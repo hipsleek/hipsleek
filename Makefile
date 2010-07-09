@@ -59,10 +59,10 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
+  cformula.cmo cast.cmo cprinter.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -90,10 +90,10 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
+  cformula.cmo cast.cmo cprinter.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -109,13 +109,13 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
-	sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
+	cformula.cmo cast.cmo cprinter.cmo \
+  sleekcommons.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -143,10 +143,10 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
+  cformula.cmo cast.cmo cprinter.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -163,10 +163,10 @@ WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
+  cformula.cmo cast.cmo cprinter.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -241,9 +241,9 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	checks.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	cformula.cmo cast.cmo cprinter.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
 	cvclite.cmo smtsolver.cmo tpdispatcher.cmo \
+  cformula.cmo cast.cmo cprinter.cmo \
 	context.cmo \
 	solver.cmo \
 	env.cmo astsimp.cmo \

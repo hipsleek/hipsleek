@@ -10,8 +10,8 @@
 ./bind_inference.cmx: globals.cmx 
 ./cast.cmo: util.cmo globals.cmo error.cmo cpure.cmo cformula.cmo 
 ./cast.cmx: util.cmx globals.cmx error.cmx cpure.cmx cformula.cmx 
-./cformula.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
-./cformula.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
+./cformula.cmo: util.cmo tpdispatcher.cmo globals.cmo error.cmo cpure.cmo 
+./cformula.cmx: util.cmx tpdispatcher.cmx globals.cmx error.cmx cpure.cmx 
 ./checks.cmo: iast.cmo globals.cmo 
 ./checks.cmx: iast.cmx globals.cmx 
 ./cjava.cmo: util.cmo globals.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
@@ -86,10 +86,8 @@
     omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
     inliner.cmx ilexer.cmx iast.cmx gui.cmx globalvars.cmx globals.cmx \
     debug.cmx cvclite.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
-./mona.cmo: util.cmo unix_add.cmo oclexer.cmo globals.cmo cpure.cmo \
-    cprinter.cmo 
-./mona.cmx: util.cmx unix_add.cmx oclexer.cmx globals.cmx cpure.cmx \
-    cprinter.cmx 
+./mona.cmo: util.cmo unix_add.cmo oclexer.cmo globals.cmo cpure.cmo 
+./mona.cmx: util.cmx unix_add.cmx oclexer.cmx globals.cmx cpure.cmx 
 ./monadicinterp.cmo: typeclass.cmo monads.cmo 
 ./monadicinterp.cmx: typeclass.cmx monads.cmx 
 ./monads.cmo: typeclass.cmo 
@@ -124,22 +122,24 @@
 ./prooftracer.cmx: util.cmx globals.cmx cpure.cmx cprinter.cmx cformula.cmx 
 ./prove.cmo: tpdispatcher.cmo net.cmo 
 ./prove.cmx: tpdispatcher.cmx net.cmx 
-./redlog.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo cprinter.cmo 
-./redlog.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx cprinter.cmx 
+./redlog.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo 
+./redlog.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx 
 ./rtc.cmo: util.cmo solver.cmo predcomp.cmo java.cmo iast.cmo globals.cmo \
     debug.cmo cpure.cmo cprinter.cmo cjava.cmo cformula.cmo cast.cmo 
 ./rtc.cmx: util.cmx solver.cmx predcomp.cmx java.cmx iast.cmx globals.cmx \
     debug.cmx cpure.cmx cprinter.cmx cjava.cmx cformula.cmx cast.cmx 
 ./run-oc.cmo: 
 ./run-oc.cmx: 
-./setmona.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo cprinter.cmo 
-./setmona.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx cprinter.cmx 
-./sleek.cmo: xmlfront.cmo tpdispatcher.cmo sleekengine.cmo sleekcommons.cmo \
-    omega.cmo nativefront.cmo ipure.cmo iformula.cmo iast.cmo globals.cmo \
-    debug.cmo cpure.cmo cformula.cmo cast.cmo astsimp.cmo 
-./sleek.cmx: xmlfront.cmx tpdispatcher.cmx sleekengine.cmx sleekcommons.cmx \
-    omega.cmx nativefront.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx \
-    debug.cmx cpure.cmx cformula.cmx cast.cmx astsimp.cmx 
+./setmona.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo 
+./setmona.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx 
+./sleek.cmo: xmlfront.cmo util.cmo tpdispatcher.cmo sleekengine.cmo \
+    sleekcommons.cmo omega.cmo nativefront.cmo ipure.cmo iformula.cmo \
+    iast.cmo globals.cmo debug.cmo cpure.cmo cformula.cmo cast.cmo \
+    astsimp.cmo 
+./sleek.cmx: xmlfront.cmx util.cmx tpdispatcher.cmx sleekengine.cmx \
+    sleekcommons.cmx omega.cmx nativefront.cmx ipure.cmx iformula.cmx \
+    iast.cmx globals.cmx debug.cmx cpure.cmx cformula.cmx cast.cmx \
+    astsimp.cmx 
 ./sleekcommons.cmo: ipure.cmo iformula.cmo iast.cmo globals.cmo cpure.cmo \
     cformula.cmo cast.cmo 
 ./sleekcommons.cmx: ipure.cmx iformula.cmx iast.cmx globals.cmx cpure.cmx \
@@ -167,9 +167,11 @@
 ./test.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
 ./test.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
 ./tpdispatcher.cmo: util.cmo smtsolver.cmo setmona.cmo redlog.cmo omega.cmo \
-    net.cmo mona.cmo isabelle.cmo globals.cmo cvclite.cmo cpure.cmo coq.cmo 
+    net.cmo mona.cmo isabelle.cmo globals.cmo debug.cmo cvclite.cmo cpure.cmo \
+    coq.cmo 
 ./tpdispatcher.cmx: util.cmx smtsolver.cmx setmona.cmx redlog.cmx omega.cmx \
-    net.cmx mona.cmx isabelle.cmx globals.cmx cvclite.cmx cpure.cmx coq.cmx 
+    net.cmx mona.cmx isabelle.cmx globals.cmx debug.cmx cvclite.cmx cpure.cmx \
+    coq.cmx 
 ./typechecker.cmo: util.cmo tpdispatcher.cmo solver.cmo setmona.cmo \
     prooftracer.cmo omega.cmo inliner.cmo globals.cmo error.cmo drawing.cmo \
     debug.cmo cpure.cmo cprinter.cmo cformula.cmo cast.cmo 
