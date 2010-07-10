@@ -529,7 +529,14 @@ and prune_preds prog (f:formula):formula =
       Base b in
     helper_formulas f
 
-
+and prune_ctx prog ctx = match ctx with
+  | OCtx (c1,c2)-> OCtx (prune_ctx prog c1,prune_ctx prog c2)
+  | Ctx es -> Ctx {es with es_formula=prune_preds prog es.es_formula}
+  
+and prune_branch_ctx prog (pt,bctx) = (pt,prune_ctx prog bctx)    
+and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
+    
+    
     
 (* split conseq to a node to be checked at the next step and *)
 (* a the remaining part to be checked recursively            *)
@@ -1643,8 +1650,10 @@ match ctx with
       Debug.devel_pprint ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
 	  ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
 	  ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
+      let es = {es with es_formula = prune_preds prog es.es_formula } in
+      let es = (CF.add_to_estate_with_steps es ss) in
       let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding
-        is_universal has_post (Ctx (CF.add_to_estate_with_steps es ss)) conseq pos pid in
+        is_universal has_post (Ctx es) conseq pos pid in
 	  (filter_set tmp, prf)
     end
       
@@ -1857,9 +1866,11 @@ match ctx with
           Debug.devel_pprint ("heap_entail_after_sat: invoking heap_entail_conjunct_lhs"
 	      ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
 	      ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
-         print_string ("going: "^(Cprinter.string_of_formula es.es_formula)^"\n") ;
+        (* print_string ("going: "^(Cprinter.string_of_formula es.es_formula)^"\n") ;*)
+          let es = {es with es_formula = prune_preds prog es.es_formula} in
+          let es = (CF.add_to_estate_with_steps es ss) in
           let tmp, prf = heap_entail_conjunct_lhs prog is_folding
-            is_universal (Ctx (CF.add_to_estate_with_steps es ss)) conseq pos in  
+            is_universal (Ctx es) conseq pos in  
 	      (filter_set tmp, prf)
         end
 
@@ -2083,7 +2094,7 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
 		    formula_exists_branches = qb;
         formula_exists_memoise = qmem;
 		    formula_exists_pos = pos}) ->
-        print_string ("heap_entail_conjunct exist: mem lst: "^(Cprinter.string_of_memoised_list qmem )^"\n") ;
+        (*print_string ("heap_entail_conjunct exist: mem lst: "^(Cprinter.string_of_memoised_list qmem )^"\n") ;*)
 		      (* eliminating existential quantifiers from the LHS *)
 		      (* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
 		      let ws = CP.fresh_spec_vars qvars in
@@ -2140,7 +2151,7 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
 				          (SuccCtx res_ctx, prf))
 		        | _ ->
 		            let h1, p1, fl1, br1, t1, mem1 = split_components ante in
-                print_string ("heap_entail_conjunct base: mem lst: "^(Cprinter.string_of_memoised_list mem1 )^"\n") ;
+                (*print_string ("heap_entail_conjunct base: mem lst: "^(Cprinter.string_of_memoised_list mem1 )^"\n") ;*)
 		            let h2, p2, fl2, br2, t2, mem2 = split_components conseq in
 			        (* let _ = print_string "pp 1\n" in*)
 			        if (isAnyConstFalse ante)&&(CF.subsume_flow_ff fl2 fl1) then 

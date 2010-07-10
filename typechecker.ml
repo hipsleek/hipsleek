@@ -293,6 +293,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	       exp_cond_pos = pos}) -> begin
           let then_cond_prim = CP.BForm (CP.mkBVar v Primed pos, None, None) in
           let else_cond_prim = CP.mkNot then_cond_prim None pos in
+          let ctx = prune_ctx_list prog ctx in
           let then_ctx = combine_list_partial_context_and_unsat_now prog ctx then_cond_prim in
             Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_partial_context then_ctx)) pos;
             let else_ctx =combine_list_partial_context_and_unsat_now prog ctx else_cond_prim in
