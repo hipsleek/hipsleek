@@ -395,9 +395,7 @@ and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
 	  | [] -> CP.mkTrue pos
 
 and prune_preds prog (f:formula):formula = 
-  if (not !Globals.allow_pruning) then f
-  else 
-    let rec helper_heap hp old_mem = match hp with
+  let rec helper_heap hp old_mem = match hp with
       | Star s ->
         let h1, mem1, changed1  = helper_heap s.h_formula_star_h1 old_mem in
         let h2, mem2, changed2  = helper_heap s.h_formula_star_h2 mem1 in
@@ -420,7 +418,7 @@ and prune_preds prog (f:formula):formula =
             let new_mem = merge_mems old_mem  [{memo_group_fv = [d.h_formula_data_node];memo_group_cons = [pcond;npcond]}] in 
            (new_hp, new_mem,true))
            
-      | ViewNode v ->      
+      | ViewNode v ->   
         let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
         let fr_vars = (CP.SpecVar (CP.OType v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
         let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
@@ -437,7 +435,8 @@ and prune_preds prog (f:formula):formula =
         let l_prune,l_no_prune, new_mem = List.fold_left 
           (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)-> (*decide which prunes can be activated , drop the onese that are implied
             add the unknowns while also keeping the old unknowns*)
-            if (Util.list_equal pr_branches rem_br) then (yes_prune, no_prune,new_mem)
+            if (Util.list_equal pr_branches rem_br) then 
+              (yes_prune, no_prune,new_mem)
             else
               let n_l = Util.intersect pr_branches rem_br in
               if ((List.length n_l)=0) then (yes_prune, no_prune,new_mem)
@@ -474,7 +473,7 @@ and prune_preds prog (f:formula):formula =
                       (yes_prune,nnp,new_mem)
                 with | Not_found -> 
                   let new_mem = {memo_group_fv=fv;memo_group_cons=[{p_cond with memo_status=Unknown false}]}::new_mem in
-                  (yes_prune, no_prune,(group_mem_by_fv new_mem))
+                  (yes_prune, (p_cond, pr_branches)::no_prune,(group_mem_by_fv new_mem))
           ) ([],[], old_mem) prun_cond in
          (*prun_cond : (memoised_constraint * formula_label list ) list -> remaining prune conditions*)
          (*l_prune : contradictions obtained by directly searching the contradiction list, *)
@@ -503,10 +502,25 @@ and prune_preds prog (f:formula):formula =
               {c with memo_group_cons = n_l@o_l}) new_mem  in
             (new_hp,merge_mems new_mem ni,true)
           else  
-            let new_hp = ViewNode{v with h_formula_view_pruning_conditions = [];} in
-            (new_hp,new_mem,false)
+            let new_hp = ViewNode{v with h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
+            (new_hp,new_mem,true)
         else 
-          (hp,new_mem,false) in
+          match v.h_formula_view_remaining_branches with
+            | Some _ ->
+              let new_hp = ViewNode{v with h_formula_view_pruning_conditions = l_no_prune;} in
+              (new_hp,new_mem,false)
+            | None ->
+            let ai = try List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants with | Not_found -> ([],[]) in
+            let ai = List.map (CP.b_apply_subs zip) (snd ai) in
+            let gr_ai = create_memo_group ai true in
+            let new_mem = List.map (fun c-> 
+              let n_l,o_l = List.partition (fun d-> not (List.exists (CP.eq_b_formula d.memo_formula) ai)) c.memo_group_cons in
+              let o_l = List.map(fun d-> match d.memo_status with
+                | Implied -> {d with memo_status=Implied_dupl}
+                | _ -> d) o_l in
+              {c with memo_group_cons = n_l@o_l}) new_mem  in            
+            let new_hp = ViewNode {v with  h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
+          (new_hp,merge_mems new_mem gr_ai,true) in
             
     let rec helper_formulas f = match f with
     | Or o -> 
@@ -526,8 +540,15 @@ and prune_preds prog (f:formula):formula =
         if changed then 
          fct {b with formula_base_heap = nh; formula_base_memoise = mem}
         else b in
-      Base b in
-    helper_formulas f
+      Base (fct b) in
+    print_string ("\n before prune: "^(Cprinter.string_of_formula f)^"\n");
+    if (not !Globals.allow_pruning) then f
+    else 
+     (Util.push_time "prune_preds";
+      let nf = helper_formulas f in
+      Util.pop_time "prune_preds";
+      print_string ("\n after prune: "^(Cprinter.string_of_formula nf)^"\n");
+      nf)
 
 and prune_ctx prog ctx = match ctx with
   | OCtx (c1,c2)-> OCtx (prune_ctx prog c1,prune_ctx prog c2)

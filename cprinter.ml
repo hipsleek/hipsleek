@@ -10,6 +10,7 @@ module P = Cpure
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
+let pr_mem = ref true
 
 (** primitive formatter comands *)
 let fmt_string x = pp_print_string (!fmt) x
@@ -625,14 +626,18 @@ let pr_prune_status st = match st with
 let pr_memoise mem = fmt_string "[";pr_seq "," (fun c-> 
   pr_b_formula c.memo_formula ; fmt_string "->"; pr_prune_status c.memo_status) mem; fmt_string "]"
 
-let pr_memoise_group m_gr = fmt_string "memoised (";pr_seq " \n\n" (fun c-> fmt_string "[";
-  pr_list_of_spec_var c.memo_group_fv ; fmt_string "]: ";pr_memoise c.memo_group_cons) m_gr; fmt_string ")"
+let pr_memoise_group m_gr = 
+  if !pr_mem then (fmt_string "memoised (";pr_seq " \n\n" (fun c-> fmt_string "[";
+  pr_list_of_spec_var c.memo_group_fv ; fmt_string "]: ";pr_memoise c.memo_group_cons) m_gr; fmt_string ")")
+  else ()
   
 let pr_remaining_branches s = match s with 
     | None -> ()
-    | Some s -> fmt_string "@[" ; pr_formula_label_list s; fmt_string "]"
+    | Some s -> fmt_string "@ rem br[" ; pr_formula_label_list s; fmt_string "]"
 
-let pr_prunning_conditions pcond =
+let pr_prunning_conditions cnd pcond = match cnd with 
+  | None -> ()
+  | Some _ ->
   fmt_string "@ prune_cond [" ; List.iter (fun (c,c2)->
       fmt_string "( " ; pr_b_formula c.memo_formula;fmt_string " ";pr_prune_status c.memo_status; fmt_string" )->"; pr_formula_label_list c2) pcond ;fmt_string "]"
     
@@ -668,7 +673,7 @@ let rec pr_h_formula h =
          fmt_string "::"; 
          pr_angle c pr_spec_var svs  ;
          pr_remaining_branches ann; 
-         pr_prunning_conditions pcond
+         pr_prunning_conditions ann pcond
       | HTrue -> fmt_bool true
       | HFalse -> fmt_bool false
 
@@ -996,6 +1001,7 @@ let printer_of_list_list_partial_context (fmt: Format.formatter) (ctx: list_part
 
 (* pretty printing for a view *)
 let pr_view_decl v =
+  pr_mem:=false;
   let f bc =
     match bc with
 	  | None -> ()
@@ -1016,7 +1022,8 @@ let pr_view_decl v =
             let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
             let d = String.concat ";" (List.map string_of_b_formula c2) in
             fmt_string ("{"^s^"} -> ["^d^"]")) c) v.view_prune_invariants;
-  fmt_close_box ()
+  fmt_close_box ();
+  pr_mem:=true
 
 
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
