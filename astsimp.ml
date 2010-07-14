@@ -4715,6 +4715,8 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
         | CP.BagUnion (l,p), CP.Var _ -> 
           if (List.exists (fun c-> match c with | CP.Bag (l,p)-> (List.length l)>0 | _ -> false )l) then CP.Neq (e2, CP.Bag ([],p),p)
             else c 
+        | CP.Var _ , CP.Bag (l,p) -> if (List.length l)>0 then CP.Neq (e1, CP.Bag ([],p),p) else c
+        | CP.Bag (l,p) , CP.Var _ -> if (List.length l)>0 then CP.Neq (e2, CP.Bag ([],p),p) else c
         | _-> c) 
       | _ -> c) r in
         
@@ -4867,7 +4869,7 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
             List.fold_left (fun a (_,c)-> CP.mkAnd a c no_pos) r1 b ) (CF.split_components c) in
           (*print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
           let pures = simplify_pures pures (Util.difference (CP.fv pures) v_l) in
-          let _  = print_string ("\n extracted conditions: "^(Cprinter.string_of_pure_formula pures)^"\n") in
+          (*let _  = print_string ("\n extracted conditions: "^(Cprinter.string_of_pure_formula pures)^"\n") in*)
           (*print_string ("\n got: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
           let pc = get_pure_conj_list pures in
           let pc = filter_pure_conj_list pc in

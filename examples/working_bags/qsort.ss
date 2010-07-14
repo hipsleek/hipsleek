@@ -58,19 +58,19 @@ void partition1(node x, ref node y, ref node z, int c)
 /* function to append 2 bounded lists */
 node append_bll1(node x, node y)
 	requires x::sll1<S1> * y::sll1<S2> & 
-	forall (a, b:(a notin S1 | b notin S2 | a <= b | a>0 | a<=0))
+	forall (a, b:(a notin S1 | b notin S2 | a <= b | a>0 & a<=0))
 	ensures res::sll1<S3> & S3 = union(S1, S2);
 
 {
-        node xn; 
-
+  node xn; 
 	if (x.next == null)
-		x.next = y;
+    {x.next = y;
+    }
 	else
-         {
+    {
 		xn = append_bll1(x.next, y);
                 x.next = xn;
-         }
+    }
 
 	return x; 
 }

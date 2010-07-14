@@ -359,7 +359,8 @@ node remove_min(node x, ref myint a)
   //int hl, hr;
   if (x.left == null) {
     a.val = x.val;
-    return x.right;
+    node t = x.right;
+    return t;
   } else {
     if (height(x.left) < height(x.right)) {
       // assert x.right != null;

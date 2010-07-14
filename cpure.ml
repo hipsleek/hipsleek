@@ -580,7 +580,14 @@ and implied_prune_ante ante = match ante with
     match f with 
     | BConst _  | BVar _ | EqMax _ | EqMin _  | BagSub _ | BagMin _ | BagMax _  | ListAllN _ | ListPerm _ -> ante
     | ListIn _ | ListNotIn _ | BagIn _  | BagNotIn _ | Lt _ | Lte _ | Gt _ | Gte _ | Neq _ -> mkTrue no_pos
-    | Eq _  -> mkTrue no_pos)
+    | Eq (e1,e2,_)  -> 
+      match e1 with 
+        | BagUnion _ -> ante 
+        | Bag _ -> ante
+        | _-> match e2 with 
+            | BagUnion _ -> ante 
+            | Bag _ -> ante
+            | _ -> mkTrue no_pos)
   | And (f1,f2,l) -> mkAnd (implied_prune_ante f1) (implied_prune_ante f2) l
   | Or _ | Not _  | Forall _  | Exists _ -> ante 
 

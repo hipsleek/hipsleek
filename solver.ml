@@ -534,7 +534,7 @@ and prune_preds prog (f:formula):formula =
             let dismissed_invs = List.map (CP.b_apply_subs zip) (snd dismissed_invs) in
             let added_invs = try List.find (fun (c1,_)-> Util.list_equal c1 rem_br_lst) v_def.view_prune_invariants with | Not_found -> ([],[]) in
             let added_invs = List.map (CP.b_apply_subs zip) (snd added_invs) in
-            let ni = List.filter (fun c-> not (List.exists (CP.eq_b_formula c) dismissed_invs)) added_invs  in
+            let ni = (*List.filter (fun c-> not (List.exists (CP.eq_b_formula c) dismissed_invs))*) added_invs  in
             let ni = create_memo_group ni true in
             let oi = List.filter (fun c-> not (List.exists (CP.eq_b_formula c) added_invs)) dismissed_invs  in
             let new_mem = List.map (fun c-> 
@@ -3021,9 +3021,84 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					                is_folding is_universal ctx1 conseq pos in
 				                  let prf = mkUnfold ctx0 conseq anode prf1 in
 					              (res_rs, prf)
-				                end else if !Globals.use_coercion then 
+				                end else 
+                        (* two different predicates match, try coercion *)
+                          (*try base case unfolding *)
+                          let ans = 
+                            let _ = Util.push_time "empty_predicate_testing" in
+                            let vd = (look_up_view_def_raw prog.prog_view_decls c1) in
+                            let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with es_formula = ante;
+                                                es_heap = estate.es_heap;
+                                                es_evars = estate.es_evars;
+                                                es_gen_expl_vars = estate.es_gen_expl_vars; 
+                                                es_gen_impl_vars = estate.es_gen_impl_vars; 
+                                                es_ante_evars = estate.es_ante_evars;
+                                                es_unsat_flag = false;
+                                                es_prior_steps = estate.es_prior_steps;
+                                                es_path_label = estate.es_path_label;} in
+                            let na,prf = match vd.view_base_case with
+                             | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
+                                                fc_message ="failure 1 ?? when checking for aliased node";
+                                                fc_current_lhs = estate;
+                                                                fc_prior_steps = estate.es_prior_steps;
+                                                fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+                                                fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), UnsatConseq)
+                             | Some (bc1,(base1,branches1)) -> 
+                                begin
+                                let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+                                let to_vars = p1 :: v1 in
+                                let base = Cpure.subst_avoid_capture fr_vars to_vars base1 in
+                                let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
+                                let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
+                                let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx bc1 !Globals.enable_syn_base_case in
+                                if b then 
+                                  let ctx = unfold_context (Branches (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
+                                  (ctx,TrueConseq)
+                                else  (CF.mkFailCtx_in(Basic_Reason  ( { 
+                                          fc_message ="failure 2 ?? when checking for aliased node";
+                                          fc_current_lhs = estate;
+                                          fc_prior_steps = estate.es_prior_steps;
+                                          fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+                                          fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
+                                end in
+                            let _ = Util.pop_time "empty_predicate_testing" in
+                            if (isFailCtx na) then None
+                            else 
+                              let cx = match na with | SuccCtx l -> List.hd l |_ -> report_error pos("heap_entail_conjunct: something wrong has happened with the context") in
+                              let _ = Util.push_time "fold_after_base_case" in
+                              let do_fold_result,prf = do_fold_w_ctx cx p2 in
+                              let _ = Util.pop_time "fold_after_base_case" in
+                              if not(isFailCtx do_fold_result) then Some (do_fold_result,prf)
+                              else                         
+                              match cx with
+                                | OCtx (c1,c2) ->  None
+                                | Ctx c ->
+                                    let r1,p1 =if !Globals.use_coercion then 
+                                        begin
+                                        Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion") pos;
+                                        let res, prfs =  do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br lhs_mem rhs_p rhs_t rhs_fl lhs_b rhs_b rhs_mem ln2 is_folding pos pid in
+                                        let prf = mkCoercion2 ctx0 conseq prfs in
+                                        (res, prf)
+                                        end else 
+                                        begin
+                                          Debug.devel_pprint ("heap_entail_conjunct: " ^ "can't reduce, fold, unfold") pos;
+                                          (CF.mkFailCtx_in (Basic_Reason ( {
+                                                fc_message = "can't reduce, fold, unfold";
+                                                fc_current_lhs = estate;
+                                                                  fc_prior_steps = estate.es_prior_steps;
+                                                fc_orig_conseq = estate.es_orig_conseq;
+                                                fc_failure_pts =match pid with | Some s-> [s] | _ -> []; 
+                                              })), Failure)
+                                        end in
+                                    if not(isFailCtx r1) then Some (r1,p1)
+                                          else None in
+                        match ans with 
+                          | Some x -> x
+                          | _ -> 
+                                (*finish base case unfolding*)
+                                (**************************)
+                        if !Globals.use_coercion then 
 				                  begin
-					                (* two different predicates match, try coercion *)
 					                Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "trying coercion") pos;
 					                let res, prfs = do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br lhs_mem rhs_p rhs_t rhs_fl lhs_b rhs_b rhs_mem ln2 is_folding pos pid in
 					                let prf = mkCoercion2 ctx0 conseq prfs in
