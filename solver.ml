@@ -2431,11 +2431,8 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
     | _ -> report_error pos ("heap_entail_conjunct: context is disjunctive or fail!!!")
 
 and heap_entail_build_pure_check (evars : CP.spec_var list) mem_lst (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
-  (*let cons_vars = (CP.fv conseq) @ (CP.fv ante)in*)
-  (*let mem_lst,dropped = List.partition (fun c-> (List.length (Util.intersectx cons_vars c.memo_group_fv))>0) mem_lst in
-  let _ = print_string ("\nrel vars: "^(Cprinter.string_of_spec_var_list cons_vars)^"\n") in
-  let _ = print_string ("\nrel forms: "^(Cprinter.string_of_pure_formula ante)^" -- "^(Cprinter.string_of_pure_formula ante)^"\n") in
-  let _ = print_string ("\ndropped: "^(Cprinter.string_of_memoised_list dropped)^"\n") in*)
+  let cons_vars = (CP.fv conseq) @ (CP.fv ante)in
+  let mem_lst,dropped = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var cons_vars c.memo_group_fv))>0) mem_lst in
   let ante = fold_mem_lst ante false mem_lst in
   let avars = CP.fv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
