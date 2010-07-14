@@ -79,7 +79,7 @@ void qsort(ref node xs)
 		}
         b = (xs.next == null);
 		if (tmp != null)
-      {assume false ;
+      {
 			qsort(tmp);}
 
 		tmp = new node(v, tmp);
@@ -94,5 +94,5 @@ void qsort(ref node xs)
 			xs = append_bll(xs.next, tmp);
 		}
 	}
-assume false;	
+
 }
