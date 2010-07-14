@@ -110,11 +110,9 @@ node get_next_next(node x)
 void insert(node x, int a)
 	requires x::ll<n> & n > 0 
 	ensures x::ll<n+1>;
-
 {
 			//dprint;
       node tmp = null;
-	
 	if (x.next == null)
 		x.next = new node(a, tmp);
 	else 

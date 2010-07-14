@@ -574,6 +574,17 @@ and split_conjunctions = function
 and join_conjunctions f = 
 	List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) f
 		  
+(*take out from ante all the leafs that *)
+and implied_prune_ante ante = match ante with
+  | BForm (f,_,_) -> (
+    match f with 
+    | BConst _  | BVar _ | EqMax _ | EqMin _  | BagSub _ | BagMin _ | BagMax _  | ListAllN _ | ListPerm _ -> ante
+    | ListIn _ | ListNotIn _ | BagIn _  | BagNotIn _ | Lt _ | Lte _ | Gt _ | Gte _ | Neq _ -> mkTrue no_pos
+    | Eq _  -> mkTrue no_pos)
+  | And (f1,f2,l) -> mkAnd (implied_prune_ante f1) (implied_prune_ante f2) l
+  | Or _ | Not _  | Forall _  | Exists _ -> ante 
+
+      
 and is_member_pure (f:formula) (p:formula):bool = 
 	let y = split_conjunctions p in
 	List.exists (fun c-> equalFormula f c) y
@@ -2616,7 +2627,8 @@ let memo_norm (l:b_formula list): b_formula list =
     | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
-    | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> get_head (List.hd e_l) in
+    | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
+      if (List.length e_l)>0 then get_head (List.hd e_l) else "[]" in
   
   let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
      
@@ -2682,10 +2694,10 @@ let memo_norm (l:b_formula list): b_formula list =
       | Gte (e1,e2,l) -> Lte (norm_expr e2,norm_expr e1,l)::a
       | Eq  (e1,e2,l) -> 
         let e1,e2 = norm_expr e1,norm_expr e2 in
-        if(eqExp e1 e2) then (print_string "fired" ;a) else Eq(e1,e2,l)::a        
+        if(eqExp e1 e2) then a else Eq(e1,e2,l)::a        
       | Neq (e1,e2,l) ->
         let e1,e2 = norm_expr e1,norm_expr e2 in
-        if(eqExp e1 e2) then (print_string "fired neq" ;a) else Neq(e1,e2,l)::a    
+        if(eqExp e1 e2) then a else Neq(e1,e2,l)::a    
       | BagIn (v,e,l) -> BagIn (v, norm_expr e, l)::a
       | BagNotIn (v,e,l) -> BagNotIn (v, norm_expr e, l)::a
       | ListIn (e1,e2,l) -> ListIn (norm_expr e1,norm_expr e2,l)::a

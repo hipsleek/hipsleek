@@ -158,6 +158,7 @@ let instantiation_variants = ref 0
 let pass_global_by_value = ref false
 
 let allow_pruning = ref false
+let prune_cnt_limit = ref 2
 
 let profile_threshold = 0.5 
 

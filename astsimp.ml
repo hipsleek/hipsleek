@@ -1198,7 +1198,7 @@ let rec (* overriding test *) (* field duplication test *)
         ignore (C.build_hierarchy cprog);
         let cprog = (add_pre_to_cprog cprog) in
         let cprog = sat_warnings cprog in
-        let c = if !Globals.enable_case_inference then pred_case_inference cprog else cprog in
+        let c = if (!Globals.enable_case_inference or !Globals.allow_pruning) then pred_case_inference cprog else cprog in
         let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
 			  c)))
 	end)
@@ -4690,7 +4690,7 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
                     | CP.Neq _ | CP.BagIn _ | CP.BagNotIn _ | CP.ListIn _ 
                     | CP.ListNotIn _-> true 
                     | _ -> false) pc in
-    List.map (fun (c1,c2) -> 
+    let r = List.map (fun (c1,c2) -> 
       if c1 then match c2 with
         | CP.Gt (e1,e2,l) -> CP.Lte (e2,e1,l)
         | CP.Gte (e1,e2,l) -> CP.Lt (e2,e1,l)
@@ -4707,6 +4707,16 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
         | CP.ListIn l -> CP.ListNotIn l
         | CP.ListNotIn l -> CP.ListIn l
         | _ -> c2) r  in
+    List.map (fun c-> match c with
+      | CP.Eq (e1,e2,l) -> (match e1,e2 with
+        | CP.Var _ , CP.BagUnion(l,p) ->  
+          if (List.exists (fun c-> match c with | CP.Bag (l,p)-> (List.length l)>0 | _ -> false )l) then CP.Neq (e1, CP.Bag ([],p),p)
+            else c
+        | CP.BagUnion (l,p), CP.Var _ -> 
+          if (List.exists (fun c-> match c with | CP.Bag (l,p)-> (List.length l)>0 | _ -> false )l) then CP.Neq (e2, CP.Bag ([],p),p)
+            else c 
+        | _-> c) 
+      | _ -> c) r in
         
   let rec simplify_pures (f:CP.formula) v_l :(CP.formula) = 
       let l = filter_pure_conj_list (get_pure_conj_list f) in
@@ -4770,21 +4780,6 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
         )
      | _ -> [] in
        
-     
-  (*let is_exclusive (f1:CP.b_formula) (f2:CP.b_formula) : bool= (* checks if f1 /\ f2 is sat*)
-      let sat_subno = ref 0 in
-      let f = CP.mkAnd (CP.BForm (f1,None,None)) (CP.BForm (f2,None,None)) no_pos in 
-      let sat = TP.is_sat_sub_no f Solver.sat_no sat_subno in
-      not sat in
-        
-  let imply (f1:CP.b_formula) (f2:CP.b_formula) : bool=  
-    let imp_subno = ref 0 in
-    imp_subno := !imp_subno+1; 
-		Debug.devel_pprint ("IMP #" ^ (string_of_int !Solver.imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;
-    let r,_,_ = TP.imply (CP.BForm (f1,None,None)) (CP.BForm (f2,None,None)) ((string_of_int !Solver.imp_no) ^ "." ^ (string_of_int !imp_subno)) in
-    r in
-  *)
-    
   let rec propagate_constraints (p_c:CP.b_formula list) (nl:CP.b_formula list): CP.b_formula list = 
     let rec new_con_list l = match l with
       | [] -> []
@@ -4831,8 +4826,8 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
                       | CP.And (f1,f2,_) -> (r f1)@(r f2)
                       | _ -> [] in 
                r lr in  
-      let ln = (List.filter (fun (e1,e2,_) -> 
-          not (List.exists (fun (d1,d2,_ )-> ((CP.eq_exp d1 e1)&(CP.eq_exp d2 e2))or((CP.eq_exp d1 e2)&(CP.eq_exp d2 e1)) )l2n)) l1n) @l2n in
+      let ln = if l1=[] then l2n else if l2=[] then l1n else (List.filter (fun (e1,e2,_) -> 
+          (*not*) (List.exists (fun (d1,d2,_ )-> ((CP.eq_exp d1 e1)&(CP.eq_exp d2 e2))or((CP.eq_exp d1 e2)&(CP.eq_exp d2 e1)) )l2n)) l1n) (*@l2n*) in
       let ln = List.map (fun (e1,e2,l) -> CP.Neq(e1,e2,l)) ln in
       lr@ln in
       
@@ -4858,13 +4853,10 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
     
     
     
-  let _ = Util.push_time "Case_inference" in
   (*actual case inference*)
   let or_list = get_or_list init_form in
   let disjunct_count = List.length or_list in
-  if disjunct_count = 1 then 
-     let _ = Util.pop_time "Case_inference" in
-     None
+  if disjunct_count = 1 then  None
   else
     let r = List.map (fun c-> 
           let pures = (fun (h,p,_,b,_,_)-> 
@@ -4875,6 +4867,7 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
             List.fold_left (fun a (_,c)-> CP.mkAnd a c no_pos) r1 b ) (CF.split_components c) in
           (*print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
           let pures = simplify_pures pures (Util.difference (CP.fv pures) v_l) in
+          let _  = print_string ("\n extracted conditions: "^(Cprinter.string_of_pure_formula pures)^"\n") in
           (*print_string ("\n got: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
           let pc = get_pure_conj_list pures in
           let pc = filter_pure_conj_list pc in
@@ -4882,6 +4875,7 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
           (*let prop_pc = List.map (fun c-> (c,false)) prop_pc in*)
           let pp = prop_pc @pc(*(List.map (fun c-> (c,true)) pc)*) in
           let pp = List.filter (fun c-> Util.subset (CP.bfv c) v_l) pp in
+          
           let pp = List.map (fun c -> (CP.bfv c,c)) pp in
           (pp, c)) or_list in   
     let guard_list, disjunct_list = List.fold_left (fun (a1,a2) (conds, form) -> 
@@ -4918,7 +4912,6 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
       List.filter (fun (c1,c2)-> disjunct_count>(List.length c2))(helper formulas) ) grouped_guards_by_vars) in 
     
     let invariant_list  = compute_invariants inv_pures in
-    let _ = Util.pop_time "Case_inference" in    
     if (List.length det_det_type) = 0 then None 
     else  Some (disjunct_list, det_det_type, invariant_list)
     
@@ -4968,12 +4961,33 @@ and struc_case_inference cp cv (sf: CF.struc_formula) :
 and view_case_inference cp vd =  
     let sf  = CP.SpecVar (CP.OType vd.C.view_data_name, self, Unprimed) in
     let branches,conds, invs = struc_case_inference cp (sf::vd.C.view_vars) vd.C.view_formula in
+    let conds = List.map (fun (c1,c2)-> (List.hd (CP.memo_norm [c1]),c2)) conds in
+    let invs = List.map (fun (c1,c2)-> (c1, CP.memo_norm c2)) invs in 
     (*(fun c-> pr_seq "," (fun (c1,c2)-> pr_formula_label c1;fmt_string "->";pr_struc_formula c2) c) branches;*)
     let v' = { vd with  C.view_prune_branches = branches; C.view_prune_conditions = conds ; C.view_prune_invariants = invs;} in 
     (*print_string ("view "^vd.C.view_name ^" defined: \n"^(Cprinter.string_of_view_decl vd)^"\n becomes: \n"^(Cprinter.string_of_view_decl v')); *)
     v'    
     
 and pred_case_inference (cp:C.prog_decl):C.prog_decl =  
-    { cp with C.prog_view_decls  = List.map (fun c-> view_case_inference cp c) cp.C.prog_view_decls;}
+    Util.push_time "pred_inference";
+    let preds = List.map (fun c-> view_case_inference cp c) cp.C.prog_view_decls in
+    let prog = {cp with C.prog_view_decls  = preds;} in
+    let preds = List.map (fun c-> {c with 
+        C.view_formula =  Solver.prune_pred_struc prog c.C.view_formula ;
+        C.view_prune_branches = List.map (fun (c1,c2)-> (c1,Solver.prune_pred_struc prog c2)) c.C.view_prune_branches}) preds in
+    let prog = { prog with C.prog_view_decls  = preds;} in
+    let r = prog in
+    (*let proc_spec f = {f with 
+      C.proc_static_specs=  Solver.prune_pred_struc prog f.C.proc_static_specs;
+      C.proc_static_specs_with_pre=  Solver.prune_pred_struc prog f.C.proc_static_specs_with_pre;
+      C.proc_dynamic_specs=  Solver.prune_pred_struc prog f.C.proc_dynamic_specs;
+      C.proc_dynamic_specs_with_pre= Solver.prune_pred_struc prog f.C.proc_dynamic_specs_with_pre;
+      } in
+    let procs = List.map proc_spec  prog.C.prog_proc_decls in    
+    let datas = List.map(fun c-> {c with 
+      C.data_invs = List.map (Solver.prune_preds prog ) c.C.data_invs;
+      C.data_methods = List.map proc_spec c.C.data_methods;}) prog.C.prog_data_decls in
+    let r = { prog with C.prog_proc_decls  = procs; C.prog_data_decls = datas;} in*)
+    Util.pop_time "pred_inference" ;r
     
     

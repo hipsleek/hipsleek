@@ -92,10 +92,10 @@
 ./monadicinterp.cmx: typeclass.cmx monads.cmx 
 ./monads.cmo: typeclass.cmo 
 ./monads.cmx: typeclass.cmx 
-./nativefront.cmo: sparser.cmo slexer.cmo sleekcommons.cmo ipure.cmo \
-    iformula.cmo iast.cmo globals.cmo 
-./nativefront.cmx: sparser.cmx slexer.cmx sleekcommons.cmx ipure.cmx \
-    iformula.cmx iast.cmx globals.cmx 
+./nativefront.cmo: sparser.cmo sleekcommons.cmo ipure.cmo iformula.cmo \
+    iast.cmo globals.cmo 
+./nativefront.cmx: sparser.cmx sleekcommons.cmx ipure.cmx iformula.cmx \
+    iast.cmx globals.cmx 
 ./net.cmo: 
 ./net.cmx: 
 ./oast.cmo: 
@@ -150,8 +150,6 @@
 ./sleekengine.cmx: xmlfront.cmx util.cmx solver.cmx sleekcommons.cmx \
     nativefront.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx error.cmx \
     cpure.cmx cprinter.cmx cformula.cmx cast.cmx astsimp.cmx 
-./slexer.cmo: sparser.cmo globals.cmo error.cmo 
-./slexer.cmx: sparser.cmx globals.cmx error.cmx 
 ./smtsolver.cmo: globals.cmo cpure.cmo 
 ./smtsolver.cmx: globals.cmx cpure.cmx 
 ./solver.cmo: util.cmo tpdispatcher.cmo prooftracer.cmo globals.cmo error.cmo \

@@ -523,3 +523,23 @@ let has_cycles ():bool =
 		if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
 			else (List.exists (fun c-> (cc c (c::visited))) sons) in	
 	(cc Globals.top_flow [Globals.top_flow])
+  
+  
+  
+let print_profiling_info () =
+  if (!Globals.profiling) then 
+    let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !tasks [] in
+    let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+      let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+      let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+      let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+        (if (List.length l)>0 then 
+          let l = (List.sort compare l) in		
+          (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+        else "")^"],  "^(fp (t/.ot))^"%)") in
+      ((a1+1),r) 
+    ) (0,"") str_list in
+    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" )
+  else ()

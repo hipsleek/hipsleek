@@ -118,55 +118,50 @@ let main () =
   let buffer = Buffer.create 10240 in
     try
       if (!inter) then 
-	while not (!quit) do
-	  if !inter then (* check for interactivity *)
-	    print_string !prompt;
-	  let input = read_line () in
-	    match input with
-	      | "" -> ()
-	      | _ -> 
-		  try
-		    let term_indx = String.index input terminator in
-		    let s = String.sub input 0 (term_indx+1) in
-		      Buffer.add_string buffer s;
-		      let cts = Buffer.contents buffer in
-			if cts = "quit" || cts = "quit\n" then quit := true
-			else try
-			  let cmd = parse cts in
-			    (match cmd with
-			       | DataDef ddef -> process_data_def ddef
-			       | PredDef pdef -> process_pred_def pdef
-			       | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
-			       | CaptureResidue lvar -> process_capture_residue lvar
-			       | LemmaDef ldef -> process_lemma ldef
-			       | PrintCmd pcmd -> process_print_command pcmd
-			       | LetDef (lvar, lbody) -> put_var lvar lbody
-             | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
-			       | EmptyCmd -> ());
-			    Buffer.clear buffer;
-			    if !inter then
-			      prompt := "SLEEK> "
-			with
-			  | _ -> 
-			      dummy_exception();
-			      print_string ("Error.\n");
-			      Buffer.clear buffer;
-			      if !inter then
-				prompt := "SLEEK> "
-		  with 
-		    | SLEEK_Exception
-		    | Not_found ->
-                        dummy_exception();
-			Buffer.add_string buffer input;
-			Buffer.add_char buffer '\n';
-			if !inter then
-			  prompt := "- "
-	done
+        while not (!quit) do
+          if !inter then (* check for interactivity *)
+            print_string !prompt;
+          let input = read_line () in
+          match input with
+            | "" -> ()
+            | _ -> 
+              try
+                let term_indx = String.index input terminator in
+                let s = String.sub input 0 (term_indx+1) in
+                Buffer.add_string buffer s;
+                let cts = Buffer.contents buffer in
+                if cts = "quit" || cts = "quit\n" then quit := true
+                else try
+                  let cmd = parse cts in
+                  (match cmd with
+                     | DataDef ddef -> process_data_def ddef
+                     | PredDef pdef -> process_pred_def pdef
+                     | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                     | CaptureResidue lvar -> process_capture_residue lvar
+                     | LemmaDef ldef -> process_lemma ldef
+                     | PrintCmd pcmd -> process_print_command pcmd
+                     | LetDef (lvar, lbody) -> put_var lvar lbody
+                     | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
+                     | EmptyCmd -> ());
+                  Buffer.clear buffer;
+                  if !inter then
+                      prompt := "SLEEK> "
+                with
+                  | _ -> dummy_exception();
+                print_string ("Error.\n");
+                Buffer.clear buffer;
+                if !inter then prompt := "SLEEK> "
+              with 
+                | SLEEK_Exception
+                | Not_found -> dummy_exception();
+              Buffer.add_string buffer input;
+              Buffer.add_char buffer '\n';
+              if !inter then prompt := "- "
+        done
       else 
-	let _ = List.map (parse_file NF.list_parse) !source_files in ()
+        let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
-      | End_of_file ->
-	  print_string ("\n")
+      | End_of_file -> print_string ("\n")
 
 let _ = 
   wrap_exists_implicit_explicit := false ;
@@ -174,4 +169,4 @@ let _ =
   if !print_version_flag then begin
 	print_version ()
   end else
-	main ()
+	(Util.push_time "Overall";  main () ; Util.pop_time "Overall";Util.print_profiling_info ())

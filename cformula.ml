@@ -28,6 +28,7 @@ type memoised_constraint = {
     memo_status : prune_status }
 type memoised_group = {
     memo_group_fv : CP.spec_var list;
+    memo_group_changed: bool;
     memo_group_cons : memoised_constraint list;}
   
 type t_formula = (* type constraint *)
@@ -522,11 +523,14 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
 					h_formula_star_h2 = f2; 
 					h_formula_star_pos = pos})
 
-and fold_mem_lst (f_init:CP.formula) lst :CP.formula= 
+and fold_mem_lst (f_init:CP.formula) with_dupl lst :CP.formula= 
   List.fold_left (fun a c-> 
     List.fold_left (fun a c-> 
       match c.memo_status with
-        | Implied_dupl (*-> CP.mkAnd a (CP.BForm (c.memo_formula,None,Some 1) pos)*) 
+        | Implied_dupl -> 
+          if with_dupl then 
+          CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos 
+          else a
         | Implied -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos
         | _ -> a)
     a c.memo_group_cons) 
@@ -546,9 +550,11 @@ and filter_mem_triv lst =
   
 and filter_mem fvs lst  = 
   filter_mem_fct (fun c->List.length(Util.intersect fvs (CP.bfv c.memo_formula))>0) lst
-  
-  
-and recompute_unknowns (p:memoised_group list): memoised_group list= List.map (fun c->
+ 
+and recompute_unknowns (p:memoised_group list): memoised_group list= p
+  (*
+  Util.push_time "recompute_unknowns";
+  let r = List.map (fun c->
   let l_i,l_c,l_u = List.fold_left (fun (a1,a2,a3) c-> match c.memo_status with
     | Implied
     | Implied_dupl -> (c::a1,a2,a3)
@@ -571,37 +577,66 @@ and recompute_unknowns (p:memoised_group list): memoised_group list= List.map (f
            {memo_formula= nf; memo_status = Fail_prune}]@acc
         else acc
   ) [] l_u in
-  {c with memo_group_cons =  l_i@l_c@n_l_u} ) p
+  {c with memo_group_cons =  l_i@l_c@n_l_u} ) p in
+  Util.pop_time "recompute_unknowns";r*)
   
+and filter_merged_cons l =   
+  let mem_eq_st c1 c2 = match c1.memo_status ,c2.memo_status with
+    | Implied, Implied | Implied_dupl, Implied_dupl | Unknown _, Unknown _ | Fail_prune,Fail_prune
+    | Implied,Implied_dupl -> CP.equalBFormula c1.memo_formula c2.memo_formula
+    | _ -> false in
+  let rec remove_d n =  match n with | [] -> []
+  | q::qs -> 
+    let nqs = List.filter (fun c-> not (mem_eq_st c q)) qs in
+    q::(remove_d nqs)in   
+  Util.push_time "filter_dupl_memo";let r = remove_d (List.concat l) in Util.pop_time "filter_dupl_memo"; r
+  (*
+  let mem_eq c1 c2 = CP.equalBFormula c1.memo_formula c2.memo_formula in
+  if ((List.length l) =0) then []
+  else 
+  let r = List.fold_left (fun acc lst_to_ad  ->  
+    List.fold_left (fun n_acc el_to_ad->
+      let ellst, nellst = List.partition (mem_eq el_to_ad) n_acc in
+      let stl  = List.map (fun d-> d.memo_status)(el_to_ad :: ellst) in
+      let stl = Util.remove_dups stl in
+      let r = if (List.mem (Fail_prune) stl) then [{memo_formula el_to_ad.memo_formula;memo_status = Fail_prune}]else [] in
+      if (List.mem (Implied) stl) then 
+        if (List.mem (Implied_dupl) stl) then {memo_formula el_to_ad.memo_formula;memo_status = Implied_dupl}::r 
+        else {memo_formula el_to_ad.memo_formula;memo_status = Implied}::r 
+          else r 
+      ) acc lst_to_ad) (List.hd l) (List.tl l) in*)
+ 
 and merge_mems (l1: memoised_group list) (l2: memoised_group list) : memoised_group list = 
   let n_l = List.fold_left (fun a c-> 
     let merged, un_merged = List.partition (fun d-> (List.length(Util.intersect d.memo_group_fv c.memo_group_fv))>0) a in
-    let n1,n2 = List.fold_left (fun (a1,a2) d-> (d.memo_group_fv@a1,d.memo_group_cons@a2)) (c.memo_group_fv,c.memo_group_cons) merged in
+    let n1,n2 = List.fold_left (fun (a1,a2) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2)) (c.memo_group_fv,[c.memo_group_cons]) merged in
     let ng = if (List.length merged)>0 then
-        {memo_group_fv = Util.remove_dups n1; memo_group_cons = Util.remove_dups n2}
-      else
-        {memo_group_fv = n1; memo_group_cons = n2} in
+        {memo_group_fv = Util.remove_dups n1; memo_group_cons = filter_merged_cons n2;memo_group_changed = true;}
+      else c in
     ng::un_merged) l2 l1 in
   recompute_unknowns n_l
 
 and memoise_add_memo (l: memoised_group list) (cm:memoised_constraint): memoised_group list =
   let fv = CP.bfv cm.memo_formula in
   let merged,un_merged = List.partition (fun c-> (List.length (Util.intersect fv c.memo_group_fv))>0) l in
-  let n1,n2 = List.fold_left (fun (a1,a2) d-> (d.memo_group_fv@a1,d.memo_group_cons@a2))(fv,[cm]) merged in   
+  let n1,n2 = List.fold_left (fun (a1,a2) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2))(fv,[[cm]]) merged in   
   let l = if (List.length merged)>0 then 
-    let ng = {memo_group_cons =  Util.remove_dups n2; memo_group_fv = Util.remove_dups n1} in
+    let ng = {memo_group_cons =  filter_merged_cons n2; memo_group_fv = Util.remove_dups n1;memo_group_changed = true;} in
     List.hd (recompute_unknowns [ng])
-    else {memo_group_cons =  Util.remove_dups n2; memo_group_fv = Util.remove_dups n1} in  
+    else {memo_group_cons =  [cm]; memo_group_fv = fv;memo_group_changed = true;} in  
   l::un_merged   
   
 and memoise_add_pure (l: memoised_group list) (p:CP.formula) : memoised_group list = 
+  Util.push_time "add_pure";
   let disjs = List.fold_left (fun a c-> match c with | CP.BForm (x,_,_) -> x::a | _ -> a)[] (CP.list_of_conjs p) in
   let m2 = create_memo_group disjs false in
-  merge_mems l m2
+  let r = merge_mems l m2 in
+  Util.pop_time "add_pure"; r
    
 (*add both imply and fail*)
 and create_memo_group (l:CP.b_formula list) inv_cons:memoised_group list = 
   let l = CP.memo_norm l in
+  let l = Util.remove_dups l in
   let ll  = List.fold_left ( fun a bf->
     let fv = CP.bfv bf in
     let to_merge, no_merge = List.partition (fun (v,_)-> (List.length (Util.intersect fv v))>0) a in
@@ -613,7 +648,7 @@ and create_memo_group (l:CP.b_formula list) inv_cons:memoised_group list =
       let pos = {memo_formula=c;memo_status = (*if inv_cons then Implied else Implied_dupl*) Implied} in
       let neg = {memo_formula=CP.memo_f_neg c;memo_status = Fail_prune} in
     (pos::(neg::a))) [] fs in 
-    {memo_group_fv=vars;memo_group_cons=nfs}) ll
+    {memo_group_fv=vars;memo_group_cons=filter_merged_cons [nfs];memo_group_changed = true}) ll
   
 let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, b1, t1, mem1 = split_components f1 in
@@ -822,6 +857,18 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 			   h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
   | HTrue | HFalse -> []
 
+and filter_formula_memo f = match f with
+  | Or c -> mkOr (filter_formula_memo c.formula_or_f1) (filter_formula_memo c.formula_or_f2) no_pos
+  | Base b-> 
+    let fv = (h_fv b.formula_base_heap)@(CP.fv b.formula_base_pure) in
+    let nmem = List.filter (fun c-> (List.length (Util.intersect fv c.memo_group_fv))>0) b.formula_base_memoise in
+    Base {b with formula_base_memoise = nmem}
+  | Exists e-> 
+    let fv = (h_fv e.formula_exists_heap)@(CP.fv e.formula_exists_pure) in
+    let nmem = List.filter (fun c-> (List.length (Util.intersect fv c.memo_group_fv))>0) e.formula_exists_memoise in
+    Exists {e with formula_exists_memoise = nmem}
+
+  
 and f_top_level_vars (f : formula) : CP.spec_var list = match f with
   | Base ({formula_base_heap = h}) -> (top_level_vars h)
   | Or ({ formula_or_f1 = f1;
@@ -945,7 +992,9 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
        formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
        formula_base_memoise = filter_mem_triv (List.map (fun c -> 
           {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
-           memo_group_cons = List.map (fun d->{d with memo_formula = CP.b_apply_one s d.memo_formula}) c.memo_group_cons}) mem);
+           memo_group_changed = c.memo_group_changed;
+           memo_group_cons = List.map (fun d->{d with memo_formula = CP.b_apply_one s d.memo_formula;
+           }) c.memo_group_cons}) mem);
 			 formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
@@ -964,6 +1013,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
           formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
           formula_exists_memoise = filter_mem_triv (List.map (fun c -> 
             {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
+             memo_group_changed = c.memo_group_changed;
              memo_group_cons = List.map (fun d->{d with memo_formula = CP.b_apply_one s d.memo_formula}) c.memo_group_cons}) mem);
 					formula_exists_pos = pos})
 		
@@ -1348,7 +1398,7 @@ let rec group_mem_by_fv (lst: memoised_group list):memoised_group list =
           if (List.length (Util.intersect v_l v_list))>0 then ((Util.remove_dups (v_list@v_l),mem::m_l)::a,true)
           else ((v_l,m_l)::a,b)) ([],false) acc in
         if b then n_acc else (v_list,[mem])::acc) [] n_l in
-    List.map (fun (v_l,m_l)-> {memo_group_fv = v_l; memo_group_cons = m_l}) r
+    List.map (fun (v_l,m_l)-> {memo_group_fv = v_l; memo_group_changed = true ; memo_group_cons = m_l}) r
     
   
 (* context functions *)
@@ -2470,8 +2520,8 @@ let normalize_max_renaming_s f pos b ctx =
   must be cleared.
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
-  Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula =
-      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
+  Ctx {(empty_es (mkTrueFlow ()) no_pos) with 
+    es_formula = filter_formula_memo es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
  
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
