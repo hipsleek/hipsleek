@@ -69,6 +69,9 @@ let disjoint l1 l2 =
 let intersect l1 l2 =
   List.filter (fun x -> List.mem x l2) l1
 
+let intersect_fct f l1 l2 =
+  List.filter (fun x -> List.exists (f x) l2) l1  
+  
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
   

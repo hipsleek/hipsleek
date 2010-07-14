@@ -224,7 +224,13 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
             Debug.devel_pprint to_print pos;
             let rs_prim, prf = heap_entail_list_partial_context_init prog false false  unfolded vheap pos pid in
             let _ = PTracer.log_proof prf in
-            let rs = CF.clear_entailment_history_partial_list rs_prim in
+            let _ = Debug.devel_pprint ("bind: after proving context:\n"
+                    ^ (Cprinter.string_of_list_partial_context rs_prim)
+                    ^ "\n") pos in
+            let rs = clear_entailment_history_partial_list rs_prim in
+            let _ = Debug.devel_pprint ("bind: after clr hst context:\n"
+                    ^ (Cprinter.string_of_list_partial_context rs)
+                    ^ "\n") pos in
               (* Solver.entail_hist#upd_opt pid rs ("No label for BIND at line"  ^ (string_of_int pos.start_pos.Lexing.pos_lnum)); *)
                     if (CF.isFailListPartialCtx rs) then   
           (* Err.report_error {Err.error_loc = pos; Err.error_text = "bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context"} *)

@@ -13,6 +13,32 @@ module CP = Cpure
 module Err = Error
 module TP = Tpdispatcher
 
+let rec filter_formula_memo f = match f with
+  | Or c -> mkOr (filter_formula_memo c.formula_or_f1) (filter_formula_memo c.formula_or_f2) no_pos
+  | Base b-> 
+    let fv = (h_fv b.formula_base_heap)@(CP.fv b.formula_base_pure) in
+    let nmem,dropped = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var fv c.memo_group_fv))>0) b.formula_base_memoise in
+    Base {b with formula_base_memoise = nmem}
+  | Exists e-> 
+    let fv = (h_fv e.formula_exists_heap)@(CP.fv e.formula_exists_pure)@e.formula_exists_qvars in
+    let nmem,dropped = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var fv c.memo_group_fv))>0) e.formula_exists_memoise in
+    Exists {e with formula_exists_memoise = nmem}
+
+
+let clear_entailment_history_es (es :entail_state) :context = 
+  Ctx {(empty_es (mkTrueFlow ()) no_pos) with 
+    es_formula = filter_formula_memo es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
+ 
+let clear_entailment_history (ctx : context) : context =  
+  transform_context clear_entailment_history_es ctx
+  
+let clear_entailment_history_list (ctx : list_context) : list_context = 
+  transform_list_context (clear_entailment_history_es,(fun c->c)) ctx 
+
+let clear_entailment_history_partial_list (ctx : list_partial_context) : list_partial_context = 
+  transform_list_partial_context (clear_entailment_history_es,(fun c->c)) ctx 
+
+
 
 let fail_ctx_stk = ref ([]:fail_type list)
 (*
@@ -410,17 +436,17 @@ and prune_preds prog (f:formula):formula =
     
   let rec helper_heap hp old_mem = match hp with
       | Star s ->
-        let h1, mem1, changed1  = helper_heap s.h_formula_star_h1 old_mem in
-        let h2, mem2, changed2  = helper_heap s.h_formula_star_h2 mem1 in
+        let h1, new_pure1, mem1, changed1  = helper_heap s.h_formula_star_h1 old_mem in
+        let h2, new_pure2, mem2, changed2  = helper_heap s.h_formula_star_h2 mem1 in
         (Star {  
           h_formula_star_h1 = h1;
           h_formula_star_h2 = h2;
-          h_formula_star_pos = s.h_formula_star_pos },mem2, (changed1 or changed2) )
+          h_formula_star_pos = s.h_formula_star_pos },(CP.mkAnd new_pure1 new_pure2 no_pos), mem2, (changed1 or changed2) )
       | HTrue 
-      | HFalse -> (hp, old_mem,false) 
+      | HFalse -> (hp,(CP.mkTrue no_pos), old_mem,false) 
       | DataNode d ->       
         (match d.h_formula_data_remaining_branches with
-          | Some l -> (hp, old_mem,false)
+          | Some l -> (hp, (CP.mkTrue no_pos), old_mem,false)
           | None -> 
             let pcond  = { memo_formula = CP.Eq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos) ; memo_status = Fail_prune} in
             let npcond = {memo_formula = CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos) ; memo_status = Implied} in
@@ -429,23 +455,23 @@ and prune_preds prog (f:formula):formula =
               h_formula_data_remaining_branches = Some br_lbl;
               h_formula_data_pruning_conditions = [(pcond,br_lbl)];} in
             let new_mem = merge_mems old_mem  [{memo_group_fv = [d.h_formula_data_node];memo_group_changed = true;memo_group_cons = [pcond;npcond]}] in 
-           (new_hp, new_mem,true))
+           (new_hp, CP.BForm (npcond.memo_formula,None,None), new_mem,true))
            
       | ViewNode v ->   
         let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
         let fr_vars = (CP.SpecVar (CP.OType v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
         let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
         let zip = List.combine fr_vars to_vars in
-        let (rem_br, prun_cond) =  
+        let (rem_br, prun_cond,first_prune) =  
             match v.h_formula_view_remaining_branches with
-              | Some l -> (l, v.h_formula_view_pruning_conditions)
+              | Some l -> (l, v.h_formula_view_pruning_conditions,true)
               | None ->                    
 		               let new_br = fst (List.split v_def.view_prune_branches) in 
                    let new_cond = List.map 
                           (fun (b_f, lbl_lst) -> ({ memo_formula = CP.b_apply_subs zip b_f ; memo_status = Unknown true;},lbl_lst))
                           v_def.view_prune_conditions in
-                   (new_br,new_cond) in                   
-        if (List.length rem_br)<=1 then (hp,old_mem,false)
+                   (new_br,new_cond,false) in                   
+        if (List.length rem_br)<=1 then (hp,(CP.mkTrue no_pos),old_mem,false)
         else                  
         let l_prune,l_no_prune, new_mem = List.fold_left 
           (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)-> (*decide which prunes can be activated , drop the onese that are implied
@@ -493,7 +519,7 @@ and prune_preds prog (f:formula):formula =
                 with | Not_found -> 
                  (* let new_mem = {memo_group_fv=fv;memo_group_changed = true;memo_group_cons=[{p_cond with memo_status=Unknown false}]}::new_mem in
                   (yes_prune, (p_cond, pr_branches)::no_prune,(group_mem_by_fv new_mem))*)               
-(*                 let corrl, ncorrl = List.partition (fun d-> (List.length (Util.intersect fv d.memo_group_fv))>0)  new_mem in 
+(*                 let corrl, ncorrl = List.partition (fun d-> (List.length (Util.intersectx fv d.memo_group_fv))>0)  new_mem in 
                   if (List.length corrl)=0 then (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
                   else
                     let r_and = List.fold_left 
@@ -534,8 +560,9 @@ and prune_preds prog (f:formula):formula =
             let dismissed_invs = List.map (CP.b_apply_subs zip) (snd dismissed_invs) in
             let added_invs = try List.find (fun (c1,_)-> Util.list_equal c1 rem_br_lst) v_def.view_prune_invariants with | Not_found -> ([],[]) in
             let added_invs = List.map (CP.b_apply_subs zip) (snd added_invs) in
-            let ni = (*List.filter (fun c-> not (List.exists (CP.eq_b_formula c) dismissed_invs))*) added_invs  in
-            let ni = create_memo_group ni true in
+            let ni_l = if first_prune then added_invs 
+              else List.filter (fun c-> not (List.exists (CP.eq_b_formula c) dismissed_invs)) added_invs in
+            let ni = create_memo_group ni_l true in
             let oi = List.filter (fun c-> not (List.exists (CP.eq_b_formula c) added_invs)) dismissed_invs  in
             let new_mem = List.map (fun c-> 
               let n_l,o_l = List.partition (fun d-> not (List.exists (CP.eq_b_formula d.memo_formula) oi)) c.memo_group_cons in
@@ -543,18 +570,19 @@ and prune_preds prog (f:formula):formula =
                 | Implied -> {d with memo_status=Implied_dupl}
                 | _ -> d) o_l in
               {c with memo_group_cons = n_l@o_l}) new_mem  in
-            (new_hp,merge_mems new_mem ni,true)
+            let added_pure = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) ni_l in
+            (new_hp, added_pure, merge_mems new_mem ni, true)
           else  
             let new_hp = ViewNode{v with h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
-            (new_hp,new_mem,true)
+            (new_hp,(CP.mkTrue no_pos), new_mem,true)
         else 
-          match v.h_formula_view_remaining_branches with
-            | Some _ ->
-              let new_hp = ViewNode{v with h_formula_view_pruning_conditions = l_no_prune;} in
-              (new_hp,new_mem,false)
-            | None ->
+          if not first_prune then
+            let new_hp = ViewNode{v with h_formula_view_pruning_conditions = l_no_prune;} in
+            (new_hp,(CP.mkTrue no_pos),new_mem,false)
+          else
             let ai = try List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants with | Not_found -> ([],[]) in
             let ai = List.map (CP.b_apply_subs zip) (snd ai) in
+            let added_pure = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) ai in
             let gr_ai = create_memo_group ai true in
             let new_mem = List.map (fun c-> 
               let n_l,o_l = List.partition (fun d-> not (List.exists (CP.eq_b_formula d.memo_formula) ai)) c.memo_group_cons in
@@ -563,7 +591,7 @@ and prune_preds prog (f:formula):formula =
                 | _ -> d) o_l in
               {c with memo_group_cons = n_l@o_l}) new_mem  in            
             let new_hp = ViewNode {v with  h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
-          (new_hp,merge_mems new_mem gr_ai,true) in
+          (new_hp, added_pure, merge_mems new_mem gr_ai, true) in
             
     let rec helper_formulas f = match f with
     | Or o -> 
@@ -576,10 +604,10 @@ and prune_preds prog (f:formula):formula =
       else
         (*print_string "x";      *)
         (*print_string ("\n before prune: "^(Cprinter.string_of_h_formula e.formula_exists_heap)^"\n");*)
-        let nh,mem,changed = helper_heap e.formula_exists_heap e.formula_exists_memoise in    
+        let nh,np, mem,changed = helper_heap e.formula_exists_heap e.formula_exists_memoise in    
        (* print_string ("\n after prune: "^(Cprinter.string_of_h_formula nh)^"\n");*)
         if changed then 
-            fct (i+1) {e with formula_exists_heap = nh; formula_exists_memoise = mem}
+            fct (i+1) {e with formula_exists_heap = nh; (*formula_exists_pure = CP.mkAnd np e.formula_exists_pure no_pos;*) formula_exists_memoise = mem}
         else 
           {e with formula_exists_memoise = List.map (fun c-> {c with memo_group_changed = false}) e.formula_exists_memoise} in
       Exists (fct 0 e)
@@ -589,10 +617,10 @@ and prune_preds prog (f:formula):formula =
       else
         (*print_string "x";*)
        (* print_string ("\n before prune: "^(Cprinter.string_of_h_formula b.formula_base_heap)^"\n");*)
-        let nh,mem,changed = helper_heap b.formula_base_heap b.formula_base_memoise in
+        let nh,np,mem,changed = helper_heap b.formula_base_heap b.formula_base_memoise in
        (* print_string ("\n after prune: "^(Cprinter.string_of_h_formula nh)^"\n");*)
         if changed then 
-         fct (i+1) {b with formula_base_heap = nh; formula_base_memoise = mem}
+         fct (i+1) {b with formula_base_heap = nh; (*formula_base_pure = CP.mkAnd np b.formula_base_pure no_pos;*) formula_base_memoise = mem}
         else {b with formula_base_memoise = List.map (fun c-> {c with memo_group_changed = false}) b.formula_base_memoise} in
       Base (fct 0 b) in
     (*print_string ("\n before prune: "^(Cprinter.string_of_formula f)^"\n");*)
@@ -1399,7 +1427,7 @@ and unsat_base prog (sat_subno:  int ref) f  : bool= match f with
       let npf = CP.mkAnd np ph no_pos in
       if phb = [] then     
           let fvl = CP.fv npf in
-          let rl, nrl = List.partition (fun c-> (List.length (Util.intersect c.memo_group_fv fvl))>0) mem in
+          let rl, nrl = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var c.memo_group_fv fvl))>0) mem in
           let merg_rl = List.fold_left (fun a c-> List.fold_left (fun a c-> match c.memo_status with
             | Implied (*| Implied_dupl*) -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos
             | _ -> a) a c.memo_group_cons) npf rl in
@@ -1425,7 +1453,7 @@ and unsat_base prog (sat_subno:  int ref) f  : bool= match f with
       let npf = CP.mkAnd np ph no_pos in
       if phb = [] then 
           let fvl = CP.fv npf in
-          let rl, nrl = List.partition (fun c-> (List.length (Util.intersect c.memo_group_fv fvl))>0) mem in
+          let rl, nrl = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var c.memo_group_fv fvl))>0) mem in
           let merg_rl = List.fold_left (fun a c-> List.fold_left (fun a c-> match c.memo_status with
             | Implied (*| Implied_dupl*) -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos
             | _ -> a) a c.memo_group_cons) npf rl in
@@ -1932,7 +1960,7 @@ and heap_entail_conjunct_lhs_struc
           )
       | EAssume (ref_vars, post,(i,y)) -> if not has_post then report_error pos ("malfunction: this formula "^y^" can not have a post condition!")
 	    else
-	      let rs = CF.clear_entailment_history ctx in
+	      let rs = clear_entailment_history ctx in
 	      (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
 	      let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
 	      (*let _ =print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
@@ -2404,7 +2432,7 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
 
 and heap_entail_build_pure_check (evars : CP.spec_var list) mem_lst (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   (*let cons_vars = (CP.fv conseq) @ (CP.fv ante)in*)
-  (*let mem_lst,dropped = List.partition (fun c-> (List.length (Util.intersect cons_vars c.memo_group_fv))>0) mem_lst in
+  (*let mem_lst,dropped = List.partition (fun c-> (List.length (Util.intersectx cons_vars c.memo_group_fv))>0) mem_lst in
   let _ = print_string ("\nrel vars: "^(Cprinter.string_of_spec_var_list cons_vars)^"\n") in
   let _ = print_string ("\nrel forms: "^(Cprinter.string_of_pure_formula ante)^" -- "^(Cprinter.string_of_pure_formula ante)^"\n") in
   let _ = print_string ("\ndropped: "^(Cprinter.string_of_memoised_list dropped)^"\n") in*)
@@ -2500,7 +2528,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	    if !Globals.omega_simpl && not(TP.is_bag_constraint new_ante0)&& not(TP.is_list_constraint new_ante0)  then 
 	      let simp_ante = 
 	        (Debug.devel_pprint ("simplify the antecedent with omega") no_pos;	
-	        CP.arith_simplify ((*Omega.simplify*) new_ante0))  (* todo: remove the comment from omega.simplify after solving the problem in omega.ml with the collection of the error output *)
+	        let r = CP.arith_simplify ((*Omega.simplify*) new_ante0) in(* todo: remove the comment from omega.simplify after solving the problem in omega.ml with the collection of the error output *)
+          Debug.devel_pprint ("res: "^(Cprinter.string_of_pure_formula r)^"\n") no_pos; r)
 	      in
 	      (* check wheather Omega raised any error; if it did then use the ante before simplification *)
 	      if !Globals.omega_err = false then 
@@ -2620,7 +2649,8 @@ and imply_one_conj ante_disj0 ante_disj1 conseq  =
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
   let xp01,xp02,xp03 = imply_disj ante_disj0 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") in  
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
-  if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
+  if (not !Globals.allow_pruning) then (xp01,xp02,xp03)
+  else if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     let xp1 = imply_disj ante_disj1 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 2(*!imp_subno*)) ^ " with XPure1") in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
