@@ -132,6 +132,19 @@ node2 test_fold()
 	return tmp3;
 }
 
+node2 test_fold2(node2 t3)
+	requires t1::node2<10,t2,null> * t3::node2<30,null,t2> * t2::node2<20,t3,t1> 
+	ensures res::dll<_, 2>;
+{ 
+  node2 tmp_null = null;
+	node2 tmp1 = new node2(10, tmp_null, tmp_null);
+  node2 tmp2 = new node2(20, tmp_null, tmp1);
+  tmp1.prev = tmp2;
+	return tmp2;
+}
+
+
+
 /* append 2 doubly linked lists */
 node2 append(node2 x, node2 y)
 

@@ -4685,10 +4685,10 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
      | CP.Exists (_,f,_,_) -> (get_pure_conj_list f) in
    
   let filter_pure_conj_list pc  =
-    let r = List.filter (fun (_,c2) -> match c2 with 
+    let r = List.filter (fun (c1,c2) -> match c2 with 
                     | CP.Lt _ | CP.Lte _ | CP.Gt _ | CP.Gte _ | CP.Eq _ 
                     | CP.Neq _ | CP.BagIn _ | CP.BagNotIn _ | CP.ListIn _ 
-                    | CP.ListNotIn _-> true 
+                    | CP.ListNotIn _ | CP.EqMax _ | CP.EqMin _-> c1 
                     | _ -> false) pc in
     let r = List.map (fun (c1,c2) -> 
       if c1 then match c2 with
@@ -4721,12 +4721,14 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
       | _ -> c) r in
         
   let rec simplify_pures (f:CP.formula) v_l :(CP.formula) = 
-      let l = filter_pure_conj_list (get_pure_conj_list f) in
+      let l = get_pure_conj_list f in
+      let l = filter_pure_conj_list l in      
       let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
       let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None,None)) no_pos)) (CP.mkTrue no_pos) neq in
       let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None,None)) no_pos)) (CP.mkTrue no_pos) eq in
-      (*print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists v_l n_f None no_pos))^"\n");*)
-      let r = TP.simplify (CP.mkExists v_l n_f None no_pos) in   
+      let ev = (Util.difference (CP.fv n_f) v_l) in
+      (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists ev n_f None no_pos))^"\n") in*)
+      let r = TP.simplify (CP.mkExists ev n_f None no_pos) in   
       CP.mkAnd r neq no_pos in
   
   let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list= 
@@ -4868,14 +4870,14 @@ and case_inference_formula cp (v_l : CP.spec_var list) (init_form: CF.formula) p
             let r1 = (CP.mkAnd xp p no_pos) in
             List.fold_left (fun a (_,c)-> CP.mkAnd a c no_pos) r1 b ) (CF.split_components c) in
           (*print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
-          let pures = simplify_pures pures (Util.difference (CP.fv pures) v_l) in
-          (*let _  = print_string ("\n extracted conditions: "^(Cprinter.string_of_pure_formula pures)^"\n") in*)
-          (*print_string ("\n got: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
+          let pures = simplify_pures pures v_l in
+(*          let _  = print_string ("\n extracted conditions: "^(Cprinter.string_of_pure_formula pures)^"\n") in*)
           let pc = get_pure_conj_list pures in
           let pc = filter_pure_conj_list pc in
           let prop_pc = propagate_constraints pc [] in
           (*let prop_pc = List.map (fun c-> (c,false)) prop_pc in*)
           let pp = prop_pc @pc(*(List.map (fun c-> (c,true)) pc)*) in
+          (*let _  = print_string ("\n extracted conditions: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pp))^"\n") in*)
           let pp = List.filter (fun c-> Util.subset (CP.bfv c) v_l) pp in
           
           let pp = List.map (fun c -> (CP.bfv c,c)) pp in
@@ -4962,6 +4964,7 @@ and struc_case_inference cp cv (sf: CF.struc_formula) :
     
 and view_case_inference cp vd =  
     let sf  = CP.SpecVar (CP.OType vd.C.view_data_name, self, Unprimed) in
+    (*let _ = print_string ("\n pre infer: "^(Cprinter.string_of_struc_formula vd.C.view_formula)^"\n") in*)
     let branches,conds, invs = struc_case_inference cp (sf::vd.C.view_vars) vd.C.view_formula in
     let conds = List.map (fun (c1,c2)-> (List.hd (CP.memo_norm [c1]),c2)) conds in
     let invs = List.map (fun (c1,c2)-> (c1, CP.memo_norm c2)) invs in 
