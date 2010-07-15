@@ -1414,7 +1414,38 @@ and elim_ante_evars (es:entail_state) : context =
   let ef = elim_exists f in
   Ctx {es with es_formula = ef }
 
-and unsat_base prog (sat_subno:  int ref) f  : bool= match f with
+and unsat_base prog (sat_subno:  int ref) f  : bool= 
+
+  let partition_memoized fvl orig_f mem =
+    let new_mem = List.map (fun c-> 
+      let n_f = List.fold_left 
+          (fun a c-> match c.memo_status with | Implied -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos | _ -> a)
+          (CP.mkTrue no_pos) c.memo_group_cons in
+    (c.memo_group_fv, n_f)) mem in    
+    if (not !Globals.allow_umemo_slicing) then 
+        [List.fold_left (fun a (_,c)-> CP.mkAnd a c no_pos ) orig_f new_mem]
+    else if (!Globals.agressive_unsat) then 
+        (orig_f::(snd (List.split new_mem)))
+    else 
+      let o_l = CP.list_of_conjs orig_f in
+      let o_l_fv =List.map (fun c-> (CP.fv c, c))  o_l in
+      let f = List.fold_left (fun acc c -> 
+            let tbm, ur = List.partition (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var (fst d) (fst c)))>0)  acc in
+            let n_rel_fv,n_rel_f = List.fold_left (fun (c1,c2) (d1,d2) -> (c1@d1),(CP.mkAnd c2 d2 no_pos)) c tbm in
+            let n_rel_fv  =Util.remove_dups_f n_rel_fv CP.eq_spec_var in
+            (n_rel_fv,n_rel_f)::ur) new_mem o_l_fv in
+    snd (List.split f) in
+  (* old partition
+    if (not !Globals.allow_umemo_slicing) then (mem,[])
+      else if (!Globals.agressive_unsat) then ([],mem)
+      else List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var c.memo_group_fv fvl))>0) mem in  
+  let fold_m_lst init_f m_lst  =
+    List.fold_left (fun a c-> List.fold_left (fun a c-> match c.memo_status with
+      | Implied -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos
+      | _ -> a) a c.memo_group_cons) init_f m_lst  in
+  *)
+  
+  match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
             formula_base_pure = p;
@@ -1426,18 +1457,14 @@ and unsat_base prog (sat_subno:  int ref) f  : bool= match f with
       let np = CP.implied_prune_ante p in
       let npf = CP.mkAnd np ph no_pos in
       if phb = [] then     
-          let fvl = CP.fv npf in
-          let rl, nrl = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var c.memo_group_fv fvl))>0) mem in
-          let merg_rl = List.fold_left (fun a c-> List.fold_left (fun a c-> match c.memo_status with
-            | Implied (*| Implied_dupl*) -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos
-            | _ -> a) a c.memo_group_cons) npf rl in
+          let f_lst = partition_memoized (CP.fv npf) npf mem in
+          let _ = print_string ("ll: "^(string_of_int (List.length f_lst))^"\n") in
+          List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no c sat_subno)) false f_lst 
+          (*
+          let merg_rl = fold_m_lst npf rl in
           if (TP.is_sat_sub_no merg_rl sat_subno) then
-            List.fold_left (fun a c-> if a then a
-              else 
-              let f = List.fold_left (fun a c-> match c.memo_status with
-                | Implied (*| Implied_dupl*) -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos | _ -> a) (CP.mkTrue no_pos) c.memo_group_cons in
-              not (TP.is_sat_sub_no f sat_subno) ) false nrl 
-          else true   
+            List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no (fold_m_lst (CP.mkTrue no_pos) [c]) sat_subno)) false nrl 
+          else true   *)
       else
         List.fold_left (fun is_ok (_,pf1b)->  if not is_ok then false else TP.is_sat_sub_no (CP.mkAnd npf pf1b no_pos) sat_subno) true phb 
   | Exists ({ formula_exists_qvars = qvars;
@@ -1452,18 +1479,15 @@ and unsat_base prog (sat_subno:  int ref) f  : bool= match f with
       let np = CP.implied_prune_ante qp in
       let npf = CP.mkAnd np ph no_pos in
       if phb = [] then 
-          let fvl = CP.fv npf in
-          let rl, nrl = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var c.memo_group_fv fvl))>0) mem in
-          let merg_rl = List.fold_left (fun a c-> List.fold_left (fun a c-> match c.memo_status with
-            | Implied (*| Implied_dupl*) -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos
-            | _ -> a) a c.memo_group_cons) npf rl in
-          if (TP.is_sat_sub_no (wrap_exists merg_rl) sat_subno) then
-            List.fold_left (fun a c-> if a then a
-              else 
-              let f = List.fold_left (fun a c-> match c.memo_status with
-                | Implied (*| Implied_dupl*) -> CP.mkAnd a (CP.BForm (c.memo_formula,None,None)) no_pos | _ -> a) (CP.mkTrue no_pos) c.memo_group_cons in
-              not (TP.is_sat_sub_no (wrap_exists f) sat_subno) ) false nrl 
-          else true
+        let f_lst = partition_memoized (CP.fv npf) npf mem in
+        let _ = print_string ("ll: "^(string_of_int (List.length f_lst))^"\n") in
+        List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no (wrap_exists c) sat_subno)) false f_lst 
+        (*let rl, nrl = partition_memoized (CP.fv npf)  npf mem in
+        let _ = print_string ("("^(string_of_int (List.length rl))^"-"^(string_of_int (List.length nrl))^")\n") in
+        let merg_rl = fold_m_lst npf rl in
+        if (TP.is_sat_sub_no (wrap_exists merg_rl) sat_subno) then
+          List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no (wrap_exists (fold_m_lst (CP.mkTrue no_pos) [c])) sat_subno) ) false nrl 
+        else true*)
       else
         List.fold_left (fun is_ok (_,pf1b)->  if not is_ok then false else TP.is_sat_sub_no (wrap_exists (CP.mkAnd npf pf1b no_pos)) sat_subno) true phb 
               
@@ -2432,7 +2456,8 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
 
 and heap_entail_build_pure_check (evars : CP.spec_var list) mem_lst (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   let cons_vars = (CP.fv conseq) @ (CP.fv ante)in
-  let mem_lst,dropped = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var cons_vars c.memo_group_fv))>0) mem_lst in
+  let mem_lst,dropped = if not !Globals.allow_imemo_slicing then (mem_lst,[])
+    else List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var cons_vars c.memo_group_fv))>0) mem_lst in
   let ante = fold_mem_lst ante false mem_lst in
   let avars = CP.fv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
@@ -2538,8 +2563,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
       in
       let new_conseq0 = 
 	    if !Globals.omega_simpl && not(TP.is_bag_constraint new_conseq0)&& not(TP.is_list_constraint new_conseq0)  then 
-	      let simp_conseq = 
-	        (Debug.devel_pprint ("simplify the consequent with omega") no_pos;	
+	      let simp_conseq = (Debug.devel_pprint ("simplify the consequent with omega") no_pos;	
 	        (*Omega.simplify*) new_conseq0) 				
 	      in
 	      let simp_conseq1 = 
@@ -2646,8 +2670,7 @@ and imply_one_conj ante_disj0 ante_disj1 conseq  =
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
   let xp01,xp02,xp03 = imply_disj ante_disj0 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") in  
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
-  if (not !Globals.allow_pruning) then (xp01,xp02,xp03)
-  else if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
+  if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
     let xp1 = imply_disj ante_disj1 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 2(*!imp_subno*)) ^ " with XPure1") in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in

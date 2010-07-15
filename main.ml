@@ -132,6 +132,10 @@ let process_cmd_line () = Arg.parse [
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
   ("--eprun", Arg.Set Globals.allow_pruning,"enable predicate pruning");
+  ("--duslice", Arg.Clear Globals.allow_umemo_slicing,"disable unsat slicing based on relevand memoized constraints");
+  ("--dislice", Arg.Clear Globals.allow_imemo_slicing,"disable imply slicing based on relevand memoized constraints");
+  ("--eagressu", Arg.Set Globals.agressive_unsat,"enable agressive unsat slicing");
+  ("--eagressi", Arg.Set Globals.agressive_imply,"enable agressive imply slicing");
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
   ("--pgbv", Arg.Set Globals.pass_global_by_value, "pass read global variables by value");
   ("--pip", Arg.Set Globals.print_input,"print input representation");

@@ -159,6 +159,11 @@ let pass_global_by_value = ref false
 
 let allow_pruning = ref false
 let prune_cnt_limit = ref 2
+let allow_umemo_slicing = ref true
+let allow_imemo_slicing = ref true
+let agressive_unsat = ref false
+let agressive_imply = ref false
+
 
 let profile_threshold = 0.5 
 

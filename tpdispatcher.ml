@@ -776,8 +776,10 @@ let simpl_pair rid (ante, conseq) =
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   let f = elim_exists f in
-  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
-  tp_is_sat f sat_no
+  if (CP.isConstTrue f) then true 
+  else if (CP.isConstFalse f) then false
+  else  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+    tp_is_sat f sat_no
 ;;
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
@@ -789,23 +791,16 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
       | None -> (false,[],None)
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
-	let conseq =
-	if CP.should_simplify conseq0 then simplify conseq0
-	else conseq0
-  in
-	if CP.isConstTrue conseq0 then
-	  (true, [],None)
+	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
+	if CP.isConstTrue conseq0 then (true, [],None)
 	else
-	  let ante =
-		if CP.should_simplify ante0 then simplify ante0
-		else ante0
-	  in
+	  let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
 	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
 	  else
-		let ante = elim_exists ante in
-		let conseq = elim_exists conseq in
-        let split_conseq = split_conjunctions conseq in
-		let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
+      let ante = elim_exists ante in
+      let conseq = elim_exists conseq in
+      let split_conseq = split_conjunctions conseq in
+      let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
         (*let pairs = [filter ante conseq] in*)
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun (res1,res2,res3) (ante, conseq) =
