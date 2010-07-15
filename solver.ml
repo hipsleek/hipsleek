@@ -960,12 +960,12 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	    match prog with
 	      | Prog prog ->
 	          let vdef = Cast.look_up_view_def pos prog.prog_view_decls c in
-            let _ = print_string "\n y\n" in
+            (*let _ = print_string "\n y\n" in*)
             let forms = match brs with 
                 | None -> vdef.view_un_struc_formula 
                 | Some s -> 
                   let l = List.filter (fun ((i,_),_)-> List.exists (fun (c,_)-> c=i) s) vdef.view_prune_branches in
-                  let _ = print_string ((string_of_int (List.length l))^"--"^(string_of_int (List.length l))^"\n") in
+                  (*let _ = print_string ((string_of_int (List.length l))^"--"^(string_of_int (List.length l))^"\n") in*)
                   struc_to_formula (List.concat (snd (List.split l))) in 
 	          let renamed_view_formula = rename_bound_vars forms in
 	          let fr_vars = (CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed))
@@ -979,7 +979,7 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 		      (*let res_form = struc_to_formula res_form in*)
 		      CF.replace_formula_label v_lbl res_form
 	      | Branches (base , br, to_vars) -> 
-            let _ = print_string "\n x\n" in
+           (* let _ = print_string "\n x\n" in*)
 	          if (List.fold_left2 (fun a c1 c2-> a&&(c1=c2)) true to_vars vs) 
 	          then  CF.replace_formula_label v_lbl  (formula_of_pure_with_branches_fl base br fl no_pos)
 	          else formula_of_heap f pos
@@ -1458,7 +1458,7 @@ and unsat_base prog (sat_subno:  int ref) f  : bool=
       let npf = CP.mkAnd np ph no_pos in
       if phb = [] then     
           let f_lst = partition_memoized (CP.fv npf) npf mem in
-          let _ = print_string ("ll: "^(string_of_int (List.length f_lst))^"\n") in
+          (*let _ = print_string ("ll: "^(string_of_int (List.length f_lst))^"\n") in*)
           List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no c sat_subno)) false f_lst 
           (*
           let merg_rl = fold_m_lst npf rl in
