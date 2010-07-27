@@ -66,7 +66,12 @@ and exp =
   | ListCons of (exp * exp * loc)
 	| ListConsP of (exp * exp * exp * loc)
 	| ListRemove of (exp * exp * exp * loc)
-  | ListSorted of (exp * loc)
+	| ListKins of (exp * exp * exp * loc)
+	| ListPartition of (exp * exp * exp * loc)
+  | ListSSorted of (exp * loc)
+	| ListQSorted of (exp * loc)
+	| ListQSortedH of (exp * exp * loc)
+	| ListISorted of (exp * loc)
   | ListHead of (exp * loc)
   | ListTail of (exp * loc)
   | ListLength of (exp * loc)
@@ -179,19 +184,24 @@ and afv (af : exp) : (ident * primed) list = match af with
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)
-	| ListConsP (a1, a2, a3, _) 
+	| ListConsP (a1, a2, a3, _)
+	| ListPartition (a1, a2, a3, _)
+	| ListKins (a1, a2, a3, _)
 	| ListRemove (a1, a2, a3, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		let fv3 = afv a3 in
 		Util.remove_dups (fv1 @ fv2 @ fv3)  
-	| ListSorted (a, _)
+	| ListSSorted (a, _)
+	| ListQSorted (a, _)
+	| ListISorted (a, _)
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
 	| Fst (a, _)
 	| Snd (a, _)
   | ListReverse (a, _) -> afv a
+	| ListQSortedH (a1, a2, _)
 	| ListMin (a1, a2, _) -> Util.remove_dups (afv a1 @ afv a2) 
 
 and is_max_min a = match a with
@@ -226,6 +236,8 @@ and is_list (e : exp) : bool = match e with
   | ListCons _
 	| ListConsP _
 	| ListRemove _
+	| ListKins _
+	| ListPartition _
   | ListTail _
   | ListAppend _
   | ListReverse _ -> true
@@ -444,6 +456,8 @@ and pos_of_exp (e : exp) = match e with
   | ListAppend (_, p) -> p
   | ListCons (_, _, p) -> p
 	| ListRemove (_,_,_, p)
+	| ListKins (_,_,_, p)
+	| ListPartition (_,_,_, p)
 	| ListConsP (_, _, _, p) -> p
   | ListHead (_, p) -> p
   | ListTail (_, p) -> p
@@ -452,8 +466,10 @@ and pos_of_exp (e : exp) = match e with
 	| Snd (_, p) -> p
 	| ListMin (_, _, p) -> p
   | ListReverse (_, p) -> p
-	| ListSorted (_, p) -> p
-  
+	| ListSSorted (_, p) -> p
+	| ListQSorted (_, p) -> p
+	| ListQSortedH (_, _, p) -> p
+	| ListISorted (_, p) -> p 
 	
 	
 and fresh_old_name (s: string):string = 
@@ -553,11 +569,16 @@ and e_apply_one (fr, t) e = match e with
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List ((e_apply_one_list (fr, t) alist), pos)
-	| ListSorted (a, pos) -> ListSorted (e_apply_one (fr, t) a, pos)
+	| ListISorted (a, pos) -> ListISorted (e_apply_one (fr, t) a, pos)
+	| ListSSorted (a, pos) -> ListSSorted (e_apply_one (fr, t) a, pos)
+	| ListQSorted (a, pos) -> ListQSorted (e_apply_one (fr, t) a, pos)
+	| ListQSortedH (a1, a2, pos) -> ListQSortedH (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list (fr, t) alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
 	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
+	| ListKins (a1, a2, a3, pos) -> ListKins (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
+	| ListPartition (a1, a2, a3, pos) -> ListPartition (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListHead (a1, pos) -> ListHead (e_apply_one (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
 	| Fst (a1, pos) -> Fst (e_apply_one (fr, t) a1, pos)
@@ -606,7 +627,12 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
   | ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
 	| ListConsP (e1, e2, e3, _)
 	| ListRemove (e1, e2, e3, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2) @ (look_for_anonymous_exp e3)
-	| ListSorted (e1, _) -> look_for_anonymous_exp e1
+	| ListKins (e1, e2, e3, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2) @ (look_for_anonymous_exp e3)
+	| ListPartition (e1, e2, e3, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2) @ (look_for_anonymous_exp e3)
+	| ListSSorted (e1, _) -> look_for_anonymous_exp e1
+	| ListQSorted (e1, _) -> look_for_anonymous_exp e1
+	| ListISorted (e1, _) -> look_for_anonymous_exp e1
+	| ListQSortedH (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
   | _ -> []
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with

@@ -27,7 +27,7 @@ void append(node x, node y)
 /* return the first element of a singly linked list */
 int ret_first(node x)
 
-	requires x::ll<L> & len(L) > 0
+	requires x::ll<L> & len(L)>0
 	ensures res = head(L);
 	
 {

@@ -17,6 +17,7 @@ let coq_channels = ref (stdin, stdout)
 
 let default_var_0 = CP.SpecVar (CP.OType "Obj", "hd", Unprimed)
 let default_var_1 = CP.SpecVar (CP.Prim Int, "ex", Unprimed)
+let default_var_2 = CP.SpecVar (CP.Prim Int, "n", Unprimed)
 
 let double_exists_flag = ref false
 let pre = ref ""
@@ -120,6 +121,8 @@ and coq_of_exp e0 =
   | CP.ListCons (a1, a2, _) ->  "(" ^ change_const (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
   | CP.ListConsP (a1, a2, a3, _) -> "((" ^ (coq_of_exp a1) ^ ", " ^ (coq_of_exp a2) ^ ") :: " ^ (coq_of_exp a3) ^ ")"
   | CP.ListRemove (a1, a2, a3, _) -> "(StsortZZ.remove (" ^ (coq_of_exp a1) ^ ", " ^ (coq_of_exp a2) ^ ") " ^ (coq_of_exp a3) ^ ")"
+	| CP.ListKins (a1, a2, a3, _) -> "(kinsert (" ^ (coq_of_exp a1) ^ ", " ^ (coq_of_exp a2) ^ ") " ^ (coq_of_exp a3) ^ ")"
+	| CP.ListPartition (a1, a2, a3, _) -> "(StsortZZ.partition (" ^ (coq_of_exp a1) ^ ", " ^ (coq_of_exp a2) ^ ") " ^ (coq_of_exp a3) ^ ")"
 	| CP.ListHead (a, _) ->
 		let def_var = coq_of_spec_var (CP.fresh_spec_var default_var_0) in
 		pre := !pre ^ "(forall " ^ def_var ^ ": (prod Z Z), ";
@@ -129,7 +132,12 @@ and coq_of_exp e0 =
   | CP.ListMin (a1, a2, _) -> "(kminl2 " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
   | CP.ListTail (a, _) -> "(tail " ^ (coq_of_exp a) ^ ")"
   | CP.ListReverse (a, _) -> "(rev " ^ (coq_of_exp a) ^ ")"
-	| CP.ListSorted (a, _) -> " (selsort " ^ (coq_of_exp a) ^ ")"
+	| CP.ListQSorted (a, _) -> " (qsort " ^ (coq_of_exp a) ^ ")"
+	| CP.ListQSortedH (a1, a2, _) ->
+		 let def_var = coq_of_spec_var (CP.fresh_spec_var default_var_2) in
+		 "forall " ^ def_var ^ ", (Z_of_nat " ^ def_var ^ " = " ^ (coq_of_exp a2) ^ ") -> (qsorth " ^ (coq_of_exp a1) ^ " " ^ def_var ^ ")"
+	| CP.ListSSorted (a, _) -> " (selsort " ^ (coq_of_exp a) ^ ")"
+	| CP.ListISorted (a, _) -> " (insertion_sort " ^ (coq_of_exp a) ^ ")"
   (* bags *)
   | CP.Bag (alist, pos) -> 
     begin match alist with

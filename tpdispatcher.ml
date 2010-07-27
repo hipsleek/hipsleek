@@ -302,6 +302,8 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.ListCons _
 	| CP.ListConsP _
 	| CP.ListRemove _
+	| CP.ListKins _
+	| CP.ListPartition _
   | CP.ListHead _
   | CP.ListTail _
   | CP.ListLength _
@@ -309,7 +311,10 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
 	| CP.Snd _
 	| CP.ListMin _
   | CP.ListAppend _
-	| CP.ListSorted _
+	| CP.ListSSorted _
+	| CP.ListQSorted _
+	| CP.ListQSortedH _
+	| CP.ListISorted _
   | CP.ListReverse _ -> false
 
 (* Method checking whether a formula contains list constraints *)
@@ -375,6 +380,8 @@ and is_list_constraint_exp (e :CP.exp) : bool = match e with
   | CP.ListCons _
 	| CP.ListConsP _
 	| CP.ListRemove _
+	| CP.ListKins _
+	| CP.ListPartition _
   | CP.ListHead _
   | CP.ListTail _
   | CP.ListLength _
@@ -382,7 +389,10 @@ and is_list_constraint_exp (e :CP.exp) : bool = match e with
 	| CP.Snd _
 	| CP.ListMin _
   | CP.ListAppend _
-	| CP.ListSorted _
+	| CP.ListSSorted _
+	| CP.ListQSorted _
+	| CP.ListQSortedH _
+	| CP.ListISorted _
   | CP.ListReverse _ -> true
 
 (*

@@ -534,12 +534,17 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListCons (e1, e2, l)  ->  f_b e1; pr_cut_after op_cons; f_b e2
 		| P.ListConsP (e1, e2, e3, l)     -> fmt_string ("("); pr_formula_exp e1; fmt_string  (", "); pr_formula_exp e2; fmt_string  ("):::");pr_formula_exp e3
 		| P.ListRemove (e1, e2, e3, l)    -> fmt_string ("("); pr_formula_exp e1; fmt_string  (", "); pr_formula_exp e2; fmt_string  (")--");pr_formula_exp e3
+		| P.ListKins (e1, e2, e3, l)    -> fmt_string ("("); pr_formula_exp e1; fmt_string  (", "); pr_formula_exp e2; fmt_string  (") kinsert ");pr_formula_exp e3
+		| P.ListPartition (e1, e2, e3, l)    -> fmt_string ("("); pr_formula_exp e1; fmt_string  (", "); pr_formula_exp e2; fmt_string  (") partition ");pr_formula_exp e3
 		| P.ListHead (e, l)     -> fmt_string ("list head("); pr_formula_exp e; fmt_string  (")")
     | P.ListTail (e, l)     -> fmt_string ("list tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("list len("); pr_formula_exp e; fmt_string  (")")
 		| P.ListMin (e1, e2, l) -> fmt_string ("list min("); pr_formula_exp e1; fmt_string (", "); pr_formula_exp e2; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("list rev("); pr_formula_exp e; fmt_string  (")")
-		| P.ListSorted (e, l)	  -> fmt_string ("list selsort("); pr_formula_exp e; fmt_string  (")")
+		| P.ListSSorted (e, l)	  -> fmt_string ("list selsort("); pr_formula_exp e; fmt_string  (")")
+		| P.ListQSorted (e, l)	  -> fmt_string ("list qsort("); pr_formula_exp e; fmt_string  (")")
+		| P.ListQSortedH (e1, e2, l)	  -> fmt_string ("list qsorth("); pr_formula_exp e1; fmt_string  (" "); pr_formula_exp e2; fmt_string  (")")
+		| P.ListISorted (e, l)	  -> fmt_string ("list inssort("); pr_formula_exp e; fmt_string  (")")
     
 
 (** print a b_formula  to formatter *)

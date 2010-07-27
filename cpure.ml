@@ -70,13 +70,18 @@ and exp =
   | ListCons of (exp * exp * loc)
 	| ListConsP of (exp * exp * exp * loc)
 	| ListRemove of (exp * exp * exp * loc)
+	| ListKins of (exp * exp * exp * loc)
+	| ListPartition of (exp * exp * exp * loc)
   | ListHead of (exp * loc)
   | ListTail of (exp * loc)
   | ListLength of (exp * loc)
 	| ListMin of (exp * exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
-	| ListSorted of (exp * loc)
+	| ListSSorted of (exp * loc)
+	| ListISorted of (exp * loc)
+	| ListQSorted of (exp * loc)
+	| ListQSortedH of (exp * exp * loc)
 	| Fst of (exp * loc)
 	| Snd of (exp * loc)
 
@@ -112,7 +117,7 @@ let rec get_exp_type (e : exp) : typ = match e with
   | Div _ -> Prim Float
 	| Fst _ | Snd _  | ListLength _ -> Prim Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
-  | List _ | ListCons _ | ListConsP _ | ListRemove _ | ListTail _ | ListAppend _ | ListReverse _ | ListSorted _ -> Prim Globals.List
+  | List _ | ListCons _ | ListConsP _ | ListRemove _ | ListKins _ | ListPartition _ | ListTail _ | ListAppend _ | ListReverse _ | ListSSorted _ | ListQSorted _ | ListQSortedH _ | ListISorted _ -> Prim Globals.List
 	| ListMin _ | ListHead _ -> OType "Obj"
 
 (* type constants *)
@@ -242,6 +247,8 @@ and afv (af : exp) : spec_var list = match af with
 	  let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)
 	| ListConsP (a1, a2, a3, _)
+	| ListPartition (a1, a2, a3, _)
+	| ListKins (a1, a2, a3, _)
 	| ListRemove (a1, a2, a3, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
@@ -252,8 +259,11 @@ and afv (af : exp) : spec_var list = match af with
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
-	| ListSorted (a, _)
-  | ListReverse (a, _) -> afv a
+  | ListReverse (a, _)
+	| ListSSorted (a, _)
+	| ListISorted (a, _)
+	| ListQSorted (a, _) -> afv a
+	| ListQSortedH (a1, a2, _)
 	| ListMin (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
@@ -361,9 +371,14 @@ and is_list (e : exp) : bool = match e with
   | ListCons _
 	| ListConsP _
 	| ListRemove _
+	| ListKins _
+	| ListPartition _
   | ListTail _
   | ListAppend _
-	| ListSorted _
+	| ListSSorted _
+	| ListISorted _
+	| ListQSorted _
+	| ListQSortedH _
   | ListReverse _ -> true
   | _ -> false
 
@@ -663,8 +678,13 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
   | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
                     else false
   | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
-	| (ListSorted (e,_),ListSorted(d,_)) -> (eqExp e d)
+	| (ListSSorted (e,_),ListSSorted(d,_)) -> (eqExp e d)
+	| (ListQSorted (e,_),ListQSorted(d,_)) -> (eqExp e d)
+	| (ListISorted (e,_),ListISorted(d,_)) -> (eqExp e d)
+	| (ListQSortedH (e1,e2,_),ListQSortedH (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
 	| (ListRemove (e1,e2,e3,_),ListRemove (d1,d2,d3,_))
+	| (ListKins (e1,e2,e3,_),ListKins (d1,d2,d3,_))
+	| (ListPartition (e1,e2,e3,_),ListPartition (d1,d2,d3,_))
 	| (ListConsP (e1,e2,e3,_),ListConsP (d1,d2,d3,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)&&(eqExp e3 d3)
   | (ListHead (e1,_),ListHead (e2,_))
   | (ListTail (e1,_),ListTail (e2,_))
@@ -764,13 +784,18 @@ and pos_of_exp (e : exp) = match e with
   | ListAppend (_, p) -> p
   | ListCons (_, _, p) -> p
 	| ListConsP (_, _, _, p) -> p
+	| ListKins (_, _, _, p) -> p
+	| ListPartition (_, _, _, p) -> p
 	| ListRemove (_, _, _, p) -> p
   | ListHead (_, p) -> p
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
 	| ListMin (_, _, p) -> p
   | ListReverse (_, p) -> p
-	| ListSorted (_, p) -> p
+	| ListSSorted (_, p) -> p
+	| ListQSorted (_, p) -> p
+	| ListQSortedH (_, _, p) -> p
+	| ListISorted (_, p) -> p
 	| Fst (_, p) -> p
 	| Snd (_, p) -> p
 
@@ -871,8 +896,13 @@ and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
   | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
           else false
   | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eq_exp e1 d1) && (eq_exp e2 d2)
-  | (ListSorted (e,_), ListSorted(d,_)) -> (eq_exp e d)
+  | (ListSSorted (e,_), ListSSorted(d,_)) -> (eq_exp e d)
+	| (ListQSorted (e,_), ListQSorted(d,_)) -> (eq_exp e d)
+	| (ListISorted (e,_), ListISorted(d,_)) -> (eq_exp e d)
+	| (ListQSortedH (e1, e2, _), ListQSortedH (d1, d2, _)) -> (eq_exp e1 d1) && (eq_exp e2 d2)
 	| (ListRemove (e1, e2, e3, _), ListRemove (d1, d2, d3, _))
+	| (ListKins (e1, e2, e3, _), ListKins (d1, d2, d3, _))
+	| (ListPartition (e1, e2, e3, _), ListPartition (d1, d2, d3, _))
 	| (ListConsP (e1, e2, e3, _), ListConsP (d1, d2, d3, _)) -> (eq_exp e1 d1) && (eq_exp e2 d2) && (eq_exp e3 d3)
   | (ListHead (e1, _), ListHead (e2, _))
   | (ListTail (e1, _), ListTail (e2, _))
@@ -1032,11 +1062,16 @@ and e_apply_subs sst e = match e with
 							  e_apply_subs sst a2, pos)
   | List (alist, pos) -> List (e_apply_subs_list sst alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_subs_list sst alist, pos)
-	| ListSorted (a, pos) -> ListSorted (e_apply_subs sst a, pos)
+	| ListSSorted (a, pos) -> ListSSorted (e_apply_subs sst a, pos)
+	| ListQSorted (a, pos) -> ListQSorted (e_apply_subs sst a, pos)
+	| ListISorted (a, pos) -> ListISorted (e_apply_subs sst a, pos)
+	| ListQSortedH (a1, a2, pos) -> ListQSortedH (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_subs sst a1, e_apply_subs sst a2, pos)
 	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
 	| ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
-  | ListHead (a, pos) -> ListHead (e_apply_subs sst a, pos)
+	| ListKins (a1, a2, a3, pos) -> ListKins (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
+	| ListPartition (a1, a2, a3, pos) -> ListPartition (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
+	| ListHead (a, pos) -> ListHead (e_apply_subs sst a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
 	| Fst (a, pos) -> Fst (e_apply_subs sst a, pos)
@@ -1123,10 +1158,15 @@ and e_apply_one (fr, t) e = match e with
 							  e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List (e_apply_one_list (fr, t) alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_one_list (fr, t) alist, pos)
-	| ListSorted (a, pos) -> ListSorted (e_apply_one (fr, t) a, pos)
+	| ListSSorted (a, pos) -> ListSSorted (e_apply_one (fr, t) a, pos)
+	| ListQSorted (a, pos) -> ListQSorted (e_apply_one (fr, t) a, pos)
+	| ListISorted (a, pos) -> ListISorted (e_apply_one (fr, t) a, pos)
+	| ListQSortedH (a1, a2, pos) -> ListQSortedH (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
 	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
 	| ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
+	| ListKins (a1, a2, a3, pos) -> ListKins (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
+	| ListPartition (a1, a2, a3, pos) -> ListPartition (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListHead (a, pos) -> ListHead (e_apply_one (fr, t) a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
@@ -1244,10 +1284,15 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
 									  a_apply_par_term sst a2, pos)
   | List (alist, pos) -> List ((a_apply_par_term_list sst alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_par_term_list sst alist), pos)
-	| ListSorted (a1, pos) -> ListSorted (a_apply_par_term sst a1, pos)
+	| ListSSorted (a1, pos) -> ListSSorted (a_apply_par_term sst a1, pos)
+	| ListQSorted (a1, pos) -> ListQSorted (a_apply_par_term sst a1, pos)
+	| ListISorted (a1, pos) -> ListISorted (a_apply_par_term sst a1, pos)
+	| ListQSortedH (a1, a2, pos) -> ListQSortedH (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
 	| ListCons (a1, a2, pos) -> ListCons (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
 	| ListConsP (a1, a2, a3, pos) -> ListConsP (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
 	| ListRemove (a1, a2, a3, pos) -> ListRemove (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+	| ListKins (a1, a2, a3, pos) -> ListKins (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+	| ListPartition (a1, a2, a3, pos) -> ListPartition (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
   | ListHead (a1, pos) -> ListHead (a_apply_par_term sst a1, pos)
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
@@ -1316,10 +1361,15 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
 									  a_apply_one_term (fr, t) a2, pos)
   | List (alist, pos) -> List ((a_apply_one_term_list (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_one_term_list (fr, t) alist), pos)
-  | ListSorted (a, pos) -> ListSorted (a_apply_one_term (fr, t) a, pos)
+  | ListSSorted (a, pos) -> ListSSorted (a_apply_one_term (fr, t) a, pos)
+	| ListQSorted (a, pos) -> ListQSorted (a_apply_one_term (fr, t) a, pos)
+	| ListISorted (a, pos) -> ListISorted (a_apply_one_term (fr, t) a, pos)
+	| ListQSortedH (a1, a2, pos) -> ListQSortedH (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListCons (a1, a2, pos) -> ListCons (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
 	| ListConsP (a1, a2, a3, pos) -> ListConsP (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
 	| ListRemove (a1, a2, a3, pos) -> ListRemove (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+	| ListKins (a1, a2, a3, pos) -> ListKins (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+	| ListPartition (a1, a2, a3, pos) -> ListPartition (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
   | ListHead (a1, pos) -> ListHead (a_apply_one_term (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
 	| Fst (a1, pos) -> Fst (a_apply_one_term (fr, t) a1, pos)
@@ -1932,6 +1982,8 @@ and e_apply_one_exp (fr, t) e = match e with
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
 	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, e_apply_one_exp (fr, t) a3, pos)
 	| ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, e_apply_one_exp (fr, t) a3, pos)
+	| ListKins (a1, a2, a3, pos) -> ListKins (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, e_apply_one_exp (fr, t) a3, pos)
+	| ListPartition (a1, a2, a3, pos) -> ListPartition (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, e_apply_one_exp (fr, t) a3, pos)
   | ListHead (a1, pos) -> ListHead (e_apply_one_exp (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
 	| Fst (a1, pos) -> Fst (e_apply_one_exp (fr, t) a1, pos)
@@ -1939,7 +1991,10 @@ and e_apply_one_exp (fr, t) e = match e with
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
 	| ListMin (a1, a2, pos) -> ListMin (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one_exp (fr, t) a1, pos)
-  | ListSorted (a1, pos) -> ListSorted (e_apply_one_exp (fr, t) a1, pos)
+  | ListSSorted (a1, pos) -> ListSSorted (e_apply_one_exp (fr, t) a1, pos)
+	| ListQSorted (a1, pos) -> ListQSorted (e_apply_one_exp (fr, t) a1, pos)
+	| ListISorted (a1, pos) -> ListISorted (e_apply_one_exp (fr, t) a1, pos)
+	| ListQSortedH (a1, a2, pos) -> ListQSortedH (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []
@@ -2095,10 +2150,15 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 					  | ListCons _
 						| ListConsP _
 						| ListRemove _
+						| ListKins _
+						| ListPartition _
 					  | ListTail _
 					  | ListAppend _
 					  | ListReverse _
-						| ListSorted _
+						| ListSSorted _
+						| ListQSorted _
+						| ListQSortedH _
+						| ListISorted _
 					  | ListHead _
 						| ListMin _
 					  | ListLength _ -> false in
@@ -2241,9 +2301,14 @@ and simp_mult (e : exp) :  exp =
 	|  ListCons (_, _, l)
 	|  ListConsP (_, _, _, l)
 	|  ListRemove (_, _, _, l)
+	|  ListKins (_, _, _, l)
+	|  ListPartition (_, _, _, l)
 	|  ListTail (_, l)
 	|  ListReverse (_, l)
-	|  ListSorted (_, l)
+	|  ListSSorted (_, l)
+	|  ListQSorted (_, l)
+	|  ListISorted (_, l)
+	|  ListQSortedH (_, _, l)
 	|  ListHead (_, l)
 	|  ListMin (_, _, l)
 	|  Fst (_, l)
@@ -2342,12 +2407,17 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   |  ListCons (e1, e2, l) -> ((Some e), None)
 	|  ListConsP (e1, e2, e3, l) -> ((Some e), None)
 	|  ListRemove (e1, e2, e3, l) -> ((Some e), None)
+	|  ListKins (e1, e2, e3, l) -> ((Some e), None)
+	|  ListPartition (e1, e2, e3, l) -> ((Some e), None)
   |  ListHead (e1, l) -> ((Some e), None)
   |  ListTail (e1, l) -> ((Some e), None)
   |  ListLength (e1, l) -> ((Some e), None)
 	|  ListMin (e1, e2, l) -> ((Some e), None)
   |  ListReverse (e1, l) -> ((Some e), None)
-	|  ListSorted (e1, l) -> ((Some e), None)
+	|  ListSSorted (e1, l) -> ((Some e), None)
+	|  ListQSorted (e1, l) -> ((Some e), None)
+	|  ListQSortedH (e1, e2, l) -> ((Some e), None)
+	|  ListISorted (e1, l) -> ((Some e), None)
 	|  Fst (e1, l) -> ((Some e), None)
 	|  Snd (e1, l) -> ((Some e), None)
 
@@ -2487,6 +2557,8 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListCons (e1, e2, l) -> ListCons (purge_mult e1, purge_mult e2, l)
 	|  ListConsP (e1, e2, e3, l) -> ListConsP (purge_mult e1, purge_mult e2, purge_mult e3, l)
 	|  ListRemove (e1, e2, e3, l) -> ListRemove (purge_mult e1, purge_mult e2, purge_mult e3, l)
+	|  ListKins (e1, e2, e3, l) -> ListKins (purge_mult e1, purge_mult e2, purge_mult e3, l)
+	|  ListPartition (e1, e2, e3, l) -> ListPartition (purge_mult e1, purge_mult e2, purge_mult e3, l)
   |  ListHead (e, l) -> ListHead (purge_mult e, l)
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
@@ -2494,7 +2566,10 @@ and purge_mult (e :  exp):  exp = match e with
 	|  Snd (e, l) -> Snd (purge_mult e, l)
 	|  ListMin (e1, e2, l) -> ListMin (purge_mult e1, purge_mult e2, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
-	|  ListSorted (e, l) -> ListSorted (purge_mult e, l)
+	|  ListSSorted (e, l) -> ListSSorted (purge_mult e, l)
+	|  ListQSorted (e, l) -> ListQSorted (purge_mult e, l)
+	|  ListISorted (e, l) -> ListISorted (purge_mult e, l)
+	|  ListQSortedH (e1, e2, l) -> ListQSortedH (purge_mult e1, purge_mult e2, l)
 	
 	
 and arith_simplify (pf : formula) :  formula = 
@@ -2677,6 +2752,16 @@ let rec transform_exp f e  =
       let ne2 = transform_exp f e2 in
 	  	let ne3 = transform_exp f e3 in
       ListConsP (ne1,ne2,ne3,l)
+	  | ListKins (e1,e2,e3,l) -> 
+      let ne1 = transform_exp f e1 in
+      let ne2 = transform_exp f e2 in
+	  	let ne3 = transform_exp f e3 in
+      ListKins (ne1,ne2,ne3,l)
+		| ListPartition (e1,e2,e3,l) -> 
+      let ne1 = transform_exp f e1 in
+      let ne2 = transform_exp f e2 in
+	  	let ne3 = transform_exp f e3 in
+      ListPartition (ne1,ne2,ne3,l)
 	  | ListRemove (e1,e2,e3,l) -> 
       let ne1 = transform_exp f e1 in
       let ne2 = transform_exp f e2 in
@@ -2690,7 +2775,10 @@ let rec transform_exp f e  =
 		| ListMin (e1,e2,l) -> ListMin ((transform_exp f e1),(transform_exp f e2), l)
     | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
     | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
-		| ListSorted (e1,l) -> ListSorted ((transform_exp f e1),l)
+		| ListSSorted (e1,l) -> ListSSorted ((transform_exp f e1),l)
+		| ListQSorted (e1,l) -> ListQSorted ((transform_exp f e1),l)
+		| ListISorted (e1,l) -> ListISorted ((transform_exp f e1),l)
+		| ListQSortedH (e1,e2,l) -> ListQSortedH ((transform_exp f e1),(transform_exp f e2), l)
 
 
 	

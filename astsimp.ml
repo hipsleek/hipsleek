@@ -265,10 +265,13 @@ and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   | IP.Mult (e1, e2, _) | IP.Div (e1, e2, _) ->
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | IP.Bag (e1, _) | IP.BagUnion (e1, _) | IP.BagIntersect (e1, _) -> look_for_anonymous_exp_list e1
-  | IP.Fst (e1, _) | IP.Snd (e1, _) | IP.ListHead (e1, _) | IP.ListTail (e1, _) | IP.ListLength (e1, _) | IP.ListSorted (e1, _) | IP.ListReverse (e1, _) -> look_for_anonymous_exp e1
+  | IP.ListQSortedH (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
+	| IP.Fst (e1, _) | IP.Snd (e1, _) | IP.ListHead (e1, _) | IP.ListTail (e1, _) | IP.ListLength (e1, _) | IP.ListSSorted (e1, _) | IP.ListQSorted (e1, _) | IP.ListISorted (e1, _) | IP.ListReverse (e1, _) -> look_for_anonymous_exp e1
   | IP.List (e1, _) | IP.ListAppend (e1, _) -> look_for_anonymous_exp_list e1
   | IP.ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
 	| IP.ListConsP (e1, e2, e3, _)
+	| IP.ListKins (e1, e2, e3, _)
+	| IP.ListPartition (e1, e2, e3, _)
 	| IP.ListRemove (e1, e2, e3, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2) @ (look_for_anonymous_exp e3)
   | _ -> []
 
@@ -4084,6 +4087,10 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
       CP.ListConsP (trans_pure_exp e1 stab, trans_pure_exp e2 stab, trans_pure_exp e3 stab, pos)
 		| IP.ListRemove (e1, e2, e3, pos) ->
       CP.ListRemove (trans_pure_exp e1 stab, trans_pure_exp e2 stab, trans_pure_exp e3 stab, pos)
+		| IP.ListKins (e1, e2, e3, pos) ->
+      CP.ListKins (trans_pure_exp e1 stab, trans_pure_exp e2 stab, trans_pure_exp e3 stab, pos)
+		| IP.ListPartition (e1, e2, e3, pos) ->
+      CP.ListPartition (trans_pure_exp e1 stab, trans_pure_exp e2 stab, trans_pure_exp e3 stab, pos)
     | IP.ListHead (e, pos) ->
       CP.ListHead (trans_pure_exp e stab, pos)
     | IP.ListTail (e, pos) ->
@@ -4098,9 +4105,14 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
       CP.ListMin (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
     | IP.ListReverse (e, pos) ->
       CP.ListReverse (trans_pure_exp e stab, pos)
-		| IP.ListSorted (e, pos) ->
-			CP.ListSorted (trans_pure_exp e stab, pos)
- 
+		| IP.ListSSorted (e, pos) ->
+			CP.ListSSorted (trans_pure_exp e stab, pos)
+		| IP.ListISorted (e, pos) ->
+			CP.ListISorted (trans_pure_exp e stab, pos)
+		| IP.ListQSorted (e, pos) ->
+			CP.ListQSorted (trans_pure_exp e stab, pos)
+		| IP.ListQSortedH (e1, e2, pos) ->
+			CP.ListQSortedH (trans_pure_exp e1 stab, trans_pure_exp e2 stab, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -4391,10 +4403,14 @@ and collect_type_info_arith a0 stab expected_type =
     | IP.Fst (a, pos) -> ()
 		| IP.Snd (a, pos) -> ()
     | IP.ListMin (a1, a2, pos) -> (collect_type_info_list a2 stab)
-		| IP.ListSorted (a1, pos) -> (collect_type_info_list a1 stab)
+		| IP.ListSSorted (a1, pos) -> (collect_type_info_list a1 stab)
+		| IP.ListISorted (a1, pos) -> (collect_type_info_list a1 stab)
+		| IP.ListQSorted (a1, pos) -> (collect_type_info_list a1 stab)
+		| IP.ListQSortedH (a1, a2, pos) -> (collect_type_info_list a1 stab)
+
     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
       failwith "collect_type_info_arith: encountered bag constraint"
-    | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.ListConsP _ | IP.ListRemove _ | IP.List _ ->
+    | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListPartition _ | IP.ListCons _ | IP.ListConsP _ | IP.ListRemove _ | IP.ListKins _ | IP.List _ ->
       failwith "collect_type_info_arith: encountered list constraint"
 
 and collect_type_info_bag_content a0 stab =
@@ -4418,7 +4434,7 @@ and collect_type_info_bag_content a0 stab =
        	failwith "collect_type_info_arith: encountered bag constraint"
 		| IP.ListMin (a1, a2, pos) -> (collect_type_info_arith a1 stab Unknown; collect_type_info_list a2 stab)
     | IP.ListHead (a, pos) | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
-    | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.ListConsP _ | IP.ListSorted _ | IP.ListRemove _ | IP.List _ ->
+    | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListPartition _  | IP.ListCons _ | IP.ListConsP _ | IP.ListSSorted _ | IP.ListISorted _ | IP.ListQSorted _ | IP.ListQSortedH _ | IP.ListRemove _ | IP.ListKins _| IP.List _ ->
         failwith "collect_type_info_bag_content: encountered list constraint"
 
 and collect_type_info_bag (e0 : IP.exp) stab =
@@ -4443,7 +4459,7 @@ and collect_type_info_bag (e0 : IP.exp) stab =
     | IP.Mult _ | IP.Div _ | IP.Subtract _ | IP.Add _ 
     | IP.IConst _ | IP.FConst _ | IP.Null _ ->
 	failwith "collect_type_info_bag: encountered arithmetic constraint"
-    | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.ListConsP _ | IP.ListSorted _ | IP.ListRemove _ | IP.List _ | IP.ListMin _ ->
+    | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListPartition _ | IP.ListCons _ | IP.ListConsP _ | IP.ListSSorted _ | IP.ListQSorted _ | IP.ListQSortedH _ | IP.ListISorted _ | IP.ListRemove _ | IP.ListKins _| IP.List _ | IP.ListMin _ ->
       failwith "collect_type_info_bag: encountered list constraint"
 
 and collect_type_info_list (e0 : IP.exp) stab =
@@ -4462,6 +4478,8 @@ and collect_type_info_list (e0 : IP.exp) stab =
       (collect_type_info_arith a1 stab Unknown;
 	     collect_type_info_list a2 stab)
  	| IP.ListRemove (a1, a2, a3, pos)
+	| IP.ListKins (a1, a2, a3, pos)
+	| IP.ListPartition (a1, a2, a3, pos)
   | IP.ListConsP (a1, a2, a3, pos) -> 
       (collect_type_info_arith a1 stab Unknown;
 			 collect_type_info_arith a2 stab Unknown;
@@ -4475,8 +4493,15 @@ and collect_type_info_list (e0 : IP.exp) stab =
       (collect_type_info_list a stab)
   | IP.ListReverse (a, pos) ->
       (collect_type_info_list a stab)
-	| IP.ListSorted (a, pos) ->
+	| IP.ListSSorted (a, pos) ->
       (collect_type_info_list a stab)
+	| IP.ListISorted (a, pos) ->
+      (collect_type_info_list a stab)
+	| IP.ListQSorted (a, pos) ->
+      (collect_type_info_list a stab)
+	| IP.ListQSortedH (a1, a2, pos) ->
+		   (collect_type_info_list a1 stab;
+			  collect_type_info_arith a2 stab Unknown)
 	| IP.Fst _ | IP.Snd _ -> ()
   | IP.Min _ | IP.Max _ | IP.Mult _ | IP.FConst _ | IP.Div _ | IP.Subtract _ | IP.Add _ | IP.IConst _
       | IP.Null _ | IP.ListLength _ ->

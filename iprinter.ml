@@ -140,12 +140,17 @@ let rec string_of_formula_exp = function
   | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
 	| P.ListConsP (e1, e2, e3, l)	-> "(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ "):::" ^ (string_of_formula_exp e3)
 	| P.ListRemove (e1, e2, e3, l)	-> "(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")--" ^ (string_of_formula_exp e3)
+	| P.ListKins (e1, e2, e3, l)	-> "(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ") kinsert " ^ (string_of_formula_exp e3)
+	| P.ListPartition (e1, e2, e3, l)	-> "(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ") partition " ^ (string_of_formula_exp e3)
   | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
 	| P.ListMin (e1, e2, l) -> "list min(" ^ (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
-	| P.ListSorted (e, l)		    -> "selsort(" ^ (string_of_formula_exp e) ^ ")"
+	| P.ListSSorted (e, l)		    -> "selsort(" ^ (string_of_formula_exp e) ^ ")"
+	| P.ListQSorted (e, l)		    -> "qsort(" ^ (string_of_formula_exp e) ^ ")"
+	| P.ListQSortedH (e1, e2, l)		    -> "qsorth(" ^ (string_of_formula_exp e1) ^ " " ^ (string_of_formula_exp e2)^ ")"
+	| P.ListISorted (e, l)		    -> "inssort(" ^ (string_of_formula_exp e) ^ ")"
 	| _ -> "bag constraint"
 
 (* pretty printing for a list of pure formulae *)

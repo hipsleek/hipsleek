@@ -102,7 +102,11 @@
 	 ("raise", RAISE);
 	 (*extension for sorted lists*)
 	 ("listmin", LISTMIN);
-	 ("selsort", SORTED);
+	 ("selsort", SSORTED);
+	 ("inssort", ISORTED);
+	 ("quicksort", QSORTED);
+   ("quicksorth", QSORTEDH);
+	 ("kinsert", KINS);
    ("perm", PERM);
 	 ("stable", STABLE);
 	 ("f_oc", FOC);
@@ -110,6 +114,7 @@
 	 ("snd", SND);
 	 ("cons_p", CONSP);
 	 ("remove", REMOVE);
+	 ("partition", PARTITION);
 	]
 }
 

@@ -221,7 +221,12 @@
 %token RAISE
 /*sorted lists*/
 %token LISTMIN
-%token SORTED
+%token SSORTED
+%token ISORTED
+%token QSORTED
+%token QSORTEDH
+%token KINS
+%token PARTITION
 %token PERM
 %token STABLE
 %token FOC
@@ -967,8 +972,23 @@ cexp
   | REVERSE OPAREN cexp CPAREN {
 	  P.ListReverse ($3, get_pos 1)
 	}
-	| SORTED OPAREN cexp CPAREN {
-	  P.ListSorted ($3, get_pos 1)
+	| QSORTED OPAREN cexp CPAREN {
+	  P.ListQSorted ($3, get_pos 1)
+	}
+  | QSORTEDH OPAREN cexp COMMA cexp CPAREN {
+	  P.ListQSortedH ($3, $5, get_pos 1)
+	}
+	| SSORTED OPAREN cexp CPAREN {
+	  P.ListSSorted ($3, get_pos 1)
+	}
+	| ISORTED OPAREN cexp CPAREN {
+	  P.ListISorted ($3, get_pos 1)
+	}
+	| KINS OPAREN cexp COMMA cexp COMMA cexp CPAREN {
+	  P.ListKins ($3, $5, $7, get_pos 1)
+	}
+	| PARTITION OPAREN cexp COMMA cexp COMMA cexp CPAREN {
+	  P.ListPartition ($3, $5, $7, get_pos 1)
 	}
 ;
 

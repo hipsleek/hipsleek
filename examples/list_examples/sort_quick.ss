@@ -52,21 +52,6 @@ int getLength(node x)
 	}
 }
 
-/*sort by quick method
-node quick_sort(node x)
-	requires x::ll<L0>
-	ensures res::ll<L1> & L1=quicksort(L0); // & stable (L0, L1);
-{
-	if (x == null) {
-		return null;
-	} else {
-		intPair a = new intPair (x.key, x.val);
-		node xl = getLeftPartition(a, x.next);
-		node xr = getRightPartition(a, x.next);
-		return append (quick_sort(xl), cons (quick_sort(xr), a));
-	}
-}*/
-
 node getLeftPartition (intPair a, node x)
     requires x::ll<L0> * a::intPair<k,v> 
     ensures res::ll<L1> * x::ll<L0> * a::intPair<k,v> & L1=fst(partition(k,v,L0));
@@ -119,26 +104,3 @@ node cons(node x, intPair a)
 {
 	return new node (a.key, a.val, x);
 }
-
-
-/*
-void getPartition (intPair a, node x, ref node xl, ref node xr)
-    requires x::ll<L0> * a::intPair<k,v> * xl::ll<L3> * xr::ll<L4> & len(L3) = 0 & len(L4) = 0
-    ensures xl'::ll<L1> * a::intPair<k,v> * xr'::ll<L2>;// & L1=fst(partition(k,v,L0)) & L2=snd(partition(k,v,L0));
-{
-    if (x == null){
-    	//xl = null;
-    	//xr = null;
-    } else {
-    	node xl_tmp = null;
-    	node xr_tmp = null;
-    	getPartition (a, x.next, xl_tmp, xr_tmp);
-    	if (x.key < a.key) {
-    		xl = append_node (x, xl_tmp);
-    		xr = xr_tmp;
-    	} else {
-    		xl = xl_tmp;
-    		xr = append_node (x, xr_tmp);
-    	}
-    }
-}*/

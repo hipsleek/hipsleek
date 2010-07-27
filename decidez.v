@@ -336,11 +336,23 @@ right. apply n.
 left. apply n.
 Qed.
 
+Lemma z_of_nat_0 : forall x, Z_of_nat x = 0%Z -> x = 0.
+Proof. intros. omega. Qed.
+
+Lemma z_of_0 : Z_of_nat 0 = 0%Z.
+Proof. auto. Qed.
+
+Lemma z_of_nat_inj : forall n, Z_of_nat n = Z_of_nat n.
+Proof. auto. Qed.
+
 Lemma z_of_nat_inc : forall a, (0 < Z_of_nat (1 + a))%Z.
 Proof.
   intros. induction a. simpl. omega.
   auto.
 Qed.
+
+Lemma z_of_nat_S_surj : forall n v, Z_of_nat (S n) = (v + 1)%Z -> Z_of_nat n = v.
+Proof. intros. rewrite inj_S in H. omega. Qed.
 
 Lemma z_of_nat_le_inj : forall x y : nat, x <= y -> (Z_of_nat x <= Z_of_nat y)%Z.
 Proof. intros. omega. Qed.
@@ -800,10 +812,97 @@ Proof.
   rewrite H1. reflexivity.
 Qed.
 
+Lemma selsort_cons : forall x l, x::l = selsort (x::l) ->
+  l = selsort l.
+Proof.
+  intros.
+  assert (l = remove x (x::l)).
+    apply remove_single_obj.
+  assert (length l <= length l).
+    auto.
+  generalize (remove_selsorth x l (length l) H1). intros.
+    rewrite H in H0. unfold selsort in H0.
+  simpl (length (x::l)) in H0. rewrite <- H0 in H2. apply H2.
+Qed.
+
 Lemma list_min_remove_cons_simpl : forall (l : list Obj) (h : Obj),
   (kminl2 h l) :: selsort (remove (kminl2 h l) (h::l)) = selsort (h::l).
 Proof.
   intros. apply list_min_remove_cons. reflexivity.
+Qed.
+
+(***************** try to optimize: *********)
+Lemma kmin_refl : forall x, x = kmin x x.
+Proof.
+  intros. unfold kmin. case_eq (kle_klt_dec x x).
+    intros. reflexivity.
+    intros. reflexivity.
+Qed.
+
+Lemma selsort_head_min_helper : forall x l0 l1, x :: l1 = selsort l0 -> x &= kminl2 x l0.
+Proof.
+  intros. destruct l4. inversion H.
+  simpl. inversion H. case_eq (keq_dec o (kminl2 o l4)).
+    intros. rewrite <- kmin_refl. unfold keq. auto.
+    intros. rewrite <- kmin_refl. unfold keq. auto.
+Qed.
+
+Lemma selsort_head_helper : forall x l0 l1, x :: l1 = selsort l0 -> x = kminl2 x l0.
+Proof.
+  intros.
+  assert (first_occurrence x (x::l4) x).
+    apply first_occurrence_head. unfold keq. auto.
+  assert (x &= kminl2 (hd x (x::l4)) (tail (x::l4))).
+    simpl. apply selsort_head_min_helper with (l1 := l14). apply H.
+  generalize (first_occ_min x x (x::l4) H0 H1). intros. 
+  simpl in H2. apply H2.
+Qed.
+
+Lemma kminl2_duplicate : forall a l, a = kminl2 a (a::l) -> a = kminl2 a l.
+Proof.
+  intros. destruct l.
+simpl. reflexivity.
+simpl.
+ unfold kmin. case_eq(kle_klt_dec a (kminl2 o l)).
+      intros. reflexivity.
+intros. simpl in H. unfold kmin in H. rewrite H0 in H. rewrite H0 in H. apply H.
+Qed.
+
+Lemma selsort_head : forall x l1, x :: l1 = selsort (x :: l1) -> x = kminl2 x l1.
+Proof.
+  intros. apply kminl2_duplicate.
+  apply selsort_head_helper with (l1 := l4). apply H.
+Qed.
+(************ try to optimize ***********)
+
+
+Lemma kminl2_cons_obj : forall a b l, a &<= b ->
+  b = kminl2 b l ->
+  a = kminl2 a (b::l).
+Proof.
+  intros.
+  simpl. rewrite <- H0. unfold kmin.
+    case_eq (kle_klt_dec a b). intros. reflexivity.
+    intros. generalize (klt_contradict1 a b H k); intros. contradict H2.
+Qed.
+
+Lemma kminl2_cons : forall a1 a2 b1 b2 l, (a1 <= b1)%Z ->
+  (b1, b2) = kminl2 (b1, b2) l ->
+  (a1, a2) = kminl2 (a1, a2) ((b1, b2)::l).
+Proof.
+  intros. apply kminl2_cons_obj. apply triv2 in H. auto.
+  apply H0.
+Qed.
+
+Lemma selsort_cons_back : forall a l,
+  a = kminl2 a l ->
+  l = selsort l ->
+  a :: l = selsort (a :: l).
+Proof.
+  intros.
+  rewrite <- list_min_remove_cons_simpl.
+  rewrite <- H. rewrite <- remove_single_obj.
+  rewrite <- H0. reflexivity.
 Qed.
 
 Lemma equal_lengths : forall L0 L1 : list (prod Z Z), L0 = L1 -> length L0 = length L1.
@@ -824,6 +923,99 @@ Proof.
 
   destruct H0. subst. simpl in H. inversion H.
   split. auto. split. auto. split.
+Qed.
+
+Lemma append_min_kinsert : forall a b l,
+  a &< b -> a :: kinsert b l = kinsert b (a :: l).
+Proof.
+  intros. simpl. case_eq (klt_kle_dec a b).
+      intros. reflexivity.
+      intros. generalize (klt_contradict1 b a k H). intros. contradict H1.
+Qed.
+
+Lemma cons_min_kinsert : forall a b l,
+  a &<= b -> a :: b :: l = kinsert a (b :: l).
+Proof.
+  intros. simpl. case_eq (klt_kle_dec b a).
+    intros. generalize (klt_contradict1 a b H k). intros. contradict H1.
+    intros. reflexivity.
+Qed.
+
+Lemma nil_kinsert_false : forall a l, nil = kinsert a l -> False.
+Proof.
+  intros. destruct l. simpl in H. inversion H.
+    simpl in H. case_eq(klt_kle_dec o a). intros. rewrite H0 in H. inversion H.
+    intros. rewrite H0 in H. inversion H.
+Qed.
+
+Lemma partition_kle : forall a b l0 l1 l2,
+  a &<= b ->
+  (l1, l2) = partition a l0 ->
+  (l1, b::l2) = partition a (b::l0).
+Proof.
+  intros. simpl.
+  case_eq (klt_kle_dec b a). intros.
+    generalize (klt_contradict1 a b H k). intros. contradict H2.
+  intros. rewrite <- H0. auto.
+Qed.
+
+Lemma partition_klt : forall a b l0 l1 l2,
+  b &< a ->
+  (l1, l2) = partition a l0 ->
+  (b::l1, l2) = partition a (b::l0).
+Proof.
+  intros. simpl.
+  case_eq (klt_kle_dec b a). intros. rewrite <- H0. auto.
+  intros. generalize (klt_contradict1 a b k H). intros. contradict H2.
+Qed.
+
+Lemma partition_kle_left : forall a b l0 l1,
+  a &<= b ->
+  l1 = fst (partition a l0) ->
+  l1 = fst (partition a (b::l0)).
+Proof.
+  intros.
+  generalize (partition_kle a b l4 l14 (snd (partition a l4)) H). intros.
+  rewrite <- H1. simpl. auto.
+  rewrite H0. symmetry. apply surjective_pairing.
+Qed.
+
+Lemma partition_kle_right : forall a b l0 l2,
+  a &<= b ->
+  l2 = snd (partition a l0) ->
+  b::l2 = snd (partition a (b::l0)).
+Proof.
+  intros.
+  generalize (partition_kle a b l4 (fst (partition a l4)) l14 H). intros.
+  rewrite <- H1. simpl. auto.
+  rewrite H0. symmetry. apply surjective_pairing.
+Qed.
+
+Lemma partition_klt_left : forall a b l0 l1,
+  b &< a ->
+  l1 = fst (partition a l0) ->
+  b::l1 = fst (partition a (b::l0)).
+Proof.
+  intros.
+  generalize (partition_klt a b l4 l14 (snd (partition a l4)) H). intros.
+  rewrite <- H1. simpl. auto.
+  rewrite H0. symmetry. apply surjective_pairing.
+Qed.
+
+Lemma partition_klt_right : forall a b l0 l2,
+  b &< a ->
+  l2 = snd (partition a l0) ->
+  l2 = snd (partition a (b::l0)).
+Proof.
+  intros.
+  generalize (partition_klt a b l4 (fst (partition a l4)) l14 H). intros.
+  rewrite <- H1. simpl. auto.
+  rewrite H0. symmetry. apply surjective_pairing.
+Qed.
+
+Lemma qsorth_nil : forall n, qsorth nil n = nil.
+Proof.
+  intros. destruct n; simpl; auto.
 Qed.
 
 
@@ -894,6 +1086,20 @@ Ltac destruct_once :=
 
 Ltac sim :=
   match goal with
+
+    | |- (?l1 = fst (partition ?a (?b::?l0))) => apply partition_kle_left 
+(*    | |- (?b::?l2 = snd (partition ?a (?b::?l0))) => apply partition_kle_right
+    | |- (?b::?l1 = fst (partition ?a (?b::?l0))) => apply partition_klt_left*)
+    | |- (?l2 = snd (partition ?a (?b::?l0))) => apply partition_klt_right
+
+(*    | |- (fst (partition ?a (?b::?l0)) = ?l1) => symmetry; apply partition_kle_left *)
+    | |- (snd (partition ?a (?b::?l0)) = ?b::?l2) => symmetry; apply partition_kle_right
+    | |- (fst (partition ?a (?b::?l0)) = ?b::?l1) => symmetry; apply partition_klt_left
+(*    | |- (snd (partition ?a (?b::?l0)) = ?l2) => symmetry; apply partition_klt_right *)
+
+    | |- (length (fst (partition ?o ?l)) <= _) => apply length_fst_partition
+    | |- (length (snd (partition ?o ?l)) <= _) => apply length_snd_partition
+
     | |- context [?x &= ?x] => apply keq_refl
     | |- context [fst ?a = fst ?b] => apply fold_keq
 
@@ -913,7 +1119,7 @@ Ltac sim :=
 
     | |- context [fst ?x = fst ?y] => try (apply obj_gt_kminl2) (*hotfix ToDo: think how to generalize this case*)
 
-    | |- (sorted nil) => apply sorted_nil
+(*    | |- (sorted nil) => apply sorted_nil
     | |- (sorted (?x::nil)) => apply sorted_singleton
     | H0: (?x &<= ?y), H1: (sorted (?y::?l)) |- (sorted (?x::?y::?l)) => apply sorted_cons
     | H0: (?x &< ?y), H1: (sorted (?y::?l)) |- (sorted (?x::?y::?l)) => apply sorted_cons
@@ -921,8 +1127,9 @@ Ltac sim :=
     | H0: (?x1 <= ?y1), H1: (sorted ((?y1,?y2)::?l)) |- (sorted ((?x1,?x2)::(?y1,?y2)::?l)) => apply sorted_cons
     | H0: (?x1 < ?y1), H1: (sorted ((?y1,?y2)::?l)) |- (sorted ((?x1,?x2)::(?y1,?y2)::?l)) => apply sorted_cons
     | H0: (?x1 = ?y1), H1: (sorted ((?y1,?y2)::?l)) |- (sorted ((?x1,?x2)::(?y1,?y2)::?l)) => apply sorted_cons
-
+*)
     | H: (?x = kminl2 ?h ?l) |- (?x :: selsort (remove ?x (?h::?l)) = selsort (?h::?l)) => apply list_min_remove_cons
+    | H: (?x::?l = selsort (?x::?l)) |- (?l = selsort ?l) => apply selsort_cons in H
 
     | |- context [?a%Z = fst (kmin (?a%Z, ?b%Z) ?z)] => apply rewrite_fst_kmin
     | |- context [?a%Z = fst (kminl2 (?a%Z, ?b%Z) ?L)] => apply rewrite_fst_kminl2
@@ -949,6 +1156,13 @@ Ltac sim :=
 
     | H0: (first_occurrence ?x ?l0 ?x) , H1: (Permutation (remove ?x ?l0) ?l1)
       |- (Permutation ?l0 (?x::?l1)) => apply remove_cons_perm
+
+    | |- (?a :: kinsert ?b ?l = kinsert ?b (?a :: ?l)) => apply append_min_kinsert
+    | |- (?a :: ?b :: ?l = kinsert ?a (?b :: ?l)) => apply cons_min_kinsert
+    | H: (nil = kinsert ?a ?l) |- _ => apply nil_kinsert_false in H
+
+(*q_sorting*)
+    | |- context [qsorth nil ?n] => rewrite qsorth_nil
 
     | |- context [length (?x :: ?L)] => try (rewrite simpl_length_cons in |- *);auto
     | |- context [(0 < Z_of_nat (1 + ?n))%Z] => apply z_of_nat_inc
@@ -1029,11 +1243,15 @@ Ltac sim :=
     | H: ((Z_of_nat ?x < Z_of_nat ?y)%Z) |- _ => apply z_of_nat_lt_surj in H
     | H: ((Z_of_nat ?x = Z_of_nat ?y)%Z) |- _ => apply z_of_nat_eq_surj in H
 
+    | H: (Z_of_nat (S ?n) = (?v + 1)%Z) |- _ => apply z_of_nat_S_surj in H
+
     | H: context [(0 + ?m)%Z] |- _ => rewrite plus_zero_left in H
     | H: context [(?m + 0)%Z] |- _ => rewrite plus_zero_right in H
 
     | H: context [(1 + Z_of_nat (length ?l))%Z = 0%Z] |- _ => apply length_null_contr in H
     | H: context [Z_of_nat (?x1 + ?x2)] |- _ => rewrite inj_plus in H
+
+    | H: (Z_of_nat ?x = 0%Z) |- _ => apply z_of_nat_0 in H
     | H: context [Z_of_nat 0] |- _ => simpl (Z_of_nat 0) in H (* rewrite inj_0 in H *)
     | H: context [Z_of_nat (S ?n)] |- _ => simpl (Z_of_nat (S n)) in H (* rewrite inj_S in H *)
 
@@ -1047,6 +1265,15 @@ Ltac sim :=
       |- _ => (*let L := L1 in*) destruct L1; simpl in H0
     | H0: (?L1 ++ ?b :: ?L2 = ?a :: ?L0), H1: (~In ?b ?L1)
       |- _ => (*let L := L1 in*) destruct L1; simpl in H0
+
+    | H0: (?l0 ++ ?l1 = selsort (?l0 ++ ?l1)), H1: (?l0 ++ ?l1 = ?x :: ?l3)
+        |- _=> rewrite H1 in H0
+
+    | H0: ((0 <= ?v)%Z), H1: (Z_of_nat ?n = (?v + 1)%Z) |- _ => destruct n
+    | H: (forall n : nat, Z_of_nat n = Z_of_nat ?m -> _) |- _ => let eM := m in generalize (H eM (z_of_nat_inj eM)); clear H; intro
+    | H: (forall n : nat, Z_of_nat n = 0%Z -> _) |- _ => generalize (H 0 z_of_0); clear H; intro
+    | H: context [partition ?a nil] |- _ => simpl in H
+    | H: context [qsorth nil ?n] |- _ => rewrite qsorth_nil in H
 
     | H: context [?x :: _ = ?x :: _] |- _ => rewrite cons_eq_cons in H
     | H: context [_ :: ?l = _ :: ?l] |- _ => apply head_eq in H
@@ -1100,6 +1327,9 @@ Ltac sim :=
 
     | H: context [first_occurrence (?x1,?x2) ((?y1,?y2)::?l) (?x1,?x2)]
         |- context [first_occurrence (?x1,?x2) ?l (?x1,?x2)] => inversion H; subst
+
+    | |- context [partition ?a ?L] => remember (partition a L) as p; destruct p as (ll, lh)
+
 end.
 
 (* ------------------------------------------------------------------------------------------------------------ *)
@@ -1130,7 +1360,16 @@ end
 with solve_existx :=
   match goal with
     | |- context [ ex _ ] => eexists; solve_existx
-    | _ => solve_all; try(instantiate)
+    | _ => solve_all; solve_instantiate
+end
+
+with solve_instantiate :=
+  match goal with
+    | |- (?a :: ?L = _ ++ (?a :: _)) => instantiate (2 := nil); instantiate (1 := L)
+    | |- (_ ++ (?a :: _) = ?a :: ?L) => instantiate (2 := nil); instantiate (1 := L)
+    | |- (_ ++ ?a :: _ = selsort (_ ++ ?a :: _)) => instantiate (1 := nil); instantiate (2 := nil)
+
+    | _ => try(instantiate)
 end
 
 with hd_cases :=
@@ -1168,9 +1407,23 @@ with hd_cases :=
 
 with selsort_cases :=
  match goal with
+    | H: context [?P] |- context [?P] => apply H
+    | H: (?l0 = kinsert ?a ?l1) |- context [?l0] => rewrite H
+
+    | |- (stable nil nil) => unfold stable
+
     | |- (stable ?l (selsort ?l)) => apply selsort_stable
     | |- (stable (?p::?l) (selsort (?p::?l))) => apply selsort_stable
 
+    | |- (stable ?l (insertion_sort ?l)) => apply stable_insertion_sort
+    | |- (stable (?p::?l) (insertion_sort (?p::?l))) => apply stable_insertion_sort
+    | |- (stable (?p::?l) (kinsert ?p (insertion_sort ?l))) => apply stable_insertion_sort
+
+
+(*
+    | H0: (?a = kminl2 ?a ?l), H1: (?l = selsort ?l)
+        |- _ => generalize(selsort_cons_back a l H0 H1); intros; clear H0 H1
+*)
     | H0: (first_occurrence (fst(kminl2 (hd ?h (?o::?l)) (tail (?o::?l))),?v) (?o::?l) 
                             (fst(kminl2 (hd ?h (?o::?l)) (tail (?o::?l))),?v))
       |- _ => apply first_occ_min_simpl in H0; rewrite H0 
@@ -1198,125 +1451,202 @@ with selsort_cases :=
               with eH  := h
               with eL  := l in
         generalize (first_occ_min (eX1, eX2) eH eL H0 H1);simpl;intros
+
+    | H0: (?a = kminl2 ?a ?l), H1: (?l = selsort ?l)
+        |- (?a :: ?l = selsort (?a :: ?l)) => generalize(selsort_cons_back a l H0 H1); intros; clear H0 H1
+
+
+    | H0: (?a &<= ?b), H1: (?b = kminl2 ?b ?l)
+        |- _=> generalize (kminl2_cons_obj a b l H0 H1); intros; clear H0 H1
+
+    | H0: ((?a1 <= ?b1)%Z), H1: ((?b1,?b2) = kminl2 (?b1,?b2) ?l)
+        |- context[(?a1,?a2)]=> generalize (kminl2_cons a1 a2 b1 b2 l H0 H1); intros; clear H0 H1
+
+    | H0: (?x :: ?l1 = selsort (?x :: ?l1))
+        |- (?y::?x::?l1 = selsort (?y::?x::?l1)) => generalize (H0); intros; apply selsort_head in H0
+
     | _ => auto
 end
 
 with solve_all := repeat
   (repeat hyp; repeat sim;
      repeat (hd_cases; repeat hyp; subst);
-     repeat selsort_cases; repeat sim; try(omega); subst; simpl);
+     (*repeat selsort_cases;*) repeat sim; try(omega); subst; simpl);
   simpl; auto with *
 
-with decidez := intros; destruct_once; solve_exists; solve_all; elimtype False; auto with *
+with decidez := intros; destruct_once; solve_exists; solve_all; repeat selsort_cases; elimtype False; auto with *
 
-with decidex := intros; destruct_once; solve_all; solve_existx; solve_all; elimtype False; auto.
+with decidex := intros; destruct_once; solve_all; solve_existx; solve_all; repeat selsort_cases; elimtype False; auto.
 
 (*Module smth := STSORT ZZ.
-Import smth.
-Print False.
+Import smth
+Print klt_kle_dec.
+
+Definition sorted_eth l :=
+  (forall l0 l1 m0 m1, l = l0 ++ (m0 :: m1 :: l1) -> m0 &<= m1) \/
+  (forall m0 l0, l = m0 :: l0 -> l0 = nil) \/
+  (l = nil).
+
+Definition sorted_eth_2 l :=
+  (forall l0 l1 l2 m0 m1, l = l0 ++ (m0 :: l1) ++ (m1 :: l2) -> m0 &<= m1) \/
+  (forall m0 l0, l = m0 :: l0 -> l0 = nil) \/
+  (l = nil).
+
+Theorem sorted_eth_2_to_1 : forall l, sorted_eth_2 l -> sorted_eth l.
+Proof.
+  unfold sorted_eth, sorted_eth_2.
+  intros. destruct H.
+    left. intros. apply H with (l0 := l4) (l1 := nil) (l2 := l14). simpl. apply H0.
+    destruct H. right. left. apply H.
+      right. right. apply H.
+Qed.
+
+Goal sorted_eth nil.
+unfold sorted_eth. right. right. auto.
+
+Goal (sorted_eth ((0,0)::nil))%Z.
+unfold sorted_eth. right. left. intros. inversion H. auto.
+
+Goal (sorted_eth ((0,0)::(1,1)::nil))%Z.
+unfold sorted_eth. left. intros.
+  destruct l4. destruct l14. simpl in H. inversion H. unfold kle, klt, keq. simpl. omega.
+  inversion H. inversion H.
+assert (length ((1%Z, 1%Z) :: nil) = length (l4 ++ m0 :: m1 :: l14)).
+  rewrite H2. auto. simpl in H0. contradict H0. rewrite app_length. simpl. omega. Qed.
+
+Lemma sorted_append_2:
+  forall l1 l2, sorted (l1++l2) -> sorted (l2).
+Proof.
+fix circ 1. intros. destruct l4. assumption.
+assert (IH := circ l4 l14). destruct l4.
+inversion H. subst. constructor. assumption. apply IH.
+simpl. inversion H. assumption.
+Save.
+
+Theorem sorted_to_eth: forall l, sorted l -> sorted_eth l.
+Proof.
+destruct l. right. right. auto.
+destruct l. right. left. intros. inversion H0. auto.
+left. intros.
+rewrite H0 in H.
+apply sorted_append_2 in H. inversion H. apply H3.
+Qed.
+
+Lemma perm_sorted : forall a b l,
+  keq a b -> sorted (a::b::l) -> sorted (b::a::l).
+Proof.
+  intros. destruct l. inversion H0. subst.
+    constructor. right. apply keq_sym. apply H. constructor.
+  inversion H0. inversion H5. subst.
+    constructor. right. apply keq_sym. apply H.
+    constructor. apply kle_trans with (y := b). apply H3. apply H8.
+  apply H10.
+Qed.
+
+Theorem sorted_to_eth_2: forall l, sorted l -> sorted_eth_2 l.
+Proof.
+destruct l. right. right. auto.
+destruct l. right. left. intros. inversion H0. auto.
+left. intros.
+rewrite H0 in H.
+apply sorted_append_2 in H.
+simpl in H. clear H0.
+induction l14. simpl in H. inversion H. apply H2.
+apply IHl14. clear IHl14. simpl in H.
+case_eq (keq_dec a m0).
+  intros. apply sorted_tail with (x := a).
+    apply perm_sorted. apply keq_sym. apply k. apply H.
+  intros.
+    assert (sorted (remove a (m0 :: a :: l14 ++ m1 :: l15))).
+    apply sorted_remove. apply H.
+      simpl in H1.
+      case_eq (keq_dec m0 a).
+        intros. contradiction n. apply keq_sym. apply k.
+        intros. case_eq (keq_dec a a).
+        intros. rewrite H2 in H1. rewrite H3 in H1. apply H1.
+        intros. contradiction n1. apply keq_refl.
+Qed.
+
+Theorem eth_to_sorted: forall l, sorted_eth l -> sorted l.
+Proof.
+intros.
+induction l. constructor.
+destruct l. constructor.
+unfold sorted_eth in H.
+destruct H.
+
+constructor. apply H with (l0 := nil) (l1 := l).
+  simpl. auto. apply IHl.
+
+unfold sorted_eth. left. intros. 
+apply H with (l0 := a::l4) (l1 := l14).
+simpl. rewrite <- H0. auto.
+
+(*singleton and nil cases*)
+destruct H. assert (H1 := H a (o :: l)).
+assert (a :: o :: l = a :: o :: l). auto. apply H1 in H0. inversion H0.
+inversion H.
+Qed.
+
+Theorem eth_2_to_sorted: forall l, sorted_eth_2 l -> sorted l.
+Proof.
+intros.
+induction l. constructor.
+destruct l. constructor.
+unfold sorted_eth_2 in H.
+destruct H.
+
+constructor. apply H with (l0 := nil) (l1 := nil) (l2 := l).
+  simpl. auto. apply IHl.
+
+unfold sorted_eth_2. left. intros. 
+apply H with (l0 := a::l4) (l1 := l14) (l2 := l15).
+simpl. rewrite H0. auto.
+
+(*singleton and nil cases*)
+destruct H. assert (H1 := H a (o :: l)).
+assert (a :: o :: l = a :: o :: l). auto. apply H1 in H0. inversion H0.
+inversion H.
+Qed.
+
+
+
+Theorem eth_2_to_sorted: forall l, sorted_eth_2 l -> sorted l.
+Proof.
+  intros. apply eth_to_sorted. apply sorted_eth_2_to_1. apply H.
+Qed.
 
 Ltac d1 :=
- match goal with
-    | H0: (?a :: ?L0 = ?L1 ++ ?b :: ?L2), H1: (~In ?b ?L1)
-      |- _ => (*let L := L1 in*) destruct L1 
-    | _ => auto
+  match goal with
+    | |- context[partition ?a ?L] => remember (partition a L) as p; destruct p as (ll, lh)
 end.
 
-Lemma test35 : (forall r_214: Z, forall L_218: list (prod Z Z), forall L1_216: list (prod Z Z), forall L2_217: list (prod Z Z), forall v_213: Z, forall L2_215: list (prod Z Z), forall a: Z, (((((((r_214=0) /\ (L2_215=(@nil (prod Z Z)))) \/  (exists L2_246:list (prod Z Z), (exists v_247:Z,((r_214<>0) /\ (L2_215=((v_247, v_247) :: L2_246)))) ) ) /\ (L_218=((v_213, v_213) :: L2_215))) /\ ( (not (In (a, a) L1_216)))) /\ (L_218=(L1_216 ++ ((a, a) :: L2_217)))) /\ (v_213<>a)) ->  (exists L1_244:list (prod Z Z), (exists L2_245:list (prod Z Z),(( (not (In (a, a) L1_244))) /\ (L2_215=(L1_244 ++ ((a, a) :: L2_245))))) ) )%Z.
-Proof. intros. decidex. intros. destruct_once. solve_all. solve_existx. solve_all. eexists;eexists. decidez.
-repeat hyp.
-  (*eexists; eexists.*) elimtype False. decidez.
-  repeat sim. (*
-    eexists; eexists.*) elimtype False. decidez.
-      eexists; eexists. decidez.
-(* elimtype False. decidez. decidez. *)
-  repeat sim. eexists. eexists.  decidez.
-eexists. eexists. 
- decidez. d1; simpl in H1. d1.
-    elimtype False. decidez.
-    decidez.
+Inductive even :nat -> Prop :=
+e0 : even 0 | eS : forall n, even n -> even (S (S n)).
 
+Goal forall n, (even n \/ ~ even n) /\ (even (S n) \/ ~ even (S n)).
 
-destruct L1_216. elimtype False. decidez. (* decidez.*)
- simpl in H1. inversion H1. rewrite in_x_cons in H2.
-eexists. eexists.
-split.
-intro.
-apply H2.
-right.
-revert H3.
-instantiate (1:=L1_216).
-auto.
-instantiate (1:=L2_217).
-assumption.
+Goal forall P, P 0 -> P 1 -> (forall n, P n -> P (S (S n))) -> forall n, P n.
 
-Goal exists x:Z, exists y:Z, y = y.
-eexists.
-exact (0%Z).
-eexists.
-instantiate (1:=0%Z).
-reflexivity.
+Goal forall n, even n \/ ~ even n.
+fix circ 1.
+intros. destruct n. left. constructor.
+destruct n. right. intro. inversion H.
+assert (H:=circ n).
+destruct H.
+left. constructor. assumption.
+right. intro. apply H. inversion H0. assumption.
+Save.
 
- decidez.
-
-eexists. eexists. (* L1_216. eexists L2_217.
-*)
-Lemma de_morgan_01: forall P Q, ~ (P \/ Q) -> ~P /\ ~Q.
-Proof. auto. Qed.
-
-apply de_morgan_01 in H2; destruct H2.
-split. apply H3.
-exact H5.
-
-exists L1_216. exists L2_217.
-
-
-
-apply equal_lengths in H1. rewrite app_length in H1. simpl in H1. 
-assert (length ())
-
-
-unfold app in H1.
- inversion H1.
-exists L1_216.
- decidez. repeat sim. sim. sim. sim. decidez.
-contradict H0.  d1. decidez. d1. generalize (H0 (fst r_238) (snd r_238)). intros.
-contradict H0.
- repeat sim. subst.
- decidez. decidez.
-
-
-
-apply false_surjective_pairing in H. decidez.
-
-rewrite inj_plus. rewrite inj_plus. rewrite inj_plus.
-simpl in H4. rewrite <- inj_plus in H4.
-
- sim. repeat sim. decidez.
- simpl (Z_of_nat 1) in H4. rewrite H4.
-auto. decidez.
-
-
-
-Lemma test40 : 
-(forall L1: list (prod Z Z), 
-  forall a: Z, forall L2_215: list (prod Z Z), 
-     forall r_214: (prod Z Z), ((( (keyIn a L1)) /\ 
-       (L1=((a, a) (*3*) :: L2_215))) /\ (((forall x y, r_214=(x, y)) /\ 
-         (L2_215=(@nil (prod Z Z)))) \/  
-         (exists L2_239:list (prod Z Z), (exists v_240:Z,(((forall x y, r_214<>(x, y))) /\ (L2_215=((v_240, v_240) (*3*) :: L2_239)))) ) )) -> ((r_214=(0, 0))))%Z.
-
-Proof. intros.
-repeat hyp. auto.
-elimtype False.
-apply (H0 (fst r_214) (snd r_214)).
-rewrite <- surjective_pairing.
-SearchAbout (fst _ , snd _).
-
-Check in_x_cons.
-decidez. auto.
-
-Proof.
-repeat hyp. auto. rewrite H. d1.
+Lemma something_is_wrong : forall n l,
+  length l <= n ->
+  qsorth l n = qsorth l (S n).
+Proof. induction n. Focus 2. intros.
+fix circ 1.
+ intros. destruct n. inversion H. destruct l.
+simpl. constructor. inversion H1. 
+assert (H0:=circ n). clear circ.
+apply circ. apply H.
+Qed.
 
 *)
