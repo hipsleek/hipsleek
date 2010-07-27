@@ -539,7 +539,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 								match c with
 									| Ipure.Var _ -> (c,[])
 									| _ -> 
-										let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+										let nn = (("flted_"^(string_of_int b.h_formula_heap_pos.start_pos.Lexing.pos_lnum)^"_004_"^(fresh_trailer ())),Unprimed) in
 										let nv = Ipure.Var (nn,b.h_formula_heap_pos) in
 										let npf = Ipure.BForm (Ipure.Eq (nv,c,b.h_formula_heap_pos), None) in																
 										(nv,[(nn,npf)])) b.h_formula_heap_arguments) in
@@ -549,7 +549,7 @@ and float_out_exps_from_heap (f:formula ):formula =
 								match (snd c) with
 									| Ipure.Var _ -> (c,[])
 									| _ -> 
-										let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^(fresh_trailer ())),Unprimed) in
+										let nn = (("flted_"^(string_of_int b.h_formula_heap2_pos.start_pos.Lexing.pos_lnum)^"_009_"^(fresh_trailer ())),Unprimed) in
 										let nv = Ipure.Var (nn,b.h_formula_heap2_pos) in
 										let npf = Ipure.BForm (Ipure.Eq (nv,(snd c),b.h_formula_heap2_pos), None) in																
 										(((fst c),nv),[(nn,npf)])) b.h_formula_heap2_arguments) in
@@ -795,6 +795,36 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
 					| None, Some p -> Some p
 					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2)) in
 			(Ipure.ListCons (ne1, ne2, l), r) 
+  | Ipure.ListConsP (e1, e2, e3, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
+			let ne3, np3 = float_out_exp_min_max e3 in
+			let r = match (np1, np2, np3) with
+					| None, None, None -> None
+					| Some p, None, None -> Some p
+					| None, Some p, None -> Some p
+					| None, None, Some p -> Some p
+					| None, Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+					| Some (p1, l1), Some (p2, l2), None -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+					| Some (p1, l1), None, Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+					| Some (p1, l1), Some (p2, l2), Some (p3, l3) ->
+						     Some ((Ipure.And (p1, (Ipure.And (p2, p3, l)), l), (List.rev_append l1 (List.rev_append l2 l3)))) in
+			(Ipure.ListConsP (ne1, ne2, ne3, l), r) 
+	|  Ipure.ListRemove (e1, e2, e3, l) ->
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
+			let ne3, np3 = float_out_exp_min_max e3 in
+			let r = match (np1, np2, np3) with
+					| None, None, None -> None
+					| Some p, None, None -> Some p
+					| None, Some p, None -> Some p
+					| None, None, Some p -> Some p
+					| None, Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+					| Some (p1, l1), Some (p2, l2), None -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+					| Some (p1, l1), None, Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2))
+					| Some (p1, l1), Some (p2, l2), Some (p3, l3) ->
+						     Some ((Ipure.And (p1, (Ipure.And (p2, p3, l)), l), (List.rev_append l1 (List.rev_append l2 l3)))) in
+			(Ipure.ListRemove (ne1, ne2, ne3, l), r) 
   | Ipure.ListHead (e, l) -> 
 			let ne1, np1 = float_out_exp_min_max e in
 			(Ipure.ListHead (ne1, l), np1)
@@ -804,9 +834,27 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
   | Ipure.ListLength (e, l) -> 
 			let ne1, np1 = float_out_exp_min_max e in
 			(Ipure.ListLength (ne1, l), np1)
+	| Ipure.Fst (e, l) -> 
+			let ne1, np1 = float_out_exp_min_max e in
+			(Ipure.Fst (ne1, l), np1)
+	| Ipure.Snd (e, l) -> 
+			let ne1, np1 = float_out_exp_min_max e in
+			(Ipure.Snd (ne1, l), np1)
+	| Ipure.ListMin (e1, e2, l) -> 
+			let ne1, np1 = float_out_exp_min_max e1 in
+			let ne2, np2 = float_out_exp_min_max e2 in
+			let r = match (np1, np2) with
+					| None, None -> None
+					| Some p, None -> Some p
+					| None, Some p -> Some p
+					| Some (p1, l1), Some (p2, l2) -> Some ((Ipure.And (p1, p2, l)), (List.rev_append l1 l2)) in
+			(Ipure.ListMin (ne1, ne2, l), r) 	
   | Ipure.ListReverse (e, l) -> 
 			let ne1, np1 = float_out_exp_min_max e in
 			(Ipure.ListReverse (ne1, l), np1)
+	| Ipure.ListSorted (e, l) ->
+		  let ne1, np1 = float_out_exp_min_max e in
+			(Ipure.ListSorted (ne1, l), np1)
 
 and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		
@@ -955,10 +1003,20 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 					let ne2, np2 = float_out_exp_min_max e2 in
 					let t = Ipure.BForm (Ipure.ListAllN (ne1, ne2, l),lbl) in
 					add_exists t np1 np2 l
+      | Ipure.ListFirstOcc (e1,e2,e3, l) ->
+				  let ne1, np1 = float_out_exp_min_max e1 in
+					let ne2, np2 = float_out_exp_min_max e2 in
+					let ne3, np3 = float_out_exp_min_max e3 in
+					Ipure.BForm (Ipure.ListFirstOcc (ne1, ne2, ne3, l),lbl)
 		  | Ipure.ListPerm (e1, e2, l) ->
 					let ne1, np1 = float_out_exp_min_max e1 in
 					let ne2, np2 = float_out_exp_min_max e2 in
 					let t = Ipure.BForm (Ipure.ListPerm (ne1, ne2, l),lbl) in
+					add_exists t np1 np2 l
+			| Ipure.ListStable (e1, e2, l) ->
+					let ne1, np1 = float_out_exp_min_max e1 in
+					let ne2, np2 = float_out_exp_min_max e2 in
+					let t = Ipure.BForm (Ipure.ListStable (ne1, ne2, l),lbl) in
 					add_exists t np1 np2 l
 			in		 
 		match p with

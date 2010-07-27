@@ -213,7 +213,7 @@ let fresh_int () =
   !seq_number
 
 let fresh_var_name (tn:string)(ln:int):string = 
-	("v_"^tn^"_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
+	("v_"^tn^"_4_"^(string_of_int ln)^"_"^(string_of_int (fresh_int ())))
 
 let fresh_trailer () = 
   let str = string_of_int (fresh_int ()) in
@@ -228,7 +228,7 @@ let fresh_name () =
 
 let fresh_label pos = 
  (* let str = string_of_int (fresh_int ()) in*)
-    "f_l_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)^"_"^(string_of_int (fresh_int ()))
+    "f_l_6_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum)^"_"^(string_of_int (fresh_int ()))
 	
 let fresh_names (n : int) = (* number of names to be generated *)
   let names = ref ([] : string list) in
@@ -240,7 +240,7 @@ let fresh_names (n : int) = (* number of names to be generated *)
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 
-let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
+let string_of_loc (p : loc) = p.start_pos.Lexing.pos_fname ^ "_100_" ^ (string_of_int p.start_pos.Lexing.pos_lnum)^"_"^
 	(string_of_int (p.start_pos.Lexing.pos_cnum-p.start_pos.Lexing.pos_bol))
 
 let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^","^string_of_int(p.Lexing.pos_cnum-p.Lexing.pos_bol) ^")"

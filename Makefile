@@ -21,9 +21,9 @@ DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 
-all: hip sleek prover prdebug decidez.vo
+all: hip sleek prover prdebug hipgui stsort.vo decidez.vo
 
-rest: sleek prover prdebug
+rest: sleek prover prdebug hipgui
 
 opt: hip.opt sleek.opt prover.opt
 
@@ -181,23 +181,23 @@ hip1: $(MAIN_FILES_2)
 hipc:
 	make clean; make hip
 
-hip: decidez.vo $(MAIN_FILES)
+hip: stsort.vo decidez.vo $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
-mytop: $(MAIN_FILES) decidez.vo
+mytop: $(MAIN_FILES) stsort.vo decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
 prdebug: $(PP_FILES) 
 	 $(OCAMLC) -a -o $@ unix.cma str.cma graph.cma $(PP_FILES)
 
-hipgui: $(GUI_FILES) decidez.vo gui.ml maingui.ml
+hipgui: $(GUI_FILES) stsort.vo decidez.vo gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) gui.ml maingui.ml
 
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
 #	make -f Makefile.opt hip.opt
 
-hip.opt: $(MAIN_FILES_OPT) decidez.vo
+hip.opt: $(MAIN_FILES_OPT) stsort.vo decidez.vo
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
 
 prover: $(PROVE_FILES)
@@ -221,10 +221,10 @@ xml/xml-light.cma:
 xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
-sleek: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
+sleek: xml/xml-light.cma stsort.vo decidez.vo $(SLEEK_FILES) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 
-sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
+sleek.opt: xml/xml-light.cmxa stsort.vo decidez.vo $(SLEEK_FILES_OPT) 
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
@@ -264,6 +264,9 @@ JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 j: $(JAVA_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(JAVA_FILES)
 
+stsort.vo:
+	coqtop -compile stsort
+	
 decidez.vo:
 	coqtop -compile decidez
 
@@ -286,7 +289,7 @@ decidez.vo:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
+	rm -f stsort.glob stsort.vo decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

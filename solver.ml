@@ -181,7 +181,7 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) branch : (CP.formula
 	h_formula_data_pos = pos}) ->
       let i = ("addr"^(fresh_trailer ())) in
       let vi = CP.SpecVar (CP.type_of_spec_var p, i, Unprimed) in
-      let non_zero = CP.BForm (CP.Neq (CP.Var (vi, pos), CP.Null pos, pos),lbl) in
+      let non_zero = CP.BForm (CP.Neq (CP.Var (vi, pos), CP.Null ((CP.type_of_spec_var vi), pos), pos),lbl) in
       let tmp1 = CP.mkEqVar p vi pos in
       let tmp2 = CP.mkAnd tmp1 non_zero pos in
 	  (tmp2, [vi])
@@ -269,7 +269,7 @@ and xpure_heap_symbolic_no_exists (prog : prog_decl) (h0 : h_formula) : (CP.form
       (*
 	    let non_zero = CP.BForm (CP.Gt (CP.Var (p, pos), CP.IConst (0, pos), pos)) in
       *)
-      let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in
+      let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null ((CP.type_of_spec_var p), pos), pos),lbl) in
 	  (non_zero, [], [p])
   | ViewNode ({h_formula_view_node = p;
 	h_formula_view_name = c;
@@ -3308,6 +3308,7 @@ and simpl_b_formula (f : CP.b_formula) : CP.b_formula =  match f with
   | CP.ListIn (e1, e2, pos)
   | CP.ListNotIn (e1, e2, pos)
   | CP.ListAllN (e1, e2, pos)
+	| CP.ListStable (e1, e2, pos)
   | CP.ListPerm (e1, e2, pos) ->
 		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
@@ -3393,19 +3394,19 @@ and transform_null (eqs) :(CP.b_formula list) = List.map (fun c-> match c with
   | Cpure.Lte _ -> c
   | Cpure.Eq (e1,e2,l) -> 
 	  if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		if (Cpure.is_zero e2) then Cpure.Eq (e1,(Cpure.Null l),l)
-		else Cpure.Neq (e1,(Cpure.Null l),l)
+		  if (Cpure.is_zero e2) then Cpure.Eq (e1,(CP.Null ((CP.OType "Obj"), l)),l)
+		  else Cpure.Neq (e1,(CP.Null ((CP.OType "Obj"), l)),l)
 	  else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		if (Cpure.is_zero e1) then Cpure.Eq (e2,(Cpure.Null l),l)
-		else Cpure.Neq (e2,(Cpure.Null l),l)
+		  if (Cpure.is_zero e1) then Cpure.Eq (e2,(CP.Null ((CP.OType "Obj"), l)),l)
+		  else Cpure.Neq (e2,(CP.Null ((CP.OType "Obj"), l)),l)
 	  else c
   | Cpure.Neq (e1,e2,l)-> 
 	  if (Cpure.exp_is_object_var e1)&&(Cpure.is_num e2) then
-		if (Cpure.is_zero e2) then Cpure.Neq (e1,(Cpure.Null l),l)
-		else c
+		  if (Cpure.is_zero e2) then Cpure.Neq (e1,(CP.Null ((CP.OType "Obj"),l)),l)
+		  else c
 	  else if (Cpure.exp_is_object_var e2)&&(Cpure.is_num e1) then
-		if (Cpure.is_zero e1) then Cpure.Neq (e2,(Cpure.Null l),l)
-		else c
+		  if (Cpure.is_zero e1) then Cpure.Neq (e2,(CP.Null ((CP.OType "Obj"), l)),l)
+		  else c
 	  else c
   | _ -> c
 ) eqs

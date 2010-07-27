@@ -123,7 +123,7 @@ let return_second (_, y) = y
  ;;
 
 (* function that returns a fresh variable with the name preceded by var_name *)
-let fresh_variable_name var_name = (var_name ^ "_" ^ (string_of_int (fresh_int ())))
+let fresh_variable_name var_name = (var_name ^ "_2_" ^ (string_of_int (fresh_int ())))
  ;;
 
 (* functions that returns a number of n fresh variables *) 

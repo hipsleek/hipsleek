@@ -44,11 +44,13 @@ and b_formula =
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
+	| ListFirstOcc of (exp * exp * exp * loc)
   | ListPerm of (exp * exp * loc)
+  | ListStable of (exp * exp * loc)
 
 (* Expression *)
 and exp =
-  | Null of loc
+  | Null of (typ * loc)
   | Var of (spec_var * loc)
   | IConst of (int * loc)
   | FConst of (float * loc)
@@ -66,11 +68,17 @@ and exp =
 	  (* list expressions *)
   | List of (exp list * loc)
   | ListCons of (exp * exp * loc)
+	| ListConsP of (exp * exp * exp * loc)
+	| ListRemove of (exp * exp * exp * loc)
   | ListHead of (exp * loc)
   | ListTail of (exp * loc)
   | ListLength of (exp * loc)
+	| ListMin of (exp * exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+	| ListSorted of (exp * loc)
+	| Fst of (exp * loc)
+	| Snd of (exp * loc)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here *)
   | ConstRel of bool
@@ -90,7 +98,7 @@ and rounding_func =
   
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
-  | Null _ -> OType ""
+  | Null (t, _) -> t
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Prim Int
   | FConst _ -> Prim Float
@@ -102,9 +110,10 @@ let rec get_exp_type (e : exp) : typ = match e with
         | _ -> Prim Float
       end
   | Div _ -> Prim Float
-  | ListHead _ | ListLength _ -> Prim Int
+	| Fst _ | Snd _  | ListLength _ -> Prim Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
-  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Prim Globals.List
+  | List _ | ListCons _ | ListConsP _ | ListRemove _ | ListTail _ | ListAppend _ | ListReverse _ | ListSorted _ -> Prim Globals.List
+	| ListMin _ | ListHead _ -> OType "Obj"
 
 (* type constants *)
 
@@ -173,8 +182,8 @@ and bfv (bf : b_formula) = match bf with
 		let fv1 = afv a1 in
 		[v] @ fv1
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-  | BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
-  | BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | BagMax (v1, v2, _) -> Util.remove_dups ([v1] @ [v2])
+  | BagMin (v1, v2, _) -> Util.remove_dups ([v1] @ [v2])
   | ListIn (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
@@ -184,6 +193,15 @@ and bfv (bf : b_formula) = match bf with
 	  let fv2 = afv a2 in
 		fv1 @ fv2
   | ListAllN (a1, a2, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		fv1 @ fv2
+  | ListFirstOcc (a1, a2, a3, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		let fv3 = afv a3 in
+		fv1 @ fv2 @ fv3
+  | ListStable (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		fv1 @ fv2
@@ -222,11 +240,24 @@ and afv (af : exp) : spec_var list = match af with
   | ListCons (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)  
+		Util.remove_dups (fv1 @ fv2)
+	| ListConsP (a1, a2, a3, _)
+	| ListRemove (a1, a2, a3, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		let fv3 = afv a3 in
+		Util.remove_dups (fv1 @ fv2 @ fv3) 
+	| Fst (a, _)
+	| Snd (a, _)
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
+	| ListSorted (a, _)
   | ListReverse (a, _) -> afv a
+	| ListMin (a1, a2, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		Util.remove_dups (fv1 @ fv2)  
 
 and afv_list (alist : exp list) : spec_var list = match alist with
 	|[] -> []
@@ -307,7 +338,7 @@ and can_be_aliased (e : exp) : bool = match e with
 
 and get_alias (e : exp) : spec_var = match e with
   | Var (sv, _) -> sv
-  | Null _ -> SpecVar (OType "", "null", Unprimed) (* it is safe to name it "null" as no other variable can be named "null" *)
+  | Null (t, _) -> SpecVar (t, "null", Unprimed) (* it is safe to name it "null" as no other variable can be named "null" *)
   | _ -> failwith ("get_alias: argument is neither a variable nor null")
 
 and is_object_var (sv : spec_var) = match sv with
@@ -328,8 +359,11 @@ and is_bag (e : exp) : bool = match e with
 and is_list (e : exp) : bool = match e with
   | List _
   | ListCons _
+	| ListConsP _
+	| ListRemove _
   | ListTail _
   | ListAppend _
+	| ListSorted _
   | ListReverse _ -> true
   | _ -> false
 
@@ -340,7 +374,8 @@ and is_arith (e : exp) : bool = match e with
   | Div _
   | Min _
   | Max _
-  | ListHead _
+	| Fst _
+	| Snd _
   | ListLength _ -> true
   | _ -> false
 
@@ -367,6 +402,27 @@ and is_object_type (t : typ) = match t with
 and should_simplify (f : formula) = match f with
   | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true
   | _ -> false
+
+and name_of_spec_var (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, _) -> v
+
+and type_of_spec_var (sv : spec_var) : typ = match sv with
+  | SpecVar (t, _, _) -> t
+
+and is_primed (sv : spec_var) : bool = match sv with
+  | SpecVar (_, _, p) -> p = Primed
+
+and is_unprimed (sv : spec_var) : bool = match sv with
+  | SpecVar (_, _, p) -> p = Unprimed
+
+and to_primed (sv : spec_var) : spec_var = match sv with
+  | SpecVar (t, v, _) -> SpecVar (t, v, Primed)
+
+and to_unprimed (sv : spec_var) : spec_var = match sv with
+  | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
+
+and to_int_var (sv : spec_var) : spec_var = match sv with
+  | SpecVar (_, v, p) -> SpecVar (Prim Int, v, p)
 
 (* smart constructor *)
 
@@ -416,7 +472,7 @@ and mkGte a1 a2 pos =
   else
 	Gte (a1, a2, pos)
 
-and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null pos) pos
+and mkNull (v : spec_var) pos = mkEqExp (mkVar v pos) (Null ((type_of_spec_var v), pos)) pos
 
 and mkNeq a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
@@ -581,7 +637,9 @@ and equalBFormula (f1:b_formula)(f2:b_formula):bool = match (f1,f2) with
   | ((ListIn (e1,e2,_)),(ListIn (d1,d2,_)))
   | ((ListNotIn (e1,e2,_)),(ListNotIn (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
   | ((ListAllN (e1,e2,_)),(ListAllN (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+	| ((ListFirstOcc (e1,e2,e3,_)),(ListFirstOcc (d1,d2,d3,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)&&(eqExp e3 d3)
   | ((ListPerm (e1,e2,_)),(ListPerm (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+  | ((ListStable (e1,e2,_)),(ListStable (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
   | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
   | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq_spec_var v1 w1)&& (eq_spec_var v2 w2)
   | _ -> false
@@ -605,10 +663,16 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
   | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
                     else false
   | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
+	| (ListSorted (e,_),ListSorted(d,_)) -> (eqExp e d)
+	| (ListRemove (e1,e2,e3,_),ListRemove (d1,d2,d3,_))
+	| (ListConsP (e1,e2,e3,_),ListConsP (d1,d2,d3,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)&&(eqExp e3 d3)
   | (ListHead (e1,_),ListHead (e2,_))
   | (ListTail (e1,_),ListTail (e2,_))
   | (ListLength (e1,_),ListLength (e2,_))
+	| (Fst (e1,_),Fst (e2,_))
+	| (Snd (e1,_),Snd (e2,_))
   | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp e1 e2)
+	| (ListMin (e1,e2,_),ListMin (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
   | _ -> false
 	
 	
@@ -681,7 +745,7 @@ and name_of_type (t : typ) : ident = match t with
   | OType c -> c
 
 and pos_of_exp (e : exp) = match e with
-  | Null pos -> pos
+  | Null (_, pos) -> pos
   | Var (_, p) -> p
   | IConst (_, p) -> p
   | FConst (_, p) -> p
@@ -699,32 +763,16 @@ and pos_of_exp (e : exp) = match e with
   | List (_, p) -> p
   | ListAppend (_, p) -> p
   | ListCons (_, _, p) -> p
+	| ListConsP (_, _, _, p) -> p
+	| ListRemove (_, _, _, p) -> p
   | ListHead (_, p) -> p
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
+	| ListMin (_, _, p) -> p
   | ListReverse (_, p) -> p
-
-and name_of_spec_var (sv : spec_var) : ident = match sv with
-  | SpecVar (_, v, _) -> v
-
-and type_of_spec_var (sv : spec_var) : typ = match sv with
-  | SpecVar (t, _, _) -> t
-
-and is_primed (sv : spec_var) : bool = match sv with
-  | SpecVar (_, _, p) -> p = Primed
-
-and is_unprimed (sv : spec_var) : bool = match sv with
-  | SpecVar (_, _, p) -> p = Unprimed
-
-and to_primed (sv : spec_var) : spec_var = match sv with
-  | SpecVar (t, v, _) -> SpecVar (t, v, Primed)
-
-and to_unprimed (sv : spec_var) : spec_var = match sv with
-  | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
-
-and to_int_var (sv : spec_var) : spec_var = match sv with
-  | SpecVar (_, v, p) -> SpecVar (Prim Int, v, p)
-
+	| ListSorted (_, p) -> p
+	| Fst (_, p) -> p
+	| Snd (_, p) -> p
 
 and fresh_old_name (s: string):string = 
 	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
@@ -789,7 +837,9 @@ and eq_b_formula (b1 : b_formula) (b2 : b_formula) : bool = match (b1, b2) with
   | (ListIn(e1, e2, _), ListIn(d1, d2, _))
   | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
   | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
+	| (ListFirstOcc(e1, e2, e3, _), ListFirstOcc(e4, e5, e6, _))  -> (eq_exp e1 e4) & ((eq_exp e2 e5) & (eq_exp e3 e6))
   | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
+  | (ListStable(e1, e2, _), ListStable(d1, d2, _)) -> (eq_exp e1 d1) & (eq_exp e2 d2)
 	| (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
 	| (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var sv1 sv3) & (eq_spec_var sv2 sv4)
 	| (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
@@ -821,10 +871,16 @@ and eq_exp (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
   | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
           else false
   | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eq_exp e1 d1) && (eq_exp e2 d2)
+  | (ListSorted (e,_), ListSorted(d,_)) -> (eq_exp e d)
+	| (ListRemove (e1, e2, e3, _), ListRemove (d1, d2, d3, _))
+	| (ListConsP (e1, e2, e3, _), ListConsP (d1, d2, d3, _)) -> (eq_exp e1 d1) && (eq_exp e2 d2) && (eq_exp e3 d3)
   | (ListHead (e1, _), ListHead (e2, _))
   | (ListTail (e1, _), ListTail (e2, _))
   | (ListLength (e1, _), ListLength (e2, _))
+	| (Fst (e1, _), Fst (e2, _))
+	| (Snd (e1, _), Snd (e2, _))
   | (ListReverse (e1, _), ListReverse (e2, _)) -> (eq_exp e1 e2)
+	| (ListMin (e1, e2 ,_),ListMin (e3, e4, _)) -> (eq_exp e1 e3) & (eq_exp e2 e4)
 	| _ -> false
 
 
@@ -947,7 +1003,9 @@ and b_apply_subs sst bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+	| ListFirstOcc (a1, a2, a3, pos) -> ListFirstOcc (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+  | ListStable (a1, a2, pos) -> ListStable (e_apply_subs sst a1, e_apply_subs sst a2, pos)
 
 and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
 
@@ -974,10 +1032,16 @@ and e_apply_subs sst e = match e with
 							  e_apply_subs sst a2, pos)
   | List (alist, pos) -> List (e_apply_subs_list sst alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_subs_list sst alist, pos)
+	| ListSorted (a, pos) -> ListSorted (e_apply_subs sst a, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
+	| ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_subs sst a1, e_apply_subs sst a2, e_apply_subs sst a3, pos)
   | ListHead (a, pos) -> ListHead (e_apply_subs sst a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
+	| Fst (a, pos) -> Fst (e_apply_subs sst a, pos)
+	| Snd (a, pos) -> Snd (e_apply_subs sst a, pos)
+	| ListMin (a1, a2, pos) -> ListMin (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_subs sst a, pos)
 
 and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
@@ -1032,7 +1096,9 @@ and b_apply_one (fr, t) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+	| ListFirstOcc (a1, a2, a3, pos) -> ListFirstOcc (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | ListStable (a1, a2, pos) -> ListStable (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | FConst _ -> e
@@ -1057,10 +1123,16 @@ and e_apply_one (fr, t) e = match e with
 							  e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List (e_apply_one_list (fr, t) alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_one_list (fr, t) alist, pos)
+	| ListSorted (a, pos) -> ListSorted (e_apply_one (fr, t) a, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
+	| ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListHead (a, pos) -> ListHead (e_apply_one (fr, t) a, pos)
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
+	| Fst (a, pos) -> Fst (e_apply_one (fr, t) a, pos)
+	| Snd (a, pos) -> Snd (e_apply_one (fr, t) a, pos)
+	| ListMin (a1, a2, pos) -> ListMin (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
 
 and e_apply_one_list (fr, t) alist = match alist with
@@ -1145,7 +1217,9 @@ and b_apply_par_term (sst : (spec_var * exp) list) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+	| ListFirstOcc (a1, a2, a3, pos) -> ListFirstOcc (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+  | ListStable (a1, a2, pos) -> ListStable (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
 
 and subs_one_term sst v orig = List.fold_left (fun old  -> fun  (fr,t) -> if (eq_spec_var fr v) then t else old) orig sst 
 
@@ -1170,10 +1244,16 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
 									  a_apply_par_term sst a2, pos)
   | List (alist, pos) -> List ((a_apply_par_term_list sst alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_par_term_list sst alist), pos)
-  | ListCons (a1, a2, pos) -> ListCons (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+	| ListSorted (a1, pos) -> ListSorted (a_apply_par_term sst a1, pos)
+	| ListCons (a1, a2, pos) -> ListCons (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+	| ListConsP (a1, a2, a3, pos) -> ListConsP (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
+	| ListRemove (a1, a2, a3, pos) -> ListRemove (a_apply_par_term sst a1, a_apply_par_term sst a2, a_apply_par_term sst a3, pos)
   | ListHead (a1, pos) -> ListHead (a_apply_par_term sst a1, pos)
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
+	| Fst (a, pos) -> Fst (a_apply_par_term sst a, pos)
+	| Snd (a, pos) -> Snd (a_apply_par_term sst a, pos)
+	| ListMin (a1, a2, pos) -> ListMin (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_par_term sst a1, pos)
 
 and a_apply_par_term_list sst alist = match alist with
@@ -1211,7 +1291,9 @@ and b_apply_one_term ((fr, t) : (spec_var * exp)) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-  | ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+	| ListFirstOcc (a1, a2, a3, pos) -> ListFirstOcc (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+	| ListPerm (a1, a2, pos) -> ListPerm (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+	| ListStable (a1, a2, pos) -> ListStable (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
 
 and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Null _ -> e
@@ -1234,10 +1316,16 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
 									  a_apply_one_term (fr, t) a2, pos)
   | List (alist, pos) -> List ((a_apply_one_term_list (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_one_term_list (fr, t) alist), pos)
+  | ListSorted (a, pos) -> ListSorted (a_apply_one_term (fr, t) a, pos)
   | ListCons (a1, a2, pos) -> ListCons (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+	| ListConsP (a1, a2, a3, pos) -> ListConsP (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
+	| ListRemove (a1, a2, a3, pos) -> ListRemove (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, a_apply_one_term (fr, t) a3, pos)
   | ListHead (a1, pos) -> ListHead (a_apply_one_term (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
+	| Fst (a1, pos) -> Fst (a_apply_one_term (fr, t) a1, pos)
+	| Snd (a1, pos) -> Snd (a_apply_one_term (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
+	| ListMin (a1, a2, pos) -> ListMin (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_one_term (fr, t) a1, pos)
 
 and a_apply_one_term_list (fr, t) alist = match alist with
@@ -1724,6 +1812,8 @@ and drop_bag_b_formula (bf0 : b_formula) : b_formula = match bf0 with
   | ListIn _
   | ListNotIn _
   | ListAllN _
+	| ListFirstOcc _
+	| ListStable _
   | ListPerm _ -> BConst (true, no_pos)
   | Eq (e1, e2, pos)
   | Neq (e1, e2, pos) ->
@@ -1812,7 +1902,9 @@ and b_apply_one_exp (fr, t) bf = match bf with
   | ListIn (a1, a2, pos) -> bf
   | ListNotIn (a1, a2, pos) -> bf
   | ListAllN (a1, a2, pos) -> bf
+	| ListFirstOcc (a1, a2, a3, pos) -> bf
   | ListPerm (a1, a2, pos) -> bf
+  | ListStable (a1, a2, pos) -> bf
 
 and e_apply_one_exp (fr, t) e = match e with
   | Null _ | IConst _ | FConst _ -> e
@@ -1838,10 +1930,16 @@ and e_apply_one_exp (fr, t) e = match e with
   | List (alist, pos) -> List ((e_apply_one_list_exp (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list_exp (fr, t) alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
+	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, e_apply_one_exp (fr, t) a3, pos)
+	| ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, e_apply_one_exp (fr, t) a3, pos)
   | ListHead (a1, pos) -> ListHead (e_apply_one_exp (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
+	| Fst (a1, pos) -> Fst (e_apply_one_exp (fr, t) a1, pos)
+	| Snd (a1, pos) -> Snd (e_apply_one_exp (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
+	| ListMin (a1, a2, pos) -> ListMin (e_apply_one_exp (fr, t) a1, e_apply_one_exp (fr, t) a2, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one_exp (fr, t) a1, pos)
+  | ListSorted (a1, pos) -> ListSorted (e_apply_one_exp (fr, t) a1, pos)
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []
@@ -1991,12 +2089,18 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 					  | BagUnion _
 					  | BagIntersect _ 
 					  | BagDiff _
+						| Fst _
+						| Snd _
 					  | List _
 					  | ListCons _
+						| ListConsP _
+						| ListRemove _
 					  | ListTail _
 					  | ListAppend _
 					  | ListReverse _
+						| ListSorted _
 					  | ListHead _
+						| ListMin _
 					  | ListLength _ -> false in
 	((is_simple e1)&& match e2 with
 				  | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
@@ -2027,7 +2131,7 @@ and drop_null (f:formula) self neg:formula =
 	  | Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
 	  
 and add_null f self : formula =  
-	mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos , None)) no_pos
+	mkAnd f (BForm (mkEq (Var (self, no_pos)) (Null ((type_of_spec_var self), no_pos)) no_pos , None)) no_pos
 	
 (*to fully extend*)
 (* TODO: double check this func *)
@@ -2135,9 +2239,15 @@ and simp_mult (e : exp) :  exp =
     |  List (_, l)
     |  ListAppend (_, l)
 	|  ListCons (_, _, l)
+	|  ListConsP (_, _, _, l)
+	|  ListRemove (_, _, _, l)
 	|  ListTail (_, l)
 	|  ListReverse (_, l)
+	|  ListSorted (_, l)
 	|  ListHead (_, l)
+	|  ListMin (_, _, l)
+	|  Fst (_, l)
+	|  Snd (_, l) 
 	|  ListLength (_, l) -> 
           match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
 
@@ -2230,10 +2340,16 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   |  List (el, l) -> ((Some e), None)
   |  ListAppend (el, l) -> ((Some e), None)
   |  ListCons (e1, e2, l) -> ((Some e), None)
+	|  ListConsP (e1, e2, e3, l) -> ((Some e), None)
+	|  ListRemove (e1, e2, e3, l) -> ((Some e), None)
   |  ListHead (e1, l) -> ((Some e), None)
   |  ListTail (e1, l) -> ((Some e), None)
   |  ListLength (e1, l) -> ((Some e), None)
+	|  ListMin (e1, e2, l) -> ((Some e), None)
   |  ListReverse (e1, l) -> ((Some e), None)
+	|  ListSorted (e1, l) -> ((Some e), None)
+	|  Fst (e1, l) -> ((Some e), None)
+	|  Snd (e1, l) -> ((Some e), None)
 
 and move_lr (lhs :  exp option) (lsm :  exp option)
   (rhs :  exp option) (rsm :  exp option) l :
@@ -2369,10 +2485,16 @@ and purge_mult (e :  exp):  exp = match e with
   |  List (el, l) -> List ((List.map purge_mult el), l)
   |  ListAppend (el, l) -> ListAppend ((List.map purge_mult el), l)
   |  ListCons (e1, e2, l) -> ListCons (purge_mult e1, purge_mult e2, l)
+	|  ListConsP (e1, e2, e3, l) -> ListConsP (purge_mult e1, purge_mult e2, purge_mult e3, l)
+	|  ListRemove (e1, e2, e3, l) -> ListRemove (purge_mult e1, purge_mult e2, purge_mult e3, l)
   |  ListHead (e, l) -> ListHead (purge_mult e, l)
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
+	|  Fst (e, l) -> Fst (purge_mult e, l)
+	|  Snd (e, l) -> Snd (purge_mult e, l)
+	|  ListMin (e1, e2, l) -> ListMin (purge_mult e1, purge_mult e2, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
+	|  ListSorted (e, l) -> ListSorted (purge_mult e, l)
 	
 	
 and arith_simplify (pf : formula) :  formula = 
@@ -2474,7 +2596,9 @@ and arith_simplify (pf : formula) :  formula =
          |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
          |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
          |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+         |  ListFirstOcc (e1, e2, e3, l) -> ListFirstOcc (purge_mult (simp_mult e1), purge_mult (simp_mult e2), purge_mult (simp_mult e3), l)
+				 |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+				 |  ListStable (e1, e2, l) -> ListStable (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
          |  BagSub (e1, e2, l) ->
               BagSub (simp_mult e1, simp_mult e2, l)
          |  BagMin _ -> b
@@ -2545,14 +2669,28 @@ let rec transform_exp f e  =
       BagDiff (ne1,ne2,l)
     | List (e1,l) -> List (( List.map (transform_exp f) e1), l) 
     | ListCons (e1,e2,l) -> 
-    let ne1 = transform_exp f e1 in
-    let ne2 = transform_exp f e2 in
-    ListCons (ne1,ne2,l)
+      let ne1 = transform_exp f e1 in
+      let ne2 = transform_exp f e2 in
+      ListCons (ne1,ne2,l)
+		| ListConsP (e1,e2,e3,l) -> 
+      let ne1 = transform_exp f e1 in
+      let ne2 = transform_exp f e2 in
+	  	let ne3 = transform_exp f e3 in
+      ListConsP (ne1,ne2,ne3,l)
+	  | ListRemove (e1,e2,e3,l) -> 
+      let ne1 = transform_exp f e1 in
+      let ne2 = transform_exp f e2 in
+	  	let ne3 = transform_exp f e3 in
+      ListRemove (ne1,ne2,ne3,l)
     | ListHead (e1,l) -> ListHead ((transform_exp f e1),l)
     | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
     | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
+		| Fst (e1,l) -> Fst ((transform_exp f e1),l)
+		| Snd (e1,l) -> Snd ((transform_exp f e1),l)
+		| ListMin (e1,e2,l) -> ListMin ((transform_exp f e1),(transform_exp f e2), l)
     | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
     | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
+		| ListSorted (e1,l) -> ListSorted ((transform_exp f e1),l)
 
 
 	
@@ -2623,11 +2761,19 @@ let transform_b_formula f (e:b_formula) :b_formula =
 	    let ne1 = transform_exp f_exp e1 in
       let ne2 = transform_exp f_exp e2 in
       ListAllN (ne1,ne2,l)
+		| ListFirstOcc (e1,e2, e3,l) ->
+	    let ne1 = transform_exp f_exp e1 in
+      let ne2 = transform_exp f_exp e2 in
+			let ne3 = transform_exp f_exp e3 in
+      ListFirstOcc (ne1,ne2,ne3,l)
     | ListPerm (e1,e2,l) ->
 	    let ne1 = transform_exp f_exp e1 in
       let ne2 = transform_exp f_exp e2 in
       ListPerm (ne1,ne2,l)
-	  
+    | ListStable (e1,e2,l) ->
+	    let ne1 = transform_exp f_exp e1 in
+      let ne2 = transform_exp f_exp e2 in
+      ListStable (ne1,ne2,l)	  
 	  
 	  
 let rec transform_formula f (e:formula) :formula = 

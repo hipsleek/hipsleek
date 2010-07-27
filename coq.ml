@@ -15,6 +15,12 @@ let bag_flag = ref false
 let coq_running = ref false
 let coq_channels = ref (stdin, stdout)
 
+let default_var_0 = CP.SpecVar (CP.OType "Obj", "hd", Unprimed)
+let default_var_1 = CP.SpecVar (CP.Prim Int, "ex", Unprimed)
+
+let double_exists_flag = ref false
+let pre = ref ""
+let post = ref ""
 
 (* pretty printing for primitive types *)
 let coq_of_prim_type = function
@@ -22,19 +28,41 @@ let coq_of_prim_type = function
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
-  | Bag		      -> "int set"
-  | List		  -> "list"
+  | Bag		        -> "int set"
+  | List		      -> "list"
 ;;
 
 (* pretty printing for spec_vars *)
 let coq_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
+let coq_null_string (t : CP.typ) = "0"
+
 let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
-  | CP.SpecVar (t, _, _) -> begin match t with
-    | CP.Prim List -> "list Z"
+  | CP.SpecVar (t, id, _) -> begin match t with
+    | CP.Prim List -> "list (prod Z Z)"
     | _ -> "Z"
 	end
+
+let coq_sign exp = begin match exp with
+	| CP.IConst _ -> true
+	| CP.ListMin _ -> false
+	| CP.ListHead _ -> false
+  | CP.Null (typ, _) -> true (*coq_null_cond typ*)
+	| CP.Var (sv, _) -> begin match sv with
+	  | CP.SpecVar (t, id, _) -> begin match t with
+	    | CP.Prim List -> false
+			| CP.OType i -> (*begin match id with
+			| "self"
+			| "res" -> true
+			| _ -> *)false 
+				(*end*)
+	    | _ -> true
+		end
+(*		| _ -> true*)
+	end
+	| _ -> true
+end
 
 (*----------------------------------*)
 (* checking if exp contains bags *)
@@ -65,33 +93,43 @@ and is_bag_b_formula b = match b with
 (* pretty printing for expressions *)
 and coq_of_exp e0 =
   match e0 with
-  | CP.Null _ -> "0"
+  | CP.Null (typ, _) -> coq_null_string typ
   | CP.Var (sv, _) -> coq_of_spec_var sv
   | CP.IConst (i, _) -> string_of_int i
   | CP.FConst (f, _) -> failwith ("coq.coq_of_exp: float can never appear here")
-  | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")"
+  | CP.Add (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " + " ^ (coq_of_exp a2) ^ ")" 
   | CP.Subtract (a1, a2, _) ->  " ( " ^ (coq_of_exp a1) ^ " - " ^ (coq_of_exp a2) ^ ")"
-  | CP.Mult (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")"
-  | CP.Div (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
-  | CP.Max _
-  | CP.Min _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
+  | CP.Mult (a1, a2, _) ->  "(" ^ (coq_of_exp a1) ^ " * " ^ (coq_of_exp a2) ^ ")" 
+  | CP.Div  (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " / " ^ (coq_of_exp a2) ^ ")"
+  | CP.Max _ -> failwith ("coq.coq_of_exp: min/max can never appear here")
+  | CP.Min (a1, a2, _) -> "(kmin " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
   (* lists *)
+	| CP.Fst (a, pos) -> "(fst " ^ (coq_of_exp a) ^ ")"
+  | CP.Snd (a, pos) -> "(snd " ^ (coq_of_exp a) ^ ")"
   | CP.List (alist, pos) -> 
     begin match alist with
-    | [] -> "(@nil Z)"
-	  | a::t -> "(" ^ (coq_of_exp a) ^ " :: " ^ (coq_of_exp (CP.List (t, pos))) ^ ")"
+    | [] -> "(@nil (prod Z Z))"
+	  | a::t -> "(" ^ change_const (coq_of_exp a) ^ " :: " ^ (coq_of_exp (CP.List (t, pos))) ^ ")"
 	  end
   | CP.ListAppend (alist, pos) ->
     begin match alist with
-    | [] -> "(@nil Z)"
+    | [] -> "(@nil (prod Z Z))"
 	  | a::[] -> coq_of_exp a
-	  | a::t -> "(" ^ (coq_of_exp a) ^ " ++ " ^ (coq_of_exp (CP.ListAppend (t, pos))) ^ ")"
+	  | a::t -> "(" ^ change_const (coq_of_exp a) ^ " ++ " ^ (coq_of_exp (CP.ListAppend (t, pos))) ^ ")"
 	  end
-  | CP.ListCons (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
-  | CP.ListHead (a, _) -> " ( hd 0 " ^ (coq_of_exp a) ^ ")"
-  | CP.ListLength (a, _) -> " ( Z_of_nat ( length " ^ (coq_of_exp a) ^ "))"
-  | CP.ListTail (a, _) -> " ( tail " ^ (coq_of_exp a) ^ ")"
-  | CP.ListReverse (a, _) -> " ( rev " ^ (coq_of_exp a) ^ ")"
+  | CP.ListCons (a1, a2, _) ->  "(" ^ change_const (coq_of_exp a1) ^ " :: " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListConsP (a1, a2, a3, _) -> "((" ^ (coq_of_exp a1) ^ ", " ^ (coq_of_exp a2) ^ ") :: " ^ (coq_of_exp a3) ^ ")"
+  | CP.ListRemove (a1, a2, a3, _) -> "(StsortZZ.remove (" ^ (coq_of_exp a1) ^ ", " ^ (coq_of_exp a2) ^ ") " ^ (coq_of_exp a3) ^ ")"
+	| CP.ListHead (a, _) ->
+		let def_var = coq_of_spec_var (CP.fresh_spec_var default_var_0) in
+		pre := !pre ^ "(forall " ^ def_var ^ ": (prod Z Z), ";
+		post := !post ^ ")";
+	  "(hd " ^ def_var ^ " " ^ (coq_of_exp a) ^ ")"
+  | CP.ListLength (a, _) -> "(Z_of_nat (length " ^ (coq_of_exp a) ^ "))"
+  | CP.ListMin (a1, a2, _) -> "(kminl2 " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListTail (a, _) -> "(tail " ^ (coq_of_exp a) ^ ")"
+  | CP.ListReverse (a, _) -> "(rev " ^ (coq_of_exp a) ^ ")"
+	| CP.ListSorted (a, _) -> " (selsort " ^ (coq_of_exp a) ^ ")"
   (* bags *)
   | CP.Bag (alist, pos) -> 
     begin match alist with
@@ -117,39 +155,73 @@ and coq_of_formula_exp_list l = match l with
   | []         -> ""
   | h::[]      -> coq_of_exp h
   | h::t       -> (coq_of_exp h) ^ ", " ^ (coq_of_formula_exp_list t)
- 
+
+and change_const (exp : string) =
+	begin match String.get exp 0 with
+    | 'v' | 'k' | 'a'                 (*hard code: the most used patterns for representing integers; to be rewritten*) 
+(*    | '0' | '1' | '2'| '3' | '4' | '5' | '6' | '7' | '8' | '9'*) -> "(" ^ exp ^ ", " ^ exp ^ ")"
+    | _ -> exp 
+	end
+
+and add_extra_quantifiers exp =
+  begin match exp with
+    | CP.Null (CP.OType id, _) -> true
+    | _ -> false
+  end
+
+and coq_sign_exp exp1 exp2 str =
+  let coq_of_exp1 = coq_of_exp exp1 in
+	let coq_of_exp2 = coq_of_exp exp2 in
+	if (coq_sign exp1) then
+		if (coq_sign exp2) then
+			coq_of_exp1 ^ str ^ coq_of_exp2
+		else
+			(change_const coq_of_exp1) ^ str ^ coq_of_exp2
+	else
+		if (coq_sign exp2) then
+			coq_of_exp1 ^ str ^ (change_const coq_of_exp2)
+		else
+ 			coq_of_exp1(* ^ "&"*) ^ str ^ coq_of_exp2
+			 
 (* pretty printing for boolean vars *)
 and coq_of_b_formula b = 
   match b with
-  | CP.BConst (c, _) -> if c then "True" else "False"
+  | CP.BConst (c, _) -> begin match c with
+		| true -> "True"
+		| false -> "False"
+			end
   | CP.BVar (bv, _) -> " (" ^ (coq_of_spec_var bv) ^ " = 1)"
-  | CP.Lt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " < " ^ (coq_of_exp a2) ^ ")"
-  | CP.Lte (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " <= " ^ (coq_of_exp a2) ^ ")"
-  | CP.Gt (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " > " ^ (coq_of_exp a2) ^ ")"
-  | CP.Gte (a1, a2, _) -> "(" ^ (coq_of_exp a1) ^ " >= " ^ (coq_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> " ( " ^ (coq_of_exp a1) ^ " = " ^ (coq_of_exp a2) ^ ")"
-  | CP.Neq (a1, a2, _) -> "( " ^ (coq_of_exp a1) ^ " <> " ^ (coq_of_exp a2) ^ ")"
+  | CP.Lt (a1, a2, _) -> coq_sign_exp a1 a2 "<"
+  | CP.Lte (a1, a2, _) -> coq_sign_exp a1 a2 "<="
+  | CP.Gt (a1, a2, _) -> coq_sign_exp a1 a2 ">"
+  | CP.Gte (a1, a2, _) -> coq_sign_exp a1 a2 ">="
+  | CP.Eq (a1, a2, _) -> (coq_sign_exp a1 a2 "=")
+  | CP.Neq (a1, a2, _) -> (coq_sign_exp a1 a2 "<>")
   | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = coq_of_exp a1 in
 	  let a2str = coq_of_exp a2 in
 	  let a3str = coq_of_exp a3 in
-	      "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a3str ^ " > " ^ a2str ^ ") \\/ ("
-	      ^ a2str ^ " >= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
+	      " (*the maximum*) ((" ^ a1str ^ (coq_sign_exp a1 a3 "=") ^ a3str ^ " /\\ " ^ a3str ^(coq_sign_exp a3 a2 ">") ^ a2str ^ ") \\/ ("
+	      ^ a2str ^ (coq_sign_exp a2 a3 ">=") ^ a3str ^ " /\\ " ^ a1str ^ (coq_sign_exp a1 a2 "=") ^ a2str ^ "))"
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = coq_of_exp a1 in
 	  let a2str = coq_of_exp a2 in
 	  let a3str = coq_of_exp a3 in
-          "((" ^ a1str ^ " = " ^ a3str ^ " /\\ " ^ a2str ^ " >= " ^ a3str ^ ") \\/ ("
-		  ^ a2str ^ " <= " ^ a3str ^ " /\\ " ^ a1str ^ " = " ^ a2str ^ "))"
+          " (*the minimum*) ((" ^ a1str ^ (coq_sign_exp a1 a3 "=") ^ a3str ^ " /\\ " ^ a2str ^ (coq_sign_exp a2 a3 ">=") ^ a3str ^ ") \\/ ("
+		  ^ a2str ^ (coq_sign_exp a2 a3 "<=") ^ a3str ^ " /\\ " ^ a1str ^ (coq_sign_exp a1 a2 "=") ^ a2str ^ "))"
   (* lists *)
-  | CP.ListIn (a1, a2, _) -> " ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
-  | CP.ListNotIn (a1, a2, _) ->  " ( not ( In " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
-  | CP.ListAllN (a1, a2, _) -> " ( alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
-  | CP.ListPerm (a1, a2, _) -> " ( Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListIn (a1, a2, _) -> " (In " ^ change_const (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListNotIn (a1, a2, _) ->  " (not (In " ^ change_const (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ "))"
+  | CP.ListAllN (a1, a2, _) -> " (alln " ^ (coq_of_exp a2) ^ " " ^ (coq_of_exp a1) ^ ")"
+	| CP.ListFirstOcc (a1, a2, a3, _) ->
+		let first_occ_var = (coq_of_exp a1) ^ "," ^ (coq_of_exp a3) in
+		   "(first_occurrence (" ^ first_occ_var ^ ") " ^ (coq_of_exp a2) ^ " (" ^ first_occ_var ^ "))"
+  | CP.ListPerm (a1, a2, _) -> " (Permutation " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+  | CP.ListStable (a1, a2, _) -> " (stable " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
   (* bags *)
-  | CP.BagIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = true)"
-  | CP.BagNotIn (sv, a, _) -> " ( ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
-  | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
+  | CP.BagIn (sv, a, _) -> " (ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = true)"
+  | CP.BagNotIn (sv, a, _) -> " (ZSets.mem " ^ (coq_of_spec_var sv) ^ " " ^ (coq_of_exp a) ^ " = false)"
+  | CP.BagSub (a1, a2, _) -> " (ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
   | CP.BagMin _
   | CP.BagMax _ -> failwith ("No bags in Coq yet")
 
@@ -165,11 +237,22 @@ and coq_of_formula f =
     | CP.Forall (sv, p, _, _) ->
 	    " (forall " ^ (coq_of_spec_var sv) ^ "," ^ (coq_of_formula p) ^ ") "
     | CP.Exists (sv, p,  _,_) ->
-	    " (exists " ^ (coq_of_spec_var sv) ^ ":"^(coq_type_of_spec_var sv) ^"," ^ (coq_of_formula p) ^ ") "
+	    " (exists " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^"," ^ (coq_of_formula p) ^ ") "
     | CP.And (p1, p2, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " /\\ " ^ (coq_of_formula p2) ^ ")"
     | CP.Or (p1, p2, _, _) ->
 	    "(" ^ (coq_of_formula p1) ^ " \\/ " ^ (coq_of_formula p2) ^ ")"
+			
+and is_double_exists f =
+  begin match f with
+    | CP.Exists (sv, p,  _,_) ->
+			begin match p with
+				| CP.Exists _ ->
+					true
+				| _ -> false
+			end
+		| _ -> false
+	end
 
 (* checking the result given by Coq *)
 let rec check fd coq_file_name : bool=
@@ -188,11 +271,11 @@ let rec check fd coq_file_name : bool=
 	  (*ignore (Sys.remove coq_file_name);	*)
 	  false
 ;;
-let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
+let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ": " ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
 (* starting Coq in interactive mode *)
 let start_prover () =
-  coq_channels := Unix.open_process "coqtop -require decidez 2> /dev/null";
+  coq_channels := Unix.open_process "coqtop -require stsort -require decidez 2> /dev/null";
   coq_running := true;
   print_string "Coq started\n"; flush stdout
 
@@ -207,7 +290,9 @@ let stop_prover () =
 let rec send_formula (f : string) (nr : int) : bool =
   try
 	  output_string (snd !coq_channels) f;
-	  output_string (snd !coq_channels) ("decidez.\nQed.\n");
+		if (!double_exists_flag)
+		  then output_string (snd !coq_channels) ("decidex.\nQed.\n")
+			else output_string (snd !coq_channels) ("decidez.\nQed.\n");
 	  flush (snd !coq_channels);
 	  
 	  let result = ref false in
@@ -240,19 +325,29 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
 (*  print_string "*"; flush stdout; *)
 (*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
   let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
-  let astr = coq_of_formula ante in
+
   let cstr = coq_of_formula conseq in
-  
+	let cstr_pre = !pre in
+  let cstr_post = !post in
+	double_exists_flag := is_double_exists conseq;
+	
+	pre := "";
+	post := "";
+
+	let astr = coq_of_formula ante in
+	let astr_pre = !pre in
+  let astr_post = !post in
+	 
   coq_file_number.contents <- !coq_file_number + 1;
   if !coq_running == false then start_prover ();
 
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
   if !log_all_flag == true then	begin
-    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
+    output_string log_file ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ cstr_pre ^ vstr ^ astr_pre ^ astr ^ astr_post ^ " -> " ^ cstr ^ cstr_post ^ ")%Z.\n");
 	flush log_file;
   end;
 
-  send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
+  send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ cstr_pre ^ vstr ^ astr_pre ^ astr ^ astr_post ^ " -> " ^ cstr ^ cstr_post ^ ")%Z.\n") 2
   
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
   if !log_all_flag == true then

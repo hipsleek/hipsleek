@@ -126,7 +126,6 @@ let rec find_read_write_global_var
   | I.Java _
   | I.Null _ 
   | I.This _ 
-  | I.Time _ 
   | I.Unfold _ -> 
 	  (IdentSet.empty, IdentSet.empty)
   | I.Label (_,b)-> find_read_write_global_var global_vars local_vars b
@@ -511,7 +510,6 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.Java _
   | I.Null _
   | I.This _
-  | I.Time _ 
   | I.Unfold _
   | I.Var _ -> 
 	  exp
@@ -677,7 +675,6 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   | I.Java _
   | I.Null _
   | I.This _
-  | I.Time _ 
   | I.Unfold _
   | I.Var _
   | I.VarDecl _ -> 

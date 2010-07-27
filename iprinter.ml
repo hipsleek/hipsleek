@@ -133,13 +133,19 @@ let rec string_of_formula_exp = function
       "(" ^ (string_of_formula_exp e1) ^ ") / (" ^ (string_of_formula_exp e2) ^ ")"
   | P.Max (e1, e2, l)         -> "max(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
   | P.Min (e1, e2, l)         -> "min(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")" 
-  | P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
+	| P.Fst (e, l)		-> "fst(" ^ (string_of_formula_exp e) ^ ")"
+	| P.Snd (e, l)		-> "snd(" ^ (string_of_formula_exp e) ^ ")"
+	| P.List (elist, l)		-> "[|" ^ (string_of_formula_exp_list elist) ^ "|]"
   | P.ListAppend (elist, l) -> "app(" ^ (string_of_formula_exp_list elist) ^ ")"
   | P.ListCons (e1, e2, l)	-> (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2)
+	| P.ListConsP (e1, e2, e3, l)	-> "(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ "):::" ^ (string_of_formula_exp e3)
+	| P.ListRemove (e1, e2, e3, l)	-> "(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")--" ^ (string_of_formula_exp e3)
   | P.ListHead (e, l)		-> "head(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
+	| P.ListMin (e1, e2, l) -> "list min(" ^ (string_of_formula_exp e1) ^ ":::" ^ (string_of_formula_exp e2) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
+	| P.ListSorted (e, l)		    -> "selsort(" ^ (string_of_formula_exp e) ^ ")"
 	| _ -> "bag constraint"
 
 (* pretty printing for a list of pure formulae *)
@@ -185,7 +191,9 @@ let string_of_b_formula = function
   | P.ListIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " inlist " ^ (string_of_formula_exp e2)
   | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
   | P.ListAllN (e1, e2, l)		-> "alln(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
-  | P.ListPerm (e1, e2, l)		-> "perm(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
+	| P.ListFirstOcc (e1, e2, e3, l) -> "first_occ of " ^ (string_of_formula_exp e1) ^ " at list " ^ (string_of_formula_exp e2) ^ " is " ^ (string_of_formula_exp e3)
+	| P.ListPerm (e1, e2, l)		-> "perm(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
+	| P.ListStable (e1, e2, l)		-> "stable(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | _ -> "bag constraint"
 ;;
 
@@ -432,7 +440,6 @@ let rec string_of_exp = function
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"
-  | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Raise ({exp_raise_type = tb;
 			exp_raise_path_id = pid;
 			exp_raise_val = b;}) -> string_of_control_path_id_opt pid 

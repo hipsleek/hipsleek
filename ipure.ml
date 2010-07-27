@@ -36,7 +36,9 @@ and b_formula =
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
-  | ListPerm of (exp * exp * loc)
+	| ListFirstOcc of (exp * exp * exp * loc)
+	| ListPerm of (exp * exp * loc)
+	| ListStable of (exp * exp * loc)
 
 (* Expression *)
 and exp = 
@@ -58,13 +60,19 @@ and exp =
   | BagIntersect of (exp list * loc)
   | BagDiff of (exp * exp * loc)
  	  (* list expressions *)
+	| Fst of (exp * loc)
+	| Snd of (exp * loc)
   | List of (exp list * loc)
   | ListCons of (exp * exp * loc)
+	| ListConsP of (exp * exp * exp * loc)
+	| ListRemove of (exp * exp * exp * loc)
+  | ListSorted of (exp * loc)
   | ListHead of (exp * loc)
   | ListTail of (exp * loc)
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+	| ListMin of (exp * exp * loc)
 
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
@@ -131,11 +139,20 @@ and bfv (bf : b_formula) = match bf with
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)
+  | ListFirstOcc (a1, a2, a3, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		let fv3 = afv a3 in
+		Util.remove_dups (fv1 @ fv2 @ fv3)		
   | ListPerm (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)
- 
+  | ListStable (a1, a2, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		Util.remove_dups (fv1 @ fv2)
+		 
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
   let fv2 = afv a2 in
@@ -161,11 +178,21 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListCons (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)  
+		Util.remove_dups (fv1 @ fv2)
+	| ListConsP (a1, a2, a3, _) 
+	| ListRemove (a1, a2, a3, _) ->
+	  let fv1 = afv a1 in
+	  let fv2 = afv a2 in
+		let fv3 = afv a3 in
+		Util.remove_dups (fv1 @ fv2 @ fv3)  
+	| ListSorted (a, _)
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
+	| Fst (a, _)
+	| Snd (a, _)
   | ListReverse (a, _) -> afv a
+	| ListMin (a1, a2, _) -> Util.remove_dups (afv a1 @ afv a2) 
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -197,6 +224,8 @@ and is_integer e =
 and is_list (e : exp) : bool = match e with
   | List _
   | ListCons _
+	| ListConsP _
+	| ListRemove _
   | ListTail _
   | ListAppend _
   | ListReverse _ -> true
@@ -414,16 +443,22 @@ and pos_of_exp (e : exp) = match e with
   | List (_, p) -> p
   | ListAppend (_, p) -> p
   | ListCons (_, _, p) -> p
+	| ListRemove (_,_,_, p)
+	| ListConsP (_, _, _, p) -> p
   | ListHead (_, p) -> p
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
+	| Fst (_, p) -> p
+	| Snd (_, p) -> p
+	| ListMin (_, _, p) -> p
   | ListReverse (_, p) -> p
+	| ListSorted (_, p) -> p
   
 	
 	
 and fresh_old_name (s: string):string = 
 	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
-	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+	let n = ((String.sub s 0 ri) ^"_007_"^ (fresh_trailer ())) in
 	n
 	
 
@@ -491,7 +526,9 @@ and b_apply_one (fr, t) bf = match bf with
   | ListIn (a1, a2, pos) -> ListIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+	| ListFirstOcc (a1, a2, a3, pos) -> ListFirstOcc (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | ListStable (a1, a2, pos) -> ListStable (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -516,11 +553,17 @@ and e_apply_one (fr, t) e = match e with
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
 							  e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List ((e_apply_one_list (fr, t) alist), pos)
+	| ListSorted (a, pos) -> ListSorted (e_apply_one (fr, t) a, pos)
   | ListAppend (alist, pos) -> ListAppend ((e_apply_one_list (fr, t) alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+	| ListConsP (a1, a2, a3, pos) -> ListConsP (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
+  | ListRemove (a1, a2, a3, pos) -> ListRemove (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, e_apply_one (fr, t) a3, pos)
   | ListHead (a1, pos) -> ListHead (e_apply_one (fr, t) a1, pos)
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
+	| Fst (a1, pos) -> Fst (e_apply_one (fr, t) a1, pos)
+	| Snd (a1, pos) -> Snd (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
+	| ListMin (a1, a2, pos) -> ListMin (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
 
 and e_apply_one_list (fr, t) alist = match alist with
@@ -552,9 +595,18 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
       List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | Bag (e1, _) | BagUnion (e1, _) | BagIntersect (e1, _) ->  look_for_anonymous_exp_list e1
 
-  | ListHead (e1, _) | ListTail (e1, _) | ListLength (e1, _) | ListReverse (e1, _) -> look_for_anonymous_exp e1
+  | ListHead (e1, _)
+	| ListTail (e1, _)
+	| ListLength (e1, _)
+	| Fst (e1, _)
+	| Snd (e1, _)
+	| ListReverse (e1, _) -> look_for_anonymous_exp e1
+	| ListMin (e1, e2, _) -> List.append (look_for_anonymous_exp e1) (look_for_anonymous_exp e2)
   | List (e1, _) | ListAppend (e1, _) -> look_for_anonymous_exp_list e1
   | ListCons (e1, e2, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2)
+	| ListConsP (e1, e2, e3, _)
+	| ListRemove (e1, e2, e3, _) -> (look_for_anonymous_exp e1) @ (look_for_anonymous_exp e2) @ (look_for_anonymous_exp e3)
+	| ListSorted (e1, _) -> look_for_anonymous_exp e1
   | _ -> []
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
@@ -585,8 +637,10 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match
   | ListIn (b1, b2,  _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+	| ListFirstOcc (b1, b2, b3, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2) @ (look_for_anonymous_exp b3)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
-  
+  | ListStable (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+
 let merge_branches l1 l2 =
   let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =

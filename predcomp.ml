@@ -1166,7 +1166,7 @@ and gen_pure_exp (pe : CP.exp) (vmap : var_map) (unbound_vars : CP.spec_var list
   | CP.IConst (i, pos) ->
 	  (IntLit ({exp_int_lit_val = i;
 			   exp_int_lit_pos = pos}), false)
-  | CP.Null pos ->
+  | CP.Null (typ, pos) ->
 	  (Null pos, false)
   | _ -> failwith ("gen_pure_exp: " ^ (Cprinter.string_of_formula_exp pe) ^ " is not supported")
 

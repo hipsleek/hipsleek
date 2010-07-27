@@ -203,7 +203,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	    (*let _ = (print_string ("\n[typechecker.ml, line 116]: fresh name = " ^ (Cprinter.string_of_spec_var p) ^ "!!!!!!!!!!!\n")) in*)
 	    (*09.05.2000 ---*)
 	  let link_pv = CF.formula_of_pure
-	    (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None)) pos) pos in
+	    (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null ((CP.type_of_spec_var p), pos)) pos, None)) pos) pos in
 	    (*let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 	    (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
 	  let tmp_ctx =
@@ -240,7 +240,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	  let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	    Debug.devel_pprint to_print pos;
 	    (*  let _ = print_string "pint ++2\n" in*)
-	    let rs_prim, prf = heap_entail_list_partial_context_init prog false false  unfolded vheap pos pid in
+	    let rs_prim, prf = heap_entail_list_partial_context_init prog false false unfolded vheap pos pid in
 	      (*let _ = print_string "pint 2\n" in*)
 	    let _ = PTracer.log_proof prf in
 	    let rs = CF.clear_entailment_history_partial_list rs_prim in
@@ -555,7 +555,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	      end
 	  *)
       | Null pos ->
-	  let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (CP.OType "", res, Unprimed)) pos) (CP.Null pos) pos in
+	  let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (CP.OType "Obj", res, Unprimed)) pos) (CP.Null ((CP.OType "Obj"), pos)) pos in
 	  let f = CF.formula_of_pure p pos in
 	  let res = CF.normalize_max_renaming_list_partial_context f pos true ctx in
 	    res
@@ -763,8 +763,6 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	    ctx
 	  end
 	end;
-      | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s;
-          ctx
       | Assert ({exp_assert_asserted_formula = c1_o;
 		 exp_assert_assumed_formula = c2;
 		 exp_assert_path_id = (pidi,s);
@@ -921,7 +919,7 @@ let check_proc_wrapper prog proc =
     if !Globals.check_all then begin
       dummy_exception();
       print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
-      print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      print_string ("\n1. Error(s) detected when checking procedure " ^ proc.proc_name ^ "; error description: " ^ (Printexc.to_string e) ^ " \n");
       false
     end else
       raise e
@@ -994,7 +992,6 @@ let rec size (expr : exp) =
     | Cond ex -> 1 + (size ex.exp_cond_then_arm) + (size ex.exp_cond_else_arm)
     | Cast ex -> 1 + (size ex.exp_cast_body)
     | Debug ex -> 1
-    | Time _ -> 1
     | Dprint ex -> 1
     | FConst ex -> 1
     | ICall ex -> 1 + (List.length ex.exp_icall_arguments)
@@ -1034,7 +1031,7 @@ let check_proc_wrapper_map prog (proc,num) =
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
-      print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      print_string ("\n2. Error(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
       raise e
@@ -1045,7 +1042,7 @@ let check_proc_wrapper_map_net prog (proc,num) =
   with _ as e ->
     if !Globals.check_all then begin
       print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
-      print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      print_string ("\n3. Error(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
       raise e

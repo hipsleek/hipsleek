@@ -113,7 +113,6 @@
 %token CSQUARE
 %token DATA
 %token DDEBUG
-%token DTIME
 %token DIFF
 %token DISTR
 %token DIV
@@ -186,7 +185,6 @@
 %token ORWORD
 %token OSQUARE
 %token PERCENT
-%token PERM
 %token PLUS
 %token PRIME
 %token PRINT
@@ -221,6 +219,16 @@
 %token FINALLY
 %token THROWS
 %token RAISE
+/*sorted lists*/
+%token LISTMIN
+%token SORTED
+%token PERM
+%token STABLE
+%token FOC
+%token FST
+%token SND
+%token CONSP
+%token REMOVE
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
 
@@ -912,6 +920,12 @@ bconstr
   | PERM OPAREN cexp COMMA cexp CPAREN {
 	  (P.BForm (P.ListPerm ($3, $5, get_pos 1),None), None)
 	}
+	| STABLE OPAREN cexp COMMA cexp CPAREN {
+	  (P.BForm (P.ListStable ($3, $5, get_pos 1),None), None)
+	}
+	| FOC OPAREN cexp COMMA cexp COMMA cexp CPAREN {
+	  (P.BForm (P.ListFirstOcc ($3, $5, $7, get_pos 1),None), None)
+	}
 ;
 
 /* constraint expressions */
@@ -938,6 +952,12 @@ cexp
   | cexp COLONCOLONCOLON cexp {
 	  P.ListCons ($1, $3, get_pos 2)
 	}
+	| CONSP OPAREN cexp COMMA cexp COMMA cexp CPAREN {
+	  P.ListConsP ($3, $5, $7, get_pos 1)
+	}
+	| REMOVE OPAREN cexp COMMA cexp COMMA cexp CPAREN {
+	  P.ListRemove ($3, $5, $7, get_pos 1)
+	}
   | TAIL OPAREN cexp CPAREN {
 	  P.ListTail ($3, get_pos 1)
 	}
@@ -946,6 +966,9 @@ cexp
 	}
   | REVERSE OPAREN cexp CPAREN {
 	  P.ListReverse ($3, get_pos 1)
+	}
+	| SORTED OPAREN cexp CPAREN {
+	  P.ListSorted ($3, get_pos 1)
 	}
 ;
 
@@ -999,6 +1022,15 @@ unary_cexp
 	}
   | LENGTH OPAREN cexp CPAREN {
 	  P.ListLength ($3, get_pos 1)
+	}
+	| LISTMIN OPAREN cexp COMMA cexp CPAREN {
+		P.ListMin ($3, $5, get_pos 1)
+	}
+	| FST OPAREN cexp CPAREN {
+		P.Fst ($3, get_pos 1)
+	}
+	| SND OPAREN cexp CPAREN {
+		P.Snd ($3, get_pos 1)
 	}
 ;
 
@@ -1401,7 +1433,6 @@ valid_declaration_statement
   | assert_statement { $1 }
   | dprint_statement { $1 }
   | debug_statement { $1 }
-  | time_statement {$1}
   | bind_statement { $1 }
   | unfold_statement { $1 }
 /*
@@ -1475,11 +1506,6 @@ debug_statement
 	  Debug { exp_debug_flag = false;
 			  exp_debug_pos = get_pos 2 }
 	}
-;
-
-time_statement 
-  : DTIME ON IDENTIFIER{Time (true,$3,get_pos 1)}
-  | DTIME OFF IDENTIFIER{Time (false,$3,get_pos 1)}
 ;
 
 dprint_statement

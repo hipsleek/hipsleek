@@ -247,7 +247,6 @@ and exp = (* expressions keep their types *)
   | SCall of exp_scall
   | Seq of exp_seq
   | This of exp_this
-  | Time of (bool*string*loc)
   | Var of exp_var
   | VarDecl of exp_var_decl
   | Unfold of exp_unfold
@@ -364,7 +363,6 @@ let rec type_of_exp (e : exp) = match e with
   | While _ -> Some void_type
   | Unfold _ -> Some void_type
   | Try _ -> Some void_type
-  | Time _ -> None
   | Sharp b -> Some b.exp_sharp_type
 
 and is_transparent e = match e with
@@ -533,7 +531,6 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 		  exp_seq_exp2 = e2;
 		  exp_seq_pos = _}) -> U.remove_dups (callees_of_exp e1 @ callees_of_exp e2)
   | This _ -> []
-  | Time _ -> []
   | Var _ -> []
   | VarDecl _ -> []
   | Unit _ -> []
@@ -730,7 +727,6 @@ and exp_to_check (e:exp) :bool = match e with
   | Assert _ 
   | Cond _
   | Try _ 
-  | Time _ 
   | Java _ -> false
   
   | BConst _
@@ -765,7 +761,6 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | Unfold b -> b.exp_unfold_pos
   | Unit b -> b
   | This b -> b.exp_this_pos
-  | Time (_,_,p)-> p
   | Var b -> b.exp_var_pos
   | Null b -> b
   | Cond b -> b.exp_cond_pos

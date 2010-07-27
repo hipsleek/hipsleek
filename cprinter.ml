@@ -527,13 +527,19 @@ let rec pr_formula_exp (e:P.exp) =
         f_b e1; pr_cut_after op_div ; f_b e2
     | P.BagDiff (e1, e2, l) -> 
         pr_formula_exp e1; pr_cut_after op_diff ; pr_formula_exp e2
+		| P.Fst (e, l) -> fmt_string ("fst_elem("); pr_formula_exp e; fmt_string  (")")
+		| P.Snd (e, l) -> fmt_string ("snd_elem("); pr_formula_exp e; fmt_string  (")")
     | P.List (elist, l) -> pr_coq_list pr_formula_exp elist 
     | P.ListAppend (elist, l) -> pr_tuple op_lappend pr_formula_exp elist
     | P.ListCons (e1, e2, l)  ->  f_b e1; pr_cut_after op_cons; f_b e2
-    | P.ListHead (e, l)     -> fmt_string ("head("); pr_formula_exp e; fmt_string  (")")
-    | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
-    | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
-    | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
+		| P.ListConsP (e1, e2, e3, l)     -> fmt_string ("("); pr_formula_exp e1; fmt_string  (", "); pr_formula_exp e2; fmt_string  ("):::");pr_formula_exp e3
+		| P.ListRemove (e1, e2, e3, l)    -> fmt_string ("("); pr_formula_exp e1; fmt_string  (", "); pr_formula_exp e2; fmt_string  (")--");pr_formula_exp e3
+		| P.ListHead (e, l)     -> fmt_string ("list head("); pr_formula_exp e; fmt_string  (")")
+    | P.ListTail (e, l)     -> fmt_string ("list tail("); pr_formula_exp e; fmt_string  (")")
+    | P.ListLength (e, l)   -> fmt_string ("list len("); pr_formula_exp e; fmt_string  (")")
+		| P.ListMin (e1, e2, l) -> fmt_string ("list min("); pr_formula_exp e1; fmt_string (", "); pr_formula_exp e2; fmt_string  (")")
+    | P.ListReverse (e, l)  -> fmt_string ("list rev("); pr_formula_exp e; fmt_string  (")")
+		| P.ListSorted (e, l)	  -> fmt_string ("list selsort("); pr_formula_exp e; fmt_string  (")")
     
 
 (** print a b_formula  to formatter *)
@@ -551,12 +557,12 @@ let rec pr_b_formula (e:P.b_formula) =
       | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
       | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_max_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
             (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
       | P.EqMin (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_min_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
             (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
       | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)
@@ -567,7 +573,9 @@ let rec pr_b_formula (e:P.b_formula) =
       | P.ListIn (e1, e2, l)			  ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lin> "  (fun ()-> pr_formula_exp e2)
       | P.ListNotIn (e1, e2, l)			->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
       | P.ListAllN (e1, e2, l)			->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
-      | P.ListPerm (e1, e2, l)			-> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
+			| P.ListFirstOcc (e1, e2, e3, l) ->  pr_formula_exp e1; fmt_string(" <first_oc> "); pr_formula_exp e2;fmt_string(" ");pr_formula_exp e3
+			| P.ListPerm (e1, e2, l)			-> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
+			| P.ListStable (e1, e2, l)			-> pr_op_adhoc (fun ()->pr_formula_exp e1) " <stable> "  (fun ()-> pr_formula_exp e2)
 ;;
   
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -1195,7 +1203,6 @@ let rec string_of_exp = function
 	  exp_seq_pos = l}) -> 
       (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2)
   | This _ -> "this"
-  | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
   | Var ({exp_var_type = _;
 	  exp_var_name = id;
 	  exp_var_pos = l}) -> id 

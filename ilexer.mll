@@ -71,7 +71,6 @@
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
-   ("perm", PERM);
 	 ("dprint", PRINT);
 	 ("ref", REF);
 	 ("requires", REQUIRES);
@@ -85,7 +84,6 @@
 	 ("tail", TAIL);
 	 ("then", THEN);
 	 ("this", THIS "this");
-   ("time", DTIME);
 	 ("to", TO);
 	 ("true", TRUE);
 	 ("unfold", UNFOLD);
@@ -101,7 +99,17 @@
 	 ("catch", CATCH);
 	 ("finally", FINALLY);
 	 ("throws", THROWS);
-	 ("raise",RAISE);
+	 ("raise", RAISE);
+	 (*extension for sorted lists*)
+	 ("listmin", LISTMIN);
+	 ("selsort", SORTED);
+   ("perm", PERM);
+	 ("stable", STABLE);
+	 ("f_oc", FOC);
+	 ("fst", FST);
+	 ("snd", SND);
+	 ("cons_p", CONSP);
+	 ("remove", REMOVE);
 	]
 }
 
