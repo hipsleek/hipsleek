@@ -368,6 +368,32 @@ and should_simplify (f : formula) = match f with
   | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true
   | _ -> false
 
+and is_b_form_arith (b: b_formula) :bool = match b with
+  | BConst _  | BVar _ -> true
+  | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
+  | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
+  | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
+	  (* bag formulas *)
+  | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _
+	  (* list formulas *)
+  | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> false
+
+(* Expression *)
+and is_exp_arith (e:exp) : bool= match e with
+  | Null _  | Var _ | IConst _ | FConst _ -> true
+  | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
+  | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
+	  (* bag expressions *)
+  | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _
+	  (* list expressions *)
+  | List _ | ListCons _ | ListHead _ | ListTail _
+  | ListLength _ | ListAppend _ | ListReverse _ -> false
+  
+and is_formula_arith (f:formula) :bool = match f with
+  | BForm (b,_) -> is_b_form_arith b 
+  | And (f1,f2,_) | Or (f1,f2,_,_)-> (is_formula_arith f1)&&(is_formula_arith f2)
+  | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_)-> (is_formula_arith f)
+  
 (* smart constructor *)
 
 and mkRes t = SpecVar (t, res, Unprimed)

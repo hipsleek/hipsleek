@@ -809,7 +809,13 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun (res1,res2,res3) (ante, conseq) =
           if res1 then 
-			let res1 = tp_imply ante conseq imp_no timeout in
+			let res1 =
+        if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+          let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout in
+          if res1 then res1
+            else tp_imply ante conseq imp_no timeout 
+        else       
+          tp_imply ante conseq imp_no timeout in
 			let l1 = CP.get_pure_label ante in
 			let l2 = CP.get_pure_label conseq in
 			if res1 then 
