@@ -73,6 +73,8 @@ let process_cmd_line () = Arg.parse [
    "Turn on devel_debug");
   ("--log-omega", Arg.Set Omega.log_all_flag,
    "Log all formulae sent to Omega Calculator in file allinput.oc");
+  ("--log-mona", Arg.Set Mona.log_all_flag,
+   "Log all formulae sent to Mona in file allinput.mona");
    ("--unsat-elim", Arg.Set Globals.elim_unsat,
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
