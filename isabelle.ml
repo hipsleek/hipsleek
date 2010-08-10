@@ -324,7 +324,7 @@ let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)
 
 let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ ". ") l)
 
-let isabelle_command isabelle_file_name = ("isabelle -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
+let isabelle_command isabelle_file_name = ("isabelle-process -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
 
 let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
@@ -409,13 +409,6 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let res =  write tmp_form 0. in
 
-
-
-
-
-
-
-
 	res
 
 
@@ -449,7 +442,7 @@ let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 (* building the multiset theory image -  so that it won't be loaded for each theory that needs to be proved *)
 (* there is an option when running the system --build-image which creates the heap image *)
 let building_image flag = begin
-	if flag = "true" & !bag_flag then begin
+	if flag = "true" (*& !bag_flag*) then begin
 	  let multiset_file = open_out "multiset.thy" in
 	  begin
 		output_string multiset_file ("theory multiset imports Multiset Main begin\n end");
@@ -463,7 +456,7 @@ let building_image flag = begin
 		flush root_file;
 		close_out root_file;
 	  end;
-	  ignore(Sys.command "isatool usedir -b HOL MyImage");
+		ignore(Sys.command "isabelle usedir -b HOL MyImage");
 	end
 end
 
