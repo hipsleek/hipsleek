@@ -85,6 +85,12 @@ node insert_last(node x, int a)
 	return tmp;
 }
 
+void id(node x)
+    requires x=null
+    ensures x::sorted2<n1,t1,S1> & ["n":n=0; "t":t=0; "s":S={}];
+{
+}
+
 node reverse(node x)
 	requires x::sorted<n,t,S>
 	ensures res::sorted2<n1,t1,S1> & ["n":n=n1; "t":t=t1; "s":S=S1];
@@ -93,6 +99,7 @@ node reverse(node x)
 	node tmp1;
 	if (x == null) {
 		//assume false;
+        id(x);
 		return null;
 	}
 	else {

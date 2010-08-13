@@ -55,6 +55,7 @@ node reverse(node x)
 	node tmp1;
 	if (x == null) {
 		//assume false;
+        id(x);
 		return null;
 	}
 	else {
@@ -63,6 +64,12 @@ node reverse(node x)
 		tmp = insert_last(tmp1, x.val);
 		return tmp;
 	}
+}
+
+void id(node x)
+    requires x=null
+    ensures x::sorted2<n1,t1,S1> & ["n":n=0; "t":t=0; "s":S={}];
+{
 }
 
 node insert_first(node x, int a)
