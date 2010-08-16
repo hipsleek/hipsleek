@@ -5,15 +5,18 @@ data node {
 
 sorted<"n":n,"t":t,"s":S> == self=null & ["n":n=0; "t":t=0; "s":S={}] or
 		 self::node<v,q> * q::sorted<n2,t2,S2> & ["n":n=n2+1; "t":t=t2+v & v>0; "s":S=union(S2, {v}) & forall (x:(x notin S2 | v >= x))]
+		 //self::node<v,q> * q::sorted<n2,t2,S2> & ["n":n=n2+1; "t":t=t2+2; "s":v>0 & S=union(S2, {v}) & forall (x:(x notin S2 | v >= x))]
 		 inv true & ["n":n>=0; "t":t>=0];
 
 sorted2<"n":n,"t":t,"s":S> == self=null & ["n":n=0; "t":t=0; "s":S={}] or
 		 self::node<v,q> * q::sorted2<n2,t2,S2> & ["n":n=n2+1; "t":t=t2+v & v>0; "s":S=union(S2, {v}) & forall (x:(x notin S2 | v <= x))]
+		 //self::node<v,q> * q::sorted2<n2,t2,S2> & ["n":n=n2+1; "t":t=t2+2; "s":v>0 & S=union(S2, {v}) & forall (x:(x notin S2 | v <= x))]
 		 inv true & ["n":n>=0; "t":t>=0];
 
 node insert(node x, int a)
 	requires x::sorted<n,t,S> & a>0
 	ensures res::sorted<n1,t1,S1> & ["n":n1=n+1; "t":t1=t+a; "s":S1=union(S,{a})];
+	//ensures res::sorted<n1,t1,S1> & ["n":n1=n+1; "t":t1=t+2; "s":S1=union(S,{a})];
 {
 	node tmp;
 	node tmp1;
@@ -32,6 +35,7 @@ node insert(node x, int a)
 node insert_first(node x, int a)
 	requires x::sorted<n,t,S> & a>0 & ["s": forall (z:(z notin S | a >= z))]
 	ensures res::sorted<n1,t1,S1> & ["n":n1=n+1; "t":t1=t+a; "s":S1=union(S,{a})];
+	//ensures res::sorted<n1,t1,S1> & ["n":n1=n+1; "t":t1=t+2; "s":S1=union(S,{a})];
 {
 	return new node(a,x);
 }
@@ -73,6 +77,7 @@ node double_reverse(node x)
 node insert_last(node x, int a)
 	requires x::sorted2<n,t,S> & a>0 & ["s": forall (z:(z notin S | z <= a))]
 	ensures res::sorted2<n1,t1,S1> & ["n":n1=n+1; "t":t1=t+a; "s":S1=union(S,{a})];
+	//ensures res::sorted2<n1,t1,S1> & ["n":n1=n+1; "t":t1=t+2; "s":S1=union(S,{a})];
 {
 	node tmp;
 	node tmp1;
@@ -86,8 +91,8 @@ node insert_last(node x, int a)
 }
 
 void id(node x)
-    requires x=null
-    ensures x::sorted2<n1,t1,S1> & ["n":n=0; "t":t=0; "s":S={}];
+	requires x=null
+	ensures x::sorted2<n1,t1,S1> & ["n":n1=0; "t":t1=0; "s":S1={}];
 {
 }
 
@@ -99,8 +104,9 @@ node reverse(node x)
 	node tmp1;
 	if (x == null) {
 		//assume false;
-        id(x);
-		return null;
+		tmp = null;
+		id(tmp);
+		return tmp;
 	}
 	else {
 		//assume false;
@@ -129,6 +135,7 @@ node merge(node x, node y)
 node delete(node x, int a)
 	requires x::sorted<n1,t1,S1>
 	ensures res::sorted<n2,t2,S2> & ["n":n1=n2+1; "t":t1=t2+a; "s":S1=union(S2,{a})] or res::sorted<n3,t3,S3> & ["n":n3=n1; "t":t3=t1; "s":S3=S1];
+	//ensures res::sorted<n2,t2,S2> & ["n":n1=n2+1; "t":t1=t2+2; "s":S1=union(S2,{a})] or res::sorted<n3,t3,S3> & ["n":n3=n1; "t":t3=t1; "s":S3=S1];
 {
 	node tmp;
 	node tmp1;
