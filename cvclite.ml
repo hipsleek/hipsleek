@@ -266,6 +266,10 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
+  let stri = sat_no in
+	begin
+		(*print_string ("\n!!!!!!!" ^ stri);*)
+	
   let all_fv = CP.remove_dups (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
@@ -296,7 +300,6 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 	let chn = open_in resultfilename in
 	let res_str = input_line chn in
 	  begin
-		(* let n = String.length "Valid." in *)
 		let n = String.length "Satisfiable." in
 		let l = String.length res_str in
 		  if l >= n then
@@ -334,17 +337,17 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 			 None)
 		  end
 	  end
-		
+		end
 and is_sat (f : CP.formula) (sat_no : string) : bool =
   let result0 = is_sat_raw f sat_no in
   let result = match result0 with
 	  | Some f -> f
 	  | None -> begin
 	  	  if !log_cvcl_formula then begin
-	  		output_string !cvcl_log "%%% is_sat --> false\n"
+	  		output_string !cvcl_log "%%% is_sat --> true (from unknown)\n"
 	  	  end;
 	  	  (*failwith "CVC Lite is unable to perform satisfiability check"*)
-	  	  false
+	  	  true
 	  	end
   in
 	begin
