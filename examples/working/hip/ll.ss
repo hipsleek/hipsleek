@@ -29,7 +29,8 @@ void append(node x, node y)
 	ensures x::ll<m> & m=n1+n2;
 
 {
-    
+  assume false;
+  assert x=null;
 	if (x.next == null)
 	  {// dprint;
         x.next = y;}
