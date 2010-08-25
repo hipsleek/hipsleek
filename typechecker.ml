@@ -681,7 +681,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	            (check_exp prog proc [CF.mk_partial_context lpc l] cc.exp_catch_body post_start_label) in
 	          let apply_catch_partial_context2 (pc : CF.partial_context) :CF.list_partial_context =
 	            (CF.splitter_partial_context (cc.exp_catch_flow_type)
-	                (cc.exp_catch_var) fn (fun c -> CF.add_path_id c (pid,0)) elim_exists_ctx) pc 
+	                (cc.exp_catch_var) fn (fun c -> CF.add_path_id c (pid,0)) elim_exists_ctx) pc in
 	          let rec apply_catch_context (ctx_crt : CF.context) (lab:path_trace) :CF.list_partial_context =
 	            match ctx_crt with
       	          |CF.OCtx (c1,c2)-> CF.list_partial_context_or (apply_catch_context c1 lab) (apply_catch_context c1 lab)
