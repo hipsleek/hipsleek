@@ -87,7 +87,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
     Cformula.find_false_list_partial_ctx ctx (Cast.pos_of_exp e0)
   else ();
     let check_exp1 (ctx : CF.list_partial_context) : CF.list_partial_context = 
-      print_string ("\n Check_exp1: "^(Cprinter.string_of_exp e0)^"\n");
+      (* print_string ("\n Check_exp1: "^(Cprinter.string_of_exp e0)^"\n"); *)
       match e0 with
 	      (* for theorem proving *)
 	      (* | Label e ->  *)

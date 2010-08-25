@@ -1942,165 +1942,164 @@ let add_to_branches label form branches =
  
 let rec drop_disjunct (f:formula) : formula = 
   match f with
-	  | BForm _ -> f
-	  | And (f1,f2,l) -> mkAnd (drop_disjunct f1) (drop_disjunct f2) l
-	  | Or (_,_,_,l) -> mkTrue l
-	  | Not (f,_,_) -> f  (* Not ((drop_disjunct f),l) TODO: investigate if f is the proper return value, in conjunction with case inference*)
-	  | Forall (q,f,lbl,l) -> Forall (q,(drop_disjunct f),lbl, l)
-	  | Exists (q,f,lbl,l) -> Exists (q,(drop_disjunct f),lbl, l) 
-  
+	| BForm _ -> f
+	| And (f1,f2,l) -> mkAnd (drop_disjunct f1) (drop_disjunct f2) l
+	| Or (_,_,_,l) -> mkTrue l
+	| Not (f,_,_) -> f  (* Not ((drop_disjunct f),l) TODO: investigate if f is the proper return value, in conjunction with case inference*)
+	| Forall (q,f,lbl,l) -> Forall (q,(drop_disjunct f),lbl, l)
+	| Exists (q,f,lbl,l) -> Exists (q,(drop_disjunct f),lbl, l) 
+          
 and float_out_quantif f = match f with
-		| BForm b-> (f,[],[])
-		| And (b1,b2,l) -> 
-			let l1,l2,l3 = float_out_quantif b1 in
-			let q1,q2,q3 = float_out_quantif b2 in
-			((mkAnd l1 q1 l), l2@q2, l3@q3)
-		| Or (b1,b2,lbl,l) ->
-			let l1,l2,l3 = float_out_quantif b1 in
-			let q1,q2,q3 = float_out_quantif b2 in
-			((mkOr l1 q1 lbl l), l2@q2, l3@q3)
-		| Not (b,lbl,l) ->
-			let l1,l2,l3 = float_out_quantif b in
-			(Not (l1,lbl,l), l2,l3)
-		| Forall (q,b,lbl,l)->
-			let l1,l2,l3 = float_out_quantif b in
-			(l1,q::l2,l3)
-		| Exists (q,b,lbl,l)->
-			let l1,l2,l3 = float_out_quantif b in
-			(l1,l2,q::l3)
+  | BForm b-> (f,[],[])
+  | And (b1,b2,l) -> 
+		let l1,l2,l3 = float_out_quantif b1 in
+		let q1,q2,q3 = float_out_quantif b2 in
+		((mkAnd l1 q1 l), l2@q2, l3@q3)
+  | Or (b1,b2,lbl,l) ->
+		let l1,l2,l3 = float_out_quantif b1 in
+		let q1,q2,q3 = float_out_quantif b2 in
+		((mkOr l1 q1 lbl l), l2@q2, l3@q3)
+  | Not (b,lbl,l) ->
+		let l1,l2,l3 = float_out_quantif b in
+		(Not (l1,lbl,l), l2,l3)
+  | Forall (q,b,lbl,l)->
+		let l1,l2,l3 = float_out_quantif b in
+		(l1,q::l2,l3)
+  | Exists (q,b,lbl,l)->
+		let l1,l2,l3 = float_out_quantif b in
+		(l1,l2,q::l3)
 			
 and check_not (f:formula):formula = 
-		let rec inner (f:formula):formula*bool = match f with
-			  | BForm b -> (f,false)
-			  | And (b1,b2,l) -> 
-					let l1,r1 = inner b1 in
-					let l2,r2 = inner b2 in
-					((mkAnd l1 l2 l),r1&r2)
-			  | Or (b1,b2,lbl,l) -> 
-					let l1,r1 = inner b1 in
-					let l2,r2 = inner b2 in
-					((mkOr l1 l2 lbl l),r1&r2)
-			  | Not (b,lbl,l) -> begin
-								match b with
-								| BForm _ -> (f,false)
-								| And (b1,b2,l) -> 
-									let l1,_ = inner (Not (b1,lbl,l)) in
-									let l2,_ = inner (Not (b2,lbl,l)) in
-									((mkOr l1 l2 lbl l),true)
-								| Or (b1,b2,lbl2,l) ->
-									let l1,_ = inner (Not (b1,lbl,l)) in
-									let l2,_ = inner (Not (b2,lbl,l)) in
-									((mkAnd l1 l2 l),true)
-								| Not (b,lbl,l) ->
-									let l1,r1 = inner b in
-									(l1,true)
-								| _ -> (f,false)
-							 end
-			  | _ ->  (f,false) in
-		let f,r = inner f in
-		if r then check_not f
-			else f 
+  let rec inner (f:formula):formula*bool = match f with
+	| BForm b -> (f,false)
+	| And (b1,b2,l) -> 
+		  let l1,r1 = inner b1 in
+		  let l2,r2 = inner b2 in
+		  ((mkAnd l1 l2 l),r1&r2)
+	| Or (b1,b2,lbl,l) -> 
+		  let l1,r1 = inner b1 in
+		  let l2,r2 = inner b2 in
+		  ((mkOr l1 l2 lbl l),r1&r2)
+	| Not (b,lbl,l) -> begin
+		match b with
+		  | BForm _ -> (f,false)
+		  | And (b1,b2,l) -> 
+				let l1,_ = inner (Not (b1,lbl,l)) in
+				let l2,_ = inner (Not (b2,lbl,l)) in
+				((mkOr l1 l2 lbl l),true)
+		  | Or (b1,b2,lbl2,l) ->
+				let l1,_ = inner (Not (b1,lbl,l)) in
+				let l2,_ = inner (Not (b2,lbl,l)) in
+				((mkAnd l1 l2 l),true)
+		  | Not (b,lbl,l) ->
+				let l1,r1 = inner b in
+				(l1,true)
+		  | _ -> (f,false)
+	  end
+	| _ ->  (f,false) in
+  let f,r = inner f in
+  if r then check_not f
+  else f 
 	
 and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool = 
-				let is_simple e = match e with
-					  | Null _ 
-					  | Var _ 
-					  | IConst _ -> true
-            | FConst _ -> true
-					  | Add (e1,e2,_)
-					  | Subtract (e1,e2,_) -> false
-					  | Mult _
-            | Div _
-					  | Max _ 
-					  | Min _
-					  | Bag _
-					  | BagUnion _
-					  | BagIntersect _ 
-					  | BagDiff _
-					  | List _
-					  | ListCons _
-					  | ListTail _
-					  | ListAppend _
-					  | ListReverse _
-					  | ListHead _
-					  | ListLength _ -> false in
-	((is_simple e1)&& match e2 with
-				  | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
-				  | _ -> false
-	)||((is_simple e2)&& match e1 with
-				  | Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
-				  | _ -> false) 				  
-				  
-and drop_null (f:formula) self neg:formula = 
-	let helper(f:b_formula) neg:b_formula = match f with
-	  | Eq (e1,e2,l) -> if neg then f
-						else begin match (e1,e2) with
-							| (Var(self,_),Null _ )
-							| (Null _ ,Var(self,_))-> BConst (true,l)
-							| _ -> f end
-	  | Neq (e1,e2,l) -> if (not neg) then f
-						 else begin match (e1,e2) with
-							| (Var(self,_),Null _ )
-							| (Null _ ,Var(self,_))-> BConst (true,l)
-							| _ -> f end
-	  | _ -> f in
-	match f with
-	  | BForm (b,lbl)-> BForm (helper b neg , lbl)
-	  | And (b1,b2,l) -> And ((drop_null b1 self neg),(drop_null b2 self neg),l)
-	  | Or _ -> f
-	  | Not (b,lbl,l)-> Not ((drop_null b self (not neg)),lbl,l)
-	  | Forall (q,f,lbl,l) -> Forall (q,(drop_null f self neg),lbl,l)
-	  | Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
+  let is_simple e = match e with
+	| Null _ 
+	| Var _ 
+	| IConst _ -> true
+    | FConst _ -> true
+	| Add (e1,e2,_)
+	| Subtract (e1,e2,_) -> false
+	| Mult _
+    | Div _
+	| Max _ 
+	| Min _
+	| Bag _
+	| BagUnion _
+	| BagIntersect _ 
+	| BagDiff _
+	| List _
+	| ListCons _
+	| ListTail _
+	| ListAppend _
+	| ListReverse _
+	| ListHead _
+	| ListLength _ -> false in
+  ((is_simple e1)&& match e2 with
+	| Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
+	| _ -> false
+  )||((is_simple e2)&& match e1 with
+	| Var (v1,l)-> List.exists (fun c->eq_spec_var c v1) interest_vars
+	| _ -> false) 				  
 	  
+and drop_null (f:formula) self neg:formula = 
+  let helper(f:b_formula) neg:b_formula = match f with
+	| Eq (e1,e2,l) -> if neg then f
+	  else begin match (e1,e2) with
+		| (Var(self,_),Null _ )
+		| (Null _ ,Var(self,_))-> BConst (true,l)
+		| _ -> f end
+	| Neq (e1,e2,l) -> if (not neg) then f
+	  else begin match (e1,e2) with
+		| (Var(self,_),Null _ )
+		| (Null _ ,Var(self,_))-> BConst (true,l)
+		| _ -> f end
+	| _ -> f in
+  match f with
+	| BForm (b,lbl)-> BForm (helper b neg , lbl)
+	| And (b1,b2,l) -> And ((drop_null b1 self neg),(drop_null b2 self neg),l)
+	| Or _ -> f
+	| Not (b,lbl,l)-> Not ((drop_null b self (not neg)),lbl,l)
+	| Forall (q,f,lbl,l) -> Forall (q,(drop_null f self neg),lbl,l)
+	| Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
+	      
 and add_null f self : formula =  
-	mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos , None)) no_pos
-	
-(*to fully extend*)
-(* TODO: double check this func *)
+  mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos , None)) no_pos	  
+      (*to fully extend*)
+      (* TODO: double check this func *)
 
 and rel_compute e1 e2:constraint_rel = match (e1,e2) with
-	| Null _, Null _ -> Equal
-	| Null _, Var (v1,_)  -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
-	| Null _, IConst (i,_) -> if i=0 then Equal else Contradicting
-	| Var (v1,_), Null _ -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
-	| Var (v1,_), Var (v2,_) -> if (String.compare (name_of_spec_var v1)(name_of_spec_var v2))=0 then Equal else Unknown
-	| Var _, IConst _ -> Unknown
-	| IConst (i,_) , Null _ -> if i=0 then Equal else Contradicting
-	| IConst _ ,Var _ -> Unknown
-	| IConst (i1,_) ,IConst (i2,_) -> if (i1<i2) then Subsumed else if (i1=i2) then Equal else Subsuming
-	| _ -> Unknown
-	
-	and compute_constraint_relation ((a1,a3,a4):(int* b_formula *(spec_var list)))
-								((b1,b3,b4):(int* b_formula *(spec_var list)))
-								:constraint_rel= match (a3,b3) with
-	| ((BVar v1),(BVar v2))-> if (v1=v2) then Equal else Unknown
-	| (Neq (e1,e2,_), Neq (d1,d2,_))
-	| (Eq (e1,e2,_), Eq  (d1,d2,_)) -> begin match ((rel_compute e1 d1),(rel_compute e2 d2)) with
-										| Equal,Equal-> Equal
-										| _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
-												| Equal,Equal-> Equal
-												| _ ->  Unknown end
-	| (Eq  (e1,e2,_), Neq (d1,d2,_)) 
-	| (Neq (e1,e2,_), Eq  (d1,d2,_)) ->  begin 
-		match ((rel_compute e1 d1),(rel_compute e2 d2)) with
-										| Equal,Equal-> Contradicting
-										| _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
-												| Equal,Equal-> Contradicting
-												| _ ->  Unknown end 
-	| (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
-	| (Lt (e1,e2,_), Lte (d1,d2,_)) 
-	| (Lt (e1,e2,_), Eq  (d1,d2,_)) 
-	| (Lt (e1,e2,_), Neq (d1,d2,_)) 
-	| (Lte (e1,e2,_), Lt  (d1,d2,_)) 
-	| (Lte (e1,e2,_), Lte (d1,d2,_)) 
-	| (Lte (e1,e2,_), Eq  (d1,d2,_)) 
-	| (Lte (e1,e2,_), Neq (d1,d2,_)) 
-	| (Eq (e1,e2,_), Lt  (d1,d2,_)) 
-	| (Eq (e1,e2,_), Lte (d1,d2,_)) 
-	| (Neq (e1,e2,_), Lt  (d1,d2,_)) 
-	| (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown
-	| _ -> Unknown
-	
+  | Null _, Null _ -> Equal
+  | Null _, Var (v1,_)  -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
+  | Null _, IConst (i,_) -> if i=0 then Equal else Contradicting
+  | Var (v1,_), Null _ -> if (String.compare (name_of_spec_var v1)"null")=0 then Equal else Unknown
+  | Var (v1,_), Var (v2,_) -> if (String.compare (name_of_spec_var v1)(name_of_spec_var v2))=0 then Equal else Unknown
+  | Var _, IConst _ -> Unknown
+  | IConst (i,_) , Null _ -> if i=0 then Equal else Contradicting
+  | IConst _ ,Var _ -> Unknown
+  | IConst (i1,_) ,IConst (i2,_) -> if (i1<i2) then Subsumed else if (i1=i2) then Equal else Subsuming
+  | _ -> Unknown
+	    
+and compute_constraint_relation ((a1,a3,a4):(int* b_formula *(spec_var list)))
+	  ((b1,b3,b4):(int* b_formula *(spec_var list)))
+	  :constraint_rel= match (a3,b3) with
+	    | ((BVar v1),(BVar v2))-> if (v1=v2) then Equal else Unknown
+	    | (Neq (e1,e2,_), Neq (d1,d2,_))
+	    | (Eq (e1,e2,_), Eq  (d1,d2,_)) -> begin match ((rel_compute e1 d1),(rel_compute e2 d2)) with
+			| Equal,Equal-> Equal
+			| _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
+				| Equal,Equal-> Equal
+				| _ ->  Unknown end
+	    | (Eq  (e1,e2,_), Neq (d1,d2,_)) 
+	    | (Neq (e1,e2,_), Eq  (d1,d2,_)) ->  begin 
+		    match ((rel_compute e1 d1),(rel_compute e2 d2)) with
+			  | Equal,Equal-> Contradicting
+			  | _ -> match ((rel_compute e1 d2),(rel_compute e2 d1)) with
+				  | Equal,Equal-> Contradicting
+				  | _ ->  Unknown end 
+	    | (Lt (e1,e2,_), Lt  (d1,d2,_)) 		
+	    | (Lt (e1,e2,_), Lte (d1,d2,_)) 
+	    | (Lt (e1,e2,_), Eq  (d1,d2,_)) 
+	    | (Lt (e1,e2,_), Neq (d1,d2,_)) 
+	    | (Lte (e1,e2,_), Lt  (d1,d2,_)) 
+	    | (Lte (e1,e2,_), Lte (d1,d2,_)) 
+	    | (Lte (e1,e2,_), Eq  (d1,d2,_)) 
+	    | (Lte (e1,e2,_), Neq (d1,d2,_)) 
+	    | (Eq (e1,e2,_), Lt  (d1,d2,_)) 
+	    | (Eq (e1,e2,_), Lte (d1,d2,_)) 
+	    | (Neq (e1,e2,_), Lt  (d1,d2,_)) 
+	    | (Neq (e1,e2,_), Lte (d1,d2,_)) -> Unknown
+	    | _ -> Unknown
+	          
 and b_form_list f: b_formula list = match f with
   | BForm (b,_) -> [b]
   | And (b1,b2,_)-> (b_form_list b1)@(b_form_list b2)
@@ -2112,173 +2111,173 @@ and b_form_list f: b_formula list = match f with
 and simp_mult (e : exp) :  exp =
   let rec normalize_add m lg (x: exp):  exp =
     match x with
-    |  Add (e1, e2, l) ->
-        let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
-    | _ -> (match m with | None -> x | Some e ->  Add (e, x, lg)) in
+      |  Add (e1, e2, l) ->
+             let t1 = normalize_add m l e2 in normalize_add (Some t1) l e1
+      | _ -> (match m with | None -> x | Some e ->  Add (e, x, lg)) in
   let rec acc_mult m e0 =
     match e0 with
-    | Null _ -> e0
-    | Var (v, l) ->
-        (match m with 
-        | None -> e0 
-        | Some c ->  Mult (IConst (c, l), e0, l))
-    | IConst (v, l) ->
-        (match m with 
-        | None -> e0 
-        | Some c ->  IConst (c * v, l))
-    | FConst (v, l) ->
-        (match m with
-        | None -> e0
-        | Some c -> FConst (v *. (float_of_int c), l))
-    |  Add (e1, e2, l) ->
-        normalize_add None l ( Add (acc_mult m e1, acc_mult m e2, l))
-    |  Subtract (e1, e2, l) ->
-        normalize_add None l
-          ( Add (acc_mult m e1,
-             acc_mult
-               (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
-             l))
-    | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
-    | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
-    |  Max (e1, e2, l) ->
-        Error.report_error
-          {
-            Error.error_loc = l;
-            Error.error_text =
-              "got Max !! (Should have already been simplified )";
-          }
-    |  Min (e1, e2, l) ->
-        Error.report_error
-          {
-            Error.error_loc = l;
-            Error.error_text =
-              "got Min !! (Should have already been simplified )";
-          }
-    |  Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
-    |  BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
-    |  BagIntersect (el, l) -> BagIntersect (List.map (acc_mult m) el, l)
-    |  BagDiff (e1, e2, l) -> BagDiff (acc_mult m e1, acc_mult m e2, l)
-    |  List (_, l)
-    |  ListAppend (_, l)
-	|  ListCons (_, _, l)
-	|  ListTail (_, l)
-	|  ListReverse (_, l)
-	|  ListHead (_, l)
-	|  ListLength (_, l) -> 
-          match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
+      | Null _ -> e0
+      | Var (v, l) ->
+            (match m with 
+              | None -> e0 
+              | Some c ->  Mult (IConst (c, l), e0, l))
+      | IConst (v, l) ->
+            (match m with 
+              | None -> e0 
+              | Some c ->  IConst (c * v, l))
+      | FConst (v, l) ->
+            (match m with
+              | None -> e0
+              | Some c -> FConst (v *. (float_of_int c), l))
+      |  Add (e1, e2, l) ->
+             normalize_add None l ( Add (acc_mult m e1, acc_mult m e2, l))
+      |  Subtract (e1, e2, l) ->
+             normalize_add None l
+                 ( Add (acc_mult m e1,
+                 acc_mult
+                     (match m with | None -> Some (- 1) | Some c -> Some (- c)) e2,
+                 l))
+      | Mult (e1, e2, l) -> Mult (acc_mult m e1, acc_mult None e2, l)
+      | Div (e1, e2, l) -> Div (acc_mult m e1, acc_mult None e2, l)
+      |  Max (e1, e2, l) ->
+             Error.report_error
+                 {
+                     Error.error_loc = l;
+                     Error.error_text =
+                         "got Max !! (Should have already been simplified )";
+                 }
+      |  Min (e1, e2, l) ->
+             Error.report_error
+                 {
+                     Error.error_loc = l;
+                     Error.error_text =
+                         "got Min !! (Should have already been simplified )";
+                 }
+      |  Bag (el, l) ->  Bag (List.map (acc_mult m) el, l)
+      |  BagUnion (el, l) ->  BagUnion (List.map (acc_mult m) el, l)
+      |  BagIntersect (el, l) -> BagIntersect (List.map (acc_mult m) el, l)
+      |  BagDiff (e1, e2, l) -> BagDiff (acc_mult m e1, acc_mult m e2, l)
+      |  List (_, l)
+      |  ListAppend (_, l)
+	  |  ListCons (_, _, l)
+	  |  ListTail (_, l)
+	  |  ListReverse (_, l)
+	  |  ListHead (_, l)
+	  |  ListLength (_, l) -> 
+             match m with | None -> e0 | Some c ->  Mult (IConst (c, l), e0, l)
 
   in acc_mult None e
 
 and split_sums (e :  exp) : (( exp option) * ( exp option)) =
   match e with
-  |  Null _ -> ((Some e), None)
-  |  Var _ -> ((Some e), None)
-  |  IConst (v, l) ->
-      if v > 0 then 
-        ((Some e), None)
-      else if v < 0 then 
-        (None, (Some ( IConst (- v, l))))
-      else (None, None)
-  | FConst (v, l) ->
-      if v > 0.0 then
-        ((Some e), None)
-      else if v < 0.0 then
-        ((None, (Some (FConst (-. v, l)))))
-      else (None, None)
-  |  Add (e1, e2, l) ->
-      let (ts1, tm1) = split_sums e1 in
-      let (ts2, tm2) = split_sums e2 in
-      let tsr =
-        (match (ts1, ts2) with
-         | (None, None) -> None
-         | (None, Some r1) -> ts2
-         | (Some r1, None) -> ts1
-         | (Some r1, Some r2) -> Some ( Add (r1, r2, l))) in
-      let tmr =
-        (match (tm1, tm2) with
-         | (None, None) -> None
-         | (None, Some r1) -> tm2
-         | (Some r1, None) -> tm1
-         | (Some r1, Some r2) -> Some ( Add (r1, r2, l)))
-      in (tsr, tmr)
-  |  Subtract (e1, e2, l) ->
-      Error.report_error
-        {
-          Error.error_loc = l;
-          Error.error_text =
-            "got subtraction !! (Should have already been simplified )";
-        }
-  | Mult (e1, e2, l) ->
-      let ts1, tm1 = split_sums e1 in
-      let ts2, tm2 = split_sums e2 in
-      let r =
-        match ts1, tm1, ts2, tm2 with
-        | None, None, _, _ -> None, None
-        | _, _, None, None -> None, None
-        | Some r1, None, Some r2, None -> Some (Mult (r1, r2, l)), None
-        | Some r1, None, None, Some r2 -> None, Some (Mult (r1, r2, l))
-        | None, Some r1, Some r2, None -> None, Some (Mult (r1, r2, l))
-        | None, Some r1, None, Some r2 -> Some (Mult (r1, r2, l)), None
-        | _ -> ((Some e), None) (* Undecidable cases *)
-      in r
-  | Div (e1, e2, l) ->
-      (* IMHO, this implementation is useless *)
-      let ts1, tm1 = split_sums e1 in
-      let ts2, tm2 = split_sums e2 in
-      let r =
-        match ts1, tm1, ts2, tm2 with
-        | None, None, _, _ -> None, None
-        | _, _, None, None -> failwith "[cpure.ml] split_sums: divide by zero"
-        | Some r1, None, Some r2, None -> Some (Div (r1, r2, l)), None
-        | Some r1, None, None, Some r2 -> None, Some (Div (r1, r2, l))
-        | None, Some r1, Some r2, None -> None, Some (Div (r1, r2, l))
-        | None, Some r1, None, Some r2 -> Some (Div (r1, r2, l)), None
-        | _ -> Some e, None
-      in r
-  |  Max (e1, e2, l) ->
-      Error.report_error
-        {
-          Error.error_loc = l;
-          Error.error_text =
-            "got Max !! (Should have already been simplified )";
-        }
-  |  Min (e1, e2, l) ->
-      Error.report_error
-        {
-          Error.error_loc = l;
-          Error.error_text =
-            "got Min !! (Should have already been simplified )";
-        }
-  |  Bag (e1, l) -> ((Some e), None)
-  |  BagUnion (e1, l) -> ((Some e), None)
-  |  BagIntersect (e1, l) -> ((Some e), None)
-  |  BagDiff (e1, e2, l) -> ((Some e), None)
-  |  List (el, l) -> ((Some e), None)
-  |  ListAppend (el, l) -> ((Some e), None)
-  |  ListCons (e1, e2, l) -> ((Some e), None)
-  |  ListHead (e1, l) -> ((Some e), None)
-  |  ListTail (e1, l) -> ((Some e), None)
-  |  ListLength (e1, l) -> ((Some e), None)
-  |  ListReverse (e1, l) -> ((Some e), None)
+    |  Null _ -> ((Some e), None)
+    |  Var _ -> ((Some e), None)
+    |  IConst (v, l) ->
+           if v > 0 then 
+             ((Some e), None)
+           else if v < 0 then 
+             (None, (Some ( IConst (- v, l))))
+           else (None, None)
+    | FConst (v, l) ->
+          if v > 0.0 then
+            ((Some e), None)
+          else if v < 0.0 then
+            ((None, (Some (FConst (-. v, l)))))
+          else (None, None)
+    |  Add (e1, e2, l) ->
+           let (ts1, tm1) = split_sums e1 in
+           let (ts2, tm2) = split_sums e2 in
+           let tsr =
+             (match (ts1, ts2) with
+               | (None, None) -> None
+               | (None, Some r1) -> ts2
+               | (Some r1, None) -> ts1
+               | (Some r1, Some r2) -> Some ( Add (r1, r2, l))) in
+           let tmr =
+             (match (tm1, tm2) with
+               | (None, None) -> None
+               | (None, Some r1) -> tm2
+               | (Some r1, None) -> tm1
+               | (Some r1, Some r2) -> Some ( Add (r1, r2, l)))
+           in (tsr, tmr)
+    |  Subtract (e1, e2, l) ->
+           Error.report_error
+               {
+                   Error.error_loc = l;
+                   Error.error_text =
+                       "got subtraction !! (Should have already been simplified )";
+               }
+    | Mult (e1, e2, l) ->
+          let ts1, tm1 = split_sums e1 in
+          let ts2, tm2 = split_sums e2 in
+          let r =
+            match ts1, tm1, ts2, tm2 with
+              | None, None, _, _ -> None, None
+              | _, _, None, None -> None, None
+              | Some r1, None, Some r2, None -> Some (Mult (r1, r2, l)), None
+              | Some r1, None, None, Some r2 -> None, Some (Mult (r1, r2, l))
+              | None, Some r1, Some r2, None -> None, Some (Mult (r1, r2, l))
+              | None, Some r1, None, Some r2 -> Some (Mult (r1, r2, l)), None
+              | _ -> ((Some e), None) (* Undecidable cases *)
+          in r
+    | Div (e1, e2, l) ->
+          (* IMHO, this implementation is useless *)
+          let ts1, tm1 = split_sums e1 in
+          let ts2, tm2 = split_sums e2 in
+          let r =
+            match ts1, tm1, ts2, tm2 with
+              | None, None, _, _ -> None, None
+              | _, _, None, None -> failwith "[cpure.ml] split_sums: divide by zero"
+              | Some r1, None, Some r2, None -> Some (Div (r1, r2, l)), None
+              | Some r1, None, None, Some r2 -> None, Some (Div (r1, r2, l))
+              | None, Some r1, Some r2, None -> None, Some (Div (r1, r2, l))
+              | None, Some r1, None, Some r2 -> Some (Div (r1, r2, l)), None
+              | _ -> Some e, None
+          in r
+    |  Max (e1, e2, l) ->
+           Error.report_error
+               {
+                   Error.error_loc = l;
+                   Error.error_text =
+                       "got Max !! (Should have already been simplified )";
+               }
+    |  Min (e1, e2, l) ->
+           Error.report_error
+               {
+                   Error.error_loc = l;
+                   Error.error_text =
+                       "got Min !! (Should have already been simplified )";
+               }
+    |  Bag (e1, l) -> ((Some e), None)
+    |  BagUnion (e1, l) -> ((Some e), None)
+    |  BagIntersect (e1, l) -> ((Some e), None)
+    |  BagDiff (e1, e2, l) -> ((Some e), None)
+    |  List (el, l) -> ((Some e), None)
+    |  ListAppend (el, l) -> ((Some e), None)
+    |  ListCons (e1, e2, l) -> ((Some e), None)
+    |  ListHead (e1, l) -> ((Some e), None)
+    |  ListTail (e1, l) -> ((Some e), None)
+    |  ListLength (e1, l) -> ((Some e), None)
+    |  ListReverse (e1, l) -> ((Some e), None)
 
 and move_lr (lhs :  exp option) (lsm :  exp option)
-  (rhs :  exp option) (rsm :  exp option) l :
-  ( exp *  exp) =
+      (rhs :  exp option) (rsm :  exp option) l :
+      ( exp *  exp) =
   let nl =
     match (lhs, rsm) with
-    | (None, None) ->  IConst (0, l)
-    | (Some e, None) -> e
-    | (None, Some e) -> e
-    | (Some e1, Some e2) ->  Add (e1, e2, l) in
+      | (None, None) ->  IConst (0, l)
+      | (Some e, None) -> e
+      | (None, Some e) -> e
+      | (Some e1, Some e2) ->  Add (e1, e2, l) in
   let nr =
     match (rhs, lsm) with
-    | (None, None) ->  IConst (0, l)
-    | (Some e, None) -> e
-    | (None, Some e) -> e
-    | (Some e1, Some e2) ->  Add (e1, e2, l)
+      | (None, None) ->  IConst (0, l)
+      | (Some e, None) -> e
+      | (None, Some e) -> e
+      | (Some e1, Some e2) ->  Add (e1, e2, l)
   in (nl, nr)
-	
-	
+	     
+	     
 and purge_mult (e :  exp):  exp = match e with
   |  Null _ -> e
   |  Var _ -> e
@@ -2287,105 +2286,105 @@ and purge_mult (e :  exp):  exp = match e with
   |  Add (e1, e2, l) ->  Add((purge_mult e1), (purge_mult e2), l)
   |  Subtract (e1, e2, l) ->  Subtract((purge_mult e1), (purge_mult e2), l)
   | Mult (e1, e2, l) ->
-      let t1 = purge_mult e1 in
-      let t2 = purge_mult e2 in
-      begin
-        match t1 with
-        | IConst (v1, _) -> 
-            if (v1 = 0) then t1 
-            else if (v1 = 1) then t2 
-            else begin 
-              match t2 with
-              | IConst (v2, _) -> IConst (v1 * v2, l)
-              | FConst (v2, _) -> FConst ((float_of_int v1) *. v2, l)
-              | _ -> Mult (t1, t2, l)
-            end
-        | FConst (v1, _) ->
-            if (v1 = 0.0) then t1 
-            else begin
-              match t2 with
-              | IConst (v2, _) -> FConst (v1 *. (float_of_int v2), l)
-              | FConst (v2, _) -> FConst (v1 *. v2, l)
-              | _ -> Mult (t1, t2, l)
-            end
-        | _ -> 
-            begin
-              match t2 with
-              | IConst (v2, _) -> 
-                  if (v2 = 0) then t2 
-                  else if (v2 = 1) then t1 
-                  else Mult (t1, t2, l)
-              | FConst (v2, _) ->
-                  if (v2 = 0.0) then t2 
-                  else Mult (t1, t2, l)
-              | _ -> Mult (t1, t2, l) 
-            end
-      end
+        let t1 = purge_mult e1 in
+        let t2 = purge_mult e2 in
+        begin
+          match t1 with
+            | IConst (v1, _) -> 
+                  if (v1 = 0) then t1 
+                  else if (v1 = 1) then t2 
+                  else begin 
+                    match t2 with
+                      | IConst (v2, _) -> IConst (v1 * v2, l)
+                      | FConst (v2, _) -> FConst ((float_of_int v1) *. v2, l)
+                      | _ -> Mult (t1, t2, l)
+                  end
+            | FConst (v1, _) ->
+                  if (v1 = 0.0) then t1 
+                  else begin
+                    match t2 with
+                      | IConst (v2, _) -> FConst (v1 *. (float_of_int v2), l)
+                      | FConst (v2, _) -> FConst (v1 *. v2, l)
+                      | _ -> Mult (t1, t2, l)
+                  end
+            | _ -> 
+                  begin
+                    match t2 with
+                      | IConst (v2, _) -> 
+                            if (v2 = 0) then t2 
+                            else if (v2 = 1) then t1 
+                            else Mult (t1, t2, l)
+                      | FConst (v2, _) ->
+                            if (v2 = 0.0) then t2 
+                            else Mult (t1, t2, l)
+                      | _ -> Mult (t1, t2, l) 
+                  end
+        end
   | Div (e1, e2, l) ->
-      let t1 = purge_mult e1 in
-      let t2 = purge_mult e2 in
-      begin
-        match t1 with
-        | IConst (v1, _) ->
-            if (v1 = 0) then FConst (0.0, l) 
-            else begin
-             match t2 with
-              | IConst (v2, _) ->
-                  if (v2 = 0) then
-                    Error.report_error {
-                      Error.error_loc = l;
-                      Error.error_text = "divided by zero";
-                    }
-                  else FConst((float_of_int v1) /. (float_of_int v2), l)
-              | FConst (v2, _) ->
-                  if (v2 = 0.0) then
-                    Error.report_error {
-                      Error.error_loc = l;
-                      Error.error_text = "divided by zero";
-                    }
-                  else FConst((float_of_int v1) /. v2, l)
-              | _ -> Div (t1, t2, l) 
-            end
-        | FConst (v1, _) ->
-            if (v1 = 0.0) then FConst (0.0, l)
-            else begin
-              match t2 with
-              | IConst (v2, _) ->
-                  if (v2 = 0) then
-                    Error.report_error {
-                      Error.error_loc = l;
-                      Error.error_text = "divided by zero";
-                    }
-                  else FConst(v1 /. (float_of_int v2), l)
-              | FConst (v2, _) ->
-                  if (v2 = 0.0) then
-                    Error.report_error {
-                      Error.error_loc = l;
-                      Error.error_text = "divided by zero";
-                    }
-                  else FConst(v1 /. v2, l)
-              | _ -> Div (t1, t2, l)
-            end
-        | _ -> 
-            begin
-              match t2 with
-              | IConst (v2, _) ->
-                  if (v2 = 0) then
-                    Error.report_error {
-                      Error.error_loc = l;
-                      Error.error_text = "divided by zero";
-                    }
-                  else Div (t1, t2, l)
-              | FConst (v2, _) ->
-                  if (v2 = 0.0) then
-                    Error.report_error {
-                      Error.error_loc = l;
-                      Error.error_text = "divided by zero";
-                    }
-                  else Div (t1, t2, l)
-              | _ -> Div (t1, t2, l)
-            end
-      end
+        let t1 = purge_mult e1 in
+        let t2 = purge_mult e2 in
+        begin
+          match t1 with
+            | IConst (v1, _) ->
+                  if (v1 = 0) then FConst (0.0, l) 
+                  else begin
+                    match t2 with
+                      | IConst (v2, _) ->
+                            if (v2 = 0) then
+                              Error.report_error {
+                                  Error.error_loc = l;
+                                  Error.error_text = "divided by zero";
+                              }
+                            else FConst((float_of_int v1) /. (float_of_int v2), l)
+                      | FConst (v2, _) ->
+                            if (v2 = 0.0) then
+                              Error.report_error {
+                                  Error.error_loc = l;
+                                  Error.error_text = "divided by zero";
+                              }
+                            else FConst((float_of_int v1) /. v2, l)
+                      | _ -> Div (t1, t2, l) 
+                  end
+            | FConst (v1, _) ->
+                  if (v1 = 0.0) then FConst (0.0, l)
+                  else begin
+                    match t2 with
+                      | IConst (v2, _) ->
+                            if (v2 = 0) then
+                              Error.report_error {
+                                  Error.error_loc = l;
+                                  Error.error_text = "divided by zero";
+                              }
+                            else FConst(v1 /. (float_of_int v2), l)
+                      | FConst (v2, _) ->
+                            if (v2 = 0.0) then
+                              Error.report_error {
+                                  Error.error_loc = l;
+                                  Error.error_text = "divided by zero";
+                              }
+                            else FConst(v1 /. v2, l)
+                      | _ -> Div (t1, t2, l)
+                  end
+            | _ -> 
+                  begin
+                    match t2 with
+                      | IConst (v2, _) ->
+                            if (v2 = 0) then
+                              Error.report_error {
+                                  Error.error_loc = l;
+                                  Error.error_text = "divided by zero";
+                              }
+                            else Div (t1, t2, l)
+                      | FConst (v2, _) ->
+                            if (v2 = 0.0) then
+                              Error.report_error {
+                                  Error.error_loc = l;
+                                  Error.error_text = "divided by zero";
+                              }
+                            else Div (t1, t2, l)
+                      | _ -> Div (t1, t2, l)
+                  end
+        end
   |  Max (e1, e2, l) ->  Max((purge_mult e1), (purge_mult e2), l)
   |  Min (e1, e2, l) ->  Min((purge_mult e1), (purge_mult e2), l)
   |  Bag (el, l) ->  Bag ((List.map purge_mult el), l)
@@ -2399,186 +2398,187 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
-	
-	
+	     
+
 and arith_simplify (pf : formula) :  formula = 
-
-	let do_all e1 e2 l =
-	  let t1 = simp_mult e1 in
-      let t2 = simp_mult e2 in
-      let (lhs, lsm) = split_sums t1 in
-      let (rhs, rsm) = split_sums t2 in
-      let (lh, rh) = move_lr lhs lsm rhs rsm l in
-			let lh = purge_mult lh in
-			let rh = purge_mult rh in
-			 (lh, rh) in
-
+  (* a+a    --> 2*a
+     1+3    --> 4
+     1+x>-2 --> 3+x>0
+  *)
+  let do_all e1 e2 l =
+	let t1 = simp_mult e1 in
+    let t2 = simp_mult e2 in
+    let (lhs, lsm) = split_sums t1 in
+    let (rhs, rsm) = split_sums t2 in
+    let (lh, rh) = move_lr lhs lsm rhs rsm l in
+	let lh = purge_mult lh in
+	let rh = purge_mult rh in
+	(lh, rh) in
   match pf with
-  |  BForm (b,lbl) ->
-      let r =
-        (match b with
-         |  BConst _ -> b
-         |  BVar _ -> b
-         |  Lt (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Lt (lh, rh, l)
-         |  Lte (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-              Lte (lh, rh, l)
-         |  Gt (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Lt (rh, lh, l)
-         |  Gte (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Lte (rh, lh, l)
-         |  Eq (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Eq (lh, rh, l)
-         |  Neq (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Neq (lh, rh, l)
-         |  EqMax (e1, e2, e3, l) ->
-						 let ne1 = simp_mult e1 in
-						 let ne2 = simp_mult e2 in
-						 let ne3 = simp_mult e3 in
-						 let ne1 = purge_mult ne1 in
-						 let ne2 = purge_mult ne2 in
-						 let ne3 = purge_mult ne3 in
-						 (*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*)
-							  let (s1, m1) = split_sums ne1 in
-								let (s2, m2) = split_sums ne2 in
-								let (s3, m3) = split_sums ne3 in
-								begin
-								match (s1, s2, s3, m1, m2, m3) with
-									| None, None, None, None, None, None ->  BConst (true, l)
-									| Some e11, Some e12, Some e13, None, None, None -> 
-										let e11 = purge_mult e11 in
-										let e12 = purge_mult e12 in
-										let e13 = purge_mult e13 in
-										 EqMax (e11, e12, e13, l)
-										 
-									| None, None, None, Some e11, Some e12, Some e13 -> 
-										let e11 = purge_mult e11 in
-										let e12 = purge_mult e12 in
-										let e13 = purge_mult e13 in
-										 EqMin (e11, e12, e13, l)
-									| _ -> 
-										  EqMax (ne1, ne2, ne3, l)
-								end
-							(*else 
-             		 EqMax (ne1, ne2, ne3, l)*)
-         |  EqMin (e1, e2, e3, l) ->
-						 let ne1 = simp_mult e1 in
-						 let ne2 = simp_mult e2 in
-						 let ne3 = simp_mult e3 in
-						 let ne1 = purge_mult ne1 in
-						 let ne2 = purge_mult ne2 in
-						 let ne3 = purge_mult ne3 in
-						 (*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*)
-							  let (s1, m1) = split_sums ne1 in
-								let (s2, m2) = split_sums ne2 in
-								let (s3, m3) = split_sums ne3 in
-								begin
-								match (s1, s2, s3, m1, m2, m3) with
-									| None, None, None, None, None, None ->  BConst (true, l)
-									| Some e11, Some e12, Some e13, None, None, None -> 
-											let e11 = purge_mult e11 in
-											let e12 = purge_mult e12 in
-											let e13 = purge_mult e13 in
-											 EqMin (e11, e12, e13, l)
-									| None, None, None, Some e11, Some e12, Some e13 -> 
-											let e11 = purge_mult e11 in
-											let e12 = purge_mult e12 in
-											let e13 = purge_mult e13 in
-											 EqMax (e11, e12, e13, l)
-									| _ ->  EqMin (ne1, ne2, ne3, l)
-								end
-							(*else
-             		 EqMin (ne1, ne2, ne3, l)*)
-         |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
-         |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
-         |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  BagSub (e1, e2, l) ->
-              BagSub (simp_mult e1, simp_mult e2, l)
-         |  BagMin _ -> b
-         |  BagMax _ -> b)
-      in  BForm (r,lbl)
-  |  And (f1, f2, loc) ->
-       And (arith_simplify f1, arith_simplify f2, loc)
-  |  Or (f1, f2, lbl, loc) ->
-       Or (arith_simplify f1, arith_simplify f2, lbl, loc)
-  |  Not (f1, lbl, loc) ->  Not (arith_simplify f1, lbl, loc)
-  |  Forall (v, f1, lbl, loc) ->  Forall (v, arith_simplify f1, lbl, loc)
-  |  Exists (v, f1, lbl, loc) ->  Exists (v, arith_simplify f1, lbl, loc)
+    |  BForm (b,lbl) ->
+           let r =
+             (match b with
+               |  BConst _ -> b
+               |  BVar _ -> b
+               |  Lt (e1, e2, l) ->
+                      let lh, rh = do_all e1 e2 l in
+					  Lt (lh, rh, l)
+               |  Lte (e1, e2, l) ->
+                      let lh, rh = do_all e1 e2 l in
+                      Lte (lh, rh, l)
+               |  Gt (e1, e2, l) ->
+                      let lh, rh = do_all e1 e2 l in
+					  Lt (rh, lh, l)
+               |  Gte (e1, e2, l) ->
+                      let lh, rh = do_all e1 e2 l in
+					  Lte (rh, lh, l)
+               |  Eq (e1, e2, l) ->
+                      let lh, rh = do_all e1 e2 l in
+					  Eq (lh, rh, l)
+               |  Neq (e1, e2, l) ->
+                      let lh, rh = do_all e1 e2 l in
+					  Neq (lh, rh, l)
+               |  EqMax (e1, e2, e3, l) ->
+					  let ne1 = simp_mult e1 in
+					  let ne2 = simp_mult e2 in
+					  let ne3 = simp_mult e3 in
+					  let ne1 = purge_mult ne1 in
+					  let ne2 = purge_mult ne2 in
+					  let ne3 = purge_mult ne3 in
+					  (*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*)
+					  let (s1, m1) = split_sums ne1 in
+					  let (s2, m2) = split_sums ne2 in
+					  let (s3, m3) = split_sums ne3 in
+					  begin
+						match (s1, s2, s3, m1, m2, m3) with
+						  | None, None, None, None, None, None ->  BConst (true, l)
+						  | Some e11, Some e12, Some e13, None, None, None -> 
+								let e11 = purge_mult e11 in
+								let e12 = purge_mult e12 in
+								let e13 = purge_mult e13 in
+								EqMax (e11, e12, e13, l)				
+						  | None, None, None, Some e11, Some e12, Some e13 -> 
+								let e11 = purge_mult e11 in
+								let e12 = purge_mult e12 in
+								let e13 = purge_mult e13 in
+								EqMin (e11, e12, e13, l)
+						  | _ -> 
+								EqMax (ne1, ne2, ne3, l)
+					  end
+						  (*else 
+             		        EqMax (ne1, ne2, ne3, l)*)
+               |  EqMin (e1, e2, e3, l) ->
+					  let ne1 = simp_mult e1 in
+					  let ne2 = simp_mult e2 in
+					  let ne3 = simp_mult e3 in
+					  let ne1 = purge_mult ne1 in
+					  let ne2 = purge_mult ne2 in
+					  let ne3 = purge_mult ne3 in
+					  (*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*)
+					  let (s1, m1) = split_sums ne1 in
+					  let (s2, m2) = split_sums ne2 in
+					  let (s3, m3) = split_sums ne3 in
+					  begin
+						match (s1, s2, s3, m1, m2, m3) with
+						  | None, None, None, None, None, None ->  BConst (true, l)
+						  | Some e11, Some e12, Some e13, None, None, None -> 
+								let e11 = purge_mult e11 in
+								let e12 = purge_mult e12 in
+								let e13 = purge_mult e13 in
+								EqMin (e11, e12, e13, l)
+						  | None, None, None, Some e11, Some e12, Some e13 -> 
+								let e11 = purge_mult e11 in
+								let e12 = purge_mult e12 in
+								let e13 = purge_mult e13 in
+								EqMax (e11, e12, e13, l)
+						  | _ ->  EqMin (ne1, ne2, ne3, l)
+					  end
+						  (*else
+             		        EqMin (ne1, ne2, ne3, l)*)
+               |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
+               |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
+               |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+               |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+               |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+               |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+               |  BagSub (e1, e2, l) ->
+                      BagSub (simp_mult e1, simp_mult e2, l)
+               |  BagMin _ -> b
+               |  BagMax _ -> b)
+           in  BForm (r,lbl)
+    |  And (f1, f2, loc) ->
+           And (arith_simplify f1, arith_simplify f2, loc)
+    |  Or (f1, f2, lbl, loc) ->
+           Or (arith_simplify f1, arith_simplify f2, lbl, loc)
+    |  Not (f1, lbl, loc) ->  Not (arith_simplify f1, lbl, loc)
+    |  Forall (v, f1, lbl, loc) ->  Forall (v, arith_simplify f1, lbl, loc)
+    |  Exists (v, f1, lbl, loc) ->  Exists (v, arith_simplify f1, lbl, loc)
 	
 let rec get_pure_label n =  match n with
-	  | And _ -> None
-	  | BForm (_,l) 
-	  | Or (_,_,l,_) 
-	  | Not (_,l,_) 
-	  | Forall (_,_,l,_) 
-	  | Exists (_,_,l,_) -> l
+  | And _ -> None
+  | BForm (_,l) 
+  | Or (_,_,l,_) 
+  | Not (_,l,_) 
+  | Forall (_,_,l,_) 
+  | Exists (_,_,l,_) -> l
 
 let select zs n = 
-	let l = List.length zs in
-	(List.nth zs (n mod l))
+  let l = List.length zs in
+  (List.nth zs (n mod l))
 
 let rec transform_exp f e  = 
-	let r =  f e in 
-	match r with
+  let r =  f e in 
+  match r with
 	| Some ne -> ne
 	| None -> match e with
-	  | Null _ 
-	  | Var _ 
-	  | IConst _
-	  | FConst _ -> e
-	  | Add (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-		let ne2 = transform_exp f e2 in
-		Add (ne1,ne2,l)
-	  | Subtract (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-		let ne2 = transform_exp f e2 in
-		Subtract (ne1,ne2,l)
-	  | Mult (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-		let ne2 = transform_exp f e2 in
-		Mult (ne1,ne2,l)
-	  | Div (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-		let ne2 = transform_exp f e2 in
-		Div (ne1,ne2,l)
-	  | Max (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-		let ne2 = transform_exp f e2 in
-		Max (ne1,ne2,l)
-	  | Min (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-		let ne2 = transform_exp f e2 in
-		Min (ne1,ne2,l)
-	  | Bag (le,l) -> 
-		Bag (List.map (fun c-> transform_exp f c) le, l) 
-	  | BagUnion (le,l) -> 
-		BagUnion (List.map (fun c-> transform_exp f c) le, l)
-	  | BagIntersect (le,l) -> 
-		BagIntersect (List.map (fun c-> transform_exp f c) le, l)
-	  | BagDiff (e1,e2,l) ->
-	    let ne1 = transform_exp f e1 in
-      let ne2 = transform_exp f e2 in
-      BagDiff (ne1,ne2,l)
-    | List (e1,l) -> List (( List.map (transform_exp f) e1), l) 
-    | ListCons (e1,e2,l) -> 
-    let ne1 = transform_exp f e1 in
-    let ne2 = transform_exp f e2 in
-    ListCons (ne1,ne2,l)
-    | ListHead (e1,l) -> ListHead ((transform_exp f e1),l)
-    | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
-    | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
-    | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
-    | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
+	    | Null _ 
+	    | Var _ 
+	    | IConst _
+	    | FConst _ -> e
+	    | Add (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+		      let ne2 = transform_exp f e2 in
+		      Add (ne1,ne2,l)
+	    | Subtract (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+		      let ne2 = transform_exp f e2 in
+		      Subtract (ne1,ne2,l)
+	    | Mult (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+		      let ne2 = transform_exp f e2 in
+		      Mult (ne1,ne2,l)
+	    | Div (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+		      let ne2 = transform_exp f e2 in
+		      Div (ne1,ne2,l)
+	    | Max (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+		      let ne2 = transform_exp f e2 in
+		      Max (ne1,ne2,l)
+	    | Min (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+		      let ne2 = transform_exp f e2 in
+		      Min (ne1,ne2,l)
+	    | Bag (le,l) -> 
+		      Bag (List.map (fun c-> transform_exp f c) le, l) 
+	    | BagUnion (le,l) -> 
+		      BagUnion (List.map (fun c-> transform_exp f c) le, l)
+	    | BagIntersect (le,l) -> 
+		      BagIntersect (List.map (fun c-> transform_exp f c) le, l)
+	    | BagDiff (e1,e2,l) ->
+	          let ne1 = transform_exp f e1 in
+              let ne2 = transform_exp f e2 in
+              BagDiff (ne1,ne2,l)
+        | List (e1,l) -> List (( List.map (transform_exp f) e1), l) 
+        | ListCons (e1,e2,l) -> 
+              let ne1 = transform_exp f e1 in
+              let ne2 = transform_exp f e2 in
+              ListCons (ne1,ne2,l)
+        | ListHead (e1,l) -> ListHead ((transform_exp f e1),l)
+        | ListTail (e1,l) -> ListTail ((transform_exp f e1),l)
+        | ListLength (e1,l) -> ListLength ((transform_exp f e1),l)
+        | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
+        | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
 
 
 	
@@ -2684,19 +2684,17 @@ let rec transform_formula f (e:formula) :formula =
 			
 			
 let rename_labels  e=
-	let f_b e = Some e in
-	let f_e e = Some e in
-	let f_f e = 
+  let f_b e = Some e in
+  let f_e e = Some e in
+  let f_f e = 
 	let n_l_f n_l = match n_l with
-				| None -> (fresh_branch_point_id "")
-				| Some (_,s) -> (fresh_branch_point_id s) in	
-		match e with
-		| BForm (b,f_l) -> Some (BForm (b,(n_l_f f_l)))
-		| And (e1,e2,l) -> None
-		| Or (e1,e2,f_l,l) -> (Some (Or (e1,e2,(n_l_f f_l),l)))
-		| Not (e1,f_l, l) -> (Some (Not (e1,(n_l_f f_l),l)))
-		| Forall (v,e1,f_l, l) -> (Some (Forall (v,e1,(n_l_f f_l),l)))
-		| Exists (v,e1,f_l, l) -> (Some (Exists (v,e1,(n_l_f f_l),l)))in
-			
-	transform_formula (f_f,f_b,f_e) e
+	  | None -> (fresh_branch_point_id "")
+	  | Some (_,s) -> (fresh_branch_point_id s) in	
+	match e with
+	  | BForm (b,f_l) -> Some (BForm (b,(n_l_f f_l)))
+	  | And (e1,e2,l) -> None
+	  | Or (e1,e2,f_l,l) -> (Some (Or (e1,e2,(n_l_f f_l),l)))
+	  | Not (e1,f_l, l) -> (Some (Not (e1,(n_l_f f_l),l)))
+	  | Forall (v,e1,f_l, l) -> (Some (Forall (v,e1,(n_l_f f_l),l)))
+	  | Exists (v,e1,f_l, l) -> (Some (Exists (v,e1,(n_l_f f_l),l)))in			transform_formula (f_f,f_b,f_e) e
 			

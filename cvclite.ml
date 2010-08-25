@@ -269,7 +269,6 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
   let stri = sat_no in
 	begin
 		(*print_string ("\n!!!!!!!" ^ stri);*)
-	
   let all_fv = CP.remove_dups (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
