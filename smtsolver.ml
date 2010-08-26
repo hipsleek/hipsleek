@@ -278,7 +278,6 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
     | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
   in res
 
-
 (**
  * Runs the specified prover and returns output
  *)
@@ -306,23 +305,25 @@ let run prover input =
  * If it is unsatisfiable, the original implication is true.
  * We also consider unknown is the same as sat
  *)
-let imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
+let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
   let output = run prover input in
   let res = output = "unsat" in
   res
 
+let imply ante conseq = smt_imply ante conseq Z3
 
 (**
  * Test for satisfiability
  * We also consider unknown is the same as sat
  *)
-let is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
+let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   let input = to_smt f None prover in
   let output = run prover input in
   let res = output = "unsat" in
   not res
 
+let is_sat f sat_no = smt_is_sat f sat_no Z3
 
 (**
  * To be implemented
