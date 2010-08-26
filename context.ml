@@ -26,9 +26,9 @@ and match_type =
 	returns a list of contexts, where the first hole of each context corresponds to a node from the heap lhs_h that appears in the alias set aset. 
 	The flag associated with each node lets us know if the match is at the root pointer,  materialized arg, arg.
  *)  
-let rec context_old prog lhs_h lhs_p (p : CP.spec_var) pos : context list =
-	let lhs_fv = (h_fv lhs_h) @ (CP.fv lhs_p) in
-	let eqns' = ptr_equations lhs_p in
+let rec context_old prog lhs_h (lhs_p:CP.memo_pure) (p : CP.spec_var) pos : context list =
+	let lhs_fv = (h_fv lhs_h) @ (CP.mfv lhs_p) in
+	let eqns' = CP.ptr_equations lhs_p in
 	let eqns = (p, p) :: eqns' in
 	let asets = alias eqns in
 	let paset = get_aset asets p in (* find the alias set containing p *)
@@ -91,7 +91,7 @@ and compute_heap_rest (l : (h_formula * match_type * (h_formula list) * h_formul
 	| [] -> []
 	
 (* assume that f is a satisfiable conjunct *)
-and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f with
+(*and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f with
   | CP.And (f1, f2, pos) -> (ptr_equations f1) @ (ptr_equations f2)
   | CP.BForm (bf,_,_) -> begin
 	  match bf with
@@ -103,7 +103,7 @@ and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f 
 			else []
 		| _ -> []
 	end
-  | _ -> []
+  | _ -> []*)
 	
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)

@@ -152,7 +152,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 	let atype = Named cls_name in
 	  ((atype, v), pos) in
   let pb_fields = List.map helper2 pbvars in
-  let normal_vvars = CP.difference field_vars pbvars in
+  let normal_vvars = Util.difference_f CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
 	pb_fields @ normal_fields
 
@@ -1578,7 +1578,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 (*  let _ = print_string ("\n\tCompiling: " ^ (Cprinter.string_of_formula disj0) ^ "\n") in *)
   let disj = disj0 (* rename_bound_vars disj0 *) in
   let qvars, base = split_quantifiers disj in
-  let h, pure0,_, branches, _,_= split_components base in
+  let h, pure0,_, branches, _= split_components base in
   let pos = pos_of_formula disj in
 	(* unbound vars include existential vars and output vars *)
   let unbound_vars = output_vars @ qvars in
@@ -1588,7 +1588,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	*)
   let vmap = H.copy vmap0 in
   let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
-  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) pure0 branches in
+  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) (CP.fold_mem_lst (CP.mkTrue no_pos) true true pure0 ) branches in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
 (*  let _ = print_vmap vmap in *)
 	(* compile *)
@@ -1868,8 +1868,8 @@ and gen_partially_bound_params (output_vars : CP.spec_var list) (f0 : formula) :
 		p1 @ p2
   | Base ({formula_base_pure = p})
   | Exists ({formula_exists_pure = p}) ->
-	  let bound_vars = gen_bound_params output_vars p in
-	  let partially_bounds = CP.difference output_vars bound_vars in
+	  let bound_vars = gen_bound_params output_vars (CP.fold_mem_lst (CP.mkTrue no_pos) true true p) in
+	  let partially_bounds = Util.difference_f CP.eq_spec_var output_vars bound_vars in
 		partially_bounds
 
 (*

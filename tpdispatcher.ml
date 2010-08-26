@@ -243,8 +243,14 @@ let set_tp tp_str =
 
 let omega_count = ref 0
 
+let rec is_memo_bag_constraint (f:CP.memo_pure): bool = 
+  List.exists (fun c-> 
+      (List.exists is_bag_constraint c.CP.memo_group_slice)|| 
+      (List.exists (fun c-> is_bag_constraint_b_formula c.CP.memo_formula) c.CP.memo_group_cons)
+  ) f
+
 (* Method checking whether a formula contains bag constraints *)
-let rec is_bag_constraint(f : CP.formula) : bool = match f with
+and is_bag_constraint(f : CP.formula) : bool = match f with
   | CP.BForm(bf,_,_) -> (is_bag_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
   | CP.Or(f1, f2,_, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
@@ -304,8 +310,13 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.ListAppend _
   | CP.ListReverse _ -> false
 
+let rec is_memo_list_constraint (f:CP.memo_pure): bool = 
+  List.exists (fun c-> 
+      (List.exists is_list_constraint c.CP.memo_group_slice)|| 
+      (List.exists (fun c-> is_list_constraint_b_formula c.CP.memo_formula) c.CP.memo_group_cons)
+  ) f  
 (* Method checking whether a formula contains list constraints *)
-let rec is_list_constraint(f : CP.formula) : bool = match f with
+and is_list_constraint(f : CP.formula) : bool = match f with
   | CP.BForm(bf,_,_) -> (is_list_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_list_constraint f1) || (is_list_constraint f2)
   | CP.Or(f1, f2, _,_) -> (is_list_constraint f1) || (is_list_constraint f2)
@@ -779,6 +790,8 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
   else  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+    (*let f_l = CP.split_disjuncts f in
+    let any_sat = List.fold_left (fun a c-> if a then a else (tp_is_sat c sat_no) ) false f_l in any_sat*)
     tp_is_sat f sat_no
 ;;
 
@@ -805,14 +818,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun (res1,res2,res3) (ante, conseq) =
           if res1 then 
-			let res1 = tp_imply ante conseq imp_no timeout in
-			let l1 = CP.get_pure_label ante in
-			let l2 = CP.get_pure_label conseq in
-			if res1 then 
-			(res1,(l1,l2)::res2,None)
-			else (res1,res2,l2)
-		   else (res1,res2,res3)
-        in
+              let res1 = tp_imply ante conseq imp_no timeout in
+              let l1 = CP.get_pure_label ante in
+              let l2 = CP.get_pure_label conseq in
+              if res1 then (res1,(l1,l2)::res2,None)
+              else (res1,res2,l2)
+          else (res1,res2,res3) in
         List.fold_left fold_fun (true,[],None) pairs
   end
 ;;
@@ -827,8 +838,26 @@ let imply_timeout ante0 conseq0 imp_no timeout =
   (res1,res2,res3)
 ;;
 
+let memo_imply_timeout ante0 conseq0 imp_no timeout = 
+  let _ = Util.push_time "memo_imply" in
+  let r = List.fold_left (fun (r1,r2,r3) c->
+    if not r1 then (r1,r2,r3)
+    else 
+      let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.CP.memo_group_fv d.CP.memo_group_fv))>0) ante0 in
+      let ant = CP.fold_mem_lst (CP.mkTrue no_pos) true true l in
+      let con = CP.fold_mem_lst (CP.mkTrue no_pos) true false [c] in
+      let r1',r2',r3' = imply_timeout ant con imp_no timeout in 
+      (r1',r2@r2',r3')) (true, [], None) conseq0 in
+  let _ = Util.pop_time "memo_imply" in
+  r
+;;
+
 let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.
 ;;
+
+let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
+;;
+
 let is_sat f sat_no =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
@@ -855,6 +884,16 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   sat_subno := !sat_subno+1;
   sat
 ;;
+
+let is_sat_memo_sub_no (f : CP.memo_pure) sat_subno with_dupl with_inv : bool = 
+  let f_lst = CP.fold_mem_lst_to_lst f with_dupl with_inv in
+  List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst 
+;;
+
+let imply_sub_no ante0 conseq0 imp_no =
+  Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;
+  imp_no := !imp_no+1;
+  imply ante0 conseq0 (string_of_int !imp_no)
 
 let print_stats () =
   print_string ("\nTP statistics:\n");

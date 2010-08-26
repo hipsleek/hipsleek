@@ -139,7 +139,7 @@ let toSMT (ante : CP.formula) (conseq : CP.formula) : string =(*{{{*)
     logic := QF_LIA;
     let ante_fv = CP.fv ante in
     let conseq_fv = CP.fv conseq in
-    let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+    let all_fv = Util.remove_dups_f (ante_fv @ conseq_fv) CP.eq_spec_var in
 
     let ante_str = (smt_of_formula ante) in
     let conseq_str = (smt_of_formula conseq) in

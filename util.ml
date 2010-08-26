@@ -45,6 +45,27 @@ let rec remove_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
+let mem f x l = List.exists (f x) l
+  
+  (* from cpure
+and mem (sv : spec_var) (svs : spec_var list) : bool =
+  List.exists (fun v -> eq_spec_var sv v) svs
+
+and disjoint (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.for_all (fun sv -> not (mem sv svs2)) svs1
+
+and subset (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.for_all (fun sv -> mem sv svs2) svs1
+
+and difference (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> not (mem sv svs2)) svs1
+
+and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> mem sv svs2) svs1
+*)
+  
+  
+  
 let rec remove_dups_f n f= 
   match n with
     [] -> []
@@ -74,6 +95,9 @@ let intersect_fct f l1 l2 =
   
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
+
+let difference_f f l1 l2 =
+  List.filter (fun x -> not (List.exists (f x) l2)) l1
   
 let list_equal l1 l2 = 
   let l = (List.length (intersect l1 l2)) in

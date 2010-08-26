@@ -859,7 +859,7 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   let ante_fv = CP.fv simp_ante in
   let conseq_fv = CP.fv simp_conseq in
   let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
-  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = Util.remove_dups_f (ante_fv @ conseq_fv) CP.eq_spec_var in
   let vs = Hashtbl.create 10 in
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =

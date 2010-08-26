@@ -27,7 +27,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
       log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
       match spec with
 	| Cformula.ECase b -> (List.for_all (fun (c1,c2)-> 
-					      let nctx = CF.transform_context (combine_es_and prog c1 true) ctx in
+					      let nctx = CF.transform_context (combine_es_and prog (CP.memoise_add_pure [] c1) true) ctx in
 					      let r = check_specs prog proc nctx c2 e0 in
 						(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 						r) b.Cformula.formula_case_branches) (*&&
@@ -162,7 +162,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
            exp_assign_pos = pos}) -> begin
           (*let _ = print_string ("-> pre ass : "^(Cprinter.string_of_pos pos)^" "^(Cprinter.string_of_context_list ctx)^"\n") in*)
           let ctx1 = check_exp prog proc ctx rhs post_start_label (*flow_store*) in
-            (*  let _ = print_string ("-> pre assert : "^(Cprinter.string_of_pos pos)^"\n"^(Cprinter.string_of_context_list ctx1)^"\n") in*)
+             (*let _ = print_string ("-> pre assert : "^(Cprinter.string_of_pos pos)^"\n"^(Cprinter.string_of_list_partial_context ctx1)^"\n") in*)
             (* Debug.devel_pprint ("delta at beginning of assignment to " ^ v ^ ":\n" ^ (string_of_constr delta) ^ "\n") pos; *)
           let fct c1 = 
             if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
@@ -171,7 +171,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
               let link = CF.formula_of_pure (CP.mkEqVar vsv (P.mkRes t) pos None) pos in
               let tmp_ctx1 = CF.compose_context_formula (CF.Ctx c1) link [vsv] CF.Flow_combine pos in
               let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
+              (*let _ = print_string ("-> pre ass : "^(Cprinter.string_of_pos pos)^" "^(Cprinter.string_of_context tmp_ctx2)^"\n") in*)
               let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
+              (*let _ = print_string ("-> pre ass : "^(Cprinter.string_of_pos pos)^" "^(Cprinter.string_of_context resctx)^"\n") in*)
           resctx 
             else (CF.Ctx c1) in
           let r = CF.transform_list_partial_context (fct,(fun c->c)) ctx1 in
@@ -298,8 +300,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	       exp_cond_else_arm = e2;
 	       exp_cond_path_id =pid;
 	       exp_cond_pos = pos}) -> begin
-          let then_cond_prim = CP.BForm (CP.mkBVar v Primed pos, None, None) in
-          let else_cond_prim = CP.mkNot then_cond_prim None pos in
+          let cnd_f = (CP.BForm (CP.mkBVar v Primed pos, None, None)) in
+          let then_cond_prim = CP.memoise_add_pure [] cnd_f in          
+          let else_cond_prim = CP.memoise_add_pure [] (CP.mkNot cnd_f None pos) in
           let ctx =  prune_ctx_list prog ctx in
           let then_ctx = combine_list_partial_context_and_unsat_now prog ctx then_cond_prim in
             Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_partial_context then_ctx)) pos;
@@ -513,7 +516,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-        let heap_form = CF.mkBase heap_node (CP.mkTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] [] pos in
+        let heap_form = CF.mkBase heap_node (CP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
         let res = CF.normalize_max_renaming_list_partial_context heap_form pos true ctx in
           res
       end;
@@ -536,7 +539,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
             
           let check_pre_post org_spec (sctx:CF.list_partial_context):CF.list_partial_context =
             (* free vars = linking vars that appear both in pre and are not formal arguments *)
-            let pre_free_vars = CP.difference (CP.difference (Cformula.struc_fv org_spec) (Cformula.struc_post_fv org_spec)) farg_spec_vars in
+            let df1 = Util.difference_f CP.eq_spec_var (Cformula.struc_fv org_spec) (Cformula.struc_post_fv org_spec) in
+            let pre_free_vars = Util.difference_f CP.eq_spec_var df1 farg_spec_vars in
               (* free vars get to be substituted by fresh vars *)
             let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
             let renamed_spec = 
@@ -777,7 +781,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in
-  let w = List.map CP.to_primed (CP.difference vsvars r) in
+  let w = List.map CP.to_primed (Util.difference_f CP.eq_spec_var vsvars r) in
     (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
     (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)

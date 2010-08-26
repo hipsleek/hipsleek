@@ -13,13 +13,6 @@ data node2 {
 		- at depth n, the height of the tree, all nodes are as far left as possible.
 */
 
-
-/* possible view for a complete tree */
-/*complete<n> == self = null & n = 0
-	or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-2>
-	or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-1>
-	inv n >= 0;*/
-
 /* the view that we used:
  	- n is the height
 	- nmin is the "minim height" 
@@ -79,37 +72,45 @@ void insert(ref node2 t, int v)
 	node2 aux;
 	
 	if(t == null) {
+    assume false;
 		t = new node2(v, null, null);	
 		return;	
 	}
 	else {
 		if(min_height(t.left) < height(t.left)) {		// there is still space in the left subtree
-			aux = t.left;
+			assume false;
+      aux = t.left;
 			insert(aux, v);
 			t.left = aux;
 			return;	
 		}
 		else {
 			if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree
-				aux = t.right;
+        assume false;			
+        aux = t.right;
 				insert(aux, v);
 				t.right = aux;
 				return;	
 			}
-			else {	
+			else {
+        //dprint;
 				node2 tmp = t.right;
 				if(height(t.left) == height(t.right)) { // tree is full - we must start another level 
-					//assert t'::complete<n1, n1>;
+					assume false;	
+          //assert t'::complete<n1, n1>;
 					aux = t.left;
 					insert(aux, v);
 					t.left = aux;
 					return;	
 				}
-				else {
-					aux = t.right;
+				else {          
+          aux = t.right;
+   					dprint;
 					//assert aux'::complete<n2, nmin2> & nmin2 = n2;
-					insert(aux, v);
-					t.right = aux;
+                    
+          insert(aux, v);    
+          assume false;
+          t.right = aux;
 					return;	
 				}
 			}

@@ -8,7 +8,7 @@ GetOptions( "stop"  => \$stop,
 			"opt" => \$optimized,
             "output=s" => \$output_file );
 
-$ss = '../../hip -tp om';
+$ss = '../../hip -tp om --eprun --epi --duslice --dislice';
 if ($optimized) {
   $ss = '../../hip.opt -tp om';
 }

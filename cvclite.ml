@@ -187,7 +187,7 @@ and split_vars (vars : CP.spec_var list) = match vars with
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = Util.remove_dups_f (ante_fv @ conseq_fv) CP.eq_spec_var in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -266,7 +266,7 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let all_fv = CP.remove_dups (CP.fv f) in
+  let all_fv = Util.remove_dups_f (CP.fv f) CP.eq_spec_var in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
