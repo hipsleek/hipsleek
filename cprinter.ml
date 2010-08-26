@@ -7,6 +7,7 @@ open Cast
 open Cformula
 
 module P = Cpure
+module MP = Mcpure
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
@@ -452,7 +453,7 @@ let pure_formula_wo_paren (e:P.formula) =
     | P.And _ -> true 
     | _ -> false
 
-let pure_memoised_wo_paren (e:P.memo_pure) = false
+let pure_memoised_wo_paren (e:MP.memo_pure) = false
 
 
 let h_formula_assoc_op (e:h_formula) : (string * h_formula list) option = 
@@ -619,13 +620,13 @@ let rec pr_pure_formula  (e:P.formula) =
 ;;
 
 let pr_prune_status st = match st with
-  | P.Fail_prune -> fmt_string "(C)"
-  | P.Implied b -> fmt_string ("(I"^(if b then "T" else "F")^")")
-  | P.Implied_dupl -> fmt_string "Id"  
-  | P.Unknown_prune b -> fmt_string ("(U"^(if b then "T" else "F")^")")
+  | MP.Fail_prune -> fmt_string "(C)"
+  | MP.Implied b -> fmt_string ("(I"^(if b then "T" else "F")^")")
+  | MP.Implied_dupl -> fmt_string "Id"  
+  | MP.Unknown_prune b -> fmt_string ("(U"^(if b then "T" else "F")^")")
   
-let pr_memoise mem = fmt_string "[";pr_list_op_none "& " (fun c-> pr_b_formula c.P.memo_formula ; pr_prune_status c.P.memo_status) 
-  (List.filter (fun c-> match c.P.memo_status with | P.Implied _ -> true | _-> false) mem); fmt_string "]"
+let pr_memoise mem = fmt_string "[";pr_list_op_none "& " (fun c-> pr_b_formula c.MP.memo_formula ; pr_prune_status c.MP.memo_status) 
+  (List.filter (fun c-> match c.MP.memo_status with | MP.Implied _ -> true | _-> false) mem); fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
   
@@ -634,11 +635,11 @@ let pr_memoise_group m_gr =
     fmt_cut();
     wrap_box ("B",1)
     ( fun m_gr -> fmt_string "(";pr_list_op_none "" 
-      (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "[";pr_list_of_spec_var c.P.memo_group_fv ; fmt_string "]:") () ; 
+      (fun c-> wrap_box ("H",1) (fun _ -> fmt_string "[";pr_list_of_spec_var c.MP.memo_group_fv ; fmt_string "]:") () ; 
                fmt_cut ();fmt_string "  ";
-               wrap_box ("B",1) pr_memoise c.P.memo_group_cons;
+               wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
                fmt_cut ();fmt_string "  ";
-               wrap_box ("B",1) pr_mem_slice c.P.memo_group_slice;
+               wrap_box ("B",1) pr_mem_slice c.MP.memo_group_slice;
                fmt_cut();
       ) m_gr; fmt_string ")") m_gr
   (*else ()*)
@@ -657,8 +658,8 @@ let pr_prunning_conditions cnd pcond = match cnd with
     wrap_box ("B",1) (fun pcond->
     List.iter (fun (c,c2)->
       fmt_cut ();
-      fmt_string "( " ; pr_b_formula c.P.memo_formula;
-      pr_prune_status c.P.memo_status; 
+      fmt_string "( " ; pr_b_formula c.MP.memo_formula;
+      pr_prune_status c.MP.memo_status; 
       fmt_string" )->"; 
       pr_formula_label_list c2;) pcond;fmt_string "]") pcond    
 
@@ -788,7 +789,7 @@ let string_of_pure_formula_branches (f, l) : string
 let string_of_memo_pure_formula_branches (f, l) : string
     =  poly_string_of_pr  pr_memo_pure_formula_branches (f, l)
     
-let string_of_memo_pure_formula (f:P.memo_pure) : string = 
+let string_of_memo_pure_formula (f:MP.memo_pure) : string = 
   poly_string_of_pr  pr_memo_pure_formula f
 
 let printer_of_pure_formula_branches (fmt: Format.formatter) (f, l) : unit =

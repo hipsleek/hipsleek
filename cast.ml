@@ -9,6 +9,7 @@ open Globals
 
 module F = Cformula
 module P = Cpure
+module MP = Mcpure
 module Err = Error
 module U = Util
 
@@ -24,7 +25,7 @@ and prog_decl = { mutable prog_data_decls : data_decl list;
 	
 and prog_or_branches = 
 		| Prog of prog_decl
-		| Branches of (P.memo_pure * ((string*P.formula)list)*(P.spec_var list))
+		| Branches of (MP.memo_pure * ((string*P.formula)list)*(P.spec_var list))
 	
 and data_decl = { data_name : ident;
 				  data_fields : typed_ident list;
@@ -41,11 +42,11 @@ and view_decl = { view_name : ident;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
 				  view_formula : F.struc_formula;
-				  view_user_inv : (P.memo_pure * (branch_label * P.formula) list);
-				  mutable view_x_formula : (P.memo_pure * (branch_label * P.formula) list);
+				  view_user_inv : (MP.memo_pure * (branch_label * P.formula) list);
+				  mutable view_x_formula : (MP.memo_pure * (branch_label * P.formula) list);
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (P.formula *(P.memo_pure*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+				  view_base_case : (P.formula *(MP.memo_pure*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
           view_prune_branches: (formula_label * Cformula.struc_formula ) list;
           view_prune_conditions: (P.b_formula * (formula_label list)) list;
           view_prune_invariants : (formula_label list * P.b_formula list) list ;}

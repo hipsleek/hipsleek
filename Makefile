@@ -55,7 +55,7 @@ oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
 
 MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -75,7 +75,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 
 
 PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -86,7 +86,7 @@ MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
 GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -107,7 +107,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 
 
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -139,7 +139,7 @@ MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
 
 
 PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -159,7 +159,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
 WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -231,12 +231,12 @@ sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT)
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
 
 CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
-	cpure.cmo cformula.cmo cast.cmo
+	cpure.cmo mcpure.cmo cformula.cmo cast.cmo
 
 cristina: $(CRISTINA_FILES)
 
 TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	checks.cmo \
 	iparser.cmo ilexer.cmo \
@@ -256,7 +256,7 @@ oo: $(TEST_OO_FILES)
 
 
 JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
-	cpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iprinter.cmo \
 	iparser.cmo ilexer.cmo \
 	java.cmo

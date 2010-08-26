@@ -5,6 +5,7 @@
 
 open Globals
 module CP = Cpure
+module MCP = Mcpure
 
 type tp_type =
   | OmegaCalc
@@ -243,10 +244,10 @@ let set_tp tp_str =
 
 let omega_count = ref 0
 
-let rec is_memo_bag_constraint (f:CP.memo_pure): bool = 
+let rec is_memo_bag_constraint (f:MCP.memo_pure): bool = 
   List.exists (fun c-> 
-      (List.exists is_bag_constraint c.CP.memo_group_slice)|| 
-      (List.exists (fun c-> is_bag_constraint_b_formula c.CP.memo_formula) c.CP.memo_group_cons)
+      (List.exists is_bag_constraint c.MCP.memo_group_slice)|| 
+      (List.exists (fun c-> is_bag_constraint_b_formula c.MCP.memo_formula) c.MCP.memo_group_cons)
   ) f
 
 (* Method checking whether a formula contains bag constraints *)
@@ -310,10 +311,10 @@ and is_bag_constraint_exp (e :CP.exp) : bool = match e with
   | CP.ListAppend _
   | CP.ListReverse _ -> false
 
-let rec is_memo_list_constraint (f:CP.memo_pure): bool = 
+let rec is_memo_list_constraint (f:MCP.memo_pure): bool = 
   List.exists (fun c-> 
-      (List.exists is_list_constraint c.CP.memo_group_slice)|| 
-      (List.exists (fun c-> is_list_constraint_b_formula c.CP.memo_formula) c.CP.memo_group_cons)
+      (List.exists is_list_constraint c.MCP.memo_group_slice)|| 
+      (List.exists (fun c-> is_list_constraint_b_formula c.MCP.memo_formula) c.MCP.memo_group_cons)
   ) f  
 (* Method checking whether a formula contains list constraints *)
 and is_list_constraint(f : CP.formula) : bool = match f with
@@ -843,9 +844,9 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
   let r = List.fold_left (fun (r1,r2,r3) c->
     if not r1 then (r1,r2,r3)
     else 
-      let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.CP.memo_group_fv d.CP.memo_group_fv))>0) ante0 in
-      let ant = CP.fold_mem_lst (CP.mkTrue no_pos) true true l in
-      let con = CP.fold_mem_lst (CP.mkTrue no_pos) true false [c] in
+      let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
+      let ant = MCP.fold_mem_lst (CP.mkTrue no_pos) true true l in
+      let con = MCP.fold_mem_lst (CP.mkTrue no_pos) true false [c] in
       let r1',r2',r3' = imply_timeout ant con imp_no timeout in 
       (r1',r2@r2',r3')) (true, [], None) conseq0 in
   let _ = Util.pop_time "memo_imply" in
@@ -885,8 +886,8 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
   sat
 ;;
 
-let is_sat_memo_sub_no (f : CP.memo_pure) sat_subno with_dupl with_inv : bool = 
-  let f_lst = CP.fold_mem_lst_to_lst f with_dupl with_inv in
+let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 
+  let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv in
   List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst 
 ;;
 

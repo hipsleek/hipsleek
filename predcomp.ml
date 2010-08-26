@@ -1588,7 +1588,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	*)
   let vmap = H.copy vmap0 in
   let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
-  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) (CP.fold_mem_lst (CP.mkTrue no_pos) true true pure0 ) branches in
+  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) (MCP.fold_mem_lst (CP.mkTrue no_pos) true true pure0 ) branches in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
 (*  let _ = print_vmap vmap in *)
 	(* compile *)
@@ -1868,7 +1868,7 @@ and gen_partially_bound_params (output_vars : CP.spec_var list) (f0 : formula) :
 		p1 @ p2
   | Base ({formula_base_pure = p})
   | Exists ({formula_exists_pure = p}) ->
-	  let bound_vars = gen_bound_params output_vars (CP.fold_mem_lst (CP.mkTrue no_pos) true true p) in
+	  let bound_vars = gen_bound_params output_vars (MCP.fold_mem_lst (CP.mkTrue no_pos) true true p) in
 	  let partially_bounds = Util.difference_f CP.eq_spec_var output_vars bound_vars in
 		partially_bounds
 
