@@ -14,6 +14,12 @@ and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
 
+(*
+ -eprune = espec + ememo + eslice
+ -espec enables specialization 
+ -ememo will enable memoizing
+ -eslice will enable slicing
+*)
 type memo_pure = memoised_group list
   
 and memoised_group = {
