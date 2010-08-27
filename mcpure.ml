@@ -266,16 +266,17 @@ and memo_is_member_pure p mm =
       | _-> false ) c.memo_group_cons)) mm
           
 and fold_mem_lst_to_lst mem with_dupl with_inv with_slice: formula list=
-    List.map (fun c-> 
-      let init_f = if with_slice then conj_of_list c.memo_group_slice no_pos else mkTrue no_pos in        
-      List.fold_left (fun a c-> match c.memo_status with 
-        | Implied_dupl -> if with_dupl then mkAnd a (BForm (c.memo_formula,None,None)) no_pos  else a
-        | Implied b -> 
-            if with_inv then mkAnd a (BForm (c.memo_formula,None,None)) no_pos 
-            else if b then            
-              mkAnd a (BForm (c.memo_formula,None,None)) no_pos 
-            else mkTrue no_pos              
-        | _ -> a) init_f c.memo_group_cons) mem
+    let r = List.map (fun c-> 
+      let slice = if with_slice then c.memo_group_slice else [] in
+      let cons = List.map (fun c-> match c.memo_status with 
+          | Implied_dupl -> if with_dupl then [BForm (c.memo_formula,None,None)] else []
+          | Implied b ->  
+            if with_inv then [BForm (c.memo_formula,None,None)] 
+            else if b then [BForm (c.memo_formula,None,None)]
+            else []
+          | _ -> []) c.memo_group_cons in
+      slice@(List.concat cons)) mem in
+    List.concat r
           
 and fold_mem_lst (f_init:formula) with_dupl with_inv lst :formula= 
   let r = fold_mem_lst_to_lst lst with_dupl with_inv true in
@@ -533,6 +534,15 @@ and memo_norm (l:(b_formula *(formula_label option)* (int option)) list): b_form
 let memo_norm_wrapper (l:b_formula list): b_formula list = 
  let l = List.map (fun c-> (c,None,None)) l in
  fst (memo_norm l)
+  
+let simpl_memo_pure_formula simpl_b_f simpl_p_f(f:memo_pure): memo_pure = 
+  List.map (fun c-> {c with 
+        memo_group_cons = List.map (fun c-> {c with memo_formula = simpl_b_f c.memo_formula}) c.memo_group_cons;
+        memo_group_changed = true;
+        memo_group_slice = list_of_conjs (simpl_p_f (conj_of_list c.memo_group_slice no_pos))}) f
+  
+  
+  
   
 let memo_drop_null self l = List.map (fun c -> {c with memo_group_slice = List.map (fun c-> drop_null c self false ) c.memo_group_slice}) l
          
