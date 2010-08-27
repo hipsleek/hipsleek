@@ -730,34 +730,34 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
           (* let s1 = CF.get_start_partial_label ctx in *)
           if CF.isFailListPartialCtx ctx then ctx
           else
-                  match c2 with 
+            match c2 with 
               | Some c -> helper ctx (* handled at small context level *)
               | None ->
-            let s1 = snd post_start_label in
+                let s1 = snd post_start_label in
               (* print_string ("\n\nLABEL PRECOND: " ^ s1 ^ "\nLabel ASSERT: " ^ s ^"\n\n"); *)
-              if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ((* print_string "inside label missmatch \n"; *)ctx)
-              else
-                (*let new_ctx = match c1_o with
-            | None -> ctx
-            | Some c1 ->
+                if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ((* print_string "inside label missmatch \n"; *)ctx)
+                else
+                  let new_ctx = match c1_o with
+                    | None -> ctx
+                    | Some c1 ->
                 (*
                   let _ = print_string ("[typechecker.ml, line 62, assert]: pre to be entailed " ^ (Cprinter.string_of_formula c1) ^ "\n") in
                   let _ = print_string ("[typechecker.ml, line 63, assert]: context before entailment:\n" ^ (Cprinter.string_of_context_list ctx) ^ "\n\n") in
                 *)
-                let to_print = "Proving assert in method " ^ proc.proc_name ^ " for spec:\n" ^ !log_spec ^ "\n" in	
-                  ebug.devel_pprint to_print pos;
-                                    (* print_string ("\n***CRT STATE : " ^ (Cprinter.string_of_list_partial_context ctx) ^ "\n"); *)
-                  (* print_string ("\n***ASSERT COND : " ^ (Cprinter.string_of_struc_formula c1) ^ "\n\n\n\n"); *)
-                  let rs,prf = heap_entail_struc_list_partial_context_init prog false false false ctx c1 pos None in
-                  let _ = PTracer.log_proof prf in
-              Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
-              (* Solver.entail_hist#upd (pidi,s) rs; *)
-              if not(CF.isFailListPartialCtx rs)
-              then
-                (Debug.print_info "assert" (s ^" : ok\n") pos;
-                 Debug.pprint ("Residual:\n" ^ (Cprinter.string_of_list_partial_context rs)) pos;
-                 rs)
-              else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in*) ctx
+                    let to_print = "Proving assert in method " ^ proc.proc_name ^ " for spec:\n" ^ !log_spec ^ "\n" in	
+                    Debug.devel_pprint to_print pos;
+                    (* print_string ("\n***CRT STATE : " ^ (Cprinter.string_of_list_partial_context ctx) ^ "\n"); *)
+                    (* print_string ("\n***ASSERT COND : " ^ (Cprinter.string_of_struc_formula c1) ^ "\n\n\n\n"); *)
+                    let rs,prf = heap_entail_struc_list_partial_context_init prog false false false ctx c1 pos None in
+                    let _ = PTracer.log_proof prf in
+                    Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
+                    (* Solver.entail_hist#upd (pidi,s) rs; *)
+                    if not(CF.isFailListPartialCtx rs)
+                    then
+                      (Debug.print_info "assert" (s ^" : ok\n") pos;
+                       Debug.pprint ("Residual:\n" ^ (Cprinter.string_of_list_partial_context rs)) pos;
+                       rs)
+                    else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in new_ctx
         end
       |  _ -> (helper ctx)
 	   

@@ -471,6 +471,11 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 	end
   | [] -> []
 *)
+let lookup_view_invs rem_br v_def = 
+  try 
+    snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)
+  with | Not_found -> []
+
 
 let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
   | p :: rest -> begin

@@ -623,7 +623,7 @@ let pr_prune_status st = match st with
   | MP.Fail_prune -> fmt_string "(C)"
   | MP.Implied b -> fmt_string ("(I"^(if b then "T" else "F")^")")
   | MP.Implied_dupl -> fmt_string "Id"  
-  | MP.Unknown_prune b -> fmt_string ("(U"^(if b then "T" else "F")^")")
+  (*| MP.Unknown_prune b -> fmt_string ("(U"^(if b then "T" else "F")^")")*)
   
 let pr_memoise mem = fmt_string "[";pr_list_op_none "& " (fun c-> pr_b_formula c.MP.memo_formula ; pr_prune_status c.MP.memo_status) 
   (List.filter (fun c-> match c.MP.memo_status with | MP.Implied _ -> true | _-> false) mem); fmt_string "]"
@@ -658,8 +658,7 @@ let pr_prunning_conditions cnd pcond = match cnd with
     wrap_box ("B",1) (fun pcond->
     List.iter (fun (c,c2)->
       fmt_cut ();
-      fmt_string "( " ; pr_b_formula c.MP.memo_formula;
-      pr_prune_status c.MP.memo_status; 
+      fmt_string "( " ; pr_b_formula c;
       fmt_string" )->"; 
       pr_formula_label_list c2;) pcond;fmt_string "]") pcond    
 

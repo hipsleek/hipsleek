@@ -1382,7 +1382,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
          let _ = vdef.I.view_typed_vars <- typed_vars in
          let mvars = [] in
 	 let n_un_str =  Cformula.struc_to_formula cf in
-	 let bc = if (*!Globals.allow_pruning*) false then None
+	 let bc = if !Globals.allow_pruning then None
     else match (compute_base_case cf) with
 	   | None -> None
 	   | Some s -> (flatten_base_case s (Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed))) in
@@ -1481,8 +1481,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
           else
             (*let saset = Solver.get_aset (Solver.alias(Solver.ptr_equations ba)) self in*)
             let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
-            let ba' = List.map (fun c -> 
-                {c with MCP.memo_group_slice = List.map (fun c-> CP.drop_null c self false ) c.MCP.memo_group_slice} ) ba in
+            let ba' = MCP.memo_drop_null self ba in
             let ba',_ = List.partition (MCP.filter_useless_mem []) ba' in
             let base_case = Cpure.BForm ((Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)),None,None) in
         Some (base_case,(ba',br'))		

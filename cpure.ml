@@ -1039,6 +1039,8 @@ and apply_one (fr, t) f = match f with
         Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
 	  else Exists (v, apply_one (fr, t) qf, lbl, pos)
 
+and b_subst zip bf = List.fold_left (fun a c-> b_apply_one c a) bf zip
+    
 and b_apply_one (fr, t) bf = match bf with
   | BConst _ -> bf
   | BVar (bv, pos) -> BVar ((if eq_spec_var bv fr then t else bv), pos)

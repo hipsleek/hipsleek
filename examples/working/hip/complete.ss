@@ -72,22 +72,19 @@ void insert(ref node2 t, int v)
 	node2 aux;
 	
 	if(t == null) {
-    assume false;
 		t = new node2(v, null, null);	
 		return;	
 	}
 	else {
 		if(min_height(t.left) < height(t.left)) {		// there is still space in the left subtree
-			assume false;
-      aux = t.left;
+			aux = t.left;
 			insert(aux, v);
 			t.left = aux;
 			return;	
 		}
 		else {
 			if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree
-        assume false;			
-        aux = t.right;
+				aux = t.right;
 				insert(aux, v);
 				t.right = aux;
 				return;	
@@ -95,21 +92,20 @@ void insert(ref node2 t, int v)
 			else {
         //dprint;
 				node2 tmp = t.right;
+        //dprint;
 				if(height(t.left) == height(t.right)) { // tree is full - we must start another level 
-					assume false;	
-          //assert t'::complete<n1, n1>;
+					//assert t'::complete<n1, n1>;
 					aux = t.left;
 					insert(aux, v);
 					t.left = aux;
 					return;	
 				}
-				else {          
-          aux = t.right;
-   					dprint;
+				else {
+					aux = t.right;
 					//assert aux'::complete<n2, nmin2> & nmin2 = n2;
-                    
-          insert(aux, v);    
-          assume false;
+          //dprint;          
+					insert(aux, v);
+					assume false;
           t.right = aux;
 					return;	
 				}

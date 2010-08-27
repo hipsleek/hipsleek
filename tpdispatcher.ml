@@ -887,9 +887,16 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =
 ;;
 
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 
-  let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv in
+  let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
   List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst 
 ;;
+
+let is_sat_msg_no_no prof_lbl (f:CP.formula):bool = 
+  let sat_subno = ref 0 in
+  let _ = Util.push_time prof_lbl in
+  let sat = is_sat_sub_no f sat_subno in
+  let _ = Util.pop_time prof_lbl in
+  sat
 
 let imply_sub_no ante0 conseq0 imp_no =
   Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;

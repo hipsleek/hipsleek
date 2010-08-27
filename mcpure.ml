@@ -27,23 +27,23 @@ and prune_status =
   | Fail_prune        (*constraint that is contradicted by the current state*)
   | Implied_dupl      (*constraint that is superseeded by other constraints in the current state*)
   | Implied of bool         (*constraint that can be deducted from the current state- including predicate invariants ,the bool indicates the source true: orig false: invariant*)
-  | Unknown_prune of bool   (*pruning constraint with unknown status, -bool indicates if it comes from an invariant
-                          true -> if proven becomes Implied, false becomes Implied_dupl*)
+  (*| Unknown_prune of bool*)   (*pruning constraint with unknown status, -bool indicates if it comes from an invariant*)
   
     
     
 let rec mfv (m: memo_pure) : spec_var list = Util.remove_dups_f (List.concat (List.map (fun c-> c.memo_group_fv) m)) eq_spec_var
 
+and pcond_fv (p:memoised_constraint) : spec_var list = bfv p.memo_formula
 
 and isConstMConsTrue r = match r.memo_status with
-  | Implied _ | Implied_dupl -> isConstBTrue  r.memo_formula
+  | Implied _ 
+  | Implied_dupl -> isConstBTrue  r.memo_formula
   | Fail_prune -> isConstBFalse r.memo_formula
-  | _ -> false
+
   
 and isConstMConsFalse r = match r.memo_status with
   | Implied _ | Implied_dupl -> isConstBFalse  r.memo_formula
   | Fail_prune -> isConstBTrue r.memo_formula
-  | _ -> false  
   
 and isConstMTrue f = 
   match (List.length f) with
@@ -138,14 +138,17 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   regroup_memo_group (List.map (helper st2) r)
 
   
+and memo_cons_subst sst (f_l : memoised_constraint list): memoised_constraint list = 
+  List.map (fun c-> 
+    let nf = List.fold_left (fun a c-> b_apply_one c a) c.memo_formula sst in
+    {c with memo_formula = nf }) f_l
 
-and subst_memo (sst : (spec_var * spec_var) list) (f_l : memo_pure) = 
+and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) = 
   let rec helper sst f_l = match sst with
   | s::ss -> helper ss (m_apply_one s f_l)
   | [] -> f_l in
   regroup_memo_group (helper sst f_l)
-  
-
+    
 and m_apply_one s f = 
   let r = List.map (fun c -> 
     {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
@@ -215,7 +218,7 @@ and memo_pure_elim_exists (f0: memo_pure):memo_pure =
       let r = elim_exists c in
       if (isConstTrue r) then a else (list_of_conjs r)@a) [] c.memo_group_slice}) f0 
       
-and mapply_one_exp s mem = 
+and memo_apply_one_exp s mem = 
   let r = List.map (fun c -> 
       { c with 
         memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one_exp s d.memo_formula}) c.memo_group_cons;
@@ -262,8 +265,9 @@ and memo_is_member_pure p mm =
       | Implied _ | Implied_dupl-> (match p with | BForm (r,_,_)-> equalBFormula r c.memo_formula | _ -> false) 
       | _-> false ) c.memo_group_cons)) mm
           
-and fold_mem_lst_to_lst mem with_dupl with_inv : formula list=
+and fold_mem_lst_to_lst mem with_dupl with_inv with_slice: formula list=
     List.map (fun c-> 
+      let init_f = if with_slice then conj_of_list c.memo_group_slice no_pos else mkTrue no_pos in        
       List.fold_left (fun a c-> match c.memo_status with 
         | Implied_dupl -> if with_dupl then mkAnd a (BForm (c.memo_formula,None,None)) no_pos  else a
         | Implied b -> 
@@ -271,11 +275,16 @@ and fold_mem_lst_to_lst mem with_dupl with_inv : formula list=
             else if b then            
               mkAnd a (BForm (c.memo_formula,None,None)) no_pos 
             else mkTrue no_pos              
-        | _ -> a)(conj_of_list c.memo_group_slice no_pos) c.memo_group_cons) mem
+        | _ -> a) init_f c.memo_group_cons) mem
           
 and fold_mem_lst (f_init:formula) with_dupl with_inv lst :formula= 
-  let r = fold_mem_lst_to_lst lst with_dupl with_inv in
+  let r = fold_mem_lst_to_lst lst with_dupl with_inv true in
   List.fold_left (fun a c-> mkAnd a c no_pos) f_init r
+  
+(*folds just the pruning constraints, ignores the memo_group_slice*) 
+and fold_mem_lst_cons init_cond lst :formula = 
+  let r = fold_mem_lst_to_lst lst false true false in
+  List.fold_left (fun a c-> mkAnd a c no_pos) (BForm (init_cond,None,None)) r
 
 and filter_useless_mem fv c = 
     match (List.length c.memo_group_slice) with
@@ -292,7 +301,6 @@ and filter_merged_cons l =
   let keep c1 c2 = match c1.memo_status ,c2.memo_status with
     | Implied _ , Implied _ 
     | Implied_dupl, Implied_dupl 
-    | Unknown_prune _, Unknown_prune _ 
     | Fail_prune,Fail_prune -> if (equalBFormula c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
     | Implied _ , Implied_dupl -> if (equalBFormula c1.memo_formula c2.memo_formula) then (false,true) else (true,true)
     | Implied_dupl , Implied _ -> if (equalBFormula c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
@@ -305,12 +313,10 @@ and filter_merged_cons l =
         let r1,r2 = keep q c in
         (b&&r1,if r2 then c::r else r)) (true,[])qs in
       if b then q::(remove_d r) else (remove_d r) in
-  (*
-  let rec remove_d n =  match n with | [] -> []
-  | q::qs -> 
-    let nqs = List.filter (fun c-> not (mem_eq_st c q)) qs in
-    q::(remove_d nqs)in   *)
-  Util.push_time "filter_dupl_memo";let r = remove_d (List.concat l) in Util.pop_time "filter_dupl_memo"; r
+  Util.push_time "filter_dupl_memo";
+  let r = remove_d (List.concat l) in 
+  Util.pop_time "filter_dupl_memo";
+  r
   
 and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure = 
   let f1 = fold_mem_lst (mkTrue no_pos) false true l1 in
@@ -349,18 +355,25 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
       ng::un_merged) l2 l1 in
     recompute_unknowns n_l
 
-and memoise_add_memo (l: memo_pure) (cm:memoised_constraint): memo_pure =
+and memoise_add_memo_fnf (l: memo_pure) (cm:memoised_constraint) fnf: memo_pure =
   let fv = bfv cm.memo_formula in
   let merged,un_merged = List.partition (fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) l in
-  let n1,n2,n3 = List.fold_left (fun (a1,a2,a3) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2,d.memo_group_slice::a3))(fv,[[cm]],[]) merged in   
+  let n_cm_lst = if not fnf then [cm]
+    else 
+      [{memo_formula = cm.memo_formula; memo_status = Fail_prune;};
+       {memo_formula = memo_f_neg cm.memo_formula; memo_status = Implied_dupl;}]in
+  let n1,n2,n3 = List.fold_left (fun (a1,a2,a3) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2,d.memo_group_slice::a3))(fv,[n_cm_lst],[]) merged in   
   let l = if (List.length merged)>0 then 
     let ng = {memo_group_cons =  filter_merged_cons n2; 
               memo_group_fv = Util.remove_dups n1;
               memo_group_changed = true;
               memo_group_slice = List.concat n3;} in
     List.hd (recompute_unknowns [ng])
-    else {memo_group_cons =[cm]; memo_group_fv = fv; memo_group_changed = true; memo_group_slice = []} in  
+    else {memo_group_cons =n_cm_lst; memo_group_fv = fv; memo_group_changed = true; memo_group_slice = []} in  
   l::un_merged   
+  
+and memoise_add_memo (l: memo_pure) (cm:memoised_constraint): memo_pure = memoise_add_memo_fnf l cm false
+and memoise_add_failed_memo (l:memo_pure) (cm:memoised_constraint) : memo_pure = memoise_add_memo_fnf l cm true
   
 and memoise_add_pure (l: memo_pure) (p:formula) : memo_pure = 
   if (isConstTrue p)||(isConstMFalse l) then l 
@@ -372,12 +385,13 @@ and memoise_add_pure (l: memo_pure) (p:formula) : memo_pure =
     let r = merge_mems l m2 true in
     Util.pop_time "add_pure"; r)
    
-(*add both imply and fail*)
+
 
 and create_memo_group_wrapper (l1:b_formula list) inv_cons : memo_pure = 
   let l = List.map (fun c-> (c, None, None)) l1 in
   create_memo_group l [] inv_cons 
 
+  (*add both imply and fail*)
 and create_memo_group (l1:(b_formula *(formula_label option)* (int option)) list) (l2:formula list) inv_cons:memo_pure = 
   let l1,l_to_slice = memo_norm l1 in
   let l1 = Util.remove_dups l1 in
@@ -520,11 +534,41 @@ let memo_norm_wrapper (l:b_formula list): b_formula list =
  let l = List.map (fun c-> (c,None,None)) l in
  fst (memo_norm l)
   
+let memo_drop_null self l = List.map (fun c -> {c with memo_group_slice = List.map (fun c-> drop_null c self false ) c.memo_group_slice}) l
+         
+let memo_change_status cons l =
+  let lcns = List.map (fun cns-> (bfv cns, cns)) cons in
+  List.map (fun grp-> 
+    List.fold_left (fun a (vcns,cns)-> 
+      if ((List.length (Util.intersect_fct eq_spec_var vcns grp.memo_group_fv))<=0) then a
+      else 
+        let ncns = List.map 
+          (fun c-> 
+            if not(eq_b_formula c.memo_formula cns) then c
+            else match c.memo_status with
+              | Implied _ -> {c with memo_status=Implied_dupl}
+              | Fail_prune -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoization contradiction undetected"}
+              | _ -> c
+          ) a.memo_group_cons in
+        {a with memo_group_cons= ncns}
+    )grp lcns
+  ) l
   
-(******************************************************************************************************************
-	End utilities for memoized formulas
-******************************************************************************************************************)
+let memo_cons_wrap_fail p = {memo_formula=p; memo_status =Fail_prune;}
 
+let memo_find_relevant_slice fv l = List.find (fun d-> Util.subset fv d.memo_group_fv) l 
+
+let memo_changed d = d.memo_group_changed 
+
+(* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)
+   if equal to an implied cond then it can be dropped as it is useless as a pruning condition
+   throws an exception if p_cond is not found in corr*)
+let memo_check_syn_prun (p_cond,pr_branches) corr = 
+    let prun = List.find (fun d -> equalBFormula d.memo_formula p_cond) corr.memo_group_cons in
+    match prun.memo_status with
+      | Fail_prune -> [(p_cond, pr_branches)]
+      | Implied_dupl 
+      | Implied _ -> []
 
 let transform_memo_formula f l : memo_pure =
   let (f_memo, f_formula, f_b_formula, f_exp) = f in

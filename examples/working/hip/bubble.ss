@@ -55,13 +55,17 @@ bool bubble(node xs)
 	if (xs.next == null) {
 		return false;
 	}
-	else {
+	else {    
 		tmp = bubble(xs.next);
 		if (xs.val <= xs.next.val) {
-			assert xs=null;
+			//assert xs!=null;
+     // dprint;
+      //assert xs::sll<_,_,_>;
+      //assume false;      
 			flag = false;
 		}
 		else {
+      //assume false;
 			aux = xs.val;
 			tmp1 = xs.next.val;
 			xs.val = tmp1;
