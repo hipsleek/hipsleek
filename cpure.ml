@@ -306,8 +306,9 @@ and to_var (e : exp) : spec_var = match e with
   | Var (sv, _) -> sv
   | _ -> failwith ("to_var: argument is not a variable")
 
-and can_be_aliased (e : exp) : bool = match e with
-  | Var _ | Null _ -> true
+and can_be_aliased with_null (e : exp) : bool = match e with
+  | Var _ -> true
+  | Null _ -> with_null
 	  (* null is necessary in this case: p=null & q=null.
 		 If null is not considered, p=q is not inferred. *)
   | _ -> false

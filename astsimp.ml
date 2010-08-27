@@ -1479,7 +1479,6 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
               else List.for_all (fun (_,c)-> TP.is_sat_sub_no (CP.mkAnd c bt no_pos) sat_subno) br in
         if (not is_sat) then None
           else
-            (*let saset = Solver.get_aset (Solver.alias(Solver.ptr_equations ba)) self in*)
             let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
             let ba' = MCP.memo_drop_null self ba in
             let ba',_ = List.partition (MCP.filter_useless_mem []) ba' in
@@ -1577,7 +1576,7 @@ and find_mvars_heap prog params hf pf =
   match hf with
     | CF.HTrue | CF.HFalse -> []
     | _ ->
-	let eqns = MCP.ptr_equations pf in
+	let eqns = MCP.ptr_equations true pf in
 	let asets = Context.alias eqns in
 	let self_aset =
           Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))
@@ -5020,26 +5019,25 @@ and view_case_inference cp vd =
 and pred_case_inference (cp:C.prog_decl):C.prog_decl =  
     Util.push_time "pred_inference";
     let preds = List.map (fun c-> view_case_inference cp c) cp.C.prog_view_decls in
-    let prog = {cp with C.prog_view_decls  = preds;} in
+    let prog_views_inf = {cp with C.prog_view_decls  = preds;} in
     (*let _ = print_string ("\n\n=========before:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
     let preds = List.map (fun c-> {c with 
-        C.view_formula =  Solver.prune_pred_struc prog c.C.view_formula ;
-        C.view_un_struc_formula = Solver.prune_preds prog c.C.view_un_struc_formula;
-        C.view_prune_branches = List.map (fun (c1,c2)-> (c1,Solver.prune_pred_struc prog c2)) c.C.view_prune_branches}) preds in
+        C.view_formula =  Solver.prune_pred_struc prog_views_inf c.C.view_formula ;
+        C.view_un_struc_formula = Solver.prune_preds prog_views_inf c.C.view_un_struc_formula;
+        C.view_prune_branches = List.map (fun (c1,c2)-> (c1,Solver.prune_pred_struc prog_views_inf c2)) c.C.view_prune_branches}) preds in
     (*let _ = print_string ("\n\n=========after:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
-    let prog = { prog with C.prog_view_decls  = preds;} in
-    let r = prog in
-    (*let proc_spec f = {f with 
-      C.proc_static_specs=  Solver.prune_pred_struc prog f.C.proc_static_specs;
-      C.proc_static_specs_with_pre=  Solver.prune_pred_struc prog f.C.proc_static_specs_with_pre;
-      C.proc_dynamic_specs=  Solver.prune_pred_struc prog f.C.proc_dynamic_specs;
-      C.proc_dynamic_specs_with_pre= Solver.prune_pred_struc prog f.C.proc_dynamic_specs_with_pre;
+    let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
+    let proc_spec f = {f with 
+      C.proc_static_specs=  Solver.prune_pred_struc prog_views_pruned f.C.proc_static_specs;
+      C.proc_static_specs_with_pre=  Solver.prune_pred_struc prog_views_pruned f.C.proc_static_specs_with_pre;
+      C.proc_dynamic_specs=  Solver.prune_pred_struc prog_views_pruned f.C.proc_dynamic_specs;
+      C.proc_dynamic_specs_with_pre= Solver.prune_pred_struc prog_views_pruned f.C.proc_dynamic_specs_with_pre;
       } in
-    let procs = List.map proc_spec  prog.C.prog_proc_decls in    
-    let datas = List.map(fun c-> {c with 
-      C.data_invs = List.map (Solver.prune_preds prog ) c.C.data_invs;
-      C.data_methods = List.map proc_spec c.C.data_methods;}) prog.C.prog_data_decls in
-    let r = { prog with C.prog_proc_decls  = procs; C.prog_data_decls = datas;} in*)
+    let procs = List.map proc_spec  prog_views_pruned.C.prog_proc_decls in    
+    (*let datas = List.map(fun c-> {c with 
+      C.data_invs = List.map (Solver.prune_preds prog_views_pruned ) c.C.data_invs;
+      C.data_methods = List.map proc_spec c.C.data_methods;}) prog_views_pruned.C.prog_data_decls in*)
+    let r = { prog_views_pruned with C.prog_proc_decls  = procs;(* C.prog_data_decls = datas;*)} in
     Util.pop_time "pred_inference" ;r
     
     

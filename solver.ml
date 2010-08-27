@@ -842,7 +842,7 @@ and unfold (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:boo
 	  resform
 
 and unfold_baref prog (h : h_formula) (p : MCP.memo_pure) (fl:flow_formula) (v : CP.spec_var) pos b qvars do_unsat : formula =
-  let asets = Context.alias (MCP.ptr_equations p) in
+  let asets = Context.alias (MCP.ptr_equations false p) in
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
   let unfolded_h = unfold_heap prog h aset v fl pos in
@@ -2056,7 +2056,7 @@ and get_node (sv : CP.spec_var) (f : CF.h_formula) : CF.h_formula =
 (* we need lhs_pure to compute the alias set of target *)
 and check_one_target prog (target : CP.spec_var) (lhs_pure : MCP.memo_pure) (rhs_p : MCP.memo_pure) (rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula): bool =
   (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
-  let lhs_eqns = MCP.ptr_equations lhs_pure in
+  let lhs_eqns = MCP.ptr_equations true lhs_pure in
   let lhs_asets = Context.alias lhs_eqns in
   let lhs_targetasets1 = Context.get_aset lhs_asets target in
   let lhs_targetasets =
@@ -2620,7 +2620,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	      let existential_eliminator_helper = 
 	        let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
 	        let pure = rhs_p in
-	        let ptr_eq = MCP.ptr_equations pure in
+	        let ptr_eq = MCP.ptr_equations false pure in
 	        let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
 	        let asets = Context.alias ptr_eq in
 
@@ -2764,65 +2764,67 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			          if r_flag = Context.Root then begin (* matching occurs at root *)
 			            if ((c1 = c2) && (prune_branches_subsume l_rem_brs r_rem_brs)) then 
 			              let ans = if (not(is_data ln2)) then 
-				            let _ = Util.push_time "empty_predicate_testing" in
-				            let vd = (look_up_view_def_raw prog.prog_view_decls c2) in
-				            let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with es_formula = ante;
-                                                es_heap = estate.es_heap;
-                                                es_evars = estate.es_evars;
-                                                es_gen_expl_vars = estate.es_gen_expl_vars; 
-                                                es_gen_impl_vars = estate.es_gen_impl_vars; 
-                                                es_ante_evars = estate.es_ante_evars;
-                                                es_unsat_flag = false;
-                                                es_prior_steps = estate.es_prior_steps;
-                                                es_path_label = estate.es_path_label;} in
-				            let na,prf = match vd.view_base_case with
-				                (* | None ->  (CF.mkFailCtx_in(Basic_Reason None),UnsatConseq) *)
-				              | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
-                                                      fc_message ="failure 1 ?? when checking for aliased node";
-                                                      fc_current_lhs = estate;
-                                                      fc_prior_steps = estate.es_prior_steps;
-                                                      fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
-                                                      fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), UnsatConseq)
-				              | Some (bc1,(base1,branches1)) -> 
-				                  begin
-					                let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
-					                let to_vars = p1 :: v1 in
-					                let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
-					                let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
-					                let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
-					                let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx bc1 !Globals.enable_syn_base_case in
-					                if b then 
-					                  let ctx = unfold_context (Branches (base,branches,v1)) (SuccCtx[nctx]) p1 true pos in
-					                  (ctx,TrueConseq)
-					                else  (CF.mkFailCtx_in(Basic_Reason  ( { 
-                                                    fc_message ="failure 2 ?? when checking for aliased node";
-                                                    fc_current_lhs = estate;
-                                                                      fc_prior_steps = estate.es_prior_steps;
-                                                    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
-                                                    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
-				                  end in
-				            let _ = Util.pop_time "empty_predicate_testing" in
-				            if (isFailCtx na) then None
-				            else 
-				              let cx = match na with | SuccCtx l -> List.hd l |_ -> report_error pos("heap_entail_conjunct: something wrong has happened with the context") in
-				              let _ = Util.push_time "fold_after_base_case" in
-				              let do_fold_result,prf = do_fold_w_ctx cx p2 in
-				              let _ = Util.pop_time "fold_after_base_case" in
-				              if not(isFailCtx do_fold_result) then Some (do_fold_result,prf)
-				              else                         
-					            match cx with
-					              | OCtx (c1,c2) ->  None
-					              | Ctx c ->
-					                  let r1,p1 = do_match prog c v1 v2 c1 c2 anode ln2 
-						                (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) is_folding is_universal p2 pos  in
-						              if not(isFailCtx r1) then Some (r1,p1)
-						              else None
-			              else None in
+                        let _ = Util.push_time "empty_predicate_testing" in
+                        let vd = (look_up_view_def_raw prog.prog_view_decls c2) in
+                        let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with es_formula = ante;
+                                                    es_heap = estate.es_heap;
+                                                    es_evars = estate.es_evars;
+                                                    es_gen_expl_vars = estate.es_gen_expl_vars; 
+                                                    es_gen_impl_vars = estate.es_gen_impl_vars; 
+                                                    es_ante_evars = estate.es_ante_evars;
+                                                    es_unsat_flag = false;
+                                                    es_prior_steps = estate.es_prior_steps;
+                                                    es_path_label = estate.es_path_label;} in
+                        let na,prf = match vd.view_base_case with
+                            (* | None ->  (CF.mkFailCtx_in(Basic_Reason None),UnsatConseq) *)
+                          | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
+                                                          fc_message ="failure 1 ?? when checking for aliased node";
+                                                          fc_current_lhs = estate;
+                                                          fc_prior_steps = estate.es_prior_steps;
+                                                          fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+                                                          fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), UnsatConseq)
+                          | Some (bc1,(base1,branches1)) -> 
+                              begin
+                              let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+                              let to_vars = p1 :: v1 in
+                              let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
+                              let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
+                              let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
+                              let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx bc1 !Globals.enable_syn_base_case in
+                              if b then 
+                                let ctx = unfold_context (Branches (base,branches,v1)) (SuccCtx[nctx]) p1 true pos in
+                                (ctx,TrueConseq)
+                              else  (CF.mkFailCtx_in(Basic_Reason  ( { 
+                                                        fc_message ="failure 2 ?? when checking for aliased node";
+                                                        fc_current_lhs = estate;
+                                                        fc_prior_steps = estate.es_prior_steps;
+                                                        fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+                                                        fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
+                              end in
+                        let _ = Util.pop_time "empty_predicate_testing" in
+                        if (isFailCtx na) then None
+                        else 
+                          let cx = match na with | SuccCtx l -> List.hd l |_ -> report_error pos("heap_entail_conjunct: something wrong has happened with the context") in
+                          let _ = Util.push_time "fold_after_base_case" in
+                          let do_fold_result,prf = do_fold_w_ctx cx p2 in
+                          let _ = Util.pop_time "fold_after_base_case" in
+                          if not(isFailCtx do_fold_result) then Some (do_fold_result,prf)
+                          else                         
+                          match cx with
+                            | OCtx (c1,c2) ->  None
+                            | Ctx c ->
+                                let r1,p1 = do_match prog c v1 v2 c1 c2 anode ln2 
+                                (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) is_folding is_universal p2 pos  in
+                              if not(isFailCtx r1) then Some (r1,p1)
+                              else None
+                        else None in
 				          match ans with 
 				            | Some x -> x
 				            | _ -> 
 				                let new_estate = {estate with es_formula = (mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos)} in
-				                let res_es1, prf1 = do_match prog new_estate v1 v2 c1 c2 anode ln2 (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) is_folding is_universal p2 pos in
+				                let res_es1, prf1 = do_match prog new_estate v1 v2 c1 c2 anode ln2 
+                                                (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) 
+                                                is_folding is_universal p2 pos in
 				                let copy_enable_distribution = !enable_distribution in
 					            (*******************************************************************************************************************************************************************************************)
 					            (* call to do_coercion *)
@@ -2872,7 +2874,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					                  (*     | false ,true -> enable_distribution := true; prf1 *)
 					                  (* | false , false -> prf in *)
 					                  (* (res,prf) *)
-			            else (* c1 not equal c2  *)
+			            else (* c1 not equal c2 or branches not subsuming *)
 			              begin
 				            if is_view ln2 && is_data anode then 
 				              begin (* fold *)

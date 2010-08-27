@@ -28,7 +28,7 @@ and match_type =
  *)  
 let rec context_old prog lhs_h (lhs_p:MCP.memo_pure) (p : CP.spec_var) pos : context list =
 	let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-	let eqns' = MCP.ptr_equations lhs_p in
+	let eqns' = MCP.ptr_equations false lhs_p in
 	let eqns = (p, p) :: eqns' in
 	let asets = alias eqns in
 	let paset = get_aset asets p in (* find the alias set containing p *)
@@ -44,7 +44,6 @@ let rec context_old prog lhs_h (lhs_p:MCP.memo_pure) (p : CP.spec_var) pos : con
 				[]
 			end
 			else
-	  
 			let anodes = context_get_aliased_node prog lhs_h paset in
 				anodes
 		end	
@@ -90,20 +89,6 @@ and compute_heap_rest (l : (h_formula * match_type * (h_formula list) * h_formul
 	| (h1, m1, h2, r1) :: rest -> (h1, m1, h2, mkStarH r1 h3 pos) :: (compute_heap_rest rest h3 pos) 
 	| [] -> []
 	
-(* assume that f is a satisfiable conjunct *)
-(*and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f with
-  | CP.And (f1, f2, pos) -> (ptr_equations f1) @ (ptr_equations f2)
-  | CP.BForm (bf,_,_) -> begin
-	  match bf with
-		| CP.Eq (e1, e2, _) ->
-			if CP.can_be_aliased e1 && CP.can_be_aliased e2 then
-			  let sv1 = CP.get_alias e1 in
-			  let sv2 = CP.get_alias e2 in
-				[(sv1, sv2)]
-			else []
-		| _ -> []
-	end
-  | _ -> []*)
 	
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
@@ -125,5 +110,3 @@ and get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 	  | [] -> []
 	  | [s] -> s
 	  | _ -> failwith ((Cprinter.string_of_spec_var v) ^ " appears in more than one alias sets")
-
-	

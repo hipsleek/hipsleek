@@ -28,18 +28,12 @@ void append(node x, node y)
   requires x::ll<n1> * y::ll<n2> & x!=null // & n1>0 & x != null
 	ensures x::ll<m> & m=n1+n2;
 
-{
-    
-	if (x.next == null)
-	  {// dprint;
-        x.next = y;}
-	else
-      { 
-        node z;
-        z = null;
-		append(x.next, y);
-      }
-    }
+{    
+	if (x.next == null) 
+    x.next = y;
+	else   
+    append(x.next, y);
+}
 
 /* return the first element of a singly linked list */
 node ret_first(node x)

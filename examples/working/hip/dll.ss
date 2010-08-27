@@ -18,14 +18,11 @@ void insert(node2 x, int a)
   requires x::dll<p, n> &  x!=null  
   ensures x::dll<p, n+1>; 
 {
-	node2 tmp_null = null;
-
-		if (x.next == null) {
-			x.next = new node2(a, x, tmp_null);
-		}
-		else {
-			insert(x.next, a);
-		}
+  bool l = x.next == null;
+  if (l)
+			x.next = new node2(a, x, null);
+		else 
+      insert(x.next, a);
 }
 
 

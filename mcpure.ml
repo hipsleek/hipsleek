@@ -161,10 +161,10 @@ and h_apply_one_m_constr_lst s l =
   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_one s c.memo_formula},c2)) l
 
 (* assume that f is a satisfiable conjunct *)
-and ptr_equations (f : memo_pure) : (spec_var * spec_var) list = 
+and ptr_equations with_null (f : memo_pure) : (spec_var * spec_var) list = 
   let prep_b_f bf =  match bf with
 	  | Eq (e1, e2, _) -> 
-      let b = can_be_aliased e1 && can_be_aliased e2 in
+      let b = can_be_aliased with_null e1 && can_be_aliased with_null e2 in
         if not b then [] else [(get_alias e1, get_alias e2)]
     | _ -> [] in  
   let rec prep_f f = match f with
@@ -276,7 +276,7 @@ and fold_mem_lst_to_lst mem with_dupl with_inv with_slice: formula list=
             else []
           | _ -> []) c.memo_group_cons in
       slice@(List.concat cons)) mem in
-    List.concat r
+    List.map join_conjunctions r
           
 and fold_mem_lst (f_init:formula) with_dupl with_inv lst :formula= 
   let r = fold_mem_lst_to_lst lst with_dupl with_inv true in
