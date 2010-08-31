@@ -4373,47 +4373,48 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 			       Iformula.formula_case_pos = b.Iformula.formula_case_pos
 			     }),(Util.remove_dups (List.concat r2)))			
       | Iformula.EBase b->		
-	  let nh0 = b.Iformula.formula_ext_explicit_inst in
-	  let _ = if (List.length (Util.intersect h nh0))>0 then 
-	    Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos;
-				Error.error_text = "the late instantiation variables collide with the used vars"}
-	  else true in
-	  let h1 = Util.remove_dups (h@nh0) in
-	  let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
-	  let h0prm = Util.difference(Iformula.heap_fv onb) h1 in
-	  let h0h0prm = Util.remove_dups (nh0@h0prm) in
-	  let h1prm = Util.remove_dups (h1@h0prm) in
-	  let _ = if (not allow_primes)&&(List.length (List.filter (fun (c1,c2)-> c2==Primed) h0h0prm))>0 then
-	    Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "should not have prime vars"} else true in
-	  let _ = if (List.length (Util.intersect(h0h0prm) p))>0 then 	
-	    Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "post variables should not appear here"} else true in
-	  let nc,h2 = helper h1prm b.Iformula.formula_ext_continuation in	
-	  let implvar = if lax_implicit then 
-	    Util.difference (Iformula.unbound_heap_fv onb(*b.Iformula.formula_ext_base*)) h1
-	  else Util.difference h2 h1 in
-	  let nb,h3 = case_normalize_renamed_formula prog (*(Util.remove_dups(h1@implvar))*) h false onb in
-	  let global_ex = Util.difference (Iformula.struc_free_vars nc) (h@implvar@nh0@p) in
-	  let _ = if (List.length global_ex)>0 then print_string ("formula: "^
-								    (Iprinter.string_of_formula nb)^"\nglobals: "^
-								    (Iprinter.string_of_var_list global_ex)^"\n")else () in
-	  let nb,ex = ilinearize_formula nb (h@implvar@nh0@global_ex) in
-	    
-	  let heap_vars = (Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc) in
-	  let global_ex_non_heap = Util.difference global_ex heap_vars in
-	  let global_ex_heap  = Util.intersect global_ex heap_vars in
-	  let ex_non_heap = Util.difference ex heap_vars in
-	  let ex_heap  = Util.intersect ex heap_vars in				
-	    
-	  let (global_ex,implvar,expl,ex) = match !Globals.instantiation_variants with
-	    | 1 -> (global_ex_non_heap,implvar,b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,ex_non_heap)
-	    | 2 -> (global_ex_non_heap,[],implvar@b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,ex_non_heap)				
-	    | 4 -> (global_ex_non_heap,implvar@b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,[],ex_non_heap)				
-	    | 0 -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
-	    | 3 -> (global_ex,implvar@b.Iformula.formula_ext_explicit_inst, [] ,ex)				
-	    | 5 -> (global_ex,[], implvar@b.Iformula.formula_ext_explicit_inst,ex)				
-	    | _ -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
+          let nh0 = b.Iformula.formula_ext_explicit_inst in
+          let _ = if (List.length (Util.intersect h nh0))>0 then 
+            Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos;
+              Error.error_text = "the late instantiation variables collide with the used vars"}
+          else true in
+          let h1 = Util.remove_dups (h@nh0) in
+          let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
+          let h0prm = Util.difference(Iformula.heap_fv onb) h1 in
+          let h0h0prm = Util.remove_dups (nh0@h0prm) in
+          let h1prm = Util.remove_dups (h1@h0prm) in
+          let _ = if (not allow_primes)&&(List.length (List.filter (fun (c1,c2)-> c2==Primed) h0h0prm))>0 then
+            Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "should not have prime vars"} else true in
+          let _ = if (List.length (Util.intersect(h0h0prm) p))>0 then 	
+            Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "post variables should not appear here"} else () in
+          let nc,h2 = helper h1prm b.Iformula.formula_ext_continuation in	
+          let implvar = if lax_implicit then 
+            Util.difference (Iformula.unbound_heap_fv onb(*b.Iformula.formula_ext_base*)) h1
+          else Util.difference h2 h1 in
+          (*let _ = print_string ("impl vars: "^(Iprinter.string_of_var_list implvar)^"\n") in*)
+          let nb,h3 = case_normalize_renamed_formula prog (*(Util.remove_dups(h1@implvar))*) h false onb in
+          let global_ex = Util.difference (Iformula.struc_free_vars nc) (h@implvar@nh0@p) in
+          let _ = if (List.length global_ex)>0 then print_string ("formula: "^
+                          (Iprinter.string_of_formula nb)^"\nglobals: "^
+                          (Iprinter.string_of_var_list global_ex)^"\n")else () in
+          let nb,ex = ilinearize_formula nb (h@implvar@nh0@global_ex) in
+            
+          let heap_vars = (Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc) in
+          let global_ex_non_heap = Util.difference global_ex heap_vars in
+          let global_ex_heap  = Util.intersect global_ex heap_vars in
+          let ex_non_heap = Util.difference ex heap_vars in
+          let ex_heap  = Util.intersect ex heap_vars in				
+            
+          let (global_ex,implvar,expl,ex) = match !Globals.instantiation_variants with
+            | 1 -> (global_ex_non_heap,implvar,b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,ex_non_heap)
+            | 2 -> (global_ex_non_heap,[],implvar@b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,ex_non_heap)				
+            | 4 -> (global_ex_non_heap,implvar@b.Iformula.formula_ext_explicit_inst@ex_heap@global_ex_heap,[],ex_non_heap)				
+            | 0 -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
+            | 3 -> (global_ex,implvar@b.Iformula.formula_ext_explicit_inst, [] ,ex)				
+            | 5 -> (global_ex,[], implvar@b.Iformula.formula_ext_explicit_inst,ex)				
+            | _ -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
 	  in
-	    
+	              (*let _ = print_string ("impl vars2: "^(Iprinter.string_of_var_list implvar)^"\n") in*)
 	  let h3 = Util.difference h3 ex in
 	  let _ = if (*(!Globals.instantiation_variants=0 || !Globals.instantiation_variants=3 || !Globals.instantiation_variants=5)&&*)(List.length (*(Util.difference implvar (Iformula.fv onb))*)
 																	   (Util.difference implvar heap_vars))>0 then 
@@ -4472,19 +4473,22 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
   let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
     | Iast.Label (pid, b) -> Iast.Label (pid, (helper ren b))
     | Iast.Assert b ->
-        Iast.Assert{Iast.exp_assert_asserted_formula = (match b.Iast.exp_assert_asserted_formula with
-							  | None -> None
-							  | Some f-> Some 
-							      ((Iformula.subst_struc 
-								  (List.fold_left(fun a (c1,c2)-> 
-										    ((c1,Unprimed),(c2,Unprimed))::
-										      ((c1,Primed),(c2,Primed))::a
-										 ) [] ren) (fst f)),(snd f)));
-		    Iast.exp_assert_assumed_formula = (match b.Iast.exp_assert_assumed_formula with
+      let subst_list = 
+        List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren in
+      let assert_formula = match b.Iast.exp_assert_asserted_formula with
+					  | None -> None
+						| Some (f1,f2)-> Some (Iformula.subst_struc subst_list f1,f2) in
+      let assume_formula = match b.Iast.exp_assert_assumed_formula with
 							 | None -> None
-							 | Some f -> Some (Iformula.subst (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) f));
+							 | Some f -> Some (Iformula.subst subst_list f) in
+      (*let r =*) Iast.Assert{
+        Iast.exp_assert_asserted_formula = assert_formula;
+		    Iast.exp_assert_assumed_formula = assume_formula;
 		    Iast.exp_assert_pos = b.Iast.exp_assert_pos;
-		    Iast.exp_assert_path_id = b.Iast.exp_assert_path_id}
+		    Iast.exp_assert_path_id = b.Iast.exp_assert_path_id} (*in
+      let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
+      let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
+      r*)
     | Iast.Assign b->
         Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
            Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
@@ -4583,18 +4587,18 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
       | Iast.Assert b->
           let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
             | None -> (None,h)
-            | Some f -> 
-          let r, _ = case_normalize_struc_formula prog h p (fst f) true true in
-            (Some (r,(snd f)),h) in
+            | Some asserted_f -> 
+          let r, _ = case_normalize_struc_formula prog h p (fst asserted_f) true true in
+            (Some (r,(snd asserted_f)),h) in
           let assm_nf  = match b.Iast.exp_assert_assumed_formula with
             | None-> None 
             | Some f -> 
           Some (fst (case_normalize_formula prog nh false f))in
-            (Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
+          let rez_assert = Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
                Iast.exp_assert_assumed_formula = assm_nf;
                Iast.exp_assert_pos = b.Iast.exp_assert_pos;
-               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;
-             }, h, p, [])
+               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
+            (rez_assert, h, p, [])
       | Iast.Assign b-> 
           let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
           let l2,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
@@ -4675,8 +4679,9 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
            let r,_,_,_ = (case_normalize_exp prog h p f) in 	Some r},h,p,[])
       | Iast.Seq b -> 
           let l1,nh,np,ren = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
-          let l2 ,nh,np,ren2 = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in
-          let l2 = rename_exp ren l2 in          
+          let l2 = rename_exp ren b.Iast.exp_seq_exp2 in
+          let l2 ,nh,np,ren2 = case_normalize_exp prog nh np l2 in          
+          
           let aux_ren = (ren_list_concat ren ren2) in
             (*let _ = print_string ((List.fold_left(fun a (c1,c2)-> a^"("^c1^","^c2^") ") "\n var2 decl renaming: " aux_ren)^"\n") in*)
             (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np, aux_ren)
