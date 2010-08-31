@@ -4339,7 +4339,7 @@ and case_normalize_formula prog (h:(ident*primed) list)(b:bool)(f:Iformula.formu
   let f = Iformula.rename_bound_vars f in
     case_normalize_renamed_formula prog h b f
       
-and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) (lax_implicit:bool):Iformula.struc_formula* ((ident*primed)list) = 	
+and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool):Iformula.struc_formula* ((ident*primed)list) = 	
   let nf = convert_struc2 prog f in
   let nf = Iformula.float_out_exps_from_heap_struc nf in
   let nf = Iformula.float_out_struc_min_max nf in
@@ -4383,7 +4383,7 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 	  let h0prm = Util.difference(Iformula.heap_fv onb) h1 in
 	  let h0h0prm = Util.remove_dups (nh0@h0prm) in
 	  let h1prm = Util.remove_dups (h1@h0prm) in
-	  let _ = if (List.length (List.filter (fun (c1,c2)-> c2==Primed) h0h0prm))>0 then
+	  let _ = if (not allow_primes)&&(List.length (List.filter (fun (c1,c2)-> c2==Primed) h0h0prm))>0 then
 	    Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "should not have prime vars"} else true in
 	  let _ = if (List.length (Util.intersect(h0h0prm) p))>0 then 	
 	    Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "post variables should not appear here"} else true in
@@ -4584,7 +4584,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
           let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
             | None -> (None,h)
             | Some f -> 
-          let r, _ = case_normalize_struc_formula prog h p (fst f) true in
+          let r, _ = case_normalize_struc_formula prog h p (fst f) true true in
             (Some (r,(snd f)),h) in
           let assm_nf  = match b.Iast.exp_assert_assumed_formula with
             | None-> None 
@@ -4698,7 +4698,7 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
       | Iast.While b->
           let nc,nh,np,_ = case_normalize_exp prog h p b.Iast.exp_while_condition in
           let nb,nh,np,_ = case_normalize_exp prog nh np b.Iast.exp_while_body in
-          let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false in
+          let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false in
             (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p,[])
       | Iast.Try b-> 
           let nb,nh,np,_ = case_normalize_exp prog h p b.Iast.exp_try_block in
@@ -4741,8 +4741,8 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) f.Iast.proc_args) in
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) f.Iast.proc_args) in
   let p = (res,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) f.Iast.proc_args)) in
-  let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false in
-  let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false in
+  let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false false in
+  let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false false in
   let h1 = Util.remove_dups (h11@h12) in 
   let h2 = Util.remove_dups (h@h_prm@(Util.difference h1 h)) in
   let nb = match f.Iast.proc_body with None -> None | Some f->
@@ -4758,7 +4758,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = List.map (fun c-> 
 			      let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
 			      let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
-			      let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false in
+			      let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false in
 				{ c with Iast.view_formula = 	wf;}) tmp_views in
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
