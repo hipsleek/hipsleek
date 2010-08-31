@@ -774,7 +774,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		                (* print_string ("\n\nLABEL PRECOND: " ^ s1 ^ "\nLabel ASSERT: " ^ s ^"\n\n"); *)
 		                if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ((* print_string "inside label missmatch \n"; *)ctx)
 		                else
-		                  let new_ctx = match c1_o with
+		                  let _ = match c1_o with
 			                | None -> ctx
 			                | Some c1 ->
 			                      (*
