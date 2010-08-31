@@ -266,9 +266,6 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let stri = sat_no in
-	begin
-		(*print_string ("\n!!!!!!!" ^ stri);*)
   let all_fv = CP.remove_dups (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
@@ -336,7 +333,7 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 			 None)
 		  end
 	  end
-		end
+	  
 and is_sat (f : CP.formula) (sat_no : string) : bool =
   let result0 = is_sat_raw f sat_no in
   let result = match result0 with
