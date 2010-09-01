@@ -17,8 +17,8 @@ clist<n> == self::node<_,p> * p::lseg<self,n-1>
 void append(node x, node y)
   requires x::ll<n> & x!=null //& n>0
 	ensures x::lseg<y, n>;
-//requires x::ll<n> & y=x & n>0
-//	ensures x::clist<n>;
+  requires x::ll<n> & y=x & n>0
+	ensures x::clist<n>;
 {
 	node tmp = x.next;
 	bool fl = tmp != null;
