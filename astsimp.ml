@@ -4679,9 +4679,8 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
            let r,_,_,_ = (case_normalize_exp prog h p f) in 	Some r},h,p,[])
       | Iast.Seq b -> 
           let l1,nh,np,ren = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
-          let l2 = rename_exp ren b.Iast.exp_seq_exp2 in
-          let l2 ,nh,np,ren2 = case_normalize_exp prog nh np l2 in          
-          
+          let l2 ,nh,np,ren2 = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in          
+          let l2 = rename_exp ren l2 in          
           let aux_ren = (ren_list_concat ren ren2) in
             (*let _ = print_string ((List.fold_left(fun a (c1,c2)-> a^"("^c1^","^c2^") ") "\n var2 decl renaming: " aux_ren)^"\n") in*)
             (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np, aux_ren)
