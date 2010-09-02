@@ -4,13 +4,7 @@
 
   module Err = Error
   let subst_lst = ref ([]:(string*string*typ)list)
-  let spec_var_of_string s = 
-	let n = String.length s in
-	  if String.get s (n-1) = '\'' then 
-		SpecVar (Prim Int, String.sub s 0 (n-1), Primed)
-	  else
-		SpecVar (Prim Int, s, Unprimed)
-
+  
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();

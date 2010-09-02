@@ -21,19 +21,18 @@ let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
-		let ln = (String.length v) in
-		let r =  
-				if (ln<15) then v 
-						else  
-						match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
-								| []-> let r_c = String.sub v (ln-15)  15 in
-											 let r_c = if((String.get r_c 0)=='_') then String.sub r_c 1 ((String.length r_c)-1) else r_c in
-											begin
-											Ocparser.subst_lst := (r_c,v,t)::!Ocparser.subst_lst; 
-											r_c end
-					| (a,b,_)::h->  a
-						in 
-						r ^ (if is_primed sv then Oclexer.primed_str else "")
+		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
+				  | []->           
+            let ln = (String.length v) in  
+            let r_c = if (ln<15) then v
+              else 
+                let v_s = String.sub v (ln-15)  15 in
+                if((String.get v_s 0)=='_') then String.sub v_s 1 ((String.length v_s)-1) else v_s in
+            begin
+              Ocparser.subst_lst := (r_c,v,t)::!Ocparser.subst_lst; 
+							r_c end
+					| (a,b,_)::h->  a in 
+		r ^ (if is_primed sv then Oclexer.primed_str else "")
 		
 	
 
