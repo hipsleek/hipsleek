@@ -9,7 +9,7 @@ data node {
 // bal: 0: left is higher, 1: balanced, 2: right is higher
 
 avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
-	or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
+	or self::node<_, n, p, q> * p::avl<m1, n1, bal1> * q::avl<m2, n2, bal2>
 		& m = 1+m1+m2 & tmp=max(n1, n2) & n = tmp + 1 
 		& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
 	inv m >= 0 & n >= 0 & 0<=bal<=2;
@@ -21,6 +21,7 @@ int height(node x)
 	ensures x::avl<m, n, b> & res = n;
 
 {
+  dprint;
 	if (x == null)
 		return 0;
 	else

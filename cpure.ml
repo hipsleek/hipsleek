@@ -306,16 +306,15 @@ and to_var (e : exp) : spec_var = match e with
   | Var (sv, _) -> sv
   | _ -> failwith ("to_var: argument is not a variable")
 
-and can_be_aliased with_null (e : exp) : bool = match e with
-  | Var _ -> true
-  | Null _ -> with_null
+and can_be_aliased (e : exp) : bool = match e with
+  | Var _ | Null _ -> true
 	  (* null is necessary in this case: p=null & q=null.
 		 If null is not considered, p=q is not inferred. *)
   | _ -> false
 
 and get_alias (e : exp) : spec_var = match e with
   | Var (sv, _) -> sv
-  | Null _ -> SpecVar (OType "", "null", Unprimed) (* it is safe to name it "null" as no other variable can be named "null" *)
+  | Null _ -> null_var (* it is safe to name it "null" as no other variable can be named "null" *)
   | _ -> failwith ("get_alias: argument is neither a variable nor null")
 
 and is_object_var (sv : spec_var) = match sv with

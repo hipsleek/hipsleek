@@ -9,7 +9,7 @@ data node2 {
 
 /* view for a doubly linked list with size */
 dll<p,n> == self = null & n = 0 
-	or self::node2<_ ,p , q> * q::dll<q1, n-1> & self = q1 
+	or self::node2<_ ,p , q> * q::dll<self, n-1>
 	inv n >= 0;
 
 
@@ -56,20 +56,28 @@ void delete1(node2 x, int a)
 	ensures x::dll<p, n-1>;
 
 {
-	node2 tmp;
-
 	if (a == 1) 
 	{
-		if (x.next.next != null)
+    node2 l = x.next.next;
+		if (l!= null)
 		{
-			x.next.next.prev = x;
+      l.prev = x;
+     // assume false;
 		}
-
-		tmp = x.next.next;
-		x.next = tmp;
+		x.next = l;
+    //dprint;
+    //assert x::dll<_,_>;
+   // assume false;
 	}
 	else
+  {
 		delete1(x.next, a-1);
+    //assume false;
+  }
+  //dprint;
+//  assert x::dll<_,_>;
+
+//  assume false;
 }
 
 

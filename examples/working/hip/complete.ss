@@ -20,9 +20,12 @@ data node2 {
 		- we used it to make the insertion easier (because in the insertion there are points where we need to
 		know if a subtree is perfect or not)
 */
-complete<n, nmin> == self = null & n = 0 & nmin = 0
-	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & tmp = min(nmin1, nmin2) & nmin = tmp + 1
-	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & tmp = min(nmin1, nmin2) & nmin = tmp + 1
+complete<n, nmin> == 
+  self = null & n = 0 & nmin = 0
+	or self::node2<_, l, r> * l::complete<n-1, n-1> * r::complete<n-1, n-1> & nmin = n
+	or self::node2<_, l, r> * l::complete<n-1, n-2> * r::complete<n-2, n-2> & nmin = n-1
+  or self::node2<_, l, r> * l::complete<n-1, n-1> * r::complete<n-2, n-2> & nmin = n-1
+  or self::node2<_, l, r> * l::complete<n-1, n-1> * r::complete<n-1, n-2> & nmin = n-1
 	inv nmin >= 0 & n >= nmin;
 
 int maxim(int a, int b) 
@@ -90,22 +93,16 @@ void insert(ref node2 t, int v)
 				return;	
 			}
 			else {
-        //dprint;
 				node2 tmp = t.right;
-        //dprint;
 				if(height(t.left) == height(t.right)) { // tree is full - we must start another level 
-					//assert t'::complete<n1, n1>;
 					aux = t.left;
 					insert(aux, v);
 					t.left = aux;
 					return;	
 				}
 				else {
-					aux = t.right;
-					//assert aux'::complete<n2, nmin2> & nmin2 = n2;
-          //dprint;          
+					aux = t.right;    
 					insert(aux, v);
-					assume false;
           t.right = aux;
 					return;	
 				}

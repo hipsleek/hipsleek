@@ -173,8 +173,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
               let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
               (*let _ = print_string ("-> pre ass : "^(Cprinter.string_of_pos pos)^" "^(Cprinter.string_of_context tmp_ctx2)^"\n") in*)
               let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
+              let resctx2 = prune_ctx prog resctx in
               (*let _ = print_string ("-> pre ass : "^(Cprinter.string_of_pos pos)^" "^(Cprinter.string_of_context resctx)^"\n") in*)
-          resctx 
+          resctx2 
             else (CF.Ctx c1) in
           let r = CF.transform_list_partial_context (fct,(fun c->c)) ctx1 in
             (*let _ = print_string ("-> post assert : "^(Cprinter.string_of_context_list r)^"\n") in*)

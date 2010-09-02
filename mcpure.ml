@@ -161,10 +161,10 @@ and h_apply_one_m_constr_lst s l =
   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_one s c.memo_formula},c2)) l
 
 (* assume that f is a satisfiable conjunct *)
-and ptr_equations with_null (f : memo_pure) : (spec_var * spec_var) list = 
+and ptr_equations (f : memo_pure) : (spec_var * spec_var) list = 
   let prep_b_f bf =  match bf with
 	  | Eq (e1, e2, _) -> 
-      let b = can_be_aliased with_null e1 && can_be_aliased with_null e2 in
+      let b = can_be_aliased e1 && can_be_aliased e2 in
         if not b then [] else [(get_alias e1, get_alias e2)]
     | _ -> [] in  
   let rec prep_f f = match f with
@@ -546,6 +546,11 @@ let simpl_memo_pure_formula simpl_b_f simpl_p_f(f:memo_pure): memo_pure =
   
 let memo_drop_null self l = List.map (fun c -> {c with memo_group_slice = List.map (fun c-> drop_null c self false ) c.memo_group_slice}) l
          
+         
+(*changes the status of the implied constraints to Implied_dupl in l if 
+those constraints appear in the cons list of memoised constraints
+this is called in order to change 
+*)
 let memo_change_status cons l =
   let lcns = List.map (fun cns-> (bfv cns, cns)) cons in
   List.map (fun grp-> 

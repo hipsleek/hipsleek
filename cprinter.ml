@@ -761,7 +761,9 @@ let rec pr_formula e =
 	  formula_base_branches = b;
 	  formula_base_type = t;
 	  formula_base_flow = fl;
+    formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
+        (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
         pr_h_formula h ; pr_cut_after "&" ; pr_memo_pure_formula_branches(p,b);
         pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
     | Exists ({formula_exists_qvars = svs;
@@ -770,7 +772,9 @@ let rec pr_formula e =
 	  formula_exists_branches = b;
 	  formula_exists_type = t;
 	  formula_exists_flow = fl;
+    formula_exists_label = lbl;
 	  formula_exists_pos = pos}) ->
+        (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
         fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
         pr_h_formula h; pr_cut_after "&" ;
         pr_memo_pure_formula_branches(p,b); pr_cut_after  "&" ; 
@@ -1042,7 +1046,7 @@ let pr_view_decl v =
   pr_vwrap  "unstructured formula: " pr_formula v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_memo_pure_formula (fst v.view_x_formula);
   f v.view_base_case;
-  pr_vwrap  "prune branches: " (fun c-> pr_seq "," (fun (c1,c2)-> pr_formula_label c1;fmt_string "->";pr_struc_formula c2) c) v.view_prune_branches;
+  pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label c) v.view_prune_branches;
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
   pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,c2)-> 
             let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
@@ -1051,7 +1055,16 @@ let pr_view_decl v =
   fmt_close_box ();
   pr_mem:=true
 
-
+let pr_prune_invs inv_lst = 
+  "prune invs: " ^ (String.concat "," (List.map 
+          (fun c-> (fun (c1,c2)-> 
+            let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
+            let d = String.concat ";" (List.map string_of_b_formula c2) in
+            ("{"^s^"} -> ["^d^"]")) c) inv_lst))
+  
+let string_of_prune_invs inv_lst : string = pr_prune_invs inv_lst
+  
+  
 let string_of_view_decl (v: Cast.view_decl): string =  poly_string_of_pr pr_view_decl v
 
 let printer_of_view_decl (fmt: Format.formatter) (v: Cast.view_decl) : unit =

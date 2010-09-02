@@ -89,7 +89,7 @@ let process_pred_def pdef =
 	  try
 		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false in
+    let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
@@ -107,7 +107,7 @@ let process_pred_def pdef =
 		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
-		let n_cpdef = AS.view_case_inference cprog cpdef in
+		let n_cpdef = AS.view_prune_inv_inference cprog cpdef in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -123,7 +123,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) true in
+      let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true in
 	AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
   | MetaVar mvar -> begin
       try 
@@ -145,7 +145,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula iprog h p b true in
+      let wf,_ = AS.case_normalize_struc_formula iprog h p b false true in
       let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
 	res
 	

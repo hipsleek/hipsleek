@@ -28,7 +28,7 @@ and match_type =
  *)  
 let rec context_old prog lhs_h (lhs_p:MCP.memo_pure) (p : CP.spec_var) pos : context list =
 	let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-	let eqns' = MCP.ptr_equations false lhs_p in
+	let eqns' = MCP.ptr_equations lhs_p in
 	let eqns = (p, p) :: eqns' in
 	let asets = alias eqns in
 	let paset = get_aset asets p in (* find the alias set containing p *)
@@ -95,8 +95,7 @@ and compute_heap_rest (l : (h_formula * match_type * (h_formula list) * h_formul
 and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = match ptr_eqs with
   | (v1, v2) :: rest -> begin
 	  let rest_sets = alias rest in
-	  let search (v : CP.spec_var) (asets : CP.spec_var list list) =
-		List.partition (fun aset -> CP.mem v aset) asets in
+	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
 	  let av1, rest1 = search v1 rest_sets in
 	  let av2, rest2 = search v2 rest1 in
 	  let v1v2_set = U.remove_dups (List.concat ([v1; v2] :: (av1 @ av2))) in
