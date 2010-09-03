@@ -148,14 +148,14 @@ and cvcl_of_sv_type sv = match sv with
   | _ -> "INT"
 
 and cvcl_of_formula f = match f with
-  | CP.BForm (b,_,l) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
+  | CP.BForm (b,_) -> "(" ^ (cvcl_of_b_formula b) ^ ")" 
   | CP.And (p1, p2, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " AND " ^ (cvcl_of_formula p2 ) ^ ")"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvcl_of_formula p1 ) ^ " OR " ^ (cvcl_of_formula p2 ) ^ ")"
   | CP.Not (p,_, _) ->
 (*	  "(NOT (" ^ (cvcl_of_formula p) ^ "))" *)
 	  begin
 		match p with
-		  | CP.BForm (CP.BVar (bv, _),_,l) -> (cvcl_of_spec_var bv) ^ " = 0" 
+		  | CP.BForm (CP.BVar (bv, _),_) -> (cvcl_of_spec_var bv) ^ " = 0" 
 		  | _ -> "(NOT (" ^ (cvcl_of_formula p ) ^ "))"
 	  end
   | CP.Forall (sv, p,_, _) ->
@@ -296,7 +296,6 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 	let chn = open_in resultfilename in
 	let res_str = input_line chn in
 	  begin
-		(* let n = String.length "Valid." in *)
 		let n = String.length "Satisfiable." in
 		let l = String.length res_str in
 		  if l >= n then
@@ -334,17 +333,17 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 			 None)
 		  end
 	  end
-		
+	  
 and is_sat (f : CP.formula) (sat_no : string) : bool =
   let result0 = is_sat_raw f sat_no in
   let result = match result0 with
 	  | Some f -> f
 	  | None -> begin
 	  	  if !log_cvcl_formula then begin
-	  		output_string !cvcl_log "%%% is_sat --> false\n"
+	  		output_string !cvcl_log "%%% is_sat --> true (from unknown)\n"
 	  	  end;
 	  	  (*failwith "CVC Lite is unable to perform satisfiability check"*)
-	  	  false
+	  	  true
 	  	end
   in
 	begin

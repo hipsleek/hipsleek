@@ -449,7 +449,7 @@ let pure_formula_wo_paren (e:P.formula) =
   match e with
     | P.Forall _ 
     | P.Exists _ | P.Not _ -> true
-    | P.BForm (e1,_,_) -> true (* b_formula_wo_paren e1 *)
+    | P.BForm (e1,_) -> true (* b_formula_wo_paren e1 *)
     | P.And _ -> true 
     | _ -> false
 
@@ -591,10 +591,7 @@ let rec pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl,s) -> (
-        match s with
-          | None -> pr_formula_label_opt lbl; pr_b_formula bf
-          | Some _ -> fmt_string "[";pr_formula_label_opt lbl; pr_b_formula bf;fmt_string "]" )
+    | P.BForm (bf,lbl) -> pr_formula_label_opt lbl; pr_b_formula bf
     | P.And (f1, f2, l) ->  
         let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
         let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in

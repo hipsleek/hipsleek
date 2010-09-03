@@ -145,7 +145,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.memo
   | DataNode ({h_formula_data_node = p;
                 h_formula_data_pos = pos}) ->
       let i = fresh_int2 () in
-      let non_null = CP.mkEqVarInt p i pos None in
+      let non_null = CP.mkEqVarInt p i pos in
 	  (MCP.memoise_add_pure (MCP.mkMTrue pos) non_null, [])
   | ViewNode ({h_formula_view_node = p;
                 h_formula_view_name = c;
@@ -157,7 +157,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.memo
 	    match addrs with
 	      | a :: rest ->
 	          let i = fresh_int () in
-	          let non_null = CP.mkEqVarInt a i pos None in
+	          let non_null = CP.mkEqVarInt a i pos in
 	          let rest_f = helper rest in
 	          let res_form = CP.mkAnd non_null rest_f pos in
 		      res_form
@@ -221,9 +221,9 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) branch : (CP.formula
       let i = ("addr"^(fresh_trailer ())) in
       let vi = CP.SpecVar (CP.type_of_spec_var p, i, Unprimed) in
       let non_zero = match rm_br with
-        | None -> P.BForm (CP.Neq (CP.Var (vi, pos), CP.Null pos, pos),lbl,None)
+        | None -> P.BForm (CP.Neq (CP.Var (vi, pos), CP.Null pos, pos),lbl)
         | Some _ -> CP.mkTrue no_pos  in
-      let tmp1 = CP.mkEqVar p vi pos None in
+      let tmp1 = CP.mkEqVar p vi pos in
       let tmp2 = CP.mkAnd tmp1 non_zero pos in
 	  (tmp2, [vi])
   | ViewNode ({h_formula_view_node = p;
@@ -322,7 +322,7 @@ and xpure_heap_symbolic_no_exists_i (prog : prog_decl) (h0 : h_formula) i: (MCP.
   | DataNode ({ h_formula_data_node = p;
                 h_formula_data_label = lbl;
                 h_formula_data_pos = pos}) ->
-      let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl,None) in
+      let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in
 	  (MCP.memoise_add_pure (MCP.mkMTrue pos) non_zero, [], [p])
   | ViewNode ({ h_formula_view_node = p;
                 h_formula_view_name = c;
@@ -419,7 +419,7 @@ and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
   let rec diff_one sv svars = match svars with
     | sv2 :: rest ->
 	    let tmp1 = diff_one sv rest in
-	    let tmp2 = CP.mkNeqVar sv sv2 pos None in
+	    let tmp2 = CP.mkNeqVar sv sv2 pos in
 	    let res = CP.mkAnd tmp1 tmp2 pos in
 	    res
     | [] -> CP.mkTrue pos
@@ -497,7 +497,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) :(h_formula*MCP
       (match d.h_formula_data_remaining_branches with
         | Some l -> (hp, old_mem,false)
         | None -> 
-          let not_null_form = CP.BForm (CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None, None) in
+          let not_null_form = CP.BForm (CP.Neq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos), None) in
           let null_form = CP.Eq (CP.Var (d.h_formula_data_node,no_pos),CP.Null no_pos,no_pos) in
           let br_lbl = [(1,"")] in
           let new_hp = DataNode{d with 
@@ -1077,7 +1077,7 @@ and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
 *)
 
 and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP.formula * CP.formula) = match f1 with
-  | CP.BForm(b,_,_) ->
+  | CP.BForm(b,_) ->
       if (List.exists (fun c -> (CP.eq_pure_formula c f1)) (CP.list_of_conjs f2)) then
 	    begin
 	      (f1, (CP.mkTrue pos), (remove_conj f2 f1 pos))
@@ -1101,10 +1101,10 @@ and find_common_conjs (f1 : CP.formula) (f2 : CP.formula) pos : (CP.formula * CP
   | _ -> ((CP.mkTrue pos), f1, f2)
 
 and remove_conj (f : CP.formula) (conj : CP.formula) pos : CP.formula = match f with
-  | CP.BForm(b1,_,_) ->
+  | CP.BForm(b1,_) ->
       begin
 	    match conj with
-	      |CP.BForm(b2,_,_) ->
+	      |CP.BForm(b2,_) ->
 	         if (CP.eq_b_formula b1 b2) then
 	           (CP.mkTrue pos)
 	         else f
@@ -1304,7 +1304,7 @@ and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
       let ns,drp2 = List.partition (fun c-> (List.length (Util.intersect_fct CP.eq_spec_var (CP.fv c) w))>0) c.MCP.memo_group_slice in
       let fand = List.fold_left (fun a c-> match c.MCP.memo_status with
         | MCP.Implied _
-        | MCP.Implied_dupl -> CP.mkAnd a (CP.BForm (c.MCP.memo_formula, None, None)) pos
+        | MCP.Implied_dupl -> CP.mkAnd a (CP.BForm (c.MCP.memo_formula, None)) pos
         | _ -> a) (CP.mkTrue pos) r in
       let fand = List.fold_left (fun a c-> CP.mkAnd a c pos) fand ns in
       let fand = elim_exists_pure_branch w fand  pos in
@@ -1461,14 +1461,14 @@ and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evar
 	      if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
 	        ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),(fr, t)::s_list)
 	      else if (CP.mem fr struc_expl_inst) then
-	        let tmp = CP.mkEqVar fr t pos None in
+	        let tmp = CP.mkEqVar fr t pos in
 		    if br_label = "" then
 		      let res = CP.mkAnd tmp rest_right_eqns pos in
 		      ((rest_left_eqns, rest_left_eqns_br),(res, rest_right_eqns_br),s_list)
 		    else
 		      ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, CP.add_to_branches br_label tmp rest_right_eqns_br),s_list)
 	      else
-	        let tmp = CP.mkEqVar fr t pos None in
+	        let tmp = CP.mkEqVar fr t pos in
 		    if br_label = "" then
 		      let res = CP.mkAnd tmp rest_left_eqns pos in
 		      ((res, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list)
@@ -1486,7 +1486,7 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
       if (CP.mem fr ivars) then
 	    let ivars' = (List.filter (fun x -> not(CP.eq_spec_var fr x)) ivars) in
 	    let (rest_eqns, ivars_new, expl_vars_new) = get_eqns_expl_inst rest ivars' pos in
-	    let tmp = CP.mkEqVar fr t pos None in
+	    let tmp = CP.mkEqVar fr t pos in
 	    let res = [tmp]@rest_eqns in
 	    (*let _ = print_string ("expl_inst: " ^ (Cprinter.string_of_pure_formula tmp) ^ "\n") in*)
 	    (res, ivars_new, t::expl_vars_new)
@@ -1494,7 +1494,7 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
 	    if (CP.mem t ivars) then
 	      let ivars' = (List.filter (fun x -> not(CP.eq_spec_var t x)) ivars) in
 	      let (rest_eqns, ivars_new, expl_vars_new) = get_eqns_expl_inst rest ivars' pos in
-	      let tmp = CP.mkEqVar t fr pos None in
+	      let tmp = CP.mkEqVar t fr pos in
 	      let res = [tmp]@rest_eqns in
 	      (*let _ = print_string ("expl_inst: " ^ (Cprinter.string_of_pure_formula tmp) ^ "\n") in*)
 	      (res, ivars_new, fr::expl_vars_new)
@@ -1983,7 +1983,7 @@ and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.memo_pure):list_context =
 (* from a list containing equaltions of the form vi = wi -> obtain two lists [vi]  and [wi] *)
 and obtain_subst l =
   match l with
-    | CP.BForm(CP.Eq(CP.Var(e1, _), CP.Var(e2, _), _),_,_)::r -> ((e1::(fst (obtain_subst r))), (e2::(snd (obtain_subst r))))
+    | CP.BForm(CP.Eq(CP.Var(e1, _), CP.Var(e2, _), _),_)::r -> ((e1::(fst (obtain_subst r))), (e2::(snd (obtain_subst r))))
     | _::r -> ((fst (obtain_subst r)), (snd (obtain_subst r)))
     | [] -> ([],[])
 
@@ -3518,8 +3518,8 @@ and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
   | CP.Not (f1, lbl, pos) -> CP.mkNot (simpl_pure_formula f1) lbl pos
   | CP.Forall (sv, f1, lbl, pos) -> CP.mkForall [sv] (simpl_pure_formula f1) lbl pos
   | CP.Exists (sv, f1, lbl, pos) -> CP.mkExists [sv] (simpl_pure_formula f1) lbl pos
-  | CP.BForm (f1,lbl,ex) ->
-      let simpl_f = CP.BForm(simpl_b_formula f1, lbl,ex) in
+  | CP.BForm (f1,lbl) ->
+      let simpl_f = CP.BForm(simpl_b_formula f1, lbl) in
 	  (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_pure_formula f ^ "\n") in
 	    let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
 	  simpl_f
@@ -3534,10 +3534,10 @@ and simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
   | CP.BagSub (e1, e2, pos) ->
       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify (CP.BForm(f,None,None)) in
+	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_,_) ->
+  	        | CP.BForm(simpl_f1,_) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -3547,10 +3547,10 @@ and simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
   | CP.EqMin (e1, e2, e3, pos) ->
       if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify (CP.BForm(f,None,None)) in
+	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_,_) ->
+  	        | CP.BForm(simpl_f1,_) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -3560,10 +3560,10 @@ and simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
   | CP.BagNotIn (sv, e1, pos) ->
       if ((count_iconst e1) > 1) then
 	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify (CP.BForm(f,None,None)) in
+	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
   	    begin
   	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_,_) ->
+  	        | CP.BForm(simpl_f1,_) ->
   		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   		        simpl_f1
   	        | _ -> f
@@ -3575,10 +3575,10 @@ and simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
   | CP.ListPerm (e1, e2, pos) ->
 		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
 			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-			let simpl_f = TP.simplify (CP.BForm(f,None,None)) in
+			let simpl_f = TP.simplify (CP.BForm(f,None)) in
   		begin
   		match simpl_f with
-  		| CP.BForm(simpl_f1,_,_) ->
+  		| CP.BForm(simpl_f1,_) ->
   			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
   			simpl_f1
   		| _ -> f

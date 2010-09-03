@@ -156,10 +156,10 @@ and coq_of_b_formula b =
 (* pretty printing for formulas *)
 and coq_of_formula f =
     match f with
-    | CP.BForm (b,_,_) -> "(" ^ (coq_of_b_formula b) ^ ")"
+    | CP.BForm (b,_) -> "(" ^ (coq_of_b_formula b) ^ ")"
     | CP.Not (p, _,_) ->
 	    begin match p with
-		| CP.BForm (CP.BVar (bv, _),_, _) -> (coq_of_spec_var bv) ^ " = 0"
+		| CP.BForm (CP.BVar (bv, _),_) -> (coq_of_spec_var bv) ^ " = 0"
 		| _ -> " (~ (" ^ (coq_of_formula p) ^ ")) "
         end
     | CP.Forall (sv, p, _, _) ->
@@ -265,7 +265,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
 let is_sat (f : CP.formula) (sat_no : string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
-  let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos), None, None))) in
+  let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos), None))) in
   match tmp_form with
   | true ->
 	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> false\n";

@@ -10,6 +10,7 @@ module MCP = Mcpure
 type tp_type =
   | OmegaCalc
   | CvcLite
+  | Cvc3
   | CO (* CVC Lite then Omega combination *)
   | Isabelle
   | Mona
@@ -215,6 +216,8 @@ let set_tp tp_str =
 	tp := OmegaCalc
   else if tp_str = "cvcl" then 
 	tp := CvcLite
+  else if tp_str = "cvc3" then 
+	tp := Cvc3
   else if tp_str = "co" then
 	tp := CO
   else if tp_str = "isabelle" then
@@ -252,7 +255,7 @@ let rec is_memo_bag_constraint (f:MCP.memo_pure): bool =
 
 (* Method checking whether a formula contains bag constraints *)
 and is_bag_constraint(f : CP.formula) : bool = match f with
-  | CP.BForm(bf,_,_) -> (is_bag_constraint_b_formula bf)
+  | CP.BForm(bf,_) -> (is_bag_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
   | CP.Or(f1, f2,_, _) -> (is_bag_constraint f1) || (is_bag_constraint f2)
   | CP.Not(f1,_, _) -> (is_bag_constraint f1)
@@ -318,7 +321,7 @@ let rec is_memo_list_constraint (f:MCP.memo_pure): bool =
   ) f  
 (* Method checking whether a formula contains list constraints *)
 and is_list_constraint(f : CP.formula) : bool = match f with
-  | CP.BForm(bf,_,_) -> (is_list_constraint_b_formula bf)
+  | CP.BForm(bf,_) -> (is_list_constraint_b_formula bf)
   | CP.And(f1, f2, _) -> (is_list_constraint f1) || (is_list_constraint f2)
   | CP.Or(f1, f2, _,_) -> (is_list_constraint f1) || (is_list_constraint f2)
   | CP.Not(f1, _,_) -> (is_list_constraint f1)
@@ -464,6 +467,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			  (Omega.is_sat f sat_no);
 			end
 	  | CvcLite -> Cvclite.is_sat f sat_no
+	  | Cvc3 -> Cvc3.is_sat f sat_no
 	  | Z3 -> Smtsolver.is_sat f sat_no
 	  | Isabelle -> Isabelle.is_sat f sat_no
 	  | Coq -> Coq.is_sat f sat_no
@@ -636,6 +640,7 @@ let tp_imply ante conseq imp_no timeout =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
   | CvcLite -> Cvclite.imply ante conseq
+  | Cvc3 -> Cvc3.imply ante conseq
   | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> Coq.imply ante conseq
@@ -695,9 +700,9 @@ let rec requant = function
 
 let rewrite_in_list list formula =
   match formula with
-  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) ->
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
       List.map (fun x -> if x <> formula then CP.subst [v1, v2] x else x) list
-  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_,_) ->
+  | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_) ->
       List.map (fun x -> if x <> formula then CP.subst_term [v1, term] x else x) list
   | x -> list
 ;;
@@ -711,17 +716,17 @@ let rec rewrite_in_and_tree rid formula rform =
   | x ->
       let subst_fun =
         match rform with
-        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) -> CP.subst [v1, v2]
-        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_,_) -> CP.subst_term [v1, term]
-        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_,_) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) -> CP.subst [v1, v2]
+        | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_) -> CP.subst_term [v1, term]
+        | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_) -> CP.subst_term [v1, term]
         | _ -> fun x -> x
       in
       if ((not rid) && x = rform) then (x, subst_fun) else (subst_fun x, subst_fun)
 ;;
 
 let is_irrelevant = function
-  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) -> v1 = v2
-  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _),_,_) -> i1 = i2
+  | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) -> v1 = v2
+  | CP.BForm (CP.Eq (CP.IConst(i1, _), CP.IConst(i2, _), _),_) -> i1 = i2
   | _ -> false
 ;;
 
@@ -771,10 +776,10 @@ let simpl_pair rid (ante, conseq) =
   let l1 = Util.remove_dups (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
-    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_,_) ->
+    | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
         ((CP.subst [v1, v2] ante, CP.subst [v1, v2] conseq), (CP.subst [v1, v2]))
-    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_,_)
-    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_,_) ->
+    | CP.BForm (CP.Eq (CP.Var (v1, _), (CP.IConst(i, _) as term), _),_)
+    | CP.BForm (CP.Eq ((CP.IConst(i, _) as term), CP.Var (v1, _), _),_) ->
 		if (List.mem v1 l1) then ((ante, conseq), fun x -> x)
 		 else ((CP.subst_term [v1, term] ante, CP.subst_term [v1, term] conseq), (CP.subst_term [v1, term]))
     | _ -> ((ante, conseq), fun x -> x)
@@ -798,7 +803,6 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  let conseq0 = CP.redundant_b_f conseq0 in
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -819,12 +823,19 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
         let fold_fun (res1,res2,res3) (ante, conseq) =
           if res1 then 
-              let res1 = tp_imply ante conseq imp_no timeout in
-              let l1 = CP.get_pure_label ante in
-              let l2 = CP.get_pure_label conseq in
-              if res1 then (res1,(l1,l2)::res2,None)
-              else (res1,res2,l2)
-          else (res1,res2,res3) in
+            let res1 =
+              if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+                let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout in
+                if res1 then res1
+                else tp_imply ante conseq imp_no timeout 
+              else       
+                tp_imply ante conseq imp_no timeout in
+            let l1 = CP.get_pure_label ante in
+            let l2 = CP.get_pure_label conseq in
+            if res1 then 
+              (res1,(l1,l2)::res2,None)
+            else (res1,res2,l2)
+          else (res1,res2,res3)in
         List.fold_left fold_fun (true,[],None) pairs
   end
 ;;

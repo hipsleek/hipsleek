@@ -69,7 +69,7 @@ let rec compute_fo_formula (f0 : formula) var_map : unit =
   How about quantified formulas? Rename all quantified variables.
 *)
 and b_formulas_list (f0 : formula) : b_formula list = match f0 with
-  | BForm (bf,_,_) -> [bf]
+  | BForm (bf,_) -> [bf]
   | And (f1, f2, _)
   | Or (f1, f2, _, _) ->
 	  let l1 = b_formulas_list f1 in
@@ -284,7 +284,7 @@ and compute_fo_exp (e0 : exp) order var_map : bool = match e0 with
    a1 = a2 + a3 + a4 ==> ex f . f = a2 + a3 & a1 = f + a4
 *)
 and normalize (f0 : formula) : formula = match f0 with
-  | BForm (bf,lbl,an) -> normalize_b_formula bf lbl an
+  | BForm (bf,lbl) -> normalize_b_formula bf lbl
   | And (f1, f2, pos) ->
 	  let nf1 = normalize f1 in
 	  let nf2 = normalize f2 in
@@ -390,15 +390,15 @@ and is_normalized_term (e : exp) : bool = match e with
   | Add (e1, e2, _) -> (is_var_num e1) && (is_var_num e2)
   | _ -> false
 
-and normalize_b_formula (bf0 : b_formula) lbl an: formula =
+and normalize_b_formula (bf0 : b_formula) lbl: formula =
   let helper2 mk e1 e2 pos =
 	let a1, s1 = split_add_subtract e1 in
 	let a2, s2 = split_add_subtract e2 in
 	let left = a1 @ s2 in
 	let right = a2 @ s1 in
-	let left_e, left_f, left_v = flatten_list left an in
-	let right_e, right_f, right_v = flatten_list right an in
-	let tmp = BForm ((mk left_e right_e pos),lbl,an) in
+	let left_e, left_f, left_v = flatten_list left in
+	let right_e, right_f, right_v = flatten_list right in
+	let tmp = BForm ((mk left_e right_e pos),lbl) in
 	let tmp1 = mkAnd left_f right_f pos in
 	let tmp2 = mkAnd tmp tmp1 pos in
 	let res_f = mkExists (left_v @ right_v) tmp2 lbl pos in
@@ -413,11 +413,11 @@ and normalize_b_formula (bf0 : b_formula) lbl an: formula =
 	  | BagNotIn _
 	  | BagSub _
 	  | BagMin _
-	  | BagMax _ -> BForm (bf0,lbl,an)
+	  | BagMax _ -> BForm (bf0,lbl)
 	  | Eq (e1, e2, pos) -> 
 		  if ((is_var_num e1 || is_null e1) && is_normalized_term e2) || 
 			((is_var_num e2 || is_null e2) && is_normalized_term e1)
-		  then (BForm (bf0,lbl,an))
+		  then (BForm (bf0,lbl))
 		  else helper2 mkEq e1 e2 pos
 	  | Neq (e1, e2, pos) -> mkNot (helper2 mkEq e1 e2 pos) lbl pos
 	  | Lt (e1, e2, pos) -> helper2 mkLt e1 e2 pos
@@ -475,7 +475,7 @@ and split_add_subtract (e0 : exp) : (exp list * exp list) = match e0 with
    second component: (optional) formula linking new expression and old one
    last component: existential variables introduced during the process
 *)
-and flatten_list (es0 : exp list) an : (exp * formula * spec_var list) = 
+and flatten_list (es0 : exp list) : (exp * formula * spec_var list) = 
 (*
   let helper e =
 	if is_var_num e || is_null e then (e, mkTrue no_pos, [])
@@ -492,19 +492,19 @@ and flatten_list (es0 : exp list) an : (exp * formula * spec_var list) =
 	| [] -> failwith ("flatten_list: es0 should be nonempty.")
 	| [e] -> (e, mkTrue no_pos, [])
 	| e1 :: e2 :: rest -> begin
-		if is_zero e1 then flatten_list (e2 :: rest) an
-		else if is_zero e2 then flatten_list (e1 :: rest) an  
+		if is_zero e1 then flatten_list (e2 :: rest)
+		else if is_zero e2 then flatten_list (e1 :: rest)  
 		else
 		  let pos = pos_of_exp e1 in
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
 		  let sv = SpecVar (Prim Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
-		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos) , None,an) in
+		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos) , None) in
 			if Util.empty rest then
 			  (new_e, additional_e, [sv])
 			else
 			  let new_es = new_e :: rest in
-			  let new1, f1, v1 = flatten_list new_es an in
+			  let new1, f1, v1 = flatten_list new_es in
 			  let res_f = mkAnd f1 additional_e pos in
 				(new1, res_f, sv :: v1)
 	  end
@@ -676,7 +676,7 @@ and print_var_map var_map =
 and mona_of_formula f0 = mona_of_formula_helper f0
 
 and mona_of_formula_helper f0 = match f0 with
-  | BForm (bf,_,_) -> mona_of_b_formula bf 
+  | BForm (bf,_) -> mona_of_b_formula bf 
   | And (f1, f2, _) ->
 	  let tmp1 = mona_of_formula_helper f1 in
 	  let tmp2 = mona_of_formula_helper f2 in
@@ -816,7 +816,7 @@ let is_sat (f : formula) : bool =
   if !log_all_flag == true then
 	output_string log_all "\n\n[mona.ml]: #is_sat\n";
   let f = elim_exists f in
-  let tmp_form = (imply f (BForm(BConst(false, no_pos), None,None))) in
+  let tmp_form = (imply f (BForm(BConst(false, no_pos), None))) in
 	match tmp_form with
 	  | true -> 
 		  begin 

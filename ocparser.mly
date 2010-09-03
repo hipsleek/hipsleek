@@ -3,17 +3,8 @@
   open Cpure
 
   module Err = Error
-  let subst_lst = ref ([]:(string*string)list)
-  let typ_lst = ref ([]:(string*typ)list)
-  let get_typ s = List.fold_left (fun a (c,t)-> if (c=s) then t else a) (Prim Int) !typ_lst
-  let spec_var_of_string s = 
-	let n = String.length s in
-	  if String.get s (n-1) = '\'' then 
-    let name = String.sub s 0 (n-1) in
-		SpecVar ((get_typ name), name, Primed)
-	  else
-		SpecVar ((get_typ s), s, Unprimed)
-
+  let subst_lst = ref ([]:(string*string*typ)list)
+  
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();
@@ -95,11 +86,9 @@ relation: relation UNION relation {
 pconstr: pconstr AND pconstr { 
   mkAnd $1 $3 (get_pos 2)
 }
-| lbconstr { 
-	fst $1 
-  }
+| lbconstr { fst $1}
 | EXISTS OPAREN var_list COLON pconstr CPAREN { 
-	let svars = List.map (fun x -> SpecVar ((get_typ (fst x)), fst x, snd x)) $3 in
+	let svars = $3 in
 	let qf f v = mkExists [v] f None (get_pos 1) in
 	let res = List.fold_left qf $5 svars in
 	  res
@@ -113,7 +102,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkLt ae $3 None (get_pos 2) None in
+			let tmp = build_relation mkLt ae $3 None (get_pos 2) in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of <"}
@@ -122,7 +111,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkLte ae $3 None (get_pos 2) None in
+			let tmp = build_relation mkLte ae $3 None (get_pos 2) in
 			  (mkAnd b tmp (get_pos 2) , Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of <="}
@@ -131,7 +120,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkGt ae $3 None (get_pos 2) None in
+			let tmp = build_relation mkGt ae $3 None (get_pos 2) in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of >"}
@@ -140,7 +129,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkGte ae $3 None (get_pos 2) None in
+			let tmp = build_relation mkGte ae $3 None (get_pos 2) in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of >="}
@@ -149,7 +138,7 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkEq ae $3 None (get_pos 2) None in
+			let tmp = build_relation mkEq ae $3 None (get_pos 2) in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of ="}
@@ -158,31 +147,31 @@ lbconstr: bconstr {
 	let b, oae = $1 in
 	  match oae with
 		| Some ae ->
-			let tmp = build_relation mkNeq ae $3 None (get_pos 2) None in
+			let tmp = build_relation mkNeq ae $3 None (get_pos 2) in
 			  (mkAnd b tmp (get_pos 2), Some $3)
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of !="}
 }
 ;
 
-bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2) None, Some $3) }
-| aexp_list LTE aexp_list { (build_relation mkLte $1 $3 None (get_pos 2) None, Some $3) }
-| aexp_list GT aexp_list { (build_relation mkGt $1 $3 None (get_pos 2) None, Some $3) }
-| aexp_list GTE aexp_list { (build_relation mkGte $1 $3 None (get_pos 2) None, Some $3) }
-| aexp_list EQ aexp_list { (build_relation mkEq $1 $3 None (get_pos 2) None, Some $3) }
-| aexp_list NEQ aexp_list { (build_relation mkNeq $1 $3 None (get_pos 2) None, Some $3) }
-| TRUE { (BForm (BConst (true, get_pos 1) , None , None), None) }
-| FALSE { (BForm (BConst (false, get_pos 1) , None , None), None) }
+bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2), Some $3) }
+| aexp_list LTE aexp_list { (build_relation mkLte $1 $3 None (get_pos 2), Some $3) }
+| aexp_list GT aexp_list { (build_relation mkGt $1 $3 None (get_pos 2), Some $3) }
+| aexp_list GTE aexp_list { (build_relation mkGte $1 $3 None (get_pos 2), Some $3) }
+| aexp_list EQ aexp_list { (build_relation mkEq $1 $3 None (get_pos 2), Some $3) }
+| aexp_list NEQ aexp_list { (build_relation mkNeq $1 $3 None (get_pos 2), Some $3) }
+| TRUE { (BForm (BConst (true, get_pos 1) , None), None) }
+| FALSE { (BForm (BConst (false, get_pos 1) , None), None) }
 ;
 
 aexp: cid {
-	Var (SpecVar ((get_typ (fst $1)), fst $1, snd $1), get_pos 1)
+	Var ($1,get_pos 1)
   }
 | ICONST {
 	IConst ($1, get_pos 1)
   }
 | ICONST cid {
-	Mult (IConst ($1, get_pos 1), (Var (SpecVar ((get_typ (fst $2)), fst $2, snd $2), get_pos 2)), get_pos 1)
+	Mult (IConst ($1, get_pos 1), (Var ($2,get_pos 2)), get_pos 1)
   }
 | aexp PLUS aexp {
 	Add ($1, $3, get_pos 2)
@@ -203,19 +192,21 @@ aexp_list_rec: aexp { [$1] }
 | aexp_list_rec COMMA aexp { $3 :: $1}
 ;
 
-var_list: { [] : (ident * primed) list }
-| var_list_rec { List.rev $1 : (ident * primed) list }
+var_list: { [] : spec_var list }
+| var_list_rec { List.rev $1 : spec_var list }
 ;
 
-var_list_rec: cid { ([$1]) : (ident * primed) list }
-| var_list_rec COMMA cid { ($3 :: $1) : (ident * primed) list }
+var_list_rec: cid { ([$1]) : spec_var list }
+| var_list_rec COMMA cid { ($3 :: $1) : spec_var list }
 ;
 
 /* identifiers appearing in constraints */
-cid: ID { match (List.filter (fun (a,b)->((String.compare $1 a)==0)) !subst_lst) with 
-					|  [] -> ($1, Unprimed)
-					| (a,b)::h-> (b,Unprimed) }
-| IDPRIMED { match (List.filter (fun (a,b)->((String.compare $1 a)==0)) !subst_lst) with 
-					|  [] -> ($1, Primed)
-					| (a,b)::h-> (b,Primed) }
+cid: ID { 
+        match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
+					|  [] -> SpecVar(Prim Int,$1, Unprimed)
+					| (a,b,t)::h-> SpecVar(t, b,Unprimed) }
+| IDPRIMED { 
+        match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
+					|  [] -> SpecVar(Prim Int,$1, Primed)
+					| (a,b,t)::h-> SpecVar(t, b,Primed) }
 ;

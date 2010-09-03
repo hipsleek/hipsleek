@@ -93,6 +93,7 @@ void insert(ref node2 t, int v)
 				return;	
 			}
 			else {
+      assume false;
 				node2 tmp = t.right;
 				if(height(t.left) == height(t.right)) { // tree is full - we must start another level 
 					aux = t.left;

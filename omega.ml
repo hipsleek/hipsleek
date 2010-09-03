@@ -20,20 +20,19 @@ let log_all_flag = ref false
 let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 let omega_of_spec_var (sv : spec_var):string = match sv with
-  | SpecVar (_, v, p) -> 
-		let ln = (String.length v) in
-		let r =  
-				if (ln<15) then v 
-						else  
-						match (List.filter (fun (a,b)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
-								| []-> let r_c = String.sub v (ln-15)  15 in
-											 let r_c = if((String.get r_c 0)=='_') then String.sub r_c 1 ((String.length r_c)-1) else r_c in
-											begin
-											Ocparser.subst_lst := (r_c,v)::!Ocparser.subst_lst; 
-											r_c end
-					| (a,b)::h->  a
-						in 
-						r ^ (if is_primed sv then Oclexer.primed_str else "")
+  | SpecVar (t, v, p) -> 
+		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
+				  | []->           
+            let ln = (String.length v) in  
+            let r_c = if (ln<15) then v
+              else 
+                let v_s = String.sub v (ln-15)  15 in
+                if((String.get v_s 0)=='_') then String.sub v_s 1 ((String.length v_s)-1) else v_s in
+            begin
+              Ocparser.subst_lst := (r_c,v,t)::!Ocparser.subst_lst; 
+							r_c end
+					| (a,b,_)::h->  a in 
+		r ^ (if is_primed sv then Oclexer.primed_str else "")
 		
 	
 
@@ -98,7 +97,7 @@ and omega_of_b_formula b = match b with
   | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
  
 and omega_of_formula f  = match f with
-  | BForm (b,_,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
+  | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
   | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
   | Or (p1, p2,_ , _) -> 	"(" ^ (omega_of_formula p1) ^ " | " ^ (omega_of_formula p2) ^ ")"
   | Not (p,_ , _) ->       " (not (" ^ (omega_of_formula p) ^ ")) "	
@@ -318,7 +317,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
         let v = List.hd vlist in
         let restvars = List.tl vlist in
         let restf = match_helper restvars rest f in
-        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos None in
+        let tmp1 = mkEqExp (Var (v, no_pos)) ae no_pos in
         let tmp2 = mkAnd tmp1 restf no_pos in
         tmp2
     in
@@ -335,7 +334,6 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 let simplify (pe : formula) : formula =
   begin
     Ocparser.subst_lst := [];
-    Ocparser.typ_lst := types_of_vars pe;
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -398,7 +396,6 @@ let pairwisecheck (pe : formula) : formula =
 let hull (pe : formula) : formula =
   begin
 		Ocparser.subst_lst := [];
-    Ocparser.typ_lst := types_of_vars pe;
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in

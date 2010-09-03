@@ -63,8 +63,8 @@ let process_cmd_line () = Arg.parse [
    "Choose frontend:\n\tnative: Native (default)\n\txml: XML");
   ("-int", Arg.Set inter,
    "Run in interactive mode.");
-  ("-tp", Arg.Symbol (["cvcl"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "z3"], Tpdispatcher.set_tp),
-   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tz3: Z3");
+  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "z3"], Tpdispatcher.set_tp),
+   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tz3: Z3");
   ("-v", Arg.Set print_version_flag,
    "Print version information");
   ("-version", Arg.Set print_version_flag,
@@ -73,6 +73,8 @@ let process_cmd_line () = Arg.parse [
    "Turn on devel_debug");
   ("--log-omega", Arg.Set Omega.log_all_flag,
    "Log all formulae sent to Omega Calculator in file allinput.oc");
+  ("--log-mona", Arg.Set Mona.log_all_flag,
+   "Log all formulae sent to Mona in file allinput.mona");
    ("--unsat-elim", Arg.Set Globals.elim_unsat,
    "Turn on unsatisfiable formulae elimination during type-checking");
   ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");

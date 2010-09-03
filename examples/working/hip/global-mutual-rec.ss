@@ -30,6 +30,7 @@ void main()
    ensures n' = 5 & k' = 5;
 {
    n = 10;
+   int t=5;
    k = 10;
    decrease1(10);
 }

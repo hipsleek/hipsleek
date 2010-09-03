@@ -650,7 +650,7 @@ and add_struc_origins (f:struc_formula) origs =
 
 and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars with
   | sv :: rest ->
-	  let f = CP.mkEqVar (CP.to_primed sv) (CP.to_unprimed sv) pos None in
+	  let f = CP.mkEqVar (CP.to_primed sv) (CP.to_unprimed sv) pos in
 	  let restf = no_change rest pos in
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
@@ -2057,7 +2057,7 @@ let rec replace_heap_formula_label nl f = match f with
 	| HFalse -> f
 	
 let rec replace_pure_formula_label nl f = match f with
-  | CP.BForm (bf,_,s) -> CP.BForm (bf,(nl()),s)
+  | CP.BForm (bf,_) -> CP.BForm (bf,(nl()))
   | CP.And (b1,b2,b3) -> CP.And ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),b3)
   | CP.Or (b1,b2,b3,b4) -> CP.Or ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),(nl()),b4)
   | CP.Not (b1,b2,b3) -> CP.Not ((replace_pure_formula_label nl b1),(nl()),b3)
@@ -2237,7 +2237,7 @@ let rename_labels transformer e =
 	let f_e e = Some e in
 	let f_p_f e = 
 		match e with
-		| CP.BForm (b,f_l,an) -> Some (CP.BForm (b,(n_l_f f_l),an))
+		| CP.BForm (b,f_l) -> Some (CP.BForm (b,(n_l_f f_l)))
 		| CP.And (e1,e2,l) -> None
 		| CP.Or (e1,e2,f_l,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),l)))
 		| CP.Not (e1,f_l, l) -> (Some (CP.Not (e1,(n_l_f f_l),l)))
@@ -2384,7 +2384,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
     | Some (cvt,cvn) ->        
         if not(b_rez) then ctx
         else begin
-      	  let vsv_f = formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos None) no_pos in
+      	  let vsv_f = formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkRes rest] ctx1 in
       	  if !Globals.elim_exists then elim_ex_fn ctx1 else  ctx1

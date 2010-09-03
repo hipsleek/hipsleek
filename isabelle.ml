@@ -211,7 +211,7 @@ and isabelle_of_b_formula b = match b with
 (* pretty printing for formulas *)
 and isabelle_of_formula f =
     match f with
-    | CP.BForm (b,_,_) ->
+    | CP.BForm (b,_) ->
 	  if (is_bag_formula f) then
 	    "(" ^ (isabelle_of_b_formula b) ^ ")"
 	  else ""
@@ -324,7 +324,7 @@ let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)
 
 let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ ". ") l)
 
-let isabelle_command isabelle_file_name = ("isabelle -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
+let isabelle_command isabelle_file_name = ("isabelle-process -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
 
 let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
@@ -422,7 +422,7 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_file ("\n\n[isabelle.ml]: #is_sat " ^ sat_no ^ "\n");
-	let tmp_form = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None, None)) !Globals.sat_timeout sat_no) in
+	let tmp_form = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
 		match tmp_form with
 			| true ->
 				begin
@@ -441,7 +441,7 @@ let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 (* building the multiset theory image -  so that it won't be loaded for each theory that needs to be proved *)
 (* there is an option when running the system --build-image which creates the heap image *)
 let building_image flag = begin
-	if flag = "true" & !bag_flag then begin
+	if flag = "true" (*& !bag_flag*) then begin
 	  let multiset_file = open_out "multiset.thy" in
 	  begin
 		output_string multiset_file ("theory multiset imports Multiset Main begin\n end");
@@ -455,7 +455,7 @@ let building_image flag = begin
 		flush root_file;
 		close_out root_file;
 	  end;
-	  ignore(Sys.command "isatool usedir -b HOL MyImage");
+		ignore(Sys.command "isabelle usedir -b HOL MyImage");
 	end
 end
 

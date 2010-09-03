@@ -1471,7 +1471,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
   match (List.hd f) with
     | Cformula.EBase b-> 
         let ba,br= symp_struc_to_formula f in
-        let bt = Cpure.add_null (MCP.fold_mem_lst (CP.mkTrue no_pos) true true ba) self None in
+        let bt = Cpure.add_null (MCP.fold_mem_lst (CP.mkTrue no_pos) true true ba) self in
         let is_sat = if br = [] then TP.is_sat_sub_no bt sat_subno
             else
               let sat = TP.is_sat_sub_no bt sat_subno in 
@@ -1482,7 +1482,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
             let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
             let ba' = MCP.memo_drop_null self ba in
             let ba',_ = List.partition (MCP.filter_useless_mem []) ba' in
-            let base_case = Cpure.BForm ((Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)),None,None) in
+            let base_case = Cpure.BForm ((Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)),None) in
         Some (base_case,(ba',br'))		
     | Cformula.ECase b-> 
           if (List.length b.Cformula.formula_case_branches) <>1 then 
@@ -3464,7 +3464,7 @@ and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula =
     
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
   match f0 with
-    | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl,None)
+    | IP.BForm (bf,lbl) -> CP.BForm (trans_pure_b_formula bf stab , lbl)
     | IP.And (f1, f2, pos) ->
         let pf1 = trans_pure_formula f1 stab in
         let pf2 = trans_pure_formula f2 stab in CP.mkAnd pf1 pf2 pos
@@ -4340,9 +4340,8 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 	    | 0 -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
 	    | 3 -> (global_ex,implvar@b.Iformula.formula_ext_explicit_inst, [] ,ex)				
 	    | 5 -> (global_ex,[], implvar@b.Iformula.formula_ext_explicit_inst,ex)				
-	    | _ -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)
-	  in
-	    
+	    | _ -> (global_ex,implvar,b.Iformula.formula_ext_explicit_inst,ex)in
+	              (*let _ = print_string ("impl vars2: "^(Iprinter.string_of_var_list implvar)^"\n") in*)
 	  let h3 = Util.difference h3 ex in
 	  let _ = if (*(!Globals.instantiation_variants=0 || !Globals.instantiation_variants=3 || !Globals.instantiation_variants=5)&&*)(List.length (*(Util.difference implvar (Iformula.fv onb))*)
 																	   (Util.difference implvar heap_vars))>0 then 
@@ -4402,19 +4401,22 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
   let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
     | Iast.Label (pid, b) -> Iast.Label (pid, (helper ren b))
     | Iast.Assert b ->
-        Iast.Assert{Iast.exp_assert_asserted_formula = (match b.Iast.exp_assert_asserted_formula with
-							  | None -> None
-							  | Some f-> Some 
-							      ((Iformula.subst_struc 
-								  (List.fold_left(fun a (c1,c2)-> 
-										    ((c1,Unprimed),(c2,Unprimed))::
-										      ((c1,Primed),(c2,Primed))::a
-										 ) [] ren) (fst f)),(snd f)));
-		    Iast.exp_assert_assumed_formula = (match b.Iast.exp_assert_assumed_formula with
+      let subst_list = 
+        List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren in
+      let assert_formula = match b.Iast.exp_assert_asserted_formula with
+					  | None -> None
+						| Some (f1,f2)-> Some (Iformula.subst_struc subst_list f1,f2) in
+      let assume_formula = match b.Iast.exp_assert_assumed_formula with
 							 | None -> None
-							 | Some f -> Some (Iformula.subst (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) f));
+							 | Some f -> Some (Iformula.subst subst_list f) in
+      (*let r =*) Iast.Assert{
+        Iast.exp_assert_asserted_formula = assert_formula;
+		    Iast.exp_assert_assumed_formula = assume_formula;
 		    Iast.exp_assert_pos = b.Iast.exp_assert_pos;
-		    Iast.exp_assert_path_id = b.Iast.exp_assert_path_id}
+		    Iast.exp_assert_path_id = b.Iast.exp_assert_path_id} (*in
+      let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
+      let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
+      r*)
     | Iast.Assign b->
         Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
            Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
@@ -4513,18 +4515,18 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
       | Iast.Assert b->
           let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
             | None -> (None,h)
-            | Some f -> 
-          let r, _ = case_normalize_struc_formula prog h p (fst f) true true in
-            (Some (r,(snd f)),h) in
+            | Some asserted_f -> 
+          let r, _ = case_normalize_struc_formula prog h p (fst asserted_f) true true in
+            (Some (r,(snd asserted_f)),h) in
           let assm_nf  = match b.Iast.exp_assert_assumed_formula with
             | None-> None 
             | Some f -> 
           Some (fst (case_normalize_formula prog nh false f))in
-            (Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
+          let rez_assert = Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
                Iast.exp_assert_assumed_formula = assm_nf;
                Iast.exp_assert_pos = b.Iast.exp_assert_pos;
-               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;
-             }, h, p, [])
+               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
+            (rez_assert, h, p, [])
       | Iast.Assign b-> 
           let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
           let l2,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
@@ -4717,7 +4719,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
     
   let rec get_pure_conj_list (f:CP.formula):(bool*CP.b_formula) list = match f with
-     | CP.BForm (l,_,_) -> [(true,l)]
+     | CP.BForm (l,_) -> [(true,l)]
      | CP.And (f1,f2,_ )-> (get_pure_conj_list f1)@(get_pure_conj_list f2)
      | CP.Or _ -> []
      | CP.Not (f,_,_) -> 
@@ -4775,8 +4777,8 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       let l = get_pure_conj_list f in
       let l = filter_pure_conj_list l in      
       let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
-      let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None,None)) no_pos)) (CP.mkTrue no_pos) neq in
-      let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None,None)) no_pos)) (CP.mkTrue no_pos) eq in
+      let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
+      let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
       let ev = (Util.difference (CP.fv n_f) v_l) in
       (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists ev n_f None no_pos))^"\n") in*)
       let r = hull_invs v_l (TP.simplify (CP.mkExists ev n_f None no_pos)) in   
@@ -4866,13 +4868,13 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       let lr = match (List.length l1r),(List.length l2r) with 
         | 0,0 | _,0 | 0,_ -> CP.mkTrue no_pos        
         | _,_ -> CP.mkOr 
-            (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) l1r) 
-            (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in
+            (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r) 
+            (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in
       (*let _ = print_string ("before hull: "^(Cprinter.string_of_pure_formula lr)^"\n") in*)
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-                      | CP.BForm (l, _,_) -> [l]
+                      | CP.BForm (l, _) -> [l]
                       | CP.And (f1,f2,_) -> (r f1)@(r f2)
                       | _ -> [] in 
                List.concat (List.map r lr) in  
@@ -4881,7 +4883,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
     (*let _ = print_string ("invs from: "^(String.concat "\n"(List.map (fun (_,c)->
-      Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) c))start))^"\n") in*)
+      Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) c))start))^"\n") in*)
     let all = List.fold_left (fun (a1,a2)(c1,c2)-> if a1=[] then ([c1],c2)else (c1::a1, combine_pures c2 a2)) ([],[]) pure_list in
     let rec comp i (crt_lst: (formula_label list * CP.b_formula list)list) (last_lst: (formula_label list * CP.b_formula list)list) =
       if i>=l then all :: crt_lst
