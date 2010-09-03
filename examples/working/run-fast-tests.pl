@@ -30,7 +30,8 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
 	if (!exists($provers{$prover})){		
-		print "name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' ";
+		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek\n";
+		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
 		exit(0);
 	}
 }else{
@@ -202,8 +203,9 @@ $output_file = "log";
                                   "insert","SUCCESS",
                                   "delete_last","SUCCESS",
                                   "main","SUCCESS"],
-		        ["global-mutual-rec.ss",2,"decrease1","SUCCESS",
-                                          "decrease2","SUCCESS"]
+		        ["global-mutual-rec.ss",3,"decrease1","SUCCESS",
+                                          "decrease2","SUCCESS",
+										  "main","SUCCESS"]
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
