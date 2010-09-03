@@ -14,7 +14,10 @@ let set_log_file fn =
   else if Sys.file_exists fn then
 	failwith "--log-cvc3: file exists"
   else
-	cvc3_log := open_out fn
+	begin
+		cvc3_log := open_out fn (* opens fn for writing and returns an output channel for fn - cvc3_log is the output channel*);
+		output_string !cvc3_log cvc3_command
+	end
 
 let run_cvc3 (input : string) : unit =
   begin
@@ -23,7 +26,14 @@ let run_cvc3 (input : string) : unit =
 	  close_out chn;
 	  ignore (Sys.command cvc3_command)
   end
-
+  
+let log_answer_cvc3 (answer : string) : unit =
+	 if !log_cvc3_formula then 
+	  begin
+		output_string !cvc3_log answer;
+		flush !cvc3_log
+	  end
+		
 let rec cvc3_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> v ^ (if CP.is_primed sv then "PRMD" else "")
 
@@ -91,7 +101,6 @@ and cvc3_of_formula f = match f with
   | CP.And (p1, p2, _) -> "(" ^ (cvc3_of_formula p1) ^ " AND " ^ (cvc3_of_formula p2) ^ ")"
   | CP.Or (p1, p2,_, _) -> "(" ^ (cvc3_of_formula p1) ^ " OR " ^ (cvc3_of_formula p2) ^ ")"
   | CP.Not (p,_, _) ->
-(*	  "(NOT (" ^ (cvc3_of_formula p) ^ "))" *)
 	  begin
 		match p with
 		  | CP.BForm (CP.BVar (bv, _),_) -> (cvc3_of_spec_var bv) ^ " = 0"
@@ -125,17 +134,16 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
 	else (String.concat ", " (List.map cvc3_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
 	if Util.empty bool_vars then ""
-	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
+	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in 
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
-  let ante_str = (* (cvc3_of_formula_decl ante) ^ (cvc3_of_formula_decl conseq) ^ *)
+  let ante_str =
 	"ASSERT (" ^ (cvc3_of_formula ante) ^ ");\n" in
-	(*  let conseq_str =  "QUERY (FORALL (S1: SET): FORALL (S2: SET): EXISTS (S3: SET): union(S1, S2, S3)) 
-		=> (" ^ (cvc3_of_formula conseq) ^ ");\n" in *)
   let conseq_str =  "QUERY (" ^ (cvc3_of_formula conseq) ^ ");\n" in
 	(* talk to CVC3 *)
   let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
 	if !log_cvc3_formula then begin
 	  output_string !cvc3_log "%%% imply\n";
+	  (*output_string !cvc3_log (Cprinter.string_of_pure_formula ante);*)
 	  output_string !cvc3_log f_cvc3;
 	  flush !cvc3_log
 	end;
@@ -147,32 +155,35 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
 	  if l >= n then
 		let tmp = String.sub res_str 0 n in
 		  if tmp = "Valid." then 
-			(close_in chn; Some true)
+			(
+			 close_in chn; 
+			 log_answer_cvc3 "%%%Res: Valid\n\n";
+			 Some true)
 		  else
 			let n1 = String.length "Invalid." in
 			  if l >= n1 then
 				let tmp1 = String.sub res_str 0 n1 in
 				  if tmp1 = "Invalid." then
 					begin
-					  (*
-						if Omega.imply ante conseq then
-						print_string ("\nimply_raw:inconsistent result for:\n" ^ f_cvc3 ^ "\n\n"); 
-					  *)
-					  (close_in chn; 
+					  (
+					   close_in chn; 
+					   log_answer_cvc3 "%%%Res: Invalid\n\n";
 					   Some false)
 					end
 				  else
-					((*print_string "imply_raw:Unknown 1";
-					   print_string ("\n\n" ^ f_cvc3 ^ "\n\n");*)
-					  close_in chn; 
-					  None)
+					(
+						close_in chn; 
+						log_answer_cvc3  "%%%Res: Unknown\n\n";
+						None)
 			  else
-				((*print_string "imply_raw:Unknown 2";*) 
+				(
 				  close_in chn; 
+				  log_answer_cvc3  "%%%Res: Unknown\n\n";
 				  None)
 	  else 
 		((*print_string "imply_raw:Unknown 3";*) 
 		  close_in chn; 
+		  if !log_cvc3_formula then log_answer_cvc3 "%%%Res: Unknown\n";
 		  None)
 		  
 and imply (ante : CP.formula) (conseq : CP.formula) : bool =
@@ -230,11 +241,8 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 			let tmp = String.sub res_str 0 n in
 			  if tmp = "Satisfiable." then 
 				begin
-				  (*
-					if not (Omega.is_sat f) then
-					print_string ("\ninconsistent result for:\n" ^ f_cvc3 ^ "\n\n");
-				  *)
 				  close_in chn;
+				  log_answer_cvc3  ("%%%Res: Satisfiable\n\n");
 				  Some true
 				end
 			  else
@@ -242,22 +250,26 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 				  if l >= n1 then
 					let tmp1 = String.sub res_str 0 n1 in
 					  if tmp1 = "Unsatisfiable." then
-						(close_in chn; 
+						(
+						 close_in chn; 
+						 log_answer_cvc3 ("%%%Res: Unsatisfiable\n\n");
 						 Some false)
 					  else begin
-						(* print_string ("is_sat_raw: Unknown 1\n"); *)
-						(close_in chn; 
+						(
+						 close_in chn; 
+						 log_answer_cvc3  ("%%%Res: Unknown\n\n");
 						 None)
 					  end
 				  else begin
-					(* print_string ("is_sat_raw: Unknown 2\n"); *)
-					(close_in chn; 
+					(
+					 close_in chn; 
+					 log_answer_cvc3  ("%%%Res: Unknown\n\n");
 					 None)
 				  end
 		  else begin
-			(* print_string ("is_sat_raw: Unknown 3\n");
-			   print_string ("\n\n" ^ f_cvc3 ^ "\n\n"); *)
-			(close_in chn; 
+			(
+			 close_in chn; 
+			 log_answer_cvc3("%%%Res: Unknown\n\n");
 			 None)
 		  end
 	  end
@@ -276,7 +288,7 @@ and is_sat (f : CP.formula) (sat_no : string) : bool =
   in
 	begin
 	  try
-		ignore (Sys.remove infilename);
+		ignore (Sys.remove infilename); 
 		ignore (Sys.remove resultfilename)
 	  with
 		| e -> ignore e
