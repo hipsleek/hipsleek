@@ -111,7 +111,6 @@ let op_f_or = "or"
 let op_lappend = "append"
 let op_cons = ":::"
 
-
 (** add a bracket around e if is simple yields false *)
 let pr_bracket (isSimple:'a -> bool) (pr_elem:'a -> unit) (e:'a) : unit =
  if (isSimple e) then pr_elem e
@@ -534,14 +533,13 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
-    
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
   let f_b e =  pr_bracket exp_wo_paren pr_formula_exp e in
   let f_b_no e =  pr_bracket (fun x -> true) pr_formula_exp e in
     match e with
-      | P.BConst (b,l) -> fmt_bool b 
+      | P.BConst (b,l) -> fmt_bool b
       | P.BVar (x, l) -> fmt_string (string_of_spec_var x)
       | P.Lt (e1, e2, l) -> f_b e1; fmt_string op_lt ; f_b e2
       | P.Lte (e1, e2, l) -> f_b e1; fmt_string op_lte ; f_b e2
@@ -669,9 +667,8 @@ let printer_of_h_formula (crt_fmt: Format.formatter) (e:h_formula) : unit =
 
 
 let  pr_pure_formula_branches (f, l) =
- (pr_bracket pure_formula_wo_paren pr_pure_formula f); 
-   pr_seq_option " & " (fun (l, f) -> fmt_string ("\"" ^ l ^ "\" : "); 
-   pr_pure_formula f) l
+  (pr_bracket pure_formula_wo_paren pr_pure_formula f);
+  pr_seq_option " & " (fun (l, f) -> fmt_string ("\"" ^ l ^ "\" : "); pr_pure_formula f) l
   (* match l with *)
   (* | [] -> string_of_pure_formula f *)
   (* | _ -> string_of_pure_formula f ^ " & [" ^ (String.concat "; " (List.map (fun (l, f) -> "\"" ^ l ^ "\" : " ^ string_of_pure_formula f) l)) ^ "]" *)
@@ -799,6 +796,240 @@ let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^
   
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
+(******************************************************************************************************************* 
+		Aug 2010 
+    Eliminate intermediate variables
+		- Intermediate variable is primed. Search for primed variables in formula e1 = e2, in both expression e1 and e2.
+		- Get the value of that intermediate variable in the other side of that formula.
+		- Replace in all existence of intermediate variable in list of formula.
+		- Build list of partial context again.
+********************************************************************************************************************)
+
+(** Revise name of variable **)
+
+let rev_name_var (sv : CP.spec_var)  : CP.spec_var =
+	match sv with
+		| CP.SpecVar (typ, id, pr) ->
+			if (not (List.mem id !all_var_name_list)) then
+				try 
+					let end_index = String.rindex id '_' in
+					let sub_var = String.sub id 0 end_index in
+						if (List.mem sub_var !all_var_name_list) then CP.SpecVar (typ, sub_var, pr)
+						else sv
+				with Not_found -> sv
+			else sv
+
+(** Check a variable is intermediate variable or not **)
+let is_inte_var (sv : CP.spec_var) : bool =
+ 	match sv with
+  	| CP.SpecVar (typ, id, pr) ->
+				if (List.mem id !all_var_name_list) then false
+				else true
+
+(** Find and get intermediate variable in boolean formula **)
+let rec get_inter_var_b_formula (f : CP.b_formula) lbl: ((CP.spec_var * CP.exp) list * CP.formula) =
+	match f with
+		| CP.BVar (sv, _) ->
+				if (is_inte_var sv) then ([(sv, CP.mkIConst 0 no_pos)], CP.mkTrue no_pos)
+				else ([], CP.BForm (f,lbl))
+  	| CP.Eq (e1, e2, _) ->
+			begin
+				match e1 with
+	   	 	| CP.Var (sv1, _) ->
+			      if (is_inte_var sv1) && (not (List.exists (fun sv -> CP.eq_spec_var sv sv1) (CP.afv e2)))
+						(* if e1 is a variable and is primed and e2 doesn't exist any e1 *)
+			      then ([(sv1, e2)], CP.mkTrue no_pos)
+			      else
+			        begin
+				      match e2 with
+				        | CP.Var (sv2, _) -> 
+						          if (is_inte_var sv2) && (not (List.exists (fun sv -> CP.eq_spec_var sv sv2) (CP.afv e1)))
+											(* if e2 is a variable and is primed and e1 doesn't exist any e1 *)
+						          then ([(sv2, e1)], CP.mkTrue no_pos)
+						          else ([], CP.BForm (f,lbl))
+				        | _ -> ([], CP.BForm (f,lbl))
+			        end
+	    	| _ -> (* e1 is not a variable *)
+	        begin
+	          match e2 with
+		        | CP.Var (sv2, _) ->
+				          if (is_inte_var sv2) && (not (List.exists (fun sv -> CP.eq_spec_var sv sv2) (CP.afv e1)))
+									(* if e2 is a variable and is primed and e1 doesn't exist any e1 *)
+				          then ([(sv2, e1)], CP.mkTrue no_pos)
+				          else ([], CP.BForm (f,lbl))
+		        | _ -> ([], CP.BForm (f,lbl))
+	        end
+    	end
+  	| _ -> ([], CP.BForm (f,lbl))
+
+(** Find and get intermediate variable in formula **)
+let rec get_inter_var (f : CP.formula) : ((CP.spec_var * CP.exp) list * CP.formula) =
+	match f with
+  	| CP.And (f1, f2, pos) ->
+    	let st1, rf1 = get_inter_var f1 in
+				if List.length st1 > 0 then
+			  	(st1, CP.mkAnd rf1 f2 pos)
+				else 
+			  	let st2, rf2 = get_inter_var f2 in
+			  	(st2, CP.mkAnd f1 rf2 pos)
+		| CP.Not (f, lbl, pos) ->
+			let st, rf = get_inter_var f in
+				if List.length st > 0 then
+			  	(st, rf)
+				else
+					([], f)
+  	| CP.BForm (bf,lbl) -> get_inter_var_b_formula bf lbl
+  	| _ -> ([], f)
+
+(** Eliminate an intermediate variable **)
+let rec elim_inter_var (f0 : formula) : formula =
+  match f0 with
+    | Or ({formula_or_f1 = f1;
+					 formula_or_f2 = f2;
+					 formula_or_pos = pos}) ->
+      	let ef1 = elim_inter_var f1 in
+      	let ef2 = elim_inter_var f2 in
+	  			(mkOr ef1 ef2 pos)
+    | Base ({formula_base_heap = h;
+				formula_base_pure = p;
+				formula_base_type = t;
+				formula_base_branches = b;
+				formula_base_flow = fl;
+				formula_base_pos = pos})
+    | Exists ({formula_exists_heap = h;
+				formula_exists_pure = p;
+				formula_exists_type = t;
+				formula_exists_branches = b;
+				formula_exists_flow = fl;
+				formula_exists_pos = pos}) ->
+					let st, pp1 = get_inter_var p in
+					if List.length st > 0 then
+			    	let one_subst = List.hd st in 
+			   	 	let tmp = mkBase h pp1 t fl b pos in
+			    	let new_baref = subst_exp [one_subst] tmp in 
+						let new_baref2 = elim_inter_var new_baref in
+							new_baref2
+					else
+						f0
+
+(** Parse and match from list of partial context to formula **)
+let rec proceed_list_partial_context lpc : list_partial_context = 
+	List.map (fun i -> proceed_partial_context i) lpc
+
+and proceed_partial_context pc : partial_context =
+  (proceed_list_br_fail (fst pc), proceed_list_br_ctx (snd pc))
+
+and proceed_list_br_fail list_br_fail : branch_fail list = 
+	List.map (fun i -> proceed_br_fail i) list_br_fail
+
+and proceed_list_br_ctx list_br_ctx : branch_ctx list = 
+	List.map (fun i -> proceed_br_ctx i) list_br_ctx
+
+and proceed_br_fail br_fail	: branch_fail =
+	(fst br_fail, proceed_fail_type (snd br_fail))
+
+and proceed_br_ctx br_ctx : branch_ctx =
+	(fst br_ctx, proceed_context (snd br_ctx))
+	
+and proceed_fail_type failtype : fail_type =
+  match failtype with
+		| Trivial_Reason _ -> failtype
+    | Basic_Reason (failctx) -> 
+				Basic_Reason {failctx with fc_current_lhs = (proceed_entail_state failctx.fc_current_lhs)}
+		| Or_Reason (f_type1, f_type2) ->
+				Or_Reason (proceed_fail_type f_type1, proceed_fail_type f_type2)
+		| And_Reason (f_type1, f_type2) ->
+				And_Reason (proceed_fail_type f_type1, proceed_fail_type f_type2)
+
+and proceed_context succ_ctx : context =
+	match succ_ctx with
+		| Ctx (es) -> Ctx (proceed_entail_state es)
+		| OCtx (ctx1, ctx2) -> OCtx (proceed_context ctx1, proceed_context ctx2)
+
+and proceed_entail_state es : entail_state =
+	{es with es_formula = (elim_inter_var (proceed_es_formula es.es_formula));
+					 es_evars = (List.map (fun i -> rev_name_var i) es.es_evars)}
+
+and proceed_es_formula esf : formula =
+	match esf with
+    | Or ({formula_or_f1 = f1;
+					 formula_or_f2 = f2;
+					 formula_or_pos = pos}) ->  
+      	let ef1 = proceed_es_formula f1 in
+      	let ef2 = proceed_es_formula f2 in
+	  			(mkOr ef1 ef2 pos)
+    | Base (bform) ->
+				Base {bform with formula_base_pure = (proceed_pure_formula bform.formula_base_pure)}
+    | Exists (eform) ->
+				Exists {eform with formula_exists_pure = (proceed_pure_formula eform.formula_exists_pure)}
+
+and proceed_pure_formula f : CP.formula =
+	match f with
+  	| CP.And (f1, f2, pos) ->
+				let rf1 = proceed_pure_formula f1 in
+				let rf2 = proceed_pure_formula f2 in
+					CP.mkAnd rf1 rf2 pos
+  	| CP.BForm (bf,lbl) -> 
+				let rbf = proceed_b_formula bf in
+					CP.BForm (rbf, lbl)
+		| CP.Exists (sv, f, flbl, loc) -> 
+				let sv_new = rev_name_var sv in
+				let rf = proceed_pure_formula f in
+					CP.mkExists [sv_new] rf flbl loc
+  	| _ -> f
+
+and proceed_b_formula bf : CP.b_formula =
+	match bf with
+		| CP.Lt (e1, e2, pos) ->
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkLt re1 re2 pos	
+		| CP.Lte (e1, e2, pos) ->
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkLte re1 re2 pos	
+		| CP.Gt (e1, e2, pos) ->
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkGt re1 re2 pos	
+		| CP.Gte (e1, e2, pos) ->
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkGte re1 re2 pos	
+		| CP.Eq (e1, e2, pos) ->
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkEq re1 re2 pos	
+		| CP.Neq (e1, e2, pos) ->
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkNeq re1 re2 pos
+		| _ -> bf
+
+and proceed_exp e : CP.exp =
+	match e with
+		| CP.Var (sv, pos) -> 
+			let new_sv = rev_name_var sv in
+				CP.mkVar new_sv pos
+		| CP.Add (e1, e2, pos) -> 
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkAdd re1 re2 pos
+		| CP.Subtract (e1, e2, pos) -> 
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkSubtract re1 re2 pos
+		| CP.Mult (e1, e2, pos) -> 
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkMult re1 re2 pos
+		| CP.Div (e1, e2, pos) -> 
+			let re1 = proceed_exp e1 in
+			let re2 = proceed_exp e2 in
+				CP.mkDiv re1 re2 pos
+		| _ -> e
+
+(************************************************************************************************************************)
 
 
   (* if String.length(hdr)>7 then *)
@@ -937,7 +1168,7 @@ let printer_of_partial_context (fmt: Format.formatter) (ctx: partial_context) : 
    fmt_cut (); pr_list_none pr_partial_context lc
     
 let string_of_list_partial_context (lc: list_partial_context) =
-    poly_string_of_pr pr_list_partial_context lc
+    poly_string_of_pr pr_list_partial_context (proceed_list_partial_context lc)
 
 let printer_of_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context) : unit =
   poly_printer_of_pr fmt pr_list_partial_context ctx 

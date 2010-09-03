@@ -1181,7 +1181,12 @@ let rec (* overriding test *) (* field duplication test *)
 		   let cviews = List.map (trans_view prog) tmp_views in
 		   let cdata =
                      List.map (trans_data prog) prog.I.prog_data_decls in
-		   let cprocs1 =
+			 let local_var_list = List.map (fun i -> proceed_proc_body i.I.proc_body) prog.I.prog_proc_decls in
+			 all_var_name_list := Util.remove_dups !all_var_name_list @ (List.flatten local_var_list);
+(*		 let _ = print_string "\nlocal variables: " in*)
+(*		 let _ = List.map (fun i -> print_string (i^" ")) !all_var_name_list in*)
+(*		 let _ = print_string "\n" in*)
+			 let cprocs1 =
                      List.map (trans_proc prog) prog.I.prog_proc_decls in
 		   let cprocs = !loop_procs @ cprocs1 in
 		   let (l2r_coers, r2l_coers) = trans_coercions prog in
@@ -1213,6 +1218,23 @@ let rec (* overriding test *) (* field duplication test *)
 			  c)))
 	end)
     else failwith "Error detected"
+
+(* collect all local variables of a scope *)
+and proceed_proc_body (e0 : I.exp option) : ident list =
+	match e0 with
+	| None -> []
+	| Some e1 -> collect_local_var e1
+
+and collect_local_var (e1 : I.exp) : ident list =
+	match e1 with
+	| I.Bind (bind_exp) -> [(bind_exp.I.exp_bind_bound_var)]
+	| I.Cond (cond_exp) -> (collect_local_var cond_exp.I.exp_cond_then_arm) @ (collect_local_var cond_exp.I.exp_cond_else_arm)
+	| I.Seq (seq_exp) -> (collect_local_var seq_exp.I.exp_seq_exp1) @ (collect_local_var seq_exp.I.exp_seq_exp2)
+	| I.Try (try_exp) -> (collect_local_var try_exp.I.exp_try_block)
+	| I.Var (var_exp) -> [(var_exp.I.exp_var_name)]
+	| I.VarDecl (vardecl_exp) -> List.map (fun (i,e,l) -> i) vardecl_exp.I.exp_var_decl_decls
+	| I.While (while_exp) -> collect_local_var while_exp.I.exp_while_body
+	| _ -> []
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 
@@ -1648,14 +1670,23 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                "parameter " ^ (p.I.param_name ^ " is duplicated");
            })
     else
-      if not (check_return proc)
-      then
-        Err.report_error
-          {
-            Err.error_loc = proc.I.proc_loc;
-            Err.error_text =
-              "not all paths of " ^ (proc.I.proc_name ^ " contain a return");
-          }
+			begin
+			let param_name_list = List.map (fun i -> i.I.param_name) proc.I.proc_args in (* list of all parameters in procedure *)
+			let static_struc_fv_list = Iformula.struc_free_vars_with_insts proc.I.proc_static_specs in (* list of static free vars in spec *)
+			let dynamic_struc_fv_list = Iformula.struc_free_vars_with_insts proc.I.proc_dynamic_specs in (*list of dynamic free vars in spec *)
+			let fv_name_list = List.map (fun i -> fst i) (static_struc_fv_list@dynamic_struc_fv_list) in (* list of all free vars in spec *)
+			all_var_name_list := U.remove_dups (!all_var_name_list@param_name_list@fv_name_list);
+(*			let _ = print_string "\nall variables: " in*)
+(*		  let _ = List.map (fun i -> print_string (i^" ")) !all_var_name_list in*)
+(*		  let _ = print_string "\n" in*)
+	    if not (check_return proc)
+	    then
+	      Err.report_error
+	        {
+	          Err.error_loc = proc.I.proc_loc;
+	          Err.error_text =
+	            "not all paths of " ^ (proc.I.proc_name ^ " contain a return");
+	        }
       else
         (
 	  E.push_scope ();
@@ -1760,6 +1791,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 		  }
 		in 
 		  (E.pop_scope (); cproc))))
+		end
 
 and trans_coercions (prog : I.prog_decl) :
     ((C.coercion_decl list) * (C.coercion_decl list)) =

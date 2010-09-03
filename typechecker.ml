@@ -19,7 +19,7 @@ let webserver = ref false
 let parallelize num =
   num_para := num
 
-(* assumes the pre, and starts the simbolic execution*)
+(* assumes the pre, and starts the symbolic execution*)
 let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
   let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
     (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
@@ -846,18 +846,17 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let _ = (* match final_state with  *)
 	(* |CF.SuccCtx cl -> if List.for_all CF.isAnyFalseCtx cl then () else  *)
 	PTracer.log_proof prf
-	    (* | _ -> ()	 *)
-  in
-  (* Solver.entail_hist#upd pid rs; *)
-  if (CF.isSuccessListPartialCtx rs) then rs
-  else
-	Err.report_error {Err.error_loc = pos;
-	Err.error_text = "Post condition "
-	        ^ (Cprinter.string_of_formula post)
-	        ^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
-	        ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
-
-
+	  (* | _ -> ()	 *)
+      in
+	(* Solver.entail_hist#upd pid rs; *)
+	if (CF.isSuccessListPartialCtx rs) then rs
+	else
+	  Err.report_error {Err.error_loc = pos;
+			    Err.error_text = "Post condition "
+	      ^ (Cprinter.string_of_formula post)
+				(* eliminate intermidiate variables before printing error message *)
+	      ^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
+	      ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
 
 
 (* checking procedure *)
@@ -912,6 +911,7 @@ let check_proc_wrapper prog proc =
   try
     check_proc prog proc
   with _ as e ->
+    Printexc.print_backtrace stdout;
     if !Globals.check_all then begin
       dummy_exception();
       print_string ("\nProcedure "^proc.proc_name^" FAIL\n");

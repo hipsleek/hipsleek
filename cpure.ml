@@ -750,6 +750,13 @@ and pos_of_exp (e : exp) = match e with
 and name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+(*and string_of_spec_var (sv : spec_var) : string = 
+  match sv with
+    | SpecVar (_, id, p) -> id ^ 
+			(match p with 
+			  | Primed -> "'" 
+			  | Unprimed -> "" )*)
+
 and type_of_spec_var (sv : spec_var) : typ = match sv with
   | SpecVar (t, _, _) -> t
 

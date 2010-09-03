@@ -71,6 +71,7 @@ let top_flow_int = ref ((-2,-2):nflow)
 let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let false_flow_int = (0,0)
 (*let stub_flow_int = (-3,-3)*)
+let all_var_name_list = ref ([]: string list) (* list of all variables' name in a procedure and its specification *)
 
 let res = "res"
 

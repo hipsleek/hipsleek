@@ -3174,18 +3174,18 @@ and elim_exists_exp_loop (f0 : formula) : (formula * bool) = match f0 with
 	  if  not(List.exists (fun sv -> CP.eq_spec_var sv qvar) fvh) then
 	    (*List.mem qvar fvh)	then*) (* if it does not appear in the heap part --> we try to eliminate *)
 	    (*let _ = print_string("fv(h) = " ^ Cprinter.string_of_spec_var_list fvh ^ "\n") in*)
-	    let st, pp1 = get_subst_equation_exp p qvar in
+	    let st, pp1 = get_subst_equation_exp p qvar in (* find all qvar existing in the current formula *)
 	    if List.length st > 0 then (* if there exists one substitution  - actually we only take the first one -> therefore, the list should only have one elem *)
 	      (* basically we only apply one substitution *)
-	      let one_subst = List.hd st in
-		  (*let _ = print_string ("\nLength = " ^ string_of_int (List.length st) ^ "\n") in
-		    let _ =  print_string("\n Using the subst var: " ^ Cprinter.string_of_spec_var (fst one_subst) ^ "\texp: " ^ Cprinter.string_of_formula_exp (snd one_subst) ^ "\n") in*)
-	      let tmp = mkBase h pp1 t fl b pos in
+	      let one_subst = List.hd st in (* take the first element of the list *)
+		 (* let _ = print_string ("\nLength = " ^ string_of_int (List.length st) ^ "\n") in*)
+		   (* let _ =  print_string("\n Using the subst var: " ^ Cprinter.string_of_spec_var (fst one_subst) ^ "\texp: " ^ Cprinter.string_of_formula_exp (snd one_subst) ^ "\n") in*)
+	      let tmp = mkBase h pp1 t fl b pos in (* make base formula *)
 		  (*let _ = (print_string (" Base formula: " ^ (Cprinter.string_of_formula tmp) ^ "\n")) in*)
-	      let new_baref = subst_exp [one_subst] tmp in
+	      let new_baref = subst_exp [one_subst] tmp in (* replace with value *)
  		  (*let _ = (print_string (" new_baref: " ^ (Cprinter.string_of_formula new_baref) ^ "\n")) in*)
-	      let tmp2 = add_quantifiers rest_qvars new_baref in
-	      let tmp3, _ = elim_exists_exp_loop tmp2 in
+	      let tmp2 = add_quantifiers rest_qvars new_baref in (* add the rest of qvar to the new formula *)
+	      let tmp3, _ = elim_exists_exp_loop tmp2 in (* loop to eliminate all the rest of qvar *)
 		  (tmp3, true)
 	    else (* if qvar is not equated to any variables, try the next one *)
 	      let tmp1 = mkExists rest_qvars h p t fl b pos in
@@ -3208,7 +3208,7 @@ and get_subst_equation_exp (f : CP.formula) (v : CP.spec_var) : ((CP.spec_var * 
 	  else
 	    let st2, rf2 = get_subst_equation_exp f2 v in
 	    (st2, CP.mkAnd f1 rf2 pos)
-  | CP.BForm (bf,lbl) -> get_subst_equation_b_formula_exp bf v lbl
+  | CP.BForm (bf,lbl) -> get_subst_equation_b_formula_exp bf v lbl (* find substitution of boolean formula *)
   | _ -> ([], f)
 
 and get_subst_equation_b_formula_exp (f : CP.b_formula) (v : CP.spec_var) lbl: ((CP.spec_var * CP.exp) list * CP.formula) = match f with
@@ -3217,30 +3217,32 @@ and get_subst_equation_b_formula_exp (f : CP.b_formula) (v : CP.spec_var) lbl: (
 	    | CP.Var (sv1, pos1) ->
 	        (* check for equality and for circularity -> if v=e then v should not appear in FV(e) *)
 	        if (CP.eq_spec_var sv1 v) && (not (List.exists (fun sv -> CP.eq_spec_var sv v) (CP.afv e2)))
+		  (* qvar exist in e1, not exist in e2 *)
 	          (*(List.mem v (CP.afv e2))) *)
 	        then ([(v, e2)], CP.mkTrue no_pos)
-	        else
+	        else (* 3 remain situations *)
 	          begin
 		        match e2 with
-		          | CP.Var (sv2, pos2) ->
+		          | CP.Var (sv2, pos2) ->  (* not exist in e1, but exist in e2 *)
 		              if CP.eq_spec_var sv2 v && (not (List.exists (fun sv -> CP.eq_spec_var sv v) (CP.afv e1)))
 			            (*(not (List.mem v (CP.afv e1))) *)
 		              then ([(v, e1)], CP.mkTrue no_pos)
 		              else ([], CP.BForm (f,lbl))
 		          | _ -> ([], CP.BForm (f,lbl))
 	          end
-	    | _ ->
+	    | _ -> (* e1 is not a CP.Var *)
 	        begin
 	          match e2 with
 		        | CP.Var (sv2, pos2) ->
 		            if CP.eq_spec_var sv2 v && (not (List.exists (fun sv -> CP.eq_spec_var sv v) (CP.afv e1)))
+			      (* exist in e2, not exist in e1 *)
 		              (*(not (List.mem v (CP.afv e1))) *)
 		            then ([(v, e1)], CP.mkTrue no_pos)
 		            else ([], CP.BForm (f,lbl))
 		        | _ -> ([], CP.BForm (f,lbl))
 	        end
     end
-  | _ -> ([], CP.BForm (f,lbl))
+  | _ -> ([], CP.BForm (f,lbl))  (* the remain situations *)
 
 (******************************************************************************************************************
 														                                                           10.06.2008
