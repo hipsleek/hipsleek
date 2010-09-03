@@ -6,13 +6,11 @@ use Getopt::Long;
 
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
-			"root=s" => \$root,
-			"tp=s" => \$prover
-			);
+			"root=s" => \$root);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] hip_tr|hip sleek\n";
 	exit(0);
 }
 if($root){
@@ -24,20 +22,6 @@ if($root){
 		$exempl_path = ".";
 		$exec_path = '../..';
 	}
-	
-if($prover){
-	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
-		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
-		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
-	if (!exists($provers{$prover})){		
-		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek\n";
-		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
-		exit(0);
-	}
-}else{
-	$prover = "omega";
-}
-
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
@@ -203,9 +187,8 @@ $output_file = "log";
                                   "insert","SUCCESS",
                                   "delete_last","SUCCESS",
                                   "main","SUCCESS"],
-		        ["global-mutual-rec.ss",3,"decrease1","SUCCESS",
-                                          "decrease2","SUCCESS",
-										  "main","SUCCESS"]
+		        ["global-mutual-rec.ss",2,"decrease1","SUCCESS",
+                                          "decrease2","SUCCESS"]
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
@@ -245,7 +228,7 @@ sub hip_process_file {
 		{
 			print "Checking $test->[0]\n";
 			#print "$hip $exempl_path/hip/$test->[0] 2>&1";
-			$output = `$hip -tp $prover $exempl_path/hip/$test->[0] 2>&1`;
+			$output = `$hip $exempl_path/hip/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;

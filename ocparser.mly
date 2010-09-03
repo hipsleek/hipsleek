@@ -3,34 +3,20 @@
   open Cpure
 
   module Err = Error
-  let subst_lst = ref ([]:(string*string*typ)list)
-  
+  let subst_lst = ref ([]:(string*string)list)
+  let spec_var_of_string s = 
+	let n = String.length s in
+	  if String.get s (n-1) = '\'' then 
+		SpecVar (Prim Int, String.sub s 0 (n-1), Primed)
+	  else
+		SpecVar (Prim Int, s, Unprimed)
+
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();
 				 end_pos = Parsing. symbol_end_pos ();
 				 mid_pos = Parsing.rhs_start_pos x;
 				}	
-  let rec trans_null (b:formula):formula = 
-    let rec trans_b_f_null b = match b with
-      | Lt (e1,e2,p) -> (match (e1,e2) with
-            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null l,p) else BConst (true,p) else b
-            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null l,p) else BConst(true,p) else b          
-            | _ -> b)
-      | Lte(e1,e2,p) ->(match (e1,e2) with
-            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null l,p) else BConst (true,p) else b
-            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null l,p) else BConst(true,p) else b          
-            | _ -> b) 
-      | Gt (e1,e2,p) -> trans_b_f_null (Lt (e2,e1,p))
-      | Gte(e1,e2,p) -> trans_b_f_null (Lte (e2,e1,p))
-      | _ -> b in
-    match b with
-      | BForm (b,l) -> BForm ((trans_b_f_null b),l)
-      | And (f1,f2,l) -> mkAnd (trans_null f1) (trans_null f2) l
-      | Or (f1,f2,fl,l) -> mkOr (trans_null f1) (trans_null f2) fl l
-      | Not (f,fl,l) -> Not ((trans_null f),fl,l)
-      | Forall (sv,f,fl,l) -> Forall(sv,(trans_null f),fl,l)
-      | Exists (sv,f,fl,l) -> Exists(sv,(trans_null f),fl,l)
 %}
 
 %token AND
@@ -107,10 +93,10 @@ pconstr: pconstr AND pconstr {
   mkAnd $1 $3 (get_pos 2)
 }
 | lbconstr { 
-	trans_null (fst $1)
+	fst $1 
   }
 | EXISTS OPAREN var_list COLON pconstr CPAREN { 
-	let svars = $3 in
+	let svars = List.map (fun x -> SpecVar (Prim Int, fst x, snd x)) $3 in
 	let qf f v = mkExists [v] f None (get_pos 1) in
 	let res = List.fold_left qf $5 svars in
 	  res
@@ -187,13 +173,13 @@ bconstr: aexp_list LT aexp_list { (build_relation mkLt $1 $3 None (get_pos 2), S
 ;
 
 aexp: cid {
-	Var ($1,get_pos 1)
+	Var (SpecVar (Prim Int, fst $1, snd $1), get_pos 1)
   }
 | ICONST {
 	IConst ($1, get_pos 1)
   }
 | ICONST cid {
-	Mult (IConst ($1, get_pos 1), (Var ($2,get_pos 2)), get_pos 1)
+	Mult (IConst ($1, get_pos 1), (Var (SpecVar (Prim Int, fst $2, snd $2), get_pos 2)), get_pos 1)
   }
 | aexp PLUS aexp {
 	Add ($1, $3, get_pos 2)
@@ -214,19 +200,19 @@ aexp_list_rec: aexp { [$1] }
 | aexp_list_rec COMMA aexp { $3 :: $1}
 ;
 
-var_list: { [] : spec_var list }
-| var_list_rec { List.rev $1 : spec_var list }
+var_list: { [] : (ident * primed) list }
+| var_list_rec { List.rev $1 : (ident * primed) list }
 ;
 
-var_list_rec: cid { ([$1]) : spec_var list }
-| var_list_rec COMMA cid { ($3 :: $1) : spec_var list }
+var_list_rec: cid { ([$1]) : (ident * primed) list }
+| var_list_rec COMMA cid { ($3 :: $1) : (ident * primed) list }
 ;
 
 /* identifiers appearing in constraints */
-cid: ID { match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
-					|  [] -> SpecVar(Prim Int,$1, Unprimed)
-					| (a,b,t)::h-> SpecVar(t, b,Unprimed) }
-| IDPRIMED { match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
-					|  [] -> SpecVar(Prim Int,$1, Primed)
-					| (a,b,t)::h-> SpecVar(t, b,Primed) }
+cid: ID { match (List.filter (fun (a,b)->((String.compare $1 a)==0)) !subst_lst) with 
+					|  [] -> ($1, Unprimed)
+					| (a,b)::h-> (b,Unprimed) }
+| IDPRIMED { match (List.filter (fun (a,b)->((String.compare $1 a)==0)) !subst_lst) with 
+					|  [] -> ($1, Primed)
+					| (a,b)::h-> (b,Primed) }
 ;

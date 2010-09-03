@@ -9,7 +9,6 @@ module CP = Cpure
 type tp_type =
   | OmegaCalc
   | CvcLite
-  | Cvc3
   | CO (* CVC Lite then Omega combination *)
   | Isabelle
   | Mona
@@ -215,8 +214,6 @@ let set_tp tp_str =
 	tp := OmegaCalc
   else if tp_str = "cvcl" then 
 	tp := CvcLite
-  else if tp_str = "cvc3" then 
-	tp := Cvc3
   else if tp_str = "co" then
 	tp := CO
   else if tp_str = "isabelle" then
@@ -455,7 +452,6 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
 			  (Omega.is_sat f sat_no);
 			end
 	  | CvcLite -> Cvclite.is_sat f sat_no
-	  | Cvc3 -> Cvc3.is_sat f sat_no
 	  | Z3 -> Smtsolver.is_sat f sat_no
 	  | Isabelle -> Isabelle.is_sat f sat_no
 	  | Coq -> Coq.is_sat f sat_no
@@ -628,7 +624,6 @@ let tp_imply ante conseq imp_no timeout =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
   | CvcLite -> Cvclite.imply ante conseq
-  | Cvc3 -> Cvc3.imply ante conseq
   | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> Coq.imply ante conseq

@@ -95,9 +95,9 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
-let string_of_var (c1,c2) = c1^(match c2 with | Primed -> "'"| _ -> "");;
 
-let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
+
+let string_of_var_list vl = (List.fold_left (fun a (c1,c2)-> a^" "^c1^(match c2 with | Primed -> "'"| _ -> "")) "" vl);;
 
 
 (* pretty printing for an expression for a formula *)
@@ -294,8 +294,8 @@ let rec string_of_ext_formula = function
 		 	Iformula.formula_ext_base = fb;
 		 	Iformula.formula_ext_continuation = cont;	
 		} -> 
-				let l1 = List.fold_left (fun a c-> a^" "^ string_of_var c) "" ii in
-				let l2 = List.fold_left (fun a c -> a^" "^ string_of_var c) "" ei in
+				let l1 = List.fold_left (fun a (c1,c2) -> a^" "^ c1) "" ii in
+				let l2 = List.fold_left (fun a (c1,c2) -> a^" "^ c1) "" ei in
 				let b = string_of_formula fb in
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
@@ -355,74 +355,67 @@ let need_parenthesis2 = function
 let rec string_of_exp = function 
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
-  | Label ((pid,_),e) -> 
-          string_of_control_path_id_opt pid(string_of_exp e)
+  | Label ((pid,_),e) -> string_of_control_path_id_opt pid(string_of_exp e)
   | Bind ({exp_bind_bound_var = v;
 		   exp_bind_fields = vs;
 		   exp_bind_path_id = pid;
-		   exp_bind_body = e})-> 
-          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
-  | Block ({exp_block_body = e;})-> "{" ^ (string_of_exp e) ^ "}\n"
+		   exp_bind_body = e})      -> string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
+  | Block ({exp_block_body = e;})    -> "{" ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
-  | Empty l -> ""
+  | Empty l                         -> ""
   | Unary ({exp_unary_op = o;
 			exp_unary_exp = e;
-			exp_unary_pos = l})-> 
-          (match o with 
-            | OpPostInc | OpPostDec -> 
-              (if need_parenthesis2 e then (parenthesis (string_of_exp e)) ^ (string_of_unary_op o)
-               else (string_of_exp e) ^ (string_of_unary_op o))
-            | _ -> 
-              (if need_parenthesis2 e then (string_of_unary_op o) ^ (parenthesis (string_of_exp e))
-               else (string_of_unary_op o) ^ (string_of_exp e)))
+			exp_unary_pos = l})     -> (match o with 
+                                       | OpPostInc | OpPostDec -> (if need_parenthesis2 e 
+                                                                  then (parenthesis (string_of_exp e)) ^ (string_of_unary_op o)
+                                                                  else (string_of_exp e) ^ (string_of_unary_op o))                                                                
+                                       | _         -> (if need_parenthesis2 e 
+                                                                  then (string_of_unary_op o) ^ (parenthesis (string_of_exp e))
+                                                                  else (string_of_unary_op o) ^ (string_of_exp e)))
   | Binary ({exp_binary_op = o;
 			 exp_binary_oper1 = e1;
 			 exp_binary_oper2 = e2;
-			 exp_binary_pos = l})-> 
-          if need_parenthesis2 e1 then 
-            if need_parenthesis2 e2 then (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (parenthesis (string_of_exp e2))
-            else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
-          else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
+			 exp_binary_pos = l})   -> if need_parenthesis2 e1 
+                                       then if need_parenthesis2 e2 then (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (parenthesis (string_of_exp e2))
+                                                                    else (parenthesis (string_of_exp e1)) ^ (string_of_binary_op o) ^ (string_of_exp e2)
+                                       else  (string_of_exp e1) ^ (string_of_binary_op o) ^ (string_of_exp e2)
   | CallNRecv ({exp_call_nrecv_method = id;
 				exp_call_nrecv_path_id = pid;
-				exp_call_nrecv_arguments = el})-> 
-          string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+				exp_call_nrecv_arguments = el})
+                                    -> string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
   | CallRecv ({exp_call_recv_receiver = recv;
 			   exp_call_recv_method = id;
 			   exp_call_recv_path_id = pid;
-			   exp_call_recv_arguments = el})-> 
-          string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
+			   exp_call_recv_arguments = el})
+                                    -> string_of_control_path_id_opt pid ( (string_of_exp recv) ^ "." ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")")
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_exp_list el ",") ^ ")" 
-  | Var ({exp_var_name = v}) -> v
+  | Var ({exp_var_name = v})        -> v
   | Member ({exp_member_base = e;
-			 exp_member_fields = idl})-> (string_of_exp e) ^ "." ^ (concatenate_string_list idl ".")
+			 exp_member_fields = idl})
+                                    -> (string_of_exp e) ^ "." ^ (concatenate_string_list idl ".")
   | Assign ({exp_assign_op = op;
 			 exp_assign_lhs = e1;
 			 exp_assign_rhs = e2})  -> (string_of_exp e1) ^ (string_of_assign_op op) ^ (string_of_exp e2)
   | Cond ({exp_cond_condition = e1;
 		   exp_cond_then_arm = e2;
 		   exp_cond_path_id = pid;
-		   exp_cond_else_arm = e3}) -> 
-        string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
-        (match e3 with 
-          | Empty ll -> ""
-          | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}"))
+		   exp_cond_else_arm = e3}) -> string_of_control_path_id_opt pid ("if " ^ (parenthesis (string_of_exp e1)) ^ " { \n  " ^ (string_of_exp e2) ^ ";\n}" ^ 
+                                        (match e3 with 
+										  | Empty ll -> ""
+                                          | _        -> "\nelse { \n  " ^ (string_of_exp e3) ^ ";\n}"))
   | While ({exp_while_condition = e1;
 			exp_while_body = e2;
 			exp_while_jump_label = lb;
-			exp_while_specs = li}) -> 
-        (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ "{\n"^ (string_of_exp e2) ^ "\n}"          
-  | Return ({exp_return_val = v; exp_return_path_id = pid})  -> 
-        string_of_control_path_id_opt pid ("return " ^ 
-          (match v with 
-            | None   -> ""
-            | Some e -> (string_of_exp e)) )
+			exp_while_specs = li}) -> (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ "{\n"
+                                       ^ (string_of_exp e2) ^ "\n}"          
+  | Return ({exp_return_val = v; exp_return_path_id = pid})  -> string_of_control_path_id_opt pid ("return " ^ (match v with 
+	  | None   -> ""
+	  | Some e -> (string_of_exp e)) )
   | Seq ({exp_seq_exp1 = e1;
-		  exp_seq_exp2 = e2})-> 
-          (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2) ^ ";"  
+		  exp_seq_exp2 = e2})      -> (string_of_exp e1) ^ ";\n" ^ (string_of_exp e2) ^ ";"  
   | VarDecl ({exp_var_decl_type = t;
 			  exp_var_decl_decls = l})
                                    -> (string_of_typ t) ^ " " ^ (string_of_assigning_list l) ^ ";";
@@ -435,14 +428,7 @@ let rec string_of_exp = function
   | FloatLit ({exp_float_lit_val = f})
                                    -> string_of_float f
   | Null l                         -> "null"
-  | Assert l                       -> 
-        snd(l.exp_assert_path_id)^" :assert "^
-          (match l.exp_assert_asserted_formula with
-            | None -> (" assume: ")
-            | Some f-> (string_of_struc_formula (fst f))^"\n assume: ") ^
-          (match l.exp_assert_assumed_formula with
-            | None -> ""
-            | Some f -> (string_of_formula f))^"\n"
+  | Assert l                       -> snd(l.exp_assert_path_id)^" :assert "
   | Dprint l                       -> "dprint" 
   | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
   | This _ -> "this"
