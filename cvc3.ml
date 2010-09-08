@@ -20,7 +20,7 @@ let set_log_file fn =
 	end
 
 let run_cvc3 (input : string) : unit =
-  begin
+  begin 
 	let chn = open_out infilename in
 	  output_string chn input;
 	  close_out chn;
@@ -138,12 +138,14 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   let ante_str =
 	"ASSERT (" ^ (cvc3_of_formula ante) ^ ");\n" in
+  let ante_str_new = "a_dummy, b_dummy: INT;\nASSERT a_dummy = b_dummy; \n" ^ ante_str in	
   let conseq_str =  "QUERY (" ^ (cvc3_of_formula conseq) ^ ");\n" in
 	(* talk to CVC3 *)
-  let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
+  let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str_new ^ conseq_str) in
 	if !log_cvc3_formula then begin
 	  output_string !cvc3_log "%%% imply\n";
-	  (*output_string !cvc3_log (Cprinter.string_of_pure_formula ante);*)
+	  (*output_string !cvc3_log (Cprinter.string_of_pure_formula conseq);
+	  output_string !cvc3_log "\n";*)
 	  output_string !cvc3_log f_cvc3;
 	  flush !cvc3_log
 	end;
@@ -217,11 +219,6 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 	if Util.empty bool_vars then ""
 	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
-(*
-  let f_str = (* (cvc3_of_formula_decl f)  ^ *) 
-	"ASSERT (" ^ (cvc3_of_formula f) ^ ");\n" in
-  let query_str = "QUERY (1<0);\n" in
-*)
   let f_str = cvc3_of_formula f in
   let query_str = "CHECKSAT (" ^ f_str ^ ");\n" in
 	(* talk to CVC3 *)
