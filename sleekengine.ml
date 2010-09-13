@@ -206,7 +206,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     else
 	  print_string ("Valid.\n")
   with
-    | _ ->  dummy_exception() ; (print_string "exception in entail check\n")	
+    | _ ->  Printexc.print_backtrace stdout;dummy_exception() ; (print_string "exception in entail check\n")	
 	
 let process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 

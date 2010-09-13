@@ -61,24 +61,24 @@ and formula =
   | Or of formula_or
   | Exists of formula_exists
 
-and formula_base = { formula_base_heap : h_formula;
-formula_base_pure : CP.formula;
-formula_base_type : t_formula;
-formula_base_flow : flow_formula;
-formula_base_branches : (branch_label * CP.formula) list;
-formula_base_pos : loc }
+and formula_base = {  formula_base_heap : h_formula;
+                      formula_base_pure : CP.formula;
+                      formula_base_type : t_formula;
+                      formula_base_flow : flow_formula;
+                      formula_base_branches : (branch_label * CP.formula) list;
+                      formula_base_pos : loc }
 
-and formula_or = { formula_or_f1 : formula;
-formula_or_f2 : formula;
-formula_or_pos : loc }
+and formula_or = {  formula_or_f1 : formula;
+                    formula_or_f2 : formula;
+                    formula_or_pos : loc }
 
-and formula_exists = { formula_exists_qvars : CP.spec_var list;
-formula_exists_heap : h_formula;
-formula_exists_pure : CP.formula;
-formula_exists_type : t_formula;
-formula_exists_flow : flow_formula;
-formula_exists_branches : (branch_label * CP.formula) list;
-formula_exists_pos : loc }
+and formula_exists = {  formula_exists_qvars : CP.spec_var list;
+                        formula_exists_heap : h_formula;
+                        formula_exists_pure : CP.formula;
+                        formula_exists_type : t_formula;
+                        formula_exists_flow : flow_formula;
+                        formula_exists_branches : (branch_label * CP.formula) list;
+                        formula_exists_pos : loc }
 
 and flow_formula = { formula_flow_interval : nflow;
 formula_flow_link : (ident option)}
