@@ -22,8 +22,6 @@ void insert(node2 x, int a)
 
 		if (x.next == null) {
 			x.next = new node2(a, x, tmp_null);
-      dprint;
-      assume false;
 		}
 		else {
 			insert(x.next, a);
