@@ -30,9 +30,11 @@ llH<n,"s":sum,"B":B> == self = null
 void dispatch(node lst, ref node gtl, ref node ltl)
   requires lst::llH<n,s,B> 
   ensures gtl'::llH<n1,s1,B1> * ltl'::llH<n2,s2,B2> 
-  & n=n1+n2 & 
-    ["s":s=s1+s2 & s1>=3*n1 
-        & s2<=2*n2; 
+  & n=n1+n2 &
+  ["s":s=s1+s2 
+   //& s1>n1+3 // this seems wrong.. 
+   & s1>=3*n1 // this seems wrong; is 30*n1 parsed correctly
+   & s2<3*n2 ;
      "B":B=union(B1,B2) 
      & forall (x:(x notin B1 | x>=3))
      //& forall (x:(x notin B2 | x<3))  bug
@@ -52,22 +54,23 @@ void dispatch(node lst, ref node gtl, ref node ltl)
      gtl=null; 
      ltl =null;}
    else {
-    
      node tmp = lst.next;
      node gt; node lt;
      if (lst.val>=3) {
-       
-          dispatch(tmp,gt,ltl);         
+          dispatch(tmp,gt,lt);         
           assert false;
+          dprint;
           lst.next = gt;
           gtl = lst;
+          ltl=lt;
           // dprint;
 
      } else {
-          dispatch(tmp,gtl,lt);
-          assert false;
+
+          dispatch(tmp,gt,lt);
           lst.next = lt;
           ltl = lst;
+          gtl=gt;
      }
    }
 }
