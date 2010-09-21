@@ -969,7 +969,7 @@ let pr_view_decl v =
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: " pr_formula v.view_un_struc_formula;
-  pr_vwrap  "xform: " pr_pure_formula (fst v.view_x_formula);
+  pr_vwrap  "xform: " pr_pure_formula_branches v.view_x_formula;
   f v.view_base_case;
   fmt_close_box ()
 

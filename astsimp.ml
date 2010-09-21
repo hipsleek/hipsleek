@@ -1127,8 +1127,9 @@ let rec (* overriding test *) (* field duplication test *)
     (* returns a pair of expressions-> to_stay, to_move (signs already         *)
     (* changed)                                                                *)
     (* bag expressions *) (* first is max of second and third *)
-    (* first is min of second and third *) (* bag formulas *) trans_prog
-    (prog3 : I.prog_decl) : C.prog_decl =
+    (* first is min of second and third *) (* bag formulas *) 
+    
+ trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   let _ = I.build_exc_hierarchy false prog3 in
   let _ = (Util.add_edge raisable_class "Object") in
   let prog2 = { prog3 with I.prog_data_decls = 
@@ -1150,63 +1151,39 @@ let rec (* overriding test *) (* field duplication test *)
       ( begin
 	  Util.c_h (); 
 	  let prims = gen_primitives prog0 in
-	  let prog =
-            { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;
-            }
-	  in
-            (set_mingled_name prog;
-             let all_names =
-               (List.map (fun p -> p.I.proc_mingled_name)
-		  prog0.I.prog_proc_decls)
-               @
-		 ((List.map (fun ddef -> ddef.I.data_name)
-                     prog0.I.prog_data_decls)
-                  @
-                     (List.map (fun vdef -> vdef.I.view_name)
-			prog0.I.prog_view_decls)) in
-             let dups = U.find_dups all_names
-             in
-               if not (U.empty dups)
-               then
-		 (print_string
-                    ("duplicated top-level name(s): " ^
-                       ((String.concat ", " dups) ^ "\n"));
-		  failwith "Error detected")
-               else
+	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
+    (set_mingled_name prog;
+    let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
+                  ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
+                   (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
+    let dups = U.find_dups all_names in
+    if not (U.empty dups) then
+		 (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected")
+    else
 		 (
 		   (*let _ = print_string ("pre norm :"^(Iprinter.string_of_program prog)) in*)
 		   let prog = case_normalize_program prog in
 		     (*let _ = print_string ("post norm :"^(Iprinter.string_of_program prog)) in*)
 		   let tmp_views = order_views prog.I.prog_view_decls in
 		   let cviews = List.map (trans_view prog) tmp_views in
-		   let cdata =
-                     List.map (trans_data prog) prog.I.prog_data_decls in
-		   let cprocs1 =
-                     List.map (trans_proc prog) prog.I.prog_proc_decls in
+		   let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
+		   let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 		   let cprocs = !loop_procs @ cprocs1 in
 		   let (l2r_coers, r2l_coers) = trans_coercions prog in
-		   let cprog =
-                     {
+		   let cprog =   {
                        C.prog_data_decls = cdata;
                        C.prog_view_decls = cviews;
                        C.prog_proc_decls = cprocs;
                        C.prog_left_coercions = l2r_coers;
                        C.prog_right_coercions = r2l_coers;
-                     }
-		   in
-		   let cprog = { cprog with			
+                     } in
+	    let cprog = { cprog with			
 				   C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
 				   C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
-                     (ignore
-			(List.map
-			   (fun vdef ->
-                              compute_view_x_formula cprog vdef !Globals.n_xpure)
-			   cviews);
-                      ignore
-			(List.map (fun vdef -> set_materialized_vars cprog vdef)
-			   cviews);
-                      ignore (C.build_hierarchy cprog);
-                      let cprog = (add_pre_to_cprog cprog) in
+      (ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
+      ignore (List.map (fun vdef -> set_materialized_vars cprog vdef) cviews);
+      ignore (C.build_hierarchy cprog);
+      let cprog = (add_pre_to_cprog cprog) in
 			sat_warnings cprog ;
 			let c = if !Globals.enable_case_inference then case_inference prog cprog else cprog in
 			let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
@@ -1244,9 +1221,8 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
       C.data_methods = List.map (trans_proc prog) ddef.I.data_methods;
       C.data_invs = [];
     }
-and
-    compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int)
-    =
+    
+and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0
    then
      (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
@@ -1279,17 +1255,9 @@ and
    else ();
    if !Globals.print_x_inv && (n = 0)
    then
-     (print_string
-        ("\ncomputed invariant for view: " ^
-           (vdef.C.view_name ^
-              ("\n" ^
-                 ((Cprinter.string_of_pure_formula_branches (vdef.C.view_x_formula)) ^
-                    "\n"))));
-      print_string
-        ("addr_vars: " ^
-           ((String.concat ", "
-               (List.map CP.name_of_spec_var vdef.C.view_addr_vars))
-            ^ "\n\n")))
+     (print_string ("\ncomputed invariant for view: " ^
+           (vdef.C.view_name ^ ("\n" ^ ((Cprinter.string_of_pure_formula_branches (vdef.C.view_x_formula)) ^ "\n"))));
+      print_string ("addr_vars: " ^ ((String.concat ", " (List.map CP.name_of_spec_var vdef.C.view_addr_vars)) ^ "\n\n")))
    else ())
 
     
@@ -1350,7 +1318,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 	 let bc = match (compute_base_case cf) with
 	   | None -> None
 	   | Some s -> (flatten_base_case s (Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed))) in
-         let cvdef =
+   let cvdef =
            {
              C.view_name = vdef.I.view_name;
              C.view_vars = view_sv_vars;
@@ -1363,9 +1331,9 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
              C.view_x_formula = (pf, pf_b);
              C.view_addr_vars = [];
              C.view_user_inv = (pf, pf_b);
-	     C.view_un_struc_formula = n_un_str;
-	     C.view_base_case = bc;
-	     C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf)
+             C.view_un_struc_formula = n_un_str;
+             C.view_base_case = bc;
+             C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf)
            }
          in
            (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef))

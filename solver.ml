@@ -152,23 +152,23 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (CP.formu
   | HFalse -> (CP.mkFalse no_pos, [])
 
 and xpure_symbolic (prog : prog_decl) (f0 : formula) branch : (CP.formula * CP.spec_var list) = match f0 with
-  | Or ({formula_or_f1 = f1;
-	formula_or_f2 = f2;
-	formula_or_pos = pos}) ->
+  | Or ({ formula_or_f1 = f1;
+          formula_or_f2 = f2;
+          formula_or_pos = pos}) ->
       let ipf1, avars1 = xpure_symbolic prog f1 branch in
       let ipf2, avars2 = xpure_symbolic prog f2 branch in
       let res_f = CP.mkOr ipf1 ipf2 None pos in
 	  (res_f, avars1 @ avars2)
-  | Base ({formula_base_heap = h;
-	formula_base_pure = p;
-	formula_base_pos = pos}) ->
+  | Base ({ formula_base_heap = h;
+            formula_base_pure = p;
+            formula_base_pos = pos}) ->
       let ph, addrs = xpure_heap_symbolic prog h branch in
       let res_form = CP.mkAnd ph p pos in
 	  (res_form, addrs)
-  | Exists ({formula_exists_qvars = qvars;
-	formula_exists_heap = qh;
-	formula_exists_pure = qp;
-	formula_exists_pos = pos}) ->
+  | Exists ({ formula_exists_qvars = qvars;
+              formula_exists_heap = qh;
+              formula_exists_pure = qp;
+              formula_exists_pos = pos}) ->
       let pqh, addrs = xpure_heap_symbolic prog qh branch in
       let sqvars = (* List.map CP.to_int_var *) qvars in
       let tmp1 = CP.mkAnd pqh qp pos in
@@ -176,19 +176,19 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) branch : (CP.formula * CP.s
 	  (res_form, addrs)
 
 and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) branch : (CP.formula * CP.spec_var list) = match h0 with
-  | DataNode ({h_formula_data_node = p;
-	h_formula_data_label = lbl;
-	h_formula_data_pos = pos}) ->
+  | DataNode ({ h_formula_data_node = p;
+                h_formula_data_label = lbl;
+                h_formula_data_pos = pos}) ->
       let i = ("addr"^(fresh_trailer ())) in
       let vi = CP.SpecVar (CP.type_of_spec_var p, i, Unprimed) in
       let non_zero = CP.BForm (CP.Neq (CP.Var (vi, pos), CP.Null pos, pos),lbl) in
       let tmp1 = CP.mkEqVar p vi pos in
       let tmp2 = CP.mkAnd tmp1 non_zero pos in
 	  (tmp2, [vi])
-  | ViewNode ({h_formula_view_node = p;
-	h_formula_view_name = c;
-	h_formula_view_arguments = vs;
-	h_formula_view_pos = pos}) ->
+  | ViewNode ({ h_formula_view_node = p;
+                h_formula_view_name = c;
+                h_formula_view_arguments = vs;
+                h_formula_view_pos = pos}) ->
       let vdef = look_up_view_def pos prog.prog_view_decls c in
       let vinv = CP.combine_branch branch vdef.view_x_formula in (* views have been ordered such that this dependency is respected *)
       let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -198,9 +198,9 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) branch : (CP.formula
       let to_addrs = CP.fresh_spec_vars from_addrs in
       let tmp2 = CP.subst (List.combine from_addrs to_addrs) tmp1 in (* no capture can happen *)
 	  (tmp2, to_addrs)
-  | Star ({h_formula_star_h1 = h1;
-	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) ->
+  | Star ({ h_formula_star_h1 = h1;
+            h_formula_star_h2 = h2;
+            h_formula_star_pos = pos}) ->
       let ph1, addrs1 = xpure_heap_symbolic prog h1 branch in
       let ph2, addrs2 = xpure_heap_symbolic prog h2 branch in
       let all_diff =
@@ -214,8 +214,8 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) branch : (CP.formula
 
 and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (CP.formula * (branch_label * CP.formula) list * CP.spec_var list) = match f0 with
   | Or ({formula_or_f1 = f1;
-	formula_or_f2 = f2;
-	formula_or_pos = pos}) ->
+         formula_or_f2 = f2;
+         formula_or_pos = pos}) ->
       let ipf1, pf1b, avars1 = xpure_symbolic_no_exists prog f1 in
       let ipf2, pf2b, avars2 = xpure_symbolic_no_exists prog f2 in
       let branches = Util.remove_dups (fst (List.split pf1b) @ (fst (List.split pf2b))) in
@@ -225,9 +225,9 @@ and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (CP.formula * (
           let l1 = List.assoc branch pf1b in
           try
             let l2 = List.assoc branch pf2b in
-		    CP.mkOr l1 l2 None pos
-          with Not_found -> l1
-        with Not_found -> List.assoc branch pf2b
+            CP.mkOr l1 l2 None pos
+          with Not_found -> CP.mkTrue no_pos
+        with Not_found -> CP.mkTrue no_pos
       in
       let map_fun b = (b, map_fun b) in
       let res_form = (CP.mkOr ipf1 ipf2 None pos) in
@@ -236,19 +236,19 @@ and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (CP.formula * (
 	    print_endline ("Xpure_Symbolic2: " ^ Cprinter.string_of_pure_formula_branches (ipf2, pf2b));
 	    print_endline ("Xpure_SymbolicOr: " ^ Cprinter.string_of_pure_formula_branches (res_form, br));*)
 	  (res_form, br, (avars1 @ avars2))
-  | Base ({formula_base_heap = h;
-	formula_base_pure = p;
-	formula_base_branches = fbr;
-	formula_base_pos = pos}) ->
+  | Base ({ formula_base_heap = h;
+            formula_base_pure = p;
+            formula_base_branches = fbr;
+            formula_base_pos = pos}) ->
       let ph, br, addrs = xpure_heap_symbolic_no_exists prog h in
       let res_form = CP.mkAnd ph p pos in
       let br = List.map (fun (l, x) -> (l, CP.mkAnd x res_form pos)) (CP.merge_branches br fbr) in
 	  (res_form, br, addrs)
-  | Exists ({formula_exists_qvars = qvars;
-	formula_exists_heap = qh;
-	formula_exists_pure = qp;
-	formula_exists_branches = fbr;
-	formula_exists_pos = pos}) ->
+  | Exists ({ formula_exists_qvars = qvars;
+              formula_exists_heap = qh;
+              formula_exists_pure = qp;
+              formula_exists_branches = fbr;
+              formula_exists_pos = pos}) ->
       let pqh, br, addrs' = xpure_heap_symbolic_no_exists prog qh in
       let sqvars = (* List.map CP.to_int_var *) qvars in
       let tmp1 = CP.mkAnd pqh qp pos in
@@ -263,18 +263,18 @@ and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (CP.formula * (
 	  (res_form, br, addrs)
 
 and xpure_heap_symbolic_no_exists (prog : prog_decl) (h0 : h_formula) : (CP.formula * (branch_label * CP.formula) list * CP.spec_var list) = match h0 with
-  | DataNode ({h_formula_data_node = p;
-	h_formula_data_label = lbl;
-	h_formula_data_pos = pos}) ->
+  | DataNode ({ h_formula_data_node = p;
+                h_formula_data_label = lbl;
+                h_formula_data_pos = pos}) ->
       (*
 	    let non_zero = CP.BForm (CP.Gt (CP.Var (p, pos), CP.IConst (0, pos), pos)) in
       *)
       let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in
 	  (non_zero, [], [p])
-  | ViewNode ({h_formula_view_node = p;
-	h_formula_view_name = c;
-	h_formula_view_arguments = vs;
-	h_formula_view_pos = pos}) ->
+  | ViewNode ({ h_formula_view_node = p;
+                h_formula_view_name = c;
+                h_formula_view_arguments = vs;
+                h_formula_view_pos = pos}) ->
       let vdef = look_up_view_def pos prog.prog_view_decls c in
       let vinv, vinv_b = vdef.view_x_formula in (* views have been ordered such that this dependency is respected *)
       let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in

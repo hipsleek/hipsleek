@@ -21,7 +21,7 @@ llS<S> == self = null & S = {}
 	or self::node<v, q> * q::llS<S1> & S = union(S1, {v});
 
 llH<n,"s":sum,"B":B> == self = null 
-  &  n = 0 & ["s": sum=0; "B":B={}]  // false when "B" missing 
+  &  n = 0 & ["s": sum=0]  // false when "B" missing 
   or self::node<v, q> * q::llH<n1, sum1,B1> & v>=0 & n=1+n1 &
   ["s": sum=sum1+v ; "B":B=union(B1,{v})]
   inv true & n>=0 & ["s": sum>=0 ];
@@ -46,18 +46,17 @@ void dispatch(node lst, ref node gtl, ref node ltl)
 //requires lst::llS<B> 
 //ensures gtl'::llS<B1> * ltl'::llS<B2> & B=union(B1,B2);
 {
-  dprint;
   if (lst == null) {
-    dprint;  // should not be false!
+      // should not be false!
      assert false;
      gtl=null; 
      ltl =null;}
    else {
-     dprint;
+    
      node tmp = lst.next;
      node gt; node lt;
      if (lst.val>=3) {
-       //dprint;
+       
           dispatch(tmp,gt,ltl);         
           assert false;
           lst.next = gt;
@@ -66,6 +65,7 @@ void dispatch(node lst, ref node gtl, ref node ltl)
 
      } else {
           dispatch(tmp,gtl,lt);
+          assert false;
           lst.next = lt;
           ltl = lst;
      }
