@@ -23,17 +23,17 @@ llS<S> == self = null & S = {}
 llH<n,"s":sum,"B":B> == self = null 
          &  n = 0 &
  [ "s":n=0 & sum=0] 
-  or self::node<v, q> * q::llH<n1, sum1,B1> & v>=0 &
-  ["n":n=1+n1; "s":n=1+n1 & sum=sum1+v ; "B":B=union(B1,{v})]
+  or self::node<v, q> * q::llH<n1, sum1,B1> & v>=0 & n=1+n1 &
+  ["s": sum=sum1+v ; "B":B=union(B1,{v})]
   inv true & n>=0 & ["s": sum>=0 ];
 
 	
 void dispatch(node lst, ref node gtl, ref node ltl)
   requires lst::llH<n,s,B> 
   ensures gtl'::llH<n1,s1,B1> * ltl'::llH<n2,s2,B2> 
-  & n=n1+n2 & 1=2 &
+  & n=n1+n2 & 
     ["s":s=s1+s2 & s1>=3*n1 
-        & 1=2 & s2<=2*n2; 
+        & s2<=2*n2; 
      "B":B=union(B1,B2) 
      & forall (x:(x notin B1 | x>=3))
      //& forall (x:(x notin B2 | x<3))  bug
@@ -52,12 +52,12 @@ void dispatch(node lst, ref node gtl, ref node ltl)
      node tmp = lst.next;
      node gt; node lt;
      if (lst.val>=3) {
-       dprint;
+       //dprint;
           dispatch(tmp,gt,ltl);         
           assert false;
           lst.next = gt;
           gtl = lst;
-          dprint;
+          // dprint;
 
      } else {
           dispatch(tmp,gtl,lt);
