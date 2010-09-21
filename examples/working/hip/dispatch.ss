@@ -14,9 +14,61 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
+llsum<n> == self = null & n = 0 
+	or self::node<v, q> * q::llsum<n-v>;
+
+llS<S> == self = null & S = {} 
+	or self::node<v, q> * q::llS<S1> & S = union(S1, {v});
+
+llH<n,"s":sum,"B":B> == self = null 
+         &  n = 0 &
+ [ "s":n=0 & sum=0] 
+  or self::node<v, q> * q::llH<n1, sum1,B1> & v>=0 &
+  ["n":n=1+n1; "s":n=1+n1 & sum=sum1+v ; "B":B=union(B1,{v})]
+  inv true & n>=0 & ["s": sum>=0 ];
+
 	
+void dispatch(node lst, ref node gtl, ref node ltl)
+  requires lst::llH<n,s,B> 
+  ensures gtl'::llH<n1,s1,B1> * ltl'::llH<n2,s2,B2> 
+  & n=n1+n2 & 1=2 &
+    ["s":s=s1+s2 & s1>=3*n1 
+        & 1=2 & s2<=2*n2; 
+     "B":B=union(B1,B2) 
+     & forall (x:(x notin B1 | x>=3))
+     //& forall (x:(x notin B2 | x<3))  bug
+     & forall (y:(y notin B2 | y<3))
+  ]
+  ;
+//requires lst::llsum<n> 
+//ensures gtl'::llsum<n1> * ltl'::llsum<n2> & n=n1+n2;
+//requires lst::ll<n> 
+//ensures gtl'::ll<n1> * ltl'::ll<n2> & n=n1+n2;
+//requires lst::llS<B> 
+//ensures gtl'::llS<B1> * ltl'::llS<B2> & B=union(B1,B2);
+{
+  if (lst==null) { gtl=null; ltl =null;}
+   else {
+     node tmp = lst.next;
+     node gt; node lt;
+     if (lst.val>=3) {
+       dprint;
+          dispatch(tmp,gt,ltl);         
+          assert false;
+          lst.next = gt;
+          gtl = lst;
+          dprint;
+
+     } else {
+          dispatch(tmp,gtl,lt);
+          lst.next = lt;
+          ltl = lst;
+     }
+   }
+}
 	
-/*ll1<S> == self = null & S = {} 
+/*
+ll1<S> == self = null & S = {} 
 	or self::node<v, q> * q::ll1<S1> & S = union(S1, {v});*/
 
 ll2<n, S> == self=null & n=0 & S={}
@@ -25,7 +77,7 @@ ll2<n, S> == self=null & n=0 & S={}
 /* append two singly linked lists */
 void append(node x, node y)
 
-  requires x::ll<n1> * y::ll<n2> //& n1>0 //x!=null // & n1>0 & x != null
+  requires x::ll<n1> * y::ll<n2> & n1>0 //x!=null // & n1>0 & x != null
   ensures x::ll<m> & m=n1+n2;
 
 {

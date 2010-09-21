@@ -1,4 +1,3 @@
-
 global int n,k;
 
 void decrease1(int t)
