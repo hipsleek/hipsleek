@@ -7,6 +7,18 @@ data node {
 	node next;	
 }
 
+ll3<n,sum> == self = null &  n = 0 &  sum=0  
+  or self::node<v, q> * q::ll3<n1, sum1> & v>=0 & n=1+n1 &
+  sum=sum1+v 
+  inv n>=0 & sum>=0;
+
+ll3a<n,"s":sum> == self = null 
+  &  n = 0 & ["s": sum=0]  // false when "B" missing 
+  or self::node<v, q> * q::ll3a<n1, sum1> & v>=0 & n=1+n1 &
+  ["s": sum=sum1+v]
+  inv true & n>=0 & ["s": sum>=0 ];
+
+
 
 /* view for a singly linked list */
 
@@ -28,6 +40,7 @@ llH<n,"s":sum,"B":B> == self = null
 
 	
 void dispatch(node lst, ref node gtl, ref node ltl)
+/*
   requires lst::llH<n,s,B> 
   ensures gtl'::llH<n1,s1,B1> * ltl'::llH<n2,s2,B2> 
   & n=n1+n2 &
@@ -41,6 +54,15 @@ void dispatch(node lst, ref node gtl, ref node ltl)
      & forall (y:(y notin B2 | y<3))
   ]
   ;
+*/
+  requires lst::ll3<n,s> 
+  ensures gtl'::ll3<n1,s1> * ltl'::ll3<n2,s2> 
+  & n=n1+n2 & s=s1+s2 & s2<4*n2 & s1>=5*n1 ;//&  ;
+  /*
+  requires lst::ll3a<n,s> 
+  ensures gtl'::ll3a<n1,s1> * ltl'::ll3a<n2,s2> 
+  & n=n1+n2+1 & ["s":s=s1+s2+1 & s2<3*n2 & s1>=5*n1] ;//&  ;
+*/
 //requires lst::llsum<n> 
 //ensures gtl'::llsum<n1> * ltl'::llsum<n2> & n=n1+n2;
 //requires lst::ll<n> 
@@ -52,21 +74,21 @@ void dispatch(node lst, ref node gtl, ref node ltl)
       // should not be false!
      assert false;
      gtl=null; 
-     ltl =null;}
+     ltl =null;
+     dprint;
+     }
    else {
      node tmp = lst.next;
      node gt; node lt;
-     if (lst.val>=3) {
+     if (lst.val>=5) {
           dispatch(tmp,gt,lt);         
-          assert false;
-          dprint;
+          //assert false;
+          //dprint;
           lst.next = gt;
           gtl = lst;
           ltl=lt;
           // dprint;
-
      } else {
-
           dispatch(tmp,gt,lt);
           lst.next = lt;
           ltl = lst;
@@ -74,6 +96,8 @@ void dispatch(node lst, ref node gtl, ref node ltl)
      }
    }
 }
+
+
 	
 /*
 ll1<S> == self = null & S = {} 
