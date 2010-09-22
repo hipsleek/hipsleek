@@ -57,7 +57,15 @@ void dispatch(node lst, ref node gtl, ref node ltl)
 */
   requires lst::ll3<n,s> 
   ensures gtl'::ll3<n1,s1> * ltl'::ll3<n2,s2> 
-  & n=n1+n2 & s=s1+s2 & s1>=3*n1 & s2<3*n2+1 ;//& s1>=5*n1 ;//&  ;
+  & n=n1+n2 & s=s1+s2 & s1>=3*n1 & s2<3*n2+1 ;
+
+  requires lst::llS<B> 
+  ensures gtl'::llS<B1> * ltl'::llS<B2> 
+     & B=union(B1,B2) 
+     & forall (x:(x notin B1 | x>=3))
+    & forall (y:(y notin B2 | y<3)); 
+
+    //& s2<=2*n2 is weaker constraint
   /*
   requires lst::ll3a<n,s> 
   ensures gtl'::ll3a<n1,s1> * ltl'::ll3a<n2,s2> 
