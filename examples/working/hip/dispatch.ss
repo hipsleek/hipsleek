@@ -40,21 +40,7 @@ llH<n,"s":sum,"B":B> == self = null
 
 	
 void dispatch(node lst, ref node gtl, ref node ltl)
-/*
-  requires lst::llH<n,s,B> 
-  ensures gtl'::llH<n1,s1,B1> * ltl'::llH<n2,s2,B2> 
-  & n=n1+n2 &
-  ["s":s=s1+s2 
-   //& s1>n1+3 // this seems wrong.. 
-   & s1>=3*n1 // this seems wrong; is 30*n1 parsed correctly
-   & s2<3*n2 ;
-     "B":B=union(B1,B2) 
-     & forall (x:(x notin B1 | x>=3))
-     //& forall (x:(x notin B2 | x<3))  bug
-     & forall (y:(y notin B2 | y<3))
-  ]
-  ;
-*/
+
   requires lst::ll3<n,s> 
   ensures gtl'::ll3<n1,s1> * ltl'::ll3<n2,s2> 
   & n=n1+n2 & s=s1+s2 & s1>=3*n1 & s2<3*n2+1 ;
@@ -65,37 +51,19 @@ void dispatch(node lst, ref node gtl, ref node ltl)
      & forall (x:(x notin B1 | x>=3))
     & forall (y:(y notin B2 | y<3)); 
 
-    //& s2<=2*n2 is weaker constraint
-  /*
-  requires lst::ll3a<n,s> 
-  ensures gtl'::ll3a<n1,s1> * ltl'::ll3a<n2,s2> 
-  & n=n1+n2+1 & ["s":s=s1+s2+1 & s2<3*n2 & s1>=5*n1] ;//&  ;
-*/
-//requires lst::llsum<n> 
-//ensures gtl'::llsum<n1> * ltl'::llsum<n2> & n=n1+n2;
-//requires lst::ll<n> 
-//ensures gtl'::ll<n1> * ltl'::ll<n2> & n=n1+n2;
-//requires lst::llS<B> 
-//ensures gtl'::llS<B1> * ltl'::llS<B2> & B=union(B1,B2);
 {
   if (lst == null) {
-      // should not be false!
-     assert false;
      gtl=null; 
      ltl =null;
-     //dprint;
      }
    else {
      node tmp = lst.next;
      node gt; node lt;
      if (lst.val>=3) {
           dispatch(tmp,gt,lt);         
-          //assert false;
-          //dprint;
           lst.next = gt;
           gtl = lst;
           ltl=lt;
-          // dprint;
      } else {
           dispatch(tmp,gt,lt);
           lst.next = lt;

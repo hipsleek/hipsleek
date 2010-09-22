@@ -68,10 +68,10 @@ checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
 // without exists, it seems ok?
 
 checkentail x::node<v,q> * q::lla<n,s> & v>=0 & v<3 & ["s":s<3n]
-   |- (exists n2 : x::lla<n2,s2> & ["s":s2=s+v & s2< 3 n2]).
+   |- (exists n2 : x::lla<n2,s2> & ["s":s2=s+v & s2< 2 n2]).
 
 checkentail x::node<v,q> * q::ll3<n,s> & v>=0 & v<3 & s<3n
-   |- (exists n2 : x::ll3<n2,s2> & s2=s+v & s2<3 n2).
+   |- (exists n2 : x::ll3<n2,s2> & s2=s+v & s2<2 n2).
 
 //checkentail x=null |- x::ll3<n,s>.
 //print residue.
