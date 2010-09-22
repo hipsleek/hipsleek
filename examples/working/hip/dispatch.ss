@@ -29,7 +29,7 @@ ll<n> == self = null & n = 0
 llsum<n> == self = null & n = 0 
 	or self::node<v, q> * q::llsum<n-v>;
 
-llS<S> == self = null & S = {} 
+llS<S> == self = null // & S = {} 
 	or self::node<v, q> * q::llS<S1> & S = union(S1, {v});
 
 llH<n,"s":sum,"B":B> == self = null 
@@ -40,11 +40,11 @@ llH<n,"s":sum,"B":B> == self = null
 
 	
 void dispatch(node lst, ref node gtl, ref node ltl)
-
+/*
   requires lst::ll3<n,s> 
   ensures gtl'::ll3<n1,s1> * ltl'::ll3<n2,s2> 
-  & n=n1+n2 & s=s1+s2 & s1>=3*n1 & s2<3*n2+1 ;
-
+  & n=n1+n2 & s=s1+s2 & s1>=3*n1 & s2 <= 2*n2 ;// s2<3*n2+1 ; 
+*/
   requires lst::llS<B> 
   ensures gtl'::llS<B1> * ltl'::llS<B2> 
      & B=union(B1,B2) 

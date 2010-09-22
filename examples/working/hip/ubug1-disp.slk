@@ -1,0 +1,19 @@
+
+data node {
+	int val; 
+	node next;	
+}.
+
+
+pred ll1<n,"s":sum> == self = null 
+  &  n = 0 & ["s": sum=0]  
+  or self::node<v, q> * q::ll1<n1, sum1> & v>=0 & n=1+n1 &
+  ["s": sum=sum1+v ]
+  inv true & n>=0 & ["s": sum>=0 ].
+
+
+checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
+   |- (exists n2 : x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2]).
+// should fail, why did it succeed? an unsound bug here!
+// it works without labels
+

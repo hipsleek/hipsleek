@@ -78,3 +78,16 @@ checkentail x::node<v,q> * q::ll3<n,s> & v>=0 & v<3 & s<3n
 
 
 // why exists in two syntactoc form?
+
+pred ll5<n,"s":sum,"B":B> == self = null 
+  &  true & ["s": sum=0 & n=0 ; "B":B={} ]  
+  or self::node<v, q> * q::ll5<n1, sum1,B1> & v>=0  &
+  ["s": sum=sum1+v & n=1+n1; "B":B=union(B1,{v})]
+  inv true &  ["s": n>=0 & sum>=0 ].
+
+
+checkentail x=null |- x::ll5<n,s,B>.
+print residue.
+
+checkentail x::node<v,null> & v>=0 |- x::ll5<n,s,B>.
+print residue.
