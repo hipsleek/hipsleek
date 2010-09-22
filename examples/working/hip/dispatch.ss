@@ -57,7 +57,7 @@ void dispatch(node lst, ref node gtl, ref node ltl)
 */
   requires lst::ll3<n,s> 
   ensures gtl'::ll3<n1,s1> * ltl'::ll3<n2,s2> 
-  & n=n1+n2 & s=s1+s2 & s2<4*n2 & s1>=5*n1 ;//&  ;
+  & n=n1+n2 & s=s1+s2 & s1>=3*n1 & s2<2*n2+1 ;//& s1>=5*n1 ;//&  ;
   /*
   requires lst::ll3a<n,s> 
   ensures gtl'::ll3a<n1,s1> * ltl'::ll3a<n2,s2> 
@@ -75,12 +75,12 @@ void dispatch(node lst, ref node gtl, ref node ltl)
      assert false;
      gtl=null; 
      ltl =null;
-     dprint;
+     //dprint;
      }
    else {
      node tmp = lst.next;
      node gt; node lt;
-     if (lst.val>=5) {
+     if (lst.val>=3) {
           dispatch(tmp,gt,lt);         
           //assert false;
           //dprint;
