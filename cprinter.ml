@@ -1137,7 +1137,6 @@ let rec string_of_exp = function
 	    exp_icall_receiver = r;
 	    exp_icall_method_name = id;
 	    exp_icall_arguments = idl;
-	    exp_icall_visible_names = _;
 	    exp_icall_path_id = pid;
 	    exp_icall_pos = l}) -> 
       string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
@@ -1185,7 +1184,6 @@ let rec string_of_exp = function
   | SCall ({exp_scall_type = _;
 	    exp_scall_method_name = id;
 	    exp_scall_arguments = idl;
-	    exp_scall_visible_names = _;
 	    exp_scall_path_id = pid;
 	    exp_scall_pos = l}) -> 
       string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")

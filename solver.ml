@@ -2095,20 +2095,13 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
   let lhs_b = r.formula_base_branches in
   let _ = reset_int2 () in
   let xpure_lhs_h, xpure_lhs_h_b = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
-  (*let xpure_lhs_h0, xpure_lhs_h0_b = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 0 in*)
-  let fold_fun is_ok (branch_id, rhs_p) =
-    if (is_ok = false) then false else begin
-      let tmp1 = CP.mkAnd (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id (lhs_p, lhs_b)) pos in
-      let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
-	  (*let tmp2 = CP.mkAnd (CP.combine_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) (CP.combine_branch branch_id (lhs_p, lhs_b)) pos in*)
-	  (*let new_ante0, new_conseq0 = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp2 rhs_p pos in*)
-	  (*(print_endline ("branch: " ^ branch_id ^ (Cprinter.string_of_pure_formula (CP.combine_branch branch_id (xpure_lhs_h, xpure_lhs_h_b))));*)
-      let res,_,_ = (*CP.isConstTrue rhs_p || TP.imply new_ante0 new_conseq0 || 
-		              (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && *) TP.imply_timeout new_ante new_conseq ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) timeout in
-	  Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+    
+  let tmp1 = CP.mkAnd xpure_lhs_h lhs_p pos in
+  let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
+	let res,_,_ =  TP.imply_timeout new_ante new_conseq ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) timeout in
+	  (Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
 	  sat_subno := !sat_subno+1;  
-	  let res = 
-        if res = false && branch_id = "" then
+	  if res = false then
           let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
           let fold_fun is_ok branch_id_added =
 	        if is_ok then true else
@@ -2120,13 +2113,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
 		      res)
           in
 	      List.fold_left fold_fun false branches
-        else res
-	  in
-	  res
-    end
-  in
-  fold_fun true ("", rhs_p)
-    
+    else res)
     
 
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs rhs_p rhs_p_br pos : (list_context * proof) =

@@ -2102,15 +2102,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                        let positions = List.map I.get_exp_pos args in
                        let (local_vars, init_seq, arg_vars) = trans_args (U.combine3 cargs cts positions) in
-                       let visi_names = E.visible_names () in
-                       let visi_svars = List.map (fun (t, n) -> CP.SpecVar (trans_type prog t pos, n, Primed)) visi_names in
                        let call_e = C.ICall{
                              C.exp_icall_type = ret_ct;
                              C.exp_icall_receiver = recv_ident;
                              C.exp_icall_receiver_type = crecv_t;
                              C.exp_icall_method_name = mingled_mn;
                              C.exp_icall_arguments = arg_vars;
-                             C.exp_icall_visible_names = visi_svars;
                              C.exp_icall_path_id = pi;
                              C.exp_icall_pos = pos;} in
                        let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2156,13 +2153,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                          ( let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
                            let positions = List.map I.get_exp_pos args in
                            let (local_vars, init_seq, arg_vars) = trans_args (U.combine3 cargs cts positions) in
-                           let visi_names = E.visible_names () in
-                           let visi_svars = List.map (fun (t, n) -> CP.SpecVar (trans_type prog t pos, n, Primed)) visi_names in
                            let call_e = C.SCall {
                                            C.exp_scall_type = ret_ct;
                                            C.exp_scall_method_name = mingled_mn;
                                            C.exp_scall_arguments = arg_vars;
-                                           C.exp_scall_visible_names = visi_svars;
                                            C.exp_scall_pos = pos;
                                            C.exp_scall_path_id = pi; } in
                            let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2463,7 +2457,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
     | I.VarDecl {
           I.exp_var_decl_type = t;
           I.exp_var_decl_decls = decls;
-          exp_var_decl_pos = tpos } ->
+          I.exp_var_decl_pos = tpos } ->
             let ct = trans_type prog t tpos in
             let rec helper ds = (match ds with
              | [ (v, oe, pos) ] ->
@@ -3079,15 +3073,13 @@ and set_mingled_name (prog : I.prog_decl) =
 
 and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
   match ce with
-    | C.Seq
-	{
+    | C.Seq{
           C.exp_seq_type = t;
           C.exp_seq_exp1 = ce1;
           C.exp_seq_exp2 = ce2;
           C.exp_seq_pos = pos
-	} ->
-	let new_ce2 = insert_dummy_vars ce2 pos
-	in
+      } ->
+        let new_ce2 = insert_dummy_vars ce2 pos in
           C.Seq
             {
               C.exp_seq_type = t;
@@ -3103,37 +3095,25 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
                then ce
                else
 		 (let fn = fresh_var_name (Cprinter.string_of_typ t) pos.start_pos.Lexing.pos_lnum in
-		  let fn_decl =
-                    C.VarDecl
-                      {
-			C.exp_var_decl_type = t;
-			C.exp_var_decl_name = fn;
-			C.exp_var_decl_pos = pos;
-                      } in
-		  let assign_e =
-                    C.Assign
-                      {
-			C.exp_assign_lhs = fn;
-			C.exp_assign_rhs = ce;
-			C.exp_assign_pos = pos;
-                      } in
+		  let fn_decl = C.VarDecl {
+                        C.exp_var_decl_type = t;
+                        C.exp_var_decl_name = fn;
+                        C.exp_var_decl_pos = pos; } in
+		  let assign_e = C.Assign {
+                        C.exp_assign_lhs = fn;
+                        C.exp_assign_rhs = ce;
+                        C.exp_assign_pos = pos; } in
 		  let local_vars = [ (t, fn) ] in
-		  let seq =
-                    C.Seq
-                      {
-			C.exp_seq_type = C.void_type;
-			C.exp_seq_exp1 = fn_decl;
-			C.exp_seq_exp2 = assign_e;
-			C.exp_seq_pos = pos;
-                      } in
-		  let block_e =
-                    C.Block
-                      {
-			C.exp_block_type = C.void_type;
-			C.exp_block_body = seq;
-			C.exp_block_local_vars = local_vars;
-			C.exp_block_pos = pos;
-                      }
+		  let seq = C.Seq {
+                  C.exp_seq_type = C.void_type;
+                  C.exp_seq_exp1 = fn_decl;
+                  C.exp_seq_exp2 = assign_e;
+                  C.exp_seq_pos = pos;} in
+		  let block_e = C.Block {
+                        C.exp_block_type = C.void_type;
+                        C.exp_block_body = seq;
+                        C.exp_block_local_vars = local_vars;
+                        C.exp_block_pos = pos; }
 		  in block_e))
 
 and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool =
@@ -4464,7 +4444,7 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
            Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
            Iast.exp_assign_pos = b.Iast.exp_assign_pos}
     | Iast.Binary b->
-        Iast.Binary { b with 
+        Iast.Binary { b with  
           Iast.exp_binary_oper1 = helper ren b.Iast.exp_binary_oper1;
           Iast.exp_binary_oper2 = helper ren b.Iast.exp_binary_oper2;}
     | Iast.Bind b->
@@ -4550,45 +4530,178 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                        | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))} in
     helper ren f 
 
+
+and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
+      | Iast.Assert _ -> (f,[])
+      | Iast.Assign b -> 
+            (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
+              Iast.exp_assign_lhs = fst(case_rename_var_decls b.Iast.exp_assign_lhs);
+              Iast.exp_assign_rhs = fst(case_rename_var_decls b.Iast.exp_assign_rhs);
+              Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
+              Iast.exp_assign_pos = b.Iast.exp_assign_pos},[])
+      | Iast.Binary b->
+            (Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
+              Iast.exp_binary_oper1 = fst (case_rename_var_decls b.Iast.exp_binary_oper1);
+              Iast.exp_binary_oper2 = fst (case_rename_var_decls b.Iast.exp_binary_oper2);
+              Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
+              Iast.exp_binary_pos = b.Iast.exp_binary_pos},[])
+      | Iast.Bind b ->
+            (Iast.Bind {b with Iast.exp_bind_body = fst (case_rename_var_decls b.Iast.exp_bind_body)},[])  
+      | Iast.Block b->
+            (Iast.Block { b with Iast.exp_block_body = fst (case_rename_var_decls b.Iast.exp_block_body)},[])
+      
+      | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _ 
+      | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _
+      | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.This _  | Iast.Time _
+      | Iast.Break _ -> (f,[])
+      
+      | Iast.CallNRecv b ->
+          let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_arguments in
+            (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },[]) 
+      | Iast.CallRecv b->
+          let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_recv_arguments in
+            (Iast.CallRecv{b with 
+                 Iast.exp_call_recv_receiver = fst (case_rename_var_decls b.Iast.exp_call_recv_receiver);
+                 Iast.exp_call_recv_arguments = nl},[])
+      | Iast.Cast b->
+            (Iast.Cast {b with Iast.exp_cast_body= fst (case_rename_var_decls b.Iast.exp_cast_body)},[])
+      | Iast.Cond b->
+          let ncond,r = case_rename_var_decls b.Iast.exp_cond_condition in	
+            (Iast.Cond {b with 
+              Iast.exp_cond_condition= ncond;
+              Iast.exp_cond_then_arm= fst (case_rename_var_decls b.Iast.exp_cond_then_arm);
+              Iast.exp_cond_else_arm= fst (case_rename_var_decls b.Iast.exp_cond_else_arm);},r)
+      | Iast.ConstDecl b->
+          let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
+                     let nn = (Ipure.fresh_old_name c1) in
+                     let ne,_ = case_rename_var_decls c2 in
+                       ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_const_decl_decls in
+            (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nren)
+      | Iast.Label (pid,b)-> (Iast.Label (pid, fst (case_rename_var_decls b)),[])
+      | Iast.Member b ->
+          (Iast.Member {b with Iast.exp_member_base = fst (case_rename_var_decls b.Iast.exp_member_base)},[]) 
+      | Iast.New b->
+          let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_new_arguments in
+            (Iast.New  {b with Iast.exp_new_arguments =nl},[])
+      | Iast.Return b -> 
+          (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with 
+              | None -> None 
+              | Some f -> Some (fst (case_rename_var_decls f))},[])
+      | Iast.Seq b -> 
+          let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
+          let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in          
+          let l2 = rename_exp ren l2 in      
+          let aux_ren = (ren_list_concat ren ren2) in
+         (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
+      | Iast.Unary b -> 
+          (Iast.Unary {b with Iast.exp_unary_exp = fst (case_rename_var_decls b.Iast.exp_unary_exp)},[])
+      | Iast.VarDecl b -> 		
+          let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
+                 let nn = (Ipure.fresh_old_name c1) in
+                 let ne = match c2 with
+                   | None -> None 
+                   | Some f-> Some (fst (case_rename_var_decls f)) in
+                   ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_var_decl_decls in
+            (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nren)		
+      | Iast.While b->
+        (Iast.While {b with 
+              Iast.exp_while_condition= fst (case_rename_var_decls b.Iast.exp_while_condition); 
+              Iast.exp_while_body= fst (case_rename_var_decls b.Iast.exp_while_body);},[])
+      | Iast.Try b-> 
+          let ncl = List.map (fun c-> 
+              let ncv,ren = match c.Iast.exp_catch_var with
+                | None -> (None,[])
+                | Some e-> 
+                  let nn = (Ipure.fresh_old_name e) in
+                    ((Some nn),[(e,nn)])in
+              let ncfv,ren = match c.Iast.exp_catch_flow_var with
+                | None -> (None,ren)
+                | Some e-> 
+                  let nn = (Ipure.fresh_old_name e) in
+                    ((Some nn),(e,nn)::ren)in								
+              {c with 
+                   Iast.exp_catch_var = ncv ;
+                   Iast.exp_catch_flow_type = c.Iast.exp_catch_flow_type;
+                   Iast.exp_catch_flow_var = ncfv;
+                   Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren c.Iast.exp_catch_body));
+                   }) b.Iast.exp_catch_clauses in 
+          let nfl = List.map (fun c-> 
+              {c with Iast.exp_finally_body = fst(case_rename_var_decls c.Iast.exp_finally_body)}) b.Iast.exp_finally_clause in
+            (Iast.Try {b with 
+               Iast.exp_try_block = fst (case_rename_var_decls b.Iast.exp_try_block);
+               Iast.exp_catch_clauses = ncl;
+               Iast.exp_finally_clause = nfl;
+                },[])
+      | Iast.Raise b-> (Iast.Raise {b with 
+				      Iast.exp_raise_val = match b.Iast.exp_raise_val with
+							      | None -> None
+							      | Some e -> Some (fst (case_rename_var_decls e))},[])
+
+
+and err_prim_l_vars s l pos= 
+  List.iter (fun (c1,c2)-> match c2 with
+        | Primed  -> Error.report_error { 
+                              Error.error_loc = pos;
+                              Error.error_text = c1^"' "^s}
+        | Unprimed -> () ) l
+                    
+and check_eprim_in_formula s f = match f with
+  | IF.Or o -> (check_eprim_in_formula s o.IF.formula_or_f1; check_eprim_in_formula s o.IF.formula_or_f2 )
+  | IF.Base b-> ()
+  | IF.Exists e-> err_prim_l_vars s e.IF.formula_exists_qvars e.IF.formula_exists_pos
+                    
+and check_eprim_in_struc_formula s f = 
+ let helper f = match f with
+   | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula s c2) b.IF.formula_case_branches
+   | IF.EBase b-> 
+        (err_prim_l_vars s b.IF.formula_ext_exists b.IF.formula_ext_pos; 
+         check_eprim_in_formula s b.IF.formula_ext_base;
+         check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
+   | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b in
+List.iter helper f
+
 and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:Iast.exp) :
-    Iast.exp*((ident*primed) list)*((ident*primed) list)*((ident*ident) list) =  match f with
+    Iast.exp*((ident*primed) list)*((ident*primed) list) =  match f with
       | Iast.Assert b->
           let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
             | None -> (None,h)
             | Some asserted_f -> 
           let r, _ = case_normalize_struc_formula prog h p (fst asserted_f) true true in
+          let _ = check_eprim_in_struc_formula " is not a valid program variable " r in
             (Some (r,(snd asserted_f)),h) in
           let assm_nf  = match b.Iast.exp_assert_assumed_formula with
             | None-> None 
             | Some f -> 
-          Some (fst (case_normalize_formula prog nh false f))in
+              let r,_ = case_normalize_formula prog nh false f in 
+              let _ = check_eprim_in_formula " is not a valid program variable " r in
+              Some r in
           let rez_assert = Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
                Iast.exp_assert_assumed_formula = assm_nf;
                Iast.exp_assert_pos = b.Iast.exp_assert_pos;
                Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
-            (rez_assert, h, p, [])
+            (rez_assert, h, p)
       | Iast.Assign b-> 
-          let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
-          let l2,_,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
+          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
+          let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
             (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
               Iast.exp_assign_lhs = l1;
               Iast.exp_assign_rhs = l2;
               Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
-              Iast.exp_assign_pos = b.Iast.exp_assign_pos},h,p,[])
+              Iast.exp_assign_pos = b.Iast.exp_assign_pos},h,p)
       | Iast.Binary b->
-          let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper1 in
-          let l2,_,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper2 in
+          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper1 in
+          let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper2 in
             (Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
               Iast.exp_binary_oper1 = l1;
               Iast.exp_binary_oper2 = l2;
               Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
-              Iast.exp_binary_pos = b.Iast.exp_binary_pos},h,p,[])
+              Iast.exp_binary_pos = b.Iast.exp_binary_pos},h,p)
       | Iast.Bind b ->
-          let r,nh,np,_ =   case_normalize_exp prog h p b.Iast.exp_bind_body in
-            (Iast.Bind {b with Iast.exp_bind_body =r},h,p,[])  
+          let r,nh,np =   case_normalize_exp prog h p b.Iast.exp_bind_body in
+            (Iast.Bind {b with Iast.exp_bind_body =r},h,p)  
       | Iast.Block b->
-          let r,_,_,_ = case_normalize_exp prog h p b.Iast.exp_block_body in
-            (Iast.Block { b with Iast.exp_block_body = r},h,p,[])
+          let r,_,_ = case_normalize_exp prog h p b.Iast.exp_block_body in
+            (Iast.Block { b with Iast.exp_block_body = r},h,p)
       | Iast.Continue _ 
       | Iast.Debug _ 
       | Iast.Dprint _ 
@@ -4602,106 +4715,99 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
       | Iast.Var _
       | Iast.This _ 
       | Iast.Time _
-      | Iast.Break _ -> (f,h,p,[])
+      | Iast.Break _ -> (f,h,p)
       | Iast.CallNRecv b ->
-          let nl = List.map (fun c-> let r1,_,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
-            (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },h,p,[]) 
+          let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
+            (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },h,p) 
       | Iast.CallRecv b->
-          let a1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_call_recv_receiver in
-          let nl = List.map (fun c-> let r1,_,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_recv_arguments in
+          let a1,_,_ = case_normalize_exp prog h p b.Iast.exp_call_recv_receiver in
+          let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_recv_arguments in
             (Iast.CallRecv{b with 
                  Iast.exp_call_recv_receiver = a1;
-                 Iast.exp_call_recv_arguments = nl},h,p,[])
+                 Iast.exp_call_recv_arguments = nl},h,p)
       | Iast.Cast b->
-          let nb,_,_,_ = case_normalize_exp prog h p b.Iast.exp_cast_body in
-            (Iast.Cast {b with Iast.exp_cast_body= nb},h,p,[])
+          let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_cast_body in
+            (Iast.Cast {b with Iast.exp_cast_body= nb},h,p)
       | Iast.Cond b->
-          let ncond,_,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_condition in	
-          let nthen,_,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_then_arm in
-          let nelse,_,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_else_arm in
+          let ncond,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_condition in	
+          let nthen,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_then_arm in
+          let nelse,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_else_arm in
             (Iast.Cond {b with 
               Iast.exp_cond_condition= ncond;
               Iast.exp_cond_then_arm= nthen;
-              Iast.exp_cond_else_arm= nelse;},h,p,[])
+              Iast.exp_cond_else_arm= nelse;},h,p)
       | Iast.ConstDecl b->
-          let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
-                     let nn = (Ipure.fresh_old_name c1) in
-                     let ne,_,_,_ = case_normalize_exp prog h p c2 in
-                       ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_const_decl_decls in
-          let nvl = List.map (fun (c1,c2)-> c1) nren in
+          let ndecl = List.fold_left (fun a1 (c1,c2,c3)-> 
+              let ne,_,_ = case_normalize_exp prog h p c2 in
+              (c1,ne,c3)::a1) [] b.Iast.exp_const_decl_decls in
+          let nvl = List.map (fun (c1,_,_)-> c1) ndecl in
           let nvlprm = List.map (fun c-> (c,Primed)) nvl in
           let nh = nvlprm@h in
           let np = (List.map (fun c->(c,Primed))nvl)@p in
-            (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nh,np,nren)
+            (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nh,np)
       | Iast.Label (pid,b)-> 
-          let nb,_,_,_ =  case_normalize_exp prog h p b in 
-          (Iast.Label (pid, nb),h,p,[])
+          let nb,_,_ =  case_normalize_exp prog h p b in 
+          (Iast.Label (pid, nb),h,p)
       | Iast.Member b ->
-          let nb,_,_,_ = case_normalize_exp prog h p b.Iast.exp_member_base in
-          (Iast.Member {b with Iast.exp_member_base = nb},h,p,[]) 
+          let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_member_base in
+          (Iast.Member {b with Iast.exp_member_base = nb},h,p) 
       | Iast.New b->
-          let nl = List.map (fun c-> let r1,_,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_new_arguments in
-            (Iast.New  {b with Iast.exp_new_arguments =nl},h,p,[])
+          let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_new_arguments in
+            (Iast.New  {b with Iast.exp_new_arguments =nl},h,p)
       | Iast.Return b -> 
           (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with | None -> None | Some f -> 
-           let r,_,_,_ = (case_normalize_exp prog h p f) in 	Some r},h,p,[])
+           let r,_,_ = (case_normalize_exp prog h p f) in Some r},h,p)
       | Iast.Seq b -> 
-          let l1,nh,np,ren = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
-          let l2 ,nh,np,ren2 = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in          
-          let l2 = rename_exp ren l2 in          
-          let aux_ren = (ren_list_concat ren ren2) in
-            (*let _ = print_string ((List.fold_left(fun a (c1,c2)-> a^"("^c1^","^c2^") ") "\n var2 decl renaming: " aux_ren)^"\n") in*)
-            (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np, aux_ren)
+          let l1,nh,np = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
+          let l2 ,nh,np = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in          
+          (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np)
       | Iast.Unary b -> 
-          let l1,_,_,_ = case_normalize_exp prog h p b.Iast.exp_unary_exp in
-          (Iast.Unary {b with Iast.exp_unary_exp = l1},h,p,[])
+          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_unary_exp in
+          (Iast.Unary {b with Iast.exp_unary_exp = l1},h,p)
       | Iast.VarDecl b -> 		
-          let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
-                 let nn = (Ipure.fresh_old_name c1) in
+          let ndecl = List.fold_left (fun a1 (c1,c2,c3)->
                  let ne = match c2 with
                    | None -> None 
-                   | Some f-> let ne,_,_,_ = case_normalize_exp prog h p f in Some ne in
-                   ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_var_decl_decls in
-          let nvl = List.map (fun (c1,c2)-> c2) nren in
+                   | Some f-> let ne,_,_ = case_normalize_exp prog h p f in Some ne in
+                   (c1,ne,c3)::a1) [] b.Iast.exp_var_decl_decls in
+          let nvl = List.map (fun (c1,_,_)-> c1) ndecl in
           let nvlprm = List.map (fun c-> (c,Primed)) nvl in
           let nh = nvlprm@h in
           let np = (List.map (fun c->(c,Primed))nvl)@p in
-            (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nh,np,nren)		
+            (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nh,np)		
       | Iast.While b->
-          let nc,nh,np,_ = case_normalize_exp prog h p b.Iast.exp_while_condition in
-          let nb,nh,np,_ = case_normalize_exp prog nh np b.Iast.exp_while_body in
+          let nc,nh,np = case_normalize_exp prog h p b.Iast.exp_while_condition in
+          let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_while_body in
           let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false in
-            (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p,[])
+            (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
       | Iast.Try b-> 
-          let nb,nh,np,_ = case_normalize_exp prog h p b.Iast.exp_try_block in
+          let nb,nh,np = case_normalize_exp prog h p b.Iast.exp_try_block in
           let ncl = List.map (fun c-> 
-              let ncv,nh,np,ren = match c.Iast.exp_catch_var with
-                | None -> (None,h,p,[])
-                | Some e-> let nn = (Ipure.fresh_old_name e) in
-                    ((Some nn),(nn,Primed)::h,(nn,Primed)::p,[(e,nn)])in
-              let ncfv,nh,np,ren = match c.Iast.exp_catch_flow_var with
-                | None -> (None,nh,np,ren)
-                | Some e-> let nn = (Ipure.fresh_old_name e) in
-                    ((Some nn),(nn,Primed)::nh,(nn,Primed)::np,(e,nn)::ren)in
-              let nb = rename_exp ren c.Iast.exp_catch_body in			
-              let nb,_,_,_ = case_normalize_exp prog nh np nb in									
+              let ncv,nh,np = match c.Iast.exp_catch_var with
+                | None -> (None,h,p)
+                | Some e-> ((Some e),(e,Primed)::h,(e,Primed)::p)in
+              let ncfv,nh,np = match c.Iast.exp_catch_flow_var with
+                | None -> (None,nh,np)
+                | Some e->
+                    ((Some e),(e,Primed)::nh,(e,Primed)::np) in	
+              let nb,_,_ = case_normalize_exp prog nh np c.Iast.exp_catch_body in									
                 {c with 
                    Iast.exp_catch_var = ncv ;
                    Iast.exp_catch_flow_type = c.Iast.exp_catch_flow_type;
                    Iast.exp_catch_flow_var = ncfv;
                    Iast.exp_catch_body = nb;}) b.Iast.exp_catch_clauses in 
-          let nfl = List.map (fun c-> let nf,_,_,_ = case_normalize_exp prog nh np c.Iast.exp_finally_body in
+          let nfl = List.map (fun c-> let nf,_,_ = case_normalize_exp prog nh np c.Iast.exp_finally_body in
               {c with Iast.exp_finally_body = nf}) b.Iast.exp_finally_clause in
             (Iast.Try {b with 
              Iast.exp_try_block = nb;
              Iast.exp_catch_clauses = ncl;
              Iast.exp_finally_clause = nfl;
-                },h,p,[])
+                },h,p)
       | Iast.Raise b-> (Iast.Raise {b with 
 				      Iast.exp_raise_val = (match b.Iast.exp_raise_val with
 							      | None -> None
-							      | Some e -> let nc,_,_,_ = (case_normalize_exp prog h p e) in
-								  Some nc)},h,p,[])
+							      | Some e -> let nc,_,_ = (case_normalize_exp prog h p e) in
+								  Some nc)},h,p)
 
 
 
@@ -4714,11 +4820,14 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) f.Iast.proc_args) in
   let p = (res,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) f.Iast.proc_args)) in
   let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false false in
+  let _ = check_eprim_in_struc_formula " is not allowed in precond " nst in 
   let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false false in
+  let _ = check_eprim_in_struc_formula "is not allowed in precond " ndn in
   let h1 = Util.remove_dups (h11@h12) in 
   let h2 = Util.remove_dups (h@h_prm@(Util.difference h1 h)) in
   let nb = match f.Iast.proc_body with None -> None | Some f->
-    let r,_,_,_ = (case_normalize_exp prog h2 [(res,Unprimed)] f) in			
+    let f,_ = case_rename_var_decls f in
+    let r,_,_ = (case_normalize_exp prog h2 [(res,Unprimed)] f) in
       Some r in
     {f with Iast.proc_static_specs =nst;
        Iast.proc_dynamic_specs = ndn;			

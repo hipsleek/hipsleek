@@ -1476,6 +1476,9 @@ if (U.empty fs) then true else false
 let isSuccessListPartialCtx cl =
   List.exists isSuccessPartialCtx cl 
   
+let isNonFalseListPartialCtx cl = 
+ List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
+  
 let rank (t:partial_context):float = match t with
   | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}
   | ( [] , _ ) -> 1.

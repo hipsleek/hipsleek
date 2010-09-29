@@ -345,7 +345,6 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		  exp_icall_type = ret_t; (* this is the return type *)
 		  exp_icall_method_name = mn;
 		  exp_icall_arguments = vs_prim;
-		  exp_icall_visible_names = p_svars;
 		  exp_icall_pos = pos}) ->
 	          Err.report_error {Err.error_loc = pos;
 			  Err.error_text = "[typechecker.ml]: We do not support instant calls"}
@@ -569,7 +568,6 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
         | SCall ({exp_scall_type = ret_t;
 		  exp_scall_method_name = mn;
 		  exp_scall_arguments = vs;
-		  exp_scall_visible_names = p_svars;
 		  exp_scall_path_id = pid;
 		  exp_scall_pos = pos}) -> begin (* mn is mingled name of the method *)
 	        (*print_endline "\nSCALL!"; flush stdout;*)
@@ -791,7 +789,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 				                  (* Solver.entail_hist#upd (pidi,s) rs; *)
 				                  if not(CF.isFailListPartialCtx rs)
 				                  then
-				                    (Debug.print_info "assert" (s ^" : ok\n") pos;
+				                    (Debug.print_info "assert" (s ^(if (CF.isNonFalseListPartialCtx ctx) then " : ok\n" else ": unreachable\n")) pos;
 				                    Debug.pprint ("Residual:\n" ^ (Cprinter.string_of_list_partial_context rs)) pos;
 				                    rs)
 				                  else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in ctx

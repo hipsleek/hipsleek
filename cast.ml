@@ -131,7 +131,7 @@ and exp_icall = { exp_icall_type : P.typ;
 				  exp_icall_receiver_type : P.typ;
 				  exp_icall_method_name : ident;
 				  exp_icall_arguments : ident list;
-				  exp_icall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
+				  (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
 				  exp_icall_path_id : control_path_id;
 				  exp_icall_pos : loc }
 
@@ -151,7 +151,7 @@ and exp_return = { exp_return_type : P.typ;
 and exp_scall = { exp_scall_type : P.typ;
 				  exp_scall_method_name : ident;
 				  exp_scall_arguments : ident list;
-				  exp_scall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
+				  (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
 				  exp_scall_path_id : control_path_id;
 				  exp_scall_pos : loc }
 
@@ -329,7 +329,6 @@ let rec type_of_exp (e : exp) = match e with
 			exp_icall_receiver = _;
 			exp_icall_method_name = _;
 			exp_icall_arguments = _;
-			exp_icall_visible_names = _;
 			exp_icall_pos = _}) -> Some t
   | Cast ({exp_cast_target_type = t}) -> Some t
   | Cond ({exp_cond_type = t;
@@ -354,7 +353,6 @@ let rec type_of_exp (e : exp) = match e with
   | SCall ({exp_scall_type = t;
 			exp_scall_method_name = _;
 			exp_scall_arguments = _;
-			exp_scall_visible_names = _;
 			exp_scall_pos = _}) -> Some t
   | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
   | This ({exp_this_type = t}) -> Some t
@@ -516,7 +514,6 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_icall_receiver = _;
 			exp_icall_method_name = n;
 			exp_icall_arguments = _;
-			exp_icall_visible_names = _; 
 			exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
   | IConst _ -> []
   | New _ -> []
@@ -526,7 +523,6 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | SCall ({exp_scall_type = _;
 			exp_scall_method_name = n;
 			exp_scall_arguments = _;
-			exp_scall_visible_names = _; 
 			exp_scall_pos = _}) -> [unmingle_name n]
   | Seq ({exp_seq_type = _;
 		  exp_seq_exp1 = e1;
