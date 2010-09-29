@@ -1,7 +1,7 @@
 void loop(ref int x) 
  case {
-  x>11 ->  requires [xx] xx=1 & x>=0 ensures xx=1 & x'=10; //'
-   x<=11 ->  requires [xx] xx=0 ensures x'=x-1; //'
+  x>11 ->  requires [xx] xx=1 & x>=0 ensures  x'=10; //'
+   x<=11 ->  requires [xx] xx=0 ensures x'=x-1 ; //'
   }
 {
   int z=x;
@@ -9,9 +9,8 @@ void loop(ref int x)
   dprint;
   if (x>10) {
     assert x-x'>0 & x'>=0;
-    assert z'-x'>1; 
+    assert z'-x'>0; 
     assert xx=0;
-    //assert xx=1;
     loop(x);
   }
 }
