@@ -20,10 +20,10 @@ and typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_global_var_decls : exp_var_decl list;
-				   prog_enum_decls : enum_decl list;
-				   mutable prog_view_decls : view_decl list;
-				   prog_proc_decls : proc_decl list;
-				   mutable prog_coercion_decls : coercion_decl list }
+                   prog_enum_decls : enum_decl list;
+                   mutable prog_view_decls : view_decl list;
+                   prog_proc_decls : proc_decl list;
+                   mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
 				  data_fields : (typed_ident * loc) list;
@@ -281,8 +281,8 @@ and exp_var = { exp_var_name : ident;
 				exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
-					 exp_var_decl_decls : (ident * exp option * loc) list;
-					 exp_var_decl_pos : loc }
+                     exp_var_decl_decls : (ident * exp option * loc) list;
+                     exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
 				  exp_while_body : exp;

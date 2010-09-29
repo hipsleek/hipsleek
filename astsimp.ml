@@ -4181,20 +4181,20 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
 
   let rec match_exp (used_names : (ident*primed) list) (hargs : (IP.exp * branch_label) list) pos :
       (((ident*primed) list) * ((ident*primed) list) * ((ident*primed) list) * (IP.formula * (branch_label * IP.formula) list)) = match hargs with
-	| (e, label) :: rest ->
-            let (new_used_names, e_hvars, e_evars, (e_link, e_link_br)) = match e with
-              | IP.Var (v, pos_e) ->
-		  (try
+    | (e, label) :: rest ->
+      let (new_used_names, e_hvars, e_evars, (e_link, e_link_br)) = match e with
+              | IP.Var (v, pos_e) -> 
+                (try
                      if (List.mem v h) || (List.mem v used_names) then(*existential wrapping and liniarization*)
-                       (let fresh_v = (Ipure.fresh_old_name (fst v)),(snd v) in
-			let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
-			let quantified_var = [ fresh_v ]
-			in (used_names, [ fresh_v ], quantified_var, if label = "" then (link_f, []) else (IP.mkTrue pos_e, [label, link_f])))
+                       (let fresh_v = (Ipure.fresh_old_name (fst v)),Unprimed in
+                        let link_f = IP.mkEqExp (IP.Var (fresh_v,pos_e)) e pos_e in
+                        let quantified_var = [ fresh_v ] in 
+                        (used_names, [ fresh_v ], quantified_var, if label = "" then (link_f, []) else (IP.mkTrue pos_e, [label, link_f])))
                      else
-                       (let quantified_var = if b then [ v ] else []
-			in((v :: used_names), [ v ], quantified_var,(IP.mkTrue pos_e, [])))
-                   with
-                     | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
+                       (let quantified_var = if b then [ v ] else [] in
+                        ((v :: used_names), [ v ], quantified_var,(IP.mkTrue pos_e, [])))
+                with
+                  | Not_found -> Err.report_error{ Err.error_loc = pos_e; Err.error_text = (fst v) ^ " is undefined"; })
               | _ -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f); Err.error_text = "malfunction with float out exp in normalizing"; } in
             let (rest_used_names, rest_hvars, rest_evars, (rest_link, rest_link_br)) = match_exp new_used_names rest pos in
             let hvars = e_hvars @ rest_hvars in
@@ -4209,36 +4209,35 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
     match f with
       | IF.HeapNode2 b -> Error.report_error {Error.error_loc = b.Iformula.h_formula_heap2_pos; Error.error_text = "malfunction: heap node 2 still present"}  
       | IF.HeapNode b ->
-	  let pos = b.Iformula.h_formula_heap_pos in
-	  let labels = try
-	    let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
-	      vdef.I.view_labels
-	  with
-	    | Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments in	
-	  let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
-	    Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
-	  in
-	  let (new_used_names, hvars, evars, (link_f, link_f_br)) =
-	    match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
-	  let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-	  let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
-	  in (new_used_names, evars, new_h, (link_f, link_f_br))
+        let pos = b.Iformula.h_formula_heap_pos in
+        let labels = try
+            let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
+            vdef.I.view_labels
+          with
+            | Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments in	
+        let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
+          Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"} in
+        let (new_used_names, hvars, evars, (link_f, link_f_br)) = 
+                match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
+        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
+        let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars} in 
+        (new_used_names, evars, new_h, (link_f, link_f_br))
       | IF.Star
-	  {
-	    IF.h_formula_star_h1 = f1;
-	    IF.h_formula_star_h2 = f2;
-	    IF.h_formula_star_pos = pos
-	  } ->
-	  let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	    linearize_heap used_names f1 in
-	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	    linearize_heap new_used_names1 f2 in
-	  let tmp_h = IF.mkStar lf1 lf2 pos in
-	  let tmp_link = IP.mkAnd link1 link2 pos in
-	  let tmp_link_br = IP.merge_branches link1_br link2_br in
-	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
-      | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
-      | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
+        {
+          IF.h_formula_star_h1 = f1;
+          IF.h_formula_star_h2 = f2;
+          IF.h_formula_star_pos = pos
+        } ->
+        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
+          linearize_heap used_names f1 in
+        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
+          linearize_heap new_used_names1 f2 in
+        let tmp_h = IF.mkStar lf1 lf2 pos in
+        let tmp_link = IP.mkAnd link1 link2 pos in
+        let tmp_link_br = IP.merge_branches link1_br link2_br in
+          (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+          | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
+          | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
     
     
   let normalize_base heap p fl br pos : Iformula.formula* ((ident*primed)list) =
@@ -4264,19 +4263,19 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
     
   let rec helper (f:Iformula.formula):Iformula.formula* ((ident*primed)list) = match f with
     | Iformula.Or b -> 
-	let f1,l1 = (helper b.Iformula.formula_or_f1) in
-	let f2,l2 = (helper b.Iformula.formula_or_f2) in
-	  (Iformula.Or {b with Iformula.formula_or_f1 = f1; Iformula.formula_or_f2 = f2}, (Util.remove_dups (l1@l2)))
-    | Iformula.Base b -> normalize_base  b.Iformula.formula_base_heap 
-	b.Iformula.formula_base_pure 
-	  b.Iformula.formula_base_flow
-	  b.Iformula.formula_base_branches 
-	  b.Iformula.formula_base_pos
+      let f1,l1 = (helper b.Iformula.formula_or_f1) in
+      let f2,l2 = (helper b.Iformula.formula_or_f2) in
+        (Iformula.Or {b with Iformula.formula_or_f1 = f1; Iformula.formula_or_f2 = f2}, (Util.remove_dups (l1@l2)))
+    | Iformula.Base b -> normalize_base   b.Iformula.formula_base_heap 
+                                          b.Iformula.formula_base_pure 
+                                          b.Iformula.formula_base_flow
+                                          b.Iformula.formula_base_branches 
+                                          b.Iformula.formula_base_pos
     | Iformula.Exists b-> normalize_base b.Iformula.formula_exists_heap 
-	b.Iformula.formula_exists_pure
-	  b.Iformula.formula_exists_flow
-	  b.Iformula.formula_exists_branches 
-	  b.Iformula.formula_exists_pos in
+                                         b.Iformula.formula_exists_pure
+                                         b.Iformula.formula_exists_flow
+                                         b.Iformula.formula_exists_branches 
+                                         b.Iformula.formula_exists_pos in
     helper f
 
 and case_normalize_formula prog (h:(ident*primed) list)(b:bool)(f:Iformula.formula):Iformula.formula* ((ident*primed)list) = 
@@ -4298,11 +4297,11 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
   let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula):Iformula.struc_formula* ((ident*primed)list) = 
     let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
       | Iformula.EAssume (b,y)-> 
-	  let onb = convert_anonym_to_exist b in
-	  let hp = (Util.remove_dups(h@p))in
-	  let nb,nh = case_normalize_renamed_formula prog hp false onb in
-	  let nb,ne = ilinearize_formula nb hp in
-	  let vars_list = Iformula.all_fv nb in
+          let onb = convert_anonym_to_exist b in
+          let hp = (Util.remove_dups(h@p))in
+          let nb,nh = case_normalize_renamed_formula prog hp false onb in
+          let nb,ne = ilinearize_formula nb hp in
+          let vars_list = Iformula.all_fv nb in
 	    (*let _ = print_string ("\n nb: "^(Iprinter.string_of_formula nb)^" \n "^
 	      (List.fold_left(fun a (c,d)-> a^" "^c^(Iprinter.string_of_primed d)) "" vars_list)^"\n"^
 	      (List.fold_left(fun a (c,d)-> a^" "^c^(Iprinter.string_of_primed d)) "" p)^"\n"^
@@ -4816,9 +4815,12 @@ and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =
     {f with Iast.data_invs = List.map (fun c-> fst(case_normalize_formula prog h false c)) f.Iast.data_invs}
 
 and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl = 
-  let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) f.Iast.proc_args) in
-  let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) f.Iast.proc_args) in
-  let p = (res,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) f.Iast.proc_args)) in
+  let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
+  let gl_v =  List.map (fun (c1,c2)-> {I.param_type = c1; I.param_name = c2; I.param_mod = I.RefMod; I.param_loc = no_pos })(List.concat gl_v_l) in
+  let gl_proc_args = gl_v@ f.Iast.proc_args in
+  let h = (List.map (fun c1-> (c1.Iast.param_name,Unprimed)) gl_proc_args) in
+  let h_prm = (List.map (fun c1-> (c1.Iast.param_name,Primed)) gl_proc_args) in
+  let p = (res,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
   let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false false in
   let _ = check_eprim_in_struc_formula " is not allowed in precond " nst in 
   let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false false in
