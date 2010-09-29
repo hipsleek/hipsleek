@@ -287,18 +287,22 @@ and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 		Util.difference (h_fv b.formula_exists_heap) b.formula_exists_qvars
 	| Or b-> Util.remove_dups ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
-and struc_free_vars (f0:struc_formula):(ident*primed) list= 
+and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list= 
 	let helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
-					let fvc = struc_free_vars b.formula_ext_continuation in
-					Util.remove_dups (Util.difference (fvb@fvc) (b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst @ b.formula_ext_exists))
+					let fvc = struc_free_vars b.formula_ext_continuation with_inst in
+					Util.remove_dups (Util.difference (fvb@fvc) 
+           ( (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists))
 		| ECase b -> 
 				let fvc = List.fold_left (fun a (c1,c2)-> 
-				a@(struc_free_vars c2)@(Ipure.fv c1)) [] b.formula_case_branches in
+				a@(struc_free_vars c2 with_inst)@(Ipure.fv c1)) [] b.formula_case_branches in
 				Util.remove_dups fvc		
 		| EAssume (b,_)-> all_fv b in
 	Util.remove_dups (List.concat (List.map helper f0))
+  
+
+  
 and all_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> Util.remove_dups 
 			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))

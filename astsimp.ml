@@ -4340,7 +4340,7 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
           else Util.difference h2 h1 in
           (*let _ = print_string ("impl vars: "^(Iprinter.string_of_var_list implvar)^"\n") in*)
           let nb,h3 = case_normalize_renamed_formula prog (*(Util.remove_dups(h1@implvar))*) h false onb in
-          let global_ex = Util.difference (Iformula.struc_free_vars nc) (h@implvar@nh0@p) in
+          let global_ex = Util.difference (Iformula.struc_free_vars nc false) (h@implvar@nh0@p) in
           let _ = if (List.length global_ex)>0 then print_string ("formula: "^
                           (Iprinter.string_of_formula nb)^"\nglobals: "^
                           (Iprinter.string_of_var_list global_ex)^"\n")else () in
@@ -4826,7 +4826,7 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false false in
   let _ = check_eprim_in_struc_formula "is not allowed in precond " ndn in
   let h1 = Util.remove_dups (h11@h12) in 
-  let h2 = Util.remove_dups (h@h_prm@(Util.difference h1 h)) in
+  let h2 = Util.remove_dups (h@h_prm@(Util.difference h1 h)@ (IF.struc_free_vars nst true)) in
   let nb = match f.Iast.proc_body with None -> None | Some f->
     let f,_ = case_rename_var_decls f in
     let r,_,_ = (case_normalize_exp prog h2 [(res,Unprimed)] f) in
