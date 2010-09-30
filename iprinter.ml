@@ -267,9 +267,9 @@ let rec string_of_formula = function
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
 					F.formula_exists_pure = pf}) ->
-	  "(EX " ^ (String.concat ", " (List.map string_of_var qvars)) ^ " . "
+	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
-		   string_of_pure_formula pf
+		   ("true & ")^string_of_pure_formula pf
 		 else if hf = F.HFalse then 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)

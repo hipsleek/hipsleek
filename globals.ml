@@ -153,8 +153,6 @@ let seq_to_try = ref false
 
 let print_input = ref false
 
-let instantiation_variants = ref 0
-
 let pass_global_by_value = ref false
 
 let profile_threshold = 0.5 

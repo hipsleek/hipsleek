@@ -89,7 +89,7 @@ let process_pred_def pdef =
 	  try
 		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
@@ -123,7 +123,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true in
+      let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true [] in
 	AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
   | MetaVar mvar -> begin
       try 
@@ -145,7 +145,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula iprog h p b false true in
+      let wf,_ = AS.case_normalize_struc_formula iprog h p b false true [] in
       let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
 	res
 	
@@ -153,7 +153,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaFormCF mf -> mf
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let wf,_ = AS.case_normalize_formula iprog h false mf in
+      let wf = AS.case_normalize_formula iprog h true mf in
       let _ = Astsimp.collect_type_info_formula iprog wf stab false in
 	AS.trans_formula iprog quant fv_idents false wf stab false
   | MetaVar mvar -> begin
@@ -216,8 +216,10 @@ let process_capture_residue (lvar : ident) =
 		
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in
-	cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
+  let l2r, r2l = AS.trans_one_coercion iprog ldef in  
+	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_coerc_decl_list l2r false ) ^"\n") else () in
+	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_coerc_decl_list r2l true ) ^"\n") else () in
+  cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
 	cprog.C.prog_right_coercions <- r2l @ cprog.C.prog_right_coercions
 
 let process_print_command pcmd0 = match pcmd0 with

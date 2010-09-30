@@ -1238,9 +1238,7 @@ let rec string_of_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
-
-
-    
+let string_of_coerc c lft = (string_of_formula c.coercion_head)^(if lft then "<=" else "=>")^(string_of_formula c.coercion_body) ;;
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
@@ -1276,9 +1274,17 @@ let rec string_of_view_decl_list l = match l with
  | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
 
+let rec string_of_coerc_decl_list l lft = match l with
+  | [] -> ""
+  | h::[] -> string_of_coerc h lft
+  | h::t -> (string_of_coerc h lft) ^ "\n" ^ (string_of_coerc_decl_list t lft)
+;;
+
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
-                          (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+                          (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
+                          (string_of_coerc_decl_list p.prog_left_coercions true)^"\n\n"^
+                          (string_of_coerc_decl_list p.prog_right_coercions false)^"\n\n"^
                           (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
