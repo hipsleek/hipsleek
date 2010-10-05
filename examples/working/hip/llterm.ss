@@ -28,17 +28,17 @@ void loop1(ref int i, int y)
 //  requires i<0 
 //  ensures i'=i; //'
  case {
-  i<0 -> ensures i'=i; //'
+  i<0 -> ensures "post1": i'=i; //'
   i>=0 -> case {
-        y<=0 -> ensures false; // loops
-        y>0 -> ensures true; // terminates
+       y<=0 -> ensures "post2" : false; // loops
+        y>0 -> ensures "post1": true; // terminates
         } 
   }
 {
   if (i>=0) { 
     i=i-y; 
-    assert (i+y)-(i'+y)>0;
-    assert i'+y>=0;
+    assert "post1": (i+y)-(i'+y)>0;
+    assert "post1": i'+y>=0;
     loop1(i,y);
   }
 }
