@@ -25,7 +25,7 @@ let mona_of_prim_type = function
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		      -> "int set"
+  | Bag		  -> "int set"
   | List          -> "list"	(* lists are not supported *)
 
 
@@ -794,7 +794,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   if !log_all_flag == true then
 	begin
 	  output_string log_file ("test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
-      output_string log_file (fstr ^ ";\n");
+      	  output_string log_file (fstr ^ ";\n");
 	  flush log_file;
 	end;
   let res = check inc timeout pid in
