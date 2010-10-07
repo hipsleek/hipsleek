@@ -28,27 +28,45 @@ void loop1(ref int i, int y)
 //  requires i<0 
 //  ensures i'=i; //'
  case {
-  i<0 -> ensures "post1": i'=i; //'
+  i<0 -> ensures "term": i'=i; //'
   i>=0 -> case {
-       y<=0 -> ensures "post2" : false; // loops
-        y>0 -> ensures "post1": true; // terminates
-        } 
+  	y<=0 -> ensures "loop" : false; // loops
+        y>0 -> ensures "term": true; // terminates
+     } 
   }
 {
   if (i>=0) { 
     i=i-y; 
-    assert "post1": (i+y)-(i'+y)>0;
-    assert "post1": i'+y>=0;
+    assert "term": (i+y)-(i'+y)>0;
+    assert "term": i'+y>=0;
     loop1(i,y);
   }
 }
 
 int foo(int n) 
  case {
-  n<0 -> requires [xx] xx=0 ensures false;
+  n<0 -> ensures "nonterm" : false;
   // non-terminating inputs..
-  n>=0 -> requires [xx] xx=1 ensures res= 2*n;
+  n>=0 -> ensures "term" : res=2*n;
  }
+// variance n
+{ 
+  if (n==0) return 0;
+  else { 
+        int m;
+        m=n-1;
+        assert n>m'; //'
+        assert "term" : m'>=0;
+        return 2+foo(m);
+   }
+}
+
+int foo2(int n) 
+case {
+	n<0 -> requires [xx] xx=0 ensures false;
+  	// non-terminating inputs..
+  	n>=0 -> requires [xx] xx=1 ensures res= 2*n;
+}
 // variance n
 { 
   if (n==0) return 1;
@@ -60,9 +78,24 @@ int foo(int n)
         assert xx!=1
                 or
                 m'>=0; //'  xx=1 -> m'>=0
-        return 2+foo(m);
+        return 2+foo2(m);
        }
 }
+
+int foo3(int n) 
+ case {
+  n<0 -> ensures false;
+  // non-terminating inputs..
+  n>=0 -> ensures res=n;
+ }
+// variance n
+{ 
+  if (n==0) return 0;
+  else { 
+        return 1+foo3(n-1);
+   }
+}
+
 
 int Ack(int m, int n)
 case {
