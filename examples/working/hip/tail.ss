@@ -16,18 +16,41 @@ node tail2(node x)
 {
   dprint;
   int v1; node n2;
-  //x.val = x.val+1;
-  tail_acc(x,v1,n2);
+  bind_node_spec(x,v1,n2);
   //assert x'::node<aa,bb> assume v1'=aa & n2'=bb; //'
     dprint;
     node tmp = n2;
     dprint;
-  assume x'::node<v1',n2'>; //'
+    form_node(x,v1,n2); // assume x'::node<v1',n2'>; //'
   dprint;
   return tmp;
 }
+/*
+ bind x to (v1,n2)
+ in e
+ ==> 
+ int v1; node n2;
+ bind_node(x,v1,n2);
+ e;
+ form_node(x,v1,n2);
+ */
 
+void bind_node(node x, ref int v1, ref node n2)
+  requires x::node<a,b>
+  ensures v1'=a & n2'=b;
 
+void bind_node_spec(node x, ref int v1, ref node n2)
+    case {
+    x'=null  -> ensures true & flow __Exc; //'
+    x'!=null -> requires x::node<aa,bb> //'
+                ensures v1'=aa & n2'=bb; //
+   }
+
+void form_node(node x, int v1, node n2)
+  requires true
+  ensures  x::node<v1,n2>;
+
+ 
 /*
   assert-spec 
     case {
