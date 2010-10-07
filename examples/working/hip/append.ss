@@ -37,22 +37,23 @@ node app2(node x, node y)
   requires x::lseg<null,n> 
   ensures res::lseg<y, n>;
 */
-/*
+
 requires x=null
 ensures res=y & n=0;
 requires x::lseg<null,n> & x!=null
   ensures res::lseg<y,n>;
-*/
+
 /*
  requires x::lseg<null,n> 
  ensures res=y & x=null & n=0 
 */
+/*
  case {
   x=null -> ensures res=y;
   x!=null -> requires x::lseg<null,n> 
              ensures res::lseg<y,n>;
  }
-
+*/
 {
   if (x==null) return y;
   //dprint;
