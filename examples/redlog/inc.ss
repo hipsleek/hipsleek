@@ -33,16 +33,17 @@ bool is_zero(node x)
 }
 
 bool is_equal(node x, node y)
+   requires x::bigint<b, v1> * y::bigint<b, v2>
+  ensures res & v1 = v2 or !res & v1 != v2;
 
 
-requires x::bigint<b, v1> * y::bigint<b, v2>
+
+/*
+ requires x::bigint<b, v1> * y::bigint<b, v2>
  case {
   v1=v2 -> ensures  res;
   v1!=v2 -> ensures  !res;
   }
-
-
-/*
 
   requires x::bigint<b, v1> * y::bigint<b, v2>
   ensures res & v1 = v2 or !res & v1 != v2;
@@ -93,12 +94,16 @@ requires x::bigint<b, v1> * y::bigint<b, v2>
   if (x == null || y == null) {
     //assert y'!=null; //'
     //assert y'!=null; //'
+    assume false;
     return is_zero(x) && is_zero(y);
   } else {
     bool bb=is_equal(x.next, y.next);
     int m=x.val; int n=y.val;
     //assume n<m or n=m or n>m;
-    if (m == n) return bb;
+    if (m == n) {
+        assume false;
+        return bb;
+      }
     else 
       { //dprint;
         //assume false;
