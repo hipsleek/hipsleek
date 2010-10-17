@@ -23,7 +23,7 @@ bool is_zero(node x)
     return true;
   }
   else {
-    dprint;
+     
       return false;
   }
   /*
@@ -36,9 +36,11 @@ bool is_equal(node x, node y)
  
 requires x::bigint<b, v1> * y::bigint<b, v2>
  case {
-  v1=v2 -> ensures  res;
-  v1!=v2 -> ensures  !res;
-  }
+  v1=v2 -> ensures x::bigint<b, v1>* y::bigint<b, v2> & res;
+  v1>v2 -> ensures x::bigint<b, v1>* y::bigint<b, v2> & !res;
+  v1<v2 -> ensures x::bigint<b, v1>* y::bigint<b, v2> & !res;
+ }
+
 
 
 /*
@@ -48,8 +50,20 @@ requires x::bigint<b, v1> * y::bigint<b, v2>
   v1!=v2 -> ensures  !res;
   }
 
+2 false contexts at: ( (113,8)  (113,15) )
+
+Total verification time: 7.44 second(s)
+        Time spent in main process: 3.83 second(s)
+        Time spent in child processes: 3.61 second(s)
+
   requires x::bigint<b, v1> * y::bigint<b, v2>
   ensures res & v1 = v2 or !res & v1 != v2;
+
+0 false contexts at: ()
+
+Total verification time: 13.51 second(s)
+        Time spent in main process: 7.82 second(s)
+        Time spent in child processes: 5.69 second(s)
 
   requires x::bigint<b, v1> * y::bigint<b, v2>
   ensures res & v1 = v2 or !res & v1 != v2;
@@ -87,10 +101,20 @@ requires x::bigint<b, v1> * y::bigint<b, v2>
   v1<v2 -> ensures x::bigint<b, v1>* y::bigint<b, v2> & !res;
  }
 
+2 false contexts at: ( (132,8)  (132,15) )
+
+Total verification time: 24.75 second(s)
+        Time spent in main process: 16.92 second(s)
+        Time spent in child processes: 7.83 second(s)
 
   requires x::bigint<b, v1> * y::bigint<b, v2>
   ensures x::bigint<b, v1>* y::bigint<b, v2> & res & v1 = v2 or 
         x::bigint<b, v1>* y::bigint<b, v2> & !res & v1 != v2;
+
+Total verification time: 89.28 second(s)
+        Time spent in main process: 66.99 second(s)
+        Time spent in child processes: 22.29 second(s)
+
 */
 {
 
@@ -104,11 +128,11 @@ requires x::bigint<b, v1> * y::bigint<b, v2>
     int m=x.val; int n=y.val;
     //assume n<m or n=m or n>m;
     if (m == n) {
-        assume false;
+       assume false;
         return bb;
       }
     else 
-      { //dprint;
+      { //assert false;
         //assume false;
         return false;
       }
