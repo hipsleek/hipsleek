@@ -1,0 +1,1737 @@
+Starting Reduce... OK!
+
+Processing file "inc.ss"
+Parsing...
+Translating global variables to procedure parameters...
+Translating to core language...
+
+!!!:0: 0: SAT #1.0
+
+!!!inc.ss:6: 16: 
+ view bigint<b,v>= 
+  true & self=null & v=0 & 1<b & {FLOW,(19,32)=__flow,}
+  || EXISTS(b_33,v1,p,q: self::node<p,q> * q::bigint<b_33,v1> & 0<=p & p<b & 
+     v=p+(b*v1) & 0<v & 1<b & b_33=b & {FLOW,(19,32)=__flow,})
+  inv: 0<=v & 1<b
+  unstructured formula: 
+   true & self=null & v=0 & 1<b & {FLOW,(19,32)=__flow,}
+   or EXISTS(b_47,v1_48,p_49,q_50: self::node<p_49,q_50> * q_50::bigint<b_47,
+      v1_48> & 0<=p_49 & p_49<b & v=p_49+(b*v1_48) & 0<v & 1<b & b_47=b &
+      {FLOW,(19,32)=__flow,})
+  xform: 0<=v & 1<b
+  base case: self=null->true & v=0 & 1<b
+
+// what are these SATs?? 
+
+!!!:0: 0: SAT #1.0
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.0
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.2
+
+!!!:0: 0: SAT #1.3
+
+!!!:0: 0: SAT #1.0
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.2
+
+!!!:0: 0: SAT #1.3
+
+!!!:0: 0: SAT #1.0
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.0
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.2
+
+!!!:0: 0: SAT #1.3
+
+!!!:0: 0: SAT #1.0
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.2
+
+!!!:0: 0: SAT #1.3
+
+!!!inc.ss:6: 16: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (self=null & v=0 & 1<b | 
+  exists1(p_49:exists1(v1_48:exists1(b_47:self!=null & 0<=v1_48 & 1<b_47 & 
+  0<=p_49 & p_49<b & v=p_49+(b*v1_48) & 0<v & 1<b & b_47=b)))) &
+  {FLOW,(19,32)=__flow,}
+ es_pure: true
+ es_orig_conseq: true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+ es_heap: true
+conseq:
+ true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+
+
+!!!inc.ss:6: 16: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (self=null & v=0 & 1<b | 
+  exists1(p_49:exists1(v1_48:exists1(b_47:self!=null & 0<=v1_48 & 1<b_47 & 
+  0<=p_49 & p_49<b & v=p_49+(b*v1_48) & 0<v & 1<b & b_47=b)))) &
+  {FLOW,(19,32)=__flow,}
+ es_pure: true
+ es_orig_conseq: true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+ es_heap: true
+conseq:
+ true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+
+!!!inc.ss:6: 16: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:6: 16: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (self=null & v=0 & 1<b | 
+  exists1(p_49:exists1(v1_48:exists1(b_47:self!=null & 0<=v1_48 & 1<b_47 & 
+  0<=p_49 & p_49<b & v=p_49+(b*v1_48) & 0<v & 1<b & b_47=b)))) &
+  {FLOW,(19,32)=__flow,}
+ es_pure: true
+ es_orig_conseq: true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+ es_heap: true
+conseq:
+ true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+
+!!!inc.ss:6: 16: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (self=null & v=0 & 1<b | 
+  exists1(p_49:exists1(v1_48:exists1(b_47:self!=null & 0<=v1_48 & 1<b_47 & 
+  0<=p_49 & p_49<b & v=p_49+(b*v1_48) & 0<v & 1<b & b_47=b)))) &
+  {FLOW,(19,32)=__flow,}
+ es_pure: true
+ es_orig_conseq: true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+ es_heap: true
+conseq:
+ true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+
+// Which ones do below corresponds to?
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #1
+
+!!!:0: 0: IMP #1.1 with XPure0
+
+!!!:0: 0: IMP #1.1 with XPure0
+
+!!!:0: 0: IMP #1.1 with XPure0
+
+!!!:0: 0: IMP #1.1 with XPure0
+
+// Numbers here don't correlate uniquely with redlog trace..
+
+
+!!!inc.ss:6: 16: heap_entail_empty_heap: formula is valid
+
+!!!inc.ss:6: 16: heap_entail_empty_heap: res_ctx:
+ es_formula: 
+  true & (self=null & v=0 & 1<b | 
+  exists1(p_49:exists1(v1_48:exists1(b_47:self!=null & 0<=v1_48 & 1<b_47 & 
+  0<=p_49 & p_49<b & v=p_49+(b*v1_48) & 0<v & 1<b & b_47=b)))) &
+  {FLOW,(19,32)=__flow,}
+ es_pure: true
+ es_orig_conseq: true & (83, ):0<=v & (84, ):1<b & {FLOW,(19,32)=__flow,}
+ es_heap: true
+
+// __flow (RATHER THAN __norm) 
+// seems to be from the predicate
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.1 done
+Checking procedure is_zero$node... 
+
+!!!inc.ss:12: 0: Checking procedure is_zero$node... 
+
+!!!inc.ss:12: 0: Specs :
+ exists [](I)[b;v][]x::bigint<b,v> & true & {FLOW,(19,20)=__norm,}
+   EAssume (1, ):
+     EXISTS(b_38,v_39: x::bigint<b_38,v_39> & res & v=0 & b_38=b & v_39=v &
+     {FLOW,(19,20)=__norm,})
+     or EXISTS(b_40,v_41: x::bigint<b_40,v_41> & !res & 0<v & b_40=b & 
+        v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!:0: 0: SAT #1.1
+
+!!!inc.ss:23: 6: Proving precondition in method is_null___$node for spec:
+ EAssume (1, ):
+   EXISTS(b_38,v_39: x::bigint<b_38,v_39> & res & v=0 & b_38=b & v_39=v &
+   {FLOW,(19,20)=__norm,})
+   or EXISTS(b_40,v_41: x::bigint<b_40,v_41> & !res & 0<v & b_40=b & v_41=v &
+      {FLOW,(19,20)=__norm,}), Line 14
+// THIS is not precondition of Is_null!!!!!
+// FIXED!
+
+
+!!!inc.ss:23: 6: heap_entail_struc_list_partial_context_init:
+ctx:
+ List of Partial Context: [(0, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: x::bigint<b,v> & x'=x & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((1, ):,-1 )]]
+conseq: true & true & {FLOW,(19,20)=__norm,}
+   EAssume (81, ):
+     true & res & x'=null & {FLOW,(19,20)=__norm,}
+     or true & !res & x'!=null & {FLOW,(19,20)=__norm,}
+
+
+!!!inc.ss:23: 6: heap_entail_struc_partial_context:
+ctx:
+ Failed States:
+ []
+ Successful States:
+ [Label: []
+  State:es_formula: (91, ):x::bigint<b,v> & x'=x & {FLOW,(19,20)=__norm,}
+        es_pure: true
+        es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+        es_heap: true
+        es_residue_pts: [(91, ):]
+        es_path_label: [((1, ):,-1 )]]
+conseq:
+ true & (90, ):true & {FLOW,(19,20)=__norm,}
+   EAssume (81, ):
+     true & (88, ):res & (89, ):x'=null & {FLOW,(19,20)=__norm,}
+     or true & (86, ):!res & (87, ):x'!=null & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:23: 6: heap_entail_one_context_struc:
+ctx:
+ es_formula: (91, ):x::bigint<b,v> & x'=x & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+
+// origconseq seems wrong..(not for this case)
+// remove orig_conseq from printing and turning it on thru
+// an option
+
+ es_heap: true
+ es_residue_pts: [(91, ):]
+ es_path_label: [((1, ):,-1 )]
+conseq:
+ true & (90, ):true & {FLOW,(19,20)=__norm,}
+   EAssume (81, ):
+     true & (88, ):res & (89, ):x'=null & {FLOW,(19,20)=__norm,}
+     or true & (86, ):!res & (87, ):x'!=null & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:23: 6: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+context:
+ es_formula: (91, ):x::bigint<b,v> & x'=x & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(91, ):]
+ es_path_label: [((1, ):,-1 )]
+conseq:
+ true & (90, ):true & {FLOW,(19,20)=__norm,}
+   EAssume (81, ):
+     true & (88, ):res & (89, ):x'=null & {FLOW,(19,20)=__norm,}
+     or true & (86, ):!res & (87, ):x'!=null & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:23: 6: heap_entail_one_context:
+ctx:
+ es_formula: (91, ):x::bigint<b,v> & x'=x & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(91, ):]
+ es_path_label: [((1, ):,-1 )]
+conseq:
+ true & (90, ):true & {FLOW,(19,20)=__norm,}
+
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.2
+
+!!!:0: 0: SAT #1.1
+
+!!!:0: 0: SAT #1.2
+
+!!!inc.ss:23: 2: conditional: then_delta:
+ List of Partial Context: [(0, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: 
+        (91, ):x::bigint<b,v> & x'=x & (88, ):v_bool_23_209' & 
+        (89, ):x'=null & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((29, ):,81 );((1, ):,-1 )]]
+
+!!!:0: 0: SAT #2.1
+
+!!!:0: 0: SAT #2.2
+
+!!!inc.ss:23: 2: conditional: else_delta:
+ List of Partial Context: [(0, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: 
+        (91, ):x::bigint<b,v> & x'=x & (86, ):!v_bool_23_209' & 
+        (87, ):x'!=null & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((29, ):,81 );((1, ):,-1 )]]
+
+!!!Final state:
+ List of Partial Context: [(0, 2  [((26, ):,0 )];  [((26, ):,1 )])]
+Failed States:
+[]
+Successful States:
+[Label: [((26, ):,0 )]
+ State:es_formula: 
+        EXISTS(x': (91, ):x::bigint<b,v> & x'=x & (88, ):v_bool_23_209' & 
+        (89, ):x'=null & v_boolean_24_207' & res=v_boolean_24_207' &
+        {FLOW,(19,20)=__norm,})
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )];
+ Label: [((26, ):,1 )]
+ State:es_formula: 
+        EXISTS(x': (91, ):x::bigint<b,v> & x'=x & (86, ):!v_bool_23_209' & 
+        (87, ):x'!=null & !v_boolean_28_208' & res=v_boolean_28_208' &
+        {FLOW,(19,20)=__norm,})
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]]
+
+
+!!!Final state after existential quantifier elimination:
+ List of Partial Context: [(0, 2  [((26, ):,0 )];  [((26, ):,1 )])]
+Failed States:
+[]
+Successful States:
+[Label: [((26, ):,0 )]
+ State:es_formula: 
+        (91, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+        v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )];
+ Label: [((26, ):,1 )]
+ State:es_formula: 
+        (91, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+        !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]]
+
+
+!!!inc.ss:14: 10: Post-cond:
+ EXISTS(b_38,v_39: x::bigint<b_38,v_39> & res & v=0 & b_38=b & v_39=v &
+ {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: x::bigint<b_40,v_41> & !res & 0<v & b_40=b & v_41=v &
+    {FLOW,(19,20)=__norm,})
+
+
+!!!inc.ss:14: 10: Proving postcondition in method is_zero$node for spec
+ EAssume (1, ):
+   EXISTS(b_38,v_39: x::bigint<b_38,v_39> & res & v=0 & b_38=b & v_39=v &
+   {FLOW,(19,20)=__norm,})
+   or EXISTS(b_40,v_41: x::bigint<b_40,v_41> & !res & 0<v & b_40=b & v_41=v &
+      {FLOW,(19,20)=__norm,}), Line 14
+
+
+!!!inc.ss:14: 10: heap_entail_list_partial_context_init:
+ctx:
+ List of Partial Context: [(0, 2  [((26, ):,0 )];  [((26, ):,1 )])]
+Failed States:
+[]
+Successful States:
+[Label: [((26, ):,0 )]
+ State:es_formula: 
+        (91, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+        v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )];
+ Label: [((26, ):,1 )]
+ State:es_formula: 
+        (91, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+        !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+       es_pure: true
+       es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+       es_heap: true
+       es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]]
+conseq: EXISTS(b_38,v_39: x::bigint<b_38,v_39> & res & v=0 & b_38=b & v_39=v &
+ {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: x::bigint<b_40,v_41> & !res & 0<v & b_40=b & v_41=v &
+    {FLOW,(19,20)=__norm,})
+
+
+!!!inc.ss:14: 10: heap_entail_struc_partial_context:
+ctx:
+ Failed States:
+ []
+ Successful States:
+ [Label: [((26, ):,0 )]
+  State:es_formula: 
+         (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+         v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+        es_pure: true
+        es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+        es_heap: true
+        es_residue_pts: [(103, ):]
+        es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )];
+  Label: [((26, ):,1 )]
+  State:es_formula: 
+         (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+         !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+        es_pure: true
+        es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+        es_heap: true
+        es_residue_pts: [(105, ):]
+        es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_one_context:
+ctx:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+
+!!!inc.ss:14: 10: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: 
+ante:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+(100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (102, ):x::bigint<b_249,v_250> & (98, ):res & (99, ):v=0 & 
+(100, ):b_249=b & (101, ):v_250=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (102, ):x::bigint<b_249,v_250> & (98, ):res & (99, ):v=0 & 
+(100, ):b_249=b & (101, ):v_250=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_non_empty_rhs_heap: trying to prove  (102, ):x::bigint<b_249,v_250>
+
+!!!inc.ss:14: 10: fold: view_form:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+ {FLOW,(19,32)=__flow,}
+|| EXISTS(b_251,v1_252,p_253,q_254: (102, ):x::node<p_253,q_254> * 
+   (102, ):q_254::bigint<b_251,v1_252> & (102, ):0<=p_253 & 
+   (102, ):p_253<b_249 & (102, ):v_250=p_253+(b_249*v1_252) & 
+   (102, ):0<v_250 & (102, ):1<b_249 & (102, ):b_251=b_249 &
+   {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 10: heap_entail_one_context_struc:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+ {FLOW,(19,32)=__flow,}
+|| EXISTS(b_251,v1_252,p_253,q_254: (102, ):x::node<p_253,q_254> * 
+   (102, ):q_254::bigint<b_251,v1_252> & (102, ):0<=p_253 & 
+   (102, ):p_253<b_249 & (102, ):v_250=p_253+(b_249*v1_252) & 
+   (102, ):0<v_250 & (102, ):1<b_249 & (102, ):b_251=b_249 &
+   {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 10: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+ {FLOW,(19,32)=__flow,}
+|| EXISTS(b_251,v1_252,p_253,q_254: (102, ):x::node<p_253,q_254> * 
+   (102, ):q_254::bigint<b_251,v1_252> & (102, ):0<=p_253 & 
+   (102, ):p_253<b_249 & (102, ):v_250=p_253+(b_249*v1_252) & 
+   (102, ):0<v_250 & (102, ):1<b_249 & (102, ):b_251=b_249 &
+   {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 10: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+{FLOW,(19,32)=__flow,}
+
+
+!!!inc.ss:14: 10: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+{FLOW,(19,32)=__flow,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+{FLOW,(19,32)=__flow,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249 &
+{FLOW,(19,32)=__flow,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #2
+
+!!!:0: 0: IMP #2.1 with XPure0
+
+!!!inc.ss:14: 10: heap_entail_empty_heap: folding: formula is valid
+
+!!!inc.ss:14: 10: heap_entail_empty_heap: folding: res_ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_251,v1_252,p_253,q_254: (102, ):x::node<p_253,q_254> * 
+(102, ):q_254::bigint<b_251,v1_252> & (102, ):0<=p_253 & 
+(102, ):p_253<b_249 & (102, ):v_250=p_253+(b_249*v1_252) & (102, ):0<v_250 & 
+(102, ):1<b_249 & (102, ):b_251=b_249 & {FLOW,(19,32)=__flow,})
+
+
+!!!inc.ss:14: 10: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_251,v1_252,p_253,q_254: (102, ):x::node<p_253,q_254> * 
+(102, ):q_254::bigint<b_251,v1_252> & (102, ):0<=p_253 & 
+(102, ):p_253<b_249 & (102, ):v_250=p_253+(b_249*v1_252) & (102, ):0<v_250 & 
+(102, ):1<b_249 & (102, ):b_251=b_249 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_251,v1_252,p_253,q_254: (102, ):x::node<p_253,q_254> * 
+(102, ):q_254::bigint<b_251,v1_252> & (102, ):0<=p_253 & 
+(102, ):p_253<b_249 & (102, ):v_250=p_253+(b_249*v1_252) & (102, ):0<v_250 & 
+(102, ):1<b_249 & (102, ):b_251=b_249 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:7: 17: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_259;v1_260;p_261;q_262;b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (102, ):x::node<p_261,q_262> * (102, ):q_262::bigint<b_259,v1_260> &
+(102, ):0<=p_261 & (102, ):p_261<b_249 & (102, ):v_250=p_261+(b_249*
+v1_260) & (102, ):0<v_250 & (102, ):1<b_249 & (102, ):b_259=b_249 &
+{FLOW,(19,32)=__flow,}
+
+!!!inc.ss:7: 17: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_259;v1_260;p_261;q_262;b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (102, ):x::node<p_261,q_262> * (102, ):q_262::bigint<b_259,v1_260> &
+(102, ):0<=p_261 & (102, ):p_261<b_249 & (102, ):v_250=p_261+(b_249*
+v1_260) & (102, ):0<v_250 & (102, ):1<b_249 & (102, ):b_259=b_249 &
+{FLOW,(19,32)=__flow,}
+
+!!!inc.ss:7: 17: heap_entail_non_empty_rhs_heap: trying to prove  (102, ):x::node<p_261,q_262>
+
+!!!inc.ss:7: 17: heap_entail_non_empty_rhs_heap: no aliased node for data node  (102, ):x::node<p_261,q_262> is found in LHS
+
+
+!!!inc.ss:14: 10: fold: rs1:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: fold: context at beginning of fold: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: fold: context at end of fold: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: v_250=0 & x=null & 2<=b_249
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: fold: es.es_pure:  (102, ):x=null & (102, ):v_250=0 & (102, ):1<b_249
+
+!!!inc.ss:14: 10: split_universal: evars: b_249, v_250
+
+!!!inc.ss:14: 10: split_universal: expl_inst_vars: 
+
+!!!inc.ss:14: 10: split_universal: vvars: b_249, v_250
+
+!!!inc.ss:14: 10: split_universal: to_ante:  true
+
+!!!inc.ss:14: 10: split_universal: to_conseq:  v_250=0 & 2<=b_249
+
+!!!inc.ss:14: 10: process_fold_result: new_ctx after folding: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: process_fold_result: vs2: b_249, v_250
+
+!!!inc.ss:14: 10: process_fold_result: to_ante:  true
+
+!!!inc.ss:14: 10: process_fold_result: to_conseq:  v_250=0 & 2<=b_249
+
+!!!inc.ss:14: 10: process_fold_result: new_conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b_249=b & (101, ):v_250=v & 
+v_250=0 & 2<=b_249 & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b_249=b & (101, ):v_250=v & 
+v_250=0 & 2<=b_249 & {FLOW,(19,20)=__norm,}
+
+
+!!!inc.ss:14: 10: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b_249=b & (101, ):v_250=v & 
+v_250=0 & 2<=b_249 & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b_249=b & (101, ):v_250=v & 
+v_250=0 & 2<=b_249 & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b_249=b & (101, ):v_250=v & 
+v_250=0 & 2<=b_249 & {FLOW,(19,20)=__norm,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #3
+
+!!!:0: 0: IMP #3.1 with XPure0
+
+!!!inc.ss:14: 10: heap_entail_empty_heap: formula is valid
+
+// WHY below when RHS is just "res".
+// leave this alone
+
+v_boolean_24_207' & res=v_boolean_24_207'
+|- res
+
+v_boolean_24_207' 
+|- v_boolean_24_207'
+
+
+#imply 3
+ante: v_boolean_24_207PRMD > 0
+conseq: v_boolean_24_207PRMD > 0
+VALID
+
+!!!inc.ss:14: 10: heap_entail_empty_heap: res_ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_249:(102, ):x=null & (102, ):1<b_249) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_249;v_250]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: process_fold_result: context at end fold: x
+ 
+Success Context: [es_formula: 
+                   true & (103, ):true & (103, ):v=0 & (103, ):1<b & 
+                   (88, ):v_bool_23_209' & (89, ):x=null & 
+                   v_boolean_24_207' & res=v_boolean_24_207' & 
+                   exists1(b_249:(102, ):x=null & (102, ):1<b_249) & 
+                   (98, ):res & (99, ):v=0 & v=0 & 2<=b &
+                   {FLOW,(19,20)=__norm,}
+                  es_pure: true
+                  es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+                  es_heap: true
+                  es_evars: [b_249;v_250]
+                  es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );
+                                 ((1, ):,-1 )]]
+
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & (94, ):0<v & 
+(95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (97, ):x::bigint<b_267,v_268> & (93, ):!res & (94, ):0<v & (95, ):b_267=b & 
+(96, ):v_268=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+ es_formula: 
+  (103, ):x::bigint<b,v> & (88, ):v_bool_23_209' & (89, ):x=null & 
+  v_boolean_24_207' & res=v_boolean_24_207' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_residue_pts: [(103, ):]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (97, ):x::bigint<b_267,v_268> & (93, ):!res & (94, ):0<v & (95, ):b_267=b & 
+(96, ):v_268=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_non_empty_rhs_heap: trying to prove  (97, ):x::bigint<b_267,v_268>
+
+!!!inc.ss:14: 43: fold: view_form:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+ {FLOW,(19,32)=__flow,}
+|| EXISTS(b_269,v1_270,p_271,q_272: (97, ):x::node<p_271,q_272> * 
+   (97, ):q_272::bigint<b_269,v1_270> & (97, ):0<=p_271 & 
+   (97, ):p_271<b_267 & (97, ):v_268=p_271+(b_267*v1_270) & (97, ):0<v_268 & 
+   (97, ):1<b_267 & (97, ):b_269=b_267 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 43: heap_entail_one_context_struc:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+ {FLOW,(19,32)=__flow,}
+|| EXISTS(b_269,v1_270,p_271,q_272: (97, ):x::node<p_271,q_272> * 
+   (97, ):q_272::bigint<b_269,v1_270> & (97, ):0<=p_271 & 
+   (97, ):p_271<b_267 & (97, ):v_268=p_271+(b_267*v1_270) & (97, ):0<v_268 & 
+   (97, ):1<b_267 & (97, ):b_269=b_267 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 43: heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+ {FLOW,(19,32)=__flow,}
+|| EXISTS(b_269,v1_270,p_271,q_272: (97, ):x::node<p_271,q_272> * 
+   (97, ):q_272::bigint<b_269,v1_270> & (97, ):0<=p_271 & 
+   (97, ):p_271<b_267 & (97, ):v_268=p_271+(b_267*v1_270) & (97, ):0<v_268 & 
+   (97, ):1<b_267 & (97, ):b_269=b_267 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 43: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+{FLOW,(19,32)=__flow,}
+
+
+!!!inc.ss:14: 43: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+{FLOW,(19,32)=__flow,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+{FLOW,(19,32)=__flow,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267 &
+{FLOW,(19,32)=__flow,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #4
+
+!!!:0: 0: IMP #4.1 with XPure0
+
+!!!inc.ss:14: 43: heap_entail_empty_heap: folding: formula is valid
+
+!!!inc.ss:14: 43: heap_entail_empty_heap: folding: res_ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_269,v1_270,p_271,q_272: (97, ):x::node<p_271,q_272> * 
+(97, ):q_272::bigint<b_269,v1_270> & (97, ):0<=p_271 & (97, ):p_271<b_267 & 
+(97, ):v_268=p_271+(b_267*v1_270) & (97, ):0<v_268 & (97, ):1<b_267 & 
+(97, ):b_269=b_267 & {FLOW,(19,32)=__flow,})
+
+
+!!!inc.ss:14: 43: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_269,v1_270,p_271,q_272: (97, ):x::node<p_271,q_272> * 
+(97, ):q_272::bigint<b_269,v1_270> & (97, ):0<=p_271 & (97, ):p_271<b_267 & 
+(97, ):v_268=p_271+(b_267*v1_270) & (97, ):0<v_268 & (97, ):1<b_267 & 
+(97, ):b_269=b_267 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:14: 43: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_269,v1_270,p_271,q_272: (97, ):x::node<p_271,q_272> * 
+(97, ):q_272::bigint<b_269,v1_270> & (97, ):0<=p_271 & (97, ):p_271<b_267 & 
+(97, ):v_268=p_271+(b_267*v1_270) & (97, ):0<v_268 & (97, ):1<b_267 & 
+(97, ):b_269=b_267 & {FLOW,(19,32)=__flow,})
+
+!!!inc.ss:7: 17: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_277;v1_278;p_279;q_280;b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (97, ):x::node<p_279,q_280> * (97, ):q_280::bigint<b_277,v1_278> &
+(97, ):0<=p_279 & (97, ):p_279<b_267 & (97, ):v_268=p_279+(b_267*v1_278) & 
+(97, ):0<v_268 & (97, ):1<b_267 & (97, ):b_277=b_267 & {FLOW,(19,32)=__flow,}
+
+!!!inc.ss:7: 17: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_277;v1_278;p_279;q_280;b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (97, ):x::node<p_279,q_280> * (97, ):q_280::bigint<b_277,v1_278> &
+(97, ):0<=p_279 & (97, ):p_279<b_267 & (97, ):v_268=p_279+(b_267*v1_278) & 
+(97, ):0<v_268 & (97, ):1<b_267 & (97, ):b_277=b_267 & {FLOW,(19,32)=__flow,}
+
+!!!inc.ss:7: 17: heap_entail_non_empty_rhs_heap: trying to prove  (97, ):x::node<p_279,q_280>
+
+!!!inc.ss:7: 17: heap_entail_non_empty_rhs_heap: no aliased node for data node  (97, ):x::node<p_279,q_280> is found in LHS
+
+
+!!!inc.ss:14: 43: fold: rs1:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: fold: context at beginning of fold: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: fold: context at end of fold: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: v_268=0 & x=null & 2<=b_267
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: fold: es.es_pure:  (97, ):x=null & (97, ):v_268=0 & (97, ):1<b_267
+
+!!!inc.ss:14: 43: split_universal: evars: b_267, v_268
+
+!!!inc.ss:14: 43: split_universal: expl_inst_vars: 
+
+!!!inc.ss:14: 43: split_universal: vvars: b_267, v_268
+
+!!!inc.ss:14: 43: split_universal: to_ante:  true
+
+!!!inc.ss:14: 43: split_universal: to_conseq:  v_268=0 & 2<=b_267
+
+!!!inc.ss:14: 43: process_fold_result: new_ctx after folding: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: process_fold_result: vs2: b_267, v_268
+
+!!!inc.ss:14: 43: process_fold_result: to_ante:  true
+
+!!!inc.ss:14: 43: process_fold_result: to_conseq:  v_268=0 & 2<=b_267
+
+!!!inc.ss:14: 43: process_fold_result: new_conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b_267=b & (96, ):v_268=v & 
+v_268=0 & 2<=b_267 & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_one_context:
+ctx:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b_267=b & (96, ):v_268=v & 
+v_268=0 & 2<=b_267 & {FLOW,(19,20)=__norm,}
+
+
+!!!inc.ss:14: 43: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b_267=b & (96, ):v_268=v & 
+v_268=0 & 2<=b_267 & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b_267=b & (96, ):v_268=v & 
+v_268=0 & 2<=b_267 & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' & 
+  exists1(b_267:(97, ):x=null & (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_267;v_268]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b_267=b & (96, ):v_268=v & 
+v_268=0 & 2<=b_267 & {FLOW,(19,20)=__norm,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #5
+
+!!!:0: 0: IMP #5.1 with XPure0
+
+!!!:0: 0: IMP #5.2 with XPure1
+
+!!!inc.ss:14: 43: heap_entail_conjunct: formula is not valid
+
+
+!!!inc.ss:14: 43: process_fold_result: context at end fold: x
+ 
+Fail Context: {fc_prior_steps: para OR on conseq
+ para OR on conseq
+ right OR 2 on conseq
+               fc_message: failed in entailing pure formula(s) in conseq
+               fc_current_lhs: 
+                es_formula: 
+                 true & (103, ):true & (103, ):v=0 & (103, ):1<b & 
+                 (88, ):v_bool_23_209' & (89, ):x=null & v_boolean_24_207' & 
+                 res=v_boolean_24_207' & exists1(b_267:(97, ):x=null & 
+                 (97, ):1<b_267) & {FLOW,(19,20)=__norm,}
+                es_pure: true
+                es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+                es_heap: true
+                es_evars: [b_267;v_268]
+                es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );
+                               ((1, ):,-1 )]
+               fc_orig_conseq: 
+                true & (93, ):!res & (94, ):0<v & (95, ):b_267=b & 
+                (96, ):v_268=v & v_268=0 & 2<=b_267 & {FLOW,(19,32)=__flow,}}
+
+
+!!!inc.ss:14: 43: do_match: using  (103, ):x::bigint<b,v> to prove  (97, ):x::bigint<b_267,v_268>
+
+!!!inc.ss:14: 43: do_match: new_ctx after matching: x
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (103, ):x::bigint<b,v>
+ es_evars: [b_267;v_268]
+ es_success_pts: [((103, ):,(97, ): )]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: do_match: new_conseq after matching:
+ true & (93, ):!res & (94, ):0<v & (95, ):b=b & (96, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (103, ):x::bigint<b,v>
+ es_evars: [b_267;v_268]
+ es_success_pts: [((103, ):,(97, ): )]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b=b & (96, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (103, ):true & (103, ):v=0 & (103, ):1<b & (88, ):v_bool_23_209' & 
+  (89, ):x=null & v_boolean_24_207' & res=v_boolean_24_207' &
+  {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (103, ):x::bigint<b,v>
+ es_evars: [b_267;v_268]
+ es_success_pts: [((103, ):,(97, ): )]
+ es_path_label: [((28, ):,0 );((26, ):,0 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b=b & (96, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #6
+
+!!!:0: 0: IMP #6.1 with XPure0
+
+!!!:0: 0: IMP #6.2 with XPure1
+
+// IF INVALID do not need to re-prove using XPure1
+// can also flag as a real bug?
+
+!!!inc.ss:14: 43: heap_entail_conjunct: formula is not valid
+
+
+!!!inc.ss:14: 43: do_coercion for  (103, ):x::bigint<b,v>
+
+
+!!!inc.ss:14: 43: heap_entail_non_empty_rhs_heap: do_coercion: c1 = bigint, c2 = bigint
+
+
+!!!inc.ss:14: 10: heap_entail_one_context:
+ctx:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+
+!!!inc.ss:14: 10: heap_entail_after_sat: invoking heap_entail_conjunct_lhs
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: 
+ante:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+ (100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+ or EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & 
+    (94, ):0<v & (95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_38,v_39: (102, ):x::bigint<b_38,v_39> & (98, ):res & (99, ):v=0 & 
+(100, ):b_38=b & (101, ):v_39=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_293;v_294]
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (102, ):x::bigint<b_293,v_294> & (98, ):res & (99, ):v=0 & 
+(100, ):b_293=b & (101, ):v_294=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_293;v_294]
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (102, ):x::bigint<b_293,v_294> & (98, ):res & (99, ):v=0 & 
+(100, ):b_293=b & (101, ):v_294=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_non_empty_rhs_heap: trying to prove  (102, ):x::bigint<b_293,v_294>
+
+!!!:0: 0: SAT #3.0
+
+!!!inc.ss:14: 10: do_match: using  (105, ):x::bigint<b,v> to prove  (102, ):x::bigint<b_293,v_294>
+
+!!!inc.ss:14: 10: do_match: new_ctx after matching: x
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_293;v_294]
+ es_success_pts: [((105, ):,(102, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 10: do_match: new_conseq after matching:
+ true & (98, ):res & (99, ):v=0 & (100, ):b=b & (101, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_293;v_294]
+ es_success_pts: [((105, ):,(102, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b=b & (101, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 10: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_293;v_294]
+ es_success_pts: [((105, ):,(102, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (98, ):res & (99, ):v=0 & (100, ):b=b & (101, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #7
+
+!!!:0: 0: IMP #7.1 with XPure0
+
+!!!:0: 0: IMP #7.2 with XPure1
+
+!!!inc.ss:14: 10: heap_entail_conjunct: formula is not valid
+
+
+!!!inc.ss:14: 10: do_coercion for  (105, ):x::bigint<b,v>
+
+
+!!!inc.ss:14: 10: heap_entail_non_empty_rhs_heap: do_coercion: c1 = bigint, c2 = bigint
+
+
+!!!inc.ss:14: 10: heap_entail_conjunct_lhs: invoking heap_entail_conjunct
+
+!!!inc.ss:14: 10: heap_entail_conjunct:
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ EXISTS(b_40,v_41: (97, ):x::bigint<b_40,v_41> & (93, ):!res & (94, ):0<v & 
+(95, ):b_40=b & (96, ):v_41=v & {FLOW,(19,20)=__norm,})
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_301;v_302]
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (97, ):x::bigint<b_301,v_302> & (93, ):!res & (94, ):0<v & (95, ):b_301=b & 
+(96, ):v_302=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct: conseq has an non-empty heap component
+context:
+ es_formula: 
+  (105, ):x::bigint<b,v> & (86, ):!v_bool_23_209' & (87, ):x!=null & 
+  !v_boolean_28_208' & res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: true
+ es_evars: [b_301;v_302]
+ es_residue_pts: [(105, ):]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ (97, ):x::bigint<b_301,v_302> & (93, ):!res & (94, ):0<v & (95, ):b_301=b & 
+(96, ):v_302=v & {FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_non_empty_rhs_heap: trying to prove  (97, ):x::bigint<b_301,v_302>
+
+!!!:0: 0: SAT #3.0
+
+!!!inc.ss:14: 43: do_match: using  (105, ):x::bigint<b,v> to prove  (97, ):x::bigint<b_301,v_302>
+
+!!!inc.ss:14: 43: do_match: new_ctx after matching: x
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_301;v_302]
+ es_success_pts: [((105, ):,(97, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: do_match: new_conseq after matching:
+ true & (93, ):!res & (94, ):0<v & (95, ):b=b & (96, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct:
+context:
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_301;v_302]
+ es_success_pts: [((105, ):,(97, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b=b & (96, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!inc.ss:14: 43: heap_entail_conjunct: conseq has an empty heap component
+context:
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_301;v_302]
+ es_success_pts: [((105, ):,(97, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+conseq:
+ true & (93, ):!res & (94, ):0<v & (95, ):b=b & (96, ):v=v &
+{FLOW,(19,20)=__norm,}
+
+!!!:0: 0: simplify the antecedent with omega
+
+!!!:0: 0: simplify the consequent with omega
+
+!!!:0: 0: IMP #8
+
+!!!:0: 0: IMP #8.1 with XPure0
+
+!!!:0: 0: IMP #8.1 with XPure0
+
+!!!:0: 0: IMP #8.2 with XPure1
+
+!!!:0: 0: IMP #8.1 with XPure0
+
+!!!:0: 0: IMP #8.1 with XPure0
+
+!!!inc.ss:14: 43: heap_entail_empty_heap: formula is valid
+
+!!!inc.ss:14: 43: heap_entail_empty_heap: res_ctx:
+ es_formula: 
+  true & (86, ):!v_bool_23_209' & (87, ):x!=null & !v_boolean_28_208' & 
+  res=v_boolean_28_208' & {FLOW,(19,20)=__norm,}
+ es_pure: true
+ es_orig_conseq: true & true & {FLOW,(19,32)=__flow,}
+ es_heap: (105, ):x::bigint<b,v>
+ es_evars: [b_301;v_302]
+ es_success_pts: [((105, ):,(97, ): )]
+ es_path_label: [((27, ):,0 );((26, ):,1 );((29, ):,81 );((1, ):,-1 )]
+
+!!!inc.ss:14: 43: do_coercion for  (105, ):x::bigint<b,v>
+
+
+!!!inc.ss:14: 43: heap_entail_non_empty_rhs_heap: do_coercion: c1 = bigint, c2 = bigint
+
+Procedure is_zero$node SUCCESS
+Halting Reduce... OK!
+
+0 false contexts at: ()
+
+Total verification time: 0.54 second(s)
+	Time spent in main process: 0.17 second(s)
+	Time spent in child processes: 0.37 second(s)

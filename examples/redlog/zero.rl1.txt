@@ -1,0 +1,155 @@
+
+#imply 1
+ante: true
+conseq: 0 <= 0
+VALID
+
+#imply 1
+ante: ex(p_210, ex(v1_211, (self != null) and (0 <= v1_211) and (0 <= p_210) and (p_210 < b) and (v = b*v1_211+p_210) and (0 < v) and (1 < b) and (1 < b)))
+conseq: 0 <= v
+VALID
+
+#imply 1
+ante: 1 < b
+conseq: 1 < b
+VALID
+
+#imply 1
+ante: ex(p_212, ex(v1_213, (self != null) and (0 <= v1_213) and (0 <= p_212) and (p_212 < b) and (v = b*v1_213+p_212) and (0 < v) and (1 < b) and (1 < b)))
+conseq: 1 < b
+VALID
+
+#is_sat 1.1
+ex(q_50, ex(p_49, ex(v1_48, (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (((q_50 = null) and (v1_48 = 0) and (1 < b)) or ex(p_49, ex(v1_241, (q_50 != null) and (0 <= v1_241) and (0 <= p_49) and (p_49 < b) and (v1_48 = p_49+b*v1_241) and (0 < v1_48) and (1 < b) and (1 < b)))))))
+SAT
+
+#is_sat 1.1
+((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))
+SAT
+
+#is_sat 1.1
+(((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))) and not(res > 0) and (x != null)
+SAT
+
+#is_sat 1.2
+(((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))) and (res > 0) and (x = null)
+SAT
+
+#is_sat 1.1
+(((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))) and not(v_bool_23_209PRMD > 0) and (x != null) and (v_bool_23_209PRMD > 0)
+UNSAT
+
+#is_sat 1.2
+(((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))) and (v_bool_23_209PRMD > 0) and (x = null)
+SAT
+
+#is_sat 2.1
+(((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))) and not(v_bool_23_209PRMD > 0) and (x != null)
+SAT
+
+#is_sat 2.2
+(((x = null) and (v = 0) and (1 < b)) or ex(p_49, ex(v1_48, (x != null) and (0 <= v1_48) and (0 <= p_49) and (p_49 < b) and (v = p_49+b*v1_48) and (0 < v) and (1 < b) and (1 < b)))) and (v_bool_23_209PRMD > 0) and (x = null) and not(v_bool_23_209PRMD > 0)
+UNSAT
+
+#imply 2
+ante: x = null
+conseq: ex(b_258, (x = null) and (1 < b_258))
+VALID
+
+#imply 3
+ante: v_boolean_24_207PRMD > 0
+conseq: v_boolean_24_207PRMD > 0
+VALID
+
+#imply 3
+ante: true
+conseq: 0 = 0
+VALID
+
+#imply 3
+ante: true
+conseq: 0 = 0
+VALID
+
+#imply 3
+ante: 1 < b
+conseq: 2 <= b
+VALID
+
+#imply 4
+ante: x = null
+conseq: ex(b_276, (x = null) and (1 < b_276))
+VALID
+
+#imply 5
+ante: v_boolean_24_207PRMD > 0
+conseq: not(v_boolean_24_207PRMD > 0)
+INVALID
+
+#imply 5
+ante: v_boolean_24_207PRMD > 0
+conseq: not(v_boolean_24_207PRMD > 0)
+INVALID
+
+#imply 6
+ante: v_boolean_24_207PRMD > 0
+conseq: not(v_boolean_24_207PRMD > 0)
+INVALID
+
+#imply 6
+ante: v_boolean_24_207PRMD > 0
+conseq: not(v_boolean_24_207PRMD > 0)
+INVALID
+
+#imply 3.0
+ante: (((x = null) and (v = 0) and (1 < b)) or ex(p_295, ex(v1_296, (x != null) and (0 <= v1_296) and (0 <= p_295) and (p_295 < b) and (v = p_295+b*v1_296) and (0 < v) and (1 < b) and (1 < b)))) and (x != null)
+conseq: x = null
+INVALID
+
+#imply 7
+ante: not(v_boolean_28_208PRMD > 0)
+conseq: v_boolean_28_208PRMD > 0
+INVALID
+
+#imply 7
+ante: not(v_boolean_28_208PRMD > 0)
+conseq: v_boolean_28_208PRMD > 0
+INVALID
+
+#imply 3.0
+ante: (((x = null) and (v = 0) and (1 < b)) or ex(p_303, ex(v1_304, (x != null) and (0 <= v1_304) and (0 <= p_303) and (p_303 < b) and (v = p_303+b*v1_304) and (0 < v) and (1 < b) and (1 < b)))) and (x != null)
+conseq: x = null
+INVALID
+
+#imply 8
+ante: not(v_boolean_28_208PRMD > 0)
+conseq: not(v_boolean_28_208PRMD > 0)
+VALID
+
+#imply 8
+ante: 0 <= v
+conseq: 0 < v
+INVALID
+
+#imply 8
+ante: (x != null) and (((x = null) and (v = 0) and (1 < b)) or ex(p_307, ex(v1_308, (x != null) and (0 <= v1_308) and (0 <= p_307) and (p_307 < b) and (v = p_307+b*v1_308) and (0 < v) and (1 < b) and (1 < b))))
+conseq: 0 < v
+VALID
+
+#imply 8
+ante: 1 < b
+conseq: b = b
+VALID
+
+#imply 8
+ante: 0 <= v
+conseq: v = v
+VALID
+
+***************
+Number of Omega calls: 40
+Number of Redlog calls: 13
+Number of formulas that need ee: 0
+Number of successful ee calls: 0
+Nonlinear verification time: 0.0824308395386
+Linear verification time: 0.144963741302
