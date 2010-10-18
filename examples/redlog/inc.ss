@@ -35,9 +35,11 @@ bool is_zero(node x)
 
 bool is_equal(node x, node y)
  
-
-  requires x::bigint<b, v1> * y::bigint<b, v2>
-  ensures res & v1 = v2 or !res & v1 != v2;
+  requires [b] x::bigint<b, v1> * y::bigint<b, v2>
+ case {
+  v1=v2 -> ensures  res;
+  v1!=v2 -> ensures  !res;
+  }
 
 /*
  requires x::bigint<b, v1> * y::bigint<b, v2>
@@ -129,17 +131,19 @@ Total verification time: 94.23 second(s)
     //assume false;
     return is_zero(x) && is_zero(y);
   } else {
-    bool bb=is_equal(x.next, y.next);
-    int m=x.val; int n=y.val;
+    bool bq = (x.val==y.val);
     //assume n<m or n=m or n>m;
-    if (m == n) {
-      //assume false;
-        return bb;
+    dprint;
+    node xn=x.next; node yn=y.next;
+    if (bq) {
+        //assume false;
+      return is_equal(xn, yn);
       }
     else 
       { //assert false;
         //assume false;
-        dprint;
+        //dprint;
+        assert xn'::bigint<b, v1a> * yn'::bigint<b, v2a> & (v1a=v2a | v1a!=v2a) assume xn'::bigint<b, v1a> * yn'::bigint<b, v2a> ;
         return false;
       }
   }

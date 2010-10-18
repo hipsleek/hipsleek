@@ -1400,18 +1400,18 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var):(Cpure.fo
 	  let ba' = Cpure.add_null ba self in
 	  let is_sat = if br = [] then 
 	    let sat = TP.is_sat ba' ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-	      (Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	      ((*Debug.devel_pprint ("SAT A1#" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	       sat_subno := !sat_subno+1;
 	       sat)
           else 
 	    let sat = (TP.is_sat ba' ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno))) in
-	      Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	      (*Debug.devel_pprint ("SAT A2#" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	      sat_subno := !sat_subno+1;
 	      if not sat then 
 		false
 	      else List.for_all (fun (_,c)-> 
 				   let sat = TP.is_sat (Cpure.add_null c self) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-				     Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+				     (*Debug.devel_pprint ("SAT A3#" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 				     sat_subno := !sat_subno+1;
 				     sat) br in
 	    if (not is_sat) then None
@@ -3136,7 +3136,7 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
                     		  Err.error_text = "all guard free vars must be instantiated";} in
 	let _ = 
 	  let sat = Tpdispatcher.is_sat(Cpure.Not (all,None,no_pos)) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-	    Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	    (*Debug.devel_pprint ("SAT A4#" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	    sat_subno := !sat_subno+1;
 	    if sat then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
                     			      Err.error_text = "the guards don't cover the whole domain";} 	in
@@ -3145,7 +3145,7 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 	  | [] -> false 
 	  | p1::p2 -> if (List.fold_left (fun a c-> 
 					    let sat =  Tpdispatcher.is_sat(Cpure.mkAnd p1 c no_pos) ((string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-					      Debug.devel_pprint ("SAT #" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+					      (*Debug.devel_pprint ("SAT A5#" ^ (string_of_int !Solver.sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 					      sat_subno := !sat_subno+1;
 					      a ||sat) false p2 ) then true else p_check p2 in
 	  

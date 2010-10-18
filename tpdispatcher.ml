@@ -23,6 +23,7 @@ type tp_type =
   | RM (* Redlog and Mona *)
 
 let tp = ref OmegaCalc
+let proof_no = ref 0
 
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
@@ -780,6 +781,10 @@ let simpl_pair rid (ante, conseq) =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
+  proof_no := !proof_no+1 ;
+  let sat_no = (string_of_int !proof_no) in
+  Debug.devel_pprint ("SAT I#" ^ sat_no) no_pos;
+
   let f = elim_exists f in
   let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
   tp_is_sat f sat_no
@@ -787,6 +792,8 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+  proof_no := !proof_no+1 ;
+  let imp_no = (string_of_int !proof_no) in
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -832,8 +839,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   end
 ;;
 
-let imply_timeout ante0 conseq0 imp_no timeout =
-
+let imply_timeout2 ante0 conseq0 imp_no timeout =
   let _ = Util.push_time "imply" in
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout in
 
@@ -842,7 +848,7 @@ let imply_timeout ante0 conseq0 imp_no timeout =
   (res1,res2,res3)
 ;;
 
-let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.
+let imply ante0 conseq0 imp_no = imply_timeout2 ante0 conseq0 imp_no 0.
 ;;
 
 let is_sat f sat_no =
