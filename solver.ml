@@ -2182,7 +2182,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	    TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)))) 	(* if XPure0  fails, then try XPure1 *)
 	    in
 	  *)
-      (*let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in*)
+	  (* not ok to comment 'cause there's no call to TP.imply or any other procedure that calls it *)
+      let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
       let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in
       let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in
       let split_ante1 = Tpdispatcher.split_disjunctions new_ante in
@@ -2197,7 +2198,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	          let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
 	          let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
 		      imp_subno := !imp_subno+1; 
-		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
+		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*) 
+			  (* ok because of TP.imply *)
 		      TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
           in
           List.fold_left fold_fun (false,[],None) branches
@@ -2274,7 +2276,7 @@ and imply_one_conj ante_disj0 ante_disj1 conseq  =
 and imply_disj ante_disj conseq str =
   match ante_disj with
     | h :: rest -> 
-	    let _ = Debug.devel_pprint str no_pos in
+	    (*let _ = Debug.devel_pprint str no_pos in*)
 	    let r1,r2,r3 = (TP.imply h conseq (string_of_int !imp_no)) in
 	    if r1 then 
 	      let r1,r22,r23 = (imply_disj rest conseq str) in
@@ -2924,8 +2926,9 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 		       - for now we only revise the universal lemmas handled by apply_universal --> the check stays here as it is *)
 		    (*******************************************************************************************************************************************************************************************)
 		    (* is it necessary to xpure (node * f) instead ? *)
-		    (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;*)
-		    imp_no := !imp_no+1;
+			(* ok because of TP.imply*)
+		    (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;
+		    imp_no := !imp_no+1;*)
 		    if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no))) then
 		      let new_f = normalize coer_rhs_new f pos in
 		      (if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
