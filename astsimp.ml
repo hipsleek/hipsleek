@@ -3440,7 +3440,7 @@ and
           let result = CF.mkOr lf1 lf2 pos in result
       | IF.Base base -> 
 	  let nh,np,nt,nfl,nb = (linearize_base base base.Iformula.formula_base_pos) in
-	    CF.mkBase nh np nt nfl nb base.Iformula.formula_base_pos 
+    CF.mkBase nh np nt nfl nb base.Iformula.formula_base_pos
       | IF.Exists
           {
             IF.formula_exists_heap = h; 
@@ -3648,7 +3648,8 @@ and collect_type_info_pure (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
     | IP.BForm (b,_) -> collect_type_info_b_formula b stab
     | IP.And (p1, p2, pos) | IP.Or (p1, p2, _, pos) ->
-        (collect_type_info_pure p1 stab; collect_type_info_pure p2 stab)
+        (collect_type_info_pure p1 stab; collect_type_info_pure p2 stab;
+         collect_type_info_pure p1 stab; collect_type_info_pure p2 stab)
     | IP.Not (p1, _, pos) -> collect_type_info_pure p1 stab 
     | IP.Forall ((qv, qp), qf, _,pos) | IP.Exists ((qv, qp), qf, _,pos) ->
 	if (H.mem stab qv) && !check_shallow_var

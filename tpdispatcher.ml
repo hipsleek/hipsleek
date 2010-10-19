@@ -507,27 +507,27 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
             Redlog.is_sat f sat_no
 
 let simplify (f : CP.formula) : CP.formula =
-	if !external_prover then 
+  if !external_prover then 
     match Netprover.call_prover (Simplify f) with
       Some res -> res
       | None -> f
-	else
-	match !tp with
+  else
+  match !tp with
   | Isabelle -> Isabelle.simplify f
   | Coq -> Coq.simplify f
   | Mona -> Mona.simplify f
   | OM ->
-	  if (is_bag_constraint f) then
-		(Mona.simplify f)
-	  else (Omega.simplify f)
+    if (is_bag_constraint f) then
+      (Mona.simplify f)
+    else (Omega.simplify f)
   | OI ->
-	  if (is_bag_constraint f) then
-		(Isabelle.simplify f)
-	  else (Omega.simplify f)
+    if (is_bag_constraint f) then
+      (Isabelle.simplify f)
+    else (Omega.simplify f)
   | SetMONA -> Mona.simplify f
   | CM ->
-	  if is_bag_constraint f then Mona.simplify f
-	  else Omega.simplify f
+      if is_bag_constraint f then Mona.simplify f
+    else Omega.simplify f
   | Redlog -> Redlog.simplify f
   | RM -> 
       if is_bag_constraint f then
@@ -535,12 +535,12 @@ let simplify (f : CP.formula) : CP.formula =
       else
         Redlog.simplify f
   | _ ->
-(*
-	  if (is_bag_constraint f) then
-		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-	  else
-*)
-	  (Omega.simplify f)
+    (*
+     if (is_bag_constraint f) then
+     failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
+     else
+     *)
+    (Omega.simplify f)
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -871,21 +871,15 @@ let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
 
-let prepare () = match !tp with
-  | Redlog | RM -> Redlog.start_red ()
-  | _ -> ()
-
-let finalize () = match !tp with
-  | Redlog | RM -> Redlog.stop_red ()
-  | _ -> ()
-
 let start_prover () =
   match !tp with
   | Coq -> Coq.start_prover ()
+  | Redlog | RM -> Redlog.start_red ()
   | _ -> ()
   
 let stop_prover () =
   match !tp with
   | Coq -> Coq.stop_prover ()
+  | Redlog | RM -> Redlog.stop_red ()
   | _ -> ()
 
