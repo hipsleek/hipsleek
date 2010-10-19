@@ -794,6 +794,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no+1 ;
   let imp_no = (string_of_int !proof_no) in
+  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;
+  
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
