@@ -792,10 +792,9 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  proof_no := !proof_no+1 ;
+  proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
-  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;
-  
+  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -850,7 +849,8 @@ let imply_timeout2 ante0 conseq0 imp_no timeout =
   (res1,res2,res3)
 ;;
 
-let imply ante0 conseq0 imp_no = imply_timeout2 ante0 conseq0 imp_no 0.
+let imply ante0 conseq0 imp_no = 
+	imply_timeout2 ante0 conseq0 imp_no 0.
 ;;
 
 let is_sat f sat_no =
