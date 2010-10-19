@@ -2182,8 +2182,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	    TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)))) 	(* if XPure0  fails, then try XPure1 *)
 	    in
 	  *)
-	  (* not ok to comment 'cause there's no call to TP.imply or any other procedure that calls it *)
-      let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
+	  (* useless to print "IMP" statement in debug as there is no imply method called before and not even a procedure that calls an imply *)
+      (*let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in *)
       let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in
       let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in
       let split_ante1 = Tpdispatcher.split_disjunctions new_ante in
@@ -2927,8 +2927,6 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b pos : (bool * formula) 
 		    (*******************************************************************************************************************************************************************************************)
 		    (* is it necessary to xpure (node * f) instead ? *)
 			(* ok because of TP.imply*)
-		    (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;
-		    imp_no := !imp_no+1;*)
 		    if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no))) then
 		      let new_f = normalize coer_rhs_new f pos in
 		      (if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
