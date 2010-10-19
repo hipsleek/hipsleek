@@ -246,9 +246,7 @@ let process_source_full source =
 	  in
 	    let _ = Util.pop_time "Preprocessing" in
 		ignore (Typechecker.check_prog cprog);
-    (* i.e. stop Reduce/Redlog if it is running. *)
-    let _ = Tpdispatcher.finalize () in
-		(* Stopping the prover (in case of Coq) *)
+		(* Stopping the prover *)
 		let _ = Tpdispatcher.stop_prover () in
 		
 		let ptime4 = Unix.times () in
@@ -286,9 +284,6 @@ let main1 () =
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
   
-  (* i.e. pre-start Reduce/Redlog if it will be used. *)
-  let _ = Tpdispatcher.prepare () in
-    
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
       Globals.procs_verified := ["f3"];
