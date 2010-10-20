@@ -6,6 +6,7 @@ let devel_debug_print_orig_conseq = ref false
 
 (* debugging facility for user *)
 
+(* used to enable the printing of the original consequent while devel debugging. By default, orig_conseq is disabled*)
 let enable_dd_and_orig_conseq_printing () =
  devel_debug_on := true;
  devel_debug_print_orig_conseq :=  true
