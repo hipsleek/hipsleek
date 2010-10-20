@@ -2,8 +2,13 @@ open Globals
 
 let debug_on = ref false
 let devel_debug_on = ref false
+let devel_debug_print_orig_conseq = ref false
 
 (* debugging facility for user *)
+
+let enable_dd_and_orig_conseq_printing () =
+ devel_debug_on := true;
+ devel_debug_print_orig_conseq :=  true
 
 let string_of_pos (pos:loc) =
   pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": "^(string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^": "

@@ -266,7 +266,7 @@ let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
     fmt_string hdr; 
     wrap_box ("B",2) f  x
   end
-
+ 
 (** call pr_wrap_nocut with a cut in front of*)    
 let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
   begin
@@ -810,7 +810,7 @@ let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
   pr_vwrap "es_pure: " pr_pure_formula_branches es.es_pure; 
-  pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq; 
+  if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   pr_wrap_test "es_evars: " U.empty (pr_seq "" pr_spec_var) es.es_evars; 
   pr_wrap_test "es_ivars: "  U.empty (pr_seq "" pr_spec_var) es.es_ivars;

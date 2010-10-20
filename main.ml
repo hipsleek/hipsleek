@@ -59,6 +59,8 @@ let process_cmd_line () = Arg.parse [
    "Check coercion validity");
   ("-dd", Arg.Set Debug.devel_debug_on,
    "Turn on devel_debug");
+  ("-dd-print-original-consequent", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
+   "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
   ("-gist", Arg.Set Globals.show_gist,
    "Show gist when implication fails");
   ("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,

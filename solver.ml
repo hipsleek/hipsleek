@@ -2264,22 +2264,21 @@ and imply_conj ante_disj0 ante_disj1 conseq_conj =
 
 and imply_one_conj ante_disj0 ante_disj1 conseq  = 
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
-  let xp01,xp02,xp03 = imply_disj ante_disj0 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") in  
+  let xp01,xp02,xp03 = imply_disj ante_disj0 conseq in  
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
-    let xp1 = imply_disj ante_disj1 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 2(*!imp_subno*)) ^ " with XPure1") in
+    let xp1 = imply_disj ante_disj1 conseq in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	xp1
   else (xp01,xp02,xp03)	
     
-and imply_disj ante_disj conseq str =
+and imply_disj ante_disj conseq =
   match ante_disj with
     | h :: rest -> 
-	    (*let _ = Debug.devel_pprint str no_pos in*)
 	    let r1,r2,r3 = (TP.imply h conseq (string_of_int !imp_no)) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_disj rest conseq str) in
+	      let r1,r22,r23 = (imply_disj rest conseq) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
