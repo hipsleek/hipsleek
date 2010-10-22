@@ -153,7 +153,7 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
   | MetaFormCF mf -> mf
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let wf = AS.case_normalize_formula iprog h true mf in
+      let wf = AS.case_normalize_formula iprog h mf in
       let _ = Astsimp.collect_type_info_formula iprog wf stab false in
 	AS.trans_formula iprog quant fv_idents false wf stab false
   | MetaVar mvar -> begin

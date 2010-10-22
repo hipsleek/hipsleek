@@ -551,12 +551,12 @@ let rec pr_b_formula (e:P.b_formula) =
       | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
       | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_max_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
             (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
       | P.EqMin (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_min_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
             (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
       | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)

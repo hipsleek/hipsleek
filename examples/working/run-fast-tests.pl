@@ -210,7 +210,7 @@ $output_file = "log";
 # list of file, string with result of each entailment....
 %sleek_files=(
 		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-					["sleek1.slk","Valid."],
+					["sleek1.slk","Fail."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
 					["sleek3.slk","Valid.Fail.Valid."],

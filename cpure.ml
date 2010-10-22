@@ -1730,6 +1730,23 @@ let rec break_implication (ante : formula) (conseq : formula) : ((formula * form
 (**************************************************************)
 (**************************************************************)
 
+let find_rel_constraints (f:formula) desired :formula = 
+ if desired=[] then (mkTrue no_pos)
+ else 
+   let lf = split_conjunctions f in
+   let lf_pair = List.map (fun c-> ((fv c),c)) lf in
+   let var_list = fst (List.split lf_pair) in
+   let rec helper (fl:spec_var list) : spec_var list = 
+    let nl = List.filter (fun c-> (Util.intersect c fl)!=[]) var_list in
+    let nl = List.concat nl in
+    if (List.length fl)=(List.length nl) then fl
+    else helper nl in
+   let fixp = helper desired in
+   let pairs = List.filter (fun (c,_) -> (List.length (Util.intersect c fixp))>0) lf_pair in
+   join_conjunctions (snd (List.split pairs))
+
+  
+  
 (*
   Drop bag and list constraints for satisfiability checking.
 *)

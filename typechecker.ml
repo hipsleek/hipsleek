@@ -290,9 +290,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	              (* ) *)
 	      end;
         | Block ({exp_block_type = t;
-		  exp_block_body = e;
-		  exp_block_local_vars = local_vars;
-		  exp_block_pos = pos}) -> begin
+                  exp_block_body = e;
+                  exp_block_local_vars = local_vars;
+                  exp_block_pos = pos}) -> begin
 	        (*let ctx = add_path_id_ctx_list ctx (pid,0) in*)
 	        let ctx1 = check_exp prog proc ctx e post_start_label (*flow_store*) in
 	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
@@ -308,12 +308,12 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	            exp_cast_pos = pos}) -> begin
 	            end
 	          *)
-        | Cond ({exp_cond_type = t;
-	      exp_cond_condition = v;
-	      exp_cond_then_arm = e1;
-	      exp_cond_else_arm = e2;
-	      exp_cond_path_id =pid;
-	      exp_cond_pos = pos}) -> begin
+        | Cond ({ exp_cond_type = t;
+                  exp_cond_condition = v;
+                  exp_cond_then_arm = e1;
+                  exp_cond_else_arm = e2;
+                  exp_cond_path_id =pid;
+                  exp_cond_pos = pos}) -> begin
 	        let then_cond_prim = CP.BForm (CP.mkBVar v Primed pos, None) in
 	        let else_cond_prim = CP.mkNot then_cond_prim None pos in
 	        let then_ctx = combine_list_partial_context_and_unsat_now prog ctx then_cond_prim in
@@ -566,10 +566,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		             [CF.false_ctx pos] (* anything following return is not reachable *)
 		             end*)
         | SCall ({exp_scall_type = ret_t;
-		  exp_scall_method_name = mn;
-		  exp_scall_arguments = vs;
-		  exp_scall_path_id = pid;
-		  exp_scall_pos = pos}) -> begin (* mn is mingled name of the method *)
+                  exp_scall_method_name = mn;
+                  exp_scall_arguments = vs;
+                  exp_scall_path_id = pid;
+                  exp_scall_pos = pos}) -> begin (* mn is mingled name of the method *)
 	        (*print_endline "\nSCALL!"; flush stdout;*)
 	        let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	        let farg_types, farg_names = List.split proc.proc_args in

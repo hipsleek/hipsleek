@@ -136,7 +136,7 @@ let print_mvars = ref false
 
 let enable_sat_statistics = ref false
 
-let wrap_exists_implicit_explicit = ref true
+let wrap_exists_implicit_explicit = ref false
 
 let profiling = ref false
 
@@ -158,7 +158,9 @@ let pass_global_by_value = ref false
 let profile_threshold = 0.5 
 
 let true_imply_count = ref 0
+
 let false_imply_count = ref 0
+
 let true_sat_count = ref 0
 
 let add_count (t: int ref) = 
