@@ -37,6 +37,10 @@ and ext_formula =
   | ECase of ext_case_formula
   | EBase of ext_base_formula
   | EAssume of ((Cpure.spec_var list) *formula* formula_label)
+        (*  struct_formula *)
+ (*
+   | EScope of  (Cpure.spec_var list) 
+ *)
 
 
 and ext_case_formula =
@@ -50,6 +54,9 @@ and ext_base_formula =
 	{
 		formula_ext_explicit_inst : Cpure.spec_var list;
 		formula_ext_implicit_inst : Cpure.spec_var list;
+        (* 
+           vars_free, vars_linking, vars_extracted 
+        *)
 		formula_ext_exists : Cpure.spec_var list;
 		formula_ext_base : formula;
 		formula_ext_continuation : struc_formula;
