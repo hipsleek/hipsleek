@@ -6,7 +6,6 @@ open Lexing
 open Cast 
 open Cformula
 
-(* hello *)
 
 module P = Cpure
 
@@ -39,7 +38,7 @@ let fmt_close x = fmt_close_box x
 
 (** polymorphic conversion to a string with -i- spaces identation*)
 let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
-  let _ = print_string ("############ commit test") in
+  (* let _ = print_string ("############ commit test") in *)
   let old_fmt = !fmt in
   begin
     (* fmt := str_formatter; *)
