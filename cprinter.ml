@@ -8,7 +8,7 @@ open Cformula
 
 (* hello there *)
 
-module P = Cpure
+module P = Cpure (* hii *)
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
