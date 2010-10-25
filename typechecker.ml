@@ -602,8 +602,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	          let _ = PTracer.log_proof prf in
 		      rs in	        
 	        let res = if(CF.isFailListPartialCtx ctx) then ctx
-	        else check_pre_post proc.proc_static_specs_with_pre ctx in	        
-	        if (CF.isFailListPartialCtx res)then begin
+					  else check_pre_post proc.proc_static_specs_with_pre ctx in	 
+            (*print_string ("context before call : "^mn^"  "^(Cprinter.string_of_list_partial_context ctx)^"\n");					
+            print_string ("outcome of pre check : "^(string_of_bool (not (CF.isFailListPartialCtx res))));					
+	        *)if (CF.isFailListPartialCtx res) then begin
               Debug.print_info ("precondition checking ("^(Cprinter.get_label_list_partial_context res)^") ") ("none is satisfied\n") pos; (* add branch info *)
 	          res
 		          (* Err.report_error { Err.error_loc = pos; *)
@@ -726,17 +728,18 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
       (* print_string ("\n ***HELPER_IN-list of partial context "^Cprinter.summary_list_partial_context ctx); *)
       if CF.isFailListPartialCtx cl then cl
       else
+	    let (fl,cl) = List.partition (fun (_,c)-> Util.empty c) cl in
         let r = List.map (CF.splitter_partial_context !n_flow_int None
 			(fun l c -> check_exp1 [CF.mk_partial_context c l]) (fun x
 			  -> x) (fun x -> x)) cl in
-        let r1 = CF.fold_partial_context_left_union r in
-        (* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx);  *)
-	    r1 
+		let r1 = CF.fold_partial_context_left_union r in
+		(r1@fl)
+			(* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx);  *)
     in
     (* check for dprint and assert first ..*)
 	(* print_string ("\n ***after helper  "^Cprinter.string_of_exp e0^"\n");  *)
     match e0 with
-      | Label e -> 
+      | Label e ->
 	        let ctx = CF.add_path_id_ctx_partial_list ctx e.exp_label_path_id in
 	        let ctx = CF.add_cond_label_list_partial_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	        (check_exp prog proc ctx e.exp_label_exp post_start_label)

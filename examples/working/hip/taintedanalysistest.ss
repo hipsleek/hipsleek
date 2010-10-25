@@ -160,9 +160,11 @@ ensures true;
 	node n2 = new node(0,null);
 	n2 = source(n2);
 	n2 = sanitizer(n2);
-	//dprint;
-    //assert n1'::ls<null,n> & n>0; //'
+	dprint;
+        //assert n1'::ls<null,n> & n>0; //'
 	insert(n1, n2.val);
+	dprint;
+	assert n1'::ls<pp,n>*pp::node<aa,null>;
 	node n3 = ret_last(n1);
 	sink(n3); /*Tainted through n2*/
 }
@@ -278,20 +280,7 @@ node get_next_next(node x)
 	return x.next.next;
 }
 
-/* function to insert a node in a singly linked list */
-void insert(node x, int a)
-	requires x::ll<n> & n > 0 
-	ensures x::ll<n+1>;
 
-{
-			//dprint;
-      node tmp = null;
-	
-	if (x.next == null)
-		x.next = new node(a, tmp);
-	else 
-		insert(x.next, a);
-} 
 
 /* function to delete the a-th node in a singly linked list */
 void delete(node x, int a)
@@ -311,24 +300,6 @@ void delete(node x, int a)
 }
 
 
-/* function to create a singly linked list with a nodes */
-node create_list(int a)
-	requires a >= 0 
-	ensures res::ll<a>;
-
-{
-	node tmp;
-
-	if (a == 0) {
-		return null;
-	}
-	else {
-		a  = a - 1;
-		tmp = create_list(a);
-		return new node (0, tmp);
-	}
-		
-}
 
 /* function to reverse a singly linked list */
 void reverse(ref node xs, ref node ys)
@@ -373,15 +344,7 @@ void basictest2()
 	sink(n1.next);	/* Bad */
 }
 
-void basictest3()
-{	
-	node n1 = create_list(10);
-	node n2 = new node(0,null);
-	n2 = source(n2);
-	n1.insert(n2, n2.val);
-	node n3 = ret_last(n1);
-	sink(n3); /*Tainted through n2*/
-}
+
 
 void basictest4()
 {

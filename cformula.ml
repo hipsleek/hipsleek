@@ -2438,14 +2438,14 @@ let clear_entailment_history_partial_list (ctx : list_partial_context) : list_pa
   
 let fold_partial_context_left_or (c_l:(list_partial_context list)) = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "folding empty partial context list \n"}
+              Err.error_text = "folding or empty partial context list \n"}
   | 1 -> (List.hd c_l)
   | _ -> List.fold_left (fun a c->  list_partial_context_or a c)
       (List.hd c_l) (List.tl c_l)
 
 let fold_partial_context_left_union (c_l:(list_partial_context list)) = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "folding empty partial context list \n"}
+              Err.error_text = "folding union empty partial context list \n"}
   | 1 -> (List.hd c_l)
   | _ -> List.fold_left (fun a c->  list_partial_context_union a c) (List.hd c_l) (List.tl c_l)
 
@@ -2514,8 +2514,9 @@ let rec splitter (c:context)
 (* fn_esc is being applied to context that escapes; for try-catch construct it may add (pid,0) label to it *)
 
 let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
-    (fn:  path_trace -> context ->  list_partial_context) (fn_esc:
-      context -> context) (elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
+    (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 
+	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
+	
   let r = List.map (fun (l,c)-> 
 	let r1,r2 = splitter c nf cvar elim_ex_fn in 
 	let r1 = match r1 with
@@ -2526,13 +2527,10 @@ let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)
 		Err.error_text = "Split can not return both empty contexts\n"}
 	  | Some cl,None -> cl
 	  | None, Some c -> [mk_partial_context   (fn_esc c) l]
-	  | Some cl,Some c -> 
-		  list_partial_context_or cl 
-			[(mk_partial_context
-			  (fn_esc c) l)] 
-  ) sl 
+	  | Some cl,Some c ->  list_partial_context_or cl  [(mk_partial_context (fn_esc c) l)]
+	) sl 
   in
-  list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
+   list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
 
 let add_to_steps (ss:steps) (s:string) = s::ss ;;
 
