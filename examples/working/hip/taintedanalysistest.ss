@@ -160,7 +160,13 @@ ensures true;
 	node n2 = new node(0,null);
 	n2 = source(n2);
 	n2 = sanitizer(n2);
-	//dprint;
+    dprint;
+    try {
+      dprint;
+    } catch (__Exc _) {
+      dprint;
+    };
+	dprint;
         //assert n1'::ls<null,n> & n>0; //'
 	insert(n1, n2.val);
 	//dprint;
