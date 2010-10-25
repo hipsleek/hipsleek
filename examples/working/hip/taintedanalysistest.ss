@@ -160,11 +160,11 @@ ensures true;
 	node n2 = new node(0,null);
 	n2 = source(n2);
 	n2 = sanitizer(n2);
-	dprint;
+	//dprint;
         //assert n1'::ls<null,n> & n>0; //'
 	insert(n1, n2.val);
-	dprint;
-	assert n1'::ls<pp,n>*pp::node<aa,null>;
+	//dprint;
+	//assert n1'::ls<pp,n>*pp::node<aa,null>;
 	node n3 = ret_last(n1);
 	sink(n3); /*Tainted through n2*/
 }

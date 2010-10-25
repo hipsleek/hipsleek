@@ -131,7 +131,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 			                (*ctx*) in
 		      if CF.isFailListPartialCtx new_ctx then 
 	            begin 
-                  Debug.print_info "assert/assume" ("has failed\n") pos; 
+                (*  Debug.print_info "assert/assume" ("has failed\n") pos; *)
 		          new_ctx
 		        end
 		      else
@@ -289,7 +289,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	              (* 	    tmp_res *)
 	              (* ) *)
 	      end;
-        | Block ({exp_block_type = t;
+        (*| Block ({exp_block_type = t;
                   exp_block_body = e;
                   exp_block_local_vars = local_vars;
                   exp_block_pos = pos}) -> begin
@@ -307,7 +307,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	            exp_cast_body = body;
 	            exp_cast_pos = pos}) -> begin
 	            end
-	          *)
+	          *)*)
         | Cond ({ exp_cond_type = t;
                   exp_cond_condition = v;
                   exp_cond_then_arm = e1;
@@ -605,21 +605,22 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 					  else check_pre_post proc.proc_static_specs_with_pre ctx in	 
             (*print_string ("context before call : "^mn^"  "^(Cprinter.string_of_list_partial_context ctx)^"\n");					
             print_string ("outcome of pre check : "^(string_of_bool (not (CF.isFailListPartialCtx res))));					
-	        *)if (CF.isFailListPartialCtx res) then begin
+	        *)(*if (CF.isFailListPartialCtx res) then begin
               Debug.print_info ("precondition checking ("^(Cprinter.get_label_list_partial_context res)^") ") ("none is satisfied\n") pos; (* add branch info *)
 	          res
 		          (* Err.report_error { Err.error_loc = pos; *)
 		          (* 			 Err.error_text = "no precondition is satisfied"} *)
 	        end
-	        else res
+	        else res*)
+			res
 	      end
-        | Seq ({exp_seq_type = te2;
+      (*  | Seq ({exp_seq_type = te2;
 	      exp_seq_exp1 = e1;
 	      exp_seq_exp2 = e2;
 	      exp_seq_pos = pos}) -> begin
 	        let ctx1 = check_exp prog proc ctx e1 post_start_label (*flow_store*) in (* Astsimp ensures that e1 is of type void *)
 	        check_exp prog proc ctx1 e2 post_start_label (*flow_store*)
-	      end
+	      end*)
         | This ({exp_this_type = t;
 	      exp_this_pos = pos}) -> begin
 	        let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos) pos in
@@ -736,6 +737,31 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		(r1@fl)
 			(* print_string ("\n ***HELPER-OUT list of partial context "^Cprinter.summary_list_partial_context ctx);  *)
     in
+	let helper2 (cl:CF.list_partial_context) mn pos : CF.list_partial_context = 
+		let r = List.map (CF.splitter_partial_context !n_flow_int None
+			(fun l c -> check_exp1 [CF.mk_partial_context c l]) (fun x
+			  -> x) (fun x -> x)) cl in
+		let r1 = CF.fold_partial_context_left_union r in
+		let _ = if not(CF.isSuccessListPartialCtx r1) then
+			Debug.print_info 
+				("precondition checking for "^mn^"("^(Cprinter.get_label_list_partial_context r1)^") ")
+				("none is satisfied \n") pos in
+	          
+		r1
+    in
+	let helper3 (cl:CF.list_partial_context)  pos : CF.list_partial_context = 
+		let r = List.map (CF.splitter_partial_context !n_flow_int None
+			(fun l c -> check_exp1 [CF.mk_partial_context c l]) (fun x
+			  -> x) (fun x -> x)) cl in
+		let r1 = CF.fold_partial_context_left_union r in
+		let _ = if not(CF.isSuccessListPartialCtx r1) then
+			Debug.print_info 
+				("assert/assume fails ("^(Cprinter.get_label_list_partial_context r1)^") ")
+				("none of assertions is satisfied\n") pos in
+	          
+		r1
+    in	
+	
     (* check for dprint and assert first ..*)
 	(* print_string ("\n ***after helper  "^Cprinter.string_of_exp e0^"\n");  *)
     match e0 with
@@ -743,10 +769,44 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	        let ctx = CF.add_path_id_ctx_partial_list ctx e.exp_label_path_id in
 	        let ctx = CF.add_cond_label_list_partial_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	        (check_exp prog proc ctx e.exp_label_exp post_start_label)
+	  | Block ({exp_block_type = t;
+                  exp_block_body = e;
+                  exp_block_local_vars = local_vars;
+                  exp_block_pos = pos}) -> begin
+	        (*let ctx = add_path_id_ctx_list ctx (pid,0) in*)
+				(*
+				  print_string ("block e : "^(Cprinter.string_of_exp e)^"\n\n");
+				  print_string ("block context : "^(Cprinter.string_of_list_partial_context ctx)^"\n\n");
+			*)
+	        let ctx1 = check_exp prog proc ctx e post_start_label (*flow_store*) in
+	        let svars = List.map (fun (t, n) -> CP.SpecVar (t, n, Primed)) local_vars in
+	        let ctx2 = CF.push_exists_list_partial_context svars ctx1 in
+	        let ctx3 = if !Globals.elim_exists then elim_exists_partial_ctx_list ctx2 else ctx2 in
+	        (* let _, tmp1 = List.split local_vars in *)
+	        (*		print_string ("local_vars:\n" ^ (String.concat ", " tmp1) ^ "\n"); *)
+	        ctx3
+	      end
+	  | Seq ({exp_seq_type = te2;
+	      exp_seq_exp1 = e1;
+	      exp_seq_exp2 = e2;
+	      exp_seq_pos = pos}) -> begin
+	        let ctx1 = check_exp prog proc ctx e1 post_start_label (*flow_store*) in (* Astsimp ensures that e1 is of type void *)
+	        check_exp prog proc ctx1 e2 post_start_label (*flow_store*)
+	      end
+	  | SCall ({exp_scall_type = ret_t;
+                  exp_scall_method_name = mn;
+                  exp_scall_arguments = vs;
+                  exp_scall_path_id = pid;
+                  exp_scall_pos = pos}) -> begin 	
+				  let (ts,pf) = List.partition (fun (f,c)-> Util.empty f) ctx in
+				   if (Util.empty ts) then helper pf
+				  else ((helper2 ts mn pos)@(helper pf))
+				  end
+
       | Dprint ({exp_dprint_string = str;
 		exp_dprint_visible_names = visib_names;
 		exp_dprint_pos = pos}) -> begin
-	      if str = "" then begin
+		  if str = "" then begin
 	        let str1 = (Cprinter.string_of_list_partial_context ctx)  in
 	        let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
 	          ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
@@ -768,12 +828,15 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
             begin
 	          (* let _ =print_string ("inside assert"^(match c1_o with | None -> "no formula "| Some c1_o ->Cprinter.string_of_struc_formula c1_o)^"\n") in *)
 	          (* let s1 = CF.get_start_partial_label ctx in *)
-	          if CF.isFailListPartialCtx ctx then ctx
-	          else
+			  let (ts,pf) = List.partition (fun (f,c)-> Util.empty f) ctx in
+
                 match c2 with 
-	              | Some c -> helper ctx (* handled at small context level *)
+	              | Some c -> 	if (Util.empty ts) then helper pf
+								else ((helper3 ts pos)@(helper pf))
+				                     (* handled at small context level *)
 	              | None ->
-		                let s1 = snd post_start_label in
+	                 if (Util.empty ts) then ctx
+	                 else let s1 = snd post_start_label in
 		                (* print_string ("\n\nLABEL PRECOND: " ^ s1 ^ "\nLabel ASSERT: " ^ s ^"\n\n"); *)
 		                if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ((* print_string "inside label missmatch \n"; *)ctx)
 		                else
@@ -788,16 +851,17 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 			                      Debug.devel_pprint to_print pos;
                                   (* print_string ("\n***CRT STATE : " ^ (Cprinter.string_of_list_partial_context ctx) ^ "\n"); *)
 			                      (* print_string ("\n***ASSERT COND : " ^ (Cprinter.string_of_struc_formula c1) ^ "\n\n\n\n"); *)
-			                      let rs,prf = heap_entail_struc_list_partial_context_init prog false false false ctx c1 pos None in
+			                      let rs,prf = heap_entail_struc_list_partial_context_init prog false false false ts c1 pos None in
 			                      let _ = PTracer.log_proof prf in
 				                  Debug.pprint ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
 				                  (* Solver.entail_hist#upd (pidi,s) rs; *)
-				                  if not(CF.isFailListPartialCtx rs)
+				                  if (CF.isSuccessListPartialCtx rs)
 				                  then
 				                    (Debug.print_info "assert" (s ^(if (CF.isNonFalseListPartialCtx ctx) then " : ok\n" else ": unreachable\n")) pos;
 				                    Debug.pprint ("Residual:\n" ^ (Cprinter.string_of_list_partial_context rs)) pos;
 				                    rs)
-				                  else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in ctx
+				                  else (Debug.print_info "assert" (s ^" : failed\n") pos;rs (*ctx*)) in 
+					      ctx
 	        end
       |  _ -> (helper ctx)
 	         
