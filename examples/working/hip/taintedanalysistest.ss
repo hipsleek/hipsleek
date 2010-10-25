@@ -68,7 +68,6 @@ ensures res::node<w,q> & w>0;
 node create_list(int a)
 	requires a >= 0 
 	ensures res::ll<a>;
-
 	requires a >= 0
 	ensures res::ls<null,a>;
 {
@@ -160,13 +159,40 @@ ensures true;
 	node n1 = create_list(10);
 	node n2 = new node(0,null);
 	n2 = source(n2);
-	dprint;
-    assert n1'::ls<null,pp> & pp>0; //'
+	n2 = sanitizer(n2);
+	//dprint;
+    //assert n1'::ls<null,n> & n>0; //'
 	insert(n1, n2.val);
 	node n3 = ret_last(n1);
 	sink(n3); /*Tainted through n2*/
 }
 
+/*
+[Label: []
+ State:es_formula: 
+        EXISTS(w_443: (166, ):n1_56'::ll<v_int_159_415> * 
+        (162, ):n2_57'::node<w_443,q_436> & v_int_159_415=10 & 
+        v_int_160_416=0 & v_ptr_160_417=null & q=v_ptr_160_417 & 
+        (144, ):v_439<0 & v=v_439 & q_436=q & (160, ):0<w_443 &
+        {FLOW,(27,28)=__norm,})
+       es_pure: true
+       es_heap: true
+       es_path_label: [((34, ):,6 );((36, ):,1 );((37, ):,7 );((24, ):,-1 )]],
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: 
+        EXISTS(w_451: (174, ):n1_56'::ls<flted_72_426,v_int_159_427> * 
+        (170, ):n2_57'::node<w_451,q_444> & v_int_159_427=10 & 
+        (139, ):flted_72_426=null & v_int_160_428=0 & v_ptr_160_429=null & 
+        q=v_ptr_160_429 & (152, ):v_447<0 & v=v_447 & q_444=q & 
+        (168, ):0<w_451 & {FLOW,(27,28)=__norm,})
+       es_pure: true
+       es_heap: true
+       es_path_label: [((34, ):,6 );((36, ):,1 );((37, ):,8 );((24, ):,-1 )]]
+
+*/
 /*
 	
 /*ll1<S> == self = null & S = {} 
