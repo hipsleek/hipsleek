@@ -1,0 +1,22 @@
+data node {
+ int val;
+ node next
+ }.
+
+ 
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail x::ll<n>* y::ll<m> & n>0 & m>0  |- x!=y.
+print residue.
+
+/*
+  above fails; does specialization handle it?
+*/
+
+/*
+checkentail x::node<_,_>* y::node<_,_>  |- x!=y.
+print residue.
+*/
