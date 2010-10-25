@@ -1154,7 +1154,7 @@ and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) :
       else
         let _ = reset_int2 () in
         let sat = TP.is_sat pf1b ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-	    Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	    (*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	    sat_subno := !sat_subno+1;
 	    if sat then (true, ctx) 
         else
@@ -1162,7 +1162,7 @@ and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) :
     if pfb = [] then 
 	  (*  let _ = print_string ("--> "^(Cprinter.string_of_pure_formula pf )^"\n") in*)
 	  let is_ok = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-	  Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	  (*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	  sat_subno := !sat_subno+1;
 	  (if is_ok then Ctx{es with es_unsat_flag = true } else false_ctx (flow_formula_of_formula es.es_formula) no_pos)
     else
@@ -1182,14 +1182,14 @@ and find_unsat (prog : prog_decl) (f : formula):formula list =
 	    let fold_fun is_ok (label, pf1b) =
 	      if not is_ok then false else
 	        let  sat = if TP.is_sat (CP.And (pf, pf1b, no_pos)) ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) then true else false in
-		    (Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+		    ((*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				*)
 		    sat_subno := !sat_subno+1;
 		    sat)
 	    in
 	    let is_ok =        
 	      if pfb = [] then 
 	        let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-		    (Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+		    ((*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				*)
 		    sat_subno := !sat_subno+1;
 		    sat)		
 	      else
@@ -1216,14 +1216,14 @@ and elim_unsat_all prog (f : formula) = match f with
           print_endline (Cprinter.string_of_pure_formula pf1b);*)
         if not is_ok then false else
 	      let sat = TP.is_sat (CP.And (pf, pf1b, no_pos)) ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-	      Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	      (*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	      sat_subno := !sat_subno + 1;
 	      if sat then true else false
       in
       let is_ok =
         if pfb = [] then 
 	      let sat = TP.is_sat pf ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
-	      Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+	      (*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 	      sat_subno := !sat_subno + 1;sat else
 	        let sat = List.fold_left fold_fun true pfb in
 		    sat
@@ -2108,7 +2108,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
   let tmp1 = CP.mkAnd xpure_lhs_h lhs_p pos in
   let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
 	let res,_,_ =  TP.imply_timeout new_ante new_conseq ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) timeout in
-	  (Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+	  ((*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				*)
 	  sat_subno := !sat_subno+1;  
 	  if res = false then
           let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
@@ -2117,7 +2117,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
 		      let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
 		      let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars)  tmp1 rhs_p pos in
 		      let res,_,_ = TP.imply_timeout new_ante new_conseq ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) timeout in
-		      (Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				
+		      ((*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;				*)
 		      sat_subno := !sat_subno+1; 
 		      res)
           in
@@ -2207,7 +2207,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	          let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
 	          let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
 		      imp_subno := !imp_subno+1; 
-		      Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;
+		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
 		      TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
           in
           List.fold_left fold_fun (false,[],None) branches
@@ -3320,7 +3320,7 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 			  ((Cpure.mkAnd c11 c21 d.formula_case_pos),c12,c22)) b.formula_case_branches) ) [] d.formula_case_branches) in
 	        let comb = List.fold_left (fun a (c1,c2,c3)-> 
 			  let sat = (Tpdispatcher.is_sat c1 ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno))) in
-			  Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+			  (*Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;*)
 			  sat_subno := !sat_subno + 1;
 			  if sat then a
 			  else (c1,(combine_struc c2 c3))::a)[] comb in

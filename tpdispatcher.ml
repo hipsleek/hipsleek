@@ -665,12 +665,13 @@ let tp_imply ante conseq imp_no timeout =
 		(Omega.imply ante conseq imp_no timeout)
   | SetMONA ->
 	  Setmona.imply ante conseq 
-  | Redlog -> Redlog.imply ante conseq imp_no
+  | Redlog -> 
+		 Redlog.imply ante conseq imp_no 
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         Mona.imply timeout ante conseq imp_no
       else
-        Redlog.imply ante conseq imp_no
+         Redlog.imply ante conseq imp_no
 ;;
 
 (* renames all quantified variables *)
@@ -802,41 +803,49 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
 	let conseq =
-	if CP.should_simplify conseq0 then simplify conseq0
-	else conseq0
-  in
+		if CP.should_simplify conseq0 then simplify conseq0
+		else conseq0 
+	in
 	if CP.isConstTrue conseq0 then
-	  (true, [],None)
+		(true, [],None)
 	else
-	  let ante =
-		if CP.should_simplify ante0 then simplify ante0
-		else ante0
-	  in
-	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
-	  else
-		let ante = elim_exists ante in
-		let conseq = elim_exists conseq in
-        let split_conseq = split_conjunctions conseq in
-		let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
-        (*let pairs = [filter ante conseq] in*)
-        (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
-        let fold_fun (res1,res2,res3) (ante, conseq) =
-          if res1 then 
-			let res1 =
-        if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-          let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout in
-          if res1 then res1
-            else tp_imply ante conseq imp_no timeout 
-        else       
-          tp_imply ante conseq imp_no timeout in
-			let l1 = CP.get_pure_label ante in
-			let l2 = CP.get_pure_label conseq in
-			if res1 then 
-			(res1,(l1,l2)::res2,None)
-			else (res1,res2,l2)
-		   else (res1,res2,res3)
-        in
-        List.fold_left fold_fun (true,[],None) pairs
+		let ante =
+			if CP.should_simplify ante0 then simplify ante0
+			else ante0
+		in
+		if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
+		else
+			let ante = elim_exists ante in
+			let conseq = elim_exists conseq in
+			let split_conseq = split_conjunctions conseq in
+			let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
+			(*let pairs = [filter ante conseq] in*)
+			let pairs_length = List.length pairs in
+			(*let _ = print_string ("\n!!!!! imp " ^ imp_no ^ " " ^ (string_of_int pairs_length)) in*)
+			(*Debug.devel_pprint (" - left folding " ^ (string_of_int pairs_length) ^ " times");*)
+			let imp_sub_no = ref 0 in
+			let fold_fun (res1,res2,res3) (ante, conseq) =
+				(incr imp_sub_no;
+				(*let _ = print_string ("\n!!!!! fold_fun " ^ imp_no ^ " " ^ (string_of_int !imp_sub_no)) in*)
+				if res1 then 
+					(*let _ = print_string ("\n!!!!! fold_fun if res1 " ^ imp_no ^ " " ^ (string_of_int !imp_sub_no)) in*)
+					let imp_no = 
+						if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
+						else imp_no in
+					let res1 =
+						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+							let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout  in
+							if res1 then res1
+							else tp_imply ante conseq imp_no timeout
+						else tp_imply ante conseq imp_no timeout
+					in
+					let l1 = CP.get_pure_label ante in
+					let l2 = CP.get_pure_label conseq in
+					if res1 then (res1,(l1,l2)::res2,None)
+					else (res1,res2,l2)
+				else (res1,res2,res3) )
+			in
+			List.fold_left fold_fun (true,[],None) pairs
   end
 ;;
 
