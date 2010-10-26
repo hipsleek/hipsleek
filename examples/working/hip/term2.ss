@@ -23,3 +23,16 @@ void g(int x, int y)
        assert "term": false;
        f(x1,y1);     
 }
+
+
+void h(int x, int y)
+  requires true
+  ensures "term":true;
+{     
+  if (y>0) {
+    int x1=x;int y1=y-1;
+    assert y1>=0;
+    assert y-y1>0;
+    h(x1,y1);
+  } else return;
+}
