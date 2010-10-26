@@ -4,14 +4,23 @@ data node {
 }
              
 bigint<b, v> == self = null & v = 0 & b>1 or
-                 self::node<p, q> * q::bigint<b, v1> & 0 <= p < b 
-                 & v = b*v1 + p & v>0 & b>1
+   self::node<p, q> * q::bigint<b, v1> & 0 <= p < b 
+      & v = b*v1 + p & v>0 & b>1
                  inv v >= 0 & b>1;
-
+/*
+bigint<b, v> == self = null & v = 0 & b>1 or
+   (exists p,q,v1 : self::node<p, q> * q::bigint<b, v1> & 0 <= p < b 
+      & v = b*v1 + p & v>0 & b>1)
+                 inv v >= 0 & b>1;
+*/
 
 bool is_zero(node x)
-  requires x::bigint<b, v>
-  ensures x::bigint<b, v> & res & v = 0 or x::bigint<b, v> & !res & v > 0;
+ requires x::bigint<b, v>
+   case {
+       v=0 -> ensures res;
+       v!=0 -> ensures !res;
+   }    
+
 /*
   requires x::bigint<b, v>
    case {
@@ -35,11 +44,9 @@ bool is_zero(node x)
 
 bool is_equal(node x, node y)
  
-  requires [b] x::bigint<b, v1> * y::bigint<b, v2>
- case {
-  v1=v2 -> ensures  res;
-  v1!=v2 -> ensures  !res;
-  }
+ 
+  requires x::bigint<b, v1> * y::bigint<b, v2>
+  ensures true & (res & v1 = v2 | !res & v1 != v2);
 
 /*
  requires x::bigint<b, v1> * y::bigint<b, v2>
@@ -53,6 +60,11 @@ bool is_equal(node x, node y)
 Total verification time: 6.5 second(s)
 	Time spent in main process: 3.7 second(s)
 	Time spent in child processes: 2.8 second(s)
+
+  requires x::bigint<b, v1> * y::bigint<b, v2> & b>1
+  ensures x::bigint<b, v1> * y::bigint<b, v2> & 
+     (res & v1 = v2  | !res & v1 != v2);
+
 
   requires x::bigint<b, v1> * y::bigint<b, v2>
   ensures true & (res & v1 = v2 | !res & v1 != v2);
@@ -133,17 +145,18 @@ Total verification time: 94.23 second(s)
   } else {
     bool bq = (x.val==y.val);
     //assume n<m or n=m or n>m;
-    dprint;
+    //dprint;
     node xn=x.next; node yn=y.next;
+    bool bb = is_equal(xn, yn);
     if (bq) {
         //assume false;
-      return is_equal(xn, yn);
+      return bb;
       }
     else 
       { //assert false;
         //assume false;
         //dprint;
-        assert xn'::bigint<b, v1a> * yn'::bigint<b, v2a> & (v1a=v2a | v1a!=v2a) assume xn'::bigint<b, v1a> * yn'::bigint<b, v2a> ;
+        // assert xn'::bigint<b, v1a> * yn'::bigint<b, v2a> & (v1a=v2a | v1a!=v2a) assume xn'::bigint<b, v1a> * yn'::bigint<b, v2a> ;
         return false;
       }
   }
