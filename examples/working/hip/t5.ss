@@ -38,6 +38,14 @@ void m1 (ref int i, e1 z) throws e4,e1
 		res::e4<> & i>0 & i'=3 & flow e4 or
 		res::e1<> & i>0 & flow e1 or  
 		i<=0 & i'=-3;
+/*
+void m1a$int~e1(  int i,  e1 z)
+static  z::<> & true & {FLOW,(25,26)=__norm,}
+   EAssume (10, ):ref [i]
+     res::<> & 0<i & i'=4 & {FLOW,(33,34)=e2,}  // should be e4..
+     or res::<> & 0<i & i'=1 & {FLOW,(29,34)=e1,}
+     or true & i<=0 & i'+3=0 & {FLOW,(25,26)=__norm,}
+*/
 {
 	try{
 		if (i>0) raise z; // new e1();
