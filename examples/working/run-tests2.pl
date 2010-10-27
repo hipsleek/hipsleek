@@ -18,7 +18,7 @@ $error_files = "";
 
 if ($output_file) {}
 else { $output_file = "log"; }
-
+ 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 
 find(\&process_file, ".");
