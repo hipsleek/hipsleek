@@ -7,14 +7,72 @@
 exception Bad_string
 exception Bail
 
+type 'a tag_list = ('a * (int list)) list
+
+type ('a,'b) stackable =  ('a * ('b list))
+
+type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
+
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
  * but put helper files in another (/usr/share/module-language),
    here's what you need to change! *)
 
+let empty l = match l with [] -> true | _ -> false
+
+let pushf (f:'a -> 'a * 'b)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = let (new_i,v)=f i 
+    in (new_i,v::stk)
+
+let popf (f:'a -> 'b -> 'a) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf on empty stack")}
+    | v::stk -> (f i v, stk)
+
+let pushf_list (f:'a -> 'a * 'b) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf f) xs
+
+let popf_list (f:'a -> 'b -> 'a)  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (popf f) xs
+
+let push_tag (xs : 'a tag_list) : ('a tag_list) =
+  let rec helper xs (n:int) =
+    match xs with
+      | [] ->  []
+      | (x,t) :: xs -> (x,(n::t))::(helper xs (n+1))
+  in (helper xs 1)
+
+(* do we need to sort the tag first *)
+let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
+  let rec helper xs acc no =
+    match xs with
+      | [] -> if (empty acc) then [] else [(List.rev acc,no)]
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing in group_tag")}
+      | ((x,n::t)::xs1) -> 
+        if (n==no) then helper xs1 ((x,t)::acc) no
+        else 
+          let rs=helper xs [] (no+1) in
+          if (empty acc) then rs
+          else (List.rev acc,no)::rs
+  in helper xs acc 1 
+
+let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
+  let rec helper xs ys =
+    match xs with
+      | [] -> []
+      | ((x,n1)::xs1) -> 
+            match ys with
+              | [] -> []
+              | ((y,n2)::ys1) -> 
+                    if (n1==n2) then (f x y)::helper xs ys1
+                    else if (n1<n2) then helper xs1 ys
+                    else helper xs ys1
+  in helper xs ys
+
 let qualify_helper_fn n =
   let d =  Filename.dirname Sys.executable_name ^ "/" in
   Sys.getcwd() ^ "/" ^ d ^ n
+
 
 let lib_name n =
   try (let d = Filename.dirname Sys.executable_name ^ "/../lib/" in
@@ -278,7 +336,6 @@ let is_some : 'a option -> bool =
 	| Some x -> true
 	| None -> false
 
-let empty l = match l with [] -> true | _ -> false
 
 (** Read the given file into a string. *)
 let string_of_file (fname : string) =

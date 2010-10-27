@@ -126,7 +126,7 @@ ensures true;
     int i;
     { 
       //dprint; // four states visible which seems wrong..
-      assert i'=2; //' default to norm; once but incorrect
+      assert i'=0; //' default to norm; once but incorrect
     }
 }
 
