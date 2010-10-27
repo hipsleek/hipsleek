@@ -39,12 +39,15 @@ void m1 (ref int i, e1 z) throws e4,e1
 		res::e1<> & i>0 & flow e1 or  
 		i<=0 & i'=-3;
 /*
-void m1a$int~e1(  int i,  e1 z)
 static  z::<> & true & {FLOW,(25,26)=__norm,}
-   EAssume (10, ):ref [i]
-     res::<> & 0<i & i'=4 & {FLOW,(33,34)=e2,}  // should be e4..
-     or res::<> & 0<i & i'=1 & {FLOW,(29,34)=e1,}
+   EAssume (5, ):ref [i]
+     res::<> & 0<i & i'=3 & {FLOW,(31,32)=e4,} // err res::?
+     or res::<> & 0<i & {FLOW,(29,34)=e1,}
      or true & i<=0 & i'+3=0 & {FLOW,(25,26)=__norm,}
+
+data e5 {
+}   // extends not displayed
+
 */
 {
 	try{
@@ -61,6 +64,13 @@ static  z::<> & true & {FLOW,(25,26)=__norm,}
 	i=-3;
         dprint;
 }
+
+ void nonnull(node x)
+   case {
+    x=null -> ensures true & flow e1;
+     x!=null -> requires x::node<a,b>
+       ensures x::node<a,b>;
+   }
 
 void m1a (ref int i, e1 z) throws e1
 	requires z::e1<>

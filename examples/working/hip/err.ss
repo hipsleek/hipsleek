@@ -1,3 +1,6 @@
+class e1 extends __Exc {} 
+//class e2 extends __Exc {} 
+
 data node {
 	int val; 
 	node next;	
@@ -10,7 +13,6 @@ ll<n> == self = null & n = 0
 	or self::node<_, q> * q::ll<n-1> 
   inv n >= 0;
 
- class e1 extends __Exc {} 
 
  void foo1(node x) 
    requires x::ll<n>
@@ -49,3 +51,13 @@ ll<n> == self = null & n = 0
        ensures x::node<a,b>;
    }
 
+/*
+void nonnull$node(  node x)
+static  case {x=null -> EAssume (4, ):
+                   true & true & {FLOW,(15,16)=__Exc,} ;
+  x!=null -> exists [](I)[a;b][]x::node<a,b> & true & {FLOW,(13,14)=__norm,}
+               EAssume (5, ):
+                 EXISTS(a_37,b_38: x::node<a_37,b_38> & a_37=a & b_38=b &
+                 {FLOW,(13,14)=__norm,})
+  }
+*/
