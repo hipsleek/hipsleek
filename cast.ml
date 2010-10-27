@@ -178,7 +178,7 @@ and exp_catch = {
 				  				  
 and exp_try = { exp_try_type : P.typ;
 				exp_try_body : exp;
-				exp_try_path_id : control_path_id;
+				exp_try_path_id : control_path_id_strict;
 				exp_catch_clause : exp_catch ;
 				exp_try_pos : loc }
 

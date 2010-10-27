@@ -799,9 +799,15 @@ let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =
 let summary_list_path_trace l =  String.concat "; " (List.map  (fun (lbl,_) -> string_of_path_trace lbl) l)
 
 let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)^" "^(summary_list_path_trace l2)^")"
+
+let summary_failesc_context (l1,l2,l3) =  
+	"("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
+	^" "^(summary_list_path_trace l3)^")"
+
   
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
+let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_failesc_context lc))^"]"
 
 
   (* if String.length(hdr)>7 then *)
@@ -904,6 +910,35 @@ let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_li
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
+let pr_esc_stack_lvl ((i,_),e) = 
+  fmt_open_vbox 0;
+  pr_vwrap_naive ("level"^(string_of_int i)^" :")
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_context fs)) e;
+  fmt_close_box ()
+           
+let pr_esc_stack e = match e with
+  | [] 
+  | [((0,""),[])] -> ()
+  | _ ->
+    fmt_open_vbox 0;
+    pr_vwrap_naive "Escaped States:"
+    (pr_seq_vbox "" pr_esc_stack_lvl) e;
+    fmt_close_box ()
+  
+let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
+
+  
+let pr_failesc_context ((l1,l2,l3): failesc_context) =
+  fmt_open_vbox 0;
+  pr_vwrap_naive_nocut "Failed States:"
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_fail_type fs)) l1;
+  pr_esc_stack l2;
+  pr_vwrap_naive "Successful States:"
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_context fs)) l3;
+  fmt_close_box ()
 
 let pr_partial_context ((l1,l2): partial_context) =
   fmt_open_vbox 0;
@@ -933,15 +968,28 @@ let string_of_partial_context (ctx:partial_context): string =  poly_string_of_pr
 
 let printer_of_partial_context (fmt: Format.formatter) (ctx: partial_context) : unit =
   poly_printer_of_pr fmt pr_partial_context ctx 
-    
 
- let pr_list_partial_context (lc : list_partial_context) =
+
+let string_of_failesc_context (ctx:failesc_context): string =  poly_string_of_pr pr_failesc_context ctx
+
+let printer_of_failesc_context (fmt: Format.formatter) (ctx: failesc_context) : unit =
+  poly_printer_of_pr fmt pr_failesc_context ctx 
+  
+let pr_list_failesc_context (lc : list_failesc_context) =
+   fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
+   fmt_cut (); pr_list_none pr_failesc_context lc
+ 
+	
+let pr_list_partial_context (lc : list_partial_context) =
    fmt_string ("List of Partial Context: "^(summary_list_partial_context lc));
    fmt_cut (); pr_list_none pr_partial_context lc
     
 let string_of_list_partial_context (lc: list_partial_context) =
     poly_string_of_pr pr_list_partial_context lc
 
+let string_of_list_failesc_context (lc: list_failesc_context) =
+    poly_string_of_pr pr_list_failesc_context lc
+	
 let printer_of_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context) : unit =
   poly_printer_of_pr fmt pr_list_partial_context ctx 
 
@@ -1214,7 +1262,7 @@ let rec string_of_exp = function
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> 
       let c = b.exp_catch_clause.exp_catch_flow_type in
-	string_of_control_path_id_opt b.exp_try_path_id  
+	string_of_control_path_id b.exp_try_path_id  
 	  "try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
 	  (match b.exp_catch_clause.exp_catch_flow_var with 
 	     | Some c -> (" @"^c^" ")
@@ -1299,13 +1347,17 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
 *)
 
 
-
-   
-let get_label_partial_context (fs,ss) : string =
+let string_of_label_partial_context (fs,_) : string =
 if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
 
-let get_label_list_partial_context (cl:Cformula.list_partial_context) : string =
-if (U.empty cl) then "" else get_label_partial_context (List.hd cl)
+let string_of_label_list_partial_context (cl:Cformula.list_partial_context) : string =
+if (U.empty cl) then "" else string_of_label_partial_context (List.hd cl)
+   
+let string_of_label_failesc_context (fs,_,_) : string =
+if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
+
+let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : string =
+if (U.empty cl) then "" else string_of_label_failesc_context (List.hd cl)
 
 
 

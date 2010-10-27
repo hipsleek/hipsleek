@@ -522,7 +522,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Sharp _ -> e
   | C.Seq b -> if (!seq_to_try) then 
 					  C.Try ({	C.exp_try_type = b.C.exp_seq_type;
-								C.exp_try_path_id = None;
+								C.exp_try_path_id = fresh_strict_branch_point_id "";
 								C.exp_try_body =  (seq_elim b.C.exp_seq_exp1);
 								C.exp_catch_clause = ({
 														  C.exp_catch_flow_type = !n_flow_int;
@@ -2617,6 +2617,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_catch_clauses = cl_list;
           I.exp_finally_clause = fl_list;
           I.exp_try_pos = pos}-> 
+          let pid = match pid with | None -> fresh_strict_branch_point_id "" | Some s -> s in
             if ((List.length fl_list)>0) then
               Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, i still found a finally clause" }
             else
@@ -2633,12 +2634,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        let fl_var = fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum in
                          C.Try({ C.exp_try_type = ct1;
                            C.exp_try_body = a;
-                           C.exp_try_path_id = None;
+                           C.exp_try_path_id = fresh_strict_branch_point_id "";
                            C.exp_try_pos = pos;
                            C.exp_catch_clause =
                              ({ c with C.exp_catch_body =
                             C.Try({C.exp_try_type = CP.Prim Void;
-                             C.exp_try_path_id = None;
+                             C.exp_try_path_id = fresh_strict_branch_point_id "";
                              C.exp_try_body = c.C.exp_catch_body;
                              C.exp_try_pos = c.C.exp_catch_pos;		   
                              C.exp_catch_clause = {

@@ -41,6 +41,7 @@ type mode =
   | ModeIn
   | ModeOut
 
+let idf (x:'a) : 'a = x
 (* global constants *)
 
 let no_pos = 
@@ -193,6 +194,8 @@ let fresh_formula_label (s:string) :formula_label =
 	(!branch_point_id,s)
   
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
+let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
+
 
 
 let fresh_int () =
