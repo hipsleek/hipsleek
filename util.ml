@@ -11,7 +11,7 @@ type 'a tag_elem = ('a * (int list))
 
 type 'a tag_list = ('a tag_elem) list
 
-type ('a,'b) stackable =  ('a * ('b list))
+type ('a,'b) stackable =  ('a * (('b list) list))
 
 type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
 
@@ -22,14 +22,47 @@ type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
 
 let empty l = match l with [] -> true | _ -> false
 
+let pushf_init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = (i,[]::stk)
+
+let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+    | lvl::stk -> let (new_i,v)=f i 
+                 in (new_i,(v@lvl)::stk)
+
+let pushf_collapse_level  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> (i,[]) (* nothing to collapse *)
+    | [lvl] -> (i,stk) (* nothing to collapse *)
+    | lvl::(lvl2::stk) -> (i,(lvl@lvl2)::stk)
+
+
+let popf_level (f:'a -> ('b list) -> 'a) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | lvl::stk -> (f i lvl, stk)
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
+
+let pushf_init_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf_init_level) xs
+
+let pushf_add_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf_add_level f) xs
+
+let pushf_collapse_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf_add_level f) xs
+
+let popf_level_list (f:'a -> ('b list) -> 'a)   (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (popf_level f) xs
+
 let pushf (f:'a -> 'a * 'b)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
   = let (new_i,v)=f i 
-    in (new_i,v::stk)
+    in (new_i,[v]::stk)
 
 let popf (f:'a -> 'b -> 'a) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
   = match stk with
-    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf on empty stack")}
-    | v::stk -> (f i v, stk)
+    | [v]::stk -> (f i v, stk)
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf on empty stack")}
 
 let pushf_list (f:'a -> 'a * 'b) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
   = List.map (pushf f) xs
@@ -44,19 +77,33 @@ let push_tag (xs : 'a tag_list) : ('a tag_list) =
       | (x,t) :: xs -> (x,(n::t))::(helper xs (n+1))
   in (helper xs 1)
 
-(* do we need to sort the tag first *)
+let check_sorted_tag (xs: 'a tag_list) : bool =
+  let rec helper xs no =
+    match xs with
+      | [] -> true
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
+      | ((x,n::t)::xs1) -> 
+        if (n<no) then false
+        else if (n==no) then helper xs1 no
+        else helper xs1 n
+  in helper xs 1
+ 
+
+(* if check_sorted_tag fail, will need to sort the tag before grouping *)
 let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
   let rec helper xs acc no =
     match xs with
       | [] -> if (empty acc) then [] else [(List.rev acc,no)]
-      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing in group_tag")}
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
       | ((x,n::t)::xs1) -> 
         if (n==no) then helper xs1 ((x,t)::acc) no
         else 
           let rs=helper xs [] (no+1) in
           if (empty acc) then rs
           else (List.rev acc,no)::rs
-  in helper xs acc 1 
+  in let r=check_sorted_tag xs in
+     if r then helper xs acc 1 
+     else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
 
 let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
   let rec helper xs ys =
