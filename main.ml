@@ -147,6 +147,7 @@ let process_cmd_line () = Arg.parse [
   ("--rl-no-pseudo-ops", Arg.Set Redlog.no_pseudo_ops, "Do not pseudo-strengthen/weaken formulas before send to Redlog");
   ("--rl-no-ee", Arg.Set Redlog.no_elim_exists, "Do not try to eliminate existential quantifier with Redlog");
   ("--rl-timeout", Arg.Set_int Redlog.timeout, "Set timeout (in seconds) for is_sat or imply with Redlog");
+  ("--failure-analysis",Arg.Set Globals.failure_analysis, "Turn on failure analysis");
   
   (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg

@@ -149,6 +149,7 @@ let print_core = ref false
 
 let print_err_sleek = ref false
 
+let failure_analysis = ref false
 
 let seq_to_try = ref false
 

@@ -395,6 +395,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
             CF.pop_esc_level_list ctx5 pid
 	      | _ -> 
 	          failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  in
+    let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Util.empty f ) ctx  
+            else ctx in
     let (fl,cl) = List.partition (fun (_,s,c)-> Util.empty c && CF.is_empty_esc_stack s) ctx in
     if (Util.empty cl) then fl
     else	    
