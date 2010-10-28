@@ -1333,6 +1333,7 @@ and list_partial_context = partial_context list
  
 and list_failesc_context = failesc_context list
   
+and list_failesc_context_tag = failesc_context Util.tag_list
 
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in

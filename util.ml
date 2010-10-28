@@ -7,7 +7,9 @@
 exception Bad_string
 exception Bail
 
-type 'a tag_list = ('a * (int list)) list
+type 'a tag_elem = ('a * (int list))
+
+type 'a tag_list = ('a tag_elem) list
 
 type ('a,'b) stackable =  ('a * ('b list))
 
