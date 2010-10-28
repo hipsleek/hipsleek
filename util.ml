@@ -49,8 +49,8 @@ let pushf_init_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
 let pushf_add_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
   = List.map (pushf_add_level f) xs
 
-let pushf_collapse_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
-  = List.map (pushf_add_level f) xs
+let pushf_collapse_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf_collapse_level) xs
 
 let popf_level_list (f:'a -> ('b list) -> 'a)   (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
   = List.map (popf_level f) xs
