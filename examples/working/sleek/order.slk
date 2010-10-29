@@ -1,10 +1,20 @@
 data node { int val; node next}.
 
+
+pred ls<n, p> == self = p & n = 0 or
+     (exists m,v1,q: self::node<v1, q> * q::ls<m, p> & m + 1 = n)
+inv n>=0.
+
+/*
+pred ls<n, p> == 
+     case {
+      n=0 -> [] true & self = p;
+      n!=0 -> [] self::node<v1, q> * q::ls<m, p> & m + 1 = n;
+     }
 pred ls<n, p> == self = p & n = 0 or
      self::node<v1, q> * q::ls<m, p> & m + 1 = n
 inv n>=0.
 
-/*
 checkentail p1::ls<n, null> * p2::node<v2, p1> & 0 < n & p1 != null
             |-
             p1::ls<f1, f2> * p2::ls<f3, f4>.
@@ -27,11 +37,41 @@ checkentail p2::node<v2, p1>  & 0 < n & p1 != null & p1=p3
 checkentail p2::node<v2, p1>  & 0 < n & p1 != null & p1=p3 & flow __norm
             |- exists(f2,f1: true & p2=f2 & f1=0 & flow __norm) .
 
+When we use case structured formula, it seems to produce or again?
+
+pred ls<n, p> == 
+     case {
+      n=0 -> [] true & self = p;
+      n!=0 -> [] self::node<v1, q> * q::ls<m, p> & m + 1 = n;
+     }
+
+Valid.
+ [EXISTS(flted_40_200: (17, ):p2::node<v2,p1> * (16, ):p1::ls<n,
+  flted_40_200> & flted_40_200=null & (10, ):0<n & p1!=null & (15, ):f3=0 & 
+  f4=p2 & {FLOW,(141,142)=__norm,})
+  or true & f4=null & (10, ):0<n & p1!=null & (15, ):f3!=0 & v1_201=v2 & 
+     q_202=p1 & m_203=n & f3=m_203+1 & {FLOW,(141,142)=__norm,}]
+
+pred ls<n, p> == self = p & n = 0 or
+     self::node<v1, q> * q::ls<m, p> & m + 1 = n
+inv n>=0.
+
+Valid.
+ [EXISTS(flted_61_197: (15, ):p2::node<v2,p1> * (14, ):p1::ls<n,
+flted_61_197> & flted_61_197=null & (8, ):0<n & p1!=null & f4=p2 & f3=0 &
+{FLOW,(141,142)=__norm,}); true & f4=null & (8, ):0<n & p1!=null & 
+v1_198=v2 & q_199=p1 & m_200=n & f3=m_200+1 & {FLOW,(141,142)=__norm,}]
+chinwn@loris-7:~/cvs/sleekex/examples/working/sleek$ 
+
+checkentail p2::node<v2, p1> * p1::ls<n, null>  & 0 < n & p1 != null
+            |-
+            p2::ls<f3,f4>  .
+
 */
 
-checkentail p2::node<v2, p1> * p3::ls<n, null>  & 0 < n & p1 != null & p1=p3
+checkentail p2::node<v2, p1> * p1::ls<n, q> 
             |-
-            p1::ls<f1, f2> * p2::ls<f3,f4> .
+            p2::ls<f3,f4>  .
 
 print residue.
 
