@@ -200,11 +200,13 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     residues := Some rs;
     if CF.isFailCtx rs then begin 
 	  print_string ("Fail.\n");
-      if !Globals.print_err_sleek  then           
+      if !Globals.print_err_sleek  then
+        print_string "printing here";           
         print_string (Cprinter.string_of_list_context rs); 
     end 
     else
-	  print_string ("Valid.\n")
+	  print_string ("Valid.\n");
+      print_string ((Cprinter.string_of_list_context rs)^"\n")
   with
     | _ ->  Printexc.print_backtrace stdout;dummy_exception() ; (print_string "exception in entail check\n")	
 	

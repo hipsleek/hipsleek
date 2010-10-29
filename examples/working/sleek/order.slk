@@ -1,0 +1,27 @@
+data node { int val; node next}.
+
+pred ls<n, p> == self = p & n = 0 or
+     self::node<v1, q> * q::ls<m, p> & m + 1 = n
+inv n>=0.
+
+/*
+checkentail p1::ls<n, null> * p2::node<v2, p1> & 0 < n & p1 != null
+            |-
+            p1::ls<f1, f2> * p2::ls<f3, f4>.
+print residue.
+
+checkentail p1::ls<n, null> * p2::node<v2, p1> & 0 < n & p1 != null
+            |-
+            p2::ls<f3,f4> * p1::ls<f1, f2>.
+print residue.
+
+checkentail p2::node<v2, p1> * p3::ls<n, null>  & 0 < n & p1 != null & p1=p3
+            |-
+            p1::ls<f1, f2> * p2::ls<f3,f4> .
+*/
+
+checkentail p2::node<v2, p1>  & 0 < n & p1 != null & p1=p3
+            |- exists(f2,f1: true & p2=f2 & f1=0) or
+                      p2::node<_,q>*q::ls<f1,f2>.
+print residue.
+
