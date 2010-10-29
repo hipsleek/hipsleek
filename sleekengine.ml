@@ -120,6 +120,7 @@ let process_pred_def pdef =
 	
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
   | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
+  | MetaFormLCF mf -> (Cformula.formula_to_struc_formula (List.hd mf))
   | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
@@ -151,6 +152,7 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
 	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
   | MetaFormCF mf -> mf
+  | MetaFormLCF mf -> (List.hd mf)
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = AS.case_normalize_formula iprog h mf in
@@ -201,21 +203,26 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     if CF.isFailCtx rs then begin 
 	  print_string ("Fail.\n");
       if !Globals.print_err_sleek  then
-        print_string "printing here";           
-        print_string (Cprinter.string_of_list_context rs); 
+        print_string ("printing here"^(Cprinter.string_of_list_context rs)) 
     end 
     else
-	  print_string ("Valid.\n");
-      print_string ((Cprinter.string_of_list_context rs)^"\n")
+	  print_string ("Valid.\n")
+      (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   with
     | _ ->  Printexc.print_backtrace stdout;dummy_exception() ; (print_string "exception in entail check\n")	
 	
-let process_capture_residue (lvar : ident) = 
+let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
       | None -> (CF.mkTrue (CF.mkTrueFlow()) no_pos)
       | Some s -> CF.formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormCF flist)
 		
+let process_capture_residue (lvar : ident) = 
+	let flist = match !residues with 
+      | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
+      | Some s -> CF.list_formula_of_list_context s in
+		put_var lvar (Sleekcommons.MetaFormLCF flist)
+
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in  
@@ -237,7 +244,7 @@ let process_print_command pcmd0 = match pcmd0 with
 	  if pcmd = "residue" then
       match !residues with
         | None -> print_string ": no residue \n"
-        | Some s -> print_string ((Cprinter.string_of_formula 
-              (CF.formula_of_list_context s))^"\n")
+        | Some s -> print_string ((Cprinter.string_of_list_formula 
+              (CF.list_formula_of_list_context s))^"\n")
 		else
 			print_string ("unsupported print command: " ^ pcmd)

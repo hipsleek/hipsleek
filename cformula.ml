@@ -11,7 +11,6 @@ module CP = Cpure
 module U = Util
 
   
-
 type typed_ident = (CP.typ * ident)
 
 type t_formula = (* type constraint *)
@@ -67,6 +66,11 @@ and formula =
   | Base of formula_base
   | Or of formula_or
   | Exists of formula_exists
+
+and list_formula = formula list
+
+(* need to incorporate flow info into formula, for case, may need
+to incorporate error flow? *)
 
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : CP.formula;
@@ -1852,6 +1856,21 @@ and formula_of_list_context (ctx : list_context) : formula =  match ctx with
           (mkFalse (mkTrueFlow ()) no_pos) ls
 (* 16.05.2008 -- *)
 
+and list_formula_of_list_context (ctx : list_context) : list_formula =  match ctx with
+  | FailCtx _ -> []
+  | SuccCtx ls -> List.map (formula_of_context) ls
+
+
+(* filter out partial failure first *)
+and list_formula_of_list_partial_context (ls : list_partial_context) : list_formula =  
+  let ls = List.filter (fun (f,s) -> Util.empty f) ls in
+  List.map (formula_of_partial_context) ls
+
+(* assumes that all are successes, may need to filter *)
+and list_formula_of_list_failesc_context (ls : list_failesc_context) : list_formula =  
+  let ls = List.filter (fun (f,es,s) -> Util.empty f) ls in
+  List.map (formula_of_failesc_context) ls
+
 and formula_of_list_partial_context (ls : list_partial_context) : formula =  
   List.fold_left (fun a c-> mkOr (formula_of_partial_context c) a no_pos)
           (mkFalse (mkTrueFlow ()) no_pos) ls
@@ -1860,10 +1879,10 @@ and formula_of_list_failesc_context (ls : list_failesc_context) : formula =
   List.fold_left (fun a c-> mkOr (formula_of_failesc_context c) a no_pos)
           (mkFalse (mkTrueFlow ()) no_pos) ls
 
+(* below ignored the escaping state! *)
 and formula_of_failesc_context ((_,_,sl) : failesc_context) : formula =  
   List.fold_left (fun a (_,c)-> mkOr (formula_of_context c) a no_pos)
           (mkFalse (mkTrueFlow ()) no_pos) sl
-
           
 and formula_of_partial_context ((fl,sl) : partial_context) : formula =  
   List.fold_left (fun a (_,c)-> mkOr (formula_of_context c) a no_pos)

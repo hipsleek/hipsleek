@@ -18,10 +18,21 @@ print residue.
 checkentail p2::node<v2, p1> * p3::ls<n, null>  & 0 < n & p1 != null & p1=p3
             |-
             p1::ls<f1, f2> * p2::ls<f3,f4> .
-*/
 
 checkentail p2::node<v2, p1>  & 0 < n & p1 != null & p1=p3
             |- exists(f2,f1: true & p2=f2 & f1=0) or
                       p2::node<_,q>*q::ls<f1,f2>.
+
+// flow did not work
+checkentail p2::node<v2, p1>  & 0 < n & p1 != null & p1=p3 & flow __norm
+            |- exists(f2,f1: true & p2=f2 & f1=0 & flow __norm) .
+
+*/
+
+checkentail p2::node<v2, p1> * p3::ls<n, null>  & 0 < n & p1 != null & p1=p3
+            |-
+            p1::ls<f1, f2> * p2::ls<f3,f4> .
+
 print residue.
+
 

@@ -302,7 +302,7 @@ let pr_tuple op f xs = pr_args None (Some "A") op "(" ")" "," f xs
 let pr_angle op f xs = pr_args None (Some "A") op "<" ">" "," f xs
 
 (** print a sequence with cut after separator*)  
-let pr_seq op f xs = pr_args None (Some "A") op "[" "]" ";" f xs
+let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
 
 (** print a sequence with cut after separator in a VBOX*)    
 let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
@@ -718,11 +718,21 @@ let rec pr_formula e =
 	  (* ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b))^"&"^(string_of_flow_formula "FLOW" fl) *)
 	  (* ^  ")" *)
 
+
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
 let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
     = poly_printer_of_pr fmt pr_formula e
 
+
+(*let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e*)    
+
+let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e    
+
+let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
+
+let printer_of_list_formula (fmt: Format.formatter) (e:list_formula) : unit
+    = poly_printer_of_pr fmt pr_list_formula e
 
 let string_of_pure_formula_branches (f, l) : string
     =  poly_string_of_pr  pr_pure_formula_branches (f, l)
