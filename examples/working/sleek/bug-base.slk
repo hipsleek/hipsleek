@@ -23,5 +23,18 @@ print residue.
 checkentail p2::ls2<n, q> & p2=null |- p2::ls2<f3,f4>  .
 print residue.
 
+checkentail p2=q & n=0 & p2=null |- p2::ls2<f3,f4>  .
+print residue.
+
+checkentail p2=q & n=0 & p2=null |- [m,f4] true & f4=p2 & m=0 .
+print residue.
+
+/*
+checkentail p2=q & n=0  |- p2::ls2<f3,f4>  .
+print residue.
+*/
+
+
+
 
 
