@@ -727,7 +727,7 @@ let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
 
 (*let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e*)    
 
-let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e    
+let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_formula) e
 
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
