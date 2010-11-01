@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml
+INCLUDES=-I ./xml -I +ocamlgraph
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
