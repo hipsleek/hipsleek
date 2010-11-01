@@ -2366,6 +2366,32 @@ and imply_disj ante_disj conseq =
     | [] -> (true,[],None)
 
     
+and return_base_cases prog c2 v2 p2 ln2 rhs pos = 
+  (*TODO: split this step into two steps,
+   x::ls<..> & D |- (B1 \/ B2 \/ R1) * D2
+  Our current changes generates (B1 or B2 or false).
+    I suppose we then perform:       x::ls<..> & D |- (B1 or B2) * D2
+    This may lead to some incompleteness, so I like to suggest
+    we collect it as a single pure form.
+    That is, we should use:          true & (B1 | B2)
+    This should be done in two steps:
+       x::ls<..> & D |- (B1 \/ B2)  ==> D3
+       D3 |- D2 ==> D4
+    The reason is to allow the instantiations to support
+    further entailment.*)
+  if (is_data ln2) then None
+  else 
+    let vd = (look_up_view_def_raw prog.prog_view_decls c2) in
+    match vd.view_raw_base_case with 
+    | None  -> None 
+    | Some s ->
+      let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+      let to_vars = p2 :: v2 in
+      let to_rhs = subst_avoid_capture fr_vars to_vars s in
+      let rhs = normalize_combine to_rhs rhs pos in
+      Some rhs
+    
+    
 and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f =
   if (is_data ln2) then (None,None)
   else
@@ -2398,6 +2424,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
           let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
           let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx bc1 !Globals.enable_syn_base_case in
           if b then 
+            let _ = print_string ("successful base case guard proof \n ") in
 					  let ctx = unfold_context (Branches (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
             (ctx,TrueConseq)
           else  (CF.mkFailCtx_in(Basic_Reason  ( { 
@@ -2412,9 +2439,13 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
     else 
       let cx = match na with | SuccCtx l -> List.hd l |_ -> report_error pos("heap_entail_conjunct: something wrong has happened with the context") in
       let _ = Util.push_time "fold_after_base_case" in
+      let _ = print_string ("ctx before fold: "^(Cprinter.string_of_context cx)^"\n") in
 			let do_fold_result,prf = fold_f cx p2 in
       let _ = Util.pop_time "fold_after_base_case" in
-      if not(isFailCtx do_fold_result) then (Some(do_fold_result,prf),None)
+      let _ = print_string ("after base case fold \n") in
+      if not(isFailCtx do_fold_result) then 
+      let _ = print_string "succeded in base case unfolding and then folding \n" in
+      (Some(do_fold_result,prf),None)
       else                         
 			  match cx with
 			    | OCtx (c1,c2) ->  (None,None)
@@ -2669,7 +2700,22 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                           match y with 
                             | Some x-> x 
                             | None -> {estate with es_formula = (mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos)} in
-				                let res_es1, prf1 = do_match prog new_estate v1 v2 c1 c2 anode ln2 (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) is_folding is_universal p2 pos in
+				                let res_es0, prf0 = do_match prog new_estate v1 v2 c1 c2 anode ln2 (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) is_folding is_universal p2 pos in
+                        let res_es1, prf1 = 
+                        if (!Globals.exhaust_match) then 
+                          let n_rhs = return_base_cases prog c2 v2 p2 ln2 (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) pos in
+                          match n_rhs with
+                          | None -> let _= print_string ("\n is a none \n") in (res_es0,prf0)
+                          | Some s ->
+                            let _ = print_string ("\n now entailing \n") in
+                            let new_estate2 = impl_to_expl estate v2 in                            
+                            let res_es2, prf2 = heap_entail_conjunct prog is_folding is_universal (Ctx new_estate2) s pos in
+                            (*TODO: move back the explicits as implicits after this heap_entail*)
+                           (* let res_es2 = transform_list_context_expl_to_impl p2 v2 in*)
+                            
+                            (* let _ = print_string ("res_es2: "^(Cprinter.string_of_list_context res_es2)^"\n") in *)
+                            (list_context_union res_es2 res_es0, Prooftracer.Unknown)
+                        else (res_es0,prf0) in
 				                let copy_enable_distribution = !enable_distribution in
 					            (*******************************************************************************************************************************************************************************************)
 					            (* call to do_coercion *)

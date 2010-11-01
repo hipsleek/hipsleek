@@ -15,6 +15,8 @@ type ('a,'b) stackable =  ('a * (('b list) list))
 
 type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
 
+let fnone (c:'a):'a option = None
+
 let empty l = match l with [] -> true | _ -> false
 
 let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable

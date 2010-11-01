@@ -46,6 +46,9 @@ Valid.
  [true & (11, ):p2=q & n=0 & p2=null & r=p2 & m=0 & {FLOW,(141,142)=__norm,}]
  
 */
+checkentail p2=q & n=0 & p2=null |- p2::ls<m,r>  .
+print residue.
+
 
 checkentail p2=q & n=0 & p2=null |- p2::ls2<m,r>  .
 print residue.

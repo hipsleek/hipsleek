@@ -74,7 +74,7 @@ to incorporate error flow? *)
 
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : CP.formula;
-                      formula_base_type : t_formula;
+                      formula_base_type : t_formula; (* a collection ot subtype information *)
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_pos : loc }
@@ -456,14 +456,14 @@ and mkTrue (flowt: flow_formula) pos = Base ({formula_base_heap = HTrue;
 						formula_base_pure = CP.mkTrue pos; 
 						formula_base_type = TypeTrue; 
 						formula_base_flow = flowt (*(mkTrueFlow ())*);
-                        formula_base_branches = [];
+            formula_base_branches = [];
 						formula_base_pos = pos})
 
 and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse; 
 						 formula_base_pure = CP.mkFalse pos; 
 						 formula_base_type = TypeFalse;
 						 formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
-                         formula_base_branches = [];
+             formula_base_branches = [];
 						 formula_base_pos = pos})
 						 
 and mkEFalse flowt pos = EBase({
@@ -1522,6 +1522,14 @@ let or_list_context c1 c2 = match c1,c2 with
      | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
+let list_context_union c1 c2 = match c1,c2 with
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
+     | FailCtx t1 ,SuccCtx t2 -> SuccCtx t2
+     | SuccCtx t1 ,FailCtx t2 -> SuccCtx t1
+     | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (t1@t2)
+
+     
+     
 let isFailCtx cl = match cl with 
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
@@ -2485,6 +2493,13 @@ and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var l
 				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
 				es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
 				(*es_evars = es.es_evars@ expvars;*)}) ctx
+        
+and impl_to_expl es vl : entail_state = 
+  let im, il = List.partition (fun c-> List.mem c vl) es.es_gen_impl_vars in
+  {es with 
+    es_gen_expl_vars = es.es_gen_expl_vars @ im; 
+    es_gen_impl_vars = il;}
+        
         
 and pop_exists_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
 transform_list_context ((fun es -> Ctx{es with es_formula = pop_exists qvars es.es_formula}),(fun c->c)) ctx

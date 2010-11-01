@@ -157,6 +157,8 @@ let print_input = ref false
 
 let pass_global_by_value = ref false
 
+let exhaust_match = ref false
+
 let profile_threshold = 0.5 
 
 let true_imply_count = ref 0

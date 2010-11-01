@@ -727,7 +727,7 @@ let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
 
 (*let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e*)    
 
-let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e    
+let pr_list_formula (e:list_formula) =  pr_seq "\n" pr_formula e    
 
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
@@ -1031,6 +1031,9 @@ let pr_view_decl v =
   pr_vwrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: " pr_formula v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_pure_formula_branches v.view_x_formula;
+  (match v.view_raw_base_case with 
+    | None -> ()
+    | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
   f v.view_base_case;
   fmt_close_box ()
 

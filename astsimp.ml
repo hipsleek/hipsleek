@@ -1325,7 +1325,18 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 	 let bc = match (compute_base_case cf) with
 	   | None -> None
 	   | Some s -> (flatten_base_case s self_c_var) in
-   let cvdef =
+   let f_tr_base f = match f with
+   | CF.Base b -> 
+    if (CF.is_complex_heap b.CF.formula_base_heap) then 
+      Some (CF.mkFalse b.CF.formula_base_flow b.CF.formula_base_pos) 
+    else Some f
+   | CF.Or _ -> None
+   | CF.Exists b -> 
+    if (CF.is_complex_heap b.CF.formula_exists_heap) then 
+      Some (CF.mkFalse b.CF.formula_exists_flow b.CF.formula_exists_pos) 
+    else Some f in
+   let rbc = CF.transform_formula ( Util.fnone, f_tr_base, Util.fnone, (Util.fnone,Util.fnone,Util.fnone))  n_un_str in
+  let cvdef =
            {
              C.view_name = vdef.I.view_name;
              C.view_vars = view_sv_vars;
@@ -1340,7 +1351,8 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
              C.view_user_inv = (pf, pf_b);
              C.view_un_struc_formula = n_un_str;
              C.view_base_case = bc;
-             C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf)
+             C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf);
+             C.view_raw_base_case = Some rbc;
            }
          in
            (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef))
@@ -4988,6 +5000,8 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
     let iv = List.find (fun c->c.Iast.view_name = cv.Cast.view_name) ivl in
       if (iv.Iast.try_case_inference) then
 	let sf = (CP.SpecVar (CP.OType cv.Cast.view_data_name, self, Unprimed)) in
+  (*TODO: disallow variables that are not instantiated in the case guards, more specifically, 
+   view parameters should not be in case guards*)
 	let f = formula_case_inference cp cv.Cast.view_formula [sf] in
 	  {cv with 
 

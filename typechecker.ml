@@ -313,13 +313,15 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	          let pre2 = CF.subst_struc_pre st2 renamed_spec in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
-                  (*!log_spec*) ^ "\n" in
-	          Debug.devel_pprint to_print pos;
+                  (*!log_spec*) in
+	          Debug.devel_pprint (to_print^"\n") pos;
 	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false false true sctx pre2 pos pid in
 		        let _ = PTracer.log_proof prf in
+            if (CF.isFailListFailescCtx ctx) then 
+              Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
-					  else check_pre_post proc.proc_static_specs_with_pre ctx in	
+                    else check_pre_post proc.proc_static_specs_with_pre ctx in	
           res
           end
         | Seq ({exp_seq_type = te2;
