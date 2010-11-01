@@ -2705,9 +2705,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                         if (!Globals.exhaust_match) then 
                           let n_rhs = return_base_cases prog c2 v2 p2 ln2 (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) pos in
                           match n_rhs with
-                          | None -> let _= print_string ("\n is a none \n") in (res_es0,prf0)
+                          | None -> (res_es0,prf0)
                           | Some s ->
-                            let _ = print_string ("\n now entailing \n") in
+                            (* let _ = print_string ("\n now entailing \n") in *)
                             let new_estate2 = impl_to_expl estate v2 in                            
                             let res_es2, prf2 = heap_entail_conjunct prog is_folding is_universal (Ctx new_estate2) s pos in
                             (*TODO: move back the explicits as implicits after this heap_entail*)
@@ -2760,6 +2760,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				                do_fold p2
 				              end else if is_data ln2 && is_view anode then 
 				                begin (* unfold *)
+ (* TODO : ADD dd debug message for unfolding *)
 				                  let delta1 = unfold (Prog prog) ante p1 true pos in
 				                  let ctx1 = build_context ctx0 delta1 pos in
 				                  let ctx1 = set_unsat_flag ctx1 true in
@@ -2768,6 +2769,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				                  let prf = mkUnfold ctx0 conseq anode prf1 in
 					              (res_rs, prf)
 				                end else 
+ (* TODO : ADD dd debug message base-unfolding; indicates when it fails after folding! *)
                           let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos do_fold_w_ctx in
                           match ans with 
                             | Some x, _ -> x
