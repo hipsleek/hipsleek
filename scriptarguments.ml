@@ -10,6 +10,8 @@ let print_version_flag = ref false
 
 let inter = ref false
 
+let enable_gui = ref false
+
 type front_end =
   | XmlFE
   | NativeFE
@@ -190,8 +192,16 @@ let sleek_specific_arguments = [
     "existentially wrap instantiations after the entailment");
    ] 
 
+(* arguments/flags used only in the gui *)	
+let gui_specific_arguments = [
+	("--gui", Arg.Set enable_gui, "enable GUI"); 
+	]
+	
 (* all hip's arguments and flags *)	
 let hip_arguments = common_arguments @ hip_specific_arguments 
 
 (* all sleek's arguments and flags *)	
 let sleek_arguments = common_arguments @ sleek_specific_arguments 
+
+(* all arguments and flags used in the gui*)	
+let gui_arguments = common_arguments @ hip_specific_arguments @ gui_specific_arguments

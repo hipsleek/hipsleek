@@ -9,7 +9,7 @@ module CF = Cformula
 
 
 
-let enable_gui = ref false
+let enable_gui = Scriptarguments.enable_gui
 let label_counter = ref 0
 
 type item_kind = 
