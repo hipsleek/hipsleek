@@ -3,8 +3,9 @@ module CP = Cpure
 
 let log_cvc3_formula = ref false
 let cvc3_log = ref stdout
-let infilename = "input.cvc3." ^ (string_of_int (Unix.getpid ()))
-let resultfilename = "result.txt." ^ (string_of_int (Unix.getpid()))
+let tmp_files_location = "/tmp/"
+let infilename = tmp_files_location ^ "input.cvc3." ^ (string_of_int (Unix.getpid ()))
+let resultfilename = tmp_files_location ^ "result.txt." ^ (string_of_int (Unix.getpid()))
 let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
 
 let set_log_file fn =

@@ -69,9 +69,11 @@ empty: (SET) -> BOOLEAN = LAMBDA(S:SET):
 ASSERT(EXISTS(A: SET): empty(A)); 
 ASSERT(FORALL(x: INT): EXISTS(A: SET): singleton(x, A));\n" 
 
-let infilename = "input.cvcl." ^ (string_of_int (Unix.getpid ()))
+let tmp_files_location = "/tmp/"
 
-let resultfilename = "result.txt." ^ (string_of_int (Unix.getpid()))
+let infilename = tmp_files_location ^ "input.cvcl." ^ (string_of_int (Unix.getpid ()))
+
+let resultfilename = tmp_files_location ^ "result.txt." ^ (string_of_int (Unix.getpid()))
 
 let cvcl_command = "cvcl " ^ infilename ^ " > " ^ resultfilename
 
