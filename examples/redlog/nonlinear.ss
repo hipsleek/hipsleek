@@ -5,3 +5,5 @@ bool is_triangle(float a, float b, float c)
   if ((a+b)*(a+b) > c*c && (a-b)*(a-b) < c*c) return true;
   return false;
 }
+
+ 

@@ -7,12 +7,13 @@ use Getopt::Long;
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
 			"root=s" => \$root,
-			"tp=s" => \$prover
+			"tp=s" => \$prover,
+			"flags=s" => \$flags
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"] \n";
 	exit(0);
 }
 if($root){
@@ -36,6 +37,16 @@ if($prover){
 	}
 }else{
 	$prover = "omega";
+}
+
+if("$flags"){
+	$script_arguments = "$flags";
+	if (!($script_arguments =~ "-tp ")){
+		$script_arguments = $script_arguments." -tp ".$prover;
+	}
+}
+else{
+	$script_arguments = " -tp ".$prover;
 }
 
 @excl_files = ();
@@ -210,7 +221,7 @@ $output_file = "log";
 # list of file, string with result of each entailment....
 %sleek_files=(
 		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-					["sleek1.slk","Valid."],
+					["sleek1.slk","Fail."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
 					["sleek3.slk","Valid.Fail.Valid."],
@@ -244,8 +255,8 @@ sub hip_process_file {
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
-			#print "$hip $exempl_path/hip/$test->[0] 2>&1";
-			$output = `$hip -tp $prover $exempl_path/hip/$test->[0] 2>&1`;
+			print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1";
+			$output = `$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
@@ -270,7 +281,7 @@ sub sleek_process_file  {
 		foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";
-			$output = `$sleek $exempl_path/sleek/$test->[0] 2>&1`;
+			$output = `$sleek $script_arguments $exempl_path/sleek/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
 			$pos = 0;

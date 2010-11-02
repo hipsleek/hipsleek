@@ -30,19 +30,6 @@ module AS = Astsimp
 module XF = Xmlfront
 module NF = Nativefront
 
-type front_end =
-  | XmlFE
-  | NativeFE
-
-let fe = ref NativeFE
-
-let set_frontend fe_str = match fe_str  with
-  | "native" -> fe := NativeFE
-  | "xml" -> fe := XmlFE
-  | _ -> failwith ("Unsupported frontend: " ^ fe_str)
-
-let inter = ref false
-
 let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 
 let source_files = ref ([] : string list)
@@ -50,43 +37,15 @@ let source_files = ref ([] : string list)
 let set_source_file arg = 
   source_files := arg :: !source_files
 
-let print_version_flag = ref false
-
 let print_version () =
   print_string ("SLEEK: A Separation Logic Entailment Checker");
   print_string ("Prototype version.");
   (*  print_string ("Copyright (C) 2005-2007 by Nguyen Huu Hai, Singapore-MIT Alliance."); *)
   print_string ("THIS SOFTWARE IS PROVIDED AS-IS, WITHOUT ANY WARRANTIES.")
 
-let process_cmd_line () = Arg.parse [
-  ("-fe", Arg.Symbol (["native"; "xml"], set_frontend),
-   "Choose frontend:\n\tnative: Native (default)\n\txml: XML");
-  ("-int", Arg.Set inter,
-   "Run in interactive mode.");
-  ("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om"; "oi"; "z3"], Tpdispatcher.set_tp),
-   "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tz3: Z3");
-  ("-v", Arg.Set print_version_flag,
-   "Print version information");
-  ("-version", Arg.Set print_version_flag,
-   "Print version information");
-  ("-dd", Arg.Set Debug.devel_debug_on,
-   "Turn on devel_debug");
-  ("--log-omega", Arg.Set Omega.log_all_flag,
-   "Log all formulae sent to Omega Calculator in file allinput.oc");
-  ("--log-mona", Arg.Set Mona.log_all_flag,
-   "Log all formulae sent to Mona in file allinput.mona");
-   ("--unsat-elim", Arg.Set Globals.elim_unsat,
-   "Turn on unsatisfiable formulae elimination during type-checking");
-  ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
-  ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
-  ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
-  ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
-  ("--pcp", Arg.Set Globals.print_core,"print core representation");
-  ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"existentially wrap instantiations after the entailment");
-  ("--slk-err", Arg.Set Globals.print_err_sleek,"print sleek errors");
-  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit;
-  3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
-] set_source_file usage_msg
+let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
+
+let inter = Scriptarguments.inter
 
 let prompt = ref "SLEEK> "
 let terminator = '.'
@@ -111,11 +70,19 @@ let parse_file (parse) (source_file : string) =
 
 
 let main () = 
+  let iprog = { I.prog_data_decls = [iobj_def];
+                I.prog_global_var_decls = [];
+                I.prog_enum_decls = [];
+                I.prog_view_decls = [];
+                I.prog_proc_decls = [];
+                I.prog_coercion_decls = [] } in
+  let _ = Iast.build_exc_hierarchy true iprog in
+  let _ = Util.c_h () in
   let quit = ref false in
   let parse =
-    match !fe with
-      | NativeFE -> NF.parse
-      | XmlFE -> XF.parse in
+    match !Scriptarguments.fe with
+      | Scriptarguments.NativeFE -> NF.parse
+      | Scriptarguments.XmlFE -> XF.parse in
   let buffer = Buffer.create 10240 in
     try
       if (!inter) then 
@@ -172,7 +139,10 @@ let main () =
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
-  if !print_version_flag then begin
+  if !Scriptarguments.print_version_flag then begin
 	print_version ()
   end else
-	main ()
+    (Tpdispatcher.start_prover ();
+    main ();
+    Tpdispatcher.stop_prover ())
+

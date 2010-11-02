@@ -6,7 +6,9 @@ open Lexing
 open Cast 
 open Cformula
 
-module P = Cpure
+(* hello there *)
+
+module P = Cpure (* hii *)
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
@@ -29,7 +31,7 @@ let fmt_open_hbox n = pp_open_hbox (!fmt) n
 let fmt_close_box x = pp_close_box (!fmt) x
 let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
-
+(* test cvs commit*)
 
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
 (*   if not(U.empty lst) then f a *)
@@ -37,6 +39,7 @@ let fmt_close x = fmt_close_box x
 
 (** polymorphic conversion to a string with -i- spaces identation*)
 let poly_string_of_pr_gen (i:int) (pr: 'a -> unit) (e:'a) : string =
+  (* let _ = print_string ("############ commit test") in *)
   let old_fmt = !fmt in
   begin
     (* fmt := str_formatter; *)
@@ -266,7 +269,7 @@ let pr_vwrap_nocut hdr (f: 'a -> unit) (x:'a) =
     fmt_string hdr; 
     wrap_box ("B",2) f  x
   end
-
+ 
 (** call pr_wrap_nocut with a cut in front of*)    
 let pr_vwrap hdr (f: 'a -> unit) (x:'a) =
   begin
@@ -299,7 +302,7 @@ let pr_tuple op f xs = pr_args None (Some "A") op "(" ")" "," f xs
 let pr_angle op f xs = pr_args None (Some "A") op "<" ">" "," f xs
 
 (** print a sequence with cut after separator*)  
-let pr_seq op f xs = pr_args None (Some "A") op "[" "]" ";" f xs
+let pr_seq op f xs = pr_args None (Some "A") op "[" "]" "; " f xs
 
 (** print a sequence with cut after separator in a VBOX*)    
 let pr_seq_vbox op f xs = pr_args (Some ("V",1)) (Some "A") op "[" "]" ";" f xs
@@ -551,12 +554,12 @@ let rec pr_b_formula (e:P.b_formula) =
       | P.Neq (e1, e2, l) -> f_b e1; fmt_string op_neq ; f_b e2
       | P.EqMax (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_max_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_max_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_max_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
             (pr_formula_exp e1); fmt_string("="); pr_fn_args op_max pr_formula_exp arg
       | P.EqMin (e1, e2, e3, l) ->   
           let arg2 = bin_op_to_list op_min_short exp_assoc_op e2 in
-          let arg3 = bin_op_to_list op_min_short exp_assoc_op e2 in
+          let arg3 = bin_op_to_list op_min_short exp_assoc_op e3 in
           let arg = arg2@arg3 in
             (pr_formula_exp e1); fmt_string("="); pr_fn_args op_min pr_formula_exp arg
       | P.BagIn (v, e, l) -> pr_op_adhoc (fun ()->pr_spec_var v) " <in> "  (fun ()-> pr_formula_exp e)
@@ -715,11 +718,21 @@ let rec pr_formula e =
 	  (* ^ " . " ^ (string_of_h_formula h) ^ " & " ^ (string_of_pure_formula_branches (p, b))^"&"^(string_of_flow_formula "FLOW" fl) *)
 	  (* ^  ")" *)
 
+
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
 let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
     = poly_printer_of_pr fmt pr_formula e
 
+
+(*let pr_list_formula (e:list_formula) =  pr_seq "" pr_formula e*)    
+
+let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_formula) e
+
+let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
+
+let printer_of_list_formula (fmt: Format.formatter) (e:list_formula) : unit
+    = poly_printer_of_pr fmt pr_list_formula e
 
 let string_of_pure_formula_branches (f, l) : string
     =  poly_string_of_pr  pr_pure_formula_branches (f, l)
@@ -796,9 +809,15 @@ let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =
 let summary_list_path_trace l =  String.concat "; " (List.map  (fun (lbl,_) -> string_of_path_trace lbl) l)
 
 let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)^" "^(summary_list_path_trace l2)^")"
+
+let summary_failesc_context (l1,l2,l3) =  
+	"("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
+	^" "^(summary_list_path_trace l3)^")"
+
   
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
+let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_failesc_context lc))^"]"
 
 
   (* if String.length(hdr)>7 then *)
@@ -810,7 +829,7 @@ let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
   pr_vwrap "es_pure: " pr_pure_formula_branches es.es_pure; 
-  pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq; 
+  if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
   pr_wrap_test "es_evars: " U.empty (pr_seq "" pr_spec_var) es.es_evars; 
   pr_wrap_test "es_ivars: "  U.empty (pr_seq "" pr_spec_var) es.es_ivars;
@@ -901,6 +920,35 @@ let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_li
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
 
+let pr_esc_stack_lvl ((i,_),e) = 
+  fmt_open_vbox 0;
+  pr_vwrap_naive ("level"^(string_of_int i)^" :")
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_context fs)) e;
+  fmt_close_box ()
+           
+let pr_esc_stack e = match e with
+  | [] 
+  | [((0,""),[])] -> ()
+  | _ ->
+    fmt_open_vbox 0;
+    pr_vwrap_naive "Escaped States:"
+    (pr_seq_vbox "" pr_esc_stack_lvl) e;
+    fmt_close_box ()
+  
+let string_of_esc_stack e = poly_string_of_pr pr_esc_stack e
+
+  
+let pr_failesc_context ((l1,l2,l3): failesc_context) =
+  fmt_open_vbox 0;
+  pr_vwrap_naive_nocut "Failed States:"
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_fail_type fs)) l1;
+  pr_esc_stack l2;
+  pr_vwrap_naive "Successful States:"
+    (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
+		       pr_vwrap "State:" pr_context fs)) l3;
+  fmt_close_box ()
 
 let pr_partial_context ((l1,l2): partial_context) =
   fmt_open_vbox 0;
@@ -930,15 +978,28 @@ let string_of_partial_context (ctx:partial_context): string =  poly_string_of_pr
 
 let printer_of_partial_context (fmt: Format.formatter) (ctx: partial_context) : unit =
   poly_printer_of_pr fmt pr_partial_context ctx 
-    
 
- let pr_list_partial_context (lc : list_partial_context) =
+
+let string_of_failesc_context (ctx:failesc_context): string =  poly_string_of_pr pr_failesc_context ctx
+
+let printer_of_failesc_context (fmt: Format.formatter) (ctx: failesc_context) : unit =
+  poly_printer_of_pr fmt pr_failesc_context ctx 
+  
+let pr_list_failesc_context (lc : list_failesc_context) =
+   fmt_string ("List of Failesc Context: "^(summary_list_failesc_context lc));
+   fmt_cut (); pr_list_none pr_failesc_context lc
+ 
+	
+let pr_list_partial_context (lc : list_partial_context) =
    fmt_string ("List of Partial Context: "^(summary_list_partial_context lc));
    fmt_cut (); pr_list_none pr_partial_context lc
     
 let string_of_list_partial_context (lc: list_partial_context) =
     poly_string_of_pr pr_list_partial_context lc
 
+let string_of_list_failesc_context (lc: list_failesc_context) =
+    poly_string_of_pr pr_list_failesc_context lc
+	
 let printer_of_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context) : unit =
   poly_printer_of_pr fmt pr_list_partial_context ctx 
 
@@ -969,7 +1030,10 @@ let pr_view_decl v =
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_pure_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: " pr_formula v.view_un_struc_formula;
-  pr_vwrap  "xform: " pr_pure_formula (fst v.view_x_formula);
+  pr_vwrap  "xform: " pr_pure_formula_branches v.view_x_formula;
+  (match v.view_raw_base_case with 
+    | None -> ()
+    | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
   f v.view_base_case;
   fmt_close_box ()
 
@@ -1137,7 +1201,6 @@ let rec string_of_exp = function
 	    exp_icall_receiver = r;
 	    exp_icall_method_name = id;
 	    exp_icall_arguments = idl;
-	    exp_icall_visible_names = _;
 	    exp_icall_path_id = pid;
 	    exp_icall_pos = l}) -> 
       string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
@@ -1185,7 +1248,6 @@ let rec string_of_exp = function
   | SCall ({exp_scall_type = _;
 	    exp_scall_method_name = id;
 	    exp_scall_arguments = idl;
-	    exp_scall_visible_names = _;
 	    exp_scall_path_id = pid;
 	    exp_scall_pos = l}) -> 
       string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")
@@ -1213,7 +1275,7 @@ let rec string_of_exp = function
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> 
       let c = b.exp_catch_clause.exp_catch_flow_type in
-	string_of_control_path_id_opt b.exp_try_path_id  
+	string_of_control_path_id b.exp_try_path_id  
 	  "try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
 	  (match b.exp_catch_clause.exp_catch_flow_var with 
 	     | Some c -> (" @"^c^" ")
@@ -1240,9 +1302,7 @@ let rec string_of_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
-
-
-    
+let string_of_coerc c lft = (string_of_formula c.coercion_head)^(if lft then "<=" else "=>")^(string_of_formula c.coercion_body) ;;
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
@@ -1278,9 +1338,17 @@ let rec string_of_view_decl_list l = match l with
  | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
 
+let rec string_of_coerc_decl_list l lft = match l with
+  | [] -> ""
+  | h::[] -> string_of_coerc h lft
+  | h::t -> (string_of_coerc h lft) ^ "\n" ^ (string_of_coerc_decl_list t lft)
+;;
+
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
-                          (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+                          (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^
+                          (string_of_coerc_decl_list p.prog_left_coercions true)^"\n\n"^
+                          (string_of_coerc_decl_list p.prog_right_coercions false)^"\n\n"^
                           (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
@@ -1292,13 +1360,17 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
 *)
 
 
-
-   
-let get_label_partial_context (fs,ss) : string =
+let string_of_label_partial_context (fs,_) : string =
 if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
 
-let get_label_list_partial_context (cl:Cformula.list_partial_context) : string =
-if (U.empty cl) then "" else get_label_partial_context (List.hd cl)
+let string_of_label_list_partial_context (cl:Cformula.list_partial_context) : string =
+if (U.empty cl) then "" else string_of_label_partial_context (List.hd cl)
+   
+let string_of_label_failesc_context (fs,_,_) : string =
+if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
+
+let string_of_label_list_failesc_context (cl:Cformula.list_failesc_context) : string =
+if (U.empty cl) then "" else string_of_label_failesc_context (List.hd cl)
 
 
 

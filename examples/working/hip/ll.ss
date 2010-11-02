@@ -12,7 +12,7 @@ data node {
 
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
-	inv n >= 0;
+  inv n >= 0;
 
 	
 	
@@ -25,20 +25,22 @@ ll<n> == self = null & n = 0
 /* append two singly linked lists */
 void append(node x, node y)
 
-  requires x::ll<n1> * y::ll<n2> & n1>0 //x!=null // & n1>0 & x != null
-  ensures x::ll<m> & m<=n1+n2;
+  requires x::ll<n1> * y::ll<n2> & n1>0 // & x!=null // & n1>0 & x != null
+  ensures x::ll<n1+n2>;
 
 {
   //assume false;
-   assert x!=null;
+   //assert x=null;
 	if (x.next == null)
-	  { dprint;
+	  { //dprint;
         x.next = y;
-        dprint;}
+        //dprint;
+      }
 	else
       { 
         node z;
         z = null;
+        dprint;
 		append(x.next, y);
       }
     }

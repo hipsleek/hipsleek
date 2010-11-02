@@ -7,6 +7,130 @@
 exception Bad_string
 exception Bail
 
+type 'a tag_elem = ('a * (int list))
+
+type 'a tag_list = ('a tag_elem) list
+
+type ('a,'b) stackable =  ('a * (('b list) list))
+
+type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
+
+let fnone (c:'a):'a option = None
+
+let empty l = match l with [] -> true | _ -> false
+
+let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = (i,[]::stk)
+
+let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+    | lvl::stk -> let (new_i,v)=f i 
+                 in (new_i,(v@lvl)::stk)
+
+let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+    | lvl::stk -> (i,(lst@lvl)::stk)
+
+let close_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | lvl::(lvl2::stk) -> (i, (lvl@lvl2)::stk)
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("close level requires at least two levels")}
+
+let collapsef_stack  (f:'a -> ('b list) -> 'a)  ((i,stk):('a,'b) stackable) : 'a
+  = f i (List.concat stk)
+
+let popf_level (f:'a -> ('b list) -> ('a * ('b list))) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | lvl::stk -> let (newi,lst)=(f i lvl) in
+      if (empty lst) then (newi, stk)
+      else (add_level lst (newi,stk))
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
+
+let init_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (init_level) xs
+
+let pushf_add_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf_add_level f) xs
+
+
+let collapsef_stack_list (f:'a ->'b list -> 'a) (xs : ('a,'b) list_of_stackable) : 'a list
+  = List.map (collapsef_stack f) xs
+
+let close_level_list  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (close_level) xs
+
+
+let popf_level_list  (f:'a -> ('b list) -> ('a * ('b list))) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (popf_level f) xs
+
+(*
+let pushf (f:'a -> 'a * 'b)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = let (new_i,v)=f i 
+    in (new_i,[v]::stk)
+
+let popf (f:'a -> 'b -> 'a) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [v]::stk -> (f i v, stk)
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf on empty stack")}
+
+let pushf_list (f:'a -> 'a * 'b) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf f) xs
+
+let popf_list (f:'a -> 'b -> 'a)  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (popf f) xs
+*)
+
+let push_tag (xs : 'a tag_list) : ('a tag_list) =
+  let rec helper xs (n:int) =
+    match xs with
+      | [] ->  []
+      | (x,t) :: xs -> (x,(n::t))::(helper xs (n+1))
+  in (helper xs 1)
+
+let check_sorted_tag (xs: 'a tag_list) : bool =
+  let rec helper xs no =
+    match xs with
+      | [] -> true
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
+      | ((x,n::t)::xs1) -> 
+        if (n<no) then false
+        else if (n==no) then helper xs1 no
+        else helper xs1 n
+  in helper xs 1
+ 
+
+(* if check_sorted_tag fail, will need to sort the tag before grouping *)
+let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
+  let rec helper xs acc no =
+    match xs with
+      | [] -> if (empty acc) then [] else [(List.rev acc,no)]
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
+      | ((x,n::t)::xs1) -> 
+        if (n==no) then helper xs1 ((x,t)::acc) no
+        else 
+          let rs=helper xs [] (no+1) in
+          if (empty acc) then rs
+          else (List.rev acc,no)::rs
+  in let r=check_sorted_tag xs in
+     if r then helper xs acc 1 
+     else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+
+let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
+  let rec helper xs ys =
+    match xs with
+      | [] -> []
+      | ((x,n1)::xs1) -> 
+            match ys with
+              | [] -> []
+              | ((y,n2)::ys1) -> 
+                    if (n1==n2) then (f x y)::helper xs ys1
+                    else if (n1<n2) then helper xs1 ys
+                    else helper xs ys1
+  in helper xs ys
+
+
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
  * but put helper files in another (/usr/share/module-language),
@@ -15,6 +139,7 @@ exception Bail
 let qualify_helper_fn n =
   let d =  Filename.dirname Sys.executable_name ^ "/" in
   Sys.getcwd() ^ "/" ^ d ^ n
+
 
 let lib_name n =
   try (let d = Filename.dirname Sys.executable_name ^ "/../lib/" in
@@ -71,6 +196,9 @@ let intersect l1 l2 =
 
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
+  
+let difference_fct f l1 l2 =
+  List.filter (fun x -> not (List.exists (f x) l2)) l1
   
 let spacify i = 
   let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
@@ -275,7 +403,6 @@ let is_some : 'a option -> bool =
 	| Some x -> true
 	| None -> false
 
-let empty l = match l with [] -> true | _ -> false
 
 (** Read the given file into a string. *)
 let string_of_file (fname : string) =

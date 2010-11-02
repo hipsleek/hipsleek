@@ -38,6 +38,17 @@ void m1 (ref int i, e1 z) throws e4,e1
 		res::e4<> & i>0 & i'=3 & flow e4 or
 		res::e1<> & i>0 & flow e1 or  
 		i<=0 & i'=-3;
+/*
+static  z::<> & true & {FLOW,(25,26)=__norm,}
+   EAssume (5, ):ref [i]
+     res::<> & 0<i & i'=3 & {FLOW,(31,32)=e4,} // err res::?
+     or res::<> & 0<i & {FLOW,(29,34)=e1,}
+     or true & i<=0 & i'+3=0 & {FLOW,(25,26)=__norm,}
+
+data e5 {
+}   // extends not displayed
+
+*/
 {
 	try{
 		if (i>0) raise z; // new e1();
@@ -53,6 +64,13 @@ void m1 (ref int i, e1 z) throws e4,e1
 	i=-3;
         dprint;
 }
+
+ void nonnull(node x)
+   case {
+    x=null -> ensures true & flow e1;
+     x!=null -> requires x::node<a,b>
+       ensures x::node<a,b>;
+   }
 
 void m1a (ref int i, e1 z) throws e1
 	requires z::e1<>

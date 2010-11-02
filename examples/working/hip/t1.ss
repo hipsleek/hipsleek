@@ -11,6 +11,21 @@ ll<n> == self=null & n=0
 // single conditional
 // is disjunct in Octx or [OCtx]? 
 
+
+int foo(int N) 
+ requires true
+  ensures res=N;
+{
+int i = 0;
+while (i < N) 
+  requires true
+  ensures i'=N;
+  {
+    i = N;
+  }
+ return i;
+}
+
 node f(int x)
 requires true
 ensures res::ll<1> & x>0

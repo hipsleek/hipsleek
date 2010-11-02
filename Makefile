@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml
+INCLUDES=-I ./xml -I +ocamlgraph
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
@@ -71,6 +71,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	globalvars.cmo \
+	scriptarguments.cmo\
 	main.cmo
 
 
@@ -101,8 +102,8 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 	astsimp.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
-	globalvars.cmo 
-
+	scriptarguments.cmo \
+	globalvars.cmo 	
 
 
 
@@ -125,6 +126,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	typechecker.cmo \
 	xmlfront.cmo nativefront.cmo \
 	sleekengine.cmo \
+	scriptarguments.cmo \
 	sleek.cmo
 
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
@@ -188,13 +190,13 @@ mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
 prdebug: $(PP_FILES) 
-	 $(OCAMLC) -a -o $@ unix.cma str.cma graph.cma $(PP_FILES)
+	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
 
-hipgui: $(GUI_FILES) decidez.vo gui.ml maingui.ml
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) gui.ml maingui.ml
+hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 
 
-#hip.opt: $(MAIN_FILES:*.cmo=*.cmx)
+#hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
 #	make -f Makefile.opt hip.opt
 
 hip.opt: $(MAIN_FILES_OPT) decidez.vo

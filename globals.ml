@@ -41,6 +41,7 @@ type mode =
   | ModeIn
   | ModeOut
 
+let idf (x:'a) : 'a = x
 (* global constants *)
 
 let no_pos = 
@@ -136,7 +137,7 @@ let print_mvars = ref false
 
 let enable_sat_statistics = ref false
 
-let wrap_exists_implicit_explicit = ref true
+let wrap_exists_implicit_explicit = ref false
 
 let profiling = ref false
 
@@ -148,19 +149,22 @@ let print_core = ref false
 
 let print_err_sleek = ref false
 
+let failure_analysis = ref false
 
 let seq_to_try = ref false
 
 let print_input = ref false
 
-let instantiation_variants = ref 0
-
 let pass_global_by_value = ref false
+
+let exhaust_match = ref false
 
 let profile_threshold = 0.5 
 
 let true_imply_count = ref 0
+
 let false_imply_count = ref 0
+
 let true_sat_count = ref 0
 
 let add_count (t: int ref) = 
@@ -193,6 +197,8 @@ let fresh_formula_label (s:string) :formula_label =
 	(!branch_point_id,s)
   
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
+let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
+
 
 
 let fresh_int () =

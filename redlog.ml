@@ -8,23 +8,28 @@ module CP = Cpure
 
 exception Timeout
 
-let manual_mode = ref false
-let is_log_all = ref false
+(* options *)
 let is_presburger = ref false
-let is_ee = ref false
-let integer_relax_mode = ref false
-let use_omega_for_presburger = ref false
+let no_pseudo_ops = ref false
+let no_elim_exists = ref false
 let timeout = ref 15 (* default timeout is 15 seconds *)
-let is_hybrid = ref true
-let is_reduce_running = ref false
-let reduce_pid = ref 0
+
+(* logging *)
+let is_log_all = ref false
 let log_file = open_out ("allinput.rl")
 let channels = ref (stdin, stdout)
 
+(* process management *)
+let is_reduce_running = ref false
+let reduce_pid = ref 0
+
+(* data collecting stuffs *)
 let omega_call_count: int ref = ref 0
 let redlog_call_count: int ref = ref 0
 let ee_call_count: int ref = ref 0
 let success_ee_count: int ref = ref 0
+let nonlinear_time: float ref = ref 0.0
+let linear_time: float ref = ref 0.0
 
 (**********************
  * auxiliari function *
@@ -46,15 +51,15 @@ let log level msg =
     | ERROR -> write_msg ()
     | DEBUG -> if !is_log_all then write_msg ()
 
-let send_cmd cmd =
-  if !is_reduce_running then output_string (snd !channels) (cmd ^ "\n")
-
 let rec remove_spaces s =
   if (String.length s > 0) then
     let rest = remove_spaces (String.sub s 1 ((String.length s) - 1)) in
     if (s.[0] = ' ') then rest
     else (String.make 1 s.[0]) ^ rest
   else s
+
+let send_cmd cmd =
+  if !is_reduce_running then output_string (snd !channels) (cmd ^ "\n")
 
 (* start Reduce system in a separated process and load redlog package *)
 let start_red () =
@@ -96,15 +101,9 @@ let stop_red () =
   log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
   log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
   log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
-  log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count))
-  (*
-  let is_sat_times_total = List.fold_left (+.) 0. !is_sat_times in
-  let is_sat_times_avg = is_sat_times_total /. (float_of_int (List.length !is_sat_times)) in
-  let imply_times_total = List.fold_left (+.) 0. !imply_times in
-  let imply_times_avg = imply_times_total /. (float_of_int (List.length !imply_times)) in
-  log DEBUG ((string_of_float is_sat_times_total) ^ " ms total time of is_sat, average is: " ^ (string_of_float is_sat_times_avg) ^ " ms");
-  log DEBUG ((string_of_float imply_times_total) ^ " ms total time of imply, average is: " ^ (string_of_float imply_times_avg) ^ " ms")
-  *)
+  log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
+  log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
+  log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
   
 let restart_red reason =
   if !is_reduce_running then begin
@@ -116,7 +115,6 @@ let restart_red reason =
 
 (* send formula to reduce/redlog and receive result *)
 let check_formula f =
-(*  try*)
   let _ = incr redlog_call_count in
   output_string (snd !channels) f;
   flush (snd !channels);
@@ -157,6 +155,47 @@ let send_and_receive f =
       ""
   else
     ""
+
+(* 
+ * run func and return its result together with running time 
+ * func must be lazy
+ *)
+let time func =
+  let pre_time = Unix.gettimeofday () in
+  let res = Lazy.force func in
+  let post_time = Unix.gettimeofday () in
+  let time_taken = (post_time -. pre_time) in
+  (res, time_taken)
+
+(* call omega's function func and collect the running time *)
+let call_omega func =
+  let _ = incr omega_call_count in
+  let res, time = time func in
+  linear_time := !linear_time +. time;
+  res
+
+(*
+ * run func with timeout checking 
+ * return default_val if the running time exceed allowed time
+ * also print err_msg when timeout happen
+ * func must be lazy
+ *)
+let run_with_timeout func default_val err_msg =
+  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+  ignore (Unix.alarm !timeout);
+  let res = 
+    try
+      Lazy.force func
+    with
+    | Timeout ->
+        log ERROR ("TIMEOUT");
+        restart_red err_msg;
+        default_val
+    | exc -> stop_red (); raise exc 
+  in
+  reset_sigalrm ();
+  res
 
 let rec is_linear_exp exp = 
   match exp with
@@ -289,6 +328,7 @@ let rec rl_of_formula f0 =
 (*
  * e1 < e2 ~> e1 <= e2 -1
  * e1 > e2 ~> e1 >= e2 + 1
+ * e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1
  *) 
 let rec strengthen_formula f0 = 
   match f0 with
@@ -296,6 +336,10 @@ let rec strengthen_formula f0 =
       let r = match b with
         | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
         | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
+        | CP.Neq (e1, e2, l) ->
+            let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+            let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
         | _ -> f0 
       in r
   | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
@@ -354,17 +398,17 @@ let rec string_of_exp e0 =
   | _ -> "???"
   
 let string_of_b_formula bf = 
-  let helper e1 e2 op =
+  let build_exp e1 e2 op =
     (string_of_exp e1) ^ op ^ (string_of_exp e2)
   in match bf with
     | CP.BConst (b, _) -> (string_of_bool b)
     | CP.BVar (bv, _) -> (rl_of_spec_var bv) ^ " > 0"
-    | CP.Lt (e1, e2, _) -> helper e1 e2 " < "
-    | CP.Lte (e1, e2, _) -> helper e1 e2 " <= "
-    | CP.Gt (e1, e2, _) -> helper e1 e2 " > "
-    | CP.Gte (e1, e2, _) -> helper e1 e2 " >= "
-    | CP.Eq (e1, e2, _) -> helper e1 e2 " = "
-    | CP.Neq (e1, e2, _) -> helper e1 e2 " != "
+    | CP.Lt (e1, e2, _) -> build_exp e1 e2 " < "
+    | CP.Lte (e1, e2, _) -> build_exp e1 e2 " <= "
+    | CP.Gt (e1, e2, _) -> build_exp e1 e2 " > "
+    | CP.Gte (e1, e2, _) -> build_exp e1 e2 " >= "
+    | CP.Eq (e1, e2, _) -> build_exp e1 e2 " = "
+    | CP.Neq (e1, e2, _) -> build_exp e1 e2 " != "
     | CP.EqMax (e1, e2, e3, _) ->
         (string_of_exp e1) ^ " = max(" ^ (string_of_exp e2) ^ "," ^ (string_of_exp e3) ^ ")"
     | CP.EqMin (e1, e2, e3, _) ->
@@ -662,7 +706,7 @@ and elim_exists_max f0 =
 	end
   | CP.BForm _ -> f0
   
-let elim_exists f0 =
+let elim_exist_quantifier f0 =
 (*  let f0 = if !TP.elim_exists_flag then CP.elim_exists f0 else f0 in*)
   let _ = incr ee_call_count in
   let f1 = elim_exists_min f0 in
@@ -706,162 +750,96 @@ let rec nomarlize_formula f0 = match f0 with
   | CP.Forall (sv, f, lbl, pos) -> CP.Forall (sv, nomarlize_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, nomarlize_formula f, lbl, pos)
 
-(****************************
- * Helper for imply
-
-let rec get_vars_formula f0 = match f0 with
-  | CP.BForm bf -> get_vars_bformula bf
-  | CP.And (f1, f2, _, _) | CP.Or (f1, f2, _, _)
-    -> union (get_vars_bformula f1) (get_vars_formula f2)
-  | CP.Not (f, _, _) -> get_vars_formula f
-  | CP.Forall (sv, f, _, _) | CP.Exists (sv, f, _, _) -> 
-
-*)
-    
 (**********************
    Verification works  
  *********************)
 
-type redlog_context =
-  | PASF
-  | OFSF
-  
-let set_context context = match context with
-  | OFSF -> send_cmd "rlset ofsf;"
-  | PASF -> send_cmd "rlset pasf;"
-
 (* to check whether a formula is satisfiable or not
  * using existence enclosure (rlex) for all free vars
  *)
+
 let is_sat (f: CP.formula) (sat_no: string) : bool =
   let f = nomarlize_formula f in
-  if is_linear_formula f then 
-    let _ = incr omega_call_count in
-    Omega.is_sat f sat_no
-  else
-    let frl = rl_of_formula f in
-    let rl_input = "rlqe rlex(" ^ frl ^ ");" in
-    let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-    let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-    ignore (Unix.alarm !timeout);
-  (*   let pre_time = Unix.gettimeofday () in *)
-    let sat = 
-      try
-        check_formula (rl_input ^ "\n")
-      with
-      | Timeout ->
-          log ERROR ("TIMEOUT");
-          restart_red ("Timeout when checking #is_sat " ^ sat_no ^ "!");
-          true
-      | exc -> stop_red (); raise exc 
-    in
-  (*   let post_time = Unix.gettimeofday () in *)
-  (*   let time = (post_time -. pre_time) *. 1000. in *)
-    reset_sigalrm ();
-    let level = DEBUG (* if sat then DEBUG else ERROR *) in
-    log level ("\n#is_sat " ^ sat_no);
-    log level (string_of_formula f);
-    log level (if sat then "SUCCESS" else "FAIL");
-    sat
+  let sat = 
+    if is_linear_formula f then 
+      call_omega (lazy (Omega.is_sat f sat_no))
+    else
+      let sf = if !no_pseudo_ops then f else strengthen_formula f in
+      let frl = rl_of_formula sf in
+      let rl_input = "rlqe rlex(" ^ frl ^ ");\n" in
+      let runner = lazy (check_formula rl_input) in
+      let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
+      let proc = lazy (run_with_timeout runner true err_msg) in
+      let res, time = time proc in
+      let _ = nonlinear_time := !nonlinear_time +. time in
+      res
+  in
+  let level = DEBUG in
+  log level ("\n#is_sat " ^ sat_no);
+  log level (string_of_formula f);
+  log level (if sat then "SAT" else "UNSAT");
+  sat
 
 let is_valid f imp_no =
   let f = nomarlize_formula f in
   let frl = rl_of_formula f in
   let rl_input = "rlqe rlall(" ^ frl ^");\n" in
-  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  ignore (Unix.alarm !timeout);
-(*   let pre_time = Unix.gettimeofday () in *)
-  let sat =
-    try
-      check_formula rl_input
-    with
-    | Timeout ->
-        log ERROR ("TIMEOUT");
-        restart_red ("Timeout when checking #imply " ^ imp_no ^ "!");
-        false
-    | exc -> stop_red (); raise exc
-  in
-(*   let post_time = Unix.gettimeofday () in *)
-(*   let time = (post_time -. pre_time) *. 1000. in *)
-  reset_sigalrm ();
-  sat
+  let runner = lazy (check_formula rl_input) in
+  let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
+  let proc = lazy (run_with_timeout runner false err_msg) in
+  let res, time = time proc in
+  let _ = nonlinear_time := !nonlinear_time +. time in
+  res
   
-let imply_helper ante conseq context imp_no =
-  let formula = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
-  is_valid formula imp_no
-
-let optimized_imply ante conseq imp_no =
+let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
+  (* begin helper funcs *)
   let has_eq f = has_existential_quantifier f false in
-  let helper f = is_valid (weaken_formula f) imp_no in
+  let elim_eq f =
+    if !no_elim_exists then f else elim_exist_quantifier f
+  in
+  let valid f = 
+    let wf = if !no_pseudo_ops then f else weaken_formula f in
+    is_valid wf imp_no 
+  in
+  (* end helper *)
   let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
   let f = nomarlize_formula f in
-  if is_linear_formula f then
-    let _ = incr omega_call_count in
-    Omega.imply ante conseq imp_no (float_of_int !timeout)
-  else
-    if has_eq f then
-      let eef = elim_exists f in
-      if has_eq eef then begin
-        print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")");
-        helper eef
-      end else
-        let _ = incr success_ee_count in
-        helper eef
-    else helper f
-
-let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
-  let ante = nomarlize_formula ante in
-  let conseq = nomarlize_formula conseq in
   let res = 
-    if not !manual_mode then
-      optimized_imply ante conseq imp_no
-    else begin  
-      (* TODO: FIX this mess *)
-      let ante = if !is_ee then elim_exists ante else ante in
-      let conseq = if !is_ee then elim_exists conseq else conseq in
-      let _ =
-        if not !is_presburger then
-          if (has_existential_quantifier ante true) || (has_existential_quantifier conseq false) then 
-            print_string (Util.new_line_str ^ "WARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")")
-      in
-      let s_ante = if !integer_relax_mode then strengthen_formula ante else ante in
-      let w_conseq = if !integer_relax_mode then weaken_formula conseq else conseq in
-      if !is_presburger then
-        imply_helper s_ante w_conseq PASF imp_no
-      else
-        imply_helper s_ante w_conseq OFSF imp_no
-    end
+    if is_linear_formula f then
+      call_omega (lazy (Omega.imply ante conseq imp_no (float_of_int !timeout)))
+    else
+      if has_eq f then
+        let eef = elim_eq f in
+        if has_eq eef then
+          (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")");
+          valid eef)
+        else
+          let _ = incr success_ee_count in
+          valid eef
+      else valid f
   in
   let lvl = if res then DEBUG else ERROR in
   log lvl ("\n#imply " ^ imp_no);
   log lvl ("ante: " ^ (string_of_formula ante));
   log lvl ("conseq: " ^ (string_of_formula conseq));
-  log lvl (if res then "SUCCESS" else "FAIL");
+  log lvl (if res then "VALID" else "INVALID");
   res
 
 (* just prototype *)
 let simplify (f: CP.formula) : CP.formula =
-    (*
-    let frl = rl_of_formula f in
-    log_all (Util.new_line_str ^ "#simplify (currently doesn't do anything)");
-    log_all frl;
-    *)
+  if is_linear_formula f then 
+    Omega.simplify f 
+  else 
     f
 
 let hull (f: CP.formula) : CP.formula = 
-    (*
-    let frl = rl_of_formula f in
-    log_all (Util.new_line_str ^ "#hull");
-    log_all frl;
-    *)
+  if is_linear_formula f then 
+    Omega.hull f 
+  else 
     f
 
 let pairwisecheck (f: CP.formula): CP.formula =
-    (*
-    let frl = rl_of_formula f in
-    log_all (Util.new_line_str ^ "#pairwisecheck");
-    log_all frl;
-    *)
+  if is_linear_formula f then 
+    Omega.pairwisecheck f 
+  else 
     f
-
