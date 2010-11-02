@@ -190,7 +190,7 @@ mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
 prdebug: $(PP_FILES) 
-	 $(OCAMLC) -a -o $@ unix.cma str.cma graph.cma $(PP_FILES)
+	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
 
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
