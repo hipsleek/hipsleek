@@ -75,7 +75,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
   else ();
 	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
       match e0 with
-	      | Label e ->
+	    | Label e ->
 	        let ctx = CF.add_path_id_ctx_failesc_list ctx e.exp_label_path_id in
 	        let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	        (check_exp prog proc ctx e.exp_label_exp post_start_label)
@@ -173,10 +173,12 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let vheap = CF.formula_of_heap vdatanode pos in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
+			if (Util.empty unfolded) then unfolded
+			else
 	        let rs_prim, prf = heap_entail_list_failesc_context_init prog false false  unfolded vheap pos pid in
 	        let _ = PTracer.log_proof prf in
 	        let rs = CF.clear_entailment_history_failesc_list rs_prim in
-	          if (CF.isFailListFailescCtx rs) then   
+	          if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
             begin
 		        Debug.print_info ("("^(Cprinter.string_of_label_list_failesc_context rs)^") ") 
               ("bind: node " ^ (Cprinter.string_of_h_formula vdatanode) ^ " cannot be derived from context\n") pos; (* add branch info *)
@@ -223,10 +225,13 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                 exp_dprint_pos = pos}) -> begin
           if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx)  in
-              let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
+	      (if (Util.empty ctx) then
+               (print_string ("\ndprint: empty context")) 
+	      else
+               let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
-              let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
-              print_string tmp1;
+               let tmp1 = if (previous_failure ()) then ("failesc context: "^tmp1) else tmp1 in
+               print_string tmp1);
               ctx
             end else begin
               ignore (Drawing.dot_of_partial_context_file prog ctx visib_names str);
@@ -400,8 +405,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
     let ctx = if (not !Globals.failure_analysis) then List.filter (fun (f,s,c)-> Util.empty f ) ctx  
             else ctx in
     let (fl,cl) = List.partition (fun (_,s,c)-> Util.empty c && CF.is_empty_esc_stack s) ctx in
-    if (Util.empty cl) then fl
-    else	    
+    (* if (Util.empty cl) then fl
+    else *)	    
       let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
       ((check_exp1 failesc) @ fl)
     
