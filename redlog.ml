@@ -811,7 +811,7 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
       if has_eq f then
         let eef = elim_eq f in
         if has_eq eef then
-          (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ")");
+          (print_string ("\nWARNING: Found formula with existential quantified var(s), result may be unsound! (Imply #" ^ imp_no ^ ") for redlog");
           valid eef)
         else
           let _ = incr success_ee_count in
