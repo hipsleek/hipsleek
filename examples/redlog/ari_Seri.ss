@@ -23,7 +23,7 @@ ensures res= m*(3*a+d*(m-1))/2;
 
 int ari4(int a1, int a2, int d, int m)
 requires m>=0 & a2-a1 = m*d 
-ensures res= ((m+1)*(2*a+d*m))/2;
+ensures res= ((m+1)*(2*a1+d*m))/2;
 { 
   if (a2==a1) return a1;
   else return a1+ari4(a1+d,a2,d,m-1);
