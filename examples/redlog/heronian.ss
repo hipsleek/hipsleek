@@ -11,21 +11,17 @@ return s*(s-a)*(s-b)*(s-c);
 
 */
 
-int area(int a, int b, int c, int m, int n, int k)
-  requires a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
+int area(int a, int b, int c)
+  requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
   ensures res = 16*k*m*n*(m+n)*(m*n-k*k)*k*m*n*(m+n)*(m*n-k*k);
 {
   int p = a+b+c;
   return p*(p-2*a)*(p-2*b)*(p-2*c);
 }
 
-int area2(int m, int n, int k)
-  requires true
-  ensures res = 16*k*m*n*(m+n)*(m*n-k*k)*k*m*n*(m+n)*(m*n-k*k);
+int semip(int a, int b, int c)
+  requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
+  ensures res = m*n*(m+n);
 {
-  int a = n*(m*m+k*k);
-  int b = m*(n*n+k*k);
-  int c = (m+n)*(m*n-k*k);
-  int p = a+b+c;
-  return p*(p-2*a)*(p-2*b)*(p-2*c);
+  return (a+b+c)/2;
 }
