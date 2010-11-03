@@ -18,7 +18,7 @@ Fatal error: exception Failure("Error detected")
 
 */
 
-
+/*
 
 int foo2(node x)
 	requires x::ll<n> & n>3
@@ -30,7 +30,8 @@ int foo2(node x)
   return z;
 }
 
-/*
+*/
+
 int foo2(node x)
 	requires x::ll<n> & n>3
 	ensures true;
@@ -41,4 +42,4 @@ int foo2(node x)
   return z;
 }
 
-*/
+

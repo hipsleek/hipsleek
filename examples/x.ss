@@ -3,7 +3,7 @@ data node {
 	node next;
 }
 
-global int a;
+//global int a;
 
 ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
@@ -20,6 +20,7 @@ int length(node x)
 }
 */
 
+/*
 int foo(node x)
 	requires x::ll<n> & n>3
 	ensures true;
@@ -27,7 +28,7 @@ int foo(node x)
   int z=x.next.next.val;
   return z;
 }
-
+*/
 int foo2(node x)
 	requires x::ll<n> & n>3
 	ensures true;
