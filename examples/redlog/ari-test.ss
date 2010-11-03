@@ -51,7 +51,7 @@ ensures res=a1; */
 
 
 int ari4a(int a1, int a2, int d, int m)
-requires  a2-a1 = m*d & d!=0 // & m>=0
+  requires  a2-a1 = m*d & d!=0 // & m>=0
 ensures res= ((m+1)*(2*a1+d*m))/2;
 requires d=0 & a2!=a1
 ensures false;
