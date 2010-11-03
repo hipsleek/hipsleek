@@ -69,6 +69,7 @@ and formula =
 
 and list_formula = formula list
 
+
 (* need to incorporate flow info into formula, for case, may need
 to incorporate error flow? *)
 
