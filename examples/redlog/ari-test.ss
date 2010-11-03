@@ -67,7 +67,7 @@ ensures false;
 }
 
 int ari4b(int a1, int a2, int d)
-requires  [m] a2-a1 = m*d & d!=0 
+requires  [m] a2-a1 = m*d & d!=0 & d=19
 ensures res= ((m+1)*(2*a1+d*m))/2;
 //requires m>=0 & a2-a1 = m*d  // this fails
 //ensures res= ((m+1)*(2*a1+d*m))/2;

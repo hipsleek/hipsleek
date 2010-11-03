@@ -4,3 +4,11 @@ ensures res = m1 * n1 * (m1/m2 + n1/n2)/(m2*n2);
 { return (a + b + c ) /2;
 }
 
+int area(int a, int b, int c)
+  requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
+  ensures res = 16 * k*m*n*(m+n)*(m*n-k*k) * k*m*n*(m+n)*(m*n-k*k);
+{
+  int p = a+b+c;
+  return p*(p-2*a)*(p-2*b)*(p-2*c);
+}
+
