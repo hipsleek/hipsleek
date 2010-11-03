@@ -79,7 +79,9 @@ let self = "self"
 
 let this = "this"
 
-let tmp_files_path = "/tmp/" (*^ Unix.getlogin() ^ "/"*)
+(*path for the temporary files used by the prover. If you change this path here it is 
+  mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
+let tmp_files_path = "/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/"
 
 (* command line options *)
 

@@ -20,6 +20,7 @@ DOC_SRC=*/*.ml */*.mli
 DEP_DOT_FILE=$(DOC)/depend/dependencies.dot
 DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
+TMP_FILES_PATH = /tmp/$(shell id -un)/prover_tmp_files
 
 all: hip sleek prover prdebug decidez.vo
 
@@ -185,25 +186,29 @@ hipc:
 
 hip: decidez.vo $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 
 prdebug: $(PP_FILES) 
 	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
+	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
-
+	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
 #	make -f Makefile.opt hip.opt
 
 hip.opt: $(MAIN_FILES_OPT) decidez.vo
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
+	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover.opt: $(PROVE_FILES_OPT)
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
@@ -225,6 +230,7 @@ xml/xml-light.cmxa:
 
 sleek: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
+	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
 sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
