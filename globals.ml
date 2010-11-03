@@ -79,6 +79,8 @@ let self = "self"
 
 let this = "this"
 
+let tmp_files_path = "/tmp/" (*^ Unix.getlogin() ^ "/"*)
+
 (* command line options *)
 
 let omega_simpl = ref true

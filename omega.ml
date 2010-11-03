@@ -5,9 +5,8 @@
 open Globals
 open Cpure
 
-let tmp_files_location = "/tmp/"
-let infilename = ref (tmp_files_location ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
-let resultfilename = ref (tmp_files_location ^ "result.txt." ^ (string_of_int (Unix.getpid())))
+let infilename = ref (tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
+let resultfilename = ref (tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
 (* currently not used *)
 let init_files () =
