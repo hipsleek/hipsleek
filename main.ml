@@ -58,7 +58,8 @@ let process_source_full source =
 	  (* Global variables translating *)
       let _ = Util.push_time "Translating global var" in
    	  let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
-	  let intermediate_prog = Globalvars.trans_global_to_param prog in
+    let intermediate_prog = Iast.to_right_seq_assoc prog in 
+	  let intermediate_prog = Globalvars.trans_global_to_param intermediate_prog in
 	  let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 	  let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
       let _ = Util.pop_time "Translating global var" in
@@ -67,6 +68,7 @@ let process_source_full source =
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
 	  let _ = print_string ("Translating to core language..."); flush stdout in
+    (*let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in*)
 	  let cprog = Astsimp.trans_prog intermediate_prog in
 	  let _ = print_string (" done\n"); flush stdout in
 	  let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in

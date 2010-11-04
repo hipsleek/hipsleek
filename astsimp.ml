@@ -4345,10 +4345,12 @@ and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl =
 and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*ident) list) = 
   let fl2 = List.map (fun (c1,c2)-> c1) l2 in
   let nl1 = List.filter (fun (c1,c2)-> not (List.mem c1 fl2)) l1 in (nl1@l2)
+
 and subid (ren:(ident*ident) list) (i:ident) :ident = 
   let nl = List.filter (fun (c1,c2)-> (String.compare c1 i)==0) ren in
     if (List.length nl )> 0 then let _,l2 = List.hd nl in l2
     else i 			
+    
 and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp = 
   
   let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
@@ -4382,9 +4384,9 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
           Iast.exp_binary_oper2 = helper ren b.Iast.exp_binary_oper2;}
     | Iast.Bind b->
           let nren = ren_list_concat ren (List.map (fun c-> (c,Ipure.fresh_old_name c)) b.Iast.exp_bind_fields) in	 
-            (*let _ = print_string ((List.fold_left(fun a (c1,c2)-> a^"("^c1^","^c2^") ") "\n renaming: " ren)^"\n") in*)
+            let new_bound_var = subid ren b.Iast.exp_bind_bound_var in
             Iast.Bind { b with 
-              Iast.exp_bind_bound_var = subid ren b.Iast.exp_bind_bound_var;
+              Iast.exp_bind_bound_var = new_bound_var;
               Iast.exp_bind_fields = List.map (fun c-> subid nren c) b.Iast.exp_bind_fields;
               Iast.exp_bind_body = helper nren b.Iast.exp_bind_body}
     | Iast.Block b-> Iast.Block{b with Iast.exp_block_body = helper ren b.Iast.exp_block_body}

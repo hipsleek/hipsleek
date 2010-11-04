@@ -178,7 +178,9 @@ let rec find_read_write_global_var
 		let new_global = IdentSet.diff global_vars new_local in
 		let (r1,w1) = find_read_write_global_var new_global new_local e.I.exp_bind_body in
 		let w = w1 in
-		let r = IdentSet.union r1 (IdentSet.diff (IdentSet.singleton e.I.exp_bind_bound_var) local_vars) in
+		let df = (IdentSet.diff (IdentSet.singleton e.I.exp_bind_bound_var) local_vars) in
+		let df = IdentSet.inter  df global_vars in
+		let r = IdentSet.union r1 df in
 		(r,w)
 	  end
   | I.Block e -> find_read_write_global_var global_vars local_vars e.I.exp_block_body
@@ -343,7 +345,7 @@ let rec find_read_write_global_var
 		match e.I.exp_raise_val with 
 		| None  -> (IdentSet.empty, IdentSet.empty)
 		| Some e -> find_read_write_global_var global_vars local_vars e
-		end
+		end 
   
 (** Construct the read/write variable declarations from the read/write sets 
 	@param global_var_decls list of global variable declarations 
@@ -438,7 +440,6 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
 let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
   let global_var_decls = prog.I.prog_global_var_decls in
   let global_id_set = union_all (List.map get_global_id global_var_decls) in
-  (* (print_string ("global vars "^(string_of_IdentSet global_id_set)^"\n")); *)
   let proc_decls = prog.I.prog_proc_decls in
   let _ = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
   let scclist = NGComponents.scc_list g in
@@ -716,12 +717,18 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 	  end
   | I.Bind e ->
 	  begin
-		if IdentSet.mem e.I.exp_bind_bound_var global_vars then
-		  let new_name = create_new_ids global_vars e.I.exp_bind_bound_var in
+		(*if IdentSet.mem e.I.exp_bind_bound_var global_vars then
+      let list_elem = IdentSet.elements global_vars in
+      let _ = print_string ("inside bind with globals "^(String.concat "," list_elem)^"\n") in
+      let _ = print_string ("global vars: "^(Iprinter.string_of_var_list global_vars)^"\n") in
+      let new_name = create_new_ids global_vars e.I.exp_bind_bound_var in
 		  let new_body = Astsimp.rename_exp [e.I.exp_bind_bound_var,new_name] e.I.exp_bind_body in
 		  let new_exp = { e with I.exp_bind_bound_var = new_name; I.exp_bind_body = new_body } in
 		  I.Bind new_exp
-		else exp
+		else exp*)
+		let new_body = check_and_change global_vars e.I.exp_bind_body in
+		let new_exp = { e with I.exp_bind_body = new_body } in
+		I.Bind new_exp
 	  end
   | I.Block e ->
 	  begin
@@ -781,7 +788,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		match e.I.exp_seq_exp1 with
 		  I.VarDecl e1 -> 
 			let ident_list = List.map fst3 e1.I.exp_var_decl_decls in
-			let new_ident_list = List.map (create_new_ids global_vars) ident_list in
+			let new_ident_list = List.map (create_new_ids global_vars) ident_list in 
 			let renlist = List.map2 join2 ident_list new_ident_list in
 			let new_exp2 = Astsimp.rename_exp renlist e.I.exp_seq_exp2 in
 			let new_exp2 = check_and_change global_vars new_exp2 in

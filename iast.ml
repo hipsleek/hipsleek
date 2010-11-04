@@ -19,7 +19,7 @@ type typ =
 and typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
-                   mutable prog_global_var_decls : exp_var_decl list;
+                   prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
                    prog_proc_decls : proc_decl list;
@@ -959,3 +959,144 @@ let label_procs_prog prog = {prog with
 	prog_data_decls = List.map (fun c->{ c with data_methods = List.map label_proc c.data_methods}) prog.prog_data_decls;	
 	prog_proc_decls = List.map label_proc prog.prog_proc_decls;
 	}
+
+let rec exp_to_right_seq_assoc e =  e (*match e with
+  | Assert _ -> e
+  | Assign b -> Assign {b with  
+                  exp_assign_lhs = exp_to_right_seq_assoc b.exp_assign_lhs;
+                  exp_assign_rhs = exp_to_right_seq_assoc b.exp_assign_rhs;}
+  | Binary b -> Binary {b with
+                  exp_binary_oper1 : exp;
+				   exp_binary_oper2 : exp;
+				   }
+  | Bind of exp_bind
+  | Block of exp_block
+  | BoolLit of exp_bool_lit
+  | Break of exp_break
+  | CallRecv of exp_call_recv
+  | CallNRecv of exp_call_nrecv
+  | Cast of exp_cast
+  | Cond of exp_cond
+  | ConstDecl of exp_const_decl
+  | Continue of exp_continue
+  | Debug of exp_debug
+  | Dprint of exp_dprint
+  | Empty of loc
+  | FloatLit of exp_float_lit
+  | IntLit of exp_int_lit
+  | Java of exp_java
+  | Label of ((control_path_id * path_label) * exp)
+  | Member of exp_member
+  | New of exp_new
+  | Null of loc
+  | Raise of exp_raise 
+  | Return of exp_return
+  | Seq of exp_seq
+  | This of exp_this
+  | Time of (bool*string*loc)
+  | Try of exp_try
+  | Unary of exp_unary
+  | Unfold of exp_unfold
+  | Var of exp_var
+  | VarDecl of exp_var_decl
+  | While of exp_while  *)
+  
+  
+let proc_to_right_seq_assoc proc =match proc.proc_body with
+  | None  -> proc
+  | Some b -> {proc with proc_body = Some (exp_to_right_seq_assoc b)} 
+let to_right_seq_assoc prog = {prog with prog_proc_decls=List.map proc_to_right_seq_assoc prog.prog_proc_decls}
+
+
+let rec transform_exp f (e:exp):exp =
+	(*let (_, f_f, f_h_f, f_p_t) = f in*)
+	let r =  f e in 
+	match r with
+	| Some e1 -> e1
+	| None  -> match e with	
+    | Assert _ -> e
+    | Assign b ->  Assign { b with
+           exp_assign_lhs = transform_exp f b.exp_assign_lhs ;
+           exp_assign_rhs = transform_exp f b.exp_assign_rhs ;}
+    | Binary b -> Binary {b with
+				   exp_binary_oper1 = transform_exp f b.exp_binary_oper1;
+				   exp_binary_oper2 = transform_exp f b.exp_binary_oper2;}
+    | Bind b -> Bind {b with exp_bind_body = transform_exp f b.exp_bind_body; }
+    | Block b -> Block {b with exp_block_body = transform_exp f b.exp_block_body;}
+    | BoolLit _ -> e
+    | Break _ -> e
+    | CallRecv b -> CallRecv {b with
+            exp_call_recv_receiver = transform_exp f b.exp_call_recv_receiver;
+					  exp_call_recv_arguments = List.map (transform_exp f) b.exp_call_recv_arguments;}
+    | CallNRecv b -> CallNRecv {b with exp_call_nrecv_arguments = List.map (transform_exp f) b.exp_call_nrecv_arguments;}
+    | Cast b -> Cast {b with exp_cast_body = transform_exp f b.exp_cast_body}
+    | Cond b -> Cond {b with
+            exp_cond_condition = transform_exp f b.exp_cond_condition;
+            exp_cond_then_arm = transform_exp f b.exp_cond_then_arm;
+            exp_cond_else_arm = transform_exp f b.exp_cond_then_arm;}
+    | ConstDecl b -> ConstDecl {b with exp_const_decl_decls=List.map (fun (c1,c2,c3) -> (c1,transform_exp f c2,c3)) b.exp_const_decl_decls}
+          
+    | Continue _ -> e
+    | Debug _ -> e
+    | Dprint _ -> e
+    | Empty _ -> e
+    | FloatLit _ -> e
+    | IntLit _ -> e
+    | Java _ -> e
+    | Label (l,b) -> Label (l,transform_exp f b)
+    | Member b -> Member {b with exp_member_base = transform_exp f b.exp_member_base;}
+    | New b -> New {b with exp_new_arguments = List.map (transform_exp f) b.exp_new_arguments}
+    | Null _ -> e
+    | Raise b -> (match b.exp_raise_val with
+        | None -> e
+        | Some body -> Raise {b with exp_raise_val = Some (transform_exp f body)})
+    | Return b->(match b.exp_return_val with
+        | None -> e
+        | Some body -> Return {b with exp_return_val = Some (transform_exp f body)})
+    | Seq b -> Seq {b with 
+        exp_seq_exp1 = transform_exp f b.exp_seq_exp1;
+        exp_seq_exp2 = transform_exp f b.exp_seq_exp2;}
+    | This _ -> e
+    | Time _ -> e 
+    | Try b -> 
+      let catc = List.map (fun c-> {c with exp_catch_body = transform_exp f c.exp_catch_body})b.exp_catch_clauses in
+      let fin = List.map (fun c-> {c with exp_finally_body = transform_exp f c.exp_finally_body})b.exp_finally_clause in
+      Try {b with
+        exp_try_block = transform_exp f b.exp_try_block;
+        exp_catch_clauses = catc;
+        exp_finally_clause = fin;}
+    | Unary b -> Unary {b with exp_unary_exp = transform_exp f b.exp_unary_exp}
+    | Unfold _ -> e
+    | Var _ -> e
+    | VarDecl b -> 
+       let ll = List.map (fun (c1,c2,c3)-> match c2 with
+                  | None -> (c1,c2,c3)
+                  | Some s -> (c1,Some (transform_exp f s), c3)) b.exp_var_decl_decls in 
+       VarDecl {b with exp_var_decl_decls = ll}
+    | While b -> 
+      let wrp = match b.exp_while_wrappings with
+        | None -> None
+        | Some s -> Some (transform_exp f s) in
+      While {b with
+        exp_while_condition = transform_exp f b.exp_while_condition;
+        exp_while_body = transform_exp f b.exp_while_body;
+        exp_while_wrappings = wrp}
+        
+        
+let rec transform_seq e = 
+ let rec lin e = match e with
+  | Seq b -> (lin b.exp_seq_exp1) @(lin b.exp_seq_exp2)
+  | _ -> [e] in
+ let rec folder l = match l with
+  | [t]-> t
+  | h::t-> Seq {
+              exp_seq_exp1 = h;
+              exp_seq_exp2 = folder t;
+              exp_seq_pos = no_pos;} in
+ match e with
+  | Seq _ -> 
+    let l = lin e in
+    let l = List.map (transform_exp transform_seq) l in 
+    Some (folder l)
+  | _ -> None
+ 
