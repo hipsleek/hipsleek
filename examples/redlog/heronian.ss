@@ -28,7 +28,9 @@ ensures exists(aa: aa=k*m*n*(m+n)*(m*n-k*k) & res = aa*aa);
 // using above takes much longer! 47s, while area takes only 1s
 {
   int p = a+b+c;
-  return p*(p-2*a)*(p-2*b)*(p-2*c)/16;
+  int r=p*(p-2*a)*(p-2*b)*(p-2*c);
+  //assert true & r'%16=0; //'
+  return r/16;
 }
 
 int semip(int a, int b, int c)
