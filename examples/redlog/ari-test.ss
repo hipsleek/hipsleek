@@ -69,8 +69,12 @@ ensures false;
 int ari4b(int a1, int a2, int d)
 //requires  [m] a2-a1 = m*d & d!=0 
 //ensures res= ((m+1)*(2*a1+d*m))/2;
+//requires  d!=0     // m=(a2-a1)/d
+//ensures exists(m:m*d=(a2-a1) & res= (((m+1)*(2*a1+d*m))/2)); 
+   // timeout problem above
 requires  d!=0     // m=(a2-a1)/d
-ensures res= (((a2-a1)/d+1)*(2*a1+d*((a2-a1)/d)))/2;
+ensures exists(m2:m2=(a2-a1)/d & res= (((m2+1)*(2*a1+d*m2))/2)); 
+//ensures res= (((a2-a1)/d+1)*(2*a1+d*((a2-a1)/d)))/2;
 requires d!=0 & ((a2-a1)/d)<0
   ensures false; 
 //requires m>=0 & a2-a1 = m*d  // this fails
@@ -79,6 +83,17 @@ requires d!=0 & ((a2-a1)/d)<0
   if (a2==a1) return a1;
   else return a1+ari4b(a1+d,a2,d);
 }
+
+int ari4c(int a1, int a2, int d)
+requires  d!=0     // m=(a2-a1)/d
+ensures exists(m2:m2=(a2-a1)/d & res= (((m2+1)*(2*a1+d*m2))/2)); 
+requires  d!=0     // m=(a2-a1)/d
+ensures exists(m2:m2=(a2-a1)/d & res= (((m2+1)*(2*a1+d*m2))/2)); 
+{ 
+  if (a2==a1) return a1;
+  else return a1+ari4c(a1+d,a2,d);
+}
+
 
 int ari5(int a1, int a2, int d, int m)
 requires m>=0 & a2-a1 = m*d //& d!=0

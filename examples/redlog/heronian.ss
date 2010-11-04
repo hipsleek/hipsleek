@@ -11,12 +11,24 @@ return s*(s-a)*(s-b)*(s-c);
 
 */
 
+
 int area(int a, int b, int c)
-  requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
-  ensures res = 16*k*m*n*(m+n)*(m*n-k*k)*k*m*n*(m+n)*(m*n-k*k);
+//requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
+//ensures res = 16*k*m*n*(m+n)*(m*n-k*k)*k*m*n*(m+n)*(m*n-k*k);
+requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
+ensures exists(aa: aa=k*m*n*(m+n)*(m*n-k*k) & res = 16*aa*aa);
 {
   int p = a+b+c;
   return p*(p-2*a)*(p-2*b)*(p-2*c);
+}
+
+int area2(int a, int b, int c)
+requires [m,n,k] a = n*(m*m+k*k) & b = m*(n*n+k*k) & c = (m+n)*(m*n-k*k)
+ensures exists(aa: aa=k*m*n*(m+n)*(m*n-k*k) & res = aa*aa);
+// using above takes much longer! 47s, while area takes only 1s
+{
+  int p = a+b+c;
+  return p*(p-2*a)*(p-2*b)*(p-2*c)/12;
 }
 
 int semip(int a, int b, int c)
