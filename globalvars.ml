@@ -49,6 +49,17 @@ let rec to_IdentSet (l : ident list) : IdentSet.t =
 	[] -> IdentSet.empty
   | _  -> IdentSet.add (List.hd l) (to_IdentSet (List.tl l))
 
+let to_IS (l : ident list) : IdentSet.t  =
+  List.fold_left (fun a e -> IdentSet.add e a) (IdentSet.empty) l
+
+let from_IS (s : IdentSet.t) : (ident list)  =
+  IdentSet.elements s
+
+
+let string_of_IdentSet (s : IdentSet.t) : string =
+  "{"^(IdentSet.fold (fun e a -> e^" "^a) s "}")
+
+
 (** Union a list of identifier sets into a unique identifier set 
 	@param l list of identifier sets
 	@return the union of all the sets in l *)
@@ -56,6 +67,7 @@ let rec union_all (l : IdentSet.t list) : IdentSet.t =
   match l with
 	[] -> IdentSet.empty
   | _  -> IdentSet.union (List.hd l) (union_all (List.tl l))
+
 
 (** Get the variable expression in a variable declaration expression.
 	Inputs are of type (ident * exp option * loc)
@@ -72,6 +84,10 @@ let get_global_id (decl : I.exp_var_decl) : IdentSet.t =
   let ident_list = List.map fst3 decl.I.exp_var_decl_decls in
   to_IdentSet ident_list
   
+let string_of_global_vars (gv) : string =
+  let global_id_set = union_all (List.map get_global_id gv) in
+  string_of_IdentSet global_id_set 
+
 (** Get the identifier name of a parameter
 	@param parameter the parameter of a method 
 	@return the identifier name of the input parameter *)
@@ -422,6 +438,7 @@ let check_and_merge (scc1 : NG.V.t list) (scc2 : NG.V.t list) : unit =
 let find_read_write_global_var_all_procs (prog : I.prog_decl) : unit =
   let global_var_decls = prog.I.prog_global_var_decls in
   let global_id_set = union_all (List.map get_global_id global_var_decls) in
+  (* (print_string ("global vars "^(string_of_IdentSet global_id_set)^"\n")); *)
   let proc_decls = prog.I.prog_proc_decls in
   let _ = List.iter (find_read_write_global_var_proc global_id_set) proc_decls in
   let scclist = NGComponents.scc_list g in
