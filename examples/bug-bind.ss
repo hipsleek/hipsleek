@@ -21,7 +21,12 @@ int foo22(node x)
   node x2=x.next;
   node x3 = x.next;
   int z;
+  {
+    int z;
+    z=z+1;
+    int z;
   bind x2 to (v,n) in { z= v; } 
   return z;
+  }
 }
 

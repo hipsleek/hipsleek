@@ -42,6 +42,9 @@ type mode =
   | ModeOut
 
 let idf (x:'a) : 'a = x
+let idf2 v e = v 
+let voidf e = ()
+let voidf2 e f = ()
 (* global constants *)
 
 let no_pos = 

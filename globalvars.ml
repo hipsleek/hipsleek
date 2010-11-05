@@ -302,7 +302,8 @@ let rec find_read_write_global_var
 	  end
   | I.Var e ->
 	  begin
-		if IdentSet.mem e.I.exp_var_name (IdentSet.union global_vars local_vars) then
+    (* not(v in Local) & (v in GVars) *)
+		if (IdentSet.mem e.I.exp_var_name global_vars) then
 		  let r = IdentSet.diff (IdentSet.singleton e.I.exp_var_name) local_vars in
 		  (r, IdentSet.empty)
 		else
@@ -311,7 +312,8 @@ let rec find_read_write_global_var
   | I.VarDecl e ->
 	  begin
 		let exp_list = List.map get_exp_var e.I.exp_var_decl_decls in
-		let read_write_list =  List.map (find_read_write_global_var global_vars local_vars) exp_list in
+		(*exp_list -> list of initialization *)
+    let read_write_list =  List.map (find_read_write_global_var global_vars local_vars) exp_list in
 		let r = union_all (List.map fst read_write_list) in
 		let w = union_all (List.map snd read_write_list) in
 		(r,w)

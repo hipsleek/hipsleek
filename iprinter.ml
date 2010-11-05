@@ -362,7 +362,15 @@ let rec string_of_exp = function
 		   exp_bind_path_id = pid;
 		   exp_bind_body = e})-> 
           string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
-  | Block ({exp_block_body = e;})-> "{" ^ (string_of_exp e) ^ "}\n"
+  | Block ({
+    exp_block_local_vars = lv;
+    exp_block_body = e;
+    })-> 
+    "{" ^(match lv with
+        | [] -> ""
+        | _ -> "local: "^
+          (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
+        ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))

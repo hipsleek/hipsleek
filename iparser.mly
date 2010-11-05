@@ -1291,9 +1291,11 @@ block
 	match $2 with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
 						   exp_block_jump_label = NoJumpLabel;
+               exp_block_local_vars = [];
 						   exp_block_pos = get_pos 1 }
 	  | _ -> Block { exp_block_body = $2;
 					 exp_block_jump_label = NoJumpLabel;
+           exp_block_local_vars = [];
 					 exp_block_pos = get_pos 1 }
   }
 ;

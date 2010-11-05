@@ -784,6 +784,7 @@ and need_break_continue lb ne non_generated_label :bool =
 																						I.exp_seq_pos = b.I.exp_try_pos;
 																					}));
 																				I.exp_block_jump_label = I.NoJumpLabel;
+                                        I.exp_block_local_vars = [];
 																				I.exp_block_pos = b.I.exp_try_pos}));
 							I.exp_catch_pos = b.I.exp_try_pos   }
 				) b.I.exp_finally_clause );
@@ -2358,7 +2359,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                      I.exp_seq_exp1 = fn_decl;
                      I.exp_seq_exp2 = seq1;
                      I.exp_seq_pos = pos; } in
-               trans_exp prog proc (I.Block { I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+               trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
             | I.OpPostDec -> 
                let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
                let fn_decl = I.VarDecl {
@@ -2385,7 +2386,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                      I.exp_seq_exp1 = fn_decl;
                      I.exp_seq_exp2 = seq1;
                      I.exp_seq_pos = pos; } in
-                trans_exp prog proc (I.Block { I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | I.OpPreInc ->
                let add1_e = I.Binary {
                      I.exp_binary_op = I.OpPlus;
@@ -2403,7 +2404,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                      I.exp_seq_exp1 = assign_e;
                      I.exp_seq_exp2 = e;
                      I.exp_seq_pos = pos;} in
-               trans_exp prog proc (I.Block { I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+               trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | I.OpPreDec ->
                let sub1_e = I.Binary {
                      I.exp_binary_op = I.OpMinus;
@@ -2421,7 +2422,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                      I.exp_seq_exp1 = assign_e;
                      I.exp_seq_exp2 = e;
                      I.exp_seq_pos = pos; } in
-               trans_exp prog proc (I.Block { I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+               trans_exp prog proc (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | _ -> failwith "u_op not supported yet")
     | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
         (try
@@ -2510,6 +2511,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                 I.exp_call_nrecv_pos = pos;
                                 I.exp_call_nrecv_path_id = pi; };
                     I.exp_seq_pos = pos; };
+                    I.exp_block_local_vars = [];
                     I.exp_block_pos = pos;} in
             let w_body = I.Block {
                     I.exp_block_jump_label = I.NoJumpLabel; 
@@ -2519,6 +2521,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           I.exp_cond_else_arm = I.Empty pos;
                           I.exp_cond_pos = pos;
                           I.exp_cond_path_id = pi;};
+                    I.exp_block_local_vars = [];
                     I.exp_block_pos = pos;} in
             let w_formal_args = List.map (fun tv ->{
                                            I.param_type = fst tv;

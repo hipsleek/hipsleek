@@ -190,6 +190,12 @@ let rec find_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then q::(find_dups qs) else find_dups qs
 
+let rec find_dups_f f n = 
+  match n with
+    [] -> []
+  | q::qs -> if (List.exists (f q) qs) then q::(find_dups_f f qs) else find_dups_f f qs
+
+  
 let rec find_one_dup (eqf : 'a -> 'a -> bool) (xs : 'a list) =
   match xs with
 	| [] -> []
