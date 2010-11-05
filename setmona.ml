@@ -4,8 +4,8 @@
 open Globals
 open Cpure
 
-let infilename = ref (tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))
-let resultfilename = ref (tmp_files_path ^ "result.mona." ^ (string_of_int (Unix.getpid())))
+let infilename = ref (!tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))
+let resultfilename = ref (!tmp_files_path ^ "result.mona." ^ (string_of_int (Unix.getpid())))
 
 let init_files () =
   begin

@@ -82,10 +82,9 @@ let self = "self"
 
 let this = "this"
 
-(*path for the temporary files used by the prover. If you change this path here it is 
-  mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
-let tmp_files_path = "/tmp/"
-(* let tmp_files_path = "/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/"*)
+(*in case the option of saving provers temp files to a different directory is enabled, the value of 
+  this variable is going to be changed accordingly in method set_tmp_files_path *)
+(*let tmp_files_path = "/tmp/"*)
 
 (* command line options *)
 
@@ -207,8 +206,31 @@ let fresh_formula_label (s:string) :formula_label =
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
 let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let tmp_files_path = ref ""
 
-
+(*path for the temporary files used by the prover. If you change this path here it is 
+  mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
+let set_tmp_files_path () = 	
+	begin
+      (try
+		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (); );
+	  (try
+		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (); );
+      (try
+		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766) 
+      with
+		Unix.Unix_error (_, _, _) -> (););
+	  (try
+		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (););
+	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
+	end
+	
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number

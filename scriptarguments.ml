@@ -155,6 +155,8 @@ let common_arguments = [
 	 "Turn on failure analysis");
 	("--exhaust-match",Arg.Set Globals.exhaust_match, 
 	 "Turn on exhaustive matching for base case of predicates"); 
+	("--use-tmp",Arg.Unit Globals.set_tmp_files_path, 
+	 "Use a local folder located in /tmp/your_username for the prover's temporary files");  
   ] 
 
 (* arguments/flags used only by hip *)	
