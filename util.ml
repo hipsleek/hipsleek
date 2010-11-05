@@ -19,6 +19,14 @@ let fnone (c:'a):'a option = None
 
 let empty l = match l with [] -> true | _ -> false
 
+type 'a imp_list = ('a list) ref
+
+let new_imp_list () : 'a imp_list 
+ = ref []
+
+let add_imp_list (x:'a list) (imp:'a imp_list) : 'a imp_list
+= imp := x@(!imp) ; imp
+
 let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
   = (i,[]::stk)
 
