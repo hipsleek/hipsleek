@@ -350,6 +350,22 @@ let bool_type = Prim Bool
 
 (* utility functions *)
 
+(* apply substitution to an id *)
+let apply_subs (subs:(ident *ident) list) (id:ident) : ident
+ = try       
+     List.assoc id subs
+   with 
+     Not_found -> id
+
+(* intersection of two lists of ids *)
+let intersect (lst1:'a list) (lst2:'a list) : 'a list
+  = List.filter (fun x -> List.mem x lst2) lst1
+
+
+(* make new renaming substitution that avoids name clash *)
+let new_renaming (lst:ident list) : (ident * ident) list
+  = List.map (fun x -> (x,x (* fresh name *))) lst
+
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
   (f_p : proc_decl -> proc_decl) : prog_decl =
