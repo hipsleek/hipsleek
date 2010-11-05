@@ -21,12 +21,12 @@ let empty l = match l with [] -> true | _ -> false
 
 (* this imp_list is not pop-pable *)
 
-type 'a imp_list = ('a list) ref
+type 'a ilist = ('a list) ref
 
-let new_imp_list () : 'a imp_list 
+let new_ilist () : 'a ilist 
  = ref []
 
-let add_imp_list (x:'a list) (imp:'a imp_list) : 'a imp_list
+let add_ilist (x:'a list) (imp:'a ilist) : 'a ilist
 = imp := x@(!imp) ; imp
 
 let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable

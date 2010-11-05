@@ -964,7 +964,7 @@ let label_procs_prog prog = {prog with
 	}
 
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
-  let rec helper in_arg (e:exp) :(exp* 'a) =	
+  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
   let n_arg = f_args in_arg e in
   match (f in_arg e) with
 	| Some e1 -> e1
@@ -1098,14 +1098,16 @@ let push_opt_void_pair e = match e with
   | None -> None
   | Some s -> Some (s,()) 
 
-  (*this maps an expression without passing an argument*)
-let map_exp (e:exp) (f:exp->exp option) : exp = 
-  fst (transform_exp e () (fun _ e -> push_opt_void_pair (f e)) idf2  voidf ())
 
   (*this maps an expression by passing an argument*)
 let map_exp_args (e:exp) (arg:'a) (f:'a -> exp -> exp option) (f_args: 'a -> exp -> 'a) : exp =
   let f1 ac e = push_opt_void_pair (f ac e) in
   fst (transform_exp e arg f1 f_args voidf ())
+
+  (*this maps an expression without passing an argument*)
+let map_exp (e:exp) (f:exp->exp option) : exp = 
+  (* fst (transform_exp e () (fun _ e -> push_opt_void_pair (f e)) idf2  voidf ()) *)
+  map_exp_args e () (fun _ e -> f e) idf2 
 
   (*this computes a result from expression passing an argument*)
 let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
@@ -1141,21 +1143,21 @@ let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit opt
   
   
 let local_var_decl (e:exp):(ident*typ*loc) list = 
-  let comb_f l= List.concat l in
-  let f _ e = match e with
+  let f e = match e with
       | ConstDecl b->
         let v_list = List.map (fun (c1,_,l)-> (c1,b.exp_const_decl_type,l)) b.exp_const_decl_decls in
-        Some (e,v_list)
+        Some (v_list)
       | VarDecl b -> 
         let v_list = List.map (fun (c1,_,l)-> (c1,b.exp_var_decl_type,l)) b.exp_var_decl_decls in
-        Some (e,v_list)
+        Some (v_list)
       | Seq _ -> None
-      | _ -> Some(e,[]) in
-  snd (transform_exp e () f idf2 comb_f [])
+      | _ -> Some([]) in
+  (*snd (transform_exp e () f idf2 comb_f []) *)
+  fold_exp e f  (List.concat) []
  
   
 let rec float_var_decl (e:exp) : exp  = 
-  let f _ e = match e with
+  let f e = match e with
       | Block b->
         let e = float_var_decl b.exp_block_body in
         let decl_list = local_var_decl e in
@@ -1168,11 +1170,14 @@ let rec float_var_decl (e:exp) : exp  =
                                 (string_of_int (pos.start_pos.Lexing.pos_cnum - pos.start_pos.Lexing.pos_bol))) ldups))^" is redefined in the current block"}in
         Some (Block {b with
           exp_block_body =e;
-          exp_block_local_vars=decl_list;},())     
-      | _ -> None in
+          exp_block_local_vars=decl_list;})     
+      | _ -> None 
+  in map_exp e f  
+(*
   let comb_f l = () in
   let (r,_) = transform_exp e () f idf2 comb_f () in
   r
+*)
   
 let float_var_decl_prog prog = 
   {prog with

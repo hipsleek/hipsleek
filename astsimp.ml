@@ -16,6 +16,7 @@ module IF = Iformula
 module IP = Ipure
   
 module CF = Cformula
+(* module GV = Globalvars*)
   
 module CP = Cpure
   
@@ -4798,7 +4799,10 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in	 
     {  Iast.prog_data_decls = cdata;
-       Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; (* Global variable *)
+       (* Global variable *)
+       Iast.prog_global_var_decls = (let v=prog.Iast.prog_global_var_decls in
+                                     (* (print_string (GV.string_of_global_vars v)); *)
+                                     v); 
        Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
        Iast.prog_view_decls = tmp_views;
        Iast.prog_proc_decls = procs1;
