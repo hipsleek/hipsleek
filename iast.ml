@@ -350,6 +350,25 @@ let bool_type = Prim Bool
 
 (* utility functions *)
 
+(* transform each proc by a map function *)
+let map_proc (prog:prog_decl)
+  (f_p : proc_decl -> proc_decl) : prog_decl =
+  { prog with
+      prog_proc_decls = List.map (f_p) prog.prog_proc_decls;
+  }
+
+(* process each proc into some data which are then combined,
+   e.g. verify each method and collect the failure points
+*)
+let fold_proc (prog:prog_decl)
+  (f_p : proc_decl -> 'b) (f_comb: 'b -> 'b -> 'b) (zero:'b) : 'b =
+  List.fold_left (fun x p -> f_comb (f_p p) x) 
+		zero prog.prog_proc_decls
+
+(* iterate each proc to check for some property *)
+let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
+  fold_proc prog (f_p) (fun _ _ -> ()) ()
+
 let set_proc_data_decl (p : proc_decl) (d : data_decl) = p.proc_data_decl <- Some d
 
 let name_of_type (t : typ) = match t with
