@@ -1207,6 +1207,13 @@ let float_var_decl_prog prog =
             | Some bd -> Some (float_var_decl bd)}
       ) prog.prog_proc_decls;}
 
+
+let float_var_decl_prog2 prog = 
+  map_proc prog (fun c-> 
+        {c with
+          proc_body = match c.proc_body with
+            | None -> None
+            | Some bd -> Some (float_var_decl bd)})
        
         
      (*   
