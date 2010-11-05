@@ -19,6 +19,8 @@ let fnone (c:'a):'a option = None
 
 let empty l = match l with [] -> true | _ -> false
 
+(* this imp_list is not pop-pable *)
+
 type 'a imp_list = ('a list) ref
 
 let new_imp_list () : 'a imp_list 
