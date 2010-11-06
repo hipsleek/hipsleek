@@ -316,6 +316,7 @@ and exp =
   | Cond of exp_cond
   | ConstDecl of exp_const_decl
   | Continue of exp_continue
+  (* | Catch of exp_catch *)
   | Debug of exp_debug
   | Dprint of exp_dprint
   | Empty of loc
@@ -351,11 +352,25 @@ let bool_type = Prim Bool
 (* utility functions *)
 
 (* apply substitution to an id *)
-let apply_subs (subs:(ident *ident) list) (id:ident) : ident
+let apply_subs_to_id (subs:(ident *ident) list) (id:ident) : ident
  = try       
      List.assoc id subs
    with 
      Not_found -> id
+
+(* apply substitution to exp_var *)
+let apply_subs_to_exp_var (subs:(ident *ident) list) (ev:exp_var) : exp_var
+ = { ev with  exp_var_name = apply_subs_to_id subs ev.exp_var_name; }
+
+(* apply substitution to list of id *)
+let apply_subs_to_list_id (subs:(ident *ident) list) (lst:ident list) : ident list
+ = List.map (apply_subs_to_id subs) lst
+
+
+(* check if id is in domain of subs *)
+let member_domain (id:ident) (subs:(ident * ident) list)  : bool
+ = List.exists (fun (x,_) -> (String.compare id x)==0) subs
+
 
 (* intersection of two lists of ids *)
 let intersect (lst1:'a list) (lst2:'a list) : 'a list
@@ -364,7 +379,7 @@ let intersect (lst1:'a list) (lst2:'a list) : 'a list
 
 (* make new renaming substitution that avoids name clash *)
 let new_renaming (lst:ident list) : (ident * ident) list
-  = List.map (fun x -> (x,x (* fresh name *))) lst
+  = List.map (fun x -> (x,x^"_tmp" (* fresh name *))) lst
 
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
