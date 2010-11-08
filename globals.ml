@@ -45,6 +45,11 @@ let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let voidf e = ()
 let voidf2 e f = ()
+
+let push_opt_void_pair e = match e with
+  | None -> None
+  | Some s -> Some (s,()) 
+
 (* global constants *)
 
 let no_pos = 

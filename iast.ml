@@ -26,96 +26,96 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
 and data_decl = { data_name : ident;
-				  data_fields : (typed_ident * loc) list;
-				  data_parent_name : ident;
-				  data_invs : F.formula list;
-				  data_methods : proc_decl list }
+		  data_fields : (typed_ident * loc) list;
+		  data_parent_name : ident;
+		  data_invs : F.formula list;
+		  data_methods : proc_decl list }
 
 (*
-and global_var_decl = { global_var_decl_type : typ;
-					    global_var_decl_decls : (ident * exp option * loc) list;
-                        global_var_decl_pos : loc }
+  and global_var_decl = { global_var_decl_type : typ;
+  global_var_decl_decls : (ident * exp option * loc) list;
+  global_var_decl_pos : loc }
 *)
 
 and view_decl = { view_name : ident; 
-				  mutable view_data_name : ident;
-				  view_vars : ident list;
-				  view_labels : branch_label list;
-				  view_modes : mode list;
-				  mutable view_typed_vars : (CP.typ * ident) list;
-				  view_invariant : (P.formula * (branch_label * P.formula) list);
-				  view_formula : Iformula.struc_formula;
-				  try_case_inference: bool}
+		  mutable view_data_name : ident;
+		  view_vars : ident list;
+		  view_labels : branch_label list;
+		  view_modes : mode list;
+		  mutable view_typed_vars : (CP.typ * ident) list;
+		  view_invariant : (P.formula * (branch_label * P.formula) list);
+		  view_formula : Iformula.struc_formula;
+		  try_case_inference: bool}
 
 and enum_decl = { enum_name : ident;
-				  enum_fields : (ident * int option) list } 
-	(* a field of an enum may optionally be initialized by an integer *)
+		  enum_fields : (ident * int option) list } 
+    (* a field of an enum may optionally be initialized by an integer *)
 
 and param_modifier =
   | NoMod
   | RefMod
-   
-  
+      
+      
 and jump_label_type =
-	| NoJumpLabel 
-	| JumpLabel of ident
-	
+  | NoJumpLabel 
+  | JumpLabel of ident
+      
 and rise_type = 
-	| Const_flow of constant_flow
-	| Var_flow of ident
+  | Const_flow of constant_flow
+  | Var_flow of ident
 
 and param = { param_type : typ;
-			  param_name : ident;
-			  param_mod : param_modifier;
-			  param_loc : loc }
+	      param_name : ident;
+	      param_mod : param_modifier;
+	      param_loc : loc }
 
 (*
-and multi_spec = spec list
+  and multi_spec = spec list
 
-and spec = 
-	| SCase of scase_spec
-	| SRequires of srequires_spec
-	| SEnsure of sensures_spec
-	
-and scase_spec = 
-	{
-			scase_branches : (Ipure.formula * multi_spec ) list ;
-			scase_pos : loc 
-		}
-	
-and srequires_spec = 
-	{		
-		srequires_explicit_inst : (ident * primed) list;
-		srequires_implicit_inst : (ident * primed) list;
-		srequires_base : Iformula.formula;
-		srequires_continuation : multi_spec;
-		srequires_pos : loc
-		}	
-	
-and sensures_spec = 
-	{
-		sensures_base : Iformula.formula;
-		sensures_pos : loc
-	}
+  and spec = 
+  | SCase of scase_spec
+  | SRequires of srequires_spec
+  | SEnsure of sensures_spec
+  
+  and scase_spec = 
+  {
+  scase_branches : (Ipure.formula * multi_spec ) list ;
+  scase_pos : loc 
+  }
+  
+  and srequires_spec = 
+  {		
+  srequires_explicit_inst : (ident * primed) list;
+  srequires_implicit_inst : (ident * primed) list;
+  srequires_base : Iformula.formula;
+  srequires_continuation : multi_spec;
+  srequires_pos : loc
+  }	
+  
+  and sensures_spec = 
+  {
+  sensures_base : Iformula.formula;
+  sensures_pos : loc
+  }
 *)
 
 and proc_decl = { proc_name : ident;
-				  mutable proc_mingled_name : ident;
-				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
-				  proc_constructor : bool;
-				  proc_args : param list;
-				  proc_return : typ;
-				  proc_static_specs : Iformula.struc_formula;
-				  proc_dynamic_specs : Iformula.struc_formula;
-				  proc_exceptions : ident list;
-				  proc_body : exp option;
-				  proc_loc : loc }
+		  mutable proc_mingled_name : ident;
+		  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+		  proc_constructor : bool;
+		  proc_args : param list;
+		  proc_return : typ;
+		  proc_static_specs : Iformula.struc_formula;
+		  proc_dynamic_specs : Iformula.struc_formula;
+		  proc_exceptions : ident list;
+		  proc_body : exp option;
+		  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
-					  coercion_name : ident;
-					  coercion_head : F.formula;
-					  coercion_body : F.formula;
-					  coercion_proof : exp }
+		      coercion_name : ident;
+		      coercion_head : F.formula;
+		      coercion_body : F.formula;
+		      coercion_proof : exp }
 and coercion_type = 
   | Left
   | Equiv
@@ -155,152 +155,152 @@ and assign_op =
   | OpModAssign
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
-				   exp_assert_assumed_formula : F.formula option;
-				   exp_assert_path_id : formula_label;
-				   exp_assert_pos : loc }
+		   exp_assert_assumed_formula : F.formula option;
+		   exp_assert_path_id : formula_label;
+		   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_op : assign_op;
-				   exp_assign_lhs : exp;
-				   exp_assign_rhs : exp;
-				   exp_assign_path_id : control_path_id;
-				   exp_assign_pos : loc }
+		   exp_assign_lhs : exp;
+		   exp_assign_rhs : exp;
+		   exp_assign_path_id : control_path_id;
+		   exp_assign_pos : loc }
 
 and exp_binary = { exp_binary_op : bin_op;
-				   exp_binary_oper1 : exp;
-				   exp_binary_oper2 : exp;
-				   exp_binary_path_id : control_path_id;
-				   exp_binary_pos : loc }
+		   exp_binary_oper1 : exp;
+		   exp_binary_oper2 : exp;
+		   exp_binary_path_id : control_path_id;
+		   exp_binary_pos : loc }
 
 and exp_bind = { exp_bind_bound_var : ident;
-				 exp_bind_fields : ident list;
-				 exp_bind_body : exp;
-				 exp_bind_path_id : control_path_id;
-				 exp_bind_pos : loc }
-	
+		 exp_bind_fields : ident list;
+		 exp_bind_body : exp;
+		 exp_bind_path_id : control_path_id;
+		 exp_bind_pos : loc }
+    
 and exp_break = { exp_break_jump_label : jump_label_type;
-				  exp_break_path_id : control_path_id;
-				  exp_break_pos : loc }	
+		  exp_break_path_id : control_path_id;
+		  exp_break_pos : loc }	
 
 and exp_block = { exp_block_body : exp;
-				  exp_block_jump_label : jump_label_type;
-          exp_block_local_vars: (ident*typ*loc) list;
-				  exp_block_pos : loc }
+		  exp_block_jump_label : jump_label_type;
+		  exp_block_local_vars: (ident*typ*loc) list;
+		  exp_block_pos : loc }
 
 and exp_bool_lit = { exp_bool_lit_val : bool;
-					 exp_bool_lit_pos : loc }
+		     exp_bool_lit_pos : loc }
 
 and exp_call_nrecv = { exp_call_nrecv_method : ident;
-					   exp_call_nrecv_arguments : exp list;
-					   exp_call_nrecv_path_id : control_path_id;
-					   exp_call_nrecv_pos : loc }
+		       exp_call_nrecv_arguments : exp list;
+		       exp_call_nrecv_path_id : control_path_id;
+		       exp_call_nrecv_pos : loc }
 
 and exp_call_recv = { exp_call_recv_receiver : exp;
-					  exp_call_recv_method : ident;
-					  exp_call_recv_arguments : exp list;
-					  exp_call_recv_path_id : control_path_id;
-					  exp_call_recv_pos : loc }
+		      exp_call_recv_method : ident;
+		      exp_call_recv_arguments : exp list;
+		      exp_call_recv_path_id : control_path_id;
+		      exp_call_recv_pos : loc }
 
 and exp_catch = { exp_catch_var : ident option ;
-				  exp_catch_flow_type : constant_flow;
-				  exp_catch_flow_var : ident option;
-				  exp_catch_body : exp;											   
-				  exp_catch_pos : loc }
-				  
+		  exp_catch_flow_type : constant_flow;
+		  exp_catch_flow_var : ident option;
+		  exp_catch_body : exp;											   
+		  exp_catch_pos : loc }
+    
 and exp_cast = { exp_cast_target_type : typ;
-				 exp_cast_body : exp;
-				 exp_cast_pos : loc }
+		 exp_cast_body : exp;
+		 exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_condition : exp;
-				 exp_cond_then_arm : exp;
-				 exp_cond_else_arm : exp;
-				 exp_cond_path_id : control_path_id;
-				 exp_cond_pos : loc }
+		 exp_cond_then_arm : exp;
+		 exp_cond_else_arm : exp;
+		 exp_cond_path_id : control_path_id;
+		 exp_cond_pos : loc }
 
 and exp_const_decl = { exp_const_decl_type : typ;
-					   exp_const_decl_decls : (ident * exp * loc) list;
-					   exp_const_decl_pos : loc }
+		       exp_const_decl_decls : (ident * exp * loc) list;
+		       exp_const_decl_pos : loc }
 
 and exp_continue = { exp_continue_jump_label : jump_label_type;
-					 exp_continue_path_id : control_path_id;
-					 exp_continue_pos : loc }
-					   
+		     exp_continue_path_id : control_path_id;
+		     exp_continue_pos : loc }
+    
 and exp_debug = { exp_debug_flag : bool;
-				  exp_debug_pos : loc }
+		  exp_debug_pos : loc }
 
 and exp_finally = { exp_finally_body : exp;
-					exp_finally_pos : loc }
+		    exp_finally_pos : loc }
 
 and exp_float_lit = { exp_float_lit_val : float;
-					  exp_float_lit_pos : loc }
+		      exp_float_lit_pos : loc }
 
 and exp_int_lit = { exp_int_lit_val : int;
-					exp_int_lit_pos : loc }
+		    exp_int_lit_pos : loc }
 
 and exp_java = { exp_java_code : string;
-				 exp_java_pos : loc }
+		 exp_java_pos : loc }
 
 and exp_member = { exp_member_base : exp;
-				   exp_member_fields : ident list;
-				   exp_member_path_id : control_path_id;
-				   exp_member_pos : loc }
+		   exp_member_fields : ident list;
+		   exp_member_path_id : control_path_id;
+		   exp_member_pos : loc }
 
 and exp_new = { exp_new_class_name : ident;
-				exp_new_arguments : exp list;
-				exp_new_pos : loc }
+		exp_new_arguments : exp list;
+		exp_new_pos : loc }
 
 and exp_raise = { exp_raise_type : rise_type;
-				  exp_raise_val : exp option;
-				  exp_raise_from_final :bool; (*if so the result can have any type...*)
-				  exp_raise_path_id : control_path_id;
-				  exp_raise_pos : loc }
-				
+		  exp_raise_val : exp option;
+		  exp_raise_from_final :bool; (*if so the result can have any type...*)
+		  exp_raise_path_id : control_path_id;
+		  exp_raise_pos : loc }
+    
 and exp_return = { exp_return_val : exp option;
-				   exp_return_path_id : control_path_id;
-				   exp_return_pos : loc }
+		   exp_return_path_id : control_path_id;
+		   exp_return_pos : loc }
 
 and exp_seq = { exp_seq_exp1 : exp;
-				exp_seq_exp2 : exp;
-				exp_seq_pos : loc }
+		exp_seq_exp2 : exp;
+		exp_seq_pos : loc }
 
 and exp_this = { exp_this_pos : loc }
 
 and exp_try = { exp_try_block : exp;
-				exp_catch_clauses : exp_catch list;
-				exp_finally_clause : exp_finally list;
-				exp_try_path_id : control_path_id;
-				exp_try_pos : loc}
+		exp_catch_clauses : exp_catch list;
+		exp_finally_clause : exp_finally list;
+		exp_try_path_id : control_path_id;
+		exp_try_pos : loc}
 
 (*and exp_throw = { exp_throw_type : ident;
-				  exp_throw_pos : loc }
+  exp_throw_pos : loc }
 *)
 and exp_unary = { exp_unary_op : uni_op;
-				  exp_unary_exp : exp;
-				  exp_unary_path_id : control_path_id;
-				  exp_unary_pos : loc }
+		  exp_unary_exp : exp;
+		  exp_unary_path_id : control_path_id;
+		  exp_unary_pos : loc }
 
 and exp_var = { exp_var_name : ident;
-				exp_var_pos : loc }
+		exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : typ;
                      exp_var_decl_decls : (ident * exp option * loc) list;
                      exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : exp;
-				  exp_while_body : exp;
-				  exp_while_specs : Iformula.struc_formula (*multi_spec*);
-				  exp_while_jump_label : jump_label_type;
-				  exp_while_path_id : control_path_id;
-				  exp_while_f_name: ident;
-				  exp_while_wrappings: exp option;
-          (*used temporary to store the break wrappers, these wrappers are catch clauses which will
-          wrap the method so that it catches and converts the break flows with target jump_label_type*)
-				  exp_while_pos : loc }
+		  exp_while_body : exp;
+		  exp_while_specs : Iformula.struc_formula (*multi_spec*);
+		  exp_while_jump_label : jump_label_type;
+		  exp_while_path_id : control_path_id;
+		  exp_while_f_name: ident;
+		  exp_while_wrappings: exp option;
+		  (*used temporary to store the break wrappers, these wrappers are catch clauses which will
+		    wrap the method so that it catches and converts the break flows with target jump_label_type*)
+		  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : string;
-				   exp_dprint_pos : loc }
+		   exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : (string * primed);
-				   exp_unfold_pos : loc } 
+		   exp_unfold_pos : loc } 
 
 and exp =
   | Assert of exp_assert
@@ -316,7 +316,7 @@ and exp =
   | Cond of exp_cond
   | ConstDecl of exp_const_decl
   | Continue of exp_continue
-  (* | Catch of exp_catch *)
+      (* | Catch of exp_catch *)
   | Debug of exp_debug
   | Dprint of exp_dprint
   | Empty of loc
@@ -1015,10 +1015,9 @@ let label_procs_prog prog = {prog with
 
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
-  let n_arg = f_args in_arg e in
   match (f in_arg e) with
 	| Some e1 -> e1
-	| None  -> match e with	
+	| None  ->   let n_arg = f_args in_arg e in match e with	
     | Assert _ 
     | BoolLit _ 
     | Break _
@@ -1144,9 +1143,6 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
         exp_while_wrappings = wrp},r) in
   helper init_arg e
 
-let push_opt_void_pair e = match e with
-  | None -> None
-  | Some s -> Some (s,()) 
 
 
   (*this maps an expression by passing an argument*)
