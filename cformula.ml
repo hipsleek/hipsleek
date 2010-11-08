@@ -2312,21 +2312,22 @@ let get_node_label n =  match n with
 
 (* generic transform for heap formula *)
 let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
-    (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) (zero:'b) :(h_formula * 'b) =
+      (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) (zero:'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
-	let r =  f arg e in 
+    let r =  f arg e in 
 	match r with
-	| Some (e1,v) -> (e1,v)
-	| None  -> match e with	 
-		| Star s -> let new_arg = f_args arg e in
-          let (e1,r1)=helper s.h_formula_star_h1 new_arg in
-          let (e2,r2)=helper s.h_formula_star_h2 new_arg in
-            (Star {s with h_formula_star_h1 = e1;
-			     h_formula_star_h2 = e2;},f_comb [r1;r2])
-	    | DataNode _
-	    | ViewNode _
-	    | HTrue
-	    | HFalse -> (e,zero) 
+	  | Some (e1,v) -> (e1,v)
+	  | None  -> let new_arg = f_args arg e in
+        match e with
+		  | Star s -> 
+                let (e1,r1)=helper s.h_formula_star_h1 new_arg in
+                let (e2,r2)=helper s.h_formula_star_h2 new_arg in
+                (Star {s with h_formula_star_h1 = e1;
+			        h_formula_star_h2 = e2;},f_comb [r1;r2])
+	      | DataNode _
+	      | ViewNode _
+	      | HTrue
+	      | HFalse -> (e,zero) 
   in (helper e arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
@@ -2361,6 +2362,7 @@ let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_fo
 	    | ViewNode _
 	    | HTrue
 	    | HFalse -> e
+
 
 (* transform formula : f_p_t : pure formula
    f_f : formula
