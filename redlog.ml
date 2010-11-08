@@ -12,30 +12,37 @@ exception Timeout
 let is_presburger = ref false
 let no_pseudo_ops = ref false
 let no_elim_exists = ref false
+let no_simplify = ref false
+let no_cache = ref false
 let timeout = ref 15 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_out ("allinput.rl")
+let log_file = open_out "allinput.rl"
 let channels = ref (stdin, stdout)
 
 (* process management *)
 let is_reduce_running = ref false
 let reduce_pid = ref 0
 
+(* cache *)
+let sat_cache = ref (Hashtbl.create 100)
+let imply_cache = ref (Hashtbl.create 100)
+
 (* data collecting stuffs *)
-let omega_call_count: int ref = ref 0
-let redlog_call_count: int ref = ref 0
-let ee_call_count: int ref = ref 0
-let success_ee_count: int ref = ref 0
-let nonlinear_time: float ref = ref 0.0
-let linear_time: float ref = ref 0.0
+let omega_call_count = ref 0
+let redlog_call_count = ref 0
+let ee_call_count = ref 0
+let success_ee_count = ref 0
+let nonlinear_time = ref 0.0
+let linear_time = ref 0.0
+let cached_count = ref 0
+
+let prompt_regexp = Str.regexp "^[0-9]+:$"
 
 (**********************
  * auxiliari function *
  **********************)
- 
-let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
 
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
@@ -51,50 +58,56 @@ let log level msg =
     | ERROR -> write_msg ()
     | DEBUG -> if !is_log_all then write_msg ()
 
-let rec remove_spaces s =
-  if (String.length s > 0) then
-    let rest = remove_spaces (String.sub s 1 ((String.length s) - 1)) in
-    if (s.[0] = ' ') then rest
-    else (String.make 1 s.[0]) ^ rest
-  else s
+(*
+ * read from input channel until we found the reduce's prompt
+ * return every lines read
+ *)
+let rec read_till_prompt (channel: in_channel) : string = 
+  let line = Util.trim_str (input_line channel) in
+  let match_prompt = Str.string_match prompt_regexp line 0 in
+  if match_prompt then ""
+  else line ^ (read_till_prompt channel)
 
+(* 
+ * send cmd to reduce
+ * for some weird i/o reasons, the reduce's prompt for this cmd
+ * can only be read after we send this cmd, thus after send the cmd
+ * to reduce, we read till the prompt (of this cmd) is found to discard it
+ *)
 let send_cmd cmd =
-  if !is_reduce_running then output_string (snd !channels) (cmd ^ "\n")
+  if !is_reduce_running then 
+    let inchannel, outchannel = !channels in
+    let cmd = cmd ^ ";\n" in
+    let _ = output_string outchannel cmd in
+    let _ = flush outchannel in
+    let _ = read_till_prompt inchannel in
+    ()
 
 (* start Reduce system in a separated process and load redlog package *)
 let start_red () =
   if not !is_reduce_running then begin
-    print_string "Starting Reduce... "; flush stdout;
-    let inchanel, outchanel, errchanel, pid = Unix_add.open_process_full "redcsl" [|"-w"|] in
-    channels := inchanel, outchanel;
+    print_endline "Starting Reduce... "; flush stdout;
+    let inchannel, outchannel, errchannel, pid = Unix_add.open_process_full "redcsl" [|"-w"; "-b";"-l reduce.log"|] in
+    channels := inchannel, outchannel;
     is_reduce_running := true;
     reduce_pid := pid;
-    send_cmd "load_package redlog;";
-    (* integer or real mode? *)
-    if !is_presburger then
-      send_cmd "rlset pasf;"
-    else
-      send_cmd "rlset ofsf;";
-    send_cmd "on rlnzden;";
-    (* discard the version line *)
-    let finished = ref false in
-    while not !finished do
-      let line = input_line (fst !channels) in
-      if (start_with line "Reduce") then finished := true;
-    done;
-    print_endline "OK!"; flush stdout
+    send_cmd "off nat";
+    send_cmd "linelength 10000";
+    send_cmd "load_package redlog";
+    send_cmd "rlset ofsf";
+    send_cmd "on rlnzden";
   end
 
 (* stop Reduce system *)
 let stop_red () = 
   if !is_reduce_running then begin
-    send_cmd "quit;"; flush (snd !channels);
-    print_string "Halting Reduce... "; flush stdout;
+    let outchannel = snd !channels in
+    output_string outchannel "quit;\n"; flush outchannel;
+    print_endline "Halting Reduce... "; flush stdout;
     Unix.kill !reduce_pid 9;
     ignore (Unix.waitpid [] !reduce_pid);
     is_reduce_running := false;
     reduce_pid := 0;
-    print_endline "OK!"; flush stdout
   end;
   (* some logging *)
   log DEBUG "\n***************";
@@ -102,59 +115,46 @@ let stop_red () =
   log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
   log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
   log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
+  log DEBUG ("Number of cached hit: " ^ (string_of_int !cached_count));
   log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
   log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
   
 let restart_red reason =
   if !is_reduce_running then begin
     print_string reason;
-    print_string " Restarting Reduce... "; flush stdout;
+    print_endline " Restarting Reduce... "; flush stdout;
     stop_red();
     start_red();
   end
 
-(* send formula to reduce/redlog and receive result *)
-let check_formula f =
-  let _ = incr redlog_call_count in
-  output_string (snd !channels) f;
-  flush (snd !channels);
-  let result = ref false in
-  let finished = ref false in
-  while not !finished do
-    let line = input_line (fst !channels) in
-    if line = "true" then begin
-      result := true;
-      finished := true
-    end else if line = "false" then begin
-      result := false;
-      finished := true
-    end else if start_with line "*****" then begin
-      print_endline ("UNKNOWN Reduce output: " ^ line);
-      result := false;
-      finished := true
-    end
-  done;
-  !result
-
-(* linear optimization with redlog *)
+(*
+ * send cmd to redlog and get the result from redlog
+ * assume result is the next line read from inchannel
+ * return empty string if reduce is not running
+ *)
 let send_and_receive f =
   if !is_reduce_running then
     try
-      output_string (snd !channels) f;
-      flush (snd !channels);
-      let result = ref "" in
-      let finished = ref false in
-      while not !finished do
-        result := input_line (fst !channels);
-        if (start_with !result "*****") || (start_with !result "{") || (start_with !result "infeasible") then
-          finished := true
-      done;
-      !result
-    with _ ->
-      restart_red "Reduce crashed or something really bad happenned!";
-      ""
+      let _ = send_cmd f in
+      input_line (fst !channels)
+    with 
+        Timeout -> raise Timeout
+      | ex ->
+        print_endline (Printexc.to_string ex);
+        restart_red "Reduce crashed or something really bad happenned!";
+        ""
   else
     ""
+
+(* send formula to reduce/redlog and receive result *)
+let check_formula f =
+  let res = send_and_receive ("rlqe " ^ f) in
+  if res = "true$" then
+    Some true
+  else if res = "false$" then
+    Some false
+  else
+    None
 
 (* 
  * run func and return its result together with running time 
@@ -174,25 +174,33 @@ let call_omega func =
   linear_time := !linear_time +. time;
   res
 
+(* call redlog's function func and collect the running time *)
+let call_redlog func =
+  let _ = incr redlog_call_count in
+  let res, time = time func in
+  nonlinear_time := !nonlinear_time +. time;
+  res
+
 (*
  * run func with timeout checking 
  * return default_val if the running time exceed allowed time
  * also print err_msg when timeout happen
  * func must be lazy
  *)
-let run_with_timeout func default_val err_msg =
+let run_with_timeout func err_msg =
+  let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout) in
   let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
   let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
   ignore (Unix.alarm !timeout);
   let res = 
     try
-      Lazy.force func
+      Some (Lazy.force func)
     with
     | Timeout ->
         log ERROR ("TIMEOUT");
         restart_red err_msg;
-        default_val
-    | exc -> stop_red (); raise exc 
+        None
+    | exc -> print_endline "Unknown error"; stop_red (); raise exc 
   in
   reset_sigalrm ();
   res
@@ -265,7 +273,7 @@ let rec rl_of_var_list (vars : ident list) : string =
 
 let rl_of_spec_var (sv: CP.spec_var) = 
   match sv with
-  | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+  | CP.SpecVar (_, v, _) -> v ^ (if CP.is_primed sv then "PRMD" else "")
 
 let get_vars_formula (p : CP.formula) =
   let svars = Cpure.fv p in List.map rl_of_spec_var svars
@@ -438,19 +446,21 @@ let rec string_of_formula f0 = match f0 with
  **********************************)
 
 (* using redlog's linear optimization to find bound of a variable in linear formula *)
-let find_bound_b_formula v f0 =
+let find_bound_linear_b_formula v f0 =
   let parse s =
-    (* parse the result string from redlog *)
-    if s.[0] = '{' then
-      let end_pos = String.index s ',' in
-      let num = remove_spaces (String.sub s 1 (end_pos - 1)) in
-      let res = float_of_string num in
-      if (abs_float res) = infinity then
-        None
+    try
+      (* parse the result string from redlog *)
+      if s.[0] = '{' then
+        let end_pos = String.index s ',' in
+        let num = Util.trim_str (String.sub s 1 (end_pos - 1)) in
+        let res = float_of_string num in
+        if (abs_float res) = infinity then
+          None
+        else
+          Some res
       else
-        Some res
-    else
-      None
+        None
+    with _ -> None
   in
   let ceil2 f =
     match f with
@@ -462,61 +472,21 @@ let find_bound_b_formula v f0 =
     | Some f0 -> Some (int_of_float (floor (0. -. f0))) (* we find max by using redlog to find min of it neg val *)
     | None -> None
   in
-  let find_min_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, " ^ (rl_of_spec_var v) ^ ");\n" in
-  let find_max_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, -" ^ (rl_of_spec_var v) ^ ");\n" in
-  send_cmd "on rounded;";
+  let find_min_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, " ^ (rl_of_spec_var v) ^ ")" in
+  let find_max_cmd = "rlopt({" ^ (rl_of_b_formula f0) ^ "}, -" ^ (rl_of_spec_var v) ^ ")" in
+  let _ = send_cmd "on rounded" in
   let min_out = send_and_receive find_min_cmd in
   let max_out = send_and_receive find_max_cmd in
-  send_cmd "off rounded;";
+  let _ = send_cmd "off rounded" in
   let min = ceil2 (parse min_out) in
   let max = floor2 (parse max_out) in
   (min, max)
 
-let rec elim_exists_with_ineq f0 =
-  match f0 with
-  | CP.Exists (qvar, qf,lbl, pos) ->
-      begin
-        match qf with
-        | CP.Or (qf1, qf2, lbl2, qpos) ->
-            let new_qf1 = CP.mkExists [qvar] qf1 None qpos in
-            let new_qf2 = CP.mkExists [qvar] qf2 None qpos in
-            let eqf1 = elim_exists_with_ineq new_qf1 in
-            let eqf2 = elim_exists_with_ineq new_qf2 in
-            let res = CP.mkOr eqf1 eqf2 lbl2 pos in
-            res
-        | _ ->
-            let eqqf = elim_exists_with_ineq qf in
-            let min, max = find_bound qvar eqqf in
-            begin
-              match min, max with
-              | Some mi, Some ma ->
-                  let res = ref (CP.mkFalse pos) in
-                  begin
-                    for i = mi to ma do
-                      res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) eqqf) lbl pos
-                    done;
-                    !res
-                  end
-              | _ -> f0
-            end
-      end
-  | CP.And (f1, f2, pos) ->
-      let ef1 = elim_exists_with_ineq f1 in
-      let ef2 = elim_exists_with_ineq f2 in
-      CP.mkAnd ef1 ef2 pos
-  | CP.Or (f1, f2,lbl, pos) ->
-      let ef1 = elim_exists_with_ineq f1 in
-      let ef2 = elim_exists_with_ineq f2 in
-      CP.mkOr ef1 ef2 lbl pos
-  | CP.Not (f1, lbl, pos) ->
-      let ef1 = elim_exists_with_ineq f1 in
-      CP.mkNot ef1 lbl pos
-  | CP.Forall (qvar, qf, lbl, pos) ->
-      let eqf = elim_exists_with_ineq qf in
-      CP.mkForall [qvar] eqf lbl pos
-  | CP.BForm _ -> f0
+let find_bound_b_formula v b0 =
+  if is_linear_bformula b0 then find_bound_linear_b_formula v b0
+  else (None, None)
 
-and find_bound v f0 =
+let rec find_bound v f0 =
   let f0 = strengthen_formula f0 in (* replace gt,lt with gte,lte to be able to find bound *)
   match f0 with
   | CP.And (f1, f2, _) ->
@@ -582,137 +552,227 @@ and get_subst_max_b_formula (bf,lbl) v = match bf with
     else ([], CP.BForm (bf,lbl))
   | _ -> ([], CP.BForm (bf,lbl))
     
-and elim_exists_min f0 =
-  match f0 with
-  | CP.Exists (qvar, qf, lbl1, pos) -> begin
-    match qf with
-    | CP.Or (qf1, qf2, lbl2, qpos) ->
-      let new_qf1 = CP.mkExists [qvar] qf1 lbl1 qpos in
-      let new_qf2 = CP.mkExists [qvar] qf2 lbl1 qpos in
-      let eqf1 = elim_exists_min new_qf1 in
-      let eqf2 = elim_exists_min new_qf2 in
-      let res = CP.mkOr eqf1 eqf2 lbl2 pos in
-      res
-    | _ ->
-      let qf = elim_exists_min qf in
-      let qvars0, bare_f = CP.split_ex_quantifiers qf in
-      let qvars = qvar :: qvars0 in
-      let conjs = CP.list_of_conjs qf in
-      let no_qvars_list, with_qvars_list = List.partition
-        (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
-      let no_qvars_f = CP.conj_of_list no_qvars_list pos in
-      let with_qvars_f = CP.conj_of_list with_qvars_list pos in
-      let st, pp1 = get_subst_min with_qvars_f qvar in
-      if not (Util.empty st) then
-        let v, e1, e2 = List.hd st in
-        let tmp1 = 
-          CP.mkOr 
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkLte e1 e2 pos),None)) pos) pp1 pos)
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkGt e1 e2 pos),None)) pos) pp1 pos)
-            None
-            pos
-          in
-        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl1 pos) in
-        let tmp3 = CP.mkExists qvars0 tmp2 None pos in
-        let tmp4 = elim_exists_min tmp3 in
-        let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
-        new_qf
+(* 
+ * partition an expression based on variable v
+ * return a tuple (f, rest)
+ * e = f*v + rest
+ *)
+let rec partition_by_var e v =
+  match e with
+  | CP.Var (sp, _) ->
+      if CP.eq_spec_var sp v then
+        (1, None)
       else
-        CP.mkExists [qvar] qf lbl1 pos
-    end
+        (0, Some e)
+  | CP.Add (e1, e2, _) ->
+      let e1_v, e1_rest = partition_by_var e1 v in
+      let e2_v, e2_rest = partition_by_var e2 v in
+      let with_v = e1_v + e2_v in
+      let without_v = match e1_rest, e2_rest with
+        | None, None -> None
+        | Some e, None -> e1_rest
+        | None, Some e -> e2_rest
+        | Some e1, Some e2 -> Some (CP.Add (e1, e2, no_pos))
+      in
+      (with_v, without_v)
+  | CP.Subtract (e1, e2, _) ->
+      let e1_v, e1_rest = partition_by_var e1 v in
+      let e2_v, e2_rest = partition_by_var e2 v in
+      let with_v = e1_v - e2_v in
+      let without_v = match e1_rest, e2_rest with
+        | None, None -> None
+        | Some e, None -> e1_rest
+        | None, Some e ->
+            let zero = CP.IConst (0, no_pos) in
+            Some (CP.Subtract (zero, e, no_pos))
+        | Some e1, Some e2 -> Some (CP.Subtract (e1, e2, no_pos))
+      in
+      (with_v, without_v)
+  | _ -> (0, Some e)
+
+let get_subst_equation_b_formula bf0 v lbl =
+  match bf0 with
+  | CP.Eq (e1, e2, pos) -> 
+      let e = CP.Subtract (e1, e2, no_pos) in
+      let with_v, without_v = partition_by_var e v in
+      if with_v = 1 then
+        let zero = CP.IConst (0, no_pos) in
+        let rhs = match without_v with
+          | None -> zero
+          | Some e -> CP.Subtract (zero, e, no_pos) 
+        in
+        ([(v, rhs)], CP.mkTrue no_pos)
+      else if with_v = -1 then
+        let zero = CP.IConst (0, no_pos) in
+        let rhs = match without_v with
+          | None -> zero
+          | Some e -> e
+        in
+        ([(v, rhs)], CP.mkTrue no_pos)
+      else
+        (print_endline (string_of_int with_v);
+        ([], CP.BForm (bf0, lbl)))
+  | _ -> ([], CP.BForm (bf0,lbl))
+
+let rec get_subst_equation f0 v =
+  match f0 with
+  | CP.And (f1, f2, pos) ->
+	  let st1, rf1 = get_subst_equation f1 v in
+		if not (Util.empty st1) then
+		  (st1, CP.mkAnd rf1 f2 pos)
+		else
+		  let st2, rf2 = get_subst_equation f2 v in
+			(st2, CP.mkAnd f1 rf2 pos)
+  | CP.BForm (bf, lbl) -> get_subst_equation_b_formula bf v lbl
+  | _ -> ([], f0)
+
+(* base of all elim_exits functions *)
+let rec elim_exists_helper core f0 =
+  let elim_exists = elim_exists_helper core in
+  match f0 with
+  | CP.Exists (qvar, qf, lbl, pos) -> 
+      let res = match qf with
+        | CP.Or (qf1, qf2, lbl2, qpos) ->
+            let new_qf1 = CP.mkExists [qvar] qf1 lbl qpos in
+            let new_qf2 = CP.mkExists [qvar] qf2 lbl qpos in
+            let eqf1 = elim_exists new_qf1 in
+            let eqf2 = elim_exists new_qf2 in
+            let res = CP.mkOr eqf1 eqf2 lbl2 pos in
+            res
+        | _ ->
+            let qf = elim_exists qf in
+            core qvar qf lbl pos
+      in res
   | CP.And (f1, f2, pos) -> begin
-	  let ef1 = elim_exists_min f1 in
-	  let ef2 = elim_exists_min f2 in
+	  let ef1 = elim_exists f1 in
+	  let ef2 = elim_exists f2 in
 	  let res = CP.mkAnd ef1 ef2 pos in
 		res
 	end
   | CP.Or (f1, f2, lbl, pos) -> begin
-	  let ef1 = elim_exists_min f1 in
-	  let ef2 = elim_exists_min f2 in
+	  let ef1 = elim_exists f1 in
+	  let ef2 = elim_exists f2 in
 	  let res = CP.mkOr ef1 ef2 lbl pos in
 		res
 	end
   | CP.Not (f1, lbl, pos) -> begin
-	  let ef1 = elim_exists_min f1 in
+	  let ef1 = elim_exists f1 in
 	  let res = CP.mkNot ef1 lbl pos in
 		res
 	end
   | CP.Forall (qvar, qf, lbl, pos) -> begin
-	  let eqf = elim_exists_min qf in
+	  let eqf = elim_exists qf in
 	  let res = CP.mkForall [qvar] eqf lbl pos in
 		res
 	end
   | CP.BForm _ -> f0
-  
+
+let rec elim_exists_with_eq f0 = 
+  let core qvar qf lbl pos =
+    let qf = elim_exists_with_eq qf in
+    let qvars0, bare_f = CP.split_ex_quantifiers qf in
+    let qvars = qvar :: qvars0 in
+    let conjs = CP.list_of_conjs bare_f in
+    let no_qvars_list, with_qvars_list = List.partition
+    (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
+    (* the part that does not contain the quantified var *)
+    let no_qvars = CP.conj_of_list no_qvars_list pos in
+    (* now eliminate the quantified variables from the part that contains it *)
+    let with_qvars = CP.conj_of_list with_qvars_list pos in
+    (* now eliminate the top existential variable. *)
+    let st, pp1 = get_subst_equation with_qvars qvar in
+    if not (Util.empty st) then
+      let new_qf = CP.subst_term st pp1 in
+      let new_qf = CP.mkExists qvars0 new_qf lbl pos in
+      let tmp3 = elim_exists_with_eq new_qf in
+      let tmp4 = CP.mkAnd no_qvars tmp3 pos in
+      tmp4
+    else (* if qvar is not equated to any variables, try the next one *)
+      let tmp1 = qf (*elim_exists qf*) in
+      let tmp2 = CP.mkExists [qvar] tmp1 lbl pos in
+      tmp2
+  in elim_exists_helper core f0
+
+and elim_exists_min f0 =
+  let core qvar qf lbl pos =
+    let qvars0, bare_f = CP.split_ex_quantifiers qf in
+    let qvars = qvar :: qvars0 in
+    let conjs = CP.list_of_conjs qf in
+    let no_qvars_list, with_qvars_list = List.partition
+    (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
+    let no_qvars_f = CP.conj_of_list no_qvars_list pos in
+    let with_qvars_f = CP.conj_of_list with_qvars_list pos in
+    let st, pp1 = get_subst_min with_qvars_f qvar in
+    if not (Util.empty st) then
+      let v, e1, e2 = List.hd st in
+      let tmp1 = 
+        CP.mkOr 
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkLte e1 e2 pos),None)) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkGt e1 e2 pos),None)) pos) pp1 pos)
+        None
+        pos
+      in
+      let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl pos) in
+      let tmp3 = CP.mkExists qvars0 tmp2 None pos in
+      let tmp4 = elim_exists_min tmp3 in
+      let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
+      new_qf
+    else
+      CP.mkExists [qvar] qf lbl pos
+  in elim_exists_helper core f0
+
 and elim_exists_max f0 =
-  match f0 with
-  | CP.Exists (qvar, qf,lbl1, pos) -> begin
-    match qf with
-    | CP.Or (qf1, qf2,lbl2, qpos) ->
-      let new_qf1 = CP.mkExists [qvar] qf1 lbl1 qpos in
-      let new_qf2 = CP.mkExists [qvar] qf2 lbl1 qpos in
-      let eqf1 = elim_exists_max new_qf1 in
-      let eqf2 = elim_exists_max new_qf2 in
-      let res = CP.mkOr eqf1 eqf2 lbl2 pos in
-      res
-    | _ ->
-      let qf = elim_exists_max qf in
-      let qvars0, bare_f = CP.split_ex_quantifiers qf in
-      let qvars = qvar :: qvars0 in
-      let conjs = CP.list_of_conjs qf in
-      let no_qvars_list, with_qvars_list = List.partition
-        (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
-      let no_qvars_f = CP.conj_of_list no_qvars_list pos in
-      let with_qvars_f = CP.conj_of_list with_qvars_list pos in
-      let st, pp1 = get_subst_max with_qvars_f qvar in
-      if not (Util.empty st) then
-        let v, e1, e2 = List.hd st in
-        let tmp1 = 
-          CP.mkOr 
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkGte e1 e2 pos),None) ) pos) pp1 pos)
-            (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkLt e1 e2 pos),None) ) pos) pp1 pos)
-            None
-            pos
-          in
-        let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl1 pos) in
-        let tmp3 = CP.mkExists qvars0 tmp2 None pos in
-        let tmp4 = elim_exists_max tmp3 in
-        let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
-        new_qf
+  let core qvar qf lbl pos =
+    let qvars0, bare_f = CP.split_ex_quantifiers qf in
+    let qvars = qvar :: qvars0 in
+    let conjs = CP.list_of_conjs qf in
+    let no_qvars_list, with_qvars_list = List.partition
+    (fun cj -> CP.disjoint qvars (CP.fv cj)) conjs in
+    let no_qvars_f = CP.conj_of_list no_qvars_list pos in
+    let with_qvars_f = CP.conj_of_list with_qvars_list pos in
+    let st, pp1 = get_subst_max with_qvars_f qvar in
+    if not (Util.empty st) then
+      let v, e1, e2 = List.hd st in
+      let tmp1 = 
+        CP.mkOr 
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e1 pos) (CP.BForm ((CP.mkGte e1 e2 pos),None) ) pos) pp1 pos)
+        (CP.mkAnd (CP.mkAnd (CP.mkEqExp (CP.mkVar v pos) e2 pos) (CP.BForm ((CP.mkLt e1 e2 pos),None) ) pos) pp1 pos)
+        None
+        pos
+      in
+      let tmp2 = CP.elim_exists (CP.mkExists [qvar] tmp1 lbl pos) in
+      let tmp3 = CP.mkExists qvars0 tmp2 None pos in
+      let tmp4 = elim_exists_max tmp3 in
+      let new_qf = CP.mkAnd no_qvars_f tmp4 pos in
+      new_qf
       else
-        CP.mkExists [qvar] qf lbl1 pos
-    end
-  | CP.And (f1, f2, pos) -> begin
-	  let ef1 = elim_exists_max f1 in
-	  let ef2 = elim_exists_max f2 in
-	  let res = CP.mkAnd ef1 ef2 pos in
-		res
-	end
-  | CP.Or (f1, f2,lbl, pos) -> begin
-	  let ef1 = elim_exists_max f1 in
-	  let ef2 = elim_exists_max f2 in
-	  let res = CP.mkOr ef1 ef2 lbl pos in
-		res
-	end
-  | CP.Not (f1,lbl, pos) -> begin
-	  let ef1 = elim_exists_max f1 in
-	  let res = CP.mkNot ef1 lbl pos in
-		res
-	end
-  | CP.Forall (qvar, qf, lbl, pos) -> begin
-	  let eqf = elim_exists_max qf in
-	  let res = CP.mkForall [qvar] eqf lbl pos in
-		res
-	end
-  | CP.BForm _ -> f0
+        CP.mkExists [qvar] qf lbl pos
+  in elim_exists_helper core f0
   
-let elim_exist_quantifier f0 =
-(*  let f0 = if !TP.elim_exists_flag then CP.elim_exists f0 else f0 in*)
+let rec elim_exists_with_ineq f0 =
+  let core qvar qf lbl pos =
+    let min, max = find_bound qvar qf in
+    begin
+      match min, max with
+      | Some mi, Some ma ->
+          let res = ref (CP.mkFalse pos) in
+          begin
+            for i = mi to ma do
+              res := CP.mkOr !res (CP.apply_one_term (qvar, CP.IConst (i, no_pos)) qf) lbl pos
+            done;
+            !res
+          end
+      | _ -> f0
+    end
+  in elim_exists_helper core f0
+
+let elim_exist_quantifier f =
   let _ = incr ee_call_count in
-  let f1 = elim_exists_min f0 in
-  let f2 = elim_exists_max f1 in
-  let f3 = elim_exists_with_ineq f2 in 
-  f3
+  let f = elim_exists_with_eq f in
+  let f = elim_exists_min f in
+  let f = elim_exists_max f in
+  let f = elim_exists_with_ineq f in 
+  f
 
 (*********************************
  * formula normalization stuffs
@@ -742,13 +802,13 @@ let rec negate_formula f0 = match f0 with
   | CP.Forall (sv, f, lbl, pos) -> CP.Exists (sv, negate_formula f, lbl, pos)
   | CP.Exists (sv, f, lbl, pos) -> CP.Forall (sv, negate_formula f, lbl, pos)
   
-let rec nomarlize_formula f0 = match f0 with
+let rec normalize_formula f0 = match f0 with
   | CP.BForm _ -> f0
-  | CP.And (f1, f2, pos) -> CP.And (nomarlize_formula f1, nomarlize_formula f2, pos)
-  | CP.Or (f1, f2, lbl, pos) -> CP.Or (nomarlize_formula f1, nomarlize_formula f2, lbl, pos)
+  | CP.And (f1, f2, pos) -> CP.And (normalize_formula f1, normalize_formula f2, pos)
+  | CP.Or (f1, f2, lbl, pos) -> CP.Or (normalize_formula f1, normalize_formula f2, lbl, pos)
   | CP.Not (f1, lbl, pos) -> negate_formula f1
-  | CP.Forall (sv, f, lbl, pos) -> CP.Forall (sv, nomarlize_formula f, lbl, pos)
-  | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, nomarlize_formula f, lbl, pos)
+  | CP.Forall (sv, f, lbl, pos) -> CP.Forall (sv, normalize_formula f, lbl, pos)
+  | CP.Exists (sv, f, lbl, pos) -> CP.Exists (sv, normalize_formula f, lbl, pos)
 
 (**********************
    Verification works  
@@ -758,41 +818,70 @@ let rec nomarlize_formula f0 = match f0 with
  * using existence enclosure (rlex) for all free vars
  *)
 
-let is_sat (f: CP.formula) (sat_no: string) : bool =
-  let f = nomarlize_formula f in
+let simplify_2options opts = match opts with
+  | Some opt ->
+    let res = match opt with
+      | Some _ -> opt
+      | None -> None
+    in res
+  | None -> None
+
+let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool =
   let sat = 
     if is_linear_formula f then 
-      call_omega (lazy (Omega.is_sat f sat_no))
+      Some (call_omega (lazy (Omega.is_sat f sat_no)))
     else
       let sf = if !no_pseudo_ops then f else strengthen_formula f in
       let frl = rl_of_formula sf in
-      let rl_input = "rlqe rlex(" ^ frl ^ ");\n" in
+      let rl_input = "rlex(" ^ frl ^ ")" in
       let runner = lazy (check_formula rl_input) in
       let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
-      let proc = lazy (run_with_timeout runner true err_msg) in
-      let res, time = time proc in
-      let _ = nonlinear_time := !nonlinear_time +. time in
-      res
+      let proc = lazy (run_with_timeout runner err_msg) in
+      let res = call_redlog proc in
+      simplify_2options res
   in
-  let level = DEBUG in
-  log level ("\n#is_sat " ^ sat_no);
-  log level (string_of_formula f);
-  log level (if sat then "SAT" else "UNSAT");
-  sat
+  let res = match sat with
+    | Some v -> v
+    | None -> true (* default is SAT *)
+  in
+  res
+
+let is_sat f sat_no =
+  let f = normalize_formula f in
+  let fstring = string_of_formula f in
+  log DEBUG ("\n#is_sat " ^ sat_no);
+  log DEBUG fstring;
+  let res = 
+    if !no_cache then
+      is_sat_no_cache f sat_no
+    else
+      try
+        let res = Hashtbl.find !sat_cache fstring in
+        incr cached_count;
+        log DEBUG "Cached.";
+        res
+      with Not_found -> 
+        let res = is_sat_no_cache f sat_no in
+        let _ = Hashtbl.add !sat_cache fstring res in
+        res
+  in
+  log DEBUG (if res then "SAT" else "UNSAT");
+  res
 
 let is_valid f imp_no =
-  let f = nomarlize_formula f in
+  let f = normalize_formula f in
   let frl = rl_of_formula f in
-  let rl_input = "rlqe rlall(" ^ frl ^");\n" in
+  let rl_input = "rlall(" ^ frl ^")" in
   let runner = lazy (check_formula rl_input) in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
-  let proc = lazy (run_with_timeout runner false err_msg) in
-  let res, time = time proc in
-  let _ = nonlinear_time := !nonlinear_time +. time in
-  res
-  
-let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
-  (* begin helper funcs *)
+  let proc = lazy (run_with_timeout runner err_msg) in
+  let valid = simplify_2options (call_redlog proc) in
+  let res = match valid with
+    | Some v -> v
+    | None -> false (* default is INVALID *)
+  in res
+
+let imply_no_cache (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
   let has_eq f = has_existential_quantifier f false in
   let elim_eq f =
     if !no_elim_exists then f else elim_exist_quantifier f
@@ -801,9 +890,8 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
     let wf = if !no_pseudo_ops then f else weaken_formula f in
     is_valid wf imp_no 
   in
-  (* end helper *)
   let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
-  let f = nomarlize_formula f in
+  let f = normalize_formula f in
   let res = 
     if is_linear_formula f then
       call_omega (lazy (Omega.imply ante conseq imp_no (float_of_int !timeout)))
@@ -818,20 +906,61 @@ let imply (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
           valid eef
       else valid f
   in
-  let lvl = if res then DEBUG else ERROR in
-  log lvl ("\n#imply " ^ imp_no);
-  log lvl ("ante: " ^ (string_of_formula ante));
-  log lvl ("conseq: " ^ (string_of_formula conseq));
-  log lvl (if res then "VALID" else "INVALID");
   res
 
-(* just prototype *)
+let imply ante conseq imp_no =
+  let ante_string = string_of_formula ante in
+  let conseq_string = string_of_formula conseq in
+  let fstring = ante_string ^ conseq_string in
+  log DEBUG ("\n#imply " ^ imp_no);
+  log DEBUG ("ante: " ^ ante_string);
+  log DEBUG ("conseq: " ^ conseq_string);
+  let res = 
+    if !no_cache then
+      imply_no_cache ante conseq imp_no
+    else
+      try
+        let res = Hashtbl.find !imply_cache fstring in
+        incr cached_count;
+        log DEBUG "Cached.";
+        res
+      with Not_found ->
+        let res = imply_no_cache ante conseq imp_no in
+        let _ = Hashtbl.add !imply_cache fstring res in
+        res
+  in
+  log DEBUG (if res then "VALID" else "INVALID");
+  res
+
 let simplify (f: CP.formula) : CP.formula =
   if is_linear_formula f then 
     Omega.simplify f 
-  else 
+  else if !no_simplify then 
     f
+  else
+    try
+      let rlf = rl_of_formula (normalize_formula f) in
+      let _ = send_cmd "rlset pasf" in
+      let redlog_result = send_and_receive ("rlsimpl " ^ rlf) in
+      let _ = send_cmd "rlset ofsf" in
+      let lexbuf = Lexing.from_string redlog_result in
+      let simpler_f = Rlparser.input Rllexer.tokenizer lexbuf in
+      let simpler_f = 
+        if is_linear_formula simpler_f then
+          Omega.simplify simpler_f
+        else
+          simpler_f
+      in
+      log DEBUG "\n#simplify";
+      log DEBUG ("original: " ^ (string_of_formula f));
+      log DEBUG ("simplified: " ^ (string_of_formula simpler_f));
+      simpler_f
+    with _ as e -> 
+      log ERROR "Error while simplifying with redlog";
+      log ERROR (Printexc.to_string e);
+      f
 
+(* unimplemented *)
 let hull (f: CP.formula) : CP.formula = 
   if is_linear_formula f then 
     Omega.hull f 

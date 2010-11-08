@@ -55,12 +55,22 @@ oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLLEX) oclexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
 
+rlparser.cmo rlparser.ml: rlparser.mly
+	$(OCAMLYACC) $(OCAMLYACCFLAGS) rlparser.mly
+	rm rlparser.mli
+	$(OCAMLC) $(OCAMLFLAGS) -c -g rlparser.ml
+
+rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
+	$(OCAMLLEX) rllexer.mll
+	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
+
 MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
+	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
@@ -93,6 +103,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
+	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
@@ -115,6 +126,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
+	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
@@ -147,6 +159,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
+	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
@@ -167,6 +180,7 @@ WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
+	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo setmona.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
@@ -250,6 +264,7 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
+	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo \
 	context.cmo \
@@ -294,7 +309,7 @@ decidez.vo:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
+	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

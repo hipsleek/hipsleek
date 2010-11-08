@@ -149,6 +149,10 @@ let common_arguments = [
 	 "Do not pseudo-strengthen/weaken formulas before send to Redlog");
 	("--rl-no-ee", Arg.Set Redlog.no_elim_exists, 
 	 "Do not try to eliminate existential quantifier with Redlog");
+  ("--rl-no-simplify", Arg.Set Redlog.no_simplify,
+   "Do not try to simplify non-linear formulas with Redlog");
+  ("--rl-no-cache", Arg.Set Redlog.no_cache,
+   "Do not use cache for unsatisfiability and implication's checking with Redlog");
 	("--rl-timeout", Arg.Set_int Redlog.timeout, 
 	 "Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 
