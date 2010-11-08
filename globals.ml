@@ -3,7 +3,6 @@
 type ident = string
 type constant_flow = ident
 
-
 type nflow = (int*int)(*numeric representation of flow*)
 
 	
