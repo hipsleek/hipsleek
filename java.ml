@@ -340,7 +340,9 @@ and java_of_exp = function
   | Raise b -> (match b.exp_raise_val with 
 				| Some b1-> "throw "^(java_of_exp b1)
 				| None -> Error.report_error{Error.error_loc = b.exp_raise_pos; Error.error_text = "can not translate properly into java code (raise with no expression)"})
-  | Try b -> ""
+  | Try b -> "translator is in need of reviews"
+  | Catch b-> "translator is in need of reviews"
+  | Finally b-> "translator is in need of reviews"
 				
 and add_semicolon (str : string) : string =
   let l = String.length str in

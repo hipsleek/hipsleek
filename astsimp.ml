@@ -508,6 +508,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.SCall _ -> e
   | C.Block b-> Cast.Block {b with Cast.exp_block_body = seq_elim b.C.exp_block_body}
   | C.Cast b -> C.Cast {b with C.exp_cast_body = (seq_elim b.C.exp_cast_body)}
+  | C.Catch b -> Error.report_error {Error.error_loc = b.C.exp_catch_pos; Error.error_text = ("malformed cast, unexpecte catch clause")}
   | C.Cond b -> C.Cond {b with C.exp_cond_then_arm  = (seq_elim b.C.exp_cond_then_arm);
 							   C.exp_cond_else_arm  = (seq_elim b.C.exp_cond_else_arm);}
   | C.CheckRef _ -> e
@@ -525,7 +526,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
 					  C.Try ({	C.exp_try_type = b.C.exp_seq_type;
 								C.exp_try_path_id = fresh_strict_branch_point_id "";
 								C.exp_try_body =  (seq_elim b.C.exp_seq_exp1);
-								C.exp_catch_clause = ({
+								C.exp_catch_clause = (C.Catch{
 														  C.exp_catch_flow_type = !n_flow_int;
 														  C.exp_catch_flow_var = None;
 														  C.exp_catch_var = Some (CP.Prim Void, 
@@ -539,7 +540,9 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Time _ -> e
   | C.Try b ->  C.Try {b with  
 				C.exp_try_body = seq_elim b.C.exp_try_body;
-				C.exp_catch_clause = {b.C.exp_catch_clause with C.exp_catch_body = (seq_elim b.C.exp_catch_clause.C.exp_catch_body)};}
+				C.exp_catch_clause = 
+					let c = C.get_catch_of_exp b.C.exp_catch_clause in
+					C.Catch {c with C.exp_catch_body = (seq_elim c.C.exp_catch_body)};}
   | C.Unit _ -> e 
   | C.Unfold _ -> e
   | C.Var _ -> e
@@ -569,6 +572,7 @@ let rec label_breaks lb e :I.exp = match e with
   | I.CallNRecv b -> I.CallNRecv {b with I.exp_call_nrecv_arguments = List.map (label_breaks lb)  b.I.exp_call_nrecv_arguments;}
   | I.Block b-> e  
   | I.Cast b -> I.Cast {b with I.exp_cast_body = (label_breaks lb  b.I.exp_cast_body)}
+  | I.Catch b -> I.Catch {b with I.exp_catch_body = (label_breaks lb b.I.exp_catch_body)}
   | I.Cond b -> I.Cond {b with I.exp_cond_condition = (label_breaks lb  b.I.exp_cond_condition);
 							   I.exp_cond_then_arm  = (label_breaks lb  b.I.exp_cond_then_arm);
 							   I.exp_cond_else_arm  = (label_breaks lb  b.I.exp_cond_else_arm);}
@@ -584,6 +588,7 @@ let rec label_breaks lb e :I.exp = match e with
   | I.FloatLit _
   | I.IntLit _ 
   | I.Java _ -> e
+  | I.Finally b-> I.Finally {b with I.exp_finally_body = (label_breaks lb b.I.exp_finally_body)}
   | I.Member b -> I.Member {b with I.exp_member_base = (label_breaks lb  b.I.exp_member_base)}
   | I.New b -> I.New {b with I.exp_new_arguments = List.map (label_breaks lb)  b.I.exp_new_arguments}
   | I.Null _ -> e
@@ -595,8 +600,8 @@ let rec label_breaks lb e :I.exp = match e with
   | I.Time _ -> e
   | I.Try b -> I.Try {b with  
 				I.exp_try_block = label_breaks lb  b.I.exp_try_block;
-				I.exp_catch_clauses = List.map (fun c-> {c with I.exp_catch_body = (label_breaks lb  c.I.exp_catch_body)}) b.I.exp_catch_clauses;
-				I.exp_finally_clause = List.map (fun c-> {c with I.exp_finally_body = (label_breaks lb  c.I.exp_finally_body)}) b.I.exp_finally_clause;}
+				I.exp_catch_clauses = List.map (label_breaks lb) b.I.exp_catch_clauses;
+				I.exp_finally_clause = List.map (label_breaks lb) b.I.exp_finally_clause;}
   | I.Unary b -> I.Unary {b with I.exp_unary_exp = (label_breaks lb  b.I.exp_unary_exp)}
   | I.Unfold _ -> e
   | I.Var _ -> e
@@ -636,6 +641,7 @@ and need_break_continue lb ne non_generated_label :bool =
 						(need_break_continue lb b.I.exp_block_body true)
 						end
 		  | I.Cast b -> (need_break_continue lb  b.I.exp_cast_body true)
+		  | I.Catch b -> need_break_continue lb  b.I.exp_catch_body true
 		  | I.Cond b -> (need_break_continue lb  b.I.exp_cond_condition true )||
 						(need_break_continue lb  b.I.exp_cond_then_arm true)||
 						(need_break_continue lb  b.I.exp_cond_else_arm true)
@@ -649,6 +655,7 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.FloatLit _
 		  | I.IntLit _ 
 		  | I.Java _ -> false
+		  | I.Finally b -> need_break_continue lb b.I.exp_finally_body true
 		  | I.Label (_,e) -> need_break_continue lb e true
 		  | I.Member b -> (need_break_continue lb  b.I.exp_member_base true)
 		  | I.New b -> List.fold_left (fun a c-> a|| (need_break_continue lb c true)) false b.I.exp_new_arguments
@@ -657,10 +664,10 @@ and need_break_continue lb ne non_generated_label :bool =
 		  | I.Return b -> (match b.I.exp_return_val with | None -> false | Some b ->(need_break_continue lb b true))
 		  | I.Seq b -> (need_break_continue lb b.I.exp_seq_exp1 true) ||(need_break_continue lb b.I.exp_seq_exp2 true)
 		  | I.This _ -> false
-      | I.Time _ -> false
+		  | I.Time _ -> false
 		  | I.Try b -> (need_break_continue lb  b.I.exp_try_block true)|| 
-					(List.fold_left (fun a c-> a||(need_break_continue lb c.I.exp_catch_body true)) false b.I.exp_catch_clauses)||
-					(List.fold_left (fun a c-> a||(need_break_continue lb c.I.exp_finally_body true)) false b.I.exp_finally_clause)
+					(List.fold_left (fun a c-> a||(need_break_continue lb c true)) false b.I.exp_catch_clauses)||
+					(List.fold_left (fun a c-> a||(need_break_continue lb c true)) false b.I.exp_finally_clause)
 		  | I.Unary b -> (need_break_continue lb b.I.exp_unary_exp true)
 		  | I.Unfold _ -> false
 		  | I.Var _ -> false
@@ -706,7 +713,7 @@ and need_break_continue lb ne non_generated_label :bool =
 		let nit= I.Try ({
 						I.exp_try_block = ne;
 						I.exp_catch_clauses = [
-									 {  I.exp_catch_var = None;(*fresh_name();*)
+							  I.Catch{  I.exp_catch_var = None;(*fresh_name();*)
 										I.exp_catch_flow_type = nc;
 										I.exp_catch_flow_var = None;
 										I.exp_catch_body = I.Label((nl,1),I.Empty b.I.exp_block_pos);	
@@ -718,7 +725,7 @@ and need_break_continue lb ne non_generated_label :bool =
 						I.exp_try_block = nit;
 						I.exp_try_path_id = nl2;
 						I.exp_catch_clauses = [
-									 {  I.exp_catch_var = None;(*fresh_name();*)
+							  I.Catch{  I.exp_catch_var = None;(*fresh_name();*)
 										I.exp_catch_flow_type = nb;
 										I.exp_catch_flow_var = None;
 										I.exp_catch_body = I.Label((nl2,1),I.Empty b.I.exp_block_pos);	
@@ -728,6 +735,7 @@ and need_break_continue lb ne non_generated_label :bool =
 		ne
 	else while_labelling (label_breaks nl b.I.exp_block_body)
   | I.Cast b -> I.Cast {b with I.exp_cast_body = (while_labelling b.I.exp_cast_body)}
+  | I.Catch b -> I.Catch {b with I.exp_catch_body = while_labelling b.I.exp_catch_body}
   | I.Cond b -> I.Cond {b with I.exp_cond_condition = (while_labelling b.I.exp_cond_condition);
 							   I.exp_cond_then_arm  = (while_labelling b.I.exp_cond_then_arm);
 							   I.exp_cond_else_arm  = (while_labelling b.I.exp_cond_else_arm);}
@@ -745,6 +753,7 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.FloatLit _
   | I.IntLit _ 
   | I.Java _ -> e
+  | I.Finally b -> I.Finally {b with I.exp_finally_body = while_labelling b.I.exp_finally_body}
   | I.Label (pid, e) -> I.Label (pid, (while_labelling e))
   | I.Member b -> I.Member {b with I.exp_member_base = (while_labelling b.I.exp_member_base)}
   | I.New b -> I.New {b with I.exp_new_arguments = List.map while_labelling b.I.exp_new_arguments}
@@ -757,7 +766,7 @@ and need_break_continue lb ne non_generated_label :bool =
   | I.Time _ -> e
   | I.Try b -> let ob = I.Try {b with  
 				I.exp_try_block = while_labelling b.I.exp_try_block;
-				I.exp_catch_clauses = (List.map (fun c-> {c with I.exp_catch_body = (while_labelling c.I.exp_catch_body)}) b.I.exp_catch_clauses); 
+				I.exp_catch_clauses = (List.map while_labelling b.I.exp_catch_clauses); 
 				I.exp_finally_clause = [];} in
 				let nt = if (List.length b.I.exp_finally_clause)==0 then ob
 				else I.Try { 
@@ -765,10 +774,11 @@ and need_break_continue lb ne non_generated_label :bool =
 						I.exp_try_block = ob;
 						I.exp_catch_clauses =
 						(List.map (fun c-> 
+						let c = I.get_finally_of_exp c in
 						let f_body = (while_labelling c.I.exp_finally_body) in
 						let new_name = fresh_var_name "fi" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
 						let new_flow_var_name = fresh_var_name "flv" b.I.exp_try_pos.start_pos.Lexing.pos_lnum in
-						{
+						I.Catch{
 							I.exp_catch_var = Some new_name;
 							I.exp_catch_flow_type = c_flow;
 							I.exp_catch_flow_var = Some new_flow_var_name;
@@ -785,7 +795,7 @@ and need_break_continue lb ne non_generated_label :bool =
 																						I.exp_seq_pos = b.I.exp_try_pos;
 																					}));
 																				I.exp_block_jump_label = I.NoJumpLabel;
-                                        I.exp_block_local_vars = [];
+																				I.exp_block_local_vars = [];
 																				I.exp_block_pos = b.I.exp_try_pos}));
 							I.exp_catch_pos = b.I.exp_try_pos   }
 				) b.I.exp_finally_clause );
@@ -811,7 +821,7 @@ and need_break_continue lb ne non_generated_label :bool =
 						I.exp_try_block = ne;
 						I.exp_try_path_id = nl1;	
 						I.exp_catch_clauses = [
-									 {  I.exp_catch_var = None;(*fresh_name();*)
+							   I.Catch{ I.exp_catch_var = None;(*fresh_name();*)
 										I.exp_catch_flow_type = nc;
 										I.exp_catch_flow_var = None;
 										I.exp_catch_body = I.Label ((nl1,1),I.Empty b.I.exp_while_pos);	
@@ -822,7 +832,7 @@ and need_break_continue lb ne non_generated_label :bool =
 							I.exp_try_block = I.This ({I.exp_this_pos = b.I.exp_while_pos});
 							I.exp_try_path_id = nl2; (*b.I.exp_while_path_id;	*)
 							I.exp_catch_clauses = [
-											{ I.exp_catch_var = None;
+									 I.Catch{ I.exp_catch_var = None;
 											  I.exp_catch_flow_type = nb;
 											  I.exp_catch_flow_var = None;
 											  I.exp_catch_body = I.Label ((nl2,1),I.Empty b.I.exp_while_pos);	
@@ -1550,7 +1560,8 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.CallNRecv _ -> false
     | I.CallRecv _ -> false
     | I.Cast _ -> false
-    | I.Cond e ->
+    | I.Catch b-> all_paths_return b.I.exp_catch_body
+	| I.Cond e ->
 	(all_paths_return e.I.exp_cond_then_arm) &&
           (all_paths_return e.I.exp_cond_else_arm)
     | I.ConstDecl _ -> false
@@ -1559,6 +1570,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.Dprint _ -> false
     | I.Empty _ -> false
     | I.FloatLit _ -> false
+	| I.Finally b-> all_paths_return b.I.exp_finally_body
     | I.IntLit _ -> false
     | I.Java _ -> false
     | I.Label (_,e)-> all_paths_return e
@@ -1566,9 +1578,7 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.New _ -> false
     | I.Null _ -> false
     | I.Return _ -> true
-    | I.Seq e ->
-	(all_paths_return e.I.exp_seq_exp1) ||
-          (all_paths_return e.I.exp_seq_exp2)
+    | I.Seq e -> (all_paths_return e.I.exp_seq_exp1) || (all_paths_return e.I.exp_seq_exp2)
     | I.This _ -> false
     | I.Time _ -> false
     | I.Unary _ -> false
@@ -1577,10 +1587,10 @@ and all_paths_return (e0 : I.exp) : bool =
     | I.While _ -> false
     | I.Unfold _ -> false
     | I.Raise _ -> true
-    | I.Try e -> (all_paths_return e.I.exp_try_block) || (List.fold_left (fun a b-> a && (all_paths_return b.I.exp_catch_body)) true e.I.exp_catch_clauses)
+    | I.Try e -> (all_paths_return e.I.exp_try_block) || (List.fold_left (fun a b-> a && (all_paths_return b)) true e.I.exp_catch_clauses)
 	|| match e.I.exp_finally_clause with 
 	  | [] -> false
-	  | h::t -> (all_paths_return h.I.exp_finally_body)
+	  | h::t -> (all_paths_return h)
 
 and check_return (proc : I.proc_decl) : bool =
   match proc.I.proc_body with
@@ -2155,7 +2165,54 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                    C.exp_block_local_vars = local_vars;
                                    C.exp_block_pos = pos; }),ret_ct)))
                   with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");})
-    | I.Cond {
+	
+     | I.Catch { I.exp_catch_var = cv;
+			  I.exp_catch_flow_type = cvt;
+			  I.exp_catch_flow_var = cfv;
+			  I.exp_catch_body = cb;	
+			  I.exp_catch_pos = pos}->	
+      if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
+								    Err.error_text = "can not catch a not raisable object" }
+      else begin
+		match cv with
+		  | Some x ->
+			  if (String.compare cvt c_flow)=0 then  begin
+			E.push_scope();
+			let new_bd, ct2 = trans_exp prog proc cb in
+			  E.pop_scope();
+			 ( C.Catch{C.exp_catch_flow_type = (Util.get_hash_of_exc c_flow);
+			   C.exp_catch_flow_var = cfv;
+			   C.exp_catch_var = Some (Cpure.Prim Void,x);
+			   C.exp_catch_body = new_bd;																					   
+			   C.exp_catch_pos = pos;},ct2) end
+			  else begin
+			E.push_scope();
+			let alpha = E.alpha_name x in
+			  E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
+			  (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
+			  let new_bd, ct2 = trans_exp prog proc cb in
+				(*let _ = print_string ("\n rrr2 -> \n") in*)
+			  let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
+				E.pop_scope();
+				let r = C.Catch {C.exp_catch_flow_type = (match ct with 
+								| CP.OType ot-> (Util.get_hash_of_exc ot) 
+								| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
+					 C.exp_catch_flow_var = cfv;
+					 C.exp_catch_var = Some (ct,alpha);
+					 C.exp_catch_body = new_bd;																					   
+					 C.exp_catch_pos = pos;
+					} in (r,ct2) end
+		  | None ->  
+			  E.push_scope();
+			  let new_bd, ct2 = trans_exp prog proc cb in
+			E.pop_scope();
+			(C.Catch{	C.exp_catch_flow_type = Util.get_hash_of_exc cvt;
+						C.exp_catch_flow_var = cfv;
+						C.exp_catch_var = None;
+						C.exp_catch_body = new_bd;																					   
+						C.exp_catch_pos = pos;},ct2)
+	  end
+	| I.Cond {
           I.exp_cond_condition = e1;
           I.exp_cond_then_arm = e2;
           I.exp_cond_else_arm = e3;
@@ -2558,6 +2615,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
     | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
         (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
+	| Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";} 
     | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
     | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
     | Iast.Break _ -> failwith (Iprinter.string_of_exp ie)
@@ -2637,7 +2695,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             if ((List.length fl_list)>0) then
               Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, i still found a finally clause" }
             else
-              let new_clauses = List.map (translate_catch prog proc pos) cl_list in
+              let new_clauses = List.map (fun c-> fst(trans_exp prog proc c)) cl_list in
               let new_body , ct1 = trans_exp prog proc body in
                 (match (List.length cl_list) with
                    | 0 -> (new_body,ct1)
@@ -2647,18 +2705,19 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                        C.exp_catch_clause = (List.hd new_clauses) ;
                        C.exp_try_pos = pos}),C.void_type)
                    | _ -> let r1 = List.fold_left (fun a c ->
+					   let c = C.get_catch_of_exp c in
                        let fl_var = fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum in
                          C.Try({ C.exp_try_type = ct1;
                            C.exp_try_body = a;
                            C.exp_try_path_id = fresh_strict_branch_point_id "";
                            C.exp_try_pos = pos;
                            C.exp_catch_clause =
-                             ({ c with C.exp_catch_body =
+                             C.Catch({ c with C.exp_catch_body =
                             C.Try({C.exp_try_type = CP.Prim Void;
                              C.exp_try_path_id = fresh_strict_branch_point_id "";
                              C.exp_try_body = c.C.exp_catch_body;
                              C.exp_try_pos = c.C.exp_catch_pos;		   
-                             C.exp_catch_clause = {
+                             C.exp_catch_clause = C.Catch{
                                C.exp_catch_flow_type = Util.get_hash_of_exc c_flow;
                                C.exp_catch_flow_var = Some fl_var;
                                C.exp_catch_var = None;
@@ -2681,7 +2740,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		 let r = C.Try({C.exp_try_type = (match r1 with | C.Try t -> t.C.exp_try_type | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, compacting case's failed" });
 				C.exp_try_body = r1;
 				C.exp_try_path_id = pid;
-				C.exp_catch_clause = {
+				C.exp_catch_clause = C.Catch{
 				  C.exp_catch_flow_type = !spec_flow_int;
 				  C.exp_catch_flow_var = None (*Some (fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum)*);
 				  C.exp_catch_var = None;
@@ -2699,57 +2758,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		   (r, C.void_type)
 	    )
 	      (*| _ -> failwith (Iprinter.string_of_exp ie)*)
-	      
-and translate_catch prog proc pos c :C.exp_catch = match c with 
-  | { I.exp_catch_var = cv;
-      I.exp_catch_flow_type = cvt;
-      I.exp_catch_flow_var = cfv;
-      I.exp_catch_body = cb;	
-      I.exp_catch_pos = pos}->	
-      if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
-								    Err.error_text = "can not catch a not raisable object" }
-      else begin
-	match cv with
-	  | Some x ->
-	      if (String.compare cvt c_flow)=0 then  begin
-		E.push_scope();
-		let new_bd, ct2 = trans_exp prog proc cb in
-		  E.pop_scope();
-		  {C.exp_catch_flow_type = (Util.get_hash_of_exc c_flow);
-		   C.exp_catch_flow_var = cfv;
-		   C.exp_catch_var = Some (Cpure.Prim Void,x);
-		   C.exp_catch_body = new_bd;																					   
-		   C.exp_catch_pos = pos;} end
-	      else begin
-		E.push_scope();
-		let alpha = E.alpha_name x in
-		  E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
-		  (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
-		  let new_bd, ct2 = trans_exp prog proc cb in
-		    (*let _ = print_string ("\n rrr2 -> \n") in*)
-		  let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
-		    E.pop_scope();
-		    let r = {C.exp_catch_flow_type = (match ct with 
-							| CP.OType ot-> (Util.get_hash_of_exc ot) 
-							| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
-			     C.exp_catch_flow_var = cfv;
-			     C.exp_catch_var = Some (ct,alpha);
-			     C.exp_catch_body = new_bd;																					   
-			     C.exp_catch_pos = pos;
-			    } in r end
-	  | None ->  
-	      E.push_scope();
-	      let new_bd, ct2 = trans_exp prog proc cb in
-		E.pop_scope();
-		{	C.exp_catch_flow_type = Util.get_hash_of_exc cvt;
-			C.exp_catch_flow_var = cfv;
-			C.exp_catch_var = None;
-			C.exp_catch_body = new_bd;																					   
-			C.exp_catch_pos = pos;}
-      end
-	(*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
-	
-
+	  
 and default_value (t : CP.typ) pos : C.exp =
   match t with
     | CP.Prim Int -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
@@ -4415,11 +4424,16 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 					 Iast.exp_call_recv_receiver = helper ren b.Iast.exp_call_recv_receiver;
 					 Iast.exp_call_recv_arguments = List.map (helper ren) b.Iast.exp_call_recv_arguments}
     | Iast.CallNRecv b -> Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments}
+	| Iast.Catch b-> Iast.Catch {b with
+                         Iast.exp_catch_flow_var = (match b.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
+                         Iast.exp_catch_var = (match b.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
+                         Iast.exp_catch_body = helper ren b.Iast.exp_catch_body;}
     | Iast.Cast b -> Iast.Cast{b with Iast.exp_cast_body =  helper ren b.Iast.exp_cast_body}
     | Iast.Cond b -> Iast.Cond {b with 
 				  Iast.exp_cond_condition = helper ren b.Iast.exp_cond_condition;
 				  Iast.exp_cond_then_arm = helper ren b.Iast.exp_cond_then_arm;
 				  Iast.exp_cond_else_arm = helper ren b.Iast.exp_cond_else_arm}	  
+	| Iast.Finally b-> Iast.Finally {b with Iast.exp_finally_body = helper ren b.Iast.exp_finally_body}
     | Iast.Member b ->
               Iast.Member {b with 
                  Iast.exp_member_base = helper ren b.Iast.exp_member_base;
@@ -4453,12 +4467,8 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.Try b -> 
         Iast.Try { b with
                Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
-               Iast.exp_catch_clauses = List.map (fun c-> {c with
-                         Iast.exp_catch_flow_var = (match c.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
-                         Iast.exp_catch_var = (match c.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
-                         Iast.exp_catch_body = rename_exp ren c.Iast.exp_catch_body;}
-                         ) b.Iast.exp_catch_clauses;
-               Iast.exp_finally_clause = List.map (fun c-> {c with Iast.exp_finally_body = rename_exp ren c.Iast.exp_finally_body;}) b.Iast.exp_finally_clause;}
+               Iast.exp_catch_clauses = List.map (rename_exp ren) b.Iast.exp_catch_clauses;
+               Iast.exp_finally_clause = List.map (rename_exp ren) b.Iast.exp_finally_clause;}
     | Iast.Raise b-> 
         Iast.Raise {b with
                 Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
@@ -4504,6 +4514,22 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
                  Iast.exp_call_recv_arguments = nl},[])
       | Iast.Cast b->
             (Iast.Cast {b with Iast.exp_cast_body= fst (case_rename_var_decls b.Iast.exp_cast_body)},[])
+	  | Iast.Catch b->
+			  let ncv,ren = match b.Iast.exp_catch_var with
+                | None -> (None,[])
+                | Some e-> 
+                  let nn = (Ipure.fresh_old_name e) in
+                    ((Some nn),[(e,nn)])in
+              let ncfv,ren = match b.Iast.exp_catch_flow_var with
+                | None -> (None,ren)
+                | Some e-> 
+                  let nn = (Ipure.fresh_old_name e) in
+                    ((Some nn),(e,nn)::ren)in								
+              (Iast.Catch{b with 
+                   Iast.exp_catch_var = ncv ;
+                   Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
+                   Iast.exp_catch_flow_var = ncfv;
+                   Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren b.Iast.exp_catch_body));},[])
       | Iast.Cond b->
           let ncond,r = case_rename_var_decls b.Iast.exp_cond_condition in	
             (Iast.Cond {b with 
@@ -4516,6 +4542,7 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
                      let ne,_ = case_rename_var_decls c2 in
                        ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_const_decl_decls in
             (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nren)
+	  | Iast.Finally b -> (Iast.Finally {b with Iast.exp_finally_body = fst(case_rename_var_decls b.Iast.exp_finally_body)},[])
       | Iast.Label (pid,b)-> (Iast.Label (pid, fst (case_rename_var_decls b)),[])
       | Iast.Member b ->
           (Iast.Member {b with Iast.exp_member_base = fst (case_rename_var_decls b.Iast.exp_member_base)},[]) 
@@ -4547,28 +4574,10 @@ and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  ma
               Iast.exp_while_condition= fst (case_rename_var_decls b.Iast.exp_while_condition); 
               Iast.exp_while_body= fst (case_rename_var_decls b.Iast.exp_while_body);},[])
       | Iast.Try b-> 
-          let ncl = List.map (fun c-> 
-              let ncv,ren = match c.Iast.exp_catch_var with
-                | None -> (None,[])
-                | Some e-> 
-                  let nn = (Ipure.fresh_old_name e) in
-                    ((Some nn),[(e,nn)])in
-              let ncfv,ren = match c.Iast.exp_catch_flow_var with
-                | None -> (None,ren)
-                | Some e-> 
-                  let nn = (Ipure.fresh_old_name e) in
-                    ((Some nn),(e,nn)::ren)in								
-              {c with 
-                   Iast.exp_catch_var = ncv ;
-                   Iast.exp_catch_flow_type = c.Iast.exp_catch_flow_type;
-                   Iast.exp_catch_flow_var = ncfv;
-                   Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren c.Iast.exp_catch_body));
-                   }) b.Iast.exp_catch_clauses in 
-          let nfl = List.map (fun c-> 
-              {c with Iast.exp_finally_body = fst(case_rename_var_decls c.Iast.exp_finally_body)}) b.Iast.exp_finally_clause in
+          let nfl = List.map (fun c-> fst(case_rename_var_decls c)) b.Iast.exp_finally_clause in
             (Iast.Try {b with 
                Iast.exp_try_block = fst (case_rename_var_decls b.Iast.exp_try_block);
-               Iast.exp_catch_clauses = ncl;
+               Iast.exp_catch_clauses = List.map (fun c-> fst (case_rename_var_decls c))b.Iast.exp_catch_clauses;
                Iast.exp_finally_clause = nfl;
                 },[])
       | Iast.Raise b-> (Iast.Raise {b with 
@@ -4667,6 +4676,21 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
       | Iast.Cast b->
           let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_cast_body in
             (Iast.Cast {b with Iast.exp_cast_body= nb},h,p)
+	  | Iast.Catch b ->
+	    let ncv,nh,np = match b.Iast.exp_catch_var with
+                | None -> (None,h,p)
+                | Some e-> ((Some e),(e,Primed)::h,(e,Primed)::p)in
+        let ncfv,nh,np = match b.Iast.exp_catch_flow_var with
+                | None -> (None,nh,np)
+                | Some e->
+                    ((Some e),(e,Primed)::nh,(e,Primed)::np) in	
+        let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_catch_body in									
+        (Iast.Catch {b with 
+                   Iast.exp_catch_var = ncv ;
+                   Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
+                   Iast.exp_catch_flow_var = ncfv;
+                   Iast.exp_catch_body = nb;},nh,np)
+	  
       | Iast.Cond b->
           let ncond,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_condition in	
           let nthen,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_then_arm in
@@ -4684,6 +4708,9 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
           let nh = nvlprm@h in
           let np = (List.map (fun c->(c,Primed))nvl)@p in
             (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nh,np)
+	  | Iast.Finally b-> 
+		  let nf,h,p = case_normalize_exp prog h p b.Iast.exp_finally_body in
+		  (Iast.Finally {b with Iast.exp_finally_body= nf},h,p)
       | Iast.Label (pid,b)-> 
           let nb,_,_ =  case_normalize_exp prog h p b in 
           (Iast.Label (pid, nb),h,p)
@@ -4724,26 +4751,11 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
             (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
       | Iast.Try b-> 
           let nb,nh,np = case_normalize_exp prog h p b.Iast.exp_try_block in
-          let ncl = List.map (fun c-> 
-              let ncv,nh,np = match c.Iast.exp_catch_var with
-                | None -> (None,h,p)
-                | Some e-> ((Some e),(e,Primed)::h,(e,Primed)::p)in
-              let ncfv,nh,np = match c.Iast.exp_catch_flow_var with
-                | None -> (None,nh,np)
-                | Some e->
-                    ((Some e),(e,Primed)::nh,(e,Primed)::np) in	
-              let nb,_,_ = case_normalize_exp prog nh np c.Iast.exp_catch_body in									
-                {c with 
-                   Iast.exp_catch_var = ncv ;
-                   Iast.exp_catch_flow_type = c.Iast.exp_catch_flow_type;
-                   Iast.exp_catch_flow_var = ncfv;
-                   Iast.exp_catch_body = nb;}) b.Iast.exp_catch_clauses in 
-          let nfl = List.map (fun c-> let nf,_,_ = case_normalize_exp prog nh np c.Iast.exp_finally_body in
-              {c with Iast.exp_finally_body = nf}) b.Iast.exp_finally_clause in
-            (Iast.Try {b with 
+		  let f l =  List.map (fun c-> let nf,_,_ = case_normalize_exp prog nh np c in nf) l in
+          (Iast.Try {b with 
              Iast.exp_try_block = nb;
-             Iast.exp_catch_clauses = ncl;
-             Iast.exp_finally_clause = nfl;
+             Iast.exp_catch_clauses = f b.Iast.exp_catch_clauses;
+             Iast.exp_finally_clause = f b.Iast.exp_finally_clause;
                 },h,p)
       | Iast.Raise b-> (Iast.Raise {b with 
 				      Iast.exp_raise_val = (match b.Iast.exp_raise_val with

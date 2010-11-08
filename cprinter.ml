@@ -1208,6 +1208,15 @@ let rec string_of_exp = function
 	   exp_cast_body = body}) -> begin
       "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
     end
+ | Catch b->   
+     let c = b.exp_catch_flow_type in
+	"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
+	  (match b.exp_catch_flow_var with 
+	     | Some c -> (" @"^c^" ")
+	     | _ -> " ")^
+	  (match b.exp_catch_var with 
+	     | Some (a,b) -> ((string_of_typ a)^":"^b^" ")
+	     | _ -> " ")^") \n\t"^(string_of_exp b.exp_catch_body)
   | Cond ({exp_cond_type = _;
 	   exp_cond_condition = id;
 	   exp_cond_then_arm = e1;
@@ -1273,16 +1282,7 @@ let rec string_of_exp = function
 	    exp_while_pos = l}) -> 
       string_of_control_path_id_opt pid ("while " ^ id ^ (string_of_struc_formula fl) ^ "\n{\n" ^ (string_of_exp e) ^ "\n}\n")
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
-  | Try b -> 
-      let c = b.exp_catch_clause.exp_catch_flow_type in
-	string_of_control_path_id b.exp_try_path_id  
-	  "try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
-	  (match b.exp_catch_clause.exp_catch_flow_var with 
-	     | Some c -> (" @"^c^" ")
-	     | _ -> " ")^
-	  (match b.exp_catch_clause.exp_catch_var with 
-	     | Some (a,b) -> ((string_of_typ a)^":"^b^" ")
-	     | _ -> " ")^") \n\t"^(string_of_exp b.exp_catch_clause.exp_catch_body)
+  | Try b -> string_of_control_path_id b.exp_try_path_id  "try \n"^(string_of_exp b.exp_try_body)^(string_of_exp b.exp_catch_clause )
 ;;
 
 

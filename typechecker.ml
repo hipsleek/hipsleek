@@ -201,6 +201,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let ctx2 = CF.push_exists_list_failesc_context svars ctx1 in
 	        if !Globals.elim_exists then elim_exists_failesc_ctx_list ctx2 else ctx2
 	      end
+		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
+                    Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"}
         | Cond ({ exp_cond_type = t;
                   exp_cond_condition = v;
                   exp_cond_then_arm = e1;
@@ -392,6 +394,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
       	  exp_catch_clause = cc;
       	  exp_try_path_id = pid;
       	  exp_try_pos = pos })->
+		    let cc = get_catch_of_exp cc in
             let ctx = CF.transform_list_failesc_context (idf,(fun c-> CF.push_esc_level c pid),(fun x-> CF.Ctx x)) ctx in
 	          let ctx1 = check_exp prog proc ctx body post_start_label in
             let ctx2 = CF.pop_esc_level_list ctx1 pid in

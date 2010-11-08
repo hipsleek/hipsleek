@@ -213,6 +213,16 @@ let rec find_read_write_global_var
 		(r,w)
 	  end
   | I.Cast e -> find_read_write_global_var global_vars local_vars e.I.exp_cast_body
+  | I.Catch b -> 
+		let ident_list = match (b.I.exp_catch_var, b.I.exp_catch_flow_var) with
+							| None, None -> []
+							| None, Some v -> [v]
+							| Some v, None -> [v]
+							| Some v1, Some v2 -> v1::[v2] in			
+		let ident_set = to_IdentSet ident_list in
+		let new_global = IdentSet.diff global_vars ident_set in
+		let new_local = IdentSet.union local_vars ident_set in
+		(find_read_write_global_var new_global new_local b.I.exp_catch_body)
   | I.Cond e ->
 	  begin
 		let (r1,w1) = find_read_write_global_var global_vars local_vars e.I.exp_cond_then_arm in
@@ -230,6 +240,7 @@ let rec find_read_write_global_var
 		let w = union_all (List.map snd read_write_list) in
 		(r,w)
 	  end
+  | I.Finally b-> find_read_write_global_var global_vars local_vars b.I.exp_finally_body
   | I.Member e -> find_read_write_global_var global_vars local_vars e.I.exp_member_base
   | I.New e ->
 	  begin
@@ -328,18 +339,8 @@ let rec find_read_write_global_var
 	  end
   | I.Try e ->	
 		let (rb,wb) = find_read_write_global_var global_vars local_vars e.I.exp_try_block in
-		let l_catch = List.map (fun c ->
-					let ident_list = match (c.I.exp_catch_var, c.I.exp_catch_flow_var) with
-						| None, None -> []
-						| None, Some v -> [v]
-						| Some v, None -> [v]
-						| Some v1, Some v2 -> v1::[v2] in			
-					let ident_set = to_IdentSet ident_list in
-					let new_global = IdentSet.diff global_vars ident_set in
-					let new_local = IdentSet.union local_vars ident_set in
-					(find_read_write_global_var new_global new_local c.I.exp_catch_body)
-				) e.I.exp_catch_clauses  in
-		let l_final = List.map (fun c -> find_read_write_global_var global_vars local_vars c.I.exp_finally_body) e.I.exp_finally_clause  in
+		let l_catch = List.map (find_read_write_global_var global_vars local_vars) e.I.exp_catch_clauses  in
+		let l_final = List.map (find_read_write_global_var global_vars local_vars) e.I.exp_finally_clause  in
 		let all_r, all_w = List.split ((rb,wb)::(l_catch @ l_final)) in
 		((union_all all_r),(union_all all_w))
   | I.Raise e -> 
@@ -582,6 +583,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_cast_body = new_body } in
 		I.Cast new_exp
 	  end
+  | I.Catch e -> I.Catch {e with I.exp_catch_body = extend_body temp_procs e.I.exp_catch_body}
   | I.Cond e ->
 	  begin
 		let new_cond = extend_body temp_procs e.I.exp_cond_condition in
@@ -596,6 +598,7 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_const_decl_decls = new_decls } in
 		I.ConstDecl new_exp
 	  end
+  | I.Finally e -> I.Finally {e with I.exp_finally_body = extend_body temp_procs e.I.exp_finally_body}
   | I.Member e ->
 	  begin
 		let new_base = extend_body temp_procs e.I.exp_member_base in
@@ -646,10 +649,8 @@ and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   | I.Try e ->
 		I.Try {e with 
 			I.exp_try_block = extend_body temp_procs e.I.exp_try_block;
-			I.exp_catch_clauses = List.map (fun c -> 
-				{c with I.exp_catch_body = extend_body temp_procs c.I.exp_catch_body}) e.I.exp_catch_clauses;
-			I.exp_finally_clause = List.map (fun c-> 
-				{c with I.exp_finally_body = (extend_body temp_procs c.I.exp_finally_body)}) e.I.exp_finally_clause;
+			I.exp_catch_clauses = List.map (extend_body temp_procs) e.I.exp_catch_clauses;
+			I.exp_finally_clause = List.map (extend_body temp_procs) e.I.exp_finally_clause;
 			}
   | I.Raise e -> I.Raise {e with 
 		I.exp_raise_val = match e.I.exp_raise_val with 
@@ -756,6 +757,25 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_cast_body = new_body } in
 		I.Cast new_exp
 	  end
+  | I.Catch e -> 
+		let (f_catch_var, int_catch_var ) = match e.I.exp_catch_var with
+					| None -> (None , [])
+					| Some v ->
+						let s = (create_new_ids global_vars v) in
+						(Some s, [s]) in
+		let (f_flow_var, int_flow_var ) = match e.I.exp_catch_flow_var with
+					| None -> (None , [])
+					| Some v ->
+						let s = (create_new_ids global_vars v) in
+						(Some s, [s]) in				
+		let ident_list = int_catch_var @ int_flow_var in
+		let new_ident_list = List.map (create_new_ids global_vars) ident_list in
+		let renlist = List.combine ident_list new_ident_list in
+		let new_exp2 = Astsimp.rename_exp renlist e.I.exp_catch_body in
+	I.Catch {e with 
+		I.exp_catch_var = f_catch_var;
+		I.exp_catch_flow_var = f_flow_var;
+		I.exp_catch_body = (check_and_change global_vars new_exp2);}
   | I.Cond e ->
 	  begin
 		let new_cond = check_and_change global_vars e.I.exp_cond_condition in
@@ -764,6 +784,7 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
 		let new_exp = { e with I.exp_cond_condition = new_cond; I.exp_cond_then_arm = new_then; I.exp_cond_else_arm = new_else } in
 		I.Cond new_exp
 	  end
+  | I.Finally e -> I.Finally {e with I.exp_finally_body = check_and_change global_vars e.I.exp_finally_body}
   | I.Member e ->
 	  begin
 		let new_base = check_and_change global_vars e.I.exp_member_base in
@@ -830,31 +851,8 @@ let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
  | I.Try e ->
 		I.Try {e with 
 			I.exp_try_block = check_and_change global_vars e.I.exp_try_block;
-			I.exp_catch_clauses = List.map (fun c-> 			
-				let (f_catch_var, int_catch_var ) = match c.I.exp_catch_var with
-					| None -> (None , [])
-					| Some v ->
-						let s = (create_new_ids global_vars v) in
-						(Some s, [s]) in
-				let (f_flow_var, int_flow_var ) = match c.I.exp_catch_flow_var with
-					| None -> (None , [])
-					| Some v ->
-						let s = (create_new_ids global_vars v) in
-						(Some s, [s]) in				
-				let ident_list = int_catch_var @ int_flow_var in
-				let new_ident_list = List.map (create_new_ids global_vars) ident_list in
-				let renlist = List.combine ident_list new_ident_list in
-				let new_exp2 = Astsimp.rename_exp renlist c.I.exp_catch_body in
-					{c with 
-						I.exp_catch_var = f_catch_var;
-						I.exp_catch_flow_var = f_flow_var;
-						I.exp_catch_body = (check_and_change global_vars new_exp2);
-					}
-			) e.I.exp_catch_clauses;
-			
-			I.exp_finally_clause = List.map (fun c -> 
-				let nf_b = (check_and_change global_vars c.I.exp_finally_body) in			
-				{c with I.exp_finally_body = nf_b}) e.I.exp_finally_clause;
+			I.exp_catch_clauses = List.map (check_and_change global_vars) e.I.exp_catch_clauses;
+			I.exp_finally_clause = List.map (check_and_change global_vars) e.I.exp_finally_clause;
 			}
   | I.Raise e -> I.Raise {e with 
 		I.exp_raise_val = match e.I.exp_raise_val with 

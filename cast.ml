@@ -178,10 +178,10 @@ and exp_catch = {
   exp_catch_pos : loc }
     
 and exp_try = { exp_try_type : P.typ;
-		exp_try_body : exp;
-		exp_try_path_id : control_path_id_strict;
-		exp_catch_clause : exp_catch ;
-		exp_try_pos : loc }
+				exp_try_body : exp;
+				exp_try_path_id : control_path_id_strict;
+				exp_catch_clause : exp ;
+				exp_try_pos : loc }
 
 and exp_this = { exp_this_type : P.typ;
 		 exp_this_pos : loc }
@@ -230,6 +230,7 @@ and exp = (* expressions keep their types *)
   | Block of exp_block
   | Cond of exp_cond
   | Cast of exp_cast
+  | Catch of exp_catch
   | Debug of exp_debug
   | Dprint of exp_dprint
   | FConst of exp_fconst
@@ -329,9 +330,11 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 			     exp_cond_else_arm = e2;},r)
 		      
 	      | Cast b -> 
-		  let e1,r1 = helper n_arg b.exp_cast_body  in  
+        let e1,r1 = helper n_arg b.exp_cast_body  in  
 		    (Cast {b with exp_cast_body = e1},r1)
-
+        | Catch b ->
+          let e1,r1 = helper n_arg b.exp_catch_body in
+        (Catch {b with exp_catch_body = e1},r1)
 	      | Seq b ->
 		  let e1,r1 = helper n_arg b.exp_seq_exp1 in 
 		  let e2,r2 = helper n_arg b.exp_seq_exp2 in 
@@ -343,8 +346,9 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 		    (While { b with exp_while_body = e1; }, r1)
 
 	      | Try b ->
-		  let e1,r1 = helper n_arg b.exp_try_body in 
-		    (Try { b with exp_try_body = e1; }, r1)
+          let e1,r1 = helper n_arg b.exp_try_body in 
+          let e2,r2 = helper n_arg b.exp_catch_clause in
+		    (Try { b with exp_try_body = e1; exp_catch_clause=e2}, (comb_f [r1;r2]))
 
   in helper init_arg e
 
@@ -468,6 +472,7 @@ let rec type_of_exp (e : exp) = match e with
 			exp_icall_arguments = _;
 			exp_icall_pos = _}) -> Some t
   | Cast ({exp_cast_target_type = t}) -> Some t
+  | Catch _ -> Some void_type
   | Cond ({exp_cond_type = t;
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = _;
@@ -637,6 +642,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_block_local_vars = _;
 			exp_block_pos = _}) -> callees_of_exp e
   | Cast ({exp_cast_body = e}) -> callees_of_exp e
+  | Catch e-> callees_of_exp e.exp_catch_body
   | Cond ({exp_cond_type = _;
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = e1;
@@ -674,7 +680,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_while_body = e;
 			exp_while_spec = _;
 			exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
-  | Try b -> U.remove_dups ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause.exp_catch_body))
+  | Try b -> U.remove_dups ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
 
 let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
@@ -858,6 +864,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Print _
   | VarDecl _
   | Cast _
+  | Catch _
   | Block _
   | FConst _
   | Assert _ 
@@ -886,6 +893,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos
   | Cast b -> b.exp_cast_pos
+  | Catch b -> b.exp_catch_pos
   | Debug b -> b.exp_debug_pos
   | Dprint b -> b.exp_dprint_pos
   | Assign b -> b.exp_assign_pos
@@ -911,6 +919,10 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos
   | Try b -> b.exp_try_pos
   | Label b -> pos_of_exp b.exp_label_exp
+	  
+let get_catch_of_exp e = match e with
+	| Catch e -> e
+	| _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}
   
   
 let rec check_proper_return cret_type exc_list f = 

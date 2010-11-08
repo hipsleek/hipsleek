@@ -265,10 +265,10 @@ and exp_seq = { exp_seq_exp1 : exp;
 and exp_this = { exp_this_pos : loc }
 
 and exp_try = { exp_try_block : exp;
-		exp_catch_clauses : exp_catch list;
-		exp_finally_clause : exp_finally list;
-		exp_try_path_id : control_path_id;
-		exp_try_pos : loc}
+				exp_catch_clauses : exp list;
+				exp_finally_clause : exp list;
+				exp_try_path_id : control_path_id;
+				exp_try_pos : loc}
 
 (*and exp_throw = { exp_throw_type : ident;
   exp_throw_pos : loc }
@@ -316,11 +316,12 @@ and exp =
   | Cond of exp_cond
   | ConstDecl of exp_const_decl
   | Continue of exp_continue
-      (* | Catch of exp_catch *)
+  | Catch of exp_catch
   | Debug of exp_debug
   | Dprint of exp_dprint
   | Empty of loc
   | FloatLit of exp_float_lit
+  | Finally of exp_finally
   | IntLit of exp_int_lit
   | Java of exp_java
   | Label of ((control_path_id * path_label) * exp)
@@ -426,7 +427,7 @@ let is_null (e : exp) : bool = match e with
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
   | _ ->false
-
+  
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
@@ -439,6 +440,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | CallRecv e -> e.exp_call_recv_pos
   | CallNRecv e -> e.exp_call_nrecv_pos
   | Cast e -> e.exp_cast_pos
+  | Catch e -> e.exp_catch_pos
   | Cond e -> e.exp_cond_pos
   | ConstDecl e -> e.exp_const_decl_pos
   | Continue p -> p.exp_continue_pos
@@ -446,6 +448,7 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Dprint e -> e.exp_dprint_pos
   | Empty p -> p
   | FloatLit e -> e.exp_float_lit_pos
+  | Finally e -> e.exp_finally_pos
   | IntLit e -> e.exp_int_lit_pos
   | Java e -> e.exp_java_pos
   | Member e -> e.exp_member_pos
@@ -463,7 +466,15 @@ let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Time (_,_,l) ->  l
   | Raise e -> e.exp_raise_pos
 	  
-(*
+	  
+let get_catch_of_exp e = match e with
+	| Catch e -> e
+	| _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting catch clause"}
+
+let get_finally_of_exp e = match e with
+	| Finally e -> e
+	| _  -> Error.report_error {Err.error_loc = get_exp_pos e; Err.error_text = "malformed expression, expecting finally clause"}
+	(*
 let rec type_of_exp e = match e with
   | Assert _ -> None
   | Assign _ -> Some void_type
@@ -711,6 +722,7 @@ and contains_field (e0 : exp) : bool = match e0 with
 	  || (List.exists contains_field e.exp_call_recv_arguments)
   | CallNRecv e -> List.exists contains_field e.exp_call_nrecv_arguments
   | Cast e -> contains_field e.exp_cast_body
+  | Catch e -> contains_field e.exp_catch_body
   | Cond e ->
 	  let e1 = e.exp_cond_condition in
 	  let e2 = e.exp_cond_then_arm in
@@ -722,6 +734,7 @@ and contains_field (e0 : exp) : bool = match e0 with
   | Dprint _ -> false
   | Empty _ -> false
   | FloatLit _ -> false
+  | Finally e -> contains_field e.exp_finally_body
   | IntLit _ -> false
   | Java _ -> false
   | Label (_,e)-> contains_field e
@@ -740,8 +753,8 @@ and contains_field (e0 : exp) : bool = match e0 with
   | Unfold _ -> false
   | Raise e -> begin match e.exp_raise_val with | None -> false | Some e -> contains_field e end
   | Try e -> (contains_field e.exp_try_block) ||
-			 (List.exists (fun c-> contains_field c.exp_catch_body  ) e.exp_catch_clauses)||
-			 (List.exists (fun c-> contains_field c.exp_finally_body) e.exp_finally_clause)
+			 (List.exists contains_field e.exp_catch_clauses)||
+			 (List.exists contains_field e.exp_finally_clause)
   | Time _ -> false
   
 (* smart constructors *)
@@ -920,6 +933,7 @@ let rec label_exp e = match e with
 			exp_call_nrecv_arguments =  List.map label_exp e.exp_call_nrecv_arguments;
 			exp_call_nrecv_path_id = nl;}
   | Cast e -> Cast {e with  exp_cast_body = label_exp e.exp_cast_body;}
+  | Catch e -> Error.report_error   {Err.error_loc = e.exp_catch_pos; Err.error_text = "unexpected catch clause"}
   | Cond e -> 
 		let nl = fresh_branch_point_id "" in
 		iast_label_table:= (nl,"cond",[(nl,0);(nl,1)],e.exp_cond_pos) ::!iast_label_table;
@@ -942,6 +956,7 @@ let rec label_exp e = match e with
   | FloatLit _ 
   | IntLit _
   | Java _ -> e
+  | Finally e -> Finally {e with exp_finally_body = label_exp e.exp_finally_body}
   | Label (pid,e) -> Label (pid, (label_exp e))
   | Member e -> 
 		let nl = fresh_branch_point_id "" in
@@ -975,16 +990,14 @@ let rec label_exp e = match e with
 		let nl = fresh_branch_point_id "" in
 		let rec lbl_list_constr n = if n==0 then [] else (nl,n)::(lbl_list_constr (n-1)) in
 		iast_label_table:= (nl,"try",(lbl_list_constr (List.length e.exp_catch_clauses)),e.exp_try_pos)::!iast_label_table;
-		let lbl_c n d = {d with	exp_catch_body = Label((nl,n),label_exp d.exp_catch_body);} in
+		let lbl_c n d = 
+			let d = get_catch_of_exp d in
+			Catch {d with	exp_catch_body = Label((nl,n),label_exp d.exp_catch_body);} in
 		Try {e with
 				exp_try_block = label_exp e.exp_try_block;
 				exp_try_path_id = nl;
 				exp_catch_clauses  = (fst (List.fold_left (fun (a,c) d-> ((lbl_c c d)::a, c+1)) ([],0) e.exp_catch_clauses));
-				exp_finally_clause = 
-					(List.map (fun c ->
-					{c with exp_finally_body = label_exp c.exp_finally_body;})
-					e.exp_finally_clause);}
-				(*(fst (List.split (List.fold_left (fun (a,c) d-> ((lbl_f c d)::a, c+1)) ([],(List.length e.exp_catch_clauses)) e.exp_catch_clauses)));}*)
+				exp_finally_clause = List.map label_exp e.exp_finally_clause;}
   | Unary e -> 
 		let nl = fresh_branch_point_id "" in
 		iast_label_table:= (nl,"unary",[],e.exp_unary_pos) ::!iast_label_table;
@@ -1061,6 +1074,9 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
     | Cast b -> 
        let e1,r1 = helper n_arg b.exp_cast_body  in  
        (Cast {b with exp_cast_body = e1},r1)
+	| Catch b -> 
+		let e1,r1 = helper n_arg b.exp_catch_body in
+		(Catch {b with exp_catch_body = e1},r1)
     | Cond b -> 
         let e1,r1 = helper n_arg b.exp_cond_condition in
         let e2,r2 = helper n_arg b.exp_cond_then_arm in
@@ -1070,6 +1086,9 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
             exp_cond_condition = e1;
             exp_cond_then_arm = e2;
             exp_cond_else_arm = e3;},r)
+	| Finally b ->
+		let e1,r1 = helper n_arg b.exp_finally_body in
+		(Finally {b with exp_finally_body=e1},r1)
     | Label (l,b) -> 
       let e1,r1 = helper n_arg b in
       (Label (l,e1),r1)
@@ -1095,12 +1114,8 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
         let r = comb_f [r1;r2] in
         (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
     | Try b -> 
-      let ecl = List.map (fun c-> 
-        let ec,r = helper n_arg c.exp_catch_body in
-        ({c with exp_catch_body = ec},r))b.exp_catch_clauses in
-      let fcl = List.map (fun c-> 
-        let ec,r = helper n_arg c.exp_finally_body in        
-        ({c with exp_finally_body = ec},r))b.exp_finally_clause in
+      let ecl = List.map (helper n_arg) b.exp_catch_clauses in
+      let fcl = List.map (helper n_arg) b.exp_finally_clause in
       let tb,r1 = helper n_arg b.exp_try_block in
       let catc, rc = List.split ecl in
       let fin, rf = List.split fcl in
