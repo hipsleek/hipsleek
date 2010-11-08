@@ -2309,9 +2309,47 @@ let get_node_label n =  match n with
 	| ViewNode b -> b.h_formula_view_label
 	| _ -> None
 	
+
+(* generic transform for heap formula *)
+let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
+    (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) (zero:'b) :(h_formula * 'b) =
+  let rec helper (e:h_formula) (arg:'a) =
+	let r =  f arg e in 
+	match r with
+	| Some (e1,v) -> (e1,v)
+	| None  -> match e with	 
+		| Star s -> let new_arg = f_args arg e in
+          let (e1,r1)=helper s.h_formula_star_h1 new_arg in
+          let (e2,r2)=helper s.h_formula_star_h2 new_arg in
+            (Star {s with h_formula_star_h1 = e1;
+			     h_formula_star_h2 = e2;},f_comb [r1;r2])
+	    | DataNode _
+	    | ViewNode _
+	    | HTrue
+	    | HFalse -> (e,zero) 
+  in (helper e arg)
+
+let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
+  let f1 ac e = push_opt_void_pair (f ac e) in
+  fst (trans_h_formula e arg f1 f_args voidf ())
 	
-	
-let rec transform_h_formula f (e:h_formula):h_formula = 
+  (*this maps an expression without passing an argument*)
+let map_h_formula (e:h_formula) (f:h_formula->h_formula option) : h_formula = 
+  map_h_formula_args e () (fun _ e -> f e) idf2 
+
+  (*this computes a result from expression passing an argument*)
+let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option) (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  let f1 ac e = match (f ac e) with
+    | Some r -> Some (e,r)
+    | None ->  None in
+  snd(trans_h_formula e init_a f1 f_args comb_f zero)
+ 
+  (*this computes a result from expression without passing an argument*)
+let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f zero
+
+(* transform heap formula *)
+let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
 	let r =  f e in 
 	match r with
 	| Some e1 -> e1
@@ -2323,7 +2361,11 @@ let rec transform_h_formula f (e:h_formula):h_formula =
 	    | ViewNode _
 	    | HTrue
 	    | HFalse -> e
-	
+
+(* transform formula : f_p_t : pure formula
+   f_f : formula
+   f_h_f : heap formula
+*)
 let rec transform_formula f (e:formula):formula =
 	let (_, f_f, f_h_f, f_p_t) = f in
 	let r =  f_f e in 
@@ -2341,8 +2383,7 @@ let rec transform_formula f (e:formula):formula =
 			formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
 			formula_exists_pure = CP.transform_formula f_p_t e.formula_exists_pure;
 			formula_exists_branches = List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
-		
-		
+				
 let rec transform_ext_formula f (e:ext_formula) :ext_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
 	let r = f_e_f e in 

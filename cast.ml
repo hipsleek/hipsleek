@@ -282,73 +282,70 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
     match (f in_arg e) with
       | Some e1 -> e1
       | None  -> 
-	  let n_arg = f_args in_arg e in
-	    match e with
-	      | Assert _
-	      | Java _
-	      | CheckRef _ 
-	      | BConst _
-	      | Debug _
-	      | Dprint _
-	      | FConst _
-	      | ICall _
-	      | IConst _
-	      | New _
-	      | Null _
-	      | Print _
-	      | SCall _
-	      | This _
-	      | Time _
-	      | Var _
-	      | VarDecl _
-	      | Unfold _
-	      | Unit _
-	      | Sharp _
-		-> (e, zero)
-	      | Label b ->
-		  let e1,r1 = helper n_arg b.exp_label_exp  in
-		    (Label { b with exp_label_exp = e1;}, r1)
-		      
-	      | Assign b ->
-		  let e1,r1 = helper n_arg b.exp_assign_rhs in
-		    (Assign { b with exp_assign_rhs = e1; }, r1)
+	        let n_arg = f_args in_arg e in
+	        match e with
+	          | Assert _
+	          | Java _
+	          | CheckRef _ 
+	          | BConst _
+	          | Debug _
+	          | Dprint _
+	          | FConst _
+	          | ICall _
+	          | IConst _
+	          | New _
+	          | Null _
+	          | Print _
+	          | SCall _
+	          | This _
+	          | Time _
+	          | Var _
+	          | VarDecl _
+	          | Unfold _
+	          | Unit _
+	          | Sharp _
+		          -> (e, zero)
+	          | Label b ->
+		            let e1,r1 = helper n_arg b.exp_label_exp  in
+		            (Label { b with exp_label_exp = e1;}, r1)
+	          | Assign b ->
+		            let e1,r1 = helper n_arg b.exp_assign_rhs in
+		            (Assign { b with exp_assign_rhs = e1; }, r1)
 
-	      | Bind b ->
-		  let e1,r1 = helper n_arg b.exp_bind_body  in
-		    (Bind { b with exp_bind_body = e1; }, r1)
+	          | Bind b ->
+		            let e1,r1 = helper n_arg b.exp_bind_body  in
+		            (Bind { b with exp_bind_body = e1; }, r1)
 
-	      | Block b ->
-		  let e1,r1 = helper n_arg b.exp_block_body in
-		    (Block { b with exp_block_body = e1; }, r1)
-		      
-	      | Cond b ->
-		  let e1,r1 = helper n_arg b.exp_cond_then_arm in
-		  let e2,r2 = helper n_arg b.exp_cond_else_arm in
-		  let r = comb_f [r1;r2] in
-		    (Cond {b with
-			     exp_cond_then_arm = e1;
-			     exp_cond_else_arm = e2;},r)
-		      
-	      | Cast b -> 
-        let e1,r1 = helper n_arg b.exp_cast_body  in  
-		    (Cast {b with exp_cast_body = e1},r1)
-        | Catch b ->
-          let e1,r1 = helper n_arg b.exp_catch_body in
-        (Catch {b with exp_catch_body = e1},r1)
-	      | Seq b ->
-		  let e1,r1 = helper n_arg b.exp_seq_exp1 in 
-		  let e2,r2 = helper n_arg b.exp_seq_exp2 in 
-		  let r = comb_f [r1;r2] in
-		    (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+	          | Block b ->
+		            let e1,r1 = helper n_arg b.exp_block_body in
+		            (Block { b with exp_block_body = e1; }, r1)		         
+	          | Cond b ->
+		            let e1,r1 = helper n_arg b.exp_cond_then_arm in
+		            let e2,r2 = helper n_arg b.exp_cond_else_arm in
+		            let r = comb_f [r1;r2] in
+		            (Cond {b with
+			            exp_cond_then_arm = e1;
+			            exp_cond_else_arm = e2;},r)
+	          | Cast b -> 
+                    let e1,r1 = helper n_arg b.exp_cast_body  in  
+		            (Cast {b with exp_cast_body = e1},r1)
+              | Catch b ->
+                    let e1,r1 = helper n_arg b.exp_catch_body in
+                    (Catch {b with exp_catch_body = e1},r1)
+	          | Seq b ->
+		            let e1,r1 = helper n_arg b.exp_seq_exp1 in 
+		            let e2,r2 = helper n_arg b.exp_seq_exp2 in 
+		            let r = comb_f [r1;r2] in
+		            (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
 
-	      | While b ->
-		  let e1,r1 = helper n_arg b.exp_while_body in 
-		    (While { b with exp_while_body = e1; }, r1)
+	          | While b ->
+		            let e1,r1 = helper n_arg b.exp_while_body in 
+		            (While { b with exp_while_body = e1; }, r1)
 
-	      | Try b ->
-          let e1,r1 = helper n_arg b.exp_try_body in 
-          let e2,r2 = helper n_arg b.exp_catch_clause in
-		    (Try { b with exp_try_body = e1; exp_catch_clause=e2}, (comb_f [r1;r2]))
+	          | Try b ->
+                    let e1,r1 = helper n_arg b.exp_try_body in 
+                    let e2,r2 = helper n_arg b.exp_catch_clause in
+		            (Try { b with exp_try_body = e1; exp_catch_clause=e2}, (comb_f [r1;r2]))
 
   in helper init_arg e
 
