@@ -2859,8 +2859,50 @@ let transform_b_formula f (e:b_formula) :b_formula =
       let ne2 = transform_exp f_exp e2 in
       ListPerm (ne1,ne2,l)
 	  
-	  
-	  
+let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
+    let f_formula, f_b_formula, f_exp = f in
+    let f_formula_arg, f_b_formula_arg, f_exp_arg = f_arg in
+    let f_formula_comb, f_b_formula_comb, f_exp_comb = f_comb in
+    let foldr_b_f (arg: 'a) (e: b_formula): (b_formula * 'b) =
+        foldr_b_formula e arg (f_b_formula, f_exp) (f_b_formula_arg, f_exp_arg) (f_b_formula_comb, f_exp_comb)
+    in
+    let rec foldr_f (arg: 'a) (e: formula): (formula * 'b) =
+        let r = f_formula arg e in
+        match r with
+        | Some e1 -> e1
+        | None ->
+            let new_arg = f_formula_arg arg e in
+            let f_comb = f_formula_comb e in
+            match e with
+            | BForm (bf, lbl) ->
+                let new_bf, r1 = foldr_b_f new_arg bf in
+                (BForm (new_bf, lbl), f_comb [r1])
+            | And (f1, f2, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                let nf2, r2 = foldr_f new_arg f2 in
+                (And (nf1, nf2, l), f_comb [r1; r2])
+            | Or (f1, f2, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                let nf2, r2 = foldr_f new_arg f2 in
+                (Or (nf1, nf2, lbl, l), f_comb [r1; r2])
+            | Not (f1, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                (Not (nf1, lbl, l), f_comb [r1])
+            | Forall (sv, f1, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                (Forall (sv, nf1, lbl, l), f_comb [r1])
+            | Exists (sv, f1, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                (Exists (sv, nf1, lbl, l), f_comb [r1])
+    in foldr_f arg e
+
+let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
+    let f_comb = ((fun x l -> f_comb l), 
+                  (fun x l -> f_comb l),
+                  (fun x l -> f_comb l))
+    in
+    foldr_formula e arg f f_arg f_comb
+
 let rec transform_formula f (e:formula) :formula = 
 	let (f_formula, f_b_formula, f_exp) = f in
 	let r =  f_formula e in 

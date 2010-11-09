@@ -2312,7 +2312,7 @@ let get_node_label n =  match n with
 
 (* generic transform for heap formula *)
 let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
-      (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) (zero:'b) :(h_formula * 'b) =
+      (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
     let r =  f arg e in 
 	match r with
@@ -2327,27 +2327,27 @@ let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
 	      | DataNode _
 	      | ViewNode _
 	      | HTrue
-	      | HFalse -> (e,zero) 
+          | HFalse -> (e, f_comb []) 
   in (helper e arg)
 
 let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
   let f1 ac e = push_opt_void_pair (f ac e) in
-  fst (trans_h_formula e arg f1 f_args voidf ())
+  fst (trans_h_formula e arg f1 f_args voidf)
 	
   (*this maps an expression without passing an argument*)
 let map_h_formula (e:h_formula) (f:h_formula->h_formula option) : h_formula = 
   map_h_formula_args e () (fun _ e -> f e) idf2 
 
   (*this computes a result from expression passing an argument*)
-let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option) (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
+let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option) (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) : 'b =
   let f1 ac e = match (f ac e) with
     | Some r -> Some (e,r)
     | None ->  None in
-  snd(trans_h_formula e init_a f1 f_args comb_f zero)
+  snd(trans_h_formula e init_a f1 f_args comb_f)
  
   (*this computes a result from expression without passing an argument*)
-let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) (zero:'b) : 'b =
-  fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f zero
+let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) : 'b =
+  fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f 
 
 (* transform heap formula *)
 let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
@@ -2385,7 +2385,62 @@ let rec transform_formula f (e:formula):formula =
 			formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
 			formula_exists_pure = CP.transform_formula f_p_t e.formula_exists_pure;
 			formula_exists_branches = List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
-				
+
+let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
+  let f_ext_f, f_f, f_heap_f, f_pure = f in
+  let f_ext_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg = f_arg in
+  let trans_heap (e: h_formula) (arg: 'a) : (h_formula * 'b) =
+    trans_h_formula e arg f_heap_f f_heap_f_arg f_comb
+  in
+  let trans_pure (e: CP.formula) (arg: 'a) : (CP.formula * 'b) =
+    CP.trans_formula e arg f_pure f_pure_arg f_comb
+  in
+  let trans_branches (branches: (branch_label * CP.formula) list) (arg: 'a) =
+    let trans_branch (lbl, e: branch_label * CP.formula) =
+      let ne, v = trans_pure e arg in
+      ((lbl, ne), f_comb [v])
+    in
+    let new_branches, vals = List.split (List.map trans_branch branches) in
+    (new_branches, f_comb vals)
+  in
+  let rec trans_f (e: formula) (arg: 'a) : (formula * 'b) =
+    let r = f_f arg e in
+    match r with
+    | Some e1 -> e1
+    | None ->
+        let new_arg = f_f_arg arg e in
+        match e with
+        | Base b ->
+            let new_heap, v1 = trans_heap b.formula_base_heap new_arg in
+            let new_pure, v2 = trans_pure b.formula_base_pure new_arg in
+            let new_branches, v3 = trans_branches b.formula_base_branches new_arg in
+            let new_base = Base { b with
+              formula_base_heap = new_heap;
+              formula_base_pure = new_pure;
+              formula_base_branches = new_branches; }
+            in
+            (new_base, f_comb [v1; v2; v3])
+        | Or o ->
+            let nf1, v1 = trans_f o.formula_or_f1 new_arg in
+            let nf2, v2 = trans_f o.formula_or_f2 new_arg in
+            let new_or = Or { o with
+              formula_or_f1 = nf1;
+              formula_or_f2 = nf2; }
+            in
+            (new_or, f_comb [v1; v2])
+        | Exists e ->
+            let new_heap, v1 = trans_heap e.formula_exists_heap new_arg in
+            let new_pure, v2 = trans_pure e.formula_exists_pure new_arg in
+            let new_branches, v3 = trans_branches e.formula_exists_branches new_arg in
+            let new_exists = Exists { e with
+              formula_exists_heap = new_heap;
+              formula_exists_pure = new_pure;
+              formula_exists_branches = new_branches; }
+            in
+            (new_exists, f_comb [v1; v2; v3])
+  in
+  trans_f e arg
+
 let rec transform_ext_formula f (e:ext_formula) :ext_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
 	let r = f_e_f e in 
@@ -2404,12 +2459,78 @@ let rec transform_ext_formula f (e:ext_formula) :ext_formula =
 and transform_struc_formula f (e:struc_formula)	:struc_formula = 
 	List.map (transform_ext_formula f) e
 		
+let rec trans_ext_formula (e: ext_formula) (arg: 'a) f f_arg f_comb : (ext_formula * 'b) =
+  let f_ext_f, f_f, f_h_formula, f_pure = f in
+  let f_ext_f_arg, f_f_arg, f_h_f_arg, f_pure_arg = f_arg in
+  let trans_pure (e: CP.formula) (arg: 'a) : (CP.formula * 'b) =
+    CP.trans_formula e arg f_pure f_pure_arg f_comb
+  in
+  let trans_struc (e: struc_formula) (arg: 'a) : (struc_formula * 'b) =
+    trans_struc_formula e arg f f_arg f_comb
+  in
+  let trans_f (e: formula) (arg: 'a) : (formula * 'b) =
+    trans_formula e arg f f_arg f_comb
+  in
+  let trans_ext (e: ext_formula) (arg: 'a) : (ext_formula * 'b) =
+    let r = f_ext_f arg e in
+    match r with
+    | Some e1 -> e1
+    | None ->
+        let new_arg = f_ext_f_arg arg e in
+        match e with
+        | ECase c ->
+            let helper (e: CP.formula * struc_formula): (CP.formula * struc_formula) * 'b =
+              let e1, e2 = e in
+              let ne1, v1 = trans_pure e1 new_arg in
+              let ne2, v2 = trans_struc e2 new_arg in
+              ((ne1, ne2), f_comb [v1; v2])
+            in
+            let new_case_branches, vals = List.split (List.map helper c.formula_case_branches) in
+            (ECase {c with formula_case_branches = new_case_branches}, f_comb vals)
+        | EBase b ->
+            let new_base, v1 = trans_f b.formula_ext_base new_arg in
+            let new_cont, v2 = trans_struc b.formula_ext_continuation new_arg in
+            let new_b = EBase { b with
+              formula_ext_base = new_base;
+              formula_ext_continuation = new_cont; }
+            in
+            (new_b, f_comb [v1; v2])
+        | EAssume (v, e, pid) ->
+            let ne, r = trans_f e new_arg in
+            (EAssume (v, ne, pid), f_comb [r])
+  in
+  trans_ext e arg
+
+and trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc_formula * 'b) =
+  let trans_ext e = trans_ext_formula e arg f f_arg f_comb in
+  let ne, vals = List.split (List.map trans_ext e) in
+  (ne, f_comb vals)
     
 let rec transform_context f (c:context):context = 
 	match c with
 	| Ctx e -> (f e)
 	| OCtx (c1,c2) -> mkOCtx (transform_context f c1)(transform_context f c2) no_pos
 		
+let rec trans_context (c: context) (arg: 'a) 
+        (f: 'a -> context -> (context * 'b) option) 
+        (f_arg: 'a -> context -> 'a)
+        (f_comb: 'b list -> 'b)
+        : (context * 'b) =
+  let rec trans_c (c: context) (arg: 'a) : (context * 'b) =
+    let r = f arg c in
+    match r with
+    | Some c1 -> c1
+    | None ->
+        let new_arg = f_arg arg c in
+        match c with
+        | Ctx _ -> (c, f_comb [])
+        | OCtx (c1, c2) ->
+            let nc1, v1 = trans_c c1 new_arg in
+            let nc2, v2 = trans_c c2 new_arg in
+            (mkOCtx nc1 nc2 no_pos, f_comb [v1; v2])
+  in
+  trans_c c arg
+
 let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason s -> c
