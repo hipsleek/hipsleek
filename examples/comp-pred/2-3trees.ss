@@ -8,6 +8,17 @@ data node3 {
 }
 
 // TODO: to check the intermediate value... sometimes I just put 0, 0
+#include <terminator.ss>
+
+tree_shape(a)[Base,Rec1,Rec2,Inv]== self= null & Base(a)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*r::tree_shape(ar)* Rec1(al,ar,self,l,m,r)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*r::tree_shape(ar)* Rec2(al,ar,self,l,m,r);
+	inv Inv(a);
+
+SBase(a) = SBase(b) & a=0
+SRec1(a) = SRec1(
+	
+tree2_3<n>== close tree_shape(n)[]
 
 tree2_3<n> == self = null & n = 0
 	or self::node3<_, _, l, m, r> * l::tree2_3<ln> * m::tree2_3<mn> * r::tree2_3<rn> 
