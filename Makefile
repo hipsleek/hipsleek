@@ -55,7 +55,7 @@ oclexer.cmo oclexer.ml: oclexer.mll ocparser.ml
 	$(OCAMLLEX) oclexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g oclexer.ml
 
-rlparser.cmo rlparser.ml: rlparser.mly
+rlparser.cmo rlparser.ml: rlparser.mly cpure.ml
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) rlparser.mly
 	rm rlparser.mli
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rlparser.ml
@@ -312,7 +312,7 @@ clean:
 	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
 
 # Dependencies
-beforedepend: iparser.ml ocparser.ml
+beforedepend: iparser.ml ocparser.ml rlparser.ml
 
 depend: beforedepend
 	(for d in $(DIRS); \
