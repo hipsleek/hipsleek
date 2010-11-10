@@ -28,6 +28,8 @@ let reduce_pid = ref 0
 (* cache *)
 let sat_cache = ref (Hashtbl.create 100)
 let imply_cache = ref (Hashtbl.create 100)
+(* threshold for caching *)
+let cache_threshold = 0.001 (* 1ms *)
 
 (* data collecting stuffs *)
 let omega_call_count = ref 0
@@ -172,14 +174,16 @@ let call_omega func =
   let _ = incr omega_call_count in
   let res, time = time func in
   linear_time := !linear_time +. time;
-  res
+  (*log DEBUG (string_of_float time);*)
+  (res, time)
 
 (* call redlog's function func and collect the running time *)
 let call_redlog func =
   let _ = incr redlog_call_count in
   let res, time = time func in
   nonlinear_time := !nonlinear_time +. time;
-  res
+  (*log DEBUG (string_of_float time);*)
+  (res, time)
 
 (*
  * run func with timeout checking 
@@ -198,68 +202,13 @@ let run_with_timeout func err_msg =
     with
     | Timeout ->
         log ERROR ("TIMEOUT");
+        log ERROR err_msg;
         restart_red err_msg;
         None
     | exc -> print_endline "Unknown error"; stop_red (); raise exc 
   in
   reset_sigalrm ();
   res
-
-let rec is_linear_exp exp = 
-  match exp with
-  | CP.Null _ | CP.Var _ | CP.IConst _ -> true
-  | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) -> (is_linear_exp e1) && (is_linear_exp e2)
-  | CP.Mult (e1, e2, _) -> 
-      let res = match e1 with
-        | CP.IConst _ -> is_linear_exp e2
-        | _ -> (match e2 with 
-                 | CP.IConst _ -> is_linear_exp e1 
-                 | _ -> false)
-      in res
-  | CP.Div (e1, e2, _) -> false
-      (* Omega don't accept / operator, we have to manually transform the formula *)
-      (*
-      (match e2 with
-        | CP.IConst _ -> is_linear_exp e1
-        | _ -> false)
-      *)
-  | _ -> false
-
-let is_linear_bformula b = 
-  match b with
-  | CP.BConst _ -> true
-  | CP.BVar _ -> true
-  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
-  | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
-  | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _)
-      -> (is_linear_exp e1) && (is_linear_exp e2)
-  | CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _)
-      -> (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
-  | _ -> false
-  
-let rec is_linear_formula f0 = 
-  match f0 with
-  | CP.BForm (b,_) -> is_linear_bformula b
-  | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) -> is_linear_formula f;
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) -> (is_linear_formula f1) && (is_linear_formula f2)
-
-let rec has_existential_quantifier f0 negation_bounded =
-  match f0 with 
-  | CP.Exists (_, f, _, _) -> 
-      if negation_bounded then 
-        has_existential_quantifier f negation_bounded 
-      else 
-        true
-  | CP.Forall (_, f, _, _) ->
-      if negation_bounded then
-        true
-      else
-        has_existential_quantifier f negation_bounded
-  | CP.Not (f, _,  _) -> has_existential_quantifier f (not negation_bounded)
-  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
-      (has_existential_quantifier f1 negation_bounded) ||
-      (has_existential_quantifier f2 negation_bounded)
-  | CP.BForm _ -> false
 
 (**************************
  * cpure to reduce/redlog *
@@ -290,7 +239,7 @@ let rec rl_of_exp e0 =
   | CP.Div (e1, e2, _) -> "(" ^ (rl_of_exp e1) ^ " / " ^ (rl_of_exp e2) ^ ")"
   | CP.Max _
   | CP.Min _ -> failwith ("redlog.rl_of_exp: min/max can't appear here")
-  | _ -> failwith ("redlog: bags is not supported")
+  | _ -> failwith ("redlog: bags/list is not supported")
 
 let rl_of_b_formula b =
   let mk_bin_exp opt e1 e2 = 
@@ -299,15 +248,20 @@ let rl_of_b_formula b =
   match b with
   | CP.BConst (c, _) -> if c then "true" else "false"
   | CP.BVar (bv, _) -> 
-      (* To be honest, I don't know what I need to return in this case. *)
-      (* So, the following solution is just a copy of what omega.ml used. *)
+      (* The following solution is just a copy of what omega.ml used. *)
       "(" ^ (rl_of_spec_var bv) ^ " > 0)"
   | CP.Lt (e1, e2, l) -> mk_bin_exp " < " e1 e2
   | CP.Lte (e1, e2, l) -> mk_bin_exp " <= " e1 e2
   | CP.Gt (e1, e2, l) -> mk_bin_exp " > " e1 e2
   | CP.Gte (e1, e2, l) -> mk_bin_exp " >= " e1 e2
-  | CP.Eq (e1, e2, _) -> mk_bin_exp " = " e1 e2
-  | CP.Neq (e1, e2, _) -> mk_bin_exp " <> " e1 e2
+  | CP.Eq (e1, e2, _) ->
+      if CP.is_null e2 then (rl_of_exp e1) ^ " <= 0"
+      else if CP.is_null e1 then (rl_of_exp e2) ^ " <= 0"
+      else mk_bin_exp " = " e1 e2
+  | CP.Neq (e1, e2, _) -> 
+      if CP.is_null e2 then (rl_of_exp e1) ^ " > 0"
+      else if CP.is_null e1 then (rl_of_exp e2) ^ " > 0"
+      else mk_bin_exp " <> " e1 e2
   | CP.EqMax (e1, e2, e3, _) ->
       (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
       let a1 = rl_of_exp e1 in
@@ -333,52 +287,6 @@ let rec rl_of_formula f0 =
   | CP.And (f1, f2, _) -> "(" ^ (rl_of_formula f1) ^ " and " ^ (rl_of_formula f2) ^ ")"
   | CP.Or (f1, f2, _, _) -> "(" ^ (rl_of_formula f1) ^ " or " ^ (rl_of_formula f2) ^ ")"
   
-(*
- * e1 < e2 ~> e1 <= e2 -1
- * e1 > e2 ~> e1 >= e2 + 1
- * e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1
- *) 
-let rec strengthen_formula f0 = 
-  match f0 with
-  | CP.BForm (b,lbl) -> 
-      let r = match b with
-        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
-        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
-        | CP.Neq (e1, e2, l) ->
-            let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-            let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
-        | _ -> f0 
-      in r
-  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
-  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
-  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
-  | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
-  | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
-
-(*
- * e1 <= e2 ~> e1 < e2 + 1
- * e1 >= e2 ~> e1 > e2 - 1
- * e1 = e2 ~> e2 - 1 < e1 < e2 + 1
- *)
-let rec weaken_formula f0 = 
-  match f0 with
-  | CP.BForm (b,lbl) ->
-      let r = match b with
-        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
-        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
-        | CP.Eq (e1, e2, l) ->
-            let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
-            let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
-            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
-        | _ -> f0 
-      in r
-  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
-  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
-  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
-  | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
-  | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
-
 
 (***********************************
  pretty printer for pure formula
@@ -441,6 +349,176 @@ let rec string_of_formula f0 = match f0 with
   | CP.Forall (sv, f1, _, _) -> "all(" ^ (rl_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
   | CP.Exists (sv, f1, _, _) -> "ex(" ^ (rl_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
   
+let rec is_linear_exp exp = 
+  match exp with
+  | CP.Null _ | CP.Var _ | CP.IConst _ -> true
+  | CP.Add (e1, e2, _) | CP.Subtract (e1, e2, _) -> (is_linear_exp e1) && (is_linear_exp e2)
+  | CP.Mult (e1, e2, _) -> 
+      let res = match e1 with
+        | CP.IConst _ -> is_linear_exp e2
+        | _ -> (match e2 with 
+                 | CP.IConst _ -> is_linear_exp e1 
+                 | _ -> false)
+      in res
+  | CP.Div (e1, e2, _) -> false
+      (* Omega don't accept / operator, we have to manually transform the formula *)
+      (*
+      (match e2 with
+        | CP.IConst _ -> is_linear_exp e1
+        | _ -> false)
+      *)
+  | _ -> false
+
+let is_linear_bformula b = 
+  match b with
+  | CP.BConst _ -> true
+  | CP.BVar _ -> true
+  | CP.Lt (e1, e2, _) | CP.Lte (e1, e2, _) 
+  | CP.Gt (e1, e2, _) | CP.Gte (e1, e2, _)
+  | CP.Eq (e1, e2, _) | CP.Neq (e1, e2, _)
+      -> (is_linear_exp e1) && (is_linear_exp e2)
+  | CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _)
+      -> (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
+  | _ -> false
+  
+let rec is_linear_formula f0 = 
+  match f0 with
+    | CP.BForm (b,_) -> is_linear_bformula b
+    | CP.Not (f, _,_) | CP.Forall (_, f, _,_) | CP.Exists (_, f, _,_) ->
+        is_linear_formula f;
+    | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
+        (is_linear_formula f1) && (is_linear_formula f2)
+
+let is_linear2 f0 =
+  let f_bf bf = 
+    if CP.is_bag_bform bf || CP.is_list_bform bf then
+      Some false
+    else None
+  in
+  let rec f_e e =
+    if CP.is_bag e || CP.is_list e then 
+      Some false
+    else
+      match e with
+      | CP.Mult (e1, e2, _) -> 
+          if not (CP.is_num e1 || CP.is_num e2) then
+            Some false
+          else None
+      | CP.Div (e1, e2, _) -> Some false
+      | _ -> None
+  in
+  let andl = List.fold_left (&&) true in
+  CP.fold_formula f0 (nonef, f_bf, f_e) andl
+
+let rec has_existential_quantifier f0 negation_bounded =
+  match f0 with 
+  | CP.Exists (_, f, _, _) -> 
+      if negation_bounded then 
+        has_existential_quantifier f negation_bounded 
+      else 
+        true
+  | CP.Forall (_, f, _, _) ->
+      if negation_bounded then
+        true
+      else
+        has_existential_quantifier f negation_bounded
+  | CP.Not (f, _,  _) -> has_existential_quantifier f (not negation_bounded)
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
+      (has_existential_quantifier f1 negation_bounded) ||
+      (has_existential_quantifier f2 negation_bounded)
+  | CP.BForm _ -> false
+
+let has_exists2 f0 =
+  let f_f neg_bounded e = match e with
+    | CP.Exists _ -> if not neg_bounded then Some true else None
+    | CP.Forall _ -> if neg_bounded then Some true else None
+    | _ -> None
+  in
+  let f_f_arg neg_bounded e = match e with
+    | CP.Not _ -> not neg_bounded
+    | _ -> neg_bounded
+  in
+  let f_bf a e = Some false in
+  let f_e a e = Some false in
+  let orl = List.fold_left (||) false in
+  CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) orl
+
+(*
+ * e1 < e2 ~> e1 <= e2 -1
+ * e1 > e2 ~> e1 >= e2 + 1
+ * e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1
+ *) 
+let rec strengthen_formula f0 = 
+  match f0 with
+  | CP.BForm (b,lbl) -> 
+      let r = match b with
+        | CP.Lt (e1, e2, l) -> CP.BForm (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l), lbl)
+        | CP.Gt (e1, e2, l) -> CP.BForm (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l), lbl)
+        | CP.Neq (e1, e2, l) ->
+            let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+            let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l)
+        | _ -> f0 
+      in r
+  | CP.Not (f, lbl, l) -> CP.Not (strengthen_formula f, lbl, l)
+  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, strengthen_formula f, lbl, l)
+  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
+  | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
+  | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
+
+let strengthen2 f0 =
+  let f_f f = match f with
+    | CP.BForm (CP.Neq (e1, e2, l), lbl) ->
+        let lp = CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+        let rp = CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        Some (CP.Or (CP.BForm (lp, lbl), CP.BForm (rp, lbl), lbl, l))
+    | _ -> None
+  in
+  let f_bf bf = match bf with
+    | CP.Lt (e1, e2, l) -> Some (CP.Lte (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+    | CP.Gt (e1, e2, l) -> Some (CP.Gte (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+    | _ -> Some bf
+  in
+  CP.map_formula f0 (f_f, f_bf, nonef)
+
+(*
+ * e1 <= e2 ~> e1 < e2 + 1
+ * e1 >= e2 ~> e1 > e2 - 1
+ * e1 = e2 ~> e2 - 1 < e1 < e2 + 1
+ *)
+let rec weaken_formula f0 = 
+  match f0 with
+  | CP.BForm (b,lbl) ->
+      let r = match b with
+        | CP.Lte (e1, e2, l) -> CP.BForm (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l),l),lbl)
+        | CP.Gte (e1, e2, l) -> CP.BForm (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l),l),lbl)
+        | CP.Eq (e1, e2, l) ->
+            let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+            let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+            CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l)
+        | _ -> f0 
+      in r
+  | CP.Not (f,lbl,l) -> CP.Not (weaken_formula f, lbl, l)
+  | CP.Forall (sv, f, lbl, l) -> CP.Forall (sv, weaken_formula f, lbl, l)
+  | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, weaken_formula f, lbl, l)
+  | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
+  | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
+
+let weaken2 f0 =
+  let f_f f = match f with
+    | CP.BForm (CP.Eq (e1, e2, l), lbl) ->
+        let lp = CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l) in
+        let rp = CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l) in
+        Some (CP.And (CP.BForm (lp,lbl), CP.BForm (rp,lbl), l))
+    | _ -> None
+  in
+  let f_bf bf = match bf with
+    | CP.Lte (e1, e2, l) -> Some (CP.Lt (e1, CP.Add(e2, CP.IConst (1, no_pos), l), l))
+    | CP.Gte (e1, e2, l) -> Some (CP.Gt (e1, CP.Add(e2, CP.IConst (-1, no_pos), l), l))
+    | _ -> Some bf
+  in
+  CP.map_formula f0 (f_f, f_bf, nonef)
+
 (***********************************
  existential quantifier elimination 
  **********************************)
@@ -610,8 +688,7 @@ let get_subst_equation_b_formula bf0 v lbl =
         in
         ([(v, rhs)], CP.mkTrue no_pos)
       else
-        (print_endline (string_of_int with_v);
-        ([], CP.BForm (bf0, lbl)))
+        ([], CP.BForm (bf0, lbl))
   | _ -> ([], CP.BForm (bf0,lbl))
 
 let rec get_subst_equation f0 v =
@@ -818,33 +895,28 @@ let rec normalize_formula f0 = match f0 with
  * using existence enclosure (rlex) for all free vars
  *)
 
-let simplify_2options opts = match opts with
+let options_to_bool opts default =
+  match opts with
   | Some opt ->
-    let res = match opt with
-      | Some _ -> opt
-      | None -> None
-    in res
-  | None -> None
+      let res = match opt with
+        | Some v -> v
+        | None -> default
+      in res
+  | None -> default
 
-let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool =
-  let sat = 
-    if is_linear_formula f then 
-      Some (call_omega (lazy (Omega.is_sat f sat_no)))
-    else
-      let sf = if !no_pseudo_ops then f else strengthen_formula f in
-      let frl = rl_of_formula sf in
-      let rl_input = "rlex(" ^ frl ^ ")" in
-      let runner = lazy (check_formula rl_input) in
-      let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
-      let proc = lazy (run_with_timeout runner err_msg) in
-      let res = call_redlog proc in
-      simplify_2options res
-  in
-  let res = match sat with
-    | Some v -> v
-    | None -> true (* default is SAT *)
-  in
-  res
+let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
+  if is_linear_formula f then 
+    call_omega (lazy (Omega.is_sat f sat_no))
+  else
+    let sf = if !no_pseudo_ops then f else strengthen_formula f in
+    let frl = rl_of_formula sf in
+    let rl_input = "rlex(" ^ frl ^ ")" in
+    let runner = lazy (check_formula rl_input) in
+    let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
+    let proc = lazy (run_with_timeout runner err_msg) in
+    let res, time = call_redlog proc in
+    let sat = options_to_bool res true in (* default is SAT *)
+    (sat, time) 
 
 let is_sat f sat_no =
   let f = normalize_formula f in
@@ -853,7 +925,7 @@ let is_sat f sat_no =
   log DEBUG fstring;
   let res = 
     if !no_cache then
-      is_sat_no_cache f sat_no
+      fst (is_sat_no_cache f sat_no)
     else
       try
         let res = Hashtbl.find !sat_cache fstring in
@@ -861,9 +933,10 @@ let is_sat f sat_no =
         log DEBUG "Cached.";
         res
       with Not_found -> 
-        let res = is_sat_no_cache f sat_no in
-        let _ = Hashtbl.add !sat_cache fstring res in
-        res
+        let res, time = is_sat_no_cache f sat_no in
+        let _ = if time > cache_threshold then
+          Hashtbl.add !sat_cache fstring res 
+        in res
   in
   log DEBUG (if res then "SAT" else "UNSAT");
   res
@@ -875,13 +948,11 @@ let is_valid f imp_no =
   let runner = lazy (check_formula rl_input) in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
-  let valid = simplify_2options (call_redlog proc) in
-  let res = match valid with
-    | Some v -> v
-    | None -> false (* default is INVALID *)
-  in res
+  let res, time = call_redlog proc in
+  let valid = options_to_bool res false in (* default is INVALID *)
+  (valid, time)
 
-let imply_no_cache (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool =
+let imply_no_cache (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in
   let elim_eq f =
     if !no_elim_exists then f else elim_exist_quantifier f
@@ -917,7 +988,7 @@ let imply ante conseq imp_no =
   log DEBUG ("conseq: " ^ conseq_string);
   let res = 
     if !no_cache then
-      imply_no_cache ante conseq imp_no
+      fst (imply_no_cache ante conseq imp_no)
     else
       try
         let res = Hashtbl.find !imply_cache fstring in
@@ -925,9 +996,10 @@ let imply ante conseq imp_no =
         log DEBUG "Cached.";
         res
       with Not_found ->
-        let res = imply_no_cache ante conseq imp_no in
-        let _ = Hashtbl.add !imply_cache fstring res in
-        res
+        let res, time = imply_no_cache ante conseq imp_no in
+        let _ = if time > cache_threshold then
+          Hashtbl.add !imply_cache fstring res
+        in res
   in
   log DEBUG (if res then "VALID" else "INVALID");
   res

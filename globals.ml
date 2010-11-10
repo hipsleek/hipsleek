@@ -44,11 +44,20 @@ let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let voidf e = ()
 let voidf2 e f = ()
-
+let nonef v = None
+let somef v = Some v
 
 let push_opt_void_pair e = match e with
   | None -> None
   | Some s -> Some (s,()) 
+
+let push_opt_val opt v = match opt with
+  | None -> None
+  | Some s -> Some (s, v)
+
+let push_opt_val_rev opt v = match opt with
+  | None -> None
+  | Some s -> Some (v, s)
 
 (* global constants *)
 

@@ -333,6 +333,14 @@ and is_list (e : exp) : bool = match e with
   | ListReverse _ -> true
   | _ -> false
 
+and is_bag_bform (b: b_formula) : bool = match b with
+  | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _ -> true
+  | _ -> false
+
+and is_list_bform (b: b_formula) : bool = match b with
+  | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> true
+  | _ -> false
+
 and is_arith (e : exp) : bool = match e with
   | Add _
   | Subtract _
@@ -2896,12 +2904,59 @@ let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
                 (Exists (sv, nf1, lbl, l), f_comb [r1])
     in foldr_f arg e
 
+(* f = (f_f, f_bf, f_e) and
+ * f_f: 'a -> formula -> (formula * 'b) option
+ * f_bf: 'a -> b_formula -> (b_formula * 'b) option
+ * f_e: 'a -> exp -> (exp * 'b) option
+ *)
 let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
-    let f_comb = ((fun x l -> f_comb l), 
-                  (fun x l -> f_comb l),
-                  (fun x l -> f_comb l))
+    let f_comb = (fun x l -> f_comb l), 
+                 (fun x l -> f_comb l),
+                 (fun x l -> f_comb l)
     in
     foldr_formula e arg f f_arg f_comb
+
+(* compute a result from formula with argument
+ * f_f: 'a -> formula -> 'b option
+ * f_bf: 'a -> b_formula -> 'b option
+ * f_e: 'a -> exp -> 'b option
+ *)
+let fold_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg (f_comb: 'b list -> 'b) : 'b =
+    let trans_func func = (fun a e -> push_opt_val_rev (func a e) e) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    snd (trans_formula e arg new_f f_arg f_comb)
+
+(* compute a result from formula without passing an argument
+ * f_f: formula -> 'b option
+ * f_bf: b_formula -> 'b option
+ * f_e: exp -> 'b option
+ *)
+let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
+    let trans_func func = (fun _ e -> push_opt_val_rev (func e) e) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    let f_arg = voidf2, voidf2, voidf2 in
+    snd (trans_formula e () new_f f_arg f_comb)
+
+(* map functions to formula with argument
+ * f_f: 'a -> formula -> formula option
+ * f_bf: 'a -> b_formula -> b_formula option
+ * f_e: 'a -> exp -> exp option
+ *)
+let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
+    let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    fst (trans_formula e () new_f f_arg voidf)
+
+(* map functions to formula without argument
+ * f_f: formula -> formula option
+ * f_bf: b_formula -> b_formula option
+ * f_e: exp -> exp option
+ *)
+let map_formula (e: formula) (f_f, f_bf, f_e) : formula =
+    let trans_func f = (fun _ e -> push_opt_void_pair (f e)) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    let f_arg = idf2, idf2, idf2 in
+    fst (trans_formula e () new_f f_arg voidf)
 
 let rec transform_formula f (e:formula) :formula = 
 	let (f_formula, f_b_formula, f_exp) = f in
