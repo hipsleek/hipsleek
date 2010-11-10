@@ -3,6 +3,31 @@ data node {
 	node next;
 }
 
+ll-shape(a)[Base,Rec,Inv]= Base(a,self)
+  or self::node<v,q>* q::ll-shape(aq) & Rec(a,aq,v,self,q)
+  inv Inv(a);
+  
+llBase (a,self) = self=null 
+  
+llsBase(a,self) = a=0 
+llsRec(a,aq,v,self,q) = a=aq+1 
+llsInv(a) = a>=0;
+  
+lsegBase (a,self) = self=a 
+lsegRec (a,aq,v,self,q) = aq=a 
+     
+ll<n> = ll-shape<> [llsBase,llsRec,llsInv : n] [Base = llBase : ] 
+
+lseg<n,p> = ll-shape<> [llsBase,llsRec,llsInv : n] [Base=lsegBase, Rec=lsegRec: p]
+    
+    // ll-part<n> = ll-shape<> [llsBase,llsRec,llsInv : n]
+    // ll<n> = ll-part<n> [Base = llBase :]
+    // lseg<n,p> = ll-part<n> [Base=lsegBase, Rec=lsegRec: p]
+    
+clist<n> == self::node<_,p> * p::lseg<self,n-1>
+	inv n>=1;
+
+/*
 ll<n> == self=null & n=0
 	or self::node<_, q> * q::ll<n-1>
 	inv n>=0;
@@ -13,7 +38,7 @@ lseg<p, n> == self=p & n=0
 
 clist<n> == self::node<_,p> * p::lseg<self,n-1>
 	inv n>=1;
-
+*/
 void append(node x, node y)
   requires x::ll<n> & x!=null //& n>0
 	ensures x::lseg<y, n>;

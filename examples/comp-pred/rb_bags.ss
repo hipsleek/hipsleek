@@ -8,11 +8,30 @@ data node {
 }
 
 /* view for red-black trees */
+tree_shape(a)[Base,Rec1,Rec2,Inv]== self= null & Base(a)
+	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec1(a,al,ar,v,c,self,l,r)
+	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec2(a,al,ar,v,c,self,l,r);
+	inv Inv(a);
+
+SBase(a,self) = a={}
+SRec1(a,al,ar,v,c,self,l,r) = a = union(al, ar, {v})
+
+clBase(a,self) = a=0
+clRec1(a,al,ar,v,c,self,l,r) = a=1 & al=0 & ar = 0 & c=1
+clRec2(a,al,ar,v,c,self,l,r) = a=0 & c=0
+
+bhBase(a,self) = a=1
+bhRec1(a,al,ar,v,c,self,l,r) =  al = a & ar = a
+bhRec2(a,al,ar,v,c,self,l,r) =  al = ar & a = 1 + al
+
+rb1<cl,bh,S>=tree_shape<>[SBase,SRec1,SRec1:S][:bh][clBase,clRec1,clRec2:cl]
+
+/*
 rb1<cl, bh, S> == self = null & bh = 1 & cl = 0 & S={}
 	or self::node<v, 1, l, r> * l::rb1<0, bhl, S1> * r::rb1<0, bhr, S2> & cl = 1 & bhl = bh & bhr = bh & S = union(S1, S2, {v})
 	or self::node<v, 0, l, r> * l::rb1<_, bhl, S1> * r::rb1<_, bhr, S2> & cl = 0 & bhl = bhr & bh = 1 + bhl & S = union(S1, S2, {v})
 	inv bh >= 1 & 0 <= cl <= 1;
-
+*/
 /* rotation case 3 */
 node rotate_case_3_1(node a, node b, node c)
 

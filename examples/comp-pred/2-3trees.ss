@@ -8,25 +8,28 @@ data node3 {
 }
 
 // TODO: to check the intermediate value... sometimes I just put 0, 0
-#include <terminator.ss>
 
-tree_shape(a)[Base,Rec1,Rec2,Inv]== self= null & Base(a)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*r::tree_shape(ar)* Rec1(al,ar,self,l,m,r)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*r::tree_shape(ar)* Rec2(al,ar,self,l,m,r);
+tree_shape(a)[Base,Rec1,Rec2,Inv]== Base(a)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec1(a,al,ar,am,self,l,m,r)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec2(a,al,ar,am,self,l,m,r);
 	inv Inv(a);
 
-SBase(a) = SBase(b) & a=0
-SRec1(a) = SRec1(
-	
-tree2_3<n>== close tree_shape(n)[]
+SBase(a,self) = a=0 & self= null
+SRec1(a,al,am,ar,self,l,m,r) = r != null & al = am & al = ar & a = al + 1
+SRec2(a,al,am,ar,self,l,m,r) = r = null & al = am & a = al + 1
+SInv (a) = a>=0 & Inv(a);
 
-tree2_3<n> == self = null & n = 0
+tree2_3<n>== tree_shape[SBase,SRec1,SRec2,SInv: n]
+
+
+
+/*tree2_3<n> == self = null & n = 0
 	or self::node3<_, _, l, m, r> * l::tree2_3<ln> * m::tree2_3<mn> * r::tree2_3<rn> 
 	& r != null & ln = mn & ln = rn & n = ln + 1
 	or self::node3<_, _, l, m, r> * l::tree2_3<ln> * m::tree2_3<mn> 
 	& r = null & ln = mn & n = ln + 1
 	inv n >= 0;
-
+*/
 	
 void  make_node(node3 tmp1, int a) 
 	requires tmp1::node3<_, _, l, m, r> * l::tree2_3<n> * m::tree2_3<n> & r = null & n = 1 

@@ -13,6 +13,21 @@ data node2 {
 		- at depth n, the height of the tree, all nodes are as far left as possible.
 */
 
+tree_shape(a)[Base,Rec1,Rec2,Inv]== Base(a)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec1(a,al,ar,am,self,l,m,r)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec2(a,al,ar,am,self,l,m,r);
+	inv Inv(a);
+
+SEBase(a,self) = self= null
+
+SHBase(a,self) = a=0 
+SHRec1(a,al,am,ar,root,l,m,r) = a=al+1& a=ar+2
+SHRec2(a,al,am,ar,root,l,m,r) = a=al+1& al=ar
+
+SHMBase(a,self) = a=0 
+SHMRec1(a,al,am,ar,root,l,m,r) = a = min(al, ar) + 1
+  
+complete<n, nmin> == tree_shape<>[Base=SEBase:][SHBase,SHRec1,SHRec2:n][SHBase,SHRec1,SHRec2:nmin]
 
 /* possible view for a complete tree */
 /*complete<n> == self = null & n = 0
@@ -26,12 +41,12 @@ data node2 {
 		- is the length of the shortest path to a leaf (the minimum between the heights for the two children) 
 		- we used it to make the insertion easier (because in the insertion there are points where we need to
 		know if a subtree is perfect or not)
-*/
+*//*
 complete<n, nmin> == self = null & n = 0 & nmin = 0
 	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
 	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
 	inv nmin >= 0 & n >= nmin;
-
+*/
 int maxim(int a, int b) 
 	requires true
 	ensures (a < b | res = a) & (a >= b | res = b);

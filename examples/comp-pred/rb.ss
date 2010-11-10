@@ -8,11 +8,31 @@ data node {
 }
 
 /* view for red-black trees */
+tree_shape(a)[Base,Rec1,Rec2,Inv]== self= null & Base(a)
+	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec1(a,al,ar,v,c,self,l,r)
+	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec2(a,al,ar,v,c,self,l,r);
+	inv Inv(a);
+
+SBase(a,self) = a=0
+SRec1(a,al,ar,v,c,self,l,r) = a=al+ar+1
+
+clBase(a,self) = a=0
+clRec1(a,al,ar,v,c,self,l,r) = a=1 & al=0 & ar = 0 & c=1
+clRec2(a,al,ar,v,c,self,l,r) = a=0 & c=0
+
+bhBase(a,self) = a=1
+bhRec1(a,al,ar,v,c,self,l,r) =  al = a & ar = a
+bhRec2(a,al,ar,v,c,self,l,r) =  al = ar & a = 1 + al
+
+rb1<n,cl,bh>=tree_shape<>[NBase,NRec1,NRec1:n][:bh][clBase,clRec1,clRec2:cl]
+
+
+/*
 rb<n, cl, bh> == self = null & n=0 & bh = 1 & cl = 0 
 	or self::node<v, 1, l, r> * l::rb<nl, 0, bhl> * r::rb<nr, 0, bhr> & cl = 1 & n = 1 + nl + nr & bhl = bh & bhr = bh
 	or self::node<v, 0, l, r> * l::rb<nl, _, bhl> * r::rb<nr, _, bhr> & cl = 0 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
-
+*/
 
 /* rotation case 3 */
 

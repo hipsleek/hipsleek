@@ -8,9 +8,22 @@ data node2 {
 }
 
 /* view for a doubly linked list with bag of values */
-dll1<p,S> == self = null & S = {} 
-	or self::node2<v ,p , q> * q::dll1<q1, S1> & S = union(S, {v}) & self = q1; 
 
+dll-shape(a)[Base,Rec,Inv] =  Base(a,self)
+  or self::node2<v,p,q>* q::dll-shape(aq) & Rec(a,aq,self,v,p,q)
+  inv Inv;
+  
+dllPropBase(a,self) = self=null
+dllPropRec(a,aq,self,v,p,q) = a=p & self = aq
+  
+dllSBase(a) = a={}
+dllSRec(a,aq,self,v,p,q) = a=union(aq,{v})
+
+dll1<p,S> = dll-shape<>[dllPropBase,dllPropRec : p][dllSBase,dllSRec : S]
+  
+/*dll1<p,S> == self = null & S = {} 
+	or self::node2<v ,p , q> * q::dll1<q1, S1> & S = union(S1, {v}) & self = q1; 
+*/
 void insert(node2 x, int a)
 	requires x::dll1<p, S> & S != {} 
 	ensures x::dll1<p, S1> & S1 = union(S, {a}); 

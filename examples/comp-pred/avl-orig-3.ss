@@ -7,7 +7,25 @@ data node {
 
 // m: number of elements, n: height
 // bal: 0: left is higher, 1: balanced, 2: right is higher
+avl-shape(a) = case {
+  self = null -> [] Base(a,self)
+  self!=null -> [] self::node<v,n,l,r> *l::avl-shape(al)*r::avl-shape(ar)* Rec(a,al,ar,v,n,l,r) }
+ inv Inv(a)
 
+avlSBase(a,self) = a = 0 
+avlSRec(a,al,ar,v,n,l,r) = a = 1+al+ar
+
+avlHBase(a,self) = a = 1
+avlHRec (a,al,ar,v,n,l,r) = -1<= al-ar<=1  & a=1+max(al,ar)
+
+avlBalBase([a1,a2],self) = a2 = 1 
+avlBalRec ([a1,a2],[al1,al2],[ar1,ar2],v,n,l,r) =  a2 = al1-ar1+1
+
+  
+avl<m,n,bal> = avl-shape<>[avlSBase,avlSRec: m][avlHBase,avlHrec: n][avlBalBase,avlBalRec: n,bal]
+
+
+/*
 avl<m, n, bal> == 
  case {
   self = null -> [] m = 0 & n = 0 & bal=1;
@@ -17,6 +35,7 @@ avl<m, n, bal> ==
 		//& n2+bal=n1+1 & n2<=n1+1 & n1 <= 1+n2
 		// & (n1=n2 & bal=0 | n1>n2 & bal=1 | n1<n2 & bal=2)
 	inv m >= 0 & n >= 0 & 0<=bal<=2;
+*/
 /*
 avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
 	or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
