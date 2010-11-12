@@ -18,6 +18,7 @@ type typ =
 	  
 and typed_ident = (typ * ident)
 
+
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
@@ -1077,10 +1078,141 @@ let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
 	  failwith ("Exception hierarchy has cycles\n");
 	end 
 
+let rec label_e e =
+  let rec helper e = match e with
+    | Catch e -> Error.report_error   {Err.error_loc = e.exp_catch_pos; Err.error_text = "unexpected catch clause"}  
+    | Block _
+    | Cast _
+    | ConstDecl _ 
+    | BoolLit _ 
+    | Debug _ 
+    | Dprint _ 
+    | Empty _ 
+    | FloatLit _ 
+    | IntLit _
+    | Java _ 
+    | Unfold _ 
+    | Var _ 
+    | This _ 
+    | Time _
+    | Null _ 
+    | VarDecl _
+    | Seq _
+    | New _ 
+    | Finally _ 
+    | Label _ -> None
+    | _ -> Some (helper2 e)
+  and helper2 e = match e with
+    | Assert e -> 
+		  let nl = fresh_formula_label (snd e.exp_assert_path_id) in
+		  iast_label_table:= (Some nl,"assert",[],e.exp_assert_pos) ::!iast_label_table;
+		  Assert {e with exp_assert_path_id = nl }
+    | Assign e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"assign",[],e.exp_assign_pos) ::!iast_label_table;
+		  Assign {e with 
+			  exp_assign_lhs = label_e e.exp_assign_lhs;
+			  exp_assign_rhs = label_e e.exp_assign_rhs;
+			  exp_assign_path_id = nl;}
+    | Binary e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"binary",[],e.exp_binary_pos) ::!iast_label_table;
+		  Binary{e with
+			  exp_binary_oper1 = label_e e.exp_binary_oper1;
+			  exp_binary_oper2 = label_e e.exp_binary_oper2;
+			  exp_binary_path_id = nl;}
+    | Bind e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"bind",[],e.exp_bind_pos) ::!iast_label_table;
+		  Bind {e with
+ 			  exp_bind_body = label_e e.exp_bind_body;
+			  exp_bind_path_id  = nl;}
+    | Break e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"break",[],e.exp_break_pos) ::!iast_label_table;
+		  Break{ e with exp_break_path_id = nl;}  
+    | CallRecv e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"callRecv",[],e.exp_call_recv_pos) ::!iast_label_table;
+		  CallRecv {e with
+			  exp_call_recv_receiver = label_e e.exp_call_recv_receiver;
+			  exp_call_recv_arguments  = List.map label_e e.exp_call_recv_arguments;
+			  exp_call_recv_path_id = nl;}
+    | CallNRecv e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"callNRecv",[],e.exp_call_nrecv_pos) ::!iast_label_table;
+		  CallNRecv { e with 
+			  exp_call_nrecv_arguments =  List.map label_e e.exp_call_nrecv_arguments;
+			  exp_call_nrecv_path_id = nl;}
+    | Cond e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"cond",[(nl,0);(nl,1)],e.exp_cond_pos) ::!iast_label_table;
+		  Cond {e with 
+			  exp_cond_condition = label_e e.exp_cond_condition;
+			  exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
+			  exp_cond_else_arm  = Label ((nl,1),(label_e e.exp_cond_else_arm));
+			  exp_cond_path_id =nl;}
+    | Continue e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"continue",[],e.exp_continue_pos) ::!iast_label_table;
+		  Continue {e with  exp_continue_path_id = nl;}
+    | Member e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"member",[],e.exp_member_pos) ::!iast_label_table;
+		  Member {e with
+			  exp_member_base = label_e e.exp_member_base;
+			  exp_member_path_id = nl;}  
+    | Raise e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"raise",[],e.exp_raise_pos) ::!iast_label_table;
+		  Raise {e with
+		      exp_raise_val = 
+			      (match e.exp_raise_val with 
+				    | None -> None 
+				    | Some s-> Some (label_e s));
+		      exp_raise_path_id = nl;}  
+    | Return e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"return",[],e.exp_return_pos) ::!iast_label_table;
+		  Return{ e with
+			  exp_return_val = (match e.exp_return_val with | None -> None | Some s-> Some (label_e s));
+			  exp_return_path_id = nl;}  
+    | Try e -> 
+		  let nl = fresh_branch_point_id "" in
+		  let rec lbl_list_constr n = if n==0 then [] else (nl,n)::(lbl_list_constr (n-1)) in
+		  iast_label_table:= (nl,"try",(lbl_list_constr (List.length e.exp_catch_clauses)),e.exp_try_pos)::!iast_label_table;
+		  let lbl_c n d = 
+			let d = get_catch_of_exp d in
+			Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in
+		  Try {e with
+			  exp_try_block = label_e e.exp_try_block;
+			  exp_try_path_id = nl;
+			  exp_catch_clauses  = (fst (List.fold_left (fun (a,c) d-> ((lbl_c c d)::a, c+1)) ([],0) e.exp_catch_clauses));
+			  exp_finally_clause = List.map label_e e.exp_finally_clause;}
+    | Unary e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"unary",[],e.exp_unary_pos) ::!iast_label_table;
+		  Unary{ e with
+			  exp_unary_exp = label_e e.exp_unary_exp;
+			  exp_unary_path_id = fresh_branch_point_id "";}  		
+    | While e -> 
+		  let nl = fresh_branch_point_id "" in
+		  iast_label_table:= (nl,"while",[],e.exp_while_pos) ::!iast_label_table;
+		  While {e with
+			  exp_while_condition = label_e e.exp_while_condition;
+			  exp_while_body = label_e e.exp_while_body;
+			  exp_while_path_id = nl;
+			  exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some s-> Some (label_e s);}  
+    | _ -> Error.report_error   
+      {Err.error_loc = get_exp_pos e; Err.error_text = "exp not considered in label_e yet"}  
+  in map_exp e helper
+
 (* This method adds (label,name,branches,loc) to iast_lable_table.
    For  branching points of expressions, such
    as conditionals, a Label construct is added.
 *)
+let label_exp e = label_e e 
+(*
 let rec label_exp e = match e with
   | Block e -> Block {e with exp_block_body = label_exp e.exp_block_body;}
   | Cast e -> Cast {e with  exp_cast_body = label_exp e.exp_cast_body;}
@@ -1205,6 +1337,7 @@ let rec label_exp e = match e with
 			exp_while_body = label_exp e.exp_while_body;
 			exp_while_path_id = nl;
 			exp_while_wrappings = match e.exp_while_wrappings with | None -> None | Some s-> Some (label_exp s);}  
+*)
 	
 let label_proc proc = {proc with
 	proc_body = 
