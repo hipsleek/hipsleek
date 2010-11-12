@@ -1,11 +1,11 @@
 ./astsimp.cmo: util.cmo tpdispatcher.cmo solver.cmo mcpure.cmo ipure.cmo \
-    iprinter.cmo iparser.cmo inliner.cmo ilexer.cmo iformula.cmo iast.cmo \
-    globals.cmo error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo \
-    context.cmo checks.cmo cformula.cmo cast.cmo 
+    iprinter.cmo iparser.cmo inliner.cmo iformula.cmo iast.cmo globals.cmo \
+    error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo context.cmo checks.cmo \
+    cformula.cmo cast.cmo 
 ./astsimp.cmx: util.cmx tpdispatcher.cmx solver.cmx mcpure.cmx ipure.cmx \
-    iprinter.cmx iparser.cmx inliner.cmx ilexer.cmx iformula.cmx iast.cmx \
-    globals.cmx error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx \
-    context.cmx checks.cmx cformula.cmx cast.cmx 
+    iprinter.cmx iparser.cmx inliner.cmx iformula.cmx iast.cmx globals.cmx \
+    error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx context.cmx checks.cmx \
+    cformula.cmx cast.cmx 
 ./bind_inference.cmo: globals.cmo 
 ./bind_inference.cmx: globals.cmx 
 ./cast.cmo: util.cmo mcpure.cmo globals.cmo error.cmo cpure.cmo cformula.cmo 
@@ -54,8 +54,6 @@
 ./iast.cmx: util.cmx ipure.cmx iformula.cmx globals.cmx error.cmx cpure.cmx 
 ./iformula.cmo: util.cmo ipure.cmo globals.cmo error.cmo 
 ./iformula.cmx: util.cmx ipure.cmx globals.cmx error.cmx 
-./ilexer.cmo: iparser.cmo globals.cmo error.cmo 
-./ilexer.cmx: iparser.cmx globals.cmx error.cmx 
 ./inliner.cmo: util.cmo iprinter.cmo iast.cmo globals.cmo error.cmo 
 ./inliner.cmx: util.cmx iprinter.cmx iast.cmx globals.cmx error.cmx 
 ./iparser.cmo: ipure.cmo iformula.cmo iast.cmo globals.cmo error.cmo 
@@ -73,23 +71,23 @@
 ./main.cmo: util.cmo typechecker.cmo tpdispatcher.cmo solver.cmo rtc.cmo \
     redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo paralib1.cmo \
     omega.cmo mona.cmo java.cmo isabelle.cmo iprinter.cmo iparser.cmo \
-    inliner.cmo ilexer.cmo iast.cmo globalvars.cmo globals.cmo debug.cmo \
-    cvclite.cmo cvc3.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
+    inliner.cmo iast.cmo globalvars.cmo globals.cmo debug.cmo cvclite.cmo \
+    cvc3.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
 ./main.cmx: util.cmx typechecker.cmx tpdispatcher.cmx solver.cmx rtc.cmx \
     redlog.cmx prooftracer.cmx predcomp.cmx paralib1v2.cmx paralib1.cmx \
     omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
-    inliner.cmx ilexer.cmx iast.cmx globalvars.cmx globals.cmx debug.cmx \
-    cvclite.cmx cvc3.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
+    inliner.cmx iast.cmx globalvars.cmx globals.cmx debug.cmx cvclite.cmx \
+    cvc3.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
 ./maingui.cmo: util.cmo typechecker.cmo tpdispatcher.cmo solver.cmo rtc.cmo \
     redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo paralib1.cmo \
     omega.cmo mona.cmo java.cmo isabelle.cmo iprinter.cmo iparser.cmo \
-    inliner.cmo ilexer.cmo iast.cmo gui.cmo globalvars.cmo globals.cmo \
-    debug.cmo cvclite.cmo cvc3.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
+    inliner.cmo iast.cmo gui.cmo globalvars.cmo globals.cmo debug.cmo \
+    cvclite.cmo cvc3.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
 ./maingui.cmx: util.cmx typechecker.cmx tpdispatcher.cmx solver.cmx rtc.cmx \
     redlog.cmx prooftracer.cmx predcomp.cmx paralib1v2.cmx paralib1.cmx \
     omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
-    inliner.cmx ilexer.cmx iast.cmx gui.cmx globalvars.cmx globals.cmx \
-    debug.cmx cvclite.cmx cvc3.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
+    inliner.cmx iast.cmx gui.cmx globalvars.cmx globals.cmx debug.cmx \
+    cvclite.cmx cvc3.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
 ./mcpure.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
 ./mcpure.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
 ./mona.cmo: util.cmo unix_add.cmo oclexer.cmo globals.cmo cpure.cmo 
@@ -98,10 +96,10 @@
 ./monadicinterp.cmx: typeclass.cmx monads.cmx 
 ./monads.cmo: typeclass.cmo 
 ./monads.cmx: typeclass.cmx 
-./nativefront.cmo: sparser.cmo slexer.cmo sleekcommons.cmo ipure.cmo \
-    iformula.cmo iast.cmo globals.cmo 
-./nativefront.cmx: sparser.cmx slexer.cmx sleekcommons.cmx ipure.cmx \
-    iformula.cmx iast.cmx globals.cmx 
+./nativefront.cmo: sparser.cmo sleekcommons.cmo ipure.cmo iformula.cmo \
+    iast.cmo globals.cmo 
+./nativefront.cmx: sparser.cmx sleekcommons.cmx ipure.cmx iformula.cmx \
+    iast.cmx globals.cmx 
 ./net.cmo: 
 ./net.cmx: 
 ./oast.cmo: 
@@ -158,8 +156,6 @@
 ./sleekengine.cmx: xmlfront.cmx util.cmx solver.cmx sleekcommons.cmx \
     nativefront.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx error.cmx \
     cpure.cmx cprinter.cmx cformula.cmx cast.cmx astsimp.cmx 
-./slexer.cmo: sparser.cmo globals.cmo error.cmo 
-./slexer.cmx: sparser.cmx globals.cmx error.cmx 
 ./smtsolver.cmo: util.cmo globals.cmo cpure.cmo 
 ./smtsolver.cmx: util.cmx globals.cmx cpure.cmx 
 ./solver.cmo: util.cmo tpdispatcher.cmo prooftracer.cmo mcpure.cmo \
@@ -170,10 +166,10 @@
     cformula.cmx cast.cmx 
 ./sparser.cmo: sleekcommons.cmo ipure.cmo iformula.cmo iast.cmo globals.cmo 
 ./sparser.cmx: sleekcommons.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx 
-./test-oo.cmo: util.cmo iprinter.cmo iparser.cmo ilexer.cmo globals.cmo \
-    debug.cmo cprinter.cmo astsimp.cmo 
-./test-oo.cmx: util.cmx iprinter.cmx iparser.cmx ilexer.cmx globals.cmx \
-    debug.cmx cprinter.cmx astsimp.cmx 
+./test-oo.cmo: util.cmo iprinter.cmo iparser.cmo globals.cmo debug.cmo \
+    cprinter.cmo astsimp.cmo 
+./test-oo.cmx: util.cmx iprinter.cmx iparser.cmx globals.cmx debug.cmx \
+    cprinter.cmx astsimp.cmx 
 ./test.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
 ./test.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
 ./tpdispatcher.cmo: util.cmo smtsolver.cmo setmona.cmo redlog.cmo omega.cmo \

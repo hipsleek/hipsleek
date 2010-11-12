@@ -1485,7 +1485,7 @@ time_statement
 dprint_statement
   : PRINT SEMICOLON { Dprint ({exp_dprint_string = "";
 							   exp_dprint_pos = (get_pos 1)}) }
-  | PRINT IDENTIFIER SEMICOLON { Dprint ({exp_dprint_string = $2;
+  | PRINT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE SEMICOLON { Dprint ({exp_dprint_string = $3;
 							   exp_dprint_pos = (get_pos 1)}) }
 ;
 

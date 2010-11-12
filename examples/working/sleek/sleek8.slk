@@ -24,8 +24,9 @@ checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 4 
 //checkentail x::lseg<n, p> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = p1 & n2 = p2 & p1 = p2.
 
 checkentail x::lseg<n, p> & n = 6 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
-// valid
-checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- x::lseg<n1, r1> * t1::lseg<x2, y2> * r1::lseg<n2, p> & n1 = n2.
+// valid 
+
+checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- t1::lseg<x2, y2> * x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
 // valid
 
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3 & n2 = 4.
@@ -56,5 +57,3 @@ checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, r2> & n1 = 3
 // valid
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 3.
 // fail
-
-

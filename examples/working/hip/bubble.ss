@@ -57,20 +57,13 @@ bool bubble(node xs)
 	}
 	else {    
 		tmp = bubble(xs.next);
-		if (xs.val <= xs.next.val) {
-			//assert xs!=null;
-     // dprint;
-      //assert xs::sll<_,_,_>;
-      //assume false;      
+    int xv = xs.val;
+    int xnv = xs.next.val;
+		if (xv <= xnv) 
 			flag = false;
-		}
 		else {
-      //assume false;
-			aux = xs.val;
-			tmp1 = xs.next.val;
-			xs.val = tmp1;
-			xs.val = xs.next.val; //ERROR: lhs and rhs do not match
-			//xs.next.val = aux;
+			xs.val = xnv;
+			xs.next.val = xv; //ERROR: lhs and rhs do not match
 			flag = true; 
 		}
 		return (flag || tmp);	

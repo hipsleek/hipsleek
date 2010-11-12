@@ -145,7 +145,6 @@ let process_cmd_line () = Arg.parse [
   ("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");
   ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
    ("--gui", Arg.Set Gui.enable_gui, "enable GUI")  
-  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
 (******************************************)
@@ -203,7 +202,7 @@ let process_source_full source =
 	(* let ptime1 = Unix.times () in
 	   let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
-      let _ = print_string ("Translating to core language..."); flush stdout in
+      let _ = print_string ("Translating to core language...\n"); flush stdout in
       let cprog = Astsimp.trans_prog intermediate_prog in
       let _ = print_string (" done\n"); flush stdout in
       let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in

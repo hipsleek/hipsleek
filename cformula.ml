@@ -290,12 +290,6 @@ and mkAndType f1 f2 = match f1 with
 		| TypeFalse -> TypeFalse
 		| _ -> TypeAnd ({t_formula_and_f1 = f1; t_formula_and_f2 = f2})
 	end
-
-and prune_branches_subsume l1 l2 = match l1,l2 with
-  | None , None -> true
-  | Some l1, Some l2 -> Util.subset l1 l2
-  | Some _ , None -> true
-  | None , Some _ -> false
   
 (*assume none is invalid*)
 and non_overlapping (n1,n2) (p1,p2) : bool = n1>p2 || p1>n2
@@ -2513,13 +2507,13 @@ let rec split_struc_formula (f0:struc_formula):(formula*formula) list =
 			in	
 	List.fold_left (fun a c-> a@(ext_to_formula c)) [] f0	;;
 
-let rec filter_branches (br:formula_label list option) (f0:struc_formula):struc_formula = 
+let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula = 
   let rec filter_helper (br:formula_label list) (f0:struc_formula):struc_formula = 
   let rec filter_formula (f:formula):formula list = match f with
     | Base {formula_base_label = lbl} 
     | Exists {formula_exists_label = lbl} -> (match lbl with
       | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
-      | Some lbl -> if (List.mem lbl br) then [f] else [])
+      | Some lbl -> if (List.mem lbl br) then (total_unfold_disjs:=!total_unfold_disjs+1;[f]) else (saved_unfolds:=!saved_unfolds+1;[]))
     | Or b -> 
       ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    
   let filter_ext (f:ext_formula):ext_formula list = match f with

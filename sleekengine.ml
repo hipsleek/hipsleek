@@ -108,6 +108,10 @@ let process_pred_def pdef =
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
 		let n_cpdef = AS.view_prune_inv_inference cprog cpdef in
+    cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
+    let n_cpdef = {n_cpdef with 
+        C.view_formula =  Solver.prune_pred_struc cprog n_cpdef.C.view_formula ;
+        C.view_un_struc_formula = Solver.prune_preds cprog n_cpdef.C.view_un_struc_formula;}in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -219,6 +223,10 @@ let process_capture_residue (lvar : ident) =
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
   let l2r, r2l = AS.trans_one_coercion iprog ldef in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec cprog true c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec cprog false c) r2l) in
+  let _ = if !Globals.print_core then 
+    print_string ((Cprinter.string_of_coerc_decl_list true l2r) ^"\n"^ (Cprinter.string_of_coerc_decl_list false r2l) ^"\n") else () in
 	cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
 	cprog.C.prog_right_coercions <- r2l @ cprog.C.prog_right_coercions
 

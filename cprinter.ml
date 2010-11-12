@@ -9,6 +9,23 @@ open Cformula
 module P = Cpure
 module MP = Mcpure
 
+
+(* pretty printing for primitive types *)
+let string_of_prim_type = function 
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | Bag           -> "multiset"
+  | List          -> "list"
+;;
+
+(* pretty printing for types *)
+let string_of_typ = function 
+  | P.Prim t -> string_of_prim_type t 
+  | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+;;
+
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
 let pr_mem = ref true
@@ -395,7 +412,7 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
  
 let string_of_spec_var x = 
   match x with
-    | P.SpecVar (t, id, p) -> id ^ (match p with 
+    | P.SpecVar (t, id, p) -> id ^(*"."^(string_of_typ t) ^*)(match p with 
 	    | Primed -> "'" 
 	    | Unprimed -> "" )
 
@@ -623,7 +640,7 @@ let pr_prune_status st = match st with
   (*| MP.Unknown_prune b -> fmt_string ("(U"^(if b then "T" else "F")^")")*)
   
 let pr_memoise mem = fmt_string "[";pr_list_op_none "& " (fun c-> pr_b_formula c.MP.memo_formula ; pr_prune_status c.MP.memo_status) 
-  (List.filter (fun c-> match c.MP.memo_status with | MP.Implied _ -> true | _-> false) mem); fmt_string "]"
+  (List.filter (fun c-> match c.MP.memo_status with | MP.Implied _ -> true | MP.Implied_dupl _ -> true | _-> false) mem); fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
   
@@ -672,11 +689,12 @@ let rec pr_h_formula h =
                    h_formula_data_name = c;
                    h_formula_data_arguments = svs;
                    h_formula_data_pos = pos;
-                   (*h_formula_data_pure_annot = an;*)
+                   h_formula_data_remaining_branches = ann;
                    h_formula_data_label = pid})->
            pr_formula_label_opt pid;
               pr_spec_var sv; fmt_string "::";
-          pr_angle c pr_spec_var svs 
+          pr_angle c pr_spec_var svs ;
+          (match ann with | None -> () | Some _ -> fmt_string "[]")
       | ViewNode ({h_formula_view_node = sv; 
                    h_formula_view_name = c; 
                    h_formula_view_arguments = svs; 
@@ -1076,22 +1094,6 @@ let rec string_of_ident_list l c = match l with
   | h::t -> h ^ c ^ (string_of_ident_list t c)
 ;;
 
-(* pretty printing for primitive types *)
-let string_of_prim_type = function 
-  | Bool          -> "boolean"
-  | Float         -> "float"
-  | Int           -> "int"
-  | Void          -> "void"
-  | Bag           -> "multiset"
-  | List          -> "list"
-;;
-
-(* pretty printing for types *)
-let string_of_typ = function 
-  | P.Prim t -> string_of_prim_type t 
-  | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
-;;
-
 let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
@@ -1366,9 +1368,21 @@ let rec string_of_view_decl_list l = match l with
  | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
 
+let string_of_coerc_decl b c = 
+  "lemma "^(string_of_formula c.coercion_head)^(if b then "->" else "<-")^(string_of_formula c.coercion_body)
+;;
+
+let rec string_of_coerc_decl_list b c = match c with
+  | [] -> ""
+  | h::[] -> string_of_coerc_decl b h
+  | h::t -> (string_of_coerc_decl b h)^"\n"^(string_of_coerc_decl_list b t)
+;;
+
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
                           (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
+                          (string_of_coerc_decl_list true p.prog_left_coercions) ^ "\n\n" ^ 
+                          (string_of_coerc_decl_list false p.prog_right_coercions) ^ "\n\n" ^ 
                           (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 

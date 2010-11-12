@@ -85,8 +85,6 @@ let process_cmd_line () = Arg.parse [
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
   ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"existentially wrap instantiations after the entailment");
   ("--slk-err", Arg.Set Globals.print_err_sleek,"print sleek errors");
-  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit;
-  3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 ] set_source_file usage_msg
 
 let prompt = ref "SLEEK> "

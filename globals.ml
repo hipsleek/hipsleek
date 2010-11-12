@@ -153,8 +153,6 @@ let seq_to_try = ref false
 
 let print_input = ref false
 
-let instantiation_variants = ref 0
-
 let pass_global_by_value = ref false
 
 let allow_pruning = ref true
@@ -163,6 +161,13 @@ let allow_umemo_slicing = ref true
 (*let allow_imemo_slicing = ref true
 let agressive_unsat = ref false
 let agressive_imply = ref false*)
+
+let prune_cnt = ref 0
+let dropped_branches = ref 0
+let saved_unfolds = ref 0
+let total_unfold_disjs = ref 0
+
+
 
 
 let profile_threshold = 0.5 

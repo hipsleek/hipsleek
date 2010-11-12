@@ -39,17 +39,17 @@ and formula =
   | Or of formula_or
 
 and formula_base = { formula_base_heap : h_formula;
-					 formula_base_pure : P.formula;
-					 formula_base_flow : flow_formula;
+                     formula_base_pure : P.formula;
+                     formula_base_flow : flow_formula;
                      formula_base_branches : (branch_label * P.formula) list;
-					 formula_base_pos : loc }
+                     formula_base_pos : loc }
 
 and formula_exists = { formula_exists_qvars : (ident * primed) list;
-					   formula_exists_heap : h_formula;
-					   formula_exists_pure : P.formula;
-					   formula_exists_flow : flow_formula;
+                       formula_exists_heap : h_formula;
+                       formula_exists_pure : P.formula;
+                       formula_exists_flow : flow_formula;
                        formula_exists_branches : (branch_label * P.formula) list;
-					   formula_exists_pos : loc }
+                       formula_exists_pos : loc }
 
 and flow_formula = constant_flow				   
 					   

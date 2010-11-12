@@ -1,7 +1,6 @@
 open Globals
 
 open Cpure
-
 (*
  -eprune = espec + ememo + eslice
  -espec enables specialization 
@@ -288,13 +287,22 @@ and fold_mem_lst_cons init_cond lst :formula =
   List.fold_left (fun a c-> mkAnd a c no_pos) (BForm (init_cond,None)) r
 
 and filter_useless_mem fv c = 
+  if ((List.length c.memo_group_cons)>0) then true
+  else
     match (List.length c.memo_group_slice) with
-      | 0 -> ((List.length c.memo_group_cons)>0)(*((List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0)*)
-      | 1 -> (((List.length c.memo_group_cons)=0)&&(not (isConstTrue (List.hd c.memo_group_slice))))|| ((List.length c.memo_group_cons)>0)
+      | 0 -> false (*((List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0)*)
+      | 1 -> not (isConstTrue (List.hd c.memo_group_slice))
       | _ -> true 
- 
-and filter_mem fvs lst  = 
-  filter_mem_fct (fun c->List.length(Util.intersect_fct eq_spec_var fvs (bfv c.memo_formula))>0) lst
+      
+and filter_useless_memo_pure simp_fct fv c_lst = 
+  let n_c_lst = List.fold_left (fun a c-> 
+    if (isConstMFalse a) then a
+    else
+      let n_slice_lst = if c.memo_group_fv = [] then List.map simp_fct c.memo_group_slice else c.memo_group_slice in
+      let n_slice_lst = List.filter (fun c-> not (isConstTrue c)) n_slice_lst in   
+      if (List.exists isConstFalse n_slice_lst) then mkMFalse no_pos
+      else {c with memo_group_slice = n_slice_lst;}::a) [] c_lst in
+  List.filter (filter_useless_mem fv) n_c_lst
  
 and recompute_unknowns (p:memo_pure): memo_pure= p
     
@@ -362,7 +370,7 @@ and memoise_add_memo_fnf (l: memo_pure) (cm:memoised_constraint) fnf: memo_pure 
   let n_cm_lst = if not fnf then [cm]
     else 
       [{memo_formula = cm.memo_formula; memo_status = Fail_prune;};
-       {memo_formula = memo_f_neg cm.memo_formula; memo_status = Implied_dupl;}]in
+       {memo_formula = memo_f_neg cm.memo_formula; memo_status = Implied false;}]in
   let n1,n2,n3 = List.fold_left (fun (a1,a2,a3) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2,d.memo_group_slice::a3))(fv,[n_cm_lst],[]) merged in   
   let l = if (List.length merged)>0 then 
     let ng = {memo_group_cons =  filter_merged_cons n2; 
@@ -579,10 +587,10 @@ let memo_changed d = d.memo_group_changed
 (* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)
    if equal to an implied cond then it can be dropped as it is useless as a pruning condition
    throws an exception if p_cond is not found in corr*)
-let memo_check_syn_prun (p_cond,pr_branches) corr = 
+let memo_check_syn_prun (p_cond,pr_branches) crt_br corr = 
     let prun = List.find (fun d -> equalBFormula d.memo_formula p_cond) corr.memo_group_cons in
     match prun.memo_status with
-      | Fail_prune -> [(p_cond, pr_branches)]
+      | Fail_prune -> pr_branches
       | Implied_dupl 
       | Implied _ -> []
 

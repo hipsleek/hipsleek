@@ -152,8 +152,6 @@ let process_cmd_line () = Arg.parse [
   ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
   ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
   ("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog")
-  
-  (*("--iv", Arg.Set_int Globals.instantiation_variants,"instantiation variants (0-default)->existentials,implicit, explicit; 1-> implicit,explicit; 2-> explicit; 3-> existentials,implicit; 4-> implicit; 5-> existential,explicit;");*)
 	] set_source_file usage_msg
 
 (******************************************)
@@ -211,7 +209,7 @@ let process_source_full source =
 	  (* let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
-	  let _ = print_string ("Translating to core language..."); flush stdout in
+	  let _ = print_string ("Translating to core language...\n"); flush stdout in
 	  let cprog = Astsimp.trans_prog intermediate_prog in
 	  let _ = print_string (" done\n"); flush stdout in
 	  let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
@@ -317,6 +315,10 @@ let _ =
   let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
   let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
   (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
+  let _ = print_string ("there were "^ (string_of_int !Globals.prune_cnt)^" prunings \n") in
+  let _ = print_string (" dropping "^ (string_of_int !Globals.dropped_branches)^" branches \n") in
+  let _ = print_string (" saving "^ (string_of_int !Globals.saved_unfolds)^" disjuncts in unfold \n") in  
+  let _ = print_string (" leaving "^ (string_of_int !Globals.total_unfold_disjs)^" disjuncts in unfold \n") in  
   let _ = Util.print_profiling_info () in
   if (!Globals.enable_sat_statistics) then 
   print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
