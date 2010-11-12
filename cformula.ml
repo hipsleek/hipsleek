@@ -2511,7 +2511,7 @@ let rec transform_context f (c:context):context =
 	| Ctx e -> (f e)
 	| OCtx (c1,c2) -> mkOCtx (transform_context f c1)(transform_context f c2) no_pos
 		
-let rec trans_context (c: context) (arg: 'a) 
+let trans_context (c: context) (arg: 'a) 
         (f: 'a -> context -> (context * 'b) option) 
         (f_arg: 'a -> context -> 'a)
         (f_comb: 'b list -> 'b)
