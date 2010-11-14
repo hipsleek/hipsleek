@@ -151,7 +151,8 @@ let process_cmd_line () = Arg.parse [
   ("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
   ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
   ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
-  ("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog")
+  ("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");
+  ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
 	] set_source_file usage_msg
 
 (******************************************)
@@ -304,6 +305,10 @@ let main1 () =
       ()
 	  
 let _ = 
+  Mcpure.print_mp_f := Cprinter.string_of_memo_pure_formula ; 
+  Mcpure.print_mc_f := Cprinter.string_of_memoise_constraint ; 
+  Tpdispatcher.print_pure :=Cprinter.string_of_pure_formula ;
+  Cpure.print_b_formula := Cprinter.string_of_b_formula;
   main1 ();
   (*let rec check_aux (t1,t2,t3,t4) l = match l with
   | [] -> true
@@ -319,6 +324,12 @@ let _ =
   let _ = print_string (" dropping "^ (string_of_int !Globals.dropped_branches)^" branches \n") in
   let _ = print_string (" saving "^ (string_of_int !Globals.saved_unfolds)^" disjuncts in unfold \n") in  
   let _ = print_string (" leaving "^ (string_of_int !Globals.total_unfold_disjs)^" disjuncts in unfold \n") in  
+  let _ = print_string ("imply prune cache calls: "^(string_of_int !Tpdispatcher.impl_cache_count)^"\n imply prune cache miss: "^
+  (string_of_int !Tpdispatcher.impl_proof_count)^"\n") in
+  let _ = print_string ("sat prune cache calls: "^(string_of_int !Tpdispatcher.sat_cache_count)^"\n sat prune cache miss: "^
+  (string_of_int !Tpdispatcher.sat_proof_count)^"\n") in
+  let _ = print_string ("imply conseq cache miss: "^(string_of_int !Tpdispatcher.impl_conseq_count)^"\n") in
+  
   let _ = Util.print_profiling_info () in
   if (!Globals.enable_sat_statistics) then 
   print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^

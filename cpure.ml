@@ -107,6 +107,7 @@ let rec get_exp_type (e : exp) : typ = match e with
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Prim Globals.List
 
 (* type constants *)
+let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 
 let bool_type = Prim Bool
 
@@ -662,7 +663,8 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
   | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp e1 e2)
   | _ -> false
 	
-	
+ 
+  
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos=
   let rec helper1 ae alist =
@@ -2840,3 +2842,8 @@ let rename_labels  e=
 		| Exists (v,e1,f_l, l) -> (Some (Exists (v,e1,(n_l_f f_l),l)))in			
 	transform_formula ((fun _-> None), f_f,f_b,f_e) e
 			
+let remove_dup_constraints (f:formula):formula = 
+  (*let f = elim_idents f in*)
+  let l_conj = split_conjunctions f in
+  let prun_l = Util.remove_dups_f l_conj equalFormula in
+  join_conjunctions prun_l

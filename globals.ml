@@ -148,6 +148,7 @@ let print_core = ref false
 
 let print_err_sleek = ref false
 
+let enable_prune_cache = ref true
 
 let seq_to_try = ref false
 
@@ -250,6 +251,12 @@ let fresh_names (n : int) = (* number of names to be generated *)
     done;
     !names
 
+let formula_cache_no_series = ref 0
+
+let fresh_formula_cache_no  () = 
+  formula_cache_no_series := !formula_cache_no_series +1;
+  !formula_cache_no_series
+    
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 

@@ -83,6 +83,7 @@ let process_cmd_line () = Arg.parse [
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
   ("--dprun", Arg.Clear Globals.allow_pruning,"disable predicate pruning");
   ("--pcp", Arg.Set Globals.print_core,"print core representation");
+  ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
   ("--iw",  Arg.Set Globals.wrap_exists_implicit_explicit ,"existentially wrap instantiations after the entailment");
   ("--slk-err", Arg.Set Globals.print_err_sleek,"print sleek errors");
 ] set_source_file usage_msg
@@ -166,7 +167,16 @@ let main () =
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();
+  Mcpure.print_mp_f := Cprinter.string_of_memo_pure_formula ; 
+  Mcpure.print_mc_f := Cprinter.string_of_memoise_constraint ; 
+  Tpdispatcher.print_pure :=Cprinter.string_of_pure_formula ;
+  Cpure.print_b_formula := Cprinter.string_of_b_formula;
+  
   if !print_version_flag then begin
 	print_version ()
   end else
-	(Util.push_time "Overall";  main () ; Util.pop_time "Overall";Util.print_profiling_info ())
+	(Util.push_time "Overall";  main () ; Util.pop_time "Overall";Util.print_profiling_info ();
+  print_string ("imply prune cache calls: "^(string_of_int !Tpdispatcher.impl_cache_count)^"\n imply prune cache miss: "^
+  (string_of_int !Tpdispatcher.impl_proof_count)^"\n");
+  print_string ("sat prune cache calls: "^(string_of_int !Tpdispatcher.sat_cache_count)^"\n sat prune cache miss: "^
+  (string_of_int !Tpdispatcher.sat_proof_count)^"\n"))

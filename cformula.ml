@@ -15,6 +15,8 @@ module TP = Tpdispatcher
 
 type typed_ident = (Cpure.typ * ident)
 
+type var_aset = CP.spec_var Util.e_set 
+
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
   	   | TypeExact of t_formula_sub_type (* for t = C *)
@@ -68,6 +70,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
+                      formula_base_aset : var_aset;
                       formula_base_pos : loc }
 
 and formula_or = {  formula_or_f1 : formula;
@@ -81,6 +84,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_flow : flow_formula;
                         formula_exists_branches : (branch_label * CP.formula) list;
                         formula_exists_label : formula_label option;
+                        formula_exists_aset : var_aset;
                         formula_exists_pos : loc }
 
 and flow_formula = {  formula_flow_interval : nflow;
@@ -210,13 +214,13 @@ and data_of_h_formula h = match h with
 
 and isAnyConstFalse f = match f with
   | Exists ({formula_exists_heap = h;
-		   formula_exists_pure = p;
-           formula_exists_branches = br; 
-		   formula_exists_flow = fl;})
+             formula_exists_pure = p;
+             formula_exists_branches = br; 
+             formula_exists_flow = fl;})
   | Base ({formula_base_heap = h;
-		   formula_base_pure = p;
+           formula_base_pure = p;
            formula_base_branches = br; 
-		   formula_base_flow = fl;}) ->
+           formula_base_flow = fl;}) ->
              (h = HFalse || MCP.isConstMFalse p || (List.filter (fun (_,f) -> CP.isConstFalse f) br <> []))||
 			 (is_false_flow fl.formula_flow_interval)
   | _ -> false
@@ -258,13 +262,13 @@ and isStrictConstTrue f = match f with
   
 and isAnyConstTrue f = match f with
   | Exists ({formula_exists_heap = HTrue;
-		   formula_exists_pure = p;
-           formula_exists_branches = br; 
-		   formula_exists_flow = fl; })
+             formula_exists_pure = p;
+             formula_exists_branches = br; 
+		         formula_exists_flow = fl; })
   | Base ({formula_base_heap = HTrue;
-		   formula_base_pure = p;
+		       formula_base_pure = p;
            formula_base_branches = br;
-		   formula_base_flow = fl;}) -> 
+		       formula_base_flow = fl;}) -> 
             MCP.isConstMTrue p && (List.filter (fun (_,f) -> not (CP.isConstTrue f)) br = [])
 	  (* don't need to care about formula_base_type  *)
   | _ -> false
@@ -448,6 +452,7 @@ and mkTrue (flowt: flow_formula) pos = Base ({formula_base_heap = HTrue;
 						formula_base_flow = flowt (*(mkTrueFlow ())*);
             formula_base_branches = [];
             formula_base_label = None;
+            formula_base_aset = Util.empty_a_set ();
 						formula_base_pos = pos})
 
 and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse; 
@@ -456,6 +461,7 @@ and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse;
 						 formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
              formula_base_branches = [];
              formula_base_label = None;
+             formula_base_aset = Util.empty_a_set ();
 						 formula_base_pos = pos})
 						 
 and mkEFalse flowt pos = EBase({
@@ -502,6 +508,7 @@ and mkBase (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl : flow_formul
 		   formula_base_flow = fl;
        formula_base_branches = b;
        formula_base_label = None;
+       formula_base_aset = Context.;
 		   formula_base_pos = pos})
 
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
@@ -1234,8 +1241,15 @@ and disj_count (f0 : formula) = match f0 with
   
 (* context functions *)
 	
+  
+  
+type formula_cache_no = int
+  
+type formula_cache_no_list = formula_cache_no list
+
 type entail_state = {
-  es_formula : formula; (* can be any formula *)
+  es_formula : formula; (* can be any formula ; 
+    !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
   es_pure : (MCP.memo_pure * (branch_label * CP.formula) list);
   es_evars : CP.spec_var list;
@@ -1257,6 +1271,7 @@ type entail_state = {
   es_orig_conseq : struc_formula ;
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
+  es_cache_no_list : formula_cache_no_list;
 }
 
 and context = 
@@ -1291,7 +1306,18 @@ and branch_ctx =  path_trace * context
 and partial_context = (branch_fail list) * (branch_ctx list)
 
 and list_partial_context = partial_context list
-   
+
+
+let es_cache_extend_list l : formula_cache_no_list = (fresh_formula_cache_no ())::l
+
+let es_cache_new_list () : formula_cache_no_list = [fresh_formula_cache_no ()]
+
+let es_cache_extend es : entail_state = {es with es_cache_no_list = es_cache_extend_list es.es_cache_no_list}
+
+let es_cache_new es : entail_state = {es with es_cache_no_list = es_cache_new_list ()}
+
+let es_cache_same es_from es_to :entail_state = {es_to with es_cache_no_list = es_from.es_cache_no_list}
+
 
 let empty_es flowt pos = 
 	let x = mkTrue flowt pos in
@@ -1316,6 +1342,7 @@ let empty_es flowt pos =
   es_orig_conseq = [mkETrue flowt pos] ;
   es_path_label  =[];
   es_prior_steps  = [];
+  es_cache_no_list = [];
 }
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)

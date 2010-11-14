@@ -570,3 +570,79 @@ let print_profiling_info () =
     ) (0,"") str_list in
     print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" )
   else ()
+  
+  
+(*aliasing structures*)
+type 'a e_set =  ('a * 'a list) list
+
+let empty_a_set () : 'a e_set = []
+
+let find_aux (s: 'a e_set) (e:'a) (d:'a list) : 'a list =
+  try
+     List.assoc e s
+  with
+     _ -> d
+
+let find (s : 'a e_set) (e:'a) : 'a list  = find_aux s e []
+
+let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
+  let r1 = find s x in
+  let r2 = find s y in
+  (r1==r2 && r1!=[])
+
+let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
+  let r1 = find s x in
+  let r2 = find s y in
+  if r1=[] then
+     if r2=[] then
+        let r3 = [x;y] in
+        (x,r3)::((y,r3)::s)
+     else (x,r2)::s
+  else
+     if r2=[] then (y,r1)::s
+     else
+        if r1==r2 then s
+        else 
+         let r3=r1@r2 in
+         List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+
+let overlap x y : bool = not ((intersect x y)=[])
+ 
+let split_partition (x:'a list) (l:'a list list): ('a list list * 'a list list) =
+ List.fold_left ( fun (r1,r2) y -> if (overlap x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
+ 
+let rec merge_partition (l1:'a list list) (l2:'a list list) : 'a list list = match l1 with
+  | [] -> l2
+  | x::xs ->
+    let (y,ys)=split_partition x l2 in
+    if y==[] then x::(merge_partition xs l2)
+    else merge_partition xs ((x@(List.concat y))::ys)
+         
+let partition (s: 'a e_set) : 'a list list =
+ let rec insert (a,k) lst = match lst with
+      | [] -> [(k,[a])]
+      | (k2,ls)::xs -> 
+        if k==k2 then (k,a::ls)::xs
+          else (k2,ls)::(insert (a,k) xs) in
+ let r = List.fold_left (fun lst x ->  insert x lst) [] s in
+ List.map ( fun (_,b) -> b) r
+         
+let un_partition (l:'a list list) : 'a e_set =
+ let flat xs y = List.map (fun x -> (x,y)) xs in
+ List.concat (List.map (fun x -> flat x x) l)
+         
+let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
+ let l1=partition s1 in
+ let l2=partition s2 in
+ let l3=merge_partition l1 l2 in
+ un_partition l3
+
+
+
+
+
+
+
+
+
+
