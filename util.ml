@@ -599,9 +599,11 @@ let find_str ((s,f) : 'a e_set_str) (e:'a) : string list
 
 (* returns s |- x=y *)
 let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
-  let r1 = find s x in
-  let r2 = find s y in
-  (r1==r2 && not(empty r1))
+  if (x=y) then true
+  else
+    let r1 = find s x in
+    let r2 = find s y in
+    (r1==r2 && not(empty r1))
 
 (* returns s |- x=y *)
 let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
@@ -609,20 +611,22 @@ let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
 
 (* add x=y to e-set s *)
 let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
-  let r1 = find s x in
-  let r2 = find s y in
-  if empty r1 then
-     if empty r2 then
+  if (x=y) then s
+  else
+    let r1 = find s x in
+    let r2 = find s y in
+    if empty r1 then
+      if empty r2 then
         let r3 = [x;y] in
         (x,r3)::((y,r3)::s)
-     else (x,r2)::s
-  else
-     if empty r2 then (y,r1)::s
-     else
+      else (x,r2)::s
+    else
+      if empty r2 then (y,r1)::s
+      else
         if r1==r2 then s
         else 
-         let r3=r1@r2 in
-         List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+          let r3=r1@r2 in
+          List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
 let add_equiv_str ((s,f): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
   (add_equiv s (f x) (f y), f)
