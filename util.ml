@@ -636,13 +636,3 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
  let l2=partition s2 in
  let l3=merge_partition l1 l2 in
  un_partition l3
-
-
-
-
-
-
-
-
-
-

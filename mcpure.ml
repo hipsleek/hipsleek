@@ -7,9 +7,10 @@ open Cpure
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
+type var_aset = spec_var Util.e_set 
 
 type memo_pure = memoised_group list
-  
+ 
 and memoised_group = {
     memo_group_fv : spec_var list;
     memo_group_changed: bool;
@@ -180,6 +181,9 @@ and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =
         | _ -> a) [] f.memo_group_cons in
     List.fold_left (fun a c-> a@(prep_f c)) r f.memo_group_slice in
  List.concat (List.map helper f)
+
+and memo_alias (m:memo_pure) : var_aset = 
+  List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) (Util.empty_a_set ()) (ptr_equations m)
 
 (*  extract the equations for the variables that are to be explicitly instantiated from the residue - a Cpure.formula *)
 (* get the equation for the existential variable used in the

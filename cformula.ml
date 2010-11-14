@@ -15,8 +15,6 @@ module TP = Tpdispatcher
 
 type typed_ident = (Cpure.typ * ident)
 
-type var_aset = CP.spec_var Util.e_set 
-
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
   	   | TypeExact of t_formula_sub_type (* for t = C *)
@@ -70,7 +68,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
-                      formula_base_aset : var_aset;
+                      formula_base_aset : MCP.var_aset;
                       formula_base_pos : loc }
 
 and formula_or = {  formula_or_f1 : formula;
@@ -84,7 +82,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_flow : flow_formula;
                         formula_exists_branches : (branch_label * CP.formula) list;
                         formula_exists_label : formula_label option;
-                        formula_exists_aset : var_aset;
+                        formula_exists_aset : MCP.var_aset;
                         formula_exists_pos : loc }
 
 and flow_formula = {  formula_flow_interval : nflow;
@@ -508,7 +506,7 @@ and mkBase (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl : flow_formul
 		   formula_base_flow = fl;
        formula_base_branches = b;
        formula_base_label = None;
-       formula_base_aset = Context.;
+       formula_base_aset = MCP.memo_alias p;
 		   formula_base_pos = pos})
 
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
