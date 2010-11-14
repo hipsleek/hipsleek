@@ -87,6 +87,9 @@ let subset l1 l2 =
 let disjoint l1 l2 = 
   List.for_all (fun x -> not (List.mem x l2)) l1
 
+let overlap l1 l2 = 
+  List.exists (fun x -> (List.mem x l2)) l1
+
 let intersect l1 l2 =
   List.filter (fun x -> List.mem x l2) l1
 
@@ -573,11 +576,12 @@ let print_profiling_info () =
   
   
 (*aliasing structures*)
+type ('a,'k) e_map =  ('a * 'k) list
 type 'a e_set =  ('a * 'a list) list
 
 let empty_a_set () : 'a e_set = []
 
-let find_aux (s: 'a e_set) (e:'a) (d:'a list) : 'a list =
+let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
   try
      List.assoc e s
   with
@@ -606,7 +610,7 @@ let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
          let r3=r1@r2 in
          List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
-let overlap x y : bool = not ((intersect x y)=[])
+(*let overlap x y : bool = not ((intersect x y)=[])*)
  
 let split_partition (x:'a list) (l:'a list list): ('a list list * 'a list list) =
  List.fold_left ( fun (r1,r2) y -> if (overlap x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
@@ -617,6 +621,7 @@ let rec merge_partition (l1:'a list list) (l2:'a list list) : 'a list list = mat
     let (y,ys)=split_partition x l2 in
     if y==[] then x::(merge_partition xs l2)
     else merge_partition xs ((x@(List.concat y))::ys)
+   (*remove dupl of x*)
          
 let partition (s: 'a e_set) : 'a list list =
  let rec insert (a,k) lst = match lst with
