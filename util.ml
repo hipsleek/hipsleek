@@ -658,3 +658,37 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
 
 let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
  (merge_set s1 s2,f)
+
+(* disjointness structures*)
+type 'a d_set =  ('a list) list
+
+(* returns a list of difference sets for element e *)
+let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
+  (List.filter (fun l -> List.exists (eq e) l) s)
+
+let overlap_q l1 l2 = 
+  List.exists (fun x -> (List.memq x l2)) l1
+
+(* checks s |- x!=y *)
+let is_disj (eq:'a->'a->bool)  (s: 'a d_set)  (x:'a) (y:'a) : bool =
+  let l1 = find_diff eq s x in
+  let l2 = find_diff eq s y in
+  (overlap_q l1 l2)
+
+(*  returns s1/\s2 *)
+let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
+ s1@s2
+
+
+(*  returns s1*s2 *)
+let star_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
+  if s1==[] then s2
+  else if s2==[] then s1
+  else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
+
+(*  returns s1\/s2 *)
+let or_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
+  List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
+
+
+
