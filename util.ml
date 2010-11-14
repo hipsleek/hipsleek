@@ -601,7 +601,7 @@ let find_str ((s,f) : 'a e_set_str) (e:'a) : string list
 let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
   let r1 = find s x in
   let r2 = find s y in
-  (r1==r2 && r1!=[])
+  (r1==r2 && not(empty r1))
 
 (* returns s |- x=y *)
 let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
@@ -611,13 +611,13 @@ let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
 let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
   let r1 = find s x in
   let r2 = find s y in
-  if r1=[] then
-     if r2=[] then
+  if empty r1 then
+     if empty r2 then
         let r3 = [x;y] in
         (x,r3)::((y,r3)::s)
      else (x,r2)::s
   else
-     if r2=[] then (y,r1)::s
+     if empty r2 then (y,r1)::s
      else
         if r1==r2 then s
         else 
@@ -626,7 +626,6 @@ let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
 
 let add_equiv_str ((s,f): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
   (add_equiv s (f x) (f y), f)
-
 
 
 (* split out sub-lists in l which overlaps with x *)
@@ -638,7 +637,7 @@ let rec merge_partition (l1:'a list list) (l2:'a list list) : 'a list list = mat
   | [] -> l2
   | x::xs ->
     let (y,ys)=split_partition x l2 in
-    if y==[] then x::(merge_partition xs l2)
+    if empty y then x::(merge_partition xs l2)
     else merge_partition xs ((x@(List.concat y))::ys)
    (*remove dupl of x*)
          
@@ -691,8 +690,8 @@ let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
 
 (*  returns s1*s2 *)
 let star_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
-  if s1==[] then s2
-  else if s2==[] then s1
+  if empty s1 then s2
+  else if empty s2 then s1
   else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
 
 (*  returns s1\/s2 *)
