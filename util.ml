@@ -590,20 +590,24 @@ let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
   with
      _ -> d
 
+(* find key of e in s *)
 let find (s : 'a e_set) (e:'a) : 'a list  = find_aux s e []
+
 
 let find_str ((s,f) : 'a e_set_str) (e:'a) : string list  
       = find_aux s (f e) []
 
+(* returns s |- x=y *)
 let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
   let r1 = find s x in
   let r2 = find s y in
   (r1==r2 && r1!=[])
 
+(* returns s |- x=y *)
 let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
   is_equiv s (f x) (f y)
 
-
+(* add x=y to e-set s *)
 let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
   let r1 = find s x in
   let r2 = find s y in
@@ -624,11 +628,12 @@ let add_equiv_str ((s,f): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
   (add_equiv s (f x) (f y), f)
 
 
-(*let overlap x y : bool = not ((intersect x y)=[])*)
- 
+
+(* split out sub-lists in l which overlaps with x *)
 let split_partition (x:'a list) (l:'a list list): ('a list list * 'a list list) =
  List.fold_left ( fun (r1,r2) y -> if (overlap x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
  
+(* merge l1 /\ l2 to [[a]] *)
 let rec merge_partition (l1:'a list list) (l2:'a list list) : 'a list list = match l1 with
   | [] -> l2
   | x::xs ->
@@ -637,6 +642,7 @@ let rec merge_partition (l1:'a list list) (l2:'a list list) : 'a list list = mat
     else merge_partition xs ((x@(List.concat y))::ys)
    (*remove dupl of x*)
          
+(* converts (a e_set) to [[a]] *)
 let partition (s: 'a e_set) : 'a list list =
  let rec insert (a,k) lst = match lst with
       | [] -> [(k,[a])]
@@ -646,16 +652,19 @@ let partition (s: 'a e_set) : 'a list list =
  let r = List.fold_left (fun lst x ->  insert x lst) [] s in
  List.map ( fun (_,b) -> b) r
          
+(* converts [[a]] to (a e_set) *)
 let un_partition (l:'a list list) : 'a e_set =
  let flat xs y = List.map (fun x -> (x,y)) xs in
  List.concat (List.map (fun x -> flat x x) l)
          
+(* merge two equivalence sets s1 /\ s2 *)
 let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
  let l1=partition s1 in
  let l2=partition s2 in
  let l3=merge_partition l1 l2 in
  un_partition l3
 
+(* merge two equivalence set_str s1 /\ s2 *)
 let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
  (merge_set s1 s2,f)
 
@@ -689,6 +698,21 @@ let star_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
 (*  returns s1\/s2 *)
 let or_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
   List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
+
+(* check if there was a conflict in the difference list *)
+let  is_conflict_list (eq:'a -> 'a -> bool) (l:'a list) :bool =
+  let rec helper l =
+    match l with
+      | [] -> false
+      | x::xs -> let b=List.exists (eq x) xs in
+        if b then true
+        else helper xs
+  in helper l
+
+(* check if there was a conflict in set of differences *)
+let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
+ List.exists (is_conflict_list eq) s
+
 
 
 
