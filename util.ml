@@ -577,9 +577,12 @@ let print_profiling_info () =
   
 (*aliasing structures*)
 type ('a,'k) e_map =  ('a * 'k) list
-type 'a e_set =  ('a * 'a list) list
+type 'a e_set =  ('a,'a list) e_map
+type 'a e_set_str =  (string e_set * ('a -> string))
 
 let empty_a_set () : 'a e_set = []
+
+let empty_a_set_str f : 'a e_set_str = ([],f)
 
 let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
   try
@@ -589,10 +592,17 @@ let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
 
 let find (s : 'a e_set) (e:'a) : 'a list  = find_aux s e []
 
+let find_str ((s,f) : 'a e_set_str) (e:'a) : string list  
+      = find_aux s (f e) []
+
 let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
   let r1 = find s x in
   let r2 = find s y in
   (r1==r2 && r1!=[])
+
+let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
+  is_equiv s (f x) (f y)
+
 
 let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
   let r1 = find s x in
@@ -609,6 +619,10 @@ let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
         else 
          let r3=r1@r2 in
          List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+
+let add_equiv_str ((s,f): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
+  (add_equiv s (f x) (f y), f)
+
 
 (*let overlap x y : bool = not ((intersect x y)=[])*)
  
@@ -641,3 +655,6 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
  let l2=partition s2 in
  let l3=merge_partition l1 l2 in
  un_partition l3
+
+let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
+ (merge_set s1 s2,f)
