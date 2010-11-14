@@ -674,6 +674,10 @@ let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
 
+let empty_dset () : 'a d_set = []
+
+let singleton_dset (e:'a) : 'a d_set = [[e]]
+
 (* returns a list of difference sets for element e *)
 let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
   (List.filter (fun l -> List.exists (eq e) l) s)
@@ -683,9 +687,11 @@ let overlap_q l1 l2 =
 
 (* checks s |- x!=y *)
 let is_disj (eq:'a->'a->bool)  (s: 'a d_set)  (x:'a) (y:'a) : bool =
-  let l1 = find_diff eq s x in
-  let l2 = find_diff eq s y in
-  (overlap_q l1 l2)
+  if (eq x y) then false 
+  else
+    let l1 = find_diff eq s x in
+    let l2 = find_diff eq s y in
+    (overlap_q l1 l2)
 
 (*  returns s1/\s2 *)
 let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
