@@ -9,6 +9,8 @@ open Globals
 (* spec var *)
 type spec_var =
   | SpecVar of (typ * ident * primed)
+
+(* and var_aset = spec_var Util.e_set *)
   
 and typ =
   | Prim of prim_type
@@ -128,7 +130,7 @@ let is_void_type t = match t with | Prim Void -> true | _ -> false
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = Util.remove_dups_f tmp eq_spec_var in
-	res
+  res
 
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
@@ -141,11 +143,11 @@ and fv_helper (f : formula) : spec_var list = match f with
 and combine_pvars p1 p2 =
   let fv1 = fv_helper p1 in
   let fv2 = fv_helper p2 in
-    fv1 @ fv2
+  fv1 @ fv2
 
 and remove_qvar qid qf =
   let qfv = fv_helper qf in
-    Util.difference_f eq_spec_var qfv [qid]
+  Util.difference_f eq_spec_var qfv [qid]
 
 and bfv (bf : b_formula) = match bf with
   | BConst _ -> []
@@ -157,14 +159,14 @@ and bfv (bf : b_formula) = match bf with
   | Eq (a1, a2, _) -> combine_avars a1 a2
   | Neq (a1, a2, _) -> combine_avars a1 a2
   | EqMax (a1, a2, a3, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
-	  let fv3 = afv a3 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
+	    let fv3 = afv a3 in
 		Util.remove_dups (fv1 @ fv2 @ fv3)
   | EqMin (a1, a2, a3, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
-	  let fv3 = afv a3 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
+	    let fv3 = afv a3 in
 		Util.remove_dups (fv1 @ fv2 @ fv3)
   | BagIn (v, a1, _) ->
 		let fv1 = afv a1 in
@@ -176,26 +178,26 @@ and bfv (bf : b_formula) = match bf with
   | BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
   | BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
   | ListIn (a1, a2, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
 		fv1 @ fv2
   | ListNotIn (a1, a2, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
 		fv1 @ fv2
   | ListAllN (a1, a2, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
 		fv1 @ fv2
   | ListPerm (a1, a2, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
 		fv1 @ fv2
 
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
   let fv2 = afv a2 in
-    Util.remove_dups (fv1 @ fv2)
+  Util.remove_dups (fv1 @ fv2)
 
 and afv (af : exp) : spec_var list = match af with
   | Null _ -> []
@@ -207,21 +209,21 @@ and afv (af : exp) : spec_var list = match af with
   | Mult (a1, a2, _) | Div (a1, a2, _) -> combine_avars a1 a2
   | Max (a1, a2, _) -> combine_avars a1 a2
   | Min (a1, a2, _) -> combine_avars a1 a2
-  (*| BagEmpty (_) -> []*)
+        (*| BagEmpty (_) -> []*)
   | Bag (alist, _) -> let svlist = afv_list alist in
-  		Util.remove_dups svlist
+  	Util.remove_dups svlist
   | BagUnion (alist, _) -> let svlist = afv_list alist in
-  		Util.remove_dups svlist
+  	Util.remove_dups svlist
   | BagIntersect (alist, _) -> let svlist = afv_list alist in
-  		Util.remove_dups svlist
+  	Util.remove_dups svlist
   | BagDiff(a1, a2, _) -> combine_avars a1 a2
   | List (alist, _) -> let svlist = afv_list alist in
-  		Util.remove_dups svlist
+  	Util.remove_dups svlist
   | ListAppend (alist, _) -> let svlist = afv_list alist in
-  		Util.remove_dups svlist
+  	Util.remove_dups svlist
   | ListCons (a1, a2, _) ->
-	  let fv1 = afv a1 in
-	  let fv2 = afv a2 in
+	    let fv1 = afv a1 in
+	    let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
@@ -229,8 +231,8 @@ and afv (af : exp) : spec_var list = match af with
   | ListReverse (a, _) -> afv a
 
 and afv_list (alist : exp list) : spec_var list = match alist with
-	|[] -> []
-	|a :: rest -> afv a @ afv_list rest
+  |[] -> []
+  |a :: rest -> afv a @ afv_list rest
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -239,15 +241,15 @@ and is_max_min a = match a with
 and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos)),_) -> true
   | _ -> false
-  
+        
 and isConstBTrue (p:b_formula) = match p with
   | BConst (true, pos) -> true
   | _ -> false
-  
+        
 and isConstFalse (p:formula) = match p with
   | BForm ((BConst (false, pos)),_) -> true
   | _ -> false
-  
+        
 and isConstBFalse (p:b_formula) = match p with
   | BConst (false, pos) -> true
   | _ -> false
@@ -272,14 +274,14 @@ and is_num (e : exp) : bool = match e with
 
 and to_int_const e t =
   match e with
-  | IConst (i, _) -> i
-  | FConst (f, _) ->
-      begin
-        match t with
-        | Ceil -> int_of_float (ceil f)
-        | Floor -> int_of_float (floor f)
-      end
-  | _ -> 0
+    | IConst (i, _) -> i
+    | FConst (f, _) ->
+          begin
+            match t with
+              | Ceil -> int_of_float (ceil f)
+              | Floor -> int_of_float (floor f)
+          end
+    | _ -> 0
 
 and is_int (e : exp) : bool = match e with
   | IConst _ -> true
@@ -288,7 +290,7 @@ and is_int (e : exp) : bool = match e with
 and is_float (e : exp) : bool = match e with
   | FConst _ -> true
   | _ -> false
-  
+        
 and get_num_int (e : exp) : int = match e with
   | IConst (b,_) -> b
   | _ -> 0
@@ -309,8 +311,8 @@ and to_var (e : exp) : spec_var = match e with
 
 and can_be_aliased (e : exp) : bool = match e with
   | Var _ | Null _ -> true
-	  (* null is necessary in this case: p=null & q=null.
-		 If null is not considered, p=q is not inferred. *)
+	    (* null is necessary in this case: p=null & q=null.
+		   If null is not considered, p=q is not inferred. *)
   | _ -> false
 
 and get_alias (e : exp) : spec_var = match e with
@@ -321,11 +323,11 @@ and get_alias (e : exp) : spec_var = match e with
 and is_object_var (sv : spec_var) = match sv with
   | SpecVar (OType _, _, _) -> true
   | _ -> false
-  
+        
 and exp_is_object_var (sv : exp) = match sv with
   | Var(SpecVar (OType _, _, _),_) -> true
   | _ -> false
-  
+        
 and is_bag (e : exp) : bool = match e with
   | Bag _
   | BagUnion _
@@ -355,7 +357,7 @@ and is_arith (e : exp) : bool = match e with
 and is_bag_type (t : typ) = match t with
   | Prim Globals.Bag  -> true
   | _ -> false
-  
+        
 and is_list_type (t : typ) = match t with
   | Prim Globals.List  -> true
   | _ -> false
@@ -381,9 +383,9 @@ and is_b_form_arith (b: b_formula) :bool = match b with
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
   | Neq (e1,e2,_) -> (is_exp_arith e1)&&(is_exp_arith e2)
   | EqMax (e1,e2,e3,_) | EqMin (e1,e2,e3,_) -> (is_exp_arith e1)&&(is_exp_arith e2) && (is_exp_arith e3)
-	  (* bag formulas *)
+	    (* bag formulas *)
   | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _
-	  (* list formulas *)
+	        (* list formulas *)
   | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> false
 
 (* Expression *)
@@ -391,17 +393,17 @@ and is_exp_arith (e:exp) : bool= match e with
   | Null _  | Var _ | IConst _ | FConst _ -> true
   | Add (e1,e2,_)  | Subtract (e1,e2,_)  | Mult (e1,e2,_) 
   | Div (e1,e2,_)  | Max (e1,e2,_)  | Min (e1,e2,_) -> (is_exp_arith e1) && (is_exp_arith e2)
-	  (* bag expressions *)
+	    (* bag expressions *)
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _
-	  (* list expressions *)
+	        (* list expressions *)
   | List _ | ListCons _ | ListHead _ | ListTail _
   | ListLength _ | ListAppend _ | ListReverse _ -> false
-  
+        
 and is_formula_arith (f:formula) :bool = match f with
   | BForm (b,_) -> is_b_form_arith b 
   | And (f1,f2,_) | Or (f1,f2,_,_)-> (is_formula_arith f1)&&(is_formula_arith f2)
   | Not (f,_,_) | Forall (_,f,_,_) | Exists (_,f,_,_)-> (is_formula_arith f)
-  
+        
 (* smart constructor *)
 
 and mkRes t = SpecVar (t, res, Unprimed)
@@ -475,33 +477,33 @@ and mkEq a1 a2 pos =
 	Eq (a1, a2, pos)
 
 and mkAnd f1 f2 pos = 
-	if (isConstFalse f1) then f1
-	else if (isConstTrue f1) then f2
-	else if (isConstFalse f2) then f2
-	else if (isConstTrue f2) then f1
-	else And (f1, f2, pos)
+  if (isConstFalse f1) then f1
+  else if (isConstTrue f1) then f2
+  else if (isConstFalse f2) then f2
+  else if (isConstTrue f2) then f1
+  else And (f1, f2, pos)
 
 and mkOr f1 f2 lbl pos= 
-	if (isConstFalse f1) then f2
-	else if (isConstTrue f1) then f1
-	else if (isConstFalse f2) then f1
-	else if (isConstTrue f2) then f2
-	else Or (f1, f2, lbl ,pos)
+  if (isConstFalse f1) then f2
+  else if (isConstTrue f1) then f1
+  else if (isConstFalse f2) then f1
+  else if (isConstTrue f2) then f2
+  else Or (f1, f2, lbl ,pos)
 
 and mkEqExp (ae1 : exp) (ae2 : exp) pos :formula = match (ae1, ae2) with
   | (Var v1, Var v2) ->
-	  if eq_spec_var (fst v1) (fst v2) then
-		mkTrue pos 
-	  else
-		BForm ((Eq (ae1, ae2, pos)),None)
+	    if eq_spec_var (fst v1) (fst v2) then
+		  mkTrue pos 
+	    else
+		  BForm ((Eq (ae1, ae2, pos)),None)
   | _ ->  BForm ((Eq (ae1, ae2, pos)),None)
 
 and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
   | (Var v1, Var v2) ->
-	  if eq_spec_var (fst v1) (fst v2) then
-		mkFalse pos 
-	  else
-		BForm ((Neq (ae1, ae2, pos)),None)
+	    if eq_spec_var (fst v1) (fst v2) then
+		  mkFalse pos 
+	    else
+		  BForm ((Neq (ae1, ae2, pos)),None)
   | _ ->  BForm ((Neq (ae1, ae2, pos)),None)
 
 and mkNot f lbl pos0 :formula= match f with
@@ -517,7 +519,7 @@ and mkNot f lbl pos0 :formula= match f with
 		| _ -> Not (f, lbl,pos0)
 	end
   | _ -> Not (f, lbl,pos0)
-  
+        
 and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then
 	mkTrue pos
@@ -535,29 +537,29 @@ and mkEqVarInt (sv : spec_var) (i : int) pos =
 
 
 (*
-and mkEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
+  and mkEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
   | (AVar (SVar sv1), AVar (SVar sv2)) ->
-	  if sv1 = sv2 then
-		mkTrue
-	  else
-		BForm (AEq (ae1, ae2))
+  if sv1 = sv2 then
+  mkTrue
+  else
+  BForm (AEq (ae1, ae2))
   | _ ->  BForm (AEq (ae1, ae2))
 
-and mkNEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
+  and mkNEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
   | (AVar (SVar sv1), AVar (SVar sv2)) ->
-	  if sv1 = sv2 then
-		mkTrue
-	  else
-		BForm (ANeq (ae1, ae2))
+  if sv1 = sv2 then
+  mkTrue
+  else
+  BForm (ANeq (ae1, ae2))
   | _ ->  BForm (ANeq (ae1, ae2))
 
-and mkNEqualVar (sv1 : spec_var) (sv2 : spec_var) =
+  and mkNEqualVar (sv1 : spec_var) (sv2 : spec_var) =
   if sv1 = sv2 then
-	mkFalse
+  mkFalse
   else
-	BForm (ANeq (AVar (force_to_svar sv1), AVar (force_to_svar sv2)))
+  BForm (ANeq (AVar (force_to_svar sv1), AVar (force_to_svar sv2)))
 
-and mkNEqualVarInt (sv : spec_var) (i : int) =
+  and mkNEqualVarInt (sv : spec_var) (i : int) =
   BForm (ANeq (AVar (force_to_svar sv), IConst i))
 *)
 
@@ -569,19 +571,19 @@ and mkFalse pos = BForm ((BConst (false, pos)),None)
 and mkExists (vs : spec_var list) (f : formula) lbl pos = match vs with
   | [] -> f
   | v :: rest ->
-      let ef = mkExists rest f lbl pos in
+        let ef = mkExists rest f lbl pos in
 		if mem v (fv ef) then
 		  Exists (v, ef, lbl, pos)
 		else
 		  ef
 
 and mkExistsBranches (vs : spec_var list) (f : (branch_label * formula )list) lbl pos = 
-	List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f
-	
+  List.map (fun (c1,c2)-> (c1,(mkExists vs c2 lbl pos))) f
+	  
 and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
   | [] -> f
   | v :: rest ->
-      let ef = mkForall rest f lbl pos in
+        let ef = mkForall rest f lbl pos in
 		if mem v (fv ef) then
 		  Forall (v, ef, lbl, pos)
 		else
@@ -590,58 +592,69 @@ and mkForall (vs : spec_var list) (f : formula) lbl pos = match vs with
 and split_conjunctions = function
   | And (x, y, _) -> (split_conjunctions x) @ (split_conjunctions y)
   | z -> [z]
-  
+        
 and join_conjunctions f = 
-	List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) f
-		  
+  List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) f
+	  
 (*take out from ante all the leafs that are in the memoized lists*)
 (*and implied_prune_ante ante = match ante with
   | BForm (f,_,_) -> (
-    match f with 
-    | BConst _  | BVar _ | EqMax _ | EqMin _  | BagSub _ | BagMin _ | BagMax _  | ListAllN _ | ListPerm _ -> ante
-    | ListIn _ | ListNotIn _ | BagIn _  | BagNotIn _ | Lt _ | Lte _ | Gt _ | Gte _ | Neq _ -> mkTrue no_pos
-    | Eq (e1,e2,_)  -> 
-      match e1 with 
-        | BagUnion _ -> ante 
-        | Bag _ -> ante
-        | _-> match e2 with 
-            | BagUnion _ -> ante 
-            | Bag _ -> ante
-            | _ -> mkTrue no_pos)
+  match f with 
+  | BConst _  | BVar _ | EqMax _ | EqMin _  | BagSub _ | BagMin _ | BagMax _  | ListAllN _ | ListPerm _ -> ante
+  | ListIn _ | ListNotIn _ | BagIn _  | BagNotIn _ | Lt _ | Lte _ | Gt _ | Gte _ | Neq _ -> mkTrue no_pos
+  | Eq (e1,e2,_)  -> 
+  match e1 with 
+  | BagUnion _ -> ante 
+  | Bag _ -> ante
+  | _-> match e2 with 
+  | BagUnion _ -> ante 
+  | Bag _ -> ante
+  | _ -> mkTrue no_pos)
   | And (f1,f2,l) -> mkAnd (implied_prune_ante f1) (implied_prune_ante f2) l
   | Or _ | Not _  | Forall _  | Exists _ -> ante *)
 
       
 and is_member_pure (f:formula) (p:formula):bool = 
-	let y = split_conjunctions p in
-	List.exists (fun c-> equalFormula f c) y
-	
-
+  let y = split_conjunctions p in
+  List.exists (fun c-> equalFormula f c) y
+	  
 
 (*limited, should use equal_formula, equal_b_formula, eq_exp instead*)  
-and equalFormula (f1:formula)(f2:formula):bool = match (f1,f2) with
-  | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula b1 b2
-  | ((Not (b1,_,_)),(Not (b2,_,_))) -> equalFormula b1 b2
-  | _ -> false	
+and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bool = 
+  let equalFormula = equalFormula_f eq in
+  let equalBFormula = equalBFormula_f eq in
+  match (f1,f2) with
+    | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula  b1 b2
+    | ((Not (b1,_,_)),(Not (b2,_,_))) -> equalFormula b1 b2
+    | (Or(f1, f2, _,_), Or(f3, f4, _,_))
+    | (And(f1, f2, _), And(f3, f4, _)) ->  (equalFormula f1 f3) & (equalFormula f2 f4)
+    | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
+    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (equalFormula f1 f2)
+    | _ -> false
 
-
-and equalBFormula (f1:b_formula)(f2:b_formula):bool = match (f1,f2) with
-  | ((BVar v1),(BVar v2))-> (eq_spec_var (fst v1) (fst v2))
-  | ((Lte (v1,v2,_)),(Lte (w1,w2,_)))
-  | ((Lt (v1,v2,_)),(Lt (w1,w2,_)))-> (eqExp w1 v1)&&(eqExp w2 v2)
-  | ((Neq (v1,v2,_)) , (Neq (w1,w2,_)))
-  | ((Eq (v1,v2,_)) , (Eq (w1,w2,_))) -> ((eqExp w1 v1)&&(eqExp w2 v2))|| ((eqExp w1 v2)&&(eqExp w2 v1))
-  | ((BagIn (v1,e1,_)),(BagIn (v2,e2,_)))
-  | ((BagNotIn (v1,e1,_)),(BagNotIn (v2,e2,_))) -> (eq_spec_var v1 v2)&&(eqExp e1 e2)
-  | ((ListIn (e1,e2,_)),(ListIn (d1,d2,_)))
-  | ((ListNotIn (e1,e2,_)),(ListNotIn (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
-  | ((ListAllN (e1,e2,_)),(ListAllN (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
-  | ((ListPerm (e1,e2,_)),(ListPerm (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
-  | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
-  | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq_spec_var v1 w1)&& (eq_spec_var v2 w2)
-  | _ -> false
-  
-and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
+and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formula):bool = 
+  let eq_spec_var = eq in
+  let eqExp = eqExp_f eq in
+  match (f1,f2) with
+    | ((BVar v1),(BVar v2))-> (eq_spec_var (fst v1) (fst v2))
+    | ((Lte (v1,v2,_)),(Lte (w1,w2,_)))
+    | ((Lt (v1,v2,_)),(Lt (w1,w2,_)))-> (eqExp w1 v1)&&(eqExp w2 v2)
+    | ((Neq (v1,v2,_)) , (Neq (w1,w2,_)))
+    | ((Eq (v1,v2,_)) , (Eq (w1,w2,_))) -> ((eqExp w1 v1)&&(eqExp w2 v2))|| ((eqExp w1 v2)&&(eqExp w2 v1))
+    | ((BagIn (v1,e1,_)),(BagIn (v2,e2,_)))
+    | ((BagNotIn (v1,e1,_)),(BagNotIn (v2,e2,_))) -> (eq_spec_var v1 v2)&&(eqExp e1 e2)
+    | ((ListIn (e1,e2,_)),(ListIn (d1,d2,_)))
+    | ((ListNotIn (e1,e2,_)),(ListNotIn (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+    | ((ListAllN (e1,e2,_)),(ListAllN (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+    | ((ListPerm (e1,e2,_)),(ListPerm (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+    | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
+    | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq_spec_var v1 w1)&& (eq_spec_var v2 w2)
+    | _ -> false
+          
+and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool = 
+  let eq_spec_var = eq in
+  let eqExp = eqExp_f eq in
+  match (e1,e2) with
 	| (Null _ ,Null _ ) -> true
 	| (Var (v1,_), Var (v2,_)) -> (eq_spec_var v1 v2)
     | (IConst (v1,_), IConst (v2,_)) -> v1=v2
@@ -650,78 +663,90 @@ and eqExp (e1:exp)(e2:exp):bool = match (e1,e2) with
 	| (Min (e1,e2,_),Min (d1,d2,_)) 
 	| (Add (e1,e2,_),Add (d1,d2,_)) -> (((eqExp e1 d1)&&(eqExp e2 d2))||((eqExp e1 d2)&&(eqExp e2 d1)))
     | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp e1 d1)&&(eqExp e2 d2))
-  (* I'm not sure about this *)
-  | (Mult (e1, e2, _), Mult(d1, d2, _)) ->
-      (((eqExp e1 d1)&&(eqExp e2 d2)) || ((eqExp e1 d2)&&(eqExp e2 d1)))
-  | (Div _, Div _) -> false (* FIX IT *)
+          (* I'm not sure about this *)
+    | (Mult (e1, e2, _), Mult(d1, d2, _)) ->
+          (((eqExp e1 d1)&&(eqExp e2 d2)) || ((eqExp e1 d2)&&(eqExp e2 d1)))
+    | (Div _, Div _) -> false (* FIX IT *)
 	| (Bag (l1,_),Bag (l2,_)) -> if (List.length l1)=(List.length l1) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
-										else false
-  | (List (l1,_),List (l2,_))
-  | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
-                    else false
-  | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
-  | (ListHead (e1,_),ListHead (e2,_))
-  | (ListTail (e1,_),ListTail (e2,_))
-  | (ListLength (e1,_),ListLength (e2,_))
-  | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp e1 e2)
-  | _ -> false
-	
- 
+	  else false
+    | (List (l1,_),List (l2,_))
+    | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
+      else false
+    | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
+    | (ListHead (e1,_),ListHead (e2,_))
+    | (ListTail (e1,_),ListTail (e2,_))
+    | (ListLength (e1,_),ListLength (e2,_))
+    | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp e1 e2)
+    | _ -> false
+	      
+
+and equalFormula (f1:formula)(f2:formula):bool = equalFormula_f eq_spec_var  f1 f2
+
+and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_var  f1 f2
+
+and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
+
+and equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
+  
+and equalBFormula_aset aset  (f1:b_formula)(f2:b_formula) :bool = equalBFormula_f (eq_spec_var_aset aset)  f1 f2
+
+and eqExp_aset aset  (f1:exp)(f2:exp):bool = eqExp_f (eq_spec_var_aset aset)  f1 f2
+
   
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 lbl pos=
   let rec helper1 ae alist =
 	let a = List.hd alist in
 	let rest = List.tl alist in
-  let check_upper r e ub pos = if ub<=1 then Eq (e,(Null no_pos),pos) else r in
-  let check_lower r e lb pos = if lb>=0 then Neq (e,(Null no_pos),pos) else r in
-  let rec tt relop ae a pos = 
-    let r = (relop ae a pos) in
-    match r with
-      | Lte (e1,e2,l) 
-      | Gte (e2,e1,l) -> 
-          ( match e1,e2 with
-            | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r
-            | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r
-            | _ -> r)
-      | Gt (e1,e2,l) 
-      | Lt (e2,e1,l) -> 
-          ( match e1,e2 with
-            | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r
-            | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r
-            | _ -> r)
-      | Eq (e1,e2,l) ->
-          ( match e1,e2 with
-              | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r
-              | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r
-              | _ -> r)
-      | Neq (e1,e2,l) ->
-          ( match e1,e2 with
-              | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
-              | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
-              | _ -> r)
-      | _ -> r in 
+    let check_upper r e ub pos = if ub<=1 then Eq (e,(Null no_pos),pos) else r in
+    let check_lower r e lb pos = if lb>=0 then Neq (e,(Null no_pos),pos) else r in
+    let rec tt relop ae a pos = 
+      let r = (relop ae a pos) in
+      match r with
+        | Lte (e1,e2,l) 
+        | Gte (e2,e1,l) -> 
+              ( match e1,e2 with
+                | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_upper r e1 (i+1) l else r
+                | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_lower r e2 (i-1) l else r
+                | _ -> r)
+        | Gt (e1,e2,l) 
+        | Lt (e2,e1,l) -> 
+              ( match e1,e2 with
+                | Var (v,_), IConst(i,l) -> if (is_otype (type_of_spec_var v)) then check_lower r e1 i l else r
+                | IConst(i,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then check_upper r e2 i l else r
+                | _ -> r)
+        | Eq (e1,e2,l) ->
+              ( match e1,e2 with
+                | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Eq (e1,(Null no_pos),pos) else r
+                | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Eq (e2,(Null no_pos),pos) else r
+                | _ -> r)
+        | Neq (e1,e2,l) ->
+              ( match e1,e2 with
+                | Var (v,_), IConst(0,l) -> if (is_otype (type_of_spec_var v)) then Neq (e1,(Null no_pos),pos) else r
+                | IConst(0,l), Var (v,_) -> if (is_otype (type_of_spec_var v)) then Neq (e2,(Null no_pos),pos) else r
+                | _ -> r)
+        | _ -> r in 
 	let tmp = BForm ((tt relop ae a pos),lbl) in
-	  if Util.empty rest then
-		tmp
-	  else
-		let tmp1 = helper1 ae rest in
-		let tmp2 = mkAnd tmp tmp1 pos in
-		  tmp2 in
+	if Util.empty rest then
+	  tmp
+	else
+	  let tmp1 = helper1 ae rest in
+	  let tmp2 = mkAnd tmp tmp1 pos in
+	  tmp2 in
   let rec helper2 alist1 alist2 =
 	let a = List.hd alist1 in
 	let rest = List.tl alist1 in
 	let tmp = helper1 a alist2 in
-	  if Util.empty rest then
-		tmp
-	  else
-		let tmp1 = helper2 rest alist2 in
-		let tmp2 = mkAnd tmp tmp1 pos in
-		  tmp2 in
-	if List.length alist10 = 0 || List.length alist20 = 0 then
-	  failwith ("build_relation: zero-length list")
+	if Util.empty rest then
+	  tmp
 	else
-	  helper2 alist10 alist20
+	  let tmp1 = helper2 rest alist2 in
+	  let tmp2 = mkAnd tmp tmp1 pos in
+	  tmp2 in
+  if List.length alist10 = 0 || List.length alist20 = 0 then
+	failwith ("build_relation: zero-length list")
+  else
+	helper2 alist10 alist20
 
 (* utility functions *)
 
@@ -767,7 +792,7 @@ and pos_of_exp (e : exp) = match e with
   | Div (_, _, p) -> p
   | Max (_, _, p) -> p
   | Min (_, _, p) -> p
-  (*| BagEmpty (p) -> p*)
+        (*| BagEmpty (p) -> p*)
   | Bag (_, p) -> p
   | BagUnion (_, p) -> p
   | BagIntersect (_, p) -> p
@@ -803,26 +828,26 @@ and to_int_var (sv : spec_var) : spec_var = match sv with
 
 
 and fresh_old_name (s: string):string = 
-	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
-	let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
-	(*let _ = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
-	n
-	
+  let ri = try  (String.rindex s '_') with  _ -> (String.length s) in
+  let n = ((String.sub s 0 ri) ^ (fresh_trailer ())) in
+  (*let _ = print_string ("init name: "^s^" new name: "^n ^"\n") in*)
+  n
+	  
 
 and fresh_spec_var (sv : spec_var) =
-	let old_name = name_of_spec_var sv in
+  let old_name = name_of_spec_var sv in
   let name = fresh_old_name old_name in
   (*--- 09.05.2000 *)
-	(*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
-	(*09.05.2000 ---*)
+  (*let _ = (print_string ("\n[cpure.ml, line 521]: fresh name = " ^ name ^ "!!!!!!!!!!!\n\n")) in*)
+  (*09.05.2000 ---*)
   let t = type_of_spec_var sv in
-	SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
+  SpecVar (t, name, Unprimed) (* fresh names are unprimed *)
 
 and fresh_spec_vars (svs : spec_var list) = List.map fresh_spec_var svs
 
 (******************************************************************************************************************
-	22.05.2008
-	Utilities for equality testing
+	                                                                                                               22.05.2008
+	                                                                                                               Utilities for equality testing
 ******************************************************************************************************************)
 
 and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
@@ -830,131 +855,138 @@ and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
     | [] -> true
     | h :: t -> (List.exists (fun c -> eq_spec_var h c) sv2) & (eq_spec_var_list_helper t sv2)
   in
-    (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
+  (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
 
 and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-	  (* translation has ensured well-typedness.
-		 We need only to compare names and primedness *)
-	  v1 = v2 & p1 = p2
+	    (* translation has ensured well-typedness.
+		   We need only to compare names and primedness *)
+	    v1 = v2 & p1 = p2
 
 and eq_spec_var_aset aset (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv aset sv1 sv2 
- 
-    
-and eq_pure_formula (f1 : formula) (f2 : formula) : bool = match (f1, f2) with
-	| (BForm(b1,_), BForm(b2,_)) -> (eq_b_formula [] b1 b2)
-	| (Or(f1, f2, _,_), Or(f3, f4, _,_))
+        
+        
+and eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
+(*
+match (f1, f2) with
+  | (BForm(b1,_), BForm(b2,_)) -> (eq_b_formula [] b1 b2)
+  | (Or(f1, f2, _,_), Or(f3, f4, _,_))
   | (And(f1, f2, _), And(f3, f4, _)) ->
-  	((eq_pure_formula f1 f3) & (eq_pure_formula f2 f4)) or ((eq_pure_formula f1 f4) & (eq_pure_formula f2 f3))
+  	    ((eq_pure_formula f1 f3) & (eq_pure_formula f2 f4)) or ((eq_pure_formula f1 f4) & (eq_pure_formula f2 f3))
   | (Not(f1,_, _), Not(f2,_, _)) -> (eq_pure_formula f1 f2)
   | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
   | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq_spec_var sv1 sv2) & (eq_pure_formula f1 f2)
-	| _ -> false
+  | _ -> false
+*)
 
-
-and eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool = match (b1, b2) with
-	| (BConst(c1, _), BConst(c2, _)) -> c1 = c2
-	| (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
+and eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool = equalBFormula_aset aset b1 b2
+(*
+match (b1, b2) with
+  | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
+  | (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
   | (Lte(e1, e2, _), Gt(e4, e3, _))
-	| (Gt(e1, e2, _), Lte(e4, e3, _))
+  | (Gt(e1, e2, _), Lte(e4, e3, _))
   | (Gte(e1, e2, _), Lt(e4, e3, _))
-	| (Lt(e1, e2, _), Gte(e4, e3, _))  
-	| (Lte(e1, e2, _), Lte(e3, e4, _))
-	| (Gt(e1, e2, _), Gt(e3, e4, _))
-	| (Gte(e1, e2, _), Gte(e3, e4, _))
-	| (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-	| (Neq(e1, e2, _), Neq(e3, e4, _))
-	| (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp aset e1 e3) & (eq_exp aset e2 e4)) or ((eq_exp aset e1 e4) & (eq_exp aset e2 e3))
-	| (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
-	| (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp aset e1 e4) & ((eq_exp aset e2 e5) & (eq_exp aset e3 e6)) or ((eq_exp aset e2 e6) & (eq_exp aset e3 e5))
-	| (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
-	| (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq_spec_var_aset aset sv1 sv2) & (eq_exp aset e1 e2)
+  | (Lt(e1, e2, _), Gte(e4, e3, _))  
+  | (Lte(e1, e2, _), Lte(e3, e4, _))
+  | (Gt(e1, e2, _), Gt(e3, e4, _))
+  | (Gte(e1, e2, _), Gte(e3, e4, _))
+  | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
+  | (Neq(e1, e2, _), Neq(e3, e4, _))
+  | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp aset e1 e3) & (eq_exp aset e2 e4)) or ((eq_exp aset e1 e4) & (eq_exp aset e2 e3))
+  | (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
+  | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp aset e1 e4) & ((eq_exp aset e2 e5) & (eq_exp aset e3 e6)) or ((eq_exp aset e2 e6) & (eq_exp aset e3 e5))
+  | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
+  | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq_spec_var_aset aset sv1 sv2) & (eq_exp aset e1 e2)
   | (ListIn(e1, e2, _), ListIn(d1, d2, _))
   | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
   | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
   | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-	| (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
-	| (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var_aset aset sv1 sv3) & (eq_spec_var_aset aset sv2 sv4)
-	| (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-	| _ -> false
+  | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
+  | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var_aset aset sv1 sv3) & (eq_spec_var_aset aset sv2 sv4)
+  | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
+  | _ -> false
+*)
 
-and eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula [] b1 b2
+and eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = equalBFormula b1 b2
   
 and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
   let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
     | [] -> true
     | h :: t -> (List.exists (fun c -> eq_exp aset h c) e2) & (eq_exp_list_helper t e2)
   in
-    (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
+  (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
 
-and eq_exp aset (e1 : exp) (e2 : exp) : bool = match (e1, e2) with
-	| (Null(_), Null(_)) -> true
-	| (Var(sv1, _), Var(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
-	| (IConst(i1, _), IConst(i2, _)) -> i1 = i2
+and eq_exp aset (e1 : exp) (e2 : exp) : bool = eqExp_aset aset e1 e2
+(*match (e1, e2) with
+  | (Null(_), Null(_)) -> true
+  | (Var(sv1, _), Var(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
+  | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
   | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
-	| (Subtract(e11, e12, _), Subtract(e21, e22, _))
-	| (Max(e11, e12, _), Max(e21, e22, _))
-	| (Min(e11, e12, _), Min(e21, e22, _))
-	| (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
+  | (Subtract(e11, e12, _), Subtract(e21, e22, _))
+  | (Max(e11, e12, _), Max(e21, e22, _))
+  | (Min(e11, e12, _), Min(e21, e22, _))
+  | (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
   | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
   | (Div(e11, e12, _), Div(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
-	| (Bag(e1, _), Bag(e2, _))
-	| (BagUnion(e1, _), BagUnion(e2, _))
-	| (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list aset e1 e2)
-	| (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
+  | (Bag(e1, _), Bag(e2, _))
+  | (BagUnion(e1, _), BagUnion(e2, _))
+  | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list aset e1 e2)
+  | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
   | (List (l1, _), List (l2, _))
   | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eq_exp aset a b)) l1 l2 
-          else false
+    else false
   | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eq_exp aset e1 d1) && (eq_exp aset e2 d2)
   | (ListHead (e1, _), ListHead (e2, _))
   | (ListTail (e1, _), ListTail (e2, _))
   | (ListLength (e1, _), ListLength (e2, _))
   | (ListReverse (e1, _), ListReverse (e2, _)) -> (eq_exp aset e1 e2)
-	| _ -> false
+  | _ -> false
+*)
 
-and eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp [] e1 e2
+and eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eqExp e1 e2
   
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
-  
+      
 (* substitution *)
 
 and subst_var_list_avoid_capture fr t svs =
   let st1 = List.combine fr t in
   let svs1 = subst_var_list st1 svs in
-	svs1
+  svs1
 
 (* renaming seems redundant
-and subst_var_list_avoid_capture fr t svs =
-  let fresh_fr = fresh_spec_vars fr in
-  let st1 = List.combine fr fresh_fr in
-  let st2 = List.combine fresh_fr t in
-  let svs1 = subst_var_list st1 svs in
-  let svs2 = subst_var_list st2 svs1 in
-	svs2
+   and subst_var_list_avoid_capture fr t svs =
+   let fresh_fr = fresh_spec_vars fr in
+   let st1 = List.combine fr fresh_fr in
+   let st2 = List.combine fresh_fr t in
+   let svs1 = subst_var_list st1 svs in
+   let svs2 = subst_var_list st2 svs1 in
+   svs2
 *)
 
 and subst_var_list sst (svs : spec_var list) = subst_var_list_par sst svs
 
 (* filter does not support multiple occurrences of domain 
-and subst_var_list sst (svs : spec_var list) = match svs with
-  | sv :: rest ->
-      let new_vars = subst_var_list sst rest in
-      let new_sv = match List.filter (fun st -> fst st = sv) sst with
-		| [(fr, t)] -> t
-		| _ -> sv in
-		new_sv :: new_vars
-  | [] -> []
+   and subst_var_list sst (svs : spec_var list) = match svs with
+   | sv :: rest ->
+   let new_vars = subst_var_list sst rest in
+   let new_sv = match List.filter (fun st -> fst st = sv) sst with
+   | [(fr, t)] -> t
+   | _ -> sv in
+   new_sv :: new_vars
+   | [] -> []
 *)
 
 and subst_var_list_par sst (svs : spec_var list) = match svs with
   | sv :: rest ->
-      let new_vars = subst_var_list sst rest in
-      let new_sv = subs_one sst sv in 
-	  new_sv :: new_vars
+        let new_vars = subst_var_list sst rest in
+        let new_sv = subs_one sst sv in 
+	    new_sv :: new_vars
   | [] -> []
-  
+        
 (* The intermediate fresh variables seem redundant. *)
 (*and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
   let fresh_fr = fresh_spec_vars fr in
@@ -962,7 +994,7 @@ and subst_var_list_par sst (svs : spec_var list) = match svs with
   let st2 = List.combine fresh_fr t in
   let f1 = subst st1 f in
   let f2 = subst st2 f1 in
-	f2*)
+  f2*)
 
 and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
   let st1 = List.combine fr t in
@@ -974,7 +1006,7 @@ and subst_avoid_capture (fr : spec_var list) (t : spec_var list) (f : formula) =
 and subst (sst : (spec_var * spec_var) list) (f : formula) : formula = match sst with
   | s::ss -> subst ss (apply_one s f) 				(* applies one substitution at a time *)
   | [] -> f
-  
+        
 and subst_var (fr, t) (o : spec_var) = if eq_spec_var fr o then t else o
 
 and subst_one_var_list s l = List.map (subst_var s) l
@@ -984,27 +1016,27 @@ and par_subst sst f = apply_subs sst f
 and apply_subs (sst : (spec_var * spec_var) list) (f : formula) : formula = match f with
   | BForm (bf,lbl) -> BForm ((b_apply_subs sst bf),lbl)
   | And (p1, p2, pos) -> And (apply_subs sst p1,
-							  apply_subs sst p2, pos)
+	apply_subs sst p2, pos)
   | Or (p1, p2, lbl,pos) -> Or (apply_subs sst p1,
-							apply_subs sst p2, lbl, pos)
+	apply_subs sst p2, lbl, pos)
   | Not (p, lbl, pos) -> Not (apply_subs sst p, lbl, pos)
   | Forall (v, qf,lbl, pos) ->
-      let sst = diff sst v in
-      if (var_in_target v sst) then
-        let fresh_v = fresh_spec_var v in
-           Forall (fresh_v, apply_subs sst (apply_one (v, fresh_v) qf), lbl, pos)
-      else Forall (v, apply_subs sst qf, lbl, pos)
+        let sst = diff sst v in
+        if (var_in_target v sst) then
+          let fresh_v = fresh_spec_var v in
+          Forall (fresh_v, apply_subs sst (apply_one (v, fresh_v) qf), lbl, pos)
+        else Forall (v, apply_subs sst qf, lbl, pos)
   | Exists (v, qf, lbl, pos) ->
-      let sst = diff sst v in
-      if (var_in_target v sst) then
-        let fresh_v = fresh_spec_var v in
-           Exists  (fresh_v, apply_subs sst (apply_one (v, fresh_v) qf), lbl, pos)
-      else Exists  (v, apply_subs sst qf, lbl, pos)
+        let sst = diff sst v in
+        if (var_in_target v sst) then
+          let fresh_v = fresh_spec_var v in
+          Exists  (fresh_v, apply_subs sst (apply_one (v, fresh_v) qf), lbl, pos)
+        else Exists  (v, apply_subs sst qf, lbl, pos)
 
 
 (* cannot change to a let, why? *)
 and diff (sst : (spec_var * 'b) list) (v:spec_var) : (spec_var * 'b) list
-  = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
+      = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
 
 and var_in_target v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (eq_spec_var t v)) false sst
 
@@ -1012,26 +1044,26 @@ and b_apply_subs sst bf = match bf with
   | BConst _ -> bf
   | BVar (bv, pos) -> BVar (subs_one sst bv, pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_subs sst a1,
-							e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Lte (a1, a2, pos) -> Lte (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Gt (a1, a2, pos) -> Gt (e_apply_subs sst a1,
-							e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Eq (a1, a2, pos) -> Eq (e_apply_subs sst a1,
-							e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Neq (a1, a2, pos) -> Neq (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_subs sst a1,
-									  e_apply_subs sst a2,
-									  e_apply_subs sst a3, pos)
+	e_apply_subs sst a2,
+	e_apply_subs sst a3, pos)
   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_subs sst a1,
-									  e_apply_subs sst a2,
-									  e_apply_subs sst a3, pos)
+	e_apply_subs sst a2,
+	e_apply_subs sst a3, pos)
   | BagIn (v, a1, pos) -> BagIn (subs_one sst v, e_apply_subs sst a1, pos)
   | BagNotIn (v, a1, pos) -> BagNotIn (subs_one sst v, e_apply_subs sst a1, pos)
-	(* is it ok?... can i have a set of boolean values?... don't think so... *)
+	    (* is it ok?... can i have a set of boolean values?... don't think so... *)
   | BagSub (a1, a2, pos) -> BagSub (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | BagMax (v1, v2, pos) -> BagMax (subs_one sst v1, subs_one sst v2, pos)
   | BagMin (v1, v2, pos) -> BagMin (subs_one sst v1, subs_one sst v2, pos)
@@ -1046,23 +1078,23 @@ and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ -> e
   | Var (sv, pos) -> Var (subs_one sst sv, pos)
   | Add (a1, a2, pos) -> Add (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_subs sst  a1,
-										e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Mult (a1, a2, pos) -> 
-      Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+        Mult (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Div (a1, a2, pos) ->
-      Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
+        Div (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
-	(*| BagEmpty (pos) -> BagEmpty (pos)*)
+	e_apply_subs sst a2, pos)
+	    (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((e_apply_subs_list sst alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((e_apply_subs_list sst alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((e_apply_subs_list sst alist), pos)
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_subs sst a1,
-							  e_apply_subs sst a2, pos)
+	e_apply_subs sst a2, pos)
   | List (alist, pos) -> List (e_apply_subs_list sst alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_subs_list sst alist, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_subs sst a1, e_apply_subs sst a2, pos)
@@ -1076,49 +1108,49 @@ and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
 and apply_one (fr, t) f = match f with
   | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf , lbl)
   | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
-							  apply_one (fr, t) p2, pos)
+	apply_one (fr, t) p2, pos)
   | Or (p1, p2, lbl, pos) -> Or (apply_one (fr, t) p1,
-							apply_one (fr, t) p2, lbl, pos)
+	apply_one (fr, t) p2, lbl, pos)
   | Not (p, lbl, pos) -> Not (apply_one (fr, t) p, lbl, pos)
   | Forall (v, qf, lbl, pos) ->
-	  if eq_spec_var v fr then f
-      else if eq_spec_var v t then
-        let fresh_v = fresh_spec_var v in
-        Forall (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
-	  else Forall (v, apply_one (fr, t) qf, lbl, pos)
+	    if eq_spec_var v fr then f
+        else if eq_spec_var v t then
+          let fresh_v = fresh_spec_var v in
+          Forall (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
+	    else Forall (v, apply_one (fr, t) qf, lbl, pos)
   | Exists (v, qf, lbl, pos) ->
-	  if eq_spec_var v fr then f
-      else if eq_spec_var v t then
-        let fresh_v = fresh_spec_var v in
-        Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
-	  else Exists (v, apply_one (fr, t) qf, lbl, pos)
+	    if eq_spec_var v fr then f
+        else if eq_spec_var v t then
+          let fresh_v = fresh_spec_var v in
+          Exists (fresh_v, apply_one (fr, t) (apply_one (v, fresh_v) qf), lbl, pos)
+	    else Exists (v, apply_one (fr, t) qf, lbl, pos)
 
 and b_subst zip bf = List.fold_left (fun a c-> b_apply_one c a) bf zip
-    
+  
 and b_apply_one (fr, t) bf = match bf with
   | BConst _ -> bf
   | BVar (bv, pos) -> BVar ((if eq_spec_var bv fr then t else bv), pos)
   | Lt (a1, a2, pos) -> Lt (e_apply_one (fr, t) a1,
-							e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Lte (a1, a2, pos) -> Lte (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Gt (a1, a2, pos) -> Gt (e_apply_one (fr, t) a1,
-							e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Gte (a1, a2, pos) -> Gte (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Eq (a1, a2, pos) -> Eq (e_apply_one (fr, t) a1,
-							e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Neq (a1, a2, pos) -> Neq (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | EqMax (a1, a2, a3, pos) -> EqMax (e_apply_one (fr, t) a1,
-									  e_apply_one (fr, t) a2,
-									  e_apply_one (fr, t) a3, pos)
+	e_apply_one (fr, t) a2,
+	e_apply_one (fr, t) a3, pos)
   | EqMin (a1, a2, a3, pos) -> EqMin (e_apply_one (fr, t) a1,
-									  e_apply_one (fr, t) a2,
-									  e_apply_one (fr, t) a3, pos)
+	e_apply_one (fr, t) a2,
+	e_apply_one (fr, t) a3, pos)
   | BagIn (v, a1, pos) -> BagIn ((if eq_spec_var v fr then t else v), e_apply_one (fr, t) a1, pos)
   | BagNotIn (v, a1, pos) -> BagNotIn ((if eq_spec_var v fr then t else v), e_apply_one (fr, t) a1, pos)
-	(* is it ok?... can i have a set of boolean values?... don't think so..*)
+	    (* is it ok?... can i have a set of boolean values?... don't think so..*)
   | BagSub (a1, a2, pos) -> BagSub (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | BagMax (v1, v2, pos) -> BagMax ((if eq_spec_var v1 fr then t else v1), (if eq_spec_var v2 fr then t else v2), pos)
   | BagMin (v1, v2, pos) -> BagMin ((if eq_spec_var v1 fr then t else v1), (if eq_spec_var v2 fr then t else v2), pos)
@@ -1131,23 +1163,23 @@ and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ | FConst _ -> e
   | Var (sv, pos) -> Var ((if eq_spec_var sv fr then t else sv), pos)
   | Add (a1, a2, pos) -> Add (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (e_apply_one (fr, t) a1,
-										e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Mult (a1, a2, pos) ->
-      Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+        Mult (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Div (a1, a2, pos) ->
-      Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+        Div (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | Max (a1, a2, pos) -> Max (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
-	(*| BagEmpty (pos) -> BagEmpty (pos)*)
+	e_apply_one (fr, t) a2, pos)
+	    (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag (e_apply_one_list (fr, t) alist, pos)
   | BagUnion (alist, pos) -> BagUnion (e_apply_one_list (fr, t) alist, pos)
   | BagIntersect (alist, pos) -> BagIntersect (e_apply_one_list (fr, t) alist, pos)
   | BagDiff (a1, a2, pos) -> BagDiff (e_apply_one (fr, t) a1,
-							  e_apply_one (fr, t) a2, pos)
+	e_apply_one (fr, t) a2, pos)
   | List (alist, pos) -> List (e_apply_one_list (fr, t) alist, pos)
   | ListAppend (alist, pos) -> ListAppend (e_apply_one_list (fr, t) alist, pos)
   | ListCons (a1, a2, pos) -> ListCons (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
@@ -1157,39 +1189,39 @@ and e_apply_one (fr, t) e = match e with
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
 
 and e_apply_one_list (fr, t) alist = match alist with
-	|[] -> []
-	|a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_list (fr, t) rest)
+  |[] -> []
+  |a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_list (fr, t) rest)
 
 (* substituting terms for variables: can name-capturing happen?
    yes. What to do? *)
 
 (* remove redundant renaming
-and subst_term_avoid_capture (sst : (spec_var * exp) list) (f : formula) : formula =
-  let fr = List.map fst sst in
-  let t = List.map snd sst in
-  let fresh_fr = fresh_spec_vars fr in
-  let st1 = List.combine fr fresh_fr in
-  let st2 = List.combine fresh_fr t in
-  let f1 = subst st1 f in
-  let f2 = subst_term st2 f1 in
-	f2
+   and subst_term_avoid_capture (sst : (spec_var * exp) list) (f : formula) : formula =
+   let fr = List.map fst sst in
+   let t = List.map snd sst in
+   let fresh_fr = fresh_spec_vars fr in
+   let st1 = List.combine fr fresh_fr in
+   let st2 = List.combine fresh_fr t in
+   let f1 = subst st1 f in
+   let f2 = subst_term st2 f1 in
+   f2
 *)
 
 and subst_term_avoid_capture (sst : (spec_var * exp) list) (f : formula) : formula =
   let f2 = subst_term_par sst f in
-	f2
-	
+  f2
+	  
 and subst_term (sst : (spec_var * exp) list) (f : formula) : formula = match sst with
   | s :: ss -> subst_term ss (apply_one_term s f)
   | [] -> f
 
 and subst_term_par (sst : (spec_var * exp) list) (f : formula) : formula = 
   apply_par_term sst f
- 
+      
 (* wasn't able to make diff/diff_term polymorphic! how come? *)
 
 and diff_term (sst : (spec_var * exp) list) (v:spec_var) : (spec_var * exp) list
- = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
+      = List.filter (fun (a,_) -> not(eq_spec_var a v)) sst
 
 and apply_par_term (sst : (spec_var * exp) list) f = match f with
   | BForm (bf,lbl) -> BForm (b_apply_par_term sst bf , lbl)
@@ -1197,20 +1229,20 @@ and apply_par_term (sst : (spec_var * exp) list) f = match f with
   | Or (p1, p2,lbl, pos) -> Or (apply_par_term sst p1, apply_par_term sst p2, lbl, pos)
   | Not (p, lbl, pos) -> Not (apply_par_term sst p, lbl, pos)
   | Forall (v, qf, lbl, pos) ->
-      let sst = diff_term sst v in
-      if (var_in_target_term v sst) then
-        let fresh_v = fresh_spec_var v in
-           Forall (fresh_v, apply_par_term sst (apply_one (v, fresh_v) qf), lbl, pos)
-      else if sst==[] then f else 
-           Forall (v, apply_par_term sst qf, lbl, pos)
+        let sst = diff_term sst v in
+        if (var_in_target_term v sst) then
+          let fresh_v = fresh_spec_var v in
+          Forall (fresh_v, apply_par_term sst (apply_one (v, fresh_v) qf), lbl, pos)
+        else if sst==[] then f else 
+          Forall (v, apply_par_term sst qf, lbl, pos)
   | Exists (v, qf, lbl, pos) ->
-      let sst = diff_term sst v in
-      if (var_in_target_term v sst) then
-        let fresh_v = fresh_spec_var v in
-           Exists  (fresh_v, apply_par_term sst (apply_one (v, fresh_v) qf), lbl, pos)
-      else if sst==[] then f else 
-           Exists  (v, apply_par_term sst qf, lbl, pos)
-           
+        let sst = diff_term sst v in
+        if (var_in_target_term v sst) then
+          let fresh_v = fresh_spec_var v in
+          Exists  (fresh_v, apply_par_term sst (apply_one (v, fresh_v) qf), lbl, pos)
+        else if sst==[] then f else 
+          Exists  (v, apply_par_term sst qf, lbl, pos)
+              
 and var_in_target_term v sst = List.fold_left (fun curr -> fun (_,t) -> curr or (is_member v t)) false sst
 
 and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr or (eq_spec_var v nv)) false vl
@@ -1218,10 +1250,10 @@ and is_member v t = let vl=afv t in List.fold_left (fun curr -> fun nv -> curr o
 and b_apply_par_term (sst : (spec_var * exp) list) bf = match bf with
   | BConst _ -> bf
   | BVar (bv, pos) ->
-	  if List.fold_left (fun curr -> fun (fr,_) -> curr or eq_spec_var bv fr) false sst   then
-		failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-	  else
-		bf
+	    if List.fold_left (fun curr -> fun (fr,_) -> curr or eq_spec_var bv fr) false sst   then
+		  failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+	    else
+		  bf
   | Lt (a1, a2, pos) -> Lt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Lte (a1, a2, pos) -> Lte (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Gt (a1, a2, pos) -> Gt (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -1249,18 +1281,18 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | Add (a1, a2, pos) -> Add (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Mult (a1, a2, pos) ->
-      Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+        Mult (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Div (a1, a2, pos) ->
-      Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
+        Div (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Var (sv, pos) -> subs_one_term sst sv e (* if eq_spec_var sv fr then t else e *)
   | Max (a1, a2, pos) -> Max (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
-	  (*| BagEmpty (pos) -> BagEmpty (pos)*)
+	    (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((a_apply_par_term_list sst alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((a_apply_par_term_list sst alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((a_apply_par_term_list sst alist), pos)
   | BagDiff (a1, a2, pos) -> BagDiff (a_apply_par_term sst a1,
-									  a_apply_par_term sst a2, pos)
+	a_apply_par_term sst a2, pos)
   | List (alist, pos) -> List ((a_apply_par_term_list sst alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_par_term_list sst alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (a_apply_par_term sst a1, a_apply_par_term sst a2, pos)
@@ -1280,14 +1312,14 @@ and apply_one_term (fr, t) f = match f with
   | Not (p, lbl, pos) -> Not (apply_one_term (fr, t) p, lbl, pos)
   | Forall (v, qf, lbl, pos) -> if eq_spec_var v fr then f else Forall (v, apply_one_term (fr, t) qf, lbl, pos)
   | Exists (v, qf, lbl, pos) -> if eq_spec_var v fr then f else Exists (v, apply_one_term (fr, t) qf, lbl, pos)
-  
+      
 and b_apply_one_term ((fr, t) : (spec_var * exp)) bf = match bf with
   | BConst _ -> bf
   | BVar (bv, pos) ->
-	  if eq_spec_var bv fr then
-		failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
-	  else
-		bf
+	    if eq_spec_var bv fr then
+		  failwith ("Presburger.b_apply_one_term: attempting to substitute arithmetic term for boolean var")
+	    else
+		  bf
   | Lt (a1, a2, pos) -> Lt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Lte (a1, a2, pos) -> Lte (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Gt (a1, a2, pos) -> Gt (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -1313,18 +1345,18 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | Add (a1, a2, pos) -> Add (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Subtract (a1, a2, pos) -> Subtract (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Mult (a1, a2, pos) ->
-      Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+        Mult (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Div (a1, a2, pos) ->
-      Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
+        Div (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Var (sv, pos) -> if eq_spec_var sv fr then t else e
   | Max (a1, a2, pos) -> Max (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
   | Min (a1, a2, pos) -> Min (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
-	  (*| BagEmpty (pos) -> BagEmpty (pos)*)
+	    (*| BagEmpty (pos) -> BagEmpty (pos)*)
   | Bag (alist, pos) -> Bag ((a_apply_one_term_list (fr, t) alist), pos)
   | BagUnion (alist, pos) -> BagUnion ((a_apply_one_term_list (fr, t) alist), pos)
   | BagIntersect (alist, pos) -> BagIntersect ((a_apply_one_term_list (fr, t) alist), pos)
   | BagDiff (a1, a2, pos) -> BagDiff (a_apply_one_term (fr, t) a1,
-									  a_apply_one_term (fr, t) a2, pos)
+	a_apply_one_term (fr, t) a2, pos)
   | List (alist, pos) -> List ((a_apply_one_term_list (fr, t) alist), pos)
   | ListAppend (alist, pos) -> ListAppend ((a_apply_one_term_list (fr, t) alist), pos)
   | ListCons (a1, a2, pos) -> ListCons (a_apply_one_term (fr, t) a1, a_apply_one_term (fr, t) a2, pos)
@@ -1336,243 +1368,243 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
 
 and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*exp) = 
   let rec a_apply_one_term_list crt_var alist = match alist with
-  |[] -> (false,[])
-  |a :: rest -> 
-    let b1,r1 = (helper crt_var a) in
-    let b2,r2 = (a_apply_one_term_list crt_var rest) in
-    ((b1||b2),(r1::r2))
+    |[] -> (false,[])
+    |a :: rest -> 
+         let b1,r1 = (helper crt_var a) in
+         let b2,r2 = (a_apply_one_term_list crt_var rest) in
+         ((b1||b2),(r1::r2))
 
   and helper crt_var e = match e with
-  | Null _   -> (false,e)
-  | IConst _ -> (false,e)
-  | FConst _ -> (false,e)
-  | Add (a1, a2, pos) -> 
-      let b1, r1 = helper crt_var a1 in
-      let b2, r2 = helper crt_var a2 in
-      ((b1||b2), Add (r1, r2, pos))
-  | Subtract (a1, a2, pos) -> 
-    let b1 , r1 = helper crt_var a1 in
-    let b2 , r2 = helper (not crt_var) a2 in
-    (b1||b2, Subtract (r1 , r2 , pos))
-  | Mult (a1, a2, pos) ->
-      let b1 , r1 = helper crt_var a1 in
-      let b2 , r2 = helper crt_var a2 in
-      (b1||b2, Mult (r1 , r2 , pos))
-  | Div (a1, a2, pos) ->
-      let b1 , r1 = helper crt_var a1 in
-      let b2 , r2 = helper (not crt_var) a2 in
-      (b1||b2, Div (r1 , r2 , pos))
-  | Var (sv, pos) -> if ((variance==crt_var)||(eq_spec_var sv fr)) then (true, t) else (false, e)
-  | Max (a1, a2, pos) -> 
-      let b1 , r1 = helper crt_var a1 in
-      let b2 , r2 = helper crt_var a2 in
-      (b1||b2, Max (r1 , r2 , pos))
-  | Min (a1, a2, pos) -> 
-      let b1 , r1 = helper (not crt_var) a1 in
-      let b2 , r2 = helper (not crt_var) a2 in
-      (b1||b2, Min (r1 , r2 , pos))
-	  (*| BagEmpty (pos) -> BagEmpty (pos)*)
-  | Bag (alist, pos) -> 
-    let b1,r1 = (a_apply_one_term_list crt_var alist) in
-      (b1,Bag (r1, pos))
-  | BagUnion (alist, pos) -> 
-    let b1,r1 = (a_apply_one_term_list crt_var alist) in
-      (b1,BagUnion (r1, pos))
-  | BagIntersect (alist, pos) -> 
-    let b1,r1 = (a_apply_one_term_list (not crt_var) (List.tl alist)) in
-    let b2,r2 = helper crt_var (List.hd alist) in
-      (b1||b2 ,BagIntersect (r2::r1, pos))
-  | BagDiff (a1, a2, pos) -> 
-    let b1 , r1 = helper crt_var a1 in
-    let b2 , r2 = helper (not crt_var) a2 in
-      (b1||b2, BagDiff (r1 , r2 , pos))
-  | List (alist, pos) -> 
-    let b1,r1 = (a_apply_one_term_list crt_var alist) in
-      (b1,List (r1, pos))
-  | ListAppend (alist, pos) -> 
-    let b1,r1 = (a_apply_one_term_list crt_var alist) in
-      (b1,ListAppend (r1, pos))
-  | ListCons (a1, a2, pos) -> 
-    let b1 , r1 = helper crt_var a1 in
-    let b2 , r2 = helper crt_var a2 in
-      (b1||b2, ListCons (r1 , r2 , pos))
-  | ListHead (a1, pos) -> 
-    let b1,r1 = (helper crt_var a1) in
-      (b1,ListHead (r1, pos))
-  | ListTail (a1, pos) -> 
-    let b1,r1 = (helper crt_var a1) in
-      (b1,ListTail (r1, pos))
-  | ListLength (a1, pos) -> 
-    let b1,r1 = (helper crt_var a1) in
-      (b1,ListLength (r1, pos))
-  | ListReverse (a1, pos) -> 
-    let b1,r1 = (helper crt_var a1) in
-      (b1,ListReverse (r1, pos)) in
+    | Null _   -> (false,e)
+    | IConst _ -> (false,e)
+    | FConst _ -> (false,e)
+    | Add (a1, a2, pos) -> 
+          let b1, r1 = helper crt_var a1 in
+          let b2, r2 = helper crt_var a2 in
+          ((b1||b2), Add (r1, r2, pos))
+    | Subtract (a1, a2, pos) -> 
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper (not crt_var) a2 in
+          (b1||b2, Subtract (r1 , r2 , pos))
+    | Mult (a1, a2, pos) ->
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper crt_var a2 in
+          (b1||b2, Mult (r1 , r2 , pos))
+    | Div (a1, a2, pos) ->
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper (not crt_var) a2 in
+          (b1||b2, Div (r1 , r2 , pos))
+    | Var (sv, pos) -> if ((variance==crt_var)||(eq_spec_var sv fr)) then (true, t) else (false, e)
+    | Max (a1, a2, pos) -> 
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper crt_var a2 in
+          (b1||b2, Max (r1 , r2 , pos))
+    | Min (a1, a2, pos) -> 
+          let b1 , r1 = helper (not crt_var) a1 in
+          let b2 , r2 = helper (not crt_var) a2 in
+          (b1||b2, Min (r1 , r2 , pos))
+	          (*| BagEmpty (pos) -> BagEmpty (pos)*)
+    | Bag (alist, pos) -> 
+          let b1,r1 = (a_apply_one_term_list crt_var alist) in
+          (b1,Bag (r1, pos))
+    | BagUnion (alist, pos) -> 
+          let b1,r1 = (a_apply_one_term_list crt_var alist) in
+          (b1,BagUnion (r1, pos))
+    | BagIntersect (alist, pos) -> 
+          let b1,r1 = (a_apply_one_term_list (not crt_var) (List.tl alist)) in
+          let b2,r2 = helper crt_var (List.hd alist) in
+          (b1||b2 ,BagIntersect (r2::r1, pos))
+    | BagDiff (a1, a2, pos) -> 
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper (not crt_var) a2 in
+          (b1||b2, BagDiff (r1 , r2 , pos))
+    | List (alist, pos) -> 
+          let b1,r1 = (a_apply_one_term_list crt_var alist) in
+          (b1,List (r1, pos))
+    | ListAppend (alist, pos) -> 
+          let b1,r1 = (a_apply_one_term_list crt_var alist) in
+          (b1,ListAppend (r1, pos))
+    | ListCons (a1, a2, pos) -> 
+          let b1 , r1 = helper crt_var a1 in
+          let b2 , r2 = helper crt_var a2 in
+          (b1||b2, ListCons (r1 , r2 , pos))
+    | ListHead (a1, pos) -> 
+          let b1,r1 = (helper crt_var a1) in
+          (b1,ListHead (r1, pos))
+    | ListTail (a1, pos) -> 
+          let b1,r1 = (helper crt_var a1) in
+          (b1,ListTail (r1, pos))
+    | ListLength (a1, pos) -> 
+          let b1,r1 = (helper crt_var a1) in
+          (b1,ListLength (r1, pos))
+    | ListReverse (a1, pos) -> 
+          let b1,r1 = (helper crt_var a1) in
+          (b1,ListReverse (r1, pos)) in
   (helper true e)
 
-  
-  
+      
+      
 and a_apply_one_term_list (fr, t) alist = match alist with
   |[] -> []
   |a :: rest -> (a_apply_one_term (fr, t) a) :: (a_apply_one_term_list (fr, t) rest)
 
 and rename_top_level_bound_vars (f : formula) = match f with
   | Or (f1, f2, lbl, pos) ->
-	  let rf1 = rename_top_level_bound_vars f1 in
-	  let rf2 = rename_top_level_bound_vars f2 in
-	  let resform = mkOr rf1 rf2 lbl pos in
+	    let rf1 = rename_top_level_bound_vars f1 in
+	    let rf2 = rename_top_level_bound_vars f2 in
+	    let resform = mkOr rf1 rf2 lbl pos in
 		resform
   | And (f1, f2, pos) ->
-	  let rf1 = rename_top_level_bound_vars f1 in
-	  let rf2 = rename_top_level_bound_vars f2 in
-	  let resform = mkAnd rf1 rf2 pos in
+	    let rf1 = rename_top_level_bound_vars f1 in
+	    let rf2 = rename_top_level_bound_vars f2 in
+	    let resform = mkAnd rf1 rf2 pos in
 		resform
   | Exists (qvar, qf, lbl, pos) ->
-	  let renamed_f = rename_top_level_bound_vars qf in
-	  let new_qvar = fresh_spec_var qvar in
-	  let rho = [(qvar, new_qvar)] in
-	  let new_qf = subst rho renamed_f in
-	  let res_form = Exists (new_qvar, new_qf,lbl,  pos) in
+	    let renamed_f = rename_top_level_bound_vars qf in
+	    let new_qvar = fresh_spec_var qvar in
+	    let rho = [(qvar, new_qvar)] in
+	    let new_qf = subst rho renamed_f in
+	    let res_form = Exists (new_qvar, new_qf,lbl,  pos) in
 		res_form
   | Forall (qvar, qf, lbl, pos) ->
-	  let renamed_f = rename_top_level_bound_vars qf in
-	  let new_qvar = fresh_spec_var qvar in
-	  let rho = [(qvar, new_qvar)] in
-	  let new_qf = subst rho renamed_f in
-	  let res_form = Forall (new_qvar, new_qf, lbl, pos) in
+	    let renamed_f = rename_top_level_bound_vars qf in
+	    let new_qvar = fresh_spec_var qvar in
+	    let rho = [(qvar, new_qvar)] in
+	    let new_qf = subst rho renamed_f in
+	    let res_form = Forall (new_qvar, new_qf, lbl, pos) in
 		res_form
   | _ -> f
 
 and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 with
   | Exists (qv, qf, lbl, pos) ->
-	  let qvars, new_f = split_ex_quantifiers qf in
+	    let qvars, new_f = split_ex_quantifiers qf in
 		(qv :: qvars, new_f)
   | _ -> ([], f0)
 
 (* More simplifications *)
 
 (*
-   EX quantifier elimination.
+  EX quantifier elimination.
 
-   EX x . x = T & P(x) ~-> P[T], T is term
-   EX x . P[x] \/ Q[x] ~-> (EX x . P[x]) \/ (EX x . Q[x])
-   EX x . P & Q[x] ~-> P & Q[x], x notin FV(P)
+  EX x . x = T & P(x) ~-> P[T], T is term
+  EX x . P[x] \/ Q[x] ~-> (EX x . P[x]) \/ (EX x . Q[x])
+  EX x . P & Q[x] ~-> P & Q[x], x notin FV(P)
 
 *)
 
 and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) = match f0 with
   | And (f1, f2, pos) ->
-	  let st1, rf1 = get_subst_equation_formula f1 v only_vars in
+	    let st1, rf1 = get_subst_equation_formula f1 v only_vars in
 		if not (Util.empty st1) then
 		  (st1, mkAnd rf1 f2 pos)
 		else
 		  let st2, rf2 = get_subst_equation_formula f2 v only_vars in
-			(st2, mkAnd f1 rf2 pos)
+		  (st2, mkAnd f1 rf2 pos)
   | BForm (bf,lbl) -> get_subst_equation_b_formula bf v lbl only_vars
   | _ -> ([], f0)
-    
+        
 and get_subst_equation_b_formula (f : b_formula) (v : spec_var) lbl only_vars: ((spec_var * exp) list * formula) = match f with
   | Eq (e1, e2, pos) -> begin
-    match e1, e2 with
+      match e1, e2 with
 	    | Var (sv1, _), Var (sv2, _) -> 
-        if (eq_spec_var sv1 v) && (not (eq_spec_var sv2 v)) then ([(v, e2)], mkTrue no_pos )
-        else if (eq_spec_var sv2 v) && (not (eq_spec_var sv1 v))  then ([(v, e1)], mkTrue no_pos )
-        else ([], BForm (f,lbl))
-      | Var (sv1, _), _  ->
-        if only_vars then ([], BForm (f,lbl))
-        else if (eq_spec_var sv1 v) &&(not (List.exists (fun sv -> eq_spec_var sv v) (afv e2))) then ([(v, e2)], mkTrue no_pos )
-        else ([], BForm (f,lbl))
-      | _ , Var (sv2, _) ->
-        if only_vars then ([], BForm (f,lbl))
-        else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)], mkTrue no_pos )
-        else ([], BForm (f,lbl))
-      | _ ->([], BForm (f,lbl))
+              if (eq_spec_var sv1 v) && (not (eq_spec_var sv2 v)) then ([(v, e2)], mkTrue no_pos )
+              else if (eq_spec_var sv2 v) && (not (eq_spec_var sv1 v))  then ([(v, e1)], mkTrue no_pos )
+              else ([], BForm (f,lbl))
+        | Var (sv1, _), _  ->
+              if only_vars then ([], BForm (f,lbl))
+              else if (eq_spec_var sv1 v) &&(not (List.exists (fun sv -> eq_spec_var sv v) (afv e2))) then ([(v, e2)], mkTrue no_pos )
+              else ([], BForm (f,lbl))
+        | _ , Var (sv2, _) ->
+              if only_vars then ([], BForm (f,lbl))
+              else if (eq_spec_var sv2 v) && (not (List.exists (fun sv -> eq_spec_var sv v) (afv e1))) then ([(v, e1)], mkTrue no_pos )
+              else ([], BForm (f,lbl))
+        | _ ->([], BForm (f,lbl))
     end
   | _ -> ([], BForm (f,lbl))
-      
-      
+        
+        
 and list_of_conjs (f0 : formula) : formula list =
   let rec helper f conjs = match f with
 	| And (f1, f2, pos) ->
-		let tmp1 = helper f2 conjs in
-		let tmp2 = helper f1 tmp1 in
+		  let tmp1 = helper f2 conjs in
+		  let tmp2 = helper f1 tmp1 in
 		  tmp2
 	| _ -> f :: conjs
   in
-	helper f0 []
+  helper f0 []
 
 and conj_of_list (fs : formula list) pos : formula =
   let helper f1 f2 = mkAnd f1 f2 pos in
-	List.fold_left helper (mkTrue pos) fs
-(* 16.04.09 *)	
+  List.fold_left helper (mkTrue pos) fs
+      (* 16.04.09 *)	
 and list_of_disjs (f0 : formula) : formula list =
   let rec helper f disjs = match f with
 	| Or (f1, f2,_,_) ->
-		let tmp1 = helper f2 disjs in
-		let tmp2 = helper f1 tmp1 in
+		  let tmp1 = helper f2 disjs in
+		  let tmp2 = helper f1 tmp1 in
 		  tmp2
 	| _ -> f :: disjs
   in
-	helper f0 []
+  helper f0 []
 
 and split_disjuncts (f0 : formula): formula list = match f0 with
   | BForm _ -> [f0]
   | And (f1,f2,_) -> 
-    let l1 = split_disjuncts f1 in
-    let l2 = split_disjuncts f2 in
-    List.concat (List.map (fun f-> List.map (fun d-> mkAnd d f no_pos) l1) l2)
+        let l1 = split_disjuncts f1 in
+        let l2 = split_disjuncts f2 in
+        List.concat (List.map (fun f-> List.map (fun d-> mkAnd d f no_pos) l1) l2)
   | Or (f1,f2,_,_) -> 
-    let l1 = split_disjuncts f1 in
-    let l2 = split_disjuncts f2 in
-    l1@l2
+        let l1 = split_disjuncts f1 in
+        let l2 = split_disjuncts f2 in
+        l1@l2
   | Not _ -> [f0] 
   | Forall _ -> [f0]
   | Exists (v,f,_,_) -> List.map (fun f-> mkExists [v] f None no_pos) (split_disjuncts f)
-  
+        
 (*	
-and disj_of_list (fs : formula list) pos : formula =
-  let helper f1 f2 = mkOr f1 f2 pos in
+    and disj_of_list (fs : formula list) pos : formula =
+    let helper f1 f2 = mkOr f1 f2 pos in
 	List.fold_left helper (mkTrue pos) fs
 *)
-	
+	    
 and disj_of_list (disj_list : formula list) pos : formula = 
-	match disj_list with
+  match disj_list with
 	| [] -> mkTrue pos
 	| h :: [] -> h
 	| h :: rest -> mkOr h (disj_of_list rest pos) None pos
-(* 16.04.09 *)
+          (* 16.04.09 *)
 
 and find_bound v f0 =
   match f0 with
-  | And (f1, f2, pos) ->
-      begin
-      let min1, max1 = find_bound v f1 in
-      let min2, max2 = find_bound v f2 in
-      let min = 
-        match min1, min2 with
-        | None, None -> None
-        | Some m1, Some m2 -> if m1 < m2 then min1 else min2 
-        | Some m, None -> min1
-        | None, Some m -> min2
-      in
-      let max =
-        match max1, max2 with
-        | None, None -> None
-        | Some m1, Some m2 -> if m1 > m2 then max1 else max2 
-        | Some m, None -> max1 
-        | None, Some m -> max2
-      in
-      (min, max)
-      end
-  | BForm (bf,_) -> find_bound_b_formula v bf
-  | _ -> None, None
+    | And (f1, f2, pos) ->
+          begin
+            let min1, max1 = find_bound v f1 in
+            let min2, max2 = find_bound v f2 in
+            let min = 
+              match min1, min2 with
+                | None, None -> None
+                | Some m1, Some m2 -> if m1 < m2 then min1 else min2 
+                | Some m, None -> min1
+                | None, Some m -> min2
+            in
+            let max =
+              match max1, max2 with
+                | None, None -> None
+                | Some m1, Some m2 -> if m1 > m2 then max1 else max2 
+                | Some m, None -> max1 
+                | None, Some m -> max2
+            in
+            (min, max)
+          end
+    | BForm (bf,_) -> find_bound_b_formula v bf
+    | _ -> None, None
 
-  (*
-and find_bound_b_formula_redlog v f0 =
+(*
+  and find_bound_b_formula_redlog v f0 =
   let cmd = "rlopt({" ^ (Redlog.rl_of_b_formula f0) ^ "}, " ^ (Redlog.rl_of_spec_var v) ^ ");\n" in
   let res = Redlog.send_and_receive cmd in
   print_endline res
-  *)
+*)
 
 and find_bound_b_formula v f0 =
   let val_for_max e included =
@@ -1618,114 +1650,114 @@ and find_bound_b_formula v f0 =
       (None, None)
   in
   match f0 with
-  | Lt (e1, e2, pos) -> helper e1 e2 true false
-  | Lte (e1, e2, pos) -> helper e1 e2 true true
-  | Gt (e1, e2, pos) -> helper e1 e2 false false
-  | Gte (e1, e2, pos) -> helper e1 e2 false true
-  | _ -> (None, None)
+    | Lt (e1, e2, pos) -> helper e1 e2 true false
+    | Lte (e1, e2, pos) -> helper e1 e2 true true
+    | Gt (e1, e2, pos) -> helper e1 e2 false false
+    | Gte (e1, e2, pos) -> helper e1 e2 false true
+    | _ -> (None, None)
 
 and elim_exists_with_ineq (f0: formula): formula =
   match f0 with
-  | Exists (qvar, qf,lbl, pos) ->
-      begin
-        match qf with
-        | Or (qf1, qf2,lbl2, qpos) ->
-            let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-            let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-            let eqf1 = elim_exists_with_ineq new_qf1 in
-            let eqf2 = elim_exists_with_ineq new_qf2 in
-            let res = mkOr eqf1 eqf2 lbl2 pos in
-            res
-        | _ ->
-            let eqqf = elim_exists qf in
-            let min, max = find_bound qvar eqqf in
-            begin
-              match min, max with
-              | Some mi, Some ma -> 
-                  let res = ref (mkFalse pos) in
-                  begin
-                    for i = mi to ma do
-                      res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) lbl pos
-                    done;
-                    !res
-                  end
-              | _ -> f0
-            end
-      end
-  | And (f1, f2, pos) ->
-      let ef1 = elim_exists_with_ineq f1 in
-      let ef2 = elim_exists_with_ineq f2 in
-      mkAnd ef1 ef2 pos
-  | Or (f1, f2, lbl, pos) ->
-      let ef1 = elim_exists_with_ineq f1 in
-      let ef2 = elim_exists_with_ineq f2 in
-      mkOr ef1 ef2 lbl pos
-  | Not (f1, lbl, pos) ->
-      let ef1 = elim_exists_with_ineq f1 in
-      mkNot ef1 lbl pos
-  | Forall (qvar, qf, lbl, pos) ->
-      let eqf = elim_exists_with_ineq qf in
-      mkForall [qvar] eqf lbl pos
-  | BForm _ -> f0
+    | Exists (qvar, qf,lbl, pos) ->
+          begin
+            match qf with
+              | Or (qf1, qf2,lbl2, qpos) ->
+                    let new_qf1 = mkExists [qvar] qf1 lbl qpos in
+                    let new_qf2 = mkExists [qvar] qf2 lbl qpos in
+                    let eqf1 = elim_exists_with_ineq new_qf1 in
+                    let eqf2 = elim_exists_with_ineq new_qf2 in
+                    let res = mkOr eqf1 eqf2 lbl2 pos in
+                    res
+              | _ ->
+                    let eqqf = elim_exists qf in
+                    let min, max = find_bound qvar eqqf in
+                    begin
+                      match min, max with
+                        | Some mi, Some ma -> 
+                              let res = ref (mkFalse pos) in
+                              begin
+                                for i = mi to ma do
+                                  res := mkOr !res (apply_one_term (qvar, IConst (i, pos)) eqqf) lbl pos
+                                done;
+                                !res
+                              end
+                        | _ -> f0
+                    end
+          end
+    | And (f1, f2, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          let ef2 = elim_exists_with_ineq f2 in
+          mkAnd ef1 ef2 pos
+    | Or (f1, f2, lbl, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          let ef2 = elim_exists_with_ineq f2 in
+          mkOr ef1 ef2 lbl pos
+    | Not (f1, lbl, pos) ->
+          let ef1 = elim_exists_with_ineq f1 in
+          mkNot ef1 lbl pos
+    | Forall (qvar, qf, lbl, pos) ->
+          let eqf = elim_exists_with_ineq qf in
+          mkForall [qvar] eqf lbl pos
+    | BForm _ -> f0
 
 and elim_exists (f0 : formula) : formula = 
   match f0 with
-  | Exists (qvar, qf, lbl, pos) -> begin
-	  match qf with
-		| Or (qf1, qf2, lbl2, qpos) ->
-			let new_qf1 = mkExists [qvar] qf1 lbl qpos in
-			let new_qf2 = mkExists [qvar] qf2 lbl qpos in
-			let eqf1 = elim_exists new_qf1 in
-			let eqf2 = elim_exists new_qf2 in
-			let res = mkOr eqf1 eqf2 lbl2 pos in
-			  res
-		| _ ->
-			let qf = elim_exists qf in
-			let qvars0, bare_f = split_ex_quantifiers qf in
-			let qvars = qvar :: qvars0 in
-			let conjs = list_of_conjs bare_f in
-			let no_qvars_list, with_qvars_list = List.partition
-			  (fun cj -> disjoint qvars (fv cj)) conjs in
-			  (* the part that does not contain the quantified var *)
-			let no_qvars = conj_of_list no_qvars_list pos in
-			  (* now eliminate the quantified variables from the part that contains it *)
-			let with_qvars = conj_of_list with_qvars_list pos in
-			  (* now eliminate the top existential variable. *)
-			let st, pp1 = get_subst_equation_formula with_qvars qvar false in
-			if not (Util.empty st) then
-				let new_qf = subst_term st pp1 in
-				let new_qf = mkExists qvars0 new_qf lbl pos in
-				let tmp3 = elim_exists new_qf in
-				let tmp4 = mkAnd no_qvars tmp3 pos in
+    | Exists (qvar, qf, lbl, pos) -> begin
+	    match qf with
+		  | Or (qf1, qf2, lbl2, qpos) ->
+			    let new_qf1 = mkExists [qvar] qf1 lbl qpos in
+			    let new_qf2 = mkExists [qvar] qf2 lbl qpos in
+			    let eqf1 = elim_exists new_qf1 in
+			    let eqf2 = elim_exists new_qf2 in
+			    let res = mkOr eqf1 eqf2 lbl2 pos in
+			    res
+		  | _ ->
+			    let qf = elim_exists qf in
+			    let qvars0, bare_f = split_ex_quantifiers qf in
+			    let qvars = qvar :: qvars0 in
+			    let conjs = list_of_conjs bare_f in
+			    let no_qvars_list, with_qvars_list = List.partition
+			      (fun cj -> disjoint qvars (fv cj)) conjs in
+			    (* the part that does not contain the quantified var *)
+			    let no_qvars = conj_of_list no_qvars_list pos in
+			    (* now eliminate the quantified variables from the part that contains it *)
+			    let with_qvars = conj_of_list with_qvars_list pos in
+			    (* now eliminate the top existential variable. *)
+			    let st, pp1 = get_subst_equation_formula with_qvars qvar false in
+			    if not (Util.empty st) then
+				  let new_qf = subst_term st pp1 in
+				  let new_qf = mkExists qvars0 new_qf lbl pos in
+				  let tmp3 = elim_exists new_qf in
+				  let tmp4 = mkAnd no_qvars tmp3 pos in
 				  tmp4
-			else (* if qvar is not equated to any variables, try the next one *)
-				let tmp1 = qf (*elim_exists qf*) in
-				let tmp2 = mkExists [qvar] tmp1 lbl pos in
+			    else (* if qvar is not equated to any variables, try the next one *)
+				  let tmp1 = qf (*elim_exists qf*) in
+				  let tmp2 = mkExists [qvar] tmp1 lbl pos in
 				  tmp2
-	end
-  | And (f1, f2, pos) -> begin
-	  let ef1 = elim_exists f1 in
-	  let ef2 = elim_exists f2 in
-	  let res = mkAnd ef1 ef2 pos in
+	  end
+    | And (f1, f2, pos) -> begin
+	    let ef1 = elim_exists f1 in
+	    let ef2 = elim_exists f2 in
+	    let res = mkAnd ef1 ef2 pos in
 		res
-	end
-  | Or (f1, f2, lbl, pos) -> begin
-	  let ef1 = elim_exists f1 in
-	  let ef2 = elim_exists f2 in
-	  let res = mkOr ef1 ef2 lbl pos in
+	  end
+    | Or (f1, f2, lbl, pos) -> begin
+	    let ef1 = elim_exists f1 in
+	    let ef2 = elim_exists f2 in
+	    let res = mkOr ef1 ef2 lbl pos in
 		res
-	end
-  | Not (f1, lbl, pos) -> begin
-	  let ef1 = elim_exists f1 in
-	  let res = mkNot ef1 lbl pos in
+	  end
+    | Not (f1, lbl, pos) -> begin
+	    let ef1 = elim_exists f1 in
+	    let res = mkNot ef1 lbl pos in
 		res
-	end
-  | Forall (qvar, qf, lbl, pos) -> begin
-	  let eqf = elim_exists qf in
-	  let res = mkForall [qvar] eqf lbl pos in
+	  end
+    | Forall (qvar, qf, lbl, pos) -> begin
+	    let eqf = elim_exists qf in
+	    let res = mkForall [qvar] eqf lbl pos in
 		res
-	end
-  | BForm _ -> f0
+	  end
+    | BForm _ -> f0
 
 (**************************************************************)
 (**************************************************************)

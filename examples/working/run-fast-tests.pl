@@ -49,7 +49,7 @@ $output_file = "log";
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
-				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
+#				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
 				["avl-bind.ss",9,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
 					"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
 					#"insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"
@@ -144,8 +144,7 @@ $output_file = "log";
 				["qsort.ss",3,	"partition","SUCCESS",
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
-				["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS",
-									"partition1","SUCCESS"],
+#				["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS","partition1","SUCCESS"],
 				["rb.ss",18,"rotate_case_3","SUCCESS",
 							"case_2","SUCCESS",
 							"rotate_case_3r","SUCCESS",
