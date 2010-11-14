@@ -531,7 +531,7 @@ let tp_is_sat f sat_no do_cache =
     let s = (!print_pure f) in
     try 
       let r = Hashtbl.find sat_cache s in
-      print_string ("sat hits: "^s^"\n");
+      (*print_string ("sat hits: "^s^"\n");*)
       r
     with Not_found -> 
         let r = tp_is_sat_sender f sat_no in
@@ -734,7 +734,7 @@ let tp_imply ante conseq imp_no timeout do_cache =
     let s = (!print_pure ante)^"/"^ s_rhs in
     try 
       let r = Hashtbl.find imply_cache s in
-      print_string ("hit rhs: "^s_rhs^"\n");
+      (* print_string ("hit rhs: "^s_rhs^"\n");*)
       r
       with Not_found -> 
         let r = tp_imply_sender ante conseq imp_no timeout in

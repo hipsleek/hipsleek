@@ -674,14 +674,17 @@ let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
 
+(* an empty difference set *)
 let empty_dset () : 'a d_set = []
 
+(* a singleton difference set *)
 let singleton_dset (e:'a) : 'a d_set = [[e]]
 
 (* returns a list of difference sets for element e *)
 let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
   (List.filter (fun l -> List.exists (eq e) l) s)
 
+(* returns checks if l1/\l2 !=null based on physical equality *)
 let overlap_q l1 l2 = 
   List.exists (fun x -> (List.memq x l2)) l1
 
@@ -697,7 +700,6 @@ let is_disj (eq:'a->'a->bool)  (s: 'a d_set)  (x:'a) (y:'a) : bool =
 let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
  s1@s2
 
-
 (*  returns s1*s2 *)
 let star_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
   if empty s1 then s2
@@ -708,7 +710,7 @@ let star_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
 let or_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
   List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
 
-(* check if there was a conflict in the difference list *)
+(* check if there was a conflict in a difference list *)
 let  is_conflict_list (eq:'a -> 'a -> bool) (l:'a list) :bool =
   let rec helper l =
     match l with
@@ -718,10 +720,7 @@ let  is_conflict_list (eq:'a -> 'a -> bool) (l:'a list) :bool =
         else helper xs
   in helper l
 
-(* check if there was a conflict in set of differences *)
+(* check if there was a conflict in a set of difference lists *)
 let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
  List.exists (is_conflict_list eq) s
-
-
-
 
