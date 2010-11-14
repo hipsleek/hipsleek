@@ -162,8 +162,8 @@ and string_of_spec_var = function
     | Unprimed -> "")
 (*09.05.2000 ---*)
 
-let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
-and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
+let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] (Util.empty_a_set ()) pos
+and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] (Util.empty_a_set ()) pos
 
 and struc_formula_of_heap h pos = [EBase { 
 		 formula_ext_explicit_inst = [];	 
@@ -190,19 +190,26 @@ and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = N
 
 and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link = None;}
 
-and formula_of_memo_pure (p:MCP.memo_pure) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
+and formula_of_memo_pure (p:MCP.memo_pure) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] (MCP.memo_alias p) pos
 
-and formula_of_pure (p:CP.formula) (pos:loc) :formula= mkBase HTrue (MCP.memoise_add_pure (MCP.mkMTrue pos) p) TypeTrue (mkTrueFlow ()) [] pos
+and formula_of_pure (p:CP.formula) (pos:loc) :formula= 
+  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
+  mkBase HTrue mp TypeTrue (mkTrueFlow ()) [] (MCP.memo_alias mp) pos
 
 (*and mkTrueFlowTest = {formula_flow_interval = (-3,-3); formula_flow_link = None;}
 and formula_of_pure_test p pos = mkBase HTrue p TypeTrue (mkTrueFlow) [] pos*)
-and formula_of_pure_with_branches p br pos = mkBase HTrue (MCP.memoise_add_pure (MCP.mkMTrue pos) p) TypeTrue (mkTrueFlow ()) br pos
+and formula_of_pure_with_branches p br pos = 
+  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
+  mkBase HTrue mp TypeTrue (mkTrueFlow ()) br (MCP.memo_alias mp) pos
 
-and formula_of_memo_pure_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos
+and formula_of_memo_pure_with_branches p br pos = 
+  mkBase HTrue p TypeTrue (mkTrueFlow ()) br (MCP.memo_alias p) pos
 
-and formula_of_pure_with_branches_fl p br fl pos = mkBase HTrue (MCP.memoise_add_pure (MCP.mkMTrue pos) p) TypeTrue fl br pos
+and formula_of_pure_with_branches_fl p br fl pos = 
+  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
+  mkBase HTrue mp TypeTrue fl br (MCP.memo_alias mp) pos
 
-and formula_of_memo_pure_with_branches_fl p br fl pos = mkBase HTrue p TypeTrue fl br pos
+and formula_of_memo_pure_with_branches_fl p br fl pos = mkBase HTrue p TypeTrue fl br (MCP.memo_alias p) pos
 
 and formula_of_base base = Base(base)
 
@@ -496,7 +503,7 @@ and mkOr f1 f2 pos =
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
   
-and mkBase (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
+and mkBase (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl : flow_formula) b aset (pos : loc) : formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
 	mkFalse fl pos
   else 
@@ -506,7 +513,7 @@ and mkBase (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl : flow_formul
 		   formula_base_flow = fl;
        formula_base_branches = b;
        formula_base_label = None;
-       formula_base_aset = MCP.memo_alias p;
+       formula_base_aset = aset;
 		   formula_base_pos = pos})
 
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
@@ -520,14 +527,15 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
 					h_formula_star_pos = pos})
   
 let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
-  let h1, p1, fl1, b1, t1 = split_components f1 in
-  let h2, p2, fl2, b2, t2 = split_components f2 in
+  let h1, p1, fl1, b1, t1, as1 = split_components f1 in
+  let h2, p2, fl2, b2, t2, as2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
   let p = MCP.merge_mems p1 p2 true in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
-  mkBase h p t fl b pos
+  let nas = Util.merge_set as1 as2 in
+  mkBase h p t fl b nas pos
    
 and combine_and_pure (f1:formula)(p:MCP.memo_pure)(f2:MCP.memo_pure):MCP.memo_pure*bool = 
 	if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
@@ -550,35 +558,40 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 	| Or b-> false		
 	| Base _					
 	| Exists _-> 
-		let _, pl, _, br, _ = split_components f in	
+		let _, pl, _, br, _,_ = split_components f in	
 		(MCP.memo_is_member_pure p pl)||(List.exists (fun (_,c)->Cpure.is_member_pure p c) br)
 		
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  let h1, p1, fl1, b1, t1 = split_components f1 in
-  let h2, p2, fl2, b2, t2 = split_components f2 in
+  let h1, p1, fl1, b1, t1, as1 = split_components f1 in
+  let h2, p2, fl2, b2, t2, as2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
-  mkBase h p t fl b pos
+  let nas = Util.merge_set as1 as2 in
+  mkBase h p t fl b nas pos
 
 
 and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.memo_pure) b2 (pos : loc):formula = 
   if (isAnyConstFalse f1) then f1
    else 
-		let h1, p1, fl1, b1, t1 = split_components f1 in		
-		if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 (CP.merge_branches b1 b2) pos
-			else mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 (CP.merge_branches b1 b2) pos
+		let h1, p1, fl1, b1, t1, as1 = split_components f1 in		
+    let nas = Util.merge_set as1 (MCP.memo_alias p2) in
+    if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 (CP.merge_branches b1 b2) nas pos
+			else 
+      mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 (CP.merge_branches b1 b2) nas pos
 
    
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl:flow_formula) b (pos : loc) =
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl:flow_formula) b aset (pos : loc) =
+  (*let m_alias = MCP.memo_alias p in*)
   let tmp_b = {formula_base_heap = h;
 				   formula_base_pure = p;
 				   formula_base_type = t;
 				   formula_base_flow = fl;
            formula_base_branches = b;
            formula_base_label = None;
+           formula_base_aset = aset;
 				   formula_base_pos = pos} in
   let fvars = fv (Base tmp_b) in
   let qvars = U.intersect svs fvars in (* used only these for the quantified formula *)
@@ -591,6 +604,7 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.memo_pure) (t : t
 			   formula_exists_flow = fl;
          formula_exists_branches = b;
          formula_exists_label = None;
+         formula_exists_aset = aset;
 			   formula_exists_pos = pos})
 
 and is_view (h : h_formula) = match h with
@@ -702,6 +716,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 			 formula_exists_flow = fl;
 			 formula_exists_branches = br;
        formula_exists_label = lbl;
+       formula_exists_aset = aset;
 			 formula_exists_pos = pos}) -> 
 	  let fvars = fv (Base ({formula_base_heap = h; 
 							 formula_base_pure = p; 
@@ -709,6 +724,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 							 formula_base_flow = fl;
                formula_base_branches = br;
                formula_base_label = lbl;
+               formula_base_aset = aset;
 							 formula_base_pos = pos})) in
 	  let res = Util.difference_f CP.eq_spec_var fvars qvars in
 		res
@@ -842,6 +858,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 		   formula_base_flow = fl;
        formula_base_branches = b;
        formula_base_label = lbl;
+       formula_base_aset = aset;
 		   formula_base_pos = pos}) -> 
       Base ({formula_base_heap = h_apply_one s h; 
 			 formula_base_pure =MCP.regroup_memo_group (MCP.m_apply_one s p); 
@@ -849,6 +866,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 			 formula_base_flow = fl;
        formula_base_label = lbl;
        formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
+       formula_base_aset = MCP.var_aset_subst_one s aset;
 			 formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
@@ -857,6 +875,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 			 formula_exists_flow = fl;
        formula_exists_branches = b;
        formula_exists_label = lbl;
+       formula_exists_aset = aset;
 			 formula_exists_pos = pos}) -> 
 	  if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	  else Exists ({formula_exists_qvars = qsv; 
@@ -866,6 +885,7 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 					formula_exists_flow = fl;
           formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one s p1)) b;
           formula_exists_label = lbl;
+          formula_exists_aset = MCP.var_aset_subst_one s aset;
 					formula_exists_pos = pos})
 		
 
@@ -932,8 +952,8 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 flow_tr pos in
-			let new_h, new_p, new_fl, b, new_t = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			let new_h, new_p, new_fl, b, new_t, new_as = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b new_as pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
     end
@@ -958,8 +978,8 @@ and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 Flow_combine pos in
-			let new_h, new_p, new_fl, b, new_t = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			let new_h, new_p, new_fl, b, new_t, aset = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b aset pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
     end
@@ -983,8 +1003,8 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 Flow_combine pos in
-			let new_h, new_p, new_fl, b, new_t = split_components new_base in
-			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			let new_h, new_p, new_fl, b, new_t, aset = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b aset pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
 		  end
     end
@@ -993,18 +1013,20 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 (* split a conjunction into heap constraints, pure pointer constraints, *)
 (* and Presburger constraints *)
 and split_components (f : formula) = 
-if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),[],TypeFalse)
+if (isAnyConstFalse f) then (HFalse,(MCP.mkMFalse no_pos),(flow_formula_of_formula f),[],TypeFalse, Util.empty_a_set ())
 else match f with
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p; 
        formula_base_branches = b;
 		   formula_base_flow =fl;
-		   formula_base_type = t}) -> (h, p, fl, b, t)
+       formula_base_aset = aset;
+		   formula_base_type = t}) -> (h, p, fl, b, t, aset)
   | Exists ({formula_exists_heap = h; 
 		   formula_exists_pure = p; 
        formula_exists_branches = b;
 		   formula_exists_flow = fl;
-		   formula_exists_type = t}) -> (h, p, fl, b, t)
+       formula_exists_aset = aset;
+		   formula_exists_type = t}) -> (h, p, fl, b, t, aset)
   (*| Exists ({formula_exists_pos = pos}) -> 
       Err.report_error {Err.error_loc = pos;
 						Err.error_text = "split_components: don't expect EXISTS"}*)
@@ -1018,8 +1040,9 @@ and split_quantifiers (f : formula) : (CP.spec_var list * formula) = match f wit
 			 formula_exists_type = t;
 			 formula_exists_flow = fl;
 			 formula_exists_branches = b;
+       formula_exists_aset = aset;
 			 formula_exists_pos = pos}) -> 
-      (qvars, mkBase h p t fl b pos)
+      (qvars, mkBase h p t fl b aset pos)
   | Base _ -> ([], f)
   | _ -> failwith ("split_quantifiers: invalid argument")
 
@@ -1029,16 +1052,18 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f
 		   formula_base_type = t;
 		   formula_base_flow = fl;
        formula_base_branches = b;
-		   formula_base_pos = pos}) -> mkExists qvars h p t fl b pos
+       formula_base_aset = aset;
+		   formula_base_pos = pos}) -> mkExists qvars h p t fl b aset pos
   | Exists ({formula_exists_qvars = qvs; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
 			 formula_exists_type = t;
 			 formula_exists_flow = fl;
        formula_exists_branches = b;
+       formula_exists_aset = aset;
 			 formula_exists_pos = pos}) -> 
 	  let new_qvars = U.remove_dups (qvs @ qvars) in
-		mkExists new_qvars h p t fl b pos
+		mkExists new_qvars h p t fl b aset pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 
 (* 19.05.2008 *)
@@ -1050,10 +1075,11 @@ and remove_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = matc
 			 formula_exists_type = t;
 			 formula_exists_flow = fl;
        formula_exists_branches = b;
+       formula_exists_aset = aset;
 			 formula_exists_pos = pos}) -> 
 	  let new_qvars = (List.filter (fun x -> not(List.exists (fun y -> CP.eq_spec_var x y) qvars)) qvs) in
-	  	if (List.length new_qvars == 0) then mkBase h p t fl b pos
-	  	else mkExists new_qvars h p t fl b pos
+	  	if (List.length new_qvars == 0) then mkBase h p t fl b aset pos
+	  	else mkExists new_qvars h p t fl b aset pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 (* 19.05.2008 *)
 
@@ -1694,22 +1720,37 @@ and combine_and (f1:formula) (f2:MCP.memo_pure) :formula*bool = match f1 with
       Error.report_error {
 		Error.error_loc = pos;
 		Error.error_text = ("malfunction: inner or has not been converted to a CtxOr!") }
-	| Base ({ formula_base_pure = p;} as b) -> 
+	| Base ({ 
+      formula_base_pure = p;
+      formula_base_aset = aset;} as b) -> 
 			let r1,r2 = (combine_and_pure f1 p f2) in
-			(Base{b with formula_base_pure = r1}, r2)					 
+      let naset = Util.merge_set aset (MCP.memo_alias f2) in
+			(Base{b with 
+        formula_base_pure = r1;
+        formula_base_aset = naset}, r2)					 
 	| Exists ({formula_exists_qvars = evars;
+         formula_exists_aset = aset;
 			   formula_exists_pure = p ;} as b) -> 
 			if (List.length (Util.intersect (MCP.mfv f2) evars))=0 then
 				let r1,r2 = (combine_and_pure f1 p f2) in
-				(Exists {b with formula_exists_pure = r1},r2)	  
+        let naset = Util.merge_set aset (MCP.memo_alias f2) in
+				(Exists {b with 
+          formula_exists_pure = r1;
+          formula_exists_aset = naset;},r2)	  
 				else 
 					let rf1 = rename_bound_vars f1 in
 					(combine_and rf1 f2)
 		
 and normalize_no_rename_context_formula (ctx : context) (p : MCP.memo_pure) : context = 
 	let rec push_pure (f:formula):formula = match f with
-		| Base b-> Base {b with formula_base_pure = MCP.merge_mems p b.formula_base_pure true}
-		| Exists b -> Exists {b with formula_exists_pure = MCP.merge_mems p b.formula_exists_pure true}
+		| Base b-> 
+        Base {b with 
+          formula_base_pure = MCP.merge_mems p b.formula_base_pure true;
+          formula_base_aset = Util.merge_set b.formula_base_aset (MCP.memo_alias p);}
+		| Exists b -> 
+        Exists {b with 
+          formula_exists_pure = MCP.merge_mems p b.formula_exists_pure true;
+          formula_exists_aset = Util.merge_set b.formula_exists_aset (MCP.memo_alias p);}
 		| Or b -> Or {
 				   formula_or_f1 = push_pure b.formula_or_f1;
 				   formula_or_f2 = push_pure b.formula_or_f2;
@@ -1835,6 +1876,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
        formula_base_branches = b;
 		   formula_base_flow = fl;
        formula_base_label = lbl;
+       formula_base_aset = aset;
 		   formula_base_pos = pos}) -> 
     Base ({formula_base_heap = h; 
 			formula_base_pure = MCP.memo_apply_one_exp s p;
@@ -1844,6 +1886,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 		 	formula_base_type = t;
       formula_base_branches = List.map (fun (l, p1) -> (l, CP.apply_one_exp s p1)) b;
       formula_base_label = lbl;
+      formula_base_aset = MCP.var_aset_subst_one_exp s aset ;
 		 	formula_base_pos = pos})
   | Exists ({formula_exists_qvars = qsv; 
 			 formula_exists_heap = qh; 
@@ -1852,6 +1895,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
        formula_exists_branches = b;
 			 formula_exists_flow = fl;
        formula_exists_label = lbl;
+       formula_exists_aset = aset;
 			 formula_exists_pos = pos}) -> 
 	  if List.mem (CP.name_of_spec_var fr) (List.map CP.name_of_spec_var qsv) then f 
 	  else 
@@ -1862,6 +1906,7 @@ and apply_one_exp ((fr, t) as s : (CP.spec_var * CP.exp)) (f : formula) = match 
 					formula_exists_flow = fl;
           formula_exists_branches = List.map (fun (l, p1) -> (l, CP.apply_one_exp s p1)) b;
           formula_exists_label = lbl;
+          formula_exists_aset = MCP.var_aset_subst_one_exp s aset ;
 					formula_exists_pos = pos})
 
 (*and combine_branch b *)
@@ -1886,8 +1931,10 @@ let rec struc_to_formula (f0:struc_formula):formula =
             (*let ng = Cpure.Not (c1,b.formula_case_pos) in*)
             if (isConstEFalse c2) then a
             else
+            let np = (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) in
+            let nas = MCP.memo_alias np in
             (mkOr a (normalize_combine 
-                  (mkBase HTrue (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) 
+                  (mkBase HTrue np TypeTrue (mkTrueFlow ()) [] nas b.formula_case_pos ) 
                   (struc_to_formula c2)
                   b.formula_case_pos) b.formula_case_pos)
           ) (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches in
@@ -2153,17 +2200,23 @@ let rec transform_formula f (e:formula):formula =
 	match r with
 	| Some e1 -> e1
 	| None  -> match e with	 
-		| Base b -> Base{b with 
-			formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
-			formula_base_pure =  MCP.transform_memo_formula f_p_t b.formula_base_pure;
-			formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;}
+		| Base b -> 
+      let np = MCP.transform_memo_formula f_p_t b.formula_base_pure in
+      Base{b with 
+              formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
+              formula_base_pure =  np;
+              formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;
+              formula_base_aset = MCP.memo_alias np;}
 		| Or o -> Or {o with 
-			formula_or_f1 = transform_formula f o.formula_or_f1;
-			formula_or_f2 = transform_formula f o.formula_or_f2;}
-		| Exists e -> Exists {e with
-			formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
-			formula_exists_pure = MCP.transform_memo_formula f_p_t e.formula_exists_pure;
-			formula_exists_branches = List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
+                    formula_or_f1 = transform_formula f o.formula_or_f1;
+                    formula_or_f2 = transform_formula f o.formula_or_f2;}
+		| Exists e -> 
+      let np = MCP.transform_memo_formula f_p_t e.formula_exists_pure in
+      Exists {e with
+                formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
+                formula_exists_pure = np;
+                formula_exists_branches = List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;
+                formula_exists_aset = MCP.memo_alias np;}
 		
 		
 let rec transform_ext_formula f (e:ext_formula) :ext_formula = 
@@ -2579,7 +2632,9 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
 	let rec ext_formula_br (f:ext_formula):(formula * formula_label) list = match f with
 		| ECase b-> List.concat 
         (List.map (fun (c1,c2) -> 
-          let g_f = mkBase HTrue (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
+          let np = (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) in
+          let nas = MCP.memo_alias np in
+          let g_f = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] nas b.formula_case_pos in
           List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (get_view_branches c2)) b.formula_case_branches)
 		| EBase b-> 
       if b.formula_ext_continuation != [] then

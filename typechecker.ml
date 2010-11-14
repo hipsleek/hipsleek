@@ -511,7 +511,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] (Util.empty_a_set ())pos in
         let res = CF.normalize_max_renaming_list_partial_context heap_form pos true ctx in
           res
       end;

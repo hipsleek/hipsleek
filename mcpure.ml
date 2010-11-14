@@ -185,6 +185,13 @@ and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =
 and memo_alias (m:memo_pure) : var_aset = 
   List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) (Util.empty_a_set ()) (ptr_equations m)
 
+and var_aset_subst_one s (l:var_aset) : var_aset = List.map (fun (a,l)-> ((subst_var s a),subst_one_var_list s l)) l 
+  
+and var_aset_subst_list s (l:var_aset) : var_aset = List.map (fun (a,l)-> ((subs_one s a),subst_var_list s l)) l 
+
+and var_aset_subst_one_exp (v,_) (l:var_aset) : var_aset = 
+  List.fold_left (fun a (c1,c2)-> if (eq_spec_var v c1) then a else (c1,(List.filter (eq_spec_var v) c2))::a ) [] l
+  
 (*  extract the equations for the variables that are to be explicitly instantiated from the residue - a Cpure.formula *)
 (* get the equation for the existential variable used in the
    following variable elimination ex x. (x=y & P(x)) <=> P(y).
@@ -587,7 +594,7 @@ let memo_change_status cons l =
       else 
         let ncns = List.map 
           (fun c-> 
-            if not(eq_b_formula c.memo_formula cns) then c
+            if not(eq_b_formula [] c.memo_formula cns) then c
             else match c.memo_status with
               | Implied _ -> {c with memo_status=Implied_dupl}
               | Fail_prune -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoization contradiction undetected"}
@@ -606,7 +613,7 @@ let memo_changed d = d.memo_group_changed
 (* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)
    if equal to an implied cond then it can be dropped as it is useless as a pruning condition
    throws an exception if p_cond is not found in corr*)
-let memo_check_syn_prun (p_cond,pr_branches) crt_br corr = 
+let memo_check_syn_prun (p_cond,pr_branches) crt_br asets corr = 
     let prun = List.find (fun d -> equalBFormula d.memo_formula p_cond) corr.memo_group_cons in
     match prun.memo_status with
       | Fail_prune -> pr_branches

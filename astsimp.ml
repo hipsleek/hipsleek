@@ -1810,7 +1810,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
   let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
   let compute_univ () =
-    let (h, p, _,_, _) = CF.split_components c_lhs in
+    let (h, p, _,_, _,_) = CF.split_components c_lhs in
     let pvars =MCP.mfv p in
     let hvars = CF.h_fv h in
     let univ_vars = Util.difference_f CP.eq_spec_var pvars hvars in 
@@ -3409,7 +3409,9 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
       | IF.Base base -> 
             let pos = base.Iformula.formula_base_pos in
             let nh,np,nt,nfl,nb = (linearize_base base pos) in
-            CF.mkBase nh (MCP.memoise_add_pure (MCP.mkMTrue pos) np) nt nfl nb pos
+            let np = (MCP.memoise_add_pure (MCP.mkMTrue pos) np)  in
+            let aset = MCP.memo_alias np in
+            CF.mkBase nh np nt nfl nb aset pos
       | IF.Exists {
             IF.formula_exists_heap = h; 
             IF.formula_exists_pure = p;
@@ -3425,7 +3427,9 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
             IF.formula_base_pos = pos;
           } in 
 	let nh,np,nt,nfl,nb = linearize_base base pos in
-	CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh (MCP.memoise_add_pure (MCP.mkMTrue pos) np) nt nfl nb pos 
+  let np = (MCP.memoise_add_pure (MCP.mkMTrue pos) np) in
+  let aset = MCP.memo_alias np in
+	CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb aset pos 
 	      
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
@@ -4704,7 +4708,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
         | CP.Bag (l,p) , CP.Var _ -> if (List.length l)>0 then CP.Neq (e2, CP.Bag ([],p),p) else c
         | _-> c) 
       | _ -> c) r in
-    Util.remove_dups_f r CP.eq_b_formula in
+    Util.remove_dups_f r CP.eq_b_formula_no_aset in
 
   let hull_invs v_l (f:CP.formula):CP.formula list =
   let rec helper acc e_v_l : CP.formula list = match e_v_l with
@@ -4730,15 +4734,15 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       | CP.Lt (e1,e2,l)  -> 
         ( match f2 with
           | CP.Lt(d1,d2,l) 
-          | CP.Lte(d1,d2,l) ->  if (CP.eq_exp e2 d1) then [CP.Lt (e1, d2,l)] else []
+          | CP.Lte(d1,d2,l) ->  if (CP.eq_exp_no_aset e2 d1) then [CP.Lt (e1, d2,l)] else []
           | _ -> []) 
      | CP.Lte (e1,e2,_) -> 
         ( match f2 with
-          | CP.Lt(d1,d2,l) -> if (CP.eq_exp e2 d1) then [CP.Lt (e1, d2,l)] else []
-          | CP.Lte(d1,d2,l) ->  if (CP.eq_exp e2 d1) then [CP.Lte (e1, d2,l)] else []
+          | CP.Lt(d1,d2,l) -> if (CP.eq_exp_no_aset e2 d1) then [CP.Lt (e1, d2,l)] else []
+          | CP.Lte(d1,d2,l) ->  if (CP.eq_exp_no_aset e2 d1) then [CP.Lte (e1, d2,l)] else []
           | _ -> []) 
      | CP.Eq (e1,e2,_)  -> 
-        let spec_eq c d = if (CP.eq_exp c d) then (match c with | CP.IConst _ | CP.FConst _ -> false | _-> true) else false in
+        let spec_eq c d = if (CP.eq_exp_no_aset c d) then (match c with | CP.IConst _ | CP.FConst _ -> false | _-> true) else false in
         let pick_three e1 e2 d1 d2 fct l= 
             if (spec_eq d1 e1) then [fct (e2,d2,l)]
                 else if (spec_eq d1 e2) then [fct (e1,d2,l)]
@@ -4759,8 +4763,8 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
                             else if (CP.eq_spec_var v2 sv) then [CP.BagIn (v1,d,l)]
                               else []
                         | _ -> []
-                      )@(if(CP.eq_exp d e1) then [CP.BagIn (sv,e2,l)]
-                          else if (CP.eq_exp d e2) then [CP.BagIn (sv,e1,l)]
+                      )@(if(CP.eq_exp_no_aset d e1) then [CP.BagIn (sv,e2,l)]
+                          else if (CP.eq_exp_no_aset d e2) then [CP.BagIn (sv,e1,l)]
                             else []))
                    | CP.BagNotIn (sv,d,l) -> 
                       (( match (e1,e2) with 
@@ -4769,8 +4773,8 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
                             else if (CP.eq_spec_var v2 sv) then [CP.BagNotIn (v1,d,l)]
                               else []
                         | _ -> []
-                      )@(if(CP.eq_exp d e1) then [CP.BagNotIn (sv,e2,l)]
-                          else if (CP.eq_exp d e2) then [CP.BagNotIn (sv,e1,l)] else []))
+                      )@(if(CP.eq_exp_no_aset d e1) then [CP.BagNotIn (sv,e2,l)]
+                          else if (CP.eq_exp_no_aset d e2) then [CP.BagNotIn (sv,e1,l)] else []))
                    | CP.ListIn (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.ListIn a) l
                    | CP.ListNotIn (d1,d2,l)-> pick_three e1 e2 d1 d2 ( fun a-> CP.ListNotIn a) l
                    | _ -> []
@@ -4784,10 +4788,10 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       | hd::tl -> 
         let r =List.map (fun c-> (constr_union hd c)@(constr_union c hd)) tl in        
         (List.concat r)@(new_con_list tl) in        
-    let r = Util.remove_dups_f (new_con_list (p_c@nl)) CP.eq_b_formula in    
-    let r1 = List.filter ( fun c-> not (List.exists (CP.eq_b_formula c) (p_c@nl) ) ) r in
+    let r = Util.remove_dups_f (new_con_list (p_c@nl)) CP.eq_b_formula_no_aset in    
+    let r1 = List.filter ( fun c-> not (List.exists (CP.eq_b_formula_no_aset c) (p_c@nl) ) ) r in
     if (List.length r1)>0 then 
-        let n = Util.remove_dups_f (r1@nl) CP.eq_b_formula in    
+        let n = Util.remove_dups_f (r1@nl) CP.eq_b_formula_no_aset in    
         (*print_string ("\n init: "^(String.concat " " (List.map Cprinter.string_of_b_formula p_c))^"\n");
         print_string ("\n new: "^(String.concat " " (List.map Cprinter.string_of_b_formula n))^"\n");*)        
         propagate_constraints p_c n
@@ -4798,7 +4802,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       let split_neq l = List.partition (fun c1 -> match c1 with | CP.Neq _ -> true | _ -> false) l in
       let l1_n, l1r = split_neq l1 in
       let l2_n, l2r = split_neq l2 in
-      let to_be_added = Util.intersect_fct CP.eq_b_formula l1_n l2_n in
+      let to_be_added = Util.intersect_fct CP.eq_b_formula_no_aset l1_n l2_n in
      (* let _ = print_string ("tba : "^
       (Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) to_be_added))^"\n") in
       let _ = print_string ("l1r : "^(Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) l1r))^"\n") in
@@ -4817,7 +4821,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
                       | CP.And (f1,f2,_) -> (r f1)@(r f2)
                       | _ -> [] in 
                List.concat (List.map r lr) in  
-      to_be_added @ (Util.remove_dups_f lr CP.eq_b_formula) in      
+      to_be_added @ (Util.remove_dups_f lr CP.eq_b_formula_no_aset) in      
       
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
@@ -4844,7 +4848,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     
   (*actual case inference*)
   let guard_list = List.map (fun (c,lbl)-> 
-          let pures = (fun (h,p,_,b,_)-> 
+          let pures = (fun (h,p,_,b,_,_)-> 
               (*let (cm,br) = (Solver.xpure_heap cp h 0) in *)
               let cm,br,_ = Solver.xpure_heap_symbolic_no_exists_i cp h 0 in
               let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
@@ -4865,7 +4869,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
   let norm_inv_list = List.map (fun (c1,c2)-> (c1,MCP.memo_norm_wrapper c2)) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, c_l)-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
   let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
-      let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula constr c) a in
+      let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula_no_aset constr c) a in
       let rest_lbls = match (List.length leq) with | 0 -> [] | 1 -> snd (List.hd leq) | _ -> [] in
       (constr,f_lbl::rest_lbls)::lneq) [] ungrouped_g_l in
   let prune_conds = List.filter (fun (c1,c2)-> (List.length init_form_lst)>(List.length c2)) prune_conds in 
@@ -4927,7 +4931,7 @@ and coerc_spec prog is_l c =
   let h_f,b_f,h_v = if is_l then (c.C.coercion_head,c.C.coercion_body,c.C.coercion_head_view) else (c.C.coercion_body, c.C.coercion_head,c.C.coercion_body_view)in
   let v_def = C.look_up_view_def no_pos prog.C.prog_view_decls h_v in
   let v_invs = v_def.C.view_prune_invariants in
-  let h_h, _, _, _, _  = CF.split_components h_f in
+  let h_h, _, _, _, _, _  = CF.split_components h_f in
   let to_vars = find_h_args h_h in 
   let subst_vars = List.combine v_def.C.view_vars to_vars in
   let fvs = Util.intersect (CF.fv h_f) (CF.fv b_f) in  
