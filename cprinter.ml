@@ -664,6 +664,8 @@ let pr_memoise_group m_gr =
                wrap_box ("B",1) pr_memoise c.MP.memo_group_cons;
                fmt_cut ();fmt_string "  ";
                wrap_box ("B",1) pr_mem_slice c.MP.memo_group_slice;
+               fmt_cut ();fmt_string "  alias set:";
+               wrap_box ("B",1) fmt_string (Util.string_of_e_set string_of_spec_var c.MP.memo_group_aset);
                fmt_cut();
       ) m_gr; fmt_string ")") m_gr
   (*else ()*)

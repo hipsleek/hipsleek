@@ -27,7 +27,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
       log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
       match spec with
 	| Cformula.ECase b -> (List.for_all (fun (c1,c2)-> 
-					      let nctx = CF.transform_context (combine_es_and prog (MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue no_pos) c1) true) ctx in
+					      let nctx = CF.transform_context (combine_es_and prog (MCP.memoise_add_pure (MCP.mkMTrue no_pos) c1) true) ctx in
 					      let r = check_specs prog proc nctx c2 e0 in
 						(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 						r) b.Cformula.formula_case_branches) (*&&
@@ -296,8 +296,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	       exp_cond_path_id =pid;
 	       exp_cond_pos = pos}) -> begin
           let cnd_f = (CP.BForm (CP.mkBVar v Primed pos, None)) in
-          let then_cond_prim = MCP.memoise_add_pure (Util.empty_a_set ())(MCP.mkMTrue pos) cnd_f in          
-          let else_cond_prim = MCP.memoise_add_pure (Util.empty_a_set ())(MCP.mkMTrue pos) (CP.mkNot cnd_f None pos) in
+          let then_cond_prim = MCP.memoise_add_pure (MCP.mkMTrue pos) cnd_f in          
+          let else_cond_prim = MCP.memoise_add_pure (MCP.mkMTrue pos) (CP.mkNot cnd_f None pos) in
           let ctx =  prune_ctx_list prog ctx in
           let then_ctx = combine_list_partial_context_and_unsat_now prog ctx then_cond_prim in
             Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_partial_context then_ctx)) pos;
@@ -511,7 +511,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
               CF.h_formula_data_pruning_conditions = [];
               CF.h_formula_data_pos = pos}) in
           (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] (Util.empty_a_set ())pos in
+        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
         let res = CF.normalize_max_renaming_list_partial_context heap_form pos true ctx in
           res
       end;

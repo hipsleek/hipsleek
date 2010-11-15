@@ -2909,7 +2909,7 @@ let transform_b_formula f (e:b_formula) :b_formula =
 	  
 	  
 let rec transform_formula f (e:formula) :formula = 
-	let (_ , f_formula, f_b_formula, f_exp) = f in
+	let (_ , _, f_formula, f_b_formula, f_exp) = f in
 	let r =  f_formula e in 
 	match r with
 	| Some e1 -> e1
@@ -2948,7 +2948,7 @@ let rename_labels  e=
 		| Not (e1,f_l, l) -> (Some (Not (e1,(n_l_f f_l),l)))
 		| Forall (v,e1,f_l, l) -> (Some (Forall (v,e1,(n_l_f f_l),l)))
 		| Exists (v,e1,f_l, l) -> (Some (Exists (v,e1,(n_l_f f_l),l)))in			
-	transform_formula ((fun _-> None), f_f,f_b,f_e) e
+	transform_formula ((fun _-> None),(fun _-> None), f_f,f_b,f_e) e
 			
 let remove_dup_constraints (f:formula):formula = 
   (*let f = elim_idents f in*)

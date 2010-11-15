@@ -53,8 +53,10 @@ node get_next(node x)
 {
 	node tmp = x.next;
 	x.next = null;
+  dprint;
 	return tmp;
 }
+
 
 /* function to set the tail of a list */
  void set_next(node x, node y)

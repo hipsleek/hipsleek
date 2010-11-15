@@ -931,4 +931,5 @@ let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bo
  is_conflict eq_str s
  
  
-let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"
+let string_of_e_set f e = 
+  "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->[]" (*^(String.concat ", "(List.map f cl))*)) e))^"]"
