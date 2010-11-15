@@ -722,6 +722,11 @@ let get_equiv (s:'a e_set) : ('a *'a) list =
 let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set = 
   List.filter (fun (a,_) -> not(List.mem a vs)) s
 
+(* make fv=tv and then eliminate fv *)
+let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set = 
+  let ns = add_equiv s fv tv in
+  elim_elems ns [fv]
+
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
