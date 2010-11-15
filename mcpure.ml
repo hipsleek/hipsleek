@@ -151,11 +151,14 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let helper  (s:(spec_var*spec_var) list) f  = 
+    let r = Util.rename_eset (subs_one s) f.memo_group_aset in
+    let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
+    let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in
    {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
     memo_group_changed = f.memo_group_changed;
     memo_group_cons = List.map (fun d->{d with memo_formula = List.fold_left (fun a c-> b_apply_one c a) d.memo_formula s;}) f.memo_group_cons;
     memo_group_slice = List.map (subst s) f.memo_group_slice; 
-    memo_group_aset = Util.rename_eset (subs_one s) f.memo_group_aset } in
+    memo_group_aset = r} in
   let r = List.map (helper st1) f_l in
   regroup_memo_group (List.map (helper st2) r)
 
@@ -171,17 +174,17 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
   | [] -> f_l in
   regroup_memo_group (helper sst f_l)
     
-and m_apply_one s f = 
+and m_apply_one (s:spec_var * spec_var) f = 
   let r1 = List.map (fun c -> 
+    let r = Util.subs_eset s c.memo_group_aset in
+    let _ = print_string ("sapp1: "^(print_alias_set c.memo_group_aset)^"\n") in
+    let _ = print_string ("sapp2: "^(print_alias_set r)^"\n") in
     {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
     memo_group_changed = c.memo_group_changed;
     memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons;
     memo_group_slice = List.map (apply_one s) c.memo_group_slice; 
-    memo_group_aset = Util.rename_eset (subst_var s) c.memo_group_aset }) f in  
+    memo_group_aset = r }) f in  
   let r = filter_mem_triv r1 in
-  let _ = print_string ("mapply1 : "^(!print_mp_f f)^"\n") in
-  let _ = print_string ("mapply2 : "^(!print_mp_f r1)^"\n") in  
-  let _ = print_string ("mapply3 : "^(!print_mp_f r)^"\n") in  
   r
 
 and h_apply_one_m_constr_lst s l = 
@@ -237,37 +240,45 @@ and get_subst_equation_memo_formula_vv (f0: memo_pure) (v:spec_var) : ((spec_var
   let (r1,r2) = get_subst_equation_memo_formula f0 v true in
   let r1 = List.fold_left (fun a c-> match c with | (r,Var(v,_))-> (r,v)::a | _ -> a) [] r1 in
   (r1,r2)
-   
+  
+  (*it always returns either 0 or one substitutions, if more are available just picks one*)
 and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) = 
   let r = List.fold_left (fun (a1,a2) c ->
     if not(a1=[]) then (a1,c::a2)
     else if not(List.exists (eq_spec_var v) c.memo_group_fv) then (a1,c::a2)
     else 
-      let acl, ncl = List.fold_left (fun (a1,a2) c-> if not(a1=[]) then (a1,c::a2)
+      let acl_cons, ncl = List.fold_left (fun (a1,a2) c-> if not(a1=[]) then (a1,c::a2)
         else match c.memo_status with
         | Implied _ | Implied_dupl -> 
           let r1,r2 = get_subst_equation_b_formula c.memo_formula v None only_vars in
           if (r1=[]) then (a1,c::a2) else (r1,a2)
         | _ -> (a1,c::a2)) ([],[]) c.memo_group_cons in
-      let tbm, naset = 
-        let eqs = Util.get_equiv c.memo_group_aset in
-        let mv,rem = List.fold_left (fun (a1,a2) (sv1,sv2) ->
-              if (eq_spec_var sv1 v) && (not (eq_spec_var sv2 v)) then ((v, Var (sv2,no_pos))::a1, a2 )
-              else if (eq_spec_var sv2 v) && (not (eq_spec_var sv1 v))  then ((v, Var (sv1,no_pos))::a1,a2)
-              else (a1, (sv1,sv2)::a2)) ([],[]) eqs in
-        (mv, (List.fold_left (fun a (c1,c2)-> Util.add_equiv a c1 c2) Util.empty_aset rem)) in
-      let acl = acl @ tbm in      
-      let acl, nsl = if not (acl=[]) then (acl, c.memo_group_slice)
+        
+      let acl_aset, nas = if not(acl_cons=[]) then (acl_cons,c.memo_group_aset)
+          else match Util.find_equiv_elim v c.memo_group_aset with
+            | None -> (acl_cons,c.memo_group_aset)
+            | Some (s,nas) -> 
+              let _ = print_string ("beforeel1: "^(print_alias_set c.memo_group_aset)^"\n") in
+              let _ = print_string ("afterel1: "^(print_alias_set nas)^"\n") in
+              let _ = print_string ("fromel2: "^(!print_sv_f v)^"\n") in
+              let _ = print_string ("toel2: "^(!print_sv_f s)^"\n") in              
+              ([(v,Var (s,no_pos))],nas) in
+            
+      let acl_slice, nsl = if not (acl_aset=[]) then (acl_aset, c.memo_group_slice)
         else List.fold_left (fun (a1,a2) c-> 
           if not (a1=[]) then (a1,c::a2)
           else 
             let r1,r2 = get_subst_equation_formula c v only_vars in
             (r1,r2::a2))([],[]) c.memo_group_slice in
-      (acl, {c with memo_group_cons=ncl; memo_group_slice=nsl; memo_group_aset = naset}::a2)) ([],[]) f0 in
-    let _ = print_string (" get_subst: "^(!print_mp_f f0)^"\n") in
+      let rg = {c with 
+                  memo_group_cons=ncl; 
+                  memo_group_slice=nsl; 
+                  memo_group_aset = nas} in
+      (acl_slice, rg::a2)) ([],[]) f0 in
+ (*   let _ = print_string (" get_subst: "^(!print_mp_f f0)^"\n") in
     let _ = print_string (" for: " ^(!print_sv_f v)^"\n") in
     let _ = print_string (" found: "^(String.concat " "(List.map (fun (c1,c2)->
-      (!print_sv_f c1)^" -> "^(!print_exp_f c2)) (fst r)))^"\n") in
+      (!print_sv_f c1)^" -> "^(!print_exp_f c2)) (fst r)))^"\n") in*)
     r
 
 

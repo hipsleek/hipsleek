@@ -975,5 +975,3 @@ let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
 (* check if there was a conflict in a set of difference lists *)
 let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bool =
  is_conflict eq_str s
- 
- 
