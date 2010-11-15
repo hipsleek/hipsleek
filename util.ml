@@ -727,6 +727,9 @@ let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set =
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
   List.map (fun (e,k) -> (f e,k)) s
 
+let string_of_e_set (f:'a->string) (e:'a e_set) : string =
+  let ll=partition e in 
+  "aset=["^ (String.concat " \n " (List.map (fun cl -> (String.concat ", "(List.map f cl))) ll))^"]"
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm
@@ -931,5 +934,3 @@ let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bo
  is_conflict eq_str s
  
  
-let string_of_e_set f e = 
-  "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->[]" (*^(String.concat ", "(List.map f cl))*)) e))^"]"
