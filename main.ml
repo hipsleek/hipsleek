@@ -60,6 +60,7 @@ let process_source_full source =
    	  let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
     let intermediate_prog =Iast.float_var_decl_prog prog in 
 	  let intermediate_prog = Globalvars.trans_global_to_param intermediate_prog in
+          print_string (Iprinter.string_of_program intermediate_prog);
 	  let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 	  let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
       let _ = Util.pop_time "Translating global var" in
