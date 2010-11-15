@@ -1580,17 +1580,25 @@ and elim_exists (f0 : formula) : formula = match f0 with
               formula_exists_branches = b;
               formula_exists_pos = pos}) ->
       let st, pp1 = MCP.get_subst_equation_memo_formula_vv p qvar in
-	  if List.length st = 1 then
-	    let tmp = mkBase h pp1 t fl b pos in
-	    let new_baref = subst st tmp in
-	    let tmp2 = add_quantifiers rest_qvars new_baref in
-	    let tmp3 = elim_exists tmp2 in
-	    tmp3
-	  else (* if qvar is not equated to any variables, try the next one *)
-	    let tmp1 = mkExists rest_qvars h p t fl b pos in
-	    let tmp2 = elim_exists tmp1 in
-	    let tmp3 = add_quantifiers [qvar] tmp2 in
-	    tmp3
+	    let r = if List.length st = 1 then
+      
+      let _ = print_string ("exit ee: "^(Cprinter.string_of_memo_pure_formula pp1)^"\n") in
+                let tmp = mkBase h pp1 t fl b pos in
+                let f,t = List.hd st in
+                let _ = print_string ("subst: "^(Cprinter.string_of_spec_var f)^" with : "^(Cprinter.string_of_spec_var t)^"\n") in
+                let new_baref = subst st tmp in
+                let _ = print_string ("ee1 : "^(Cprinter.string_of_formula new_baref)^"\n") in
+                let tmp2 = add_quantifiers rest_qvars new_baref in
+                let _ = print_string ("ee2 : "^(Cprinter.string_of_formula tmp2)^"\n") in
+                let tmp3 = elim_exists tmp2 in
+                let _ = print_string ("ee3 : "^(Cprinter.string_of_formula tmp3)^"\n") in
+                tmp3
+              else (* if qvar is not equated to any variables, try the next one *)
+                let tmp1 = mkExists rest_qvars h p t fl b pos in
+                let tmp2 = elim_exists tmp1 in
+                let tmp3 = add_quantifiers [qvar] tmp2 in
+                tmp3 in
+      r
   | Exists _ -> failwith ("Solver.elim_exists: Exists with an empty list of quantified variables")
 
 (**************************************************************)

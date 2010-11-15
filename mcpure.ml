@@ -38,6 +38,8 @@ let print_mc_f = ref (fun (c:memoised_constraint)-> "printing not initialized")
 let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
 let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
 let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
+let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
+
 let print_alias_set aset = Util.string_of_e_set !print_sv_f aset
     
 let rec mfv (m: memo_pure) : spec_var list = Util.remove_dups_f (List.concat (List.map (fun c-> c.memo_group_fv) m)) eq_spec_var
@@ -65,6 +67,12 @@ and isConstMTrue f =
             | _ -> false)
     | _ -> false
       
+and isConstGroupTrue (f:memoised_group) : bool = match f.memo_group_slice with
+  | [] -> f.memo_group_cons == [] && (Util.is_empty_aset f.memo_group_aset) 
+  | x::[] -> f.memo_group_cons == [] && (Util.is_empty_aset f.memo_group_aset) && (isConstTrue x)
+  | _ -> false
+  
+      
 and isConstMFalse f = 
   match (List.length f) with
     | 1 ->
@@ -78,7 +86,7 @@ and isConstMFalse f =
   
 let rec filter_mem_fct fct lst =  
    let l = List.map (fun c->{c with memo_group_cons = List.filter fct c.memo_group_cons}) lst in
-  List.filter (fun c-> (List.length c.memo_group_cons)+(List.length c.memo_group_slice)>0) l
+  List.filter (fun c-> not (isConstGroupTrue c)) l
     
 and filter_mem_triv lst = 
   filter_mem_fct (fun c->match c.memo_formula with 
@@ -164,13 +172,17 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
   regroup_memo_group (helper sst f_l)
     
 and m_apply_one s f = 
-  let r = List.map (fun c -> 
+  let r1 = List.map (fun c -> 
     {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
     memo_group_changed = c.memo_group_changed;
     memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons;
     memo_group_slice = List.map (apply_one s) c.memo_group_slice; 
     memo_group_aset = Util.rename_eset (subst_var s) c.memo_group_aset }) f in  
-  filter_mem_triv r
+  let r = filter_mem_triv r1 in
+  let _ = print_string ("mapply1 : "^(!print_mp_f f)^"\n") in
+  let _ = print_string ("mapply2 : "^(!print_mp_f r1)^"\n") in  
+  let _ = print_string ("mapply3 : "^(!print_mp_f r)^"\n") in  
+  r
 
 and h_apply_one_m_constr_lst s l = 
   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_one s c.memo_formula},c2)) l
@@ -227,7 +239,7 @@ and get_subst_equation_memo_formula_vv (f0: memo_pure) (v:spec_var) : ((spec_var
   (r1,r2)
    
 and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: ((spec_var * exp) list * memo_pure) = 
-  List.fold_left (fun (a1,a2) c->
+  let r = List.fold_left (fun (a1,a2) c ->
     if not(a1=[]) then (a1,c::a2)
     else if not(List.exists (eq_spec_var v) c.memo_group_fv) then (a1,c::a2)
     else 
@@ -251,7 +263,12 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
           else 
             let r1,r2 = get_subst_equation_formula c v only_vars in
             (r1,r2::a2))([],[]) c.memo_group_slice in
-      (acl, {c with memo_group_cons=ncl; memo_group_slice=nsl; memo_group_aset = naset}::a2)) ([],[]) f0
+      (acl, {c with memo_group_cons=ncl; memo_group_slice=nsl; memo_group_aset = naset}::a2)) ([],[]) f0 in
+    let _ = print_string (" get_subst: "^(!print_mp_f f0)^"\n") in
+    let _ = print_string (" for: " ^(!print_sv_f v)^"\n") in
+    let _ = print_string (" found: "^(String.concat " "(List.map (fun (c1,c2)->
+      (!print_sv_f c1)^" -> "^(!print_exp_f c2)) (fst r)))^"\n") in
+    r
 
 
 and memo_pure_elim_exists (f0: memo_pure):memo_pure = 
@@ -348,13 +365,13 @@ and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula =
   (*fold_mem_lst_to_lst lst false true false*)
   fold_mem_lst_gen (BForm (init_cond,None)) with_dupl with_inv with_slice lst
 
-and filter_useless_mem fv c = 
-  if ((List.length c.memo_group_cons)>0 or (not (Util.is_empty_aset c.memo_group_aset))) then true
+and filter_useless_mem c = not (isConstGroupTrue c) 
+(*  if ((List.length c.memo_group_cons)>0 or (not (Util.is_empty_aset c.memo_group_aset))) then true
   else
     match (List.length c.memo_group_slice) with
       | 0 -> false (*((List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0)*)
       | 1 -> not (isConstTrue (List.hd c.memo_group_slice))
-      | _ -> true 
+      | _ -> true *)
       
 and filter_useless_memo_pure (simp_fct:formula->formula) (fv:spec_var list) (c_lst:memo_pure) : memo_pure = 
   let n_c_lst = List.fold_left (fun a c-> 
@@ -364,7 +381,7 @@ and filter_useless_memo_pure (simp_fct:formula->formula) (fv:spec_var list) (c_l
       let n_slice_lst = List.filter (fun c-> not (isConstTrue c)) n_slice_lst in   
       if (List.exists isConstFalse n_slice_lst) then mkMFalse no_pos
       else {c with memo_group_slice = n_slice_lst;}::a) [] c_lst in
-  List.filter (filter_useless_mem fv) n_c_lst
+  List.filter (fun c-> not (isConstGroupTrue c))  n_c_lst
  
 and recompute_unknowns (p:memo_pure): memo_pure= p
     

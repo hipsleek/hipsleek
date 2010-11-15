@@ -166,15 +166,7 @@ let main () =
 
 let _ = 
   wrap_exists_implicit_explicit := false ;
-  process_cmd_line ();
-  Mcpure.print_mp_f := Cprinter.string_of_memo_pure_formula ; 
-  Mcpure.print_mc_f := Cprinter.string_of_memoise_constraint ; 
-  Mcpure.print_sv_f := Cprinter.string_of_spec_var ; 
-  Mcpure.print_bf_f := Cprinter.string_of_b_formula ;
-  Mcpure.print_p_f_f := Cprinter.string_of_pure_formula ;
-  Tpdispatcher.print_pure :=Cprinter.string_of_pure_formula ;
-  Cpure.print_b_formula := Cprinter.string_of_b_formula;
-  
+  process_cmd_line ();  
   if !print_version_flag then begin
 	print_version ()
   end else

@@ -205,6 +205,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
             (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None)) pos) pos in
           let tmp_ctx =
             if !Globals.large_bind then CF.normalize_max_renaming_list_partial_context link_pv pos false ctx else ctx in
+          
           let unfolded = unfold_partial_context (Prog prog) tmp_ctx v_prim true pos in
           let _ = Debug.devel_pprint ("bind: unfolded context:\n"
                     ^ (Cprinter.string_of_list_partial_context unfolded)
@@ -220,6 +221,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
           let vheap = CF.formula_of_heap vdatanode pos in
           let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
           Debug.devel_pprint to_print pos;
+          let _ = print_string ("before bind: "^(Cprinter.string_of_list_partial_context unfolded)^"\n") in
           let rs_prim, prf = heap_entail_list_partial_context_init prog false false  unfolded vheap pos pid in
           let _ = PTracer.log_proof prf in
           let _ = Debug.devel_pprint ("bind: after proving context:\n"^ (Cprinter.string_of_list_partial_context rs_prim)^ "\n") pos in
@@ -238,8 +240,11 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
               let tmp_res1 = check_exp prog proc [cc] body post_start_label in 
               let tmp_res2 = CF.normalize_max_renaming_list_partial_context vheap pos true tmp_res1 in
               let tmp_res3 = CF.push_exists_list_partial_context vs_prim tmp_res2 in
-              let res =if !Globals.elim_exists then elim_exists_partial_ctx_list tmp_res3
-              else tmp_res3 in
+              let _ = print_string ("body3: "^(Cprinter.string_of_list_partial_context tmp_res3)^"\n") in
+              let res =if !Globals.elim_exists then elim_exists_partial_ctx_list tmp_res3 else tmp_res3 in
+              let res = elim_exists_partial_ctx_list res in
+              let _ = print_string ("body4: "^(Cprinter.string_of_list_partial_context res)^"\n") in
+              
                 res 
             in
             let tmp_res = List.concat (List.map process_one rs) in
@@ -597,8 +602,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
         exp_sharp_unpack = un;(*true if it must get the new flow from the second element of the current flow pair*)
         exp_sharp_path_id = pid;
         exp_sharp_pos = pos})	-> 
-        (*let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_context_list ctx)^"\n") in
-          let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in*)
+        let _ =print_string ("sharp start ctx: "^ (Cprinter.string_of_list_partial_context ctx)^"\n") in
+        (*  let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in*)
         let nctx = match v with 
           | Sharp_prog_var (t,v) -> 
               let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos) pos in
@@ -779,6 +784,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   (*   | CF.SuccCtx _ ->  *)
 
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
+  let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in

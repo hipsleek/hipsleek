@@ -1483,7 +1483,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
           else
             let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
             let ba' = MCP.memo_drop_null self ba in
-            let ba',_ = List.partition (MCP.filter_useless_mem []) ba' in
+            let ba',_ = List.partition (MCP.filter_useless_mem) ba' in
             let base_case = Cpure.BForm ((Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)),None) in
         Some (base_case,(ba',br'))		
     | Cformula.ECase b-> 

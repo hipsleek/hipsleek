@@ -305,10 +305,6 @@ let main1 () =
       ()
 	  
 let _ = 
-  Mcpure.print_mp_f := Cprinter.string_of_memo_pure_formula ; 
-  Mcpure.print_mc_f := Cprinter.string_of_memoise_constraint ; 
-  Tpdispatcher.print_pure :=Cprinter.string_of_pure_formula ;
-  Cpure.print_b_formula := Cprinter.string_of_b_formula;
   main1 ();
   (*let rec check_aux (t1,t2,t3,t4) l = match l with
   | [] -> true

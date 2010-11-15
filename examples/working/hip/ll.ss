@@ -51,9 +51,10 @@ node get_next(node x)
 	ensures x::ll<1> * res::ll<n-1>; 
 
 {
-	node tmp = x.next;
-	x.next = null;
   dprint;
+	node tmp = x.next;
+  assume false;
+	x.next = null;
 	return tmp;
 }
 

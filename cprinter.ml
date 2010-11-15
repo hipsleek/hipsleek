@@ -1413,8 +1413,15 @@ if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
 
 let get_label_list_partial_context (cl:Cformula.list_partial_context) : string =
 if (U.empty cl) then "" else get_label_partial_context (List.hd cl)
-
-
+;;
+Mcpure.print_mp_f := string_of_memo_pure_formula ;;
+Mcpure.print_mc_f := string_of_memoise_constraint ;;
+Mcpure.print_sv_f := string_of_spec_var ;; 
+Mcpure.print_bf_f := string_of_b_formula ;;
+Mcpure.print_p_f_f := string_of_pure_formula ;;
+Mcpure.print_exp_f := string_of_formula_exp;;
+Tpdispatcher.print_pure := string_of_pure_formula ;;
+Cpure.print_b_formula := string_of_b_formula;;
 
 
 
