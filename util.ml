@@ -592,9 +592,14 @@ type ('a,'k) e_map =  ('a * 'k) list
 type 'a e_set =  ('a,'a list) e_map
 type 'a e_set_str =  (string e_set * ('a -> string))
 
-let empty_a_set () : 'a e_set = []
+let empty_aset  : 'a e_set = []
+
+let empty_a_set () : 'a e_set = empty_aset 
 
 let empty_a_set_str f : 'a e_set_str = ([],f)
+
+(* return the domain of e-set *)
+let domain (s: ('a,'k) e_map) : 'a list = List.map fst s
 
 let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
   try
@@ -668,9 +673,11 @@ let partition (s: 'a e_set) : 'a list list =
  List.map ( fun (_,b) -> b) r
          
 (* converts [[a]] to (a e_set) *)
-let un_partition (l:'a list list) : 'a e_set =
- let flat xs y = List.map (fun x -> (x,y)) xs in
- List.concat (List.map (fun x -> flat x x) l)
+let un_partition (ll:'a list list) : 'a e_set =
+  let flat xs y = 
+    if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
+    else [] in
+  List.concat (List.map (fun x -> flat x x) ll)
          
 (* merge two equivalence sets s1 /\ s2 *)
 let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
@@ -682,6 +689,26 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
 (* merge two equivalence set_str s1 /\ s2 *)
 let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
  (merge_set s1 s2,f)
+
+(* return list of elements in e_set *)
+let get_elems (s:'a e_set) : 'a list = domain s
+
+(* return pairs of equivalent element from e_set *)
+let get_equiv (s:'a e_set) : ('a *'a) list = 
+  let ll = partition s in
+  let make_p l = match l with
+    | [] -> []
+    | x::xs -> List.map (fun b -> (x,b)) xs in
+  List.concat (List.map make_p ll)
+
+(* remove vs elements from e_set - used by existential elimination *)
+let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set = 
+  List.filter (fun (a,_) -> not(List.mem a vs)) s
+
+(* rename the elements of e_set *)
+(* pre : f must be 1-to-1 map *)
+let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
+  List.map (fun (e,k) -> (f e,k)) s
 
 (* disjointness structures*)
 type 'a d_set =  ('a list) list

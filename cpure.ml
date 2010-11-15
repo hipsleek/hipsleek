@@ -632,6 +632,32 @@ and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bo
 
 and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formula):bool = 
   match (f1,f2) with
+  | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
+  | (BVar(sv1, _), BVar(sv2, _)) -> (eq sv1 sv2)
+  | (Lte(e1, e2, _), Gt(e4, e3, _))
+  | (Gt(e1, e2, _), Lte(e4, e3, _))
+  | (Gte(e1, e2, _), Lt(e4, e3, _))
+  | (Lt(e1, e2, _), Gte(e4, e3, _))  
+  | (Lte(e1, e2, _), Lte(e3, e4, _))
+  | (Gt(e1, e2, _), Gt(e3, e4, _))
+  | (Gte(e1, e2, _), Gte(e3, e4, _))
+  | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+  | (Neq(e1, e2, _), Neq(e3, e4, _))
+  | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)) or ((eqExp_f eq e1 e4) & (eqExp_f eq e2 e3))
+  | (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
+  | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eqExp_f eq e1 e4) & ((eqExp_f eq e2 e5) & (eqExp_f eq e3 e6)) or ((eqExp_f eq e2 e6) & (eqExp_f eq e3 e5))
+  | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
+  | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq sv1 sv2) & (eqExp_f eq e1 e2)
+  | (ListIn(e1, e2, _), ListIn(d1, d2, _))
+  | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eqExp_f eq e1 d1) & (eqExp_f eq e2 d2)
+  | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eqExp_f eq e1 d1) & (eqExp_f eq e2 d2)
+  | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eqExp_f eq e1 d1) & (eqExp_f eq e2 d2)
+  | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
+  | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq sv1 sv3) & (eq sv2 sv4)
+  | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+  | _ -> false
+(*
+  match (f1,f2) with
     | ((BVar v1),(BVar v2))-> (eq (fst v1) (fst v2))
     | ((Lte (v1,v2,_)),(Lte (w1,w2,_)))
     | ((Lt (v1,v2,_)),(Lt (w1,w2,_)))-> (eqExp_f eq w1 v1)&&(eqExp_f eq w2 v2)
@@ -646,6 +672,7 @@ and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formul
     | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
     | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq v1 w1)&& (eq v2 w2)
     | _ -> false
+*)
           
 and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
 match (e1, e2) with
