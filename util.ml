@@ -659,6 +659,7 @@ let find_elem_str (nmap:'a e_name) (n:string)  : 'a =
   with _ -> Error.report_error {Error.error_loc = Globals.no_pos; 
                   Error.error_text = ("find_elem_str : elem not found")}
 
+(* add x=y to e-set_str *)
 let add_equiv_str ((s,f,nm): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
   let (s1,nm1) = find_name_str f nm x in
   let (s2,nm2) = find_name_str f nm1 y in
@@ -746,11 +747,103 @@ let elim_elems_str ((s,f,nm):'a e_set_str) (vs:'a list) : 'a e_set_str =
   let nm1=List.filter (fun (_,a) -> not(List.mem a vstr)) nm in
   (s1,f,nm1)
 
-
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
-let rename_eset_str (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
-  List.map (fun (e,k) -> (f e,k)) s
+let rename_eset_str (re:'a -> 'a) ((s,f,nm):'a e_set_str) : 'a e_set_str = 
+  let s_new=List.map (fun (e,k) -> (f(re(find_elem_str nm e)),k)) s in
+  let nm_new=List.map (fun (a,s) -> let new_e=re a in (new_e,f new_e)) nm in
+  (s_new,f,nm_new)
+
+
+(*aliasing structures*)
+let e_cnt = ref 0
+
+(*aliasing structures*)
+let e_cnt_fresh() = e_cnt := !e_cnt+1; !e_cnt
+
+type 'a map_opt = ('a * int) list (* map of name to int used *)
+type 'a e_set_opt =  (int e_set * ('a -> 'a -> bool) * 'a map_opt )
+
+let empty_a_set_opt f : 'a e_set_opt = ([],f,[])
+
+let find_int_opt (eq:'a->'a->bool) (nmap:'a map_opt) (n:'a)  : int option =
+  try 
+     Some(snd(List.find (fun (s,_) -> eq n s) nmap))
+  with _ -> None
+
+let add_elem_opt (eq:'a->'a->bool) (nmap:'a map_opt) (e:'a) : (int * 'a map_opt) =
+  match find_int_opt eq nmap e with
+    | Some i -> (i,nmap)
+    | None -> let s=e_cnt_fresh() in (s,(e,s)::nmap)
+
+let find_elem_opt (nmap:'a map_opt) (n:int)  : 'a option =
+  try 
+     Some(fst(List.find (fun (_,s) -> n=s) nmap))
+  with _ -> None
+
+
+(* find key of e in s *)
+let find_key_opt ((s,f,nm) : 'a e_set_opt) (e:'a) : int list  = 
+  match (find_int_opt f nm e) with
+    | Some i -> find_aux s i []
+    | None -> []
+  
+(* returns s |- x=y *)
+let is_equiv_opt ((s,eq,nm): 'a e_set_opt)  (x:'a) (y:'a) : bool =
+  let fi = find_int_opt eq nm in
+  match (fi x) with
+    | Some(i1) -> (match (fi y) with
+        | Some(i2) -> is_equiv s i1 i2
+        | None -> false)
+    | None -> eq x y
+ 
+(* add x=y to e-set-opt *)
+let add_equiv_opt ((s,eq,nm): 'a e_set_opt) (x:'a) (y:'a) : 'a e_set_opt =
+  let (s1,nm1) = add_elem_opt eq nm x in
+  let (s2,nm2) = add_elem_opt eq nm1 y in
+  (add_equiv s s1 s2, eq, nm2)
+
+(* merge two equivalence set_str s1 /\ s2 - incorrect! *)
+let merge_set_opt ((s1,eq,nm1): 'a e_set_opt) ((s2,_,nm2): 'a e_set_opt): 'a e_set_opt =
+ (merge_set s1 s2,eq,nm1@nm2)
+
+
+(* return list of elements in e_set_opt *)
+let get_elems_opt ((_,_,nm):'a e_set_opt) : 'a list = List.map (fst) nm
+
+let find_elem_opt_sure (nm:'a map_opt) (n:int)  : 'a =
+  match find_elem_opt nm n with
+    | Some e -> e
+    | None -> Error.report_error {Error.error_loc = Globals.no_pos; 
+                  Error.error_text = ("find_elem_opt_sure : elem not found")}
+
+(* return pairs of equivalent elements from e_set_opt *)
+let get_equiv_opt ((s,_,nm):'a e_set_opt) : ('a *'a) list = 
+  let fe = find_elem_opt_sure nm in
+  let ll = partition s in
+  let make_p l = match l with
+    | [] -> []
+    | x::xs -> List.map (fun b -> (fe x,fe b)) xs in
+  List.concat (List.map make_p ll)
+
+let exists_elem (nm:'a map_opt) (n:int)  : 'a =
+  match find_elem_opt nm n with
+    | Some e -> e
+    | None -> Error.report_error {Error.error_loc = Globals.no_pos; 
+                  Error.error_text = ("find_elem_opt_sure : elem not found")}
+
+(* remove vs elements from e_set_opt - used by existential elimination *)
+let elim_elems_opt ((s,eq,nm):'a e_set_opt) (vs:'a list) : 'a e_set_opt = 
+  let vs_int=List.map snd (List.filter (fun (e,_)->  List.exists (eq e) vs) nm) in 
+  let s1=List.filter (fun (a,_) -> not(List.mem a vs_int)) s in
+  let nm1=List.filter (fun (_,a) -> not(List.mem a vs_int)) nm in
+  (s1,eq,nm1)
+
+(* rename the elements of e_set_opt *)
+(* pre : f must be 1-to-1 map *)
+let rename_eset_opt (re:'a -> 'a) ((s,eq,nm):'a e_set_opt) : 'a e_set_opt = 
+  let nm_new=List.map (fun (a,s) -> let new_a=re a in (new_a,s)) nm in
+  (s,eq,nm_new)
 
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
