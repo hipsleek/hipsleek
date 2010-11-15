@@ -649,7 +649,7 @@ let pr_memoise mem =
   (List.filter (fun c-> match c.MP.memo_status with 
                   | MP.Implied _ -> true 
                   | MP.Implied_dupl _ -> true 
-                  | _-> true (*false*)) mem); fmt_string "]"
+                  | _-> false) mem); fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
   
@@ -678,7 +678,7 @@ let pr_remaining_branches s = match s with
 
 let pr_prunning_conditions cnd pcond = match cnd with 
   | None -> ()
-  | Some _ ->
+  | Some _ -> () (*
   fmt_cut ();
   fmt_string "@ prune_cond [" ; 
     wrap_box ("B",1) (fun pcond->
@@ -686,7 +686,7 @@ let pr_prunning_conditions cnd pcond = match cnd with
       fmt_cut ();
       fmt_string "( " ; pr_b_formula c;
       fmt_string" )->"; 
-      pr_formula_label_list c2;) pcond;fmt_string "]") pcond    
+      pr_formula_label_list c2;) pcond;fmt_string "]") pcond  *)  
 
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 

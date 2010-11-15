@@ -90,6 +90,7 @@ void set_null(node x)
 
 {
 	x.next = null;
+    dprint;
 }
 
 /* function to get the third element of a list */

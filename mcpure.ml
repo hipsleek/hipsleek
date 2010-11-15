@@ -259,10 +259,10 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
           else match Util.find_equiv_elim v c.memo_group_aset with
             | None -> (acl_cons,c.memo_group_aset)
             | Some (s,nas) -> 
-              let _ = print_string ("beforeel1: "^(print_alias_set c.memo_group_aset)^"\n") in
-              let _ = print_string ("afterel1: "^(print_alias_set nas)^"\n") in
-              let _ = print_string ("fromel2: "^(!print_sv_f v)^"\n") in
-              let _ = print_string ("toel2: "^(!print_sv_f s)^"\n") in              
+              let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
+              let _ = print_string ("before_el: "^(print_alias_set c.memo_group_aset)^"\n") in
+              let _ = print_string ("after_el: "^(print_alias_set nas)^"\n") in
+              let _ = print_string ("subs_to: "^(!print_sv_f s)^"\n") in              
               ([(v,Var (s,no_pos))],nas) in
             
       let acl_slice, nsl = if not (acl_aset=[]) then (acl_aset, c.memo_group_slice)
