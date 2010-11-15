@@ -751,7 +751,7 @@ let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set =
 
 let string_of_e_set (f:'a->string) (e:'a e_set) : string =
   let ll=partition e in 
-  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"@]"
+  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm
