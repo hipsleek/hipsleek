@@ -718,6 +718,13 @@ let get_equiv (s:'a e_set) : ('a *'a) list =
     | x::xs -> List.map (fun b -> (x,b)) xs in
   List.concat (List.map make_p ll)
 
+let find_equiv (e:'a) (s:'a e_set) : 'a option  =
+  let ls = get_equiv s in
+  try 
+    let (c1,c2) = List.find (fun (c1,c2) -> not(c1=c2) && (c1=e || c2=e)) ls in
+    if (c1=e) then Some c2 else Some c1
+  with _ -> None
+
 (* remove vs elements from e_set - used by existential elimination *)
 let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set = 
   List.filter (fun (a,_) -> not(List.mem a vs)) s
