@@ -621,62 +621,92 @@ and is_member_pure (f:formula) (p:formula):bool =
 
 (*limited, should use equal_formula, equal_b_formula, eq_exp instead*)  
 and equalFormula_f (eq:spec_var -> spec_var -> bool) (f1:formula)(f2:formula):bool = 
-  let equalFormula = equalFormula_f eq in
-  let equalBFormula = equalBFormula_f eq in
   match (f1,f2) with
-    | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula  b1 b2
-    | ((Not (b1,_,_)),(Not (b2,_,_))) -> equalFormula b1 b2
+    | ((BForm (b1,_)),(BForm (b2,_))) -> equalBFormula_f eq  b1 b2
+    | ((Not (b1,_,_)),(Not (b2,_,_))) -> equalFormula_f eq b1 b2
     | (Or(f1, f2, _,_), Or(f3, f4, _,_))
-    | (And(f1, f2, _), And(f3, f4, _)) ->  (equalFormula f1 f3) & (equalFormula f2 f4)
+    | (And(f1, f2, _), And(f3, f4, _)) ->  (equalFormula_f eq f1 f3) & (equalFormula_f eq f2 f4)
     | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
-    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (equalFormula f1 f2)
+    | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq sv1 sv2) & (equalFormula_f eq f1 f2)
     | _ -> false
 
 and equalBFormula_f (eq:spec_var -> spec_var -> bool) (f1:b_formula)(f2:b_formula):bool = 
-  let eqExp = eqExp_f eq in
   match (f1,f2) with
     | ((BVar v1),(BVar v2))-> (eq (fst v1) (fst v2))
     | ((Lte (v1,v2,_)),(Lte (w1,w2,_)))
-    | ((Lt (v1,v2,_)),(Lt (w1,w2,_)))-> (eqExp w1 v1)&&(eqExp w2 v2)
+    | ((Lt (v1,v2,_)),(Lt (w1,w2,_)))-> (eqExp_f eq w1 v1)&&(eqExp_f eq w2 v2)
     | ((Neq (v1,v2,_)) , (Neq (w1,w2,_)))
-    | ((Eq (v1,v2,_)) , (Eq (w1,w2,_))) -> ((eqExp w1 v1)&&(eqExp w2 v2))|| ((eqExp w1 v2)&&(eqExp w2 v1))
+    | ((Eq (v1,v2,_)) , (Eq (w1,w2,_))) -> ((eqExp_f eq w1 v1)&&(eqExp_f eq w2 v2))|| ((eqExp_f eq w1 v2)&&(eqExp_f eq w2 v1))
     | ((BagIn (v1,e1,_)),(BagIn (v2,e2,_)))
-    | ((BagNotIn (v1,e1,_)),(BagNotIn (v2,e2,_))) -> (eq v1 v2)&&(eqExp e1 e2)
+    | ((BagNotIn (v1,e1,_)),(BagNotIn (v2,e2,_))) -> (eq v1 v2)&&(eqExp_f eq e1 e2)
     | ((ListIn (e1,e2,_)),(ListIn (d1,d2,_)))
-    | ((ListNotIn (e1,e2,_)),(ListNotIn (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
-    | ((ListAllN (e1,e2,_)),(ListAllN (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
-    | ((ListPerm (e1,e2,_)),(ListPerm (d1,d2,_))) -> (eqExp e1 d1)&&(eqExp e2 d2)
+    | ((ListNotIn (e1,e2,_)),(ListNotIn (d1,d2,_))) -> (eqExp_f eq e1 d1)&&(eqExp_f eq e2 d2)
+    | ((ListAllN (e1,e2,_)),(ListAllN (d1,d2,_))) -> (eqExp_f eq e1 d1)&&(eqExp_f eq e2 d2)
+    | ((ListPerm (e1,e2,_)),(ListPerm (d1,d2,_))) -> (eqExp_f eq e1 d1)&&(eqExp_f eq e2 d2)
     | ((BagMax (v1,v2,_)),(BagMax (w1,w2,_))) 
     | ((BagMin (v1,v2,_)),(BagMin (w1,w2,_))) -> (eq v1 w1)&& (eq v2 w2)
     | _ -> false
           
-and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool = 
-  let eqExp = eqExp_f eq in
+and eqExp_f (eq:spec_var -> spec_var -> bool) (e1:exp)(e2:exp):bool =
+match (e1, e2) with
+  | (Null(_), Null(_)) -> true
+  | (Var(sv1, _), Var(sv2, _)) -> (eq sv1 sv2)
+  | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
+  | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
+  | (Subtract(e11, e12, _), Subtract(e21, e22, _))
+  | (Max(e11, e12, _), Max(e21, e22, _))
+  | (Min(e11, e12, _), Min(e21, e22, _))
+  | (Add(e11, e12, _), Add(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
+  | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
+  | (Div(e11, e12, _), Div(e21, e22, _)) -> (eqExp_f eq e11 e21) & (eqExp_f eq e12 e22)
+  | (Bag(e1, _), Bag(e2, _))
+  | (BagUnion(e1, _), BagUnion(e2, _))
+  | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eqExp_list_f eq e1 e2)
+  | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eqExp_f eq e1 e3) & (eqExp_f eq e2 e4)
+  | (List (l1, _), List (l2, _))
+  | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eqExp_f eq a b)) l1 l2 
+    else false
+  | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eqExp_f eq e1 d1) && (eqExp_f eq e2 d2)
+  | (ListHead (e1, _), ListHead (e2, _))
+  | (ListTail (e1, _), ListTail (e2, _))
+  | (ListLength (e1, _), ListLength (e2, _))
+  | (ListReverse (e1, _), ListReverse (e2, _)) -> (eqExp_f eq e1 e2)
+  | _ -> false
+
+
+and eqExp_list_f (eq:spec_var -> spec_var -> bool) (e1 : exp list) (e2 : exp list) : bool =
+  let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
+    | [] -> true
+    | h :: t -> (List.exists (fun c -> eqExp_f eq h c) e2) & (eq_exp_list_helper t e2)
+  in
+  (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
+ 
+(*
   match (e1,e2) with
 	| (Null _ ,Null _ ) -> true
 	| (Var (v1,_), Var (v2,_)) -> (eq v1 v2)
     | (IConst (v1,_), IConst (v2,_)) -> v1=v2
     | (FConst (v1,_), FConst (v2,_)) -> v1=v2
+    | (Div(e1, e2, _), Div(d1, d2, _)) 
+    | (Subtract(e1, e2, _), Subtract(d1, d2, _)) -> (eqExp_f eq e1 d1)& (eqExp_f eq e2 d2)
     | (Max (e1,e2,_),Max (d1,d2,_)) 
 	| (Min (e1,e2,_),Min (d1,d2,_)) 
-	| (Add (e1,e2,_),Add (d1,d2,_)) -> (((eqExp e1 d1)&&(eqExp e2 d2))||((eqExp e1 d2)&&(eqExp e2 d1)))
-    | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp e1 d1)&&(eqExp e2 d2))
-          (* I'm not sure about this *)
     | (Mult (e1, e2, _), Mult(d1, d2, _)) ->
-          (((eqExp e1 d1)&&(eqExp e2 d2)) || ((eqExp e1 d2)&&(eqExp e2 d1)))
+	| (Add (e1,e2,_),Add (d1,d2,_)) -> (eqExp_f eq e1 d1)& (eqExp_f eq e2 d2)  (*((eqExp_f eq e1 d2)&&(eqExp_f eq e2 d1))*)
+    | (BagDiff(e1,e2,_),BagDiff (d1,d2,_)) -> ((eqExp_f eq e1 d1)& (eqExp_f eq e2 d2))
     | (Div _, Div _) -> false (* FIX IT *)
-	| (Bag (l1,_),Bag (l2,_)) -> if (List.length l1)=(List.length l1) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
+	| (Bag (l1,_),Bag (l2,_)) -> if (List.length l1)=(List.length l1) then List.for_all2 (fun a b-> (eqExp_f eq a b)) l1 l2 
 	  else false
     | (List (l1,_),List (l2,_))
-    | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp a b)) l1 l2 
+    | (ListAppend (l1,_),ListAppend (l2,_))  -> if (List.length l1)=(List.length l2) then List.for_all2 (fun a b-> (eqExp_f eq a b)) l1 l2 
       else false
-    | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp e1 d1)&&(eqExp e2 d2)
+    | (ListCons (e1,e2,_),ListCons (d1,d2,_)) -> (eqExp_f eq e1 d1)&&(eqExp_f eq e2 d2)
     | (ListHead (e1,_),ListHead (e2,_))
     | (ListTail (e1,_),ListTail (e2,_))
     | (ListLength (e1,_),ListLength (e2,_))
-    | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp e1 e2)
+    | (ListReverse (e1,_),ListReverse (e2,_)) -> (eqExp_f eq e1 e2)
     | _ -> false
-	      
+*)	      
 
 and equalFormula (f1:formula)(f2:formula):bool = equalFormula_f eq_spec_var  f1 f2
 
@@ -684,11 +714,6 @@ and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_va
 
 and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 
-and equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
-  
-and equalBFormula_aset aset  (f1:b_formula)(f2:b_formula) :bool = equalBFormula_f (eq_spec_var_aset aset)  f1 f2
-
-and eqExp_aset aset  (f1:exp)(f2:exp):bool = eqExp_f (eq_spec_var_aset aset)  f1 f2
 
   
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
@@ -861,89 +886,10 @@ and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
-and eq_spec_var_aset aset (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv aset sv1 sv2 
-        
-        
-and eq_pure_formula (f1 : formula) (f2 : formula) : bool = 
-(*equalFormula f1 f2*) 
-match (f1, f2) with
-  | (BForm(b1,_), BForm(b2,_)) -> (eq_b_formula [] b1 b2)
-  | (Or(f1, f2, _,_), Or(f3, f4, _,_))
-  | (And(f1, f2, _), And(f3, f4, _)) ->
-  	    ((eq_pure_formula f1 f3) & (eq_pure_formula f2 f4)) or ((eq_pure_formula f1 f4) & (eq_pure_formula f2 f3))
-  | (Not(f1,_, _), Not(f2,_, _)) -> (eq_pure_formula f1 f2)
-  | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
-  | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq_spec_var sv1 sv2) & (eq_pure_formula f1 f2)
-  | _ -> false
-
-and eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool = 
-(*equalBFormula_aset aset b1 b2*)
-match (b1, b2) with
-  | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
-  | (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
-  | (Lte(e1, e2, _), Gt(e4, e3, _))
-  | (Gt(e1, e2, _), Lte(e4, e3, _))
-  | (Gte(e1, e2, _), Lt(e4, e3, _))
-  | (Lt(e1, e2, _), Gte(e4, e3, _))  
-  | (Lte(e1, e2, _), Lte(e3, e4, _))
-  | (Gt(e1, e2, _), Gt(e3, e4, _))
-  | (Gte(e1, e2, _), Gte(e3, e4, _))
-  | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-  | (Neq(e1, e2, _), Neq(e3, e4, _))
-  | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp aset e1 e3) & (eq_exp aset e2 e4)) or ((eq_exp aset e1 e4) & (eq_exp aset e2 e3))
-  | (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
-  | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp aset e1 e4) & ((eq_exp aset e2 e5) & (eq_exp aset e3 e6)) or ((eq_exp aset e2 e6) & (eq_exp aset e3 e5))
-  | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
-  | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq_spec_var_aset aset sv1 sv2) & (eq_exp aset e1 e2)
-  | (ListIn(e1, e2, _), ListIn(d1, d2, _))
-  | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-  | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-  | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
-  | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
-  | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var_aset aset sv1 sv3) & (eq_spec_var_aset aset sv2 sv4)
-  | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-  | _ -> false
-
-and eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula [] b1 b2
-  
-and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
-  let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
-    | [] -> true
-    | h :: t -> (List.exists (fun c -> eq_exp aset h c) e2) & (eq_exp_list_helper t e2)
-  in
-  (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
-
-and eq_exp aset (e1 : exp) (e2 : exp) : bool = (*eqExp_aset aset e1 e2*)
-match (e1, e2) with
-  | (Null(_), Null(_)) -> true
-  | (Var(sv1, _), Var(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
-  | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
-  | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
-  | (Subtract(e11, e12, _), Subtract(e21, e22, _))
-  | (Max(e11, e12, _), Max(e21, e22, _))
-  | (Min(e11, e12, _), Min(e21, e22, _))
-  | (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
-  | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
-  | (Div(e11, e12, _), Div(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
-  | (Bag(e1, _), Bag(e2, _))
-  | (BagUnion(e1, _), BagUnion(e2, _))
-  | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list aset e1 e2)
-  | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
-  | (List (l1, _), List (l2, _))
-  | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eq_exp aset a b)) l1 l2 
-    else false
-  | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eq_exp aset e1 d1) && (eq_exp aset e2 d2)
-  | (ListHead (e1, _), ListHead (e2, _))
-  | (ListTail (e1, _), ListTail (e2, _))
-  | (ListLength (e1, _), ListLength (e2, _))
-  | (ListReverse (e1, _), ListReverse (e2, _)) -> (eq_exp aset e1 e2)
-  | _ -> false
-
-and eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp [] e1 e2
-  
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
+
+
       
 (* substitution *)
 
@@ -1753,6 +1699,102 @@ and elim_exists (f0 : formula) : formula =
 		res
 	  end
     | BForm _ -> f0
+
+
+let eq_spec_var_aset aset (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv aset sv1 sv2 
+        
+
+let equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
+  
+and equalBFormula_aset aset  (f1:b_formula)(f2:b_formula) :bool = equalBFormula_f (eq_spec_var_aset aset)  f1 f2
+
+and eqExp_aset aset  (f1:exp)(f2:exp):bool = eqExp_f (eq_spec_var_aset aset)  f1 f2
+
+
+let rec eq_exp aset (e1 : exp) (e2 : exp) : bool = eqExp_aset aset e1 e2
+(*
+match (e1, e2) with
+  | (Null(_), Null(_)) -> true
+  | (Var(sv1, _), Var(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
+  | (IConst(i1, _), IConst(i2, _)) -> i1 = i2
+  | (FConst(f1, _), FConst(f2, _)) -> f1 = f2
+  | (Subtract(e11, e12, _), Subtract(e21, e22, _))
+  | (Max(e11, e12, _), Max(e21, e22, _))
+  | (Min(e11, e12, _), Min(e21, e22, _))
+  | (Add(e11, e12, _), Add(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
+  | (Mult(e11, e12, _), Mult(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
+  | (Div(e11, e12, _), Div(e21, e22, _)) -> (eq_exp aset e11 e21) & (eq_exp aset e12 e22)
+  | (Bag(e1, _), Bag(e2, _))
+  | (BagUnion(e1, _), BagUnion(e2, _))
+  | (BagIntersect(e1, _), BagIntersect(e2, _)) -> (eq_exp_list aset e1 e2)
+  | (BagDiff(e1, e2, _), BagDiff(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
+  | (List (l1, _), List (l2, _))
+  | (ListAppend (l1, _), ListAppend (l2, _)) -> if (List.length l1) = (List.length l2) then List.for_all2 (fun a b-> (eq_exp aset a b)) l1 l2 
+    else false
+  | (ListCons (e1, e2, _), ListCons (d1, d2, _)) -> (eq_exp aset e1 d1) && (eq_exp aset e2 d2)
+  | (ListHead (e1, _), ListHead (e2, _))
+  | (ListTail (e1, _), ListTail (e2, _))
+  | (ListLength (e1, _), ListLength (e2, _))
+  | (ListReverse (e1, _), ListReverse (e2, _)) -> (eq_exp aset e1 e2)
+  | _ -> false
+
+
+and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
+  let rec eq_exp_list_helper (e1 : exp list) (e2 : exp list) = match e1 with
+    | [] -> true
+    | h :: t -> (List.exists (fun c -> eq_exp aset h c) e2) & (eq_exp_list_helper t e2)
+  in
+  (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
+*)
+
+let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp [] e1 e2        
+
+let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_aset aset b1 b2
+(*
+match (b1, b2) with
+  | (BConst(c1, _), BConst(c2, _)) -> c1 = c2
+  | (BVar(sv1, _), BVar(sv2, _)) -> (eq_spec_var_aset aset sv1 sv2)
+  | (Lte(e1, e2, _), Gt(e4, e3, _))
+  | (Gt(e1, e2, _), Lte(e4, e3, _))
+  | (Gte(e1, e2, _), Lt(e4, e3, _))
+  | (Lt(e1, e2, _), Gte(e4, e3, _))  
+  | (Lte(e1, e2, _), Lte(e3, e4, _))
+  | (Gt(e1, e2, _), Gt(e3, e4, _))
+  | (Gte(e1, e2, _), Gte(e3, e4, _))
+  | (Lt(e1, e2, _), Lt(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
+  | (Neq(e1, e2, _), Neq(e3, e4, _))
+  | (Eq(e1, e2, _), Eq(e3, e4, _)) -> ((eq_exp aset e1 e3) & (eq_exp aset e2 e4)) or ((eq_exp aset e1 e4) & (eq_exp aset e2 e3))
+  | (EqMax(e1, e2, e3, _), EqMax(e4, e5, e6, _))
+  | (EqMin(e1, e2, e3, _), EqMin(e4, e5, e6, _))  -> (eq_exp aset e1 e4) & ((eq_exp aset e2 e5) & (eq_exp aset e3 e6)) or ((eq_exp aset e2 e6) & (eq_exp aset e3 e5))
+  | (BagIn(sv1, e1, _), BagIn(sv2, e2, _))
+  | (BagNotIn(sv1, e1, _), BagNotIn(sv2, e2, _)) -> (eq_spec_var_aset aset sv1 sv2) & (eq_exp aset e1 e2)
+  | (ListIn(e1, e2, _), ListIn(d1, d2, _))
+  | (ListNotIn(e1, e2, _), ListNotIn(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
+  | (ListAllN(e1, e2, _), ListAllN(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
+  | (ListPerm(e1, e2, _), ListPerm(d1, d2, _)) -> (eq_exp aset e1 d1) & (eq_exp aset e2 d2)
+  | (BagMin(sv1, sv2, _), BagMin(sv3, sv4, _))
+  | (BagMax(sv1, sv2, _), BagMax(sv3, sv4, _)) -> (eq_spec_var_aset aset sv1 sv3) & (eq_spec_var_aset aset sv2 sv4)
+  | (BagSub(e1, e2, _), BagSub(e3, e4, _)) -> (eq_exp aset e1 e3) & (eq_exp aset e2 e4)
+  | _ -> false
+*)
+
+let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula [] b1 b2
+
+
+let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
+(*
+match (f1, f2) with
+  | (BForm(b1,_), BForm(b2,_)) -> (eq_b_formula [] b1 b2)
+  | (Or(f1, f2, _,_), Or(f3, f4, _,_))
+  | (And(f1, f2, _), And(f3, f4, _)) ->
+  	    ((eq_pure_formula f1 f3) & (eq_pure_formula f2 f4)) or ((eq_pure_formula f1 f4) & (eq_pure_formula f2 f3))
+  | (Not(f1,_, _), Not(f2,_, _)) -> (eq_pure_formula f1 f2)
+  | (Exists(sv1, f1, _,_), Exists(sv2, f2, _,_))
+  | (Forall(sv1, f1,_, _), Forall(sv2, f2, _,_)) -> (eq_spec_var sv1 sv2) & (eq_pure_formula f1 f2)
+  | _ -> false
+*)
+
 
 (**************************************************************)
 (**************************************************************)
