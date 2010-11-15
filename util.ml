@@ -590,13 +590,14 @@ let print_profiling_info () =
 (*aliasing structures*)
 type ('a,'k) e_map =  ('a * 'k) list
 type 'a e_set =  ('a,'a list) e_map
-type 'a e_set_str =  (string e_set * ('a -> string))
+type 'a e_name = ('a * string) list (* map of name to string used *)
+type 'a e_set_str =  (string e_set * ('a -> string) * 'a e_name )
 
 let empty_aset  : 'a e_set = []
 
 let empty_a_set () : 'a e_set = empty_aset 
 
-let empty_a_set_str f : 'a e_set_str = ([],f)
+let empty_a_set_str f : 'a e_set_str = ([],f,[])
 
 (* return the domain of e-set *)
 let domain (s: ('a,'k) e_map) : 'a list = List.map fst s
@@ -611,7 +612,7 @@ let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
 let find (s : 'a e_set) (e:'a) : 'a list  = find_aux s e []
 
 
-let find_str ((s,f) : 'a e_set_str) (e:'a) : string list  
+let find_str ((s,f,_) : 'a e_set_str) (e:'a) : string list  
       = find_aux s (f e) []
 
 (* returns s |- x=y *)
@@ -623,7 +624,7 @@ let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
     (r1==r2 && not(empty r1))
 
 (* returns s |- x=y *)
-let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
+let is_equiv_str ((s,f,_): 'a e_set_str)  (x:'a) (y:'a) : bool =
   is_equiv s (f x) (f y)
 
 (* add x=y to e-set s *)
@@ -645,8 +646,21 @@ let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
           let r3=r1@r2 in
           List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
-let add_equiv_str ((s,f): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
-  (add_equiv s (f x) (f y), f)
+let find_name_str (f:'a->string) (nmap:'a e_name) (e:'a) : (string * 'a e_name) =
+  try 
+     (List.assoc e nmap,nmap)
+  with _ -> let s=f e in (s,(e,s)::nmap)
+
+let find_elem_str (nmap:'a e_name) (n:string)  : 'a =
+  try 
+     fst(List.find (fun (_,s) -> n=s) nmap)
+  with _ -> Error.report_error {Error.error_loc = Globals.no_pos; 
+                  Error.error_text = ("find_elem_str : elem not found")}
+
+let add_equiv_str ((s,f,nm): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
+  let (s1,nm1) = find_name_str f nm x in
+  let (s2,nm2) = find_name_str f nm1 y in
+  (add_equiv s s1 s2, f, nm2)
 
 
 (* split out sub-lists in l which overlaps with x *)
@@ -687,13 +701,13 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
  un_partition l3
 
 (* merge two equivalence set_str s1 /\ s2 *)
-let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
- (merge_set s1 s2,f)
+let merge_set_str ((s1,f,nm1): 'a e_set_str) ((s2,_,nm2): 'a e_set_str): 'a e_set_str =
+ (merge_set s1 s2,f,nm1@nm2)
 
 (* return list of elements in e_set *)
 let get_elems (s:'a e_set) : 'a list = domain s
 
-(* return pairs of equivalent element from e_set *)
+(* return pairs of equivalent elements from e_set *)
 let get_equiv (s:'a e_set) : ('a *'a) list = 
   let ll = partition s in
   let make_p l = match l with
@@ -708,6 +722,32 @@ let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set =
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
+  List.map (fun (e,k) -> (f e,k)) s
+
+
+(* return list of elements in e_set_str *)
+let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm
+
+(* return pairs of equivalent elements from e_set_str *)
+let get_equiv_str ((s,_,nm):'a e_set_str) : ('a *'a) list = 
+  let fe = find_elem_str nm in
+  let ll = partition s in
+  let make_p l = match l with
+    | [] -> []
+    | x::xs -> List.map (fun b -> (fe x,fe b)) xs in
+  List.concat (List.map make_p ll)
+
+(* remove vs elements from e_set_str - used by existential elimination *)
+let elim_elems_str ((s,f,nm):'a e_set_str) (vs:'a list) : 'a e_set_str = 
+  let vstr=List.map f vs in
+  let s1=List.filter (fun (a,_) -> not(List.mem a vstr)) s in
+  let nm1=List.filter (fun (_,a) -> not(List.mem a vstr)) nm in
+  (s1,f,nm1)
+
+
+(* rename the elements of e_set *)
+(* pre : f must be 1-to-1 map *)
+let rename_eset_str (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
   List.map (fun (e,k) -> (f e,k)) s
 
 (* disjointness structures*)
