@@ -15,7 +15,9 @@ and memoised_group = {
     memo_group_fv : spec_var list;
     memo_group_changed: bool;
     memo_group_cons : memoised_constraint list;(*used for pruning*)
-    memo_group_slice: formula list; (*constraints that can not be used for pruning but belong to the current slice non-the less*)}
+    memo_group_slice: formula list; (*constraints that can not be used for pruning but belong to the current slice non-the less*)
+ (*   memo_group_aset : MCP.var_aset;*)
+    }
 
 and memoised_constraint = {
     (*memo_formula_mut: b_formula ref;
@@ -163,27 +165,34 @@ and m_apply_one s f =
 and h_apply_one_m_constr_lst s l = 
   List.map (fun (c,c2)-> ({c with memo_formula = b_apply_one s c.memo_formula},c2)) l
 
-(* assume that f is a satisfiable conjunct *)
-and ptr_equations (f : memo_pure) : (spec_var * spec_var) list = 
-  let prep_b_f bf =  match bf with
+and b_f_ptr_equations f =  match f with
 	  | Eq (e1, e2, _) -> 
       let b = can_be_aliased e1 && can_be_aliased e2 in
         if not b then [] else [(get_alias e1, get_alias e2)]
-    | _ -> [] in  
+    | _ -> [] 
+  
+and pure_ptr_equations (f:formula) : (spec_var * spec_var) list = 
   let rec prep_f f = match f with
     | And (f1, f2, pos) -> (prep_f f1) @ (prep_f f2)
-    | BForm (bf,_) -> prep_b_f bf
-    | _ -> [] in  
+    | BForm (bf,_) -> b_f_ptr_equations bf
+    | _ -> [] in 
+  prep_f f
+    
+(* assume that f is a satisfiable conjunct *)
+and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c-> match c.memo_status with
         | Implied _
-        | Implied_dupl -> (a@ prep_b_f c.memo_formula)
+        | Implied_dupl -> (a@ b_f_ptr_equations c.memo_formula)
         | _ -> a) [] f.memo_group_cons in
-    List.fold_left (fun a c-> a@(prep_f c)) r f.memo_group_slice in
+    List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
  List.concat (List.map helper f)
 
-and memo_alias (m:memo_pure) : var_aset = 
-  List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) (Util.empty_a_set ()) (ptr_equations m)
+and alias_of_ptr_eqs s = List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) (Util.empty_a_set ()) s
+ 
+and pure_alias (f:formula) : var_aset = alias_of_ptr_eqs (pure_ptr_equations f)
+ 
+and memo_alias (m:memo_pure) : var_aset = alias_of_ptr_eqs (ptr_equations m)
 
 and var_aset_subst_one s (l:var_aset) : var_aset = List.map (fun (a,l)-> ((subst_var s a),subst_one_var_list s l)) l 
   
@@ -322,13 +331,14 @@ and filter_useless_memo_pure simp_fct fv c_lst =
  
 and recompute_unknowns (p:memo_pure): memo_pure= p
     
-and filter_merged_cons l =   
+and filter_merged_cons aset l=   
+  let eq = Cpure.eq_spec_var_aset aset  in
   let keep c1 c2 = match c1.memo_status ,c2.memo_status with
     | Implied _ , Implied _ 
     | Implied_dupl, Implied_dupl 
-    | Fail_prune,Fail_prune -> if (equalBFormula c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
-    | Implied _ , Implied_dupl -> if (equalBFormula c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
-    | Implied_dupl , Implied _ -> if (equalBFormula c1.memo_formula c2.memo_formula) then (false,true) else (true,true)
+    | Fail_prune,Fail_prune -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
+    | Implied _ , Implied_dupl -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
+    | Implied_dupl , Implied _ -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (false,true) else (true,true)
     | _ -> (true, true) in
     
   let rec remove_d n = match n with 
@@ -346,15 +356,15 @@ and filter_merged_cons l =
 and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure = 
   let f1 = fold_mem_lst (mkTrue no_pos) false true l1 in
   let f2 = fold_mem_lst (mkTrue no_pos) false true l2 in
-   memoise_add_pure [] (mkOr f1 f2 None no_pos)
+   memoise_add_pure (Util.empty_a_set ()) [] (mkOr f1 f2 None no_pos)
    
-and combine_memo_branch b (f, l) =
+and combine_memo_branch aset b (f, l) =
   match b with 
   | "" -> f
   | s -> try 
-    memoise_add_pure f (List.assoc b l) with Not_found -> f
+    memoise_add_pure aset f (List.assoc b l) with Not_found -> f
 
-and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
+and merge_mems aset (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure = 
   if (isConstMFalse l1)||(isConstMTrue l2) then l1
   else if (isConstMFalse l2)||(isConstMTrue l1) then l2
   else
@@ -373,7 +383,7 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
           Util.pop_time "merge_mems_r_dups";
           r)in
           {memo_group_fv = Util.remove_dups n1; 
-           memo_group_cons = filter_merged_cons n2;
+           memo_group_cons = filter_merged_cons aset n2;
            memo_group_changed = true;
            memo_group_slice = n_slc;}
         else c in
@@ -394,7 +404,7 @@ and memoise_add_memo_fnf (l_init: memo_pure) (cm:memoised_constraint) fnf: memo_
     (fun (a1,a2,a3) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2,d.memo_group_slice::a3))
     (fv,[n_cm_lst],[]) merged in   
   let l = if (List.length merged)>0 then 
-    let ng = {memo_group_cons =  filter_merged_cons n2; 
+    let ng = {memo_group_cons =  filter_merged_cons (Util.empty_a_set ()) n2; 
               memo_group_fv = Util.remove_dups n1;
               memo_group_changed = true;
               memo_group_slice = List.concat n3;} in
@@ -410,24 +420,24 @@ and memoise_add_memo_fnf (l_init: memo_pure) (cm:memoised_constraint) fnf: memo_
 and memoise_add_memo (l: memo_pure) (cm:memoised_constraint): memo_pure = memoise_add_memo_fnf l cm false
 and memoise_add_failed_memo (l:memo_pure) (cm:memoised_constraint) : memo_pure = memoise_add_memo_fnf l cm true
   
-and memoise_add_pure (l: memo_pure) (p:formula) : memo_pure = 
+and memoise_add_pure aset (l: memo_pure) (p:formula) : memo_pure = 
   if (isConstTrue p)||(isConstMFalse l) then l 
   else if (isConstFalse p) then mkMFalse no_pos
   else 
     (Util.push_time "add_pure";  
     let disjs, rests = List.fold_left (fun (a1,a2) c-> match c with | BForm x -> (x::a1,a2) | _ -> (a1,c::a2))([],[]) (list_of_conjs p) in
-    let m2 = create_memo_group disjs rests false in
-    let r = merge_mems l m2 true in
+    let m2 = create_memo_group aset disjs rests false in
+    let r = merge_mems aset l m2 true in
     Util.pop_time "add_pure"; r)
    
 
 
-and create_memo_group_wrapper (l1:b_formula list) inv_cons : memo_pure = 
+and create_memo_group_wrapper aset (l1:b_formula list) inv_cons : memo_pure = 
   let l = List.map (fun c-> (c, None)) l1 in
-  create_memo_group l [] inv_cons 
+  create_memo_group aset l [] inv_cons 
 
   (*add both imply and fail*)
-and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) inv_cons:memo_pure = 
+and create_memo_group aset (l1:(b_formula *(formula_label option)) list) (l2:formula list) inv_cons:memo_pure = 
   let l1,l_to_slice = memo_norm l1 in
   let l1 = Util.remove_dups l1 in
   let l2 = (List.map (fun c-> BForm c) l_to_slice)@l2 in
@@ -455,7 +465,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
       let neg = {memo_formula=memo_f_neg c;memo_status = Fail_prune} in
     (pos::(neg::a))) [] bfs in 
     { memo_group_fv=vars;
-      memo_group_cons=filter_merged_cons [nfs];
+      memo_group_cons=filter_merged_cons aset [nfs];
       memo_group_slice = fs;
       memo_group_changed = true}) ll
   
@@ -614,7 +624,8 @@ let memo_changed d = d.memo_group_changed
    if equal to an implied cond then it can be dropped as it is useless as a pruning condition
    throws an exception if p_cond is not found in corr*)
 let memo_check_syn_prun (p_cond,pr_branches) crt_br asets corr = 
-    let prun = List.find (fun d -> equalBFormula d.memo_formula p_cond) corr.memo_group_cons in
+    let f = Cpure.eq_spec_var_aset asets in
+    let prun = List.find (fun d -> equalBFormula_f f d.memo_formula p_cond) corr.memo_group_cons in
     match prun.memo_status with
       | Fail_prune -> pr_branches
       | Implied_dupl 

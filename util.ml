@@ -437,7 +437,7 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
 
 let profiling_stack = ref []
 let tasks = ref (Hashtbl.create 10)  
-	
+
 let get_time () = 
 	let r = Unix.times () in
 	(*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
@@ -481,8 +481,20 @@ let add_index l =
 		| [] -> []
 		| a::b-> (i,a)::(ff (i+1) b) in
 	(ff 0 l)
+
 	
-	
+let counters = ref (Hashtbl.create 10)
+
+let add_to_counter (s:string) i = 
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = Hashtbl.fold (fun k v a-> a^k^" = "^(string_of_int v)^"\n") !counters ""
 	
 (*hairy stuff for exception numbering*)
 			
@@ -755,3 +767,6 @@ let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
 (* check if there was a conflict in a set of difference lists *)
 let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bool =
  is_conflict eq_str s
+ 
+ 
+let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"

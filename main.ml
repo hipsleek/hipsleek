@@ -329,7 +329,7 @@ let _ =
   let _ = print_string ("sat prune cache calls: "^(string_of_int !Tpdispatcher.sat_cache_count)^"\n sat prune cache miss: "^
   (string_of_int !Tpdispatcher.sat_proof_count)^"\n") in
   let _ = print_string ("imply conseq cache miss: "^(string_of_int !Tpdispatcher.impl_conseq_count)^"\n") in
-  
+  let _ = print_string (Util.string_of_counters ()) in
   let _ = Util.print_profiling_info () in
   if (!Globals.enable_sat_statistics) then 
   print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^

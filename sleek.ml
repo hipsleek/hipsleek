@@ -179,4 +179,7 @@ let _ =
   print_string ("imply prune cache calls: "^(string_of_int !Tpdispatcher.impl_cache_count)^"\n imply prune cache miss: "^
   (string_of_int !Tpdispatcher.impl_proof_count)^"\n");
   print_string ("sat prune cache calls: "^(string_of_int !Tpdispatcher.sat_cache_count)^"\n sat prune cache miss: "^
-  (string_of_int !Tpdispatcher.sat_proof_count)^"\n"))
+  (string_of_int !Tpdispatcher.sat_proof_count)^"\n");
+  print_string (Util.string_of_counters ());
+  )
+  

@@ -1397,9 +1397,9 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
              C.view_materialized_vars = mvars;
              C.view_data_name = data_name;
              C.view_formula = cf;
-             C.view_x_formula = ((MCP.memoise_add_pure (MCP.mkMTrue pos) pf), pf_b);
+             C.view_x_formula = ((MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue pos) pf), pf_b);
              C.view_addr_vars = [];
-             C.view_user_inv = ((MCP.memoise_add_pure (MCP.mkMTrue pos) pf), pf_b);
+             C.view_user_inv = ((MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue pos) pf), pf_b);
              C.view_un_struc_formula = n_un_str;
              C.view_base_case = bc;
              C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf);
@@ -1440,7 +1440,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
           let b2,br2 = (get_pure b.Cformula.formula_or_f2) in
           let b2 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true b2 in
           let b1 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true b1 in
-          (MCP.memoise_add_pure (MCP.mkMTrue no_pos) (Cpure.mkOr b1 b2 None no_pos) , Cpure.or_branches br1 br2)
+          (MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue no_pos) (Cpure.mkOr b1 b2 None no_pos) , Cpure.or_branches br1 br2)
       | Cformula.Base b -> (b.Cformula.formula_base_pure, b.Cformula.formula_base_branches)
       | Cformula.Exists b-> 
         let qv = b.Cformula.formula_exists_qvars in
@@ -1455,12 +1455,12 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
           else 
             let c1,c2 = List.hd b.Cformula.formula_case_branches in (*push existential dismissed*)
             let b2,br2 = symp_struc_to_formula c2 in
-            let f = MCP.memoise_add_pure (MCP.mkMTrue no_pos) (CP.Not (c1, None, no_pos)) in
+            let f = MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue no_pos) (CP.Not (c1, None, no_pos)) in
               ((MCP.mkOr_mems f b2),br2)
         | Cformula.EBase b-> 
           let b1,br1 = (get_pure b.Cformula.formula_ext_base) in
           let b2,br2 = (symp_struc_to_formula b.Cformula.formula_ext_continuation) in
-          let r1 = MCP.merge_mems b1 b2 true in
+          let r1 = MCP.merge_mems (Util.empty_a_set ()) b1 b2 true in
           let r2 = CP.merge_branches br1 br2 in
           let ev = (*b.Cformula.formula_ext_explicit_inst@b.Cformula.formula_ext_implicit_inst@*)b.Cformula.formula_ext_exists in
           let r2 = List.map (fun (c1,c2)-> (c1,(CP.mkExists ev c2 None no_pos))) r2 in
@@ -3409,7 +3409,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
       | IF.Base base -> 
             let pos = base.Iformula.formula_base_pos in
             let nh,np,nt,nfl,nb = (linearize_base base pos) in
-            let np = (MCP.memoise_add_pure (MCP.mkMTrue pos) np)  in
+            let np = (MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue pos) np)  in
             let aset = MCP.memo_alias np in
             CF.mkBase nh np nt nfl nb aset pos
       | IF.Exists {
@@ -3427,8 +3427,8 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
             IF.formula_base_pos = pos;
           } in 
 	let nh,np,nt,nfl,nb = linearize_base base pos in
-  let np = (MCP.memoise_add_pure (MCP.mkMTrue pos) np) in
-  let aset = MCP.memo_alias np in
+  let aset = MCP.pure_alias np in
+  let np = (MCP.memoise_add_pure aset (MCP.mkMTrue pos) np) in
 	CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb aset pos 
 	      
 

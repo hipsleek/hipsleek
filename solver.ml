@@ -147,6 +147,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.memo_pure * (branch_label
   | Base ({ formula_base_heap = h;
             formula_base_pure = p;
             formula_base_branches = br;
+            formula_base_aset = aset;
             formula_base_pos = pos}) ->
       let (ph, phb) = xpure_heap prog h 1 in
       let phb = CP.merge_branches phb br in
@@ -154,16 +155,17 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.memo_pure * (branch_label
         else
           let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue pos) false true ph) false true p in     
           List.map (fun (l, x) -> (l, CP.mkAnd x r pos)) phb in          
-	  ((MCP.merge_mems p ph true), rb)
+      ((MCP.merge_mems aset p ph true), rb)
   | Exists ({ formula_exists_qvars = qvars;
               formula_exists_heap = qh;
               formula_exists_pure = qp;
               formula_exists_branches = br;
+              formula_exists_aset = aset;
               formula_exists_pos = pos}) ->
       let (pqh, pqhb) = xpure_heap prog qh 1 in
       let pqhb = CP.merge_branches pqhb br in
       let sqvars = (* List.map CP.to_int_var *) qvars in
-      let tmp1 = MCP.merge_mems qp pqh true in
+      let tmp1 = MCP.merge_mems aset qp pqh true in
       let r_f = MCP.memo_pure_push_exists sqvars tmp1 in
       let rb = if (List.length pqhb)=0 then []
         else 
@@ -177,7 +179,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.memo
                 h_formula_data_pos = pos}) ->
       let i = fresh_int2 () in
       let non_null = CP.mkEqVarInt p i pos in
-	  (MCP.memoise_add_pure (MCP.mkMTrue pos) non_null, [])
+	  (MCP.memoise_add_pure (Util.empty_a_set ())(MCP.mkMTrue pos) non_null, [])
   | ViewNode ({h_formula_view_node = p;
                 h_formula_view_name = c;
                 h_formula_view_arguments = vs;
@@ -215,7 +217,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.memo
             h_formula_star_pos = pos}) ->
       let (ph1, ph1b) = xpure_heap prog h1 use_xpure0 in
       let (ph2, ph2b) = xpure_heap prog h2 use_xpure0 in
-      let res_form = (MCP.merge_mems ph1 ph2 true, CP.merge_branches ph1b ph2b) in
+      let res_form = (MCP.merge_mems (Util.empty_a_set ()) ph1 ph2 true, CP.merge_branches ph1b ph2b) in
 	  res_form
   | HTrue  -> (MCP.mkMTrue no_pos, [])
   | HFalse -> (MCP.mkMFalse no_pos, [])
@@ -230,17 +232,19 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) branch : (MCP.memo_pure * C
 	  (res_f, avars1 @ avars2)
   | Base ({formula_base_heap = h;
             formula_base_pure = p;
+            formula_base_aset = aset;
             formula_base_pos = pos}) ->
       let ph, addrs = xpure_heap_symbolic prog h branch in
-      let res_form = MCP.memoise_add_pure p ph in
+      let res_form = MCP.memoise_add_pure aset p ph in
       (res_form, addrs)
   | Exists ({formula_exists_qvars = qvars;
               formula_exists_heap = qh;
               formula_exists_pure = qp;
+              formula_exists_aset = aset;
               formula_exists_pos = pos}) ->
       let pqh, addrs = xpure_heap_symbolic prog qh branch in
       let sqvars = (* List.map CP.to_int_var *) qvars in
-      let tmp1 = MCP.memoise_add_pure qp pqh in
+      let tmp1 = MCP.memoise_add_pure aset qp pqh in
       let res_form = MCP.memo_pure_push_exists sqvars tmp1 in
 	  (res_form, addrs)
 
@@ -315,9 +319,10 @@ and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (MCP.memo_pure 
   | Base ({ formula_base_heap = h;
             formula_base_pure = p;
             formula_base_branches = fbr;
+            formula_base_aset = aset;
             formula_base_pos = pos}) ->
       let ph, br, addrs = xpure_heap_symbolic_no_exists prog h in
-      let n_p = MCP.merge_mems p ph true in
+      let n_p = MCP.merge_mems aset p ph true in
       let n_br = CP.merge_branches br fbr in      
       let r_br = if (List.length n_br)=0 then []
         else 
@@ -328,11 +333,12 @@ and xpure_symbolic_no_exists (prog : prog_decl) (f0 : formula) : (MCP.memo_pure 
               formula_exists_heap = qh;
               formula_exists_pure = qp;
               formula_exists_branches = fbr;
+              formula_exists_aset = aset;
               formula_exists_pos = pos}) ->
       let pqh, br, addrs' = xpure_heap_symbolic_no_exists prog qh in
       let sqvars = (* List.map CP.to_int_var *) qvars in
       let addrs = Util.difference_f CP.eq_spec_var addrs' sqvars in
-      let tmp1 = MCP.merge_mems qp pqh true in
+      let tmp1 = MCP.merge_mems aset qp pqh true in
       let res_form = MCP.memo_pure_push_exists sqvars tmp1 in
       let n_br = CP.merge_branches br fbr in      
       let wrap_exists f =
@@ -354,7 +360,7 @@ and xpure_heap_symbolic_no_exists_i (prog : prog_decl) (h0 : h_formula) i: (MCP.
                 h_formula_data_label = lbl;
                 h_formula_data_pos = pos}) ->
       let non_zero = CP.BForm (CP.Neq (CP.Var (p, pos), CP.Null pos, pos),lbl) in
-	  (MCP.memoise_add_pure (MCP.mkMTrue pos) non_zero, [], [p])
+	  (MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue pos) non_zero, [], [p])
   | ViewNode ({ h_formula_view_node = p;
                 h_formula_view_name = c;
                 h_formula_view_arguments = vs;
@@ -384,8 +390,8 @@ and xpure_heap_symbolic_no_exists_i (prog : prog_decl) (h0 : h_formula) i: (MCP.
       let all_diff =
 	    if !no_diff then P.mkTrue no_pos
 	    else pairwise_diff addrs1 addrs2 pos in
-      let tmp1 = MCP.merge_mems ph1 ph2 true in
-      let res_form = MCP.memoise_add_pure tmp1 all_diff in
+      let tmp1 = MCP.merge_mems (Util.empty_a_set ()) ph1 ph2 true in
+      let res_form = MCP.memoise_add_pure (Util.empty_a_set ()) tmp1 all_diff in
 	  (res_form, CP.merge_branches b1 b2, addrs1 @ addrs2)
   | HTrue -> (MCP.mkMTrue no_pos, [], [])
   | HFalse -> (MCP.mkMFalse no_pos, [], [])
@@ -538,7 +544,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) (aset: MCP.var_
           let new_hp = DataNode{d with 
             h_formula_data_remaining_branches = Some br_lbl;
             h_formula_data_pruning_conditions = [ (null_form,br_lbl)];} in
-          let new_mem = MCP.memoise_add_pure old_mem  not_null_form in
+          let new_mem = MCP.memoise_add_pure aset old_mem  not_null_form in
          (new_hp, new_mem, aset, true))           
     | ViewNode v ->   
       let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
@@ -565,12 +571,17 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) (aset: MCP.var_
                 let corr = MCP.memo_find_relevant_slice fv new_mem in
                 if not (MCP.memo_changed corr) then (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
                 else try
+                    (Util.inc_counter "counter_memo_count";
                     let y_p = MCP.memo_check_syn_prun (p_cond, pr_branches) rem_br aset corr in
+                     Util.inc_counter "counter_memo_hit";
+                      
                     (*let _ = print_string ("found contra: "^(String.concat " ; "(List.map (fun (c,_) -> string_of_int c) y_p))^"-\n") in*)
-                    (y_p@yes_prune, no_prune,new_mem)
+                    (y_p@yes_prune, no_prune,new_mem))
                   with | Not_found -> 
                     (*decide if i ^ a = false*)
-                    
+                    let _ = print_string ("memo miss: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
+                    let _ = print_string (" memo formula: "^(Cprinter.string_of_memoised_list [corr])^"\n") in
+                    let _ = print_string ("memo aset: "^(Util.string_of_e_set Cprinter.string_of_spec_var aset)^"\n") in
                     
                  (*   let _ = print_string ("init mem: "^(Cprinter.string_of_memoised_list [corr])^"\n") in
                     let _ = print_string ("and_is: "^(Cprinter.string_of_pure_formula and_is)^"\n") in
@@ -603,20 +614,20 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) (aset: MCP.var_
           let added_invs = List.map (CP.b_apply_subs zip) (lookup_view_invs rem_br_lst v_def) in
           let new_add_invs = Util.difference_f CP.eq_b_formula_no_aset added_invs dism_invs in
           let old_dism_invs = Util.difference_f CP.eq_b_formula_no_aset dism_invs added_invs in
-          let ni = MCP.create_memo_group_wrapper new_add_invs true in
+          let ni = MCP.create_memo_group_wrapper aset new_add_invs true in
           (*let _ = print_string ("adding: "^(Cprinter.string_of_memoised_list ni)^"\n") in*)
           let mem_o_inv = MCP.memo_change_status old_dism_invs new_mem2 in 
           ( prune_cnt := !prune_cnt +1 ; dropped_branches := !dropped_branches + (List.length l_prune);
-          (new_hp, MCP.merge_mems mem_o_inv ni true, true)          )
+          (new_hp, MCP.merge_mems aset mem_o_inv ni true, true)          )
       else 
         if not first_prune then 
           (ViewNode{v with h_formula_view_pruning_conditions = l_no_prune;},new_mem2, false)
         else 
           let ai = List.map (CP.b_apply_subs zip) (lookup_view_invs rem_br v_def) in
-          let gr_ai = MCP.create_memo_group_wrapper ai true in     
+          let gr_ai = MCP.create_memo_group_wrapper aset ai true in     
           let l_no_prune = List.filter (fun (_,c)-> (List.length(Util.intersect c rem_br))>0) l_no_prune in
           let new_hp = ViewNode {v with  h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
-        (new_hp, MCP.merge_mems new_mem2 gr_ai true, true) in
+        (new_hp, MCP.merge_mems aset new_mem2 gr_ai true, true) in
       let r_aset = if r_b then MCP.memo_alias r_memo else aset in
       (r_hp,r_memo,r_aset,r_b)
         
@@ -1357,7 +1368,7 @@ and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
         MCP.memo_group_changed = true;
         MCP.memo_group_cons = drp1;
         MCP.memo_group_slice = drp2;} in
-      MCP.memoise_add_pure [r] fand in
+      MCP.memoise_add_pure ((Util.empty_a_set ())) [r] fand in
   List.concat (List.map helper f0)  
   
 and elim_exists_pure_branch (w : CP.spec_var list) (f0 : CP.formula) pos =
@@ -1406,11 +1417,12 @@ and unsat_base prog (sat_subno:  int ref) f  : bool=
     | Base ({ formula_base_heap = h;
             formula_base_pure = p;
             formula_base_branches = br;
+            formula_base_aset = aset;
             formula_base_pos = pos}) ->
       let (ph, phb) = xpure_heap prog h 1 in
       let phb = CP.merge_branches phb br in  
       if phb = [] then 
-        let npf = MCP.merge_mems p ph true in
+        let npf = MCP.merge_mems aset p ph true in
         TP.is_sat_memo_sub_no npf sat_subno true true
       else
         let npf = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true p in
@@ -1421,12 +1433,13 @@ and unsat_base prog (sat_subno:  int ref) f  : bool=
               formula_exists_heap = qh;
               formula_exists_pure = qp;
               formula_exists_branches = br;
+              formula_exists_aset = aset;
               formula_exists_pos = pos}) ->
       let wrap_exists f = List.fold_left (fun f -> fun qv -> CP.Exists (qv, f, None, pos)) f qvars in
       let (ph, phb) = xpure_heap prog qh 1 in
       let phb = CP.merge_branches phb br in    
       if phb = [] then 
-        let npf = MCP.merge_mems qp ph true in
+        let npf = MCP.merge_mems aset qp ph true in
         let f_lst = MCP.fold_mem_lst_to_lst npf false true true in
         List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no (wrap_exists c) sat_subno)) false f_lst 
       else
@@ -1761,7 +1774,14 @@ and sem_imply_add prog is_folding is_universal ctx (p:CP.formula) only_syn:(cont
 	    else if only_syn then (ctx,false)
 	    else
 	      let b = (xpure_imply prog is_folding is_universal c p !Globals.imply_timeout) in
-	      if b then ((Ctx {c with es_formula =(mkAnd_pure_and_branch c.es_formula (MCP.memoise_add_pure (MCP.mkMTrue no_pos) p) [] no_pos)}),true)
+	      if b then 
+          let aset = MCP.pure_alias p in
+        ((Ctx {c with 
+          es_formula =(mkAnd_pure_and_branch 
+                        c.es_formula 
+                        (MCP.memoise_add_pure aset (MCP.mkMTrue no_pos) p) 
+                        [] 
+                        no_pos)}),true)
 	      else (ctx,false)
 
 
@@ -1806,7 +1826,7 @@ and heap_entail_conjunct_lhs_struc
 	        let r = match r with
 	          | None -> begin
 		          List.map (fun (c1,c2)-> 
-			        let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure (MCP.mkMTrue pos) c1) in (*this unsat check is essential for completeness of result*)
+			        let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure (Util.empty_a_set ())(MCP.mkMTrue pos) c1) in (*this unsat check is essential for completeness of result*)
 				    if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
 				    else inner_entailer n_ctx c2 ) b.formula_case_branches 
 		        end
@@ -2365,10 +2385,12 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool) lhs
   let lhs_h = r.formula_base_heap in  
   let lhs_p = r.formula_base_pure in
   let lhs_b = r.formula_base_branches in
+  let lhs_aset = r.formula_base_aset in
   let _ = reset_int2 () in
   let xpure_lhs_h, xpure_lhs_h_b = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
-  let tmp1 = MCP.merge_mems lhs_p xpure_lhs_h true in
-  let new_ante, new_conseq = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 (MCP.memoise_add_pure (MCP.mkMTrue pos) rhs_p) pos in
+  let tmp1 = MCP.merge_mems lhs_aset lhs_p xpure_lhs_h true in
+  let new_ante, new_conseq = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 
+    (MCP.memoise_add_pure (Util.empty_a_set () ) (MCP.mkMTrue pos) rhs_p) pos in
   let res,_,_ =  TP.memo_imply_timeout new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) timeout in
   Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;				
   imp_subno := !imp_subno+1;  
@@ -2376,11 +2398,11 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool) lhs
     let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
     let fold_fun2 is_ok branch_id_added =
       if is_ok then true else
-        let tmp1 = MCP.merge_mems 
-            (MCP.combine_memo_branch branch_id_added (lhs_p, lhs_b))
-            (MCP.combine_memo_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) true in
+        let tmp1 = MCP.merge_mems lhs_aset
+            (MCP.combine_memo_branch (Util.empty_a_set ()) branch_id_added (lhs_p, lhs_b))
+            (MCP.combine_memo_branch (Util.empty_a_set ()) branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) true in
         let new_ante, new_conseq = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 
-          (MCP.memoise_add_pure (MCP.mkMTrue pos) rhs_p) pos in
+          (MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue pos) rhs_p) pos in
         let res,_,_ = TP.memo_imply_timeout new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) timeout in
         (Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;				
         imp_subno := !imp_subno+1; 
@@ -2405,10 +2427,10 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
     print_endline ("XPURE0: " ^ Cprinter.string_of_pure_formula_branches (xpure_lhs_h0, xpure_lhs_h0_b));*)
   let fold_fun (is_ok,succs,fails) (branch_id, rhs_p) =
     if (is_ok = false) then (is_ok,succs,fails) else 
-      let m_lhs = MCP.combine_memo_branch branch_id (lhs_p, lhs_b) in
-      let tmp1 = MCP.merge_mems m_lhs (MCP.combine_memo_branch branch_id (xpure_lhs_h, xpure_lhs_h_b)) true in
+      let m_lhs = MCP.combine_memo_branch (Util.empty_a_set ()) branch_id (lhs_p, lhs_b) in
+      let tmp1 = MCP.merge_mems (Util.empty_a_set ()) m_lhs (MCP.combine_memo_branch (Util.empty_a_set ()) branch_id (xpure_lhs_h, xpure_lhs_h_b)) true in
       let new_ante, new_conseq = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
-      let tmp2 = MCP.merge_mems m_lhs (MCP.combine_memo_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
+      let tmp2 = MCP.merge_mems (Util.empty_a_set ()) m_lhs (MCP.combine_memo_branch (Util.empty_a_set ()) branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
       let new_ante0, new_conseq0 = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp2 rhs_p pos in
 	  (* 26.03.2009 simplify the pure part *) 		 
 	  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)				
@@ -2460,8 +2482,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	      let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
           let fold_fun2 (is_ok,a2,a3) branch_id_added =
             if is_ok then (is_ok,a2,a3) else
-              let m_lhs = MCP.combine_memo_branch branch_id_added (lhs_p, lhs_b) in
-              let tmp1 = MCP.merge_mems m_lhs (MCP.combine_memo_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) true in
+              let m_lhs = MCP.combine_memo_branch (Util.empty_a_set ()) branch_id_added (lhs_p, lhs_b) in
+              let tmp1 = MCP.merge_mems (Util.empty_a_set ()) m_lhs (MCP.combine_memo_branch (Util.empty_a_set ()) branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) true in
               let new_ante, new_conseq = heap_entail_build_memo_pure_check estate.es_evars tmp1 rhs_p pos in
               imp_subno := !imp_subno+1; 
               Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;
@@ -2480,13 +2502,13 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	  (res1,res2@succs,res3))  in
     
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
-  let memo_r_br = List.map (fun (c1,c2)-> (c1,MCP.memoise_add_pure (MCP.mkMTrue pos) c2)) rhs_p_br in
+  let memo_r_br = List.map (fun (c1,c2)-> (c1,MCP.memoise_add_pure (Util.empty_a_set ()) (MCP.mkMTrue pos) c2)) rhs_p_br in
   let (r_rez,r_succ_match, r_fail_match) = List.fold_left fold_fun  (true,[],None) (("", rhs_p) :: memo_r_br) in
   if r_rez then begin
     let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b lhs_aset no_pos in
 	if is_folding then begin
 	  let res_es = {(es_cache_extend estate) with es_formula = res_delta; 
-		es_pure = ((MCP.merge_mems rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br));
+		es_pure = ((MCP.merge_mems (Util.empty_a_set ()) rhs_p (fst estate.es_pure) true),(Cpure.merge_branches (snd estate.es_pure) rhs_p_br));
 		es_success_pts = (List.fold_left (fun a (c1,c2)-> match (c1,c2) with
 		  | Some s1,Some s2 -> (s1,s2)::a
 		  | _ -> a) [] r_succ_match)@estate.es_success_pts;
@@ -2639,8 +2661,8 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
   (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
   (* explicit instantiation is like delaying the movement of the bindings for the free vars from the RHS to the LHS *)
   (********************************************************************)
-  let new_ante_p = (MCP.memoise_add_pure l_p to_lhs) in
-  let new_conseq_p = (MCP.memoise_add_pure r_p to_rhs) in
+  let new_ante_p = (MCP.memoise_add_pure l_a l_p to_lhs) in
+  let new_conseq_p = (MCP.memoise_add_pure r_a r_p to_rhs) in
   let new_ante = mkBase l_h new_ante_p l_t l_fl (CP.merge_branches l_b to_lhs_br) (MCP.memo_alias new_ante_p) pos in
   let tmp_conseq = mkBase r_h new_conseq_p r_t r_fl (CP.merge_branches r_b to_rhs_br) (MCP.memo_alias new_conseq_p) pos  in
   (* apply the new bindings to the consequent *)

@@ -646,10 +646,14 @@ let string_of_memoise_constraint c = poly_string_of_pr pr_memoise_constraint c
   
 let pr_memoise mem = 
   fmt_string "[";pr_list_op_none "& " pr_memoise_constraint 
-  (List.filter (fun c-> match c.MP.memo_status with | MP.Implied _ -> true | MP.Implied_dupl _ -> true | _-> false) mem); fmt_string "]"
+  (List.filter (fun c-> match c.MP.memo_status with 
+                  | MP.Implied _ -> true 
+                  | MP.Implied_dupl _ -> true 
+                  | _-> true (*false*)) mem); fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
   
+ 
 let pr_memoise_group m_gr = 
   (*if !pr_mem then *)
     fmt_cut();
@@ -663,7 +667,7 @@ let pr_memoise_group m_gr =
                fmt_cut();
       ) m_gr; fmt_string ")") m_gr
   (*else ()*)
-  
+
 let pr_remaining_branches s = match s with 
     | None -> ()
     | Some s -> 

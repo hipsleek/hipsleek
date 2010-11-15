@@ -192,22 +192,25 @@ and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link =
 
 and formula_of_memo_pure (p:MCP.memo_pure) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] (MCP.memo_alias p) pos
 
-and formula_of_pure (p:CP.formula) (pos:loc) :formula= 
-  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
-  mkBase HTrue mp TypeTrue (mkTrueFlow ()) [] (MCP.memo_alias mp) pos
+and formula_of_pure (p:CP.formula) (pos:loc) :formula=
+  let aset = MCP.pure_alias p in
+  let mp = MCP.memoise_add_pure aset (MCP.mkMTrue pos) p in
+  mkBase HTrue mp TypeTrue (mkTrueFlow ()) [] aset pos
 
 (*and mkTrueFlowTest = {formula_flow_interval = (-3,-3); formula_flow_link = None;}
 and formula_of_pure_test p pos = mkBase HTrue p TypeTrue (mkTrueFlow) [] pos*)
 and formula_of_pure_with_branches p br pos = 
-  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
-  mkBase HTrue mp TypeTrue (mkTrueFlow ()) br (MCP.memo_alias mp) pos
+  let aset = MCP.pure_alias p in
+  let mp = MCP.memoise_add_pure aset (MCP.mkMTrue pos) p in
+  mkBase HTrue mp TypeTrue (mkTrueFlow ()) br aset pos
 
 and formula_of_memo_pure_with_branches p br pos = 
   mkBase HTrue p TypeTrue (mkTrueFlow ()) br (MCP.memo_alias p) pos
 
 and formula_of_pure_with_branches_fl p br fl pos = 
-  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
-  mkBase HTrue mp TypeTrue fl br (MCP.memo_alias mp) pos
+  let aset = MCP.pure_alias p in
+  let mp = MCP.memoise_add_pure aset (MCP.mkMTrue pos) p in
+  mkBase HTrue mp TypeTrue fl br aset pos
 
 and formula_of_memo_pure_with_branches_fl p br fl pos = mkBase HTrue p TypeTrue fl br (MCP.memo_alias p) pos
 
@@ -530,18 +533,18 @@ let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, b1, t1, as1 = split_components f1 in
   let h2, p2, fl2, b2, t2, as2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
-  let p = MCP.merge_mems p1 p2 true in
+  let nas = Util.merge_set as1 as2 in
+  let p = MCP.merge_mems nas p1 p2 true in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
-  let nas = Util.merge_set as1 as2 in
   mkBase h p t fl b nas pos
    
-and combine_and_pure (f1:formula)(p:MCP.memo_pure)(f2:MCP.memo_pure):MCP.memo_pure*bool = 
+and combine_and_pure aset (f1:formula)(p:MCP.memo_pure)(f2:MCP.memo_pure):MCP.memo_pure*bool = 
 	if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
 		else if (isAnyConstTrue f1) then (f2,true)
 			else 
-        let r = MCP.merge_mems p f2 true in
+        let r = MCP.merge_mems aset p f2 true in
         if (MCP.isConstMFalse r) then (r,false)
         else if (MCP.isConstMTrue r) then (r,false)
         else (r,true)      
@@ -564,12 +567,13 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, b1, t1, as1 = split_components f1 in
   let h2, p2, fl2, b2, t2, as2 = split_components f2 in
+  let nas = Util.merge_set as1 as2 in
   let h = mkStarH h1 h2 pos in
-  let p,_ = combine_and_pure f1 p1 p2 in
+  let p,_ = combine_and_pure nas f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
-  let nas = Util.merge_set as1 as2 in
+
   mkBase h p t fl b nas pos
 
 
@@ -580,7 +584,7 @@ and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.memo_pure) b2 (pos : loc):for
     let nas = Util.merge_set as1 (MCP.memo_alias p2) in
     if (MCP.isConstMTrue p1) then mkBase h1 p2 t1 fl1 (CP.merge_branches b1 b2) nas pos
 			else 
-      mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 (CP.merge_branches b1 b2) nas pos
+      mkBase h1 (MCP.merge_mems nas p1 p2 true) t1 fl1 (CP.merge_branches b1 b2) nas pos
 
    
 and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl:flow_formula) b aset (pos : loc) =
@@ -1723,8 +1727,8 @@ and combine_and (f1:formula) (f2:MCP.memo_pure) :formula*bool = match f1 with
 	| Base ({ 
       formula_base_pure = p;
       formula_base_aset = aset;} as b) -> 
-			let r1,r2 = (combine_and_pure f1 p f2) in
       let naset = Util.merge_set aset (MCP.memo_alias f2) in
+			let r1,r2 = (combine_and_pure naset f1 p f2) in
 			(Base{b with 
         formula_base_pure = r1;
         formula_base_aset = naset}, r2)					 
@@ -1732,8 +1736,8 @@ and combine_and (f1:formula) (f2:MCP.memo_pure) :formula*bool = match f1 with
          formula_exists_aset = aset;
 			   formula_exists_pure = p ;} as b) -> 
 			if (List.length (Util.intersect (MCP.mfv f2) evars))=0 then
-				let r1,r2 = (combine_and_pure f1 p f2) in
-        let naset = Util.merge_set aset (MCP.memo_alias f2) in
+				let naset = Util.merge_set aset (MCP.memo_alias f2) in
+        let r1,r2 = (combine_and_pure naset f1 p f2) in
 				(Exists {b with 
           formula_exists_pure = r1;
           formula_exists_aset = naset;},r2)	  
@@ -1744,13 +1748,15 @@ and combine_and (f1:formula) (f2:MCP.memo_pure) :formula*bool = match f1 with
 and normalize_no_rename_context_formula (ctx : context) (p : MCP.memo_pure) : context = 
 	let rec push_pure (f:formula):formula = match f with
 		| Base b-> 
+        let nas = Util.merge_set b.formula_base_aset (MCP.memo_alias p) in
         Base {b with 
-          formula_base_pure = MCP.merge_mems p b.formula_base_pure true;
-          formula_base_aset = Util.merge_set b.formula_base_aset (MCP.memo_alias p);}
+          formula_base_pure = MCP.merge_mems nas p b.formula_base_pure true;
+          formula_base_aset = nas;}
 		| Exists b -> 
+        let nas = Util.merge_set b.formula_exists_aset (MCP.memo_alias p) in
         Exists {b with 
-          formula_exists_pure = MCP.merge_mems p b.formula_exists_pure true;
-          formula_exists_aset = Util.merge_set b.formula_exists_aset (MCP.memo_alias p);}
+          formula_exists_pure = MCP.merge_mems nas p b.formula_exists_pure true;
+          formula_exists_aset = nas;}
 		| Or b -> Or {
 				   formula_or_f1 = push_pure b.formula_or_f1;
 				   formula_or_f2 = push_pure b.formula_or_f2;
@@ -1931,8 +1937,8 @@ let rec struc_to_formula (f0:struc_formula):formula =
             (*let ng = Cpure.Not (c1,b.formula_case_pos) in*)
             if (isConstEFalse c2) then a
             else
-            let np = (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) in
-            let nas = MCP.memo_alias np in
+            let nas = MCP.pure_alias c1 in
+            let np = (MCP.memoise_add_pure nas (MCP.mkMTrue b.formula_case_pos) c1) in
             (mkOr a (normalize_combine 
                   (mkBase HTrue np TypeTrue (mkTrueFlow ()) [] nas b.formula_case_pos ) 
                   (struc_to_formula c2)
@@ -2632,8 +2638,8 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
 	let rec ext_formula_br (f:ext_formula):(formula * formula_label) list = match f with
 		| ECase b-> List.concat 
         (List.map (fun (c1,c2) -> 
-          let np = (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) in
-          let nas = MCP.memo_alias np in
+          let nas = MCP.pure_alias c1 in
+          let np = (MCP.memoise_add_pure nas (MCP.mkMTrue b.formula_case_pos) c1) in
           let g_f = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] nas b.formula_case_pos in
           List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (get_view_branches c2)) b.formula_case_branches)
 		| EBase b-> 
