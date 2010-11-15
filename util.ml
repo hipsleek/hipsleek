@@ -597,6 +597,8 @@ let empty_aset  : 'a e_set = []
 
 let empty_a_set () : 'a e_set = empty_aset 
 
+let is_empty_aset s = s=[]
+
 let empty_a_set_str f : 'a e_set_str = ([],f,[])
 
 (* return the domain of e-set *)
