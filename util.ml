@@ -727,12 +727,19 @@ let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set =
   let ns = add_equiv s fv tv in
   elim_elems ns [fv]
 
-let is_dupl (s:'a list) : bool =
-  false
+(* returns true if s contains no duplicates *)
+let check_no_dupl (s:'a list) : bool =
+  let rec helper s = match s with
+    | [] -> true
+    | x::xs -> 
+          if List.mem x xs then false
+          else helper xs in
+  helper s
 
+(* check f is 1-to-1 map assuming s contains no duplicates *)
 let is_one2one (f:'a -> 'a) (s:'a list) : bool =
   let l = List.map f s in
-  is_dupl l
+  check_no_dupl l
 
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
