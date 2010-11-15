@@ -724,8 +724,11 @@ let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set =
 
 (* make fv=tv and then eliminate fv *)
 let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set = 
-  let ns = add_equiv s fv tv in
-  elim_elems ns [fv]
+  let d = get_elems s in
+  if (List.mem fv d) then
+    let ns = add_equiv s fv tv in
+    elim_elems ns [fv]
+  else s
 
 (* returns true if s contains no duplicates *)
 let check_no_dupl (s:'a list) : bool =
