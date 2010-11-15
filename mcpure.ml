@@ -177,6 +177,7 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
 and m_apply_one (s:spec_var * spec_var) f = 
   let r1 = List.map (fun c -> 
     let r = Util.subs_eset s c.memo_group_aset in
+    let _ = print_string ("sapp0: "^(!print_sv_f (fst s))^"->"^ (!print_sv_f (snd s))^"\n") in
     let _ = print_string ("sapp1: "^(print_alias_set c.memo_group_aset)^"\n") in
     let _ = print_string ("sapp2: "^(print_alias_set r)^"\n") in
     {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;

@@ -613,6 +613,11 @@ let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
 (* find key of e in s *)
 let find (s : 'a e_set) (e:'a) : 'a list  = find_aux s e []
 
+(* find key of e in s and return remainder *)
+let find_remove (s : 'a e_set) (e:'a) : 'a list * ('a e_set)  = 
+  let r1 = find_aux s e [] in
+  (r1, if r1==[] then s else List.filter (fun (e2,_)-> not(e2=e)) s)
+
 
 let find_str ((s,f,_) : 'a e_set_str) (e:'a) : string list  
       = find_aux s (f e) []
@@ -718,10 +723,18 @@ let get_equiv (s:'a e_set) : ('a *'a) list =
     | x::xs -> List.map (fun b -> (x,b)) xs in
   List.concat (List.map make_p ll)
 
-
 (* remove vs elements from e_set - used by existential elimination *)
-let elim_elems (s:'a e_set) (vs:'a list) : 'a e_set = 
+let elim_elems_list (s:'a e_set) (vs:'a list) : 'a e_set = 
   List.filter (fun (a,_) -> not(List.mem a vs)) s
+
+(* remove all entries with same key k from e_set 
+let elim_elems_key (s:'a e_set) (k) : 'a e_set = 
+  List.filter (fun (a,k2) -> not(k==k2)) s
+  *)
+
+(* remove key e from e_set  *)
+let elim_elems_one (s:'a e_set) (e:'a) : 'a e_set = 
+  List.filter (fun (a,k2) -> not(a=e)) s
 
 (* return a distinct element equal to e *)
 let find_equiv (e:'a) (s:'a e_set) : 'a option  =
@@ -733,21 +746,39 @@ let find_equiv (e:'a) (s:'a e_set) : 'a option  =
     | (x,_)::_ -> Some x
 
 
-(* return a distinct element equal to e and elim e from e_set *)
+(* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
+let find_equiv_elim_sure (e:'a) (s:'a e_set) : 'a option * ('a e_set)  =
+  let r1,s1 = find_remove s e in
+  if (r1==[]) then (None,s)
+  else let (ls,ls2) = List.partition (fun (a,k) -> k==r1 ) s1 in
+  match ls with
+    | [] -> (None,s1)
+    | [(x,_)] -> (Some x, ls2)
+    | (x,_)::_ -> (Some x, s1)
+
+(* return a distinct element equal to e and elim e from e_set if found *)
 let find_equiv_elim (e:'a) (s:'a e_set) : ('a * 'a e_set) option  =
-  match (find_equiv e s) with
+  let (ne,ns) = find_equiv_elim_sure e s in
+  match ne with
     | None -> None
-    | Some x -> Some (x, elim_elems s [e]) 
-  
+    | Some x -> Some (x, ns) 
 
 (* make fv=tv and then eliminate fv *)
 let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set = 
-  let d = get_elems s in
-  if (List.mem fv d) then
+  let r1 = find s fv in
+  if (r1==[]) then s
+  else 
     let ns = add_equiv s fv tv in
-    elim_elems ns [fv]
-  else s
-
+    elim_elems_one ns fv
+(*
+let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set = 
+  let r1 = find s fv in
+  if (r1==[]) then s
+  else 
+    let ns = add_equiv s fv tv in
+    elim_elems_one ns fv
+*)
+ 
 (* returns true if s contains no duplicates *)
 let check_no_dupl (s:'a list) : bool =
   let rec helper s = match s with
