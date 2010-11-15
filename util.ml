@@ -727,14 +727,24 @@ let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set =
   let ns = add_equiv s fv tv in
   elim_elems ns [fv]
 
+let is_dupl (s:'a list) : bool =
+  false
+
+let is_one2one (f:'a -> 'a) (s:'a list) : bool =
+  let l = List.map f s in
+  is_dupl l
+
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
-  List.map (fun (e,k) -> (f e,k)) s
+  let b = is_one2one f (get_elems s) in
+  if b then  List.map (fun (e,k) -> (f e,k)) s
+  else Error.report_error {Error.error_loc = Globals.no_pos; 
+                  Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
 let string_of_e_set (f:'a->string) (e:'a e_set) : string =
   let ll=partition e in 
-  "aset=["^ (String.concat " \n " (List.map (fun cl -> "["^(String.concat ", "(List.map f cl))^"]") ll))^"]"
+  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"@]"
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm
