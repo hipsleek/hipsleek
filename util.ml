@@ -910,7 +910,8 @@ let subs_eset_eq (t:'a * 'a) ((s,eq):'a eq_set) : 'a eq_set =
 (* make fv=tv and then eliminate fv *)
 let subs_eset_eq_debug (f:'a->string)  (t:'a * 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   let r=subs_eset_eq2 (eq) t s in
-  let _ = print_string ("subs_eset_eq inp :"^(string_of_e_set f s)^"\n") in
+  let _ = print_string ("subs_eset_eq inp1 :"^(f (fst t))^"->"^(f (snd t))^"\n") in
+  let _ = print_string ("subs_eset_eq inp2 :"^(string_of_e_set f s)^"\n") in
   let _ = print_string ("subs_eset_eq out :"^(string_of_e_set f r)^"\n") in
   (r,eq)
 
