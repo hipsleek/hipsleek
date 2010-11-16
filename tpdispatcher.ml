@@ -521,13 +521,11 @@ let tp_is_sat_sender (f : CP.formula) (sat_no : string) =
 
 
 let sat_cache  = Hashtbl.create 2000 ;;
-let sat_cache_count = ref 0;;
-let sat_proof_count = ref 0;;
 
 let tp_is_sat f sat_no do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
-    sat_cache_count := !sat_cache_count + 1 ;
+    Util.inc_counter "sat_cache_count";
     let s = (!print_pure f) in
     try 
       let r = Hashtbl.find sat_cache s in
@@ -536,7 +534,7 @@ let tp_is_sat f sat_no do_cache =
     with Not_found -> 
         let r = tp_is_sat_sender f sat_no in
         (Hashtbl.add sat_cache s r ;
-        sat_proof_count := !sat_proof_count + 1 ;
+        Util.inc_counter "sat_proof_count";
         r))
   else  
     tp_is_sat_sender f sat_no

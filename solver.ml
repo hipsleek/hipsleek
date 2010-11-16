@@ -1350,8 +1350,8 @@ and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
             c.MCP.memo_group_slice in
       let nas, drp3 = List.partition (fun (c1,c2)-> 
         (List.exists (CP.eq_spec_var c1) w) or (List.exists (CP.eq_spec_var c2) w)) 
-        (Util.get_equiv c.MCP.memo_group_aset) in
-      let aset = List.fold_left  ( fun a (c1,c2) -> Util.add_equiv a c1 c2) Util.empty_aset drp3 in 
+        (Util.get_equiv_eq c.MCP.memo_group_aset) in
+      let aset = List.fold_left  ( fun a (c1,c2) -> Util.add_equiv_eq a c1 c2) MCP.empty_var_aset drp3 in 
       let fand1 = List.fold_left (fun a c-> match c.MCP.memo_status with
         | MCP.Implied _
         | MCP.Implied_dupl -> CP.mkAnd a (CP.BForm (c.MCP.memo_formula, None)) pos

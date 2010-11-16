@@ -924,7 +924,7 @@ let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set =
   let r=rename_eset_eq2 (eq) f s in
   (r,eq)
 
-let string_of_e_set (f:'a->string) (e:'a e_set) : string =
+let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string =
   let ll=partition e in 
   "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 

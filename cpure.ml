@@ -1728,8 +1728,8 @@ and elim_exists (f0 : formula) : formula =
     | BForm _ -> f0
 
 
-let eq_spec_var_aset aset (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv aset sv1 sv2 
+let eq_spec_var_aset (aset: spec_var Util.eq_set ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv_eq aset sv1 sv2 
         
 
 let equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
@@ -1775,7 +1775,7 @@ and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
   (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
 *)
 
-let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp [] e1 e2        
+let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp (Util.empty_a_set_eq eq_spec_var) e1 e2        
 
 let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_aset aset b1 b2
 (*
@@ -1806,7 +1806,7 @@ match (b1, b2) with
   | _ -> false
 *)
 
-let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula [] b1 b2
+let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula (Util.empty_a_set_eq eq_spec_var ) b1 b2
 
 
 let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
@@ -2148,12 +2148,12 @@ and elim_idents_b_formula (f : b_formula) : b_formula =  match f with
   | Lte (e1, e2, pos)
   | Gte (e1, e2, pos)
   | Eq (e1, e2, pos) ->
-  	if (eq_exp [] e1 e2) then BConst(true, pos)
+  	if (eq_exp_no_aset e1 e2) then BConst(true, pos)
   	else f
   | Neq (e1, e2, pos)
   | Lt (e1, e2, pos)
   | Gt (e1, e2, pos) ->
-	if (eq_exp [] e1 e2) then BConst(false, pos)
+	if (eq_exp_no_aset e1 e2) then BConst(false, pos)
   	else f
   | _ -> f
 

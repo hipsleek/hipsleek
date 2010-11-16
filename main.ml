@@ -322,8 +322,6 @@ let _ =
   let _ = print_string (" leaving "^ (string_of_int !Globals.total_unfold_disjs)^" disjuncts in unfold \n") in  
   let _ = print_string ("imply prune cache calls: "^(string_of_int !Tpdispatcher.impl_cache_count)^"\n imply prune cache miss: "^
   (string_of_int !Tpdispatcher.impl_proof_count)^"\n") in
-  let _ = print_string ("sat prune cache calls: "^(string_of_int !Tpdispatcher.sat_cache_count)^"\n sat prune cache miss: "^
-  (string_of_int !Tpdispatcher.sat_proof_count)^"\n") in
   let _ = print_string ("imply conseq cache miss: "^(string_of_int !Tpdispatcher.impl_conseq_count)^"\n") in
   let _ = print_string (Util.string_of_counters ()) in
   let _ = Util.print_profiling_info () in

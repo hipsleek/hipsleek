@@ -154,11 +154,14 @@ node create_list(int a)
 	node tmp;
 
 	if (a == 0) {
+  assume false;
 		return null;
 	}
-	else {
+	else {    
 		a  = a - 1;
+    dprint;
 		tmp = create_list(a);
+    dprint;
 		return new node (0, tmp);
 	}
 		

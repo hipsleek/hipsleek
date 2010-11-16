@@ -7,7 +7,9 @@ open Cpure
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-type var_aset = spec_var Util.e_set 
+type var_aset = spec_var Util.eq_set 
+
+let empty_var_aset = Util.empty_a_set_eq eq_spec_var 
 
 type memo_pure = memoised_group list
  
@@ -40,7 +42,7 @@ let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
 let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
 let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
 
-let print_alias_set aset = Util.string_of_e_set !print_sv_f aset
+let print_alias_set aset = Util.string_of_eq_set !print_sv_f aset
     
 let rec mfv (m: memo_pure) : spec_var list = Util.remove_dups_f (List.concat (List.map (fun c-> c.memo_group_fv) m)) eq_spec_var
 
@@ -62,14 +64,14 @@ and isConstMTrue f =
     | 1 ->
         let r = List.hd f in
         (match ((List.length r.memo_group_cons),(List.length r.memo_group_slice)) with
-            | 0,1 -> isConstTrue (List.hd r.memo_group_slice) && (Util.is_empty_aset r.memo_group_aset)
-            | 1,0 -> isConstMConsTrue (List.hd r.memo_group_cons) && (Util.is_empty_aset r.memo_group_aset)
+            | 0,1 -> isConstTrue (List.hd r.memo_group_slice) && (Util.is_empty_aset_eq r.memo_group_aset)
+            | 1,0 -> isConstMConsTrue (List.hd r.memo_group_cons) && (Util.is_empty_aset_eq r.memo_group_aset)
             | _ -> false)
     | _ -> false
       
 and isConstGroupTrue (f:memoised_group) : bool = match f.memo_group_slice with
-  | [] -> f.memo_group_cons == [] && (Util.is_empty_aset f.memo_group_aset) 
-  | x::[] -> f.memo_group_cons == [] && (Util.is_empty_aset f.memo_group_aset) && (isConstTrue x)
+  | [] -> f.memo_group_cons == [] && (Util.is_empty_aset_eq f.memo_group_aset) 
+  | x::[] -> f.memo_group_cons == [] && (Util.is_empty_aset_eq f.memo_group_aset) && (isConstTrue x)
   | _ -> false
   
       
@@ -78,8 +80,8 @@ and isConstMFalse f =
     | 1 ->
         let r = List.hd f in
         (match ((List.length r.memo_group_cons),(List.length r.memo_group_slice)) with
-            | 0,1 -> isConstFalse (List.hd r.memo_group_slice)&& (Util.is_empty_aset r.memo_group_aset)
-            | 1,0 -> isConstMConsFalse (List.hd r.memo_group_cons) && (Util.is_empty_aset r.memo_group_aset)
+            | 0,1 -> isConstFalse (List.hd r.memo_group_slice)&& (Util.is_empty_aset_eq r.memo_group_aset)
+            | 1,0 -> isConstMConsFalse (List.hd r.memo_group_cons) && (Util.is_empty_aset_eq r.memo_group_aset)
             | _ -> false)
     | _ -> false
   
@@ -100,7 +102,7 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
     let n_l = List.fold_left (fun a d-> 
       let n_l = List.map (fun c->((bfv c.memo_formula),[(Some c, None,None)])) d.memo_group_cons in
       let n_l_f = List.map (fun f->((fv f),[(None, Some f, None)])) d.memo_group_slice in
-      let n_l_a = (fun f -> ((Util.get_elems f),[(None, None, Some f )])) d.memo_group_aset in
+      let n_l_a = (fun f -> ((Util.get_elems_eq f),[(None, None, Some f )])) d.memo_group_aset in
       n_l_a :: (n_l @ n_l_f @ a)) [] lst in
       
     let r = List.fold_left (fun acc (v_list, mem) -> 
@@ -113,8 +115,8 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
       let mc_l, f_l,a_l = List.fold_left (fun (a1,a2,a3) c -> match c with
         | None, Some f , None -> (a1,f::a2,a3)
         | Some f, None , None -> (f::a1,a2,a3)
-        | None, None, Some f -> (a1,a2,Util.merge_set f a3)
-        | _ -> (a1,a2,a3)) ([],[], []) m_l in      
+        | None, None, Some f -> (a1,a2,Util.merge_set_eq f a3)
+        | _ -> (a1,a2,a3)) ([],[], empty_var_aset ) m_l in      
       { memo_group_fv = v_l; 
         memo_group_changed = true ; 
         memo_group_cons = mc_l;
@@ -138,7 +140,7 @@ and regroup_memo_group (lst : memo_pure) : memo_pure =
           memo_group_slice = a.memo_group_slice @c.memo_group_slice;
           memo_group_cons =  a.memo_group_cons  @c.memo_group_cons;
           memo_group_changed = true;
-          memo_group_aset = Util.merge_set a.memo_group_aset c.memo_group_aset;}) h h_merged in
+          memo_group_aset = Util.merge_set_eq a.memo_group_aset c.memo_group_aset;}) h h_merged in
       let r_h = {h_m with memo_group_fv = Util.remove_dups_f h_m.memo_group_fv eq_spec_var;} in      
       let r = helper h_not_merged in
       r_h::r in
@@ -151,7 +153,7 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let helper  (s:(spec_var*spec_var) list) f  = 
-    let r = Util.rename_eset (subs_one s) f.memo_group_aset in
+    let r = Util.rename_eset_eq (subs_one s) f.memo_group_aset in
     let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
     let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in
    {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
@@ -176,7 +178,7 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
     
 and m_apply_one (s:spec_var * spec_var) f = 
   let r1 = List.map (fun c -> 
-    let r = Util.subs_eset s c.memo_group_aset in
+    let r = Util.subs_eset_eq s c.memo_group_aset in
     let _ = print_string ("sapp0: "^(!print_sv_f (fst s))^"->"^ (!print_sv_f (snd s))^"\n") in
     let _ = print_string ("sapp1: "^(print_alias_set c.memo_group_aset)^"\n") in
     let _ = print_string ("sapp2: "^(print_alias_set r)^"\n") in
@@ -212,7 +214,7 @@ and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =
         | Implied_dupl -> (a@ b_f_ptr_equations c.memo_formula)
         | _ -> a) [] f.memo_group_cons in
     let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
-    r @ (Util.get_equiv f.memo_group_aset) in
+    r @ (Util.get_equiv_eq f.memo_group_aset) in
      List.concat (List.map helper f)
 
 (*and alias_of_ptr_eqs s = List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) Util.empty_aset s*)
@@ -256,7 +258,7 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
         | _ -> (a1,c::a2)) ([],[]) c.memo_group_cons in
         
       let acl_aset, nas = if not(acl_cons=[]) then (acl_cons,c.memo_group_aset)
-          else match Util.find_equiv_elim v c.memo_group_aset with
+          else match Util.find_equiv_elim_eq v c.memo_group_aset with
             | None -> (acl_cons,c.memo_group_aset)
             | Some (s,nas) -> 
               let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
@@ -292,12 +294,12 @@ and memo_pure_elim_exists (f0: memo_pure):memo_pure =
 and memo_apply_one_exp s mem = 
   let fr,t = s in
   let r = List.map (fun c -> 
-    let eqs = Util.get_equiv c.memo_group_aset in
+    let eqs = Util.get_equiv_eq c.memo_group_aset in
     let tbm,rem = List.fold_left 
         (fun (a1,a2) (c1,c2) -> 
           if (eq_spec_var c1 fr) then ((BForm (Eq (Var(c2,no_pos),t,no_pos),None))::a1,a2)
           else if (eq_spec_var c2 fr) then ((BForm (Eq (Var(c1,no_pos),t,no_pos),None))::a1,a2)
-          else (a1,Util.add_equiv a2 c1 c2)) ([],Util.empty_aset) eqs in
+          else (a1,Util.add_equiv_eq a2 c1 c2)) ([],empty_var_aset) eqs in
       { c with 
         memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one_exp s d.memo_formula}) c.memo_group_cons;
         memo_group_slice = tbm @ (List.map (apply_one_exp s) c.memo_group_slice);
@@ -335,7 +337,7 @@ and mkMFalse pos :memo_pure =
     memo_group_changed = false; 
     memo_group_cons = [];
     memo_group_slice = [mkFalse pos];
-    memo_group_aset = Util.empty_aset}]
+    memo_group_aset = empty_var_aset}]
         
 
 and memo_is_member_pure p mm = 
@@ -346,7 +348,7 @@ and memo_is_member_pure p mm =
       | _-> false ) c.memo_group_cons) in
     if r then true
     else match p with
-      | BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> Util.is_equiv c.memo_group_aset v1 v2
+      | BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> Util.is_equiv_eq c.memo_group_aset v1 v2
       | _ -> false ) mm
           
 and fold_mem_lst_to_lst mem with_dupl with_inv with_slice: formula list=
@@ -361,7 +363,7 @@ and fold_mem_lst_to_lst mem with_dupl with_inv with_slice: formula list=
           | _ -> []) c.memo_group_cons in
       let asetf = List.map (fun(c1,c2)-> 
               BForm ((Eq (Var (c1,no_pos),Var (c2,no_pos),no_pos)),None)) 
-          (Util.get_equiv c.memo_group_aset) in
+          (Util.get_equiv_eq c.memo_group_aset) in
       asetf @ slice@(List.concat cons)) mem in
     let r = List.map join_conjunctions r in
     r
@@ -378,7 +380,7 @@ and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula =
   fold_mem_lst_gen (BForm (init_cond,None)) with_dupl with_inv with_slice lst
 
 and filter_useless_mem c = not (isConstGroupTrue c) 
-(*  if ((List.length c.memo_group_cons)>0 or (not (Util.is_empty_aset c.memo_group_aset))) then true
+(*  if ((List.length c.memo_group_cons)>0 or (not (Util.is_empty_aset_eq c.memo_group_aset))) then true
   else
     match (List.length c.memo_group_slice) with
       | 0 -> false (*((List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0)*)
@@ -438,7 +440,7 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
       let merged, un_merged = List.partition (fun d-> (List.length(Util.intersect_fct eq_spec_var d.memo_group_fv c.memo_group_fv))>0) a in
       let n1, n2, n3, n4 = List.fold_left 
               (fun (a1,a2,a3,a4) d-> 
-                let r = (Util.merge_set a4 d.memo_group_aset) in
+                let r = (Util.merge_set_eq a4 d.memo_group_aset) in
                 (d.memo_group_fv@a1,
                  d.memo_group_cons::a2, 
                  d.memo_group_slice::a3, 
@@ -478,10 +480,14 @@ and memoise_add_memo_fnf (l_init: memo_pure) (cm:memoised_constraint) fnf: memo_
       [{memo_formula = cm.memo_formula; memo_status = Fail_prune;};
        {memo_formula = neg_f; memo_status = (*Implied false *)Implied_dupl;}]in
   let n1,n2,n3,n4 = List.fold_left 
-    (fun (a1,a2,a3,a4) d-> (d.memo_group_fv@a1,d.memo_group_cons::a2,d.memo_group_slice::a3, Util.merge_set a4 d.memo_group_aset))
-    (fv,[n_cm_lst],[], Util.empty_aset) merged in   
+    (fun (a1,a2,a3,a4) d-> 
+        (d.memo_group_fv@a1,
+         d.memo_group_cons::a2,
+         d.memo_group_slice::a3, 
+         Util.merge_set_eq a4 d.memo_group_aset))
+    (fv,[n_cm_lst],[], empty_var_aset) merged in   
   let l = if (List.length merged)>0 then 
-    let ng = {memo_group_cons =  filter_merged_cons (Util.empty_aset) n2; 
+    let ng = {memo_group_cons =  filter_merged_cons (empty_var_aset) n2; 
               memo_group_fv = Util.remove_dups n1;
               memo_group_changed = true;
               memo_group_slice = List.concat n3;
@@ -493,7 +499,7 @@ and memoise_add_memo_fnf (l_init: memo_pure) (cm:memoised_constraint) fnf: memo_
       memo_group_fv = fv; 
       memo_group_changed = true; 
       memo_group_slice = []; 
-      memo_group_aset = Util.empty_aset} in  
+      memo_group_aset = empty_var_aset} in  
   let r = l::un_merged in
 (*  let _ = print_string ("before add: " ^(!print_mp_f l_init)^"\n") in
   let _ = print_string ("add cm: " ^(!print_mc_f cm)^"\n") in
@@ -548,11 +554,11 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
   let r = List.map (fun (vars,bfs,fs)-> 
     let nfs,aset = List.fold_left (fun (a,s) c-> 
       match c with 
-        | Eq(Var(v1,_),Var(v2,_),_) -> (a,Util.add_equiv s v1 v2)
+        | Eq(Var(v1,_),Var(v2,_),_) -> (a,Util.add_equiv_eq s v1 v2)
         | _ ->
           let pos = {memo_formula=c;memo_status = Implied (not inv_cons)} in
           let neg = {memo_formula=memo_f_neg c;memo_status = Fail_prune} in
-          (pos::(neg::a),s)) ([],Util.empty_aset) bfs in 
+          (pos::(neg::a),s)) ([],empty_var_aset) bfs in 
     { memo_group_fv = vars;
       memo_group_cons = filter_merged_cons aset [nfs];
       memo_group_slice = fs;
@@ -571,8 +577,8 @@ and memo_group_push_exists qv c =
     let ns,drp2 = List.partition (fun c-> (List.length (Util.intersect_fct eq_spec_var (fv c) qv))>0) c.memo_group_slice in
     let nas, drp3 = List.partition (fun (c1,c2)-> 
         (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) 
-        (Util.get_equiv c.memo_group_aset) in
-    let aset = List.fold_left  ( fun a (c1,c2) -> Util.add_equiv a c1 c2) Util.empty_aset drp3 in 
+        (Util.get_equiv_eq c.memo_group_aset) in
+    let aset = List.fold_left  ( fun a (c1,c2) -> Util.add_equiv_eq a c1 c2) empty_var_aset drp3 in 
     let fand1 = List.fold_left (fun a c-> match c.memo_status with
       | Implied _
       | Implied_dupl -> mkAnd a (BForm (c.memo_formula, None)) no_pos
@@ -703,7 +709,7 @@ let memo_change_status cons l =
       else 
         let ncns = List.map 
           (fun c-> 
-            if not(eq_b_formula [] c.memo_formula cns) then c
+            if not(eq_b_formula_no_aset c.memo_formula cns) then c
             else match c.memo_status with
               | Implied _ -> {c with memo_status=Implied_dupl}
               | Fail_prune -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoization contradiction undetected"}
