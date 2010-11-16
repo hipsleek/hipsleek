@@ -609,7 +609,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
           let ni = MCP.create_memo_group_wrapper new_add_invs true in
           (*let _ = print_string ("adding: "^(Cprinter.string_of_memoised_list ni)^"\n") in*)
           let mem_o_inv = MCP.memo_change_status old_dism_invs new_mem2 in 
-          ( prune_cnt := !prune_cnt +1 ; dropped_branches := !dropped_branches + (List.length l_prune);
+          ( Util.inc_counter "prune_cnt"; Util.add_to_counter "dropped_branches" (List.length l_prune);
           (new_hp, MCP.merge_mems mem_o_inv ni true, true)          )
       else 
         if not first_prune then 

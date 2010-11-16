@@ -150,6 +150,8 @@ let print_err_sleek = ref false
 
 let enable_prune_cache = ref true
 
+let enable_counters = ref true
+
 let seq_to_try = ref false
 
 let print_input = ref false
@@ -163,19 +165,8 @@ let allow_umemo_slicing = ref true
 let agressive_unsat = ref false
 let agressive_imply = ref false*)
 
-let prune_cnt = ref 0
-let dropped_branches = ref 0
-let saved_unfolds = ref 0
-let total_unfold_disjs = ref 0
-
-
-
 
 let profile_threshold = 0.5 
-
-let true_imply_count = ref 0
-let false_imply_count = ref 0
-let true_sat_count = ref 0
 
 let add_count (t: int ref) = 
 	t := !t+1

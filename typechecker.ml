@@ -543,7 +543,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
             let pre_free_vars = Util.difference_f CP.eq_spec_var df1 farg_spec_vars in
               (* free vars get to be substituted by fresh vars *)
             let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
-            let renamed_spec = 
+            let renamed_spec1 = 
                     if !Globals.max_renaming then (Cformula.rename_struc_bound_vars org_spec)
                     else (Cformula.rename_struc_clash_bound_vars org_spec (CF.formula_of_list_partial_context ctx))
             in
@@ -552,10 +552,15 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
             let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
               (*let _ = print_string ("\n trt from: "^(Cprinter.string_of_spec_var_list fr_vars)^"\n"^
           "\n  to: "^(Cprinter.string_of_spec_var_list to_vars)^"\n in: "^(Cprinter.string_of_struc_formula renamed_spec)^"\n") in*)
-            let renamed_spec = CF.subst_struc st1 renamed_spec in
-            let renamed_spec= CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+            let renamed_spec2 = CF.subst_struc st1 renamed_spec1 in
+            let renamed_spec= CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec2 in
             let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
             let pre2 = CF.subst_struc_pre st2 renamed_spec in
+            (*let _ = print_string ("bcall0: "^(Cprinter.string_of_struc_formula org_spec)^"\n") in
+            let _ = print_string ("bcall1: "^(Cprinter.string_of_struc_formula renamed_spec1)^"\n") in
+            let _ = print_string ("bcall2: "^(Cprinter.string_of_struc_formula renamed_spec2)^"\n") in
+            let _ = print_string ("bcall3: "^(Cprinter.string_of_struc_formula renamed_spec)^"\n") in
+            let _ = print_string ("bcall5: "^(Cprinter.string_of_struc_formula pre2)^"\n") in*)
             let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ !log_spec ^ "\n" in
               Debug.devel_pprint to_print pos;
               let rs,prf = heap_entail_struc_list_partial_context_init prog false false true sctx pre2 pos pid in

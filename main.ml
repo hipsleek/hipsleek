@@ -316,20 +316,8 @@ let _ =
   let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
   let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
   (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
-  let _ = print_string ("there were "^ (string_of_int !Globals.prune_cnt)^" prunings \n") in
-  let _ = print_string (" dropping "^ (string_of_int !Globals.dropped_branches)^" branches \n") in
-  let _ = print_string (" saving "^ (string_of_int !Globals.saved_unfolds)^" disjuncts in unfold \n") in  
-  let _ = print_string (" leaving "^ (string_of_int !Globals.total_unfold_disjs)^" disjuncts in unfold \n") in  
-  let _ = print_string ("imply prune cache calls: "^(string_of_int !Tpdispatcher.impl_cache_count)^"\n imply prune cache miss: "^
-  (string_of_int !Tpdispatcher.impl_proof_count)^"\n") in
-  let _ = print_string ("imply conseq cache miss: "^(string_of_int !Tpdispatcher.impl_conseq_count)^"\n") in
   let _ = print_string (Util.string_of_counters ()) in
   let _ = Util.print_profiling_info () in
-  if (!Globals.enable_sat_statistics) then 
-  print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
-				"\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
-				"\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
-				)
-  else ()
+  ()
 
   

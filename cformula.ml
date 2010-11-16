@@ -2546,7 +2546,7 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
     | Base {formula_base_label = lbl} 
     | Exists {formula_exists_label = lbl} -> (match lbl with
       | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
-      | Some lbl -> if (List.mem lbl br) then (total_unfold_disjs:=!total_unfold_disjs+1;[f]) else (saved_unfolds:=!saved_unfolds+1;[]))
+      | Some lbl -> if (List.mem lbl br) then (Util.inc_counter "total_unfold_disjs";[f]) else (Util.inc_counter "saved_unfolds";[]))
     | Or b -> 
       ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    
   let filter_ext (f:ext_formula):ext_formula list = match f with

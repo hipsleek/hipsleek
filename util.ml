@@ -492,15 +492,16 @@ let add_index l =
 let counters = ref (Hashtbl.create 10)
 
 let add_to_counter (s:string) i = 
+  if !Globals.enable_counters then
   try
     let r = Hashtbl.find !counters s in
     Hashtbl.replace !counters s (r+i)
   with
   | Not_found -> Hashtbl.add !counters s i
-
+  else ()
 let inc_counter (s:string) = add_to_counter s 1
   
-let string_of_counters () = Hashtbl.fold (fun k v a-> a^k^" = "^(string_of_int v)^"\n") !counters ""
+let string_of_counters () = "Counters: \n "^ (Hashtbl.fold (fun k v a-> a^k^" = "^(string_of_int v)^"\n") !counters "")
 	
 (*hairy stuff for exception numbering*)
 			

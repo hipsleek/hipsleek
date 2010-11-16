@@ -115,7 +115,7 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
       let mc_l, f_l,a_l = List.fold_left (fun (a1,a2,a3) c -> match c with
         | None, Some f , None -> (a1,f::a2,a3)
         | Some f, None , None -> (f::a1,a2,a3)
-        | None, None, Some f -> (a1,a2,Util.merge_set_eq f a3)
+        | None, None, Some f -> (a1,a2,Util.merge_set_eq(*_debug !print_sv_f*) f a3)
         | _ -> (a1,a2,a3)) ([],[], empty_var_aset ) m_l in      
       { memo_group_fv = v_l; 
         memo_group_changed = true ; 
@@ -140,7 +140,7 @@ and regroup_memo_group (lst : memo_pure) : memo_pure =
           memo_group_slice = a.memo_group_slice @c.memo_group_slice;
           memo_group_cons =  a.memo_group_cons  @c.memo_group_cons;
           memo_group_changed = true;
-          memo_group_aset = Util.merge_set_eq a.memo_group_aset c.memo_group_aset;}) h h_merged in
+          memo_group_aset = Util.merge_set_eq(*_debug !print_sv_f*) a.memo_group_aset c.memo_group_aset;}) h h_merged in
       let r_h = {h_m with memo_group_fv = Util.remove_dups_f h_m.memo_group_fv eq_spec_var;} in      
       let r = helper h_not_merged in
       r_h::r in
@@ -154,8 +154,8 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let st2 = List.combine fresh_fr t in
   let helper  (s:(spec_var*spec_var) list) f  = 
     let r = Util.rename_eset_eq (subs_one s) f.memo_group_aset in
-    let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
-    let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in
+    (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
+    let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
    {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
     memo_group_changed = f.memo_group_changed;
     memo_group_cons = List.map (fun d->{d with memo_formula = List.fold_left (fun a c-> b_apply_one c a) d.memo_formula s;}) f.memo_group_cons;
@@ -178,10 +178,7 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
     
 and m_apply_one (s:spec_var * spec_var) f = 
   let r1 = List.map (fun c -> 
-    let r = Util.subs_eset_eq s c.memo_group_aset in
-    let _ = print_string ("sapp0: "^(!print_sv_f (fst s))^"->"^ (!print_sv_f (snd s))^"\n") in
-    let _ = print_string ("sapp1: "^(print_alias_set c.memo_group_aset)^"\n") in
-    let _ = print_string ("sapp2: "^(print_alias_set r)^"\n") in
+    let r = Util.subs_eset_eq(*_debug !print_sv_f*) s c.memo_group_aset in
     {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
     memo_group_changed = c.memo_group_changed;
     memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons;
@@ -261,10 +258,10 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
           else match Util.find_equiv_elim_eq v c.memo_group_aset with
             | None -> (acl_cons,c.memo_group_aset)
             | Some (s,nas) -> 
-              let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
+              (*let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
               let _ = print_string ("before_el: "^(print_alias_set c.memo_group_aset)^"\n") in
               let _ = print_string ("after_el: "^(print_alias_set nas)^"\n") in
-              let _ = print_string ("subs_to: "^(!print_sv_f s)^"\n") in              
+              let _ = print_string ("subs_to: "^(!print_sv_f s)^"\n") in*)
               ([(v,Var (s,no_pos))],nas) in
             
       let acl_slice, nsl = if not (acl_aset=[]) then (acl_aset, c.memo_group_slice)
@@ -440,7 +437,7 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
       let merged, un_merged = List.partition (fun d-> (List.length(Util.intersect_fct eq_spec_var d.memo_group_fv c.memo_group_fv))>0) a in
       let n1, n2, n3, n4 = List.fold_left 
               (fun (a1,a2,a3,a4) d-> 
-                let r = (Util.merge_set_eq a4 d.memo_group_aset) in
+                let r = (Util.merge_set_eq(*_debug !print_sv_f*) a4 d.memo_group_aset) in
                 (d.memo_group_fv@a1,
                  d.memo_group_cons::a2, 
                  d.memo_group_slice::a3, 
@@ -484,7 +481,7 @@ and memoise_add_memo_fnf (l_init: memo_pure) (cm:memoised_constraint) fnf: memo_
         (d.memo_group_fv@a1,
          d.memo_group_cons::a2,
          d.memo_group_slice::a3, 
-         Util.merge_set_eq a4 d.memo_group_aset))
+         Util.merge_set_eq(*_debug !print_sv_f*) a4 d.memo_group_aset))
     (fv,[n_cm_lst],[], empty_var_aset) merged in   
   let l = if (List.length merged)>0 then 
     let ng = {memo_group_cons =  filter_merged_cons (empty_var_aset) n2; 

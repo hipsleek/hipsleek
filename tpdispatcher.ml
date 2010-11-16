@@ -34,7 +34,6 @@ let prover_arg = ref "omega"
 let external_prover = ref false
 let external_host_ports = ref []
 let webserver = ref false
-let formulae_count = ref 0
 let priority = ref 1
 let decr_priority = ref false
 let set_priority = ref false
@@ -709,24 +708,21 @@ let tp_imply_sender ante conseq imp_no timeout =
 ;;
 
 let imply_cache  = Hashtbl.create 2000 ;;
-let impl_cache_count = ref 0;;
-let impl_proof_count = ref 0;;
 let impl_conseq_cache  = Hashtbl.create 2000 ;;
-let impl_conseq_count = ref 0;;
 
 let add_conseq_to_cache s = 
   try
     let _ = Hashtbl.find impl_conseq_cache s in ()
   with
     | Not_found -> 
-          (impl_conseq_count := !impl_conseq_count  +1 ;
+          (Util.inc_counter "impl_conseq_count";
           Hashtbl.add impl_conseq_cache s ()
           )
           
 let tp_imply ante conseq imp_no timeout do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
-    impl_cache_count := !impl_cache_count + 1 ;
+    Util.inc_counter "impl_cache_count";
     add_conseq_to_cache (!print_pure conseq) ;
     let s_rhs = !print_pure conseq in
     let s = (!print_pure ante)^"/"^ s_rhs in
@@ -738,7 +734,7 @@ let tp_imply ante conseq imp_no timeout do_cache =
         let r = tp_imply_sender ante conseq imp_no timeout in
         (Hashtbl.add imply_cache s r ;
          (*print_string ("s rhs: "^s_rhs^"\n");*)
-        impl_proof_count := !impl_proof_count + 1 ;
+         Util.inc_counter "impl_proof_count";
         r))
   else  
     tp_imply_sender ante conseq imp_no timeout
@@ -918,7 +914,7 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache in
 
   let _ = Util.pop_time s in
-  if res1  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
+  if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ;
   (res1,res2,res3)
 ;;
 
