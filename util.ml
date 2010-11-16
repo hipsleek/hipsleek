@@ -913,6 +913,7 @@ let subs_eset_eq_debug (f:'a->string)  (t:'a * 'a) ((s,eq):'a eq_set) : 'a eq_se
   let _ = print_string ("subs_eset_eq inp1 :"^(f (fst t))^"->"^(f (snd t))^"\n") in
   let _ = print_string ("subs_eset_eq inp2 :"^(string_of_e_set f s)^"\n") in
   let _ = print_string ("subs_eset_eq out :"^(string_of_e_set f r)^"\n") in
+  if (List.length r)<(List.length s) then print_string "subs_eset_eq : WARNING lost source var";
   (r,eq)
 
 
