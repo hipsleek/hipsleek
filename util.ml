@@ -763,12 +763,38 @@ let rec merge_partition (eq:'a->'a->bool) (l1:'a list list) (l2:'a list list) : 
    (*remove dupl of x*)
          
 
+(* return list of elements in e_set *)
+let get_elems (s:'a e_set) : 'a list = domain s
+
+(* return list of elements in e_set *)
+let get_elems_eq ((s,_):'a eq_set) : 'a list = domain s
+
+(* return pairs of equivalent elements from e_set *)
+let get_equiv (s:'a e_set) : ('a *'a) list = 
+  let ll = partition s in
+  let make_p l = match l with
+    | [] -> []
+    | x::xs -> List.map (fun b -> (x,b)) xs in
+  List.concat (List.map make_p ll)
+
+(* return pairs of equivalent elements from e_set *)
+let get_equiv_eq ((s,_):'a eq_set) : ('a *'a) list = get_equiv s 
+
+let order_two (l1:'a list) (l2:'a list) : ('a list * 'a list) =
+  if (List.length l1)>(List.length l2) then (l2,l1)
+  else (l1,l2)
+
 (* merge two equivalence sets s1 /\ s2 *)
 let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
- let l1=partition s1 in
+  let (t1,t2) = order_two s1 s2 in
+  List.fold_left (fun a (p1,p2) -> add_equiv_eq2 eq a p1 p2) t2 (get_equiv t1)
+
+
+(* let l1=partition s1 in
  let l2=partition s2 in
  let l3=merge_partition eq l1 l2 in
  un_partition l3
+*)
 
 let merge_set_eq  ((s1,eq): 'a eq_set) ((s2,_): 'a eq_set): 'a eq_set =
  let ax = merge_set_eq2 eq s1 s2 in
@@ -788,22 +814,6 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
 let merge_set_str ((s1,f,nm1): 'a e_set_str) ((s2,_,nm2): 'a e_set_str): 'a e_set_str =
  (merge_set s1 s2,f,nm1@nm2)
 
-(* return list of elements in e_set *)
-let get_elems (s:'a e_set) : 'a list = domain s
-
-(* return list of elements in e_set *)
-let get_elems_eq ((s,_):'a eq_set) : 'a list = domain s
-
-(* return pairs of equivalent elements from e_set *)
-let get_equiv (s:'a e_set) : ('a *'a) list = 
-  let ll = partition s in
-  let make_p l = match l with
-    | [] -> []
-    | x::xs -> List.map (fun b -> (x,b)) xs in
-  List.concat (List.map make_p ll)
-
-(* return pairs of equivalent elements from e_set *)
-let get_equiv_eq ((s,_):'a eq_set) : ('a *'a) list = get_equiv s 
 
 (* remove vs elements from e_set - used by existential elimination 
 let elim_elems_list (s:'a e_set) (vs:'a list) : 'a e_set = 
