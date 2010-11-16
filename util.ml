@@ -756,14 +756,18 @@ let un_partition (ll:'a list list) : 'a e_set =
   List.concat (List.map (fun x -> flat x x) ll)
          
 (* merge two equivalence sets s1 /\ s2 *)
-let merge_set_eq (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
+let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
  let l1=partition s1 in
  let l2=partition s2 in
  let l3=merge_partition eq l1 l2 in
  un_partition l3
 
+let merge_set_eq  ((s1,eq): 'a eq_set) ((s2,_): 'a eq_set): 'a eq_set =
+ let ax = merge_set_eq2 eq s1 s2 in
+ (ax,eq)
+
 let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
-  merge_set_eq (=) s1 s2
+  merge_set_eq2 (=) s1 s2
 
 (* merge two equivalence set_str s1 /\ s2 *)
 let merge_set_str ((s1,f,nm1): 'a e_set_str) ((s2,_,nm2): 'a e_set_str): 'a e_set_str =
