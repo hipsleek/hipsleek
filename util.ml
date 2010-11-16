@@ -890,11 +890,13 @@ let find_equiv_elim_eq (e:'a) ((s,eq):'a eq_set) : ('a * 'a eq_set) option  =
 
 (* make fv=tv and then eliminate fv *)
 let subs_eset_eq2 (eq:'a->'a->bool)  ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set = 
-  let r1 = find_eq2 eq s fv in
-  if (r1==[]) then s
-  else 
-    let ns = add_equiv_eq2 eq s fv tv in
-    elim_elems_one_eq2 eq ns fv
+  if (eq fv tv) then s
+  else
+    let r1 = find_eq2 eq s fv in
+    if (r1==[]) then s
+    else 
+      let ns = add_equiv_eq2 eq s fv tv in
+      elim_elems_one_eq2 eq ns fv
 
 (* make fv=tv and then eliminate fv *)
 let subs_eset  (t:'a * 'a) (s:'a e_set) : 'a e_set = 
@@ -904,6 +906,14 @@ let subs_eset  (t:'a * 'a) (s:'a e_set) : 'a e_set =
 let subs_eset_eq (t:'a * 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   let ns=subs_eset_eq2 (eq) t s in
   (ns,eq)
+
+(* make fv=tv and then eliminate fv *)
+let subs_eset_eq_debug (f:'a->string)  (t:'a * 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  let r=subs_eset_eq2 (eq) t s in
+  let _ = print_string ("subs_eset_eq inp :"^(string_of_e_set f s)^"\n") in
+  let _ = print_string ("subs_eset_eq out :"^(string_of_e_set f r)^"\n") in
+  (r,eq)
+
 
 (*
 let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set = 
@@ -947,6 +957,12 @@ let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set =
 
 let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   let r=rename_eset_eq2 (eq) f s in
+  (r,eq)
+
+let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  let r=rename_eset_eq2 (eq) f s in
+ let _ = print_string ("rename_eset_eq inp1 :"^(string_of_e_set f s)^"\n") in
+ let _ = print_string ("rename_eset_eq out :"^(string_of_e_set f r)^"\n") in
   (r,eq)
 
 
