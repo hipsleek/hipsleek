@@ -601,6 +601,30 @@ type 'a e_set_str =  (string e_set * ('a -> string) * 'a e_name )
 
 type 'a eq_set =  ('a,'a list) e_map * ('a -> 'a -> bool)
 
+(* converts (a e_set) to [[a]] *)
+let partition (s: 'a e_set) : 'a list list =
+ let rec insert (a,k) lst = match lst with
+      | [] -> [(k,[a])]
+      | (k2,ls)::xs -> 
+        if k==k2 then (k,a::ls)::xs
+          else (k2,ls)::(insert (a,k) xs) in
+ let r = List.fold_left (fun lst x ->  insert x lst) [] s in
+ List.map ( fun (_,b) -> b) r
+         
+(* converts [[a]] to (a e_set) *)
+let un_partition (ll:'a list list) : 'a e_set =
+  let flat xs y = 
+    if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
+    else [] in
+  List.concat (List.map (fun x -> flat x x) ll)
+         
+let string_of_e_set (f:'a->string) (e:'a e_set) : string =
+  let ll=partition e in 
+  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
+
+let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string = string_of_e_set f e
+
+
 let empty_aset  : 'a e_set = []
 
 let empty_a_set () : 'a e_set = empty_aset 
@@ -738,23 +762,7 @@ let rec merge_partition (eq:'a->'a->bool) (l1:'a list list) (l2:'a list list) : 
     else merge_partition eq xs ((x@(List.concat y))::ys)
    (*remove dupl of x*)
          
-(* converts (a e_set) to [[a]] *)
-let partition (s: 'a e_set) : 'a list list =
- let rec insert (a,k) lst = match lst with
-      | [] -> [(k,[a])]
-      | (k2,ls)::xs -> 
-        if k==k2 then (k,a::ls)::xs
-          else (k2,ls)::(insert (a,k) xs) in
- let r = List.fold_left (fun lst x ->  insert x lst) [] s in
- List.map ( fun (_,b) -> b) r
-         
-(* converts [[a]] to (a e_set) *)
-let un_partition (ll:'a list list) : 'a e_set =
-  let flat xs y = 
-    if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
-    else [] in
-  List.concat (List.map (fun x -> flat x x) ll)
-         
+
 (* merge two equivalence sets s1 /\ s2 *)
 let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
  let l1=partition s1 in
@@ -764,6 +772,13 @@ let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
 
 let merge_set_eq  ((s1,eq): 'a eq_set) ((s2,_): 'a eq_set): 'a eq_set =
  let ax = merge_set_eq2 eq s1 s2 in
+ (ax,eq)
+
+let merge_set_eq_debug (f:'a->string) ((s1,eq): 'a eq_set) ((s2,_): 'a eq_set): 'a eq_set =
+ let ax = merge_set_eq2 eq s1 s2 in
+ let _ = print_string ("merge_set_eq inp1 :"^(string_of_e_set f s1)^"\n") in
+ let _ = print_string ("merge_set_eq inp2 :"^(string_of_e_set f s2)^"\n") in
+ let _ = print_string ("merge_set_eq out :"^(string_of_e_set f ax)^"\n") in
  (ax,eq)
 
 let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
@@ -924,9 +939,6 @@ let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set =
   let r=rename_eset_eq2 (eq) f s in
   (r,eq)
 
-let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string =
-  let ll=partition e in 
-  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm
