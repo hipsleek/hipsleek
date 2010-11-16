@@ -911,14 +911,18 @@ let is_one2one (f:'a -> 'a) (s:'a list) : bool = is_one2one_eq (=) f s
 
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
-let rename_eset_eq (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
+let rename_eset_eq2 (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
   let b = is_one2one_eq eq f (get_elems s) in
   if b then  List.map (fun (e,k) -> (f e,k)) s
   else Error.report_error {Error.error_loc = Globals.no_pos; 
                   Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
-  rename_eset_eq (=) f s
+  rename_eset_eq2 (=) f s
+
+let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  let r=rename_eset_eq2 (eq) f s in
+  (r,eq)
 
 let string_of_e_set (f:'a->string) (e:'a e_set) : string =
   let ll=partition e in 
