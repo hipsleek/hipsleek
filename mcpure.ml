@@ -725,14 +725,75 @@ let memo_changed d = d.memo_group_changed
 (* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)
    if equal to an implied cond then it can be dropped as it is useless as a pruning condition
    throws an exception if p_cond is not found in corr*)
-let memo_check_syn_prun (p_cond,pr_branches) crt_br corr = 
-    let f = Cpure.eq_spec_var_aset corr.memo_group_aset in
-    let prun = List.find (fun d -> equalBFormula_f f d.memo_formula p_cond) corr.memo_group_cons in
-    match prun.memo_status with
-      | Fail_prune -> pr_branches
-      | Implied_dupl 
-      | Implied _ -> []
 
+let memo_check_syn_prun_fail (p,pr_branches) crt_br corr  = 
+    let f = Cpure.eq_spec_var_aset corr.memo_group_aset in
+    try 
+     let _ = List.find (fun d -> 
+      match d.memo_status with
+        | Implied_dupl 
+        | Implied _ ->  false
+        | _  -> equalBFormula_f f d.memo_formula p) corr.memo_group_cons in
+    Some pr_branches
+    with _ -> None
+    
+    
+let rec list_find (f:'a -> 'b option) l = match l with 
+    | [] -> None
+    | x::xs -> match f x with
+      | None -> list_find f xs
+      | Some s -> Some s
+    
+let memo_check_syn_prun_imply (p,pr_branches) crt_br corr  = 
+    let f = Cpure.eq_spec_var_aset corr.memo_group_aset in
+    let pn = memo_f_neg p in
+    let f_f x = match x.memo_status with
+      | Implied_dupl 
+      | Implied _ -> 
+          if equalBFormula_f f x.memo_formula p then Some []
+          else if equalBFormula_f f x.memo_formula pn then Some pr_branches
+          else None
+      | _ -> None in
+    list_find f_f corr.memo_group_cons
+
+(*let memo_check_syn_prun (p_cond,pr_branches) crt_br corr = 
+    let f = Cpure.eq_spec_var_aset corr.memo_group_aset in
+    let nf = List.hd (memo_norm_wrapper [(memo_f_neg p_cond)]) in
+ *)
+let memo_check_syn_prun_orig (p_cond,pr_branches) crt_br corr = 
+    let f = Cpure.eq_spec_var_aset corr.memo_group_aset in
+    try
+      let prun = List.find (fun d -> equalBFormula_f f d.memo_formula p_cond) corr.memo_group_cons in
+      match prun.memo_status with
+        | Fail_prune -> Some pr_branches
+        | Implied_dupl 
+        | Implied _ -> Some []
+    with _ -> None
+ 
+let memo_check_syn_prun p c corr =  memo_check_syn_prun_imply p c corr
+    
+let memo_check_syn_prun_debug p c corr = 
+    let r1 = memo_check_syn_prun_fail p c corr in
+    let r2 = memo_check_syn_prun_imply p c corr in
+    let r3 = memo_check_syn_prun_orig p c corr in
+    let _ = match (r1,r3) with
+      | Some s, None -> 
+          let _ = print_string (" Fail wins: "^(!print_bf_f (fst p))^"\n") in
+           print_string (" before check_s3 "^(!print_mp_f [corr])^"\n")
+      | None, Some s -> 
+          let _ = print_string (" Orig wins: "^(!print_bf_f (fst p))^"\n") in
+          print_string (" before check_s3 "^(!print_mp_f [corr])^"\n")
+      | _ -> () in      
+    let _ = match (r1,r2) with
+      | Some s, None -> 
+          let _ = print_string (" Fail wins: "^(!print_bf_f (fst p))^"\n") in
+           print_string (" before check_s3 "^(!print_mp_f [corr])^"\n")
+      | None, Some s -> 
+          let _ = print_string (" Imply wins: "^(!print_bf_f (fst p))^"\n") in
+          print_string (" before check_s3 "^(!print_mp_f [corr])^"\n")
+      | _ -> () in
+    r3
+    
 let transform_memo_formula f l : memo_pure =
   let (f_memo,f_aset, f_formula, f_b_formula, f_exp) = f in
   let r = f_memo l in 

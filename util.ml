@@ -501,7 +501,10 @@ let add_to_counter (s:string) i =
   else ()
 let inc_counter (s:string) = add_to_counter s 1
   
-let string_of_counters () = "Counters: \n "^ (Hashtbl.fold (fun k v a-> a^k^" = "^(string_of_int v)^"\n") !counters "")
+let string_of_counters () = 
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 	
 (*hairy stuff for exception numbering*)
 			

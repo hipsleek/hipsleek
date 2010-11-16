@@ -564,31 +564,32 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                 let fv = CP.bfv p_cond in
                 let corr = MCP.memo_find_relevant_slice fv new_mem in
                 if not (MCP.memo_changed corr) then (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
-                else try
-                    (Util.inc_counter "counter_memo_count";
-                    let y_p = MCP.memo_check_syn_prun (p_cond, pr_branches) rem_br corr in
-                     Util.inc_counter "counter_memo_hit";
-                      
-                    (*let _ = print_string ("found contra: "^(String.concat " ; "(List.map (fun (c,_) -> string_of_int c) y_p))^"-\n") in*)
-                    (y_p@yes_prune, no_prune,new_mem))
-                  with | Not_found -> 
-                    (*decide if i ^ a = false*)
-                   (* let _ = print_string ("memo miss: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
-                    let _ = print_string (" memo formula: "^(Cprinter.string_of_memoised_list [corr])^"\n") in                    
-                    let _ = print_string ("init mem: "^(Cprinter.string_of_memoised_list [corr])^"\n") in
-                    let _ = print_string ("and_is: "^(Cprinter.string_of_pure_formula and_is)^"\n") in
-                    let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
-                   *) 
-                    let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
-                    let sat,_,_ = TP.imply_msg_no_no and_is (CP.Not ((CP.BForm (p_cond,None)),None,no_pos)) (ref 1) "prune_imply" true in
-                    let sat = not sat in
-                    (*let and_is = MCP.fold_mem_lst_cons p_cond [corr] false true false  in
-                    let sat = TP.is_sat_msg_no_no "prune_sat" and_is true in*)
-                    if not sat then (*there was a contradiction*)
-                      let nyp = pr_branches@yes_prune in
-                      let mem_w_fail = MCP.memoise_add_failed_memo new_mem (MCP.memo_cons_wrap_fail p_cond) in
-                      (nyp,no_prune,mem_w_fail)
-                    else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
+                else 
+                    let y_p = (Util.inc_counter "counter_memo_count";
+                      MCP.memo_check_syn_prun(*_debug*) (p_cond, pr_branches) rem_br corr) in
+                    match y_p with
+                      | Some y_p ->
+                       (Util.inc_counter "counter_memo_hit";
+                          (*let _ = print_string ("found contra: "^(String.concat " ; "(List.map (fun (c,_) -> string_of_int c) y_p))^"-\n") in*)
+                       (y_p@yes_prune, no_prune,new_mem))
+                      | None -> 
+                          (*decide if i ^ a = false*)
+                         (* let _ = print_string ("memo miss: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
+                          let _ = print_string (" memo formula: "^(Cprinter.string_of_memoised_list [corr])^"\n") in                    
+                          let _ = print_string ("init mem: "^(Cprinter.string_of_memoised_list [corr])^"\n") in
+                          let _ = print_string ("and_is: "^(Cprinter.string_of_pure_formula and_is)^"\n") in
+                          let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
+                         *) 
+                          let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
+                          let sat,_,_ = TP.imply_msg_no_no and_is (CP.Not ((CP.BForm (p_cond,None)),None,no_pos)) (ref 1) "prune_imply" true in
+                          let sat = not sat in
+                          (*let and_is = MCP.fold_mem_lst_cons p_cond [corr] false true false  in
+                          let sat = TP.is_sat_msg_no_no "prune_sat" and_is true in*)
+                          if not sat then (*there was a contradiction*)
+                            let nyp = pr_branches@yes_prune in
+                            let mem_w_fail = MCP.memoise_add_failed_memo new_mem (MCP.memo_cons_wrap_fail p_cond) in
+                            (nyp,no_prune,mem_w_fail)
+                          else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
               with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
         ) ([],[], old_mem) prun_cond in
        (*l_prune : branches that will be dropped*)

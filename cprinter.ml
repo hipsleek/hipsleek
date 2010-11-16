@@ -649,7 +649,7 @@ let pr_memoise mem =
   (List.filter (fun c-> match c.MP.memo_status with 
                   | MP.Implied _ -> true 
                   | MP.Implied_dupl _ -> true 
-                  | _-> false) mem); fmt_string "]"
+                  | _-> true (*false*)) mem); fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
   
