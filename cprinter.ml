@@ -634,10 +634,8 @@ let rec pr_pure_formula  (e:P.formula) =
 ;;
 
 let pr_prune_status st = match st with
-  | MP.Fail_prune -> fmt_string "(C)"
   | MP.Implied b -> fmt_string ("(I"^(if b then "T" else "F")^")")
-  | MP.Implied_dupl -> fmt_string "(IDup)"  
-  (*| MP.Unknown_prune b -> fmt_string ("(U"^(if b then "T" else "F")^")")*)
+  | MP.Implied_dupl -> fmt_string "(IDup)" 
   
 let pr_memoise_constraint c = 
   pr_b_formula c.MP.memo_formula ; pr_prune_status c.MP.memo_status
@@ -648,8 +646,7 @@ let pr_memoise mem =
   fmt_string "[";pr_list_op_none "& " pr_memoise_constraint 
   (List.filter (fun c-> match c.MP.memo_status with 
                   | MP.Implied _ -> true 
-                  | MP.Implied_dupl _ -> true 
-                  | _-> true (*false*)) mem); fmt_string "]"
+                  | MP.Implied_dupl _ -> true) mem); fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
   

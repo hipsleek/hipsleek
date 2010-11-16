@@ -4877,24 +4877,15 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
 
 and view_prune_inv_inference cp vd =  
     let sf  = CP.SpecVar (CP.OType vd.C.view_data_name, self, Unprimed) in
-    (*let _ = print_string ("\n pre infer: "^(Cprinter.string_of_struc_formula vd.C.view_formula)^"\n") in*)
-    (*let _ = print_string "bf\n"  in*)
     let v_f = CF.label_view vd.C.view_formula in 
     let f_branches = CF.get_view_branches  v_f in 
     let branches = snd (List.split f_branches) in
-    (*let _ = print_string ("start "^vd.C.view_name);flush stdout in*)
     let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches no_pos in    
-    (*let _ = print_string "aft\n"  in*)
-    (*let conds = List.filter (fun (c1,_)-> ((List.length c1)>0)) conds in*)
-    (*let conds = List.map (fun (c1,c2)-> (List.hd (MCP.memo_norm_wrapper [c1]),c2)) conds in
-    let invs = List.map (fun (c1,c2)-> (c1, MCP.memo_norm_wrapper c2)) invs in *)
-    (*(fun c-> pr_seq "," (fun (c1,c2)-> pr_formula_label c1;fmt_string "->";pr_struc_formula c2) c) branches;*)
     let v' = { vd with  
         C.view_formula = v_f;
         C.view_prune_branches = branches; 
         C.view_prune_conditions = conds ; 
         C.view_prune_invariants = invs;} in 
-    (*print_string ("view "^vd.C.view_name ^" defined: \n"^(Cprinter.string_of_view_decl vd)^"\n becomes: \n"^(Cprinter.string_of_view_decl v')); *)
     v'    
     
 and coerc_spec prog is_l c = 
@@ -4961,7 +4952,9 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
     let preds = List.map (fun c-> view_prune_inv_inference cp c) cp.C.prog_view_decls in
     let prog_views_inf = {cp with C.prog_view_decls  = preds;} in
     (*let _ = print_string ("\n\n=========before:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
-    let preds = List.map (fun c-> {c with 
+    let preds = List.map (fun c-> 
+      let _ = print_string ("pruning for "^(c.C.view_name)^"\n") in
+      {c with 
         C.view_formula =  Solver.prune_pred_struc prog_views_inf c.C.view_formula ;
         C.view_un_struc_formula = Solver.prune_preds prog_views_inf c.C.view_un_struc_formula;}) preds in
     (*let _ = print_string ("\n\n=========after:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)

@@ -546,7 +546,8 @@ let simplify (f : CP.formula) : CP.formula =
       Some res -> res
       | None -> f
 	else
-	match !tp with
+  (Util.push_time "simplify";
+	 let r = match !tp with
   | Isabelle -> Isabelle.simplify f
   | Coq -> Coq.simplify f
   | Mona -> Mona.simplify f
@@ -574,7 +575,9 @@ let simplify (f : CP.formula) : CP.formula =
 		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
 	  else
 *)
-	  (Omega.simplify f)
+	  (Omega.simplify f) in
+  Util.pop_time "simplify";
+  r)
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f

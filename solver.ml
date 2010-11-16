@@ -14,16 +14,92 @@ module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
 
-let rec filter_formula_memo f = 
+
+(*
+  - count how many int constants are contained in one expression
+  - if there are more than 1 --> means that we can simplify further (by performing the operation)
+*)
+let rec count_iconst (f : CP.exp) = match f with
+  | CP.Subtract (e1, e2, _)
+  | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
+  | CP.Mult (e1, e2, _)
+  | CP.Div (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
+  | CP.IConst _ -> 1
+  | _ -> 0
+
+let simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
+  | CP.Lt (e1, e2, pos)
+  | CP.Lte (e1, e2, pos)
+  | CP.Gt (e1, e2, pos)
+  | CP.Gte (e1, e2, pos)
+  | CP.Eq (e1, e2, pos)
+  | CP.Neq (e1, e2, pos)
+  | CP.BagSub (e1, e2, pos) ->
+      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
+	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
+  	    begin
+  	      match simpl_f with
+  	        | CP.BForm(simpl_f1,_) ->
+  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  		        simpl_f1
+  	        | _ -> f
+  	    end
+      else f
+  | CP.EqMax (e1, e2, e3, pos)
+  | CP.EqMin (e1, e2, e3, pos) ->
+      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then
+	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
+  	    begin
+  	      match simpl_f with
+  	        | CP.BForm(simpl_f1,_) ->
+  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  		        simpl_f1
+  	        | _ -> f
+  	    end
+      else f
+  | CP.BagIn (sv, e1, pos)
+  | CP.BagNotIn (sv, e1, pos) ->
+      if ((count_iconst e1) > 1) then
+	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
+  	    begin
+  	      match simpl_f with
+  	        | CP.BForm(simpl_f1,_) ->
+  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  		        simpl_f1
+  	        | _ -> f
+  	    end
+      else f
+  | CP.ListIn (e1, e2, pos)
+  | CP.ListNotIn (e1, e2, pos)
+  | CP.ListAllN (e1, e2, pos)
+  | CP.ListPerm (e1, e2, pos) ->
+		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
+			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
+			let simpl_f = TP.simplify (CP.BForm(f,None)) in
+  		begin
+  		match simpl_f with
+  		| CP.BForm(simpl_f1,_) ->
+  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
+  			simpl_f1
+  		| _ -> f
+  		end
+  	else f
+ 	| _ -> f
+
+
+let rec filter_formula_memo f simp_b=
   match f with
-    | Or c -> mkOr (filter_formula_memo c.formula_or_f1) (filter_formula_memo c.formula_or_f2) no_pos
+    | Or c -> mkOr (filter_formula_memo c.formula_or_f1 simp_b) (filter_formula_memo c.formula_or_f2 simp_b) no_pos
     | Base b-> 
       let fv = (h_fv b.formula_base_heap)@(MCP.mfv b.formula_base_pure) in
-      let nmem = MCP.filter_useless_memo_pure TP.simplify fv b.formula_base_pure in
+      let nmem = MCP.filter_useless_memo_pure TP.simplify simp_b fv b.formula_base_pure in
       Base {b with formula_base_pure = nmem;}
     | Exists e-> 
       let fv = (h_fv e.formula_exists_heap)@(MCP.mfv e.formula_exists_pure)@e.formula_exists_qvars in
-      let nmem = MCP.filter_useless_memo_pure TP.simplify fv e.formula_exists_pure in
+      let nmem = MCP.filter_useless_memo_pure TP.simplify simp_b fv e.formula_exists_pure in
       Exists {e with formula_exists_pure = nmem;}
 
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
@@ -60,7 +136,7 @@ let prune_branches_subsume prog univ_vars lhs_node rhs_node = match lhs_node,rhs
 
 let clear_entailment_history_es (es :entail_state) :context = 
   Ctx {(es_cache_same es (empty_es (mkTrueFlow ()) no_pos)) with 
-    es_formula = filter_formula_memo es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
+    es_formula = filter_formula_memo es.es_formula None; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
  
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -484,7 +560,8 @@ and prune_pred_struc prog f =
 (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
 List.map helper f
    
-and prune_preds prog (f:formula):formula =     
+and prune_preds prog (f:formula):formula =   
+let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "" false in r in   
     let rec helper_formulas f = match f with
     | Or o -> 
       let f1 = helper_formulas o.formula_or_f1 in
@@ -496,7 +573,7 @@ and prune_preds prog (f:formula):formula =
           let nh, mem, changed = heap_prune_preds prog e.formula_exists_heap e.formula_exists_pure in 
           if changed then fct (i+1) {e with formula_exists_heap = nh; formula_exists_pure = mem;}
           else {e with formula_exists_pure = List.map (fun c-> {c with MCP.memo_group_changed = false}) e.formula_exists_pure} in
-      Exists (fct 0 e)
+      Exists (let r = fct 0 e in MCP.check_redundant imply_w r.formula_exists_pure ; r)
     | Base b ->
       let rec fct i b = if (i== !Globals.prune_cnt_limit) then b
           else
@@ -505,12 +582,14 @@ and prune_preds prog (f:formula):formula =
             if changed then 
               fct (i+1) {b with formula_base_heap = nh; formula_base_pure = mem}
             else {b with formula_base_pure = List.map (fun c-> {c with MCP.memo_group_changed = false}) b.formula_base_pure} in
-      Base (fct 0 b) in
+            
+           
+      Base (let r = fct 0 b in MCP.check_redundant imply_w r.formula_base_pure ; r) in
   if (not !Globals.allow_pruning) then f
   else 
      (
       Util.push_time "prune_preds_filter";
-      let f1 = filter_formula_memo f in
+      let f1 = filter_formula_memo f (Some simpl_b_formula) in
       Util.pop_time "prune_preds_filter";
       Util.push_time "prune_preds";
       let nf = helper_formulas f1 in
@@ -587,7 +666,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                           let sat = TP.is_sat_msg_no_no "prune_sat" and_is true in*)
                           if not sat then (*there was a contradiction*)
                             let nyp = pr_branches@yes_prune in
-                            let mem_w_fail = MCP.memoise_add_failed_memo new_mem (MCP.memo_cons_wrap_fail p_cond) in
+                            let mem_w_fail = MCP.memoise_add_failed_memo new_mem p_cond in
                             (nyp,no_prune,mem_w_fail)
                           else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
               with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
@@ -607,7 +686,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
           let added_invs = List.map (CP.b_apply_subs zip) (lookup_view_invs rem_br_lst v_def) in
           let new_add_invs = Util.difference_f CP.eq_b_formula_no_aset added_invs dism_invs in
           let old_dism_invs = Util.difference_f CP.eq_b_formula_no_aset dism_invs added_invs in
-          let ni = MCP.create_memo_group_wrapper new_add_invs true in
+          let ni = MCP.create_memo_group_wrapper new_add_invs 1 in
           (*let _ = print_string ("adding: "^(Cprinter.string_of_memoised_list ni)^"\n") in*)
           let mem_o_inv = MCP.memo_change_status old_dism_invs new_mem2 in 
           ( Util.inc_counter "prune_cnt"; Util.add_to_counter "dropped_branches" (List.length l_prune);
@@ -617,7 +696,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
           (ViewNode{v with h_formula_view_pruning_conditions = l_no_prune;},new_mem2, false)
         else 
           let ai = List.map (CP.b_apply_subs zip) (lookup_view_invs rem_br v_def) in
-          let gr_ai = MCP.create_memo_group_wrapper ai true in     
+          let gr_ai = MCP.create_memo_group_wrapper ai 1 in     
           let l_no_prune = List.filter (fun (_,c)-> (List.length(Util.intersect c rem_br))>0) l_no_prune in
           let new_hp = ViewNode {v with  h_formula_view_remaining_branches = Some rem_br;h_formula_view_pruning_conditions = l_no_prune;} in
         (new_hp, MCP.merge_mems new_mem2 gr_ai true, true) in
@@ -1293,7 +1372,7 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
 	    let tmp_conseq = mkBase resth2 pure2 type2 flow2 branches2 pos in
 	    let new_conseq = normalize tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure to_conseq pos)) pos in
 	    let new_ante = normalize fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure to_ante pos)) pos in
-      let new_ante = filter_formula_memo new_ante in
+      let new_ante = filter_formula_memo new_ante None in
 	    let new_consumed = fold_es.es_heap in
 	    let new_es = {(es_cache_extend estate) with es_heap = new_consumed;
                                 es_formula = new_ante;
@@ -1355,8 +1434,7 @@ and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
       let aset = List.fold_left  ( fun a (c1,c2) -> Util.add_equiv_eq a c1 c2) MCP.empty_var_aset drp3 in 
       let fand1 = List.fold_left (fun a c-> match c.MCP.memo_status with
         | MCP.Implied _
-        | MCP.Implied_dupl -> CP.mkAnd a (CP.BForm (c.MCP.memo_formula, None)) pos
-        | _ -> a) (CP.mkTrue pos) r in
+        | MCP.Implied_dupl -> CP.mkAnd a (CP.BForm (c.MCP.memo_formula, None)) pos) (CP.mkTrue pos) r in
       let fand2 = List.fold_left (fun a c-> CP.mkAnd a c pos) fand1 ns in
       let fand3 = List.fold_left (fun a (c1,c2)-> 
                     CP.mkAnd a (CP.BForm (CP.Eq(CP.Var(c1,no_pos),CP.Var(c2,no_pos),no_pos),None)) no_pos)
@@ -2434,16 +2512,12 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
       let new_ante0 =
         if !Globals.omega_simpl && not(TP.is_memo_bag_constraint new_ante0)&& not(TP.is_memo_list_constraint new_ante0)  then 
           let simp_ante = new_ante0 in
-            (*(Debug.devel_pprint ("simplify the antecedent with omega") no_pos;	
-              
-            let r = CP.memo_arith_simplify (simpl_memo_pure_formula new_ante0) in(* todo: remove the comment from omega.simplify after solving the problem in omega.ml with the collection of the error output *)
-            Debug.devel_pprint ("res: "^(Cprinter.string_of_pure_formula r)^"\n") no_pos; r)*)
-          (* check wheather Omega raised any error; if it did then use the ante before simplification *)
           if !Globals.omega_err = false then simp_ante else (Globals.omega_err := false; new_ante0)	(* reset the error flag *)
         else new_ante0 in
       let new_conseq0 = 
 	    if !Globals.omega_simpl && not(TP.is_memo_bag_constraint new_conseq0)&& not(TP.is_memo_list_constraint new_conseq0)  then 
-	      let simp_conseq = (Debug.devel_pprint ("simplify the consequent with omega") no_pos;	(*simpl_memo_pure_formula*) new_conseq0) in
+	      let simp_conseq = (Debug.devel_pprint ("simplify the consequent with omega") no_pos;	
+        (*simpl_memo_pure_formula*) new_conseq0) in
 	      let simp_conseq1 =  if !Globals.omega_err = false then simp_conseq else (Globals.omega_err := false; new_conseq0)	in 
         (* use the previous conseq , reset the error flag *)
         memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos 
@@ -3538,80 +3612,6 @@ and simpl_pure_formula (f : CP.formula) : CP.formula = match f with
 	  (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_pure_formula f ^ "\n") in
 	    let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_pure_formula simpl_f ^ "\n") in*)
 	  simpl_f
-
-and simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
-  | CP.Lt (e1, e2, pos)
-  | CP.Lte (e1, e2, pos)
-  | CP.Gt (e1, e2, pos)
-  | CP.Gte (e1, e2, pos)
-  | CP.Eq (e1, e2, pos)
-  | CP.Neq (e1, e2, pos)
-  | CP.BagSub (e1, e2, pos) ->
-      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
-	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
-  	    begin
-  	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_) ->
-  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  		        simpl_f1
-  	        | _ -> f
-  	    end
-      else f
-  | CP.EqMax (e1, e2, e3, pos)
-  | CP.EqMin (e1, e2, e3, pos) ->
-      if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) or ((count_iconst e3) > 1) then
-	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
-  	    begin
-  	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_) ->
-  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  		        simpl_f1
-  	        | _ -> f
-  	    end
-      else f
-  | CP.BagIn (sv, e1, pos)
-  | CP.BagNotIn (sv, e1, pos) ->
-      if ((count_iconst e1) > 1) then
-	    (*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-	    let simpl_f = TP.simplify (CP.BForm(f,None)) in
-  	    begin
-  	      match simpl_f with
-  	        | CP.BForm(simpl_f1,_) ->
-  		        (*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  		        simpl_f1
-  	        | _ -> f
-  	    end
-      else f
-  | CP.ListIn (e1, e2, pos)
-  | CP.ListNotIn (e1, e2, pos)
-  | CP.ListAllN (e1, e2, pos)
-  | CP.ListPerm (e1, e2, pos) ->
-		if ((count_iconst e1) > 1) or ((count_iconst e2) > 1) then
-			(*let _ = print_string("\n[solver.ml]: Formula before simpl: " ^ Cprinter.string_of_b_formula f ^ "\n") in*)
-			let simpl_f = TP.simplify (CP.BForm(f,None)) in
-  		begin
-  		match simpl_f with
-  		| CP.BForm(simpl_f1,_) ->
-  			(*let _ = print_string("\n[solver.ml]: Formula after simpl: " ^ Cprinter.string_of_b_formula simpl_f1 ^ "\n") in*)
-  			simpl_f1
-  		| _ -> f
-  		end
-  	else f
- 	| _ -> f
-
-(*
-  - count how many int constants are contained in one expression
-  - if there are more than 1 --> means that we can simplify further (by performing the operation)
-*)
-and count_iconst (f : CP.exp) = match f with
-  | CP.Subtract (e1, e2, _)
-  | CP.Add (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
-  | CP.Mult (e1, e2, _)
-  | CP.Div (e1, e2, _) -> ((count_iconst e1) + (count_iconst e2))
-  | CP.IConst _ -> 1
-  | _ -> 0
 
 and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula = 
   let sat_subno = ref 0 in
