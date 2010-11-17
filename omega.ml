@@ -176,8 +176,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
     if !log_all_flag then begin
 (*      output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-      output_string log_all ("#is_sat " ^ sat_no ^ " " ^ Util.new_line_str ^ Util.new_line_str);
-      output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+      output_string log_all (Util.new_line_str^"#is_sat " ^ sat_no ^ Util.new_line_str);
+      output_string log_all (Util.break_lines fomega);
       flush log_all;
     end;
     let quitloop = ref false in
@@ -208,7 +208,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       | e -> ignore e
     end;
     if !log_all_flag = true then begin
-      if !sat then output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> FAIL\n");
+      if !sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") else output_string log_all ("[omega.ml]: unsat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
     end else ();
     !sat
   end
@@ -251,8 +251,8 @@ let is_valid (pe : formula) timeout: bool =
     let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
             if !log_all_flag then begin
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-                output_string log_all ("#is_valid" ^ Util.new_line_str ^ Util.new_line_str);
-                output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+                output_string log_all (Util.new_line_str^"#is_valid" ^Util.new_line_str);
+                output_string log_all (Util.break_lines fomega);
                 flush log_all;
             end;
       let quitloop = ref false in
@@ -298,9 +298,9 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
     if result then 
-      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
+      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
     else 
-      output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
+      output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
 

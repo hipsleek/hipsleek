@@ -561,7 +561,7 @@ and prune_pred_struc prog simp_f f =
 List.map helper f
    
 and prune_preds prog f_simp (f:formula):formula =   
-    let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "" false in r in   
+    let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false in r in   
     let f_p_simp c = match f_simp with | None -> c | Some _ ->  MCP.elim_redundant(*_debug*) imply_w c in
 
     let rec helper_formulas f = match f with
@@ -662,7 +662,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                           let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                          *) 
                           let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
-                          let sat,_,_ = TP.imply_msg_no_no and_is (CP.Not ((CP.BForm (p_cond,None)),None,no_pos)) (ref 1) "prune_imply" true in
+                          let sat,_,_ = TP.imply_msg_no_no and_is (CP.Not ((CP.BForm (p_cond,None)),None,no_pos)) "prune_imply" "prune_imply" true in
                           let sat = not sat in
                           (*let and_is = MCP.fold_mem_lst_cons p_cond [corr] false true false  in
                           let sat = TP.is_sat_msg_no_no "prune_sat" and_is true in*)
@@ -2559,7 +2559,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
               imp_subno := !imp_subno+1; 
               Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;
               (*let  _ = print_string ("imply ante: "^(Cprinter.string_of_memo_pure_formula new_ante)) in*)
-		      TP.memo_imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
+		      TP.memo_imply new_ante new_conseq ("emptyRHS"^(string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
           in
           List.fold_left fold_fun2 (false,[],None) branches
         else (res1,res2,res3)
@@ -2653,7 +2653,7 @@ and imply_process_ante ante_disj conseq str =
   let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct CP.eq_spec_var fv c.MCP.memo_group_fv))>0) ante_disj in 
   let r = MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-  (TP.imply r conseq (string_of_int !imp_no) false)
+  (TP.imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false)
 
    
 and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f =
@@ -3358,7 +3358,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 		    (* is it necessary to xpure (node * f) instead ? *)
 		    Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;
 		    imp_no := !imp_no+1;
-		    if ((fun (c1,_,_)-> c1) (TP.imply (MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs) lhs_guard_new (string_of_int !imp_no) false)) then
+		    if ((fun (c1,_,_)-> c1) (TP.imply (MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs) lhs_guard_new ("line3360"^(string_of_int !imp_no)) false)) then
 		      let new_f = normalize coer_rhs_new f pos in
 		      (if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
 			    ((*print_string("disable distribution\n"); *)enable_distribution := false);

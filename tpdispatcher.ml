@@ -660,7 +660,7 @@ let tp_imply_sender ante conseq imp_no timeout =
                   ^(Cprinter.string_of_pure_formula conseq)^"\n") in
    *)
   match !tp with
-  | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
+  | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
   | Cvc3 -> Cvc3.imply ante conseq
   | Z3 -> Smtsolver.imply ante conseq
@@ -979,9 +979,9 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
   sat
   
 let imply_sub_no ante0 conseq0 imp_no do_cache=
-  Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "\n") no_pos;
-  imp_no := !imp_no+1;
-  imply ante0 conseq0 (string_of_int !imp_no) do_cache
+  Debug.devel_pprint ("IMP #" ^ imp_no ^ "\n") no_pos;
+  (* imp_no := !imp_no+1;*)
+  imply ante0 conseq0 imp_no do_cache
 
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let _ = Util.push_time prof_lbl in  
