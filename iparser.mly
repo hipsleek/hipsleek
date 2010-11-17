@@ -6,7 +6,9 @@
 
   module F = Iformula
   module P = Ipure
-
+ 
+  let file_name = ref ""
+  
   type type_decl =
 	| Data of data_decl
 	| Enum of enum_decl
@@ -1045,6 +1047,7 @@ proc_header
 		  proc_static_specs = $7;
 		  proc_dynamic_specs = [];
 		  proc_loc = get_pos 1;
+      proc_file = !file_name;
 		  proc_body = None }
 	}
   | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
@@ -1059,6 +1062,7 @@ proc_header
 			proc_static_specs = $7;
 			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
+      proc_file = !file_name;
 			proc_body = None }
   }
 ;
@@ -1084,6 +1088,7 @@ constructor_header
 			proc_static_specs = $6;
 			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
+      proc_file = !file_name;
 			proc_body = None }
 	(*	else
 		  report_error (get_pos 1) ("constructors have only static speficiations");*)

@@ -110,8 +110,8 @@ let process_pred_def pdef =
 		let n_cpdef = AS.view_prune_inv_inference cprog cpdef in
     cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
     let n_cpdef = {n_cpdef with 
-        C.view_formula =  Solver.prune_pred_struc cprog (Some Tpdispatcher.simplify) n_cpdef.C.view_formula ;
-        C.view_un_struc_formula = Solver.prune_preds cprog (Some Tpdispatcher.simplify) n_cpdef.C.view_un_struc_formula;}in
+        C.view_formula =  Solver.prune_pred_struc cprog true n_cpdef.C.view_formula ;
+        C.view_un_struc_formula = Solver.prune_preds cprog true n_cpdef.C.view_un_struc_formula;}in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)

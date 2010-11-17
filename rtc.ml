@@ -226,6 +226,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;
 					   I.proc_exceptions = [];
+             I.proc_file = "";
 					   I.proc_loc = no_pos } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_PRE";
 				 I.data_fields = fields;
@@ -294,6 +295,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;
 					   I.proc_exceptions = [];
+             I.proc_file = "";
 					   I.proc_loc = no_pos } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_POST";
 				 I.data_fields = fields;

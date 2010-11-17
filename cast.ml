@@ -62,6 +62,7 @@ and proc_decl = { proc_name : ident;
 				  proc_dynamic_specs_with_pre : Cformula.struc_formula;
 				  proc_by_name_params : P.spec_var list;
 				  proc_body : exp option;
+          proc_file : string;
 				  proc_loc : loc }
 
 (*TODO: does lemma need struc formulas?*)

@@ -90,7 +90,7 @@ let simpl_b_formula (f : CP.b_formula): CP.b_formula =  match f with
  	| _ -> f
 
 
-let rec filter_formula_memo f simp_b=
+let rec filter_formula_memo f (simp_b:bool)=
   match f with
     | Or c -> mkOr (filter_formula_memo c.formula_or_f1 simp_b) (filter_formula_memo c.formula_or_f2 simp_b) no_pos
     | Base b-> 
@@ -136,7 +136,7 @@ let prune_branches_subsume prog univ_vars lhs_node rhs_node = match lhs_node,rhs
 
 let clear_entailment_history_es (es :entail_state) :context = 
   Ctx {(es_cache_same es (empty_es (mkTrueFlow ()) no_pos)) with 
-    es_formula = filter_formula_memo es.es_formula None; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
+    es_formula = filter_formula_memo es.es_formula false; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;} 
  
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -546,23 +546,23 @@ and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
  
 and prune_ctx prog ctx = match ctx with
   | OCtx (c1,c2)-> OCtx (prune_ctx prog c1,prune_ctx prog c2)
-  | Ctx es -> Ctx {es with es_formula =prune_preds prog None es.es_formula}
+  | Ctx es -> Ctx {es with es_formula =prune_preds prog false es.es_formula}
   
 and prune_branch_ctx prog (pt,bctx) = (pt,prune_ctx prog bctx)    
 and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
     
-and prune_pred_struc prog simp_f f = 
+and prune_pred_struc prog (simp_b:bool) f = 
   let rec helper f =match f with
-    | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc prog simp_f c2)) c.formula_case_branches;}
-    | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_f b.formula_ext_base;
-                               formula_ext_continuation = prune_pred_struc prog simp_f b.formula_ext_continuation}
-    | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_f f,l) in    
+    | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc prog simp_b c2)) c.formula_case_branches;}
+    | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_b b.formula_ext_base;
+                               formula_ext_continuation = prune_pred_struc prog simp_b b.formula_ext_continuation}
+    | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l) in    
 (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
 List.map helper f
    
-and prune_preds prog f_simp (f:formula):formula =   
+and prune_preds prog (simp_b:bool) (f:formula):formula =   
     let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false in r in   
-    let f_p_simp c = match f_simp with | None -> c | Some _ ->  MCP.elim_redundant(*_debug*) imply_w c in
+    let f_p_simp c = if simp_b then  MCP.elim_redundant(*_debug*) imply_w c else c in
 
     let rec helper_formulas f = match f with
     | Or o -> 
@@ -591,7 +591,7 @@ and prune_preds prog f_simp (f:formula):formula =
   else 
      (
       Util.push_time "prune_preds_filter";
-      let f1 = filter_formula_memo f f_simp in
+      let f1 = filter_formula_memo f simp_b in
       Util.pop_time "prune_preds_filter";
       Util.push_time "prune_preds";
       let nf = try  helper_formulas f1 with e -> (print_string "here2 \n"; raise e) in   
@@ -1374,7 +1374,7 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
 	    let tmp_conseq = mkBase resth2 pure2 type2 flow2 branches2 pos in
 	    let new_conseq = normalize tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure to_conseq pos)) pos in
 	    let new_ante = normalize fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure to_ante pos)) pos in
-      let new_ante = filter_formula_memo new_ante None in
+      let new_ante = filter_formula_memo new_ante false in
 	    let new_consumed = fold_es.es_heap in
 	    let new_es = {(es_cache_extend estate) with es_heap = new_consumed;
                                 es_formula = new_ante;
@@ -1781,9 +1781,9 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool) (is_universal 
 		  es_orig_ante   = es.es_formula;
 		  es_orig_conseq = conseq ;}in	
 	    let cl_new = transform_list_context ( (fun es1->         
-        let es = {es1 with es_formula =prune_preds prog (Some TP.simplify) es1.es_formula} in
+        let es = {es1 with es_formula =prune_preds prog false es1.es_formula} in
         Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-	    let conseq_new = prune_pred_struc prog (Some TP.simplify) conseq in
+	    let conseq_new = prune_pred_struc prog false conseq in
 	    heap_entail_struc prog is_folding is_universal has_post cl_new conseq_new pos pid
 
 	      
@@ -2975,7 +2975,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                           (*let _ = print_string ("can strenghten: with: "^(Cprinter.string_of_pure_formula l)^"\n") in*)
                           let f_l = formula_of_pure l pos   in
                           let new_es_f = normalize estate.es_formula f_l pos in
-                          let new_es = {estate with es_formula = prune_preds prog None new_es_f } in 
+                          let new_es = {estate with es_formula = prune_preds prog false new_es_f } in 
                           let new_ctx = Ctx new_es in
                           let new_conseq = normalize conseq f_l pos in
                           heap_entail_conjunct prog is_folding is_universal new_ctx new_conseq pos 
@@ -3716,7 +3716,7 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) ^"\n") pos; 
   Util.push_time "entail_prune";
   let cl = prune_ctx_list prog cl in
-  let conseq = prune_pred_struc prog (Some TP.simplify) conseq in
+  let conseq = prune_pred_struc prog false conseq in
   Util.pop_time "entail_prune";
   heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,heap_entail_one_context_struc)
   
@@ -3727,7 +3727,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
   Util.push_time "entail_prune";  
   let cl_after_prune = prune_ctx_list prog cl in
-  let conseq = prune_preds prog (Some TP.simplify) conseq in
+  let conseq = prune_preds prog false conseq in
   (*let _ = print_string ("Context before prune ctx: "^(Cprinter.string_of_list_partial_context cl)^"\n") in
   let _ = print_string ("Context after prune ctx: "^(Cprinter.string_of_list_partial_context cl_after_prune)^"\n") in*)
   Util.pop_time "entail_prune";

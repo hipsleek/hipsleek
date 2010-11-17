@@ -199,6 +199,7 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
      let input = Lexing.from_string all_prims in
+     Iparser.file_name := "primitives";
      let prog = Iparser.program (Ilexer.tokenizer "primitives") input
      in 
 	 (*let _ = print_string ("\n primitives: "^(Iprinter.string_of_program prog)^"\n") in*)
@@ -1503,6 +1504,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                     C.proc_dynamic_specs_with_pre =  [];
                     C.proc_by_name_params = by_names;
                     C.proc_body = body;
+                    C.proc_file = proc.I.proc_file ;
                     C.proc_loc = proc.I.proc_loc; } in 
 		  (E.pop_scope (); cproc))))
 
@@ -2297,6 +2299,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
                 I.proc_dynamic_specs = [];
                 I.proc_body = Some w_body;
+                I.proc_file = proc.I.proc_file;
                 I.proc_loc = pos; } in
             let temp_call =  I.CallNRecv {
                 I.exp_call_nrecv_method = w_name;
@@ -4648,10 +4651,10 @@ and coerc_spec prog is_l c =
       let n_h_f = CF.normalize inv_f (add_brs v_def brs h_f) no_pos in
       let n_b_f = CF.normalize inv_f (add_brs v_def brs b_f)  no_pos in
       (*let _ = print_string ("coer head: "^(Cprinter.string_of_formula n_h_f)^"\n\n") in*)
-      let prun_h_f = Solver.prune_preds prog (Some TP.simplify) n_h_f in
+      let prun_h_f = Solver.prune_preds prog true n_h_f in
       (*let _ = print_string ("coer pruned head: "^(Cprinter.string_of_formula prun_h_f)^"\n\n") in
       let _ = print_string ("coer body: "^(Cprinter.string_of_formula n_b_f)^"\n\n") in*)
-      let prun_b_f = Solver.prune_preds prog (Some TP.simplify) n_b_f in
+      let prun_b_f = Solver.prune_preds prog true n_b_f in
       (*let _ = print_string ("coer pruned body: "^(Cprinter.string_of_formula prun_b_f)^"\n\n") in*)
       (prun_h_f,prun_b_f)) v_invs in   
   if is_l then 
@@ -4668,17 +4671,18 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
     let preds = List.map (fun c-> 
       let _ = print_string ("pruning for "^(c.C.view_name)^"\n") in
       {c with 
-        C.view_formula =  Solver.prune_pred_struc prog_views_inf (Some TP.simplify) c.C.view_formula ;
-        C.view_un_struc_formula = Solver.prune_preds prog_views_inf (Some TP.simplify) c.C.view_un_struc_formula;}) preds in
+        C.view_formula =  Solver.prune_pred_struc prog_views_inf true c.C.view_formula ;
+        C.view_un_struc_formula = Solver.prune_preds prog_views_inf true c.C.view_un_struc_formula;}) preds in
     (*let _ = print_string ("\n\n=========after:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
     let proc_spec f = 
       (*let _ = print_string ("\n prunning procedure: "^(f.C.proc_name)^"\n") in*)
+      let simp_b = not ((String.compare f.C.proc_file "primitives")==0 or (f.C.proc_file="")) in
       {f with 
-      C.proc_static_specs=  Solver.prune_pred_struc prog_views_pruned (Some TP.simplify) f.C.proc_static_specs;
-      C.proc_static_specs_with_pre=  Solver.prune_pred_struc prog_views_pruned (Some TP.simplify) f.C.proc_static_specs_with_pre;
-      C.proc_dynamic_specs=  Solver.prune_pred_struc prog_views_pruned (Some TP.simplify) f.C.proc_dynamic_specs;
-      C.proc_dynamic_specs_with_pre= Solver.prune_pred_struc prog_views_pruned (Some TP.simplify) f.C.proc_dynamic_specs_with_pre;
+      C.proc_static_specs=  Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_static_specs;
+      C.proc_static_specs_with_pre=  Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_static_specs_with_pre;
+      C.proc_dynamic_specs=  Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_dynamic_specs;
+      C.proc_dynamic_specs_with_pre= Solver.prune_pred_struc prog_views_pruned simp_b f.C.proc_dynamic_specs_with_pre;
       } in
     let procs = List.map proc_spec  prog_views_pruned.C.prog_proc_decls in    
     (*let datas = List.map(fun c-> {c with 

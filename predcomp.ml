@@ -1667,6 +1667,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_dynamic_specs = [];
 					proc_exceptions = [];
 					proc_body = Some seq2;
+          proc_file = "";
 					proc_loc = pos } 
   in
 	disj_proc
@@ -1779,6 +1780,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_dynamic_specs = [];
 					 proc_body = Some combined_exp;
 					 proc_exceptions = [];
+           proc_file = "";
 					 proc_loc = no_pos } in
   let ddef = { data_name = class_name_of_view vdef.C.view_name;
 			   data_fields = fields;

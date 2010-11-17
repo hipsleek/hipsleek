@@ -340,10 +340,10 @@ and mkMFalse pos :memo_pure =
 and memo_is_member_pure p mm = 
   List.exists (fun c-> 
     let r = (List.exists (is_member_pure p) c.memo_group_slice)||
-    (List.exists (fun c-> match c.memo_status with
+    (List.exists (fun d-> match d.memo_status with
       | Implied _ 
       | Implied_dupl-> 
-        (match p with | BForm (r,_)-> equalBFormula r c.memo_formula | _ -> false)) c.memo_group_cons) in
+        (match p with | BForm (r,_)-> equalBFormula_aset c.memo_group_aset r d.memo_formula | _ -> false)) c.memo_group_cons) in
     if r then true
     else match p with
       | BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> Util.is_equiv_eq c.memo_group_aset v1 v2
@@ -376,7 +376,7 @@ and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula =
   (*fold_mem_lst_to_lst lst false true false*)
   fold_mem_lst_gen (BForm (init_cond,None)) with_dupl with_inv with_slice lst
       
-and filter_useless_memo_pure (simp_fct:formula->formula) simp_b_fct 
+and filter_useless_memo_pure (simp_fct:formula->formula) (simp_b:bool) 
                              (fv:spec_var list) (c_lst:memo_pure) : memo_pure = 
   let n_c_lst = List.fold_left (fun a c-> 
     if (isConstMFalse a) then a
@@ -385,13 +385,12 @@ and filter_useless_memo_pure (simp_fct:formula->formula) simp_b_fct
       let n_slice_lst = List.filter (fun c-> not (isConstTrue c)) n_slice_lst in   
       if (List.exists isConstFalse n_slice_lst) then mkMFalse no_pos
       else {c with memo_group_slice = n_slice_lst; memo_group_cons = c.memo_group_cons;}::a
-        (*let r = match simp_b_fct with 
-          | None -> {c with memo_group_slice = n_slice_lst; memo_group_cons = c.memo_group_cons;}
-          | Some s_fct -> 
+        (*let r = if not simp_b then {c with memo_group_slice = n_slice_lst; memo_group_cons = c.memo_group_cons;}
+          else
             let tbsimp, tbmnt = List.partition (fun c-> match c.memo_formula with | Neq _ -> false | _ -> true) c.memo_group_cons in
             let asetf = fold_aset c.memo_group_aset in
             let nsimp_f = List.fold_left (fun a c -> mkAnd a (BForm (c.memo_formula,None)) no_pos) asetf tbsimp in
-            let simp_f = s_fct nsimp_f in
+            let simp_f = simp_fct nsimp_f in
             let old_cons = List.map (fun c-> {c with memo_status = Implied_dupl}) c.memo_group_cons in
             let simp_cons_l, n_slice = memo_norm_wrapper (split_conjunctions simp_f) in
             let simp_cons,n_aset = List.fold_left (fun (a,s) c-> match c with 
