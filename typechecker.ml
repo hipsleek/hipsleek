@@ -689,7 +689,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
         in*)
           CF.fold_partial_context_left_or (List.map apply_catch_partial_context2 ctx1)
 
-    | _ -> 
+              | _ -> 
         failwith ((Cprinter.string_of_exp e0) ^ " is not supported yet")  
   in
   let helper (cl:CF.list_partial_context) : CF.list_partial_context = 
@@ -714,7 +714,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
       | Dprint ({exp_dprint_string = str;
                  exp_dprint_visible_names = visib_names;
                  exp_dprint_pos = pos}) -> begin
-                print_string ("dpint: string " ^ str^"\n") ;
+                print_string ("dprint: string " ^ str^"\n") ;
           let s1 = snd post_start_label in
            (* print_string ("\n\nLABEL PRECOND: " ^ s1 ^ "\nLabel ASSERT: " ^ s ^"\n\n"); *)
           if (String.length str)>0 && (String.compare str s1 <> 0)  then (ctx)

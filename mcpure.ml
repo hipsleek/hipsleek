@@ -801,9 +801,11 @@ let elim_redundant_cons impl aset asetf pn =
           let b = 
                 let x = Util.gen_time_msg () in
                 try 
-                  Util.push_time x;
+                  (Util.push_time x;
+                  Util.push_time "erc_imply");
                   let r = impl nf (BForm (c.memo_formula,None)) in
-                  Util.pop_time_to_s_no_count x;
+                  (Util.pop_time "erc_imply";
+                  Util.pop_time_to_s_no_count x);
                   r                   
                 with _ -> (Util.pop_time_to_s_no_count x ;false) in
           if b then
