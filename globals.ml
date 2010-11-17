@@ -161,6 +161,10 @@ let pass_global_by_value = ref false
 let allow_pruning = ref true
 let prune_cnt_limit = ref 2
 let allow_umemo_slicing = ref true
+
+let suppress_warning_msg = ref false
+let disable_elim_redundant_ctr = ref false
+
 (*let allow_imemo_slicing = ref true
 let agressive_unsat = ref false
 let agressive_imply = ref false*)

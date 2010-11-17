@@ -547,37 +547,33 @@ let simplify (f : CP.formula) : CP.formula =
       | None -> f
 	else
   (Util.push_time "simplify";
+  try
 	 let r = match !tp with
-  | Isabelle -> Isabelle.simplify f
-  | Coq -> Coq.simplify f
-  | Mona -> Mona.simplify f
-  | OM ->
-	  if (is_bag_constraint f) then
-		(Mona.simplify f)
-	  else (Omega.simplify f)
-  | OI ->
-	  if (is_bag_constraint f) then
-		(Isabelle.simplify f)
-	  else (Omega.simplify f)
-  | SetMONA -> Mona.simplify f
-  | CM ->
-	  if is_bag_constraint f then Mona.simplify f
-	  else Omega.simplify f
-  | Redlog -> Redlog.simplify f
-  | RM -> 
-      if is_bag_constraint f then
-        Mona.simplify f
-      else
-        Redlog.simplify f
-  | _ ->
-(*
-	  if (is_bag_constraint f) then
-		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-	  else
-*)
-	  (Omega.simplify f) in
+      | Isabelle -> Isabelle.simplify f
+      | Coq -> Coq.simplify f
+      | Mona -> Mona.simplify f
+      | OM ->
+        if (is_bag_constraint f) then
+        (Mona.simplify f)
+        else (Omega.simplify f)
+      | OI ->
+        if (is_bag_constraint f) then
+        (Isabelle.simplify f)
+        else (Omega.simplify f)
+      | SetMONA -> Mona.simplify f
+      | CM ->
+        if is_bag_constraint f then Mona.simplify f
+        else Omega.simplify f
+      | Redlog -> Redlog.simplify f
+      | RM -> 
+          if is_bag_constraint f then
+            Mona.simplify f
+          else
+            Redlog.simplify f
+      | _ -> Omega.simplify f in
   Util.pop_time "simplify";
-  r)
+  r
+  with | _ -> f)
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -915,7 +911,6 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   let s = "imply" in
   let _ = Util.push_time s in
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache in
-
   let _ = Util.pop_time s in
   if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ;
   (res1,res2,res3)

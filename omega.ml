@@ -48,14 +48,14 @@ let rec omega_of_exp e0 = match e0 with
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
             | _ -> 
-                Error.report_error {
+                Error.report_warning {
                   Error.error_loc = l;
                   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
                 }
             in rr
       in r
   | Div (_, _, l) -> 
-      Error.report_error {
+      Error.report_warning {
         Error.error_loc = l;
         Error.error_text ="[omega.ml] Divide is not supported."
       }

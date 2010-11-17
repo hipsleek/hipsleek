@@ -480,6 +480,20 @@ let pop_time msg =
 		else 
 			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
 	else ()
+  
+let pop_spec_counter = ref 1
+let gen_time_msg _  = 
+  pop_spec_counter := !pop_spec_counter+1;
+  "time_stk_"^ (string_of_int !pop_spec_counter)
+  
+let pop_time_to_s_no_count  msg = 
+	if (!Globals.profiling) then
+		let rec helper l = match l with
+      | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
+      | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
+			else t in
+    profiling_stack := helper !profiling_stack 
+	else ()
 	
 	
 let add_index l = 

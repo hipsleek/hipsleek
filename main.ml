@@ -153,6 +153,7 @@ let process_cmd_line () = Arg.parse [
   ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
   ("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");
   ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
+  ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
 	] set_source_file usage_msg
 
 (******************************************)

@@ -546,22 +546,24 @@ and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
  
 and prune_ctx prog ctx = match ctx with
   | OCtx (c1,c2)-> OCtx (prune_ctx prog c1,prune_ctx prog c2)
-  | Ctx es -> Ctx {es with es_formula =prune_preds prog es.es_formula}
+  | Ctx es -> Ctx {es with es_formula =prune_preds prog None es.es_formula}
   
 and prune_branch_ctx prog (pt,bctx) = (pt,prune_ctx prog bctx)    
 and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
     
-and prune_pred_struc prog f = 
+and prune_pred_struc prog simp_f f = 
   let rec helper f =match f with
-    | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc prog c2)) c.formula_case_branches;}
-    | EBase b -> EBase {b with formula_ext_base = prune_preds prog b.formula_ext_base;
-                               formula_ext_continuation = prune_pred_struc prog b.formula_ext_continuation}
-    | EAssume (v,f,l) -> EAssume (v,prune_preds prog f,l) in    
+    | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc prog simp_f c2)) c.formula_case_branches;}
+    | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_f b.formula_ext_base;
+                               formula_ext_continuation = prune_pred_struc prog simp_f b.formula_ext_continuation}
+    | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_f f,l) in    
 (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
 List.map helper f
    
-and prune_preds prog (f:formula):formula =   
-let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "" false in r in   
+and prune_preds prog f_simp (f:formula):formula =   
+    let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "" false in r in   
+    let f_p_simp c = match f_simp with | None -> c | Some _ ->  MCP.elim_redundant(*_debug*) imply_w c in
+
     let rec helper_formulas f = match f with
     | Or o -> 
       let f1 = helper_formulas o.formula_or_f1 in
@@ -573,7 +575,8 @@ let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "" false in r in
           let nh, mem, changed = heap_prune_preds prog e.formula_exists_heap e.formula_exists_pure in 
           if changed then fct (i+1) {e with formula_exists_heap = nh; formula_exists_pure = mem;}
           else {e with formula_exists_pure = List.map (fun c-> {c with MCP.memo_group_changed = false}) e.formula_exists_pure} in
-      Exists (let r = fct 0 e in MCP.check_redundant imply_w r.formula_exists_pure ; r)
+      let r = fct 0 e in 
+      Exists {r with formula_exists_pure = f_p_simp r.formula_exists_pure}
     | Base b ->
       let rec fct i b = if (i== !Globals.prune_cnt_limit) then b
           else
@@ -582,17 +585,16 @@ let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "" false in r in
             if changed then 
               fct (i+1) {b with formula_base_heap = nh; formula_base_pure = mem}
             else {b with formula_base_pure = List.map (fun c-> {c with MCP.memo_group_changed = false}) b.formula_base_pure} in
-            
-           
-      Base (let r = fct 0 b in MCP.check_redundant imply_w r.formula_base_pure ; r) in
+      let r = fct 0 b in 
+      Base {r with formula_base_pure = f_p_simp r.formula_base_pure} in
   if (not !Globals.allow_pruning) then f
   else 
      (
       Util.push_time "prune_preds_filter";
-      let f1 = filter_formula_memo f (Some simpl_b_formula) in
+      let f1 = filter_formula_memo f f_simp in
       Util.pop_time "prune_preds_filter";
       Util.push_time "prune_preds";
-      let nf = helper_formulas f1 in
+      let nf = try  helper_formulas f1 with e -> (print_string "here2 \n"; raise e) in   
       Util.pop_time "prune_preds";
       nf)
    
@@ -1779,9 +1781,9 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool) (is_universal 
 		  es_orig_ante   = es.es_formula;
 		  es_orig_conseq = conseq ;}in	
 	    let cl_new = transform_list_context ( (fun es1->         
-        let es = {es1 with es_formula =prune_preds prog es1.es_formula} in
+        let es = {es1 with es_formula =prune_preds prog (Some TP.simplify) es1.es_formula} in
         Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-	    let conseq_new = prune_pred_struc prog conseq in
+	    let conseq_new = prune_pred_struc prog (Some TP.simplify) conseq in
 	    heap_entail_struc prog is_folding is_universal has_post cl_new conseq_new pos pid
 
 	      
@@ -2973,7 +2975,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                           (*let _ = print_string ("can strenghten: with: "^(Cprinter.string_of_pure_formula l)^"\n") in*)
                           let f_l = formula_of_pure l pos   in
                           let new_es_f = normalize estate.es_formula f_l pos in
-                          let new_es = {estate with es_formula = prune_preds prog new_es_f } in 
+                          let new_es = {estate with es_formula = prune_preds prog None new_es_f } in 
                           let new_ctx = Ctx new_es in
                           let new_conseq = normalize conseq f_l pos in
                           heap_entail_conjunct prog is_folding is_universal new_ctx new_conseq pos 
@@ -3714,7 +3716,7 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) ^"\n") pos; 
   Util.push_time "entail_prune";
   let cl = prune_ctx_list prog cl in
-  let conseq = prune_pred_struc prog conseq in
+  let conseq = prune_pred_struc prog (Some TP.simplify) conseq in
   Util.pop_time "entail_prune";
   heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,heap_entail_one_context_struc)
   
@@ -3725,7 +3727,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
   Util.push_time "entail_prune";  
   let cl_after_prune = prune_ctx_list prog cl in
-  let conseq = prune_preds prog conseq in
+  let conseq = prune_preds prog (Some TP.simplify) conseq in
   (*let _ = print_string ("Context before prune ctx: "^(Cprinter.string_of_list_partial_context cl)^"\n") in
   let _ = print_string ("Context after prune ctx: "^(Cprinter.string_of_list_partial_context cl_after_prune)^"\n") in*)
   Util.pop_time "entail_prune";
