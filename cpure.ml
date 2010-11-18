@@ -3000,7 +3000,9 @@ and norm_exp (e:exp) = match e with
   | Null _ | Var _ | IConst _ | FConst _ -> e
   | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
   | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
-  | Mult (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e1) is_one (fun x -> Mult x) l
+  | Mult (e1,e2,l) -> let e1=norm_exp e1 in let e2=norm_exp e2 in
+    if (is_zero e1 || is_zero e2) then IConst(0,l)
+    else two_args (norm_exp e1) (norm_exp e1) is_one (fun x -> Mult x) l
   | Div (e1,e2,l) -> if is_one e2 then e1 else Div (norm_exp e1,norm_exp e2,l)
   | Max (e1,e2,l)-> two_args (norm_exp e1) (norm_exp e1) (fun _ -> false) (fun x -> Max x) l
   | Min (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e1) (fun _ -> false) (fun x -> Min x) l
@@ -3034,6 +3036,7 @@ and norm_two_sides (e1:exp) (e2:exp)   =
     | Add (e1,e2,l1) -> help_sub e2 pa (e1::sa) c
     | e1 -> (pa, e1::sa, c) in 
   let (lhs,rhs,i) = help_add e1 e2 [] [] 0 in
+  let (lhs,rhs) = (List.map norm_exp lhs, List.map norm_exp rhs) in
   if (lhs==[]) then (IConst(i,no_pos),addlist_to_exp rhs)
   else if (rhs==[]) then  (addlist_to_exp lhs, IConst(-i,no_pos))
   else if (i==0) then (addlist_to_exp lhs, addlist_to_exp rhs)
