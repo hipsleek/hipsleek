@@ -2955,3 +2955,96 @@ let remove_dup_constraints (f:formula):formula =
   let l_conj = split_conjunctions f in
   let prun_l = Util.remove_dups_f l_conj equalFormula in
   join_conjunctions prun_l
+
+let rec get_head e = match e with 
+    | Null _ -> "Null"
+    | Var (v,_) -> name_of_spec_var v
+    | IConst (i,_)-> string_of_int i
+    | FConst (f,_) -> string_of_float f
+    | Add (e,_,_) | Subtract (e,_,_) | Mult (e,_,_) | Div (e,_,_)
+    | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
+    | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
+    | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
+      if (List.length e_l)>0 then get_head (List.hd e_l) else "[]" 
+  
+let norm_exp (e:exp) = e
+
+let simple el = List.length el <=1
+
+let addlist_to_exp (el:exp list) : exp = 
+  let el = List.sort (fun e1 e2 -> String.compare (get_head e2) (get_head e1)) el in
+  match el with
+    | [] -> IConst(0,no_pos)
+    | e::es -> List.fold_left (fun ac e1 -> Add(e1,ac,no_pos) ) e es 
+
+let norm_two_sides (e1:exp) (e2:exp)  =
+  let rec help_add e s pa sa c  = match e with
+    | Subtract (e1,e2,l) -> help_add e1 (Add(e2,s,l)) pa sa c
+    | IConst(i,_)  -> help_sub s pa sa (c+i) 
+    | Add (Add(e1,e2,l1),e3,l2) -> help_add (Add(e1,Add(e2,e3,no_pos),l2)) s pa sa c
+    | Add (IConst(i,l1),e,l2) -> help_add e s pa sa (c+i) 
+    | Add (Subtract(e1,e2,l1),e3,l2) -> help_add (Add(e1,e3,l2)) (Add(e2,s,no_pos)) pa sa c
+    | Add (e1,e2,l1) -> help_add e2 s (e1::pa) sa c
+    | e1 -> help_sub s (e1::pa) sa c
+  and help_sub e pa sa c  = match e with
+    | IConst(i,_)  -> (pa, sa,c-i)
+    | Subtract (e1,e2,l)  -> help_add e2 e1 pa sa c
+    | Add (Add(e1,e2,l1),e3,l2) -> help_sub (Add(e1,Add(e2,e3,no_pos),l2)) pa sa c
+    | Add (IConst(i,l1),e,l2) -> help_sub e pa sa (c-i) 
+    | Add (Subtract(e1,e2,l1),e3,l2) -> help_add e2 (Add(e1,e3,l2))  pa sa c
+    | Add (e1,e2,l1) -> help_sub e2 pa (e1::sa) c
+    | e1 -> (pa, e1::sa, c) in 
+  let (lhs,rhs,i) = help_add e1 e2 [] [] 0 in
+  if (lhs==[]) then (IConst(i,no_pos),addlist_to_exp rhs)
+  else if (rhs==[]) then  (addlist_to_exp lhs, IConst(-i,no_pos))
+  else if i==0 then (addlist_to_exp lhs, addlist_to_exp rhs)
+  else if (simple rhs) then (Add(IConst(i,no_pos),addlist_to_exp lhs,no_pos),addlist_to_exp rhs)
+  else (addlist_to_exp lhs, Add(IConst(i,no_pos),addlist_to_exp rhs,no_pos))
+      
+let norm_bform_leq (e1:exp)  (e2:exp) loc : b_formula = 
+  let (lhs,rhs) = norm_two_sides e1 e2 in
+   Lte(lhs,rhs,loc)
+
+let norm_bform_eq (e1:exp)  (e2:exp) loc : b_formula = 
+  let (lhs,rhs) = norm_two_sides e1 e2 in
+   Eq(lhs,rhs,loc)
+
+let norm_bform_neq (e1:exp)  (e2:exp) loc : b_formula = 
+  let (lhs,rhs) = norm_two_sides e1 e2 in
+   Neq(lhs,rhs,loc)
+
+let norm_bform_aux (bf:b_formula) : b_formula =
+  let bf = b_form_simplify bf in
+  match bf with 
+      | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
+      | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l
+      | Gt  (e1,e2,l) -> norm_bform_leq (Add(e2,IConst(1,no_pos),l)) e1 l
+      | Gte (e1,e2,l) ->  norm_bform_leq e2 e1 l
+      | Eq  (e1,e2,l) -> norm_bform_eq e1 e2 l
+      | Neq (e1,e2,l) -> norm_bform_neq e1 e2 l 
+      | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
+      | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
+      | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
+      | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+      | BConst _ | BVar _ | EqMax _ 
+      | EqMin _ |  BagSub _ | BagMin _ 
+      | BagMax _ | ListAllN _ | ListPerm _ -> bf 
+
+let norm_bform_opt bf =
+  match bf with
+    | BConst _ | BVar _ | EqMax _ 
+    | EqMin _ |  BagSub _ | BagMin _ 
+    | BagMax _ | ListAllN _ | ListPerm _ -> None 
+    | _ -> Some bf 
+
+let norm_bform (bf:b_formula) =
+  let bf=norm_bform_aux bf in
+  norm_bform_opt bf
+
+
+let norm_bform_debug (bf:b_formula) : b_formula option =
+  let r = norm_bform_aux bf in
+  let _ = print_string ("norm_bform inp :"^(!print_b_formula bf)^"\n") in
+  let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
+  norm_bform_opt r
+  

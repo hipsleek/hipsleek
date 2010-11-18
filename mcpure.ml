@@ -654,8 +654,34 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
       let a = List.fold_left (fun a c-> cons1(a,c,no_pos)) (List.hd lp) (List.tl lp) in
       List.fold_left(fun a c-> cons2 (a,c,no_pos)) a ln
     else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in
+
+  let norm_bf (c1:b_formula) : (b_formula option) =
+    let c1 = b_form_simplify c1 in
+    match c1 with
+      | Lt  (e1,e2,l) -> Some (Lt  (norm_expr e1,norm_expr e2,l))
+      | Lte (e1,e2,l) -> Some (Lte (norm_expr e1,norm_expr e2,l))
+      | Gt  (e1,e2,l) -> Some (Lt  (norm_expr e2,norm_expr e1,l))
+      | Gte (e1,e2,l) -> Some (Lte (norm_expr e2,norm_expr e1,l))
+      | Eq  (e1,e2,l) -> 
+        let e1,e2 = norm_expr e1,norm_expr e2 in
+        if(eqExp e1 e2) then Some(BConst(true,no_pos)) else Some(Eq(e1,e2,l))
+      | Neq (e1,e2,l) -> Some (Neq(norm_expr e1,norm_expr e2,l))
+      | BagIn (v,e,l) -> Some (BagIn (v, norm_expr e, l))
+      | BagNotIn (v,e,l) -> Some (BagNotIn (v, norm_expr e, l))
+      | ListIn (e1,e2,l) -> Some (ListIn (norm_expr e1,norm_expr e2,l))
+      | ListNotIn (e1,e2,l) -> Some (ListIn (norm_expr e1,norm_expr e2,l))
+      | BConst _ | BVar _ | EqMax _ 
+      | EqMin _ |  BagSub _ | BagMin _ 
+      | BagMax _ | ListAllN _ | ListPerm _ -> None in
     
   Util.push_time "memo_norm";
+  let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
+    match norm_bform (*norm_bform_debug norm_bf*) c1 with
+      | Some c1 -> (c1::a1,a2)
+      | None -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
+    Util.pop_time "memo_norm";l
+
+(*
   let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
     let c1 = b_form_simplify c1 in
     match c1 with
@@ -674,7 +700,7 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
       | BConst _ | BVar _ | EqMax _ 
       | EqMin _ |  BagSub _ | BagMin _ 
       | BagMax _ | ListAllN _ | ListPerm _ -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
-    Util.pop_time "memo_norm";l
+*)
   
 let memo_norm_wrapper (l:b_formula list): b_formula list = 
  let l = List.map (fun c-> (c,None)) l in
