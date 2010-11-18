@@ -57,9 +57,9 @@ and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
 				  proc_return : P.typ;
 				  proc_static_specs : Cformula.struc_formula;
-				  proc_static_specs_with_pre : Cformula.struc_formula;
+				  (*proc_static_specs_with_pre : Cformula.struc_formula;*)
 				  proc_dynamic_specs : Cformula.struc_formula;
-				  proc_dynamic_specs_with_pre : Cformula.struc_formula;
+				  (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
 				  proc_by_name_params : P.spec_var list;
 				  proc_body : exp option;
           proc_file : string;

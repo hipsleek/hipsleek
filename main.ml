@@ -154,6 +154,7 @@ let process_cmd_line () = Arg.parse [
   ("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");
   ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
   ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
+  ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
 	] set_source_file usage_msg
 
 (******************************************)

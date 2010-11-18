@@ -128,30 +128,33 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true in
-	AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
+      let r = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*) in
+      r
+      
   | MetaVar mvar -> begin
       try 
-	let mf = get_var mvar in
-	  meta_to_struc_formula mf quant fv_idents stab
+        let mf = get_var mvar in
+          meta_to_struc_formula mf quant fv_idents stab
       with
-	| Not_found ->
-	    dummy_exception() ;
-	    print_string (mvar ^ " is undefined.\n");
-	    raise SLEEK_Exception
-    end
+        | Not_found ->
+          dummy_exception() ;
+          print_string (mvar ^ " is undefined.\n");
+          raise SLEEK_Exception
+      end
   | MetaCompose (vs, mf1, mf2) -> begin
       let cf1 = meta_to_struc_formula mf1 quant fv_idents stab in
       let cf2 = meta_to_struc_formula mf2 quant fv_idents stab in
       let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
       let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
-	res
+      res
     end
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p b false true in
       let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
-	res
+      (*let _ = print_string (" before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in*)
+      res
 	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
   | MetaFormCF mf -> mf
@@ -159,7 +162,10 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf,_ = AS.case_normalize_formula iprog h false mf in
       let _ = Astsimp.collect_type_info_formula iprog wf stab false in
-	AS.trans_formula iprog quant fv_idents false wf stab false
+      let r = AS.trans_formula iprog quant fv_idents false wf stab false in
+      (*let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in
+      let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in*)
+      r
   | MetaVar mvar -> begin
       try 
 	let mf = get_var mvar in
@@ -183,14 +189,12 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try
     let _ = residues := None in
     let stab = H.create 103 in
-    let ante = meta_to_formula iante0 false [] stab in
-    (*
-	  let ante_str = Cprinter.string_of_formula ante in
-	  let _ = print_string ("\nante: " ^ ante_str ^ "\n") in
-    *)
+    let ante = meta_to_formula iante0 false [] stab in    
+    let ante = Solver.prune_preds cprog true ante in
     let fvs = CF.fv ante in
     let fv_idents = List.map CP.name_of_spec_var fvs in
     let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+    let conseq = Solver.prune_pred_struc cprog true conseq in
     (*let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in*)
     let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
     let ctx = CF.build_context ectx ante no_pos in

@@ -190,22 +190,35 @@ and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link =
 
 and formula_of_memo_pure (p:MCP.memo_pure) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
-and formula_of_pure (p:CP.formula) (pos:loc) :formula=
-  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
+and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
+  let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
+      else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
   mkBase HTrue mp TypeTrue (mkTrueFlow ()) [] pos
 
-(*and mkTrueFlowTest = {formula_flow_interval = (-3,-3); formula_flow_link = None;}
-and formula_of_pure_test p pos = mkBase HTrue p TypeTrue (mkTrueFlow) [] pos*)
-and formula_of_pure_with_branches p br pos = 
-  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
+and formula_of_pure_P (p:CP.formula) (pos:loc) :formula= formula_of_pure_aux p (-1) pos
+  
+and formula_of_pure_N (p:CP.formula) (pos:loc) :formula= formula_of_pure_aux p 1 pos
+  
+and formula_of_pure_with_branches_aux p br status pos = 
+  let mp = if status>0 then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p
+              else MCP.memoise_add_pure_P (MCP.mkMTrue pos) p in
   mkBase HTrue mp TypeTrue (mkTrueFlow ()) br pos
+
+and formula_of_pure_with_branches_N p br pos = formula_of_pure_with_branches_aux p br 1 pos
+
+and formula_of_pure_with_branches_P p br pos = formula_of_pure_with_branches_aux p br (-1) pos
 
 and formula_of_memo_pure_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos
 
-and formula_of_pure_with_branches_fl p br fl pos = 
-  let mp = MCP.memoise_add_pure (MCP.mkMTrue pos) p in
+and formula_of_pure_with_branches_fl_aux p br fl status pos = 
+  let mp = if status>0 then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
+            else MCP.memoise_add_pure_P (MCP.mkMTrue pos) p in
   mkBase HTrue mp TypeTrue fl br pos
 
+and formula_of_pure_with_branches_fl_N p br fl pos = formula_of_pure_with_branches_fl_aux p br fl 1 pos
+
+and formula_of_pure_with_branches_fl_P p br fl pos = formula_of_pure_with_branches_fl_aux p br fl (-1) pos
+  
 and formula_of_memo_pure_with_branches_fl p br fl pos = mkBase HTrue p TypeTrue fl br pos
 
 and formula_of_base base = Base(base)
@@ -1888,7 +1901,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
             (*let ng = Cpure.Not (c1,b.formula_case_pos) in*)
             if (isConstEFalse c2) then a
             else
-            let np = (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) in
+            let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
             (mkOr a (normalize_combine 
                   (mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) 
                   (struc_to_formula c2)
@@ -2012,13 +2025,13 @@ and case_to_disjunct f  =
     | EBase b-> EBase {b with formula_ext_base = 
       normalize_combine 
         b.formula_ext_base 
-          (formula_of_pure c no_pos) 
+          (formula_of_pure_N c no_pos) 
           no_pos}
     | _ -> EBase {
        formula_ext_explicit_inst = [];
        formula_ext_implicit_inst = [];
        formula_ext_exists = [];
-       formula_ext_base = formula_of_pure c no_pos;
+       formula_ext_base = formula_of_pure_N c no_pos;
        formula_ext_continuation = [f];
        formula_ext_pos = no_pos;
     }	
@@ -2411,7 +2424,7 @@ let conv_elim_res (cvar:typed_ident option)  (c:entail_state)
     | Some (cvt,cvn) ->        
         if not(b_rez) then ctx
         else begin
-      	  let vsv_f = formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
+      	  let vsv_f = formula_of_pure_N (CP.mkEqVar (CP.SpecVar (rest, cvn, Primed)) (CP.mkRes rest) no_pos) no_pos in
       	  let ctx1 = normalize_max_renaming_s vsv_f no_pos true ctx in
       	  let ctx1 = push_exists_context [CP.mkRes rest] ctx1 in
       	  if !Globals.elim_exists then elim_ex_fn ctx1 else  ctx1
@@ -2528,7 +2541,7 @@ let rec split_struc_formula (f0:struc_formula):(formula*formula) list =
 		| ECase b-> 
       let r =  List.concat (List.map (fun (c1,c2)->
 				let ll = split_struc_formula c2 in
-				List.map (fun (d1,d2)-> ((normalize d1 (formula_of_pure c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
+				List.map (fun (d1,d2)-> ((normalize d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
 			List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r 
 		| EBase b-> 
 				let ll = split_struc_formula b.formula_ext_continuation in
@@ -2587,7 +2600,7 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
 	let rec ext_formula_br (f:ext_formula):(formula * formula_label) list = match f with
 		| ECase b-> List.concat 
         (List.map (fun (c1,c2) -> 
-          let np = (MCP.memoise_add_pure (MCP.mkMTrue b.formula_case_pos) c1) in
+          let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
           let g_f = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
           List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (get_view_branches c2)) b.formula_case_branches)
 		| EBase b-> 

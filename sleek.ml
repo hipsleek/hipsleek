@@ -111,6 +111,14 @@ let parse_file (parse) (source_file : string) =
 
 
 let main () = 
+  let iprog = { I.prog_data_decls = [iobj_def];
+                I.prog_global_var_decls = [];
+                I.prog_enum_decls = [];
+                I.prog_view_decls = [];
+                I.prog_proc_decls = [];
+                I.prog_coercion_decls = [] } in
+  let _ = Iast.build_exc_hierarchy true iprog in
+  let _ = Util.c_h () in
   let quit = ref false in
   let parse =
     match !fe with
