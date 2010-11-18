@@ -3,17 +3,21 @@
 use File::Find;
 use File::Basename;
 use Getopt::Long;
+use Sys::Hostname;
+use File::NCopy;
+use Cwd;
 
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
 			"root=s" => \$root,
 			"tp=s" => \$prover,
-			"flags=s" => \$flags
+			"flags=s" => \$flags,
+			"copy-to-home21" => \$home21 
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"] \n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
 	exit(0);
 }
 if($root){
@@ -31,7 +35,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
 	if (!exists($provers{$prover})){		
-		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek\n";
+		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
 		exit(0);
 	}
@@ -47,6 +51,26 @@ if("$flags"){
 }
 else{
 	$script_arguments = " -tp ".$prover;
+}
+
+if($home21){
+	$current_dir = getcwd();
+	$current_hostname = hostname;
+	#if ($current_hostname eq "loris-21"){
+	#	print "The current host is already loris-21";
+	#	exit(0);
+	#}
+	$target_dir = "/home21/".getlogin()."/sleek_tmp_".getppid();
+	mkdir $target_dir or die "\nerror: Could not create directory $target_dir\n";
+	my $cp = File::NCopy->new(recursive => 1);
+    $cp->copy("$exec_path/*", $target_dir) or die "Could not perform rcopy of $source_dir to $target_dir: $!";
+	$exec_path = "$target_dir";
+	$exempl_path = "$target_dir/examples/working";
+	if($root){
+		chdir("$root") or die "Can't chdir to $path $!";
+	}else{
+		chdir("$target_dir") or die "Can't chdir to $path $!"; 
+	}	
 }
 
 @excl_files = ();
@@ -255,7 +279,7 @@ sub hip_process_file {
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
-			#print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1";
+			#print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1 \n";
 			$output = `$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
