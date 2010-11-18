@@ -454,7 +454,7 @@ let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula)
   else
 	(ante, conseq)
 
-let tp_is_sat_sender (f : CP.formula) (sat_no : string) =
+let tp_is_sat_sender_aux (f : CP.formula) (sat_no : string) =
 	match !tp with
 	  | OmegaCalc ->
 (*
@@ -518,6 +518,16 @@ let tp_is_sat_sender (f : CP.formula) (sat_no : string) =
           else
             Redlog.is_sat f sat_no
 
+let tp_is_sat_sender (f : CP.formula) (sat_no : string) =
+  let t1 = Util.get_time () in
+  let r = tp_is_sat_sender_aux f sat_no in
+  let t2 = Util.get_time () in
+  let diff = t2 -. t1 in
+  (if (diff> 2.5) then print_string ("\n Expensive unsat "^sat_no^" time :"^(string_of_float diff)
+     ^"\n formula :"^(!print_pure f)
+   ))
+  ; r
+ 
 
 let sat_cache  = Hashtbl.create 2000 ;;
 
@@ -655,7 +665,7 @@ let rec split_disjunctions = function
   | z -> [z]
 ;;
 
-let tp_imply_sender ante conseq imp_no timeout =
+let tp_imply_sender_aux ante conseq imp_no timeout =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
                   ^(Cprinter.string_of_pure_formula conseq)^"\n") in
    *)
@@ -705,6 +715,18 @@ let tp_imply_sender ante conseq imp_no timeout =
       else
         Redlog.imply ante conseq imp_no
 ;;
+
+let tp_imply_sender ante conseq imp_no timeout =
+	 let t1 = Util.get_time () in
+     let r = tp_imply_sender_aux ante conseq imp_no timeout in
+	 let t2 = Util.get_time () in
+     let diff = t2 -. t1 in
+     (if (diff> 2.5) then 
+         print_string (("\n Expensive imply "^imp_no^" time :"^(string_of_float diff))
+     ^"\n ante :"^(!print_pure ante)
+     ^"\n conseq :"^(!print_pure conseq)) )
+     ; r
+  
 
 let imply_cache  = Hashtbl.create 2000 ;;
 let impl_conseq_cache  = Hashtbl.create 2000 ;;

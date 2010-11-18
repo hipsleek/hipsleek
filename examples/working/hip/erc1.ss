@@ -11,8 +11,15 @@ ll<n> == self = null & n = 0
 	inv n >= 0;
 
 node id(node x)
-  requires x::ll<n> & x!=null
-  ensures res::ll<n> & n>0;
+  requires x::ll<nn> & x!=null
+  ensures res::ll<nn> & nn>0;
 {    
   return x;
+}
+
+node id2(node y)
+  requires true //y::ll<b> & y!=null
+  ensures res::ll<zz> & zz>0;
+{    
+  return y;
 }
