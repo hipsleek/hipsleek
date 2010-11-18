@@ -2967,7 +2967,13 @@ let rec get_head e = match e with
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
       if (List.length e_l)>0 then get_head (List.hd e_l) else "[]" 
   
-let norm_exp (e:exp) = e
+let is_zero b =   match b with
+    | IConst(0,_) -> true
+    | _ -> false
+
+let is_one b =   match b with
+    | IConst(1,_) -> true
+    | _ -> false
 
 let simple el = List.length el <=1
 
@@ -2977,7 +2983,40 @@ let addlist_to_exp (el:exp list) : exp =
     | [] -> IConst(0,no_pos)
     | e::es -> List.fold_left (fun ac e1 -> Add(e1,ac,no_pos) ) e es 
 
-let norm_two_sides (e1:exp) (e2:exp)  =
+let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) 
+ 
+let two_args e1 e2 isOne f loc=
+        if isOne e1 then e2
+        else if is_one e2 then e1
+        else if (e_cmp e1 e2)>0 then f(e1,e2,loc) else f(e2,e1,loc)
+
+let rec simp_addsub e1 e2 loc =
+  let (lhs,rhs)=norm_two_sides e1 e2 in
+  match rhs with
+    | IConst(0,_) -> lhs
+    | _ -> Subtract(lhs,rhs,loc)
+
+and norm_exp (e:exp) = match e with
+  | Null _ | Var _ | IConst _ | FConst _ -> e
+  | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
+  | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
+  | Mult (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e1) is_one (fun x -> Mult x) l
+  | Div (e1,e2,l) -> if is_one e2 then e1 else Div (norm_exp e1,norm_exp e2,l)
+  | Max (e1,e2,l)-> two_args (norm_exp e1) (norm_exp e1) (fun _ -> false) (fun x -> Max x) l
+  | Min (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e1) (fun _ -> false) (fun x -> Min x) l
+  | Bag (e,l)-> Bag ( List.sort e_cmp (List.map norm_exp e), l)    
+  | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map norm_exp e), l)    
+  | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map norm_exp e), l)    
+  | BagDiff (e1,e2,l) -> BagDiff (norm_exp e1, norm_exp e2, l)
+  | List (e,l)-> List (List.sort e_cmp (List.map norm_exp e), l)    
+  | ListCons (e1,e2,l)-> ListCons(norm_exp e1, norm_exp e2,l)      
+  | ListHead (e,l)-> ListHead(norm_exp e, l)      
+  | ListTail (e,l)-> ListTail(norm_exp e, l)      
+  | ListLength (e,l)-> ListLength(norm_exp e, l)
+  | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_exp e), l)    
+  | ListReverse (e,l)-> ListReverse(norm_exp e, l)  
+
+and norm_two_sides (e1:exp) (e2:exp)   =
   let rec help_add e s pa sa c  = match e with
     | Subtract (e1,e2,l) -> help_add e1 (Add(e2,s,l)) pa sa c
     | IConst(i,_)  -> help_sub s pa sa (c+i) 
@@ -2997,9 +3036,9 @@ let norm_two_sides (e1:exp) (e2:exp)  =
   let (lhs,rhs,i) = help_add e1 e2 [] [] 0 in
   if (lhs==[]) then (IConst(i,no_pos),addlist_to_exp rhs)
   else if (rhs==[]) then  (addlist_to_exp lhs, IConst(-i,no_pos))
-  else if i==0 then (addlist_to_exp lhs, addlist_to_exp rhs)
+  else if (i==0) then (addlist_to_exp lhs, addlist_to_exp rhs)
   else if (simple rhs) then (Add(IConst(i,no_pos),addlist_to_exp lhs,no_pos),addlist_to_exp rhs)
-  else (addlist_to_exp lhs, Add(IConst(i,no_pos),addlist_to_exp rhs,no_pos))
+  else (addlist_to_exp lhs, Add(IConst(-i,no_pos),addlist_to_exp rhs,no_pos))
       
 let norm_bform_leq (e1:exp)  (e2:exp) loc : b_formula = 
   let (lhs,rhs) = norm_two_sides e1 e2 in
