@@ -2988,24 +2988,28 @@ let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2)
 let two_args e1 e2 isOne f loc=
         if isOne e1 then e2
         else if is_one e2 then e1
-        else if (e_cmp e1 e2)>0 then f(e1,e2,loc) else f(e2,e1,loc)
+        else if (e_cmp e1 e2)<0 then f(e1,e2,loc) else f(e2,e1,loc)
 
+(* normalize add/sub expression *)
 let rec simp_addsub e1 e2 loc =
   let (lhs,rhs)=norm_two_sides e1 e2 in
   match rhs with
     | IConst(0,_) -> lhs
     | _ -> Subtract(lhs,rhs,loc)
 
+(* normalise and simplify expression *)
 and norm_exp (e:exp) = match e with
   | Null _ | Var _ | IConst _ | FConst _ -> e
   | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
   | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
-  | Mult (e1,e2,l) -> let e1=norm_exp e1 in let e2=norm_exp e2 in
-    if (is_zero e1 || is_zero e2) then IConst(0,l)
-    else two_args (norm_exp e1) (norm_exp e1) is_one (fun x -> Mult x) l
+  | Mult (e1,e2,l) -> 
+        let e1=norm_exp e1 in 
+        let e2=norm_exp e2 in
+        if (is_zero e1 || is_zero e2) then IConst(0,l)
+        else two_args (norm_exp e1) (norm_exp e2) is_one (fun x -> Mult x) l
   | Div (e1,e2,l) -> if is_one e2 then e1 else Div (norm_exp e1,norm_exp e2,l)
-  | Max (e1,e2,l)-> two_args (norm_exp e1) (norm_exp e1) (fun _ -> false) (fun x -> Max x) l
-  | Min (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e1) (fun _ -> false) (fun x -> Min x) l
+  | Max (e1,e2,l)-> two_args (norm_exp e1) (norm_exp e2) (fun _ -> false) (fun x -> Max x) l
+  | Min (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e2) (fun _ -> false) (fun x -> Min x) l
   | Bag (e,l)-> Bag ( List.sort e_cmp (List.map norm_exp e), l)    
   | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map norm_exp e), l)    
   | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map norm_exp e), l)    
@@ -3018,6 +3022,7 @@ and norm_exp (e:exp) = match e with
   | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_exp e), l)    
   | ListReverse (e,l)-> ListReverse(norm_exp e, l)  
 
+(* normalise add/subtract on both lhs (e1) and rhs (e2) *)
 and norm_two_sides (e1:exp) (e2:exp)   =
   let rec help_add e s pa sa c  = match e with
     | Subtract (e1,e2,l) -> help_add e1 (Add(e2,s,l)) pa sa c
@@ -3055,6 +3060,7 @@ let norm_bform_neq (e1:exp)  (e2:exp) loc : b_formula =
   let (lhs,rhs) = norm_two_sides e1 e2 in
    Neq(lhs,rhs,loc)
 
+(* normalise and simplify b_formula *)
 let norm_bform_aux (bf:b_formula) : b_formula =
   let bf = b_form_simplify bf in
   match bf with 
