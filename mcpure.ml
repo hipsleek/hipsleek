@@ -827,7 +827,7 @@ let isCtrInSet aset s c =  List.exists (fun d-> eq_b_formula aset c.memo_formula
 let cons_filter g f = List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
 
-let elim_redundant_cons impl aset asetf pn =  
+let elim_redundant_cons_slow impl aset asetf pn =  
   let rec helper pn s r e f = match pn with
     | [] -> (s,r,e)
     | c::cs -> 
@@ -850,7 +850,7 @@ let elim_redundant_cons impl aset asetf pn =
           else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
 
-let elim_redundant_cons_fast impl aset asetf pn =  
+let elim_redundant_cons(*_fast*) impl aset asetf pn =  
   let rec helper pn mc s r e f = match pn,mc with
     | [],_ -> (s,r,e)
     | (c::cs),(m::ms) -> 
