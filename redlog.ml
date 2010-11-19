@@ -27,7 +27,7 @@ let reduce_pid = ref 0
 
 (* cache *)
 let sat_cache = ref (Hashtbl.create 100)
-let imply_cache = ref (Hashtbl.create 100)
+let impl_cache = ref (Hashtbl.create 100)
 (* threshold for caching *)
 let cache_threshold = 0.001 (* 1ms *)
 
@@ -255,13 +255,15 @@ let rl_of_b_formula b =
   | CP.Gt (e1, e2, l) -> mk_bin_exp " > " e1 e2
   | CP.Gte (e1, e2, l) -> mk_bin_exp " >= " e1 e2
   | CP.Eq (e1, e2, _) ->
-      if CP.is_null e2 then (rl_of_exp e1) ^ " <= 0"
-      else if CP.is_null e1 then (rl_of_exp e2) ^ " <= 0"
-      else mk_bin_exp " = " e1 e2
+      (*if CP.is_null e2 then (rl_of_exp e1) ^ " <= 0"*)
+      (*else if CP.is_null e1 then (rl_of_exp e2) ^ " <= 0"*)
+      (*else*)
+      mk_bin_exp " = " e1 e2
   | CP.Neq (e1, e2, _) -> 
-      if CP.is_null e2 then (rl_of_exp e1) ^ " > 0"
-      else if CP.is_null e1 then (rl_of_exp e2) ^ " > 0"
-      else mk_bin_exp " <> " e1 e2
+      (*if CP.is_null e2 then (rl_of_exp e1) ^ " > 0"*)
+      (*else if CP.is_null e1 then (rl_of_exp e2) ^ " > 0"*)
+      (*else*)
+      mk_bin_exp " <> " e1 e2
   | CP.EqMax (e1, e2, e3, _) ->
       (* e1 = max(e2,e2) <-> ((e1 = e2 /\ e2 >= e3) \/ (e1 = e3 /\ e2 < e3)) *)
       let a1 = rl_of_exp e1 in
@@ -349,6 +351,51 @@ let rec string_of_formula f0 = match f0 with
   | CP.Forall (sv, f1, _, _) -> "all(" ^ (rl_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
   | CP.Exists (sv, f1, _, _) -> "ex(" ^ (rl_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
   
+let simplify_var_name (e: CP.formula) : CP.formula =
+  let shorten_sv (CP.SpecVar (typ, name, prm)) vnames =
+    let short_name =
+      try
+        Hashtbl.find vnames name
+      with Not_found ->
+        let fresh_name = "v" ^ (string_of_int (Hashtbl.length vnames)) in
+        let _ = Hashtbl.add vnames name fresh_name in
+        fresh_name
+    in
+    CP.SpecVar (typ, short_name, prm)
+  in
+  let f_bf vnames bf = match bf with
+    | CP.BVar (sv, l) -> Some (CP.BVar (shorten_sv sv vnames, l))
+    | _ -> None
+  in
+  let f_e vnames e = match e with
+    | CP.Var (sv, l) ->
+        Some (CP.Var (shorten_sv sv vnames, l))
+    | _ -> None
+  in
+  let rec simplify f0 vnames = match f0 with
+    | CP.Forall (sv, f1, lbl, l) ->
+        let nsv = shorten_sv sv vnames in
+        let nf1 = simplify f1 vnames in
+        CP.Forall (nsv, nf1, lbl, l)
+    | CP.Exists (sv, f1, lbl, l) ->
+        let nsv = shorten_sv sv vnames in
+        let nf1 = simplify f1 vnames in
+        CP.Exists (nsv, nf1, lbl, l)
+    | CP.And (f1, f2, l) ->
+        let nf1 = simplify f1 vnames in
+        let nf2 = simplify f2 vnames in
+        CP.And (nf1, nf2, l)
+    | CP.Or (f1, f2, lbl, l) ->
+        let nf1 = simplify f1 vnames in
+        let nf2 = simplify f2 vnames in
+        CP.Or (nf1, nf2, lbl, l)
+    | CP.Not (f1, lbl, l) ->
+        CP.Not (simplify f1 vnames, lbl, l)
+    | CP.BForm (bf, lbl) ->
+        CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
+  in
+  simplify e (Hashtbl.create 100)
+
 let rec is_linear_exp exp = 
   match exp with
   | CP.Null _ | CP.Var _ | CP.IConst _ -> true
@@ -402,13 +449,13 @@ let is_linear2 f0 =
       match e with
       | CP.Mult (e1, e2, _) -> 
           if not (CP.is_num e1 || CP.is_num e2) then
+            (* FIXME: should check that e1 or e2 can be reduced to const *)
             Some false
           else None
       | CP.Div (e1, e2, _) -> Some false
       | _ -> None
   in
-  let andl = List.fold_left (&&) true in
-  CP.fold_formula f0 (nonef, f_bf, f_e) andl
+  CP.fold_formula f0 (nonef, f_bf, f_e) and_list
 
 let rec has_existential_quantifier f0 negation_bounded =
   match f0 with 
@@ -440,8 +487,7 @@ let has_exists2 f0 =
   in
   let f_bf a e = Some false in
   let f_e a e = Some false in
-  let orl = List.fold_left (||) false in
-  CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) orl
+  CP.fold_formula_arg f0 false (f_f, f_bf, f_e) (f_f_arg, idf2, idf2) or_list
 
 (*
  * e1 < e2 ~> e1 <= e2 -1
@@ -744,6 +790,25 @@ let rec elim_exists_helper core f0 =
 	end
   | CP.BForm _ -> f0
 
+let rec elim_exists_helper2 core (f0: CP.formula) : CP.formula =
+  let f_f f = match f with
+    | CP.Exists (qvar, qf, lbl, pos) ->
+        let res = match qf with
+          | CP.Or (qf1, qf2, lbl2, qpos) ->
+              let new_qf1 = CP.mkExists [qvar] qf1 lbl qpos in
+              let new_qf2 = CP.mkExists [qvar] qf2 lbl qpos in
+              let eqf1 = elim_exists_helper2 core new_qf1 in
+              let eqf2 = elim_exists_helper2 core new_qf2 in
+              Some (CP.mkOr eqf1 eqf2 lbl2 pos)
+          | _ ->
+              let qf = elim_exists_helper2 core qf in
+              Some (core qvar qf lbl pos)
+        in res
+    | CP.BForm bf -> Some f
+    | _ -> None
+  in
+  CP.map_formula f0 (f_f, somef, somef)
+
 let rec elim_exists_with_eq f0 = 
   let core qvar qf lbl pos =
     let qf = elim_exists_with_eq qf in
@@ -919,8 +984,8 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     (sat, time) 
 
 let is_sat f sat_no =
-  let f = normalize_formula f in
-  let fstring = string_of_formula f in
+  let sf = simplify_var_name (normalize_formula f) in
+  let fstring = string_of_formula sf in
   log DEBUG ("\n#is_sat " ^ sat_no);
   log DEBUG fstring;
   let res = 
@@ -952,7 +1017,7 @@ let is_valid f imp_no =
   let valid = options_to_bool res false in (* default is INVALID *)
   (valid, time)
 
-let imply_no_cache (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : bool * float =
+let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in
   let elim_eq f =
     if !no_elim_exists then f else elim_exist_quantifier f
@@ -961,11 +1026,9 @@ let imply_no_cache (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : b
     let wf = if !no_pseudo_ops then f else weaken_formula f in
     is_valid wf imp_no 
   in
-  let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
-  let f = normalize_formula f in
   let res = 
     if is_linear_formula f then
-      call_omega (lazy (Omega.imply ante conseq imp_no (float_of_int !timeout)))
+      call_omega (lazy (Omega.is_valid f (float_of_int !timeout)))
     else
       if has_eq f then
         let eef = elim_eq f in
@@ -980,25 +1043,25 @@ let imply_no_cache (ante : CP.formula) (conseq: CP.formula) (imp_no: string) : b
   res
 
 let imply ante conseq imp_no =
-  let ante_string = string_of_formula ante in
-  let conseq_string = string_of_formula conseq in
-  let fstring = ante_string ^ conseq_string in
+  let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
+  let sf = simplify_var_name f in
+  let fstring = string_of_formula sf in
   log DEBUG ("\n#imply " ^ imp_no);
-  log DEBUG ("ante: " ^ ante_string);
-  log DEBUG ("conseq: " ^ conseq_string);
+  log DEBUG ("ante: " ^ (string_of_formula ante));
+  log DEBUG ("conseq: " ^ (string_of_formula conseq));
   let res = 
     if !no_cache then
-      fst (imply_no_cache ante conseq imp_no)
+      fst (imply_no_cache f imp_no)
     else
       try
-        let res = Hashtbl.find !imply_cache fstring in
+        let res = Hashtbl.find !impl_cache fstring in
         incr cached_count;
         log DEBUG "Cached.";
         res
       with Not_found ->
-        let res, time = imply_no_cache ante conseq imp_no in
+        let res, time = imply_no_cache f imp_no in
         let _ = if time > cache_threshold then
-          Hashtbl.add !imply_cache fstring res
+          Hashtbl.add !impl_cache fstring res
         in res
   in
   log DEBUG (if res then "VALID" else "INVALID");
