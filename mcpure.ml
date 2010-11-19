@@ -11,7 +11,7 @@ type var_aset = spec_var Util.eq_set
 
 let empty_var_aset = Util.empty_a_set_eq eq_spec_var 
 let fold_aset (f:var_aset):formula = 
-  List.fold_left (fun a (c1,c2)->  mkAnd (BForm ((Eq (Var (c1,no_pos),Var (c2,no_pos),no_pos)),None)) a no_pos)
+  List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq c1 c2) a no_pos)
                  (mkTrue no_pos) (Util.get_equiv_eq f)
 
 type memo_pure = memoised_group list
@@ -278,7 +278,7 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
       (!print_sv_f c1)^" -> "^(!print_exp_f c2)) (fst r)))^"\n") in*)
     r
 
-and memo_apply_one_exp s mem = 
+and memo_apply_one_exp (s:spec_var *exp) (mem:memoised_group list) : memo_pure = 
   let fr,t = s in
   let r = List.map (fun c -> 
     let eqs = Util.get_equiv_eq c.memo_group_aset in
@@ -348,22 +348,24 @@ and fold_mem_lst_to_lst_gen  mem with_R with_P with_slice with_disj: formula lis
           | Implied_N -> [BForm (c.memo_formula,None)] 
           | Implied_P-> if with_P then [BForm (c.memo_formula,None)] else [] ) c.memo_group_cons in
       let asetf = List.map (fun(c1,c2)-> 
-              BForm ((Eq (Var (c1,no_pos),Var (c2,no_pos),no_pos)),None)) 
-          (Util.get_equiv_eq c.memo_group_aset) in
+              form_formula_eq c1 c2
+                  (*BForm ((Eq (Var (c1,no_pos),Var (c2,no_pos),no_pos)),None)*)
+      ) 
+        (Util.get_equiv_eq c.memo_group_aset) in
       asetf @ slice@(List.concat cons)) mem in
     let r = List.map join_conjunctions r in
     r
-    
-and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
         
+and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
+  
 and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj lst : formula = 
   let r = fold_mem_lst_to_lst_gen lst with_dupl with_inv with_slice with_disj in
-    List.fold_left (fun a c-> mkAnd a c no_pos) f_init r      
-    
+  List.fold_left (fun a c-> mkAnd a c no_pos) f_init r      
+      
 and fold_mem_lst_no_disj (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true false lst
-    
+  
 and fold_mem_lst (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true true lst
-    
+  
 (*folds just the pruning constraints, ignores the memo_group_slice*) 
 and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula = 
   (*fold_mem_lst_to_lst lst false true false*)
@@ -847,6 +849,30 @@ let elim_redundant_cons impl aset asetf pn =
             helper cs s ({c with memo_status = Implied_R}::r) e f
           else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
+
+let elim_redundant_cons_fast impl aset asetf pn =  
+  let rec helper pn mc s r e f = match pn,mc with
+    | [],_ -> (s,r,e)
+    | (c::cs),(m::ms) -> 
+          let b = 
+            let x = Util.gen_time_msg () in
+            try 
+              (Util.push_time x;
+              Util.push_time "fast_imply");
+                let r = fast_imply_debug aset (ms@f) m in
+                (Util.pop_time "fast_imply";
+                Util.pop_time_to_s_no_count x);
+                (r>0)                   
+            with _ -> (Util.pop_time_to_s_no_count x ;false) 
+          in
+          if b then
+            helper cs ms s ({c with memo_status = Implied_R}::r) e f
+          else helper cs ms (c::s) r e (m::f) 
+  in let mc=List.map (fun x -> x.memo_formula) pn 
+  in helper pn  mc [] [] [] []
+
+
+(* let elim_redundant_slice impl (f:memoised_group): memoised_group*memoised_group = *)
 
 let elim_redundant_slice (impl,simpl) (f:memoised_group): memoised_group*memoised_group = 
   let asetf = fold_aset f.memo_group_aset in

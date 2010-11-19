@@ -640,6 +640,9 @@ let string_of_e_set (f:'a->string) (e:'a e_set) : string =
   let ll=partition e in 
   "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
+let string_of_a_list (f:'a->string) (el:'a list) : string =
+  "["^ (String.concat ", "(List.map f el))^"]\n"
+
 let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string = string_of_e_set f e
 
 

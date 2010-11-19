@@ -3024,7 +3024,13 @@ let rec get_head e = match e with
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
       if (List.length e_l)>0 then get_head (List.hd e_l) else "[]" 
-  
+
+let form_bform_eq (v1:spec_var) (v2:spec_var) =
+   Eq(Var(v1,no_pos),Var(v2,no_pos),no_pos)
+
+let form_formula_eq (v1:spec_var) (v2:spec_var) =
+  BForm (form_bform_eq v1 v2, None)
+   
 let is_zero b =   match b with
     | IConst(0,_) -> true
     | _ -> false
@@ -3153,4 +3159,99 @@ let norm_bform_debug (bf:b_formula) : b_formula option =
   let _ = print_string ("norm_bform inp :"^(!print_b_formula bf)^"\n") in
   let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
   norm_bform_opt r
-  
+
+let is_leq eq e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1<=i2
+    | _,_ -> eqExp_f eq e1 e2
+
+let is_lt eq e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1<i2
+    | _,_ -> false
+
+let check_imply_leq eq lhs e1 e2 =
+  let rec helper l = match l with
+    | [] -> -1
+    | a::ls -> if helper2 a then 1 else helper ls
+  and helper2 a = match a with
+    | Eq(d1,d2,_) ->          
+          if eqExp_f eq d1 e1 then is_leq eq d2 e2 
+          else if eqExp_f eq d2 e2 then is_leq eq e1 d1 
+          else helper2 (Lte(d2,d1,no_pos))
+    | Lte(d1,d2,_) -> 
+          if eqExp_f eq d1 e1 then is_leq eq d2 e2 
+          else if eqExp_f eq d2 e2 then is_leq eq e1 d1 
+          else false
+    | _ -> false
+  in helper lhs
+
+let check_imply_eq eq lhs e1 e2 = 
+  let rec helper l = match l with
+    | [] -> -1
+    | a::ls -> if helper2 a then 1 else helper ls
+  and helper2 a = match a with
+    | Eq(d1,d2,_) ->          
+          (eqExp_f eq d1 e1 && eqExp_f eq d2 e2) ||
+              (eqExp_f eq d1 e2 && eqExp_f eq d2 e1)
+    | _ -> false
+  in if ((eqExp_f eq) e1 e2) then 1
+  else helper lhs 
+
+let check_imply_neq eq lhs e1 e2 = 
+ let rec helper l = match l with
+    | [] -> -1
+    | a::ls -> if helper2 a then 1 else helper ls
+  and helper2 a = match a with
+    | Eq(d1,d2,_) ->          
+          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+          else helper2 (Lte(d2,d1,no_pos))
+    | Lte(d1,d2,_) -> 
+          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+          else false
+    | _ -> false
+  in if ((eqExp_f eq) e1 e2) then -2
+  else helper lhs 
+
+let check_eq_bform eq lhs rhs failval = 
+  if List.exists (equalBFormula_f eq rhs) lhs then 1
+  else failval
+
+(* assume b_formula has been normalized 
+     1 - true
+     0 - dont know
+     -1 - likely false
+    -2 - definitely false
+*)
+
+let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
+  let eq x y = Util.is_equiv_eq aset x y in
+  match rhs with
+    | BConst(true,_) -> 1
+    | Lte(e1,e2,_) -> check_imply_leq eq lhs e1 e2
+    | Eq(e1,e2,_) -> check_imply_eq eq lhs e1 e2
+    | Neq(e1,e2,_) -> check_imply_neq eq lhs e1 e2
+    | EqMin _ | EqMax _ (* min/max *) -> check_eq_bform eq lhs rhs 0
+    | Lt _ | Gt _ | Gte _ -> (* RHS not normalised *) 
+          let _ = print_string "warning fast_imply : not normalised"
+          in (check_eq_bform eq lhs rhs (-1))
+    | _ -> (* use just syntactic checking *) 
+          check_eq_bform eq lhs rhs (-1)
+
+
+let full_name_of_spec_var (sv : spec_var) : ident = 
+  match sv with
+    | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
+
+
+let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
+  let r = fast_imply aset lhs rhs in
+  if (r<=0) then r else
+    let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
+    let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
+    let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
+    let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
+    r
+
