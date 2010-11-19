@@ -946,9 +946,9 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
       ( ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
         ignore (List.map (fun vdef -> set_materialized_vars cprog vdef) cviews);
         ignore (C.build_hierarchy cprog);
-        let cprog2 = sat_warnings cprog1 in
-        let cprog3 = add_pre_to_cprog cprog2 in
-        let cprog4 = if (!Globals.enable_case_inference or !Globals.allow_pruning) then pred_prune_inference cprog3 else cprog3 in
+        let cprog2 = sat_warnings cprog1 in        
+        let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pruning) then pred_prune_inference cprog2 else cprog2 in
+        let cprog4 = add_pre_to_cprog cprog3 in
         let _ = if !Globals.print_core then print_string (Cprinter.string_of_program cprog4) else () in
 			  cprog4)))
 	end)
@@ -956,8 +956,8 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 
-					      {c with  Cast.proc_static_specs = add_pre(*_debug*) cprog c.Cast.proc_static_specs;
-                         Cast.proc_dynamic_specs = add_pre cprog c.Cast.proc_dynamic_specs;}
+					      {c with  Cast.proc_static_specs_with_pre = add_pre(*_debug*) cprog c.Cast.proc_static_specs;
+                         (*Cast.proc_dynamic_specs = add_pre cprog c.Cast.proc_dynamic_specs;*)}
                          ) cprog.C.prog_proc_decls;}	
 
 and sat_warnings cprog = 
@@ -1496,6 +1496,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                     C.proc_args = args;
                     C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
                     C.proc_static_specs = final_static_specs_list;
+                    C.proc_static_specs_with_pre = final_static_specs_list;
                     C.proc_dynamic_specs = final_dynamic_specs_list;
                     C.proc_by_name_params = by_names;
                     C.proc_body = body;
@@ -2911,7 +2912,7 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 			       Cformula.formula_ext_continuation = inner_add_pre new_pf new_branches fc;
 			    }
 	| Cformula.EAssume (ref_vars, bf,y) ->
-	    Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_P pf no_pos)) no_pos),y)
+	    Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
     
@@ -4541,7 +4542,11 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
     (*let _ = print_string ("invs from: "^(String.concat "\n"(List.map (fun (_,c)->
       Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) c))start))^"\n") in*)
-    let all = List.fold_left (fun (a1,a2)(c1,c2)-> if a1=[] then ([c1],c2)else (c1::a1, combine_pures c2 a2)) ([],[]) pure_list in
+    let all = List.fold_left 
+      (fun (a1,a2)(c1,c2)-> 
+          if a1=[] then 
+            ([c1],c2)
+          else (c1::a1, combine_pures c2 a2)) ([],[]) pure_list in
     let rec comp i (crt_lst: (formula_label list * CP.b_formula list)list) (last_lst: (formula_label list * CP.b_formula list)list) =
       if i>=l then all :: crt_lst
       else 
@@ -4672,7 +4677,7 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
       let _ = print_string ("pruning for "^(c.C.view_name)^"\n") in
       {c with 
         C.view_formula =  Solver.prune_pred_struc prog_views_inf true c.C.view_formula ;
-        C.view_un_struc_formula = Solver.prune_preds prog_views_inf true c.C.view_un_struc_formula;}) preds in
+        C.view_un_struc_formula = Solver.prune_preds_debug prog_views_inf true c.C.view_un_struc_formula;}) preds in
     (*let _ = print_string ("\n\n=========after:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
     let proc_spec f = 

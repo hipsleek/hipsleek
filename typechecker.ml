@@ -418,7 +418,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
           rs in
             
           let res = if(CF.isFailListPartialCtx ctx) then ctx
-          else check_pre_post proc.proc_static_specs ctx in
+          else check_pre_post proc.proc_static_specs_with_pre ctx in
           
             if (CF.isFailListPartialCtx res)then begin
                     Debug.print_info ("precondition checking ("^(Cprinter.get_label_list_partial_context res)^") ") ("none is satisfied\n") pos; (* add branch info *)

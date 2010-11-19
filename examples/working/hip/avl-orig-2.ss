@@ -9,9 +9,9 @@ data node {
 // bal: 0: left is higher, 1: balanced, 2: right is higher
 
 avl<m, n, bal> == self = null & m = 0 & n = 0 & bal=1
-	or self::node<_, n, p, q> * p::avl<m1, n1, _> * q::avl<m2, n2, _>
+	or (exists m1,n1,m2,n2,q,p,x1,x2,x3 : self::node<x1, n, p, q> * p::avl<m1, n1, x2> * q::avl<m2, n2, x3>
 		& m = 1+m1+m2 & n=1+max(n1, n2) 
-		& -1 <= n1-n2 <=1 & bal=n1-n2+1
+		& -1 <= n1-n2 <=1 & bal=n1-n2+1)
   inv m >= 0 & n >= 0 & 0<=bal<=2;
 /*
 avl<m, n, bal> ==

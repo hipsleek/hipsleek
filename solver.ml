@@ -562,7 +562,7 @@ List.map helper f
    
 and prune_preds prog (simp_b:bool) (f:formula):formula =   
     let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false in r in   
-    let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) imply_w c else c in
+    let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify) c else c in
     
     let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
         else
@@ -594,6 +594,13 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
       Util.pop_time "prune_preds";
       nf)
    
+and prune_preds_debug  prog (simp_b:bool) (f:formula):formula =   
+    let r = prune_preds prog simp_b f in
+    print_string ("prune_preds input: "^(Cprinter.string_of_formula f)^"\n");
+    print_string ("prune_preds output: "^(Cprinter.string_of_formula r)^"\n");
+    r
+
+  
 and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP.memo_pure*bool)= 
   match hp with
     | Star s ->
@@ -1410,19 +1417,19 @@ and redundant_existential_check (svs : CP.spec_var list) (ctx0 : context) =
 	    let _ = redundant_existential_check svs c1 in
 	    (redundant_existential_check svs c2)
 
-and elim_exists_pure w (f, b) lump_all pos =
-  (elim_exists_memo_pure w f lump_all pos, List.map (fun (l, f) -> (l, elim_exists_pure_branch w f pos)) b)
+and elim_exists_pure w (f, b) lump pos =
+  (elim_exists_memo_pure w f pos, List.map (fun (l, f) -> (l, elim_exists_pure_branch w f pos)) b)
   
 and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
   let f_simp w f pos = Util.push_time "elim_exists";
       let f_s = elim_exists_pure_branch(*_debug*) w f pos in
       Util.pop_time "elim_exists"; f_s in
-  MCP.memo_pure_push_exists_aux f_simp w f0
+  MCP.memo_pure_push_exists_aux (f_simp,true) w f0 pos
     
 and elim_exists_memo_pure_debug w f0 lump_all pos = 
   (print_string ("elim_exists_memo_pure input1: "^(Cprinter.string_of_spec_var_list w)^"\n") ;
    print_string ("elim_exists_memo_pure input2: "^(Cprinter.string_of_memo_pure_formula f0)^"\n") ;
-   let r = elim_exists_memo_pure w f0 lump_all pos in  
+   let r = elim_exists_memo_pure w f0 pos in  
    print_string ("elim_exists_memo_pure output: "^(Cprinter.string_of_memo_pure_formula r)^"\n") ;
   r)
   
@@ -2099,7 +2106,7 @@ and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.memo_pure):list_context =
         let v_l = es.es_gen_impl_vars@es.es_evars in
         if (v_l = []) then es.es_formula
           else 
-            let f1 = formula_of_memo_pure (elim_exists_memo_pure(*_debug*) v_l f false no_pos) no_pos in
+            let f1 = formula_of_memo_pure (elim_exists_memo_pure(*_debug*) v_l f no_pos) no_pos in
             CF.mkStar es.es_formula f1 Flow_combine no_pos in
     (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
     Ctx {(es_cache_extend es) with
@@ -2411,12 +2418,13 @@ and heap_entail_build_memo_pure_check (evars : CP.spec_var list) (ante : MCP.mem
   let avars = MCP.mfv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
-  let tmp1 = MCP.memo_pure_push_exists inner_vars conseq in
-  if U.empty outer_vars then
+  let tmp1 = (*MCP.memo_pure_push_exists*) elim_exists_memo_pure inner_vars conseq no_pos in
+  (ante,tmp1)
+  (*if U.empty outer_vars then
     (ante, tmp1)
   else
-    let tmp2 = MCP.memo_pure_push_exists sevars conseq in
-	(ante, tmp2)
+    let tmp2 = (*MCP.memo_pure_push_exists*) elim_exists_memo_pure sevars conseq no_pos in
+	(ante, tmp2)*)
   
 and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   let avars = CP.fv ante in
@@ -2616,31 +2624,31 @@ and imply_conj ante_memo0 ante_memo1 conseq_conj =
     | [] -> (true,[],None)
     
 and imply_one_conj ante_memo0 ante_memo1 conseq  = 
-  (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
-  let xp01,xp02,xp03 = imply_process_ante false ante_memo0 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no disj") in  
-  (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
+ let xp01,xp02,xp03 = imply_process_ante 0 ante_memo0 conseq 
+        ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no complex") "imply_proc_one_ncplx" in  
   if not xp01  then  
-    let xp01,xp02,xp03 = 
-      (Util.push_time "with_disj_time";
-      let r = imply_process_ante true ante_memo0 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 with disj") in
-      Util.pop_time "with_disj_time"; r) in  
-      (*if not xp01  then
-        let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
-        let xp1 = imply_process_ante true ante_memo1 conseq ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 2(*!imp_subno*)) ^ " with XPure1") in
-        let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
-        xp1
-      else *)
-      if not xp01 then (Util.inc_counter "with_disj_cnt_fail";(xp01,xp02,xp03)	)
-      else (Util.inc_counter "with_disj_cnt_success";(xp01,xp02,xp03)	)
-  else (xp01,xp02,xp03)	
+  (*  let xp01,xp02,xp03 = imply_process_ante 1 ante_memo0 conseq 
+        ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no disj") "imply_proc_one_ndisj" in  
+    if not xp01  then *)
+      let xp01,xp02,xp03 = imply_process_ante 2 ante_memo0 conseq 
+        ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") "imply_proc_one_full" in  
+      if not xp01 then (Util.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
+      else (Util.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
+    (*else (Util.inc_counter "with_disj_cnt_1_s";(xp01,xp02,xp03)	)*)
+  else (Util.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
     
-and imply_process_ante with_disj ante_disj conseq str =
+and imply_process_ante with_disj ante_disj conseq str str_time=
   let fv = CP.fv conseq in
   let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct CP.eq_spec_var fv c.MCP.memo_group_fv))>0) ante_disj in 
-  let r = if with_disj then MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_ante 
-    else MCP.fold_mem_lst_no_disj (CP.mkTrue no_pos) false true n_ante in
+  let r = match with_disj with  
+    | 0 -> MCP.fold_mem_lst_gen (CP.mkTrue no_pos) false true false true n_ante
+    | 1 -> MCP.fold_mem_lst_no_disj (CP.mkTrue no_pos) false true n_ante
+    | _ -> MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-  (TP.imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false)
+  (Util.push_time str_time; 
+   let r = TP.imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false in
+   Util.pop_time str_time;
+   r)
 
    
 and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f =
