@@ -46,6 +46,8 @@ let voidf e = ()
 let voidf2 e f = ()
 let nonef v = None
 let somef v = Some v
+let or_list = List.fold_left (||) false
+let and_list = List.fold_left (&&) true
 
 let push_opt_void_pair e = match e with
   | None -> None
@@ -182,11 +184,14 @@ let exhaust_match = ref false
 
 let profile_threshold = 0.5 
 
+let no_cache_formula = ref false
+
 let true_imply_count = ref 0
 
 let false_imply_count = ref 0
 
 let true_sat_count = ref 0
+
 
 let add_count (t: int ref) = 
 	t := !t+1

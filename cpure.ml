@@ -2794,6 +2794,11 @@ let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
 let trans_b_formula (e:b_formula) (arg:'a) f 
       f_args (f_comb: 'b list -> 'b) :(b_formula * 'b) =
   foldr_b_formula e arg f f_args  ((fun x l -> f_comb l), (fun x l -> f_comb l)) 
+
+let map_b_formula_arg (bf: b_formula) (arg: 'a) (f_bf, f_e) f_arg : b_formula =
+  let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
+  let new_f = trans_func f_bf, trans_func f_e in
+  fst (trans_b_formula bf arg new_f f_arg voidf)
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
 	let (f_b_formula, f_exp) = f in
@@ -2945,7 +2950,7 @@ let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
 let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
     let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
     let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
-    fst (trans_formula e () new_f f_arg voidf)
+    fst (trans_formula e arg new_f f_arg voidf)
 
 (* map functions to formula without argument
  * f_f: formula -> formula option
