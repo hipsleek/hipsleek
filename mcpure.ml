@@ -826,44 +826,54 @@ let isCtrInSet aset s c =  List.exists (fun d-> eq_b_formula aset c.memo_formula
 
 let cons_filter g f = List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
+let slow_imply impl nf rhs =
+  let x = Util.gen_time_msg () in
+  try 
+    (Util.push_time x;
+    Util.push_time "slow_imply");
+      let r = impl nf rhs in
+      (Util.pop_time "slow_imply";
+      Util.pop_time_to_s_no_count x);
+      r                   
+  with _ -> (Util.pop_time_to_s_no_count x ;false) 
 
-let elim_redundant_cons_slow impl aset asetf pn =  
+let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
+  let lhs_f = join_conjunctions (List.map (fun c-> (BForm (c,None))) lhs) in
+  let rhs_f = BForm (rhs,None) in
+  let r = fast_imply aset lhs rhs in
+  let s = slow_imply impl lhs_f rhs_f in
+  if s && (r<=0) then 
+    let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
+    let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
+    let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
+    let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
+    r
+  else r
+
+let elim_redundant_cons(*_slow*) impl aset asetf pn =  
   let rec helper pn s r e f = match pn with
     | [] -> (s,r,e)
     | c::cs -> 
-        if (isCtrInSet aset s c) then helper cs s r (c::e) f
-        else 
-          let conj_cs = join_conjunctions (List.map (fun c-> (BForm (c.memo_formula,None))) cs) in
-          let nf = mkAnd f conj_cs no_pos in
-          let b = 
-                let x = Util.gen_time_msg () in
-                try 
-                  (Util.push_time x;
-                  Util.push_time "erc_imply");
-                  let r = impl nf (BForm (c.memo_formula,None)) in
-                  (Util.pop_time "erc_imply";
-                  Util.pop_time_to_s_no_count x);
-                  r                   
-                with _ -> (Util.pop_time_to_s_no_count x ;false) in
-          if b then
-            helper cs s ({c with memo_status = Implied_R}::r) e f
-          else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
+          if (isCtrInSet aset s c) then helper cs s r (c::e) f
+          else 
+            let conj_cs = join_conjunctions (List.map (fun c-> (BForm (c.memo_formula,None))) cs) in
+            let nf = mkAnd f conj_cs no_pos in
+            let b =  Util.push_time "erc_imply";
+              let r = slow_imply impl nf (BForm (c.memo_formula,None)) in
+              (Util.pop_time "erc_imply"; r)   in                
+            if b then
+              helper cs s ({c with memo_status = Implied_R}::r) e f
+            else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
 
-let elim_redundant_cons(*_fast*) impl aset asetf pn =  
+let elim_redundant_cons_fast impl aset asetf pn =  
   let rec helper pn mc s r e f = match pn,mc with
     | [],_ -> (s,r,e)
     | (c::cs),(m::ms) -> 
           let b = 
-            let x = Util.gen_time_msg () in
-            try 
-              (Util.push_time x;
-              Util.push_time "fast_imply");
-                let r = fast_imply_debug aset (ms@f) m in
-                (Util.pop_time "fast_imply";
-                Util.pop_time_to_s_no_count x);
-                (r>0)                   
-            with _ -> (Util.pop_time_to_s_no_count x ;false) 
+            (Util.push_time "erc_imply";
+            let r = fast_imply_debug(*_cmp impl*) aset (ms@f) m in
+            (Util.pop_time "erc_imply";r>0)) 
           in
           if b then
             helper cs ms s ({c with memo_status = Implied_R}::r) e f
