@@ -926,10 +926,8 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
 		     (*let _ = print_string ("post norm :"^(Iprinter.string_of_program prog)) in*)
 		   let tmp_views = order_views prog.I.prog_view_decls in
 		   let cviews = List.map (trans_view prog) tmp_views in
-		   let cdata =
-                     List.map (trans_data prog) prog.I.prog_data_decls in
-		   let cprocs1 =
-                     List.map (trans_proc prog) prog.I.prog_proc_decls in
+		   let cdata = List.map (trans_data prog) prog.I.prog_data_decls in
+		   let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
 		   let cprocs = !loop_procs @ cprocs1 in
 		   let (l2r_coers, r2l_coers) = trans_coercions prog in
 		   let cprog =
@@ -968,9 +966,14 @@ and sat_warnings cprog =
     let goods,unsat_list = Solver.find_unsat cprog f in
     let nf = List.fold_left ( fun a c -> CF.mkOr a c no_pos) (CF.mkFalse (CF.mkTrueFlow ()) no_pos) goods in
       (nf,unsat_list) in
+  let trim_unsat_l f = 
+    let r1,r2 = List.split (List.map (fun (c1,c2)-> 
+      let r1,r2 = trim_unsat c1 in
+      ((r1,c2),r2)) f) in
+    (r1,(List.concat r2)) in
   
   let n_pred_list = List.map (fun c->       
-      let nf,unsat_list =  trim_unsat c.Cast.view_un_struc_formula in      
+      let nf,unsat_list =  trim_unsat_l c.Cast.view_un_struc_formula in      
       if ((List.length unsat_list)> 0) then warn c.Cast.view_name unsat_list else ();            
       let ncf = List.fold_left (fun a c-> match c with
           | CF.EBase b -> if ((List.length b.CF.formula_ext_continuation)>0) then c::a
@@ -997,8 +1000,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
      (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-      let (xform', xform_b, addr_vars') =
-        Solver.xpure_symbolic_no_exists prog vdef.Cast.view_un_struc_formula(*view_formula *)in
+      let (xform', xform_b, addr_vars') = Solver.xpure_symbolic_no_exists prog (C.formula_of_unstruc_view_f vdef) in
       let addr_vars = U.remove_dups addr_vars' in
 	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
@@ -1094,8 +1096,9 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
 	 let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
          let _ = vdef.I.view_typed_vars <- typed_vars in
          let mvars = [] in
-	 let n_un_str =  Cformula.struc_to_formula cf in
-	 let bc = (*if !Globals.allow_pruning then None
+   let cf = CF.label_view cf in
+   let n_un_str =  Cformula.(*struc_to_view_un_s*) get_view_branches cf in   
+   let bc = (*if !Globals.allow_pruning then None
     else*) match (compute_base_case cf) with
 	   | None -> None
 	   | Some s -> (flatten_base_case s (Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed))) in
@@ -1117,6 +1120,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
              C.view_prune_branches = [];
              C.view_prune_conditions = [];
              C.view_prune_invariants = []} in
+    let _ = print_string ("mda: "^(Cprinter.string_of_view_decl cvdef)^"\n") in
    (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef))(CF.pos_of_struc_formula cf);
     cvdef)))
 
@@ -1242,7 +1246,7 @@ and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_form
 
 and set_materialized_vars prog cdef =
   let mvars =
-    find_materialized_vars prog cdef.C.view_vars (*cdef.C.view_formula*) cdef.C.view_un_struc_formula
+    find_materialized_vars prog cdef.C.view_vars (*cdef.C.view_formula*) (C.formula_of_unstruc_view_f cdef)
   in
     (cdef.C.view_materialized_vars <- mvars; cdef)
 
@@ -4599,12 +4603,11 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
 
 and view_prune_inv_inference cp vd =  
     let sf  = CP.SpecVar (CP.OType vd.C.view_data_name, self, Unprimed) in
-    let v_f = CF.label_view vd.C.view_formula in 
-    let f_branches = CF.get_view_branches  v_f in 
+    (*let v_f = CF.label_view vd.C.view_formula in *)
+    let f_branches = CF.get_view_branches  vd.C.view_formula in 
     let branches = snd (List.split f_branches) in
     let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches (fst vd.C.view_user_inv) no_pos in    
     let v' = { vd with  
-        C.view_formula = v_f;
         C.view_prune_branches = branches; 
         C.view_prune_conditions = conds ; 
         C.view_prune_invariants = invs;} in 
@@ -4675,10 +4678,11 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
     let prog_views_inf = {cp with C.prog_view_decls  = preds;} in
     (*let _ = print_string ("\n\n=========before:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
     let preds = List.map (fun c-> 
-      let _ = print_string ("pruning for "^(c.C.view_name)^"\n") in
+      let unstruc = List.map (fun (c1,c2) ->
+          (Solver.prune_preds(*_debug*) prog_views_inf true c1,c2))c.C.view_un_struc_formula in
       {c with 
         C.view_formula =  Cformula.erase_propagated (Solver.prune_pred_struc prog_views_inf true c.C.view_formula) ;
-        C.view_un_struc_formula = Solver.prune_preds(*_debug*) prog_views_inf true c.C.view_un_struc_formula;}) preds in
+        C.view_un_struc_formula = unstruc;}) preds in
     (*let _ = print_string ("\n\n=========after:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
     let proc_spec f = 

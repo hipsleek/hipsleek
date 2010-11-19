@@ -111,7 +111,7 @@ let process_pred_def pdef =
     cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
     let n_cpdef = {n_cpdef with 
         C.view_formula =  Solver.prune_pred_struc cprog true n_cpdef.C.view_formula ;
-        C.view_un_struc_formula = Solver.prune_preds cprog true n_cpdef.C.view_un_struc_formula;}in
+        C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)

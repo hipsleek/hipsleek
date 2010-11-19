@@ -1761,11 +1761,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let vmap = H.create 103 in
   let _ = List.iter 
 	(fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
-  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_un_struc_formula in
+  let pbvars0 = gen_partially_bound_params out_params (C.formula_of_unstruc_view_f vdef) in
 	(* update partially bound vars for vdef *)
   let _ = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
-	gen_formula prog vdef.C.view_un_struc_formula vmap out_params in
+	gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
 	(* generate fields *)
   let fields = ((Named vdef.C.view_data_name, self), pos) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in

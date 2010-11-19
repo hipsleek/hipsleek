@@ -1006,9 +1006,10 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	      | Prog prog ->
 	          let vdef = Cast.look_up_view_def pos prog.prog_view_decls c in
             (*let _ = print_string "\n y\n" in*)
+            let joiner f = formula_of_disjuncts (fst (List.split f)) in
             let forms = match brs with 
-                | None -> vdef.view_un_struc_formula 
-                | Some s -> struc_to_formula (filter_branches brs vdef.view_formula) in
+                | None -> formula_of_unstruc_view_f vdef
+                | Some s -> joiner (List.filter (fun (_,l)-> List.mem l s) vdef.view_un_struc_formula) in
 	          let renamed_view_formula = rename_bound_vars forms in
 	          let fr_vars = (CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed))
 		        :: vdef.view_vars in
@@ -2473,24 +2474,16 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool) lhs
   else res 
 
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.memo_pure) rhs_p_br pos : (list_context * proof) =
-  (*print_endline ("RHS: " ^ Cprinter.string_of_pure_formula_branches (rhs_p, rhs_p_br));*)
-  let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let lhs_t = lhs.formula_base_type in
   let lhs_fl = lhs.formula_base_flow in
   let lhs_b = lhs.formula_base_branches in
   let _ = reset_int2 () in
-  let xpure_lhs_h, xpure_lhs_h_b = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
-  (*  print_endline ("XPURE1: " ^ Cprinter.string_of_pure_formula_branches (xpure_lhs_h, xpure_lhs_h_b));*)
   let xpure_lhs_h0, xpure_lhs_h0_b = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 0 in
-  (*print_endline ("consumed: "^(Cprinter.string_of_context (Cformula.Ctx estate)));
-    print_endline ("XPURE0: " ^ Cprinter.string_of_pure_formula_branches (xpure_lhs_h0, xpure_lhs_h0_b));*)
   let fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.memo_pure) =
     if (is_ok = false) then (is_ok,succs,fails) else 
       let m_lhs = MCP.combine_memo_branch branch_id (lhs_p, lhs_b) in
-      let tmp1 = MCP.merge_mems m_lhs (MCP.combine_memo_branch branch_id (xpure_lhs_h, xpure_lhs_h_b)) true in
-      let new_ante, new_conseq = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
       let tmp2 = MCP.merge_mems m_lhs (MCP.combine_memo_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
       let new_ante0, new_conseq0 = heap_entail_build_memo_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp2 rhs_p pos in
 	  (* 26.03.2009 simplify the pure part *) 		 
@@ -2509,52 +2502,11 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	      let simp_conseq1 =  if !Globals.omega_err = false then simp_conseq else (Globals.omega_err := false; new_conseq0)	in 
         (* use the previous conseq , reset the error flag *)
         memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos 
-	    else new_conseq0
-      in
-	  (*
-	    BEFORE:
-	    TP.imply new_ante0 new_conseq0 ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))) || (* first try XPure0 *)
-	    (((new_ante <> new_ante0) || (new_conseq <> new_conseq0)) && 
-	    (imp_subno := !imp_subno+1; Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno) ^ " with XPure1") no_pos;
-	    TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)))) 	(* if XPure0  fails, then try XPure1 *)
-	    in
-	  *)    
+	    else new_conseq0 in
       let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
-      let split_ante1 = (*Tpdispatcher.split_disjunctions*) new_ante in
-	  (* first try for xpure 0 and see what conjuncts can be discharged *)
-      let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None) else (imply_memo split_ante0 split_ante1 split_conseq) in	
-	  (* added by cezary  for branches *)
-    (*if common fails to prove common it might be due to missing info, for example:
-        x::avl<s,h,S> & ["s": s>0] |-  x::avl<s,h,S> & x!=null
-      *)
-      (*let _ = if res1 then () else 
-        (print_string ("\n failed ante"^branch_id^" : ");
-         print_string ("conseq_0 : "^(Cprinter.string_of_memo_pure_formula new_conseq0)^"\n");
-         print_string ("xpure_0 : "^(Cprinter.string_of_memo_pure_formula new_ante0)^"\n");
-         print_string ("xpure_1 : "^(Cprinter.string_of_memo_pure_formula new_ante)^"\n")) in   *)
-      let res1,res2,re3 = 
-        if res1 = false && branch_id = "" then
-	      let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
-          let fold_fun2 (is_ok,a2,a3) branch_id_added =
-            if is_ok then (is_ok,a2,a3) else
-              let m_lhs = MCP.combine_memo_branch branch_id_added (lhs_p, lhs_b) in
-              let tmp1 = MCP.merge_mems m_lhs (MCP.combine_memo_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) true in
-              let new_ante, new_conseq = heap_entail_build_memo_pure_check estate.es_evars tmp1 rhs_p pos in
-              imp_subno := !imp_subno+1; 
-              Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;
-              (*let  _ = print_string ("imply ante: "^(Cprinter.string_of_memo_pure_formula new_ante)) in*)
-		      TP.memo_imply new_ante new_conseq ("emptyRHS"^(string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
-          in
-          List.fold_left fold_fun2 (false,[],None) branches
-        else (res1,res2,res3)
-      in
-	  (*print_endline branch_id;
-	    print_endline ("RHS_P: " ^ Cprinter.string_of_pure_formula rhs_p);
-	    print_endline ("ANTE: " ^ Cprinter.string_of_pure_formula new_ante);
-	    print_endline ("CONSEQ: " ^ Cprinter.string_of_pure_formula new_conseq);
-	    if res then print_endline "ok" else print_endline "notok";*)
+	    let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None) else (imply_memo split_ante0 split_conseq) in	
 	  (imp_no := !imp_no+1;
 	  (res1,res2@succs,res3))  in
     
@@ -2597,25 +2549,25 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
     (* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)
     (****************************************************************)  
     
-and imply_memo ante_memo0 ante_memo1 conseq_memo = 
+and imply_memo ante_memo0 conseq_memo = 
   match conseq_memo with
     | h :: rest -> 
       let r = MCP.fold_mem_lst_to_lst [h] false false true in
-	    let (r1,r2,r3)=(imply_conj ante_memo0 ante_memo1 r) in
+	    let (r1,r2,r3)=(imply_conj ante_memo0 r) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_memo ante_memo0 ante_memo1 rest) in
+	      let r1,r22,r23 = (imply_memo ante_memo0 rest) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
     
     
     
-and imply_conj ante_memo0 ante_memo1 conseq_conj = 
+and imply_conj ante_memo0 conseq_conj = 
   match conseq_conj with
     | h :: rest -> 
-	    let (r1,r2,r3)=(imply_one_conj ante_memo0 ante_memo1 h) in
+	    let (r1,r2,r3)=(imply_one_conj ante_memo0 h) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_conj ante_memo0 ante_memo1 rest) in
+	      let r1,r22,r23 = (imply_conj ante_memo0 rest) in
 	      (r1,r2@r22,r23)
 	    else 
       (*let _ = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
@@ -2623,7 +2575,7 @@ and imply_conj ante_memo0 ante_memo1 conseq_conj =
       (r1,r2,r3)
     | [] -> (true,[],None)
     
-and imply_one_conj ante_memo0 ante_memo1 conseq  = 
+and imply_one_conj ante_memo0 conseq  = 
  let xp01,xp02,xp03 = imply_process_ante 0 ante_memo0 conseq 
         ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no complex") "imply_proc_one_ncplx" in  
   if not xp01  then  

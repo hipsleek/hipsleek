@@ -147,6 +147,8 @@ approx_formula_and_a2 : approx_formula }
 
 (* utility functions *)
 
+let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 
@@ -1098,7 +1100,8 @@ and pop_exists (qvars : CP.spec_var list) (f : formula) = match f with
 (* 19.05.2008 *)
 
 and formula_of_disjuncts (f:formula list) : formula= 
-  List.fold_left (fun a c-> mkOr a c no_pos) (mkFalse (mkFalseFlow ) no_pos) f
+  if (f=[]) then (mkTrue (mkTrueFlow()) no_pos)
+  else List.fold_left (fun a c-> mkOr a c no_pos) (mkFalse (mkFalseFlow ) no_pos) f
 
 and rename_struc_bound_vars (f:struc_formula):struc_formula =
 	let rec helper (f:ext_formula):ext_formula = match f with
@@ -1891,33 +1894,45 @@ let flatten_branches p br =
   List.fold_left (fun p (l, f) -> CP.And (p, f,no_pos)) p br
 ;;
 
-let rec struc_to_formula (f0:struc_formula):formula = 
-	let rec ext_to_formula (f:ext_formula):formula = match f with
+let rec struc_to_formula_gen (f0:struc_formula):(formula*formula_label option list) list = 
+	let rec get_label_f f = match f with
+		| Or b-> (get_label_f b.formula_or_f1)@(get_label_f b.formula_or_f2)
+		| Base{formula_base_label = l}| Exists{formula_exists_label = l} -> [l]in
+	let rec ext_to_formula (f:ext_formula) = match f with
 		| ECase b-> 
-      let r = 
-        if (List.length b.formula_case_branches) <=0 then  mkTrue (mkTrueFlow ()) b.formula_case_pos
-        else List.fold_left 
-          (fun a (c1,c2)-> 
-            (*let ng = Cpure.Not (c1,b.formula_case_pos) in*)
-            if (isConstEFalse c2) then a
-            else
-            let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
-            (mkOr a (normalize_combine 
-                  (mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos ) 
-                  (struc_to_formula c2)
-                  b.formula_case_pos) b.formula_case_pos)
-          ) (mkFalse (mkFalseFlow) b.formula_case_pos) b.formula_case_branches in
-      push_exists b.formula_case_exists r 
+			  let r = List.concat (List.map 
+				  (fun (c1,c2)-> 
+					if (isConstEFalse c2) then []
+					else
+					let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
+					let npf = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
+					let l = struc_to_formula_gen c2 in
+					List.map (fun (c1,c2) -> (normalize_combine npf c1 no_pos,c2)) l) b.formula_case_branches) in
+			  List.map (fun (c1,c2)-> ( (push_exists b.formula_case_exists c1),c2)) r 
 		| EBase b-> 
-				let e = normalize_combine b.formula_ext_base (struc_to_formula b.formula_ext_continuation) b.formula_ext_pos in
-				let nf = push_exists ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) e in
-				nf
-		| EAssume (_,b,_)-> b 
-			in	
-	if (List.length f0)>0 then
-		List.fold_left (fun a c-> mkOr a (ext_to_formula c) no_pos) (mkFalse (mkFalseFlow) no_pos)f0
-	else mkTrue (mkTrueFlow ()) no_pos	
+				let nf,nl = b.formula_ext_base,(get_label_f b.formula_ext_base) in
+				let lc = struc_to_formula_gen b.formula_ext_continuation in
+				let f c = push_exists b.formula_ext_exists (normalize_combine nf c b.formula_ext_pos) in
+				(match lc with
+				  | [] -> [(f nf, nl)]
+				  | _ -> List.map (fun (c1,c2)-> (f c1,nl@c2)) lc)
+		| EAssume (_,b,_)-> [(b,[None])] in	
+	List.concat (List.map ext_to_formula f0) ;;
 	
+let struc_to_formula f0 :formula = formula_of_disjuncts (fst (List.split (struc_to_formula_gen f0)));;
+	
+let rec split_conjuncts (f:formula):formula list = match f with 
+  | Or b -> (split_conjuncts b.formula_or_f1)@(split_conjuncts b.formula_or_f2)
+  | _ -> [f] 
+  
+let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
+  let ifo = (struc_to_formula_gen f0) in
+  List.map (fun (c1,c2)-> 
+	let c2 = List.fold_left (fun a c2-> match c2 with | None -> a | Some s-> s::a) [] c2 in
+	match c2 with
+	| [x] -> (c1,x)
+	| _ ->  Err.report_error {Err.error_loc = no_pos;  Err.error_text = " mismatch in view labeling \n"} ) ifo
+
 and formula_to_struc_formula (f:formula):struc_formula =
 	let rec helper (f:formula):struc_formula = match f with
 		| Base b-> [EBase ({
@@ -2621,4 +2636,3 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
       else formula_br b.formula_ext_base
 		| EAssume (_,b,_)-> [] in	
   List.concat (List.map ext_formula_br f0)
-
