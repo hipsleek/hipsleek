@@ -7,11 +7,11 @@ data node {
 
 bnd1<n, sm, bg, mi> == self::node<mi, null> & sm <= mi < bg & n = 1 or
                        self::node<d, p> * p::bnd1<n-1, sm, bg, tmi> & sm <= d < bg & mi = min(d, tmi) & sm <= mi < bg
-                    inv n >= 1 & sm <= mi < bg;
+                    inv n >= 1 & sm <= mi < bg &self!=null;
 
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or 
                   self::node<sm, q> * q::sll<n-1, qs, lg> & q != null & sm <= qs
-               inv n >= 1 & sm <= lg; 
+               inv n >= 1 & sm <= lg & self!=null; 
 
                  
 int find_min(node x)
@@ -23,7 +23,7 @@ int find_min(node x)
 	if (x.next == null)
 		return x.val;
 	else
-	{		
+	{		assume false;
 		tmp = find_min(x.next);
 		if (tmp > x.val)
 			return x.val;

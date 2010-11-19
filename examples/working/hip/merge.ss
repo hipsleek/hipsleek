@@ -12,7 +12,7 @@ bnd<n, sm, bg> == self = null & n = 0 or
 
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
                   self::node<sm, q> * q::sll<n-1, qs, lg> & sm <= qs
-               inv n >= 1 & sm <= lg;
+               inv n >= 1 & sm <= lg & self!=null;
  
 /* function to count the number of elements of a list */
 int count(node x)

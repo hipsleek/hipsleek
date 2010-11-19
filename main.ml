@@ -155,6 +155,7 @@ let process_cmd_line () = Arg.parse [
   ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
   ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
   ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
+  ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
 	] set_source_file usage_msg
 
 (******************************************)

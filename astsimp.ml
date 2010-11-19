@@ -1110,7 +1110,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
              C.view_formula = cf;
              C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
              C.view_addr_vars = [];
-             C.view_user_inv = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
+             C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
              C.view_un_struc_formula = n_un_str;
              C.view_base_case = bc;
              C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf);
@@ -4366,7 +4366,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
       
 
   
-and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) pos: 
+and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_inv pos: 
       ((Cpure.b_formula * (formula_label list)) list)*
       ((formula_label list * Cpure.b_formula list) list) = 
   (*print_string ("sent to case inf: "^(Cprinter.string_of_formula init_form)^"\n");*)
@@ -4542,11 +4542,15 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
     (*let _ = print_string ("invs from: "^(String.concat "\n"(List.map (fun (_,c)->
       Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) c))start))^"\n") in*)
-    let all = List.fold_left 
-      (fun (a1,a2)(c1,c2)-> 
-          if a1=[] then 
-            ([c1],c2)
-          else (c1::a1, combine_pures c2 a2)) ([],[]) pure_list in
+    
+      let all = 
+        if (!Globals.enable_strong_invariant) then
+            List.fold_left 
+            (fun (a1,a2)(c1,c2)-> 
+                if a1=[] then ([c1],c2)
+                else (c1::a1, combine_pures c2 a2)) ([],[]) pure_list
+        else ((fst (List.split pure_list)),
+      List.concat (List.map (fun c->List.map (fun c-> c.MCP.memo_formula) c.MCP.memo_group_cons)u_inv)) in
     let rec comp i (crt_lst: (formula_label list * CP.b_formula list)list) (last_lst: (formula_label list * CP.b_formula list)list) =
       if i>=l then all :: crt_lst
       else 
@@ -4559,11 +4563,8 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
             List.map (fun (d1,d2)->(d1::c1, combine_pures c2 d2)) rem 
           ) last_lst in          
         let n_list = List.concat n_list1 in 
-        comp (i+1) (crt_lst@n_list) n_list in
-        
+        comp (i+1) (crt_lst@n_list) n_list in        
       (comp 2 start start) in
-    
-    
     
   (*actual case inference*)
   let guard_list = List.map (fun (c,lbl)-> 
@@ -4601,7 +4602,7 @@ and view_prune_inv_inference cp vd =
     let v_f = CF.label_view vd.C.view_formula in 
     let f_branches = CF.get_view_branches  v_f in 
     let branches = snd (List.split f_branches) in
-    let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches no_pos in    
+    let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches (fst vd.C.view_user_inv) no_pos in    
     let v' = { vd with  
         C.view_formula = v_f;
         C.view_prune_branches = branches; 
@@ -4676,8 +4677,8 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
     let preds = List.map (fun c-> 
       let _ = print_string ("pruning for "^(c.C.view_name)^"\n") in
       {c with 
-        C.view_formula =  Solver.prune_pred_struc prog_views_inf true c.C.view_formula ;
-        C.view_un_struc_formula = Solver.prune_preds_debug prog_views_inf true c.C.view_un_struc_formula;}) preds in
+        C.view_formula =  Cformula.erase_propagated (Solver.prune_pred_struc prog_views_inf true c.C.view_formula) ;
+        C.view_un_struc_formula = Solver.prune_preds(*_debug*) prog_views_inf true c.C.view_un_struc_formula;}) preds in
     (*let _ = print_string ("\n\n=========after:::::\n"^(String.concat "\n" (List.map Cprinter.string_of_view_decl preds))) in*)
     let prog_views_pruned = { prog_views_inf with C.prog_view_decls  = preds;} in
     let proc_spec f = 

@@ -45,7 +45,7 @@ and view_decl = { view_name : ident;
 				  view_user_inv : (MP.memo_pure * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
 				  mutable view_x_formula : (MP.memo_pure * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
 				  mutable view_addr_vars : P.spec_var list;
-				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+				  view_un_struc_formula : Cformula.formula (*(Cformula.formula * formula_label) list*) ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
 				  view_base_case : (P.formula *(MP.memo_pure*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
           view_prune_branches: formula_label list;
           view_prune_conditions: (P.b_formula * (formula_label list)) list;

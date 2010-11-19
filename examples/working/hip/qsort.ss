@@ -11,7 +11,7 @@ bnd<n, sm, bg> == self = null & n = 0 or
 
 sll<n, sm, lg> == self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 or 
                   self::node<sm, q> * q::sll<n1, qs, lg> & n= n1+1 &  sm <= qs 
-               inv n >= 1 & sm <= lg;
+               inv n >= 1 & sm <= lg & self!=null ;
 
 node partition(ref node xs, int c)
 	requires xs::bnd<n, sm, bg> & sm <= c <= bg

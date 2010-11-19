@@ -2291,7 +2291,7 @@ let rename_labels_formula_ante  e=
 	let n_l_f n_l = match n_l with
 				| None -> (fresh_branch_point_id "")
 				| Some (_,s) -> (fresh_branch_point_id s) in	
-    let f_e_f e = None in
+  let f_e_f e = None in
 	let f_f e = None in
 	let rec f_h_f e = match e with 
 		| Star s -> None
@@ -2306,7 +2306,16 @@ let rename_labels_formula_ante  e=
 	let f_p_f e = Some e in			
 	transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 			 
-  
+let erase_propagated f = 
+  let f_e_f e = None in
+	let f_f e = None in
+	let rec f_h_f e =  None in
+  let f_memo e =  Some (MCP.cons_filter e MCP.isImplT) in
+  let f_aset e = Some e in
+	let f_formula e = Some e in
+	let f_b_formula e = Some e in
+	let f_exp e = Some e in			
+  transform_struc_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp)) f
 
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
   transform_list_context ((fun es -> Ctx{es with 

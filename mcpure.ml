@@ -385,7 +385,9 @@ and filter_merged_cons aset l=
   let keep c1 c2 = match c1.memo_status ,c2.memo_status with
     | _ , Implied_R -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true)
     | Implied_R , _ -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (false,true) else (true,true) 
-    | _ -> (true,true) in
+    | Implied_N,Implied_N | Implied_P,Implied_P | Implied_N,Implied_P
+      -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (false,true) else (true,true) 
+    | Implied_P,Implied_N -> if (equalBFormula_f eq c1.memo_formula c2.memo_formula) then (true,false) else (true,true) in
     
   let rec remove_d n = match n with 
     | [] -> []
@@ -819,6 +821,8 @@ let check_redundant impl (f:memo_pure): unit = List.iter (fun c->
 let isImpl_dupl c = match c.memo_status with | Implied_R -> true | _ -> false 
 let isImplT c = match c.memo_status with | Implied_N -> true | _ -> false 
 let isCtrInSet aset s c =  List.exists (fun d-> eq_b_formula aset c.memo_formula d.memo_formula) s  
+
+let cons_filter g f = List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
 
 let elim_redundant_cons impl aset asetf pn =  
