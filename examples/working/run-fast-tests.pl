@@ -5,6 +5,7 @@ use File::Basename;
 use Getopt::Long;
 use Sys::Hostname;
 use File::NCopy;
+use File::Path 'rmtree';
 use Cwd;
 
 GetOptions( "stop"  => \$stop,
@@ -67,9 +68,9 @@ if($home21){
 	$exec_path = "$target_dir";
 	$exempl_path = "$target_dir/examples/working";
 	if($root){
-		chdir("$root") or die "Can't chdir to $path $!";
+		chdir("$root") or die "Can't chdir to $root $!";
 	}else{
-		chdir("$target_dir") or die "Can't chdir to $path $!"; 
+		chdir("$target_dir") or die "Can't chdir to $target_dir $!"; 
 	}	
 }
 
@@ -268,7 +269,10 @@ if ($error_count > 0) {
 }
 else
 	{print "All test results were as expected.\n";}
-
+if($home21){
+	chdir("/home") or die "Can't chdir to $target_dir $!";
+	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
+}
 exit(0);
 
 
