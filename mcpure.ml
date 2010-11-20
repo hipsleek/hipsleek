@@ -779,6 +779,7 @@ let memo_check_syn_prun_imply (p,pn,pr_branches) crt_br corr  =
           else None in
     Util.list_find f_f corr.memo_group_cons
 
+
 let memo_check_syn_prun p c corr =  memo_check_syn_prun_imply p c corr
     
 let memo_check_syn_prun_debug (p,pn,br) c corr = 
@@ -925,3 +926,12 @@ let elim_redundant_debug impl (f:memo_pure) : memo_pure  =
 let fast_memo_imply (g:memoised_group) (f:b_formula):int = 
   let cons = List.map (fun c-> c.memo_formula) g.memo_group_cons in
   fast_imply g.memo_group_aset cons f
+
+
+let memo_check_syn_fast (p,pn,pr_branches) crt_br corr  = 
+  match (fast_memo_imply corr pn) with
+    | 1 -> Some pr_branches
+    | _ -> match (fast_memo_imply corr p) with
+        | 1 -> Some []
+        | _ -> None
+ 

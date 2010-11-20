@@ -3229,19 +3229,21 @@ let check_eq_bform eq lhs rhs failval =
 let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
   let _ = Util.push_time "fast_imply" in
   let r =
-    (let eq x y = Util.is_equiv_eq aset x y in
-    match rhs with
-      | BConst(true,_) -> 1
-      | Lte(e1,e2,_) -> check_imply_leq eq lhs e1 e2
-      | Eq(e1,e2,_) -> check_imply_eq eq lhs e1 e2
-      | Neq(e1,e2,_) -> check_imply_neq eq lhs e1 e2
-      | EqMin _ | EqMax _ (* min/max *) -> check_eq_bform eq lhs rhs 0
-      | Lt _ | Gt _ | Gte _ -> (* RHS not normalised *) 
-            let _ = print_string "warning fast_imply : not normalised"
-            in (check_eq_bform eq lhs rhs (-1))
-      | _ -> (* use just syntactic checking *) 
-            check_eq_bform eq lhs rhs (-1)) 
-  in (Util.pop_time "fast_imply");r
+    let eq x y = Util.is_equiv_eq aset x y in
+    let r1=check_eq_bform eq lhs rhs 0 in
+    if (r1>0) then r1
+    else 
+      match rhs with
+        | BConst(true,_) -> 1
+        | Lte(e1,e2,_) -> check_imply_leq eq lhs e1 e2
+        | Eq(e1,e2,_) -> check_imply_eq eq lhs e1 e2
+        | Neq(e1,e2,_) -> check_imply_neq eq lhs e1 e2
+        | EqMin _ | EqMax _ (* min/max *) -> 0
+        | Lt _ | Gt _ | Gte _ -> (* RHS not normalised *) 
+              let _ = print_string "warning fast_imply : not normalised"
+              in 0
+        | _ -> (* use just syntactic checking *) 0 in
+  (Util.pop_time "fast_imply");r
 
 
 let full_name_of_spec_var (sv : spec_var) : ident = 
