@@ -506,7 +506,7 @@ and mkNeqExp (ae1 : exp) (ae2 : exp) pos = match (ae1, ae2) with
 		  BForm ((Neq (ae1, ae2, pos)),None)
   | _ ->  BForm ((Neq (ae1, ae2, pos)),None)
 
-and mkNot f lbl pos0 :formula= match f with
+and mkNot f lbl1 pos0 :formula= match f with
   | BForm (bf,lbl) -> begin
 	  match bf with
 		| BConst (b, pos) -> BForm ((BConst ((not b), pos)),lbl)
@@ -518,7 +518,7 @@ and mkNot f lbl pos0 :formula= match f with
 		| Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos)),lbl)
 		| _ -> Not (f, lbl,pos0)
 	end
-  | _ -> Not (f, lbl,pos0)
+  | _ -> Not (f, lbl1,pos0)
         
 and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=
   if eq_spec_var sv1 sv2 then

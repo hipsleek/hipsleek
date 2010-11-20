@@ -484,7 +484,7 @@ and memoise_add_memo (l_init: memo_pure) (cm:memoised_constraint) : memo_pure =
 (*and memoise_add_memo (l: memo_pure) (cm:memoised_constraint): memo_pure = memoise_add_memo_fnf l cm false*)
 *)
 and memoise_add_failed_memo (l:memo_pure) (p:b_formula) : memo_pure = 
-  merge_mems l (create_memo_group_wrapper [memo_f_neg p] Implied_R) false
+  merge_mems l (create_memo_group_wrapper [p] Implied_R) false
   
 and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure = 
   if (isConstTrue p)||(isConstMFalse l) then l 
@@ -671,7 +671,7 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
       List.fold_left(fun a c-> cons2 (a,c,no_pos)) a ln
     else List.fold_left(fun a c-> cons2 (a,c,no_pos)) nel ln in
 
-  let norm_bf (c1:b_formula) : (b_formula option) =
+(*  let norm_bf (c1:b_formula) : (b_formula option) =
     let c1 = b_form_simplify c1 in
     match c1 with
       | Lt  (e1,e2,l) -> Some (Lt  (norm_expr e1,norm_expr e2,l))
@@ -688,7 +688,7 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
       | ListNotIn (e1,e2,l) -> Some (ListIn (norm_expr e1,norm_expr e2,l))
       | BConst _ | BVar _ | EqMax _ 
       | EqMin _ |  BagSub _ | BagMin _ 
-      | BagMax _ | ListAllN _ | ListPerm _ -> None in
+      | BagMax _ | ListAllN _ | ListPerm _ -> None in*)
     
   Util.push_time "memo_norm";
   let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
@@ -765,9 +765,14 @@ let memo_changed d = d.memo_group_changed
    if equal to an implied cond then it can be dropped as it is useless as a pruning condition
    throws an exception if p_cond is not found in corr*)    
    
-let memo_check_syn_prun_imply (p,pr_branches) crt_br corr  = 
+let memo_f_neg_norm (p:b_formula) :b_formula = 
+  match norm_bform (memo_f_neg p) with
+    | Some s-> s
+    | None -> Error.report_error 
+      {Error.error_loc = no_pos; Error.error_text = "memo_f_neg_norm: the negation can not be normalized to a simple b_formula"}
+   
+let memo_check_syn_prun_imply (p,pn,pr_branches) crt_br corr  = 
     let f = Cpure.eq_spec_var_aset corr.memo_group_aset in
-    let pn = memo_f_neg p in
     let f_f x =  
           if equalBFormula_f f x.memo_formula p then Some []
           else if equalBFormula_f f x.memo_formula pn then Some pr_branches
@@ -776,10 +781,10 @@ let memo_check_syn_prun_imply (p,pr_branches) crt_br corr  =
 
 let memo_check_syn_prun p c corr =  memo_check_syn_prun_imply p c corr
     
-let memo_check_syn_prun_debug p c corr = 
-  let _ = print_string (" Check_syn1: "^(!print_bf_f (fst p))^"\n") in
+let memo_check_syn_prun_debug (p,pn,br) c corr = 
+  let _ = print_string (" Check_syn1: "^(!print_bf_f p)^"\n") in
   let _ = print_string (" Check_syn2: "^(!print_mp_f [corr])^"\n") in
-    memo_check_syn_prun_imply p c corr
+    memo_check_syn_prun_imply (p,pn,br) c corr
     
 let transform_memo_formula f l : memo_pure =
   let (f_memo,f_aset, f_formula, f_b_formula, f_exp) = f in
@@ -870,16 +875,15 @@ let elim_redundant_cons_fast impl aset asetf pn =
   let rec helper pn mc s r e f = match pn,mc with
     | [],_ -> (s,r,e)
     | (c::cs),(m::ms) -> 
-          let b = 
-            (Util.push_time "erc_imply";
-            let r = fast_imply_debug(*_cmp impl*) aset (ms@f) m in
-            (Util.pop_time "erc_imply";r>0)) 
-          in
-          if b then
-            helper cs ms s ({c with memo_status = Implied_R}::r) e f
-          else helper cs ms (c::s) r e (m::f) 
-  in let mc=List.map (fun x -> x.memo_formula) pn 
-  in helper pn  mc [] [] [] []
+      let b = 
+        (Util.push_time "erc_imply";
+        let r = fast_imply_debug(*_cmp impl*) aset (ms@f) m in
+          (Util.pop_time "erc_imply";r>0)) in
+        if b then  helper cs ms s ({c with memo_status = Implied_R}::r) e f
+        else helper cs ms (c::s) r e (m::f) 
+    | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "elim_redundant_cons_fast: unexpected pattern"} in       
+  let mc=List.map (fun x -> x.memo_formula) pn in    
+  helper pn  mc [] [] [] []
 
 
 (* let elim_redundant_slice impl (f:memoised_group): memoised_group*memoised_group = *)
@@ -916,3 +920,8 @@ let elim_redundant_debug impl (f:memo_pure) : memo_pure  =
   print_string ("eliminate_redundant redundant: "^(!print_mp_f r2)^"\n");
   print_string ("eliminate_redundant result: "^(!print_mp_f r1)^"\n");
   r1
+
+(* wrapper for fast_imply*)  
+let fast_memo_imply (g:memoised_group) (f:b_formula):int = 
+  let cons = List.map (fun c-> c.memo_formula) g.memo_group_cons in
+  fast_imply g.memo_group_aset cons f

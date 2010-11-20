@@ -649,14 +649,15 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                 let corr = MCP.memo_find_relevant_slice fv new_mem in
                 if not (MCP.memo_changed corr) then (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
                 else 
-                    let y_p = (Util.inc_counter "counter_memo_count";
-                      MCP.memo_check_syn_prun(*_debug*) (p_cond, pr_branches) rem_br corr) in
+                    let p_cond_n = MCP.memo_f_neg_norm p_cond in
+                   (* let y_p = (Util.inc_counter "counter_memo_count";
+                               MCP.memo_check_syn_prun(*_debug*) (p_cond,p_cond_n, pr_branches) rem_br corr) in
                     match y_p with
                       | Some y_p ->
                        (Util.inc_counter "counter_memo_hit";
                           (*let _ = print_string ("found contra: "^(String.concat " ; "(List.map (fun (c,_) -> string_of_int c) y_p))^"-\n") in*)
                        (y_p@yes_prune, no_prune,new_mem))
-                      | None -> 
+                      | None -> *)
                           (*decide if i ^ a = false*)
                          (* let _ = print_string ("memo miss: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                           let _ = print_string (" memo formula: "^(Cprinter.string_of_memoised_list [corr])^"\n") in                    
@@ -664,14 +665,23 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                           let _ = print_string ("and_is: "^(Cprinter.string_of_pure_formula and_is)^"\n") in
                           let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                          *) 
-                          let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
-                          let sat,_,_ = TP.imply_msg_no_no and_is (CP.Not ((CP.BForm (p_cond,None)),None,no_pos)) "prune_imply" "prune_imply" true in
-                          let sat = not sat in
+                          let imp = match (MCP.fast_memo_imply corr p_cond_n) with
+                              | 1 -> 
+                                (Util.inc_counter "fast_imply_succ";
+                                true  (*definitely true*))
+                              | _ ->
+                                let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
+                                let r,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
+                                (if r then Util.inc_counter "fast_imply_sem_prun_true"
+                                  else Util.inc_counter "fast_imply_sem_prun_false"; r) 
+                              (*| _ -> 
+                                Util.inc_counter "fast_imply_likely_false";
+                                false (*definitely false*) (*| -1 (*likely false*) | 0 (*don't know*)*)*)in
                           (*let and_is = MCP.fold_mem_lst_cons p_cond [corr] false true false  in
                           let sat = TP.is_sat_msg_no_no "prune_sat" and_is true in*)
-                          if not sat then (*there was a contradiction*)
+                          if imp then (*there was a contradiction*)
                             let nyp = pr_branches@yes_prune in
-                            let mem_w_fail = MCP.memoise_add_failed_memo new_mem p_cond in
+                            let mem_w_fail = MCP.memoise_add_failed_memo new_mem p_cond_n in
                             (nyp,no_prune,mem_w_fail)
                           else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
               with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
