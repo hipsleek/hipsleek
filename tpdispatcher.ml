@@ -28,7 +28,7 @@ let tp = ref OmegaCalc
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
 
-let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" printing not initialized"*))
 
 let prover_arg = ref "omega"
 let external_prover = ref false
@@ -665,6 +665,8 @@ let rec split_disjunctions = function
   | z -> [z]
 ;;
 
+let called_prover = ref ""
+
 let tp_imply_sender_aux ante conseq imp_no timeout =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
                   ^(Cprinter.string_of_pure_formula conseq)^"\n") in
@@ -698,9 +700,9 @@ let tp_imply_sender_aux ante conseq imp_no timeout =
   end
   | OM ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(Mona.imply timeout ante conseq imp_no)
+		(called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
 	  else
-		(Omega.imply ante conseq imp_no timeout)
+		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
   | OI ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
 		(Isabelle.imply ante conseq imp_no)
@@ -716,9 +718,17 @@ let tp_imply_sender_aux ante conseq imp_no timeout =
         Redlog.imply ante conseq imp_no
 ;;
 
+let tp_imply_sender_aux_debug ante conseq imp_no timeout = 
+  let r = tp_imply_sender_aux ante conseq imp_no timeout in
+  print_string (" tp_imply_sender input1: "^ (!print_pure ante)^"\n") ;
+  print_string (" tp_imply_sender input2: "^ (!print_pure conseq)^"\n") ;
+  print_string (" tp_imply_sender output by: "^ !called_prover ^ " "^(string_of_bool r)^"\n") ;
+  r
+;;
+
 let tp_imply_sender ante conseq imp_no timeout =
 	 let t1 = Util.get_time () in
-     let r = tp_imply_sender_aux ante conseq imp_no timeout in
+     let r = tp_imply_sender_aux(*_debug*) ante conseq imp_no timeout in
 	 let t2 = Util.get_time () in
      let diff = t2 -. t1 in
      (if (diff> 2.5) then 

@@ -10,7 +10,6 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 module U = Util
-module TP = Tpdispatcher
 
 
 type typed_ident = (Cpure.typ * ident)

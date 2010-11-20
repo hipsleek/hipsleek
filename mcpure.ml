@@ -47,6 +47,8 @@ let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
 let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
 let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
 
+let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
+
 let print_alias_set aset = Util.string_of_eq_set !print_sv_f aset
     
 let rec mfv (m: memo_pure) : spec_var list = Util.remove_dups_f (List.concat (List.map (fun c-> c.memo_group_fv) m)) eq_spec_var
@@ -343,20 +345,24 @@ and fold_mem_lst_to_lst_gen  mem with_R with_P with_slice with_disj: formula lis
                     if with_disj then c.memo_group_slice 
                     else List.filter (fun c-> not (has_disj_f c)) c.memo_group_slice
                   else [] in
-      let cons = List.map (fun c-> match c.memo_status with 
-          | Implied_R -> if with_R then [BForm (c.memo_formula,None)] else []
-          | Implied_N -> [BForm (c.memo_formula,None)] 
-          | Implied_P-> if with_P then [BForm (c.memo_formula,None)] else [] ) c.memo_group_cons in
-      let asetf = List.map (fun(c1,c2)-> 
-              form_formula_eq c1 c2
-                  (*BForm ((Eq (Var (c1,no_pos),Var (c2,no_pos),no_pos)),None)*)
-      ) 
-        (Util.get_equiv_eq c.memo_group_aset) in
-      asetf @ slice@(List.concat cons)) mem in
+      let cons = List.filter (fun c-> match c.memo_status with 
+          | Implied_R -> with_R 
+          | Implied_N -> true 
+          | Implied_P-> with_P) c.memo_group_cons in
+      let cons  = List.map (fun c-> (BForm(c.memo_formula, None))) cons in
+      let asetf = List.map (fun(c1,c2)-> form_formula_eq c1 c2) (Util.get_equiv_eq c.memo_group_aset) in
+      asetf @ slice@cons) mem in
     let r = List.map join_conjunctions r in
     r
         
 and fold_mem_lst_to_lst mem with_dupl with_inv with_slice = fold_mem_lst_to_lst_gen mem with_dupl with_inv with_slice true
+  
+and fold_mem_lst_to_lst_debug mem with_dupl with_inv with_slice = 
+  let r = fold_mem_lst_to_lst mem with_dupl with_inv with_slice in
+  print_string ("fold_mem_lst_to_lst input: "^(!print_mp_f mem)^"\n");
+  print_string ("fold_mem_lst_to_lst output: "^(print_p_f_l r)^"\n");
+  r
+  
   
 and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj lst : formula = 
   let r = fold_mem_lst_to_lst_gen lst with_dupl with_inv with_slice with_disj in

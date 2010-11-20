@@ -1,5 +1,5 @@
 /* avl trees */
-
+/*not working/provable code */
 /* representation of a node in an avl tree */
 data node {
 	int val;
@@ -11,7 +11,8 @@ data node {
 /* view for avl trees */
 /**** for omega and mona ****/
 avl2<n, S> == self = null & S = {} & n = 0 
-	or self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & S = union(S1, S2, {v}) & n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1 
+	or self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & S = union(S1, S2, {v}) & 
+    n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1 
 	inv n >= 0;
 
 /**** for isabelle */ 
@@ -46,7 +47,7 @@ int height(node x)
 node rotate_left(node l, node rl, node rr)
 
 	requires l::avl2<ln, S1> * rl::avl2<ln, S2> * rr::avl2<ln+1, S3>
-	ensures res::avl2<2+ln, S>;	
+	ensures res::avl2<2+ln, S> & S = union (S1,S2,S3); 
 
 {
 	node tmp;
@@ -61,7 +62,7 @@ node rotate_left(node l, node rl, node rr)
 /* function to rotate right */
 node rotate_right(node ll, node lr, node r)
 	requires ll::avl2<lln, S1> * lr::avl2<lln-1, S2> * r::avl2<lln-1, S3>
-	ensures res::avl2<lln+1, S>; 
+	ensures res::avl2<lln+1, S> & S = union (S1,S2,S3); 
 {
 	node tmp; 
 	int v = 10, h;
@@ -140,16 +141,19 @@ node node_error() requires true ensures false;
 /* function to insert a node in an avl tree (using the rotate functions) */
 node insert(node x, int a)
 	requires x::avl2<n1, S1>
-	ensures res::avl2<n2, S2> & S2 = union(S1, {a}) & (n2 = n1 | n2 = n1+1);
+	ensures res::avl2<n2, S2> & S2 = union(S1, {a}) & n1<=n2 & n2<=n1+1 ;
 {
 	node tmp, tmp_null = null;
 
 	if (x == null)
-		return new node (a, 1, null, null);
-	else 
-	{
-		if (a <= x.val)
 		{
+    assume false;
+    return new node (a, 1, null, null);
+    }
+	else 
+	{ 
+		if (a <= x.val)
+		{// assume false;
 			tmp = x.left;
 			x.left = insert(tmp, a);
 			// check if we need rotation 
@@ -157,10 +161,13 @@ node insert(node x, int a)
 			{
 				if (height(x.left.left) > height(x.left.right))
 				{
-					return rotate_right(x.left.left, x.left.right, x.right);
+					
+          dprint;
+          node t = rotate_right(x.left.left, x.left.right, x.right);
+          return t;
 				}
 				else
-				{
+				{ assume false;
 					if (height(x.left.left) == (height(x.left.right) - 1))
 						return rotate_double_left(x.left.left, x.left.right.left, x.left.right.right, x.right, 1, 1, 1);
 					else
@@ -171,7 +178,7 @@ node insert(node x, int a)
 			        return node_error();
 		}
 		else
-		{
+		{ assume false;
 			tmp = x.right;
 			x.right = insert(tmp, a);
 			if ((height(x.right) - height(x.left)) == 2)

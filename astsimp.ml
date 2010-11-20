@@ -1120,7 +1120,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
              C.view_prune_branches = [];
              C.view_prune_conditions = [];
              C.view_prune_invariants = []} in
-    let _ = print_string ("mda: "^(Cprinter.string_of_view_decl cvdef)^"\n") in
+   (* let _ = print_string ("mda: "^(Cprinter.string_of_view_decl cvdef)^"\n") in*)
    (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef))(CF.pos_of_struc_formula cf);
     cvdef)))
 

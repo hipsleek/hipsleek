@@ -666,8 +666,8 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                    let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                                 *) 
                                 let imp = 
-                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
-                                  let r(*,_,_*)=false (*TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true *) in
+                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.enable_aggressive_prune in
+                                  let r,_,_=(*false *)TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
                                   (if r then Util.inc_counter "fast_imply_sem_prun_true"
                                   else Util.inc_counter "fast_imply_sem_prun_false"; r) 
                                       (*| _ -> 
@@ -2425,13 +2425,10 @@ and heap_entail_build_memo_pure_check (evars : CP.spec_var list) (ante : MCP.mem
   let avars = MCP.mfv ante in
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
+  let conseq = MCP.cons_filter conseq MCP.isImplT in
   let tmp1 = (*MCP.memo_pure_push_exists*) elim_exists_memo_pure inner_vars conseq no_pos in
   (ante,tmp1)
-      (*if U.empty outer_vars then
-        (ante, tmp1)
-        else
-        let tmp2 = (*MCP.memo_pure_push_exists*) elim_exists_memo_pure sevars conseq no_pos in
-	    (ante, tmp2)*)
+  
       
 and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   let avars = CP.fv ante in
@@ -2558,7 +2555,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 and imply_memo ante_memo0 conseq_memo = 
   match conseq_memo with
     | h :: rest -> 
-          let r = MCP.fold_mem_lst_to_lst [h] false false true in
+          let r = MCP.fold_mem_lst_to_lst(*_debug*) [h] false false true in
 	      let (r1,r2,r3)=(imply_conj ante_memo0 r) in
 	      if r1 then 
 	        let r1,r22,r23 = (imply_memo ante_memo0 rest) in
@@ -2566,8 +2563,13 @@ and imply_memo ante_memo0 conseq_memo =
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
           
-          
-          
+and imply_memo_debug ante_memo conseq_memo=
+  let (r1,r2,r3)= imply_memo ante_memo conseq_memo in  
+  print_string ("imply_memo input1: "^(Cprinter.string_of_memo_pure_formula ante_memo)^"\n");
+  print_string ("imply_memo input1: "^(Cprinter.string_of_memo_pure_formula conseq_memo)^"\n");    
+  print_string ("imply_memo output: "^(string_of_bool r1)^"\n");
+  (r1,r2,r3)
+  
 and imply_conj ante_memo0 conseq_conj = 
   match conseq_conj with
     | h :: rest -> 

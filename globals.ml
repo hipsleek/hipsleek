@@ -166,6 +166,7 @@ let suppress_warning_msg = ref false
 let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
+let enable_aggressive_prune = ref false
 
 (*let allow_imemo_slicing = ref true
 let agressive_unsat = ref false

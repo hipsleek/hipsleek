@@ -802,10 +802,12 @@ let rec pr_formula e =
         pr_memo_pure_formula_branches(p,b); pr_cut_after  "&" ; 
         fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
 
+
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
 let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
     = poly_printer_of_pr fmt pr_formula e
+
 
 
 let string_of_pure_formula_branches (f, l) : string
@@ -1403,6 +1405,7 @@ let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ 
 
 
 
+
    
 let get_label_partial_context (fs,ss) : string =
 if (U.empty fs) then "" else string_of_path_trace(fst(List.hd fs))
@@ -1416,7 +1419,7 @@ Mcpure.print_sv_f := string_of_spec_var ;;
 Mcpure.print_bf_f := string_of_b_formula ;;
 Mcpure.print_p_f_f := string_of_pure_formula ;;
 Mcpure.print_exp_f := string_of_formula_exp;;
-Tpdispatcher.print_pure := string_of_pure_formula ;;
+(*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
 Cpure.print_b_formula := string_of_b_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;

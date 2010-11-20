@@ -25,15 +25,9 @@ let mona_of_prim_type = function
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		      -> "int set"
+  | Bag		  -> "int set"
   | List          -> "list"	(* lists are not supported *)
 
-let mona_of_typ = function 
-  | CP.Prim t -> mona_of_prim_type t 
-  | CP.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
-;;
-
-  
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
@@ -61,7 +55,7 @@ and mona_of_exp_break e0 =
   match e0 with
   | CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (mona_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := (new_tmp_var :: !additional_vars);
@@ -70,7 +64,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (mona_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -80,7 +74,7 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3)
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (mona_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
 		additional_vars := new_tmp_var :: !additional_vars;
@@ -89,7 +83,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (mona_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -98,7 +92,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (mona_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -427,13 +421,14 @@ and is_firstorder_mem f e vs =
 (* pretty printing for spec_vars *)
 and mona_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> 
+	(*let _ = print_string("var " ^ (Cprinter.string_of_spec_var sv) ^ "\n") in*)
 		v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = match e0 with
-  | CP.Null _ -> "pconst(0)"
+  | CP.Null _ -> " 0 "
   | CP.Var (sv, _) -> mona_of_spec_var sv
-  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"
+  | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
   | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
   | CP.Add (a1, a2, _) ->  " ( " ^ (mona_of_exp a1 f) ^ " + " ^ (mona_of_exp a2 f) ^ ")"
   | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
@@ -471,7 +466,7 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
       let add_string2 = add_string ^ (if a1str <> "" then (" & " ^ a1str) else "") ^ (if a2str <> "" then (" & " ^ a2str) else "") in
       ((tmp :: (exs1 @ exs2)), tmp, add_string2)
 	| CP.Max _
-	| CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
+	| CP.Min _ -> failwith ("mona.mona_of_exp_secondorder: min/max can never appear here")
   | CP.Mult (a1, a2, p) ->
       (match a1 with
       | CP.IConst(i, _) -> 
@@ -482,7 +477,9 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
             let sum = if (i>1) then (mult i) else CP.IConst (1, p) in
             mona_of_exp_secondorder sum f
       | _ -> failwith ("mona.mona_of_exp_secondorder: nonlinear arithmetic isn't supported."))
-	| CP.Subtract (e1, e2, p) -> 	failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
+	| CP.Subtract (e1, e2, p) -> 	
+		let _ = print_string("Illegal subtraction: " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in
+		failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction ...")
   | CP.List _
   | CP.ListCons _
   | CP.ListHead _
@@ -577,7 +574,9 @@ and mona_of_b_formula b f vs =
         let a1str = (mona_of_exp a1 f) in
         let a2str = (mona_of_exp a2 f) in
         let a3str = (mona_of_exp a3 f) in
-	    "(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
+        match a1 with
+          | CP.IConst _ -> "(" ^ a3str ^ " = " ^ a2str ^ " + " ^ a1str ^ ") "
+          | _ ->  "(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
       else
         let (a1ex, a1name, a1str) = (mona_of_exp_secondorder a1 f) in
         let (a2ex, a2name, a2str) = (mona_of_exp_secondorder a2 f) in
@@ -797,7 +796,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   if !log_all_flag == true then
 	begin
 	  output_string log_file ("test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
-      output_string log_file (fstr ^ ";\n");
+      	  output_string log_file (fstr ^ ";\n");
 	  flush log_file;
 	end;
   let res = check inc timeout pid in
@@ -811,7 +810,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   | _ -> ()
   end;
 (*  print_endline "Mona died."; flush stdout;*)
-  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
+  (*Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");*)
   begin match res with
   | true ->
 	  begin
@@ -853,13 +852,14 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   *)
   (* try 02.04.09 *)
   (* ante *)
-  
+  let ante = CP.arith_simplify ante in
+  let conseq = CP.arith_simplify conseq in
   let simp_ante = (break_presburger ante true) in
   let simp_conseq = (break_presburger conseq false) in
   let ante_fv = CP.fv simp_ante in
   let conseq_fv = CP.fv simp_conseq in
   let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
-  let all_fv = Util.remove_dups_f (ante_fv @ conseq_fv) CP.eq_spec_var in
+  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
   let vs = Hashtbl.create 10 in
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
