@@ -878,7 +878,7 @@ let elim_redundant_cons_fast impl aset asetf pn =
     | (c::cs),(m::ms) -> 
       let b = 
         (Util.push_time "erc_imply";
-        let r = fast_imply_debug(*_cmp impl*) aset (ms@f) m in
+        let r = fast_imply(*_debug*)(*_cmp impl*) aset (ms@f) m in
           (Util.pop_time "erc_imply";r>0)) in
         if b then  helper cs ms s ({c with memo_status = Implied_R}::r) e f
         else helper cs ms (c::s) r e (m::f) 
@@ -925,7 +925,7 @@ let elim_redundant_debug impl (f:memo_pure) : memo_pure  =
 (* wrapper for fast_imply*)  
 let fast_memo_imply (g:memoised_group) (f:b_formula):int = 
   let cons = List.map (fun c-> c.memo_formula) g.memo_group_cons in
-  fast_imply g.memo_group_aset cons f
+  fast_imply(*_debug*) g.memo_group_aset cons f
 
 
 let memo_check_syn_fast (p,pn,pr_branches) crt_br corr  = 

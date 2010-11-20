@@ -667,7 +667,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                 *) 
                                 let imp = 
                                   let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true false  in
-                                  let r,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
+                                  let r(*,_,_*)=false (*TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true *) in
                                   (if r then Util.inc_counter "fast_imply_sem_prun_true"
                                   else Util.inc_counter "fast_imply_sem_prun_false"; r) 
                                       (*| _ -> 
