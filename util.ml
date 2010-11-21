@@ -648,6 +648,7 @@ let string_of_e_set (f:'a->string) (e:'a e_set) : string =
 let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string = string_of_e_set f e
 
 
+(* converts (a eq_set) to [[a]] *)
 let partition_eq ((s,_): 'a eq_set) : 'a list list =
   partition s
 
@@ -678,9 +679,6 @@ let is_empty_aset_eq ((s,_):'a eq_set)  = s=[]
 
 let empty_a_set_str f : 'a e_set_str = ([],f,[])
 
-(* return the domain of e-set *)
-let domain (s: ('a,'k) e_map) : 'a list = List.map fst s
-
 let find_aux_eq (eq:'a->'a->bool) (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
   try
      snd(List.find (fun (e1,_) -> eq e e1) s)
@@ -695,23 +693,25 @@ let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k = find_aux_eq (=) s e d
      _ -> d
 *)
 
-(* find key of e in s *)
+(* find key of e in s, returning [] if not found *)
 let find_eq2 (eq:'a->'a->bool)  (s : 'a e_set) (e:'a) : 'a list  
       = find_aux_eq eq s e []
 
 (* find key of e in s *)
 let find (s : 'a e_set) (e:'a) : 'a list  = find_eq2 (=) s e
 
-(* find key of e in s *)
+(* find key of e in eq_set s *)
 let find_eq ((s,eq) : 'a eq_set) (e:'a) : 'a list  = find_eq2 eq s e 
 
 
-(* find key of e in s and return remainder *)
+(* find key of e in s and return remainder after
+   all elements equivalent to e is removed *)
 let find_remove_eq2 (eq:'a->'a->bool) (s : 'a e_set) (e:'a) : ('a list) * ('a e_set)  = 
   let r1 = find_aux_eq eq s e [] in
   (r1, if r1==[] then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
 
-(* find key of e in s and return remainder *)
+(* find key of e in s and return remainder after
+   all elements equivalent to e is removed *)
 let find_remove (s : 'a e_set) (e:'a) : 'a list * ('a e_set)  = 
   find_remove_eq2 (=) s e 
 
@@ -722,7 +722,6 @@ let find_remove_eq ((s,eq) : 'a eq_set) (e:'a) : 'a list * ('a eq_set)  =
 
 let find_str ((s,f,_) : 'a e_set_str) (e:'a) : string list  
       = find_aux s (f e) []
-
 
 (* returns s |- x=y *)
 let is_equiv_eq2 (eq:'a->'a->bool) (s: 'a e_set)  (x:'a) (y:'a) : bool =
@@ -745,7 +744,8 @@ let is_equiv_eq ((s,eq): 'a eq_set)  (x:'a) (y:'a) : bool =
 let is_equiv_str ((s,f,_): 'a e_set_str)  (x:'a) (y:'a) : bool =
   is_equiv s (f x) (f y)
 
-(* add x=y to e-set s *)
+(* add x=y to e-set s and returning a new e-set with
+   extra elements added *)
 let add_equiv_eq2_raw  (eq:'a->'a->bool) (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
   if (eq x y) then s
   else
@@ -790,6 +790,8 @@ let add_equiv_str ((s,f,nm): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
   (add_equiv_raw s s1 s2, f, nm2)
 
 
+(* this method is used to merge two partitions 
+   which may have different keys *)
 (* split out sub-lists in l which overlaps with x *)
 let split_partition (eq:'a->'a->bool) (x:'a list) (l:'a list list): ('a list list * 'a list list) =
  List.fold_left ( fun (r1,r2) y -> if (overlap_eq eq x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
@@ -803,13 +805,14 @@ let rec merge_partition (eq:'a->'a->bool) (l1:'a list list) (l2:'a list list) : 
     else merge_partition eq xs ((x@(List.concat y))::ys)
    (*remove dupl of x*)
          
+(* return the domain of e-set *)
+let domain (s: ('a,'k) e_map) : 'a list = List.map fst s
 
 (* return list of elements in e_set *)
 let get_elems (s:'a e_set) : 'a list = domain s
 
-(* return list of elements in e_set *)
+(* return list of elements in eq_set *)
 let get_elems_eq_raw ((s,_):'a eq_set) : 'a list = domain s
-
 
 (* return pairs of equivalent elements from e_set *)
 let get_equiv_raw (s:'a e_set) : ('a *'a) list = 
@@ -831,12 +834,6 @@ let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
   let (t1,t2) = order_two s1 s2 in
   List.fold_left (fun a (p1,p2) -> add_equiv_eq2_raw eq a p1 p2) t2 (get_equiv_raw t1)
 
-
-(* let l1=partition s1 in
- let l2=partition s2 in
- let l3=merge_partition eq l1 l2 in
- un_partition l3
-*)
 
 let merge_set_eq  ((s1,eq): 'a eq_set) ((s2,_): 'a eq_set): 'a eq_set =
  let ax = merge_set_eq2 eq s1 s2 in
@@ -879,27 +876,35 @@ let elim_elems_one (s:'a e_set) (e:'a) : 'a e_set =
 let elim_elems_one_eq ((s,eq):'a eq_set) (e:'a) : 'a eq_set = 
   let ns=elim_elems_one_eq2 eq s e in (ns,eq)
 
+(* return all elements equivalent to e, including itself *)
+let find_equiv_all_eq2_raw  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a list  =
+  let r1 = find_eq2 eq s e in
+  if (r1==[]) then []
+  else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+
 (* return a distinct element equal to e *)
 let find_equiv_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  =
-  let r1 = find_eq2 eq s e in
+  let ls=find_equiv_all_eq2_raw eq e s in
+  try 
+    let p = List.find (fun x -> not(eq x e)) ls in
+    Some p
+  with _ -> None
+(* 
+  old implementation
+ let r1 = find_eq2 eq s e in
   if (r1==[]) then None
   else let ls = List.filter (fun (a,k) -> k==r1 && not(eq a e) ) s in
   match ls with
     | [] -> None 
     | (x,_)::_ -> Some x
-
-(* return a distinct element equal to e *)
-let find_equiv_all_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a list  =
-  let r1 = find_eq2 eq s e in
-  if (r1==[]) then []
-  else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+*)
 
 
 (* return a distinct element equal to e *)
 let find_equiv  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  = find_equiv_eq2 (=) e s
  
 (* return a distinct element equal to e *)
-let find_equiv_eq  (e:'a) ((s,eq):'a eq_set) : 'a option  = find_equiv_eq2 (=) e s
+let find_equiv_eq  (e:'a) ((s,eq):'a eq_set) : 'a option  = find_equiv_eq2 (eq) e s
  
 (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
 let find_equiv_elim_sure_eq2 (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option * ('a e_set)  =
