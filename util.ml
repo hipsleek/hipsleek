@@ -619,6 +619,18 @@ type 'a e_set_str =  (string e_set * ('a -> string) * 'a e_name )
 
 type 'a eq_set =  ('a,'a list) e_map * ('a -> 'a -> bool)
 
+let string_of_a_list (f:'a->string) (el:'a list) : string =
+  "["^ (String.concat ", "(List.map f el))^"]\n"
+         
+let string_of_a_list_no_newline (f:'a->string) (el:'a list) : string =
+  "["^ (String.concat ", "(List.map f el))^"]"
+
+let string_of_a_list (f:'a->string) (el:'a list) : string =
+  (string_of_a_list_no_newline f el)^"\n"
+
+let string_of_a_list_of_list (f:'a->string) (el:'a list list) : string =
+  "["^ (String.concat ", "(List.map (string_of_a_list_no_newline f) el))^"]\n"
+
 (* converts (a e_set) to [[a]] *)
 let partition (s: 'a e_set) : 'a list list =
  let rec insert (a,k) lst = match lst with
@@ -628,7 +640,23 @@ let partition (s: 'a e_set) : 'a list list =
           else (k2,ls)::(insert (a,k) xs) in
  let r = List.fold_left (fun lst x ->  insert x lst) [] s in
  List.map ( fun (_,b) -> b) r
-         
+
+let string_of_e_set (f:'a->string) (e:'a e_set) : string =
+  let ll=partition e in 
+  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
+
+let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string = string_of_e_set f e
+
+
+let partition_eq ((s,_): 'a eq_set) : 'a list list =
+  partition s
+
+let partition_eq_debug (f:'a->string) ((s,eq): 'a eq_set) : 'a list list =
+ let ax = partition s in
+ let _ = print_string ("partition_eq inp1 :"^(string_of_e_set f s)^"\n") in
+ let _ = print_string ("partition_eq out2 :"^(string_of_a_list_of_list f ax)^"\n") in
+ (ax)
+
 (* converts [[a]] to (a e_set) *)
 let un_partition (ll:'a list list) : 'a e_set =
   let flat xs y = 
@@ -636,18 +664,6 @@ let un_partition (ll:'a list list) : 'a e_set =
     else [] in
   List.concat (List.map (fun x -> flat x x) ll)
 
-
-let string_of_a_list (f:'a->string) (el:'a list) : string =
-  "["^ (String.concat ", "(List.map f el))^"]\n"
-         
-let string_of_e_set (f:'a->string) (e:'a e_set) : string =
-  let ll=partition e in 
-  "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
-
-let string_of_a_list (f:'a->string) (el:'a list) : string =
-  "["^ (String.concat ", "(List.map f el))^"]\n"
-
-let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string = string_of_e_set f e
 
 
 let empty_aset  : 'a e_set = []

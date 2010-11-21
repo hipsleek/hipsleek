@@ -3321,7 +3321,12 @@ let get_elems_eq_with_null aset =
   let vl=Util.get_elems_eq_raw aset in
     List.filter (fun v -> not(is_int_const v)) vl
 
-(* check if eq_map is normalised - to implement*)
+(* below is for Andreea to implement,
+   likely to require Util
+
+*)
+
+(* normalise eq_map - to implement*)
 (* remove duplicate occurrences of a var in a partition, 
    if single element by itself, remove it,
    if it is false, change it to a simpler 1=0. 
