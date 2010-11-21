@@ -1,11 +1,8 @@
-
 data node {
 	int val; 
 	node next;	
 }
 
-
-/* view for a singly linked list */
 
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
@@ -18,8 +15,9 @@ int id2(int x,int t, int mx, int An)
 {    
   return x;
 }
+
 */
- 
+
 node id(node x)
   requires x::ll<nn> & x!=null & nn>=3 & 1<nn
   ensures res::ll<nn> & nn>0 ;
