@@ -10,11 +10,12 @@ open Globals
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
-(* and var_aset = spec_var Util.e_set *)
   
 and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
+
+type var_aset = spec_var Util.eq_set
 
 type formula =
   | BForm of (b_formula *(formula_label option))
@@ -3252,7 +3253,7 @@ let form_bform_eq (v1:spec_var) (v2:spec_var) =
         Error.error_text =  "form_bform_eq : adding an equality with a constant"; }
   else Eq(conv v1,conv v2,no_pos)
 
-(* form bformula allwing constants to be converted *)
+(* form bformula allowing constants to be converted *)
 let form_bform_eq_with_const (v1:spec_var) (v2:spec_var) =
   let conv v = 
     if (name_of_spec_var v="null") then (Null no_pos)
@@ -3260,7 +3261,6 @@ let form_bform_eq_with_const (v1:spec_var) (v2:spec_var) =
       | Some i -> IConst(i,no_pos)
       | None -> Var(v,no_pos)
   in Eq(conv v1,conv v2,no_pos)
-
 
 (* form an equality formula assuming vars only *)
 let form_formula_eq (v1:spec_var) (v2:spec_var) =
@@ -3285,7 +3285,7 @@ let add_equiv_eq a v1 v2 =
  if (is_const v1)||(is_const v2) then
     Error.report_error  {
         Error.error_loc = no_pos;
-        Error.error_text =  "add_equiv_eq : adding an equality with a constant"; }
+        Error.error_text =  "add_equiv_eq bug : adding an equality with a constant"; }
  else Util.add_equiv_eq_raw a v1 v2
 
 (* constant may be added to map*)
@@ -3320,6 +3320,50 @@ let get_elems_eq_with_const aset =
 let get_elems_eq_with_null aset =
   let vl=Util.get_elems_eq_raw aset in
     List.filter (fun v -> not(is_int_const v)) vl
+
+(* check if eq_map is normalised - to implement*)
+(* remove duplicate occurrences of a var in a partition, 
+   if single element by itself, remove it,
+   if it is false, change it to a simpler 1=0. 
+   use Util.partition
+   check duplicates & remove
+   check singletion & remove
+   check false by presence of duplicate constants --> change to 1=0
+*)
+let normalise_eq (aset : var_aset) : var_aset = aset
+
+(* print if there was a change in state check - *)
+let normalise_eq_debug (aset : var_aset) : spec_var Util.eq_set = aset
+
+(* check if an eq_map has a contradiction - to implement *)
+(* call normalised_eq and check if equal to 1=0 *)
+let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset = (false,aset)
+
+(* check if an eq_map has a contradiction - to implement *)
+(* call normalised_eq and check if equal to 1=0 *)
+let is_false_eq (aset : var_aset) : bool = false
+
+(* print if false detected or when there is a state change - to implement *)
+let is_false_and_normalise_eq_debug (aset : var_aset) : bool * var_aset = (false,aset)
+
+(* check if v is a constant and return its var representation - to implement *)
+(* look-up var's key *)
+(* return all constant with the same key *)
+(* return key if found *)
+let get_var_const_eq (aset : var_aset) (v:spec_var) : spec_var option = None
+
+(* check if v is an int constant and return its value, if so - to implement *)
+(* use get_var_const *)
+(* return i if i_const found *)
+(* report error if wrong type found *)
+let get_var_int_eq (aset : var_aset) (v:spec_var) : int option = None
+
+(* check if v is null - to implement *)
+(* report error if of wrong type *) 
+let is_null_var_eq (aset : var_aset) (v:spec_var) : bool = false
+
+(* check if v is null *)
+let is_null_var_eq_debug (aset : var_aset) (v:spec_var) : bool = false
 
 let string_of_var_list l : string =
   Util.string_of_a_list name_of_spec_var l
