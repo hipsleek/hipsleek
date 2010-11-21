@@ -635,6 +635,10 @@ let un_partition (ll:'a list list) : 'a e_set =
     if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
     else [] in
   List.concat (List.map (fun x -> flat x x) ll)
+
+
+let string_of_a_list (f:'a->string) (el:'a list) : string =
+  "["^ (String.concat ", "(List.map f el))^"]\n"
          
 let string_of_e_set (f:'a->string) (e:'a e_set) : string =
   let ll=partition e in 
@@ -726,7 +730,7 @@ let is_equiv_str ((s,f,_): 'a e_set_str)  (x:'a) (y:'a) : bool =
   is_equiv s (f x) (f y)
 
 (* add x=y to e-set s *)
-let add_equiv_eq2  (eq:'a->'a->bool) (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
+let add_equiv_eq2_raw  (eq:'a->'a->bool) (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
   if (eq x y) then s
   else
     let r1 = find_eq2 eq s x in
@@ -745,12 +749,12 @@ let add_equiv_eq2  (eq:'a->'a->bool) (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
           List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
 (* add x=y to e-set s *)
-let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
-  add_equiv_eq2 (=) s x y
+let add_equiv_raw (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
+  add_equiv_eq2_raw (=) s x y
 
 (* add x=y to e-set s *)
-let add_equiv_eq  ((s,eq): 'a eq_set) (x:'a) (y:'a) : 'a eq_set = 
-  let ns=add_equiv_eq2 eq s x y in (ns,eq)
+let add_equiv_eq_raw  ((s,eq): 'a eq_set) (x:'a) (y:'a) : 'a eq_set = 
+  let ns=add_equiv_eq2_raw eq s x y in (ns,eq)
 
 let find_name_str (f:'a->string) (nmap:'a e_name) (e:'a) : (string * 'a e_name) =
   try 
@@ -767,7 +771,7 @@ let find_elem_str (nmap:'a e_name) (n:string)  : 'a =
 let add_equiv_str ((s,f,nm): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
   let (s1,nm1) = find_name_str f nm x in
   let (s2,nm2) = find_name_str f nm1 y in
-  (add_equiv s s1 s2, f, nm2)
+  (add_equiv_raw s s1 s2, f, nm2)
 
 
 (* split out sub-lists in l which overlaps with x *)
@@ -788,10 +792,11 @@ let rec merge_partition (eq:'a->'a->bool) (l1:'a list list) (l2:'a list list) : 
 let get_elems (s:'a e_set) : 'a list = domain s
 
 (* return list of elements in e_set *)
-let get_elems_eq ((s,_):'a eq_set) : 'a list = domain s
+let get_elems_eq_raw ((s,_):'a eq_set) : 'a list = domain s
+
 
 (* return pairs of equivalent elements from e_set *)
-let get_equiv (s:'a e_set) : ('a *'a) list = 
+let get_equiv_raw (s:'a e_set) : ('a *'a) list = 
   let ll = partition s in
   let make_p l = match l with
     | [] -> []
@@ -799,7 +804,7 @@ let get_equiv (s:'a e_set) : ('a *'a) list =
   List.concat (List.map make_p ll)
 
 (* return pairs of equivalent elements from e_set *)
-let get_equiv_eq ((s,_):'a eq_set) : ('a *'a) list = get_equiv s 
+let get_equiv_eq_raw ((s,_):'a eq_set) : ('a *'a) list = get_equiv_raw s 
 
 let order_two (l1:'a list) (l2:'a list) : ('a list * 'a list) =
   if (List.length l1)>(List.length l2) then (l2,l1)
@@ -808,7 +813,7 @@ let order_two (l1:'a list) (l2:'a list) : ('a list * 'a list) =
 (* merge two equivalence sets s1 /\ s2 *)
 let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
   let (t1,t2) = order_two s1 s2 in
-  List.fold_left (fun a (p1,p2) -> add_equiv_eq2 eq a p1 p2) t2 (get_equiv t1)
+  List.fold_left (fun a (p1,p2) -> add_equiv_eq2_raw eq a p1 p2) t2 (get_equiv_raw t1)
 
 
 (* let l1=partition s1 in
@@ -868,6 +873,13 @@ let find_equiv_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  =
     | (x,_)::_ -> Some x
 
 (* return a distinct element equal to e *)
+let find_equiv_all_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a list  =
+  let r1 = find_eq2 eq s e in
+  if (r1==[]) then []
+  else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
+
+
+(* return a distinct element equal to e *)
 let find_equiv  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  = find_equiv_eq2 (=) e s
  
 (* return a distinct element equal to e *)
@@ -882,6 +894,7 @@ let find_equiv_elim_sure_eq2 (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option *
     | [] -> (None,s1)
     | [(x,_)] -> (Some x, ls2)
     | (x,_)::_ -> (Some x, s1)
+
 
 (* return an element r that is equiv to e but distinct from it, and elim e from e_set *)
 let find_equiv_elim_sure (e:'a) (s:'a e_set) : 'a option * ('a e_set)  = find_equiv_elim_sure_eq2 (=) e s 
@@ -916,7 +929,7 @@ let subs_eset_eq2 (eq:'a->'a->bool)  ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set =
     let r1 = find_eq2 eq s fv in
     if (r1==[]) then s
     else 
-      let ns = add_equiv_eq2 eq s fv tv in
+      let ns = add_equiv_eq2_raw eq s fv tv in
       elim_elems_one_eq2 eq ns fv
 
 (* make fv=tv and then eliminate fv *)
@@ -960,32 +973,33 @@ let check_no_dupl_eq eq (s:'a list) : bool =
 let check_no_dupl (s:'a list) : bool = check_no_dupl_eq (=) s
 
 (* check f is 1-to-1 map assuming s contains no duplicates *)
-let is_one2one_eq (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : bool =
+let is_one2one_eq (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : bool =
   let l = List.map f s in
-  check_no_dupl_eq eq l
+    if (check_no_dupl_eq eq l) then true
+    else (print_string ("duplicates here :"^(string_of_a_list pr l)^"\n") ; false) 
 
 (* check f is 1-to-1 map assuming s contains no duplicates *)
-let is_one2one (f:'a -> 'a) (s:'a list) : bool = is_one2one_eq (=) f s
+let is_one2one (f:'a -> 'a) (s:'a list) : bool = is_one2one_eq (fun x -> "?") (=) f s
 
 (* rename the elements of e_set *)
 (* pre : f must be 1-to-1 map *)
-let rename_eset_eq2 (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
-  let b = is_one2one_eq eq f (get_elems s) in
+let rename_eset_eq2 (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
+  let b = is_one2one_eq pr eq f (get_elems s) in
   if b then  List.map (fun (e,k) -> (f e,k)) s
   else Error.report_error {Error.error_loc = Globals.no_pos; 
                   Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
-  rename_eset_eq2 (=) f s
+  rename_eset_eq2 (fun _ -> "?") (=) f s
 
 let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
-  let r=rename_eset_eq2 (eq) f s in
+  let r=rename_eset_eq2 (fun _ -> "?") (eq) f s in
   (r,eq)
 
 let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
-  let r=rename_eset_eq2 (eq) f s in
- let _ = print_string ("rename_eset_eq inp1 :"^(string_of_e_set f s)^"\n") in
- let _ = print_string ("rename_eset_eq out :"^(string_of_e_set f r)^"\n") in
+  let r=rename_eset_eq2 pr (eq) f s in
+ let _ = print_string ("rename_eset_eq inp1 :"^(string_of_e_set pr s)^"\n") in
+ let _ = print_string ("rename_eset_eq out :"^(string_of_e_set pr r)^"\n") in
   (r,eq)
 
 
@@ -1062,7 +1076,7 @@ let is_equiv_opt ((s,eq,nm): 'a e_set_opt)  (x:'a) (y:'a) : bool =
 let add_equiv_opt ((s,eq,nm): 'a e_set_opt) (x:'a) (y:'a) : 'a e_set_opt =
   let (s1,nm1) = add_elem_opt eq nm x in
   let (s2,nm2) = add_elem_opt eq nm1 y in
-  (add_equiv s s1 s2, eq, nm2)
+  (add_equiv_raw s s1 s2, eq, nm2)
 
 (* merge two equivalence set_str s1 /\ s2 - incorrect! *)
 let merge_set_opt ((s1,eq,nm1): 'a e_set_opt) ((s2,_,nm2): 'a e_set_opt): 'a e_set_opt =

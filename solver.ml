@@ -2076,7 +2076,7 @@ and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal
 		  List.fold_left (fun a c->a+
 			(List.length (List.filter MCP.isImplT c.MCP.memo_group_cons))+
 			(List.fold_left (fun a c-> a+ (p_f_size c)) 0 c.MCP.memo_group_slice)+
-			(List.length (Util.get_equiv_eq c.MCP.memo_group_aset))) 0 l in 
+			(List.length (CP.get_equiv_eq c.MCP.memo_group_aset))) 0 l in 
 		let rec fsz f = match f with
 			| Or f-> (fsz f.formula_or_f1)+(fsz f.formula_or_f2)
 			| Base f-> (hsz f.formula_base_heap)+(m_f_size f.formula_base_pure)

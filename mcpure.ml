@@ -12,7 +12,7 @@ type var_aset = spec_var Util.eq_set
 let empty_var_aset = Util.empty_a_set_eq eq_spec_var 
 let fold_aset (f:var_aset):formula = 
   List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq c1 c2) a no_pos)
-                 (mkTrue no_pos) (Util.get_equiv_eq f)
+                 (mkTrue no_pos) (get_equiv_eq f)
 
 type memo_pure = memoised_group list
  
@@ -106,7 +106,7 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
     let n_l = List.fold_left (fun a d-> 
       let n_l = List.map (fun c->((bfv c.memo_formula),[(Some c, None,None)])) d.memo_group_cons in
       let n_l_f = List.map (fun f->((fv f),[(None, Some f, None)])) d.memo_group_slice in
-      let n_l_a = (fun f -> ((Util.get_elems_eq f),[(None, None, Some f )])) d.memo_group_aset in
+      let n_l_a = (fun f -> ((get_elems_eq f),[(None, None, Some f )])) d.memo_group_aset in
       n_l_a :: (n_l @ n_l_f @ a)) [] lst in
       
     let r = List.fold_left (fun acc (v_list, mem) -> 
@@ -212,7 +212,7 @@ and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =
   let helper f = 
     let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
-    r @ (Util.get_equiv_eq f.memo_group_aset) in
+    r @ (get_equiv_eq f.memo_group_aset) in
      List.concat (List.map helper f)
 
 (*and alias_of_ptr_eqs s = List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) Util.empty_aset s*)
@@ -283,12 +283,12 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
 and memo_apply_one_exp (s:spec_var *exp) (mem:memoised_group list) : memo_pure = 
   let fr,t = s in
   let r = List.map (fun c -> 
-    let eqs = Util.get_equiv_eq c.memo_group_aset in
+    let eqs = get_equiv_eq c.memo_group_aset in
     let tbm,rem = List.fold_left 
         (fun (a1,a2) (c1,c2) -> 
           if (eq_spec_var c1 fr) then ((BForm (Eq (Var(c2,no_pos),t,no_pos),None))::a1,a2)
           else if (eq_spec_var c2 fr) then ((BForm (Eq (Var(c1,no_pos),t,no_pos),None))::a1,a2)
-          else (a1,Util.add_equiv_eq a2 c1 c2)) ([],empty_var_aset) eqs in
+          else (a1,add_equiv_eq a2 c1 c2)) ([],empty_var_aset) eqs in
       { c with 
         memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one_exp s d.memo_formula}) c.memo_group_cons;
         memo_group_slice = tbm @ (List.map (apply_one_exp s) c.memo_group_slice);
@@ -350,7 +350,7 @@ and fold_mem_lst_to_lst_gen  mem with_R with_P with_slice with_disj: formula lis
           | Implied_N -> true 
           | Implied_P-> with_P) c.memo_group_cons in
       let cons  = List.map (fun c-> (BForm(c.memo_formula, None))) cons in
-      let asetf = List.map (fun(c1,c2)-> form_formula_eq c1 c2) (Util.get_equiv_eq c.memo_group_aset) in
+      let asetf = List.map (fun(c1,c2)-> form_formula_eq c1 c2) (get_equiv_eq c.memo_group_aset) in
       asetf @ slice@cons) mem in
     let r = List.map join_conjunctions r in
     r
@@ -544,7 +544,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
   let r = List.map (fun (vars,bfs,fs)-> 
     let nfs,aset = List.fold_left (fun (a,s) c-> 
       match c with 
-        | Eq(Var(v1,_),Var(v2,_),_) -> (a,Util.add_equiv_eq s v1 v2)
+        | Eq(Var(v1,_),Var(v2,_),_) -> (a,add_equiv_eq s v1 v2)
         | _ ->
           let pos = {memo_formula=c;memo_status = status} in
           ((pos::a),s)) ([],empty_var_aset) bfs in 
@@ -556,7 +556,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
   r
   
 and split_mem_grp (g:memoised_group): memo_pure =   
-    let leq = Util.get_equiv_eq g.memo_group_aset in
+    let leq = get_equiv_eq g.memo_group_aset in
     let l1 = List.map fv g.memo_group_slice in
     let l2 = List.map (fun c-> bfv c.memo_formula) g.memo_group_cons in
     let l3 = List.map (fun (c1,c2) -> [c1;c2]) leq in
@@ -572,7 +572,7 @@ and split_mem_grp (g:memoised_group): memo_pure =
           memo_group_cons = List.filter (fun d-> not((Util.intersect c (bfv d.memo_formula))=[])) g.memo_group_cons;
           memo_group_slice = List.filter (fun d-> not((Util.intersect c (fv d))=[])) g.memo_group_slice;
           memo_group_aset = List.fold_left (fun a (c1,c2) -> 
-              if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then Util.add_equiv_eq a c1 c2
+              if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then add_equiv_eq a c1 c2
                 else a) empty_var_aset leq;
         }) needs_split
     )
@@ -590,12 +590,12 @@ and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pur
     if (List.length (Util.intersect_fct eq_spec_var qv c.memo_group_fv)=0) then [c] 
     else 
       let nas, drp3 = List.partition (fun (c1,c2)->
-        (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) (Util.get_equiv_eq c.memo_group_aset) in
+        (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) (get_equiv_eq c.memo_group_aset) in
       let r,drp1 = List.partition 
             (fun c-> (List.length (Util.intersect_fct eq_spec_var (bfv c.memo_formula) qv))>0) c.memo_group_cons in
       let r = List.filter (fun c-> not (c.memo_status=Implied_R)) r in
       let ns,drp2 = List.partition (fun c-> (List.length (Util.intersect_fct eq_spec_var (fv c) qv))>0) c.memo_group_slice in
-      let aset = List.fold_left  ( fun a (c1,c2) -> Util.add_equiv_eq a c1 c2) empty_var_aset drp3 in 
+      let aset = List.fold_left  ( fun a (c1,c2) -> add_equiv_eq a c1 c2) empty_var_aset drp3 in 
       let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
       let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
       let fand3 = List.fold_left (fun a (c1,c2)-> 

@@ -915,6 +915,9 @@ and pos_of_exp (e : exp) = match e with
 and name_of_spec_var (sv : spec_var) : ident = match sv with
   | SpecVar (_, v, _) -> v
 
+and full_name_of_spec_var (sv : spec_var) : ident = match sv with
+  | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
+
 and type_of_spec_var (sv : spec_var) : typ = match sv with
   | SpecVar (t, _, _) -> t
 
@@ -3160,6 +3163,208 @@ let norm_bform_debug (bf:b_formula) : b_formula option =
   let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
   norm_bform_opt r
 
+(* name prefix for int const *)
+let const_prefix = "__CONST_Int_"
+
+let const_prefix_len = String.length(const_prefix)
+
+let get_sub_debug s n m =
+  let _ = print_string ("get_sub inp:"^s^";"^(string_of_int n)^";"^(string_of_int m)^"\n") in
+  let r = String.sub s n m in
+  let _ = print_string ("get_sub out:"^r^"\n") in
+  r
+
+
+(* is string a int const, n is prefix length *)
+let is_int_const_aux (n:int) (s:string) : bool =
+  if (n<=const_prefix_len) then false
+  else 
+    let p = String.sub s 0 const_prefix_len in
+    if (p=const_prefix) then true
+    else false
+
+
+(* get int value if it is an int_const *)
+let get_int_const (s:string) : int option =
+  let n=String.length s in
+  if (is_int_const_aux n s) then
+    let c = String.sub s const_prefix_len (n-const_prefix_len) in
+    try Some (int_of_string c) 
+    with _ -> None (* should not be possible *)
+  else None
+
+(* check if a string denotes an int_const *)
+let is_int_const (s:string) : bool =
+  let n=String.length s in
+    is_int_const_aux n s
+
+(* check if a string is a null const *)
+let is_null_const (s:string) : bool = (s="null")
+
+
+(* is string a constant?  *)
+let is_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+  (is_null_const n) || (is_int_const n)
+
+(* is string an int constant?  *)
+let is_i_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+     (is_int_const n)
+
+(* is exp a var  *)
+let is_var (f:exp) = match f with
+  | Var _ -> true
+  | _ -> false  
+
+(* get args from a bform formula *)
+let get_bform_eq_args_aux conv (bf:b_formula) =
+  match bf with
+    | Eq(e1,e2,_) -> 
+          let ne1=conv e1 in let ne2=conv e2 in
+          (match ne1,ne2 with
+            | Var(v1,_),Var(v2,_) -> Some (v1,v2)
+            | _, _ -> None)
+    | _-> None     
+
+(* get arguments of an eq formula *)
+let get_bform_eq_args (bf:b_formula) =
+  get_bform_eq_args_aux (fun x -> x) bf
+
+(* convert exp to var representation where possible *)
+let conv_exp_with_const e = match e with
+    | IConst(i,loc) -> 
+          let n= const_prefix^(string_of_int i)
+          in Var(SpecVar ((Prim Int), n , Unprimed),loc) 
+    | Null loc -> Var (null_var,loc) 
+    | _ -> e
+
+(* get arguments of bformula and allowing constants *)
+let get_bform_eq_args_with_const (bf:b_formula) =
+   get_bform_eq_args_aux conv_exp_with_const bf
+
+(* form bformula assuming only vars *)
+let form_bform_eq (v1:spec_var) (v2:spec_var) =
+  let conv v = Var(v,no_pos) in
+  if ((is_const v1) || (is_const v2)) then              
+    Error.report_error  {
+        Error.error_loc = no_pos;
+        Error.error_text =  "form_bform_eq : adding an equality with a constant"; }
+  else Eq(conv v1,conv v2,no_pos)
+
+(* form bformula allwing constants to be converted *)
+let form_bform_eq_with_const (v1:spec_var) (v2:spec_var) =
+  let conv v = 
+    if (name_of_spec_var v="null") then (Null no_pos)
+    else match get_int_const (name_of_spec_var v) with
+      | Some i -> IConst(i,no_pos)
+      | None -> Var(v,no_pos)
+  in Eq(conv v1,conv v2,no_pos)
+
+
+(* form an equality formula assuming vars only *)
+let form_formula_eq (v1:spec_var) (v2:spec_var) =
+  BForm (form_bform_eq v1 v2, None)
+
+(* form an equality formula and allowing constants *)
+let form_formula_eq_with_const (v1:spec_var) (v2:spec_var) : formula =
+  BForm (form_bform_eq_with_const v1 v2, None)
+ 
+(* get args of a equality formula *)
+let get_bform_eq_args_debug (bf:b_formula) : (spec_var * spec_var) option =
+  let r=get_bform_eq_args bf in
+  let _ = print_string ("get_bform_eq_args inp:"^(!print_b_formula bf)^"\n") in
+  let _ = match r with 
+    | Some (v1,v2) -> let o=form_bform_eq v1 v2 in
+      print_string ("get_bform_eq_args out:"^(!print_b_formula o)^"\n") 
+    | None ->  print_string ("get_bform_eq_args out: None \n")
+  in r
+
+(* no constant must be added when adding equiv *)
+let add_equiv_eq a v1 v2 = 
+ if (is_const v1)||(is_const v2) then
+    Error.report_error  {
+        Error.error_loc = no_pos;
+        Error.error_text =  "add_equiv_eq : adding an equality with a constant"; }
+ else Util.add_equiv_eq_raw a v1 v2
+
+(* constant may be added to map*)
+let add_equiv_eq_with_const a v1 v2 = 
+ Util.add_equiv_eq_raw a v1 v2
+
+(* get arguments of an equality formula *)
+let get_formula_eq_args (f:formula) =
+  match f with
+    | BForm(bf,_) -> get_bform_eq_args bf
+    | _ -> None
+
+let get_formula_eq_args_debug_add bf =
+  let _=print_string ("Adding") in
+  get_bform_eq_args_debug bf
+
+let get_formula_eq_args_debug_chk bf =
+  let _=print_string ("Checking") in
+  get_bform_eq_args_debug bf
+
+(* get var elements from a eq-map but remove constants *)
+let get_elems_eq aset =
+  let vl=Util.get_elems_eq_raw aset in
+    List.filter (fun v -> not(is_const v)) vl
+
+(* get var elements from a eq-map allowing constants *)
+let get_elems_eq_with_const aset =
+  let vl=Util.get_elems_eq_raw aset in
+    List.filter (fun v -> true) vl
+
+(* get var elements from a eq-map allowing null *)
+let get_elems_eq_with_null aset =
+  let vl=Util.get_elems_eq_raw aset in
+    List.filter (fun v -> not(is_int_const v)) vl
+
+let string_of_var_list l : string =
+  Util.string_of_a_list name_of_spec_var l
+
+let string_of_p_var_list l : string =
+  Util.string_of_a_list (fun (v1,v2) -> "("^(name_of_spec_var v1)^","^(name_of_spec_var v2)^")") l
+
+(* get string name of var e *)
+let string_of_var_eset e : string =
+  Util.string_of_eq_set name_of_spec_var e
+
+(* get eq pairs without any const *)
+let get_equiv_eq aset =
+  let vl=Util.get_equiv_eq_raw aset in
+    List.filter (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
+
+(* get eq pairs without int const *)
+let get_equiv_eq_with_null aset =
+  let vl=Util.get_equiv_eq_raw aset in
+    List.filter (fun (v1,v2) -> not(is_i_const v1) && not(is_i_const v2) ) vl
+
+(* get eq pairs without int const *)
+let get_equiv_eq_with_const aset =
+  let vl=Util.get_equiv_eq_raw aset in
+    List.filter (fun (v1,v2) -> true ) vl
+
+let get_equiv_eq_with_const_debug aset =
+  let ax = get_equiv_eq_with_const aset in
+  let _ = print_string ("get_equiv_eq_with_const inp :"^(string_of_var_eset aset)^"\n") in
+  let _ = print_string ("get_equiv_eq_with_const out :"^(string_of_p_var_list ax)^"\n") in
+  ax
+
+(*
+(* return constant int for e *)
+let find_int_const_eq2  (eq:'a->'a->bool) (str:'a->string) (e:'a) (s:'a e_set) : int option  =
+  let r1 = find_eq2 eq s e in
+  if (r1==[]) then None
+  else let ls = List.filter (fun (a,k) -> k==r1 && (is_int_const (str a))  ) s in
+  match ls with
+    | [] -> None 
+    | (x,_)::_ -> get_int_const x
+
+*)
+
+
 let is_leq eq e1 e2 =
   match e1,e2 with
     | IConst (i1,_), IConst(i2,_) -> i1<=i2
@@ -3259,4 +3464,5 @@ let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
+
 
