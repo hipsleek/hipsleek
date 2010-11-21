@@ -14,6 +14,35 @@ module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
 
+let count_br_specialized prog cl = 
+let helper prog h_node = match h_node with	
+	| ViewNode v ->
+		Util.inc_counter "consumed_nodes_counter";
+		let vdef = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
+		let i = match v.h_formula_view_remaining_branches with
+			| None -> 0
+			| Some s -> (List.length vdef.view_prune_branches)-(List.length s) in
+		if i>0 then  Util.inc_counter "consumed_specialized_nodes" else ();
+    Some h_node
+	| _  -> None in
+  let f_e_f e = None in
+	let f_f e = None in
+	let f_h_f e =  helper prog e in
+  let f_memo e =  Some e in
+  let f_aset e = Some e in
+	let f_formula e = Some e in
+	let f_b_formula e = Some e in
+	let f_exp e = Some e in			
+  let f_fail e = e in
+  let f_ctx e = 
+    let f = e.es_formula in
+    let _ = transform_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp)) f in
+    Ctx e in
+  let _ = transform_context f_ctx cl in
+  ()
+  
+  
+  
 
 (*
   - count how many int constants are contained in one expression
@@ -548,7 +577,11 @@ and prune_ctx prog ctx = match ctx with
   | OCtx (c1,c2)-> OCtx (prune_ctx prog c1,prune_ctx prog c2)
   | Ctx es -> Ctx {es with es_formula =prune_preds prog false es.es_formula}
         
-and prune_branch_ctx prog (pt,bctx) = (pt,prune_ctx prog bctx)    
+and prune_branch_ctx prog (pt,bctx) = 
+  let r = prune_ctx prog bctx in
+  let _ = count_br_specialized prog r in
+  (pt,r)   
+  
 and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
   
 and prune_pred_struc prog (simp_b:bool) f = 
@@ -667,9 +700,12 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                 *) 
                                 let imp = 
                                   let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.enable_aggressive_prune in
-                                  let r,_,_=(*false *)TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
-                                  (if r then Util.inc_counter "fast_imply_sem_prun_true"
-                                  else Util.inc_counter "fast_imply_sem_prun_false"; r) 
+                                  let r = if (!Globals.enable_fast_imply) then false
+                                  else 
+                                    let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
+                                    (if r1 then Util.inc_counter "imply_sem_prun_true"
+                                     else Util.inc_counter "imply_sem_prun_false";r1) in
+                                  r
                                       (*| _ -> 
                                         Util.inc_counter "fast_imply_likely_false";
                                         false (*definitely false*) (*| -1 (*likely false*) | 0 (*don't know*)*)*)in
@@ -2027,8 +2063,29 @@ and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal
     else if isAnyFalseCtx ctx then
       (SuccCtx [ctx], UnsatAnte)
     else
-      (heap_entail_after_sat prog is_folding is_universal ctx conseq pos
-          ([]) ) 
+      (
+      if (!Globals.enable_counters)then
+		(Util.inc_counter "ctx_count";
+		let rec hsz f = match f with
+			| Star h-> (hsz h.h_formula_star_h1)+(hsz h.h_formula_star_h2)
+			| _ -> 1 in
+		let rec p_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+	    let m_f_size l = 
+		  List.fold_left (fun a c->a+
+			(List.length (List.filter MCP.isImplT c.MCP.memo_group_cons))+
+			(List.fold_left (fun a c-> a+ (p_f_size c)) 0 c.MCP.memo_group_slice)+
+			(List.length (Util.get_equiv_eq c.MCP.memo_group_aset))) 0 l in 
+		let rec fsz f = match f with
+			| Or f-> (fsz f.formula_or_f1)+(fsz f.formula_or_f2)
+			| Base f-> (hsz f.formula_base_heap)+(m_f_size f.formula_base_pure)
+			| Exists f-> (hsz f.formula_exists_heap)+(m_f_size f.formula_exists_pure) in
+		let rec f c = match c with 
+			| OCtx (c1,c2) -> (f c1)+(f c2) 
+			| Ctx c -> (Util.add_to_counter "ctx_form_size" (fsz c.es_formula); 1) in 
+		Util.add_to_counter "ctx_disj_count" (f ctx)) else ();
+		heap_entail_after_sat prog is_folding is_universal ctx conseq pos ([]) ) 
 
 and heap_entail_after_sat prog is_folding is_universal ctx conseq pos
       (ss:CF.steps) : (list_context * proof) = 
@@ -3663,6 +3720,7 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) ^"\n") pos; 
   Util.push_time "entail_prune";
   let cl = prune_ctx_list prog cl in
+(*  let _ = count_br_specialized prog cl in*)
   let conseq = prune_pred_struc prog false conseq in
   Util.pop_time "entail_prune";
   heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,heap_entail_one_context_struc)
@@ -3674,6 +3732,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
   Util.push_time "entail_prune";  
   let cl_after_prune = prune_ctx_list prog cl in
+ (* let _ = ccount_br_specialized l_after_prune in*)
   let conseq = prune_preds prog false conseq in
   (*let _ = print_string ("Context before prune ctx: "^(Cprinter.string_of_list_partial_context cl)^"\n") in
   let _ = print_string ("Context after prune ctx: "^(Cprinter.string_of_list_partial_context cl_after_prune)^"\n") in*)

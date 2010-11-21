@@ -157,6 +157,7 @@ let process_cmd_line () = Arg.parse [
   ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+  ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
 	] set_source_file usage_msg
 
 (******************************************)

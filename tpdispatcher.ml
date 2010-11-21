@@ -519,14 +519,14 @@ let tp_is_sat_sender_aux (f : CP.formula) (sat_no : string) =
             Redlog.is_sat f sat_no
 
 let tp_is_sat_sender (f : CP.formula) (sat_no : string) =
-  let t1 = Util.get_time () in
+  (*let t1 = Util.get_time () in*)
   let r = tp_is_sat_sender_aux f sat_no in
-  let t2 = Util.get_time () in
+  (*let t2 = Util.get_time () in
   let diff = t2 -. t1 in
   (if (diff> 2.5) then print_string ("\n Expensive unsat "^sat_no^" time :"^(string_of_float diff)
      ^"\n formula :"^(!print_pure f)
    ))
-  ; r
+  ; *) r
  
 
 let sat_cache  = Hashtbl.create 2000 ;;
@@ -727,15 +727,15 @@ let tp_imply_sender_aux_debug ante conseq imp_no timeout =
 ;;
 
 let tp_imply_sender ante conseq imp_no timeout =
-	 let t1 = Util.get_time () in
+	 (*let t1 = Util.get_time () in*)
      let r = tp_imply_sender_aux(*_debug*) ante conseq imp_no timeout in
-	 let t2 = Util.get_time () in
+	 (*let t2 = Util.get_time () in
      let diff = t2 -. t1 in
      (if (diff> 2.5) then 
          print_string (("\n Expensive imply "^imp_no^" time :"^(string_of_float diff))
      ^"\n ante :"^(!print_pure ante)
      ^"\n conseq :"^(!print_pure conseq)) )
-     ; r
+     ; *) r
   
 
 let imply_cache  = Hashtbl.create 2000 ;;
@@ -945,6 +945,26 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache in
   let _ = Util.pop_time s in
   if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ;
+  if (!Globals.enable_counters)then
+	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+	  let rec or_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
+		  | CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
+	  (*Util.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
+	  Util.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
+	  Util.inc_counter "imply_count";
+	  Util.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*)
+    
+    Util.add_to_counter "stat_disj_count" ((or_f_size ante0)+(or_f_size conseq0));
+    Util.inc_counter "stat_count";
+    Util.add_to_counter "stat_size_count" ((p_f_size ante0)+(p_f_size conseq0));
+    
+    )
+   else ();
+  
   (res1,res2,res3)
 ;;
 
@@ -977,8 +997,21 @@ let is_sat f sat_no do_cache =
 
 	let _ = Util.push_time "is_sat" in
     let res = is_sat f sat_no do_cache in
-
 	let _ = Util.pop_time "is_sat" in
+  
+  if (!Globals.enable_counters)then
+	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+	  let rec or_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
+		  | CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
+	  Util.add_to_counter "stat_disj_count" (or_f_size f);
+	  Util.inc_counter "stat_count";
+	  Util.add_to_counter "stat_size_count" (p_f_size f))
+   else ();  
+  
 	res end
 ;;
 

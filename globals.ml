@@ -152,6 +152,8 @@ let enable_prune_cache = ref true
 
 let enable_counters = ref true
 
+let enable_fast_imply = ref false
+
 let seq_to_try = ref false
 
 let print_input = ref false
