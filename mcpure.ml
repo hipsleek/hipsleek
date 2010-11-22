@@ -12,9 +12,10 @@ type var_aset = spec_var Util.eq_set
 let empty_var_aset = Util.empty_a_set_eq eq_spec_var 
 
 (* with const for get_equiv_eq + form_formula__eq *)
+(* converts an equiv set into a formula *)
 let fold_aset (f:var_aset):formula = 
-  List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq c1 c2) a no_pos) 
-                 (mkTrue no_pos) (get_equiv_eq f)
+  List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
+                 (mkTrue no_pos) (get_equiv_eq_with_const f)
 
 type memo_pure = memoised_group list
  
@@ -209,8 +210,11 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
     | _ -> [] in 
   prep_f f
     
-(* no_const for below*)
+(* use_with_null_const for below*)
 (* assume that f is a satisfiable conjunct *)
+(* returns a list of ptr eqns v1=v2 that can be found in memo_pure
+   and called during matching of predicates
+*)
 and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
@@ -283,7 +287,9 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
       (!print_sv_f c1)^" -> "^(!print_exp_f c2)) (fst r)))^"\n") in*)
     r
 
-(* below need to be no_const *)
+(* below need to be with_const *)
+(* this applies a substitution v->e on a list of memoised group *)
+(* useful to consider two special cases is v->v2 or v->c for aset *)
 and memo_apply_one_exp (s:spec_var *exp) (mem:memoised_group list) : memo_pure = 
   let fr,t = s in
   let r = List.map (fun c -> 
@@ -343,7 +349,13 @@ and memo_is_member_pure p mm =
       | _ -> false ) mm
           
 (* below with_const *)
-and fold_mem_lst_to_lst_gen  mem with_R with_P with_slice with_disj: formula list=	
+(* this extracts a list of formula from memo_pure ;
+      with_P : takes the propagated ctrs
+      with_R : takes the redundant  ctrs
+      with_slice : takes the non-atomic ctrs
+      with_disj : takes also non-atomic  disjunctive ctrs
+*)
+and fold_mem_lst_to_lst_gen  (mem:memo_pure) with_R with_P with_slice with_disj: formula list=	
     let rec has_disj_f c = match c with | Or _ -> true | _ -> false  in			  
     let r = List.map (fun c-> 
       let slice = if with_slice then 
@@ -355,7 +367,7 @@ and fold_mem_lst_to_lst_gen  mem with_R with_P with_slice with_disj: formula lis
           | Implied_N -> true 
           | Implied_P-> with_P) c.memo_group_cons in
       let cons  = List.map (fun c-> (BForm(c.memo_formula, None))) cons in
-      let asetf = List.map (fun(c1,c2)-> form_formula_eq c1 c2) (get_equiv_eq c.memo_group_aset) in
+      let asetf = List.map (fun(c1,c2)-> form_formula_eq_with_const c1 c2) (get_equiv_eq_with_const c.memo_group_aset) in
       asetf @ slice@cons) mem in
     let r = List.map join_conjunctions r in
     r
@@ -560,8 +572,14 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
       memo_group_aset = aset;}) ll in
   r
   
-(* bot with_const and no_const needed *)
+
+(* with_const; change to get_vars_eq rather than get_equiv_eq *)
+(*
+  This attempts to split g into multiple groups if 
+ the constraints are disjoint.
+*)
 and split_mem_grp (g:memoised_group): memo_pure =   
+    let leq_all = get_equiv_eq_with_const g.memo_group_aset in
     let leq = get_equiv_eq g.memo_group_aset in
     let l1 = List.map fv g.memo_group_slice in
     let l2 = List.map (fun c-> bfv c.memo_formula) g.memo_group_cons in
@@ -578,8 +596,8 @@ and split_mem_grp (g:memoised_group): memo_pure =
           memo_group_cons = List.filter (fun d-> not((Util.intersect c (bfv d.memo_formula))=[])) g.memo_group_cons;
           memo_group_slice = List.filter (fun d-> not((Util.intersect c (fv d))=[])) g.memo_group_slice;
           memo_group_aset = List.fold_left (fun a (c1,c2) -> 
-              if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then add_equiv_eq a c1 c2
-                else a) empty_var_aset leq;
+              if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then add_equiv_eq_with_const a c1 c2
+                else a) empty_var_aset leq_all;
         }) needs_split
     )
     else [g]
@@ -591,6 +609,7 @@ and_split_mem_grp_debug g =
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
   memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
   
+(* elim exists should first consider aset for elimination *)
 (* both with_const and no_const needed *)
 and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
     let helper c =
@@ -605,6 +624,7 @@ and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pur
       let aset = List.fold_left  ( fun a (c1,c2) -> add_equiv_eq a c1 c2) empty_var_aset drp3 in 
       let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
       let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
+      (* below may contain v=c *)
       let fand3 = List.fold_left (fun a (c1,c2)-> 
                     mkAnd a (BForm (Eq(Var(c1,no_pos),Var(c2,no_pos),no_pos),None)) no_pos)
                     fand2 nas in

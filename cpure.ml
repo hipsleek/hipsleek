@@ -3277,12 +3277,14 @@ let form_formula_eq_with_const (v1:spec_var) (v2:spec_var) : formula =
  
 (* get args of a equality formula *)
 let get_bform_eq_args_debug (bf:b_formula) : (spec_var * spec_var) option =
+  let s="get_bform_eq_args " in
+  let s="DEBUG "^s in
   let r=get_bform_eq_args bf in
-  let _ = print_string ("get_bform_eq_args inp:"^(!print_b_formula bf)^"\n") in
+  let _ = print_string (s^"inp:"^(!print_b_formula bf)^"\n") in
   let _ = match r with 
     | Some (v1,v2) -> let o=form_bform_eq v1 v2 in
-      print_string ("get_bform_eq_args out:"^(!print_b_formula o)^"\n") 
-    | None ->  print_string ("get_bform_eq_args out: None \n")
+      print_string (s^"out:"^(!print_b_formula o)^"\n") 
+    | None ->  print_string (s^"out: None \n")
   in r
 
 (* no constant must be added when adding equiv *)
@@ -3389,13 +3391,18 @@ let string_of_var_list l : string =
   Util.string_of_a_list name_of_spec_var l
 
 let string_of_p_var_list l : string =
-  Util.string_of_a_list (fun (v1,v2) -> "("^(name_of_spec_var v1)^","^(name_of_spec_var v2)^")") l
+  Util.string_of_a_list (fun (v1,v2) -> "("^(full_name_of_spec_var v1)^","^(full_name_of_spec_var v2)^")") l
 
+(* get two lists - no_const & with_const *)
+let get_equiv_eq_split aset =
+  let vl=Util.get_equiv_eq_raw aset in
+    List.partition (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
 
 (* get eq pairs without any const *)
 let get_equiv_eq aset =
   let vl=Util.get_equiv_eq_raw aset in
-    List.filter (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
+  List.filter (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
+
 
 (* get eq pairs without int const *)
 let get_equiv_eq_with_null aset =
