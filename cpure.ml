@@ -3169,6 +3169,11 @@ let const_prefix = "__CONST_Int_"
 
 let const_prefix_len = String.length(const_prefix)
 
+(* get string name of var e *)
+let string_of_var_eset e : string =
+  Util.string_of_eq_set full_name_of_spec_var e
+
+
 let get_sub_debug s n m =
   let _ = print_string ("get_sub inp:"^s^";"^(string_of_int n)^";"^(string_of_int m)^"\n") in
   let r = String.sub s n m in
@@ -3237,7 +3242,7 @@ let conv_exp_with_const e = match e with
     | IConst(i,loc) -> 
           let n= const_prefix^(string_of_int i)
           in Var(SpecVar ((Prim Int), n , Unprimed),loc) 
-    | Null loc -> Var (null_var,loc) 
+    | Null loc -> Var (null_var,loc) (*"null"*)
     | _ -> e
 
 (* get arguments of bformula and allowing constants *)
@@ -3334,11 +3339,21 @@ let get_elems_eq_with_null aset =
    check duplicates & remove
    check singletion & remove
    check false by presence of duplicate constants --> change to 1=0
+    x=1=2 & a=b  ===> 1=0
 *)
+
+
+let normalise_eq_aux (aset : var_aset) : var_aset * bool = (aset,false)
+
 let normalise_eq (aset : var_aset) : var_aset = aset
 
 (* print if there was a change in state check - *)
-let normalise_eq_debug (aset : var_aset) : spec_var Util.eq_set = aset
+let normalise_eq_debug (aset : var_aset) : spec_var Util.eq_set =
+ let ax,change = normalise_eq_aux aset in
+ (if change then
+ let _ = print_string ("normalise_eq inp1 :"^(string_of_var_eset aset)^"\n") in
+ print_string ("partition_eq out2 :"^(string_of_var_eset ax)^"\n"))
+ ; (ax)
 
 (* check if an eq_map has a contradiction - to implement *)
 (* call normalised_eq and check if equal to 1=0 *)
@@ -3376,9 +3391,6 @@ let string_of_var_list l : string =
 let string_of_p_var_list l : string =
   Util.string_of_a_list (fun (v1,v2) -> "("^(name_of_spec_var v1)^","^(name_of_spec_var v2)^")") l
 
-(* get string name of var e *)
-let string_of_var_eset e : string =
-  Util.string_of_eq_set name_of_spec_var e
 
 (* get eq pairs without any const *)
 let get_equiv_eq aset =
