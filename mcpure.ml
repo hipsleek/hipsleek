@@ -10,8 +10,10 @@ open Cpure
 type var_aset = spec_var Util.eq_set 
 
 let empty_var_aset = Util.empty_a_set_eq eq_spec_var 
+
+(* with const for get_equiv_eq + form_formula__eq *)
 let fold_aset (f:var_aset):formula = 
-  List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq c1 c2) a no_pos)
+  List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq c1 c2) a no_pos) 
                  (mkTrue no_pos) (get_equiv_eq f)
 
 type memo_pure = memoised_group list
@@ -207,6 +209,7 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
     | _ -> [] in 
   prep_f f
     
+(* no_const for below*)
 (* assume that f is a satisfiable conjunct *)
 and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
@@ -280,6 +283,7 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
       (!print_sv_f c1)^" -> "^(!print_exp_f c2)) (fst r)))^"\n") in*)
     r
 
+(* below need to be no_const *)
 and memo_apply_one_exp (s:spec_var *exp) (mem:memoised_group list) : memo_pure = 
   let fr,t = s in
   let r = List.map (fun c -> 
@@ -338,6 +342,7 @@ and memo_is_member_pure p mm =
       | BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> Util.is_equiv_eq c.memo_group_aset v1 v2
       | _ -> false ) mm
           
+(* below with_const *)
 and fold_mem_lst_to_lst_gen  mem with_R with_P with_slice with_disj: formula list=	
     let rec has_disj_f c = match c with | Or _ -> true | _ -> false  in			  
     let r = List.map (fun c-> 
@@ -555,6 +560,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
       memo_group_aset = aset;}) ll in
   r
   
+(* bot with_const and no_const needed *)
 and split_mem_grp (g:memoised_group): memo_pure =   
     let leq = get_equiv_eq g.memo_group_aset in
     let l1 = List.map fv g.memo_group_slice in
@@ -585,6 +591,7 @@ and_split_mem_grp_debug g =
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
   memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
   
+(* both with_const and no_const needed *)
 and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
     let helper c =
     if (List.length (Util.intersect_fct eq_spec_var qv c.memo_group_fv)=0) then [c] 

@@ -151,8 +151,45 @@ let rec drop n l  = if n<=0 then l
     | h::t -> (drop (n-1) t)
     | [] -> []
 
+let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'a->string) (f:'a -> 'z) (e:'a) : 'z =
+  let r = try
+    f e 
+  with ex -> 
+      let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
+      let _ = print_string (s^" Exception Occurred!\n") in
+      raise ex in
+  let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
+  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  r
     
-    
+let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  let r = try
+    f e1 e2 
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" Exception Occurred!\n") in
+      raise ex in
+  let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+  let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  r
+
+let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'b) : 'z =
+  let r = try
+    f e1 e2 e3
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+      let _ = print_string (s^" Exception Occurred!\n") in
+      raise ex in
+  let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+  let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+  let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  r
+
 (** String-handling utility functions. *)
 
 let trim_quotes s = 

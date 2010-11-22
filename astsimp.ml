@@ -1289,7 +1289,7 @@ and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
 	let tmp = CP.intersect mvars params in 
 	  tmp
 
-and find_mvars_heap prog params hf pf =
+and find_mvars_heap prog params hf pf : CP.spec_var list =
   match hf with
     | CF.HTrue | CF.HFalse -> []
     | _ ->
