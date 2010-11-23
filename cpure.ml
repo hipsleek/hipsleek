@@ -3226,7 +3226,7 @@ let conv_var_to_exp (v:spec_var) :exp =
     | None -> Var(v,no_pos)
 
 let conv_var_to_exp_debug (v:spec_var) :exp =
- Util.ho_debug_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp_aux v
+ Util.ho_debug_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v
 
 (* is exp a var  *)
 let is_var (f:exp) = match f with
@@ -3265,6 +3265,9 @@ let conv_exp_with_const e = match conv_exp_to_var e with
 (* get arguments of bformula and allowing constants *)
 let get_bform_eq_args_with_const (bf:b_formula) =
    get_bform_eq_args_aux conv_exp_with_const bf
+
+let get_bform_eq_args_with_const_debug (bf:b_formula) =
+   Util.ho_debug_1 " get_bform_eq_args_with_const" (!print_b_formula) (fun _ -> "?") get_bform_eq_args_with_const bf
 
 (* form bformula assuming only vars *)
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
@@ -3350,6 +3353,9 @@ let get_elems_eq_with_const aset =
   let vl=Util.get_elems_eq_raw aset in
     List.filter (fun v -> true) vl
 
+let get_elems_eq_with_const_debug aset =
+  Util.ho_debug_1_list "get_elems_eq_with_const" (string_of_var_eset) (full_name_of_spec_var) get_elems_eq_with_const aset
+
 (* get var elements from a eq-map allowing null *)
 let get_elems_eq_with_null aset =
   let vl=Util.get_elems_eq_raw aset in
@@ -3363,7 +3369,7 @@ let get_elems_eq_with_null aset =
 (* creates a false aset*)
 let mkFalse_var_aset eq = 
   let es= Util.empty_a_set_eq eq in
-    add_equiv_eq_with_const es (mk_sp_const 0) (mk_sp_const 1)
+    add_equiv_eq_with_const es (mk_sp_const 0) (mk_sp_const 3)
 
 (**)	
 let get_bform_eq_vars (bf:b_formula) : (spec_var * spec_var) option =
