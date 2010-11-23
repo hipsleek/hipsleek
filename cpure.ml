@@ -3067,6 +3067,7 @@ let rec simp_addsub e1 e2 loc =
     | _ -> Subtract(lhs,rhs,loc)
 
 (* normalise and simplify expression *)
+(* add to take a v->c eq_map *)
 and norm_exp (e:exp) = match e with
   | Null _ | Var _ | IConst _ | FConst _ -> e
   | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
@@ -3091,6 +3092,9 @@ and norm_exp (e:exp) = match e with
   | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_exp e), l)    
   | ListReverse (e,l)-> ListReverse(norm_exp e, l)  
 
+(* if v->c, replace v by the constant whenever encountered 
+   normalise each sub-expresion only once please.
+*)
 (* normalise add/subtract on both lhs (e1) and rhs (e2) *)
 and norm_two_sides (e1:exp) (e2:exp)   =
   let rec help_add e s pa sa c  = match e with
@@ -3099,18 +3103,18 @@ and norm_two_sides (e1:exp) (e2:exp)   =
     | Add (Add(e1,e2,l1),e3,l2) -> help_add (Add(e1,Add(e2,e3,no_pos),l2)) s pa sa c
     | Add (IConst(i,l1),e,l2) -> help_add e s pa sa (c+i) 
     | Add (Subtract(e1,e2,l1),e3,l2) -> help_add (Add(e1,e3,l2)) (Add(e2,s,no_pos)) pa sa c
-    | Add (e1,e2,l1) -> help_add e2 s (e1::pa) sa c
-    | e1 -> help_sub s (e1::pa) sa c
+    | Add (e1,e2,l1) -> help_add e2 s (e1::pa) sa c (* normalise e1, is e1=c? *)
+    | e1 -> help_sub s (e1::pa) sa c (* normalise e1, is e1=c? *)
   and help_sub e pa sa c  = match e with
     | IConst(i,_)  -> (pa, sa,c-i)
     | Subtract (e1,e2,l)  -> help_add e2 e1 pa sa c
     | Add (Add(e1,e2,l1),e3,l2) -> help_sub (Add(e1,Add(e2,e3,no_pos),l2)) pa sa c
     | Add (IConst(i,l1),e,l2) -> help_sub e pa sa (c-i) 
     | Add (Subtract(e1,e2,l1),e3,l2) -> help_add e2 (Add(e1,e3,l2))  pa sa c
-    | Add (e1,e2,l1) -> help_sub e2 pa (e1::sa) c
-    | e1 -> (pa, e1::sa, c) in 
+    | Add (e1,e2,l1) -> help_sub e2 pa (e1::sa) c (* normalise e1, is e1=c? *)
+    | e1 -> (pa, e1::sa, c) in (* normalise e1, is e1=c? *)
   let (lhs,rhs,i) = help_add e1 e2 [] [] 0 in
-  let (lhs,rhs) = (List.map norm_exp lhs, List.map norm_exp rhs) in
+  (* let (lhs,rhs) = (List.map norm_exp lhs, List.map norm_exp rhs) in *)
   if (lhs==[]) then (IConst(i,no_pos),addlist_to_exp rhs)
   else if (rhs==[]) then  (addlist_to_exp lhs, IConst(-i,no_pos))
   else if (i==0) then (addlist_to_exp lhs, addlist_to_exp rhs)
