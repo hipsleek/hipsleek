@@ -3131,7 +3131,7 @@ let norm_bform_neq (e1:exp)  (e2:exp) loc : b_formula =
 
 (* normalise and simplify b_formula *)
 let norm_bform_aux (bf:b_formula) : b_formula =
-  let bf = b_form_simplify bf in
+  (*let bf = b_form_simplify bf in *)
   match bf with 
       | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
       | Lte (e1,e2,l) -> norm_bform_leq e1 e2 l

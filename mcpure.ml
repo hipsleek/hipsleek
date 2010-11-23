@@ -637,9 +637,13 @@ and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure =
   memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
     
 (* this pushes an exist into a memo-pure;
-   it may be useful to consider aset for elimination.
-   if not, should consider the use of aset for elimination 
-   check
+   it is probably useful consider qv in aset for elimination.
+   proc : 
+   (i) find rs = overlap between qv and domain(aset)
+   (ii) prepare subs: [x->o] or [x->c] or [x->x1] and 
+        elim x from aset and other locations
+   (ii) subtract qv-dom(subs) and add to exists
+   (iii) normalise aset
 *)
 (* both with_const and no_const needed *)
 and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
