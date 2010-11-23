@@ -3398,11 +3398,17 @@ let get_equiv_eq_split aset =
   let vl=Util.get_equiv_eq_raw aset in
     List.partition (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
 
-(* get eq pairs without any const *)
-let get_equiv_eq aset =
+(* get eq pairs without const *)
+let get_equiv_eq_no_const aset =
   let vl=Util.get_equiv_eq_raw aset in
   List.filter (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
 
+(* get all eq pairs *)
+let get_equiv_eq_all aset =
+  let vl=Util.get_equiv_eq_raw aset in vl
+
+(* get eq pairs without const *)
+let get_equiv_eq aset = get_equiv_eq_no_const  aset
 
 (* get eq pairs without int const *)
 let get_equiv_eq_with_null aset =

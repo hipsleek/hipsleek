@@ -609,7 +609,10 @@ and_split_mem_grp_debug g =
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
   memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
   
-(* elim exists should first consider aset for elimination *)
+(* this pushes an exist into a memo-pure;
+   it may be useful to consider aset for elimination.
+   However, the elimination may possible affect h_formula?
+   if not, should consider the use of aset for elimination *)
 (* both with_const and no_const needed *)
 and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
     let helper c =
