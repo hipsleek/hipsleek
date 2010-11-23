@@ -143,6 +143,9 @@ let _ =
 	print_version ()
   end else
     (Tpdispatcher.start_prover ();
+    Util.push_time "Overall";
     main ();
+    Util.pop_time "Overall";
+    let _ = if (!Globals.profiling && not !inter) then Util.print_tasks () in
     Tpdispatcher.stop_prover ())
 
