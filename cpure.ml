@@ -111,6 +111,7 @@ let rec get_exp_type (e : exp) : typ = match e with
 
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
+let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 
 let bool_type = Prim Bool
 
@@ -3218,6 +3219,15 @@ let is_i_const (s:spec_var) : bool =
   let n = name_of_spec_var s in
      (is_int_const n)
 
+let conv_var_to_exp (v:spec_var) :exp =
+  if (full_name_of_spec_var v="null") then (Null no_pos)
+  else match get_int_const (name_of_spec_var v) with
+    | Some i -> IConst(i,no_pos)
+    | None -> Var(v,no_pos)
+
+let conv_var_to_exp_debug (v:spec_var) :exp =
+ Util.ho_debug_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp_aux v
+
 (* is exp a var  *)
 let is_var (f:exp) = match f with
   | Var _ -> true
@@ -3237,12 +3247,19 @@ let get_bform_eq_args_aux conv (bf:b_formula) =
 let get_bform_eq_args (bf:b_formula) =
   get_bform_eq_args_aux (fun x -> x) bf
 
-(* convert exp to var representation where possible *)
-let conv_exp_with_const e = match e with
-    | IConst(i,loc) -> 
+let mk_sp_const (i:int) = 
           let n= const_prefix^(string_of_int i)
-          in Var(SpecVar ((Prim Int), n , Unprimed),loc) 
-    | Null loc -> Var (null_var,loc) (*"null"*)
+          in SpecVar ((Prim Int), n , Unprimed) 
+
+let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
+  match e with
+    | IConst(i,loc) -> Some (mk_sp_const i,loc)
+    | Null loc -> Some (null_var,loc)
+    | _ -> None
+
+(* convert exp to var representation where possible *)
+let conv_exp_with_const e = match conv_exp_to_var e with
+    | Some (v,loc) -> Var(v,loc)
     | _ -> e
 
 (* get arguments of bformula and allowing constants *)
@@ -3260,11 +3277,7 @@ let form_bform_eq (v1:spec_var) (v2:spec_var) =
 
 (* form bformula allowing constants to be converted *)
 let form_bform_eq_with_const (v1:spec_var) (v2:spec_var) =
-  let conv v = 
-    if (name_of_spec_var v="null") then (Null no_pos)
-    else match get_int_const (name_of_spec_var v) with
-      | Some i -> IConst(i,no_pos)
-      | None -> Var(v,no_pos)
+  let conv v = conv_var_to_exp v
   in Eq(conv v1,conv v2,no_pos)
 
 (* form an equality formula assuming vars only *)
@@ -3295,9 +3308,23 @@ let add_equiv_eq a v1 v2 =
         Error.error_text =  "add_equiv_eq bug : adding an equality with a constant"; }
  else Util.add_equiv_eq_raw a v1 v2
 
+let add_equiv_eq_debug a v1 v2 = 
+  let _ = print_string ("add_equiv_eq inp1 :"^(string_of_var_eset a)^"\n") in
+  let _ = print_string ("add_equiv_eq inp2 :"^(full_name_of_spec_var v1)^","^(name_of_spec_var v2)^"\n") in
+   let ax = add_equiv_eq a v1 v2 in
+  let _ = print_string ("add_equiv_eq out :"^(string_of_var_eset ax)^"\n") in
+  ax
+
 (* constant may be added to map*)
 let add_equiv_eq_with_const a v1 v2 = 
  Util.add_equiv_eq_raw a v1 v2
+
+let add_equiv_eq_with_const_debug a v1 v2 = 
+  let _ = print_string ("add_equiv_eq_with_const inp1 :"^(string_of_var_eset a)^"\n") in
+  let _ = print_string ("add_equiv_eq_with_const inp2 :"^(full_name_of_spec_var v1)^","^(name_of_spec_var v2)^"\n") in
+   let ax = add_equiv_eq_with_const a v1 v2 in
+  let _ = print_string ("add_equiv_eq_with_const out :"^(string_of_var_eset ax)^"\n") in
+  ax
 
 (* get arguments of an equality formula *)
 let get_formula_eq_args (f:formula) =
@@ -3333,46 +3360,88 @@ let get_elems_eq_with_null aset =
 
 *)
 
+(* creates a false aset*)
+let mkFalse_var_aset eq = 
+  let es= Util.empty_a_set_eq eq in
+    add_equiv_eq_with_const es (mk_sp_const 0) (mk_sp_const 1)
+
+(**)	
+let get_bform_eq_vars (bf:b_formula) : (spec_var * spec_var) option =
+     match bf with 
+        | Eq(Var(v1,_),Var(v2,_),_) -> Some (v1,v2)
+		| _ -> None
+
 (* normalise eq_map - to implement*)
 (* remove duplicate occurrences of a var in a partition, 
-   if single element by itself, remove it,
-   if it is false, change it to a simpler 1=0. 
-   use Util.partition
-   check duplicates & remove
-   check singletion & remove
+   check singleton & remove
    check false by presence of duplicate constants --> change to 1=0
-    x=1=2 & a=b  ===> 1=0
+   
+   @return: var_aset - normalized eq
+			 bool(1) - flag that tells if the eq has changed
+			 bool(2) - flag that tells if there is a conflict in the eq
 *)
 
+let normalise_eq_aux ((_,eq) as aset : var_aset) : var_aset * bool * bool= 
+  let plst = Util.partition_eq aset in
+  let (nlst,flag) = List.fold_left 
+    (fun (rl,f) l -> 
+       let nl=Util.remove_dups l in
+	 (nl::rl,(f||not((List.length nl)==(List.length l))))) 
+    ([],false) plst in
+  let (nlst2,flag2) = List.fold_left 
+    (fun (rl,f) ls -> 
+       if (List.length ls<=1) then (rl,true)
+       else (ls::rl,f))
+    ([],flag) nlst in
+  let is_conflict = List.fold_left 
+    (fun f ls -> 
+       (f || (let cl= List.filter (fun v -> is_const v) ls in (List.length cl)>1)))
+    false nlst2 
+  in
+    if is_conflict then (mkFalse_var_aset eq, true, true)
+    else
+      ((Util.un_partition nlst2,eq),flag2, false)
 
-let normalise_eq_aux (aset : var_aset) : var_aset * bool = (aset,false)
 
-let normalise_eq (aset : var_aset) : var_aset = aset
+(* return the normalized eq *)
+let normalise_eq (aset : var_aset) : var_aset = 
+  let (r, _, _) = normalise_eq_aux aset in r
 
 (* print if there was a change in state check - *)
 let normalise_eq_debug (aset : var_aset) : spec_var Util.eq_set =
- let ax,change = normalise_eq_aux aset in
+ let ax, change, _ = normalise_eq_aux aset in
  (if change then
- let _ = print_string ("normalise_eq inp1 :"^(string_of_var_eset aset)^"\n") in
- print_string ("partition_eq out2 :"^(string_of_var_eset ax)^"\n"))
- ; (ax)
+	let _ = print_string ("normalise_eq inp1 :"^(string_of_var_eset aset)^"\n") in
+	print_string ("partition_eq out2 :"^(string_of_var_eset ax)^"\n"));
+ (ax)
 
 (* check if an eq_map has a contradiction - to implement *)
 (* call normalised_eq and check if equal to 1=0 *)
-let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset = (false,aset)
+(* @return: bool - flag that tells if there is a conflict in the eq 
+			var_aset - normalized eq *)
+let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset =
+	let (ax, _, conflict) = normalise_eq_aux aset in (conflict, ax) 
+	
+(* print if false detected - when debugging *)
+let is_false_and_normalise_eq_debug (aset : var_aset) : bool * var_aset = 
+ let (ax, _, conflict) = normalise_eq_aux aset in
+ let _ = print_string ("normalise_eq inp1 :"^(string_of_var_eset aset) ^ "\n") in
+ let _ = print_string ("partition_eq out2 :"^(string_of_var_eset ax) ^ "\n") in
+ let _ = print_string ("conflict in eq: " ^ (string_of_bool conflict) ^ "\n") in
+ (conflict, ax) 
 
 (* check if an eq_map has a contradiction - to implement *)
 (* call normalised_eq and check if equal to 1=0 *)
-let is_false_eq (aset : var_aset) : bool = false
+let is_false_eq (aset : var_aset) : bool = 
+	let (_, _, conflict) = normalise_eq_aux aset in conflict
 
-(* print if false detected or when there is a state change - to implement *)
-let is_false_and_normalise_eq_debug (aset : var_aset) : bool * var_aset = (false,aset)
 
 (* check if v is a constant and return its var representation - to implement *)
 (* look-up var's key *)
 (* return all constant with the same key *)
 (* return key if found *)
-let get_var_const_eq (aset : var_aset) (v:spec_var) : spec_var option = None
+let get_var_const_eq (aset : var_aset) (v : spec_var) : spec_var option = None
+	
 
 (* check if v is an int constant and return its value, if so - to implement *)
 (* use get_var_const *)

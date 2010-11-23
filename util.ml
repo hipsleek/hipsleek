@@ -190,7 +190,7 @@ let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
 
-let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'b) : 'z =
+let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
   let r = try
     f e1 e2 e3
   with ex -> 
@@ -204,6 +204,9 @@ let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
+
+let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
+  ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
 
 (** String-handling utility functions. *)
 

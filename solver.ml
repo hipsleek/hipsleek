@@ -310,7 +310,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.memo
                 let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                 let to_svs = p :: vs in
                 let (f, b) = vinv in
-                let subst_m_fun = MCP.subst_avoid_capture_memo from_svs to_svs in
+                let subst_m_fun = MCP.subst_avoid_capture_memo_debug1 from_svs to_svs in
                 let subst_fun = CP.subst_avoid_capture from_svs to_svs in
                 let tmp1 = subst_m_fun f, List.map (fun (x,y) -> x, subst_fun y) b in
                 tmp1)
@@ -474,7 +474,7 @@ and xpure_heap_symbolic_no_exists_i (prog : prog_decl) (h0 : h_formula) i: (MCP.
                 let from_addrs = vdef.view_addr_vars in
                 let to_addrs = CP.fresh_spec_vars from_addrs in
                 let subst_m_fun f =
-                  let tmp1 = MCP.subst_avoid_capture_memo from_svs to_svs f in
+                  let tmp1 = MCP.subst_avoid_capture_memo_debug2 from_svs to_svs f in
                   MCP.memo_subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
                 let subst_fun f =
                   let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
@@ -2696,7 +2696,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
               let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
               let to_vars = p1 :: v1 in
               (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
-              let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
+              let base = MCP.subst_avoid_capture_memo_debug3 fr_vars to_vars base1 in
               let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
               let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
               let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx bc1 !Globals.enable_syn_base_case in
