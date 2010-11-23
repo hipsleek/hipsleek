@@ -151,7 +151,8 @@ let rec drop n l  = if n<=0 then l
     | h::t -> (drop (n-1) t)
     | [] -> []
 
-let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'a->string) (f:'a -> 'z) (e:'a) : 'z =
+
+let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
   let r = try
     f e 
   with ex -> 
@@ -162,6 +163,19 @@ let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'a->string) (f:'a -> 'z) (e:'a
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
     
+let ho_debug_1_option (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z option) (e:'a) : 'z option =
+  let np i = match i with
+    | Some x -> pr_o x
+    | None -> "None" in
+  ho_debug_1 s pr_i np f e 
+
+let string_of_list (f:'a->string) (ls:'a list) : string = 
+  ("["^(String.concat "," (List.map f ls))^"]")
+
+let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z list) (e:'a) : 'z list =
+  let np ls = string_of_list pr_o ls in
+  ho_debug_1 s pr_i np f e 
+
 let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
   let r = try
     f e1 e2 
