@@ -33,7 +33,7 @@ let helper prog h_node = match h_node with
 	let f_formula e = Some e in
 	let f_b_formula e = Some e in
 	let f_exp e = Some e in			
-  let f_fail e = e in
+  (*let f_fail e = e in*)
   let f_ctx e = 
     let f = e.es_formula in
     let _ = transform_formula (f_e_f,f_f,f_h_f,(f_memo,f_aset, f_formula, f_b_formula, f_exp)) f in
@@ -310,7 +310,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.memo
                 let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                 let to_svs = p :: vs in
                 let (f, b) = vinv in
-                let subst_m_fun = MCP.subst_avoid_capture_memo_debug1 from_svs to_svs in
+                let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                 let subst_fun = CP.subst_avoid_capture from_svs to_svs in
                 let tmp1 = subst_m_fun f, List.map (fun (x,y) -> x, subst_fun y) b in
                 tmp1)
@@ -474,7 +474,7 @@ and xpure_heap_symbolic_no_exists_i (prog : prog_decl) (h0 : h_formula) i: (MCP.
                 let from_addrs = vdef.view_addr_vars in
                 let to_addrs = CP.fresh_spec_vars from_addrs in
                 let subst_m_fun f =
-                  let tmp1 = MCP.subst_avoid_capture_memo_debug2 from_svs to_svs f in
+                  let tmp1 = MCP.subst_avoid_capture_memo(*_debug2*) from_svs to_svs f in
                   MCP.memo_subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
                 let subst_fun f =
                   let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
@@ -2063,29 +2063,7 @@ and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal
     else if isAnyFalseCtx ctx then
       (SuccCtx [ctx], UnsatAnte)
     else
-      (
-      if (!Globals.enable_counters)then
-		(Util.inc_counter "ctx_count";
-		let rec hsz f = match f with
-			| Star h-> (hsz h.h_formula_star_h1)+(hsz h.h_formula_star_h2)
-			| _ -> 1 in
-		let rec p_f_size f = match f with | CP.BForm _ -> 1
-		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
-		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
-	    let m_f_size l = 
-		  List.fold_left (fun a c->a+
-			(List.length (List.filter MCP.isImplT c.MCP.memo_group_cons))+
-			(List.fold_left (fun a c-> a+ (p_f_size c)) 0 c.MCP.memo_group_slice)+
-			(List.length (CP.get_equiv_eq c.MCP.memo_group_aset))) 0 l in 
-		let rec fsz f = match f with
-			| Or f-> (fsz f.formula_or_f1)+(fsz f.formula_or_f2)
-			| Base f-> (hsz f.formula_base_heap)+(m_f_size f.formula_base_pure)
-			| Exists f-> (hsz f.formula_exists_heap)+(m_f_size f.formula_exists_pure) in
-		let rec f c = match c with 
-			| OCtx (c1,c2) -> (f c1)+(f c2) 
-			| Ctx c -> (Util.add_to_counter "ctx_form_size" (fsz c.es_formula); 1) in 
-		Util.add_to_counter "ctx_disj_count" (f ctx)) else ();
-		heap_entail_after_sat prog is_folding is_universal ctx conseq pos ([]) ) 
+      heap_entail_after_sat prog is_folding is_universal ctx conseq pos ([])
 
 and heap_entail_after_sat prog is_folding is_universal ctx conseq pos
       (ss:CF.steps) : (list_context * proof) = 
@@ -2696,7 +2674,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
               let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
               let to_vars = p1 :: v1 in
               (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
-              let base = MCP.subst_avoid_capture_memo_debug3 fr_vars to_vars base1 in
+              let base = MCP.subst_avoid_capture_memo(*_debug3*) fr_vars to_vars base1 in
               let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
               let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
               let (nctx,b) = sem_imply_add prog is_folding is_universal fold_ctx bc1 !Globals.enable_syn_base_case in

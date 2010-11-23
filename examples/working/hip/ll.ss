@@ -75,7 +75,7 @@ void set_null2(node x)
 	ensures x::ll<1>;
 
 {
-	if (2>1) 
+	if (4>3) 
 		x.next = null;
 	else 
 		x.next = null;

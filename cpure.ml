@@ -3237,7 +3237,8 @@ let is_var (f:exp) = match f with
 let get_bform_eq_args_aux conv (bf:b_formula) =
   match bf with
     | Eq(e1,e2,_) -> 
-          let ne1=conv e1 in let ne2=conv e2 in
+          let ne1=conv e1 in 
+          let ne2=conv e2 in
           (match ne1,ne2 with
             | Var(v1,_),Var(v2,_) -> Some (v1,v2)
             | _, _ -> None)

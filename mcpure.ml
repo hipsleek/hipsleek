@@ -273,13 +273,13 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
 				
 			      let acl_aset, nas = if not(acl_cons=[]) then (acl_cons,c.memo_group_aset)
 			      else match Util.find_equiv_elim_eq v c.memo_group_aset with
-				| None -> (acl_cons,c.memo_group_aset)
-				| Some (s,nas) -> 
-				    (*let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
-				      let _ = print_string ("before_el: "^(print_alias_set c.memo_group_aset)^"\n") in
-				      let _ = print_string ("after_el: "^(print_alias_set nas)^"\n") in
-				      let _ = print_string ("subs_to: "^(!print_sv_f s)^"\n") in*)
-				    ([(v,Var (s,no_pos))],nas) in
+                | None -> (acl_cons,c.memo_group_aset)
+                | Some (s,nas) -> 
+                    (*let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
+                      let _ = print_string ("before_el: "^(print_alias_set c.memo_group_aset)^"\n") in
+                      let _ = print_string ("after_el: "^(print_alias_set nas)^"\n") in
+                      let _ = print_string ("subs_to: "^(!print_sv_f s)^"\n") in*)
+                    ([(v,conv_var_to_exp s)],nas) in
 				
 			      let acl_slice, nsl = if not (acl_aset=[]) then (acl_aset, c.memo_group_slice)
 			      else List.fold_left (fun (a1,a2) c-> 
@@ -535,17 +535,21 @@ and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure =
      let disjs, rests = List.fold_left (fun (a1,a2) c-> match c with 
 					  | BForm x -> (x::a1,a2) 
 					  | _ -> (a1,c::a2))  ([],[]) (list_of_conjs p) in
-     let m2 = create_memo_group disjs rests status in
+     let m2 = create_memo_group(*_debug*) disjs rests status in
      let r = merge_mems l m2 true in
        (*let r = List.concat (List.map split_mem_grp r) in*)
        Util.pop_time "add_pure"; r)
-      
-and memoise_add_pure_N l p = memoise_add_pure_aux l p Implied_N
-and memoise_add_pure_P l p = memoise_add_pure_aux l p Implied_P
+    
+and memoise_add_pure_aux_debug l p status : memo_pure = 
+  Util.ho_debug_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
+
+  
+and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
+and memoise_add_pure_P l p = memoise_add_pure_aux(*_debug*) l p Implied_P
 
 and create_memo_group_wrapper (l1:b_formula list) status : memo_pure = 
   let l = List.map (fun c-> (c, None)) l1 in
-    create_memo_group l [] status 
+    create_memo_group(*_debug*) l [] status 
 
 and anon_partition (l1:(b_formula *(formula_label option)) list) = 
   List.fold_left (fun (a1,a2) (c1,c2)-> 
@@ -580,7 +584,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
 		      let nfs,aset = List.fold_left (fun (a,s) c-> 
 
 						       match get_bform_eq_args_with_const c with 
-							 | Some(v1,v2) -> (a,add_equiv_eq_with_const_debug s v1 v2)
+							 | Some(v1,v2) -> (a,add_equiv_eq_with_const(*_debug*) s v1 v2)
 							 | _ ->
 							     let pos = {memo_formula=c;memo_status = status} in
 							       ((pos::a),s)) ([],empty_var_aset) bfs in 
@@ -592,9 +596,10 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
     r
       
 and create_memo_group_debug ll l2 = 
-  let 
-  ho_debug_2 "create_memo_group " (fun ) () () create_memo_group ll l2
+  Util.ho_debug_3 "create_memo_group " (Util.string_of_list (fun (c,_) -> !print_bf_f c)) (Util.string_of_list !print_p_f_f) (fun _ -> "?")
+    (!print_mp_f) create_memo_group ll l2
 
+    
 (* with_const; use get_equiv_eq *)
 (*
   This attempts to split g into multiple groups if 
