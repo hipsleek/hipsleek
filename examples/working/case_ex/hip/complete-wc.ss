@@ -28,8 +28,8 @@ data node2 {
 		know if a subtree is perfect or not)
 */
 complete<n, nmin> == self = null & n = 0 & nmin = 0
-	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & tmp = min(nmin1, nmin2) & nmin = tmp + 1
-	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & tmp = min(nmin1, nmin2) & nmin = tmp + 1
+	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
+	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
 	inv nmin >= 0 & n >= nmin;
 
 int maxim(int a, int b) 
@@ -73,14 +73,14 @@ int min_height(node2 t)
 void insert(ref node2 t, int v) 
     requires t::complete<n, nmin>
       case {
-        nmin<n -> ensures t'::complete<n, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);
-        nmin=n -> ensures t'::complete<n+1, nmin1> & (nmin1 = nmin | nmin1 = nmin + 1);  
-        nmin>n -> false;}
+        nmin<n -> ensures t'::complete<n, nmin1> & nmin <=nmin1 & nmin1 <= nmin + 1;
+        nmin=n -> ensures t'::complete<n+1, nmin1> & nmin <= nmin1 & nmin1 <= nmin + 1;  
+        nmin>n -> ensures false;}
 {
 	node2 aux;
 	
 	if(t == null) {
-		t = new node2(v, null, null);	
+    t = new node2(v, null, null);	
 		return;	
 	}
 	else {
@@ -89,6 +89,7 @@ void insert(ref node2 t, int v)
 			insert(aux, v);
 			t.left = aux;
 			return;	
+      
 		}
 		else {
 			if(min_height(t.right) < height(t.right)) {	// there is still space in the right subtree

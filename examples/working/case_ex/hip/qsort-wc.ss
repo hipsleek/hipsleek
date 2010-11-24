@@ -44,9 +44,10 @@ node partition(ref node xs, int c)
 
 /* function to append 2 bounded lists */
 node append_bll(node x, node y)
+  requires y::sll<m,s2,b2>
   case {
-    x=null -> requires y::sll<m,s2,b2> ensures res::sll<m,s2,b2>;
-	  x!=null -> requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2
+    x=null ->  ensures res::sll<m,s2,b2>;
+	  x!=null -> requires x::sll<nn, s0, b0> & b0 <= s2
                   ensures res::sll<nn+m, s0, b2>;}
 {
         node xn; 
