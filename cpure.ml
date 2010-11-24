@@ -3068,29 +3068,35 @@ let rec simp_addsub e1 e2 loc =
 
 (* normalise and simplify expression *)
 (* add to take a v->c eq_map *)
-and norm_exp (e:exp) = match e with
-  | Null _ | Var _ | IConst _ | FConst _ -> e
-  | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
-  | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
-  | Mult (e1,e2,l) -> 
-        let e1=norm_exp e1 in 
-        let e2=norm_exp e2 in
-        if (is_zero e1 || is_zero e2) then IConst(0,l)
-        else two_args (norm_exp e1) (norm_exp e2) is_one (fun x -> Mult x) l
-  | Div (e1,e2,l) -> if is_one e2 then e1 else Div (norm_exp e1,norm_exp e2,l)
-  | Max (e1,e2,l)-> two_args (norm_exp e1) (norm_exp e2) (fun _ -> false) (fun x -> Max x) l
-  | Min (e1,e2,l) -> two_args (norm_exp e1) (norm_exp e2) (fun _ -> false) (fun x -> Min x) l
-  | Bag (e,l)-> Bag ( List.sort e_cmp (List.map norm_exp e), l)    
-  | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map norm_exp e), l)    
-  | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map norm_exp e), l)    
-  | BagDiff (e1,e2,l) -> BagDiff (norm_exp e1, norm_exp e2, l)
-  | List (e,l)-> List (List.sort e_cmp (List.map norm_exp e), l)    
-  | ListCons (e1,e2,l)-> ListCons(norm_exp e1, norm_exp e2,l)      
-  | ListHead (e,l)-> ListHead(norm_exp e, l)      
-  | ListTail (e,l)-> ListTail(norm_exp e, l)      
-  | ListLength (e,l)-> ListLength(norm_exp e, l)
-  | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_exp e), l)    
-  | ListReverse (e,l)-> ListReverse(norm_exp e, l)  
+(* and norm_exp_aux (e:exp) = match e with  *)
+
+and norm_exp_aux simp (e:exp) = 
+  let rec helper e = match e with
+    | Null _ | Var _ | IConst _ | FConst _ -> e
+    | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
+    | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
+    | Mult (e1,e2,l) -> 
+          let e1=helper e1 in 
+          let e2=helper e2 in
+          if (is_zero e1 || is_zero e2) then IConst(0,l)
+          else two_args (helper e1) (helper e2) is_one (fun x -> Mult x) l
+    | Div (e1,e2,l) -> if is_one e2 then e1 else Div (helper e1,helper e2,l)
+    | Max (e1,e2,l)-> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Max x) l
+    | Min (e1,e2,l) -> two_args (helper e1) (helper e2) (fun _ -> false) (fun x -> Min x) l
+    | Bag (e,l)-> Bag ( List.sort e_cmp (List.map helper e), l)    
+    | BagUnion (e,l)-> BagUnion ( List.sort e_cmp (List.map helper e), l)    
+    | BagIntersect (e,l)-> BagIntersect ( List.sort e_cmp (List.map helper e), l)    
+    | BagDiff (e1,e2,l) -> BagDiff (helper e1, helper e2, l)
+    | List (e,l)-> List (List.sort e_cmp (List.map helper e), l)    
+    | ListCons (e1,e2,l)-> ListCons(helper e1, helper e2,l)      
+    | ListHead (e,l)-> ListHead(helper e, l)      
+    | ListTail (e,l)-> ListTail(helper e, l)      
+    | ListLength (e,l)-> ListLength(helper e, l)
+    | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)    
+    | ListReverse (e,l)-> ListReverse(helper e, l) in
+  helper e
+
+and norm_exp (e:exp) = norm_exp_aux (fun x -> x) e
 
 (* if v->c, replace v by the constant whenever encountered 
    normalise each sub-expresion only once please.
@@ -3187,7 +3193,7 @@ let get_sub_debug s n m =
 
 
 (* is string a int const, n is prefix length *)
-let is_int_const_aux (n:int) (s:string) : bool =
+let is_int_str_aux (n:int) (s:string) : bool =
   if (n<=const_prefix_len) then false
   else 
     let p = String.sub s 0 const_prefix_len in
@@ -3198,30 +3204,35 @@ let is_int_const_aux (n:int) (s:string) : bool =
 (* get int value if it is an int_const *)
 let get_int_const (s:string) : int option =
   let n=String.length s in
-  if (is_int_const_aux n s) then
+  if (is_int_str_aux n s) then
     let c = String.sub s const_prefix_len (n-const_prefix_len) in
     try Some (int_of_string c) 
     with _ -> None (* should not be possible *)
   else None
 
 (* check if a string denotes an int_const *)
-let is_int_const (s:string) : bool =
+let is_int_str (s:string) : bool =
   let n=String.length s in
-    is_int_const_aux n s
+    is_int_str_aux n s
 
 (* check if a string is a null const *)
-let is_null_const (s:string) : bool = (s="null")
+let is_null_str (s:string) : bool = (s="null")
 
 
 (* is string a constant?  *)
 let is_const (s:spec_var) : bool = 
   let n = name_of_spec_var s in
-  (is_null_const n) || (is_int_const n)
+  (is_null_str n) || (is_int_str n)
+
+(* is string a constant?  *)
+let is_null_const (s:spec_var) : bool = 
+  let n = name_of_spec_var s in
+  (is_null_str n) 
 
 (* is string an int constant?  *)
-let is_i_const (s:spec_var) : bool = 
+let is_int_const (s:spec_var) : bool = 
   let n = name_of_spec_var s in
-     (is_int_const n)
+     (is_int_str n)
 
 let conv_var_to_exp (v:spec_var) :exp =
   if (full_name_of_spec_var v="null") then (Null no_pos)
@@ -3451,21 +3462,34 @@ let is_false_eq (aset : var_aset) : bool =
 (* look-up var's key *)
 (* return all constant with the same key *)
 (* return key if found *)
-let get_var_const_eq (aset : var_aset) (v : spec_var) : spec_var option = None
-	
-
+let get_all_const_eq (aset : var_aset) (v : spec_var) : spec_var list = (*None*)
+  let nlst = Util.find_equiv_all_eq_raw v aset in
+  List.filter (is_const) nlst
+(*
+	let isconst = is_const v in
+	if (isconst) then
+			let key = Util.find_eq aset v in
+			let nlst = 
+				Util.find_equiv_all_eq2_raw eq v s in
+			Some nlst 
+	else None
+*)
 (* check if v is an int constant and return its value, if so - to implement *)
 (* use get_var_const *)
 (* return i if i_const found *)
 (* report error if wrong type found *)
-let get_var_int_eq (aset : var_aset) (v:spec_var) : int option = None
+let conv_var_to_exp_eq (aset : var_aset) (v:spec_var) : exp = 
+  let nlst = get_all_const_eq aset v in
+  match nlst with
+    | [] -> Var(v,no_pos)
+    | hd::_ -> conv_var_to_exp hd
 
 (* check if v is null - to implement *)
 (* report error if of wrong type *) 
-let is_null_var_eq (aset : var_aset) (v:spec_var) : bool = false
+let is_null_var_eq (aset : var_aset) (v:spec_var) : bool = 
+  let nlst = get_all_const_eq aset v in
+  List.exists (is_null_const) nlst
 
-(* check if v is null *)
-let is_null_var_eq_debug (aset : var_aset) (v:spec_var) : bool = false
 
 let string_of_var_list l : string =
   Util.string_of_a_list name_of_spec_var l
@@ -3493,7 +3517,7 @@ let get_equiv_eq aset = get_equiv_eq_no_const  aset
 (* get eq pairs without int const *)
 let get_equiv_eq_with_null aset =
   let vl=Util.get_equiv_eq_raw aset in
-    List.filter (fun (v1,v2) -> not(is_i_const v1) && not(is_i_const v2) ) vl
+    List.filter (fun (v1,v2) -> not(is_int_const v1) && not(is_int_const v2) ) vl
 
 (* get eq pairs without int const *)
 let get_equiv_eq_with_const aset =

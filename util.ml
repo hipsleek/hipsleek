@@ -937,6 +937,7 @@ let find_equiv_all_eq2_raw  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a list  =
   if (r1==[]) then []
   else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
 
+
 (* return a distinct element equal to e *)
 let find_equiv_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  =
   let ls=find_equiv_all_eq2_raw eq e s in
@@ -956,8 +957,12 @@ let find_equiv_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  =
 
 
 (* return a distinct element equal to e *)
-let find_equiv  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  = find_equiv_eq2 (=) e s
- 
+let find_equiv  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  = find_equiv_eq2 (=) e s 
+
+(* return all elements in eq_set equivalent to e, including itself *)
+let find_equiv_all_eq_raw (e:'a) ((s,eq):'a eq_set) : 'a list  =
+  find_equiv_all_eq2_raw eq e s
+
 (* return a distinct element equal to e *)
 let find_equiv_eq  (e:'a) ((s,eq):'a eq_set) : 'a option  = find_equiv_eq2 (eq) e s
  
