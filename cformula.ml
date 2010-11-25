@@ -1540,7 +1540,7 @@ let isFailPartialCtx (fs,ss) =
 if (U.empty ss) then true else false
 
 let isFailFailescCtx (fs,es,ss) =
-if (U.empty ss)&&(U.empty es) then true else false
+if (U.empty ss)&&(U.empty (colapse_esc_stack es)) then true else false
 
 let isFailListPartialCtx cl =
   List.for_all isFailPartialCtx cl 

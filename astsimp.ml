@@ -1307,7 +1307,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
        (* let _ = print_string ("pre: "^(Cprinter.string_of_pure_formula      *)
        (* pf)^"\n") in                                                        *)
      let pf = Cpure.arith_simplify pf in
-     let _ = print_string ("simplified x form : "^(Cprinter.string_of_pure_formula pf)^"\n") in
+    (* let _ = print_string ("simplified x form : "^(Cprinter.string_of_pure_formula pf)^"\n") in*)
        (* let _ = print_string ("post: "^(Cprinter.string_of_pure_formula     *)
        (* pf)^"\n") in                                                        *)
      let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in

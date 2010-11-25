@@ -309,7 +309,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	          let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
 	          let renamed_spec = 
                 if !Globals.max_renaming then (Cformula.rename_struc_bound_vars org_spec)
-                else (Cformula.rename_struc_clash_bound_vars org_spec (CF.formula_of_list_failesc_context ctx))
+                else (Cformula.rename_struc_clash_bound_vars org_spec (CF.formula_of_list_failesc_context sctx))
 	          in
 	          let st1 = List.combine pre_free_vars pre_free_vars_fresh in
 	          let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
@@ -324,7 +324,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	          Debug.devel_pprint (to_print^"\n") pos;
 	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false false true sctx pre2 pos pid in
 		        let _ = PTracer.log_proof prf in
-            if (CF.isFailListFailescCtx ctx) then 
+            (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
+            if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
