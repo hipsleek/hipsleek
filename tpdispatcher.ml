@@ -548,7 +548,10 @@ let tp_is_sat f sat_no do_cache =
   else  
     tp_is_sat_sender f sat_no
 ;;
-            
+    
+let simplify_omega (f:CP.formula): CP.formula = 
+   if is_bag_constraint f then f
+    else Omega.simplify f   
             
 let simplify (f : CP.formula) : CP.formula =
 	if !external_prover then 

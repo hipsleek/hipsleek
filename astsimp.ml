@@ -4439,17 +4439,17 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     helper [] v_l in
   
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    let l = get_pure_conj_list f in
-    let l = filter_pure_conj_list l in      
-    let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
-    let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
-    let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
-    let ev = (Util.difference (CP.fv n_f) v_l) in
-    (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists ev n_f None no_pos))^"\n") in*)
-    let r = hull_invs v_l (TP.simplify (CP.mkExists ev n_f None no_pos)) in   
-    (*let r = TP.hull r in*)
-    if r=[] then [neq] 
-    else List.map (fun c-> CP.mkAnd c neq no_pos) r in
+      let l = get_pure_conj_list f in
+      let l = filter_pure_conj_list l in      
+      let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
+      let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
+      let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
+      let ev = (Util.difference (CP.fv n_f) v_l) in
+      (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists ev n_f None no_pos))^"\n") in*)
+      let r = hull_invs v_l (TP.simplify_omega (CP.mkExists ev n_f None no_pos)) in   
+      (*let r = TP.hull r in*)
+      if r=[] then [neq] 
+      else List.map (fun c-> CP.mkAnd c neq no_pos) r in
   
   let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=     
     match f1 with    
@@ -4658,7 +4658,7 @@ and coerc_spec prog is_l c =
       let c_inv_f = CP.conj_of_list (List.map (fun c-> CP.BForm (c,None)) c_inv) no_pos in
       let c_inv_s = CP.apply_subs subst_vars c_inv_f in
       let c_inv_s_e = CP.mkExists quant_v c_inv_s None no_pos in
-      let c_inv_simp = TP.simplify c_inv_s_e in
+      let c_inv_simp = TP.simplify_omega c_inv_s_e in
       let inv_f = CF.formula_of_pure_N c_inv_simp no_pos in
       let n_h_f = CF.normalize inv_f (add_brs v_def brs h_f) no_pos in
       let n_b_f = CF.normalize inv_f (add_brs v_def brs b_f)  no_pos in

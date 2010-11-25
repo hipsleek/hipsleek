@@ -52,7 +52,13 @@ and cvc3_of_b_formula b = match b with
   | CP.Lte (a1, a2, _) -> (cvc3_of_exp a1) ^ " <= " ^ (cvc3_of_exp a2)
   | CP.Gt (a1, a2, _) -> (cvc3_of_exp a1) ^ " > " ^ (cvc3_of_exp a2)
   | CP.Gte (a1, a2, _) -> (cvc3_of_exp a1) ^ " >= " ^ (cvc3_of_exp a2)
-  | CP.Eq (a1, a2, _) -> (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
+  | CP.Eq (a1, a2, _) -> 
+    if CP.is_null a2 then 
+		(cvc3_of_exp a1) ^ " <= 0"
+	  else if CP.is_null a1 then 
+		(cvc3_of_exp a2) ^ " <= 0"
+	  else 
+    (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
   | CP.Neq (a1, a2, _) -> 
 	  if CP.is_null a2 then 
 		(cvc3_of_exp a1) ^ " > 0"
