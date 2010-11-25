@@ -946,7 +946,7 @@ let elim_redundant_cons_fast impl aset asetf pn =
     | (c::cs),(m::ms) -> 
       let b = 
         (Util.push_time "erc_imply";
-        let r = fast_imply(*_debug*)(*_cmp impl*) aset (ms@f) m in
+        let r = fast_imply(*_debug_cmp impl*) aset (ms@f) m in
           (Util.pop_time "erc_imply";r>0)) in
         if b then  helper cs ms s ({c with memo_status = Implied_R}::r) e f
         else helper cs ms (c::s) r e (m::f) 
