@@ -2926,8 +2926,6 @@ let rec transform_exp f e  =
         | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
         | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
 
-
-
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
 	let (f_b_formula, f_exp) = f in
@@ -3091,6 +3089,7 @@ let two_args e1 e2 isOne f loc=
         else if is_one e2 then e1
         else if (e_cmp e1 e2)<0 then f(e1,e2,loc) else f(e2,e1,loc)
 
+
 (* normalize add/sub expression *)
 let rec simp_addsub e1 e2 loc =
   let (lhs,rhs)=norm_two_sides e1 e2 in
@@ -3102,9 +3101,11 @@ let rec simp_addsub e1 e2 loc =
 (* add to take a v->c eq_map *)
 (* and norm_exp_aux (e:exp) = match e with  *)
 
-and norm_exp_aux simp (e:exp) = 
+and norm_exp (e:exp) = 
+  let _ = print_string "\n !!!!!!!!!!!!!!!! norm exp aux \n" in
   let rec helper e = match e with
-    | Null _ | Var _ | IConst _ | FConst _ -> e
+    | Var _ 
+    | Null _ | IConst _ | FConst _ -> e
     | Add (e1,e2,l) -> simp_addsub e (IConst(0,no_pos)) l 
     | Subtract (e1,e2,l) -> simp_addsub e1 e2 l 
     | Mult (e1,e2,l) -> 
@@ -3127,8 +3128,6 @@ and norm_exp_aux simp (e:exp) =
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map helper e), l)    
     | ListReverse (e,l)-> ListReverse(helper e, l) in
   helper e
-
-and norm_exp (e:exp) = norm_exp_aux (fun x -> x) e
 
 (* if v->c, replace v by the constant whenever encountered 
    normalise each sub-expresion only once please.
@@ -3171,8 +3170,15 @@ let norm_bform_neq (e1:exp)  (e2:exp) loc : b_formula =
   let (lhs,rhs) = norm_two_sides e1 e2 in
    Neq(lhs,rhs,loc)
 
+let simp_bform simp bf =
+  let f_b e = None in
+  let f_e e = match e with
+    | Var _ -> Some (simp e)
+    | _ -> None in
+  transform_b_formula (f_b,f_e) bf
+
 (* normalise and simplify b_formula *)
-let norm_bform_aux (bf:b_formula) : b_formula =
+let norm_bform_a (bf:b_formula) : b_formula =
   (*let bf = b_form_simplify bf in *)
   match bf with 
       | Lt  (e1,e2,l) -> norm_bform_leq (Add(e1,IConst(1,no_pos),l)) e2 l
@@ -3189,6 +3195,8 @@ let norm_bform_aux (bf:b_formula) : b_formula =
       | EqMin _ |  BagSub _ | BagMin _ 
       | BagMax _ | ListAllN _ | ListPerm _ -> bf 
 
+let norm_bform_aux (bf:b_formula) : b_formula = norm_bform_a bf
+
 let norm_bform_opt bf =
   match bf with
     | BConst _ | BVar _ | EqMax _ 
@@ -3196,7 +3204,7 @@ let norm_bform_opt bf =
     | BagMax _ | ListAllN _ | ListPerm _ -> None 
     | _ -> Some bf 
 
-let norm_bform (bf:b_formula) =
+let norm_bform_option (bf:b_formula) =
   let bf=norm_bform_aux bf in
   norm_bform_opt bf
 
@@ -3465,8 +3473,8 @@ let normalise_eq (aset : var_aset) : var_aset =
 let normalise_eq_debug (aset : var_aset) : spec_var Util.eq_set =
  let ax, change, _ = normalise_eq_aux aset in
  (if change then
-	let _ = print_string ("normalise_eq inp1 :"^(string_of_var_eset aset)^"\n") in
-	print_string ("partition_eq out2 :"^(string_of_var_eset ax)^"\n"));
+	let _ = print_string ("normalise_eq inp :"^(string_of_var_eset aset)^"\n") in
+	print_string ("partition_eq out :"^(string_of_var_eset ax)^"\n"));
  (ax)
 
 (* check if an eq_map has a contradiction - to implement *)
@@ -3478,34 +3486,23 @@ let is_false_and_normalise_eq (aset : var_aset) : bool * var_aset =
 	
 (* print if false detected - when debugging *)
 let is_false_and_normalise_eq_debug (aset : var_aset) : bool * var_aset = 
- let (ax, _, conflict) = normalise_eq_aux aset in
- let _ = print_string ("normalise_eq inp1 :"^(string_of_var_eset aset) ^ "\n") in
- let _ = print_string ("partition_eq out2 :"^(string_of_var_eset ax) ^ "\n") in
- let _ = print_string ("conflict in eq: " ^ (string_of_bool conflict) ^ "\n") in
- (conflict, ax) 
+  let (ax, _, conflict) = normalise_eq_aux aset in
+  let _ = print_string ("normalise_eq inp :"^(string_of_var_eset aset) ^ "\n") in
+  let _ = print_string ("partition_eq out :"^(string_of_var_eset ax) ^ "\n") in
+  let _ = print_string ("conflict in eq: " ^ (string_of_bool conflict) ^ "\n") in
+  (conflict, ax)
 
-(* check if an eq_map has a contradiction - to implement *)
+(* check if an eq_map has a contradiction*)
 (* call normalised_eq and check if equal to 1=0 *)
 let is_false_eq (aset : var_aset) : bool = 
 	let (_, _, conflict) = normalise_eq_aux aset in conflict
 
-
-(* check if v is a constant and return its var representation - to implement *)
-(* look-up var's key *)
-(* return all constant with the same key *)
-(* return key if found *)
-let get_all_const_eq (aset : var_aset) (v : spec_var) : spec_var list = (*None*)
+(* check if v is a constant*)
+(* return a list with all constant having the same key as v*)
+let get_all_const_eq (aset : var_aset) (v : spec_var) : spec_var list =
   let nlst = Util.find_equiv_all_eq_raw v aset in
   List.filter (is_const) nlst
-(*
-	let isconst = is_const v in
-	if (isconst) then
-			let key = Util.find_eq aset v in
-			let nlst = 
-				Util.find_equiv_all_eq2_raw eq v s in
-			Some nlst 
-	else None
-*)
+
 (* check if v is an int constant and return its value, if so - to implement *)
 (* use get_var_const *)
 (* return i if i_const found *)
@@ -3516,8 +3513,15 @@ let conv_var_to_exp_eq (aset : var_aset) (v:spec_var) : exp =
     | [] -> Var(v,no_pos)
     | hd::_ -> conv_var_to_exp hd
 
+(*Convert an expresion to another expresion after replacing the variables representing constants*)
+let conv_exp_to_exp_eq aset e : exp =
+  match e with
+    | Var(v,_) -> let r = conv_var_to_exp_eq aset v in
+      if not(r==e) then ((Util.add_to_counter "var_changed_2_const" 1); r)
+      else r
+    | _ -> e
+
 (* check if v is null - to implement *)
-(* report error if of wrong type *) 
 let is_null_var_eq (aset : var_aset) (v:spec_var) : bool = 
   let nlst = get_all_const_eq aset v in
   List.exists (is_null_const) nlst
@@ -3641,9 +3645,21 @@ let check_eq_bform eq lhs rhs failval =
     -2 - definitely false
 *)
 
-let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
+let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
+  (*let _ = print_string "\n fast_imply \n" in*)
   let _ = Util.push_time "fast_imply" in
-  let r =
+  (*normalize lhs and rhs*)
+  let simp e = conv_exp_to_exp_eq aset e in
+  let normsimp lhs rhs =
+    let _ = Util.push_time "fi-normsimp" in
+    let lhs = List.map (fun e -> norm_bform_a(simp_bform simp e)) lhs in
+    let rhs = norm_bform_a( simp_bform simp rhs) in
+    let _ = Util.pop_time "fi-normsimp" in
+    (lhs,rhs) in
+  let lhs,rhs = if !Globals.enable_norm_simp then normsimp lhs rhs 
+  else (lhs,rhs)
+  in
+  let r = 
     let eq x y = Util.is_equiv_eq aset x y in
     let r1=check_eq_bform eq lhs rhs 0 in
     if (r1>0) then r1
@@ -3658,7 +3674,8 @@ let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
               let _ = print_string "warning fast_imply : not normalised"
               in 0
         | _ -> (* use just syntactic checking *) 0 in
-  (Util.pop_time "fast_imply");r
+  let _ = if r>0 then (Util.add_to_counter "fast_imply_success" 1) else () in
+  let _  = Util.pop_time "fast_imply" in r
 
 
 

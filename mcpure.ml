@@ -760,7 +760,7 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
     
     Util.push_time "memo_norm";
     let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
-			      match norm_bform (*norm_bform_debug norm_bf*) c1 with
+			      match norm_bform_option (*norm_bform_debug norm_bf*) c1 with
 				| Some c1 -> (c1::a1,a2)
 				| None -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
       Util.pop_time "memo_norm";l
@@ -834,7 +834,7 @@ let memo_changed d = d.memo_group_changed
    throws an exception if p_cond is not found in corr*)    
    
 let memo_f_neg_norm (p:b_formula) :b_formula = 
-  match norm_bform (memo_f_neg p) with
+  match norm_bform_option (memo_f_neg p) with
     | Some s-> s
     | None -> Error.report_error 
       {Error.error_loc = no_pos; Error.error_text = "memo_f_neg_norm: the negation can not be normalized to a simple b_formula"}

@@ -554,39 +554,39 @@ let simplify_omega (f:CP.formula): CP.formula =
     else Omega.simplify f   
             
 let simplify (f : CP.formula) : CP.formula =
-	if !external_prover then 
+  if !external_prover then 
     match Netprover.call_prover (Simplify f) with
-      Some res -> res
+        Some res -> res
       | None -> f
-	else
-  (Util.push_time "simplify";
-  try
-	 let r = match !tp with
-      | Isabelle -> Isabelle.simplify f
-      | Coq -> Coq.simplify f
-      | Mona -> Mona.simplify f
-      | OM ->
-        if (is_bag_constraint f) then
-        (Mona.simplify f)
-        else (Omega.simplify f)
-      | OI ->
-        if (is_bag_constraint f) then
-        (Isabelle.simplify f)
-        else (Omega.simplify f)
-      | SetMONA -> Mona.simplify f
-      | CM ->
-        if is_bag_constraint f then Mona.simplify f
-        else Omega.simplify f
-      | Redlog -> Redlog.simplify f
-      | RM -> 
-          if is_bag_constraint f then
-            Mona.simplify f
-          else
-            Redlog.simplify f
-      | _ -> Omega.simplify f in
-  Util.pop_time "simplify";
-  r
-  with | _ -> f)
+  else
+    (Util.push_time "simplify";
+    try
+	  let r = match !tp with
+        | Isabelle -> Isabelle.simplify f
+        | Coq -> Coq.simplify f
+        | Mona -> Mona.simplify f
+        | OM ->
+              if (is_bag_constraint f) then
+                (Mona.simplify f)
+              else (Omega.simplify f)
+        | OI ->
+              if (is_bag_constraint f) then
+                (Isabelle.simplify f)
+              else (Omega.simplify f)
+        | SetMONA -> Mona.simplify f
+        | CM ->
+              if is_bag_constraint f then Mona.simplify f
+              else Omega.simplify f
+        | Redlog -> Redlog.simplify f
+        | RM -> 
+              if is_bag_constraint f then
+                Mona.simplify f
+              else
+                Redlog.simplify f
+        | _ -> Omega.simplify f in
+      Util.pop_time "simplify";
+      r
+    with | _ -> f)
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f

@@ -131,6 +131,7 @@ let process_cmd_line () = Arg.parse [
   ("--prover", Arg.String Tpdispatcher.set_tp, "<p,q,..> comma-separated list of provers to try in parallel");
   ("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, "enable sat statistics");
   ("--epi", Arg.Set Globals.profiling, "enable profiling statistics");
+  ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
   ("--dprun", Arg.Clear Globals.allow_pruning,"disable predicate pruning");

@@ -9,6 +9,7 @@ elim_exists (f:formula) : formula
 
 (* below from solver.ml *)
 
+
 and elim_exists_pure w (f, b) lump pos =
   (elim_exists_memo_pure w f pos, List.map (fun (l, f) -> (l, elim_exists_pure_branch w f pos)) b)
       
@@ -25,9 +26,10 @@ and elim_exists_memo_pure_debug w f0 lump_all pos =
   print_string ("elim_exists_memo_pure output: "^(Cprinter.string_of_memo_pure_formula r)^"\n") ;
   r)
       
+(*creates an existential cpure formula which is than simplified by the prover*)
 and elim_exists_pure_branch (w : CP.spec_var list) (f0 : CP.formula) pos =
   let f = CP.mkExists w f0 None pos in
-  let simplified_f = TP.simplify f in
+  let simplified_f = TP.simplify f in (*calls the prover simplify*)
   simplified_f
 
 and elim_exists_pure_branch_debug w f0 = 

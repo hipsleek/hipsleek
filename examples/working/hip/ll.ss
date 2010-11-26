@@ -51,7 +51,7 @@ node get_next(node x)
 	ensures x::ll<1> * res::ll<n-1>; 
 
 {
-  dprint;
+  //dprint;
 	node tmp = x.next;
   assume false;
 	x.next = null;
@@ -90,7 +90,7 @@ void set_null(node x)
 
 {
 	x.next = null;
-    dprint;
+    //dprint;
 }
 
 /* function to get the third element of a list */
@@ -159,9 +159,9 @@ node create_list(int a)
 	}
 	else {    
 		a  = a - 1;
-    dprint;
+        //    dprint;
 		tmp = create_list(a);
-    dprint;
+        //    dprint;
 		return new node (0, tmp);
 	}
 		
