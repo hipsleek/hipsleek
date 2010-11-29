@@ -3,7 +3,6 @@
 type ident = string
 type constant_flow = ident
 
-
 type nflow = (int*int)(*numeric representation of flow*)
 
 	
@@ -41,6 +40,16 @@ type mode =
   | ModeIn
   | ModeOut
 
+let idf (x:'a) : 'a = x
+let idf2 v e = v 
+let voidf e = ()
+let voidf2 e f = ()
+
+
+let push_opt_void_pair e = match e with
+  | None -> None
+  | Some s -> Some (s,()) 
+
 (* global constants *)
 
 let no_pos = 
@@ -53,17 +62,33 @@ let no_pos =
 let flow = "flow"
 let top_flow = "__flow"
 (*let any_flow = "__Any"*)
-let n_flow = "__norm"
-let cont_top = "__Cont_top"
-let brk_top = "__Brk_top"
 let c_flow = "__c-flow"
-let raisable_class = "__Exc"
-let ret_flow = "__Ret"
-let spec_flow = "__Spec"
 let false_flow = "__false"
 let abnormal_flow = "__abnormal"
 let stub_flow = "__stub"
 
+(* Control flow *)
+let raisable_class = "__Exc" (*raisable exception*)
+let local_flow = "__local"
+
+(* Local flow *)
+let n_flow = "__norm"
+let other_flow = "__others"
+let cont_top = "__Cont_top"
+let brk_top = "__Brk_top"
+let ret_flow = "__Ret"
+let spec_flow = "__Spec"
+
+(* Abort flow *)
+let abort_flow = "__abort"
+let halt_flow = "__halt"
+let hang_flow = "__hang"
+let error_flow = "__Error"
+
+(* Error flow *)
+let nullptr_flow = "__NullPointerErr"
+
+(* Control flow *)
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
 let spec_flow_int = ref ((-1,-1):nflow)
@@ -78,6 +103,16 @@ let res = "res"
 let self = "self"
 
 let this = "this"
+
+(* Header filename list
+ * Use in 'include' preprocessing *)
+
+let header_file_list  = ref (["\"prelude.ss\""] : string list)
+let pragma_list = ref ([] : string list)
+
+(*in case the option of saving provers temp files to a different directory is enabled, the value of 
+  this variable is going to be changed accordingly in method set_tmp_files_path *)
+(*let tmp_files_path = "/tmp/"*)
 
 (* command line options *)
 
@@ -137,7 +172,7 @@ let print_mvars = ref false
 
 let enable_sat_statistics = ref false
 
-let wrap_exists_implicit_explicit = ref true
+let wrap_exists_implicit_explicit = ref false
 
 let profiling = ref false
 
@@ -149,19 +184,22 @@ let print_core = ref false
 
 let print_err_sleek = ref false
 
+let failure_analysis = ref false
 
 let seq_to_try = ref false
 
 let print_input = ref false
 
-let instantiation_variants = ref 0
-
 let pass_global_by_value = ref false
+
+let exhaust_match = ref false
 
 let profile_threshold = 0.5 
 
 let true_imply_count = ref 0
+
 let false_imply_count = ref 0
+
 let true_sat_count = ref 0
 
 let add_count (t: int ref) = 
@@ -194,8 +232,33 @@ let fresh_formula_label (s:string) :formula_label =
 	(!branch_point_id,s)
   
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
+let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let tmp_files_path = ref ""
 
+(*path for the temporary files used by the prover. If you change this path here it is 
+  mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
+let set_tmp_files_path () = 	
+	begin
+      (try
+		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (); );
+	  (try
+		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (); );
+      (try
+		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766) 
+      with
+		Unix.Unix_error (_, _, _) -> (););
+	  (try
+		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (););
+	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
+	end
+	
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number
@@ -290,6 +353,23 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
+(* check a pid is in current es path trace or not *)
+let rec isInPathTrace (pid : control_path_id_strict option) (pt : path_trace) : (bool * int) =
+	match pid with
+	| None -> (true, 0)
+	| Some p -> 
+		let lbl = fst p in
+		let fpt = List.map (fun ((i, s), l) -> (i, lbl, l)) pt in
+			isFormulaLabel fpt
+
+and isFormulaLabel fpt : (bool * int) =
+	match fpt with
+	| [] -> (false, 0)
+	| head::rest -> 
+		match head with
+		| (i, l, p) -> 
+			if i = l then (true, p)
+			else isFormulaLabel rest	
  
 let dummy_exception () = ()
 

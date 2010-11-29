@@ -20,7 +20,7 @@ let set_log_file fn =
 	end
 
 let run_cvc3 (input : string) : unit =
-  begin
+  begin 
 	let chn = open_out infilename in
 	  output_string chn input;
 	  close_out chn;
@@ -110,8 +110,55 @@ and cvc3_of_formula f = match f with
 	  let typ_str = cvc3_of_sv_type sv in
   		"(FORALL (" ^ (cvc3_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvc3_of_formula p) ^ ")"
   | CP.Exists (sv, p, _,_) -> 
-	  let typ_str = cvc3_of_sv_type sv in
+		let typ_str = cvc3_of_sv_type sv in
   		"(EXISTS (" ^ (cvc3_of_spec_var sv) ^ ": " ^ typ_str ^ "): " ^ (cvc3_of_formula p) ^ ")"
+		
+and remove_quantif f quant_list  = match f with
+  | CP.BForm (b,_) -> 
+		(*let _ = print_string ("\n#### BForm: " ^ Cprinter.string_of_pure_formula f ) in*)
+		(f, quant_list)
+  | CP.And (p1, p2, pos) -> 
+		begin
+			let (tmp1, quant_list) = remove_quantif p1 quant_list in
+			let (tmp2, quant_list) = remove_quantif p2 quant_list in
+			(*let _ = print_string ("\n#### and: " ^ Cprinter.string_of_pure_formula tmp1 ) in
+			let _ = print_string ("\n#### and: " ^ Cprinter.string_of_pure_formula tmp2 ) in*)
+			((CP.mkAnd tmp1 tmp2 pos), quant_list)
+		end
+  | CP.Or (p1, p2, lbl, pos) -> 
+		begin
+			let (tmp1, quant_list) = remove_quantif p1 quant_list in
+			let (tmp2, quant_list) = remove_quantif p2 quant_list in
+			(*let _ = print_string ("\n#### Or: " ^ Cprinter.string_of_pure_formula tmp1 ) in*)
+			(*let _ = print_string ("\n#### Or: " ^ Cprinter.string_of_pure_formula tmp2 ) in*)
+			((CP.mkOr tmp1 tmp2 lbl pos), quant_list)
+		end
+  | CP.Not (p, lbl, pos) -> 
+		begin
+			let (tmp, quant_list) = remove_quantif p quant_list in
+			(*let _ = print_string ("\n#### NOT: " ^ Cprinter.string_of_pure_formula tmp ) in*)
+			((CP.mkNot tmp lbl pos), quant_list)
+		end
+  | CP.Forall (sv, p, lbl, pos) -> 
+		begin
+			let (tmp, quant_list) = remove_quantif p quant_list in
+			(*let _ = print_string ("\n#### Forall: " ^ Cprinter.string_of_pure_formula tmp ) in*)
+			((CP.mkForall [sv] tmp lbl pos), quant_list)
+		end
+  | CP.Exists (sv, p, lbl, pos) -> 
+		begin
+			let new_name = (CP.name_of_spec_var sv)^"_flatten" in 
+			let new_sv = CP.SpecVar (CP.type_of_spec_var sv, new_name, if CP.is_primed sv then Primed else Unprimed) in
+			let new_list = [] in
+			let new_list = new_sv :: new_list in
+			let old_list = [] in
+			let old_list = sv :: old_list in
+			let new_formula = CP.subst_avoid_capture old_list new_list p in
+			let quant_list_modif = new_sv :: quant_list in
+			let (tmp, quant_list_modif) = remove_quantif new_formula quant_list_modif in
+			(*let _ = print_string ("\n#### Exists: " ^ Cprinter.string_of_pure_formula tmp ) in*)
+			(tmp , quant_list_modif)
+		end
 
 (*
   split a list of spec_vars to three lists:
@@ -119,8 +166,39 @@ and cvc3_of_formula f = match f with
   - boolean vars
   - set/bag vars
 *)
-and split_vars (vars : CP.spec_var list) = (vars, [], [])
-
+and split_vars (vars : CP.spec_var list) = 
+	if Util.empty vars then 
+		begin
+			([], [], [])
+		end
+	else 
+		begin
+			let ints, bools, bags = split_vars (List.tl vars) in
+			(*let _ = print_string ("!!!!!!! " ^ string_of_int (List.length ints) ^ "   " ^ string_of_int (List.length vars) ^ "\n" ) (*^ (String.concat ", " (List.map cvc3_of_spec_var ints)) ^ "/n" *)in*)
+			let var = List.hd vars in
+			match var with
+				| CP.SpecVar (CP.Prim Bag, _, _) -> (ints, bools, var :: bags)
+				| CP.SpecVar (CP.Prim Bool, _, _) -> (var :: ints, bools, bags)
+				| _ -> (var :: ints, bools, bags)
+		end
+		
+and flatten_output ints bools bags : string =  
+	if (Util.empty ints && Util.empty bools && Util.empty bags) then ""
+	else
+		let ints_vars_list =
+			if Util.empty ints then []
+			else let ints_str = (String.concat ", " (List.map cvc3_of_spec_var ints)) ^ " : INT" in				
+				ints_str :: [] in
+		let bags_vars_list =
+			if Util.empty bags then ints_vars_list
+			else let bags_str = (String.concat ", " (List.map cvc3_of_spec_var bags)) ^ " : SET" in				
+				bags_str :: ints_vars_list in
+		let all_quantif_vars_list =
+			if Util.empty bools then bags_vars_list
+			else let bools_str = (String.concat ", " (List.map cvc3_of_spec_var bools)) ^ " : INT" in
+				bools_str :: bags_vars_list in 
+		"EXISTS (" ^ (String.concat ", " all_quantif_vars_list) ^ ") : "
+	
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
@@ -137,13 +215,22 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
 	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in 
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   let ante_str =
-	"ASSERT (" ^ (cvc3_of_formula ante) ^ ");\n" in
-  let conseq_str =  "QUERY (" ^ (cvc3_of_formula conseq) ^ ");\n" in
+	if (String.compare (cvc3_of_formula ante) "TRUE") == 0 then 
+				"a_dummy, b_dummy: INT;\nASSERT a_dummy = b_dummy; \n" 
+	else "ASSERT (" ^ (cvc3_of_formula ante) ^ ");\n" in
+  let (flatted_conseq, quant_list) = remove_quantif conseq [] in
+  (*let _ = print_string ("\n ~~~~~ " ^ string_of_int(List.length quant_list) ^ String.concat ", " (List.map cvc3_of_spec_var quant_list)) in*)
+  let ints, bools, bags = split_vars quant_list in 
+  let quantif_vars_str = flatten_output ints bools bags in
+  let conseq_str =  "QUERY (" ^ quantif_vars_str ^ " ( " ^ (cvc3_of_formula flatted_conseq) ^ "));\n" in
 	(* talk to CVC3 *)
   let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
 	if !log_cvc3_formula then begin
 	  output_string !cvc3_log "%%% imply\n";
-	  (*output_string !cvc3_log (Cprinter.string_of_pure_formula ante);*)
+	  output_string !cvc3_log (Cprinter.string_of_pure_formula flatted_conseq);
+	  output_string !cvc3_log "\n";
+	  output_string !cvc3_log (Cprinter.string_of_pure_formula conseq);
+	  output_string !cvc3_log "\n";
 	  output_string !cvc3_log f_cvc3;
 	  flush !cvc3_log
 	end;
@@ -217,11 +304,7 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
 	if Util.empty bool_vars then ""
 	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
-(*
-  let f_str = (* (cvc3_of_formula_decl f)  ^ *) 
-	"ASSERT (" ^ (cvc3_of_formula f) ^ ");\n" in
-  let query_str = "QUERY (1<0);\n" in
-*)
+  (* let quant_list = [] in *)
   let f_str = cvc3_of_formula f in
   let query_str = "CHECKSAT (" ^ f_str ^ ");\n" in
 	(* talk to CVC3 *)

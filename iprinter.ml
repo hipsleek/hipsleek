@@ -267,9 +267,9 @@ let rec string_of_formula = function
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
 					F.formula_exists_pure = pf}) ->
-	  "(EX " ^ (String.concat ", " (List.map fst qvars)) ^ " . "
+	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
-		   string_of_pure_formula pf
+		   ("true & ")^string_of_pure_formula pf
 		 else if hf = F.HFalse then 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
@@ -362,11 +362,21 @@ let rec string_of_exp = function
 		   exp_bind_path_id = pid;
 		   exp_bind_body = e})-> 
           string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
-  | Block ({exp_block_body = e;})-> "{" ^ (string_of_exp e) ^ "}\n"
+  | Block ({
+    exp_block_local_vars = lv;
+    exp_block_body = e;
+    })-> 
+    "{" ^(match lv with
+        | [] -> ""
+        | _ -> "local: "^
+          (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
+        ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
+  | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
   | Empty l -> ""
+  | Finally c->  ("finally "^(string_of_exp c.exp_finally_body))
   | Unary ({exp_unary_op = o;
 			exp_unary_exp = e;
 			exp_unary_pos = l})-> 
@@ -454,14 +464,9 @@ let rec string_of_exp = function
   | Try ({	exp_try_block = bl;
 			exp_catch_clauses = cl;
 			exp_finally_clause = fl;})
-				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_catch b)) "" cl)^
-									(List.fold_left (fun a b -> a^"\n"^(string_of_finally b)) "" fl)
-									
-and string_of_catch c  = 
-		("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
-
-and string_of_finally c = ("finally "^(string_of_exp c.exp_finally_body))
-
+				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
+									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
+							
 and 
    (* function to transform a list of expression in a string *)
    string_of_exp_list l c = match l with  
@@ -485,6 +490,168 @@ and
      | (id, e, l)::t 	           -> id ^ "=" ^ (string_of_exp e) ^ ", " ^ (string_of_cassigning_list t)
 
 ;;
+
+(************************************** Printing some needed expressions for error execution path ***********************************)
+
+let rec string_of_part_exp pt e0 =
+	match e0 with 
+  | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
+  | Java ({exp_java_code = code}) -> code
+  | Label ((pid,_),e) -> 
+					let br = isInPathTrace pid pt in
+						if (fst br) then
+		        	(string_of_part_exp pt e)
+						else ""
+  | Bind ({exp_bind_bound_var = v;
+		   exp_bind_fields = vs;
+		   exp_bind_path_id = pid;
+		   exp_bind_body = e})-> 
+					let br = isInPathTrace pid pt in
+						if (fst br) then
+          		("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_part_exp pt e) ^ " }")
+						else ""
+  | Block ({exp_block_body = e;})-> "{" ^ (string_of_part_exp pt e) ^ "}\n"
+  | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
+  | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
+  | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
+  | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_part_exp pt c.exp_catch_body))
+  | Empty l -> ""
+  | Finally c->  ("finally "^(string_of_part_exp pt c.exp_finally_body))
+  | Unary ({exp_unary_op = o;
+			exp_unary_exp = e;
+			exp_unary_pos = l})-> 
+          (match o with 
+            | OpPostInc | OpPostDec -> 
+              (if need_parenthesis2 e then (parenthesis (string_of_part_exp pt e)) ^ (string_of_unary_op o)
+               else (string_of_part_exp pt e) ^ (string_of_unary_op o))
+            | _ -> 
+              (if need_parenthesis2 e then (string_of_unary_op o) ^ (parenthesis (string_of_part_exp pt e))
+               else (string_of_unary_op o) ^ (string_of_part_exp pt e)))
+  | Binary ({exp_binary_op = o;
+			 exp_binary_oper1 = e1;
+			 exp_binary_oper2 = e2;
+			 exp_binary_pos = l})-> 
+          if need_parenthesis2 e1 then 
+            if need_parenthesis2 e2 then
+								(parenthesis (string_of_part_exp pt e1)) ^ (string_of_binary_op o) ^ (parenthesis (string_of_part_exp pt e2))
+            else (parenthesis (string_of_part_exp pt e1)) ^ (string_of_binary_op o) ^ (string_of_part_exp pt e2)
+          else  (string_of_part_exp pt e1) ^ (string_of_binary_op o) ^ (string_of_part_exp pt e2)
+  | CallNRecv ({exp_call_nrecv_method = id;
+				exp_call_nrecv_path_id = pid;
+				exp_call_nrecv_arguments = el})-> 
+					let br = isInPathTrace pid pt in
+						if (fst br) then
+          		(id ^ "(" ^ (string_of_part_exp_list pt el ",") ^ ")")
+						else ""
+  | CallRecv ({exp_call_recv_receiver = recv;
+			   exp_call_recv_method = id;
+			   exp_call_recv_path_id = pid;
+			   exp_call_recv_arguments = el})-> 
+					let br = isInPathTrace pid pt in
+						if (fst br) then
+          		( (string_of_part_exp pt recv) ^ "." ^ id ^ "(" ^ (string_of_part_exp_list pt el ",") ^ ")")
+						else ""
+  | New ({exp_new_class_name = id;
+		  exp_new_arguments = el})  -> "new " ^ id ^ "(" ^ (string_of_part_exp_list pt el ",") ^ ")" 
+  | Var ({exp_var_name = v}) -> v
+  | Member ({exp_member_base = e;
+			 exp_member_fields = idl})-> (string_of_part_exp pt e) ^ "." ^ (concatenate_string_list idl ".")
+  | Assign ({exp_assign_op = op;
+			 exp_assign_lhs = e1;
+			 exp_assign_rhs = e2})  -> (string_of_part_exp pt e1) ^ (string_of_assign_op op) ^ (string_of_part_exp pt e2)
+  | Cond ({exp_cond_condition = e1;
+		   exp_cond_then_arm = e2;
+		   exp_cond_path_id = pid;
+		   exp_cond_else_arm = e3}) -> 
+				let br = isInPathTrace pid pt in
+				let string_if_statement = if ((snd br) = 0) then (" { \n  " ^ string_of_part_exp pt e2 ^ ";\n}") else "\n..." in
+				let string_else_statement = if ((snd br) = 1) then ("{ \n  " ^ string_of_part_exp pt e3 ^ ";"  ^ "\n}") else "\n..." in
+					if (fst br) then
+					  ("if " ^ (parenthesis (string_of_part_exp pt e1)) ^  string_if_statement ^ 
+					  	(match e3 with 
+								  | Empty ll -> ""
+								  | _        -> "\nelse "  ^ string_else_statement))
+					else "\n..."
+  | While ({exp_while_condition = e1;
+			exp_while_body = e2;
+			exp_while_jump_label = lb;
+			exp_while_specs = li}) -> 
+        (string_of_label lb)^" while " ^ (parenthesis (string_of_part_exp pt e1)) ^ " \n" ^ "{\n"^ (string_of_part_exp pt e2) ^ "\n}"          
+  | Return ({exp_return_val = v; exp_return_path_id = pid})  -> 
+				let br = isInPathTrace pid pt in
+						if (fst br) then
+						  ("return " ^ 
+						    (match v with 
+						      | None   -> ""
+						      | Some e -> (string_of_part_exp pt e)) )
+						else "\n..."
+  | Seq ({exp_seq_exp1 = e1;
+		  exp_seq_exp2 = e2})-> 
+          (string_of_part_exp pt e1) ^ ";\n" ^ (string_of_part_exp pt e2) ^ ";"  
+  | VarDecl ({exp_var_decl_type = t;
+			  exp_var_decl_decls = l})
+                                   -> (string_of_typ t) ^ " " ^ (string_of_part_assigning_list pt l);
+  | ConstDecl ({exp_const_decl_type = t;
+				exp_const_decl_decls = l}) 
+                                   -> "const " ^ (string_of_typ t) ^ " " ^ (string_of_part_cassigning_list pt l)
+  | BoolLit ({exp_bool_lit_val = b})
+                                   -> string_of_bool b 
+  | IntLit ({exp_int_lit_val = i}) -> string_of_int i
+  | FloatLit ({exp_float_lit_val = f})
+                                   -> string_of_float f
+  | Null l                         -> "null"
+  | Assert l                       -> (* No need to print assert, just print assume *) 
+        snd(l.exp_assert_path_id)^
+           (match l.exp_assert_assumed_formula with
+            | None -> ""
+            | Some f -> " : assume " ^ (string_of_formula f))^"\n"
+  | Dprint l                       -> "" 
+  | Debug ({exp_debug_flag = f})   -> "debug " ^ (if f then "on" else "off")
+  | This _ -> "this"
+  | Time (b,s,_) -> ("Time "^(string_of_bool b)^" "^s)
+  | Raise ({exp_raise_type = tb;
+			exp_raise_path_id = pid;
+			exp_raise_val = b;}) -> 
+				let br = isInPathTrace pid pt in
+						if (fst br) then
+							("raise "^
+							(match b with
+								| None -> 
+									let r = match tb with 
+										| Const_flow cf-> cf 
+										| Var_flow cf -> cf in r 
+										| Some bs-> (string_of_part_exp pt bs))^ "\n")
+						else "\n..."
+  | Try ({	exp_try_block = bl;
+			exp_catch_clauses = cl;
+			exp_finally_clause = fl;})
+				-> "try {"^(string_of_part_exp pt
+                                bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_part_exp pt b)) "" cl)^
+									(List.fold_left (fun a b -> a^"\n"^(string_of_part_exp pt b)) "" fl)
+and 
+   (* function to transform a list of expression in a string *)
+   string_of_part_exp_list pt l c = match l with  
+     | []                          -> ""
+     | h::[]                       -> string_of_part_exp pt h
+     | h::t 	                   -> (string_of_part_exp pt h) ^ c ^ " " ^ (string_of_part_exp_list pt t c)			    
+and 
+   (* function to transform in a string such a list : ((ident * exp option * loc) list *)
+   string_of_part_assigning_list pt l = match l with 
+     | []                          -> ""
+     | (id, eo, l)::[]             -> id ^ (match eo with 
+       | None    -> ""
+       | Some e  -> " = " ^ (string_of_part_exp pt e))
+     | (id, eo, l)::t 	           -> id ^ (match eo with 
+       | None    -> ""
+       | Some e  -> " = " ^ (string_of_part_exp pt e)) ^ ", " ^ (string_of_part_assigning_list pt t)
+and 
+   string_of_part_cassigning_list pt l = match l with 
+     | []                          -> ""
+     | (id, e, l)::[]              -> id ^ "=" ^ (string_of_part_exp pt e)
+     | (id, e, l)::t 	           -> id ^ "=" ^ (string_of_part_exp pt e) ^ ", " ^ (string_of_part_cassigning_list pt t)
+
+;;
+(*******************************************************************************************************************************************)
 
 (* pretty printing for one data declaration*)
 let string_of_decl (d, pos) = match d with 
@@ -541,6 +708,14 @@ let string_of_proc_decl p =
 		^ "\ndynamic " ^ (string_of_struc_formula  p.proc_dynamic_specs) ^ "\n" ^ body)
 ;;
 
+(* Printing for some part of procedure *)                                                                                              
+let string_of_part_proc_decl pt p = 
+  let body = match p.proc_body with 
+	| None     -> ""
+	| Some e   -> string_of_part_exp pt e
+	in body
+;;
+
 (* proc_pre_post_list : (F.formula * F.formula) list; *)
 
 (* pretty printing for a list of data_decl *)
@@ -555,6 +730,17 @@ let rec string_of_proc_decl_list l = match l with
  | []        -> ""
  | h::[]     -> (string_of_proc_decl h) 
  | h::t      -> (string_of_proc_decl h) ^ "\n" ^ (string_of_proc_decl_list t)
+;;
+
+(* Printing for a list of some part of proc_decl *)
+let rec string_of_part_proc_decl_list pt l = match l with 
+ | []        -> ""
+ | h::[]     -> if (List.exists (fun i -> i = h.proc_name) !procs_verified) then (string_of_part_proc_decl pt h)
+                else "" 
+ | h::t      -> 
+     let proc_string = if (List.exists (fun i -> i = h.proc_name) !procs_verified) then ("\n" ^(string_of_part_proc_decl pt h))      
+                       else "" 
+     in (proc_string ^ (string_of_part_proc_decl_list pt t))
 ;;
 
 (* pretty printing for a list of view_decl *)
@@ -620,6 +806,10 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_view_decl_list p.prog_view_decls) ^"\n" ^
   (string_of_coerc_decl_list p.prog_coercion_decls) ^ "\n\n" ^ 
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
+;;
+
+(* printing for some part of program *)
+let string_of_part_program pt p = string_of_part_proc_decl_list pt p.prog_proc_decls
 ;;
 
 

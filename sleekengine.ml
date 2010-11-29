@@ -89,7 +89,7 @@ let process_pred_def pdef =
 	  try
 		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
 		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
-		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false in
+		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
 		let new_pdef = {pdef with Iast.view_formula = wf} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
@@ -107,7 +107,9 @@ let process_pred_def pdef =
 		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
-		let n_cpdef = AS.view_case_inference cprog iprog.I.prog_view_decls cpdef in
+		let n_cpdef = 
+      if !Globals.enable_case_inference then 
+        AS.view_case_inference cprog iprog.I.prog_view_decls cpdef else cpdef in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -120,10 +122,11 @@ let process_pred_def pdef =
 	
 let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.struc_formula = match mf0 with
   | MetaFormCF mf -> (Cformula.formula_to_struc_formula mf)
+  | MetaFormLCF mf -> (Cformula.formula_to_struc_formula (List.hd mf))
   | MetaForm mf -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true in
+      let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true [] in
 	AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
   | MetaVar mvar -> begin
       try 
@@ -145,15 +148,16 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
-      let wf,_ = AS.case_normalize_struc_formula iprog h p b false true in
+      let wf,_ = AS.case_normalize_struc_formula iprog h p b false true [] in
       let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
 	res
 	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
   | MetaFormCF mf -> mf
+  | MetaFormLCF mf -> (List.hd mf)
   | MetaForm mf ->
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
-      let wf,_ = AS.case_normalize_formula iprog h false mf in
+      let wf = AS.case_normalize_formula iprog h mf in
       let _ = Astsimp.collect_type_info_formula iprog wf stab false in
 	AS.trans_formula iprog quant fv_idents false wf stab false
   | MetaVar mvar -> begin
@@ -193,31 +197,42 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
     (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
     let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+    (*let _ = print_string (Cprinter.string_of_program cprog) in*)
     let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
-    (*	let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
+    (*	let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in *)
     let rs, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
+    (*let _ = print_string (Prooftracer.string_of_proof prf) in*)
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs in
     residues := Some rs;
     if CF.isFailCtx rs then begin 
 	  print_string ("Fail.\n");
-      if !Globals.print_err_sleek  then           
-        print_string (Cprinter.string_of_list_context rs); 
+      if !Globals.print_err_sleek  then
+        print_string ("printing here"^(Cprinter.string_of_list_context rs)) 
     end 
     else
 	  print_string ("Valid.\n")
+      (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   with
-    | _ ->  dummy_exception() ; (print_string "exception in entail check\n")	
+    | _ ->  Printexc.print_backtrace stdout;dummy_exception() ; (print_string "exception in entail check\n")	
 	
-let process_capture_residue (lvar : ident) = 
+let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
       | None -> (CF.mkTrue (CF.mkTrueFlow()) no_pos)
       | Some s -> CF.formula_of_list_context s in
 		put_var lvar (Sleekcommons.MetaFormCF flist)
 		
+let process_capture_residue (lvar : ident) = 
+	let flist = match !residues with 
+      | None -> [(CF.mkTrue (CF.mkTrueFlow()) no_pos)]
+      | Some s -> CF.list_formula_of_list_context s in
+		put_var lvar (Sleekcommons.MetaFormLCF flist)
+
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in
-	cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
+  let l2r, r2l = AS.trans_one_coercion iprog ldef in  
+	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_coerc_decl_list l2r false ) ^"\n") else () in
+	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_coerc_decl_list r2l true ) ^"\n") else () in
+  cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
 	cprog.C.prog_right_coercions <- r2l @ cprog.C.prog_right_coercions
 
 let process_print_command pcmd0 = match pcmd0 with
@@ -233,7 +248,7 @@ let process_print_command pcmd0 = match pcmd0 with
 	  if pcmd = "residue" then
       match !residues with
         | None -> print_string ": no residue \n"
-        | Some s -> print_string ((Cprinter.string_of_formula 
-              (CF.formula_of_list_context s))^"\n")
+        | Some s -> print_string ((Cprinter.string_of_list_formula 
+              (CF.list_formula_of_list_context s))^"\n")
 		else
 			print_string ("unsupported print command: " ^ pcmd)

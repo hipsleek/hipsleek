@@ -23,6 +23,7 @@ type tp_type =
   | RM (* Redlog and Mona *)
 
 let tp = ref OmegaCalc
+let proof_no = ref 0
 
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
@@ -506,27 +507,27 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
             Redlog.is_sat f sat_no
 
 let simplify (f : CP.formula) : CP.formula =
-	if !external_prover then 
+  if !external_prover then 
     match Netprover.call_prover (Simplify f) with
       Some res -> res
       | None -> f
-	else
-	match !tp with
+  else
+  match !tp with
   | Isabelle -> Isabelle.simplify f
   | Coq -> Coq.simplify f
   | Mona -> Mona.simplify f
   | OM ->
-	  if (is_bag_constraint f) then
-		(Mona.simplify f)
-	  else (Omega.simplify f)
+    if (is_bag_constraint f) then
+      (Mona.simplify f)
+    else (Omega.simplify f)
   | OI ->
-	  if (is_bag_constraint f) then
-		(Isabelle.simplify f)
-	  else (Omega.simplify f)
+    if (is_bag_constraint f) then
+      (Isabelle.simplify f)
+    else (Omega.simplify f)
   | SetMONA -> Mona.simplify f
   | CM ->
-	  if is_bag_constraint f then Mona.simplify f
-	  else Omega.simplify f
+      if is_bag_constraint f then Mona.simplify f
+    else Omega.simplify f
   | Redlog -> Redlog.simplify f
   | RM -> 
       if is_bag_constraint f then
@@ -534,12 +535,12 @@ let simplify (f : CP.formula) : CP.formula =
       else
         Redlog.simplify f
   | _ ->
-(*
-	  if (is_bag_constraint f) then
-		failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-	  else
-*)
-	  (Omega.simplify f)
+    (*
+     if (is_bag_constraint f) then
+     failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
+     else
+     *)
+    (Omega.simplify f)
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -664,12 +665,13 @@ let tp_imply ante conseq imp_no timeout =
 		(Omega.imply ante conseq imp_no timeout)
   | SetMONA ->
 	  Setmona.imply ante conseq 
-  | Redlog -> Redlog.imply ante conseq imp_no
+  | Redlog -> 
+		 Redlog.imply ante conseq imp_no 
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         Mona.imply timeout ante conseq imp_no
       else
-        Redlog.imply ante conseq imp_no
+         Redlog.imply ante conseq imp_no
 ;;
 
 (* renames all quantified variables *)
@@ -780,6 +782,10 @@ let simpl_pair rid (ante, conseq) =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
+  proof_no := !proof_no+1 ;
+  let sat_no = (string_of_int !proof_no) in
+  Debug.devel_pprint ("SAT #" ^ sat_no) no_pos;
+
   let f = elim_exists f in
   let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
   tp_is_sat f sat_no
@@ -787,6 +793,9 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+  proof_no := !proof_no + 1 ; 
+  let imp_no = (string_of_int !proof_no) in
+  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -794,46 +803,53 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
 	let conseq =
-	if CP.should_simplify conseq0 then simplify conseq0
-	else conseq0
-  in
+		if CP.should_simplify conseq0 then simplify conseq0
+		else conseq0 
+	in
 	if CP.isConstTrue conseq0 then
-	  (true, [],None)
+		(true, [],None)
 	else
-	  let ante =
-		if CP.should_simplify ante0 then simplify ante0
-		else ante0
-	  in
-	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
-	  else
-		let ante = elim_exists ante in
-		let conseq = elim_exists conseq in
-        let split_conseq = split_conjunctions conseq in
-		let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
-        (*let pairs = [filter ante conseq] in*)
-        (*print_endline ("EEE: " ^ (string_of_int (List.length pairs)));*)
-        let fold_fun (res1,res2,res3) (ante, conseq) =
-          if res1 then 
-			let res1 =
-        if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-          let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout in
-          if res1 then res1
-            else tp_imply ante conseq imp_no timeout 
-        else       
-          tp_imply ante conseq imp_no timeout in
-			let l1 = CP.get_pure_label ante in
-			let l2 = CP.get_pure_label conseq in
-			if res1 then 
-			(res1,(l1,l2)::res2,None)
-			else (res1,res2,l2)
-		   else (res1,res2,res3)
-        in
-        List.fold_left fold_fun (true,[],None) pairs
+		let ante =
+			if CP.should_simplify ante0 then simplify ante0
+			else ante0
+		in
+		if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
+		else
+			let ante = elim_exists ante in
+			let conseq = elim_exists conseq in
+			let split_conseq = split_conjunctions conseq in
+			let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
+			(*let pairs = [filter ante conseq] in*)
+			let pairs_length = List.length pairs in
+			(*let _ = print_string ("\n!!!!! imp " ^ imp_no ^ " " ^ (string_of_int pairs_length)) in*)
+			(*Debug.devel_pprint (" - left folding " ^ (string_of_int pairs_length) ^ " times");*)
+			let imp_sub_no = ref 0 in
+			let fold_fun (res1,res2,res3) (ante, conseq) =
+				(incr imp_sub_no;
+				(*let _ = print_string ("\n!!!!! fold_fun " ^ imp_no ^ " " ^ (string_of_int !imp_sub_no)) in*)
+				if res1 then 
+					(*let _ = print_string ("\n!!!!! fold_fun if res1 " ^ imp_no ^ " " ^ (string_of_int !imp_sub_no)) in*)
+					let imp_no = 
+						if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
+						else imp_no in
+					let res1 =
+						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+							let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout  in
+							if res1 then res1
+							else tp_imply ante conseq imp_no timeout
+						else tp_imply ante conseq imp_no timeout
+					in
+					let l1 = CP.get_pure_label ante in
+					let l2 = CP.get_pure_label conseq in
+					if res1 then (res1,(l1,l2)::res2,None)
+					else (res1,res2,l2)
+				else (res1,res2,res3) )
+			in
+			List.fold_left fold_fun (true,[],None) pairs
   end
 ;;
 
-let imply_timeout ante0 conseq0 imp_no timeout =
-
+let imply_timeout2 ante0 conseq0 imp_no timeout =
   let _ = Util.push_time "imply" in
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout in
 
@@ -842,7 +858,8 @@ let imply_timeout ante0 conseq0 imp_no timeout =
   (res1,res2,res3)
 ;;
 
-let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.
+let imply ante0 conseq0 imp_no = 
+	imply_timeout2 ante0 conseq0 imp_no 0.
 ;;
 
 let is_sat f sat_no =
@@ -863,21 +880,15 @@ let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")
 
-let prepare () = match !tp with
-  | Redlog | RM -> Redlog.start_red ()
-  | _ -> ()
-
-let finalize () = match !tp with
-  | Redlog | RM -> Redlog.stop_red ()
-  | _ -> ()
-
 let start_prover () =
   match !tp with
   | Coq -> Coq.start_prover ()
+  | Redlog | RM -> Redlog.start_red ()
   | _ -> ()
   
 let stop_prover () =
   match !tp with
   | Coq -> Coq.stop_prover ()
+  | Redlog | RM -> Redlog.stop_red ()
   | _ -> ()
 

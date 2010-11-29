@@ -11,12 +11,17 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
+
+  type preprocessing_decl =
+  | Include of string
+  | Pragma of string
 		
   type decl = 
     | Type of type_decl
     | Global_var of exp_var_decl
     | Proc of proc_decl
-	| Coercion of coercion_decl
+  	| Coercion of coercion_decl
+    | Preprocessing of preprocessing_decl
 		
   type member = 
 	| Field of (typed_ident * loc)
@@ -139,12 +144,14 @@
 %token GTE
 %token HASH
 %token HEAD
+%token <string> HEADER_FILE
 %token <string> IDENTIFIER
 %token IF
 %token IMPLIES
 %token IMPLY
 %token IMPORT
 %token IN
+%token INCLUDE
 %token INLIST
 %token <string> JAVA
 %token LEFTARROW
@@ -188,6 +195,7 @@
 %token PERCENT
 %token PERM
 %token PLUS
+%token PRAGMA
 %token PRIME
 %token PRINT
 %token REF
@@ -246,29 +254,39 @@
 
 program
   : opt_decl_list {
-    let data_defs = ref ([] : data_decl list) in
-    let global_var_defs = ref ([] : exp_var_decl list) in
+  let data_defs = ref ([] : data_decl list) in
+  let global_var_defs = ref ([] : exp_var_decl list) in
 	let enum_defs = ref ([] : enum_decl list) in
 	let view_defs = ref ([] : view_decl list) in
-    let proc_defs = ref ([] : proc_decl list) in
+  let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
+  let include_defs = ref ([] : string list) in
+  let pragma_defs = ref ([] : string list) in
     let choose d = match d with
       | Type tdef -> begin
 		  match tdef with
-			| Data ddef -> data_defs := ddef :: !data_defs
-			| Enum edef -> enum_defs := edef :: !enum_defs
-			| View vdef -> view_defs := vdef :: !view_defs
-		end
+			  | Data ddef -> data_defs := ddef :: !data_defs
+			  | Enum edef -> enum_defs := edef :: !enum_defs
+			  | View vdef -> view_defs := vdef :: !view_defs
+		  end
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
-	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+	    | Coercion cdef -> coercion_defs := cdef :: !coercion_defs 
+      | Preprocessing prepdef  -> begin
+        match prepdef with
+        | Include idef -> include_defs := idef :: !include_defs
+        | Pragma pgdef -> pragma_defs := pgdef :: !pragma_defs
+        end
+    in
     let _ = List.map choose $1 in
-	let obj_def = { data_name = "Object";
+    header_file_list := !header_file_list @ !include_defs;
+    pragma_list := !pragma_list @ !pragma_defs;
+	  let obj_def = { data_name = "Object";
 					data_fields = [];
 					data_parent_name = "";
 					data_invs = []; (* F.mkTrue no_pos; *)
 					data_methods = [] } in
-	let string_def = { data_name = "String";
+	  let string_def = { data_name = "String";
 					   data_fields = [];
 					   data_parent_name = "";
 					   data_invs = []; (* F.mkTrue no_pos; *)
@@ -297,6 +315,12 @@ decl
   | global_var_decl { Global_var $1 }
   | proc_decl { Proc $1 }
   | coercion_decl { Coercion $1 }
+  | preprocessing_decl { Preprocessing $1 }
+;
+
+preprocessing_decl
+  : INCLUDE HEADER_FILE { Include $2 }
+  | PRAGMA IDENTIFIER { Pragma $2 }
 ;
 
 type_decl
@@ -1291,9 +1315,11 @@ block
 	match $2 with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
 						   exp_block_jump_label = NoJumpLabel;
+               exp_block_local_vars = [];
 						   exp_block_pos = get_pos 1 }
 	  | _ -> Block { exp_block_body = $2;
 					 exp_block_jump_label = NoJumpLabel;
+           exp_block_local_vars = [];
 					 exp_block_pos = get_pos 1 }
   }
 ;
@@ -1642,7 +1668,7 @@ opt_catch_list
 
 catch_clause
 	: CATCH OPAREN IDENTIFIER IDENTIFIER CPAREN valid_declaration_statement 
-		{ { exp_catch_var = Some $4;
+		{Catch { exp_catch_var = Some $4;
 			exp_catch_flow_type = $3 (*(Named $3) *);
 			exp_catch_flow_var = None;
 			exp_catch_body = $6;																					   
@@ -1651,7 +1677,7 @@ catch_clause
 
 opt_finally
 	: {[]}
-	| FINALLY valid_declaration_statement {let f = {exp_finally_body = $2;
+	| FINALLY valid_declaration_statement {let f = Finally {exp_finally_body = $2;
 												    exp_finally_pos = get_pos 1 } in f::[] }
 ;
 opt_expression

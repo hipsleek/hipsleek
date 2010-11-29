@@ -55,6 +55,7 @@
 	 ("implies", IMPLIES);
 	 ("import", IMPORT);
 	 ("in", IN);
+         ("include", INCLUDE);
 	 ("inlist", INLIST);
 	 ("int", INT);
 	 ("intersect", INTERSECT);
@@ -71,7 +72,8 @@
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
-   ("perm", PERM);
+         ("perm", PERM);
+         ("pragma", PRAGMA);
 	 ("dprint", PRINT);
 	 ("ref", REF);
 	 ("requires", REQUIRES);
@@ -110,6 +112,7 @@ let digit = ['0'-'9']
 let intnum = digit+
 let fnum = digit*('.')digit+
 let whitespace = [' ' '\t']
+let header_file = ('"')alpha(alpha|digit)*('.')alpha+('"') 
 
 rule tokenizer file_name = parse
   | "/*" { 
@@ -164,6 +167,7 @@ rule tokenizer file_name = parse
   | ';' { SEMICOLON }
   | '*' { STAR }
   | '/' { DIV }
+  | header_file as hfile { HEADER_FILE (hfile) }
   | intnum as numstr { LITERAL_INTEGER (int_of_string numstr) }
   | fnum as numstr { LITERAL_FLOAT (float_of_string numstr) }
   | alpha(alpha | digit)* as idstr 
