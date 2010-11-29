@@ -3209,7 +3209,7 @@ let norm_bform_option (bf:b_formula) =
   norm_bform_opt bf
 
 
-let norm_bform_debug (bf:b_formula) : b_formula option =
+let norm_bform_option_debug (bf:b_formula) : b_formula option =
   let r = norm_bform_aux bf in
   let _ = print_string ("norm_bform inp :"^(!print_b_formula bf)^"\n") in
   let _ = print_string ("norm_bform out :"^(!print_b_formula r)^"\n") in
@@ -3589,6 +3589,7 @@ let is_lt eq e1 e2 =
     | IConst (i1,_), IConst(i2,_) -> i1<i2
     | _,_ -> false
 
+(* lhs |- e1<=e2 *)
 let check_imply_leq eq lhs e1 e2 =
   let rec helper l = match l with
     | [] -> -1
@@ -3605,6 +3606,7 @@ let check_imply_leq eq lhs e1 e2 =
     | _ -> false
   in helper lhs
 
+(* lhs |- e1=e2 *)
 let check_imply_eq eq lhs e1 e2 = 
   let rec helper l = match l with
     | [] -> -1
@@ -3617,6 +3619,7 @@ let check_imply_eq eq lhs e1 e2 =
   in if ((eqExp_f eq) e1 e2) then 1
   else helper lhs 
 
+(* lhs |- e1!=e2 *)
 let check_imply_neq eq lhs e1 e2 = 
  let rec helper l = match l with
     | [] -> -1
@@ -3687,5 +3690,252 @@ let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
+
+
+(* added for better normalization *)
+
+type exp_form = 
+  | C of int 
+  | V of spec_var 
+  | E of exp
+
+type add_term = (int * exp_form)  
+(* e.g i*e; special case of constant i*1 *)
+
+type mult_term = (exp_form * int) 
+(* e^i; special case c^1 or c^-1*)
+
+type add_term_list = add_term list (* default [] means 0 *)
+type mult_term_list = mult_term list (* default [] means 1 *)
+
+let mk_err s = Error.report_error
+          { Error.error_loc = no_pos;
+            Error.error_text = s } 
+
+(* to be implemented : use GCD, then simplify fraction *)
+let simp_frac c1 c2 = (c1,c2)
+
+let gen_iconst (c1:int) (c2:int) : mult_term_list =
+  let (d1,d2) = simp_frac c1 c2 in
+  if (d1==1) then
+    if (d2==1) then [] else [(C d2,-1)]
+  else   
+    if (d2==1) then [(C d1,1)] else [(C d1,1);(C d2,-1)]
+
+let gen_var (v:spec_var) (c:int) : mult_term_list =
+  if c==0 then [] else [(V v,c)]
+
+let gen_exp (e:exp) (c:int) : mult_term_list =
+  if c==0 then [] else [(E e,c)]
+
+let mul_zero = [(C 0,1)]
+
+let gen_add_exp (e:exp) (c:int) : add_term_list =
+  if c==0 then [] else [(c,E e)]
+
+let gen_add_var (e:spec_var) (c:int) : add_term_list =
+  if c==0 then [] else [(c,V e)]
+
+let gen_add_iconst (c:int) : add_term_list =
+  if c==0 then [] else [(c,C 1)]
+
+(* to be implemented *)
+let eq_exp e1 e2 = false
+
+let sort_add_term (xs:add_term_list) : add_term_list =
+  let cmp (_,x) (_,y) = match x,y with
+    | C _, C _ -> 0
+    | C _, _ -> -1
+    | _ , C _ -> 1
+    | V v1 , V v2 -> String.compare (full_name_of_spec_var v1) (full_name_of_spec_var v2)
+    | V v , _ -> -1
+    | _ , V v -> 1
+    | E e1 , E e2 -> 0 (* to refine *)
+  in List.sort cmp xs
+
+(* pre : c1!=0 *)
+let rec norm_add_c (c1:int) (xs:add_term_list) : add_term_list =
+  match xs with
+    | [] -> gen_add_iconst c1
+    | (i,C _)::xs -> norm_add_c (c1+i) xs
+    | _ :: _ -> (gen_add_iconst c1)@norm_add xs
+
+and norm_add_v c v (xs:add_term_list)  : add_term_list= 
+  match xs with
+    | [] -> gen_add_var v c
+    | (i,V v1)::xs -> 
+          if eq_spec_var v v1 then norm_add_v (i+c) v xs
+          else (gen_add_var v c)@norm_add_v i v1 xs
+    | _::_ -> (gen_add_var v c)@norm_add xs
+
+and norm_add_e c e (xs:add_term_list) : add_term_list= 
+  match xs with
+    | [] -> gen_add_exp e c
+    | (i,E e1)::xs -> 
+          if eq_exp e e1 then norm_add_e (i+c) e xs
+          else (gen_add_exp e c)@norm_add_e i e1  xs
+    | _::_ -> (gen_add_exp e c)@norm_add xs
+
+(* add_term_list --> add_term_list 
+   2+3x+4x+4xy --> 2+7x+4xy
+*)
+
+and norm_add xs =
+  match xs with 
+    | [] -> []
+    | (i,C _)::xs -> norm_add_c i xs
+    | (i,V v)::xs -> norm_add_v i v xs
+    | (i,E e)::xs -> norm_add_e i e xs
+
+(* pre : c1!=0 *)
+let rec norm_mult_c (c1:int) (c2:int) (xs:mult_term_list) : mult_term_list =
+  match xs with
+    | [] -> gen_iconst c1 c2
+    | (C c,v)::xs -> 
+          if c==0 then mul_zero else
+            if v==1 then norm_mult_c (c*c1) c2 xs
+            else norm_mult_c c1 (c2*c) xs
+    | _ :: _ -> (gen_iconst c1 c2)@norm_mult xs
+          
+and norm_mult_v v c (xs:mult_term_list)  : mult_term_list= 
+  match xs with
+    | [] -> gen_var v c
+    | (V v1,c1)::xs -> 
+          if eq_spec_var v v1 then norm_mult_v v (c+c1) xs
+          else (gen_var v c)@norm_mult_v v1 c1 xs
+    | _::_ -> (gen_var v c)@norm_mult xs
+
+and norm_mult_e e c (xs:mult_term_list) : mult_term_list= 
+  match xs with
+    | [] -> gen_exp e c
+    | (E e1,c1)::xs -> 
+          if eq_exp e e1 then norm_mult_e e (c+c1) xs
+          else (gen_exp e c)@norm_mult_e e1 c1 xs
+    | _::_ -> (gen_exp e c)@norm_mult xs
+
+and norm_mult xs =
+  match xs with 
+    | [] -> []
+    | (C c,b)::xs -> 
+          if c==0 then mul_zero else
+	        if b==1 then norm_mult_c c 1 xs
+	        else norm_mult_c 1 c xs
+    | (V v,p)::xs -> norm_mult_v v p xs
+    | (E e,p)::xs -> norm_mult_e e p xs
+
+(* converts add_ter -> exp *)
+         
+(* pre : no negative signs
+   converts [add_term] -> exp *)
+let add_term_to_exp (xs:add_term_list) : exp =
+  let to_exp (i,e) =
+    if (i<0) then mk_err "add_term has -ve sign" else
+    match e with
+      | C _ -> IConst(i,no_pos)
+      | V v -> if (i==1) then Var(v,no_pos)
+        else Mult(IConst(i,no_pos),Var(v,no_pos),no_pos)
+      | E e -> if (i==1) then e
+        else Mult (IConst(i,no_pos),e,no_pos) in 
+  match xs with
+    | [] -> IConst (0,no_pos)
+    | x::xs -> List.fold_left (fun e r -> 
+          let e2=to_exp r in Add (e,e2,no_pos)) (to_exp x) xs
+
+(* pre : no negative powers
+   converts [mult_term] -> exp *)
+let mult_term_to_exp (xs:mult_term_list) : exp =
+  let rec power e i = if i==1 then e else Mult(e,power e (i-1), no_pos) in
+  let to_exp (e,i) =
+    if (i<0) then mk_err "mult_term has -ve power" else
+      match e with
+        | C c -> IConst(c,no_pos)
+        | V v -> power (Var(v,no_pos)) i
+        | E e -> power e i in
+  match xs with
+    | [] -> IConst (1,no_pos)
+    | x::xs -> List.fold_left (fun e r -> 
+          let e2=to_exp r in Mult(e,e2,no_pos)) (to_exp x) xs
+
+let split_add_term (xs:add_term_list) : (add_term_list * add_term_list) = List.partition (fun (i,_) -> i>0) xs
+
+let split_mult_term (xs:mult_term_list) : (mult_term_list * mult_term_list)  = List.partition (fun (_,i) -> i>0) xs
+
+let op_inv rs = List.map (fun (x,i) -> (x,-i)) rs
+let op_neg rs = List.map (fun (i,x) -> (-i,x)) rs
+let op_mult r1 r2 = r1@r2
+let op_div r1 r2 = r1@(op_inv r2)
+
+let op_add r1 r2 = r1@r2
+let op_sub r1 r2 = op_add r1 (op_neg r2)
+
+(* move to util.ml later *)
+let assoc_op_part (split:'a -> 'a list) (comb: 'a -> ('b list) list -> 'b list)
+      (base:'a->'b list) (e:'a) : 'b list =
+  let rec helper e =
+    match (split e) with
+      | [] -> base e
+      | xs -> let r = List.map (helper) xs in
+        comb e r
+  in helper e
+
+(* (e1+e2)-(e3+e4) ==> [e1,e2,-e3,-e4] *)
+
+let assoc_add (e:exp) : add_term_list =
+  let  split e = match e with
+    | Add (e1,e2,_) -> [e1;e2]
+    | Subtract (e1,e2,_) -> [e1;e2]
+    (* | Neg (e1,_) -> [e1] *)
+    | _ -> [] in
+  let comb e args = match e, args with
+    | Add _,[r1;r2] -> op_add r1 r2
+    | Subtract _,[r1;r2] -> op_sub r1 r2
+    (* | Neg _,[r] -> op_neg r *)
+    | _ -> mk_err "comb in assoc_add : mismatch number of arguments! " in
+  let base e = match e with
+    | IConst (i,_) -> [(i, C 1)]
+    | Var (v,_)  -> [(1, V v)]
+    | e      -> [(1, E e)]
+  in assoc_op_part split comb base  e
+
+let normalise_add e =
+  let al=assoc_add e
+  in norm_add (sort_add_term al)
+
+(* (e1*e2)/(e3*e4) ==> [e1^1,e2^1,e3^-1,e4^-1] *)
+
+let assoc_mult (e:exp) : mult_term_list =
+  let split e = match e with
+    | Mult (e1,e2,_) -> [e1;e2]
+    | Div (e1,e2,_) -> [e1;e2]
+    | _ -> [] in
+  let comb e args = match (e,args) with
+    | (Mult _,[r1;r2]) -> op_mult r1 r2
+    | (Div _,[r1;r2]) -> op_div r1 r2
+    | _,_ ->  mk_err "comb assoc_mult : mismatch number of arguments! " in
+  let base e = match e with
+    | IConst (i,_) -> [(C i,1)]
+    | Var (v,_)  -> [(V v, 1)]
+    | e      -> [(E e,1)]
+  in assoc_op_part split comb base  e
+
+let assoc_min (e:exp) : add_term_list list =
+  let  split e = match e with
+    | Min (e1,e2,_) -> [e1;e2]
+    | _ -> [] in
+  let comb e args = match e, args with
+    | Min _,[r1;r2] -> op_add r1 r2
+    | _ -> mk_err "comb in assoc_min : mismatch number of arguments! " in
+  let base e = [assoc_add e]
+  in assoc_op_part split comb base  e
+
+let assoc_max (e:exp) : add_term_list list =
+  let  split e = match e with
+    | Max (e1,e2,_) -> [e1;e2]
+    | _ -> [] in
+  let comb e args = match e, args with
+    | Max _,[r1;r2] -> op_add r1 r2
+    | _ -> mk_err "comb in assoc_max : mismatch number of arguments! " in
+  let base e = [assoc_add e]
+  in assoc_op_part split comb base  e
 
 
