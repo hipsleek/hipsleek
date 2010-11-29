@@ -3933,6 +3933,14 @@ let normalise_add (e:exp) : exp =
   let al=assoc_add e
   in add_term_to_exp(norm_add (sort_add_term al))
 
+let normalise_two_sides (e1:exp) (e2:exp) : (exp * exp) =
+  let a1=assoc_add e1 in
+  let a2=assoc_add e2 in
+  let al=op_sub a1 a2 in
+  let al=norm_add(sort_add_term al) in
+  let (r1,r2)=List.partition (fun (i,_) -> i>=0) al in
+   ((add_term_to_exp r1),(add_term_to_exp r2))
+
 let assoc_min (e:exp) : add_term_list list =
   let  split e = match e with
     | Min (e1,e2,_) -> [e1;e2]
@@ -3953,4 +3961,34 @@ let assoc_max (e:exp) : add_term_list list =
   let base e = [assoc_add e]
   in assoc_op_part split comb base  e
 
-
+(* normalise and simplify b_formula *)
+let norm_bform_b (bf:b_formula) : b_formula =
+  (*let bf = b_form_simplify bf in *)
+  match bf with 
+    | Lt  (e1,e2,l) -> 
+          let e1= (Add(e1,IConst(1,no_pos),l)) in 
+          let (e1,e2) = normalise_two_sides e1 e2 in
+          norm_bform_leq e1 e2 l 
+    | Lte (e1,e2,l) -> 
+          let (e1,e2) = normalise_two_sides e1 e2 in
+          norm_bform_leq e1 e2 l 
+    | Gt  (e1,e2,l) -> 
+          let e1,e2= (Add(e2,IConst(1,no_pos),l),e1) in 
+          let (e1,e2) = normalise_two_sides e1 e2 in
+          norm_bform_leq e1 e2 l 
+    | Gte (e1,e2,l) ->  
+          let (e1,e2) = normalise_two_sides e2 e1 in
+          norm_bform_leq e1 e2 l 
+    | Eq  (e1,e2,l) -> 
+          let (e1,e2) = normalise_two_sides e1 e2 in
+          norm_bform_eq e1 e2 l 
+    | Neq (e1,e2,l) -> 
+          let (e1,e2) = normalise_two_sides e1 e2 in
+          norm_bform_neq e1 e2 l  
+    | BagIn (v,e,l) -> BagIn (v, norm_exp e, l)
+    | BagNotIn (v,e,l) -> BagNotIn (v, norm_exp e, l)
+    | ListIn (e1,e2,l) -> ListIn (norm_exp e1,norm_exp e2,l)
+    | ListNotIn (e1,e2,l) -> ListNotIn (norm_exp e1,norm_exp e2,l)
+    | BConst _ | BVar _ | EqMax _ 
+    | EqMin _ |  BagSub _ | BagMin _ 
+    | BagMax _ | ListAllN _ | ListPerm _ -> bf 
