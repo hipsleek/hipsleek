@@ -3742,8 +3742,7 @@ let gen_add_iconst (c:int) : add_term_list =
 (* to be implemented *)
 let eq_exp e1 e2 = false
 
-let sort_add_term (xs:add_term_list) : add_term_list =
-  let cmp (_,x) (_,y) = match x,y with
+let cmp_term x y = match x,y with
     | C _, C _ -> 0
     | C _, _ -> -1
     | _ , C _ -> 1
@@ -3751,6 +3750,17 @@ let sort_add_term (xs:add_term_list) : add_term_list =
     | V v , _ -> -1
     | _ , V v -> 1
     | E e1 , E e2 -> 0 (* to refine *)
+
+let sort_add_term (xs:add_term_list) : add_term_list =
+  let cmp (_,x) (_,y) = cmp_term x y
+  in List.sort cmp xs
+
+let sort_mult_term (xs:mult_term_list) : mult_term_list =
+  let cmp (x,i1) (y,i2) = 
+    let r = cmp_term x y in 
+    if r==0 then if i1<0 then if i2<0 then 0 else 1
+    else if i2<0 then -1 else 0 
+    else r 
   in List.sort cmp xs
 
 (* pre : c1!=0 *)
@@ -3878,28 +3888,6 @@ let assoc_op_part (split:'a -> 'a list) (comb: 'a -> ('b list) list -> 'b list)
         comb e r
   in helper e
 
-(* (e1+e2)-(e3+e4) ==> [e1,e2,-e3,-e4] *)
-
-let assoc_add (e:exp) : add_term_list =
-  let  split e = match e with
-    | Add (e1,e2,_) -> [e1;e2]
-    | Subtract (e1,e2,_) -> [e1;e2]
-    (* | Neg (e1,_) -> [e1] *)
-    | _ -> [] in
-  let comb e args = match e, args with
-    | Add _,[r1;r2] -> op_add r1 r2
-    | Subtract _,[r1;r2] -> op_sub r1 r2
-    (* | Neg _,[r] -> op_neg r *)
-    | _ -> mk_err "comb in assoc_add : mismatch number of arguments! " in
-  let base e = match e with
-    | IConst (i,_) -> [(i, C 1)]
-    | Var (v,_)  -> [(1, V v)]
-    | e      -> [(1, E e)]
-  in assoc_op_part split comb base  e
-
-let normalise_add e =
-  let al=assoc_add e
-  in norm_add (sort_add_term al)
 
 (* (e1*e2)/(e3*e4) ==> [e1^1,e2^1,e3^-1,e4^-1] *)
 
@@ -3917,6 +3905,33 @@ let assoc_mult (e:exp) : mult_term_list =
     | Var (v,_)  -> [(V v, 1)]
     | e      -> [(E e,1)]
   in assoc_op_part split comb base  e
+
+let normalise_mult (e:exp) : exp =
+  let al=assoc_mult e
+  in mult_term_to_exp(norm_mult (sort_mult_term al))
+
+(* (e1+e2)-(e3+e4) ==> [e1,e2,-e3,-e4] *)
+
+let assoc_add (e:exp) : add_term_list =
+  let  split e = match e with
+    | Add (e1,e2,_) -> [e1;e2]
+    | Subtract (e1,e2,_) -> [e1;e2]
+    (* | Neg (e1,_) -> [e1] *)
+    | _ -> [] in
+  let comb e args = match e, args with
+    | Add _,[r1;r2] -> op_add r1 r2
+    | Subtract _,[r1;r2] -> op_sub r1 r2
+    (* | Neg _,[r] -> op_neg r *)
+    | _ -> mk_err "comb in assoc_add : mismatch number of arguments! " in
+  let base e = match e with
+    | IConst (i,_) -> [(i, C 1)]
+    | Var (v,_)  -> [(1, V v)]
+    | e      -> let e1=normalise_mult e in [(1, E e1)]
+  in assoc_op_part split comb base  e
+
+let normalise_add (e:exp) : exp =
+  let al=assoc_add e
+  in add_term_to_exp(norm_add (sort_add_term al))
 
 let assoc_min (e:exp) : add_term_list list =
   let  split e = match e with
