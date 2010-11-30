@@ -9,7 +9,7 @@ data node2 {
 
 /* view for a doubly linked list with bag of values */
 dll1<p,S> == self = null & S = {} 
-	or (exists q1: self::node2<v ,p , q> * q::dll1<q1, S> & S = union(S, {v}) & self = q1); 
+	or (exists q1: self::node2<v ,p , q> * q::dll1<q1, S1> & S = union(S1, {v}) & self = q1); 
 
 void insert(node2 x, int a)
 	requires x::dll1<p, S> & S != {} 
@@ -32,7 +32,8 @@ node2 append(node2 x, node2 y) // for this I got the Mona + Isabelle timings
 {
 	node2 tmp;
 
-	if (x == null)
+	if (x == nullls
+  )
 		return y;
 	else
 	{ 	
