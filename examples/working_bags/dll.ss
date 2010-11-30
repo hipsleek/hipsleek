@@ -9,7 +9,7 @@ data node2 {
 
 /* view for a doubly linked list with bag of values */
 dll1<p,S> == self = null & S = {} 
-	or self::node2<v ,p , q> * q::dll1<q1, S1> & S = union(S, {v}) & self = q1; 
+	or (exists q1: self::node2<v ,p , q> * q::dll1<q1, S> & S = union(S, {v}) & self = q1); 
 
 void insert(node2 x, int a)
 	requires x::dll1<p, S> & S != {} 
@@ -18,10 +18,14 @@ void insert(node2 x, int a)
 	node2 tmp_null = null;
 
 		if (x.next == null) {
-			x.next = new node2(a, x, tmp_null);
+			dprint;
+      x.next = new node2(a, x, tmp_null);
+      dprint;
+      assume false;
 		}
 		else {
 			insert(x.next, a);
+      assume false;
 		}
 }
 

@@ -2629,8 +2629,8 @@ let rename_labels_formula_ante  e=
 
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
   transform_list_context ((fun es -> Ctx{es with 
-				es_gen_expl_vars = Util.difference es.es_gen_expl_vars expvars; 
-				es_gen_impl_vars = Util.difference es.es_gen_impl_vars impvars;
+				es_gen_expl_vars = Util.difference_fct CP.eq_spec_var es.es_gen_expl_vars expvars; 
+				es_gen_impl_vars = Util.difference_fct CP.eq_spec_var es.es_gen_impl_vars impvars;
 				es_evars = Util.difference es.es_evars expvars;
 				}), fun c->c) ctx
 
@@ -2646,12 +2646,6 @@ and push_exists_list_failesc_context (qvars : CP.spec_var list) (ctx : list_fail
   
 and push_exists_context (qvars : CP.spec_var list) (ctx : context) : context = 
   transform_context (fun es -> Ctx{es with es_formula = push_exists qvars es.es_formula}) ctx
-
-and push_expl_impl_list_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
- transform_list_context ((fun es -> Ctx{es with 
-				es_gen_expl_vars = es.es_gen_expl_vars @ expvars; 
-				es_gen_impl_vars = es.es_gen_impl_vars @ impvars;
-				(*es_evars = es.es_evars@ expvars;*)}),(fun c->c)) ctx
         
 and push_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : context)  : context = 
  transform_context (fun es -> Ctx{es with 
