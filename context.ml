@@ -26,7 +26,7 @@ and match_type =
 	returns a list of contexts, where the first hole of each context corresponds to a node from the heap lhs_h that appears in the alias set aset. 
 	The flag associated with each node lets us know if the match is at the root pointer,  materialized arg, arg.
  *)  
-let rec context_old prog lhs_h (lhs_p:MCP.memo_pure) (p : CP.spec_var) pos : context list =
+let rec context_old prog lhs_h (lhs_p:MCP.mix_formula) (p : CP.spec_var) pos : context list =
 	let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
 	let eqns' = MCP.ptr_equations lhs_p in
 	let eqns = (p, p) :: eqns' in

@@ -23,10 +23,17 @@ void append(node x, node y)
 	ensures x::ll<S> & S = union(S1, S2);
 
 {
-	if (x.next == null)
-		x.next = y;
+	if (x.next==null)
+    {      
+      x.next = y;
+      //dprint;
+      //assume false;
+    }
 	else
+   {
+    //assume false;
 		append(x.next, y);
+    }
 }
 
 /* function to insert a node in a singly linked list */

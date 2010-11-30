@@ -62,7 +62,7 @@ and formula =
   | Exists of formula_exists
 
 and formula_base = {  formula_base_heap : h_formula;
-                      formula_base_pure : MCP.memo_pure;
+                      formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula;
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
@@ -75,7 +75,7 @@ and formula_or = {  formula_or_f1 : formula;
 
 and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_heap : h_formula;
-                        formula_exists_pure : MCP.memo_pure;
+                        formula_exists_pure : MCP.mix_formula;
                         formula_exists_type : t_formula;
                         formula_exists_flow : flow_formula;
                         formula_exists_branches : (branch_label * CP.formula) list;
@@ -189,7 +189,7 @@ and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = N
 
 and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link = None;}
 
-and formula_of_memo_pure (p:MCP.memo_pure) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
+and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
@@ -209,7 +209,7 @@ and formula_of_pure_with_branches_N p br pos = formula_of_pure_with_branches_aux
 
 and formula_of_pure_with_branches_P p br pos = formula_of_pure_with_branches_aux p br (-1) pos
 
-and formula_of_memo_pure_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos
+and formula_of_mix_formula_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos
 
 and formula_of_pure_with_branches_fl_aux p br fl status pos = 
   let mp = if status>0 then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
@@ -220,7 +220,7 @@ and formula_of_pure_with_branches_fl_N p br fl pos = formula_of_pure_with_branch
 
 and formula_of_pure_with_branches_fl_P p br fl pos = formula_of_pure_with_branches_fl_aux p br fl (-1) pos
   
-and formula_of_memo_pure_with_branches_fl p br fl pos = mkBase HTrue p TypeTrue fl br pos
+and formula_of_mix_formula_with_branches_fl (p:MCP.mix_formula) br fl pos = mkBase HTrue p TypeTrue fl br pos
 
 and formula_of_base base = Base(base)
 
@@ -512,7 +512,7 @@ and mkOr f1 f2 pos =
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
   
-and mkBase (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
+and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
 	mkFalse fl pos
   else 
@@ -544,7 +544,7 @@ let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let fl = mkAndFlow fl1 fl2 flow_tr in
   mkBase h p t fl b pos
    
-and combine_and_pure (f1:formula)(p:MCP.memo_pure)(f2:MCP.memo_pure):MCP.memo_pure*bool = 
+and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
 		else if (isAnyConstTrue f1) then (f2,true)
 			else 
@@ -553,7 +553,7 @@ and combine_and_pure (f1:formula)(p:MCP.memo_pure)(f2:MCP.memo_pure):MCP.memo_pu
         else if (MCP.isConstMTrue r) then (r,false)
         else (r,true)      
       (*(sem_and p f2)
-and sem_and (p:memo_pure)(f2:memo_pure):(memo_pure*bool) = 
+and sem_and (p:mix_formula)(f2:mix_formula):(mix_formula*bool) = 
 	let ys  = Cpure.split_conjunctions f2 in
 	let ys' = List.filter (fun c-> not (Cpure.is_member_pure c p)) ys in
 	let y   = Cpure.join_conjunctions ys' in
@@ -579,7 +579,7 @@ and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   mkBase h p t fl b pos
 
 
-and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.memo_pure) b2 (pos : loc):formula = 
+and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.mix_formula) b2 (pos : loc):formula = 
   if (isAnyConstFalse f1) then f1
    else 
 		let h1, p1, fl1, b1, t1 = split_components f1 in		
@@ -588,7 +588,7 @@ and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.memo_pure) b2 (pos : loc):for
       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 (CP.merge_branches b1 b2) pos
 
    
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.memo_pure) (t : t_formula) (fl:flow_formula) b (pos : loc) =
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) b (pos : loc) =
   let tmp_b = {formula_base_heap = h;
 				   formula_base_pure = p;
 				   formula_base_type = t;
@@ -1266,7 +1266,7 @@ type entail_state = {
   es_formula : formula; (* can be any formula ; 
     !!!!!  make sure that for each change to this formula the es_cache_no_list is update apropriatedly*)
   es_heap : h_formula; (* consumed nodes *)
-  es_pure : (MCP.memo_pure * (branch_label * CP.formula) list);
+  es_pure : (MCP.mix_formula * (branch_label * CP.formula) list);
   es_evars : CP.spec_var list;
   (*used by lemmas*)
   es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
@@ -1705,7 +1705,7 @@ and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_sta
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
 	Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 		
-and combine_and (f1:formula) (f2:MCP.memo_pure) :formula*bool = match f1 with
+and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
 	| Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
 	 print_string ("malfunction: inner or has not been converted to a CtxOr!");
       Error.report_error {
@@ -1723,7 +1723,7 @@ and combine_and (f1:formula) (f2:MCP.memo_pure) :formula*bool = match f1 with
 					let rf1 = rename_bound_vars f1 in
 					(combine_and rf1 f2)
 		
-and normalize_no_rename_context_formula (ctx : context) (p : MCP.memo_pure) : context = 
+and normalize_no_rename_context_formula (ctx : context) (p : MCP.mix_formula) : context = 
 	let rec push_pure (f:formula):formula = match f with
 		| Base b-> Base {b with formula_base_pure = MCP.merge_mems p b.formula_base_pure true;}
 		| Exists b -> Exists {b with formula_exists_pure = MCP.merge_mems p b.formula_exists_pure true;}
@@ -2104,27 +2104,17 @@ let rec replace_heap_formula_label nl f = match f with
 	| ViewNode b -> ViewNode {b with h_formula_view_label = (nl ())}
 	| HTrue 
 	| HFalse -> f
-	
-let rec replace_pure_formula_label nl f = match f with
-  | CP.BForm (bf,_) -> CP.BForm (bf,(nl()))
-  | CP.And (b1,b2,b3) -> CP.And ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),b3)
-  | CP.Or (b1,b2,b3,b4) -> CP.Or ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),(nl()),b4)
-  | CP.Not (b1,b2,b3) -> CP.Not ((replace_pure_formula_label nl b1),(nl()),b3)
-  | CP.Forall (b1,b2,b3,b4) -> CP.Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
-  | CP.Exists (b1,b2,b3,b4) -> CP.Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
-    	
-let replace_memo_pure_label nl f = 
-  List.map (fun c-> {c with MCP.memo_group_slice = List.map (replace_pure_formula_label nl) c.MCP.memo_group_slice;}) f
-      
+	    	
+     
 let rec replace_formula_label1 nl f = match f with
 	| Base b->Base {b with 
 			formula_base_heap = replace_heap_formula_label nl b.formula_base_heap ;
-			formula_base_pure = replace_memo_pure_label nl b.formula_base_pure ;
-			formula_base_branches = List.map (fun (c1,c2)-> (c1,( replace_pure_formula_label nl c2))) b.formula_base_branches; }
+			formula_base_pure = MCP.replace_mix_formula_label nl b.formula_base_pure ;
+			formula_base_branches = List.map (fun (c1,c2)-> (c1,( CP.replace_pure_formula_label nl c2))) b.formula_base_branches; }
 	| Exists b->Exists {b with 
 			formula_exists_heap = replace_heap_formula_label nl b.formula_exists_heap ;
-			formula_exists_pure = replace_memo_pure_label nl b.formula_exists_pure ;
-            formula_exists_branches = List.map (fun (c1,c2)-> (c1,( replace_pure_formula_label nl c2))) b.formula_exists_branches; }
+			formula_exists_pure = MCP.replace_mix_formula_label nl b.formula_exists_pure ;
+            formula_exists_branches = List.map (fun (c1,c2)-> (c1,( CP.replace_pure_formula_label nl c2))) b.formula_exists_branches; }
 	| Or b -> Or {b with 
 			formula_or_f1 = replace_formula_label1 nl b.formula_or_f1;
 			formula_or_f2 = replace_formula_label1 nl b.formula_or_f2;	}
@@ -2136,7 +2126,7 @@ let rec replace_struc_formula_label1 nl f = List.map (fun f-> match f with
 	| ECase b -> 
       let new_br = List.map 
         (fun (c1,c2)-> 
-          ((replace_pure_formula_label nl c1), (replace_struc_formula_label1 nl c2))
+          ((CP.replace_pure_formula_label nl c1), (replace_struc_formula_label1 nl c2))
         ) b.formula_case_branches in
       ECase { b with formula_case_branches = new_br;}
 	| EAssume (b1,b2,b3)-> EAssume (b1,(replace_formula_label1 nl b2),b3) ) f
@@ -2186,7 +2176,7 @@ let rec transform_formula f (e:formula):formula =
 		| Base b -> 
       Base{b with 
               formula_base_heap = transform_h_formula f_h_f b.formula_base_heap;
-              formula_base_pure =  MCP.transform_memo_formula f_p_t b.formula_base_pure;
+              formula_base_pure =  MCP.transform_mix_formula f_p_t b.formula_base_pure;
               formula_base_branches =  List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) b.formula_base_branches;}
 		| Or o -> Or {o with 
                     formula_or_f1 = transform_formula f o.formula_or_f1;
@@ -2194,7 +2184,7 @@ let rec transform_formula f (e:formula):formula =
 		| Exists e -> 
       Exists {e with
                 formula_exists_heap = transform_h_formula f_h_f e.formula_exists_heap;
-                formula_exists_pure = MCP.transform_memo_formula f_p_t e.formula_exists_pure;
+                formula_exists_pure = MCP.transform_mix_formula f_p_t e.formula_exists_pure;
                 formula_exists_branches = 
                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
 		

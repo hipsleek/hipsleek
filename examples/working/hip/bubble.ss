@@ -35,12 +35,17 @@ node id2(node xs)
 }
 
 void id3(node x)
-	requires x::sll<n, sm, lg>
+	requires x::sll<n, sm, lg> //& n=1
 	ensures x::ll<n>;
 {
-	if (x.next != null) {
-		id3(x.next);
-	}
+  node y = x.next;  
+	if (y != null) {    
+   // dprint;
+   // assert y'::sll<_,_,_>; 
+	//	assume false;
+    id3(y);
+	}  
+  //assume false;  
 }
 
 

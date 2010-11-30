@@ -504,34 +504,19 @@ and mona_of_b_formula b f vs =
   match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
   | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ " = pconst(0))"
-  (* CP.Lt *)   
-  (*| CP.Lt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
-  | CP.Lt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lt (a1, a2, _) -> (equation a1 a2 f "less" "<" vs)
-  (* CP.Lte *)   
-  (*| CP.Lte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
-  | CP.Lte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lte (a1, a2, _) -> (equation a1 a2 f "lessEq" "<=" vs)
-  (* CP.Gt *)   
-  (*| CP.Gt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
-  | CP.Gt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Gt (a1, a2, _) -> (equation a1 a2 f "greater" ">" vs)
-  (* CP.Gte *)   
-  (*| CP.Gte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
-  | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
   (* CP.Neq *)   
   | CP.Neq((CP.Add(a1, a2, l1)), a3, l2)
   | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2)
-  (*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
-  | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*)
     -> "(~" ^ (mona_of_b_formula (CP.Eq((CP.Subtract(a3, a1, l1)), a2, l2)) f vs) ^ ")"
   | CP.Neq (CP.IConst(i, _), a1, _)
   | CP.Neq (a1, CP.IConst(i, _), _) ->
-      if (is_firstorder_mem f a1 vs) then
-	"(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
-      else
-	"(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
+      if (is_firstorder_mem f a1 vs) then "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
+      else if CP.is_null a1 then "(" ^ (string_of_int i) ^ " > 0)"
+      else "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
   | CP.Neq (a1, a2, _) ->
 	if (is_firstorder_mem f a1 vs) then
 	  begin
@@ -553,21 +538,6 @@ and mona_of_b_formula b f vs =
 	    else
 	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
 	  end
-  (* CP.Eq *)
-  (*| CP.Eq((CP.Subtract(a1, a2, pos1)), (CP.Subtract(a3, a4, pos2)), pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a4, pos1), CP.Add(a2, a3, pos2), pos3)) f vs)	 
-  | CP.Eq(a1,CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), pos3)  
-  | CP.Eq(CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), a1, pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a3, pos1), CP.Add(a2, a4, pos2), pos3)) f vs)
-  | CP.Eq((CP.Subtract(a3, a1, pos1)), a2, pos2)
-  | CP.Eq(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Eq(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 
-  *)
-  (* try: todo: I think it's not the best place cause the existentials are already introduced *)
-  (*| CP.Eq(CP.Add(CP.Mult _, _, _), _, _) 
-  | CP.Eq(CP.Add(_, CP.Mult _, _), _, _) 
-  | CP.Eq(CP.Add(_, _, _), CP.Mult _, _)
-  | CP.Eq(CP.Add(CP.Add _, _, _), _, _) 
-  | CP.Eq(CP.Add(_, CP.Add _, _), _, _) 
-  | CP.Eq(_, CP.Add(_, CP.Add _ , _), _)
-  | CP.Eq(_, CP.Add(CP.Add _ , _, _), _)  -> ((*print_string("[mona]: weakening to true\n");*) "true")*)
   | CP.Eq((CP.Add(a1, a2, _)), a3, _)
   | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
       if (is_firstorder_mem f a1 vs) || (is_firstorder_mem f a2 vs) || (is_firstorder_mem f a3 vs) then
@@ -586,12 +556,13 @@ and mona_of_b_formula b f vs =
         let end_str = String.concat "" (List.map (fun name -> ")") all_existentials) in
         str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "
         ^ (if a1str <> "" then " & " ^ a1str else "") ^ (if a2str <> "" then " & " ^ a2str else "") ^ (if a3str <> "" then " & " ^ a3str else "") ^ end_str
+  (*| CP.Neq (CP.IConst (i1,_),CP.IConst (i2,_),_) -> "(" ^ (string_of_int i1) ^ " ~= " ^ (string_of_int i2) ^ ")"
+  | CP.Eq (CP.IConst (i1,_),CP.IConst (i2,_),_) -> "(" ^ (string_of_int i1) ^ " = " ^ (string_of_int i2) ^ ")"*)
   | CP.Eq (CP.IConst(i, _), a1, _)
   | CP.Eq (a1, CP.IConst(i, _), _) ->
-      if (is_firstorder_mem f a1 vs) then
-	"(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
-      else
-	"(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
+      if (is_firstorder_mem f a1 vs) then "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
+      else if CP.is_null a1 then "(" ^ (string_of_int i) ^ " = 0)"
+      else "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
   (***********************)
   | CP.Eq (a1, CP.Null _, _) ->
       if (is_firstorder_mem f a1 vs) then
@@ -810,7 +781,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   | _ -> ()
   end;
 (*  print_endline "Mona died."; flush stdout;*)
-  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
+  (*Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");*)
   begin match res with
   | true ->
 	  begin

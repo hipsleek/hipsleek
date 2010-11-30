@@ -1531,6 +1531,14 @@ and split_ex_quantifiers (f0 : formula) : (spec_var list * formula) = match f0 w
 
 *)
 
+and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * spec_var) list * formula) = 
+  let r1,r2 = get_subst_equation_formula f0 v true in
+  let r =List.fold_left (fun a (c1,c2)->match c2 with
+    | Var (v,_)-> (c1,v)::a
+    | _ -> a ) [] r1 in
+  (r,r2)
+
+
 and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) = match f0 with
   | And (f1, f2, pos) ->
 	    let st1, rf1 = get_subst_equation_formula f1 v only_vars in
@@ -3692,6 +3700,47 @@ let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
     r
 
 
+let rec replace_pure_formula_label nl f = match f with
+  | BForm (bf,_) -> BForm (bf,(nl()))
+  | And (b1,b2,b3) -> And ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),b3)
+  | Or (b1,b2,b3,b4) -> Or ((replace_pure_formula_label nl b1),(replace_pure_formula_label nl b2),(nl()),b4)
+  | Not (b1,b2,b3) -> Not ((replace_pure_formula_label nl b1),(nl()),b3)
+  | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
+  | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
+
+  
+let rec imply_disj ante_disj conseq t_imply imp_no =
+  match ante_disj with
+    | h :: rest -> 
+	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true) in
+	    if r1 then 
+	      let r1,r22,r23 = (imply_disj rest conseq t_imply imp_no) in
+	      (r1,r2@r22,r23)
+	    else (r1,r2,r3)
+    | [] -> (true,[],None)
+  
+let rec imply_one_conj ante_disj0 ante_disj1 conseq t_imply imp_no = 
+  (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
+  let xp01,xp02,xp03 = imply_disj ante_disj0 conseq t_imply imp_no in  
+  (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
+  if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
+    let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let xp1 = imply_disj ante_disj1 conseq t_imply imp_no in
+    let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+	xp1
+  else (xp01,xp02,xp03)	
+  
+let rec imply_conj ante_disj0 ante_disj1 conseq_conj t_imply imp_no 
+   : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+  match conseq_conj with
+    | h :: rest -> 
+	    let (r1,r2,r3)=(imply_one_conj ante_disj0 ante_disj1 h t_imply imp_no) in
+	    if r1 then 
+	      let r1,r22,r23 = (imply_conj ante_disj0 ante_disj1 rest t_imply imp_no) in
+	      (r1,r2@r22,r23)
+	    else (r1,r2,r3)
+    | [] -> (true,[],None)
+    
 (* added for better normalization *)
 
 type exp_form = 
@@ -3992,3 +4041,4 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | BConst _ | BVar _ | EqMax _ 
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> bf 
+

@@ -95,7 +95,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	(* 	    (check_exp prog proc ctx e.exp_label_exp post_start_label) *)
     | Unfold ({exp_unfold_var = sv;
            exp_unfold_pos = pos}) -> begin
-          let res = unfold_partial_context (Prog prog) ctx sv true pos in
+          let res = unfold_partial_context (prog,None) ctx sv true pos in
             res
         end
 	  (* for code *)
@@ -206,7 +206,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
           let tmp_ctx =
             if !Globals.large_bind then CF.normalize_max_renaming_list_partial_context link_pv pos false ctx else ctx in
           
-          let unfolded = unfold_partial_context (Prog prog) tmp_ctx v_prim true pos in
+          let unfolded = unfold_partial_context (prog, None) tmp_ctx v_prim true pos in
           let _ = Debug.devel_pprint ("bind: unfolded context:\n"
                     ^ (Cprinter.string_of_list_partial_context unfolded)
                     ^ "\n") pos in
@@ -784,14 +784,14 @@ let check_coercion (prog : prog_decl) =
     (*let unfold_head_pred hname f0 : int = *)
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
-    let lhs = unfold (Prog prog) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
-    let rhs = unfold (Prog prog) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let lhs = unfold (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let rhs = unfold (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
       check_entailment lhs rhs in
     (* check_entailment lhs coer.coercion_body in *)
   let check_right_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
-    let rhs = unfold (Prog prog) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
-    let lhs = unfold (Prog prog) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let rhs = unfold (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let lhs = unfold (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
       check_entailment lhs rhs
 	(* check_entailment coer.coercion_body rhs *)
   in

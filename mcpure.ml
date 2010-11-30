@@ -17,8 +17,7 @@ let empty_var_aset = Util.empty_a_set_eq eq_spec_var
 let fold_aset (f:var_aset):formula = 
   List.fold_left (fun a (c1,c2)->  mkAnd (form_formula_eq_with_const c1 c2) a no_pos) 
                  (mkTrue no_pos) (get_equiv_eq_with_const f)
-
-
+                 
 type memo_pure = memoised_group list
  
 and memoised_group = {
@@ -898,7 +897,8 @@ let isImpl_dupl c = match c.memo_status with | Implied_R -> true | _ -> false
 let isImplT c = match c.memo_status with | Implied_N -> true | _ -> false 
 let isCtrInSet aset s c =  List.exists (fun d-> eq_b_formula aset c.memo_formula d.memo_formula) s  
 
-let cons_filter g f = List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
+let cons_filter (g:memo_pure) (f:memoised_constraint->bool) : memo_pure = 
+    List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
 let slow_imply impl nf rhs =
   let x = Util.gen_time_msg () in
@@ -1003,3 +1003,230 @@ let memo_check_syn_fast (p,pn,pr_branches) crt_br corr  =
         | 1 -> Some []
         | _ -> None
  
+let replace_memo_pure_label nl f = 
+  List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
+ 
+ (* imply functions *)
+ 
+    
+let mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
+  let fv = fv conseq in
+  let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
+  let r = match with_disj with  
+    | 0 -> fold_mem_lst_gen (mkTrue no_pos) false true false true n_ante
+    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) false true n_ante
+    | _ -> fold_mem_lst (mkTrue no_pos) false true n_ante in
+  let _ = Debug.devel_pprint str no_pos in
+  (Util.push_time str_time; 
+  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false in
+  Util.pop_time str_time;
+  r)
+ 
+let mimply_one_conj ante_memo0 conseq  t_imply imp_no = 
+  let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
+    ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no complex") 
+    "imply_proc_one_ncplx" t_imply imp_no in  
+  if not xp01  then  
+    let xp01,xp02,xp03 = mimply_process_ante 2 ante_memo0 conseq 
+      ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") 
+      "imply_proc_one_full" t_imply imp_no in  
+    if not xp01 then (Util.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
+    else (Util.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
+  else (Util.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
+
+ 
+let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
+  match conseq_conj with
+    | h :: rest -> 
+	      let (r1,r2,r3)=(mimply_one_conj ante_memo0 h t_imply imp_no) in
+	      if r1 then 
+	        let r1,r22,r23 = (mimply_conj ante_memo0 rest t_imply imp_no) in
+	        (r1,r2@r22,r23)
+	      else 
+            (*let _ = print_string ("\n failed ante: "^(Cprinter.string_of_pure_formula  
+              (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
+            (r1,r2,r3)
+    | [] -> (true,[],None)
+
+    
+let rec imply_memo ante_memo0 conseq_memo t_imply imp_no 
+    :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+  match conseq_memo with
+    | h :: rest -> 
+          let r = fold_mem_lst_to_lst(*_debug*) [h] false false true in
+	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in
+	      if r1 then 
+	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in
+	        (r1,r2@r22,r23)
+	      else (r1,r2,r3)
+    | [] -> (true,[],None)
+          
+(*let imply_memo_debug ante_memo conseq_memo t_imply =
+  let (r1,r2,r3)= imply_memo ante_memo conseq_memo in  
+  print_string ("imply_memo input1: "^(!print_mp_f ante_memo)^"\n");
+  print_string ("imply_memo input1: "^(!print_mp_f conseq_memo)^"\n");    
+  print_string ("imply_memo output: "^(string_of_bool r1)^"\n");
+  (r1,r2,r3)*)
+
+let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
+  
+ 
+ 
+ 
+ 
+ 
+type mix_formula = 
+  | MemoF of memo_pure
+  | OnePF of formula
+  
+  
+let mkMTrue pos = 
+    if (!Globals.allow_pred_spec) then  MemoF (mkMTrue pos)
+    else OnePF (mkTrue pos)
+let mkMFalse pos = 
+    if (!Globals.allow_pred_spec) then MemoF (mkMFalse pos)
+    else OnePF (mkFalse pos)  
+  
+let isConstMFalse mx = match mx with
+  | MemoF mf -> isConstMFalse mf
+  | OnePF f -> isConstFalse f
+  
+let isConstMTrue mx = match mx with
+  | MemoF mf -> isConstMTrue mf
+  | OnePF f -> isConstTrue f
+  
+let m_apply_one s qp = match qp with
+  | MemoF f -> MemoF (m_apply_one s f)
+  | OnePF f -> OnePF (apply_one s f)
+  
+let memo_apply_one_exp s qp = match qp with
+  | MemoF mf -> MemoF (memo_apply_one_exp s mf)
+  | OnePF f -> OnePF (apply_one_exp s f)
+ 
+let regroup_memo_group s =  match s with
+  | MemoF mf -> MemoF (regroup_memo_group mf)
+  | OnePF f -> s
+ 
+let mfv f = match f with
+  | MemoF mf -> mfv mf
+  | OnePF f -> fv f
+ 
+let merge_mems_m = merge_mems
+ 
+let merge_mems f1 f2 slice_dup = match (f1,f2) with
+  | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
+  | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
+  | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"}
+  
+ let replace_mix_formula_label lb s = match s with
+  | MemoF f -> MemoF (replace_memo_pure_label lb f)
+  | OnePF f -> OnePF (replace_pure_formula_label lb f)
+ 
+ let transform_mix_formula f_p_t f = match f with
+  | MemoF f -> MemoF (transform_memo_formula f_p_t f)
+  | OnePF f -> OnePF (transform_formula f_p_t f)
+  
+ let memo_pure_push_exists qv f = match f with
+  | MemoF f -> MemoF (memo_pure_push_exists qv f)
+  | OnePF f -> OnePF (mkExists qv f None no_pos)
+ 
+ let ptr_equations f = match f with
+  | MemoF f -> ptr_equations f
+  | OnePF f -> pure_ptr_equations f
+ 
+ 
+ let filter_useless_memo_pure sim_f b fv f = match f with
+  | MemoF f -> MemoF (filter_useless_memo_pure sim_f b fv f)
+  | OnePF _ -> f
+ 
+let fold_mem_lst_m = fold_mem_lst
+ 
+let fold_mem_lst init_f with_dupl with_inv f :formula= match f with
+  | MemoF f -> fold_mem_lst init_f with_dupl with_inv f 
+  | OnePF f -> (mkAnd init_f f no_pos)
+ 
+ let memoise_add_pure_N (f:mix_formula) (pf:formula) = match f with
+  | MemoF f -> MemoF (memoise_add_pure_N f pf)
+  | OnePF f -> OnePF (mkAnd f pf no_pos)
+ 
+let memoise_add_pure_P_m = memoise_add_pure_P
+let memoise_add_pure_P (f:mix_formula) (pf:formula) = match f with
+  | MemoF f -> MemoF (memoise_add_pure_P f pf)
+  | OnePF f -> OnePF (mkAnd f pf no_pos)
+  
+  
+let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
+  | MemoF f -> MemoF (simpl_memo_pure_formula b_f_f p_f_f f tp_simp)
+  | OnePF f -> OnePF (p_f_f f)
+ 
+let memo_arith_simplify f = match f with
+  | MemoF f -> MemoF (memo_arith_simplify f)
+  | OnePF f -> OnePF (arith_simplify f)
+ 
+let memo_is_member_pure sp f = match f with
+  | MemoF f -> memo_is_member_pure sp f
+  | OnePF f -> is_member_pure sp f
+ 
+let mkOr_mems (f1: mix_formula) (f2: mix_formula) : mix_formula = match f1,f2 with
+  | MemoF f1, MemoF f2 -> MemoF (mkOr_mems f1 f2)
+  | OnePF f1, OnePF f2 -> OnePF (mkOr f1 f2 None no_pos)
+  | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "mkOr_mems: wrong mix of memo and pure formulas"}
+  
+let subst_avoid_capture_memo from t f = match f with
+  | MemoF f -> MemoF (subst_avoid_capture_memo from t f)
+  | OnePF f -> OnePF (subst_avoid_capture from t f)
+  
+let memo_subst s f = match f with
+  | MemoF f -> MemoF (memo_subst s f)
+  | OnePF f -> OnePF (subst s f)  
+ 
+let elim_redundant sf f = match f with
+  | MemoF f -> MemoF (elim_redundant sf f)
+  | OnePF _ -> f
+ 
+let fold_mix_lst_to_lst npf with_dupl with_inv with_slice  = match npf with
+  | MemoF f -> fold_mem_lst_to_lst f with_dupl with_inv with_slice 
+  | OnePF f -> [f]
+  
+let get_subst_equation_memo_formula_vv p qvar = match p with
+  | MemoF f -> 
+    let l,f = get_subst_equation_memo_formula_vv f qvar in
+     (l,MemoF f)
+  | OnePF f -> 
+    let l,f = get_subst_equation_formula_vv f qvar in
+    (l,OnePF f)
+
+let get_subst_equation_mix_formula p qvar only_vars = match p with
+  | MemoF f -> 
+    let l,f = get_subst_equation_memo_formula f qvar only_vars in
+     (l,MemoF f)
+  | OnePF f -> 
+    let l,f = get_subst_equation_formula f qvar only_vars in
+    (l,OnePF f)
+    
+let mix_cons_filter f fct = match f with
+  | MemoF f -> MemoF (cons_filter f fct)
+  | OnePF _ -> f
+
+let combine_mix_branch (s:string) (f:mix_formula * 'a) = match (fst f) with
+  | MemoF mf -> MemoF (combine_memo_branch s (mf,snd f))
+  | OnePF pf -> OnePF (combine_branch s (pf,snd f))
+ (*
+ match f with
+  | MemoF f -> 
+  | OnePF f -> 
+ *)
+let mix_drop_null self l neg = match l with
+  | MemoF l -> 
+    let r = List.map (fun c -> {c with memo_group_slice = List.map (fun c-> drop_null c self neg ) c.memo_group_slice}) l in
+    MemoF r
+  | OnePF  pf -> 
+    OnePF (drop_null pf self neg)
+    
+let drop_triv_grps f = match f with
+  | MemoF f -> MemoF (fst (List.partition (fun c-> not (isConstGroupTrue c)) f))
+  | OnePF _ -> f
+  
+let drop_pf f = match f with
+  | MemoF f -> f
+  | OnePF _ -> []

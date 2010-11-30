@@ -134,7 +134,7 @@ let process_cmd_line () = Arg.parse [
   ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
   ("--sbc", Arg.Set Globals.enable_syn_base_case, "use only syntactic base case detection");
   ("--eci", Arg.Set Globals.enable_case_inference,"enable struct formula inference");
-  ("--dprun", Arg.Clear Globals.allow_pruning,"disable predicate pruning");
+  ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
   ("--duslice", Arg.Clear Globals.allow_umemo_slicing,"disable unsat slicing based on relevand memoized constraints");
   (*("--dislice", Arg.Clear Globals.allow_imemo_slicing,"disable imply slicing based on relevand memoized constraints");
   ("--eagressu", Arg.Set Globals.agressive_unsat,"enable agressive unsat slicing");

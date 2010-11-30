@@ -23,9 +23,7 @@ and prog_decl = { mutable prog_data_decls : data_decl list;
 				  mutable prog_left_coercions : coercion_decl list;
 				  mutable prog_right_coercions : coercion_decl list }
 	
-and prog_or_branches = 
-		| Prog of prog_decl
-		| Branches of (MP.memo_pure * ((string*P.formula)list)*(P.spec_var list))
+and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
 	
 and data_decl = { data_name : ident;
 				  data_fields : typed_ident list;
@@ -42,11 +40,11 @@ and view_decl = { view_name : ident;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
 				  view_formula : F.struc_formula;
-				  view_user_inv : (MP.memo_pure * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-				  mutable view_x_formula : (MP.memo_pure * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (P.formula *(MP.memo_pure*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
 				  view_prune_invariants : (formula_label list * P.b_formula list) list ;}

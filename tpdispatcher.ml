@@ -381,6 +381,14 @@ and is_list_constraint_exp (e :CP.exp) : bool = match e with
   | CP.ListAppend _
   | CP.ListReverse _ -> true
 
+and is_mix_bag_constraint f = match f with
+  | MCP.MemoF f -> is_memo_bag_constraint f
+  | MCP.OnePF f -> is_bag_constraint f
+
+and is_mix_list_constraint f = match f with
+  | MCP.MemoF f -> is_memo_list_constraint f
+  | MCP.OnePF f -> is_list_constraint f  
+  
 (*
 let rec is_bag_constraint(f : CP.formula) : bool =
   match f with
@@ -888,6 +896,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   else  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
     (*let f_l = CP.split_disjuncts f in
     let any_sat = List.fold_left (fun a c-> if a then a else (tp_is_sat c sat_no) ) false f_l in any_sat*)
+  (*let _ = print_string ("ss: "^(Cprinter.string_of_pure_formula f)^"\n") in*)
     tp_is_sat f sat_no do_cache
 ;;
 
@@ -977,19 +986,28 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
     if not r1 then (r1,r2,r3)
     else 
       let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
-      let ant = MCP.fold_mem_lst (CP.mkTrue no_pos) true true l in
-      let con = MCP.fold_mem_lst (CP.mkTrue no_pos) true false [c] in
+      let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true true l in
+      let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true false [c] in
       let r1',r2',r3' = imply_timeout ant con imp_no timeout false in 
       (r1',r2@r2',r3')) (true, [], None) conseq0 in
   let _ = Util.pop_time "memo_imply" in
   r
 ;;
 
+let mix_imply_timeout ante0 conseq0 imp_no timeout = match ante0,conseq0 with
+  | MCP.MemoF a, MCP.MemoF c -> memo_imply_timeout a c imp_no timeout
+  | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false
+  | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
+
 let imply ante0 conseq0 imp_no do_cache = imply_timeout ante0 conseq0 imp_no 0. do_cache
 ;;
 
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
 ;;
+
+let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
+;;
+
 
 let is_sat f sat_no do_cache =
   if !external_prover then 
@@ -999,10 +1017,10 @@ let is_sat f sat_no do_cache =
   else  begin   
 
 	let _ = Util.push_time "is_sat" in
-    let res = is_sat f sat_no do_cache in
+  let res = is_sat f sat_no do_cache in
 	let _ = Util.pop_time "is_sat" in
   
-  if (!Globals.enable_counters)then
+  (*if (!Globals.enable_counters)then
 	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
 		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
 		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
@@ -1013,7 +1031,7 @@ let is_sat f sat_no do_cache =
 	  Util.add_to_counter "stat_disj_count" (or_f_size f);
 	  Util.inc_counter "stat_count";
 	  Util.add_to_counter "stat_size_count" (p_f_size f))
-   else ();  
+   else ();  *)
   
 	res end
 ;;
@@ -1036,8 +1054,12 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =  is_sat_sub_no_c f sat_sub
 
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-  List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst 
+  not (List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)
 ;;
+
+let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
+  | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
+  | MCP.OnePF f -> is_sat_sub_no f sat_subno
 
 let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
   let sat_subno = ref 0 in

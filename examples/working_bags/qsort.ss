@@ -10,7 +10,8 @@ ll1<S> == self =  null & S={}
 
 sll1<S> == self::node<v1, null> & S = {v1}
 	or self::node<v2, r> * r::sll1<S1> & r != null 
-	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x));
+	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x))
+  inv self !=null;
 
 void partition1(node x, ref node y, ref node z, int c)
 	requires x::ll1<S> 
@@ -83,37 +84,30 @@ void qsort1(ref node xs)
 
 {
 	node tmp, tmp1;
-        int v;
+  int v;
 	bool b;
-
-        assert xs=null ;
-	if (xs == null) {
-                assert false;
-		skip(); }
-	else
+	if (xs != null) 
 	{
-        v = xs.val;
-	bind xs to (xsval, xsnext) in {
-		partition1(xsnext, tmp1, tmp, xsval);
-		xsnext = tmp1;			
-	}
-        b = (xs.next == null);
-		if (tmp == null)
-			skip();
-		else
-			qsort1(tmp);
-
+    v = xs.val;
+    bind xs to (xsval, xsnext) in 
+    {
+      partition1(xsnext, tmp1, tmp, xsval);
+      xsnext = tmp1;			
+    }
+    b = (xs.next == null);
+		if (tmp != null) qsort1(tmp);
 		tmp = new node(v, tmp);
-		if (b)
-			xs = tmp;
+		if (b) xs = tmp;
 		else
 		{
 			bind xs to (xsval, xsnext) in {
 				qsort1(xsnext);
 			}
 			xs = append_bll1(xs.next, tmp);
+     // assume false;
 		}
-	}	
+	}
+  //assume false;	
 }
 
 
