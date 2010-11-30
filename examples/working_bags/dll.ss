@@ -18,14 +18,10 @@ void insert(node2 x, int a)
 	node2 tmp_null = null;
 
 		if (x.next == null) {
-			dprint;
       x.next = new node2(a, x, tmp_null);
-      dprint;
-      assume false;
 		}
 		else {
 			insert(x.next, a);
-      assume false;
 		}
 }
 

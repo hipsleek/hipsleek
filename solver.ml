@@ -971,9 +971,9 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 (* constraint pp and Presburger constraint pres             *)
 and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
   | ViewNode ({h_formula_view_node = p;
-	h_formula_view_name = c;
-	h_formula_view_label = pid;
-	h_formula_view_arguments = vs}) -> begin
+                h_formula_view_name = c;
+                h_formula_view_label = pid;
+                h_formula_view_arguments = vs}) -> begin
       try
 	    let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c in
 	    let renamed_view_formula = rename_struc_bound_vars 
@@ -1843,7 +1843,7 @@ and move_lemma_expl_inst_ctx_list (ctx : list_context) (f : formula) : list_cont
 and move_expl_inst_ctx_list (ctx:list_context)(f:CP.formula):list_context = 
   let fct es = 
     let nf = CP.find_rel_constraints f es.es_gen_expl_vars in
-    let f1 = CP.mkExists (es.es_gen_impl_vars@es.es_evars) nf None no_pos in
+    let f1 = CP.mkExists es.es_evars nf None no_pos in
     let f1 = formula_of_pure (CP.elim_exists f1) no_pos in
     Ctx {es with
 	  es_gen_impl_vars = [];
@@ -2146,25 +2146,9 @@ and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : 
     | _ -> report_error pos ("heap_entail_conjunct: context is disjunctive or fail!!!")
 
 and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
-  let avars = CP.fv ante in
-  let sevars = (* List.map CP.to_int_var *) evars in
-  let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
-  let tmp1 = CP.mkExists inner_vars conseq None no_pos in
-  if U.empty outer_vars then
+  let tmp1 = CP.mkExists evars conseq None no_pos in
     (ante, tmp1)
-  else
-    (*TODO: fix this
-    *)
-    let tmp2 = CP.mkExists sevars conseq None no_pos in
-	(ante, tmp2)
-	  (*
-	    Error.report_error {
-	    Error.error_loc = pos;
-	    Error.error_text = ("heap_entail_build_pure_check: outer_vars: "
-	    ^ (String.concat ", "
-	    (List.map CP.name_of_spec_var outer_vars))) }
-	  *)
-	  
+    
 and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lhs rhs_p timeout : bool = 
   let sat_subno = ref 0 in
   let estate = lhs in
@@ -2279,7 +2263,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
           let fold_fun (is_ok,a2,a3) branch_id_added =
             if is_ok then (is_ok,a2,a3) else
 	          let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
-	          let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
+	          let new_ante, new_conseq = heap_entail_build_pure_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
 		      imp_subno := !imp_subno+1; 
 		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
 		      TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
@@ -2466,7 +2450,8 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
   let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho estate.es_ivars pos) in
   (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
   let rho = List.combine rho label_list in
-  let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = get_eqns_free rho estate.es_evars (estate.es_expl_vars@expl_vars') estate.es_gen_expl_vars pos in
+  let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
+        get_eqns_free rho estate.es_evars (estate.es_expl_vars@expl_vars') estate.es_gen_expl_vars pos in
   (*********************************************************************)
   (* handle both explicit and implicit instantiation *)
   (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -2474,6 +2459,7 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
   (********************************************************************)
   let new_ante = (mkBase l_h (CP.mkAnd l_p to_lhs pos) l_t l_fl (CP.merge_branches l_b to_lhs_br) pos) in
   let tmp_conseq = (mkBase r_h (CP.mkAnd r_p to_rhs pos) r_t r_fl (CP.merge_branches r_b to_rhs_br) pos) in
+  let lhs_vars = ((CP.fv to_lhs) @(List.concat (List.map (fun (_,c)-> CP.fv c) to_lhs_br))) in
   (* apply the new bindings to the consequent *)
   let r_subs, l_sub = List.split ext_subst in
   (*IMPORTANT TODO: global existential not took into consideration*)
@@ -2487,14 +2473,15 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     |Some s1, None -> ((Util.remove_elem s1 estate.es_residue_pts),estate.es_success_pts)
     | None, None -> (estate.es_residue_pts, estate.es_success_pts)in 
   let new_es = {estate with es_formula = new_ante;
-	(* add the new vars to be explicitly instantiated *)
-	es_expl_vars = estate.es_expl_vars@expl_vars';
-	(* update ivars - basically, those univ vars for which binsings have been found will be removed:
-	   for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
-	es_ivars = ivars';
-	es_heap = new_consumed;
-	es_residue_pts = n_es_res;
-	es_success_pts = n_es_succ; } in
+                            (* add the new vars to be explicitly instantiated *)
+                            es_expl_vars = estate.es_expl_vars@expl_vars';
+                            (* update ivars - basically, those univ vars for which binsings have been found will be removed:
+                               for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
+                            es_gen_impl_vars = Util.difference_fct CP.eq_spec_var estate.es_gen_impl_vars lhs_vars ;
+                            es_ivars = ivars';
+                            es_heap = new_consumed;
+                            es_residue_pts = n_es_res;
+                            es_success_pts = n_es_succ; } in
   let new_subst = (obtain_subst expl_inst) in
   (* apply the explicit instantiations to the consequent *)
   let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in
