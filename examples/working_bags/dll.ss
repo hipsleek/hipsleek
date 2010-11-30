@@ -32,8 +32,7 @@ node2 append(node2 x, node2 y) // for this I got the Mona + Isabelle timings
 {
 	node2 tmp;
 
-	if (x == nullls
-  )
+	if (x == null)
 		return y;
 	else
 	{ 	
