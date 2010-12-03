@@ -1,109 +1,135 @@
-./astsimp.cmo: util.cmo tpdispatcher.cmo solver.cmo mcpure.cmo ipure.cmo \
-    iprinter.cmo iparser.cmo inliner.cmo ilexer.cmo iformula.cmo iast.cmo \
-    globals.cmo error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo \
-    context.cmo checks.cmo cformula.cmo cast.cmo 
-./astsimp.cmx: util.cmx tpdispatcher.cmx solver.cmx mcpure.cmx ipure.cmx \
-    iprinter.cmx iparser.cmx inliner.cmx ilexer.cmx iformula.cmx iast.cmx \
-    globals.cmx error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx \
-    context.cmx checks.cmx cformula.cmx cast.cmx 
+./astsimp.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmo solver.cmo \
+    mcpure.cmo ipure.cmo iprinter.cmo iparser.cmo inliner.cmo ilexer.cmo \
+    iformula.cmo iast.cmo globals.cmo error.cmo env.cmo debug.cmo cpure.cmo \
+    cprinter.cmo context.cmo checks.cmo cformula.cmo cast.cmo 
+./astsimp.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmx solver.cmx \
+    mcpure.cmx ipure.cmx iprinter.cmx iparser.cmx inliner.cmx ilexer.cmx \
+    iformula.cmx iast.cmx globals.cmx error.cmx env.cmx debug.cmx cpure.cmx \
+    cprinter.cmx context.cmx checks.cmx cformula.cmx cast.cmx 
 ./bind_inference.cmo: globals.cmo 
 ./bind_inference.cmx: globals.cmx 
-./cast.cmo: util.cmo mcpure.cmo globals.cmo error.cmo cpure.cmo cformula.cmo 
-./cast.cmx: util.cmx mcpure.cmx globals.cmx error.cmx cpure.cmx cformula.cmx 
-./cformula.cmo: util.cmo mcpure.cmo globals.cmo error.cmo cpure.cmo 
-./cformula.cmx: util.cmx mcpure.cmx globals.cmx error.cmx cpure.cmx 
+./cast.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi mcpure.cmo globals.cmo \
+    error.cmo cpure.cmo cformula.cmo 
+./cast.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi mcpure.cmx globals.cmx \
+    error.cmx cpure.cmx cformula.cmx 
+./cformula.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi mcpure.cmo globals.cmo \
+    error.cmo cpure.cmo 
+./cformula.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi mcpure.cmx globals.cmx \
+    error.cmx cpure.cmx 
 ./checks.cmo: iast.cmo globals.cmo 
 ./checks.cmx: iast.cmx globals.cmx 
-./cjava.cmo: util.cmo globals.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
+./cjava.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo error.cmo \
+    debug.cmo cpure.cmo cprinter.cmo cast.cmo 
+./cjava.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx error.cmx \
+    debug.cmx cpure.cmx cprinter.cmx cast.cmx 
+./context.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi cprinter.cmo cformula.cmo \
     cast.cmo 
-./cjava.cmx: util.cmx globals.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
+./context.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi cprinter.cmx cformula.cmx \
     cast.cmx 
-./context.cmo: globals.cmo debug.cmo cprinter.cmo cformula.cmo cast.cmo 
-./context.cmx: globals.cmx debug.cmx cprinter.cmx cformula.cmx cast.cmx 
-./coq.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo 
-./coq.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx 
-./cprinter.cmo: util.cmo mcpure.cmo globals.cmo cpure.cmo cformula.cmo \
-    cast.cmo 
-./cprinter.cmx: util.cmx mcpure.cmx globals.cmx cpure.cmx cformula.cmx \
-    cast.cmx 
-./cpure.cmo: util.cmo globals.cmo error.cmo 
-./cpure.cmx: util.cmx globals.cmx error.cmx 
-./cvc3.cmo: util.cmo globals.cmo cpure.cmo 
-./cvc3.cmx: util.cmx globals.cmx cpure.cmx 
-./cvclite.cmo: util.cmo globals.cmo cpure.cmo 
-./cvclite.cmx: util.cmx globals.cmx cpure.cmx 
+./coq.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi oclexer.cmo globals.cmo \
+    cpure.cmo 
+./coq.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi oclexer.cmx globals.cmx \
+    cpure.cmx 
+./cprinter.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi mcpure.cmo globals.cmo \
+    debug.cmo cvc3.cmo cpure.cmo cformula.cmo cast.cmo 
+./cprinter.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi mcpure.cmx globals.cmx \
+    debug.cmx cvc3.cmx cpure.cmx cformula.cmx cast.cmx 
+./cpure.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo error.cmo \
+    debug.cmo 
+./cpure.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx error.cmx \
+    debug.cmx 
+./cvc3.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo cpure.cmo 
+./cvc3.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx cpure.cmx 
+./cvclite.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo cpure.cmo 
+./cvclite.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx cpure.cmx 
 ./debug.cmo: globals.cmo 
 ./debug.cmx: globals.cmx 
 ./drawing.cmo: globals.cmo cpure.cmo context.cmo cformula.cmo cast.cmo 
 ./drawing.cmx: globals.cmx cpure.cmx context.cmx cformula.cmx cast.cmx 
-./env.cmo: util.cmo iast.cmo globals.cmo cast.cmo 
-./env.cmx: util.cmx iast.cmx globals.cmx cast.cmx 
+./env.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi iast.cmo globals.cmo cast.cmo 
+./env.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi iast.cmx globals.cmx cast.cmx 
 ./error.cmo: globals.cmo 
 ./error.cmx: globals.cmx 
 ./globals.cmo: 
 ./globals.cmx: 
 ./globalvars.cmo: iformula.cmo iast.cmo globals.cmo astsimp.cmo 
 ./globalvars.cmx: iformula.cmx iast.cmx globals.cmx astsimp.cmx 
-./gui.cmo: util.cmo typechecker.cmo solver.cmo inliner.cmo globals.cmo \
-    cpure.cmo cprinter.cmo cformula.cmo cast.cmo 
-./gui.cmx: util.cmx typechecker.cmx solver.cmx inliner.cmx globals.cmx \
-    cpure.cmx cprinter.cmx cformula.cmx cast.cmx 
-./iast.cmo: util.cmo ipure.cmo iformula.cmo globals.cmo error.cmo cpure.cmo 
-./iast.cmx: util.cmx ipure.cmx iformula.cmx globals.cmx error.cmx cpure.cmx 
-./iformula.cmo: util.cmo ipure.cmo globals.cmo error.cmo 
-./iformula.cmx: util.cmx ipure.cmx globals.cmx error.cmx 
+./gui.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmo solver.cmo \
+    scriptarguments.cmo inliner.cmo globals.cmo cpure.cmo cprinter.cmo \
+    cformula.cmo cast.cmo 
+./gui.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmx solver.cmx \
+    scriptarguments.cmx inliner.cmx globals.cmx cpure.cmx cprinter.cmx \
+    cformula.cmx cast.cmx 
+./iast.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi ipure.cmo iformula.cmo \
+    globals.cmo error.cmo cpure.cmo 
+./iast.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi ipure.cmx iformula.cmx \
+    globals.cmx error.cmx cpure.cmx 
+./iastUtil.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi ipure.cmo iformula.cmo \
+    iast.cmo globals.cmo error.cmo cpure.cmo 
+./iastUtil.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi ipure.cmx iformula.cmx \
+    iast.cmx globals.cmx error.cmx cpure.cmx 
+./iformula.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi ipure.cmo globals.cmo \
+    error.cmo 
+./iformula.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi ipure.cmx globals.cmx \
+    error.cmx 
 ./ilexer.cmo: iparser.cmo globals.cmo error.cmo 
 ./ilexer.cmx: iparser.cmx globals.cmx error.cmx 
-./inliner.cmo: util.cmo iprinter.cmo iast.cmo globals.cmo error.cmo 
-./inliner.cmx: util.cmx iprinter.cmx iast.cmx globals.cmx error.cmx 
+./inliner.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi iprinter.cmo iast.cmo \
+    globals.cmo error.cmo 
+./inliner.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi iprinter.cmx iast.cmx \
+    globals.cmx error.cmx 
 ./iparser.cmo: ipure.cmo iformula.cmo iast.cmo globals.cmo error.cmo 
 ./iparser.cmx: ipure.cmx iformula.cmx iast.cmx globals.cmx error.cmx 
 ./iprinter.cmo: ipure.cmo iformula.cmo iast.cmo globals.cmo 
 ./iprinter.cmx: ipure.cmx iformula.cmx iast.cmx globals.cmx 
-./ipure.cmo: util.cmo globals.cmo 
-./ipure.cmx: util.cmx globals.cmx 
-./isabelle.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo 
-./isabelle.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx 
-./java.cmo: util.cmo iprinter.cmo iast.cmo globals.cmo error.cmo cpure.cmo 
-./java.cmx: util.cmx iprinter.cmx iast.cmx globals.cmx error.cmx cpure.cmx 
+./ipure.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo 
+./ipure.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx 
+./isabelle.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi oclexer.cmo globals.cmo \
+    cpure.cmo 
+./isabelle.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi oclexer.cmx globals.cmx \
+    cpure.cmx 
+./java.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi iprinter.cmo iast.cmo \
+    globals.cmo error.cmo cpure.cmo 
+./java.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi iprinter.cmx iast.cmx \
+    globals.cmx error.cmx cpure.cmx 
 ./layout.cmo: globals.cmo cpure.cmo 
 ./layout.cmx: globals.cmx cpure.cmx 
-./main.cmo: util.cmo typechecker.cmo tpdispatcher.cmo solver.cmo rtc.cmo \
-    redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo paralib1.cmo \
-    omega.cmo mona.cmo java.cmo isabelle.cmo iprinter.cmo iparser.cmo \
-    inliner.cmo ilexer.cmo iast.cmo globalvars.cmo globals.cmo debug.cmo \
-    cvclite.cmo cvc3.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
-./main.cmx: util.cmx typechecker.cmx tpdispatcher.cmx solver.cmx rtc.cmx \
-    redlog.cmx prooftracer.cmx predcomp.cmx paralib1v2.cmx paralib1.cmx \
-    omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
-    inliner.cmx ilexer.cmx iast.cmx globalvars.cmx globals.cmx debug.cmx \
-    cvclite.cmx cvc3.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
-./maingui.cmo: util.cmo typechecker.cmo tpdispatcher.cmo solver.cmo rtc.cmo \
-    redlog.cmo prooftracer.cmo predcomp.cmo paralib1v2.cmo paralib1.cmo \
-    omega.cmo mona.cmo java.cmo isabelle.cmo iprinter.cmo iparser.cmo \
-    inliner.cmo ilexer.cmo iast.cmo gui.cmo globalvars.cmo globals.cmo \
-    debug.cmo cvclite.cmo cvc3.cmo cprinter.cmo coq.cmo cast.cmo astsimp.cmo 
-./maingui.cmx: util.cmx typechecker.cmx tpdispatcher.cmx solver.cmx rtc.cmx \
-    redlog.cmx prooftracer.cmx predcomp.cmx paralib1v2.cmx paralib1.cmx \
-    omega.cmx mona.cmx java.cmx isabelle.cmx iprinter.cmx iparser.cmx \
-    inliner.cmx ilexer.cmx iast.cmx gui.cmx globalvars.cmx globals.cmx \
-    debug.cmx cvclite.cmx cvc3.cmx cprinter.cmx coq.cmx cast.cmx astsimp.cmx 
-./mcpure.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
-./mcpure.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
-./mona.cmo: util.cmo unix_add.cmo oclexer.cmo globals.cmo cpure.cmo \
-    cprinter.cmo 
-./mona.cmx: util.cmx unix_add.cmx oclexer.cmx globals.cmx cpure.cmx \
-    cprinter.cmx 
-./mona_br.cmo: util.cmo unix_add.cmo oclexer.cmo globals.cmo cpure.cmo 
-./mona_br.cmx: util.cmx unix_add.cmx oclexer.cmx globals.cmx cpure.cmx 
+./main.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmo \
+    tpdispatcher.cmo scriptarguments.cmo rtc.cmo predcomp.cmo java.cmo \
+    iprinter.cmo iparser.cmo ilexer.cmo iastUtil.cmo iast.cmo globals.cmo \
+    cprinter.cmo cast.cmo astsimp.cmo 
+./main.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmx \
+    tpdispatcher.cmx scriptarguments.cmx rtc.cmx predcomp.cmx java.cmx \
+    iprinter.cmx iparser.cmx ilexer.cmx iastUtil.cmx iast.cmx globals.cmx \
+    cprinter.cmx cast.cmx astsimp.cmx 
+./maingui.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmo \
+    tpdispatcher.cmo scriptarguments.cmo rtc.cmo predcomp.cmo java.cmo \
+    iprinter.cmo iparser.cmo ilexer.cmo iast.cmo gui.cmo globalvars.cmo \
+    globals.cmo cprinter.cmo cast.cmo astsimp.cmo 
+./maingui.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmx \
+    tpdispatcher.cmx scriptarguments.cmx rtc.cmx predcomp.cmx java.cmx \
+    iprinter.cmx iparser.cmx ilexer.cmx iast.cmx gui.cmx globalvars.cmx \
+    globals.cmx cprinter.cmx cast.cmx astsimp.cmx 
+./mcpure.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo error.cmo \
+    debug.cmo cpure.cmo 
+./mcpure.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx error.cmx \
+    debug.cmx cpure.cmx 
+./mona.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmo oclexer.cmo \
+    globals.cmo cpure.cmo cprinter.cmo 
+./mona.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmx oclexer.cmx \
+    globals.cmx cpure.cmx cprinter.cmx 
+./mona_br.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmo oclexer.cmo \
+    globals.cmo cpure.cmo 
+./mona_br.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmx oclexer.cmx \
+    globals.cmx cpure.cmx 
 ./monadicinterp.cmo: typeclass.cmo monads.cmo 
 ./monadicinterp.cmx: typeclass.cmx monads.cmx 
 ./monads.cmo: typeclass.cmo 
 ./monads.cmx: typeclass.cmx 
-./nativefront.cmo: sparser.cmo sleekcommons.cmo ipure.cmo iformula.cmo \
-    iast.cmo globals.cmo 
-./nativefront.cmx: sparser.cmx sleekcommons.cmx ipure.cmx iformula.cmx \
-    iast.cmx globals.cmx 
+./nativefront.cmo: sparser.cmo slexer.cmo sleekcommons.cmo ipure.cmo \
+    iformula.cmo iast.cmo globals.cmo 
+./nativefront.cmx: sparser.cmx slexer.cmx sleekcommons.cmx ipure.cmx \
+    iformula.cmx iast.cmx globals.cmx 
 ./net.cmo: 
 ./net.cmx: 
 ./oast.cmo: 
@@ -112,82 +138,110 @@
 ./oclexer.cmx: ocparser.cmx 
 ./ocparser.cmo: globals.cmo error.cmo cpure.cmo 
 ./ocparser.cmx: globals.cmx error.cmx cpure.cmx 
-./old-cprinter.cmo: util.cmo globals.cmo cpure.cmo cformula.cmo cast.cmo 
-./old-cprinter.cmx: util.cmx globals.cmx cpure.cmx cformula.cmx cast.cmx 
-./omega.cmo: util.cmo unix_add.cmo ocparser.cmo oclexer.cmo globals.cmo \
-    error.cmo cpure.cmo 
-./omega.cmx: util.cmx unix_add.cmx ocparser.cmx oclexer.cmx globals.cmx \
-    error.cmx cpure.cmx 
+./old-cprinter.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo cpure.cmo \
+    cformula.cmo cast.cmo 
+./old-cprinter.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx cpure.cmx \
+    cformula.cmx cast.cmx 
+./omega.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmo ocparser.cmo \
+    oclexer.cmo globals.cmo error.cmo cpure.cmo 
+./omega.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmx ocparser.cmx \
+    oclexer.cmx globals.cmx error.cmx cpure.cmx 
 ./paralib1.cmo: tpdispatcher.cmo net.cmo 
 ./paralib1.cmx: tpdispatcher.cmx net.cmx 
 ./paralib1v2.cmo: tpdispatcher.cmo net.cmo 
 ./paralib1v2.cmx: tpdispatcher.cmx net.cmx 
-./predcomp.cmo: util.cmo iast.cmo globals.cmo error.cmo debug.cmo cpure.cmo \
-    cprinter.cmo cformula.cmo cast.cmo 
-./predcomp.cmx: util.cmx iast.cmx globals.cmx error.cmx debug.cmx cpure.cmx \
-    cprinter.cmx cformula.cmx cast.cmx 
-./prooftracer.cmo: util.cmo globals.cmo cpure.cmo cprinter.cmo cformula.cmo 
-./prooftracer.cmx: util.cmx globals.cmx cpure.cmx cprinter.cmx cformula.cmx 
+./predcomp.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi iast.cmo globals.cmo \
+    error.cmo debug.cmo cpure.cmo cprinter.cmo cformula.cmo cast.cmo 
+./predcomp.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi iast.cmx globals.cmx \
+    error.cmx debug.cmx cpure.cmx cprinter.cmx cformula.cmx cast.cmx 
+./prooftracer.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo cpure.cmo \
+    cprinter.cmo cformula.cmo 
+./prooftracer.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx cpure.cmx \
+    cprinter.cmx cformula.cmx 
 ./prove.cmo: tpdispatcher.cmo net.cmo 
 ./prove.cmx: tpdispatcher.cmx net.cmx 
-./redlog.cmo: util.cmo unix_add.cmo omega.cmo oclexer.cmo globals.cmo \
-    cpure.cmo 
-./redlog.cmx: util.cmx unix_add.cmx omega.cmx oclexer.cmx globals.cmx \
-    cpure.cmx 
-./rtc.cmo: util.cmo solver.cmo predcomp.cmo java.cmo iast.cmo globals.cmo \
-    debug.cmo cpure.cmo cprinter.cmo cjava.cmo cformula.cmo cast.cmo 
-./rtc.cmx: util.cmx solver.cmx predcomp.cmx java.cmx iast.cmx globals.cmx \
-    debug.cmx cpure.cmx cprinter.cmx cjava.cmx cformula.cmx cast.cmx 
+./redlog.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmo rlparser.cmo \
+    rllexer.cmo omega.cmo globals.cmo cpure.cmo 
+./redlog.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi unix_add.cmx rlparser.cmx \
+    rllexer.cmx omega.cmx globals.cmx cpure.cmx 
+./rllexer.cmo: rlparser.cmo 
+./rllexer.cmx: rlparser.cmx 
+./rlparser.cmo: globals.cmo cpure.cmo 
+./rlparser.cmx: globals.cmx cpure.cmx 
+./rtc.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi solver.cmo predcomp.cmo \
+    java.cmo iast.cmo globals.cmo debug.cmo cpure.cmo cprinter.cmo cjava.cmo \
+    cformula.cmo cast.cmo 
+./rtc.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi solver.cmx predcomp.cmx \
+    java.cmx iast.cmx globals.cmx debug.cmx cpure.cmx cprinter.cmx cjava.cmx \
+    cformula.cmx cast.cmx 
 ./run-oc.cmo: 
 ./run-oc.cmx: 
-./setmona.cmo: util.cmo oclexer.cmo globals.cmo cpure.cmo 
-./setmona.cmx: util.cmx oclexer.cmx globals.cmx cpure.cmx 
-./sleek.cmo: xmlfront.cmo util.cmo tpdispatcher.cmo sleekengine.cmo \
-    sleekcommons.cmo omega.cmo nativefront.cmo mona.cmo ipure.cmo \
-    iformula.cmo iast.cmo globals.cmo debug.cmo cpure.cmo cformula.cmo \
+./scriptarguments.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmo \
+    tpdispatcher.cmo solver.cmo rtc.cmo redlog.cmo prooftracer.cmo \
+    paralib1v2.cmo paralib1.cmo omega.cmo mona.cmo isabelle.cmo inliner.cmo \
+    globals.cmo debug.cmo cvclite.cmo cvc3.cmo coq.cmo 
+./scriptarguments.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi typechecker.cmx \
+    tpdispatcher.cmx solver.cmx rtc.cmx redlog.cmx prooftracer.cmx \
+    paralib1v2.cmx paralib1.cmx omega.cmx mona.cmx isabelle.cmx inliner.cmx \
+    globals.cmx debug.cmx cvclite.cmx cvc3.cmx coq.cmx 
+./setmona.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi oclexer.cmo globals.cmo \
+    cpure.cmo 
+./setmona.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi oclexer.cmx globals.cmx \
+    cpure.cmx 
+./sleek.cmo: xmlfront.cmo /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmo \
+    sleekengine.cmo sleekcommons.cmo scriptarguments.cmo nativefront.cmo \
+    ipure.cmo iformula.cmo iast.cmo globals.cmo cpure.cmo cformula.cmo \
     cast.cmo astsimp.cmo 
-./sleek.cmx: xmlfront.cmx util.cmx tpdispatcher.cmx sleekengine.cmx \
-    sleekcommons.cmx omega.cmx nativefront.cmx mona.cmx ipure.cmx \
-    iformula.cmx iast.cmx globals.cmx debug.cmx cpure.cmx cformula.cmx \
+./sleek.cmx: xmlfront.cmx /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmx \
+    sleekengine.cmx sleekcommons.cmx scriptarguments.cmx nativefront.cmx \
+    ipure.cmx iformula.cmx iast.cmx globals.cmx cpure.cmx cformula.cmx \
     cast.cmx astsimp.cmx 
 ./sleekcommons.cmo: ipure.cmo iformula.cmo iast.cmo globals.cmo cpure.cmo \
     cformula.cmo cast.cmo 
 ./sleekcommons.cmx: ipure.cmx iformula.cmx iast.cmx globals.cmx cpure.cmx \
     cformula.cmx cast.cmx 
-./sleekengine.cmo: xmlfront.cmo util.cmo solver.cmo sleekcommons.cmo \
-    nativefront.cmo ipure.cmo iformula.cmo iast.cmo globals.cmo error.cmo \
-    cpure.cmo cprinter.cmo cformula.cmo cast.cmo astsimp.cmo 
-./sleekengine.cmx: xmlfront.cmx util.cmx solver.cmx sleekcommons.cmx \
-    nativefront.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx error.cmx \
-    cpure.cmx cprinter.cmx cformula.cmx cast.cmx astsimp.cmx 
-./smtsolver.cmo: util.cmo globals.cmo cpure.cmo 
-./smtsolver.cmx: util.cmx globals.cmx cpure.cmx 
-./solver.cmo: util.cmo tpdispatcher.cmo prooftracer.cmo mcpure.cmo \
-    globals.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo context.cmo \
-    cformula.cmo cast.cmo 
-./solver.cmx: util.cmx tpdispatcher.cmx prooftracer.cmx mcpure.cmx \
-    globals.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx context.cmx \
-    cformula.cmx cast.cmx 
+./sleekengine.cmo: xmlfront.cmo /usr/lib/ocaml/ocamlgraph/util.cmi solver.cmo \
+    sleekcommons.cmo nativefront.cmo ipure.cmo iformula.cmo iast.cmo \
+    globals.cmo error.cmo cpure.cmo cprinter.cmo cformula.cmo cast.cmo \
+    astsimp.cmo 
+./sleekengine.cmx: xmlfront.cmx /usr/lib/ocaml/ocamlgraph/util.cmi solver.cmx \
+    sleekcommons.cmx nativefront.cmx ipure.cmx iformula.cmx iast.cmx \
+    globals.cmx error.cmx cpure.cmx cprinter.cmx cformula.cmx cast.cmx \
+    astsimp.cmx 
+./slexer.cmo: sparser.cmo globals.cmo error.cmo 
+./slexer.cmx: sparser.cmx globals.cmx error.cmx 
+./smtsolver.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo cpure.cmo 
+./smtsolver.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx cpure.cmx 
+./solver.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmo \
+    prooftracer.cmo mcpure.cmo globals.cmo error.cmo debug.cmo cpure.cmo \
+    cprinter.cmo context.cmo cformula.cmo cast.cmo 
+./solver.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmx \
+    prooftracer.cmx mcpure.cmx globals.cmx error.cmx debug.cmx cpure.cmx \
+    cprinter.cmx context.cmx cformula.cmx cast.cmx 
 ./sparser.cmo: sleekcommons.cmo ipure.cmo iformula.cmo iast.cmo globals.cmo 
 ./sparser.cmx: sleekcommons.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx 
-./test-oo.cmo: util.cmo iprinter.cmo iparser.cmo ilexer.cmo globals.cmo \
-    debug.cmo cprinter.cmo astsimp.cmo 
-./test-oo.cmx: util.cmx iprinter.cmx iparser.cmx ilexer.cmx globals.cmx \
-    debug.cmx cprinter.cmx astsimp.cmx 
-./test.cmo: util.cmo globals.cmo error.cmo cpure.cmo 
-./test.cmx: util.cmx globals.cmx error.cmx cpure.cmx 
-./tpdispatcher.cmo: util.cmo smtsolver.cmo setmona.cmo redlog.cmo omega.cmo \
-    net.cmo mona.cmo mcpure.cmo isabelle.cmo globals.cmo debug.cmo \
-    cvclite.cmo cvc3.cmo cpure.cmo coq.cmo 
-./tpdispatcher.cmx: util.cmx smtsolver.cmx setmona.cmx redlog.cmx omega.cmx \
-    net.cmx mona.cmx mcpure.cmx isabelle.cmx globals.cmx debug.cmx \
-    cvclite.cmx cvc3.cmx cpure.cmx coq.cmx 
-./typechecker.cmo: util.cmo tpdispatcher.cmo solver.cmo setmona.cmo \
-    prooftracer.cmo omega.cmo inliner.cmo globals.cmo error.cmo debug.cmo \
-    cpure.cmo cprinter.cmo cformula.cmo cast.cmo 
-./typechecker.cmx: util.cmx tpdispatcher.cmx solver.cmx setmona.cmx \
-    prooftracer.cmx omega.cmx inliner.cmx globals.cmx error.cmx debug.cmx \
-    cpure.cmx cprinter.cmx cformula.cmx cast.cmx 
+./test-oo.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi iprinter.cmo iparser.cmo \
+    ilexer.cmo globals.cmo debug.cmo cprinter.cmo astsimp.cmo 
+./test-oo.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi iprinter.cmx iparser.cmx \
+    ilexer.cmx globals.cmx debug.cmx cprinter.cmx astsimp.cmx 
+./test.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmo error.cmo \
+    cpure.cmo 
+./test.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi globals.cmx error.cmx \
+    cpure.cmx 
+./tpdispatcher.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi smtsolver.cmo \
+    setmona.cmo redlog.cmo omega.cmo net.cmo mona.cmo mcpure.cmo isabelle.cmo \
+    globals.cmo debug.cmo cvclite.cmo cvc3.cmo cpure.cmo cprinter.cmo coq.cmo 
+./tpdispatcher.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi smtsolver.cmx \
+    setmona.cmx redlog.cmx omega.cmx net.cmx mona.cmx mcpure.cmx isabelle.cmx \
+    globals.cmx debug.cmx cvclite.cmx cvc3.cmx cpure.cmx cprinter.cmx coq.cmx 
+./typechecker.cmo: /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmo \
+    solver.cmo setmona.cmo prooftracer.cmo omega.cmo inliner.cmo globals.cmo \
+    error.cmo drawing.cmo debug.cmo cpure.cmo cprinter.cmo cformula.cmo \
+    cast.cmo 
+./typechecker.cmx: /usr/lib/ocaml/ocamlgraph/util.cmi tpdispatcher.cmx \
+    solver.cmx setmona.cmx prooftracer.cmx omega.cmx inliner.cmx globals.cmx \
+    error.cmx drawing.cmx debug.cmx cpure.cmx cprinter.cmx cformula.cmx \
+    cast.cmx 
 ./typeclass.cmo: 
 ./typeclass.cmx: 
 ./unix_add.cmo: 

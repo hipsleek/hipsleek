@@ -1070,14 +1070,40 @@ let rec imply_memo ante_memo0 conseq_memo t_imply imp_no
 
 let reset_changed f = List.map (fun c-> {c with memo_group_changed = false}) f
   
- 
- 
+let trans_memo_group (e: memoised_group) (arg: 'a) f f_arg f_comb : (memoised_group * 'b) = 
+  let f_grp, f_memo_cons, f_aset, f_slice,f_fv = f in
+  match f_grp arg e with 
+    | Some e1-> e1
+    | None -> 
+      let new_arg = f_arg arg e in
+      let new_cons,new_rc  = List.split ((List.map (fun c-> f_memo_cons c new_arg)) e.memo_group_cons) in
+      let new_aset, new_ra = f_aset new_arg e.memo_group_aset in
+      let new_slice, new_rs = List.split ((List.map (fun c-> f_slice c new_arg)) e.memo_group_slice) in
+      let new_fv, new_rv =  List.split ((List.map (fun c-> f_fv c new_arg)) e.memo_group_fv) in
+      ({e with
+        memo_group_fv =new_fv;
+        memo_group_cons = new_cons;
+        memo_group_slice = new_slice;
+        memo_group_aset = new_aset;}, f_comb (new_rc@new_ra@new_rs@new_rv))
+  
+let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b) = 
+  let trans_memo_gr e = trans_memo_group e arg f f_arg f_comb in
+  let ne, vals = List.split (List.map trans_memo_gr e) in
+  (ne, f_comb vals)
  
  
  
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula
+  
+let mix_of_pure f = 
+    if (!Globals.allow_pred_spec) then  MemoF (memoise_add_pure_N (mkMTrue ()) f)
+    else OnePF f
+    
+let pure_of_mix f = match f with
+  | OnePF f-> f
+  | MemoF f-> fold_mem_lst (mkTrue no_pos) false true f 
   
   
 let mkMTrue pos = 
@@ -1230,3 +1256,19 @@ let drop_triv_grps f = match f with
 let drop_pf f = match f with
   | MemoF f -> f
   | OnePF _ -> []
+    
+let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula * 'b) = 
+  let mf,pf = f in
+  let ma,pa = f_arg in
+  match e with
+  | MemoF e-> 
+    let f,r = trans_memo_formula e arg mf ma f_comb in
+    (MemoF f, r)
+  | OnePF e -> 
+    let f,r = trans_formula e arg pf pa f_comb in
+    (OnePF f,r)
+    
+    
+let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
+  | MemoF f -> MemoF (List.filter (fun c-> not ((Util.intersect_fct eq_spec_var c.memo_group_fv v_l )==[]))f)
+  | OnePF f -> OnePF (find_rel_constraints f v_l)

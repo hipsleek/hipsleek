@@ -26,11 +26,22 @@ and match_type =
 	returns a list of contexts, where the first hole of each context corresponds to a node from the heap lhs_h that appears in the alias set aset. 
 	The flag associated with each node lets us know if the match is at the root pointer,  materialized arg, arg.
  *)  
-let rec context_old prog lhs_h (lhs_p:MCP.mix_formula) (p : CP.spec_var) pos : context list =
+let rec context_old prog lhs_h (lhs_p:MCP.mix_formula) (p : CP.spec_var) rhs_info pos : context list =
 	let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
 	let eqns' = MCP.ptr_equations lhs_p in
+  let r_eqns = match rhs_info with
+    | Some (f,v)-> 
+      let eqns = MCP.ptr_equations f in
+      let r_asets = alias eqns in
+      let a_vars = lhs_fv @ v in
+      let fltr = List.map (fun c-> Util.intersect c a_vars) r_asets in
+      let colaps l = List.fold_left (fun a c -> match a with 
+                                                  | [] -> [(c,c)]
+                                                  | h::_-> (c,(fst h))::a) [] l in
+      List.concat (List.map colaps fltr) 
+    | None -> [] in
 	let eqns = (p, p) :: eqns' in
-	let asets = alias eqns in
+	let asets = alias (eqns@r_eqns) in
 	let paset = get_aset asets p in (* find the alias set containing p *)
 		if U.empty paset then 
 		begin (* can this case happen *)
@@ -38,14 +49,13 @@ let rec context_old prog lhs_h (lhs_p:MCP.mix_formula) (p : CP.spec_var) pos : c
 		end 
 		else
 		begin
-			if not(CP.mem p lhs_fv) || (!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))
+			(*if not(CP.mem p lhs_fv) || (!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))
 			then begin
 				Debug.devel_pprint ("context_old: " ^ (Cprinter.string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos;
 				[]
 			end
-			else
-			let anodes = context_get_aliased_node prog lhs_h paset in
-				anodes
+			else*) 
+        context_get_aliased_node prog lhs_h paset 
 		end	
 
 and context_get_aliased_node prog (f0 : h_formula) (aset : CP.spec_var list) : context list  =

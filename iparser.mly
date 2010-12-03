@@ -1296,9 +1296,11 @@ block
 	match $2 with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
 						   exp_block_jump_label = NoJumpLabel;
+               exp_block_local_vars = [];
 						   exp_block_pos = get_pos 1 }
 	  | _ -> Block { exp_block_body = $2;
 					 exp_block_jump_label = NoJumpLabel;
+           exp_block_local_vars = [];
 					 exp_block_pos = get_pos 1 }
   }
 ;
@@ -1647,7 +1649,7 @@ opt_catch_list
 
 catch_clause
 	: CATCH OPAREN IDENTIFIER IDENTIFIER CPAREN valid_declaration_statement 
-		{ { exp_catch_var = Some $4;
+		{Catch { exp_catch_var = Some $4;
 			exp_catch_flow_type = $3 (*(Named $3) *);
 			exp_catch_flow_var = None;
 			exp_catch_body = $6;																					   
@@ -1656,7 +1658,7 @@ catch_clause
 
 opt_finally
 	: {[]}
-	| FINALLY valid_declaration_statement {let f = {exp_finally_body = $2;
+	| FINALLY valid_declaration_statement {let f = Finally {exp_finally_body = $2;
 												    exp_finally_pos = get_pos 1 } in f::[] }
 ;
 opt_expression

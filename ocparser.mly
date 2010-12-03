@@ -11,6 +11,26 @@
 				 end_pos = Parsing. symbol_end_pos ();
 				 mid_pos = Parsing.rhs_start_pos x;
 				}	
+  let rec trans_null (b:formula):formula = 
+    let rec trans_b_f_null b = match b with
+      | Lt (e1,e2,p) -> (match (e1,e2) with
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=0) then Neq(e2,Null l,p) else BConst (true,p) else b
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<=1) then Eq(e1,Null l,p) else BConst(true,p) else b          
+            | _ -> b)
+      | Lte(e1,e2,p) ->(match (e1,e2) with
+            | IConst (i,_), Var(v,l) ->  if (is_object_var v) then if (i>=1) then Neq(e2,Null l,p) else BConst (true,p) else b
+            | Var (v,l), IConst (i,_) -> if (is_object_var v) then if (i<1) then Eq(e1,Null l,p) else BConst(true,p) else b          
+            | _ -> b) 
+      | Gt (e1,e2,p) -> trans_b_f_null (Lt (e2,e1,p))
+      | Gte(e1,e2,p) -> trans_b_f_null (Lte (e2,e1,p))
+      | _ -> b in
+    match b with
+      | BForm (b,l) -> BForm ((trans_b_f_null b),l)
+      | And (f1,f2,l) -> mkAnd (trans_null f1) (trans_null f2) l
+      | Or (f1,f2,fl,l) -> mkOr (trans_null f1) (trans_null f2) fl l
+      | Not (f,fl,l) -> Not ((trans_null f),fl,l)
+      | Forall (sv,f,fl,l) -> Forall(sv,(trans_null f),fl,l)
+      | Exists (sv,f,fl,l) -> Exists(sv,(trans_null f),fl,l)
 %}
 
 %token AND
@@ -86,7 +106,7 @@ relation: relation UNION relation {
 pconstr: pconstr AND pconstr { 
   mkAnd $1 $3 (get_pos 2)
 }
-| lbconstr { fst $1}
+| lbconstr { trans_null (fst $1) }
 | EXISTS OPAREN var_list COLON pconstr CPAREN { 
 	let svars = $3 in
 	let qf f v = mkExists [v] f None (get_pos 1) in

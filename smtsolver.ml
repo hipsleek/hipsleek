@@ -102,7 +102,6 @@ let logic_for_formulas f1 f2 =
   | true, false -> AUFLIA (* should I use UFNIA instead? *)
   | false, false -> UFNIA
 
-
 (**
  * Define SMT provers and commands needed to run them
  *)

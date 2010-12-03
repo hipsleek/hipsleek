@@ -349,6 +349,14 @@ and is_list (e : exp) : bool = match e with
   | ListReverse _ -> true
   | _ -> false
 
+and is_bag_bform (b: b_formula) : bool = match b with
+  | BagIn _ | BagNotIn _ | BagSub _ | BagMin _ | BagMax _ -> true
+  | _ -> false
+
+and is_list_bform (b: b_formula) : bool = match b with
+  | ListIn _ | ListNotIn _ | ListAllN _ | ListPerm _ -> true
+  | _ -> false
+
 and is_arith (e : exp) : bool = match e with
   | Add _
   | Subtract _
@@ -864,9 +872,7 @@ and build_relation relop alist10 alist20 lbl pos=
   else
 	helper2 alist10 alist20
         (* utility functions *)
-        
 
-(* utility functions *)
 
 and mem (sv : spec_var) (svs : spec_var list) : bool =
   List.exists (fun v -> eq_spec_var sv v) svs
@@ -2073,6 +2079,23 @@ let rec break_implication (ante : formula) (conseq : formula) : ((formula * form
 (**************************************************************)
 (**************************************************************)
 
+let find_rel_constraints (f:formula) desired :formula = 
+ if desired=[] then (mkTrue no_pos)
+ else 
+   let lf = split_conjunctions f in
+   let lf_pair = List.map (fun c-> ((fv c),c)) lf in
+   let var_list = fst (List.split lf_pair) in
+   let rec helper (fl:spec_var list) : spec_var list = 
+    let nl = List.filter (fun c-> (Util.intersect c fl)!=[]) var_list in
+    let nl = List.concat nl in
+    if (List.length fl)=(List.length nl) then fl
+    else helper nl in
+   let fixp = helper desired in
+   let pairs = List.filter (fun (c,_) -> (List.length (Util.intersect c fixp))>0) lf_pair in
+   join_conjunctions (snd (List.split pairs))
+
+  
+  
 (*
   Drop bag and list constraints for satisfiability checking.
 *)
@@ -2392,31 +2415,30 @@ and of_interest (e1:exp) (e2:exp) (interest_vars:spec_var list):bool =
 	| _ -> false) 				  
 	  
 and drop_null (f:formula) self neg:formula = 
-	let helper(f:b_formula) neg:b_formula = match f with
-	  | Eq (e1,e2,l) -> if neg then f
-						else begin match (e1,e2) with
-							| (Var(self,_),Null _ )
-							| (Null _ ,Var(self,_))-> BConst (true,l)
-							| _ -> f end
-	  | Neq (e1,e2,l) -> if (not neg) then f
-						 else begin match (e1,e2) with
-							| (Var(self,_),Null _ )
-							| (Null _ ,Var(self,_))-> BConst (true,l)
-							| _ -> f end
-	  | _ -> f in
-	match f with
-	  | BForm (b,lbl)-> BForm (helper b neg , lbl)
-	  | And (b1,b2,l) -> And ((drop_null b1 self neg),(drop_null b2 self neg),l)
-	  | Or _ -> f
-	  | Not (b,lbl,l)-> Not ((drop_null b self (not neg)),lbl,l)
-	  | Forall (q,f,lbl,l) -> Forall (q,(drop_null f self neg),lbl,l)
-	  | Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
-	  
+  let helper(f:b_formula) neg:b_formula = match f with
+	| Eq (e1,e2,l) -> if neg then f
+	  else begin match (e1,e2) with
+		| (Var(self,_),Null _ )
+		| (Null _ ,Var(self,_))-> BConst (true,l)
+		| _ -> f end
+	| Neq (e1,e2,l) -> if (not neg) then f
+	  else begin match (e1,e2) with
+		| (Var(self,_),Null _ )
+		| (Null _ ,Var(self,_))-> BConst (true,l)
+		| _ -> f end
+	| _ -> f in
+  match f with
+	| BForm (b,lbl)-> BForm (helper b neg , lbl)
+	| And (b1,b2,l) -> And ((drop_null b1 self neg),(drop_null b2 self neg),l)
+	| Or _ -> f
+	| Not (b,lbl,l)-> Not ((drop_null b self (not neg)),lbl,l)
+	| Forall (q,f,lbl,l) -> Forall (q,(drop_null f self neg),lbl,l)
+	| Exists (q,f,lbl,l) -> Exists (q,(drop_null f self neg),lbl,l)
+	      
 and add_null f self : formula =  
-	mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos , None)) no_pos
-	
-(*to fully extend*)
-(* TODO: double check this func *)
+  mkAnd f (BForm (mkEq (Var (self,no_pos)) (Null no_pos) no_pos , None)) no_pos	  
+      (*to fully extend*)
+      (* TODO: double check this func *)
 
 and rel_compute e1 e2:constraint_rel = match (e1,e2) with
   | Null _, Null _ -> Equal
@@ -2759,7 +2781,7 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListTail (e, l) -> ListTail (purge_mult e, l)
   |  ListLength (e, l) -> ListLength (purge_mult e, l)
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
-	
+
 and b_form_simplify (b:b_formula) :b_formula = 
 	let do_all e1 e2 l =
 	  let t1 = simp_mult e1 in
@@ -2860,6 +2882,10 @@ and b_form_simplify (b:b_formula) :b_formula =
          |  BagMin _ -> b
          |  BagMax _ -> b 
   
+    (* a+a    --> 2*a
+     1+3    --> 4
+     1+x>-2 --> 3+x>0
+  *)  
 and arith_simplify (pf : formula) :  formula =   match pf with
   |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
   |  And (f1, f2, loc) -> And (arith_simplify f1, arith_simplify f2, loc)
@@ -2869,16 +2895,104 @@ and arith_simplify (pf : formula) :  formula =   match pf with
   |  Exists (v, f1, lbl, loc) ->  Exists (v, arith_simplify f1, lbl, loc)
 	  
 let rec get_pure_label n =  match n with
-	  | And _ -> None
-	  | BForm (_,l) 
-	  | Or (_,_,l,_) 
-	  | Not (_,l,_) 
-	  | Forall (_,_,l,_) 
-	  | Exists (_,_,l,_) -> l
+  | And _ -> None
+  | BForm (_,l) 
+  | Or (_,_,l,_) 
+  | Not (_,l,_) 
+  | Forall (_,_,l,_) 
+  | Exists (_,_,l,_) -> l
 
 let select zs n = 
   let l = List.length zs in
   (List.nth zs (n mod l))
+
+
+(* decided to drop zero since same as f_comb e [] *)
+
+let foldr_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option) 
+      (f_args:'a->exp->'a)(f_comb:exp -> 'b list -> 'b) 
+      :(exp * 'b) =
+  let rec helper (arg:'a) (e:exp) : (exp * 'b)=
+    let r =  f arg e  in 
+    match r with
+	  | Some ne -> ne
+	  | None ->  let new_arg = f_args arg e in 
+        let f_comb = f_comb e in match e with
+	      | Null _ 
+	      | Var _ 
+	      | IConst _
+	      | FConst _ -> (e,f_comb [])
+	      | Add (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Add (ne1,ne2,l),f_comb[r1;r2])
+	      | Subtract (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Subtract (ne1,ne2,l),f_comb[r1;r2])
+	      | Mult (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Mult (ne1,ne2,l),f_comb[r1;r2])
+	      | Div (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Div (ne1,ne2,l),f_comb[r1;r2])
+	      | Max (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Max (ne1,ne2,l),f_comb[r1;r2])
+	      | Min (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Min (ne1,ne2,l),f_comb[r1;r2])
+	      | Bag (le,l) -> 
+                let el=List.map (fun c-> helper new_arg c) le in
+                let (el,rl)=List.split el in 
+		        (Bag (el, l), f_comb rl) 
+	      | BagUnion (le,l) -> 
+                let el=List.map (fun c-> helper new_arg c) le in
+                let (el,rl)=List.split el in 
+		        (BagUnion (el, l), f_comb rl) 		                
+	      | BagIntersect (le,l) -> 
+                let el=List.map (fun c-> helper new_arg c) le in
+                let (el,rl)=List.split el in 
+		        (BagIntersect (el, l), f_comb rl) 
+		            (*(BagIntersect (List.map (fun c-> helper new_arg c) le, l))*)
+	      | BagDiff (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+                let (ne2,r2) = helper new_arg e2 in
+                (BagDiff (ne1,ne2,l),f_comb[r1;r2])
+          | List (e1,l) -> (* List (( List.map (helper new_arg) e1), l)*) 
+                let el=List.map (fun c-> helper new_arg c) e1 in
+                let (el,rl)=List.split el in 
+		        (List (el, l), f_comb rl) 
+          | ListCons (e1,e2,l) -> 
+                let (ne1,r1) = helper new_arg e1 in
+                let (ne2,r2) = helper new_arg e2 in
+                (ListCons (ne1,ne2,l),f_comb[r1;r2])
+          | ListHead (e1,l) -> 
+                let (ne1,r1) = helper new_arg e1 in
+                (ListHead (ne1,l),f_comb [r1])
+          | ListTail (e1,l) -> 
+                let (ne1,r1) = helper new_arg e1 in
+                (ListTail (ne1,l),f_comb [r1])
+          | ListLength (e1,l) -> 
+                let (ne1,r1) = helper new_arg e1 in
+                (ListLength (ne1,l),f_comb [r1])
+          | ListAppend (e1,l) ->  
+                let el=List.map (fun c-> helper new_arg c) e1 in
+                let (el,rl)=List.split el in 
+		        (ListAppend (el, l), f_comb rl) 
+          | ListReverse (e1,l) -> 
+                let (ne1,r1) = helper new_arg e1 in
+                (ListReverse (ne1,l),f_comb [r1])
+  in helper arg e
+
+let trans_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option) 
+      (f_args:'a->exp->'a)(f_comb: 'b list -> 'b) 
+      :(exp * 'b) =
+  foldr_exp e arg f f_args (fun x l -> f_comb l) 
 
 let rec transform_exp f e  = 
   let r =  f e in 
@@ -2934,6 +3048,95 @@ let rec transform_exp f e  =
         | ListAppend (e1,l) ->  ListAppend (( List.map (transform_exp f) e1), l) 
         | ListReverse (e1,l) -> ListReverse ((transform_exp f e1),l)
 
+let foldr_b_formula (e:b_formula) (arg:'a) f f_args f_comb
+      (*(f_comb:'b list -> 'b)*) :(b_formula * 'b) =
+  let (f_b_formula, f_exp) = f in
+  let (f_b_formula_args, f_exp_args) = f_args in
+  let (f_b_formula_comb, f_exp_comb) = f_comb in
+  let helper (arg:'a) (e:exp) : (exp * 'b)= foldr_exp e arg f_exp f_exp_args f_exp_comb in
+  let helper2 (arg:'a) (e:b_formula) : (b_formula * 'b) =
+	let r =  f_b_formula arg e in 
+	match r with
+	  | Some e1 -> e1
+	  | None  -> let new_arg = f_b_formula_args arg e in 
+        let f_comb = f_b_formula_comb e in
+        match e with	  
+	      | BConst _
+	      | BVar _ 
+	      | BagMin _ 
+	      | BagMax _ -> (e,f_comb [])
+	      | Lt (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Lt (ne1,ne2,l),f_comb[r1;r2])
+	      | Lte (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Lte (ne1,ne2,l),f_comb[r1;r2])
+	      | Gt (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Gt (ne1,ne2,l),f_comb[r1;r2])
+	      | Gte (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Gte (ne1,ne2,l),f_comb[r1;r2])
+	      | Eq (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Eq (ne1,ne2,l),f_comb[r1;r2])
+	      | Neq (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (Neq (ne1,ne2,l),f_comb[r1;r2])
+	      | EqMax (e1,e2,e3,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        let (ne3,r3) = helper new_arg e3 in
+		        (EqMax (ne1,ne2,ne3,l),f_comb[r1;r2;r3])	  
+	      | EqMin (e1,e2,e3,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        let (ne3,r3) = helper new_arg e3 in
+		        (EqMin (ne1,ne2,ne3,l),f_comb[r1;r2;r3])
+		            (* bag formulas *)
+	      | BagIn (v,e,l)->
+		        let (ne1,r1) = helper new_arg e in
+		        (BagIn (v,ne1,l),f_comb [r1])
+	      | BagNotIn (v,e,l)->
+		        let (ne1,r1) = helper new_arg e in
+		        (BagNotIn (v,ne1,l),f_comb [r1])
+	      | BagSub (e1,e2,l) ->
+		        let (ne1,r1) = helper new_arg e1 in
+		        let (ne2,r2) = helper new_arg e2 in
+		        (BagSub (ne1,ne2,l),f_comb[r1;r2])
+          | ListIn (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+                let (ne2,r2) = helper new_arg e2 in
+                (ListIn (ne1,ne2,l),f_comb[r1;r2])
+          | ListNotIn (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+                let (ne2,r2) = helper new_arg e2 in
+                (ListNotIn (ne1,ne2,l),f_comb[r1;r2])
+          | ListAllN (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+                let (ne2,r2) = helper new_arg e2 in
+                (ListAllN (ne1,ne2,l),f_comb[r1;r2])
+          | ListPerm (e1,e2,l) ->
+	            let (ne1,r1) = helper new_arg e1 in
+                let (ne2,r2) = helper new_arg e2 in
+                (ListPerm (ne1,ne2,l),f_comb[r1;r2])
+  in (helper2 arg e)
+
+
+let trans_b_formula (e:b_formula) (arg:'a) f 
+      f_args (f_comb: 'b list -> 'b) :(b_formula * 'b) =
+  foldr_b_formula e arg f f_args  ((fun x l -> f_comb l), (fun x l -> f_comb l)) 
+
+let map_b_formula_arg (bf: b_formula) (arg: 'a) (f_bf, f_e) f_arg : b_formula =
+  let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
+  let new_f = trans_func f_bf, trans_func f_e in
+  fst (trans_b_formula bf arg new_f f_arg voidf)
 	
 let transform_b_formula f (e:b_formula) :b_formula = 
 	let (f_b_formula, f_exp) = f in
@@ -3007,8 +3210,97 @@ let transform_b_formula f (e:b_formula) :b_formula =
       let ne2 = transform_exp f_exp e2 in
       ListPerm (ne1,ne2,l)
 	  
-	  
-	  
+let foldr_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
+    let f_formula, f_b_formula, f_exp = f in
+    let f_formula_arg, f_b_formula_arg, f_exp_arg = f_arg in
+    let f_formula_comb, f_b_formula_comb, f_exp_comb = f_comb in
+    let foldr_b_f (arg: 'a) (e: b_formula): (b_formula * 'b) =
+        foldr_b_formula e arg (f_b_formula, f_exp) (f_b_formula_arg, f_exp_arg) (f_b_formula_comb, f_exp_comb)
+    in
+    let rec foldr_f (arg: 'a) (e: formula): (formula * 'b) =
+        let r = f_formula arg e in
+        match r with
+        | Some e1 -> e1
+        | None ->
+            let new_arg = f_formula_arg arg e in
+            let f_comb = f_formula_comb e in
+            match e with
+            | BForm (bf, lbl) ->
+                let new_bf, r1 = foldr_b_f new_arg bf in
+                (BForm (new_bf, lbl), f_comb [r1])
+            | And (f1, f2, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                let nf2, r2 = foldr_f new_arg f2 in
+                (And (nf1, nf2, l), f_comb [r1; r2])
+            | Or (f1, f2, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                let nf2, r2 = foldr_f new_arg f2 in
+                (Or (nf1, nf2, lbl, l), f_comb [r1; r2])
+            | Not (f1, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                (Not (nf1, lbl, l), f_comb [r1])
+            | Forall (sv, f1, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                (Forall (sv, nf1, lbl, l), f_comb [r1])
+            | Exists (sv, f1, lbl, l) ->
+                let nf1, r1 = foldr_f new_arg f1 in
+                (Exists (sv, nf1, lbl, l), f_comb [r1])
+    in foldr_f arg e
+
+(* f = (f_f, f_bf, f_e) and
+ * f_f: 'a -> formula -> (formula * 'b) option
+ * f_bf: 'a -> b_formula -> (b_formula * 'b) option
+ * f_e: 'a -> exp -> (exp * 'b) option
+ *)
+let trans_formula (e: formula) (arg: 'a) f f_arg f_comb : (formula * 'b) =
+    let f_comb = (fun x l -> f_comb l), 
+                 (fun x l -> f_comb l),
+                 (fun x l -> f_comb l)
+    in
+    foldr_formula e arg f f_arg f_comb
+
+(* compute a result from formula with argument
+ * f_f: 'a -> formula -> 'b option
+ * f_bf: 'a -> b_formula -> 'b option
+ * f_e: 'a -> exp -> 'b option
+ *)
+let fold_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg (f_comb: 'b list -> 'b) : 'b =
+    let trans_func func = (fun a e -> push_opt_val_rev (func a e) e) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    snd (trans_formula e arg new_f f_arg f_comb)
+
+(* compute a result from formula without passing an argument
+ * f_f: formula -> 'b option
+ * f_bf: b_formula -> 'b option
+ * f_e: exp -> 'b option
+ *)
+let fold_formula (e: formula) (f_f, f_bf, f_e) (f_comb: 'b list -> 'b) : 'b =
+    let trans_func func = (fun _ e -> push_opt_val_rev (func e) e) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    let f_arg = voidf2, voidf2, voidf2 in
+    snd (trans_formula e () new_f f_arg f_comb)
+
+(* map functions to formula with argument
+ * f_f: 'a -> formula -> formula option
+ * f_bf: 'a -> b_formula -> b_formula option
+ * f_e: 'a -> exp -> exp option
+ *)
+let map_formula_arg (e: formula) (arg: 'a) (f_f, f_bf, f_e) f_arg : formula =
+    let trans_func f = (fun a e -> push_opt_void_pair (f a e)) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    fst (trans_formula e arg new_f f_arg voidf)
+
+(* map functions to formula without argument
+ * f_f: formula -> formula option
+ * f_bf: b_formula -> b_formula option
+ * f_e: exp -> exp option
+ *)
+let map_formula (e: formula) (f_f, f_bf, f_e) : formula =
+    let trans_func f = (fun _ e -> push_opt_void_pair (f e)) in
+    let new_f = trans_func f_f, trans_func f_bf, trans_func f_e in
+    let f_arg = idf2, idf2, idf2 in
+    fst (trans_formula e () new_f f_arg voidf)
+
 let rec transform_formula f (e:formula) :formula = 
 	let (_ , _, f_formula, f_b_formula, f_exp) = f in
 	let r =  f_formula e in 

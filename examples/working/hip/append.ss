@@ -32,6 +32,39 @@ void append(node x, node y)
 	}
 }
 
+node app2(node x, node y)
+/*
+  requires x::lseg<null,n> 
+  ensures res::lseg<y, n>;
+*/
+
+/*
+requires x=null
+ensures res=y ;
+requires x::lseg<null,n> & x!=null
+  ensures res::lseg<y,n>;
+*/
+
+ requires x::lseg<null,n> 
+  ensures res=y & x=null & n=0// n=0
+  or res::lseg<y,m> & res=x & x!=null & m=n & n>0; //m>0
+
+/*
+ case {
+  x=null -> ensures res=y;
+  x!=null -> requires x::lseg<null,n> 
+             ensures res::lseg<y,n>;
+ }
+*/
+{
+  if (x==null) return y;
+  //dprint;
+  node tmp=x.next;
+  //assume tmp'=null or tmp'!=null;
+  x.next=app2(tmp,y);
+  return x;
+}
+
 int test(int x)
 
   case {

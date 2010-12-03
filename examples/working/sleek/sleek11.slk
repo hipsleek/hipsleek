@@ -69,4 +69,8 @@ checkentail x::avl<m,_,_> * y::avl<n,_,_> & m>0 & n>0   |- x!=y .
 // fail but should be valid 
 
 
+checkentail x::node<_,_> * y::node<_,_>   |- x!=y .
+// fail but should be valid 
+
+
 
