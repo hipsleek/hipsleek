@@ -86,13 +86,17 @@ int foo3(int n)
  case {
   n<0 -> ensures false;
   // non-terminating inputs..
-  n>=0 -> ensures res=n;
+  n>=0 -> ensures "term" : res=2*n;
  }
 // variance n
 { 
   if (n==0) return 0;
-  else { 
-        return 1+foo3(n-1);
+  else {
+		int m;
+		m = n - 1;
+		assert "term" : n>m;
+		assert "term" : n>=0;
+        return 2+foo3(m);
    }
 }
 
