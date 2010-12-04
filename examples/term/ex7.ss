@@ -80,7 +80,7 @@ requires y<0 & z<=0
 		loop_aux(x, y, z);
 	}
 }
-
+/*
 void loop_aux1(ref int x, ref int y, int z)
 requires y<0 & z>=0 & x+y<=0
  //variance x
@@ -96,6 +96,26 @@ requires y<0 & z>=0 & x+y<=0
 		y = y + z;
         assert "dr":x-x'>0;
 		if (y<0)
+			loop_aux1(x, y, z);
+	}
+}
+*/
+void loop_aux1(ref int x, ref int y, int z)
+requires z>=0
+ //variance x
+ case {
+  x>0 -> // variance x
+		 requires y<0 & x+y<=0
+         ensures "dr":x'=x+y;
+  x<=0 -> // variance 0
+         ensures "bs":x'=x & y'=y;
+}
+{   
+	if (x > 0) {
+		x = x + y;
+		y = y + z;
+        assert "dr":x-x'>0;
+		//if (y<0)
 			loop_aux1(x, y, z);
 	}
 }
