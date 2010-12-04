@@ -21,21 +21,54 @@ case {
 //ensures x'<0;
 /*
 case {
+<<<<<<< ex8.ss
+  x<0 -> // variance 0 (base case)
+         ensures "r1":x'=x;
+x>=0 -> case {
+         x>5 -> //variance x (not well-founded)
+                //variance 0 (going to base case)
+                ensures "r2":x'<0;
+         x<=2 -> ensures "r3":x'<0;
+         x=3 -> ensures "r4":x'<0;
+         x=4 -> ensures "r8":x'<0;
+         x=5 -> ensures "r8":x'<0;
+=======
  x<0 -> ensures x'=x;
  x>=0 -> case {
          x>5 -> ensures x'<0;
          x<=5 -> ensures true;
+>>>>>>> 1.5
        }
 }
-*/
 case {
  x<0 -> ensures x'=x;
  x>=0 -> requires x > 5 ensures x'<0;
 }
 
+*/
+
+case {
+  x<0 -> // variance 0 (base case)
+         ensures "r1":x'=x;
+  x>=0 -> case {
+         x>5 -> //variance x (not well-founded)
+                //variance 0 (going to base case)
+                ensures "r2":x'<0;
+         x<=2 -> ensures "r3":x'<0;
+         x=3 -> ensures "r4":x'<0;
+         x=4 -> ensures "r8":x'<0;
+         x=5 -> ensures "r8":x'<0;
+   }
+}
 {
 	if (x >= 0) {
 		x = -2*x + 10;
+        assert "r2":x-x'>0;
+        assert "r2":x'>=0; //not well-founded!
+        assert "r2":x'<0;  //going to base case
+        assert "r3":x'>5; //going to another base case
+        assert "r8":x'<=2; //going to another base case
+        assert "r4":x'=4; //going to another base case
 		//if (x >= 0) 
         loop(x);
 	}
