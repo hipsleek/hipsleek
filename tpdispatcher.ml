@@ -468,7 +468,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       else
         Redlog.is_sat f sat_no
 
+let tp_is_sat_no_cache_debug f sat_no =
+  Util.ho_debug_2 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula (fun x-> x) string_of_bool tp_is_sat_no_cache f sat_no
+        
+        
 let prune_sat_cache  = Hashtbl.create 2000 ;;
+
+
 
 
 let tp_is_sat (f: CP.formula) (sat_no: string) =
@@ -483,7 +489,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
       try
         Hashtbl.find !sat_cache fstring
       with Not_found ->
-        let r = tp_is_sat_no_cache f sat_no in
+        let r = tp_is_sat_no_cache(*_debug*) f sat_no in
         (*let _ = Util.push_time "cache overhead" in*)
         let _ = Hashtbl.add !sat_cache fstring r in
         (*let _ = Util.pop_time "cache overhead" in*)
@@ -965,6 +971,10 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
 ;;
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  is_sat_sub_no_c f sat_subno false;;
+
+let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =  
+  Util.ho_debug_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+    (string_of_bool ) is_sat_sub_no f sat_subno;;
 
 
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 

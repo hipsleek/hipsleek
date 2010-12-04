@@ -282,7 +282,7 @@ sub hip_process_file {
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
-			#print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1 \n";
+			print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1 \n";
 			$output = `$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";

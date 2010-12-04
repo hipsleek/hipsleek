@@ -65,8 +65,8 @@ void flatten1(node2 x)
 
 /* view for binary search trees */
 bst1 <S> == self = null & S = {} 
-	or self::node2<v, p, q> * p::bst1<S1> * q::bst1<S2> & S3 = union(S1, S2) & S = union(S3, {v}) 
-	& forall (a: (a notin S1 | a<=v)) & forall (b: (b notin S2 | v<=b));
+	or (exists S3: self::node2<v, p, q> * p::bst1<S1> * q::bst1<S2> & S3 = union(S1, S2) & S = union(S3, {v}) 
+	& forall (a: (a notin S1 | a<=v)) & forall (b: (b notin S2 | v<=b)));
 
 /* insert a node in a bst */
 node2 insert1(node2 x, int a)

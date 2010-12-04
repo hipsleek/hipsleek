@@ -2999,12 +2999,15 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
           let g_f = mkBase HTrue np TypeTrue (mkTrueFlow ()) [] b.formula_case_pos in
           List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (get_view_branches c2)) b.formula_case_branches)
 		| EBase b-> 
+      let l_e_v =(b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) in
       if b.formula_ext_continuation != [] then
         let l = get_view_branches b.formula_ext_continuation in
         List.map (fun (c1,c2)-> 
           let r_f = normalize_combine b.formula_ext_base c1 b.formula_ext_pos in
-          ((push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) r_f),c2)) l 
-      else formula_br b.formula_ext_base
+          ((push_exists l_e_v r_f),c2)) l 
+      else 
+        let r = formula_br b.formula_ext_base in
+        List.map (fun (c1,c2) -> ((push_exists l_e_v c1),c2) ) r 
 		| EAssume (_,b,_)-> [] in	
   List.concat (List.map ext_formula_br f0)
 

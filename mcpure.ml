@@ -1097,6 +1097,8 @@ type mix_formula =
   | MemoF of memo_pure
   | OnePF of formula
   
+let print_mix_f  = ref (fun (c:mix_formula) -> "printing not intialized")
+  
 let mix_of_pure f = 
     if (!Globals.allow_pred_spec) then  MemoF (memoise_add_pure_N (mkMTrue ()) f)
     else OnePF f
@@ -1143,6 +1145,12 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   | MemoF f1, MemoF f2 -> MemoF (merge_mems f1 f2 slice_dup)
   | OnePF f1, OnePF f2 -> OnePF (mkAnd f1 f2 no_pos)
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "merge mems: wrong mix of memo and pure formulas"}
+  
+  
+let merge_mems_debug f1 f2 slice_dup = 
+  Util.ho_debug_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
+  !print_mix_f merge_mems f1 f2 slice_dup
+  
   
  let replace_mix_formula_label lb s = match s with
   | MemoF f -> MemoF (replace_memo_pure_label lb f)

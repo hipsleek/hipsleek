@@ -206,8 +206,8 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
     (*let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in*)
     (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-    let rs, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
-    let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs in
+    let rs1, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
+    let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
     residues := Some rs;
     if CF.isFailCtx rs then begin 
 	  print_string ("Fail.\n");

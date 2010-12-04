@@ -416,6 +416,7 @@ and is_firstorder_mem f e vs =
         let ret = is_first_order f [e] in
         Hashtbl.replace vs sv1 ret; ret
       end
+  | CP.IConst _ -> true
   | _ -> false
 
 (* pretty printing for spec_vars *)
@@ -426,9 +427,11 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = match e0 with
-  | CP.Null _ -> " 0 "
+  (*| CP.Null _ -> " 0 "*)
+  | CP.Null _ -> "pconst(0)"
   | CP.Var (sv, _) -> mona_of_spec_var sv
   | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
+(*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
   | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
   | CP.Add (a1, a2, _) ->  " ( " ^ (mona_of_exp a1 f) ^ " + " ^ (mona_of_exp a2 f) ^ ")"
   | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
@@ -500,23 +503,51 @@ and mona_of_formula_exp_list l f = match l with
 
 (* pretty printing for boolean vars *)
 and mona_of_b_formula b f vs =
+    let second_order_composite a1 a2 a3 f = 
+         let (a1ex, a1name, a1str) = (mona_of_exp_secondorder a1 f) in
+        let (a2ex, a2name, a2str) = (mona_of_exp_secondorder a2 f) in
+        let (a3ex, a3name, a3str) = (mona_of_exp_secondorder a3 f) in
+        let all_existentials = a1ex @ a2ex @ a3ex in
+        let str = String.concat "" (List.map (fun name -> "ex2 " ^ name ^ " : (") all_existentials) in
+        let end_str = String.concat "" (List.map (fun name -> ")") all_existentials) in
+        let end_str = 
+          (if a1str <> "" then " & " ^ a1str else "") ^ 
+          (if a2str <> "" then " & " ^ a2str else "") ^ 
+          (if a3str <> "" then " & " ^ a3str else "") ^ end_str^"\n" in
+        (a1name,a2name,a3name,str,end_str)  in
+
   let ret =
   match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
   | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ " = pconst(0))"
+  (* CP.Lt *)   
+  (*| CP.Lt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Lt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lt (a1, a2, _) -> (equation a1 a2 f "less" "<" vs)
+  (* CP.Lte *)   
+  (*| CP.Lte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Lte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lte (a1, a2, _) -> (equation a1 a2 f "lessEq" "<=" vs)
+  (* CP.Gt *)   
+  (*| CP.Gt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Gt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Gt (a1, a2, _) -> (equation a1 a2 f "greater" ">" vs)
+  (* CP.Gte *)   
+  (*| CP.Gte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
+  | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
   (* CP.Neq *)   
   | CP.Neq((CP.Add(a1, a2, l1)), a3, l2)
   | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2)
+  (*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
+  | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*)
     -> "(~" ^ (mona_of_b_formula (CP.Eq((CP.Subtract(a3, a1, l1)), a2, l2)) f vs) ^ ")"
   | CP.Neq (CP.IConst(i, _), a1, _)
   | CP.Neq (a1, CP.IConst(i, _), _) ->
-      if (is_firstorder_mem f a1 vs) then "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
-      else if CP.is_null a1 then "(" ^ (string_of_int i) ^ " > 0)"
-      else "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
+      if (is_firstorder_mem f a1 vs) then
+	"(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
+      else
+	"(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
   | CP.Neq (a1, a2, _) ->
 	if (is_firstorder_mem f a1 vs) then
 	  begin
@@ -538,31 +569,40 @@ and mona_of_b_formula b f vs =
 	    else
 	      "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
 	  end
+  (* CP.Eq *)
+  (*| CP.Eq((CP.Subtract(a1, a2, pos1)), (CP.Subtract(a3, a4, pos2)), pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a4, pos1), CP.Add(a2, a3, pos2), pos3)) f vs)	 
+  | CP.Eq(a1,CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), pos3)  
+  | CP.Eq(CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), a1, pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a3, pos1), CP.Add(a2, a4, pos2), pos3)) f vs)
+  | CP.Eq((CP.Subtract(a3, a1, pos1)), a2, pos2)
+  | CP.Eq(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Eq(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 
+  *)
+  (* try: todo: I think it's not the best place cause the existentials are already introduced *)
+  (*| CP.Eq(CP.Add(CP.Mult _, _, _), _, _) 
+  | CP.Eq(CP.Add(_, CP.Mult _, _), _, _) 
+  | CP.Eq(CP.Add(_, _, _), CP.Mult _, _)
+  | CP.Eq(CP.Add(CP.Add _, _, _), _, _) 
+  | CP.Eq(CP.Add(_, CP.Add _, _), _, _) 
+  | CP.Eq(_, CP.Add(_, CP.Add _ , _), _)
+  | CP.Eq(_, CP.Add(CP.Add _ , _, _), _)  -> ((*print_string("[mona]: weakening to true\n");*) "true")*)
   | CP.Eq((CP.Add(a1, a2, _)), a3, _)
   | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
-      if (is_firstorder_mem f a1 vs) || (is_firstorder_mem f a2 vs) || (is_firstorder_mem f a3 vs) then
+      if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
         let a1str = (mona_of_exp a1 f) in
         let a2str = (mona_of_exp a2 f) in
         let a3str = (mona_of_exp a3 f) in
         match a1 with
           | CP.IConst _ -> "(" ^ a3str ^ " = " ^ a2str ^ " + " ^ a1str ^ ") "
-          | _ ->  "(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
+          | _ ->  
+          "(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
       else
-        let (a1ex, a1name, a1str) = (mona_of_exp_secondorder a1 f) in
-        let (a2ex, a2name, a2str) = (mona_of_exp_secondorder a2 f) in
-        let (a3ex, a3name, a3str) = (mona_of_exp_secondorder a3 f) in
-        let all_existentials = a1ex @ a2ex @ a3ex in
-        let str = String.concat "" (List.map (fun name -> "ex2 " ^ name ^ " : (") all_existentials) in
-        let end_str = String.concat "" (List.map (fun name -> ")") all_existentials) in
-        str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "
-        ^ (if a1str <> "" then " & " ^ a1str else "") ^ (if a2str <> "" then " & " ^ a2str else "") ^ (if a3str <> "" then " & " ^ a3str else "") ^ end_str
-  (*| CP.Neq (CP.IConst (i1,_),CP.IConst (i2,_),_) -> "(" ^ (string_of_int i1) ^ " ~= " ^ (string_of_int i2) ^ ")"
-  | CP.Eq (CP.IConst (i1,_),CP.IConst (i2,_),_) -> "(" ^ (string_of_int i1) ^ " = " ^ (string_of_int i2) ^ ")"*)
+        let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a3 f in
+        str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str
   | CP.Eq (CP.IConst(i, _), a1, _)
   | CP.Eq (a1, CP.IConst(i, _), _) ->
-      if (is_firstorder_mem f a1 vs) then "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
-      else if CP.is_null a1 then "(" ^ (string_of_int i) ^ " = 0)"
-      else "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
+      if (is_firstorder_mem f a1 vs) then
+	"(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
+      else
+	"(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
   (***********************)
   | CP.Eq (a1, CP.Null _, _) ->
       if (is_firstorder_mem f a1 vs) then
@@ -572,25 +612,41 @@ and mona_of_b_formula b f vs =
   (**********************)	
   | CP.Eq (a1, a2, _) -> "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"	 
   | CP.EqMin (a1, a2, a3, _) ->
-	  let a1str = mona_of_exp a1 f in
-	  let a2str = mona_of_exp a2 f in
-	  let a3str = mona_of_exp a3 f in
-	  if (is_firstorder_mem f a1 vs) || (is_firstorder_mem f a2 vs) || (is_firstorder_mem f a3 vs) then
-	  "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-		^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
-          else
+	  if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
+      let a1str = mona_of_exp a1 f in
+      let a2str = mona_of_exp a2 f in
+      let a3str = mona_of_exp a3 f in	  
+      "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
+      ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
+    else
+      let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a3 f in
+      (*str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str*)
+      str ^ "((lessEq(" ^ a3name ^ ", " ^ a2name ^ ") & " ^ a1name ^ " = " ^ a3name ^ ") | (less("
+		^ a2name ^ ", " ^ a3name ^ ") & " ^ a1name ^ " = " ^ a2name ^ "))"   ^end_str
+          
+    (*let a1str = mona_of_exp_secondorder a1 f in
+	  let a2str = mona_of_exp_secondorder a2 f in
+	  let a3str = mona_of_exp_secondorder a3 f in
 	  "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a3str ^ ") | (less("
-		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
-  | CP.EqMax (a1, a2, a3, _) ->
-	  let a1str = mona_of_exp a1 f in
-	  let a2str = mona_of_exp a2 f in
-	  let a3str = mona_of_exp a3 f in
-	  if (is_firstorder_mem f a1 vs) || (is_firstorder_mem f a2 vs) || (is_firstorder_mem f a3 vs) then
-	  "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
-	    ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str
-          else
+		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str*)
+  | CP.EqMax (a1, a2, a3, _) ->	 
+	  if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
+       let a1str = mona_of_exp a1 f in
+       let a2str = mona_of_exp a2 f in
+       let a3str = mona_of_exp a3 f in
+      "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
+        ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str
+    else
+      let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a3 f in
+      (*str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str*)
+      str ^ "((lessEq(" ^ a3name ^ ", " ^ a2name ^ ") & " ^ a1name ^ " = " ^ a2name ^ ") | (less("
+		^ a2name ^ ", " ^ a3name ^ ") & " ^ a1name ^ " = " ^ a3name ^ "))"   ^end_str      
+          
+   (* let a1str = mona_of_exp_secondorder a1 f in
+	  let a2str = mona_of_exp_secondorder a2 f in
+	  let a3str = mona_of_exp_secondorder a3 f in
 	  "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a2str ^ ") | (less("
-		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a3str ^ "))\n"
+		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a3str ^ "))\n"*)
   | CP.BagIn (v, e, l) -> (mona_of_spec_var v) ^ " in " ^ (mona_of_exp e f)
   | CP.BagNotIn (v, e, l) -> "~(" ^ (mona_of_spec_var v) ^ " in " ^ (mona_of_exp e f) ^")"
   | CP.BagSub (e1, e2, l) -> "(" ^ (mona_of_exp e1 f) ^ " sub " ^ (mona_of_exp e2 f) ^ ")"
@@ -604,7 +660,7 @@ and mona_of_b_formula b f vs =
   ret
 
 and equation a1 a2 f sec_order_symbol first_order_symbol vs =
-  if (is_firstorder_mem f a1 vs || is_firstorder_mem f a2 vs) then begin
+  if (is_firstorder_mem f a1 vs && is_firstorder_mem f a2 vs) then begin
     match a1 with
     | CP.IConst(i1, _) ->
 	  "(" ^ (string_of_int i1) ^ first_order_symbol ^ (mona_of_exp a2 f) ^ ")"
@@ -713,15 +769,23 @@ let rec check fd timeout pid : bool =
   try begin
     if (Unix.select [Unix.descr_of_in_channel fd] [] [] timeout) = ([],[],[]) then begin
         print_endline "\nMOna timeout reached."; flush stdout; false
-    end else match input_line fd with
-	| "Formula is valid" ->
-		begin
-      	  if !log_all_flag==true then
-      		output_string log_file (" [mona.ml]: --> SUCCESS\n");
-      	  true;
-      	end
-    | _ -> false
-  end
+    end else 
+    let r = input_line fd in
+    let err= "Error in file " in 
+    match r with
+    | "Formula is valid" ->
+      begin
+            if !log_all_flag==true then
+            output_string log_file (" [mona.ml]: --> SUCCESS\n");
+            true;
+          end
+    | _ -> 
+      let l = String.length err in
+      if (String.compare err (String.sub r 0 l))=0 then
+        Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)}
+      else
+        false
+    end
   with
 	End_of_file -> false
 
@@ -770,7 +834,13 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
       	  output_string log_file (fstr ^ ";\n");
 	  flush log_file;
 	end;
-  let res = check inc timeout pid in
+  let res = 
+    try
+      check inc timeout pid 
+    with
+    | e-> 
+      (print_string ("failing formula: "^(Cprinter.string_of_pure_formula pe)^"\n");
+      raise e) in
   Unix.kill pid 9;
   (try (Unix.close (Unix.descr_of_in_channel inc)) with _ -> ());
   (try (Unix.close (Unix.descr_of_out_channel outc)) with _ -> ());
@@ -823,6 +893,7 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   *)
   (* try 02.04.09 *)
   (* ante *)
+  
   let ante = CP.arith_simplify ante in
   let conseq = CP.arith_simplify conseq in
   let simp_ante = (break_presburger ante true) in

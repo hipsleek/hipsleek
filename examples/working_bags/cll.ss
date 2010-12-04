@@ -78,18 +78,20 @@ int delete(ref node x)
 
 int delete2(ref node x)
 	requires x::hd2<n, S> & S != {} & n > 0
-	ensures x'::hd2<n1, S1> /*& S = union(S1, {res})*/ & n = n1 + 1;
+	ensures x'::hd2<n1, S1> & S = union(S1, {res}) & n = n1 + 1;
 {
+
 	node tmp;
 
 	if (x.next == x) {
-			tmp = x;
+      tmp = x;
 			x = null;
 			return tmp.val;
 	}
 	else{
-		tmp = x.next;
-		x.next = tmp.next;
-		return tmp.val;
-		}
+   tmp = x.next;
+   x.next = tmp.next;
+   int t=tmp.val;
+   return t;
+  }
 }

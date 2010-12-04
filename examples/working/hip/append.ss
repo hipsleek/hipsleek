@@ -20,6 +20,7 @@ void append(node x, node y)
   requires x::ll<n> & y=x & n>0
 	ensures x::clist<n>;
 {
+  dprint;
 	node tmp = x.next;
 	bool fl = tmp != null;
 	if (fl) {

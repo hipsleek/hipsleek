@@ -184,9 +184,11 @@ void reverse(ref node xs, ref node ys)
 	if (xs != null) {
 		node tmp;
 		tmp = xs.next;
+    //dprint;
 		xs.next = ys;
 		ys = xs;
 		xs = tmp;
+    //dprint;
 		reverse(xs, ys);
 	}
 }

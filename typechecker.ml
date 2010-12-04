@@ -169,14 +169,15 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                             CF.h_formula_data_name = c;
                             CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
                             CF.h_formula_data_label = None;
-							CF.h_formula_data_remaining_branches = None;
-							CF.h_formula_data_pruning_conditions = [];
+                            CF.h_formula_data_remaining_branches = None;
+                            CF.h_formula_data_pruning_conditions = [];
                             CF.h_formula_data_pos = pos}) in
 	        let vheap = CF.formula_of_heap vdatanode pos in
+          let vheap = prune_preds prog false vheap in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Util.empty unfolded) then unfolded
-			else
+			else 
 	        let rs_prim, prf = heap_entail_list_failesc_context_init prog false false  unfolded vheap pos pid in
 	        let _ = PTracer.log_proof prf in
 	        let rs = CF.clear_entailment_history_failesc_list rs_prim in
@@ -282,12 +283,13 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                 CF.h_formula_data_node = CP.SpecVar (CP.OType c, res, Unprimed);
                 CF.h_formula_data_name = c;
                 CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
-				CF.h_formula_data_remaining_branches = None;
-				CF.h_formula_data_pruning_conditions = [];
+                CF.h_formula_data_remaining_branches = None;
+                CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
 	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+          let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
 	        res
 	      end;
