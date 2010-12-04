@@ -4041,11 +4041,12 @@ type exp_form =
   | E of exp
 
 type add_term = (int * exp_form)  
-(* e.g i*e; special case of constant i*1 *)
+(* e.g i*e; special case of constant i*1  3*v  4*(a*b) *)
 
 type mult_term = (exp_form * int) 
 (* e^i; special case c^1 or c^-1*)
 
+    (* [2v,3,5v,6ab,..] *)
 type add_term_list = add_term list (* default [] means 0 *)
 type mult_term_list = mult_term list (* default [] means 1 *)
 

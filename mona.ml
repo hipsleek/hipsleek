@@ -781,8 +781,9 @@ let rec check fd timeout pid : bool =
           end
     | _ -> 
       let l = String.length err in
-      if (String.compare err (String.sub r 0 l))=0 then
-        Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)}
+      if ((String.length r) >=l) && String.compare err (String.sub r 0 l)=0 then
+        (print_string "MONA translation failure!";
+        Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)})
       else
         false
     end
@@ -839,7 +840,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
       check inc timeout pid 
     with
     | e-> 
-      (print_string ("failing formula: "^(Cprinter.string_of_pure_formula pe)^"\n");
+      (print_string ("MONA failed : "^(Printexc.to_string e)^(Cprinter.string_of_pure_formula pe)^"\n");
       raise e) in
   Unix.kill pid 9;
   (try (Unix.close (Unix.descr_of_in_channel inc)) with _ -> ());

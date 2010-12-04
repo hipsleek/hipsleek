@@ -761,7 +761,7 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
     
     Util.push_time "memo_norm";
     let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
-			      match norm_bform_option(*_debug *) c1 with
+			      match norm_bform_option(*_debug*) c1 with
 				| Some c1 -> (c1::a1,a2)
 				| None -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
       Util.pop_time "memo_norm";l

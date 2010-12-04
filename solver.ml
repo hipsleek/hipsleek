@@ -2987,7 +2987,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                               es_orig_conseq = estate.es_orig_conseq;
                               es_prior_steps = estate.es_prior_steps;
                               es_path_label = estate.es_path_label;} in
-	      do_fold_w_ctx_debug fold_ctx var_to_fold  in
+	      do_fold_w_ctx(*_debug*) fold_ctx var_to_fold  in
 	    
 	    
 	    (****************************************************************************************************************************************************************************)

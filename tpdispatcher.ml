@@ -900,10 +900,10 @@ let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
 						else imp_no in
 					let res1 =
 						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-							let res1 = tp_imply_debug (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
+							let res1 = tp_imply(*_debug *) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
 							if res1 then res1
-							else tp_imply_debug ante conseq imp_no timeout do_cache
-						else tp_imply_debug ante conseq imp_no timeout do_cache in
+							else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
+						else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
 					let l1 = CP.get_pure_label ante in
 					let l2 = CP.get_pure_label conseq in
 					if res1 then (res1,(l1,l2)::res2,None)

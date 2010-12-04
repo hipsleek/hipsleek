@@ -27,7 +27,7 @@ checkentail  x::node<vv,n,null,xr> *
            S2_2719=union(xrl_S,xrr_S,{xr_v}) &  vv<=xr_v & 
             S=union(S2_2719,{v_2711}) & v_2711<=vv & n=2
         |- x::avl<m2,n,S2>.
-print residue.
+//print residue.
 
 
 
