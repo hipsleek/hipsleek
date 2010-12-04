@@ -633,7 +633,9 @@ and split_mem_grp (g:memoised_group): memo_pure =
 	if (List.length r)>1 then *)
       
 and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
-  memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
+  if qv==[] then c
+  else
+    memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
     
 (* this pushes an exist into a memo-pure;
    it is probably useful consider qv in aset for elimination.
@@ -1034,11 +1036,19 @@ let mimply_one_conj ante_memo0 conseq  t_imply imp_no =
     else (Util.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
   else (Util.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
+let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
+  Util.ho_debug_4 "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
+  (fun x -> string_of_int !x)
+  (fun (c,_,_)-> string_of_bool c) 
+  (fun (x,_,_) -> not x)
+  mimply_one_conj ante_memo0 conseq_conj t_imply imp_no
+
+  
  
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
   match conseq_conj with
     | h :: rest -> 
-	      let (r1,r2,r3)=(mimply_one_conj ante_memo0 h t_imply imp_no) in
+	      let (r1,r2,r3)=(mimply_one_conj_debug ante_memo0 h t_imply imp_no) in
 	      if r1 then 
 	        let r1,r22,r23 = (mimply_conj ante_memo0 rest t_imply imp_no) in
 	        (r1,r2@r22,r23)
@@ -1047,13 +1057,14 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
               (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
             (r1,r2,r3)
     | [] -> (true,[],None)
-
+   
     
 let rec imply_memo ante_memo0 conseq_memo t_imply imp_no 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
           let r = fold_mem_lst_to_lst(*_debug*) [h] false false true in
+          let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in
 	      if r1 then 
 	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in

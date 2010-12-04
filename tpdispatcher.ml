@@ -743,6 +743,14 @@ let tp_imply ante conseq imp_no timeout do_cache =
     tp_imply ante conseq imp_no timeout
 ;;
 
+let tp_imply_debug ante conseq imp_no timeout do_cache =
+ Util.ho_debug_5 "tp_imply " 
+  Cprinter.string_of_pure_formula 
+  Cprinter.string_of_pure_formula
+ (fun c-> c) (fun _ -> "?") string_of_bool 
+ string_of_bool (fun x-> true)
+ tp_imply ante conseq imp_no timeout do_cache
+
 (* renames all quantified variables *)
 let rec requant = function
   | CP.And (f, g, l) -> CP.And (requant f, requant g, l)
@@ -892,10 +900,10 @@ let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
 						else imp_no in
 					let res1 =
 						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-							let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
+							let res1 = tp_imply_debug (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
 							if res1 then res1
-							else tp_imply ante conseq imp_no timeout do_cache
-						else tp_imply ante conseq imp_no timeout do_cache in
+							else tp_imply_debug ante conseq imp_no timeout do_cache
+						else tp_imply_debug ante conseq imp_no timeout do_cache in
 					let l1 = CP.get_pure_label ante in
 					let l2 = CP.get_pure_label conseq in
 					if res1 then (res1,(l1,l2)::res2,None)
@@ -975,7 +983,6 @@ let is_sat_sub_no (f : CP.formula) sat_subno : bool =  is_sat_sub_no_c f sat_sub
 let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =  
   Util.ho_debug_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
-
 
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in

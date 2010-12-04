@@ -648,7 +648,9 @@ let pr_memoise mem =
   fmt_string "[";pr_list_op_none "& " pr_memoise_constraint mem; fmt_string "]"
 
 let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos); fmt_string "]"
-  
+
+let pr_mem_slice_aux slc = fmt_string "[";
+ pr_list_op_none "" pr_pure_formula slc ; fmt_string "]"  
  
 let pr_memoise_group m_gr = 
   (*if !pr_mem then *)
@@ -665,6 +667,19 @@ let pr_memoise_group m_gr =
                fmt_cut();
       ) m_gr; fmt_string ")") m_gr
   (*else ()*)
+  
+let pr_memoise_group_aux m_gr = 
+  (*if !pr_mem then *)
+    fmt_cut();
+    wrap_box ("B",1)
+    ( fun m_gr -> fmt_string "(";pr_list_op_none ""     
+      (fun c-> 
+        let f = MCP.fold_mem_lst (CP.mkTrue no_pos) false true (MCP.MemoF [c]) in
+        fmt_string "[";
+        wrap_box ("B",1) pr_pure_formula f;
+        fmt_string "]";
+        fmt_cut()
+      ) m_gr; fmt_string ")") m_gr
 
 let pr_remaining_branches s = match s with 
     | None -> ()

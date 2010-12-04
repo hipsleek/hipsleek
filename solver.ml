@@ -173,7 +173,7 @@ let prune_branches_subsume prog univ_vars lhs_node rhs_node = match lhs_node,rhs
 
 let prune_branches_subsume_debug prog univ_vars lhs_node rhs_node = 
   Util.ho_debug_4 "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
-  (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None)))
+  (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None))) (fun _ -> true)
   prune_branches_subsume prog univ_vars lhs_node rhs_node
   
 let clear_entailment_history_es (es :entail_state) :context = 
@@ -1573,6 +1573,46 @@ and elim_ante_evars (es:entail_state) : context =
   let ef = elim_exists f in
   Ctx {es with es_formula = ef } (*!! maybe unsound unless new clean cache id*)
 
+  
+(*used for finding the unsat in the original pred defs formulas*)
+and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
+  let sat_subno = ref 1 in 
+  match f with
+    | Base _ | Exists _ ->
+	      let _ = reset_int2 () in
+	      let pf, pfb = xpure prog f in
+	      let is_ok =        
+	        if pfb = [] then 
+              TP.is_sat_mix_sub_no pf sat_subno true true
+	        else
+            (*  let r = TP.is_sat_mix_sub_no npf sat_subno true true in*)
+              let npf = MCP.fold_mem_lst (CP.mkTrue no_pos) false true pf in
+              List.fold_left (fun is_ok (label, pf1b) ->
+                  if not is_ok then false 
+                  else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in	  
+	      if is_ok then ([f],[]) else ([],[f])
+    | Or ({formula_or_f1 = f1;
+          formula_or_f2 = f2;
+          formula_or_pos = pos}) ->
+	      let nf1,nf1n = find_unsat prog f1 in
+	      let nf2,nf2n = find_unsat prog f2 in
+	      (nf1@nf2,nf1n@nf2n)
+  
+  
+and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
+ let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in
+ let (ph, phb) = xpure_f hf in
+ let phb = CP.merge_branches phb br in    
+ if phb = [] then
+    let npf = MCP.merge_mems mix ph true in
+    (not (TP.is_sat_mix_sub_no npf sat_subno true true))
+ else
+    let npf = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true mix in
+    let r = List.fold_left (fun is_ok (_,pf1b)->  
+                is_ok  && (TP.is_sat_sub_no (CP.mkAnd npf pf1b no_pos) sat_subno)) 
+              true phb in
+    (not r)
+   
 and unsat_base prog (sat_subno:  int ref) f  : bool= 
   match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
@@ -1580,40 +1620,17 @@ and unsat_base prog (sat_subno:  int ref) f  : bool=
       formula_base_pure = p;
       formula_base_branches = br;
       formula_base_pos = pos}) ->
-          let (ph, phb) = xpure_heap prog h 1 in
-          let phb = CP.merge_branches phb br in  
-          if phb = [] then 
-            let npf = MCP.merge_mems(*_debug*) p ph true in
-            (*let _ = print_string (" before sat: "^(Cprinter.string_of_mix_formula npf)^"\n") in*)
-            let r = TP.is_sat_mix_sub_no npf sat_subno true true in
-            (*let _ = print_string (" sat: "^(string_of_bool r)^"\n") in*)
-            (not r)
-          else
-            let npf = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true p in
-            let r = List.fold_left (fun is_ok (_,pf1b)->  if not is_ok then false else 
-              TP.is_sat_sub_no (CP.mkAnd npf pf1b no_pos) sat_subno ) true phb in
-            (not r)
+          is_unsat_with_branches (fun f-> xpure_heap prog f 1) [] h p br pos sat_subno
     | Exists ({ formula_exists_qvars = qvars;
                 formula_exists_heap = qh;
                 formula_exists_pure = qp;
                 formula_exists_branches = br;
                 formula_exists_pos = pos}) ->
-          let wrap_exists f = List.fold_left (fun f -> fun qv -> CP.Exists (qv, f, None, pos)) f qvars in
-          let (ph, phb) = xpure_heap prog qh 1 in
-          let phb = CP.merge_branches phb br in    
-          if phb = [] then 
-            let npf = MCP.merge_mems qp ph true in
-            let f_lst = MCP.fold_mix_lst_to_lst npf false true true in
-            List.fold_left (fun a c-> if a then a else not (TP.is_sat_sub_no (wrap_exists c) sat_subno)) false f_lst 
-          else
-            let npf = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true qp in
-            let r = List.fold_left (fun is_ok (_,pf1b)->  
-                if not is_ok then false 
-                else TP.is_sat_sub_no (wrap_exists (CP.mkAnd npf pf1b no_pos)) sat_subno) true phb in
-            (not r)
+          is_unsat_with_branches (fun f-> xpure_heap prog f 1) qvars qh qp br pos sat_subno
              
 and unsat_base_debug prog (sat_subno:  int ref) f  : bool= 
-  Util.ho_debug_3 "unsat_base " (fun _ -> "?") (fun x-> (string_of_int !x)) Cprinter.string_of_formula string_of_bool
+  Util.ho_debug_3 "unsat_base " (fun _ -> "?") (fun x-> (string_of_int !x)) 
+  Cprinter.string_of_formula string_of_bool
   unsat_base prog sat_subno f
              
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
@@ -1628,37 +1645,12 @@ and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) :
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
   | Or _ -> elim_unsat_all prog f 
   | _ -> f
-
-(*used for finding the unsat in the original pred defs formulas*)
-and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
-  let sat_subno = ref 1 in 
-  match f with
-    | Base _ | Exists _ ->
-	      let _ = reset_int2 () in
-	      let pf, pfb = xpure prog f in
-	      let is_ok =        
-	        if pfb = [] then 
-              let f_lst = MCP.fold_mix_lst_to_lst pf false true true in
-              List.fold_left (fun a c-> if not a then a else TP.is_sat_sub_no c sat_subno) true f_lst 
-	        else
-              let npf = MCP.fold_mem_lst (CP.mkTrue no_pos) false true pf in
-              List.fold_left (fun is_ok (label, pf1b) ->
-                  if not is_ok then false 
-                  else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in	  
-	      if is_ok then ([f],[]) else ([],[f])
-    | Or ({formula_or_f1 = f1;
-          formula_or_f2 = f2;
-          formula_or_pos = pos}) ->
-	      let nf1,nf1n = find_unsat prog f1 in
-	      let nf2,nf2n = find_unsat prog f2 in
-	      (nf1@nf2,nf1n@nf2n)
-
 	          
 and elim_unsat_all prog (f : formula): formula = match f with
   | Base _ | Exists _ ->
         let sat_subno = ref 1 in	
         let _ = reset_int2 () in
-	    (*      print_endline (Cprinter.string_of_formula f);*)
+	    (*(*      print_endline (Cprinter.string_of_formula f);*)
         let pf, pfb = xpure prog f in
         let is_ok =
           if pfb = [] then 
@@ -1670,8 +1662,9 @@ and elim_unsat_all prog (f : formula): formula = match f with
                 if not is_ok then false 
                 else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in
 	    TP.incr_sat_no ();
-	    (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)
-	    if is_ok then f else mkFalse (flow_formula_of_formula f) (pos_of_formula f)
+	    (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)*)
+      let is_ok = unsat_base prog sat_subno f in
+	    if not is_ok then f else mkFalse (flow_formula_of_formula f) (pos_of_formula f)
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
@@ -2994,7 +2987,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                               es_orig_conseq = estate.es_orig_conseq;
                               es_prior_steps = estate.es_prior_steps;
                               es_path_label = estate.es_path_label;} in
-	      do_fold_w_ctx(*_debug*) fold_ctx var_to_fold  in
+	      do_fold_w_ctx_debug fold_ctx var_to_fold  in
 	    
 	    
 	    (****************************************************************************************************************************************************************************)
