@@ -93,7 +93,7 @@ requires x=5
   x<0 -> ensures "r1": x'=x;
  x>=0 -> case {
            x>10 -> 
-          //variance x
+          //variance 0 (indirect, going to another base case)
           ensures "r2":x'<0;
   x<=10 -> ensures "r3":false;
  }}
