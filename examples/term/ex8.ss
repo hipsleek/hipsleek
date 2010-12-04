@@ -48,16 +48,18 @@ case {
 */
 
 case {
-  x<0 -> // variance 0 (base case)
+  x<0 -> // variance 0,false (base case)
          ensures "r1":x'=x;
   x>=0 -> case {
          x>5 -> //variance x (not well-founded)
-                //variance 0 (going to base case)
+                //variance 0,x<0 (going to x<0)
                 ensures "r2":x'<0;
-         x<=2 -> ensures "r3":x'<0;
-         x=3 -> ensures "r4":x'<0;
-         x=4 -> ensures "r8":x'<0;
-         x=5 -> ensures "r8":x'<0;
+         x<=2 -> //variance 0,x>5
+                 ensures "r3":x'<0;
+         x=3 -> //variance 0, x=4
+                 ensures "r4":x'<0;
+         4<=x<=5 -> //variance o,x<=2
+                    ensures "r8":x'<0;
    }
 }
 {
@@ -93,7 +95,7 @@ requires x=5
   x<0 -> ensures "r1": x'=x;
  x>=0 -> case {
            x>10 -> 
-          //variance 0 (indirect, going to another base case)
+          //variance 0, x<0 (indirect, going to another base case)
           ensures "r2":x'<0;
   x<=10 -> ensures "r3":false;
  }}
