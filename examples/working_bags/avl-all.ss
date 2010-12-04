@@ -223,7 +223,7 @@ node remove_min_add(node x, ref myint a)
   myint tmp2 = new myint(0);
   if (x.left == null) {
     if (x.right == null) {
-      assume false;
+      //assume false;
       if (a.val >= x.val) {
         ti = x.val;
         x.val = a.val;
@@ -240,16 +240,16 @@ node remove_min_add(node x, ref myint a)
           a.val = ti;
           ti = x.val;
           tr = x.right.left;
-          dprint;
+          //dprint;
           //assert tr' = null;
           //assume tr' = null ; //'
           return x;
         } else {
-          assume false;
+          //assume false;
           return x;
         }
       } else {
-      assume false;
+        //assume false;
         ti = x.val;
         tr = x.right.left;
         //assert tr' = null;
@@ -264,7 +264,7 @@ node remove_min_add(node x, ref myint a)
       }
     }
   } else {
-    assume false;
+    //assume false;
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;

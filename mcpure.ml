@@ -1048,7 +1048,7 @@ let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no =
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
   match conseq_conj with
     | h :: rest -> 
-	      let (r1,r2,r3)=(mimply_one_conj_debug ante_memo0 h t_imply imp_no) in
+	      let (r1,r2,r3)=(mimply_one_conj(*_debug*) ante_memo0 h t_imply imp_no) in
 	      if r1 then 
 	        let r1,r22,r23 = (mimply_conj ante_memo0 rest t_imply imp_no) in
 	        (r1,r2@r22,r23)
