@@ -19,12 +19,18 @@ case {
 
 //requires x > 5
 //ensures x'<0;
+/*
 case {
  x<0 -> ensures x'=x;
-x>=0 -> case {
+ x>=0 -> case {
          x>5 -> ensures x'<0;
-        x<=5 -> ensures true;
+         x<=5 -> ensures true;
        }
+}
+*/
+case {
+ x<0 -> ensures x'=x;
+ x>=0 -> requires x > 5 ensures x'<0;
 }
 
 {
