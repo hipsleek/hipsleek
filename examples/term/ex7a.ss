@@ -14,7 +14,10 @@ case {
      z>0 -> case {
        x+y<=0 -> // variance 0,x<=0
          ensures "dr":x'=x+y & y'=y+z;
-       x+y>0  -> ensures "tm2":true;
+       x+y>0  -> case {
+         y+z>=0 -> ensures "tm2a":false; // loop
+         y+z<0  -> ensures "tm2b":x'<x & y'>y; //true; //may not terminate
+       }
        }
     z<=0 -> // variance x
             // varterm x<=0
