@@ -4,7 +4,7 @@ data node {
 }
              
 bigint<b, v> == self = null & v = 0 or
-                 self::node<p, q> * q::bigint<b, v1> & 0 <= p < b & v = b*v1 + p
+                 self::node<p, q> * q::bigint<b, v1> & 0 <= p < b & v = b*v1 + p & v > 0
                  inv v >= 0;
 
 int int_value_of(node x, int b)
@@ -19,6 +19,7 @@ node bigint_of(int v, int b)
   requires v >= 0 & 0 < b <= 10
   ensures res::bigint<b, v>;
 {
+  if (v == 0) return null;
   if (v < b) {
     return new node(v, null);
   } else {
@@ -34,6 +35,7 @@ node add_one_digit(node x, int c, int b)
   ensures res::bigint<b, v+c> * x::bigint<b, v>;
 {
   if (x == null) {
+    if (c == 0) return null;
     return new node(c, x);
   } else {
     int t = x.val + c;
@@ -60,7 +62,6 @@ node add_c(node x, node y, int c, int b)
     }
   } else {
     if (y == null) {
-    assert y = null;
       return add_one_digit(x, c, b);
     } else {
       int t = x.val + y.val + c;
@@ -87,9 +88,9 @@ node mult_c(node x, int d, int c, int b)
   requires x::bigint<b, v> & 0 <= c < b & 0 <= d < b & b <= 10
   ensures res::bigint<b, v*d+c> * x::bigint<b, v>;
 {
-  if (x == null) {
+  if (x == null || d == 0) {
     if (c == 0) return null;
-    else return new node(c, null);
+    return new node(c, null);
   } else {
     int ans = x.val * d + c;
     int carry = 0;
@@ -133,11 +134,10 @@ int compare(node x, node y)
   ensures res = 0 & v1 = v2 or res > 0 & v1 > v2 or res < 0 & v1 < v2;
 {
   if (x == null) {
-    if (is_zero(y)) return 0;
+    if (y == null) return 0;
     return -1;
   }
   if (y == null) {
-    if (is_zero(x)) return 0;
     return 1;
   }
   int c = compare(x.next, y.next);
@@ -149,15 +149,13 @@ bool is_equal(node x, node y)
   requires x::bigint<b, v1> * y::bigint<b, v2>
   ensures res & v1 = v2 or !res & v1 != v2;
 {
-  /* unproveable code
   if (x == null || y == null) {
-    return is_zero(x) && is_zero(y);
+    return x == null && y == null;
   } else {
-    if (x.val == y.val) return is_equal(x.next, y.next);
+    bool eq = is_equal(x.next, y.next);
+    if (x.val == y.val) return eq;
     else return false;
   }
-  */
-  return compare(x, y) == 0;
 }
 
 bool is_zero(node x)
@@ -165,7 +163,6 @@ bool is_zero(node x)
   ensures res & v = 0 or !res & v != 0;
 {
   if (x == null) return true;
-  if (x.val == 0 && is_zero(x.next)) return true;
   return false;
 }
 

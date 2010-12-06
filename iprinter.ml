@@ -267,9 +267,9 @@ let rec string_of_formula = function
 					F.formula_exists_heap = hf;
 					F.formula_exists_flow = fl;
 					F.formula_exists_pure = pf}) ->
-	  "(EX " ^ (String.concat ", " (List.map fst qvars)) ^ " . "
+	  "(EX " ^ (string_of_var_list qvars) ^ " . "
 	  ^ (if hf = F.HTrue then 
-		   string_of_pure_formula pf
+		   ("true & ")^string_of_pure_formula pf
 		 else if hf = F.HFalse then 
 		   let s = string_of_pure_formula pf in 
 			 (if s = "" then  (string_of_h_formula hf)
@@ -361,12 +361,22 @@ let rec string_of_exp = function
 		   exp_bind_fields = vs;
 		   exp_bind_path_id = pid;
 		   exp_bind_body = e})-> 
-          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
-  | Block ({exp_block_body = e;})-> "{" ^ (string_of_exp e) ^ "}\n"
+          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")	   
+  | Block ({
+    exp_block_local_vars = lv;
+    exp_block_body = e;
+    })-> 
+    "{" ^(match lv with
+        | [] -> ""
+        | _ -> "local: "^
+          (String.concat "," (List.map (fun (c1,c2,c3)->(string_of_typ c2)^" "^c1) lv))^"\n")
+        ^ (string_of_exp e) ^ "}\n"
   | Break b -> string_of_control_path_id_opt b.exp_break_path_id ("break "^(string_of_label b.exp_break_jump_label))
   | Cast e -> "(" ^ (string_of_typ e.exp_cast_target_type) ^ ")" ^ (string_of_exp e.exp_cast_body)
   | Continue b -> string_of_control_path_id_opt b.exp_continue_path_id ("continue "^(string_of_label b.exp_continue_jump_label))
+  | Catch c -> ("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
   | Empty l -> ""
+  | Finally c->  ("finally "^(string_of_exp c.exp_finally_body))
   | Unary ({exp_unary_op = o;
 			exp_unary_exp = e;
 			exp_unary_pos = l})-> 
@@ -454,14 +464,9 @@ let rec string_of_exp = function
   | Try ({	exp_try_block = bl;
 			exp_catch_clauses = cl;
 			exp_finally_clause = fl;})
-				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_catch b)) "" cl)^
-									(List.fold_left (fun a b -> a^"\n"^(string_of_finally b)) "" fl)
-									
-and string_of_catch c  = 
-		("catch (" ^ (match c.exp_catch_var with | Some x-> x | None -> "") ^ ": " ^ c.exp_catch_flow_type ^")\n"^(string_of_exp c.exp_catch_body))
-
-and string_of_finally c = ("finally "^(string_of_exp c.exp_finally_body))
-
+				-> "try {"^(string_of_exp bl)^"\n}"^(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" cl)^
+									(List.fold_left (fun a b -> a^"\n"^(string_of_exp b)) "" fl)
+							
 and 
    (* function to transform a list of expression in a string *)
    string_of_exp_list l c = match l with  

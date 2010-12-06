@@ -18,7 +18,7 @@ bnd<n,sm,bg> ==
 ll<n> == self=null & n=0
 	or self::node<_, r> * r::ll<n-1>
 	inv n>=0;
-
+  
 coercion self::sll<n, sm, lg> -> self::ll<n>;
 
 
@@ -66,15 +66,6 @@ bool bubble(node xs)
 			xs.val = xs.next.val; //ERROR: lhs and rhs do not match
 			//xs.next.val = aux;
 			flag = true; 
-/*
-			if (!tmp) {
-				if (xs.next.next != null) { // this is the coercion step
-					//node tmp2 = xs.next.next;
-					//xs.next.next = id(tmp2);
-					id3(xs.next.next);
-				}
-			}
-*/
 		}
 		return (flag || tmp);	
 	}

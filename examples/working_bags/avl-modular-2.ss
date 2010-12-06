@@ -571,7 +571,9 @@ void main()
   node tmp = new node(1,1,null,null);
   tmp=insert(tmp, 3);
   assume tmp'=null or tmp'!=null;
+  dprint;
   tmp=insert(tmp, 11);
+  assume false;
   assume tmp'=null or tmp'!=null;
   tmp=insert(tmp, 5);
   assume tmp'=null or tmp'!=null;

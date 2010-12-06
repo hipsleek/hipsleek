@@ -6,7 +6,9 @@
 
   module F = Iformula
   module P = Ipure
-
+ 
+  let file_name = ref ""
+  
   type type_decl =
 	| Data of data_decl
 	| Enum of enum_decl
@@ -1045,6 +1047,7 @@ proc_header
 		  proc_static_specs = $7;
 		  proc_dynamic_specs = [];
 		  proc_loc = get_pos 1;
+      proc_file = !file_name;
 		  proc_body = None }
 	}
   | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
@@ -1059,6 +1062,7 @@ proc_header
 			proc_static_specs = $7;
 			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
+      proc_file = !file_name;
 			proc_body = None }
   }
 ;
@@ -1084,6 +1088,7 @@ constructor_header
 			proc_static_specs = $6;
 			proc_dynamic_specs = [];
 			proc_loc = get_pos 1;
+      proc_file = !file_name;
 			proc_body = None }
 	(*	else
 		  report_error (get_pos 1) ("constructors have only static speficiations");*)
@@ -1291,9 +1296,11 @@ block
 	match $2 with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
 						   exp_block_jump_label = NoJumpLabel;
+               exp_block_local_vars = [];
 						   exp_block_pos = get_pos 1 }
 	  | _ -> Block { exp_block_body = $2;
 					 exp_block_jump_label = NoJumpLabel;
+           exp_block_local_vars = [];
 					 exp_block_pos = get_pos 1 }
   }
 ;
@@ -1485,7 +1492,7 @@ time_statement
 dprint_statement
   : PRINT SEMICOLON { Dprint ({exp_dprint_string = "";
 							   exp_dprint_pos = (get_pos 1)}) }
-  | PRINT IDENTIFIER SEMICOLON { Dprint ({exp_dprint_string = $2;
+  | PRINT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE SEMICOLON { Dprint ({exp_dprint_string = $3;
 							   exp_dprint_pos = (get_pos 1)}) }
 ;
 
@@ -1642,7 +1649,7 @@ opt_catch_list
 
 catch_clause
 	: CATCH OPAREN IDENTIFIER IDENTIFIER CPAREN valid_declaration_statement 
-		{ { exp_catch_var = Some $4;
+		{Catch { exp_catch_var = Some $4;
 			exp_catch_flow_type = $3 (*(Named $3) *);
 			exp_catch_flow_var = None;
 			exp_catch_body = $6;																					   
@@ -1651,7 +1658,7 @@ catch_clause
 
 opt_finally
 	: {[]}
-	| FINALLY valid_declaration_statement {let f = {exp_finally_body = $2;
+	| FINALLY valid_declaration_statement {let f = Finally {exp_finally_body = $2;
 												    exp_finally_pos = get_pos 1 } in f::[] }
 ;
 opt_expression

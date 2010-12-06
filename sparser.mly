@@ -205,10 +205,10 @@
 %left SEMICOLON
 %left OR
 %left AND
-%left STAR
 %right NOT
 %left EQ NEQ GT GTE LT LTE
 %left PLUS MINUS
+%left STAR
 %left UMINUS
 
 %nonassoc LOWER_THAN_DOT_OP
@@ -566,9 +566,9 @@ one_constr
 	|  OPAREN EXISTS opt_cid_list COLON core_constr CPAREN {
 	  match $5 with
 		| F.Base ({F.formula_base_heap = h;
-				   F.formula_base_pure = p;
-				   F.formula_base_flow = fl;
-                   F.formula_base_branches = b}) ->
+               F.formula_base_pure = p;
+               F.formula_base_flow = fl;
+               F.formula_base_branches = b}) ->
 			F.mkExists $3 h p fl b (get_pos 1)
 		| _ -> report_error (get_pos 4) ("only Base is expected here.")
 	}
@@ -748,6 +748,9 @@ cexp
   | LITERAL_INTEGER cid {
 	  P.mkMult (P.IConst ($1, get_pos 1)) (P.Var ($2, get_pos 2)) (get_pos 1)
 	}
+  | cexp STAR cexp {
+      P.mkMult $1 $3 (get_pos 2)
+  }
   | cexp PLUS cexp {
 	  P.mkAdd $1 $3 (get_pos 2)
 	}

@@ -7,6 +7,14 @@ bigint<v> == self = null & v = 0 or
              self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p
              inv v >= 0;
 
+node clone(node x)
+  requires x::bigint<v>
+  ensures x::bigint<v> * res::bigint<v>;
+{
+  if (x == null) return x;
+  return new node(x.val, clone(x.next));
+}
+
 int int_value(node x)
   requires x::bigint<v>
   ensures res = v;
@@ -19,36 +27,25 @@ node bigint_of(int v)
   requires v >= 0
   ensures res::bigint<v>;
 {
-  if (v < 10) {
-    return new node(v, null);
-  } else {
-    int digit = 0;
-    int rem = div_with_remainder(v, 10, digit);
-    node rest = bigint_of(rem);
-    return new node(digit, rest);
-  }
+  if (v < 10) return new node(v, null);
+  int digit = 0;
+  int rem = div_with_remainder(v, 10, digit);
+  node rest = bigint_of(rem);
+  return new node(digit, rest);
 }
 
 node add_one_digit(node x, int c)
   requires x::bigint<v> & 0 <= c <= 9
   ensures res::bigint<v+c> * x::bigint<v>;
 {
-  if (x == null) {
-    return new node(c, x);
-  } else {
-    int t = x.val + c;
-    int carry = 0;
-    if (t >= 10) {
-      t = t - 10;
-      carry = 1;
-    }
-    node rest = add_one_digit(x.next, carry);
-    return new node(t, rest);
-  }
+  if (x == null) return new node(c, x);
+  int t = x.val + c;
+  if (t >= 10) return new node(t - 10, add_one_digit(x.next, 1));
+  return new node(t, clone(x.next));
 }
 
 node add_c(node x, node y, int c)
-  requires x::bigint<v1> * y::bigint<v2> & 0 <= c <= 9
+  requires x::bigint<v1> * y::bigint<v2> & 0 <= c <= 1
   ensures res::bigint<v1+v2+c> * x::bigint<v1> * y::bigint<v2>;
 {
   if (x == null) {
@@ -65,9 +62,11 @@ node add_c(node x, node y, int c)
       int t = x.val + y.val + c;
       int carry = 0;
       if (t >= 10) {
-        carry = div_with_remainder(t, 10, t);
+        // carry = div_with_remainder(t, 10, t);
         // carry = t/10;
         // t = t - carry*10;
+        carry = 1;
+        t = t - 10;
       }
       node rest = add_c(x.next, y.next, carry);
       return new node(t, rest);
@@ -82,22 +81,39 @@ node add(node x, node y)
   return add_c(x, y, 0);
 }
 
-/*
-node subtract(node x, node y)
-  requires x::bigint<v1> * y::bigint<v2>
+node sub_one_digit(node x, int c)
+  requires x::bigint<v> & 0 <= c <= 9 & c <= v
+  ensures res::bigint<v-c> * x::bigint<v>;
+{
+  if (x == null) return null;
+  if (x.val >= c) return new node(x.val - c, clone(x.next));
+  return new node(x.val + 10 - c, sub_one_digit(x.next, 1));
+}
+
+node sub_c(node x, node y, int c)
+  requires x::bigint<v1> * y::bigint<v2> & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c> * x::bigint<v1> * y::bigint<v2>;
+{
+  if (x == null) return null;
+  if (y == null) return sub_one_digit(x, c);
+  int t = x.val - y.val - c;
+  if (t >= 0) return new node(t, sub_c(x.next, y.next, 0));
+  return new node(t+10, sub_c(x.next, y.next, 1));
+}
+
+node sub(node x, node y)
+  requires x::bigint<v1> * y::bigint<v2> & v1 >= v2
   ensures res::bigint<v1-v2> * x::bigint<v1> * y::bigint<v2>;
 {
-  return subtract_c(x, y, 0);
+  return sub_c(x, y, 0);
 }
-*/
 
 node mult_c(node x, int d, int c)
   requires x::bigint<v> & 0 <= c <= 9 & 0 <= d <= 9 
   ensures res::bigint<v*d+c> * x::bigint<v>;
 {
   if (x == null) {
-    if (c == 0) return null;
-    else return new node(c, null);
+    return new node(c, null);
   } else {
     int ans = x.val * d + c;
     int carry = 0;
@@ -117,11 +133,8 @@ node shift_left(node x)
   requires x::bigint<v>
   ensures res::bigint<v*10>;
 {
-  if (x == null) {
-    return x;
-  } else {
-    return new node(0, x);
-  }
+  if (x == null) return x;
+  return new node(0, x);
 }
 
 node mult(node x, node y)
@@ -133,8 +146,29 @@ node mult(node x, node y)
   } else {
     node t1 = mult_c(x, y.val, 0);
     node t2 = shift_left(mult(x, y.next));
-    return add_c(t1, t2, 0);
+    return add(t1, t2);
   }
+}
+
+node karatsuba_mult(node x, node y)
+  requires x::bigint<v1> * y::bigint<v2>
+  ensures res::bigint<v1*v2> * x::bigint<v1> * y::bigint<v2>;
+{
+  if (x == null || y == null) return null;
+  if (x.next == null || y.next == null) return mult(x, y);
+  // x = x1*10+x2
+  // y = y1*10+y2
+  // A = x1*y1
+  node A = karatsuba_mult(x.next, y.next);
+  // B = x2*y2
+  node B = bigint_of(x.val * y.val);
+  // C= (x1+x2)*(y1+y2)
+  node C = karatsuba_mult(add_one_digit(x.next, x.val), add_one_digit(y.next, y.val));
+  // K = C - A - B = x1*y2 + x2*y1
+  node K = sub(C, add(A, B));
+  // node K = add(mult_c(x.next, y.val, 0), mult_c(y.next, x.val, 0));
+  // x * y = A*100 + K*10 + B
+  return add(shift_left(shift_left(A)), add(shift_left(K), B));
 }
 
 bool is_zero(node x)
@@ -150,7 +184,6 @@ bool is_equal(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
   ensures res & v1 = v2 or !res & v1 != v2;
 {
-  /* correct code but not proveable by redlog
   if (x == null) {
     if (is_zero(y)) return true;
     else return false;
@@ -163,8 +196,7 @@ bool is_equal(node x, node y)
       else return false;
     }
   }
-  */
-  return compare(x, y) == 0;
+  // return compare(x, y) == 0;
 }
 
 int compare(node x, node y)

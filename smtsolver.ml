@@ -102,7 +102,6 @@ let logic_for_formulas f1 f2 =
   | true, false -> AUFLIA (* should I use UFNIA instead? *)
   | false, false -> UFNIA
 
-
 (**
  * Define SMT provers and commands needed to run them
  *)
@@ -222,7 +221,6 @@ let rec smt_of_formula f qvars =
       let qvars = StringSet.add varname qvars in
       "(exists (?" ^ varname ^ " Int) " ^ (smt_of_formula p qvars) ^ ")"
 
-
 (**
  * output for smt-lib v2.0 format
  *)
@@ -269,7 +267,7 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
   in
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
   let ante_str = smt_of_formula ante StringSet.empty in
   let conseq_str = smt_of_formula conseq StringSet.empty in
   let logic = logic_for_formulas ante conseq in
