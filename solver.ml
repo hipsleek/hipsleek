@@ -26,7 +26,7 @@ let pop_fail_ctx () =
   *) 
 let previous_failure () = not(U.empty !fail_ctx_stk)
    
-
+let failure_msg = ref ("" : string)
 
 let enable_distribution = ref true
 let sat_no = ref 1
@@ -1545,6 +1545,7 @@ and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_uni
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
   if isAnyFalseCtx ctx then
+    (*failure_msg := "Error in antecedent. ";*)
     (* check this first so that false => false is true (with false residual) *)
     ((SuccCtx [ctx]), UnsatAnte)
   else(* if isConstFalse conseq then
@@ -2200,6 +2201,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
     
 
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs rhs_p rhs_p_br pos : (list_context * proof) =
+  let sat_subno = ref 1 in
   (*print_endline ("RHS: " ^ Cprinter.string_of_pure_formula_branches (rhs_p, rhs_p_br));*)
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
@@ -2267,20 +2269,29 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	  *)
 	  (* useless to print "IMP" statement in debug as there is no imply method called before and not even a procedure that calls an imply *)
       (*let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in *)
+      let _ = Debug.devel_pprint ((Cprinter.string_of_pure_formula new_ante0) ^ " |- " ^ (Cprinter.string_of_pure_formula new_conseq0)) pos in
+      (* Check for MAY failure: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)
+      let new_formula = CP.mkAnd new_ante0 new_conseq0 no_pos in
+      let res_sat = TP.is_sat new_formula ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) in
+      let _ = if res_sat then failure_msg := "May failure. " else failure_msg := "Must failure. " in
+      (*(*Check strongness of pre-condition: if (forall conseq |- ante = true) then (ante is stronger than conseq.*)
+      let _ = imp_subno := !imp_subno + 1 in
+      let res_imp,_,_ = TP.imply new_conseq0 new_ante0 ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) in
+      let _ = if res_imp then failure_msg := !failure_msg ^ "Antecedent is stronger then consequence. " else () in*)
       let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in
       let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in
       let split_ante1 = Tpdispatcher.split_disjunctions new_ante in
-	  (* first try for xpure 0 and see what conjuncts can be discharged *)
+                      (* first try for xpure 0 and see what conjuncts can be discharged *)
       let res1,res2,res3 = if (CP.isConstTrue rhs_p) then (true,[],None) else (imply_conj split_ante0 split_ante1 split_conseq) in	
 	  (* added by cezary  for branches *)
-      let res1,res2,re3 = 
+      let res1,res2,res3 = 
         if res1 = false && branch_id = "" then
 	      let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
           let fold_fun (is_ok,a2,a3) branch_id_added =
             if is_ok then (is_ok,a2,a3) else
 	          let tmp1 = CP.mkAnd (CP.combine_branch branch_id_added (xpure_lhs_h, xpure_lhs_h_b)) (CP.combine_branch branch_id_added (lhs_p, lhs_b)) pos in
 	          let new_ante, new_conseq = heap_entail_build_pure_check estate.es_evars tmp1 rhs_p pos in
-		      imp_subno := !imp_subno+1; 
+                      imp_subno := !imp_subno+1; 
 		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
 		      TP.imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
           in
