@@ -86,8 +86,6 @@ pred ll<n> == self = null & n = 0
 //checkentail (y::node<_,_>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<n>@I).
 //print residue.
 
-checkentail y::node<_,_> |- y::ll<_>.
-
 //checkentail (x::ll<n>@I); y::ll<m>@I * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<m2>@I * t::ll<a2>@I).
 //print residue.
 
