@@ -770,3 +770,104 @@ let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bo
  
  
 let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"
+
+let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+  let r = try
+    f e 
+  with ex -> 
+      let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
+      let _ = print_string (s^" Exception Occurred!"^(Printexc.to_string ex)^"\n") in raise ex in
+  let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
+  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  r
+    
+let string_of_option (f:'a->string) (e:'a option) : string = 
+  match e with
+    | Some x -> f x
+    | None -> "None" 
+
+let ho_debug_1_option (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z option) (e:'a) : 'z option =
+  ho_debug_1 s pr_i (string_of_option pr_o) f e 
+
+let string_of_list (f:'a->string) (ls:'a list) : string = 
+  ("["^(String.concat "," (List.map f ls))^"]")
+
+let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z list) (e:'a) : 'z list =
+  ho_debug_1 s pr_i (string_of_list pr_o) f e 
+
+let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  let r = (try
+    f e1 e2 
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" Exception Occurred!"^(Printexc.to_string ex)^"\n") in raise ex) 
+  in
+  let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+  let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  r
+
+let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  let r = try
+    f e1 e2 e3
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+      let _ = print_string (s^" Exception Occurred!"^(Printexc.to_string ex)^"\n") in      raise ex in
+  let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+  let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+  let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  r
+  
+let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  let r = try
+    f e1 e2 e3 e4
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+      let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
+      let _ = print_string (s^" Exception Occurred!"^(Printexc.to_string ex)^"\n") in  raise ex in
+  if (test r) then
+    let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+    let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+    let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    r
+  else
+    r
+let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
+  let r = try
+    f e1 e2 e3 e4 e5
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+      let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
+      let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
+       let _ = print_string (s^" Exception Occurred!"^(Printexc.to_string ex)^"\n") in raise ex in
+  if (test r) then
+    let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+    let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+    let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
+    let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    r  
+  else 
+    r
+
+let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
+  ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
+
+(*
+let conv_var_to_exp_debug (v:spec_var) :exp =
+ Util.ho_debug_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v
+*)
