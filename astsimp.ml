@@ -356,6 +356,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
         {
           IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
           IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+	  IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
           IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
           IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
           IF.h_formula_heap_arguments = hargs;
@@ -375,6 +376,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
           {
             IF.h_formula_heap_node = h0.IF.h_formula_heap2_node;
             IF.h_formula_heap_name = h0.IF.h_formula_heap2_name;
+	    IF.h_formula_heap_imm = h0.IF.h_formula_heap2_imm;
             IF.h_formula_heap_full = h0.IF.h_formula_heap2_full;
             IF.h_formula_heap_with_inv = h0.IF.h_formula_heap2_with_inv;
             IF.h_formula_heap_arguments = hargs;
@@ -1844,6 +1846,18 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		   CF.h_formula_star_h1 = h1;
 		   CF.h_formula_star_h2 = h2;
 		   CF.h_formula_star_pos = _
+		 } 
+             | CF.Conj
+		 {
+		   CF.h_formula_conj_h1 = h1;
+		   CF.h_formula_conj_h2 = h2;
+		   CF.h_formula_conj_pos = _
+		 } 
+             | CF.Phase
+		 {
+		   CF.h_formula_phase_rd = h1;
+		   CF.h_formula_phase_rw = h2;
+		   CF.h_formula_phase_pos = _
 		 } ->
 		 let name1 = find_view_heap h1 in
 		 let name2 = find_view_heap h2
@@ -1881,7 +1895,7 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
 		   CF.h_formula_view_arguments = _;
 		   CF.h_formula_view_pos = _
 		 } -> if (CP.name_of_spec_var p) = v then c else ""
-             | CF.HTrue | CF.HFalse -> "")
+             | CF.HTrue | CF.HFalse | CF.Hole _ -> "")
 	in find_view_heap h
     | CF.Or _ ->
 	Err.report_error
@@ -3409,6 +3423,7 @@ and
         {
           IF.h_formula_heap_node = (v, p);
           IF.h_formula_heap_name = c;
+	  IF.h_formula_heap_imm = imm;
           IF.h_formula_heap_arguments = exps;
           IF.h_formula_heap_full = full;
           IF.h_formula_heap_pos = pos;
@@ -3431,6 +3446,7 @@ and
                {
                  CF.h_formula_view_node = new_v;
                  CF.h_formula_view_name = c;
+		 CF.h_formula_view_imm = imm;
                  CF.h_formula_view_arguments = hvars;
                  CF.h_formula_view_modes = vdef.I.view_modes;
                  CF.h_formula_view_coercible = true;
@@ -3449,6 +3465,7 @@ and
                    {
                      CF.h_formula_data_node = new_v;
                      CF.h_formula_data_name = c;
+		     CF.h_formula_data_imm = imm;
                      CF.h_formula_data_arguments = hvars;
 		     CF.h_formula_data_label = pi;
                      CF.h_formula_data_pos = pos;
@@ -3465,9 +3482,32 @@ and
         let tmp_h = CF.mkStarH lf1 lf2 pos in
         let tmp_type = CF.mkAndType type1 type2 in 
 	  (tmp_h, tmp_type)
+    | IF.Phase
+        {
+          IF.h_formula_phase_rd = f1;
+          IF.h_formula_phase_rw = f2;
+          IF.h_formula_phase_pos = pos
+        } ->
+        let (lf1, type1) = linearize_heap f1 pos in
+        let (lf2, type2) = linearize_heap f2 pos in
+        let tmp_h = CF.mkPhaseH lf1 lf2 pos in
+        let tmp_type = CF.mkAndType type1 type2 in 
+	  (tmp_h, tmp_type)
+   | IF.Conj
+        {
+          IF.h_formula_conj_h1 = f1;
+          IF.h_formula_conj_h2 = f2;
+          IF.h_formula_conj_pos = pos
+        } ->
+        let (lf1, type1) = linearize_heap f1 pos in
+        let (lf2, type2) = linearize_heap f2 pos in
+        let tmp_h = CF.mkConjH lf1 lf2 pos in
+        let tmp_type = CF.mkAndType type1 type2 in 
+	  (tmp_h, tmp_type)
     | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
     | IF.HFalse -> (CF.HFalse, CF.TypeFalse) in
-  let linearize_base base pos =
+  
+let linearize_base base pos =
     let h = base.IF.formula_base_heap in
     let p = base.IF.formula_base_pure in
     let br = base.IF.formula_base_branches in
@@ -4050,6 +4090,18 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
           IF.h_formula_star_h1 = h1;
           IF.h_formula_star_h2 = h2;
           IF.h_formula_star_pos = pos
+	} 
+    | IF.Conj
+	{
+          IF.h_formula_conj_h1 = h1;
+          IF.h_formula_conj_h2 = h2;
+          IF.h_formula_conj_pos = pos
+	} 
+    | IF.Phase
+	{
+          IF.h_formula_phase_rd = h1;
+          IF.h_formula_phase_rw = h2;
+          IF.h_formula_phase_pos = pos
 	} ->
 	(collect_type_info_heap prog h1 stab;
 	 collect_type_info_heap prog h2 stab)
@@ -4286,6 +4338,35 @@ and case_normalize_renamed_formula prog (h:(ident*primed) list)(b:bool)(f:Iformu
 	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
 	    linearize_heap new_used_names1 f2 in
 	  let tmp_h = IF.mkStar lf1 lf2 pos in
+	  let tmp_link = IP.mkAnd link1 link2 pos in
+	  let tmp_link_br = IP.merge_branches link1_br link2_br in
+	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+
+      | IF.Conj
+	  {
+	    IF.h_formula_conj_h1 = f1;
+	    IF.h_formula_conj_h2 = f2;
+	    IF.h_formula_conj_pos = pos
+	  } ->
+	  let (new_used_names1, qv1, lf1, (link1, link1_br)) =
+	    linearize_heap used_names f1 in
+	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
+	    linearize_heap new_used_names1 f2 in
+	  let tmp_h = IF.mkConj lf1 lf2 pos in
+	  let tmp_link = IP.mkAnd link1 link2 pos in
+	  let tmp_link_br = IP.merge_branches link1_br link2_br in
+	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+      | IF.Phase
+	  {
+	    IF.h_formula_phase_rd = f1;
+	    IF.h_formula_phase_rw = f2;
+	    IF.h_formula_phase_pos = pos
+	  } ->
+	  let (new_used_names1, qv1, lf1, (link1, link1_br)) =
+	    linearize_heap used_names f1 in
+	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
+	    linearize_heap new_used_names1 f2 in
+	  let tmp_h = IF.mkPhase lf1 lf2 pos in
 	  let tmp_link = IP.mkAnd link1 link2 pos in
 	  let tmp_link_br = IP.merge_branches link1_br link2_br in
 	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
@@ -4953,7 +5034,7 @@ and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var l
 				 else b.Cformula.formula_ext_base 
 			       | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 			     in
-			     let not_fact,nf_br = (Solver.xpure cp d) in
+			     let not_fact,nf_br, memset = (Solver.xpure cp d) in
 			     let fact =  Solver.normalize_to_CNF not_fact no_pos in
 			     let fact = Cpure.drop_disjunct fact in
 			     let fact = Cpure.rename_top_level_bound_vars fact in

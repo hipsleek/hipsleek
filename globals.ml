@@ -40,7 +40,7 @@ and prim_type =
 type mode = 
   | ModeIn
   | ModeOut
-
+     
 (* global constants *)
 
 let no_pos = 
@@ -79,6 +79,8 @@ let self = "self"
 let this = "this"
 
 (* command line options *)
+
+let instantiation_variants = ref 0
 
 let omega_simpl = ref true
 
@@ -148,14 +150,28 @@ let print_core = ref false
 
 let print_err_sleek = ref false
 
+let enable_prune_cache = ref true
 
 let seq_to_try = ref false
 
 let print_input = ref false
 
-let instantiation_variants = ref 0
-
 let pass_global_by_value = ref false
+
+let allow_pruning = ref true
+let prune_cnt_limit = ref 2
+let allow_umemo_slicing = ref true
+(*let allow_imemo_slicing = ref true
+let agressive_unsat = ref false
+let agressive_imply = ref false*)
+
+let prune_cnt = ref 0
+let dropped_branches = ref 0
+let saved_unfolds = ref 0
+let total_unfold_disjs = ref 0
+
+
+
 
 let profile_threshold = 0.5 
 
@@ -237,6 +253,12 @@ let fresh_names (n : int) = (* number of names to be generated *)
     done;
     !names
 
+let formula_cache_no_series = ref 0
+
+let fresh_formula_cache_no  () = 
+  formula_cache_no_series := !formula_cache_no_series +1;
+  !formula_cache_no_series
+    
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 

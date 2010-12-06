@@ -45,6 +45,27 @@ let rec remove_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
+let mem f x l = List.exists (f x) l
+  
+  (* from cpure
+and mem (sv : spec_var) (svs : spec_var list) : bool =
+  List.exists (fun v -> eq_spec_var sv v) svs
+
+and disjoint (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.for_all (fun sv -> not (mem sv svs2)) svs1
+
+and subset (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.for_all (fun sv -> mem sv svs2) svs1
+
+and difference (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> not (mem sv svs2)) svs1
+
+and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
+  List.filter (fun sv -> mem sv svs2) svs1
+*)
+  
+  
+  
 let rec remove_dups_f n f= 
   match n with
     [] -> []
@@ -66,11 +87,24 @@ let subset l1 l2 =
 let disjoint l1 l2 = 
   List.for_all (fun x -> not (List.mem x l2)) l1
 
+let overlap l1 l2 = 
+  List.exists (fun x -> (List.mem x l2)) l1
+
 let intersect l1 l2 =
   List.filter (fun x -> List.mem x l2) l1
 
+let intersect_fct f l1 l2 =
+  List.filter (fun x -> List.exists (f x) l2) l1  
+  
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
+
+let difference_f f l1 l2 =
+  List.filter (fun x -> not (List.exists (f x) l2)) l1
+  
+let list_equal l1 l2 = 
+  let l = (List.length (intersect l1 l2)) in
+  ((List.length l1) =  l) && (l = (List.length l2))
   
 let spacify i = 
   let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
@@ -403,7 +437,7 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
 
 let profiling_stack = ref []
 let tasks = ref (Hashtbl.create 10)  
-	
+
 let get_time () = 
 	let r = Unix.times () in
 	(*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
@@ -447,8 +481,20 @@ let add_index l =
 		| [] -> []
 		| a::b-> (i,a)::(ff (i+1) b) in
 	(ff 0 l)
+
 	
-	
+let counters = ref (Hashtbl.create 10)
+
+let add_to_counter (s:string) i = 
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = Hashtbl.fold (fun k v a-> a^k^" = "^(string_of_int v)^"\n") !counters ""
 	
 (*hairy stuff for exception numbering*)
 			
@@ -519,3 +565,208 @@ let has_cycles ():bool =
 		if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
 			else (List.exists (fun c-> (cc c (c::visited))) sons) in	
 	(cc Globals.top_flow [Globals.top_flow])
+  
+  
+  
+let print_profiling_info () =
+  if (!Globals.profiling) then 
+    let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !tasks [] in
+    let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+      let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+      let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+      let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+      let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+        (if (List.length l)>0 then 
+          let l = (List.sort compare l) in		
+          (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+        else "")^"],  "^(fp (t/.ot))^"%)") in
+      ((a1+1),r) 
+    ) (0,"") str_list in
+    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" )
+  else ()
+  
+  
+(*aliasing structures*)
+type ('a,'k) e_map =  ('a * 'k) list
+type 'a e_set =  ('a,'a list) e_map
+type 'a e_set_str =  (string e_set * ('a -> string))
+
+let empty_a_set () : 'a e_set = []
+
+let empty_a_set_str f : 'a e_set_str = ([],f)
+
+let find_aux (s: ('a,'k) e_map) (e:'a) (d:'k) : 'k =
+  try
+     List.assoc e s
+  with
+     _ -> d
+
+(* find key of e in s *)
+let find (s : 'a e_set) (e:'a) : 'a list  = find_aux s e []
+
+
+let find_str ((s,f) : 'a e_set_str) (e:'a) : string list  
+      = find_aux s (f e) []
+
+(* returns s |- x=y *)
+let is_equiv (s: 'a e_set)  (x:'a) (y:'a) : bool =
+  if (x=y) then true
+  else
+    let r1 = find s x in
+    let r2 = find s y in
+    (r1==r2 && not(empty r1))
+
+(* returns s |- x=y *)
+let is_equiv_str ((s,f): 'a e_set_str)  (x:'a) (y:'a) : bool =
+  is_equiv s (f x) (f y)
+
+(* add x=y to e-set s *)
+let add_equiv (s: 'a e_set) (x:'a) (y:'a) : 'a e_set = 
+  if (x=y) then s
+  else
+    let r1 = find s x in
+    let r2 = find s y in
+    if empty r1 then
+      if empty r2 then
+        let r3 = [x;y] in
+        (x,r3)::((y,r3)::s)
+      else (x,r2)::s
+    else
+      if empty r2 then (y,r1)::s
+      else
+        if r1==r2 then s
+        else 
+          let r3=r1@r2 in
+          List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
+
+let add_equiv_str ((s,f): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
+  (add_equiv s (f x) (f y), f)
+
+
+(* split out sub-lists in l which overlaps with x *)
+let split_partition (x:'a list) (l:'a list list): ('a list list * 'a list list) =
+ List.fold_left ( fun (r1,r2) y -> if (overlap x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
+ 
+(* merge l1 /\ l2 to [[a]] *)
+let rec merge_partition (l1:'a list list) (l2:'a list list) : 'a list list = match l1 with
+  | [] -> l2
+  | x::xs ->
+    let (y,ys)=split_partition x l2 in
+    if empty y then x::(merge_partition xs l2)
+    else merge_partition xs ((x@(List.concat y))::ys)
+   (*remove dupl of x*)
+         
+(* converts (a e_set) to [[a]] *)
+let partition (s: 'a e_set) : 'a list list =
+ let rec insert (a,k) lst = match lst with
+      | [] -> [(k,[a])]
+      | (k2,ls)::xs -> 
+        if k==k2 then (k,a::ls)::xs
+          else (k2,ls)::(insert (a,k) xs) in
+ let r = List.fold_left (fun lst x ->  insert x lst) [] s in
+ List.map ( fun (_,b) -> b) r
+         
+(* converts [[a]] to (a e_set) *)
+let un_partition (l:'a list list) : 'a e_set =
+ let flat xs y = List.map (fun x -> (x,y)) xs in
+ List.concat (List.map (fun x -> flat x x) l)
+         
+(* merge two equivalence sets s1 /\ s2 *)
+let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
+ let l1=partition s1 in
+ let l2=partition s2 in
+ let l3=merge_partition l1 l2 in
+ un_partition l3
+
+(* merge two equivalence set_str s1 /\ s2 *)
+let merge_set_str ((s1,f): 'a e_set_str) ((s2,_): 'a e_set_str): 'a e_set_str =
+ (merge_set s1 s2,f)
+
+(* disjointness structures*)
+type 'a d_set =  ('a list) list
+
+(* below will help convert to string representation*)
+type 'a d_set_str =  (string d_set * ('a -> string)) 
+
+(* an empty difference set *)
+let empty_dset () : 'a d_set = []
+
+(* an empty difference set *)
+let empty_dset_str (f:'a->string) : 'a d_set_str = ([],f)
+
+(* a singleton difference set *)
+let singleton_dset (e:'a) : 'a d_set = [[e]]
+
+(* a singleton difference set *)
+let singleton_dset_str (f:'a->string) (e:'a) : 'a d_set_str = ([[f e]],f)
+
+(* returns a list of difference sets for element e *)
+let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
+  (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
+
+(* returns a list of difference sets for element e *)
+let find_diff_str (eq_str:string->string->bool) ((s,f): 'a d_set_str) (e:'a) : 'a d_set_str =
+  (find_diff (eq_str) s (f e),f)
+
+(* returns checks if l1/\l2 !=null based on physical equality *)
+let overlap_q l1 l2 = 
+  List.exists (fun x -> (List.memq x l2)) l1
+
+(* checks s |- x!=y *)
+let is_disj (eq:'a->'a->bool)  (s: 'a d_set)  (x:'a) (y:'a) : bool =
+  if (eq x y) then false 
+  else
+    let l1 = find_diff eq s x in
+    let l2 = find_diff eq s y in
+    (overlap_q l1 l2)
+
+(* checks s |- x!=y *)
+let is_disj_str (eq_str:string->string->bool)  ((s,f): 'a d_set_str)  (x:'a) (y:'a) : bool =
+ is_disj eq_str s (f x) (f y)
+
+(*  returns s1/\s2 *)
+let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
+ s1@s2
+
+(*  returns s1/\s2 *)
+let merge_disj_set_str ((s1,f1): 'a d_set_str) ((s2,_): 'a d_set_str): 'a d_set_str =
+  (merge_disj_set s1 s2, f1)
+
+(*  returns s1*s2 *)
+let star_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
+  if empty s1 then s2
+  else if empty s2 then s1
+  else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
+
+(*  returns s1*s2 *)
+let star_disj_set_str ((s1,f1): 'a d_set_str) ((s2,_): 'a d_set_str): 'a d_set_str = (star_disj_set s1 s2,f1)
+
+(*  returns s1\/s2 *)
+let or_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
+  List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
+
+(*  returns s1\/s2 *)
+let or_disj_set_str ((s1,f): 'a d_set_str) ((s2,_): 'a d_set_str): 'a d_set_str =
+  (or_disj_set s1 s2,f)
+
+(* check if there was a conflict in a difference list *)
+let  is_conflict_list (eq:'a -> 'a -> bool) (l:'a list) :bool =
+  let rec helper l =
+    match l with
+      | [] -> false
+      | x::xs -> let b=List.exists (eq x) xs in
+        if b then true
+        else helper xs
+  in helper l
+
+(* check if there was a conflict in a set of difference lists *)
+let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
+ List.exists (is_conflict_list eq) s
+
+(* check if there was a conflict in a set of difference lists *)
+let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bool =
+ is_conflict eq_str s
+ 
+ 
+let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"

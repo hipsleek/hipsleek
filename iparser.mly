@@ -160,6 +160,7 @@
 %token INTERR
 %token INTERSECT
 %token INV
+%token IMM
 %token LT
 %token LTE
 %token MAX
@@ -509,8 +510,6 @@ cid
   | THIS { (this, Unprimed) }
 ;
 
-
-
 view_body
   : formulas {((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1))}
 ;
@@ -732,26 +731,33 @@ heap_constr
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
 ;
 
+opt_imm
+  : IMM {true}
+  | {false}    
+;
+
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label {
+  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_imm opt_formula_label {
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
+						 F.h_formula_heap_imm = $7;
 						 F.h_formula_heap_full = false;
 						 F.h_formula_heap_with_inv = false;
 						 F.h_formula_heap_pseudo_data = false;
 						 F.h_formula_heap_arguments = $5;
-						 F.h_formula_heap_label = $7;
+						 F.h_formula_heap_label = $8;
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
+  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_imm opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
+							F.h_formula_heap2_imm = $7;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
 							F.h_formula_heap2_arguments = $5;
-							F.h_formula_heap2_label = $7;
+							F.h_formula_heap2_label = $8;
 							F.h_formula_heap2_pos = get_pos 2 } in
 		h
 	}

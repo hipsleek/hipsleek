@@ -617,6 +617,79 @@ let rec split_disjunctions = function
   | z -> [z]
 ;;
 
+(*-------------*)
+(* 
+   try to solve the inequalities from the rhs by making queries to the memory set:
+   - if the inequality cannot be solved -> leave it in the conseq
+   - if the equality is solved -> remove it from conseq + add the guard of the memory set disjoint pair used in the solving
+*)
+  let rec solve_ineq (memset : Cformula.mem_formula) conseq : Cpure.formula =
+    match conseq with
+      | Cpure.BForm (f, l) -> solve_ineq_b_formula memset f
+      | Cpure.And (f1, f2, pos) -> Cpure.And((solve_ineq memset f1), (solve_ineq memset f2), pos)  
+      | Cpure.Or (f1, f2, l, pos) -> Cpure.Or((solve_ineq memset f1), (solve_ineq memset f2), l, pos)  
+      | Cpure.Not (f, l, pos) -> Cpure.Not((solve_ineq memset f), l, pos)
+      (* todo: think about it *)
+      | _ -> conseq
+      (*| Forall of (spec_var * formula * (formula_label option) * loc)
+      | Exists of (spec_var * formula * (formula_label option) * loc)*)
+	  
+  and solve_ineq_b_formula memset conseq : Cpure.formula =
+    let get_guard eq (memset :  (CP.spec_var * CP.formula) Util.d_set) v1 v2 : Cpure.formula =
+      let l1 = Util.find_diff eq memset v1 in
+      let res = Util.find_diff eq l1 v2 in
+	(* res should be a singleton; if it's not then we will only use the head *)
+	if (List.length res) > 0 then
+	  List.fold_left (fun x y -> CP.mkAnd x (snd y) no_pos) (CP.mkTrue no_pos) (List.hd res)
+	else CP.mkTrue no_pos
+    in
+      
+      match conseq with
+	| Cpure.Neq (e1, e2, pos) -> 
+	    if (CP.is_var e1) && (CP.is_var e2) then
+	      let eq = (fun x y -> CP.eq_spec_var (fst x) (fst y)) in
+	      let v1 = CP.to_var e1 in
+	      let v2 = CP.to_var e2 in
+	      let _ = print_string("Trying to prove " ^ (Cprinter.string_of_spec_var v1) ^ "!=" ^ (Cprinter.string_of_spec_var v2) ^ 
+				     " by using the memory set " ^ (Cprinter.string_of_mem_formula memset) ^ "\n") in
+		(* the second element in the (v1, _) and (v2, _) do not matter as the comparison is based on v1 and v2, respectively *)
+	      let discharge = Util.is_disj eq memset.Cformula.mem_formula_mset (v1, CP.mkTrue no_pos) (v2, CP.mkTrue no_pos) in
+		if discharge then 
+		  let _ = print_string("Found a witness in the memory set\n") in
+		  (* need to add the guard to the conseq *)
+		  let guard = get_guard eq memset.Cformula.mem_formula_mset (v1, CP.mkTrue no_pos) (v2, CP.mkTrue no_pos) in
+		    guard
+		else CP.BForm(conseq, None) (* todo: add loc as a par to the method *)
+            else CP.BForm(conseq, None)
+        | _ -> CP.BForm(conseq, None)	
+(* todo: i can actually solve more types of b_formulae *)
+
+(*
+      | BConst() of (bool * loc)
+  | BVar of (spec_var * loc)
+  | Lt of (exp * exp * loc)
+  | Lte of (exp * exp * loc)
+  | Gt of (exp * exp * loc)
+  | Gte of (exp * exp * loc)
+  | Eq of (exp * exp * loc) (* these two could be arithmetic or pointer or bag or list *)
+  | EqMax of (exp * exp * exp * loc) (* first is max of second and third *)
+  | EqMin of (exp * exp * exp * loc) (* first is min of second and third *)
+	  (* bag formulas *)
+  | BagIn of (spec_var * exp * loc)
+  | BagNotIn of (spec_var * exp * loc)
+  | BagSub of (exp * exp * loc)
+  | BagMin of (spec_var * spec_var * loc)
+  | BagMax of (spec_var * spec_var * loc)
+	  (* list formulas *)
+  | ListIn of (exp * exp * loc)
+  | ListNotIn of (exp * exp * loc)
+  | ListAllN of (exp * exp * loc)
+  | ListPerm of (exp * exp * loc)
+*)
+
+(*-------------*)
+
+
 let tp_imply ante conseq imp_no timeout =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
                   ^(Cprinter.string_of_pure_formula conseq)^"\n") in
@@ -780,8 +853,10 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
   tp_is_sat f sat_no
 ;;
 
-let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (memset : Cformula.mem_formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+  let conseq0 = solve_ineq memset conseq0 in
+  let _ = print_string("The new conseq is " ^ (Cprinter.string_of_pure_formula conseq0) ^ "\n") in  
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -827,17 +902,17 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   end
 ;;
 
-let imply_timeout ante0 conseq0 imp_no timeout =
+let imply_timeout ante0 conseq0 memset imp_no timeout =
 
   let _ = Util.push_time "imply" in
-  let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout in
+  let (res1,res2,res3) = imply_timeout ante0 conseq0 memset imp_no timeout in
 
   let _ = Util.pop_time "imply" in
   if res1  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
   (res1,res2,res3)
 ;;
 
-let imply ante0 conseq0 imp_no = imply_timeout ante0 conseq0 imp_no 0.
+let imply ante0 conseq0 memset imp_no = imply_timeout ante0 conseq0 memset imp_no 0.
 ;;
 
 let is_sat f sat_no =

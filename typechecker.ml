@@ -139,22 +139,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		          | None -> Err.report_error {Err.error_loc = pos; Err.error_text = "assert/assume should not be here; it should have been handled earlier!"}
 		          | Some c ->
 			            (let assumed_ctx = CF.normalize_max_renaming_list_partial_context c pos false new_ctx in
-			            (*print_int (!Omega.test_number);*)
 			            let ret =CF.transform_list_partial_context ((elim_unsat_es prog (ref 1)),(fun c->c)) assumed_ctx in
-			            (*print_int
-			              (!Omega.test_number);*)
 			            ret)
-			                (* match c2 with *)
-			                (*   | None -> Err.report_error {Err.error_loc = pos; Err.error_text = "assert/assume should not be here; it should have been handled earlier!"} *)
-			                (*   | Some c -> *)
-			                (*       Debug.pprint ("assume condition:\n" ^ (Cprinter.string_of_formula c)) pos; *)
-			                (*       if not(CF.isFailListPartialCtx new_ctx) then *)
-			                (* 	let assumed_ctx = CF.normalize_max_renaming_list_partial_context c pos false new_ctx in *)
-			                (* 	  (\*print_int (!Omega.test_number);*\) *)
-			                (* 	let ret =CF.transform_list_partial_context ((elim_unsat_es prog (ref 1)),(fun c->c)) assumed_ctx in *)
-			                (* 	  (\*print_int (!Omega.test_number);*\) *)
-			                (* 	  ret *)
-			                (*       else new_ctx *)
 	      end
         | Assign ({exp_assign_lhs = v;
 		  exp_assign_rhs = rhs;
@@ -176,7 +162,6 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 		            resctx 
 	              else (CF.Ctx c1) in
 	            let r = CF.transform_list_partial_context (fct,(fun c->c)) ctx1 in
-	            (*let _ = print_string ("-> post assert : "^(Cprinter.string_of_context_list r)^"\n") in*)
 	            r
 	          end
         | BConst ({exp_bconst_val = b;
@@ -217,24 +202,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	        let _ = Debug.devel_pprint ("bind: unfolded context:\n"
 			^ (Cprinter.string_of_list_partial_context unfolded)
 			^ "\n") pos in
-	        (* let _ = Debug.devel_pprint ("bind: unfolded formula after eliminating unsatisfiable disjuncts:\n"
-	           ^ (string_of_constr unfolded) ^ "\n") pos in *)
 	        let c = CP.name_of_type v_t in
-	        (*--- 09.05.2000 *)
-	        (* change performed on 09.04.2008 *)
-	        (* before: *)
-	        (*let fn1 = fresh_name () in
-	          let fn2 = fresh_name () in
-	          let _ = (print_string ("\n[typechecker.ml, line 132]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n")) in
-	          let _ = (print_string ("\n[typechecker.ml, line 133]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n")) in
-	          let ext_var = CP.SpecVar (CP.OType c, fn1, Unprimed) in
-	          let t_var = CP.SpecVar (CP.OType c, fn2, Unprimed) in*)
-	        (*09.05.2008 ---*)
-	        (* 09.06.08*)
-	        (*let ext_var = CP.SpecVar (CP.OType c, c, Unprimed) in*)
-	        (*let t_var = CP.SpecVar (CP.OType c, c, Unprimed) in*)
 	        let vdatanode = CF.DataNode ({CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
 			CF.h_formula_data_name = c;
+			CF.h_formula_data_imm = false;
 			CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
 			CF.h_formula_data_label = None;
 			CF.h_formula_data_pos = pos}) in
@@ -534,6 +505,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_conte
 	        (*let ext_null = CP.mkNull ext_var pos in*)
 	        let heap_node = CF.DataNode ({CF.h_formula_data_node = CP.SpecVar (CP.OType c, res, Unprimed);
 			CF.h_formula_data_name = c;
+			CF.h_formula_data_imm = false;
 			CF.h_formula_data_arguments =
 					(*type_var :: ext_var :: *) heap_args;
 			CF.h_formula_data_label = None;

@@ -9,7 +9,6 @@ open Globals
 module Err = Error
 module CP = Cpure
 module U = Util
-
   
 
 type typed_ident = (CP.typ * ident)
@@ -61,12 +60,27 @@ and formula =
   | Or of formula_or
   | Exists of formula_exists
 
-and formula_base = { formula_base_heap : h_formula;
-formula_base_pure : CP.formula;
-formula_base_type : t_formula;
+and formula_base = { 
+formula_base_heap : h_formula;
+(*formula_base_mem  : mem_formula; (* not used mostly *)
+formula_base_disj : disj_formula;*)
+formula_base_pure : CP.formula;formula_base_type : t_formula;
 formula_base_flow : flow_formula;
 formula_base_branches : (branch_label * CP.formula) list;
 formula_base_pos : loc }
+
+
+and mem_formula = { 
+(*mem_formula_exact : boolean ;*) (* true if exact; false if underapprox *)
+mem_formula_mset : (CP.spec_var * CP.formula) Util.d_set (*(CP.spec_var list) list*); (* list of disjoint vars *)
+(*mem_formula_disj : (CP.spec_var list) list; *)
+}
+
+(*
+and disj_formula = { 
+disj_formula_mset : (CP.spec_var list) list; (* list of list of disjoint vars *)
+}
+*)
 
 and formula_or = { formula_or_f1 : formula;
 formula_or_f2 : formula;
@@ -93,24 +107,37 @@ and flow_treatment =
 		  
 and h_formula = (* heap formula *)
   | Star of h_formula_star
+  | Conj of h_formula_conj
+  | Phase of h_formula_phase
   | DataNode of h_formula_data
   | ViewNode of h_formula_view
+  (* | Mem of [[Var]] *)
+  | Hole of int    
   | HTrue
   | HFalse
           
-
 and h_formula_star = { h_formula_star_h1 : h_formula;
 h_formula_star_h2 : h_formula;
 h_formula_star_pos : loc }
 
+and h_formula_conj = { h_formula_conj_h1 : h_formula;
+h_formula_conj_h2 : h_formula;
+h_formula_conj_pos : loc }
+
+and h_formula_phase = { h_formula_phase_rd : h_formula;
+h_formula_phase_rw : h_formula;
+h_formula_phase_pos : loc }
+
 and h_formula_data = { h_formula_data_node : CP.spec_var;
 h_formula_data_name : ident;
+h_formula_data_imm : bool;
 h_formula_data_arguments : CP.spec_var list;
 h_formula_data_label : formula_label option;
 h_formula_data_pos : loc }
 
 and h_formula_view = { h_formula_view_node : CP.spec_var;
 h_formula_view_name : ident;
+h_formula_view_imm : bool;
 h_formula_view_arguments : CP.spec_var list;
 h_formula_view_modes : mode list;
 h_formula_view_coercible : bool;
@@ -163,7 +190,7 @@ and struc_formula_of_heap h pos = [EBase {
 		 formula_ext_pos = pos}]
 		 
 and struc_formula_of_formula f pos = [EBase { 
-		 formula_ext_explicit_inst = [];	 formula_ext_implicit_inst = []; formula_ext_exists = [];
+	 formula_ext_explicit_inst = [];	 formula_ext_implicit_inst = []; formula_ext_exists = [];
 		 formula_ext_base = f;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos}]
@@ -263,6 +290,51 @@ and is_complex_heap (h : h_formula) : bool = match h with
 and is_coercible (h : h_formula) : bool = match h with
   | ViewNode ({h_formula_view_coercible = c}) -> c
   | _ -> false
+
+(*
+  for immutability 
+*)
+and drop_read_phase (f : h_formula) : h_formula = match f with
+  | Phase(f1) -> f1.h_formula_phase_rw
+  | _ -> f
+
+and drop_read_phase1 (f : h_formula) p : h_formula = match f with
+  | Phase(f1) -> 
+      if contains_spec_var f1.h_formula_phase_rw p 
+      then f1.h_formula_phase_rw
+      else f
+  | Star({h_formula_star_h1 = h1;
+	 h_formula_star_h2 = h2;
+	 h_formula_star_pos = pos;}) -> 
+      let new_f1 = drop_read_phase1 h1 p in
+      let new_f2 = drop_read_phase1 h2 p in
+	mkStarH new_f1 new_f2 pos
+  | Conj({h_formula_conj_h1 = h1;
+	 h_formula_conj_h2 = h2;
+	 h_formula_conj_pos = pos;}) -> 
+      let new_f1 = drop_read_phase1 h1 p in
+      let new_f2 = drop_read_phase1 h2 p in
+	mkConjH new_f1 new_f2 pos
+  | _ -> f
+
+and contains_spec_var (f : h_formula) p : bool = match f with
+  | DataNode (h1) -> Cpure.eq_spec_var p h1.h_formula_data_node
+  | ViewNode (h1) -> Cpure.eq_spec_var p h1.h_formula_view_node
+  | Phase ({h_formula_phase_rd = h1;
+	    h_formula_phase_rw = h2;}) ->
+      (contains_spec_var h1 p) or (contains_spec_var h2 p)
+  | Conj ({h_formula_conj_h1 = h1;
+	   h_formula_conj_h2 = h2;}) ->
+      (contains_spec_var h1 p) or (contains_spec_var h2 p)
+  | Star ({h_formula_star_h1 = h1;
+	   h_formula_star_h2 = h2;}) ->
+      (contains_spec_var h1 p) or (contains_spec_var h2 p)
+  | _ -> false
+ 
+and get_imm (f : h_formula) : bool =  match f with
+  | DataNode (h1) -> h1.h_formula_data_imm
+  | ViewNode (h1) -> h1.h_formula_view_imm
+  | _ -> false (* we shouldn't get here *)
 
 (*
   perform simplification incrementally
@@ -532,12 +604,32 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
   | HTrue -> f2
   | _ -> match f2 with
-	  | HFalse -> HFalse
-	  | HTrue -> f1
-	  | _ -> Star ({h_formula_star_h1 = f1; 
-					h_formula_star_h2 = f2; 
-					h_formula_star_pos = pos})
+      | HFalse -> HFalse
+      | HTrue -> f1
+      | _ -> Star ({h_formula_star_h1 = f1; 
+		    h_formula_star_h2 = f2; 
+		    h_formula_star_pos = pos})
 
+and mkConjH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
+  | HFalse -> HFalse
+  | HTrue -> f2
+  | _ -> match f2 with
+      | HFalse -> HFalse
+      | HTrue -> f1
+      | _ -> Conj ({h_formula_conj_h1 = f1; 
+		    h_formula_conj_h2 = f2; 
+		    h_formula_conj_pos = pos})
+
+and mkPhaseH (f1 : h_formula) (f2 : h_formula) (pos : loc) = 
+  match f1 with
+  | HFalse -> HFalse
+  | HTrue -> f2
+  | _ -> match f2 with
+      | HFalse -> HFalse
+      | HTrue -> f1
+      | _ -> Phase ({h_formula_phase_rd = f1; 
+		    h_formula_phase_rw = f2; 
+		    h_formula_phase_pos = pos})
 				
 let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, b1, t1 = split_components f1 in
@@ -577,7 +669,26 @@ and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
   mkBase h p t fl b pos
-
+		
+and mkConj_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+  let h1, p1, fl1, b1, t1 = split_components f1 in
+  let h2, p2, fl2, b2, t2 = split_components f2 in
+  let h = mkConjH h1 h2 pos in
+  let p,_ = combine_and_pure f1 p1 p2 in
+  let t = mkAndType t1 t2 in
+  let b = CP.merge_branches b1 b2 in
+  let fl =  mkAndFlow fl1 fl2 flow_tr in
+  mkBase h p t fl b pos
+		
+and mkPhase_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+  let h1, p1, fl1, b1, t1 = split_components f1 in
+  let h2, p2, fl2, b2, t2 = split_components f2 in
+  let h = mkPhaseH h1 h2 pos in
+  let p,_ = combine_and_pure f1 p1 p2 in
+  let t = mkAndType t1 t2 in
+  let b = CP.merge_branches b1 b2 in
+  let fl =  mkAndFlow fl1 fl2 flow_tr in
+  mkBase h p t fl b pos
 
 and mkAnd_pure_and_branch (f1 : formula) (p2 : Cpure.formula) b2 (pos : loc):formula = 
   if (isAnyConstFalse f1) then f1
@@ -620,6 +731,11 @@ and get_node_name (h : h_formula) = match h with
   | DataNode ({h_formula_data_name = c}) -> c
   | _ -> failwith ("get_node_name: invalid argument")
 
+and get_node_imm (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_imm = imm}) 
+  | DataNode ({h_formula_data_imm = imm}) -> imm
+  | _ -> failwith ("get_node_imm: invalid argument")
+
 and get_view_origins (h : h_formula) = match h with
   | ViewNode ({h_formula_view_origins = origs}) -> origs
   | _ -> failwith ("get_view_origins: not a view")
@@ -627,6 +743,10 @@ and get_view_origins (h : h_formula) = match h with
 and get_view_modes (h : h_formula) = match h with
   | ViewNode ({h_formula_view_modes = modes}) -> modes
   | _ -> failwith ("get_view_modes: not a view")
+
+and get_view_imm (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_imm = imm}) -> imm
+  | _ -> failwith ("get_view_imm: not a view")
 
 and h_add_origins (h : h_formula) origs = match h with
   | Star ({h_formula_star_h1 = h1;
@@ -678,7 +798,7 @@ and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
   | Or ({formula_or_pos = pos}) -> pos
   | Exists ({formula_exists_pos = pos}) -> pos
-  
+
 and struc_fv (f: struc_formula) : CP.spec_var list = 
 	let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
 		| ECase b -> 
@@ -724,32 +844,42 @@ and fv (f : formula) : CP.spec_var list = match f with
 							 formula_base_pos = pos})) in
 	  let res = CP.difference fvars qvars in
 		res
-	
+		  
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
-		   h_formula_star_h2 = h2; 
-		   h_formula_star_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+	   h_formula_star_h2 = h2; 
+	   h_formula_star_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+  | Conj ({h_formula_conj_h1 = h1; 
+	   h_formula_conj_h2 = h2; 
+	   h_formula_conj_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+  | Phase ({h_formula_phase_rd = h1; 
+	    h_formula_phase_rw = h2; 
+	    h_formula_phase_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v; 
-			   h_formula_data_arguments = vs0}) ->
-	  (*let vs = List.tl (List.tl vs0) in*)
-	  let vs = vs0 in
-		if List.mem v vs then vs else v :: vs
+	       h_formula_data_arguments = vs0}) ->
+      (*let vs = List.tl (List.tl vs0) in*)
+      let vs = vs0 in
+	if List.mem v vs then vs else v :: vs
   | ViewNode ({h_formula_view_node = v; 
-			   h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
-  | HTrue | HFalse -> []
+	       h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
+  | HTrue | HFalse | Hole _ -> []
 
 and f_top_level_vars (f : formula) : CP.spec_var list = match f with
   | Base ({formula_base_heap = h}) -> (top_level_vars h)
   | Or ({ formula_or_f1 = f1;
-		formula_or_f2 = f2}) -> (f_top_level_vars f1) @ (f_top_level_vars f2)
+	  formula_or_f2 = f2}) -> (f_top_level_vars f1) @ (f_top_level_vars f2)
   | Exists ({formula_exists_heap = h}) -> (top_level_vars h)
-  
+      
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
-		   h_formula_star_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
+	   h_formula_star_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
+  | Conj ({h_formula_conj_h1 = h1; 
+	   h_formula_conj_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
+  | Phase ({h_formula_phase_rd = h1; 
+	   h_formula_phase_rw = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
   | DataNode ({h_formula_data_node = v}) 
   | ViewNode ({h_formula_view_node = v}) -> [v]
-  | HTrue | HFalse -> []
+  | HTrue | HFalse | Hole _ -> []
 
 and get_formula_pos (f : formula) = match f with
   | Base ({formula_base_pos = p}) -> p
@@ -879,39 +1009,56 @@ and apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : formula) = match
 
 and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = match f with
   | Star ({h_formula_star_h1 = f1; 
-		   h_formula_star_h2 = f2; 
-		   h_formula_star_pos = pos}) -> 
+	   h_formula_star_h2 = f2; 
+	   h_formula_star_pos = pos}) -> 
       Star ({h_formula_star_h1 = h_apply_one s f1; 
-			 h_formula_star_h2 = h_apply_one s f2; 
-			 h_formula_star_pos = pos})
+	     h_formula_star_h2 = h_apply_one s f2; 
+	     h_formula_star_pos = pos})
+  | Phase ({h_formula_phase_rd = f1; 
+	   h_formula_phase_rw = f2; 
+	   h_formula_phase_pos = pos}) -> 
+      Phase ({h_formula_phase_rd = h_apply_one s f1; 
+	     h_formula_phase_rw = h_apply_one s f2; 
+	     h_formula_phase_pos = pos})
+  | Conj ({h_formula_conj_h1 = f1; 
+	   h_formula_conj_h2 = f2; 
+	   h_formula_conj_pos = pos}) -> 
+      Conj ({h_formula_conj_h1 = h_apply_one s f1; 
+	     h_formula_conj_h2 = h_apply_one s f2; 
+	     h_formula_conj_pos = pos})
   | ViewNode ({h_formula_view_node = x; 
-			   h_formula_view_name = c; 
-			   h_formula_view_arguments = svs; 
-			   h_formula_view_modes = modes;
-			   h_formula_view_coercible = coble;
-			   h_formula_view_origins = orgs;
-			   h_formula_view_label = lbl;
-			   h_formula_view_pos = pos}) -> 
+	       h_formula_view_name = c; 
+	       h_formula_view_imm = imm; 
+	       h_formula_view_arguments = svs; 
+	       h_formula_view_modes = modes;
+	       h_formula_view_coercible = coble;
+	       h_formula_view_origins = orgs;
+	       h_formula_view_label = lbl;
+	       h_formula_view_pos = pos}) -> 
       ViewNode ({h_formula_view_node = subst_var s x; 
-				 h_formula_view_name = c; 
-				 h_formula_view_arguments = List.map (subst_var s) svs;
-				 h_formula_view_modes = modes;
-				 h_formula_view_coercible = coble;
-				 h_formula_view_origins = orgs;
-				 h_formula_view_label = lbl;
-				 h_formula_view_pos = pos})
+		 h_formula_view_name = c;
+		 h_formula_view_imm = imm;  
+		 h_formula_view_arguments = List.map (subst_var s) svs;
+		 h_formula_view_modes = modes;
+		 h_formula_view_coercible = coble;
+		 h_formula_view_origins = orgs;
+		 h_formula_view_label = lbl;
+		 h_formula_view_pos = pos})
   | DataNode ({h_formula_data_node = x; 
-			   h_formula_data_name = c; 
-			   h_formula_data_arguments = svs; 
-			   h_formula_data_label = lbl;
-			   h_formula_data_pos = pos}) -> 
+	       h_formula_data_name = c;
+     	       h_formula_data_imm = imm; 
+	       h_formula_data_arguments = svs; 
+	       h_formula_data_label = lbl;
+	       h_formula_data_pos = pos}) -> 
       DataNode ({h_formula_data_node = subst_var s x; 
-				 h_formula_data_name = c; 
-				 h_formula_data_arguments = List.map (subst_var s) svs;
-				 h_formula_data_label = lbl;
-				 h_formula_data_pos = pos})
+		 h_formula_data_name = c;
+    	         h_formula_data_imm = imm;  
+		 h_formula_data_arguments = List.map (subst_var s) svs;
+		 h_formula_data_label = lbl;
+		 h_formula_data_pos = pos})
   | HTrue -> f
   | HFalse -> f
+  | Hole _ -> f    
 
 (* normalization *)
 (* normalizes ( \/ (EX v* . /\ ) ) * ( \/ (EX v* . /\ ) ) *)
@@ -963,6 +1110,7 @@ match f1 with
 			  resform
 		  end
     end*)
+(*
 and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
       let eo1 = normalize_combine o11 f2 pos in
@@ -980,6 +1128,79 @@ and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
 			let new_base = mkStar_combine base1 base2 Flow_combine pos in
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			  resform
+		  end
+    end
+*)
+
+(* todo: check if this is ok *)
+and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = normalize_combine_star f1 f2 pos
+
+and normalize_combine_star (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+      let eo1 = normalize_combine_star o11 f2 pos in
+      let eo2 = normalize_combine_star o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			let eo1 = normalize_combine_star f1 o21 pos in
+			let eo2 = normalize_combine_star f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkStar_combine base1 base2 Flow_combine pos in
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			  resform
+		  end
+    end
+
+and normalize_combine_conj (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+      let eo1 = normalize_combine_conj o11 f2 pos in
+      let eo2 = normalize_combine_conj o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			let eo1 = normalize_combine_conj f1 o21 pos in
+			let eo2 = normalize_combine_conj f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkConj_combine base1 base2 Flow_combine pos in
+			let new_h, new_p, new_fl, b, new_t = split_components new_base in
+			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
+			  resform
+		  end
+    end
+
+and normalize_combine_phase (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+  | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
+      let eo1 = normalize_combine_phase o11 f2 pos in
+      let eo2 = normalize_combine_phase o12 f2 pos in
+		mkOr eo1 eo2 pos
+  | _ -> begin
+      match f2 with
+		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
+			let eo1 = normalize_combine_phase f1 o21 pos in
+			let eo2 = normalize_combine_phase f1 o22 pos in
+			  mkOr eo1 eo2 pos
+		| _ -> begin
+			let rf1 = rename_bound_vars f1 in
+			let rf2 = rename_bound_vars f2 in
+			let qvars1, base1 = split_quantifiers rf1 in
+			let qvars2, base2 = split_quantifiers rf2 in
+			let new_base = mkPhase_combine base1 base2 Flow_combine pos in
 			let new_h, new_p, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -1150,6 +1371,67 @@ and rename_bound_vars (f : formula) = match f with
 	  let new_base_f = subst rho base_f in
 	  let resform = add_quantifiers new_qvars new_base_f in
 		resform
+
+(* for immutability *)
+and propagate_imm_formula (f : formula) (imm : bool) : formula = match f with
+  | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	  let rf1 = propagate_imm_formula f1 imm in
+	  let rf2 = propagate_imm_formula f2 imm in
+	  let resform = mkOr rf1 rf2 pos in
+		resform
+  | Base f1 ->
+      let f1_heap = propagate_imm_h_formula f1.formula_base_heap imm in
+      Base({f1 with formula_base_heap = f1_heap})
+  | Exists f1 ->
+      let f1_heap = propagate_imm_h_formula f1.formula_exists_heap imm in
+      Exists({f1 with formula_exists_heap = f1_heap})
+
+and propagate_imm_h_formula (f : h_formula) (imm : bool) : h_formula = 
+  match f with
+    | ViewNode f1 -> ViewNode({f1 with h_formula_view_imm = imm})
+    | DataNode f1 -> DataNode({f1 with h_formula_data_imm = imm})
+    | Star f1 ->
+	let h1 = propagate_imm_h_formula f1.h_formula_star_h1 imm in
+	let h2 = propagate_imm_h_formula f1.h_formula_star_h2 imm in
+	  mkStarH h1 h2 f1.h_formula_star_pos
+    | Conj f1 ->
+	let h1 = propagate_imm_h_formula f1.h_formula_conj_h1 imm in
+	let h2 = propagate_imm_h_formula f1.h_formula_conj_h2 imm in
+	  mkConjH h1 h2 f1.h_formula_conj_pos
+    | Phase f1 ->
+	let h1 = propagate_imm_h_formula f1.h_formula_phase_rd imm in
+	let h2 = propagate_imm_h_formula f1.h_formula_phase_rw imm in
+	  mkPhaseH h1 h2 f1.h_formula_phase_pos
+    | _ -> f
+
+(*
+
+and formula =
+  | Base of formula_base
+  | Or of formula_or
+  | Exists of formula_exists
+
+and formula_base = { formula_base_heap : h_formula;
+formula_base_pure : CP.formula;
+formula_base_type : t_formula;
+formula_base_flow : flow_formula;
+formula_base_branches : (branch_label * CP.formula) list;
+formula_base_pos : loc }
+
+and formula_or = { formula_or_f1 : formula;
+formula_or_f2 : formula;
+formula_or_pos : loc }
+
+and formula_exists = { formula_exists_qvars : CP.spec_var list;
+formula_exists_heap : h_formula;
+formula_exists_pure : CP.formula;
+formula_exists_type : t_formula;
+formula_exists_flow : flow_formula;
+formula_exists_branches : (branch_label * CP.formula) list;
+formula_exists_pos : loc }
+
+
+*)
 
 (* -- 13.05.2008 *)
 (* rename only those bound vars of f1 which clash with fv(f2) *)
@@ -1993,30 +2275,36 @@ and set_unsat_flag (ctx:context) (nf:bool):context = match ctx with
 | Ctx c-> Ctx {c with es_unsat_flag = nf}
 
 and filter_heap (f:formula):formula option = match f with
-	| Or b-> begin 
-				match (filter_heap b.formula_or_f1) with
-					| None -> None (*(filter_heap b.formula_or_f2)*)
-					| Some d1-> match (filter_heap b.formula_or_f2) with
-								| None -> None
-								| Some d2 -> Some (mkOr d1 d2 b.formula_or_pos)
-			 end
-	| Base b-> begin 
-					match b.formula_base_heap with
-					 | Star _
-					 | DataNode _ 
-					 | ViewNode _ -> None
-					 | HTrue 
-					 | HFalse -> Some f
-				end
-	| Exists b-> 
-				begin
-					match b.formula_exists_heap with
-					 | Star _
-					 | DataNode _ 
-					 | ViewNode _ -> None
-					 | HTrue 
-					 | HFalse -> Some f
-				end
+  | Or b-> begin 
+      match (filter_heap b.formula_or_f1) with
+	| None -> None (*(filter_heap b.formula_or_f2)*)
+	| Some d1-> match (filter_heap b.formula_or_f2) with
+	    | None -> None
+	    | Some d2 -> Some (mkOr d1 d2 b.formula_or_pos)
+    end
+  | Base b-> begin 
+      match b.formula_base_heap with
+	| Star _
+	| Conj _
+	| Phase _    
+	| DataNode _ 
+	| ViewNode _ 
+	| Hole _ -> None
+	| HTrue 
+	| HFalse -> Some f
+    end
+  | Exists b-> 
+      begin
+	match b.formula_exists_heap with
+	  | Star _
+	  | Conj _
+	  | Phase _    
+	  | DataNode _ 
+	  | ViewNode _ 
+	  | Hole _ -> None
+	  | HTrue 
+	  | HFalse -> Some f
+      end
 
 and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
 	| OCtx (c1,c2)-> OCtx ((set_es_evars c1 v),(set_es_evars c2 v))
@@ -2113,13 +2401,20 @@ let get_start_partial_label (ctx:list_partial_context) =
 
 	
 let rec replace_heap_formula_label nl f = match f with
-	| Star b -> Star {b with 
-			h_formula_star_h1 = replace_heap_formula_label nl b.h_formula_star_h1; 
-			h_formula_star_h2 = replace_heap_formula_label nl b.h_formula_star_h2; }
-	| DataNode b -> DataNode {b with h_formula_data_label = (nl ())}
-	| ViewNode b -> ViewNode {b with h_formula_view_label = (nl ())}
-	| HTrue 
-	| HFalse -> f
+  | Star b -> Star {b with 
+		      h_formula_star_h1 = replace_heap_formula_label nl b.h_formula_star_h1; 
+		      h_formula_star_h2 = replace_heap_formula_label nl b.h_formula_star_h2; }
+  | Phase b -> Phase {b with 
+		      h_formula_phase_rd = replace_heap_formula_label nl b.h_formula_phase_rd; 
+		      h_formula_phase_rw = replace_heap_formula_label nl b.h_formula_phase_rw; }
+  | Conj b -> Conj {b with 
+		      h_formula_conj_h1 = replace_heap_formula_label nl b.h_formula_conj_h1; 
+		      h_formula_conj_h2 = replace_heap_formula_label nl b.h_formula_conj_h2; }
+  | DataNode b -> DataNode {b with h_formula_data_label = (nl ())}
+  | ViewNode b -> ViewNode {b with h_formula_view_label = (nl ())}
+  | HTrue 
+  | HFalse 
+  | Hole _ -> f
 	
 let rec replace_pure_formula_label nl f = match f with
   | CP.BForm (bf,_) -> CP.BForm (bf,(nl()))
@@ -2156,35 +2451,45 @@ let replace_formula_label nl f = replace_formula_label1 (fun c -> nl) f
 let replace_formula_label_fresh f = replace_formula_label1 (fun c -> (fresh_branch_point_id "")) f
 
 let rec residue_labels_in_formula f = 
-	let rec residue_labels_in_heap f = match f with
-		| Star b -> (residue_labels_in_heap b.h_formula_star_h1) @ (residue_labels_in_heap b.h_formula_star_h2)
-		| DataNode b -> (match b.h_formula_data_label with Some s-> [s] | _ -> [])
-		| ViewNode b -> (match b.h_formula_view_label with Some s-> [s] | _ -> [])
-		| HTrue 
-		| HFalse -> [] in match f with
+  let rec residue_labels_in_heap f = match f with
+    | Star b -> (residue_labels_in_heap b.h_formula_star_h1) @ (residue_labels_in_heap b.h_formula_star_h2)
+    | Conj b -> (residue_labels_in_heap b.h_formula_conj_h1) @ (residue_labels_in_heap b.h_formula_conj_h2)
+    | Phase b -> (residue_labels_in_heap b.h_formula_phase_rd) @ (residue_labels_in_heap b.h_formula_phase_rw)
+    | DataNode b -> (match b.h_formula_data_label with Some s-> [s] | _ -> [])
+    | ViewNode b -> (match b.h_formula_view_label with Some s-> [s] | _ -> [])
+    | HTrue 
+    | HFalse 
+    | Hole _ -> [] 
+        in match f with
 	| Base b-> residue_labels_in_heap b.formula_base_heap 
 	| Exists b->residue_labels_in_heap b.formula_exists_heap
 	| Or b -> (residue_labels_in_formula b.formula_or_f1) @ (residue_labels_in_formula b.formula_or_f2)
 
 let get_node_label n =  match n with
-	| DataNode b -> b.h_formula_data_label
-	| ViewNode b -> b.h_formula_view_label
-	| _ -> None
-	
-	
+  | DataNode b -> b.h_formula_data_label
+  | ViewNode b -> b.h_formula_view_label
+  | _ -> None
+		
 	
 let rec transform_h_formula f (e:h_formula):h_formula = 
-	let r =  f e in 
-	match r with
-	| Some e1 -> e1
-	| None  -> match e with	 
-		| Star s -> Star {s with 
-			h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
-			h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
-	    | DataNode _
-	    | ViewNode _
-	    | HTrue
-	    | HFalse -> e
+  let r =  f e in 
+    match r with
+      | Some e1 -> e1
+      | None  -> match e with	 
+	  | Star s -> Star {s with 
+			      h_formula_star_h1 = transform_h_formula f s.h_formula_star_h1;
+			      h_formula_star_h2 = transform_h_formula f s.h_formula_star_h2;}
+	  | Conj s -> Conj {s with 
+			      h_formula_conj_h1 = transform_h_formula f s.h_formula_conj_h1;
+			      h_formula_conj_h2 = transform_h_formula f s.h_formula_conj_h2;}
+          | Phase s -> Phase {s with 
+			      h_formula_phase_rd = transform_h_formula f s.h_formula_phase_rd;
+			      h_formula_phase_rw = transform_h_formula f s.h_formula_phase_rw;}    
+	  | DataNode _
+	  | ViewNode _
+	  | HTrue
+	  | HFalse 
+	  | Hole _ -> e
 	
 let rec transform_formula f (e:formula):formula =
 	let (_, f_f, f_h_f, f_p_t) = f in
@@ -2276,53 +2581,57 @@ let rec fold_fail_context f (c:fail_type) =
   match c with
     | FailCtx fc -> fold_fail_context f_f fc
     | SuccCtx sc -> List.map (fold_context f_c) sc*)
-    
+	
 let rename_labels transformer e =
-	let n_l_f n_l = match n_l with
-				| None -> (fresh_branch_point_id "")
-				| Some (_,s) -> (fresh_branch_point_id s) in	
-    let f_e_f e = None in
-	let f_f e = None in
-	let rec f_h_f e = match e with 
-		| Star s -> None
-	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
-	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
-	    | HTrue
-	    | HFalse -> Some e in
-	let f_b e = Some e in
-	let f_e e = Some e in
-	let f_p_f e = 
-		match e with
-		| CP.BForm (b,f_l) -> Some (CP.BForm (b,(n_l_f f_l)))
-		| CP.And (e1,e2,l) -> None
-		| CP.Or (e1,e2,f_l,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),l)))
-		| CP.Not (e1,f_l, l) -> (Some (CP.Not (e1,(n_l_f f_l),l)))
-		| CP.Forall (v,e1,f_l, l) -> (Some (CP.Forall (v,e1,(n_l_f f_l),l)))
-		| CP.Exists (v,e1,f_l, l) -> (Some (CP.Exists (v,e1,(n_l_f f_l),l)))in
-	 transformer (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
+  let n_l_f n_l = match n_l with
+    | None -> (fresh_branch_point_id "")
+    | Some (_,s) -> (fresh_branch_point_id s) in	
+  let f_e_f e = None in
+  let f_f e = None in
+  let rec f_h_f e = match e with 
+    | Conj s -> None
+    | Phase s -> None	
+    | Star s -> None
+    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
+    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
+    | HTrue
+    | HFalse 
+    | Hole _ -> Some e in
+  let f_b e = Some e in
+  let f_e e = Some e in
+  let f_p_f e = 
+    match e with
+      | CP.BForm (b,f_l) -> Some (CP.BForm (b,(n_l_f f_l)))
+      | CP.And (e1,e2,l) -> None
+      | CP.Or (e1,e2,f_l,l) -> (Some (CP.Or (e1,e2,(n_l_f f_l),l)))
+      | CP.Not (e1,f_l, l) -> (Some (CP.Not (e1,(n_l_f f_l),l)))
+      | CP.Forall (v,e1,f_l, l) -> (Some (CP.Forall (v,e1,(n_l_f f_l),l)))
+      | CP.Exists (v,e1,f_l, l) -> (Some (CP.Exists (v,e1,(n_l_f f_l),l)))in
+    transformer (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
 
 let rename_labels_struc (e:struc_formula):struc_formula = rename_labels transform_struc_formula e
 let rename_labels_formula (e:formula):formula = rename_labels transform_formula e
-		 		
-let rename_labels_formula_ante  e=
-	let n_l_f n_l = match n_l with
-				| None -> (fresh_branch_point_id "")
-				| Some (_,s) -> (fresh_branch_point_id s) in	
-    let f_e_f e = None in
-	let f_f e = None in
-	let rec f_h_f e = match e with 
-		| Star s -> None
-	    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
-	    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
-	    | HTrue
-	    | HFalse -> Some e in
-	let f_b e = Some e in
-	let f_e e = Some e in
-	let f_p_f e = Some e in			
-	transform_formula (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
-			 
   
-
+let rename_labels_formula_ante  e=
+  let n_l_f n_l = match n_l with
+    | None -> (fresh_branch_point_id "")
+    | Some (_,s) -> (fresh_branch_point_id s) in	
+  let f_e_f e = None in
+  let f_f e = None in
+  let rec f_h_f e = match e with 
+    | Star s -> None
+    | Conj s -> None
+    | Phase s -> None
+    | DataNode d -> Some (DataNode {d with h_formula_data_label = n_l_f d.h_formula_data_label})
+    | ViewNode v -> Some (ViewNode {v with h_formula_view_label = n_l_f v.h_formula_view_label})
+    | HTrue
+    | HFalse 
+    | Hole _ -> Some e in
+  let f_b e = Some e in
+  let f_e e = Some e in
+  let f_p_f e = Some e in			
+    transform_formula (f_e_f,f_f,f_h_f,(f_p_f,f_b,f_e)) e
+      
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
   transform_list_context ((fun es -> Ctx{es with 
 				es_gen_expl_vars = Util.difference es.es_gen_expl_vars expvars; 

@@ -1,8 +1,96 @@
-data node { int val ; node next }.
+/*data node { int val ; node next }.
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.*/
+
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
 	inv n >= 0.
 
 
-checkentail x::ll<n> & n > 0 |- x::ll<m> & m > 0.
-print residue.
+//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::ll<m> * x::ll<n>.
+//print residue.
+// fail
+
+//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
+//print residue.
+// t@I; z
+
+//checkentail (x::ll<n>@I * p::ll<m>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n1>@I * p::ll<m1>@I); t::ll<a1>@I.
+//print residue.
+// x@I * p@I; y * (t@I; z)
+
+//checkentail (x::ll<n>@I * p::ll<m>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n1>@I * p::ll<m1>@I).
+//print residue.
+// x@I * p@I; y * (t@I; z)
+
+//checkentail (x::ll<n>@I * p::ll<m>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n1>@I * p::ll<m1>@I); z::ll<m2>.
+//print residue.
+// y
+
+
+//checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0 & m=5  |- y::ll<m2>.
+//print residue.
+// t@I; z
+
+//checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
+//print residue.
+
+//checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. // failed
+//print residue.
+
+//checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m1> * x::ll<n1> & y!=x. // failed
+//print residue.
+
+
+//checkentail (x::ll<n>@I * y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. // failed
+//print residue.
+
+
+
+//checkentail (x::ll<n>@I * y::ll<m>@I)  |- (y::ll<m1>@I & x::ll<n1>@I).
+//print residue.
+// x@I * y@I
+
+
+//checkentail (x::ll<n>@I & y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I * x::ll<n1>@I).
+//print residue.
+// fail
+
+
+//checkentail (x::ll<n>@I * y::ll<m>@I) ; p::ll<_> * ((t::ll<a>@I); z::ll<m>) & n > 3  |- (y::ll<m1>@I & x::ll<n1>@I).
+//print residue.
+
+
+//checkentail (x::ll<n>@I & y::ll<m>@I & t::ll<a>@I); z::ll<m> & n > 3  |- (y::ll<m1>@I & x::ll<n1>@I) & n1>6.
+//print residue.
+// fail
+
+
+//checkentail (x::ll<n>@I); p::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<m>@I & x::ll<n>@I).
+//print residue.
+// fail
+
+//checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (z::ll<n1>@I). 
+//print residue.
+// ok?
+
+
+//checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::node<_,_>@I).
+//print residue.
+
+//checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::node<_,_>. // should fail -> when unfolding must propagate the imm annotation
+//print residue.
+
+//checkentail (y::node<_,_>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<n>@I).
+//print residue.
+
+checkentail y::node<_,_> |- y::ll<_>.
+
+//checkentail (x::ll<n>@I); y::ll<m>@I * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<m2>@I * t::ll<a2>@I).
+//print residue.
+
+
+
+
