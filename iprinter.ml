@@ -361,7 +361,7 @@ let rec string_of_exp = function
 		   exp_bind_fields = vs;
 		   exp_bind_path_id = pid;
 		   exp_bind_body = e})-> 
-          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")
+          string_of_control_path_id_opt pid ("bind " ^ v ^ " to (" ^ (String.concat ", " vs) ^ ") in { " ^ (string_of_exp e) ^ " }")	   
   | Block ({
     exp_block_local_vars = lv;
     exp_block_body = e;

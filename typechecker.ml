@@ -27,7 +27,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
     log_spec := (Cprinter.string_of_ext_formula spec) ^ ", Line " ^ (string_of_int pos_spec.start_pos.Lexing.pos_lnum);	 
     match spec with
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
-			let nctx = CF.transform_context (combine_es_and prog c1 true) ctx in
+			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
 			let r = check_specs prog proc nctx c2 e0 in
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 			r) b.Cformula.formula_case_branches
@@ -80,7 +80,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let ctx = CF.add_cond_label_list_failesc_context (fst e.exp_label_path_id) (snd e.exp_label_path_id) ctx in
 	        (check_exp prog proc ctx e.exp_label_exp post_start_label)
         | Unfold ({exp_unfold_var = sv;
-                   exp_unfold_pos = pos}) -> unfold_failesc_context (Prog prog) ctx sv true pos 
+                   exp_unfold_pos = pos}) -> unfold_failesc_context (prog,None) ctx sv true pos 
 	          (* for code *)
         | Assert ({ exp_assert_asserted_formula = c1_o;
                     exp_assert_assumed_formula = c2;
@@ -119,7 +119,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	              if (CF.subsume_flow_f !n_flow_int (CF.flow_formula_of_formula c1.CF.es_formula)) then 
 	                let t = U.unsome (type_of_exp rhs) in
 	                let vsv = CP.SpecVar (t, v, Primed) in (* rhs must be non-void *)
-	                let link = CF.formula_of_pure (CP.mkEqVar vsv (P.mkRes t) pos) pos in
+	                let link = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqVar vsv (P.mkRes t) pos)) pos in
 	                let tmp_ctx1 = CF.compose_context_formula (CF.Ctx c1) link [vsv] CF.Flow_combine pos in
 	                let tmp_ctx2 = CF.push_exists_context [CP.mkRes t] tmp_ctx1 in
 	                let resctx = if !Globals.elim_exists then elim_exists_ctx tmp_ctx2 else tmp_ctx2 in
@@ -134,7 +134,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let tmp2 =
 	          if b then tmp1
 	          else CP.Not (tmp1, None, pos) in
-	        let f = CF.formula_of_pure tmp2 pos in
+	        let f = CF.formula_of_pure_N tmp2 pos in
 	        CF.normalize_max_renaming_list_failesc_context f pos true ctx 
 	      end
         | Bind ({ exp_bind_type = body_t;
@@ -151,7 +151,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        (*--- 09.05.2000 *)
 	        (*let _ = (print_string ("\n[typechecker.ml, line 116]: fresh name = " ^ (Cprinter.string_of_spec_var p) ^ "!!!!!!!!!!!\n")) in*)
 	        (*09.05.2000 ---*)
-	        let link_pv = CF.formula_of_pure
+	        let link_pv = CF.formula_of_pure_N
 	          (CP.mkAnd (CP.mkEqVar v_prim p pos) (CP.BForm (CP.mkNeq (CP.Var (p, pos)) (CP.Null pos) pos, None)) pos) pos in
 	        (*let _ = print_string ("[typechecker.ml, check__exp]: link_pv: " ^ Cprinter.string_of_formula link_pv ^ "\n") in*)
 	        (*	  let link_pv = CF.formula_of_pure (CP.mkEqVar v_prim p pos) pos in *)
@@ -159,7 +159,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	          if !Globals.large_bind then
 	            CF.normalize_max_renaming_list_failesc_context link_pv pos false ctx
 	          else ctx in
-	        let unfolded = unfold_failesc_context (Prog prog) tmp_ctx v_prim true pos in
+	        let unfolded = unfold_failesc_context (prog,None) tmp_ctx v_prim true pos in
 	        (* let unfolded_prim = if !Globals.elim_unsat then elim_unsat unfolded else unfolded in *)
 	        let _ = Debug.devel_pprint ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n") pos in
@@ -169,12 +169,15 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                             CF.h_formula_data_name = c;
                             CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
                             CF.h_formula_data_label = None;
+                            CF.h_formula_data_remaining_branches = None;
+                            CF.h_formula_data_pruning_conditions = [];
                             CF.h_formula_data_pos = pos}) in
 	        let vheap = CF.formula_of_heap vdatanode pos in
+          let vheap = prune_preds prog false vheap in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
 			if (Util.empty unfolded) then unfolded
-			else
+			else 
 	        let rs_prim, prf = heap_entail_list_failesc_context_init prog false false  unfolded vheap pos pid in
 	        let _ = PTracer.log_proof prf in
 	        let rs = CF.clear_entailment_history_failesc_list rs_prim in
@@ -209,8 +212,9 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                   exp_cond_else_arm = e2;
                   exp_cond_path_id =pid;
                   exp_cond_pos = pos}) -> begin
-	        let then_cond_prim = CP.BForm (CP.mkBVar v Primed pos, None) in
-	        let else_cond_prim = CP.mkNot then_cond_prim None pos in
+			let pure_cond = (CP.BForm (CP.mkBVar v Primed pos, None)) in
+	        let then_cond_prim = MCP.mix_of_pure pure_cond in
+	        let else_cond_prim = MCP.mix_of_pure (CP.mkNot pure_cond None pos) in
 	        let then_ctx = combine_list_failesc_context_and_unsat_now prog ctx then_cond_prim in
 	        Debug.devel_pprint ("conditional: then_delta:\n" ^ (Cprinter.string_of_list_failesc_context then_ctx)) pos;
 	        let else_ctx =combine_list_failesc_context_and_unsat_now prog ctx else_cond_prim in
@@ -259,13 +263,13 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                    exp_iconst_pos = pos}) ->
 	          let c_e = CP.IConst (i, pos) in
 	          let res_v = CP.Var (CP.mkRes int_type, pos) in
-	          let f = CF.formula_of_pure (CP.mkEqExp res_v c_e pos) pos in
+	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
         | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
 	          let c_e = CP.FConst (f, pos) in
 	          let res_v = CP.Var (CP.mkRes float_type, pos) in
-	          let f = CF.formula_of_pure (CP.mkEqExp res_v c_e pos) pos in
+	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
         | New ({exp_new_class_name = c;
@@ -278,18 +282,20 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let heap_node = CF.DataNode ({
                 CF.h_formula_data_node = CP.SpecVar (CP.OType c, res, Unprimed);
                 CF.h_formula_data_name = c;
-                CF.h_formula_data_arguments =
-                    (*type_var :: ext_var :: *) heap_args;
+                CF.h_formula_data_arguments =(*type_var :: ext_var :: *) heap_args;
+                CF.h_formula_data_remaining_branches = None;
+                CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_label = None;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	        let heap_form = CF.mkBase heap_node (CP.mkTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+          let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
 	        res
 	      end;
         | Null pos ->
 	          let p = CP.mkEqExp (CP.mkVar (CP.SpecVar (CP.OType "", res, Unprimed)) pos) (CP.Null pos) pos in
-	          let f = CF.formula_of_pure p pos in
+	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
         | SCall ({exp_scall_type = ret_t;
@@ -304,7 +310,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 	          (* free vars = linking vars that appear both in pre and are not formal arguments *)
-	          let pre_free_vars = CP.difference (CP.difference (Cformula.struc_fv org_spec) (Cformula.struc_post_fv org_spec)) farg_spec_vars in
+	          let pre_free_vars = Util.difference_fct CP.eq_spec_var (Util.difference_fct CP.eq_spec_var (Cformula.struc_fv org_spec) (Cformula.struc_post_fv org_spec)) farg_spec_vars in
 	          (* free vars get to be substituted by fresh vars *)
 	          let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
 	          let renamed_spec = 
@@ -343,14 +349,14 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
         | This ({exp_this_type = t;
                  exp_this_pos = pos}) -> 
           begin
-            let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos) pos in
+            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, "this", Unprimed)) pos)) pos in
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
           end
         | Var ({exp_var_type = t;
                 exp_var_name = v;
                 exp_var_pos = pos}) -> 
           begin
-            let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos) pos in
+            let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
             CF.normalize_max_renaming_list_failesc_context tmp pos true ctx 
           end
         | VarDecl _ -> ctx (* nothing to do *)
@@ -365,14 +371,14 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	            let _ = print_string ("raising: "^(Cprinter.string_of_exp e0)^"\n") in*)
 	          let nctx = match v with 
 	            | Sharp_prog_var (t,v) -> 
-		              let tmp = CF.formula_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos) pos in
+		              let tmp = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.mkRes t) (CP.SpecVar (t, v, Primed)) pos)) pos in
 		              let ctx1 = CF.normalize_max_renaming_list_failesc_context tmp pos true ctx in
 		              ctx1
 	            | Sharp_finally v -> 
 		              let fct es = 
 		                let rest, b_rez = CF.get_var_type v es.CF.es_formula in
 		                if b_rez then
-                          let vsv_f = CF.formula_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos) pos in
+                          let vsv_f = CF.formula_of_mix_formula  (MCP.mix_of_pure (CP.mkEqVar (CP.SpecVar (rest, v, Primed)) (P.mkRes rest) pos)) pos in
 			              if !Globals.max_renaming then CF.normalize_es vsv_f pos true es
 			              else CF.normalize_clash_es vsv_f pos true es
 		                else CF.Ctx es
@@ -416,11 +422,12 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
+  (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
   let r = proc.proc_by_name_params in
-  let w = List.map CP.to_primed (CP.difference vsvars r) in
-  (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
+  let w = List.map CP.to_primed (Util.difference_f CP.eq_spec_var vsvars r) in
+    (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
   let final_state = 
@@ -433,7 +440,6 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   Debug.devel_pprint to_print pos;	
   let rs, prf = heap_entail_list_partial_context_init prog false false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
-  (* Solver.entail_hist#upd pid rs; *)
   if (CF.isSuccessListPartialCtx rs) then rs
   else
 	Err.report_error {Err.error_loc = pos;
@@ -441,8 +447,6 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
 	        ^ (Cprinter.string_of_formula post)
 	        ^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
 	        ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
-
-
 
 
 (* checking procedure *)
@@ -465,7 +469,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	      (* fsvars are the spec vars corresponding to the parameters *)
 	      let fsvars = List.map2 (fun t -> fun v -> CP.SpecVar (t, v, Unprimed)) ftypes fnames in
 	      (*Debug.devel_pprint ("fsvars : " ^ Cprinter.string_of_spec_var_list fsvars) proc.proc_loc;*)
-	      let nox = CF.formula_of_pure (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
+	      let nox = CF.formula_of_pure_N (CF.no_change fsvars proc.proc_loc) proc.proc_loc in
 	      let init_form = nox in(*
 				                  if !Globals.max_renaming then
 	      (* if the max_renaming flag is on --> rename all the bound vars when doing the normalization *)
@@ -545,14 +549,14 @@ let check_coercion (prog : prog_decl) =
     (*let unfold_head_pred hname f0 : int = *)
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
-    let lhs = unfold (Prog prog) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
-    let rhs = unfold (Prog prog) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let lhs = unfold (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let rhs = unfold (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
       check_entailment lhs rhs in
     (* check_entailment lhs coer.coercion_body in *)
   let check_right_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
-    let rhs = unfold (Prog prog) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
-    let lhs = unfold (Prog prog) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let rhs = unfold (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let lhs = unfold (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
       check_entailment lhs rhs
 	(* check_entailment coer.coercion_body rhs *)
   in

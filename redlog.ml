@@ -148,7 +148,7 @@ let send_and_receive f =
   else
     ""
 
-(* send formula to reduce/redlog and receive result *)
+	(* send formula to reduce/redlog and receive result *)
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
   if res = "true$" then
@@ -209,7 +209,7 @@ let run_with_timeout func err_msg =
   in
   reset_sigalrm ();
   res
-
+ 
 (**************************
  * cpure to reduce/redlog *
  **************************)
@@ -289,6 +289,7 @@ let rec rl_of_formula f0 =
   | CP.And (f1, f2, _) -> "(" ^ (rl_of_formula f1) ^ " and " ^ (rl_of_formula f2) ^ ")"
   | CP.Or (f1, f2, _, _) -> "(" ^ (rl_of_formula f1) ^ " or " ^ (rl_of_formula f2) ^ ")"
   
+ 
 
 (***********************************
  pretty printer for pure formula
@@ -494,7 +495,8 @@ let has_exists2 f0 =
  * e1 > e2 ~> e1 >= e2 + 1
  * e1 != e2 ~> e1 >= e2 + 1 or e1 <= e2 - 1
  *) 
-let rec strengthen_formula f0 = 
+ 
+ let rec strengthen_formula f0 = 
   match f0 with
   | CP.BForm (b,lbl) -> 
       let r = match b with
@@ -511,6 +513,7 @@ let rec strengthen_formula f0 =
   | CP.Exists (sv, f, lbl, l) -> CP.Exists (sv, strengthen_formula f, lbl, l)
   | CP.And (f1, f2, l) -> CP.And (strengthen_formula f1, strengthen_formula f2, l)
   | CP.Or (f1, f2, lbl, l) -> CP.Or (strengthen_formula f1, strengthen_formula f2, lbl, l)
+
 
 let strengthen2 f0 =
   let f_f f = match f with
@@ -532,6 +535,7 @@ let strengthen2 f0 =
  * e1 >= e2 ~> e1 > e2 - 1
  * e1 = e2 ~> e2 - 1 < e1 < e2 + 1
  *)
+ 
 let rec weaken_formula f0 = 
   match f0 with
   | CP.BForm (b,lbl) ->
@@ -550,6 +554,7 @@ let rec weaken_formula f0 =
   | CP.And (f1, f2, l) -> CP.And (weaken_formula f1, weaken_formula f2, l)
   | CP.Or (f1, f2, lbl, l) -> CP.Or (weaken_formula f1, weaken_formula f2, lbl, l)
 
+  
 let weaken2 f0 =
   let f_f f = match f with
     | CP.BForm (CP.Eq (e1, e2, l), lbl) ->
@@ -565,7 +570,7 @@ let weaken2 f0 =
   in
   CP.map_formula f0 (f_f, f_bf, nonef)
 
-(***********************************
+ (***********************************
  existential quantifier elimination 
  **********************************)
 
@@ -1024,9 +1029,8 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   in
   let valid f = 
     let wf = if !no_pseudo_ops then f else weaken_formula f in
-    is_valid wf imp_no 
-  in
-  let res = 
+    is_valid wf imp_no    in
+   let res = 
     if is_linear_formula f then
       call_omega (lazy (Omega.is_valid f (float_of_int !timeout)))
     else
@@ -1072,7 +1076,7 @@ let simplify (f: CP.formula) : CP.formula =
     Omega.simplify f 
   else if !no_simplify then 
     f
-  else
+   else
     try
       let rlf = rl_of_formula (normalize_formula f) in
       let _ = send_cmd "rlset pasf" in
@@ -1096,6 +1100,7 @@ let simplify (f: CP.formula) : CP.formula =
       f
 
 (* unimplemented *)
+
 let hull (f: CP.formula) : CP.formula = 
   if is_linear_formula f then 
     Omega.hull f 

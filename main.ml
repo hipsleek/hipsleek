@@ -24,6 +24,7 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n"; flush stdout;
         let _ = Util.push_time "Parsing" in
+    Iparser.file_name := file_name;
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
          let _ = Util.pop_time "Parsing" in
@@ -68,7 +69,7 @@ let process_source_full source =
     (* let ptime1 = Unix.times () in
        let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
     let _ = Util.push_time "Translating to Core" in
-    let _ = print_string ("Translating to core language..."); flush stdout in
+    let _ = print_string ("Translating to core language...\n"); flush stdout in
     (*let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in*)
     let cprog = Astsimp.trans_prog intermediate_prog in
     let _ = print_string (" done\n"); flush stdout in
@@ -160,22 +161,9 @@ let main1 () =
 	  
 let _ = 
   main1 ();
-  (*let rec check_aux (t1,t2,t3,t4) l = match l with
-  | [] -> true
-  | (p1,p2,p3,p4)::l1 -> if (p1<=t1 && p2<=t2&& p3<=t3&& p4<=t4) then check_aux (p1,p2,p3,p4) l1
-						 else false in
-  let check_sorted l = match l with
-	  | a::b -> check_aux a b
-	  | [] -> true  in
-  let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
-  let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
-  (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
-  let _ = if (!Globals.profiling) then Util.print_tasks () in
-  if (!Globals.enable_sat_statistics) then 
-  print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
-				"\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
-				"\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
-				)
-  else ()
+  let _ = print_string (Util.string_of_counters ()) in
+  let _ = Util.print_profiling_info () in
+  ()
+
 
   

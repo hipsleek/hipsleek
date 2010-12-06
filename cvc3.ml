@@ -11,6 +11,8 @@ let infilename = !tmp_files_path ^ "input.cvc3." ^ (string_of_int (Unix.getpid (
 let resultfilename = !tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid()))
 let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
 
+let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+
 let set_log_file fn =
   log_cvc3_formula := true;
   if fn = "" then
@@ -82,7 +84,13 @@ and cvc3_of_b_formula b = match b with
   | CP.Lte (a1, a2, _) -> (cvc3_of_exp a1) ^ " <= " ^ (cvc3_of_exp a2)
   | CP.Gt (a1, a2, _) -> (cvc3_of_exp a1) ^ " > " ^ (cvc3_of_exp a2)
   | CP.Gte (a1, a2, _) -> (cvc3_of_exp a1) ^ " >= " ^ (cvc3_of_exp a2)
-  | CP.Eq (a1, a2, _) -> (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
+  | CP.Eq (a1, a2, _) -> 
+    if CP.is_null a2 then 
+		(cvc3_of_exp a1) ^ " <= 0"
+	  else if CP.is_null a1 then 
+		(cvc3_of_exp a2) ^ " <= 0"
+	  else 
+    (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
   | CP.Neq (a1, a2, _) -> 
 	    if CP.is_null a2 then 
 		  (cvc3_of_exp a1) ^ " > 0"
@@ -186,6 +194,7 @@ and remove_quantif f quant_list  = match f with
   - boolean vars
   - set/bag vars
 *)
+
 and split_vars (vars : CP.spec_var list) = 
   if Util.empty vars then 
 	begin
@@ -223,7 +232,7 @@ and flatten_output ints bools bags : string =
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -246,11 +255,13 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let conseq_str =  "QUERY (" ^ quantif_vars_str ^ " ( " ^ (cvc3_of_formula flatted_conseq) ^ "));\n" in
   (* talk to CVC3 *)
   let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
+
+  
   if !log_cvc3_formula then begin
 	output_string !cvc3_log "%%% imply\n";
-	output_string !cvc3_log (Cprinter.string_of_pure_formula flatted_conseq);
+	output_string !cvc3_log (!print_pure flatted_conseq);
 	output_string !cvc3_log "\n";
-	output_string !cvc3_log (Cprinter.string_of_pure_formula conseq);
+	output_string !cvc3_log (!print_pure conseq);
 	output_string !cvc3_log "\n";
 	output_string !cvc3_log f_cvc3;
 	flush !cvc3_log
@@ -268,6 +279,7 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
     | _ -> return_answer chn "Unknown" None
   in r
 		 
+
 and imply (ante : CP.formula) (conseq : CP.formula) : bool =
   let result0 = imply_raw ante conseq in
   let result = match result0 with
@@ -287,7 +299,7 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
   result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let all_fv = CP.remove_dups (CP.fv f) in
+  let all_fv = Util.remove_dups (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -304,6 +316,8 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
   let query_str = "CHECKSAT (" ^ f_str ^ ");\n" in
   (* talk to CVC3 *)
   let f_cvc3 = Util.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
+
+  
   if !log_cvc3_formula then begin
 	output_string !cvc3_log ("%%% is_sat " ^ sat_no ^ "\n");
 	output_string !cvc3_log f_cvc3;

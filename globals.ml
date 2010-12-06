@@ -148,6 +148,8 @@ let anon_exist = ref true
 
 let simplify_pure = ref false
 
+let enable_norm_simp = ref false
+
 let n_xpure = ref 1
 
 let check_coercions = ref false
@@ -172,6 +174,12 @@ let print_core = ref false
 
 let print_err_sleek = ref false
 
+let enable_prune_cache = ref true
+
+let enable_counters = ref true
+
+let enable_fast_imply = ref false
+
 let failure_analysis = ref false
 
 let seq_to_try = ref false
@@ -180,17 +188,25 @@ let print_input = ref false
 
 let pass_global_by_value = ref false
 
+let allow_pred_spec = ref false
+
+let prune_cnt_limit = ref 2
+
+let suppress_warning_msg = ref false
+let disable_elim_redundant_ctr = ref false
+
+let enable_strong_invariant = ref false
+let enable_aggressive_prune = ref false
+
+let pass_global_by_value = ref false
+
 let exhaust_match = ref false
+
+let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
 let no_cache_formula = ref false
-
-let true_imply_count = ref 0
-
-let false_imply_count = ref 0
-
-let true_sat_count = ref 0
 
 
 let add_count (t: int ref) = 
@@ -292,6 +308,12 @@ let fresh_names (n : int) = (* number of names to be generated *)
     done;
     !names
 
+let formula_cache_no_series = ref 0
+
+let fresh_formula_cache_no  () = 
+  formula_cache_no_series := !formula_cache_no_series +1;
+  !formula_cache_no_series
+    
 let gen_ext_name c1 c2 = "Ext~" ^ c1 ^ "~" ^ c2
 
 

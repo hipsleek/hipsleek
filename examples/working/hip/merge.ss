@@ -19,15 +19,13 @@ bnd<n, sm, bg> == self = null & n = 0 or
 
 
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or
-                  self::node<sm, q> * q::sll<n-1, qs, lg> & q != null & sm <= qs
-				  
-               inv n >= 1 & sm <= lg;
+                  self::node<sm, q> * q::sll<n-1, qs, lg> & sm <= qs
+               inv n >= 1 & sm <= lg & self!=null;
  
 /* function to count the number of elements of a list */
 int count(node x)
 	requires x::bnd<n, sm, bg>
         ensures x::bnd<n, sm, bg> & res = n;
-
 {
 	int tmp;
 
@@ -102,7 +100,7 @@ node merge(node x1, node x2)
 			if (x2.next != null)
 			{
 				node tmp = merge(x1, x2.next);
-				dprint;
+				//dprint;
 				assert tmp'::sll<n1+n2,_,max(b1,b2)>  ;
 				return tmp;
 			}
@@ -117,7 +115,6 @@ node insert(node x, int v)
 	requires x::sll<n, xs, xl> & n > 0
 	ensures res::sll<n+1, sres, lres> & sres = min(v, xs) & lres =  max(v, xl);
 {
-	node tmp_null = null;
 	node tmp;	
 
 	if (v <= x.val)
@@ -126,38 +123,13 @@ node insert(node x, int v)
 	{
 		if (x.next != null)
 		{
-			tmp = insert(x.next, v);
-			x.next = tmp;
+			x.next = insert(x.next, v);
+      return x;
 		}
 		else
-			x.next = new node(v, tmp_null);
-		
-		return x;
+    {
+			x.next = new node(v,null);
+      return x;
+    }
 	}
 }
-
-/* non-working */
-
-/*
-node merge_sort_1(node xs)
-	requires xs::bnd<n, sm, bg> & n > 0 
-	ensures res::sll<n, smres, bgres> & smres >= sm & bgres <= bg;
-{
-	int c, middle;
-	node s1, s2, s3; 
-
-	c = count(xs);
-	if (c > 1) 
-	{
-		middle = div2(c);
-		s1 = split_func(xs, middle);
-		s2 = merge_sort(s1);
-		s3 = merge_sort(xs);
-		return merge(s2, s3);
-	}
-	else {
-		// this requires coercion
-		return xs;
-	}
-}
-*/

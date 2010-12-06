@@ -18,14 +18,11 @@ void insert(node2 x, int a)
   requires x::dll<p, n> & n>0 //&  x!=null  
   ensures x::dll<p, m> & m>n; 
 {
-	node2 tmp_null = null;
-
-		if (x.next == null) {
-			x.next = new node2(a, x, tmp_null);
-		}
-		else {
-			insert(x.next, a);
-		}
+  bool l = x.next == null;
+  if (l)
+			x.next = new node2(a, x, null);
+		else 
+      insert(x.next, a);
 }
 
 
@@ -59,20 +56,28 @@ void delete1(node2 x, int a)
 	ensures x::dll<p, n-1>;
 
 {
-	node2 tmp;
-
 	if (a == 1) 
 	{
-		if (x.next.next != null)
+    node2 l = x.next.next;
+		if (l!= null)
 		{
-			x.next.next.prev = x;
+      l.prev = x;
+     // assume false;
 		}
-
-		tmp = x.next.next;
-		x.next = tmp;
+		x.next = l;
+    //dprint;
+    //assert x::dll<_,_>;
+   // assume false;
 	}
 	else
+  {
 		delete1(x.next, a-1);
+    //assume false;
+  }
+  //dprint;
+//  assert x::dll<_,_>;
+
+//  assume false;
 }
 
 

@@ -493,7 +493,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 	| [e] -> (e, mkTrue no_pos, [])
 	| e1 :: e2 :: rest -> begin
 		if is_zero e1 then flatten_list (e2 :: rest)
-		else if is_zero e2 then flatten_list (e1 :: rest)
+		else if is_zero e2 then flatten_list (e1 :: rest)  
 		else
 		  let pos = pos_of_exp e1 in
 			let fn = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
@@ -567,9 +567,8 @@ and mona_of_exp order e0 = match e0 with
 	  let e1str = mona_of_exp order e1 in
 	  let e2str = mona_of_exp order e2 in
 		e1str ^ " - " ^ e2str
-  | _ -> failwith ("mona_of_exp: " ^ (Cprinter.string_of_formula_exp e0) 
-				   ^ ": not supported in set mode.")
-
+  | _ -> failwith ("mona_of_exp: lists, mult, div not supported in set mode.")
+           
 and is_fo_exp (e0 : exp) = match e0 with
   | Var (sv, _) -> is_fo_ref sv
   | _ -> false
@@ -593,7 +592,7 @@ and mona_of_b_formula bf0 = match bf0 with
 *)
   | Eq (e1, e2, pos) ->
 	  if not (is_var_num e1 || is_var_num e2) then
-		failwith ("mona_of_b_formula: Eq: normalize failed to transform: " ^ (Cprinter.string_of_b_formula bf0))
+		failwith ("mona_of_b_formula: Eq: normalize failed to transform, still left with non vars ")
 	  else if not (is_var_num e1) then mona_of_b_formula (Eq (e2, e1, pos))
 	  else 
 		begin
@@ -609,7 +608,7 @@ and mona_of_b_formula bf0 = match bf0 with
 				  let bstr = mona_of_exp SO b in
 					"plus(" ^ astr ^ ", " ^ bstr ^ ", " ^ e1str ^ ")"
 			  | Subtract (a, b, _) ->
-				  failwith ("normalize failed to transform: " ^ (Cprinter.string_of_b_formula bf0))
+				  failwith ("normalize failed to transform: stubtraction")
 			  | _ ->
 				  let e1str = mona_of_exp SO e1 in
 				  let e2str = mona_of_exp SO e2 in
@@ -657,8 +656,7 @@ and mona_of_b_formula bf0 = match bf0 with
 	  let tmp1 = mona_of_spec_var sv1 in
 	  let tmp2 = mona_of_spec_var sv2 in
 		"max {" ^ tmp1 ^ ", " ^ tmp2 ^ "}"
-  | _ -> failwith ("mona_of_b_formula: " ^ (Cprinter.string_of_b_formula bf0)
-				   ^ ": not supported in set mode.")
+  | _ -> failwith ("mona_of_b_formula, lists : not supported in set mode.")
 
 and ex_quant_of_spec_var (sv : spec_var) : string =
   if is_fo_ref sv then "ex1 "
@@ -769,7 +767,6 @@ let imply (ante : formula) (conseq : formula) : bool =
   let conseq = normalize conseq in
   let var_map = H.create 103 in
   let tmptmp = mkOr ante conseq None no_pos in
-(*  let _ = print_string ("\ntmptmp:\n" ^ (Cprinter.string_of_pure_formula tmptmp ^ "\n")) in *)
   let _ = compute_fo_formula tmptmp var_map in
   let _ = var_map_ref := var_map in
   let tmp_vars = fv tmptmp in

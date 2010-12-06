@@ -33,22 +33,18 @@ node2 append(node2 x, node2 y) // for this I got the Mona + Isabelle timings
 	node2 tmp;
 
 	if (x == null)
+  {
+    assume false;
 		return y;
-	else
+	}else
 	{ 	
-
-		//tmp = x.next;
 		tmp = append(x.next, y);
-
-		if (tmp != null)
-		{
-			x.next = tmp; 
-			tmp.prev = x;
-		}
-		else {
-			x.next = null;
-		}
-
+    x.next = tmp;
+    if (tmp != null)		
+    {  tmp.prev = x;
+       dprint;
+    }
+    else assume false;
 		return x; 
 	}
 }

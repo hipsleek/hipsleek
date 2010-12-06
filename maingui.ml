@@ -8,6 +8,7 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
+
 let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
 
 (******************************************)
@@ -65,7 +66,7 @@ let process_source_full source =
 	(* let ptime1 = Unix.times () in
 	   let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
       let _ = Util.push_time "Translating to Core" in
-      let _ = print_string ("Translating to core language..."); flush stdout in
+      let _ = print_string ("Translating to core language...\n"); flush stdout in
       let cprog = Astsimp.trans_prog intermediate_prog in
       let _ = print_string (" done\n"); flush stdout in
       let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in

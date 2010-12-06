@@ -9,6 +9,7 @@ open Globals
 
 module F = Cformula
 module P = Cpure
+module MP = Mcpure
 module Err = Error
 module U = Util
 
@@ -16,16 +17,15 @@ type typed_ident = (P.typ * ident)
 
 
 
-and prog_decl = { mutable prog_data_decls : data_decl list;
-		  mutable prog_view_decls : view_decl list;
-		  prog_proc_decls : proc_decl list;
-		  mutable prog_left_coercions : coercion_decl list;
-		  mutable prog_right_coercions : coercion_decl list }
-
-and prog_or_branches = 
-  | Prog of prog_decl
-  | Branches of (Cpure.formula * ((string*Cpure.formula)list)*(Cpure.spec_var list))
-      
+and prog_decl = { 
+          mutable prog_data_decls : data_decl list;
+				  mutable prog_view_decls : view_decl list;
+				  prog_proc_decls : proc_decl list;
+				  mutable prog_left_coercions : coercion_decl list;
+				  mutable prog_right_coercions : coercion_decl list }
+	
+and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
+	
 and data_decl = { data_name : ident;
 		  data_fields : typed_ident list;
 		  data_parent_name : ident;
@@ -33,31 +33,35 @@ and data_decl = { data_name : ident;
 		  data_methods : proc_decl list }
     
 and view_decl = { view_name : ident; 
-		  view_vars : P.spec_var list;
-		  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
-		  view_labels : branch_label list;
-		  view_modes : mode list;
-		  mutable view_partially_bound_vars : bool list;
-		  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
-		  view_data_name : ident;
-		  view_formula : F.struc_formula;
-		  view_user_inv : (P.formula * (branch_label * P.formula) list);
-		  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
-		  mutable view_addr_vars : P.spec_var list;
-		  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-		  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option;
-		  view_raw_base_case: Cformula.formula option;}
-    
+				  view_vars : P.spec_var list;
+				  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
+				  view_labels : branch_label list;
+				  view_modes : mode list;
+				  mutable view_partially_bound_vars : bool list;
+				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
+				  view_data_name : ident;
+				  view_formula : F.struc_formula;
+				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+				  mutable view_addr_vars : P.spec_var list;
+				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+				  view_prune_branches: formula_label list;
+				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
+				  view_prune_invariants : (formula_label list * P.b_formula list) list ;
+          view_raw_base_case: Cformula.formula option;}
+  
 and proc_decl = { proc_name : ident;
-		  proc_args : typed_ident list;
-		  proc_return : P.typ;
-		  proc_static_specs : Cformula.struc_formula;
-		  proc_static_specs_with_pre : Cformula.struc_formula;
-		  proc_dynamic_specs : Cformula.struc_formula;
-		  proc_dynamic_specs_with_pre : Cformula.struc_formula;
-		  proc_by_name_params : P.spec_var list;
-		  proc_body : exp option;
-		  proc_loc : loc }
+				  proc_args : typed_ident list;
+				  proc_return : P.typ;
+				  proc_static_specs : Cformula.struc_formula;
+				  proc_static_specs_with_pre : Cformula.struc_formula;
+				  proc_dynamic_specs : Cformula.struc_formula;
+				  (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
+				  proc_by_name_params : P.spec_var list;
+				  proc_body : exp option;
+          proc_file : string;
+				  proc_loc : loc }
 
 (*TODO: does lemma need struc formulas?*)
 
@@ -602,6 +606,11 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 	end
   | [] -> []
 *)
+let lookup_view_invs rem_br v_def = 
+  try 
+    snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)
+  with | Not_found -> []
+
 
 let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
   | p :: rest -> begin
@@ -767,6 +776,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
+                 F.h_formula_data_remaining_branches = None;
+                 F.h_formula_data_pruning_conditions = [];
 							   F.h_formula_data_pos = pos}) in
 		(* generate extensions for the rest of the fields *)
 	  let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
@@ -779,6 +790,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
+                     F.h_formula_data_remaining_branches = None;
+                     F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				  ext_h
 			  else
@@ -792,6 +805,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
+                     F.h_formula_data_remaining_branches = None;
+                     F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
 				let ext = F.mkStarH ext_h rest_exts pos in
@@ -974,3 +989,6 @@ let rec check_proper_return cret_type exc_list f =
 		| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 		in
 	List.iter helper f
+
+  
+let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))

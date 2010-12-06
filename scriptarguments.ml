@@ -163,6 +163,22 @@ let common_arguments = [
 	 "Turn on exhaustive matching for base case of predicates"); 
 	("--use-tmp",Arg.Unit Globals.set_tmp_files_path, 
 	 "Use a local folder located in /tmp/your_username for the prover's temporary files");  
+  ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
+  ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+  (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
+  (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
+  *)
+  ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
+  ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+  (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
+  ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
+  ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
+  ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
+  ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
+  ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+  ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
+  ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
+     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
   ] 
 
 (* arguments/flags used only by hip *)	

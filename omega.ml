@@ -47,14 +47,14 @@ let rec omega_of_exp e0 = match e0 with
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
             | _ -> 
-                Error.report_error {
+                Error.report_warning {
                   Error.error_loc = l;
                   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
                 }
             in rr
       in r
   | Div (_, _, l) -> 
-      Error.report_error {
+      Error.report_warning {
         Error.error_loc = l;
         Error.error_text ="[omega.ml] Divide is not supported."
       }
@@ -94,7 +94,7 @@ and omega_of_b_formula b = match b with
         "((" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
         ^ a3str ^ " > " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | _ -> failwith ("Omega.omega_of_exp: bag or list constraint")
-
+ 
 and omega_of_formula f  = match f with
   | BForm (b,_) -> 		"(" ^ (omega_of_b_formula b) ^ ")"
   | And (p1, p2, _) -> 	"(" ^ (omega_of_formula p1) ^ " & " ^ (omega_of_formula p2 ) ^ ")"
@@ -175,8 +175,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
     if !log_all_flag then begin
 (*      output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-      output_string log_all ("#is_sat " ^ sat_no ^ " " ^ Util.new_line_str ^ Util.new_line_str);
-      output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+      output_string log_all (Util.new_line_str^"#is_sat " ^ sat_no ^ Util.new_line_str);
+      output_string log_all (Util.break_lines fomega);
       flush log_all;
     end;
     let quitloop = ref false in
@@ -207,7 +207,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       | e -> ignore e
     end;
     if !log_all_flag = true then begin
-      if !sat then output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> FAIL\n");
+      if !sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") else output_string log_all ("[omega.ml]: unsat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
     end else ();
     !sat
   end
@@ -250,14 +250,15 @@ let is_valid (pe : formula) timeout: bool =
     let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
             if !log_all_flag then begin
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-                output_string log_all ("#is_valid" ^ Util.new_line_str ^ Util.new_line_str);
-                output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+                output_string log_all (Util.new_line_str^"#is_valid" ^Util.new_line_str);
+                output_string log_all (Util.break_lines fomega);
                 flush log_all;
             end;
-      ignore (run_omega fomega timeout);
-      let chn = open_in !resultfilename in
       let quitloop = ref false in
       let result = ref false in
+      if not (run_omega fomega timeout) then (quitloop:=true) ;
+      (*ignore (run_omega fomega timeout);*)
+      let chn = open_in !resultfilename in      
                 while not !quitloop do
                     let line = input_line chn in
                     let n = String.length line in
@@ -295,7 +296,10 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
-    if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
+    if result then 
+      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
+    else 
+      output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
 
@@ -339,20 +343,22 @@ let simplify (pe : formula) : formula =
       output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
       flush log_all;
     end;
-    ignore (run_omega fomega 0.);
+    let r = run_omega fomega 0. in
     let chn = open_in !resultfilename in
-    let lex_buf = Lexing.from_channel chn in
-    let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-    let f = match_vars (fv pe) rel in
-    begin
-      try
-        ignore (Sys.remove !infilename);
-        ignore (Sys.remove !resultfilename)
-      with
-      | e -> ignore e
-    end;
-    close_in chn;
-    f
+    let f = if r then 
+      let lex_buf = Lexing.from_channel chn in
+      let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
+       match_vars (fv pe) rel 
+      else pe in
+      begin
+        try
+          ignore (Sys.remove !infilename);
+          ignore (Sys.remove !resultfilename)
+        with
+        | e -> ignore e
+      end;
+      close_in chn;
+      f
   end
 
 let pairwisecheck (pe : formula) : formula =
@@ -367,20 +373,23 @@ let pairwisecheck (pe : formula) : formula =
                 output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
                 flush log_all;
             end;
-      ignore (run_omega fomega 0.);
-      let chn = open_in !resultfilename in
-            let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-            let f = match_vars (fv pe) rel in
-                begin
-                    try
-                        ignore (Sys.remove !infilename);
-                        ignore (Sys.remove !resultfilename)
-                    with
-                        | e -> ignore e
-                end;
-                close_in chn;
-                f
+      (*ignore (run_omega fomega 0.);*)
+    let r = run_omega fomega 0. in
+    let chn = open_in !resultfilename in
+    let f = if r then 
+      let lex_buf = Lexing.from_channel chn in
+      let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
+      match_vars (fv pe) rel 
+      else pe in
+    begin
+      try
+        ignore (Sys.remove !infilename);
+        ignore (Sys.remove !resultfilename)
+      with
+        | e -> ignore e
+    end;
+    close_in chn;
+    f
   end
 
 let hull (pe : formula) : formula =
@@ -395,28 +404,31 @@ let hull (pe : formula) : formula =
                 output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
                 flush log_all;
             end;
-      ignore (run_omega fomega 0.);
+      (*ignore (run_omega fomega 0.);*)
+      let r = run_omega fomega 0. in
       let chn = open_in !resultfilename in
-            let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-            let f = match_vars (fv pe) rel in
-                begin
-                    try
-                        ignore (Sys.remove !infilename);
-                        ignore (Sys.remove !resultfilename)
-                    with
-                        | e -> ignore e
-                end;
-                close_in chn;
-                f
+      let f = if r then 
+        let lex_buf = Lexing.from_channel chn in
+        let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
+        match_vars (fv pe) rel 
+        else pe in
+      begin
+        try
+          ignore (Sys.remove !infilename);
+          ignore (Sys.remove !resultfilename)
+        with
+          | e -> ignore e
+      end;
+      close_in chn;
+      f
   end
-
+(*
 let gist (pe1 : formula) (pe2 : formula) : formula =
   begin
 		Ocparser.subst_lst := [];
     let fstr1 = omega_of_formula pe1 in
         let fstr2 = omega_of_formula pe2 in
-        let vars_list = remove_dups (fv pe1 @ fv pe2) in
+        let vars_list = Util.remove_dups_f (fv pe1 @ fv pe2)  eq_spec_var  in
 				let l1 = List.map omega_of_spec_var vars_list  in
     let vstr = String.concat ", " l1  in
     let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
@@ -427,8 +439,8 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
                 output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
                 flush log_all;
             end;
-      ignore (run_omega fomega 0.);
-      let chn = open_in !resultfilename in
+      if (run_omega fomega 0.) then 
+            let chn = open_in !resultfilename in
             let lex_buf = Lexing.from_channel chn in
             let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
             let f = match_vars vars_list rel in
@@ -441,8 +453,9 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
                 end;
                 close_in chn;
                 f
+      else 
   end
-
+*)
 let log_mark (mark : string) =
   if !log_all_flag then begin
     output_string log_all ("#mark: " ^ mark ^ Util.new_line_str ^ Util.new_line_str);

@@ -99,7 +99,7 @@ int count(node2 z)
 /* function to transform a tree in a doubly linked list */
 void flatten(node2 x)
 	requires x::tree<m, n> 
-	ensures x::dll<null, m>;
+	ensures (exists q : x::dll<q, m> & q=null);
 {
 	node2 tmp;
 	if (x != null)

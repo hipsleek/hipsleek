@@ -101,16 +101,17 @@ and param = { param_type : typ;
 *)
 
 and proc_decl = { proc_name : ident;
-		  mutable proc_mingled_name : ident;
-		  mutable proc_data_decl : data_decl option; (* the class containing the method *)
-		  proc_constructor : bool;
-		  proc_args : param list;
-		  proc_return : typ;
-		  proc_static_specs : Iformula.struc_formula;
-		  proc_dynamic_specs : Iformula.struc_formula;
-		  proc_exceptions : ident list;
-		  proc_body : exp option;
-		  proc_loc : loc }
+				  mutable proc_mingled_name : ident;
+				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+				  proc_constructor : bool;
+				  proc_args : param list;
+				  proc_return : typ;
+				  proc_static_specs : Iformula.struc_formula;
+				  proc_dynamic_specs : Iformula.struc_formula;
+				  proc_exceptions : ident list;
+				  proc_body : exp option;
+          proc_file : string;
+				  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
 		      coercion_name : ident;

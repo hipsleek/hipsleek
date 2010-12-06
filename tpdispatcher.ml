@@ -5,6 +5,7 @@
 
 open Globals
 module CP = Cpure
+module MCP = Mcpure
 
 type tp_type =
   | OmegaCalc
@@ -28,6 +29,8 @@ let proof_no = ref 0
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
 
+let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" printing not initialized"*))
+
 let sat_cache = ref (Hashtbl.create 200)
 let impl_cache = ref (Hashtbl.create 200)
 
@@ -35,7 +38,6 @@ let prover_arg = ref "omega"
 let external_prover = ref false
 let external_host_ports = ref []
 let webserver = ref false
-let formulae_count = ref 0
 let priority = ref 1
 let decr_priority = ref false
 let set_priority = ref false
@@ -251,8 +253,8 @@ let set_tp tp_str =
 let omega_count = ref 0
 
 (* Method checking whether a formula contains bag constraints *)
-let is_bag_constraint (e: CP.formula) : bool =
-  let f_bf bf = match bf with
+
+let is_bag_b_constraint bf = match bf with
     | CP.BConst _ 
     | CP.BVar _
     | CP.Lt _ 
@@ -273,7 +275,8 @@ let is_bag_constraint (e: CP.formula) : bool =
     | CP.BagSub _
         -> Some true
     | _ -> None
-  in
+
+let is_bag_constraint (e: CP.formula) : bool =  
   let f_e e = match e with
     | CP.Bag _
     | CP.BagUnion _
@@ -283,11 +286,17 @@ let is_bag_constraint (e: CP.formula) : bool =
     | _ -> Some false
   in
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, f_bf, f_e) or_list
+  CP.fold_formula e (nonef, is_bag_b_constraint, f_e) or_list
 
-(* Method checking whether a formula contains list constraints *)
-let is_list_constraint (e: CP.formula) : bool =
-  let f_bf bf = match bf with
+let rec is_memo_bag_constraint (f:MCP.memo_pure): bool = 
+  List.exists (fun c-> 
+      (List.exists is_bag_constraint c.MCP.memo_group_slice)|| 
+      (List.exists (fun c-> match is_bag_b_constraint c.MCP.memo_formula with | Some b-> b |_ -> false) c.MCP.memo_group_cons)
+  ) f
+
+  (* Method checking whether a formula contains list constraints *)
+ 
+let is_list_b_formula bf = match bf with
     | CP.BConst _ 
     | CP.BVar _
     | CP.Lt _ 
@@ -308,7 +317,9 @@ let is_list_constraint (e: CP.formula) : bool =
     | CP.ListPerm _
         -> Some true
     | _ -> None
-  in
+ 
+let is_list_constraint (e: CP.formula) : bool =
+ 
   let f_e e = match e with
     | CP.List _
     | CP.ListCons _
@@ -321,19 +332,22 @@ let is_list_constraint (e: CP.formula) : bool =
     | _ -> Some false
   in
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, f_bf, f_e) or_list
+  CP.fold_formula e (nonef, is_list_b_formula, f_e) or_list
+  
+let rec is_memo_list_constraint (f:MCP.memo_pure): bool = 
+  List.exists (fun c-> 
+      (List.exists is_list_constraint c.MCP.memo_group_slice)|| 
+      (List.exists (fun c-> match is_list_b_formula c.MCP.memo_formula with | Some b-> b| _ -> false) c.MCP.memo_group_cons)
+  ) f  
+  
+let is_mix_bag_constraint f = match f with
+  | MCP.MemoF f -> is_memo_bag_constraint f
+  | MCP.OnePF f -> is_bag_constraint f
 
-(*
-let start () = match !tp with
-  | OmegaCalc -> ()
-  | CvcLite -> Cvclite.start ()
-  | Isabelle -> Isabelle.start ()
-
-let stop () = match !tp with
-  | OmegaCalc -> ()
-  | CvcLite -> let _ = Cvclite.stop () in ()
-*)
-
+let is_mix_list_constraint f = match f with
+  | MCP.MemoF f -> is_memo_list_constraint f
+  | MCP.OnePF f -> is_list_constraint f  
+  
 let elim_exists_flag = ref true
 let filtering_flag = ref true
 
@@ -398,13 +412,6 @@ let simplify_var_name (e: CP.formula) : CP.formula =
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   match !tp with
   | OmegaCalc ->
-(*
-if (is_bag_constraint f) then
-  begin
-    failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n");
-  end
-else
-*)
       begin
         (Omega.is_sat f sat_no);
       end
@@ -461,6 +468,15 @@ else
       else
         Redlog.is_sat f sat_no
 
+let tp_is_sat_no_cache_debug f sat_no =
+  Util.ho_debug_2 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula (fun x-> x) string_of_bool tp_is_sat_no_cache f sat_no
+        
+        
+let prune_sat_cache  = Hashtbl.create 2000 ;;
+
+
+
+
 let tp_is_sat (f: CP.formula) (sat_no: string) =
   if !Globals.no_cache_formula then
     tp_is_sat_no_cache f sat_no
@@ -473,48 +489,70 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
       try
         Hashtbl.find !sat_cache fstring
       with Not_found ->
-        let r = tp_is_sat_no_cache f sat_no in
+        let r = tp_is_sat_no_cache(*_debug*) f sat_no in
         (*let _ = Util.push_time "cache overhead" in*)
         let _ = Hashtbl.add !sat_cache fstring r in
         (*let _ = Util.pop_time "cache overhead" in*)
         r
     in res
 
+
+let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
+  if !Globals.enable_prune_cache (*&& do_cache*) then
+    (
+    Util.inc_counter "sat_cache_count";
+    let s = (!print_pure f) in
+    try 
+      let r = Hashtbl.find prune_sat_cache s in
+      (*print_string ("sat hits: "^s^"\n");*)
+      r
+    with Not_found -> 
+        let r = tp_is_sat f sat_no in
+        (Hashtbl.add prune_sat_cache s r ;
+        Util.inc_counter "sat_proof_count";
+        r))
+  else  
+    tp_is_sat f sat_no
+;;
+    
+let simplify_omega (f:CP.formula): CP.formula = 
+   if is_bag_constraint f then f
+    else Omega.simplify f   
+            
 let simplify (f : CP.formula) : CP.formula =
   if !external_prover then 
     match Netprover.call_prover (Simplify f) with
-      Some res -> res
+        Some res -> res
       | None -> f
   else
-  match !tp with
-  | Isabelle -> Isabelle.simplify f
-  | Coq -> Coq.simplify f
-  | Mona -> Mona.simplify f
-  | OM ->
-    if (is_bag_constraint f) then
-      (Mona.simplify f)
-    else (Omega.simplify f)
-  | OI ->
-    if (is_bag_constraint f) then
-      (Isabelle.simplify f)
-    else (Omega.simplify f)
-  | SetMONA -> Mona.simplify f
-  | CM ->
-      if is_bag_constraint f then Mona.simplify f
-    else Omega.simplify f
-  | Redlog -> Redlog.simplify f
-  | RM -> 
-      if is_bag_constraint f then
-        Mona.simplify f
-      else
-        Redlog.simplify f
-  | _ ->
-    (*
-     if (is_bag_constraint f) then
-     failwith ("[Tpdispatcher.ml]: The specification contains bag constraints which cannot be handled by Omega\n")
-     else
-     *)
-    (Omega.simplify f)
+    (Util.push_time "simplify";
+    try
+	  let r = match !tp with
+        | Isabelle -> Isabelle.simplify f
+        | Coq -> Coq.simplify f
+        | Mona -> Mona.simplify f
+        | OM ->
+              if (is_bag_constraint f) then
+                (Mona.simplify f)
+              else (Omega.simplify f)
+        | OI ->
+              if (is_bag_constraint f) then
+                (Isabelle.simplify f)
+              else (Omega.simplify f)
+        | SetMONA -> Mona.simplify f
+        | CM ->
+              if is_bag_constraint f then Mona.simplify f
+              else Omega.simplify f
+        | Redlog -> Redlog.simplify f
+        | RM -> 
+              if is_bag_constraint f then
+                Mona.simplify f
+              else
+                Redlog.simplify f
+        | _ -> Omega.simplify f in
+      Util.pop_time "simplify";
+      r
+    with | _ -> f)
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -596,12 +634,14 @@ let rec split_disjunctions = function
   | z -> [z]
 ;;
 
+let called_prover = ref ""
+
 let tp_imply_no_cache ante conseq imp_no timeout =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
                   ^(Cprinter.string_of_pure_formula conseq)^"\n") in
    *)
   match !tp with
-  | OmegaCalc -> (Omega.imply ante conseq imp_no timeout)
+  | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
   | Cvc3 -> Cvc3.imply ante conseq
   | Z3 -> Smtsolver.imply ante conseq
@@ -630,10 +670,10 @@ let tp_imply_no_cache ante conseq imp_no timeout =
               Omega.imply ante conseq imp_no timeout
       end
   | OM ->
-        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          (Mona.imply timeout ante conseq imp_no)
-        else
-          (Omega.imply ante conseq imp_no timeout)
+	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+		(called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
+	  else
+		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
   | OI ->
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         (Isabelle.imply ante conseq imp_no)
@@ -647,7 +687,20 @@ let tp_imply_no_cache ante conseq imp_no timeout =
       else
         Redlog.imply ante conseq imp_no
 ;;
+ 
 
+let imply_cache  = Hashtbl.create 2000 ;;
+let impl_conseq_cache  = Hashtbl.create 2000 ;;
+
+let add_conseq_to_cache s = 
+  try
+    let _ = Hashtbl.find impl_conseq_cache s in ()
+  with
+    | Not_found -> 
+          (Util.inc_counter "impl_conseq_count";
+          Hashtbl.add impl_conseq_cache s ()
+          )
+          
 let tp_imply ante conseq imp_no timeout =
   if !Globals.no_cache_formula then
     tp_imply_no_cache ante conseq imp_no timeout
@@ -667,6 +720,36 @@ let tp_imply ante conseq imp_no timeout =
         (*let _ = Util.pop_time "cache overhead" in*)
         r
     in res
+
+    
+let tp_imply ante conseq imp_no timeout do_cache =
+  if !Globals.enable_prune_cache (*&& do_cache*) then
+    (
+    Util.inc_counter "impl_cache_count";
+    add_conseq_to_cache (!print_pure conseq) ;
+    let s_rhs = !print_pure conseq in
+    let s = (!print_pure ante)^"/"^ s_rhs in
+    try 
+      let r = Hashtbl.find imply_cache s in
+      (* print_string ("hit rhs: "^s_rhs^"\n");*)
+      r
+      with Not_found -> 
+        let r = tp_imply ante conseq imp_no timeout in
+        (Hashtbl.add imply_cache s r ;
+         (*print_string ("s rhs: "^s_rhs^"\n");*)
+         Util.inc_counter "impl_proof_count";
+        r))
+  else  
+    tp_imply ante conseq imp_no timeout
+;;
+
+let tp_imply_debug ante conseq imp_no timeout do_cache =
+ Util.ho_debug_5 "tp_imply " 
+  Cprinter.string_of_pure_formula 
+  Cprinter.string_of_pure_formula
+ (fun c-> c) (fun _ -> "?") string_of_bool 
+ string_of_bool (fun x-> true)
+ tp_imply ante conseq imp_no timeout do_cache
 
 (* renames all quantified variables *)
 let rec requant = function
@@ -775,17 +858,15 @@ let simpl_pair rid (ante, conseq) =
   (ante3, conseq)
 ;;
 
-let is_sat (f : CP.formula) (sat_no : string) : bool =
-  proof_no := !proof_no+1 ;
-  let sat_no = (string_of_int !proof_no) in
-  Debug.devel_pprint ("SAT #" ^ sat_no) no_pos;
-
+let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   let f = elim_exists f in
-  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
-  tp_is_sat f sat_no
+  if (CP.isConstTrue f) then true 
+  else if (CP.isConstFalse f) then false
+  else  let (f, _) = simpl_pair true (f, CP.mkFalse no_pos) in
+    tp_is_sat f sat_no do_cache
 ;;
 
-let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout 
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
@@ -796,43 +877,33 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
       | None -> (false,[],None)
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
-	let conseq =
-		if CP.should_simplify conseq0 then simplify conseq0
-		else conseq0 
-	in
-	if CP.isConstTrue conseq0 then
-		(true, [],None)
+	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
+	if CP.isConstTrue conseq0 then (true, [],None)
 	else
-		let ante =
-			if CP.should_simplify ante0 then simplify ante0
-			else ante0
-		in
+let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
 		if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
 		else
 			let ante = elim_exists ante in
 			let conseq = elim_exists conseq in
 			let split_conseq = split_conjunctions conseq in
-			let pairs = List.map (fun cons -> let (ante,cons) = simpl_pair false (requant ante, requant cons) in filter ante cons) split_conseq in
-			(*let pairs = [filter ante conseq] in*)
+			let pairs = List.map (fun cons -> 
+        let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
+        let ante = CP.remove_dup_constraints ante in
+        filter ante cons) split_conseq in
 			let pairs_length = List.length pairs in
-			(*let _ = print_string ("\n!!!!! imp " ^ imp_no ^ " " ^ (string_of_int pairs_length)) in*)
-			(*Debug.devel_pprint (" - left folding " ^ (string_of_int pairs_length) ^ " times");*)
 			let imp_sub_no = ref 0 in
 			let fold_fun (res1,res2,res3) (ante, conseq) =
 				(incr imp_sub_no;
-				(*let _ = print_string ("\n!!!!! fold_fun " ^ imp_no ^ " " ^ (string_of_int !imp_sub_no)) in*)
 				if res1 then 
-					(*let _ = print_string ("\n!!!!! fold_fun if res1 " ^ imp_no ^ " " ^ (string_of_int !imp_sub_no)) in*)
 					let imp_no = 
 						if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
 						else imp_no in
 					let res1 =
 						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-							let res1 = tp_imply (CP.drop_bag_formula ante) conseq imp_no timeout  in
+							let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
 							if res1 then res1
-							else tp_imply ante conseq imp_no timeout
-						else tp_imply ante conseq imp_no timeout
-					in
+							else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
+						else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
 					let l1 = CP.get_pure_label ante in
 					let l2 = CP.get_pure_label conseq in
 					if res1 then (res1,(l1,l2)::res2,None)
@@ -843,20 +914,45 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   end
 ;;
 
-let imply_timeout2 ante0 conseq0 imp_no timeout =
-  let _ = Util.push_time "imply" in
-  let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout in
-
-  let _ = Util.pop_time "imply" in
-  if res1  then true_imply_count := !true_imply_count + 1 else false_imply_count := 1+ !false_imply_count;
+let imply_timeout ante0 conseq0 imp_no timeout do_cache =
+  let s = "imply" in
+  let _ = Util.push_time s in
+  let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache in
+  let _ = Util.pop_time s in
+  if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
 ;;
 
-let imply ante0 conseq0 imp_no = 
-	imply_timeout2 ante0 conseq0 imp_no 0.
+let memo_imply_timeout ante0 conseq0 imp_no timeout = 
+  let _ = Util.push_time "memo_imply" in
+  let r = List.fold_left (fun (r1,r2,r3) c->
+    if not r1 then (r1,r2,r3)
+    else 
+      let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
+      let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true true l in
+      let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true false [c] in
+      let r1',r2',r3' = imply_timeout ant con imp_no timeout false in 
+      (r1',r2@r2',r3')) (true, [], None) conseq0 in
+  let _ = Util.pop_time "memo_imply" in
+  r
 ;;
 
-let is_sat f sat_no =
+let mix_imply_timeout ante0 conseq0 imp_no timeout = match ante0,conseq0 with
+  | MCP.MemoF a, MCP.MemoF c -> memo_imply_timeout a c imp_no timeout
+  | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false
+  | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
+
+let imply ante0 conseq0 imp_no do_cache = imply_timeout ante0 conseq0 imp_no 0. do_cache
+;;
+
+let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
+;;
+
+let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
+;;
+
+
+let is_sat f sat_no do_cache =
   if !external_prover then 
       match Netprover.call_prover (Sat f) with
       Some res -> res       
@@ -864,12 +960,64 @@ let is_sat f sat_no =
   else  begin   
 
 	let _ = Util.push_time "is_sat" in
-    let res = is_sat f sat_no in
-
-	let _ = Util.pop_time "is_sat" in
+  let res = is_sat f sat_no do_cache in
+	let _ = Util.pop_time "is_sat" in  
 	res end
 ;;
 
+let sat_no = ref 1
+;;
+let incr_sat_no () = 
+ sat_no := !sat_no +1 
+;;
+
+let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool = 
+  let sat = is_sat f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
+  Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+  sat_subno := !sat_subno+1;
+  sat
+;;
+
+let is_sat_sub_no (f : CP.formula) sat_subno : bool =  is_sat_sub_no_c f sat_subno false;;
+
+let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =  
+  Util.ho_debug_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
+    (string_of_bool ) is_sat_sub_no f sat_subno;;
+
+let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 
+  let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
+  not (List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)
+;;
+
+let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
+  | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
+  | MCP.OnePF f -> is_sat_sub_no f sat_subno
+
+let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
+  let sat_subno = ref 0 in
+  let _ = Util.push_time prof_lbl in
+  let sat = is_sat_sub_no_c f sat_subno do_cache in
+  let _ = Util.pop_time prof_lbl in
+  sat
+  
+let imply_sub_no ante0 conseq0 imp_no do_cache=
+  Debug.devel_pprint ("IMP #" ^ imp_no ^ "\n") no_pos;
+  (* imp_no := !imp_no+1;*)
+  imply ante0 conseq0 imp_no do_cache
+
+let imply_msg_no_nox ante0 conseq0 imp_no prof_lbl do_cache =
+  let _ = Util.push_time prof_lbl in  
+  let r = imply_sub_no ante0 conseq0 imp_no do_cache in
+  let _ = Util.pop_time prof_lbl in
+  r
+let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
+Util.ho_debug_5 "imply_msg_no_no " 
+  Cprinter.string_of_pure_formula 
+  Cprinter.string_of_pure_formula
+ (fun c-> c) (fun _ -> "?") string_of_bool 
+ (fun (x,_,_)-> string_of_bool x) (fun x-> true)
+ imply_msg_no_nox ante0 conseq0 imp_no prof_lbl do_cache
+  
 let print_stats () =
   print_string ("\nTP statistics:\n");
   print_string ("omega_count = " ^ (string_of_int !omega_count) ^ "\n")

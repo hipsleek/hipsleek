@@ -113,7 +113,7 @@ and gen_nodes prog n h0 buffer = match h0 with
 and gen_edges prog n h0 p nodes buffer = 
   let hvars = h_fv h0 in
   let heqs = List.map (fun hv -> (hv, hv)) hvars in
-  let asets = Context.alias ((Solver.ptr_equations p) @ heqs) in
+  let asets = Context.alias ((MCP.ptr_equations p) @ heqs) in
 	(* see if an edge from start to finish can be added *)
   let make_edge start finish lbl =
 	let aset' = Context.get_aset asets finish in
@@ -150,7 +150,7 @@ and gen_edges prog n h0 p nodes buffer =
 and gen_edges_visib_names n visib_names p nodes buffer =
   let visib_names = List.map (fun v -> SpecVar (OType "", v, Primed)) visib_names in
   let veqs = List.map (fun v -> (v, v)) visib_names in
-  let asets = Context.alias ((Solver.ptr_equations p) @ veqs) in
+  let asets = Context.alias ((MCP.ptr_equations p) @ veqs) in
   let make_edge var =
 	let aset' = Context.get_aset asets var in
 	let aset = List.map dot_of_spec_var aset' in

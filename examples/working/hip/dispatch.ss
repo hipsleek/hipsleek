@@ -40,14 +40,6 @@ llH<n,"s":sum,"B":B> == self = null
 
 	
 void dispatch(node lst, ref node gtl, ref node ltl)
-<<<<<<< dispatch.ss
-  requires lst::llH<n,s,B> 
-  ensures gtl'::llH<n1,s1,B1> * ltl'::llH<n2,s2,B2> 
-  & n=n1+n2 & 
-    ["s":s=s1+s2 & s1>=10*n1 
-        & s2<1*n2; 
-     "B":B=union(B1,B2) 
-=======
 /*
   requires lst::ll3<n,s> 
   ensures gtl'::ll3<n1,s1> * ltl'::ll3<n2,s2> 
@@ -56,52 +48,19 @@ void dispatch(node lst, ref node gtl, ref node ltl)
   requires lst::llS<B> 
   ensures gtl'::llS<B1> * ltl'::llS<B2> 
      & B=union(B1,B2) 
->>>>>>> 1.12
      & forall (x:(x notin B1 | x>=3))
-<<<<<<< dispatch.ss
-     //& forall (x:(x notin B2 | x<3))  bug
-     & forall (y:(y notin B2 | y<2))
-  ]
-  ;
-//requires lst::llsum<n> 
-//ensures gtl'::llsum<n1> * ltl'::llsum<n2> & n=n1+n2;
-//requires lst::ll<n> 
-//ensures gtl'::ll<n1> * ltl'::ll<n2> & n=n1+n2;
-//requires lst::llS<B> 
-//ensures gtl'::llS<B1> * ltl'::llS<B2> & B=union(B1,B2);
-=======
     & forall (y:(y notin B2 | y<3)); 
 
->>>>>>> 1.12
 {
-<<<<<<< dispatch.ss
-  //dprint;
-=======
->>>>>>> 1.12
   if (lst == null) {
-<<<<<<< dispatch.ss
-    //dprint;  // should not be false!
-     //assert false;
-=======
->>>>>>> 1.12
      gtl=null; 
      ltl =null;
      }
    else {
-<<<<<<< dispatch.ss
-     //dprint;
-=======
->>>>>>> 1.12
      node tmp = lst.next;
      node gt; node lt;
      if (lst.val>=3) {
-<<<<<<< dispatch.ss
-       //dprint;
-          dispatch(tmp,gt,ltl);         
-         // assert false;
-=======
           dispatch(tmp,gt,lt);         
->>>>>>> 1.12
           lst.next = gt;
           gtl = lst;
           ltl=lt;

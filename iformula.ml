@@ -39,17 +39,17 @@ and formula =
   | Or of formula_or
 
 and formula_base = { formula_base_heap : h_formula;
-					 formula_base_pure : P.formula;
-					 formula_base_flow : flow_formula;
+                     formula_base_pure : P.formula;
+                     formula_base_flow : flow_formula;
                      formula_base_branches : (branch_label * P.formula) list;
-					 formula_base_pos : loc }
+                     formula_base_pos : loc }
 
 and formula_exists = { formula_exists_qvars : (ident * primed) list;
-					   formula_exists_heap : h_formula;
-					   formula_exists_pure : P.formula;
-					   formula_exists_flow : flow_formula;
+                       formula_exists_heap : h_formula;
+                       formula_exists_pure : P.formula;
+                       formula_exists_flow : flow_formula;
                        formula_exists_branches : (branch_label * P.formula) list;
-					   formula_exists_pos : loc }
+                       formula_exists_pos : loc }
 
 and flow_formula = constant_flow				   
 					   
@@ -189,11 +189,11 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flo
 		mkFalse flow pos
 	  else
 		Exists { formula_exists_qvars = qvars;
-				 formula_exists_heap = h;
-				 formula_exists_pure = p;
-				 formula_exists_flow = flow;
-                 formula_exists_branches = br;
-				 formula_exists_pos = pos }
+             formula_exists_heap = h;
+             formula_exists_pure = p;
+             formula_exists_flow = flow;
+             formula_exists_branches = br;
+             formula_exists_pos = pos }
 
 and mkStar f1 f2 pos = match f1 with
   | HFalse -> HFalse
@@ -332,17 +332,17 @@ and all_fv (f:formula):(ident*primed) list = match f with
 	| Or b-> Util.remove_dups ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))
 	
 and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
-  | Base ({formula_base_heap = h; 
-		   formula_base_pure = p; 
-           formula_base_branches = b;
-		   formula_base_flow = f;
-		   formula_base_pos = pos}) -> mkExists qvars h p f b pos
+  | Base ({ formula_base_heap = h; 
+            formula_base_pure = p; 
+            formula_base_branches = b;
+           formula_base_flow = f;
+           formula_base_pos = pos}) -> mkExists qvars h p f b pos
   | Exists ({formula_exists_qvars = qvs; 
-			 formula_exists_heap = h; 
-			 formula_exists_pure = p; 
-			 formula_exists_flow = f;
+             formula_exists_heap = h; 
+             formula_exists_pure = p; 
+             formula_exists_flow = f;
              formula_exists_branches = b;
-			 formula_exists_pos = pos}) -> 
+             formula_exists_pos = pos}) -> 
 	  let new_qvars = Util.remove_dups (qvs @ qvars) in
 		mkExists new_qvars h p f b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
