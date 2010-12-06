@@ -1600,7 +1600,7 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
   
   
 and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
- let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in
+(* let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in*)
  let (ph, phb) = xpure_f hf in
  let phb = CP.merge_branches phb br in    
  if phb = [] then
@@ -2965,10 +2965,10 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
             (fold_rs, fold_prf)
 	      end in
       
-      let do_fold_w_ctx_debug ctx var = 
+      (*let do_fold_w_ctx_debug ctx var = 
       Util.ho_debug_2 
         "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var
-        (fun (c,_) -> Cprinter.string_of_list_context c) do_fold_w_ctx ctx var in
+        (fun (c,_) -> Cprinter.string_of_list_context c) do_fold_w_ctx ctx var in*)
         
 	    let do_fold (var_to_fold : CP.spec_var) =
 	      let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with 

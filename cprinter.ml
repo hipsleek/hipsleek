@@ -593,12 +593,14 @@ let rec pr_b_formula (e:P.b_formula) =
   
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = s2 (*("("^(string_of_int i)^", "^s^"):"^s2) *)
+let string_of_formula_label (i,s) s2:string = s2 (*("("^(string_of_int i)^", "^s^"):"^s2)*)
+let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
 
+let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")
 let pr_formula_label_opt l = fmt_string (string_of_formula_label_opt l "")
@@ -652,7 +654,7 @@ let pr_mem_slice slc = fmt_string "[";pr_pure_formula (P.conj_of_list slc no_pos
 let pr_mem_slice_aux slc = fmt_string "[";
  pr_list_op_none "" pr_pure_formula slc ; fmt_string "]"  
  
-let pr_memoise_group m_gr = 
+let pr_memoise_group_vb m_gr = 
   (*if !pr_mem then *)
     fmt_cut();
     wrap_box ("B",1)
@@ -668,19 +670,24 @@ let pr_memoise_group m_gr =
       ) m_gr; fmt_string ")") m_gr
   (*else ()*)
   
-let pr_memoise_group_aux m_gr = 
+let pr_memoise_group_standard print_P m_gr = 
   (*if !pr_mem then *)
     fmt_cut();
     wrap_box ("B",1)
     ( fun m_gr -> fmt_string "(";pr_list_op_none ""     
       (fun c-> 
-        let f = MCP.fold_mem_lst (CP.mkTrue no_pos) false true (MCP.MemoF [c]) in
+        let f = MCP.fold_mem_lst (CP.mkTrue no_pos) false print_P (MCP.MemoF [c]) in
         fmt_string "[";
         wrap_box ("B",1) pr_pure_formula f;
         fmt_string "]";
         fmt_cut()
       ) m_gr; fmt_string ")") m_gr
 
+let pr_memoise_group m_gr = match !Globals.memo_verbosity with
+  | 0 -> pr_memoise_group_vb m_gr (*verbose*)
+  | 1 -> pr_memoise_group_standard false  m_gr (*brief*)
+  | _ -> pr_memoise_group_standard true  m_gr (*standard*)
+      
 let pr_remaining_branches s = match s with 
     | None -> ()
     | Some s -> 
@@ -1162,7 +1169,7 @@ let pr_view_decl v =
     | None -> ()
     | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
   f v.view_base_case;
-  pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label c) v.view_prune_branches;
+  pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
   pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,c2)-> 
             let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in

@@ -177,6 +177,8 @@ let common_arguments = [
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
+  ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
+     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
   ] 
 
 (* arguments/flags used only by hip *)	

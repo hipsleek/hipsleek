@@ -202,6 +202,8 @@ let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
+let memo_verbosity = ref 2
+
 let profile_threshold = 0.5 
 
 let no_cache_formula = ref false
