@@ -1264,7 +1264,7 @@ and fold p c v q u l = Util.ho_debug_6 "fold "
 (fun _ -> "?") 
 (fun _ -> "?")
 (fun _ -> "?")
-(fun _ -> "?")
+(fun (c,_) -> Cprinter.string_of_list_context c)
 (fun _ -> true) fold_a p c v q u l
 
 

@@ -93,13 +93,14 @@ print residue.
 */
 
 // failed!
-checkentail (y::node<_,null>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<n>@I).
+checkentail (y::node<_,null>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m> )  |- (y::ll<n>@I).
 print residue.
 
+/*
 //tested : OK!
 checkentail (y::ll<n>@I); p::ll<m1> * ((t::ll<a>@I); z::ll<m>) & n > 0 & x=null  |- x::ll<m>. // should fail -> when unfolding must propagate the imm annotation
 //print residue.
-
+*/
 //checkentail (x::ll<n>@I); y::ll<m>@I * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<m2>@I * t::ll<a2>@I).
 //print residue.
 

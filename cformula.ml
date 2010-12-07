@@ -64,7 +64,8 @@ and formula_base = {
 formula_base_heap : h_formula;
 (*formula_base_mem  : mem_formula; (* not used mostly *)
 formula_base_disj : disj_formula;*)
-formula_base_pure : CP.formula;formula_base_type : t_formula;
+formula_base_pure : CP.formula;
+formula_base_type : t_formula;
 formula_base_flow : flow_formula;
 formula_base_branches : (branch_label * CP.formula) list;
 formula_base_pos : loc }
