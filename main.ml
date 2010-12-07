@@ -15,7 +15,15 @@ let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_fil
 (* main function                          *)
 (******************************************)
 
-let sleekex_link = "/home/an/sleekex/"
+let exe_url = Sys.argv.(0)
+
+let get_exe_direct_link ()  =
+  try
+     let name_index = String.rindex exe_url '/' in
+     try
+        String.sub exe_url 0 (name_index+1)
+     with Invalid_argument "" -> "./"
+  with Not_found -> "./"
 
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
@@ -42,6 +50,7 @@ let rec process_primitives file_list =
   | [] -> []
   | hd::tl ->
         let header_filename = String.sub hd 1 ((String.length hd) - 2) in
+        let sleekex_link = get_exe_direct_link() in
         let new_filename = sleekex_link ^ header_filename in
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
