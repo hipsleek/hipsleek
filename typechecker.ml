@@ -88,7 +88,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                     exp_assert_pos = pos}) -> 
         begin
 	        let s1 = snd post_start_label in
-	        if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then (print_string "inside label missmatch \n";ctx)
+	        if (String.length s)>0 && (String.length s1)>0 && (String.compare s s1 <> 0)  then ctx
 	        else
             let (ts,ps) = List.partition (fun (fl,el,sl)-> (List.length fl) = 0) ctx in
 	          let new_ctx = match c1_o with

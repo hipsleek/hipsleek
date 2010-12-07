@@ -1360,6 +1360,9 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | _ -> f
 
 
+and fold_debug p c v pu u loc = 
+  Util.ho_debug_2 "fold " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
+      (fun c v -> fold p c v pu u loc) c v
 (**************************************************************)
 (**************************************************************)
 (**************************************************************)
