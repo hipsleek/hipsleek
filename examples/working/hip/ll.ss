@@ -39,7 +39,7 @@ void append(node x, node y)
 {
 	if (x.next == null)
 	      x.next = y;
-	else
+	else 
 		append(x.next, y);
 }
 
