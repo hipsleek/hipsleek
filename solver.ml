@@ -726,7 +726,7 @@ and find_node prog lhs_h lhs_p (ps : CP.spec_var list) pos : find_node_result =
 
 and find_node_one prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) (phase : Context.phase_type option) pos : find_node_result =
   let matches = Context.choose_context prog lhs_h lhs_p p imm phase pos in 
-  if U.empty matches then let _ = print_string ("no match \n\n") in NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
+  if U.empty matches then NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Match (matches)
 
 and h_mvars prog (h : h_formula) : CP.spec_var list = match h with
@@ -932,10 +932,10 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
   transform_list_partial_context (fct,(fun c->c)) ctx 
     
     
-(* and unfold p f v d l = Util.ho_debug_5 "unfold " (fun _ -> "?")  *)
-(* (Cprinter.string_of_formula)  *)
-(* (CP.name_of_spec_var) (fun _ -> "?") (fun _ -> "?") *)
-(* (Cprinter.string_of_formula) (fun _ -> true) unfold_a p f v d l *)
+and unfold_debug p f v d l = Util.ho_debug_5 "unfold " (fun _ -> "?")
+(Cprinter.string_of_formula)
+(CP.name_of_spec_var) (fun _ -> "?") (fun _ -> "?")
+(Cprinter.string_of_formula) (fun _ -> true) unfold p f v d l
     
 and unfold (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = 
 match f with
@@ -1257,7 +1257,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 (**************************************************************)
 (**************************************************************)
 
-and fold p c v q u l = Util.ho_debug_6 "fold " 
+and fold_debug p c v q u l = Util.ho_debug_6 "fold " 
 (fun _ -> "?")
 (fun _ -> "?")
 (Cprinter.string_of_h_formula)
@@ -1265,12 +1265,12 @@ and fold p c v q u l = Util.ho_debug_6 "fold "
 (fun _ -> "?")
 (fun _ -> "?")
 (fun (c,_) -> Cprinter.string_of_list_context c)
-(fun _ -> true) fold_a p c v q u l
+(fun _ -> true) fold p c v q u l
 
 
 (* fold some constraints in f1 to view v under pure pointer *)
 (* constraint pp and Presburger constraint pres             *)
-and fold_a prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
+and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
   | ViewNode ({h_formula_view_node = p;
 	h_formula_view_name = c;
 	h_formula_view_imm = imm;
