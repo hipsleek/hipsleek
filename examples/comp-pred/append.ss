@@ -1,24 +1,50 @@
-data node {
-	int val;
+data node[t] {
+	t val;
 	node next;
 }
 
-ll-shape(a)[Base,Rec,Inv]= Base(a,self)
-  or self::node<v,q>* q::ll-shape(aq) & Rec(a,aq,v,self,q)
-  inv Inv(a);
-  
-llBase (a,self) = self=null 
-  
-llsBase(a,self) = a=0 
-llsRec(a,aq,v,self,q) = a=aq+1 
-llsInv(a) = a>=0;
-  
-lsegBase (a,self) = self=a 
-lsegRec (a,aq,v,self,q) = aq=a 
-     
-ll<n> = ll-shape<> [llsBase,llsRec,llsInv : n] [Base = llBase : ] 
+pred ll_shape[t]<a:t2>[Base,Rec,I] = 
+     self=null & Base(a,self)
+  or self::node[t]<v,q> * q::ll-shape[t]<aq> & Rec(a,aq,v,self,q) 
+     inv I(self,a);
 
-lseg<n,p> = ll-shape<> [llsBase,llsRec,llsInv : n] [Base=lsegBase, Rec=lsegRec: p]
+pred ll_gshape[t]<a:t2>[Base,Rec,I] = 
+     Base(a,self)
+  or self::node[t]<v,q> * q::ll-gshape[t]<aq> & Rec(a,aq,v,self,q) 
+     inv I(self,a); 
+
+pred ll_acyclic[t]<a:t2> extends ll-gshape[t]<a>
+     with { Base(_,self) = self=null; }
+
+pred ll_acyclic[t]<a:t2>[Base,Rec,I] =
+       ll-gshape[t]<a>[\ (a,self)-> self=null & Base(a,self), Rec, I];
+
+pred ll_seg[t]<(p:node[t],a:t2)> extends ll-gshape[t]<(p,a)>
+       with { Base((p,_),self) = self=p; }
+
+pred ll_seg[t]<(p:node[t],a:t2)>[Base,Rec,I] =
+  ll-gshape[t]<(p:node[t],a:t2)>[\ ((p,a),self)-> self=p & Base((p,a),self), Rec, I];
+
+
+pred ll_seg_size[t]<(p:node[t],a:int)> extends ll_seg[t]<(p,a)>
+       with { Base((p,a),self) = a=0;
+               Rec((p,a),(_,a1),..) = a=a1+1; }
+
+pred ll_seg_size[t]<(p:node[t],a:int)>[Base,Rec,I]
+  ll-seg[t]<a>[\ ((p,a),self)-> a=0 & Base((p,a),self), 
+               \ ((p,a),(p1,a1),..) as args = a=a1+1 & Rec(ars),I ]
+Rec, I];
+       with { Base((p,a),self) = a=0;
+               Rec((p,a),(_,a1),..) = a=a1+1; }
+
+pred ll_seg_size[t]<(p:node[t],a:t2)>[Base,Rec,I] =
+  ll-gshape[t]<(p:node[t],a:t2)>[\((p,a),self)-> self=p & Base((p,a),self), Rec, I];
+
+pred ll[t]<n> = self::ll-shape[t]<n>
+  [\(n,_)-> n=0, \(n,n1,..)->n=1+n1, \(n,_)->n>=0];
+
+
+pred lseg<n,p> = ll-shape<> [llsBase,llsRec,llsInv : n] [Base=lsegBase, Rec=lsegRec: p];
     
     // ll-part<n> = ll-shape<> [llsBase,llsRec,llsInv : n]
     // ll<n> = ll-part<n> [Base = llBase :]
