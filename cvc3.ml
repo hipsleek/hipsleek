@@ -131,7 +131,7 @@ and cvc3_of_formula f = match f with
   | CP.Not (p,_, _) ->
 	    begin
 		  match p with
-		    | CP.BForm (CP.BVar (bv, _),_) -> (cvc3_of_spec_var bv) ^ " = 0"
+		   (* | CP.BForm (CP.BVar (bv, _),_) -> (cvc3_of_spec_var bv) ^ " = 0"*)
 		    | _ -> "(NOT (" ^ (cvc3_of_formula p) ^ "))"
 	    end
   | CP.Forall (sv, p,_, _) ->

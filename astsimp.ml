@@ -2857,8 +2857,10 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
             Err.error_text = "all guard free vars must be instantiated";} in
 	      let _ = 
 	        let sat = Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno in
-	        if sat then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
-            Err.error_text = "the guards don't cover the whole domain";} 	in
+	        if sat then 
+            let s = (Cprinter.string_of_struc_formula f) in
+            Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
+            Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} 	in
 	      
 	      let rec p_check (p:Cpure.formula list):bool = match p with
 	        | [] -> false 
@@ -2866,8 +2868,10 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 				  let sat =  Tpdispatcher.is_sat_sub_no (Cpure.mkAnd p1 c no_pos) sat_subno in
 				  a ||sat) false p2 ) then true else p_check p2 in
 	      
-	      let _ = if (p_check r1) then Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
-          Err.error_text = "the guards are not disjoint";} in
+	      let _ = if (p_check r1) then 
+          let s = (Cprinter.string_of_struc_formula f) in
+          Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
+          Err.error_text = "the guards are not disjoint : "^s^"\n";} in
 	      
 	      let _ = List.map (case_coverage instant) r2 in true	in
   let _ = List.map (ext_case_coverage instant) f in true

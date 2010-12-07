@@ -859,6 +859,10 @@ let simpl_pair rid (ante, conseq) =
 ;;
 
 let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
+  proof_no := !proof_no+1 ;
+  let sat_no = (string_of_int !proof_no) in
+  Debug.devel_pprint ("SAT #" ^ sat_no) no_pos;
+  
   let f = elim_exists f in
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
