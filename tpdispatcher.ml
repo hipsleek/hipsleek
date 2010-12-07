@@ -856,7 +856,7 @@ let is_sat (f : CP.formula) (sat_no : string) : bool =
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (memset : Cformula.mem_formula) (imp_no : string) timeout 
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   let conseq0 = solve_ineq memset conseq0 in
-  let _ = print_string("The new conseq is " ^ (Cprinter.string_of_pure_formula conseq0) ^ "\n") in  
+  (* let _ = print_string("The new conseq is " ^ (Cprinter.string_of_pure_formula conseq0) ^ "\n") in   *)
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       

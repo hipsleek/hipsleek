@@ -1373,6 +1373,17 @@ and rename_bound_vars (f : formula) = match f with
 		resform
 
 (* for immutability *)
+(* and propagate_imm_struc_formula (sf : struc_formula) (imm : bool) : struc_formula =  *)
+(* let helper (f : ext_formula) = match f with *)
+(* 	| EBase b -> EBase {b with formula_ext_base = substitute_flow_in_f to_flow from_flow b.formula_ext_base ;  *)
+(* 								   formula_ext_continuation = substitute_flow_in_struc_f to_flow from_flow  b.formula_ext_continuation} *)
+(* 	| ECase b -> ECase {b with formula_case_branches = List.map (fun (c1,c2) -> (c1,(substitute_flow_in_struc_f to_flow from_flow  c2))) b.formula_case_branches} *)
+(* 	| EAssume (x,b,y) -> EAssume (x,(substitute_flow_in_f to_flow from_flow  b),y) *)
+(* 	in *)
+(* List.map helper f	 *)
+
+
+
 and propagate_imm_formula (f : formula) (imm : bool) : formula = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
 	  let rf1 = propagate_imm_formula f1 imm in
@@ -2882,3 +2893,16 @@ let add_to_estate_with_steps (es:entail_state) (ss:steps) =
 (* 		   ) sl  *)
 (*   in *)
 (*     list_partial_context_or [ (fl, []) ] (fold_partial_context_left r) *)
+
+
+let propagate_imm_struc_formula e =
+  let f_e_f e = None  in
+  let f_f e = None in
+  let f_h_f f = Some (propagate_imm_h_formula f true) in
+  let f_p_t1 e = Some e in
+  let f_p_t2 e = Some e in
+  let f_p_t3 e = Some e in
+  let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3)) in
+    transform_struc_formula f e
+    
+

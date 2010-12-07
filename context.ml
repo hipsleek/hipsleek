@@ -60,9 +60,9 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) (phase : 
 	  (* choose the type of context *)
 	  let anodes = 
 	    match phase with
-	      | Some Spatial -> let _ = print_string("[choose_cxt]: Spatial ctx:\n") in (spatial_ctx_extract prog lhs_h paset imm) 
-              | Some Classic -> let _ = print_string("[choose_ctx]: Conj ctx\n") in (conj_ctx_extract prog lhs_h paset imm)
-	      | None -> let _ = print_string("[choose_ctx]: No ctx -> apply the conj one\n") in (conj_ctx_extract prog lhs_h paset imm) 	  
+	      | Some Spatial -> (* let _ = print_string("[choose_cxt]: Spatial ctx:\n") in *) (spatial_ctx_extract prog lhs_h paset imm) 
+              | Some Classic -> (* let _ = print_string("[choose_ctx]: Conj ctx\n") in *) (conj_ctx_extract prog lhs_h paset imm)
+	      | None -> (* let _ = print_string("[choose_ctx]: No ctx -> apply the conj one\n") in *) (conj_ctx_extract prog lhs_h paset imm) 	  
           in		  
 	    List.map (fun (new_ctx, hole, hole_id, anode, flag, _, _) -> (hole, anode, flag, phase, new_ctx, hole_id)) anodes
       end	
@@ -70,16 +70,24 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) (phase : 
 (*
 spatial context
 *)
+    
+and spatial_ctx_extract p f a i = Util.ho_debug_4 "spatial_context_extract " (fun _ -> "?") 
+(Cprinter.string_of_h_formula) 
+(fun _ -> "?") 
+(string_of_bool)
+(fun _ -> "?")
+(fun _ -> true) 
+spatial_ctx_extract_a p f a i
 
-and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : context list  =
-  let _ = print_string("spatial_ctx_extract with f0 = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in
+and spatial_ctx_extract_a prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : context list  =
+  (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in *)
   let rec helper f = match f with
     | HTrue 
     | HFalse -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
 		 h_formula_data_imm = imm1}) ->
-	if ((CP.mem p1 aset) && (subtype imm imm1)) then 
+	if ((CP.mem p1 aset) && (subtype imm1 imm)) then 
 	  let matched_node = 
 	    (* if the node is immutable -> do not consume it *)
 	    if imm then f
@@ -138,9 +146,9 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
     | Phase ({h_formula_phase_rd = f1;
 	     h_formula_phase_rw = f2;
 	     h_formula_phase_pos = pos}) ->
-	let _ = print_string("in phase with f1 = " ^ (Cprinter.string_of_h_formula f1) ^ "\n") in
-	let _ = print_string("and f2 = " ^ (Cprinter.string_of_h_formula f2) ^ "\n") in
-	let l1 = helper f1 in
+	(* let _ = print_string("in phase with f1 = " ^ (Cprinter.string_of_h_formula f1) ^ "\n") in *)
+	(* let _ = print_string("and f2 = " ^ (Cprinter.string_of_h_formula f2) ^ "\n") in *)
+	let l1 = helper f1 in		
 	let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (mkPhaseH ctx1 f2 pos, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in  
 
 	let l2 = helper f2 in
@@ -165,15 +173,24 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 conjunctive context
 *)
 
-and conj_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : context list  =
-  let _ = print_string("conj_ctx_extract: input formula = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in
+and conj_ctx_extract p f a i = Util.ho_debug_4 "conj_context_extract " (fun _ -> "?") 
+(Cprinter.string_of_h_formula) 
+(fun _ -> "?") 
+(string_of_bool)
+(fun _ -> "?")
+(fun _ -> true) 
+conj_ctx_extract_a p f a i
+
+and conj_ctx_extract_a prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : context list  =
+  (* let _ = print_string("conj_ctx_extract: input formula = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in *)
   let rec helper f = match f with
     | HTrue 
     | HFalse -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1;
 		 h_formula_data_imm = imm1}) ->
-	if (CP.mem p1 aset) && (subtype imm imm1) then 
+	if (CP.mem p1 aset) && (subtype imm1 imm) then
+	  let _ = print_string("allowed") in
 	  let matched_node =
 	    if imm then f
 	    else HTrue 
@@ -181,6 +198,7 @@ and conj_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool
 	  let hole_no = Globals.fresh_int() in 
 	  [((Hole hole_no), matched_node, hole_no, f, Root, HTrue, [])]  (* the node is imm, hence it is not consumed *)
 	else 
+  	  let _ = print_string("disallowed") in
 	  []
     | ViewNode ({h_formula_view_node = p1;
 		 h_formula_view_imm = imm1;

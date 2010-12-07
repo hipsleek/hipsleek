@@ -60,7 +60,7 @@ let no_check_outer_vars = ref false
 (*----------------*)
 let rec formula_2_mem (f : CF.formula) prog : CF.mem_formula = 
   (* for formula *)	
-  let _ = print_string("f = " ^ (Cprinter.string_of_formula f) ^ "\n") in
+  (* let _ = print_string("f = " ^ (Cprinter.string_of_formula f) ^ "\n") in *)
   match f with
     | Base ({formula_base_heap = h;
 	     formula_base_pure = p;
@@ -88,12 +88,12 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
 	    h_formula_star_pos = pos}) -> 
 	let m1 = h_formula_2_mem h1 evars prog in
 	let m2 = h_formula_2_mem h2 evars prog in
-	let _ = print_string("m1 = " ^ (Cprinter.string_of_mem_formula m1) ^ "\n") in  
-	let _ = print_string("m2 = " ^ (Cprinter.string_of_mem_formula m2) ^ "\n") in  
+	(* let _ = print_string("m1 = " ^ (Cprinter.string_of_mem_formula m1) ^ "\n") in   *)
+	(* let _ = print_string("m2 = " ^ (Cprinter.string_of_mem_formula m2) ^ "\n") in   *)
 	let m = (Util.star_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	let res = {mem_formula_mset = m;} in
-	let _ = print_string("The union is " ^ (Cprinter.string_of_mem_formula res) ^ "\n") in
-	let _ = print_string("The h_formula is " ^ (Cprinter.string_of_h_formula f) ^ "\n") in
+	(* let _ = print_string("The union is " ^ (Cprinter.string_of_mem_formula res) ^ "\n") in *)
+	(* let _ = print_string("The h_formula is " ^ (Cprinter.string_of_h_formula f) ^ "\n") in *)
 	  res
     | Phase ({h_formula_phase_rd = h1;
 	    h_formula_phase_rw = h2;
@@ -125,10 +125,10 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
 
 
 let rec xpure (prog : prog_decl) (f0 : formula) : (CP.formula * (branch_label * CP.formula) list * CF.mem_formula) = 
-  let _ = print_string("\n-------------------\n") in  
-  let _ = print_string ("Computing the mem set for formula " ^ (Cprinter.string_of_formula f0) ^ ": \n") in
+  (* let _ = print_string("\n-------------------\n") in   *)
+  (* let _ = print_string ("Computing the mem set for formula " ^ (Cprinter.string_of_formula f0) ^ ": \n") in *)
   let mset = formula_2_mem f0 prog in 
-  let _ = print_string("Result: " ^ (Cprinter.string_of_mem_formula mset) ^ "\n-------------------\n") in  
+  (* let _ = print_string("Result: " ^ (Cprinter.string_of_mem_formula mset) ^ "\n-------------------\n") in   *)
 (* xpure_symbolic prog f0 *)
   let rec xpure_helper  (prog : prog_decl) (f0 : formula) : (CP.formula * (branch_label * CP.formula) list) = 
   match f0 with
@@ -177,7 +177,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (CP.formula * (branch_label * 
 
 
 and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (CP.formula * (branch_label * CP.formula) list * CF.mem_formula) = 
-  let _ = print_string("Calling xpure_heap for f = " ^ (Cprinter.string_of_h_formula h0) ^ "\n") in
+  (* let _ = print_string("Calling xpure_heap for f = " ^ (Cprinter.string_of_h_formula h0) ^ "\n") in *)
   let memset = h_formula_2_mem h0 [] prog in
 
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (CP.formula * (branch_label * CP.formula) list) = 
@@ -932,6 +932,11 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
   transform_list_partial_context (fct,(fun c->c)) ctx 
     
     
+(* and unfold p f v d l = Util.ho_debug_5 "unfold " (fun _ -> "?")  *)
+(* (Cprinter.string_of_formula)  *)
+(* (CP.name_of_spec_var) (fun _ -> "?") (fun _ -> "?") *)
+(* (Cprinter.string_of_formula) (fun _ -> true) unfold_a p f v d l *)
+    
 and unfold (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = 
 match f with
   | Base ({formula_base_heap = h;
@@ -1252,11 +1257,23 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
 (**************************************************************)
 (**************************************************************)
 
+and fold p c v q u l = Util.ho_debug_6 "fold " 
+(fun _ -> "?")
+(fun _ -> "?")
+(Cprinter.string_of_h_formula)
+(fun _ -> "?") 
+(fun _ -> "?")
+(fun _ -> "?")
+(fun _ -> "?")
+(fun _ -> true) fold_a p c v q u l
+
+
 (* fold some constraints in f1 to view v under pure pointer *)
 (* constraint pp and Presburger constraint pres             *)
-and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
+and fold_a prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
   | ViewNode ({h_formula_view_node = p;
 	h_formula_view_name = c;
+	h_formula_view_imm = imm;
 	h_formula_view_label = pid;
 	h_formula_view_arguments = vs}) -> begin
       try
@@ -1264,6 +1281,14 @@ and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (p
 	    let renamed_view_formula = rename_struc_bound_vars 
 	      (if use_case then vdef.Cast.view_formula
 	      else Cformula.case_to_disjunct vdef.Cast.view_formula) in
+	    (****)  
+	     let renamed_view_formula = 
+	       if imm then 
+		 Cformula.propagate_imm_struc_formula renamed_view_formula 
+	       else
+		 renamed_view_formula
+	     in 
+	      (***)
 	    (*(if use_base_case then match vdef.Cast.view_base_case with 
 	      | None -> vdef.Cast.view_formula
 	      | Some s -> s
@@ -2789,9 +2814,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			es_id  = estate.es_id;
 			es_orig_ante  = estate.es_orig_ante;
 			es_orig_conseq = estate.es_orig_conseq;
-            es_prior_steps = estate.es_prior_steps;
+			es_prior_steps = estate.es_prior_steps;
 			es_path_label = estate.es_path_label;} in
-	      do_fold_w_ctx fold_ctx var_to_fold  in
+		do_fold_w_ctx fold_ctx var_to_fold  in
 	    
 	    
 	    (****************************************************************************************************************************************)
@@ -2809,7 +2834,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	    *)
 	    
 	    let fnode_results = find_node_one prog lhs_h lhs_p p2 imm2 phase2 pos in
-	    let _ = print_string("Matching " ^ (Cprinter.string_of_spec_var p2) ^ "\n") in  
+	    (* let _ = print_string("Matching " ^ (Cprinter.string_of_spec_var p2) ^ "\n") in   *)
 	    (************************* match_all_nodes ******************)
 	    match fnode_results with 
 	      | Failed -> (CF.mkFailCtx_in (Basic_Reason ( {
@@ -2828,7 +2853,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 		        (CF.mkFailCtx_in (Basic_Reason ( {
 				  fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
 				  fc_current_lhs = estate;
-                  fc_prior_steps = estate.es_prior_steps;
+				  fc_prior_steps = estate.es_prior_steps;
 				  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 				  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) 
 		      end
@@ -2898,7 +2923,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					                else  (CF.mkFailCtx_in(Basic_Reason  ( { 
 									  fc_message ="failure 2 ?? when checking for aliased node";
 									  fc_current_lhs = estate;
-                                      fc_prior_steps = estate.es_prior_steps;
+									  fc_prior_steps = estate.es_prior_steps;
 									  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 									  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
 				                  end in
@@ -3029,11 +3054,11 @@ il_conjunct: " ^ "can't reduce, fold, unfold") pos;
 			  match all_nodes with
 		            (* before: | (anode, r_flag, _, rest_heap) :: rest -> *)
 			    | (rest_heap, anode, r_flag, phase, ctx, hole_id) :: rest ->
-				let _ = print_string("crt phase = " ^ (string_of_phase !crt_phase) ^ "\n") in 
-				let _ = print_string("next phase = " ^ (string_of_phase phase) ^ "\n") in 
+				(* let _ = print_string("crt phase = " ^ (string_of_phase !crt_phase) ^ "\n") in  *)
+				(* let _ = print_string("next phase = " ^ (string_of_phase phase) ^ "\n") in  *)
 
-				let _ = print_string("crt ctx = " ^ (Cprinter.string_of_h_formula !crt_ctx) ^ "\n") in  
-				let _ = print_string("initial rest = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in  
+				(* let _ = print_string("crt ctx = " ^ (Cprinter.string_of_h_formula !crt_ctx) ^ "\n") in   *)
+				(* let _ = print_string("initial rest = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in   *)
 				(********************)
 				
 
@@ -3044,21 +3069,22 @@ il_conjunct: " ^ "can't reduce, fold, unfold") pos;
 				      crt_ctx := Context.mk_empty_ctx !crt_hole;
 				      Context.ctx_heap_input tmp_ctx !crt_hole rest_heap
 				  else rest_heap in
-				  let _ = print_string("current rest = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in
+				  (* let _ = print_string("current rest = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in *)
 
 				  (* update the current context and hole *)
-				  if ((*!crt_phase*)phase = Some Context.Spatial) && (Context.is_hole_heap_ctx !crt_ctx)
+				  if (phase = Some Context.Spatial) && (Context.is_hole_heap_ctx !crt_ctx)
 		                  then 
-				    ((crt_ctx := ctx; crt_hole := hole_id); 
-				     print_string("phase = Spatial -> updated ctx = " ^ (Cprinter.string_of_h_formula !crt_ctx) ^ "; hole = " ^ (string_of_int !crt_hole) ^"\n"));    
+				    (crt_ctx := ctx; crt_hole := hole_id); 
+				     (* print_string("phase = Spatial -> updated ctx = " ^ (Cprinter.string_of_h_formula !crt_ctx) ^ "; hole = " ^ (string_of_int !crt_hole) ^"\n");     *)
 				  (* for each write -> drop the reading phases before (those in the crt_ctx) *)
 		                  (* currently the dropping is not nested -> should it be? *)
-				  if not(imm2) then
-				    (crt_ctx := Cformula.drop_read_phase !crt_ctx;
-				     print_string("spec var = " ^ (Cprinter.string_of_spec_var p2) ^ "\n");
-				     print_string("drop the read phase -> updated ctx = " ^ (Cprinter.string_of_h_formula !crt_ctx) ^ "; hole = " ^ (string_of_int !crt_hole) ^"\n"))
-				  else
-				    print_string("no need to drop the reading phase\n");    
+				  (* if not(imm2) then *)
+				  (*   ( *)
+				    crt_ctx := Cformula.drop_read_phase !crt_ctx;
+				     (* print_string("spec var = " ^ (Cprinter.string_of_spec_var p2) ^ "\n"); *)
+				     (* print_string("drop the read phase -> updated ctx = " ^ (Cprinter.string_of_h_formula !crt_ctx) ^ "; hole = " ^ (string_of_int !crt_hole) ^"\n")) *)
+				  (* else *)
+				  (*   print_string("no need to drop the reading phase\n");     *)
 
 
 		                  (* update the current phase *)
