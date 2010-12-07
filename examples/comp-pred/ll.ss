@@ -2,24 +2,47 @@
 
 /* representation of a node */
 
-data node(a) {
+data node[a] {
 	a val; 
-	node next;	
+	node[a] next;	
 }
 
+type treeint = node[int]
 
-type treeint = node<int>
+/* sugar form */
+pred list[t,b]<a:t>
+ ==  self = null & Base(a,self)
+  or self::node[b]<v,q> * q::list[t,b]<a1> & Rec(a,a1,v,self,q) 
+ inv Inv(a,self);
 
-pred list<t,b><a:t>[Base:t->bool,Rec:(t,t,b,node(b),node(b))] 
-  == self = null & Base<a>
-  or self::node<v, q> * q::list<a1> & Rec<a,a1,v,self,q> ;
+/* fully translated */
+pred list[t,b]<self:node[b],a:t>{Base:(t,node[b])->bool,
+     Rec:(t,t,b,node[b],node[b])->bool,Inv:(t,node[b])->bool} 
+ ==  self = null & Base(a,self)
+  or self::node[b]<v,q> * list[t,b]<q,a1>{Base,Rec,Inv} 
+         & Rec(a,a1,v,self,q) 
+ inv Inv(a,self);
 
-pred list<t,b><a:t>
-  == self = null & Base<a>
-  or self::node<v, q> * q::list<a1> & Rec<a,a1,v,self,q> ;
+/* sugar form */
+pred ll[b]<n:int> refines list[int,b]<n:int>
+  with { Base(n,_) = n=0;  Rec(n,n1,...) = n=1+n1; Inv(n,_) = n>=0; }
 
-ll<b><n:int> refine list<int,b><n:int>
+/* fully translated */
+pred ll[b]<self:node[b],n:int>{Base:(int,node[b])->bool,
+     Rec:(int,int,b,node[b],node[b])->bool,Inv:(int,node[b])->bool} 
+ == list[int,b]<self,n>{\ (n,s) -> n=0 & Base(n,s),
+                  \ (n,n1,_,_,_) as arg -> n=1+n1 & (Rec arg),
+                  \ (n,s) as arg -> n>=0 & (Inv arg)} ;
 
+/* sugar form */
+pred ll_g[b]<n:int> finalizes ll[b]<n> ;
+
+/* fully translated to first-order form */
+pred ll_g[b]<self:node[b],n:int>
+ == self=null & n=0
+ or exists( v:b, q:node[b], n1:int . 
+            self::node[b]<v,q> * ll_g[b]<q,n1> & n=1+n1) 
+ inv n>=0 ;
 
 
 /* view for a singly linked list */
