@@ -17,9 +17,9 @@ let set_log_file fn =
   log_cvc3_formula := true;
   if fn = "" then
 	cvc3_log := open_out "formula.cvc"
-  else if Sys.file_exists fn then
+  else (*if Sys.file_exists fn then
 	failwith "--log-cvc3: file exists"
-  else
+  else*)
 	begin
 		cvc3_log := open_out fn (* opens fn for writing and returns an output channel for fn - cvc3_log is the output channel*);
 		output_string !cvc3_log cvc3_command
@@ -79,7 +79,7 @@ and cvc3_of_exp a = match a with
 and cvc3_of_b_formula b = match b with
   | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
       (* | CP.BVar (sv, _) -> cvc3_of_spec_var sv *)
-  | CP.BVar (sv, _) -> (cvc3_of_spec_var sv) ^ " = 1"
+  | CP.BVar (sv, _) -> (cvc3_of_spec_var sv) ^ " > 0"
   | CP.Lt (a1, a2, _) -> (cvc3_of_exp a1) ^ " < " ^ (cvc3_of_exp a2)
   | CP.Lte (a1, a2, _) -> (cvc3_of_exp a1) ^ " <= " ^ (cvc3_of_exp a2)
   | CP.Gt (a1, a2, _) -> (cvc3_of_exp a1) ^ " > " ^ (cvc3_of_exp a2)
@@ -131,7 +131,7 @@ and cvc3_of_formula f = match f with
   | CP.Not (p,_, _) ->
 	    begin
 		  match p with
-		   (* | CP.BForm (CP.BVar (bv, _),_) -> (cvc3_of_spec_var bv) ^ " = 0"*)
+		    | CP.BForm (CP.BVar (bv, _),_) -> (cvc3_of_spec_var bv) ^ " <= 0"
 		    | _ -> "(NOT (" ^ (cvc3_of_formula p) ^ "))"
 	    end
   | CP.Forall (sv, p,_, _) ->
@@ -259,7 +259,8 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   
   if !log_cvc3_formula then begin
 	output_string !cvc3_log "%%% imply\n";
-	output_string !cvc3_log (!print_pure flatted_conseq);
+	output_string !cvc3_log (!print_pure ante);
+  output_string !cvc3_log (!print_pure flatted_conseq);
 	output_string !cvc3_log "\n";
 	output_string !cvc3_log (!print_pure conseq);
 	output_string !cvc3_log "\n";
