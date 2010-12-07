@@ -3,7 +3,7 @@ void loop(ref int x, ref int y, int N)
  case {
   x>N -> ensures "l1":x'=x & y'=y;
   x<=N -> requires x+y>=0
-          ensures "l2":true;
+          ensures "l2":N-x'<0;
  }
 {
   if (x<=N) {
@@ -15,6 +15,7 @@ void loop(ref int x, ref int y, int N)
       loop(x,y,N);
     } else {
       assume x'>=x+1;
+	  assume y'=y;
       loop(x,y,N);
     }
   }

@@ -4,7 +4,7 @@ case {
 	x < 0 -> 
 		//variance 0
 		ensures x' = x;
-	x >= 0 & x <= 5 ->
+			x >= 0 & x <= 5 ->
 		//variance -1
 		ensures false;
 	x > 5 ->
@@ -62,13 +62,13 @@ void loop2(ref int x)
   ensures false;
   requires x=1 or x=9
   ensures false;
- requires x=2 or x=8
+  requires x=2 or x=8
   ensures false;
- requires x=3 or x=7
+  requires x=3 or x=7
   ensures false;
-requires x=4 or x=6
+  requires x=4 or x=6
   ensures false;
-requires x=5
+  requires x=5
   ensures false;
 */
  case {
@@ -87,6 +87,5 @@ requires x=5
         assert "r2": x-x'>0;
         assert "r2": x'<0;
         loop2(x);
-	}
+   }
 }
-
