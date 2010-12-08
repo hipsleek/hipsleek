@@ -1,20 +1,55 @@
 /* red black trees */
 
-data node {
-	int val;
-	int color; /*  0 for black, 1 for red */
+data node[a1,a2] {
+	a1 val;
+	a2 color; /*  0 for black, 1 for red */
 	node left;
 	node right;
 }
 
 /* view for red-black trees */
-tree_shape(a)[Base,Rec1,Rec2,Inv]== self= null & Base(a)
-	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec1(a,al,ar,v,c,self,l,r)
-	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec2(a,al,ar,v,c,self,l,r);
-	inv Inv(a);
+pred tree_shape[t,b1,b2]<a:t>
+  == self= null & Base(a,self)
+      or self::node[b1,b2]<v,c,l,r>* l::tree_shape[t,b1,b2]<al>* r::tree_shape[t,b1,b2]<ar>* Rec1(a,al,ar,v,c,self,l,r)
+      or self::node[b1,b2]<v,c,l,r>* l::tree_shape[t,b1,b2]<al>* r::tree_shape[t,b1,b2]<ar>* Rec2(a,al,ar,v,c,self,l,r);
+      inv Inv(a,self);
+  
+/*separate */
+  pred tree_set[b1,b2]<S:set[b1]> refines tree_shape [set[b1],b1,b2]<>
+      with { Base(S,_) = S={};  
+             Rec1(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v}); 
+             Rec2(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v});}
 
-SBase(a,self) = a={}
-SRec1(a,al,ar,v,c,self,l,r) = a = union(al, ar, {v})
+  pred tree_bh [b1,b2]<bh:int> refines tree_shape [int,b1,b2]<>
+    with {   Base(bh,_) = bh=1;  
+             Rec1(bh,bhl,bhr,...) = bhl = bh & bhr = bh; 
+             Rec2(bh,bhl,bhr,...) = bhl = bhr & bh = 1 + bhl;}
+             
+  pred tree_cl [b1]<cl:int> refines tree_shape [int,b1,int]<>
+    with {   Base(cl,_) = cl=0;  
+             Rec1(cl,cll,clr,_,c,...) = cl = 1 & cll = 0 & clr = 0 & c=1; 
+             Rec2(cl,cll,clr,_,c,...) = cl = 0 & c = 0; }
+        
+    /*modular preds*/
+      pred rb1<cl,bh,S> == finalize [int] (tree_set split tree_bh split tree_cl)
+    /*non modular*/          
+      pred rb1<cl,bh,S> == finalize [int] (tree_set combine tree_bh combine tree_cl)     
+
+/*incremental modular preds*/
+  pred tree_cl [b1]<cl:int> refines tree_shape [int,b1,int]<>
+    with {   Base(cl,_) = cl=0;  
+             Rec1(cl,cll,clr,_,c,...) = cl = 1 & cll = 0 & clr = 0 & c=1; 
+             Rec2(cl,cll,clr,_,c,...) = cl = 0 & c = 0; }
+  
+  pred tree_cl_bh [b1]<bh:int,cl:int> refines tree_cl[b1]<cl>
+    with {   Base(bh,_) = bh=1;  
+             Rec1(bh,bhl,bhr,...) = bhl = bh & bhr = bh; 
+             Rec2(bh,bhl,bhr,...) = bhl = bhr & bh = 1 + bhl;}
+             
+  pred tree_cl_bh_set [b1] <>
+          
+             
+/*incremental non modular preds -> replace refines by extends*/
 
 clBase(a,self) = a=0
 clRec1(a,al,ar,v,c,self,l,r) = a=1 & al=0 & ar = 0 & c=1
