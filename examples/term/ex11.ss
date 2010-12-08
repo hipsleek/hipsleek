@@ -34,8 +34,10 @@ case {
 
 bool lessthan(int a, int v)
 requires true
-ensures a<v;
+//ensures a<v;
+ensures res & a<v or !res & a>=v ;
 
 bool greaterthan(int a, int v)
 requires true
-ensures	a>v;
+//ensures a>=v;
+ensures res & a>v or !res & a<=v ;
