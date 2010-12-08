@@ -2,11 +2,12 @@ int bsearch(int a, int v, int low, int up)
 case {
 	low>up -> ensures "l1":true & (res=-1 | a=v);
 	low<=up -> //variance up-low
-			   case {
-					a<v -> ensures "l2":true;
-					a>v -> ensures "l3":true;
-					a=v -> ensures	true;
-				}
+               ensures "l2":true;
+			   /* case { */
+			   /*  	a<v -> ensures "l2":true; */
+			   /*  	a>v -> ensures "l3":true; */
+			   /*  	a=v -> ensures	true; */
+			   /*  } */
 }
 {
 	if (low <= up) {
@@ -17,12 +18,14 @@ case {
 		int up2 = mid-1;
 		if (lessthan(a,v)) {
 			assert "l2":(up1'-low1')-(up'-low')<0;
-			assert "l2":(up'-low')>=0;
+			assert "l2":true & ((up1'-low1')>=0 | low1'>up1');
+			assert "l2":(up1'-low1')>=0 ;
 			return bsearch(a,v,low1,up1);
 		}
 		else if (greaterthan(a,v)) {
-			assert "l3":(up2'-low2')-(up'-low')<0;
-			assert "l3":(up'-low')>=0;
+			assert "l2":(up2'-low2')-(up'-low')<0;
+			assert "l2":true & ((up2'-low2')>=0 | low2'>up2');
+			assert "l2":(up2'-low2')>=0;
 			return bsearch(a,v,low2,up2);
 		}
 		else
