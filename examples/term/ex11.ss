@@ -1,8 +1,8 @@
 int bsearch(int a, int v, int low, int up)
 case {
 	low>up -> ensures "l1":true & (res=-1 | a=v);
-	low<=up -> //variance up-low
-               ensures "l2":true;
+	low<=up -> //variance up-low => low>up
+               ensures "l2":true & (res=-1 | a=v);
 			   /* case { */
 			   /*  	a<v -> ensures "l2":true; */
 			   /*  	a>v -> ensures "l3":true; */
