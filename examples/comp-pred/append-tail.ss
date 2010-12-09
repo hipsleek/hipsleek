@@ -1,27 +1,34 @@
-data node {
-	int val;
-	node next;
+data node [b] {
+	b val;
+	node[b] next;
 }
-ll-shape(a)[Base,Rec,Inv]= Base(a,self)
-  or self::node<v,q>* q::ll-shape(aq) & Rec(a,aq,v,self,q)
+pred ll_shape[t,b]<a:t>[Base,Rec,Inv]= Base(a,self)
+  or self::node[b]<v,q>* q::ll_shape[t,b]<aq> & Rec(a,aq,v,self,q)
   inv Inv(a);
 
-lsegBase (a,self) = self=a 
-lsegRec (a,aq,v,self,q) = aq=a 
-
-ltailBase(a,self) = self::node<_, null> 
-ltailRec (a,aq,v,self,q) = q!=null 
-
-lsBase (a,self) = a=1 
-lsRec (a,aq,v,self,q) = a=aq+1 
-
-lseg<p> = ll-shape<> [Base=lsegBase, Rec=lsegRec: p]
-
-ll_tail<tx>= llseg<tx> [ltailBase,ltailRec: tx]
- 
-ll_tail2<tx,n> = ll_tail<tx> [lsBase, lsRec: n]
+pred ll_size[int,b]<n:int>[Base,Rec,Inv] refines ll_shape[int,b]<n>
+  with {
+    Base(n,self) = n=0
+    Rec(n,nq,v,self,q) = n=n+1
+    Inv(n,self) = n>=0}
+  
+pred lseg[node[b],b]<p:node[b]> extends ll_shape[node[b],b]<p>
+  with
+    { Base (p,self) = self=p 
+      Rec (p,pq,v,self,q) = pq=p }
+    
+pred ll_tail[node[b],b]<tx:node[b]> refines lseg[node[b],b]<tx>
+  with
+    { Base (tx,self) = self::node[b]<_, null> 
+      Rec  (tx,txq,v,self,q) = q!=null  }
+     
+pred ll_tail_size[int,b]<n>[Base,Rec,Inv] refines ll_size[int,b]<n>
+  with { Base(n,self) = n=1 
+         Inv(n,self) = n>=1}
+     
+pred ll_tail2<tx,n> finalizes (ll_tail[int]<tx> split ll_tail_size[int]<n>)
 	
-lseg2<p,n> = lseg<p> [lsBase, lsRec: n]
+pred lseg2<p,n> finalizes (lseg[int]<p> split ll_size[int]<n>) 
   
 /*
 ll_tail<tx> == self::node<_, null> & tx=self
