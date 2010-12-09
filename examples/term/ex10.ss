@@ -10,8 +10,7 @@ void loop(ref int x, ref int y, int N)
       // variance 0 ==> x>N
       ensures "l2":true;
     y<=N -> 
-      // variance -(x+y) 
-      // bound  -2*N-1 
+      // variance -(x+y)@(-2*N-1)
       ensures "l3":true;
   }
  }
@@ -20,7 +19,7 @@ void loop(ref int x, ref int y, int N)
     x=x+1;
     assert "l2": y'>N;
     assert "l3": -(x+y)+(x'+y')>0;
-    assert "l3": -(x'+y') >= -2*N-1;
+    assert "l3": -(x'+y')-(-2*N-1) >= 0;
     loop(y,x,N);
   }
 }
