@@ -1,33 +1,46 @@
 /* avl trees */
 
 /* representation of a node in an avl tree */
-data node {
-  int val;
+data node[b] {
+  b val;
   int height;
-  node left;
-  node right;
+  node[b] left;
+  node[b] right;
 }
 
 data myint {
   int val;
 }
 
-avl-shape(a) = Base(a,self)
-  or self::node<v,n,l,r> *l::avl-shape(al)*r::avl-shape(ar)* Rec(a,al,ar,v,n,l,r)
+pred avl_shape[t,b]<a:t>[Base,Rec,Inv] = Base(a,self)
+  or self::node[b]<v,n,l,r> *l::avl_shape[t,b](al)*r::avl_shape[t,b](ar)* Rec(a,al,ar,v,n,l,r)
   inv Inv(a)
 
-avleBase(a,self) = self=null
+pred avl_B[t,b]<a:t>[Base,Rec,Inv] refines avl_shape[t,b]<a> with { Base(a,self) = self=null}
+ 
+pred avl_n[int,b]<n:int>[Base,Rec,Inv] extends avl_shape[int,b]<n>
+with 
+   { Base(n,self) = n = 0 
+     Rec(n,nl,nr,v,_,l,r) = n = 1+nl+nr
+     Inv(n,self) = n>=0
+   }
 
-avlSBase(a,self) = a = 0 
-avlSRec(a,al,ar,v,n,l,r) = a = 1+al+ar
+pred avl_h[int,b]<h:int>[Base,Rec,Inv] extends avl_shape[int,b]<h>
+with 
+   { Base(h,self) = h = 0 
+     Rec(h,hl,hr,v,nh,l,r) = nh=h & -1<=hl-hr<=1  & h=1+max(hl,hr)
+     Inv(h,self) = h>=0
+   }
 
-avlHBase(a,self) = a = 0
-avlHRec (a,al,ar,v,n,l,r) = -1<=al-ar<=1  & a=1+max(al,ar)
+pred avl_S[set[b],b]<S:set[b]>[Base,Rec,Inv] extends avl_shape[set[b],b]<S>  
+with
+  { Base (S,self) = S={}
+    Rec (S,Sl,Sr,v,n,l,r) =  S = union(Sl, Sr, {v}) & forall (x : (x notin Sl | x <= v)) & forall (y : (y notin Sr | y >= v))
+  }
   
-avlBBase (a,self) = a={}
-avlBRec (a,al,ar,v,n,l,r) =  a = union(al, ar, {v}) & forall (x : (x notin al | x <= v)) & forall (y : (y notin ar | y >= v))
+pred avl<m,n,S> finalizes (avl_S[int]<S> split avl_h[int]<n> split avl_n[int]<m>) 
 
-avl<m,n,S> = avl-shape<>[Base = avleBase:][avlSBase,avlSRec:m][avlHBase,avlHrec:n][avlBBase, avlBRec :S]
+
 
 /* view for avl trees */
 /*avl<m, n, S> == self = null & m = 0 & n = 0 & S = {}
