@@ -1,0 +1,65 @@
+
+--> data declarations -> to allow for optional type argument
+--> ho  pred definitions: (instead of pred use ho_pred)
+     -> extends_form
+     -> refines_form
+     -> split, combine form
+--> pred definitions: (pred)
+      -> old_form
+      -> finalizes 
+  
+  
+  
+ho preds:
+
+ho_pred_list = ho_pred ho_pred_list | []
+
+ho_pred = 
+  | "hpred" hpred_header "extends" extends_form
+  | "hpred" hpred_header "refines" refines_form
+  | "hpred" hpred_header "==" split_combine
+  
+extends_form
+ 
+     
+     
+/* representation of a node in an avl tree */
+data node[b] {
+  b val;
+  int height;
+  node[b] left;
+  node[b] right;
+}
+
+data myint {
+  int val;
+}
+
+pred avl_shape[t,b]<a:t>[Base,Rec,Inv] = Base(a,self)
+  or self::node[b]<v,n,l,r> *l::avl_shape[t,b](al)*r::avl_shape[t,b](ar)* Rec(a,al,ar,v,n,l,r)
+  inv Inv(a)
+
+pred avl_B[t,b]<a:t>[Base,Rec,Inv] refines avl_shape[t,b]<a> with { Base(a,self) = self=null}
+ 
+pred avl_n[int,b]<n:int>[Base,Rec,Inv] extends avl_shape[int,b]<n>
+with 
+   { Base(n,self) = n = 0 
+     Rec(n,nl,nr,v,_,l,r) = n = 1+nl+nr
+     Inv(n,self) = n>=0
+   }
+
+pred avl_h[int,b]<h:int>[Base,Rec,Inv] extends avl_shape[int,b]<h>
+with 
+   { Base(h,self) = h = 0 
+     Rec(h,hl,hr,v,nh,l,r) = nh=h & -1<=hl-hr<=1  & h=1+max(hl,hr)
+     Inv(h,self) = h>=0
+   }
+
+pred avl_S[set[b],b]<S:set[b]>[Base,Rec,Inv] extends avl_shape[set[b],b]<S>  
+with
+  { Base (S,self) = S={}
+    Rec (S,Sl,Sr,v,n,l,r) =  S = union(Sl, Sr, {v}) & forall (x : (x notin Sl | x <= v)) & forall (y : (y notin Sr | y >= v))
+  }
+  
+pred avl<m,n,S> finalizes (avl_S[int]<S> split avl_h[int]<n> split avl_n[int]<m>) 
+
