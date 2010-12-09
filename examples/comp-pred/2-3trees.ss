@@ -19,7 +19,7 @@ pred tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
 	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3[t,b](am) * r::tree_shape[t,b](ar)* Rec1(a,al,ar,am,self,l,m,r);
 	inv Inv(a);
 
-pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] extends tree_shape[int,b]<a>
+pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<a>
   with { 
       Base(a,self) = a=0 & self= null
       Rec(a,al,am,ar,self,l,m,r) = (r != null & al = am & al = ar & a = al + 1 & Rec1(a,al,am,ar,self,l,m,r)  |
@@ -27,7 +27,7 @@ pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] extends tree_shape[int,b]<a>
       Inv (a) = a>=0;
        }
 
-tree2_3<n>== finalizes tree_23[int]
+pred tree2_3<n> finalizes tree_23[int]
 
 
 

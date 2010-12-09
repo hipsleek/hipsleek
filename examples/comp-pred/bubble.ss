@@ -1,24 +1,38 @@
 /* bubble sort */
 
-data node {
-	int val;
+data node [b]{
+	b val;
 	node next;
 }
 
 //------------------------------------------------------------------------------------------
 // views
 //------------------------------------------------------------------------------------------
-ll-shape(a)[Base,Rec,Inv]= Base(a,self)
-  or self::node<v,q>* q::ll-shape(aq) & Rec(a,aq,v,self,q)
-  inv Inv(a);
 
-llSBase(a,self) = self = null & a = {}
-llSRec(a,aq,v,self,q) = a=union(aq,{v})
+pred ll_shape[t,b]<a:t>[Base,Rec]
+  == Base(a,self)
+      or self::node[b]<v,q>* q::ll_shape[t,b]<aq>* Rec(a,aq,self,v,q)
+      inv Inv(a,self);
 
-sllRec(a,aq,v,self,q) = forall(x: (x notin aq | v <= x));
+pred ll_Base[t,b]<a:t>[Base,Rec] refines ll_shape[t,b]<a>
+  with 
+    {
+      Base(a,self) = self=null;
+    }
+      
+pred ll_S[set[b],b]<S:set[b]>[Base,Rec] extends ll_Base [set[b],b]<S>
+  with { Base(S,_) = S={};  
+         Rec(S,Sq,self,v,p,q) = S=union(Sq,{v})
+       }
 
-ll1<S> = ll-shape() [llSBase,llSRec:S]
-sll1<S> = ll1<S> [Rec = sllRec : S]
+pred sll [set[b],b]<S:set[b]>[Base,Rec] refine ll_S [set[b],b]<S>
+  with {  
+         Rec(S,Sq,self,v,p,q) = forall(x: (x notin Sq | v <= x))
+       }
+       
+pred ll1<S> finalizes ll_S[int]
+pred sll1<S> finalizes sll[int]
+
 
 /*
 ll1<S> == self = null & S = {}

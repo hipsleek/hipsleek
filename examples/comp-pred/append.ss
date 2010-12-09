@@ -3,11 +3,11 @@ data node[t] {
 	node next;
 }
 
-pred ll_shape[t]<a:t2>[Base,Rec,I] = 
-     self=null & Base(a,self)
-  or self::node[t]<v,q> * q::ll-shape[t]<aq> & Rec(a,aq,v,self,q) 
+pred ll_shape[t]<a:t2>[Base,Rec,I] = Base(a,self)
+  or self::node[t]<v,q> * q::ll_shape[t]<aq> & Rec(a,aq,v,self,q) 
      inv I(self,a);
 
+     
 pred ll_gshape[t]<a:t2>[Base,Rec,I] = 
      Base(a,self)
   or self::node[t]<v,q> * q::ll-gshape[t]<aq> & Rec(a,aq,v,self,q) 
