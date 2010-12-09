@@ -2,9 +2,9 @@
 data node3[b] {
 	b maxl;	// max left
 	b maxm;	// max middle	
-	node3 left;
-	node3 middle;
-	node3 right;
+	node3[b] left;
+	node3[b] middle;
+	node3[b] right;
 }
 
 // TODO: to check the intermediate value... sometimes I just put 0, 0
@@ -16,7 +16,7 @@ pred dll_shape[t,b]<a:t>
       inv Inv(a,self);
 
 pred tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3[t,b](am) * r::tree_shape[t,b](ar)* Rec1(a,al,ar,am,self,l,m,r);
+	or self::node3[b]<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3[t,b](am) * r::tree_shape[t,b](ar)* Rec1(a,al,ar,am,self,l,m,r);
 	inv Inv(a);
 
 pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<a>

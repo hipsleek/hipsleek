@@ -3,8 +3,8 @@
 data node[a1] {
 	a1 val;
 	int color; /*  0 for black, 1 for red */
-	node left;
-	node right;
+	node[a1] left;
+	node[a1] right;
 }
 
 /* view for red-black trees */
