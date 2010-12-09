@@ -2,10 +2,10 @@
 	COMPLETE TREES
 */
 
-data node2 {
-	int val;
-	node2 left;
-	node2 right; 
+data node2[b] {
+	b val;
+	node2[b] left;
+	node2[b] right; 
 }
 /*
 	- complete binary tree: 
@@ -13,35 +13,35 @@ data node2 {
 		- at depth n, the height of the tree, all nodes are as far left as possible.
 */
 
-tree_shape(a)[Base,Rec1,Rec2,Inv]== Base(a)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec1(a,al,ar,am,self,l,m,r)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec2(a,al,ar,am,self,l,m,r);
-	inv Inv(a);
 
-SEBase(a,self) = self= null
+tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
+	or self::node2[n]<v,l,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec1(a,al,ar,self,v,l,r);
+	inv Inv(a,self);
 
-SHBase(a,self) = a=0 
-SHRec1(a,al,am,ar,root,l,m,r) = a=al+1& a=ar+2
-SHRec2(a,al,am,ar,root,l,m,r) = a=al+1& al=ar
-
-SHMBase(a,self) = a=0 
-SHMRec1(a,al,am,ar,root,l,m,r) = a = min(al, ar) + 1
+pred tree_B[t,b]<a:t>[Base,Rec,Inv] refines tree_shape[t,b]<a>
+  with { Base(a,self) = self=null;}  
   
-complete<n, nmin> == tree_shape<>[Base=SEBase:][SHBase,SHRec1,SHRec2:n][SHBase,SHRec1,SHRec2:nmin]
+pred tree_Hmin [int,b]<nmin:int>[Base,Rec,Inv] extends tree_B[int,b]<nmin>
+ with 
+  { Base (nmin,self) = nmin=0
+    Rec (nmin,nminl,nminr,self,v,l,r) = nmin= min(nminl,nminr)+1
+    Inv (nmin,self)= nmin>=0
+  }
+  
+pred tree_H [int,b]<n:int>[Base,Rec,Inv] extends tree_B[int,b]<n>
+ with 
+  { Base(n,self) = n=0
+    Rec (n,nl,nr,self,v,l,r) =  nl=n-1 & (nr=n-2 | nr = n-1)
+  }
+  
+pred tree_inv[int,int,b]<nmin,n>[Base,Rec,Inv] refines (tree_H[int,b]<n> combine tree_Hmin[int,b]<nmin>)
+  with 
+    {Inv(nmin,n,self) = n>=nmin}
+  
+complete<n, nmin> finalizes tree_inv[int]<nmin,n>
 
 /* possible view for a complete tree */
-/*complete<n> == self = null & n = 0
-	or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-2>
-	or self::node2<_, l, r> * l::complete<n-1> * r::complete<n-1>
-	inv n >= 0;*/
-
-/* the view that we used:
- 	- n is the height
-	- nmin is the "minim height" 
-		- is the length of the shortest path to a leaf (the minimum between the heights for the two children) 
-		- we used it to make the insertion easier (because in the insertion there are points where we need to
-		know if a subtree is perfect or not)
-*//*
+/*
 complete<n, nmin> == self = null & n = 0 & nmin = 0
 	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
 	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
