@@ -106,9 +106,7 @@ relation: relation UNION relation {
 pconstr: pconstr AND pconstr { 
   mkAnd $1 $3 (get_pos 2)
 }
-| lbconstr { 
-	trans_null (fst $1)
-  }
+| lbconstr { trans_null (fst $1) }
 | EXISTS OPAREN var_list COLON pconstr CPAREN { 
 	let svars = $3 in
 	let qf f v = mkExists [v] f None (get_pos 1) in
@@ -223,10 +221,12 @@ var_list_rec: cid { ([$1]) : spec_var list }
 ;
 
 /* identifiers appearing in constraints */
-cid: ID { match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
+cid: ID { 
+        match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
 					|  [] -> SpecVar(Prim Int,$1, Unprimed)
 					| (a,b,t)::h-> SpecVar(t, b,Unprimed) }
-| IDPRIMED { match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
+| IDPRIMED { 
+        match (List.filter (fun (a,b,_)->((String.compare $1 a)==0)) !subst_lst) with 
 					|  [] -> SpecVar(Prim Int,$1, Primed)
 					| (a,b,t)::h-> SpecVar(t, b,Primed) }
 ;

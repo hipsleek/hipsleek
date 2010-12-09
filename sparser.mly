@@ -566,9 +566,9 @@ one_constr
 	|  OPAREN EXISTS opt_cid_list COLON core_constr CPAREN {
 	  match $5 with
 		| F.Base ({F.formula_base_heap = h;
-				   F.formula_base_pure = p;
-				   F.formula_base_flow = fl;
-                   F.formula_base_branches = b}) ->
+               F.formula_base_pure = p;
+               F.formula_base_flow = fl;
+               F.formula_base_branches = b}) ->
 			F.mkExists $3 h p fl b (get_pos 1)
 		| _ -> report_error (get_pos 4) ("only Base is expected here.")
 	}

@@ -1869,9 +1869,9 @@ let yyact = [|
                                                         (
 	  match _5 with
 		| F.Base ({F.formula_base_heap = h;
-				   F.formula_base_pure = p;
-				   F.formula_base_flow = fl;
-                   F.formula_base_branches = b}) ->
+               F.formula_base_pure = p;
+               F.formula_base_flow = fl;
+               F.formula_base_branches = b}) ->
 			F.mkExists _3 h p fl b (get_pos 1)
 		| _ -> report_error (get_pos 4) ("only Base is expected here.")
 	)

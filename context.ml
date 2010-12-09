@@ -26,11 +26,12 @@ and match_type =
 	returns a list of contexts, where the first hole of each context corresponds to a node from the heap lhs_h that appears in the alias set aset. 
 	The flag associated with each node lets us know if the match is at the root pointer,  materialized arg, arg.
  *)  
-let rec context_old prog lhs_h lhs_p (p : CP.spec_var) rhs_info pos : context list =
-  let lhs_fv = (h_fv lhs_h) @ (CP.fv lhs_p) in
+let rec context_old prog lhs_h (lhs_p:MCP.mix_formula) (p : CP.spec_var) rhs_info pos : context list =
+	let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
+	let eqns' = MCP.ptr_equations lhs_p in
   let r_eqns = match rhs_info with
     | Some (f,v)-> 
-      let eqns = ptr_equations f in
+      let eqns = MCP.ptr_equations f in
       let r_asets = alias eqns in
       let a_vars = lhs_fv @ v in
       let fltr = List.map (fun c-> Util.intersect c a_vars) r_asets in
@@ -39,7 +40,6 @@ let rec context_old prog lhs_h lhs_p (p : CP.spec_var) rhs_info pos : context li
                                                   | h::_-> (c,(fst h))::a) [] l in
       List.concat (List.map colaps fltr) 
     | None -> [] in
-	let eqns' = ptr_equations lhs_p in
 	let eqns = (p, p) :: eqns' in
 	let asets = alias (eqns@r_eqns) in
 	let paset = get_aset asets p in (* find the alias set containing p *)
@@ -99,28 +99,13 @@ and compute_heap_rest (l : (h_formula * match_type * (h_formula list) * h_formul
 	| (h1, m1, h2, r1) :: rest -> (h1, m1, h2, mkStarH r1 h3 pos) :: (compute_heap_rest rest h3 pos) 
 	| [] -> []
 	
-(* assume that f is a satisfiable conjunct *)
-and ptr_equations (f : CP.formula) : (CP.spec_var * CP.spec_var) list = match f with
-  | CP.And (f1, f2, pos) -> (ptr_equations f1) @ (ptr_equations f2)
-  | CP.BForm (bf,_) -> begin
-	  match bf with
-		| CP.Eq (e1, e2, _) ->
-			if CP.can_be_aliased e1 && CP.can_be_aliased e2 then
-			  let sv1 = CP.get_alias e1 in
-			  let sv2 = CP.get_alias e2 in
-				[(sv1, sv2)]
-			else []
-		| _ -> []
-	end
-  | _ -> []
 	
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
 and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = match ptr_eqs with
   | (v1, v2) :: rest -> begin
 	  let rest_sets = alias rest in
-	  let search (v : CP.spec_var) (asets : CP.spec_var list list) =
-		List.partition (fun aset -> CP.mem v aset) asets in
+	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
 	  let av1, rest1 = search v1 rest_sets in
 	  let av2, rest2 = search v2 rest1 in
 	  let v1v2_set = U.remove_dups (List.concat ([v1; v2] :: (av1 @ av2))) in
@@ -134,5 +119,3 @@ and get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list
 	  | [] -> []
 	  | [s] -> s
 	  | _ -> failwith ((Cprinter.string_of_spec_var v) ^ " appears in more than one alias sets")
-
-	

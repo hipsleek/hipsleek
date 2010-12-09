@@ -483,6 +483,7 @@ end
 				       CF.h_formula_data_name = c;
 				       CF.h_formula_data_arguments = (*t_var :: ext_var ::*) vs_prim;
 				       CF.h_formula_data_label = None;
+               CF.h_formula_data_pure_annot = None;
 				       CF.h_formula_data_pos = pos}) in
    	 let vheap = CF.formula_of_heap vdatanode pos in
 	   match pid with

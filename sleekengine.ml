@@ -107,9 +107,14 @@ let process_pred_def pdef =
 		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
-		let n_cpdef = 
+    let cpdef = 
       if !Globals.enable_case_inference then 
         AS.view_case_inference cprog iprog.I.prog_view_decls cpdef else cpdef in
+		let n_cpdef = AS.view_prune_inv_inference cprog cpdef in
+    cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
+    let n_cpdef = {n_cpdef with 
+        C.view_formula =  Solver.prune_pred_struc cprog true n_cpdef.C.view_formula ;
+        C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
 		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
@@ -127,30 +132,31 @@ let rec meta_to_struc_formula (mf0 : meta_formula) quant fv_idents stab : CF.str
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p (Iformula.formula_to_struc_formula mf) false true [] in
-	AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
+      AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) []*)
   | MetaVar mvar -> begin
       try 
-	let mf = get_var mvar in
-	  meta_to_struc_formula mf quant fv_idents stab
+        let mf = get_var mvar in
+          meta_to_struc_formula mf quant fv_idents stab
       with
-	| Not_found ->
-	    dummy_exception() ;
-	    print_string (mvar ^ " is undefined.\n");
-	    raise SLEEK_Exception
-    end
+        | Not_found ->
+          dummy_exception() ;
+          print_string (mvar ^ " is undefined.\n");
+          raise SLEEK_Exception
+      end
   | MetaCompose (vs, mf1, mf2) -> begin
       let cf1 = meta_to_struc_formula mf1 quant fv_idents stab in
       let cf2 = meta_to_struc_formula mf2 quant fv_idents stab in
       let svs = List.map (fun v -> AS.get_spec_var_stab v stab no_pos) vs in
       let res = Solver.compose_struc_formula cf1 cf2 svs no_pos in
-	res
+      res
     end
   | MetaEForm b -> 
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let p = List.map (fun c-> (c,Primed)) fv_idents in
       let wf,_ = AS.case_normalize_struc_formula iprog h p b false true [] in
       let res = AS.trans_struc_formula iprog quant fv_idents wf stab false (*(Cpure.Prim Void) [] *) in
-	res
+      (*let _ = print_string (" before meta: " ^(Iprinter.string_of_struc_formula b)^"\n") in*)
+      res
 	
 let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula = match mf0 with
   | MetaFormCF mf -> mf
@@ -159,7 +165,10 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
       let h = List.map (fun c-> (c,Unprimed)) fv_idents in
       let wf = AS.case_normalize_formula iprog h mf in
       let _ = Astsimp.collect_type_info_formula iprog wf stab false in
-	AS.trans_formula iprog quant fv_idents false wf stab false
+      let r = AS.trans_formula iprog quant fv_idents false wf stab false in
+      (*let _ = print_string (" before sf: " ^(Iprinter.string_of_formula wf)^"\n") in
+      let _ = print_string (" after sf: " ^(Cprinter.string_of_formula r)^"\n") in*)
+      r
   | MetaVar mvar -> begin
       try 
 	let mf = get_var mvar in
@@ -183,14 +192,12 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try
     let _ = residues := None in
     let stab = H.create 103 in
-    let ante = meta_to_formula iante0 false [] stab in
-    (*
-	  let ante_str = Cprinter.string_of_formula ante in
-	  let _ = print_string ("\nante: " ^ ante_str ^ "\n") in
-    *)
+    let ante = meta_to_formula iante0 false [] stab in    
+    let ante = Solver.prune_preds cprog true ante in
     let fvs = CF.fv ante in
     let fv_idents = List.map CP.name_of_spec_var fvs in
     let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+    let conseq = Solver.prune_pred_struc cprog true conseq in
     (*let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in*)
     let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
     let ctx = CF.build_context ectx ante no_pos in
@@ -214,7 +221,9 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
             print_string ("Valid.\n");
       (*print_string ((Cprinter.string_of_list_context rs)^"\n")*)
   with
-    | _ ->  Printexc.print_backtrace stdout;dummy_exception() ; (print_string "exception in entail check\n")	
+    | _ ->  
+    Printexc.print_backtrace stdout;
+    dummy_exception() ; (print_string "exception in entail check\n")	
 	
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
@@ -230,10 +239,12 @@ let process_capture_residue (lvar : ident) =
 
 let process_lemma ldef =
   let ldef = Astsimp.case_normalize_coerc iprog ldef in
-  let l2r, r2l = AS.trans_one_coercion iprog ldef in  
-	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_coerc_decl_list l2r false ) ^"\n") else () in
-	let _ = if !Globals.print_core then print_string ((Cprinter.string_of_coerc_decl_list r2l true ) ^"\n") else () in
-  cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
+  let l2r, r2l = AS.trans_one_coercion iprog ldef in
+  let l2r = List.concat (List.map (fun c-> AS.coerc_spec cprog true c) l2r) in
+  let r2l = List.concat (List.map (fun c-> AS.coerc_spec cprog false c) r2l) in
+  let _ = if !Globals.print_core then 
+    print_string ((Cprinter.string_of_coerc_decl_list l2r true) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l false) ^"\n") else () in
+	cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
 	cprog.C.prog_right_coercions <- r2l @ cprog.C.prog_right_coercions
 
 let process_print_command pcmd0 = match pcmd0 with

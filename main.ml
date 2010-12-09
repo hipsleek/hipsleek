@@ -34,6 +34,7 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n"; flush stdout;
         let _ = Util.push_time "Parsing" in
+    Iparser.file_name := file_name;
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
          let _ = Util.pop_time "Parsing" in
@@ -50,7 +51,8 @@ let rec process_primitives file_list =
   | [] -> []
   | hd::tl ->
         let header_filename = String.sub hd 1 ((String.length hd) - 2) in
-        let sleekex_link = get_exe_direct_link() in
+        (*let sleekex_link = get_exe_direct_link() in*)
+        let sleekex_link = "/home/an/sleekex/" in
         let new_filename = sleekex_link ^ header_filename in
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
@@ -161,12 +163,11 @@ let process_source_full source =
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
 		  print_string ("\nTotal verification time: " 
-						^ (string_of_float t4) ^ " second(s)\n"
-						^ "\tTime spent in main process: " 
-						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
-						^ "\tTime spent in child processes: " 
-						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
-
+				^ (string_of_float t4) ^ " second(s)\n"
+				^ "\tTime spent in main process: " 
+				^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
+				^ "\tTime spent in child processes: " 
+				^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
 	  
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)
@@ -203,36 +204,9 @@ let main1 () =
 	  
 let _ = 
   main1 ();
-  (*let rec check_aux (t1,t2,t3,t4) l = match l with
-  | [] -> true
-  | (p1,p2,p3,p4)::l1 -> if (p1<=t1 && p2<=t2&& p3<=t3&& p4<=t4) then check_aux (p1,p2,p3,p4) l1
-						 else false in
-  let check_sorted l = match l with
-	  | a::b -> check_aux a b
-	  | [] -> true  in
-  let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
-  let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
-  (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
-  let _ = if (!Globals.profiling) then 
-	let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !Util.tasks [] in
-	let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-	let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
-	let f a = (string_of_float ((floor(100. *.a))/.100.)) in
-	let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-	let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
-	let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
-		(if (List.length l)>0 then 
-			let l = (List.sort compare l) in		
-			(List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
-		else "")^"],  "^(fp (t/.ot))^"%)") in
-	((a1+1),r) 
-	) (0,"") str_list in
-  print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) in
-  if (!Globals.enable_sat_statistics) then 
-  print_string ("\n there where: \n -> successful imply checks : "^(string_of_int !Globals.true_imply_count)^
-				"\n -> failed imply checks : "^(string_of_int !Globals.false_imply_count)^
-				"\n -> successful sat checks : "^(string_of_int !Globals.true_sat_count)
-				)
-  else ()
+  let _ = print_string (Util.string_of_counters ()) in
+  let _ = Util.print_profiling_info () in
+  ()
+
 
   

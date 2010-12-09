@@ -21,11 +21,11 @@ sll1<S> == self = null & S = {}
 void id1(node x)
 	requires x::sll1<S> & S != {}
 	ensures x::ll1<S>;
-{
-	if (x.next != null) {
-		id1(x.next);
-	}
-}
+  {
+ 	if (x.next != null) {
+ 		id1(x.next);
+ 	}
+ }
 
 //------------------------------------------------------------------------------------------
 // bubble function
