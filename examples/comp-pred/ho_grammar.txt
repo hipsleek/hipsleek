@@ -1,39 +1,43 @@
 
 --> data declarations -> to allow for optional type argument
 --> ho  pred definitions: (instead of pred use ho_pred)
-     -> extends_form
-     -> refines_form
+     -> shape
+     -> extends_form, refines_form
      -> split, combine form
 --> pred definitions: (pred)
       -> old_form
       -> finalizes 
   
-  
-  
-ho preds:
-
-ho_pred_list = ho_pred ho_pred_list | []
+ ================================
+  high order preds: (e denotes the empty grammar production)
+ =================================
+ 
+ho_pred_list = ho_pred ho_pred_list | e
 
 ho_pred = 
   | "hpred" hpred_header "extends" extends_form
   | "hpred" hpred_header "refines" refines_form
-  | "hpred" hpred_header "==" split_combine
+  | "hpred" hpred_header "join" split_combine
+  | "hpred" hpred_header "==" shape 
   
-extends_form
+extends_form =
  
-     
-     
-/* representation of a node in an avl tree */
-data node[b] {
-  b val;
-  int height;
-  node[b] left;
-  node[b] right;
-}
+ 
+hpred_header = identifier opt_type_var_list "<" arg_list ">" opt_fct_list
+  
+pred_def = 
+  | old_pred
+  | pred_header "==" finalizes hpred_header
 
-data myint {
-  int val;
-}
+  
+arg_list = ident ":" ident | ident ":" ident "," arg_list
+
+opt_arg_list = e | arg_list
+
+opt_type_var_list = e | "[" ident_list "]"
+opt_fct_list = e | "[" ident_list "]"
+  
+  =========================================== 
 
 pred avl_shape[t,b]<a:t>[Base,Rec,Inv] = Base(a,self)
   or self::node[b]<v,n,l,r> *l::avl_shape[t,b](al)*r::avl_shape[t,b](ar)* Rec(a,al,ar,v,n,l,r)
