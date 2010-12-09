@@ -11,28 +11,37 @@
  ================================
   high order preds: (e denotes the empty grammar production)
  =================================
+pred_def =                                              // concrete predicates
+  | old_pred
+  | pred_header "==" finalizes hpred_header
+  
  
 ho_pred_list = ho_pred ho_pred_list | e
 
 ho_pred = 
-  | "hpred" hpred_header "extends" extends_form
-  | "hpred" hpred_header "refines" refines_form
+  | "hpred" hpred_header "extends" ext_form
+  | "hpred" hpred_header "refines" ext_form
   | "hpred" hpred_header "join" split_combine
   | "hpred" hpred_header "==" shape 
   
-extends_form =
- 
- 
-hpred_header = identifier opt_type_var_list "<" arg_list ">" opt_fct_list
-  
-pred_def = 
-  | old_pred
-  | pred_header "==" finalizes hpred_header
+shape = this will be a modified formula which will allow for ho_fct_header inside formulas
 
-  
-arg_list = ident ":" ident | ident ":" ident "," arg_list
+split_combine = hpred_header | hpred_header "split" split_combine | hpred_header "combine" split_combine 
 
-opt_arg_list = e | arg_list
+ext_form = hpred_header "with" "{" ho_fct_def_list "}"
+
+ho_fct_header = ident "(" fct_arg_list ")"
+ho_fct_def = ho_fct_header "=" shape
+
+ho_fct_def_list = ho_fct_def | ho_fct_def ho_fct_def_list
+ 
+hpred_header = identifier opt_type_var_list "<" opt_typed_arg_list ">" opt_fct_list
+  
+typed_arg_list = ident ":" ident | ident ":" ident "," typed_arg_list
+
+fct_arg_list = ident | ident "," fct_arg_list
+
+opt_typed_arg_list = e | typed_arg_list
 
 opt_type_var_list = e | "[" ident_list "]"
 opt_fct_list = e | "[" ident_list "]"
