@@ -1,0 +1,12 @@
+              updated
+2-3trees   -> done
+append-tail 
+avl-all    -> done
+append 
+avl-orig3  -> done
+bll        -> done
+bubble     -> done
+complete   -> done
+rb
+dll-sets -> done
+rb_bags  -> done
