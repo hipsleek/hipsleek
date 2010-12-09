@@ -9,22 +9,22 @@ data node2[b] {
 
 /* view for a doubly linked list with bag of values */
 
-pred dll_shape[t,b]<a:t>
+pred dll_shape[t,b]<a:t>[Base,Rec]
   == Base(a,self)
       or self::node2[b]<v,p,q>* q::dll_shape[t,b]<aq>* Rec(a,aq,self,v,p,q)
       inv Inv(a,self);
        
-pred dll_PBase[node2[b],b]<a:node2[b]> extends dll_shape[node2[b],b]<a>
+pred dll_PBase[node2[b],b]<a:node2[b]>[Base,Rec] extends dll_shape[node2[b],b]<a>
       with { Base(a,_) =self=null;  
             Rec(a,aq,self,v,p,q) = a=p & self = aq
       }
       
-pred dll_S[b]<S:set[b]> extends dll_PBase[set[b],b]<S>
+pred dll_S[b]<S:set[b]>[Base,Rec] extends dll_PBase[set[b],b]<S>
       with { Base(S,_) = S={};  
              Rec(S,Sq,v,...) = S = union(Sq, {v});   
       }
       
-pred dll1<p,S> = finalize [int] (dll_S<S> split dll_PBase<p>)
+pred dll1<p,S> = finalizes (dll_S[int]<S> split dll_PBase[int]<p>)
   
 /*dll1<p,S> == self = null & S = {} 
 	or self::node2<v ,p , q> * q::dll1<q1, S1> & S = union(S1, {v}) & self = q1; 

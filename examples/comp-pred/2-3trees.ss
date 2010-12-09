@@ -1,7 +1,7 @@
 /* 2-3 trees */
-data node3 {
-	int maxl;	// max left
-	int maxm;	// max middle	
+data node3[b] {
+	b maxl;	// max left
+	b maxm;	// max middle	
 	node3 left;
 	node3 middle;
 	node3 right;
@@ -9,17 +9,25 @@ data node3 {
 
 // TODO: to check the intermediate value... sometimes I just put 0, 0
 
-tree_shape(a)[Base,Rec1,Rec2,Inv]== Base(a)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec1(a,al,ar,am,self,l,m,r)
-	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3(am) * r::tree_shape(ar)* Rec2(a,al,ar,am,self,l,m,r);
+
+pred dll_shape[t,b]<a:t>
+  == Base(a,self)
+      or self::node2[b]<v,p,q>* q::dll_shape[t,b]<aq>* Rec(a,aq,self,v,p,q)
+      inv Inv(a,self);
+
+pred tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
+	or self::node3<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3[t,b](am) * r::tree_shape[t,b](ar)* Rec1(a,al,ar,am,self,l,m,r);
 	inv Inv(a);
 
-SBase(a,self) = a=0 & self= null
-SRec1(a,al,am,ar,self,l,m,r) = r != null & al = am & al = ar & a = al + 1
-SRec2(a,al,am,ar,self,l,m,r) = r = null & al = am & a = al + 1
-SInv (a) = a>=0 & Inv(a);
+pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] extends tree_shape[int,b]<a>
+  with { 
+      Base(a,self) = a=0 & self= null
+      Rec(a,al,am,ar,self,l,m,r) = (r != null & al = am & al = ar & a = al + 1 & Rec1(a,al,am,ar,self,l,m,r)  |
+                                    r = null & al = am & a = al + 1 & Rec2(a,al,am,ar,self,l,m,r))
+      Inv (a) = a>=0;
+       }
 
-tree2_3<n>== tree_shape[SBase,SRec1,SRec2,SInv: n]
+tree2_3<n>== finalizes tree_23[int]
 
 
 

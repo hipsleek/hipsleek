@@ -1,52 +1,37 @@
 /* red black trees */
 
-data node[a1,a2] {
+data node[a1] {
 	a1 val;
-	a2 color; /*  0 for black, 1 for red */
+	int color; /*  0 for black, 1 for red */
 	node left;
 	node right;
 }
 
 /* view for red-black trees */
-pred tree_shape[t,b1,b2]<a:t>
+pred tree_shape[t,b]<a:t>[Base,Rec]
   == self= null & Base(a,self)
-      or self::node[b1,b2]<v,c,l,r>* l::tree_shape[t,b1,b2]<al>* r::tree_shape[t,b1,b2]<ar>* Rec1(a,al,ar,v,c,self,l,r)
-      or self::node[b1,b2]<v,c,l,r>* l::tree_shape[t,b1,b2]<al>* r::tree_shape[t,b1,b2]<ar>* Rec2(a,al,ar,v,c,self,l,r);
+      or self::node[b]<v,c,l,r>* l::tree_shape[t,b]<al>* r::tree_shape[t,b]<ar>* Rec(a,al,ar,v,c,self,l,r)
       inv Inv(a,self);
+
+pred rb_tree[t]<c:int>[Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<c>
+  with {   Base(c,_) = c=0 ;  
+           Rec(c,c1,cr,_,cv,..) as arg = c=cv & (c=1 & cl=0 & cr=0 (Rec1 arg) | c=2 & (Rec2 arg))
+           Inv(c,_) = 0<=c<=1;
+  }
   
-/*separate */
-  pred tree_set[b1,b2]<S:set[b1]> refines tree_shape [set[b1],b1,b2]<>
+pred height[t]<c:int,h:int>[Base,Rec1,Rec2] extends rb_tree[int,b]<c>
+  with {   Base(h,c,_) = h=1;  
+            Rec1(h,hl,hr,...) =  h=hl=hr 
+            Rec2(h,hl,hr,...) =  hl=hr & h=1+hl
+            Inv(h,_,_) = h>=1;          
+  }
+pred tree_set[b]<S:set[b]>[Base,Rec] extends tree_shape [set[b],b]<>
       with { Base(S,_) = S={};  
-             Rec1(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v}); 
-             Rec2(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v});}
-
-  pred tree_bh [b1,b2]<bh:int> refines tree_shape [int,b1,b2]<>
-    with {   Base(bh,_) = bh=1;  
-             Rec1(bh,bhl,bhr,...) = bhl = bh & bhr = bh; 
-             Rec2(bh,bhl,bhr,...) = bhl = bhr & bh = 1 + bhl;}
-             
-  pred tree_cl [b1]<cl:int> refines tree_shape [int,b1,int]<>
-    with {   Base(cl,_) = cl=0;  
-             Rec1(cl,cll,clr,_,c,...) = cl = 1 & cll = 0 & clr = 0 & c=1; 
-             Rec2(cl,cll,clr,_,c,...) = cl = 0 & c = 0; }
-        
-    /*modular preds*/
-      pred rb1<cl,bh,S> == finalize [int] (tree_set split tree_bh split tree_cl)
-    /*non modular*/          
-      pred rb1<cl,bh,S> == finalize [int] (tree_set combine tree_bh combine tree_cl)     
-
-/*incremental modular preds*/
-  pred tree_cl [b1]<cl:int> refines tree_shape [int,b1,int]<>
-    with {   Base(cl,_) = cl=0;  
-             Rec1(cl,cll,clr,_,c,...) = cl = 1 & cll = 0 & clr = 0 & c=1; 
-             Rec2(cl,cll,clr,_,c,...) = cl = 0 & c = 0; }
-  
-  pred tree_cl_bh [b1]<bh:int,cl:int> refines tree_cl[b1]<cl>
-    with {   Base(bh,_) = bh=1;  
-             Rec1(bh,bhl,bhr,...) = bhl = bh & bhr = bh; 
-             Rec2(bh,bhl,bhr,...) = bhl = bhr & bh = 1 + bhl;}
-             
-  pred tree_cl_bh_set [b1] <>
+             Rec(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v});   
+      }
+ 
+/*modular preds*/
+pred rb<cl,bh,S> finalizes (tree_set[int]<S> &_split height[int]<c,h> )
           
              
 /*incremental non modular preds -> replace refines by extends*/
@@ -67,6 +52,8 @@ rb1<cl, bh, S> == self = null & bh = 1 & cl = 0 & S={}
 	or self::node<v, 0, l, r> * l::rb1<_, bhl, S1> * r::rb1<_, bhr, S2> & cl = 0 & bhl = bhr & bh = 1 + bhl & S = union(S1, S2, {v})
 	inv bh >= 1 & 0 <= cl <= 1;
 */
+
+
 /* rotation case 3 */
 node rotate_case_3_1(node a, node b, node c)
 
