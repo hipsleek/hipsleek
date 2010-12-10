@@ -10,7 +10,7 @@ checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
 print residue.
 
 // must failure
-checkentail x=null  |- x::node<_,_>.
+checkentail x=null |- x::node<_,_>.
 print residue.
 
 // must failure
@@ -40,4 +40,12 @@ print residue.
 // valid
 checkentail n > 1 or n > 3 |- n > 1.
 //print residue.
+
+// must failure
+checkentail n > 1 |- n > 3 or n < 1.
+print residue.
+
+// may failure
+checkentail n > 1 |- n > 2 or n > 3.
+print residue.
 

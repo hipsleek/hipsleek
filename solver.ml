@@ -14,6 +14,7 @@ module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
 
+
 let count_br_specialized prog cl = 
 let helper prog h_node = match h_node with	
 	| ViewNode v ->
@@ -204,6 +205,7 @@ let pop_fail_ctx () =
 let previous_failure () = not(U.empty !fail_ctx_stk)
    
 let failure_msg = ref ("" : string)
+let may_must_list = ref ([] : string list)
 
 let enable_distribution = ref true
 let imp_no = ref 1
@@ -1945,7 +1947,10 @@ and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_uni
         if isAnyFalseCtx ctx then
         ([false_ctx pos], UnsatAnte)
         else*)
+      let _ = may_must_list := [] in
       let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos pid []  in
+      let _ = if (List.mem "must" !may_must_list) then
+                      failure_msg := "Must failure. " else failure_msg := "May failure. " in
       (result, prf)
 
 and heap_entail_after_sat_struc prog is_folding is_universal has_post
@@ -1958,7 +1963,7 @@ and heap_entail_after_sat_struc prog is_folding is_universal has_post
           let rs1, prf1 = heap_entail_after_sat_struc prog is_folding
             is_universal has_post c1 conseq pos pid (CF.add_to_steps ss "left OR 5 on ante") in
           let rs2, prf2 = heap_entail_after_sat_struc prog is_folding is_universal has_post c2 conseq pos pid (CF.add_to_steps ss "right OR 5 on ante") in
-	      ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
+             ((or_list_context rs1 rs2),(mkOrStrucLeft ctx conseq [prf1;prf2]))
     | Ctx es -> begin
         Debug.devel_pprint ("heap_entail_after_sat_struc: invoking heap_entail_conjunct_lhs_struc"
 	    ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx)
@@ -2640,10 +2645,11 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
           memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos 
 	    else new_conseq0 in
       let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
+      (*let _ = print_string ("\n"^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_ante0))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_conseq0))) in*)
       (* Check for MAY failure: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)
       let new_pformula = CP.mkAnd (MCP.pure_of_mix new_ante0) (MCP.pure_of_mix new_conseq0) no_pos in
       let res_sat = TP.is_sat_sub_no new_pformula sat_subno in
-      let _ = if res_sat then failure_msg := "May failure. " else failure_msg := "Must failure. " in
+      let _ = if res_sat then may_must_list := !may_must_list @ ["may"] else may_must_list := !may_must_list @ ["must"] in
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
       let split_ante1 = new_ante1 in
@@ -3016,6 +3022,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	      | NoMatch -> begin (* p2 is mentioned in LHS, but no matching
 				                node/predicate is found *)
               if is_data ln2 then begin (* fail *)
+                may_must_list := !may_must_list @ ["must"];
                 Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
                 ^ "no aliased node for data node "
                 ^ (Cprinter.string_of_h_formula ln2)

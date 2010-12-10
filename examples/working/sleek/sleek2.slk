@@ -34,3 +34,4 @@ checkentail x::ll<n> & n > 0 |- x::ll<m> & m > 0.
 print residue.
 
 checkentail x::ll<n> & n > 3 |- x::node<next = r1> * r1::node<next = r2> & r2=null.
+print residue.

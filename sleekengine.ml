@@ -207,7 +207,6 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     (*let _ = print_string (Cprinter.string_of_program cprog) in*)
     let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
     (*	let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in *)
-    let _ = Solver.failure_msg := "Don't know. " in
     let rs, prf = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
     (*let _ = print_string ("PROOF: " ^ (Prooftracer.string_of_proof prf)) in*)
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs in
