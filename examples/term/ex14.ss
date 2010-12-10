@@ -1,3 +1,5 @@
+//Example from the slide of "The polyranking principles"
+
 void loop(ref int x, ref int y, int k, int N, bool b)
 requires k>0
 case {
