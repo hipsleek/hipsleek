@@ -14,11 +14,11 @@ case {
 				!b -> case {
 					//l6 -> l7 -> l5 -> l1
 					z>0 -> //variance x-y
-						   ensures "l5":true;
+						   ensures "l2":true;
 					z=0 -> ensures "l6":true;
 					z=-1 -> ensures "l7":true;
 					z<(-1) -> //variance x-y
-							  ensures "l5":true;
+							  ensures "l2":true;
 				}
 			}
 }	  
@@ -46,8 +46,12 @@ case {
 			y1 = y + z*z;
 			z1 = z - 1;
 
-			assert "l5":(x1'-y1')-(x'-y')<0;
-			assert "l5":(x'-y')>=0;
+			assert "l2":(x1'-y1')-(x'-y')<0;
+			assert "l2":(x-y)>=0;
+			//assert "l5":(x1'-y1')-(x'-y')<0;
+			//assert "l5":(x'-y')>=0;
+			assert "l4":(-x1')-(-x')<0;
+			assert "l4":(-x')>=-1;
 
 			assert "l6":z1'=-1;
 
