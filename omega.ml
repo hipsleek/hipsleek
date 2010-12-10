@@ -3,20 +3,28 @@
 *)
 open Globals
 open Cpure
+exception Timeout
 
+let channels = ref (stdin, stdout)
+let omega_call_count: int ref = ref 0
+let is_omega_running = ref false
+let timeout = ref 15.0 (* default timeout is 15 seconds *)
+let omega_pid = ref 0
+
+(***********)
+let test_number = ref 0
+let log_all_flag = ref false
+let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
+
+(* currently not used --should be removed*)
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
-let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid()))) 
-(***csfdsfs*)
-(* currently not used *)
+let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
+
 let init_files () =
   begin
 	infilename := "input.oc." ^ (string_of_int (Unix.getpid ()));
 	resultfilename := "result.txt." ^ (string_of_int (Unix.getpid()));
   end
-
-let test_number = ref 0
-let log_all_flag = ref false
-let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
@@ -105,49 +113,190 @@ and omega_of_formula f  = match f with
 
 
 let omegacalc = "oc" (* TODO: fix oc path *)
+(*let omegacalc = "/home/locle/workspace/omega/omega_calc/obj/oc"*)
 
-let omega_calc_command =
-  if Sys.os_type = "Cygwin" then ("dos2unix " ^ !infilename ^ " ; " ^ omegacalc ^ " " ^ !infilename ^ " > " ^ !resultfilename)
-  else (omegacalc ^ " " ^ !infilename ^ " > " ^ !resultfilename)
+let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
+let start_with str prefix =
+  (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
+let send_cmd cmd =
+  if !is_omega_running then output_string (snd !channels) (cmd ^ "\n")
 
 let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
             { Unix.it_interval = 0.0; Unix.it_value = tsecs })
 
-(*let continue f arg tsecs pid =
-  let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in
-  try
-    set_timer tsecs;
-    ignore (f arg);
+
+(* start omega system in a separated process and load redlog package *)
+let start_omega () =
+  if not !is_omega_running then begin
+    (*print_string "Starting Omega... \n"; flush stdout;*)
+	(if !log_all_flag then 
+        output_string log_all ("[omega.ml]: >> Starting Omega...\n") );
+    let inchanel, outchanel, errchanel, pid = Unix_add.open_process_full omegacalc [|omegacalc|]  (*omegacalc [|omegacalc|]*) in 
+	(*let pid = Unix.create_process omegacalc  [|omegacalc|] (Unix.stdin) (snd channels) Unix.stderr in (*open_process*) *) 
+	(*let inchanel, outchanel = Unix.open_process (omegacalc) in*)
+    channels := inchanel, outchanel; 
+	
+    is_omega_running := true;
+    omega_pid := pid;
+    
+    let finished = ref false in
+    while not !finished do
+      let line = input_line (fst !channels) in
+	  (*let _ = print_endline line in *)
+	  (if !log_all_flag then 
+        output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running!\n") );
+      if (start_with line "#") then finished := true;
+    done;
+	
+    (*print_endline "OC is running!"; flush stdout*)
+  end
+
+(* stop Omega system *)
+let stop_omega () = 
+  if !is_omega_running then begin
+    (*send_cmd "quit;"; flush (snd !channels);*)
+    (*print_string "Stop Omega... "; flush stdout;*)
+	(if !log_all_flag then 
+        output_string log_all ("[omega.ml]: >> Stop Omega...\n") );
+    Unix.kill !omega_pid 9;
+    ignore (Unix.waitpid [] !omega_pid);
+    is_omega_running := false;
+    omega_pid := 0;
+  end
+
+(* restart Omega system *)
+let restart_omega reason =
+  if !is_omega_running then begin
+    print_string reason;
+	(if !log_all_flag then 
+        output_string log_all ("[omega.ml]: >> " ^ reason ^ " Restarting Omega...\n") );
+    stop_omega();
+    start_omega();
+  end
+
+(*
+  - in: input channel
+  - out: receiving msg
+  - Desc: read from the channel, return the msg
+*)
+let read_from_in_channel chn : string =
+  let res = ref "" in
+  let quitloop = ref false in
+     while not !quitloop do
+	  let line = input_line chn in
+      let n = String.length line in
+        if n > 0 then begin
+		 (* print_string (line^"\n"); flush stdout;*)
+          (if !log_all_flag then 
+            output_string log_all ("[omega.ml]: >> "^line^"\n") );
+          if line.[0] != '#' then
+		    begin   
+              res := !res ^ line;
+              if (line.[n-1] == '}') then
+		         quitloop := true;			  
+            end;
+        end;
+    done;
+	!res
+
+(*
+  - in: input channel
+  - out: last non-comment line of the input channel
+  - Desc: read from the channel, return the last line
+*)	
+let read_last_line_from_in_channel chn : string =
+  let line = ref "" in
+  let quitloop = ref false in
+     while not !quitloop do
+	  line := (input_line chn);
+      let n = String.length !line in
+        if n > 0 then begin
+		 (* print_string (line^"\n"); flush stdout;*)
+          (if !log_all_flag then 
+            output_string log_all ("[omega.ml]: >> "^(!line)^"\n") );
+          if !line.[0] != '#' then
+		    begin   
+              
+              if (!line.[n-1] == '}') then
+		         quitloop := true;			  
+            end;
+        end;
+    done;
+	!line
+  
+(* send formula to omega and receive result -true/false*)
+let check_formula f timeout=
+(*  try*)
+ begin
+  if not !is_omega_running then
+    start_omega ();
+  
+  (*timer*)
+  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+  set_timer timeout;
+  
+ (*let _ = print_endline "check" in*)
+  let _ = incr omega_call_count in
+  let new_f = 
+  if String.length f > 1024 then
+     (Util.break_lines f)
+  else
+      f
+  in
+  output_string (snd !channels) new_f;
+  flush (snd !channels);
+  
+  let result = ref true in
+  let str = read_last_line_from_in_channel (fst !channels) in
+  let n = String.length str in
+  if n > 7 then
+   begin
+    let lastchars = String.sub str (n - 7) 7 in
+    if lastchars = "FALSE }" then
+	begin
+        result := false;
+	end;
+   end;
+  (*turn off timer*)
+  set_timer 0.0;
+  reset_sigalrm () ;
+  !result
+ end
+
+(* linear optimization with omega *)
+let rec send_and_receive f timeout=
+ begin
+  (*timer*)
+  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+  set_timer timeout;
+  
+  if not !is_omega_running then
+    start_omega ();
+  let new_f = 
+  if String.length f > 1024 then
+     (Util.break_lines f)
+  else
+      f
+  in
+    output_string (snd !channels) new_f;
+    flush (snd !channels);
+	let str = read_from_in_channel (fst !channels) in
+		
+    let lex_buf = Lexing.from_string str in
+	(*print_string (line^"\n"); flush stdout;*)
+    let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
+
+    (*turn off timer*)
     set_timer 0.0;
-    Sys.set_signal Sys.sigalrm oldsig; true
-  with Exit ->
-    Sys.set_signal Sys.sigalrm oldsig; false
-(*  begin continue Sys.command omega_calc_command timeout end*)
-	*)
+    reset_sigalrm () ;	
 
-let run_omega (input : string) (timeout : float):bool = begin
-	let chn = open_out !infilename in
-	output_string chn (Util.break_lines input);
-    close_out chn;
-    (* flush_all(); *)
- 	let pid = Unix_add.open_proc omegacalc [|omegacalc;!infilename|] !resultfilename in
-	let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in	
-	let r =	try 			
-			begin
-			set_timer timeout;
-			ignore (Unix.waitpid [] pid);
-			true end
-		with Exit ->
-			begin
-			print_endline "\nOmega timeout reached."; flush stdout; 
-			Unix.kill pid 9;
-			ignore (Unix.waitpid [] pid);
-			false end in
-	set_timer 0.0;
-	Sys.set_signal Sys.sigalrm oldsig;
-	r end
-
+    rel 
+  
+  end
+(********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
   | [] -> ""
   | [v] -> v
@@ -163,129 +312,82 @@ let get_vars_formula (p : formula) =
 *)
 
 let is_sat (pe : formula)  (sat_no : string): bool =
+  (*print_endline (Util.new_line_str^"#is_sat " ^ sat_no ^ Util.new_line_str);*)
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
-		Ocparser.subst_lst := [];
+	Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
     let pvars = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups pvars) in
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
+	(*test*)
+	(*print_endline (Util.break_lines fomega);*)
+	
     if !log_all_flag then begin
 (*      output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
       output_string log_all (Util.new_line_str^"#is_sat " ^ sat_no ^ Util.new_line_str);
       output_string log_all (Util.break_lines fomega);
       flush log_all;
     end;
-    let quitloop = ref false in
-    let sat = ref true in
-    if (run_omega fomega !Globals.sat_timeout = false) then (quitloop := true);
-    let chn = open_in !resultfilename in
-    while not !quitloop do
-      let line = input_line chn in
-      let n = String.length line in
-      if n > 0 then begin
-        (if !log_all_flag then 
-          output_string log_all ("[omega.ml]: >> "^line^"\n") );
-        if line.[0] != '#' then begin
-          quitloop := true;
-          if n > 7 then
-            let lastchars = String.sub line (n - 7) 7 in
-            if lastchars = "FALSE }" then
-              sat := false
-        end;
-      end;
-    done;
-    close_in chn;
-    begin
+	
+	let sat = 
       try
-        ignore (Sys.remove !infilename);
-        ignore (Sys.remove !resultfilename)
+        check_formula fomega !timeout
       with
-      | e -> ignore e
-    end;
+      | Timeout ->
+	      begin
+           restart_omega ("Timeout when checking #is_sat " ^ sat_no ^ "!");
+           true
+		  end
+      | exc -> stop_omega (); raise exc 
+    in
+  (*   let post_time = Unix.gettimeofday () in *)
+  (*   let time = (post_time -. pre_time) *. 1000. in *)
+   
     if !log_all_flag = true then begin
-      if !sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") else output_string log_all ("[omega.ml]: unsat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
+      if sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") else output_string log_all ("[omega.ml]: sat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
     end else ();
-    !sat
+    sat
   end
-
-(*
-    let is_valid (pe : pConstr) : bool =
-  begin
-  let fstr = omega_of_formula pe in
-  let vstr = omega_of_var_list (Util.remove_dups (get_vars_pConstr pe)) in
-  let truestr = "{[" ^ vstr ^ "] : 0 = 0 }" in
-  let fomega =  truestr ^ " subset {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";\n" in
-    output_string log_all ("#is_valid\n\n");
-    output_string log_all ((Util.break_lines fomega) ^ "\n\n");
-    flush log_all;
-  run_omega fomega;
-  let chn = open_in resultfilename in
-  let quitloop = ref false in
-  let result = ref false in
-    while not !quitloop do
-    let line = input_line chn in
-    if String.length line > 0 then
-    if line.[0] != '#' then
-    begin
-    quitloop := true;
-    if line = "True" || line = "{ TRUE }" then
-    result := true
-    else if line = "False" || line = "{ FALSE }" then
-    result := false
-    end;
-    done;
-    !result
-  end
-*)
 
 let is_valid (pe : formula) timeout: bool =
+  (*print_endline "LOCLE: is_valid";*)
   begin
-		Ocparser.subst_lst := [];
+	Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups (get_vars_formula pe)) in
     let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
-            if !log_all_flag then begin
+    (*test*)
+	(*print_endline (Util.break_lines fomega);*)
+	
+    if !log_all_flag then begin
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
                 output_string log_all (Util.new_line_str^"#is_valid" ^Util.new_line_str);
                 output_string log_all (Util.break_lines fomega);
                 flush log_all;
             end;
-      let quitloop = ref false in
-      let result = ref false in
-      if not (run_omega fomega timeout) then (quitloop:=true) ;
-      (*ignore (run_omega fomega timeout);*)
-      let chn = open_in !resultfilename in      
-                while not !quitloop do
-                    let line = input_line chn in
-                    let n = String.length line in
-                       (if !log_all_flag then 
-                          output_string log_all ("[omega.ml]: >> "^line^"\n") );
-                        if n > 0 then begin
-                            if line.[0] != '#' then begin
-                                quitloop := true;
-                                if n > 7 then
-                                    let lastchars = String.sub line (n - 7) 7 in
-                                        if lastchars = "FALSE }" then
-                                            result := true
-                            end;
-                        end;
-                done;
-                close_in chn;
-                begin
-                    try
-                        ignore (Sys.remove !infilename);
-                        ignore (Sys.remove !resultfilename)
-                    with
-                        | e -> ignore e
-                end;
-                !result
+	
+	let sat = 
+      try
+        not (check_formula (fomega ^ "\n") timeout)
+      with
+      | Timeout ->
+          (*log ERROR ("TIMEOUT");*)
+          restart_omega ("Timeout when checking #is_valid ");
+          true
+      | exc -> stop_omega (); raise exc 
+    in
+  (*   let post_time = Unix.gettimeofday () in *)
+  (*   let time = (post_time -. pre_time) *. 1000. in *)
+    
+    sat		
   end
 
 let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
+  (*print_endline "LOCLE: imply";*)
   incr test_number;
   (*
     let tmp1 = mkAnd ante (mkNot conseq no_pos) no_pos in
@@ -294,7 +396,8 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
     not (is_valid tmp2)
    *)
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
-  let result = is_valid tmp_form timeout in
+  	
+  let result = is_valid tmp_form  timeout in
   if !log_all_flag = true then begin
     if result then 
       output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
@@ -302,7 +405,7 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
       output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
-
+  
 let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 | ConstRel b ->
     if b then
@@ -331,106 +434,93 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
     tmp
 
 let simplify (pe : formula) : formula =
+ (* print_endline "LOCLE: simplify";*)
   begin
     Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+	(*test*)
+	(*print_endline (Util.break_lines fomega);*)
+	
     if !log_all_flag then begin
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
       output_string log_all ("#simplify" ^ Util.new_line_str ^ Util.new_line_str);
       output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
       flush log_all;
     end;
-    let r = run_omega fomega 0. in
-    let chn = open_in !resultfilename in
-    let f = if r then 
-      let lex_buf = Lexing.from_channel chn in
-      let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-       match_vars (fv pe) rel 
-      else pe in
-      begin
-        try
-          ignore (Sys.remove !infilename);
-          ignore (Sys.remove !resultfilename)
-        with
-        | e -> ignore e
-      end;
-      close_in chn;
-      f
+	
+    let simp_f = 
+	try
+      begin	
+	   let rel = send_and_receive fomega 0.0 in
+	   match_vars (fv pe) rel
+	  end
+	with
+      | Timeout ->
+          (*log ERROR ("TIMEOUT");*)
+          restart_omega ("Timeout when checking #simplify ");
+          pe
+      | exc -> stop_omega (); raise exc 
+    in
+  (*   let post_time = Unix.gettimeofday () in *)
+  (*   let time = (post_time -. pre_time) *. 1000. in *)
+  
+    simp_f
   end
 
 let pairwisecheck (pe : formula) : formula =
+  (*print_endline "LOCLE: pairwisecheck";*)
   begin
 		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
     let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
-            if !log_all_flag then begin
-                output_string log_all ("#pairwisecheck" ^ Util.new_line_str ^ Util.new_line_str);
-                output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
-                flush log_all;
-            end;
-      (*ignore (run_omega fomega 0.);*)
-    let r = run_omega fomega 0. in
-    let chn = open_in !resultfilename in
-    let f = if r then 
-      let lex_buf = Lexing.from_channel chn in
-      let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-      match_vars (fv pe) rel 
-      else pe in
-    begin
-      try
-        ignore (Sys.remove !infilename);
-        ignore (Sys.remove !resultfilename)
-      with
-        | e -> ignore e
+	
+	(*test*)
+	(*print_endline (Util.break_lines fomega);*)
+	
+    if !log_all_flag then begin
+       output_string log_all ("#pairwisecheck" ^ Util.new_line_str ^ Util.new_line_str);
+       output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+       flush log_all;
     end;
-    close_in chn;
-    f
+    let rel = send_and_receive fomega 0. in
+	  match_vars (fv pe) rel 
   end
 
 let hull (pe : formula) : formula =
+  (*print_endline "LOCLE: hull";*)
   begin
 		Ocparser.subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
-    let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
-            if !log_all_flag then begin
-                output_string log_all ("#hull" ^ Util.new_line_str ^ Util.new_line_str);
-                output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
-                flush log_all;
-            end;
-      (*ignore (run_omega fomega 0.);*)
-      let r = run_omega fomega 0. in
-      let chn = open_in !resultfilename in
-      let f = if r then 
-        let lex_buf = Lexing.from_channel chn in
-        let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-        match_vars (fv pe) rel 
-        else pe in
-      begin
-        try
-          ignore (Sys.remove !infilename);
-          ignore (Sys.remove !resultfilename)
-        with
-          | e -> ignore e
-      end;
-      close_in chn;
-      f
+     let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+	
+	(*test*)
+	(*print_endline (Util.break_lines fomega);*)
+	
+    if !log_all_flag then begin
+       output_string log_all ("#hull" ^ Util.new_line_str ^ Util.new_line_str);
+       output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+       flush log_all;
+    end;
+    let rel = send_and_receive fomega 0. in
+	  match_vars (fv pe) rel
   end
-(*
+
 let gist (pe1 : formula) (pe2 : formula) : formula =
+  (*print_endline "LOCLE: gist";*)
   begin
 		Ocparser.subst_lst := [];
     let fstr1 = omega_of_formula pe1 in
         let fstr2 = omega_of_formula pe2 in
-        let vars_list = Util.remove_dups_f (fv pe1 @ fv pe2)  eq_spec_var  in
+        let vars_list = Util.remove_dups (fv pe1 @ fv pe2) in
 				let l1 = List.map omega_of_spec_var vars_list  in
-    let vstr = String.concat ", " l1  in
+    let vstr = String.concat "," l1  in
     let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
             ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Util.new_line_str
         in
@@ -439,23 +529,10 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
                 output_string log_all ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
                 flush log_all;
             end;
-      if (run_omega fomega 0.) then 
-            let chn = open_in !resultfilename in
-            let lex_buf = Lexing.from_channel chn in
-            let rel = Ocparser.oc_output (Oclexer.tokenizer !resultfilename) lex_buf in
-            let f = match_vars vars_list rel in
-                begin
-                    try
-                        ignore (Sys.remove !infilename);
-                        ignore (Sys.remove !resultfilename)
-                    with
-                        | e -> ignore e
-                end;
-                close_in chn;
-                f
-      else 
+    let rel = send_and_receive fomega 0. in
+	  match_vars vars_list rel
   end
-*)
+
 let log_mark (mark : string) =
   if !log_all_flag then begin
     output_string log_all ("#mark: " ^ mark ^ Util.new_line_str ^ Util.new_line_str);

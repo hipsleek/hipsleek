@@ -1009,18 +1009,18 @@ let imply_sub_no ante0 conseq0 imp_no do_cache=
   (* imp_no := !imp_no+1;*)
   imply ante0 conseq0 imp_no do_cache
 
-let imply_msg_no_nox ante0 conseq0 imp_no prof_lbl do_cache =
+let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let _ = Util.push_time prof_lbl in  
   let r = imply_sub_no ante0 conseq0 imp_no do_cache in
   let _ = Util.pop_time prof_lbl in
   r
-let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
+let imply_msg_no_no_debug ante0 conseq0 imp_no prof_lbl do_cache =
 Util.ho_debug_5 "imply_msg_no_no " 
   Cprinter.string_of_pure_formula 
   Cprinter.string_of_pure_formula
  (fun c-> c) (fun _ -> "?") string_of_bool 
  (fun (x,_,_)-> string_of_bool x) (fun x-> true)
- imply_msg_no_nox ante0 conseq0 imp_no prof_lbl do_cache
+ imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache
   
 let print_stats () =
   print_string ("\nTP statistics:\n");
@@ -1029,12 +1029,20 @@ let print_stats () =
 let start_prover () =
   match !tp with
   | Coq -> Coq.start_prover ()
-  | Redlog | RM -> Redlog.start_red ()
-  | _ -> ()
+  | Redlog | RM -> 
+     begin
+      Redlog.start_red ();
+	  Omega.start_omega ();
+	 end
+  | _ -> Omega.start_omega ()
   
 let stop_prover () =
   match !tp with
   | Coq -> Coq.stop_prover ()
-  | Redlog | RM -> Redlog.stop_red ()
-  | _ -> ()
+  | Redlog | RM -> 
+    begin
+     Redlog.stop_red ();
+	 Omega.stop_omega ();
+	end
+  | _ -> Omega.stop_omega ();
 
