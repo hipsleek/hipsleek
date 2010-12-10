@@ -17,11 +17,13 @@ case {
 		y1 = x + y;
 		assert "l2":(x1'-y1')-(x'-y')<0;
 		assert "l2":(x-y)>=0;
+		//assert "l2":(x1'-y1')>=0; // not needed
 
 		assert "l3":x1'>=y1' & x1'>1;
 
 		assert	"l4":(-x1')-(-x')<0;
 		assert	"l4":(-x')>=-1;
+		assert	"l4":(-x)>=0;
 		
 		loop(x1, y1);
 	}
