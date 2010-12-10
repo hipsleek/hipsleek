@@ -20,12 +20,14 @@ case {
 		z1 = z - 1;
 		
 		assert "l2":(x1'-y1')-(x'-y')<0;
-		assert "l5":(x1'-y1')-(x'-y')<0;
+		//assert "l2":(x'-y')>=0;
 		assert "l2":true & ((x1'-y1')>=-10 | z1'=0);  //failed..
 		assert "l2":(x1'-y1')>=-10;  //failed..
+
+		assert "l5":(x1'-y1')-(x'-y')<0;	
 		assert "l5":true & ((x1'-y1')>=-10 | z1'=0);  //failed..
 
-		assert "l3":x1'>=y1' &z1'=-1;
+		assert "l3":x1'>=y1' & z1'=-1;
 
 		assert "l4":x1'>=y1' & z1'<(-1);
 		
