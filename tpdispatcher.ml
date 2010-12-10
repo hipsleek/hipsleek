@@ -469,7 +469,8 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         Redlog.is_sat f sat_no
 
 let tp_is_sat_no_cache_debug f sat_no =
-  Util.ho_debug_2 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula (fun x-> x) string_of_bool tp_is_sat_no_cache f sat_no
+  Util.ho_debug_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
+    (fun f -> tp_is_sat_no_cache f sat_no) f
         
         
 let prune_sat_cache  = Hashtbl.create 2000 ;;
@@ -507,7 +508,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
       (*print_string ("sat hits: "^s^"\n");*)
       r
     with Not_found -> 
-        let r = tp_is_sat f sat_no in
+        let r = tp_is_sat_no_cache f sat_no in
         (Hashtbl.add prune_sat_cache s r ;
         Util.inc_counter "sat_proof_count";
         r))
@@ -734,7 +735,7 @@ let tp_imply ante conseq imp_no timeout do_cache =
       (* print_string ("hit rhs: "^s_rhs^"\n");*)
       r
       with Not_found -> 
-        let r = tp_imply ante conseq imp_no timeout in
+        let r = tp_imply_no_cache ante conseq imp_no timeout in
         (Hashtbl.add imply_cache s r ;
          (*print_string ("s rhs: "^s_rhs^"\n");*)
          Util.inc_counter "impl_proof_count";
