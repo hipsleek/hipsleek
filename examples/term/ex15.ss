@@ -1,6 +1,6 @@
 // McCarthy 91
 int f(int x)
-
+ensures true;
 {
 	int s = 1;
 	return loop(x, s);
@@ -29,6 +29,7 @@ case {
 			assert "l2": (10*s1'-x1'+90)-(10*s'-x'+90) = 0;
 			assert "l2": (x1'-x')<0;
 			assert "l2": x1'>=0;
+			assert "l2": x'>=0;
 			
 			return loop(x1, s1);
 		}
