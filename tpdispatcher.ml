@@ -519,7 +519,10 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
 let simplify_omega (f:CP.formula): CP.formula = 
    if is_bag_constraint f then f
     else Omega.simplify f   
-            
+
+let simplify_omega_debug f =
+  Util.ho_debug_1 "simplify_omega" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify_omega f
+
 let simplify (f : CP.formula) : CP.formula =
   if !external_prover then 
     match Netprover.call_prover (Simplify f) with
@@ -554,6 +557,9 @@ let simplify (f : CP.formula) : CP.formula =
       Util.pop_time "simplify";
       r
     with | _ -> f)
+
+let simplify_debug f =
+  Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
