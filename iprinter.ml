@@ -300,6 +300,15 @@ let rec string_of_ext_formula = function
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
 	| Iformula.EAssume (b,(n1,n2))-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+    | Iformula.EVariance {
+			Iformula.formula_ext_measures = measures;
+			Iformula.formula_ext_escape_clauses = escape_clauses;
+	  } ->
+		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
+																			| None -> rs^(string_of_formula_exp expr)^" "
+																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
+		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
+		  "EVariance "^"[ "^string_of_measures^"]"^" ==> "^"[ "^string_of_escape_clauses^" ]" 
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 

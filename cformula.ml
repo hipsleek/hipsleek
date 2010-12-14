@@ -36,6 +36,7 @@ and ext_formula =
   | ECase of ext_case_formula
   | EBase of ext_base_formula
   | EAssume of ((Cpure.spec_var list) *formula* formula_label)
+  | EVariance of ext_variance_formula
         (*  struct_formula *)
  (*
    | EScope of  (Cpure.spec_var list) 
@@ -60,6 +61,13 @@ and ext_base_formula =
 		formula_ext_base : formula;
 		formula_ext_continuation : struc_formula;
 		formula_ext_pos : loc
+	}
+
+and ext_variance_formula =
+	{
+		formula_ext_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
+		formula_ext_escape_clauses : Cpure.formula list;
+		formula_variance_pos : loc
 	}
 
 and formula =

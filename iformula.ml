@@ -14,6 +14,7 @@ and ext_formula =
 	| ECase of ext_case_formula
 	| EBase of ext_base_formula
 	| EAssume of (formula*formula_label)(*could be generalized to have a struc_formula type instead of simple formula*)
+	| EVariance of ext_variance_formula
 
 
 and ext_case_formula =
@@ -31,7 +32,13 @@ and ext_base_formula =
 		 formula_ext_continuation : struc_formula;
 		 formula_ext_pos : loc
 	}
-  
+
+and ext_variance_formula =
+	{
+		formula_ext_measures : (P.exp * (P.exp option)) list;
+		formula_ext_escape_clauses : P.formula list;
+		formula_variance_pos : loc
+	}
 
 and formula =
   | Base of formula_base
@@ -216,6 +223,7 @@ if (List.length f0)==0 then no_pos
 	| ECase b -> b.formula_case_pos
 	| EBase b -> b.formula_ext_pos
 	| EAssume (b,_) -> pos_of_formula b
+	| EVariance b -> b.formula_variance_pos
 
 let replace_branches b = function
   | Or f -> failwith "replace_branches doesn't expect an Or"
@@ -272,7 +280,9 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 													(b.formula_ext_explicit_inst@b.formula_ext_implicit_inst)
 							| ECase b-> List.fold_left (fun a (c1,c2)->
 											a@ (struc_hp_fv c2)) [] b.formula_case_branches
-							| EAssume (b,_)-> heap_fv b) in
+							| EAssume (b,_)-> heap_fv b
+							| EVariance b -> []
+							) in
 						List.concat (List.map helper f)
 
 and heap_fv (f:formula):(ident*primed) list = match f with
@@ -298,8 +308,13 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 				let fvc = List.fold_left (fun a (c1,c2)-> 
 				a@(struc_free_vars c2 with_inst)@(Ipure.fv c1)) [] b.formula_case_branches in
 				Util.remove_dups fvc		
-		| EAssume (b,_)-> all_fv b in
-	Util.remove_dups (List.concat (List.map helper f0))
+		| EAssume (b,_)-> all_fv b
+		| EVariance b -> (List.fold_left (fun res x -> res@(Ipure.fv x)) [] b.formula_ext_escape_clauses)
+						 @
+						 (List.fold_left (fun res (expr, bound) -> match bound with
+											| None -> res@(Ipure.afv expr)
+											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_ext_measures)
+	in Util.remove_dups (List.concat (List.map helper f0))
  
 and struc_split_fv (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
 	let helper f = match f with
@@ -314,7 +329,9 @@ and struc_split_fv (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*
               ((a1@prc@(Ipure.fv c1)),psc@a2)
           ) ([],[]) b.formula_case_branches in
 				(Util.remove_dups prl,Util.remove_dups psl)		
-		| EAssume (b,_)-> ([],all_fv b) in
+		| EAssume (b,_)-> ([],all_fv b)
+		| EVariance b -> ([],[]) (* TODO: What is the functionality of this function? *)
+	in
   let vl = List.map helper f0 in
   let prl, pcl = List.split vl in
 	(Util.remove_dups (List.concat prl), Util.remove_dups (List.concat pcl))
@@ -523,7 +540,19 @@ and subst_struc (sst:((ident * primed)*(ident * primed)) list) (f:struc_formula)
 					formula_ext_exists = s_exist;
 					formula_ext_base = sb;
 					formula_ext_continuation = sc;
-					formula_ext_pos = b.formula_ext_pos	})	in	
+					formula_ext_pos = b.formula_ext_pos	})
+		| EVariance b ->
+			(* let subst_list_of_pair sst ls = match sst with
+			  | [] -> ls
+			  | s::rest -> subst_list_of_pair rest (Ipure.e_apply_one_list_of_pair s ls) in *)
+			let subst_measures = (Ipure.subst_list_of_pair sst b.formula_ext_measures) in
+			let subst_escape = (List.map (Ipure.subst sst) b.formula_ext_escape_clauses) in
+				EVariance ({
+								formula_ext_measures = subst_measures;
+								formula_ext_escape_clauses = subst_escape;
+								formula_variance_pos = b.formula_variance_pos
+						   })
+	in	
 	List.map helper f
 
 
@@ -542,7 +571,12 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 			EBase ({b with 
 				formula_ext_explicit_inst = (*snd (List.split sst1)*) b.formula_ext_explicit_inst;
 		 		formula_ext_implicit_inst = snd (List.split sst2);
-				formula_ext_base=new_base_f; formula_ext_continuation=new_cont_f})			
+				formula_ext_base=new_base_f; formula_ext_continuation=new_cont_f})
+		| EVariance b -> EVariance ({
+										formula_ext_measures = b.formula_ext_measures;
+										formula_ext_escape_clauses = b.formula_ext_escape_clauses;
+										formula_variance_pos = b.formula_variance_pos
+									})
 			in
 	List.map helper f
 
@@ -626,7 +660,13 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 					formula_ext_base = float_out_exps_from_heap b.formula_ext_base;
 					formula_ext_continuation = float_out_exps_from_heap_struc b.formula_ext_continuation;
 					formula_ext_pos = b.formula_ext_pos			
-				})in	
+				})
+		| EVariance b -> EVariance ({
+										formula_ext_measures = b.formula_ext_measures;
+										formula_ext_escape_clauses = b.formula_ext_escape_clauses;
+										formula_variance_pos = b.formula_variance_pos
+									})
+	in	
 	List.map helper f
 	
 	
@@ -1065,7 +1105,18 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula =
 						 formula_case_pos = b.formula_case_pos}
 		| EBase b -> EBase {b with 
 						 formula_ext_base = float_out_min_max b.formula_ext_base;
-						 formula_ext_continuation = float_out_struc_min_max b.formula_ext_continuation}in
+						 formula_ext_continuation = float_out_struc_min_max b.formula_ext_continuation}
+		| EVariance b ->
+			let fo_measures = (List.map (fun (expr, bound) -> match bound with
+																| None -> ((fst (float_out_exp_min_max expr)), None)
+																| Some bexpr -> ((fst (float_out_exp_min_max expr)), Some (fst (float_out_exp_min_max bexpr)))) b.formula_ext_measures) in
+			let fo_escape_clause = (List.map (fun f -> (float_out_pure_min_max f)) b.formula_ext_escape_clauses) in
+				EVariance {
+					formula_ext_measures = fo_measures;
+					formula_ext_escape_clauses = fo_escape_clause;
+					formula_variance_pos = b.formula_variance_pos
+				}
+	in
 	List.map helper f0
 		
 
@@ -1074,6 +1125,7 @@ and view_node_types_struc (f:struc_formula):ident list =
 	| ECase b -> List.concat (List.map (fun (c1,c2)-> view_node_types_struc c2) b.formula_case_branches)
 	| EBase b -> (view_node_types b.formula_ext_base)@(view_node_types_struc b.formula_ext_continuation)
 	| EAssume (b,_) -> view_node_types b
+	| EVariance b -> []  (* This function doesn't work on pure formulae *)
 	in
 	Util.remove_dups (List.concat (List.map helper f))
 		
@@ -1101,6 +1153,7 @@ and has_top_flow_struc (f:struc_formula) =
 		| EBase b->   (has_top_flow b.formula_ext_base); (has_top_flow_struc b.formula_ext_continuation)
 		| ECase b->   List.iter (fun (_,b1)-> (has_top_flow_struc b1)) b.formula_case_branches
 		| EAssume (b,_)-> (has_top_flow b)
+		| EVariance b -> ()
 		in
 List.iter helper f
 
@@ -1123,7 +1176,13 @@ let rec helper f = match f with
 		| ECase b ->ECase {b with
 						 formula_case_branches = (List.map (fun (c1,c2)->
 								(c1,(subst_flow_of_struc_formula fr t c2)))b.formula_case_branches)}
-		| EAssume (b,tag)-> EAssume ((subst_flow_of_formula fr t b),tag) in
+		| EAssume (b,tag)-> EAssume ((subst_flow_of_formula fr t b),tag)
+		| EVariance b -> EVariance {
+										formula_ext_measures = b.formula_ext_measures;
+										formula_ext_escape_clauses = b.formula_ext_escape_clauses;
+										formula_variance_pos = b.formula_variance_pos
+								   }
+in 
 List.map helper f 
 
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
