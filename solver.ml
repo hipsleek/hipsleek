@@ -1532,16 +1532,20 @@ and elim_exists_pure_branch (w : CP.spec_var list) (f0 : CP.formula) pos =
   let r=CP.intersect w (CP.fv f0) in
   if (r==[]) then f0
   else
-    let f = CP.mkExists w f0 None pos in
-    let simplified_f = TP.simplify f in
+    let lc = CP.split_conjunctions f0 in
+    let (fl,bl)=List.partition (fun e -> CP.intersect r (CP.fv e)==[]) lc in
+    let be = CP.join_conjunctions bl in 
+    let f = CP.mkExists r be None pos in
+    let sf = TP.simplify f in
+    let simplified_f = List.fold_left (fun be e -> CP.mkAnd e be no_pos) sf fl in
     simplified_f
 
 and elim_exists_pure_branch_debug (w : CP.spec_var list) (f0 : CP.formula) pos =
   Util.ho_debug_2_opt "elim_exists_pure_branch" Cprinter.string_of_spec_var_list Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun _ -> not(w==[]))
-(fun w f0 -> elim_exists_pure_branch w f0 pos) w f0 
+      (fun w f0 -> elim_exists_pure_branch w f0 pos) w f0 
 
 (*
-and elim_exists_pure_branch_debug w f0 = 
+  and elim_exists_pure_branch_debug w f0 = 
   let r = elim_exists_pure_branch w f0 in
   (print_string ("elim_exists_pure_branch input1: "^(Cprinter.string_of_spec_var_list w)^"\n");
   print_string ("elim_exists_pure_branch input2: "^(Cprinter.string_of_pure_formula f0)^"\n");
