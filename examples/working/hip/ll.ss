@@ -62,7 +62,7 @@ node get_next(node x)
 {
   //dprint;
 	node tmp = x.next;
-  assume false;
+    //assume false;
 	x.next = null;
 	return tmp;
 }

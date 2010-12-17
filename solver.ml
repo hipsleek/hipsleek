@@ -131,6 +131,10 @@ let rec filter_formula_memo f (simp_b:bool)=
       let nmem = MCP.filter_useless_memo_pure TP.simplify simp_b fv e.formula_exists_pure in
       Exists {e with formula_exists_pure = nmem;}
 
+let filter_formula_memo_debug f (simp_b:bool)= 
+  Util.ho_debug_1 "filter_formula_memo" Cprinter.string_of_formula Cprinter.string_of_formula 
+   (fun f -> filter_formula_memo f simp_b) f
+
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
 let prune_branches_subsume prog univ_vars lhs_node rhs_node = match lhs_node,rhs_node with
@@ -1111,12 +1115,27 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	    normalize_combine uf1 uf2 pos
   | _ -> formula_of_heap_fl f fl pos
 
-(*
-  vvars: variables of interest
-  evars: those involving this will be on the rhs
-  otherwise move to the lhs
-*)
+(* this is added to eliminate some obvious existentials in the antecedent *)
 and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
+      (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
+      (vvars : CP.spec_var list) (pos : loc) 
+      = let ((a,b),x,y)=split_universal_a (f0,f0b) evars expl_inst_vars impl_inst_vars vvars pos in
+      ((elim_exists_pure_formula a,b),x,y)
+
+and split_universal_debug ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
+      (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
+      (vvars : CP.spec_var list) (pos : loc) 
+      =
+  let vv = evars (*impl_inst_vars*) in
+  Util.ho_debug_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
+      (fun _ -> (Cprinter.string_of_spec_var_list evars)^"/I="^(Cprinter.string_of_spec_var_list impl_inst_vars)^"/E="^(Cprinter.string_of_spec_var_list expl_inst_vars)^"/"^ (Cprinter.string_of_spec_var_list vvars)) (fun ((f1,_),(f2,_),_) -> (Cprinter.string_of_pure_formula f1)^"/"^ (Cprinter.string_of_pure_formula f2)) (fun f vv -> split_universal f evars expl_inst_vars impl_inst_vars vvars pos)
+      (f0,f0b) vv
+      (*
+        vvars: variables of interest
+        evars: those involving this will be on the rhs
+        otherwise move to the lhs
+      *)
+and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
       (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
       : ((CP.formula * (branch_label * CP.formula) list) * 
@@ -1172,10 +1191,10 @@ and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
     List.map2 (fun to_conseq instantiate -> List.fold_left (fun f v -> CP.Exists (v, f, None, pos)) to_conseq instantiate)
         to_conseq_f instantiate_b in
   let to_ante =
-    if CP.fv wrapped_to_conseq <> [] then CP.And (to_ante, wrapped_to_conseq, no_pos) else to_ante
+    if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante
   in
   let to_ante_f = List.map2 (fun to_ante wrapped_to_conseq ->
-	  if CP.fv wrapped_to_conseq <> [] then CP.And (to_ante, wrapped_to_conseq, no_pos) else to_ante
+	  if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante
   ) to_ante_f wrapped_to_conseq_b in
   let to_ante_b = List.combine labels to_ante_f in
   (*t evars = explicitly_quantified @ evars in*)
@@ -1283,7 +1302,7 @@ and normalize_to_CNF (f : CP.formula) pos : CP.formula = match f with
 	      let _ = (print_string ("\n[cpure.ml, normalize_to_CNF]: disj2: " ^ (Cprinter.string_of_pure_formula disj2) ^ "\n")) in
 	    *)
 	    (CP.mkAnd conj (CP.mkOr disj1 disj2 lbl p) p)
-  | CP.And (f1, f2, p) -> CP.And(normalize_to_CNF f1 p, normalize_to_CNF f2 p, p)
+  | CP.And (f1, f2, p) -> CP.mkAnd (normalize_to_CNF f1 p) (normalize_to_CNF f2 p) p
   | CP.Not (f1, lbl, p) -> CP.Not(normalize_to_CNF f1 p, lbl ,p)
   | CP.Forall (sp, f1, lbl, p) -> CP.Forall(sp, normalize_to_CNF f1 p, lbl ,p)
   | CP.Exists (sp, f1, lbl, p) -> CP.Exists(sp, normalize_to_CNF f1 p, lbl ,p)
@@ -1354,8 +1373,8 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.BForm _ ->
         if CP.disjoint (CP.fv f) vvars then (CP.mkTrue no_pos)
         else f
-  | CP.And(f1, f2, l) -> CP.And(discard_uninteresting_constraint f1 vvars, discard_uninteresting_constraint f2 vvars, l)
-  | CP.Or(f1, f2, lbl, l) -> CP.Or(discard_uninteresting_constraint f1 vvars, discard_uninteresting_constraint f2 vvars, lbl, l)
+  | CP.And(f1, f2, l) -> CP.mkAnd (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) l
+  | CP.Or(f1, f2, lbl, l) -> CP.mkOr (discard_uninteresting_constraint f1 vvars) (discard_uninteresting_constraint f2 vvars) lbl  l
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
@@ -1528,8 +1547,25 @@ and elim_exists_memo_pure_debug w f0 lump_all pos =
   print_string ("elim_exists_memo_pure output: "^(Cprinter.string_of_memo_pure_formula r)^"\n") ;
   r)
       
+and elim_exists_pure_formula (f0:CP.formula) =
+  match f0 with
+    | CP.Exists _ ->
+          (*let _ = print_string "***elim exists" in*)
+          let sf=TP.simplify f0 in
+          sf
+    | _ -> f0
+
+and elim_exists_pure_formula_debug (f0:CP.formula) =
+  Util.ho_debug_1_opt "elim_exists_pure_formula" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun r -> not(r==f0))
+      elim_exists_pure_formula f0
+
+
+(* this method will lift out free conjuncts prior to an elimination
+   of existential variables w that were newly introduced;
+   r denotes that free variables from f0 that overlaps with w 
+*)
 and elim_exists_pure_branch (w : CP.spec_var list) (f0 : CP.formula) pos =
-  let r=CP.intersect w (CP.fv f0) in
+  let r=if (w==[]) then [] else CP.intersect w (CP.fv f0) in
   if (r==[]) then f0
   else
     let lc = CP.split_conjunctions f0 in
@@ -1544,14 +1580,7 @@ and elim_exists_pure_branch_debug (w : CP.spec_var list) (f0 : CP.formula) pos =
   Util.ho_debug_2_opt "elim_exists_pure_branch" Cprinter.string_of_spec_var_list Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun _ -> not(w==[]))
       (fun w f0 -> elim_exists_pure_branch w f0 pos) w f0 
 
-(*
-  and elim_exists_pure_branch_debug w f0 = 
-  let r = elim_exists_pure_branch w f0 in
-  (print_string ("elim_exists_pure_branch input1: "^(Cprinter.string_of_spec_var_list w)^"\n");
-  print_string ("elim_exists_pure_branch input2: "^(Cprinter.string_of_pure_formula f0)^"\n");
-  r)
-*)    
-      
+    
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
   let f_prim = elim_exists es.es_formula in

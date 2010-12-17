@@ -296,16 +296,21 @@ let rec drop n l  = if n<=0 then l
     | [] -> []
 
 
-let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e:'a) : 'z =
   let r = try
     f e 
   with ex -> 
       let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
       let _ = print_string (s^" Exception Occurred!\n") in
       raise ex in
+  if not(test r) then r else
   let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
+
+let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+  ho_debug_1_opt s pr_i pr_o (fun _ -> true) f e
+
     
 let string_of_option (f:'a->string) (e:'a option) : string = 
   match e with
