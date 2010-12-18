@@ -3948,9 +3948,10 @@ let check_eq_bform eq lhs rhs failval =
     -2 - definitely false
 *)
 
+
 let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
   (*let _ = print_string "\n fast_imply \n" in*)
-  let _ = Util.push_time "fast_imply" in
+  (* let _ = Util.push_time "fast_imply" in *)
   (*normalize lhs and rhs*)
   let simp e = conv_exp_to_exp_eq aset e in
   let normsimp lhs rhs =
@@ -3978,10 +3979,13 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
               in 0
         | _ -> (* use just syntactic checking *) 0 in
   let _ = if r>0 then (Util.add_to_counter "fast_imply_success" 1) else () in
-  let _  = Util.pop_time "fast_imply" in r
+  (* let _  = Util.pop_time "fast_imply" in *) r
+
+let fast_imply a l r = Util.prof_3 "fast_imply" fast_imply a l r
 
 
 
+(*
 let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
   let r = fast_imply aset lhs rhs in
   if (r<=0) then r else
@@ -3990,7 +3994,7 @@ let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
-
+*)
 
 let rec replace_pure_formula_label nl f = match f with
   | BForm (bf,_) -> BForm (bf,(nl()))

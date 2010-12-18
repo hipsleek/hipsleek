@@ -1977,7 +1977,10 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : boo
 	      else
 	        (heap_entail_one_context_struc prog is_folding is_universal has_post (List.hd cl) conseq pos pid)
 
-and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
+and heap_entail_one_context_struc p i1 i2 hp cl cs pos pid =
+  Util.prof_3 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x p i1 i2 hp cl) cs pos pid
+
+and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_struc_formula conseq)) pos;
@@ -2652,7 +2655,10 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
     List.fold_left fold_fun2 false branches
   else res 
 
-and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap p i1 i2 es l rp rpb pos=
+  Util.prof_2 "heap_entail_empty_rhs_heap" (heap_entail_empty_rhs_heap_x p i1 i2 es l rp) rpb pos
+
+and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
