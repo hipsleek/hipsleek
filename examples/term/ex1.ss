@@ -3,16 +3,14 @@ data node {
 	node next;	
 }
 
-
 /* view for a singly linked list */
-
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
 	inv n >= 0;
 
 node app2(node x, node y)
  requires x::ll<n> * y::ll<m> & n>=0
- // variance [n@1]
+ variance [n@1]
  ensures res::ll<n+m>;
 {
  if (x==null) return y;
@@ -27,17 +25,17 @@ node app2(node x, node y)
 
 int length (node xs)
  requires xs::ll<n>
- //variance [n]
+ variance [n@1]
  ensures xs::ll<n> & res=n;
  case {
-   xs=null ->  //variance [] => false
+   xs=null -> variance [0] => false
               ensures res=0;
   xs!=null -> requires xs::ll<n>
- 	      //variance [n]
+ 	          variance [n@1]
               ensures xs::ll<n> & res=n;
  }
  requires x::ll<n>
- //variance [n]
+ variance [n@1]
  case {
    xs=null -> ensures res=0;
    xs!=null -> ensures x::ll<n> & res=n;
