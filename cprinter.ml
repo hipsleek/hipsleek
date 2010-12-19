@@ -1346,8 +1346,9 @@ let rec string_of_exp = function
 	    exp_icall_method_name = id;
 	    exp_icall_arguments = idl;
 	    exp_icall_path_id = pid;
-	    exp_icall_pos = l}) -> 
-      string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
+	    exp_icall_pos = l;
+		exp_icall_is_rec = is_rec}) -> 
+      string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
   | Cast ({exp_cast_target_type = t;
 	   exp_cast_body = body}) -> begin
       "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
@@ -1402,8 +1403,9 @@ let rec string_of_exp = function
 	    exp_scall_method_name = id;
 	    exp_scall_arguments = idl;
 	    exp_scall_path_id = pid;
-	    exp_scall_pos = l}) -> 
-      string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")
+	    exp_scall_pos = l;
+		exp_scall_is_rec = is_rec}) ->
+      string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
   | Seq ({exp_seq_type = _;
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;

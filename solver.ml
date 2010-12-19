@@ -607,7 +607,9 @@ and prune_pred_struc prog (simp_b:bool) f =
     | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc prog simp_b c2)) c.formula_case_branches;}
     | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_b b.formula_ext_base;
           formula_ext_continuation = prune_pred_struc prog simp_b b.formula_ext_continuation}
-    | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l) in    
+    | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l)
+	| EVariance v -> EVariance v
+  in    
   (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
   List.map helper f
       

@@ -19,7 +19,7 @@ let webserver = ref false
 let parallelize num =
   num_para := num
 
-(* assumes the pre, and starts the simbolic execution*)
+(* assumes the pre, and starts the symbolic execution*)
 let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
   let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
     (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
@@ -39,6 +39,7 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 	        let r = check_specs prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
+	  | Cformula.EVariance b -> true (* TODO *)
 	  | Cformula.EAssume (x,b,y) ->
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
@@ -301,6 +302,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
         | SCall ({exp_scall_type = ret_t;
                   exp_scall_method_name = mn;
                   exp_scall_arguments = vs;
+				  exp_scall_is_rec = ir;
                   exp_scall_path_id = pid;
                   exp_scall_pos = pos}) -> begin (* mn is mingled name of the method *)
 	        (*print_endline "\nSCALL!"; flush stdout;*)
@@ -309,13 +311,23 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	        let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
 	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
+			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
+			  let stripped_spec = if (ir) then org_spec else
+				let rec strip_variance ls = match ls with
+				  | [] -> []
+				  | spec::rest -> match spec with
+					  | Cformula.EVariance _ -> strip_variance rest
+					  | _ -> spec::(strip_variance rest)
+				in strip_variance org_spec
+			  in
+			  (* org_spec -> stripped_spec *)
 	          (* free vars = linking vars that appear both in pre and are not formal arguments *)
 	          let pre_free_vars = Util.difference_fct CP.eq_spec_var (Util.difference_fct CP.eq_spec_var (Cformula.struc_fv org_spec) (Cformula.struc_post_fv org_spec)) farg_spec_vars in
 	          (* free vars get to be substituted by fresh vars *)
 	          let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
 	          let renamed_spec = 
-                if !Globals.max_renaming then (Cformula.rename_struc_bound_vars org_spec)
-                else (Cformula.rename_struc_clash_bound_vars org_spec (CF.formula_of_list_failesc_context sctx))
+                if !Globals.max_renaming then (Cformula.rename_struc_bound_vars stripped_spec)
+                else (Cformula.rename_struc_clash_bound_vars stripped_spec (CF.formula_of_list_failesc_context sctx))
 	          in
 	          let st1 = List.combine pre_free_vars pre_free_vars_fresh in
 	          let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
@@ -325,6 +337,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	          let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 	          let pre2 = CF.subst_struc_pre st2 renamed_spec in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
+			  (* Termination checking *)
+			  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name else "" in
+				Debug.devel_pprint (str_debug_variance ^ "\n") pos;
+				(* TODO: call the entailment checking function in solver.ml *)
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                   (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;

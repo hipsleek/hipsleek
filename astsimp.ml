@@ -1,5 +1,7 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
+
+open Printf
   
 module C = Cast
   
@@ -27,7 +29,7 @@ module H = Hashtbl
 module TP = Tpdispatcher
   
 module Chk = Checks
-  
+
 (* module VG = View_generator *)
 
 (*
@@ -257,6 +259,8 @@ module NG = Graph.Imperative.Digraph.Concrete(Name)
 module TopoNG = Graph.Topological.Make(NG)
   
 module DfsNG = Graph.Traverse.Dfs(NG)
+
+module NGComponents = Graph.Components.Make(NG)
   
 (***********************************************)
 (* 17.04.2008 *)
@@ -947,7 +951,8 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
       let cprog2 = sat_warnings cprog1 in        
       let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
       let cprog4 = (add_pre_to_cprog cprog3) in
-			let c = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
+	  let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
+	  let c = (mark_recursive_call prog cprog5) in 
 			let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
 			  c)))
 	end)
@@ -1827,6 +1832,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                              C.exp_icall_receiver_type = crecv_t;
                              C.exp_icall_method_name = mingled_mn;
                              C.exp_icall_arguments = arg_vars;
+							 C.exp_icall_is_rec = false; (* default value - it will be set later in trans_prog *)
                              C.exp_icall_path_id = pi;
                              C.exp_icall_pos = pos;} in
                        let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -1846,7 +1852,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_call_nrecv_pos = pos } ->
             let tmp = List.map (trans_exp prog proc) args in
             let (cargs, cts) = List.split tmp in
-            let mingled_mn = C.mingle_name mn cts in
+            let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
             let this_recv = 
                 if U.is_some proc.I.proc_data_decl then
                     (let cdef = U.unsome proc.I.proc_data_decl in
@@ -1876,6 +1882,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                            C.exp_scall_type = ret_ct;
                                            C.exp_scall_method_name = mingled_mn;
                                            C.exp_scall_arguments = arg_vars;
+										   C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                                            C.exp_scall_pos = pos;
                                            C.exp_scall_path_id = pi; } in
                            let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -5069,5 +5076,104 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
     
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
-	
-    
+
+   
+(* Recursive call detection *)
+(* irf = is_rec_field *)	
+and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
+  let cg = IastUtil.callgraph_of_prog ip in
+  let scc_list = List.rev (IastUtil.NGComponents.scc_list cg) in
+  (* let _ = printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list; printf "**********\n" in *)
+  irf_traverse_prog ip cp scc_list
+
+and find_scc_group (ip: Iast.prog_decl) (pname: Globals.ident) (scc_list: IastUtil.NG.V.t list list) : (IastUtil.NG.V.t list) =
+  match scc_list with
+	| [] -> []
+	| x::xs -> if (is_found ip pname x) then x else (find_scc_group ip pname xs)
+
+and is_found (ip: Iast.prog_decl) (pname: Globals.ident) (scc: IastUtil.NG.V.t list) : bool =
+  (* let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
+  let _ = print_string ("The proc name: "^pname^"\n") in *)
+  match scc with
+    | [] -> false
+	| x::xs -> let mingled_name = (Iast.look_up_proc_def_raw ip.Iast.prog_proc_decls x).Iast.proc_mingled_name in
+		(* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
+		if (mingled_name = pname) then true else (is_found ip pname xs)
+
+and irf_traverse_prog (ip: Iast.prog_decl) (cp: Cast.prog_decl) (scc_list: IastUtil.NG.V.t list list) : Cast.prog_decl = 
+   {cp with
+		Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc ip proc (find_scc_group ip proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+   }
+
+and irf_traverse_proc (ip: Iast.prog_decl) (proc: Cast.proc_decl) (scc: IastUtil.NG.V.t list) : Cast.proc_decl =
+  {proc with
+	 Cast.proc_body = 
+		match proc.Cast.proc_body with
+			| None -> None
+			| Some body -> Some (irf_traverse_exp ip body scc)
+  }
+
+and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.NG.V.t list) : Cast.exp =
+  match exp with
+	| Cast.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp ip e.Cast.exp_label_exp scc)}
+	| Cast.CheckRef e -> Cast.CheckRef e
+	| Cast.Java e -> Cast.Java e
+	| Cast.Assert e -> Cast.Assert e
+	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp ip e.Cast.exp_assign_rhs scc)}
+	| Cast.BConst e -> Cast.BConst e
+	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp ip e.Cast.exp_bind_body scc)}
+	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp ip e.Cast.exp_block_body scc)}
+	| Cast.Cond e -> Cast.Cond {e with Cast.exp_cond_then_arm = (irf_traverse_exp ip e.Cast.exp_cond_then_arm scc); Cast.exp_cond_else_arm = (irf_traverse_exp ip e.Cast.exp_cond_else_arm scc)}
+	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp ip e.Cast.exp_cast_body scc)}
+	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp ip e.Cast.exp_catch_body scc)}
+	| Cast.Debug e -> Cast.Debug e
+	| Cast.Dprint e -> Cast.Dprint e
+	| Cast.FConst e -> Cast.FConst e
+	| Cast.IConst e -> Cast.IConst e
+	| Cast.New e -> Cast.New e
+	| Cast.Null e -> Cast.Null e
+	| Cast.Print e -> Cast.Print e
+	| Cast.Seq e -> Cast.Seq {e with Cast.exp_seq_exp1 = (irf_traverse_exp ip e.Cast.exp_seq_exp1 scc); Cast.exp_seq_exp2 = (irf_traverse_exp ip e.Cast.exp_seq_exp2 scc)}
+	| Cast.This e -> Cast.This e
+	| Cast.Time e -> Cast.Time e
+	| Cast.Var e -> Cast.Var e
+	| Cast.VarDecl e -> Cast.VarDecl e
+	| Cast.Unfold e -> Cast.Unfold e
+	| Cast.Unit e -> Cast.Unit e
+	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp ip e.Cast.exp_while_body scc)}
+	| Cast.Sharp e -> Cast.Sharp e
+	| Cast.Try e -> Cast.Try {e with Cast.exp_try_body = (irf_traverse_exp ip e.Cast.exp_try_body scc); Cast.exp_catch_clause = (irf_traverse_exp ip e.Cast.exp_catch_clause scc)}
+	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found ip e.Cast.exp_icall_method_name scc)}
+	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found ip e.Cast.exp_scall_method_name scc)}
+		
+
+(* Build call graph of the program *)
+(*
+and addin_callgraph_of_exp (cg: NG.t) exp mnv : unit = 
+  let f e = 
+    match exp with
+    | Cast.ICall e ->
+      NG.add_edge cg mnv e.Cast.exp_icall_method_name;
+      Some ()
+    | Cast.SCall e ->
+      NG.add_edge cg mnv e.Cast.exp_scall_method_name;
+      Some ()
+    | _ -> None
+  in
+  iter_exp exp f
+   
+
+
+and addin_callgraph_of_proc cg proc : unit = 
+  match proc.Cast.proc_body with
+  | None -> ()
+  | Some e -> addin_callgraph_of_exp cg e proc.Cast.proc_name
+
+and callgraph_of_prog prog : NG.t = 
+  let cg = NG.create () in
+  let pn pc = pc.Cast.proc_name in
+  let mns = List.map pn prog.Cast.prog_proc_decls in
+  List.iter (NG.add_vertex cg) mns;
+  List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls;
+  cg
+*)

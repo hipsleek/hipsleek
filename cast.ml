@@ -129,13 +129,14 @@ and exp_debug = { exp_debug_flag : bool;
 
 and exp_fconst = { exp_fconst_val : float;
 		   exp_fconst_pos : loc }
-
+	
 (* instance call *)
 and exp_icall = { exp_icall_type : P.typ;
 		  exp_icall_receiver : ident;
 		  exp_icall_receiver_type : P.typ;
 		  exp_icall_method_name : ident;
 		  exp_icall_arguments : ident list;
+		  exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
 		  (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
 		  exp_icall_path_id : control_path_id;
 		  exp_icall_pos : loc }
@@ -156,6 +157,7 @@ and exp_return = { exp_return_type : P.typ;
 and exp_scall = { exp_scall_type : P.typ;
 		  exp_scall_method_name : ident;
 		  exp_scall_arguments : ident list;
+		  exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
 		  (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
 		  exp_scall_path_id : control_path_id;
 		  exp_scall_pos : loc }
