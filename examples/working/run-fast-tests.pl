@@ -87,7 +87,7 @@ if($home21){
 
 if($timings){
     my $parser = new Spreadsheet::ParseExcel::SaveParser;
-    my $timings_logfile = "timings_log.xls";
+    $timings_logfile = "timings_log.xls";
     if(-e "$timings_logfile") {#check for file existance
         $book = $parser->Parse("$timings_logfile") #open file for appending
             or die "File $timings_logfile was not found";
@@ -325,9 +325,9 @@ $output_file = "log";
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 print "Starting sleek tests:\n";
-#	sleek_process_file();
+	sleek_process_file();
 print "Starting hip tests:\n";
-#	hip_process_file();
+	hip_process_file();
 close(LOGFILE);
 
 if ($error_count > 0) {
