@@ -2047,7 +2047,7 @@ and heap_entail_conjunct_lhs_struc
               let rez1 = List.fold_left (fun a c->or_list_context a c) (List.hd rez1) (List.tl rez1) in
 	          (rez1,(mkCaseStep ctx [f] rez2))
       | EBase ({
-		    formula_ext_explicit_inst =expl_inst;
+		    formula_ext_explicit_inst = expl_inst;
 		    formula_ext_implicit_inst = impl_inst;
 		    formula_ext_exists = base_exists;
 		    formula_ext_base = formula_base;

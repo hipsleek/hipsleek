@@ -462,10 +462,8 @@ and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 
 	| Iformula.EBase b -> Iformula.EBase{b with 
 		 Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
 		 Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
-	| Iformula.EVariance b -> Iformula.EVariance {
-									Iformula.formula_ext_measures = b.Iformula.formula_ext_measures;
-									Iformula.formula_ext_escape_clauses = b.Iformula.formula_ext_escape_clauses;
-									Iformula.formula_variance_pos = b.Iformula.formula_variance_pos
+	| Iformula.EVariance b -> Iformula.EVariance {b with
+									Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
 							  }
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
@@ -501,7 +499,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 		| Iformula.EBase {Iformula.formula_ext_base =fb;
 		 				 Iformula.formula_ext_continuation = cont}-> List.fold_left 
 									(fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont
-		| Iformula.EVariance b -> []
+		| Iformula.EVariance b -> List.fold_left 
+									(fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
 		 in
 	 	
 	let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
@@ -1253,7 +1252,7 @@ and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_form
 	            else Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = []; Cformula.formula_ext_base=d })]
       end
     | Cformula.EAssume b-> Err.report_error{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
-	| Cformula.EVariance b -> None
+	| Cformula.EVariance b -> compute_base_case b.Cformula.formula_var_continuation
   in
   match (List.length cf) with
     | 0 -> None
@@ -1385,10 +1384,8 @@ and set_pre_flow f =
     | Cformula.ECase b-> Cformula.ECase {b with 
           Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow c2))) b.Cformula.formula_case_branches;}
     | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2),b3)
-	| Cformula.EVariance b -> Cformula.EVariance {
-									Cformula.formula_ext_measures = b.Cformula.formula_ext_measures;
-									Cformula.formula_ext_escape_clauses = b.Cformula.formula_ext_escape_clauses;
-									Cformula.formula_variance_pos = b.Cformula.formula_variance_pos
+	| Cformula.EVariance b -> Cformula.EVariance {b with
+									Cformula.formula_var_continuation = set_pre_flow b.Cformula.formula_var_continuation
 							  }
   in
   List.map helper f
@@ -1407,7 +1404,7 @@ and check_valid_flows f =
     | Iformula.EBase b-> (check_valid_flows_f b.Iformula.formula_ext_base); check_valid_flows b.Iformula.formula_ext_continuation
     | Iformula.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.Iformula.formula_case_branches)
     | Iformula.EAssume (b,_)-> check_valid_flows_f b
-	| Iformula.EVariance b -> ()
+	| Iformula.EVariance b -> check_valid_flows b.Iformula.formula_var_continuation
   in
   List.iter helper f
       
@@ -2896,7 +2893,7 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
           Err.error_text = "the guards are not disjoint : "^s^"\n";} in
 	      
 	      let _ = List.map (case_coverage instant) r2 in true
-	| Cformula.EVariance b -> true
+	| Cformula.EVariance b -> case_coverage instant b.Cformula.formula_var_continuation
   in
   let _ = List.map (ext_case_coverage instant) f in true
 
@@ -2937,10 +2934,8 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 			  }
 	    | Cformula.EAssume (ref_vars, bf,y) ->
 	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
-		| Cformula.EVariance b -> Cformula.EVariance {
-										Cformula.formula_ext_measures = b.Cformula.formula_ext_measures;
-										Cformula.formula_ext_escape_clauses = b.Cformula.formula_ext_escape_clauses;
-										Cformula.formula_variance_pos = b.Cformula.formula_variance_pos;
+		| Cformula.EVariance b -> Cformula.EVariance {b with
+										Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
 								  }
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
@@ -2982,11 +2977,12 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
                 Cformula.formula_ext_continuation = nc;
                 Cformula.formula_ext_pos = b.Iformula.formula_ext_pos}
 	  | Iformula.EVariance b -> Cformula.EVariance {
-			Cformula.formula_ext_measures = List.map (fun (expr, bound) -> match bound with
+			Cformula.formula_var_measures = List.map (fun (expr, bound) -> match bound with
 														| None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
-														| Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_ext_measures;
-			Cformula.formula_ext_escape_clauses = List.map (fun f -> Cpure.arith_simplify (trans_pure_formula f stab)) b.Iformula.formula_ext_escape_clauses;
-			Cformula.formula_variance_pos = b.Iformula.formula_variance_pos
+														| Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_var_measures;
+			Cformula.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify (trans_pure_formula f stab)) b.Iformula.formula_var_escape_clauses;
+			Cformula.formula_var_continuation = trans_struc_formula_hlp b.Iformula.formula_var_continuation fvars;
+			Cformula.formula_var_pos = b.Iformula.formula_var_pos
 		}
 	in  
     let r = List.map (fun c-> trans_ext_formula c stab) f0 in
@@ -3690,11 +3686,12 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 	  | Iformula.EVariance b ->
 		  let _ = List.map (fun (expr, bound) -> match bound with
 							  | None -> (collect_type_info_arith expr stab)
-							  | Some b_expr -> let _ = (collect_type_info_arith expr stab) in (collect_type_info_arith b_expr stab)) b.Iformula.formula_ext_measures in
-		  let _ = List.map (fun f -> collect_type_info_pure f stab) b.Iformula.formula_ext_escape_clauses in ()
+							  | Some b_expr -> let _ = (collect_type_info_arith expr stab) in (collect_type_info_arith b_expr stab)) b.Iformula.formula_var_measures in
+		  let _ = List.map (fun f -> collect_type_info_pure f stab) b.Iformula.formula_var_escape_clauses in
+		  let _ = inner_collector b.Iformula.formula_var_continuation in ()
     in
-    let _ = List.map helper f0 in 
-    () in
+    let _ = List.map helper f0 in
+	() in
   begin
     inner_collector f0;
     (* re-collect type info, don't check for shallowing outer var this time *)
@@ -4039,10 +4036,8 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
                    Iformula.formula_ext_pos = b.Iformula.formula_ext_pos}),(Util.remove_dups (h2@h3)))in
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
             r
-	  | Iformula.EVariance b -> (Iformula.EVariance ({
-			Iformula.formula_ext_measures = b.Iformula.formula_ext_measures;
-			Iformula.formula_ext_escape_clauses = b.Iformula.formula_ext_escape_clauses;
-			Iformula.formula_variance_pos = b.Iformula.formula_variance_pos
+	  | Iformula.EVariance b -> (Iformula.EVariance ({b with
+			Iformula.formula_var_continuation = fst (helper h b.Iformula.formula_var_continuation strad_vs)
 		}), [])
 		in
       if (List.length f0)=0 then
@@ -4312,7 +4307,7 @@ and check_eprim_in_struc_formula s f =
          check_eprim_in_formula s b.IF.formula_ext_base;
          check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
    | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
-   | IF.EVariance b -> ()
+   | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
  in
 List.iter helper f
 
@@ -4996,6 +4991,7 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 				  ) splitting_constraints)
 	  else splitter f_list_init rest_vars
 
+(* TODO *)
 and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure.spec_var list) = 
   let rec helper (f:Cformula.ext_formula):Cformula.ext_formula*(Cpure.spec_var list) = match f with
     | Cformula.EBase b->
@@ -5026,7 +5022,13 @@ and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure
 			       Cformula.formula_case_branches = new_cases}),
 	    (List.concat var_list))			
     | Cformula.EAssume b-> (f,[])
-	| Cformula.EVariance b -> (f, [])
+	| Cformula.EVariance b ->
+		let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
+										 | None -> Cpure.afv e1
+										 | Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.Cformula.formula_var_measures in
+		let e_var_list = List.fold_left (fun rs f -> rs@(Cpure.fv f)) [] b.Cformula.formula_var_escape_clauses in
+		let new_cont, c_var_list = move_instantiations b.Cformula.formula_var_continuation in
+		(Cformula.EVariance {b with Cformula.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
   in
   let forms, vars = List.split (List.map helper f) in
     (forms, (List.concat vars))

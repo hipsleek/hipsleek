@@ -1210,13 +1210,14 @@ spec
 						Iformula.formula_case_pos = get_pos 1; 
 				}
 			}
-	| VARIANCE measures escape_conditions
+	| VARIANCE measures escape_conditions spec
 		{
 			Iformula.EVariance
 			  {
-					Iformula.formula_ext_measures = $2;
-					Iformula.formula_ext_escape_clauses = $3;
-					Iformula.formula_variance_pos = get_pos 1;
+					Iformula.formula_var_measures = $2;
+					Iformula.formula_var_escape_clauses = $3;
+					Iformula.formula_var_continuation = [$4];
+					Iformula.formula_var_pos = get_pos 1;
 			  }
 		}
 ;	

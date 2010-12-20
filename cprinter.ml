@@ -913,15 +913,23 @@ and pr_ext_formula  (e:ext_formula) =
 	     fmt_cut();
 	     wrap_box ("B",0) pr_formula b) b
 	| EVariance {
-			formula_ext_measures = measures;
-			formula_ext_escape_clauses = escape_clauses;
+			formula_var_measures = measures;
+			formula_var_escape_clauses = escape_clauses;
+			formula_var_continuation = cont;
 	  } ->
 		
 		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
 																			| None -> rs^(string_of_formula_exp expr)^" "
 																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
 		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(poly_string_of_pr pr_pure_formula f)) "" escape_clauses in
-		  fmt_string ("EVariance "^"[ "^string_of_measures^"]"^" ==> "^"[ "^string_of_escape_clauses^" ]" )
+		fmt_open_vbox 2;
+		fmt_string ("EVariance "^"[ "^string_of_measures^"]"^" ==> "^"[ "^string_of_escape_clauses^" ]" );
+        if not(U.empty(cont)) then
+		begin
+			fmt_cut();
+			wrap_box ("B",0) pr_struc_formula cont;
+        end;
+        fmt_close();
 ;;
 
 
