@@ -13,6 +13,7 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
+	| Ho_Pred of ho_pred_dcl
 		
   type decl = 
     | Type of type_decl
@@ -216,6 +217,14 @@
 %token WHERE
 %token WHILE
 %token GLOBAL
+/* Higher Order Predicate Related */
+%token HPRED
+%token HPREDEXTENDS
+%token REFINES
+%token JOIN
+%token WITH
+%token SPLIT
+%token COMBINE
 /*exception related*/
 %token <string> FLOW
 %token TRY
@@ -447,6 +456,60 @@ enumerator
   : IDENTIFIER { ($1, None) }
   | IDENTIFIER EQ LITERAL_INTEGER { ($1, Some $3) }
 ;
+
+
+/********** Higher Order Preds *******/
+
+pred_def 
+	: view {}
+	| view_header EQEQ finalizes ho_pred_header {}
+	
+ho_pred_list : ho_pred ho_pred_list {}
+
+ho_pred 
+	: HPRED hpred_header HPREDEXTENDS ext_form {}
+	| HPRED hpred_header  REFINES  ext_form {}
+	| HPRED hpred_header  JOIN  split_combine {}
+	| HPRED hpred_header  EQEQ shape {}
+	
+/** shape :  not sure what to do here */
+
+split_combine 
+	: HPRED {}
+	| hpred_header SPLIT split_combine {}
+	| hpred_header COMBINE split_combine {}
+			
+ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {}
+
+ho_fct_header 
+	: ident OPAREN fct_arg_list CPAREN {}
+
+ho_fct_def
+	: ho_fct_header EQ shape {}
+	
+ho_fct_def_list
+	: ho_fct_def {}
+	| ho_fct_def ho_fct_def_list {}
+	
+hpred_header
+	: ident opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {}
+
+typed_arg_list
+	: ident COLON ident {}
+	| ident COLON ident COMMA typed_arg_list {}
+	
+fct_arg_list
+	: ident {}
+	| ident COMMA fct_arg_list {}
+	
+opt_typed_arg_list
+	: typed_arg_list {}
+	
+opt_type_var_list
+	: OSQUARE ident_list CSQUARE {}
+	
+opt_fct_list
+	: OSQUARE ident_list CSQUARE {}
 
 /********** Views **********/
 
