@@ -20,7 +20,7 @@ let parallelize num =
   num_para := num
 
 (* assumes the pre, and starts the symbolic execution*)
-let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spec_list e0 : bool = 
+let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = 
   let rec do_spec_verification (spec: Cformula.ext_formula):bool = 
     (*let _ = print_string (Cprinter.string_of_ext_formula spec) in*)
     let pos_spec = CF.pos_of_struc_formula [spec] in

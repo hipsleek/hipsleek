@@ -65,9 +65,10 @@ and ext_base_formula =
 
 and ext_variance_formula =
 	{
-		formula_ext_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
-		formula_ext_escape_clauses : Cpure.formula list;
-		formula_variance_pos : loc
+		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
+		formula_var_escape_clauses : Cpure.formula list;
+		formula_var_pos : loc
+		formula_var_continuation : struc_formula;
 	}
 
 and formula =
@@ -80,7 +81,7 @@ and list_formula = formula list
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
-                      formula_base_flow : flow_formula;
+                      formula_base_ftyplow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
                       formula_base_pos : loc }
@@ -1335,6 +1336,7 @@ type entail_state = {
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
+  (* es_variance :  ? option ; *)
 }
 
 and context = 
