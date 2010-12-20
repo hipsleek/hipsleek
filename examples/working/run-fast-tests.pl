@@ -54,7 +54,6 @@ else{
     }
 }
 
-
 if("$flags"){
 	$script_arguments = "$flags";
 	if (!($script_arguments =~ "-tp ")){
@@ -106,11 +105,11 @@ if($timings){
         my $new_worksheet_name = "$prover"."_".$provers_sheet_no;#compute the name of the new worksheet: prover_maxno
         $book->AddWorksheet($new_worksheet_name);
         local $^W = 0;
-        $workbook = $book->SaveAs("$timings_logfile");
+        $workbook = $book->SaveAs("temp_"."$timings_logfile");
         $worksheet = $workbook->sheets($count);
     }else{
         #create a new file
-        $workbook = Spreadsheet::WriteExcel->new("$timings_logfile")
+        $workbook = Spreadsheet::WriteExcel->new("temp_"."$timings_logfile")
             or die "Could not create file $timings_logfile"; 
         my $new_worksheet_name = "$prover"."_1";
         $workbook->add_worksheet($new_worksheet_name);
@@ -344,6 +343,13 @@ if($home21){
 if($timings){
     #close the timings log worksheet
     $workbook->close();
+    my $parser = new Spreadsheet::ParseExcel::SaveParser;
+    $book = $parser->Parse("temp_"."$timings_logfile") #open file for appending
+            or die "File $timings_logfile was not found";
+    local $^W = 0;
+    $workbook = $book->SaveAs("$timings_logfile");
+    $workbook->close();
+    unlink("temp_"."$timings_logfile");
 }
 exit(0);
 
