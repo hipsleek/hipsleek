@@ -115,28 +115,38 @@ if($timings){
         $workbook->add_worksheet($new_worksheet_name);
         $worksheet = $workbook->sheets(0);
     }
-    $row = 0;
+
+    $row = 1;
     (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
-    $worksheet->write($row, 1, "Time:");
-    $worksheet->write($row, 2, $date);
+    $worksheet->write($row, 0, "Time:");
+    $worksheet->write($row, 1, $date);
     $row++;
-    $worksheet->write($row, 1, "Prover:");
-    $worksheet->write($row, 2, "$prover");
+    $worksheet->write($row, 0, "Prover:");
+    $worksheet->write($row, 1, "$prover");
+    $row++;
     if("$flags"){
-        $worksheet->write($row, 3, "$flags");
+        $worksheet->write($row, 0, "Call args:");
+        $worksheet->write($row, 1, "$flags");
     }
     $row = $row + 2;
     $programCol = 1;
     $mainCol = 2;
     $childCol = 3;
     $totalCol = 4;
-    $worksheet->write($row, $programCol, "Program");
-    $worksheet->write($row, $mainCol, "Main");
-    $worksheet->write($row, $childCol, "Child");
-    $worksheet->write($row, $totalCol, "Total time");
+    $falseContextCol = 5;
+    my $format = $workbook->add_format();
+    $format->set_bold();
+    $format->set_align('center');
+    $worksheet->write($row, $programCol, "Program", $format);
+    $worksheet->set_column($programCol, 0, 15);
+    $worksheet->set_column($mainCol,$falseContextCol, 10);
+    $worksheet->write($row, $mainCol, "Main", $format);
+    $worksheet->write($row, $childCol, "Child", $format);
+    $worksheet->write($row, $totalCol, "Total time", $format);
+    $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
 
 }
 
@@ -321,6 +331,12 @@ $output_file = "log";
 					["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid."]]				
 			);
+if($timings){
+    $mainSum = 0.0;
+    $childSum = 0.0;
+    $totalSum = 0.0;
+    $falseContextSum = 0;
+}
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 print "Starting sleek tests:\n";
@@ -341,7 +357,18 @@ if($home21){
 }
 
 if($timings){
-    #close the timings log worksheet
+    #do the last computations and close the timings log worksheet
+    #compute the total times*
+    $row = $row + 2;
+    my $format = $workbook->add_format();
+    $format->set_bold();
+    $format->set_num_format('0.00');
+    $format->set_align('right');
+    $worksheet->write($row, $programCol, "Totals:", $format);
+    $worksheet->write($row, $mainCol, "$mainSum", $format);
+    $worksheet->write($row, $childCol, "$childSum", $format);
+    $worksheet->write($row, $totalCol, $totalSum, $format);
+    $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
     $workbook->close();
     my $parser = new Spreadsheet::ParseExcel::SaveParser;
     $book = $parser->Parse("temp_"."$timings_logfile") #open file for appending
@@ -353,6 +380,31 @@ if($timings){
 }
 exit(0);
 
+sub log_one_line_of_timings{
+ my ($prog_name, $outp) = @_;
+ $row++;
+ $worksheet->write($row, $programCol, "$prog_name");
+ my $format = $workbook->add_format();
+ $format->set_num_format('0.00');
+ $format->set_align('right');
+ if($outp =~ m/Total verification time: (.*?) second/){
+     $worksheet->write_number($row, $totalCol,"$1", $format);
+     $totalSum = $totalSum + $1;
+ }
+ if($outp =~ m/Time spent in main process: (.*?) second/){
+     $worksheet->write($row, $mainCol, "$1", $format);
+     $mainSum = $mainSum + $1;
+ }
+ if($outp =~ m/Time spent in child processes: (.*?) second/){
+     $worksheet->write($row, $childCol, "$1", $format);
+     $childSum = $childSum + $1;
+ }
+ if($outp =~ m/\b(\w+) false contexts/){
+     $format->set_num_format('0');
+     $worksheet->write($row, $falseContextCol, "$1", $format);
+     $falseContextSum = $falseContextSum + $1;
+ }
+}
 
 sub hip_process_file {
   foreach $param (@param_list)
@@ -377,21 +429,13 @@ sub hip_process_file {
 				}
 			}
             if($timings) {
-                $row++;
-                $worksheet->write($row, $programCol, "$test->[0]");
-                if($output =~ m/Total verification time: (.*?) second/){
-                    $worksheet->write($row, $totalCol,"$1");
-                }
-                if($output =~ m/Time spent in main process: (.*?) second/){
-                    $worksheet->write($row, $mainCol, "$1");
-                }
-                if($output =~ m/Time spent in child processes: (.*?) second/){
-                    $worksheet->write($row, $childCol, "$1");
-                }
+                log_one_line_of_timings ($test->[0],$output);
             }
 		}
   }
 }
+
+
 
 sub sleek_process_file  {
   foreach $param (@param_list)
@@ -432,7 +476,10 @@ sub sleek_process_file  {
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}  
+			}
+            if($timings) {
+               # log_one_line_of_timings ($test->[0],$output);
+            }  
 		}
 	}
 }
