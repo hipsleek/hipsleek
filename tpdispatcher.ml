@@ -934,6 +934,9 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   (res1,res2,res3)
 ;;
 
+let imply_timeout a c i t dc =
+  Util.prof_5 "TP.imply_timeout" imply_timeout a c i t dc
+
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
   let _ = Util.push_time "memo_imply" in
   let r = List.fold_left (fun (r1,r2,r3) c->

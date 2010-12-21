@@ -7,18 +7,22 @@ use Sys::Hostname;
 use File::NCopy;
 use File::Path 'rmtree';
 use Cwd;
+use lib '/usr/local/share/perl/5.10.0';
+use Spreadsheet::ParseExcel;
+use Spreadsheet::ParseExcel::SaveParser;
 
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
 			"root=s" => \$root,
 			"tp=s" => \$prover,
 			"flags=s" => \$flags,
-			"copy-to-home21" => \$home21 
+			"copy-to-home21" => \$home21,
+            "log-timings" => \$timings
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings file_to_save_results] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 if($root){
@@ -36,12 +40,18 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
 	if (!exists($provers{$prover})){		
-		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
 		exit(0);
 	}
-}else{
-	$prover = "omega";
+}
+else{
+    if("$flags" =~ m/-tp (\w+)\b/ ){
+        $prover = "$1";
+    }
+    else{
+       $prover = "omega";
+    }
 }
 
 if("$flags"){
@@ -72,6 +82,62 @@ if($home21){
 	}else{
 		chdir("$target_dir") or die "Can't chdir to $target_dir $!"; 
 	}	
+}
+
+if($timings){
+    my $parser = new Spreadsheet::ParseExcel::SaveParser;
+    $timings_logfile = "timings_log.xls";
+    if(-e "$timings_logfile") {#check for file existance
+        $book = $parser->Parse("$timings_logfile") #open file for appending
+            or die "File $timings_logfile was not found";
+        my $count = $book->{SheetCount};#total number of worksheets of teh workbook
+        my $provers_sheet_no = 0;
+        for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
+            if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
+                if($book->{Worksheet}[$i]->{Name} =~ m/_(\d+)/) {#find the no. of the newest worksheet of this prover
+                    if($provers_sheet_no < int($1)){
+                        $provers_sheet_no = int($1);
+                    }
+                }
+            }
+        }
+        $provers_sheet_no = $provers_sheet_no + 1;
+        my $new_worksheet_name = "$prover"."_".$provers_sheet_no;#compute the name of the new worksheet: prover_maxno
+        $book->AddWorksheet($new_worksheet_name);
+        local $^W = 0;
+        $workbook = $book->SaveAs("temp_"."$timings_logfile");
+        $worksheet = $workbook->sheets($count);
+    }else{
+        #create a new file
+        $workbook = Spreadsheet::WriteExcel->new("temp_"."$timings_logfile")
+            or die "Could not create file $timings_logfile"; 
+        my $new_worksheet_name = "$prover"."_1";
+        $workbook->add_worksheet($new_worksheet_name);
+        $worksheet = $workbook->sheets(0);
+    }
+    $row = 0;
+    (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
+    $Year += 1900;
+    $Month++;
+    $date = "$Day/$Month/$Year  $Hour:$Minute";
+    $worksheet->write($row, 1, "Time:");
+    $worksheet->write($row, 2, $date);
+    $row++;
+    $worksheet->write($row, 1, "Prover:");
+    $worksheet->write($row, 2, "$prover");
+    if("$flags"){
+        $worksheet->write($row, 3, "$flags");
+    }
+    $row = $row + 2;
+    $programCol = 1;
+    $mainCol = 2;
+    $childCol = 3;
+    $totalCol = 4;
+    $worksheet->write($row, $programCol, "Program");
+    $worksheet->write($row, $mainCol, "Main");
+    $worksheet->write($row, $childCol, "Child");
+    $worksheet->write($row, $totalCol, "Total time");
+
 }
 
 @excl_files = ();
@@ -267,10 +333,23 @@ if ($error_count > 0) {
   print "Total number of errors: $error_count in files:\n $error_files.\n";
 }
 else
-	{print "All test results were as expected.\n";}
+	{print "All test results were as expected.\n";} 
+
 if($home21){
 	chdir("/home") or die "Can't chdir to $target_dir $!";
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
+}
+
+if($timings){
+    #close the timings log worksheet
+    $workbook->close();
+    my $parser = new Spreadsheet::ParseExcel::SaveParser;
+    $book = $parser->Parse("temp_"."$timings_logfile") #open file for appending
+            or die "File $timings_logfile was not found";
+    local $^W = 0;
+    $workbook = $book->SaveAs("$timings_logfile");
+    $workbook->close();
+    unlink("temp_"."$timings_logfile");
 }
 exit(0);
 
@@ -287,7 +366,7 @@ sub hip_process_file {
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
-			#print "$output";
+			#print "\nbegin"."$output"."end\n";
 			for($i = 2; $i<$limit;$i+=2)
 			{
 				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
@@ -297,6 +376,19 @@ sub hip_process_file {
 					print "error at: $test->[0] $test->[$i]\n";
 				}
 			}
+            if($timings) {
+                $row++;
+                $worksheet->write($row, $programCol, "$test->[0]");
+                if($output =~ m/Total verification time: (.*?) second/){
+                    $worksheet->write($row, $totalCol,"$1");
+                }
+                if($output =~ m/Time spent in main process: (.*?) second/){
+                    $worksheet->write($row, $mainCol, "$1");
+                }
+                if($output =~ m/Time spent in child processes: (.*?) second/){
+                    $worksheet->write($row, $childCol, "$1");
+                }
+            }
 		}
   }
 }
@@ -344,3 +436,4 @@ sub sleek_process_file  {
 		}
 	}
 }
+

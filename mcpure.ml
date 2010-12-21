@@ -913,6 +913,7 @@ let slow_imply impl nf rhs =
       r                   
   with _ -> (Util.pop_time_to_s_no_count x ;false) 
 
+(*
 let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
   let lhs_f = join_conjunctions (List.map (fun c-> (BForm (c,None))) lhs) in
   let rhs_f = BForm (rhs,None) in
@@ -925,6 +926,8 @@ let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
   else r
+*)
+
 
 let elim_redundant_cons(*_slow*) impl aset asetf pn =  
   let rec helper pn s r e f = match pn with
@@ -942,7 +945,8 @@ let elim_redundant_cons(*_slow*) impl aset asetf pn =
             else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
 
-let elim_redundant_cons_fast impl aset asetf pn =  
+(*
+let elim_redundant_cons_fast_x impl aset asetf pn =  
   let rec helper pn mc s r e f = match pn,mc with
     | [],_ -> (s,r,e)
     | (c::cs),(m::ms) -> 
@@ -955,7 +959,7 @@ let elim_redundant_cons_fast impl aset asetf pn =
     | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "elim_redundant_cons_fast: unexpected pattern"} in       
   let mc=List.map (fun x -> x.memo_formula) pn in    
   helper pn  mc [] [] [] []
-
+*)
 
 (* let elim_redundant_slice impl (f:memoised_group): memoised_group*memoised_group = *)
 

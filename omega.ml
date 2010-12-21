@@ -13,6 +13,7 @@ let omega_pid = ref 0
 
 (***********)
 let test_number = ref 0
+let last_test_number = ref 0
 let log_all_flag = ref false
 let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
@@ -130,6 +131,7 @@ let set_timer tsecs =
 let start_omega () =
   if not !is_omega_running then begin
     print_string "Starting Omega... \n"; flush stdout;
+    last_test_number := !test_number;
 	(if !log_all_flag then 
         output_string log_all ("[omega.ml]: >> Starting Omega...\n") );
     let inchanel, outchanel, errchanel, pid = Unix_add.open_process_full omegacalc [|omegacalc|]  (*omegacalc [|omegacalc|]*) in 
@@ -156,9 +158,10 @@ let start_omega () =
 let stop_omega () = 
   if !is_omega_running then begin
     (*send_cmd "quit;"; flush (snd !channels);*)
-    print_string "Stop Omega... "; flush stdout;
+    let num_tasks = !test_number - !last_test_number in
+    print_string ("Stop Omega... "^(string_of_int num_tasks)^" invocations "); flush stdout;
 	(if !log_all_flag then 
-        output_string log_all ("[omega.ml]: >> Stop Omega...\n") );
+        output_string log_all ("[omega.ml]: >> Stop Omega after ... "^(string_of_int num_tasks)^" invocations\n") );
     Unix.kill !omega_pid 9;
     ignore (Unix.waitpid [] !omega_pid);
     is_omega_running := false;
@@ -168,9 +171,10 @@ let stop_omega () =
 (* restart Omega system *)
 let restart_omega reason =
   if !is_omega_running then begin
-    print_string reason;
+    let num_tasks = !test_number - !last_test_number in
+    print_string (reason^" Restarting Omega after ... "^(string_of_int num_tasks)^" invocations ");
 	(if !log_all_flag then 
-        output_string log_all ("[omega.ml]: >> " ^ reason ^ " Restarting Omega...\n") );
+        output_string log_all ("[omega.ml]: >> " ^ reason ^ " Restarting Omega after ... "^(string_of_int num_tasks)^" invocations \n") );
     stop_omega();
     start_omega();
   end

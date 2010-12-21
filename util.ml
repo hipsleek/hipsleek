@@ -296,16 +296,21 @@ let rec drop n l  = if n<=0 then l
     | [] -> []
 
 
-let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e:'a) : 'z =
   let r = try
     f e 
   with ex -> 
       let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
       let _ = print_string (s^" Exception Occurred!\n") in
       raise ex in
+  if not(test r) then r else
   let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
+
+let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+  ho_debug_1_opt s pr_i pr_o (fun _ -> true) f e
+
     
 let string_of_option (f:'a->string) (e:'a option) : string = 
   match e with
@@ -321,7 +326,7 @@ let string_of_list (f:'a->string) (ls:'a list) : string =
 let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z list) (e:'a) : 'z list =
   ho_debug_1 s pr_i (string_of_list pr_o) f e 
 
-let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+let ho_debug_2_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
   let r = try
     f e1 e2 
   with ex -> 
@@ -329,10 +334,15 @@ let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" Exception Occurred!\n") in
       raise ex in
+  if not(test r) then r else
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
+
+let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  ho_debug_2_opt s pr1 pr2 pr_o (fun _ -> true) f e1 e2
+ 
 
 let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
   let r = try
@@ -713,16 +723,60 @@ let pop_time msg =
 			else
 			profiling_stack := List.tl !profiling_stack;
 			if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) !profiling_stack) then begin
-				if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin
-					profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack;
-					print_string ("\n double accounting for "^msg^"\n")
-				end	else ()
-				end else add_task_instance m1 (t2-.t1) 
+				(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
+				(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
+				(* 	print_string ("\n double accounting for "^msg^"\n") *)
+                print_string ("\n skip double accounting for "^msg^"\n") 				
+				end	
+            else add_task_instance m1 (t2-.t1) 
 			 
 		else 
 			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
 	else ()
   
+let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
+  try
+    push_time s;
+      let r=f e in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_2 (s:string) (f:'a1 -> 'a2 -> 'z) (e1:'a1) (e2:'a2) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 in
+      (pop_time s; r)
+  with ex -> (print_string "exception profiling";pop_time s; raise ex)
+
+let prof_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 in
+      (pop_time s; r)
+  with ex -> (print_string "exception profiling";pop_time s; raise ex)
+
+let prof_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 e4 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_5 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 e4 e5 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_6 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'a6 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) (e6:'a6) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 e4 e5 e6 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+
 let pop_spec_counter = ref 1
 let gen_time_msg _  = 
   pop_spec_counter := !pop_spec_counter+1;

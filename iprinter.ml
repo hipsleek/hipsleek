@@ -627,6 +627,7 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
-
+Iformula.print_formula :=string_of_formula;;
+Iformula.print_struc_formula :=string_of_struc_formula;;
 
 
