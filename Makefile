@@ -256,6 +256,9 @@ sleek: xml/xml-light.cma decidez.vo $(SLEEK_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
+gsleek: gsleek.ml $(SLEEK_FILES)
+	$(OCAMLC) -g -o $@ -I +lablgtk2 str.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo gsleek.ml
+
 sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
 
