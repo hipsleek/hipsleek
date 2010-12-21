@@ -97,6 +97,19 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 						h_formula_heap2_label : formula_label option;
 						h_formula_heap2_pos : loc }
 
+let print_formula = ref(fun (c:formula) -> "printer not initialized")
+let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
+
+let rec string_of_spec_var_list l = match l with 
+  | []               -> ""
+  | h::[]            -> string_of_spec_var h 
+  | h::t             -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list t)
+
+and string_of_spec_var = function 
+  | (id, p) -> id ^ (match p with 
+    | Primed   -> "'"
+    | Unprimed -> "")
+	
 (* constructors *)
 
 let rec formula_of_heap_1 h pos = mkBase h (P.mkTrue pos) top_flow [] pos
@@ -319,25 +332,34 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 			Util.remove_dups (fv_ex@fv_ec@fv_co)
 	in Util.remove_dups (List.concat (List.map helper f0))
 
-(*
-and struc_split_fv f0 wi =
-  Util.ho_debug_2 "struc_split_fv" (string_of_struc f0) ("") ("") (struc_split_fv f0 wi)
-*)		 
-and struc_split_fv (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
+and struc_split_fv(*_debug*) f0 wi =
+  Util.ho_debug_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
+      (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
+
+(*and struc_split_fv f0 wi = struc_split_fv_a f0 wi*)
+	
+and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
 	let helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
-					let prc,psc = struc_split_fv b.formula_ext_continuation with_inst in
-          let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
-					(Util.remove_dups (Util.difference (fvb@prc) rm),(Util.difference psc rm))
+					let prc,psc = struc_split_fv_a b.formula_ext_continuation with_inst in
+          let rm = (if with_inst then [] else b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
+					(Util.remove_dups (Util.difference (fvb@prc) rm), (Util.difference psc rm))
 		| ECase b -> 
 				let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
-              let prc, psc = struc_split_fv c2 with_inst in
+              let prc, psc = struc_split_fv_a c2 with_inst in
               ((a1@prc@(Ipure.fv c1)),psc@a2)
           ) ([],[]) b.formula_case_branches in
 				(Util.remove_dups prl,Util.remove_dups psl)		
 		| EAssume (b,_)-> ([],all_fv b)
-		| EVariance b -> ([],[]) (* TODO: What is the functionality of this function? *)
+		| EVariance b ->
+			let prc, psc = struc_split_fv_a b.formula_var_continuation with_inst in
+			let fv_ec = (List.fold_left (fun res x -> res@(Ipure.fv x)) [] b.formula_var_escape_clauses) in
+			let fv_ex = (List.fold_left (fun res (expr, bound) -> match bound with
+											| None -> res@(Ipure.afv expr)
+											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
+			  (Util.remove_dups prc@fv_ec@fv_ex, Util.remove_dups psc)
+			
 	in
   let vl = List.map helper f0 in
   let prl, pcl = List.split vl in
