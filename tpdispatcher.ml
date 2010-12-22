@@ -34,6 +34,9 @@ let print_pure = ref (fun (c:CP.formula)-> Cprinter.string_of_pure_formula c(*" 
 let sat_cache = ref (Hashtbl.create 200)
 let impl_cache = ref (Hashtbl.create 200)
 
+let sat_file_cache = "sat_cache_file"
+let imply_file_cache = "imply_cache_file"
+
 let prover_arg = ref "omega"
 let external_prover = ref false
 let external_host_ports = ref []
@@ -249,6 +252,23 @@ let set_tp tp_str =
     (Redlog.is_presburger := true; tp := RM)
   else
 	()
+
+let tp_print () = 
+  match !tp with 
+    | OmegaCalc -> "Omega"
+    | CvcLite -> "Cvcl"
+    | Cvc3 -> "Cvc3"
+    | CO -> "CO"
+    | Isabelle -> "isabelle"
+    | Mona -> "Mona"
+    | OM -> "om"
+    | OI -> "oi"
+    | SetMONA -> "set"
+    | CM -> "cm"
+    | Coq -> "coq"
+    | Z3 -> "z3"
+    | Redlog -> "redlog"
+    | RM -> "rm"
 
 let omega_count = ref 0
 
@@ -475,8 +495,23 @@ let tp_is_sat_no_cache_debug f sat_no =
         
 let prune_sat_cache  = Hashtbl.create 2000 ;;
 
-
-
+let rec f_search file search_string n = 
+  let str = String.create 3 in
+  let n_read = Unix.read file str 0 3 in 
+     if n_read == 0 then false 
+     else 
+(*	(Printf.printf "str read : %s \n" str; *)
+        match str with 
+        | "==>" ->   let str2 = String.create n in
+  	   let _ = Unix.read file str2 0 n in
+	      if ( String.compare str2 search_string) == 0 then true
+              else
+		 let _ = Unix.lseek file (50-n_read-(String.length str2)) Unix.SEEK_CUR in 
+		 	f_search file search_string n
+        | _ -> 
+ 	   let _ = Unix.lseek file (50-n_read) Unix.SEEK_CUR in  
+           	f_search file search_string n 
+	
 
 let tp_is_sat (f: CP.formula) (sat_no: string) =
   if !Globals.no_cache_formula then
@@ -497,21 +532,70 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
         r
     in res
 
+let ht_hit_count = ref 0;;
+let f_hit_count = ref 0;;
 
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
     Util.inc_counter "sat_cache_count";
-    let s = (!print_pure f) in
-    try 
-      let r = Hashtbl.find prune_sat_cache s in
+    let s = (!print_pure f) in    	
+    let mode = [Unix.O_WRONLY] in
+    let mode2 = [Unix.O_RDONLY] in 	
+    let file = Unix.openfile sat_file_cache mode2 0o644 in
+    
+    let key_s = string_of_int (Hashtbl.hash s) in  
+    let ans = f_search file key_s (String.length key_s) in        
+       (if ans then
+          (f_hit_count := !f_hit_count+1;
+          Printf.printf "f_hit_count : %d\n" !f_hit_count;
+          let str = String.create 5 in
+	  let _ = Unix.read file str 0 5 in
+          	match str with 
+		    | ";true" -> Printf.printf "Result from cache -> true\n"
+		    | _ -> Printf.printf "Result from cache -> false\n"
+	    (*Can retrieve information about the prover type and time taken to prove*)
+	  ) 
+       else           
+	  Unix.close file;
+          let t1 = Unix.gettimeofday () in 
+          let r = tp_is_sat_no_cache f sat_no in 
+          let t2 = Unix.gettimeofday () -. t1 in 
+             if t2 > 0.0 then (*TODO Must change to 0.5s *)
+                let key = Hashtbl.hash s in  
+          	let file2 = Unix.openfile sat_file_cache mode 0o644 in
+          	let _ = Unix.lseek file2 0 Unix.SEEK_END in
+          	let cache_val = "==>"^(string_of_int key)^";"^(string_of_bool r)^";"^(tp_print ())^";"^(string_of_float t2)^";" in
+		let len = String.length cache_val in
+		let dummy_string = String.make (50-len) '.' in
+		let _ = Unix.write file2 (cache_val^dummy_string) 0 (String.length (cache_val^dummy_string)) in	
+		 Unix.close file2
+		 (*  Printf.printf "New Value has been cached\n"; *)
+     	     else 
+		Printf.printf "Time taken < 0.5s. Not cached\n"	         
+       );
+    try
+      let r = Hashtbl.find prune_sat_cache s in 
+       (ht_hit_count := !ht_hit_count+1;
+      Printf.printf "ht_hit_count : %d\n" !ht_hit_count;
       (*print_string ("sat hits: "^s^"\n");*)
-      r
+      r )	 
     with Not_found -> 
+	let t1 = Unix.gettimeofday () in 
         let r = tp_is_sat_no_cache f sat_no in
-        (Hashtbl.add prune_sat_cache s r ;
-        Util.inc_counter "sat_proof_count";
-        r))
+	let t2 = Unix.gettimeofday () -. t1 in 
+	if t2 > 0.5 then (*Expensive prover*)
+		print_string "\n\nExpensive Proof\n";
+	(*print_string "\n\nProver Type : "; print_endline (tp_print ());  *)
+ 
+	(*let t1 = Unix.gettimeofday () in
+	Hashtbl.add rv_sat_cache f r;
+	let t2 = Unix.gettimeofday () -. t1 in
+	Printf.printf "\n\nTime taken to hash & store is:%f\n" t2;
+	r)*)
+        ( Hashtbl.add prune_sat_cache s r;
+          Util.inc_counter "sat_proof_count";
+        r)) 
   else  
     tp_is_sat f sat_no
 ;;
@@ -643,12 +727,12 @@ let tp_imply_no_cache ante conseq imp_no timeout =
    *)
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
-  | CvcLite -> Cvclite.imply ante conseq
-  | Cvc3 -> Cvc3.imply ante conseq
-  | Z3 -> Smtsolver.imply ante conseq
-  | Isabelle -> Isabelle.imply ante conseq imp_no
-  | Coq -> Coq.imply ante conseq
-  | Mona -> Mona.imply timeout ante conseq imp_no 
+  | CvcLite ->  Cvclite.imply ante conseq
+  | Cvc3 ->  Cvc3.imply ante conseq
+  | Z3 ->  Smtsolver.imply ante conseq
+  | Isabelle ->  Isabelle.imply ante conseq imp_no
+  | Coq ->  Coq.imply ante conseq
+  | Mona ->  Mona.imply timeout ante conseq imp_no 
   | CO -> 
       begin
         let result1 = Cvclite.imply_raw ante conseq in
@@ -670,18 +754,17 @@ let tp_imply_no_cache ante conseq imp_no timeout =
               omega_count := !omega_count + 1;
               Omega.imply ante conseq imp_no timeout
       end
-  | OM ->
-	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+  | OM -> if (is_bag_constraint ante) || (is_bag_constraint conseq) then
 		(called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
 	  else
-		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-  | OI ->
+		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)	  
+  | OI -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         (Isabelle.imply ante conseq imp_no)
       else
-        (Omega.imply ante conseq imp_no timeout)
-  | SetMONA -> Setmona.imply ante conseq 
-  | Redlog -> Redlog.imply ante conseq imp_no 
+        (Omega.imply ante conseq imp_no timeout)	
+  | SetMONA ->  Setmona.imply ante conseq 
+  | Redlog ->  Redlog.imply ante conseq imp_no 
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         Mona.imply timeout ante conseq imp_no
@@ -691,7 +774,7 @@ let tp_imply_no_cache ante conseq imp_no timeout =
  
 
 let imply_cache  = Hashtbl.create 2000 ;;
-let impl_conseq_cache  = Hashtbl.create 2000 ;;
+	let impl_conseq_cache  = Hashtbl.create 2000 ;;
 
 let add_conseq_to_cache s = 
   try
@@ -701,9 +784,10 @@ let add_conseq_to_cache s =
           (Util.inc_counter "impl_conseq_count";
           Hashtbl.add impl_conseq_cache s ()
           )
-          
+    
+
 let tp_imply ante conseq imp_no timeout =
-  if !Globals.no_cache_formula then
+  if !Globals.no_cache_formula then    
     tp_imply_no_cache ante conseq imp_no timeout
   else
     (*let _ = Util.push_time "cache overhead" in*)
@@ -715,14 +799,22 @@ let tp_imply ante conseq imp_no timeout =
       try
         Hashtbl.find !impl_cache fstring
       with Not_found ->
+	let t1 = Unix.gettimeofday () in
         let r = tp_imply_no_cache ante conseq imp_no timeout in
+	let t2 = (Unix.gettimeofday ()) -. t1 in
+	if t2 > 0.5 then 
+		print_string "\n\nExpensive prover";
+	(*print_string "\n\nImply tp_str :"; print_endline (tp_print ()); *)
         (*let _ = Util.push_time "cache overhead" in*)
         let _ = Hashtbl.add !impl_cache fstring r in
         (*let _ = Util.pop_time "cache overhead" in*)
         r
     in res
 
-    
+
+let imply_fhc = ref 0 ;;
+let imply_hthc = ref 0;;
+
 let tp_imply ante conseq imp_no timeout do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
@@ -730,12 +822,52 @@ let tp_imply ante conseq imp_no timeout do_cache =
     add_conseq_to_cache (!print_pure conseq) ;
     let s_rhs = !print_pure conseq in
     let s = (!print_pure ante)^"/"^ s_rhs in
-    try 
+    let mode = [Unix.O_RDONLY] in
+    let mode2 = [Unix.O_WRONLY] in
+    let file = Unix.openfile imply_file_cache mode 0o664 in
+      let () = Printf.printf "Searching for implication results...\n" in
+        let key_s = string_of_int ( Hashtbl.hash s ) in
+    	let ans = f_search file key_s (String.length key_s ) in 
+	    ( if ans then 
+		(imply_fhc := !imply_fhc+1;
+		 Printf.printf "imply_f_hit_count : %d\n" !imply_fhc;
+		 let str = String.create 5 in 
+		 let _ = Unix.read file str 0 5 in 
+			match str with
+			   | ";true" -> Printf.printf "Imply Result from cache -> true\n"
+			   | _ -> Printf.printf "Imply Result from cache -> false\n"
+		)
+	      else 
+		Unix.close file;
+		let t1 = Unix.gettimeofday () in 
+		let r = tp_imply_no_cache ante conseq imp_no timeout in 
+		let t2 = Unix.gettimeofday () -. t1 in 
+			if t2 > 0.0 then 
+			    let () = Printf.printf "Adding to imply_cache...............\n" in 
+			    let key = Hashtbl.hash s in 
+		   	    let file2 = Unix.openfile imply_file_cache mode2 0o644 in 
+			    let _ = Unix.lseek file2 0 Unix.SEEK_END in 
+			    let cache_val = "==>"^(string_of_int key)^";"^(string_of_bool r)^";"^(tp_print ())^";"^(string_of_float t2)^";" in
+			    let len = String.length cache_val in 
+			    let dummy_string = String.make (50-len) '.' in
+			    let _ = Unix.write file2 (cache_val^dummy_string) 0 (String.length (cache_val^dummy_string)) in 
+			       Unix.close file
+			else 
+			   Printf.printf "Time take < 0.5s"
+	);    	
+    try
       let r = Hashtbl.find imply_cache s in
-      (* print_string ("hit rhs: "^s_rhs^"\n");*)
+      (* print_string ("hit rhs: "^s_rhs^"\n");*)      
       r
-      with Not_found -> 
-        let r = tp_imply_no_cache ante conseq imp_no timeout in
+      with Not_found ->
+	let t1 = Unix.gettimeofday () in        
+	let r = tp_imply_no_cache ante conseq imp_no timeout in
+	let t2 = (Unix.gettimeofday ()) -. t1 in 
+	if t2 > 0.5 then
+		Printf.printf "\n\nExpensive Prover";	
+	(*print_string "\n\nImply tp_str:"; print_endline (tp_print ()); *)
+	
+	if not(r == true || r == false) then Printf.printf "\nUnsound result %b\n" r;
         (Hashtbl.add imply_cache s r ;
          (*print_string ("s rhs: "^s_rhs^"\n");*)
          Util.inc_counter "impl_proof_count";
