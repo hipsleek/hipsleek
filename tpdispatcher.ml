@@ -4,6 +4,7 @@
 *)
 
 open Globals
+open Mysql
 module CP = Cpure
 module MCP = Mcpure
 
@@ -36,6 +37,8 @@ let impl_cache = ref (Hashtbl.create 200)
 
 let sat_file_cache = "sat_cache_file"
 let imply_file_cache = "imply_cache_file"
+
+let db = quick_connect ~database:"cache" ~password:"vignesh" ~user:"vignesh" () 
 
 let prover_arg = ref "omega"
 let external_prover = ref false
@@ -540,40 +543,44 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     (
     Util.inc_counter "sat_cache_count";
     let s = (!print_pure f) in    	
-    let mode = [Unix.O_WRONLY] in
-    let mode2 = [Unix.O_RDONLY] in 	
-    let file = Unix.openfile sat_file_cache mode2 0o644 in
-    
-    let key_s = string_of_int (Hashtbl.hash s) in  
-    let ans = f_search file key_s (String.length key_s) in        
-       (if ans then
-          (f_hit_count := !f_hit_count+1;
-          Printf.printf "f_hit_count : %d\n" !f_hit_count;
-          let str = String.create 5 in
-	  let _ = Unix.read file str 0 5 in
-          	match str with 
-		    | ";true" -> Printf.printf "Result from cache -> true\n"
-		    | _ -> Printf.printf "Result from cache -> false\n"
-	    (*Can retrieve information about the prover type and time taken to prove*)
-	  ) 
-       else           
-	  Unix.close file;
-          let t1 = Unix.gettimeofday () in 
-          let r = tp_is_sat_no_cache f sat_no in 
-          let t2 = Unix.gettimeofday () -. t1 in 
-             if t2 > 0.0 then (*TODO Must change to 0.5s *)
-                let key = Hashtbl.hash s in  
-          	let file2 = Unix.openfile sat_file_cache mode 0o644 in
-          	let _ = Unix.lseek file2 0 Unix.SEEK_END in
-          	let cache_val = "==>"^(string_of_int key)^";"^(string_of_bool r)^";"^(tp_print ())^";"^(string_of_float t2)^";" in
-		let len = String.length cache_val in
-		let dummy_string = String.make (50-len) '.' in
-		let _ = Unix.write file2 (cache_val^dummy_string) 0 (String.length (cache_val^dummy_string)) in	
-		 Unix.close file2
-		 (*  Printf.printf "New Value has been cached\n"; *)
-     	     else 
-		Printf.printf "Time taken < 0.5s. Not cached\n"	         
-       );
+     
+   let key = string_of_int (Hashtbl.hash s) in 
+   let select_query = "select result, prover_type, time_taken, hr from sat_cache where hash="^key in 
+   let insert_query values = "insert into sat_cache values "^values in 
+   let res   = exec db select_query in 
+   let col = column res in 
+   let ret_result (x,y,z,h) = x^y^(string_of_float z)^(string_of_int h) in
+   let get_hr (_,_,_,hr)  = hr in
+   let row x = ( not_null str2ml (col ~key:"result" ~row:x)
+      	       , not_null str2ml  (col ~key:"prover_type" ~row:x)
+	       , not_null float2ml (col ~key:"time_taken" ~row:x)
+	       , not_null int2ml (col ~key:"hr" ~row:x)
+ 	       )  in 
+   let print_result res = match res with
+			|  None -> (	print_string "key not found in db";
+					let ml2values (hash,result,prover_type,t, hr) = values [ml2int hash; ml2str result; ml2str prover_type; ml2float t; ml2int hr]  in 
+					let t1 = Unix.gettimeofday () in
+					let r = tp_is_sat_no_cache f sat_no in					
+					let t2 = ( Unix.gettimeofday () ) -. t1 in 
+					    if not ( r ==true || r == false) then 
+						let q values = "insert into sat_fail_cache values "^values in
+						let ml2values (p,f,t) = values [ml2str p; ml2blob f; ml2float t] in 
+						let _ = exec db ( q (ml2values ((tp_print ()), s, t2))) in
+						    print_endline "--> New row inserted into fail cache";
+ 					    else
+						if t2 > 0.1 then (* TODO Must change to 0.5s *)
+						    let _ =  exec db (insert_query (ml2values ((Hashtbl.hash s), (string_of_bool r), (tp_print ()), t2, 0 )) ) in
+	                           				   print_endline "-->New row inserted into cache";					
+                                                else 
+						print_endline "prover < 0.1s hence not added";
+				   )		
+			|  Some x -> (  let curr_hr = get_hr (row x) in 
+					let _ = exec db ( "update sat_cache set hr="^(string_of_int (1+curr_hr))^" where hash="^key ) in 
+						print_endline (ret_result (row x));
+					)
+   in 
+   let () = print_result (fetch res) in 
+
     try
       let r = Hashtbl.find prune_sat_cache s in 
        (ht_hit_count := !ht_hit_count+1;
@@ -581,18 +588,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
       (*print_string ("sat hits: "^s^"\n");*)
       r )	 
     with Not_found -> 
-	let t1 = Unix.gettimeofday () in 
         let r = tp_is_sat_no_cache f sat_no in
-	let t2 = Unix.gettimeofday () -. t1 in 
-	if t2 > 0.5 then (*Expensive prover*)
-		print_string "\n\nExpensive Proof\n";
-	(*print_string "\n\nProver Type : "; print_endline (tp_print ());  *)
- 
-	(*let t1 = Unix.gettimeofday () in
-	Hashtbl.add rv_sat_cache f r;
-	let t2 = Unix.gettimeofday () -. t1 in
-	Printf.printf "\n\nTime taken to hash & store is:%f\n" t2;
-	r)*)
         ( Hashtbl.add prune_sat_cache s r;
           Util.inc_counter "sat_proof_count";
         r)) 
@@ -822,7 +818,8 @@ let tp_imply ante conseq imp_no timeout do_cache =
     add_conseq_to_cache (!print_pure conseq) ;
     let s_rhs = !print_pure conseq in
     let s = (!print_pure ante)^"/"^ s_rhs in
-    let mode = [Unix.O_RDONLY] in
+    
+ (*let mode = [Unix.O_RDONLY] in
     let mode2 = [Unix.O_WRONLY] in
     let file = Unix.openfile imply_file_cache mode 0o664 in
       let () = Printf.printf "Searching for implication results...\n" in
@@ -854,7 +851,7 @@ let tp_imply ante conseq imp_no timeout do_cache =
 			       Unix.close file
 			else 
 			   Printf.printf "Time take < 0.5s"
-	);    	
+	);    	 *)
     try
       let r = Hashtbl.find imply_cache s in
       (* print_string ("hit rhs: "^s_rhs^"\n");*)      
