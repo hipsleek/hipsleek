@@ -295,6 +295,9 @@ let rec drop n l  = if n<=0 then l
     | h::t -> (drop (n-1) t)
     | [] -> []
 
+let force_backtrace () : string =
+  try raise Exit 
+  with e -> Printexc.record_backtrace true;("xxx"^Printexc.get_backtrace ())
 
 let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e:'a) : 'z =
   let r = try
@@ -306,6 +309,7 @@ let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bo
   if not(test r) then r else
   let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in
   r
 
 let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
@@ -693,6 +697,23 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
 	Hashtbl.fold append_val tab []
 
+let counters = ref (Hashtbl.create 10)
+
+let add_to_counter (s:string) i = 
+  if !Globals.enable_counters then
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+  else ()
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = 
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+	
 let profiling_stack = ref []
 let tasks = ref (Hashtbl.create 10)  
 
@@ -708,10 +729,17 @@ let add_task_instance msg time =
 	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
  with Not_found -> 
 	Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
-let push_time msg = 
+let push_time_no_cnt msg = 
 if (!Globals.profiling) then
  let timer = get_time () in
-	profiling_stack := (msg, timer,true) :: !profiling_stack 
+	profiling_stack := (msg, timer,true) :: !profiling_stack
+else ()
+
+let push_time msg = 
+if (!Globals.profiling) then
+ (inc_counter ("cnt_"^msg);
+ let timer = get_time () in
+	profiling_stack := (msg, timer,true) :: !profiling_stack)
 else ()
 	
 let pop_time msg = 
@@ -815,23 +843,7 @@ let add_index l =
 	(ff 0 l)
 
 	
-let counters = ref (Hashtbl.create 10)
 
-let add_to_counter (s:string) i = 
-  if !Globals.enable_counters then
-  try
-    let r = Hashtbl.find !counters s in
-    Hashtbl.replace !counters s (r+i)
-  with
-  | Not_found -> Hashtbl.add !counters s i
-  else ()
-let inc_counter (s:string) = add_to_counter s 1
-  
-let string_of_counters () = 
-  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
-  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
-	
 (*hairy stuff for exception numbering*)
 			
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)

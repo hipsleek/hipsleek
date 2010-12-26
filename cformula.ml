@@ -1136,6 +1136,7 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula =
 			in
 	List.map helper f
 
+
 and rename_bound_vars (f : formula) = rename_bound_vars_x f
 
 (*

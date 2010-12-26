@@ -905,7 +905,7 @@ let cons_filter (g:memo_pure) (f:memoised_constraint->bool) : memo_pure =
 let slow_imply impl nf rhs =
   let x = Util.gen_time_msg () in
   try 
-    (Util.push_time x;
+    (Util.push_time_no_cnt x;
     Util.push_time "slow_imply");
       let r = impl nf rhs in
       (Util.pop_time "slow_imply";
