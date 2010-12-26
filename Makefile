@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml -I +ocamlgraph
+INCLUDES=-I ./xml -I +ocamlgraph -I /usr/local/lib/ocaml/3.11.2/mysql/
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
@@ -203,43 +203,43 @@ WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
 	typechecker.cmo \
 	web.cmo
 hip1: $(MAIN_FILES_2) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(MAIN_FILES_2)
 
 hipc:
 	make clean; make hip
 
 hip: decidez.vo $(MAIN_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(MAIN_FILES)
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 mytop: $(MAIN_FILES) decidez.vo
-	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(MAIN_FILES)
 
 prdebug: $(PP_FILES) 
-	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
+	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(PP_FILES)
 #	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
 #	make -f Makefile.opt hip.opt
 
 hip.opt: $(MAIN_FILES_OPT) decidez.vo
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa mysql.cma $(MAIN_FILES_OPT)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(PROVE_FILES)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover.opt: $(PROVE_FILES_OPT)
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa mysql.cma $(PROVE_FILES_OPT)
 
 
 web: $(WEB_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(WEB_FILES)
 
 #$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
@@ -253,11 +253,11 @@ xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
 sleek: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma xml-light.cma $(SLEEK_FILES)
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
 sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa mysql.cma xml-light.cmxa $(SLEEK_FILES_OPT)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
@@ -286,7 +286,7 @@ TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 #	main.cmo
 
 oo: $(TEST_OO_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(TEST_OO_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(TEST_OO_FILES)
 
 
 JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
@@ -297,7 +297,7 @@ JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 	java.cmo
 
 j: $(JAVA_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(JAVA_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma mysql.cma $(JAVA_FILES)
 
 decidez.vo:
 	coqtop -compile decidez
