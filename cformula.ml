@@ -1136,10 +1136,17 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula =
 			in
 	List.map helper f
 
-and rename_bound_vars (f : formula) = match f with
+and rename_bound_vars (f : formula) = rename_bound_vars_x f
+
+(*
+and rename_bound_vars (f : formula) = 
+  Util.ho_debug_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
+*)
+
+and rename_bound_vars_x (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	  let rf1 = rename_bound_vars f1 in
-	  let rf2 = rename_bound_vars f2 in
+	  let rf1 = rename_bound_vars_x f1 in
+	  let rf2 = rename_bound_vars_x f2 in
 	  let resform = mkOr rf1 rf2 pos in
 		resform
   | Base _ -> f
