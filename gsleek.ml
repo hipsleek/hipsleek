@@ -2,12 +2,8 @@
  * GUI frontend for Sleek
  *************************)
 
-open GMain
-open Printf
-
-(* configurations *)
-let win_width = 1000 (* default main window width *)
-let win_height = 700 (* default main window height *)
+module SC = Sleekcommons
+module SE = Sleekengine
 
 (**********************************
  * Operations on file
@@ -48,9 +44,11 @@ module SourceUtils = struct
     start_line: int;
     stop_char: int;
     stop_line: int;
+    header: string
   }
 
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
+  let print_re = Str.regexp "print [^\\.]+\\."
   let new_line_re = Str.regexp "^"
 
   (* return a list of all positions of "new line" char in src *)
@@ -74,6 +72,16 @@ module SourceUtils = struct
     in
     greater_than pos new_lines
 
+  let remove_checkentail (src: string) : string =
+    Str.global_replace checkentail_re "" src
+
+  let remove_print (src: string) : string =
+    Str.global_replace print_re "" src
+
+  let clean (src: string) : string =
+    let r = remove_checkentail src in
+    remove_print r
+
   (* parse sleek file and return list of entailments (to be checked) *)
   let parse_entailment_list (src: string) : entailment list =
     let new_lines = new_line_position src in
@@ -85,21 +93,77 @@ module SourceUtils = struct
         let f = Str.matched_group 1 src in
         let start_line = to_line_num start_char in
         let stop_line = to_line_num stop_char in
+        let header = String.sub src 0 start_char in
         let first = {
           start_char = start_char;
           stop_char = stop_char;
           start_line = start_line;
           stop_line = stop_line;
           formula = f;
+          header = clean header;
         } in
         first::(parse (first.stop_char+1))
       with Not_found -> []
     in
     parse 0
 
+(*
+ *  let parse_command_list (src: string) =
+ *    let lexbuf = Lexing.from_string src in
+ *    Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf
+ *
+ *  let exec_nth_checkentail_cmd (src: string) (n: int) : bool =
+ *    let _ = SE.reset_data () in
+ *    let cmd_list = parse_command_list src in
+ *    let rec exec_nth cmd_list count = match cmd_list with
+ *      | [] -> invalid_arg "[gsleek.ml/exec_nth_checkentail_cmd]:nth"
+ *      | head::rest ->
+ *          let p = SE.process_cmd head (count = n) in
+ *          let res = match p with
+ *            | Some r -> r
+ *            | None ->
+ *                if SC.is_entailcheck_cmd head then
+ *                  exec_nth rest (count+1)
+ *                else
+ *                  exec_nth rest count
+ *          in res
+ *    in
+ *    exec_nth cmd_list 0
+ *)
+
 end (* SourceUtils *)
 
 open SourceUtils
+
+module SleekHelper = struct
+
+  let infile = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
+  let outfile = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
+  let sleek_command = Printf.sprintf "./sleek %s > %s" infile outfile
+
+  let run_sleek (source: string) : string =
+    let os = open_out infile in
+    output_string os source;
+    close_out os;
+    ignore (Sys.command sleek_command);
+    let is = open_in outfile in
+    let _ = input_line is in (* discard 1st line *)
+    let res = input_line is in
+    close_in is;
+    Sys.remove infile;
+    Sys.remove outfile;
+    res
+
+  let parse_sleek_result (res: string) : bool =
+    let _ = print_endline res in
+    res = "Valid."
+
+  let checkentail (e: entailment) : bool =
+    let src = Printf.sprintf "%s \n checkentail %s." e.header e.formula in
+    let res = run_sleek src in
+    parse_sleek_result res
+    
+end
 
 
 (*********************************
@@ -109,12 +173,14 @@ let cols = new GTree.column_list
 let col_id = cols#add Gobject.Data.int
 let col_line = cols#add Gobject.Data.int
 let col_formula = cols#add Gobject.Data.string
+let col_valid = cols#add Gobject.Data.string (* yes, no or unknown *)
 
 class entailment_list_model ?source:(src = "") () =
   object (self)
     val delegate = GTree.list_store cols
     val mutable entailment_list = []
     val mutable count = 0
+    val mutable source = src
 
     initializer
       self#update_source src
@@ -126,18 +192,24 @@ class entailment_list_model ?source:(src = "") () =
       delegate#set ~row:iter ~column:col_id count;
       delegate#set ~row:iter ~column:col_line e.start_line;
       delegate#set ~row:iter ~column:col_formula e.formula;
+      delegate#set ~row:iter ~column:col_valid "gtk-execute";
       count <- count + 1
 
-    method update_source (source: string) =
+    method update_source (src: string) =
       delegate#clear ();
       count <- 0;
-      entailment_list <- parse_entailment_list source;
+      source <- src;
+      entailment_list <- parse_entailment_list src;
       List.iter self#append_one_entailment entailment_list
 
     method get_entailment_of_tree_path path =
       let row = delegate#get_iter path in
       let id = delegate#get ~row ~column:col_id in
-      List.nth entailment_list id
+      let entail = List.nth entailment_list id in
+      let res = SleekHelper.checkentail entail in
+      let valid = if res then "gtk-apply" else "gtk-cancel" in
+      delegate#set ~row ~column:col_valid valid;
+      entail
 
   end
 
@@ -152,16 +224,15 @@ class entailment_list_view ?model:(model = new entailment_list_model ()) () =
 
     initializer
       delegate#selection#set_mode `SINGLE;
-      let col = GTree.view_column
-        ~title:"Line"
-        ~renderer:(GTree.cell_renderer_text [], ["text", col_line])
-        () in
-      ignore (delegate#append_column col);
-      let col = GTree.view_column
-        ~title:"Entailment"
-        ~renderer:(GTree.cell_renderer_text [], ["text", col_formula])
-        () in
-      ignore (delegate#append_column col);
+      let add_new_col title renderer =
+        let col = GTree.view_column ~title ~renderer () in
+        col#set_resizable true;
+        ignore (delegate#append_column col)
+      in
+      let text_renderer = GTree.cell_renderer_text [] in
+      add_new_col "Line" (text_renderer, ["text", col_line]);
+      add_new_col "Entailment" (text_renderer, ["text", col_formula]);
+      add_new_col "Valid?" (GTree.cell_renderer_pixbuf [], ["stock_id", col_valid]);
       delegate#set_model (Some model#coerce)
 
     method coerce = delegate#coerce
@@ -189,7 +260,7 @@ class sleek_source_view ?text:(text = "") () =
     let lang_mime_type = "text/x-sleek" in
     let language_manager = GSourceView2.source_language_manager ~default:true in
     match language_manager#guess_language ~content_type:lang_mime_type () with
-    | None -> failwith (sprintf "no language for %s" lang_mime_type)
+    | None -> failwith ("no language for " ^ lang_mime_type)
     | Some lang -> lang
   in
 
@@ -260,6 +331,8 @@ let create_scrolled_win child () =
   scroll_win
 
 class mainwindow =
+  let win_width = 1000 in
+  let win_height = 700 in
   let win = GWindow.window
     ~height:win_height ~width:win_width
     ~title:"New file - Sleek" 
@@ -307,13 +380,13 @@ class mainwindow =
         ~border_width:5 ~spacing:5
         ~child_height:35
         () in
-      bbox#pack run_one_btn#coerce;
+      (*bbox#pack run_one_btn#coerce;*)
       bbox#pack run_all_btn#coerce;
       vbox#pack ~expand:false bbox#coerce;
       vbox#pack ~expand:false statusbar#coerce;
 
       (* set event handlers *)
-      ignore (self#connect#destroy (fun _ -> quit ()));
+      ignore (self#connect#destroy (fun _ -> GMain.quit ()));
       ignore (open_btn#connect#clicked ~callback:self#open_handler);
       ignore (save_btn#connect#clicked ~callback:self#save_handler);
       ignore (source_view#source_buffer#connect#changed
@@ -350,7 +423,12 @@ class mainwindow =
     method replace_source (new_src: string): unit =
       source_view#source_buffer#set_text new_src;
       source_is_changed <- false;
-      model#update_source new_src;
+      model#update_source new_src
+
+    method open_file (fname: string): unit =
+      current_filename <- fname;
+      self#set_title (fname ^ " - Sleek");
+      self#replace_source (FileUtils.read_from_file fname)
 
     method get_text () = source_view#source_buffer#get_text ()
 
@@ -361,12 +439,7 @@ class mainwindow =
       let fname = self#show_file_chooser () in
       match fname with
       | None -> ()
-      | Some fname -> begin
-          current_filename <- fname;
-          self#set_title (fname ^ " - Sleek");
-          let src = FileUtils.read_from_file fname in
-          self#replace_source src
-        end
+      | Some fname -> self#open_file fname
 
     method private save_handler () =
       let text = source_view#source_buffer#get_text () in
@@ -392,4 +465,5 @@ class mainwindow =
 let _ =
   let win = new mainwindow in
   win#show ();
-  Main.main ()
+  win#open_file "examples/sleek.slk";
+  GMain.Main.main ()

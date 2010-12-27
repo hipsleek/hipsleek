@@ -256,11 +256,39 @@ sleek: xml/xml-light.cma decidez.vo $(SLEEK_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
-gsleek: gsleek.ml $(SLEEK_FILES)
-	$(OCAMLC) -g -o $@ -I +lablgtk2 str.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo gsleek.ml
-
 sleek.opt: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
+
+GSLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
+	cpure.cmo mcpure.cmo ipure.cmo \
+	iformula.cmo iast.cmo \
+	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
+	iprinter.cmo \
+  iastUtil.cmo \
+	rlparser.cmo rllexer.cmo \
+	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+    net.cmo \
+	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
+  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
+  sleekcommons.cmo \
+	prooftracer.cmo context.cmo solver.cmo \
+	drawing.cmo \
+	env.cmo checks.cmo \
+	inliner.cmo \
+	astsimp.cmo \
+	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
+	typechecker.cmo \
+	xmlfront.cmo nativefront.cmo \
+	sleekengine.cmo \
+	scriptarguments.cmo \
+	gsleek.cmo
+
+gsleek.cmo: gsleek.ml
+	$(OCAMLC) -g -c $(OCAMLFLAGS) -I +lablgtk2 unix.cma str.cma graph.cma xml-light.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo gsleek.ml
+
+gsleek: $(GSLEEK_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) -I +lablgtk2 unix.cma str.cma graph.cma xml-light.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo $(GSLEEK_FILES)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
