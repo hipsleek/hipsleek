@@ -304,12 +304,12 @@ let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bo
     f e 
   with ex -> 
       let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
   let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
-  let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in
+  (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
   r
 
 let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
@@ -336,7 +336,7 @@ let ho_debug_2_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string
   with ex -> 
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -355,7 +355,7 @@ let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
@@ -372,7 +372,7 @@ let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -394,7 +394,7 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
       let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -774,14 +774,14 @@ let prof_2 (s:string) (f:'a1 -> 'a2 -> 'z) (e1:'a1) (e2:'a2) : 'z =
     push_time s;
       let r=f e1 e2 in
       (pop_time s; r)
-  with ex -> (print_string "exception profiling";pop_time s; raise ex)
+  with ex -> (pop_time s; raise ex)
 
 let prof_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z =
   try
     push_time s;
       let r=f e1 e2 e3 in
       (pop_time s; r)
-  with ex -> (print_string "exception profiling";pop_time s; raise ex)
+  with ex -> (pop_time s; raise ex)
 
 let prof_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
   try
@@ -844,7 +844,7 @@ let add_index l =
 
 	
 
-(*hairy stuff for exception numbering*)
+(*hairy stuff for excep tion numbering*)
 			
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
   			 

@@ -1978,7 +1978,10 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : boo
 	        (heap_entail_one_context_struc prog is_folding is_universal has_post (List.hd cl) conseq pos pid)
 
 and heap_entail_one_context_struc p i1 i2 hp cl cs pos pid =
-  Util.prof_3 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x p i1 i2 hp cl) cs pos pid
+  Util.prof_3 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x(*_debug*) p i1 i2 hp cl) cs pos pid
+
+and heap_entail_one_context_struc_debug p i1 i2 hp cl cs pos pid =
+  Util.ho_debug_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 i2 hp cl cs pos pid) cl
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
@@ -2244,9 +2247,18 @@ and heap_entail_after_sat prog is_folding is_universal ctx conseq pos
 	    (filter_set tmp, prf)
       end
 
+(*
+and heap_entail_conjunct_lhs_debug prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) 
+      = Util.ho_debug_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
+  (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding is_universal ctx conseq pos) ctx 
+*)
+
+and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p
+
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
-and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) = match conseq with
+and heap_entail_conjunct_lhs_x prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) = 
+  match conseq with
   | Or ({formula_or_f1 = f1;
 	formula_or_f2 = f2;
 	formula_or_pos = pos1}) ->
@@ -2257,13 +2269,13 @@ and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq p
         let ctx_L = CF.add_to_context ctx "left OR 2 on conseq" in
         let ctx_R = CF.add_to_context ctx "right OR 2 on conseq" in
         if !Globals.use_set then
-	      let rs1, prf1 = heap_entail_conjunct_lhs prog is_folding is_universal ctx_L f1 pos in
-	      let rs2, prf2 = heap_entail_conjunct_lhs prog is_folding is_universal ctx_R f2 pos in
+	      let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_L f1 pos in
+	      let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_R f2 pos in
 	      ((fold_context_left [rs1;rs2]),( mkOrRight ctx conseq [prf1; prf2]))		  
         else
-	      let rs1, prf1 = heap_entail_conjunct_lhs prog is_folding is_universal ctx_L f1 pos in
+	      let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_L f1 pos in
 	      if (isFailCtx rs1) then
-	        let rs2, prf2 = heap_entail_conjunct_lhs prog is_folding is_universal ctx_R f2 pos in
+	        let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_R f2 pos in
 	        (filter_set rs2, prf2)
 	      else
 	        (filter_set rs1, prf1)
