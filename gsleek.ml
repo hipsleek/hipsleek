@@ -20,7 +20,7 @@ module FileUtils = struct
     close_in ic;
     buf
 
-  (* write text to a file with name fname *)
+  (* write text to a file (with name fname *)
   let write_to_file (fname: string) (text: string) : unit =
     let oc = open_out fname in
     output_string oc text;
@@ -39,12 +39,11 @@ end (* FileUtils *)
 module SourceUtils = struct
 
   type entailment = {
-    formula: string;
+    formula: string; (* the entailment formula *)
     start_char: int;
     start_line: int;
     stop_char: int;
     stop_line: int;
-    header: string
   }
 
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
@@ -72,15 +71,18 @@ module SourceUtils = struct
     in
     greater_than pos new_lines
 
+  (* remove all checkentail command from source *)
   let remove_checkentail (src: string) : string =
     Str.global_replace checkentail_re "" src
 
+  (* remove all print command from source *)
   let remove_print (src: string) : string =
     Str.global_replace print_re "" src
 
   let clean (src: string) : string =
-    let r = remove_checkentail src in
-    remove_print r
+    let res = remove_checkentail src in
+    let res = remove_print res in
+    res
 
   (* parse sleek file and return list of entailments (to be checked) *)
   let parse_entailment_list (src: string) : entailment list =
@@ -93,14 +95,12 @@ module SourceUtils = struct
         let f = Str.matched_group 1 src in
         let start_line = to_line_num start_char in
         let stop_line = to_line_num stop_char in
-        let header = String.sub src 0 start_char in
         let first = {
           start_char = start_char;
           stop_char = stop_char;
           start_line = start_line;
           stop_line = stop_line;
           formula = f;
-          header = clean header;
         } in
         first::(parse (first.stop_char+1))
       with Not_found -> []
@@ -141,14 +141,18 @@ module SleekHelper = struct
   let outfile = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
   let sleek_command = Printf.sprintf "./sleek %s > %s" infile outfile
 
-  let run_sleek (source: string) : string =
+  (* run sleek with source text and return result string *)
+  let run_sleek (src: string) : string =
+    (* write source text to temp file *)
     let os = open_out infile in
-    output_string os source;
+    output_string os src;
     close_out os;
+    (* then run sleek with that file *)
     ignore (Sys.command sleek_command);
+    (* read the output of running sleek *)
     let is = open_in outfile in
     let _ = input_line is in (* discard 1st line *)
-    let res = input_line is in
+    let res = input_line is in (* the 2nd line *)
     close_in is;
     Sys.remove infile;
     Sys.remove outfile;
@@ -158,8 +162,9 @@ module SleekHelper = struct
     let _ = print_endline res in
     res = "Valid."
 
-  let checkentail (e: entailment) : bool =
-    let src = Printf.sprintf "%s \n checkentail %s." e.header e.formula in
+  let checkentail (src: string) (e: entailment) : bool =
+    let header = SourceUtils.clean (String.sub src 0 e.start_char) in
+    let src = Printf.sprintf "%s \n checkentail %s." header e.formula in
     let res = run_sleek src in
     parse_sleek_result res
     
@@ -173,14 +178,14 @@ let cols = new GTree.column_list
 let col_id = cols#add Gobject.Data.int
 let col_line = cols#add Gobject.Data.int
 let col_formula = cols#add Gobject.Data.string
-let col_valid = cols#add Gobject.Data.string (* yes, no or unknown *)
+let col_validity = cols#add Gobject.Data.string
 
 class entailment_list_model ?source:(src = "") () =
   object (self)
     val delegate = GTree.list_store cols
     val mutable entailment_list = []
+    val mutable modified_times = []
     val mutable count = 0
-    val mutable source = src
 
     initializer
       self#update_source src
@@ -192,24 +197,36 @@ class entailment_list_model ?source:(src = "") () =
       delegate#set ~row:iter ~column:col_id count;
       delegate#set ~row:iter ~column:col_line e.start_line;
       delegate#set ~row:iter ~column:col_formula e.formula;
-      delegate#set ~row:iter ~column:col_valid "gtk-execute";
+      delegate#set ~row:iter ~column:col_validity "gtk-execute";
       count <- count + 1
 
     method update_source (src: string) =
       delegate#clear ();
       count <- 0;
-      source <- src;
       entailment_list <- parse_entailment_list src;
       List.iter self#append_one_entailment entailment_list
 
-    method get_entailment_of_tree_path path =
+    method get_entailment_by_path path =
       let row = delegate#get_iter path in
       let id = delegate#get ~row ~column:col_id in
-      let entail = List.nth entailment_list id in
-      let res = SleekHelper.checkentail entail in
-      let valid = if res then "gtk-apply" else "gtk-cancel" in
-      delegate#set ~row ~column:col_valid valid;
-      entail
+      List.nth entailment_list id
+
+    method set_entaiment_validity path (valid: bool) : unit =
+      let row = delegate#get_iter path in
+      let stock_id = self#stock_id_of_bool valid in
+      delegate#set ~row ~column:col_validity stock_id
+
+    method private stock_id_of_bool b =
+      if b then "gtk-apply" else "gtk-cancel"
+
+    method check_all (check_func: entailment -> bool): unit =
+      let func path iter =
+        let entail = self#get_entailment_by_path path in
+        let valid = check_func entail in
+        self#set_entaiment_validity path valid;
+        false
+      in
+      delegate#foreach func
 
   end
 
@@ -217,36 +234,48 @@ class entailment_list_model ?source:(src = "") () =
 (*********************************
  * Entailment list view
  *********************************)
-class entailment_list_view ?model:(model = new entailment_list_model ()) () =
+class entailment_list ?model:(model = new entailment_list_model ()) () =
   object (self)
-    val delegate = GTree.view ()
+    val view = GTree.view ()
     val mutable model = model
 
     initializer
-      delegate#selection#set_mode `SINGLE;
+      view#selection#set_mode `SINGLE;
       let add_new_col title renderer =
         let col = GTree.view_column ~title ~renderer () in
         col#set_resizable true;
-        ignore (delegate#append_column col)
+        ignore (view#append_column col)
       in
       let text_renderer = GTree.cell_renderer_text [] in
       add_new_col "Line" (text_renderer, ["text", col_line]);
       add_new_col "Entailment" (text_renderer, ["text", col_formula]);
-      add_new_col "Valid?" (GTree.cell_renderer_pixbuf [], ["stock_id", col_valid]);
-      delegate#set_model (Some model#coerce)
+      add_new_col "Valid?" (GTree.cell_renderer_pixbuf [], ["stock_id", col_validity]);
+      view#set_model (Some model#coerce)
 
-    method coerce = delegate#coerce
-    method selection = delegate#selection
+    method coerce = view#coerce
+    method selection = view#selection
 
     method set_model new_model =
       model <- new_model;
-      delegate#set_model (Some model#coerce)
+      view#set_model (Some model#coerce)
 
     method get_selected_entailment () =
       let rows = self#selection#get_selected_rows in
       match rows with
-      | [] -> None
-      | h::t -> Some (model#get_entailment_of_tree_path h)
+      | [row] -> Some (model#get_entailment_by_path row)
+      | _ -> None
+
+    method set_selected_entailment_validity valid =
+      let rows = self#selection#get_selected_rows in
+      match rows with
+      | [row] ->model#set_entaiment_validity row valid
+      | _ -> ()
+
+    method check_all (func: entailment -> bool) : unit =
+      model#check_all func
+
+    method update_source (src: string) : unit =
+      model#update_source src
 
   end
 
@@ -292,6 +321,17 @@ class sleek_source_view ?text:(text = "") () =
       let start = self#source_buffer#get_iter_at_char e.start_char in
       let stop = self#source_buffer#get_iter_at_char e.stop_char in
       self#source_buffer#apply_tag_by_name tag_name start stop
+
+    (* highlight all checkentail commands *)
+    method hl_all_entailement () : unit =
+      let hl (e: entailment) : unit =
+        let start = self#source_buffer#get_iter_at_char e.start_char in
+        let stop = self#source_buffer#get_iter_at_char e.stop_char in
+        self#source_buffer#apply_tag_by_name tag_name start stop
+      in
+      let src = self#source_buffer#get_text () in
+      let e_list = SourceUtils.parse_entailment_list src in
+      List.iter hl e_list
 
     (* clear current highlight
      * by removing checkentail tag in current source code *)
@@ -346,19 +386,17 @@ class mainwindow =
     val open_btn = GButton.tool_button ~stock:`OPEN ~homogeneous:true ()
     val save_btn = GButton.tool_button ~stock:`SAVE ~homogeneous:true ()
     val exec_btn = GButton.tool_button ~stock:`EXECUTE ~homogeneous:true ()
-    val run_one_btn = GButton.button ~label:"Run selected" ()
+    (*val run_one_btn = GButton.button ~label:"Run selected" ()*)
     val run_all_btn = GButton.button ~label:"Run all" ()
     val source_view = new sleek_source_view ()
-    val entailment_list = new entailment_list_view ()
+    val entailment_list = new entailment_list ()
     val statusbar = create_statusbar ()
     (* data *)
     val mutable current_filename = ""
     val mutable source_is_changed = false
-    val model = new entailment_list_model ()
       
     initializer
       (* initialize components *)
-      entailment_list#set_model model;
       toolbar#insert open_btn;
       toolbar#insert save_btn;
       (*toolbar#insert (GButton.separator_tool_item ());*)
@@ -383,7 +421,7 @@ class mainwindow =
       (*bbox#pack run_one_btn#coerce;*)
       bbox#pack run_all_btn#coerce;
       vbox#pack ~expand:false bbox#coerce;
-      vbox#pack ~expand:false statusbar#coerce;
+      (*vbox#pack ~expand:false statusbar#coerce;*)
 
       (* set event handlers *)
       ignore (self#connect#destroy (fun _ -> GMain.quit ()));
@@ -392,7 +430,8 @@ class mainwindow =
       ignore (source_view#source_buffer#connect#changed
         ~callback:self#source_changed_handler);
       ignore (entailment_list#selection#connect#changed
-        ~callback:self#entailment_list_selection_changed_handler)
+        ~callback:self#entailment_list_selection_changed_handler);
+      ignore (run_all_btn#connect#clicked ~callback:self#run_all_handler)
 
 
     (* open file chooser dialog with parent window
@@ -423,7 +462,7 @@ class mainwindow =
     method replace_source (new_src: string): unit =
       source_view#source_buffer#set_text new_src;
       source_is_changed <- false;
-      model#update_source new_src
+      entailment_list#update_source new_src
 
     method open_file (fname: string): unit =
       current_filename <- fname;
@@ -448,13 +487,23 @@ class mainwindow =
     method private source_changed_handler () =
       source_is_changed <- true;
       self#set_title (current_filename ^ "* - Sleek");
-      model#update_source (self#get_text ())
+      entailment_list#update_source (self#get_text ())
 
     method private entailment_list_selection_changed_handler () =
       let entail = entailment_list#get_selected_entailment () in
       match entail with
       | None -> ()
-      | Some e -> source_view#hl_entailment e
+      | Some e -> begin
+        let src = self#get_text () in
+        let valid = SleekHelper.checkentail src e in
+        entailment_list#set_selected_entailment_validity valid;
+        source_view#hl_entailment e
+      end
+
+    method private run_all_handler () =
+      let src = self#get_text () in
+      entailment_list#check_all (fun e -> SleekHelper.checkentail src e);
+      source_view#hl_all_entailement ()
 
   end
 
