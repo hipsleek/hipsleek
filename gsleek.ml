@@ -383,10 +383,8 @@ let create_scrolled_win child =
   scroll_win
 
 class mainwindow =
-  let win_width = 900 in
-  let win_height = 600 in
   let win = GWindow.window
-    ~height:win_height ~width:win_width
+    ~height:600 ~width:900
     ~title:"New file - Sleek" 
     ~allow_shrink:true
     () in
@@ -435,7 +433,7 @@ class mainwindow =
         let residue_panel = residue_panel () in
         let list_scrolled = create_scrolled_win entailment_list in
         let hpaned = GPack.paned `HORIZONTAL () in
-        hpaned#set_position (win_width*2/3);
+        hpaned#set_position 500; (* FIXME *)
         hpaned#pack1 list_scrolled#coerce;
         hpaned#pack2 ~resize:true ~shrink:true residue_panel#coerce;
         hpaned
@@ -444,7 +442,7 @@ class mainwindow =
       let vbox = GPack.vbox ~packing:self#add () in
       vbox#pack ~expand:false toolbar#coerce;
       let vpaned = GPack.paned `VERTICAL () in
-      vpaned#set_position (win_height*2/3);
+      vpaned#set_position 380; (* FIXME *)
       vbox#pack ~expand:true ~fill:true vpaned#coerce;
       let source_scrolled = create_scrolled_win source_view in
       vpaned#pack1 ~resize:true ~shrink:true source_scrolled#coerce;
