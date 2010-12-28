@@ -7,6 +7,8 @@ let infilename = "input.cvc3." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = "result.txt." ^ (string_of_int (Unix.getpid()))
 let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
 
+let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+
 let set_log_file fn =
   log_cvc3_formula := true;
   if fn = "" then
@@ -203,7 +205,7 @@ and flatten_output ints bools bags : string =
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -227,11 +229,13 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
 	(* talk to CVC3 *)
   let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
 	if !log_cvc3_formula then begin
-	  output_string !cvc3_log "%%% imply\n";
-	  output_string !cvc3_log (Cprinter.string_of_pure_formula flatted_conseq);
-	  output_string !cvc3_log "\n";
-	  output_string !cvc3_log (Cprinter.string_of_pure_formula conseq);
-	  output_string !cvc3_log "\n";
+	output_string !cvc3_log "%%% imply\n";
+	output_string !cvc3_log (!print_pure ante);
+    output_string !cvc3_log (!print_pure flatted_conseq);
+	output_string !cvc3_log "\n";
+	output_string !cvc3_log (!print_pure conseq);
+	output_string !cvc3_log "\n";
+	output_string !cvc3_log f_cvc3;
 	  output_string !cvc3_log f_cvc3;
 	  flush !cvc3_log
 	end;
@@ -293,7 +297,7 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let all_fv = CP.remove_dups (CP.fv f) in
+  let all_fv = Util.remove_dups (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
