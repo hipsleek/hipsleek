@@ -160,7 +160,8 @@ module Netprover = struct
         else begin
           (* show_info "pmap" (Printf.sprintf "wait %d results" (num_jobs -          *)
           (* !num_results));                                                         *)
-          let in_fds, _, _ = Unix.select [wait_fd] [] [] time_left in
+          let in_fds, _, _ = Util.restart  (Unix.select [wait_fd] [] []) time_left in
+          (* let in_fds, _, _ = Unix.select [wait_fd] [] [] time_left in *)
           if in_fds <> [] then begin
             incr num_results;
             let seqno, idx, result = Net.IO.read_result (Unix.in_channel_of_descr (List.hd in_fds)) in
