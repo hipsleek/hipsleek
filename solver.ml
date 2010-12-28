@@ -2248,13 +2248,12 @@ and heap_entail_after_sat prog is_folding is_universal ctx conseq pos
       end
 
 (*
-and heap_entail_conjunct_lhs_debug prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) 
+and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) 
       = Util.ho_debug_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
   (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding is_universal ctx conseq pos) ctx 
 *)
 
 and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p
-
 
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) = 

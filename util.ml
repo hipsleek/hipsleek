@@ -7,6 +7,9 @@
 exception Bad_string
 exception Bail
 
+let rec restart f arg =
+  try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
+
 type 'a tag_elem = ('a * (int list))
 
 type 'a tag_list = ('a tag_elem) list
@@ -754,7 +757,7 @@ let pop_time msg =
 				(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
 				(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
 				(* 	print_string ("\n double accounting for "^msg^"\n") *)
-                print_string ("\n skip double accounting for "^msg^"\n") 				
+                (* print_string ("\n skip double accounting for "^msg^"\n")  *)
 				end	
             else add_task_instance m1 (t2-.t1) 
 			 

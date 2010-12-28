@@ -764,10 +764,14 @@ let continue f arg tsecs =
     Sys.set_signal Sys.sigalrm oldsig; None
 *)
 
+(* let rec restart f arg = *)
+(*   try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg) *)
+
 (* checking the result given by Mona *)
-let rec check fd timeout pid : bool =
+let check fd timeout pid : bool =
   try begin
-    if (Unix.select [Unix.descr_of_in_channel fd] [] [] timeout) = ([],[],[]) then begin
+    let tup = Util.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
+    if tup (*Unix.select [Unix.descr_of_in_channel fd] [] [] timeout)*) = ([],[],[]) then begin
         print_endline "\nMOna timeout reached."; flush stdout; false
     end else 
     let r = input_line fd in
@@ -790,6 +794,9 @@ let rec check fd timeout pid : bool =
   with
 	End_of_file -> false
 
+let check_debug fd timeout pid : bool =
+  Util.ho_debug_1 "check" string_of_float string_of_bool 
+      (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)
 let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
