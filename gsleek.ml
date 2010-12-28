@@ -143,30 +143,25 @@ module SleekHelper = struct
 
   (* run sleek with source text and return result string *)
   let run_sleek (src: string) : string =
-    (* write source text to temp file *)
-    let os = open_out infile in
-    output_string os src;
-    close_out os;
-    (* then run sleek with that file *)
+    FileUtils.write_to_file infile src;
     ignore (Sys.command sleek_command);
-    (* read the output of running sleek *)
-    let is = open_in outfile in
-    let _ = input_line is in (* discard 1st line *)
-    let res = input_line is in (* the 2nd line *)
-    close_in is;
+    let res = FileUtils.read_from_file outfile in
     Sys.remove infile;
     Sys.remove outfile;
     res
 
-  let parse_sleek_result (res: string) : bool =
-    let _ = print_endline res in
-    res = "Valid."
+  let parse_checkentail_result (res: string) : bool =
+    let regexp = Str.regexp "Valid\\." in
+    try
+      ignore (Str.search_forward regexp res 0);
+      true
+    with Not_found -> false
 
-  let checkentail (src: string) (e: entailment) : bool =
+  let checkentail (src: string) (e: entailment) : bool * string =
     let header = SourceUtils.clean (String.sub src 0 e.start_char) in
-    let src = Printf.sprintf "%s \n checkentail %s." header e.formula in
+    let src = Printf.sprintf "%s checkentail %s. print residue." header e.formula in
     let res = run_sleek src in
-    parse_sleek_result res
+    parse_checkentail_result res, res
     
 end
 
@@ -238,18 +233,26 @@ class entailment_list ?model:(model = new entailment_list_model ()) () =
   object (self)
     val view = GTree.view ()
     val mutable model = model
+    val validity_col = GTree.view_column
+      ~title:"Validity"
+      ~renderer:(GTree.cell_renderer_pixbuf [], ["stock_id", col_validity])
+      ()
 
     initializer
       view#selection#set_mode `SINGLE;
       let add_new_col title renderer =
         let col = GTree.view_column ~title ~renderer () in
         col#set_resizable true;
-        ignore (view#append_column col)
+        ignore (view#append_column col);
+        col
       in
       let text_renderer = GTree.cell_renderer_text [] in
-      add_new_col "Line" (text_renderer, ["text", col_line]);
-      add_new_col "Entailment" (text_renderer, ["text", col_formula]);
-      add_new_col "Valid?" (GTree.cell_renderer_pixbuf [], ["stock_id", col_validity]);
+      ignore (add_new_col "Line" (text_renderer, ["text", col_line]));
+      ignore (add_new_col "Entailment" (text_renderer, ["text", col_formula]));
+      validity_col#set_resizable true;
+      validity_col#set_alignment 0.5;
+      validity_col#set_clickable true;
+      ignore (view#append_column validity_col);
       view#set_model (Some model#coerce)
 
     method coerce = view#coerce
@@ -276,6 +279,9 @@ class entailment_list ?model:(model = new entailment_list_model ()) () =
 
     method update_source (src: string) : unit =
       model#update_source src
+
+    method set_checkall_handler callback =
+      ignore (validity_col#connect#clicked ~callback)
 
   end
 
@@ -357,13 +363,19 @@ let create_toolbar () =
   let toolbar = GButton.toolbar 
     ~orientation:`HORIZONTAL
     ~style:`ICONS
-    (*~height:50*)
+    ~tooltips:true
     () in
   toolbar#set_icon_size `LARGE_TOOLBAR;
   toolbar
 
+let create_residue_view () =
+  let view = GText.view
+    ~editable:false
+    () in
+  view
+
 (* wrap child in a scrolled window and return that window *)
-let create_scrolled_win child () = 
+let create_scrolled_win child = 
   let scroll_win = GBin.scrolled_window 
     ~hpolicy: `AUTOMATIC ~vpolicy: `AUTOMATIC 
     () in
@@ -371,8 +383,8 @@ let create_scrolled_win child () =
   scroll_win
 
 class mainwindow =
-  let win_width = 1000 in
-  let win_height = 700 in
+  let win_width = 900 in
+  let win_height = 600 in
   let win = GWindow.window
     ~height:win_height ~width:win_width
     ~title:"New file - Sleek" 
@@ -383,55 +395,77 @@ class mainwindow =
 
     (* gui components *)
     val toolbar = create_toolbar ()
-    val open_btn = GButton.tool_button ~stock:`OPEN ~homogeneous:true ()
-    val save_btn = GButton.tool_button ~stock:`SAVE ~homogeneous:true ()
-    val exec_btn = GButton.tool_button ~stock:`EXECUTE ~homogeneous:true ()
     (*val run_one_btn = GButton.button ~label:"Run selected" ()*)
-    val run_all_btn = GButton.button ~label:"Run all" ()
+    (*val run_all_btn = GButton.button ~label:"Run all" ()*)
     val source_view = new sleek_source_view ()
     val entailment_list = new entailment_list ()
     val statusbar = create_statusbar ()
+    val residue_view = create_residue_view ()
     (* data *)
     val mutable current_filename = ""
     val mutable source_is_changed = false
       
     initializer
       (* initialize components *)
-      toolbar#insert open_btn;
-      toolbar#insert save_btn;
-      (*toolbar#insert (GButton.separator_tool_item ());*)
-      (*toolbar#insert exec_btn;*)
+      let tooltips = GData.tooltips () in
+      let add_toolbar_button stock callback tooltip =
+        let btn = GButton.tool_button ~stock ~homogeneous:true () in
+        btn#set_tooltip tooltips tooltip tooltip;
+        ignore (btn#connect#clicked ~callback);
+        toolbar#insert btn
+      in
+      add_toolbar_button `OPEN self#open_handler "Open file";
+      add_toolbar_button `SAVE self#save_handler "Save file";
+      toolbar#insert (GButton.separator_tool_item ());
+      add_toolbar_button `EXECUTE self#run_all_handler "Check all entailments";
 
+      let residue_panel () =
+        let label = GMisc.label 
+          ~text:"Residue:" 
+          ~xalign:0.0 ~yalign:0.0
+          ~xpad:5 ~ypad:5
+          () in
+        let residue_scrolled = create_scrolled_win residue_view in
+        let vbox = GPack.vbox () in
+        vbox#pack ~expand:false label#coerce;
+        vbox#pack ~expand:true residue_scrolled#coerce;
+        vbox
+      in
+      let entail_panel () =
+        let residue_panel = residue_panel () in
+        let list_scrolled = create_scrolled_win entailment_list in
+        let hpaned = GPack.paned `HORIZONTAL () in
+        hpaned#set_position (win_width*2/3);
+        hpaned#pack1 list_scrolled#coerce;
+        hpaned#pack2 ~resize:true ~shrink:true residue_panel#coerce;
+        hpaned
+      in
       (* arrange components on main window *)
       let vbox = GPack.vbox ~packing:self#add () in
       vbox#pack ~expand:false toolbar#coerce;
       let vpaned = GPack.paned `VERTICAL () in
-      (* default position is about 2/3 of window's height *)
-      vpaned#set_position (win_height*7/12);
+      vpaned#set_position (win_height*2/3);
       vbox#pack ~expand:true ~fill:true vpaned#coerce;
-      let source_scrolled = create_scrolled_win source_view () in
+      let source_scrolled = create_scrolled_win source_view in
       vpaned#pack1 ~resize:true ~shrink:true source_scrolled#coerce;
-      let list_scrolled = create_scrolled_win entailment_list () in
-      vpaned#pack2 list_scrolled#coerce;
-      let bbox = GPack.button_box
-        `HORIZONTAL ~layout:`END
-        ~border_width:5 ~spacing:5
-        ~child_height:35
-        () in
+      vpaned#pack2 (entail_panel ())#coerce;
+      (*let bbox = GPack.button_box*)
+        (*`HORIZONTAL ~layout:`END*)
+        (*~border_width:5 ~spacing:5*)
+        (*~child_height:35*)
+        (*() in*)
       (*bbox#pack run_one_btn#coerce;*)
-      bbox#pack run_all_btn#coerce;
-      vbox#pack ~expand:false bbox#coerce;
+      (*bbox#pack run_all_btn#coerce;*)
+      (*vbox#pack ~expand:false bbox#coerce;*)
       (*vbox#pack ~expand:false statusbar#coerce;*)
 
       (* set event handlers *)
       ignore (self#connect#destroy (fun _ -> GMain.quit ()));
-      ignore (open_btn#connect#clicked ~callback:self#open_handler);
-      ignore (save_btn#connect#clicked ~callback:self#save_handler);
       ignore (source_view#source_buffer#connect#changed
         ~callback:self#source_changed_handler);
       ignore (entailment_list#selection#connect#changed
         ~callback:self#entailment_list_selection_changed_handler);
-      ignore (run_all_btn#connect#clicked ~callback:self#run_all_handler)
+      entailment_list#set_checkall_handler self#run_all_handler;
 
 
     (* open file chooser dialog with parent window
@@ -495,14 +529,15 @@ class mainwindow =
       | None -> ()
       | Some e -> begin
         let src = self#get_text () in
-        let valid = SleekHelper.checkentail src e in
+        let valid, residue = SleekHelper.checkentail src e in
         entailment_list#set_selected_entailment_validity valid;
+        residue_view#buffer#set_text residue;
         source_view#hl_entailment e
       end
 
     method private run_all_handler () =
       let src = self#get_text () in
-      entailment_list#check_all (fun e -> SleekHelper.checkentail src e);
+      entailment_list#check_all (fun e -> fst (SleekHelper.checkentail src e));
       source_view#hl_all_entailement ()
 
   end

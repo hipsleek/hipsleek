@@ -130,7 +130,7 @@ let set_timer tsecs =
 (* start omega system in a separated process and load redlog package *)
 let start_omega () =
   if not !is_omega_running then begin
-    print_string "Starting Omega... \n"; flush stdout;
+    (*print_string "Starting Omega... \n"; flush stdout;*)
     last_test_number := !test_number;
 	(if !log_all_flag then 
         output_string log_all ("[omega.ml]: >> Starting Omega...\n") );
@@ -159,7 +159,7 @@ let stop_omega () =
   if !is_omega_running then begin
     (*send_cmd "quit;"; flush (snd !channels);*)
     let num_tasks = !test_number - !last_test_number in
-    print_string ("Stop Omega... "^(string_of_int num_tasks)^" invocations "); flush stdout;
+    (*print_string ("Stop Omega... "^(string_of_int num_tasks)^" invocations "); flush stdout;*)
 	(if !log_all_flag then 
         output_string log_all ("[omega.ml]: >> Stop Omega after ... "^(string_of_int num_tasks)^" invocations\n") );
     Unix.kill !omega_pid 9;
