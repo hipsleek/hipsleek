@@ -17,12 +17,13 @@ GetOptions( "stop"  => \$stop,
 			"tp=s" => \$prover,
 			"flags=s" => \$flags,
 			"copy-to-home21" => \$home21,
-            "log-timings" => \$timings
+            "log-timings" => \$timings,
+            "log-string=s" => \$str_log
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings file_to_save_results] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 if($root){
@@ -40,7 +41,7 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
 	if (!exists($provers{$prover})){		
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
 		exit(0);
 	}
@@ -121,6 +122,7 @@ if($timings){
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
+    $worksheet->set_column(0, 0, 10);
     $worksheet->write($row, 0, "Time:");
     $worksheet->write($row, 1, $date);
     $row++;
@@ -130,6 +132,11 @@ if($timings){
     if("$flags"){
         $worksheet->write($row, 0, "Call args:");
         $worksheet->write($row, 1, "$flags");
+    }
+    $row++;
+    if("$str_log"){
+        $worksheet->write($row, 0, "Comments:");
+        $worksheet->write($row, 1, "$str_log");
     }
     $row = $row + 2;
     $programCol = 1;
