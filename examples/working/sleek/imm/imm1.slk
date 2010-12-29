@@ -3,7 +3,7 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
 	inv n >= 0.
 
-/*
+
 checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::ll<m> * x::ll<n>.
 //print residue.
 // Fail
@@ -34,13 +34,11 @@ checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0 & m=5  |- 
 print residue.
 // t@I; z
 // Valid
-*/
 
-//checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I & z::ll<n2>@I); p::ll<m> & y!=x. 
+//checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
 //print residue.
 // x * y
 // Valid
 
-checkentail z::ll<n> * (x::ll<n1>@I & y::ll<n2>@I) |- z::ll<n>.
 
 
