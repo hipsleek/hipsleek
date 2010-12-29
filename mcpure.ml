@@ -1030,11 +1030,11 @@ let mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
  
 let mimply_one_conj ante_memo0 conseq  t_imply imp_no = 
   let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
-    ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no complex") 
+    (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
     "imply_proc_one_ncplx" t_imply imp_no in  
   if not xp01  then  
     let xp01,xp02,xp03 = mimply_process_ante 2 ante_memo0 conseq 
-      ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") 
+     (* ("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^ *)" with XPure0")*) ""
       "imply_proc_one_full" t_imply imp_no in  
     if not xp01 then (Util.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
     else (Util.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)

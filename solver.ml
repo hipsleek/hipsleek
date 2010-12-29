@@ -1580,7 +1580,7 @@ and elim_exists_pure_branch_debug (w : CP.spec_var list) (f0 : CP.formula) pos =
   Util.ho_debug_2_opt "elim_exists_pure_branch" Cprinter.string_of_spec_var_list Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun _ -> not(w==[]))
       (fun w f0 -> elim_exists_pure_branch w f0 pos) w f0 
 
-    
+      
 (* --- added 11.05.2008 *)
 and entail_state_elim_exists es = 
   let f_prim = elim_exists es.es_formula in
@@ -2258,31 +2258,31 @@ and heap_entail_conjunct_lhs p  = heap_entail_conjunct_lhs_x p
 (* check entailment when lhs is normal-form, rhs is a conjunct *)
 and heap_entail_conjunct_lhs_x prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) = 
   match conseq with
-  | Or ({formula_or_f1 = f1;
-	formula_or_f2 = f2;
-	formula_or_pos = pos1}) ->
-        Debug.devel_pprint ("heap_entail_conjunct_lhs: \nante:\n"
-	    ^ (Cprinter.string_of_context ctx)
-	    ^ "\nconseq:\n"
-	    ^ (Cprinter.string_of_formula conseq)) pos;
-        let ctx_L = CF.add_to_context ctx "left OR 2 on conseq" in
-        let ctx_R = CF.add_to_context ctx "right OR 2 on conseq" in
-        if !Globals.use_set then
-	      let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_L f1 pos in
-	      let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_R f2 pos in
-	      ((fold_context_left [rs1;rs2]),( mkOrRight ctx conseq [prf1; prf2]))		  
-        else
-	      let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_L f1 pos in
-	      if (isFailCtx rs1) then
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos1}) ->
+          Debug.devel_pprint ("heap_entail_conjunct_lhs: \nante:\n"
+	      ^ (Cprinter.string_of_context ctx)
+	      ^ "\nconseq:\n"
+	      ^ (Cprinter.string_of_formula conseq)) pos;
+          let ctx_L = CF.add_to_context ctx "left OR 2 on conseq" in
+          let ctx_R = CF.add_to_context ctx "right OR 2 on conseq" in
+          if !Globals.use_set then
+	        let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_L f1 pos in
 	        let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_R f2 pos in
-	        (filter_set rs2, prf2)
-	      else
-	        (filter_set rs1, prf1)
-  | _ -> begin
-      Debug.devel_pprint ("heap_entail_conjunct_lhs: invoking heap_entail_conjunct") pos;
-      let r1,p1 = heap_entail_conjunct prog is_folding is_universal ctx conseq pos in      
-      (r1,p1)
-    end
+	        ((fold_context_left [rs1;rs2]),( mkOrRight ctx conseq [prf1; prf2]))		  
+          else
+	        let rs1, prf1 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_L f1 pos in
+	        if (isFailCtx rs1) then
+	          let rs2, prf2 = heap_entail_conjunct_lhs_x prog is_folding is_universal ctx_R f2 pos in
+	          (filter_set rs2, prf2)
+	        else
+	          (filter_set rs1, prf1)
+    | _ -> begin
+        Debug.devel_pprint ("heap_entail_conjunct_lhs: invoking heap_entail_conjunct") pos;
+        let r1,p1 = heap_entail_conjunct prog is_folding is_universal ctx conseq pos in      
+        (r1,p1)
+      end
 
 (* 23.10.2008 *)
 (* for empty RHS heap:
@@ -2648,8 +2648,6 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
   let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 
     (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
   let res,_,_ =  TP.mix_imply_timeout new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) timeout in
-  Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;				
-  imp_subno := !imp_subno+1;  
   if res = false then
     let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h_b @ lhs_b)) in
     let fold_fun2 is_ok branch_id_added =
@@ -2660,9 +2658,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
         let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 
           (MCP.memoise_add_pure_N (MCP.mkMTrue pos) rhs_p) pos in
         let res,_,_ = TP.mix_imply_timeout new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) timeout in
-        (Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;				
-        imp_subno := !imp_subno+1; 
-        res)in
+        res in
     List.fold_left fold_fun2 false branches
   else res 
 
@@ -2703,7 +2699,6 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_univ
           (* use the previous conseq , reset the error flag *)
           memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos 
 	    else new_conseq0 in
-      let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
       let split_ante1 = new_ante1 in

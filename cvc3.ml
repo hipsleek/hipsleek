@@ -448,9 +448,9 @@ let cvc3_assert (process: cvc3process) (f : CP.formula) =
   send_cmd process cmd
 
 (*checks for implication*)
-let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) : bool option = 
+let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option = 
   (* let _ = (print_string ("\nquery "); flush stdout; ) in  *)
-  let _ = log_text_to_cvc3  "%%% imply\n" in
+  let _ = log_text_to_cvc3  ("%%% imply " ^ imp_no  ^ "\n") in
   let ante_fv = CP.fv ante in  
   let conseq_fv = CP.fv conseq in  
   let _ = cvc3_declare_list_of_vars process (ante_fv @ conseq_fv) in
@@ -473,8 +473,8 @@ let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) 
   r
 
 (*checks the satisfiability of formula f in the active context of cvc3process*)
-let cvc3_checksat (process: cvc3process) (f : CP.formula) : bool option = 
-  let _ = log_text_to_cvc3 ("%%% is_sat " ^ (*sat_no ^*) "\n") in
+let cvc3_checksat (process: cvc3process) (f : CP.formula) (sat_no : string): bool option = 
+  let _ = log_text_to_cvc3 ("%%% is_sat " ^ sat_no ^ "\n") in
   let _ = cvc3_declare_vars_of_formula process f in
   let n_f = prepare_formula_for_sending f in 
   let checksat_str = "CHECKSAT (" ^ n_f ^ ");\n" in
@@ -522,14 +522,14 @@ let cvc3_popto (process: cvc3process) (n: int) =
 (*simplify f formula and return the simplified formula *)
 let cvc3_transform (process: cvc3process) (f: CP.formula) (*: CP.formula*) = ()
   
-let imply_helper (ante : CP.formula) (conseq : CP.formula) : bool option =
+let imply_helper (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
   let process = cvc3_create_process () in  
-  let answer = cvc3_query process ante conseq in
+  let answer = cvc3_query process ante conseq imp_no in
   let _ = cvc3_stop_process process in
   answer
 
-let imply (ante : CP.formula) (conseq : CP.formula) : bool =
-  let result0 = imply_helper ante conseq in
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let result0 = imply_helper ante conseq imp_no in
   let result = match result0 with
 	| Some f -> f
 	| None -> begin
@@ -542,7 +542,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) : bool =
 
 let is_sat_helper (f : CP.formula) (sat_no : string) : bool option =
   let process = cvc3_create_process () in
-  let answer = cvc3_checksat process f in
+  let answer = cvc3_checksat process f sat_no in
   let _ = cvc3_stop_process process in 
   answer
 	     

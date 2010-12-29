@@ -651,7 +651,7 @@ let tp_imply_no_cache ante conseq imp_no timeout =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
-  | Cvc3 -> Cvc3.imply ante conseq
+  | Cvc3 -> Cvc3.imply ante conseq imp_no
   | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
   | Coq -> Coq.imply ante conseq
@@ -870,7 +870,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
   proof_no := !proof_no+1 ;
   let sat_no = (string_of_int !proof_no) in
   Debug.devel_pprint ("SAT #" ^ sat_no) no_pos;
-  
+  Debug.devel_pprint (!print_pure f) no_pos;
   let f = elim_exists f in
   if (CP.isConstTrue f) then true 
   else if (CP.isConstFalse f) then false
@@ -883,6 +883,8 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
+  Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
+  Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
       Some res -> (res,[],None)       
@@ -988,7 +990,7 @@ let incr_sat_no () =
 
 let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool = 
   let sat = is_sat f ((string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) do_cache in
-  Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos;
+  (* Debug.devel_pprint ("SAT #" ^ (string_of_int !sat_no) ^ "." ^ (string_of_int !sat_subno)) no_pos; *)
   sat_subno := !sat_subno+1;
   sat
 ;;
@@ -1016,9 +1018,7 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
   sat
   
 let imply_sub_no ante0 conseq0 imp_no do_cache=
-  Debug.devel_pprint ("IMP #" ^ imp_no ^ "\n") no_pos;
-  (* imp_no := !imp_no+1;*)
-  imply ante0 conseq0 imp_no do_cache
+   imply ante0 conseq0 imp_no do_cache
 
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let _ = Util.push_time prof_lbl in  
