@@ -943,42 +943,45 @@ let find_free_read_write_of_proc proc : (IS.t * IS.t) =
   in 
   (IS.diff rs ws, ws)
 
-module MNV = struct
+module IdentComp = struct
   type t = ident
   let compare = compare
   let hash = Hashtbl.hash
   let equal = ( = )
 end
-module NG = Graph.Imperative.Digraph.Concrete(MNV)
-module NGComponents = Graph.Components.Make(NG)
-module NGPathCheck = Graph.Path.Check(NG)
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
 
-let addin_callgraph_of_exp (cg:NG.t) exp mnv : unit = 
+
+let ngs_union gs = 
+  List.fold_left IGO.union IG.empty gs 
+
+let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t = 
   let f e = 
     match e with
     | CallRecv e ->
-      NG.add_edge cg mnv e.exp_call_recv_method;
-      Some ()
+      Some (IG.add_edge cg mnv e.exp_call_recv_method)
     | CallNRecv e ->
-      NG.add_edge cg mnv e.exp_call_nrecv_method;
-      Some ()
+      Some (IG.add_edge cg mnv e.exp_call_nrecv_method)
     | _ -> None
   in
-  iter_exp exp f 
+  fold_exp exp f ngs_union IG.empty
 
 
-let addin_callgraph_of_proc cg proc : unit = 
+let addin_callgraph_of_proc cg proc : IG.t = 
   match proc.proc_body with
-  | None -> ()
+  | None -> cg
   | Some e -> addin_callgraph_of_exp cg e proc.proc_name
 
-let callgraph_of_prog prog : NG.t = 
-  let cg = NG.create () in
+let callgraph_of_prog prog : IG.t = 
+  let cg = IG.empty in
   let pn pc = pc.proc_name in
   let mns = List.map pn prog.prog_proc_decls in
-  List.iter (NG.add_vertex cg) mns;
-  List.iter (addin_callgraph_of_proc cg) prog.prog_proc_decls;
-  cg
+  let cg = List.fold_right (ex_args IG.add_vertex) mns cg in
+  List.fold_right (ex_args addin_callgraph_of_proc) prog.prog_proc_decls cg
+  
 
 let method_lookup prog n : proc_decl = 
   let fun0 proc = proc.proc_name = n in
@@ -1002,8 +1005,8 @@ let from_H h =
   H.iter fun0 h;
   !r
 
-let ngscc_list cg = NGComponents.scc_list cg 
-let ngscc cg = NGComponents.scc cg
+let ngscc_list cg = IGC.scc_list cg 
+let ngscc cg = IGC.scc cg
 
 let create_progfreeht_of_prog prog = 
   let ht = H.create 10 in
@@ -1030,7 +1033,7 @@ let cmbn_rw a b =
 
 
 let push_freev0 cg ms0 (mss0:(((ident list) * (IS.t * IS.t)) list)) = 
-  let predms0 = List.concat (List.map (NG.pred cg) (fst ms0)) in
+  let predms0 = List.concat (List.map (IG.pred cg) (fst ms0)) in
   let fun0 (ms1:((ident list) * (IS.t * IS.t))) = 
     if (intersect predms0 (fst ms1)) = [] 
     then
