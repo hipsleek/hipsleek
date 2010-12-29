@@ -348,7 +348,6 @@ class sleek_source_view ?text:(text = "") () =
 
   end
 
-
 (***************
  * Main window
  * *************)
@@ -382,6 +381,7 @@ let create_scrolled_win child =
   scroll_win#add child#coerce;
   scroll_win
 
+
 class mainwindow =
   let win = GWindow.window
     ~height:600 ~width:900
@@ -400,8 +400,8 @@ class mainwindow =
     val statusbar = create_statusbar ()
     val residue_view = create_residue_view ()
     (* data *)
-    val mutable current_filename = ""
-    val mutable source_is_changed = false
+    val mutable current_file = None
+    val mutable source_modified = false
       
     initializer
       (* initialize components *)
@@ -479,7 +479,13 @@ class mainwindow =
       let dialog = GWindow.file_chooser_dialog
         ~action:`OPEN
         ~title:"Open Sleek file"
-        ~parent:self () in
+        ~parent:self 
+        () in
+      let dir = match current_file with
+        | Some name -> Filename.dirname name
+        | None -> Filename.current_dir_name
+      in
+      ignore (dialog#set_current_folder dir);
       dialog#add_button_stock `CANCEL `CANCEL;
       dialog#add_select_button_stock `OPEN `OPEN;
       dialog#add_filter (slk_files ());
@@ -492,16 +498,22 @@ class mainwindow =
       res
 
     method replace_source (new_src: string): unit =
+      source_modified <- true;
       source_view#source_buffer#set_text new_src;
-      source_is_changed <- false;
+      source_modified <- false;
       entailment_list#update_source new_src
 
     method open_file (fname: string): unit =
-      current_filename <- fname;
+      current_file <- (Some fname);
       self#set_title (fname ^ " - Sleek");
       self#replace_source (FileUtils.read_from_file fname)
 
     method get_text () = source_view#source_buffer#get_text ()
+
+    method private string_of_current_file () =
+      match current_file with
+      | Some fname -> fname
+      | None -> "New file"
 
     (*********************
      * Actions handlers 
@@ -513,13 +525,18 @@ class mainwindow =
       | Some fname -> self#open_file fname
 
     method private save_handler () =
-      let text = source_view#source_buffer#get_text () in
-      FileUtils.write_to_file current_filename text
+      match current_file with
+      | Some name ->
+          let text = source_view#source_buffer#get_text () in
+          FileUtils.write_to_file name text
+      | None -> ()
 
     method private source_changed_handler () =
-      source_is_changed <- true;
-      self#set_title (current_filename ^ "* - Sleek");
-      entailment_list#update_source (self#get_text ())
+      entailment_list#update_source (self#get_text ());
+      if not source_modified then
+        let fname = self#string_of_current_file () in
+        source_modified <- true;
+        self#set_title (fname ^ "* - Sleek")
 
     method private entailment_list_selection_changed_handler () =
       let entail = entailment_list#get_selected_entailment () in
@@ -544,8 +561,23 @@ class mainwindow =
 (**********************
  * MAIN FUNCTION
  **********************)
+let get_fname () : string option =
+  let len = Array.length Sys.argv in
+  if len = 1 then
+    None
+  else
+    Some (Array.get Sys.argv 1)
+
+let init win =
+  let fname = get_fname () in
+  match fname with
+  | Some name -> win#open_file name
+  | None ->
+      let ex = "./examples/sleek.slk" in
+      if Sys.file_exists ex then win#open_file ex
+
 let _ =
   let win = new mainwindow in
   win#show ();
-  win#open_file "examples/sleek.slk";
+  init win;
   GMain.Main.main ()
