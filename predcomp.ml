@@ -152,7 +152,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 	let atype = Named cls_name in
 	  ((atype, v), pos) in
   let pb_fields = List.map helper2 pbvars in
-  let normal_vvars = CP.difference field_vars pbvars in
+  let normal_vvars = Util.difference_f CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
 	pb_fields @ normal_fields
 
@@ -1601,7 +1601,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 	*)
   let vmap = H.copy vmap0 in
   let _(*v_order*) = gen_bindings_heap prog h unbound_vars vmap in
-  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) pure0 branches in
+  let pure0 = List.fold_left (fun f1 (_, f2) -> CP.And (f1, f2, no_pos)) (MCP.fold_mem_lst (CP.mkTrue no_pos) true true pure0 ) branches in
   let pure = gen_bindings_pure pure0 unbound_vars vmap in
 (*  let _ = print_vmap vmap in *)
 	(* compile *)
@@ -1680,6 +1680,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_dynamic_specs = [];
 					proc_exceptions = [];
 					proc_body = Some seq2;
+          proc_file = "";
 					proc_loc = pos } 
   in
 	disj_proc
@@ -1773,11 +1774,11 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
   let vmap = H.create 103 in
   let _ = List.iter 
 	(fun iv -> H.add vmap iv (HExp ("this", iv, false))) (self :: in_names) in
-  let pbvars0 = gen_partially_bound_params out_params vdef.C.view_un_struc_formula in
+  let pbvars0 = gen_partially_bound_params out_params (C.formula_of_unstruc_view_f vdef) in
 	(* update partially bound vars for vdef *)
   let _ = update_partially_bound vdef pbvars0 in
   let combined_exp, disj_procs, pbvars = 
-	gen_formula prog vdef.C.view_un_struc_formula vmap out_params in
+	gen_formula prog (C.formula_of_unstruc_view_f vdef) vmap out_params in
 	(* generate fields *)
   let fields = ((Named vdef.C.view_data_name, self), pos) 
 	:: (gen_fields vdef.C.view_vars pbvars pos) in
@@ -1792,6 +1793,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_dynamic_specs = [];
 					 proc_body = Some combined_exp;
 					 proc_exceptions = [];
+           proc_file = "";
 					 proc_loc = no_pos } in
   let ddef = { data_name = class_name_of_view vdef.C.view_name;
 			   data_fields = fields;
@@ -1881,8 +1883,8 @@ and gen_partially_bound_params (output_vars : CP.spec_var list) (f0 : formula) :
 		p1 @ p2
   | Base ({formula_base_pure = p})
   | Exists ({formula_exists_pure = p}) ->
-	  let bound_vars = gen_bound_params output_vars p in
-	  let partially_bounds = CP.difference output_vars bound_vars in
+	  let bound_vars = gen_bound_params output_vars (MCP.fold_mem_lst (CP.mkTrue no_pos) true true p) in
+	  let partially_bounds = Util.difference_f CP.eq_spec_var output_vars bound_vars in
 		partially_bounds
 
 (*

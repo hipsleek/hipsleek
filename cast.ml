@@ -9,6 +9,7 @@ open Globals
 
 module F = Cformula
 module P = Cpure
+module MP = Mcpure
 module Err = Error
 module U = Util
 
@@ -16,22 +17,21 @@ type typed_ident = (P.typ * ident)
 
 
 
-and prog_decl = { mutable prog_data_decls : data_decl list;
+and prog_decl = { 
+          mutable prog_data_decls : data_decl list;
 				  mutable prog_view_decls : view_decl list;
 				  prog_proc_decls : proc_decl list;
 				  mutable prog_left_coercions : coercion_decl list;
 				  mutable prog_right_coercions : coercion_decl list }
 	
-and prog_or_branches = 
-		| Prog of prog_decl
-		| Branches of (Cpure.formula * ((string*Cpure.formula)list)*(Cpure.spec_var list))
+and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
 	
 and data_decl = { data_name : ident;
-				  data_fields : typed_ident list;
-				  data_parent_name : ident;
-				  data_invs : F.formula list;
-				  data_methods : proc_decl list }
-	
+		  data_fields : typed_ident list;
+		  data_parent_name : ident;
+		  data_invs : F.formula list;
+		  data_methods : proc_decl list }
+    
 and view_decl = { view_name : ident; 
 				  view_vars : P.spec_var list;
 				  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
@@ -41,187 +41,193 @@ and view_decl = { view_name : ident;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
 				  view_formula : F.struc_formula;
-				  view_user_inv : (P.formula * (branch_label * P.formula) list);
-				  mutable view_x_formula : (P.formula * (branch_label * P.formula) list);
+				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
 				  mutable view_addr_vars : P.spec_var list;
-				  view_un_struc_formula : Cformula.formula; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (Cpure.formula *(Cpure.formula*((branch_label*Cpure.formula)list))) option;}
-	
+				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+				  view_prune_branches: formula_label list;
+				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
+				  view_prune_invariants : (formula_label list * P.b_formula list) list ;
+          view_raw_base_case: Cformula.formula option;}
+  
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
 				  proc_return : P.typ;
 				  proc_static_specs : Cformula.struc_formula;
 				  proc_static_specs_with_pre : Cformula.struc_formula;
 				  proc_dynamic_specs : Cformula.struc_formula;
-				  proc_dynamic_specs_with_pre : Cformula.struc_formula;
+				  (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
 				  proc_by_name_params : P.spec_var list;
 				  proc_body : exp option;
+          proc_file : string;
 				  proc_loc : loc }
 
 (*TODO: does lemma need struc formulas?*)
 
 and coercion_decl = { coercion_name : ident;
-					  coercion_head : F.formula;
-					  coercion_body : F.formula;
-					  coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
-					  (* coercion_proof : exp; *)
-					  coercion_head_exist : F.formula;
-					  coercion_head_view : ident; 
-					  (* the name of the predicate where this coercion can be applied *)
-					  coercion_body_view : ident  (* used for cycles checking *) }
+		      coercion_head : F.formula;
+		      coercion_body : F.formula;
+		      coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
+		      (* coercion_proof : exp; *)
+		      coercion_head_exist : F.formula;
+		      coercion_head_view : ident; 
+		      (* the name of the predicate where this coercion can be applied *)
+		      coercion_body_view : ident  (* used for cycles checking *) }
 
 and coercion_type = 
   | Left
   | Equiv
   | Right
-   
+      
 and sharp_flow = 
-	| Sharp_ct of F.flow_formula
-	| Sharp_v of ident
-	
+  | Sharp_ct of F.flow_formula
+  | Sharp_v of ident
+      
 and sharp_val = 
-	| Sharp_no_val 
-	| Sharp_finally of ident
-	| Sharp_prog_var of typed_ident
-	
+  | Sharp_no_val 
+  | Sharp_finally of ident
+  | Sharp_prog_var of typed_ident
+      
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
-				   exp_assert_assumed_formula : F.formula option;
-				   exp_assert_path_id : formula_label;
-				   exp_assert_pos : loc }
+		   exp_assert_assumed_formula : F.formula option;
+		   exp_assert_path_id : formula_label;
+		   exp_assert_pos : loc }
 
 and exp_assign = { exp_assign_lhs : ident;
-				   exp_assign_rhs : exp;
-				   exp_assign_pos : loc }
+		   exp_assign_rhs : exp;
+		   exp_assign_pos : loc }
 
 and exp_bconst = { exp_bconst_val : bool;
-				   exp_bconst_pos : loc }
+		   exp_bconst_pos : loc }
 
 and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct, i.e. the type of the body *)
-				 exp_bind_bound_var : typed_ident;
-				 exp_bind_fields : typed_ident list;
-				 exp_bind_body : exp;
-				 exp_bind_path_id : control_path_id;
-				 exp_bind_pos : loc }
+		 exp_bind_bound_var : typed_ident;
+		 exp_bind_fields : typed_ident list;
+		 exp_bind_body : exp;
+		 exp_bind_imm : bool;
+		 exp_bind_path_id : control_path_id;
+		 exp_bind_pos : loc }
 
 and exp_block = { exp_block_type : P.typ;
-				  exp_block_body : exp;
-				  exp_block_local_vars : typed_ident list;
-				  exp_block_pos : loc }
+		  exp_block_body : exp;
+		  exp_block_local_vars : typed_ident list;
+		  exp_block_pos : loc }
 
 and exp_cast = { exp_cast_target_type : P.typ;
-				 exp_cast_body : exp;
-				 exp_cast_pos : loc }
+		 exp_cast_body : exp;
+		 exp_cast_pos : loc }
 
 and exp_cond = { exp_cond_type : P.typ;
-				 exp_cond_condition : ident;
-				 exp_cond_then_arm : exp;
-				 exp_cond_else_arm : exp;
-				 exp_cond_path_id : control_path_id;
-				 exp_cond_pos : loc }
+		 exp_cond_condition : ident;
+		 exp_cond_then_arm : exp;
+		 exp_cond_else_arm : exp;
+		 exp_cond_path_id : control_path_id;
+		 exp_cond_pos : loc }
 
 and exp_debug = { exp_debug_flag : bool;
-				  exp_debug_pos : loc }
+		  exp_debug_pos : loc }
 
 and exp_fconst = { exp_fconst_val : float;
-				   exp_fconst_pos : loc }
+		   exp_fconst_pos : loc }
 
 (* instance call *)
 and exp_icall = { exp_icall_type : P.typ;
-				  exp_icall_receiver : ident;
-				  exp_icall_receiver_type : P.typ;
-				  exp_icall_method_name : ident;
-				  exp_icall_arguments : ident list;
-				  exp_icall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
-				  exp_icall_path_id : control_path_id;
-				  exp_icall_pos : loc }
+		  exp_icall_receiver : ident;
+		  exp_icall_receiver_type : P.typ;
+		  exp_icall_method_name : ident;
+		  exp_icall_arguments : ident list;
+		  (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+		  exp_icall_path_id : control_path_id;
+		  exp_icall_pos : loc }
 
 and exp_iconst = { exp_iconst_val : int;
-				   exp_iconst_pos : loc }
+		   exp_iconst_pos : loc }
 
 and exp_new = { exp_new_class_name : ident;
-				exp_new_parent_name : ident;
-				exp_new_arguments : typed_ident list;
-				exp_new_pos : loc }
+		exp_new_parent_name : ident;
+		exp_new_arguments : typed_ident list;
+		exp_new_pos : loc }
 
 and exp_return = { exp_return_type : P.typ;
-				   exp_return_val : ident option;
-				   exp_return_pos : loc }
+		   exp_return_val : ident option;
+		   exp_return_pos : loc }
 
 (* static call *)
 and exp_scall = { exp_scall_type : P.typ;
-				  exp_scall_method_name : ident;
-				  exp_scall_arguments : ident list;
-				  exp_scall_visible_names : P.spec_var list; (* list of visible names at location the call is made *)
-				  exp_scall_path_id : control_path_id;
-				  exp_scall_pos : loc }
+		  exp_scall_method_name : ident;
+		  exp_scall_arguments : ident list;
+		  (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+		  exp_scall_path_id : control_path_id;
+		  exp_scall_pos : loc }
 
 and exp_seq = { exp_seq_type : P.typ;
-				exp_seq_exp1 : exp;
-				exp_seq_exp2 : exp;
-				exp_seq_pos : loc }
-				
+		exp_seq_exp1 : exp;
+		exp_seq_exp2 : exp;
+		exp_seq_pos : loc }
+    
 and exp_sharp = {
-				   exp_sharp_type : P.typ;
-				   exp_sharp_flow_type :sharp_flow;(*the new flow*)
-				   exp_sharp_val :sharp_val;(*returned value*)
-				   exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
-				   exp_sharp_path_id : control_path_id;
-				   exp_sharp_pos : loc;
-				}
-				
+  exp_sharp_type : P.typ;
+  exp_sharp_flow_type :sharp_flow;(*the new flow*)
+  exp_sharp_val :sharp_val;(*returned value*)
+  exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
+  exp_sharp_path_id : control_path_id;
+  exp_sharp_pos : loc;
+}
+    
 and exp_catch = { 
-				  exp_catch_flow_type : nflow ;
-				  exp_catch_flow_var : ident option;
-				  exp_catch_var : typed_ident option;
-				  exp_catch_body : exp;			
-				  exp_catch_pos : loc }
-				  				  
+  exp_catch_flow_type : nflow ;
+  exp_catch_flow_var : ident option;
+  exp_catch_var : typed_ident option;
+  exp_catch_body : exp;			
+  exp_catch_pos : loc }
+    
 and exp_try = { exp_try_type : P.typ;
 				exp_try_body : exp;
-				exp_try_path_id : control_path_id;
-				exp_catch_clause : exp_catch ;
+				exp_try_path_id : control_path_id_strict;
+				exp_catch_clause : exp ;
 				exp_try_pos : loc }
 
 and exp_this = { exp_this_type : P.typ;
-				 exp_this_pos : loc }
+		 exp_this_pos : loc }
 
 and exp_var = { exp_var_type : P.typ;
-				exp_var_name : ident;
-				exp_var_pos : loc }
+		exp_var_name : ident;
+		exp_var_pos : loc }
 
 and exp_var_decl = { exp_var_decl_type : P.typ;
-					 exp_var_decl_name : ident;
-					 exp_var_decl_pos : loc }
+		     exp_var_decl_name : ident;
+		     exp_var_decl_pos : loc }
 
 and exp_while = { exp_while_condition : ident;
-				  exp_while_body : exp;
-				  exp_while_spec : Cformula.struc_formula (*multi_spec*);
-				  exp_while_path_id : control_path_id;
-				  exp_while_pos : loc }
+		  exp_while_body : exp;
+		  exp_while_spec : Cformula.struc_formula (*multi_spec*);
+		  exp_while_path_id : control_path_id;
+		  exp_while_pos : loc }
 
 and exp_dprint = { exp_dprint_string : ident;
-				   exp_dprint_visible_names : ident list;
-				   exp_dprint_pos : loc }
+		   exp_dprint_visible_names : ident list;
+		   exp_dprint_pos : loc }
 
 and exp_unfold = { exp_unfold_var : P.spec_var;
-				   exp_unfold_pos : loc }
+		   exp_unfold_pos : loc }
 
 and exp_check_ref = { exp_check_ref_var : ident;
-					  exp_check_ref_pos : loc }
+		      exp_check_ref_pos : loc }
 
 and exp_java = { exp_java_code : string;
-				 exp_java_pos : loc}
+		 exp_java_pos : loc}
 and exp_label = {
-				exp_label_type : P.typ;
-				exp_label_path_id : (control_path_id * path_label);
-				exp_label_exp: exp;}
-			 
+  exp_label_type : P.typ;
+  exp_label_path_id : (control_path_id * path_label);
+  exp_label_exp: exp;}
+    
 and exp = (* expressions keep their types *)
-	(* for runtime checking *)
+    (* for runtime checking *)
   | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
-	  (* standard expressions *)
+      (* standard expressions *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -229,21 +235,22 @@ and exp = (* expressions keep their types *)
   | Block of exp_block
   | Cond of exp_cond
   | Cast of exp_cast
+  | Catch of exp_catch
   | Debug of exp_debug
   | Dprint of exp_dprint
   | FConst of exp_fconst
-	  (*
-		| FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
-	  (* v.f --> (type of f, v, (f, position of f in field list), pos *)
-		| FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
-	  (* field assignment is flattened to form x.f = y only *)
-	  *)
+      (*
+	| FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
+      (* v.f --> (type of f, v, (f, position of f in field list), pos *)
+	| FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
+      (* field assignment is flattened to form x.f = y only *)
+      *)
   | ICall of exp_icall
   | IConst of exp_iconst
   | New of exp_new
   | Null of loc
   | Print of (int * loc)
- (* | Return of exp_return*)
+      (* | Return of exp_return*)
   | SCall of exp_scall
   | Seq of exp_seq
   | This of exp_this
@@ -255,6 +262,142 @@ and exp = (* expressions keep their types *)
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
+
+(* transform each proc by a map function *)
+let map_proc (prog:prog_decl)
+  (f_p : proc_decl -> proc_decl) : prog_decl =
+  { prog with
+      prog_proc_decls = List.map (f_p) prog.prog_proc_decls;
+  }
+
+(* process each proc into some data which are then combined,
+   e.g. verify each method and collect the failure points
+*)
+let fold_proc (prog:prog_decl)
+  (f_p : proc_decl -> 'b) (f_comb: 'b -> 'b -> 'b) (zero:'b) : 'b =
+  List.fold_left (fun x p -> f_comb (f_p p) x) 
+		zero prog.prog_proc_decls
+
+(* iterate each proc to check for some property *)
+let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
+  fold_proc prog (f_p) (fun _ _ -> ()) ()
+
+let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
+  let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
+    match (f in_arg e) with
+      | Some e1 -> e1
+      | None  -> 
+	        let n_arg = f_args in_arg e in
+	        match e with
+	          | Assert _
+	          | Java _
+	          | CheckRef _ 
+	          | BConst _
+	          | Debug _
+	          | Dprint _
+	          | FConst _
+	          | ICall _
+	          | IConst _
+	          | New _
+	          | Null _
+	          | Print _
+	          | SCall _
+	          | This _
+	          | Time _
+	          | Var _
+	          | VarDecl _
+	          | Unfold _
+	          | Unit _
+	          | Sharp _
+		          -> (e, zero)
+	          | Label b ->
+		            let e1,r1 = helper n_arg b.exp_label_exp  in
+		            (Label { b with exp_label_exp = e1;}, r1)
+	          | Assign b ->
+		            let e1,r1 = helper n_arg b.exp_assign_rhs in
+		            (Assign { b with exp_assign_rhs = e1; }, r1)
+
+	          | Bind b ->
+		            let e1,r1 = helper n_arg b.exp_bind_body  in
+		            (Bind { b with exp_bind_body = e1; }, r1)
+
+	          | Block b ->
+		            let e1,r1 = helper n_arg b.exp_block_body in
+		            (Block { b with exp_block_body = e1; }, r1)		         
+	          | Cond b ->
+		            let e1,r1 = helper n_arg b.exp_cond_then_arm in
+		            let e2,r2 = helper n_arg b.exp_cond_else_arm in
+		            let r = comb_f [r1;r2] in
+		            (Cond {b with
+			            exp_cond_then_arm = e1;
+			            exp_cond_else_arm = e2;},r)
+	          | Cast b -> 
+                    let e1,r1 = helper n_arg b.exp_cast_body  in  
+		            (Cast {b with exp_cast_body = e1},r1)
+              | Catch b ->
+                    let e1,r1 = helper n_arg b.exp_catch_body in
+                    (Catch {b with exp_catch_body = e1},r1)
+	          | Seq b ->
+		            let e1,r1 = helper n_arg b.exp_seq_exp1 in 
+		            let e2,r2 = helper n_arg b.exp_seq_exp2 in 
+		            let r = comb_f [r1;r2] in
+		            (Seq {b with exp_seq_exp1 = e1;exp_seq_exp2 = e2;},r)
+
+	          | While b ->
+		            let e1,r1 = helper n_arg b.exp_while_body in 
+		            (While { b with exp_while_body = e1; }, r1)
+
+	          | Try b ->
+                    let e1,r1 = helper n_arg b.exp_try_body in 
+                    let e2,r2 = helper n_arg b.exp_catch_clause in
+		            (Try { b with exp_try_body = e1; exp_catch_clause=e2}, (comb_f [r1;r2]))
+
+  in helper init_arg e
+
+
+
+  (*this maps an expression by passing an argument*)
+let map_exp_args (e:exp) (arg:'a) (f:'a -> exp -> exp option) (f_args: 'a -> exp -> 'a) : exp =
+  let f1 ac e = push_opt_void_pair (f ac e) in
+  fst (transform_exp e arg f1 f_args voidf ())
+
+  (*this maps an expression without passing an argument*)
+let map_exp (e:exp) (f:exp->exp option) : exp = 
+  (* fst (transform_exp e () (fun _ e -> push_opt_void_pair (f e)) idf2  voidf ()) *)
+  map_exp_args e () (fun _ e -> f e) idf2 
+
+  (*this computes a result from expression passing an argument*)
+let fold_exp_args (e:exp) (init_a:'a) (f:'a -> exp-> 'b option) (f_args: 'a -> exp -> 'a) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  let f1 ac e = match (f ac e) with
+    | Some r -> Some (e,r)
+    | None ->  None in
+  snd(transform_exp e init_a f1 f_args comb_f zero)
+ 
+  (*this computes a result from expression without passing an argument*)
+let fold_exp (e:exp) (f:exp-> 'b option) (comb_f: 'b list->'b) (zero:'b) : 'b =
+  fold_exp_args e () (fun _ e-> f e) voidf2 comb_f zero
+
+  (*this iterates over the expression and passing an argument*)
+let iter_exp_args (e:exp) (init_arg:'a) (f:'a -> exp-> unit option) (f_args: 'a -> exp -> 'a) : unit =
+  fold_exp_args  e init_arg f f_args voidf ()
+
+  (*this iterates over the expression without passing an argument*)
+let iter_exp (e:exp) (f:exp-> unit option)  : unit =  iter_exp_args e () (fun _ e-> f e) voidf2
+
+  (*this computes a result from expression passing an argument with side-effects*)
+let fold_exp_args_imp (e:exp)  (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp-> 'b option)
+  (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) (f_comb:'b list->'b) (zero:'b) : 'b =
+  let fn (arg,imp) e = match (f arg imp e) with
+    | Some r -> Some (e,r)
+    | None -> None in
+  let fnargs (arg,imp) e = ((f_args arg imp e), (f_imp imp e)) in
+  snd(transform_exp e (arg,imp) fn fnargs f_comb zero)
+
+  (*this iterates over the expression and passing an argument*)
+let iter_exp_args_imp e (arg:'a) (imp:'c ref) (f:'a -> 'c ref -> exp -> unit option)
+  (f_args: 'a -> 'c ref -> exp -> 'a) (f_imp: 'c ref -> exp -> 'c ref) : unit =
+  fold_exp_args_imp e arg imp f f_args f_imp voidf ()
+  
 
 let distributive_views : string list ref = ref ([])
 
@@ -329,9 +472,9 @@ let rec type_of_exp (e : exp) = match e with
 			exp_icall_receiver = _;
 			exp_icall_method_name = _;
 			exp_icall_arguments = _;
-			exp_icall_visible_names = _;
 			exp_icall_pos = _}) -> Some t
   | Cast ({exp_cast_target_type = t}) -> Some t
+  | Catch _ -> Some void_type
   | Cond ({exp_cond_type = t;
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = _;
@@ -354,7 +497,6 @@ let rec type_of_exp (e : exp) = match e with
   | SCall ({exp_scall_type = t;
 			exp_scall_method_name = _;
 			exp_scall_arguments = _;
-			exp_scall_visible_names = _;
 			exp_scall_pos = _}) -> Some t
   | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
   | This ({exp_this_type = t}) -> Some t
@@ -465,6 +607,11 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 	end
   | [] -> []
 *)
+let lookup_view_invs rem_br v_def = 
+  try 
+    snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)
+  with | Not_found -> []
+
 
 let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
   | p :: rest -> begin
@@ -502,6 +649,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_block_local_vars = _;
 			exp_block_pos = _}) -> callees_of_exp e
   | Cast ({exp_cast_body = e}) -> callees_of_exp e
+  | Catch e-> callees_of_exp e.exp_catch_body
   | Cond ({exp_cond_type = _;
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = e1;
@@ -516,7 +664,6 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_icall_receiver = _;
 			exp_icall_method_name = n;
 			exp_icall_arguments = _;
-			exp_icall_visible_names = _; 
 			exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
   | IConst _ -> []
   | New _ -> []
@@ -526,7 +673,6 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | SCall ({exp_scall_type = _;
 			exp_scall_method_name = n;
 			exp_scall_arguments = _;
-			exp_scall_visible_names = _; 
 			exp_scall_pos = _}) -> [unmingle_name n]
   | Seq ({exp_seq_type = _;
 		  exp_seq_exp1 = e1;
@@ -541,7 +687,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_while_body = e;
 			exp_while_spec = _;
 			exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
-  | Try b -> U.remove_dups ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause.exp_catch_body))
+  | Try b -> U.remove_dups ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
 
 let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
@@ -632,6 +778,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
+                 F.h_formula_data_remaining_branches = None;
+                 F.h_formula_data_pruning_conditions = [];
 							   F.h_formula_data_pos = pos}) in
 		(* generate extensions for the rest of the fields *)
 	  let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
@@ -645,6 +793,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
+                     F.h_formula_data_remaining_branches = None;
+                     F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				  ext_h
 			  else
@@ -659,6 +809,8 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
+                     F.h_formula_data_remaining_branches = None;
+                     F.h_formula_data_pruning_conditions = [];
 										 F.h_formula_data_pos = pos}) in
 				let rest_exts = gen_exts ext_link_p link_p rest_fields (cdef2 :: rest) in
 				let ext = F.mkStarH ext_h rest_exts pos in
@@ -728,6 +880,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Print _
   | VarDecl _
   | Cast _
+  | Catch _
   | Block _
   | FConst _
   | Assert _ 
@@ -756,6 +909,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos
   | Cast b -> b.exp_cast_pos
+  | Catch b -> b.exp_catch_pos
   | Debug b -> b.exp_debug_pos
   | Dprint b -> b.exp_dprint_pos
   | Assign b -> b.exp_assign_pos
@@ -781,6 +935,10 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | While b -> b.exp_while_pos
   | Try b -> b.exp_try_pos
   | Label b -> pos_of_exp b.exp_label_exp
+	  
+let get_catch_of_exp e = match e with
+	| Catch e -> e
+	| _  -> Error.report_error {Err.error_loc = pos_of_exp e; Err.error_text = "malformed expression, expecting catch clause"}
   
   
 let rec check_proper_return cret_type exc_list f = 
@@ -835,3 +993,6 @@ let rec check_proper_return cret_type exc_list f =
 		| F.EAssume (_,b,_)-> if (F.isAnyConstFalse b)||(F.isAnyConstTrue b) then () else check_proper_return_f b
 		in
 	List.iter helper f
+
+  
+let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))

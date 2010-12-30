@@ -3,7 +3,6 @@
 type ident = string
 type constant_flow = ident
 
-
 type nflow = (int*int)(*numeric representation of flow*)
 
 	
@@ -40,7 +39,28 @@ and prim_type =
 type mode = 
   | ModeIn
   | ModeOut
-     
+
+let idf (x:'a) : 'a = x
+let idf2 v e = v 
+let voidf e = ()
+let voidf2 e f = ()
+let nonef v = None
+let somef v = Some v
+let or_list = List.fold_left (||) false
+let and_list = List.fold_left (&&) true
+
+let push_opt_void_pair e = match e with
+  | None -> None
+  | Some s -> Some (s,()) 
+
+let push_opt_val opt v = match opt with
+  | None -> None
+  | Some s -> Some (s, v)
+
+let push_opt_val_rev opt v = match opt with
+  | None -> None
+  | Some s -> Some (v, s)
+
 (* global constants *)
 
 let no_pos = 
@@ -77,6 +97,10 @@ let res = "res"
 let self = "self"
 
 let this = "this"
+
+(*in case the option of saving provers temp files to a different directory is enabled, the value of 
+  this variable is going to be changed accordingly in method set_tmp_files_path *)
+(*let tmp_files_path = "/tmp/"*)
 
 (* command line options *)
 
@@ -126,6 +150,8 @@ let anon_exist = ref true
 
 let simplify_pure = ref false
 
+let enable_norm_simp = ref false
+
 let n_xpure = ref 1
 
 let check_coercions = ref false
@@ -138,7 +164,7 @@ let print_mvars = ref false
 
 let enable_sat_statistics = ref false
 
-let wrap_exists_implicit_explicit = ref true
+let wrap_exists_implicit_explicit = ref false
 
 let profiling = ref false
 
@@ -152,32 +178,36 @@ let print_err_sleek = ref false
 
 let enable_prune_cache = ref true
 
+let enable_counters = ref true
+
+let enable_fast_imply = ref false
+
+let failure_analysis = ref false
+
 let seq_to_try = ref false
 
 let print_input = ref false
 
 let pass_global_by_value = ref false
 
-let allow_pruning = ref true
+let allow_pred_spec = ref false
+
 let prune_cnt_limit = ref 2
-let allow_umemo_slicing = ref true
-(*let allow_imemo_slicing = ref true
-let agressive_unsat = ref false
-let agressive_imply = ref false*)
 
-let prune_cnt = ref 0
-let dropped_branches = ref 0
-let saved_unfolds = ref 0
-let total_unfold_disjs = ref 0
+let suppress_warning_msg = ref false
+let disable_elim_redundant_ctr = ref false
 
+let enable_strong_invariant = ref false
+let enable_aggressive_prune = ref false
 
+let exhaust_match = ref false
 
+let memo_verbosity = ref 2
 
 let profile_threshold = 0.5 
 
-let true_imply_count = ref 0
-let false_imply_count = ref 0
-let true_sat_count = ref 0
+let no_cache_formula = ref false
+
 
 let add_count (t: int ref) = 
 	t := !t+1
@@ -209,8 +239,33 @@ let fresh_formula_label (s:string) :formula_label =
 	(!branch_point_id,s)
   
 let fresh_branch_point_id (s:string) : control_path_id = Some (fresh_formula_label s)
+let fresh_strict_branch_point_id (s:string) : control_path_id_strict = (fresh_formula_label s)
 
+let tmp_files_path = ref ""
 
+(*path for the temporary files used by the prover. If you change this path here it is 
+  mandatory to also change the value of TMP_FILES_PATH in Makefile accordingly to the changes made here*)
+let set_tmp_files_path () = 	
+	begin
+      (try
+		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (); );
+	  (try
+		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin()) 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (); );
+      (try
+		ignore (Unix.mkdir ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766) 
+      with
+		Unix.Unix_error (_, _, _) -> (););
+	  (try
+		ignore (Unix.chmod ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/") 0o766;)		 
+      with
+		Unix.Unix_error (_, _, _) -> (););
+	tmp_files_path := ("/tmp/" ^ Unix.getlogin() ^ "/prover_tmp_files/")
+	end
+	
 let fresh_int () =
   seq_number := !seq_number + 1;
   !seq_number

@@ -90,6 +90,7 @@ let write_to_file java_code file_name : unit =
   - All input files are put in a subdirectory of the working directory.
   The name of the subdirectory is "output".
 *)
+
 let rec compile_prog (prog : C.prog_decl) source : unit =
   let java_code = Buffer.create 10240 in
 	(* Compile data declarations *)
@@ -162,7 +163,7 @@ and compile_proc_body (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit
 				   C.proc_body = Some cbody} in
 	  Cjava.java_of_proc_decl prog cproc java_code
   end
-
+  
 and compile_proc_spec (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit = 
 	let r = Cformula.split_struc_formula proc.C.proc_static_specs in
 	match r with
@@ -201,7 +202,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 	let farg_spec_vars = List.map2 
 	  (fun n -> fun t -> CP.SpecVar (t, n, Unprimed)) 
 	  farg_names farg_types in
-	let output_vars = CP.difference pre_fv farg_spec_vars in
+	let output_vars = Util.difference_f CP.eq_spec_var pre_fv farg_spec_vars in
 	  (* build vmap *)
 	let vmap = H.create 103 in
 	let _ = List.map 
@@ -212,7 +213,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 	let _ = Predcomp.precond_output := [] in
 	  (* generate fields *)
 	let pbvars = get_partially_bound_vars prog pre in
-	let fields_tmp = CP.remove_dups (farg_spec_vars @ pre_fv) in
+	let fields_tmp = Util.remove_dups_f (farg_spec_vars @ pre_fv) CP.eq_spec_var in
 	let fields = gen_fields fields_tmp pbvars pos in
 	  (* parameters for traverse *)
 	let check_proc = { I.proc_name = "traverse";
@@ -225,6 +226,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;
 					   I.proc_exceptions = [];
+             I.proc_file = "";
 					   I.proc_loc = no_pos } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_PRE";
 				 I.data_fields = fields;
@@ -273,9 +275,9 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 	let res = CP.SpecVar (proc.C.proc_return, "res", Unprimed) in
 	let fields_tmp = 
 	  if proc.C.proc_return = C.void_type then
-		CP.remove_dups (farg_spec_vars @ post_fv @ pre_outvars)
+		Util.remove_dups_f (farg_spec_vars @ post_fv @ pre_outvars) CP.eq_spec_var
 	  else
-		CP.remove_dups (res :: farg_spec_vars @ post_fv @ pre_outvars) 
+		Util.remove_dups_f (res :: farg_spec_vars @ post_fv @ pre_outvars) CP.eq_spec_var
 	in
 (*
 	let _ = print_string ("Compiling " ^ proc.C.proc_name ^ "\n") in
@@ -293,6 +295,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;
 					   I.proc_exceptions = [];
+             I.proc_file = "";
 					   I.proc_loc = no_pos } in
 	let ddef = { I.data_name = (C.unmingle_name proc.C.proc_name) ^ "_POST";
 				 I.data_fields = fields;

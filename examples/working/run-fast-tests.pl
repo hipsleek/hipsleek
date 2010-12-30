@@ -3,14 +3,22 @@
 use File::Find;
 use File::Basename;
 use Getopt::Long;
+use Sys::Hostname;
+use File::NCopy;
+use File::Path 'rmtree';
+use Cwd;
 
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
-			"root=s" => \$root);
+			"root=s" => \$root,
+			"tp=s" => \$prover,
+			"flags=s" => \$flags,
+			"copy-to-home21" => \$home21 
+			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] hip_tr|hip sleek\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
 	exit(0);
 }
 if($root){
@@ -22,11 +30,55 @@ if($root){
 		$exempl_path = ".";
 		$exec_path = '../..';
 	}
+	
+if($prover){
+	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
+		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
+		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
+	if (!exists($provers{$prover})){		
+		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
+		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
+		exit(0);
+	}
+}else{
+	$prover = "omega";
+}
+
+if("$flags"){
+	$script_arguments = "$flags";
+	if (!($script_arguments =~ "-tp ")){
+		$script_arguments = $script_arguments." -tp ".$prover;
+	}
+}
+else{
+	$script_arguments = " -tp ".$prover;
+}
+
+if($home21){
+	$current_dir = getcwd();
+	$current_hostname = hostname;
+	#if ($current_hostname eq "loris-21"){
+	#	print "The current host is already loris-21";
+	#	exit(0);
+	#}
+	$target_dir = "/home21/".getlogin()."/sleek_tmp_".getppid();
+	mkdir $target_dir or die "\nerror: Could not create directory $target_dir\n";
+	my $cp = File::NCopy->new(recursive => 1);
+    $cp->copy("$exec_path/*", $target_dir) or die "Could not perform rcopy of $source_dir to $target_dir: $!";
+	$exec_path = "$target_dir";
+	$exempl_path = "$target_dir/examples/working";
+	if($root){
+		chdir("$root") or die "Can't chdir to $root $!";
+	}else{
+		chdir("$target_dir") or die "Can't chdir to $target_dir $!"; 
+	}	
+}
+
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip";
-$sleek = "$exec_path/sleek";
+$hip = "$exec_path/hip ";
+$sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
@@ -34,7 +86,7 @@ $output_file = "log";
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
-				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
+#				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
 				["avl-bind.ss",9,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
 					"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
 					#"insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"
@@ -129,8 +181,7 @@ $output_file = "log";
 				["qsort.ss",3,	"partition","SUCCESS",
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
-				["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS",
-									"partition1","SUCCESS"],
+#				["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS","partition1","SUCCESS"],
 				["rb.ss",18,"rotate_case_3","SUCCESS",
 							"case_2","SUCCESS",
 							"rotate_case_3r","SUCCESS",
@@ -187,13 +238,14 @@ $output_file = "log";
                                   "insert","SUCCESS",
                                   "delete_last","SUCCESS",
                                   "main","SUCCESS"],
-		        ["global-mutual-rec.ss",2,"decrease1","SUCCESS",
-                                          "decrease2","SUCCESS"]
+		        ["global-mutual-rec.ss",3,"decrease1","SUCCESS",
+                                          "decrease2","SUCCESS",
+										  "main","SUCCESS"]
 				]);
 # list of file, string with result of each entailment....
 %sleek_files=(
 		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
-					["sleek1.slk","Valid."],
+					["sleek1.slk","Fail."],
 					["sleek10.slk","Valid.Fail."],
 					["sleek2.slk","Fail.Valid.Fail.Fail.Valid.Valid.Valid.Fail."],
 					["sleek3.slk","Valid.Fail.Valid."],
@@ -201,7 +253,11 @@ $output_file = "log";
 					["sleek6.slk","Valid.Valid."],
 					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
 					["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid."]]				
+					["sleek9.slk","Valid."],
+                                        ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+			                ["imm/imm2.slk", "Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+			                ["imm/imm3.slk", "Fail.Fail.Valid.Valid.Valid.Valid."],
+			                ["imm/imm4.slk", "Valid.Fail."]]				
 			);
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
@@ -216,7 +272,10 @@ if ($error_count > 0) {
 }
 else
 	{print "All test results were as expected.\n";}
-
+if($home21){
+	chdir("/home") or die "Can't chdir to $target_dir $!";
+	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
+}
 exit(0);
 
 
@@ -227,8 +286,8 @@ sub hip_process_file {
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
-			#print "$hip $exempl_path/hip/$test->[0] 2>&1";
-			$output = `$hip $exempl_path/hip/$test->[0] 2>&1`;
+			#print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1 \n";
+			$output = `$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
@@ -253,7 +312,7 @@ sub sleek_process_file  {
 		foreach $test (@{$t_list})
 			{
 			print "Checking $test->[0]\n";
-			$output = `$sleek $exempl_path/sleek/$test->[0] 2>&1`;
+			$output = `$sleek $script_arguments $exempl_path/sleek/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 	        print LOGFILE "$output";
 			$pos = 0;

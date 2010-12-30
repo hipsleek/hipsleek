@@ -39,17 +39,17 @@ and formula =
   | Or of formula_or
 
 and formula_base = { formula_base_heap : h_formula;
-					 formula_base_pure : P.formula;
-					 formula_base_flow : flow_formula;
+                     formula_base_pure : P.formula;
+                     formula_base_flow : flow_formula;
                      formula_base_branches : (branch_label * P.formula) list;
-					 formula_base_pos : loc }
+                     formula_base_pos : loc }
 
 and formula_exists = { formula_exists_qvars : (ident * primed) list;
-					   formula_exists_heap : h_formula;
-					   formula_exists_pure : P.formula;
-					   formula_exists_flow : flow_formula;
+                       formula_exists_heap : h_formula;
+                       formula_exists_pure : P.formula;
+                       formula_exists_flow : flow_formula;
                        formula_exists_branches : (branch_label * P.formula) list;
-					   formula_exists_pos : loc }
+                       formula_exists_pos : loc }
 
 and flow_formula = constant_flow				   
     
@@ -252,11 +252,11 @@ and mkExists (qvars : (ident * primed) list) (h : h_formula) (p : P.formula) flo
 		mkFalse flow pos
 	  else
 		Exists { formula_exists_qvars = qvars;
-				 formula_exists_heap = h;
-				 formula_exists_pure = p;
-				 formula_exists_flow = flow;
-                 formula_exists_branches = br;
-				 formula_exists_pos = pos }
+             formula_exists_heap = h;
+             formula_exists_pure = p;
+             formula_exists_flow = flow;
+             formula_exists_branches = br;
+             formula_exists_pos = pos }
 
 and mkStar f1 f2 pos = match f1 with
   | HFalse -> HFalse
@@ -382,18 +382,40 @@ and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 		Util.difference (h_fv b.formula_exists_heap) b.formula_exists_qvars
 	| Or b-> Util.remove_dups ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
-and struc_free_vars (f0:struc_formula):(ident*primed) list= 
+and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list= 
 	let helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
-					let fvc = struc_free_vars b.formula_ext_continuation in
-					Util.remove_dups (Util.difference (fvb@fvc) (b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst @ b.formula_ext_exists))
+					let fvc = struc_free_vars b.formula_ext_continuation with_inst in
+					Util.remove_dups (Util.difference (fvb@fvc) 
+           ( (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists))
 		| ECase b -> 
 				let fvc = List.fold_left (fun a (c1,c2)-> 
-				a@(struc_free_vars c2)@(Ipure.fv c1)) [] b.formula_case_branches in
+				a@(struc_free_vars c2 with_inst)@(Ipure.fv c1)) [] b.formula_case_branches in
 				Util.remove_dups fvc		
 		| EAssume (b,_)-> all_fv b in
 	Util.remove_dups (List.concat (List.map helper f0))
+ 
+and struc_split_fv (f0:struc_formula) with_inst:((ident*primed) list) * ((ident*primed) list)= 
+	let helper f = match f with
+		| EBase b -> 
+					let fvb = all_fv b.formula_ext_base in
+					let prc,psc = struc_split_fv b.formula_ext_continuation with_inst in
+          let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
+					(Util.remove_dups (Util.difference (fvb@prc) rm),(Util.difference psc rm))
+		| ECase b -> 
+				let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
+              let prc, psc = struc_split_fv c2 with_inst in
+              ((a1@prc@(Ipure.fv c1)),psc@a2)
+          ) ([],[]) b.formula_case_branches in
+				(Util.remove_dups prl,Util.remove_dups psl)		
+		| EAssume (b,_)-> ([],all_fv b) in
+  let vl = List.map helper f0 in
+  let prl, pcl = List.split vl in
+	(Util.remove_dups (List.concat prl), Util.remove_dups (List.concat pcl))
+ 
+
+  
 and all_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> Util.remove_dups 
 			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))
@@ -405,17 +427,17 @@ and all_fv (f:formula):(ident*primed) list = match f with
 	| Or b-> Util.remove_dups ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))
 	
 and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
-  | Base ({formula_base_heap = h; 
-		   formula_base_pure = p; 
-           formula_base_branches = b;
-		   formula_base_flow = f;
-		   formula_base_pos = pos}) -> mkExists qvars h p f b pos
+  | Base ({ formula_base_heap = h; 
+            formula_base_pure = p; 
+            formula_base_branches = b;
+           formula_base_flow = f;
+           formula_base_pos = pos}) -> mkExists qvars h p f b pos
   | Exists ({formula_exists_qvars = qvs; 
-			 formula_exists_heap = h; 
-			 formula_exists_pure = p; 
-			 formula_exists_flow = f;
+             formula_exists_heap = h; 
+             formula_exists_pure = p; 
+             formula_exists_flow = f;
              formula_exists_branches = b;
-			 formula_exists_pos = pos}) -> 
+             formula_exists_pos = pos}) -> 
 	  let new_qvars = Util.remove_dups (qvs @ qvars) in
 		mkExists new_qvars h p f b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
@@ -1269,3 +1291,164 @@ let rec helper f = match f with
 List.map helper f 
 
 and subst_stub_flow_struc (t:string) (f:struc_formula) : struc_formula = subst_flow_of_struc_formula stub_flow t f	
+
+
+(* normalization of the heap formula *)
+(* emp & emp * K == K *)
+
+(* D@I@NE & emp * K *)
+(* D@I & D@W    * K *)
+(* D@I & D@I@NE * K@W *)
+
+
+(* @NE = non-empty *)
+(* @I = all immutable *)
+(* @W = at least one W *)
+
+(* KI = KI*KI *)
+
+
+let rec normalize_h_formula (h : h_formula) : h_formula = match h with
+  | Phase({h_formula_phase_rd = h1;
+	 h_formula_phase_rw = h2;
+	 h_formula_phase_pos = pos
+	  }) ->
+      (* conj in read phase -> split into two separate read phases *)
+      let rd_phase = normalize_h_formula_rd_phase h1 in
+      let wr_phase = normalize_h_formula h2 in 
+      let res = insert_wr_phase rd_phase wr_phase in
+	res
+  | Star({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos
+	 }) ->
+      Star({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = normalize_h_formula h2;
+	  h_formula_star_pos = pos
+	 }) 
+  | Conj({h_formula_conj_h1 = h1;
+	 h_formula_conj_h2 = h2;
+	 h_formula_conj_pos = pos
+	 }) ->
+	normalize_h_formula_rd_phase h
+  | _ -> h
+    
+and contains_phase (h : h_formula) : bool = match h with
+  | Phase _ -> true
+  | Conj ({h_formula_conj_h1 = h1;
+	   h_formula_conj_h2 = h2;
+	   h_formula_conj_pos = pos;
+    }) 
+  | Star ({h_formula_star_h1 = h1;
+	 h_formula_star_h2 = h2;
+	 h_formula_star_pos = pos}) ->
+      (contains_phase h1) or (contains_phase h2)
+  | _ -> false
+
+and normalize_h_formula_rd_phase (h : h_formula) : h_formula = match h with
+  | Conj({h_formula_conj_h1 = h1;
+	 h_formula_conj_h2 = h2;
+	 h_formula_conj_pos = pos}) ->
+      (* conj in read phase -> split into two separate read phases *)
+      let conj1 = normalize_h_formula_rd_phase h1 in
+	insert_rd_phase conj1 h2 
+  | Phase _ -> failwith "Shouldn't have phases inside the reading phase\n"
+  | _ -> Phase({h_formula_phase_rd = h;
+		h_formula_phase_rw = HTrue;
+		h_formula_phase_pos = no_pos;
+	       })
+
+
+and insert_wr_phase (f : h_formula) (wr_phase : h_formula) : h_formula = 
+  match f with
+    | Phase ({h_formula_phase_rd = h1;
+	     h_formula_phase_rw = h2;
+	     h_formula_phase_pos = pos}) ->
+	let new_h2 = 
+	  match h2 with
+	    | HTrue -> wr_phase (* insert the new phase *)
+	    | Star({h_formula_star_h1 = h1_star;
+		    h_formula_star_h2 = h2_star;
+		    h_formula_star_pos = pos_star
+		   }) ->
+		(* when insert_wr_phase is called, f represents a reading phase ->
+		   all the writing phases whould be emp *)
+		if (contains_phase h2_star) then
+		  (* insert in the nested phase *)
+		  Star({
+			h_formula_star_h1 = h1_star;
+			h_formula_star_h2 = insert_wr_phase h2_star wr_phase;
+			h_formula_star_pos = pos_star
+		       })
+		else failwith ("[iformula.ml] : should contain phase\n")
+		  
+	    | _ -> Star({
+			h_formula_star_h1 = h2;
+			h_formula_star_h2 = wr_phase;
+			h_formula_star_pos = pos
+		       })
+	in
+	  (* reconstruct the phase *)
+	  Phase({h_formula_phase_rd = h1;
+		 h_formula_phase_rw = new_h2;
+		h_formula_phase_pos = pos})
+    | _ -> failwith ("[iformula.ml] : There should be a phase at this point\n")
+
+
+and insert_rd_phase (f : h_formula) (rd_phase : h_formula) : h_formula = 
+  match f with
+    | Phase ({h_formula_phase_rd = h1;
+	     h_formula_phase_rw = h2;
+	     h_formula_phase_pos = pos}) ->
+	let new_h2 = 
+	(match h2 with
+	   | HTrue -> 
+	       (* construct the new phase *)
+		let new_phase = Phase({h_formula_phase_rd = rd_phase; 
+				  h_formula_phase_rw = HTrue;
+				  h_formula_phase_pos = pos})
+		in
+		  (* input the new phase *)
+		Star({h_formula_star_h1 = HTrue;
+		      h_formula_star_h2 = new_phase;
+		      h_formula_star_pos = pos})
+	   | Conj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n") (* the write phase does not contain conj *)	     
+	   | Star ({h_formula_star_h1 = h1_star;
+		    h_formula_star_h2 = h2_star;
+		    h_formula_star_pos = pos_star
+		   }) ->
+	       let new_phase = insert_rd_phase h2_star rd_phase in
+	       Star({h_formula_star_h1 = h1_star;
+		     h_formula_star_h2 = new_phase;
+		     h_formula_star_pos = pos_star})
+	   | _ ->
+		let new_phase = Phase({h_formula_phase_rd = rd_phase; 
+				  h_formula_phase_rw = HTrue;
+				  h_formula_phase_pos = pos})
+		in
+		Star({h_formula_star_h1 = h2;
+		      h_formula_star_h2 = new_phase;
+		      h_formula_star_pos = pos})
+	)
+	in
+	  Phase({
+		  h_formula_phase_rd = h1;
+		  h_formula_phase_rw = new_h2;
+		  h_formula_phase_pos = pos;
+		})
+    | Conj _ -> failwith ("[cformula.ml] : Should not have conj at this point\n")	     
+    | _ -> 
+		let new_phase = Phase({h_formula_phase_rd = rd_phase; 
+				  h_formula_phase_rw = HTrue;
+				  h_formula_phase_pos = no_pos})
+		in
+		let new_star = Star({h_formula_star_h1 = HTrue;
+		      h_formula_star_h2 = new_phase;
+		      h_formula_star_pos = no_pos})
+		in 
+		Phase({
+		  h_formula_phase_rd = f;
+		  h_formula_phase_rw = new_star;
+		  h_formula_phase_pos = no_pos;
+		})
+

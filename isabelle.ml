@@ -408,7 +408,6 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let res =  write tmp_form 0. in
-
 	res
 
 

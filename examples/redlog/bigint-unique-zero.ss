@@ -4,7 +4,7 @@ data node {
 }
 
 bigint<v> == self = null & v = 0 or
-             self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p
+             self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p & v > 0
              inv v >= 0;
 
 node clone(node x)
@@ -27,6 +27,7 @@ node bigint_of(int v)
   requires v >= 0
   ensures res::bigint<v>;
 {
+  if (v == 0) return null;
   if (v < 10) return new node(v, null);
   int digit = 0;
   int rem = div_with_remainder(v, 10, digit);
@@ -38,7 +39,10 @@ node add_one_digit(node x, int c)
   requires x::bigint<v> & 0 <= c <= 9
   ensures res::bigint<v+c> * x::bigint<v>;
 {
-  if (x == null) return new node(c, x);
+  if (x == null) {
+    if (c == 0) return null;
+    return new node(c, null);
+  }
   int t = x.val + c;
   if (t >= 10) return new node(t - 10, add_one_digit(x.next, 1));
   return new node(t, clone(x.next));
@@ -86,6 +90,7 @@ node sub_one_digit(node x, int c)
   ensures res::bigint<v-c> * x::bigint<v>;
 {
   if (x == null) return null;
+  if (x.val == c && x.next == null) return null;
   if (x.val >= c) return new node(x.val - c, clone(x.next));
   return new node(x.val + 10 - c, sub_one_digit(x.next, 1));
 }
@@ -97,8 +102,15 @@ node sub_c(node x, node y, int c)
   if (x == null) return null;
   if (y == null) return sub_one_digit(x, c);
   int t = x.val - y.val - c;
-  if (t >= 0) return new node(t, sub_c(x.next, y.next, 0));
-  return new node(t+10, sub_c(x.next, y.next, 1));
+  if (t >= 0) {
+    node s = sub_c(x.next, y.next, 0);
+    if (t == 0 && s == null) return null;
+    else return new node(t, s);
+  }
+  t = t + 10;
+  node s = sub_c(x.next, y.next, 1);
+  if (t == 0 && s == null) return null;
+  return new node(t, s);
 }
 
 node sub(node x, node y)
@@ -112,20 +124,20 @@ node mult_c(node x, int d, int c)
   requires x::bigint<v> & 0 <= c <= 9 & 0 <= d <= 9 
   ensures res::bigint<v*d+c> * x::bigint<v>;
 {
-  if (x == null) {
+  if (x == null || d == 0) {
+    if (c == 0) return null;
     return new node(c, null);
-  } else {
-    int ans = x.val * d + c;
-    int carry = 0;
-    if (ans >= 10) {
-      carry = div_with_remainder(ans, 10, ans);
-      // carry = ans/10;
-      // ans = ans - carry*10;
-      // ans = ans%10;
-    }
-    node rest = mult_c(x.next, d, carry);
-    return new node(ans, rest);
+  } 
+  int ans = x.val * d + c;
+  int carry = 0;
+  if (ans >= 10) {
+    carry = div_with_remainder(ans, 10, ans);
+    // carry = ans/10;
+    // ans = ans - carry*10;
+    // ans = ans%10;
   }
+  node rest = mult_c(x.next, d, carry);
+  return new node(ans, rest);
 }
 
 /* left shift all digits one pos (multiplied by ten) */
@@ -133,7 +145,7 @@ node shift_left(node x)
   requires x::bigint<v>
   ensures res::bigint<v*10>;
 {
-  if (x == null) return x;
+  if (x == null) return null;
   return new node(0, x);
 }
 
@@ -176,7 +188,6 @@ bool is_zero(node x)
   ensures res & v = 0 or !res & v != 0;
 {
   if (x == null) return true;
-  if (x.val == 0 && is_zero(x.next)) return true;
   return false;
 }
 
@@ -184,19 +195,11 @@ bool is_equal(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
   ensures res & v1 = v2 or !res & v1 != v2;
 {
-  if (x == null) {
-    if (is_zero(y)) return true;
-    else return false;
-  } else {
-    if (y == null) {
-      if (is_zero(x)) return true;
-      else return false;
-    } else {
-      if (x.val == y.val) return is_equal(x.next, y.next);
-      else return false;
-    }
+  if (x == null || y == null) {
+    return x == null && y == null;
   }
-  // return compare(x, y) == 0;
+  if (x.val == y.val) return is_equal(x.next, y.next);
+  else return false;
 }
 
 int compare(node x, node y)
@@ -204,11 +207,10 @@ int compare(node x, node y)
   ensures res = 0 & v1 = v2 or res = 1 & v1 > v2 or res = -1 & v1 < v2;
 {
   if (x == null) {
-    if (is_zero(y)) return 0;
+    if (y == null) return 0;
     return -1;
   }
   if (y == null) {
-    if (is_zero(x)) return 0;
     return 1;
   }
   int c = compare(x.next, y.next);
