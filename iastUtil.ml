@@ -967,7 +967,7 @@ let addin_callgraph_of_exp (cg:IG.t) exp mnv : IG.t =
       Some (IG.add_edge cg mnv e.exp_call_nrecv_method)
     | _ -> None
   in
-  fold_exp exp f ngs_union IG.empty
+  fold_exp exp f ngs_union cg
 
 
 let addin_callgraph_of_proc cg proc : IG.t = 
