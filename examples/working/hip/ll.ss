@@ -7,13 +7,11 @@ data node {
 	node next;	
 }
 
-
 /* view for a singly linked list */
 
 ll<n> == self = null & n = 0 
 	or self::node<_, q> * q::ll<n-1> 
-	inv n >= 0;
-
+  inv n >= 0;
 	
 	
 /*ll1<S> == self = null & S = {} 
@@ -23,31 +21,41 @@ ll<n> == self = null & n = 0
 	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
 
 /* append two singly linked lists */
-void append(node x, node y)
+void append2(node x, node y)
+  requires x::ll<n1> * y::ll<n2> & n1>0 //x!=null // & n1>0 & x != null
+  ensures x::ll<m> & m<=n1+n2;
+{    
+	if (x.next == null) 
+    x.next = y;
+	else   
+    append2(x.next, y);
+}
 
-  requires x::ll<n1> * y::ll<n2> & x!=null // & n1>0 & x != null
-	ensures x::ll<m> & m=n1+n2;
 
+int length (node x) 
+requires x::ll<n>@I
+ensures /*x::ll<n>@I*/true & res = n;
 {
-  //assume false;
-  //assert x=null;
+ if (x==null) return 0;
+    else return 1+length(x.next);
+}
+
+void append(node x, node y)
+  requires x::ll<n1> * y::ll<n2>@I & n1>0 // & x!=null // & n1>0 & x != null
+  ensures x::ll<n1+n2>@I;
+{
 	if (x.next == null)
-	  {// dprint;
-        x.next = y;}
-	else
-      { 
-        node z;
-        z = null;
+	      x.next = y;
+	else 
 		append(x.next, y);
-      }
-    }
+}
 
 /* return the first element of a singly linked list */
 node ret_first(node x)
 
-	requires x::ll<n> * y::ll<m> & n < m 
-	ensures x::ll<n>;
-
+	requires x::ll<n>@I * y::ll<m> & n < m 
+//	ensures x::ll<n>@I;
+	ensures true;
 {
 	return x;
 }
@@ -59,10 +67,13 @@ node get_next(node x)
 	ensures x::ll<1> * res::ll<n-1>; 
 
 {
+  //dprint;
 	node tmp = x.next;
+  assume false;
 	x.next = null;
 	return tmp;
 }
+
 
 /* function to set the tail of a list */
  void set_next(node x, node y)
@@ -80,7 +91,7 @@ void set_null2(node x)
 	ensures x::ll<1>;
 
 {
-	if (2>1) 
+	if (4>3) 
 		x.next = null;
 	else 
 		x.next = null;
@@ -95,6 +106,7 @@ void set_null(node x)
 
 {
 	x.next = null;
+    //dprint;
 }
 
 /* function to get the third element of a list */
@@ -111,11 +123,9 @@ node get_next_next(node x)
 void insert(node x, int a)
 	requires x::ll<n> & n > 0 
 	ensures x::ll<n+1>;
-
 {
 			//dprint;
       node tmp = null;
-	
 	if (x.next == null)
 		x.next = new node(a, tmp);
 	else 
@@ -160,11 +170,14 @@ node create_list(int a)
 	node tmp;
 
 	if (a == 0) {
+  assume false;
 		return null;
 	}
-	else {
+	else {    
 		a  = a - 1;
+        //    dprint;
 		tmp = create_list(a);
+        //    dprint;
 		return new node (0, tmp);
 	}
 		
@@ -178,9 +191,11 @@ void reverse(ref node xs, ref node ys)
 	if (xs != null) {
 		node tmp;
 		tmp = xs.next;
+    //dprint;
 		xs.next = ys;
 		ys = xs;
 		xs = tmp;
+    //dprint;
 		reverse(xs, ys);
 	}
 }

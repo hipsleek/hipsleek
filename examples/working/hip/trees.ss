@@ -19,7 +19,7 @@ tree1<m> == self = null & m = 0
 
 /* view for trees with number of nodes and depth */
 tree<m, n> == self = null & m = 0 & n = 0 
-	or self::node2<_, p, q> * p::tree<m1, n1> * q::tree<m2, n2> & m = 1 + m1 + m2 & tmp = max(n1, n2) & n = 1 + tmp
+	or self::node2<_, p, q> * p::tree<m1, n1> * q::tree<m2, n2> & m = 1 + m1 + m2 & n = 1 + max(n1, n2)
 	inv m >= 0 & n >= 0;
 
 /*tree_1<S> == self = null & S = {}
@@ -99,7 +99,7 @@ int count(node2 z)
 /* function to transform a tree in a doubly linked list */
 void flatten(node2 x)
 	requires x::tree<m, n> 
-	ensures x::dll<null, m>;
+	ensures (exists q : x::dll<q, m> & q=null);
 {
 	node2 tmp;
 	if (x != null)
@@ -140,7 +140,7 @@ void flatten(node2 x)
 
 /* view for binary search trees */
 bst <sm, lg> == self = null & sm <= lg 
-	or self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v
+	or (exists pl,qs: self::node2<v, p, q> * p::bst<sm, pl> * q::bst<qs, lg> & pl <= v & qs >= v)
 	inv sm <= lg;
 
 /*bst1 <S> == self = null & S = {} 
@@ -152,12 +152,7 @@ node2 insert(node2 x, int a)
 
 	requires x::bst<sm, lg> 
 	ensures res::bst<mi, ma> & res != null & mi = min(sm, a) & ma = max(lg, a);
-	//ensures res::bst<mi, ma> & res != null & (mi = sm | mi = a) & (ma = lg | ma = a);
-	//ensures v>sm or res::bst<v, lg>;
-	//or v < lg or res::bst<sm, v>
-	//or res::bst<sm, lg>;
-
-
+	
 {
 	node2 tmp;
         node2 tmp_null = null;

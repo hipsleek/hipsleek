@@ -61,6 +61,7 @@ void main()
 {
 	p = new node(5,null);
     n=1;  // I added this
+ // dprint;
 	insert(4);
 	insert(3);
 	insert(2);

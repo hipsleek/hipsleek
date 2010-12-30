@@ -10,9 +10,9 @@ ll1<n, S> == self =  null & S={} & n = 0
 	inv n >= 0;
 
 sll1<n, S> == self::node<v1, null> & S = {v1} & n = 1
-	or self::node<v2, r> * r::sll1<n1, S1> & n = n1+1 & r != null 
+	or self::node<v2, r> * r::sll1<n1, S1> & n = n1+1 
 	& S = union(S1, {v2}) &	forall(x: (x notin S1 | v2 <= x))
-	inv n >= 1;
+	inv n >= 1 & self!=null  & S!={} ;
  
 
 /* function to count the number of elements of a list */
@@ -109,17 +109,16 @@ node insert1(node x, int v)
 	node tmp;	
 
 	if (v <= x.val)
-		return new node(v, x);
+    return new node(v, x);
 	else
-	{
+	{ 
 		if (x.next != null)
 		{
 			tmp = insert1(x.next, v);
-			x.next = tmp;
+			x.next = tmp;     
 		}
 		else
-			x.next = new node(v, tmp_null);
-		
+			x.next = new node(v, tmp_null);	
 		return x;
 	}
 }

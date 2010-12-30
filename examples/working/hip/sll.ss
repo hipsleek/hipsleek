@@ -13,7 +13,7 @@ ll<n> == self = null & n = 0
 
 /* view for a sorted list */
 sll<n, sm, lg> == self = null & n = 0 & sm <= lg 
-	or self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin  
+	or (exists qs,ql: self::node<qmin, q> * q::sll<n-1, qs, ql> & qmin <= qs & ql <= lg & sm <= qmin )
 	inv n >= 0 & sm <= lg;
 
 /* insert an element in a sorted list */

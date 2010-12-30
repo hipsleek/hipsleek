@@ -35,12 +35,17 @@ node id2(node xs)
 }
 
 void id3(node x)
-	requires x::sll<n, sm, lg>
+	requires x::sll<n, sm, lg> //& n=1
 	ensures x::ll<n>;
 {
-	if (x.next != null) {
-		id3(x.next);
-	}
+  node y = x.next;  
+	if (y != null) {    
+   // dprint;
+   // assert y'::sll<_,_,_>; 
+	//	assume false;
+    id3(y);
+	}  
+  //assume false;  
 }
 
 
@@ -55,18 +60,15 @@ bool bubble(node xs)
 	if (xs.next == null) {
 		return false;
 	}
-	else {
+	else {    
 		tmp = bubble(xs.next);
-		if (xs.val <= xs.next.val) {
-			assert xs=null;
+    int xv = xs.val;
+    int xnv = xs.next.val;
+		if (xv <= xnv) 
 			flag = false;
-		}
 		else {
-			aux = xs.val;
-			tmp1 = xs.next.val;
-			xs.val = tmp1;
-			xs.val = xs.next.val; //ERROR: lhs and rhs do not match
-			//xs.next.val = aux;
+			xs.val = xnv;
+			xs.next.val = xv; //ERROR: lhs and rhs do not match
 			flag = true; 
 		}
 		return (flag || tmp);	

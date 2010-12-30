@@ -13,14 +13,23 @@ data myint {
 }
 
 /* view for avl trees */
-avl<m, n, S> == self = null & m = 0 & n = 0 & S = {}
+/*avl<m, n, S> == self = null & m = 0 & n = 0 & S = {}
   or self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> 
   & m = 1+m1+m2 &
   -1<=n1-n2<=1  & n=1+max(n1,n2) &
 // n <= n1 + 2 & n <= n2 + 2 & tmp=max(n1, n2) & n = tmp + 1 
   S = union(S1, S2, {v}) &
   forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))
+  inv m >= 0 & n >= 0;*/
+  
+avl<m, n, S> == case{
+  self = null -> [] m = 0 & n = 0 & S = {};
+  self !=null -> [] self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> 
+      & m = 1+m1+m2 & -1<=n1-n2<=1  & n=1+max(n1,n2) & S = union(S1, S2, {v}) &
+      forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v));}
   inv m >= 0 & n >= 0;
+  
+  
 
 /* function to return the height of an avl tree */
 int height(node x)
@@ -214,6 +223,7 @@ node remove_min_add(node x, ref myint a)
   myint tmp2 = new myint(0);
   if (x.left == null) {
     if (x.right == null) {
+      //assume false;
       if (a.val >= x.val) {
         ti = x.val;
         x.val = a.val;
@@ -230,17 +240,23 @@ node remove_min_add(node x, ref myint a)
           a.val = ti;
           ti = x.val;
           tr = x.right.left;
-          //assume tr' = null; //'
+          //dprint;
+          //assert tr' = null;
+          //assume tr' = null ; //'
           return x;
         } else {
+          //assume false;
           return x;
         }
       } else {
+        //assume false;
         ti = x.val;
         tr = x.right.left;
-        //assume tr' = null; //'
+        //assert tr' = null;
+        //assume tr' = null ; //'
         tr = x.right.right;
-        //assume tr' = null; //'
+       // assert tr' = null;
+       // assume tr' = null ; //'
         x.val = x.right.val;
         x.right.val = a.val;
         a.val = ti;
@@ -248,12 +264,13 @@ node remove_min_add(node x, ref myint a)
       }
     }
   } else {
+    //assume false;
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;
-        //assume tr' = null; //'
+       // assume tr' = null ; //'
         tr = x.left.right;
-        //assume tr' = null; //'
+       // assume tr' = null ; //'
         ti = x.left.val;
         x.left.val = x.val;
         x.val = a.val;
@@ -304,7 +321,7 @@ node remove_max_add(node x, ref myint a)
           a.val = ti;
           ti = x.val;
           tr = x.left.right;
-          //assume tr' = null; //'
+         // assume tr' = null; //'
           return x;
         } else {
           return x;
@@ -312,9 +329,9 @@ node remove_max_add(node x, ref myint a)
       } else {
         ti = x.val;
         tr = x.left.right;
-        //assume tr' = null; //'
+       // assume tr' = null; //'
         tr = x.left.left;
-        //assume tr' = null; //'
+       // assume tr' = null; //'
         x.val = x.left.val;
         x.left.val = a.val;
         a.val = ti;
@@ -325,9 +342,9 @@ node remove_max_add(node x, ref myint a)
     if (a.val <= x.val) {
       if (x.left == null) {
         tr = x.right.right;
-        //assume tr' = null; //'
+       // assume tr' = null; //'
         tr = x.right.left;
-        //assume tr' = null; //'
+       // assume tr' = null; //'
         ti = x.right.val;
         x.right.val = x.val;
         x.val = a.val;
@@ -359,7 +376,8 @@ node remove_min(node x, ref myint a)
   //int hl, hr;
   if (x.left == null) {
     a.val = x.val;
-    return x.right;
+    node t = x.right;
+    return t;
   } else {
     if (height(x.left) < height(x.right)) {
       // assert x.right != null;
@@ -405,9 +423,9 @@ node delete_top(node x)
         return x;
       } else {
         tmp = x.left;
-        //assert tmp' != null; //'
+        assume tmp' != null; //'
         tmp = x.left.right;
-        //assert tmp' != null; //'
+        assume tmp' != null; //'
         tmp = rotate_double_right(x.left.left, x.left.right.left, x.left.right.right, x.right, x.left.val, x.left.right.val, x.val); // DRR
         return tmp;
       }

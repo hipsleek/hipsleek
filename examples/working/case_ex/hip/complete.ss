@@ -28,8 +28,8 @@ data node2 {
 		know if a subtree is perfect or not)
 */
 complete<n, nmin> == self = null & n = 0 & nmin = 0
-	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & tmp = min(nmin1, nmin2) & nmin = tmp + 1
-	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & tmp = min(nmin1, nmin2) & nmin = tmp + 1
+	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-2, nmin2> & nmin = min(nmin1, nmin2) + 1
+	or self::node2<_, l, r> * l::complete<n-1, nmin1> * r::complete<n-1, nmin2> & nmin = min(nmin1, nmin2) + 1
 	inv nmin >= 0 & n >= nmin;
 
 int maxim(int a, int b) 
