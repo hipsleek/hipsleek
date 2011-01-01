@@ -45,6 +45,7 @@ and ctx_type =
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) (phase : phase_type option)  rhs_info pos : (h_formula * h_formula * match_type * phase_type option * h_formula * int) list =
 (*****)
+  (* let _ = print_string("choose ctx: lhs_h = " ^ (Cprinter.string_of_h_formula lhs_h) ^ "\n") in *)
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
   let eqns' = MCP.ptr_equations lhs_p in
   let r_eqns = match rhs_info with
@@ -100,7 +101,7 @@ and spatial_ctx_extract_debug p f a i = Util.ho_debug_4 "spatial_context_extract
 spatial_ctx_extract p f a i
 
 and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : context list  =
-  let _ = print_string("spatial_ctx_extract with f0 = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in 
+  (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in  *)
   let rec helper f = match f with
     | HTrue 
     | HFalse -> []
@@ -355,11 +356,11 @@ and mk_empty_frame (): (h_formula * int) =
     (Hole(hole_id), hole_id)
 
 (* check whether a context is empty *)
-and is_empty_ctx (ctx : formula) : bool = match ctx with 
-  | Base ({formula_base_heap = fb_h;}) -> is_hole_heap_ctx fb_h
+and is_empty_frame (frame : formula) : bool = match frame with 
+  | Base ({formula_base_heap = fb_h;}) -> is_hole_heap_frame fb_h
   | _  -> failwith "context.ml, is_empty_ctx: check this\n" (* todo: check this *)
 
-and is_hole_heap_ctx (ctx_h : h_formula) : bool = match ctx_h with
+and is_hole_heap_frame (frame_h : h_formula) : bool = match frame_h with
   | Hole _ -> true
   | _ -> false
 	
@@ -373,7 +374,7 @@ and update_ctx_frame ctx0 (frame, hole_id) =
 
 and update_list_ctx_frame ctx0 (frame, hole_id) = 
   match ctx0 with
-    | FailCtx _ -> ctx0
+    | FailCtx _ -> let _ = print_string("fail with frame " ^ (Cprinter.string_of_h_formula frame) ^ "\n") in ctx0
     | SuccCtx (cl) -> SuccCtx(List.map (fun x -> update_ctx_frame x (frame, hole_id))cl) 
 
 and update_ctx_es_formula ctx0 f = 
@@ -384,7 +385,14 @@ and update_ctx_es_formula ctx0 f =
 	let update_c2 = update_ctx_es_formula c2 f in
 	  OCtx(update_c1, update_c2)
 
-	
+and update_ctx_es_orig_conseq ctx new_conseq = 
+  match ctx with
+    | Ctx(es) -> Ctx{es with es_orig_conseq = new_conseq}
+    | OCtx(c1, c2) -> 
+	let update_c1 = update_ctx_es_orig_conseq c1 new_conseq in
+	let update_c2 = update_ctx_es_orig_conseq c2 new_conseq in
+	  OCtx(update_c1, update_c2)
+
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
 and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = match ptr_eqs with
