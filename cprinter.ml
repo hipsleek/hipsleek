@@ -883,11 +883,13 @@ and pr_ext_formula  (e:ext_formula) =
         formula_case_exists =ee; formula_case_branches  =  case_list ; formula_case_pos = _} ->
         (* fmt_string "case exists"; *)
         (* pr_seq "" pr_spec_var ee; *)
+		fmt_string "ECase ";
         pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
           (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
                    (fun () -> pr_struc_formula c2)) case_list
     | EBase { formula_ext_implicit_inst = ii; formula_ext_explicit_inst = ei; formula_ext_exists = ee; formula_ext_base = fb;
 	      formula_ext_continuation = cont; formula_ext_pos = _ } ->
+		fmt_string "EBase ";
         fmt_open_vbox 2;
         wrap_box ("B",0) (fun fb ->
 			    if not(U.empty(ee@ii@ei)) then
@@ -990,6 +992,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_success_pts: " U.empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts;
   pr_wrap_test "es_residue_pts: " U.empty (pr_seq "" pr_formula_label) es.es_residue_pts;
   pr_wrap_test "es_path_label: " U.empty pr_path_trace es.es_path_label;
+  pr_wrap_test "es_variance: " U.empty (pr_seq "" pr_formula_exp) es.es_variance;
   fmt_close ()
 
 
@@ -1544,3 +1547,6 @@ Cpure.print_exp := string_of_formula_exp;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
+
+Cformula.print_formula :=string_of_formula;;
+Cformula.print_struc_formula :=string_of_struc_formula;;

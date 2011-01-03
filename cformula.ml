@@ -1342,7 +1342,7 @@ type entail_state = {
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
-  (* es_variance :  ? option ; *)
+  es_variance : CP.exp list;
 }
 
 and context = 
@@ -1420,6 +1420,7 @@ let empty_es flowt pos =
   es_orig_conseq = [mkETrue flowt pos] ;
   es_path_label  =[];
   es_prior_steps  = [];
+  es_variance = []
   (*es_cache_no_list = [];*)
 }
 
@@ -1780,7 +1781,7 @@ let remove_empty_fail_ctx c : context list = match c with
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
-		Ctx ({es with es_formula = f;es_unsat_flag =false;})
+		Ctx ({es with es_formula = f;es_unsat_flag =false})
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = _}) -> 
 	  let c1 = build_context ctx f1 pos in
 	  let c2 = build_context ctx f2 pos in
@@ -3016,21 +3017,36 @@ let rec add_post post f = List.map (fun c-> match c with
 ) f
 
 (* TODO *)
-let rec split_struc_formula (f0:struc_formula):(formula*formula) list = 
+let rec string_of_list_of_pair_formula ls =
+  match ls with
+	| [] -> ""
+	| (f1,f2)::[] -> (!print_formula f1)^"*"^(!print_formula f2)
+	| (f1,f2)::rest -> (!print_formula f1)^"*"^(!print_formula f2)^(string_of_list_of_pair_formula rest)
+
+and print_formula = ref(fun (c:formula) -> "Cprinter not initialized")
+
+and print_struc_formula = ref(fun (c:struc_formula) -> "Cprinter not initialized")
+		
+and split_struc_formula f0 = split_struc_formula_a f0
+
+and split_struc_formula_debug f0 =
+  Util.ho_debug_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
+(* split the struc_formula into the list of pre/post pairs *)  
+and split_struc_formula_a (f0:struc_formula):(formula*formula) list = 
 	let rec ext_to_formula (f:ext_formula):(formula*formula) list = match f with
 		| ECase b-> 
       let r =  List.concat (List.map (fun (c1,c2)->
-				let ll = split_struc_formula c2 in
+				let ll = split_struc_formula_a c2 in
 				List.map (fun (d1,d2)-> ((normalize d1 (formula_of_pure_N c1 b.formula_case_pos) b.formula_case_pos),d2)) ll) b.formula_case_branches) in
 			List.map (fun (c1,c2)-> ((push_exists b.formula_case_exists c1),(push_exists b.formula_case_exists c2))) r 
 		| EBase b-> 
-				let ll = split_struc_formula b.formula_ext_continuation in
+				let ll = split_struc_formula_a b.formula_ext_continuation in
 				let e = List.map (fun (c1,c2)-> ((normalize c1 b.formula_ext_base b.formula_ext_pos),c2)) ll in
 				let nf = ((*b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@*)b.formula_ext_exists) in
 				let e = List.map (fun (c1,c2)-> ((push_exists nf c1),(push_exists nf c2))) e in
 				e
 		| EAssume (x,b,_)-> [((mkTrue (mkNormalFlow ()) no_pos),b)]
-		| EVariance b -> split_struc_formula b.formula_var_continuation
+		| EVariance b -> split_struc_formula_a b.formula_var_continuation
 			in	
 	List.fold_left (fun a c-> a@(ext_to_formula c)) [] f0	;;
 
@@ -3139,3 +3155,22 @@ let rec clean_case_guard_redundancy f l:struc_formula =
 	| _ -> c
 	) f
 *)
+
+let mkEBase (pf:CP.formula) loc : ext_formula =
+  EBase	{
+	formula_ext_explicit_inst = [];
+	formula_ext_implicit_inst = [];
+	formula_ext_exists = [];
+	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;
+	  (*Base {
+		formula_base_heap = HTrue;
+		formula_base_pure = MCP.OnePF (pf);
+		formula_base_type = TypeTrue;
+		formula_base_flow = mkTrueFlow ();
+		formula_base_branches = [("",pf)];
+		formula_base_label = None;
+		formula_base_pos = loc;
+	};*)
+	formula_ext_continuation = [];
+	formula_ext_pos = loc;
+  }	
