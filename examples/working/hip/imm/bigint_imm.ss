@@ -116,11 +116,18 @@ node sub_one_digit(node x, int c)
 }
 
 node sub_c(node x, node y, int c)
+/*
+  requires (x::bigint<v1>@I) ; y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
+
   requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1 & v1 >= v2+c
   ensures res::bigint<v1-v2-c>;
-//  requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
-//  ensures res::bigint<v1-v2-c>;
+  // fails - should succeed
+*/
+  requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
 {
+  dprint;
   if (x == null) return null;
   if (y == null) {
     dprint;
@@ -172,9 +179,10 @@ node shift_left(node x)
 }
 
 node mult(node x, node y)
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires (x::bigint<v1>@I) ; y::bigint<v2>@I & true
   ensures res::bigint<v1*v2>;
 {
+  dprint;
   if (x == null || y == null) {
     return null;
   } else {
@@ -185,6 +193,11 @@ node mult(node x, node y)
 }
 
 node karatsuba_mult(node x, node y)
+/*
+  requires (x::bigint<v1>@I) ; y::bigint<v2>@I & true
+  ensures res::bigint<v1*v2> ;
+  // not working..
+*/
   requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures res::bigint<v1*v2> ;//* x::bigint<v1> * y::bigint<v2>;
 {
@@ -217,6 +230,8 @@ bool is_zero(node x)
 bool is_equal(node x, node y)
   requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures res & v1 = v2 or !res & v1 != v2;
+ requires (x::bigint<v1>@I);  y::bigint<v2>@I & true
+  ensures res & v1 = v2 or !res & v1 != v2;
 {
   if (x == null) {
     if (is_zero(y)) return true;
@@ -235,6 +250,8 @@ bool is_equal(node x, node y)
 
 int compare(node x, node y)
   requires x::bigint<v1>@I * y::bigint<v2>@I
+  ensures res = 0 & v1 = v2 or res = 1 & v1 > v2 or res = -1 & v1 < v2;
+requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
   ensures res = 0 & v1 = v2 or res = 1 & v1 > v2 or res = -1 & v1 < v2;
 {
   if (x == null) {

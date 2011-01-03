@@ -45,7 +45,11 @@ node get_next(node x)
 	//requires x::ll<n> & n > 0
         //ensures x::ll<1> * res::ll<n-1>; 
 	requires x::node<_, p> * p::ll<n1>@I
-        ensures x::ll<1> * res::ll<n1>@I; 
+    ensures x::ll<1> * res::ll<n1>@I; 
+	requires x::node<_, p> * p::ll<n1>@I
+    ensures x::ll<1> & res=p; 
+	requires x::node<v, p> 
+    ensures x::node<v,null> & res=p;
 {
   //dprint;
 	node tmp = x.next;
@@ -58,6 +62,8 @@ node get_next(node x)
 
 	requires x::ll<i> * y::ll<j>@I & i > 0 
 	ensures x::ll<j+1>@I; 
+  requires x::node<v,_>
+  ensures x::node<v,y>;
 
 {
 	x.next = y;
@@ -73,6 +79,8 @@ node get_next_next(node x)
 	//ensures res=r;
 	requires x::lseg<r,2>@I
 	ensures res=r;
+    requires x::node<_,q>@I * q::node<_,r>@I 
+    ensures res=r;
 
 {
 	return x.next.next;
