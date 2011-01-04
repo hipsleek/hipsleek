@@ -8,7 +8,7 @@ checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::ll<
 //print residue.
 // Fail
 
-checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n>@I); y::ll<m> * t::ll<a>@I.
+checkentail (x::ll<n>@I); y::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (x::ll<n2>@I); y::ll<m2> * t::ll<a2>@I.
 print residue.
 // t@I; z
 // Valid
@@ -40,5 +40,11 @@ checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I
 print residue.
 // x * y
 // Valid
+
+checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y=x. 
+print residue.
+
+checkentail x::ll<n>@I & n>0 & m>0 & x=y  |- (y::ll<m1>@I & x::ll<n1>@I) & y=x. 
+print residue.
 
 
