@@ -329,22 +329,22 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
-			  (*let stripped_spec = if (ir) then org_spec else
+			  let stripped_spec = if (ir) then org_spec else
 				let rec strip_variance ls = match ls with
 				  | [] -> []
 				  | spec::rest -> match spec with
 					  | Cformula.EVariance e -> (e.Cformula.formula_var_continuation)@(strip_variance rest)
 					  | _ -> spec::(strip_variance rest)
 				in strip_variance org_spec
-			  in*)
+			  in
 			  (* org_spec -> stripped_spec *)
 	          (* free vars = linking vars that appear both in pre and are not formal arguments *)
-	          let pre_free_vars = Util.difference_fct CP.eq_spec_var (Util.difference_fct CP.eq_spec_var (Cformula.struc_fv org_spec) (Cformula.struc_post_fv org_spec)) farg_spec_vars in
+	          let pre_free_vars = Util.difference_fct CP.eq_spec_var (Util.difference_fct CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*)) (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
 	          (* free vars get to be substituted by fresh vars *)
 	          let pre_free_vars_fresh = CP.fresh_spec_vars pre_free_vars in
 	          let renamed_spec = 
-                if !Globals.max_renaming then (Cformula.rename_struc_bound_vars (*stripped_spec*)org_spec)
-                else (Cformula.rename_struc_clash_bound_vars (*stripped_spec*)org_spec (CF.formula_of_list_failesc_context sctx))
+                if !Globals.max_renaming then (Cformula.rename_struc_bound_vars stripped_spec(*org_spec*))
+                else (Cformula.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx))
 	          in
 	          let st1 = List.combine pre_free_vars pre_free_vars_fresh in
 	          let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in

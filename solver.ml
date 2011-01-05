@@ -2117,21 +2117,38 @@ and heap_entail_conjunct_lhs_struc
 	      ((SuccCtx [rs4]),TrueConseq)
 	  | EVariance e ->
 		  let loc = e.formula_var_pos in
-		  let m_list = match ctx with
-			| Ctx c -> c.es_variance
+		  let lhs_measures = match ctx with
+			| Ctx c -> List.map (fun exp -> CP.transform_exp (fun e -> match e with
+															  | CP.Var (x,l) -> Some (CP.Var (CP.to_primed x,l))
+															  | _ -> None) exp) c.es_variance
+			(*| Ctx c -> c.es_variance*)
 			| OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n")
 		  in
-		  let n_list = e.formula_var_measures in
-		  let _ = if ((List.length m_list) != (List.length n_list)) then Debug.print_info "inner_entailer"  ("error in termination checking\n") loc else () in	
-		  let lexico_ranking_formula = mkEBase (CP.BForm (CP.mkGt (CP.mkSubtract (List.hd m_list) (fst (List.hd e.formula_var_measures)) loc) (CP.mkIConst 0 loc) loc, None)) loc in
-		  let boundedness_checking_formula = mkEBase (CP.BForm (CP.mkGte (List.hd m_list) (CP.mkIConst 0 loc) loc, None)) loc in
+		  let rhs_measures = e.formula_var_measures in
+		  let _ = if ((List.length lhs_measures) != (List.length rhs_measures)) then report_error no_pos ("inner_entailer: OCtx encountered \n") (*Debug.print_info "inner_entailer"  ("error in termination checking\n") loc*)
+				  else () in
+		  (* lhs-rhs>0 *)
+		  let lexico_ranking_formula = mkEBase (CP.BForm (CP.mkGt (CP.mkSubtract (List.hd lhs_measures) (fst (List.hd rhs_measures)) loc) (CP.mkIConst 0 loc) loc, None)) loc in
+		  (* lhs>=0 *)
+		  let lower_bound = match (snd (List.hd rhs_measures)) with
+								| None -> report_error no_pos ("inner_entailer: error with lower bound in termination checking \n")
+								| Some exp -> exp in
+		  let boundedness_checking_formula = mkEBase (CP.BForm (CP.mkGte (*List.hd lhs_measures*) (fst (List.hd rhs_measures)) lower_bound loc, None)) loc in
+		  (* Debug information *)	
 		  let _ = print_string ("EVariance: lexico ranking: " ^ (Cprinter.string_of_ext_formula lexico_ranking_formula) ^ "\n") in
 		  let _ = print_string ("EVariance: boundedness checking: " ^ (Cprinter.string_of_ext_formula boundedness_checking_formula) ^ "\n") in
+			
 		  let rs,prf = inner_entailer ctx [lexico_ranking_formula] in
 		  let _ = print_string ("EVariance: lexico ranking checking:" ^ ("\nCtx:"^(Cprinter.string_of_list_context rs)^"\nProof:"^(Prooftracer.string_of_proof prf))) in
 		  let _ = Prooftracer.log_proof prf in
-			(if CF.isAnyFalseListCtx rs then Debug.print_info "inner_entailer" "checking lexico ranking : failed" loc
+			(if CF.isFailCtx rs then Debug.print_info "inner_entailer" "checking lexico ranking : failed" loc
 			else Debug.print_info "inner_entailer" "checking lexico ranking : ok" loc);
+
+		  let rs,prf = inner_entailer ctx [boundedness_checking_formula] in
+		  let _ = print_string ("EVariance: boundedness checking:" ^ ("\nCtx:"^(Cprinter.string_of_list_context rs)^"\nProof:"^(Prooftracer.string_of_proof prf))) in
+		  let _ = Prooftracer.log_proof prf in
+			(if CF.isFailCtx rs then Debug.print_info "inner_entailer" "checking boundedness : failed" loc
+			else Debug.print_info "inner_entailer" "checking boundedness : ok" loc);	
 		  
 		  inner_entailer ctx e.Cformula.formula_var_continuation
     in
@@ -3764,10 +3781,12 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	    | EBase d ->
 	          ECase {b with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f2] c2))) b.formula_case_branches)}
 	    | EAssume _ -> ECase ({b with formula_case_branches = List.map (fun (c1,c2)-> (c1,(combine_struc c2 [f2])))
-			      b.formula_case_branches}) in r	
+			      b.formula_case_branches})
+		| EVariance e -> ECase {b with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f2] c2))) b.formula_case_branches)}
+	  in r	
     | EBase b -> let r = match f2 with
 	    | ECase d ->
-	          ECase {d with 	 formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) d.formula_case_branches)}
+	          ECase {d with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) d.formula_case_branches)}
 	    | EBase d -> EBase 
 	          {
 	              formula_ext_explicit_inst = b.formula_ext_explicit_inst @ d.formula_ext_explicit_inst;
@@ -3777,11 +3796,24 @@ and combine_struc (f1:struc_formula)(f2:struc_formula) :struc_formula =
 	              formula_ext_continuation = combine_struc b.formula_ext_continuation d.formula_ext_continuation;
 	              formula_ext_pos = b.formula_ext_pos
 	          }
-	    | EAssume _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]}) in r
+	    | EAssume _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
+		| EVariance _ -> EBase ({b with formula_ext_continuation = combine_struc b.formula_ext_continuation [f2]})
+	  in r																												  
     | EAssume (x1,b, (y1',y2') )-> let r = match f2 with
 	    | ECase d -> combine_ext_struc f2 f1
 	    | EBase d -> combine_ext_struc f2 f1 
-	    | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2'))) in r in
+	    | EAssume (x2,d,(y1,y2)) -> EAssume ((x1@x2),(normalize_combine b d (Cformula.pos_of_formula d)),(y1,(y2^y2')))
+		| EVariance e -> combine_ext_struc f2 f1
+	  in r
+	| EVariance e -> let r = match f2 with
+		| ECase c -> ECase {c with formula_case_branches =  (List.map (fun (c1,c2)-> (c1,(combine_struc [f1] c2))) c.formula_case_branches)}
+		| EBase _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
+		| EAssume _ -> EVariance ({e with formula_var_continuation = combine_struc e.formula_var_continuation [f2]})
+		| EVariance e2 -> EVariance ({e with formula_var_measures = e.formula_var_measures@e2.formula_var_measures;
+									         formula_var_escape_clauses = e.formula_var_escape_clauses@e2.formula_var_escape_clauses; (* [ec1,ec2] means ec1 or ec2 *)
+											 formula_var_continuation = combine_struc e.formula_var_continuation e2.formula_var_continuation}) 
+	  in r
+  in
   List.fold_left (fun b c1->b@(List.map (fun c2->(combine_ext_struc c1 c2)) f2)) [] f1
 
 

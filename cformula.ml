@@ -3161,7 +3161,8 @@ let mkEBase (pf:CP.formula) loc : ext_formula =
 	formula_ext_explicit_inst = [];
 	formula_ext_implicit_inst = [];
 	formula_ext_exists = [];
-	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;
+	(*formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [("",pf)] loc;*)
+	formula_ext_base = mkBase HTrue (MCP.OnePF (pf)) TypeTrue (mkTrueFlow ()) [] loc;
 	  (*Base {
 		formula_base_heap = HTrue;
 		formula_base_pure = MCP.OnePF (pf);
