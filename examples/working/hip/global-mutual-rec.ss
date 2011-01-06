@@ -2,9 +2,9 @@ global int n,k;
 
 void decrease1(int t)
    requires [a] t = a+a & a >= 0
-   ensures (exists a: n' = n-a & k' = k-a & t=a+a);
+   ensures n' = n-a & k' = k-a & t=a+a;
    requires [a] t = a+a+1 & a >= 0
-   ensures (exists a: n' = n-a-1 & k' = k-a & t=a+a+1);
+   ensures n' = n-a-1 & k' = k-a & t=a+a+1;
 {
    if (t > 0){
 	  n--;
@@ -14,9 +14,9 @@ void decrease1(int t)
 
 void decrease2(int t)
    requires  [a] t = a+a & a >= 0
-   ensures (exists a: k' = k-a & n' = n-a & t=a+a);
+   ensures k' = k-a & n' = n-a & t=a+a;
    requires [a] t = a+a+1 & a >= 0
-   ensures (exists a: k' = k-a-1 & n' = n-a & t=a+a+1);
+   ensures k' = k-a-1 & n' = n-a & t=a+a+1;
 {
    if (t > 0) {
 	  k--;

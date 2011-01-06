@@ -424,7 +424,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   | Mona -> Mona.is_sat f sat_no
   | CO -> 
       begin
-        let result1 = (Cvclite.is_sat_raw f sat_no) in
+        let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
         match result1 with
         | Some f -> f
         | None ->
@@ -436,7 +436,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         if (is_bag_constraint f) then
           (Mona.is_sat f sat_no)
         else
-          let result1 = (Cvclite.is_sat_raw f sat_no) in
+          let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
           match result1 with
           | Some f -> f
           | None ->
@@ -658,7 +658,7 @@ let tp_imply_no_cache ante conseq imp_no timeout =
   | Mona -> Mona.imply timeout ante conseq imp_no 
   | CO -> 
       begin
-        let result1 = Cvclite.imply_raw ante conseq in
+        let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
         match result1 with
         | Some f -> f
         | None -> (* CVC Lite is not sure is this case, try Omega *)
@@ -670,7 +670,7 @@ let tp_imply_no_cache ante conseq imp_no timeout =
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
           Mona.imply timeout ante conseq imp_no
         else
-          let result1 = Cvclite.imply_raw ante conseq in
+          let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
           match result1 with
           | Some f -> f
           | None -> (* CVC Lite is not sure is this case, try Omega *)
@@ -879,7 +879,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
 ;;
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
-	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
@@ -887,44 +887,100 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
-      Some res -> (res,[],None)       
+        Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
 	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
 	if CP.isConstTrue conseq0 then (true, [],None)
 	else
-let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
-		if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
-		else
-			let ante = elim_exists ante in
-			let conseq = elim_exists conseq in
-			let split_conseq = split_conjunctions conseq in
-			let pairs = List.map (fun cons -> 
-        let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
-        let ante = CP.remove_dup_constraints ante in
-        filter ante cons) split_conseq in
-			let pairs_length = List.length pairs in
-			let imp_sub_no = ref 0 in
-			let fold_fun (res1,res2,res3) (ante, conseq) =
-				(incr imp_sub_no;
-				if res1 then 
-					let imp_no = 
-						if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
-						else imp_no in
-					let res1 =
-						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-							let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
-							if res1 then res1
-							else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
-						else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
-					let l1 = CP.get_pure_label ante in
-					let l2 = CP.get_pure_label conseq in
-					if res1 then (res1,(l1,l2)::res2,None)
-					else (res1,res2,l2)
-				else (res1,res2,res3) )
-			in
-			List.fold_left fold_fun (true,[],None) pairs
+      let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
+	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
+	  else
+		let ante = elim_exists ante in
+		let conseq = elim_exists conseq in
+		let split_conseq = split_conjunctions conseq in
+		let pairs = List.map (fun cons -> 
+            let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
+            let ante = CP.remove_dup_constraints ante in
+            filter ante cons) split_conseq in
+		let pairs_length = List.length pairs in
+		let imp_sub_no = ref 0 in
+        (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
+		let fold_fun (res1,res2,res3) (ante, conseq) =
+		  (incr imp_sub_no;
+		  if res1 then 
+            (*<< for log - numbering *)
+			let imp_no = 
+			  if pairs_length > 1 then ( (* let _ = print_string("\n!!!!!!! \n") in flush stdout ; *) (imp_no ^ "." ^ string_of_int (!imp_sub_no)))
+			  else imp_no in
+            (*>> for log - numbering *)
+            (*<< test the pair for implication - implication result is saved in res1*)
+			let res1 =
+			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
+				if res1 then res1
+				else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
+			  else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
+			let l1 = CP.get_pure_label ante in
+			let l2 = CP.get_pure_label conseq in
+            (* let _ = print_string ("\n!!! " ^ (Cprinter.string_of_formula_label l1 "") ^ " \n") in *)
+			if res1 then (res1,(l1,l2)::res2,None)
+			else (res1,res2,l2)
+            (*>> test the pair for implication - implication result is saved in res1*)
+		  else (res1,res2,res3) )
+		in
+		List.fold_left fold_fun (true,[],None) pairs
+  end
+;;
+
+let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
+	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+  proof_no := !proof_no + 1 ; 
+  let imp_no = (string_of_int !proof_no) in
+  Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
+  Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
+  Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
+  if !external_prover then 
+    match Netprover.call_prover (Imply (ante0,conseq0)) with
+        Some res -> (res,[],None)       
+      | None -> (false,[],None)
+  else begin 
+	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
+	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
+	if CP.isConstTrue conseq0 then (true, [],None)
+	else
+      let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
+	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
+	  else
+		let ante = elim_exists ante in
+		let conseq = elim_exists conseq in
+		let split_conseq = split_conjunctions conseq in
+		let pairs = List.map (fun cons -> 
+            let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
+            let ante = CP.remove_dup_constraints ante in
+            filter ante cons) split_conseq in
+		let pairs_length = List.length pairs in
+		let imp_sub_no = ref 0 in
+		let fold_fun (res1,res2,res3) (ante, conseq) =
+		  (incr imp_sub_no;
+		  if res1 then 
+			let imp_no = 
+			  if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
+			  else imp_no in
+			let res1 =
+			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
+				if res1 then res1
+				else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
+			  else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
+			let l1 = CP.get_pure_label ante in
+			let l2 = CP.get_pure_label conseq in
+			if res1 then (res1,(l1,l2)::res2,None)
+			else (res1,res2,l2)
+		  else (res1,res2,res3) )
+		in
+		List.fold_left fold_fun (true,[],None) pairs
   end
 ;;
 
