@@ -250,6 +250,22 @@ let set_tp tp_str =
   else
 	()
 
+let string_of_tp tp = match tp with
+  | OmegaCalc -> "omega"
+  | CvcLite -> "cvcl"
+  | Cvc3 -> "cvc3"
+  | CO -> "co"
+  | Isabelle -> "isabelle"
+  | Mona -> "mona"
+  | OM -> "om"
+  | OI -> "oi"
+  | SetMONA -> "set"
+  | CM -> "cm"
+  | Coq -> "coq"
+  | Z3 -> "z3"
+  | Redlog -> "redlog"
+  | RM -> "rm"
+
 let omega_count = ref 0
 
 (* Method checking whether a formula contains bag constraints *)

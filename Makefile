@@ -5,7 +5,7 @@ OCAMLDOC=ocamldoc
 
 DIRS=.
 INCLUDES=-I ./xml -I +ocamlgraph
-GUIINCLUDES=-I +lablgtk2
+GUIINCLUDES=-I +lablgtk2 unix.cma str.cma graph.cma xml-light.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS= -dtypes $(INCLUDES) # add other options for ocamlc here
@@ -282,13 +282,20 @@ GSLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	xmlfront.cmo nativefront.cmo \
 	sleekengine.cmo \
 	scriptarguments.cmo \
+	gUtil.cmo gEntailmentList.cmo gSleekSourceView.cmo \
 	gsleek.cmo
 
-gsleek.cmo: gsleek.ml
-	$(OCAMLC) -g -c $(OCAMLFLAGS) -I +lablgtk2 unix.cma str.cma graph.cma xml-light.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo gsleek.ml
+gEntailmentList.cmo: gUtil.cmo gEntailmentList.ml
+	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gEntailmentList.ml
+
+gSleekSourceView.cmo: gUtil.cmo gSleekSourceView.ml
+	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gSleekSourceView.ml
+
+gsleek.cmo: gUtil.ml gsleek.ml
+	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gsleek.ml
 
 gsleek: $(GSLEEK_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) -I +lablgtk2 unix.cma str.cma graph.cma xml-light.cma lablgtk.cma lablgtksourceview2.cma gtkInit.cmo $(GSLEEK_FILES)
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) $(GSLEEK_FILES)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
@@ -352,7 +359,7 @@ decidez.vo:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
+	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug gsleek
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
