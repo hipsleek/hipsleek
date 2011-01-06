@@ -59,6 +59,37 @@ class entailment_list_model ?(src = "") () =
       in
       delegate#foreach func
 
+    (*
+     *method check_all (check_func: SU.entailment -> bool): unit =
+     *  let output, input = Unix.pipe () in
+     *  let func path iter =
+     *    let _ = print_endline (string_of_int (Unix.getpid ())) in
+     *    match Unix.fork () with
+     *    | 0 -> begin [> child process <]
+     *        let _ = print_endline (string_of_int (Unix.getpid ())) in
+     *        let entail = self#get_entailment_by_path path in
+     *        let valid = check_func entail in
+     *        let res = if valid then "1" else "0" in
+     *        ignore (Unix.write input res 0 1);
+     *        Unix.close input;
+     *        [>self#set_entaiment_validity path valid;<]
+     *        exit 0
+     *        [>true<]
+     *      end
+     *    | pid -> false
+     *  in
+     *  delegate#foreach func;
+     *  let _ = try
+     *      while true do
+     *        ignore (Unix.wait ())
+     *      done
+     *    with Unix.Unix_error _ -> ()
+     *  in 
+     *  let buff = String.create 5 in
+     *  ignore (Unix.read output buff 0 5);
+     *  print_endline buff
+     *)
+
   end
 
 

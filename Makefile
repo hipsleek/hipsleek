@@ -283,7 +283,6 @@ GSLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	sleekengine.cmo \
 	scriptarguments.cmo \
 	gUtil.cmo gEntailmentList.cmo gSleekSourceView.cmo \
-	gsleek.cmo
 
 gEntailmentList.cmo: gUtil.cmo gEntailmentList.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gEntailmentList.ml
@@ -291,11 +290,11 @@ gEntailmentList.cmo: gUtil.cmo gEntailmentList.ml
 gSleekSourceView.cmo: gUtil.cmo gSleekSourceView.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gSleekSourceView.ml
 
-gsleek.cmo: gUtil.ml gsleek.ml
+gsleek.cmo: $(GSLEEK_FILES) gsleek.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gsleek.ml
 
-gsleek: $(GSLEEK_FILES)
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) $(GSLEEK_FILES)
+gsleek: $(GSLEEK_FILES) gsleek.cmo
+	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) $(GSLEEK_FILES) gsleek.cmo
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)

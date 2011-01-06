@@ -140,29 +140,36 @@ module SleekHelper = struct
     tp: TP.tp_type;
     eps: bool;
     eap: bool;
+    dd: bool;
   }
 
-  let infile = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
-  let outfile = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
+  let infile () = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
+  let outfile () = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
   let default_args = {
     tp = TP.OmegaCalc;
     eps = false;
     eap = false;
+    dd = false;
   }
 
   let build_args_string (args: sleek_args): string =
     let tp = " -tp " ^ (TP.string_of_tp args.tp) in
-    let eps = if args.eps then " -eps" else "" in
-    let eap = if args.eap then " -eap" else "" in
-    let res = tp ^ eps ^ eap in
+    let eps = if args.eps then " --eps" else "" in
+    let eap = if args.eap then " --eap" else "" in
+    let dd = if args.dd then " -dd" else "" in
+    let res = tp ^ eps ^ eap ^ dd in
     res
 
   let sleek_command (args: sleek_args) : string = 
     let args_string = build_args_string args in
+    let infile = infile () in
+    let outfile = outfile () in
     Printf.sprintf "./sleek %s %s > %s" args_string infile outfile
 
   (* run sleek with source text and return result string *)
   let run_sleek ?(args = default_args) (src: string) : string =
+    let infile = infile () in
+    let outfile = outfile () in
     FileUtil.write_to_file infile src;
     let cmd = sleek_command args in
     ignore (Sys.command cmd);

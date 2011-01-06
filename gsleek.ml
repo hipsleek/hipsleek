@@ -8,6 +8,7 @@ open GSleekSourceView
 module SU = GUtil.SourceUtil
 module FU = GUtil.FileUtil
 module SH = GUtil.SleekHelper
+module TP = Tpdispatcher
 
 let create_yes_no_cancel_dialog
     ?(msg="Yes or No?")
@@ -68,10 +69,13 @@ let ui_info =
       <menu action='TheoremProverMenu'>\
         <menuitem action='Omega'/>\
         <menuitem action='Mona'/>\
+        <menuitem action='CVC3'/>\
         <menuitem action='Redlog'/>\
+        <menuitem action='OM'/>\
       </menu>\
       <menuitem action='EPS'/>\
       <menuitem action='EAP'/>\
+      <menuitem action='DD'/>\
     </menu>\
     <menu action='HelpMenu'>\
       <menuitem action='About'/>\
@@ -102,6 +106,7 @@ class mainwindow =
     val residue_view = create_residue_view ()
     (* data *)
     val mutable current_file = None
+    val mutable sleek_args = SH.default_args
       
     initializer
       (* initialize components *)
@@ -175,14 +180,18 @@ class mainwindow =
         a "About" ~label:"_About" ~tooltip:"About HIP/Sleek";
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
           ~callback:(fun _ -> self#run_all_handler ());
-        ta "EPS" ~label:"Predicate Specialization"
-          ~callback:(fun _ -> print_endline "eps");
-        ta "EAP" ~label:"Aggressive Prunning"
-          ~callback:(fun _ -> print_endline "eap");
-        radio ~init_value:0 [
+        ta "EPS" ~label:"Enable Predicate Specialization"
+          ~callback:(fun act -> sleek_args <- {sleek_args with SH.eps = act#get_active});
+        ta "EAP" ~label:"Enable Aggressive Prunning"
+          ~callback:(fun act -> sleek_args <- {sleek_args with SH.eap = act#get_active});
+        ta "DD" ~label:"Show Debug Messages"
+          ~callback:(fun act -> sleek_args <- {sleek_args with SH.dd = act#get_active});
+        radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
-          ra "Redlog" 2 ~label:"_Redlog";
+          ra "CVC3" 2 ~label:"_CVC3";
+          ra "Redlog" 3 ~label:"_Redlog";
+          ra "OM" 4 ~label:"Omega _And Mona";
         ];
       ];
       let ui = GAction.ui_manager () in
@@ -251,7 +260,6 @@ class mainwindow =
       entailment_list#update_source new_src;
       residue_view#buffer#set_text ""
       
-
     method private string_of_current_file () =
       match current_file with
       | Some fname -> fname
@@ -279,6 +287,11 @@ class mainwindow =
       self#set_title title;
         
     method get_text () = source_view#source_buffer#get_text ()
+
+    method set_theorem_prover id =
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.OM] in
+      let tp = List.nth provers id in
+      sleek_args <- {sleek_args with SH.tp = tp}
 
 
     (*********************
@@ -321,7 +334,7 @@ class mainwindow =
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
       let src = self#get_text () in
-      entailment_list#check_all (fun e -> fst (SH.checkentail src e));
+      entailment_list#check_all (fun e -> fst (SH.checkentail ~args:sleek_args src e));
       source_view#hl_all_entailement ()
 
     (* Source buffer modified *)
@@ -335,7 +348,7 @@ class mainwindow =
       | None -> ()
       | Some e -> begin
         let src = self#get_text () in
-        let valid, residue = SH.checkentail src e in
+        let valid, residue = SH.checkentail ~args:sleek_args src e in
         entailment_list#set_selected_entailment_validity valid;
         residue_view#buffer#set_text residue;
         source_view#hl_entailment e
