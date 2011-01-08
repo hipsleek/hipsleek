@@ -1949,8 +1949,8 @@ and heap_entail_one_context_struc (prog : prog_decl) (is_folding : bool) (is_uni
         else*)
       let _ = may_must_list := [] in
       let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos pid []  in
-      let _ = if (List.mem "must" !may_must_list) then
-                      failure_msg := "Must failure. " else failure_msg := "May failure. " in
+      let _ = if (List.mem "may" !may_must_list) then
+                      failure_msg := "May failure. " else failure_msg := "Must failure. " in
       (result, prf)
 
 and heap_entail_after_sat_struc prog is_folding is_universal has_post
@@ -2656,7 +2656,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	  let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None) 
             else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no) in	
     
-    let res1,res2,re3 = 
+    let res1,res2,res3 = 
         if res1 = false && branch_id = "" then
 	      let branches = Util.remove_dups (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
           let fold_fun (is_ok,a2,a3) branch_id_added =
