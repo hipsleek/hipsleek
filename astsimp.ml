@@ -2977,6 +2977,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
                 Cformula.formula_ext_continuation = nc;
                 Cformula.formula_ext_pos = b.Iformula.formula_ext_pos}
 	  | Iformula.EVariance b -> Cformula.EVariance {
+		    Cformula.formula_var_label = b.Iformula.formula_var_label;
 			Cformula.formula_var_measures = List.map (fun (expr, bound) -> match bound with
 														| None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
 														| Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_var_measures;

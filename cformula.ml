@@ -65,6 +65,7 @@ and ext_base_formula =
 
 and ext_variance_formula =
 	{
+		formula_var_label : int;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
 	    formula_var_continuation : struc_formula;
@@ -1342,7 +1343,8 @@ type entail_state = {
   es_path_label : path_trace;
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
-  es_variance : CP.exp list;
+  es_var_measures : CP.exp list;
+  es_var_label : int;
 }
 
 and context = 
@@ -1420,7 +1422,8 @@ let empty_es flowt pos =
   es_orig_conseq = [mkETrue flowt pos] ;
   es_path_label  =[];
   es_prior_steps  = [];
-  es_variance = []
+  es_var_measures = [];
+  es_var_label = 0;
   (*es_cache_no_list = [];*)
 }
 

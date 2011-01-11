@@ -915,6 +915,7 @@ and pr_ext_formula  (e:ext_formula) =
 	     fmt_cut();
 	     wrap_box ("B",0) pr_formula b) b
 	| EVariance {
+			formula_var_label = label;
 			formula_var_measures = measures;
 			formula_var_escape_clauses = escape_clauses;
 			formula_var_continuation = cont;
@@ -925,7 +926,7 @@ and pr_ext_formula  (e:ext_formula) =
 																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
 		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(poly_string_of_pr pr_pure_formula f)) "" escape_clauses in
 		fmt_open_vbox 2;
-		fmt_string ("EVariance "^"[ "^string_of_measures^"]"^" ==> "^"[ "^string_of_escape_clauses^" ]" );
+		fmt_string ("EVariance ("^(string_of_int label)^") "^"[ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ]"));
         if not(U.empty(cont)) then
 		begin
 			fmt_cut();
@@ -992,7 +993,8 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_success_pts: " U.empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts;
   pr_wrap_test "es_residue_pts: " U.empty (pr_seq "" pr_formula_label) es.es_residue_pts;
   pr_wrap_test "es_path_label: " U.empty pr_path_trace es.es_path_label;
-  pr_wrap_test "es_variance: " U.empty (pr_seq "" pr_formula_exp) es.es_variance;
+  pr_wrap_test "es_var_measures: " U.empty (pr_seq "" pr_formula_exp) es.es_var_measures;
+  pr_vwrap "es_var_label: " (fun l -> fmt_string (string_of_int l)) es.es_var_label;
   fmt_close ()
 
 

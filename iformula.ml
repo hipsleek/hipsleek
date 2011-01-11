@@ -35,6 +35,7 @@ and ext_base_formula =
 
 and ext_variance_formula =
 	{
+	    formula_var_label : int;
 		formula_var_measures : (P.exp * (P.exp option)) list;
 		formula_var_escape_clauses : P.formula list;
 		formula_var_continuation : struc_formula;
@@ -602,11 +603,8 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 				formula_ext_explicit_inst = (*snd (List.split sst1)*) b.formula_ext_explicit_inst;
 		 		formula_ext_implicit_inst = snd (List.split sst2);
 				formula_ext_base=new_base_f; formula_ext_continuation=new_cont_f})
-		| EVariance b -> EVariance ({
-										formula_var_measures = b.formula_var_measures;
-										formula_var_escape_clauses = b.formula_var_escape_clauses;
+		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = rename_bound_var_struc_formula b.formula_var_continuation;
-										formula_var_pos = b.formula_var_pos
 									})
 			in
 	List.map helper f
@@ -692,11 +690,8 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 					formula_ext_continuation = float_out_exps_from_heap_struc b.formula_ext_continuation;
 					formula_ext_pos = b.formula_ext_pos			
 				})
-		| EVariance b -> EVariance ({
-										formula_var_measures = b.formula_var_measures;
-										formula_var_escape_clauses = b.formula_var_escape_clauses;
+		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = float_out_exps_from_heap_struc b.formula_var_continuation;
-										formula_var_pos = b.formula_var_pos
 									})
 	in	
 	List.map helper f
@@ -1143,12 +1138,11 @@ and float_out_struc_min_max (f0 : struc_formula): struc_formula =
 																| None -> ((fst (float_out_exp_min_max expr)), None)
 																| Some bexpr -> ((fst (float_out_exp_min_max expr)), Some (fst (float_out_exp_min_max bexpr)))) b.formula_var_measures) in
 			let fo_escape_clause = (List.map (fun f -> (float_out_pure_min_max f)) b.formula_var_escape_clauses) in
-				EVariance {
+				EVariance ({ b with
 					formula_var_measures = fo_measures;
 					formula_var_escape_clauses = fo_escape_clause;
 					formula_var_continuation = float_out_struc_min_max b.formula_var_continuation;
-					formula_var_pos = b.formula_var_pos
-				}
+				})
 	in
 	List.map helper f0
 		
@@ -1210,12 +1204,9 @@ let rec helper f = match f with
 						 formula_case_branches = (List.map (fun (c1,c2)->
 								(c1,(subst_flow_of_struc_formula fr t c2)))b.formula_case_branches)}
 		| EAssume (b,tag)-> EAssume ((subst_flow_of_formula fr t b),tag)
-		| EVariance b -> EVariance {
-										formula_var_measures = b.formula_var_measures;
-										formula_var_escape_clauses = b.formula_var_escape_clauses;
+		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = subst_flow_of_struc_formula fr t b.formula_var_continuation;
-										formula_var_pos = b.formula_var_pos
-								   }
+								   })
 in 
 List.map helper f 
 

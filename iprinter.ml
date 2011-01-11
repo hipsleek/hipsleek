@@ -301,6 +301,7 @@ let rec string_of_ext_formula = function
 				"["^l1^"]["^l2^"]"^b^" "^c
 	| Iformula.EAssume (b,(n1,n2))-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
     | Iformula.EVariance {
+			Iformula.formula_var_label = label;
 			Iformula.formula_var_measures = measures;
 			Iformula.formula_var_escape_clauses = escape_clauses;
 			Iformula.formula_var_continuation = continuation;
@@ -310,7 +311,7 @@ let rec string_of_ext_formula = function
 																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
 		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
 		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
-		  "EVariance "^"[ "^string_of_measures^"]"^" ==> "^"[ "^string_of_escape_clauses^" ] "^string_of_continuation 
+		  "EVariance ("^(string_of_int label)^") "^"[ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 

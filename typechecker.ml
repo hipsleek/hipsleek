@@ -49,7 +49,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	        r
 	  | Cformula.EVariance b ->
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_variance = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures}) ctx in
+		  let _ = print_string "check_specs: EVariance: before nctx\n" in 
+			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures; Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 			let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0 (* TODO *)
 	  | Cformula.EAssume (x,b,y) ->
@@ -516,8 +517,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 		  let _ = print_string ("check_proc: init_form: " ^ (Cprinter.string_of_formula init_form) ^ "\n") in*)
 	      let init_ctx = CF.build_context init_ctx1 init_form proc.proc_loc in
 		  (*let _ = print_string ("check_proc: init_ctx: " ^ (Cprinter.string_of_context init_ctx) ^ "\n") in*)
-		  (* Add es_variance *)
-		  (*let init_ctx = CF.add_es_variance init_ctx2 proc.proc_static_specs in*)
+		  (* Add es_var_measures *)
+		  (*let init_ctx = CF.add_es_var_measures init_ctx2 proc.proc_static_specs in*)
 	      let pp = check_specs prog proc init_ctx (proc.proc_static_specs @ proc.proc_dynamic_specs) body in
 	      let result =
 	        if pp then begin

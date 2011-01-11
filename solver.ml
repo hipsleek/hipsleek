@@ -178,7 +178,11 @@ let prune_branches_subsume_debug prog univ_vars lhs_node rhs_node =
   
 let clear_entailment_history_es (es :entail_state) :context = 
   Ctx {(empty_es (mkTrueFlow ()) no_pos) with 
-    es_formula = filter_formula_memo es.es_formula false; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_variance = es.es_variance} 
+    es_formula = filter_formula_memo es.es_formula false;
+	es_path_label = es.es_path_label;
+	es_prior_steps= es.es_prior_steps;
+	es_var_measures = es.es_var_measures;
+	es_var_label = es.es_var_label} 
  
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -2116,40 +2120,43 @@ and heap_entail_conjunct_lhs_struc
 	        ) in*)
 	      ((SuccCtx [rs4]),TrueConseq)
 	  | EVariance e ->
-		  let loc = e.formula_var_pos in
-		  let lhs_measures = match ctx with
-			| Ctx c -> List.map (fun exp -> CP.transform_exp (fun e -> match e with
+		  let _ = (* Termination checking *)
+			print_string ("\nEVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
+			print_string ("\nEVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n");
+			let loc = e.formula_var_pos in
+			let es = match ctx with
+			  | Ctx c -> c
+			  | OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n"^(Cprinter.string_of_context ctx))
+			in
+			  
+			if es.es_var_label = e.formula_var_label then
+			  let lhs_measures = List.map (fun exp -> CP.transform_exp (fun e -> match e with
 															  | CP.Var (x,l) -> Some (CP.Var (CP.to_primed x,l))
-															  | _ -> None) exp) c.es_variance
-			(*| Ctx c -> c.es_variance*)
-			| OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n")
-		  in
-		  let rhs_measures = e.formula_var_measures in
-		  let _ = if ((List.length lhs_measures) != (List.length rhs_measures)) then report_error no_pos ("inner_entailer: OCtx encountered \n") (*Debug.print_info "inner_entailer"  ("error in termination checking\n") loc*)
-				  else () in
-		  (* lhs-rhs>0 *)
-		  let lexico_ranking_formula = mkEBase (CP.BForm (CP.mkGt (CP.mkSubtract (List.hd lhs_measures) (fst (List.hd rhs_measures)) loc) (CP.mkIConst 0 loc) loc, None)) loc in
-		  (* lhs>=0 *)
-		  let lower_bound = match (snd (List.hd rhs_measures)) with
+															  | _ -> None) exp) es.es_var_measures
+			  in
+			  let rhs_measures = e.formula_var_measures in
+			  let _ = if ((List.length lhs_measures) != (List.length rhs_measures)) then report_error no_pos ("inner_entailer: LHS does not match RHS \n")
+				      else () in
+		      (* lhs-rhs>0 *)
+		      let lexico_ranking_formula = mkEBase (CP.BForm (CP.mkGt (CP.mkSubtract (List.hd lhs_measures) (fst (List.hd rhs_measures)) loc) (CP.mkIConst 0 loc) loc, None)) loc in
+		      (* lhs>=lower_bound *)
+			  let lower_bound = match (snd (List.hd rhs_measures)) with
 								| None -> report_error no_pos ("inner_entailer: error with lower bound in termination checking \n")
 								| Some exp -> exp in
-		  let boundedness_checking_formula = mkEBase (CP.BForm (CP.mkGte (*List.hd lhs_measures*) (fst (List.hd rhs_measures)) lower_bound loc, None)) loc in
-		  (* Debug information *)	
-		  let _ = print_string ("EVariance: lexico ranking: " ^ (Cprinter.string_of_ext_formula lexico_ranking_formula) ^ "\n") in
-		  let _ = print_string ("EVariance: boundedness checking: " ^ (Cprinter.string_of_ext_formula boundedness_checking_formula) ^ "\n") in
-			
-		  let rs,prf = inner_entailer ctx [lexico_ranking_formula] in
-		  let _ = print_string ("EVariance: lexico ranking checking:" ^ ("\nCtx:"^(Cprinter.string_of_list_context rs)^"\nProof:"^(Prooftracer.string_of_proof prf))) in
-		  let _ = Prooftracer.log_proof prf in
-			(if CF.isFailCtx rs then Debug.print_info "inner_entailer" "checking lexico ranking : failed" loc
-			else Debug.print_info "inner_entailer" "checking lexico ranking : ok" loc);
+		      let boundedness_checking_formula = mkEBase (CP.BForm (CP.mkGte (*List.hd lhs_measures*) (fst (List.hd rhs_measures)) lower_bound loc, None)) loc in
+		    
+		      let rs,prf = inner_entailer ctx [lexico_ranking_formula] in
+		      let _ = Prooftracer.log_proof prf in
+				(if CF.isFailCtx rs then Debug.print_info "inner_entailer" "checking lexico ranking : failed" loc
+				else Debug.print_info "inner_entailer" "checking lexico ranking : ok" loc);
 
-		  let rs,prf = inner_entailer ctx [boundedness_checking_formula] in
-		  let _ = print_string ("EVariance: boundedness checking:" ^ ("\nCtx:"^(Cprinter.string_of_list_context rs)^"\nProof:"^(Prooftracer.string_of_proof prf))) in
-		  let _ = Prooftracer.log_proof prf in
-			(if CF.isFailCtx rs then Debug.print_info "inner_entailer" "checking boundedness : failed" loc
-			else Debug.print_info "inner_entailer" "checking boundedness : ok" loc);	
-		  
+		      let rs,prf = inner_entailer ctx [boundedness_checking_formula] in
+			  let _ = Prooftracer.log_proof prf in
+				(if CF.isFailCtx rs then Debug.print_info "inner_entailer" "checking boundedness : failed" loc
+				else Debug.print_info "inner_entailer" "checking boundedness : ok" loc);	
+			  
+			else ()  
+		  in
 		  inner_entailer ctx e.Cformula.formula_var_continuation
     in
     (*let _ = print_string ("\n inner entailer: "^(string_of_int (List.length conseq))^"\n") in
@@ -2203,7 +2210,10 @@ and heap_entail (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl
 	      else
             (heap_entail_one_context prog is_folding is_universal (List.hd cl) conseq pos)
 
-and heap_entail_one_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx : context) (conseq : formula) pos : (list_context * proof) =
+and heap_entail_one_context prog is_folding is_universal ctx conseq pos =
+  Util.ho_debug_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) (fun ctx conseq -> heap_entail_one_context_a prog is_folding is_universal ctx conseq pos) ctx conseq 
+			  
+and heap_entail_one_context_a (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx : context) (conseq : formula) pos : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_context ctx)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)^"\n") pos;
@@ -2658,7 +2668,10 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
     List.fold_left fold_fun2 false branches
   else res 
 
-and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap prog is_folding is_universal estate lhs rhs_p rhs_p_br pos =
+  Util.ho_debug_4 "heap_entail_empty_rhs_heap" (Cprinter.string_of_estate) (fun fbase -> Cprinter.string_of_formula (Base (fbase))) (Cprinter.string_of_mix_formula) (fun ls -> List.fold_left (fun rs (lb,f) -> rs^(Cprinter.string_of_pure_formula f)) "" ls) (fun (l,p) -> Cprinter.string_of_list_context l) (fun _ -> true) (fun estate lhs rhs_p rhs_p_br -> heap_entail_empty_rhs_heap_a prog is_folding is_universal estate lhs rhs_p rhs_p_br pos) estate lhs rhs_p rhs_p_br
+	
+and heap_entail_empty_rhs_heap_a (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
@@ -2807,7 +2820,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
                           es_unsat_flag = false;
                           es_prior_steps = estate.es_prior_steps;
                           es_path_label = estate.es_path_label;
-						  es_variance = estate.es_variance} in
+						  es_var_measures = estate.es_var_measures} in
     let na,prf = match vd.view_base_case with
 			| None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
                                       fc_message ="failure 1 ?? when checking for aliased node";
@@ -3038,7 +3051,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                               es_orig_conseq = estate.es_orig_conseq;
                               es_prior_steps = estate.es_prior_steps;
                               es_path_label = estate.es_path_label;
-							  es_variance = estate.es_variance} in
+							  es_var_measures = estate.es_var_measures;
+							  es_var_label = estate.es_var_label} in
 	      do_fold_w_ctx(*_debug*) fold_ctx var_to_fold  in
 	    
 	    
