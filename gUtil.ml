@@ -1,5 +1,11 @@
-
 module TP = Tpdispatcher
+
+let create_scrolled_win child = 
+  let scroll_win = GBin.scrolled_window 
+    ~hpolicy: `AUTOMATIC ~vpolicy: `AUTOMATIC 
+    () in
+  scroll_win#add child#coerce;
+  scroll_win
 
 (**********************************
  * Common operations on text file
@@ -39,13 +45,18 @@ module SourceUtil = struct
     stop_char: int;
     stop_line: int;
   }
+  type substring_pos = {
+    start: int;
+    stop: int;
+  }
+  type position = GText.position
 
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
   let print_re = Str.regexp "print [^\\.]+\\."
   let new_line_re = Str.regexp "^"
 
   (* return a list of all positions of "new line" char in src *)
-  let new_line_position (src: string) : int list =
+  let get_new_line_positions (src: string) : int list =
     let rec new_line_pos (start: int): int list =
       try
         let pos = Str.search_forward new_line_re src start in
@@ -80,7 +91,7 @@ module SourceUtil = struct
 
   (* parse sleek file and return list of entailments (to be checked) *)
   let parse_entailment_list (src: string) : entailment list =
-    let new_lines = new_line_position src in
+    let new_lines = get_new_line_positions src in
     let to_line_num pos = char_pos_to_line_num pos new_lines in
     let rec parse (start: int) : entailment list =
       try
@@ -96,10 +107,22 @@ module SourceUtil = struct
           stop_line = stop_line;
           formula = f;
         } in
-        first::(parse (first.stop_char+1))
+        first::(parse (stop_char+1))
       with Not_found -> []
     in
     parse 0
+
+  let search (doc: string) (substring: string) : substring_pos list =
+    let reg = Str.regexp_string substring in
+    let rec search_next (start: int) : substring_pos list =
+      try
+        let start_char = Str.search_forward reg doc start in
+        let stop_char = Str.match_end () in
+        let pos = { start = start_char; stop = stop_char} in
+        pos::(search_next (stop_char+1))
+      with Not_found -> []
+    in
+    search_next 0
 
 (*
  *  let parse_command_list (src: string) =
@@ -140,56 +163,53 @@ module SleekHelper = struct
     tp: TP.tp_type;
     eps: bool;
     eap: bool;
-    dd: bool;
   }
 
-  let infile () = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
-  let outfile () = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
+  let infile = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
+  let outfile = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
+  let errfile = "/tmp/sleek.err." ^ (string_of_int (Unix.getpid ()))
+
   let default_args = {
     tp = TP.OmegaCalc;
     eps = false;
     eap = false;
-    dd = false;
   }
 
-  let build_args_string (args: sleek_args): string =
+  let build_args_string (args: sleek_args) =
     let tp = " -tp " ^ (TP.string_of_tp args.tp) in
     let eps = if args.eps then " --eps" else "" in
     let eap = if args.eap then " --eap" else "" in
-    let dd = if args.dd then " -dd" else "" in
-    let res = tp ^ eps ^ eap ^ dd in
+    let res = tp ^ eps ^ eap in
     res
 
-  let sleek_command (args: sleek_args) : string = 
+  let sleek_command (args: sleek_args) = 
     let args_string = build_args_string args in
-    let infile = infile () in
-    let outfile = outfile () in
-    Printf.sprintf "./sleek %s %s > %s" args_string infile outfile
+    Printf.sprintf "./sleek -dd %s %s > %s 2> %s" args_string infile outfile errfile
 
   (* run sleek with source text and return result string *)
-  let run_sleek ?(args = default_args) (src: string) : string =
-    let infile = infile () in
-    let outfile = outfile () in
+  let run_sleek ?(args = default_args) (src: string) =
     FileUtil.write_to_file infile src;
     let cmd = sleek_command args in
     ignore (Sys.command cmd);
     let res = FileUtil.read_from_file outfile in
+    let log = FileUtil.read_from_file errfile in
     Sys.remove infile;
     Sys.remove outfile;
-    res
+    Sys.remove errfile;
+    res, log
 
-  let parse_checkentail_result (res: string) : bool =
+  let parse_checkentail_result (res: string) =
     let regexp = Str.regexp "Valid\\." in
     try
       ignore (Str.search_forward regexp res 0);
       true
     with Not_found -> false
 
-  let checkentail ?args (src: string) (e: SU.entailment) : bool * string =
+  let checkentail ?args (src: string) (e: SU.entailment) =
     let header = SU.clean (String.sub src 0 e.SU.start_char) in
     let src = Printf.sprintf "%s checkentail %s. print residue." header e.SU.formula in
-    let res = run_sleek src ?args in
-    parse_checkentail_result res, res
+    let res, log = run_sleek ?args src in
+    parse_checkentail_result res, res, log
     
 end (* SleekHelper *)
 

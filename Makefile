@@ -282,13 +282,19 @@ GSLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	xmlfront.cmo nativefront.cmo \
 	sleekengine.cmo \
 	scriptarguments.cmo \
-	gUtil.cmo gEntailmentList.cmo gSleekSourceView.cmo \
+	gUtil.cmo gEntailmentList.cmo gSleekSourceView.cmo gLogViewWindow.cmo \
+
+gUtil.cmo: gUtil.ml
+	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gUtil.ml
 
 gEntailmentList.cmo: gUtil.cmo gEntailmentList.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gEntailmentList.ml
 
 gSleekSourceView.cmo: gUtil.cmo gSleekSourceView.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gSleekSourceView.ml
+
+gLogViewWindow.cmo: gLogViewWindow.ml
+	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gLogViewWindow.ml
 
 gsleek.cmo: $(GSLEEK_FILES) gsleek.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gsleek.ml

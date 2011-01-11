@@ -10,89 +10,51 @@ module FU = GUtil.FileUtil
 module SH = GUtil.SleekHelper
 module TP = Tpdispatcher
 
-let create_yes_no_cancel_dialog
-    ?(msg="Yes or No?")
-    ?(yes_label="Yes")
-    ?(no_label="No")
-    () =
-  let dialog = GWindow.dialog () in
-  let hbox = GPack.hbox 
-    ~spacing:10 ~border_width:5
-    () in
-  let icon = GMisc.image 
-    ~stock:`DIALOG_WARNING 
-    ~icon_size:`DIALOG
-    () in
-  let label = GMisc.label
-    ~text:msg
-    ~justify:`LEFT
-    () in
-  hbox#add icon#coerce;
-  hbox#add label#coerce;
-  dialog#vbox#add hbox#coerce;
-  dialog#add_button yes_label `YES;
-  dialog#add_button no_label `NO;
-  dialog#add_button_stock `CANCEL `CANCEL;
-  dialog
-
-let create_statusbar () =
-  let statusbar = GMisc.statusbar () in
-  let context = statusbar#new_context ~name:"statusbar" in
-  let _ = context#push "" in
-  statusbar
-
 let create_residue_view () =
   let view = GText.view
     ~editable:false
+    ~wrap_mode:`WORD
     () in
   view
 
 (* wrap child in a scrolled window and return that window *)
-let create_scrolled_win child = 
-  let scroll_win = GBin.scrolled_window 
-    ~hpolicy: `AUTOMATIC ~vpolicy: `AUTOMATIC 
-    () in
-  scroll_win#add child#coerce;
-  scroll_win
-
-let ui_info =
-  "<ui>\
-  <menubar name='MenuBar'>\
-    <menu action='FileMenu'>\
-      <menuitem action='New'/>\
-      <menuitem action='Open'/>\
-      <menuitem action='Save'/>\
-      <separator/>\
-      <menuitem action='Quit'/>\
-    </menu>\
-    <menu action='PreferencesMenu'>\
-      <menu action='TheoremProverMenu'>\
-        <menuitem action='Omega'/>\
-        <menuitem action='Mona'/>\
-        <menuitem action='CVC3'/>\
-        <menuitem action='Redlog'/>\
-        <menuitem action='OM'/>\
-      </menu>\
-      <menuitem action='EPS'/>\
-      <menuitem action='EAP'/>\
-      <menuitem action='DD'/>\
-    </menu>\
-    <menu action='HelpMenu'>\
-      <menuitem action='About'/>\
-    </menu>\
-  </menubar>\
-  <toolbar name='ToolBar'>\
-    <toolitem action='New'/>\
-    <toolitem action='Open'/>\
-    <toolitem action='Save'/>\
-    <separator/>\
-    <toolitem action='Execute'/>\
-  </toolbar>\
-</ui>"
-
 class mainwindow =
+  let ui_info =
+    "<ui>\
+    <menubar name='MenuBar'>\
+      <menu action='FileMenu'>\
+        <menuitem action='New'/>\
+        <menuitem action='Open'/>\
+        <menuitem action='Save'/>\
+        <separator/>\
+        <menuitem action='Quit'/>\
+      </menu>\
+      <menu action='PreferencesMenu'>\
+        <menu action='TheoremProverMenu'>\
+          <menuitem action='Omega'/>\
+          <menuitem action='Mona'/>\
+          <menuitem action='CVC3'/>\
+          <menuitem action='Redlog'/>\
+          <menuitem action='OM'/>\
+        </menu>\
+        <menuitem action='EPS'/>\
+        <menuitem action='EAP'/>\
+      </menu>\
+      <menu action='HelpMenu'>\
+        <menuitem action='About'/>\
+      </menu>\
+    </menubar>\
+    <toolbar name='ToolBar'>\
+      <toolitem action='New'/>\
+      <toolitem action='Open'/>\
+      <toolitem action='Save'/>\
+      <separator/>\
+      <toolitem action='Execute'/>\
+    </toolbar>\
+  </ui>"
+  in
   let win = GWindow.window
-    ~height:600 ~width:900
+    ~height:750 ~width:1000
     ~title:"New file - Sleek" 
     ~allow_shrink:true
     () in
@@ -102,11 +64,11 @@ class mainwindow =
     (* gui components *)
     val source_view = new sleek_source_view ()
     val entailment_list = new entailment_list ()
-    (*val statusbar = create_statusbar ()*)
     val residue_view = create_residue_view ()
     (* data *)
     val mutable current_file = None
     val mutable sleek_args = SH.default_args
+    val mutable debug_log = ""
       
     initializer
       (* initialize components *)
@@ -116,24 +78,41 @@ class mainwindow =
           ~xalign:0.0 ~yalign:0.0
           ~xpad:5 ~ypad:5
           () in
-        let residue_scrolled = create_scrolled_win residue_view in
+        let residue_scrolled = GUtil.create_scrolled_win residue_view in
         let vbox = GPack.vbox () in
         vbox#pack ~expand:false label#coerce;
         vbox#pack ~expand:true residue_scrolled#coerce;
         vbox
       in
       let entail_panel =
-        let list_scrolled = create_scrolled_win entailment_list in
+        let list_scrolled = GUtil.create_scrolled_win entailment_list in
+        let buttons = GPack.button_box 
+          `HORIZONTAL ~layout:`SPREAD
+          ~border_width:10
+          () in
+        let check_btn = GButton.button
+          ~label:"Check Selected Entailment"
+          ~packing:buttons#add
+          () in
+        ignore (check_btn#connect#clicked ~callback:self#check_selected_entailment);
+        let show_log_btn = GButton.button
+          ~label:"Show Debug Log"
+          ~packing:buttons#add
+          () in
+        ignore (show_log_btn#connect#clicked ~callback:self#show_log_window);
+        let vbox = GPack.vbox () in
+        vbox#pack ~expand:true list_scrolled#coerce;
+        vbox#pack ~expand:false buttons#coerce;
         let hpaned = GPack.paned `HORIZONTAL () in
-        hpaned#set_position 500; (* FIXME *)
-        hpaned#pack1 list_scrolled#coerce;
+        hpaned#set_position 570; (* FIXME *)
+        hpaned#pack1 vbox#coerce;
         hpaned#pack2 ~resize:true ~shrink:true residue_panel#coerce;
         hpaned
       in
       let main_panel =
         let vpaned = GPack.paned `VERTICAL () in
-        vpaned#set_position 380; (* FIXME *)
-        let source_scrolled = create_scrolled_win source_view in
+        vpaned#set_position 450; (* FIXME *)
+        let source_scrolled = GUtil.create_scrolled_win source_view in
         vpaned#pack1 ~resize:true ~shrink:true source_scrolled#coerce;
         vpaned#pack2 entail_panel#coerce;
         vpaned
@@ -146,14 +125,13 @@ class mainwindow =
       vbox#pack menubar;
       vbox#pack toolbar;
       vbox#pack ~expand:true ~fill:true main_panel#coerce;
-      (*vbox#pack ~expand:false statusbar#coerce;*)
 
       (* set event handlers *)
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
       ignore (source_view#source_buffer#connect#modified_changed
         ~callback:self#source_changed_handler);
       ignore (entailment_list#selection#connect#changed
-        ~callback:self#entailment_list_selection_changed_handler);
+        ~callback:self#check_selected_entailment);
       entailment_list#set_checkall_handler self#run_all_handler;
 
 
@@ -184,8 +162,8 @@ class mainwindow =
           ~callback:(fun act -> sleek_args <- {sleek_args with SH.eps = act#get_active});
         ta "EAP" ~label:"Enable Aggressive Prunning"
           ~callback:(fun act -> sleek_args <- {sleek_args with SH.eap = act#get_active});
-        ta "DD" ~label:"Show Debug Messages"
-          ~callback:(fun act -> sleek_args <- {sleek_args with SH.dd = act#get_active});
+        (*ta "DD" ~label:"Show Debug Messages"*)
+          (*~callback:(fun act -> sleek_args <- {sleek_args with SH.dd = act#get_active});*)
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
@@ -239,18 +217,22 @@ class mainwindow =
         | Some _ -> "Save"
         | None -> "Save as..."
       in
-      let dialog = create_yes_no_cancel_dialog
-        ~msg:("\nSave changes to file \"" ^ fname ^ "\"\nbefore closing?\n")
-        ~yes_label:save_msg
-        ~no_label:"Discard"
+      let icon = GMisc.image 
+        ~stock:`DIALOG_WARNING 
+        ~icon_size:`DIALOG
         () in
-      let response = dialog#run () in
+      let response = GToolbox.question_box
+        ~title:(fname ^ " is modified")
+        ~buttons:["Discard"; "Cancel"; save_msg]
+        ~icon:icon#coerce
+        ~default:3
+        ("\nSave changes to file \"" ^ fname ^ "\"\nbefore closing?\n")
+        in
       let res = match response with
-        | `YES -> self#save_handler ()
-        | `NO -> true
-        | `CANCEL | _ -> false
-      in dialog#destroy ();
-      res
+        | 1 -> true
+        | 3 -> self#save_handler ()
+        | _ -> false
+      in res
 
     method replace_source (new_src: string): unit =
       source_view#source_buffer#begin_not_undoable_action ();
@@ -293,6 +275,22 @@ class mainwindow =
       let tp = List.nth provers id in
       sleek_args <- {sleek_args with SH.tp = tp}
 
+    method check_selected_entailment () =
+      let entail = entailment_list#get_selected_entailment () in
+      match entail with
+      | None -> ()
+      | Some e -> begin
+          let src = self#get_text () in
+          let valid, residue, log = SH.checkentail ~args:sleek_args src e in
+          entailment_list#set_selected_entailment_validity valid;
+          residue_view#buffer#set_text residue;
+          debug_log <- log;
+          source_view#hl_entailment e
+        end
+
+    method show_log_window () =
+      let win = new GLogViewWindow.log_view_window debug_log in
+      win#show ()
 
     (*********************
      * Actions handlers 
@@ -333,6 +331,7 @@ class mainwindow =
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
+      let fst (a,b,c) = a in
       let src = self#get_text () in
       entailment_list#check_all (fun e -> fst (SH.checkentail ~args:sleek_args src e));
       source_view#hl_all_entailement ()
@@ -340,19 +339,8 @@ class mainwindow =
     (* Source buffer modified *)
     method private source_changed_handler () =
       entailment_list#update_source (self#get_text ());
+      source_view#clear_highlight ();
       self#update_win_title ()
-
-    method private entailment_list_selection_changed_handler () =
-      let entail = entailment_list#get_selected_entailment () in
-      match entail with
-      | None -> ()
-      | Some e -> begin
-        let src = self#get_text () in
-        let valid, residue = SH.checkentail ~args:sleek_args src e in
-        entailment_list#set_selected_entailment_validity valid;
-        residue_view#buffer#set_text residue;
-        source_view#hl_entailment e
-      end
 
     method private quit () =
       if self#file_closing_check () then

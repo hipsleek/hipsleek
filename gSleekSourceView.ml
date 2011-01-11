@@ -31,7 +31,9 @@ class sleek_source_view ?(text = "") () =
       buffer#set_language (Some (get_sleek_lang ()));
       buffer#set_text text;
       buffer#set_highlight_syntax true;
-      ignore (buffer#create_tag ~name:tag_name [`BACKGROUND "light gray"])
+      ignore (buffer#create_tag ~name:tag_name [`BACKGROUND "light blue"]);
+      (*ignore (buffer#connect#mark_set *)
+        (*~callback:(fun _ _ -> highlight_selected_word ()))*)
 
     method coerce = delegate#coerce
     method source_buffer = delegate#source_buffer
@@ -61,6 +63,14 @@ class sleek_source_view ?(text = "") () =
       let start = self#source_buffer#get_iter `START in
       let stop = self#source_buffer#get_iter `END in
       self#source_buffer#remove_tag_by_name tag_name start stop
+
+    (*
+     *method highlight_selected_word () =
+     *  let start = self#source_buffer#get_iter_at_mark `SEL_BOUND in
+     *  let stop = self#source_buffer#get_iter_at_mark `INSERT in
+     *  let word = self#source_buffer#get_text ~start ~stop () in
+     *  print word
+     *)
 
   end
 
