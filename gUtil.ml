@@ -49,7 +49,6 @@ module SourceUtil = struct
     start: int;
     stop: int;
   }
-  type position = GText.position
 
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
   let print_re = Str.regexp "print [^\\.]+\\."
@@ -112,8 +111,8 @@ module SourceUtil = struct
     in
     parse 0
 
-  let search (doc: string) (substring: string) : substring_pos list =
-    let reg = Str.regexp_string substring in
+  let search (doc: string) (sub: string) : substring_pos list =
+    let reg = Str.regexp_string sub in
     let rec search_next (start: int) : substring_pos list =
       try
         let start_char = Str.search_forward reg doc start in

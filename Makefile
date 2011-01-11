@@ -293,7 +293,7 @@ gEntailmentList.cmo: gUtil.cmo gEntailmentList.ml
 gSleekSourceView.cmo: gUtil.cmo gSleekSourceView.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gSleekSourceView.ml
 
-gLogViewWindow.cmo: gLogViewWindow.ml
+gLogViewWindow.cmo: gUtil.cmo gLogViewWindow.ml
 	$(OCAMLC) -g -c $(GUIOCAMLFLAGS) gLogViewWindow.ml
 
 gsleek.cmo: $(GSLEEK_FILES) gsleek.ml
