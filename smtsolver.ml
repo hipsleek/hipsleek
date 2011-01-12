@@ -167,12 +167,18 @@ let rec smt_of_b_formula b qvars =
   let smt_of_exp e = smt_of_exp e qvars in
   match b with
   | CP.BConst (c, _) -> if c then "true" else "false"
-  | CP.BVar (sv, _) -> "(= 1 " ^(smt_of_spec_var sv) ^ ")"
+  | CP.BVar (sv, _) -> "(> " ^(smt_of_spec_var sv) ^ " 0)"
   | CP.Lt (a1, a2, _) -> "(< " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Lte (a1, a2, _) -> "(<= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> "(> " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Gte (a1, a2, _) -> "(>= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
+  | CP.Eq (a1, a2, _) -> 
+      if CP.is_null a2 then
+        "(< " ^(smt_of_exp a1)^ " 1)"
+      else if CP.is_null a1 then
+        "(< " ^(smt_of_exp a2)^ " 1)"
+      else
+        "(= " ^(smt_of_exp a1) ^ " " ^ (smt_of_exp a2) ^ ")"
   | CP.Neq (a1, a2, _) ->
       if CP.is_null a2 then
         "(> " ^(smt_of_exp a1)^ " 0)"
@@ -204,12 +210,7 @@ let rec smt_of_formula f qvars =
   | CP.BForm (b,_) -> (smt_of_b_formula b qvars)
   | CP.And (p1, p2, _) -> "(and " ^ (smt_of_formula p1 qvars) ^ " " ^ (smt_of_formula p2 qvars) ^ ")"
   | CP.Or (p1, p2,_, _) -> "(or " ^ (smt_of_formula p1 qvars) ^ " " ^ (smt_of_formula p2 qvars) ^ ")"
-  | CP.Not (p,_, _) ->
-      begin
-        match p with
-        | CP.BForm (CP.BVar (bv, _),_) -> "(= 0 " ^ (smt_of_spec_var bv (Some qvars)) ^ ")"
-        | _ -> "(not " ^ (smt_of_formula p qvars) ^ ")"
-      end
+  | CP.Not (p,_, _) -> "(not " ^ (smt_of_formula p qvars) ^ ")"
   | CP.Forall (sv, p, _,_) ->
       (* see smt_of_spec_var for explanations of the qvars set *)
       let varname = smt_of_spec_var sv None in
@@ -309,6 +310,9 @@ let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
   let res = output = "unsat" in
   res
 
+(* For backward compatibility, use Z3 as default *
+ * Probably, a better way is modify the tpdispatcher.ml to call imply with a
+ * specific smt-prover argument as well *)
 let imply ante conseq = smt_imply ante conseq Z3
 
 (**
@@ -321,6 +325,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
   let res = output = "unsat" in
   not res
 
+(* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
 
 (**
