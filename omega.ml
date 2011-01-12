@@ -49,7 +49,7 @@ let rec omega_of_exp e0 = match e0 with
   | Var (sv, _) -> omega_of_spec_var sv
   | IConst (i, _) -> string_of_int i 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
-  | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^(omega_of_exp a2)
+  | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - (" ^(omega_of_exp a2) ^")"
   | Mult (a1, a2, l) ->
       let r = match a1 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
