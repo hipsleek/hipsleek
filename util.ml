@@ -885,7 +885,7 @@ let get_closest ((min,max):Globals.nflow):(string) =
 											else (a,(c,d)) in
 	let r,_ = (get !exc_list) in r
  
-  
+ (*constructs the mapping between class/data def names and interval types*) 
  let c_h () = 								
 	let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 		let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
