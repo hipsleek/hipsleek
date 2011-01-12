@@ -2647,7 +2647,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
       let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
       (*let _ = print_string ("\n"^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_ante0))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_conseq0))) in*)
       (* Check for MAY failure: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)
-      let new_pformula = CP.mkAnd (MCP.pure_of_mix new_ante0) (MCP.pure_of_mix new_conseq0) no_pos in
+      let new_pformula = CP.mkAnd (MCP.pure_of_mix new_ante1) (MCP.pure_of_mix new_conseq1) no_pos in
       let res_sat = TP.is_sat_sub_no new_pformula sat_subno in
       let _ = if res_sat then may_must_list := !may_must_list @ ["may"] else may_must_list := !may_must_list @ ["must"] in
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
