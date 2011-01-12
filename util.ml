@@ -835,6 +835,14 @@ let string_of_counters () =
 (*hairy stuff for exception numbering*)
 			
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
+
+let clear_exc_list () =
+  Globals.n_flow_int := (-1,-1);
+  Globals.ret_flow_int := (-1,-1);
+  Globals.spec_flow_int := (-1,-1);
+  Globals.top_flow_int := (-2,-2);
+  Globals.exc_flow_int := (-2,-2);
+  exc_list := []
   			 
  let get_hash_of_exc (f:string): Globals.nflow = 
 	if ((String.compare f Globals.stub_flow)==0) then 

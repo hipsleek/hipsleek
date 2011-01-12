@@ -1,11 +1,11 @@
 module SU = GUtil.SourceUtil
 
-class log_view_window log =
+class log_view_window ?(title="Log") log () =
   let tag_results = "results" in
   let tag_current = "current" in
   let win = GWindow.window
+    ~title
     ~height:600 ~width:850
-    ~title:"Debug Log"
     ~allow_shrink:true
     () in
   object (self)
@@ -29,8 +29,8 @@ class log_view_window log =
       let next_btn = GButton.button ~label:"Next" () in
       let prev_btn = GButton.button ~label:"Previous" () in
       let buttons = GPack.button_box `HORIZONTAL () in
-      buttons#pack next_btn#coerce;
       buttons#pack prev_btn#coerce;
+      buttons#pack next_btn#coerce;
       let close_btn = GButton.button ~label:"  Close  " () in
       action_panel#pack search_lbl#coerce;
       action_panel#pack ~expand:true search_field#coerce;

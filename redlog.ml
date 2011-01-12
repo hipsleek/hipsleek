@@ -18,7 +18,7 @@ let timeout = ref 15 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_file = open_out "allinput.rl"
+let log_all = ref (fun _ -> raise Not_found)
 let channels = ref (stdin, stdout)
 
 (* process management *)
@@ -55,7 +55,13 @@ type log_level =
   | DEBUG
 
 let log level msg = 
-  let write_msg () = output_string log_file (msg ^ "\n") in
+  let write_msg () = 
+    try !log_all msg
+    with Not_found ->
+      let out = open_out "allinput.rl" in
+      log_all := (fun msg -> output_string out msg; flush out);
+      !log_all msg
+  in
   match level with
     | ERROR -> write_msg ()
     | DEBUG -> if !is_log_all then write_msg ()

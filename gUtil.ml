@@ -1,4 +1,6 @@
 module TP = Tpdispatcher
+module SE = Sleekengine
+module SC = Sleekcommons
 
 let create_scrolled_win child = 
   let scroll_win = GBin.scrolled_window 
@@ -123,30 +125,6 @@ module SourceUtil = struct
     in
     search_next 0
 
-(*
- *  let parse_command_list (src: string) =
- *    let lexbuf = Lexing.from_string src in
- *    Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf
- *
- *  let exec_nth_checkentail_cmd (src: string) (n: int) : bool =
- *    let _ = SE.reset_data () in
- *    let cmd_list = parse_command_list src in
- *    let rec exec_nth cmd_list count = match cmd_list with
- *      | [] -> invalid_arg "[gsleek.ml/exec_nth_checkentail_cmd]:nth"
- *      | head::rest ->
- *          let p = SE.process_cmd head (count = n) in
- *          let res = match p with
- *            | Some r -> r
- *            | None ->
- *                if SC.is_entailcheck_cmd head then
- *                  exec_nth rest (count+1)
- *                else
- *                  exec_nth rest count
- *          in res
- *    in
- *    exec_nth cmd_list 0
- *)
-
 end (* SourceUtil *)
 
 
@@ -156,8 +134,6 @@ end (* SourceUtil *)
  **********************************)
 module SleekHelper = struct
 
-  module SU = SourceUtil
-
   type sleek_args = {
     tp: TP.tp_type;
     eps: bool;
@@ -166,7 +142,6 @@ module SleekHelper = struct
 
   let infile = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
   let outfile = "/tmp/sleek.out." ^ (string_of_int (Unix.getpid ()))
-  let errfile = "/tmp/sleek.err." ^ (string_of_int (Unix.getpid ()))
 
   let default_args = {
     tp = TP.OmegaCalc;
@@ -183,7 +158,7 @@ module SleekHelper = struct
 
   let sleek_command (args: sleek_args) = 
     let args_string = build_args_string args in
-    Printf.sprintf "./sleek -dd %s %s > %s 2> %s" args_string infile outfile errfile
+    Printf.sprintf "./sleek -dd %s %s > %s" args_string infile outfile
 
   (* run sleek with source text and return result string *)
   let run_sleek ?(args = default_args) (src: string) =
@@ -191,11 +166,9 @@ module SleekHelper = struct
     let cmd = sleek_command args in
     ignore (Sys.command cmd);
     let res = FileUtil.read_from_file outfile in
-    let log = FileUtil.read_from_file errfile in
     Sys.remove infile;
     Sys.remove outfile;
-    Sys.remove errfile;
-    res, log
+    res
 
   let parse_checkentail_result (res: string) =
     let regexp = Str.regexp "Valid\\." in
@@ -204,11 +177,56 @@ module SleekHelper = struct
       true
     with Not_found -> false
 
-  let checkentail ?args (src: string) (e: SU.entailment) =
-    let header = SU.clean (String.sub src 0 e.SU.start_char) in
-    let src = Printf.sprintf "%s checkentail %s. print residue." header e.SU.formula in
-    let res, log = run_sleek ?args src in
-    parse_checkentail_result res, res, log
-    
+  let checkentail_external ?args (src: string) (e: SourceUtil.entailment) =
+    let header = SourceUtil.clean (String.sub src 0 e.SourceUtil.start_char) in
+    let src = Printf.sprintf "%s checkentail %s. print residue." header e.SourceUtil.formula in
+    let res = run_sleek ?args src in
+    parse_checkentail_result res, res
+
+  let parse_command_list (src: string) : SC.command list =
+    let lexbuf = Lexing.from_string src in
+    Sparser.opt_command_list (Slexer.tokenizer "editor_buffer") lexbuf
+
+  let process_cmd cmd = match cmd with
+    | SC.DataDef ddef -> 
+        print_endline "processing data def";
+        SE.process_data_def ddef; None
+    | SC.PredDef pdef -> 
+        print_endline "processing pred def";
+        SE.process_pred_def pdef; None
+    | SC.EntailCheck (iante, iconseq) -> 
+        print_endline "processing entail check"; 
+        Some (SE.run_entail_check iante iconseq)
+    | SC.CaptureResidue lvar -> 
+        print_endline "processing capture residue";
+        SE.process_capture_residue lvar; None
+    | SC.LemmaDef ldef -> 
+        print_endline "processing lemmad def";
+        SE.process_lemma ldef; None
+    | SC.PrintCmd pcmd -> 
+        print_endline "processing print cmd";
+        SE.process_print_command pcmd; None
+    | SC.LetDef (lvar, lbody) -> 
+        print_endline "processing let def";
+        SC.put_var lvar lbody; None
+    | SC.Time (b,s,_) -> None
+    | SC.EmptyCmd -> None
+
+  let checkentail ?args src e =
+    (* FIXME: setup Sleek's preferences based on given arguments *)
+    let header = SourceUtil.clean (String.sub src 0 e.SourceUtil.start_char) in
+    let src = Printf.sprintf "%s checkentail %s." header e.SourceUtil.formula in
+    let cmds = parse_command_list src in
+    let _ = SE.clear_all () in
+    let rec exec cmds = match cmds with
+      | [] -> failwith "[gUtil.ml/checkentail]: empty command list"
+      | [cmd] -> process_cmd cmd
+      | cmd::rest -> ignore (process_cmd cmd); exec rest
+    in
+    let res = match exec cmds with
+      | None -> failwith "[gUtil.ml/checkentail]: last command is not checkentail command"
+      | Some v -> v
+    in res, SE.get_residue ()
+
 end (* SleekHelper *)
 

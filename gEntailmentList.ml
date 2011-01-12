@@ -48,7 +48,7 @@ class entailment_list_model ?(src = "") () =
       delegate#set ~row ~column:col_validity stock_id
 
     method private stock_id_of_bool b =
-      if b then "gtk-apply" else "gtk-cancel"
+      if b then "gtk-yes" else "gtk-no"
 
     method check_all (check_func: SU.entailment -> bool): unit =
       let func path iter =

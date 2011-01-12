@@ -72,6 +72,8 @@ let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 
 let get_var (v : ident) : meta_formula = H.find var_tab v
 
+let clear_var_table () = H.clear var_tab
+
 (*
   let get_var (v : ident) : let_body =
   H.find var_tab v

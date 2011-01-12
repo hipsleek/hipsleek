@@ -18,7 +18,7 @@ let create_residue_view () =
   view
 
 (* wrap child in a scrolled window and return that window *)
-class mainwindow =
+class mainwindow () =
   let ui_info =
     "<ui>\
     <menubar name='MenuBar'>\
@@ -28,7 +28,8 @@ class mainwindow =
         <menuitem action='Save'/>\
         <separator/>\
         <menuitem action='Quit'/>\
-      </menu>\
+      </menu>\n" ^
+      (* TODO: bring back preferences
       <menu action='PreferencesMenu'>\
         <menu action='TheoremProverMenu'>\
           <menuitem action='Omega'/>\
@@ -40,7 +41,8 @@ class mainwindow =
         <menuitem action='EPS'/>\
         <menuitem action='EAP'/>\
       </menu>\
-      <menu action='HelpMenu'>\
+      *)
+     "<menu action='HelpMenu'>\
         <menuitem action='About'/>\
       </menu>\
     </menubar>\
@@ -68,7 +70,6 @@ class mainwindow =
     (* data *)
     val mutable current_file = None
     val mutable sleek_args = SH.default_args
-    val mutable debug_log = ""
       
     initializer
       (* initialize components *)
@@ -87,31 +88,36 @@ class mainwindow =
       let entail_panel =
         let list_scrolled = GUtil.create_scrolled_win entailment_list in
         let buttons = GPack.button_box 
-          `HORIZONTAL ~layout:`SPREAD
+          `HORIZONTAL ~layout:`START
           ~border_width:10
           () in
         let check_btn = GButton.button
-          ~label:"Check Selected Entailment"
+          ~label:"Check Entailment"
           ~packing:buttons#add
           () in
         ignore (check_btn#connect#clicked ~callback:self#check_selected_entailment);
-        let show_log_btn = GButton.button
+        let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
           () in
-        ignore (show_log_btn#connect#clicked ~callback:self#show_log_window);
+        ignore (show_debug_log_btn#connect#clicked ~callback:self#show_debug_log);
+        let show_prover_log_btn = GButton.button
+          ~label:"Show Prover Log"
+          ~packing:buttons#add
+          () in
+        ignore (show_prover_log_btn#connect#clicked ~callback:self#show_prover_log);
         let vbox = GPack.vbox () in
         vbox#pack ~expand:true list_scrolled#coerce;
         vbox#pack ~expand:false buttons#coerce;
         let hpaned = GPack.paned `HORIZONTAL () in
-        hpaned#set_position 570; (* FIXME *)
+        hpaned#set_position 580;
         hpaned#pack1 vbox#coerce;
         hpaned#pack2 ~resize:true ~shrink:true residue_panel#coerce;
         hpaned
       in
       let main_panel =
         let vpaned = GPack.paned `VERTICAL () in
-        vpaned#set_position 450; (* FIXME *)
+        vpaned#set_position 450;
         let source_scrolled = GUtil.create_scrolled_win source_view in
         vpaned#pack1 ~resize:true ~shrink:true source_scrolled#coerce;
         vpaned#pack2 entail_panel#coerce;
@@ -155,7 +161,8 @@ class mainwindow =
           ~callback:(fun _ -> ignore (self#save_handler ()));
         a "Quit" ~stock:`QUIT ~tooltip:"Quit"
           ~callback:(fun _ -> ignore (self#quit ()));
-        a "About" ~label:"_About" ~tooltip:"About HIP/Sleek";
+        a "About" ~label:"_About" ~tooltip:"About HIP/Sleek"
+          ~callback:(fun _ -> ignore (self#show_about_dialog ()));
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
           ~callback:(fun _ -> self#run_all_handler ());
         ta "EPS" ~label:"Enable Predicate Specialization"
@@ -281,16 +288,37 @@ class mainwindow =
       | None -> ()
       | Some e -> begin
           let src = self#get_text () in
-          let valid, residue, log = SH.checkentail ~args:sleek_args src e in
+          let valid, residue = SH.checkentail ~args:sleek_args src e in
           entailment_list#set_selected_entailment_validity valid;
           residue_view#buffer#set_text residue;
-          debug_log <- log;
           source_view#hl_entailment e
         end
 
-    method show_log_window () =
-      let win = new GLogViewWindow.log_view_window debug_log in
+    method show_debug_log () =
+      let log = Debug.get_debug_log () in
+      let win = new GLogViewWindow.log_view_window 
+        ~title:"Devel Debug Log" log
+        () in
       win#show ()
+
+    method show_prover_log () =
+      (* FIXME: support other provers *)
+      let log = FU.read_from_file "allinput.oc" in
+      let win = new GLogViewWindow.log_view_window 
+        ~title:"Prover Log" log 
+        () in
+      win#show ()
+
+    method show_about_dialog () =
+        let dialog = GWindow.about_dialog 
+          ~name:"HIP/Sleek"
+          ~authors:["Wei Ngan Chin"; "Huu Hai Nguyen"; "Cristina David"; "Cristian Gherghina"]
+          ~version:"1.0"
+          ~website:"http://loris-7.ddns.comp.nus.edu.sg/~project/hip/index.html"
+          ~parent:self
+          () in
+        dialog#connect#response ~callback:(fun _ -> dialog#destroy ());
+        dialog#show ()
 
     (*********************
      * Actions handlers 
@@ -331,7 +359,6 @@ class mainwindow =
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
-      let fst (a,b,c) = a in
       let src = self#get_text () in
       entailment_list#check_all (fun e -> fst (SH.checkentail ~args:sleek_args src e));
       source_view#hl_all_entailement ()
@@ -370,8 +397,21 @@ let init win =
       let ex = "./examples/sleek.slk" in
       if Sys.file_exists ex then win#open_file ex
 
+let initialize () =
+  Debug.devel_debug_on := true;
+  Debug.log_devel_debug := true;
+  (* FIXME: support other provers *)
+  Omega.log_all_flag := true;
+  Tpdispatcher.start_prover ()
+
+let finalize () =
+  Tpdispatcher.stop_prover ()
+
 let _ =
-  let win = new mainwindow in
-  win#show ();
+  initialize ();
+  let win = new mainwindow () in
   init win;
-  GMain.Main.main ()
+  win#show ();
+  GMain.Main.main ();
+  finalize ()
+
