@@ -19,9 +19,9 @@ let webserver = ref false
 let parallelize num =
   num_para := num
 
-let rec check_specs(*_debug*) prog proc ctx spec_list e0 = Util.ho_debug_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+let rec check_specs_debug prog proc ctx spec_list e0 = Util.ho_debug_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
 
-(*and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0*)
+and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0
   
 (* assumes the pre, and starts the symbolic execution*)
 and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = 
@@ -33,8 +33,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)->
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
-			let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
-			let r = check_specs_a prog proc nctx c2 e0 in
+			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+			let r = check_specs prog proc nctx c2 e0 in
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 			r) b.Cformula.formula_case_branches
 	  | Cformula.EBase b ->
@@ -43,16 +43,16 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	          if !Globals.max_renaming 
 	          then (CF.transform_context (CF.normalize_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx)
 	          else (CF.transform_context (CF.normalize_clash_es b.Cformula.formula_ext_base b.Cformula.formula_ext_pos false) ctx) in
-			let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
-	        let r = check_specs_a prog proc nctx b.Cformula.formula_ext_continuation e0 in
+			(*let _ = print_string ("check_specs: EBase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+	        let r = check_specs prog proc nctx b.Cformula.formula_ext_continuation e0 in
 	        (*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
 	        r
 	  | Cformula.EVariance b ->
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-		  let _ = print_string "check_specs: EVariance: before nctx\n" in 
+		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in *)
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures; Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
-			let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in
-		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0 (* TODO *)
+			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
+		    check_specs prog proc nctx b.Cformula.formula_var_continuation e0 (* TODO *)
 	  | Cformula.EAssume (x,b,y) ->
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
@@ -71,7 +71,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 		          let lfe = [CF.mk_failesc_context ctx1 []] in 
 			      let res_ctx = CF.list_failesc_to_partial (check_exp prog proc lfe e0 y) in
 			      let res_ctx = Cformula.change_ret_flow_partial_ctx res_ctx in
-				  let _ = print_string ("check_specs: EAssume: " ^ (Cprinter.string_of_list_partial_context res_ctx) ^ "\n") in
+				  (*let _ = print_string ("check_specs: EAssume: " ^ (Cprinter.string_of_list_partial_context res_ctx) ^ "\n") in*)
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
@@ -84,9 +84,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   in	
   List.for_all do_spec_verification spec_list
 
-and check_exp(*_debug*) prog proc ctx e0 label = Util.ho_debug_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+and check_exp_debug prog proc ctx e0 label = Util.ho_debug_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
-(*and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label*)
+and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
   if (exp_to_check e0) then  
@@ -114,13 +114,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               | None -> ts
               | Some c1 ->
                     let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
-                    Debug.(*devel_pprint*)print_info "assert" to_print pos;
+                    Debug.devel_pprint(*print_info "assert"*) to_print pos;
                     let rs,prf = heap_entail_struc_list_failesc_context_init prog false false false ts c1 pos None in
                     let _ = PTracer.log_proof prf in                    
-                    Debug.(*pprint*)print_info "assert" ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
+                    Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
                     if CF.isSuccessListFailescCtx rs then 
 				            (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
-				             Debug.(*pprint*)print_info "assert" ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
+				             Debug.pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
 				            else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
                     rs in 
             let res = match c2 with
@@ -356,8 +356,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let pre2 = CF.subst_struc_pre st2 renamed_spec in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
 			  (* Termination checking *)
-			  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name else "" in
-				Debug.devel_pprint (str_debug_variance ^ "\n") pos;
+			  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
+				(*Debug.devel_pprint (str_debug_variance ^ "\n") pos;*)
+				print_string (str_debug_variance ^ "\n");
 				(* TODO: call the entailment checking function in solver.ml *)
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                   (*!log_spec*) in
