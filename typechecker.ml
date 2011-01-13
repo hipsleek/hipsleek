@@ -357,8 +357,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
 			  (* Termination checking *)
 			  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
-				(*Debug.devel_pprint (str_debug_variance ^ "\n") pos;*)
-				print_string (str_debug_variance ^ "\n");
+				Debug.devel_pprint (str_debug_variance ^ "\n") pos;
+				(*print_string (str_debug_variance ^ "\n");*)
 				(* TODO: call the entailment checking function in solver.ml *)
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                   (*!log_spec*) in

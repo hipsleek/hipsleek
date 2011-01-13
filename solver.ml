@@ -2139,12 +2139,12 @@ and heap_entail_conjunct_lhs_struc
 			  let lhs_measures = es.es_var_measures in
 			  let rhs_measures = e.formula_var_measures in
 			  let rec binding lhs_m rhs_m =
-				if ((List.length lhs_m) != (List.length rhs_m)) then report_error no_pos ("inner_entailer: LHS does not match RHS \n")
+				if ((List.length lhs_m) != (List.length rhs_m)) then report_error no_pos ("inner_entailer: variance checking: LHS does not match RHS \n")
 				else match lhs_m with
 					| [] -> []
 					| h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
 			  let binding_measures = binding lhs_measures rhs_measures in
-
+			  (*	
 			  (* lhs-rhs>0 *)
 			  let fun_check_lexico_ranking lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m2>n2 *) 
 				let lexico_ranking_formula = 
@@ -2153,7 +2153,7 @@ and heap_entail_conjunct_lhs_struc
 															 else
 																(false, CP.mkAnd (CP.BForm (CP.mkEq l (fst r) loc, None)) res loc)) lst_measures (true, CP.mkTrue loc)
 				in
-				(*let _ = print_string ("\ninner_intailer: lexico ranking: "^(Cprinter.string_of_struc_formula [mkEBase (snd lexico_ranking_formula) loc])) in*)
+				let _ = print_string ("\ninner_intailer: lexico ranking: "^(Cprinter.string_of_struc_formula [mkEBase (snd lexico_ranking_formula) loc])) in
 				(inner_entailer ctx [mkEBase (snd lexico_ranking_formula) loc])  
 			  in
 			  let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
@@ -2172,6 +2172,7 @@ and heap_entail_conjunct_lhs_struc
 								| None -> report_error no_pos ("inner_entailer: error with lower bound in termination checking \n")
 								| Some exp -> exp in
 		        let boundedness_checking_formula = mkEBase (CP.BForm (CP.mkGte (lhs) lower_bound loc, None)) loc in
+	     		let _ = print_string ("\ninner_intailer: boundedness checking: "^(Cprinter.string_of_struc_formula [boundedness_checking_formula])) in
 				inner_entailer ctx [boundedness_checking_formula]
 			  in	
 			  let lst_res = List.map (fun (l,r) -> fun_check_boundedness l r) binding_measures in
@@ -2179,7 +2180,32 @@ and heap_entail_conjunct_lhs_struc
 				  Debug.print_info "inner_entailer" ("checking boundedness at variance " ^ (string_of_int e.formula_var_label) ^ " : failed") loc
 				else
 				  Debug.print_info "inner_entailer" ("checking boundedness at variance " ^ (string_of_int e.formula_var_label) ^ " : ok") loc;
-			 			
+			  *)
+
+			  let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m2>n2 & m2>=lb*) 
+				let term_formula = 
+					List.fold_right (fun (l,r) (flag,res) -> if flag then
+																let lower_bound = match (snd r) with
+																	| None -> report_error no_pos ("inner_entailer: error with lower bound in termination checking \n")
+																	| Some exp -> exp in
+																let boundedness_checking_formula = CP.BForm (CP.mkGte l lower_bound loc, None) in
+																let lexico_ranking_formula = CP.BForm (CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None) in
+																(false, CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc)
+															 else
+																(false, CP.mkAnd (CP.BForm (CP.mkEq l (fst r) loc, None)) res loc)) lst_measures (true, CP.mkTrue loc)
+				in
+				(*let _ = print_string ("\ninner_intailer: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
+				(inner_entailer ctx [mkEBase (snd term_formula) loc])  
+			  in
+			  let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
+				List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
+			  in
+			  let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
+				if (List.exists (fun (rs,prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
+				  Debug.print_info "inner_entailer" ("checking termination by variance " ^ (string_of_int e.formula_var_label) ^ " : ok") loc
+				else
+				  Debug.print_info "inner_entailer" ("checking termination by variance " ^ (string_of_int e.formula_var_label) ^ " : failed") loc;
+				
 			(*else if (es.es_var_label > e.formula_var_label) then*)
 			  		
 			else ()  
