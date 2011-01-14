@@ -2027,7 +2027,8 @@ and heap_entail_conjunct_lhs_struc
 	
   and inner_entailer_a (ctx : context) (conseq : struc_formula): list_context * proof = 
     let rec helper (ctx : context) (f:ext_formula) : list_context * proof = match f with
-      | ECase b   -> 
+      | ECase b   ->
+		  (*let _ = print_string "innner_entailer: ECase\n" in*)
 	        (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
             (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
             let ctx = add_to_context ctx "case rule" in
@@ -2056,7 +2057,7 @@ and heap_entail_conjunct_lhs_struc
 				        if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
 				        else inner_entailer n_ctx c2 ) b.formula_case_branches 
 		          end
-	            | Some (p,e) -> begin [inner_entailer ctx e]end in
+	            | Some (p,e) -> begin [inner_entailer ctx e] end in
 	          let rez1,rez2 = List.split r in
               let rez1 = List.fold_left (fun a c->or_list_context a c) (List.hd rez1) (List.tl rez1) in
 	          (rez1,(mkCaseStep ctx [f] rez2))
@@ -2067,7 +2068,8 @@ and heap_entail_conjunct_lhs_struc
 		    formula_ext_base = formula_base;
 		    formula_ext_continuation = formula_cont;
 		    formula_ext_pos = struc_pos;
-	    } as b)  -> 
+	    } as b)  ->
+		  (*let _ = print_string "innner_entailer: EBase\n" in*)
 		if (List.length base_exists)>0 then 
 	      let ws = CP.fresh_spec_vars base_exists in
 	      let st = List.combine base_exists ws in
@@ -2105,6 +2107,7 @@ and heap_entail_conjunct_lhs_struc
 		            (res,prf)
           )
       | EAssume (ref_vars, post,(i,y)) ->
+		(*let _ = print_string "innner_entailer: EAssume\n" in*)
 		if not has_post then report_error pos ("malfunction: this formula "^y^" can not have a post condition!")
 	    else
 	      let rs = clear_entailment_history ctx in
@@ -2123,9 +2126,10 @@ and heap_entail_conjunct_lhs_struc
 	        ) in*)
 	      ((SuccCtx [rs4]),TrueConseq)
 	  | EVariance e ->
+		  (*let _ = print_string "innner_entailer: EVariance\n" in*)
 		  let _ = (* Termination checking *)
-			(*print_string ("\nEVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");*)
-			(*print_string ("\nEVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n");*)
+			print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
+			print_string ("\ninner_entailer: EVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n");
 			let loc = e.formula_var_pos in
 			let es = match ctx with
 			  | Ctx c -> c
@@ -2194,7 +2198,7 @@ and heap_entail_conjunct_lhs_struc
 															 else
 																(false, CP.mkAnd (CP.BForm (CP.mkEq l (fst r) loc, None)) res loc)) lst_measures (true, CP.mkTrue loc)
 				in
-				(*let _ = print_string ("\ninner_intailer: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
+				let _ = print_string ("\ninner_intailer: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in
 				(inner_entailer ctx [mkEBase (snd term_formula) loc])  
 			  in
 			  let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
@@ -2206,9 +2210,10 @@ and heap_entail_conjunct_lhs_struc
 				else
 				  Debug.print_info "inner_entailer" ("checking termination by variance " ^ (string_of_int e.formula_var_label) ^ " : failed") loc;
 				
-			(*else if (es.es_var_label > e.formula_var_label) then*)
-			  		
-			else ()  
+			else if (es.es_var_label > e.formula_var_label) then
+			  (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
+			  Debug.print_info "inner_entailer" ("transition from variance " ^ (string_of_int es.es_var_label) ^ " to " ^ (string_of_int e.formula_var_label) ^ " : safe") loc  		
+			else ()
 		  in
 		  inner_entailer ctx e.Cformula.formula_var_continuation
     in
@@ -2889,7 +2894,8 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
                           es_unsat_flag = false;
                           es_prior_steps = estate.es_prior_steps;
                           es_path_label = estate.es_path_label;
-						  es_var_measures = estate.es_var_measures} in
+						  es_var_measures = estate.es_var_measures;
+						  es_var_label = estate.es_var_label} in
     let na,prf = match vd.view_base_case with
 			| None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
                                       fc_message ="failure 1 ?? when checking for aliased node";

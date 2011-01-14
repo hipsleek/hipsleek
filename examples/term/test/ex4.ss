@@ -1,6 +1,7 @@
 void loop (ref int x, ref int y)
 case {
-	x < y -> ensures "l0" : true;
+	x < y ->   variance (0)
+			   ensures "l0" : true;
 	x >= y -> case {
 					x>1 -> variance (1) [x-y]
 						   ensures "l1" : true;

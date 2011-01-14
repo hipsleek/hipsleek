@@ -49,10 +49,10 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	        r
 	  | Cformula.EVariance b ->
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in *)
+		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in*)
 			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures; Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
-		    check_specs prog proc nctx b.Cformula.formula_var_continuation e0 (* TODO *)
+		    check_specs prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,b,y) ->
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
