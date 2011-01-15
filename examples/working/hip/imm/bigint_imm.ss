@@ -76,6 +76,9 @@ node add_c(node x, node y, int c)
   requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1
   ensures res::bigint<v1+v2+c>;
 
+ requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1
+  ensures res::bigint<v1+v2+c>;
+
 {
   if (x == null) {
     if (y == null) {
@@ -138,24 +141,40 @@ node sub_c(node x, node y, int c)
  ensures res::bigint<v1-v2-c>;
  // fails - should succeed
 
-  requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
-  ensures res::bigint<v1-v2-c>;
 
-*/ 
  requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
  ensures res::bigint<v1-v2-c>;
 
+  requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
+
+ requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
+ ensures res::bigint<v1-v2-c>;
+
+*/ 
+
+
+ requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
+
+ requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
+ ensures res::bigint<v1-v2-c>;
 
 {
   //dprint;
-  //if (x == null) return null;
   if (x == null) {
-    //dprint;
     //assume false;
+  return null;
+  }
+  /*
+  if (x == null) {
+    dprint;
     node r =sub_one_digit(y, c);
+    assume false;
     dprint;
     return r;
   }
+  */
   //assume false;
   if (y == null) return sub_one_digit(x, c);
   int t = x.val - y.val - c;
