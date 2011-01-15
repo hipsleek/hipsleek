@@ -16,41 +16,6 @@ checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- y::nod
 //print residue.
 //Fail.
 
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n=0  |- y=null. 
-print residue.
-//Fail.
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n>3  |- y::node<v1,q>@I*q::node<v2,r>@I. 
-print residue.
-//Fail.
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & n>=2  |- y::node<v1,q>@I*q::node<v2,null>@I. 
-print residue.
-//Fail.
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & m=2  |- x::node<v1,q>@I*q::node<v2,null>@I. 
-print residue.
-/* funny context
- EXISTS(flted_3_421,r_443,flted_3_442: (y::ll<n>@I ; (y::ll<n>@I ; 
- x::node<v1,q>@M * q::node<v2,r_443>@M * r_443::ll<flted_3_442>@M * 
- (t::ll<a>@I ; z::ll<m>@M))) & flted_3_442+1=flted_3_421 & flted_3_421+1=m & 
- m=2 & {FLOW,(147,148)=__norm,})
-*/
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & m=2  |- x::node<v1,q>*q::node<v2,null>. 
-print residue.
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & m=1  |- x::node<v1,q>*q::node<v2,null>. 
-print residue.
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & m>3  |- x::node<v1,q>@I*q::node<v2,r>@I*r::node<v3,s>@I. 
-print residue.
-
-checkentail (y::ll<n>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) & m>3  |- x::node<v1,s>@I. 
-print residue.
-/*
-
-*/
 
 
 

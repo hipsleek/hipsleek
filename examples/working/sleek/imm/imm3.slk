@@ -7,6 +7,7 @@ checkentail (x::ll<n>@I); p::ll<m> * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll
 //print residue.
 // Fail
 
+
 checkentail (y::ll<n>@I) |- y::ll<n1>. 
 //print residue.
 // Fail
@@ -26,14 +27,11 @@ print residue.
 
 checkentail (y::ll<n>@I); p::ll<m1> * ((t::ll<a>@I); z::ll<m>) & n > 0 & x=null |- x::ll<m2>. 
 print residue.
-// y ; p * (t; z)
+// y ; p * (t; z)	// 2 residues
 // Valid
 
 checkentail (x::ll<n>@I); y::ll<m>@I * ((t::ll<a>@I); z::ll<m>) & n > 0  |- (y::ll<m2>@I * t::ll<a2>@I).
-print residue.
+print residue. // ?? hole in the residue
 // x ; y * (t;z)
 // Valid
-
-
-
 

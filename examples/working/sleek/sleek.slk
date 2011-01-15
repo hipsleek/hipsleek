@@ -15,4 +15,3 @@ let $a = x' = 1.
 let $b = x' = x + 1.
 let $c = compose[x]($a; $b).
 let $d = x' = 3.
-

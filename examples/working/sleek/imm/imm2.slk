@@ -13,12 +13,8 @@ print residue.
 checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
 // Fail
 
-checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0 & y!=x  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
-print residue.
-// Fail
 
-
-checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m3> * x::ll<n4> & y!=x.
+checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m1> * x::ll<n1> & y!=x.
 print residue.
 // true
 // Valid

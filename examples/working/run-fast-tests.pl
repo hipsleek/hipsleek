@@ -7,23 +7,18 @@ use Sys::Hostname;
 use File::NCopy;
 use File::Path 'rmtree';
 use Cwd;
-use lib '/usr/local/share/perl/5.10.0';
-use Spreadsheet::ParseExcel;
-use Spreadsheet::ParseExcel::SaveParser;
 
 GetOptions( "stop"  => \$stop,
 			"help" => \$help,
 			"root=s" => \$root,
 			"tp=s" => \$prover,
 			"flags=s" => \$flags,
-			"copy-to-home21" => \$home21,
-            "log-timings" => \$timings,
-            "log-string=s" => \$str_log
+			"copy-to-home21" => \$home21 
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
 	exit(0);
 }
 if($root){
@@ -41,18 +36,12 @@ if($prover){
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
 	if (!exists($provers{$prover})){		
-        print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
+		print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip_imm|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
 		exit(0);
 	}
-}
-else{
-    if("$flags" =~ m/-tp (\w+)\b/ ){
-        $prover = "$1";
-    }
-    else{
-       $prover = "omega";
-    }
+}else{
+	$prover = "omega";
 }
 
 if("$flags"){
@@ -85,87 +74,42 @@ if($home21){
 	}	
 }
 
-if($timings){
-    my $parser = new Spreadsheet::ParseExcel::SaveParser;
-    $timings_logfile = "timings_log.xls";
-    if(-e "$timings_logfile") {#check for file existance
-        $book = $parser->Parse("$timings_logfile") #open file for appending
-            or die "File $timings_logfile was not found";
-        my $count = $book->{SheetCount};#total number of worksheets of teh workbook
-        my $provers_sheet_no = 0;
-        for(my $i=0; $i < $count ; $i++){#iterate through all the worksheets 
-            if ($book->{Worksheet}[$i]->{Name} =~ "$prover") {#check if a profiling worksheet of the selected prover already exists
-                if($book->{Worksheet}[$i]->{Name} =~ m/_(\d+)/) {#find the no. of the newest worksheet of this prover
-                    if($provers_sheet_no < int($1)){
-                        $provers_sheet_no = int($1);
-                    }
-                }
-            }
-        }
-        $provers_sheet_no = $provers_sheet_no + 1;
-        my $new_worksheet_name = "$prover"."_".$provers_sheet_no;#compute the name of the new worksheet: prover_maxno
-        $book->AddWorksheet($new_worksheet_name);
-        local $^W = 0;
-        $workbook = $book->SaveAs("temp_"."$timings_logfile");
-        $worksheet = $workbook->sheets($count);
-    }else{
-        #create a new file
-        $workbook = Spreadsheet::WriteExcel->new("temp_"."$timings_logfile")
-            or die "Could not create file $timings_logfile"; 
-        my $new_worksheet_name = "$prover"."_1";
-        $workbook->add_worksheet($new_worksheet_name);
-        $worksheet = $workbook->sheets(0);
-    }
-
-    $row = 1;
-    (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
-    $Year += 1900;
-    $Month++;
-    $date = "$Day/$Month/$Year  $Hour:$Minute";
-    $worksheet->set_column(0, 0, 10);
-    $worksheet->write($row, 0, "Time:");
-    $worksheet->write($row, 1, $date);
-    $row++;
-    $worksheet->write($row, 0, "Prover:");
-    $worksheet->write($row, 1, "$prover");
-    $row++;
-    if("$flags"){
-        $worksheet->write($row, 0, "Call args:");
-        $worksheet->write($row, 1, "$flags");
-    }
-    $row++;
-    if("$str_log"){
-        $worksheet->write($row, 0, "Comments:");
-        $worksheet->write($row, 1, "$str_log");
-    }
-    $row = $row + 2;
-    $programCol = 1;
-    $mainCol = 2;
-    $childCol = 3;
-    $totalCol = 4;
-    $falseContextCol = 5;
-    my $format = $workbook->add_format();
-    $format->set_bold();
-    $format->set_align('center');
-    $worksheet->write($row, $programCol, "Program", $format);
-    $worksheet->set_column($programCol, 0, 15);
-    $worksheet->set_column($mainCol,$falseContextCol, 10);
-    $worksheet->write($row, $mainCol, "Main", $format);
-    $worksheet->write($row, $childCol, "Child", $format);
-    $worksheet->write($row, $totalCol, "Total time", $format);
-    $worksheet->write($row, $falseContextCol, "No. false ctx", $format);
-
-}
-
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip.opt ";
-$sleek = "$exec_path/sleek.opt ";
+$hip = "$exec_path/hip ";
+$sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
 	"hip_tr"=>[["trees.ss",1,"insert"]],
+        "hip_imm" =>[ ["imm/bigint_imm.ss",19,
+		 "clone", "SUCCESS",
+		 "int_value", "SUCCESS",
+		 "bigint_of", "SUCCESS",
+		 "add_one_digit", "SUCCESS",
+		 "test", "FAIL", 
+		 "add_c", "SUCCESS",
+		 "add", "SUCCESS",
+		 "sub_one_digit", "SUCCESS",
+		 "sub_c", "SUCCESS",
+		 "sub", "SUCCESS",
+		 "mult_c", "SUCCESS",
+		 "shift_left", "SUCCESS",
+		 "mult", "SUCCESS",
+		 "karatsuba_mult", "SUCCESS",
+		 "is_zero", "SUCCESS",
+		 "is_equal", "SUCCESS",
+		 "compare", "SUCCESS",
+		 "compare_int", "SUCCESS",
+		 "div_with_remainder", "SUCCESS"],
+                ["imm/append_imm.ss", 1, "append", "SUCCESS"],
+                ["imm/ll_imm.ss", 6, "length", "SUCCESS",
+		 "append", "SUCCESS",
+		 "get_next", "SUCCESS",
+		 "set_next", "SUCCESS",
+		 "get_next_next", "SUCCESS",
+		 "sumN", "SUCCESS"]],
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
@@ -324,7 +268,9 @@ $output_file = "log";
 		        ["global-mutual-rec.ss",3,"decrease1","SUCCESS",
                                           "decrease2","SUCCESS",
 										  "main","SUCCESS"]
-				]);
+				]
+
+              );
 # list of file, string with result of each entailment....
 %sleek_files=(
 		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
@@ -336,14 +282,12 @@ $output_file = "log";
 					["sleek6.slk","Valid.Valid."],
 					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
 					["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid."]]				
+					["sleek9.slk","Valid."],
+                                        ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
+			                ["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+			                ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
+			                ["imm/imm4.slk","Valid.Fail."]]				
 			);
-if($timings){
-    $mainSum = 0.0;
-    $childSum = 0.0;
-    $totalSum = 0.0;
-    $falseContextSum = 0;
-}
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 print "Starting sleek tests:\n";
@@ -356,62 +300,13 @@ if ($error_count > 0) {
   print "Total number of errors: $error_count in files:\n $error_files.\n";
 }
 else
-	{print "All test results were as expected.\n";} 
-
+	{print "All test results were as expected.\n";}
 if($home21){
 	chdir("/home") or die "Can't chdir to $target_dir $!";
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
 }
-
-if($timings){
-    #do the last computations and close the timings log worksheet
-    #compute the total times*
-    $row = $row + 2;
-    my $format = $workbook->add_format();
-    $format->set_bold();
-    $format->set_num_format('0.00');
-    $format->set_align('right');
-    $worksheet->write($row, $programCol, "Totals:", $format);
-    $worksheet->write($row, $mainCol, "$mainSum", $format);
-    $worksheet->write($row, $childCol, "$childSum", $format);
-    $worksheet->write($row, $totalCol, $totalSum, $format);
-    $worksheet->write($row, $falseContextCol, $falseContextSum, $format);
-    $workbook->close();
-    my $parser = new Spreadsheet::ParseExcel::SaveParser;
-    $book = $parser->Parse("temp_"."$timings_logfile") #open file for appending
-            or die "File $timings_logfile was not found";
-    local $^W = 0;
-    $workbook = $book->SaveAs("$timings_logfile");
-    $workbook->close();
-    unlink("temp_"."$timings_logfile");
-}
 exit(0);
 
-sub log_one_line_of_timings{
- my ($prog_name, $outp) = @_;
- $row++;
- $worksheet->write($row, $programCol, "$prog_name");
- my $format = $workbook->add_format();
- $format->set_num_format('0.00');
- $format->set_align('right');
- if($outp =~ m/Total verification time: (.*?) second/){
-     $worksheet->write_number($row, $totalCol,"$1", $format);
-     $totalSum = $totalSum + $1;
- }
- if($outp =~ m/Time spent in main process: (.*?) second/){
-     $worksheet->write($row, $mainCol, "$1", $format);
-     $mainSum = $mainSum + $1;
- }
- if($outp =~ m/Time spent in child processes: (.*?) second/){
-     $worksheet->write($row, $childCol, "$1", $format);
-     $childSum = $childSum + $1;
- }
- if($outp =~ m/\b(\w+) false contexts/){
-     $format->set_num_format('0');
-     $worksheet->write($row, $falseContextCol, "$1", $format);
-     $falseContextSum = $falseContextSum + $1;
- }
-}
 
 sub hip_process_file {
   foreach $param (@param_list)
@@ -425,7 +320,7 @@ sub hip_process_file {
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
-			#print "\nbegin"."$output"."end\n";
+			#print "$output";
 			for($i = 2; $i<$limit;$i+=2)
 			{
 				if($output !~ /Procedure $test->[$i].* $test->[$i+1]/)
@@ -435,14 +330,9 @@ sub hip_process_file {
 					print "error at: $test->[0] $test->[$i]\n";
 				}
 			}
-            if($timings) {
-                log_one_line_of_timings ($test->[0],$output);
-            }
 		}
   }
 }
-
-
 
 sub sleek_process_file  {
   foreach $param (@param_list)
@@ -483,11 +373,7 @@ sub sleek_process_file  {
 				print "Unexpected result with : $test->[0]\n";
 				$error_count++;
 				$error_files = $error_files . " " . $test->[0];
-			}
-            if($timings) {
-               # log_one_line_of_timings ($test->[0],$output);
-            }  
+			}  
 		}
 	}
 }
-

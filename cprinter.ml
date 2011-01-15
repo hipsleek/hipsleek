@@ -1011,7 +1011,7 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_success_pts: " U.empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts;
   pr_wrap_test "es_residue_pts: " U.empty (pr_seq "" pr_formula_label) es.es_residue_pts;
   pr_wrap_test "es_path_label: " U.empty pr_path_trace es.es_path_label;
-  pr_vwrap "es_frame: " pr_h_formula (fst es.es_frame);
+  (*pr_vwrap "es_frame: " pr_h_formula (fst es.es_frame);*)
   fmt_close ()
 
 
@@ -1068,6 +1068,7 @@ let rec pr_fail_type (e:fail_type) =
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason br ->  pr_fail_estate br
+    | Continuation br ->  fmt_string (" Continuation ! "); pr_fail_estate br
     | Or_Reason _ -> 
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_OR " f_b args
