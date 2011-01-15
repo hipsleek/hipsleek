@@ -2644,7 +2644,12 @@ and fv_rhs (lhs : CF.formula) (rhs : CF.formula) : CP.spec_var list =
 
 (*__________________*)
 
-and split_phase_debug h = Util.ho_debug_1 "split_phase"
+and split_phase_lhs_debug h = Util.ho_debug_1 "split_phase(lhs)"
+  Cprinter.string_of_h_formula 
+  (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
+  split_phase h
+
+and split_phase_rhs_debug h = Util.ho_debug_1 "split_phase(rhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
@@ -2708,7 +2713,7 @@ and heap_entail_split_rhs_phases
   in
     
   let helper h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
-    let h1, h2, h3 = split_phase h in
+    let h1, h2, h3 = split_phase_rhs_debug h in
 	let _ = print_string
 	  ("heap_entail_split_rhs: splitting h into:
               \n h1 (rhs) = " ^ (Cprinter.string_of_h_formula h1) ^ 
@@ -2917,7 +2922,7 @@ and helper_lhs h func : (list_context * proof) =
 	     h2 = write phase
 	     h3 = nested phase 
 	  *)
-	let h1, h2, h3 = split_phase h in
+	let h1, h2, h3 = split_phase_lhs_debug h in
 	let _ = print_string("heap_entail_split_lhs: splitting h into:\n h1 (lhs) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n h2 (lhs) = " ^ (Cprinter.string_of_h_formula h2) ^ "\n h3 (lhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in
 
 	  if ((is_true h1) && (is_true h3))

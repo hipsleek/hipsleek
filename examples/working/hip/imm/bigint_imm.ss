@@ -115,11 +115,45 @@ node sub_one_digit(node x, int c)
 }
 
 node sub_c(node x, node y, int c)
+<<<<<<< bigint_imm.ss
+/*
+  requires (x::bigint<v1>@I) ; y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
+
+  requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
+  // fails - should succeed
+
+ requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
+  ensures res::bigint<v1-v2-c>;
+
+*/
+ 
+ requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
+ ensures res::bigint<v1-v2-c>;
+ // fails - should succeed
+=======
   requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
   ensures res::bigint<v1-v2-c>;
+>>>>>>> 1.1.2.4
 {
+<<<<<<< bigint_imm.ss
+  //dprint;
+=======
+>>>>>>> 1.1.2.4
   if (x == null) return null;
+<<<<<<< bigint_imm.ss
+  if (y == null) {
+    //dprint;
+    assume false;
+    node r =sub_one_digit(x, c);
+    dprint;
+    return r;
+  }
+  //assume false;
+=======
   if (y == null) return sub_one_digit(x, c);
+>>>>>>> 1.1.2.4
   int t = x.val - y.val - c;
   if (t >= 0) return new node(t, sub_c(x.next, y.next, 0));
   return new node(t+10, sub_c(x.next, y.next, 1));
