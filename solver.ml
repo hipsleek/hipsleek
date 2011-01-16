@@ -1379,7 +1379,7 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | _ -> f
 
 and fold p c v pu u loc =
-  Util.prof_2 "fold" (fold_debug_2 p c v pu) u loc
+  Util.prof_2 "fold" (fold_x p c v pu) u loc
 
 and fold_debug_2 p c v pu u loc = 
   Util.ho_debug_2 "fold " (fun _ -> "?") Cprinter.string_of_h_formula (fun _ -> "?")
