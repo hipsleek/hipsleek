@@ -786,6 +786,8 @@ let prof_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : '
       (pop_time s; r)
   with ex -> (pop_time s; raise ex)
 
+let prof_3_nth n s =  let str=(s^"#"^n) in prof_3 str
+
 let prof_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
   try
     push_time s;

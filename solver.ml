@@ -1413,7 +1413,7 @@ and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (p
 	    let new_es = {estate with es_evars = vs (*Util.remove_dups (vs @ estate.es_evars)*)} in
 	    let new_ctx = Ctx new_es in
 	    (*let new_ctx = set_es_evars ctx vs in*)
-	    let rs0, fold_prf = heap_entail_one_context_struc_nth 3 prog true false false new_ctx view_form pos None in
+	    let rs0, fold_prf = heap_entail_one_context_struc_nth "fold" prog true false false new_ctx view_form pos None in
         (*let _ = print_string ("before fold: " ^ (Cprinter.string_of_context new_ctx)) in
           let _ = print_string ("after fold: " ^ (Cprinter.string_of_list_context rs0)) in*)
 	    let tmp_vars = p :: (estate.es_evars @ vs) in
@@ -1970,19 +1970,19 @@ and heap_entail_struc (prog : prog_decl) (is_folding : bool) (is_universal : boo
     | FailCtx _ -> (cl,Failure)
     | SuccCtx cl ->
 	      if !Globals.use_set || U.empty cl then
-	        let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth 4 prog is_folding is_universal has_post c conseq pos pid) cl in
+	        let tmp1 = List.map (fun c -> heap_entail_one_context_struc_nth "4" prog is_folding is_universal has_post c conseq pos pid) cl in
 	        let tmp2, tmp_prfs = List.split tmp1 in
 	        let prf = mkContextList cl conseq tmp_prfs in
             ((fold_context_left tmp2), prf)
 	      else
-	        (heap_entail_one_context_struc_nth 5 prog is_folding is_universal has_post (List.hd cl) conseq pos pid)
+	        (heap_entail_one_context_struc_nth "5" prog is_folding is_universal has_post (List.hd cl) conseq pos pid)
 
 and heap_entail_one_context_struc p i1 i2 hp cl cs pos pid =
   Util.prof_3 "heap_entail_one_context_struc" (heap_entail_one_context_struc_x(*_debug*) p i1 i2 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_nth n p i1 i2 hp cl cs pos pid =
-  let str="heap_entail_one_context_struc#"^string_of_int(n) in
-  Util.prof_3 str (heap_entail_one_context_struc_x(*_debug*) p i1 i2 hp cl) cs pos pid
+  let str="heap_entail_one_context_struc" in
+  Util.prof_3_nth n str (heap_entail_one_context_struc_x(*_debug*) p i1 i2 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_debug p i1 i2 hp cl cs pos pid =
   Util.ho_debug_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 i2 hp cl cs pos pid) cl
@@ -3876,14 +3876,14 @@ let heap_entail_struc_list_partial_context_init (prog : prog_decl) (is_folding :
 (*  let _ = count_br_specialized prog cl in*)
   let conseq = prune_pred_struc prog false conseq in
   Util.pop_time "entail_prune";
-  heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth 1))
+  heap_entail_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "1"))
   
 let heap_entail_struc_list_failesc_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)
 	(cl : list_failesc_context)(conseq:struc_formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
   Debug.devel_pprint ("heap_entail_struc_list_failesc_context_init:"
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
           ^ "\nconseq:"^ (Cprinter.string_of_struc_formula conseq) ^"\n") pos; 
-  heap_entail_failesc_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth 2))
+  heap_entail_failesc_prefix_init prog is_folding is_universal has_post cl conseq pos pid (rename_labels_struc,Cprinter.string_of_struc_formula,(heap_entail_one_context_struc_nth "2"))
   
   
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_partial_context)
