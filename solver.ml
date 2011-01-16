@@ -1378,17 +1378,23 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
+and fold p c v pu u loc =
+  Util.prof_2 "fold" (fold_x p c v pu) u loc
+
+and fold_debug_2 p c v pu u loc = 
+  Util.ho_debug_2 "fold " (fun _ -> "?") Cprinter.string_of_h_formula (fun _ -> "?")
+      (fun c v -> fold_x p c v pu u loc) c v
 
 and fold_debug p c v pu u loc = 
   Util.ho_debug_2 "fold " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
-      (fun c v -> fold p c v pu u loc) c v
+      (fun c v -> fold_x p c v pu u loc) c v
       (**************************************************************)
       (**************************************************************)
       (**************************************************************)
 
 (* fold some constraints in f1 to view v under pure pointer *)
 (* constraint pp and Presburger constraint pres             *)
-and fold prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
+and fold_x prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
   | ViewNode ({ h_formula_view_node = p;
     h_formula_view_name = c;
     h_formula_view_label = pid;

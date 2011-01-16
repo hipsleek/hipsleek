@@ -413,6 +413,13 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
 let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
 
+let ho_debug_1_nth n s =  let str=(s^"#"^n) in ho_debug_1 str
+let ho_debug_2_nth n s =  let str=(s^"#"^n) in ho_debug_2 str
+let ho_debug_3_nth n s =  let str=(s^"#"^n) in ho_debug_3 str
+let ho_debug_4_nth n s =  let str=(s^"#"^n) in ho_debug_4 str
+let ho_debug_5_nth n s =  let str=(s^"#"^n) in ho_debug_5 str
+
+
 (** String-handling utility functions. *)
 
 let trim_quotes s = 
@@ -786,7 +793,6 @@ let prof_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : '
       (pop_time s; r)
   with ex -> (pop_time s; raise ex)
 
-let prof_3_nth n s =  let str=(s^"#"^n) in prof_3 str
 
 let prof_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
   try
@@ -809,6 +815,12 @@ let prof_6 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'a6 -> 'z) (e1:'a1) 
       (pop_time s; r)
   with ex -> (pop_time s; raise ex)
 
+let prof_1_nth n s =  let str=(s^"#"^n) in prof_1 str
+let prof_2_nth n s =  let str=(s^"#"^n) in prof_2 str
+let prof_3_nth n s =  let str=(s^"#"^n) in prof_3 str
+let prof_4_nth n s =  let str=(s^"#"^n) in prof_4 str
+let prof_5_nth n s =  let str=(s^"#"^n) in prof_5 str
+let prof_6_nth n s =  let str=(s^"#"^n) in prof_6 str
 
 let pop_spec_counter = ref 1
 let gen_time_msg _  = 
