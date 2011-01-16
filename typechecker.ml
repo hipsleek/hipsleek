@@ -420,7 +420,10 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
       let failesc = CF.splitter_failesc_context !n_flow_int None (fun x->x)(fun x -> x) cl in
       ((check_exp1 failesc) @ fl)
     
-and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context =
+  Util.prof_2 "check_post" (check_post_x prog proc ctx post) pos pid
+
+and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
   (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
