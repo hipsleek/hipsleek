@@ -952,7 +952,7 @@ and expand_all_preds prog f0 do_unsat: formula =
       formula_base_pure = p;
       formula_base_pos =pos}) -> begin
 	    let proots = find_pred_roots_heap h in 
-	    let ef0 = List.fold_left (fun f -> fun v -> unfold (prog,None) f v do_unsat pos ) f0 proots in
+	    let ef0 = List.fold_left (fun f -> fun v -> unfold_nth "3" (prog,None) f v do_unsat pos ) f0 proots in
 	    ef0
       end
     | Exists ({ formula_exists_qvars = qvars;
@@ -969,7 +969,7 @@ and expand_all_preds prog f0 do_unsat: formula =
         formula_base_branches = [];
         formula_base_label = lbl;
         formula_base_pos = pos}) in
-	    let ef = List.fold_left (fun f -> fun v -> unfold (prog,None) f v do_unsat pos  ) f proots in
+	    let ef = List.fold_left (fun f -> fun v -> unfold_nth "4" (prog,None) f v do_unsat pos  ) f proots in
 	    let ef0 = push_exists qvars ef in
 	    ef0
       end
@@ -1009,8 +1009,9 @@ and find_pred_roots_heap h0 =
 
 (* unfolding *)
 and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_context =
+  (* this is called by base-case unfolding *)
   let fct es = 
-    let unfolded_f = unfold prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth "5" prog es.es_formula v do_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if do_unsat then set_unsat_flag res true
     else res in 
@@ -1018,7 +1019,7 @@ and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var
 
 and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_partial_context =
   let fct es = 
-    let unfolded_f = unfold prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth "6" prog es.es_formula v do_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if do_unsat then set_unsat_flag res true
     else res in 
@@ -1026,13 +1027,19 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
 	  
 and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_failesc_context =
   let fct es = 
-    let unfolded_f = unfold prog es.es_formula v do_unsat pos in
+    (* this came from unfolding for bind mostly *)
+    let unfolded_f = unfold_nth "7" prog es.es_formula v do_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if do_unsat then set_unsat_flag res true
     else res in 
   transform_list_failesc_context (idf,idf,fct) ctx
+
+and unfold_nth(*_debug*) n (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula =
+  unfold_x prog f v do_unsat pos
+  (* Util.ho_debug_1_nth n "unfold" string_of_bool (fun _ -> "?") (fun d -> unfold_x prog f v d pos) do_unsat
+  *)
       
-and unfold (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = match f with
+and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = match f with
   | Base ({ formula_base_heap = h;
     formula_base_pure = p;
     formula_base_branches = b;
@@ -1050,8 +1057,8 @@ and unfold (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:boo
   | Or ({formula_or_f1 = f1;
     formula_or_f2 = f2;
     formula_or_pos = pos}) ->
-        let uf1 = unfold prog f1 v do_unsat pos in
-        let uf2 = unfold prog f2 v do_unsat pos in
+        let uf1 = unfold_x prog f1 v do_unsat pos in
+        let uf2 = unfold_x prog f2 v do_unsat pos in
         let resform = mkOr uf1 uf2 pos in
 	    resform
 
@@ -1379,10 +1386,14 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | _ -> f
 
 and fold p c v pu u loc =
-  Util.prof_2 "fold" (fold_x p c v pu) u loc
+  Util.prof_2 "fold" (fold_x(*debug_2*) p c v pu) u loc
 
 and fold_debug_2 p c v pu u loc = 
-  Util.ho_debug_2 "fold " (fun _ -> "?") Cprinter.string_of_h_formula (fun _ -> "?")
+  Util.ho_debug_2 "fold " (fun c -> match c with
+    | Ctx c -> Cprinter.string_of_formula c.es_formula
+    | _ -> "CtxOR!") 
+      Cprinter.string_of_h_formula 
+      (fun (c,_) -> match c with | FailCtx _ -> "Fail" | _ -> "Success")
       (fun c v -> fold_x p c v pu u loc) c v
 
 and fold_debug p c v pu u loc = 
@@ -1663,7 +1674,7 @@ and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
       true phb in
     (not r)
         
-and unsat_base prog (sat_subno:  int ref) f  : bool= 
+and unsat_base_x prog (sat_subno:  int ref) f  : bool= 
   match f with
     | Or _ -> report_error no_pos ("unsat_xpure : encountered a disjunctive formula \n")
     | Base ({ formula_base_heap = h;
@@ -1678,17 +1689,18 @@ and unsat_base prog (sat_subno:  int ref) f  : bool=
       formula_exists_pos = pos}) ->
           is_unsat_with_branches (fun f-> xpure_heap prog f 1) qvars qh qp br pos sat_subno
               
-and unsat_base_debug prog (sat_subno:  int ref) f  : bool= 
-  Util.ho_debug_3 "unsat_base " (fun _ -> "?") (fun x-> (string_of_int !x)) 
+and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
+  unsat_base_x prog sat_subno f
+  (* Util.ho_debug_3_nth n "unsat_base" (fun _ -> "?") (fun x-> (string_of_int !x)) 
       Cprinter.string_of_formula string_of_bool
-      unsat_base prog sat_subno f
-      
+      unsat_base_x prog sat_subno f
+  *) 
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
   else 
     let f = es.es_formula in
     let _ = reset_int2 () in
-    let b = unsat_base prog sat_subno f in
+    let b = unsat_base_nth "1" prog sat_subno f in
     if not b then Ctx{es with es_unsat_flag = true } else 
       false_ctx (flow_formula_of_formula es.es_formula) no_pos
     	  
@@ -1713,7 +1725,7 @@ and elim_unsat_all prog (f : formula): formula = match f with
           else TP.is_sat_sub_no (CP.And (npf, pf1b, no_pos)) sat_subno ) true pfb in
 	      TP.incr_sat_no ();
 	    (*      if is_ok then print_endline "elim_unsat_all: true" else print_endline "elim_unsat_all: false";*)*)
-        let is_ok = unsat_base prog sat_subno f in
+        let is_ok = unsat_base_nth "2" prog sat_subno f in
 	    if not is_ok then f else mkFalse (flow_formula_of_formula f) (pos_of_formula f)
   | Or ({ formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -3216,7 +3228,8 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				                end else if is_data ln2 && is_view anode then 
 				                  begin (* unfold *)
                                     (* TODO : ADD dd debug message for unfolding *)
-				                    let delta1 = unfold (prog,None) ante p1 true pos in
+                                    (* unfold a pred in LHS *)
+				                    let delta1 = unfold_nth "1" (prog,None) ante p1 true pos in
 				                    let ctx1 = build_context ctx0 delta1 pos in
 				                    let ctx1 = set_unsat_flag ctx1 true in
 				                    let res_rs, prf1 = heap_entail_one_context prog is_folding is_universal ctx1 conseq pos in
@@ -3546,7 +3559,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 		          let f0 = normalize f (formula_of_heap node pos) pos in
 		          let f1 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 		          (* unfold the case with the negation of the guard. *)
-		          let f1 = unfold (prog,None) f1 p1 true pos in
+		          let f1 = unfold_nth "2" (prog,None) f1 p1 true pos in
 		          let f2 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 		          (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		          let new_f = mkOr f1 f2 pos in

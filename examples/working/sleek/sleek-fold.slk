@@ -15,5 +15,27 @@ checkentail x::node<next = r1> * r1::node<next = aa> * y::node<> & b > 10 & aa=n
 print residue.
 */
 
-checkentail x=null or x::node<_,q>*q::node<_,null> |- x::ll<d>.
+checkentail x=null or x::node<_,q>*q::node<_,null> & q=null |- x::ll<d>.
 print residue.
+
+checkentail x=null or x::node<_,q>*q::node<_,null> & 1=0 |- x::ll<d>.
+print residue.
+
+checkentail x::node<_,q>*q::ll<n> & n>=0 |- x::ll<d>.
+print residue.
+
+checkentail 1=0 |- x::ll<d>.
+print residue.
+
+checkentail 2=3 |- x::ll<d>.
+print residue.
+
+
+checkentail false |- x::ll<d>.
+print residue.
+
+
+checkentail x::ll<n> & n>1 |- x::node<_,q> * q::node<_,r>.
+print residue.
+
+
