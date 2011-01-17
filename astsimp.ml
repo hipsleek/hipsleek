@@ -1,5 +1,7 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
+
+open Printf
   
 module C = Cast
   
@@ -27,7 +29,7 @@ module H = Hashtbl
 module TP = Tpdispatcher
   
 module Chk = Checks
-  
+
 (* module VG = View_generator *)
 
 (*
@@ -257,6 +259,8 @@ module NG = Graph.Imperative.Digraph.Concrete(Name)
 module TopoNG = Graph.Topological.Make(NG)
   
 module DfsNG = Graph.Traverse.Dfs(NG)
+
+module NGComponents = Graph.Components.Make(NG)
   
 (***********************************************)
 (* 17.04.2008 *)
@@ -457,8 +461,10 @@ and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 
 	| Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
 	| Iformula.EBase b -> Iformula.EBase{b with 
 		 Iformula.formula_ext_base = convert_heap2 prog b.Iformula.formula_ext_base;
-		 Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation 
-		}
+		 Iformula.formula_ext_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_ext_continuation}
+	| Iformula.EVariance b -> Iformula.EVariance {b with
+									Iformula.formula_var_continuation = List.map (fun e-> convert_ext2 prog e)  b.Iformula.formula_var_continuation
+							  }
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
 	List.map (convert_ext2 prog ) f0 
@@ -492,7 +498,9 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 			List.fold_left (fun d (e1,e2) -> List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c)) d e2) [] b 
 		| Iformula.EBase {Iformula.formula_ext_base =fb;
 		 				 Iformula.formula_ext_continuation = cont}-> List.fold_left 
-									(fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
+									(fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont
+		| Iformula.EVariance b -> List.fold_left 
+									(fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
 		 in
 	 	
 	let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
@@ -942,7 +950,8 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
       let cprog2 = sat_warnings cprog1 in        
       let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
       let cprog4 = (add_pre_to_cprog cprog3) in
-			let c = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
+	  let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
+	  let c = (mark_recursive_call prog cprog5) in 
 			let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
 			  c)))
 	end)
@@ -1227,7 +1236,7 @@ and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_form
   let rec helper (cf:Cformula.ext_formula) : Cformula.struc_formula option = match cf with
     | Cformula.ECase b -> 
 	      let l = List.fold_left (fun a (c1,c2) -> 
-			  match (compute_base_case c2 ) with
+			  match (compute_base_case c2) with
 				| None -> a (*(c1,[(Cformula.mkEFalse pos)]) *)
 				| Some s ->(c1,s)::a) [] b.Cformula.formula_case_branches in
 	      if ((List.length l) > 0) then Some [(Cformula.ECase {b with Cformula.formula_case_branches = [List.hd l]})]
@@ -1242,7 +1251,9 @@ and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_form
                     | Some s -> Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = s; Cformula.formula_ext_base=d })]
 	            else Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = []; Cformula.formula_ext_base=d })]
       end
-    | Cformula.EAssume b-> Err.report_error{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"} in
+    | Cformula.EAssume b-> Err.report_error{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
+	| Cformula.EVariance b -> compute_base_case b.Cformula.formula_var_continuation
+  in
   match (List.length cf) with
     | 0 -> None
     | 1 -> helper (List.hd cf)
@@ -1372,7 +1383,11 @@ and set_pre_flow f =
 		  Cformula.formula_ext_continuation = set_pre_flow b.Cformula.formula_ext_continuation}
     | Cformula.ECase b-> Cformula.ECase {b with 
           Cformula.formula_case_branches = List.map (fun (c1,c2)-> (c1,(set_pre_flow c2))) b.Cformula.formula_case_branches;}
-    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2),b3)in
+    | Cformula.EAssume (b1,b2,b3)-> Cformula.EAssume (b1,(Cformula.substitute_flow_in_f !n_flow_int !top_flow_int b2),b3)
+	| Cformula.EVariance b -> Cformula.EVariance {b with
+									Cformula.formula_var_continuation = set_pre_flow b.Cformula.formula_var_continuation
+							  }
+  in
   List.map helper f
       
 and check_valid_flows f = 
@@ -1388,7 +1403,9 @@ and check_valid_flows f =
   let helper f0 = match f0 with
     | Iformula.EBase b-> (check_valid_flows_f b.Iformula.formula_ext_base); check_valid_flows b.Iformula.formula_ext_continuation
     | Iformula.ECase b-> (List.iter (fun d-> check_valid_flows (snd d)) b.Iformula.formula_case_branches)
-    | Iformula.EAssume (b,_)-> check_valid_flows_f b in
+    | Iformula.EAssume (b,_)-> check_valid_flows_f b
+	| Iformula.EVariance b -> check_valid_flows b.Iformula.formula_var_continuation
+  in
   List.iter helper f
       
       
@@ -1812,6 +1829,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                              C.exp_icall_receiver_type = crecv_t;
                              C.exp_icall_method_name = mingled_mn;
                              C.exp_icall_arguments = arg_vars;
+							 C.exp_icall_is_rec = false; (* default value - it will be set later in trans_prog *)
                              C.exp_icall_path_id = pi;
                              C.exp_icall_pos = pos;} in
                        let seq1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -1831,7 +1849,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_call_nrecv_pos = pos } ->
             let tmp = List.map (trans_exp prog proc) args in
             let (cargs, cts) = List.split tmp in
-            let mingled_mn = C.mingle_name mn cts in
+            let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
             let this_recv = 
                 if U.is_some proc.I.proc_data_decl then
                     (let cdef = U.unsome proc.I.proc_data_decl in
@@ -1861,6 +1879,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                            C.exp_scall_type = ret_ct;
                                            C.exp_scall_method_name = mingled_mn;
                                            C.exp_scall_arguments = arg_vars;
+										   C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
                                            C.exp_scall_pos = pos;
                                            C.exp_scall_path_id = pi; } in
                            let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
@@ -2873,7 +2892,9 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
           Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
           Err.error_text = "the guards are not disjoint : "^s^"\n";} in
 	      
-	      let _ = List.map (case_coverage instant) r2 in true	in
+	      let _ = List.map (case_coverage instant) r2 in true
+	| Cformula.EVariance b -> case_coverage instant b.Cformula.formula_var_continuation
+  in
   let _ = List.map (ext_case_coverage instant) f in true
 
 and trans_var (ve, pe) stab pos =try
@@ -2913,6 +2934,9 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 			  }
 	    | Cformula.EAssume (ref_vars, bf,y) ->
 	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
+		| Cformula.EVariance b -> Cformula.EVariance {b with
+										Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
+								  }
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
          
@@ -2951,7 +2975,17 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
                 Cformula.formula_ext_exists = ext_exis;
                 Cformula.formula_ext_base = nb;
                 Cformula.formula_ext_continuation = nc;
-                Cformula.formula_ext_pos = b.Iformula.formula_ext_pos} in
+                Cformula.formula_ext_pos = b.Iformula.formula_ext_pos}
+	  | Iformula.EVariance b -> Cformula.EVariance {
+		    Cformula.formula_var_label = b.Iformula.formula_var_label;
+			Cformula.formula_var_measures = List.map (fun (expr, bound) -> match bound with
+														| None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
+														| Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_var_measures;
+			Cformula.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify (trans_pure_formula f stab)) b.Iformula.formula_var_escape_clauses;
+			Cformula.formula_var_continuation = trans_struc_formula_hlp b.Iformula.formula_var_continuation fvars;
+			Cformula.formula_var_pos = b.Iformula.formula_var_pos
+		}
+	in  
     let r = List.map (fun c-> trans_ext_formula c stab) f0 in
     r in
   let _ = collect_type_info_struc_f prog f0 stab in	
@@ -3649,10 +3683,16 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 			let _ = collect_type_info_pure c1 stab in
 			inner_collector c2) b.Iformula.formula_case_branches in ()
       | Iformula.EBase b ->  let _ = collect_type_info_formula prog b.Iformula.formula_ext_base stab false in
-	    let _ = inner_collector b.Iformula.formula_ext_continuation in ()								
+	    let _ = inner_collector b.Iformula.formula_ext_continuation in ()
+	  | Iformula.EVariance b ->
+		  let _ = List.map (fun (expr, bound) -> match bound with
+							  | None -> (collect_type_info_arith expr stab)
+							  | Some b_expr -> let _ = (collect_type_info_arith expr stab) in (collect_type_info_arith b_expr stab)) b.Iformula.formula_var_measures in
+		  let _ = List.map (fun f -> collect_type_info_pure f stab) b.Iformula.formula_var_escape_clauses in
+		  let _ = inner_collector b.Iformula.formula_var_continuation in ()
     in
-    let _ = List.map helper f0 in 
-    () in
+    let _ = List.map helper f0 in
+	() in
   begin
     inner_collector f0;
     (* re-collect type info, don't check for shallowing outer var this time *)
@@ -3996,7 +4036,11 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
                    Iformula.formula_ext_continuation = nc;
                    Iformula.formula_ext_pos = b.Iformula.formula_ext_pos}),(Util.remove_dups (h2@h3)))in
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
-            r in
+            r
+	  | Iformula.EVariance b -> (Iformula.EVariance ({b with
+			Iformula.formula_var_continuation = fst (helper h b.Iformula.formula_var_continuation strad_vs)
+		}), [])
+		in
       if (List.length f0)=0 then
 	([],[])
       else
@@ -4263,7 +4307,9 @@ and check_eprim_in_struc_formula s f =
         (err_prim_l_vars s b.IF.formula_ext_exists b.IF.formula_ext_pos; 
          check_eprim_in_formula s b.IF.formula_ext_base;
          check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
-   | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b in
+   | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
+   | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
+ in
 List.iter helper f
 
 and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:Iast.exp) :
@@ -4946,6 +4992,7 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 				  ) splitting_constraints)
 	  else splitter f_list_init rest_vars
 
+(* TODO *)
 and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure.spec_var list) = 
   let rec helper (f:Cformula.ext_formula):Cformula.ext_formula*(Cpure.spec_var list) = match f with
     | Cformula.EBase b->
@@ -4975,7 +5022,15 @@ and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure
 	    (Cformula.ECase {b with 
 			       Cformula.formula_case_branches = new_cases}),
 	    (List.concat var_list))			
-    | Cformula.EAssume b-> (f,[]) in
+    | Cformula.EAssume b-> (f,[])
+	| Cformula.EVariance b ->
+		let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
+										 | None -> Cpure.afv e1
+										 | Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.Cformula.formula_var_measures in
+		let e_var_list = List.fold_left (fun rs f -> rs@(Cpure.fv f)) [] b.Cformula.formula_var_escape_clauses in
+		let new_cont, c_var_list = move_instantiations b.Cformula.formula_var_continuation in
+		(Cformula.EVariance {b with Cformula.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
+  in
   let forms, vars = List.split (List.map helper f) in
     (forms, (List.concat vars))
     
@@ -5024,5 +5079,104 @@ and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.vi
     
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
-	
-    
+   
+(* Recursive call detection *)
+(* irf = is_rec_field *)	
+and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
+  let cg = IastUtil.callgraph_of_prog ip in
+  let scc_list = List.rev (IastUtil.IGC.scc_list cg) in
+  (* let _ = printf "The scc list of program:\n"; List.iter (fun l -> (List.iter (fun c -> print_string (" "^c)) l; printf "\n")) scc_list; printf "**********\n" in *)
+  irf_traverse_prog ip cp scc_list
+
+and find_scc_group (ip: Iast.prog_decl) (pname: Globals.ident) (scc_list: IastUtil.IG.V.t list list) : (IastUtil.IG.V.t list) =
+  match scc_list with
+	| [] -> []
+	| x::xs -> if (is_found ip pname x) then x else (find_scc_group ip pname xs)
+
+and is_found (ip: Iast.prog_decl) (pname: Globals.ident) (scc: IastUtil.IG.V.t list) : bool =
+  (* let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
+  let _ = print_string ("The proc name: "^pname^"\n") in *)
+  match scc with
+    | [] -> false
+	| x::xs -> let mingled_name = (Iast.look_up_proc_def_raw ip.Iast.prog_proc_decls x).Iast.proc_mingled_name in
+		(* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
+		if (mingled_name = pname) then true else (is_found ip pname xs)
+
+and irf_traverse_prog (ip: Iast.prog_decl) (cp: Cast.prog_decl) (scc_list: IastUtil.IG.V.t list list) : Cast.prog_decl = 
+   {cp with
+		Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc ip proc (find_scc_group ip proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+   }
+
+and irf_traverse_proc (ip: Iast.prog_decl) (proc: Cast.proc_decl) (scc: IastUtil.IG.V.t list) : Cast.proc_decl =
+  {proc with
+	 Cast.proc_body = 
+		match proc.Cast.proc_body with
+			| None -> None
+			| Some body -> Some (irf_traverse_exp ip body scc)
+  }
+
+and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t list) : Cast.exp =
+  match exp with
+	| Cast.Label e -> Cast.Label {e with Cast.exp_label_exp = (irf_traverse_exp ip e.Cast.exp_label_exp scc)}
+	| Cast.CheckRef e -> Cast.CheckRef e
+	| Cast.Java e -> Cast.Java e
+	| Cast.Assert e -> Cast.Assert e
+	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp ip e.Cast.exp_assign_rhs scc)}
+	| Cast.BConst e -> Cast.BConst e
+	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp ip e.Cast.exp_bind_body scc)}
+	| Cast.Block e -> Cast.Block {e with Cast.exp_block_body = (irf_traverse_exp ip e.Cast.exp_block_body scc)}
+	| Cast.Cond e -> Cast.Cond {e with Cast.exp_cond_then_arm = (irf_traverse_exp ip e.Cast.exp_cond_then_arm scc); Cast.exp_cond_else_arm = (irf_traverse_exp ip e.Cast.exp_cond_else_arm scc)}
+	| Cast.Cast e -> Cast.Cast {e with Cast.exp_cast_body = (irf_traverse_exp ip e.Cast.exp_cast_body scc)}
+	| Cast.Catch e -> Cast.Catch {e with Cast.exp_catch_body = (irf_traverse_exp ip e.Cast.exp_catch_body scc)}
+	| Cast.Debug e -> Cast.Debug e
+	| Cast.Dprint e -> Cast.Dprint e
+	| Cast.FConst e -> Cast.FConst e
+	| Cast.IConst e -> Cast.IConst e
+	| Cast.New e -> Cast.New e
+	| Cast.Null e -> Cast.Null e
+	| Cast.Print e -> Cast.Print e
+	| Cast.Seq e -> Cast.Seq {e with Cast.exp_seq_exp1 = (irf_traverse_exp ip e.Cast.exp_seq_exp1 scc); Cast.exp_seq_exp2 = (irf_traverse_exp ip e.Cast.exp_seq_exp2 scc)}
+	| Cast.This e -> Cast.This e
+	| Cast.Time e -> Cast.Time e
+	| Cast.Var e -> Cast.Var e
+	| Cast.VarDecl e -> Cast.VarDecl e
+	| Cast.Unfold e -> Cast.Unfold e
+	| Cast.Unit e -> Cast.Unit e
+	| Cast.While e -> Cast.While {e with Cast.exp_while_body = (irf_traverse_exp ip e.Cast.exp_while_body scc)}
+	| Cast.Sharp e -> Cast.Sharp e
+	| Cast.Try e -> Cast.Try {e with Cast.exp_try_body = (irf_traverse_exp ip e.Cast.exp_try_body scc); Cast.exp_catch_clause = (irf_traverse_exp ip e.Cast.exp_catch_clause scc)}
+	| Cast.ICall e -> Cast.ICall {e with Cast.exp_icall_is_rec = (is_found ip e.Cast.exp_icall_method_name scc)}
+	| Cast.SCall e -> Cast.SCall {e with Cast.exp_scall_is_rec = (is_found ip e.Cast.exp_scall_method_name scc)}
+		
+
+(* Build call graph of the program *)
+(*
+and addin_callgraph_of_exp (cg: NG.t) exp mnv : unit = 
+  let f e = 
+    match exp with
+    | Cast.ICall e ->
+      NG.add_edge cg mnv e.Cast.exp_icall_method_name;
+      Some ()
+    | Cast.SCall e ->
+      NG.add_edge cg mnv e.Cast.exp_scall_method_name;
+      Some ()
+    | _ -> None
+  in
+  iter_exp exp f
+   
+
+
+and addin_callgraph_of_proc cg proc : unit = 
+  match proc.Cast.proc_body with
+  | None -> ()
+  | Some e -> addin_callgraph_of_exp cg e proc.Cast.proc_name
+
+and callgraph_of_prog prog : NG.t = 
+  let cg = NG.create () in
+  let pn pc = pc.Cast.proc_name in
+  let mns = List.map pn prog.Cast.prog_proc_decls in
+  List.iter (NG.add_vertex cg) mns;
+  List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls;
+  cg
+*)
+		

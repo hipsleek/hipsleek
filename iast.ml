@@ -834,6 +834,7 @@ and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula
 	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view  view_decls c2) b.Iformula.formula_case_branches)
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 		  [(data_name_of_view view_decls b.Iformula.formula_ext_continuation)])
+	| Iformula.EVariance b -> ""
   in
   handle_list_res (List.map data_name_in_ext f0) 
 

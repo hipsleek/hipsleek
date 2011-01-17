@@ -526,7 +526,18 @@ and e_apply_one (fr, t) e = match e with
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
   |a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_list (fr, t) rest)
-	
+
+(* apply_one function for the formula_ext_measures of ext_variance_formula *)
+and e_apply_one_list_of_pair (fr, t) list_of_pair = match list_of_pair with
+  | [] -> []
+  | (expr, bound)::rest -> match bound with
+							| None -> ((e_apply_one (fr, t) expr), None)::(e_apply_one_list_of_pair (fr, t) rest)
+							| Some b_expr ->  ((e_apply_one (fr, t) expr), Some (e_apply_one (fr, t) b_expr))::(e_apply_one_list_of_pair (fr, t) rest)
+
+and subst_list_of_pair sst ls = match sst with
+  | [] -> ls
+  | s::rest -> subst_list_of_pair rest (e_apply_one_list_of_pair s ls)
+			 						
 
 and look_for_anonymous_exp_list (args : exp list) :
   (ident * primed) list =

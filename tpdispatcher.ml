@@ -525,6 +525,7 @@ let simplify_omega_debug f =
   Util.ho_debug_1 "simplify_omega" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify_omega f
 
 let simplify (f : CP.formula) : CP.formula =
+  (*let _ = print_string ("\nsimplify: f before"^(Cprinter.string_of_pure_formula f)) in*)
   if !external_prover then 
     match Netprover.call_prover (Simplify f) with
         Some res -> res
@@ -556,6 +557,7 @@ let simplify (f : CP.formula) : CP.formula =
                 Redlog.simplify f
         | _ -> Omega.simplify f in
       Util.pop_time "simplify";
+	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
       r
     with | _ -> f)
 
@@ -892,7 +894,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
         Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
-	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
+	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
 	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
 	if CP.isConstTrue conseq0 then (true, [],None)
 	else
@@ -948,7 +950,7 @@ let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no :
         Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
-	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
+	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
 	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
 	if CP.isConstTrue conseq0 then (true, [],None)
 	else
@@ -1023,7 +1025,7 @@ let imply ante0 conseq0 imp_no do_cache = imply_timeout ante0 conseq0 imp_no 0. 
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
-let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
+let	mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
 
