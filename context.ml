@@ -28,10 +28,10 @@ and match_type =
  *)  
 let rec context_old prog lhs_h (lhs_p:MCP.mix_formula) (p : CP.spec_var) rhs_info pos : context list =
 	let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-	let eqns' = MCP.ptr_equations lhs_p in
+	let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns = match rhs_info with
     | Some (f,v)-> 
-      let eqns = MCP.ptr_equations f in
+      let eqns = MCP.ptr_equations_without_null f in
       let r_asets = alias eqns in
       let a_vars = lhs_fv @ v in
       let fltr = List.map (fun c-> Util.intersect c a_vars) r_asets in

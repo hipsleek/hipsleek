@@ -179,7 +179,7 @@ int remove_min(ref node x)
 		if (is_red(x.right))
 			x.right.color = 0; 
 		x = x.right;
-	    dprint;
+	  //  dprint;
 		return tmp;
 	}
 	else 
@@ -240,14 +240,11 @@ int remove_min(ref node x)
 
 /* function to delete an element in a red black tree */
 void del(ref node  x, int a)
-
-/*
-	requires x::rb<n, cl, bh> & 0 <= cl <= 1
+	/*requires x::rb<n, cl, bh> & 0 <= cl <= 1
 	ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
 		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
 		 or x'::rb<n, cl, bh>;
-*/
-	requires x::rb<n, cl, bh> 
+	*/requires x::rb<n, cl, bh> 
     case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
                    or x'::rb<n, cl, bh>;
          cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h
@@ -368,26 +365,17 @@ void del(ref node  x, int a)
 
 /* function to delete an element in a red black tree */
 void dep(ref node  x, int a)
-/*
-	requires x::rb<n, cl, bh> & 0 <= cl <= 1
-	ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
+
+/*	requires x::rb<n, cl, bh> & 0 <= cl <= 1
+	  ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
 		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
-		 or x'::rb<n, cl, bh>;
+		 or x'::rb<n, cl, bh>;*/
 
-	requires x::rb<n, cl, bh> 
-	ensures  x'::rb<n-1, cl2, bh> & cl = 1 
-		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0;
-         or x'::rb<n, cl, bh>;
-
-*/
-	requires x::rb<n, cl, bh> 
-    case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
-           or x'::rb<n, cl, bh>;
-         cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h
-           or x'::rb<n, cl, bh>;
+  requires x::rb<n, cl, bh> 
+    case { cl=1 -> ensures x'::rb<n-1, cl2, bh> or x'::rb<n, cl, bh>;
+         cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h or x'::rb<n, cl, bh>;
         (cl<0 | cl>1) -> ensures false;
-    }
-{
+    }{
 	int v;
 
 	if (x != null)
@@ -399,14 +387,12 @@ void dep(ref node  x, int a)
 				if (is_red(x.left))
 					x.left.color = 0;
 				x = x.left;
-
 			}
 			else assume false;
 		}
-		else assume false;
-        
+		else assume false;        
    }
-   //dprint;
+  else {dprint; assert x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h or x'::rb<n, cl, bh>; assume false;}
 }
 
 /*

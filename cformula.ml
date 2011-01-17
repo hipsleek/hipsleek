@@ -521,8 +521,8 @@ and mkOr f1 f2 pos =
   else 	
 	Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos})
   
-and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
-  if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
+and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) lbl: formula= 
+   if MCP.isConstMFalse p || h = HFalse || (is_false_flow fl.formula_flow_interval)  then 
 	mkFalse fl pos
   else 
 	Base ({formula_base_heap = h; 
@@ -530,8 +530,12 @@ and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_form
 		   formula_base_type = t;
 		   formula_base_flow = fl;
        formula_base_branches = b;
-       formula_base_label = None;
+       formula_base_label = lbl;
 		   formula_base_pos = pos})
+       
+and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
+  mkBase_w_lbl h p t fl b pos None
+ 
 
 and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
   | HFalse -> HFalse
@@ -597,13 +601,13 @@ and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.mix_formula) b2 (pos : loc):f
       mkBase h1 (MCP.merge_mems p1 p2 true) t1 fl1 (CP.merge_branches b1 b2) pos
 
    
-and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) b (pos : loc) =
+and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) b (pos : loc) lbl=
   let tmp_b = {formula_base_heap = h;
 				   formula_base_pure = p;
 				   formula_base_type = t;
 				   formula_base_flow = fl;
            formula_base_branches = b;
-           formula_base_label = None;
+           formula_base_label = lbl;
 				   formula_base_pos = pos} in
   let fvars = fv (Base tmp_b) in
   let qvars = U.intersect svs fvars in (* used only these for the quantified formula *)
@@ -615,8 +619,11 @@ and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t :
 			   formula_exists_type = t;
 			   formula_exists_flow = fl;
          formula_exists_branches = b;
-         formula_exists_label = None;
+         formula_exists_label = lbl;
 			   formula_exists_pos = pos})
+         
+and mkExists (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl:flow_formula) b (pos : loc) = 
+ mkExists_w_lbl svs h p t fl b pos None
 
 and is_view (h : h_formula) = match h with
   | ViewNode _ -> true
