@@ -379,6 +379,7 @@ class mainwindow () =
  * MAIN FUNCTION
  **********************)
 let initialize () =
+  GtkMain.Main.init ();
   Debug.devel_debug_on := true;
   Debug.log_devel_debug := true;
   (* FIXME: support other provers *)
