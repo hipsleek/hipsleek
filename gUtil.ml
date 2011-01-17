@@ -9,6 +9,16 @@ let create_scrolled_win child =
   scroll_win#add child#coerce;
   scroll_win
 
+let verbose_flag = ref false
+let log_func = ref (fun _ -> raise Not_found)
+let log msg =
+  if !verbose_flag then begin
+    try !log_func msg
+    with Not_found ->
+      log_func := (fun msg -> print_endline msg; flush stdout);
+      !log_func msg
+  end
+
 (**********************************
  * Common operations on text file
  **********************************)
@@ -55,6 +65,9 @@ module SourceUtil = struct
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
   let print_re = Str.regexp "print [^\\.]+\\."
   let new_line_re = Str.regexp "^"
+
+  let string_of_entailment (e: entailment) =
+    Printf.sprintf "(%d,%d): %s" e.start_line e.stop_line e.formula
 
   (* return a list of all positions of "new line" char in src *)
   let get_new_line_positions (src: string) : int list =
@@ -189,44 +202,59 @@ module SleekHelper = struct
 
   let process_cmd cmd = match cmd with
     | SC.DataDef ddef -> 
-        print_endline "processing data def";
+        log "processing data def";
         SE.process_data_def ddef; None
     | SC.PredDef pdef -> 
-        print_endline "processing pred def";
+        log "processing pred def";
         SE.process_pred_def pdef; None
     | SC.EntailCheck (iante, iconseq) -> 
-        print_endline "processing entail check"; 
+        log "processing entail check"; 
         Some (SE.run_entail_check iante iconseq)
     | SC.CaptureResidue lvar -> 
-        print_endline "processing capture residue";
+        log "processing capture residue";
         SE.process_capture_residue lvar; None
     | SC.LemmaDef ldef -> 
-        print_endline "processing lemmad def";
+        log "processing lemmad def";
         SE.process_lemma ldef; None
     | SC.PrintCmd pcmd -> 
-        print_endline "processing print cmd";
+        log "processing print cmd";
         SE.process_print_command pcmd; None
     | SC.LetDef (lvar, lbody) -> 
-        print_endline "processing let def";
+        log "processing let def";
         SC.put_var lvar lbody; None
     | SC.Time (b,s,_) -> None
     | SC.EmptyCmd -> None
 
-  let checkentail ?args src e =
-    (* FIXME: setup Sleek's preferences based on given arguments *)
-    let header = SourceUtil.clean (String.sub src 0 e.SourceUtil.start_char) in
-    let src = Printf.sprintf "%s checkentail %s." header e.SourceUtil.formula in
-    let cmds = parse_command_list src in
-    let _ = SE.clear_all () in
-    let rec exec cmds = match cmds with
-      | [] -> failwith "[gUtil.ml/checkentail]: empty command list"
-      | [cmd] -> process_cmd cmd
-      | cmd::rest -> ignore (process_cmd cmd); exec rest
-    in
-    let res = match exec cmds with
-      | None -> failwith "[gUtil.ml/checkentail]: last command is not checkentail command"
-      | Some v -> v
-    in res, SE.get_residue ()
+  let checkentail src e =
+    try
+      log ("Checking entailment: " ^ (SourceUtil.string_of_entailment e));
+      let header = SourceUtil.clean (String.sub src 0 e.SourceUtil.start_char) in
+      let src = Printf.sprintf "%s checkentail %s." header e.SourceUtil.formula in
+      let cmds = parse_command_list src in
+      let _ = SE.clear_all () in
+      let rec exec cmds = match cmds with
+        | [] -> failwith "[gUtil.ml/checkentail]: empty command list"
+        | [cmd] -> process_cmd cmd
+        | cmd::rest -> ignore (process_cmd cmd); exec rest
+      in
+      let res, contexts = match exec cmds with
+        | None -> failwith "[gUtil.ml/checkentail]: last command is not checkentail command"
+        | Some v -> v
+      in
+      let residue = match SE.get_residue () with
+        | Some residue ->
+            let formulas = Cformula.list_formula_of_list_context residue in
+            let fstring = Cprinter.string_of_list_formula formulas in
+            "Residue:\n" ^ fstring ^ "\n"
+        | None -> ""
+      in
+      let context = Cprinter.string_of_list_context contexts in
+      let info = residue ^ context in
+      let valid = if res then "valid" else "fail" in
+      log valid;
+      res, info
+    with exn as e ->
+      false, (Printexc.to_string e) ^ "\n" ^ (Printexc.get_backtrace ())
 
 end (* SleekHelper *)
 

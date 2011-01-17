@@ -28,8 +28,7 @@ class mainwindow () =
         <menuitem action='Save'/>\
         <separator/>\
         <menuitem action='Quit'/>\
-      </menu>\n" ^
-      (* TODO: bring back preferences
+      </menu>\n
       <menu action='PreferencesMenu'>\
         <menu action='TheoremProverMenu'>\
           <menuitem action='Omega'/>\
@@ -41,8 +40,7 @@ class mainwindow () =
         <menuitem action='EPS'/>\
         <menuitem action='EAP'/>\
       </menu>\
-      *)
-     "<menu action='HelpMenu'>\
+      <menu action='HelpMenu'>\
         <menuitem action='About'/>\
       </menu>\
     </menubar>\
@@ -69,13 +67,12 @@ class mainwindow () =
     val residue_view = create_residue_view ()
     (* data *)
     val mutable current_file = None
-    val mutable sleek_args = SH.default_args
       
     initializer
       (* initialize components *)
       let residue_panel =
         let label = GMisc.label 
-          ~text:"Residue:" 
+          ~text:"Residue and Contexts:" 
           ~xalign:0.0 ~yalign:0.0
           ~xpad:5 ~ypad:5
           () in
@@ -166,11 +163,9 @@ class mainwindow () =
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
           ~callback:(fun _ -> self#run_all_handler ());
         ta "EPS" ~label:"Enable Predicate Specialization"
-          ~callback:(fun act -> sleek_args <- {sleek_args with SH.eps = act#get_active});
+          ~callback:(fun act -> Globals.allow_pred_spec := act#get_active);
         ta "EAP" ~label:"Enable Aggressive Prunning"
-          ~callback:(fun act -> sleek_args <- {sleek_args with SH.eap = act#get_active});
-        (*ta "DD" ~label:"Show Debug Messages"*)
-          (*~callback:(fun act -> sleek_args <- {sleek_args with SH.dd = act#get_active});*)
+          ~callback:(fun act -> Globals.enable_aggressive_prune := act#get_active);
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
@@ -189,7 +184,7 @@ class mainwindow () =
     (* open file chooser dialog with parent window
      * return choosen file name 
      *)
-    method show_file_chooser ?(title="Slect file") action : string option =
+    method show_file_chooser ?(title="Select file") action : string option =
       let all_files () =
         GFile.filter ~name:"All files" ~patterns:["*"] ()
       in
@@ -278,9 +273,10 @@ class mainwindow () =
     method get_text () = source_view#source_buffer#get_text ()
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.OM] in
+      let provers = ["omega"; "mona"; "cvc3"; "redlog"; "om"] in
       let tp = List.nth provers id in
-      sleek_args <- {sleek_args with SH.tp = tp}
+      GUtil.log (Printf.sprintf "Use %s as backend prover." tp);
+      TP.set_tp tp
 
     method check_selected_entailment () =
       let entail = entailment_list#get_selected_entailment () in
@@ -288,7 +284,7 @@ class mainwindow () =
       | None -> ()
       | Some e -> begin
           let src = self#get_text () in
-          let valid, residue = SH.checkentail ~args:sleek_args src e in
+          let valid, residue = SH.checkentail src e in
           entailment_list#set_selected_entailment_validity valid;
           residue_view#buffer#set_text residue;
           source_view#hl_entailment e
@@ -333,7 +329,7 @@ class mainwindow () =
     (* Toolbar's Open button clicked *)
     method private open_handler () : bool =
       if self#file_closing_check () then
-        let fname = self#show_file_chooser `OPEN in
+        let fname = self#show_file_chooser ~title:"Open File" `OPEN in
         match fname with
         | None -> false
         | Some fname -> (self#open_file fname; true)
@@ -352,7 +348,7 @@ class mainwindow () =
           self#update_win_title ();
           true
       | None ->
-          let fname = self#show_file_chooser `SAVE in
+          let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
           match fname with
           | None -> false
           | Some fname -> FU.write_to_file fname text; true
@@ -360,7 +356,7 @@ class mainwindow () =
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
       let src = self#get_text () in
-      entailment_list#check_all (fun e -> fst (SH.checkentail ~args:sleek_args src e));
+      entailment_list#check_all (fun e -> fst (SH.checkentail src e));
       source_view#hl_all_entailement ()
 
     (* Source buffer modified *)
@@ -382,21 +378,6 @@ class mainwindow () =
 (**********************
  * MAIN FUNCTION
  **********************)
-let get_fname () : string option =
-  let len = Array.length Sys.argv in
-  if len = 1 then
-    None
-  else
-    Some (Array.get Sys.argv 1)
-
-let init win =
-  let fname = get_fname () in
-  match fname with
-  | Some name -> win#open_file name
-  | None ->
-      let ex = "./examples/sleek.slk" in
-      if Sys.file_exists ex then win#open_file ex
-
 let initialize () =
   Debug.devel_debug_on := true;
   Debug.log_devel_debug := true;
@@ -407,10 +388,15 @@ let initialize () =
 let finalize () =
   Tpdispatcher.stop_prover ()
 
+let usage_msg = Sys.argv.(0) ^ " [options] <source file>"
+let arguments = [
+  ("-v", Arg.Set GUtil.verbose_flag, "Verbose")
+  ]
+
 let _ =
   initialize ();
   let win = new mainwindow () in
-  init win;
+  Arg.parse arguments win#open_file usage_msg;
   win#show ();
   GMain.Main.main ();
   finalize ()
