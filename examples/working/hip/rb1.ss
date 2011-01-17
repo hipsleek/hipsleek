@@ -244,7 +244,8 @@ void del(ref node  x, int a)
 	ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
 		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
 		 or x'::rb<n, cl, bh>;
-	*/requires x::rb<n, cl, bh> 
+	*/
+    requires x::rb<n, cl, bh> 
     case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
                    or x'::rb<n, cl, bh>;
          cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h
@@ -372,10 +373,14 @@ void dep(ref node  x, int a)
 		 or x'::rb<n, cl, bh>;*/
 
   requires x::rb<n, cl, bh> 
-    case { cl=1 -> ensures x'::rb<n-1, cl2, bh> or x'::rb<n, cl, bh>;
-         cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h or x'::rb<n, cl, bh>;
+    case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
+                      or x'::rb<n, cl, bh>;
+         cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h 
+                      or x'::rb<n, cl, bh>;
         (cl<0 | cl>1) -> ensures false;
-    }{
+    }
+
+{
 	int v;
 
 	if (x != null)
