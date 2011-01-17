@@ -18,7 +18,7 @@ node app2(node x, node y)
  if (x==null) return y;
  else {
    node w = x.next;
-   //assert len(x)>=0;
+   assert x!=null;
    return new node(x.val,app2(x.next,y));
  }
 }

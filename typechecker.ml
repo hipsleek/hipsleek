@@ -330,14 +330,18 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
-			  let stripped_spec = if (ir) then org_spec else
+			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
+			  let stripped_spec = if ir then org_spec else
 				let rec strip_variance ls = match ls with
 				  | [] -> []
 				  | spec::rest -> match spec with
-					  | Cformula.EVariance e -> (e.Cformula.formula_var_continuation)@(strip_variance rest)
+					  | Cformula.EVariance e -> (strip_variance e.Cformula.formula_var_continuation)@(strip_variance rest)
+					  | Cformula.EBase b -> (Cformula.EBase {b with Cformula.formula_ext_continuation = strip_variance b.Cformula.formula_ext_continuation})::(strip_variance rest)
+					  | Cformula.ECase c -> (Cformula.ECase {c with Cformula.formula_case_branches = List.map (fun (cpf, sf) -> (cpf, strip_variance sf)) c.Cformula.formula_case_branches})::(strip_variance rest)
 					  | _ -> spec::(strip_variance rest)
 				in strip_variance org_spec
 			  in
+			  (*let _ = print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "stripped_spec: " ^ (Cprinter.string_of_struc_formula stripped_spec) ^ "\n") in*)
 			  (* org_spec -> stripped_spec *)
 	          (* free vars = linking vars that appear both in pre and are not formal arguments *)
 	          let pre_free_vars = Util.difference_fct CP.eq_spec_var (Util.difference_fct CP.eq_spec_var (Cformula.struc_fv stripped_spec(*org_spec*)) (Cformula.struc_post_fv stripped_spec(*org_spec*))) farg_spec_vars in
@@ -363,6 +367,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                   (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
+			  (*print_string ("check_specs: SCall: spec: " ^ new_spec ^ "\n"); *)
 			  let rs,prf = heap_entail_struc_list_failesc_context_init prog false false true sctx pre2 pos pid in
 		        let _ = PTracer.log_proof prf in
             (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)

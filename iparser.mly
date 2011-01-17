@@ -1220,7 +1220,7 @@ spec
 					Iformula.formula_var_continuation = [$7];
 					Iformula.formula_var_pos = get_pos 1;
 			  }
-		}
+		}	}
 ;	
 
 measures

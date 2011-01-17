@@ -1,4 +1,4 @@
-void loop (ref int x, ref int y)
+void loop (int x, int y)
 case {
 	x < y ->   variance (0)
 			   ensures "l0" : true;
@@ -12,11 +12,11 @@ case {
 			  }
 }
 {
-	int nx, ny;
+	//int nx, ny;
 	if (x >= y) {
-		nx = x + 1;
-		ny = x + y;
-		assert "l1": (x'-y')-(nx'-ny')>0;
-		loop(nx, ny);
+		x = x + 1;
+		y = x + y;
+		//assert "l1": (x'-y')-(nx'-ny')>0;
+		loop(x, y);
 	}
 }
