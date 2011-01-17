@@ -109,6 +109,9 @@ let rec get_exp_type (e : exp) : typ = match e with
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Prim Globals.List
 
+(* *GLOBAL_VAR* substitution list, used by Omega and Ocparser *)
+let omega_subst_lst = ref ([]: (string*string*typ) list)
+
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")

@@ -38,7 +38,7 @@ let init_files () =
 
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
-		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
+		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!omega_subst_lst) with
 				  | []->           
             let ln = (String.length v) in  
             let r_c = if (ln<15) then v
@@ -46,7 +46,7 @@ let omega_of_spec_var (sv : spec_var):string = match sv with
                 let v_s = String.sub v (ln-15)  15 in
                 if((String.get v_s 0)=='_') then String.sub v_s 1 ((String.length v_s)-1) else v_s in
             begin
-              Ocparser.subst_lst := (r_c,v,t)::!Ocparser.subst_lst; 
+              omega_subst_lst := (r_c,v,t)::!omega_subst_lst; 
 							r_c end
 					| (a,b,_)::h->  a in 
 		r ^ (if is_primed sv then Oclexer.primed_str else "")
@@ -324,7 +324,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
   begin
         (*  Cvclite.write_CVCLite pe; *)
         (*  Lash.write pe; *)
-	Ocparser.subst_lst := [];
+	omega_subst_lst := [];
     let fstr = omega_of_formula pe in
     let pvars = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups pvars) in
@@ -364,7 +364,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 let is_valid (pe : formula) timeout: bool =
   (*print_endline "LOCLE: is_valid";*)
   begin
-	Ocparser.subst_lst := [];
+	omega_subst_lst := [];
     let fstr = omega_of_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups (get_vars_formula pe)) in
     let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
@@ -442,7 +442,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 let simplify (pe : formula) : formula =
  (* print_endline "LOCLE: simplify";*)
   begin
-    Ocparser.subst_lst := [];
+    omega_subst_lst := [];
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -476,7 +476,7 @@ let simplify (pe : formula) : formula =
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
   begin
-		Ocparser.subst_lst := [];
+		omega_subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -494,7 +494,7 @@ let pairwisecheck (pe : formula) : formula =
 let hull (pe : formula) : formula =
   (*print_endline "LOCLE: hull";*)
   begin
-		Ocparser.subst_lst := [];
+		omega_subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
     let vstr = omega_of_var_list (Util.remove_dups vars_list) in
@@ -512,7 +512,7 @@ let hull (pe : formula) : formula =
 let gist (pe1 : formula) (pe2 : formula) : formula =
   (*print_endline "LOCLE: gist";*)
   begin
-		Ocparser.subst_lst := [];
+		omega_subst_lst := [];
     let fstr1 = omega_of_formula pe1 in
         let fstr2 = omega_of_formula pe2 in
         let vars_list = Util.remove_dups (fv pe1 @ fv pe2) in

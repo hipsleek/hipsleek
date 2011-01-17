@@ -23,7 +23,7 @@
 %left STAR
 
 %start input
-  %type <CP.formula> input
+  %type <Cpure.formula> input
 
 %%
 

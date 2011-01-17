@@ -102,6 +102,9 @@ let this = "this"
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
+(* *GLOBAL_VAR* input filename, used by Astsimp and Main *)
+let input_file_name = ref ""
+
 (* command line options *)
 
 let omega_simpl = ref true

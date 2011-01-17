@@ -200,7 +200,7 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
      let input = Lexing.from_string all_prims in
-     Iparser.file_name := "primitives";
+     input_file_name := "primitives";
      let prog = Iparser.program (Ilexer.tokenizer "primitives") input
      in 
 	 (*let _ = print_string ("\n primitives: "^(Iprinter.string_of_program prog)^"\n") in*)
