@@ -496,7 +496,7 @@ let tp_is_sat_no_cache_debug f sat_no =
     (fun f -> tp_is_sat_no_cache f sat_no) f
         
         
-let prune_sat_cache  = Hashtbl.create 2000 ;;
+(* let prune_sat_cache  = Hashtbl.create 2000 ;;*)
 
 let rec f_search file search_string n = 
   let str = String.create 3 in
@@ -526,6 +526,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
     (*let _ = Util.pop_time "cache overhead" in*)
     let res =
       try
+	print_string ("\ntp_is_sat[529]: cached formula is :\n"^fstring);
         Hashtbl.find !sat_cache fstring
       with Not_found ->
         let r = tp_is_sat_no_cache(*_debug*) f sat_no in
@@ -535,56 +536,114 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
         r
     in res
 
-let ht_hit_count = ref 0;;
-let f_hit_count = ref 0;;
+(*let db_hc  = ref 0;;
+let fdb_hc = ref 0;;
+let ht_hc  = ref 0;;*)
+
+(*let vc = ref 1;;
+let fresh_name (s:string):string =
+  let n = "v"^(string_of_int !vc) in 
+    n
+
+let make_vars ( sv: spec_var ) = 
+  let old_name = name_of_spec_var sv in
+  let name  = fresh_name old_name in
+  let t = type_of_spec_var sv in
+  SpecVar (t, name, Unprimed)
+
+let cache_renaming (f:formula) = match f with 
+  | Or -> print_string "\nTODO: OR case of renaming before caching\n"
+  | Base _ -> print_string "\nTODO: BASE case of renaming before caching\n"
+  | Exists _ -> 
+	let qvars, base_f = CFormula.split_quantifiers f in
+	let new_qvars = make_vars qvars in 
+          print_string ("\n fresh_name = " ^ (string_of_spec_var_list new_qvars) ^"!!!!!!!!!\n");
+	  vc := 1 *)
+
+let tb_cache t1 t2 s f = 
+   let key = Hashtbl.hash s in
+   let key_s = string_of_int (Hashtbl.hash s) in
+   let select_cache = "select result, pt, time, hr from "^t1^" where hash="^key_s in 
+   let select_fail_cache = "select pt, time, input, hr from "^t2^" where hash="^key_s in 
+   let insert_cache values = "insert into "^t1^" values "^values in 
+   let insert_fail_cache values = "insert into "^t2^" values "^values in
+   let res1  = exec db select_cache in 
+   let res2 = exec db select_fail_cache in   
+   let col1 = column res1 in
+   let col2 = column res2 in
+   let get_hr (_,_,_,hr)  = hr in
+   let row1 x = ( not_null str2ml  (col1 ~key:"result" ~row:x)
+      	       , not_null str2ml   (col1 ~key:"pt" ~row:x)
+	       , not_null float2ml (col1 ~key:"time" ~row:x)
+	       , not_null int2ml   (col1 ~key:"hr" ~row:x)
+ 	       )  in 
+   let row2 x = ( not_null str2ml   (col2 ~key:"pt" ~row:x)
+		, not_null float2ml (col2 ~key:"time" ~row:x)
+		, not_null blob2ml  (col2 ~key:"input" ~row:x)
+		, not_null int2ml   (col2 ~key:"hr" ~row:x)
+		) in 
+   let print_result1 res1 = 
+       match res1 with
+       |  None -> ( let print_result2 res2 = 
+		      match res2 with
+		      | None ->  (
+				let ml2values (hash,result,pt,t, hr) = values [ml2int hash; ml2str result; ml2str pt; ml2float t; ml2int hr]  in 
+				let t = Unix.gettimeofday () in
+   				let r = f in					
+				let td = ( Unix.gettimeofday () ) -. t in 
+			        let add = 
+					if r == false then (*Record added to sat_fail_cache because result if is_sat is false *)					    
+					    let ml2values (h,i,p,t,hr) = values [ml2int h; ml2blob i; ml2str p; ml2float t; ml2int hr] in 
+					    let _ = exec db ( insert_fail_cache (ml2values ( key, s, (tp_print ()), td, 0))) in
+					         print_string (t2^":added\n");
+ 		                        else
+                			if td > 0.1 then (* Record added to sat_cache *)
+		             		    let _ =  exec db (insert_cache (ml2values (key, (string_of_bool r), (tp_print ()), td, 0 )) ) in
+                 	        		   print_string (t1^":added\n");					
+                                        else (* Record not added to any db *) 
+	           		            print_string "!";
+                                 in add; r;
+				)
+		      | Some x -> ( let curr_hr = get_hr (row2 x) in
+				    let _ = exec db ("update "^t2^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s) in
+					(*fdb_hc := !fdb_hc+1;
+					Printf.printf "\nfdb_hc : %d" !fdb_hc; *)
+					print_string "@";
+					false;
+				 ) in  
+			print_result2 ( fetch res2 ) ;
+		   )		
+ 	|  Some x -> (  let curr_hr = get_hr (row1 x) in 
+			let _ = exec db ( "update "^t1^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s ) in 	 		
+				(*db_hc := !db_hc+1;
+				Printf.printf "\ndb_hc : %d" !db_hc;*)
+				print_string "#";
+				true;
+		     )	in 
+    print_result1 (fetch res1)
+
+let cache_db = true;;
 
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
-  if !Globals.enable_prune_cache (*&& do_cache*) then
+  if !Globals.enable_prune_cache (*&& do_cache*) then   
+ (*      tp_is_sat_no_cache f sat_no *)
     (
     Util.inc_counter "sat_cache_count";
-    let s = (!print_pure f) in    	
-     
-   let key = string_of_int (Hashtbl.hash s) in 
-   let select_query = "select result, prover_type, time_taken, hr from sat_cache where hash="^key in 
-   let insert_query values = "insert into sat_cache values "^values in 
-   let res   = exec db select_query in 
-   let col = column res in 
-   let ret_result (x,y,z,h) = x^y^(string_of_float z)^(string_of_int h) in
-   let get_hr (_,_,_,hr)  = hr in
-   let row x = ( not_null str2ml (col ~key:"result" ~row:x)
-      	       , not_null str2ml  (col ~key:"prover_type" ~row:x)
-	       , not_null float2ml (col ~key:"time_taken" ~row:x)
-	       , not_null int2ml (col ~key:"hr" ~row:x)
- 	       )  in 
-   let print_result res = match res with
-			|  None -> (	print_string "key not found in db";
-					let ml2values (hash,result,prover_type,t, hr) = values [ml2int hash; ml2str result; ml2str prover_type; ml2float t; ml2int hr]  in 
-					let t1 = Unix.gettimeofday () in
-					let r = tp_is_sat_no_cache f sat_no in					
-					let t2 = ( Unix.gettimeofday () ) -. t1 in 
-					    if not ( r ==true || r == false) then 
-						let q values = "insert into sat_fail_cache values "^values in
-						let ml2values (p,f,t) = values [ml2str p; ml2blob f; ml2float t] in 
-						let _ = exec db ( q (ml2values ((tp_print ()), s, t2))) in
-						    print_endline "--> New row inserted into fail cache";
- 					    else
-						if t2 > 0.1 then (* TODO Must change to 0.5s *)
-						    let _ =  exec db (insert_query (ml2values ((Hashtbl.hash s), (string_of_bool r), (tp_print ()), t2, 0 )) ) in
-	                           				   print_endline "-->New row inserted into cache";					
-                                                else 
-						print_endline "prover < 0.1s hence not added";
-				   )		
-			|  Some x -> (  let curr_hr = get_hr (row x) in 
-					let _ = exec db ( "update sat_cache set hr="^(string_of_int (1+curr_hr))^" where hash="^key ) in 
-						print_endline (ret_result (row x));
-					)
-   in 
-   let () = print_result (fetch res) in 
-
-    try
+ (*   let s = (!print_pure f) in  *)
+    let new_f = CP.cache_renaming f in
+    let s = (!print_pure new_f) in     
+     if cache_db then 
+	let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in 
+	 print_string ("\n Old Forumula : "^(!print_pure f) ^"\n New Formula :"^(!print_pure new_f)^"\n");
+	  r
+     else 
+	tp_is_sat_no_cache f sat_no
+    )
+             
+  (*    try
       let r = Hashtbl.find prune_sat_cache s in 
-       (ht_hit_count := !ht_hit_count+1;
-      Printf.printf "ht_hit_count : %d\n" !ht_hit_count;
+       (
+      (*Printf.printf "ht_hc : %d\n" !ht_hc;i*)
       (*print_string ("sat hits: "^s^"\n");*)
       r )	 
     with Not_found -> 
@@ -592,7 +651,9 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
         ( Hashtbl.add prune_sat_cache s r;
           Util.inc_counter "sat_proof_count";
         r)) 
-  else  
+	let r = tp_is_sat_no_cache f sat_no in 
+	  r ) *) 
+ else  
     tp_is_sat f sat_no
 ;;
     
@@ -769,7 +830,7 @@ let tp_imply_no_cache ante conseq imp_no timeout =
 ;;
  
 
-let imply_cache  = Hashtbl.create 2000 ;;
+(*let imply_cache  = Hashtbl.create 2000 ;;*)
 	let impl_conseq_cache  = Hashtbl.create 2000 ;;
 
 let add_conseq_to_cache s = 
@@ -790,17 +851,13 @@ let tp_imply ante conseq imp_no timeout =
     let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
     let sf = simplify_var_name f in
     let fstring = Cprinter.string_of_pure_formula sf in
+    let _ = CP.cache_renaming sf in 
     (*let _ = Util.pop_time "cache overhead" in*)
     let res = 
       try
         Hashtbl.find !impl_cache fstring
       with Not_found ->
-	let t1 = Unix.gettimeofday () in
         let r = tp_imply_no_cache ante conseq imp_no timeout in
-	let t2 = (Unix.gettimeofday ()) -. t1 in
-	if t2 > 0.5 then 
-		print_string "\n\nExpensive prover";
-	(*print_string "\n\nImply tp_str :"; print_endline (tp_print ()); *)
         (*let _ = Util.push_time "cache overhead" in*)
         let _ = Hashtbl.add !impl_cache fstring r in
         (*let _ = Util.pop_time "cache overhead" in*)
@@ -808,50 +865,20 @@ let tp_imply ante conseq imp_no timeout =
     in res
 
 
-let imply_fhc = ref 0 ;;
-let imply_hthc = ref 0;;
-
 let tp_imply ante conseq imp_no timeout do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
     Util.inc_counter "impl_cache_count";
     add_conseq_to_cache (!print_pure conseq) ;
     let s_rhs = !print_pure conseq in
-    let s = (!print_pure ante)^"/"^ s_rhs in
+    let s = (!print_pure ante)^"/"^ s_rhs in    
     
- (*let mode = [Unix.O_RDONLY] in
-    let mode2 = [Unix.O_WRONLY] in
-    let file = Unix.openfile imply_file_cache mode 0o664 in
-      let () = Printf.printf "Searching for implication results...\n" in
-        let key_s = string_of_int ( Hashtbl.hash s ) in
-    	let ans = f_search file key_s (String.length key_s ) in 
-	    ( if ans then 
-		(imply_fhc := !imply_fhc+1;
-		 Printf.printf "imply_f_hit_count : %d\n" !imply_fhc;
-		 let str = String.create 5 in 
-		 let _ = Unix.read file str 0 5 in 
-			match str with
-			   | ";true" -> Printf.printf "Imply Result from cache -> true\n"
-			   | _ -> Printf.printf "Imply Result from cache -> false\n"
-		)
-	      else 
-		Unix.close file;
-		let t1 = Unix.gettimeofday () in 
-		let r = tp_imply_no_cache ante conseq imp_no timeout in 
-		let t2 = Unix.gettimeofday () -. t1 in 
-			if t2 > 0.0 then 
-			    let () = Printf.printf "Adding to imply_cache...............\n" in 
-			    let key = Hashtbl.hash s in 
-		   	    let file2 = Unix.openfile imply_file_cache mode2 0o644 in 
-			    let _ = Unix.lseek file2 0 Unix.SEEK_END in 
-			    let cache_val = "==>"^(string_of_int key)^";"^(string_of_bool r)^";"^(tp_print ())^";"^(string_of_float t2)^";" in
-			    let len = String.length cache_val in 
-			    let dummy_string = String.make (50-len) '.' in
-			    let _ = Unix.write file2 (cache_val^dummy_string) 0 (String.length (cache_val^dummy_string)) in 
-			       Unix.close file
-			else 
-			   Printf.printf "Time take < 0.5s"
-	);    	 *)
+    if cache_db then
+	tb_cache "imply_cache" "imply_fail_cache" s (tp_imply_no_cache ante conseq imp_no timeout)
+    else 
+	tp_imply_no_cache ante conseq imp_no timeout
+    )
+(*
     try
       let r = Hashtbl.find imply_cache s in
       (* print_string ("hit rhs: "^s_rhs^"\n");*)      
@@ -868,7 +895,7 @@ let tp_imply ante conseq imp_no timeout do_cache =
         (Hashtbl.add imply_cache s r ;
          (*print_string ("s rhs: "^s_rhs^"\n");*)
          Util.inc_counter "impl_proof_count";
-        r))
+        r)) *)
   else  
     tp_imply ante conseq imp_no timeout
 ;;

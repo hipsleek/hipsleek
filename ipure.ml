@@ -420,6 +420,9 @@ and pos_of_exp (e : exp) = match e with
   | ListReverse (_, p) -> p
   
 	
+and fresh_old_name2 (s:string):string = 
+  let n = "_b_"^(fresh_trailer ()) in 
+   n 
 	
 and fresh_old_name (s: string):string = 
 	let ri = try  (String.rindex s '_') with  _ -> (String.length s) in

@@ -10,7 +10,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 module U = Util
- 
+
 type typed_ident = (CP.typ * ident)
 
 type t_formula = (* type constraint *)
@@ -188,8 +188,7 @@ and struc_formula_of_formula f pos = [EBase {
 		 formula_ext_base = f;
 		 formula_ext_continuation = [];
 		 formula_ext_pos = pos}]
-		 
-		 
+		 		 
 and mkTrueFlow () = 
 	{formula_flow_interval = !top_flow_int; formula_flow_link = None;}
 	
@@ -1136,18 +1135,24 @@ and rename_struc_bound_vars (f:struc_formula):struc_formula =
 			in
 	List.map helper f
 
-and rename_bound_vars (f : formula) = match f with
+
+and rename_bound_vars (f : formula) = rename_bound_vars_x f 
+
+(*and rename_bound_vars (f : formula) = 
+  Util.ho_debug_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f  *)
+
+and rename_bound_vars_x (f : formula) = match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	  let rf1 = rename_bound_vars f1 in
-	  let rf2 = rename_bound_vars f2 in
+	  let rf1 = rename_bound_vars_x f1 in
+	  let rf2 = rename_bound_vars_x f2 in
 	  let resform = mkOr rf1 rf2 pos in
 		resform
   | Base _ -> f
   | Exists _ ->
-	  let qvars, base_f = split_quantifiers f in
+	  let qvars, base_f = split_quantifiers f in   	  
 	  let new_qvars = CP.fresh_spec_vars qvars in
 	  (*--- 09.05.2000 *)
-		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in*)
+		(*let _ = (print_string ("\n[cformula.ml, line 519]: fresh name = " ^ (string_of_spec_var_list new_qvars) ^ "!!!!!!!!!!!\n")) in *)
 		(*09.05.2000 ---*)
 	  let rho = List.combine qvars new_qvars in
 	  let new_base_f = subst rho base_f in

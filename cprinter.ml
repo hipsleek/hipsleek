@@ -1519,6 +1519,7 @@ Mcpure.print_p_f_f := string_of_pure_formula ;;
 Mcpure.print_exp_f := string_of_formula_exp;;
 Mcpure.print_mix_f := string_of_mix_formula;;
 (*Tpdispatcher.print_pure := string_of_pure_formula ;;*)
+Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cformula.print_formula :=string_of_formula;;
