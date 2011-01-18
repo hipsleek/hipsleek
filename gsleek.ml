@@ -33,7 +33,7 @@ class mainwindow () =
         <menu action='TheoremProverMenu'>\
           <menuitem action='Omega'/>\
           <menuitem action='Mona'/>\
-          <menuitem action='CVC3'/>\
+          <menuitem action='Cvc3'/>\
           <menuitem action='Redlog'/>\
           <menuitem action='OM'/>\
         </menu>\
@@ -67,6 +67,8 @@ class mainwindow () =
     val residue_view = create_residue_view ()
     (* data *)
     val mutable current_file = None
+    val mutable debug_log_window = None
+    val mutable prover_log_window = None
       
     initializer
       (* initialize components *)
@@ -169,7 +171,7 @@ class mainwindow () =
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
-          ra "CVC3" 2 ~label:"_CVC3";
+          ra "Cvc3" 2 ~label:"_Cvc3";
           ra "Redlog" 3 ~label:"_Redlog";
           ra "OM" 4 ~label:"Omega _And Mona";
         ];
@@ -273,10 +275,11 @@ class mainwindow () =
     method get_text () = source_view#source_buffer#get_text ()
 
     method set_theorem_prover id =
-      let provers = ["omega"; "mona"; "cvc3"; "redlog"; "om"] in
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.OM] in
       let tp = List.nth provers id in
-      GUtil.log (Printf.sprintf "Use %s as backend prover." tp);
-      TP.set_tp tp
+      TP.change_prover tp;
+      let tp_name = TP.string_of_tp tp in
+      GUtil.log (Printf.sprintf "Use %s as backend prover." tp_name)
 
     method check_selected_entailment () =
       let entail = entailment_list#get_selected_entailment () in
@@ -292,18 +295,23 @@ class mainwindow () =
 
     method show_debug_log () =
       let log = Debug.get_debug_log () in
-      let win = new GLogViewWindow.log_view_window 
-        ~title:"Devel Debug Log" log
-        () in
-      win#show ()
+      let win = match debug_log_window with
+        | Some win-> 
+            win#set_log log;
+            win
+        | None ->
+            let win = new GLogViewWindow.log_view_window
+              ~title:"Development Debug Log" log () in
+            debug_log_window <- Some win;
+            win
+      in
+      win#present ()
 
     method show_prover_log () =
-      (* FIXME: support other provers *)
-      let log = FU.read_from_file "allinput.oc" in
-      let win = new GLogViewWindow.log_view_window 
-        ~title:"Prover Log" log 
-        () in
-      win#show ()
+      let log = TP.get_prover_log () in
+      let title = (TP.get_current_tp_name ()) ^ " Log" in
+      let win = new GLogViewWindow.log_view_window ~title log () in
+      win#present ()
 
     method show_about_dialog () =
         let dialog = GWindow.about_dialog 
@@ -313,7 +321,7 @@ class mainwindow () =
           ~website:"http://loris-7.ddns.comp.nus.edu.sg/~project/hip/index.html"
           ~parent:self
           () in
-        dialog#connect#response ~callback:(fun _ -> dialog#destroy ());
+        ignore (dialog#connect#response ~callback:(fun _ -> dialog#destroy ()));
         dialog#show ()
 
     (*********************
@@ -379,15 +387,14 @@ class mainwindow () =
  * MAIN FUNCTION
  **********************)
 let initialize () =
-  GtkMain.Main.init ();
+  ignore (GtkMain.Main.init ());
   Debug.devel_debug_on := true;
   Debug.log_devel_debug := true;
-  (* FIXME: support other provers *)
-  Omega.log_all_flag := true;
-  Tpdispatcher.start_prover ()
+  TP.enable_log_for_all_provers ();
+  TP.start_prover ()
 
 let finalize () =
-  Tpdispatcher.stop_prover ()
+  TP.stop_prover ()
 
 let usage_msg = Sys.argv.(0) ^ " [options] <source file>"
 let arguments = [

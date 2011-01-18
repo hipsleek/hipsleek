@@ -251,20 +251,22 @@ let set_tp tp_str =
 	()
 
 let string_of_tp tp = match tp with
-  | OmegaCalc -> "omega"
-  | CvcLite -> "cvcl"
-  | Cvc3 -> "cvc3"
-  | CO -> "co"
-  | Isabelle -> "isabelle"
-  | Mona -> "mona"
-  | OM -> "om"
-  | OI -> "oi"
-  | SetMONA -> "set"
-  | CM -> "cm"
-  | Coq -> "coq"
-  | Z3 -> "z3"
-  | Redlog -> "redlog"
-  | RM -> "rm"
+  | OmegaCalc -> "Omega Calculator"
+  | CvcLite -> "CVC Lite"
+  | Cvc3 -> "CVC3"
+  | CO -> "CVC Lite and Omega"
+  | Isabelle -> "Isabelle"
+  | Mona -> "Mona"
+  | OM -> "Omega and Mona"
+  | OI -> "Omega and Isabelle"
+  | SetMONA -> "Set Mona"
+  | CM -> "CVC Lite and Mona"
+  | Coq -> "Coq"
+  | Z3 -> "Z3"
+  | Redlog -> "Redlog"
+  | RM -> "Redlog and Mona"
+
+let get_current_tp_name () = string_of_tp !tp
 
 let omega_count = ref 0
 
@@ -1056,19 +1058,48 @@ let start_prover () =
   match !tp with
   | Coq -> Coq.start_prover ()
   | Redlog | RM -> 
-     begin
+    begin
+      Omega.start_omega ();
       Redlog.start_red ();
-	  Omega.start_omega ();
-	 end
-  | _ -> Omega.start_omega ()
+    end
+  | OmegaCalc | OM | OI | CO -> Omega.start_omega ();
+  | _ -> () 
   
 let stop_prover () =
-  match !tp with
-  | Coq -> Coq.stop_prover ()
-  | Redlog | RM -> 
-    begin
-     Redlog.stop_red ();
-	 Omega.stop_omega ();
-	end
-  | _ -> Omega.stop_omega ();
+  Coq.stop_prover ();
+  Redlog.stop_red ();
+  Omega.stop_omega ()
+
+let get_prover_log () =
+  let log_file = match !tp with
+    | OmegaCalc | OM | OI | CO -> Some "allinput.oc"
+    | Cvc3 -> Some "formula.cvc"
+    | Mona -> Some "allinput.mona"
+    | Redlog -> Some "allinput.rl"
+    | _ -> None
+  in
+  let res = match log_file with
+    | Some fname ->
+        let ic = open_in fname in
+        let size = in_channel_length ic in
+        let buff = String.create size in
+        really_input ic buff 0 size;
+        close_in ic;
+        buff
+    | None -> 
+        Printf.sprintf
+          "I'm sorry! Logging feature of prover %s haven't been implemented yet."
+          (string_of_tp !tp)
+  in res
+
+let enable_log_for_all_provers () =
+  Omega.log_all_flag := true;
+  Redlog.is_log_all := true;
+  Mona.log_all_flag := true;
+  Cvc3.log_cvc3_formula := true;
+  Cvc3.set_log_file ""
+
+let change_prover prover =
+  tp := prover;
+  start_prover ()
 

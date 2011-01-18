@@ -17,6 +17,7 @@ class log_view_window ?(title="Log") log () =
     val mutable current_index = 0
     val mutable search_results = []
     val mutable current_pos = None
+    val mutable clear_callback = (fun () -> ())
 
     initializer
       status_lbl#set_use_markup true;
@@ -26,33 +27,54 @@ class log_view_window ?(title="Log") log () =
       log_view#buffer#set_text log;
       let action_panel = GPack.hbox ~spacing:10 ~border_width:10 () in
       let search_lbl = GMisc.label ~text:"Find:" () in
-      let next_btn = GButton.button ~label:"Next" () in
-      let prev_btn = GButton.button ~label:"Previous" () in
-      let buttons = GPack.button_box `HORIZONTAL () in
-      buttons#pack prev_btn#coerce;
-      buttons#pack next_btn#coerce;
-      let close_btn = GButton.button ~label:"  Close  " () in
       action_panel#pack search_lbl#coerce;
       action_panel#pack ~expand:true search_field#coerce;
       action_panel#pack status_lbl#coerce;
+      let next_btn = GButton.button ~label:"Next" () in
+      let prev_btn = GButton.button ~label:"Previous" () in
+      let buttons = GPack.button_box `HORIZONTAL () in
+      buttons#pack next_btn#coerce;
+      buttons#pack prev_btn#coerce;
       action_panel#pack buttons#coerce;
-      action_panel#pack ~padding:5 v_separator#coerce;
-      action_panel#pack close_btn#coerce;
-      ignore (close_btn#connect#clicked ~callback:(fun _ -> self#destroy ()));
+      let clear_btn = GButton.button ~label:"Clear" () in
+      let close_btn = GButton.button ~label:"Close" () in
+      let buttons = GPack.button_box `HORIZONTAL () in
+      buttons#pack clear_btn#coerce;
+      buttons#pack close_btn#coerce;
+      action_panel#pack v_separator#coerce;
+      action_panel#pack buttons#coerce;
+      ignore (close_btn#connect#clicked ~callback:(fun _ -> self#misc#hide ()));
       let vbox = GPack.vbox ~packing:self#add () in
       vbox#pack ~expand:true log_panel#coerce;
       vbox#pack action_panel#coerce;
       ignore (log_view#buffer#create_tag ~name:tag_results [`BACKGROUND "yellow"]);
       ignore (log_view#buffer#create_tag ~name:tag_current [`BACKGROUND "orange"]);
+
       (* set event handlers *)
       ignore (search_field#connect#changed
-        ~callback:self#search_field_changed_handler);
+        ~callback:self#update_search);
       ignore (search_field#event#connect#key_press
         ~callback:self#key_press_handler);
       ignore (next_btn#connect#clicked ~callback:self#find_next);
       ignore (prev_btn#connect#clicked ~callback:self#find_previous);
+      ignore (clear_btn#connect#clicked ~callback:self#clear_log)
 
-    method search_field_changed_handler () =
+    (*****************
+     * Public methods
+     * ***************)
+
+    method clear_log () =
+      log_view#buffer#set_text "";
+      clear_callback ();
+
+    method set_log log =
+      log_view#buffer#set_text log
+
+    (******************
+     * Private methods
+     * ****************)
+
+    method private update_search () =
       let trimmed = Util.trim_str search_field#text in
       if String.length trimmed > 0 then
         let found = self#find_all (search_field#text) in
@@ -62,7 +84,7 @@ class log_view_window ?(title="Log") log () =
       else
         (self#clear_highlight (); self#set_status "")
 
-    method key_press_handler key =
+    method private key_press_handler key =
       let enter_key = 36 in
       let num_enter_key = 104 in
       let keycode = GdkEvent.Key.hardware_keycode key in
@@ -70,20 +92,20 @@ class log_view_window ?(title="Log") log () =
         self#find_next ();
       false
 
-    method pos2iters (pos: SU.substring_pos) =
+    method private pos2iters (pos: SU.substring_pos) =
       let start = log_view#buffer#get_iter_at_char pos.SU.start in
       let stop = log_view#buffer#get_iter_at_char pos.SU.stop in
       start, stop
 
-    method apply_tag (tag: string) (pos: SU.substring_pos) =
+    method private apply_tag (tag: string) (pos: SU.substring_pos) =
       let start, stop = self#pos2iters pos in
       log_view#buffer#apply_tag_by_name tag start stop
 
-    method remove_tag (tag: string) (pos: SU.substring_pos) =
+    method private remove_tag (tag: string) (pos: SU.substring_pos) =
       let start, stop = self#pos2iters pos in
       log_view#buffer#remove_tag_by_name tag start stop
 
-    method find_all (sub: string) =
+    method private find_all (sub: string) =
       (* clear current highlight *)
       self#clear_highlight ();
       (* search *)
@@ -97,19 +119,19 @@ class log_view_window ?(title="Log") log () =
       let found = (List.length res) > 0 in
       found
 
-    method find_next () =
+    method private find_next () =
       if (List.length search_results) > 0 then
         let next_idx = (current_index + 1) mod (List.length search_results) in
         self#goto_search_result next_idx
 
-    method find_previous () =
+    method private find_previous () =
       if (List.length search_results) > 0 then
         let length = List.length search_results in
         let prev_idx = (current_index - 1) mod length in
         let prev_idx = if prev_idx < 0 then length-1 else prev_idx in
         self#goto_search_result prev_idx
 
-    method goto_search_result idx =
+    method private goto_search_result idx =
       (* unhighlight current pos *)
       let _ = match current_pos with
         | Some pos -> 
@@ -128,13 +150,16 @@ class log_view_window ?(title="Log") log () =
       current_pos <- Some pos;
       self#set_status (Printf.sprintf "%d of %d" (idx+1)  (List.length search_results))
 
-    method clear_highlight () =
+    method private clear_highlight () =
       let start = log_view#buffer#get_iter `START in
       let stop = log_view#buffer#get_iter `END in
       log_view#buffer#remove_tag_by_name tag_current start stop;
       log_view#buffer#remove_tag_by_name tag_results start stop
 
-    method set_status (msg: string) =
+    method private set_clear_callback ~callback =
+      clear_callback <- callback
+
+    method private set_status (msg: string) =
       status_lbl#set_label msg
 
   end

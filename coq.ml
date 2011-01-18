@@ -198,10 +198,12 @@ let start_prover () =
 
 (* stopping Coq *)
 let stop_prover () =
-  output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
-  ignore (Unix.close_process !coq_channels);
-  coq_running := false;
-  print_string "Coq stopped\n"; flush stdout
+  if !coq_running then begin
+    output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
+    ignore (Unix.close_process !coq_channels);
+    coq_running := false;
+    print_string "Coq stopped\n"; flush stdout
+  end
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =

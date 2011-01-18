@@ -59,7 +59,7 @@ let log level msg =
     try !log_all msg
     with Not_found ->
       let out = open_out "allinput.rl" in
-      log_all := (fun msg -> output_string out msg; flush out);
+      log_all := (fun msg -> output_string out (msg ^ "\n"); flush out);
       !log_all msg
   in
   match level with
@@ -94,7 +94,7 @@ let send_cmd cmd =
 (* start Reduce system in a separated process and load redlog package *)
 let start_red () =
   if not !is_reduce_running then begin
-    print_endline "Starting Reduce... "; flush stdout;
+    log DEBUG "Starting Reduce... "; flush stdout;
     let inchannel, outchannel, errchannel, pid = Unix_add.open_process_full "redcsl" [|"-w"; "-b";"-l reduce.log"|] in
     channels := inchannel, outchannel;
     is_reduce_running := true;
@@ -111,26 +111,26 @@ let stop_red () =
   if !is_reduce_running then begin
     let outchannel = snd !channels in
     output_string outchannel "quit;\n"; flush outchannel;
-    print_endline "Halting Reduce... "; flush stdout;
+    log DEBUG "Halting Reduce... "; flush stdout;
     Unix.kill !reduce_pid 9;
     ignore (Unix.waitpid [] !reduce_pid);
     is_reduce_running := false;
     reduce_pid := 0;
-  end;
-  (* some logging *)
-  log DEBUG "\n***************";
-  log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
-  log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
-  log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
-  log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
-  log DEBUG ("Number of cached hit: " ^ (string_of_int !cached_count));
-  log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
-  log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
+    (* some logging *)
+    log DEBUG "\n***************";
+    log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
+    log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
+    log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
+    log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
+    log DEBUG ("Number of cached hit: " ^ (string_of_int !cached_count));
+    log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
+    log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
+  end
   
 let restart_red reason =
   if !is_reduce_running then begin
     print_string reason;
-    print_endline " Restarting Reduce... "; flush stdout;
+    log DEBUG " Restarting Reduce... "; flush stdout;
     stop_red();
     start_red();
   end
