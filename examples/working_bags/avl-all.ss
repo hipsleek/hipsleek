@@ -321,6 +321,8 @@ node remove_max_add(node x, ref myint a)
           a.val = ti;
           ti = x.val;
           tr = x.left.right;
+          assert tr'=null;
+          dprint;
           assume tr' = null; //'
           return x;
         } else {
