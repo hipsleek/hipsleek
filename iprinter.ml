@@ -511,6 +511,7 @@ let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_
                             (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
 ;;
 
+
 let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^
 							 (string_of_formula c.coercion_body)^"\n" 
 
@@ -622,6 +623,103 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
+(*pretty print of recursive user-defined predicate definition 
+* Oct 16 2010 
+* much more thing to do*)
+let string_of_pure_pred_decl p = 
+  let string_of_type tp = 
+    match tp with
+      |IN -> "IN"
+      | OUT -> "OUT"
+      |INIT -> "INIT"
+  in
+  let rec string_of_args arg_type_list = 
+    match arg_type_list with 
+      |(id, typ)::tail -> id ^" " ^ (string_of_type typ) ^"," ^ ( string_of_args tail)
+      |[] -> ""
+  in
+  let rec string_of_arg_list arg = 
+    match arg with
+      |head::tail -> (string_of_formula_exp head ) ^ " , "^ (string_of_arg_list tail)
+      |[] -> ""
+  in
+  let rec string_of_pred_formula f = 
+    f.pred_name ^ " ("^ (string_of_arg_list f.argument_list)^" ) "
+  in 
+  let rec string_of_each_pure_or_rec each = 
+    match each with
+      | Pure p -> string_of_b_formula p 
+      | PreFormula f -> string_of_pred_formula f
+      | _ -> ""
+  in
+  let rec string_of_pure_or_rec_formula form = 
+    match form with
+      |head:: tail -> (string_of_each_pure_or_rec head)^" &  "^(string_of_pure_or_rec_formula tail)
+      |[] -> ""
+  in 
+  let rec string_of_ident_list ident_list = 
+    match ident_list with
+      |head::tail -> head ^","^ (string_of_ident_list tail)
+      |[] -> ""
+  in
+  let string_of_one_case_in_rec one_case = 
+    let result_string = "Forall "^ (string_of_ident_list one_case.forall_list) ^"Ex "^ (string_of_ident_list one_case.exists_list) ^ ": " ^ (string_of_pure_or_rec_formula one_case.formula_element) in
+      result_string
+  in 
+  let rec string_of_pure_formula pure_formula = 
+    match pure_formula with
+      |(Case_in_rec head):: tail -> (string_of_one_case_in_rec head ) ^ "\n or " ^ (string_of_pure_formula tail)
+      |[] -> ""
+  in
+  p.predicate_name ^"(" ^ (string_of_args p.pure_vars) ^ ") ==" ^(string_of_pure_formula p.pure_formula)^ "\n"
+;;
 
 
-
+let string_of_pure_derive entail =
+  let rec string_of_arg_list arg = 
+    match arg with
+      | [] -> ""
+      |head::[] -> string_of_formula_exp head
+      |head::tail -> (string_of_formula_exp head ) ^ " , "^ (string_of_arg_list tail)
+  
+  and  string_of_pred_formula f = 
+    f.pred_name ^ " ("^ (string_of_arg_list f.argument_list)^" ) "
+  
+  and string_of_ident_list forall =
+    match forall with
+      |[] -> ""
+      |head::[] -> head
+      |head::tail -> head ^ " , " ^ string_of_ident_list tail 
+  
+  and string_of_foralllist forall = 
+    match forall with
+      |head::tail -> "(Forall: " ^ string_of_ident_list forall ^"):"
+      |[] -> ""
+   
+  and string_of_existslist exists = 
+    match exists with
+      |head::tail -> "(Exists: " ^string_of_ident_list exists ^"):"
+      |[] -> ""
+  
+  and string_of_one_formula form =
+    match form with
+      | Pure p -> string_of_b_formula p
+      | PreFormula f -> string_of_pred_formula f
+      | Expand e ->"("^ ( string_of_case_in_rec_user_defined_list e) ^ ")"
+  
+  and string_of_pure_or_rec_formula pure_or_rec_formula = 
+    match pure_or_rec_formula with
+      |[] -> ""
+      |head ::[] -> string_of_one_formula head
+      |head::tail -> (string_of_one_formula head) ^" & "^ (string_of_pure_or_rec_formula tail) 
+  
+  and string_of_case_in_rec_user_defined_list user_defined_list = 
+    match user_defined_list with
+      | [] -> "" 
+      | (Case_in_rec head)::[] -> "("^(string_of_existslist head.exists_list)^ (string_of_foralllist head.forall_list)^(string_of_pure_or_rec_formula head.formula_element)^")"
+      | (Case_in_rec head)::tail ->
+         "("^(string_of_existslist head.exists_list)^ (string_of_foralllist head.forall_list)^
+         (string_of_pure_or_rec_formula head.formula_element)^") or " ^ (string_of_case_in_rec_user_defined_list tail)
+  in
+  "( " ^ string_of_foralllist entail.foralllist ^ string_of_existslist entail.existslist ^ string_of_case_in_rec_user_defined_list entail.left_hand_side ^ " |- "^ string_of_case_in_rec_user_defined_list entail.right_hand_side ^" )\n"
+;; 

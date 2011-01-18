@@ -278,7 +278,13 @@ program
 		prog_enum_decls = !enum_defs;
 		prog_view_decls = !view_defs;
 		prog_proc_decls = !proc_defs;
-		prog_coercion_decls = !coercion_defs; }
+		prog_coercion_decls = !coercion_defs;
+
+    (*added Oct 16 2010*)
+    (* I will use it to support recursive user-defined predicate for HIP
+     * but it is a long story and now I focus on SLEEKEX first*)
+    prog_pure_pred_decl = []; 
+    prog_pure_lemma = [];}
   }
 ;
 

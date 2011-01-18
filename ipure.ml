@@ -276,7 +276,8 @@ and mkEq a1 a2 pos =
   else 
 	Eq (a1, a2, pos)
 
-and mkAnd f1 f2 pos = match f1 with
+and mkAnd f1 f2 pos = 
+  match f1 with
   | BForm (BConst (false, _),_) -> f1
   | BForm (BConst (true, _),_) -> f2
   | _ -> match f2 with
@@ -284,7 +285,8 @@ and mkAnd f1 f2 pos = match f1 with
       | BForm (BConst (true, _),_) -> f1
       | _ -> And (f1, f2, pos)
 
-and mkOr f1 f2 lbl pos = match f1 with
+and mkOr f1 f2 lbl pos = 
+  match f1 with
   | BForm (BConst (false, _),_) -> f2
   | BForm (BConst (true, _),_) -> f1
   | _ -> match f2 with
@@ -371,25 +373,27 @@ and mkForall (vs : (ident * primed) list) (f : formula) lbl pos = match vs with
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
 and build_relation relop alist10 alist20 pos = 
   let rec helper1 ae alist = 
-	let a = List.hd alist in
-	let rest = List.tl alist in
-	let tmp = BForm ((relop ae a pos),None) in
-	  if Util.empty rest then
-		tmp
+    let a = List.hd alist in
+    let rest = List.tl alist in
+    let tmp = BForm ((relop ae a pos),None) in
+    if Util.empty rest then
+      tmp
 	  else
 		let tmp1 = helper1 ae rest in
 		let tmp2 = mkAnd tmp tmp1 pos in
-		  tmp2 in
+		  tmp2 
+  in
   let rec helper2 alist1 alist2 =
-	let a = List.hd alist1 in
-	let rest = List.tl alist1 in
-	let tmp = helper1 a alist2 in
+    let a = List.hd alist1 in
+    let rest = List.tl alist1 in
+    let tmp = helper1 a alist2 in
 	  if Util.empty rest then
-		tmp
+      tmp
 	  else
-		let tmp1 = helper2 rest alist2 in
-		let tmp2 = mkAnd tmp tmp1 pos in
-		  tmp2 in
+      let tmp1 = helper2 rest alist2 in
+      let tmp2 = mkAnd tmp tmp1 pos in
+        tmp2 
+  in
 	if List.length alist10 = 0 || List.length alist20 = 0 then
 	  failwith ("build_relation: zero-length list")
 	else begin

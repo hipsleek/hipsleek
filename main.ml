@@ -111,6 +111,7 @@ let process_source_full source =
 		
 		let ptime4 = Unix.times () in
 		let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
+			
 		print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^
 		(List.fold_left (fun a c-> a^" ("^(string_of_int c.Globals.start_pos.Lexing.pos_lnum)^","^
 		( string_of_int (c.Globals.start_pos.Lexing.pos_cnum-c.Globals.start_pos.Lexing.pos_bol))^") ") "" !Globals.false_ctx_line_list)^")\n");
@@ -120,7 +121,10 @@ let process_source_full source =
 						^ (string_of_float (ptime4.Unix.tms_utime+.ptime4.Unix.tms_stime)) ^ " second(s)\n"
 						^ "\tTime spent in child processes: " 
 						^ (string_of_float (ptime4.Unix.tms_cutime +. ptime4.Unix.tms_cstime)) ^ " second(s)\n")
-
+			(**this line is for AltErgo**)			
+			(*print_string ("\n Number of times using Omega to simplify in is_sat "^string_of_int !Altergo.number_of_called_Omega_is_sat^"/"^string_of_int !Altergo.number_of_is_sat^"\n");
+			print_string ("\n Number of times using Omega to simplify in imply "^string_of_int !Altergo.number_of_called_Omega_imply^"/"^string_of_int !Altergo.number_of_imply^"\n")*)
+		
 	  
 let main1 () =
   (* Cprinter.fmt_set_margin 40; *)

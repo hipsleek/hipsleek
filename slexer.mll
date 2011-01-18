@@ -31,6 +31,7 @@
 	 ("by", BY);
 	 ("case",CASE);
 	 ("checkentail", CHECKENTAIL);
+   ("checkentailpure", CHECKENTAILPURE);
 	 ("capture_residue", CAPTURERESIDUE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
@@ -60,6 +61,8 @@
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
 	 ("lemma", LEMMA);
+   ("lemmas", LEMMAS);(* this is used only for recursive user-defined pure
+   predicates*)
 	 ("let", LET);
 	 ("max", MAX);
 	 ("min", MIN);

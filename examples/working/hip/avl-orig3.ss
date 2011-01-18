@@ -50,6 +50,13 @@ int get_max(int a, int b)
 	else return b;
 }
 
+int foo()
+requires true
+ensures true;
+{
+return 1;
+}
+
 node insert(node t, int x) 
 /* cannot be verified without case analysis
   requires t=null

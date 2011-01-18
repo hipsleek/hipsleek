@@ -35,7 +35,7 @@ let open_proc cmd args out_file:int  =
   match Unix.fork() with
   |  0 -> begin 
 			let output = Unix.openfile out_file [Unix.O_CREAT;Unix.O_WRONLY] 0o640 in
-			Unix.dup2 output Unix.stdout; Unix.close output;
+			Unix.dup2 output Unix.stdout;Unix.dup2 output Unix.stderr; Unix.close output;
 			try Unix.execvp cmd args with _ -> exit 127 end
   | id -> id
 ;;

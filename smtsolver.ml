@@ -222,6 +222,15 @@ let rec smt_of_formula f qvars =
       let qvars = StringSet.add varname qvars in
       "(exists (?" ^ varname ^ " Int) " ^ (smt_of_formula p qvars) ^ ")"
 
+let rec make_assert_string list_formula = 
+  match list_formula with
+    |head::tail -> "(assert "^head^ ")\n" ^(make_assert_string tail)
+    |[] -> "\n"
+
+let rec make_assumption_string list_formula =
+  match list_formula with
+    |head::tail -> ":assumption"^head^ "\n" ^(make_assumption_string tail)
+    |[] -> "\n"
 
 (**
  * output for smt-lib v2.0 format
@@ -234,7 +243,7 @@ and to_smt_v2 ante conseq logic fvars =
   in ( 
     "(set-logic " ^ (string_of_logic logic) ^ ")\n" ^ 
     (decfuns fvars) ^
-    "(assert " ^ ante ^ ")\n" ^
+    make_assert_string ante ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
 
@@ -254,10 +263,21 @@ and to_smt_v1 ante conseq logic fvars =
     ":status unknown\n" ^
     ":logic " ^ (string_of_logic logic) ^ "\n" ^
     extrafuns ^
-    ":assumption " ^ ante ^ "\n" ^
+    make_assumption_string ante ^"\n" ^
     ":formula (not " ^ conseq ^ ")\n" ^
     ")")
 
+       (*if the ante is And formula form, break it into a list of formula
+        * use for assumption*)
+let rec break_ante (ante:CP.formula) =
+  match ante with
+    |CP.And(f1, f2, loc) ->(break_ante f1)@(break_ante f2)
+    |_ -> [ante]
+
+let rec list_string_of_list_formula (list_formula: CP.formula list) =
+  match list_formula with
+    |head::tail -> (smt_of_formula head StringSet.empty)::(list_string_of_list_formula tail)
+    |[] ->[] 
 (**
  * Converts a core pure formula into SMT-LIB format which can be run through various SMT provers.
  *)
@@ -270,12 +290,16 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
   let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
-  let ante_str = smt_of_formula ante StringSet.empty in
-  let conseq_str = smt_of_formula conseq StringSet.empty in
+
+  (*let ante_str = smt_of_formula ante StringSet.empty in*)
+  let list_formula_of_ante = break_ante ante in
+  let list_string_of_formula = list_string_of_list_formula list_formula_of_ante in
+
+  let conseq_str = smt_of_formula conseq StringSet.empty in 
   let logic = logic_for_formulas ante conseq in
   let res = match prover with
-    | Z3 ->  to_smt_v2 ante_str conseq_str logic all_fv
-    | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
+    | Z3 ->  to_smt_v2 list_string_of_formula conseq_str logic all_fv
+    | Cvc3 | Yices ->  to_smt_v1 list_string_of_formula conseq_str logic all_fv
   in res
 
 (**

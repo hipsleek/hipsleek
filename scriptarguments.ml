@@ -109,7 +109,7 @@ let common_arguments = [
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
 	 "Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om";
-	 "oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
+	 "oi"; "set"; "cm"; "redlog"; "rm"; "prm"; "alt-ergo" ], Tpdispatcher.set_tp),
 	 "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
 	("--use-field", Arg.Set Globals.use_field,
 	 "Use field construct instead of bind");
@@ -155,6 +155,10 @@ let common_arguments = [
 	 "Turn on failure analysis");
 	("--exhaust-match",Arg.Set Globals.exhaust_match, 
 	 "Turn on exhaustive matching for base case of predicates"); 
+  ("--log-altergo", Arg.Set Altergo.log_all_flag,
+    "Log all formulae sent to Alt-Ergo in file allinput.ae");
+  ("--ns", Arg.Set Altergo.not_simplified,
+    "With this option, AltErgo will not send formula to Omega for simplification. Using with -tp alt-ergo");  
   ] 
 
 (* arguments/flags used only by hip *)	

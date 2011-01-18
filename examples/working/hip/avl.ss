@@ -93,7 +93,9 @@ node rotate_double_left(node a, node b, node c, node d, int v1, int v2, int v3)
 	tmp2 = new node(v3, h, c, d);
 
 	h = get_max(height(tmp1), height(tmp2));
+
 	h = h + 1;
+
 	return new node(v2, h, tmp1, tmp2);
 }
 

@@ -208,7 +208,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       | e -> ignore e
     end;
     if !log_all_flag = true then begin
-      if !sat then output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: sat "^(string_of_int !test_number)^" --> FAIL\n");
+      if !sat then output_string log_all ("[omega.ml]: sat testnumber: "^(string_of_int !test_number)^"sat_no: "^sat_no^"  --> SUCCESS\n") 
+      else output_string log_all ("[omega.ml]: sat testnumber: "^(string_of_int !test_number)^"sat_no: "^sat_no^" --> FAIL\n");
     end else ();
     !sat
   end
@@ -296,7 +297,8 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   let result = is_valid tmp_form timeout in
   if !log_all_flag = true then begin
-    if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") else output_string log_all ("[omega.ml]: imp "^(string_of_int !test_number)^" --> FAIL\n");
+    if result then output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ " \n-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n")
+    else output_string log_all ("[omega.ml]: imp # "^imp_no ^"\n --test #"^(string_of_int !test_number)^" --> FAIL\n");
   end else ();
   result
 
@@ -347,11 +349,13 @@ let simplify (pe : formula) : formula =
     let f = match_vars (fv pe) rel in
     begin
       try
+      
         ignore (Sys.remove !infilename);
         ignore (Sys.remove !resultfilename)
+     
       with
       | e -> ignore e
-    end;
+    end; 
     close_in chn;
     f
   end

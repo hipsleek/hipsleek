@@ -53,17 +53,23 @@ let terminator = '.'
 let parse_file (parse) (source_file : string) =
 	try
 		let cmd = parse source_file in 
+    let string_cmd = string_of_command_list  cmd in
+      print_string(string_cmd ^"\n");
 		let _ = (List.map (fun c -> (
 							match c with
 								 | DataDef ddef -> process_data_def ddef
+                 | PurePredDef ppdef -> process_pure_pred_def ppdef
 								 | PredDef pdef -> process_pred_def pdef
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
-								 | PrintCmd pcmd -> process_print_command pcmd
+                 | PureLemmaDef pldef -> process_pure_lemma pldef
+                 | PrintCmd pcmd -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
                  | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
-								 | EmptyCmd -> ())) cmd) in ()
+                 | CheckEntailPure p -> process_entail_pure p
+								 | EmptyCmd -> ())) 
+             cmd) in ()
 	with
 	  | End_of_file ->
 		  print_string ("\n")
@@ -75,7 +81,9 @@ let main () =
                 I.prog_enum_decls = [];
                 I.prog_view_decls = [];
                 I.prog_proc_decls = [];
-                I.prog_coercion_decls = [] } in
+                I.prog_coercion_decls = [];
+                I.prog_pure_pred_decl = [];
+                I.prog_pure_lemma = [] } in
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = Util.c_h () in
   let quit = ref false in
@@ -86,55 +94,58 @@ let main () =
   let buffer = Buffer.create 10240 in
     try
       if (!inter) then 
-	while not (!quit) do
-	  if !inter then (* check for interactivity *)
-	    print_string !prompt;
-	  let input = read_line () in
-	    match input with
-	      | "" -> ()
-	      | _ -> 
-		  try
-		    let term_indx = String.index input terminator in
-		    let s = String.sub input 0 (term_indx+1) in
-		      Buffer.add_string buffer s;
-		      let cts = Buffer.contents buffer in
-			if cts = "quit" || cts = "quit\n" then quit := true
-			else try
-			  let cmd = parse cts in
-			    (match cmd with
-			       | DataDef ddef -> process_data_def ddef
-			       | PredDef pdef -> process_pred_def pdef
-			       | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
-			       | CaptureResidue lvar -> process_capture_residue lvar
-			       | LemmaDef ldef -> process_lemma ldef
-			       | PrintCmd pcmd -> process_print_command pcmd
-			       | LetDef (lvar, lbody) -> put_var lvar lbody
-             | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
-			       | EmptyCmd -> ());
-			    Buffer.clear buffer;
-			    if !inter then
-			      prompt := "SLEEK> "
-			with
-			  | _ -> 
-			      dummy_exception();
-			      print_string ("Error.\n");
-			      Buffer.clear buffer;
-			      if !inter then
-				prompt := "SLEEK> "
-		  with 
-		    | SLEEK_Exception
-		    | Not_found ->
+        while not (!quit) do
+          if !inter then (* check for interactivity *)
+            print_string !prompt;
+          let input = read_line () in
+            match input with
+              | "" -> ()
+              | _ -> 
+                  try
+                    let term_indx = String.index input terminator in
+                    let s = String.sub input 0 (term_indx+1) in
+                      Buffer.add_string buffer s;
+                      let cts = Buffer.contents buffer in
+                        if cts = "quit" || cts = "quit\n" then quit := true
+                        else try
+                          let cmd = parse cts in
+                            (match cmd with
+                               | DataDef ddef -> process_data_def ddef
+                               | PurePredDef ppdef -> process_pure_pred_def ppdef
+                               | PredDef pdef -> process_pred_def pdef
+                               | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
+                               | CaptureResidue lvar -> process_capture_residue lvar
+                               | LemmaDef ldef -> process_lemma ldef
+                               | PureLemmaDef pldef -> process_pure_lemma pldef
+                               | PrintCmd pcmd -> process_print_command pcmd
+                               | LetDef (lvar, lbody) -> put_var lvar lbody
+                               | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
+                               | CheckEntailPure p -> process_entail_pure p
+                               | EmptyCmd -> ());
+                            Buffer.clear buffer;
+                            if !inter then
+                              prompt := "SLEEK> "
+                        with
+                          | _ -> 
+                              dummy_exception();
+                              print_string ("Error.\n");
+                              Buffer.clear buffer;
+                              if !inter then
+                                prompt := "SLEEK> "
+                  with 
+                    | SLEEK_Exception
+                    | Not_found ->
                         dummy_exception();
-			Buffer.add_string buffer input;
-			Buffer.add_char buffer '\n';
-			if !inter then
-			  prompt := "- "
-	done
+                        Buffer.add_string buffer input;
+                        Buffer.add_char buffer '\n';
+                        if !inter then
+                          prompt := "- "
+        done
       else 
-	let _ = List.map (parse_file NF.list_parse) !source_files in ()
+        let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
       | End_of_file ->
-	  print_string ("\n")
+          print_string ("\n")
 
 let _ = 
   wrap_exists_implicit_explicit := false ;

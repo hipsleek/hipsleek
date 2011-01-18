@@ -283,7 +283,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
         IF.formula_base_branches = br0;
-		IF.formula_base_flow = fl0;
+        IF.formula_base_flow = fl0;
         IF.formula_base_pos = l0
       } -> (*as f*)
       let tmp1 = look_for_anonymous_h_formula h0
@@ -295,7 +295,7 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_heap = h0;
               IF.formula_exists_qvars = tmp1;
               IF.formula_exists_pure = p0;
-			  IF.formula_exists_flow = fl0;
+              IF.formula_exists_flow = fl0;
               IF.formula_exists_branches = br0;
               IF.formula_exists_pos = l0;
             }
@@ -361,7 +361,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-		  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+          IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
         }
       in h
     with
@@ -380,7 +380,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             IF.h_formula_heap_arguments = hargs;
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
-			IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
+            IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
           }
         in h
   
@@ -403,6 +403,8 @@ let rec convert_heap2_heap prog (h0 : IF.h_formula) : IF.h_formula =
   | _ -> h0
 
 and convert_heap2 prog (f0 : IF.formula) : IF.formula =
+  (*convert input formula formula that contains heap2 node to formula that only
+   * contains heap node*)
   match f0 with
   | IF.Or (({ IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } as f)) ->
       let tmp1 = convert_heap2 prog f1 in
@@ -415,7 +417,10 @@ and convert_heap2 prog (f0 : IF.formula) : IF.formula =
       let h = convert_heap2_heap prog h0
       in IF.Exists { (f) with IF.formula_exists_heap = h; }
 
-and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 with
+and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = 
+  (*convert ext_formula that contain heap2 node to ext_formula that only
+   * contains heap node*)
+  match f0 with
 	| Iformula.EAssume (b,tag)-> Iformula.EAssume ((convert_heap2 prog b),tag)
 	| Iformula.ECase b -> Iformula.ECase {b with Iformula.formula_case_branches = (List.map (fun (c1,c2)-> (c1,(convert_struc2 prog c2))) b.Iformula.formula_case_branches)};
 	| Iformula.EBase b -> Iformula.EBase{b with 
@@ -424,6 +429,8 @@ and convert_ext2 prog (f0:Iformula.ext_formula):Iformula.ext_formula = match f0 
 		}
 
 and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula = 
+  (*convert a struc_formula ( a list of ext_formula ) that contains heap2 node
+   * to struc_formula that only contains heap node*)
 	List.map (convert_ext2 prog ) f0 
 	  
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
@@ -4261,11 +4268,17 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
     Iformula.push_exists need_quant f in
   
   let nf = convert_struc2 prog f in
+    (*let _ = print_string ("\n after convert_struc2:
+     * "^(Iprinter.string_of_struc_formula (*""*) nf))in*)
   let nf = Iformula.float_out_exps_from_heap_struc nf in
+    (*let _ = print_string ("\n after float_out_exps_from_heap_struc:
+     * "^(Iprinter.string_of_struc_formula (*""*) nf))in*)
   let nf = Iformula.float_out_struc_min_max nf in
-    (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
+    (*let _ = print_string ("\n before rename
+     * "^(Iprinter.string_of_struc_formula (*""*) nf))in*)
   let nf = Iformula.rename_bound_var_struc_formula nf in
-    (*let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula "" nf)^"\n") in*)
+    (*let _ = print_string ("\n after rename:
+     * "^(Iprinter.string_of_struc_formula (*""*) nf)^"\n") in*)
     (*convert anonym to exists*)
   let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula) strad_vs :Iformula.struc_formula* ((ident*primed)list) = 
     let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
@@ -4797,7 +4810,12 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
        Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
        Iast.prog_view_decls = tmp_views;
        Iast.prog_proc_decls = procs1;
-       Iast.prog_coercion_decls = coer1 }
+       Iast.prog_coercion_decls = coer1;
+
+       (*added Oct 16 2010*)
+       (*I will modify a little bit soon*)
+       Iast.prog_pure_pred_decl = [] ;
+       Iast.prog_pure_lemma = []}
       
 
 

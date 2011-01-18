@@ -14,9 +14,9 @@
 	| View of view_decl
 
   type decl =
-    | Type of type_decl
-    | Proc of proc_decl
-	| Coercion of coercion_decl
+  | Type of type_decl
+  | Proc of proc_decl
+  | Coercion of coercion_decl
 
   type member =
 	| Field of (typed_ident * loc)
@@ -55,7 +55,7 @@
 
 
   let expand_exp_list mk l r pos =
-	let b, oe = l in
+    let b, oe = l in
 	  match oe with
 		| Some e ->
 			let tmp = P.build_relation mk e r pos in
@@ -88,6 +88,7 @@
 %token CASE
 %token CBRACE
 %token CHECKENTAIL
+%token CHECKENTAILPURE 
 %token CAPTURERESIDUE
 %token CLASS
 %token COERCION
@@ -135,6 +136,7 @@
 %token <string> JAVA
 %token LEFTARROW
 %token LEMMA
+%token LEMMAS
 %token LET
 %token <float> LITERAL_FLOAT
 %token <int> LITERAL_INTEGER
@@ -211,6 +213,7 @@
 %left STAR
 %left UMINUS
 
+
 %nonassoc LOWER_THAN_DOT_OP
 %nonassoc OP_DEC OP_INC
 %left DOT
@@ -241,7 +244,7 @@ command
 ;
 non_empty_command
   : data_decl {
-	DataDef $1
+    DataDef $1
   }
   | view_decl {
 	  PredDef $1
@@ -261,18 +264,35 @@ non_empty_command
   | print_cmd {
 	  PrintCmd $1
 	}
-  | time_cmd {$1}
+  | time_cmd {
+    $1
+  }
+  | pure_pred_decl{
+    PurePredDef $1
+  }
+  | check_pure_entail{
+   (* EntailCheckPure $1*)
+    CheckEntailPure $1
+  }
+  |pure_lemmas_def{
+    (*lemma for recursive user-defined pure predicates*)
+    PureLemmaDef $1
+  }
 ;
 
 
 
 program : {
   { prog_data_decls = [];
-	prog_global_var_decls = [];
+  prog_global_var_decls = [];
 	prog_enum_decls = [];
 	prog_view_decls = [];
 	prog_proc_decls = [];
-	prog_coercion_decls = []; }
+  prog_coercion_decls = [];
+
+  (*added Oct 16 2010*)
+  prog_pure_pred_decl = [];
+  prog_pure_lemma = []; }
 }
 ;
 
@@ -314,11 +334,129 @@ field_list
 		}
 ;
 
+/*this part is for recursive user-defined predicate Oct 14 2010*/
+
+pure_pred_decl :
+  pure_header EQEQ pure_body inv_for_user_define DOT {
+  {$1 with pure_inv = $4; pure_formula = $3}
+ }
+;
+
+inv_for_user_define:
+  INV inv_for_user_define_res{
+          $2        
+}
+  | {[]}
+;
+
+inv_for_user_define_res:
+  pure_relation AND inv_for_user_define_res {
+    $1::$3
+  }
+  | pure_relation{
+    [$1]
+  }
+  | {[]}
+;
+
+pure_header :
+  PRED IDENTIFIER OPAREN opt_ann_cid_list CPAREN
+  /*because I am so lazy so I want to reuse opt_and_cid_list for this reason, I
+  do not care about ann, branch, etc*/
+  {
+    let cids, _ = List.split $4 in
+    let cids, _ = List.split cids in
+    let cids = List.map fst cids in
+
+    let rec init_argument id_list = 
+        match id_list with
+        |head::tail -> (head, INIT)::(init_argument tail)
+        |[] -> [] in
+
+    let argument_list_for_pure_predicate = init_argument cids in
+    {
+      predicate_name = $2;
+      pure_vars = argument_list_for_pure_predicate ;
+      pure_inv = [];
+      pure_formula = []
+    }
+  
+  }
+;
+
+pure_body:
+  one_case ORWORD pure_body{
+          Case_in_rec($1)::($3)
+  }
+  | one_case{
+          [Case_in_rec ($1)]
+  }
+;
+
+one_case: 
+  OPAREN EXISTS opt_ann_cid_list COLON one_case_part CPAREN {
+    let cids, _ = List.split $3 in
+    let cids, _ = List.split cids in
+    let cids = List.map fst cids in
+    {
+      forall_list = [];
+      exists_list = cids;
+      formula_element = $5;
+    } 
+  }
+  | one_case_part {
+    {
+      forall_list = [];
+      exists_list = [];
+      formula_element = $1;
+    }
+  }
+;
+
+one_case_part:
+  pure_relation {
+    [$1]
+  }
+  | pure_relation AND one_case_part {
+    $1::$3 
+  }
+;
+
+pure_relation:
+        /*I have to add this because bconstr only accepts a list of expression*/
+  | cexp EQ cexp {
+    Pure (P.mkEq $1 $3 (get_pos 2))
+  }
+  | cexp LT cexp{
+    Pure(P.mkLt $1 $3 (get_pos 2))
+  }
+  | cexp LTE cexp{
+    Pure(P.mkLte $1 $3 (get_pos 2))
+  }
+  | cexp GT cexp{
+    Pure(P.mkGt $1 $3 (get_pos 2))
+  }
+  | cexp GTE cexp{
+    Pure(P.mkGte $1 $3 (get_pos 2))
+  }
+  | IDENTIFIER OPAREN cexp_list CPAREN{
+    PreFormula (
+    {
+      pred_name = $1;
+      argument_list = $3 
+    }
+   ) 
+  }
+;
+
 /********** Views **********/
 
 view_decl
   : view_header EQEQ view_body opt_inv DOT{
-	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3) }
+	{ $1 with 
+    view_formula = (fst $3); 
+    view_invariant = $4; 
+    try_case_inference = (snd $3) }
   }
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
@@ -366,10 +504,10 @@ view_header
 			view_typed_vars = [];
 			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
-			try_case_inference = false;
+			try_case_inference = false
 			}
   }
-;
+  ;
 
 cid
   : IDENTIFIER { ($1, Unprimed) }
@@ -589,8 +727,9 @@ flow_constraints :
 	AND FLOW IDENTIFIER {$3} 
 	
 	
-opt_formula_label : AT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE {(fresh_branch_point_id $3)}
-|{(fresh_branch_point_id "")}
+opt_formula_label : 
+        AT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE {(fresh_branch_point_id $3)}
+        |{(fresh_branch_point_id "")}
 
 heap_constr
   : simple_heap_constr { $1 }
@@ -623,13 +762,16 @@ simple_heap_constr
 ;
 
 pure_constr
-  : simple_pure_constr opt_formula_label { match $1 with 
-	| P.BForm (b,_) -> P.BForm (b,$2)
+  : simple_pure_constr opt_formula_label 
+  { 
+    match $1 with 
+    | P.BForm (b,_) -> P.BForm (b,$2)
     | P.And _ -> $1
     | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
     | P.Not (b1,_,l) -> P.Not(b1,$2,l)
     | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
-    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
+    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)
+  }
   | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
@@ -667,11 +809,12 @@ simple_pure_constr
   | NOT cid {
 	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None )) None (get_pos 1)
 	}
+  /*this maybe the place to modify for my purpose Oct 4 2010*/
 ;
 
 lbconstr
   : bconstr {
-	(fst $1, snd $1)
+    (fst $1, snd $1)
   }
   | lbconstr NEQ cexp_list {
 	  expand_exp_list P.mkNeq $1 $3 (get_pos 2)
@@ -695,7 +838,8 @@ lbconstr
 
 bconstr
   : cexp_list LT cexp_list {
-	let p = P.build_relation P.mkLt $1 $3 (get_pos 2) in
+    let p = P.build_relation P.mkLt $1 $3 (get_pos 2) in
+    let _ = print_string("test print: "^Iprinter.string_of_pure_formula p^"\n") in
 	  (p, Some $3)
   }
   | cexp_list LTE cexp_list {
@@ -734,6 +878,7 @@ bconstr
   | BAGMIN OPAREN cid COMMA cid CPAREN {
 	  (P.BForm (P.BagMin ($3, $5, get_pos 2), None), None)
 	}
+  /*must add some thing to handle user-defined predicate Oct 20 2010*/
 ;
 
 /* constraint expressions */
@@ -757,6 +902,9 @@ cexp
   | cexp MINUS cexp {
 	  P.mkSubtract $1 $3 (get_pos 2)
 	}
+  |cexp STAR cexp{
+    P.mkMult $1 $3 (get_pos 2)
+  }
   | MINUS cexp %prec UMINUS {
 	  P.mkSubtract (P.IConst (0, get_pos 1)) $2 (get_pos 1)
 	}
@@ -859,9 +1007,10 @@ extended_meta_constr
 	  MetaCompose $1
 	}
 ;
+
 meta_constr
   : DOLLAR IDENTIFIER {
-	MetaVar $2
+    MetaVar $2
   }
   | disjunctive_constr {
 	  MetaForm (F.subst_stub_flow n_flow $1)
@@ -931,4 +1080,98 @@ id_list
   | id_list COMMA IDENTIFIER { $3 :: $1 }
 ;
 
+/*all the the following is added in Oct 21th 2010*/
+check_pure_entail
+  : CHECKENTAILPURE core_pureentail DOT {
+          $2
+  }
+;
+
+pure_lemmas_def
+  :LEMMAS core_pureentail DOT{
+     $2
+  }
+;
+
+core_pureentail:
+  OPAREN EXISTS opt_ann_cid_list COLON core_pure CPAREN{
+    let cids, _ = List.split $3 in
+    let cids, _ = List.split cids in
+    let cids = List.map fst cids in
+    {
+      foralllist = [] ;
+      existslist = cids;
+      left_hand_side = fst $5;
+      right_hand_side = snd $5;
+    }    
+  }
+  | OPAREN FORALL  opt_ann_cid_list COLON core_pure CPAREN{
+    let cids, _ = List.split $3 in
+    let cids, _ = List.split cids in
+    let cids = List.map fst cids in
+    {
+      foralllist = cids;
+      existslist = [];
+      left_hand_side = fst $5;
+      right_hand_side = snd $5;
+    }
+  }
+  | OPAREN core_pure CPAREN {
+    {
+      foralllist = [];
+      existslist = [];
+      left_hand_side = fst $2;
+      right_hand_side = snd $2;
+    }
+  }
+  | core_pure {
+    {
+      foralllist = [];
+      existslist = [];
+      left_hand_side = fst $1;
+      right_hand_side = snd $1;
+    }
+  }
+;
+
+core_pure 
+  : one_side DERIVE one_side{
+    ($1, $3)
+  }
+;
+
+one_side
+  : | OPAREN core_one_side CPAREN {
+    $2    
+  }
+  | core_one_side {
+    $1  
+  }
+;
+
+core_one_side
+  : core_one ORWORD core_one_side {
+          (Case_in_rec {
+                  forall_list = []; 
+                  exists_list = [];
+                  formula_element = $1;})::$3
+  }
+  | core_one {
+    [(Case_in_rec {
+            forall_list = [];
+            exists_list = [];
+            formula_element = $1;})]
+  }
+;
+
+core_one 
+  : pure_relation {
+    [$1]
+  }
+  | pure_relation AND core_one {
+    $1::$3
+
+  }
+;
+ 
 %%

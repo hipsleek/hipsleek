@@ -11,6 +11,62 @@ module P = Ipure
 module Err = Error
 module CP = Cpure
 
+type type_of_argument =
+    (*the arguments of pure predicates has two types IN and OUT
+    * variables have type IN means they are input arguments for function
+    * variables have type OUT means they are the result and depend on IN
+    * variables
+    * INIT is just a temp type before we run the definning type procedure*)
+  |IN
+  |OUT
+  |INIT
+
+type predForm = {
+  pred_name : ident ;
+  argument_list : P.exp list;(*Ipure.exp*)
+} 
+
+and pure_or_rec_formula =
+  |Pure of P.b_formula
+  |PreFormula of predForm(*PreFormula for example fact(n, r) pred_name = fact, argument_list = n, r*)
+  |Expand of case_in_rec_user_defined list
+  (*used in unfolding process PreFormula is replaced by Expand*)
+
+
+and one_case_in_rec = {
+  (*forall_list and exists_list only apprear in predicate definition*)
+  forall_list : ident list;
+  exists_list : ident list;
+  formula_element : pure_or_rec_formula list;
+}
+
+and case_in_rec_user_defined =
+      (*case in recursive user-defined predicate
+      * Example fact(n, r) == n=0 & r =1 
+      * or n> 0 fact(n-1, r1) & r = r1*n
+       * contains 2 case 
+       * -- n=0 & r =1
+       * -- n>0 & fact(n-1, r1) & r = r1*n*)
+  |Case_in_rec of (*pure_or_rec_formula list*) one_case_in_rec
+
+and pure_pred_decl =
+  (*this struc is used for pure recursive user-defined predicates*)
+  {
+    predicate_name: ident;
+    pure_vars: (ident * type_of_argument) list;
+    pure_inv: pure_or_rec_formula list;(*this invariant has some basic type P = Ipure*)
+    pure_formula: case_in_rec_user_defined list;
+  }
+
+and pure_derive = 
+  {
+      foralllist : ident list;
+      existslist : ident list;
+      left_hand_side :case_in_rec_user_defined list;
+      right_hand_side: case_in_rec_user_defined list;
+  }
+
+
 type typ =
   | Prim of prim_type
   | Named of ident (* named type, could be enumerated or object *)
@@ -20,10 +76,14 @@ and typed_ident = (typ * ident)
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
                    mutable prog_global_var_decls : exp_var_decl list;
-                   prog_enum_decls : enum_decl list;
-                   mutable prog_view_decls : view_decl list;
-                   prog_proc_decls : proc_decl list;
-                   mutable prog_coercion_decls : coercion_decl list }
+				   prog_enum_decls : enum_decl list;
+				   mutable prog_view_decls : view_decl list;
+				   prog_proc_decls : proc_decl list;
+				   mutable prog_coercion_decls : coercion_decl list;
+       (*added  Oct 16 2010*)
+       (*use it to store all definition of recursive user-defined predicates*)
+           mutable prog_pure_pred_decl: pure_pred_decl list;
+           mutable prog_pure_lemma: pure_derive list}
 
 and data_decl = { data_name : ident;
 				  data_fields : (typed_ident * loc) list;
@@ -46,6 +106,7 @@ and view_decl = { view_name : ident;
 				  view_invariant : (P.formula * (branch_label * P.formula) list);
 				  view_formula : Iformula.struc_formula;
 				  try_case_inference: bool}
+
 
 and enum_decl = { enum_name : ident;
 				  enum_fields : (ident * int option) list } 
@@ -500,6 +561,12 @@ and mkSpecTrue pos = Iformula.mkETrue pos
 		
 (* look up functions *)
 
+let rec look_up_pure_pred_def_raw (defs: pure_pred_decl list) (name:ident) = 
+  match defs with
+    |head::tail -> if head.predicate_name = name then head 
+                   else look_up_pure_pred_def_raw tail name 
+    | [] -> raise Not_found
+              
 let rec look_up_data_def pos (defs : data_decl list) (name : ident) = match defs with
   | d :: rest -> if d.data_name = name then d else look_up_data_def pos rest name
   | [] -> Err.report_error {Err.error_loc = pos; Err.error_text = "no type declaration named " ^ name ^ " is found"}

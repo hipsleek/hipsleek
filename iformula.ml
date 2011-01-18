@@ -38,11 +38,12 @@ and formula =
   | Exists of formula_exists
   | Or of formula_or
 
-and formula_base = { formula_base_heap : h_formula;
-					 formula_base_pure : P.formula;
-					 formula_base_flow : flow_formula;
-                     formula_base_branches : (branch_label * P.formula) list;
-					 formula_base_pos : loc }
+and formula_base = { 
+  formula_base_heap : h_formula;
+  formula_base_pure : P.formula;
+  formula_base_flow : flow_formula;
+  formula_base_branches : (branch_label * P.formula) list;
+  formula_base_pos : loc }
 
 and formula_exists = { formula_exists_qvars : (ident * primed) list;
 					   formula_exists_heap : h_formula;
@@ -473,20 +474,20 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 
 and rename_bound_vars (f : formula) = 
 	let add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
-  | Base ({formula_base_heap = h; 
+    | Base ({formula_base_heap = h; 
 		   formula_base_pure = p;
 		   formula_base_flow = fl;
 		   formula_base_branches = br;  
 		   formula_base_pos = pos}) -> mkExists qvars h p fl br pos
-  | Exists ({formula_exists_qvars = qvs; 
+    | Exists ({formula_exists_qvars = qvs; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p;
 			 formula_exists_flow = fl;
 			 formula_exists_branches = br;  
 			 formula_exists_pos = pos}) -> 
-	  let new_qvars = Util.remove_dups (qvs @ qvars) in
-		mkExists new_qvars h p fl br pos
-  | _ -> failwith ("add_quantifiers: invalid argument") in		
+        let new_qvars = Util.remove_dups (qvs @ qvars) in
+          mkExists new_qvars h p fl br pos
+    | _ -> failwith ("add_quantifiers: invalid argument") in		
 	match f with
   | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
 	  let rf1 = rename_bound_vars f1 in
@@ -549,7 +550,8 @@ let rec rename_bound_var_struc_formula (f:struc_formula):struc_formula =
 
 
 and float_out_exps_from_heap (f:formula ):formula = 
-	
+(*return the formula that does not contain heap node
+ * (I am not sure about this*)	
 	let rec float_out_exps (f:h_formula):(h_formula * (((ident*primed)*Ipure.formula)list)) = match f with
 		 | Star b-> 
 				let r11,r12 = float_out_exps b.h_formula_star_h1 in
@@ -631,12 +633,13 @@ and float_out_exps_from_heap_struc (f:struc_formula):struc_formula =
 	
 	
 and float_out_min_max (f :  formula) :  formula =
+  (*return a formula that does not contain min max*)
   match f with
   |  Base
       {
          formula_base_pos = l;
          formula_base_heap = h0;
-		 formula_base_flow = fl;
+         formula_base_flow = fl;
          formula_base_branches = br;
          formula_base_pure = p0
       } ->
@@ -646,7 +649,7 @@ and float_out_min_max (f :  formula) :  formula =
           {
              formula_base_pos = l;
              formula_base_heap = nh;
-			 formula_base_flow = fl;
+             formula_base_flow = fl;
              formula_base_branches = (List.map (fun (l, f) -> (l, float_out_pure_min_max f)) br);
              formula_base_pure =
               (match nhpf with
@@ -658,7 +661,7 @@ and float_out_min_max (f :  formula) :  formula =
          formula_exists_qvars = qv;
          formula_exists_heap = h0;
          formula_exists_pure = p0;
-		 formula_exists_flow = fl;
+         formula_exists_flow = fl;
          formula_exists_branches = br;
          formula_exists_pos = l
       } ->
@@ -668,7 +671,7 @@ and float_out_min_max (f :  formula) :  formula =
           {
              formula_exists_qvars = qv;
              formula_exists_heap = nh;
-			 formula_exists_flow =fl;
+             formula_exists_flow =fl;
              formula_exists_pure =
               (match nhpf with
                | None -> np

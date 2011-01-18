@@ -21,6 +21,7 @@ type tp_type =
   | Z3
   | Redlog
   | RM (* Redlog and Mona *)
+  | AltErgo
 
 let tp = ref OmegaCalc
 let proof_no = ref 0
@@ -242,6 +243,8 @@ let set_tp tp_str =
     tp := RM
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
+  else if tp_str = "alt-ergo" then
+    tp := AltErgo
   else
 	()
 
@@ -505,6 +508,7 @@ let tp_is_sat (f : CP.formula) (sat_no : string) =
             Mona.is_sat f sat_no
           else
             Redlog.is_sat f sat_no
+       | AltErgo -> Altergo.is_sat f sat_no
 
 let simplify (f : CP.formula) : CP.formula =
   if !external_prover then 
@@ -534,6 +538,7 @@ let simplify (f : CP.formula) : CP.formula =
         Mona.simplify f
       else
         Redlog.simplify f
+  |AltErgo -> Altergo.simplify f
   | _ ->
     (*
      if (is_bag_constraint f) then
@@ -564,6 +569,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
         Mona.hull f
       else
         Redlog.hull f
+  |AltErgo -> Altergo.hull f
   | _ ->
 	  (*
 		if (is_bag_constraint f) then
@@ -593,6 +599,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | RM ->
       if is_bag_constraint f then Mona.pairwisecheck f
       else Redlog.pairwisecheck f
+  |AltErgo -> Altergo.pairwisecheck f
   | _ ->
 	  (*
 	  if (is_bag_constraint f) then
@@ -665,8 +672,10 @@ let tp_imply ante conseq imp_no timeout =
 		(Omega.imply ante conseq imp_no timeout)
   | SetMONA ->
 	  Setmona.imply ante conseq 
+
   | Redlog -> 
 		 Redlog.imply ante conseq imp_no 
+    |   AltErgo -> Altergo.imply ante conseq imp_no
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
         Mona.imply timeout ante conseq imp_no

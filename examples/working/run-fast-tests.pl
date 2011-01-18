@@ -52,7 +52,7 @@ else{
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip";
+$hip = "$exec_path/hip -tp alt-ergo";
 $sleek = "$exec_path/sleek";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......

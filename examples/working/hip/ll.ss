@@ -43,7 +43,7 @@ void append(node x, node y)
         dprint;
 		append(x.next, y);
       }
-    }
+}
 
 /* return the first element of a singly linked list */
 node ret_first(node x)

@@ -656,6 +656,10 @@ let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_form
 let printer_of_b_formula (crt_fmt: Format.formatter) (e:P.b_formula) : unit =
   poly_printer_of_pr crt_fmt pr_b_formula e
 
+let rec string_of_b_formula_list b_list =
+  match b_list with
+    |head::tail -> (string_of_b_formula head)^"\n" ^ (string_of_b_formula_list tail)
+    |[] -> "\n"
 
 (** convert pure_formula  to a string via pr_pure_formula *)
 let string_of_pure_formula (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula e
