@@ -108,7 +108,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
                 | None -> ts
                 | Some c ->
                     let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
-                    CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx  in
+                    let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
+                    List.map CF.remove_dupl_false_fe r in
             (ps@res)
 	      end
         | Assign ({ exp_assign_lhs = v;
@@ -206,7 +207,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 	      end
 		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
                     Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"}
-        | Cond ({ exp_cond_type = t;
+    | Cond ({ exp_cond_type = t;
                   exp_cond_condition = v;
                   exp_cond_then_arm = e1;
                   exp_cond_else_arm = e2;

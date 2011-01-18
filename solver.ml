@@ -921,15 +921,17 @@ and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_fo
   let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
   TP.incr_sat_no () ; r
 
-
+(*
 and combine_list_partial_context_and_unsat_now prog (ctx : list_partial_context) (f : MCP.mix_formula) : list_partial_context = 
   let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in
   let r = transform_list_partial_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
+  let r = filter_false_list_partial_context r in
   TP.incr_sat_no () ; r
-
+*)
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) r in
+  let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
 
 
@@ -1555,7 +1557,7 @@ and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
   let f_simp w f pos = Util.push_time "elim_exists";
     let f_s = elim_exists_pure_branch(*_debug*) w f pos in
     Util.pop_time "elim_exists"; f_s in
-  MCP.memo_pure_push_exists_aux (f_simp,true) w f0 pos
+  MCP.memo_pure_push_exists_all (f_simp,true) w f0 pos
       
 and elim_exists_memo_pure_debug w f0 lump_all pos = 
   (print_string ("elim_exists_memo_pure input1: "^(Cprinter.string_of_spec_var_list w)^"\n") ;

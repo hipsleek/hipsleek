@@ -290,10 +290,16 @@ int bh(node x) requires true ensures false;
 
 /* function to delete the smalles element in a rb and then rebalance */
 int remove_min(ref node x)
-
+/*
 	requires x::rb<n, cl, bh> & x != null & 0 <= cl <= 1
 	ensures x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1
 		or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0;
+*/
+	requires x::rb<n, cl, bh> & x != null 
+    case { cl=1 -> ensures x'::rb<n-1, cl2, bh>;
+           cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh;
+           (cl<0 | cl>1) -> ensures false;
+    }
 
 {
 	int v1;
@@ -366,12 +372,20 @@ int remove_min(ref node x)
 
 /* function to delete an element in a red black tree */
 void del(ref node  x, int a)
-
+/*
 	requires x::rb<n, cl, bh> & 0 <= cl <= 1
 	ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
 		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
 		 or x'::rb<n, cl, bh>;
-
+*/
+  requires x::rb<n, cl, bh> 
+    case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
+                   or x'::rb<n, cl, bh>;
+         cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h
+                   or x'::rb<n, cl, bh>;
+        (cl<0 | cl>1) -> ensures false;
+    }
+     
 {
 	int v;
 
