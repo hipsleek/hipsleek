@@ -1,5 +1,8 @@
 /* avl trees */
 
+/*REMEMBER: IF EPS IS USED IT NEEDS EAP AS WELL OTHERWISE IT WILL NOT PASS*/
+
+
 /* representation of a node in an avl tree */
 data node {
   int val;
