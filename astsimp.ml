@@ -1303,7 +1303,7 @@ and find_mvars_heap prog params hf pf : CP.spec_var list =
   match hf with
     | CF.HTrue | CF.HFalse -> []
     | _ ->
-	      let eqns = MCP.ptr_equations pf in
+	      let eqns = MCP.ptr_equations_with_null pf in
 	      let asets = Context.alias eqns in
 	      let self_aset =
             Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))

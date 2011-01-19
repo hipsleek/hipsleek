@@ -409,7 +409,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
   in
   simplify e (Hashtbl.create 100)
-
+  
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   match !tp with
   | OmegaCalc ->
@@ -559,6 +559,8 @@ let simplify (f : CP.formula) : CP.formula =
       r
     with | _ -> f)
 
+let simplify (f:CP.formula): CP.formula = if (CP.contains_exists f) then simplify f else f
+   
 let simplify_debug f =
   Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 

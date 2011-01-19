@@ -391,7 +391,7 @@ and is_object_type (t : typ) = match t with
 and should_simplify (f : formula) = match f with
   | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true
   | _ -> false
-
+  
 and is_b_form_arith (b: b_formula) :bool = match b with
   | BConst _  | BVar _ -> true
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
@@ -4627,3 +4627,13 @@ let is_linear_exp e0 =
   in
   fold_exp e0 f and_list
 
+
+  
+
+let rec contains_exists (f:formula) : bool =  match f with
+    | BForm _ -> false
+    | Or (f1,f2,_,_)  
+    | And (f1,f2, _) -> (contains_exists f1) || (contains_exists f2) 
+    | Not(f1,_,_)
+    | Forall (_ ,f1,_,_) -> (contains_exists f1)  
+    | Exists _ -> true
