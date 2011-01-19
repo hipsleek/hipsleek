@@ -229,7 +229,7 @@ and ptr_equations_aux with_null (f : memo_pure) : (spec_var * spec_var) list =
   let helper f = 
     let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
-    let eqs = (if with_null then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
+    let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
       r @ eqs in
     List.concat (List.map helper f)
 

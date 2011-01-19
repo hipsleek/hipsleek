@@ -985,7 +985,7 @@ let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no :
 		List.fold_left fold_fun (true,[],None) pairs
   end
 ;;
-
+(*
 let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   let s = "imply" in
   let _ = Util.push_time s in
@@ -993,9 +993,34 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   let _ = Util.pop_time s in
   if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
-;;
+;;*)
+
+let disj_cnt a c =
+  if (!Globals.enable_counters)then
+	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> p_f_size f in
+	  let rec or_f_size f = match f with | CP.BForm _ -> 1
+		  | CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
+		  | CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
+            (*Util.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
+            Util.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
+            Util.inc_counter "imply_count";
+            Util.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
+    match c with
+      | None -> 
+          Util.add_to_counter "stat_disj_count" (or_f_size a);Util.inc_counter "stat_count";
+          Util.add_to_counter "stat_size_count" (p_f_size a)
+      | Some c-> 
+          Util.add_to_counter "stat_disj_count" ((or_f_size a)+(or_f_size c));Util.inc_counter "stat_count";
+          Util.add_to_counter "stat_size_count" ((p_f_size a)+(p_f_size c))   
+    )
+  else ()
+
 
 let imply_timeout a c i t dc =
+  disj_cnt a (Some c);
   Util.prof_5 "TP.imply_timeout" imply_timeout a c i t dc
 
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
@@ -1033,11 +1058,9 @@ let is_sat f sat_no do_cache =
       Some res -> res       
       | None -> false
   else  begin   
-
-	let _ = Util.push_time "is_sat" in
-  let res = is_sat f sat_no do_cache in
-	let _ = Util.pop_time "is_sat" in  
-	res end
+    disj_cnt f None;
+    Util.prof_1 "is_sat" (is_sat f sat_no) do_cache
+  end
 ;;
 
 let sat_no = ref 1

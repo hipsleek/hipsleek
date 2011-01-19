@@ -175,6 +175,28 @@ let prune_branches_subsume prog univ_vars lhs_node rhs_node = match lhs_node,rhs
       )
   | _ -> (false, None)      
 
+  
+let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a -> 'a) (res_checker:'b-> bool) (argument:'a) :'b =
+  begin
+   Globals.prune_with_slice := !Globals.enable_aggressive_prune;
+   let first_res = crt_heap_entailer argument in
+   first_res (*
+   let res = match !Globals.enable_aggressive_prune, !Globals.disable_aggressive_prune with
+      | true, true 
+      | false, false -> 
+        if (res_checker first_res) then first_res
+        else 
+        (Globals.prune_with_slice := true;
+         let r = prune_fct argument in
+         crt_heap_entailer r
+         )
+      | false, true 
+      | true , false ->  first_res in
+   Globals.prune_with_slice := false; 
+   res
+   *)
+  end
+  
 let prune_branches_subsume_debug prog univ_vars lhs_node rhs_node = 
   Util.ho_debug_4 "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
   (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None))) (fun _ -> true)
@@ -600,6 +622,10 @@ and prune_branch_ctx prog (pt,bctx) =
   let _ = count_br_specialized prog r in
   (pt,r)   
       
+and prune_list_ctx prog ctx = match ctx with
+  | SuccCtx c -> SuccCtx (List.map (prune_ctx prog) c)
+  | _ -> ctx
+      
 and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
   
 and prune_ctx_failesc_list prog ctx = List.map (fun (c1,c2,c3)-> 
@@ -733,7 +759,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                    let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                                 *) 
                                 let imp = 
-                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.enable_aggressive_prune in
+                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.prune_with_slice in
                                   let r = if (!Globals.enable_fast_imply) then false
                                   else 
                                     let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
@@ -1860,9 +1886,9 @@ and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool) (is_u
 	    es_orig_ante   = es.es_formula;
 	    (*es_orig_conseq = conseq ;*)}in	
     let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es es)))) cl in
-    heap_entail_struc_list_failesc_context prog is_folding is_universal has_post cl_new conseq pos pid f to_string
+    let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding is_universal has_post c conseq pos pid f to_string in 
+    heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
         
-		
 and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
       (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
 	  (f: prog_decl->bool->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof)))
@@ -1986,9 +2012,9 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool) (is_universal 
 		        es_orig_ante   = es.es_formula;
 		        es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-	        heap_entail_struc prog is_folding is_universal has_post cl_new conseq pos pid
-
-	            
+          let entail_fct = fun c-> heap_entail_struc prog is_folding is_universal has_post c conseq pos pid in
+          heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new 
+            
 	            
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
@@ -3924,7 +3950,9 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in
   Util.pop_time "entail_prune";
-  heap_entail_prefix_init prog is_folding is_universal false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)  
+  let entail_fct = (fun c-> heap_entail_prefix_init prog is_folding is_universal false c 
+      conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)) in
+  heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx c) cl_after_prune 
   
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_failesc_context)
         (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
@@ -3936,5 +3964,3 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
   let conseq = prune_preds prog false conseq in
   Util.pop_time "entail_prune";
   heap_entail_failesc_prefix_init prog is_folding is_universal false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)  
-
-  

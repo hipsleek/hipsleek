@@ -176,10 +176,12 @@ let common_arguments = [
   ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
   ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
   ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
-  ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+  ("--eap", Arg.Set Globals.enable_aggressive_prune, "always use aggressive prunning");
+  ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
   ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
      "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
+  ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ")
   ] 
 
 (* arguments/flags used only by hip *)	
