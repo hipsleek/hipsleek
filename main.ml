@@ -162,8 +162,6 @@ let main1 () =
 let _ = 
   main1 ();
   let _ = print_string (Util.string_of_counters ()) in
+  let _ = print_string ("db_access_time = "^(string_of_float !Util.db_access_time)^"\n") in
   let _ = Util.print_profiling_info () in
-  ()
-
-
-  
+  ()  

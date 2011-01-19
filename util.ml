@@ -1392,3 +1392,6 @@ let rec list_find (f:'a -> 'b option) l = match l with
     | x::xs -> match f x with
       | None -> list_find f xs
       | Some s -> Some s
+
+(*Vignesh: float counter for keeping track of db access time*)
+let db_access_time = ref 0.0;;

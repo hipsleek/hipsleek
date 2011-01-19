@@ -560,7 +560,19 @@ let cache_renaming (f:formula) = match f with
           print_string ("\n fresh_name = " ^ (string_of_spec_var_list new_qvars) ^"!!!!!!!!!\n");
 	  vc := 1 *)
 
+let hash_check = Hashtbl.create 300;;
+
 let tb_cache t1 t2 s f = 
+   let search_table key s = 
+       try 
+ 	  let ans = Hashtbl.find hash_check key in 
+		if (String.compare ans s) != 0 then 
+		   print_string "\nclash!\n"
+  		else print_string "ok2!"
+	with Not_found -> 
+		Hashtbl.add hash_check key s;
+		print_string "ok2!"
+   in    
    let key = Hashtbl.hash s in
    let key_s = string_of_int (Hashtbl.hash s) in
    let select_cache = "select result, pt, time, hr from "^t1^" where hash="^key_s in 
@@ -583,44 +595,56 @@ let tb_cache t1 t2 s f =
 		, not_null int2ml   (col2 ~key:"hr" ~row:x)
 		) in 
    let print_result1 res1 = 
-       match res1 with
-       |  None -> ( let print_result2 res2 = 
-		      match res2 with
-		      | None ->  (
-				let ml2values (hash,result,pt,t, hr) = values [ml2int hash; ml2str result; ml2str pt; ml2float t; ml2int hr]  in 
-				let t = Unix.gettimeofday () in
-   				let r = f in					
-				let td = ( Unix.gettimeofday () ) -. t in 
-			        let add = 
-					if r == false then (*Record added to sat_fail_cache because result if is_sat is false *)					    
-					    let ml2values (h,i,p,t,hr) = values [ml2int h; ml2blob i; ml2str p; ml2float t; ml2int hr] in 
-					    let _ = exec db ( insert_fail_cache (ml2values ( key, s, (tp_print ()), td, 0))) in
-					         (*int_string (t2^":added\n");*) ()
- 		                        else
-                			if td > 0.1 then (* Record added to sat_cache *)
-		             		    let _ =  exec db (insert_cache (ml2values (key, (string_of_bool r), (tp_print ()), td, 0 )) ) in
-                 	        		   (*print_string (t1^":added\n");*) () 					
-                                        (*else (* Record not added to any db *) 
-	           		             print_string "!"; *)
-                                 in add; r;
-				)
-		      | Some x -> ( let curr_hr = get_hr (row2 x) in
-				    let _ = exec db ("update "^t2^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s) in
+      match res1 with
+      |  None -> ( let print_result2 res2 = 
+	 match res2 with
+	 | None ->  (
+            let ml2values (hash,result,pt,t, hr) = values [ml2int hash; ml2str result; ml2str pt; ml2float t; ml2int hr]  in 
+	    let t = Unix.gettimeofday () in
+	    let r = f in					
+	    let td = ( Unix.gettimeofday () ) -. t in 
+	    let add = 
+	       if f == false then (*Record added to sat_fail_cache because result if is_sat is false *)
+	          let ml2values (h,i,p,t,hr) = values [ml2int h; ml2blob i; ml2str p; ml2float t; ml2int hr] in 
+ 		  let time1 = Unix.gettimeofday () in
+	          let _ = exec db ( insert_fail_cache (ml2values ( key, (tp_print ()), s, td, 0))) in 
+		  let _ = search_table key key_s in 
+		     Util.db_access_time := !Util.db_access_time +. ((Unix.gettimeofday ()) -. time1 ) 
+	          else
+	       if td > 0.1 then (* Record added to sat_cache *)
+ 		  let time1 = Unix.gettimeofday () in
+	          let _ =  exec db (insert_cache (ml2values (key, (string_of_bool r), (tp_print ()), td, 0 )) ) in
+		  let _ = search_table key key_s in
+		    Util.db_access_time := !Util.db_access_time +.( (Unix.gettimeofday ()) -. time1 )
+						(*print_string (t1^":added\n");*)  					
+				     (*else (* Record not added to any db *) 
+					  print_string "!"; *)
+		     in add; r;
+	    )
+	  | Some x -> ( let curr_hr = get_hr (row2 x) in
+ 	     let time1 = Unix.gettimeofday () in
+	     let _ = exec db ("update "^t2^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s) in
+	     let _ = search_table key key_s in 
+	        Util.db_access_time  := !Util.db_access_time +. ( (Unix.gettimeofday ()) -. time1 );
 					(*fdb_hc := !fdb_hc+1;
 					Printf.printf "\nfdb_hc : %d" !fdb_hc; 
 					print_string "@"; *)
-					false;
-				 ) in  
-			print_result2 ( fetch res2 ) ;
-		   )		
- 	|  Some x -> (  let curr_hr = get_hr (row1 x) in 
-			let _ = exec db ( "update "^t1^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s ) in 	 		
+	        false;
+	    ) in  
+	     print_result2 ( fetch res2 ) ;
+	  )		
+      |  Some x -> (  let curr_hr = get_hr (row1 x) in 
+	    let time1 = Unix.gettimeofday () in
+            let _ = exec db ( "update "^t1^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s ) in 	 		
+	    let _ = search_table key key_s in 
+	       Util.db_access_time := !Util.db_access_time +. ( (Unix.gettimeofday ()) -. time1 );
 				(*db_hc := !db_hc+1;
 				Printf.printf "\ndb_hc : %d" !db_hc;
 				print_string "#";*)
-				true;
-		     )	in 
-    print_result1 (fetch res1)
+	   true;
+	 ) in 
+    	print_result1 (fetch res1)
+	  
 
 let cache_db = true;;
 
@@ -630,12 +654,12 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     (
     Util.inc_counter "sat_cache_count";
     let new_f = simplify_var_name f in
-    let s = (!print_pure new_f) in     
+    let s = (!print_pure new_f) in         
      if cache_db then 
 	let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in 
 	  r
      else 
-	tp_is_sat_no_cache f sat_no
+	tp_is_sat_no_cache f sat_no   
     )
              
   (*    try
