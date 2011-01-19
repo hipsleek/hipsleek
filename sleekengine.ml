@@ -60,6 +60,8 @@ let clear_cprog () =
   cprog.C.prog_right_coercions <- []
 
 let clear_all () =
+  Debug.clear_debug_log ();
+  Tpdispatcher.clear_prover_log ();
   Util.clear_exc_list ();
   clear_var_table ();
   clear_iprog ();

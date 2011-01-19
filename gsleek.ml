@@ -33,9 +33,7 @@ class mainwindow () =
         <menu action='TheoremProverMenu'>\
           <menuitem action='Omega'/>\
           <menuitem action='Mona'/>\
-          <menuitem action='Cvc3'/>\
           <menuitem action='Redlog'/>\
-          <menuitem action='OM'/>\
         </menu>\
         <menuitem action='EPS'/>\
         <menuitem action='EAP'/>\
@@ -55,7 +53,7 @@ class mainwindow () =
   in
   let win = GWindow.window
     ~height:750 ~width:1000
-    ~title:"New file - Sleek" 
+    ~title:"Unsaved Document - gSleek" 
     ~allow_shrink:true
     () in
   object (self)
@@ -133,7 +131,7 @@ class mainwindow () =
 
       (* set event handlers *)
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
-      ignore (source_view#source_buffer#connect#modified_changed
+      ignore (source_view#source_buffer#connect#end_user_action
         ~callback:self#source_changed_handler);
       ignore (entailment_list#selection#connect#changed
         ~callback:self#check_selected_entailment);
@@ -150,7 +148,7 @@ class mainwindow () =
       GAction.add_actions actions [ 
         a "FileMenu" ~label:"_File";
         a "PreferencesMenu" ~label:"_Preferences";
-        a "TheoremProverMenu" ~label:"_Prover";
+        a "TheoremProverMenu" ~label:"_Theorem Prover";
         a "HelpMenu" ~label:"_Help";
         a "New" ~stock:`NEW ~tooltip:"Create a new file"
           ~callback:(fun _ -> ignore (self#newfile_handler ()));
@@ -171,9 +169,7 @@ class mainwindow () =
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
-          ra "Cvc3" 2 ~label:"_Cvc3";
-          ra "Redlog" 3 ~label:"_Redlog";
-          ra "OM" 4 ~label:"Omega _And Mona";
+          ra "Redlog" 2 ~label:"_Redlog";
         ];
       ];
       let ui = GAction.ui_manager () in
@@ -226,8 +222,8 @@ class mainwindow () =
         ~icon_size:`DIALOG
         () in
       let response = GToolbox.question_box
-        ~title:(fname ^ " is modified")
-        ~buttons:["Discard"; "Cancel"; save_msg]
+        ~title:""
+        ~buttons:["Close without Saving"; "Cancel"; save_msg]
         ~icon:icon#coerce
         ~default:3
         ("\nSave changes to file \"" ^ fname ^ "\"\nbefore closing?\n")
@@ -249,7 +245,7 @@ class mainwindow () =
     method private string_of_current_file () =
       match current_file with
       | Some fname -> fname
-      | None -> "New file"
+      | None -> "Unsaved Document"
 
     method file_closing_check (): bool =
       if source_view#source_buffer#modified then
@@ -264,18 +260,20 @@ class mainwindow () =
 
     method update_win_title () =
       let fname = self#string_of_current_file () in
-      let title = 
+      let fname = Filename.basename fname in
+      let prefix = 
         if source_view#source_buffer#modified then
-          fname ^ "* - Sleek"
+          "*"
         else
-          fname ^ " - Sleek"
+          ""
       in
+      let title = prefix ^ fname ^ " - gSleek" in
       self#set_title title;
         
     method get_text () = source_view#source_buffer#get_text ()
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.OM] in
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog] in
       let tp = List.nth provers id in
       TP.change_prover tp;
       let tp_name = TP.string_of_tp tp in
@@ -310,7 +308,16 @@ class mainwindow () =
     method show_prover_log () =
       let log = TP.get_prover_log () in
       let title = (TP.get_current_tp_name ()) ^ " Log" in
-      let win = new GLogViewWindow.log_view_window ~title log () in
+      let win = match prover_log_window with
+        | Some win-> 
+            win#set_log log;
+            win#set_title title;
+            win
+        | None ->
+            let win = new GLogViewWindow.log_view_window ~title log () in
+            prover_log_window <- Some win;
+            win
+      in
       win#present ()
 
     method show_about_dialog () =
@@ -369,6 +376,7 @@ class mainwindow () =
 
     (* Source buffer modified *)
     method private source_changed_handler () =
+      GUtil.log (self#get_text ());
       entailment_list#update_source (self#get_text ());
       source_view#clear_highlight ();
       self#update_win_title ()

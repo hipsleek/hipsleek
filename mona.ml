@@ -7,8 +7,6 @@ module CP = Cpure
 
 let mona_file_number = ref 0
 let result_file_name = "res"
-let log_all_flag = ref false
-let log_file = open_out "allinput.mona"
 let first_order_vars = ref ([] : CP.spec_var list)
 let second_order_vars = ref ([] : CP.spec_var list)
 let additional_vars = ref ([] : CP.spec_var list)
@@ -17,6 +15,17 @@ let substitution_list = ref ([] : CP.b_formula list)
 let automaton_completed = ref false
 let cycle = ref false
 let sat_optimize = ref false;;
+
+let log_all_flag = ref false
+let log_all = ref (fun _ -> raise Not_found)
+let log msg =
+  if !log_all_flag then begin
+    try !log_all msg
+    with Not_found ->
+      let out = open_out "allinput.mona" in
+      log_all := (fun msg -> output_string out msg; flush out);
+      !log_all msg
+  end
 
 
 (* pretty printing for primitive types *)
@@ -774,11 +783,8 @@ let rec check fd timeout pid : bool =
     let err= "Error in file " in 
     match r with
     | "Formula is valid" ->
-      begin
-            if !log_all_flag==true then
-            output_string log_file (" [mona.ml]: --> SUCCESS\n");
-            true;
-          end
+        log (" [mona.ml]: --> SUCCESS\n");
+        true
     | _ -> 
       let l = String.length err in
       if ((String.length r) >=l) && String.compare err (String.sub r 0 l)=0 then
@@ -829,12 +835,8 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   let (inc, outc, errc, pid) = Unix_add.open_process_full "/usr/bin/mona" [|"/usr/bin/mona"; "-q"; "test" ^ (string_of_int !mona_file_number) ^ ".mona"|] in
 (*  print_endline ("Mona started: " ^ (string_of_int pid)); flush stdout;*)
   (* if log_all_flag is on -> writing the formula in the mona log file  *)
-  if !log_all_flag == true then
-	begin
-	  output_string log_file ("test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
-      	  output_string log_file (fstr ^ ";\n");
-	  flush log_file;
-	end;
+  log ("test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
+  log (fstr ^ ";\n");
   let res = 
     try
       check inc timeout pid 
@@ -853,27 +855,20 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   end;
 (*  print_endline "Mona died."; flush stdout;*)
   Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
-  begin match res with
-  | true ->
-	  begin
-		if !log_all_flag == true then
-		  output_string log_file "[mona.ml]: imply --> true\n";
-	  end
-  | false ->
-	  begin
-		if !log_all_flag == true then
-		  output_string log_file "[mona.ml]: imply --> false\n";
-	  end
-  end;
-  flush log_file;
+  let msg =
+    if res then
+      "[mona.ml]: imply --> true\n"
+    else
+      "[mona.ml]: imply --> false\n"
+  in
+  log msg;
   res
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
   first_order_vars := [];
   second_order_vars := [];
-  if !log_all_flag == true then
-    output_string log_file ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
+  log ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   (*	
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
@@ -917,25 +912,18 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
  end
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
-  if !log_all_flag == true then
-	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
+  log ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
   let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
-  match tmp_form with
-  | true ->
-	  begin
-		if !log_all_flag == true then
-		  output_string log_file "[mona.ml]: is_sat --> false\n";
-		false;
-	  end
-  | false ->
-	  begin
-		if !log_all_flag == true then
-		  output_string log_file "[mona.ml]: is_sat --> true\n";
-		true;
-	  end
-;;
+  let msg =
+    if tmp_form then
+      "[mona.ml]: is_sat --> false\n"
+    else
+      "[mona.ml]: is_sat --> true\n"
+  in
+  log msg;
+  not tmp_form
 
 (*let imply = imply (-1.);;*)
 

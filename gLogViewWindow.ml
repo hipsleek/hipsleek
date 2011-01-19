@@ -12,12 +12,12 @@ class log_view_window ?(title="Log") log () =
     inherit GWindow.window win#as_window as super
 
     val log_view = GText.view ~editable:false ~wrap_mode:`WORD ()
-    val search_field = GEdit.entry ()
+    val search_field = GEdit.entry ~activates_default:true ()
     val status_lbl = GMisc.label ()
     val mutable current_index = 0
     val mutable search_results = []
     val mutable current_pos = None
-    val mutable clear_callback = (fun () -> ())
+    (*val mutable clear_callback = (fun () -> ())*)
 
     initializer
       status_lbl#set_use_markup true;
@@ -36,10 +36,10 @@ class log_view_window ?(title="Log") log () =
       buttons#pack next_btn#coerce;
       buttons#pack prev_btn#coerce;
       action_panel#pack buttons#coerce;
-      let clear_btn = GButton.button ~label:"Clear" () in
+      (*let clear_btn = GButton.button ~label:"Clear" () in*)
       let close_btn = GButton.button ~label:"Close" () in
       let buttons = GPack.button_box `HORIZONTAL () in
-      buttons#pack clear_btn#coerce;
+      (*buttons#pack clear_btn#coerce;*)
       buttons#pack close_btn#coerce;
       action_panel#pack v_separator#coerce;
       action_panel#pack buttons#coerce;
@@ -53,19 +53,18 @@ class log_view_window ?(title="Log") log () =
       (* set event handlers *)
       ignore (search_field#connect#changed
         ~callback:self#update_search);
-      ignore (search_field#event#connect#key_press
-        ~callback:self#key_press_handler);
+      ignore (search_field#connect#activate ~callback:self#find_next);
       ignore (next_btn#connect#clicked ~callback:self#find_next);
       ignore (prev_btn#connect#clicked ~callback:self#find_previous);
-      ignore (clear_btn#connect#clicked ~callback:self#clear_log)
+      (*ignore (clear_btn#connect#clicked ~callback:self#clear_log)*)
 
     (*****************
      * Public methods
      * ***************)
 
     method clear_log () =
-      log_view#buffer#set_text "";
-      clear_callback ();
+      log_view#buffer#set_text ""
+      (*clear_callback ();*)
 
     method set_log log =
       log_view#buffer#set_text log
@@ -83,14 +82,6 @@ class log_view_window ?(title="Log") log () =
         else self#set_status "<span background='red'>0 of 0</span>"
       else
         (self#clear_highlight (); self#set_status "")
-
-    method private key_press_handler key =
-      let enter_key = 36 in
-      let num_enter_key = 104 in
-      let keycode = GdkEvent.Key.hardware_keycode key in
-      if keycode = enter_key or keycode = num_enter_key then 
-        self#find_next ();
-      false
 
     method private pos2iters (pos: SU.substring_pos) =
       let start = log_view#buffer#get_iter_at_char pos.SU.start in
@@ -156,8 +147,8 @@ class log_view_window ?(title="Log") log () =
       log_view#buffer#remove_tag_by_name tag_current start stop;
       log_view#buffer#remove_tag_by_name tag_results start stop
 
-    method private set_clear_callback ~callback =
-      clear_callback <- callback
+    (*method private set_clear_callback ~callback =*)
+      (*clear_callback <- callback*)
 
     method private set_status (msg: string) =
       status_lbl#set_label msg

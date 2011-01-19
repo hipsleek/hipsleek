@@ -1070,36 +1070,22 @@ let stop_prover () =
   Redlog.stop_red ();
   Omega.stop_omega ()
 
-let get_prover_log () =
-  let log_file = match !tp with
-    | OmegaCalc | OM | OI | CO -> Some "allinput.oc"
-    | Cvc3 -> Some "formula.cvc"
-    | Mona -> Some "allinput.mona"
-    | Redlog -> Some "allinput.rl"
-    | _ -> None
-  in
-  let res = match log_file with
-    | Some fname ->
-        let ic = open_in fname in
-        let size = in_channel_length ic in
-        let buff = String.create size in
-        really_input ic buff 0 size;
-        close_in ic;
-        buff
-    | None -> 
-        Printf.sprintf
-          "I'm sorry! Logging feature of prover %s haven't been implemented yet."
-          (string_of_tp !tp)
-  in res
+let prover_log = Buffer.create 5096
 
 let enable_log_for_all_provers () =
+  let log_func = fun msg -> Buffer.add_string prover_log msg in
   Omega.log_all_flag := true;
+  Omega.log_all := log_func;
   Redlog.is_log_all := true;
+  Redlog.log_all := log_func;
   Mona.log_all_flag := true;
-  Cvc3.log_cvc3_formula := true;
-  Cvc3.set_log_file ""
+  Mona.log_all := log_func
+
+let get_prover_log () = Buffer.contents prover_log
+let clear_prover_log () = Buffer.clear prover_log
 
 let change_prover prover =
+  clear_prover_log ();
   tp := prover;
   start_prover ()
 

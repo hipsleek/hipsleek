@@ -5,7 +5,7 @@ let devel_debug_on = ref false
 let devel_debug_print_orig_conseq = ref false
 
 let log_devel_debug = ref false
-let debug_log = Buffer.create 1024
+let debug_log = Buffer.create 5096
 
 let clear_debug_log () = Buffer.clear debug_log
 let get_debug_log () = Buffer.contents debug_log
