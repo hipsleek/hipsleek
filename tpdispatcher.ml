@@ -595,20 +595,20 @@ let tb_cache t1 t2 s f =
 					if r == false then (*Record added to sat_fail_cache because result if is_sat is false *)					    
 					    let ml2values (h,i,p,t,hr) = values [ml2int h; ml2blob i; ml2str p; ml2float t; ml2int hr] in 
 					    let _ = exec db ( insert_fail_cache (ml2values ( key, s, (tp_print ()), td, 0))) in
-					         print_string (t2^":added\n");
+					         (*int_string (t2^":added\n");*) ()
  		                        else
                 			if td > 0.1 then (* Record added to sat_cache *)
 		             		    let _ =  exec db (insert_cache (ml2values (key, (string_of_bool r), (tp_print ()), td, 0 )) ) in
-                 	        		   print_string (t1^":added\n");					
-                                        else (* Record not added to any db *) 
-	           		            print_string "!";
+                 	        		   (*print_string (t1^":added\n");*) () 					
+                                        (*else (* Record not added to any db *) 
+	           		             print_string "!"; *)
                                  in add; r;
 				)
 		      | Some x -> ( let curr_hr = get_hr (row2 x) in
 				    let _ = exec db ("update "^t2^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s) in
 					(*fdb_hc := !fdb_hc+1;
-					Printf.printf "\nfdb_hc : %d" !fdb_hc; *)
-					print_string "@";
+					Printf.printf "\nfdb_hc : %d" !fdb_hc; 
+					print_string "@"; *)
 					false;
 				 ) in  
 			print_result2 ( fetch res2 ) ;
@@ -616,8 +616,8 @@ let tb_cache t1 t2 s f =
  	|  Some x -> (  let curr_hr = get_hr (row1 x) in 
 			let _ = exec db ( "update "^t1^" set hr="^(string_of_int (1+curr_hr))^" where hash="^key_s ) in 	 		
 				(*db_hc := !db_hc+1;
-				Printf.printf "\ndb_hc : %d" !db_hc;*)
-				print_string "#";
+				Printf.printf "\ndb_hc : %d" !db_hc;
+				print_string "#";*)
 				true;
 		     )	in 
     print_result1 (fetch res1)
@@ -629,12 +629,10 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
  (*      tp_is_sat_no_cache f sat_no *)
     (
     Util.inc_counter "sat_cache_count";
- (*   let s = (!print_pure f) in  *)
-    let new_f = CP.cache_renaming f in
+    let new_f = simplify_var_name f in
     let s = (!print_pure new_f) in     
      if cache_db then 
 	let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in 
-	 print_string ("\n Old Forumula : "^(!print_pure f) ^"\n New Formula :"^(!print_pure new_f)^"\n");
 	  r
      else 
 	tp_is_sat_no_cache f sat_no

@@ -992,7 +992,6 @@ and fresh_spec_vars (svs : spec_var list) = List.map fresh_spec_var svs
 (*----------------------------------------------------------
        13.01.2011 Renaming variables before caching*)
 
-
 and fresh_var_name_rv (s:string)  =
   let n = "v"^(string_of_int !vc) in    
     vc := !vc +1;
@@ -1002,56 +1001,46 @@ and make_var ( sv: spec_var ) =
   let old_name = name_of_spec_var sv in
   let name  = fresh_var_name_rv old_name in
   let t = type_of_spec_var sv in
-  SpecVar (t, name, Unprimed)
+    if is_primed sv then SpecVar (t, name, Primed)
+    else SpecVar(t,name,Unprimed)
 
 and make_vars (svs : spec_var list) = vc:= 1; List.map make_var svs
 
-and  cache_renaming (f:formula) =
-  Util.ho_debug_1 "cache_renaming" !print_formula !print_formula cache_renaming_x f
+(*and change_names f =
+   Util.ho_debug_1 "changes_names" !print_formula !print_formula change_names_x f 
+*)
+and change_names (f:formula):formula = 
+  let qvars = fv f in 
+  let new_qvars = make_vars qvars in 
+  let rho = List.combine qvars new_qvars in 
+  let new_qf = subst rho f in 
+    new_qf 
 
-and cache_renaming_x (f:formula) = match f with
+(*and  cache_renaming (f:formula) =
+  Util.ho_debug_1 "cache_renaming" !print_formula !print_formula cache_renaming_x f
+*)
+
+and cache_renaming (f:formula) = match f with
   | BForm _ ->   
-	let qvars = fv_helper f in 
-	let new_qvars = make_vars qvars in 
-	let rho = List.combine qvars new_qvars in
-	let new_qf = subst rho f in 
-	   print_string ("\n Names changed in BForm!!!\n"); new_qf
+	   print_string ("\n Names changed in BForm!!!\n"); (change_names f)
   | And (p1,p2,pos) -> 
-	let qvars = fv_helper f in
-	let new_qvars = make_vars qvars in 
-	let rho = List.combine qvars new_qvars in
-	let new_qf = subst rho f in 
-	    print_string ("\nNames changed in AND !!!!\n"); new_qf
+	    print_string ("\nNames changed in AND !!!!\n"); (change_names f)
 (*	let rp1 = cache_renaming p1 and rp2 = cache_renaming p2 in 
 	let res = mkAnd rp1 rp2 pos in
 	  print_string ("Names changed !!!!!!!!!\n\n");  res  *)
   | Not (qf,lb,pos)  ->  
-	let qvars = fv_helper f in
-	let new_qvars = make_vars qvars in 
-	let rho = List.combine qvars new_qvars in 
-	let new_qf = subst rho f in 
-	    print_string ("\nNames chaned in NOT !!!\n"); new_qf
+	    print_string ("\nNames chaned in NOT !!!\n"); (change_names f)
   | Or (p1,p2,lbl,pos) -> 
-	let qvars = fv_helper f in
-	let new_qvars = make_vars qvars in 
-	let rho = List.combine qvars new_qvars in 
-	let new_qf = subst rho f in
-	    print_string ("\nNames chaned in OR !!\n"); new_qf 
+	    print_string ("\nNames chaned in OR !!\n"); (change_names f)
   | Exists (qvar, qf, lbl, pos) ->
-        let renamed_f = cache_renaming_x qf in
-	let new_qvar = make_var qvar in
-	let rho = [(qvar, new_qvar)] in
-	let new_qf = subst rho renamed_f in 
-	let res_form = Exists(new_qvar, new_qf, lbl, pos) in
-	  print_string ("\nNames changed "^(string_of_spec_var new_qvar)^" !!!!!!!!!!!\n\n");res_form
+	  print_string ("\nNames changed in Exists !!!!!!!!!!!\n\n"); (change_names f)
   | Forall(qvar, qf, lbl, pos) -> 
-        let renamed_f = cache_renaming_x qf in
+        (*let renamed_f = cache_renaming_x qf in
 	let new_qvar = make_var qvar in
 	let rho = [(qvar, new_qvar)] in
 	let new_qf = subst rho renamed_f in
-	let res_form = Forall(new_qvar, new_qf, lbl, pos) in
-	  print_string ("Names changed !!!!!!!!!!!!!\n\n"); res_form
-  | BForm _ -> print_string ("\nTODO: BForm type of pure formulas not supported yet\n!!"); f
+	let res_form = Forall(new_qvar, new_qf, lbl, pos) in*)
+	  print_string ("Names changed !!!!!!!!!!!!!\n\n"); (change_names f)
 
 and split_quantifiers (f : formula) : (spec_var) = match f with
   | Exists (qvar,f,opt, loc) -> qvar 
