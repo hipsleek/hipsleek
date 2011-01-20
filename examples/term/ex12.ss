@@ -4,10 +4,10 @@ case {
 	x>=y -> case {
 				b -> case {
 					//l4 -> l3 -> l2 -> l1
-					x>1 -> //variance x-y
+					x>1 -> //variance x-y ==> [x<y]
 						   ensures "l2":true;
 					x=1 -> ensures "l3":true;
-					x<1 -> //variance -x
+					x<1 -> //variance -x ==> [x=1]
 						   ensures "l4":true;
 				}
 
@@ -21,7 +21,19 @@ case {
 							  ensures "l2":true;
 				}
 			}
-}	  
+}
+/*
+l4:x<1
+x<1 & D |- var_0 = 1
+
+x<1 & D |- (-x) >= -1
+
+x<1 & D |- (-var_0) - (-x) < 0
+
+D |- D2 * R
+------------------------------------------------
+D,[-x] |- variance [-var_0] ==> [var_0=1] D2 * R
+*/
 {
 	int x1, y1, z1;
 	if (x >= y) {
@@ -39,6 +51,7 @@ case {
 
 			assert "l4":(-x1')-(-x')<0;
 			assert "l4":(-x')>=-1;
+			assert "l4":x1'=1;
 			
 			loop(x1, y1, z1, randBool());
 		} else {

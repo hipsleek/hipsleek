@@ -72,8 +72,9 @@ let common_arguments = [
      "Trace all proof paths");
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
      "Log all CVC Lite formula to specified log file");
-	("--log-cvc3", Arg.String Cvc3.set_log_file,
-	 "Log all CVC3 formula to specified log file");
+	(* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
+	("--log-cvc3", Arg.Unit Cvc3.set_log_file,
+    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	 "Log all formulae sent to Omega Calculator in file allinput.oc");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
@@ -110,7 +111,7 @@ let common_arguments = [
 	 "Build the image theory in Isabelle - default false");
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "z3"; "om";
 	 "oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
-	 "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
+	 "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
 	("--use-field", Arg.Set Globals.use_field,
 	 "Use field construct instead of bind");
 	("--use-large-bind", Arg.Set Globals.large_bind,

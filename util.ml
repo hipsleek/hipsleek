@@ -7,6 +7,9 @@
 exception Bad_string
 exception Bail
 
+let rec restart f arg =
+  try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
+
 type 'a tag_elem = ('a * (int list))
 
 type 'a tag_list = ('a tag_elem) list
@@ -295,17 +298,21 @@ let rec drop n l  = if n<=0 then l
     | h::t -> (drop (n-1) t)
     | [] -> []
 
+let force_backtrace () : string =
+  try raise Exit 
+  with e -> Printexc.record_backtrace true;("xxx"^Printexc.get_backtrace ())
 
 let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e:'a) : 'z =
   let r = try
     f e 
   with ex -> 
       let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
   let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
   r
 
 let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
@@ -332,7 +339,7 @@ let ho_debug_2_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string
   with ex -> 
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -351,7 +358,7 @@ let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
@@ -368,7 +375,7 @@ let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -390,7 +397,7 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
       let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -405,6 +412,13 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
 
 let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
+
+let ho_debug_1_nth n s =  let str=(s^"#"^n) in ho_debug_1 str
+let ho_debug_2_nth n s =  let str=(s^"#"^n) in ho_debug_2 str
+let ho_debug_3_nth n s =  let str=(s^"#"^n) in ho_debug_3 str
+let ho_debug_4_nth n s =  let str=(s^"#"^n) in ho_debug_4 str
+let ho_debug_5_nth n s =  let str=(s^"#"^n) in ho_debug_5 str
+
 
 (** String-handling utility functions. *)
 
@@ -693,6 +707,23 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
 	Hashtbl.fold append_val tab []
 
+let counters = ref (Hashtbl.create 10)
+
+let add_to_counter (s:string) i = 
+  if !Globals.enable_counters then
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+  else ()
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = 
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+	
 let profiling_stack = ref []
 let tasks = ref (Hashtbl.create 10)  
 
@@ -708,10 +739,17 @@ let add_task_instance msg time =
 	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
  with Not_found -> 
 	Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
-let push_time msg = 
+let push_time_no_cnt msg = 
 if (!Globals.profiling) then
  let timer = get_time () in
-	profiling_stack := (msg, timer,true) :: !profiling_stack 
+	profiling_stack := (msg, timer,true) :: !profiling_stack
+else ()
+
+let push_time msg = 
+if (!Globals.profiling) then
+ (inc_counter ("cnt_"^msg);
+ let timer = get_time () in
+	profiling_stack := (msg, timer,true) :: !profiling_stack)
 else ()
 	
 let pop_time msg = 
@@ -726,7 +764,7 @@ let pop_time msg =
 				(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
 				(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
 				(* 	print_string ("\n double accounting for "^msg^"\n") *)
-                print_string ("\n skip double accounting for "^msg^"\n") 				
+                (* print_string ("\n skip double accounting for "^msg^"\n")  *)
 				end	
             else add_task_instance m1 (t2-.t1) 
 			 
@@ -746,14 +784,15 @@ let prof_2 (s:string) (f:'a1 -> 'a2 -> 'z) (e1:'a1) (e2:'a2) : 'z =
     push_time s;
       let r=f e1 e2 in
       (pop_time s; r)
-  with ex -> (print_string "exception profiling";pop_time s; raise ex)
+  with ex -> (pop_time s; raise ex)
 
 let prof_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z =
   try
     push_time s;
       let r=f e1 e2 e3 in
       (pop_time s; r)
-  with ex -> (print_string "exception profiling";pop_time s; raise ex)
+  with ex -> (pop_time s; raise ex)
+
 
 let prof_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
   try
@@ -776,6 +815,12 @@ let prof_6 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'a6 -> 'z) (e1:'a1) 
       (pop_time s; r)
   with ex -> (pop_time s; raise ex)
 
+let prof_1_nth n s =  let str=(s^"#"^n) in prof_1 str
+let prof_2_nth n s =  let str=(s^"#"^n) in prof_2 str
+let prof_3_nth n s =  let str=(s^"#"^n) in prof_3 str
+let prof_4_nth n s =  let str=(s^"#"^n) in prof_4 str
+let prof_5_nth n s =  let str=(s^"#"^n) in prof_5 str
+let prof_6_nth n s =  let str=(s^"#"^n) in prof_6 str
 
 let pop_spec_counter = ref 1
 let gen_time_msg _  = 
@@ -815,24 +860,8 @@ let add_index l =
 	(ff 0 l)
 
 	
-let counters = ref (Hashtbl.create 10)
 
-let add_to_counter (s:string) i = 
-  if !Globals.enable_counters then
-  try
-    let r = Hashtbl.find !counters s in
-    Hashtbl.replace !counters s (r+i)
-  with
-  | Not_found -> Hashtbl.add !counters s i
-  else ()
-let inc_counter (s:string) = add_to_counter s 1
-  
-let string_of_counters () = 
-  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
-  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
-	
-(*hairy stuff for exception numbering*)
+(*hairy stuff for excep tion numbering*)
 			
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
 
@@ -878,7 +907,7 @@ let get_closest ((min,max):Globals.nflow):(string) =
 											else (a,(c,d)) in
 	let r,_ = (get !exc_list) in r
  
-  
+ (*constructs the mapping between class/data def names and interval types*) 
  let c_h () = 								
 	let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 		let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in

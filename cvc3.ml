@@ -13,17 +13,21 @@ let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
 
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 
-let set_log_file fn =
+(* let set_log_file fn = *)
+(*   log_cvc3_formula := true; *)
+(*   if fn = "" then *)
+(* 	cvc3_log := open_out "formula.cvc" *)
+(*   else (\*if Sys.file_exists fn then *)
+(* 	failwith "--log-cvc3: file exists" *)
+(*   else*\) *)
+(* 	begin *)
+(* 		cvc3_log := open_out fn (\* opens fn for writing and returns an output channel for fn - cvc3_log is the output channel*\); *)
+(* 		(\* output_string !cvc3_log cvc3_command *\) *)
+(* 	end *)
+
+let set_log_file () :  unit=
   log_cvc3_formula := true;
-  if fn = "" then
-	cvc3_log := open_out "formula.cvc"
-  else (*if Sys.file_exists fn then
-	failwith "--log-cvc3: file exists"
-  else*)
-	begin
-		cvc3_log := open_out fn (* opens fn for writing and returns an output channel for fn - cvc3_log is the output channel*);
-		(* output_string !cvc3_log cvc3_command *)
-	end
+  cvc3_log := open_out "allinput.cvc3"
 
 let run_cvc3 (input : string) : unit =
   begin
@@ -66,7 +70,8 @@ and cvc3_of_exp a = match a with
         failwith ("Lists are not supported in cvc3")
 
 and cvc3_of_b_formula b = match b with
-  | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)"
+  (* | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)" *)
+  | CP.BConst (c, _) -> if c then "(0 = 0)" else "( 0 > 0)"
       (* | CP.BVar (sv, _) -> cvc3_of_spec_var sv *)
   | CP.BVar (sv, _) -> (cvc3_of_spec_var sv) ^ " > 0"
   | CP.Lt (a1, a2, _) -> (cvc3_of_exp a1) ^ " < " ^ (cvc3_of_exp a2)
@@ -75,9 +80,9 @@ and cvc3_of_b_formula b = match b with
   | CP.Gte (a1, a2, _) -> (cvc3_of_exp a1) ^ " >= " ^ (cvc3_of_exp a2)
   | CP.Eq (a1, a2, _) -> 
     if CP.is_null a2 then 
-		(cvc3_of_exp a1) ^ " <= 0"
+		(cvc3_of_exp a1) ^ " < 1"
 	  else if CP.is_null a1 then 
-		(cvc3_of_exp a2) ^ " <= 0"
+		(cvc3_of_exp a2) ^ " < 1"
 	  else 
     (cvc3_of_exp a1) ^ " = " ^ (cvc3_of_exp a2)
   | CP.Neq (a1, a2, _) -> 
@@ -348,7 +353,7 @@ and is_sat_old (f : CP.formula) (sat_no : string) : bool =
   result
 
 (*#########################################################################################*)
-(*multithreading - no log yet (to be implemented) *)
+(*manually start - stop process *)
 
 type cvc3process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
 
@@ -448,9 +453,9 @@ let cvc3_assert (process: cvc3process) (f : CP.formula) =
   send_cmd process cmd
 
 (*checks for implication*)
-let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) : bool option = 
+let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option = 
   (* let _ = (print_string ("\nquery "); flush stdout; ) in  *)
-  let _ = log_text_to_cvc3  "%%% imply\n" in
+  let _ = log_text_to_cvc3  ("%%% imply " ^ imp_no  ^ "\n") in
   let ante_fv = CP.fv ante in  
   let conseq_fv = CP.fv conseq in  
   let _ = cvc3_declare_list_of_vars process (ante_fv @ conseq_fv) in
@@ -473,8 +478,8 @@ let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) 
   r
 
 (*checks the satisfiability of formula f in the active context of cvc3process*)
-let cvc3_checksat (process: cvc3process) (f : CP.formula) : bool option = 
-  let _ = log_text_to_cvc3 ("%%% is_sat " ^ (*sat_no ^*) "\n") in
+let cvc3_checksat (process: cvc3process) (f : CP.formula) (sat_no : string): bool option = 
+  let _ = log_text_to_cvc3 ("%%% is_sat " ^ sat_no ^ "\n") in
   let _ = cvc3_declare_vars_of_formula process f in
   let n_f = prepare_formula_for_sending f in 
   let checksat_str = "CHECKSAT (" ^ n_f ^ ");\n" in
@@ -521,40 +526,49 @@ let cvc3_popto (process: cvc3process) (n: int) =
 
 (*simplify f formula and return the simplified formula *)
 let cvc3_transform (process: cvc3process) (f: CP.formula) (*: CP.formula*) = ()
-  
-let imply_helper (ante : CP.formula) (conseq : CP.formula) : bool option =
+
+let imply_helper (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
+  let answer = cvc3_query process ante conseq imp_no in
+  answer
+
+let imply_helper_separate_process (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
   let process = cvc3_create_process () in  
-  let answer = cvc3_query process ante conseq in
+  let answer = imply_helper process ante conseq imp_no in
   let _ = cvc3_stop_process process in
   answer
 
-let imply (ante : CP.formula) (conseq : CP.formula) : bool =
-  let result0 = imply_helper ante conseq in
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  let result0 = imply_helper_separate_process ante conseq imp_no in
   let result = match result0 with
 	| Some f -> f
 	| None -> begin
+        (log_text_to_cvc3   "%%% imply --> invalid (from unknown)\n\n";  flush !cvc3_log); 
 		_invalid  (* unknown is assumed to be false *)
 		    (*failwith "CVC3 is unable to perform implication check"*)
 	  end
   in
   result
 
+let is_sat_helper (process: cvc3process) (f : CP.formula) (sat_no : string) : bool option =
+  let answer = cvc3_checksat process f sat_no in
+  answer
 
-let is_sat_helper (f : CP.formula) (sat_no : string) : bool option =
+let is_sat_helper_separate_process (f : CP.formula) (sat_no : string) : bool option =
   let process = cvc3_create_process () in
-  let answer = cvc3_checksat process f in
+  let answer = is_sat_helper process f sat_no in
   let _ = cvc3_stop_process process in 
   answer
-	     
+
 let  is_sat (f : CP.formula) (sat_no : string) : bool =
-  let result0 = is_sat_helper f sat_no in
+  let result0 = is_sat_helper_separate_process f sat_no in
   let result = match result0 with
 	| Some f -> f
 	| None -> begin
-        (log_text_to_cvc3   "%%% is_sat --> true (from unknown)\n\n";  flush !cvc3_log) 
-	  end;
-	  	  (*failwith "CVC3 is unable to perform satisfiability check"*)
-	  	  _sat
-  in  result
+        (log_text_to_cvc3   "%%% is_sat --> true (from unknown)\n\n";  flush !cvc3_log);
+	  	(*failwith "CVC3 is unable to perform satisfiability check"*)
+	  	_sat
+      end
+  in
+  result
 
 (*#########################################################################################*)

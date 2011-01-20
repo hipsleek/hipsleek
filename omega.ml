@@ -58,7 +58,7 @@ let rec omega_of_exp e0 = match e0 with
   | Var (sv, _) -> omega_of_spec_var sv
   | IConst (i, _) -> string_of_int i 
   | Add (a1, a2, _) ->  (omega_of_exp a1)^ " + " ^(omega_of_exp a2) 
-  | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^(omega_of_exp a2)
+  | Subtract (a1, a2, _) ->  (omega_of_exp a1)^ " - " ^"("^(omega_of_exp a2)^")"
   | Mult (a1, a2, l) ->
       let r = match a1 with
         | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a2) ^ ")"
@@ -441,6 +441,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
 
 let simplify (pe : formula) : formula =
  (* print_endline "LOCLE: simplify";*)
+  (*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*)
   begin
     omega_subst_lst := [];
     let fstr = omega_of_formula pe in
@@ -469,7 +470,7 @@ let simplify (pe : formula) : formula =
     in
   (*   let post_time = Unix.gettimeofday () in *)
   (*   let time = (post_time -. pre_time) *. 1000. in *)
-  
+  (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
     simp_f
   end
 

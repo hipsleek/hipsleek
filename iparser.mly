@@ -214,6 +214,8 @@
 %token WHERE
 %token WHILE
 %token GLOBAL
+%token VARIANCE
+%token ESCAPE
 /*exception related*/
 %token <string> FLOW
 %token TRY
@@ -797,7 +799,7 @@ pure_constr
     | P.Not (b1,_,l) -> P.Not(b1,$2,l)
     | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
     | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
-  | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
+	| pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
 disjunctive_pure_constr
@@ -1022,6 +1024,17 @@ cexp_list_rec
 	}
 ;
 
+/*
+cexp_list_rec
+  : cexp cexp_list_rec_p {$1::$2}
+  ;
+
+cexp_list_rec_p
+  : {[]}
+  | COMMA cexp cexp_list_rec_p {$2::$3}
+  ;
+*/
+
 /********** Procedures and Coercion **********/
 
 proc_decl
@@ -1187,16 +1200,65 @@ spec
 	| ENSURES opt_label disjunctive_constr SEMICOLON {
 		Iformula.EAssume ((F.subst_stub_flow n_flow $3),(fresh_formula_label $2))
 		}
-	| CASE OBRACE branch_list CBRACE 
+	| CASE OBRACE branch_list CBRACE
 		{
 			Iformula.ECase 
 				{
 						Iformula.formula_case_branches = $3; 
 						Iformula.formula_case_pos = get_pos 1; 
 				}
-			} 
-;
+			}
+	| VARIANCE OPAREN integer_literal CPAREN measures escape_conditions spec
+		{
+			Iformula.EVariance
+			  {
+					Iformula.formula_var_label = $3;
+					Iformula.formula_var_measures = $5;
+					Iformula.formula_var_escape_clauses = $6;
+					Iformula.formula_var_continuation = [$7];
+					Iformula.formula_var_pos = get_pos 1;
+			  }
+		}
+;	
 
+measures
+	: {[]}
+	| OSQUARE variance_list CSQUARE {$2}
+	;
+
+variance_list
+	: cexp_with_bound variance_list_p {$1::$2}
+	;
+
+variance_list_p
+	: {[]}
+	| COMMA cexp_with_bound variance_list_p {$2::$3}
+	;
+
+cexp_with_bound
+	: cexp {($1, None)}
+	| cexp AT cexp {($1, Some $3)}
+	;
+
+escape_conditions
+	: {[]}
+	| ESCAPE OSQUARE condition_list CSQUARE {$3}
+	;
+
+condition_list
+	: pure_constr {[$1]}
+	;
+
+/*
+condition_list
+	: pure_constr condition_list_p {$1::$2}
+	;
+
+condition_list_p
+	: {[]}
+	| COMMA pure_constr condition_list_p {$2::$3}
+	;
+*/
 branch_list 
 	:pure_constr LEFTARROW spec_list {[($1,$3)]	}
 	| branch_list pure_constr LEFTARROW spec_list {($2,$4)::$1}

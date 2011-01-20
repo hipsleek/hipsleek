@@ -883,11 +883,13 @@ and pr_ext_formula  (e:ext_formula) =
         formula_case_exists =ee; formula_case_branches  =  case_list ; formula_case_pos = _} ->
         (* fmt_string "case exists"; *)
         (* pr_seq "" pr_spec_var ee; *)
+		fmt_string "ECase ";
         pr_args  (Some("V",1)) (Some "A") "case " "{" "}" ";"
           (fun (c1,c2) -> wrap_box ("B",0) (pr_op_adhoc (fun () -> pr_pure_formula c1) " -> " )
                    (fun () -> pr_struc_formula c2)) case_list
     | EBase { formula_ext_implicit_inst = ii; formula_ext_explicit_inst = ei; formula_ext_exists = ee; formula_ext_base = fb;
 	      formula_ext_continuation = cont; formula_ext_pos = _ } ->
+		fmt_string "EBase ";
         fmt_open_vbox 2;
         wrap_box ("B",0) (fun fb ->
 			    if not(U.empty(ee@ii@ei)) then
@@ -911,7 +913,26 @@ and pr_ext_formula  (e:ext_formula) =
 	     pr_formula_label (y1,y2);
 	     if not(U.empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
 	     fmt_cut();
-	     wrap_box ("B",0) pr_formula b) b	 
+	     wrap_box ("B",0) pr_formula b) b
+	| EVariance {
+			formula_var_label = label;
+			formula_var_measures = measures;
+			formula_var_escape_clauses = escape_clauses;
+			formula_var_continuation = cont;
+	  } ->
+		
+		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
+																			| None -> rs^(string_of_formula_exp expr)^" "
+																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
+		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(poly_string_of_pr pr_pure_formula f)) "" escape_clauses in
+		fmt_open_vbox 2;
+		fmt_string ("EVariance ("^(string_of_int label)^") "^"[ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ]"));
+        if not(U.empty(cont)) then
+		begin
+			fmt_cut();
+			wrap_box ("B",0) pr_struc_formula cont;
+        end;
+        fmt_close();
 ;;
 
 
@@ -972,6 +993,8 @@ let pr_estate (es : entail_state) =
   pr_wrap_test "es_success_pts: " U.empty (pr_seq "" (fun (c1,c2)-> fmt_string "(";(pr_op pr_formula_label c1 "," c2);fmt_string ")")) es.es_success_pts;
   pr_wrap_test "es_residue_pts: " U.empty (pr_seq "" pr_formula_label) es.es_residue_pts;
   pr_wrap_test "es_path_label: " U.empty pr_path_trace es.es_path_label;
+  pr_wrap_test "es_var_measures: " U.empty (pr_seq "" pr_formula_exp) es.es_var_measures;
+  pr_vwrap "es_var_label: " (fun l -> fmt_string (string_of_int l)) es.es_var_label;
   fmt_close ()
 
 
@@ -1336,8 +1359,9 @@ let rec string_of_exp = function
 	    exp_icall_method_name = id;
 	    exp_icall_arguments = idl;
 	    exp_icall_path_id = pid;
-	    exp_icall_pos = l}) -> 
-      string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" )
+	    exp_icall_pos = l;
+		exp_icall_is_rec = is_rec}) -> 
+      string_of_control_path_id_opt pid (r ^ "." ^ id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
   | Cast ({exp_cast_target_type = t;
 	   exp_cast_body = body}) -> begin
       "(" ^ (string_of_typ t) ^ " )" ^ string_of_exp body
@@ -1392,8 +1416,9 @@ let rec string_of_exp = function
 	    exp_scall_method_name = id;
 	    exp_scall_arguments = idl;
 	    exp_scall_path_id = pid;
-	    exp_scall_pos = l}) -> 
-      string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")")
+	    exp_scall_pos = l;
+		exp_scall_is_rec = is_rec}) ->
+      string_of_control_path_id_opt pid (id ^ "(" ^ (string_of_ident_list idl ",") ^ ")" ^ (if (is_rec) then " rec" else ""))
   | Seq ({exp_seq_type = _;
 	  exp_seq_exp1 = e1;
 	  exp_seq_exp2 = e2;
@@ -1524,3 +1549,6 @@ Cpure.print_exp := string_of_formula_exp;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
+
+Cformula.print_formula :=string_of_formula;;
+Cformula.print_struc_formula :=string_of_struc_formula;;

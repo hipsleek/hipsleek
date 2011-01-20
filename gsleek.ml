@@ -223,7 +223,7 @@ class mainwindow () =
         () in
       let response = GToolbox.question_box
         ~title:""
-        ~buttons:["Close without Saving"; "Cancel"; save_msg]
+        ~buttons:["Discard"; "Cancel"; save_msg]
         ~icon:icon#coerce
         ~default:3
         ("\nSave changes to file \"" ^ fname ^ "\"\nbefore closing?\n")
