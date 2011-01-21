@@ -99,7 +99,7 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 
 let remove_dups_svl vl = Util.remove_dups_f vl eq_spec_var
 
-      
+     
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
@@ -121,6 +121,7 @@ let rec get_exp_type (e : exp) : typ = match e with
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 
 let bool_type = Prim Bool
 
@@ -146,6 +147,10 @@ let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = Util.remove_dups_f tmp eq_spec_var in
   res
+
+and check_dups_svl ls = 
+  let b=(Util.check_dups_eq eq_spec_var ls) in
+   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
 
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
@@ -993,7 +998,9 @@ and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
   in
   (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
 
-  
+
+
+
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
 

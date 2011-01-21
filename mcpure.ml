@@ -174,6 +174,7 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
        memo_group_cons = List.map (fun d->{d with memo_formula = List.fold_left (fun a c-> b_apply_one c a) d.memo_formula s;}) f.memo_group_cons;
        memo_group_slice = List.map (subst s) f.memo_group_slice; 
        memo_group_aset = r} in
+  let _ = (check_dups_svl t) in
   let r = List.map (helper st1) f_l in
     regroup_memo_group (List.map (helper st2) r)
 

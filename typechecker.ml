@@ -71,7 +71,10 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
 
 and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
   if (exp_to_check e0) then  
-    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
+    (* let _ = if (List.exists CF.isAnyFalseFailescCtx ctx) then *)
+    (*   print_string ("\n false at :"^(Cprinter.string_of_exp e0))  *)
+    (* else () in *)
+    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0) 
   else ();
 	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
       match e0 with

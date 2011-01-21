@@ -2159,8 +2159,9 @@ and find_false_ctx ctx pos =
     false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) else ()
 
 and find_false_list_failesc_ctx (ctx:list_failesc_context) pos =
-    if (List.exists isAnyFalseFailescCtx ctx) then 
-      false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) 
+    if (List.exists isAnyFalseFailescCtx ctx) then
+      (* print_string (!print_exp e); *)
+      false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list)
     else ()
     
 	(*

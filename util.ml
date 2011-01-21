@@ -202,7 +202,12 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 *)
   
-  
+
+let rec check_dups_eq f n = 
+  match n with
+    [] -> false
+  | q::qs -> if (List.exists (fun c-> f q c) qs) then true  else check_dups_eq f qs 
+
   
 let rec remove_dups_f n f= 
   match n with
