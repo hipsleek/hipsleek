@@ -850,7 +850,7 @@ let rec simpl_in_quant formula negated rid =
 
 let simpl_pair rid (ante, conseq) =
   let l1 = CP.bag_vars_formula ante in
-  let l1 = Util.remove_dups (l1 @ (CP.bag_vars_formula conseq)) in
+  let l1 = CP.remove_dups_svl (l1 @ (CP.bag_vars_formula conseq)) in
   let antes = split_conjunctions ante in
   let fold_fun l_f_vars (ante, conseq)  = function
     | CP.BForm (CP.Eq (CP.Var (v1, _), CP.Var(v2, _), _),_) ->
@@ -1038,8 +1038,8 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
     if not r1 then (r1,r2,r3)
     else 
       let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
-      let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true true l in
-      let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true false [c] in
+      let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true (*!no_LHS_prop_drop*) true l in
+      let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) !no_RHS_prop_drop false [c] in
       let r1',r2',r3' = imply_timeout ant con imp_no timeout false in 
       (r1',r2@r2',r3')) (true, [], None) conseq0 in
   let _ = Util.pop_time "memo_imply" in

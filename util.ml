@@ -1349,12 +1349,10 @@ let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set =
   let r=rename_eset_eq2 (fun _ -> "?") (eq) f s in
   (r,eq)
 
-let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
-  let r=rename_eset_eq2 pr (eq) f s in
- let _ = print_string ("rename_eset_eq inp1 :"^(string_of_e_set pr s)^"\n") in
- let _ = print_string ("rename_eset_eq out :"^(string_of_e_set pr r)^"\n") in
-  (r,eq)
-
+let rename_eset_eq_debug (pr:'a->string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  ho_debug_1 "rename_eset_eq" 
+    (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c)
+    (fun c-> rename_eset_eq f c) (s,eq)
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm

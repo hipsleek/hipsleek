@@ -213,6 +213,15 @@ let profile_threshold = 0.5
 let no_cache_formula = ref false
 
 
+  (*for cav experiments*)
+  let f_1_slice = ref false
+  let f_2_slice = ref false
+  let no_memoisation = ref false
+  let no_incremental = ref false
+  let no_LHS_prop_drop = ref false
+  let no_RHS_prop_drop = ref false
+  
+
 let add_count (t: int ref) = 
 	t := !t+1
 

@@ -90,7 +90,16 @@ and constraint_rel =
 and rounding_func = 
   | Ceil
   | Floor
-  
+
+let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+	    (* translation has ensured well-typedness.
+		   We need only to compare names and primedness *)
+	    v1 = v2 & p1 = p2
+
+let remove_dups_svl vl = Util.remove_dups_f vl eq_spec_var
+
+      
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
@@ -168,12 +177,12 @@ and bfv (bf : b_formula) = match bf with
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 	    let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		remove_dups_svl (fv1 @ fv2 @ fv3)
   | EqMin (a1, a2, a3, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 	    let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		remove_dups_svl (fv1 @ fv2 @ fv3)
   | BagIn (v, a1, _) ->
 		let fv1 = afv a1 in
 		[v] @ fv1
@@ -181,8 +190,8 @@ and bfv (bf : b_formula) = match bf with
 		let fv1 = afv a1 in
 		[v] @ fv1
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-  | BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
-  | BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
+  | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
   | ListIn (a1, a2, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
@@ -203,7 +212,7 @@ and bfv (bf : b_formula) = match bf with
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
   let fv2 = afv a2 in
-  Util.remove_dups (fv1 @ fv2)
+  remove_dups_svl (fv1 @ fv2)
 
 and afv (af : exp) : spec_var list = match af with
   | Null _ -> []
@@ -217,20 +226,20 @@ and afv (af : exp) : spec_var list = match af with
   | Min (a1, a2, _) -> combine_avars a1 a2
         (*| BagEmpty (_) -> []*)
   | Bag (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagUnion (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagIntersect (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagDiff(a1, a2, _) -> combine_avars a1 a2
   | List (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | ListAppend (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | ListCons (a1, a2, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)  
+		remove_dups_svl (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
@@ -984,12 +993,7 @@ and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
   in
   (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
 
-and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-	    (* translation has ensured well-typedness.
-		   We need only to compare names and primedness *)
-	    v1 = v2 & p1 = p2
-
+  
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
 
@@ -3751,7 +3755,7 @@ let normalise_eq_aux ((_,eq) as aset : var_aset) : var_aset * bool * bool=
   let plst = Util.partition_eq aset in
   let (nlst,flag) = List.fold_left 
     (fun (rl,f) l -> 
-       let nl=Util.remove_dups l in
+       let nl=remove_dups_svl l in
 	 (nl::rl,(f||not((List.length nl)==(List.length l))))) 
     ([],false) plst in
   let (nlst2,flag2) = List.fold_left 

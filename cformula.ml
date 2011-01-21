@@ -702,14 +702,14 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
 	let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
 		| ECase b -> 
 		Util.difference_f CP.eq_spec_var
-      (Util.remove_dups (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)))
+      (CP.remove_dups_svl (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)))
       b.formula_case_exists
 		| EBase b -> 
 			let e = struc_fv b.formula_ext_continuation in
 			let be = fv b.formula_ext_base in
-			Util.difference_f CP.eq_spec_var (Util.remove_dups (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
+			Util.difference_f CP.eq_spec_var (CP.remove_dups_svl (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
 		| EAssume (x,b,_) -> fv b
-	in Util.remove_dups (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
+	in CP.remove_dups_svl (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
 
 	
 and struc_post_fv (f:struc_formula):Cpure.spec_var list =
@@ -721,12 +721,12 @@ List.fold_left (fun a c-> a@(helper c)) [] f
 	
 and fv (f : formula) : CP.spec_var list = match f with
   | Or ({formula_or_f1 = f1; 
-		 formula_or_f2 = f2}) -> Util.remove_dups (fv f1 @ fv f2)
+		 formula_or_f2 = f2}) -> CP.remove_dups_svl (fv f1 @ fv f2)
   | Base ({formula_base_heap = h; 
 		   formula_base_pure = p;
 		   formula_base_branches = br;
 		   formula_base_type = t}) -> 
-	  Util.remove_dups (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) (h_fv h @ MCP.mfv p) br)
+	  CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) (h_fv h @ MCP.mfv p) br)
   | Exists ({formula_exists_qvars = qvars; 
 			 formula_exists_heap = h; 
 			 formula_exists_pure = p; 
@@ -748,7 +748,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 and h_fv (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 		   h_formula_star_h2 = h2; 
-		   h_formula_star_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+		   h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v; 
 			   h_formula_data_arguments = vs0}) ->
 	  (*let vs = List.tl (List.tl vs0) in*)
@@ -1069,7 +1069,7 @@ and add_quantifiers (qvars : CP.spec_var list) (f : formula) : formula = match f
 			 formula_exists_flow = fl;
        formula_exists_branches = b;
 			 formula_exists_pos = pos}) -> 
-	  let new_qvars = U.remove_dups (qvs @ qvars) in
+	  let new_qvars = CP.remove_dups_svl (qvs @ qvars) in
 		mkExists new_qvars h p t fl b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 
@@ -1260,7 +1260,7 @@ and view_node_types (f:formula):ident list =
 
 and get_var_type v (f: formula): (CP.typ*bool) = 
 	let fv_list = fv f in
-	let res_list = Util.remove_dups (List.filter (fun c-> ((String.compare v (CP.name_of_spec_var c))==0)) fv_list) in
+	let res_list = CP.remove_dups_svl (List.filter (fun c-> ((String.compare v (CP.name_of_spec_var c))==0)) fv_list) in
 	match List.length res_list with
 	| 0 -> (CP.Prim Void,false)
 	| 1 -> (CP.type_of_spec_var (List.hd res_list),true)

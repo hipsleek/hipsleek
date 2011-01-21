@@ -170,7 +170,7 @@ let common_arguments = [
   (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
   *)
   ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
-  ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+  ("-redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
   (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
   ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
   ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
@@ -179,9 +179,16 @@ let common_arguments = [
   ("--eap", Arg.Set Globals.enable_aggressive_prune, "always use aggressive prunning");
   ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
   ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
-  ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
+  ("-memo_print", Arg.Set_int Globals.memo_verbosity,
      "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
-  ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ")
+  ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
+  
+  (*for cav experiments*)
+  ("--force_one_slice", Arg.Set Globals.f_1_slice,"");
+  ("--force_no_memo", Arg.Set Globals.no_memoisation,"");
+  ("--no_incremental", Arg.Set Globals.no_incremental,"");
+  ("--no_LHS_prop_drop", Arg.Set Globals.no_LHS_prop_drop,"");
+  ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
   ] 
 
 (* arguments/flags used only by hip *)	

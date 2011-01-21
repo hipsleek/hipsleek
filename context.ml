@@ -108,7 +108,7 @@ and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =
 	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
 	  let av1, rest1 = search v1 rest_sets in
 	  let av2, rest2 = search v2 rest1 in
-	  let v1v2_set = U.remove_dups (List.concat ([v1; v2] :: (av1 @ av2))) in
+	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
 		v1v2_set :: rest2
 	end
   | [] -> []
