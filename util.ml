@@ -1336,6 +1336,8 @@ let is_one2one_eq (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : b
     if (check_no_dupl_eq eq l) then true
     else (print_string ("duplicates here :"^(string_of_a_list pr l)^"\n") ; false) 
 
+
+
 (* check f is 1-to-1 map assuming s contains no duplicates *)
 let is_one2one (f:'a -> 'a) (s:'a list) : bool = is_one2one_eq (fun x -> "?") (=) f s
 
@@ -1347,11 +1349,41 @@ let rename_eset_eq2 (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) 
   else Error.report_error {Error.error_loc = Globals.no_pos; 
                   Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
+(* s - from var; t - to var *)
+let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
+  let rec add (f,t) acc = match acc with
+    | [] -> [[(f,t)]]
+    | (a::acc) -> if eq (snd (List.hd a)) t then ((f,t)::a)::acc
+      else a::(add (f,t) acc) in
+  let rec part xs acc = match xs with
+    | [] -> acc
+    | (x::xs) -> part xs (add x acc) in
+  let pp = part subs [] in
+  let rec mkeq xs = match xs with
+    | (a1,b1)::((a2,b2)::xs) -> (a1,a2)::(mkeq ((a2,b2)::xs))
+    | _ -> [] in
+  let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
+     eqlst
+
+let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
+  let s1 = List.map (fun x -> (x,f x)) (get_elems s) in
+  let e2= norm_subs_eq eq s1 in
+  let ns = List.fold_left (fun s (a1,a2) -> add_equiv_eq2_raw eq s a1 a2) s e2 in
+    List.map (fun (e,k) -> (f e,k)) ns
+
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
   rename_eset_eq2 (fun _ -> "?") (=) f s
 
 let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   let r=rename_eset_eq2 (fun _ -> "?") (eq) f s in
+  (r,eq)
+
+let rename_eset_eq_with_pr (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  let r=rename_eset_eq2 pr (eq) f s in
+  (r,eq)
+
+let rename_eset_eq_with_pr_allow_clash (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  let r=rename_eset_eq2_allow_clash pr (eq) f s in
   (r,eq)
 
 let rename_eset_eq_debug (pr:'a->string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 

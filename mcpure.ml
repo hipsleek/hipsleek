@@ -166,7 +166,7 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let helper  (s:(spec_var*spec_var) list) f  = 
-    let r = Util.rename_eset_eq(*_debug !print_sv_f*) (subs_one s) f.memo_group_aset in
+    let r = Util.rename_eset_eq_with_pr_allow_clash(*_debug*) !print_sv_f (subs_one s) f.memo_group_aset in
       (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
 	let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
       {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
