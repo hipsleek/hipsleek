@@ -213,7 +213,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 	let _ = Predcomp.precond_output := [] in
 	  (* generate fields *)
 	let pbvars = get_partially_bound_vars prog pre in
-	let fields_tmp = Util.remove_dups_f (farg_spec_vars @ pre_fv) CP.eq_spec_var in
+	let fields_tmp = CP.remove_dups_spec_var_list (farg_spec_vars @ pre_fv) in
 	let fields = gen_fields fields_tmp pbvars pos in
 	  (* parameters for traverse *)
 	let check_proc = { I.proc_name = "traverse";
