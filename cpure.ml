@@ -994,6 +994,8 @@ and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
+and remove_dups_spec_var_list vl = Util.remove_dups_eq eq_spec_var vl
+
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
 
@@ -4013,38 +4015,151 @@ let rec replace_pure_formula_label nl f = match f with
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
   
-let rec imply_disj ante_disj conseq t_imply imp_no =
+let rec imply_disj_orig ante_disj conseq t_imply imp_no =
   match ante_disj with
     | h :: rest -> 
-	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true) in
+	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_disj rest conseq t_imply imp_no) in
+	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
   
-let rec imply_one_conj ante_disj0 ante_disj1 conseq t_imply imp_no = 
+let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no = 
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
-  let xp01,xp02,xp03 = imply_disj ante_disj0 conseq t_imply imp_no in  
+  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
-    let xp1 = imply_disj ante_disj1 conseq t_imply imp_no in
+    (* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *)
+    let xp1 = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	xp1
   else (xp01,xp02,xp03)	
-  
-let rec imply_conj ante_disj0 ante_disj1 conseq_conj t_imply imp_no 
-   : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+
+let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
+   : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   match conseq_conj with
-    | h :: rest -> 
-	    let (r1,r2,r3)=(imply_one_conj ante_disj0 ante_disj1 h t_imply imp_no) in
-	    if r1 then 
-	      let r1,r22,r23 = (imply_conj ante_disj0 ante_disj1 rest t_imply imp_no) in
+    | h :: rest ->
+	    let (r1,r2,r3)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
+	    if r1 then
+	      let r1,r22,r23 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
-    
+
+(*###############################################################################  incremental_testing*)
+
+(* let rec imply_disj ante_disj conseq t_imply (increm_funct: Globals.incremMethodsType option) process imp_no = *)
+(*   match ante_disj with *)
+(*     | h :: rest ->  *)
+(* 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true process) in *)
+(* 	    if r1 then  *)
+(* 	      let r1,r22,r23 = (imply_disj rest conseq t_imply increm_funct process imp_no) in *)
+(* 	      (r1,r2@r22,r23) *)
+(* 	    else (r1,r2,r3) *)
+(*     | [] -> (true,[],None) *)
+
+(* let rec imply_one_conj ante_disj0 ante_disj1 conseq t_imply (increm_funct: Globals.incremMethodsType option) process imp_no =  *)
+(*   (\*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*\) *)
+(*   let xp01,xp02,xp03 = imply_disj ante_disj0 conseq t_imply increm_funct process imp_no in *)
+(*   (\*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*\) *)
+(*   if (not(xp01) (\*&& (ante_disj0 <> ante_disj1)*\)) then *)
+(*     let _ = match (increm_funct, process) with  *)
+(*       | (Some ifun, Some proc) -> ifun#popto proc 0  *)
+(*       | (_, _) -> () in *)
+(*     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in *)
+(*     (\* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *\) *)
+(*     let xp1 = imply_disj ante_disj1 conseq t_imply increm_funct process imp_no in *)
+(*     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in *)
+(* 	xp1 *)
+(*   else (xp01,xp02,xp03)	 *)
+
+
+(* let rec imply_conj_helper ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: Globals.incremMethodsType option) process imp_no  *)
+(*       : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =  *)
+(*   match conseq_conj with *)
+(*     | h :: rest -> *)
+(* 	      let (r1,r2,r3) = (imply_one_conj ante_disj0 ante_disj1 h t_imply increm_funct process imp_no) in *)
+(* 	      if r1 then *)
+(* 	        let r1,r22,r23 = (imply_conj_helper ante_disj0 ante_disj1 rest t_imply increm_funct process imp_no) in *)
+(* 	        (r1,r2@r22,r23) *)
+(* 	      else (r1,r2,r3) *)
+(*     | [] -> (true,[],None) *)
+
+(* let imply_conj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: Globals.incremMethodsType option) imp_no *)
+(*       : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = *)
+(*   (\* let _ = print_string ("\nCpure.ml: CVC3 create process") in *\) *)
+(*   let process =  *)
+(*     match increm_funct with *)
+(*       | Some ifun -> *)
+(*             let proc = ifun#start_p () in *)
+(*             let _ = ifun#push proc in *)
+(*             Some proc *)
+(*       | None -> None in *)
+(*   let r = imply_conj_helper ante_disj0 ante_disj1 conseq_conj t_imply increm_funct process imp_no in *)
+(*   let _ = *)
+(*     match (increm_funct, process) with *)
+(*       | (Some ifun, Some proc) -> ifun#stop_p proc; *)
+(*       | (_, _) -> () in *)
+(*   (\* let _ = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *\) *)
+(*   r *)
+
+let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
+  (* let _ = print_string("\nCpure.ml: imply_conj") in *)
+  match conseq_conj with
+    | h :: rest ->
+	      let r1,r2,r3 = (t_imply ante h (string_of_int !imp_no) true ( Some (process, send_ante))) in
+          (* let _ = print_string("\nCpure.ml: h:: rest "^(string_of_bool r1)) in *)
+          if r1 then
+            let send_ante = if (!Globals.enable_incremental_proving) then false
+            else send_ante in
+	        let r1,r22,r23 = (imply_conj send_ante ante rest t_imply increm_funct process imp_no) in
+	        (r1,r2@r22,r23)
+	      else (r1,r2,r3)
+    | [] -> (* let _ = print_string("\nCpure.ml: []")  in*) (true,[],None)
+
+let rec imply_disj_helper ante_disj conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) process imp_no
+      : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  match ante_disj with
+    | h :: rest ->
+          (* let _ = print_string("\nCpure.ml: bef imply_conj ") in *)
+	      let (r1,r2,r3) = (imply_conj true(*<-send_ante*) h conseq_conj t_imply increm_funct process imp_no) in
+          (* let _ = print_string("\nCpure.ml: affer imply_conj " ^(string_of_bool r1)) in *)
+	      if r1 then
+	        let r1,r22,r23 = (imply_disj_helper rest conseq_conj t_imply increm_funct process imp_no) in
+	        (r1,r2@r22,r23)
+	      else (r1,r2,r3)
+    | [] -> (true,[],None)
+
+let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) imp_no
+      : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  (* let _ = print_string ("\nCpure.ml: CVC3 create process") in *)
+  let process = 
+    match increm_funct with
+      | Some ifun ->
+            (* let _ = print_string("\nCpure.ml: start process") in *)
+            let proc = ifun#start_p () in
+            let _ = ifun#push proc in
+            Some proc
+      | None -> None in
+  let xp01,xp02,xp03 = imply_disj_helper ante_disj0 conseq_conj t_imply increm_funct process imp_no in
+  let r = if ( not(xp01) ) then begin (*xpure0 fails to prove. try xpure1*)
+    let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let r1 = imply_disj_helper ante_disj1 conseq_conj t_imply increm_funct process imp_no in
+    let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+    r1
+  end else (xp01, xp02, xp03) in
+  let _ =
+    match (increm_funct, process) with
+      | (Some ifun, Some proc) -> ifun#stop_p proc
+        (* let _ = print_string("\nCpure.ml: stop process") in  *)
+      | (_, _) -> () in
+  (* let _ = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
+  r
+
+(*###############################################################################  *)
+
 (* added for better normalization *)
 
 type exp_form = 

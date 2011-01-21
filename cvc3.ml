@@ -226,7 +226,7 @@ and flatten_output ints bools bags : string =
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = CP.remove_dups_spec_var_list (ante_fv @ conseq_fv) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -294,7 +294,7 @@ and imply_old (ante : CP.formula) (conseq : CP.formula) : bool =
   result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let all_fv = Util.remove_dups (CP.fv f) in
+  let all_fv = CP.remove_dups_spec_var_list (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -355,14 +355,16 @@ and is_sat_old (f : CP.formula) (sat_no : string) : bool =
 (*#########################################################################################*)
 (*manually start - stop process *)
 
-type cvc3process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
-
-let cvc3_create_process () : cvc3process =
+(*creates a new "cvc3 +int" process*)
+let cvc3_create_process () : Globals.prover_process =
+  (* let _ = print_string ("\nCvc3.ml: CVC3 create process") in *)
   let inchn, outchn, errchn, npid = Unix_add.open_process_full "cvc3" [|"cvc3"; "+int";(* "+printResults"*)|] in
-  let ncvc3process = {inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid } in
-  ncvc3process
+  let nProcess = {inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid } in
+  nProcess
 
-let cvc3_stop_process (process: cvc3process) : unit = 
+(*stop the "cvc3 +int" process*)
+let cvc3_stop_process (process: Globals.prover_process) : unit = 
+  (* let _ = print_string ("\nCvc3.ml: CVC3 stop process") in *)
   let _ = flush process.outchannel in
   let _ = flush stdout in
   let _ = Unix.close (Unix.descr_of_out_channel process.outchannel) in
@@ -378,18 +380,19 @@ let log_text_to_cvc3 (str : string) : unit =
 		output_string !cvc3_log str
 	  end
 
-(* return the answer from cvc3process*)
-let rec get_answer (process: cvc3process) : string =
+(* return the answer from Globals.prover_process*)
+let rec get_answer (process: Globals.prover_process) : string =
   try
     let chr = input_char process.inchannel in
     match chr with
-      |'\n' ->  ""
-      | 'a'..'z' | 'A'..'Z' -> (Char.escaped chr) ^ get_answer process (*save only alpha characters*)
-      | _ -> "" ^ get_answer process
+      |'\n' ->  "" (*end answer reading when meeting the first "\n"*)
+      | 'a'..'z' | 'A'..'Z' -> (Char.escaped chr) ^ get_answer process (*save only alpha characters.*)
+      | _ -> "" ^ get_answer process (*ignore non-alpha characters*)
   with
       _ ->   (print_string ("\nexception getting the answer from cvc3: \n" ); flush stdout); ""
 
-let rec read_prompt (process: cvc3process) : string =
+(*reads the prompt that cvc3 outputs when running in incremental mode *)
+let rec read_prompt (process: Globals.prover_process) : string =
   try
     let chr = input_char process.inchannel in
     match chr with
@@ -398,8 +401,8 @@ let rec read_prompt (process: cvc3process) : string =
   with
     |  _ ->   (print_string ("\nexception while reading cvc3 promp \n" ); flush stdout); ""
 
-(*send one command to cvc3 process*)
-let send_cmd (process: cvc3process) (cmd: string): unit = 
+(*send one command to cvc3 process without expecting any answer*)
+let send_cmd (process: Globals.prover_process) (cmd: string): unit = 
   try
     let _ = read_prompt process in
     let _ = output_string process.outchannel cmd in
@@ -409,7 +412,8 @@ let send_cmd (process: cvc3process) (cmd: string): unit =
   with
       _ ->  (print_string ("\nerror when sending a command: \n" ); flush stdout); ()
 
-let send_cmd_with_answer (process: cvc3process) (cmd: string): string = 
+(*send one command to cvc3 process and waits for its answer*)
+let send_cmd_with_answer (process: Globals.prover_process) (cmd: string): string = 
  try
   let _ = send_cmd process cmd in
   let answ = get_answer process in
@@ -423,7 +427,7 @@ let prepare_formula_for_sending (f : CP.formula) : string =
   cvc3_of_formula f 
 
 (*declares the set of variables included in vars (list of variables) *)
-let cvc3_declare_list_of_vars (process: cvc3process) (vars: CP.spec_var list) =
+let cvc3_declare_list_of_vars (process: Globals.prover_process) (vars: CP.spec_var list) =
   let int_vars, bool_vars, bag_vars = split_vars vars in
   let bag_var_decls = 
 	if Util.empty bag_vars then "" 
@@ -442,58 +446,46 @@ let cvc3_declare_list_of_vars (process: cvc3process) (vars: CP.spec_var list) =
   ()
 
 (*declares the set of variables included in f formula*)
-let cvc3_declare_vars_of_formula (process: cvc3process) (f: CP.formula) = 
-  let all_fv = Util.remove_dups (CP.fv f) in
+let cvc3_declare_vars_of_formula (process: Globals.prover_process) (f: CP.formula) = 
+  let all_fv = CP.remove_dups_spec_var_list (CP.fv f) in
   cvc3_declare_list_of_vars process all_fv
 
-(*asserts a condition to the context active in cvc3process*)
-let cvc3_assert (process: cvc3process) (f : CP.formula) =
+(*asserts a condition to the context active in Globals.prover_process*)
+let cvc3_assert (process: Globals.prover_process) (f : CP.formula) =
+  (* let _ = print_string ("\nCvc3.ml: cvc3_assert ") in *)
   let f_str = prepare_formula_for_sending f in
   let cmd = "ASSERT " ^ f_str ^ ";\n" in
   send_cmd process cmd
 
 (*checks for implication*)
-let cvc3_query (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option = 
-  (* let _ = (print_string ("\nquery "); flush stdout; ) in  *)
-  let _ = log_text_to_cvc3  ("%%% imply " ^ imp_no  ^ "\n") in
-  let ante_fv = CP.fv ante in  
-  let conseq_fv = CP.fv conseq in  
-  let _ = cvc3_declare_list_of_vars process (ante_fv @ conseq_fv) in
-  let _ =  cvc3_assert process ante in
-  (*next 3 steps are for flattering the consequent: all the quantified variables are moved in front of the consequent formula separated by type*)
-  let (flatted_conseq, quant_list) = remove_quantif conseq [] in
-  let ints, bools, bags = split_vars quant_list in 
-  let quantif_vars_str = flatten_output ints bools bags in
-  (**)
-  let n_conseq = prepare_formula_for_sending flatted_conseq in
-  let conseq_str =  "QUERY (" ^ quantif_vars_str ^ " ( " ^ n_conseq ^ "));\n" in
+let cvc3_query (process: Globals.prover_process) (f : CP.formula) : bool option * string = 
+  (* let _ = print_string ("\nCvc3.ml: cvc3_query ") in *)
+  let n_formula = prepare_formula_for_sending f in
+  let conseq_str =  "QUERY ( " ^ n_formula ^ ");\n" in
   let answer = send_cmd_with_answer process conseq_str in
-  let _ = (log_text_to_cvc3  ("%%% Res: " ^ answer ^ " \n\n");  flush !cvc3_log) in
   let r = match answer with
     | "Valid" -> Some _valid
     | "Invalid" -> Some _invalid
     | "Unknown" -> None
     | _ -> None
   in
-  r
+  (r, answer)
 
-(*checks the satisfiability of formula f in the active context of cvc3process*)
-let cvc3_checksat (process: cvc3process) (f : CP.formula) (sat_no : string): bool option = 
-  let _ = log_text_to_cvc3 ("%%% is_sat " ^ sat_no ^ "\n") in
-  let _ = cvc3_declare_vars_of_formula process f in
+(*checks the satisfiability of formula f in the active context of Globals.prover_process*)
+let cvc3_checksat (process: Globals.prover_process) (f : CP.formula): bool option * string= 
+  (* let _ = print_string ("\nCvc3.ml: cvc3_checksat ") in *)
   let n_f = prepare_formula_for_sending f in 
   let checksat_str = "CHECKSAT (" ^ n_f ^ ");\n" in
   let answer = send_cmd_with_answer process checksat_str in
-  let _ = (log_text_to_cvc3  ("%%% Res: " ^ answer ^ " \n\n");  flush !cvc3_log) in
   let r = match answer with
     | "Satisfiable" ->  Some _sat
     | "Unsatisfiable" ->  Some _unsat
     | "Unknown" ->  None
     | _ -> None 
-  in  r
+  in  (r, answer)
 
 (*restarts an invalid QUERY or satisfiable CHECKSAT with an additional assumption represented by f, using what it has been learnt by now*)
-let cvc3_restart_query (process: cvc3process) (f: CP.formula) : bool option = 
+let cvc3_restart_query (process: Globals.prover_process) (f: CP.formula) : bool option = 
   let _ = log_text_to_cvc3 ("%%% restart " ^ (*sat_no ^*) "\n") in
   let n_f = prepare_formula_for_sending f in 
   let restart_str = "RESTART ( "^ n_f ^ " );\n" in 
@@ -510,35 +502,51 @@ let cvc3_restart_query (process: cvc3process) (f: CP.formula) : bool option =
   in r
 
 (*saves the current state in the active context of cvc3process*)
-let cvc3_push (process: cvc3process) = 
+let cvc3_push (process: Globals.prover_process) = 
   let cmd = "PUSH;\n" in
   send_cmd process cmd
 
 (*returns to the state before the last call of PUSH*)
-let cvc3_pop (process: cvc3process) = 
+let cvc3_pop (process: Globals.prover_process) = 
   let cmd = "POP;\n" in
   send_cmd process cmd
 
 (*returns to the state before the last call of PUSH made from stack level n*)
-let cvc3_popto (process: cvc3process) (n: int) = 
+let cvc3_popto (process: Globals.prover_process) (n: int) = 
   let cmd = "POPTO " ^ (string_of_int n)  ^ ";\n" in
   send_cmd process cmd
 
 (*simplify f formula and return the simplified formula *)
-let cvc3_transform (process: cvc3process) (f: CP.formula) (*: CP.formula*) = ()
+let cvc3_transform (process: Globals.prover_process) (f: CP.formula) (*: CP.formula*) = ()
 
-let imply_helper (process: cvc3process) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
-  let answer = cvc3_query process ante conseq imp_no in
+(*sends the query command to "process" and returns the answer given by cvc3*)
+let imply_helper (process: Globals.prover_process) (send_ante: bool) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
+  (* let _ = print_string ("\nCvc3.ml: imply ") in *)
+  let _ = log_text_to_cvc3  ("%%% imply " ^ imp_no  ^ "\n") in
+  let _ = 
+    if (send_ante) then
+      let ante_fv = CP.fv ante in
+      let conseq_fv = CP.fv conseq in
+      let _ = cvc3_declare_list_of_vars process (ante_fv @ conseq_fv) in
+      cvc3_assert process ante
+    else cvc3_declare_vars_of_formula process (conseq) in
+  let (answer, answer_str) = cvc3_query process conseq in
+  let _ = (log_text_to_cvc3  ("%%% Res: " ^ answer_str ^ " \n\n");  flush !cvc3_log) in
   answer
 
+(*creates a new cvc3 process, sends the query command to the freshly created"process", stops the process and returns the answer given by cvc3*)
 let imply_helper_separate_process (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
   let process = cvc3_create_process () in  
-  let answer = imply_helper process ante conseq imp_no in
+  let answer = imply_helper process true ante conseq imp_no in
   let _ = cvc3_stop_process process in
   answer
 
-let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  let result0 = imply_helper_separate_process ante conseq imp_no in
+(*checks implication when in incremental running mode.*)
+let imply_increm (process: (Globals.prover_process option * bool) option) (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  (* let _ = print_string ("\nIMPLY:\n\tante: " ^( prepare_formula_for_sending ante) ^ "\n\tconseq:" ^( prepare_formula_for_sending conseq)) in *)
+  let result0 = match process with
+    |Some (Some proc, send_ante) -> imply_helper proc send_ante ante conseq imp_no
+    | None | _ -> imply_helper_separate_process ante conseq imp_no in
   let result = match result0 with
 	| Some f -> f
 	| None -> begin
@@ -549,8 +557,16 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   in
   result
 
-let is_sat_helper (process: cvc3process) (f : CP.formula) (sat_no : string) : bool option =
-  let answer = cvc3_checksat process f sat_no in
+(*checks implication when in non-incremental running mode.*)
+let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
+  imply_increm None ante conseq imp_no
+
+let is_sat_helper (process: Globals.prover_process) (f : CP.formula) (sat_no : string) : bool option =
+  (* let _ = print_string ("\nCvc3.ml: cvc3_is_sat ") in *)
+  let _ = log_text_to_cvc3 ("%%% is_sat " ^ sat_no ^ "\n") in
+  let _ = cvc3_declare_vars_of_formula process f in
+  let (answer, answer_str) = cvc3_checksat process f in
+  let _ = (log_text_to_cvc3  ("%%% Res: " ^ answer_str ^ " \n\n");  flush !cvc3_log) in
   answer
 
 let is_sat_helper_separate_process (f : CP.formula) (sat_no : string) : bool option =

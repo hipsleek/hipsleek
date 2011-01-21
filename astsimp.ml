@@ -1022,7 +1022,8 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
       Solver.heap_entail_init prog false false (CF.SuccCtx [ ctx ]) formula pos
     in
 	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
-	if not(CF.isFailCtx rs)
+    (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
+	let _ = if not(CF.isFailCtx rs)
     then
       (vdef.C.view_x_formula <- (xform, xform_b);
       vdef.C.view_addr_vars <- addr_vars;
@@ -1031,7 +1032,9 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
       Err.report_error
           {
               Err.error_loc = pos;
-              Err.error_text = "view formula does not entail supplied invariant\n";})
+              Err.error_text = "view formula does not entail supplied invariant\n";} in ()
+    (* print_string ("\nAstsimp.ml: bef error") *)
+)
   else ();
   if !Globals.print_x_inv && (n = 0)
   then

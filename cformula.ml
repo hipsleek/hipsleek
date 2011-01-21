@@ -729,7 +729,7 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
 			let escapes_fv = (List.concat (List.map (fun f -> CP.fv f) b.formula_var_escape_clauses)) in
 			let continuation_fv = struc_fv b.formula_var_continuation in
 			Util.remove_dups (measures_fv@escapes_fv@continuation_fv)
-	in Util.remove_dups (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
+	in CP.remove_dups_spec_var_list (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
 
 	
 and struc_post_fv (f:struc_formula):Cpure.spec_var list =
@@ -1880,6 +1880,7 @@ and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_sta
 	Ctx {es with es_formula = normalize es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat} 
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
+  (* let _ = print_string ("\nCformula.ml: normalize_es_combine") in *)
 	Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 		
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
@@ -1918,7 +1919,9 @@ match ctx with
 		res
 		
 (* -- 17.05.2008 *)
-and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context = match f with
+and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
+  (* let _ = print_string ("\nCformula.ml: normalize_clash_es") in *)
+  match f with
 	| Or ({formula_or_f1 = phi1; formula_or_f2 =  phi2; formula_or_pos = _}) ->
 		let new_c1 = normalize_clash_es phi1 pos result_is_sat es in
 		let new_c2 = normalize_clash_es phi2 pos result_is_sat es in

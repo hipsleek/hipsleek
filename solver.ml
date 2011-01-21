@@ -622,7 +622,7 @@ and prune_pred_struc prog (simp_b:bool) f =
   List.map helper f
       
 and prune_preds prog (simp_b:bool) (f:formula):formula =   
-  let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false in r in   
+  let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify) c else c in
   
   let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
@@ -742,7 +742,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                   let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.enable_aggressive_prune in
                                   let r = if (!Globals.enable_fast_imply) then false
                                   else 
-                                    let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true in
+                                    let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
                                     (if r1 then Util.inc_counter "imply_sem_prun_true"
                                     else Util.inc_counter "imply_sem_prun_false";r1) in
                                   r
@@ -1646,6 +1646,7 @@ and elim_ante_evars (es:entail_state) : context =
       
 (*used for finding the unsat in the original pred defs formulas*)
 and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =  
+  (* let _ = print_string ("\naSolver.ml: find_unsat") in *)
   let sat_subno = ref 1 in 
   match f with
     | Base _ | Exists _ ->
@@ -2054,23 +2055,25 @@ and heap_entail_after_sat_struc prog is_folding is_universal has_post
 	    (filter_set tmp, prf)
       end
           
-and sem_imply_add prog is_folding is_universal ctx (p:CP.formula) only_syn:(context*bool) = match ctx with
-  | OCtx _ -> report_error no_pos ("sem_imply_add: OCtx encountered \n")
-  | Ctx c -> 
-        if (CP.isConstTrue p) then (ctx,true)
-        else
-	      if (sintactic_search c.es_formula p) then (ctx,true)
-	      else if only_syn then (ctx,false)
-	      else
-	        let b = (xpure_imply prog is_folding is_universal c p !Globals.imply_timeout) in
-	        if b then 
-              ((Ctx {c with 
-                  es_formula =(mkAnd_pure_and_branch 
-                      c.es_formula 
-                      (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) p) 
-                      [] 
-                      no_pos)}),true)
-	        else (ctx,false)
+and sem_imply_add prog is_folding is_universal ctx (p:CP.formula) only_syn:(context*bool) = 
+  (* let _ = print_string ("\nSolver.ml: sem_imply_add") in *)
+  match ctx with
+    | OCtx _ -> report_error no_pos ("sem_imply_add: OCtx encountered \n")
+    | Ctx c -> 
+          if (CP.isConstTrue p) then (ctx,true)
+          else
+	        if (sintactic_search c.es_formula p) then (ctx,true)
+	        else if only_syn then (ctx,false)
+	        else
+	          let b = (xpure_imply prog is_folding is_universal c p !Globals.imply_timeout) in
+	          if b then 
+                ((Ctx {c with 
+                    es_formula =(mkAnd_pure_and_branch 
+                        c.es_formula 
+                        (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) p) 
+                        [] 
+                        no_pos)}),true)
+	          else (ctx,false)
 
 
 and heap_entail_conjunct_lhs_struc 
@@ -2351,8 +2354,8 @@ and heap_entail_after_sat prog is_folding is_universal ctx conseq pos
       end
 
 (*
-and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) 
-      = Util.ho_debug_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
+  and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) 
+  = Util.ho_debug_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
   (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding is_universal ctx conseq pos) ctx 
 *)
 
@@ -2738,6 +2741,7 @@ and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) 
   (ante, tmp1)
       
 and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lhs rhs_p timeout : bool = 
+  (* let _ = print_string ("\nSolver.ml: xpure_imply") in *)
   let imp_subno = ref 0 in
   let estate = lhs in
   let pos = no_pos in
@@ -2869,18 +2873,38 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_univ
   end
     
 
-and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no 
+and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  (* let _ = print_string ("\nSolver.ml: imply_mix_formula " ^ (string_of_int !imp_no)) in *)
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
-          CP.imply_conj 
+          let increm_funct = 
+            if !Globals.enable_incremental_proving then Some TP.incremMethodsO
+            else None in
+          CP.imply_disj
+              (TP.split_disjunctions a0) (* list with xpure0 antecedent disjunctions *)
+              (TP.split_disjunctions a1) (* list with xpure1 antecedent disjunctions *)
+              (TP.split_conjunctions c) (* list with consequent conjunctions *)
+              TP.imply         (* imply method to be used for implication proving *)
+              increm_funct
+              imp_no
+    | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
+
+and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no 
+      :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  (* let _ = print_string ("\n\nimply_mix_formula" ^ (string_of_int !imp_no)^"\n") in *)
+  match ante_m0,ante_m1,conseq_m with
+    | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
+    | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
+          CP.imply_conj_orig 
               (TP.split_disjunctions a0) 
               (TP.split_disjunctions a1) 
               (TP.split_conjunctions c) 
               TP.imply 
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
+
           
 and return_base_cases prog c2 v2 p2 ln2 rhs pos = 
   (*TODO: split this step into two steps,
@@ -2909,6 +2933,7 @@ and return_base_cases prog c2 v2 p2 ln2 rhs pos =
                 
                 
 and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f =
+  (* let _ = print_string ("\nSolver.ml: do_base_case_unfold ") in *)
   if (is_data ln2) then (None,None)
   else
     let _ = Util.push_time "empty_predicate_testing" in
@@ -3034,6 +3059,7 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     (res_es1,prf1)
 	    
 and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
+  (* let _ = print_string ("\nSolver.ml: heap_entail_non_empty_rhs_heap") in *)
   let lhs_h = lhs_b.formula_base_heap in
   let lhs_p = lhs_b.formula_base_pure in
   let lhs_t = lhs_b.formula_base_type in
@@ -3635,7 +3661,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 		        (*******************************************************************************************************************************************************************************************)
 		        (* is it necessary to xpure (node * f) instead ? *)
 			    (* ok because of TP.imply*)
-		        if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then
+		        if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false None)) then
 		          let new_f = normalize coer_rhs_new f pos in
 		          (if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
 			        ((*print_string("disable distribution\n"); *)enable_distribution := false);

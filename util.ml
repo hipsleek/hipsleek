@@ -183,7 +183,13 @@ let rec remove_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
+
 let mem f x l = List.exists (f x) l
+
+let rec remove_dups_eq eq n = 
+  match n with
+    [] -> []
+  | q::qs -> if (mem eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
   
   (* from cpure
 and mem (sv : spec_var) (svs : spec_var list) : bool =
@@ -405,6 +411,32 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
     let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
     let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    r  
+  else 
+    r
+
+let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
+  let r = try
+    f e1 e2 e3 e4 e5 e6
+  with ex -> 
+      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+      let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+      let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
+      let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
+      let _ = print_string (s^" inp6 :"^(pr6 e6)^"\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+      raise ex in
+  if (test r) then
+    let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+    let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+    let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
+    let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
+    let _ = print_string (s^" inp6 :"^(pr6 e6)^"\n") in
     let _ = print_string (s^" out :"^(pr_o r)^"\n") in
     r  
   else 

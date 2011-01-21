@@ -208,6 +208,8 @@ let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
+let enable_incremental_proving = ref false
+
 
 let add_count (t: int ref) = 
 	t := !t+1
@@ -387,3 +389,19 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
   match (fn t) with
     | None -> "", [t]
     | Some (op, _) -> op,(bin_op_to_list op fn t)
+
+(*type of process used for communicating with the prover*)
+type prover_process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+
+(*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
+class type ['a] incremMethodsType = object
+  method start_p: unit -> prover_process
+  method stop_p:  prover_process -> unit
+  method push: prover_process -> unit
+  method pop: prover_process -> unit
+  method popto: prover_process -> int -> unit
+  method imply: prover_process -> 'a -> 'a -> string -> bool
+  (* method add_to_context: 'a -> unit *)
+end
+
+

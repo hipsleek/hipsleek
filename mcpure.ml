@@ -1024,7 +1024,7 @@ let mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
     | _ -> fold_mem_lst (mkTrue no_pos) false true n_ante in
   let _ = Debug.devel_pprint str no_pos in
   (Util.push_time str_time; 
-  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false in
+  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
   Util.pop_time str_time;
   r)
  
@@ -1050,6 +1050,7 @@ let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no =
   
  
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
+  let _ = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in
   match conseq_conj with
     | h :: rest -> 
 	      let (r1,r2,r3)=(mimply_one_conj(*_debug*) ante_memo0 h t_imply imp_no) in
