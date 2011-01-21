@@ -357,7 +357,7 @@ let elim_exists (f : CP.formula) : CP.formula =
   ef
 
 let filter (ante : CP.formula) (conseq : CP.formula) : (CP.formula * CP.formula) =
-  if !filtering_flag then
+  if !filtering_flag (*&& (not !allow_pred_spec)*) then
 	let fvar = CP.fv conseq in
 	let new_ante = CP.filter_var ante fvar in
 	  (new_ante, conseq)
@@ -995,7 +995,7 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache =
   (res1,res2,res3)
 ;;*)
 
-let disj_cnt a c =
+let disj_cnt a c s =
   if (!Globals.enable_counters)then
 	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
 		  | CP.And (f1,f2,_) | CP.Or (f1,f2,_,_) -> (p_f_size f1)+(p_f_size f2)
@@ -1008,19 +1008,28 @@ let disj_cnt a c =
             Util.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
             Util.inc_counter "imply_count";
             Util.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
+    let rec add_or_f_size f = match f with
+      | CP.BForm _ -> 0
+		  | CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
+		  | CP.Or (f1,f2,_,_) -> 1+(add_or_f_size f1)+(add_or_f_size f2)
+		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
     match c with
       | None -> 
-          Util.add_to_counter "stat_disj_count" (or_f_size a);Util.inc_counter "stat_count";
-          Util.add_to_counter "stat_size_count" (p_f_size a)
+          Util.inc_counter ("stat_count"^s);
+          Util.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a));
+          Util.add_to_counter ("stat_disj_count"^s) (or_f_size a);
+          Util.add_to_counter ("stat_size_count"^s) (p_f_size a)
       | Some c-> 
-          Util.add_to_counter "stat_disj_count" ((or_f_size a)+(or_f_size c));Util.inc_counter "stat_count";
-          Util.add_to_counter "stat_size_count" ((p_f_size a)+(p_f_size c))   
+          Util.inc_counter ("stat_count"^s);
+          Util.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a)); 
+          Util.add_to_counter ("stat_disj_count"^s) ((or_f_size a)+(or_f_size c));
+          Util.add_to_counter ("stat_size_count"^s) ((p_f_size a)+(p_f_size c)) ;
     )
   else ()
 
 
 let imply_timeout a c i t dc =
-  disj_cnt a (Some c);
+  disj_cnt a (Some c) "imply";
   Util.prof_5 "TP.imply_timeout" imply_timeout a c i t dc
 
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
@@ -1058,7 +1067,7 @@ let is_sat f sat_no do_cache =
       Some res -> res       
       | None -> false
   else  begin   
-    disj_cnt f None;
+    disj_cnt f None "sat";
     Util.prof_1 "is_sat" (is_sat f sat_no) do_cache
   end
 ;;
