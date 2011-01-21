@@ -112,6 +112,7 @@ let rec get_exp_type (e : exp) : typ = match e with
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 
 let bool_type = Prim Bool
 
@@ -231,7 +232,7 @@ and afv (af : exp) : spec_var list = match af with
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)  
-  | ListHead (a, _)
+  | ListHead (a, _)  
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
@@ -243,6 +244,9 @@ and afv_list (alist : exp list) : spec_var list = match alist with
 and is_max_min a = match a with
   | Max _ | Min _ -> true
   | _ -> false
+
+and isConstTrue_debug (p:formula) =
+  Util.ho_debug_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
 and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos)),_) -> true

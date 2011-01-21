@@ -519,8 +519,8 @@ and mona_of_b_formula b f vs =
   let ret =
   match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
-  | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ " = pconst(0))"
-  (* CP.Lt *)   
+  | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
+   (* CP.Lt *)   
   (*| CP.Lt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
   | CP.Lt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lt (a1, a2, _) -> (equation a1 a2 f "less" "<" vs)
@@ -694,7 +694,7 @@ and mona_of_formula f initial_f vs =
       begin
         if !sat_optimize then
 	      match p with
-		  | CP.BForm (CP.BVar (bv, _),_) -> (mona_of_spec_var bv) ^ " = pconst(1)"
+		  | CP.BForm (CP.BVar (bv, _),_) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
 (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		  | _ -> " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
         else " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
@@ -727,7 +727,7 @@ and mona_of_formula f initial_f vs =
 (* pretty printing for boolean vars *)
 and print_b_formula b f = match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
-  | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ (*" = 1")*)" = pconst(1))"
+  | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.Lt (a1, a2, _) -> (mona_of_exp a1 f) ^ "<" ^ (mona_of_exp a2 f)
   | CP.Lte (a1, a2, _) -> (mona_of_exp a1 f) ^ "<=" ^ (mona_of_exp a2 f)
   | CP.Gt (a1, a2, _) -> (mona_of_exp a1 f) ^ ">" ^ (mona_of_exp a2 f)
