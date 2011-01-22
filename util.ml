@@ -1365,8 +1365,13 @@ let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
   let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
      eqlst
 
-let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
-  let s1 = List.map (fun x -> (x,f x)) (get_elems s) in
+let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set =
+  let sl = get_elems s in
+  let tl = List.map f sl in
+  if (check_no_dupl_eq eq tl) then
+    List.map (fun (e,k) -> (f e,k)) s
+  else
+  let s1 = List.combine sl tl in
   let e2= norm_subs_eq eq s1 in
   let ns = List.fold_left (fun s (a1,a2) -> add_equiv_eq2_raw eq s a1 a2) s e2 in
     List.map (fun (e,k) -> (f e,k)) ns

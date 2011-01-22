@@ -160,7 +160,7 @@ and regroup_memo_group (lst : memo_pure) : memo_pure =
     helper lst
       
       
-
+(*
 and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure=
   let fresh_fr = fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
@@ -168,7 +168,7 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let helper  (s:(spec_var*spec_var) list) f  = 
     let r = Util.rename_eset_eq_with_pr_allow_clash(*_debug*) !print_sv_f (subs_one s) f.memo_group_aset in
       (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
-	let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
+	let _ = print_string1 ("rapp2: "^(print_alias_set r)^"\n") in*)
       {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
        memo_group_changed = f.memo_group_changed;
        memo_group_cons = List.map (fun d->{d with memo_formula = List.fold_left (fun a c-> b_apply_one c a) d.memo_formula s;}) f.memo_group_cons;
@@ -177,6 +177,22 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let _ = (check_dups_svl t) in
   let r = List.map (helper st1) f_l in
     regroup_memo_group (List.map (helper st2) r)
+*)
+
+and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure=
+  let st1 = List.combine fr t in
+  (* let st2 = List.combine fresh_fr t in *)
+  let helper  (s:(spec_var*spec_var) list) f  = 
+    let r = Util.rename_eset_eq_with_pr_allow_clash(*_debug*) !print_sv_f (subs_one s) f.memo_group_aset in
+      (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
+	let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
+      {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
+       memo_group_changed = f.memo_group_changed;
+       memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs s d.memo_formula;}) f.memo_group_cons;
+       memo_group_slice = List.map (par_subst s) f.memo_group_slice; 
+       memo_group_aset = r} in
+  let r = List.map (helper st1) f_l in
+    regroup_memo_group r
 
 and subst_avoid_capture_memo_debug (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure =
   Util.ho_debug_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l

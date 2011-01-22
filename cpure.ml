@@ -1128,7 +1128,13 @@ and b_apply_subs sst bf = match bf with
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
 
-and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
+(* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
+
+and subs_one sst v = 
+  let rec helper sst v = match sst with
+    | [] -> v
+    | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)
+  in helper sst v
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ -> e
