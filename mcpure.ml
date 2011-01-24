@@ -1169,7 +1169,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
     | [] -> (true,[],None)
    
     
-let rec imply_memo ante_memo0 conseq_memo t_imply imp_no 
+let rec imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
@@ -1177,10 +1177,25 @@ let rec imply_memo ante_memo0 conseq_memo t_imply imp_no
           let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in
 	      if r1 then 
-	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in
+	        let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
+          
+let imply_memo ante_memo0 conseq_memo t_imply imp_no =
+  let ante_memo0 = 
+    if !f_2_slice then match ante_memo0 with
+       | [] -> []
+       | [h] -> [h]
+       | h::t -> [List.fold_left (fun a c-> 
+          let na =Util.merge_set_eq a.memo_group_aset c.memo_group_aset in
+            {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
+             memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
+             memo_group_changed = true;
+             memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
+             memo_group_aset = na;}) h t]
+    else ante_memo0 in
+  imply_memo_x ante_memo0 conseq_memo t_imply imp_no
           
 (*let imply_memo_debug ante_memo conseq_memo t_imply =
   let (r1,r2,r3)= imply_memo ante_memo conseq_memo in  

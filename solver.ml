@@ -669,7 +669,7 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_branches b.formula_base_pos b.formula_base_label
           (*Base {b with formula_base_pure = rp; formula_base_heap = rh} *) in
-  if (not !Globals.allow_pred_spec || !Globals.no_prun) then f
+  if not !Globals.allow_pred_spec then f
   else 
     (
         Util.push_time "prune_preds_filter";

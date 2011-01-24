@@ -1119,12 +1119,13 @@ let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =
 
 let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool = 
   let f_lst = MCP.fold_mem_lst_to_lst f with_dupl with_inv true in
-  not (List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)
+  if !f_2_slice then (is_sat_sub_no (CP.join_conjunctions f_lst) sat_subno)
+  else not (List.fold_left (fun a c-> if a then a else not (is_sat_sub_no c sat_subno)) false f_lst)
 ;;
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
-  | MCP.OnePF f -> is_sat_sub_no_with_slicing f sat_subno
+  | MCP.OnePF f -> (if !do_sat_slice then is_sat_sub_no_with_slicing else is_sat_sub_no) f sat_subno
 
 let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
   let sat_subno = ref 0 in

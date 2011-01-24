@@ -220,7 +220,7 @@ let no_cache_formula = ref false
   let no_incremental = ref false
   let no_LHS_prop_drop = ref false
   let no_RHS_prop_drop = ref false
-  let no_prun = ref false
+  let do_sat_slice = ref false
   
 
 let add_count (t: int ref) = 
