@@ -1332,7 +1332,7 @@ let mkOr_mems (f1: mix_formula) (f2: mix_formula) : mix_formula = match f1,f2 wi
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "mkOr_mems: wrong mix of memo and pure formulas"}
   
 let subst_avoid_capture_memo from t f = match f with
-  | MemoF f -> MemoF (subst_avoid_capture_memo_debug from t f)
+  | MemoF f -> MemoF (subst_avoid_capture_memo(*_debug*) from t f)
   | OnePF f -> OnePF (subst_avoid_capture from t f)
   
 let memo_subst s f = match f with

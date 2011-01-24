@@ -669,7 +669,7 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_branches b.formula_base_pos b.formula_base_label
           (*Base {b with formula_base_pure = rp; formula_base_heap = rh} *) in
-  if (not !Globals.allow_pred_spec) then f
+  if (not !Globals.allow_pred_spec || !Globals.no_prun) then f
   else 
     (
         Util.push_time "prune_preds_filter";
@@ -2863,7 +2863,7 @@ and return_base_cases prog c2 v2 p2 ln2 rhs pos =
             Some rhs
                 
                 
-and do_base_case_unfold_x prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f =
+and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f =
   if (is_data ln2) then (None,None)
   else
     let _ = Util.push_time "empty_predicate_testing" in
@@ -2889,7 +2889,7 @@ and do_base_case_unfold_x prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_foldi
               (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
               let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
               let to_vars = p1 :: v1 in
-              let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in
+              (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
               let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
               let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
               let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
@@ -2922,7 +2922,7 @@ and do_base_case_unfold_x prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_foldi
 		  | OCtx (c1,c2) ->  (None,None)
 		  | Ctx c -> (None,Some c)
 				
- and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f = 
+ and do_base_case_unfold_debug prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f = 
    Util.ho_debug_4 "base_case_unfold" 
       Cprinter.string_of_formula 
       Cprinter.string_of_formula 
@@ -2931,7 +2931,7 @@ and do_base_case_unfold_x prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_foldi
       (fun _ -> "")
      (fun _ -> true)
      (fun ante conseq p1 p2->  
-       do_base_case_unfold_x prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f ) 
+       do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f ) 
       ante conseq p1 p2
         
 and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos : 

@@ -189,6 +189,7 @@ let common_arguments = [
   ("--no_incremental", Arg.Set Globals.no_incremental,"");
   ("--no_LHS_prop_drop", Arg.Set Globals.no_LHS_prop_drop,"");
   ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
+  ("--force_no_prun", Arg.Set Globals.no_prun, "");
   ] 
 
 (* arguments/flags used only by hip *)	

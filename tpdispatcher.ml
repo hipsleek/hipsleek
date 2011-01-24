@@ -1087,6 +1087,32 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  is_sat_sub_no_c f sat_subno false;;
 
+
+
+let is_sat_sub_no_with_slicing (f:CP.formula) sat_subno : bool =  
+  let rec group_conj l = match l with
+    | [] -> (false,[]) 
+    | (fvs, fs)::t ->  
+      let b,l = group_conj t in
+      let l1,l2 = List.partition (fun (c,_)-> not((Util.intersect_fct CP.eq_spec_var fvs c)==[])) l in
+      if l1==[] then (b,(fvs,fs)::l) 
+      else 
+        let vars,nfs = List.split l1 in 
+        let nfs = CP.join_conjunctions (fs::nfs) in
+        let nvs = CP.remove_dups_svl (List.concat (fvs::vars)) in
+        (true,(nvs,nfs)::l2) in
+      
+  let rec fix n_l = 
+    let r1,r2 = group_conj n_l in
+    if r1 then fix r2 else r2 in    
+  let split_sub_f f = 
+    let conj_list = CP.split_conjunctions f in
+    let n_l = List.map (fun c-> (CP.fv c , c)) conj_list in
+    snd (List.split (fix n_l)) in
+  let  n_f_l = split_sub_f f in
+  List.fold_left (fun a f -> if not a then a else is_sat_sub_no_c f sat_subno false) true n_f_l 
+
+
 let is_sat_sub_no_debug (f : CP.formula) sat_subno : bool =  
   Util.ho_debug_2 "is_sat_sub_no " (Cprinter.string_of_pure_formula) (fun x-> string_of_int !x)
     (string_of_bool ) is_sat_sub_no f sat_subno;;
@@ -1098,7 +1124,7 @@ let is_sat_memo_sub_no (f : MCP.memo_pure) sat_subno with_dupl with_inv : bool =
 
 let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool = match f with
   | MCP.MemoF f -> is_sat_memo_sub_no f sat_subno with_dupl with_inv
-  | MCP.OnePF f -> is_sat_sub_no f sat_subno
+  | MCP.OnePF f -> is_sat_sub_no_with_slicing f sat_subno
 
 let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
   let sat_subno = ref 0 in
