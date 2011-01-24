@@ -422,7 +422,6 @@ and is_firstorder_mem f e vs =
 (* pretty printing for spec_vars *)
 and mona_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> 
-	let _ =  output_string log_file ("var " ^ v ^ "\n") in
 		v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 (* pretty printing for expressions *)
