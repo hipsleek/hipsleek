@@ -3910,6 +3910,11 @@ let is_lt eq e1 e2 =
     | IConst (i1,_), IConst(i2,_) -> i1<i2
     | _,_ -> false
 
+let is_diff e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1<>i2
+    | _,_ -> false
+    
 (* lhs |- e1<=e2 *)
 let check_imply_leq eq lhs e1 e2 =
   let rec helper l = match l with
@@ -3947,16 +3952,30 @@ let check_imply_neq eq lhs e1 e2 =
     | a::ls -> if helper2 a then 1 else helper ls
   and helper2 a = match a with
     | Eq(d1,d2,_) ->          
-          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
-          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else helper2 (Lte(d2,d1,no_pos))
+        if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+        else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+        else helper2 (Lte(d2,d1,no_pos))
+     (*((eqExp_f eq d1 e1) && (is_diff d2 e2)) || ((eqExp_f eq d2 e2) && (is_diff e1 d1)) ||
+     ((eqExp_f eq d2 e1) && (is_diff d1 e2)) || ((eqExp_f eq d1 e2) && (is_diff e1 d2)) ||
+     (helper2 (Lte(d2,d1,no_pos)))*)
     | Lte(d1,d2,_) -> 
-          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+               if eqExp_f eq d1 e1 then is_lt eq d2 e2 
           else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else false
+          else (*if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+          else *)
+          false
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
+
+let check_imply_neq_debug eq lhs e1 e2 = 
+Util.ho_debug_3 
+    "check_imply_neq" 
+    (fun c-> String.concat "&" (List.map !print_b_formula c))
+    !print_exp 
+    !print_exp 
+    string_of_int (check_imply_neq eq ) lhs e1 e2
 
 let check_eq_bform eq lhs rhs failval = 
   if List.exists (equalBFormula_f eq rhs) lhs then 1
@@ -4006,16 +4025,15 @@ let fast_imply a l r = Util.prof_3 "fast_imply" fast_imply a l r
 
 
 
-(*
+
 let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
   let r = fast_imply aset lhs rhs in
-  if (r<=0) then r else
+  (*if (r<=0) then r else*)
     let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
     let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
-*)
 
 let rec replace_pure_formula_label nl f = match f with
   | BForm (bf,_) -> BForm (bf,(nl()))
