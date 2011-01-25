@@ -3958,8 +3958,8 @@ let check_imply_neq eq lhs e1 e2 =
     | a::ls -> if helper2 a then 1 else helper ls
   and helper2 a = match a with
     | Eq(d1,d2,_) ->          
-        if eqExp_f eq d1 e1 then is_lt eq d2 e2 
-        else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+        if eqExp_f eq d1 e1 then (is_lt eq d2 e2) || (is_lt eq e2 d2)
+        else if eqExp_f eq d2 e2 then (is_lt eq e1 d1) || (is_lt eq d1 e1)
         else helper2 (Lte(d2,d1,no_pos))
      (*((eqExp_f eq d1 e1) && (is_diff d2 e2)) || ((eqExp_f eq d2 e2) && (is_diff e1 d1)) ||
      ((eqExp_f eq d2 e1) && (is_diff d1 e2)) || ((eqExp_f eq d1 e2) && (is_diff e1 d2)) ||
@@ -3967,9 +3967,9 @@ let check_imply_neq eq lhs e1 e2 =
     | Lte(d1,d2,_) -> 
                if eqExp_f eq d1 e1 then is_lt eq d2 e2 
           else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else (*if eqExp_f eq d1 e1 then is_lt eq d2 e2 
-          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else *)
+          else if eqExp_f eq d1 e2 then is_lt eq d2 e1 
+          else if eqExp_f eq d2 e1 then is_lt eq e2 d1 
+          else 
           false
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2

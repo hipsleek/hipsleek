@@ -1156,7 +1156,7 @@ let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no =
   
  
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
-  let _ = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in
+  (*let _ = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in*)
   match conseq_conj with
     | h :: rest -> 
 	      let (r1,r2,r3)=(mimply_one_conj(*_debug*) ante_memo0 h t_imply imp_no) in

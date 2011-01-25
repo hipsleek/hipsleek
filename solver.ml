@@ -772,12 +772,12 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                 let imp = 
                                   let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.prune_with_slice in
                                   let r = if (!Globals.enable_fast_imply) then 
-                                    let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
+                                    (*let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
                                     let _ = if r1 then 
                                           print_string ("would have succeded:in proving: "^ (Cprinter.string_of_b_formula p_cond_n)^" (disproving "^
                                           (Cprinter.string_of_b_formula p_cond)^")\n for: "^
                                        (Cprinter.string_of_pure_formula and_is)^"\n")
-                                       else () in
+                                       else () in*)
                                       false
                                   else 
                                     let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
