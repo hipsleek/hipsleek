@@ -90,7 +90,16 @@ and constraint_rel =
 and rounding_func = 
   | Ceil
   | Floor
-  
+
+let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+	    (* translation has ensured well-typedness.
+		   We need only to compare names and primedness *)
+	    v1 = v2 & p1 = p2
+
+let remove_dups_svl vl = Util.remove_dups_f vl eq_spec_var
+
+     
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
@@ -113,6 +122,7 @@ let rec get_exp_type (e : exp) : typ = match e with
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 
 let bool_type = Prim Bool
 
@@ -138,6 +148,10 @@ let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
   let res = Util.remove_dups_f tmp eq_spec_var in
   res
+
+and check_dups_svl ls = 
+  let b=(Util.check_dups_eq eq_spec_var ls) in
+   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
 
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
@@ -169,12 +183,12 @@ and bfv (bf : b_formula) = match bf with
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 	    let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		remove_dups_svl (fv1 @ fv2 @ fv3)
   | EqMin (a1, a2, a3, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 	    let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		remove_dups_svl (fv1 @ fv2 @ fv3)
   | BagIn (v, a1, _) ->
 		let fv1 = afv a1 in
 		[v] @ fv1
@@ -182,8 +196,8 @@ and bfv (bf : b_formula) = match bf with
 		let fv1 = afv a1 in
 		[v] @ fv1
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-  | BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
-  | BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
+  | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
   | ListIn (a1, a2, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
@@ -204,7 +218,7 @@ and bfv (bf : b_formula) = match bf with
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
   let fv2 = afv a2 in
-  Util.remove_dups (fv1 @ fv2)
+  remove_dups_svl (fv1 @ fv2)
 
 and afv (af : exp) : spec_var list = match af with
   | Null _ -> []
@@ -218,21 +232,21 @@ and afv (af : exp) : spec_var list = match af with
   | Min (a1, a2, _) -> combine_avars a1 a2
         (*| BagEmpty (_) -> []*)
   | Bag (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagUnion (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagIntersect (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagDiff(a1, a2, _) -> combine_avars a1 a2
   | List (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | ListAppend (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | ListCons (a1, a2, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)  
-  | ListHead (a, _)  
+		remove_dups_svl (fv1 @ fv2)  
+  | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
@@ -988,11 +1002,8 @@ and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
   in
   (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
 
-and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-	    (* translation has ensured well-typedness.
-		   We need only to compare names and primedness *)
-	    v1 = v2 & p1 = p2
+
+
 
 and remove_dups_spec_var_list vl = Util.remove_dups_eq eq_spec_var vl
 
@@ -1123,7 +1134,13 @@ and b_apply_subs sst bf = match bf with
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
 
-and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
+(* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
+
+and subs_one sst v = 
+  let rec helper sst v = match sst with
+    | [] -> v
+    | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)
+  in helper sst v
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ -> e
@@ -3757,7 +3774,7 @@ let normalise_eq_aux ((_,eq) as aset : var_aset) : var_aset * bool * bool=
   let plst = Util.partition_eq aset in
   let (nlst,flag) = List.fold_left 
     (fun (rl,f) l -> 
-       let nl=Util.remove_dups l in
+       let nl=remove_dups_svl l in
 	 (nl::rl,(f||not((List.length nl)==(List.length l))))) 
     ([],false) plst in
   let (nlst2,flag2) = List.fold_left 
@@ -3899,6 +3916,11 @@ let is_lt eq e1 e2 =
     | IConst (i1,_), IConst(i2,_) -> i1<i2
     | _,_ -> false
 
+let is_diff e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1<>i2
+    | _,_ -> false
+    
 (* lhs |- e1<=e2 *)
 let check_imply_leq eq lhs e1 e2 =
   let rec helper l = match l with
@@ -3936,16 +3958,30 @@ let check_imply_neq eq lhs e1 e2 =
     | a::ls -> if helper2 a then 1 else helper ls
   and helper2 a = match a with
     | Eq(d1,d2,_) ->          
-          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
-          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else helper2 (Lte(d2,d1,no_pos))
+        if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+        else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+        else helper2 (Lte(d2,d1,no_pos))
+     (*((eqExp_f eq d1 e1) && (is_diff d2 e2)) || ((eqExp_f eq d2 e2) && (is_diff e1 d1)) ||
+     ((eqExp_f eq d2 e1) && (is_diff d1 e2)) || ((eqExp_f eq d1 e2) && (is_diff e1 d2)) ||
+     (helper2 (Lte(d2,d1,no_pos)))*)
     | Lte(d1,d2,_) -> 
-          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+               if eqExp_f eq d1 e1 then is_lt eq d2 e2 
           else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else false
+          else (*if eqExp_f eq d1 e1 then is_lt eq d2 e2 
+          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+          else *)
+          false
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
+
+let check_imply_neq_debug eq lhs e1 e2 = 
+Util.ho_debug_3 
+    "check_imply_neq" 
+    (fun c-> String.concat "&" (List.map !print_b_formula c))
+    !print_exp 
+    !print_exp 
+    string_of_int (check_imply_neq eq ) lhs e1 e2
 
 let check_eq_bform eq lhs rhs failval = 
   if List.exists (equalBFormula_f eq rhs) lhs then 1
@@ -3995,16 +4031,15 @@ let fast_imply a l r = Util.prof_3 "fast_imply" fast_imply a l r
 
 
 
-(*
+
 let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
   let r = fast_imply aset lhs rhs in
-  if (r<=0) then r else
+  (*if (r<=0) then r else*)
     let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
     let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
-*)
 
 let rec replace_pure_formula_label nl f = match f with
   | BForm (bf,_) -> BForm (bf,(nl()))

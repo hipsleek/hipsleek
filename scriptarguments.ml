@@ -177,11 +177,22 @@ let common_arguments = [
     ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
     ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+    ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
     ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
     ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
-] 
+    ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
+  
+  (*for cav experiments*)
+  ("--force_one_slice", Arg.Set Globals.f_1_slice,"");
+  ("--force_no_memo", Arg.Set Globals.no_memoisation,"");
+  ("--no_incremental", Arg.Set Globals.no_incremental,"");
+  ("--no_LHS_prop_drop", Arg.Set Globals.no_LHS_prop_drop,"");
+  ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
+  ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
+  ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
+  ] 
 
 (* arguments/flags used only by hip *)	
 let hip_specific_arguments = [ ("-cp", Arg.String set_pred,

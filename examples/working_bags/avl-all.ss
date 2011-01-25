@@ -1,5 +1,8 @@
 /* avl trees */
 
+/*REMEMBER: IF EPS IS USED IT NEEDS EAP AS WELL OTHERWISE IT WILL NOT PASS*/
+
+
 /* representation of a node in an avl tree */
 data node {
   int val;
@@ -242,7 +245,7 @@ node remove_min_add(node x, ref myint a)
           tr = x.right.left;
           //dprint;
           //assert tr' = null;
-          //assume tr' = null ; //'
+          //assume tr' = null ; //' need --eap
           return x;
         } else {
           //assume false;
@@ -253,10 +256,10 @@ node remove_min_add(node x, ref myint a)
         ti = x.val;
         tr = x.right.left;
         //assert tr' = null;
-        //assume tr' = null ; //'
+        //assume tr' = null ; //' needs --eap
         tr = x.right.right;
-       // assert tr' = null;
-       // assume tr' = null ; //'
+        //assert tr' = null;
+        //assume tr' = null ; //' needs --eap
         x.val = x.right.val;
         x.right.val = a.val;
         a.val = ti;
@@ -268,9 +271,9 @@ node remove_min_add(node x, ref myint a)
     if (a.val >= x.val) {
       if (x.right == null) {
         tr = x.left.left;
-       // assume tr' = null ; //'
+        //assume tr' = null ; //'
         tr = x.left.right;
-       // assume tr' = null ; //'
+        //assume tr' = null ; //' needs --eap
         ti = x.left.val;
         x.left.val = x.val;
         x.val = a.val;
@@ -321,7 +324,9 @@ node remove_max_add(node x, ref myint a)
           a.val = ti;
           ti = x.val;
           tr = x.left.right;
-         // assume tr' = null; //'
+          // assert tr'=null;
+          // dprint;
+          // assume tr' = null; //' --eap
           return x;
         } else {
           return x;
@@ -329,9 +334,9 @@ node remove_max_add(node x, ref myint a)
       } else {
         ti = x.val;
         tr = x.left.right;
-       // assume tr' = null; //'
+        // assume tr' = null; //'
         tr = x.left.left;
-       // assume tr' = null; //'
+        // assume tr' = null; //'
         x.val = x.left.val;
         x.left.val = a.val;
         a.val = ti;
@@ -342,9 +347,9 @@ node remove_max_add(node x, ref myint a)
     if (a.val <= x.val) {
       if (x.left == null) {
         tr = x.right.right;
-       // assume tr' = null; //'
+        // assume tr' = null; //' needs --eap
         tr = x.right.left;
-       // assume tr' = null; //'
+        // assume tr' = null; //'
         ti = x.right.val;
         x.right.val = x.val;
         x.val = a.val;
@@ -419,13 +424,14 @@ node delete_top(node x)
         x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
         return x;
       } else if (height(x.left.left) == height(x.left.right)) {
+        // assume false; // pre of rotate_right failed. --eap avoids problem
         x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
         return x;
       } else {
         tmp = x.left;
-        assume tmp' != null; //'
+        //assume tmp' != null; //'
         tmp = x.left.right;
-        assume tmp' != null; //'
+        //assume tmp' != null; //'
         tmp = rotate_double_right(x.left.left, x.left.right.left, x.left.right.right, x.right, x.left.val, x.left.right.val, x.val); // DRR
         return tmp;
       }
@@ -452,16 +458,17 @@ node delete(node x, int a)
       x.right = delete(x.right, a);
       if ((height(x.left) - height(x.right)) == 2) {
         tmp = x.left;
-        //assert tmp'!=null; //'
+        assert tmp'!=null; //'
         if ((height(x.left.left) - 1) == height(x.left.right)) {
           x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
           return x;
         } else if (height(x.left.left) == height(x.left.right)) {
+          // assume false; // pre for rotate-right failed
           x = rotate_right(x.left.left, x.left.right, x.right, x.left.val, x.val); // SRR
           return x;
         } else {
           tmp = x.left.right;
-          //assert tmp'!=null; //'
+          assert tmp'!=null; //'
           tmp = rotate_double_right(x.left.left, x.left.right.left, x.left.right.right, x.right, x.left.val, x.left.right.val, x.val); // DRR
           return tmp;
         }
@@ -477,11 +484,12 @@ node delete(node x, int a)
       x.left = delete(x.left, a);
       if ((height(x.right) - height(x.left)) == 2) {
         tmp = x.right;
-        //assert tmp'!=null; //'
+        assert tmp'!=null; //'
         if ((height(x.right.left)) == height(x.right.right) - 1) {
           x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
           return x;
         } else if (height(x.right.left) == height(x.right.right)) {
+          //assume false; // pre for rotate_left failed --eap avoids problem
           x = rotate_left(x.left, x.right.left, x.right.right, x.val, x.right.val); // SRR
           return x;
         } else {

@@ -175,6 +175,28 @@ let prune_branches_subsume prog univ_vars lhs_node rhs_node = match lhs_node,rhs
       )
   | _ -> (false, None)      
 
+  
+let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a -> 'a) (res_checker:'b-> bool) (argument:'a) :'b =
+  begin
+   Globals.prune_with_slice := !Globals.enable_aggressive_prune;
+   let first_res = crt_heap_entailer argument in
+   first_res (*
+   let res = match !Globals.enable_aggressive_prune, !Globals.disable_aggressive_prune with
+      | true, true 
+      | false, false -> 
+        if (res_checker first_res) then first_res
+        else 
+        (Globals.prune_with_slice := true;
+         let r = prune_fct argument in
+         crt_heap_entailer r
+         )
+      | false, true 
+      | true , false ->  first_res in
+   Globals.prune_with_slice := false; 
+   res
+   *)
+  end
+  
 let prune_branches_subsume_debug prog univ_vars lhs_node rhs_node = 
   Util.ho_debug_4 "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
   (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None))) (fun _ -> true)
@@ -331,7 +353,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.mix_
                 let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                 let to_svs = p :: vs in
                 let (f, b) = vinv in
-                let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
+                let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug*) from_svs to_svs in
                 let subst_fun = CP.subst_avoid_capture from_svs to_svs in
                 let tmp1 = subst_m_fun f, List.map (fun (x,y) -> x, subst_fun y) b in
                 tmp1)
@@ -496,7 +518,7 @@ and xpure_heap_symbolic_no_exists_i (prog : prog_decl) (h0 : h_formula) i: (MCP.
                 let from_addrs = vdef.view_addr_vars in
                 let to_addrs = CP.fresh_spec_vars from_addrs in
                 let subst_m_fun f =
-                  let tmp1 = MCP.subst_avoid_capture_memo(*_debug2*) from_svs to_svs f in
+                  let tmp1 = MCP.subst_avoid_capture_memo(*_debug*) from_svs to_svs f in
                   MCP.memo_subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
                 let subst_fun f =
                   let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
@@ -604,6 +626,10 @@ and prune_branch_ctx prog (pt,bctx) =
   let _ = count_br_specialized prog r in
   (pt,r)   
       
+and prune_list_ctx prog ctx = match ctx with
+  | SuccCtx c -> SuccCtx (List.map (prune_ctx prog) c)
+  | _ -> ctx
+      
 and prune_ctx_list prog ctx = List.map (fun (c1,c2)->(c1,List.map (prune_branch_ctx prog) c2)) ctx
   
 and prune_ctx_failesc_list prog ctx = List.map (fun (c1,c2,c3)-> 
@@ -649,7 +675,7 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
           let rp = f_p_simp rp in
           mkBase_w_lbl rh rp b.formula_base_type  b.formula_base_flow b.formula_base_branches b.formula_base_pos b.formula_base_label
           (*Base {b with formula_base_pure = rp; formula_base_heap = rh} *) in
-  if (not !Globals.allow_pred_spec) then f
+  if not !Globals.allow_pred_spec then f
   else 
     (
         Util.push_time "prune_preds_filter";
@@ -704,7 +730,11 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
           let zip = List.combine fr_vars to_vars in
           let (rem_br, prun_cond,first_prune) =  
             match v.h_formula_view_remaining_branches with
-              | Some l -> (l, v.h_formula_view_pruning_conditions,false)
+              | Some l -> 
+                  if !no_incremental then
+                    let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
+                     (v_def.view_prune_branches,new_cond ,true)
+                  else (l, v.h_formula_view_pruning_conditions,false)
               | None ->                    
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                     (v_def.view_prune_branches,new_cond ,true) in                   
@@ -723,7 +753,8 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                       if not (MCP.memo_changed corr) then (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
                       else 
                         let p_cond_n = MCP.memo_f_neg_norm p_cond in
-                        let y_p = (Util.inc_counter "syn_memo_count";
+                        let y_p = if !no_memoisation then None else
+                        (Util.inc_counter "syn_memo_count";
                         MCP.memo_check_syn_fast(*_prun*)(*_debug*) (p_cond,p_cond_n, pr_branches) rem_br corr) in
                         match y_p with
                           | Some y_p ->
@@ -739,8 +770,15 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                    let _ = print_string ("pcond: "^(Cprinter.string_of_b_formula p_cond)^"\n") in
                                 *) 
                                 let imp = 
-                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.enable_aggressive_prune in
-                                  let r = if (!Globals.enable_fast_imply) then false
+                                  let and_is = MCP.fold_mem_lst_cons (CP.BConst (true,no_pos)) [corr] false true !Globals.prune_with_slice in
+                                  let r = if (!Globals.enable_fast_imply) then 
+                                    let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
+                                    let _ = if r1 then 
+                                          print_string ("would have succeded:in proving: "^ (Cprinter.string_of_b_formula p_cond_n)^" (disproving "^
+                                          (Cprinter.string_of_b_formula p_cond)^")\n for: "^
+                                       (Cprinter.string_of_pure_formula and_is)^"\n")
+                                       else () in
+                                      false
                                   else 
                                     let r1,_,_ = TP.imply_msg_no_no and_is (CP.BForm (p_cond_n,None)) "prune_imply" "prune_imply" true None in
                                     (if r1 then Util.inc_counter "imply_sem_prun_true"
@@ -867,7 +905,7 @@ and find_node_one prog lhs_h lhs_p (p : CP.spec_var) rhs_info pos : find_node_re
 and h_mvars prog (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
-	h_formula_star_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+	h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v}) -> [v]
   | ViewNode ({h_formula_view_node = v;
 	h_formula_view_arguments = vargs;
@@ -935,15 +973,17 @@ and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_fo
   let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
   TP.incr_sat_no () ; r
 
-
+(*
 and combine_list_partial_context_and_unsat_now prog (ctx : list_partial_context) (f : MCP.mix_formula) : list_partial_context = 
   let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in
   let r = transform_list_partial_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
+  let r = filter_false_list_partial_context r in
   TP.incr_sat_no () ; r
-
+*)
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) r in
+  let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
 
 
@@ -993,7 +1033,7 @@ and find_pred_roots f0 = match f0 with
     formula_or_f2 = f2}) -> begin
       let pr1 = find_pred_roots f1 in
       let pr2 = find_pred_roots f2 in
-      let tmp = Util.remove_dups_f (pr1 @ pr2) CP.eq_spec_var in
+      let tmp = CP.remove_dups_svl (pr1 @ pr2)  in
 	  tmp
     end
   | Base ({formula_base_heap = h;
@@ -1015,7 +1055,7 @@ and find_pred_roots_heap h0 =
       h_formula_star_pos = pos}) -> begin
 	    let pr1 = find_pred_roots_heap h1 in
 	    let pr2 = find_pred_roots_heap h2 in
-	    let tmp = Util.remove_dups_f (pr1 @ pr2) CP.eq_spec_var in
+	    let tmp = CP.remove_dups_svl (pr1 @ pr2)  in
 	    tmp
       end
     | ViewNode ({h_formula_view_node = p}) -> [p]
@@ -1569,14 +1609,11 @@ and elim_exists_memo_pure (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
   let f_simp w f pos = Util.push_time "elim_exists";
     let f_s = elim_exists_pure_branch(*_debug*) w f pos in
     Util.pop_time "elim_exists"; f_s in
-  MCP.memo_pure_push_exists_aux (f_simp,true) w f0 pos
+  MCP.memo_pure_push_exists_all (f_simp,true) w f0 pos
       
-and elim_exists_memo_pure_debug w f0 lump_all pos = 
-  (print_string ("elim_exists_memo_pure input1: "^(Cprinter.string_of_spec_var_list w)^"\n") ;
-  print_string ("elim_exists_memo_pure input2: "^(Cprinter.string_of_memo_pure_formula f0)^"\n") ;
-  let r = elim_exists_memo_pure w f0 pos in  
-  print_string ("elim_exists_memo_pure output: "^(Cprinter.string_of_memo_pure_formula r)^"\n") ;
-  r)
+and elim_exists_memo_pure_debug w f0 pos = 
+  Util.ho_debug_2 "elim_exists_memo_pure" Cprinter.string_of_spec_var_list Cprinter.string_of_memo_pure_formula Cprinter.string_of_memo_pure_formula
+  (fun w f0 -> elim_exists_memo_pure w f0 pos) w f0
       
 and elim_exists_pure_formula (f0:CP.formula) =
   match f0 with
@@ -1860,9 +1897,9 @@ and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool) (is_u
 	    es_orig_ante   = es.es_formula;
 	    (*es_orig_conseq = conseq ;*)}in	
     let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es es)))) cl in
-    heap_entail_struc_list_failesc_context prog is_folding is_universal has_post cl_new conseq pos pid f to_string
+    let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding is_universal has_post c conseq pos pid f to_string in 
+    heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
         
-		
 and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_partial_context)
       (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
 	  (f: prog_decl->bool->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof)))
@@ -1986,9 +2023,9 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool) (is_universal 
 		        es_orig_ante   = es.es_formula;
 		        es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-	        heap_entail_struc prog is_folding is_universal has_post cl_new conseq pos pid
-
-	            
+          let entail_fct = fun c-> heap_entail_struc prog is_folding is_universal has_post c conseq pos pid in
+          heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new 
+            
 	            
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
@@ -2729,12 +2766,15 @@ and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.m
   let sevars = (* List.map CP.to_int_var *) evars in
   let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) sevars in
   (*let _ = print_string ("\nheap_entail_build_mix_formula_check: conseq: "^(Cprinter.string_of_mix_formula conseq)) in*)
-  let conseq = MCP.mix_cons_filter conseq MCP.isImplT in
-  (*let _ = print_string ("\nheap_entail_build_mix_formula_check: conseq after mix_cons_filter: "^(Cprinter.string_of_mix_formula conseq)) in*)
+  let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = (*MCP.memo_pure_push_exists*) elim_exists_mix_formula inner_vars conseq no_pos in
   (*let _ = print_string ("\nheap_entail_build_mix_formula_check: conseq after elim_exists_mix_formula: "^(Cprinter.string_of_mix_formula tmp1)) in*)
   (ante,tmp1)
       
+and heap_entail_build_mix_formula_check_debug (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
+ Util.ho_debug_3 "heap_entail_build_mix_formula_check_debug"  (fun l -> Cprinter.string_of_spec_var_list l) 
+  Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula (fun (_,c )-> Cprinter.string_of_mix_formula c)
+  ( fun c1 ante c2 -> heap_entail_build_mix_formula_check c1 ante c2 pos) evars ante conseq 
       
 and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   let tmp1 = CP.mkExists evars conseq None no_pos in
@@ -2791,9 +2831,9 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_univ
       let tmp2 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
       let tmp3 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h1, xpure_lhs_h1_b)) true in
 	  (*let _ = print_string ("\nheap_entail_empty_rhs_heap: rhs_p: "^(Cprinter.string_of_mix_formula rhs_p)) in*)
-      let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp2 rhs_p pos in
-      let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp3 rhs_p pos in
 	  (*let _ = print_string ("\nheap_entail_empty_rhs_heap: new_conseq0 after heap_entail_build_mix_formula_check: "^(Cprinter.string_of_mix_formula new_conseq0)) in*)
+      let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check(*_debug*) (estate.es_evars@estate.es_gen_expl_vars) tmp2 rhs_p pos in
+      let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check(*_debug*) (estate.es_evars@estate.es_gen_expl_vars) tmp3 rhs_p pos in
 	  (* 26.03.2009 simplify the pure part *) 		 
 	  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)				
 	  (* TODO: if xpure 1 is needed, then perform the same simplifications as for xpure 0 *)
@@ -2994,6 +3034,18 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
 		  | OCtx (c1,c2) ->  (None,None)
 		  | Ctx c -> (None,Some c)
 				
+ and do_base_case_unfold_debug prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f = 
+   Util.ho_debug_4 "base_case_unfold" 
+      Cprinter.string_of_formula 
+      Cprinter.string_of_formula 
+      Cprinter.string_of_spec_var 
+      Cprinter.string_of_spec_var 
+      (fun _ -> "")
+     (fun _ -> true)
+     (fun ante conseq p1 p2->  
+       do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f ) 
+      ante conseq p1 p2
+        
 and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos : 
       list_context *proof =
   Debug.devel_pprint ("do_match: using " ^
@@ -3071,7 +3123,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
   let rhs_br = rhs_b.formula_base_branches in
   let rhs_fl = rhs_b.formula_base_flow in
   (*let ln2, resth2 = split_linear_node rhs_h in*)
-  let ln2, resth2 = split_linear_node_guided ( Util.remove_dups (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
+  let ln2, resth2 = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
   let ln2,resth2 = if (Cformula.is_complex_heap ln2) then (ln2,resth2)
   else split_linear_node rhs_h in
   (*let estate_steps = estate.es_prior_steps in *)
@@ -4046,7 +4098,9 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in
   Util.pop_time "entail_prune";
-  heap_entail_prefix_init prog is_folding is_universal false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)  
+  let entail_fct = (fun c-> heap_entail_prefix_init prog is_folding is_universal false c 
+      conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)) in
+  heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx c) cl_after_prune 
   
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_failesc_context)
         (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
@@ -4058,5 +4112,3 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
   let conseq = prune_preds prog false conseq in
   Util.pop_time "entail_prune";
   heap_entail_failesc_prefix_init prog is_folding is_universal false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)  
-
-  

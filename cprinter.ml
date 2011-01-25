@@ -1539,6 +1539,7 @@ if (U.empty cl) then "" else string_of_label_failesc_context (List.hd cl)
 Mcpure.print_mp_f := string_of_memo_pure_formula ;;
 Mcpure.print_mc_f := string_of_memoise_constraint ;;
 Mcpure.print_sv_f := string_of_spec_var ;; 
+Mcpure.print_sv_l_f := string_of_spec_var_list;;
 Mcpure.print_bf_f := string_of_b_formula ;;
 Mcpure.print_p_f_f := string_of_pure_formula ;;
 Mcpure.print_exp_f := string_of_formula_exp;;
@@ -1547,6 +1548,7 @@ Mcpure.print_mix_f := string_of_mix_formula;;
 Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
+Cpure.print_svl := string_of_spec_var_list;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;

@@ -197,6 +197,10 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
+let disable_aggressive_prune = ref false
+let prune_with_slice = ref false
+
+let enulalias = ref false
 
 let pass_global_by_value = ref false
 
@@ -210,6 +214,16 @@ let no_cache_formula = ref false
 
 let enable_incremental_proving = ref false
 
+
+  (*for cav experiments*)
+  let f_1_slice = ref false
+  let f_2_slice = ref false
+  let no_memoisation = ref false
+  let no_incremental = ref false
+  let no_LHS_prop_drop = ref false
+  let no_RHS_prop_drop = ref false
+  let do_sat_slice = ref false
+  
 
 let add_count (t: int ref) = 
 	t := !t+1

@@ -90,7 +90,10 @@ and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
   if (exp_to_check e0) then  
-    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
+    (* let _ = if (List.exists CF.isAnyFalseFailescCtx ctx) then *)
+    (*   print_string ("\n false at :"^(Cprinter.string_of_exp e0))  *)
+    (* else () in *)
+    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0) 
   else ();
 	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
       match e0 with
@@ -127,7 +130,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 | None -> ts
                 | Some c ->
                     let assumed_ctx = CF.normalize_max_renaming_list_failesc_context c pos false new_ctx in
-                    CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx  in
+                    let r =CF.transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) assumed_ctx in
+                    List.map CF.remove_dupl_false_fe r in
             (ps@res)
 	      end
         | Assign ({ exp_assign_lhs = v;
@@ -225,7 +229,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	      end
 		| Catch b -> Error.report_error {Err.error_loc = b.exp_catch_pos;
                     Err.error_text = "[typechecker.ml]: malformed cast, unexpected catch clause"}
-        | Cond ({ exp_cond_type = t;
+    | Cond ({ exp_cond_type = t;
                   exp_cond_condition = v;
                   exp_cond_then_arm = e1;
                   exp_cond_else_arm = e2;
@@ -546,8 +550,9 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 
 (* check entire program *)
 let check_proc_wrapper prog proc =
+  (*check_proc prog proc  *)
   try
-    check_proc prog proc
+    check_proc prog proc  
   with _ as e ->
     if !Globals.check_all then begin
       dummy_exception();
@@ -556,7 +561,6 @@ let check_proc_wrapper prog proc =
       false
     end else
       raise e
-
 (*
 let check_view vdef =
   let ante = vdef.view_formula in
