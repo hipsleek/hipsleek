@@ -526,7 +526,6 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
     (*let _ = Util.pop_time "cache overhead" in*)
     let res =
       try
-	print_string ("\ntp_is_sat[529]: cached formula is :\n"^fstring);
         Hashtbl.find !sat_cache fstring
       with Not_found ->
         let r = tp_is_sat_no_cache(*_debug*) f sat_no in
@@ -560,7 +559,48 @@ let cache_renaming (f:formula) = match f with
           print_string ("\n fresh_name = " ^ (string_of_spec_var_list new_qvars) ^"!!!!!!!!!\n");
 	  vc := 1 *)
 
+(* Shifted to globals.ml
+ let sat_temp_cache = Hashtbl.create 200;;
+let pre_store = 
+   let select_query = "select hash from sat_fail_cache" in 
+   let res = exec db select_query in 
+   let col = column res in
+   let row x = not_null int2ml (col ~key:"hash" ~row:x) in    
+   let create_hash r = 
+      Hashtbl.add sat_temp_cache (row r) false 
+   in 
+	iter res create_hash   
+ *)
+
 let hash_check = Hashtbl.create 300;;
+
+let tb_cache2 ht1 ht2 table s f :bool =
+  let key = Hashtbl.hash s in
+  let get_res (r,_,_,_,_,_) = (bool_of_string r) in 
+  let rec retrieve_result l =
+        match l with 
+	| (result,_,input,_,_,_)::tail -> if ((String.compare input s)  == 0 ) then (print_string ("\nResult retrieved from the head!!!!\n"); ( bool_of_string result))
+				  else (print_string ("\nLooping\n"); retrieve_result tail )
+	| [] -> ( (* This case should never occur, throw exception if it does *)			   
+		try 
+		    let r = Hashtbl.find ht2 key in 
+		    (*let _ = print_string ("\ntp_is_sat:result from sat_temp_fail_cache table") in*)
+			get_res r  
+		with Not_found -> 	   
+		    (*Globals.update_db key s f table (tp_print ()) ) Should not update the cache directly, as it results in redundant values*)
+		    print_string ("\nNew Entry into"^table); Globals.update_new_values ht1 ht2 f s key (tp_print())
+		 )   
+     in
+    let res = Hashtbl.find_all ht1 key in     
+    (*let _ = print_string ("\ntp_is_sat:result from sat_temp_cache table\n") in*)
+      retrieve_result res 
+(*  with Not_found -> 
+	try 
+	    let r = Hashtbl.find ht2 key in 
+	    (*let _ = print_string ("\ntp_is_sat:result from sat_temp_fail_cache table") in*)
+		get_res r  
+	with Not_found -> 	   
+	    Globals.update_db key s f table (tp_print ()) (*Should not update the cache directly, as it results in redundant values*) *)
 
 let tb_cache t1 t2 s f = 
    let search_table key s = 
@@ -581,18 +621,17 @@ let tb_cache t1 t2 s f =
    let insert_fail_cache values = "insert into "^t2^" values "^values in
    let res1  = exec db select_cache in 
    let res2 = exec db select_fail_cache in   
-   let col1 = column res1 in
-   let col2 = column res2 in
+   let col = column res1 in
    let get_hr (_,_,_,hr)  = hr in
-   let row1 x = ( not_null str2ml  (col1 ~key:"result" ~row:x)
-      	       , not_null str2ml   (col1 ~key:"pt" ~row:x)
-	       , not_null float2ml (col1 ~key:"time" ~row:x)
-	       , not_null int2ml   (col1 ~key:"hr" ~row:x)
+   let row1 x = ( not_null str2ml  (col ~key:"result" ~row:x)
+      	       , not_null str2ml   (col ~key:"pt" ~row:x)
+	       , not_null float2ml (col ~key:"time" ~row:x)
+	       , not_null int2ml   (col ~key:"hr" ~row:x)
  	       )  in 
-   let row2 x = ( not_null str2ml   (col2 ~key:"pt" ~row:x)
-		, not_null float2ml (col2 ~key:"time" ~row:x)
-		, not_null blob2ml  (col2 ~key:"input" ~row:x)
-		, not_null int2ml   (col2 ~key:"hr" ~row:x)
+   let row2 x = ( not_null str2ml   (col ~key:"pt" ~row:x)
+		, not_null float2ml (col ~key:"time" ~row:x)
+		, not_null blob2ml  (col ~key:"input" ~row:x)
+		, not_null int2ml   (col ~key:"hr" ~row:x)
 		) in 
    let print_result1 res1 = 
       match res1 with
@@ -645,7 +684,6 @@ let tb_cache t1 t2 s f =
 	 ) in 
     	print_result1 (fetch res1)
 	  
-
 let cache_db = true;;
 
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
@@ -656,7 +694,8 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     let new_f = simplify_var_name f in
     let s = (!print_pure new_f) in         
      if cache_db then 
-	let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in 
+	(*let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in *)
+     	let r = tb_cache2 Globals.sat_temp_cache Globals.sat_temp_fail_cache "sat" s (tp_is_sat_no_cache new_f sat_no) in
 	  r
      else 
 	tp_is_sat_no_cache f sat_no   
@@ -896,7 +935,8 @@ let tp_imply ante conseq imp_no timeout do_cache =
     let s = (!print_pure ante)^"/"^ s_rhs in    
     
     if cache_db then
-	tb_cache "imply_cache" "imply_fail_cache" s (tp_imply_no_cache ante conseq imp_no timeout)
+	(*tb_cache "imply_cache" "imply_fail_cache" s (tp_imply_no_cache ante conseq imp_no timeout)*)
+	  tb_cache2 Globals.imply_temp_cache Globals.imply_temp_fail_cache "imply" s (tp_imply_no_cache ante conseq imp_no timeout)
     else 
 	tp_imply_no_cache ante conseq imp_no timeout
     )
