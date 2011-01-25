@@ -19,7 +19,7 @@ checkentail x::bigint<v1>@I * y::bigint<v2>@I & 0<=c & c<=1 & v1>=c+v2 & x=null
 // & v>=c. .
 print residue.
 */
-
+/*
 checkentail (x::bigint<v1>@I & y::bigint<v2>@I) & 0<=c & c<=1 & v1>=c+v2 & x=null
 |- y::bigint<n>@I.
 print residue.
@@ -31,12 +31,16 @@ print residue.
 checkentail (x::bigint<v1>@I & y::bigint<v2>@I) & 0<=c & c<=1 & v1>=c+v2 & x=null & v2>=0
 |- c=0 & v2=0.
 print residue.
-
-
+*/
+/*
 checkentail (x::bigint<v1>@I & y::bigint<v2>@I) & 0<=c & c<=1 & v1>=c+v2 & x=null
 |- c=0 & v2=0.
 print residue.
-
+*/
 // v1=0 & 0<=c & c<=1 & v1>=c+v2 |- v2=0.
+
+checkentail (x::bigint<v1>@I); y::bigint<v2> & 0<=c & c<=1 & v1>=c+v2 & x=null
+|- y::bigint<v2> & c=0 & v2=0.
+print residue.
 
 

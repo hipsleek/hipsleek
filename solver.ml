@@ -1639,7 +1639,8 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
 	let new_es = {estate with es_heap = new_consumed;
 			es_formula = new_ante;
 			es_evars = new_evars;
-			es_unsat_flag =false; } in
+			es_unsat_flag =false;
+			es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos} in
 	let new_ctx = (Ctx new_es) in
 	  Debug.devel_pprint ("process_fold_result: new_ctx after folding: "
 			      ^ (Cprinter.string_of_spec_var p2) ^ "\n"
@@ -2436,7 +2437,7 @@ and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq p
 	      (filter_set rs1, prf1)
   | _ -> begin
       Debug.devel_pprint ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases") pos;
-      print_string ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases with rhs = " ^ (Cprinter.string_of_formula conseq) ^ "\n");
+      (* print_string ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases with rhs = " ^ (Cprinter.string_of_formula conseq) ^ "\n"); *)
       let r1,p1 = heap_entail_split_rhs_phases prog is_folding is_universal ctx conseq false pos in      
 	(r1,p1)
     end
@@ -2661,6 +2662,9 @@ and split_phase (h : h_formula) : (h_formula * h_formula * h_formula )=
 	     h_formula_phase_pos = pos}) -> 
 	let h3, h4 = split_wr_phase h2 in
 	  (h1, h3, h4)
+    | Star _ ->
+	let h3, h4 = split_wr_phase h in
+	  (HTrue, h3, h4)
     | _ ->
 	if (CF.contains_mutable_h_formula h) then
 	  (HTrue, h, HTrue)
@@ -2696,7 +2700,6 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 (*     (fun _ -> "?") *)
 (*     (fun ctx0 conseq -> heap_entail_split_rhs_phases p is_folding is_universal ctx0 conseq pos) ctx0 conseq *)
   
-
 and heap_entail_split_rhs_phases
     (prog : prog_decl) 
     (is_folding : bool) 
@@ -2705,57 +2708,96 @@ and heap_entail_split_rhs_phases
     (conseq : formula) 
     (drop_read_phase : bool)
     pos : (list_context * proof) =
-  
-  let choose_not_true_heap h1 h2 h3 = 
+  let rec choose_not_true_heap h1 h2 h3 = 
     if ((is_true h1) && (is_true h2)) then h3
     else if ((is_true h1) && (is_true h3)) then h2
     else h1
-  in
     
-  let helper h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
-    let h1, h2, h3 = split_phase_rhs_debug h in
-	let _ = print_string
-	  ("heap_entail_split_rhs: splitting h into:
-              \n h1 (rhs) = " ^ (Cprinter.string_of_h_formula h1) ^ 
-	     "\n h2 (rhs) = " ^ (Cprinter.string_of_h_formula h2) ^ 
-	      "\n h3 (rhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in 
+  and heap_n_pure_entail ctx0 h p func = 
+    (*let _ = print_string("[heap_n_pure_entail] : ctx0 = " ^ (Cprinter.string_of_context ctx0) ^ "\n") in*)
+    (* let _  = print_string("*************************************************\n") in *)
+    (* let _ = print_string("entailing the heap first:\n") in *)
+    (* let _  = print_string("*************************************************\n") in *)
+    let entail_h_ctx, entail_h_prf = heap_entail_split_lhs_phases prog is_folding is_universal ctx0 (func h (MCP.mkMTrue pos)) (contains_mutable_h_formula h) pos 
+    in
+      match entail_h_ctx with
+	| FailCtx _ -> (entail_h_ctx, entail_h_prf)
+	| SuccCtx(cl) ->
+	    (* let _  = print_string("*************************************************\n") in *)
+	    (* let _ = print_string("entailing the pure:\n") in *)
+	    (* let _  = print_string("*************************************************\n") in *)
+	    (* let _ = print_string("[heap_n_pure_entail] : cl after entailing the heap is = " ^ (Cprinter.string_of_context_list cl) ^ "\n") in *)
+	    (* let _ = print_string("[heap_n_pure_entail]: entail the pure part:" (\*^ (Cprinter.string_of_mix_formula p) ^ "\n"*\)) in *)
+	    let entail_p = List.map 
+	      (fun c -> 
+		 let new_conseq, aux_conseq_from_fold = 
+		   (match c with 
+		      | Ctx(estate) -> 
+			  subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p),
+			  subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq))
+		      | OCtx _ -> report_error no_pos ("Disunctive context\n"))
+		 in 
+		 let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
+		   heap_entail_conjunct prog is_folding is_universal c new_conseq pos) cl  
+	    in
+	    let entail_p_ctx, entail_p_prf = List.split entail_p in
+	    let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
+	    let entail_p_ctx = fold_context_left entail_p_ctx in 
+	      (entail_p_ctx, entail_p_prf)
+
+  and helper ctx0 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
+    let ctx0 = (Cformula.transform_context
+    		  (fun es ->
+    		     Ctx{es with
+    			   (* reset the substitution list *)
+    			   es_subst = ([], []);
+    			})) ctx0
+    in
+
+    let h1, h2, h3 = split_phase h in
+	(* let _ = print_string *)
+	(*   ("heap_entail_split_rhs: splitting h into: *)
+        (*       \n h1 (rhs) = " ^ (Cprinter.string_of_h_formula h1) ^ *)
+	(*      "\n h2 (rhs) = " ^ (Cprinter.string_of_h_formula h2) ^ *)
+	(*       "\n h3 (rhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
 
 	
 	  if ((is_true h1) && (is_true h3))
 	    or ((is_true h2) && (is_true h3))
 	  then
-	    let _ = print_string("heap_entail_split_rhs_phases: Conseq contains only one phase (no need to split\n)") in
-	    let new_conseq = func (choose_not_true_heap h1 h2 h3) p  in
-		heap_entail_split_lhs_phases prog is_folding is_universal ctx0 new_conseq (contains_mutable new_conseq) pos
+	    (* let _ = print_string("heap_entail_split_rhs_phases: Conseq contains only one phase (no need to split\n)") in  *)
+	    heap_n_pure_entail ctx0 (choose_not_true_heap h1 h2 h3) p func
 	  else
 	    if ((is_true h1) && (is_true h2)) then
-		  let _ = print_string("heap_entail_split_rhs_phases: Conseq contains only a nested phase h3 (no need to split\n)") in
+		  (* let _ = print_string("heap_entail_split_rhs_phases: Conseq contains only a nested phase h3 (no need to split\n)") in  *)
 		  let new_conseq = func h3 p in
 		  if not(contains_phase h3) then
-		      heap_entail_split_lhs_phases prog is_folding is_universal ctx0 new_conseq (contains_mutable new_conseq) pos
-		  else
-		      heap_entail_split_rhs_phases prog is_folding is_universal ctx0 new_conseq (contains_mutable new_conseq) pos
+		    heap_n_pure_entail ctx0 (choose_not_true_heap h1 h2 h3) p func
+ 		  else
+		    heap_entail_split_rhs_phases prog is_folding is_universal ctx0 new_conseq (contains_mutable new_conseq) pos
 	    else
 	let res_ctx, res_prf = 
 	(	    
+
 	(* entail the read phase heap *)
-	let _ = print_string("************************************************************************\n") in
-	let _ = print_string("split_rhs: entail rd phase h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
-	let _ = print_string("************************************************************************\n") in
+	(* let _ = print_string("************************************************************************\n") in *)
+	(* let _ = print_string("split_rhs: entail rd phase h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
+	(* let _ = print_string("************************************************************************\n") in *)
 
 	let new_conseq =
 	  if (is_true h2 && is_true h3) then
 	    func h1 (*p *) (MCP.mkMTrue pos) 
 	  else func h1 (MCP.mkMTrue pos)
 	in
-	let (after_rd_ctx, after_rd_prf) = heap_entail_split_lhs_phases prog is_folding is_universal ctx0 new_conseq (contains_mutable new_conseq) pos in
+	let (after_rd_ctx, after_rd_prf) = 
+	  heap_entail_split_lhs_phases prog is_folding is_universal ctx0 new_conseq (contains_mutable new_conseq) pos in
 	  (match after_rd_ctx with
                      | FailCtx _ -> (after_rd_ctx, after_rd_prf)
 		     | SuccCtx (cl) -> 
 			 (* entail the write phase *)
-			 let _ = print_string("************************************************************************\n") in
-			 let _ = print_string("split_rhs: entail wr phase h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in
-			 let _ = print_string("************************************************************************\n") in
+			 (* let _ = print_string("************************************************************************\n") in *)
+			 (* let _ = print_string("split_rhs: entail wr phase h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
+			 (* let _ = print_string("************************************************************************\n") in *)
 			   
 			 let drop_read_phase = 
 			   if (contains_mutable_h_formula h2) or (contains_mutable_h_formula h3)
@@ -2771,7 +2813,7 @@ and heap_entail_split_rhs_phases
 			 in
 			 let after_wr_ctx, after_wr_prfs =
 			   if not(is_true h2) then
-			     let _ = print_string("conseq in heap_entail_split_rhs is conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in
+			     (* let _ = print_string("conseq in heap_entail_split_rhs is conseq = " ^ (Cprinter.string_of_formula new_conseq) ^ "\n") in *)
 			     let after_wr = List.map (fun c -> heap_entail_split_lhs_phases prog is_folding is_universal c new_conseq drop_read_phase pos) cl in
 			     let after_wr_ctx, after_wr_prfs = List.split after_wr in
 			     let after_wr_prfs = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) after_wr_prfs in
@@ -2794,9 +2836,9 @@ and heap_entail_split_rhs_phases
 				       (* let after_wr_ctx = fold_context_left after_wr_ctx in  *)
 				       (after_wr_ctx, after_wr_prfs)
 				   | _ ->
-				       let _ = print_string("************************************************************************\n") in
-				       let _ = print_string("entail rhs h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in
-				       let _ = print_string("************************************************************************\n") in
+				       (* let _ = print_string("************************************************************************\n") in *)
+				       (* let _ = print_string("entail rhs h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
+				       (* let _ = print_string("************************************************************************\n") in *)
 					 if (CF.contains_phase h3) then
 					   let after_nested_phase = List.map (fun c -> heap_entail_split_rhs_phases prog is_folding is_universal c (func h3 (*p*) (MCP.mkMTrue pos)) drop_read_phase pos) cl in
 					   let after_nested_phase_ctx, after_nested_phase_prfs = List.split after_nested_phase in
@@ -2817,13 +2859,27 @@ and heap_entail_split_rhs_phases
 	  (* entail the pure part *)
 	  match res_ctx with
 	    | SuccCtx (cl) ->
-		let pure_conseq = (func HTrue p) in
-		let res = List.map (fun c -> heap_entail_conjunct prog is_folding is_universal c pure_conseq pos) cl in
+		(*let pure_conseq = (func HTrue p) in*)
+		(* let _ = print_string("************************************************************************\n") in *)
+		(* let _ = print_string("[heap_n_pure_entail]: entail the pure part: p =" ^ (Cprinter.string_of_mix_formula p) ^ "\n") in *)
+		(* let _ = print_string("************************************************************************\n") in *)
+		let res = List.map (fun c -> 
+				      let new_conseq, aux_conseq_from_fold = 
+					(match c with 
+					| Ctx(estate) -> 
+					    subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p), 
+					    subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq))
+					| OCtx _ -> report_error no_pos ("Disunctive context\n"))
+		                      in 
+					let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
+					heap_entail_conjunct prog is_folding is_universal c new_conseq pos) cl 
+		in
 		let res_ctx, res_prf = List.split res in
 		let res_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) res_prf in
 		let res_ctx = fold_context_left res_ctx in 
 		  (res_ctx, res_prf)
 	    | FailCtx _ -> (res_ctx, res_prf)	    
+    
   in
 
   Debug.devel_pprint ("heap_entail_split_rhs_phases: 
@@ -2831,26 +2887,82 @@ and heap_entail_split_rhs_phases
 			  ^ (Cprinter.string_of_context ctx0)
 			  ^ "\nconseq:\n"
 			  ^ (Cprinter.string_of_formula conseq)) pos;
-  print_string ("heap_entail_split_rhs_phases: 
-                            \nante:\n"
-			  ^ (Cprinter.string_of_context ctx0)
-			  ^ "\nconseq:\n"
-			  ^ (Cprinter.string_of_formula conseq));
+  (* print_string ("heap_entail_split_rhs_phases:  *)
+  (*                           \nante:\n" *)
+  (* 			  ^ (Cprinter.string_of_context ctx0) *)
+  (* 			  ^ "\nconseq:\n" *)
+  (* 			  ^ (Cprinter.string_of_formula conseq)); *)
 
-  match conseq with 
-    | Base(bf) -> 
-	let (h, p, fl, b, t) = CF.split_components conseq in
-	  helper h p (fun xh xp -> CF.mkBase xh xp t fl b pos)
-    | Exists({formula_exists_qvars = qvars;
-	      formula_exists_heap = h;
-              formula_exists_pure = p;
-              formula_exists_type = t;
-              formula_exists_flow = fl;
-              formula_exists_branches = b;
-              formula_exists_label = l;
-	      formula_exists_pos = pos }) -> 
-	 helper h p (fun x y -> CF.mkExists qvars x y t fl b pos)
-    | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n")
+ match ctx0 with
+    | Ctx estate -> begin
+	let ante = estate.es_formula in
+	  match ante with
+	    | Exists ({formula_exists_qvars = qvars;
+		       formula_exists_heap = qh;
+		       formula_exists_pure = qp;
+		       formula_exists_type = qt;
+		       formula_exists_flow = qfl;
+		       formula_exists_branches = qb;
+		       formula_exists_pos = pos}) ->
+		(* eliminating existential quantifiers from the LHS *)
+		(* ws are the newly generated fresh vars for the existentially quantified vars in the LHS *)
+		let ws = CP.fresh_spec_vars qvars in
+		let st = List.combine qvars ws in
+		let baref = mkBase qh qp qt qfl qb pos in
+		let new_baref = subst st baref in
+		  (* new ctx is the new context after substituting the fresh vars for the exist quantified vars *)
+		let new_ctx = Ctx {estate with
+				     es_formula = new_baref;
+				     es_ante_evars = ws @ estate.es_ante_evars;
+				     es_unsat_flag = false;} in
+		  (* call the entailment procedure for the new context - with the existential vars substituted by fresh vars *)
+		let rs, prf1 =  heap_entail_split_rhs_phases prog is_folding is_universal new_ctx conseq drop_read_phase pos in
+		let new_rs =
+		  if !Globals.wrap_exist then
+		    (* the fresh vars - that have been used to substitute the existenaltially quantified vars - need to be existentially quantified after the entailment *)
+		    (add_exist_vars_to_ctx_list rs ws)
+		  else
+		    rs
+		in
+		  (* log the transformation for the proof tracere *)
+		let prf = mkExLeft ctx0 conseq qvars ws prf1 in
+		  (new_rs, prf)
+	    | _ -> begin
+		match conseq with  
+		  | Base(bf) -> 
+		      let (h, p, fl, b, t) = CF.split_components conseq in
+			helper ctx0 h p (fun xh xp -> CF.mkBase xh xp t fl b pos)
+		  | Exists ({formula_exists_qvars = qvars;
+			     formula_exists_heap = qh;
+			     formula_exists_pure = qp;
+			     formula_exists_type = qt;
+			     formula_exists_flow = qfl;
+			     formula_exists_branches = qb;
+			     formula_exists_pos = pos}) ->
+		      (* let _ = print_string("Eliminating exist on RHS for conseq = " ^ (Cprinter.string_of_formula conseq) ^ "\n") in *)
+		      (* quantifiers on the RHS. Keep them for later processing *)
+		      let ws = CP.fresh_spec_vars qvars in
+		      let st = List.combine qvars ws in
+		      let baref = mkBase qh qp qt qfl qb pos in
+		      let new_baref = subst st baref in
+		      let new_ctx = Ctx {estate with es_evars = ws @ estate.es_evars} in
+		      let tmp_rs, tmp_prf = heap_entail_split_rhs_phases prog is_folding is_universal new_ctx new_baref drop_read_phase pos
+
+		      in
+
+			(match tmp_rs with
+			   | FailCtx _ -> (tmp_rs, tmp_prf)
+			   | SuccCtx sl ->
+			       let prf = mkExRight ctx0 conseq qvars ws tmp_prf in
+			       let _ = List.map (redundant_existential_check ws) sl in
+			       let res_ctx =
+				 if !Globals.elim_exists then List.map elim_exists_ctx sl
+				 else sl in
+				 (SuccCtx res_ctx, prf))
+		  | _ -> report_error no_pos ("[solver.ml]: No disjunction on the RHS should reach this level\n")
+	      end
+      end
+	| _ -> report_error no_pos ("[solver.ml]: No disjunctive context should reach this level\n")
 
 
 (* and heap_entail_split_lhs_phases_debug *)
@@ -2861,8 +2973,7 @@ and heap_entail_split_rhs_phases
 (*     (Cprinter.string_of_formula) *)
 (*     (fun _ -> "?") *)
 (*     (fun ctx0 conseq -> heap_entail_split_lhs_phases p is_folding is_universal ctx0 conseq pos) ctx0 conseq *)
-
-and heap_entail_split_lhs_phases 
+and heap_entail_split_lhs_phases
     (prog : prog_decl) 
     (is_folding : bool) 
     (is_universal : bool)
@@ -2870,6 +2981,7 @@ and heap_entail_split_lhs_phases
     (conseq : formula) 
     (drop_read_phase : bool)
     pos : (list_context * proof) =
+
   Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \nante:\n"
 			  ^ (Cprinter.string_of_context ctx0)
@@ -2877,7 +2989,16 @@ and heap_entail_split_lhs_phases
 			  ^ (Cprinter.string_of_formula conseq)) pos;
 
 (*** insert_ho_frame ****)
-  let rec insert_ho_frame_in2_formula f ho_frame = 
+let rec insert_ho_frame_in2_formula_debug f ho = 
+	       Util.ho_debug_2 "insert_ho_frame_in2_formula"
+	       Cprinter.string_of_formula
+	       (*Cprinter.string_of_h_formula*)
+	       (fun _ -> "?")
+	       Cprinter.string_of_formula
+	       insert_ho_frame_in2_formula f ho
+	       
+
+ and insert_ho_frame_in2_formula f ho_frame = 
     match f with
       | Base({formula_base_heap = h;
 	      formula_base_pure = p;
@@ -2914,6 +3035,7 @@ and heap_entail_split_lhs_phases
     else if ((is_true h1) && (is_true h3)) then h2
     else h1
 
+
 (***** main helper method ******)
 (* used in order to not duplicate the same code for formula base and formula exists *)
 and helper_lhs h func : (list_context * proof) = 
@@ -2922,26 +3044,26 @@ and helper_lhs h func : (list_context * proof) =
 	     h2 = write phase
 	     h3 = nested phase 
 	  *)
-	let h1, h2, h3 = split_phase_lhs_debug h in
-	let _ = print_string("heap_entail_split_lhs: splitting h into:\n h1 (lhs) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n h2 (lhs) = " ^ (Cprinter.string_of_h_formula h2) ^ "\n h3 (lhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in
+	let h1, h2, h3 = split_phase h in
+	(* let _ = print_string("heap_entail_split_lhs: splitting h into:\n h1 (lhs) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n h2 (lhs) = " ^ (Cprinter.string_of_h_formula h2) ^ "\n h3 (lhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
 
 	  if ((is_true h1) && (is_true h3))
 	    or ((is_true h2) && (is_true h3))
 	  then
-	    let _ = print_string("heap_entail_split_lhs_phases:lhs contains only one phase (no need to split\n)") in
+	    (* let _ = print_string("heap_entail_split_lhs_phases:lhs contains only one phase (no need to split\n)") in *)
 	    let new_ctx = CF.set_context_formula ctx0 (func (choose_not_true_heap h1 h2 h3)) in
 	    let final_ctx, final_prf = heap_entail_conjunct prog is_folding is_universal new_ctx conseq pos in
 	      match final_ctx with
 		| SuccCtx(cl) ->
 		     (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-		    let _ = print_string("Substitute the holes (6)\n") in
+		    (* let _ = print_string("Substitute the holes (6)\n") in *)
 		    let cl1 = List.map Context.subs_crt_holes_ctx cl in
 		      (SuccCtx(cl1), final_prf)
 		| FailCtx _ -> (final_ctx, final_prf)
 		    
 	  else
 	    if ((is_true h1) && (is_true h2)) then
-		  let _ = print_string("heap_entail_split_lhs_phases: lhs contains only a nested phase h3 (no need to split\n)") in
+		  (* let _ = print_string("heap_entail_split_lhs_phases: lhs contains only a nested phase h3 (no need to split\n)") in *)
 		  let new_ctx = CF.set_context_formula ctx0 (func h3) in
 		  let final_ctx, final_prf = 
 		    if not(contains_phase h3) then
@@ -2952,7 +3074,7 @@ and helper_lhs h func : (list_context * proof) =
 		    match final_ctx with
 		      | SuccCtx(cl) ->
 			  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-			  let _ = print_string("Substitute the holes (7)\n") in
+			  (* let _ = print_string("Substitute the holes (7)\n") in *)
 			  let cl1 = List.map Context.subs_crt_holes_ctx cl in
 			    (SuccCtx(cl1), final_prf)
 		      | FailCtx _ -> (final_ctx, final_prf)
@@ -2966,9 +3088,9 @@ and helper_lhs h func : (list_context * proof) =
 	let rd_ctx = CF.set_context_formula ctx0 lhs_rd in
 	  Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \ncall heap_entail_conjunct with lhs = reading phase\n") pos;
-	let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
-	let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
-	let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+	(* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+	(* let _ = print_string("split_lhs: entail using h1 = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
+	(* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 
 
 	let (with_rd_ctx, with_rd_prf) = heap_entail_conjunct prog is_folding is_universal rd_ctx conseq pos in
@@ -2977,7 +3099,7 @@ and helper_lhs h func : (list_context * proof) =
                      | FailCtx _ -> with_rd_ctx
 		     | SuccCtx (cl) -> 
 			 (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-			 let _ = print_string("Substitute the holes (1)\n") in
+			 (* let _ = print_string("Substitute the holes (1)\n") in *)
 			 let cl1 = List.map Context.subs_crt_holes_ctx cl in
 			 (* in case of success, put back the frame consisting of h2*h3*)
 			 let cl2 = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH f (CF.mkStarH h2 h3 pos) pos)) cl1 in
@@ -2995,9 +3117,9 @@ and helper_lhs h func : (list_context * proof) =
 	Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                             \ncall heap_entail_conjunct with lhs = writing phase\n") pos;
 
-	let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
-	let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in
-	let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+	(* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+	(* let _ = print_string("split_lhs: entail using h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n") in *)
+	(* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 
 
 	let (with_wr_ctx, with_wr_prf) = heap_entail_conjunct prog is_folding is_universal wr_ctx conseq pos in
@@ -3011,10 +3133,10 @@ and helper_lhs h func : (list_context * proof) =
 
 	  match with_wr_ctx with
 	    | SuccCtx(cl) -> 
-		let _ = print_string("Success when using lhs = h2 = " ^ (Cprinter.string_of_h_formula h2) ^ ": no need for continuation\n") in
+		(* let _ = print_string("Success when using lhs = h2 = " ^ (Cprinter.string_of_h_formula h2) ^ ": no need for continuation\n") in *)
 		(* h2 was enough, no need to use h3 *)
 		(* substitute the holes due to the temporary removal of matched immutable nodes *) 
-		let _ = print_string("Substitute the holes (2)\n") in
+		(* let _ = print_string("Substitute the holes (2)\n") in *)
 
 		let cl = List.map Context.subs_crt_holes_ctx cl in
 		(* put back the frame consisting of h1 and h3 *)
@@ -3023,39 +3145,51 @@ and helper_lhs h func : (list_context * proof) =
 		let cl = 
 		  if not(CF.contains_mutable conseq) && not(drop_read_phase) then
 	            (* next add the frame h1;[]*)
-		  let _ = print_string("adding back frame consisting of h1 (4)= " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
+		  (* let _ = print_string("adding back frame consisting of h1 (4)= " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
 		  List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 		  else
-		    let _ = print_string("rhs_split: drop read phase\n") in
-		    cl
-		in
+		    (* drop the read phase *)
+		    (* let _ = print_string("rhs_split: drop read phase\n") in *)
+		    let xpure_rd_0, _, memset_rd = xpure_heap prog h1 0 in
+		    let xpure_rd_1, _, memset_rd = xpure_heap prog h1 1 in
+		      (* let _ = print_string("add pure info " ^ (Cprinter.string_of_mix_formula xpure_rd_1) ^ "\n") in *)
+		      List.map 
+			(Cformula.transform_context 
+			   (fun es -> 
+			      Ctx{es with 
+				    (* add xpure0 directly to the state formula *)
+				    es_formula = mkStar es.es_formula (formula_of_mix_formula xpure_rd_0 pos) Flow_combine pos;
+				    (* store xpure_1 of the dropped phase for the case it is needed later during the entailment *)
+				    es_aux_xpure_1 = MCP.merge_mems es.es_aux_xpure_1 xpure_rd_1 true; 
+				 })) cl
+		  in
  		  (SuccCtx(cl), with_wr_prf)
             | FailCtx(ft) -> 
-		let _ = print_string("insuccess when using lhs = h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n; try continuation\n") in
+		(* let _ = print_string("insuccess when using lhs = h2 = " ^ (Cprinter.string_of_h_formula h2) ^ "\n; try continuation\n") in *)
 		match h3 with
 		  | HTrue -> (with_wr_ctx, with_wr_prf)
 		  | _ ->
-		let _ = print_string("check for continuation\n") in
+		(* let _ = print_string("check for continuation\n") in  *)
 		(match ft with
 		   | Continuation(fc) ->
 		       begin
-			 let _ = print_string("found continuation\n") in
+			 (* let _ = print_string("found continuation\n") in *)
 		       (* check if there is any continuation *)
 		       let lhs = fc.fc_current_lhs in
 			 if (lhs.es_cont = []) then
-			   let _ = print_string("no continuation detected\n") in
+			   (* let _ = print_string("no continuation detected\n") in *)
 			   (* no continuation *)
 			   (* ---TODO:  need to enable folding --- *)
 			   (with_wr_ctx, with_wr_prf)
 			 else 
-			   let _ = print_string("pop the continuation\n") in
+			   (* let _ = print_string("pop the continuation\n") in  *)
 			   (* pop the continuation *)
 			   (* we already know the continuation is h3 *)
 			   let _, lhs = Context.pop_cont_es lhs in
-			   let _ = print_string("continuation = " ^ (Cprinter.string_of_estate lhs) ^ "\n") in
+			    (* let _ = print_string("continuation = " ^ (Cprinter.string_of_estate lhs) ^ "\n") in  *)
 			     (* retrieve the current conseq from the failed context *)				    
 			   let conseq = fc.fc_current_conseq in
-			   let _ = print_string("not proven conseq after using h2 is " ^ (Cprinter.string_of_formula conseq) ^ "\n") in
+			   (* let _ = print_string("not proven conseq after using h2 is " ^ (Cprinter.string_of_formula conseq) ^ "\n") in  *)
 			     (* take out the current lhs heap as frame *)
 			     (**** swap_heap *****)
 			     (* returns the new formula and the heap extracted from the initial formula *)
@@ -3078,16 +3212,16 @@ and helper_lhs h func : (list_context * proof) =
 				     (******* end swap_heap *************)
 			     let new_f, h2_rest = swap_heap lhs.es_formula h3 in
 			       (* create the current context containing the current estate *)
-			     let _ = print_string("estate after swapping is f = " ^ (Cprinter.string_of_formula new_f) ^ "\n") in
+			     (* let _ = print_string("estate after swapping is f = " ^ (Cprinter.string_of_formula new_f) ^ "\n") in  *)
 			     let cont_ctx = Ctx({lhs with es_formula = new_f;}) in
 			     let cont_ctx_list = SuccCtx([cont_ctx]) in
-			     print_string ("heap_entail_split_lhs_phases: 
-                             \ncall heap_entail_conjunct for the continuation\n");
+			     (* print_string ("heap_entail_split_lhs_phases:  *)
+                             (* \ncall heap_entail_conjunct for the continuation\n"); *)
 			     Debug.devel_pprint ("heap_entail_split_lhs_phases: 
                              \ncall heap_entail_conjunct for the continuation\n") pos;
-			     let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
-			     let _ = print_string("split_lhs: entail using h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in
-			     let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in
+			     (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
+			     (* let _ = print_string("split_lhs: entail using h3 = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
+			     (* let _ = print_string("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n") in *)
 
 			     let after_wr_ctx, after_wr_prf =
 			       if (CF.contains_phase h3) then
@@ -3101,7 +3235,7 @@ and helper_lhs h func : (list_context * proof) =
 				  | FailCtx _ -> (after_wr_ctx, after_wr_prf)
 				  | SuccCtx (cl) -> 
 				      (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-				      let _ = print_string("Substitute the holes (3)\n") in
+				      (* let _ = print_string("Substitute the holes (3)\n") in *)
 
 				      let cl = List.map Context.subs_crt_holes_ctx cl in
 				      (* in case of success, put back the frame consisting of h1 and what's left of h2 *)
@@ -3111,11 +3245,23 @@ and helper_lhs h func : (list_context * proof) =
 
 				      let cl =
 					if not(CF.contains_mutable conseq)  && not(drop_read_phase) then
-					  let _ = print_string("adding back frame consisting of h1(1) = " ^ (Cprinter.string_of_h_formula h1) ^ ", when conseq = " ^ (Cprinter.string_of_formula conseq) ^ "\n") in
+					  (* let _ = print_string("adding back frame consisting of h1(1) = " ^ (Cprinter.string_of_h_formula h1) ^ ", when conseq = " ^ (Cprinter.string_of_formula conseq) ^ "\n") in *)
 					  List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl 
 					else
-					  let _ = print_string("rhs_split: drop read phase\n") in
-					  cl
+					  (* let _ = print_string("rhs_split: drop read phase\n") in *)
+					  let xpure_rd_0, _, memset_rd = xpure_heap prog h1 0 in
+					  let xpure_rd_1, _, memset_rd = xpure_heap prog h1 1 in
+					    (* let _ = print_string("add pure info " ^ (Cprinter.string_of_mix_formula xpure_rd_1) ^ "\n") in *)
+					    List.map 
+					      (Cformula.transform_context 
+						 (fun es -> 
+						    Ctx{es with 
+							  (* add xpure0 directly to the state formula *)
+							  es_formula = mkStar es.es_formula (formula_of_mix_formula xpure_rd_0 pos) Flow_combine pos;
+							  (* store xpure_1 of the dropped phase for the case it is needed later during the entailment *)
+							  es_aux_xpure_1 = MCP.merge_mems es.es_aux_xpure_1 xpure_rd_1 true; 
+						       })) cl
+
 				      in
 					(SuccCtx(cl), after_wr_prf)
 			       )
@@ -3123,7 +3269,7 @@ and helper_lhs h func : (list_context * proof) =
 			 
 			       
 		   | Or_Reason _ -> 
-		       let _ = print_string("Or reason \n") in
+		       (* let _ = print_string("Or reason \n") in *)
 			 
 		       (* could not use the continuation -> try to discharge the conseq by using h3 as lhs and h2*[] as frame *)
 		       (* create the new ctx *)
@@ -3135,14 +3281,14 @@ and helper_lhs h func : (list_context * proof) =
 			  | FailCtx _ -> (with_wr_ctx, with_wr_prf)
 			  | SuccCtx (cl) -> 
 			  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-			  let _ = print_string("Substitute the holes (4)\n") in
+			  (* let _ = print_string("Substitute the holes (4)\n") in *)
 
 			  let cl = List.map Context.subs_crt_holes_ctx cl in   
 			  (* in case of success, put back the frame consisting of h1;h2*[] *)
 			  (* first add the frame h2*[] *) 
 			  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos)) cl in
                                (* next add the frame h1;[]*)
-			     let _ = print_string("adding back frame consisting of h1 (2) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
+			     (* let _ = print_string("adding back frame consisting of h1 (2) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
 
 		             let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl in
 			       (SuccCtx(cl), with_wr_prf)
@@ -3150,7 +3296,7 @@ and helper_lhs h func : (list_context * proof) =
 		     in (with_wr_ctx, with_wr_prf)
 
 		   | _ -> 
-		       let _ = print_string("No basic reason\n") in
+		       (* let _ = print_string("No basic reason\n") in *)
 
 		       (* could not use the continuation -> try to discharge the conseq by using h3 as lhs and h2*[] as frame *)
 		       (* create the new ctx *)
@@ -3162,14 +3308,14 @@ and helper_lhs h func : (list_context * proof) =
 			  | FailCtx _ -> (with_wr_ctx, with_wr_prf)
 			  | SuccCtx (cl) -> 
 			  (* substitute the holes due to the temporary removal of matched immutable nodes *) 
-			  let _ = print_string("Substitute the holes (5)\n") in
+			  (* let _ = print_string("Substitute the holes (5)\n") in *)
 
 			  let cl = List.map Context.subs_crt_holes_ctx cl in   
 			  (* in case of success, put back the frame consisting of h1;h2*[] *)
 			  (* first add the frame h2*[] *) 
 			  let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkStarH h2 f pos)) cl in
                                (* next add the frame h1;[]*)
-			     let _ = print_string("adding back frame consisting of h1 (3)= " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in
+			     (* let _ = print_string("adding back frame consisting of h1 (3)= " ^ (Cprinter.string_of_h_formula h1) ^ "\n") in *)
 
 		             let cl = List.map (fun x -> insert_ho_frame x (fun f -> CF.mkPhaseH h1 f pos)) cl in
 			       (SuccCtx(cl), with_wr_prf)
@@ -3184,15 +3330,6 @@ and helper_lhs h func : (list_context * proof) =
 
 in
 
-(*
-and ctx_union ctx1 ctx2 : list_context =
-    match ctx1, ctx2 with
-     | FailCtx t1 ,FailCtx t2 -> FailCtx (Or_Reason (t1,t2))
-     | FailCtx t1,SuccCtx t2 -> SuccCtx t2
-     | SuccCtx t1,FailCtx t2 -> SuccCtx t1
-     | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)
-  in
-*)
 (*  end of helper method *)
 (*********************)
 
@@ -3213,6 +3350,7 @@ and ctx_union ctx1 ctx2 : list_context =
               formula_exists_pos = pos }) -> 
 	  helper_lhs h (fun xh -> CF.mkExists qvars xh p t fl b pos)
     | _ -> report_error no_pos ("[solver.ml]: No disjunction on the LHS should reach this level\n")
+
 
 
 (*___________________*)
@@ -3394,10 +3532,18 @@ and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.m
     (ante,tmp1)
       
 and heap_entail_build_mix_formula_check_debug ev an cq pos =
-  Util.ho_debug_1 "heap_entail_build_mix_formula_check" Cprinter.string_of_mix_formula (fun (_,f) -> Cprinter.string_of_mix_formula f)
+  Util.ho_debug_1 "heap_entail_build_mix_formula_check" 
+    Cprinter.string_of_mix_formula 
+    (fun (_,f) -> Cprinter.string_of_mix_formula f)
     (fun cq -> heap_entail_build_mix_formula_check ev an cq pos) cq
+
+and heap_entail_build_pure_check ev an cq pos =
+  Util.ho_debug_1 "heap_entail_build_pure_check" 
+    Cprinter.string_of_pure_formula 
+    (fun (f1,f2) -> "f1 = " ^ (Cprinter.string_of_pure_formula f1) ^ "; f2 = " ^ (Cprinter.string_of_pure_formula f2) ^ "\n") 
+    (fun cq -> heap_entail_build_pure_check_a ev an cq pos) cq
     
-and heap_entail_build_pure_check (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
+and heap_entail_build_pure_check_a (evars : CP.spec_var list) (ante : CP.formula) (conseq : CP.formula) pos : (CP.formula * CP.formula) =
   let tmp1 = CP.mkExists evars conseq None no_pos in
     (ante, tmp1)
       
@@ -3459,6 +3605,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   let _ = reset_int2 () in
   let xpure_lhs_h0, xpure_lhs_h0_b, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 0 in
   let xpure_lhs_h1, xpure_lhs_h1_b, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
+    (* add the information about the dropped reading phases *)
+  let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
   let fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
     if (is_ok = false) then (is_ok,succs,fails) else 
       let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
@@ -3583,8 +3731,8 @@ and solve_ineq (memset : Cformula.mem_formula) (conseq : MCP.mix_formula) : MCP.
     | MCP.OnePF f -> MCP.OnePF (solve_ineq_pure_formula memset f) 
 
 and solve_ineq_pure_formula (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
-  let _ = print_string("solve_ineq: conseq = " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
-  let _ = print_string("solve_ineq: memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n") in
+  (* let _ = print_string("solve_ineq: conseq = " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in *)
+  (* let _ = print_string("solve_ineq: memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n") in *)
   match conseq with
     | Cpure.BForm (f, l) -> solve_ineq_b_formula memset f
     | Cpure.And (f1, f2, pos) -> Cpure.And((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), pos)  
@@ -3813,6 +3961,8 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
   let r_subs, l_sub = List.split ext_subst in
     (*IMPORTANT TODO: global existential not took into consideration*)
   let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
+
+
   let tmp_h2, tmp_p2, tmp_fl2, tmp_b2, _ = split_components tmp_conseq' in
   let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
     (* only add the new node if it is mutable *)
@@ -3835,7 +3985,9 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
                   es_ivars = ivars';
                   es_heap = new_consumed;
                   es_residue_pts = n_es_res;
-                  es_success_pts = n_es_succ; } in
+                  es_success_pts = n_es_succ; 
+		  es_subst = ((fst estate.es_subst)@r_subs, (snd estate.es_subst)@l_sub);
+	       } in
   let new_subst = (obtain_subst expl_inst) in
     (* apply the explicit instantiations to the consequent *)
   let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in
@@ -3999,7 +4151,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	    (************************* match_all_nodes ******************)
 	    match fnode_results with 
 	      | Failed -> 
-		  let _ = print_string("Matching result: Failed -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in
+		  (* let _ = print_string("Matching result: Failed -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
 
 		  (CF.mkFailCtx_in (Continuation ( {
 							     fc_message = "failed 1 ?? to find a match";
@@ -4012,7 +4164,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				    node/predicate is found *)
 		  (* let _ = print_string("no match\n") in *)
 		  if is_data ln2 then begin (* fail *)
-		    let _ = print_string("Matching result: NoMatch -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in
+		    (* let _ = print_string("Matching result: NoMatch -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
 
                     Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
 					^ "no aliased node for data node "
@@ -4029,7 +4181,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 		    else
 			(* there is a continuation to try *)
 			if (estate.es_cont != []) then
-			  let _ = print_string("try the cont!!!\n\n") in
+			  (* let _ = print_string("try the cont!!!\n\n") in *)
 			  (CF.mkFailCtx_in (Continuation ( {
 							     fc_message = "try the continuation";
 							     fc_current_lhs = estate;

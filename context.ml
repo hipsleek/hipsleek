@@ -86,24 +86,17 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
 (*
 spatial context
 *)
-(*    
-and spatial_ctx_extract p f a i = Util.ho_debug_4 "spatial_context_extract " (fun _ -> "?") 
+    
+and spatial_ctx_extract_debug p f a i = Util.ho_debug_4 "spatial_context_extract " (fun _ -> "?") 
 (Cprinter.string_of_h_formula) 
 (fun _ -> "?") 
 (string_of_bool)
-(fun l -> List.fold_left (fun x (a,b,c,d,e,f,g) -> x ^ "frame: " ^ (Cprinter.string_of_h_formula a) ^ "\n; rest_heap__lhs: " ^ (Cprinter.string_of_h_formula b) ^ "\n; anode = " ^ (Cprinter.string_of_h_formula d)) "" l)
+(fun _ -> "?")
+(*(fun l -> List.fold_left (fun x (a,b,c,d,e,f,g) -> x ^ "frame: " ^ (Cprinter.string_of_h_formula a) ^ "\n; rest_heap__lhs: " ^ (Cprinter.string_of_h_formula b) ^ "\n; anode = " ^ (Cprinter.string_of_h_formula d)) "" l)*)
 (fun _ -> true) 
-spatial_ctx_extract_a p f a i
-*)
+spatial_ctx_extract p f a i
 
 
-(*
-match_res = (h_formula (* lhs formula - contains holes in place of matched immutable nodes/views *)
-		* h_formula (* node from the extracted formula *)                                                                                          
-		* (h_formula * int) (* imm node/view that have been replaced in lhs together with their corresponding hole id *)
-		* match_type (* indicator of what type of matching *)
-	       )
-*)
 and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : match_res list  =
   (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in  *)
   let rec helper f = match f with
@@ -202,105 +195,6 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
   in
     (helper f0)
 
-
-(*
-conjunctive context
-*)
-(*
-and conj_ctx_extract_debug p f a i = Util.ho_debug_4 "conj_context_extract " (fun _ -> "?") 
-(Cprinter.string_of_h_formula) 
-(fun _ -> "?") 
-(string_of_bool)
-(fun l -> List.fold_left (fun x (a,b,c,d,e,f,g) -> x ^ "ctx: " ^ (Cprinter.string_of_h_formula a) ^ "; resulted_lhs: " ^ (Cprinter.string_of_h_formula b) ^ "; anode = " ^ (Cprinter.string_of_h_formula d)) "" l)
-(fun _ -> true) 
-conj_ctx_extract p f a i
-
-and conj_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : context list  =
-  (* let _ = print_string("conj_ctx_extract: input formula = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in *)
-  let rec helper f = match f with
-    | HTrue 
-    | HFalse -> []
-    | Hole _ -> []
-    | DataNode ({h_formula_data_node = p1;
-		 h_formula_data_imm = imm1}) ->
-	if (CP.mem p1 aset) && (subtype imm imm1) then
-	  let matched_node =
-	    if imm then f
-	    else HTrue 
-	   in   
-	  let hole_no = Globals.fresh_int() in 
-	  [((Hole hole_no), matched_node, hole_no, f, Root, HTrue, [])]  (* the node is imm, hence it is not consumed *)
-	else 
-	  []
-    | ViewNode ({h_formula_view_node = p1;
-		 h_formula_view_imm = imm1;
-		 h_formula_view_arguments = vs1;
-		 h_formula_view_name = c}) ->
-	let matched_node =
-	  if imm then f
-	  else HTrue 
-	in
-	  if (subtype imm imm1) then
-	    (if (CP.mem p1 aset) then
-	       (*let _ = print_string("f = " ^ (Cprinter.string_of_h_formula f) ^ "\n") in
-		 let _ = print_string("imm = " ^ (string_of_bool imm) ^ "\n") in
-		 let _ = print_string("imm1 = " ^ (string_of_bool imm1) ^ "\n") in*)
-	       let hole_no = Globals.fresh_int() in 
-		 [(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]
-	     else
-	       let vdef = look_up_view_def_raw prog.prog_view_decls c in
-	       let mvs = CP.subst_var_list_avoid_capture vdef.view_vars vs1
-		 vdef.view_materialized_vars
-	       in
-		 if List.exists (fun v -> ((CP.mem v aset) && (subtype imm imm1))) mvs then
-		   let hole_no = Globals.fresh_int() in 
-		     [(Hole hole_no, matched_node, hole_no, f, MaterializedArg, HTrue, [])]
-		 else if List.exists (fun v -> ((CP.mem v aset) && (subtype imm imm1))) vs1 then
-		   let hole_no = Globals.fresh_int() in 
-		     [(Hole hole_no, matched_node, hole_no, f, Arg, HTrue, [])]
-		 else [])
-	  else []
-    | Star ({h_formula_star_h1 = f1;
-	     h_formula_star_h2 = f2;
-	     h_formula_star_pos = pos}) ->
-
-	let l1 = helper f1 in
-	let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (ctx1, mkStarH hole1 f2 pos, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in
-	
-	let l2 = helper f2 in
-	let res2 = List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (ctx2, mkStarH f1 hole2 pos, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2 in
-	  res1 @ res2
-    | Conj ({h_formula_conj_h1 = f1;
-	     h_formula_conj_h2 = f2;
-	     h_formula_conj_pos = pos}) -> 
-	let l1 = helper f1 in
-	let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (ctx1, mkConjH hole1 f2 pos, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in
-	
-	let l2 = helper f2 in
-	let res2 = List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (ctx2, mkConjH f1 hole2 pos, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2 in
-	  res1 @ res2
-
-    | Phase ({h_formula_phase_rd = f1;
-	     h_formula_phase_rw = f2;
-	     h_formula_phase_pos = pos}) ->
-
-	let l1 = helper f1 in
-	let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (ctx1, mkPhaseH hole1 f2 pos, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in
-	
-	let l2 = helper f2 in
-	let res2 = 
-	  if not(imm) && (List.length l2) > 0 then
-	    (* drop the read phase *)
-	    List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2 
-	  else    
-	    List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (ctx2, mkPhaseH f1 hole2 pos, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2 
-	in
-	  res1 @ res2
-  in
-    (helper f0)
-*)
-
-
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with
     | Base (fb) ->
@@ -348,21 +242,6 @@ and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formul
     | ViewNode _
     | HTrue | HFalse -> frame
   
-(* update the es_formula of ctx as frame[id_hole <- es_formula] *)
-(* and input_ctx_frame_debug c =  *)
-(*   Util.ho_debug_1  *)
-(*     "input_ctx_frame"  *)
-(*     (fun x ->  *)
-(*        match x with *)
-(* 	 | Ctx(es) -> Cprinter.string_of_h_formula (fst es.es_frame) *)
-(* 	 | _ -> "or_ctx" *)
-(*     ) *)
-(*     (fun x ->  *)
-(*        match x with *)
-(* 	 | Ctx(es) -> Cprinter.string_of_formula es.es_formula *)
-(* 	 | _ -> "or_ctx" *)
-(*     ) *)
-(*     input_ctx_frame c *)
 
 (* 
 and input_ctx_frame (ctx : Cformula.context) : Cformula.context =

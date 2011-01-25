@@ -1103,8 +1103,6 @@ let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b
   let ne, vals = List.split (List.map trans_memo_gr e) in
   (ne, f_comb vals)
  
- 
- 
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula

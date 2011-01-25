@@ -698,7 +698,15 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
   let h1, p1, fl1, b1, t1 = split_components f1 in
   let h2, p2, fl2, b2, t2 = split_components f2 in
-  let h = mkStarH h1 h2 pos in
+
+(* i assume that at least one of the two formulae has only 1 phase *)
+  let h = 
+    if not(contains_phase h1) then
+      mkStarH h1 h2 pos
+    else
+      mkStarH h2 h1 pos
+  in
+  (* let h = mkStarH h1 h2 pos in *)
   let p,_ = combine_and_pure f1 p1 p2 in
   let t = mkAndType t1 t2 in
   let b = CP.merge_branches b1 b2 in
@@ -1598,6 +1606,9 @@ type entail_state = {
   es_cont : h_formula list;
   es_crt_holes : (h_formula * int) list;
   es_hole_stk : ((h_formula * int) list) list;
+  es_aux_xpure_1 : MCP.mix_formula;
+  es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
+  es_aux_conseq : CP.formula;
 }
 
 and context = 
@@ -1684,6 +1695,10 @@ let empty_es flowt pos =
   es_cont = [];
   es_crt_holes = [];
   es_hole_stk = [];
+  es_aux_xpure_1 = MCP.mkMTrue pos;
+  es_subst = ([], []);
+  es_aux_conseq = CP.mkTrue pos;
+
 }
 
 let empty_ctx flowt pos = Ctx (empty_es flowt pos)

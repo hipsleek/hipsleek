@@ -47,7 +47,6 @@ node add_one_digit(node x, int c)
   return new node(t, clone(x.next));
 }
 
-// verification of procedure test should fail
 node test(node x) 
  requires x::bigint<v>@I
  ensures res::bigint<2*v>;
@@ -72,22 +71,24 @@ node add_c(node x, node y, int c)
 */
 // above should fail but did not
 
- 
   requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1
   ensures res::bigint<v1+v2+c>;
 
- requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1
+  requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1
   ensures res::bigint<v1+v2+c>;
 
 {
   if (x == null) {
     if (y == null) {
       if (c == 0) return null;
-      else return new node(c, null);
+      else //assume false;
+      return new node(c, null);
     } else {
+//	    assume false;
       return add_one_digit(y, c);
     }
   } else {
+//    assume false;	  
     if (y == null) {
       return add_one_digit(x, c);
     } else {
@@ -100,7 +101,10 @@ node add_c(node x, node y, int c)
         carry = 1;
         t = t - 10;
       }
+//      dprint;
       node rest = add_c(x.next, y.next, carry);
+//      dprint;
+ //     assume false;
       return new node(t, rest);
     }
   }

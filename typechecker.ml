@@ -69,13 +69,16 @@ let rec check_specs (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) spe
   in	
   List.for_all do_spec_verification spec_list
 
-and check_exp_debug p proc ctx e post =
-  Util.ho_debug_1 
-    "check_exp_debug"
-    (Cprinter.string_of_list_failesc_context)
-    (Cprinter.string_of_list_failesc_context)
-    (fun ctx -> check_exp p proc ctx e post)
-    ctx
+and check_exp_debug p proc c e0 post =
+  Util.ho_debug_1 "check_exp"
+    (fun x -> match e0 with
+       | SCall _ -> Cprinter.string_of_list_failesc_context x
+       | _ -> "?")
+    (fun x -> match e0 with
+       | SCall _ -> Cprinter.string_of_list_failesc_context x
+       | _ -> "?")   
+    (fun x -> check_exp p proc x e0 post) c
+
 
 and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
   if (exp_to_check e0) then  
@@ -213,8 +216,8 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
 		    CF.normalize_max_renaming_list_failesc_context vheap pos true tmp_res1 
 		  else tmp_res1
 		in
-		    (* let _ = print_string ("bind: tmp_res2:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res2) *)
-                    (* ^ "\n") in *)
+		     (* let _ = print_string ("bind: tmp_res2:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res2) *)
+                     (* ^ "\n") in  *)
                 let tmp_res3 = CF.push_exists_list_failesc_context vs_prim tmp_res2 in
                 (* let _ = print_string ("bind: tmp_res3:\n" ^ (Cprinter.string_of_list_failesc_context tmp_res3) *)
                 (*     ^ "\n") in *)
@@ -364,6 +367,7 @@ and check_exp (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_conte
             rs in	        
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
+		
           res
           end
         | Seq ({exp_seq_type = te2;
