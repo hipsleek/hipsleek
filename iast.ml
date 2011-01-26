@@ -23,6 +23,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
+                   mutable prog_hopred_decls : hopred_decl list;
                    prog_proc_decls : proc_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
@@ -47,6 +48,14 @@ and view_decl = { view_name : ident;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
 		  try_case_inference: bool}
+
+and hopred_decl = { hopred_name : ident;
+          hopred_typed_arg_list : ident list;
+          hopred_fct_arg_list : ident list;
+          hopred_opt_typed_arg_list : ident list;
+          hopred_opt_type_var_list : ident list;
+          hopred_opt_fct_list : ident list;          
+}
 
 and enum_decl = { enum_name : ident;
 		  enum_fields : (ident * int option) list } 

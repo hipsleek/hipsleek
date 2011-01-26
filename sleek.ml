@@ -75,7 +75,9 @@ let main () =
                 I.prog_enum_decls = [];
                 I.prog_view_decls = [];
                 I.prog_proc_decls = [];
-                I.prog_coercion_decls = [] } in
+                I.prog_coercion_decls = [];
+                I.prog_hopred_decls = [];
+  } in
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = Util.c_h () in
   let quit = ref false in

@@ -4473,7 +4473,9 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
        Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
        Iast.prog_view_decls = tmp_views;
        Iast.prog_proc_decls = procs1;
-       Iast.prog_coercion_decls = coer1 }
+       Iast.prog_coercion_decls = coer1;
+       Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;     
+    }
       
 and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_inv pos: 
       ((Cpure.b_formula * (formula_label list)) list)*

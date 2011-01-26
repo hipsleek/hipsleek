@@ -13,7 +13,6 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-	| Ho_Pred of ho_pred_dcl
 		
   type decl = 
     | Type of type_decl
@@ -225,6 +224,7 @@
 %token WITH
 %token SPLIT
 %token COMBINE
+%token FINALIZES
 /*exception related*/
 %token <string> FLOW
 %token TRY
@@ -263,6 +263,7 @@ program
 	let view_defs = ref ([] : view_decl list) in
     let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
+    let hopred_defs = ref ([] : hopred_decl list) in
     let choose d = match d with
       | Type tdef -> begin
 		  match tdef with
@@ -289,7 +290,9 @@ program
 		prog_enum_decls = !enum_defs;
 		prog_view_decls = !view_defs;
 		prog_proc_decls = !proc_defs;
-		prog_coercion_decls = !coercion_defs; }
+		prog_coercion_decls = !coercion_defs; 
+        prog_hopred_decls = !hopred_defs;
+}
   }
 ;
 
@@ -461,10 +464,11 @@ enumerator
 /********** Higher Order Preds *******/
 
 pred_def 
-	: view {}
-	| view_header EQEQ finalizes ho_pred_header {}
+	: view_decl {}
+	| view_header EQEQ FINALIZES hpred_header {}
 	
 ho_pred_list : ho_pred ho_pred_list {}
+    | {}
 
 ho_pred 
 	: HPRED hpred_header HPREDEXTENDS ext_form {}
@@ -472,7 +476,7 @@ ho_pred
 	| HPRED hpred_header  JOIN  split_combine {}
 	| HPRED hpred_header  EQEQ shape {}
 	
-/** shape :  not sure what to do here */
+shape :  formulas {}
 
 split_combine 
 	: HPRED {}
@@ -482,7 +486,7 @@ split_combine
 ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {}
 
 ho_fct_header 
-	: ident OPAREN fct_arg_list CPAREN {}
+	: IDENTIFIER OPAREN fct_arg_list CPAREN {}
 
 ho_fct_def
 	: ho_fct_header EQ shape {}
@@ -492,24 +496,25 @@ ho_fct_def_list
 	| ho_fct_def ho_fct_def_list {}
 	
 hpred_header
-	: ident opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {}
+	: IDENTIFIER opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {}
 
 typed_arg_list
-	: ident COLON ident {}
-	| ident COLON ident COMMA typed_arg_list {}
+	: IDENTIFIER COLON IDENTIFIER {}
+	| IDENTIFIER COLON IDENTIFIER COMMA typed_arg_list {}
 	
 fct_arg_list
-	: ident {}
-	| ident COMMA fct_arg_list {}
+	: IDENTIFIER {}
+	| IDENTIFIER COMMA fct_arg_list {}
 	
 opt_typed_arg_list
-	: typed_arg_list {}
+	: {}
+    | typed_arg_list {}
 	
 opt_type_var_list
-	: OSQUARE ident_list CSQUARE {}
+	: OSQUARE id_list_opt CSQUARE {}
 	
 opt_fct_list
-	: OSQUARE ident_list CSQUARE {}
+	: OSQUARE id_list_opt CSQUARE {}
 
 /********** Views **********/
 

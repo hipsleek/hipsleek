@@ -272,7 +272,9 @@ program : {
 	prog_enum_decls = [];
 	prog_view_decls = [];
 	prog_proc_decls = [];
-	prog_coercion_decls = []; }
+	prog_coercion_decls = [];
+    prog_hopred_decls = [];
+  }
 }
 ;
 
