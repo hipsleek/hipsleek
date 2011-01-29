@@ -46,10 +46,10 @@ and ctx_type =
 let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (Cprinter.string_of_h_formula lhs_h) ^ "\n") in *)
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-  let eqns' = MCP.ptr_equations lhs_p in
+	let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns = match rhs_info with
     | Some (f,v)-> 
-      let eqns = MCP.ptr_equations f in
+      let eqns = MCP.ptr_equations_without_null f in
       let r_asets = alias eqns in
       let a_vars = lhs_fv @ v in
       let fltr = List.map (fun c-> Util.intersect c a_vars) r_asets in
@@ -310,7 +310,7 @@ and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =
 	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
 	  let av1, rest1 = search v1 rest_sets in
 	  let av2, rest2 = search v2 rest1 in
-	  let v1v2_set = U.remove_dups (List.concat ([v1; v2] :: (av1 @ av2))) in
+	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
 		v1v2_set :: rest2
 	end
   | [] -> []
@@ -459,3 +459,4 @@ and apply_subs_h_formula crt_holes (h : h_formula) : h_formula =
 	       h_formula_phase_rw = nh2;
 	       h_formula_phase_pos = pos})
     | _ -> h
+

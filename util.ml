@@ -6,6 +6,8 @@
 
 exception Bad_string
 exception Bail
+let rec restart f arg =
+  try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
 type 'a tag_elem = ('a * (int list))
 
@@ -140,7 +142,6 @@ let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c
                     else helper xs ys1
   in helper xs ys
 
-
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
  * but put helper files in another (/usr/share/module-language),
@@ -181,6 +182,10 @@ let rec remove_dups n =
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
 let mem f x l = List.exists (f x) l
+let rec remove_dups_eq eq n = 
+  match n with
+    [] -> []
+  | q::qs -> if (mem eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
   
   (* from cpure
 and mem (sv : spec_var) (svs : spec_var list) : bool =
@@ -199,6 +204,10 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 *)
   
+let rec check_dups_eq f n = 
+  match n with
+    [] -> false
+  | q::qs -> if (List.exists (fun c-> f q c) qs) then true  else check_dups_eq f qs 
   
   
 let rec remove_dups_f n f= 
@@ -295,18 +304,26 @@ let rec drop n l  = if n<=0 then l
     | h::t -> (drop (n-1) t)
     | [] -> []
 
+let force_backtrace () : string =
+  try raise Exit 
+  with e -> Printexc.record_backtrace true;("xxx"^Printexc.get_backtrace ())
 
-let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e:'a) : 'z =
   let r = try
     f e 
   with ex -> 
       let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
+  if not(test r) then r else
   let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+  (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
   r
-    
+
+let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
+  ho_debug_1_opt s pr_i pr_o (fun _ -> true) f e
+
 let string_of_option (f:'a->string) (e:'a option) : string = 
   match e with
     | Some x -> f x
@@ -321,18 +338,23 @@ let string_of_list (f:'a->string) (ls:'a list) : string =
 let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z list) (e:'a) : 'z list =
   ho_debug_1 s pr_i (string_of_list pr_o) f e 
 
-let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+let ho_debug_2_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
   let r = try
     f e1 e2 
   with ex -> 
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
+  if not(test r) then r else
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
+
+let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  ho_debug_2_opt s pr1 pr2 pr_o (fun _ -> true) f e1 e2
+ 
 
 let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
   let r = try
@@ -341,7 +363,7 @@ let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
@@ -358,7 +380,7 @@ let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -380,7 +402,7 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
       let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
-      let _ = print_string (s^" Exception Occurred!\n") in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
@@ -395,7 +417,7 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
 
 let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
                (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
-    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6 : 'f) : 'z =
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
   let r = try
     f e1 e2 e3 e4 e5 e6
   with ex -> 
@@ -405,7 +427,8 @@ let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
       let _ = print_string (s^" inp4 :"^(pr4 e4)^"\n") in
       let _ = print_string (s^" inp5 :"^(pr5 e5)^"\n") in
       let _ = print_string (s^" inp6 :"^(pr6 e6)^"\n") in
-       let _ = print_string (s^" Exception Occurred!"^(Printexc.to_string ex)^"\n") in raise ex in
+      let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+      raise ex in
   if (test r) then
     let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
     let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
@@ -420,6 +443,13 @@ let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
 
 let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
+
+let ho_debug_1_nth n s =  let str=(s^"#"^n) in ho_debug_1 str
+let ho_debug_2_nth n s =  let str=(s^"#"^n) in ho_debug_2 str
+let ho_debug_3_nth n s =  let str=(s^"#"^n) in ho_debug_3 str
+let ho_debug_4_nth n s =  let str=(s^"#"^n) in ho_debug_4 str
+let ho_debug_5_nth n s =  let str=(s^"#"^n) in ho_debug_5 str
+
 
 (** String-handling utility functions. *)
 
@@ -708,6 +738,23 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
 	Hashtbl.fold append_val tab []
 
+let counters = ref (Hashtbl.create 10)
+
+let add_to_counter (s:string) i = 
+  if !Globals.enable_counters then
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+  else ()
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = 
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+	
 let profiling_stack = ref []
 let tasks = ref (Hashtbl.create 10)  
 
@@ -723,10 +770,17 @@ let add_task_instance msg time =
 	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
  with Not_found -> 
 	Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
-let push_time msg = 
+let push_time_no_cnt msg = 
 if (!Globals.profiling) then
  let timer = get_time () in
 	profiling_stack := (msg, timer,true) :: !profiling_stack 
+else ()
+
+let push_time msg = 
+if (!Globals.profiling) then
+ (inc_counter ("cnt_"^msg);
+ let timer = get_time () in
+	profiling_stack := (msg, timer,true) :: !profiling_stack)
 else ()
 	
 let pop_time msg = 
@@ -738,15 +792,65 @@ let pop_time msg =
 			else
 			profiling_stack := List.tl !profiling_stack;
 			if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) !profiling_stack) then begin
-				if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin
-					profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack;
-					print_string ("\n double accounting for "^msg^"\n")
-				end	else ()
-				end else add_task_instance m1 (t2-.t1) 
+				(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
+				(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
+				(* 	print_string ("\n double accounting for "^msg^"\n") *)
+                (* print_string ("\n skip double accounting for "^msg^"\n")  *)
+				end	
+            else add_task_instance m1 (t2-.t1) 
 			 
 		else 
 			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
 	else ()
+  let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
+  try
+    push_time s;
+      let r=f e in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_2 (s:string) (f:'a1 -> 'a2 -> 'z) (e1:'a1) (e2:'a2) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_3 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+
+let prof_4 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 e4 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_5 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 e4 e5 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_6 (s:string) (f:'a1 -> 'a2 -> 'a3 -> 'a4 -> 'a5 -> 'a6 -> 'z) (e1:'a1) (e2:'a2) (e3:'a3) (e4:'a4)(e5:'a5) (e6:'a6) : 'z =
+  try
+    push_time s;
+      let r=f e1 e2 e3 e4 e5 e6 in
+      (pop_time s; r)
+  with ex -> (pop_time s; raise ex)
+
+let prof_1_nth n s =  let str=(s^"#"^n) in prof_1 str
+let prof_2_nth n s =  let str=(s^"#"^n) in prof_2 str
+let prof_3_nth n s =  let str=(s^"#"^n) in prof_3 str
+let prof_4_nth n s =  let str=(s^"#"^n) in prof_4 str
+let prof_5_nth n s =  let str=(s^"#"^n) in prof_5 str
+let prof_6_nth n s =  let str=(s^"#"^n) in prof_6 str
   
 let pop_spec_counter = ref 1
 let gen_time_msg _  = 
@@ -803,7 +907,7 @@ let string_of_counters () =
   "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 	
 (*hairy stuff for exception numbering*)
-			
+
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
   			 
  let get_hash_of_exc (f:string): Globals.nflow = 
@@ -840,7 +944,7 @@ let get_closest ((min,max):Globals.nflow):(string) =
 											else (a,(c,d)) in
 	let r,_ = (get !exc_list) in r
  
-  
+ (*constructs the mapping between class/data def names and interval types*) 
  let c_h () = 								
 	let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 		let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
@@ -1283,6 +1387,33 @@ let rename_eset_eq2 (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) 
   else Error.report_error {Error.error_loc = Globals.no_pos; 
                   Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
+(* s - from var; t - to var *)
+let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
+  let rec add (f,t) acc = match acc with
+    | [] -> [[(f,t)]]
+    | (a::acc) -> if eq (snd (List.hd a)) t then ((f,t)::a)::acc
+      else a::(add (f,t) acc) in
+  let rec part xs acc = match xs with
+    | [] -> acc
+    | (x::xs) -> part xs (add x acc) in
+  let pp = part subs [] in
+  let rec mkeq xs = match xs with
+    | (a1,b1)::((a2,b2)::xs) -> (a1,a2)::(mkeq ((a2,b2)::xs))
+    | _ -> [] in
+  let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
+     eqlst
+
+let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set =
+  let sl = get_elems s in
+  let tl = List.map f sl in
+  if (check_no_dupl_eq eq tl) then
+    List.map (fun (e,k) -> (f e,k)) s
+  else
+  let s1 = List.combine sl tl in
+  let e2= norm_subs_eq eq s1 in
+  let ns = List.fold_left (fun s (a1,a2) -> add_equiv_eq2_raw eq s a1 a2) s e2 in
+    List.map (fun (e,k) -> (f e,k)) ns
+
 let rename_eset (f:'a -> 'a) (s:'a e_set) : 'a e_set = 
   rename_eset_eq2 (fun _ -> "?") (=) f s
 
@@ -1290,12 +1421,18 @@ let rename_eset_eq (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set =
   let r=rename_eset_eq2 (fun _ -> "?") (eq) f s in
   (r,eq)
 
-let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+let rename_eset_eq_with_pr (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   let r=rename_eset_eq2 pr (eq) f s in
- let _ = print_string ("rename_eset_eq inp1 :"^(string_of_e_set pr s)^"\n") in
- let _ = print_string ("rename_eset_eq out :"^(string_of_e_set pr r)^"\n") in
   (r,eq)
 
+let rename_eset_eq_with_pr_allow_clash (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  let r=rename_eset_eq2_allow_clash pr (eq) f s in
+  (r,eq)
+
+let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+  ho_debug_1 "rename_eset_eq" 
+    (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c)
+    (fun c-> rename_eset_eq f c) (s,eq)
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm

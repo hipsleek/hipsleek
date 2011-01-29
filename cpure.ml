@@ -90,7 +90,16 @@ and constraint_rel =
 and rounding_func = 
   | Ceil
   | Floor
-  
+
+let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
+	    (* translation has ensured well-typedness.
+		   We need only to compare names and primedness *)
+	    v1 = v2 & p1 = p2
+
+let remove_dups_svl vl = Util.remove_dups_f vl eq_spec_var
+
+     
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
@@ -112,6 +121,8 @@ let rec get_exp_type (e : exp) : typ = match e with
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 
 let bool_type = Prim Bool
 
@@ -135,9 +146,12 @@ let is_void_type t = match t with | Prim Void -> true | _ -> false
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
+
   let res = Util.remove_dups_f tmp eq_spec_var in
   res
-
+and check_dups_svl ls = 
+  let b=(Util.check_dups_eq eq_spec_var ls) in
+   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
   | And (p1, p2,_) -> combine_pvars p1 p2
@@ -168,12 +182,12 @@ and bfv (bf : b_formula) = match bf with
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 	    let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		remove_dups_svl (fv1 @ fv2 @ fv3)
   | EqMin (a1, a2, a3, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
 	    let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		remove_dups_svl (fv1 @ fv2 @ fv3)
   | BagIn (v, a1, _) ->
 		let fv1 = afv a1 in
 		[v] @ fv1
@@ -181,8 +195,8 @@ and bfv (bf : b_formula) = match bf with
 		let fv1 = afv a1 in
 		[v] @ fv1
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-  | BagMax (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
-  | BagMin (v1, v2, _) ->Util.remove_dups ([v1] @ [v2])
+  | BagMax (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
+  | BagMin (v1, v2, _) ->remove_dups_svl ([v1] @ [v2])
   | ListIn (a1, a2, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
@@ -203,7 +217,7 @@ and bfv (bf : b_formula) = match bf with
 and combine_avars (a1 : exp) (a2 : exp) : spec_var list =
   let fv1 = afv a1 in
   let fv2 = afv a2 in
-  Util.remove_dups (fv1 @ fv2)
+  remove_dups_svl (fv1 @ fv2)
 
 and afv (af : exp) : spec_var list = match af with
   | Null _ -> []
@@ -217,20 +231,20 @@ and afv (af : exp) : spec_var list = match af with
   | Min (a1, a2, _) -> combine_avars a1 a2
         (*| BagEmpty (_) -> []*)
   | Bag (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagUnion (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagIntersect (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | BagDiff(a1, a2, _) -> combine_avars a1 a2
   | List (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | ListAppend (alist, _) -> let svlist = afv_list alist in
-  	Util.remove_dups svlist
+  	remove_dups_svl svlist
   | ListCons (a1, a2, _) ->
 	    let fv1 = afv a1 in
 	    let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)  
+		remove_dups_svl (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
@@ -243,6 +257,8 @@ and afv_list (alist : exp list) : spec_var list = match alist with
 and is_max_min a = match a with
   | Max _ | Min _ -> true
   | _ -> false
+and isConstTrue_debug (p:formula) =
+  Util.ho_debug_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
 and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos)),_) -> true
@@ -391,7 +407,7 @@ and is_object_type (t : typ) = match t with
 and should_simplify (f : formula) = match f with
   | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true
   | _ -> false
-
+  
 and is_b_form_arith (b: b_formula) :bool = match b with
   | BConst _  | BVar _ -> true
   | Lt (e1,e2,_) | Lte (e1,e2,_)  | Gt (e1,e2,_) | Gte (e1,e2,_) | Eq (e1,e2,_) 
@@ -984,11 +1000,7 @@ and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
   in
   (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
 
-and eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) ->
-	    (* translation has ensured well-typedness.
-		   We need only to compare names and primedness *)
-	    v1 = v2 & p1 = p2
+and remove_dups_spec_var_list vl = Util.remove_dups_eq eq_spec_var vl
 
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
@@ -1117,7 +1129,13 @@ and b_apply_subs sst bf = match bf with
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_subs sst a1, e_apply_subs sst a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_subs sst a1, e_apply_subs sst a2, pos)
 
-and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst 
+(* and subs_one sst v = List.fold_left (fun old -> fun (fr,t) -> if (eq_spec_var fr v) then t else old) v sst  *)
+
+and subs_one sst v = 
+  let rec helper sst v = match sst with
+    | [] -> v
+    | (fr,t)::sst -> if (eq_spec_var fr v) then t else (helper sst v)
+  in helper sst v
 
 and e_apply_subs sst e = match e with
   | Null _ | IConst _ | FConst _ -> e
@@ -2994,6 +3012,10 @@ let trans_exp (e:exp) (arg:'a) (f:'a->exp->(exp * 'b) option)
       :(exp * 'b) =
   foldr_exp e arg f f_args (fun x l -> f_comb l) 
 
+let fold_exp (e: exp) (f: exp -> 'b option) (f_comb: 'b list -> 'b) : 'b =
+  let new_f a e = push_opt_val_rev (f e) e in
+  snd (trans_exp e () new_f voidf2 f_comb)
+
 let rec transform_exp f e  = 
   let r =  f e in 
   match r with
@@ -3747,7 +3769,7 @@ let normalise_eq_aux ((_,eq) as aset : var_aset) : var_aset * bool * bool=
   let plst = Util.partition_eq aset in
   let (nlst,flag) = List.fold_left 
     (fun (rl,f) l -> 
-       let nl=Util.remove_dups l in
+       let nl=remove_dups_svl l in
 	 (nl::rl,(f||not((List.length nl)==(List.length l))))) 
     ([],false) plst in
   let (nlst2,flag2) = List.fold_left 
@@ -3889,6 +3911,11 @@ let is_lt eq e1 e2 =
     | IConst (i1,_), IConst(i2,_) -> i1<i2
     | _,_ -> false
 
+let is_diff e1 e2 =
+  match e1,e2 with
+    | IConst (i1,_), IConst(i2,_) -> i1<>i2
+    | _,_ -> false
+
 (* lhs |- e1<=e2 *)
 let check_imply_leq eq lhs e1 e2 =
   let rec helper l = match l with
@@ -3926,16 +3953,29 @@ let check_imply_neq eq lhs e1 e2 =
     | a::ls -> if helper2 a then 1 else helper ls
   and helper2 a = match a with
     | Eq(d1,d2,_) ->          
-          if eqExp_f eq d1 e1 then is_lt eq d2 e2 
-          else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
+        if eqExp_f eq d1 e1 then (is_lt eq d2 e2) || (is_lt eq e2 d2)
+        else if eqExp_f eq d2 e2 then (is_lt eq e1 d1) || (is_lt eq d1 e1)
           else helper2 (Lte(d2,d1,no_pos))
+     (*((eqExp_f eq d1 e1) && (is_diff d2 e2)) || ((eqExp_f eq d2 e2) && (is_diff e1 d1)) ||
+     ((eqExp_f eq d2 e1) && (is_diff d1 e2)) || ((eqExp_f eq d1 e2) && (is_diff e1 d2)) ||
+     (helper2 (Lte(d2,d1,no_pos)))*)
     | Lte(d1,d2,_) -> 
           if eqExp_f eq d1 e1 then is_lt eq d2 e2 
           else if eqExp_f eq d2 e2 then is_lt eq e1 d1 
-          else false
+          else if eqExp_f eq d1 e2 then is_lt eq d2 e1 
+          else if eqExp_f eq d2 e1 then is_lt eq e2 d1 
+          else 
+          false
     | _ -> false
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
+let check_imply_neq_debug eq lhs e1 e2 = 
+Util.ho_debug_3 
+    "check_imply_neq" 
+    (fun c-> String.concat "&" (List.map !print_b_formula c))
+    !print_exp 
+    !print_exp 
+    string_of_int (check_imply_neq eq ) lhs e1 e2
 
 let check_eq_bform eq lhs rhs failval = 
   if List.exists (equalBFormula_f eq rhs) lhs then 1
@@ -3950,7 +3990,7 @@ let check_eq_bform eq lhs rhs failval =
 
 let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
   (*let _ = print_string "\n fast_imply \n" in*)
-  let _ = Util.push_time "fast_imply" in
+  (* let _ = Util.push_time "fast_imply" in *)
   (*normalize lhs and rhs*)
   let simp e = conv_exp_to_exp_eq aset e in
   let normsimp lhs rhs =
@@ -3978,13 +4018,16 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
               in 0
         | _ -> (* use just syntactic checking *) 0 in
   let _ = if r>0 then (Util.add_to_counter "fast_imply_success" 1) else () in
-  let _  = Util.pop_time "fast_imply" in r
+  (* let _  = Util.pop_time "fast_imply" in *) r
+
+let fast_imply a l r = Util.prof_3 "fast_imply" fast_imply a l r
+
 
 
 
 let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
   let r = fast_imply aset lhs rhs in
-  if (r<=0) then r else
+  (*if (r<=0) then r else*)
     let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
     let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
@@ -4001,37 +4044,94 @@ let rec replace_pure_formula_label nl f = match f with
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
   
-let rec imply_disj ante_disj conseq t_imply imp_no =
+let rec imply_disj_orig ante_disj conseq t_imply imp_no =
   match ante_disj with
     | h :: rest -> 
-	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true) in
+	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_disj rest conseq t_imply imp_no) in
+	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
   
-let rec imply_one_conj ante_disj0 ante_disj1 conseq t_imply imp_no = 
+let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no = 
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
-  let xp01,xp02,xp03 = imply_disj ante_disj0 conseq t_imply imp_no in  
+  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
-    let xp1 = imply_disj ante_disj1 conseq t_imply imp_no in
+    (* let _ = print_string ("\nimply_one_conj xp1 #" ^ (string_of_int !imp_no) ^ "\n") in *)
+    let xp1 = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	xp1
   else (xp01,xp02,xp03)	
   
-let rec imply_conj ante_disj0 ante_disj1 conseq_conj t_imply imp_no 
+let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_conj with
     | h :: rest -> 
-	    let (r1,r2,r3)=(imply_one_conj ante_disj0 ante_disj1 h t_imply imp_no) in
+	    let (r1,r2,r3)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_conj ante_disj0 ante_disj1 rest t_imply imp_no) in
+	      let r1,r22,r23 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
 	      (r1,r2@r22,r23)
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
+(*###############################################################################  incremental_testing*)
+
+let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
+  (* let _ = print_string("\nCpure.ml: imply_conj") in *)
+  match conseq_conj with
+    | h :: rest ->
+	      let r1,r2,r3 = (t_imply ante h (string_of_int !imp_no) true ( Some (process, send_ante))) in
+          (* let _ = print_string("\nCpure.ml: h:: rest "^(string_of_bool r1)) in *)
+          if r1 then
+            let send_ante = if (!Globals.enable_incremental_proving) then false
+            else send_ante in
+	        let r1,r22,r23 = (imply_conj send_ante ante rest t_imply increm_funct process imp_no) in
+	        (r1,r2@r22,r23)
+	      else (r1,r2,r3)
+    | [] -> (* let _ = print_string("\nCpure.ml: []")  in*) (true,[],None)
+
+let rec imply_disj_helper ante_disj conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) process imp_no
+      : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  match ante_disj with
+    | h :: rest ->
+          (* let _ = print_string("\nCpure.ml: bef imply_conj ") in *)
+	      let (r1,r2,r3) = (imply_conj true(*<-send_ante*) h conseq_conj t_imply increm_funct process imp_no) in
+          (* let _ = print_string("\nCpure.ml: affer imply_conj " ^(string_of_bool r1)) in *)
+	      if r1 then
+	        let r1,r22,r23 = (imply_disj_helper rest conseq_conj t_imply increm_funct process imp_no) in
+	        (r1,r2@r22,r23)
+	      else (r1,r2,r3)
+    | [] -> (true,[],None)
+
+let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) imp_no
+      : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+  (* let _ = print_string ("\nCpure.ml: CVC3 create process") in *)
+  let process = 
+    match increm_funct with
+      | Some ifun ->
+            (* let _ = print_string("\nCpure.ml: start process") in *)
+            let proc = ifun#start_p () in
+            let _ = ifun#push proc in
+            Some proc
+      | None -> None in
+  let xp01,xp02,xp03 = imply_disj_helper ante_disj0 conseq_conj t_imply increm_funct process imp_no in
+  let r = if ( not(xp01) ) then begin (*xpure0 fails to prove. try xpure1*)
+    let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
+    let r1 = imply_disj_helper ante_disj1 conseq_conj t_imply increm_funct process imp_no in
+    let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
+    r1
+  end else (xp01, xp02, xp03) in
+  let _ =
+    match (increm_funct, process) with
+      | (Some ifun, Some proc) -> ifun#stop_p proc
+        (* let _ = print_string("\nCpure.ml: stop process") in  *)
+      | (_, _) -> () in
+  (* let _ = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
+  r
+
+(*###############################################################################  *)
     
 (* added for better normalization *)
 
@@ -4097,13 +4197,16 @@ let sort_add_term (xs:add_term_list) : add_term_list =
   let cmp (_,x) (_,y) = cmp_term x y
   in List.sort cmp xs
 
+let cmp_mult_term (mt1: mult_term) (mt2: mult_term): int =
+  let x, i1 = mt1 in
+  let y, i2 = mt2 in
+  let r = cmp_term x y in 
+  if r == 0 then 
+    compare i1 i2
+  else r 
+
 let sort_mult_term (xs:mult_term_list) : mult_term_list =
-  let cmp (x,i1) (y,i2) = 
-    let r = cmp_term x y in 
-    if r==0 then if i1<0 then if i2<0 then 0 else 1
-    else if i2<0 then -1 else 0 
-    else r 
-  in List.sort cmp xs
+  List.sort cmp_mult_term xs
 
 (* pre : c1!=0 *)
 let rec norm_add_c (c1:int) (xs:add_term_list) : add_term_list =
@@ -4335,3 +4438,294 @@ let norm_bform_b (bf:b_formula) : b_formula =
     | EqMin _ |  BagSub _ | BagMin _ 
     | BagMax _ | ListAllN _ | ListPerm _ -> bf 
 
+(***********************************
+ * aggressive simplify and normalize
+ * of arithmetic formulas
+ **********************************)
+module ArithNormalizer = struct
+
+  (* 
+   * Printing functions, mainly here for debugging purposes
+   *)
+  let string_of_spec_var (sv: spec_var) = match sv with
+    | SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+
+  let rec string_of_exp e0 =
+    let need_parentheses e = match e with
+      | Add _ | Subtract _ -> true
+      | _ -> false
+    in let wrap e =
+      if need_parentheses e then "(" ^ (string_of_exp e) ^ ")"
+      else (string_of_exp e)
+    in
+    match e0 with
+    | Null _ -> "null"
+    | Var (v, _) -> string_of_spec_var v
+    | IConst (i, _) -> string_of_int i
+    | FConst (f, _) -> string_of_float f
+    | Add (e1, e2, _) -> (string_of_exp e1) ^ " + " ^ (string_of_exp e2)
+    | Subtract (e1, e2, _) -> (string_of_exp e1) ^ " - " ^ (string_of_exp e2)
+    | Mult (e1, e2, _) -> (wrap e1) ^ "*" ^ (wrap e2)
+    | Div (e1, e2, _) -> (wrap e1) ^ "/" ^ (wrap e2)
+    | Max (e1, e2, _) -> "max(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
+    | Min (e1, e2, _) -> "min(" ^ (string_of_exp e1) ^ "," ^ (string_of_exp e2) ^ ")"
+    | _ -> "???"
+    
+  let string_of_b_formula bf = 
+    let build_exp e1 e2 op =
+      (string_of_exp e1) ^ op ^ (string_of_exp e2)
+    in match bf with
+      | BConst (b, _) -> (string_of_bool b)
+      | BVar (bv, _) -> (string_of_spec_var bv) ^ " > 0"
+      | Lt (e1, e2, _) -> build_exp e1 e2 " < "
+      | Lte (e1, e2, _) -> build_exp e1 e2 " <= "
+      | Gt (e1, e2, _) -> build_exp e1 e2 " > "
+      | Gte (e1, e2, _) -> build_exp e1 e2 " >= "
+      | Eq (e1, e2, _) -> build_exp e1 e2 " = "
+      | Neq (e1, e2, _) -> build_exp e1 e2 " != "
+      | EqMax (e1, e2, e3, _) ->
+          (string_of_exp e1) ^ " = max(" ^ (string_of_exp e2) ^ "," ^ (string_of_exp e3) ^ ")"
+      | EqMin (e1, e2, e3, _) ->
+          (string_of_exp e1) ^ " = min(" ^ (string_of_exp e2) ^ "," ^ (string_of_exp e3) ^ ")"
+      | _ -> "???"
+
+  let rec string_of_formula f0 = match f0 with
+    | BForm (b, _) -> string_of_b_formula b
+    | And (f1, f2, _) -> 
+        let wrap f = match f with
+          | Or _ | BForm _ -> "(" ^ (string_of_formula f) ^ ")"
+          | _ -> string_of_formula f
+        in
+        (wrap f1) ^ " and " ^ (wrap f2)
+    | Or (f1, f2, _, _) -> 
+        let wrap f = match f with
+          | And _ | BForm _ -> "(" ^ (string_of_formula f) ^ ")"
+          | _ -> string_of_formula f
+        in
+        (wrap f1) ^ " or " ^ (wrap f2)
+    | Not (f1, _, _) -> "not(" ^ (string_of_formula f1) ^ ")"
+    | Forall (sv, f1, _, _) -> "all(" ^ (string_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
+    | Exists (sv, f1, _, _) -> "ex(" ^ (string_of_spec_var sv) ^ ", " ^ (string_of_formula f1) ^ ")"
+
+  type add_term = int * mult_term_list
+
+  type add_term_list = add_term list (* default [] means 0 *)
+
+  let neg_add_term_list (terms: add_term_list) =
+    List.map (fun (i, x) -> (-i, x)) terms
+
+  let mult_2_add_terms (t1: add_term) (t2: add_term) : add_term =
+    let i1, mt1 = t1 in
+    let i2, mt2 = t2 in
+    (i1*i2, mt1@mt2)
+
+  (*
+   * create a add_terms list from given exp
+   * faltten the expression by distributing all multiplications over addition sub-exp
+   * e.g.:
+   *   a*(b+c) -> a*b + a*c
+   *   (a+b)*(c+d) -> a*c + a*d + b*c + b*d
+   *)
+  let rec explode_exp (e: exp) : add_term_list = match e with
+    | Add (e1, e2, _) -> (explode_exp e1) @ (explode_exp e2)
+    | Subtract (e1, e2, _) -> (explode_exp e1) @ (neg_add_term_list (explode_exp e2))
+    | Mult (e1, e2, _) ->
+        let terms1 = explode_exp e1 in
+        let terms2 = explode_exp e2 in
+        List.flatten (List.map (fun t -> List.map (mult_2_add_terms t) terms2) terms1)
+    | Div (e1, e2, _) -> [1, [E e, 1]] (* FIXME: to be implemented *)
+    | Null _ -> []
+    | Var (sv, _) -> [1, [V sv, 1]]
+    | IConst (i, _) -> [1, [C i, 1]]
+    | _ -> [1, [E e, 1]]
+
+  (* convert a m_add_term to corresponding exp form 
+   * also simplify the case coeff = 0 or 1 and empty mult_terms list
+   *)
+  let add_term_to_exp (term: add_term) : exp =
+    let i, mtl = term in
+    if i = 0 || mtl = [] then 
+      IConst (i, no_pos)
+    else if i = 1 then
+      mult_term_to_exp mtl
+    else
+      Mult (IConst (i, no_pos), mult_term_to_exp mtl, no_pos)
+
+  (* convert a list of add_terms back to correspondding exp form *)
+  let rec add_term_list_to_exp (terms: add_term_list) : exp =
+    match terms with
+    | [] -> IConst (0, no_pos)
+    | [term] -> add_term_to_exp term
+    | head::tail -> 
+        let i, mtl = head in
+        if i = 0 then
+          add_term_list_to_exp tail
+        else
+          Add (add_term_to_exp head, add_term_list_to_exp tail, no_pos)
+
+  (* compare two lists
+   * most significant item is the head of the list
+   * list with smaller length will be considered less than the other
+   *)
+  let rec cmp_list (l1: 'a list) (l2: 'a list) (fcmp: 'a -> 'a -> int) : int =
+    match l1, l2 with
+    | [], [] -> 0
+    | [], _ -> -1
+    | _, [] -> 1
+    | h1::r1, h2::r2 ->
+        let cmp_head = fcmp h1 h2 in
+        if cmp_head = 0 then
+          cmp_list r1 r2 fcmp
+        else cmp_head
+
+  let norm_add_term (term: add_term) : add_term =
+    let i, mlist = term in
+    let normalized_mult_terms = norm_mult (sort_mult_term mlist) in
+    let res = match normalized_mult_terms with
+      | (C c, _)::r -> (i*c, r)
+      | _ -> (i, normalized_mult_terms)
+    in res
+
+  (* sort the list of add_terms after normalizing each m_add_term
+   *)
+  let sort_add_term_list (terms: add_term_list) : add_term_list =
+    let cmp (_, x) (_, y) = cmp_list x y cmp_mult_term in
+    List.sort cmp (List.map norm_add_term terms)
+
+  let rec norm_add_term_list (terms: add_term_list) : add_term_list =
+    let terms = sort_add_term_list terms in
+    let rec insert (term: add_term) (termlist: add_term_list) : add_term_list = 
+      let i1, mtl1 = term in
+      if i1 = 0 then
+        termlist
+      else
+        match termlist with
+        | [] -> [term]
+        | head::tail ->
+            let i2, mtl2 = head in
+            if (cmp_list mtl1 mtl2 cmp_mult_term) = 0 then
+              insert (i1+i2, mtl1) tail
+            else
+              term::termlist
+    in
+    match terms with
+      | [] -> []
+      | head::tail -> insert head (norm_add_term_list tail)
+
+  let norm_two_sides (e1:exp) (e2:exp) : (exp * exp) =
+    let aterms1 = explode_exp e1 in
+    let aterms2 = explode_exp e2 in
+    let terms = norm_add_term_list (aterms1 @ (neg_add_term_list aterms2)) in
+    let lhs_terms, rhs_terms = List.partition (fun (i, _) -> i >= 0) terms in
+    let rhs_terms = neg_add_term_list rhs_terms in
+    (add_term_list_to_exp lhs_terms), (add_term_list_to_exp rhs_terms)
+
+  let norm_two_sides_debug e1 e2 =
+    Util.ho_debug_2 "cpure::norm_two_sides" string_of_exp string_of_exp 
+    (fun (x,y) -> (string_of_exp x) ^ " | " ^ (string_of_exp y))
+    norm_two_sides e1 e2
+
+  let norm_exp (e: exp) : exp =
+    let term_list = norm_add_term_list (explode_exp e) in
+    add_term_list_to_exp term_list
+
+  let norm_exp_debug e =
+    Util.ho_debug_1 "cpure::norm_exp" string_of_exp string_of_exp norm_exp e
+
+  let norm_bform_relation rel e1 e2 l makef = match e1, e2 with
+    | IConst (i1, _), IConst (i2, _) -> BConst (rel i1 i2, l)
+    | _ -> makef (e1, e2, l)
+
+  let norm_bform_leq e1 e2 l =
+    norm_bform_relation (<=) e1 e2 l (fun x -> Lte x)
+
+  let norm_bform_eq e1 e2 l = 
+    norm_bform_relation (=) e1 e2 l (fun x -> Eq x)
+
+  let norm_bform_neq e1 e2 l = 
+    norm_bform_relation (<>) e1 e2 l (fun x -> Neq x)
+
+  let norm_b_formula (bf: b_formula) : b_formula option = match bf with
+    | Lt (e1, e2, l) -> 
+        let e1 = Add (e1, IConst(1, no_pos), l) in 
+        let lhs, rhs = norm_two_sides e1 e2 in
+        Some (norm_bform_leq lhs rhs l)
+    | Lte (e1, e2, l) -> 
+        let lhs, rhs = norm_two_sides e1 e2 in
+        Some (norm_bform_leq lhs rhs l)
+    | Gt (e1, e2, l) -> 
+        let e1, e2 = Add (e2, IConst(1, no_pos), l), e1 in 
+        let lhs, rhs = norm_two_sides e1 e2 in
+        Some (norm_bform_leq lhs rhs l)
+    | Gte (e1, e2, l) ->  
+        let lhs, rhs = norm_two_sides e2 e1 in
+        Some (norm_bform_leq lhs rhs l)
+    | Eq (e1, e2, l) ->
+        let lhs, rhs = norm_two_sides e1 e2 in
+        Some (norm_bform_eq lhs rhs l)
+    | Neq (e1, e2, l) -> 
+        let lhs, rhs = norm_two_sides e1 e2 in
+        Some (norm_bform_neq lhs rhs l)
+    | _ -> None
+
+  let norm_formula_0 (f: formula) : formula =
+    map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
+
+  let norm_formula(*_debug*) f =
+    Util.ho_debug_1 "cpure::norm_formula" string_of_formula string_of_formula
+        norm_formula_0 f
+
+end (* of ArithNormalizer module's definition *)
+
+let has_var_exp e0 =
+  let f e = match e with
+    | Var _ -> Some true
+    | _ -> None
+  in
+  fold_exp e0 f or_list 
+
+let is_linear_formula f0 =
+  let f_bf bf = 
+    if is_bag_bform bf || is_list_bform bf then
+      Some false
+    else None
+  in
+  let f_e e =
+    if is_bag e || is_list e then 
+      Some false
+    else
+      match e with
+      | Mult (e1, e2, _) -> 
+          if has_var_exp e1 && has_var_exp e2 then
+            Some false
+          else None
+      | Div (e1, e2, _) -> Some false
+      | _ -> None
+  in
+  fold_formula f0 (nonef, f_bf, f_e) and_list
+
+let is_linear_exp e0 =
+  let f e =
+    if is_bag e || is_list e then 
+      Some false
+    else
+      match e with
+      | Mult (e1, e2, _) -> 
+          if has_var_exp e1 && has_var_exp e2 then
+            Some false
+          else None
+      | Div (e1, e2, _) -> Some false
+      | _ -> None
+  in
+  fold_exp e0 f and_list
+
+
+  
+
+let rec contains_exists (f:formula) : bool =  match f with
+    | BForm _ -> false
+    | Or (f1,f2,_,_)  
+    | And (f1,f2, _) -> (contains_exists f1) || (contains_exists f2) 
+    | Not(f1,_,_)
+    | Forall (_ ,f1,_,_) -> (contains_exists f1)  
+    | Exists _ -> true

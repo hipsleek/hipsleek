@@ -287,213 +287,24 @@ node del_2r(node a, node b, node c)
 /* primitive for the black height */
 int bh(node x) requires true ensures false;
 
+
 /* function to delete the smalles element in a rb and then rebalance */
 int remove_min(ref node x)
 
 	requires x::rb<n, cl, bh> & x != null & 0 <= cl <= 1
 	ensures x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1
 		or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0;
-        /*
-	requires x::rb<n, cl, bh> & x != null 
-    case { cl=1 -> ensures x'::rb<n-1, cl2, bh>;
-           cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh;
-           (cl<0 | cl>1) -> ensures false;
-    }
-*/
-{
-	int v1;
 
-	if (x.left == null)
-	{
-		int tmp = x.val;
-
-		if (is_red(x.right))
-			x.right.color = 0; 
-		x = x.right;
-	
-		return tmp;
-	}
-	else 
-	{
-		v1 = remove_min(x.left);
-
-		//rebalance 
-		if (bh(x.left) < bh(x.right))
-		{
-			if (is_black(x.left))
-			{
-				if (is_red(x.right))
-				{
-					if (x.right.left != null)
-                                        {
-						x = del_2(x.left, x.right.left, x.right.right);
-                                                return v1;
-                                        }
-					else
-						return v1;
-				}
-				else 
-				{
-					if (is_black(x.right.right))
-					{
-						if (is_black(x.right.left))
-							if (x.color == 0)
-							{
-								x = del_3(x.left, x.right.left, x.right.right);
-								return v1;
-							}	
-							else
-							{
-								x = del_4(x.left, x.right.left, x.right.right);
-								return v1;
-							}
-						else
-						{
-							x = del_5(x.left, x.right.left.left, x.right.left.right, x.right.right, x.color);
-							return v1;
-						}
-					}
-					else
-					{
-						x = del_6(x.left, x.right.left, x.right.right, x.color);
-						return v1; 
-					}
-							
-				}
-			}
-			else 
-				return v1;
-		}
-		else 
-			return v1;
-	}
-}		
 
 /* function to delete an element in a red black tree */
 void del(ref node  x, int a)
-/*
+
 	requires x::rb<n, cl, bh> & 0 <= cl <= 1
 	ensures  x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1 
 		 or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h & cl = 0 
 		 or x'::rb<n, cl, bh>;
-*/
-  requires x::rb<n, cl, bh> 
-    case { cl=1 -> ensures x'::rb<n-1, cl2, bh> 
-                   or x'::rb<n, cl, bh>;
-         cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h
-                   or x'::rb<n, cl, bh>;
-        (cl<0 | cl>1) -> ensures false;
-    }
 
-{
-	int v;
 
-    assert false;if (x!=null)
-      {  assert false;
-		if (x.val == a) // delete x
-         { 
-			if (x.right == null)
-			{ 
-				if (is_red(x.left))
-                  x.left.color = 0;
-				x = x.left;
-
-			}
-			else 
-			{
-				v = remove_min(x.right);
-				if (bh(x.right) < bh(x.left))
-				{
-					if (is_black(x.right))
-					{
-						if (is_red(x.left))	
-						{
-							if (x.left.right != null)
-								x = del_2r(x.left.left, x.left.right, x.right);
-						}
-						else 
-						{
-							if (is_black(x.left.left))
-								if (is_black(x.left.right))
-									if (x.color == 0)
-										x = del_3r(x.left.left, x.left.right, x.right);
-									else
-										x = del_4r(x.left.left, x.left.right, x.right);
-								else 
-									x = del_5r(x.left.left, x.left.right.left, x.left.right.right, x.right, x.color);
-							else
-								x = del_6r(x.left.left, x.left.right, x.right, x.color);
-						}
-								
-					}
-				}		
-			}
-		}
-		else 
-		{
-			if (x.val < a) //go right 
-			{
-				del(x.right, a);
-
-				// rebalance
-				if (bh(x.right) < bh(x.left))
-				{
-					if (is_black(x.right))
-						if (is_red(x.left))
-						{
-							if (x.left.right != null)
-								x = del_2r(x.left.left, x.left.right, x.right);
-						}
-						else 	
-
-						{
-							if (is_black(x.left.left))
-								if (is_black(x.left.right))
-									if (x.color == 0)
-										x = del_3r(x.left.left, x.left.right, x.right);
-									else 
-										x = del_4r(x.left.left, x.left.right, x.right);
-								else 
-									x = del_5r(x.left.left, x.left.right.left, x.left.right.right, x.right, x.color);
-							else 
-								x = del_6r(x.left.left, x.left.right, x.right, x.color);
-						}
-				}
-			}
-			else   // go left 
-			{
-				del(x.left, a);
-
-				// rebalance 
-				if (bh(x.left) < bh(x.right))
-				{
-					if (is_black(x.left))
-						if (is_red(x.right))
-						{
-							if (x.right.left != null)
-								x = del_2(x.left, x.right.left, x.right.right);			
-						}
-						else 
-						{
-							if (is_black(x.right.right))
-								if (is_black(x.right.left))
-								{
-									if (x.color == 0)
-										x = del_3(x.left, x.right.left, x.right.right);
-									else
-										x = del_4(x.left, x.right.left, x.right.right);
-								}
-								else
-									x = del_5(x.left, x.right.left.left, x.right.left.right, x.right.right, x.color);
-
-							else 
-								x = del_6(x.left, x.right.left, x.right.right, x.color);	
-						}
-				}
-			}
-		}
-	}
-}
 
 /*
 node test_insert(node x, int v)
