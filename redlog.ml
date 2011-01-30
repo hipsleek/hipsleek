@@ -195,7 +195,8 @@ let run_with_timeout func err_msg =
   let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout) in
   let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
   let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  ignore (Unix.alarm !timeout);
+  ignore (Unix.setitimer Unix.ITIMER_REAL 
+        {Unix.it_interval = 0.0; Unix.it_value = (float_of_int !timeout)});
   let res = 
     try
       Some (Lazy.force func)
@@ -207,6 +208,8 @@ let run_with_timeout func err_msg =
         None
     | exc -> print_endline "Unknown error"; stop_red (); raise exc 
   in
+  ignore (Unix.setitimer Unix.ITIMER_REAL 
+        {Unix.it_interval = 0.0; Unix.it_value = 0.0});
   reset_sigalrm ();
   res
  
@@ -437,6 +440,13 @@ let rec is_linear_formula f0 =
     | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
         (is_linear_formula f1) && (is_linear_formula f2)
 
+let has_var_exp e0 =
+  let f e = match e with
+    | CP.Var _ -> Some true
+    | _ -> None
+  in
+  CP.fold_exp e0 f or_list 
+
 let is_linear2 f0 =
   let f_bf bf = 
     if CP.is_bag_bform bf || CP.is_list_bform bf then
@@ -449,8 +459,7 @@ let is_linear2 f0 =
     else
       match e with
       | CP.Mult (e1, e2, _) -> 
-          if not (CP.is_num e1 || CP.is_num e2) then
-            (* FIXME: should check that e1 or e2 can be reduced to const *)
+          if (has_var_exp e1 && has_var_exp e2) then
             Some false
           else None
       | CP.Div (e1, e2, _) -> Some false
