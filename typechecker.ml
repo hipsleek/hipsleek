@@ -556,7 +556,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	        if pp then begin
 		      print_string ("\nProcedure "^proc.proc_name^" SUCCESS\n");
 		      true
-	        end else begin print_string ("\nProcedure "^proc.proc_name^" result FAIL\n"); false end in
+	        end else begin print_string ("\nProcedure "^proc.proc_name^" result FAIL-1\n"); false end in
 	      (*
 		    if List.for_all check_pre_post pp then begin
 		    print_string ("SUCCESS\n");
@@ -575,7 +575,8 @@ let check_proc_wrapper prog proc =
   with _ as e ->
     if !Globals.check_all then begin
       dummy_exception();
-      print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
+      print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
+      print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -687,7 +688,7 @@ let check_proc_wrapper_map prog (proc,num) =
     check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
-      print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
+      print_string ("\nProcedure "^proc.proc_name^" FAIL-3\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -698,7 +699,7 @@ let check_proc_wrapper_map_net prog (proc,num) =
     check_proc prog proc
   with _ as e ->
     if !Globals.check_all then begin
-      print_string ("\nProcedure "^proc.proc_name^" FAIL\n");
+      print_string ("\nProcedure "^proc.proc_name^" FAIL-4\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
