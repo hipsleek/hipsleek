@@ -218,11 +218,9 @@
 %token GLOBAL
 /* Higher Order Predicate Related */
 %token HPRED
-%token HPREDEXTENDS
 %token REFINES
 %token JOIN
 %token WITH
-%token SPLIT
 %token COMBINE
 %token FINALIZES
 /*exception related*/
@@ -471,7 +469,7 @@ ho_pred_list : ho_pred ho_pred_list {}
     | {}
 
 ho_pred 
-	: HPRED hpred_header HPREDEXTENDS ext_form {}
+	: HPRED hpred_header EXTENDS ext_form {}
 	| HPRED hpred_header  REFINES  ext_form {}
 	| HPRED hpred_header  JOIN  split_combine {}
 	| HPRED hpred_header  EQEQ shape {}
@@ -800,6 +798,7 @@ flow_constraints :
 heap_constr
   : simple_heap_constr { $1 }
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
+  | heap_constr STAR simple_heap_constr STAR ho_fct_header {$1}
 ;
 
 simple_heap_constr

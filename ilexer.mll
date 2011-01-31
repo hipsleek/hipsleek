@@ -33,6 +33,7 @@
 	 ("case",CASE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
+     ("combine", COMBINE);
 	 ("conseq", CONSEQ);
 	 ("const", CONST);
 	 ("continue", CONTINUE);
@@ -50,7 +51,9 @@
 	 ("float", FLOAT);
 	 ("fold", FOLD);
 	 ("forall", FORALL);
+     ("finalizes",FINALIZES);
 	 ("head", HEAD);
+     ("ho_pred",HPRED);
 	 ("if", IF);
 	 ("implies", IMPLIES);
 	 ("import", IMPORT);
@@ -59,6 +62,7 @@
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+     ("join",JOIN);
 	 ("len", LENGTH);
 	 ("max", MAX);
 	 ("min", MIN);
@@ -74,6 +78,7 @@
    ("perm", PERM);
 	 ("dprint", PRINT);
 	 ("ref", REF);
+     ("refines", REFINES);
 	 ("requires", REQUIRES);
 	 ("res", RES "res");
 	 ("rev", REVERSE);
@@ -94,6 +99,7 @@
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
+     ("with", WITH);
    ("global", GLOBAL);
 	 (*exception related*)
 	 (flow, FLOW flow);
