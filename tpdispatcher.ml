@@ -432,6 +432,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
   in
   simplify e (Hashtbl.create 100)
 
+
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   match !tp with
   | OmegaCalc ->
@@ -491,10 +492,10 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       else
         Redlog.is_sat f sat_no
 
-let tp_is_sat_no_cache_debug f sat_no =
+(*let tp_is_sat_no_cache f sat_no =
   Util.ho_debug_1 "tp_is_sat_no_cache " Cprinter.string_of_pure_formula string_of_bool 
-    (fun f -> tp_is_sat_no_cache f sat_no) f
-        
+    (fun f -> tp_is_sat_no_cache_x f sat_no) f
+*)        
         
 (* let prune_sat_cache  = Hashtbl.create 2000 ;;*)
 
@@ -579,28 +580,20 @@ let tb_cache2 ht1 ht2 table s f :bool =
   let get_res (r,_,_,_,_,_) = (bool_of_string r) in 
   let rec retrieve_result l =
         match l with 
-	| (result,_,input,_,_,_)::tail -> if ((String.compare input s)  == 0 ) then (print_string ("\nResult retrieved from the head!!!!\n"); ( bool_of_string result))
-				  else (print_string ("\nLooping\n"); retrieve_result tail )
-	| [] -> ( (* This case should never occur, throw exception if it does *)			   
+	| (result,_,input,_,_,_)::tail -> if ((String.compare input s)  == 0 ) then (bool_of_string result)
+				  else (retrieve_result tail )
+	| [] -> ( 			   
 		try 
 		    let r = Hashtbl.find ht2 key in 
 		    (*let _ = print_string ("\ntp_is_sat:result from sat_temp_fail_cache table") in*)
 			get_res r  
 		with Not_found -> 	   
-		    (*Globals.update_db key s f table (tp_print ()) ) Should not update the cache directly, as it results in redundant values*)
-		    print_string ("\nNew Entry into"^table); Globals.update_new_values ht1 ht2 f s key (tp_print())
+		    Globals.update_new_values ht1 ht2 f s key (tp_print())
 		 )   
      in
     let res = Hashtbl.find_all ht1 key in     
     (*let _ = print_string ("\ntp_is_sat:result from sat_temp_cache table\n") in*)
       retrieve_result res 
-(*  with Not_found -> 
-	try 
-	    let r = Hashtbl.find ht2 key in 
-	    (*let _ = print_string ("\ntp_is_sat:result from sat_temp_fail_cache table") in*)
-		get_res r  
-	with Not_found -> 	   
-	    Globals.update_db key s f table (tp_print ()) (*Should not update the cache directly, as it results in redundant values*) *)
 
 let tb_cache t1 t2 s f = 
    let search_table key s = 
@@ -695,7 +688,8 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     let s = (!print_pure new_f) in         
      if cache_db then 
 	(*let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in *)
-     	let r = tb_cache2 Globals.sat_temp_cache Globals.sat_temp_fail_cache "sat" s (tp_is_sat_no_cache new_f sat_no) in
+	let no_cache_fun = lazy( tp_is_sat_no_cache new_f sat_no) in 
+     	let r = tb_cache2 Globals.sat_temp_cache Globals.sat_temp_fail_cache "sat" s no_cache_fun in
 	  r
      else 
 	tp_is_sat_no_cache f sat_no   
@@ -936,7 +930,8 @@ let tp_imply ante conseq imp_no timeout do_cache =
     
     if cache_db then
 	(*tb_cache "imply_cache" "imply_fail_cache" s (tp_imply_no_cache ante conseq imp_no timeout)*)
-	  tb_cache2 Globals.imply_temp_cache Globals.imply_temp_fail_cache "imply" s (tp_imply_no_cache ante conseq imp_no timeout)
+	  let no_cache_fun = lazy(tp_imply_no_cache ante conseq imp_no timeout) in 
+	  tb_cache2 Globals.imply_temp_cache Globals.imply_temp_fail_cache "imply" s no_cache_fun
     else 
 	tp_imply_no_cache ante conseq imp_no timeout
     )

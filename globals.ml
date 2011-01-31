@@ -420,17 +420,25 @@ let db = Mysql.quick_connect ~database:"cache" ~password:"vignesh" ~user:"vignes
                                      (*else (* Record not added to any db *) 
                                   print_string "!"; *)
     in add; r *)
+let get_time () =
+        let r = Unix.times () in
+        (*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
+        (*time_list := (r.Unix.tms_utime , r.Unix.tms_stime , r.Unix.tms_cutime , r.Unix.tms_cstime):: !time_list ;*)
+        r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
 
 let update_new_values table table2 f input key pt = 
-    let t = Unix.gettimeofday () in 
-    let r = f in 
-    let td = (Unix.gettimeofday ()) -. t in 
-	if r == false then (Hashtbl.add table2 key ((string_of_bool r),pt, input, td, 0,1); r)
-        else (Hashtbl.add table key ((string_of_bool r),pt,input,td,0,1); r)
+    let t = get_time () in 
+    let r = Lazy.force f in 
+    let td = (get_time ()) -. t in   
+	if r = false then (Hashtbl.add table2 key ((string_of_bool r),pt, input, td, 0,1); r)
+        else if td > 0.1 then (Hashtbl.add table key ((string_of_bool r),pt,input,td,0,1); r)
+	     else (print_string "Not added to cache\n"; r) 
+
+let limit = " limit 0, 100";;
 
 let pre_store () =
-   let select_query = "select * from sat_cache" and select_query2 = "select * from sat_fail_cache" and
-    	select_query3 = "select * from imply_cache" and select_query4 = "select * from imply_fail_cache" in
+   let select_query = "select * from sat_cache"^limit and select_query2 = "select * from sat_fail_cache"^limit and
+    	select_query3 = "select * from imply_cache"^limit and select_query4 = "select * from imply_fail_cache"^limit in
    let res = Mysql.exec db select_query and res2 = Mysql.exec db select_query2 and 
 	res3 = Mysql.exec db select_query3 and res4 = Mysql.exec db select_query4 in
    let col = Mysql.column res in
@@ -454,16 +462,16 @@ let pre_store () =
 let post_store () = 
    let ml2values (h,r,i,p,t,hr) = Mysql.values [Mysql.ml2int h; Mysql.ml2str r; Mysql.ml2blob i; Mysql.ml2str p; Mysql.ml2float t; Mysql.ml2int hr] in
    let query table values = "insert into "^table^"_cache values "^values in 
-   let flag = ref 2 in 
+   let flag = ref 1 in 
    let update_db key (r,pt,i,t,hr,bit) = 
 	match !flag with 
-	| 1 -> if bit == 1 then ( let _ = Mysql.exec db (query "sat" (ml2values (key,r,pt,i,t,hr)) ) in () )  
-	| 2 -> if bit == 1 then ( let _ = Mysql.exec db (query "sat_fail" (ml2values (key,r,pt,i,t,hr)) ) in () ) 
-	| 3 -> if bit == 1 then ( let _ = Mysql.exec db (query "imply" (ml2values( key,r,pt,i,t,hr)) ) in () ) 
-	| 4 -> if bit == 1 then ( let _ = Mysql.exec db (query "imply_fail" (ml2values (key,r,pt,i,t,hr)) ) in () )  
+	| 1 -> if bit = 1 then ( let _ = Mysql.exec db (query "sat" (ml2values (key,r,pt,i,t,hr)) ) in () )  
+	| 2 -> if bit = 1 then ( let _ = Mysql.exec db (query "sat_fail" (ml2values (key,r,pt,i,t,hr)) ) in () ) 
+	| 3 -> if bit = 1 then ( let _ = Mysql.exec db (query "imply" (ml2values( key,r,pt,i,t,hr)) ) in () ) 
+	| 4 -> if bit = 1 then ( let _ = Mysql.exec db (query "imply_fail" (ml2values (key,r,pt,i,t,hr)) ) in () )  
 	| _ -> print_string ("FATAL ERROR IN Globals.ml:464")
     in 
-        Hashtbl.iter update_db sat_temp_fail_cache; flag := 2;
+        Hashtbl.iter update_db sat_temp_cache; flag := 2;
 (*	print_string ("\nSize of sat_temp_fail_cache:"^(string_of_int (Hashtbl.length sat_temp_fail_cache)))*)
 	Hashtbl.iter update_db sat_temp_fail_cache; flag := 3;
 	Hashtbl.iter update_db imply_temp_cache; flag := 4;
