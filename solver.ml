@@ -2913,14 +2913,14 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_univ
   end
     
 
-and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no 
+and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   (* let _ = print_string ("\nSolver.ml: imply_mix_formula " ^ (string_of_int !imp_no)) in *)
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
           let increm_funct = 
-            if !Globals.enable_incremental_proving then Some TP.incremMethodsO
+            if !Globals.enable_incremental_proving then Some !TP.incremMethodsO
             else None in
           CP.imply_disj
               (TP.split_disjunctions a0) (* list with xpure0 antecedent disjunctions *)
@@ -2931,7 +2931,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no 
+and imply_mix_formula_old ante_m0 ante_m1 conseq_m imp_no 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   (* let _ = print_string ("\n\nimply_mix_formula" ^ (string_of_int !imp_no)^"\n") in *)
   match ante_m0,ante_m1,conseq_m with

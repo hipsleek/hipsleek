@@ -4084,7 +4084,7 @@ let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
     | [] -> (true,[],None)
 
 (*###############################################################################  incremental_testing*)
-
+(*check implication having a single formula on the lhs and a conjuction of formulas on the rhs*)
 let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
   (* let _ = print_string("\nCpure.ml: imply_conj") in *)
   match conseq_conj with
@@ -4115,11 +4115,14 @@ let rec imply_disj_helper ante_disj conseq_conj t_imply (increm_funct: (formula)
 let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula) Globals.incremMethodsType option) imp_no
       : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   (* let _ = print_string ("\nCpure.ml: CVC3 create process") in *)
+  let start = ref false in
   let process = 
     match increm_funct with
       | Some ifun ->
-            (* let _ = print_string("\nCpure.ml: start process") in *)
-            let proc = ifun#start_p () in
+            let proc0 = ifun#get_process() in 
+            let proc = match proc0 with
+              |Some pr -> pr
+              |None -> (start :=true; ifun#start_p ()) in
             let _ = ifun#push proc in
             Some proc
       | None -> None in
@@ -4131,10 +4134,10 @@ let imply_disj ante_disj0 ante_disj1 conseq_conj t_imply (increm_funct: (formula
     r1
   end else (xp01, xp02, xp03) in
   let _ =
-    match (increm_funct, process) with
-      | (Some ifun, Some proc) -> ifun#stop_p proc
+    match (increm_funct, process, !start) with
+      | (Some ifun, Some proc, true) -> ifun#stop_p proc
         (* let _ = print_string("\nCpure.ml: stop process") in  *)
-      | (_, _) -> () in
+      | (_, _, _) -> () in
   (* let _ = print_string ("\nCpure.ml: CVC3 stop process \n\n") in *)
   r
 
