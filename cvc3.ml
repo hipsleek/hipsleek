@@ -354,7 +354,7 @@ and is_sat_old (f : CP.formula) (sat_no : string) : bool =
   result
 
 (*#########################################################################################*)
-(*manually start - stop process *)
+(*interactively start - stop process *)
 
 let log_text_to_cvc3 (str : string) : unit =
 	 if !log_cvc3_formula then
