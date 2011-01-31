@@ -87,6 +87,9 @@
 	| [] -> ([], [])
 
   let rec remove_spec_qualifier (_, pre, post) = (pre, post)
+let parse_error s = 
+print_endline s;
+flush stdout
 %}
 
 %token ALLN
@@ -268,6 +271,7 @@ program
 			| Data ddef -> data_defs := ddef :: !data_defs
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
+           
 		end
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
@@ -460,66 +464,64 @@ enumerator
 
 
 /********** Higher Order Preds *******/
-
-pred_def 
-	: view_decl {}
-	| view_header EQEQ FINALIZES hpred_header {}
-	
 ho_pred_list : ho_pred ho_pred_list {}
     | {}
-
+;
 ho_pred 
 	: HPRED hpred_header EXTENDS ext_form {}
 	| HPRED hpred_header  REFINES  ext_form {}
 	| HPRED hpred_header  JOIN  split_combine {}
 	| HPRED hpred_header  EQEQ shape {}
-	
+;	
 shape :  formulas {}
-
+;
 split_combine 
 	: HPRED {}
 	| hpred_header SPLIT split_combine {}
 	| hpred_header COMBINE split_combine {}
-			
+;			
 ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {}
-
+;
 ho_fct_header 
 	: IDENTIFIER OPAREN fct_arg_list CPAREN {}
-
+;
 ho_fct_def
 	: ho_fct_header EQ shape {}
-	
+;
 ho_fct_def_list
 	: ho_fct_def {}
 	| ho_fct_def ho_fct_def_list {}
-	
+;
 hpred_header
 	: IDENTIFIER opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {}
-
+;
 typed_arg_list
 	: IDENTIFIER COLON IDENTIFIER {}
 	| IDENTIFIER COLON IDENTIFIER COMMA typed_arg_list {}
-	
+;
 fct_arg_list
 	: IDENTIFIER {}
 	| IDENTIFIER COMMA fct_arg_list {}
-	
+;
 opt_typed_arg_list
 	: {}
     | typed_arg_list {}
-	
+;
 opt_type_var_list
-	: OSQUARE id_list_opt CSQUARE {}
-	
+    : {}
+	| OSQUARE id_list_opt CSQUARE {}
+;
 opt_fct_list
-	: OSQUARE id_list_opt CSQUARE {}
-
+    : {}
+	| OSQUARE id_list_opt CSQUARE {}
+;
 /********** Views **********/
 
 view_decl
   : view_header EQEQ view_body opt_inv SEMICOLON {
 	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3)}
   }
+  | ho_pred_list {report_error (get_pos 1) ("Not a View")}
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
 	}
@@ -798,7 +800,7 @@ flow_constraints :
 heap_constr
   : simple_heap_constr { $1 }
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
-  | heap_constr STAR simple_heap_constr STAR ho_fct_header {$1}
+  | heap_constr STAR ho_fct_header {$1}
 ;
 
 simple_heap_constr

@@ -55,7 +55,7 @@
 	 ("head", HEAD);
      ("ho_pred",HPRED);
 	 ("if", IF);
-	 ("implies", IMPLIES);
+	 ("implies",IMPLIES);
 	 ("import", IMPORT);
 	 ("in", IN);
 	 ("inlist", INLIST);
