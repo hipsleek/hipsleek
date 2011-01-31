@@ -1,6 +1,5 @@
-ho_pred ll<n> == self = null & n = 0 
-	or self::node<_, q> * q::ll<n-1> 
-  inv n >= 0;
+ho_pred ll<n> == true ;
+
 
 /*
 avl_shape[t,b]<a:t>[Base,Rec,Inv] == Base(a,self)

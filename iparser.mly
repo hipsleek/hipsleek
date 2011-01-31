@@ -320,6 +320,7 @@ type_decl
   | class_decl { Data $1 }
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
+  | ho_pred  {report_error (get_pos 2) ("Error")}
 ;
 
 /***************** Global_variable **************/
@@ -464,9 +465,10 @@ enumerator
 
 
 /********** Higher Order Preds *******/
-ho_pred_list : ho_pred ho_pred_list {}
-    | {}
-;
+/* ho_pred_list 
+    : {}
+    | ho_pred ho_pred_list {}
+;*/
 ho_pred 
 	: HPRED hpred_header EXTENDS ext_form {}
 	| HPRED hpred_header  REFINES  ext_form {}
@@ -521,7 +523,6 @@ view_decl
   : view_header EQEQ view_body opt_inv SEMICOLON {
 	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3)}
   }
-  | ho_pred_list {report_error (get_pos 1) ("Not a View")}
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")
 	}
