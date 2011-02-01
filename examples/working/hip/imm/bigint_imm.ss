@@ -4,7 +4,7 @@ data node {
 }
 
 bigint<v> == self = null & v = 0 or
-      self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p & v>0
+      self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p
       inv v >= 0;
 
 node clone(node x)
