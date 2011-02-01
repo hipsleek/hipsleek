@@ -402,6 +402,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
           IF.h_formula_heap_arguments = hargs;
           IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
           IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+          IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
 		  IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
         }
       in h
@@ -421,6 +422,7 @@ let node2_to_node prog (h0 : IF.h_formula_heap2) : IF.h_formula_heap =
             IF.h_formula_heap_arguments = hargs;
             IF.h_formula_heap_pseudo_data = h0.IF.h_formula_heap2_pseudo_data;
             IF.h_formula_heap_pos = h0.IF.h_formula_heap2_pos;
+            IF.h_formula_heap_perm = h0.IF.h_formula_heap2_perm;
 			IF.h_formula_heap_label = h0.IF.h_formula_heap2_label;
           }
         in h

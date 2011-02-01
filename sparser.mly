@@ -597,26 +597,46 @@ heap_constr
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
 ;
 
+opt_perm_annot
+  : {F.mk_full ()}
+  | AT cid PLUS perm_lst {F.mk_perm (Some $2) $4}
+  | AT PLUS perm_lst {F.mk_perm None $3}
+;
+
+one_perm
+    : IDENTIFIER {
+        if $1="L" then PLeft
+        else if $1="R" then PRight
+        else report_error (get_pos 1) "only L or R as permission splits are allowed"};
+
+perm_lst
+  : one_perm {[$1]}
+  | perm_lst COMMA one_perm {$1@[$3]}
+;
+
+
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label{
+  : cid COLONCOLON IDENTIFIER opt_perm_annot LT heap_arg_list GT opt_formula_label{
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
 						 F.h_formula_heap_full = false;
 						 F.h_formula_heap_with_inv = false;
 						 F.h_formula_heap_pseudo_data = false;
-						 F.h_formula_heap_arguments = $5;
-						 F.h_formula_heap_label = $7;
+						 F.h_formula_heap_arguments = $6;
+						 F.h_formula_heap_label = $8;
+                         F.h_formula_heap_perm = $4;
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
+  | cid COLONCOLON IDENTIFIER opt_perm_annot LT opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
-							F.h_formula_heap2_arguments = $5;
-							F.h_formula_heap2_label = $7;
+							F.h_formula_heap2_arguments = $6;
+                            F.h_formula_heap2_perm = $4;
+							F.h_formula_heap2_label = $8;
 							F.h_formula_heap2_pos = get_pos 2 } in
 		h
 	}

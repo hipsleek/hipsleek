@@ -3,10 +3,14 @@
 type ident = string
 type constant_flow = ident
 
+type perm_split = 
+  | PLeft
+  | PRight 
+
+and perm_modifier = perm_split list
+
 type nflow = (int*int)(*numeric representation of flow*)
 
-	
-	
 and branch_label = string	(*formula branches*)
 type formula_label = (int*string)
 and control_path_id_strict = formula_label

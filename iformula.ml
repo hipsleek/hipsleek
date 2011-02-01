@@ -7,6 +7,15 @@
 open Globals
 module P = Ipure
 
+(*
+and frac_perm = 
+  | PFull
+  | PConst of perm_splint list
+  | PVar of (ident * primed)* (perm_splint list)
+*)
+
+type frac_perm  = (ident*primed) option * perm_modifier
+
 
 type struc_formula = ext_formula list
 
@@ -60,8 +69,8 @@ and formula_exists = { formula_exists_qvars : (ident * primed) list;
                        formula_exists_branches : (branch_label * P.formula) list;
                        formula_exists_pos : loc }
 
-and flow_formula = constant_flow				   
-					   
+and flow_formula = constant_flow
+
 and formula_or = { formula_or_f1 : formula;
 				   formula_or_f2 : formula;
 				   formula_or_pos : loc }
@@ -73,9 +82,9 @@ and h_formula = (* heap formula *)
 	  (* Don't distinguish between view and data node for now, as that requires look up *)
 	  (*  | ArrayNode of ((ident * primed) * ident * P.exp list * loc) *)
 	  (* pointer * base type * list of dimensions *)
-  | HTrue 
+  | HTrue
   | HFalse
-	  
+
 and h_formula_star = { h_formula_star_h1 : h_formula;
 					   h_formula_star_h2 : h_formula;
 					   h_formula_star_pos : loc }
@@ -87,6 +96,7 @@ and h_formula_heap = { h_formula_heap_node : (ident * primed);
 					   h_formula_heap_arguments : P.exp list;
 					   h_formula_heap_pseudo_data : bool;
 					   h_formula_heap_label : formula_label option;
+                       h_formula_heap_perm : frac_perm ;
 					   h_formula_heap_pos : loc }
 
 and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
@@ -96,7 +106,13 @@ and h_formula_heap2 = { h_formula_heap2_node : (ident * primed);
 						h_formula_heap2_arguments : (ident * P.exp) list;
 						h_formula_heap2_pseudo_data : bool;
 						h_formula_heap2_label : formula_label option;
+                        h_formula_heap2_perm : frac_perm;
 						h_formula_heap2_pos : loc }
+
+
+let mk_full () = (None,[])
+
+let mk_perm posib_var splint = (posib_var,splint)
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
@@ -440,6 +456,11 @@ let rec subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
   | [] -> f 
       
+
+and subst_perm (fr, t) (o1,o2) = match o1 with
+  | Some s -> (Some (subst_var (fr,t) s) , o2)
+  | _ -> (o1,o2)
+
 and subst_var (fr, t) (o : (ident*primed)) = if (Ipure.eq_var fr o) then t else o
 and subst_var_list ft (o : (ident*primed)) = let r = List.filter (fun (c1,c2)-> (Ipure.eq_var c1 o) ) ft in
 	if (List.length r)==0 then o else snd (List.hd r)
@@ -485,6 +506,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 			   h_formula_heap_arguments = args;
 			   h_formula_heap_pseudo_data = ps_data;
 			   h_formula_heap_label = l;
+               h_formula_heap_perm = perm;
 			   h_formula_heap_pos = pos}) -> 
       HeapNode ({h_formula_heap_node = subst_var s x; 
 				 h_formula_heap_name = c; 
@@ -493,6 +515,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 				 h_formula_heap_arguments = List.map (Ipure.e_apply_one s) args;
 				 h_formula_heap_pseudo_data = ps_data;
 				 h_formula_heap_label = l;
+                 h_formula_heap_perm = subst_perm s perm;
 				 h_formula_heap_pos = pos})
   | HeapNode2 ({
 		 				h_formula_heap2_node = x;
@@ -502,6 +525,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 						h_formula_heap2_arguments = args;
 						h_formula_heap2_pseudo_data = ps_data;
 						h_formula_heap2_label = l;
+                        h_formula_heap2_perm = perm;
 						h_formula_heap2_pos= pos}) -> 
       HeapNode2 ({
 				 		h_formula_heap2_node = subst_var s x;
@@ -511,6 +535,7 @@ and h_apply_one ((fr, t) as s : ((ident*primed) * (ident*primed))) (f : h_formul
 						h_formula_heap2_arguments = List.map (fun (c1,c2)-> (c1,(Ipure.e_apply_one s c2))) args;
 						h_formula_heap2_pseudo_data =ps_data;
 						h_formula_heap2_label = l;
+                        h_formula_heap2_perm = subst_perm s perm;
 						h_formula_heap2_pos = pos})
   | HTrue -> f
   | HFalse -> f
