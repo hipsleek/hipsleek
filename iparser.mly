@@ -497,9 +497,15 @@ ho_fct_def_list
 hpred_header
 	: IDENTIFIER opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {}
 ;
+
+typed_arg
+    : IDENTIFIER {}
+	| IDENTIFIER COLON IDENTIFIER {}
+;
+
 typed_arg_list
-	: IDENTIFIER COLON IDENTIFIER {}
-	| IDENTIFIER COLON IDENTIFIER COMMA typed_arg_list {}
+    : typed_arg {}
+	| typed_arg COMMA typed_arg_list {}
 ;
 fct_arg_list
 	: IDENTIFIER {}
@@ -763,6 +769,7 @@ disjunctive_constr
   : one_constr { (* each case of a view definition *)
 	$1
   }
+  | ho_fct_header ORWORD one_constr {report_error (get_pos 1) ("parse error in  disjunctive")}
   | disjunctive_constr ORWORD one_constr {
 	  F.mkOr $1 $3 (get_pos 2)
 	}
