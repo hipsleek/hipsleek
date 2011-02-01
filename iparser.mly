@@ -769,7 +769,6 @@ disjunctive_constr
   : one_constr { (* each case of a view definition *)
 	$1
   }
-  | ho_fct_header ORWORD one_constr {report_error (get_pos 1) ("parse error in  disjunctive")}
   | disjunctive_constr ORWORD one_constr {
 	  F.mkOr $1 $3 (get_pos 2)
 	}
@@ -808,7 +807,6 @@ flow_constraints :
 heap_constr
   : simple_heap_constr { $1 }
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
-  | heap_constr STAR ho_fct_header {$1}
 ;
 
 simple_heap_constr
@@ -820,6 +818,18 @@ simple_heap_constr
 						 F.h_formula_heap_pseudo_data = false;
 						 F.h_formula_heap_arguments = $5;
 						 F.h_formula_heap_label = $7;
+						 F.h_formula_heap_pos = get_pos 2 } in
+	  h
+  }
+  |ho_fct_header { report_error (get_pos 1) ("parse error in simple heap")}
+  |cid COLONCOLON IDENTIFIER opt_type_var_list LT heap_arg_list GT opt_formula_label {
+	let h = F.HeapNode { F.h_formula_heap_node = $1;
+						 F.h_formula_heap_name = $3;
+						 F.h_formula_heap_full = false;
+						 F.h_formula_heap_with_inv = false;
+						 F.h_formula_heap_pseudo_data = false;
+						 F.h_formula_heap_arguments = $6;
+						 F.h_formula_heap_label = $8;
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
