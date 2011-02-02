@@ -320,7 +320,7 @@ type_decl
   | class_decl { Data $1 }
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
-  | ho_pred  {report_error (get_pos 2) ("Error")}
+  | ho_pred  {report_error (get_pos 2) ("finished parsing hopred")}
 ;
 
 /***************** Global_variable **************/
@@ -465,7 +465,7 @@ enumerator
 
 
 /********** Higher Order Preds *******/
-/* ho_pred_list 
+ /* ho_pred_list 
     : {}
     | ho_pred ho_pred_list {}
 ;*/
@@ -473,7 +473,7 @@ ho_pred
 	: HPRED hpred_header EXTENDS ext_form {}
 	| HPRED hpred_header  REFINES  ext_form {}
 	| HPRED hpred_header  JOIN  split_combine {}
-	| HPRED hpred_header  EQEQ shape {}
+	| HPRED hpred_header  EQEQ shape opt_inv SEMICOLON {}
 ;	
 shape :  formulas {}
 ;
@@ -499,29 +499,36 @@ hpred_header
 ;
 
 typed_arg
-    : IDENTIFIER {}
-	| IDENTIFIER COLON IDENTIFIER {}
+    : typ {}
+	| typ COLON typ {}
 ;
 
 typed_arg_list
     : typed_arg {}
 	| typed_arg COMMA typed_arg_list {}
 ;
-fct_arg_list
-	: IDENTIFIER {}
-	| IDENTIFIER COMMA fct_arg_list {}
+type_var_lst
+    : typ {}
+	| typ COMMA type_var_lst {}
 ;
 opt_typed_arg_list
 	: {}
     | typed_arg_list {}
 ;
-opt_type_var_list
-    : {}
-	| OSQUARE id_list_opt CSQUARE {}
+type_var_list
+    : OSQUARE type_var_lst CSQUARE {}
+; 
+ opt_type_var_list
+	: type_var_list {}
+    | {}
+;
+fct_arg_list
+    : cid{}
+    | cid COMMA fct_arg_list {}
 ;
 opt_fct_list
     : {}
-	| OSQUARE id_list_opt CSQUARE {}
+	| OSQUARE fct_arg_list CSQUARE {}
 ;
 /********** Views **********/
 
@@ -537,6 +544,7 @@ view_decl
 opt_inv
   : { (P.mkTrue no_pos, []) }
   | INV pure_constr opt_branches { ($2, $3) }
+  | INV ho_fct_header {(P.mkTrue no_pos, [])}
 ;
 
 opt_branches
@@ -809,8 +817,25 @@ heap_constr
   | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
 ;
 
+simple2
+: opt_type_var_list LT {}
+;
+
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label {
+  : 
+  ho_fct_header { 
+      let h = F.HeapNode { F.h_formula_heap_node = ("",Primed);
+						 F.h_formula_heap_name = "";
+						 F.h_formula_heap_full = false;
+						 F.h_formula_heap_with_inv = false;
+						 F.h_formula_heap_pseudo_data = false;
+						 F.h_formula_heap_arguments = [];
+						 F.h_formula_heap_label = None;
+						 F.h_formula_heap_pos = get_pos 2 } in
+	  h
+(*report_error (get_pos 1) ("parse error in simple heap")
+*)}
+  |cid COLONCOLON IDENTIFIER simple2 heap_arg_list GT opt_formula_label {
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
 						 F.h_formula_heap_full = false;
@@ -821,19 +846,7 @@ simple_heap_constr
 						 F.h_formula_heap_pos = get_pos 2 } in
 	  h
   }
-  |ho_fct_header { report_error (get_pos 1) ("parse error in simple heap")}
-  |cid COLONCOLON IDENTIFIER opt_type_var_list LT heap_arg_list GT opt_formula_label {
-	let h = F.HeapNode { F.h_formula_heap_node = $1;
-						 F.h_formula_heap_name = $3;
-						 F.h_formula_heap_full = false;
-						 F.h_formula_heap_with_inv = false;
-						 F.h_formula_heap_pseudo_data = false;
-						 F.h_formula_heap_arguments = $6;
-						 F.h_formula_heap_label = $8;
-						 F.h_formula_heap_pos = get_pos 2 } in
-	  h
-  }
-  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
+  | cid COLONCOLON IDENTIFIER simple2 opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
 							F.h_formula_heap2_full = false;
