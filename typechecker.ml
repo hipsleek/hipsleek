@@ -4,6 +4,7 @@ open Cast
 
 module CF = Cformula
 module CP = Cpure
+module CPr = Cperm
 module U = Util
 module TP = Tpdispatcher
 module PTracer = Prooftracer
@@ -187,6 +188,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let _ = Debug.devel_pprint ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded)
                     ^ "\n") pos in
 	        let c = CP.name_of_type v_t in
+          let prv,prf = CPr.mkFullVar () in
 	        let vdatanode = CF.DataNode ({
                             CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                             CF.h_formula_data_name = c;
@@ -194,8 +196,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                             CF.h_formula_data_label = None;
                             CF.h_formula_data_remaining_branches = None;
                             CF.h_formula_data_pruning_conditions = [];
+                            CF.h_formula_data_perm = prv;
                             CF.h_formula_data_pos = pos}) in
-	        let vheap = CF.formula_of_heap vdatanode pos in
+	        let vheap = CF.formula_of_heap_perm_exists vdatanode [prv] prf pos in
           let vheap = prune_preds prog false vheap in
 	        let to_print = "Proving binding in method " ^ proc.proc_name ^ " for spec " ^ !log_spec ^ "\n" in
 	        Debug.devel_pprint to_print pos;
@@ -300,8 +303,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 exp_new_arguments = args;
                 exp_new_pos = pos}) -> begin
 	        let field_types, vs = List.split args in
-	        let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed))
-	          vs field_types in
+	        let heap_args = List.map2 (fun n -> fun t -> CP.SpecVar (t, n, Primed)) vs field_types in
+          let prv, prf = CPr.mkFullVar () in
 	        let heap_node = CF.DataNode ({
                 CF.h_formula_data_node = CP.SpecVar (CP.OType c, res, Unprimed);
                 CF.h_formula_data_name = c;
@@ -309,9 +312,11 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 CF.h_formula_data_remaining_branches = None;
                 CF.h_formula_data_pruning_conditions = [];
                 CF.h_formula_data_label = None;
+                CF.h_formula_data_perm = prv;
                 CF.h_formula_data_pos = pos}) in
 	        (*c let heap_form = CF.mkExists [ext_var] heap_node ext_null type_constr pos in*)
-	        let heap_form = CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos in
+	        let heap_form =  CF.formula_of_heap_perm_exists heap_node [prv] prf pos
+          (* CF.mkBase heap_node (MCP.mkMTrue pos) CF.TypeTrue (CF.mkTrueFlow ()) [] pos*) in
           let heap_form = prune_preds prog false heap_form in
 	        let res = CF.normalize_max_renaming_list_failesc_context heap_form pos true ctx in
 	        res

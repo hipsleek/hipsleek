@@ -437,6 +437,15 @@ and fresh_vars (svs : (ident*primed) list):(ident*primed) list = List.map fresh_
 
 and eq_var (f: (ident*primed))(t:(ident*primed)):bool = ((String.compare (fst f) (fst t))==0) &&(snd f)==(snd t) 
 
+and subst_var (fr, t) (o : (ident*primed)) = if (eq_var fr o) then t else o
+and subst_var_list ft (o : (ident*primed)) = let r = List.filter (fun (c1,c2)-> (eq_var c1 o) ) ft in
+	if (List.length r)==0 then o else snd (List.hd r)
+
+
+and remove_dups_vl l = Util.remove_dups_f l eq_var
+and difference_vl l1 l2 = Util.difference_f eq_var l1 l2
+
+
 and subst sst (f : formula) = match sst with
   | s :: rest -> subst rest (apply_one s f)
   | [] -> f 

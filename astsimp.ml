@@ -30,6 +30,9 @@ module TP = Tpdispatcher
   
 module Chk = Checks
 
+module IPr = Iperm
+module CPr = Cperm
+
 (* module VG = View_generator *)
 
 (*
@@ -266,6 +269,25 @@ module NGComponents = Graph.Components.Make(NG)
 (* 17.04.2008 *)
 (* add existential quantifiers for the anonymous vars - those that start with "Anon_" *)
 (***********************************************)
+
+let anon_var (id, p) = 
+  if ((String.length id) > 5) &&
+	  ((String.compare (String.sub id 0 5) "Anon_") == 0)
+  then [ (id, p) ]
+  else []
+
+let look_for_anonymous_frac_perm ((pr1,_): IPr.frac_perm) : (ident * primed) list = match pr1 with
+ | None -> []
+ | Some v -> anon_var v
+
+let rec look_for_anonymous_perm (pr : IPr.perm_formula) : (ident * primed) list = match pr with
+  | IPr.And (fr1,fr2,_) -> (look_for_anonymous_perm fr1) @ (look_for_anonymous_perm fr2)
+  | IPr.Join (fr1,fr2,fr3,_) -> (look_for_anonymous_frac_perm fr1) @ (look_for_anonymous_frac_perm fr2) @ (look_for_anonymous_frac_perm fr3)
+  | IPr.Exists (_,f,_) -> (look_for_anonymous_perm f)
+  | IPr.Eq (fr1,fr2,_) -> (look_for_anonymous_frac_perm fr1) @ (look_for_anonymous_frac_perm fr2)
+  | IPr.PTrue _ -> []
+  | IPr.PFalse _ -> []
+  
 let rec
 
 	(* - added 17.04.2008 - checks if the heap formula contains anonymous    *)
@@ -278,8 +300,11 @@ let rec
   | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
       let tmp1 = look_for_anonymous_h_formula h1 in
       let tmp2 = look_for_anonymous_h_formula h2 in List.append tmp1 tmp2
-  | IF.HeapNode { IF.h_formula_heap_arguments = args } ->
-      let tmp1 = look_for_anonymous_exp_list args in tmp1
+  | IF.HeapNode { IF.h_formula_heap_arguments = args; IF.h_formula_heap_perm = pr } ->
+      let tmp1 = look_for_anonymous_exp_list args in 
+      tmp1 @ (look_for_anonymous_frac_perm pr)
+  | IF.HeapNode2 h ->
+    (*(look_for_anonymous_exp_list h.IF.h_formula_heap2_arguments) @*) (look_for_anonymous_frac_perm h.IF.h_formula_heap2_perm)
   | _ -> []
 
 and look_for_anonymous_exp_list (args : IP.exp list) :
@@ -289,13 +314,7 @@ and look_for_anonymous_exp_list (args : IP.exp list) :
       List.append (look_for_anonymous_exp h)
         (look_for_anonymous_exp_list rest)
   | _ -> []
-
-and anon_var (id, p) = 
-  if ((String.length id) > 5) &&
-	  ((String.compare (String.sub id 0 5) "Anon_") == 0)
-  then [ (id, p) ]
-  else []
-
+  
 and look_for_anonymous_exp (arg : IP.exp) : (ident * primed) list =
   match arg with
   | IP.Var (b1, _) -> anon_var b1
@@ -324,11 +343,13 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
         IF.formula_base_heap = h0;
         IF.formula_base_pure = p0;
         IF.formula_base_branches = br0;
-		IF.formula_base_flow = fl0;
+        IF.formula_base_perm = pr0;
+        IF.formula_base_flow = fl0;
         IF.formula_base_pos = l0
       } -> (*as f*)
-      let tmp1 = look_for_anonymous_h_formula h0
-      in
+      let tmp1 = look_for_anonymous_h_formula h0 in
+      let tmp2 = look_for_anonymous_perm pr0 in
+      let tmp1 = tmp1@tmp2 in
         if ( != ) (List.length tmp1) 0
         then
           IF.Exists
@@ -338,14 +359,16 @@ and convert_anonym_to_exist (f0 : IF.formula) : IF.formula =
               IF.formula_exists_pure = p0;
               IF.formula_exists_flow = fl0;
               IF.formula_exists_branches = br0;
+              IF.formula_exists_perm = pr0;
               IF.formula_exists_pos = l0;
             }
         else f0
   | IF.Exists
-      (({ IF.formula_exists_heap = h0; IF.formula_exists_qvars = q0 } as f))
+      (({ IF.formula_exists_heap = h0; IF.formula_exists_qvars = q0 ; IF.formula_exists_perm = pr0} as f))
       ->
-      let tmp1 = look_for_anonymous_h_formula h0
-      in
+      let tmp1 = look_for_anonymous_h_formula h0 in
+      let tmp2 = look_for_anonymous_perm pr0 in
+      let tmp1 = tmp1@tmp2 in
         if ( != ) (List.length tmp1) 0
         then
           (let rec append_no_duplicates (l1 : (ident * primed) list)
@@ -1513,10 +1536,11 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
   let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
   let compute_univ () =
-    let h, p, _,_, _ = CF.split_components c_lhs in
-    let pvars =MCP.mfv p in
+    let h, p, pr, _, _, _ = CF.split_components c_lhs in
+    let pvars = MCP.mfv p in
+    let prvars = CPr.fv pr in
     let hvars = CF.h_fv h in
-    let univ_vars = Util.difference_f CP.eq_spec_var pvars hvars in 
+    let univ_vars = Util.difference_f CP.eq_spec_var (pvars@prvars) hvars in 
     Util.remove_dups_f univ_vars CP.eq_spec_var in
   let univ_vars = compute_univ () in
   let lhs_fnames = Util.difference lhs_fnames (List.map CP.name_of_spec_var univ_vars) in
@@ -3025,11 +3049,13 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
           IF.formula_base_pure = p;
           IF.formula_base_flow = fl;
           IF.formula_base_branches = br;
+          IF.formula_base_perm = pr ; 
           IF.formula_base_pos = pos} ->(
           let rl = Cformula.res_retrieve stab clean_res fl in
           let _ = if sep_collect then 
             (collect_type_info_pure (IF.flatten_branches p br) stab;
-            collect_type_info_heap prog h stab) else () in 
+            collect_type_info_heap prog h stab;
+            collect_type_info_perm pr stab) else () in 
           let ch = linearize_formula prog f0 stab in
           (*let ch1 = linearize_formula prog false [] f0 stab in*)
           let _ = 
@@ -3048,15 +3074,18 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
           IF.formula_exists_pure = p;
           IF.formula_exists_flow = fl;
           IF.formula_exists_branches = br;
+          IF.formula_exists_perm = pr;
           IF.formula_exists_pos = pos} -> (
           let rl = Cformula.res_retrieve stab clean_res fl in
           let _ = if sep_collect then (collect_type_info_pure (IF.flatten_branches p br) stab;
-          collect_type_info_heap prog h stab) else () in 
+          collect_type_info_heap prog h stab;
+          collect_type_info_perm pr stab) else () in 
           let f1 = IF.Base {
               IF.formula_base_heap = h;
               IF.formula_base_pure = p;
               IF.formula_base_flow = fl;
               IF.formula_base_branches = br;
+              IF.formula_base_perm = pr;
               IF.formula_base_pos = pos; } in
           let ch = linearize_formula prog f1 stab in
           let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
@@ -3092,7 +3121,13 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           IF.h_formula_heap_arguments = exps;
           IF.h_formula_heap_full = full;
           IF.h_formula_heap_pos = pos;
+          IF.h_formula_heap_perm = pr;
           IF.h_formula_heap_label = pi;} ->
+          let cperm = match pr with
+              | (Some v, []) -> trans_var v stab pos
+              | _ ->  Err.report_error{
+                    Err.error_loc = pos;
+                    Err.error_text = "permission formula floating error";} in
           (try
             let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
             let labels = vdef.I.view_labels in
@@ -3113,6 +3148,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                 CF.h_formula_view_label = pi;
                 CF.h_formula_view_pruning_conditions = [];
                 CF.h_formula_view_remaining_branches = None;
+                CF.h_formula_view_perm = cperm;
                 CF.h_formula_view_pos = pos;}
             in (new_h, CF.TypeTrue)
           with
@@ -3127,6 +3163,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                       CF.h_formula_data_label = pi;
                       CF.h_formula_data_remaining_branches = None;
                       CF.h_formula_data_pruning_conditions = [];
+                      CF.h_formula_data_perm = cperm;
                       CF.h_formula_data_pos = pos;} 
                   in ( new_h, CF.TypeTrue))
     | IF.Star {
@@ -3146,14 +3183,16 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
     let p = base.IF.formula_base_pure in
     let br = base.IF.formula_base_branches in
     let fl = base.IF.formula_base_flow in
+    let pr = base.IF.formula_base_perm in
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
     let new_p = Cpure.arith_simplify new_p in
     let new_fl = trans_flow_formula fl pos in
+    let new_pr = trans_perm_formula pr stab pos in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
     let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify f)) new_br in
-    (new_h, new_p, type_f, new_fl, new_br) in
+    (new_h, new_p, type_f, new_pr, new_fl, new_br) in
   match f0 with
     | IF.Or {
           IF.formula_or_f1 = f1;
@@ -3164,28 +3203,42 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           let result = CF.mkOr lf1 lf2 pos in result
     | IF.Base base -> 
           let pos = base.Iformula.formula_base_pos in
-          let nh,np,nt,nfl,nb = (linearize_base base pos) in
+          let nh,np,nt,npr, nfl,nb = (linearize_base base pos) in
           let np = (MCP.memoise_add_pure_N (MCP.mkMTrue pos) np)  in
-          CF.mkBase nh np nt nfl nb pos
+          CF.mkBase nh np nt npr nfl nb pos
     | IF.Exists {
           IF.formula_exists_heap = h; 
           IF.formula_exists_pure = p;
           IF.formula_exists_branches = br;
           IF.formula_exists_flow = fl;
           IF.formula_exists_qvars = qvars;
+          IF.formula_exists_perm = pr;
           IF.formula_exists_pos = pos} ->
           let base ={
               IF.formula_base_heap = h;
               IF.formula_base_pure = p;
               IF.formula_base_flow = fl;
               IF.formula_base_branches = br;
+              IF.formula_base_perm = pr;
               IF.formula_base_pos = pos;
           } in 
-	      let nh,np,nt,nfl,nb = linearize_base base pos in
+	      let nh,np,nt,npr,nfl,nb = linearize_base base pos in
           let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
-	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt nfl nb pos 
-	          
-
+	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt npr nfl nb pos 
+	                
+and trans_frac_perm_formula (f:IPr.frac_perm) stab pos: CPr.frac_perm = match f with
+  | (Some v, r) -> (Some (trans_var v stab pos),r)
+  | (None, r) -> (None,r)
+            
+and trans_perm_formula (f:IPr.perm_formula) stab pos : CPr.perm_formula = match f with
+  | IPr.And (f1,f2,p)-> CPr.mkAnd (trans_perm_formula f1 stab p) (trans_perm_formula f2 stab p) pos 
+  | IPr.Eq (f1,f2,p) -> CPr.mkEq (trans_frac_perm_formula f1 stab p) (trans_frac_perm_formula f2 stab p) pos
+  | IPr.Join (f1,f2,f3,p) -> CPr.mkJoin (trans_frac_perm_formula f1 stab p) (trans_frac_perm_formula f2 stab p) 
+      (trans_frac_perm_formula f3 stab p) p
+  | IPr.Exists (vl,f,p) -> CPr.mkExists (List.map (fun c-> trans_var c stab p) vl) (trans_perm_formula f stab pos) p
+  | IPr.PTrue p -> CPr.PTrue p
+  | IPr.PFalse p -> CPr.PFalse p
+   
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
   { Cformula.formula_flow_interval = Util.get_hash_of_exc f0;
   Cformula.formula_flow_link = None} 
@@ -3660,10 +3713,11 @@ and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
 and collect_type_info_formula prog f0 stab filter_res = 
   (* let _ = print_string ("collecting types for:\n"^(Iprinter.string_of_formula f0)^"\n") in 
      let _ = print_string ("stab: " ^ (string_of_stab stab) ^ "\n") in *)
-  let helper pure branches heap = 
+  let helper pure branches heap perm = 
     (
         collect_type_info_heap prog heap stab;
         collect_type_info_pure pure stab;
+        collect_type_info_perm perm stab;
         ignore (List.map (fun (c1,c2) -> collect_type_info_pure c2 stab) branches)
     )	in
   match f0 with
@@ -3671,11 +3725,11 @@ and collect_type_info_formula prog f0 stab filter_res =
 	  collect_type_info_formula prog b.Iformula.formula_or_f2 stab filter_res)
     | Iformula.Exists b -> 
 	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_exists_flow in
-	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap);	
+	      (helper b.Iformula.formula_exists_pure b.Iformula.formula_exists_branches b.Iformula.formula_exists_heap b.Iformula.formula_exists_perm);	
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_exists_flow) 
     | Iformula.Base b ->
 	      let rl = Cformula.res_retrieve stab filter_res b.Iformula.formula_base_flow in
-	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap);
+	      (helper b.Iformula.formula_base_pure b.Iformula.formula_base_branches b.Iformula.formula_base_heap b.Iformula.formula_base_perm);
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow) 
 
 and type_store_clean_up (f:Cformula.struc_formula) stab = () (*if stab to big,  -> get list of quantified vars, remove them from stab*)
@@ -3706,6 +3760,25 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
     check_shallow_var := true
   end
       
+and collect_type_info_frac_perm pf stab = match pf with 
+  | (Some (v,_),_ ) -> collect_type_info_var v stab (Known (CP.OType "perm")) no_pos
+  | _ -> ()
+      
+and collect_type_info_perm pf stab = match pf with
+  | IPr.And (f1,f2,_) -> 
+      collect_type_info_perm f1 stab;
+      collect_type_info_perm f2 stab
+  | IPr.Eq (f1,f2,_) -> 
+    collect_type_info_frac_perm f1 stab;
+    collect_type_info_frac_perm f2 stab
+  | IPr.Join (f1,f2,f3,_) ->
+    collect_type_info_frac_perm f1 stab;
+    collect_type_info_frac_perm f2 stab;
+    collect_type_info_frac_perm f3 stab  
+  | IPr.Exists (_,f,_) -> collect_type_info_perm f stab
+  | IPr.PTrue _ -> ()
+  | IPr.PFalse _ -> ()
+  
 and collect_type_info_heap prog (h0 : IF.h_formula) stab =
   match h0 with
     | IF.Star
@@ -3724,8 +3797,10 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                 IF.h_formula_heap_node = (v, p);
                 IF.h_formula_heap_name = c;
                 IF.h_formula_heap_arguments = ies;
+                IF.h_formula_heap_perm = pr;
                 IF.h_formula_heap_pos = pos
 	        } ->
+        let _ = collect_type_info_frac_perm pr stab in 
 	      let dname =
             (try
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
@@ -3929,7 +4004,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
       | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
       | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
  
-  let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
+  let normalize_base heap cp pr fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
@@ -3938,7 +4013,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
        let to_evars = Util.difference init_evars posib_expl in
        let to_expl = Util.intersect init_evars posib_expl in       
        (to_evars,to_expl))in
-    let result = Iformula.mkExists tmp_evars new_h new_p fl new_br pos in
+    let result = Iformula.mkExists tmp_evars new_h new_p pr fl new_br pos in
     let used_vars = Util.difference nu tmp_evars in
       if not (Util.empty tmp_evars)  then 
         Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
@@ -3953,12 +4028,14 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
          Util.remove_dups (l1@l2),(Util.remove_dups (expl1@expl2)))
     | Iformula.Base b -> normalize_base   b.Iformula.formula_base_heap 
                                           b.Iformula.formula_base_pure 
+                                          b.Iformula.formula_base_perm
                                           b.Iformula.formula_base_flow
                                           b.Iformula.formula_base_branches 
                                           []
                                           b.Iformula.formula_base_pos
     | Iformula.Exists b-> normalize_base b.Iformula.formula_exists_heap 
                                          b.Iformula.formula_exists_pure
+                                         b.Iformula.formula_exists_perm
                                          b.Iformula.formula_exists_flow
                                          b.Iformula.formula_exists_branches 
                                          b.Iformula.formula_exists_qvars 
@@ -4728,7 +4805,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
   
   (*actual case inference*)
   let guard_list = List.map (fun (c,lbl)-> 
-      let pures = (fun (h,p,_,b,_)-> 
+      let pures = (fun (h,p,_,_,b,_)-> 
           (*let (cm,br) = (Solver.xpure_heap cp h 0) in *)
           let cm,br,_ = Solver.xpure_heap_symbolic_no_exists_i cp h 0 in
           let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
@@ -4804,7 +4881,7 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
       else (c.C.coercion_body, c.C.coercion_head,c.C.coercion_body_view)in
   let v_def = C.look_up_view_def no_pos prog.C.prog_view_decls h_v in
   let v_invs = v_def.C.view_prune_invariants in
-  let h_h, _, _, _, _ = CF.split_components h_f in
+  let h_h, _, _, _, _, _ = CF.split_components h_f in
   let to_vars = find_h_args h_h in 
   let subst_vars = List.combine v_def.C.view_vars to_vars in
   let fvs = Util.intersect (CF.fv h_f) (CF.fv b_f) in  

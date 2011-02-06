@@ -65,7 +65,7 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
 MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -89,7 +89,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 
 
 PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo mcpure.cmo cperm.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -101,7 +101,7 @@ MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
 GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -124,7 +124,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 
 
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -160,7 +160,7 @@ MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
 
 
 PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -183,7 +183,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
 WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
@@ -268,7 +268,7 @@ CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
 cristina: $(CRISTINA_FILES)
 
 TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
-	cpure.cmo mcpure.cmo ipure.cmo \
+	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
 	checks.cmo \
 	iparser.cmo ilexer.cmo \

@@ -65,7 +65,8 @@
 	 ("min", MIN);
 	 ("bagmax", BAGMAX);
 	 ("bagmin", BAGMIN);
-	 ("new", NEW);
+	 ("join", JOIN);
+   ("new", NEW);
 	 ("notin", NOTIN);
 	 ("null", NULL);
 	 ("off", OFF);
@@ -108,6 +109,7 @@ rule tokenizer file_name = parse
 	}
   | "//" { line_comment file_name lexbuf }
   | '&' { AND }
+  | "&p" {ANDP}
   | "&&" { ANDAND }
   | "@" { AT }
   | '}' { CBRACE }

@@ -7,7 +7,8 @@
 
   module F = Iformula
   module P = Ipure
-
+  module Pr = Iperm
+  
   type type_decl =
 	| Data of data_decl
 	| Enum of enum_decl
@@ -77,6 +78,7 @@
 %}
 
 %token AND
+%token ANDP
 %token ANDAND
 %token ASSERT
 %token ASSUME
@@ -133,6 +135,7 @@
 %token IMPORT
 %token IN
 %token <string> JAVA
+%token JOIN
 %token LEFTARROW
 %token LEMMA
 %token LET
@@ -568,23 +571,39 @@ one_constr
 		| F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
+               F.formula_base_perm = pr;
                F.formula_base_branches = b}) ->
-			F.mkExists $3 h p fl b (get_pos 1)
+			F.mkExists $3 h p pr fl b (get_pos 1)
 		| _ -> report_error (get_pos 4) ("only Base is expected here.")
 	}
 ;
 
 
 core_constr
-  : heap_constr flows_and_branches { F.replace_branches (snd $2) (F.formula_of_heap_with_flow $1 (fst $2) (get_pos 1)) }
-  | pure_constr flows_and_branches { F.replace_branches (snd $2) (F.formula_of_pure_with_flow $1 (fst $2) (get_pos 1)) }
-  | heap_constr AND pure_constr flows_and_branches { F.mkBase $1 $3 (fst $4) (snd $4) (get_pos 2) }
+  : heap_constr flows_and_branches { F.formula_of_heap_with_flow_perm_br $1 $2 (get_pos 1) }
+  | pure_constr flows_and_branches { F.formula_of_pure_with_flow_perm_br $1 $2 (get_pos 1) }
+  | heap_constr AND pure_constr flows_and_branches { 
+      let (prm,fl,br) = $4 in
+      F.mkBase $1 $3 prm fl br (get_pos 2) }
 ;
 
-flows_and_branches
-	: flow_constraints opt_branches { ($1,$2)}
-	| opt_branches {(stub_flow,$1)}
-
+flows_and_branches 
+  : opt_branches { (Pr.mkTrue (get_pos 1), stub_flow, $1)};
+  | flow_constraints opt_branches { (Pr.mkTrue(get_pos 1), $1, $2)};
+  | ANDP permission_constraints opt_branches { ($2, stub_flow, $3)};
+  | ANDP permission_constraints flow_constraints opt_branches { ($2, $3, $4)};
+  
+permission_constraints
+  : permission_constraints AND one_p_const{Pr.mkAnd $1 $3 (get_pos 2)}
+  | EXISTS OPAREN opt_cid_list COLON permission_constraints CPAREN { Pr.mkExists $3 $5 (get_pos 1)}
+  | one_p_const {$1}
+;
+  
+one_p_const
+ : perm EQ perm {Pr.mkEq $1 $3 (get_pos 1)}
+ | JOIN OPAREN perm COMMA perm COMMA perm CPAREN {Pr.mkJoin $3 $5 $7 (get_pos 1)}
+;
+  
 flow_constraints :
 	AND FLOW IDENTIFIER {$3} 
 	
@@ -598,22 +617,26 @@ heap_constr
 ;
 
 opt_perm_annot
-  : {F.mk_full ()}
-  | AT cid PLUS perm_lst {F.mk_perm (Some $2) $4}
-  | AT PLUS perm_lst {F.mk_perm None $3}
+  : {Pr.mkPFull ()}
+  | AT perm {$2}
 ;
 
-one_perm
+perm 
+  : OSQUARE cid PLUS perm_lst CSQUARE {Pr.mkPerm (Some $2) $4}
+  | OSQUARE PLUS perm_lst CSQUARE {Pr.mkPerm None $3}
+  | cid {Pr.mkPerm (Some $1) []}
+;
+
+one_perm  
     : IDENTIFIER {
-        if $1="L" then PLeft
-        else if $1="R" then PRight
+        if $1="L" then PLeft 
+        else if $1="R" then PRight 
         else report_error (get_pos 1) "only L or R as permission splits are allowed"};
 
 perm_lst
   : one_perm {[$1]}
   | perm_lst COMMA one_perm {$1@[$3]}
 ;
-
 
 simple_heap_constr
   : cid COLONCOLON IDENTIFIER opt_perm_annot LT heap_arg_list GT opt_formula_label{

@@ -60,6 +60,7 @@
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
 	 ("len", LENGTH);
+   ("join", JOIN);
 	 ("max", MAX);
 	 ("min", MIN);
 	 ("bagmax", BAGMAX);
@@ -119,6 +120,7 @@ rule tokenizer file_name = parse
 	}
   | "//" { line_comment file_name lexbuf }
   | '&' { AND }
+  | "&p" {ANDP}
   | "&&" { ANDAND }
   | "@" { AT }
   | '}' { CBRACE }

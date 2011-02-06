@@ -417,11 +417,59 @@ let string_of_spec_var x =
 	    | Primed -> "'" 
 	    | Unprimed -> "" )
 
+
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
-  
+        
+let string_of_splint l = 
+  if (l==[]) then ""
+  else ("+"^(String.concat "" (List.map (fun c-> match c with | PLeft-> "L" | _ -> "R") l)))
 
+let string_of_perm (x1,x2) = match x1 with
+  |Some v -> "@"^(string_of_spec_var v)^(string_of_splint x2)
+  |None ->
+      if (x2==[]) then ""
+      else ("@"^(string_of_splint x2))
+
+ 
+let perm_formula_wo_paren (e:Pr.perm_formula) = match e with
+  | Pr.And _ -> true
+  | Pr.Eq _ -> true
+  | Pr.Join _ -> true
+  | Pr.Exists _ -> true
+  | Pr.PTrue _ -> true
+  | Pr.PFalse _ -> true      
+    
+let perm_formula_assoc_op (e:Pr.perm_formula) : (string * Pr.perm_formula list) option = 
+  match e with
+    | Pr.And (e1,e2,_) -> Some (op_and_short,[e1;e2])
+    | _ -> None
+    
+let pr_perm_formula (e:Pr.perm_formula) =
+  let rec pr_perm_formula_helper (e:Pr.perm_formula) = 
+    let f_b e = pr_bracket perm_formula_wo_paren pr_perm_formula_helper e in
+    match e with
+     | Pr.And ( f1,f2,_ ) -> 
+        let arg1 = bin_op_to_list op_and_short perm_formula_assoc_op f1 in
+        let arg2 = bin_op_to_list op_and_short perm_formula_assoc_op f2 in
+        let args = arg1@arg2 in
+          pr_list_op op_and f_b args
+     | Pr.Join (f1,f2,f3,_) ->
+        (fmt_string (string_of_perm f1)); fmt_string("@"); (fmt_string (string_of_perm f2)); fmt_string("=");
+        (fmt_string (string_of_perm f3))
+     | Pr.Eq (f1,f2,_) ->  fmt_string (string_of_perm f1); fmt_string op_eq ; fmt_string (string_of_perm f2)
+     | Pr.Exists (vl, f, _) ->
+        fmt_string "existsP("; pr_list_of_spec_var vl; fmt_string ":";
+        pr_perm_formula_helper f; fmt_string ")"     
+     | Pr.PTrue _ -> fmt_string "true"
+     | Pr.PFalse _ -> fmt_string "false" in
+  match e with
+    | Pr.PTrue _ -> ()
+    | _ -> fmt_string "&p(" ; pr_perm_formula_helper e ; fmt_string ")"
+
+let string_of_perm_formula f = poly_string_of_pr  pr_perm_formula f
+    
 (** check if top operator of e is associative and 
    return its list of arguments if so *)
 let exp_assoc_op (e:P.exp) : (string * P.exp list) option = 
@@ -720,10 +768,12 @@ let rec pr_h_formula h =
                    h_formula_data_arguments = svs;
                    h_formula_data_pos = pos;
                    h_formula_data_remaining_branches = ann;
+                   h_formula_data_perm = perm;
                    h_formula_data_label = pid})->
-           pr_formula_label_opt pid;
-              pr_spec_var sv; fmt_string "::";
-          pr_angle c pr_spec_var svs ;
+          pr_formula_label_opt pid;
+          pr_spec_var sv; fmt_string "::";
+          let type_perm = c^"@"^(string_of_spec_var perm) in
+          pr_angle type_perm pr_spec_var svs ;
           (match ann with | None -> () | Some _ -> fmt_string "[]")
       | ViewNode ({h_formula_view_node = sv; 
                    h_formula_view_name = c; 
@@ -732,11 +782,13 @@ let rec pr_h_formula h =
                    h_formula_view_label = pid;
                    h_formula_view_remaining_branches = ann;
                    h_formula_view_pruning_conditions = pcond;
+                   h_formula_view_perm = perm;
                    h_formula_view_pos =pos}) ->
          pr_formula_label_opt pid; 
          pr_spec_var sv; 
          fmt_string "::"; 
-         pr_angle c pr_spec_var svs  ;
+         let type_perm = c^"@"^(string_of_spec_var perm) in
+         pr_angle type_perm pr_spec_var svs  ;
          pr_remaining_branches ann; 
          pr_prunning_conditions ann pcond
       | HTrue -> fmt_bool true
@@ -981,7 +1033,8 @@ let summary_list_failesc_context lc = "["^(String.concat " " (List.map summary_f
 let pr_estate (es : entail_state) =
   fmt_open_vbox 0;
   pr_vwrap_nocut "es_formula: " pr_formula  es.es_formula; 
-  pr_vwrap "es_pure: " pr_mix_formula_branches es.es_pure; 
+  pr_vwrap "es_pure_mix: " pr_mix_formula_branches (fst es.es_pure); 
+  pr_vwrap "es_pure_perm: " pr_perm_formula (snd es.es_pure); 
   pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq; 
   if (!Debug.devel_debug_print_orig_conseq == true) then pr_vwrap "es_orig_conseq: " pr_struc_formula es.es_orig_conseq  else ();
   pr_vwrap "es_heap: " pr_h_formula es.es_heap;
