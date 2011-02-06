@@ -122,6 +122,8 @@ let lemma_heuristic = ref false
 
 let elim_exists = ref true
 
+let allow_imm = ref false
+
 let print_proc = ref false
 
 let check_all = ref true

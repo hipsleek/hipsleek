@@ -4,7 +4,7 @@ data node {
 }
 
 bigint<v> == self = null & v = 0 or
-      self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p
+      self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p 
       inv v >= 0;
 
 node clone(node x)
@@ -256,10 +256,9 @@ Checking procedure karatsuba_mult$node~node...
 Procedure karatsuba_mult$node~node result FAIL
 Halting Reduce... 
 Stop Omega... 81 invocations 
-
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
-  ensures res::bigint<v1*v2> ;// x::bigint<v1> * y::bigint<v2>;
 */
+  requires (x::bigint<v1>@I & y::bigint<v2>@I) 
+  ensures res::bigint<v1*v2> ;// x::bigint<v1> * y::bigint<v2>;
 
   requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures res::bigint<v1*v2> ;// x::bigint<v1> * y::bigint<v2>;
@@ -311,18 +310,9 @@ bool is_equal(node x, node y)
 }
 
 int compare(node x, node y)
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires (x::bigint<v1>@I & y::bigint<v2>@I)
   ensures true & (res = 0 & v1 = v2 | res = 1 & v1 > v2 | res = -1 & v1 < v2);
- /*
-  // fail: why?
-Procedure compare$node~node FAIL
 
-Error(s) detected when checking procedure compare$node~node
-Halting Reduce... 
-
-  requires( x::bigint<v1>@I & y::bigint<v2>@I) & 1=1
-  ensures res = 0 & v1 = v2 or res = 1 & v1 > v2 or res = -1 & v1 < v2;
-*/
 {
   if (x == null) {
     if (is_zero(y)) return 0;

@@ -1709,7 +1709,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_var_name = fn;
                               C.exp_var_pos = pos;
                           } in
-                          let (tmp_e, tmp_t) = flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos in
+                          let (tmp_e, tmp_t) =
+			      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
+			  in
+			  
                           let fn_decl = if new_var then C.VarDecl {
                               C.exp_var_decl_type = rhs_t;
                               C.exp_var_decl_name = fn;
@@ -2051,7 +2054,12 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_path_id = pid;
           I.exp_member_pos = pos } -> 
           (*let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in*)
-          let r = flatten_to_bind prog proc e (List.rev fs) None pid true pos in
+          let r = 
+	    if (!Globals.allow_imm) then
+	      flatten_to_bind prog proc e (List.rev fs) None pid true pos
+	    else
+	      flatten_to_bind prog proc e (List.rev fs) None pid false pos
+	  in
           (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
           r
     | I.New {
@@ -3135,11 +3143,7 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
 	        hvars
       | [] -> [] in
   let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
-    (* let f = Iformula.normalize_h_formula f in *)
     let res = 
-    (*let _ = print_string("IF.f = " ^ (Iprinter.string_of_h_formula f) ^ "\n") in
-    let normalized_f = Iformula.normalize_h_formula f in
-    let _ = print_string("IF.normalized_f = " ^ (Iprinter.string_of_h_formula normalized_f) ^ "\n") in*)
     match f with
     | IF.HeapNode2 h2 -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = "malfunction with convert to heap node"; }
     | IF.HeapNode{

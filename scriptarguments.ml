@@ -87,6 +87,7 @@ let common_arguments = [
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
+	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,
