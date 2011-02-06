@@ -9,7 +9,7 @@ bigint<v> == self = null & v = 0 or
 
 node clone(node x)
   requires x::bigint<v>@I
-  ensures x::bigint<v> * res::bigint<v>;
+  ensures res::bigint<v>;
 {
   if (x == null) return x;
   return new node(x.val, clone(x.next));
