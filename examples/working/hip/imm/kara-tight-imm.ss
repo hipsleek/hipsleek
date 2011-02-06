@@ -15,15 +15,15 @@ node bigint_of(int v)
 
 node add_one_digit(node x, int c)
   requires x::bigint<v>@I & 0 <= c <= 9
-  ensures res::bigint<v+c> * x::bigint<v>;
+  ensures res::bigint<v+c>;
 
 node add(node x, node y)
   requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
   ensures res::bigint<v1+v2>;
 
 node sub_one_digit(node x, int c)
-  requires x::bigint<v> & 0 <= c <= 9 & c <= v
-  ensures res::bigint<v-c> * x::bigint<v>;
+  requires x::bigint<v>@I & 0 <= c <= 9 & c <= v
+  ensures res::bigint<v-c>;
 
 node sub(node x, node y)
   requires (x::bigint<v1>@I & y::bigint<v2>@I) & v1 >= v2

@@ -118,9 +118,10 @@ node sub_one_digit(node x, int c)
 
 
 node sub_c(node x, node y, int c)
+/*
   requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1 & v1 >= v2+c
   ensures res::bigint<v1-v2-c>;
-
+*/
  requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
  ensures res::bigint<v1-v2-c>;
 {
@@ -205,7 +206,7 @@ bool is_zero(node x)
 }
 
 bool is_equal(node x, node y)
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires (x::bigint<v1>@I & y::bigint<v2>@I)
   ensures true & (res & v1 = v2 | !res & v1 != v2);
 {
   if (x == null) {
@@ -224,7 +225,7 @@ bool is_equal(node x, node y)
 }
 
 int compare(node x, node y)
-  requires x::bigint<v1>@I * y::bigint<v2>@I
+  requires (x::bigint<v1>@I & y::bigint<v2>@I)
   ensures true & (res = 0 & v1 = v2 | res = 1 & v1 > v2 | res = -1 & v1 < v2);
  /*
   // fail: why?

@@ -47,14 +47,6 @@ node add_one_digit(node x, int c)
   return new node(t, clone(x.next));
 }
 
-node test(node x) 
- requires x::bigint<v>@I
- ensures res::bigint<2*v>;
-{
-  //assume false;
-  node r=add_c(x,x,0);
-  return r;
-}
 
 node add_c(node x, node y, int c)
 /*
@@ -75,7 +67,7 @@ node add_c(node x, node y, int c)
   requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1
   ensures res::bigint<v1+v2+c>;
 */
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & 0 <= c <= 1
+  requires x::bigint<v1>@I * y::bigint<v2>@I & 0 <= c <= 1
   ensures res::bigint<v1+v2+c>;
 
 {
@@ -112,7 +104,7 @@ node add_c(node x, node y, int c)
 }
 
 node add(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures res::bigint<v1+v2>;
 /*
   requires x::bigint<v1>@I * y::bigint<v2>@I
@@ -167,7 +159,7 @@ node sub_c(node x, node y, int c)
   ensures res::bigint<v1-v2-c>;
 */
 
- requires (y::bigint<v2>@I & x::bigint<v1>@I) & 0 <= c <= 1 & v1 >= v2+c
+ requires y::bigint<v2>@I * x::bigint<v1>@I & 0 <= c <= 1 & v1 >= v2+c
  ensures res::bigint<v1-v2-c>;
 
 {
@@ -193,7 +185,7 @@ node sub_c(node x, node y, int c)
 }
 
 node sub(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & v1 >= v2
+  requires x::bigint<v1>@I * y::bigint<v2>@I & v1 >= v2
   ensures res::bigint<v1-v2>;
 /*
   requires x::bigint<v1>@I * y::bigint<v2>@I & v1 >= v2
@@ -233,7 +225,7 @@ node shift_left(node x)
 }
 
 node mult(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires x::bigint<v1>@I * y::bigint<v2>@I & true
   ensures res::bigint<v1*v2>;
 /*
   requires x::bigint<v1>@I * y::bigint<v2>@I
@@ -287,7 +279,7 @@ bool is_zero(node x)
 }
 
 bool is_equal(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I)
+  requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures true & (res & v1 = v2 | !res & v1 != v2);
 {
   if (x == null) {
@@ -306,7 +298,7 @@ bool is_equal(node x, node y)
 }
 
 int compare(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I)
+  requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures true & (res = 0 & v1 = v2 | res = 1 & v1 > v2 | res = -1 & v1 < v2);
 
 {

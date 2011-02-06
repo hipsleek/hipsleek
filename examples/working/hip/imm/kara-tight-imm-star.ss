@@ -6,7 +6,7 @@ data node {
 /* non-redundant version of bigint where 0 is denoted uniquely */
 
 bigint<v> == self = null & v = 0 or
-     self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p 
+     self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p & v>0
      inv v >= 0;
 
 node bigint_of(int v)
@@ -26,7 +26,7 @@ node sub_one_digit(node x, int c)
   ensures res::bigint<v-c>;
 
 node sub(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & v1 >= v2
+  requires x::bigint<v1>@I * y::bigint<v2>@I & v1 >= v2
   ensures res::bigint<v1-v2>;
 
 /* left shift all digits one pos (multiplied by ten) */
@@ -35,11 +35,11 @@ node shift_left(node x)
   ensures res::bigint<v*10>@I;
 
 node mult(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures res::bigint<v1*v2>;
 
 node karatsuba_mult(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires x::bigint<v1>@I * y::bigint<v2>@I
   ensures res::bigint<v1*v2> ;// x::bigint<v1> * y::bigint<v2>;
 {
   if (x == null || y == null) return null;
