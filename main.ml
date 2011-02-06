@@ -147,6 +147,7 @@ let main1 () =
   (* Cprinter.fmt_string "TEST7.................................."; *)
   (*  Cprinter.fmt_cut (); *)
   process_cmd_line ();
+  if (Globals.db_cache == true) then (print_string("pre_storing...\n");Globals.pre_store ();) else (); 
   
     if List.length (!Globals.source_files) = 0 then begin
       (* print_string (Sys.argv.(0) ^ " -help for usage information\n") *)
@@ -160,9 +161,9 @@ let main1 () =
       ()
 	  
 let _ = 
-  Globals.pre_store () ;
+  (*Globals.pre_store () ; This has been shifted inside main afte cmd line has been processed *)
   main1 ();
-  Globals.post_store () ;
+  if (Globals.db_cache == true) then (print_string("post_storing...\n");Globals.post_store ();) else ();
   let _ = print_string (Util.string_of_counters ()) in
   let _ = print_string ("db_access_time = "^(string_of_float !Util.db_access_time)^"\n") in
   let _ = Util.print_profiling_info () in

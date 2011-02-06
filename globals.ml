@@ -426,54 +426,59 @@ let get_time () =
         (*time_list := (r.Unix.tms_utime , r.Unix.tms_stime , r.Unix.tms_cutime , r.Unix.tms_cstime):: !time_list ;*)
         r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
 
-let update_new_values table table2 f input key pt = 
+let update_new_values table table2 f input key pt =
     let t = get_time () in 
     let r = Lazy.force f in 
     let td = (get_time ()) -. t in   
-	if r = false then (Hashtbl.add table2 key ((string_of_bool r),pt, input, td, 0,1); r)
-        else if td > 0.1 then (Hashtbl.add table key ((string_of_bool r),pt,input,td,0,1); r)
-	     else (print_string "Not added to cache\n"; r) 
+	if r == false then (Hashtbl.add table2 key ((string_of_bool r),pt, input, td, 0,1,(List.hd !source_files)); r)
+        else (print_string("tr_time:"^(string_of_float td));
+	     if td > 0.1 then (Hashtbl.add table key ((string_of_bool r),pt,input,td,0,1,(List.hd !source_files)); r)
+	     else r)
 
-let limit = " limit 0, 100";;
 
 let pre_store () =
-   let select_query = "select * from sat_cache"^limit and select_query2 = "select * from sat_fail_cache"^limit and
-    	select_query3 = "select * from imply_cache"^limit and select_query4 = "select * from imply_fail_cache"^limit in
+   let select_query = "select * from sat_cache where file_name='"^(List.hd !source_files)^"'" 
+   and select_query2 = "select * from sat_fail_cache where file_name='"^(List.hd !source_files)^"'" 
+   and select_query3 = "select * from imply_cache where file_name='"^(List.hd !source_files)^"'" 
+   and select_query4 = "select * from imply_fail_cache where file_name='"^(List.hd !source_files)^"'" in
    let res = Mysql.exec db select_query and res2 = Mysql.exec db select_query2 and 
-	res3 = Mysql.exec db select_query3 and res4 = Mysql.exec db select_query4 in
+       res3 = Mysql.exec db select_query3 and res4 = Mysql.exec db select_query4 in
    let col = Mysql.column res in
    let row x = ( Mysql.not_null Mysql.int2ml (col ~key:"hash" ~row:x)
 		,Mysql.not_null Mysql.str2ml (col ~key:"result" ~row:x)
 		,Mysql.not_null Mysql.str2ml (col ~key:"pt" ~row:x)
 		,Mysql.not_null Mysql.blob2ml (col ~key:"input" ~row:x)
 		,Mysql.not_null Mysql.float2ml (col ~key:"time" ~row:x)
-		,Mysql.not_null Mysql.int2ml (col ~key:"hr" ~row:x) )  in
-   let get_key (k,_,_,_,_,_) = k and get_values (_,r,pt,i,t,hr) = (r,pt,i,t,hr,0) in (*0 indicates a clean entry in the cache *)
+		,Mysql.not_null Mysql.int2ml (col ~key:"hr" ~row:x) 
+		,Mysql.not_null Mysql.str2ml (col ~key:"file_name" ~row:x) )  in
+   let get_key (k,_,_,_,_,_,_) = k and get_values (_,r,pt,i,t,hr,fn) = (r,pt,i,t,hr,0,fn) in (*0 indicates a clean entry in the cache *)
    let create_hash r = Hashtbl.add sat_temp_cache (get_key (row r)) (get_values (row r))  and 
        create_hash2 r = Hashtbl.add sat_temp_fail_cache (get_key (row r)) (get_values (row r)) and 
 	create_hash3 r = Hashtbl.add imply_temp_cache (get_key (row r)) (get_values (row r)) and 
 	create_hash4 r = Hashtbl.add imply_temp_fail_cache (get_key (row r)) (get_values (row r))
    in
         Mysql.iter res create_hash; Mysql.iter res2 create_hash2;
-	Mysql.iter res3 create_hash3; Mysql.iter res4 create_hash4
-        (*print_string ("\nSize of result is:"^(string_of_int (Hashtbl.length sat_temp_fail_cache))^"\n");
-	print_string ("\nSize of result from db is:"^(Int64.to_string (Mysql.size res))^"\n") *)
+	Mysql.iter res3 create_hash3; Mysql.iter res4 create_hash4;
+        print_string ("pre_stfc_size:"^(string_of_int (Hashtbl.length sat_temp_fail_cache))^"\n");
+	print_string ("pre_imtf_size:"^(string_of_int (Hashtbl.length imply_temp_fail_cache;))^"\n") 
 
 let post_store () = 
-   let ml2values (h,r,i,p,t,hr) = Mysql.values [Mysql.ml2int h; Mysql.ml2str r; Mysql.ml2blob i; Mysql.ml2str p; Mysql.ml2float t; Mysql.ml2int hr] in
+   let ml2values (h,r,i,p,t,hr,fn) = Mysql.values [Mysql.ml2int h; Mysql.ml2str r; Mysql.ml2blob i; Mysql.ml2str p; Mysql.ml2float t; Mysql.ml2int hr; Mysql.ml2str fn] in
    let query table values = "insert into "^table^"_cache values "^values in 
    let flag = ref 1 in 
-   let update_db key (r,pt,i,t,hr,bit) = 
+   let update_db key (r,pt,i,t,hr,bit,fn) = 
 	match !flag with 
-	| 1 -> if bit = 1 then ( let _ = Mysql.exec db (query "sat" (ml2values (key,r,pt,i,t,hr)) ) in () )  
-	| 2 -> if bit = 1 then ( let _ = Mysql.exec db (query "sat_fail" (ml2values (key,r,pt,i,t,hr)) ) in () ) 
-	| 3 -> if bit = 1 then ( let _ = Mysql.exec db (query "imply" (ml2values( key,r,pt,i,t,hr)) ) in () ) 
-	| 4 -> if bit = 1 then ( let _ = Mysql.exec db (query "imply_fail" (ml2values (key,r,pt,i,t,hr)) ) in () )  
+	| 1 -> if bit = 1 then ( let _ = Mysql.exec db (query "sat" (ml2values (key,r,pt,i,t,hr,fn)) ) in () )  
+	| 2 -> if bit = 1 then ( let _ = Mysql.exec db (query "sat_fail" (ml2values (key,r,pt,i,t,hr,fn)) ) in () ) 
+	| 3 -> if bit = 1 then ( let _ = Mysql.exec db (query "imply" (ml2values( key,r,pt,i,t,hr,fn)) ) in () ) 
+	| 4 -> if bit = 1 then ( let _ = Mysql.exec db (query "imply_fail" (ml2values (key,r,pt,i,t,hr,fn)) ) in () )  
 	| _ -> print_string ("FATAL ERROR IN Globals.ml:464")
     in 
+	print_string ("post_stfc_size:"^(string_of_int (Hashtbl.length sat_temp_fail_cache))^"\n");
+	print_string ("post_imtf_size:"^(string_of_int (Hashtbl.length imply_temp_fail_cache;))^"\n"); 
         Hashtbl.iter update_db sat_temp_cache; flag := 2;
-(*	print_string ("\nSize of sat_temp_fail_cache:"^(string_of_int (Hashtbl.length sat_temp_fail_cache)))*)
 	Hashtbl.iter update_db sat_temp_fail_cache; flag := 3;
 	Hashtbl.iter update_db imply_temp_cache; flag := 4;
-	Hashtbl.iter update_db imply_temp_fail_cache  
-
+	Hashtbl.iter update_db imply_temp_fail_cache
+	  
+let db_cache = true;;

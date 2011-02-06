@@ -573,20 +573,26 @@ let pre_store =
 	iter res create_hash   
  *)
 
-let hash_check = Hashtbl.create 300;;
-
 let tb_cache2 ht1 ht2 table s f :bool =
   let key = Hashtbl.hash s in
-  let get_res (r,_,_,_,_,_) = (bool_of_string r) in 
+  let rec get_res l = 
+      match l with 
+      | (result,_,input,_,_,_,_)::tail -> if ((String.compare input s) == 0 ) then (print_string ("found in fail_result\n"); 
+						(bool_of_string result)) 
+  					  else get_res tail
+      | [] -> Globals.update_new_values ht1 ht2 f s key (tp_print ()) 
+
+  in
   let rec retrieve_result l =
         match l with 
-	| (result,_,input,_,_,_)::tail -> if ((String.compare input s)  == 0 ) then (bool_of_string result)
+	| (result,_,input,_,_,_,_)::tail -> if ((String.compare input s) == 0 ) then (print_string("found result!\n"); 
+					(bool_of_string result))
 				  else (retrieve_result tail )
 	| [] -> ( 			   
 		try 
-		    let r = Hashtbl.find ht2 key in 
+		    let res = Hashtbl.find_all ht2 key in 
 		    (*let _ = print_string ("\ntp_is_sat:result from sat_temp_fail_cache table") in*)
-			get_res r  
+			get_res res  
 		with Not_found -> 	   
 		    Globals.update_new_values ht1 ht2 f s key (tp_print())
 		 )   
@@ -595,7 +601,7 @@ let tb_cache2 ht1 ht2 table s f :bool =
     (*let _ = print_string ("\ntp_is_sat:result from sat_temp_cache table\n") in*)
       retrieve_result res 
 
-let tb_cache t1 t2 s f = 
+(*let tb_cache t1 t2 s f = 
    let search_table key s = 
        try 
  	  let ans = Hashtbl.find hash_check key in 
@@ -676,8 +682,7 @@ let tb_cache t1 t2 s f =
 	   true;
 	 ) in 
     	print_result1 (fetch res1)
-	  
-let cache_db = true;;
+*)	  
 
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then   
@@ -686,7 +691,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     Util.inc_counter "sat_cache_count";
     let new_f = simplify_var_name f in
     let s = (!print_pure new_f) in         
-     if cache_db then 
+     if Globals.db_cache then 
 	(*let r = tb_cache "sat_cache" "sat_fail_cache" s (tp_is_sat_no_cache new_f sat_no) in *)
 	let no_cache_fun = lazy( tp_is_sat_no_cache new_f sat_no) in 
      	let r = tb_cache2 Globals.sat_temp_cache Globals.sat_temp_fail_cache "sat" s no_cache_fun in
@@ -928,7 +933,7 @@ let tp_imply ante conseq imp_no timeout do_cache =
     let s_rhs = !print_pure conseq in
     let s = (!print_pure ante)^"/"^ s_rhs in    
     
-    if cache_db then
+    if Globals.db_cache then
 	(*tb_cache "imply_cache" "imply_fail_cache" s (tp_imply_no_cache ante conseq imp_no timeout)*)
 	  let no_cache_fun = lazy(tp_imply_no_cache ante conseq imp_no timeout) in 
 	  tb_cache2 Globals.imply_temp_cache Globals.imply_temp_fail_cache "imply" s no_cache_fun
