@@ -424,7 +424,15 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   | Cvc3 -> Cvc3.is_sat f sat_no
   | Z3 -> Smtsolver.is_sat f sat_no
   | Isabelle -> Isabelle.is_sat f sat_no
-  | Coq -> Coq.is_sat f sat_no
+  | Coq -> (*Coq.is_sat f sat_no*)
+      if (is_list_constraint f) then
+        begin
+          (Coq.is_sat f sat_no);
+        end
+      else
+        begin
+          (Omega.is_sat f sat_no);
+        end
   | Mona -> Mona.is_sat f sat_no
   | CO -> 
       begin
@@ -539,7 +547,10 @@ let simplify (f : CP.formula) : CP.formula =
     try
 	  let r = match !tp with
         | Isabelle -> Isabelle.simplify f
-        | Coq -> Coq.simplify f
+        | Coq -> (* Coq.simplify f *)
+              if (is_list_constraint f) then
+                (Coq.simplify f)
+              else (Omega.simplify f)
         | Mona -> Mona.simplify f
         | OM ->
               if (is_bag_constraint f) then
@@ -565,6 +576,9 @@ let simplify (f : CP.formula) : CP.formula =
       r
     with | _ -> f)
 
+let simplify_debug f =
+  Util.ho_debug_1 "simplify " Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify_omega f
+
 let simplify (f:CP.formula): CP.formula = if (CP.contains_exists f) then simplify f else f
    
 let simplify_debug f =
@@ -572,7 +586,10 @@ let simplify_debug f =
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
-  | Coq -> Coq.hull f
+  | Coq -> (* Coq.hull f *)
+      if (is_list_constraint f) then
+		(Coq.hull f)
+	  else (Omega.hull f)
   | Mona -> Mona.hull f
   | OM ->
 	  if (is_bag_constraint f) then
@@ -603,7 +620,10 @@ let hull (f : CP.formula) : CP.formula = match !tp with
 
 let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.pairwisecheck f
-  | Coq -> Coq.pairwisecheck f
+  | Coq -> (* Coq.pairwisecheck f *)
+	  if (is_list_constraint f) then
+		(Coq.pairwisecheck f)
+	  else (Omega.pairwisecheck f)
   | Mona -> Mona.pairwisecheck f
   | OM ->
 	  if (is_bag_constraint f) then
@@ -667,8 +687,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             Cvc3.imply ante conseq imp_no
     | Z3 -> Smtsolver.imply ante conseq
     | Isabelle -> Isabelle.imply ante conseq imp_no
-    | Coq -> Coq.imply ante conseq
-    | Mona -> Mona.imply timeout ante conseq imp_no 
+    | Coq -> (* Coq.imply ante conseq *)
+          if (is_list_constraint ante) || (is_list_constraint conseq) then
+		    (called_prover :="coq " ; Coq.imply ante conseq)
+	      else
+		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
+     | Mona -> Mona.imply timeout ante conseq imp_no 
     | CO -> 
           begin
             let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
@@ -1179,7 +1203,10 @@ let print_stats () =
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
   match !tp with
-  | Coq -> Coq.start_prover ()
+  | Coq -> begin
+      Coq.start_prover ();
+	  Omega.start_omega ();
+	 end
   | Redlog | RM -> 
      begin
       Redlog.start_red ();
@@ -1189,7 +1216,11 @@ let start_prover () =
   
 let stop_prover () =
   match !tp with
-    | Coq -> Coq.stop_prover ()
+    | Coq -> (* Coq.stop_prover () *)
+          begin
+            Coq.stop_prover ();
+	        Omega.stop_omega ();
+	      end
     | Redlog | RM -> 
           begin
             Redlog.stop_red ();
@@ -1242,7 +1273,7 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
         !push_no 
       end
       else n in
-    match !tp with
+    match !tp with 
       | Cvc3 -> Cvc3.cvc3_popto process n
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
