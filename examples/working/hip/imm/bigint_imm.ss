@@ -249,14 +249,9 @@ node mult(node x, node y)
   }
 }
 
+/*
 node karatsuba_mult(node x, node y)
 
-/*
-Checking procedure karatsuba_mult$node~node... 
-Procedure karatsuba_mult$node~node result FAIL
-Halting Reduce... 
-Stop Omega... 81 invocations 
-*/
   requires (x::bigint<v1>@I & y::bigint<v2>@I) 
   ensures res::bigint<v1*v2> ;// x::bigint<v1> * y::bigint<v2>;
 
@@ -280,6 +275,7 @@ Stop Omega... 81 invocations
   // x * y = A*100 + K*10 + B
   return add(shift_left(shift_left(A)), add(shift_left(K), B));
 }
+*/
 
 bool is_zero(node x)
   requires x::bigint<v>@I
