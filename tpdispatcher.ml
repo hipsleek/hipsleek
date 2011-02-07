@@ -218,40 +218,65 @@ module Netprover = struct
    
 end
 
+(*reads the prompt that cvc3 outputs when running in incremental mode *)
+let rec read_answer (process: Globals.prover_process) : string =
+  try
+    let chr = input_char process.inchannel in
+    match chr with
+      |'\n' -> "" 
+      | _ -> (Char.escaped chr) ^ read_answer process
+  with
+    |  _ ->   (print_string ("\nexception while reading cvc3 promp \n" ); flush stdout); ""
+
+let rec check_prover_existence prover_cmd_str =
+  match prover_cmd_str with
+    |[] -> ()
+    | prover::rest -> 
+        let exit_code = Sys.command ("which "^prover) in
+        if exit_code > 0 then
+          let _ = print_string ("Command for starting the prover (" ^ prover ^ ") not found\n") in
+          exit 0
+
 let set_tp tp_str =
-  prover_arg := tp_str;  
+  prover_arg := tp_str;
+  let prover_str = ref [] in
   if tp_str = "omega" then
-	tp := OmegaCalc
+	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "cvcl" then 
-	tp := CvcLite
+	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
-	tp := Cvc3
+	(tp := Cvc3; prover_str := "cvc3"::!prover_str;)
   else if tp_str = "co" then
-	tp := CO
+	(tp := CO; prover_str := "cvc3"::!prover_str; 
+     prover_str := "oc"::!prover_str;)
   else if tp_str = "isabelle" then
-	tp := Isabelle
+	(tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "mona" then
-	tp := Mona
+	(tp := Mona; prover_str := "mona"::!prover_str;)
   else if tp_str = "om" then
-	tp := OM
+	(tp := OM; prover_str := "oc"::!prover_str;
+     prover_str := "mona"::!prover_str;)
   else if tp_str = "oi" then
-	tp := OI
+	(tp := OI; prover_str := "oc"::!prover_str;
+     prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "set" then
-	tp := SetMONA
+    (tp := SetMONA; prover_str := "mona"::!prover_str;)
   else if tp_str = "cm" then
-	tp := CM
+	(tp := CM; prover_str := "cvc3"::!prover_str;
+     prover_str := "mona"::!prover_str;)
   else if tp_str = "coq" then
-	tp := Coq
+	(tp := Coq; prover_str := "coqtop"::!prover_str;)
   else if tp_str = "z3" then 
-	tp := Z3
+	(tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
-    tp := Redlog
+    (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else
-	()
+	();
+  check_prover_existence !prover_str
 
 let omega_count = ref 0
 
