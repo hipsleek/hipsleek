@@ -13,6 +13,7 @@ type frac_perm  = (ident*primed) option * perm_modifier
 
 type perm_formula = 
   | And of (perm_formula * perm_formula * loc)
+  | Or of (perm_formula * perm_formula * loc)
   | Join of (frac_perm*frac_perm*frac_perm * loc)
   | Eq of (frac_perm*frac_perm *loc)
   | Exists of ((ident * primed) list * perm_formula *loc)
@@ -27,6 +28,15 @@ let mkPerm posib_var splint :frac_perm = (posib_var,splint)
 
 let mkTrue pos = PTrue pos
 let mkFalse pos = PFalse pos
+
+let mkOr f1 f2 pos = match f1 with
+  | PTrue _ -> f1
+  | PFalse _ -> f2
+  | _ -> match f2 with
+        | PTrue _ -> f2
+        | PFalse _ -> f1 
+        | _ -> Or (f1,f2,pos)
+
 
 let mkAnd f1 f2 pos = match f1 with
   | PTrue _ -> f2
@@ -49,6 +59,7 @@ let frac_fv f= match (fst f) with | Some v -> [v] | _ -> []
 
 let rec fv f = match f with
   | And (f1,f2,_) -> P.remove_dups_vl ((fv f1)@(fv f2))
+  | Or (f1,f2,_) -> P.remove_dups_vl ((fv f1)@(fv f2))
   | Join (f1,f2,f3,_) -> P.remove_dups_vl ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
   | Eq (f1,f2,_) -> P.remove_dups_vl ((frac_fv f1)@(frac_fv f2))
   | Exists (l1,f1,_) -> P.difference_vl (fv f1) l1
@@ -60,6 +71,7 @@ and subst_perm (fr, t) (o1,o2) = match o1 with
   
 let rec apply_one (fr,t) f = match f with
   | And (f1,f2,p) -> And (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
+  | Or (f1,f2,p) -> Or (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
   | Join (f1,f2,f3,p) -> Join (subst_perm (fr,t) f1, subst_perm (fr,t) f2, subst_perm (fr,t) f3, p)
   | Eq (f1,f2,p) -> Eq (subst_perm (fr,t) f1, subst_perm (fr,t) f2, p)
   | Exists (qsv,f1,p) ->  

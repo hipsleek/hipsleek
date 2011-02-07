@@ -219,6 +219,7 @@ let string_of_perm (x1,x2) = match x1 with
 let string_of_perm_formula pr = 
   let rec helper pr = match pr with
   | Pr.And (f1,f2,_) -> (helper f1)^" & "^(helper f2)
+  | Pr.Or (f1,f2,_) -> "("^(helper f1)^" | "^(helper f2)^")"
   | Pr.Join (fp1, fp2, fp3, _) -> " join(" ^ (string_of_perm fp1) ^ "," ^ (string_of_perm fp2) ^ "," ^ (string_of_perm fp3)^")" 
   | Pr.Eq (fp1,fp2,_) -> (string_of_perm fp1) ^ " = " ^ (string_of_perm fp2)
   | Pr.Exists (vl, fp, _) -> "exists ("^(string_of_var_list vl)^" : "^(helper fp)^")"

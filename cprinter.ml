@@ -435,6 +435,7 @@ let string_of_perm (x1,x2) = match x1 with
  
 let perm_formula_wo_paren (e:Pr.perm_formula) = match e with
   | Pr.And _ -> true
+  | Pr.Or _ -> false
   | Pr.Eq _ -> true
   | Pr.Join _ -> true
   | Pr.Exists _ -> true
@@ -455,6 +456,11 @@ let pr_perm_formula (e:Pr.perm_formula) =
         let arg2 = bin_op_to_list op_and_short perm_formula_assoc_op f2 in
         let args = arg1@arg2 in
           pr_list_op op_and f_b args
+     | Pr.Or ( f1,f2,_ ) -> 
+        let arg1 = bin_op_to_list op_or_short perm_formula_assoc_op f1 in
+        let arg2 = bin_op_to_list op_or_short perm_formula_assoc_op f2 in
+        let args = arg1@arg2 in
+          pr_list_op op_or f_b args
      | Pr.Join (f1,f2,f3,_) ->
         (fmt_string (string_of_perm f1)); fmt_string("@"); (fmt_string (string_of_perm f2)); fmt_string("=");
         (fmt_string (string_of_perm f3))

@@ -282,6 +282,7 @@ let look_for_anonymous_frac_perm ((pr1,_): IPr.frac_perm) : (ident * primed) lis
 
 let rec look_for_anonymous_perm (pr : IPr.perm_formula) : (ident * primed) list = match pr with
   | IPr.And (fr1,fr2,_) -> (look_for_anonymous_perm fr1) @ (look_for_anonymous_perm fr2)
+  | IPr.Or (fr1,fr2,_) -> (look_for_anonymous_perm fr1) @ (look_for_anonymous_perm fr2)
   | IPr.Join (fr1,fr2,fr3,_) -> (look_for_anonymous_frac_perm fr1) @ (look_for_anonymous_frac_perm fr2) @ (look_for_anonymous_frac_perm fr3)
   | IPr.Exists (_,f,_) -> (look_for_anonymous_perm f)
   | IPr.Eq (fr1,fr2,_) -> (look_for_anonymous_frac_perm fr1) @ (look_for_anonymous_frac_perm fr2)
@@ -3232,6 +3233,7 @@ and trans_frac_perm_formula (f:IPr.frac_perm) stab pos: CPr.frac_perm = match f 
             
 and trans_perm_formula (f:IPr.perm_formula) stab pos : CPr.perm_formula = match f with
   | IPr.And (f1,f2,p)-> CPr.mkAnd (trans_perm_formula f1 stab p) (trans_perm_formula f2 stab p) pos 
+  | IPr.Or (f1,f2,p)-> CPr.mkOr (trans_perm_formula f1 stab p) (trans_perm_formula f2 stab p) pos 
   | IPr.Eq (f1,f2,p) -> CPr.mkEq (trans_frac_perm_formula f1 stab p) (trans_frac_perm_formula f2 stab p) pos
   | IPr.Join (f1,f2,f3,p) -> CPr.mkJoin (trans_frac_perm_formula f1 stab p) (trans_frac_perm_formula f2 stab p) 
       (trans_frac_perm_formula f3 stab p) p
@@ -3766,6 +3768,9 @@ and collect_type_info_frac_perm pf stab = match pf with
       
 and collect_type_info_perm pf stab = match pf with
   | IPr.And (f1,f2,_) -> 
+      collect_type_info_perm f1 stab;
+      collect_type_info_perm f2 stab
+  | IPr.Or (f1,f2,_) -> 
       collect_type_info_perm f1 stab;
       collect_type_info_perm f2 stab
   | IPr.Eq (f1,f2,_) -> 

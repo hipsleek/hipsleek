@@ -6,6 +6,7 @@ type frac_perm = P.spec_var option * perm_modifier
 
 type perm_formula = 
   | And of (perm_formula * perm_formula * loc)
+  | Or  of (perm_formula * perm_formula * loc)
   | Join of (frac_perm*frac_perm*frac_perm * loc)
   | Eq of (frac_perm*frac_perm *loc)
   | Exists of (P.spec_var  list * perm_formula *loc)
@@ -20,6 +21,14 @@ let mkPerm posib_var splint :frac_perm = (posib_var,splint)
 
 let mkTrue pos = PTrue pos
 let mkFalse pos = PFalse pos
+
+let mkOr f1 f2 pos = match f1 with
+  | PTrue _ -> f1
+  | PFalse _ -> f2
+  | _ -> match f2 with
+        | PTrue _ -> f2
+        | PFalse _ -> f1 
+        | _ -> Or (f1,f2,pos)
 
 let mkAnd f1 f2 pos = match f1 with
   | PTrue _ -> f2
@@ -46,10 +55,11 @@ let frac_fv f= match (fst f) with | Some v -> [v] | _ -> []
 
 let rec fv f = match f with
   | And (f1,f2,_) -> P.remove_dups_svl ((fv f1)@(fv f2))
+  | Or (f1,f2,_) -> P.remove_dups_svl ((fv f1)@(fv f2))
   | Join (f1,f2,f3,_) -> P.remove_dups_svl ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
   | Eq (f1,f2,_) -> P.remove_dups_svl ((frac_fv f1)@(frac_fv f2))
   | Exists (l1,f1,_) -> Util.difference_f P.eq_spec_var (fv f1) l1
-  | _ -> [] 
+  | PTrue _ | PFalse _ -> [] 
     
 and subst_perm (fr, t) (o1,o2) = match o1 with
   | Some s -> (Some (P.subst_var (fr,t) s) , o2)
@@ -57,6 +67,7 @@ and subst_perm (fr, t) (o1,o2) = match o1 with
   
 let rec apply_one (fr,t) f = match f with
   | And (f1,f2,p) -> And (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
+  | Or (f1,f2,p) -> Or (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
   | Join (f1,f2,f3,p) -> Join (subst_perm (fr,t) f1, subst_perm (fr,t) f2, subst_perm (fr,t) f3, p)
   | Eq (f1,f2,p) -> Eq (subst_perm (fr,t) f1, subst_perm (fr,t) f2, p)
   | Exists (qsv,f1,p) ->  
@@ -87,6 +98,10 @@ let rec transform_perm (f:(perm_formula->perm_formula option)* (frac_perm -> fra
 	| None  -> match e with	  
     | PTrue _ -> e
     | PFalse _ -> e
+    | Or (f1,f2,p) ->
+      let nf1 = transform_perm f f1 in
+      let nf2 = transform_perm f f2 in
+      mkOr nf1 nf2 p
     | And (f1,f2,p) ->
       let nf1 = transform_perm f f1 in
       let nf2 = transform_perm f f2 in
@@ -124,6 +139,10 @@ let trans_perm (e:perm_formula) (arg: 'a) f f_arg f_comb_a : (perm_formula * 'b)
       let new_arg = f_perm_arg arg e in
       let f_comb = f_perm_comb e in
       match e with
+      | Or (f1,f2,p) ->
+        let nf1, r1 = foldr_f new_arg f1 in
+        let nf2, r2 = foldr_f new_arg f2 in
+        (mkOr nf1 nf2 p, f_comb [r1;r2])
       | And (f1,f2,p) ->
         let nf1, r1 = foldr_f new_arg f1 in
         let nf2, r2 = foldr_f new_arg f2 in

@@ -601,7 +601,13 @@ permission_constraints
   
 one_p_const
  : perm EQ perm {Pr.mkEq $1 $3 (get_pos 1)}
+ | OPAREN disjunctive_perm_constr CPAREN {$2}
  | JOIN OPAREN perm COMMA perm COMMA perm CPAREN {Pr.mkJoin $3 $5 $7 (get_pos 1)}
+;
+
+disjunctive_perm_constr
+  : permission_constraints OR permission_constraints { Pr.mkOr $1 $3 (get_pos 2) }
+  | disjunctive_perm_constr OR permission_constraints { Pr.mkOr $1 $3 (get_pos 2) }
 ;
   
 flow_constraints :

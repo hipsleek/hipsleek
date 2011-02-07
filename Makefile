@@ -126,7 +126,6 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo cperm.cmo mcpure.cmo ipure.cmo iperm.cmo\
 	iformula.cmo iast.cmo \
-	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
@@ -136,6 +135,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
   sleekcommons.cmo \
+  sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -321,7 +321,7 @@ decidez.vo:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
+	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot ss.exe hip.exe hip hip.opt ss ss.opt sleek.opt sleek sleek.exe prover prover.opt web *~ oo oo.exe hipgui prdebug
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
