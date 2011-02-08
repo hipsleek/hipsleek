@@ -10,6 +10,7 @@ open Globals
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
+
   
 and typ =
   | Prim of prim_type
@@ -4761,4 +4762,32 @@ let elim_exists_with_simpl_debug simpl (f0 : formula) : formula =
   Util.ho_debug_1 "elim_exists_with_simpl" !print_formula !print_formula 
     (fun f0 -> elim_exists_with_simpl simpl f0) f0
 
-  
+(* result of xpure with baga and memset/diffset *)
+type xp_res_type = (spec_var Util.baga * spec_var Util.d_set * formula)
+
+(*
+(S1,D1,P1) * (S2,D2,P2)  =   (S1+S2, D1&D2,P1&P2)
+
+(S1,D1,P1) & (S2,D2,P2)  = 
+  (S1{\cap}S2, S1::D1 & S2::D2,
+            (SAT(S1)&SAT(S2)) & P1&P2 )
+(S1,D1,P1) \/ (S2,D2,P2) = 
+  (S1{\cap}S2, D1\/D2, SAT(S1) & P1 \/ SAT(S2) & P2)
+*)
+
+let star_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
+  (Util.star_baga b1 b2, Util.star_disj_set d1 d2, mkAnd p1 p2 no_pos)
+
+let conj_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
+  let nb = Util.conj_baga eq b1 b2 in
+  let nd = Util.conj_disj_set (b1::d1) (b2::d2) in
+  let np = if (Util.is_sat_baga eq b1) && (Util.is_sat_baga eq b1) then  mkAnd p1 p2 no_pos  else mkFalse no_pos in
+  (nb,nd,np)
+
+let or_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
+  let nb = Util.or_baga eq b1 b2 in
+  let nd = Util.or_disj_set d1 d2 in
+  let np1 = if (Util.is_sat_baga eq b1) then p1 else mkFalse no_pos in
+  let np2 = if (Util.is_sat_baga eq b2) then p2 else mkFalse no_pos in
+    (nb,nd, mkOr np1 np2 None no_pos)
+
