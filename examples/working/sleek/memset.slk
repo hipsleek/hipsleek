@@ -27,3 +27,9 @@ print residue.
 checkentail x::node<_,_> * x::node<_,_> |- 1=4.
 print residue.
 // fail but should succeed
+
+checkentail x::ll<n> * y::node<_,_> & n=1 |- x!=y.
+// succee with imm but failed for --eps
+
+checkentail x::ll<n> * y::node<_,_> & n=0 |- x!=y.
+// succeed for --eps but failed for others
