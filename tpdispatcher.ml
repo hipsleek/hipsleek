@@ -564,11 +564,16 @@ let simplify (f : CP.formula) : CP.formula =
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
       r
     with | _ -> f)
-let simplify (f:CP.formula): CP.formula = if (CP.contains_exists f) then simplify f else f
-   
+
 let simplify_debug f =
   Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
+let simplify (f:CP.formula): CP.formula = 
+  CP.elim_exists_with_simpl simplify f 
+  (* if (CP.contains_exists f) then  *)
+  (*   let f=CP.elim_exists f in  *)
+  (*    simplify f else f *)
+   
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f

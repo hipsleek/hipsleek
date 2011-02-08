@@ -1007,7 +1007,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
     (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-    let (xform', xform_b, addr_vars') = Solver.xpure_symbolic_no_exists prog (C.formula_of_unstruc_view_f vdef) in
+    let (xform', xform_b, addr_vars', _) = Solver.xpure_symbolic_no_exists prog (C.formula_of_unstruc_view_f vdef) in
     let addr_vars = CP.remove_dups_svl addr_vars' in
 	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
@@ -5190,7 +5190,7 @@ and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var l
 				 else b.Cformula.formula_ext_base 
 			       | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 			     in
-			     let not_fact,nf_br, memset = (Solver.xpure cp d) in
+			     let not_fact,nf_br, _, memset = ((*Solver.xpure*)Solver.xpure_symbolic_no_exists cp d) in
 			     let fact =  Solver.normalize_to_CNF (MCP.pure_of_mix not_fact) no_pos in
 			     let fact = Cpure.drop_disjunct fact in
 			     let fact = Cpure.rename_top_level_bound_vars fact in

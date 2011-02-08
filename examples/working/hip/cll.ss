@@ -41,14 +41,17 @@ void insert(node x, int v)
 	
 	requires x::hd<n> & n > 0 
 	ensures x::hd<n+1>;
-    requires x::node<w,q> 
-    ensures x::node<w,r> * r::node<v,q>;
+    //requires x::node<w,q> 
+    //ensures x::node<w,r> * r::node<v,q>;
 {
 	node tmp;
 
 	tmp = new node(v, x.next);
 
 	x.next = tmp;
+	dprint;
+	//assert x'::hd<m>;
+	//assume false;
 }
 
 

@@ -511,7 +511,7 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
 			  (Util.push_time "merge_mems_r_dups";
 			   let r = Util.remove_dups_f n3 eq_pure_formula in
 			     Util.pop_time "merge_mems_r_dups";
-			     r)in
+			     r) in
 			  {memo_group_fv = remove_dups_svl n1; 
 			   memo_group_cons = filter_merged_cons n4 n2;
 			   memo_group_changed = true;
@@ -1146,7 +1146,7 @@ let mimply_one_conj ante_memo0 conseq  t_imply imp_no =
   else (Util.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
 let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
-  Util.ho_debug_4 "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
+  Util.ho_debug_4_opt "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
   (fun (x,_,_) -> not x)
@@ -1345,7 +1345,7 @@ let memoise_add_pure_P (f:mix_formula) (pf:formula) = match f with
   
 let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
   | MemoF f -> MemoF (simpl_memo_pure_formula b_f_f p_f_f f tp_simp)
-  | OnePF f -> OnePF (p_f_f f)
+  | OnePF f -> OnePF ((*p_f_f*) tp_simp f)
  
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
