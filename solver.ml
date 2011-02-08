@@ -202,7 +202,7 @@ let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a ->
   end
   
 let prune_branches_subsume_debug prog univ_vars lhs_node rhs_node = 
-  Util.ho_debug_4 "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Util.ho_debug_4_opt "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
   (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None))) (fun _ -> true)
   prune_branches_subsume prog univ_vars lhs_node rhs_node
   
@@ -1972,13 +1972,13 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	  let nf2,nf2n = find_unsat prog f2 in
 	    (nf1@nf2,nf1n@nf2n)
 	      
-and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
+and is_unsat_with_branches_debug xpure_f qvars hf mix br pos sat_subno=
   Util.ho_debug_2 "is_unsat_with_branches" 
     (fun h -> (Cprinter.string_of_h_formula h)^"\n"^Cprinter.string_of_mix_formula(fst( xpure_f hf)))
     Cprinter.string_of_mix_formula string_of_bool
-    (fun hf mix -> is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno) hf mix
+    (fun hf mix -> is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno) hf mix
 	      
-and is_unsat_with_branches_x xpure_f qvars hf mix br pos sat_subno=
+and is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno=
   (* let wrap_exists f =  List.fold_left (fun a qv -> CP.Exists (qv, a, None, pos)) f qvars in*)
   let (ph, phb) = xpure_f hf in
   let phb = CP.merge_branches phb br in    
@@ -2370,7 +2370,7 @@ and sem_imply_add prog is_folding is_universal ctx (p:CP.formula) only_syn:(cont
       if (CP.isConstTrue p) then (ctx,true)
       else
 	if (sintactic_search c.es_formula p) then (ctx,true)
-	else if only_syn then (ctx,false)
+	else if only_syn then (print_string "only syn\n"; (ctx,false))
 	else
 	  let b = (xpure_imply prog is_folding is_universal c p !Globals.imply_timeout) in
 	    if b then 
@@ -3949,32 +3949,41 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	 - if the equality is solved -> remove it from conseq + add the guard of the memory set disjoint pair used in the solving
       *)
 
-and solve_ineq_debug m c = Util.ho_debug_2 "solve_ineq "
+and solve_ineq_debug a m c = Util.ho_debug_2 "solve_ineq "
   (Cprinter.string_of_mem_formula)
   (Cprinter.string_of_mix_formula) 
-  (Cprinter.string_of_mix_formula) solve_ineq m c
+  (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq a m c) m c
 
-and solve_ineq (memset : Cformula.mem_formula) (conseq : MCP.mix_formula) : MCP.mix_formula =
-  match conseq with
-    | MCP.MemoF _ -> conseq
-    | MCP.OnePF f -> MCP.OnePF (solve_ineq_pure_formula memset f) 
+and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
+    (conseq : MCP.mix_formula) : MCP.mix_formula =
+  match ante_m0,conseq with
+    | (MCP.MemoF _,MCP.MemoF _) -> conseq
+    | (MCP.OnePF at,MCP.OnePF f) -> MCP.OnePF (solve_ineq_pure_formula at memset f) 
+    |  _ ->  Error.report_error 
+      {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
-and solve_ineq_pure_formula (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+
+and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   (* let _ = print_string("solve_ineq: conseq = " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in *)
   (* let _ = print_string("solve_ineq: memset = " ^ (Cprinter.string_of_mem_formula memset) ^ "\n") in *)
+
+  let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.pure_ptr_equations ante) in
+  let rec helper (conseq : Cpure.formula) =
   match conseq with
-    | Cpure.BForm (f, l) -> solve_ineq_b_formula memset f
-    | Cpure.And (f1, f2, pos) -> Cpure.And((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), pos)  
-    | Cpure.Or (f1, f2, l, pos) -> Cpure.Or((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), l, pos)
+    | Cpure.BForm (f, l) -> solve_ineq_b_formula (fun x y -> Util.is_equiv_eq eqset x y) memset f
+    | Cpure.And (f1, f2, pos) -> Cpure.And((helper f1), (helper f2), pos)  
+    | Cpure.Or (f1, f2, l, pos) -> Cpure.Or((helper f1), (helper f2), l, pos)
 	(*check_disj memset l f1 f2 pos*)
-    | Cpure.Not (f, l, pos) -> Cpure.Not((solve_ineq_pure_formula memset f), l, pos)
+    (* | Cpure.Not (f, l, pos) -> Cpure.Not((helper f), l, pos) *)
 	(* todo: think about it *)
     | _ -> conseq
 	(*| Forall of (spec_var * formula * (formula_label option) * loc)
-	  | Exists of (spec_var * formula * (formula_label option) * loc)*)
+	  | Exists of (spec_var * formula * (formula_label option) * loc)*) in
+  helper conseq
 
 (* check whether the disjunction is of the form (x<y | y<x) which can be discharged by using the memory set *)
-and check_disj memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpure.formula = 
+and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpure.formula = 
+  let s_ineq = solve_ineq_pure_formula ante memset in
   match f1, f2 with 
     | CP.BForm(bf1, label1), CP.BForm(bf2, label2) -> 
 	(match bf1, bf2 with
@@ -3983,16 +3992,16 @@ and check_disj memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpure.fo
 		  | CP.Var(sv1, _), CP.Var(sv2, _), CP.Var(sv3, _), CP.Var(sv4, _) ->
 		      if (CP.eq_spec_var sv1 sv4) && (CP.eq_spec_var sv2 sv3)
 		      then 
-			solve_ineq_pure_formula memset (CP.BForm (CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), label1))
+			s_ineq  (CP.BForm (CP.Neq(CP.Var(sv1, pos), CP.Var(sv2, pos), pos), label1))
 		      else
-			Cpure.Or((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), l, pos)
-		  | _, _, _, _ -> Cpure.Or((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), l, pos)
+			Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
+		  | _, _, _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 	       )
-	   | _, _ -> Cpure.Or((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), l, pos)
+	   | _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 	)
-    | _, _ -> Cpure.Or((solve_ineq_pure_formula memset f1), (solve_ineq_pure_formula memset f2), l, pos)
+    | _, _ -> Cpure.Or((s_ineq f1), (s_ineq f2), l, pos)
 	
-and solve_ineq_b_formula memset conseq : Cpure.formula =
+and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
   let get_guard eq (memset :  (CP.spec_var * CP.formula) Util.d_set) v1 v2 : Cpure.formula =
     let l1 = Util.find_diff eq memset v1 in
     let res = Util.find_diff eq l1 v2 in
@@ -4005,7 +4014,7 @@ and solve_ineq_b_formula memset conseq : Cpure.formula =
     match conseq with
       | Cpure.Neq (e1, e2, pos) -> 
 	  if (CP.is_var e1) && (CP.is_var e2) then
-	    let eq = (fun x y -> CP.eq_spec_var (fst x) (fst y)) in
+	    let eq = (fun x y -> sem_eq (fst x) (fst y)) in
 	    let v1 = CP.to_var e1 in
 	    let v2 = CP.to_var e2 in
 	      (*	      let _ = print_string("Trying to prove " ^ (Cprinter.string_of_spec_var v1) ^ "!=" ^ (Cprinter.string_of_spec_var v2) ^ 
@@ -4029,7 +4038,7 @@ and solve_ineq_b_formula memset conseq : Cpure.formula =
 and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   (* let _ = print_string ("\nSolver.ml: imply_mix_formula " ^ (string_of_int !imp_no)) in *)
- let conseq_m = solve_ineq memset conseq_m in
+ let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
@@ -4045,10 +4054,18 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-     
+  
+and imply_mix_formula_debug ante_m0 ante_m1 conseq_m imp_no memset =
+  Util.ho_debug_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+    Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
+    Cprinter.string_of_mem_formula
+    (fun (r,_,_) -> string_of_bool r)
+    (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset)
+    ante_m0 ante_m1 conseq_m memset
+   
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset 
     :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
-  let conseq_m = solve_ineq memset conseq_m in
+  let conseq_m = solve_ineq ante_m0 memset conseq_m in
     match ante_m0,ante_m1,conseq_m with
       | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
       | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
@@ -4060,8 +4077,14 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
 	    imp_no
       | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
+and imply_mix_formula_no_memo_debug new_ante new_conseq imp_no imp_subno timeout memset =   
+  Util.ho_debug_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
+    (fun (r,_,_) -> string_of_bool r) 
+    (fun new_ante new_conseq memset -> imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset) 
+    new_ante new_conseq memset 
+
 and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
-  let new_conseq = solve_ineq memset new_conseq in
+  let new_conseq = solve_ineq new_ante memset new_conseq in
     
   let (r1,r2,r3) =  
     match timeout with
@@ -4072,7 +4095,7 @@ and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memse
     (r1,r2,r3)
 
 and imply_formula_no_memo new_ante new_conseq imp_no memset =   
-  let new_conseq = solve_ineq_pure_formula memset new_conseq in
+  let new_conseq = solve_ineq_pure_formula new_ante memset new_conseq in
   let res,_,_ = TP.imply new_ante new_conseq ((string_of_int imp_no)) false None in
     Debug.devel_pprint ("IMP #" ^ (string_of_int imp_no)) no_pos;
     res
@@ -4173,7 +4196,6 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
       Cprinter.string_of_spec_var 
       Cprinter.string_of_spec_var 
       (fun _ -> "")
-     (fun _ -> true)
      (fun ante conseq p1 p2->  
        do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f ) 
       ante conseq p1 p2

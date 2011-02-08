@@ -371,7 +371,7 @@ let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
   
-let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
+let ho_debug_4_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
     (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
   let r = try
     f e1 e2 e3 e4
@@ -391,7 +391,12 @@ let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     r
   else
     r
-let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+
+let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
+    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  ho_debug_4_opt s pr1 pr2 pr3 pr4 pr_o (fun _ -> true) f e1 e2 e3 e4
+
+let ho_debug_5_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
                (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
     (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
   let r = try
@@ -415,7 +420,12 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   else 
     r
 
-let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
+  ho_debug_5_opt s pr1 pr2 pr3 pr4 pr5 pr_o (fun _ -> true) f e1 e2 e3 e4 e5
+
+let ho_debug_6_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
                (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
     (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
   let r = try
@@ -440,6 +450,11 @@ let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     r  
   else 
     r
+
+let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
+  ho_debug_6_opt s pr1 pr2 pr3 pr4 pr5 pr6 pr_o (fun _ -> true) f e1 e2 e3 e4 e5 e6
 
 let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
@@ -1141,6 +1156,9 @@ let add_equiv_raw (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
 (* add x=y to e-set s *)
 let add_equiv_eq_raw  ((s,eq): 'a eq_set) (x:'a) (y:'a) : 'a eq_set = 
   let ns=add_equiv_eq2_raw eq s x y in (ns,eq)
+
+let build_aset_eq (eq:'a->'a->bool) (xs:('a *'a) list) :  'a eq_set =
+  List.fold_right (fun (x,y) eqs -> add_equiv_eq_raw eqs x y) xs (empty_a_set_eq eq)
 
 let find_name_str (f:'a->string) (nmap:'a e_name) (e:'a) : (string * 'a e_name) =
   try 
