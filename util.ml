@@ -1634,3 +1634,19 @@ type 'a one_dset =
 
 type 'a disj_set = (('a one_dset) list * ('a ->'a->int))
 
+(*
+let empty_dj_set (cp:'a->'a->int) : 'a disj_set = ([],cp)
+
+add_one_bag  ((d,cp):'a disj_set) (b:'a list) = (b::d,cp 
+add_one_ineq ((d,cp):'a disj_set) (x:'a) (y:'a)  = ([x,y]::d,cp
+is_ineq  (eq:'a->'a->bool) ((d,cp):'a disj_set) (x:'a) (y:'a)  : bool = false
+norm_dj_set ((d,cp):'a disj_set) : ((d,cp):'a disj_set) = ..
+ (* remove singleton; sort by size; combine where possible *)
+star_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+conj_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+or_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+
+*)
+
+
+
