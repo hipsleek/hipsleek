@@ -4,7 +4,7 @@ data node {
 }
 
 bigint<v> == self = null & v = 0 or
-             self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p
+     self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p 
              inv v >= 0;
 
 node clone(node x)
@@ -150,6 +150,7 @@ node mult(node x, node y)
   }
 }
 
+/*
 node karatsuba_mult(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
   ensures res::bigint<v1*v2> * x::bigint<v1> * y::bigint<v2>;
@@ -170,10 +171,11 @@ node karatsuba_mult(node x, node y)
   // x * y = A*100 + K*10 + B
   return add(shift_left(shift_left(A)), add(shift_left(K), B));
 }
+*/
 
 bool is_zero(node x)
   requires x::bigint<v>
-  ensures res & v = 0 or !res & v != 0;
+  ensures x::bigint<v> & (res & v = 0 | !res & v != 0);
 {
   if (x == null) return true;
   if (x.val == 0 && is_zero(x.next)) return true;
@@ -182,7 +184,7 @@ bool is_zero(node x)
 
 bool is_equal(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
-  ensures res & v1 = v2 or !res & v1 != v2;
+  ensures x::bigint<v1> * y::bigint<v2> & (res & v1 = v2 | !res & v1 != v2);
 {
   if (x == null) {
     if (is_zero(y)) return true;
@@ -201,7 +203,8 @@ bool is_equal(node x, node y)
 
 int compare(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
-  ensures res = 0 & v1 = v2 or res = 1 & v1 > v2 or res = -1 & v1 < v2;
+  ensures x::bigint<v1> * y::bigint<v2> & 
+  (res = 0 & v1 = v2 | res = 1 & v1 > v2 | res = -1 & v1 < v2);
 {
   if (x == null) {
     if (is_zero(y)) return 0;

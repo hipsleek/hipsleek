@@ -238,7 +238,7 @@ let rec check_prover_existence prover_cmd_str =
           exit 0
 
 let set_tp tp_str =
-  prover_arg := tp_str;
+  prover_arg := tp_str;  
   let prover_str = ref [] in
   if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
@@ -438,7 +438,7 @@ let simplify_var_name (e: CP.formula) : CP.formula =
         CP.BForm (CP.map_b_formula_arg bf vnames (f_bf, f_e) (idf2, idf2), lbl)
   in
   simplify e (Hashtbl.create 100)
-  
+
 let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
   match !tp with
   | OmegaCalc ->
@@ -557,7 +557,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
 let simplify_omega (f:CP.formula): CP.formula = 
    if is_bag_constraint f then f
     else Omega.simplify f   
-
+            
 let simplify_omega_debug f =
   Util.ho_debug_1 "simplify_omega" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify_omega f
 
@@ -602,12 +602,14 @@ let simplify (f : CP.formula) : CP.formula =
     with | _ -> f)
 
 let simplify_debug f =
-  Util.ho_debug_1 "simplify " Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify_omega f
-
-let simplify (f:CP.formula): CP.formula = if (CP.contains_exists f) then simplify f else f
-   
-let simplify_debug f =
   Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+
+let simplify (f:CP.formula): CP.formula = 
+  CP.elim_exists_with_simpl simplify f 
+  (* if (CP.contains_exists f) then  *)
+  (*   let f=CP.elim_exists f in  *)
+  (*    simplify f else f *)
+   
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -703,62 +705,60 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
   match !tp with
-    | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
-    | CvcLite -> Cvclite.imply ante conseq
+  | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
+  | CvcLite -> Cvclite.imply ante conseq
     | Cvc3 -> 
           if !Globals.enable_incremental_proving then
             Cvc3.imply_increm process ante conseq imp_no
           else
             Cvc3.imply ante conseq imp_no
-    | Z3 -> Smtsolver.imply ante conseq
-    | Isabelle -> Isabelle.imply ante conseq imp_no
+  | Z3 -> Smtsolver.imply ante conseq
+  | Isabelle -> Isabelle.imply ante conseq imp_no
     | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
 		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-     | Mona -> Mona.imply timeout ante conseq imp_no 
-    | CO -> 
-          begin
+  | Mona -> Mona.imply timeout ante conseq imp_no 
+  | CO -> 
+      begin
             let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
-            match result1 with
-              | Some f -> f
-              | None -> (* CVC Lite is not sure is this case, try Omega *)
-                    omega_count := !omega_count + 1;
-                    Omega.imply ante conseq imp_no timeout
-          end
-    | CM -> 
-          begin
-            if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-              Mona.imply timeout ante conseq imp_no
-            else
+        match result1 with
+        | Some f -> f
+        | None -> (* CVC Lite is not sure is this case, try Omega *)
+            omega_count := !omega_count + 1;
+            Omega.imply ante conseq imp_no timeout
+      end
+  | CM -> 
+      begin
+        if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+          Mona.imply timeout ante conseq imp_no
+        else
               let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
-              match result1 with
-                | Some f -> f
-                | None -> (* CVC Lite is not sure is this case, try Omega *)
-                      omega_count := !omega_count + 1;
-                      Omega.imply ante conseq imp_no timeout
-          end
-    | OM ->
-	      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		    (called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
-	      else
-		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-    | OI ->
-          if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-            (Isabelle.imply ante conseq imp_no)
-          else
-            (Omega.imply ante conseq imp_no timeout)
-    | SetMONA -> Setmona.imply ante conseq 
-    | Redlog -> Redlog.imply ante conseq imp_no 
-    | RM -> 
-          if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-            Mona.imply timeout ante conseq imp_no
-          else
-            Redlog.imply ante conseq imp_no
+          match result1 with
+          | Some f -> f
+          | None -> (* CVC Lite is not sure is this case, try Omega *)
+              omega_count := !omega_count + 1;
+              Omega.imply ante conseq imp_no timeout
+      end
+  | OM ->
+	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+		(called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
+	  else
+		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
+  | OI ->
+      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+        (Isabelle.imply ante conseq imp_no)
+      else
+        (Omega.imply ante conseq imp_no timeout)
+  | SetMONA -> Setmona.imply ante conseq 
+  | Redlog -> Redlog.imply ante conseq imp_no 
+  | RM -> 
+      if (is_bag_constraint ante) || (is_bag_constraint conseq) then
+        Mona.imply timeout ante conseq imp_no
+      else
+        Redlog.imply ante conseq imp_no
 ;;
- 
-
 let imply_cache  = Hashtbl.create 2000 ;;
 let impl_conseq_cache  = Hashtbl.create 2000 ;;
 
@@ -813,6 +813,7 @@ let tp_imply ante conseq imp_no timeout do_cache process =
   else  
     tp_imply ante conseq imp_no timeout process
 ;;
+
 
 let tp_imply_debug ante conseq imp_no timeout do_cache process =
   Util.ho_debug_6 "tp_imply " 
@@ -1006,7 +1007,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 ;;
 (*
 let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
-	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
+	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
@@ -1014,44 +1015,44 @@ let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no :
   Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
-        Some res -> (res,[],None)       
+      Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)) in*)
 	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
 	if CP.isConstTrue conseq0 then (true, [],None)
 	else
-      let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
-	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
-	  else
-		let ante = elim_exists ante in
-		let conseq = elim_exists conseq in
-		let split_conseq = split_conjunctions conseq in
-		let pairs = List.map (fun cons -> 
-            let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
-            let ante = CP.remove_dup_constraints ante in
-            filter ante cons) split_conseq in
-		let pairs_length = List.length pairs in
-		let imp_sub_no = ref 0 in
-		let fold_fun (res1,res2,res3) (ante, conseq) =
-		  (incr imp_sub_no;
-		  if res1 then 
-			let imp_no = 
-			  if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
-			  else imp_no in
-			let res1 =
-			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
-				if res1 then res1
-				else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
-			  else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
-			let l1 = CP.get_pure_label ante in
-			let l2 = CP.get_pure_label conseq in
-			if res1 then (res1,(l1,l2)::res2,None)
-			else (res1,res2,l2)
-		  else (res1,res2,res3) )
-		in
-		List.fold_left fold_fun (true,[],None) pairs
+let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
+		if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
+		else
+			let ante = elim_exists ante in
+			let conseq = elim_exists conseq in
+			let split_conseq = split_conjunctions conseq in
+			let pairs = List.map (fun cons -> 
+        let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
+        let ante = CP.remove_dup_constraints ante in
+        filter ante cons) split_conseq in
+			let pairs_length = List.length pairs in
+			let imp_sub_no = ref 0 in
+			let fold_fun (res1,res2,res3) (ante, conseq) =
+				(incr imp_sub_no;
+				if res1 then 
+					let imp_no = 
+						if pairs_length > 1 then (imp_no ^ "." ^ string_of_int (!imp_sub_no))
+						else imp_no in
+					let res1 =
+						if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+							let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache in
+							if res1 then res1
+							else tp_imply(*_debug*) ante conseq imp_no timeout do_cache
+						else tp_imply(*_debug*) ante conseq imp_no timeout do_cache in
+					let l1 = CP.get_pure_label ante in
+					let l2 = CP.get_pure_label conseq in
+					if res1 then (res1,(l1,l2)::res2,None)
+					else (res1,res2,l2)
+				else (res1,res2,res3) )
+			in
+			List.fold_left fold_fun (true,[],None) pairs
   end
 ;;*)
 
@@ -1062,7 +1063,6 @@ let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let _ = Util.pop_time s in
   if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
-
 let disj_cnt a c s =
   if (!Globals.enable_counters)then
 	  (let rec p_f_size f = match f with | CP.BForm _ -> 1
@@ -1118,9 +1118,9 @@ let memo_imply_timeout ante0 conseq0 imp_no timeout =
 let mix_imply_timeout ante0 conseq0 imp_no timeout = 
   (* let _ = print_string ("\nTPdispatcher.ml: mix_imply_timeout") in *)
   match ante0,conseq0 with
-    | MCP.MemoF a, MCP.MemoF c -> memo_imply_timeout a c imp_no timeout
+  | MCP.MemoF a, MCP.MemoF c -> memo_imply_timeout a c imp_no timeout
     | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
-    | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
+  | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
 let imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no 0. do_cache process
 ;;
@@ -1128,7 +1128,7 @@ let imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 im
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
-let	mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
+let mix_imply ante0 conseq0 imp_no = mix_imply_timeout ante0 conseq0 imp_no 0.
 ;;
 
 
@@ -1142,7 +1142,6 @@ let is_sat f sat_no do_cache =
     Util.prof_1 "is_sat" (is_sat f sat_no) do_cache
   end
 ;;
-
 let sat_no = ref 1
 ;;
 let incr_sat_no () = 
@@ -1157,9 +1156,6 @@ let is_sat_sub_no_c (f : CP.formula) sat_subno do_cache : bool =
 ;;
 
 let is_sat_sub_no (f : CP.formula) sat_subno : bool =  is_sat_sub_no_c f sat_subno false;;
-
-
-
 let is_sat_sub_no_with_slicing (f:CP.formula) sat_subno : bool =  
   let rec group_conj l = match l with
     | [] -> (false,[]) 
@@ -1206,7 +1202,9 @@ let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool =
   sat
   
 let imply_sub_no ante0 conseq0 imp_no do_cache=
-   imply ante0 conseq0 imp_no do_cache
+  Debug.devel_pprint ("IMP #" ^ imp_no ^ "\n") no_pos;
+  (* imp_no := !imp_no+1;*)
+  imply ante0 conseq0 imp_no do_cache
 
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
   let _ = Util.push_time prof_lbl in  
@@ -1253,8 +1251,6 @@ let stop_prover () =
 	      end
     | _ -> Omega.stop_omega ();;
 
-
-
 (* class used for keeping prover's functions needed for the incremental proving*)
 class incremMethods : [CP.formula] Globals.incremMethodsType = object
 
@@ -1298,7 +1294,7 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
         !push_no 
       end
       else n in
-    match !tp with 
+    match !tp with
       | Cvc3 -> Cvc3.cvc3_popto process n
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 

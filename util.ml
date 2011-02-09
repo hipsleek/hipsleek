@@ -6,7 +6,6 @@
 
 exception Bad_string
 exception Bail
-
 let rec restart f arg =
   try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
@@ -143,7 +142,6 @@ let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c
                     else helper xs ys1
   in helper xs ys
 
-
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
  * but put helper files in another (/usr/share/module-language),
@@ -183,9 +181,7 @@ let rec remove_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
-
 let mem f x l = List.exists (f x) l
-
 let rec remove_dups_eq eq n = 
   match n with
     [] -> []
@@ -208,12 +204,11 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 *)
   
-
 let rec check_dups_eq f n = 
   match n with
     [] -> false
   | q::qs -> if (List.exists (fun c-> f q c) qs) then true  else check_dups_eq f qs 
-
+  
   
 let rec remove_dups_f n f= 
   match n with
@@ -329,7 +324,6 @@ let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bo
 let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
   ho_debug_1_opt s pr_i pr_o (fun _ -> true) f e
 
-    
 let string_of_option (f:'a->string) (e:'a option) : string = 
   match e with
     | Some x -> f x
@@ -377,7 +371,7 @@ let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   r
   
-let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
+let ho_debug_4_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
     (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
   let r = try
     f e1 e2 e3 e4
@@ -397,7 +391,12 @@ let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     r
   else
     r
-let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+
+let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
+    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  ho_debug_4_opt s pr1 pr2 pr3 pr4 pr_o (fun _ -> true) f e1 e2 e3 e4
+
+let ho_debug_5_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
                (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
     (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
   let r = try
@@ -421,7 +420,12 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   else 
     r
 
-let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
+  ho_debug_5_opt s pr1 pr2 pr3 pr4 pr5 pr_o (fun _ -> true) f e1 e2 e3 e4 e5
+
+let ho_debug_6_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
                (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
     (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
   let r = try
@@ -446,6 +450,11 @@ let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     r  
   else 
     r
+
+let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
+  ho_debug_6_opt s pr1 pr2 pr3 pr4 pr5 pr6 pr_o (fun _ -> true) f e1 e2 e3 e4 e5 e6
 
 let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
@@ -779,7 +788,7 @@ let add_task_instance msg time =
 let push_time_no_cnt msg = 
 if (!Globals.profiling) then
  let timer = get_time () in
-	profiling_stack := (msg, timer,true) :: !profiling_stack
+	profiling_stack := (msg, timer,true) :: !profiling_stack 
 else ()
 
 let push_time msg = 
@@ -808,8 +817,7 @@ let pop_time msg =
 		else 
 			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
 	else ()
-  
-let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
+  let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
   try
     push_time s;
       let r=f e in
@@ -858,7 +866,7 @@ let prof_3_nth n s =  let str=(s^"#"^n) in prof_3 str
 let prof_4_nth n s =  let str=(s^"#"^n) in prof_4 str
 let prof_5_nth n s =  let str=(s^"#"^n) in prof_5 str
 let prof_6_nth n s =  let str=(s^"#"^n) in prof_6 str
-
+  
 let pop_spec_counter = ref 1
 let gen_time_msg _  = 
   pop_spec_counter := !pop_spec_counter+1;
@@ -896,10 +904,27 @@ let add_index l =
 		| a::b-> (i,a)::(ff (i+1) b) in
 	(ff 0 l)
 
-	
+(*
+let counters = ref (Hashtbl.create 10)
 
-(*hairy stuff for excep tion numbering*)
-			
+let add_to_counter (s:string) i = 
+  if !Globals.enable_counters then
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+  else ()
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = 
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+*)
+	
+(*hairy stuff for exception numbering*)
+
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
   			 
  let get_hash_of_exc (f:string): Globals.nflow = 
@@ -967,9 +992,6 @@ let has_cycles ():bool =
 		if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
 			else (List.exists (fun c-> (cc c (c::visited))) sons) in	
 	(cc Globals.top_flow [Globals.top_flow])
-  
-  
-  
 let print_profiling_info () = if (!Globals.profiling) then  print_tasks () else ()
   
   
@@ -1133,6 +1155,9 @@ let add_equiv_raw (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
 (* add x=y to e-set s *)
 let add_equiv_eq_raw  ((s,eq): 'a eq_set) (x:'a) (y:'a) : 'a eq_set = 
   let ns=add_equiv_eq2_raw eq s x y in (ns,eq)
+
+let build_aset_eq (eq:'a->'a->bool) (xs:('a *'a) list) :  'a eq_set =
+  List.fold_right (fun (x,y) eqs -> add_equiv_eq_raw eqs x y) xs (empty_a_set_eq eq)
 
 let find_name_str (f:'a->string) (nmap:'a e_name) (e:'a) : (string * 'a e_name) =
   try 
@@ -1368,8 +1393,6 @@ let is_one2one_eq (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : b
     if (check_no_dupl_eq eq l) then true
     else (print_string ("duplicates here :"^(string_of_a_list pr l)^"\n") ; false) 
 
-
-
 (* check f is 1-to-1 map assuming s contains no duplicates *)
 let is_one2one (f:'a -> 'a) (s:'a list) : bool = is_one2one_eq (fun x -> "?") (=) f s
 
@@ -1423,7 +1446,7 @@ let rename_eset_eq_with_pr_allow_clash (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a
   let r=rename_eset_eq2_allow_clash pr (eq) f s in
   (r,eq)
 
-let rename_eset_eq_debug (pr:'a->string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   ho_debug_1 "rename_eset_eq" 
     (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c)
     (fun c-> rename_eset_eq f c) (s,eq)
@@ -1457,6 +1480,44 @@ let rename_eset_str (re:'a -> 'a) ((s,f,nm):'a e_set_str) : 'a e_set_str =
 
 
 
+(* bag of addresses*)
+type 'a baga =  ('a list) 
+
+let empty_baga () : 'a baga = []
+
+(* a singleton bag *)
+let singleton_baga (e:'a) : 'a baga = [e]
+
+
+let rec is_dupl_baga (eq:'a->'a->bool) (xs:'a baga) : bool = 
+  match xs with
+    | [] -> false
+    | x::xs1 -> match xs1 with
+        | [] -> false
+        | _ -> if (List.exists (eq x) xs1) then true else is_dupl_baga eq xs1
+
+(* false result denotes contradiction *)
+let is_sat_baga (eq:'a->'a->bool) (xs:'a baga) : bool = not(is_dupl_baga eq xs)
+
+(*
+[d1,d2] & [d3,d4] = [d1,d2,d3,d4]
+[d1,d2] | [d3,d4] = [d1|d3,d1|d4,d2|d3,d2|d4]
+d1|d3 = d1 \cap d3
+  
+*)
+
+(* star conjunction of two bag of addresses *)
+let star_baga (x:'a baga) (y:'a baga) : 'a baga = x@y
+
+(* conjunction of two bag of addresses *)
+let conj_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
+
+(* disjunction of two bag of addresses *)
+let or_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
+
+
+
+(**  disjointness: **)
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
 
@@ -1503,6 +1564,16 @@ let is_disj_str (eq_str:string->string->bool)  ((s,f): 'a d_set_str)  (x:'a) (y:
 let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
  s1@s2
 
+(*  returns d1*d2 *)
+let star_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2
+
+(*  returns d1/\d2 *)
+let conj_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2
+
+(*  returns d1\/d2 *)
+let or_disj_set (eq:'a->'a->bool) (d1: 'a d_set) (d2: 'a d_set): 'a d_set = 
+  List.concat (List.map (fun x1 -> List.map (fun x2-> intersect_fct eq x1 x2) d2) d1) 
+
 (*  returns s1/\s2 *)
 let merge_disj_set_str ((s1,f1): 'a d_set_str) ((s2,_): 'a d_set_str): 'a d_set_str =
   (merge_disj_set s1 s2, f1)
@@ -1541,9 +1612,40 @@ let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
 (* check if there was a conflict in a set of difference lists *)
 let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bool =
  is_conflict eq_str s
+ 
+ 
+let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"
+(** **)
 
 let rec list_find (f:'a -> 'b option) l = match l with 
     | [] -> None
     | x::xs -> match f x with
       | None -> list_find f xs
       | Some s -> Some s
+
+
+
+(**  disjointness: **)
+(* new disjointness structure*)
+type 'a one_dset =    
+  | Disj of ('a list)
+  | DisjMinus of ('a list * 'a * 'a)
+
+type 'a disj_set = (('a one_dset) list * ('a ->'a->int))
+
+(*
+let empty_dj_set (cp:'a->'a->int) : 'a disj_set = ([],cp)
+
+add_one_bag  ((d,cp):'a disj_set) (b:'a list) = (b::d,cp 
+add_one_ineq ((d,cp):'a disj_set) (x:'a) (y:'a)  = ([x,y]::d,cp
+is_ineq  (eq:'a->'a->bool) ((d,cp):'a disj_set) (x:'a) (y:'a)  : bool = false
+norm_dj_set ((d,cp):'a disj_set) : ((d,cp):'a disj_set) = ..
+ (* remove singleton; sort by size; combine where possible *)
+star_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+conj_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+or_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+
+*)
+
+
+
