@@ -29,7 +29,7 @@ print residue.
 // fail but should succeed
 
 checkentail x::ll<n> * y::node<_,_> & n=1 |- x!=y.
-// succee with imm but failed for --eps
+// succeeded with imm but failed for --eps
 
 checkentail x::ll<n> * y::node<_,_> & n=0 |- x!=y.
 // succeed for --eps but failed for others
