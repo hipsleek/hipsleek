@@ -426,10 +426,10 @@ let string_of_splint l =
   if (l==[]) then ""
   else ("+"^(String.concat "" (List.map (fun c-> match c with | PLeft-> "L" | _ -> "R") l)))
 
-let string_of_perm (x1,x2) = match x1 with
+let string_of_perm allow_full (x1,x2) = match x1 with
   |Some v -> "@"^(string_of_spec_var v)^(string_of_splint x2)
   |None ->
-      if (x2==[]) then ""
+      if (x2==[]) then if allow_full then "@1" else ""
       else ("@"^(string_of_splint x2))
 
  
@@ -462,9 +462,9 @@ let pr_perm_formula (e:Pr.perm_formula) =
         let args = arg1@arg2 in
           pr_list_op op_or f_b args
      | Pr.Join (f1,f2,f3,_) ->
-        (fmt_string (string_of_perm f1)); fmt_string("@"); (fmt_string (string_of_perm f2)); fmt_string("=");
-        (fmt_string (string_of_perm f3))
-     | Pr.Eq (f1,f2,_) ->  fmt_string (string_of_perm f1); fmt_string op_eq ; fmt_string (string_of_perm f2)
+        (fmt_string (string_of_perm true f1)); fmt_string("@"); (fmt_string (string_of_perm true f2)); fmt_string("=");
+        (fmt_string (string_of_perm true f3))
+     | Pr.Eq (f1,f2,_) ->  fmt_string (string_of_perm true f1); fmt_string op_eq ; fmt_string (string_of_perm true f2)
      | Pr.Exists (vl, f, _) ->
         fmt_string "existsP("; pr_list_of_spec_var vl; fmt_string ":";
         pr_perm_formula_helper f; fmt_string ")"     
@@ -472,7 +472,7 @@ let pr_perm_formula (e:Pr.perm_formula) =
      | Pr.PFalse _ -> fmt_string "false" in
   match e with
     | Pr.PTrue _ -> ()
-    | _ -> fmt_string "&p(" ; pr_perm_formula_helper e ; fmt_string ")"
+    | _ -> pr_perm_formula_helper e 
 
 let string_of_perm_formula f = poly_string_of_pr  pr_perm_formula f
     
@@ -874,10 +874,11 @@ let rec pr_formula e =
 	  formula_base_type = t;
 	  formula_base_flow = fl;
     formula_base_label = lbl;
+    formula_base_perm = pr;
 	  formula_base_pos = pos}) ->
         (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
         pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
-        pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+        pr_cut_after  "&" ; pr_perm_formula pr; pr_cut_after  "&" ; fmt_string (string_of_flow_formula "FLOW" fl)
     | Exists ({formula_exists_qvars = svs;
 	  formula_exists_heap = h;
 	  formula_exists_pure = p;
@@ -885,11 +886,12 @@ let rec pr_formula e =
 	  formula_exists_type = t;
 	  formula_exists_flow = fl;
     formula_exists_label = lbl;
+    formula_exists_perm = pr;
 	  formula_exists_pos = pos}) ->
         (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
         fmt_string "EXISTS("; pr_list_of_spec_var svs; fmt_string ": ";
         pr_h_formula h; pr_cut_after "&" ;
-        pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
+        pr_mix_formula_branches(p,b); pr_cut_after  "&" ; pr_perm_formula pr; pr_cut_after  "&" ; 
         fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
 
 
@@ -1237,9 +1239,9 @@ let pr_view_decl v =
   let f bc =
     match bc with
 	  | None -> ()
-      | Some (s1,(s3,s2)) -> 
+      | Some (s1,(s3,s2,s4)) -> 
             pr_vwrap "base case: "
-	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
+	            (fun () -> pr_pure_formula s1; fmt_string "->"; pr_perm_formula s4;fmt_string "&";pr_mix_formula_branches (s3, s2)) ()
   in
   fmt_open_vbox 1;
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
@@ -1614,3 +1616,6 @@ Cvc3.print_pure := string_of_pure_formula;;
 
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
+
+Cperm.print_perm_f := string_of_perm_formula;;
+Cperm.print_frac_f := string_of_perm ;;

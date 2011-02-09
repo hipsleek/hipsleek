@@ -486,8 +486,8 @@ branch
   : DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE COLON pure_constr { ($2, $5) }
 
 view_header
-  : IDENTIFIER LT opt_ann_cid_list GT {
-	let cids, anns = List.split $3 in
+  : IDENTIFIER opt_perm_annot LT opt_ann_cid_list GT {
+	let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
@@ -504,6 +504,7 @@ view_header
 			view_typed_vars = [];
 			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
+      view_perm = $2 ;
 			try_case_inference = false;}
   }
 ;

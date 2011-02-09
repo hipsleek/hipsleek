@@ -183,6 +183,7 @@ let common_arguments = [
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
     ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
+    ("--dfp", Arg.Clear Globals.allow_frac_perm, "disable fractional permissions");
   
   (*for cav experiments*)
   ("--force_one_slice", Arg.Set Globals.f_1_slice,"");

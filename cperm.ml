@@ -13,6 +13,9 @@ type perm_formula =
   | PTrue of loc
   | PFalse of loc
 
+let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
+let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
+  
 let frac_of_var v = (Some v,[])
   
 let mkPFull () :frac_perm = (None,[])
@@ -40,11 +43,11 @@ let mkAnd f1 f2 pos = match f1 with
         
 let mkEq f1 f2 pos = Eq (f1,f2,pos)
 
-let mkFullVar () : (P.spec_var * perm_formula) = 
-  let nv = P.SpecVar (P.OType "perm", fresh_name (), Unprimed) in
-  (nv,mkEq (frac_of_var nv) (mkPFull ()) no_pos)
+let freshPermVar () = P.SpecVar (P.OType "perm", fresh_name (), Unprimed) 
 
-let mkExists vl f pos = Exists (vl,f,pos)
+let mkFullVar () : (P.spec_var * perm_formula) = 
+  let nv = freshPermVar() in
+  (nv,mkEq (frac_of_var nv) (mkPFull ()) no_pos)
 
 let mkJoin v1 v2 v3 pos = Join (v1,v2,v3,pos)
 
@@ -61,6 +64,13 @@ let rec fv f = match f with
   | Exists (l1,f1,_) -> Util.difference_f P.eq_spec_var (fv f1) l1
   | PTrue _ | PFalse _ -> [] 
     
+let mkExists vl f pos =  match f with
+  | PFalse _
+  | PTrue _ -> f
+  | _ ->
+    let nl = Util.intersect_fct P.eq_spec_var vl (fv f) in
+    if nl==[] then f else Exists (nl,f,pos)
+    
 and subst_perm (fr, t) (o1,o2) = match o1 with
   | Some s -> (Some (P.subst_var (fr,t) s) , o2)
   | _ -> (o1,o2)
@@ -75,6 +85,33 @@ let rec apply_one (fr,t) f = match f with
       else Exists (qsv, apply_one (fr,t) f1, p)
   | _ -> f
 
+and subst (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_formula = match sst with
+  | s::ss -> subst ss (apply_one s f) 				(* applies one substitution at a time *)
+  | [] -> f
+
+and subst_avoid_capture (fr : P.spec_var list) (t : P.spec_var list) (f : perm_formula) =
+  let st1 = List.combine fr t in
+  let f2 = apply_subs st1 f in 
+  f2
+  
+and apply_subs_frac sst f = match f with
+  | (Some v, x) -> (Some (P.subs_one sst v),x)
+  | _ -> f
+  
+and apply_subs (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_formula = match f with
+  | And (f1,f2,p) -> And (apply_subs sst f1,apply_subs sst f2, p)
+  | Or (f1,f2,p) -> Or (apply_subs sst f1,apply_subs sst f2, p)
+  | Join (f1,f2,f3,p) -> Join (apply_subs_frac sst f1, apply_subs_frac sst f2, apply_subs_frac sst f3, p)
+  | Eq (f1,f2,p) -> Eq (apply_subs_frac sst f1, apply_subs_frac sst f2, p)
+  | Exists (qsv,f1,p) -> 
+      let nv,nf = List.fold_left (fun (av,af) v->
+        let sst = P.diff sst v in
+        if (P.var_in_target v sst) then
+          let fresh_v = P.fresh_spec_var v in
+          (fresh_v::av, apply_subs sst (apply_one (v, fresh_v) af))
+        else (v::av, apply_subs sst af) ) ([],f1) qsv in
+      Exists (nv,nf,p)
+  | _ -> f 
   
 (*elim exists*)
 let elim_exists_perm w f pos = f
@@ -84,6 +121,7 @@ let elim_exists_perm_exists f = f
 let simpl_perm_formula f = f
 (*imply*)
 (*sat*)
+let is_sat f = true
 (*transformers*)
 
 let transform_frac f (e:frac_perm) : frac_perm = match f e with

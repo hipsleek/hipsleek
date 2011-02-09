@@ -20,6 +20,9 @@ type perm_formula =
   | PTrue of loc
   | PFalse of loc
 
+let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
+let print_frac_f = ref (fun b (c:frac_perm)-> "printing not initialized")
+  
 let frac_of_var v = (Some v,[])
   
 let mkPFull () :frac_perm = (None,[])
@@ -46,9 +49,29 @@ let mkAnd f1 f2 pos = match f1 with
         | PFalse _ -> f2 
         | _ -> And (f1,f2,pos)
         
-let mkEq f1 f2 pos = Eq (f1,f2,pos)
+let mkEq f1 f2 pos = 
+  let _ = print_string ("f1: "^(!print_frac_f true f1)^"\n") in 
+  let _ = print_string ("f2: "^(!print_frac_f true f2)^"\n") in 
+  let r = Eq (f1,f2,pos) in
+  let _ = print_string ("r: "^(!print_perm_f r)^"\n") in 
+  r
 
-let mkExists vl f pos = Exists (vl,f,pos)
+let frac_fv f= match (fst f) with | Some v -> [v] | _ -> []
+
+let rec fv f = match f with
+  | And (f1,f2,_) -> P.remove_dups_vl ((fv f1)@(fv f2))
+  | Or (f1,f2,_) -> P.remove_dups_vl ((fv f1)@(fv f2))
+  | Join (f1,f2,f3,_) -> P.remove_dups_vl ((frac_fv f1)@(frac_fv f2)@(frac_fv f3))
+  | Eq (f1,f2,_) -> P.remove_dups_vl ((frac_fv f1)@(frac_fv f2))
+  | Exists (l1,f1,_) -> P.difference_vl (fv f1) l1
+  | PTrue _ | PFalse _ -> [] 
+
+let mkExists vl f pos =  match f with
+  | PFalse _
+  | PTrue _ -> f
+  | _ ->
+    let nl = Util.intersect_fct P.eq_var vl (fv f) in
+    if nl==[] then f else Exists (nl,f,pos)
 
 let mkJoin v1 v2 v3 pos = Join (v1,v2,v3,pos)
 

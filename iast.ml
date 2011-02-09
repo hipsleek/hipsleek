@@ -10,6 +10,7 @@ module F = Iformula
 module P = Ipure
 module Err = Error
 module CP = Cpure
+module IPr = Iperm
 
 type typ =
   | Prim of prim_type
@@ -46,6 +47,7 @@ and view_decl = { view_name : ident;
 		  mutable view_typed_vars : (CP.typ * ident) list;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
+      view_perm : IPr.frac_perm;
 		  try_case_inference: bool}
 
 and enum_decl = { enum_name : ident;

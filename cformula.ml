@@ -647,6 +647,8 @@ and mkStarH (f1 : h_formula) (f2 : h_formula) (pos : loc) = match f1 with
 					h_formula_star_h2 = f2; 
 					h_formula_star_pos = pos})
   
+let perm_normal = ref (fun (c:formula) -> c)
+  
 let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, pr1, fl1, b1, t1 = split_components f1 in
   let h2, p2, pr2, fl2, b2, t2 = split_components f2 in
@@ -656,7 +658,7 @@ let rec mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let b = CP.merge_branches b1 b2 in
   let fl = mkAndFlow fl1 fl2 flow_tr in
   let pr = Pr.mkAnd pr1 pr2 pos in
-  mkBase h p t pr fl b pos
+  !perm_normal (mkBase h p t pr fl b pos)
    
 and combine_and_pure (f1:formula)(p:MCP.mix_formula)(f2:MCP.mix_formula):MCP.mix_formula*bool = 
 	if (isAnyConstFalse f1) then (MCP.mkMFalse no_pos,false)
@@ -682,7 +684,7 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 		let _, pl, _, _, br, _ = split_components f in	
 		(MCP.memo_is_member_pure p pl)||(List.exists (fun (_,c)->Cpure.is_member_pure p c) br)
 		
-and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
+and mkStar_combine (f1 : formula) (f2 : formula) flow_tr do_perm_norm (pos : loc) = 
   let h1, p1, pr1, fl1, b1, t1 = split_components f1 in
   let h2, p2, pr2, fl2, b2, t2 = split_components f2 in
   let h = mkStarH h1 h2 pos in
@@ -691,8 +693,7 @@ and mkStar_combine (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let b = CP.merge_branches b1 b2 in
   let fl =  mkAndFlow fl1 fl2 flow_tr in
   let pr = Pr.mkAnd pr1 pr2 pos in
-  mkBase h p t pr fl b pos
-
+  if do_perm_norm then !perm_normal (mkBase h p t pr fl b pos) else (mkBase h p t pr fl b pos)
 
 and mkAnd_pure_and_branch (f1 : formula) (p2 : MCP.mix_formula) b2 (pos : loc):formula = 
   if (isAnyConstFalse f1) then f1
@@ -1033,7 +1034,7 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 			let rf2 = rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar_combine base1 base2 flow_tr pos in
+			let new_base = mkStar_combine base1 base2 flow_tr true pos in
 			let new_h, new_p, new_pr, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_pr new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -1043,23 +1044,23 @@ and normalize_keep_flow (f1 : formula) (f2 : formula) flow_tr (pos : loc) = matc
 and normalize (f1 : formula) (f2 : formula) (pos : loc) = 
 	normalize_keep_flow f1 f2 Flow_combine pos
 
-and normalize_combine (f1 : formula) (f2 : formula) (pos : loc) = match f1 with
+and normalize_combine (f1 : formula) (f2 : formula) do_perm_norm (pos : loc) = match f1 with
   | Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = _}) ->
-      let eo1 = normalize_combine o11 f2 pos in
-      let eo2 = normalize_combine o12 f2 pos in
+      let eo1 = normalize_combine o11 f2 do_perm_norm pos in
+      let eo2 = normalize_combine o12 f2 do_perm_norm pos in
 		mkOr eo1 eo2 pos
   | _ -> begin
       match f2 with
 		| Or ({formula_or_f1 = o21; formula_or_f2 = o22; formula_or_pos = _}) ->
-			let eo1 = normalize_combine f1 o21 pos in
-			let eo2 = normalize_combine f1 o22 pos in
+			let eo1 = normalize_combine f1 o21 do_perm_norm pos in
+			let eo2 = normalize_combine f1 o22 do_perm_norm pos in
 			  mkOr eo1 eo2 pos
 		| _ -> begin
 			let rf1 = rename_bound_vars f1 in
 			let rf2 = rename_bound_vars f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar_combine base1 base2 Flow_combine pos in
+			let new_base = mkStar_combine base1 base2 Flow_combine do_perm_norm pos in
 			let new_h, new_p, new_pr, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_pr new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -1084,7 +1085,7 @@ and normalize_only_clash_rename (f1 : formula) (f2 : formula) (pos : loc) = matc
 			let rf2 = (*rename_bound_vars*) f2 in
 			let qvars1, base1 = split_quantifiers rf1 in
 			let qvars2, base2 = split_quantifiers rf2 in
-			let new_base = mkStar_combine base1 base2 Flow_combine pos in
+			let new_base = mkStar_combine base1 base2 Flow_combine true pos in
 			let new_h, new_p, new_pr, new_fl, b, new_t = split_components new_base in
 			let resform = mkExists (qvars1 @ qvars2) new_h new_p new_t new_pr new_fl b pos in (* qvars[1|2] are fresh vars, hence no duplications *)
 			  resform
@@ -1800,41 +1801,6 @@ match c_pid with
   | None -> (print_string "empty c_pid here"; lpc)
   | Some pid -> List.map (add_cond_label_failesc_context pid c_opt) lpc
 
-  
-(*let isFailCtx (ctx:context):bool = match ctx with
-  | FailCtx es -> true
-  | _ -> false
-  
-let rec isAnyFailCtx c = match c with
-	| OCtx (c1,c2) -> (isAnyFailCtx c1) || (isAnyFailCtx c2) 
-	| Ctx _ -> false
-  
-let isAnyFailCtx_list cl = List.exists isAnyFailCtx cl
-    
-  
-let merge_two_fail_ctx (ctx1:context list) (ctx2:context list) :context list = match ctx1, ctx2 with
-	| [FailCtx fs1], [FailCtx fs2] -> [FailCtx (fs1 @ fs2)]
-	| [] , t -> t
-	| t , [] -> t
-	| _,_ -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in mkOCtx with FailCtx \n"}
-  
-let or_fail_ctx ctx1 ctx2 : context = match (ctx1,ctx2) with
-	| FailCtx fs1, FailCtx fs2 -> FailCtx (fs1 @ fs2)
-	| _ , FailCtx fs2 ->  FailCtx fs2
-	| FailCtx fs1 , _ ->  FailCtx fs1
-	| _,_ -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = "malfunction in mkOCtx with FailCtx \n"}
-	
-(*normalize for set of contexts if all fail the result is fail otherwise filter the failed contexts*)
-let normalize_fail_ctx_list (cl:context list) : context list =  if cl==[] then []
-	else if List.for_all isFailCtx cl then 
-		[List.fold_left or_fail_ctx (List.hd cl) (List.tl cl)]
-	else List.filter (fun c-> not (isFailCtx c)) cl
-	 
-let remove_empty_fail_ctx c : context list = match c with 
-	| [] -> [FailCtx[]]
-	| _ -> c
-	*) 
-
 let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
@@ -1920,7 +1886,7 @@ and normalize_es (f : formula) (pos : loc) (result_is_sat:bool) (es : entail_sta
 
 and normalize_es_combine (f : formula) (result_is_sat:bool)(pos : loc) (es : entail_state): context =
   (* let _ = print_string ("\nCformula.ml: normalize_es_combine") in *)
-	Ctx {es with es_formula = normalize_combine es.es_formula f pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
+	Ctx {es with es_formula = normalize_combine es.es_formula f true pos; es_unsat_flag = es.es_unsat_flag&&result_is_sat;} 
 		
 and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
 	| Or ({formula_or_f1 = o11; formula_or_f2 = o12; formula_or_pos = pos}) ->
@@ -1939,23 +1905,6 @@ and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
 				else 
 					let rf1 = rename_bound_vars f1 in
 					(combine_and rf1 f2)
-		(*
-and normalize_no_rename_context_formula (ctx : context) (p : MCP.mix_formula) : context = 
-	let rec push_pure (f:formula):formula = match f with
-		| Base b-> Base {b with formula_base_pure = MCP.merge_mems p b.formula_base_pure true;}
-		| Exists b -> Exists {b with formula_exists_pure = MCP.merge_mems p b.formula_exists_pure true;}
-		| Or b -> Or {
-				   formula_or_f1 = push_pure b.formula_or_f1;
-				   formula_or_f2 = push_pure b.formula_or_f2;
-				   formula_or_pos = b.formula_or_pos
-				}in
-match ctx with
-  | Ctx es -> Ctx {es with es_formula = push_pure es.es_formula;es_unsat_flag  =false;}
-  | OCtx (c1, c2) ->
-	  let nc1 = normalize_no_rename_context_formula c1 p in
-	  let nc2 = normalize_no_rename_context_formula c2 p in
-	  let res = OCtx (nc1, nc2) in
-		res*)
 		
 (* -- 17.05.2008 *)
 and normalize_clash_es (f : formula) (pos : loc) (result_is_sat:bool)(es:entail_state): context =
@@ -2154,12 +2103,12 @@ let rec struc_to_formula_gen (f0:struc_formula):(formula*formula_label option li
 					let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
 					let npf = mkBase HTrue np TypeTrue (Pr.mkTrue b.formula_case_pos)(mkTrueFlow ()) [] b.formula_case_pos in
 					let l = struc_to_formula_gen c2 in
-					List.map (fun (c1,c2) -> (normalize_combine npf c1 no_pos,c2)) l) b.formula_case_branches) in
+					List.map (fun (c1,c2) -> (normalize_combine npf c1 true no_pos,c2)) l) b.formula_case_branches) in
 			  List.map (fun (c1,c2)-> ( (push_exists b.formula_case_exists c1),c2)) r 
 		| EBase b-> 
 				let nf,nl = b.formula_ext_base,(get_label_f b.formula_ext_base) in
 				let lc = struc_to_formula_gen b.formula_ext_continuation in
-				let f c = push_exists b.formula_ext_exists (normalize_combine nf c b.formula_ext_pos) in
+				let f c = push_exists b.formula_ext_exists (normalize_combine nf c true b.formula_ext_pos) in
 				(match lc with
 				  | [] -> [(f nf, nl)]
 				  | _ -> List.map (fun (c1,c2)-> (f c1,nl@c2)) lc)
@@ -2196,6 +2145,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
 				(mkOr a (normalize_combine 
 							(mkBase HTrue c1 TypeTrue (Pr.mkTrue b.formula_case_pos)(mkTrueFlow ()) [] b.formula_case_pos ) 
 							(struc_to_formula c2)
+              true
 							b.formula_case_pos
 						) 
 						b.formula_case_pos
@@ -2205,7 +2155,7 @@ let rec struc_to_formula (f0:struc_formula):formula =
 			else mkTrue (mkTrueFlow ()) b.formula_case_pos in
 			push_exists b.formula_case_exists r 
 		| EBase b-> 
-				let e = normalize_combine b.formula_ext_base (struc_to_formula b.formula_ext_continuation) b.formula_ext_pos in
+				let e = normalize_combine b.formula_ext_base (struc_to_formula b.formula_ext_continuation) true b.formula_ext_pos in
 				let nf = push_exists (b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) e in
 				nf
 		| EAssume (_,b,_)-> b
@@ -2328,6 +2278,7 @@ and case_to_disjunct f  =
       normalize_combine 
         b.formula_ext_base 
           (formula_of_pure_N c no_pos) 
+          true
           no_pos}
     | _ -> EBase {
        formula_ext_explicit_inst = [];
@@ -3189,13 +3140,13 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
         (List.map (fun (c1,c2) -> 
           let np = (MCP.memoise_add_pure_N (MCP.mkMTrue b.formula_case_pos) c1) in
           let g_f = mkBase HTrue np TypeTrue (Pr.mkTrue b.formula_case_pos) (mkTrueFlow ()) [] b.formula_case_pos in
-          List.map (fun (d1,d2)-> (normalize_combine g_f d1 no_pos,d2)) (get_view_branches c2)) b.formula_case_branches)
+          List.map (fun (d1,d2)-> (normalize_combine g_f d1 true no_pos,d2)) (get_view_branches c2)) b.formula_case_branches)
 		| EBase b-> 
       let l_e_v =(b.formula_ext_explicit_inst@b.formula_ext_implicit_inst@b.formula_ext_exists) in
       if b.formula_ext_continuation != [] then
         let l = get_view_branches b.formula_ext_continuation in
         List.map (fun (c1,c2)-> 
-          let r_f = normalize_combine b.formula_ext_base c1 b.formula_ext_pos in
+          let r_f = normalize_combine b.formula_ext_base c1 true b.formula_ext_pos in
           ((push_exists l_e_v r_f),c2)) l 
       else 
         let r = formula_br b.formula_ext_base in

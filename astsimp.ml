@@ -979,6 +979,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
 	  let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 	  let c = (mark_recursive_call prog cprog5) in 
 			let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
+      let _ = CF.perm_normal := Solver.normalize_perm c in
 			  c)))
 	end)
   else failwith "Error detected"
@@ -1113,6 +1114,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    else(
      let pos = IF.pos_of_struc_formula view_formula1 in
      let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
+     let view_perm_var = trans_perm_must_var true vdef.I.view_perm stab pos in
      let self_c_var = Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed) in
      let _ = 
       let ffv = Util.difference (CF.struc_fv cf) (self_c_var::view_sv_vars) in
@@ -1165,7 +1167,8 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                C.view_raw_base_case = rbc;
                C.view_prune_branches = [];
                C.view_prune_conditions = [];
-               C.view_prune_invariants = []} in
+               C.view_prune_invariants = [];
+               C.view_perm_var = view_perm_var;} in
        (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef)) (CF.pos_of_struc_formula cf);
         cvdef)
     )
@@ -1197,59 +1200,64 @@ and rec_grp prog :ident list =
    and memo_pure
 *)
 and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
-      :(Cpure.formula * (MCP.mix_formula*(string*Cpure.formula)list)) option = 
+      :(Cpure.formula * (MCP.mix_formula*(string*Cpure.formula)list * CPr.perm_formula)) option = 
   let sat_subno = ref 0 in
-  let rec get_pure (f:CF.formula):(MCP.mix_formula*((string*Cpure.formula) list)) = match f with
+  let rec get_pure (f:CF.formula):(MCP.mix_formula*((string*Cpure.formula) list)* CPr.perm_formula) = match f with
     | Cformula.Or b->
-          let b1,br1 = (get_pure b.Cformula.formula_or_f1) in
-          let b2,br2 = (get_pure b.Cformula.formula_or_f2) in
+          let b1,br1, pr1 = (get_pure b.Cformula.formula_or_f1) in
+          let b2,br2, pr2 = (get_pure b.Cformula.formula_or_f2) in
           let b2 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true b2 in
           let b1 = MCP.fold_mem_lst (CP.mkTrue no_pos) true true b1 in
-          (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) (Cpure.mkOr b1 b2 None no_pos), Cpure.or_branches br1 br2)
-    | Cformula.Base b -> (b.Cformula.formula_base_pure, b.Cformula.formula_base_branches)
+          let npr = CPr.mkOr pr1 pr2 no_pos in
+          (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) (Cpure.mkOr b1 b2 None no_pos), Cpure.or_branches br1 br2, npr)
+    | Cformula.Base b -> (b.Cformula.formula_base_pure, b.Cformula.formula_base_branches, b.Cformula.formula_base_perm)
     | Cformula.Exists b-> 
           let qv = b.Cformula.formula_exists_qvars in
           let l = List.map (fun (c1,c2)-> (c1, Cpure.mkExists qv c2 None no_pos)) b.Cformula.formula_exists_branches in
           let cm = MCP.memo_pure_push_exists qv b.Cformula.formula_exists_pure in
-          (cm,l)
+          let npr = CPr.mkExists qv b.Cformula.formula_exists_perm no_pos in
+          (cm,l, npr)
 
-  and symp_struc_to_formula (f0:Cformula.struc_formula):(MCP.mix_formula*((string*CP.formula) list)) = 
-    let rec ext_to_formula (f:Cformula.ext_formula):(MCP.mix_formula*((string*CP.formula) list)) = match f with
+  and symp_struc_to_formula (f0:Cformula.struc_formula):(MCP.mix_formula*((string*CP.formula) list)*CPr.perm_formula) = 
+    let rec ext_to_formula (f:Cformula.ext_formula):(MCP.mix_formula*((string*CP.formula) list)*CPr.perm_formula) = match f with
       | Cformula.ECase b-> 
             if (List.length b.Cformula.formula_case_branches) <>1 then Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
             else 
               let c1,c2 = List.hd b.Cformula.formula_case_branches in (*push existential dismissed*)
-              let b2,br2 = symp_struc_to_formula c2 in
+              let b2,br2,pr1 = symp_struc_to_formula c2 in
               let f = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) (CP.Not (c1, None, no_pos)) in
-              ((MCP.mkOr_mems f b2),br2)
+              ((MCP.mkOr_mems f b2),br2, pr1)
       | Cformula.EBase b-> 
-            let b1,br1 = (get_pure b.Cformula.formula_ext_base) in
-            let b2,br2 = (symp_struc_to_formula b.Cformula.formula_ext_continuation) in
+            let b1,br1,pr1 = (get_pure b.Cformula.formula_ext_base) in
+            let b2,br2,pr2 = (symp_struc_to_formula b.Cformula.formula_ext_continuation) in
             let r1 = MCP.merge_mems b1 b2 true in
             let r2 = CP.merge_branches br1 br2 in
+            let npr = CPr.mkAnd pr1 pr2 no_pos in
             let ev = b.Cformula.formula_ext_explicit_inst@b.Cformula.formula_ext_implicit_inst@b.Cformula.formula_ext_exists in
             let r2 = List.map (fun (c1,c2)-> (c1,(CP.mkExists ev c2 None no_pos))) r2 in
             let r1 = MCP.memo_pure_push_exists ev r1 in
-            (r1,r2)
+            let npr = CPr.mkExists ev npr no_pos in
+            (r1,r2,npr)
       | _ -> Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}in	
-    if (List.length f0)<>1 then ((MCP.mkMTrue no_pos),[])
+    if (List.length f0)<>1 then ((MCP.mkMTrue no_pos),[],CPr.mkTrue no_pos)
     else ext_to_formula (List.hd f0)  in  
+    
   match (List.hd f) with
     | Cformula.EBase b-> 
-          let ba,br= symp_struc_to_formula f in
+          let ba,br,pr= symp_struc_to_formula f in
           let bt = Cpure.add_null (MCP.fold_mem_lst (CP.mkTrue no_pos) true true ba) self in
-          let is_sat = if br = [] then TP.is_sat_sub_no bt sat_subno
+          let is_sat = (CPr.is_sat pr) && (if br = [] then TP.is_sat_sub_no bt sat_subno
           else
             let sat = TP.is_sat_sub_no bt sat_subno in 
             if not sat then sat
-            else List.for_all (fun (_,c)-> TP.is_sat_sub_no (CP.mkAnd c bt no_pos) sat_subno) br in
+            else List.for_all (fun (_,c)-> TP.is_sat_sub_no (CP.mkAnd c bt no_pos) sat_subno) br) in
           if (not is_sat) then None
           else
             let br' = List.map (fun (c1,c2)-> (c1,(Cpure.drop_null c2 self false)) ) br in
             let ba' = MCP.mix_drop_null self ba false in
             let ba' = MCP.drop_triv_grps ba' in
             let base_case = Cpure.BForm ((Cpure.Eq ((Cpure.Var (self,no_pos)),(Cpure.Null no_pos),no_pos)),None) in
-            Some (base_case,(ba',br'))		
+            Some (base_case,(ba',br',pr))		
     | Cformula.ECase b-> 
           if (List.length b.Cformula.formula_case_branches) <>1 then 
             Error.report_error { Err.error_loc = no_pos; Err.error_text = "error: base case filtering malfunction"}
@@ -3124,11 +3132,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           IF.h_formula_heap_pos = pos;
           IF.h_formula_heap_perm = pr;
           IF.h_formula_heap_label = pi;} ->
-          let cperm = match pr with
-              | (Some v, []) -> trans_var v stab pos
-              | _ ->  Err.report_error{
-                    Err.error_loc = pos;
-                    Err.error_text = "permission formula floating error";} in
+          let cperm = trans_perm_must_var false pr stab pos in
           (try
             let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
             let labels = vdef.I.view_labels in
@@ -3227,6 +3231,13 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
           let np = MCP.memoise_add_pure_N (MCP.mkMTrue pos) np in
 	      CF.mkExists (List.map (fun c-> trans_var c stab pos) qvars) nh np nt npr nfl nb pos 
 	                
+and trans_perm_must_var in_vdef pr stab pos = match pr with
+  | (Some v, []) -> trans_var v stab pos
+  | (None,[]) when in_vdef -> CPr.freshPermVar () 
+  | _ ->  Err.report_error{
+            Err.error_loc = pos;
+            Err.error_text = "permission formula floating error";} 
+                  
 and trans_frac_perm_formula (f:IPr.frac_perm) stab pos: CPr.frac_perm = match f with
   | (Some v, r) -> (Some (trans_var v stab pos),r)
   | (None, r) -> (None,r)
@@ -3977,7 +3988,8 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
       | [] -> (used_names, [], [], ((IP.mkTrue pos), [])) in
   
   let rec linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
-        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
+        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list) *
+          IPr.perm_formula) =
     match f with
       | IF.HeapNode2 b -> Error.report_error {Error.error_loc = b.Iformula.h_formula_heap2_pos; Error.error_text = "malfunction: heap node 2 still present"}  
       | IF.HeapNode b ->
@@ -3993,32 +4005,42 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
             let (new_used_names, hvars, evars, (link_f, link_f_br)) =
               match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
             let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-            let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
-            in (new_used_names, evars, new_h, (link_f, link_f_br))
+            let (new_used_names, nprv, evars, new_pr) = match b.IF.h_formula_heap_perm with
+              | (Some v, []) ->                    
+                 if (List.mem v avail_vars) || (List.mem v new_used_names) then(*existential wrapping and liniarization*)
+                        let fresh_v = (Ipure.fresh_old_name (fst v)),Unprimed in
+                        let link_f = IPr.mkEq (IPr.frac_of_var fresh_v) b.IF.h_formula_heap_perm no_pos in
+                        (new_used_names, IPr.frac_of_var fresh_v, fresh_v::evars, link_f)
+                 else (v :: new_used_names, b.IF.h_formula_heap_perm, evars, IPr.mkTrue no_pos )
+              | _ -> Err.report_error { Err.error_loc = b.IF.h_formula_heap_pos; Err.error_text = "malfunction with float out perm in normalizing"; } in
+            let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars; IF.h_formula_heap_perm = nprv}
+            in (new_used_names, evars, new_h, (link_f, link_f_br),new_pr)
       | IF.Star {
                   IF.h_formula_star_h1 = f1;
                   IF.h_formula_star_h2 = f2;
                   IF.h_formula_star_pos = pos
               } ->
-            let (new_used_names1, qv1, lf1, (link1, link1_br)) = linearize_heap used_names f1 in
-            let (new_used_names2, qv2, lf2, (link2, link2_br)) = linearize_heap new_used_names1 f2 in
+            let (new_used_names1, qv1, lf1, (link1, link1_br),new_pr1) = linearize_heap used_names f1 in
+            let (new_used_names2, qv2, lf2, (link2, link2_br),new_pr2) = linearize_heap new_used_names1 f2 in
             let tmp_h = IF.mkStar lf1 lf2 pos in
             let tmp_link = IP.mkAnd link1 link2 pos in
             let tmp_link_br = IP.merge_branches link1_br link2_br in
-            (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
-      | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
-      | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
+            let new_pr = IPr.mkAnd new_pr1 new_pr2  pos in
+            (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br), new_pr)
+      | IF.HTrue ->  (used_names, [], IF.HTrue,  (IP.mkTrue no_pos, []), (IPr.mkTrue no_pos))
+      | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, []), (IPr.mkTrue no_pos)) in
  
   let normalize_base heap cp pr fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
-    let (nu, h_evars, new_h, (link_f, link_f_br)) = linearize_heap [] heap in
+    let (nu, h_evars, new_h, (link_f, link_f_br), new_pr) = linearize_heap [] heap in
     let new_p = Ipure.mkAnd cp link_f pos in
     let new_br = IP.merge_branches new_br link_f_br in
+    let new_pr = IPr.mkAnd new_pr pr pos in
     let tmp_evars, to_expl =
       (let init_evars = (h_evars@evs) in
        let to_evars = Util.difference init_evars posib_expl in
        let to_expl = Util.intersect init_evars posib_expl in       
        (to_evars,to_expl))in
-    let result = Iformula.mkExists tmp_evars new_h new_p pr fl new_br pos in
+    let result = Iformula.mkExists tmp_evars new_h new_p new_pr fl new_br pos in
     let used_vars = Util.difference nu tmp_evars in
       if not (Util.empty tmp_evars)  then 
         Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
@@ -4858,8 +4880,8 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
       | CF.ViewNode v-> 
             if (String.compare self (CP.name_of_spec_var v.CF.h_formula_view_node))=0 &&
               (String.compare v_def.C.view_name v.CF.h_formula_view_name)=0 then 
-                let fr_vars = (CP.SpecVar (CP.OType v_def.C.view_data_name, self, Unprimed)):: v_def.C.view_vars in
-                let to_vars = v.CF.h_formula_view_node :: v.CF.h_formula_view_arguments in
+                let fr_vars = v_def.C.view_perm_var :: (CP.SpecVar (CP.OType v_def.C.view_data_name, self, Unprimed)):: v_def.C.view_vars in
+                let to_vars = v.CF.h_formula_view_perm :: v.CF.h_formula_view_node :: v.CF.h_formula_view_arguments in
                 let zip = List.combine fr_vars to_vars in
                 let new_pc = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.C.view_prune_conditions in  
                 CF.ViewNode {v with

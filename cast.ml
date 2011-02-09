@@ -9,9 +9,11 @@ open Globals
 
 module F = Cformula
 module P = Cpure
+module Pr = Cperm
 module MP = Mcpure
 module Err = Error
 module U = Util
+module CPr = Cperm
 
 type typed_ident = (P.typ * ident)
 
@@ -24,7 +26,7 @@ and prog_decl = {
 				  mutable prog_left_coercions : coercion_decl list;
 				  mutable prog_right_coercions : coercion_decl list }
 	
-and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
+and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list) * CPr.perm_formula) option )
 	
 and data_decl = { data_name : ident;
 		  data_fields : typed_ident list;
@@ -45,10 +47,12 @@ and view_decl = { view_name : ident;
 				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list)* Pr.perm_formula)) option; 
+            (* guard for base case, base case (common pure, pure branches)*)
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
 				  view_prune_invariants : (formula_label list * P.b_formula list) list ;
+          view_perm_var : P.spec_var;
           view_raw_base_case: Cformula.formula option;}
   
 and proc_decl = { proc_name : ident;

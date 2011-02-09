@@ -351,8 +351,8 @@ branch
 
 
 view_header
-  : PRED IDENTIFIER LT opt_ann_cid_list GT {
-	let cids, anns = List.split $4 in
+  : PRED IDENTIFIER opt_perm_annot LT opt_ann_cid_list GT {
+	let cids, anns = List.split $5 in
     let cids, br_labels = List.split cids in
 	  if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
@@ -369,6 +369,7 @@ view_header
 			view_typed_vars = [];
 			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
+      view_perm = $3;
 			try_case_inference = false;
 			}
   }
