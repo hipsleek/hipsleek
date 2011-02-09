@@ -13,6 +13,7 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
+    | Hopred of unit
 		
   type decl = 
     | Type of type_decl
@@ -206,6 +207,7 @@ flush stdout
 %token SPLIT
 %token STAR
 %token STATIC
+%token SET
 %token SUBSET
 %token TAIL
 %token THEN
@@ -320,7 +322,7 @@ type_decl
   | class_decl { Data $1 }
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
-  | ho_pred  {report_error (get_pos 2) ("finished parsing hopred")}
+  | ho_pred  {Hopred $1 }
 ;
 
 /***************** Global_variable **************/
@@ -500,7 +502,9 @@ hpred_header
 
 typed_arg
     : typ {}
-	| typ COLON typ {}
+    | SET OSQUARE typ CSQUARE {}
+    | SET OSQUARE typ CSQUARE COLON typed_arg {}
+	| typ COLON typed_arg {}
 ;
 
 typed_arg_list
@@ -509,6 +513,8 @@ typed_arg_list
 ;
 type_var_lst
     : typ {}
+    | SET OSQUARE typ CSQUARE {}
+    | SET OSQUARE typ CSQUARE COMMA type_var_lst {}
 	| typ COMMA type_var_lst {}
 ;
 opt_typed_arg_list

@@ -84,6 +84,7 @@
 	 ("rev", REVERSE);
 	 ("return", RETURN);
 	 ("self", SELF "self");
+     ("set", SET);
 	 ("split", SPLIT);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
