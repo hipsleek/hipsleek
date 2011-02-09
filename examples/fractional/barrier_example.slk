@@ -1,4 +1,5 @@
 
+
 data node { int val ; node next }.
 
 pred ll<n> == self = null & n = 0
