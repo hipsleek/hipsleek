@@ -721,7 +721,7 @@ let rec pr_mem_formula  (e : mem_formula) =
     | h :: r ->
 	fmt_string "[";
 	fmt_string (List.fold_left 
-		      (fun y x -> (y ^ ("(" ^ (string_of_spec_var (fst x)) ^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x)) ^ ")"))) 
+		      (fun y x -> (y ^ ("(" ^ (string_of_spec_var ((*fst*) x)) (*^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x))*) ^ ")"))) 
 		      "" 
 		      h);
 	fmt_string "]";

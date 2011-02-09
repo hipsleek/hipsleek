@@ -88,7 +88,7 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pos : loc }
 
 and mem_formula = { 
-  mem_formula_mset : (CP.spec_var * CP.formula) Util.d_set (*(CP.spec_var list) list*); (* list of disjoint vars *)
+  mem_formula_mset : CP.spec_var Util.d_set ; (* list of disjoint vars *)
 }
 
 and formula_or = {  formula_or_f1 : formula;

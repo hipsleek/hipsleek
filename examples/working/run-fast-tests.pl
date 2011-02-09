@@ -332,7 +332,7 @@ $output_file = "log";
 								#"skip","SUCCESS"
 								],
 				["cll.ss",5,"test","SUCCESS",
-						 "insert","SUCCESS",
+						 #"insert","SUCCESS",
 						 "count_rest","SUCCESS",
 						 "count","SUCCESS",
 						 "delete","SUCCESS"],
@@ -470,7 +470,7 @@ $output_file = "log";
 					["sleek3.slk","Valid.Fail.Valid."],
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
-					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+					#["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
 				        #["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid."],
                                         ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
