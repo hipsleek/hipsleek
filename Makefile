@@ -11,6 +11,7 @@ GUIINCLUDES=-I +lablgtk2
 OCAMLFLAGS= -dtypes $(INCLUDES) # add other options for ocamlc here
 GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
 OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
+# removed -p from above as it seems related to profiling..
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
 OCAMLLEX=ocamllex -q
