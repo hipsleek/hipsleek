@@ -1478,6 +1478,46 @@ let rename_eset_str (re:'a -> 'a) ((s,f,nm):'a e_set_str) : 'a e_set_str =
   let nm_new=List.map (fun (a,s) -> let new_e=re a in (new_e,f new_e)) nm in
   (s_new,f,nm_new)
 
+
+
+
+(* bag of addresses*)
+type 'a baga =  ('a list) 
+
+let empty_baga () : 'a baga = []
+
+(* a singleton bag *)
+let singleton_baga (e:'a) : 'a baga = [e]
+
+
+let rec is_dupl_baga (eq:'a->'a->bool) (xs:'a baga) : bool = 
+  match xs with
+    | [] -> false
+    | x::xs1 -> match xs1 with
+        | [] -> false
+        | _ -> if (List.exists (eq x) xs1) then true else is_dupl_baga eq xs1
+
+(* false result denotes contradiction *)
+let is_sat_baga (eq:'a->'a->bool) (xs:'a baga) : bool = not(is_dupl_baga eq xs)
+
+(*
+[d1,d2] & [d3,d4] = [d1,d2,d3,d4]
+[d1,d2] | [d3,d4] = [d1|d3,d1|d4,d2|d3,d2|d4]
+d1|d3 = d1 \cap d3
+  
+*)
+
+(* star conjunction of two bag of addresses *)
+let star_baga (x:'a baga) (y:'a baga) : 'a baga = x@y
+
+(* conjunction of two bag of addresses *)
+let conj_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
+
+(* disjunction of two bag of addresses *)
+let or_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
+
+
+
 (**  disjointness: **)
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
@@ -1524,6 +1564,16 @@ let is_disj_str (eq_str:string->string->bool)  ((s,f): 'a d_set_str)  (x:'a) (y:
 (*  returns s1/\s2 *)
 let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
  s1@s2
+
+(*  returns d1*d2 *)
+let star_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2
+
+(*  returns d1/\d2 *)
+let conj_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2
+
+(*  returns d1\/d2 *)
+let or_disj_set (eq:'a->'a->bool) (d1: 'a d_set) (d2: 'a d_set): 'a d_set = 
+  List.concat (List.map (fun x1 -> List.map (fun x2-> intersect_fct eq x1 x2) d2) d1) 
 
 (*  returns s1/\s2 *)
 let merge_disj_set_str ((s1,f1): 'a d_set_str) ((s2,_): 'a d_set_str): 'a d_set_str =
@@ -1573,4 +1623,30 @@ let rec list_find (f:'a -> 'b option) l = match l with
     | x::xs -> match f x with
       | None -> list_find f xs
       | Some s -> Some s
+
+
+
+(**  disjointness: **)
+(* new disjointness structure*)
+type 'a one_dset =    
+  | Disj of ('a list)
+  | DisjMinus of ('a list * 'a * 'a)
+
+type 'a disj_set = (('a one_dset) list * ('a ->'a->int))
+
+(*
+let empty_dj_set (cp:'a->'a->int) : 'a disj_set = ([],cp)
+
+add_one_bag  ((d,cp):'a disj_set) (b:'a list) = (b::d,cp 
+add_one_ineq ((d,cp):'a disj_set) (x:'a) (y:'a)  = ([x,y]::d,cp
+is_ineq  (eq:'a->'a->bool) ((d,cp):'a disj_set) (x:'a) (y:'a)  : bool = false
+norm_dj_set ((d,cp):'a disj_set) : ((d,cp):'a disj_set) = ..
+ (* remove singleton; sort by size; combine where possible *)
+star_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+conj_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+or_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+
+*)
+
+
 
