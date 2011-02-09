@@ -501,6 +501,7 @@ if($home21){
 	chdir("/home") or die "Can't chdir to $target_dir $!";
 	rmtree(["$target_dir"]) or die ("Could not delete folder: $target_dir $!");
 }
+
 if($timings){
     #do the last computations and close the timings log worksheet
     #compute the total times*
@@ -530,18 +531,21 @@ sub log_one_line_of_timings{
  $row++;
  $worksheet->write($row, $programCol, "$prog_name");
  my $format = $workbook->add_format();
- $format->set_num_format('0.00');
+ # $format->set_num_format('0.00');
  $format->set_align('right');
  if($outp =~ m/Total verification time: (.*?) second/){
-     $worksheet->write_number($row, $totalCol,"$1", $format);
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write_number($row, $totalCol, $formatted_no, $format);
      $totalSum = $totalSum + $1;
  }
  if($outp =~ m/Time spent in main process: (.*?) second/){
-     $worksheet->write($row, $mainCol, "$1", $format);
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $mainCol, $formatted_no, $format);
      $mainSum = $mainSum + $1;
  }
  if($outp =~ m/Time spent in child processes: (.*?) second/){
-     $worksheet->write($row, $childCol, "$1", $format);
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $childCol, $formatted_no, $format);
      $childSum = $childSum + $1;
  }
  if($outp =~ m/\b(\w+) false contexts/){

@@ -1,0 +1,93 @@
+
+data node {
+	int val; 
+	node next;	
+}.
+
+pred ll3<n,sum> == self = null 
+  &  n = 0 &  sum=0  // false when "B" missing 
+  or self::node<v, q> * q::ll3<n1, sum1> & v>=0 & n=1+n1 &
+  sum=sum1+v 
+  inv n>=0 & sum>=0.
+
+
+pred ll1<n,"s":sum> == self = null 
+  &  n = 0 & ["s": sum=0]  
+  or self::node<v, q> * q::ll1<n1, sum1> & v>=0 & n=1+n1 &
+  ["s": sum=sum1+v ]
+  inv true & n>=0 & ["s": sum>=0 ].
+
+pred lla<n,"s":sum> == self = null 
+  &  ["s": n = 0 & sum=0]  // false when "B" missing 
+  or self::node<v, q> * q::lla<n1, sum1> & v>=0 &
+  ["s":  n=1+n1 & sum=sum1+v ]
+  inv true  & ["s": n>=0 & sum>=0 ].
+
+/*
+pred ll2<n,"s":sum,"B":B> == self = null 
+  &  n = 0 & ["s": sum=0 ; "B":B={}]  // false when "B" missing 
+  or self::node<v, q> * q::ll2<n1, sum1,B1> & v>=0 & n=1+n1 &
+  ["s": sum=sum1+v ; "B":B=union(B1,{v})]
+  inv true & n>=0 & ["s": sum>=0 ].
+
+
+pred llN<s> == self=null & s=0
+  or self::node<v,q>*q::llN<s2> & s=v+s2
+ inv true.
+*/
+
+/*
+//checkentail  x::ll2<n,s,B> & n>0 |- x!=null.
+checkentail x::node<3,null> |- x::llN<s> & s=3.
+//checkentail x=null |- x::llN<s>.
+
+checkentail x=null |- x::ll2<n,s,B>.
+//print residue.
+
+checkentail x::node<3,null> |- x::ll2<n,s,B> & s=3.
+
+checkentail x::node<v,null> & v>=0 |- x::ll2<n,s,B>.
+
+checkentail x::node<v,q> * q::ll2<n,s,B> & v>=3 & ["s":s>=3 n]
+   |- x::ll2<n2,s2,B2> & ["s":s2=s+v & s2>=3 n2].
+
+checkentail x::node<v,q> * q::ll2<n,s,B> & v>=0 & v<3 & ["s":s<3n]
+   |- x::ll2<n2,s2,B2> & ["s":s2=s+v & s2<3 n2].
+
+checkentail x::node<v,q> * q::ll2<n,s,B> & v>=0 & v<3 & ["s":s<3n]
+   |- (exists s2 : x::ll2<n2,s2,B2> & ["s":s2=s+v & s2<2 n2]).
+*/
+
+
+checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
+   |- (exists n2 : x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2]).
+// should fail, why did it succeed? a bug here!
+
+checkentail x::node<v,q> * q::ll1<n,s> & v>=0 & v<3 & ["s":s<3n]
+   |-  x::ll1<n2,s2> & ["s":s2=s+v & s2<2 n2].
+// without exists, it seems ok?
+
+checkentail x::node<v,q> * q::lla<n,s> & v>=0 & v<3 & ["s":s<3n]
+   |- (exists n2 : x::lla<n2,s2> & ["s":s2=s+v & s2< 2 n2]).
+
+checkentail x::node<v,q> * q::ll3<n,s> & v>=0 & v<3 & s<3n
+   |- (exists n2 : x::ll3<n2,s2> & s2=s+v & s2<2 n2).
+
+//checkentail x=null |- x::ll3<n,s>.
+//print residue.
+
+
+// why exists in two syntactoc form?
+
+pred ll5<n,"s":sum,"B":B> == self = null 
+  &  true & ["s": sum=0 & n=0 ; "B":B={} ]  
+  or self::node<v, q> * q::ll5<n1, sum1,B1> & v>=0  &
+  ["s": sum=sum1+v & n=1+n1; "B":B=union(B1,{v})]
+  inv true &  ["s": n>=0 & sum>=0 ].
+
+
+checkentail x=null |- x::ll5<n,s,B>.
+print residue.
+
+checkentail x::node<v,null> & v>=0 |- x::ll5<n,s,B>.
+print residue.

@@ -147,7 +147,6 @@ let send_and_receive f =
         ""
   else
     ""
-
 	(* send formula to reduce/redlog and receive result *)
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in

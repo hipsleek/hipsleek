@@ -110,7 +110,13 @@ let process_source_full source =
       end
     in
     let _ = Util.pop_time "Preprocessing" in
+    (try
     ignore (Typechecker.check_prog cprog);
+    with _ as e -> begin
+      print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+      print_string ("\nError(s) detected at main "^"\n");
+      raise e
+    end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
     

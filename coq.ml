@@ -196,12 +196,20 @@ let start_prover () =
   coq_running := true;
   print_string "Coq started\n"; flush stdout
 
+let start_prover_debug () =
+  Util.ho_debug_1 "stack coq prover" (fun () -> "") (fun () -> "") start_prover ()
+
 (* stopping Coq *)
 let stop_prover () =
+  (* print_string "stopping \n";  *) (* without this prover stops early*)
   output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
   ignore (Unix.close_process !coq_channels);
   coq_running := false;
   print_string "Coq stopped\n"; flush stdout
+
+let stop_prover_debug () =
+  print_string "stop coq prover"; 
+  Util.ho_debug_1 "stop coq prover" (fun () -> "") (fun () -> "") stop_prover ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =

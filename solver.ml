@@ -12,7 +12,6 @@ module CP = Cpure
 module MCP = Mcpure
 module Err = Error
 module TP = Tpdispatcher
-
 (* globals 4 the immutability extension *)
 (* let crt_hole = ref (Globals.fresh_int ());; *)
 (* let crt_ctx = ref (Context.mk_empty_frame ());; *)
@@ -230,10 +229,11 @@ let previous_failure () = not(U.empty !fail_ctx_stk)
 let enable_distribution = ref true
 let imp_no = ref 1
 
-class entailhist = object (self)
-  val en_hist = Hashtbl.create 40;
+class entailhist =
+object (self)
+  val en_hist = Hashtbl.create 40
     
-  method init () = Hashtbl.clear en_hist;
+  method init () = Hashtbl.clear en_hist
     
   method upd_opt (pid : control_path_id) (rs: list_context) (errmsg: string) =
     match pid with 
@@ -3652,7 +3652,6 @@ and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.m
   let conseq = if !no_RHS_prop_drop then conseq else  MCP.mix_cons_filter conseq MCP.isImplT in
   let tmp1 = (*MCP.memo_pure_push_exists*) elim_exists_mix_formula inner_vars conseq no_pos in
     (ante,tmp1)
-
 and heap_entail_build_mix_formula_check_debug (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
  Util.ho_debug_3 "heap_entail_build_mix_formula_check_debug"  (fun l -> Cprinter.string_of_spec_var_list l) 
   Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula (fun (_,c )-> Cprinter.string_of_mix_formula c)

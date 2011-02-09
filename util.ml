@@ -904,6 +904,7 @@ let add_index l =
 		| a::b-> (i,a)::(ff (i+1) b) in
 	(ff 0 l)
 
+(*
 let counters = ref (Hashtbl.create 10)
 
 let add_to_counter (s:string) i = 
@@ -920,6 +921,7 @@ let string_of_counters () =
   let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
   let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
   "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+*)
 	
 (*hairy stuff for exception numbering*)
 
@@ -990,9 +992,6 @@ let has_cycles ():bool =
 		if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
 			else (List.exists (fun c-> (cc c (c::visited))) sons) in	
 	(cc Globals.top_flow [Globals.top_flow])
-  
-  
-  
 let print_profiling_info () = if (!Globals.profiling) then  print_tasks () else ()
   
   

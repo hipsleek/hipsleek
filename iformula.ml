@@ -1382,7 +1382,6 @@ let rec helper f = match f with
 		| EVariance b -> EVariance ({ b with
 										formula_var_continuation = subst_flow_of_struc_formula fr t b.formula_var_continuation;
 								   })
-
 in
 List.map helper f 
 

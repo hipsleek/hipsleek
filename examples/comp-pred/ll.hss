@@ -1,0 +1,305 @@
+/* singly linked lists */
+
+/* representation of a node */
+
+data node[a] {
+	a val; 
+	node[a] next;	
+}
+
+type treeint = node[int]
+
+/* sugar form */
+pred list[t,b]<a:t>
+ ==  self = null & Base(a,self)
+  or self::node[b]<v,q> * q::list[t,b]<a1> & Rec(a,a1,v,self,q) 
+ inv Inv(a,self);
+
+/* fully translated */
+pred list[t,b]<self:node[b],a:t>{Base:(t,node[b])->bool,
+     Rec:(t,t,b,node[b],node[b])->bool,Inv:(t,node[b])->bool} 
+ ==  self = null & Base(a,self)
+  or self::node[b]<v,q> * list[t,b]<q,a1>{Base,Rec,Inv} 
+         & Rec(a,a1,v,self,q) 
+ inv Inv(a,self);
+
+/* sugar form */
+pred ll_g[b]<n:int> refines list[int,b]<n:int>
+  with { Base(n,_) = n=0;  Rec(n,n1,...) = n=1+n1; Inv(n,_) = n>=0; }
+
+/* fully translated */
+pred ll_g[b]<self:node[b],n:int>{Base:(int,node[b])->bool,
+     Rec:(int,int,b,node[b],node[b])->bool,Inv:(int,node[b])->bool} 
+ == list[int,b]<self,n>{\ (n,s) -> n=0 & Base(n,s),
+                  \ (n,n1,_,_,_) as arg -> n=1+n1 & (Rec arg),
+                  \ (n,s) as arg -> n>=0 & (Inv arg)} ;
+
+/* sugar form */
+pred ll[b]<n:int> finalizes ll_g[b]<n> ;
+
+/* fully translated to first-order form */
+pred ll[b]<self:node[b],n:int>
+ == self=null & n=0
+ or exists( v:b, q:node[b], n1:int . 
+            self::node[b]<v,q> * ll[b]<q,n1> & n=1+n1) 
+ inv n>=0 ;
+
+/* sugar form */
+pred ll1[b]<S:set[b]> finalises list[set(b),b]<S>
+ with { Base(S,_) = S={};
+        Rec(S,S1,v,...) = S=union({v},S1); }
+
+/* translated to intermediate form */
+pred ll1[b]<S:set[b]> 
+ == list[int,b]<self,S>{\ (S,s) -> S={},
+                  \ (S,S1,_,_,_) -> S=union({v},S1),
+                  \ _ -> true; };
+
+/* fully translated to first-order form */
+pred ll1[b]<self:node[b],S:set[b]>
+ == self=null & S={}
+ or exists( v:b, q:node[b], S1:set[b] . 
+            self::node[b]<v,q> * ll[b]<q,S1> & S=union({v},S1)
+ inv true ;
+
+/* sugar form */
+pred ll2[b]<n:int,S:set[b]> combines ll[b]<n> & ll1[b]<S>;
+
+/* translated to intermediate form */
+pred ll2[b]<self:node[b],n:int,set[b]> 
+ == ll[b]<self,n> &_combines ll1[b]<self,S>
+ == ll[b]<self,"n":n> & ll1[b]<self,"S":S>
+
+/* fully translated to first-order form with branching */
+pred ll2[b]<self:node[b],n:int,set[b]> 
+ == self=null & "n":n=0 & "S":S={}
+ or exists( v:b, q:node[b], n1:int, S1:set[b] . 
+       self::node[b]<v,q> * ll2[b]<q,n1,S1> & "n":n=n+1 & "S":S=union({v},S1)
+ inv true & "n":n>=0 & "S":true;
+
+/* sugar form for predicate integration */
+pred ll3[b]<n:int,S:set[b]> integrates ll[b]<n> & ll1[b]<S>;
+
+/* translated to intermediate form */
+pred ll2[b]<self:node[b],n:int,set[b]> 
+ == ll[b]<self,n> & ll1[b]<self,S>
+
+/* fully translated to first-order form without branching */
+pred ll3[b]<self:node[b],n:int,set[b]> 
+ == self=null & n=0 & S={}
+ or exists( v:b, q:node[b], n1:int, S1:set[b] . 
+       self::node[b]<v,q> * ll3[b]<q,n1,S1> & n=n+1 & S=union({v},S1)
+ inv n>=0 ;
+
+
+/*
+ how to combine:
+  pred<a> &_split pred<b> 
+     ==> pred<"1":a> & pred<"2":b>
+  pred<l1:a> &_combines pred<l2:b>  
+     ==> pred<l1^l2:a> & pred<l1^l2:b>
+
+
+l1:l2:e ==> l1 and l2
+(l1+l2):e ==> l1 or l2
+
+(l1 or l2) 
+(l1 and l2)
+
+
+
+"1" or "2"
+"1" and "2"
+
+*/
+
+ == ll[b]<self,n> & ll1[b]<self,S>
+
+
+/* view for a singly linked list */
+ll<n> == self = null & n = 0 
+	or self::node<_, q> * q::ll<n-1> 
+  inv n >= 0;
+	
+/*ll1<S> == self = null & S = {} 
+	or self::node<v, q> * q::ll1<S1> & S = union(S1, {v});*/
+
+/*ll2<n, S> == self=null & n=0 & S={}
+	or self::node<v, r> * r::ll2<m, S1> & n=m+1   & S=union(S1, {v});*/
+
+/* append two singly linked lists */
+[b] void append(node[b] x, node[b] y)
+  requires x::ll[b]<n1> * y::ll[b]<n2> & n1>0 
+  ensures x::ll[b]<n1+n2>;
+{
+  //assume false;
+   //assert x=null;
+	if (x.next == null)
+	  { //dprint;
+        x.next = y;
+        //dprint;
+      }
+	else
+      { 
+        node z;
+        z = null;
+        dprint;
+		append(x.next, y);
+      }
+    }
+
+/* return the first element of a singly linked list */
+[b] b ret_first(node[b] x)
+	requires x::ll[b]<n> & x!=null 
+	ensures true;
+{
+	return x.val;
+}
+
+/* return the tail of a singly linked list */
+[b] node[b] get_next(node[b] x)
+	requires x::ll[b]<n> & n > 0
+	ensures x::ll[b]<1> * res::ll[b]<n-1>; 
+{
+	node tmp = x.next;
+	x.next = null;
+	return tmp;
+}
+
+/* function to set the tail of a list */
+[b] void set_next(node[b] x, node[b] y)
+	requires x::ll[b]<i> * y::ll[b]<j> & i > 0 
+	ensures x::ll[b]<j+1>; 
+{
+	x.next = y;
+}
+
+[b] void set_null2(node[b] x)
+	requires x::ll[b]<i> & i > 0 
+	ensures x::ll[b]<1>;
+{
+	if (2>1) 
+		x.next = null;
+	else 
+		x.next = null;
+}	
+
+
+/* function to set null the tail of a list */
+[b] void set_null(node[b] x)
+	requires x::ll[b]<i> & i > 0 
+	ensures x::ll[b]<1>;
+{
+	x.next = null;
+}
+
+/* function to get the third element of a list */
+[b] node[b] get_next_next(node[b] x) 
+	requires x::ll[b]<n> & n > 1
+	ensures res::ll[b]<n-2>;
+{
+	return x.next.next;
+}
+
+/* function to insert a node in a singly linked list */
+[t] void insert(node[t] x, t a)
+	requires x::ll[t]<n> & n > 0 
+	ensures x::ll[t]<n+1>;
+{
+    //dprint;
+    node tmp = null;	
+	if (x.next == null)
+		x.next = new node(a, tmp);
+	else 
+		insert(x.next, a);
+} 
+
+/* function to delete the a-th node in a singly linked list */
+[b] void delete(node[b] x, int a)
+	requires x::ll[b]<n> & n>a & a>0 
+	ensures x::ll[b]<n-1>;
+{
+    if (a == 1)
+	{
+		//node tmp = x.next.next;
+		//x.next = tmp;
+                  x.next = x.next.next;
+	}
+	else
+	{
+		delete(x.next, a-1);
+	}	
+}
+
+/*node delete1(node x, int a)
+	requires x::ll1<S>  
+	ensures res::ll1<S1> & ((a notin S | S=union(S1, {a})) | S = S1);
+{
+	if (x == null) 
+		return x;
+	else {
+		if (x.val == a) return x.next;
+		else return new node(x.val, delete1(x.next, a));
+	}
+}*/
+
+/* function to create a singly linked list with a nodes */
+node[int] create_list(int a)
+	requires a >= 0 
+	ensures res::ll[int]<a>;
+
+{
+	node tmp;
+
+	if (a == 0) {
+		return null;
+	}
+	else {
+		a  = a - 1;
+		tmp = create_list(a);
+		return new node (0, tmp);
+	}
+		
+}
+
+/* function to reverse a singly linked list */
+[b] void reverse(ref node[b] xs, ref node[b] ys)
+	requires xs::ll[b]<n> * ys::ll[b]<m> 
+	ensures ys'::ll[b]<n+m> & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+		reverse(xs, ys);
+	}
+}
+/*
+[b] void reverse1(ref node[b] xs, ref[b] node ys)
+	requires xs::ll1[b]<S1> * ys::ll1[b]<S2> 
+	ensures ys'::ll1[b]<S3> & S3 = union(S1, S2) & xs' = null;
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+		xs.next = ys;
+		ys = xs;
+		xs = tmp;
+		reverse1(xs, ys);
+	}
+}*/
+/*
+[b] void test(node[b] x)
+	requires x::ll[b]<n> & n>=2 
+    ensures x::ll[b]<n-1>;
+{
+	node tmp = x.next.next;
+	x.next = tmp;
+}
+*/
+
+
+
+

@@ -1,0 +1,48 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail x::ll<n> * y::ll<n> *
+  a::ll<n> *
+  b::ll<n>*
+  c::ll<n>*
+  d::ll<n>*
+  e::ll<n> *
+  a1::ll<n> *
+  a2::ll<n>*
+  a3::ll<n>*
+  a4::ll<n>*
+  a11::ll<n> *
+  a12::ll<n>*
+  a13::ll<n>*
+  a14::ll<n>*
+  a21::ll<n> *
+  a22::ll<n>*
+  a23::ll<n>*
+  a24::ll<n>*
+  a31::ll<n> *
+  a32::ll<n>*
+  a33::ll<n>*
+  a34::ll<n>*
+  a41::ll<n> *
+  a42::ll<n>*
+  a43::ll<n>*
+  a44::ll<n>*
+  a51::ll<n> *
+  a52::ll<n>*
+  a53::ll<n>*
+  a54::ll<n>*
+  a5::ll<n>
+& x!=null |- a!=null &  
+b!=null &  c!=null &  d!=null &  e!=null & y!=null & n>0
+& a1!=null & a2!=null & a3!=null & a4!=null
+& a11!=null & a12!=null & a13!=null & a14!=null
+& a21!=null & a22!=null & a23!=null & a24!=null
+& a21!=null & a32!=null & a33!=null & a34!=null
+& a41!=null & a42!=null & a43!=null & a44!=null
+& a51!=null & a52!=null & a53!=null & a54!=null
+& a5!=null.
+print residue.
