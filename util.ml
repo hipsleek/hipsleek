@@ -1516,6 +1516,8 @@ let conj_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_
 (* disjunction of two bag of addresses *)
 let or_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
 
+
+
 (**  disjointness: **)
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
@@ -1621,4 +1623,14 @@ let rec list_find (f:'a -> 'b option) l = match l with
     | x::xs -> match f x with
       | None -> list_find f xs
       | Some s -> Some s
+
+
+
+(**  disjointness: **)
+(* new disjointness structure*)
+type 'a one_dset =    
+  | Disj of ('a list)
+  | DisjMinus of ('a list * 'a * 'a)
+
+type 'a disj_set = (('a one_dset) list * ('a ->'a->int))
 

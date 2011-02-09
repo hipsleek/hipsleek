@@ -4772,7 +4772,8 @@ type xp_res_type = (spec_var Util.baga * spec_var Util.d_set * formula)
   (S1{\cap}S2, S1::D1 & S2::D2,
             (SAT(S1)&SAT(S2)) & P1&P2 )
 (S1,D1,P1) \/ (S2,D2,P2) = 
-  (S1{\cap}S2, D1\/D2, SAT(S1) & P1 \/ SAT(S2) & P2)
+  (S1{\cap}S2, SAT(S1)->S1::D1\/SAT(S2)->S1::D2, 
+        SAT(S1) & P1 \/ SAT(S2) & P2)
 *)
 
 let star_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
@@ -4786,8 +4787,12 @@ let conj_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
 
 let or_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
   let nb = Util.or_baga eq b1 b2 in
-  let nd = Util.or_disj_set d1 d2 in
-  let np1 = if (Util.is_sat_baga eq b1) then p1 else mkFalse no_pos in
-  let np2 = if (Util.is_sat_baga eq b2) then p2 else mkFalse no_pos in
+  let (np1,nd1) = if (Util.is_sat_baga eq b1) then (p1,Some (b1::d1)) else (mkFalse no_pos,None) in
+  let (np2,nd2) = if (Util.is_sat_baga eq b2) then (p2,Some (b2::d2)) else (mkFalse no_pos,None) in
+  let nd = match nd1,nd2 with
+    | None,None -> []
+    | None,Some nd2 -> nd2
+    | Some nd1,None -> nd1
+    | Some nd1,Some nd2 ->  Util.or_disj_set (b1::d1) (b2::d2) in
     (nb,nd, mkOr np1 np2 None no_pos)
 
