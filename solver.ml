@@ -2909,7 +2909,7 @@ and heap_entail_split_rhs_phases
       (drop_read_phase : bool)
       pos : (list_context * proof) =
   
-  let rec heap_n_pure_entail ctx0 h p func = 
+  let rec heap_n_pure_entail_x ctx0 h p func = 
     (* let _  = print_string("*************************************************\n") in *)
     (* let _ = print_string("entailing the heap first:\n") in *)
     (* let _  = print_string("*************************************************\n") in *)
@@ -2927,7 +2927,7 @@ and heap_entail_split_rhs_phases
 		              | Ctx(estate) -> 
 			                subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p),
 			                subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq))
-		              | OCtx _ -> report_error no_pos ("Disjunctive context\n"))
+		              | OCtx _ -> report_error no_pos ("Disjunctive context\n"^(Cprinter.string_of_context c)))
 		          in 
 		          let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
 		          heap_entail_conjunct prog is_folding is_universal c new_conseq pos) cl  
@@ -2936,6 +2936,16 @@ and heap_entail_split_rhs_phases
 	        let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
 	        let entail_p_ctx = fold_context_left entail_p_ctx in 
 	        (entail_p_ctx, entail_p_prf)
+
+  and heap_n_pure_entail ctx0 h p func =
+    Util.ho_debug_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
+        (fun _ -> "?") (fun ctx0 h -> heap_n_pure_entail_x ctx0 h p func) ctx0 h 
+
+  and heap_n_pure_entail_1 ctx0 h p func = 
+        print_string "tracing heap_n_pure_entail_1\n"; (heap_n_pure_entail ctx0 h p func)
+
+  and heap_n_pure_entail_2 ctx0 h p func = 
+        print_string "tracing heap_n_pure_entail_2\n"; (heap_n_pure_entail ctx0 h p func)
 
   and helper ctx0 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     let ctx0 = (Cformula.transform_context
@@ -2946,7 +2956,7 @@ and heap_entail_split_rhs_phases
     		})) ctx0
     in
 
-    let h1, h2, h3 = split_phase h in
+    let h1, h2, h3 = split_phase_rhs h in
 	(* let _ = print_string *)
 	(*   ("heap_entail_split_rhs: splitting h into: *)
     (*       \n h1 (rhs) = " ^ (Cprinter.string_of_h_formula h1) ^ *)
@@ -3259,7 +3269,7 @@ and heap_entail_split_lhs_phases
          h2 = write phase
          h3 = nested phase 
       *)
-      let h1, h2, h3 = split_phase h in
+      let h1, h2, h3 = split_phase_lhs h in
       (* let _ = print_string("heap_entail_split_lhs: splitting h into:\n h1 (lhs) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n h2 (lhs) = " ^ (Cprinter.string_of_h_formula h2) ^ "\n h3 (lhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
 
       if ((is_true h1) && (is_true h3))

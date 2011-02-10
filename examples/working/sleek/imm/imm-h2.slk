@@ -9,7 +9,7 @@ pred nll<n> == self::node<_,null> & n=1
 	inv n >= 1.
 
 checkentail x::nll<n>  |-  x::node<_,_>. 
-print residue.
+// print residue.
 // x * y
 // Valid
 
