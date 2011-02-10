@@ -464,14 +464,14 @@ and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
   let ph, pb = xpure_heap_helper prog h0 which_xpure in
   (ph, pb, memset)
 
-and xpure_symbolic(*_debug*) (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_symbolic_debug (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Util.ho_debug_1 "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) 
-      (fun h0 -> xpure_symbolic_x prog h0) h0
+      (fun h0 -> xpure_symbolic prog h0) h0
 
 (* xpure approximation without memory enumeration *)
-and xpure_symbolic_x (prog : prog_decl) (f0 : formula) : 
+and xpure_symbolic (prog : prog_decl) (f0 : formula) : 
       (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let mset = formula_2_mem f0 prog in 
   let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = match f0 with
