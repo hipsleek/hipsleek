@@ -1319,7 +1319,7 @@ and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
       (let tmp1 = find_mvars prog params !ef in
       let tmp2 = Util.remove_dups_f (tmp1 @ !all_mvars) CP.eq_spec_var in
       let tmp3 = Util.difference_f CP.eq_spec_var tmp2 !all_mvars
-      in if U.empty tmp3 then quit_loop := true else all_mvars := tmp3)
+      in if U.empty tmp3 then quit_loop := true else all_mvars := tmp3@ !all_mvars)
   done;
   !all_mvars)
 
@@ -1353,9 +1353,8 @@ and find_mvars_heap prog params hf pf : CP.spec_var list =
     | _ ->
 	      let eqns = MCP.ptr_equations_with_null pf in
 	      let asets = Context.alias eqns in
-	      let self_aset =
-            Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))
-	      in self_aset
+	      let self_aset = Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed)) in
+	      self_aset
 
 and all_paths_return (e0 : I.exp) : bool =
   match e0 with

@@ -74,7 +74,8 @@ let process_data_def ddef =
 	let _ = Util.c_h () in
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
-	  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls
+	  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls;
+    CF.perm_normal := Solver.normalize_perm cprog 
       with
 	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
       else begin
@@ -116,7 +117,8 @@ let process_pred_def pdef =
         C.view_formula =  Solver.prune_pred_struc cprog true n_cpdef.C.view_formula ;
         C.view_un_struc_formula = List.map (fun (c1,c2) -> (Solver.prune_preds cprog true c1,c2)) n_cpdef.C.view_un_struc_formula;}in
 		let _ = if !Globals.print_core then print_string (Cprinter.string_of_view_decl n_cpdef ^"\n") else () in
-		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec)
+		cprog.C.prog_view_decls <- (n_cpdef :: old_vdec);
+    CF.perm_normal := Solver.normalize_perm cprog 
 		(*print_string ("\npred def: "^(Cprinter.string_of_view_decl cpdef)^"\n")*)
 (* added 07.04.2008	*)									  
 	  with
@@ -194,6 +196,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     let stab = H.create 103 in
     let ante = meta_to_formula iante0 false [] stab in    
     let ante = Solver.prune_preds cprog true ante in
+    let ante = !CF.perm_normal ante in
     let fvs = CF.fv ante in
     let fv_idents = List.map CP.name_of_spec_var fvs in
     let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in

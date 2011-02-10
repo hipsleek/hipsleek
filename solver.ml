@@ -322,7 +322,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_lab
           (List.map (fun (l, x) -> (l, wrap_exists (CP.mkAnd x r pos))) pqhb) in
 	    (r_f, rb)
 
-and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.mix_formula * (branch_label * CP.formula) list) = match h0 with
+and xpure_heap_d (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.mix_formula * (branch_label * CP.formula) list) = match h0 with
   | DataNode ({h_formula_data_node = p;
     h_formula_data_pos = pos}) ->
         let i = fresh_int2 () in
@@ -334,6 +334,10 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.mix_
     h_formula_view_remaining_branches = rm_br;
     h_formula_view_pos = pos}) ->
         let vdef = look_up_view_def pos prog.prog_view_decls c in
+        let sv = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) in
+        let from_svs = sv :: vdef.view_vars in
+        let to_svs = p :: vs in
+        let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug*) from_svs to_svs in
         let rec helper addrs =
 	      match addrs with
 	        | a :: rest ->
@@ -344,7 +348,10 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.mix_
 		          res_form
 	        | [] -> CP.mkTrue pos in
         (match rm_br with
-          | Some l -> (MCP.mkMTrue no_pos, [])
+          | Some l -> 
+            let nf = helper (sv::vdef.view_materialized_vars) in
+            let nf = MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) nf in
+            (subst_m_fun nf, [])
           | None -> 
                 let vinv = match use_xpure0 with
                   | -1 -> (MCP.mkMTrue no_pos, [])
@@ -352,24 +359,25 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (use_xpure0 :int) : (MCP.mix_
                   | _ -> vdef.view_x_formula in
                 (*let _ = print_string ("xpure "^(string_of_int use_xpure0)^" of : "^(Cprinter.string_of_h_formula h0)^"\n invariant: "^
                   (Cprinter.string_of_memo_pure_formula_branches vinv)^"\n") in*)
-                let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
-                let to_svs = p :: vs in
                 let (f, b) = vinv in
-                let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug*) from_svs to_svs in
+                let f = MCP.memoise_add_pure_N f (helper (sv::vdef.view_materialized_vars)) in
                 let subst_fun = CP.subst_avoid_capture from_svs to_svs in
-                let tmp1 = subst_m_fun f, List.map (fun (x,y) -> x, subst_fun y) b in
+                let tmp1 = (subst_m_fun f), List.map (fun (x,y) -> x, subst_fun y) b in
                 tmp1)
             
   | Star ({h_formula_star_h1 = h1;
     h_formula_star_h2 = h2;
     h_formula_star_pos = pos}) ->
-        let (ph1, ph1b) = xpure_heap prog h1 use_xpure0 in
-        let (ph2, ph2b) = xpure_heap prog h2 use_xpure0 in
+        let (ph1, ph1b) = xpure_heap_d prog h1 use_xpure0 in
+        let (ph2, ph2b) = xpure_heap_d prog h2 use_xpure0 in
         let res_form = (MCP.merge_mems ph1 ph2 true, CP.merge_branches ph1b ph2b) in
 	    res_form
   | HTrue  -> (MCP.mkMTrue no_pos, [])
   | HFalse -> (MCP.mkMFalse no_pos, [])
 
+and xpure_heap prog h use_xpure0 =
+Util.ho_debug_1 "xpure_heap " Cprinter.string_of_h_formula Cprinter.string_of_mix_formula_branches (fun c-> xpure_heap_d prog c use_xpure0) h
+  
 and xpure_symbolic (prog : prog_decl) (f0 : formula) branch : (MCP.mix_formula * CP.spec_var list) = match f0 with
   | Or ({formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -395,10 +403,10 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) branch : (MCP.mix_formula *
 	    (res_form, addrs)
 
 and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) branch : (CP.formula * CP.spec_var list) = match h0 with
-  | DataNode ({h_formula_data_node = p;
-    h_formula_data_label = lbl;
-    h_formula_data_remaining_branches = rm_br;
-    h_formula_data_pos = pos}) ->
+  | DataNode ({ h_formula_data_node = p;
+                h_formula_data_label = lbl;
+                h_formula_data_remaining_branches = rm_br;
+                h_formula_data_pos = pos}) ->
         let i = ("addr"^(fresh_trailer ())) in
         let vi = CP.SpecVar (CP.type_of_spec_var p, i, Unprimed) in
         let non_zero = match rm_br with
@@ -1084,13 +1092,13 @@ and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:b
     formula_base_perm = pr;
     formula_base_pos = pos}) -> 
         (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-        unfold_baref prog h p pr fl v pos b [] do_unsat 
+        unfold_baref prog h p pr fl v pos b [] true do_unsat 
   | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
         let rf = rename_bound_vars f in
         let qvars, baref = split_quantifiers rf in
         let h, p, pr, fl, b, t = split_components baref in
         (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-        let uf = unfold_baref prog h p pr fl v pos b qvars do_unsat in
+        let uf = unfold_baref prog h p pr fl v pos b qvars true do_unsat in
 	    uf
   | Or ({formula_or_f1 = f1;
     formula_or_f2 = f2;
@@ -1155,8 +1163,8 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	      formula_of_heap_fl f fl pos
   | Star ({h_formula_star_h1 = f1;
            h_formula_star_h2 = f2}) ->
-        let uf1 = unfold_heap prog f1 aset v fl pos in
-        let uf2 = unfold_heap prog f2 aset v fl pos in
+        let uf1 = unfold_heap prog f1 aset v fl do_perm_norm pos in
+        let uf2 = unfold_heap prog f2 aset v fl do_perm_norm pos in
 	    normalize_combine uf1 uf2 do_perm_norm pos
   | _ -> formula_of_heap_fl f fl pos
 
@@ -4134,73 +4142,154 @@ let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)
 
   
   
-let normalize_perm prog (c:formula):formula = 
+let normalize_perm_d prog (c:formula):formula = 
   let rec heap_lin f = match f with
     | Star h -> (heap_lin h.h_formula_star_h1)@(heap_lin h.h_formula_star_h2)
     | _ -> [f] in
     
-  let test_need_unfold v1 asets v2= match v2 with 
-    | DataNode in
+  let test_need_unfold v1 aset v2= 
+    match v2 with 
+    | DataNode d -> List.exists (CP.eq_spec_var d.h_formula_data_node) aset
+    | ViewNode v -> List.exists (CP.eq_spec_var v.h_formula_view_node) aset 
+    | _ -> false in
     
-  let rec needs_unfold_lh pr_lin po_lin asets = match po_lin with
-    | [] -> ([],[])
-    | ((ViewNode v):: t)-> 
-        let v_vars = 
-        let t = (List.exists (test_need_unfold v asets) pr_lin) || (List.exists (test_need_unfold v asets) t) in
-        let (nl1,nl2) = needs_unfold (h::pr_lin) t asets in
-        if t then ((ViewNode v)::nl1,nl2) else (nl1,(ViewNode v)::nl2) in
-    | ( h :: t)-> 
-        let nl1,nl2 = needs_unfold (h::pr_lin) t asets in
-        (nl1,h::nl2) in
+  let group_nodes lh asets  = 
+    let rec helper lh = match lh with
+      | [] -> []
+      | (h::t) -> 
+        let tm, nr = match h with
+          | ViewNode v -> 
+              let v_node = v.h_formula_view_node in
+              let aset' = Context.get_aset asets v_node in
+              let aset = if CP.mem v_node aset' then aset' else v_node :: aset' in  
+              List.partition (test_need_unfold v_node aset) t 
+          | DataNode d -> 
+              let d_node = d.h_formula_data_node in
+              let aset' = Context.get_aset asets d_node in
+              let aset = if CP.mem d_node aset' then aset' else d_node :: aset' in  
+              List.partition (test_need_unfold d_node aset) t 
+          | _ -> ([],t) in
+        (h::tm)::(helper nr) in
+    helper lh in
     
-  let do_unfolds f 
+  let rec soundness_check f = match f with
+    | Or f -> (soundness_check f.formula_or_f1;soundness_check f.formula_or_f2)
+    | Base _
+    | Exists _ ->
+      let qvs,rf = split_quantifiers f in
+      let h, p, pr, fl, b, t = split_components rf in
+      let lin_h = heap_lin h in
+      let asets = Context.alias (MCP.ptr_equations_with_null p) in
+      let r = group_nodes lin_h asets in
+      if List.exists (fun c-> List.length c >1) r then Error.report_error {Error.error_loc = no_pos; Error.error_text ="merge malfunction"} else () in
     
-    
-  
-  (*  unfold_baref prog h p pr fl v pos b qvars false true*)
-  
-  let norm_h (h, p, pr, fl, b, t) = 
-    let lin_h = heap_lin h in
-    let asets = Context.alias (MCP.ptr_equations_with_null p) in
-    (test_h asets lin_h, asets, lin_h) in
-    
-    
-  let rec do_merges f0 = match f0 with
-    | Or f -> mkOr (formula_helper f.formula_or_f1) (formula_helper f.formula_or_f2) f.formula_or_pos
-    | Base f ->
-       let needs_unfold_lh pr_lin po_lin asets 
-       if not (is_complex_heap f.formula_base_heap) then f0
-       else
-        let n_m, asets,lin_h = tester f.formula_base_heap f.formula_base_pure in
-        if not n_m then f 
-        else 
-          let h, p, pr, fl, b, t =  in 
-          norm_h split_components f f.formula_exists_pos b [] asets
-    | Exists f ->  
-       let n_m, asets,lin_h = tester f.formula_exists_heap f.formula_exists_pure in
-       if not n_m then f 
-       else 
-          let qvars, baref = split_quantifiers rf in
-          let h, p, pr, fl, b, t = split_components baref in 
-          norm_h lin_h p pr fl f.formula_exists_pos b qvars asets
-      in
-      
-  let rec do_unfolds f0 = match f0 with
-    | Or f -> mkOr (formula_helper f.formula_or_f1) (formula_helper f.formula_or_f2) f.formula_or_pos
-    | Base f ->
-        let n_m, asets,lin_h = tester f.formula_base_heap f.formula_base_pure in
-        if not n_m then f 
-        else 
-          let h, p, pr, fl, b, t =  in 
-          norm_h split_components f f.formula_exists_pos b [] asets
-    | Exists f ->  
-       let n_m, asets,lin_h = tester f.formula_exists_heap f.formula_exists_pure in
-       if not n_m then f 
-       else 
-          let qvars, baref = split_quantifiers rf in
-          let h, p, pr, fl, b, t = split_components baref in 
-          norm_h lin_h p pr fl f.formula_exists_pos b qvars asets
-      in
-      
+  let do_unfolds fh fp = 
+    let lin_h = heap_lin fh in
+    let asets = Context.alias (MCP.ptr_equations_with_null fp) in
+    let r = List.map (fun c-> 
+            if (List.length c)<=1 then ([],c) 
+            else 
+            let name = get_node_name (List.hd c) in
+            let _ = print_string ("nodes: "^(String.concat ";" (List.map Cprinter.string_of_h_formula c))^"\n") in
+            if (List.for_all (fun c-> (String.compare (get_node_name c) name) ==0) (List.tl c)) then 
+              ([],c)
+            else
+            
+            List.fold_left (fun (a1,a2) c-> match c with
+                | ViewNode v -> (v::a1,a2)
+                | _ -> (a1,c::a2)) ([],[]) c)(group_nodes lin_h asets) in
+    let to_unfold, rest = List.split r in
+    let _ = List.iter (fun c-> print_string ("to_unfold: "^(String.concat ";" (List.map (fun c-> Cprinter.string_of_h_formula (ViewNode c))c))^"\n")) to_unfold in
+    let to_unfold = List.concat to_unfold in
+    let rest = List.fold_left (fun a c-> mkStarH a c no_pos) HTrue (List.concat rest) in  
+    if to_unfold == [] then None
+    else
+      let nf = List.map (fun c-> 
+            unfold_baref (prog,None) (ViewNode c) (MCP.mkMTrue no_pos) (CPr.mkTrue no_pos) (mkTrueFlow ()) 
+            c.h_formula_view_node no_pos [] [] false false) to_unfold in
+      let nf = List.fold_left ( fun a c -> normalize_combine a c false no_pos) (List.hd nf) (List.tl nf) in
+      Some (nf,rest) in
+       
+  let rec fix_unfold f0 = match f0 with
+    | Or f -> mkOr (fix_unfold f.formula_or_f1) (fix_unfold f.formula_or_f2) f.formula_or_pos
+    | Base _
+    | Exists _ -> 
+        let qvs,rf = split_quantifiers f0 in
+        let h, p, pr, fl, b, t = split_components rf in
+        let nh = do_unfolds h p in
+        (match nh with
+          | None -> f0
+          | Some (f,oh) -> 
+              let nbase = mkBase oh p t pr fl b no_pos in
+              let nf =push_exists qvs (normalize_combine f nbase false no_pos) in
+              fix_unfold nf) in
+          
+  let fix_unfold_d f = Util.ho_debug_1 "fix_unfold" Cprinter.string_of_formula Cprinter.string_of_formula fix_unfold f in
+          
+  let rec do_merge f0 = match f0 with
+    | Or f -> (f0,false) 
+    | Base _ 
+    | Exists _ ->  
+        let qvs,rf = split_quantifiers f0 in
+        let h, p, pr, fl, b, t = split_components rf in        
+        let lin_h = heap_lin h in
+        let asets = Context.alias (MCP.ptr_equations_with_null p) in
+        let nhl= group_nodes lin_h asets in
+        let nh,npr,np,nvars,did_m = List.fold_left (fun (ah,apr,ap, avars,did_m) c -> match c with
+          | [] -> (ah,apr,ap,avars,did_m)
+          | h::[]-> (mkStarH ah h no_pos, apr, ap,avars,did_m)
+          | h::tl -> 
+            let name = get_node_name h in
+            (*let _ = print_string ("nodes: "^(String.concat ";" (List.map get_node_name c))^"\n") in*)
+            let _ = if (List.exists (fun c-> (String.compare(get_node_name c) name)<>0) tl) then 
+            Error.report_error { Error.error_loc = no_pos; Error.error_text =" heap consistency issue"}else ()in
+            let prl,args = List.fold_left (fun (a1,a2) c-> match c with
+               | ViewNode v-> (v.h_formula_view_perm::a1, v.h_formula_view_arguments::a2)
+               | DataNode d-> (d.h_formula_data_perm::a1, d.h_formula_data_arguments::a2)
+               | _ -> (a1,a2)) ([],[]) c in
+            let rec pr_constr l = match l with
+              | [] -> Error.report_error { Error.error_loc = no_pos; Error.error_text =" heap2 consistency issue"}
+              | a::[] -> (CPr.mkTrue no_pos, a, [])                
+              | h::t ->
+                let prev_f, prev_v, prev_vl = pr_constr t in
+                let nv = CPr.freshPermVar() in
+                let nfv = CPr.frac_of_var nv in
+                let f = CPr.mkJoin (CPr.frac_of_var h) (CPr.frac_of_var prev_v) nfv no_pos in
+                (CPr.mkAnd f prev_f no_pos, nv, nv::prev_vl) in
+            let npr, nv ,nvl = pr_constr prl in
+            let nh = match h with 
+              | ViewNode v-> ViewNode {v with h_formula_view_perm = nv}
+              | DataNode d-> DataNode {d with h_formula_data_perm = nv}
+              | _ -> h in
+            let refvl = List.hd args in
+            let np = List.fold_left (fun a c-> 
+              let nf = List.fold_left2 ( fun a v1 v2 -> 
+                let eqf = CP.mkEqExp (CP.mkVar v1 no_pos)(CP.mkVar v2 no_pos) no_pos in
+                CP.mkAnd a eqf no_pos ) (CP.mkTrue no_pos) refvl c in
+              CP.mkAnd a nf no_pos) (CP.mkTrue no_pos) (List.tl args) in 
+           let rp = MCP.memoise_add_pure_N ap np in
+           let _ = print_string (" constr: "^(Cprinter.string_of_pure_formula np)^"\n") in
+           let _ = print_string (" after merge: "^(Cprinter.string_of_mix_formula rp)^"\n") in
+            (mkStarH nh ah no_pos,CPr.mkAnd npr apr no_pos ,rp, nvl@avars, true)) (HTrue , CPr.mkTrue no_pos, MCP.mkMTrue no_pos , [],false) nhl in        
+        let r1 = push_exists (nvars@qvs) (mkBase nh (MCP.merge_mems np p true ) t (CPr.mkAnd pr npr no_pos) fl b no_pos) in
+        (r1,did_m) in
+       
+  let rec fix_merges is_fst f0 = match f0 with
+    | Or f -> mkOr (fix_merges is_fst f.formula_or_f1) (fix_merges is_fst f.formula_or_f2) f.formula_or_pos
+    | Base _
+    | Exists _ -> 
+      let f,did = do_merge f0 in
+      if did then (fix_merges false f)
+      else if is_fst then f0 
+      else 
+        let _ = soundness_check f in
+        let r = elim_unsat_all prog f in
+        let _ = print_string ("before elim: "^(Cprinter.string_of_formula f)^"\n") in
+        let _ = print_string ("after elim: "^(Cprinter.string_of_formula r)^"\n") in
+        r in      
+        
   if not !allow_frac_perm then c
-  else do_merges (do_unfolds c)
+  else fix_merges true (fix_unfold_d c)
+  
+let normalize_perm prog f = 
+ Util.ho_debug_1 "normalize_perm " Cprinter.string_of_formula Cprinter.string_of_formula (fun c-> normalize_perm_d prog c) f 

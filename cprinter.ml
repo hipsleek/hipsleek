@@ -462,7 +462,7 @@ let pr_perm_formula (e:Pr.perm_formula) =
         let args = arg1@arg2 in
           pr_list_op op_or f_b args
      | Pr.Join (f1,f2,f3,_) ->
-        (fmt_string (string_of_perm true f1)); fmt_string("@"); (fmt_string (string_of_perm true f2)); fmt_string("=");
+        (fmt_string (string_of_perm true f1)); fmt_string("+p+"); (fmt_string (string_of_perm true f2)); fmt_string("=");
         (fmt_string (string_of_perm true f3))
      | Pr.Eq (f1,f2,_) ->  fmt_string (string_of_perm true f1); fmt_string op_eq ; fmt_string (string_of_perm true f2)
      | Pr.Exists (vl, f, _) ->
@@ -1246,6 +1246,7 @@ let pr_view_decl v =
   fmt_open_vbox 1;
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
+  pr_vwrap  "mat_vars: " pr_list_of_spec_var v.view_materialized_vars;
   pr_vwrap  "inv: "  pr_mix_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)->pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);

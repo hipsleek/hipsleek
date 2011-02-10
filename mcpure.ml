@@ -1332,7 +1332,7 @@ let memoise_add_pure_P (f:mix_formula) (pf:formula) = match f with
   
 let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
   | MemoF f -> MemoF (simpl_memo_pure_formula b_f_f p_f_f f tp_simp)
-  | OnePF f -> OnePF (p_f_f f)
+  | OnePF f -> OnePF (tp_simp f)
  
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)

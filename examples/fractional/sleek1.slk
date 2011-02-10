@@ -1,0 +1,16 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll1<n,pr> == self = pr & n = 0 
+	or self::node<next = r> * pr::node<_,_>* r::ll<n - 1>
+	inv n >= 0.
+
+
+checkentail x::node<_,_> * x::node<_,_>  |- 1>2.
+
+checkentail x::ll<n> * x::ll<n> & n > 1 |- 1>2.
+
+checkentail x::node<_,_> * x::ll<n> & n > 1 |- 1>2.

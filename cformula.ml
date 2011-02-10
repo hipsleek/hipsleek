@@ -619,7 +619,7 @@ and mkETrue flowt pos = EBase({
 		 formula_ext_pos = pos})
 		 
 and mkOr f1 f2 pos =
-	let rec liniarize_or c = match c with
+	(*let rec liniarize_or c = match c with
 		| Or f -> 
 			let p11,p12,p13 = liniarize_or f.formula_or_f1 in
 			let p21,p22,p23 = liniarize_or f.formula_or_f2 in
@@ -628,7 +628,7 @@ and mkOr f1 f2 pos =
 		| Base f -> 
 			if (isAnyConstFalse c) then ([],[c],[])
 			else if (isAnyConstTrue c) then ([c],[],[])
-			else ([],[],[c]) in
+			else ([],[],[c]) in*)
   if isStrictConstTrue f1 || isStrictConstTrue f2 then
 	mkTrue (mkTrueFlow ()) pos
   else if isAnyConstFalse f1 then f2
