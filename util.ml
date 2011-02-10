@@ -1530,6 +1530,9 @@ let empty_dset () : 'a d_set = []
 (* an empty difference set *)
 let empty_dset_str (f:'a->string) : 'a d_set_str = ([],f)
 
+(* one list difference set *)
+let one_list_dset (e:'a list) : 'a d_set = [e]
+
 (* a singleton difference set *)
 let singleton_dset (e:'a) : 'a d_set = [[e]]
 

@@ -1007,7 +1007,7 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
     (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-    let (xform', xform_b, addr_vars', _) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
+    let (xform', xform_b, addr_vars', ms) = Solver.xpure_symbolic prog (C.formula_of_unstruc_view_f vdef) in
     let addr_vars = CP.remove_dups_svl addr_vars' in
 	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
@@ -1029,6 +1029,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
     then
       (vdef.C.view_x_formula <- (xform, xform_b);
       vdef.C.view_addr_vars <- addr_vars;
+      vdef.C.view_baga <- (match ms.Cformula.mem_formula_mset with | [] -> [] | h::_ -> h) ;
       compute_view_x_formula prog vdef (n - 1))
     else
       Err.report_error
@@ -1134,6 +1135,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                C.view_formula = cf;
                C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
                C.view_addr_vars = [];
+               C.view_baga = [];
                C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
                C.view_un_struc_formula = n_un_str;
                C.view_base_case = bc;

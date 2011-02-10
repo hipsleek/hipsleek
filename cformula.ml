@@ -963,15 +963,7 @@ and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : form
   let f2 = subst st2 f1 in
 	f2
   
-(*
-and subst_var_list_avoid_capture fr t svs = 
-  let fresh_fr = fresh_spec_vars fr in
-  let st1 = List.combine fr fresh_fr in
-  let st2 = List.combine fresh_fr t in
-  let svs1 = subst_var_list st1 svs in
-  let svs2 = subst_var_list st2 svs1 in
-	svs2
-*)
+
 and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
   | [] -> []
   | sv :: rest ->
