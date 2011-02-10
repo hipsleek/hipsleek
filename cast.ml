@@ -49,7 +49,7 @@ and view_decl = { view_name : ident;
 				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
-				  view_prune_invariants : (formula_label list * (* P.spec_var CP.baga * *) P.b_formula list) list ;
+				  view_prune_invariants : (formula_label list * (P.spec_var Util.baga * P.b_formula list)) list ;
           view_raw_base_case: Cformula.formula option;}
   
 and proc_decl = { proc_name : ident;
@@ -627,9 +627,21 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 *)
 let lookup_view_invs rem_br v_def = 
   try 
-    snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)
+    snd(snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants))
   with | Not_found -> []
 
+
+let lookup_view_invs_with_subs rem_br v_def zip  = 
+  try 
+    let v=snd(snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)) in
+    List.map (P.b_apply_subs zip) v
+  with | Not_found -> []
+
+let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
+  try 
+    let v=fst(snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)) in
+    P.subst_var_list_avoid_capture from_v to_v v
+  with | Not_found -> []
 
 let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
   | p :: rest -> begin

@@ -721,7 +721,7 @@ let rec pr_mem_formula  (e : mem_formula) =
     | h :: r ->
 	fmt_string "[";
 	fmt_string (List.fold_left 
-		      (fun y x -> (y ^ ("(" ^ (string_of_spec_var ((*fst*) x)) (*^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x))*) ^ ")"))) 
+		      (fun y x -> (y ^ ( (string_of_spec_var ((*fst*) x)) (*^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x))*) ^ ","))) 
 		      "" 
 		      h);
 	fmt_string "]";
@@ -1238,10 +1238,11 @@ let pr_view_decl v =
   f v.view_base_case;
   pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
-  pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,c2)-> 
+  pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,(ba,c2))-> 
             let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
+            let b = string_of_spec_var_list ba in
             let d = String.concat ";" (List.map string_of_b_formula c2) in
-            fmt_string ("{"^s^"} -> ["^d^"]")) c) v.view_prune_invariants;
+            fmt_string ("{"^s^"} -> "^b^"=["^d^"]")) c) v.view_prune_invariants;
   fmt_close_box ();
   pr_mem:=true
 

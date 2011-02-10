@@ -10,11 +10,12 @@ open Globals
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
-
   
 and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
+
+type baga_sv = spec_var Util.baga
 
 type var_aset = spec_var Util.eq_set
 

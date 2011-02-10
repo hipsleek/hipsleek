@@ -1581,7 +1581,14 @@ let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
  s1@s2
 
 (*  returns d1*d2 *)
-let star_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2
+let star_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = (* d1@d2 *)
+  let helper d1 d2 = List.concat (List.map (fun x -> List.map (fun y -> x@y) d2 ) d1)
+  in
+  match d1,d2 with
+    | [],[] -> []
+    | [],d2 -> d2
+    | d1,[] -> d1
+    | d1,d2 -> helper d1 d2
 
 (*  returns d1/\d2 *)
 let conj_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2

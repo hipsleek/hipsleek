@@ -4,16 +4,18 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
 	inv n >= 0.
 
+/*
 checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m=0  |-  x!=y. 
 print residue.
 // x * y
 // Valid
 
 
-checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & x!=y. 
+checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) . 
 print residue.
 // x * y
 // Valid
+*/
 
 checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- y!=x. 
 print residue.
