@@ -473,10 +473,12 @@ $output_file = "log";
 					#["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
 				        #["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid."],
-                                        ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid.Valid."],
-			                ["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+                                        ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
+			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
+			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
 			                ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
-			                ["imm/imm4.slk","Valid.Fail."]]				
+			                ["imm/imm4.slk","Valid.Fail."],
+			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
 			);
 if($timings){
     $mainSum = 0.0;

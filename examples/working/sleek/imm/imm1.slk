@@ -1,4 +1,5 @@
 
+
 data node { int val ; node next }.
 pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
@@ -38,9 +39,6 @@ print residue.
 // t@I; z
 // Valid
 
-checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & x!=y. 
-print residue.
-// x * y
-// Valid
+
 
 
