@@ -2331,6 +2331,20 @@ let combine_branch b (f, l) =
   | s -> try And (f, List.assoc b l, no_pos) with Not_found -> f
 ;;
 
+let merge_branches_with_common l1 l2 cf =
+  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let map_fun branch =
+    try 
+      let l1 = List.assoc branch l1 in
+      try
+        let l2 = List.assoc branch l2 in
+        (branch, mkAnd cf (mkAnd l1 l2 no_pos) no_pos)
+      with Not_found -> (branch, l1)
+    with Not_found -> (branch, List.assoc branch l2)
+  in
+  List.map map_fun branches
+;;
+
 let merge_branches l1 l2 =
   let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
@@ -2345,7 +2359,7 @@ let merge_branches l1 l2 =
   List.map map_fun branches
 ;;
 
-let or_branches l1 l2 =
+let or_branches_old l1 l2 =
   let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
@@ -2355,6 +2369,20 @@ let or_branches l1 l2 =
         (branch, mkOr l1 l2 None no_pos)
       with Not_found -> (branch, l1)
     with Not_found -> (branch, List.assoc branch l2)
+  in
+  List.map map_fun branches
+;;
+
+let or_branches l1 l2 =
+  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let map_fun branch =
+    try 
+      let l1 = List.assoc branch l1 in
+      try
+        let l2 = List.assoc branch l2 in
+        (branch, mkOr l1 l2 None no_pos)
+      with Not_found -> (branch, mkTrue no_pos)
+    with Not_found -> (branch, mkTrue no_pos )
   in
   List.map map_fun branches
 ;;
