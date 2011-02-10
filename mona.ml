@@ -771,7 +771,7 @@ let check fd timeout pid : bool =
   try begin
     let tup = Util.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
     if tup (*Unix.select [Unix.descr_of_in_channel fd] [] [] timeout)*) = ([],[],[]) then begin
-        print_endline "\nMOna timeout reached."; flush stdout; false
+        print_endline "\nMona timeout reached."; flush stdout; false
     end else 
     let r = input_line fd in
     let err= "Error in file " in 

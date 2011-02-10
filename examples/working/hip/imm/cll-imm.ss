@@ -41,17 +41,14 @@ void insert(node x, int v)
 	
 	requires x::hd<n> & n > 0 
 	ensures x::hd<n+1>;
-    //requires x::node<w,q> 
-    //ensures x::node<w,r> * r::node<v,q>;
+    requires x::node<w,q> 
+    ensures x::node<w,r> * r::node<v,q>;
 {
 	node tmp;
 
 	tmp = new node(v, x.next);
 
 	x.next = tmp;
-	dprint;
-	//assert x'::hd<m>;
-	//assume false;
 }
 
 
@@ -59,8 +56,10 @@ void insert(node x, int v)
 /* functions to count the number of nodes in a circular list */
 int count_rest(node rest, node h)
 
-	requires rest::cll<p, n> & h = p 
-	ensures rest::cll<p, n> & res = n; 
+//	requires rest::cll<p, n> & h = p 
+//	ensures rest::cll<p, n> & res = n; 
+	requires rest::cll<p, n>@I & h = p 
+	ensures  res = n; 
 
 {
 	int n;
@@ -78,8 +77,10 @@ int count_rest(node rest, node h)
 
 int count(node x)
 	
-	requires x::hd<n>
-	ensures x::hd<n> & res = n; 
+//	requires x::hd<n>
+//	ensures x::hd<n> & res = n; 
+	requires x::hd<n>@I
+	ensures res = n; 
 	
 {
 	int n;
@@ -101,7 +102,12 @@ void delete(ref node x)
 
 	requires x::hd<n> & n > 0
 	ensures x'::hd<n-1>;
-
+    requires x::node<v,r>
+    case {
+      x=r -> ensures x::node<v,r> & x'=null; // x is a leak!
+      x!=r -> requires r::node<w,q>@I
+              ensures x'::node<v,q>; // r is a leak!
+     }
 {
 	node tmp;
 
