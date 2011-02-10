@@ -1539,6 +1539,19 @@ let singleton_dset (e:'a) : 'a d_set = [[e]]
 (* a singleton difference set *)
 let singleton_dset_str (f:'a->string) (e:'a) : 'a d_set_str = ([[f e]],f)
 
+
+let is_dupl_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = 
+  let rec helper xs =
+    match xs with
+      | [] -> false
+      | x::xs1 -> match xs1 with
+          | [] -> false
+          | _ -> if (is_dupl_baga eq x) then true else helper xs1
+  in helper xs
+
+(* false result denotes contradiction *)
+let is_sat_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = not(is_dupl_dset eq xs)
+
 (* returns a list of difference sets for element e *)
 let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
   (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
