@@ -374,12 +374,13 @@ and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branc
             let (ph, phb, _) = xpure_heap_mem_enum prog h 1 in
             let n_p = MCP.merge_mems p ph true in           
             let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_p) in
-            (* let n_br = CP.merge_branches_with_common br phb cf in   *)    
-            let phb = CP.merge_branches phb br in
-            let rb = if (List.length phb) = 0 then []
-            else
-              let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue pos) false true ph) false true p in
-              List.map (fun (l, x) -> (l, CP.mkAnd x r pos)) phb in
+            let rb = CP.merge_branches_with_common br phb cf [] in   
+            (* let phb = CP.merge_branches phb br in *)
+            (* let rb = if (List.length phb) = 0 then [] *)
+            (* else *)
+            (*   let r = MCP.fold_mem_lst (CP.mkTrue pos) false true n_p in *)
+            (*   (\* let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue pos) false true ph) false true p in *\) *)
+            (*   List.map (fun (l, x) -> (l, CP.mkAnd x r pos)) phb in *)
             (n_p,rb)
       | Exists ({ formula_exists_qvars = qvars;
 		formula_exists_heap = qh;
@@ -387,16 +388,18 @@ and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branc
 		formula_exists_branches = br;
 		formula_exists_pos = pos}) ->
             let (pqh, pqhb, _) = xpure_heap_mem_enum prog qh 1 in
-            let pqhb = CP.merge_branches pqhb br in
-            let sqvars = (* List.map CP.to_int_var *) qvars in
+            (*let pqhb = CP.merge_branches pqhb br in
+            let sqvars = (* List.map CP.to_int_var *) qvars in*)
             let tmp1 = MCP.merge_mems qp pqh true in
-            let r_f = MCP.memo_pure_push_exists sqvars tmp1 in
-            let rb = if (List.length pqhb)=0 then []
-            else 
-              let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue pos) false true pqh) false true qp in     
-              let wrap_exists f = List.fold_left (fun f -> fun qv -> CP.Exists (qv, f, None, pos)) f sqvars in
-              (List.map (fun (l, x) -> (l, wrap_exists (CP.mkAnd x r pos))) pqhb) in
-	        (r_f, rb)
+            let cf2 = MCP.memo_pure_push_exists qvars tmp1 in
+            let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true tmp1) in
+            let rb = CP.merge_branches_with_common pqhb br cf qvars in
+            (* let rb = if (List.length pqhb)=0 then [] *)
+            (* else *)
+            (*   let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue pos) false true pqh) false true qp in *)
+            (*   let wrap_exists f = List.fold_left (fun f -> fun qv -> CP.Exists (qv, f, None, pos)) f sqvars in *)
+            (*   (List.map (fun (l, x) -> (l, wrap_exists (CP.mkAnd x r pos))) pqhb) in *)
+	        (cf2, rb)
   in 
   let pf, pb = xpure_helper prog f0 in
   (pf, pb, mset)
@@ -502,12 +505,13 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
           let ph, br, addrs, _ = xpure_heap_symbolic prog h 1 in
           let n_p = MCP.merge_mems p ph true in
           let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true n_p) in
-          let n_br = CP.merge_branches br fbr in      
-          let r_br = if (List.length n_br)=0 then []
-          else
-            let res_form = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true p in
-            List.map (fun (l, x) -> (l, CP.mkAnd x res_form pos)) n_br in
-	      (n_p, r_br, addrs)
+          (* let n_br = CP.merge_branches br fbr in       *)
+          let rb = CP.merge_branches_with_common br fbr cf [] in   
+          (* let r_br = if (List.length n_br)=0 then [] *)
+          (* else *)
+          (*   let res_form = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true ph) false true p in *)
+          (*   List.map (fun (l, x) -> (l, CP.mkAnd x res_form pos)) n_br in *)
+	      (n_p, rb, addrs)
     | Exists ({ formula_exists_qvars = qvars;
 	  formula_exists_heap = qh;
 	  formula_exists_pure = qp;
@@ -518,16 +522,18 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
           let addrs = Util.difference_f CP.eq_spec_var addrs' sqvars in
           let tmp1 = MCP.merge_mems qp pqh true in
           let res_form = MCP.memo_pure_push_exists sqvars tmp1 in
-          let n_br = CP.merge_branches br fbr in      
-          let wrap_exists f =
-            let fv = CP.fv f in
-            let sqvars = List.filter (fun sv -> List.mem sv fv) sqvars in
-            List.fold_left (fun f -> fun qv -> CP.Exists (qv, f, None, pos)) f sqvars
-          in
-          let rb = if (List.length n_br)=0 then []
-          else 
-            let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true pqh) false true qp in
-            List.map (fun (l, x) -> (l, wrap_exists (CP.mkAnd x r pos))) n_br in
+          let cf = (MCP.fold_mem_lst (CP.mkTrue no_pos) false true tmp1) in
+          (* let n_br = CP.merge_branches br fbr in  *)     
+          let rb = CP.merge_branches_with_common br fbr cf sqvars in   
+          (* let wrap_exists f = *)
+          (*   let fv = CP.fv f in *)
+          (*   let sqvars = List.filter (fun sv -> List.mem sv fv) sqvars in *)
+          (*   List.fold_left (fun f -> fun qv -> CP.Exists (qv, f, None, pos)) f sqvars *)
+          (* in *)
+          (* let rb = if (List.length n_br)=0 then [] *)
+          (* else  *)
+          (*   let r = MCP.fold_mem_lst (MCP.fold_mem_lst (CP.mkTrue no_pos) false true pqh) false true qp in *)
+          (*   List.map (fun (l, x) -> (l, wrap_exists (CP.mkAnd x r pos))) n_br in *)
 	      (res_form, rb, addrs)
   in 
   let pf, pb, pa = xpure_symbolic_helper prog f0 in
