@@ -330,19 +330,19 @@ let pop_ho (f:'a->'b) (e:'a) : 'b =
 (* string representation of call stack of ho_debug *)
 let string_of_ctr_stk () : string =
   let h = !proc_ctr_stk in
-  String.concat ";" (List.map string_of_int h)
+  String.concat "$" (List.map string_of_int h)
 
 (* returns @n and @n1;n2;.. for a new call being debugged *)
-let new_proc_ctr (os:string) : (string * string) = 
+let new_proc_ctr (loop_d:bool) (os:string) (pr1:'a->string) (e1:string) : (string * string) = 
   proc_ctr := !proc_ctr+1 ; 
   proc_ctr_stk := !proc_ctr::!proc_ctr_stk;
-  let s = os^"@"^(string_of_int !proc_ctr) in
-  let h = os^"@"^string_of_ctr_stk() in
-  s,h
+  let s = os^"$"^(string_of_int !proc_ctr) in
+  let h = os^"$"^string_of_ctr_stk() in
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
+    s,h
  
 let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
-  let s,h = new_proc_ctr s in
-  (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
+  let s,h = new_proc_ctr loop_d s pr1 e1 in
   let r = try
     pop_ho f e1 
   with ex -> 
@@ -350,10 +350,10 @@ let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->strin
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
-  let _ = print_string (h^" inp :"^(pr1 e1)^"\n") in
-  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
-  (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
-  r
+    let _ = print_string (h^" inp :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
+    r
 
 let ho_debug_1_opt  (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
   ho_debug_1_opt_aux false s pr1 pr_o test f e1
@@ -383,12 +383,11 @@ let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z l
   ho_debug_1 s pr_i (string_of_list pr_o) f e 
 
 let ho_debug_2_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
-  let s,h = new_proc_ctr s in
-  (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
+  let s,h = new_proc_ctr loop_d s pr1 e1 in
   let r = try
     pop_ho (f e1) e2 
   with ex -> 
-      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (h^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
@@ -411,12 +410,11 @@ let no_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f
   f e1 e2
 
 let ho_debug_3_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
-  let s,h = new_proc_ctr s in
-  (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
+  let s,h = new_proc_ctr loop_d s pr1 e1 in
   let r = try
     pop_ho (f e1 e2) e3
   with ex -> 
-      let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+      let _ = print_string (h^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
@@ -440,10 +438,11 @@ let loop_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (
 let no_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
   f e1 e2 e3
 
-let ho_debug_4_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
-    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+let ho_debug_4_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
+      (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  let s,h = new_proc_ctr loop_d s pr1 e1 in
   let r = try
-    f e1 e2 e3 e4
+    pop_ho (f e1 e2 e3) e4
   with ex -> 
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
@@ -461,9 +460,17 @@ let ho_debug_4_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string)
   else
     r
 
+let ho_debug_4_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  ho_debug_4_opt_aux false s pr1 pr2 pr3 pr4 pr_o test f e1 e2 e3 e4
+
 let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
     (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
-  ho_debug_4_opt s pr1 pr2 pr3 pr4 pr_o (fun _ -> true) f e1 e2 e3 e4
+  ho_debug_4_opt_aux false s pr1 pr2 pr3 pr4 pr_o (fun _ -> true) f e1 e2 e3 e4
+
+(* let loop_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string)  *)
+(*     (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z = *)
+(*   ho_debug_4_opt_aux true s pr1 pr2 pr3 pr4 pr_o (fun _ -> true) f e1 e2 e3 e4 *)
 
 let no_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
     (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
@@ -539,8 +546,8 @@ let no_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
    f e1 e2 e3 e4 e5 e6
 
-let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
-  ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
+(* let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z = *)
+(*   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3  *)
 
 let ho_debug_1_nth n s =  let str=(s^"#"^n) in ho_debug_1 str
 let ho_debug_2_nth n s =  let str=(s^"#"^n) in ho_debug_2 str
@@ -1529,10 +1536,10 @@ let rename_eset_eq_with_pr_allow_clash (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a
   let r=rename_eset_eq2_allow_clash pr (eq) f s in
   (r,eq)
 
-let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
-  ho_debug_1 "rename_eset_eq" 
-    (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c)
-    (fun c-> rename_eset_eq f c) (s,eq)
+(* let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set =  *)
+(*   ho_debug_1 "rename_eset_eq"  *)
+(*     (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c) *)
+(*     (fun c-> rename_eset_eq f c) (s,eq) *)
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm

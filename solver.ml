@@ -3271,7 +3271,7 @@ and swap_heap (f : formula) (new_h : h_formula) pos : (formula * h_formula) =
     | _ -> report_error no_pos ("solver.ml: No LHS disj should reach this point\n  ")
 
 
-and heap_entail_split_lhs_phases_debug
+and heap_entail_split_lhs_phases(*_debug*)
       p is_folding is_universal ctx0 conseq d
       pos : (list_context * proof) =
   Util.ho_debug_2 "heap_entail_split_lhs_phases"
@@ -3279,10 +3279,10 @@ and heap_entail_split_lhs_phases_debug
       (fun _ -> "RHS")
       (* (Cprinter.string_of_formula) *)
       (fun _ -> "OUT")
-      (fun ctx0 conseq -> heap_entail_split_lhs_phases p is_folding is_universal ctx0 conseq d pos) ctx0 conseq
+      (fun ctx0 conseq -> heap_entail_split_lhs_phases_x p is_folding is_universal ctx0 conseq d pos) ctx0 conseq
 
 (* entailment method for splitting the antecedent *)
-and heap_entail_split_lhs_phases
+and heap_entail_split_lhs_phases_x
       (prog : prog_decl) 
       (is_folding : bool) 
       (is_universal : bool)
