@@ -2856,12 +2856,12 @@ and fv_rhs (lhs : CF.formula) (rhs : CF.formula) : CP.spec_var list =
 
 (*__________________*)
 
-and split_phase_lhs h = Util.ho_debug_1 "split_phase(lhs)"
+and split_phase_debug_lhs h = Util.ho_debug_1 "split_phase(lhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
 
-and split_phase_rhs h = Util.ho_debug_1 "split_phase(rhs)"
+and split_phase_debug_rhs h = Util.ho_debug_1 "split_phase(rhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
@@ -2939,7 +2939,7 @@ and heap_entail_split_rhs_phases
       (drop_read_phase : bool)
       pos : (list_context * proof) =
   
-  let rec heap_n_pure_entail_x ctx0 h p func = 
+  let rec heap_n_pure_entail ctx0 h p func = 
     (* let _  = print_string("*************************************************\n") in *)
     (* let _ = print_string("entailing the heap first:\n") in *)
     (* let _  = print_string("*************************************************\n") in *)
@@ -2967,9 +2967,9 @@ and heap_entail_split_rhs_phases
 	        let entail_p_ctx = fold_context_left entail_p_ctx in 
 	        (entail_p_ctx, entail_p_prf)
 
-  and heap_n_pure_entail ctx0 h p func =
+  and heap_n_pure_entail_debug ctx0 h p func =
     Util.ho_debug_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
-        (fun _ -> "?") (fun ctx0 h -> heap_n_pure_entail_x ctx0 h p func) ctx0 h 
+        (fun _ -> "?") (fun ctx0 h -> heap_n_pure_entail ctx0 h p func) ctx0 h 
 
   and heap_n_pure_entail_1 ctx0 h p func = 
         print_string "tracing heap_n_pure_entail_1\n"; (heap_n_pure_entail ctx0 h p func)
@@ -2986,7 +2986,7 @@ and heap_entail_split_rhs_phases
     		})) ctx0
     in
 
-    let h1, h2, h3 = split_phase_rhs h in
+    let h1, h2, h3 = split_phase(*_debug_rhs*) h in
 	(* let _ = print_string *)
 	(*   ("heap_entail_split_rhs: splitting h into: *)
     (*       \n h1 (rhs) = " ^ (Cprinter.string_of_h_formula h1) ^ *)
@@ -3299,7 +3299,7 @@ and heap_entail_split_lhs_phases
          h2 = write phase
          h3 = nested phase 
       *)
-      let h1, h2, h3 = split_phase_lhs h in
+      let h1, h2, h3 = split_phase(*_debug_lhs*) h in
       (* let _ = print_string("heap_entail_split_lhs: splitting h into:\n h1 (lhs) = " ^ (Cprinter.string_of_h_formula h1) ^ "\n h2 (lhs) = " ^ (Cprinter.string_of_h_formula h2) ^ "\n h3 (lhs) = " ^ (Cprinter.string_of_h_formula h3) ^ "\n") in *)
 
       if ((is_true h1) && (is_true h3))
@@ -3955,14 +3955,14 @@ and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
     |  _ ->  Error.report_error 
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
-and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
 Util.ho_debug_3 "solve_ineq_pure_formula "
   (Cprinter.string_of_pure_formula)
   (Cprinter.string_of_mem_formula) 
   (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
-  (fun ante memset conseq -> solve_ineq_pure_formula_x ante memset conseq ) ante memset conseq
+  (fun ante memset conseq -> solve_ineq_pure_formula ante memset conseq ) ante memset conseq
 
-and solve_ineq_pure_formula_x (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with

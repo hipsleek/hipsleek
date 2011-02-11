@@ -244,7 +244,7 @@ let imply_timeout = ref 10.
 let report_error (pos : loc) (msg : string) =
   print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
-  failwith "Error detected"
+  failwith "Error detected - globals.ml"
 
 let branch_point_id = ref 0
 

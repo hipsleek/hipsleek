@@ -927,7 +927,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
                    (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
     let dups = U.find_dups all_names in
     if not (U.empty dups) then
-		 (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected")
+		 (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
     else (
 		   let prog = case_normalize_program prog in
 		   let tmp_views = order_views prog.I.prog_view_decls in

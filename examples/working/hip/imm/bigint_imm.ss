@@ -228,8 +228,10 @@ node shift_left(node x)
   requires x::bigint<v>@I
   ensures res::bigint<v*10>@I;
 {
-  if (x == null) return x;
-  return new node(0, x);
+  if (x == null) { assume false; return x;}
+  node t = new node(0, x);
+  dprint;
+  return t;
 }
 
 node mult(node x, node y)

@@ -578,6 +578,7 @@ let check_proc_wrapper prog proc =
       print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      Printexc.print_backtrace stdout;
       false
     end else
       raise e
