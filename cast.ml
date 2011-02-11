@@ -105,6 +105,7 @@ and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct
 		 exp_bind_bound_var : typed_ident;
 		 exp_bind_fields : typed_ident list;
 		 exp_bind_body : exp;
+		 exp_bind_imm : bool;
 		 exp_bind_path_id : control_path_id;
 		 exp_bind_pos : loc }
 
@@ -776,6 +777,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
+							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
@@ -790,6 +792,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 			  if U.empty rest then
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
@@ -805,6 +808,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;

@@ -104,6 +104,8 @@ let this = "this"
 
 (* command line options *)
 
+let instantiation_variants = ref 0
+
 let omega_simpl = ref true
 
 let source_files = ref ([] : string list)
@@ -119,6 +121,8 @@ let elim_unsat = ref false
 let lemma_heuristic = ref false
 
 let elim_exists = ref true
+
+let allow_imm = ref false
 
 let print_proc = ref false
 
@@ -224,7 +228,6 @@ let enable_incremental_proving = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
   
-
 let add_count (t: int ref) = 
 	t := !t+1
 

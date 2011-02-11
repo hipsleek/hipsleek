@@ -1,5 +1,4 @@
-(* test main branch *)
-
+(* test - added to immutability branch *)
 (******************************************)
 (* command line processing                *)
 (******************************************)
@@ -78,8 +77,8 @@ let process_source_full source =
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 
       if !Globals.verify_callees then begin
-	    let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
-	    Globals.procs_verified := tmp
+	let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
+	Globals.procs_verified := tmp
       end in
     let _ = Util.pop_time "Translating to Core" in
     (* let ptime2 = Unix.times () in
@@ -87,32 +86,32 @@ let process_source_full source =
        let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
     let _ =
       if !Scriptarguments.comp_pred then begin
-	    let _ = print_string ("Compiling predicates to Java..."); flush stdout in
-	    let compile_one_view vdef = 
-	      if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
-	        let data_def, pbvars = Predcomp.gen_view cprog vdef in
-	        let java_str = Java.java_of_data data_def pbvars in
-	        let jfile = open_out (vdef.Cast.view_name ^ ".java") in
-	        print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
-	        output_string jfile java_str;
-	        close_out jfile
-	      else
-	        ()
-	    in
-	    ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-	    print_string ("\nDone.\n"); flush stdout;
-	    exit 0
+	let _ = print_string ("Compiling predicates to Java..."); flush stdout in
+	let compile_one_view vdef = 
+	  if (!Scriptarguments.pred_to_compile = ["all"] || List.mem vdef.Cast.view_name !Scriptarguments.pred_to_compile) then
+	    let data_def, pbvars = Predcomp.gen_view cprog vdef in
+	    let java_str = Java.java_of_data data_def pbvars in
+	    let jfile = open_out (vdef.Cast.view_name ^ ".java") in
+	    print_string ("\n\tWriting Java file " ^ vdef.Cast.view_name ^ ".java");
+	    output_string jfile java_str;
+	    close_out jfile
+	  else
+	    ()
+	in
+	ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
+	print_string ("\nDone.\n"); flush stdout;
+	exit 0
       end 
     in
     let _ =
       if !Scriptarguments.rtc then begin
-	    Rtc.compile_prog cprog source;
-	    exit 0
+	Rtc.compile_prog cprog source;
+	exit 0
       end
     in
     let _ = Util.pop_time "Preprocessing" in
     (try
-      ignore (Typechecker.check_prog cprog);
+    ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected at main "^"\n");
@@ -120,6 +119,7 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
+    
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
     print_string ("\n"^(string_of_int (List.length !Globals.false_ctx_line_list))^" false contexts at: ("^

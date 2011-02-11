@@ -954,7 +954,6 @@ module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 
-
 let ngs_union gs = 
   List.fold_left IGO.union IG.empty gs 
 

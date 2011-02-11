@@ -103,6 +103,8 @@ let op_and_short = "&"
 let op_or_short = "|"  
 let op_not_short = "!"  
 let op_star_short = "*"  
+let op_phase_short = ";"  
+let op_conj_short = "&"  
 let op_f_or_short = "or"  
 let op_lappend_short = "APP"
 let op_cons_short = ":::"
@@ -127,6 +129,8 @@ let op_and = " & "
 let op_or = " | "  
 let op_not = "!"  
 let op_star = " * "  
+let op_phase = " ; "  
+let op_conj = " & "  
 let op_f_or = "or" 
 let op_lappend = "append"
 let op_cons = ":::"
@@ -417,10 +421,15 @@ let string_of_spec_var x =
 	    | Primed -> "'" 
 	    | Unprimed -> "" )
 
+let string_of_imm imm = 
+  if imm then "@I" else "@M"
+
 let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
+let pr_imm x = fmt_string (string_of_imm x)
+
 
 (** check if top operator of e is associative and 
    return its list of arguments if so *)
@@ -630,7 +639,7 @@ let rec pr_pure_formula  (e:P.formula) =
         pr_formula_label_opt lbl; 
 	    fmt_string "forall("; pr_spec_var x; fmt_string ":";
 	    pr_pure_formula f; fmt_string ")"
-    | P.Exists (x, f,lbl, l) -> 
+    | P.Exists (x, f, lbl, l) -> 
         pr_formula_label_opt lbl; 
 	    fmt_string "exists1("; pr_spec_var x; fmt_string ":";
 	    pr_pure_formula f; fmt_string ")"
@@ -706,6 +715,20 @@ let pr_prunning_conditions cnd pcond = match cnd with
       fmt_string" )->"; 
       pr_formula_label_list c2;) pcond;fmt_string "]") pcond  *)  
 
+(** print a pure formula to formatter *)
+let rec pr_mem_formula  (e : mem_formula) = 
+  match e.mem_formula_mset with
+    | h :: r ->
+	fmt_string "[";
+	fmt_string (List.fold_left 
+		      (fun y x -> (y ^ ("(" ^ (string_of_spec_var ((*fst*) x)) (*^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x))*) ^ ")"))) 
+		      "" 
+		      h);
+	fmt_string "]";
+	pr_mem_formula {mem_formula_mset = r}
+    | [] -> fmt_string ";"
+;;
+
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
   in
@@ -715,8 +738,19 @@ let rec pr_h_formula h =
           let arg2 = bin_op_to_list op_star_short h_formula_assoc_op h2 in
           let args = arg1@arg2 in
             pr_list_op op_star f_b args
+      | Phase ({h_formula_phase_rd = h1; h_formula_phase_rw = h2; h_formula_phase_pos = pos}) -> 
+	  let arg1 = bin_op_to_list op_phase_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_phase_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+            fmt_string "("; pr_list_op op_phase f_b args; fmt_string ")" 
+      | Conj ({h_formula_conj_h1 = h1; h_formula_conj_h2 = h2; h_formula_conj_pos = pos}) -> 
+	  let arg1 = bin_op_to_list op_conj_short h_formula_assoc_op h1 in
+          let arg2 = bin_op_to_list op_conj_short h_formula_assoc_op h2 in
+          let args = arg1@arg2 in
+            pr_list_op op_conj f_b args
       | DataNode ({h_formula_data_node = sv;
                    h_formula_data_name = c;
+		   h_formula_data_imm = imm;
                    h_formula_data_arguments = svs;
                    h_formula_data_pos = pos;
                    h_formula_data_remaining_branches = ann;
@@ -724,9 +758,11 @@ let rec pr_h_formula h =
            pr_formula_label_opt pid;
               pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
+	  pr_imm imm;
           (match ann with | None -> () | Some _ -> fmt_string "[]")
       | ViewNode ({h_formula_view_node = sv; 
                    h_formula_view_name = c; 
+		   h_formula_view_imm = imm;
                    h_formula_view_arguments = svs; 
                    h_formula_view_origins = _;
                    h_formula_view_label = pid;
@@ -737,11 +773,12 @@ let rec pr_h_formula h =
          pr_spec_var sv; 
          fmt_string "::"; 
          pr_angle c pr_spec_var svs  ;
+	 pr_imm imm;
          pr_remaining_branches ann; 
          pr_prunning_conditions ann pcond
       | HTrue -> fmt_bool true
       | HFalse -> fmt_bool false
-
+      | Hole m -> fmt_string ("[" ^ (string_of_int m) ^ "]")
 
 (** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
@@ -757,6 +794,8 @@ let string_of_b_formula (e:P.b_formula) : string =  poly_string_of_pr  pr_b_form
 let printer_of_b_formula (crt_fmt: Format.formatter) (e:P.b_formula) : unit =
   poly_printer_of_pr crt_fmt pr_b_formula e
 
+(** convert mem_formula  to a string via pr_mem_formula *)
+let string_of_mem_formula (e:Cformula.mem_formula) : string =  poly_string_of_pr  pr_mem_formula e
 
 (** convert pure_formula  to a string via pr_pure_formula *)
 let string_of_pure_formula (e:P.formula) : string =  poly_string_of_pr  pr_pure_formula e
@@ -913,7 +952,7 @@ and pr_ext_formula  (e:ext_formula) =
 	     pr_formula_label (y1,y2);
 	     if not(U.empty(x)) then pr_seq_nocut "ref " pr_spec_var x;
 	     fmt_cut();
-	     wrap_box ("B",0) pr_formula b) b
+	     wrap_box ("B",0) pr_formula b) b	 
 	| EVariance {
 			formula_var_label = label;
 			formula_var_measures = measures;
@@ -1051,10 +1090,14 @@ let rec pr_fail_type (e:fail_type) =
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason br ->  pr_fail_estate br
+    | Continuation br ->  fmt_string (" Continuation ! "); pr_fail_estate br
     | Or_Reason _ -> 
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_OR " f_b args
-    | And_Reason _ -> 
+   | Or_Continuation _ -> 
+          let args = bin_op_to_list op_or_short ft_assoc_op e in
+          pr_list_vbox_wrap "CONTINUATION_OR " f_b args 
+   | And_Reason _ -> 
           let args = bin_op_to_list op_and_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_AND " f_b args
 
@@ -1284,8 +1327,6 @@ let rec string_of_spec_var_list l = match l with
   | h::[] -> string_of_spec_var h 
   | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list t)
 ;;
-
-
 
 (*
 let rec string_of_spec = function
@@ -1549,9 +1590,9 @@ Cpure.print_b_formula := string_of_b_formula;;
 Cpure.print_exp := string_of_formula_exp;;
 Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
-Cformula.print_formula :=string_of_formula;;
+Cformula.print_formula := string_of_formula;;
+Cformula.print_h_formula := string_of_h_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
-
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
