@@ -308,34 +308,40 @@ let force_backtrace () : string =
   try raise Exit 
   with e -> Printexc.record_backtrace true;("xxx"^Printexc.get_backtrace ())
 
+(* keep track of calls being traced by ho_debug *)
 let proc_ctr = ref 0
+
+(* stack of calls being traced by ho_debug *)
 let proc_ctr_stk = ref ([]: int list)
 
-
+(* pop last element from call stack of ho debug *)
 let pop_proc_ctr () =
   match !proc_ctr_stk with
     | [] -> () (* error *)
     | v::rest -> proc_ctr_stk := rest
 
+(* call f and pop its trace in call stack of ho debug *)
 let pop_ho (f:'a->'b) (e:'a) : 'b =
   let r = try 
     f e
   with exc -> pop_proc_ctr(); raise exc
   in pop_proc_ctr(); r
 
+(* string representation of call stack of ho_debug *)
 let string_of_ctr_stk () : string =
   let h = !proc_ctr_stk in
   String.concat ";" (List.map string_of_int h)
 
-let new_proc_ctr (loop_d:bool) (os:string) : (string * string) = 
+(* returns @n and @n1;n2;.. for a new call being debugged *)
+let new_proc_ctr (os:string) : (string * string) = 
   proc_ctr := !proc_ctr+1 ; 
   proc_ctr_stk := !proc_ctr::!proc_ctr_stk;
   let s = os^"@"^(string_of_int !proc_ctr) in
-  let h = if loop_d then s else os^"@"^string_of_ctr_stk() in
+  let h = os^"@"^string_of_ctr_stk() in
   s,h
  
 let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
-  let s,h = new_proc_ctr loop_d s in
+  let s,h = new_proc_ctr s in
   (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
   let r = try
     pop_ho f e1 
@@ -377,7 +383,7 @@ let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z l
   ho_debug_1 s pr_i (string_of_list pr_o) f e 
 
 let ho_debug_2_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
-  let s,h = new_proc_ctr loop_d s in
+  let s,h = new_proc_ctr s in
   (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
   let r = try
     pop_ho (f e1) e2 
@@ -405,7 +411,7 @@ let no_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f
   f e1 e2
 
 let ho_debug_3_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
-  let s,h = new_proc_ctr loop_d s in
+  let s,h = new_proc_ctr s in
   (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
   let r = try
     pop_ho (f e1 e2) e3
