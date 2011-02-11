@@ -49,5 +49,6 @@ print residue.
 // x * y
 // Valid
 */
-checkentail x::ll<n> * x::ll<n> & n>0|-  2=1. 
+
+checkentail x::ll<n> * x::ll<n>   |-  x=null & n=0. 
 print residue.

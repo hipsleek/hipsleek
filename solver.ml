@@ -604,6 +604,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
       h_formula_view_arguments = vs;
       h_formula_view_remaining_branches = lbl_lst;
       h_formula_view_pos = pos}) ->
+         (* let _ = print_endline ("xpure_heap_symbolic_i: ViewNode") in*)
           let ba = look_up_view_baga prog c p vs in
           let vdef = look_up_view_def pos prog.prog_view_decls c in
           let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
@@ -618,15 +619,20 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
                     MCP.memo_subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
                   let subst_fun f =
                     let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
-                    CP.subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in           
+                    CP.subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in
+                  (* let _ = print_endline ("xpure_heap_symbolic_i NONE: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in *)
                   (subst_m_fun vinv, List.map (fun (l,x) -> (l, subst_fun x)) vinv_b, ba (*to_addrs*)) 
-            | Some ls -> 
-                         (MCP.mkMTrue no_pos, [], lookup_view_baga_with_subs ls vdef from_svs to_svs))
+            | Some ls ->  
+                  let ba = lookup_view_baga_with_subs ls vdef from_svs to_svs in
+                  (* let _ = print_endline ("xpure_heap_symbolic_i SOME: svl = " ^ (Cprinter.string_of_spec_var_list ba)) in*)
+                         (MCP.mkMTrue no_pos, [], ba))
     | Star ({ h_formula_star_h1 = h1;
       h_formula_star_h2 = h2;
       h_formula_star_pos = pos}) ->
+         (* let _ = print_endline ("xpure_heap_symbolic_i: Star") in*)
           let ph1, b1, addrs1 = helper h1 in
           let ph2, b2, addrs2 = helper h2 in
+         
           (* let all_diff = *)
           (* 	if !no_diff then P.mkTrue no_pos *)
           (* 	else pairwise_diff addrs1 addrs2 pos in *)

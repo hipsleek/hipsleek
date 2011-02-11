@@ -1128,7 +1128,7 @@ and mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
   let fv = fv conseq in 
   let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
   (*check lhs is false*)
-  let n_ante = if (isConstMFalse  ante_disj) then n_ante @ (mkMFalse no_pos) else n_ante in
+ (* let n_ante = if (isConstMFalse  ante_disj) then n_ante @ (mkMFalse no_pos) else n_ante in*)
   (* let _ = print_endline ("mimply_process_ante: n_ante 1"^ (!print_mp_f n_ante) )in*)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
