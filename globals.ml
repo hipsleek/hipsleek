@@ -42,9 +42,9 @@ type mode =
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
+let nonef v = None
 let voidf e = ()
 let voidf2 e f = ()
-let nonef v = None
 let somef v = Some v
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
