@@ -576,10 +576,10 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
 
 
 and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
-  Util.ho_debug_1 "xpure_heap_symbolic" Cprinter.string_of_h_formula 
+  Util.ho_debug_1_opt "xpure_heap_symbolic" Cprinter.string_of_h_formula 
       (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
       ^string_of_bool(is_sat_mem_formula p4)) 
-      (* (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) *)
+      (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
       (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
