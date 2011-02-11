@@ -1202,6 +1202,8 @@ and  imply_memo_x ante_memo0 conseq_memo t_imply imp_no
   imply_memo_x ante_memo0 conseq_memo t_imply imp_no
           
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =
+  if (isConstMFalse ante_memo0) then (true,[],None)
+  else 
   let ante_memo0 = 
     if !f_2_slice then match ante_memo0 with
        | [] -> []
