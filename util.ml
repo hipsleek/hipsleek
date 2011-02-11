@@ -330,7 +330,7 @@ let pop_ho (f:'a->'b) (e:'a) : 'b =
 (* string representation of call stack of ho_debug *)
 let string_of_ctr_stk () : string =
   let h = !proc_ctr_stk in
-  String.concat ";" (List.map string_of_int h)
+  String.concat "@" (List.map string_of_int h)
 
 (* returns @n and @n1;n2;.. for a new call being debugged *)
 let new_proc_ctr (os:string) : (string * string) = 
@@ -342,15 +342,17 @@ let new_proc_ctr (os:string) : (string * string) =
  
 let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
   let s,h = new_proc_ctr s in
-  (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
   let r = try
     pop_ho f e1 
   with ex -> 
-      let _ = print_string (h^" inp :"^(pr1 e1)^"\n") in
+      let _ = print_string (h^"\n") in
+      let _ = print_string (s^" inp :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
-  let _ = print_string (h^" inp :"^(pr1 e1)^"\n") in
+  let _ = print_string (h^"\n") in
+  let _ = print_string (s^" inp :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
   r
@@ -384,15 +386,17 @@ let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z l
 
 let ho_debug_2_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
   let s,h = new_proc_ctr s in
-  (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
   let r = try
     pop_ho (f e1) e2 
   with ex -> 
+      let _ = print_string (h^"\n") in
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
+  let _ = print_string (h^"\n") in
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
@@ -412,16 +416,18 @@ let no_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f
 
 let ho_debug_3_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
   let s,h = new_proc_ctr s in
-  (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
   let r = try
     pop_ho (f e1 e2) e3
   with ex -> 
+      let _ = print_string (h^"\n") in
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
+  let _ = print_string (s^"\n") in
   let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
   let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
@@ -1622,18 +1628,8 @@ let singleton_dset (e:'a) : 'a d_set = [[e]]
 (* a singleton difference set *)
 let singleton_dset_str (f:'a->string) (e:'a) : 'a d_set_str = ([[f e]],f)
 
-
 let is_dupl_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = 
-  let rec helper xs =
-    match xs with
-      | [] -> false
-      | x::xs1 -> match xs1 with
-          | [] -> false
-          | _ -> if (is_dupl_baga eq x) then true else helper xs1
-  in helper xs
-
-(* false result denotes contradiction *)
-let is_sat_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = not(is_dupl_dset eq xs)
+     List.exists (is_dupl_baga eq) xs
 
 (* returns a list of difference sets for element e *)
 let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
@@ -1719,6 +1715,9 @@ let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
 let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bool =
  is_conflict eq_str s
  
+(* false result denotes contradiction *)
+let is_sat_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = 
+  not(is_dupl_dset eq xs)
  
 let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"
 (** **)

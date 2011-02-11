@@ -23,15 +23,11 @@ DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 TMP_FILES_PATH = /tmp/$(shell id -un)/prover_tmp_files
 
-all: hip sleek 
+all: hip sleek prover prdebug decidez.vo
 
-#prover prdebug decidez.vo 
-#hip.opt sleek.opt
+rest: sleek prover prdebug
 
-rest: sleek prover prdebug prover.opt # decidez.vo
-
-opt: hip.opt sleek.opt 
-#prover.opt
+opt: hip.opt sleek.opt prover.opt
 
 sparser.cmo sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly

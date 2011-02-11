@@ -505,7 +505,7 @@ and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
 and xpure_symbolic_debug (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Util.ho_debug_1 "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
-"^(Cprinter.string_of_mem_formula p4)) 
+"^(Cprinter.string_of_mem_formula p4)) (* (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) *)
       (fun h0 -> xpure_symbolic prog h0) h0
 
 (* xpure approximation without memory enumeration *)
@@ -577,13 +577,15 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
 
 and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Util.ho_debug_1 "xpure_heap_symbolic" Cprinter.string_of_h_formula 
-      (fun (p1,_,_,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_mem_formula p4)) 
+      (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
+      ^string_of_bool(is_sat_mem_formula p4)) 
+      (* (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) *)
       (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
   let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure in
-  if (Util.is_sat_baga CP.eq_spec_var pa) then 
+  if (is_sat_mem_formula memset) then 
     (ph, pb, pa, memset)
   else (MCP.mkMFalse no_pos, pb, pa, memset)  
 
@@ -3271,7 +3273,7 @@ and swap_heap (f : formula) (new_h : h_formula) pos : (formula * h_formula) =
     | _ -> report_error no_pos ("solver.ml: No LHS disj should reach this point\n  ")
 
 
-and heap_entail_split_lhs_phases_debug
+and heap_entail_split_lhs_phases(*_debug*)
       p is_folding is_universal ctx0 conseq d
       pos : (list_context * proof) =
   Util.ho_debug_2 "heap_entail_split_lhs_phases"
@@ -3279,10 +3281,10 @@ and heap_entail_split_lhs_phases_debug
       (fun _ -> "RHS")
       (* (Cprinter.string_of_formula) *)
       (fun _ -> "OUT")
-      (fun ctx0 conseq -> heap_entail_split_lhs_phases p is_folding is_universal ctx0 conseq d pos) ctx0 conseq
+      (fun ctx0 conseq -> heap_entail_split_lhs_phases_x p is_folding is_universal ctx0 conseq d pos) ctx0 conseq
 
 (* entailment method for splitting the antecedent *)
-and heap_entail_split_lhs_phases
+and heap_entail_split_lhs_phases_x
       (prog : prog_decl) 
       (is_folding : bool) 
       (is_universal : bool)

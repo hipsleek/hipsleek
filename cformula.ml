@@ -197,6 +197,11 @@ and string_of_spec_var = function
     | Unprimed -> "")
 (*09.05.2000 ---*)
 
+(* returns false if unsatisfiable *)
+let is_sat_mem_formula (mf:mem_formula) : bool =
+  let d = mf.mem_formula_mset in
+  (Util.is_sat_dset CP.eq_spec_var d)
+
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
 

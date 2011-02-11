@@ -715,19 +715,27 @@ let pr_prunning_conditions cnd pcond = match cnd with
       fmt_string" )->"; 
       pr_formula_label_list c2;) pcond;fmt_string "]") pcond  *)  
 
-(** print a pure formula to formatter *)
-let rec pr_mem_formula  (e : mem_formula) = 
-  match e.mem_formula_mset with
-    | h :: r ->
-	fmt_string "[";
-	fmt_string (List.fold_left 
-		      (fun y x -> (y ^ ( (string_of_spec_var ((*fst*) x)) (*^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x))*) ^ ","))) 
-		      "" 
-		      h);
-	fmt_string "]";
-	pr_mem_formula {mem_formula_mset = r}
-    | [] -> fmt_string ";"
-;;
+let string_of_ms (m:(P.spec_var list) list) : string =
+  let wrap s1 = "["^s1^"]" in
+  let ls = List.map (fun l -> wrap (String.concat "," (List.map string_of_spec_var l))) m in
+  wrap (String.concat ";" ls)
+
+let pr_mem_formula  (e : mem_formula) = 
+  fmt_string (string_of_ms e.mem_formula_mset)
+
+(** print a mem formula to formatter *)
+(* let rec pr_mem_formula  (e : mem_formula) =  *)
+(*   match e.mem_formula_mset with *)
+(*     | h :: r -> *)
+(* 	fmt_string "["; *)
+(* 	fmt_string (List.fold_left  *)
+(* 		      (fun y x -> (y ^ ( (string_of_spec_var ((\*fst*\) x)) (\*^ "|" ^ (poly_string_of_pr  pr_pure_formula (snd x))*\) ^ ",")))  *)
+(* 		      ""  *)
+(* 		      h); *)
+(* 	fmt_string "]"; *)
+(* 	pr_mem_formula {mem_formula_mset = r} *)
+(*     | [] -> fmt_string ";" *)
+(* ;; *)
 
 let rec pr_h_formula h = 
   let f_b e =  pr_bracket h_formula_wo_paren pr_h_formula e 
