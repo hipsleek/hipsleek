@@ -1118,17 +1118,25 @@ let replace_memo_pure_label nl f =
   List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
  
  (* imply functions *)
- 
+
+let rec mimply_process_ante_debug with_disj ante_disj conseq str str_time t_imply imp_no =
+ Util.ho_debug_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+  (fun (c,_,_)-> string_of_bool c) 
+ (fun with_disj ante_disj conseq -> mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
     
-let mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
+and mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
   let fv = fv conseq in 
   let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
+  (*check lhs is false*)
+  let n_ante = if (isConstMFalse  ante_disj) then n_ante @ (mkMFalse no_pos) else n_ante in
+  (* let _ = print_endline ("mimply_process_ante: n_ante 1"^ (!print_mp_f n_ante) )in*)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-  (Util.push_time str_time; 
+ 
+  (Util.push_time str_time;
   let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
   Util.pop_time str_time;
   r)
