@@ -290,11 +290,11 @@ and formula_2_mem_debug (f : formula) prog : CF.mem_formula =
   Util.ho_debug_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
       (fun f -> formula_2_mem f prog) f
 
-and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
+and h_formula_2_mem(*_debug*) (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
   Util.ho_debug_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
-      (fun f -> h_formula_2_mem f evars prog) f
+      (fun f -> h_formula_2_mem_x f evars prog) f
 
-and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
+and h_formula_2_mem_x (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
   let rec helper f =
     (* for h_formula *)
     match f with
@@ -502,14 +502,14 @@ and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
   let ph, pb = xpure_heap_helper prog h0 which_xpure in
   (ph, pb, memset)
 
-and xpure_symbolic_debug (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_symbolic(*_debug*) (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Util.ho_debug_1 "xpure_symbolic" Cprinter.string_of_formula 
       (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) 
-      (fun h0 -> xpure_symbolic prog h0) h0
+      (fun h0 -> xpure_symbolic_x prog h0) h0
 
 (* xpure approximation without memory enumeration *)
-and xpure_symbolic (prog : prog_decl) (f0 : formula) : 
+and xpure_symbolic_x (prog : prog_decl) (f0 : formula) : 
       (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let mset = formula_2_mem f0 prog in 
   let rec xpure_symbolic_helper (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = match f0 with
@@ -587,12 +587,12 @@ and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
     (ph, pb, pa, memset)
   else (MCP.mkMFalse no_pos, pb, pa, memset)  
 
-and xpure_heap_symbolic_i_debug (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i(*_debug*) (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   Util.ho_debug_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula (fun (_,_,vl) -> Cprinter.string_of_spec_var_list vl)
-      (fun h0 -> xpure_heap_symbolic_i prog h0 i) h0
+      (fun h0 -> xpure_heap_symbolic_i_x prog h0 i) h0
 
 
-and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
       h_formula_data_label = lbl;
@@ -3806,11 +3806,11 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
 	List.fold_left fold_fun2 false branches
   else res 
 
-and heap_entail_empty_rhs_heap(*_debug*) p i_f i_u es lhs rhs rhsb pos =
+and heap_entail_empty_rhs_heap_debug p i_f i_u es lhs rhs rhsb pos =
   Util.ho_debug_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula (fun _ -> "?")
-      (fun lhs rhs -> heap_entail_empty_rhs_heap_x p i_f i_u es lhs rhs rhsb pos) lhs rhs
+      (fun lhs rhs -> heap_entail_empty_rhs_heap p i_f i_u es lhs rhs rhsb pos) lhs rhs
 
-and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
@@ -4086,15 +4086,14 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
        end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_no_memo(*_debug*) new_ante new_conseq imp_no imp_subno timeout memset =   
+and imply_mix_formula_no_memo_debug new_ante new_conseq imp_no imp_subno timeout memset =   
   Util.ho_debug_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r) 
-      (fun new_ante new_conseq memset -> imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset) 
+      (fun new_ante new_conseq memset -> imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset) 
       new_ante new_conseq memset 
 
-and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset =   
+and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
   let new_conseq = solve_ineq new_ante memset new_conseq in
-  
   let (r1,r2,r3) =  
     match timeout with
       | None -> TP.mix_imply new_ante new_conseq ((string_of_int imp_no) ^ "." ^ (string_of_int imp_subno))
