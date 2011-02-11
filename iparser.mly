@@ -409,9 +409,12 @@ data_decl
 		data_methods = [] }
 	}
 ;
-
+with_typed_var
+  : OSQUARE typ CSQUARE {}
+;
 data_header
   : DATA IDENTIFIER { $2 }
+  | DATA IDENTIFIER with_typed_var {"Done"}
 ;
 
 data_body
@@ -430,11 +433,18 @@ opt_semicolon
 
 field_list
   : typ IDENTIFIER { [(($1, $2), get_pos 1)] }
+  | typ OSQUARE typ CSQUARE IDENTIFIER {[(($1,$5), get_pos 1)]}
   | field_list SEMICOLON typ IDENTIFIER { 
 			if List.mem $4 (List.map (fun f -> snd (fst f)) $1) then
 				report_error (get_pos 4) ($4 ^ " is duplicated")
 			else
 				(($3, $4), get_pos 3) :: $1 
+		}
+  | field_list SEMICOLON typ OSQUARE typ CSQUARE IDENTIFIER{ 
+			if List.mem $7 (List.map (fun f -> snd (fst f)) $1) then
+				report_error (get_pos 4) ($7 ^ " is duplicated")
+			else
+				(($3, $7), get_pos 3) :: $1 
 		}
 ;
 
@@ -504,6 +514,8 @@ typed_arg
     : typ {}
     | SET OSQUARE typ CSQUARE {}
     | SET OSQUARE typ CSQUARE COLON typed_arg {}
+    | typ OSQUARE typ CSQUARE {}
+    | typ OSQUARE typ CSQUARE COLON typed_arg {}
 	| typ COLON typed_arg {}
 ;
 
@@ -515,6 +527,7 @@ type_var_lst
     : typ {}
     | SET OSQUARE typ CSQUARE {}
     | SET OSQUARE typ CSQUARE COMMA type_var_lst {}
+    | typ OSQUARE typ CSQUARE COMMA type_var_lst {}
 	| typ COMMA type_var_lst {}
 ;
 opt_typed_arg_list
@@ -529,7 +542,7 @@ type_var_list
     | {}
 ;
 fct_arg_list
-    : cid{}
+    : cid {}
     | cid COMMA fct_arg_list {}
 ;
 opt_fct_list
@@ -604,6 +617,8 @@ cid
 
 view_body
   : formulas {((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1))}
+  | FINALIZES hpred_header {report_error (get_pos 1) 
+		  ("here")}
 ;
 
 
@@ -906,6 +921,7 @@ pure_constr
     | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
     | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
   | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
+  | pure_constr AND ho_fct_header {$1}
 ;
 
 disjunctive_pure_constr
@@ -1382,7 +1398,7 @@ array_type
 ;
 
 rank_specifier
-  : OSQUARE comma_list_opt CSQUARE {}
+  : OBRACE comma_list_opt CBRACE {}
 ;
 
 comma_list_opt
