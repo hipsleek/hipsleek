@@ -2912,6 +2912,24 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 (*     (fun _ -> "?") *)
 (*     (fun ctx0 conseq -> heap_entail_split_rhs_phases p is_folding is_universal ctx0 conseq d pos) ctx0 conseq *)
           
+and one_ctx_entail prog is_folding is_universal c conseq func p pos : (list_context * proof) = 
+  (match c with 
+    | Ctx(estate) -> 
+      let new_conseq = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p) in
+      let aux_conseq_from_fold = subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq)) in
+      let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
+      heap_entail_conjunct prog is_folding is_universal c new_conseq pos
+    | OCtx (c1, c2) -> 
+      let cl1, prf1 = one_ctx_entail prog is_folding is_universal c1 conseq func p pos in
+      let cl2, prf2 = one_ctx_entail prog is_folding is_universal c2 conseq func p pos in
+      let entail_p_ctx = Cformula.or_list_context cl1 cl2  in 
+      let entail_p_prf = 
+	match entail_p_ctx with
+	  | FailCtx _ -> mkContextList [] (Cformula.struc_formula_of_formula conseq pos) ([prf1]@[prf2]) 
+	  | SuccCtx cl -> mkContextList cl (Cformula.struc_formula_of_formula conseq pos) ([prf1]@[prf2]) 
+      in
+      (entail_p_ctx, entail_p_prf))
+
 and heap_entail_split_rhs_phases
       (prog : prog_decl) 
       (is_folding : bool) 
@@ -2933,16 +2951,16 @@ and heap_entail_split_rhs_phases
 	        (* let _ = print_string("entailing the pure:\n") in *)
 	        (* let _  = print_string("*************************************************\n") in *)
 	        let entail_p = List.map 
-	          (fun c -> 
-		          let new_conseq, aux_conseq_from_fold = 
+	      (fun c -> one_ctx_entail prog is_folding is_universal c conseq func p pos
+(*		 let new_conseq, aux_conseq_from_fold = 
 		            (match c with 
 		              | Ctx(estate) -> 
 			                subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue p),
 			                subst_avoid_capture (fst estate.es_subst) (snd estate.es_subst) (func HTrue (MCP.mix_of_pure estate.es_aux_conseq))
-		              | OCtx _ -> report_error no_pos ("Disjunctive context\n"^(Cprinter.string_of_context c)))
+		      | OCtx _ -> report_error no_pos ("Disjunctive context\n"))
 		          in 
 		          let new_conseq = CF.mkStar new_conseq aux_conseq_from_fold Flow_combine pos in
-		          heap_entail_conjunct prog is_folding is_universal c new_conseq pos) cl  
+		   heap_entail_conjunct prog is_folding is_universal c new_conseq pos*)) cl  
 	        in
 	        let entail_p_ctx, entail_p_prf = List.split entail_p in
 	        let entail_p_prf = mkContextList cl (Cformula.struc_formula_of_formula conseq pos) entail_p_prf in
