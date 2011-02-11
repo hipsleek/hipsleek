@@ -3806,11 +3806,11 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
 	List.fold_left fold_fun2 false branches
   else res 
 
-and heap_entail_empty_rhs_heap_debug p i_f i_u es lhs rhs rhsb pos =
-  Util.ho_debug_1 "heap_entail_empty_rhs_heap" Cprinter.string_of_mix_formula (fun _ -> "?")
-      (fun rhs -> heap_entail_empty_rhs_heap p i_f i_u es lhs rhs rhsb pos) rhs
+and heap_entail_empty_rhs_heap(*_debug*) p i_f i_u es lhs rhs rhsb pos =
+  Util.ho_debug_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula (fun _ -> "?")
+      (fun lhs rhs -> heap_entail_empty_rhs_heap_x p i_f i_u es lhs rhs rhsb pos) lhs rhs
 
-and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
@@ -4057,15 +4057,15 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
           
-and imply_mix_formula_debug ante_m0 ante_m1 conseq_m imp_no memset =
+and imply_mix_formula(*_debug*) ante_m0 ante_m1 conseq_m imp_no memset =
   Util.ho_debug_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
-      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset)
+      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
       ante_m0 ante_m1 conseq_m memset
       
-and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset 
+and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
@@ -4086,13 +4086,13 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
        end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_no_memo_debug new_ante new_conseq imp_no imp_subno timeout memset =   
+and imply_mix_formula_no_memo(*_debug*) new_ante new_conseq imp_no imp_subno timeout memset =   
   Util.ho_debug_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r) 
-      (fun new_ante new_conseq memset -> imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset) 
+      (fun new_ante new_conseq memset -> imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset) 
       new_ante new_conseq memset 
 
-and imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset =   
+and imply_mix_formula_no_memo_x new_ante new_conseq imp_no imp_subno timeout memset =   
   let new_conseq = solve_ineq new_ante memset new_conseq in
   
   let (r1,r2,r3) =  
