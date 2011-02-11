@@ -346,6 +346,7 @@ let is_list_b_formula bf = match bf with
         -> Some true
     | _ -> None
  
+
 let is_list_constraint (e: CP.formula) : bool =
  
   let f_e e = match e with
@@ -361,6 +362,9 @@ let is_list_constraint (e: CP.formula) : bool =
   in
   let or_list = List.fold_left (||) false in
   CP.fold_formula e (nonef, is_list_b_formula, f_e) or_list
+
+let is_list_constraint (e: CP.formula) : bool =
+  Util.ho_debug_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e
   
 let rec is_memo_list_constraint (f:MCP.memo_pure): bool = 
   List.exists (fun c-> 
