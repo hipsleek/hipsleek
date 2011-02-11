@@ -309,21 +309,42 @@ let force_backtrace () : string =
   with e -> Printexc.record_backtrace true;("xxx"^Printexc.get_backtrace ())
 
 let proc_ctr = ref 0
+let proc_ctr_stk = ref ([]: int list)
 
-let new_proc_ctr () : string = 
-  (proc_ctr  := !proc_ctr+1;  "@"^(string_of_int !proc_ctr))
 
+let pop_proc_ctr () =
+  match !proc_ctr_stk with
+    | [] -> () (* error *)
+    | v::rest -> proc_ctr_stk := rest
+
+let pop_ho (f:'a->'b) (e:'a) : 'b =
+  let r = try 
+    f e
+  with exc -> pop_proc_ctr(); raise exc
+  in pop_proc_ctr(); r
+
+let string_of_ctr_stk () : string =
+  let h = !proc_ctr_stk in
+  String.concat ";" (List.map string_of_int h)
+
+let new_proc_ctr (loop_d:bool) (os:string) : (string * string) = 
+  proc_ctr := !proc_ctr+1 ; 
+  proc_ctr_stk := !proc_ctr::!proc_ctr_stk;
+  let s = os^"@"^(string_of_int !proc_ctr) in
+  let h = if loop_d then s else os^"@"^string_of_ctr_stk() in
+  s,h
+ 
 let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
-  let s = s^new_proc_ctr() in
+  let s,h = new_proc_ctr loop_d s in
   (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
   let r = try
-    f e1 
+    pop_ho f e1 
   with ex -> 
-      let _ = print_string (s^" inp :"^(pr1 e1)^"\n") in
+      let _ = print_string (h^" inp :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
-  let _ = print_string (s^" inp :"^(pr1 e1)^"\n") in
+  let _ = print_string (h^" inp :"^(pr1 e1)^"\n") in
   let _ = print_string (s^" out :"^(pr_o r)^"\n") in
   (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
   r
@@ -356,10 +377,10 @@ let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z l
   ho_debug_1 s pr_i (string_of_list pr_o) f e 
 
 let ho_debug_2_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
-  let s = s^new_proc_ctr() in
+  let s,h = new_proc_ctr loop_d s in
   (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
   let r = try
-    f e1 e2 
+    pop_ho (f e1) e2 
   with ex -> 
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
@@ -384,10 +405,10 @@ let no_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f
   f e1 e2
 
 let ho_debug_3_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
-  let s = s^new_proc_ctr() in
+  let s,h = new_proc_ctr loop_d s in
   (if loop_d then print_string (s^" inp :"^(pr1 e1)^"\n"));
   let r = try
-    f e1 e2 e3
+    pop_ho (f e1 e2) e3
   with ex -> 
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
