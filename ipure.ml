@@ -8,6 +8,10 @@ open Globals
 
 type formula = 
   | BForm of (b_formula*(formula_label option))
+  (* AnHoa: Predicate formula to capture relations, for instance, s(a,b,c) or
+   * t(x+1,y+2,z+3), etc. 
+   *)
+  | PForm of (ident * (exp list))
   | And of (formula * formula * loc)
   | Or of (formula * formula *(formula_label option) * loc)
   | Not of (formula *(formula_label option)* loc)
@@ -65,6 +69,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+  | ArrayAt of ((ident * primed) * exp  * loc)
 
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
@@ -76,6 +81,7 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
 
 let rec fv (f : formula) : (ident * primed) list = match f with 
   | BForm (b,_) -> bfv b
+  | PForm (_,_) -> [] (* TODO Implement *)
   | And (p1, p2, _) -> combine_pvars p1 p2
   | Or (p1, p2, _,_) -> combine_pvars p1 p2
   | Not (nf, _,_) -> fv nf
@@ -443,6 +449,7 @@ and subst sst (f : formula) = match sst with
 
 and apply_one (fr, t) f = match f with
   | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf, lbl)
+  | PForm (p,args) -> PForm (p,args) (* TODO implement *)
   | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
 							  apply_one (fr, t) p2, pos)
   | Or (p1, p2, lbl, pos) -> Or (apply_one (fr, t) p1,
@@ -570,6 +577,7 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
   | BForm (b,_) -> look_for_anonymous_b_formula b
+  | PForm (_,_) -> [] (* TODO implement *)
   | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | Or  (b1,b2,_,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | Not (b1,_,_) -> (look_for_anonymous_pure_formula b1)

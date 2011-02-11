@@ -1052,6 +1052,7 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 			in		 
 		match p with
 			| Ipure.BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
+            | Ipure.PForm x -> Ipure.PForm x (* TODO implement *)
   		| Ipure.And (f1, f2, l) -> Ipure.And((float_out_pure_min_max f1), (float_out_pure_min_max f2), l)
   		| Ipure.Or (f1, f2, lbl, l) -> Ipure.Or((float_out_pure_min_max f1), (float_out_pure_min_max f2), lbl,l)
   		| Ipure.Not (f1,lbl, l) -> Ipure.Not((float_out_pure_min_max f1), lbl, l)

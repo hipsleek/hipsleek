@@ -193,6 +193,7 @@
 %token PRIME
 %token PRINT
 %token REF
+%token REL /* An Hoa */
 %token REVERSE
 %token REQUIRES
 %token <string> RES
@@ -254,6 +255,7 @@ program
     let global_var_defs = ref ([] : exp_var_decl list) in
 	let enum_defs = ref ([] : enum_decl list) in
 	let view_defs = ref ([] : view_decl list) in
+	let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
     let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
     let choose d = match d with
@@ -281,6 +283,7 @@ program
         prog_global_var_decls = !global_var_defs;
 		prog_enum_decls = !enum_defs;
 		prog_view_decls = !view_defs;
+        prog_rel_decls = []; (* An Hoa: TODO implement *)
 		prog_proc_decls = !proc_defs;
 		prog_coercion_decls = !coercion_defs; }
   }

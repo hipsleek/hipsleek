@@ -36,6 +36,7 @@ exception SLEEK_Exception
 type command =
   | DataDef of I.data_decl
   | PredDef of I.view_decl
+  | RelDef of I.rel_decl (* An Hoa *)
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)

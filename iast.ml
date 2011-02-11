@@ -23,6 +23,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
+                   mutable prog_rel_decls : rel_decl list; (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
@@ -47,6 +48,15 @@ and view_decl = { view_name : ident;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
 		  try_case_inference: bool}
+
+(* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
+and rel_decl = { rel_name : ident; 
+		  rel_vars : ident list;
+		  rel_labels : branch_label list;
+          mutable rel_typed_vars : (CP.typ * ident) list;
+		  rel_invariant : (P.formula * (branch_label * P.formula) list);
+		  rel_formula : Iformula.struc_formula;
+		  (* try_case_inference: bool *)}
 
 and enum_decl = { enum_name : ident;
 		  enum_fields : (ident * int option) list } 

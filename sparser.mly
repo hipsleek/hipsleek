@@ -176,6 +176,7 @@
 %token PRIME
 %token PRINT
 %token REF
+%token REL /* An Hoa */
 %token REQUIRES
 %token <string> RES
 %token RETURN
@@ -215,10 +216,11 @@
 %nonassoc OP_DEC OP_INC
 %left DOT
 
-%start program,data_decl,view_decl,coercion_decl,formulas,command,opt_command_list
+%start program,data_decl,view_decl,rel_decl,coercion_decl,formulas,command,opt_command_list /* An Hoa: append rel_decl to the list*/
 %type <Iast.prog_decl> program
 %type <Iast.data_decl> data_decl
 %type <Iast.view_decl> view_decl
+%type <Iast.rel_decl> rel_decl /* An Hoa */
 %type <Iast.coercion_decl> coercion_decl
 %type <Iformula.struc_formula*bool> formulas
 %type <Sleekcommons.command> command
@@ -241,11 +243,14 @@ command
 ;
 non_empty_command
   : data_decl {
-	DataDef $1
+	  DataDef $1
   }
   | view_decl {
 	  PredDef $1
 	}
+  | rel_decl {
+      RelDef $1
+    }
   | coercion_decl {
 	  LemmaDef $1
 	}
@@ -271,6 +276,7 @@ program : {
 	prog_global_var_decls = [];
 	prog_enum_decls = [];
 	prog_view_decls = [];
+  	prog_rel_decls = []; (* An Hoa *)
 	prog_proc_decls = [];
 	prog_coercion_decls = []; }
 }
@@ -380,8 +386,48 @@ cid
 ;
 
 view_body
-  : formulas { ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) }
+: formulas { 
+    ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) }
 ;
+
+/* An Hoa */
+/********** Relations **********/
+
+rel_decl
+  : rel_header EQEQ rel_body opt_inv DOT{
+	{ $1 with rel_formula = (fst $3); rel_invariant = $4;}
+  }
+  | rel_header EQ error {
+	  report_error (get_pos 2) ("use == to define a relation")
+	}  
+;
+
+rel_header
+  : REL IDENTIFIER OPAREN opt_ann_cid_list CPAREN {
+    let cids, anns = List.split $4 in
+    let cids, br_labels = List.split cids in
+	  if List.exists 
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	  then
+		report_error (get_pos 1) 
+		  ("variables in view header are not allowed to be primed")
+	  else
+		(* let modes = get_modes anns in *)
+		  { rel_name = $2;
+			rel_vars = List.map fst cids;
+            rel_labels = br_labels;
+			rel_typed_vars = [];
+			rel_formula = F.mkETrue top_flow (get_pos 1);
+			rel_invariant = (P.mkTrue (get_pos 1), []);
+			}
+  }
+;
+
+rel_body
+: formulas { 
+    ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) }
+;
+/* END OF An Hoa */
 
 /********** Constraints **********/
 
@@ -625,6 +671,7 @@ simple_heap_constr
 pure_constr
   : simple_pure_constr opt_formula_label { match $1 with 
 	| P.BForm (b,_) -> P.BForm (b,$2)
+    | P.PForm _ -> $1 (* TODO implement *)
     | P.And _ -> $1
     | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
     | P.Not (b1,_,l) -> P.Not(b1,$2,l)
@@ -641,7 +688,7 @@ disjunctive_pure_constr
 simple_pure_constr
   : lbconstr {
 	fst $1
-  }
+  }  
   | OPAREN disjunctive_pure_constr CPAREN {
 	  $2
 	}
@@ -734,6 +781,15 @@ bconstr
   | BAGMIN OPAREN cid COMMA cid CPAREN {
 	  (P.BForm (P.BagMin ($3, $5, get_pos 2), None), None)
 	}
+  | IDENTIFIER OPAREN opt_cexp_list CPAREN {
+   (* AnHoa: relation constraint, for instance, given the relatioin (defined as a view)
+
+  pred s(a,b,c) == c = a + b.
+
+  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
+    *)
+   (P.PForm ($1, $3), None)
+  }
 ;
 
 /* constraint expressions */
@@ -782,7 +838,11 @@ cexp
   | DIFF OPAREN cexp COMMA cexp CPAREN {
 	  P.BagDiff ($3, $5, get_pos 1)
 	}
-
+  | cid OSQUARE cexp CSQUARE {
+    (* An Hoa : the array access, note that now we only allow 1-dimensional
+     * array, latter this can be expanded by replacing cexp by cexp_list *)
+    P.ArrayAt ($1, $3, get_pos 1)
+  }
 ;
 
 opt_cexp_list
@@ -929,6 +989,11 @@ comma_list
 id_list
   : IDENTIFIER { [$1] }
   | id_list COMMA IDENTIFIER { $3 :: $1 }
+;
+
+opt_id_list
+  : { [] }
+  | id_list { $1 }
 ;
 
 %%

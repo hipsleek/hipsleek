@@ -57,6 +57,7 @@ let parse_file (parse) (source_file : string) =
 							match c with
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
+                                 | RelDef rdef -> () (* An Hoa TODO implement *)
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
@@ -74,6 +75,7 @@ let main () =
                 I.prog_global_var_decls = [];
                 I.prog_enum_decls = [];
                 I.prog_view_decls = [];
+                I.prog_rel_decls = [];
                 I.prog_proc_decls = [];
                 I.prog_coercion_decls = [] } in
   let _ = Iast.build_exc_hierarchy true iprog in
@@ -104,6 +106,7 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
+                     | RelDef rdef -> () (* An Hoa TODO implement *)
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef -> process_lemma ldef

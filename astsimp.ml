@@ -4521,6 +4521,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
        Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
        Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
        Iast.prog_view_decls = tmp_views;
+       Iast.prog_rel_decls = []; (* An Hoa TODO implement*)
        Iast.prog_proc_decls = procs1;
        Iast.prog_coercion_decls = coer1 }
       
