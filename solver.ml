@@ -301,6 +301,7 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos}) -> 
+            (*let _ = print_endline "h_formula_2_mem: Star" in*)
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
 	        (* let _ = print_string("m1 = " ^ (Cprinter.string_of_mem_formula m1) ^ "\n") in   *)
@@ -316,12 +317,14 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
       | Conj ({h_formula_conj_h1 = h1;
 	    h_formula_conj_h2 = h2;
 	    h_formula_conj_pos = pos}) ->
+           (*  let _ = print_endline "h_formula_2_mem: Phase or Conj" in*)
 	        let m1 = helper h1  in
 	        let m2 = helper h2 in
 	        let m = (Util.merge_disj_set m1.mem_formula_mset m2.mem_formula_mset) in
 	        {mem_formula_mset = m;}
       | DataNode ({h_formula_data_node = p;
 	    h_formula_data_pos = pos}) ->
+           (*  let _ = print_endline "h_formula_2_mem: DataNode" in*)
 	        let new_mset = 
 	          if List.mem p evars then Util.empty_dset ()
 	          else Util.singleton_dset (p(*, CP.mkTrue pos*)) in
@@ -331,22 +334,29 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
         h_formula_view_arguments = vs;
         h_formula_view_remaining_branches = lbl_lst;
         h_formula_view_pos = pos}) ->
+          (*  let _ = print_endline "h_formula_2_mem: ViewNode" in*)
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
             let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
             let to_svs = p :: vs in
  	        let new_mset = 
               (match lbl_lst with
-                |None ->	  if List.mem p evars then Util.empty_baga ()
-	              else ba 
-                | Some ls -> lookup_view_baga_with_subs ls vdef from_svs to_svs)
+                |None ->
+                    (*let _ = print_endline "h_formula_2_mem: ViewNode->None" in*)
+                      if List.mem p evars then Util.empty_baga ()
+	                    else (*let _ = print_endline "h_formula_2_mem: else" in*) ba 
+                | Some ls -> 
+                  (* let _ = print_endline "h_formula_2_mem: ViewNode->Some" in*)
+                   lookup_view_baga_with_subs ls vdef from_svs to_svs)
             in
 	        (* if List.mem p evars then Util.empty_dset () *)
 	        (* else Util.singleton_dset (p, CP.BForm(CP.Neq(CP.Var(p, pos), CP.Null(pos), pos), None)) in *)
 	        {mem_formula_mset = Util.one_list_dset new_mset;} 
       | Hole _
       | HTrue
-      | HFalse -> {mem_formula_mset = Util.empty_dset ();}
+      | HFalse ->
+         (*  let _ = print_endline "h_formula_2_mem: HTrue, HFalse, Hole" in*)
+         {mem_formula_mset = Util.empty_dset ();}
   in helper f
 
 
@@ -459,7 +469,7 @@ and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
 	            | [] -> CP.mkTrue pos in
             (match rm_br with
               | Some l -> (MCP.mkMTrue no_pos, [])
-              | None -> 
+              | None ->
                     let vinv = match which_xpure with
                       | -1 -> (MCP.mkMTrue no_pos, [])
                       | 0 -> vdef.view_user_inv
@@ -599,7 +609,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
           let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
           let to_svs = p :: vs in
           (match lbl_lst with
-            | None ->
+            | None -> 
                   let vinv, vinv_b = if (i=1) then vdef.view_x_formula else vdef.view_user_inv in       
                   let from_addrs = vdef.view_addr_vars in
                   let to_addrs = CP.fresh_spec_vars from_addrs in
@@ -610,7 +620,8 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
                     let tmp1 = CP.subst_avoid_capture from_svs to_svs f in
                     CP.subst (List.combine from_addrs to_addrs) tmp1 (* no capture can happen *) in           
                   (subst_m_fun vinv, List.map (fun (l,x) -> (l, subst_fun x)) vinv_b, ba (*to_addrs*)) 
-            | Some ls -> (MCP.mkMTrue no_pos, [], lookup_view_baga_with_subs ls vdef from_svs to_svs))
+            | Some ls -> 
+                         (MCP.mkMTrue no_pos, [], lookup_view_baga_with_subs ls vdef from_svs to_svs))
     | Star ({ h_formula_star_h1 = h1;
       h_formula_star_h2 = h2;
       h_formula_star_pos = pos}) ->
@@ -859,7 +870,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                       let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                       (v_def.view_prune_branches,new_cond ,true)
                     else (l, v.h_formula_view_pruning_conditions,false)
-              | None ->                    
+              | None ->
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
                     (v_def.view_prune_branches,new_cond ,true) in                   
           if (List.length rem_br)<=1 then 
@@ -930,6 +941,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
               if (rem_br_lst == []) then (HFalse, MCP.mkMFalse_no_mix no_pos, true)
               else 
                 let l_no_prune = List.filter (fun (_,c)-> (List.length(Util.intersect c rem_br_lst))>0) l_no_prune in
+                  (*let _ = print_endline " heap_prune_preds: ViewNode->Update branches" in *)
                 let new_hp = ViewNode {v with 
                     h_formula_view_remaining_branches = Some rem_br_lst;
                     h_formula_view_pruning_conditions = l_no_prune;} in
@@ -3910,14 +3922,29 @@ and solve_ineq_debug a m c = Util.ho_debug_2 "solve_ineq "
 
 and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
       (conseq : MCP.mix_formula) : MCP.mix_formula =
+  (* let memset = {mem_formula_mset = [[Cpure.SpecVar (Cpure.Prim Int, "x", Unprimed);Cpure.SpecVar (Cpure.Prim Int, "y", Unprimed)]]} in *)
   match ante_m0,conseq with
-    | (MCP.MemoF _,MCP.MemoF _) -> conseq
-    | (MCP.OnePF at,MCP.OnePF f) -> MCP.OnePF (solve_ineq_pure_formula at memset f) 
+    | (MCP.MemoF at,MCP.MemoF f) ->
+       begin
+         (* print_endline "solve_ineq: first"; *)
+         MCP.MemoF (solve_ineq_memo_formula at memset f)
+       end
+    | (MCP.OnePF at,MCP.OnePF f) -> 
+       begin
+         (* print_endline "solve_ineq: second"; *)
+         MCP.OnePF (solve_ineq_pure_formula at memset f) 
+       end
     |  _ ->  Error.report_error 
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
-
 and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+Util.ho_debug_3 "solve_ineq_pure_formula "
+  (Cprinter.string_of_pure_formula)
+  (Cprinter.string_of_mem_formula) 
+  (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
+  (fun ante memset conseq -> solve_ineq_pure_formula_x ante memset conseq ) ante memset conseq
+
+and solve_ineq_pure_formula_x (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with
@@ -3930,6 +3957,25 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
 	        (*| Forall of (spec_var * formula * (formula_label option) * loc)
 	          | Exists of (spec_var * formula * (formula_label option) * loc)*) in
   helper conseq
+
+and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formula) (conseq : MCP.memo_pure) : MCP.memo_pure =
+  let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.ptr_equations_aux_mp false ante) in
+  let eq x y = Util.is_equiv_eq eqset x y in
+  let f_memo x = None in
+  let f_aset x = None in
+  let f_formula x = None in
+  let f_b_formula e = match e with
+    | CP.Neq (e1,e2,_) -> 	if (CP.is_var e1) && (CP.is_var e2) then
+	        let v1 = CP.to_var e1 in
+	        let v2 = CP.to_var e2 in
+	        let discharge = Util.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
+	        let ans = (if discharge then CP.BConst(true,no_pos) else e) in 
+              Some ans 
+                  else None
+    | _ -> None in
+  let f_exp x = None in
+  let f = (f_memo,f_aset, f_formula, f_b_formula, f_exp) in
+  MCP.transform_memo_formula f conseq
 
 (* check whether the disjunction is of the form (x<y | y<x) which can be discharged by using the memory set *)
 and check_disj ante memset l (f1 : Cpure.formula) (f2 : Cpure.formula) pos : Cpure.formula = 
@@ -4005,14 +4051,21 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
-    | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
-    | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
+    | MCP.MemoF a, _, MCP.MemoF c ->
+       begin
+          (*print_endline "imply_mix_formula: first";*)
+          MCP.imply_memo a c TP.imply imp_no
+       end
+    | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
+       begin
+         (*print_endline "imply_mix_formula first: second";*)
 	      CP.imply_conj_orig 
               (TP.split_disjunctions a0) 
               (TP.split_disjunctions a1) 
               (TP.split_conjunctions c) 
 	          TP.imply 
 	          imp_no
+       end
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula_no_memo_debug new_ante new_conseq imp_no imp_subno timeout memset =   

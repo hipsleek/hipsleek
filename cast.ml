@@ -555,12 +555,14 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
 let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
+  (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
   let from_svs = P.SpecVar (P.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Util.ho_debug_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl (fun r a ->  look_up_view_baga prog c r a) root args
+      Util.ho_debug_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
   | d :: rest -> 

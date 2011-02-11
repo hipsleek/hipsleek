@@ -242,7 +242,7 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
 (* returns a list of ptr eqns v1=v2 that can be found in memo_pure
    and called during matching of predicates
 *)
-and ptr_equations_aux with_null (f : memo_pure) : (spec_var * spec_var) list =  
+and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
@@ -1167,9 +1167,14 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
               (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
             (r1,r2,r3)
     | [] -> (true,[],None)
-   
-    
-let rec imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
+
+let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
+ Util.ho_debug_2 "imply_memo_x" (!print_mp_f)
+      (!print_mp_f)
+      (fun (r,_,_) -> string_of_bool r)
+      (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no)ante_memo0 conseq_memo
+
+and  imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
@@ -1201,7 +1206,7 @@ let imply_memo ante_memo0 conseq_memo t_imply imp_no =
     if !f_2_slice then match ante_memo0 with
        | [] -> []
        | [h] -> [h]
-       | h::t -> [List.fold_left (fun a c-> 
+       | h::t -> [List.fold_left (fun a c->
           let na =Util.merge_set_eq a.memo_group_aset c.memo_group_aset in
             {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
              memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
@@ -1314,7 +1319,7 @@ let merge_mems_debug f1 f2 slice_dup =
   | OnePF f -> OnePF (mkExists qv f None no_pos)
  
  let ptr_equations_aux with_null f = match f with
-  | MemoF f -> ptr_equations_aux with_null f
+  | MemoF f -> ptr_equations_aux_mp with_null f
   | OnePF f -> pure_ptr_equations f
  
  let ptr_equations_with_null f = ptr_equations_aux true f
