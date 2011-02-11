@@ -441,7 +441,7 @@ and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branc
 
 
 and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
-  (* let _ = print_string("Calling xpure_heap for f = " ^ (Cprinter.string_of_h_formula h0) ^ "\n") in *)
+  (* let _  = print_string("Calling xpure_heap for f = " ^ (Cprinter.string_of_h_formula h0) ^ "\n") in *)
   let memset = h_formula_2_mem h0 [] prog in
 
   let rec xpure_heap_helper (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list) = 
@@ -575,12 +575,12 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
   (pf, pb, pa, mset)
 
 
-and xpure_heap_symbolic_debug (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Util.ho_debug_1 "xpure_heap_symbolic" Cprinter.string_of_h_formula 
       (fun (p1,_,_,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_mem_formula p4)) 
-      (fun h0 -> xpure_heap_symbolic prog h0 which_xpure) h0
+      (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0
 
-and xpure_heap_symbolic (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
+and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   let memset = h_formula_2_mem h0 [] prog in
   let ph, pb, pa = xpure_heap_symbolic_i prog h0 which_xpure in
   if (Util.is_sat_baga CP.eq_spec_var pa) then 
@@ -2945,7 +2945,7 @@ and heap_entail_split_rhs_phases
       (drop_read_phase : bool)
       pos : (list_context * proof) =
   
-  let rec heap_n_pure_entail ctx0 h p func = 
+  let rec heap_n_pure_entail_x ctx0 h p func = 
     (* let _  = print_string("*************************************************\n") in *)
     (* let _ = print_string("entailing the heap first:\n") in *)
     (* let _  = print_string("*************************************************\n") in *)
@@ -2973,9 +2973,9 @@ and heap_entail_split_rhs_phases
 	        let entail_p_ctx = fold_context_left entail_p_ctx in 
 	        (entail_p_ctx, entail_p_prf)
 
-  and heap_n_pure_entail_debug ctx0 h p func =
+  and heap_n_pure_entail(*_debug*) ctx0 h p func : (list_context * proof) =
     Util.ho_debug_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
-        (fun _ -> "?") (fun ctx0 h -> heap_n_pure_entail ctx0 h p func) ctx0 h 
+         (fun (lc,_) -> match lc with FailCtx _ -> "Fail" | SuccCtx _ -> "OK")  (fun ctx0 h -> heap_n_pure_entail_x ctx0 h p func) ctx0 h 
 
   and heap_n_pure_entail_1 ctx0 h p func = 
         print_string "tracing heap_n_pure_entail_1\n"; (heap_n_pure_entail ctx0 h p func)

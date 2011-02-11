@@ -230,7 +230,7 @@ node shift_left(node x)
 {
   if (x == null) { return x;}
   node t = new node(0, x);
-  dprint;
+  //dprint;
   return t;
 }
 
