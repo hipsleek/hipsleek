@@ -8,10 +8,6 @@ open Globals
 
 type formula = 
   | BForm of (b_formula*(formula_label option))
-  (* AnHoa: Predicate formula to capture relations, for instance, s(a,b,c) or
-   * t(x+1,y+2,z+3), etc. 
-   *)
-  | PForm of (ident * (exp list))
   | And of (formula * formula * loc)
   | Or of (formula * formula *(formula_label option) * loc)
   | Not of (formula *(formula_label option)* loc)
@@ -41,6 +37,7 @@ and b_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
   | ListPerm of (exp * exp * loc)
+  | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
 and exp = 
@@ -69,7 +66,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
-  | ArrayAt of ((ident * primed) * exp  * loc)
+  | ArrayAt of ((ident * primed) * exp  * loc)      (* An Hoa : array access *)
 
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
@@ -81,7 +78,6 @@ and relation = (* for obtaining back results from Omega Calculator. Will see if 
 
 let rec fv (f : formula) : (ident * primed) list = match f with 
   | BForm (b,_) -> bfv b
-  | PForm (_,_) -> [] (* TODO Implement *)
   | And (p1, p2, _) -> combine_pvars p1 p2
   | Or (p1, p2, _,_) -> combine_pvars p1 p2
   | Not (nf, _,_) -> fv nf
@@ -141,6 +137,7 @@ and bfv (bf : b_formula) = match bf with
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)
+  | RelForm (_,args,_) -> [] (* An Hoa : TODO implement *)
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -172,6 +169,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
+  | ArrayAt _ -> [] (* An Hoa : TODO implement *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -424,6 +422,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | ListReverse (_, p) -> p
+  | ArrayAt (_,_,p) -> p (* An Hoa : TODO implement *)
   
 	
 	
@@ -449,7 +448,6 @@ and subst sst (f : formula) = match sst with
 
 and apply_one (fr, t) f = match f with
   | BForm (bf,lbl) -> BForm (b_apply_one (fr, t) bf, lbl)
-  | PForm (p,args) -> PForm (p,args) (* TODO implement *)
   | And (p1, p2, pos) -> And (apply_one (fr, t) p1,
 							  apply_one (fr, t) p2, pos)
   | Or (p1, p2, lbl, pos) -> Or (apply_one (fr, t) p1,
@@ -499,6 +497,9 @@ and b_apply_one (fr, t) bf = match bf with
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | RelForm (r, args, pos) -> 
+          (* An Hoa : apply to every arguments *)
+          RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos) 
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -529,6 +530,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
+  | ArrayAt (a,e,pos) -> ArrayAt (a, (e_apply_one (fr, t) e), pos) (* An Hoa *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -577,7 +579,6 @@ and look_for_anonymous_exp (arg : exp) : (ident * primed) list = match arg with
 
 and look_for_anonymous_pure_formula (f : formula) : (ident * primed) list = match f with
   | BForm (b,_) -> look_for_anonymous_b_formula b
-  | PForm (_,_) -> [] (* TODO implement *)
   | And (b1,b2,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | Or  (b1,b2,_,_) -> (look_for_anonymous_pure_formula b1)@ (look_for_anonymous_pure_formula b1)
   | Not (b1,_,_) -> (look_for_anonymous_pure_formula b1)
@@ -605,6 +606,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | RelForm _ -> [] (* An Hoa : TODO implement *)
   
 let merge_branches l1 l2 =
   let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in

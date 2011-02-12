@@ -14,6 +14,7 @@ type spec_var =
 and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
+  | Array of typ (* An Hoa : Array whose elements are all of type typ ==> this will allow us to have higher dimensional array, but we do not handle this now *)
 
 type var_aset = spec_var Util.eq_set
 
@@ -48,6 +49,7 @@ and b_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
   | ListPerm of (exp * exp * loc)
+  | RelForm of (spec_var * (exp list) * loc)            (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
 and exp =
@@ -74,6 +76,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+  | ArrayAt of (spec_var * exp * loc)      (* An Hoa : array access *)
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here *)
   | ConstRel of bool
@@ -117,6 +120,11 @@ let rec get_exp_type (e : exp) : typ = match e with
   | ListHead _ | ListLength _ -> Prim Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ -> Prim Globals.Bag
   | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Prim Globals.List
+  | ArrayAt (SpecVar (t, a, _), _, _) ->
+          (* Type of a[i] is the type of the element of array a *)
+          match t with
+          | Array et -> et
+          | _ -> let _ = failwith "Cpure.get_exp_type : " ^ a ^ " is not an array variable" in OType "" 
 
 (* type constants *)
 let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
@@ -4049,7 +4057,7 @@ let rec replace_pure_formula_label nl f = match f with
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
-  
+(* An Hoa : Main function to change *) 
 let rec imply_disj_orig ante_disj conseq t_imply imp_no =
   match ante_disj with
     | h :: rest -> 
@@ -4060,6 +4068,7 @@ let rec imply_disj_orig ante_disj conseq t_imply imp_no =
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
   
+(* An Hoa : Modified this to accomodate array & relations *)
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no = 
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
@@ -4072,6 +4081,7 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
 	xp1
   else (xp01,xp02,xp03)	
 
+(* An Hoa : Modified to allow relations and array access *)
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   match conseq_conj with

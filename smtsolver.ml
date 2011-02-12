@@ -161,6 +161,9 @@ let rec smt_of_exp a qvars =
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("[smtsolver.ml]: ERROR in constraints (lists should not appear here)")
+  | CP.ArrayAt (a, i, l) -> 
+          (* An Hoa : TODO EDIT APPROPRIATELY *)
+          "(select " ^ (smt_of_spec_var a (Some qvars)) ^ (smt_of_exp i qvars) ^ ")"
 
 let rec smt_of_b_formula b qvars =
   let smt_of_spec_var v = smt_of_spec_var v (Some qvars) in
@@ -204,6 +207,9 @@ let rec smt_of_b_formula b qvars =
       failwith ("smt_of_b_formula: BagMax/BagMin should not appear here.\n")
   | CP.ListIn _ | CP.ListNotIn _ | CP.ListAllN _ | CP.ListPerm _ -> 
       failwith ("smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
+  | CP.RelForm (r, args, l) ->
+          (* An Hoa : TODO EDIT APPROPRIATELY *)
+          "(" ^ (smt_of_spec_var r) ^ " " ^ (String.concat " " (List.map smt_of_exp args)) ^ ")"
 
 let rec smt_of_formula f qvars =
   match f with

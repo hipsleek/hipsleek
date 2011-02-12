@@ -2931,13 +2931,16 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
+(* An Hoa : Prove the pure formula (no heap involved) 
+ * TODO make change to capture relations
+ * *)
 and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   (* let _ = print_string ("\n\nimply_mix_formula" ^ (string_of_int !imp_no)^"\n") in *)
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
-          CP.imply_conj_orig 
+          CP.imply_conj_orig (* An Hoa: note this function in CPure*) 
               (TP.split_disjunctions a0) 
               (TP.split_disjunctions a1) 
               (TP.split_conjunctions c) 

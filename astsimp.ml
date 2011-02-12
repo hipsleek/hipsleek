@@ -3261,6 +3261,10 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.ListPerm (e1, e2, pos) ->
           let pe1 = trans_pure_exp e1 stab in
           let pe2 = trans_pure_exp e2 stab in CP.ListPerm (pe1, pe2, pos)
+    | IP.RelForm (r, args, pos) ->
+          let cpargs = trans_pure_exp_list args stab in
+          CP.RelForm (CP.SpecVar (C.bool_type, r, Unprimed), cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
+          
 
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
@@ -3285,7 +3289,11 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
     | IP.ListTail (e, pos) -> CP.ListTail (trans_pure_exp e stab, pos)
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
-          
+    | IP.ArrayAt ((a, p), ind, pos) -> 
+            (* An Hoa : translate IP.ArrayAt to CP.ArrayAt *)
+            let cpind = trans_pure_exp ind stab in
+            (* Currently, only allow single dimensional array of int => TODO Use the correct type *)
+            CP.ArrayAt (CP.SpecVar ((CP.Array C.int_type), a, p), cpind, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -3370,6 +3378,7 @@ and collect_type_info_pure (p0 : IP.formula) (stab : spec_var_table) : unit =
 and collect_type_info_b_formula b0 stab =
   match b0 with
     | IP.BConst _ -> ()
+    | IP.RelForm _ -> () (* An Hoa : TODO Implement *)
     | IP.BVar ((bv, bp), pos) ->
 	      collect_type_info_var bv stab (Known C.bool_type) pos
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
@@ -3566,11 +3575,13 @@ and collect_type_info_arith a0 stab expected_type =
 	      (collect_type_info_arith a1 stab expected_type; collect_type_info_arith a2 stab expected_type)
     | IP.ListHead (a, pos)
     | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
-          
     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
           failwith "collect_type_info_arith: encountered bag constraint"
     | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
           failwith "collect_type_info_arith: encountered list constraint"
+    | IP.ArrayAt _ -> 
+            (* An Hoa : TODO IMPLEMENT *)
+            failwith "collect_type_info_arith: encounter array access" 
 
 and collect_type_info_bag_content a0 stab =
   match a0 with
@@ -3593,6 +3604,9 @@ and collect_type_info_bag_content a0 stab =
     | IP.ListHead (a, pos) | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
     | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
           failwith "collect_type_info_bag_content: encountered list constraint"
+    | IP.ArrayAt _ -> 
+            (* An Hoa *)
+            failwith "collect_type_info_bag_content: encountered array access" 
 
 and collect_type_info_bag (e0 : IP.exp) stab =
   match e0 with
@@ -3618,6 +3632,9 @@ and collect_type_info_bag (e0 : IP.exp) stab =
 	      failwith "collect_type_info_bag: encountered arithmetic constraint"
     | IP.ListHead _ | IP.ListTail _ | IP.ListLength _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
           failwith "collect_type_info_bag: encountered list constraint"
+    | IP.ArrayAt _ ->
+          (* An Hoa *)
+          failwith "collect_type_info_bag: encountered array constraint!" 
 
 and collect_type_info_list (e0 : IP.exp) stab =
   match e0 with
@@ -3643,6 +3660,9 @@ and collect_type_info_list (e0 : IP.exp) stab =
           failwith "collect_type_info_list: encountered arithmetic constraint"
     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
           failwith "collect_type_info_list: encountered bag constraint"
+    | IP.ArrayAt _ ->
+          (* An Hoa *)
+          failwith "collect_type_info_list: encountered array access" 
 
 and collect_type_info_pointer (e0 : IP.exp) (k : spec_var_kind) stab =
   match e0 with

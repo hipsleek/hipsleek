@@ -671,7 +671,6 @@ simple_heap_constr
 pure_constr
   : simple_pure_constr opt_formula_label { match $1 with 
 	| P.BForm (b,_) -> P.BForm (b,$2)
-    | P.PForm _ -> $1 (* TODO implement *)
     | P.And _ -> $1
     | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
     | P.Not (b1,_,l) -> P.Not(b1,$2,l)
@@ -782,13 +781,11 @@ bconstr
 	  (P.BForm (P.BagMin ($3, $5, get_pos 2), None), None)
 	}
   | IDENTIFIER OPAREN opt_cexp_list CPAREN {
-   (* AnHoa: relation constraint, for instance, given the relatioin (defined as a view)
-
-  pred s(a,b,c) == c = a + b.
-
-  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
+   (* AnHoa: relation constraint, for instance, given the relation 
+    *  s(a,b,c) == c = a + b.
+    *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
     *)
-   (P.PForm ($1, $3), None)
+   (P.BForm (P.RelForm ($1, $3, get_pos 1), None), None)
   }
 ;
 
@@ -846,7 +843,7 @@ cexp
 ;
 
 opt_cexp_list
-  : { [] }
+  : { [] : P.exp list }
   | cexp_list { $1 }
 ;
 
