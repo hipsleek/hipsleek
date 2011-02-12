@@ -2977,7 +2977,7 @@ and heap_entail_split_rhs_phases
 
   and heap_n_pure_entail(*_debug*) ctx0 h p func : (list_context * proof) =
     Util.ho_debug_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
-         (fun (lc,_) -> match lc with FailCtx _ -> "Fail" | SuccCtx _ -> "OK")  (fun ctx0 h -> heap_n_pure_entail_x ctx0 h p func) ctx0 h 
+         (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  (fun ctx0 h -> heap_n_pure_entail_x ctx0 h p func) ctx0 h 
 
   and heap_n_pure_entail_1 ctx0 h p func = 
         print_string "tracing heap_n_pure_entail_1\n"; (heap_n_pure_entail ctx0 h p func)
