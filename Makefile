@@ -23,9 +23,12 @@ DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 TMP_FILES_PATH = /tmp/$(shell id -un)/prover_tmp_files
 
-all: hip sleek prover prdebug decidez.vo
+all: hip.opt sleek.opt decidez.vo
+#hip sleek prover prdebug decidez.vo
 
-rest: sleek prover prdebug
+norm: hip sleek  prover prdebug decidez.vo
+
+rest: hip sleek prover prdebug decidez.vo
 
 opt: hip.opt sleek.opt prover.opt
 
