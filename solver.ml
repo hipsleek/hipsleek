@@ -1793,7 +1793,7 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
 	      let new_ante = normalize fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure_N to_ante pos)) pos in
           let new_ante = filter_formula_memo new_ante false in
 	      let new_consumed = fold_es.es_heap in
-	      (* let _ = print_string("new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in *)
+	      let _ = print_string("new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in
 	      let new_es = {estate with es_heap = new_consumed;
 			  es_formula = new_ante;
 			  es_evars = new_evars;
@@ -3131,7 +3131,7 @@ and heap_entail_split_rhs_phases
   ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n"
   ^ (Cprinter.string_of_formula conseq)) pos;
-  (* print_string ("heap_entail_split_rhs_phases:  *)
+  (* print_string ("heap_entail_split_rhs_phases: *)
   (*                           \nante:\n" *)
   (* 			  ^ (Cprinter.string_of_context ctx0) *)
   (* 			  ^ "\nconseq:\n" *)
@@ -4252,11 +4252,11 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
 
     let tmp_h2, tmp_p2, tmp_fl2, tmp_b2, _ = split_components tmp_conseq' in
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
-    (* only add the new node if it is mutable *)
+    (* only add the consumed node if the node matched on the rhs is mutable *)
     let new_consumed = 
-      if not(get_imm l_node) 
+      if not(get_imm r_node) (************) 
       then mkStarH l_node estate.es_heap pos 
-      else estate.es_heap
+      else  estate.es_heap
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
       |Some s1, Some s2 -> ((Util.remove_elem s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
