@@ -6,15 +6,9 @@ data node { int val ; node next }.
 
 pred nll<n> == self::node<_,null> & n=1
 	or self::node<next = r> * r::nll<n-1> 
-	inv n >= 1.
-/*
+	inv n >= 1 & self!=null.
+
 checkentail x::nll<n>  |-  x::node<_,_>. 
-// print residue.
-// x * y
-// Valid
-
-
-checkentail x::nll<n> * y::nll<m>  |-  x!=null & y!=null. 
 print residue.
 // x * y
 // Valid
@@ -28,6 +22,10 @@ checkentail x::nll<n> * x::nll<m>  |-  1=2.
 print residue.
 // x * y
 // Valid
-*/
+
 checkentail x::nll<n> * y::nll<m>  |-  x!=null & y!=null. 
 print residue.
+// x * y
+// Valid
+
+
