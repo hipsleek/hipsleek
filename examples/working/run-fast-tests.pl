@@ -478,7 +478,7 @@ $output_file = "log";
 			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
 			                ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
 			                ["imm/imm4.slk","Valid.Fail."],
-			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
+			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
 			);
 if($timings){
     $mainSum = 0.0;

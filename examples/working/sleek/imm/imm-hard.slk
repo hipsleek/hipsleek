@@ -43,8 +43,20 @@ print residue.
 // x * y
 // Valid
 
+checkentail x::ll<n> * x::ll<n> & n=0   |-  x=null & n=0.
 
-/*
-checkentail x::ll<n> * x::ll<n>   |-  x=null & n=0. 
+checkentail x::ll<n> * x::ll<n> & n>0   |-  x=null & n=0.
+
+checkentail x::ll<n> * x::ll<n> & x=null  
+or x::ll<n> * x::ll<n> & x!=null   |-  x=null & n=0.
+
+
+checkentail x::ll<n> * x::ll<n>   |-  
+    case {  x=null -> [] x=null & n=0;
+            x!=null -> [] x=null & n=0; }. 
 print residue.
+
+/* parse error
+checkentail x::ll<n> * x::ll<n> * (true & x=null or true & x!=null)   |- 
+            x=null & n=0. 
 */
