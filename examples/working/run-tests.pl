@@ -8,9 +8,9 @@ GetOptions( "stop"  => \$stop,
 			"opt" => \$optimized,
             "output=s" => \$output_file );
 
-$ss = '../../ss';
+$ss = '../../ss.norm';
 if ($optimized) {
-  $ss = '../../ss.opt';
+$ss = '../../ss';
 }
 
 $error_count = 0;
