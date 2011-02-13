@@ -1,3 +1,8 @@
+12Feb : run_fast_test.pl should detect False from
+WN      xpure_heap_symbolic. This seems not to be
+        captured by xpure_heap?
+
+
 SLEEK:
 ------
 
