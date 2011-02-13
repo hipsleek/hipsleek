@@ -160,8 +160,8 @@ if($timings){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip.opt ";
-$sleek = "$exec_path/sleek.opt ";
+$hip = "$exec_path/hip ";
+$sleek = "$exec_path/sleek ";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
@@ -478,7 +478,7 @@ $output_file = "log";
 			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
 			                ["imm/imm3.slk","Fail.Fail.Valid.Valid.Valid.Valid."],
 			                ["imm/imm4.slk","Valid.Fail."],
-			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
+			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
 			);
 if($timings){
     $mainSum = 0.0;

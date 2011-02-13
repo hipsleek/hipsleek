@@ -4,7 +4,6 @@ pred ll<n> == self = null & n = 0
 	or self::node<next = r> * r::ll<n-1> 
 	inv n >= 0.
 
-/*
 checkentail (x::ll<n>@I * y::ll<m>@I) & n>0 & m=0  |-  x!=y. 
 print residue.
 // x * y
@@ -44,11 +43,8 @@ print residue.
 // x * y
 // Valid
 
-checkentail x::ll<n> * x::ll<n>   |-  x=null & n=0. 
-print residue.
-// x * y
-// Valid
-*/
 
+/*
 checkentail x::ll<n> * x::ll<n>   |-  x=null & n=0. 
 print residue.
+*/
