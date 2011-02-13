@@ -91,7 +91,6 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	scriptarguments.cmo\
 	main.cmo
 
-
 PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
@@ -100,9 +99,7 @@ PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	iastUtil.cmo \
 	cformula.cmo cast.cmo cprinter.cmo
 
-
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
-
 
 GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
@@ -124,8 +121,6 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 	typechecker.cmo \
 	scriptarguments.cmo \
 	globalvars.cmo 	
-
-
 
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
@@ -153,7 +148,6 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	sleek.cmo
 
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
-
 
 MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 	ipure.cmo iformula.cmo iast.cmo \
@@ -239,7 +233,6 @@ prover.norm: $(PROVE_FILES)
 
 prover: $(PROVE_FILES_OPT)
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
-
 
 web: $(WEB_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
