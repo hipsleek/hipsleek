@@ -355,6 +355,7 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
   in helper f
 
 let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+  (* print_string "calling xpure"; *)
   if (!Globals.allow_imm) then xpure_symbolic prog f0
   else
     let a, b, c = xpure_mem_enum prog f0 in
@@ -370,16 +371,21 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix
     let a, b, c = xpure_heap_mem_enum prog h0 which_xpure in
     (a, b, [], c)
 
-(* xpure approximation with memory enumeration *)
 and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
+  Util.ho_debug_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+    ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_mem_enum_x prog f0) f0
+
+
+(* xpure approximation with memory enumeration *)
+and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
   let mset = formula_2_mem f0 prog in 
   let rec xpure_helper  (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list) = 
     match f0 with
       | Or ({ formula_or_f1 = f1;
 	      formula_or_f2 = f2;
 	      formula_or_pos = pos}) ->
-        let pf1, pf1b, _ = xpure_mem_enum prog f1 in
-        let pf2, pf2b, _ = xpure_mem_enum prog f2 in
+        let pf1, pf1b = xpure_helper prog f1 in
+        let pf2, pf2b = xpure_helper prog f2 in
         let br = CP.or_branches pf1b pf2b in
 		(* let branches = Util.remove_dups (fst (List.split pf1b) @ (fst (List.split pf2b))) in *)
 		(* let map_fun branch = *)
@@ -432,7 +438,12 @@ and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branc
   let pf, pb = xpure_helper prog f0 in
   (pf, pb, mset)
 
-and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =
+
+and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Util.ho_debug_1 "xpure_heap_mem_enum" Cprinter.string_of_h_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+    ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_heap_mem_enum_x prog f0 which_xpure) h0
+
+
+and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =
   (* let _  = print_string("Calling xpure_heap for f = " ^ (Cprinter.string_of_h_formula h0) ^ "\n") in *)
   let memset = h_formula_2_mem h0 [] prog in
 
@@ -483,8 +494,8 @@ and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
       | Conj ({h_formula_conj_h1 = h1;
 	       h_formula_conj_h2 = h2;
 	       h_formula_conj_pos = pos}) ->
-        let (ph1, ph1b, _) = xpure_heap_mem_enum prog h1 which_xpure in
-        let (ph2, ph2b, _) = xpure_heap_mem_enum prog h2 which_xpure in
+        let (ph1, ph1b) = xpure_heap_helper prog h1 which_xpure in
+        let (ph2, ph2b) = xpure_heap_helper prog h2 which_xpure in
         let res_form = (MCP.merge_mems ph1 ph2 true, CP.merge_branches ph1b ph2b) in
 	res_form
       | HTrue  -> (MCP.mkMTrue no_pos, [])
@@ -492,7 +503,9 @@ and xpure_heap_mem_enum (prog : prog_decl) (h0 : h_formula) (which_xpure :int) :
       | Hole _ -> (MCP.mkMTrue no_pos, []) (*report_error no_pos "[solver.ml]: An immutability marker was encountered in the formula\n"*)
   in
   let ph, pb = xpure_heap_helper prog h0 which_xpure in
-  (ph, pb, memset)
+  if (is_sat_mem_formula memset) then 
+    (ph, pb,  memset)
+  else (MCP.mkMFalse no_pos, pb, memset)  
 
 and xpure_symbolic_debug (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
   Util.ho_debug_1 "xpure_symbolic" Cprinter.string_of_formula 
