@@ -1169,30 +1169,40 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
   | _ -> formula_of_heap_fl f fl pos
 
 (* this is added to eliminate some obvious existentials in the antecedent *)
-and split_universal ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
+and split_universal ((f0 : CP.formula), f0b,(f0perm:CPr.perm_formula)) (evars : CP.spec_var list) 
       (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
-      = let ((a,b),x,y)=split_universal_a (f0,f0b) evars expl_inst_vars impl_inst_vars vvars pos in
-      ((elim_exists_pure_formula a,b)(*Pr.elim_exists_perm_exists c)*),x,y)
+      = let ((a,b,c),x,y)=split_universal_a (f0,f0b,f0perm) evars expl_inst_vars impl_inst_vars vvars pos in
+      ((elim_exists_pure_formula a,b,CPr.elim_exists_perm_exists c),x,y)
 
-and split_universal_debug ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
+and split_universal_debug ((f0 : CP.formula), f0b, f0perm) (evars : CP.spec_var list) 
       (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
       =
   let vv = evars (*impl_inst_vars*) in
-  Util.ho_debug_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
-      (fun _ -> (Cprinter.string_of_spec_var_list evars)^"/I="^(Cprinter.string_of_spec_var_list impl_inst_vars)^"/E="^(Cprinter.string_of_spec_var_list expl_inst_vars)^"/"^ (Cprinter.string_of_spec_var_list vvars)) (fun ((f1,_),(f2,_),_) -> (Cprinter.string_of_pure_formula f1)^"/"^ (Cprinter.string_of_pure_formula f2)) (fun f vv -> split_universal f evars expl_inst_vars impl_inst_vars vvars pos)
-      (f0,f0b) vv
+  Util.ho_debug_2 "split_universal" 
+      
+      (fun (f,_,c)->(Cprinter.string_of_pure_formula f) ^" -- "^(Cprinter.string_of_perm_formula c))
+      
+      (fun _ -> (Cprinter.string_of_spec_var_list evars)^"/I="^(Cprinter.string_of_spec_var_list impl_inst_vars)^"/E="^
+               (Cprinter.string_of_spec_var_list expl_inst_vars)^"/"^ (Cprinter.string_of_spec_var_list vvars)) 
+      
+      (fun ((f1,_,f1p),(f2,_,f2p),_) -> (Cprinter.string_of_pure_formula f1)^"&p"^(Cprinter.string_of_perm_formula f1p)^
+          "/"^ (Cprinter.string_of_pure_formula f2) ^ "&p"^(Cprinter.string_of_perm_formula f2p)) 
+      
+      (fun f vv -> split_universal f evars expl_inst_vars impl_inst_vars vvars pos)
+      
+      (f0,f0b,f0perm) vv
       (*
         vvars: variables of interest
         evars: those involving this will be on the rhs
         otherwise move to the lhs
       *)
-and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list) 
+and split_universal_a ((f0 : CP.formula), f0b, (f0perm:CPr.perm_formula)) (evars : CP.spec_var list) 
       (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
-      : ((CP.formula * (branch_label * CP.formula) list) * 
-          (CP.formula * (branch_label * CP.formula) list) * (CP.spec_var list)) =
+      : ((CP.formula * (branch_label * CP.formula) list * CPr.perm_formula) * 
+          (CP.formula * (branch_label * CP.formula) list * CPr.perm_formula) * (CP.spec_var list)) =
   let rec split f = match f with
     | CP.And (f1, f2, _) ->
 	      let app1, cpp1 = split f1 in
@@ -1214,21 +1224,32 @@ and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
 
 	          What we added here: -->Step (iii) can be also improved by additionally moving (exists e : E3(e,f,g)) to the LHS.
 	        *)
-	        if not (CP.disjoint (evars@expl_inst_vars@impl_inst_vars) fvars) then (* to conseq *)
-	          (CP.mkTrue pos, f)
-	        else (* to ante *)
-	          (f, CP.mkTrue pos)
-  in
+	        if not (CP.disjoint (evars@expl_inst_vars@impl_inst_vars) fvars) then (* to conseq *) (CP.mkTrue pos, f)
+	        else (* to ante *) (f, CP.mkTrue pos) in
+  
+  let rec split_perm f :(CPr.perm_formula * CPr.perm_formula)= match f with
+    | CPr.And (f1, f2, _) ->
+	      let app1, cpp1 = split_perm f1 in
+	      let app2, cpp2 = split_perm f2 in
+	      (CPr.mkAnd app1 app2 pos, CPr.mkAnd cpp1 cpp2 pos)
+    | _ ->
+	      let fvars = CPr.fv f in
+	      if CP.disjoint fvars vvars then (CPr.mkTrue pos, CPr.mkTrue pos)
+	      else if not (CP.disjoint (evars@expl_inst_vars@impl_inst_vars) fvars) then (CPr.mkTrue pos, f)
+	      else (f, CPr.mkTrue pos)in
+  
   (* -- added on 21.05.2008 *)
   (* try to obtain as much as a CNF form as possible so that the splitting of bindings between antecedent and consequent is more accurate *)
   let f = (normalize_to_CNF f0 pos) in
   let fb = (List.map (fun (l,f) -> (l, normalize_to_CNF f pos)) f0b) in
+  let fperm = CPr.normalize_to_CNF f0perm pos in
   (* added on 21.05.2008 -- *)
   (*
     let _ = (print_string ("\n[solver.ml, split_universal]: Pure formula: " ^ (Cprinter.string_of_pure_formula f0) ^ "\n")) in
     let _ = (print_string ("[solver.ml, split_universal]: Pure formula in simplified cnf: " ^ (Cprinter.string_of_pure_formula f) ^ "\n")) in
   *)
   let to_ante, to_conseq = split f in
+  let to_ante_perm, to_conseq_perm = split_perm fperm in
   let to_ante = CP.find_rel_constraints to_ante vvars in
   let tmp_l = List.map (fun (l, f) -> (l, split f)) fb in
   let labels, pairs = List.split tmp_l in
@@ -1238,38 +1259,28 @@ and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
   let conseq_fv = CP.fv to_conseq in
   let conseq_fv_b = (List.map (fun (l,f) -> CP.fv f) to_conseq_b) in
   let instantiate = List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) conseq_fv in
+  let instantiate_perm = List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) (CPr.fv to_conseq_perm) in
   let instantiate_b = List.map (fun fv_list -> List.filter (fun v -> List.mem v (evars@expl_inst_vars@impl_inst_vars)) fv_list) conseq_fv_b in
   let wrapped_to_conseq = List.fold_left (fun f v -> CP.Exists (v, f,None, pos)) to_conseq instantiate in
+  let wrapped_to_conseq_perm = CPr.mkExists instantiate_perm to_conseq_perm pos in
   let wrapped_to_conseq_b = 
     List.map2 (fun to_conseq instantiate -> List.fold_left (fun f v -> CP.Exists (v, f, None, pos)) to_conseq instantiate)
         to_conseq_f instantiate_b in
-  let to_ante =
-    if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante
-  in
+  let to_ante = if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante in
+  let to_ante_perm = if CPr.fv wrapped_to_conseq_perm <> [] then CPr.mkAnd to_ante_perm wrapped_to_conseq_perm no_pos else to_ante_perm in
   let to_ante_f = List.map2 (fun to_ante wrapped_to_conseq ->
 	  if CP.fv wrapped_to_conseq <> [] then CP.mkAnd to_ante wrapped_to_conseq no_pos else to_ante
   ) to_ante_f wrapped_to_conseq_b in
   let to_ante_b = List.combine labels to_ante_f in
   (*t evars = explicitly_quantified @ evars in*)
-
   (*TODO: wrap implicit vars for to_ante
     (i) find FV=free vars of to_ante; (ii) select ctrs connected to FV (iii) remove redundant exists vars
   *)
-
-  Debug.devel_pprint ("split_universal: evars: "
-  ^ (String.concat ", "
-	  (List.map Cprinter.string_of_spec_var evars))) pos;
-  Debug.devel_pprint ("split_universal: expl_inst_vars: "
-  ^ (String.concat ", "
-	  (List.map Cprinter.string_of_spec_var expl_inst_vars))) pos;
-  
-  Debug.devel_pprint ("split_universal: vvars: "
-  ^ (String.concat ", "
-	  (List.map Cprinter.string_of_spec_var vvars))) pos;
-  Debug.devel_pprint ("split_universal: to_ante: "
-  ^ (Cprinter.string_of_pure_formula_branches (to_ante, to_ante_b))) pos;
-  Debug.devel_pprint ("split_universal: to_conseq: "
-  ^ (Cprinter.string_of_pure_formula_branches (to_conseq, to_conseq_b))) pos;
+  Debug.devel_pprint ("split_universal: evars: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var evars))) pos;
+  Debug.devel_pprint ("split_universal: expl_inst_vars: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var expl_inst_vars))) pos;
+  Debug.devel_pprint ("split_universal: vvars: "^ (String.concat ", "(List.map Cprinter.string_of_spec_var vvars))) pos;
+  Debug.devel_pprint ("split_universal: to_ante: "^ (Cprinter.string_of_pure_formula_branches (to_ante, to_ante_b))) pos;
+  Debug.devel_pprint ("split_universal: to_conseq: "^ (Cprinter.string_of_pure_formula_branches (to_conseq, to_conseq_b))) pos;
   let fvars = CP.fv f in
 
   (* 27.05.2008 *)
@@ -1279,8 +1290,8 @@ and split_universal_a ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
 	(*let _ = print_string("\n[solver.ml, split_universal]: No FV in  " ^ (Cprinter.string_of_pure_formula f) ^ "\n") in*)
 	(* Branches not handled here yet *)
 	let new_f = discard_uninteresting_constraint f vvars in
-	(((CP.mkAnd to_ante (CP.mkExists evars new_f None pos) pos), []), (to_conseq, to_conseq_b), evars)
-  else ((to_ante, to_ante_b), (to_conseq, to_conseq_b), evars)
+	(((CP.mkAnd to_ante (CP.mkExists evars new_f None pos) pos), [],to_ante_perm), (to_conseq, to_conseq_b, to_conseq_perm), evars)
+  else ((to_ante, to_ante_b, to_ante_perm), (to_conseq, to_conseq_b, to_conseq_perm), evars)
 
 
 (**************************************************************)
@@ -1547,12 +1558,12 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
     | Ctx fold_es ->
           let fold_es = CF.overwrite_estate_with_steps fold_es ss in
           let e_pure = MCP.fold_mem_lst (CP.mkTrue pos) true true (fst (fst fold_es.es_pure)) in
-	      let (to_ante, to_ante_br), (to_conseq, to_conseq_br), new_evars = 
-            split_universal (e_pure, snd (fst fold_es.es_pure)) fold_es.es_evars fold_es.es_gen_expl_vars
+	      let (to_ante, to_ante_br,to_ante_perm), (to_conseq, to_conseq_br, to_conseq_perm), new_evars = 
+            split_universal (e_pure, snd (fst fold_es.es_pure), snd fold_es.es_pure) fold_es.es_evars fold_es.es_gen_expl_vars
               fold_es.es_gen_impl_vars vs2 pos in
-	      let tmp_conseq = mkBase resth2 pure2 type2 pr2 flow2 branches2 pos in
-	      let new_conseq = normalize tmp_conseq (CF.replace_branches to_conseq_br (formula_of_pure_N to_conseq pos)) pos in
-	      let new_ante = normalize fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure_N to_ante pos)) pos in
+	      let tmp_conseq = mkBase resth2 pure2 type2 pr2  flow2 branches2 pos in
+	      let new_conseq = normalize tmp_conseq (CF.replace_branches_perm to_conseq_br to_conseq_perm (formula_of_pure_N to_conseq pos)) pos in
+	      let new_ante = normalize fold_es.es_formula (CF.replace_branches_perm to_ante_br to_ante_perm (formula_of_pure_N to_ante pos)) pos in
           let new_ante = filter_formula_memo new_ante false in
 	      let new_consumed = fold_es.es_heap in
 	      let new_es = {estate with es_heap = new_consumed;
@@ -2142,6 +2153,7 @@ and heap_entail_conjunct_lhs_struc
 	        (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
             (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
             let ctx = add_to_context ctx "case rule" in
+            let _ = print_string "got here3\n" in
 	        if (List.length b.formula_case_exists)>0 then 
 	          let ws = CP.fresh_spec_vars b.formula_case_exists in
 	          let st = List.combine b.formula_case_exists ws in

@@ -8,6 +8,7 @@ open Cformula
 
 module P = Cpure
 module MP = Mcpure
+module CPr = Cperm
 
 
 (* pretty printing for primitive types *)
@@ -422,14 +423,14 @@ let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
         
-let string_of_splint l = 
-  if (l==[]) then ""
-  else ("+"^(String.concat "" (List.map (fun c-> match c with | PLeft-> "L" | _ -> "R") l)))
+let string_of_splint l = CPr.string_of_tree_share l
+  (*if (l==[]) then ""
+  else ("+"^(String.concat "" (List.map (fun c-> match c with | PLeft-> "L" | _ -> "R") l)))*)
 
 let string_of_perm allow_full (x1,x2) = match x1 with
   |Some v -> "@"^(string_of_spec_var v)^(string_of_splint x2)
-  |None ->
-      if (x2==[]) then if allow_full then "@1" else ""
+  |None -> 
+      if (CPr.is_full_frac x2) then if allow_full then "@1" else ""
       else ("@"^(string_of_splint x2))
 
  

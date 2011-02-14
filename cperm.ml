@@ -1,8 +1,12 @@
 open Globals
 module P = Cpure
+module Ts = Tree_shares
 
+type share = Ts.Share.coq_ShareTree
 
-type frac_perm = P.spec_var option * perm_modifier
+type frac_perm = P.spec_var option * share
+
+(*perm_modifier*)
 
 type perm_formula = 
   | And of (perm_formula * perm_formula * loc)
@@ -16,9 +20,13 @@ type perm_formula =
 let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
 let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
   
-let frac_of_var v = (Some v,[])
+let top_share = Ts.Share.top
+
+let split = Ts.Share.split
+
+let frac_of_var v :frac_perm = (Some v,Ts.Share.top)
   
-let mkPFull () :frac_perm = (None,[])
+let mkPFull () :frac_perm = (None,Ts.Share.top)
 
 let mkPerm posib_var splint :frac_perm = (posib_var,splint)
 
@@ -44,6 +52,8 @@ let mkAnd f1 f2 pos = match f1 with
 let mkEq f1 f2 pos = Eq (f1,f2,pos)
 
 let freshPermVar () = P.SpecVar (P.OType "perm", fresh_name (), Unprimed) 
+
+let is_full_frac t = Ts.Share.eq_dec t Ts.Share.top 
 
 let mkFullVar () : (P.spec_var * perm_formula) = 
   let nv = freshPermVar() in
@@ -201,3 +211,70 @@ let trans_perm (e:perm_formula) (arg: 'a) f f_arg f_comb_a : (perm_formula * 'b)
       | PFalse _ -> (e, f_comb []) in
  foldr_f arg e
 
+let eq_fperm_var v1 v2  = match v1,v2 with
+  | Some v1,Some v2 -> P.eq_spec_var v1 v2 
+  | None,None -> true
+  | _ -> false
+ 
+let eq_fperm (v1,f1) (v2,f2) =(eq_fperm_var v1 v2)&& (Ts.Share.eq_dec f1 f2) 
+ 
+let rec eq_perm_formula (f1 : perm_formula) (f2 : perm_formula) : bool = match (f1,f2) with
+  | And (f11,f12,_), And (f21,f22,_)
+  | Or  (f11,f12,_), Or (f21,f22,_) -> 
+      ((eq_perm_formula f11 f21) && (eq_perm_formula f12 f22))||((eq_perm_formula f11 f22) && (eq_perm_formula f12 f21))
+  | Join (f11,f12,f13,_), Join (f21,f22,f23,_) -> 
+      ((eq_fperm f11 f21)&&(eq_fperm f12 f22)&&(eq_fperm f13 f23)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21)&&(eq_fperm f13 f23))
+  | Eq (f11,f12,_) , Eq(f21,f22,_) -> ((eq_fperm f11 f21)&&(eq_fperm f12 f22)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21))
+  | Exists (l1,f1,_), Exists (l2,f2,_) -> (List.length l1 = List.length l2 ) && (List.for_all2 P.eq_spec_var l1 l2) && (eq_perm_formula f1 f2)
+  | PTrue _, PTrue _
+  | PFalse _, PFalse _ -> true
+  | _ -> false
+ 
+
+let rec normalize_to_CNF (f : perm_formula) pos : perm_formula = match f with
+  | Or (f1, f2, p) ->
+        let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
+	     (mkAnd conj (mkOr disj1 disj2 p) p)
+  | And (f1, f2, p) -> mkAnd (normalize_to_CNF f1 p) (normalize_to_CNF f2 p) p
+  | Exists (sp, f1, p) -> mkExists sp (normalize_to_CNF f1 p) p
+  | _ -> f
+(* take two formulas f1 and f2 and returns:
+   - the formula containing the commom conjuncts
+   - the formula representing what's left of f1
+   - the formula representing what's left of f2
+*)
+ and list_of_conjs (f:perm_formula): perm_formula list = match f with
+  | And (f1,f2,_) -> (list_of_conjs f1) @ (list_of_conjs f2)
+  | _ -> [f]
+  
+ and find_common_conjs (f1 : perm_formula) (f2 : perm_formula) pos : (perm_formula * perm_formula * perm_formula) = match f1 with
+  | Eq _ 
+  | Join _ ->
+        if (List.exists (fun c -> (eq_perm_formula c f1)) (list_of_conjs f2)) then (f1, (mkTrue pos), (remove_conj f2 f1 pos))
+        else ((mkTrue pos), f1, f2)
+  | And(f11, f12, p) ->
+        let outer_conj, new_f1, new_f2 = (find_common_conjs f11 f2 p) in
+        let outer_conj_prim, new_f1_prim, new_f2_prim  = (find_common_conjs f12 new_f2 p) in
+	    ((mkAnd outer_conj outer_conj_prim p), (mkAnd new_f1 new_f1_prim p), new_f2_prim)
+  | Or(f11, f12, p) ->
+        let new_f11 = (normalize_to_CNF f11 p) in
+        let new_f12 = (normalize_to_CNF f12 p) in
+	    (mkTrue pos),(mkOr new_f11 new_f12 p),f2
+  | _ -> ((mkTrue pos), f1, f2)
+
+and remove_conj (f : perm_formula) (conj : perm_formula) pos : perm_formula = match f with
+  | Eq _
+  | Join _ -> if eq_perm_formula f conj then mkTrue pos else f
+  | And(f1, f2, p) ->
+        (mkAnd (remove_conj f1 conj p) (remove_conj f2 conj p) p)
+  | _ -> f
+
+ 
+ 
+let rec string_of_tree_share ts = match ts with
+  | Ts.Share.Leaf true -> "T"
+  | Ts.Share.Leaf false -> ""
+  | Ts.Share.Node (t1,t2) -> 
+    let s1 = string_of_tree_share t1 in
+    let s2 = string_of_tree_share t2 in
+    "("^s1^","^s2^")"

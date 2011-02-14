@@ -2084,7 +2084,13 @@ and replace_branches b = function
   | Or f -> failwith "replace_branches doesn't expect an Or"
   | Base f -> Base {f with formula_base_branches = b;}
   | Exists f -> Exists {f with formula_exists_branches = b;}
+
+and replace_branches_perm b perm = function
+  | Or f -> failwith "replace_branches doesn't expect an Or"
+  | Base f -> Base {f with formula_base_branches = b; formula_base_perm = Pr.mkAnd f.formula_base_perm perm no_pos;}
+  | Exists f -> Exists {f with formula_exists_branches = b; formula_exists_perm = Pr.mkAnd f.formula_exists_perm perm no_pos;}
 ;;
+
 
 let flatten_branches p br =
   List.fold_left (fun p (l, f) -> CP.And (p, f,no_pos)) p br
