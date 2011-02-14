@@ -323,32 +323,7 @@ let rec is_memo_bag_constraint (f:MCP.memo_pure): bool =
   ) f
 
   (* Method checking whether a formula contains list constraints *)
- 
-let is_list_b_formula bf = match bf with
-    | CP.BConst _ 
-    | CP.BVar _
-    | CP.Lt _ 
-    | CP.Lte _ 
-    | CP.Gt _ 
-    | CP.Gte _
-    | CP.EqMax _ 
-    | CP.EqMin _
-    | CP.BagIn _ 
-    | CP.BagNotIn _
-    | CP.BagMin _ 
-    | CP.BagMax _
-    | CP.BagSub _
-        -> Some false
-    | CP.ListIn _ 
-    | CP.ListNotIn _
-    | CP.ListAllN _ 
-    | CP.ListPerm _
-        -> Some true
-    | _ -> None
- 
-let is_list_constraint (e: CP.formula) : bool =
- 
-  let f_e e = match e with
+let rec is_list_exp e = match e with
     | CP.List _
     | CP.ListCons _
     | CP.ListHead _
@@ -357,10 +332,69 @@ let is_list_constraint (e: CP.formula) : bool =
     | CP.ListAppend _
     | CP.ListReverse _ 
         -> Some true
+	| CP.Add (e1,e2,_)
+	| CP.Subtract (e1,e2,_)
+	| CP.Mult (e1,e2,_)
+	| CP.Div (e1,e2,_)
+	| CP.Max (e1,e2,_)
+	| CP.Min (e1,e2,_)
+	| CP.BagDiff (e1,e2,_)
+		-> (match (is_list_exp e1) with
+						| Some true -> Some true
+						| _ -> is_list_exp e2)
+	| CP.Bag (el,_)
+	| CP.BagUnion (el,_)
+	| CP.BagIntersect (el,_)
+		-> (List.fold_left (fun res exp -> match res with
+											| Some true -> Some true
+											| _ -> is_list_exp exp) (Some false) el)
     | _ -> Some false
-  in
+	  
+(*let f_e e = Util.ho_debug_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
+	| Some ss -> string_of_bool ss
+	| _ -> "") f_e_1 e
+*)	
+
+let is_list_b_formula bf = match bf with
+    | CP.BConst _ 
+    | CP.BVar _
+	| CP.BagMin _ 
+    | CP.BagMax _
+		-> Some false    
+    | CP.Lt (e1,e2,_) 
+    | CP.Lte (e1,e2,_) 
+    | CP.Gt (e1,e2,_)
+    | CP.Gte (e1,e2,_)
+	| CP.Eq (e1,e2,_)
+	| CP.Neq (e1,e2,_)
+	| CP.BagSub (e1,e2,_)
+		-> (match (is_list_exp e1) with
+						| Some true -> Some true
+						| _ -> is_list_exp e2)
+    | CP.EqMax (e1,e2,e3,_)
+    | CP.EqMin (e1,e2,e3,_)
+		-> (match (is_list_exp e1) with
+						| Some true -> Some true
+						| _ -> (match (is_list_exp e2) with
+											| Some true -> Some true
+											| _ -> is_list_exp e3))
+    | CP.BagIn (_,e,_) 
+    | CP.BagNotIn (_,e,_)
+		-> is_list_exp e
+    | CP.ListIn _ 
+    | CP.ListNotIn _
+    | CP.ListAllN _ 
+    | CP.ListPerm _
+        -> Some true  
+	  
+let is_list_constraint (e: CP.formula) : bool =
+ 
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, is_list_b_formula, f_e) or_list
+  CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
+
+let is_list_constraint_a (e: CP.formula) : bool =
+  (*Util.ho_debug_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
+  Util.ho_debug_1 "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool is_list_constraint e
   
 let rec is_memo_list_constraint (f:MCP.memo_pure): bool = 
   List.exists (fun c-> 
