@@ -357,6 +357,9 @@ let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->strin
 let ho_debug_1_opt  (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
   ho_debug_1_opt_aux false s pr1 pr_o test f e1
 
+let no_debug_1_opt  (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
+  (f e1)
+
 let ho_debug_1 (s:string) (pr1:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e1:'a) : 'z =
   ho_debug_1_opt_aux false s pr1 pr_o (fun _ -> true) f e1
 

@@ -117,26 +117,26 @@ if($timings){
         $worksheet = $workbook->sheets(0);
     }
 
-    $row = 1;
+    $row = 3;
     (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
     $worksheet->set_column(0, 0, 10);
-    $worksheet->write($row, 0, "Time:");
-    $worksheet->write($row, 1, $date);
+    $worksheet->write($row, 3, "Time:");
+    $worksheet->write($row, 4, $date);
     $row++;
-    $worksheet->write($row, 0, "Prover:");
-    $worksheet->write($row, 1, "$prover");
+    $worksheet->write($row, 3, "Prover:");
+    $worksheet->write($row, 4, "$prover");
     $row++;
     if("$flags"){
-        $worksheet->write($row, 0, "Call args:");
-        $worksheet->write($row, 1, "$flags");
+        $worksheet->write($row, 3, "Call args:");
+        $worksheet->write($row, 4, "$flags");
     }
     $row++;
     if("$str_log"){
-        $worksheet->write($row, 0, "Comments:");
-        $worksheet->write($row, 1, "$str_log");
+        $worksheet->write($row, 3, "Comments:");
+        $worksheet->write($row, 4, "$str_log");
     }
     $row = $row + 2;
     $programCol = 1;

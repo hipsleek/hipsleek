@@ -372,7 +372,7 @@ and xpure_heap (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix
     (a, b, [], c)
 
 and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
-  Util.ho_debug_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+  Util.no_debug_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
     ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_mem_enum_x prog f0) f0
 
 
@@ -439,7 +439,7 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (bra
   (pf, pb, mset)
 
 
-and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Util.ho_debug_1 "xpure_heap_mem_enum" Cprinter.string_of_h_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Util.no_debug_1 "xpure_heap_mem_enum" Cprinter.string_of_h_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
     ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_heap_mem_enum_x prog f0 which_xpure) h0
 
 
@@ -508,7 +508,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
   else (MCP.mkMFalse no_pos, pb, memset)  
 
 and xpure_symbolic_debug (prog : prog_decl) (h0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
-  Util.ho_debug_1 "xpure_symbolic" Cprinter.string_of_formula 
+  Util.no_debug_1 "xpure_symbolic" Cprinter.string_of_formula 
     (fun (p1,_,vl,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(Cprinter.string_of_spec_var_list vl)^"#
 "^(Cprinter.string_of_mem_formula p4)) (* (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) *)
     (fun h0 -> xpure_symbolic prog h0) h0
@@ -581,7 +581,7 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
 
 
 and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
-  Util.ho_debug_1_opt "xpure_heap_symbolic" Cprinter.string_of_h_formula 
+  Util.no_debug_1_opt "xpure_heap_symbolic" Cprinter.string_of_h_formula 
     (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
       ^string_of_bool(is_sat_mem_formula p4)) 
     (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
@@ -3053,7 +3053,7 @@ and eliminate_exist_from_LHS qvars qh qp qt qfl qb pos estate =
   in new_ctx
 
 and heap_n_pure_entail(*_debug*) prog is_folding is_universal ctx0 conseq h p func drop_read_phase pos : (list_context * proof) =
-    Util.ho_debug_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
+    Util.no_debug_2 "heap_n_pure_entail" (Cprinter.string_of_context) Cprinter.string_of_h_formula
          (fun (lc,_) -> match lc with FailCtx _ -> "Not OK" | SuccCtx _ -> "OK")  (fun ctx0 h -> heap_n_pure_entail_x prog is_folding is_universal ctx0 conseq h p func drop_read_phase pos) ctx0 h 
 
 and heap_n_pure_entail_1 prog is_folding is_universal ctx0 conseq h p func drop_read_phase pos = 
@@ -3249,7 +3249,7 @@ and swap_heap (f : formula) (new_h : h_formula) pos : (formula * h_formula) =
 and heap_entail_split_lhs_phases(*_debug*)
       p is_folding is_universal ctx0 conseq d
       pos : (list_context * proof) =
-  Util.ho_debug_2 "heap_entail_split_lhs_phases"
+  Util.no_debug_2 "heap_entail_split_lhs_phases"
       (Cprinter.string_of_context)
       (fun _ -> "RHS")
       (* (Cprinter.string_of_formula) *)
