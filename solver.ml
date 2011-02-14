@@ -2385,9 +2385,12 @@ and heap_entail_conjunct_lhs_struc
 	          let r = match r with
 	            | None -> begin
 		            List.map (fun (c1,c2)-> 
-			            let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in (*this unsat check is essential for completeness of result*)
+			            let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
+                    (*this unsat check is essential for completeness of result*)
 				        if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
-				        else inner_entailer n_ctx c2 ) b.formula_case_branches 
+				        else 
+                  let n_ctx = prune_ctx prog n_ctx in
+                  inner_entailer n_ctx c2 ) b.formula_case_branches 
 		          end
 	            | Some (p,e) -> begin [inner_entailer ctx e]end in
 	          let rez1,rez2 = List.split r in
