@@ -91,6 +91,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	scriptarguments.cmo\
 	main.cmo
 
+
 PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
@@ -99,7 +100,9 @@ PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	iastUtil.cmo \
 	cformula.cmo cast.cmo cprinter.cmo
 
+
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
+
 
 GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
@@ -121,6 +124,8 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 	typechecker.cmo \
 	scriptarguments.cmo \
 	globalvars.cmo 	
+
+
 
 SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
@@ -148,6 +153,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	sleek.cmo
 
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
+
 
 MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 	ipure.cmo iformula.cmo iast.cmo \
@@ -209,6 +215,7 @@ hipc:
 hip.norm: decidez.vo $(MAIN_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
+
 hip: $(MAIN_FILES_OPT) decidez.vo
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
@@ -220,6 +227,7 @@ prdebug: $(PP_FILES)
 	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
 #	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
+
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
@@ -227,12 +235,14 @@ hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
 #	make -f Makefile.opt hip.opt
 
+
 prover.norm: $(PROVE_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES_OPT)
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
+
 
 web: $(WEB_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)

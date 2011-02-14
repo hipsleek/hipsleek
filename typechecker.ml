@@ -569,8 +569,8 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 
 (* check entire program *)
 let check_proc_wrapper prog proc =
-  (*check_proc prog proc  *)
-  try
+  check_proc prog proc 
+(*  try
     check_proc prog proc  
   with _ as e ->
     if !Globals.check_all then begin
@@ -578,9 +578,10 @@ let check_proc_wrapper prog proc =
       print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
+      Printexc.print_backtrace stdout;
       false
     end else
-      raise e
+      raise e*)
 (*
 let check_view vdef =
   let ante = vdef.view_formula in

@@ -242,7 +242,7 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
 (* returns a list of ptr eqns v1=v2 that can be found in memo_pure
    and called during matching of predicates
 *)
-and ptr_equations_aux with_null (f : memo_pure) : (spec_var * spec_var) list =  
+and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
@@ -1118,17 +1118,25 @@ let replace_memo_pure_label nl f =
   List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
  
  (* imply functions *)
- 
+
+let rec mimply_process_ante_debug with_disj ante_disj conseq str str_time t_imply imp_no =
+ Util.ho_debug_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+  (fun (c,_,_)-> string_of_bool c) 
+ (fun with_disj ante_disj conseq -> mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
     
-let mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
+and mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
   let fv = fv conseq in 
   let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
+  (*check lhs is false*)
+ (* let n_ante = if (isConstMFalse  ante_disj) then n_ante @ (mkMFalse no_pos) else n_ante in*)
+  (* let _ = print_endline ("mimply_process_ante: n_ante 1"^ (!print_mp_f n_ante) )in*)
   let r = match with_disj with  
     | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
     | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
     | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-  (Util.push_time str_time; 
+ 
+  (Util.push_time str_time;
   let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
   Util.pop_time str_time;
   r)
@@ -1167,9 +1175,14 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
               (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
             (r1,r2,r3)
     | [] -> (true,[],None)
-   
-    
-let rec imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
+
+let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
+ Util.ho_debug_2 "imply_memo_x" (!print_mp_f)
+      (!print_mp_f)
+      (fun (r,_,_) -> string_of_bool r)
+      (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no)ante_memo0 conseq_memo
+
+and  imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
@@ -1197,11 +1210,13 @@ let rec imply_memo_x ante_memo0 conseq_memo t_imply imp_no
   imply_memo_x ante_memo0 conseq_memo t_imply imp_no
           
 let imply_memo ante_memo0 conseq_memo t_imply imp_no =
+  if (isConstMFalse ante_memo0) then (true,[],None)
+  else 
   let ante_memo0 = 
     if !f_2_slice then match ante_memo0 with
        | [] -> []
        | [h] -> [h]
-       | h::t -> [List.fold_left (fun a c-> 
+       | h::t -> [List.fold_left (fun a c->
           let na =Util.merge_set_eq a.memo_group_aset c.memo_group_aset in
             {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
              memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
@@ -1314,7 +1329,7 @@ let merge_mems_debug f1 f2 slice_dup =
   | OnePF f -> OnePF (mkExists qv f None no_pos)
  
  let ptr_equations_aux with_null f = match f with
-  | MemoF f -> ptr_equations_aux with_null f
+  | MemoF f -> ptr_equations_aux_mp with_null f
   | OnePF f -> pure_ptr_equations f
  
  let ptr_equations_with_null f = ptr_equations_aux true f

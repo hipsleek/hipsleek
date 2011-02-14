@@ -10,7 +10,7 @@ GetOptions( "stop"  => \$stop,
 
 $ss = '../../ss.norm';
 if ($optimized) {
-$ss = '../../ss';
+  $ss = '../../ss';
 }
 
 $error_count = 0;

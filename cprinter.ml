@@ -1197,16 +1197,16 @@ let pr_view_decl v =
   pr_vwrap  "inv: "  pr_mix_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)->pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
-  (* pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga; *)
+  pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()
     | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
   f v.view_base_case;
   pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
-  pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,c2)-> 
+  pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,(ba,c2))-> 
       let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
-      let b = "" in
+      let b = string_of_spec_var_list ba in
       let d = String.concat ";" (List.map string_of_b_formula c2) in
       fmt_string ("{"^s^"} -> "^b^"=["^d^"]")) c) v.view_prune_invariants;
   fmt_close_box ();
@@ -1557,7 +1557,7 @@ Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
-(* Cast.print_b_formula := string_of_b_formula;; *)
-(* Cast.print_exp := string_of_formula_exp;; *)
-(* Cast.print_formula := string_of_pure_formula;; *)
-(* Cast.print_svl := string_of_spec_var_list;; *)
+Cast.print_b_formula := string_of_b_formula;;
+Cast.print_exp := string_of_formula_exp;;
+Cast.print_formula := string_of_pure_formula;;
+Cast.print_svl := string_of_spec_var_list;;

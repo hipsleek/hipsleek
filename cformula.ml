@@ -197,6 +197,11 @@ and string_of_spec_var = function
     | Unprimed -> "")
 (*09.05.2000 ---*)
 
+(* returns false if unsatisfiable *)
+let is_sat_mem_formula (mf:mem_formula) : bool =
+  let d = mf.mem_formula_mset in
+  (Util.is_sat_dset CP.eq_spec_var d)
+
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
 
@@ -963,15 +968,7 @@ and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : form
   let f2 = subst st2 f1 in
 	f2
   
-(*
-and subst_var_list_avoid_capture fr t svs = 
-  let fresh_fr = fresh_spec_vars fr in
-  let st1 = List.combine fr fresh_fr in
-  let st2 = List.combine fresh_fr t in
-  let svs1 = subst_var_list st1 svs in
-  let svs2 = subst_var_list st2 svs1 in
-	svs2
-*)
+
 and subst_var_list sst (svs : Cpure.spec_var list) = match svs with
   | [] -> []
   | sv :: rest ->
