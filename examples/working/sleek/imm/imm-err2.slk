@@ -21,3 +21,8 @@ checkentail x::ll<n> * x::ll<n>   |-
             x!=null -> [] x=null & n=0; }. 
 print residue.
 
+checkentail x::ll<n>   |-  
+    case {  x=null -> [] n=0;
+            x!=null -> [] n>0; }. 
+
+
