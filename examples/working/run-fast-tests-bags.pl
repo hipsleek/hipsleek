@@ -77,8 +77,8 @@ if($home21){
 @excl_files = ();
 $error_count = 0;
 $error_files = "";
-$hip = "$exec_path/hip.opt -tp om --eps";
-$sleek = "$exec_path/sleek.opt -tp om --eps";
+$hip = "$exec_path/hip -tp om --eps";
+$sleek = "$exec_path/sleek -tp om --eps";
 $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
