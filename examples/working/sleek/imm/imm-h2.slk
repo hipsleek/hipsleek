@@ -18,14 +18,13 @@ print residue.
 // x * y
 // Valid
 
-checkentail x::nll<n> * x::nll<m>  |-  1=2. 
-print residue.
-// x * y
-// Valid
-
 checkentail x::nll<n> * y::nll<m>  |-  x!=null & y!=null. 
 print residue.
 // x * y
 // Valid
 
+checkentail x::nll<n> * x::nll<m>  |-  1=2. 
+print residue.
+// x * y
+// Valid
 

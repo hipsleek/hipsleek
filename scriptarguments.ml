@@ -180,7 +180,7 @@ let common_arguments = [
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
     ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
-    ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
+    ("--memo_print", Arg.Set_int Globals.memo_verbosity,
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
     ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
