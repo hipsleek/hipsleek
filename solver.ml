@@ -1781,7 +1781,7 @@ and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 ba
 	      let new_ante = normalize fold_es.es_formula (CF.replace_branches to_ante_br (formula_of_pure_N to_ante pos)) pos in
           let new_ante = filter_formula_memo new_ante false in
 	      let new_consumed = fold_es.es_heap in
-	      let _ = print_string("new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in
+	      (* let _ = print_string("new_consumed = " ^ (Cprinter.string_of_h_formula new_consumed) ^ "\n") in *)
 	      let new_es = {estate with es_heap = new_consumed;
 			  es_formula = new_ante;
 			  es_evars = new_evars;

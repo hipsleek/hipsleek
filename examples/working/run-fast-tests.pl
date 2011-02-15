@@ -332,7 +332,7 @@ $output_file = "log";
 								#"skip","SUCCESS"
 								],
 				["cll.ss",5,"test","SUCCESS",
-						 #"insert","SUCCESS",
+						 "insert","SUCCESS",
 						 "count_rest","SUCCESS",
 						 "count","SUCCESS",
 						 "delete","SUCCESS"],
