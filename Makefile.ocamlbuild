@@ -13,7 +13,7 @@ GUI_INCLUDES = $(INCLUDES),-I,+lablgtk2
 GUI_FLAGS = $(GUI_INCLUDES)
 OB_GUI_FLAGS = -no-links -libs $(GUI_LIBS) -cflags $(GUI_FLAGS) -lflags $(GUI_FLAGS) -j $(JOBS)
 
-all: byte
+all: gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
 gui: gsleek.byte
@@ -49,5 +49,5 @@ gsleek.byte:
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
-	rm -f sleek sleek.opt hip hip.opt
+	rm -f sleek sleek.opt hip hip.opt gsleek gsleek.opt
 	rm -f allinput.*

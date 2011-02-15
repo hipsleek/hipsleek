@@ -1,4 +1,6 @@
-module SU = GUtil.SourceUtil
+(**/**)
+open GUtil.SourceUtil
+(**/**)
 
 class log_view_window ?(title="Log") log () =
   let tag_results = "results" in
@@ -83,16 +85,16 @@ class log_view_window ?(title="Log") log () =
       else
         (self#clear_highlight (); self#set_status "")
 
-    method private pos2iters (pos: SU.substring_pos) =
-      let start = log_view#buffer#get_iter_at_char pos.SU.start in
-      let stop = log_view#buffer#get_iter_at_char pos.SU.stop in
+    method private pos2iters (pos: seg_pos) =
+      let start = log_view#buffer#get_iter_at_char pos.start_char in
+      let stop = log_view#buffer#get_iter_at_char pos.stop_char in
       start, stop
 
-    method private apply_tag (tag: string) (pos: SU.substring_pos) =
+    method private apply_tag (tag: string) (pos: seg_pos) =
       let start, stop = self#pos2iters pos in
       log_view#buffer#apply_tag_by_name tag start stop
 
-    method private remove_tag (tag: string) (pos: SU.substring_pos) =
+    method private remove_tag (tag: string) (pos: seg_pos) =
       let start, stop = self#pos2iters pos in
       log_view#buffer#remove_tag_by_name tag start stop
 
@@ -101,7 +103,7 @@ class log_view_window ?(title="Log") log () =
       self#clear_highlight ();
       (* search *)
       let doc = log_view#buffer#get_text () in
-      let res = SU.search doc sub in
+      let res = search doc sub in
       (* update current state and highlight all results *)
       search_results <- res;
       current_index <- -1;
@@ -132,7 +134,7 @@ class log_view_window ?(title="Log") log () =
       in
       (* get next pos and it's iter *)
       let pos = List.nth search_results idx in
-      let iter = log_view#buffer#get_iter_at_char pos.SU.start in
+      let iter = log_view#buffer#get_iter_at_char pos.start_char in
       (* scroll to and highlight it *)
       ignore (log_view#scroll_to_iter iter);
       self#apply_tag tag_current pos;

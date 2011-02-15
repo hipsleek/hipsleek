@@ -252,6 +252,22 @@ let set_tp tp_str =
 	()
 
 let string_of_tp tp = match tp with
+  | OmegaCalc -> "omega"
+  | CvcLite -> "cvcl"
+  | Cvc3 -> "cvc3"
+  | CO -> "co"
+  | Isabelle -> "isabelle"
+  | Mona -> "mona"
+  | OM -> "om"
+  | OI -> "oi"
+  | SetMONA -> "set"
+  | CM -> "cm"
+  | Coq -> "coq"
+  | Z3 -> "z3"
+  | Redlog -> "redlog"
+  | RM -> "rm"
+
+let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
   | CvcLite -> "CVC Lite"
   | Cvc3 -> "CVC3"
@@ -267,7 +283,7 @@ let string_of_tp tp = match tp with
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
 
-let get_current_tp_name () = string_of_tp !tp
+let get_current_tp_name () = name_of_tp !tp
 
 let omega_count = ref 0
 

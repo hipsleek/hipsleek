@@ -225,9 +225,24 @@ let seq_number = ref 10
 let sat_timeout = ref 10.
 let imply_timeout = ref 10.
   
+let reporter = ref (fun _ -> raise Not_found)
+
 let report_error (pos : loc) (msg : string) =
-  print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
-	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
+  let _ =
+    try !reporter pos msg
+    with Not_found ->
+      let report pos msg =
+        let output = Printf.sprintf "\n%s:%d:%d: %s\n"
+          pos.start_pos.Lexing.pos_fname
+          pos.start_pos.Lexing.pos_lnum
+          (pos.start_pos.Lexing.pos_cnum - pos.start_pos.Lexing.pos_bol)
+          msg
+        in
+        print_endline output
+      in
+      reporter := report;
+      report pos msg
+  in
   failwith "Error detected"
 
 let branch_point_id = ref 0

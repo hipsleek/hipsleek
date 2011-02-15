@@ -1,22 +1,16 @@
 (**
-   GUI frontend for Sleek
+  GUI frontend for HIP
  *)
 
-open GEntailmentList
-open GSleekSourceView
+
+open GProcList
+open GHipSourceView
 open GUtil
+open SourceUtil
 
-module SU = SourceUtil
 module FU = FileUtil
-module SH = SleekHelper
+module HH = HipHelper
 module TP = Tpdispatcher
-
-let create_residue_view () =
-  let view = GText.view
-    ~editable:false
-    ~wrap_mode:`WORD
-    () in
-  view
 
 class mainwindow () =
   let ui_info =
@@ -53,46 +47,34 @@ class mainwindow () =
   in
   let win = GWindow.window
     ~height:750 ~width:1000
-    ~title:"Unsaved Document - gSleek" 
+    ~title:"Unsaved Document - gHip" 
     ~allow_shrink:true
     () in
   object (self)
     inherit GWindow.window win#as_window as super
 
     (* gui components *)
-    val source_view = new sleek_source_view ()
-    val entailment_list = new entailment_list ()
-    val residue_view = create_residue_view ()
+    val source_view = new hip_source_view ()
+    val proc_list = new procedure_list ()
     (* data *)
     val mutable current_file = None
+    val mutable args = HH.default_args
     val mutable debug_log_window = None
     val mutable prover_log_window = None
       
     initializer
       (* initialize components *)
-      let residue_panel =
-        let label = GMisc.label 
-          ~text:"Residue and Contexts:" 
-          ~xalign:0.0 ~yalign:0.0
-          ~xpad:5 ~ypad:5
-          () in
-        let residue_scrolled = create_scrolled_win residue_view in
-        let vbox = GPack.vbox () in
-        vbox#pack ~expand:false label#coerce;
-        vbox#pack ~expand:true residue_scrolled#coerce;
-        vbox
-      in
-      let entail_panel =
-        let list_scrolled = create_scrolled_win entailment_list in
+      let proc_panel =
+        let list_scrolled = create_scrolled_win proc_list in
         let buttons = GPack.button_box 
           `HORIZONTAL ~layout:`START
           ~border_width:10
           () in
         let check_btn = GButton.button
-          ~label:"Check Entailment"
+          ~label:"Check Procedure"
           ~packing:buttons#add
           () in
-        ignore (check_btn#connect#clicked ~callback:self#check_selected_entailment);
+        ignore (check_btn#connect#clicked ~callback:self#check_selected_proc);
         let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
@@ -106,17 +88,13 @@ class mainwindow () =
         let vbox = GPack.vbox () in
         vbox#pack ~expand:true list_scrolled#coerce;
         vbox#pack ~expand:false buttons#coerce;
-        let hpaned = GPack.paned `HORIZONTAL () in
-        hpaned#set_position 580;
-        hpaned#pack1 vbox#coerce;
-        hpaned#pack2 ~resize:true ~shrink:true residue_panel#coerce;
-        hpaned
+        vbox
       in
       let main_panel =
         let vpaned = GPack.paned `VERTICAL () in
         vpaned#set_position 450;
         vpaned#pack1 ~resize:true ~shrink:true source_view#coerce;
-        vpaned#pack2 entail_panel#coerce;
+        vpaned#pack2 proc_panel#coerce;
         vpaned
       in
       (* arrange components on main window *)
@@ -132,9 +110,10 @@ class mainwindow () =
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
       ignore (source_view#source_buffer#connect#end_user_action
         ~callback:self#source_changed_handler);
-      ignore (entailment_list#selection#connect#changed
-        ~callback:self#check_selected_entailment);
-      entailment_list#set_checkall_handler self#run_all_handler;
+      ignore (proc_list#selection#connect#changed ~callback:self#check_selected_proc);
+      ignore (source_view#event#connect#focus_out
+        ~callback:(fun _ -> self#update_proc_list (); false));
+      proc_list#set_checkall_handler self#run_all_handler;
 
 
     (** Setup UIManager for creating Menubar and Toolbar *)
@@ -159,12 +138,12 @@ class mainwindow () =
           ~callback:(fun _ -> ignore (self#quit ()));
         a "About" ~label:"_About" ~tooltip:"About HIP/Sleek"
           ~callback:(fun _ -> ignore (self#show_about_dialog ()));
-        a "Execute" ~stock:`EXECUTE ~tooltip:"Check all entailments"
+        a "Execute" ~stock:`EXECUTE ~tooltip:"Check all procedures"
           ~callback:(fun _ -> self#run_all_handler ());
         ta "EPS" ~label:"Enable Predicate Specialization"
-          ~callback:(fun act -> Globals.allow_pred_spec := act#get_active);
+          ~callback:(fun act -> args <- {args with HH.eps = act#get_active});
         ta "EAP" ~label:"Enable Aggressive Prunning"
-          ~callback:(fun act -> Globals.enable_aggressive_prune := act#get_active);
+          ~callback:(fun act -> args <- {args with HH.eap = act#get_active});
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
@@ -186,7 +165,7 @@ class mainwindow () =
         GFile.filter ~name:"All files" ~patterns:["*"] ()
       in
       let slk_files () =
-        GFile.filter ~name:"Sleek files" ~patterns:["*.slk"] ()
+        GFile.filter ~name:"Hip source files" ~patterns:["*.ss"] ()
       in
       let dialog = GWindow.file_chooser_dialog
         ~action ~title
@@ -234,12 +213,16 @@ class mainwindow () =
       in res
 
     method replace_source (new_src: string): unit =
+      source_view#clear_status ();
       source_view#source_buffer#begin_not_undoable_action ();
       source_view#source_buffer#set_text new_src;
       source_view#source_buffer#set_modified false;
       source_view#source_buffer#end_not_undoable_action ();
-      entailment_list#update_source new_src;
-      residue_view#buffer#set_text ""
+      try
+        proc_list#update_source (self#get_text ())
+      with Syntax_error (msg, pos) ->
+        proc_list#misc#set_sensitive false;
+        source_view#hl_error ~msg pos
       
     method private string_of_current_file () =
       match current_file with
@@ -266,7 +249,7 @@ class mainwindow () =
         else
           ""
       in
-      let title = prefix ^ fname ^ " - gSleek" in
+      let title = prefix ^ fname ^ " - gHip" in
       self#set_title title;
         
     method get_text () = source_view#source_buffer#get_text ()
@@ -274,20 +257,19 @@ class mainwindow () =
     method set_theorem_prover id =
       let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog] in
       let tp = List.nth provers id in
-      TP.change_prover tp;
+      args <- {args with HH.tp = tp};
       let tp_name = TP.name_of_tp tp in
       log (Printf.sprintf "Use %s as backend prover." tp_name)
 
-    method check_selected_entailment () =
-      let entail = entailment_list#get_selected_entailment () in
-      match entail with
+    method check_selected_proc () =
+      let proc = proc_list#get_selected_procedure () in
+      match proc with
       | None -> ()
-      | Some e -> begin
+      | Some p -> begin
           let src = self#get_text () in
-          let valid, residue = SH.checkentail src e in
-          entailment_list#set_selected_entailment_validity valid;
-          residue_view#buffer#set_text residue;
-          source_view#hl_entailment e
+          let valid = HH.check_proc_external ~args src p in
+          proc_list#set_selected_procedure_validity valid;
+          source_view#hl_proc p
         end
 
     method show_debug_log () =
@@ -370,15 +352,21 @@ class mainwindow () =
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
       let src = self#get_text () in
-      entailment_list#check_all (fun e -> fst (SH.checkentail src e));
-      source_view#hl_all_entailement ()
+      proc_list#check_all (HH.check_proc_external ~args src)
 
     (* Source buffer modified *)
     method private source_changed_handler () =
-      log (self#get_text ());
-      entailment_list#update_source (self#get_text ());
-      source_view#clear_highlight ();
-      self#update_win_title ()
+      self#update_win_title ();
+      source_view#clear_status ();
+      source_view#clear_highlight ()
+
+    method private update_proc_list () =
+      try
+        proc_list#update_source (self#get_text ());
+        proc_list#misc#set_sensitive true
+      with Syntax_error (msg, pos) ->
+        proc_list#misc#set_sensitive false;
+        source_view#hl_error ~msg pos
 
     method private quit () =
       if self#file_closing_check () then
