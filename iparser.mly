@@ -465,8 +465,9 @@ view_decl
 ;
 
 opt_inv
-  : { (P.mkTrue no_pos, []) }
-  | INV pure_constr opt_branches { ($2, $3) }
+  : { (P.mkTrue no_pos, [], IPr.mkTrue no_pos) }
+  | INV pure_constr opt_branches { ($2, $3, IPr.mkTrue no_pos) }
+  | INV pure_constr ANDP permission_constraints opt_branches { ($2, $5, $4) }
 ;
 
 opt_branches
@@ -503,7 +504,7 @@ view_header
 			view_modes = modes;
 			view_typed_vars = [];
 			view_formula = F.mkETrue top_flow (get_pos 1);
-			view_invariant = (P.mkTrue (get_pos 1), []);
+			view_invariant = (P.mkTrue (get_pos 1), [],IPr.mkTrue (get_pos 1));
       view_perm = $2 ;
 			try_case_inference = false;}
   }

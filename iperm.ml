@@ -29,6 +29,10 @@ let mkPFull () :frac_perm = (None,[])
 
 let mkPerm posib_var splint :frac_perm = (posib_var,splint)
 
+let name_of_frac s (f1,_) = match f1 with
+  | None -> report_error no_pos s
+  | Some v -> (fst v)
+
 let mkTrue pos = PTrue pos
 let mkFalse pos = PFalse pos
 

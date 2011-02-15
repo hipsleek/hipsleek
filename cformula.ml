@@ -324,6 +324,9 @@ and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link =
 
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (Pr.mkTrue pos)(mkTrueFlow ()) [] pos
 
+and formula_of_perm_mix_formula prm (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue prm (mkTrueFlow ()) [] pos
+
+
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
   let mp = if (status >0 ) then MCP.memoise_add_pure_N (MCP.mkMTrue pos) p 
       else  MCP.memoise_add_pure_P (MCP.mkMTrue pos) p  in
@@ -3217,3 +3220,11 @@ let mkEBase (pf:CP.formula) loc : ext_formula =
 	formula_ext_pos = loc;
   }	
 
+let rec simpl_perm f = match f with
+  | Or f -> mkOr (simpl_perm f.formula_or_f1) (simpl_perm f.formula_or_f2) f.formula_or_pos
+  | Base b -> 
+      mkBase b.formula_base_heap b.formula_base_pure b.formula_base_type 
+            (Pr.simpl_perm_formula b.formula_base_perm) b.formula_base_flow b.formula_base_branches b.formula_base_pos
+  | Exists e -> 
+      mkExists e.formula_exists_qvars e.formula_exists_heap e.formula_exists_pure 
+            e.formula_exists_type (Pr.simpl_perm_formula e.formula_exists_perm) e.formula_exists_flow e.formula_exists_branches  e.formula_exists_pos

@@ -1032,27 +1032,26 @@ and trans_data (prog : I.prog_decl) (ddef : I.data_decl) : C.data_decl =
 and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   (if n > 0 then
     (let pos = CF.pos_of_struc_formula vdef.C.view_formula in
-    let (xform', xform_b, addr_vars') = Solver.xpure_symbolic_no_exists prog (C.formula_of_unstruc_view_f vdef) in
+    let (xform', xform_b, addr_vars', x_perm') = Solver.xpure_symbolic_no_exists prog (C.formula_of_unstruc_view_f vdef) in
     let addr_vars = CP.remove_dups_svl addr_vars' in
 	(*let _ = print_string ("\n!!! "^(vdef.Cast.view_name)^" struc: \n"^(Cprinter.string_of_struc_formula vdef.Cast.view_formula)^"\n\n here1 \n un:"^
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
 	  (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
     (*let xform' = TP.simplify  xform' in*)
     let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' TP.simplify in
+    let x_perm = CPr.simpl_perm_formula x_perm' in 
     (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
       let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in
-    *)let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
-    let ctx =
-      CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
-    let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
-    let (rs, _) =
-      Solver.heap_entail_init prog false false (CF.SuccCtx [ ctx ]) formula pos
-    in
+    *)let formula1 = CF.replace_branches xform_b (CF.formula_of_perm_mix_formula x_perm xform pos) in
+    let ctx =CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
+    let u_p, u_b, u_perm = vdef.C.view_user_inv in
+    let formula = CF.replace_branches u_b (CF.formula_of_perm_mix_formula u_perm u_p pos) in
+    let (rs, _) = Solver.heap_entail_init prog false false (CF.SuccCtx [ ctx ]) formula pos in
 	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
     (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
 	let _ = if not(CF.isFailCtx rs)
     then
-      (vdef.C.view_x_formula <- (xform, xform_b);
+      (vdef.C.view_x_formula <- (xform, xform_b,x_perm);
       vdef.C.view_addr_vars <- addr_vars;
       compute_view_x_formula prog vdef (n - 1))
     else
@@ -1067,7 +1066,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
   then
     (print_string
         ("\ncomputed invariant for view: " ^
-            (vdef.C.view_name ^("\n" ^((Cprinter.string_of_mix_formula_branches (vdef.C.view_x_formula)) ^"\n"))));
+            (vdef.C.view_name ^("\n" ^((Cprinter.string_of_mix_formula_branches_perm vdef.C.view_x_formula) ^"\n"))));
     print_string
         ("addr_vars: " ^((String.concat ", "(List.map CP.name_of_spec_var vdef.C.view_addr_vars))^ "\n\n")))
   else ())
@@ -1097,15 +1096,18 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                   else vdef.I.view_data_name in
   (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = Known (CP.OType data_name);id = fresh_int () };
+   H.add stab (IPr.name_of_frac "un initialized view share var" vdef.I.view_perm) { sv_info_kind = Known (CP.OType "perm");id = fresh_int () };
    let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
-   let (inv, inv_b) = vdef.I.view_invariant in
+   let (inv, inv_b,inv_perm) = vdef.I.view_invariant in
    let pf = trans_pure_formula inv stab in
    let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
-   let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
+   let pf_perm = trans_perm_formula inv_perm stab no_pos in
+   let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv f)) pf_b) in
    let pf = Cpure.arith_simplify pf in
    let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
    let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
-   if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) then
+   let prm_fv = List.map CP.name_of_spec_var (CPr.fv pf_perm) in
+   if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) || (List.mem res prm_fv) then
            Err.report_error
              {
                Err.error_loc = IF.pos_of_struc_formula view_formula1;
@@ -1158,9 +1160,9 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                C.view_materialized_vars = mvars;
                C.view_data_name = data_name;
                C.view_formula = cf;
-               C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
+               C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b,pf_perm);
                C.view_addr_vars = [];
-               C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
+               C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b,pf_perm);
                C.view_un_struc_formula = n_un_str;
                C.view_base_case = bc;
                C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf);
@@ -2953,29 +2955,30 @@ with Not_found ->
         }			
         
 and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formula = 
-  let rec inner_add_pre (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:Cformula.struc_formula): Cformula.struc_formula =
-    let rec helper (pf:Cpure.formula) (branches: (branch_label * CP.formula) list) (f:Cformula.ext_formula):Cformula.ext_formula=
+  let rec inner_add_pre (pf:Cpure.formula) (branches: (branch_label * CP.formula) list)(perm:CPr.perm_formula)(f:Cformula.struc_formula): Cformula.struc_formula =
+    let rec helper (pf:Cpure.formula) (branches: (branch_label * CP.formula) list)(perm:CPr.perm_formula)(f:Cformula.ext_formula):Cformula.ext_formula=
       match f with
 	    | Cformula.ECase ({ Cformula.formula_case_branches = cb;} as b) ->
               Cformula.ECase{	b with Cformula.formula_case_branches = 
-                      List.map (fun (c1,c2)->(c1,(inner_add_pre (Cpure.mkAnd c1 pf no_pos) branches c2))) cb;}
+                      List.map (fun (c1,c2)->(c1,(inner_add_pre (Cpure.mkAnd c1 pf no_pos) branches perm c2))) cb;}
 	    | Cformula.EBase({
 			  Cformula.formula_ext_exists = ext_exists_vars;
 			  Cformula.formula_ext_base = fb;
 			  Cformula.formula_ext_continuation = fc;} as b)	->
-	          let (xpure_pre2_prim, xpure_pre2_prim_b) = Solver.xpure_consumed_pre prog fb in
+	          let (xpure_pre2_prim, xpure_pre2_prim_b, xpure_pre2_perm) = Solver.xpure_consumed_pre prog fb in
 	          let new_pf = Cpure.mkAnd pf (Cpure.mkExists ext_exists_vars xpure_pre2_prim None no_pos) no_pos in
 	          let new_branches = Cpure.merge_branches (Cpure.mkExistsBranches ext_exists_vars xpure_pre2_prim_b None no_pos) branches in
+            let new_perm = CPr.mkAnd perm xpure_pre2_perm no_pos in
 	          Cformula.EBase{b with 
-			      Cformula.formula_ext_continuation = inner_add_pre new_pf new_branches fc;
+			      Cformula.formula_ext_continuation = inner_add_pre new_pf new_branches new_perm fc;
 			  }
 	    | Cformula.EAssume (ref_vars, bf,y) ->
-	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
+	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_with_branches_N pf perm [] no_pos)) no_pos),y)
 		| Cformula.EVariance b -> Cformula.EVariance {b with
-										Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
+										Cformula.formula_var_continuation = inner_add_pre pf branches perm b.Cformula.formula_var_continuation;
 								  }
-    in	List.map (helper pf branches ) f 
-  in inner_add_pre (Cpure.mkTrue no_pos) [] f
+    in	List.map (helper pf branches perm ) f 
+  in inner_add_pre (Cpure.mkTrue no_pos) [] (CPr.mkTrue no_pos) f
          
 and add_pre_debug prog f = 
   let r = add_pre prog f in
@@ -4617,10 +4620,15 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = order_views prog.I.prog_view_decls in
   let tmp_views = List.map (fun c-> 
-			      let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
-			      let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
+            let v_share_var = match c.I.view_perm with  
+              | Some v, []-> v
+              | None,[] -> (("flted_"^(fresh_trailer ())),Unprimed)
+              | _-> report_error no_pos ("share var in view "^c.I.view_name^" not properly defined") in
+              
+			      let h = (fst v_share_var,Unprimed)::(self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
+			      let p = (fst v_share_var,Primed)::(self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 			      let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
-				{ c with Iast.view_formula = 	wf;}) tmp_views in
+				{ c with Iast.view_formula = 	wf;Iast.view_perm = IPr.frac_of_var v_share_var}) tmp_views in
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in
@@ -4836,12 +4844,12 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
   
   (*actual case inference*)
   let guard_list = List.map (fun (c,lbl)-> 
-      let pures = (fun (h,p,_,_,b,_)-> 
+      let pures, (*perms*) _ = (fun (h,p,_,_,b,_)-> 
           (*let (cm,br) = (Solver.xpure_heap cp h 0) in *)
-          let cm,br,_ = Solver.xpure_heap_symbolic_no_exists_i cp h 0 in
+          let cm,br,_,perm = Solver.xpure_heap_symbolic_no_exists_i cp h 0 in
           let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
           let xp = MCP.fold_mem_lst fbr true true cm in
-          MCP.fold_mem_lst xp true true p) (CF.split_components c) in
+          MCP.fold_mem_lst xp true true p, perm) (CF.split_components c) in
       (*print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
       let pures = simplify_pures pures v_l in
       (*let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
@@ -4870,7 +4878,8 @@ and view_prune_inv_inference cp vd =
   (*let v_f = CF.label_view vd.C.view_formula in *)
   let f_branches = CF.get_view_branches  vd.C.view_formula in 
   let branches = snd (List.split f_branches) in
-  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches (MCP.drop_pf (fst vd.C.view_user_inv)) no_pos in    
+  let pure_ui = MCP.drop_pf ((fun (c,_,_) ->c) vd.C.view_user_inv) in
+  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches pure_ui no_pos in    
   let v' = { vd with  
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 
@@ -5158,7 +5167,7 @@ and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var l
 				 else b.Cformula.formula_ext_base 
 			       | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
 			     in
-			     let not_fact,nf_br = (Solver.xpure cp d) in
+			     let not_fact,_,_ = (Solver.xpure cp d) in
 			     let fact =  Solver.normalize_to_CNF (MCP.pure_of_mix not_fact) no_pos in
 			     let fact = Cpure.drop_disjunct fact in
 			     let fact = Cpure.rename_top_level_bound_vars fact in

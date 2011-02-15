@@ -43,8 +43,8 @@ and view_decl = { view_name : ident;
 				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
 				  view_data_name : ident;
 				  view_formula : F.struc_formula;
-				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list * CPr.perm_formula); (* XPURE 0 -> revert to P.formula*)
+				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list * CPr.perm_formula); (*XPURE 1 -> revert to P.formula*)
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
 				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list)* Pr.perm_formula)) option; 
@@ -1002,3 +1002,10 @@ let rec check_proper_return cret_type exc_list f =
 
   
 let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
+
+let perm_of_view prog c prm p vs pos =
+    let vdef = look_up_view_def pos prog.prog_view_decls c in
+    let _,_, vinvperm = vdef.view_x_formula in 
+    let from_svs = vdef.view_perm_var :: P.SpecVar (P.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+    let to_svs = prm :: p :: vs in
+    CPr.subst_avoid_capture from_svs to_svs vinvperm

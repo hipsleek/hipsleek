@@ -45,7 +45,7 @@ and view_decl = { view_name : ident;
 		  view_labels : branch_label list;
 		  view_modes : mode list;
 		  mutable view_typed_vars : (CP.typ * ident) list;
-		  view_invariant : (P.formula * (branch_label * P.formula) list);
+		  view_invariant : (P.formula * (branch_label * P.formula) list * IPr.perm_formula);
 		  view_formula : Iformula.struc_formula;
       view_perm : IPr.frac_perm;
 		  try_case_inference: bool}

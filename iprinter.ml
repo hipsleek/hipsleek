@@ -554,9 +554,13 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 let string_of_global_var_decl d = "global " ^ (string_of_exp (VarDecl d))
 ;;
 
+let string_of_inv (p,b,perm) = 
+  (string_of_pure_formula p) ^"&" ^(string_of_perm_formula perm)(*^" "^(string_of_branches b)*)
+
 (* pretty printig for view declaration *)
 let string_of_view_decl v = v.view_name ^ "<" ^ (concatenate_string_list v.view_vars ",") ^ "> == " ^ 
-                            (string_of_struc_formula v.view_formula) ^ " inv " ^ (string_of_pure_formula (fst v.view_invariant))                    (* incomplete *)
+                            (string_of_struc_formula v.view_formula) ^ " inv " ^ 
+                            (string_of_inv v.view_invariant)                   (* incomplete *)
 ;;
 
 let string_of_coerc_decl c = "coerc "^c.coercion_name^"\n\t head: "^(string_of_formula c.coercion_head)^"\n\t body:"^

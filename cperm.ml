@@ -130,6 +130,7 @@ let elim_exists_perm_exists f = f
 
 let simpl_perm_formula f = f
 (*imply*)
+let imply f1 f2 = true
 (*sat*)
 let is_sat f = true
 (*transformers*)
@@ -247,6 +248,8 @@ let rec normalize_to_CNF (f : perm_formula) pos : perm_formula = match f with
   | And (f1,f2,_) -> (list_of_conjs f1) @ (list_of_conjs f2)
   | _ -> [f]
   
+ and conj_of_list l = List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l
+  
  and find_common_conjs (f1 : perm_formula) (f2 : perm_formula) pos : (perm_formula * perm_formula * perm_formula) = match f1 with
   | Eq _ 
   | Join _ ->
@@ -269,6 +272,24 @@ and remove_conj (f : perm_formula) (conj : perm_formula) pos : perm_formula = ma
         (mkAnd (remove_conj f1 conj p) (remove_conj f2 conj p) p)
   | _ -> f
 
+  
+
+let find_rel_constraints (f:perm_formula) desired :perm_formula = 
+ if desired=[] then (mkTrue no_pos)
+ else 
+   let lf = list_of_conjs f in
+   let lf_pair = List.map (fun c-> ((fv c),c)) lf in
+   let var_list = fst (List.split lf_pair) in
+   let rec helper (fl:P.spec_var list) : P.spec_var list = 
+    let nl = List.filter (fun c-> (Util.intersect_fct P.eq_spec_var c fl)!=[]) var_list in
+    let nl = List.concat nl in
+    if (List.length fl)=(List.length nl) then fl
+    else helper nl in
+   let fixp = helper desired in
+   let pairs = List.filter (fun (c,_) -> (List.length (Util.intersect_fct P.eq_spec_var c fixp))>0) lf_pair in
+   conj_of_list (snd (List.split pairs))
+  
+  
  
  
 let rec string_of_tree_share ts = match ts with
