@@ -51,9 +51,7 @@ let rec process_primitives file_list =
   | [] -> []
   | hd::tl ->
         let header_filename = String.sub hd 1 ((String.length hd) - 2) in
-        (*let sleekex_link = get_exe_direct_link() in*)
-        let sleekex_link = "/home/an/sleekex/" in
-        let new_filename = sleekex_link ^ header_filename in
+        let new_filename = (Util.get_path Sys.executable_name) ^ header_filename in
         let primitives = parse_file_full new_filename in
                 primitives :: (process_primitives tl)
 
