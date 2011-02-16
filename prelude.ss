@@ -8,26 +8,26 @@ int mult___(int a, int b) requires true ensures res = a * b;
 
 int div___(int a, int b) case {
   a >= 0 -> case {
-    b >= 1 -> requires true ensures a = b*res + r & res >= 0 & 0 <= r <= b-1;
-    b <= -1 -> requires true ensures a = b*res + r & res <= 0 & 0 <= r <= -b-1;
+    b >= 1 -> requires true ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
+    b <= -1 -> requires true ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1);
     -1 < b < 1 -> requires true ensures true & flow __DivByZeroErr;
     }
   a < 0 -> case {
-    b >= 1 -> requires true ensures a = b*res + r & res <= -1 & 0 <= r <= b-1;
-    b <= -1 -> requires true ensures a = b*res + r & res >= 1 & 0 <= r <= -b-1;
+    b >= 1 -> requires true ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1);
+    b <= -1 -> requires true ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1);
     -1 < b < 1 -> requires true ensures true & flow __DivByZeroErr;
     }
 }
 
 int mod___(int a, int b) case {
   a >= 0 -> case {
-    b >= 1 -> requires true ensures a = b*q + res & q >= 0 & 0 <= res <= b-1;
-    b <= -1 -> requires true ensures a = b*q + res & q <= 0 & 0 <= res <= -b-1;
+    b >= 1 -> requires true ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
+    b <= -1 -> requires true ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
     -1 < b < 1 -> requires false ensures false;
   }
   a < 0 -> case {
-    b >= 1 -> requires true ensures a = b*q + res & q <= -1 & 0 <= res <= b-1;
-    b <= -1 -> requires true ensures a = b*q + res & q >= 1 & 0 <= res <= -b-1;
+    b >= 1 -> requires true ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1);
+    b <= -1 -> requires true ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1);
     -1 < b < 1 -> requires false ensures false;
   }
 }
