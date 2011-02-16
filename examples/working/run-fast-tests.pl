@@ -117,26 +117,26 @@ if($timings){
         $worksheet = $workbook->sheets(0);
     }
 
-    $row = 1;
+    $row = 3;
     (my $Second,my $Minute, $Hour, $Day, $Month, $Year, $WeekDay, $DayOfYear, $IsDST) = localtime(time);
     $Year += 1900;
     $Month++;
     $date = "$Day/$Month/$Year  $Hour:$Minute";
     $worksheet->set_column(0, 0, 10);
-    $worksheet->write($row, 0, "Time:");
-    $worksheet->write($row, 1, $date);
+    $worksheet->write($row, 3, "Time:");
+    $worksheet->write($row, 4, $date);
     $row++;
-    $worksheet->write($row, 0, "Prover:");
-    $worksheet->write($row, 1, "$prover");
+    $worksheet->write($row, 3, "Prover:");
+    $worksheet->write($row, 4, "$prover");
     $row++;
     if("$flags"){
-        $worksheet->write($row, 0, "Call args:");
-        $worksheet->write($row, 1, "$flags");
+        $worksheet->write($row, 3, "Call args:");
+        $worksheet->write($row, 4, "$flags");
     }
     $row++;
     if("$str_log"){
-        $worksheet->write($row, 0, "Comments:");
-        $worksheet->write($row, 1, "$str_log");
+        $worksheet->write($row, 3, "Comments:");
+        $worksheet->write($row, 4, "$str_log");
     }
     $row = $row + 2;
     $programCol = 1;
@@ -392,18 +392,21 @@ sub log_one_line_of_timings{
  $row++;
  $worksheet->write($row, $programCol, "$prog_name");
  my $format = $workbook->add_format();
- $format->set_num_format('0.00');
+ # $format->set_num_format('0.00');
  $format->set_align('right');
  if($outp =~ m/Total verification time: (.*?) second/){
-     $worksheet->write_number($row, $totalCol,"$1", $format);
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write_number($row, $totalCol, $formatted_no, $format);
      $totalSum = $totalSum + $1;
  }
  if($outp =~ m/Time spent in main process: (.*?) second/){
-     $worksheet->write($row, $mainCol, "$1", $format);
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $mainCol, $formatted_no, $format);
      $mainSum = $mainSum + $1;
  }
  if($outp =~ m/Time spent in child processes: (.*?) second/){
-     $worksheet->write($row, $childCol, "$1", $format);
+     my $formatted_no = sprintf "%.2f", "$1";
+     $worksheet->write($row, $childCol, $formatted_no, $format);
      $childSum = $childSum + $1;
  }
  if($outp =~ m/\b(\w+) false contexts/){
