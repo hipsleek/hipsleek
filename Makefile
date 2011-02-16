@@ -8,9 +8,9 @@ INCLUDES=-I ./xml -I +ocamlgraph
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
-OCAMLFLAGS= -dtypes $(INCLUDES) # add other options for ocamlc here
+OCAMLFLAGS= $(INCLUDES) # add other options for ocamlc here
 GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
-OCAMLOPTFLAGS=$(INCLUDES) # add other options for ocamlopt here
+OCAMLOPTFLAGS= -dtypes $(INCLUDES) # add other options for ocamlopt here
 # removed -p from above as it seems related to profiling..
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
@@ -23,14 +23,14 @@ DEP_PS_FILE=$(DOC)/depend/dependencies.ps
 DEP_PDF_FILE=$(DOC)/depend/dependencies.pdf
 TMP_FILES_PATH = /tmp/$(shell id -un)/prover_tmp_files
 
-all: hip sleek decidez.vo prover
+all: sleek hip prover decidez.vo
 #hip sleek prover prdebug decidez.vo
 
-norm: hip.norm sleek.norm  prover.norm decidez.vo
+norm: sleek.norm hip.norm prover.norm decidez.vo
 
-rest: hip.norm sleek.norm prover.norm prdebug decidez.vo
+rest: sleek.norm hip.norm prover.norm prdebug decidez.vo
 
-opt: hip sleek prover
+opt: sleek hip prover
 
 sparser.cmo sparser.ml: sparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) sparser.mly

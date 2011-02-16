@@ -2978,13 +2978,18 @@ and b_form_simplify (b:b_formula) :b_formula =
      1+3    --> 4
      1+x>-2 --> 3+x>0
   *)  
-and arith_simplify (pf : formula) :  formula =   match pf with
+and arith_simplify (pf : formula) :  formula =   
+  Util.ho_debug_1 "arith_simplify" !print_formula !print_formula  arith_simplify_x pf
+
+and arith_simplify_x (pf : formula) :  formula =  
+  let rec helper pf = match pf with
   |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
-  |  And (f1, f2, loc) -> And (arith_simplify f1, arith_simplify f2, loc)
-  |  Or (f1, f2, lbl, loc) -> Or (arith_simplify f1, arith_simplify f2, lbl, loc)
-  |  Not (f1, lbl, loc) ->  Not (arith_simplify f1, lbl, loc)
-  |  Forall (v, f1, lbl, loc) ->  Forall (v, arith_simplify f1, lbl, loc)
-  |  Exists (v, f1, lbl, loc) ->  Exists (v, arith_simplify f1, lbl, loc)
+  |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
+  |  Or (f1, f2, lbl, loc) -> Or (helper f1, helper f2, lbl, loc)
+  |  Not (f1, lbl, loc) ->  Not (helper f1, lbl, loc)
+  |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
+  |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
+  in helper pf
 	  
 let rec get_pure_label n =  match n with
   | And _ -> None

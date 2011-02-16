@@ -7,6 +7,11 @@ open Cpure
 let infilename = ref (!tmp_files_path ^ "input.mona." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.mona." ^ (string_of_int (Unix.getpid())))
 
+let print_pf = ref (fun (c:formula) -> "cpure printer has not been initialized")
+let print_b_formula = ref (fun (c:b_formula) -> "cpure printer has not been initialized")
+let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
+
 let init_files () =
   begin
 	infilename := "input.mona." ^ (string_of_int (Unix.getpid ()));
@@ -672,8 +677,11 @@ and print_var_map var_map =
 	H.iter p var_map;
 	print_string "\n"
 
-	
-and mona_of_formula f0 = mona_of_formula_helper f0
+and mona_of_formula f0 = 
+  Util.ho_debug_1 "mona_of_formula" !print_pf
+      (fun x -> x) mona_of_formula_x f0
+
+and mona_of_formula_x f0 = mona_of_formula_helper f0
 
 and mona_of_formula_helper f0 = match f0 with
   | BForm (bf,_) -> mona_of_b_formula bf 
