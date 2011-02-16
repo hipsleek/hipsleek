@@ -425,27 +425,34 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 		v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 (* pretty printing for expressions *)
-and mona_of_exp e0 f = match e0 with
+and mona_of_exp e0 f = 
+  Util.ho_debug_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+      (fun e0 -> mona_of_exp_x e0 f) e0
+
+(* pretty printing for expressions *)
+and mona_of_exp_x e0 f = 
+  let rec helper e0 =
+  match e0 with
     (*| CP.Null _ -> " 0 "*)
   | CP.Null _ -> "pconst(0)"
   | CP.Var (sv, _) -> mona_of_spec_var sv
   | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
         (*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
-  | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
-  | CP.Add (a1, a2, _) ->  " ( " ^ (mona_of_exp a1 f) ^ " + " ^ (mona_of_exp a2 f) ^ ")"
-  | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (mona_of_exp a f) ^ " + " ^ (string_of_int i) ^ " )"
-  | CP.Mult (a1, a2, p) -> "(" ^ (mona_of_exp a1 f) ^ " * " ^ (mona_of_exp a2 f) ^ ")"
+  | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (helper a) ^ " + " ^ (string_of_int i) ^ " )"
+  | CP.Add (a1, a2, _) ->  " ( " ^ (helper a1) ^ " + " ^ (helper a2) ^ ")"
+  | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (helper a) ^ " + " ^ (string_of_int i) ^ " )"
+  | CP.Mult (a1, a2, p) -> "(" ^ (helper a1) ^ " * " ^ (helper a2) ^ ")"
   | CP.Div (a1, a2, p) -> failwith "[mona.ml]: divide is not supported."
   | CP.Max _
   | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
   | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
   | CP.BagUnion ([], _) -> ""
-  | CP.BagUnion (e::[], _) -> (mona_of_exp e f)
-  | CP.BagUnion (e::rest, l) -> (mona_of_exp e f) ^ " union " ^ (mona_of_exp (CP.BagUnion (rest, l)) f)
+  | CP.BagUnion (e::[], _) -> (helper e)
+  | CP.BagUnion (e::rest, l) -> (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l)))
   | CP.BagIntersect ([], _) -> ""
-  | CP.BagIntersect (e::[], _) -> (mona_of_exp e f)
-  | CP.BagIntersect (e::rest, l)->(mona_of_exp e f) ^ " inter " ^ (mona_of_exp (CP.BagIntersect (rest, l)) f)
-  | CP.BagDiff (e1, e2, _)     -> (mona_of_exp e1 f) ^ "\\" ^ (mona_of_exp e2 f)
+  | CP.BagIntersect (e::[], _) -> (helper e)
+  | CP.BagIntersect (e::rest, l)->(helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l)))
+  | CP.BagDiff (e1, e2, _)     -> (helper e1) ^ "\\" ^ (helper e2)
   | CP.List _
   | CP.ListCons _
   | CP.ListHead _
@@ -453,7 +460,9 @@ and mona_of_exp e0 f = match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
-  | _ -> failwith ("mona.mona_of_exp: mona doesn't support..."^(Cprinter.string_of_formula_exp e0))
+  | _ -> failwith ("mona.mona_of_exp: mona doesn't support..."^(Cprinter.string_of_formula_exp e0)) 
+  in
+  helper e0
 
 and mona_of_exp_secondorder e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
@@ -536,10 +545,10 @@ and mona_of_b_formula b f vs =
               | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
       | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
             (* CP.Neq *)   
-      | CP.Neq((CP.Add(a1, a2, l1)), a3, l2)
-      | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2)
               (*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
                 | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*)
+      | CP.Neq((CP.Add(a1, a2, l1)), a3, l2)
+      | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2)
           -> "(~" ^ (mona_of_b_formula (CP.Eq((CP.Subtract(a3, a1, l1)), a2, l2)) f vs) ^ ")"
       | CP.Neq (CP.IConst(i, _), a1, _)
       | CP.Neq (a1, CP.IConst(i, _), _) ->
@@ -682,8 +691,10 @@ and equation a1 a2 f sec_order_symbol first_order_symbol vs =
   end
 
 and mona_of_formula f initial_f vs = 
-  Util.loop_debug_1 "mona_of_formula" Cprinter.string_of_pure_formula
-      (fun x -> x) (fun f -> mona_of_formula_x f initial_f vs) f
+  Util.ho_debug_2 "mona_of_formula" Cprinter.string_of_pure_formula
+      Cprinter.string_of_pure_formula 
+      (fun x -> x) (fun f initial_f -> mona_of_formula_x f initial_f vs) 
+      f initial_f 
 
 (* pretty printing for formulas *)
 and mona_of_formula_x f initial_f vs =
