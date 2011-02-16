@@ -25,7 +25,7 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n"; flush stdout;
         let _ = Util.push_time "Parsing" in
-    Iparser.file_name := file_name;
+        Globals.input_file_name := file_name;
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
          let _ = Util.pop_time "Parsing" in

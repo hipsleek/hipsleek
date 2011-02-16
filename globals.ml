@@ -102,6 +102,10 @@ let this = "this"
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
+(* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
+ * moved here from iparser.mly *)
+let input_file_name = ref ""
+
 (* command line options *)
 
 let instantiation_variants = ref 0
