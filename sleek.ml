@@ -144,4 +144,5 @@ let _ =
     let _ = 
       if (!Globals.profiling && not !inter) then 
         ( Util.print_profiling_info (); print_string (Util.string_of_counters ())) in
-    Tpdispatcher.stop_prover ())
+    Tpdispatcher.stop_prover ();
+    print_string "\n")

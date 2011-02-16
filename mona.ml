@@ -431,7 +431,6 @@ and is_firstorder_mem f e vs =
 (* pretty printing for spec_vars *)
 and mona_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (_, v, p) -> 
-	(*let _ = print_string("var " ^ (Cprinter.string_of_spec_var sv) ^ "\n") in*)
 		v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
 
 (* pretty printing for expressions *)
@@ -528,8 +527,8 @@ and mona_of_b_formula b f vs =
   let ret =
   match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
-  | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ " = pconst(0))"
-  (* CP.Lt *)   
+  | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ", pconst(0))"
+   (* CP.Lt *)   
   (*| CP.Lt((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Lt(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
   | CP.Lt(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Lt(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
   | CP.Lt (a1, a2, _) -> (equation a1 a2 f "less" "<" vs)
@@ -703,7 +702,7 @@ and mona_of_formula f initial_f vs =
       begin
         if !sat_optimize then
 	      match p with
-		  | CP.BForm (CP.BVar (bv, _),_) -> (mona_of_spec_var bv) ^ " = pconst(1)"
+		  | CP.BForm (CP.BVar (bv, _),_) -> (mona_of_spec_var bv) ^ " =pconst(0)" (*== pconst(1)*)
 (*              (equation (CP.Var (bv, no_pos)) (CP.IConst (1, no_pos)) f "less" "<" vs)*)
 		  | _ -> " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
         else " (~" ^ (mona_of_formula p initial_f vs) ^ ") "
@@ -736,7 +735,7 @@ and mona_of_formula f initial_f vs =
 (* pretty printing for boolean vars *)
 and print_b_formula b f = match b with
   | CP.BConst (c, _) -> if c then "(0 = 0)" else "(~ (0 <= 0))"
-  | CP.BVar (bv, _) -> "(" ^ (mona_of_spec_var bv) ^ (*" = 1")*)" = pconst(1))"
+  | CP.BVar (bv, _) -> "greater(" ^ (mona_of_spec_var bv) ^ ",pconst(0))" 
   | CP.Lt (a1, a2, _) -> (mona_of_exp a1 f) ^ "<" ^ (mona_of_exp a2 f)
   | CP.Lte (a1, a2, _) -> (mona_of_exp a1 f) ^ "<=" ^ (mona_of_exp a2 f)
   | CP.Gt (a1, a2, _) -> (mona_of_exp a1 f) ^ ">" ^ (mona_of_exp a2 f)
@@ -781,7 +780,7 @@ let check fd timeout pid : bool =
   try begin
     let tup = Util.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
     if tup (*Unix.select [Unix.descr_of_in_channel fd] [] [] timeout)*) = ([],[],[]) then begin
-        print_endline "\nMOna timeout reached."; flush stdout; false
+        print_endline "\nMona timeout reached."; flush stdout; false
     end else 
     let r = input_line fd in
     let err= "Error in file " in 
@@ -877,22 +876,22 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   second_order_vars := [];
   log ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   (*	
-  let ante_fv = CP.fv ante in
-  let conseq_fv = CP.fv conseq in
-  let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
-  let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in
-  let vs = Hashtbl.create 10 in
-  let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
-  let first_order_var_decls =
-    if Util.empty (*!first_order_vars*) part1 then ""
-    else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var (*(!first_order_vars)*)part1)) ^ ";\n" in
-  let second_order_var_decls =
-    if Util.empty (*!second_order_vars*) part2 then ""
-    else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var (*!second_order_vars*) part2)) ^ ";\n" in
-  let var_decls = first_order_var_decls ^ second_order_var_decls in
+        let ante_fv = CP.fv ante in
+        let conseq_fv = CP.fv conseq in
+        let all_fv = CP.remove_dups (ante_fv @ conseq_fv) in
+        let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in
+        let vs = Hashtbl.create 10 in
+        let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
+        let first_order_var_decls =
+        if Util.empty (*!first_order_vars*) part1 then ""
+        else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var (*(!first_order_vars)*)part1)) ^ ";\n" in
+        let second_order_var_decls =
+        if Util.empty (*!second_order_vars*) part2 then ""
+        else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var (*!second_order_vars*) part2)) ^ ";\n" in
+        let var_decls = first_order_var_decls ^ second_order_var_decls in
   (*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
-  let simp_form = break_presburger tmp_form in
-  (write var_decls simp_form vs timeout)
+        let simp_form = break_presburger tmp_form in
+        (write var_decls simp_form vs timeout)
   *)
   (* try 02.04.09 *)
   (* ante *)
@@ -904,7 +903,7 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   let ante_fv = CP.fv simp_ante in
   let conseq_fv = CP.fv simp_conseq in
   let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
-  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = CP.remove_dups_spec_var_list (ante_fv @ conseq_fv) in
   let vs = Hashtbl.create 10 in
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
@@ -916,7 +915,7 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   let var_decls = first_order_var_decls ^ second_order_var_decls in
   if (timeout = 0.) then (write var_decls tmp_form vs (-1.))
   else (write var_decls tmp_form vs timeout)
- end
+end
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
   log ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");

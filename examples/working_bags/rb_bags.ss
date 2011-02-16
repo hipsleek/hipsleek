@@ -243,7 +243,7 @@ node del_2_1(node a, node b, node c)
 			tmp = del_5_1(a, b.left.left, b.left.right, b.right, 1);
 	}
 	else 
-		tmp = del_6_1(a, b.left, b.right, 1);
+		{assume false; tmp = del_6_1(a, b.left, b.right, 1);}
 	return new node(0, 0, tmp, c);
 }
 

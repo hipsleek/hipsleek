@@ -13,34 +13,30 @@ GUI_INCLUDES = $(INCLUDES),-I,+lablgtk2
 GUI_FLAGS = $(GUI_INCLUDES),-g
 OB_GUI_FLAGS = -no-links -libs $(GUI_LIBS) -cflags $(GUI_FLAGS) -lflags $(GUI_FLAGS) -yaccflag -v -j $(JOBS)
 
-all: byte gui
+all: native
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
 gui: gsleek.byte ghip.byte
 
+hip: hip.native
+
 hip.byte:
 	$(OCAMLBUILD) $(OB_FLAGS) main.byte
-	cp _build/main.byte hip
-
-hip: hip.byte
+	cp _build/main.byte hip.byte
 
 hip.native:
 	$(OCAMLBUILD) $(OB_FLAGS) main.native
-	cp _build/main.native hip.opt
+	cp _build/main.native hip
 
-hip.opt: hip.native
+sleek: sleek.native
 
 sleek.byte:
 	$(OCAMLBUILD) $(OB_FLAGS) sleek.byte
-	cp _build/sleek.byte sleek
-
-sleek: sleek.byte
+	cp _build/sleek.byte sleek.byte
 
 sleek.native:
 	$(OCAMLBUILD) $(OB_FLAGS) sleek.native
-	cp _build/sleek.native sleek.opt
-
-sleek.opt: sleek.native
+	cp _build/sleek.native sleek
 
 gsleek.byte:
 	$(OCAMLBUILD) $(OB_GUI_FLAGS) gsleek.byte
@@ -53,5 +49,5 @@ ghip.byte:
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
-	rm -f sleek sleek.opt hip hip.opt gsleek gsleek.opt
+	rm -f sleek sleek.byte hip hip.byte gsleek ghip
 	rm -f allinput.*

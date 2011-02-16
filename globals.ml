@@ -42,9 +42,9 @@ type mode =
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
+let nonef v = None
 let voidf e = ()
 let voidf2 e f = ()
-let nonef v = None
 let somef v = Some v
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
@@ -107,6 +107,8 @@ let input_file_name = ref ""
 
 (* command line options *)
 
+let instantiation_variants = ref 0
+
 let omega_simpl = ref true
 
 let source_files = ref ([] : string list)
@@ -122,6 +124,8 @@ let elim_unsat = ref false
 let lemma_heuristic = ref false
 
 let elim_exists = ref true
+
+let allow_imm = ref false
 
 let print_proc = ref false
 
@@ -200,6 +204,10 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
+let disable_aggressive_prune = ref false
+let prune_with_slice = ref false
+
+let enulalias = ref false
 
 let pass_global_by_value = ref false
 
@@ -211,7 +219,18 @@ let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
+let enable_incremental_proving = ref false
 
+
+  (*for cav experiments*)
+  let f_1_slice = ref false
+  let f_2_slice = ref false
+  let no_memoisation = ref false
+  let no_incremental = ref false
+  let no_LHS_prop_drop = ref false
+  let no_RHS_prop_drop = ref false
+  let do_sat_slice = ref false
+  
 let add_count (t: int ref) = 
 	t := !t+1
 
@@ -405,3 +424,19 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
   match (fn t) with
     | None -> "", [t]
     | Some (op, _) -> op,(bin_op_to_list op fn t)
+
+(*type of process used for communicating with the prover*)
+type prover_process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+
+(*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
+class type ['a] incremMethodsType = object
+  method start_p: unit -> prover_process
+  method stop_p:  prover_process -> unit
+  method push: prover_process -> unit
+  method pop: prover_process -> unit
+  method popto: prover_process -> int -> unit
+  method imply: prover_process -> 'a -> 'a -> string -> bool
+  (* method add_to_context: 'a -> unit *)
+end
+
+

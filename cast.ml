@@ -43,12 +43,13 @@ and view_decl = { view_name : ident;
 				  view_formula : F.struc_formula;
 				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
 				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+                  mutable view_baga : P.spec_var Util.baga;
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
 				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
-				  view_prune_invariants : (formula_label list * P.b_formula list) list ;
+				  view_prune_invariants : (formula_label list * (P.spec_var Util.baga * P.b_formula list)) list ;
           view_raw_base_case: Cformula.formula option;}
   
 and proc_decl = { proc_name : ident;
@@ -105,6 +106,7 @@ and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct
 		 exp_bind_bound_var : typed_ident;
 		 exp_bind_fields : typed_ident list;
 		 exp_bind_body : exp;
+		 exp_bind_imm : bool;
 		 exp_bind_path_id : control_path_id;
 		 exp_bind_pos : loc }
 
@@ -263,6 +265,11 @@ and exp = (* expressions keep their types *)
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
+
+let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
+let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
@@ -545,6 +552,18 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a view definition"}
 
+let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+  let ba = vdef.view_baga in
+  (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
+  let from_svs = P.SpecVar (P.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+  let to_svs = root :: args in
+  P.subst_var_list_avoid_capture from_svs to_svs ba
+
+let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+      Util.ho_debug_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      (fun r a ->  look_up_view_baga prog c r a) root args
+
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
   | d :: rest -> 
 	  if d.data_name = name then d 
@@ -610,9 +629,21 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 *)
 let lookup_view_invs rem_br v_def = 
   try 
-    snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)
+    snd(snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants))
   with | Not_found -> []
 
+
+let lookup_view_invs_with_subs rem_br v_def zip  = 
+  try 
+    let v=snd(snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)) in
+    List.map (P.b_apply_subs zip) v
+  with | Not_found -> []
+
+let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
+  try 
+    let v=fst(snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)) in
+    P.subst_var_list_avoid_capture from_v to_v v
+  with | Not_found -> []
 
 let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
   | p :: rest -> begin
@@ -776,6 +807,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
+							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
@@ -790,6 +822,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 			  if U.empty rest then
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
@@ -805,6 +838,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
