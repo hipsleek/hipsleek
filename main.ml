@@ -14,17 +14,6 @@ let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_fil
 (******************************************)
 (* main function                          *)
 (******************************************)
-
-let exe_url = Sys.argv.(0)
-
-let get_exe_direct_link ()  =
-  try
-     let name_index = String.rindex exe_url '/' in
-     try
-        String.sub exe_url 0 (name_index+1)
-     with Invalid_argument "" -> "./"
-  with Not_found -> "./"
-
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
   let input = Lexing.from_channel org_in_chnl in
