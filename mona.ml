@@ -432,35 +432,35 @@ and mona_of_exp e0 f =
 (* pretty printing for expressions *)
 and mona_of_exp_x e0 f = 
   let rec helper e0 =
-  match e0 with
-    (*| CP.Null _ -> " 0 "*)
-  | CP.Null _ -> "pconst(0)"
-  | CP.Var (sv, _) -> mona_of_spec_var sv
-  | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
-        (*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
-  | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (helper a) ^ " + " ^ (string_of_int i) ^ " )"
-  | CP.Add (a1, a2, _) ->  " ( " ^ (helper a1) ^ " + " ^ (helper a2) ^ ")"
-  | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (helper a) ^ " + " ^ (string_of_int i) ^ " )"
-  | CP.Mult (a1, a2, p) -> "(" ^ (helper a1) ^ " * " ^ (helper a2) ^ ")"
-  | CP.Div (a1, a2, p) -> failwith "[mona.ml]: divide is not supported."
-  | CP.Max _
-  | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
-  | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
-  | CP.BagUnion ([], _) -> ""
-  | CP.BagUnion (e::[], _) -> (helper e)
-  | CP.BagUnion (e::rest, l) -> (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l)))
-  | CP.BagIntersect ([], _) -> ""
-  | CP.BagIntersect (e::[], _) -> (helper e)
-  | CP.BagIntersect (e::rest, l)->(helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l)))
-  | CP.BagDiff (e1, e2, _)     -> (helper e1) ^ "\\" ^ (helper e2)
-  | CP.List _
-  | CP.ListCons _
-  | CP.ListHead _
-  | CP.ListTail _
-  | CP.ListLength _
-  | CP.ListAppend _
-  | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
-  | _ -> failwith ("mona.mona_of_exp: mona doesn't support..."^(Cprinter.string_of_formula_exp e0)) 
+    match e0 with
+        (*| CP.Null _ -> " 0 "*)
+      | CP.Null _ -> "pconst(0)"
+      | CP.Var (sv, _) -> mona_of_spec_var sv
+      | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
+            (*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
+      | CP.Add(CP.IConst(i, _), a, _) -> "( " ^ (helper a) ^ " + " ^ (string_of_int i) ^ " )"
+      | CP.Add (a1, a2, _) ->  " ( " ^ (helper a1) ^ " + " ^ (helper a2) ^ ")"
+      | CP.Subtract(CP.IConst(i, _), a, _) -> "( " ^ (helper a) ^ " + " ^ (string_of_int i) ^ " )"
+      | CP.Mult (a1, a2, p) -> "(" ^ (helper a1) ^ " * " ^ (helper a2) ^ ")"
+      | CP.Div (a1, a2, p) -> failwith "[mona.ml]: divide is not supported."
+      | CP.Max _
+      | CP.Min _ -> failwith ("mona.mona_of_exp: min/max can never appear here")
+      | CP.Bag (elist, _) -> "{"^ (mona_of_formula_exp_list elist f) ^ "}"
+      | CP.BagUnion ([], _) -> ""
+      | CP.BagUnion (e::[], _) -> (helper e)
+      | CP.BagUnion (e::rest, l) -> (helper e) ^ " union " ^ (helper (CP.BagUnion (rest, l)))
+      | CP.BagIntersect ([], _) -> ""
+      | CP.BagIntersect (e::[], _) -> (helper e)
+      | CP.BagIntersect (e::rest, l)->(helper e) ^ " inter " ^ (helper (CP.BagIntersect (rest, l)))
+      | CP.BagDiff (e1, e2, _)     -> (helper e1) ^ "\\" ^ (helper e2)
+      | CP.List _
+      | CP.ListCons _
+      | CP.ListHead _
+      | CP.ListTail _
+      | CP.ListLength _
+      | CP.ListAppend _
+      | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
+      | _ -> failwith ("mona.mona_of_exp: mona doesn't support..."^(Cprinter.string_of_formula_exp e0)) 
   in
   helper e0
 
@@ -523,6 +523,16 @@ and mona_of_b_formula b f vs =
           (if a2str <> "" then " & " ^ a2str else "") ^ 
           (if a3str <> "" then " & " ^ a3str else "") ^ end_str^"\n" in
     (a1name,a2name,a3name,str,end_str)  in
+  let second_order_composite2 a1 a2 f = 
+    let (a1ex, a1name, a1str) = (mona_of_exp_secondorder a1 f) in
+    let (a2ex, a2name, a2str) = (mona_of_exp_secondorder a2 f) in
+    let all_existentials = a1ex @ a2ex in
+    let str = String.concat "" (List.map (fun name -> "ex2 " ^ name ^ " : (") all_existentials) in
+    let end_str = String.concat "" (List.map (fun name -> ")") all_existentials) in
+    let end_str = 
+      (if a1str <> "" then " & " ^ a1str else "") ^ 
+          (if a2str <> "" then " & " ^ a2str else "") ^ end_str^"\n" in
+    (a1name,a2name,str,end_str)  in
 
   let ret =
     match b with
@@ -545,11 +555,10 @@ and mona_of_b_formula b f vs =
               | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
       | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
             (* CP.Neq *)   
-              (*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
-                | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*)
-      | CP.Neq((CP.Add(a1, a2, l1)), a3, l2)
-      | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2)
-          -> "(~" ^ (mona_of_b_formula (CP.Eq((CP.Subtract(a3, a1, l1)), a2, l2)) f vs) ^ ")"
+            (*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2)
+              | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*)
+      | CP.Neq(a1, a2, l2)
+          -> 
       | CP.Neq (CP.IConst(i, _), a1, _)
       | CP.Neq (a1, CP.IConst(i, _), _) ->
             if (is_firstorder_mem f a1 vs) then
@@ -575,9 +584,26 @@ and mona_of_b_formula b f vs =
 	              if CP.is_null a1 then
 	                " greater(" ^ (mona_of_exp a2 f) ^ ",  pconst(0))"
 	              else
-	                "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
-	          end
-                  (* CP.Eq *)
+            if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) then
+              let a1str = (mona_of_exp a1 f) in
+              let a2str = (mona_of_exp a2 f) in (" ^ a1str ^ " = " ^ a2str ^ ") "
+            else
+              let (a1name,a2name,a3name,str,end_str) = second_order_composite2 a1 a2 f in
+              str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
+
+
+            if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
+              let a1str = (mona_of_exp a1 f) in
+              let a2str = (mona_of_exp a2 f) in
+              let a3str = (mona_of_exp a3 f) in
+              match a1 with
+                | CP.IConst _ -> "(" ^ a3str ^ " = " ^ a2str ^ " + " ^ a1str ^ ") "
+                | _ ->  
+                      "(" ^ a3str ^ " = " ^ a1str ^ " + " ^ a2str ^ ") "
+            else
+              let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a1 f in
+               (str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str)
+(* CP.Eq *)
                   (*| CP.Eq((CP.Subtract(a1, a2, pos1)), (CP.Subtract(a3, a4, pos2)), pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a4, pos1), CP.Add(a2, a3, pos2), pos3)) f vs)	 
                     | CP.Eq(a1,CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), pos3)  
                     | CP.Eq(CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), a1, pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a3, pos1), CP.Add(a2, a4, pos2), pos3)) f vs)
