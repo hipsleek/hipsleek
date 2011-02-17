@@ -149,6 +149,7 @@
 %token <string> HEADER_FILE
 %token <string> IDENTIFIER
 %token IF
+%token IMM
 %token IMPLIES
 %token IMPLY
 %token IMPORT
@@ -169,6 +170,7 @@
 %token INTERR
 %token INTERSECT
 %token INV
+%token IMM
 %token LT
 %token LTE
 %token MAX
@@ -224,6 +226,8 @@
 %token WHERE
 %token WHILE
 %token GLOBAL
+%token VARIANCE
+%token ESCAPE
 /*exception related*/
 %token <string> FLOW
 %token TRY
@@ -256,21 +260,21 @@
 
 program
   : opt_decl_list {
-  let data_defs = ref ([] : data_decl list) in
-  let global_var_defs = ref ([] : exp_var_decl list) in
+    let data_defs = ref ([] : data_decl list) in
+    let global_var_defs = ref ([] : exp_var_decl list) in
 	let enum_defs = ref ([] : enum_decl list) in
 	let view_defs = ref ([] : view_decl list) in
-  let proc_defs = ref ([] : proc_decl list) in
+    let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
   let include_defs = ref ([] : string list) in
   let pragma_defs = ref ([] : string list) in
     let choose d = match d with
       | Type tdef -> begin
 		  match tdef with
-			  | Data ddef -> data_defs := ddef :: !data_defs
-			  | Enum edef -> enum_defs := edef :: !enum_defs
-			  | View vdef -> view_defs := vdef :: !view_defs
-		  end
+			| Data ddef -> data_defs := ddef :: !data_defs
+			| Enum edef -> enum_defs := edef :: !enum_defs
+			| View vdef -> view_defs := vdef :: !view_defs
+		end
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
 	    | Coercion cdef -> coercion_defs := cdef :: !coercion_defs 
@@ -535,8 +539,6 @@ cid
   | THIS { (this, Unprimed) }
 ;
 
-
-
 view_body
   : formulas {((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1))}
 ;
@@ -754,14 +756,58 @@ flow_constraints :
 	AND FLOW IDENTIFIER {$3} 
 	
 heap_constr
-  : simple_heap_constr { $1 }
-  | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
+  : OPAREN heap_rd CPAREN SEMICOLON heap_rw {F.mkPhase $2 $5 (get_pos 2)}
+  | OPAREN heap_rd CPAREN {F.mkPhase $2 F.HTrue (get_pos 2)}
+  | heap_rw {F.mkPhase F.HTrue $1 (get_pos 2)}
+
+heap_rd
+  : heap_rd STAR simple_heap_constr_imm { F.mkStar $1 $3 (get_pos 2) }
+  | heap_rd AND simple_heap_constr_imm { F.mkConj $1 $3 (get_pos 2) }
+  | simple_heap_constr_imm {$1}
+
+heap_rw
+  : heap_wr STAR OPAREN heap_constr CPAREN { F.mkStar $1 $4 (get_pos 2) }
+  | heap_wr {F.mkPhase F.HTrue $1 (get_pos 2)}
+
+heap_wr
+  : heap_wr STAR simple_heap_constr {F.mkStar $1 $3 (get_pos 2)}
+  | heap_wr STAR simple_heap_constr_imm {F.mkStar $1 $3 (get_pos 2)}
+  | simple_heap_constr {$1}
+  | simple_heap_constr_imm {$1}
+;
+
+simple_heap_constr_imm: 
+cid COLONCOLON IDENTIFIER LT heap_arg_list GT IMM opt_formula_label{
+	let h = F.HeapNode { F.h_formula_heap_node = $1;
+						 F.h_formula_heap_name = $3;
+						 F.h_formula_heap_imm = true;
+						 F.h_formula_heap_full = false;
+						 F.h_formula_heap_with_inv = false;
+						 F.h_formula_heap_pseudo_data = false;
+						 F.h_formula_heap_arguments = $5;
+						 F.h_formula_heap_label = $8;
+						 F.h_formula_heap_pos = get_pos 2 } in
+	  h
+  }
+  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT IMM opt_formula_label{
+	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
+							F.h_formula_heap2_name = $3;
+							F.h_formula_heap2_imm = true;
+							F.h_formula_heap2_full = false;
+							F.h_formula_heap2_with_inv = false;
+							F.h_formula_heap2_pseudo_data = false;
+							F.h_formula_heap2_arguments = $5;
+							F.h_formula_heap2_label = $8;
+							F.h_formula_heap2_pos = get_pos 2 } in
+		h
+	}
 ;
 
 simple_heap_constr
-  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label {
+  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label{
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
+						 F.h_formula_heap_imm =  false;
 						 F.h_formula_heap_full = false;
 						 F.h_formula_heap_with_inv = false;
 						 F.h_formula_heap_pseudo_data = false;
@@ -773,6 +819,7 @@ simple_heap_constr
   | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
+							F.h_formula_heap2_imm = false;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
@@ -817,13 +864,13 @@ simple_heap_constr
 
 pure_constr
   : simple_pure_constr opt_formula_label { match $1 with 
-	| P.BForm (b,_) -> P.BForm (b,$2)
-    | P.And _ -> $1
-    | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
-    | P.Not (b1,_,l) -> P.Not(b1,$2,l)
-    | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
-    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
-  | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
+			| P.BForm (b,_) -> P.BForm (b,$2)
+		        | P.And _ -> $1
+			| P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
+	                | P.Not (b1,_,l) -> P.Not(b1,$2,l)
+	                | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
+			| P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
+                        | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
 disjunctive_pure_constr
@@ -835,8 +882,8 @@ simple_pure_constr
   : lbconstr {
 	fst $1
   }
-  | OPAREN disjunctive_pure_constr CPAREN { 
-	  $2 
+  | OPAREN disjunctive_pure_constr CPAREN {
+	  $2
 	}
   | EXISTS OPAREN opt_cid_list COLON pure_constr CPAREN {
 	  let qf f v = P.mkExists [v] f None (get_pos 1) in
@@ -858,12 +905,14 @@ simple_pure_constr
 	  P.BForm (P.mkBVar $1 (get_pos 1), None )
 	}
   | NOT cid {
-	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None)) None (get_pos 1)
+	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None )) None (get_pos 1)
 	}
 ;
 
 lbconstr
-  : bconstr { $1  }
+  : bconstr {
+	(fst $1, snd $1)
+  }
   | lbconstr NEQ cexp_list {
 	  expand_exp_list P.mkNeq $1 $3 (get_pos 2)
 	}
@@ -1048,6 +1097,17 @@ cexp_list_rec
 	}
 ;
 
+/*
+cexp_list_rec
+  : cexp cexp_list_rec_p {$1::$2}
+  ;
+
+cexp_list_rec_p
+  : {[]}
+  | COMMA cexp cexp_list_rec_p {$2::$3}
+  ;
+*/
+
 /********** Procedures and Coercion **********/
 
 proc_decl
@@ -1213,16 +1273,65 @@ spec
 	| ENSURES opt_label disjunctive_constr SEMICOLON {
 		Iformula.EAssume ((F.subst_stub_flow n_flow $3),(fresh_formula_label $2))
 		}
-	| CASE OBRACE branch_list CBRACE 
+	| CASE OBRACE branch_list CBRACE
 		{
 			Iformula.ECase 
 				{
 						Iformula.formula_case_branches = $3; 
 						Iformula.formula_case_pos = get_pos 1; 
 				}
-			} 
-;
+			}
+	| VARIANCE OPAREN integer_literal CPAREN measures escape_conditions spec
+		{
+			Iformula.EVariance
+			  {
+					Iformula.formula_var_label = $3;
+					Iformula.formula_var_measures = $5;
+					Iformula.formula_var_escape_clauses = $6;
+					Iformula.formula_var_continuation = [$7];
+					Iformula.formula_var_pos = get_pos 1;
+			  }
+		}
+;	
 
+measures
+	: {[]}
+	| OSQUARE variance_list CSQUARE {$2}
+	;
+
+variance_list
+	: cexp_with_bound variance_list_p {$1::$2}
+	;
+
+variance_list_p
+	: {[]}
+	| COMMA cexp_with_bound variance_list_p {$2::$3}
+	;
+
+cexp_with_bound
+	: cexp {($1, None)}
+	| cexp AT cexp {($1, Some $3)}
+	;
+
+escape_conditions
+	: {[]}
+	| ESCAPE OSQUARE condition_list CSQUARE {$3}
+	;
+
+condition_list
+	: pure_constr {[$1]}
+	;
+
+/*
+condition_list
+	: pure_constr condition_list_p {$1::$2}
+	;
+
+condition_list_p
+	: {[]}
+	| COMMA pure_constr condition_list_p {$2::$3}
+	;
+*/
 branch_list 
 	:pure_constr LEFTARROW spec_list {[($1,$3)]	}
 	| branch_list pure_constr LEFTARROW spec_list {($2,$4)::$1}

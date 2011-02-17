@@ -226,12 +226,15 @@ mytop: $(MAIN_FILES) decidez.vo
 prdebug: $(PP_FILES) 
 	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
 #	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
+
+
 hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
 	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
 #	make -f Makefile.opt hip.opt
+
 
 prover.norm: $(PROVE_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)

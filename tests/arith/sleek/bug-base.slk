@@ -1,0 +1,45 @@
+data node { int val; node next}.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ls2<n, p> == self = p & n = 0 or
+     (exists m,v1,q: self::node<v1, q> * q::ls2<m, p> & m + 1 = n & self!=p)
+inv n>=0.
+
+/*
+Below results in direct match rather than base-case unfolding
+
+*/
+
+checkentail p2::ll<n> & p2=null |- p2::ll<f3>  .
+print residue.
+
+checkentail p2::ls2<n, q> & p2=q |- p2::ls2<f3,f4>  .
+print residue.
+
+checkentail p2::ls2<n, q> & n=0 |- p2::ls2<f3,f4>  .
+print residue.
+
+checkentail p2::ls2<n, q> & p2=q |- p2::ls2<f3,f4>  .
+print residue.
+
+checkentail p2::ls2<n, q> & p2=null |- p2::ls2<f3,f4>  .
+print residue.
+
+checkentail p2=q & n=0 & p2=null |- p2::ls2<f3,f4>  .
+print residue.
+
+checkentail p2=q & n=0 & p2=null |- [m,f4] true & f4=p2 & m=0 .
+print residue.
+
+/*
+checkentail p2=q & n=0  |- p2::ls2<f3,f4>  .
+print residue.
+*/
+
+
+
+
+

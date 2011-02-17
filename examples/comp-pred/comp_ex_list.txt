@@ -1,0 +1,12 @@
+              updated
+2-3trees   -> done
+append-tail-> done -> interesting as base introduces one node
+avl-all    -> done
+append     ->
+avl-orig3  -> done  -> interesting because of balance factor needing height
+bll        -> done
+bubble     -> done  -> sortedness on top of ll -> refining the set property
+complete   -> done
+rb         -> done  -> interesting because of the extra branch introduced -> how will split deal with it
+dll-sets   -> done
+rb_bags    -> done

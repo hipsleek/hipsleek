@@ -101,17 +101,17 @@ and param = { param_type : typ;
 *)
 
 and proc_decl = { proc_name : ident;
-		  mutable proc_mingled_name : ident;
-		  mutable proc_data_decl : data_decl option; (* the class containing the method *)
-		  proc_constructor : bool;
-		  proc_args : param list;
-		  proc_return : typ;
-		  proc_static_specs : Iformula.struc_formula;
-		  proc_dynamic_specs : Iformula.struc_formula;
-		  proc_exceptions : ident list;
-		  proc_body : exp option;
-                  proc_file : string;
-		  proc_loc : loc }
+				  mutable proc_mingled_name : ident;
+				  mutable proc_data_decl : data_decl option; (* the class containing the method *)
+				  proc_constructor : bool;
+				  proc_args : param list;
+				  proc_return : typ;
+				  proc_static_specs : Iformula.struc_formula;
+				  proc_dynamic_specs : Iformula.struc_formula;
+				  proc_exceptions : ident list;
+				  proc_body : exp option;
+          proc_file : string;
+				  proc_loc : loc }
 
 and coercion_decl = { coercion_type : coercion_type;
 		      coercion_name : ident;
@@ -428,8 +428,8 @@ let is_null (e : exp) : bool = match e with
 
 let is_var (e : exp) : bool = match e with
   | Var _ -> true
-  | _ -> false
-
+  | _ ->false
+  
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
@@ -834,6 +834,7 @@ and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula
 	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view  view_decls c2) b.Iformula.formula_case_branches)
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
 		  [(data_name_of_view view_decls b.Iformula.formula_ext_continuation)])
+	| Iformula.EVariance b -> ""
   in
   handle_list_res (List.map data_name_in_ext f0) 
 
@@ -943,7 +944,7 @@ and contains_field2 (e0 : exp) : bool = match e0 with
   | Raise e -> begin match e.exp_raise_val with | None -> false | Some e -> contains_field2 e end
   | Try e -> (contains_field2 e.exp_try_block) ||
 		(List.exists contains_field2 e.exp_catch_clauses)||
-		(List.exists contains_field2 e.exp_finally_clause)
+			(List.exists contains_field2 e.exp_finally_clause)
   | Time _ -> false
 *)
  
@@ -981,9 +982,7 @@ and mkBinary op oper1 oper2 pos = Binary { exp_binary_op = op;
 										   exp_binary_path_id = (fresh_branch_point_id "") ;
 										   exp_binary_pos = pos }
 
-and mkVar id pos = Var { exp_var_name = id;
-                         exp_var_pos = pos }
-                                                                         and mkUnary op oper pos = Unary { exp_unary_op = op;
+and mkUnary op oper pos = Unary { exp_unary_op = op;
 								  exp_unary_exp = oper;
 								  exp_unary_path_id = (fresh_branch_point_id "") ;
 								  exp_unary_pos = pos }

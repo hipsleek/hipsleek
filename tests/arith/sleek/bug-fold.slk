@@ -1,0 +1,69 @@
+data node { int val; node next}.
+
+pred ls<n, p> == self = p & n = 0 or
+     (exists m,v1,q: self::node<v1, q> * q::ls<m, p> & m + 1 = n )
+inv n>=0.
+
+pred ls2<n, p> == self = p & n = 0 or
+     (exists m,v1,q: self::node<v1, q> * q::ls2<m, p> & m + 1 = n & self!=p)
+inv n>=0.
+
+
+/* why is case not shown by -dd, but visible for --pcp
+
+ view ls2<n,p>= 
+  true & (6, ):self=p & n=0 & {FLOW,(25,180)=__flow,}
+  || EXISTS(p_200,m_197,v1_198,q_199: (7, ):self::node<v1_198,q_199> * 
+     (8, ):q_199::ls2<m_197,p_200> & (9, ):1+m_197=n & self!=p & p_200=p &
+     {FLOW,(25,180)=__flow,})
+  inv: (10, ):0<=n
+  unstructured formula: 
+   true & (6, ):self=p & n=0 & {FLOW,(25,180)=__flow,}
+   or EXISTS(p_205,m_206,v1_207,q_208: (7, ):self::node<v1_207,q_208> * 
+      (8, ):q_208::ls2<m_206,p_205> & (9, ):1+m_206=n & self!=p & p_205=p &
+      {FLOW,(25,180)=__flow,})
+  xform: (10, ):0<=n
+  base case: self=null->(6, ):self=p & n=0
+
+*/
+
+
+/*
+
+checkentail p2=q & n=0 & p2=null |- [m,f4] true & f4=p2 & m=0 .
+print residue.
+
+*/
+
+
+
+
+/*
+checkentail p2=q & n=0 & p2=null |- p2::ls<m,r>  .
+print residue.
+
+Valid.
+ [true & (11, ):p2=q & n=0 & p2=null & r=p2 & m=0 & {FLOW,(141,142)=__norm,}]
+ 
+*/
+checkentail p2=q & n=0 & p2=null |- p2::ls<m,r>  .
+print residue.
+
+
+checkentail p2=q & n=0 & p2=null |- p2::ls2<m,r>  .
+print residue.
+
+/*
+Fail
+*/
+
+
+/*
+checkentail p2=q & n=0  |- p2::ls2<f3,f4>  .
+print residue.
+*/
+
+
+
+
+

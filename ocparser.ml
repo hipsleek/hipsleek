@@ -40,8 +40,7 @@ open Parsing;;
   open Cpure
 
   module Err = Error
-  let subst_lst = ref ([]:(string*string*typ)list)
-  
+
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();
@@ -68,7 +67,7 @@ open Parsing;;
       | Not (f,fl,l) -> Not ((trans_null f),fl,l)
       | Forall (sv,f,fl,l) -> Forall(sv,(trans_null f),fl,l)
       | Exists (sv,f,fl,l) -> Exists(sv,(trans_null f),fl,l)
-# 72 "ocparser.ml"
+# 71 "ocparser.ml"
 let yytransl_const = [|
   257 (* AND *);
   258 (* BOOL *);
@@ -261,101 +260,101 @@ let yyact = [|
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'relation) in
     Obj.repr(
-# 84 "ocparser.mly"
+# 83 "ocparser.mly"
                     (
   _1
 )
-# 269 "ocparser.ml"
+# 268 "ocparser.ml"
                : Cpure.relation))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'relation) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'relation) in
     Obj.repr(
-# 89 "ocparser.mly"
+# 88 "ocparser.mly"
                                   (
   UnionRel (_1, _3)
 )
-# 279 "ocparser.ml"
+# 278 "ocparser.ml"
                : 'relation))
 ; (fun __caml_parser_env ->
     let _3 = (Parsing.peek_val __caml_parser_env 4 : 'aexp_list) in
     let _6 = (Parsing.peek_val __caml_parser_env 1 : 'pconstr) in
     Obj.repr(
-# 92 "ocparser.mly"
+# 91 "ocparser.mly"
                                                         (
   BaseRel (_3, _6)
 )
-# 289 "ocparser.ml"
+# 288 "ocparser.ml"
                : 'relation))
 ; (fun __caml_parser_env ->
     let _3 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
     Obj.repr(
-# 95 "ocparser.mly"
+# 94 "ocparser.mly"
                                           (
 	BaseRel (_3, mkTrue (get_pos 1))
   )
-# 298 "ocparser.ml"
+# 297 "ocparser.ml"
                : 'relation))
 ; (fun __caml_parser_env ->
     Obj.repr(
-# 98 "ocparser.mly"
+# 97 "ocparser.mly"
                      (
 	ConstRel true
   )
-# 306 "ocparser.ml"
+# 305 "ocparser.ml"
                : 'relation))
 ; (fun __caml_parser_env ->
     Obj.repr(
-# 101 "ocparser.mly"
+# 100 "ocparser.mly"
                       (
 	ConstRel false
   )
-# 314 "ocparser.ml"
+# 313 "ocparser.ml"
                : 'relation))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'pconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'pconstr) in
     Obj.repr(
-# 106 "ocparser.mly"
+# 105 "ocparser.mly"
                              ( 
   mkAnd _1 _3 (get_pos 2)
 )
-# 324 "ocparser.ml"
+# 323 "ocparser.ml"
                : 'pconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'lbconstr) in
     Obj.repr(
-# 109 "ocparser.mly"
+# 108 "ocparser.mly"
            ( trans_null (fst _1) )
-# 331 "ocparser.ml"
+# 330 "ocparser.ml"
                : 'pconstr))
 ; (fun __caml_parser_env ->
     let _3 = (Parsing.peek_val __caml_parser_env 3 : 'var_list) in
     let _5 = (Parsing.peek_val __caml_parser_env 1 : 'pconstr) in
     Obj.repr(
-# 110 "ocparser.mly"
+# 109 "ocparser.mly"
                                               ( 
 	let svars = _3 in
 	let qf f v = mkExists [v] f None (get_pos 1) in
 	let res = List.fold_left qf _5 svars in
 	  res
 )
-# 344 "ocparser.ml"
+# 343 "ocparser.ml"
                : 'pconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'bconstr) in
     Obj.repr(
-# 118 "ocparser.mly"
+# 117 "ocparser.mly"
                   ( 
 	(fst _1, snd _1)
   )
-# 353 "ocparser.ml"
+# 352 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lbconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 121 "ocparser.mly"
+# 120 "ocparser.mly"
                         (
 	let b, oae = _1 in
 	  match oae with
@@ -365,13 +364,13 @@ let yyact = [|
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of <"}
   )
-# 369 "ocparser.ml"
+# 368 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lbconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 130 "ocparser.mly"
+# 129 "ocparser.mly"
                          (
 	let b, oae = _1 in
 	  match oae with
@@ -381,13 +380,13 @@ let yyact = [|
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of <="}
   )
-# 385 "ocparser.ml"
+# 384 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lbconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 139 "ocparser.mly"
+# 138 "ocparser.mly"
                         (
 	let b, oae = _1 in
 	  match oae with
@@ -397,13 +396,13 @@ let yyact = [|
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of >"}
 )
-# 401 "ocparser.ml"
+# 400 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lbconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 148 "ocparser.mly"
+# 147 "ocparser.mly"
                          (
 	let b, oae = _1 in
 	  match oae with
@@ -413,13 +412,13 @@ let yyact = [|
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of >="}
 )
-# 417 "ocparser.ml"
+# 416 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lbconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 157 "ocparser.mly"
+# 156 "ocparser.mly"
                         (
 	let b, oae = _1 in
 	  match oae with
@@ -429,13 +428,13 @@ let yyact = [|
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of ="}
 )
-# 433 "ocparser.ml"
+# 432 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'lbconstr) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 166 "ocparser.mly"
+# 165 "ocparser.mly"
                          (
 	let b, oae = _1 in
 	  match oae with
@@ -445,200 +444,200 @@ let yyact = [|
 		| None -> Err.report_error {Err.error_loc = get_pos 2;
 									Err.error_text = "parse error in lhs of !="}
 )
-# 449 "ocparser.ml"
+# 448 "ocparser.ml"
                : 'lbconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
-# 177 "ocparser.mly"
+# 176 "ocparser.mly"
                                 ( (build_relation mkLt _1 _3 None (get_pos 2), Some _3) )
-# 457 "ocparser.ml"
+# 456 "ocparser.ml"
+               : 'bconstr))
+; (fun __caml_parser_env ->
+    let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
+    let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
+    Obj.repr(
+# 177 "ocparser.mly"
+                          ( (build_relation mkLte _1 _3 None (get_pos 2), Some _3) )
+# 464 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
 # 178 "ocparser.mly"
-                          ( (build_relation mkLte _1 _3 None (get_pos 2), Some _3) )
-# 465 "ocparser.ml"
+                         ( (build_relation mkGt _1 _3 None (get_pos 2), Some _3) )
+# 472 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
 # 179 "ocparser.mly"
-                         ( (build_relation mkGt _1 _3 None (get_pos 2), Some _3) )
-# 473 "ocparser.ml"
+                          ( (build_relation mkGte _1 _3 None (get_pos 2), Some _3) )
+# 480 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
 # 180 "ocparser.mly"
-                          ( (build_relation mkGte _1 _3 None (get_pos 2), Some _3) )
-# 481 "ocparser.ml"
+                         ( (build_relation mkEq _1 _3 None (get_pos 2), Some _3) )
+# 488 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
 # 181 "ocparser.mly"
-                         ( (build_relation mkEq _1 _3 None (get_pos 2), Some _3) )
-# 489 "ocparser.ml"
+                          ( (build_relation mkNeq _1 _3 None (get_pos 2), Some _3) )
+# 496 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
-    let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list) in
-    let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list) in
     Obj.repr(
 # 182 "ocparser.mly"
-                          ( (build_relation mkNeq _1 _3 None (get_pos 2), Some _3) )
-# 497 "ocparser.ml"
+       ( (BForm (BConst (true, get_pos 1) , None), None) )
+# 502 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
     Obj.repr(
 # 183 "ocparser.mly"
-       ( (BForm (BConst (true, get_pos 1) , None), None) )
-# 503 "ocparser.ml"
-               : 'bconstr))
-; (fun __caml_parser_env ->
-    Obj.repr(
-# 184 "ocparser.mly"
         ( (BForm (BConst (false, get_pos 1) , None), None) )
-# 509 "ocparser.ml"
+# 508 "ocparser.ml"
                : 'bconstr))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'cid) in
     Obj.repr(
-# 187 "ocparser.mly"
+# 186 "ocparser.mly"
           (
 	Var (_1,get_pos 1)
   )
-# 518 "ocparser.ml"
+# 517 "ocparser.ml"
                : 'aexp))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : int) in
     Obj.repr(
-# 190 "ocparser.mly"
+# 189 "ocparser.mly"
          (
 	IConst (_1, get_pos 1)
   )
-# 527 "ocparser.ml"
+# 526 "ocparser.ml"
                : 'aexp))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 1 : int) in
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'cid) in
     Obj.repr(
-# 193 "ocparser.mly"
+# 192 "ocparser.mly"
              (
 	Mult (IConst (_1, get_pos 1), (Var (_2,get_pos 2)), get_pos 1)
   )
-# 537 "ocparser.ml"
+# 536 "ocparser.ml"
                : 'aexp))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp) in
     Obj.repr(
-# 196 "ocparser.mly"
+# 195 "ocparser.mly"
                  (
 	Add (_1, _3, get_pos 2)
   )
-# 547 "ocparser.ml"
+# 546 "ocparser.ml"
                : 'aexp))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp) in
     Obj.repr(
-# 199 "ocparser.mly"
+# 198 "ocparser.mly"
                   (
 	Subtract (_1, _3, get_pos 2)
   )
-# 557 "ocparser.ml"
+# 556 "ocparser.ml"
                : 'aexp))
 ; (fun __caml_parser_env ->
     let _2 = (Parsing.peek_val __caml_parser_env 0 : 'aexp) in
     Obj.repr(
-# 202 "ocparser.mly"
+# 201 "ocparser.mly"
                           (
 	Subtract (IConst (0, get_pos 1), _2, get_pos 1)
   )
-# 566 "ocparser.ml"
+# 565 "ocparser.ml"
                : 'aexp))
 ; (fun __caml_parser_env ->
     Obj.repr(
-# 207 "ocparser.mly"
+# 206 "ocparser.mly"
            ( [] )
-# 572 "ocparser.ml"
+# 571 "ocparser.ml"
                : 'aexp_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'aexp_list_rec) in
     Obj.repr(
-# 208 "ocparser.mly"
+# 207 "ocparser.mly"
                 ( List.rev _1 )
-# 579 "ocparser.ml"
+# 578 "ocparser.ml"
                : 'aexp_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'aexp) in
     Obj.repr(
-# 211 "ocparser.mly"
+# 210 "ocparser.mly"
                     ( [_1] )
-# 586 "ocparser.ml"
+# 585 "ocparser.ml"
                : 'aexp_list_rec))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'aexp_list_rec) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'aexp) in
     Obj.repr(
-# 212 "ocparser.mly"
+# 211 "ocparser.mly"
                            ( _3 :: _1)
-# 594 "ocparser.ml"
+# 593 "ocparser.ml"
                : 'aexp_list_rec))
 ; (fun __caml_parser_env ->
     Obj.repr(
-# 215 "ocparser.mly"
+# 214 "ocparser.mly"
           ( [] : spec_var list )
-# 600 "ocparser.ml"
+# 599 "ocparser.ml"
                : 'var_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'var_list_rec) in
     Obj.repr(
-# 216 "ocparser.mly"
+# 215 "ocparser.mly"
                ( List.rev _1 : spec_var list )
-# 607 "ocparser.ml"
+# 606 "ocparser.ml"
                : 'var_list))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : 'cid) in
     Obj.repr(
-# 219 "ocparser.mly"
+# 218 "ocparser.mly"
                   ( ([_1]) : spec_var list )
-# 614 "ocparser.ml"
+# 613 "ocparser.ml"
                : 'var_list_rec))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 2 : 'var_list_rec) in
     let _3 = (Parsing.peek_val __caml_parser_env 0 : 'cid) in
     Obj.repr(
-# 220 "ocparser.mly"
+# 219 "ocparser.mly"
                          ( (_3 :: _1) : spec_var list )
-# 622 "ocparser.ml"
+# 621 "ocparser.ml"
                : 'var_list_rec))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
-# 224 "ocparser.mly"
+# 223 "ocparser.mly"
         ( 
-        match (List.filter (fun (a,b,_)->((String.compare _1 a)==0)) !subst_lst) with 
+        match (List.filter (fun (a,b,_)->((String.compare _1 a)==0)) !omega_subst_lst) with 
 					|  [] -> SpecVar(Prim Int,_1, Unprimed)
 					| (a,b,t)::h-> SpecVar(t, b,Unprimed) )
-# 632 "ocparser.ml"
+# 631 "ocparser.ml"
                : 'cid))
 ; (fun __caml_parser_env ->
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
-# 228 "ocparser.mly"
+# 227 "ocparser.mly"
            ( 
-        match (List.filter (fun (a,b,_)->((String.compare _1 a)==0)) !subst_lst) with 
+        match (List.filter (fun (a,b,_)->((String.compare _1 a)==0)) !omega_subst_lst) with 
 					|  [] -> SpecVar(Prim Int,_1, Primed)
 					| (a,b,t)::h-> SpecVar(t, b,Primed) )
-# 642 "ocparser.ml"
+# 641 "ocparser.ml"
                : 'cid))
 (* Entry oc_output *)
 ; (fun __caml_parser_env -> raise (Parsing.YYexit (Parsing.peek_val __caml_parser_env 0)))

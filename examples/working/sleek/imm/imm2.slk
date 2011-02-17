@@ -1,0 +1,37 @@
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+
+
+checkentail (x::ll<n>@I & y::ll<m>@I) & n>0 & m>0  |- (y::ll<m1>@I & x::ll<n1>@I) & y!=x. 
+// Fail
+
+
+
+
+
+checkentail (x::ll<n>@I * y::ll<m>@I)  |- (y::ll<m1>@I & x::ll<n1>@I).
+print residue.
+// x@I * y@I
+// Valid
+
+
+checkentail (x::ll<n>@I & y::ll<m>@I) & x!=null & y!=null  |- (y::ll<m1>@I * x::ll<n1>@I).
+print residue.
+// Fail
+
+
+checkentail (x::ll<n>@I * y::ll<m>@I) ; p::ll<_> * ((t::ll<a>@I); z::ll<m>) & n > 3 |- (y::ll<m1>@I & x::ll<n1>@I).
+print residue.
+// x * y; p * (t; z)
+// Valid.
+
+
+checkentail (x::ll<n>@I & y::ll<m>@I & t::ll<a>@I); z::ll<m> & n > 3  |- (y::ll<m1>@I & x::ll<n1>@I) & n1>6.
+print residue.
+// Fail
+
+
+

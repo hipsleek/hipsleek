@@ -10,7 +10,7 @@ checkentail x::ll<n> & n > 1|- x::ll<m> & m > 3.
 print residue.
 
 // must failure
-checkentail x=null |- x::node<_,_>.
+checkentail x=null  |- x::node<_,_>.
 print residue.
 
 // must failure

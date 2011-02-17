@@ -1,0 +1,44 @@
+data node {
+	int val;
+    node prev;
+	node next;
+}.
+
+
+pred dll<p,n> == self=null & n=0
+  or self::node<v,p,q> * q::dll<self,n-1>
+	inv n>=0 .
+
+pred dllB<p,S> == self=null & S={}
+  or self::node<v,p,q> * q::dllB<self,S1> & S=union({v},S1)
+     &  forall (x : (x notin S1 | v <= x))
+	inv true.
+ /* double linked list with sortedness property */
+
+/*
+checkentail x=null |- x::dll<p,n>.
+print residue.
+
+checkentail  x::dll<p,n> |- x=null.
+print residue.
+
+checkentail  x::dll<p,n> & n=0 |- x=null.
+print residue.
+*/
+
+checkentail x::node<_,q,p> * p::dll<x,3>  |- x::dll<r,n>.
+print residue.
+
+checkentail x=null |- x::dllB<r,S>.
+print residue.
+
+checkentail x::node<v,q,p> * p::dllB<x,S>  & forall (z: (z notin S | v<=z))  
+   |- x::dllB<r,S2>.
+print residue.
+
+checkentail x::node<v,q,p> * p::dllB<x,S>  
+   |- x::dllB<r,S2>.
+print residue.
+
+
+

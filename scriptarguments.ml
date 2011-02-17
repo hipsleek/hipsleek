@@ -35,144 +35,166 @@ let set_frontend fe_str = match fe_str  with
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
-	 "Do not use Omega to simplify the arithmetic constraints when using other solver");
+	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
-	 "Simplify the pure part of the formulas");
+	"Simplify the pure part of the formulas");
 	("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic,
-	 "Use the combined coerce&match + history heuristic for lemma application");
+	"Use the combined coerce&match + history heuristic for lemma application");
 	("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
-	 "Move instantiation (containing existential vars) to the LHS at the end of the folding process");
+	"Move instantiation (containing existential vars) to the LHS at the end of the folding process");
 	("--max-renaming", Arg.Set Globals.max_renaming,
-	 "Always rename the bound variables");
+	"Always rename the bound variables");
 	("--no-anon-exist", Arg.Clear Globals.anon_exist,
-	 "Disallow anonymous variables in the precondition to be existential");
+	"Disallow anonymous variables in the precondition to be existential");
 	("--LHS-wrap-exist", Arg.Set Globals.wrap_exist,
-	 "Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
+	"Existentially quantify the fresh vars in the residue after applying ENT-LHS-EX");
 	("-noee", Arg.Clear Tpdispatcher.elim_exists_flag,
-	 "No eleminate existential quantifiers before calling TP.");
+	"No eleminate existential quantifiers before calling TP.");
 	("-nofilter", Arg.Clear Tpdispatcher.filtering_flag,
-	 "No assumption filtering.");
+	"No assumption filtering.");
 	("--check-coercions", Arg.Set Globals.check_coercions,
-	 "Check coercion validity");
+	"Check coercion validity");
 	("-dd", Arg.Set Debug.devel_debug_on,
-     "Turn on devel_debug");
+    "Turn on devel_debug");
 	("-dd-print-orig-conseq", Arg.Unit Debug.enable_dd_and_orig_conseq_printing,
-     "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
+    "Enable printing of the original consequent while debugging. Automatically enables -dd (debugging) ");
 	("-gist", Arg.Set Globals.show_gist,
-     "Show gist when implication fails");
+    "Show gist when implication fails");
 	("--hull-pre-inv", Arg.Set Globals.hull_pre_inv,
-	 "Hull precondition invariant at call sites");
+	"Hull precondition invariant at call sites");
 	("--sat-timeout", Arg.Set_float Globals.sat_timeout,
-	 "Timeout for sat checking");
+	"Timeout for sat checking");
 	("--imply-timeout", Arg.Set_float Globals.imply_timeout,
-     "Timeout for imply checking");
+    "Timeout for imply checking");
 	("--log-proof", Arg.String Prooftracer.set_proof_file,
-     "Log (failed) proof to file");
+    "Log (failed) proof to file");
 	("--trace-all", Arg.Set Globals.trace_all,
-     "Trace all proof paths");
+    "Trace all proof paths");
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
-     "Log all CVC Lite formula to specified log file");
-	("--log-cvc3", Arg.String Cvc3.set_log_file,
-	 "Log all CVC3 formula to specified log file");
+    "Log all CVC Lite formula to specified log file");
+	(* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
+	("--log-cvc3", Arg.Unit Cvc3.set_log_file,
+    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
-	 "Log all formulae sent to Omega Calculator in file allinput.oc");
+	"Log all formulae sent to Omega Calculator in file allinput.oc");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
-	 "Log all formulae sent to Isabelle in file allinput.thy");
+	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,
-	 "Log all formulae sent to Coq in file allinput.v");
+	"Log all formulae sent to Coq in file allinput.v");
 	("--log-mona", Arg.Set Mona.log_all_flag,
-	 "Log all formulae sent to Mona in file allinput.mona");
+	"Log all formulae sent to Mona in file allinput.mona");
 	("--log-redlog", Arg.Set Redlog.is_log_all,
-     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
+    "Log all formulae sent to Reduce/Redlog in file allinput.rl");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
-	 "Use the bag theory from Isabelle, instead of the set theory");
+	"Use the bag theory from Isabelle, instead of the set theory");
+	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
-     "Turn off coercion mechanism");
+    "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,
-	 "Turn off existential quantifier elimination during type-checking");
+	"Turn off existential quantifier elimination during type-checking");
 	("--no-diff", Arg.Set Solver.no_diff,
-	 "Drop disequalities generated from the separating conjunction");
+	"Drop disequalities generated from the separating conjunction");
 	("--no-set", Arg.Clear Globals.use_set,
-	 "Turn off set-of-states search");
+	"Turn off set-of-states search");
 	("--unsat-elim", Arg.Set Globals.elim_unsat,
-     "Turn on unsatisfiable formulae elimination during type-checking");
+    "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
-     "Number of unfolding using XPure");
+    "Number of unfolding using XPure");
 	("-parse", Arg.Set parse_only,
-	 "Parse only");
+	"Parse only");
 	("--print-iparams", Arg.Set Globals.print_mvars,
-	 "Print input parameters of predicates");
+	"Print input parameters of predicates");
 	("--print-x-inv", Arg.Set Globals.print_x_inv,
-	 "Print computed view invariants");
+	"Print computed view invariants");
 	("-stop", Arg.Clear Globals.check_all,
-	 "Stop checking on erroneous procedure");
+	"Stop checking on erroneous procedure");
 	("--build-image", Arg.Symbol (["true"; "false"], Isabelle.building_image),
-	 "Build the image theory in Isabelle - default false");
-	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "om";
-	 "oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
-	 "Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC Lite then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC Lite then MONA.");
+	"Build the image theory in Isabelle - default false");
+	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "z3"; "om";
+	"oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
+	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
+	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
-	 "Use field construct instead of bind");
+	"Use field construct instead of bind");
 	("--use-large-bind", Arg.Set Globals.large_bind,
-	 "Use large bind construct, where the bound variable may be changed in the body of bind");
+	"Use large bind construct, where the bound variable may be changed in the body of bind");
 	("-v", Arg.Set Debug.debug_on, 
-	 "Verbose");
+	"Verbose");
 	("--pipe", Arg.Unit Tpdispatcher.Netprover.set_use_pipe, 
-	 "use external prover via pipe");
+	"use external prover via pipe");
 	("--dsocket", Arg.Unit (fun () -> Tpdispatcher.Netprover.set_use_socket "loris-7:8888"), 
-	 "<host:port>: use external prover via loris-7:8888");
+	"<host:port>: use external prover via loris-7:8888");
 	("--socket", Arg.String Tpdispatcher.Netprover.set_use_socket, 
-	 "<host:port>: use external prover via socket");
+	"<host:port>: use external prover via socket");
 	("--prover", Arg.String Tpdispatcher.set_tp, 
-	 "<p,q,..> comma-separated list of provers to try in parallel");
+	"<p,q,..> comma-separated list of provers to try in parallel");
 	("--enable-sat-stat", Arg.Set Globals.enable_sat_statistics, 
-	 "enable sat statistics");
+	"enable sat statistics");
 	("--epi", Arg.Set Globals.profiling, 
-	 "enable profiling statistics");
+	"enable profiling statistics");
 	("--sbc", Arg.Set Globals.enable_syn_base_case, 
-	 "use only syntactic base case detection");
+	"use only syntactic base case detection");
 	("--eci", Arg.Set Globals.enable_case_inference,
-	 "enable struct formula inference");
+	"enable struct formula inference");
 	("--pcp", Arg.Set Globals.print_core,
-	 "print core representation");
+	"print core representation");
 	("--pip", Arg.Set Globals.print_input,
-	 "print input representation");
+	"print input representation");
+	("--no-cache", Arg.Set Globals.no_cache_formula,
+    "Do not cache result of satisfiability and validity checking");
 	("--web", Arg.String (fun s -> (Tpdispatcher.Netprover.set_use_socket_for_web s); Tpdispatcher.webserver := true; Typechecker.webserver := true; Paralib1v2.webs := true; Paralib1.webs := true) ,  
-	 "<host:port>: use external web service via socket");
+	"<host:port>: use external web service via socket");
 	("-para", Arg.Int Typechecker.parallelize, 
-	 "Use Paralib map_para instead of List.map in typecheker");
+	"Use Paralib map_para instead of List.map in typecheker");
 	("--priority",Arg.String Tpdispatcher.Netprover.set_prio_list, 
-	 "<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
+	"<proc_name1:prio1;proc_name2:prio2;...> To be used along with webserver");
 	("--decrprio",Arg.Set Tpdispatcher.decr_priority , 
-	 "use a decreasing priority scheme");
+	"use a decreasing priority scheme");
 	("--rl-no-pseudo-ops", Arg.Set Redlog.no_pseudo_ops, 
-	 "Do not pseudo-strengthen/weaken formulas before send to Redlog");
+	"Do not pseudo-strengthen/weaken formulas before send to Redlog");
 	("--rl-no-ee", Arg.Set Redlog.no_elim_exists, 
-	 "Do not try to eliminate existential quantifier with Redlog");
+	"Do not try to eliminate existential quantifier with Redlog");
+    ("--rl-no-simplify", Arg.Set Redlog.no_simplify,
+    "Do not try to simplify non-linear formulas with Redlog");
+    ("--rl-no-cache", Arg.Set Redlog.no_cache,
+    "Do not use cache for unsatisfiability and implication's checking with Redlog");
 	("--rl-timeout", Arg.Set_int Redlog.timeout, 
-	 "Set timeout (in seconds) for is_sat or imply with Redlog");
+	"Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 
-	 "Turn on failure analysis");
+	"Turn on failure analysis");
 	("--exhaust-match",Arg.Set Globals.exhaust_match, 
-	 "Turn on exhaustive matching for base case of predicates"); 
+	"Turn on exhaustive matching for base case of predicates"); 
 	("--use-tmp",Arg.Unit Globals.set_tmp_files_path, 
-	 "Use a local folder located in /tmp/your_username for the prover's temporary files");  
-  ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
-  ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
-  (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
-  (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
-  *)
-  ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
-  ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
-  (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
-  ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
-  ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
-  ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
-  ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
-  ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
-  ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
-  ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
-     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
+	"Use a local folder located in /tmp/your_username for the prover's temporary files");  
+    ("--esn", Arg.Set Globals.enable_norm_simp, "enable simplifier in fast imply");
+    ("--eps", Arg.Set Globals.allow_pred_spec,"enable predicate specialization together with memoized formulas");
+    (*("--redlog-int-relax", Arg.Set Redlog.integer_relax_mode, "use redlog real q.e to prove intefer formula  *experiment*");*)
+    (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
+    *)
+    ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
+    ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+    (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
+    ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
+    ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");
+    ("--dcounters", Arg.Clear Globals.enable_counters, "disable counters");
+    ("--esi",Arg.Set Globals.enable_strong_invariant, "enable strong predicate invariant");
+    ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
+    ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
+    ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
+    ("--memo_print", Arg.Set_int Globals.memo_verbosity,
+    "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
+    ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
+    ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");
+  
+  (*for cav experiments*)
+  ("--force_one_slice", Arg.Set Globals.f_1_slice,"");
+  ("--force_no_memo", Arg.Set Globals.no_memoisation,"");
+  ("--no_incremental", Arg.Set Globals.no_incremental,"");
+  ("--no_LHS_prop_drop", Arg.Set Globals.no_LHS_prop_drop,"");
+  ("--no_RHS_prop_drop", Arg.Set Globals.no_RHS_prop_drop,"");
+  ("--force_sat_slice", Arg.Set Globals.do_sat_slice, "for no eps, use sat slicing");
+  ("--force_one_slice_proving" , Arg.Set Globals.f_2_slice,"use one slice for proving (sat, imply)");
   ] 
 
 (* arguments/flags used only by hip *)	

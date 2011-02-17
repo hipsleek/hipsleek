@@ -8,12 +8,8 @@ let usage_msg = Sys.argv.(0) ^ " [options] <source files>"
 let set_source_file arg = 
   Globals.source_files := arg :: !Globals.source_files
 
-<<<<<<< maingui.ml
-let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
-=======
 
 let process_cmd_line () = Arg.parse Scriptarguments.sleek_arguments set_source_file usage_msg
->>>>>>> 1.5
 
 (******************************************)
 (* main function                          *)

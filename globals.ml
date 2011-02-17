@@ -42,9 +42,9 @@ type mode =
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
+let nonef v = None
 let voidf e = ()
 let voidf2 e f = ()
-let nonef v = None
 let somef v = Some v
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
@@ -73,7 +73,13 @@ let no_pos =
 let flow = "flow"
 let top_flow = "__flow"
 (*let any_flow = "__Any"*)
+let n_flow = "__norm"
+let cont_top = "__Cont_top"
+let brk_top = "__Brk_top"
 let c_flow = "__c-flow"
+let raisable_class = "__Exc"
+let ret_flow = "__Ret"
+let spec_flow = "__Spec"
 let false_flow = "__false"
 let abnormal_flow = "__abnormal"
 let stub_flow = "__stub"
@@ -125,7 +131,13 @@ let pragma_list = ref ([] : string list)
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
+(* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
+ * moved here from iparser.mly *)
+let input_file_name = ref ""
+
 (* command line options *)
+
+let instantiation_variants = ref 0
 
 let omega_simpl = ref true
 
@@ -142,6 +154,8 @@ let elim_unsat = ref false
 let lemma_heuristic = ref false
 
 let elim_exists = ref true
+
+let allow_imm = ref false
 
 let print_proc = ref false
 
@@ -220,8 +234,12 @@ let disable_elim_redundant_ctr = ref false
 
 let enable_strong_invariant = ref false
 let enable_aggressive_prune = ref false
+let disable_aggressive_prune = ref false
+let prune_with_slice = ref false
 
-let exhaust_match = ref false
+let enulalias = ref false
+
+let pass_global_by_value = ref false
 
 let exhaust_match = ref false
 
@@ -231,6 +249,18 @@ let profile_threshold = 0.5
 
 let no_cache_formula = ref false
 
+let enable_incremental_proving = ref false
+
+
+  (*for cav experiments*)
+  let f_1_slice = ref false
+  let f_2_slice = ref false
+  let no_memoisation = ref false
+  let no_incremental = ref false
+  let no_LHS_prop_drop = ref false
+  let no_RHS_prop_drop = ref false
+  let do_sat_slice = ref false
+  
 let add_count (t: int ref) = 
 	t := !t+1
 
@@ -247,7 +277,7 @@ let imply_timeout = ref 10.
 let report_error (pos : loc) (msg : string) =
   print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
-  failwith "Error detected"
+  failwith "Error detected - globals.ml"
 
 let branch_point_id = ref 0
 
@@ -388,11 +418,11 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
-(* check a pid is in current es path trace or not *)
+ (* check a pid is in current es path trace or not *)
 let rec isInPathTrace (pid : control_path_id_strict option) (pt : path_trace) : (bool * int) =
 	match pid with
 	| None -> (true, 0)
-	| Some p -> 
+	| Some p ->
 		let lbl = fst p in
 		let fpt = List.map (fun ((i, s), l) -> (i, lbl, l)) pt in
 			isFormulaLabel fpt
@@ -400,29 +430,45 @@ let rec isInPathTrace (pid : control_path_id_strict option) (pt : path_trace) : 
 and isFormulaLabel fpt : (bool * int) =
 	match fpt with
 	| [] -> (false, 0)
-	| head::rest -> 
+	| head::rest ->
 		match head with
-		| (i, l, p) -> 
+		| (i, l, p) ->
 			if i = l then (true, p)
-			else isFormulaLabel rest	
- 
+			else isFormulaLabel rest
+
 let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * ('a list)) option) 
+  (fn : 'a -> (string * ('a list)) option)
   (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with
       | None -> [t]
-      | Some (op2, xs) -> 
-          if (op=op2) then 
+      | Some (op2, xs) ->
+          if (op=op2) then
             List.concat (List.map helper xs)
           else [t]
   in (helper t)
 
-let bin_to_list (fn : 'a -> (string * ('a list)) option) 
+let bin_to_list (fn : 'a -> (string * ('a list)) option)
   (t:'a) : string * ('a list) =
   match (fn t) with
     | None -> "", [t]
     | Some (op, _) -> op,(bin_op_to_list op fn t)
+
+(*type of process used for communicating with the prover*)
+type prover_process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+
+(*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
+class type ['a] incremMethodsType = object
+  method start_p: unit -> prover_process
+  method stop_p:  prover_process -> unit
+  method push: prover_process -> unit
+  method pop: prover_process -> unit
+  method popto: prover_process -> int -> unit
+  method imply: prover_process -> 'a -> 'a -> string -> bool
+  (* method add_to_context: 'a -> unit *)
+end
+
+
