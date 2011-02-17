@@ -43,10 +43,6 @@ and ctx_type =
    returns a list of tuples: (rest, matching node, flag, phase, ctx)
    The flag associated with each node lets us know if the match is at the root pointer, materialized arg, arg.
 *)
-(* 
-   returns a list of tuples: (rest, matching node, flag, phase, ctx)
-   The flag associated with each node lets us know if the match is at the root pointer, materialized arg, arg.
-*)
 
 (*  (resth1, anode, r_flag, phase, ctx) *)   
 let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos :  match_res list =

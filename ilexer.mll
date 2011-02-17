@@ -74,6 +74,7 @@
 	 ("on", ON);
 	 ("or", ORWORD);
      ("perm", PERM);
+     ("pragma", PRAGMA);
 	 ("dprint", PRINT);
 	 ("ref", REF);
 	 ("requires", REQUIRES);

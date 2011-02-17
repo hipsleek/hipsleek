@@ -50,7 +50,7 @@ and view_decl = { view_name : ident;
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
 				  view_prune_invariants : (formula_label list * (P.spec_var Util.baga * P.b_formula list)) list ;
-          view_raw_base_case: Cformula.formula option;}
+                  view_raw_base_case: Cformula.formula option;}
   
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
@@ -58,10 +58,10 @@ and proc_decl = { proc_name : ident;
 				  proc_static_specs : Cformula.struc_formula;
 				  proc_static_specs_with_pre : Cformula.struc_formula;
 				  proc_dynamic_specs : Cformula.struc_formula;
-				  (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
+				 (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
 				  proc_by_name_params : P.spec_var list;
 				  proc_body : exp option;
-          proc_file : string;
+                  proc_file : string;
 				  proc_loc : loc }
 
 (*TODO: does lemma need struc formulas?*)

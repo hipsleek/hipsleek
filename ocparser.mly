@@ -3,7 +3,8 @@
   open Cpure
 
   module Err = Error
-
+  let subst_lst = ref ([]:(string*string*typ)list)
+  
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();

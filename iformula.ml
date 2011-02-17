@@ -439,7 +439,37 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 			let fv_co = struc_free_vars b.formula_var_continuation with_inst in
 			Util.remove_dups (fv_ex@fv_ec@fv_co)
 	in Util.remove_dups (List.concat (List.map helper f0))
- 
+
+(******************************************************************************************
+* Aug 2010
+* Collect all free vars.
+* Use in eliminating intermediate variables and reviving original var name
+*******************************************************************************************)
+
+(*returns all variables in the f0 together with the late and early instantiation variables*)
+and struc_free_vars_with_insts (f0:struc_formula):(ident*primed) list= 
+	let helper f = match f with
+		| EBase b ->
+			   let fvb = all_fv_with_qvar b.formula_ext_base in
+			   let fvc = struc_free_vars_with_insts b.formula_ext_continuation in
+					Util.remove_dups (fvb@fvc)
+		| ECase b ->
+				let fvc = List.fold_left (fun a (c1,c2)-> 
+				a@(struc_free_vars_with_insts c2)@(Ipure.fv c1)) [] b.formula_case_branches in
+				Util.remove_dups fvc		
+		| EAssume (b,_)-> all_fv_with_qvar b in
+	           Util.remove_dups (List.concat (List.map helper f0))
+
+(* returns all free variables along with quantifier variable *)
+and all_fv_with_qvar (f:formula):(ident*primed) list = match f with
+	| Base b-> Util.remove_dups 
+			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))
+							b.formula_base_branches )
+	| Exists b-> 
+		List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure))
+							b.formula_exists_branches
+	| Or b-> Util.remove_dups ((all_fv_with_qvar b.formula_or_f1)@(all_fv_with_qvar b.formula_or_f2))
+
 and struc_split_fv_debug f0 wi =
   Util.ho_debug_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
