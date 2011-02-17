@@ -1208,7 +1208,7 @@ let pr_view_decl v =
       let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
       let b = string_of_spec_var_list ba in
       let d = String.concat ";" (List.map string_of_b_formula c2) in
-      fmt_string ("{"^s^"} -> "^b^"=["^d^"]")) c) v.view_prune_invariants;
+      fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) v.view_prune_invariants;
   fmt_close_box ();
   pr_mem:=true
 
