@@ -567,7 +567,7 @@ and mona_of_b_formula b f vs =
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
       | CP.Neq (a1, a2, _) ->
-	        if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) then
+	        if (is_firstorder_mem f a1 vs)(* && (is_firstorder_mem f a2 vs) *) then
 	          begin
 	            if CP.is_null a2 then
 	              "(" ^ (mona_of_exp a1 f) ^ " > 0)"
@@ -931,10 +931,10 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   (* try 02.04.09 *)
   (* ante *)
   
+  let ante = CP.arith_simplify ante in
+  let conseq = CP.arith_simplify conseq in
   let simp_ante = (break_presburger ante true) in
   let simp_conseq = (break_presburger conseq false) in
-  let simp_ante = CP.arith_simplify simp_ante in
-  let simp_conseq = CP.arith_simplify simp_conseq in
   let ante_fv = CP.fv simp_ante in
   let conseq_fv = CP.fv simp_conseq in
   let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
@@ -956,7 +956,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  (* let f = CP.arith_simplify f in *)
+  let f = CP.arith_simplify f in 
   let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with
