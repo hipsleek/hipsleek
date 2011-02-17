@@ -799,27 +799,37 @@ let check fd timeout pid : bool =
   try begin
     let tup = Util.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
     if tup (*Unix.select [Unix.descr_of_in_channel fd] [] [] timeout)*) = ([],[],[]) then begin
-        print_endline "\nMona timeout reached."; flush stdout; false
+      print_endline "\nMona timeout reached."; flush stdout; false
     end else 
-    let r = input_line fd in
-    let err= "Error in file " in 
-    match r with
-    | "Formula is valid" ->
-      begin
-            if !log_all_flag==true then
-            output_string log_file (" [mona.ml]: --> SUCCESS\n");
-            true;
-          end
-    | _ -> 
-      let l = String.length err in
-      if ((String.length r) >=l) && String.compare err (String.sub r 0 l)=0 then
-        (print_string "MONA translation failure!";
-        Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)})
-      else
-        false
-    end
+      let r = input_line fd in
+      let err= "Error in file " in 
+      let err2= "BDD too large" in 
+      let ans1= "A counter-example of lea" in
+      let ans2= "Formula is unsatisfiable" in
+      match r with
+        | "Formula is valid" ->
+              begin
+                if !log_all_flag==true then
+                  output_string log_file (" [mona.ml]: --> SUCCESS\n");
+                true;
+              end
+        | _ -> 
+              let l = String.length err in
+              if ((String.length r) >=l) && String.compare err (String.sub r 0 l)=0 then
+                (print_string "MONA translation failure!";
+                Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)})
+              else
+                (* print_string ("***:"^r^"\n"); *)
+                let mona_file_name = "test" ^ (string_of_int !mona_file_number) ^ ".mona" in
+                let l = String.length ans1 in
+                if ((String.length r) >=l) && String.compare ans1 (String.sub r 0 l)=0 then false
+                else if ((String.length r) >=l) && String.compare ans2 (String.sub r 0 l)=0 then false
+                else
+                  (print_string ("MONA failure : maybe BDD too large!"^mona_file_name^r^"\n");
+                  false)
+  end
   with
-	End_of_file -> false
+	  End_of_file -> false
 
 let check_debug fd timeout pid : bool =
   Util.ho_debug_1 "check" string_of_float string_of_bool 
@@ -888,7 +898,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   | _ -> ()
   end;
 (*  print_endline "Mona died."; flush stdout;*)
-  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
+  (* Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona"); *)
   begin match res with
   | true ->
 	  begin

@@ -71,14 +71,16 @@ node insert(node t, int x)
 */
 //* cannot be verified without case analysis
   requires t::avl<tm, tn, b>
-  ensures res::avl<tm+1, resn, resb> & t!=null & tm>0 & tn>0 & (tn=resn | resn=tn+1 & resb!=1)
+  ensures res::avl<tm+1, resn, resb> & t!=null & tm>0 & tn>0 
+  & (tn=resn | resn=tn+1 & resb!=1)
 		or res::avl<1,1,1> & tn=0 & tm=0 & t=null;
 {
 	node tmp = null;
 	if (t==null) 
+        
 		return new node(x, 1, tmp, tmp);
-	else if (x < t.ele) {		
-
+	else { 
+        if (x < t.ele) {		
 		t.left = insert(t.left, x);
 
 		if (height(t.left) - height(t.right) == 2) {
@@ -95,6 +97,7 @@ node insert(node t, int x)
 		}
 	}
 	else {
+        assume false;
 		t.right = insert(t.right, x);
 		if (height(t.right) - height(t.left) == 2) {
 			if (height(t.right.right) > height(t.right.left)) {
@@ -105,12 +108,13 @@ node insert(node t, int x)
 			}
 		}
 	}
-
+    
 	t.height = get_max(height(t.left), height(t.right)) + 1;
 
 	// assert t'::avl<ntm,ntn,ntb> & (ntn=tn | ntn=tn+1 & ntb>0);
 
 	return t;
+    }
 }
 
 /*
