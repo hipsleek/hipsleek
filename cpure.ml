@@ -2751,8 +2751,26 @@ and move_lr (lhs :  exp option) (lsm :  exp option)
       | (None, Some e) -> e
       | (Some e1, Some e2) ->  Add (e1, e2, l)
   in (nl, nr)
-	     
-	     
+
+and move_lr3 (lhs :  exp option) (lsm :  exp option)
+      (rhs :  exp option) (rsm :  exp option) (qhs :  exp option) (qsm :  exp option) loc :
+      ( exp *  exp * exp) =
+  let rec add e ls = match e,ls with
+    | None,[] -> IConst (0, loc)
+    | Some e,[] -> e
+    | None,l::ls ->  add (Some l) ls 
+    | Some e,l::ls ->  add (Some (Add (e,l,loc))) ls in
+  let rl,ql = match lsm with
+    | None -> [],[]
+    | Some e -> [e],[e] in
+  let ll,ql = match rsm with
+    | None -> [],ql
+    | Some e -> [e],e::ql in
+  let ll,rl = match qsm with
+    | None -> ll,rl
+    | Some e -> e::ll,e::rl in
+  (add lhs ll, add rhs rl, add qhs ql)
+
 and purge_mult (e :  exp):  exp = match e with
   |  Null _ -> e
   |  Var _ -> e
@@ -2884,6 +2902,18 @@ and b_form_simplify (b:b_formula) :b_formula =
 			let lh = purge_mult lh in
 			let rh = purge_mult rh in
 			 (lh, rh) in
+	let do_all3 e1 e2 e3 l =
+	  let t1 = simp_mult e1 in
+      let t2 = simp_mult e2 in
+      let t3 = simp_mult e3 in
+      let (lhs, lsm) = split_sums t1 in
+      let (rhs, rsm) = split_sums t2 in
+      let (qhs, qsm) = split_sums t3 in
+      let (lh, rh, qh) = move_lr3 lhs lsm rhs rsm qhs qsm l in
+			let lh = purge_mult lh in
+			let rh = purge_mult rh in
+			let qh = purge_mult qh in
+			 (lh, rh, qh) in
   match b with
          |  BConst _ -> b
          |  BVar _ -> b
@@ -2906,33 +2936,35 @@ and b_form_simplify (b:b_formula) :b_formula =
              let lh, rh = do_all e1 e2 l in
 						  Neq (lh, rh, l)
          |  EqMax (e1, e2, e3, l) ->
-						 let ne1 = simp_mult e1 in
-						 let ne2 = simp_mult e2 in
-						 let ne3 = simp_mult e3 in
-						 let ne1 = purge_mult ne1 in
-						 let ne2 = purge_mult ne2 in
-						 let ne3 = purge_mult ne3 in
-						 (*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*)
-							  let (s1, m1) = split_sums ne1 in
-								let (s2, m2) = split_sums ne2 in
-								let (s3, m3) = split_sums ne3 in
-								begin
-								match (s1, s2, s3, m1, m2, m3) with
-									| None, None, None, None, None, None ->  BConst (true, l)
-									| Some e11, Some e12, Some e13, None, None, None -> 
-										let e11 = purge_mult e11 in
-										let e12 = purge_mult e12 in
-										let e13 = purge_mult e13 in
-										 EqMax (e11, e12, e13, l)
+                let lh,rh,qh = do_all3 e1 e2 e3 l in
+                EqMax (lh,rh,qh,l)
+						 (* let ne1 = simp_mult e1 in *)
+						 (* let ne2 = simp_mult e2 in *)
+						 (* let ne3 = simp_mult e3 in *)
+						 (* let ne1 = purge_mult ne1 in *)
+						 (* let ne2 = purge_mult ne2 in *)
+						 (* let ne3 = purge_mult ne3 in *)
+						 (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
+						 (*      let (s1, m1) = split_sums ne1 in *)
+						 (*    	let (s2, m2) = split_sums ne2 in *)
+						 (*    	let (s3, m3) = split_sums ne3 in *)
+						 (*    	begin *)
+						 (*    	match (s1, s2, s3, m1, m2, m3) with *)
+						 (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
+						 (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
+						 (*    			let e11 = purge_mult e11 in *)
+						 (*    			let e12 = purge_mult e12 in *)
+						 (*    			let e13 = purge_mult e13 in *)
+						 (*    			 EqMax (e11, e12, e13, l) *)
 										 
-									| None, None, None, Some e11, Some e12, Some e13 -> 
-										let e11 = purge_mult e11 in
-										let e12 = purge_mult e12 in
-										let e13 = purge_mult e13 in
-										 EqMin (e11, e12, e13, l)
-									| _ -> 
-										  EqMax (ne1, ne2, ne3, l)
-								end
+						 (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
+						 (*    			let e11 = purge_mult e11 in *)
+						 (*    			let e12 = purge_mult e12 in *)
+						 (*    			let e13 = purge_mult e13 in *)
+						 (*    			 EqMin (e11, e12, e13, l) *)
+						 (*    		| _ ->  *)
+						 (*    			  EqMax (ne1, ne2, ne3, l) *)
+						 (*    	end *)
 							(*else 
              		 EqMax (ne1, ne2, ne3, l)*)
          |  EqMin (e1, e2, e3, l) ->
@@ -2980,7 +3012,7 @@ and b_form_simplify (b:b_formula) :b_formula =
   *)  
 
 and arith_simplify (pf : formula) :  formula =   
-  Util.no_debug_1 "arith_simplify" !print_formula !print_formula 
+  Util.ho_debug_1 "arith_simplify" !print_formula !print_formula 
       arith_simplify_x pf
 
 and arith_simplify_x (pf : formula) :  formula =   
