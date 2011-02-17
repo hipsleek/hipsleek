@@ -49,5 +49,5 @@ ghip.byte:
 # Clean up
 clean:
 	$(OCAMLBUILD) -quiet -clean 
-	rm -f sleek sleek.byte hip hip.byte gsleek ghip
+	rm -f sleek sleek.norm hip hip.norm gsleek ghip
 	rm -f allinput.*

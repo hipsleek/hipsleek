@@ -201,11 +201,13 @@ let start_prover_debug () =
 
 (* stopping Coq *)
 let stop_prover () =
-  (* print_string "stopping \n";  *) (* without this prover stops early*)
-  output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
-  ignore (Unix.close_process !coq_channels);
-  coq_running := false;
-  print_string "Coq stopped\n"; flush stdout
+  if !coq_running then begin
+    (* print_string "stopping \n";  *) (* without this prover stops early*)
+    output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
+    ignore (Unix.close_process !coq_channels);
+    coq_running := false;
+    print_string "Coq stopped\n"; flush stdout
+  end
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
