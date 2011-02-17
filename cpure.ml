@@ -2582,7 +2582,7 @@ and b_form_list f: b_formula list = match f with
   | Not _ -> []
   | Forall (_,f,_,_)
   | Exists (_,f,_,_) -> (b_form_list f)
-  
+        
 and simp_mult (e : exp) :  exp =
   let rec normalize_add m lg (x: exp):  exp =
     match x with
@@ -2735,6 +2735,9 @@ and split_sums (e :  exp) : (( exp option) * ( exp option)) =
     |  ListLength (e1, l) -> ((Some e), None)
     |  ListReverse (e1, l) -> ((Some e), None)
 
+(* 
+   lhs-lsm = rhs-rsm   ==> lhs+rsm = rhs+lsm 
+*)
 and move_lr (lhs :  exp option) (lsm :  exp option)
       (rhs :  exp option) (rsm :  exp option) l :
       ( exp *  exp) =
@@ -2752,6 +2755,10 @@ and move_lr (lhs :  exp option) (lsm :  exp option)
       | (Some e1, Some e2) ->  Add (e1, e2, l)
   in (nl, nr)
 
+(* 
+   lhs-lsm = max(rhs-rsm,qhs-qsm) 
+   ==> lhs+rsm+qsm = max(rhs+lsm+qsm,qhs+lsm+rsm) 
+*)
 and move_lr3 (lhs :  exp option) (lsm :  exp option)
       (rhs :  exp option) (rsm :  exp option) (qhs :  exp option) (qsm :  exp option) loc :
       ( exp *  exp * exp) =
@@ -2893,123 +2900,130 @@ and purge_mult (e :  exp):  exp = match e with
   |  ListReverse (e, l) -> ListReverse (purge_mult e, l)
 
 and b_form_simplify (b:b_formula) :b_formula = 
-	let do_all e1 e2 l =
-	  let t1 = simp_mult e1 in
-      let t2 = simp_mult e2 in
-      let (lhs, lsm) = split_sums t1 in
-      let (rhs, rsm) = split_sums t2 in
-      let (lh, rh) = move_lr lhs lsm rhs rsm l in
-			let lh = purge_mult lh in
-			let rh = purge_mult rh in
-			 (lh, rh) in
-	let do_all3 e1 e2 e3 l =
-	  let t1 = simp_mult e1 in
-      let t2 = simp_mult e2 in
-      let t3 = simp_mult e3 in
-      let (lhs, lsm) = split_sums t1 in
-      let (rhs, rsm) = split_sums t2 in
-      let (qhs, qsm) = split_sums t3 in
-      let (lh, rh, qh) = move_lr3 lhs lsm rhs rsm qhs qsm l in
-			let lh = purge_mult lh in
-			let rh = purge_mult rh in
-			let qh = purge_mult qh in
-			 (lh, rh, qh) in
+  let do_all e1 e2 l =
+	let t1 = simp_mult e1 in
+    let t2 = simp_mult e2 in
+    let (lhs, lsm) = split_sums t1 in
+    let (rhs, rsm) = split_sums t2 in
+    let (lh, rh) = move_lr lhs lsm rhs rsm l in
+	let lh = purge_mult lh in
+	let rh = purge_mult rh in
+	(lh, rh) in
+  let do_all3 e1 e2 e3 l =
+	let t1 = simp_mult e1 in
+    let t2 = simp_mult e2 in
+    let t3 = simp_mult e3 in
+    let (lhs, lsm) = split_sums t1 in
+    let (rhs, rsm) = split_sums t2 in
+    let (qhs, qsm) = split_sums t3 in
+    let ((lh,rh,qh),flag) =
+      match (lhs,rhs,qhs,lsm,rsm,qsm) with
+          (* -x = max(-y,-z) ==> x = min(y,z) *)
+        | None,None,None,Some lh,Some rh, Some qh -> ((lh,rh,qh),false)
+        | _,_,_,_,_,_ -> (move_lr3 lhs lsm rhs rsm qhs qsm l,true) in
+	let lh = purge_mult lh in
+	let rh = purge_mult rh in
+	let qh = purge_mult qh in
+	(lh, rh, qh,flag) in
   match b with
-         |  BConst _ -> b
-         |  BVar _ -> b
-         |  Lt (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Lt (lh, rh, l)
-         |  Lte (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-              Lte (lh, rh, l)
-         |  Gt (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Lt (rh, lh, l)
-         |  Gte (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Lte (rh, lh, l)
-         |  Eq (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Eq (lh, rh, l)
-         |  Neq (e1, e2, l) ->
-             let lh, rh = do_all e1 e2 l in
-						  Neq (lh, rh, l)
-         |  EqMax (e1, e2, e3, l) ->
-                let lh,rh,qh = do_all3 e1 e2 e3 l in
-                EqMax (lh,rh,qh,l)
-						 (* let ne1 = simp_mult e1 in *)
-						 (* let ne2 = simp_mult e2 in *)
-						 (* let ne3 = simp_mult e3 in *)
-						 (* let ne1 = purge_mult ne1 in *)
-						 (* let ne2 = purge_mult ne2 in *)
-						 (* let ne3 = purge_mult ne3 in *)
-						 (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
-						 (*      let (s1, m1) = split_sums ne1 in *)
-						 (*    	let (s2, m2) = split_sums ne2 in *)
-						 (*    	let (s3, m3) = split_sums ne3 in *)
-						 (*    	begin *)
-						 (*    	match (s1, s2, s3, m1, m2, m3) with *)
-						 (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
-						 (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
-						 (*    			let e11 = purge_mult e11 in *)
-						 (*    			let e12 = purge_mult e12 in *)
-						 (*    			let e13 = purge_mult e13 in *)
-						 (*    			 EqMax (e11, e12, e13, l) *)
-										 
-						 (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
-						 (*    			let e11 = purge_mult e11 in *)
-						 (*    			let e12 = purge_mult e12 in *)
-						 (*    			let e13 = purge_mult e13 in *)
-						 (*    			 EqMin (e11, e12, e13, l) *)
-						 (*    		| _ ->  *)
-						 (*    			  EqMax (ne1, ne2, ne3, l) *)
-						 (*    	end *)
-							(*else 
-             		 EqMax (ne1, ne2, ne3, l)*)
-         |  EqMin (e1, e2, e3, l) ->
-						 let ne1 = simp_mult e1 in
-						 let ne2 = simp_mult e2 in
-						 let ne3 = simp_mult e3 in
-						 let ne1 = purge_mult ne1 in
-						 let ne2 = purge_mult ne2 in
-						 let ne3 = purge_mult ne3 in
-						 (*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*)
-							  let (s1, m1) = split_sums ne1 in
-								let (s2, m2) = split_sums ne2 in
-								let (s3, m3) = split_sums ne3 in
-								begin
-								match (s1, s2, s3, m1, m2, m3) with
-									| None, None, None, None, None, None ->  BConst (true, l)
-									| Some e11, Some e12, Some e13, None, None, None -> 
-											let e11 = purge_mult e11 in
-											let e12 = purge_mult e12 in
-											let e13 = purge_mult e13 in
-											 EqMin (e11, e12, e13, l)
-									| None, None, None, Some e11, Some e12, Some e13 -> 
-											let e11 = purge_mult e11 in
-											let e12 = purge_mult e12 in
-											let e13 = purge_mult e13 in
-											 EqMax (e11, e12, e13, l)
-									| _ ->  EqMin (ne1, ne2, ne3, l)
-								end
-							(*else
-             		 EqMin (ne1, ne2, ne3, l)*)
-         |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
-         |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
-         |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
-         |  BagSub (e1, e2, l) ->
-              BagSub (simp_mult e1, simp_mult e2, l)
-         |  BagMin _ -> b
-         |  BagMax _ -> b 
-  
-    (* a+a    --> 2*a
-     1+3    --> 4
-     1+x>-2 --> 3+x>0
-  *)  
+    |  BConst _ -> b
+    |  BVar _ -> b
+    |  Lt (e1, e2, l) ->
+           let lh, rh = do_all e1 e2 l in
+		   Lt (lh, rh, l)
+    |  Lte (e1, e2, l) ->
+           let lh, rh = do_all e1 e2 l in
+           Lte (lh, rh, l)
+    |  Gt (e1, e2, l) ->
+           let lh, rh = do_all e1 e2 l in
+		   Lt (rh, lh, l)
+    |  Gte (e1, e2, l) ->
+           let lh, rh = do_all e1 e2 l in
+		   Lte (rh, lh, l)
+    |  Eq (e1, e2, l) ->
+           let lh, rh = do_all e1 e2 l in
+		   Eq (lh, rh, l)
+    |  Neq (e1, e2, l) ->
+           let lh, rh = do_all e1 e2 l in
+		   Neq (lh, rh, l)
+    |  EqMax (e1, e2, e3, l) ->
+           let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
+           if flag then EqMax (lh,rh,qh,l)
+           else EqMin (lh,rh,qh,l)
+			   (* let ne1 = simp_mult e1 in *)
+			   (* let ne2 = simp_mult e2 in *)
+			   (* let ne3 = simp_mult e3 in *)
+			   (* let ne1 = purge_mult ne1 in *)
+			   (* let ne2 = purge_mult ne2 in *)
+			   (* let ne3 = purge_mult ne3 in *)
+			   (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
+			   (*      let (s1, m1) = split_sums ne1 in *)
+			   (*    	let (s2, m2) = split_sums ne2 in *)
+			   (*    	let (s3, m3) = split_sums ne3 in *)
+			   (*    	begin *)
+			   (*    	match (s1, s2, s3, m1, m2, m3) with *)
+			   (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
+			   (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
+			   (*    			let e11 = purge_mult e11 in *)
+			   (*    			let e12 = purge_mult e12 in *)
+			   (*    			let e13 = purge_mult e13 in *)
+			   (*    			 EqMax (e11, e12, e13, l) *)
+			   (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
+			   (*    			let e11 = purge_mult e11 in *)
+			   (*    			let e12 = purge_mult e12 in *)
+			   (*    			let e13 = purge_mult e13 in *)
+			   (*    			 EqMin (e11, e12, e13, l) *)
+			   (*    		| _ ->  *)
+			   (*    			  EqMax (ne1, ne2, ne3, l) *)
+			   (*    	end *)
+			   (*else 
+             	 EqMax (ne1, ne2, ne3, l)*)
+    |  EqMin (e1, e2, e3, l) ->
+           let lh,rh,qh,flag = do_all3 e1 e2 e3 l in
+           if flag then EqMin (lh,rh,qh,l)
+           else EqMax (lh,rh,qh,l)
+			   (* let ne1 = simp_mult e1 in *)
+			   (* let ne2 = simp_mult e2 in *)
+			   (* let ne3 = simp_mult e3 in *)
+			   (* let ne1 = purge_mult ne1 in *)
+			   (* let ne2 = purge_mult ne2 in *)
+			   (* let ne3 = purge_mult ne3 in *)
+			   (* (\*if (!Tpdispatcher.tp == Tpdispatcher.Mona) then*\) *)
+			   (*      let (s1, m1) = split_sums ne1 in *)
+			   (*    	let (s2, m2) = split_sums ne2 in *)
+			   (*    	let (s3, m3) = split_sums ne3 in *)
+			   (*    	begin *)
+			   (*    	match (s1, s2, s3, m1, m2, m3) with *)
+			   (*    		| None, None, None, None, None, None ->  BConst (true, l) *)
+			   (*    		| Some e11, Some e12, Some e13, None, None, None ->  *)
+			   (*    				let e11 = purge_mult e11 in *)
+			   (*    				let e12 = purge_mult e12 in *)
+			   (*    				let e13 = purge_mult e13 in *)
+			   (*    				 EqMin (e11, e12, e13, l) *)
+			   (*    		| None, None, None, Some e11, Some e12, Some e13 ->  *)
+			   (*    				let e11 = purge_mult e11 in *)
+			   (*    				let e12 = purge_mult e12 in *)
+			   (*    				let e13 = purge_mult e13 in *)
+			   (*    				 EqMax (e11, e12, e13, l) *)
+			   (*    		| _ ->  EqMin (ne1, ne2, ne3, l) *)
+			   (*    	end *)
+			   (*else
+             	 EqMin (ne1, ne2, ne3, l)*)
+    |  BagIn (v, e1, l) ->  BagIn (v, purge_mult (simp_mult e1), l)
+    |  BagNotIn (v, e1, l) ->  BagNotIn (v, purge_mult (simp_mult e1), l)
+    |  ListIn (e1, e2, l) -> ListIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+    |  ListNotIn (e1, e2, l) -> ListNotIn (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+    |  ListAllN (e1, e2, l) -> ListAllN (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+    |  ListPerm (e1, e2, l) -> ListPerm (purge_mult (simp_mult e1), purge_mult (simp_mult e2), l)
+    |  BagSub (e1, e2, l) ->
+           BagSub (simp_mult e1, simp_mult e2, l)
+    |  BagMin _ -> b
+    |  BagMax _ -> b 
+           
+(* a+a    --> 2*a
+   1+3    --> 4
+   1+x>-2 --> 3+x>0
+*)  
 
 and arith_simplify (pf : formula) :  formula =   
   Util.no_debug_1 "arith_simplify" !print_formula !print_formula 
@@ -3017,12 +3031,12 @@ and arith_simplify (pf : formula) :  formula =
 
 and arith_simplify_x (pf : formula) :  formula =   
   let rec helper pf = match pf with
-  |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
-  |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
-  |  Or (f1, f2, lbl, loc) -> Or (helper f1, helper f2, lbl, loc)
-  |  Not (f1, lbl, loc) ->  Not (helper f1, lbl, loc)
-  |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
-  |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
+    |  BForm (b,lbl) -> BForm (b_form_simplify b,lbl)
+    |  And (f1, f2, loc) -> And (helper f1, helper f2, loc)
+    |  Or (f1, f2, lbl, loc) -> Or (helper f1, helper f2, lbl, loc)
+    |  Not (f1, lbl, loc) ->  Not (helper f1, lbl, loc)
+    |  Forall (v, f1, lbl, loc) ->  Forall (v, helper f1, lbl, loc)
+    |  Exists (v, f1, lbl, loc) ->  Exists (v, helper f1, lbl, loc)
   in helper pf
 	  
 let rec get_pure_label n =  match n with
