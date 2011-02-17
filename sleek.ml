@@ -57,7 +57,7 @@ let parse_file (parse) (source_file : string) =
 							match c with
 								 | DataDef ddef -> process_data_def ddef
 								 | PredDef pdef -> process_pred_def pdef
-                                 | RelDef rdef -> () (* An Hoa TODO implement *)
+                 | RelDef rdef -> process_rel_def rdef
 								 | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
 								 | CaptureResidue lvar -> process_capture_residue lvar
 								 | LemmaDef ldef -> process_lemma ldef
@@ -106,7 +106,7 @@ let main () =
                   (match cmd with
                      | DataDef ddef -> process_data_def ddef
                      | PredDef pdef -> process_pred_def pdef
-                     | RelDef rdef -> () (* An Hoa TODO implement *)
+                     | RelDef rdef -> process_rel_def rdef
                      | EntailCheck (iante, iconseq) -> process_entail_check iante iconseq
                      | CaptureResidue lvar -> process_capture_residue lvar
                      | LemmaDef ldef -> process_lemma ldef

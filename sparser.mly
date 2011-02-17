@@ -394,17 +394,27 @@ view_body
 /********** Relations **********/
 
 rel_decl
-  : rel_header EQEQ rel_body opt_inv DOT{
-	{ $1 with rel_formula = (fst $3); rel_invariant = $4;}
+  : rel_header EQEQ rel_body /* opt_inv */ DOT{
+	{ $1 with rel_formula = $3 (* (fst $3) *); (* rel_invariant = $4; *)}
   }
   | rel_header EQ error {
 	  report_error (get_pos 2) ("use == to define a relation")
 	}  
 ;
 
+typed_id_list_opt
+	: { [] }
+	| typ IDENTIFIER { 
+		[($1,$2)]
+		}
+	| typ IDENTIFIER COMMA typed_id_list_opt { 
+		($1,$2) :: $4 
+		}
+;
+
 rel_header
-  : REL IDENTIFIER OPAREN opt_ann_cid_list CPAREN {
-    let cids, anns = List.split $4 in
+  : REL IDENTIFIER OPAREN typed_id_list_opt /* opt_ann_cid_list */ CPAREN {
+    (* let cids, anns = List.split $4 in
     let cids, br_labels = List.split cids in
 	  if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
@@ -412,20 +422,18 @@ rel_header
 		report_error (get_pos 1) 
 		  ("variables in view header are not allowed to be primed")
 	  else
-		(* let modes = get_modes anns in *)
+		let modes = get_modes anns in *)
 		  { rel_name = $2;
-			rel_vars = List.map fst cids;
-            rel_labels = br_labels;
-			rel_typed_vars = [];
-			rel_formula = F.mkETrue top_flow (get_pos 1);
-			rel_invariant = (P.mkTrue (get_pos 1), []);
+			rel_typed_vars = $4;
+			rel_formula = P.mkTrue (get_pos 1); (* F.mkETrue top_flow (get_pos 1); *)			
 			}
   }
 ;
 
 rel_body
-: formulas { 
-    ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) }
+: /* formulas { 
+    ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) } */
+	pure_constr { $1 } /* Only allow pure constraint in relation definition. */
 ;
 /* END OF An Hoa */
 
@@ -691,7 +699,7 @@ simple_pure_constr
   | OPAREN disjunctive_pure_constr CPAREN {
 	  $2
 	}
-  | EXISTS OPAREN opt_cid_list COLON pure_constr CPAREN {
+  | EXISTS OPAREN opt_cid_list COLON pure_constr CPAREN {		
 	  let qf f v = P.mkExists [v] f None (get_pos 1) in
 	  let res = List.fold_left qf $5 $3 in
 		res

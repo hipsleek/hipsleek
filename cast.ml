@@ -20,6 +20,7 @@ type typed_ident = (P.typ * ident)
 and prog_decl = { 
           mutable prog_data_decls : data_decl list;
 				  mutable prog_view_decls : view_decl list;
+					mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
 				  prog_proc_decls : proc_decl list;
 				  mutable prog_left_coercions : coercion_decl list;
 				  mutable prog_right_coercions : coercion_decl list }
@@ -50,6 +51,26 @@ and view_decl = { view_name : ident;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
 				  view_prune_invariants : (formula_label list * P.b_formula list) list ;
           view_raw_base_case: Cformula.formula option;}
+
+(* An Hoa : relation *)					
+and rel_decl = { rel_name : ident; 
+				  rel_vars : P.spec_var list;
+					rel_formula : P.formula;
+				  (* rel_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of rel_vars*)
+				  rel_labels : branch_label list;
+				  rel_modes : mode list;
+				  mutable rel_partially_bound_vars : bool list;
+				  mutable rel_materialized_vars : P.spec_var list; (* rel vars that can point to objects *)
+				  rel_formula : F.struc_formula;
+				  rel_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+				  mutable rel_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+				  mutable rel_addr_vars : P.spec_var list;
+				  rel_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+				  rel_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+				  rel_prune_branches: formula_label list;
+				  rel_prune_conditions: (P.b_formula * (formula_label list)) list;
+				  rel_prune_invariants : (formula_label list * P.b_formula list) list ;
+          rel_raw_base_case: Cformula.formula option; *)}
   
 and proc_decl = { proc_name : ident;
 				  proc_args : typed_ident list;
@@ -514,7 +535,7 @@ and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
   | _ -> false
 
-let name_of_type (t : P.typ) = match t with
+let rec name_of_type (t : P.typ) = match t with
   | P.Prim Int -> "int"
   | P.Prim Bool -> "bool"
   | P.Prim Void -> "void"
@@ -522,6 +543,7 @@ let name_of_type (t : P.typ) = match t with
   | P.Prim Bag -> "bag"
   | P.Prim List -> "list"
   | P.OType c -> c
+	| P.Array et -> (name_of_type et) ^ "[]" (* An hoa *) 
 
 let mingle_name (m : ident) (targs : P.typ list) = 
   let param_tnames = String.concat "~" (List.map name_of_type targs) in
@@ -845,10 +867,10 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 			| Not_found -> failwith ("find_classes: " ^ c1 ^ " and " ^ c2 ^ " are not related!")
 
 
-and sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
+let rec sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
   | P.Prim _ -> t1 = t2
-  | P.OType c1 -> match t2 with
-	  | P.Prim _ -> false
+  | P.OType c1 -> begin match t2 with
+	  | P.Prim _ | P.Array _ -> false (* An Hoa add P.Array _ *)
 	  | P.OType c2 ->
 		  if c1 = c2 then true
 		  else if c1 = "" then true (* t1 is null in this case *)
@@ -864,6 +886,13 @@ and sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
 				  true
 			  with
 				| Not_found -> false
+			end
+	(* An Hoa *)
+	| P.Array et1 -> begin
+		match t2 with
+			| P.Array et2 -> (sub_type et1 et2)
+			| _ -> false
+		end
 
 				
 				

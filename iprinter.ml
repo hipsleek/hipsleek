@@ -140,12 +140,13 @@ let rec string_of_formula_exp = function
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
-	| _ -> "bag constraint"  
   | P.ArrayAt ((a, p), i, _)     ->  
           (* An Hoa : print the array access *)
           a ^ (match p with 
                 | Primed -> "'["
-                | Unprimed -> "[") ^ (string_of_formula_exp i) ^ "]"
+                | Unprimed -> "[") 
+          ^ (string_of_formula_exp i) ^ "]"
+ | _ -> "bag constraint"  
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
@@ -191,10 +192,10 @@ let string_of_b_formula = function
   | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
   | P.ListAllN (e1, e2, l)		-> "alln(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.ListPerm (e1, e2, l)		-> "perm(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
-  | _ -> "bag constraint"
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
           r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
+  | _ -> "bag constraint"
 ;;
 
 let concat_string_list_string strings =

@@ -21,9 +21,10 @@ let string_of_prim_type = function
 ;;
 
 (* pretty printing for types *)
-let string_of_typ = function 
+let rec string_of_typ = function 
   | P.Prim t -> string_of_prim_type t 
   | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+	| P.Array et -> string_of_typ et ^ "[]" (* An Hoa *)
 ;;
 
 (** the formatter that fmt- commands will use *)
@@ -555,6 +556,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
+		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
     
 
 (** print a b_formula  to formatter *)
@@ -589,6 +591,7 @@ let rec pr_b_formula (e:P.b_formula) =
       | P.ListNotIn (e1, e2, l)			->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
       | P.ListAllN (e1, e2, l)			->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
       | P.ListPerm (e1, e2, l)			-> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
+			| P.RelForm (r, args, l) -> fmt_string (r ^ "("); let _ = List.map pr_formula_exp args in fmt_string ")" (* An Hoa *) 
 ;;
   
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2

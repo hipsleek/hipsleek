@@ -137,7 +137,9 @@ and bfv (bf : b_formula) = match bf with
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		Util.remove_dups (fv1 @ fv2)
-  | RelForm (_,args,_) -> [] (* An Hoa : TODO implement *)
+  | RelForm (_,args,_) -> (* An Hoa *)
+		let args_fv = List.concat (List.map afv args) in
+		Util.remove_dups args_fv
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -169,7 +171,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
-  | ArrayAt _ -> [] (* An Hoa : TODO implement *)
+  | ArrayAt (a, i, _) -> Util.remove_dups (a :: (afv i)) (* An Hoa *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -400,6 +402,19 @@ and build_relation relop alist10 alist20 pos =
 	  helper2 alist10 alist20
 	end
 
+ (* An Hoa *)
+and pos_of_formula (f : formula) = match f with 
+	| BForm (b,_) -> begin match b with
+		  | BConst (_,p) | BVar (_,p)
+		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
+		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
+			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
+		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
+		  | RelForm (_,_,p) -> p
+	end
+  | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
+  | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
+
 and pos_of_exp (e : exp) = match e with
   | Null pos -> pos
   | Var (_, p) -> p
@@ -422,7 +437,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | ListReverse (_, p) -> p
-  | ArrayAt (_,_,p) -> p (* An Hoa : TODO implement *)
+  | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
   
 	
 	
@@ -498,7 +513,7 @@ and b_apply_one (fr, t) bf = match bf with
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | RelForm (r, args, pos) -> 
-          (* An Hoa : apply to every arguments *)
+          (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
           RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos) 
 
 and e_apply_one (fr, t) e = match e with
@@ -530,7 +545,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
-  | ArrayAt (a,e,pos) -> ArrayAt (a, (e_apply_one (fr, t) e), pos) (* An Hoa *)
+  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one (fr, t) ind), pos) (* An Hoa *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []

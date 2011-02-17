@@ -20,6 +20,11 @@ module CP = Cpure
 
 module StringSet = Set.Make(String)
 
+(**
+ * Relation definition
+ *)
+type relation_definition = 
+	| RelDefn of (ident * CP.spec_var list * CP.formula)
 
 (**
  * Temp files used to feed input and capture output from provers
@@ -27,6 +32,18 @@ module StringSet = Set.Make(String)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 
+(**
+ * @author An Hoa
+ * Relation definitions. To be appended by process_rel_def appropriately.
+ *)
+let rel_defs = ref []
+
+(**
+ * Add a new relation definition. 
+ * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
+ *)
+let add_rel_def rdef =
+	rel_defs := !rel_defs @ [rdef]
 
 (******************
  * Helper funcs
@@ -209,7 +226,7 @@ let rec smt_of_b_formula b qvars =
       failwith ("smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.RelForm (r, args, l) ->
           (* An Hoa : TODO EDIT APPROPRIATELY *)
-          "(" ^ (smt_of_spec_var r) ^ " " ^ (String.concat " " (List.map smt_of_exp args)) ^ ")"
+          "(" ^ r ^ " " ^ (String.concat " " (List.map smt_of_exp args)) ^ ")"
 
 let rec smt_of_formula f qvars =
   match f with
@@ -228,21 +245,64 @@ let rec smt_of_formula f qvars =
       let qvars = StringSet.add varname qvars in
       "(exists (?" ^ varname ^ " Int) " ^ (smt_of_formula p qvars) ^ ")"
 
+(** An Hoa : 
+ * Find the SMT corresponding of typ
+ *)
+let rec smt_of_typ t = 
+	match t with
+		| CP.Prim pt -> begin match pt with
+			| Bool -> "Bool"
+		  | Float -> "Real"
+		  | Int -> "Int"
+		  | Void | Bag | List -> "" (* Fail! *)
+		end
+		| CP.OType _ -> "" (* Fail! *)
+		| CP.Array et -> "(Array Int " ^ smt_of_typ et ^ ")" (* Only allow array of integer values *)
+
+(* An Hoa : get the corresponding typed variable. For instance, *)
+
+let smt_typed_var_of_spec_var sv = 
+	match sv with
+		| CP.SpecVar (t, id, _) -> "(" ^ (smt_of_spec_var sv None) ^ " " ^ (smt_of_typ t) ^ ")"
+
+let extract_type sv = 
+	match sv with
+		| CP.SpecVar (t,_,_) -> t
+
+let extract_name sv = 
+	match sv with
+		| CP.SpecVar (_,n,_) -> n
+
+(**
+ * Axiomatize the relation from the definition.
+ *)				
+let smt_of_rel_def (rdef : relation_definition) =
+	match rdef with
+		| RelDefn	(rn,rv,rf) ->
+			let rel_signature = String.concat " " (List.map smt_of_typ (List.map extract_type rv)) in
+			let rel_typed_vars = String.concat " " (List.map smt_typed_var_of_spec_var rv) in
+			let rel_params = String.concat " " (List.map extract_name rv) in
+				(* Declare the relation in form of a function --> Bool *)
+				(* Axiomatize the relation using an assertion*)
+				"(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n" ^ 
+				"(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n"
+
 (**
  * output for smt-lib v2.0 format
  *)
-and to_smt_v2 ante conseq logic fvars =
+let to_smt_v2 ante conseq logic fvars =
   let rec decfuns vars = match vars with
     (* let's assume all vars are Int *)
     | [] -> ""
     | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () Int)\n" ^ (decfuns rest)
-  in ( 
-    "(set-logic " ^ (string_of_logic logic) ^ ")\n" ^ 
-    (decfuns fvars) ^
+  in 
+	let rel_def_ax = (String.concat "" (List.map smt_of_rel_def !rel_defs)) in
+	 ("(set-logic " ^ (string_of_logic logic) ^ ")\n" ^ 
+    (decfuns fvars) ^ rel_def_ax ^
     "(assert " ^ ante ^ ")\n" ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
-
+	
 (**
  * output for smt-lib v1.2 format
  *)
@@ -312,6 +372,10 @@ let run prover input =
  *)
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
+	(* An Hoa : Print the output for debugging purpose *)
+	let _ = print_string input in
+	let _ = flush stdout in
+	(* An Hoa : Debug *)
   let output = run prover input in
   let res = output = "unsat" in
   res
@@ -327,6 +391,10 @@ let imply ante conseq = smt_imply ante conseq Z3
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   let input = to_smt f None prover in
+	(* An Hoa : Print the output for debugging purpose *)
+	let _ = print_string input in
+	let _ = flush stdout in
+	(* An Hoa : Debug *)
   let output = run prover input in
   let res = output = "unsat" in
   not res

@@ -51,11 +51,11 @@ and view_decl = { view_name : ident;
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
 and rel_decl = { rel_name : ident; 
-		  rel_vars : ident list;
-		  rel_labels : branch_label list;
-          mutable rel_typed_vars : (CP.typ * ident) list;
-		  rel_invariant : (P.formula * (branch_label * P.formula) list);
-		  rel_formula : Iformula.struc_formula;
+		  (* rel_vars : ident list; *)
+		  (* rel_labels : branch_label list; *)
+			rel_typed_vars : (typ * ident) list;
+		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
+		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
 		  (* try_case_inference: bool *)}
 
 and enum_decl = { enum_name : ident;
@@ -773,6 +773,11 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) = match defs wit
 
 and look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+  | [] -> raise Not_found
+
+(* An Hoa *)
+and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
 and look_up_enum_def pos (defs : enum_decl list) (name : ident) = match defs with

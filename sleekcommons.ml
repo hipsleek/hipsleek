@@ -73,6 +73,16 @@ let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 
 let get_var (v : ident) : meta_formula = H.find var_tab v
 
+(* An Hoa : String representation of meta_formula *)
+let string_of_meta_formula (mf : meta_formula) = 
+	match mf with
+  | MetaVar i -> i
+  | MetaForm f -> Iprinter.string_of_formula f
+  | MetaFormCF cf -> Cprinter.string_of_formula cf
+  | MetaFormLCF lf -> "" (* TODO Implement *)
+  | MetaEForm sf -> Iprinter.string_of_struc_formula sf
+  | MetaCompose _ -> "" (* TODO Implement *)
+
 (*
   let get_var (v : ident) : let_body =
   H.find var_tab v
