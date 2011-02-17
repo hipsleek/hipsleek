@@ -586,9 +586,9 @@ and mona_of_b_formula b f vs =
 	              else
             if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) then
               let a1str = (mona_of_exp a1 f) in
-              let a2str = (mona_of_exp a2 f) in (" ^ a1str ^ " = " ^ a2str ^ ") "
+              let a2str = (mona_of_exp a2 f) in (" ^ a1str ^ " ~= " ^ a2str ^ ") "
             else
-              let (a1name,a2name,a3name,str,end_str) = second_order_composite2 a1 a2 f in
+              let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
               str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
 
 
