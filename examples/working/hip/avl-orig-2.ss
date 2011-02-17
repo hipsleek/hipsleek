@@ -77,8 +77,10 @@ node insert(node t, int x)
 {
 	node tmp = null;
 	if (t==null) 
-        
+      {
+        //assume false;
 		return new node(x, 1, tmp, tmp);
+      }
 	else { 
         if (x < t.ele) {		
 		t.left = insert(t.left, x);
@@ -88,16 +90,19 @@ node insert(node t, int x)
 				// once we incorpate BST property into the tree, we should be able to
 				// perform this test based on the values of the inserted element (x)
 				// and t.left.val
-
+              //assume false;
 				t = rotate_left_child(t);
 			}
 			else {
+              //assume false;
 				t = double_left_child(t);
 			}
+            //dprint;
 		}
+        //else {assume false;}
 	}
 	else {
-        assume false;
+      //assume false;
 		t.right = insert(t.right, x);
 		if (height(t.right) - height(t.left) == 2) {
 			if (height(t.right.right) > height(t.right.left)) {
