@@ -3012,7 +3012,7 @@ and b_form_simplify (b:b_formula) :b_formula =
   *)  
 
 and arith_simplify (pf : formula) :  formula =   
-  Util.ho_debug_1 "arith_simplify" !print_formula !print_formula 
+  Util.no_debug_1 "arith_simplify" !print_formula !print_formula 
       arith_simplify_x pf
 
 and arith_simplify_x (pf : formula) :  formula =   
@@ -4785,7 +4785,7 @@ module ArithNormalizer = struct
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
   let norm_formula(*_debug*) f =
-    Util.ho_debug_1 "cpure::norm_formula" string_of_formula string_of_formula
+    Util.no_debug_1 "cpure::norm_formula" string_of_formula string_of_formula
         norm_formula_0 f
 
 end (* of ArithNormalizer module's definition *)
