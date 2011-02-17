@@ -2980,7 +2980,7 @@ and b_form_simplify (b:b_formula) :b_formula =
   *)  
 
 and arith_simplify (pf : formula) :  formula =   
-  Util.ho_debug_1 "arith_simplify" !print_formula !print_formula 
+  Util.no_debug_1 "arith_simplify" !print_formula !print_formula 
       arith_simplify_x pf
 
 and arith_simplify_x (pf : formula) :  formula =   
