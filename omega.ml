@@ -22,6 +22,8 @@ let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
+let print_pure = ref (fun (c:formula)-> " printing not initialized")
+
 let init_files () =
   begin
 	infilename := "input.oc." ^ (string_of_int (Unix.getpid ()));
@@ -472,6 +474,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
     let tmp = mkOr f1 f2 None no_pos in
     tmp
 
+
 let simplify (pe : formula) : formula =
  (* print_endline "LOCLE: simplify";*)
   (*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*)
@@ -509,6 +512,10 @@ let simplify (pe : formula) : formula =
   (*let _ = print_string ("\nomega_simplify: f after"^(omega_of_formula simp_f)) in*)
     simp_f
   end
+
+let simplify (pe : formula) : formula =
+  let pf = !print_pure in
+  Util.ho_debug_1 "Omega.simplify" pf pf simplify pe
 
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)

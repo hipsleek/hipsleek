@@ -610,7 +610,7 @@ let simplify (f : CP.formula) : CP.formula =
               if (is_list_constraint f) then
                 (Coq.simplify f)
               else (Omega.simplify f)
-        | Mona -> Mona.simplify f
+        | Mona (* -> Mona.simplify f *)
         | OM ->
               if (is_bag_constraint f) then
                 (Mona.simplify f)
@@ -635,15 +635,35 @@ let simplify (f : CP.formula) : CP.formula =
       r
     with | _ -> f)
 
-let simplify_debug f =
-  Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
+(* let simplify f = *)
+(*   Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (\* (fun x -> x) *\)simplify f *)
 
 let simplify (f:CP.formula): CP.formula = 
   CP.elim_exists_with_simpl simplify f 
   (* if (CP.contains_exists f) then  *)
   (*   let f=CP.elim_exists f in  *)
   (*    simplify f else f *)
-   
+
+(* let simplify (f:CP.formula): CP.formula =  *)
+(*   (\* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *\) *)
+(*   (\*   begin *\) *)
+(*   (\*     try *\) *)
+(*   (\*       raise Omega.Timeout *\) *)
+(*   (\*      with _ -> print_string ("BACKTRACE"^(Printexc.get_backtrace())) *\) *)
+(*   (\*   end); *\) *)
+(*   let pf = Cprinter.string_of_pure_formula in *)
+(*   Util.ho_debug_1 "TP.simplify0" pf pf simplify f *)
+
+let simplify_a (s:int) (f:CP.formula): CP.formula = 
+  (* (if (2107 <= !Util.proc_ctr  && !Util.proc_ctr <= 2109) then  *)
+  (*   begin *)
+  (*     try *)
+  (*       raise Omega.Timeout *)
+  (*      with _ -> print_string ("BACKTRACE"^(Printexc.get_backtrace())) *)
+  (*   end); *)
+  let pf = Cprinter.string_of_pure_formula in
+  Util.ho_debug_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
+
 
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
@@ -976,6 +996,7 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
     tp_is_sat f sat_no do_cache
 ;;
 
+
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout begining") in *)
@@ -991,10 +1012,10 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
       | None -> (false,[],None)
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
-	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
-	if CP.isConstTrue conseq0 then (true, [],None)
+	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
+	if CP.isConstTrue conseq then (true, [],None)
 	else
-      let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
+      let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
 	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
 	  else
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout bef elim exist ante") in *)
@@ -1039,6 +1060,12 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   end;
 
 ;;
+
+let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
+	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
+  = let pf = Cprinter.string_of_pure_formula in
+  Util.ho_debug_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
+      (fun a c -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0
 (*
 let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
 	: bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)

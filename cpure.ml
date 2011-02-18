@@ -3026,7 +3026,15 @@ and b_form_simplify (b:b_formula) :b_formula =
 *)  
 
 and arith_simplify (pf : formula) :  formula =   
-  Util.no_debug_1 "arith_simplify" !print_formula !print_formula 
+  Util.ho_debug_1 "arith_simplify" !print_formula !print_formula 
+      arith_simplify_x pf
+
+and arith_simplify_lhs (pf : formula) :  formula =   
+  Util.ho_debug_1 "arith_simplify LHS" !print_formula !print_formula 
+      arith_simplify_x pf
+
+and arith_simplify_rhs  (pf : formula) :  formula =   
+  Util.ho_debug_1 "arith_simplify RHS" !print_formula !print_formula 
       arith_simplify_x pf
 
 and arith_simplify_x (pf : formula) :  formula =   
@@ -4861,7 +4869,7 @@ let elim_exists_with_simpl simpl (f0 : formula) : formula =
   let f = elim_exists f0 in
   inner_simplify simpl f
 
-let elim_exists_with_simpl_debug simpl (f0 : formula) : formula = 
+let elim_exists_with_simpl simpl (f0 : formula) : formula = 
   Util.ho_debug_1 "elim_exists_with_simpl" !print_formula !print_formula 
     (fun f0 -> elim_exists_with_simpl simpl f0) f0
 
