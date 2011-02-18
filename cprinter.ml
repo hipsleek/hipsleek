@@ -878,6 +878,9 @@ let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_
 
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
 
+let string_of_list_f (f:'a->string) (e:'a list) : string =  
+  "["^(String.concat "," (List.map f e))^"]"
+
 let printer_of_list_formula (fmt: Format.formatter) (e:list_formula) : unit = 
   poly_printer_of_pr fmt pr_list_formula e
 

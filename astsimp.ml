@@ -4746,6 +4746,10 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       if r=[] then [neq] 
       else List.map (fun c-> CP.mkAnd c neq no_pos) r in
   
+  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
+    Util.ho_debug_1 "simplify_pures " Cprinter.string_of_pure_formula (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
+        (fun f -> simplify_pures f v_l) f in
+
   let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=     
     match f1 with    
       | CP.Lt (e1,e2,l)  -> 
