@@ -4757,7 +4757,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     (*let r = TP.hull r in*)
     if r=[] then [neq] 
     else List.map (fun c-> CP.mkAnd c neq no_pos) r in
-  
+
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
     Util.no_debug_2 "simplify_pures " Cprinter.string_of_pure_formula 
         Cprinter.string_of_spec_var_list
@@ -4851,12 +4851,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _) -> [l]
-        | CP.And (f1,f2,_) -> (r f1)@(r f2)
-        | _ -> [] in 
-      List.concat (List.map r lr) in  
+          | CP.BForm (l, _) -> [l]
+          | CP.And (f1,f2,_) -> (r f1)@(r f2)
+          | _ -> [] in 
+        List.concat (List.map r lr) in  
       to_be_added @ (Util.remove_dups_f lr CP.eq_b_formula_no_aset) in      
-    
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
     let all = 
