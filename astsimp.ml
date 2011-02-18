@@ -4840,13 +4840,17 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let to_be_added = Util.intersect_fct CP.eq_b_formula_no_aset l1_n l2_n in
       let lr = match (List.length l1r),(List.length l2r) with 
         | 0,0 | _,0 | 0,_ -> CP.mkTrue no_pos        
-        | _,_ -> 
-              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
-              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
-              let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
-              if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
-              else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
-              else  CP.mkOr f1r f2r None no_pos in
+        | _,_ -> CP.mkOr 
+              (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r) 
+                  (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in
+(* Cristian's fixes which seem very slow *)
+        (* | _,_ ->  *)
+        (*       let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in *)
+        (*       let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in *)
+        (*       let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in *)
+        (*       if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r *)
+        (*       else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r *)
+        (*       else  CP.mkOr f1r f2r None no_pos in *)
       (*let _ = print_string ("before hull: "^(Cprinter.string_of_pure_formula lr)^"\n") in*)
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)

@@ -14,6 +14,7 @@ type tp_type =
   | CO (* CVC3 then Omega combination *)
   | Isabelle
   | Mona
+  | MonaH
   | OM
   | OI
   | SetMONA
@@ -253,6 +254,8 @@ let set_tp tp_str =
 	(tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "mona" then
 	(tp := Mona; prover_str := "mona"::!prover_str;)
+  else if tp_str = "monah" then
+	(tp := MonaH; prover_str := "mona"::!prover_str;)
   else if tp_str = "om" then
 	(tp := OM; prover_str := "oc"::!prover_str;
      prover_str := "mona"::!prover_str;)
@@ -492,7 +495,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         begin
           (Omega.is_sat f sat_no);
         end
-  | Mona -> Mona.is_sat f sat_no
+  | Mona | MonaH -> Mona.is_sat f sat_no
   | CO -> 
       begin
         let result1 = (Cvc3.is_sat_helper_separate_process f sat_no) in
@@ -610,7 +613,7 @@ let simplify (f : CP.formula) : CP.formula =
               if (is_list_constraint f) then
                 (Coq.simplify f)
               else (Omega.simplify f)
-        | Mona (* -> Mona.simplify f *)
+        | Mona | MonaH (* -> Mona.simplify f *)
         | OM ->
               if (is_bag_constraint f) then
                 (Mona.simplify f)
@@ -672,7 +675,8 @@ let hull (f : CP.formula) : CP.formula = match !tp with
       if (is_list_constraint f) then
 		(Coq.hull f)
 	  else (Omega.hull f)
-  | Mona  -> Mona.hull f 
+  | Mona   -> Mona.hull f  
+  | MonaH  (* -> Mona.hull f  *)
   | OM ->
 	  if (is_bag_constraint f) then
 		(Mona.hull f)
@@ -774,7 +778,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
 		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-  | Mona -> Mona.imply timeout ante conseq imp_no 
+  | Mona | MonaH -> Mona.imply timeout ante conseq imp_no 
   | CO -> 
       begin
             let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in

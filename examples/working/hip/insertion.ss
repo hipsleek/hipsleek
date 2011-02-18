@@ -28,7 +28,7 @@ node insert(node x, int v)
 		return new node(v, x);
         }
 	else {
-      assume false;
+      // assume false;
 		if (x.next != null)
 		{
                         xn = insert(x.next, v);

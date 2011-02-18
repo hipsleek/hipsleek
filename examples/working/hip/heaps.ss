@@ -242,7 +242,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 
 {
 	if (m1 == 0)
-      { assume false;
+      { //assume false;
 		if (m2 == 0)
 		{
 			d = v;
@@ -252,7 +252,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 	{
 		if (m2 == 0)
 		{
-            assume false;
+          //assume false;
 			if (v >= l.val)
 				d = v;
 			else
@@ -268,7 +268,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= l.val)
 					d = v;
 				else 
-				{   assume false;
+                  {   //assume false;
 					d = l.val;
 					ripple(l.val, v, l.nleft, l.nright, l.left, l.right);
 				}
