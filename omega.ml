@@ -515,7 +515,7 @@ let simplify (pe : formula) : formula =
 
 let simplify (pe : formula) : formula =
   let pf = !print_pure in
-  Util.ho_debug_1 "Omega.simplify" pf pf simplify pe
+  Util.no_debug_1 "Omega.simplify" pf pf simplify pe
 
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)

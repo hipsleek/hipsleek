@@ -420,8 +420,10 @@ and is_object_type (t : typ) = match t with
   | _ -> false
 
 and should_simplify (f : formula) = match f with
-  | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true
+  | Exists _ -> true
   | _ -> false
+  (* | Exists (_, Exists (_, (Exists _),_,_), _,_) -> true *)
+
     
 and is_b_form_arith (b: b_formula) :bool = match b with
   | BConst _  | BVar _ -> true
@@ -2778,6 +2780,7 @@ and move_lr3 (lhs :  exp option) (lsm :  exp option)
     | Some e -> e::ll,e::rl in
   (add lhs ll, add rhs rl, add qhs ql)
 
+(* TODO : must elim some multiply for MONA *)
 and purge_mult (e :  exp):  exp = match e with
   |  Null _ -> e
   |  Var _ -> e

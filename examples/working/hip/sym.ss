@@ -105,7 +105,7 @@ void loop(node x)
       assert tmp'::lseg<a,r>*r::node<b,null> & a=v & b=w;
       loop(tmp);
       dprint;
-      assume false;
+      //assume false;
   }
 }
 
