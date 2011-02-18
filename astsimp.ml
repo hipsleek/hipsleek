@@ -4727,6 +4727,11 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       | _ -> c) r in
     Util.remove_dups_f r CP.eq_b_formula_no_aset in
 
+  let filter_pure_conj_list_x l = 
+    Util.ho_debug_1 "filter_pure_conj_list" 
+      (fun l -> String.concat "; "(List.map (fun (c1,c2)->(string_of_bool c1) ^"--"^ (Cprinter.string_of_b_formula c2)) l))
+  (fun c-> String.concat "; "(List.map Cprinter.string_of_b_formula c)) filter_pure_conj_list l in
+    
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let rec helper acc e_v_l : CP.formula list = match e_v_l with
       | [] ->[TP.hull (CP.mkExists acc f None no_pos)]
@@ -4734,6 +4739,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
     helper [] v_l in
   
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
+      
       let l = get_pure_conj_list f in
       let l = filter_pure_conj_list l in      
       let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
@@ -4746,7 +4752,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       if r=[] then [neq] 
       else List.map (fun c-> CP.mkAnd c neq no_pos) r in
   
-  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
+  let simplify_pures_x (f:CP.formula) v_l :(CP.formula list) = 
     Util.ho_debug_1 "simplify_pures " Cprinter.string_of_pure_formula (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
         (fun f -> simplify_pures f v_l) f in
 
@@ -4826,19 +4832,22 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       let to_be_added = Util.intersect_fct CP.eq_b_formula_no_aset l1_n l2_n in
       let lr = match (List.length l1r),(List.length l2r) with 
         | 0,0 | _,0 | 0,_ -> CP.mkTrue no_pos        
-        | _,_ -> CP.mkOr 
-              (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r) 
-                  (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in
+        | _,_ -> 
+              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
+              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
+              let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
+              if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
+              else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
+              else  CP.mkOr f1r f2r None no_pos in
       (*let _ = print_string ("before hull: "^(Cprinter.string_of_pure_formula lr)^"\n") in*)
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _) -> [l]
-        | CP.And (f1,f2,_) -> (r f1)@(r f2)
-        | _ -> [] in 
-      List.concat (List.map r lr) in  
+          | CP.BForm (l, _) -> [l]
+          | CP.And (f1,f2,_) -> (r f1)@(r f2)
+          | _ -> [] in 
+        List.concat (List.map r lr) in  
       to_be_added @ (Util.remove_dups_f lr CP.eq_b_formula_no_aset) in      
-    
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
     let all = 
