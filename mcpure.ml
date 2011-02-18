@@ -720,7 +720,7 @@ and memo_pure_push_exists_eq_x (qv:spec_var list) (f0:memo_pure) pos : (memo_pur
    res
   
 and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
- Util.ho_debug_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
+ Util.no_debug_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
  (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq_x qv f0 pos) qv f0
   
 (*pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
@@ -765,7 +765,7 @@ and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pu
     memo_pure_push_exists_slice (f_simp,do_split) nqv f0 pos
  
 and memo_pure_push_exists_all fs qv f0 pos =
-  Util.ho_debug_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "") 
+  Util.no_debug_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "") 
   !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 
 (*and memo_pure_push_exists_eq_debug qv f0 pos =

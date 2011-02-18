@@ -1838,7 +1838,7 @@ and elim_exists_memo_pure_x (w : CP.spec_var list) (f0 : MCP.memo_pure) pos =
   MCP.memo_pure_push_exists_all (f_simp,true) w f0 pos
 
 and elim_exists_memo_pure(* _debug *) w f0 pos = 
-  Util.ho_debug_2 "elim_exists_memo_pure" Cprinter.string_of_spec_var_list Cprinter.string_of_memo_pure_formula Cprinter.string_of_memo_pure_formula
+  Util.no_debug_2 "elim_exists_memo_pure" Cprinter.string_of_spec_var_list Cprinter.string_of_memo_pure_formula Cprinter.string_of_memo_pure_formula
       (fun w f0 -> elim_exists_memo_pure_x w f0 pos) w f0
 
 and elim_exists_pure_formula (f0:CP.formula) =
@@ -1860,7 +1860,7 @@ and elim_exists_pure_formula_debug (f0:CP.formula) =
 *)
 and elim_exists_pure_branch (i:int) (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =
   let pf = Cprinter.string_of_pure_formula in
-  Util.ho_debug_2 ("elim_exists_pure_branch"^(string_of_int i)) Cprinter.string_of_spec_var_list pf pf 
+  Util.no_debug_2 ("elim_exists_pure_branch"^(string_of_int i)) Cprinter.string_of_spec_var_list pf pf 
       (fun w f0 -> elim_exists_pure_branch_x w f0 pos) w f0
 
 and elim_exists_pure_branch_x (w : CP.spec_var list) (f0 : CP.formula) pos : CP.formula =

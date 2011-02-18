@@ -662,7 +662,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   (*      with _ -> print_string ("BACKTRACE"^(Printexc.get_backtrace())) *)
   (*   end); *)
   let pf = Cprinter.string_of_pure_formula in
-  Util.ho_debug_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
+  Util.no_debug_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
 
 
 let hull (f : CP.formula) : CP.formula = match !tp with
@@ -1064,7 +1064,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Util.ho_debug_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
+  Util.no_debug_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0
 (*
 let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
