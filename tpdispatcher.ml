@@ -610,7 +610,7 @@ let simplify (f : CP.formula) : CP.formula =
               if (is_list_constraint f) then
                 (Coq.simplify f)
               else (Omega.simplify f)
-        | Mona -> Mona.simplify f
+        | Mona (* -> Mona.simplify f *)
         | OM ->
               if (is_bag_constraint f) then
                 (Mona.simplify f)
@@ -651,7 +651,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
       if (is_list_constraint f) then
 		(Coq.hull f)
 	  else (Omega.hull f)
-  | Mona -> Mona.hull f
+  | Mona (* -> Mona.hull f *)
   | OM ->
 	  if (is_bag_constraint f) then
 		(Mona.hull f)
@@ -685,7 +685,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
 	  if (is_list_constraint f) then
 		(Coq.pairwisecheck f)
 	  else (Omega.pairwisecheck f)
-  | Mona -> Mona.pairwisecheck f
+  | Mona (* -> Mona.pairwisecheck f *)
   | OM ->
 	  if (is_bag_constraint f) then
 		(Mona.pairwisecheck f)
