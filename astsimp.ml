@@ -1078,7 +1078,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    let pf = trans_pure_formula inv stab in
    let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
    let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
-   let pf = Cpure.arith_simplify pf in
+   let pf = Cpure.arith_simplify 1 pf in
    let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
    let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
    if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) then
@@ -3024,7 +3024,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
       | Iformula.ECase b-> 	
             Cformula.ECase {
                 Cformula.formula_case_exists = [];
-                Cformula.formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.arith_simplify (trans_pure_formula c1 stab)),
+                Cformula.formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.arith_simplify 2 (trans_pure_formula c1 stab)),
                 (trans_struc_formula_hlp c2 fvars))) b.Iformula.formula_case_branches;          
                 Cformula.formula_case_pos = b.Iformula.formula_case_pos}			
       | Iformula.EBase b-> 			
@@ -3046,7 +3046,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
 			Cformula.formula_var_measures = List.map (fun (expr, bound) -> match bound with
 			  | None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
 			  | Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_var_measures;
-			Cformula.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify (trans_pure_formula f stab)) b.Iformula.formula_var_escape_clauses;
+			Cformula.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify 3 (trans_pure_formula f stab)) b.Iformula.formula_var_escape_clauses;
 			Cformula.formula_var_continuation = trans_struc_formula_hlp b.Iformula.formula_var_continuation fvars;
 			Cformula.formula_var_pos = b.Iformula.formula_var_pos
 		}
@@ -3244,10 +3244,10 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
-    let new_p = Cpure.arith_simplify new_p in
+    let new_p = Cpure.arith_simplify 5 new_p in
     let new_fl = trans_flow_formula fl pos in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
-    let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify f)) new_br in
+    let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify 6 f)) new_br in
     (new_h, new_p, type_f, new_fl, new_br) in
   match f0 with
     | IF.Or {

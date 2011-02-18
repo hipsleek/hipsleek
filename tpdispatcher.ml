@@ -610,11 +610,12 @@ let simplify (f : CP.formula) : CP.formula =
               if (is_list_constraint f) then
                 (Coq.simplify f)
               else (Omega.simplify f)
-        | Mona -> Mona.simplify f
+        | Mona (* -> Mona.simplify f *)
         | OM ->
               if (is_bag_constraint f) then
                 (Mona.simplify f)
-              else (Omega.simplify f)
+              else let f=(Omega.simplify f) 
+              in CP.arith_simplify 12 f
         | OI ->
               if (is_bag_constraint f) then
                 (Isabelle.simplify f)
@@ -1013,10 +1014,10 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
 	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
-	if CP.isConstTrue conseq0 || CP.isConstTrue conseq then (true, [],None)
+	if CP.isConstTrue conseq then (true, [],None)
 	else
       let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
-	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
+	  if (* CP.isConstFalse ante0 || *) CP.isConstFalse ante then (true,[],None)
 	  else
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout bef elim exist ante") in *)
 		let ante = elim_exists ante in

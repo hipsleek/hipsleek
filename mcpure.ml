@@ -362,7 +362,7 @@ and memo_f_neg (f: b_formula): b_formula = match f with
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoized negation: unexpected constraint type"}
       
 and memo_arith_simplify (f:memo_pure) : memo_pure = 
-  List.map (fun c-> { c with memo_group_slice = List.map arith_simplify c.memo_group_slice}) f
+  List.map (fun c-> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice}) f
     
 (******************************************************************************************************************
 														   Utilities for memoized formulas
@@ -1364,7 +1364,7 @@ let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
  
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
-  | OnePF f -> OnePF (arith_simplify f)
+  | OnePF f -> OnePF (arith_simplify 6 f)
  
 let memo_arith_simplify_debug f = 
   Util.ho_debug_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 

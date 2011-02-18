@@ -2797,7 +2797,8 @@ and purge_mult (e :  exp):  exp = match e with
                     match t2 with
                       | IConst (v2, _) -> IConst (v1 * v2, l)
                       | FConst (v2, _) -> FConst ((float_of_int v1) *. v2, l)
-                      | _ -> Mult (t1, t2, l)
+                      | _ -> if (v1=2) then Add(t2,t2,l)
+                        else Mult (t1, t2, l)
                   end
             | FConst (v1, _) ->
                   if (v1 = 0.0) then t1 
@@ -2813,7 +2814,8 @@ and purge_mult (e :  exp):  exp = match e with
                       | IConst (v2, _) -> 
                             if (v2 = 0) then t2 
                             else if (v2 = 1) then t1 
-                            else Mult (t1, t2, l)
+                            else if (v2 = 2) then Add(t2,t2,l)
+                        else Mult (t1, t2, l) 
                       | FConst (v2, _) ->
                             if (v2 = 0.0) then t2 
                             else Mult (t1, t2, l)
@@ -3025,17 +3027,10 @@ and b_form_simplify (b:b_formula) :b_formula =
    1+x>-2 --> 3+x>0
 *)  
 
-and arith_simplify (pf : formula) :  formula =   
-  Util.no_debug_1 "arith_simplify" !print_formula !print_formula 
+and arith_simplify (i:int) (pf : formula) :  formula =   
+  Util.no_debug_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
       arith_simplify_x pf
 
-and arith_simplify_lhs (pf : formula) :  formula =   
-  Util.no_debug_1 "arith_simplify LHS" !print_formula !print_formula 
-      arith_simplify_x pf
-
-and arith_simplify_rhs  (pf : formula) :  formula =   
-  Util.no_debug_1 "arith_simplify RHS" !print_formula !print_formula 
-      arith_simplify_x pf
 
 and arith_simplify_x (pf : formula) :  formula =   
   let rec helper pf = match pf with

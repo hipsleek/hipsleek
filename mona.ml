@@ -941,8 +941,8 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   (* try 02.04.09 *)
   (* ante *)
   
-  let ante = CP.arith_simplify_lhs ante in
-  let conseq = CP.arith_simplify_rhs conseq in
+  let ante = CP.arith_simplify 8 ante in
+  let conseq = CP.arith_simplify 9 conseq in
   let simp_ante = (break_presburger ante true) in
   let simp_conseq = (break_presburger conseq false) in
   let ante_fv = CP.fv simp_ante in
@@ -966,7 +966,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  let f = CP.arith_simplify f in 
+  let f = CP.arith_simplify 10 f in 
   let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with
