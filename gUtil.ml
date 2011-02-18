@@ -72,15 +72,12 @@ module SourceUtil = struct
     stop_line: int;
   }
 
-  type entailment = {
-    formula: string; (** the entailment formula *)
+  type procedure = {
+    name: string;
     pos: seg_pos;
   }
 
-  type procedure = {
-    proc_name: string; (** function's name *)
-    proc_pos: seg_pos;
-  }
+  type entailment = procedure
 
   exception Syntax_error of string * seg_pos
 
@@ -89,7 +86,7 @@ module SourceUtil = struct
   let new_line_re = Str.regexp "^"
 
   let string_of_entailment (e: entailment) =
-    Printf.sprintf "(%d,%d): %s" e.pos.start_line e.pos.stop_line e.formula
+    Printf.sprintf "(%d,%d): %s" e.pos.start_line e.pos.stop_line e.name
 
   (** return a list of all positions of "new line" char in src *)
   let get_new_line_positions (src: string) : int list =
@@ -145,7 +142,7 @@ module SourceUtil = struct
         } in
         let first = {
           pos = pos;
-          formula = f;
+          name = f;
         } in
         first::(parse (stop_char+1))
       with Not_found -> []
@@ -162,8 +159,8 @@ module SourceUtil = struct
         stop_line = proc_pos.end_pos.Lexing.pos_lnum;
       } in
       {
-        proc_name = proc.Iast.proc_name;
-        proc_pos = pos;
+        name = proc.Iast.proc_name;
+        pos = pos;
       }
     in
     let lexbuf = Lexing.from_string src in
@@ -255,7 +252,7 @@ module SleekHelper = struct
 
   let checkentail_external ?args (src: string) (e: entailment) =
     let header = clean (String.sub src 0 e.pos.start_char) in
-    let src = Printf.sprintf "%s checkentail %s. print residue." header e.formula in
+    let src = Printf.sprintf "%s checkentail %s. print residue." header e.name in
     let res = run_sleek ?args src in
     parse_checkentail_result res, res
 
@@ -292,7 +289,7 @@ module SleekHelper = struct
     try
       log ("Checking entailment: " ^ (string_of_entailment e));
       let header = clean (String.sub src 0 e.pos.start_char) in
-      let src = Printf.sprintf "%s checkentail %s." header e.formula in
+      let src = Printf.sprintf "%s checkentail %s." header e.name in
       let cmds = parse_command_list src in
       let _ = SE.clear_all () in
       let rec exec cmds = match cmds with
@@ -371,7 +368,7 @@ module HipHelper = struct
     with Not_found -> (log "FAIL!"; false)
 
   let check_proc_external ?args (src: string) (p: procedure) =
-    let res = run_hip ?args src p.proc_name in
+    let res = run_hip ?args src p.name in
     parse_result res
 
 end (* HipHelper *)

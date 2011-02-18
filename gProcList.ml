@@ -29,14 +29,14 @@ class procedure_list_model ?(src = "") () =
     method append_one_procedure (e: procedure) =
       let iter = delegate#append () in
       delegate#set ~row:iter ~column:col_id count;
-      delegate#set ~row:iter ~column:col_line e.proc_pos.start_line;
-      delegate#set ~row:iter ~column:col_name e.proc_name;
+      delegate#set ~row:iter ~column:col_line e.pos.start_line;
+      delegate#set ~row:iter ~column:col_name e.name;
       delegate#set ~row:iter ~column:col_validity "gtk-execute";
       count <- count + 1
 
-    method update_source (src: string) =
+    method update_source ?(parse_func = parse_procedure_list) (src: string) =
       try begin
-        procedure_list <- parse_procedure_list src;
+        procedure_list <- parse_func src;
         delegate#clear ();
         count <- 0;
         List.iter self#append_one_procedure procedure_list
@@ -48,7 +48,7 @@ class procedure_list_model ?(src = "") () =
       let id = delegate#get ~row ~column:col_id in
       List.nth procedure_list id
 
-    method set_entaiment_validity path (valid: bool) : unit =
+    method set_procedure_validity path (valid: bool) : unit =
       let row = delegate#get_iter path in
       let stock_id = self#stock_id_of_bool valid in
       delegate#set ~row ~column:col_validity stock_id
@@ -60,7 +60,7 @@ class procedure_list_model ?(src = "") () =
       let func path iter =
         let entail = self#get_procedure_by_path path in
         let valid = check_func entail in
-        self#set_entaiment_validity path valid;
+        self#set_procedure_validity path valid;
         false
       in
       delegate#foreach func
@@ -75,6 +75,14 @@ class procedure_list ?(model = new procedure_list_model ()) () =
   object (self)
     val view = GTree.view ()
     val mutable model = model
+    val line_col = GTree.view_column
+      ~title:"Line"
+      ~renderer:(GTree.cell_renderer_text [], ["text", col_line])
+      ()
+    val name_col = GTree.view_column
+      ~title:"Procedure"
+      ~renderer:(GTree.cell_renderer_text [], ["text", col_name])
+      ()
     val validity_col = GTree.view_column
       ~title:"Validity"
       ~renderer:(GTree.cell_renderer_pixbuf [], ["stock_id", col_validity])
@@ -82,18 +90,13 @@ class procedure_list ?(model = new procedure_list_model ()) () =
 
     initializer
       view#selection#set_mode `SINGLE;
-      let add_new_col title renderer =
-        let col = GTree.view_column ~title ~renderer () in
-        col#set_resizable true;
-        ignore (view#append_column col);
-        col
-      in
-      let text_renderer = GTree.cell_renderer_text [] in
-      ignore (add_new_col "Line" (text_renderer, ["text", col_line]));
-      ignore (add_new_col "Procedure" (text_renderer, ["text", col_name]));
+      line_col#set_resizable true;
+      name_col#set_resizable true;
       validity_col#set_resizable true;
       validity_col#set_alignment 0.5;
       validity_col#set_clickable true;
+      ignore (view#append_column line_col);
+      ignore (view#append_column name_col);
       ignore (view#append_column validity_col);
       view#set_model (Some model#coerce)
 
@@ -114,7 +117,7 @@ class procedure_list ?(model = new procedure_list_model ()) () =
     method set_selected_procedure_validity valid =
       let rows = self#selection#get_selected_rows in
       match rows with
-      | [row] ->model#set_entaiment_validity row valid
+      | [row] ->model#set_procedure_validity row valid
       | _ -> ()
 
     method check_all (func: procedure -> bool) : unit =

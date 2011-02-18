@@ -387,10 +387,11 @@ let arguments = [
   ]
 
 let _ =
-  GUtil.initialize ();
+  (*GUtil.initialize ();*)
+  ignore (GtkMain.Main.init ());
   let win = new mainwindow () in
   Arg.parse arguments win#open_file usage_msg;
   win#show ();
   GMain.Main.main ();
-  GUtil.finalize ()
+  (*GUtil.finalize ()*)
 

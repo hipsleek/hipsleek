@@ -16,9 +16,13 @@ OB_GUI_FLAGS = -no-links -libs $(GUI_LIBS) -cflags $(GUI_FLAGS) -lflags $(GUI_FL
 all: native
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
-gui: gsleek.byte ghip.byte
+gui: ghip.native gsleek.native
+byte-gui: ghip.byte gsleek.byte
 
 hip: hip.native
+sleek: sleek.native
+ghip: ghip.native
+gsleek: gsleek.native
 
 hip.byte:
 	$(OCAMLBUILD) $(OB_FLAGS) main.byte
@@ -28,11 +32,9 @@ hip.native:
 	$(OCAMLBUILD) $(OB_FLAGS) main.native
 	cp _build/main.native hip
 
-sleek: sleek.native
-
 sleek.byte:
 	$(OCAMLBUILD) $(OB_FLAGS) sleek.byte
-	cp _build/sleek.byte sleek.byte
+	cp _build/sleek.byte .
 
 sleek.native:
 	$(OCAMLBUILD) $(OB_FLAGS) sleek.native
@@ -40,11 +42,19 @@ sleek.native:
 
 gsleek.byte:
 	$(OCAMLBUILD) $(OB_GUI_FLAGS) gsleek.byte
-	cp _build/gsleek.byte gsleek
+	cp _build/gsleek.byte .
+
+gsleek.native:
+	$(OCAMLBUILD) $(OB_GUI_FLAGS) gsleek.native
+	cp _build/gsleek.native gsleek
 
 ghip.byte:
 	$(OCAMLBUILD) $(OB_GUI_FLAGS) ghip.byte
-	cp _build/ghip.byte ghip
+	cp _build/ghip.byte .
+
+ghip.native:
+	$(OCAMLBUILD) $(OB_GUI_FLAGS) ghip.native
+	cp _build/ghip.native ghip
 
 # Clean up
 clean:
