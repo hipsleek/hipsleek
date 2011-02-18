@@ -87,6 +87,7 @@ let common_arguments = [
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
+	("--imm", Arg.Set Globals.allow_imm,"enable the use of immutability annotations");
 	("--no-coercion", Arg.Clear Globals.use_coercion,
     "Turn off coercion mechanism");
 	("--no-exists-elim", Arg.Clear Globals.elim_exists,
@@ -112,6 +113,8 @@ let common_arguments = [
 	("-tp", Arg.Symbol (["cvcl"; "cvc3"; "omega"; "co"; "isabelle"; "coq"; "mona"; "z3"; "om";
 	"oi"; "set"; "cm"; "redlog"; "rm"; "prm" ], Tpdispatcher.set_tp),
 	"Choose theorem prover:\n\tcvcl: CVC Lite\n\tcvc3: CVC3\n\tomega: Omega Calculator (default)\n\tco: CVC3 then Omega\n\tisabelle: Isabelle\n\tcoq: Coq\n\tmona: Mona\n\tz3: Z3\n\tom: Omega and Mona\n\toi: Omega and Isabelle\n\tset: Use MONA in set mode.\n\tcm: CVC3 then MONA.");
+	("--omega-interval", Arg.Set_int Omega.omega_restart_interval,
+	"Restart Omega Calculator after number of proof. Default = 0, not restart");
 	("--use-field", Arg.Set Globals.use_field,
 	"Use field construct instead of bind");
 	("--use-large-bind", Arg.Set Globals.large_bind,
@@ -179,7 +182,7 @@ let common_arguments = [
     ("--eap", Arg.Set Globals.enable_aggressive_prune, "enable aggressive prunning");
     ("--dap", Arg.Clear Globals.disable_aggressive_prune, "never use aggressive prunning");
     ("--efp",Arg.Set Globals.enable_fast_imply, " enable fast imply only for pruning");
-    ("--memo_print ", Arg.Set_int Globals.memo_verbosity,
+    ("--memo_print", Arg.Set_int Globals.memo_verbosity,
     "level of detail in memo printing 0-verbose 1-brief 2-standard(default)");
     ("--increm",Arg.Set Globals.enable_incremental_proving, " enable incremental proving ");
     ("--enable_null_aliasing", Arg.Set Globals.enulalias, "enable null aliasing ");

@@ -297,40 +297,56 @@ let incremMethodsO = ref (new incremMethods)
 
 (* ##################################################################### *)
 
+let rec check_prover_existence prover_cmd_str =
+  match prover_cmd_str with
+    |[] -> ()
+    | prover::rest -> 
+        let exit_code = Sys.command ("which "^prover) in
+        if exit_code > 0 then
+          let _ = print_string ("Command for starting the prover (" ^ prover ^ ") not found\n") in
+          exit 0
+
+
 let set_tp tp_str =
   prover_arg := tp_str;  
+  let prover_str = ref [] in
   if tp_str = "omega" then
-	tp := OmegaCalc
+	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
   else if tp_str = "cvcl" then 
-	tp := CvcLite
+	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
-	tp := Cvc3
+	(tp := Cvc3; prover_str := "cvc3"::!prover_str;)
   else if tp_str = "co" then
-	tp := CO
+	(tp := CO; prover_str := "cvc3"::!prover_str; 
+     prover_str := "oc"::!prover_str;)
   else if tp_str = "isabelle" then
-	tp := Isabelle
+	(tp := Isabelle; prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "mona" then
-	tp := Mona
+	(tp := Mona; prover_str := "mona"::!prover_str;)
   else if tp_str = "om" then
-	tp := OM
+	(tp := OM; prover_str := "oc"::!prover_str;
+     prover_str := "mona"::!prover_str;)
   else if tp_str = "oi" then
-	tp := OI
+	(tp := OI; prover_str := "oc"::!prover_str;
+     prover_str := "isabelle-process"::!prover_str;)
   else if tp_str = "set" then
-	tp := SetMONA
+    (tp := SetMONA; prover_str := "mona"::!prover_str;)
   else if tp_str = "cm" then
-	tp := CM
+	(tp := CM; prover_str := "cvc3"::!prover_str;
+     prover_str := "mona"::!prover_str;)
   else if tp_str = "coq" then
-	tp := Coq
+	(tp := Coq; prover_str := "coqtop"::!prover_str;)
   else if tp_str = "z3" then 
-	tp := Z3
+	(tp := Z3; prover_str := "z3"::!prover_str;)
   else if tp_str = "redlog" then
-    tp := Redlog
+    (tp := Redlog; prover_str := "redcsl"::!prover_str;)
   else if tp_str = "rm" then
     tp := RM
   else if tp_str = "prm" then
     (Redlog.is_presburger := true; tp := RM)
   else
-	()
+	();
+  check_prover_existence !prover_str
 
 let omega_count = ref 0
 
@@ -377,32 +393,7 @@ let rec is_memo_bag_constraint (f:MCP.memo_pure): bool =
   ) f
 
   (* Method checking whether a formula contains list constraints *)
- 
-let is_list_b_formula bf = match bf with
-    | CP.BConst _ 
-    | CP.BVar _
-    | CP.Lt _ 
-    | CP.Lte _ 
-    | CP.Gt _ 
-    | CP.Gte _
-    | CP.EqMax _ 
-    | CP.EqMin _
-    | CP.BagIn _ 
-    | CP.BagNotIn _
-    | CP.BagMin _ 
-    | CP.BagMax _
-    | CP.BagSub _
-        -> Some false
-    | CP.ListIn _ 
-    | CP.ListNotIn _
-    | CP.ListAllN _ 
-    | CP.ListPerm _
-        -> Some true
-    | _ -> None
- 
-let is_list_constraint (e: CP.formula) : bool =
- 
-  let f_e e = match e with
+let rec is_list_exp e = match e with
     | CP.List _
     | CP.ListCons _
     | CP.ListHead _
@@ -411,10 +402,69 @@ let is_list_constraint (e: CP.formula) : bool =
     | CP.ListAppend _
     | CP.ListReverse _ 
         -> Some true
+	| CP.Add (e1,e2,_)
+	| CP.Subtract (e1,e2,_)
+	| CP.Mult (e1,e2,_)
+	| CP.Div (e1,e2,_)
+	| CP.Max (e1,e2,_)
+	| CP.Min (e1,e2,_)
+	| CP.BagDiff (e1,e2,_)
+		-> (match (is_list_exp e1) with
+						| Some true -> Some true
+						| _ -> is_list_exp e2)
+	| CP.Bag (el,_)
+	| CP.BagUnion (el,_)
+	| CP.BagIntersect (el,_)
+		-> (List.fold_left (fun res exp -> match res with
+											| Some true -> Some true
+											| _ -> is_list_exp exp) (Some false) el)
     | _ -> Some false
-  in
+
+(*let f_e e = Util.ho_debug_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
+	| Some ss -> string_of_bool ss
+	| _ -> "") f_e_1 e
+*)	
+
+let is_list_b_formula bf = match bf with
+    | CP.BConst _ 
+    | CP.BVar _
+	| CP.BagMin _ 
+    | CP.BagMax _
+		-> Some false    
+    | CP.Lt (e1,e2,_) 
+    | CP.Lte (e1,e2,_) 
+    | CP.Gt (e1,e2,_)
+    | CP.Gte (e1,e2,_)
+	| CP.Eq (e1,e2,_)
+	| CP.Neq (e1,e2,_)
+	| CP.BagSub (e1,e2,_)
+		-> (match (is_list_exp e1) with
+						| Some true -> Some true
+						| _ -> is_list_exp e2)
+    | CP.EqMax (e1,e2,e3,_)
+    | CP.EqMin (e1,e2,e3,_)
+		-> (match (is_list_exp e1) with
+						| Some true -> Some true
+						| _ -> (match (is_list_exp e2) with
+											| Some true -> Some true
+											| _ -> is_list_exp e3))
+    | CP.BagIn (_,e,_) 
+    | CP.BagNotIn (_,e,_)
+		-> is_list_exp e
+    | CP.ListIn _ 
+    | CP.ListNotIn _
+    | CP.ListAllN _ 
+    | CP.ListPerm _
+        -> Some true  
+	  
+let is_list_constraint (e: CP.formula) : bool =
+ 
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, is_list_b_formula, f_e) or_list
+  CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
+
+let is_list_constraint_a (e: CP.formula) : bool =
+  (*Util.ho_debug_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
+  Util.ho_debug_1 "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool is_list_constraint e
   
 let rec is_memo_list_constraint (f:MCP.memo_pure): bool = 
   List.exists (fun c-> 
@@ -509,7 +559,15 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
           end
     | Z3 -> Smtsolver.is_sat f sat_no
     | Isabelle -> Isabelle.is_sat f sat_no
-    | Coq -> Coq.is_sat f sat_no
+  | Coq -> (*Coq.is_sat f sat_no*)
+      if (is_list_constraint f) then
+        begin
+          (Coq.is_sat f sat_no);
+        end
+      else
+        begin
+          (Omega.is_sat f sat_no);
+        end
     | Mona -> Mona.is_sat f sat_no
     | CO -> 
           begin
@@ -624,7 +682,10 @@ let simplify (f : CP.formula) : CP.formula =
     try
 	  let r = match !tp with
         | Isabelle -> Isabelle.simplify f
-        | Coq -> Coq.simplify f
+        | Coq -> (* Coq.simplify f *)
+              if (is_list_constraint f) then
+                (Coq.simplify f)
+              else (Omega.simplify f)
         | Mona -> Mona.simplify f
         | OM ->
               if (is_bag_constraint f) then
@@ -650,14 +711,22 @@ let simplify (f : CP.formula) : CP.formula =
       r
     with | _ -> f)
 
-let simplify (f:CP.formula): CP.formula = if (CP.contains_exists f) then simplify f else f
-   
 let simplify_debug f =
   Util.ho_debug_1 "TP.simplify" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula simplify f
 
+let simplify (f:CP.formula): CP.formula = 
+  CP.elim_exists_with_simpl simplify f 
+  (* if (CP.contains_exists f) then  *)
+  (*   let f=CP.elim_exists f in  *)
+  (*    simplify f else f *)
+   
+
 let hull (f : CP.formula) : CP.formula = match !tp with
   | Isabelle -> Isabelle.hull f
-  | Coq -> Coq.hull f
+  | Coq -> (* Coq.hull f *)
+      if (is_list_constraint f) then
+		(Coq.hull f)
+	  else (Omega.hull f)
   | Mona -> Mona.hull f
   | OM ->
 	  if (is_bag_constraint f) then
@@ -753,7 +822,11 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       end
     | Z3 -> Smtsolver.imply ante conseq
     | Isabelle -> Isabelle.imply ante conseq imp_no
-    | Coq -> Coq.imply ante conseq
+    | Coq -> (* Coq.imply ante conseq *)
+          if (is_list_constraint ante) || (is_list_constraint conseq) then
+		    (called_prover :="coq " ; Coq.imply ante conseq)
+	      else
+		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
     | Mona -> Mona.imply timeout ante conseq imp_no 
     | CO -> 
           begin
@@ -1150,7 +1223,12 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
     | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
     | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
-let imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no 0. do_cache process
+let rec imply_debug ante0 conseq0 imp_no do_cache process =
+Util.ho_debug_2 "imply" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) 
+      (fun (r, _, _) -> string_of_bool r)
+      (fun ante0 conseq0 -> imply ante0 conseq0 imp_no do_cache process) ante0 conseq0
+
+and imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no 0. do_cache process
 ;;
 
 let memo_imply ante0 conseq0 imp_no = memo_imply_timeout ante0 conseq0 imp_no 0.
@@ -1256,7 +1334,10 @@ let print_stats () =
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
   match !tp with
-    | Coq -> Coq.start_prover ()
+  | Coq -> begin
+      Coq.start_prover ();
+	  Omega.start_omega ();
+	 end
     | Redlog | RM -> 
         begin
             Redlog.start_red ();
@@ -1270,13 +1351,17 @@ let start_prover () =
               | _ -> () in
 	        Omega.start_omega ();
 	    end
-    | Mona ->
-        Mona.start_mona()
+    (* | Mona -> *)
+    (*     Mona.start_mona() *)
     | _ -> Omega.start_omega ()
   
 let stop_prover () =
   match !tp with
-    | Coq -> Coq.stop_prover ()
+    | Coq -> (* Coq.stop_prover () *)
+          begin
+            Coq.stop_prover ();
+	        Omega.stop_omega ();
+	      end
     | Redlog | RM -> 
           begin
             Redlog.stop_red ();
@@ -1289,7 +1374,7 @@ let stop_prover () =
               |_ -> ();
 	        Omega.stop_omega ();
 	      end
-    | Mona -> Mona.stop_mona();
+    (* | Mona -> Mona.stop_mona(); *)
     | _ -> Omega.stop_omega ();;
 
 

@@ -6,7 +6,6 @@
 
 exception Bad_string
 exception Bail
-
 let rec restart f arg =
   try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
@@ -108,11 +107,10 @@ let check_sorted_tag (xs: 'a tag_list) : bool =
       | [] -> true
       | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
       | ((x,n::t)::xs1) -> 
-        if (n<no) then false
-        else if (n==no) then helper xs1 no
-        else helper xs1 n
+            if (n<no) then false
+            else if (n==no) then helper xs1 no
+            else helper xs1 n
   in helper xs 1
- 
 
 (* if check_sorted_tag fail, will need to sort the tag before grouping *)
 let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
@@ -121,14 +119,14 @@ let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
       | [] -> if (empty acc) then [] else [(List.rev acc,no)]
       | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
       | ((x,n::t)::xs1) -> 
-        if (n==no) then helper xs1 ((x,t)::acc) no
-        else 
-          let rs=helper xs [] (no+1) in
-          if (empty acc) then rs
-          else (List.rev acc,no)::rs
+            if (n==no) then helper xs1 ((x,t)::acc) no
+            else 
+              let rs=helper xs [] (no+1) in
+              if (empty acc) then rs
+              else (List.rev acc,no)::rs
   in let r=check_sorted_tag xs in
-     if r then helper xs acc 1 
-     else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+  if r then helper xs acc 1 
+  else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
 
 let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
   let rec helper xs ys =
@@ -142,7 +140,6 @@ let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c
                     else if (n1<n2) then helper xs1 ys
                     else helper xs ys1
   in helper xs ys
-
 
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
@@ -183,14 +180,12 @@ let rec remove_dups n =
     [] -> []
   | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
 
-
 let mem f x l = List.exists (f x) l
-
 let rec remove_dups_eq eq n = 
   match n with
     [] -> []
   | q::qs -> if (mem eq q qs) then remove_dups_eq eq qs else q::(remove_dups_eq eq qs)
-  
+
   (* from cpure
 and mem (sv : spec_var) (svs : spec_var list) : bool =
   List.exists (fun v -> eq_spec_var sv v) svs
@@ -207,30 +202,27 @@ and difference (svs1 : spec_var list) (svs2 : spec_var list) =
 and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 *)
-  
 
 let rec check_dups_eq f n = 
   match n with
-    [] -> false
-  | q::qs -> if (List.exists (fun c-> f q c) qs) then true  else check_dups_eq f qs 
+    | [] -> false
+    | q::qs -> if (List.exists (fun c-> f q c) qs) then true  else check_dups_eq f qs 
 
-  
 let rec remove_dups_f n f= 
   match n with
-    [] -> []
-  | q::qs -> if (List.exists (fun c-> f q c) qs) then remove_dups_f qs f else q::(remove_dups_f qs f)
-  
+    | [] -> []
+    | q::qs -> if (List.exists (fun c-> f q c) qs) then remove_dups_f qs f else q::(remove_dups_f qs f)
+
 let rec find_dups n = 
   match n with
-    [] -> []
-  | q::qs -> if (List.mem q qs) then q::(find_dups qs) else find_dups qs
+    | [] -> []
+    | q::qs -> if (List.mem q qs) then q::(find_dups qs) else find_dups qs
 
 let rec find_dups_f f n = 
   match n with
-    [] -> []
-  | q::qs -> if (List.exists (f q) qs) then q::(find_dups_f f qs) else find_dups_f f qs
+    | [] -> []
+    | q::qs -> if (List.exists (f q) qs) then q::(find_dups_f f qs) else find_dups_f f qs
 
-  
 let rec find_one_dup (eqf : 'a -> 'a -> bool) (xs : 'a list) =
   match xs with
 	| [] -> []
@@ -249,63 +241,63 @@ let overlap_eq eq l1 l2 =
   List.exists (fun x -> (mem_eq eq x l2)) l1
 
 let overlap eq l1 l2 = 
- List.exists (fun x -> (List.mem x l2)) l1
- 
+  List.exists (fun x -> (List.mem x l2)) l1
+
 let intersect l1 l2 =
   List.filter (fun x -> List.mem x l2) l1
 
 let intersect_fct f l1 l2 =
   List.filter (fun x -> List.exists (f x) l2) l1  
-  
+
 let difference l1 l2 =
   List.filter (fun x -> not (List.mem x l2)) l1
 
 let difference_f f l1 l2 =
   List.filter (fun x -> not (List.exists (f x) l2)) l1
-  
+
 let list_equal l1 l2 = 
   let l = (List.length (intersect l1 l2)) in
   ((List.length l1) =  l) && (l = (List.length l2))
-  
+
 let difference_fct f l1 l2 =
   List.filter (fun x -> not (List.exists (f x) l2)) l1
-  
+
 let spacify i = 
   let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
   function [] -> ""
-  | [x] -> x
-  | x::xs -> x ^ (s' xs)
+    | [x] -> x
+    | x::xs -> x ^ (s' xs)
 
 let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
   let rec helper xs n = match xs with
 	| e :: rest -> 
-		if f e then (n, e)
-		else helper rest (n + 1)
+		  if f e then (n, e)
+		  else helper rest (n + 1)
 	| _ -> raise Not_found
   in
-	helper xs0 0
+  helper xs0 0
 
 let rec list_last l = match l with
-	| h::[] -> h
-	| _::t -> (list_last t)
-	| [] -> failwith "Util.list_last: empty list"
-	
+  | h::[] -> h
+  | _::t -> (list_last t)
+  | [] -> failwith "Util.list_last: empty list"
+
 (** Split the list of length k>=1 into a pair consisting of
    the list of first k-1 elements and the last element. *)
 let rec firsts_last xs = match xs with
-| [] -> failwith "Util.first_lasts: empty list"
-| [x] -> ([],x)
-| x::xs1 ->
-    let (fs,l) = firsts_last xs1 in
-    (x::fs,l)
+  | [] -> failwith "Util.first_lasts: empty list"
+  | [x] -> ([],x)
+  | x::xs1 ->
+        let (fs,l) = firsts_last xs1 in
+        (x::fs,l)
 
-let rec take n l  = if n<=0 then []
-  else match l with
+let rec take n l  = if n<=0 then [] else 
+  match l with
     | h::t -> h::(take (n-1) t)
     | [] -> []
     
-let rec drop n l  = if n<=0 then l
-  else match l with
+let rec drop n l  = if n<=0 then l else
+  match l with
     | h::t -> (drop (n-1) t)
     | [] -> []
 
@@ -313,23 +305,70 @@ let force_backtrace () : string =
   try raise Exit 
   with e -> Printexc.record_backtrace true;("xxx"^Printexc.get_backtrace ())
 
-let ho_debug_1_opt (s:string) (pr_i:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e:'a) : 'z =
+(* keep track of calls being traced by ho_debug *)
+let proc_ctr = ref 0
+
+(* stack of calls being traced by ho_debug *)
+let proc_ctr_stk = ref ([]: int list)
+
+(* pop last element from call stack of ho debug *)
+let pop_proc_ctr () =
+  match !proc_ctr_stk with
+    | [] -> () (* error *)
+    | v::rest -> proc_ctr_stk := rest
+
+(* call f and pop its trace in call stack of ho debug *)
+let pop_ho (f:'a->'b) (e:'a) : 'b =
+  let r = try 
+    f e
+  with exc -> pop_proc_ctr(); raise exc
+  in pop_proc_ctr(); r
+
+(* string representation of call stack of ho_debug *)
+let string_of_ctr_stk () : string =
+  let h = !proc_ctr_stk in
+  String.concat "@" (List.map string_of_int h)
+
+(* returns @n and @n1;n2;.. for a new call being debugged *)
+let new_proc_ctr (os:string) : (string * string) = 
+  proc_ctr := !proc_ctr+1 ; 
+  proc_ctr_stk := !proc_ctr::!proc_ctr_stk;
+  let s = os^"@"^(string_of_int !proc_ctr) in
+  let h = os^"@"^string_of_ctr_stk() in
+  s,h
+
+let ho_debug_1_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
+  let s,h = new_proc_ctr s in
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
   let r = try
-    f e 
+    pop_ho f e1 
   with ex -> 
-      let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
+      let _ = print_string (h^"\n") in
+      let _ = print_string (s^" inp :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
-  let _ = print_string (s^" inp :"^(pr_i e)^"\n") in
-  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
-  (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
-  r
+    let _ = print_string (h^"\n") in
+    let _ = print_string (s^" inp :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    (* let _ = print_string (s^" backtrace:"^(force_backtrace ())^"\n") in *)
+    r
 
-let ho_debug_1 (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e:'a) : 'z =
-  ho_debug_1_opt s pr_i pr_o (fun _ -> true) f e
+let ho_debug_1_opt  (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
+  ho_debug_1_opt_aux false s pr1 pr_o test f e1
 
-    
+let no_debug_1_opt  (s:string) (pr1:'a->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'z) (e1:'a) : 'z =
+  (f e1)
+
+let ho_debug_1 (s:string) (pr1:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e1:'a) : 'z =
+  ho_debug_1_opt_aux false s pr1 pr_o (fun _ -> true) f e1
+
+let loop_debug_1 (s:string) (pr1:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e1:'a) : 'z =
+  ho_debug_1_opt_aux true s pr1 pr_o (fun _ -> true) f e1
+
+let no_debug_1 (s:string) (pr1:'a->string) (pr_o:'z->string) (f:'a -> 'z) (e1:'a) : 'z =
+  f e1
+
 let string_of_option (f:'a->string) (e:'a option) : string = 
   match e with
     | Some x -> f x
@@ -338,47 +377,77 @@ let string_of_option (f:'a->string) (e:'a option) : string =
 let ho_debug_1_option (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z option) (e:'a) : 'z option =
   ho_debug_1 s pr_i (string_of_option pr_o) f e 
 
+
 let string_of_list (f:'a->string) (ls:'a list) : string = 
   ("["^(String.concat "," (List.map f ls))^"]")
 
 let ho_debug_1_list (s:string) (pr_i:'a->string) (pr_o:'z->string) (f:'a -> 'z list) (e:'a) : 'z list =
   ho_debug_1 s pr_i (string_of_list pr_o) f e 
 
-let ho_debug_2_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+let ho_debug_2_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  let s,h = new_proc_ctr s in
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
   let r = try
-    f e1 e2 
+    pop_ho (f e1) e2 
   with ex -> 
+      let _ = print_string (h^"\n") in
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
   if not(test r) then r else
-  let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
-  let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
-  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
-  r
+    let _ = print_string (h^"\n") in
+    let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    r
+
+let ho_debug_2_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  ho_debug_2_opt_aux false s pr1 pr2 pr_o test f e1 e2
 
 let ho_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
-  ho_debug_2_opt s pr1 pr2 pr_o (fun _ -> true) f e1 e2
- 
+  ho_debug_2_opt_aux false s pr1 pr2 pr_o (fun _ -> true) f e1 e2
 
-let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+let loop_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  ho_debug_2_opt_aux true s pr1 pr2 pr_o (fun _ -> true) f e1 e2
+
+let no_debug_2 (s:string) (pr1:'a->string) (pr2:'b->string) (pr_o:'z->string) (f:'a -> 'b -> 'z) (e1:'a) (e2:'b) : 'z =
+  f e1 e2
+
+let ho_debug_3_opt_aux (loop_d:bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  let s,h = new_proc_ctr s in
+  (if loop_d then print_string (h^" inp :"^(pr1 e1)^"\n"));
   let r = try
-    f e1 e2 e3
+    pop_ho (f e1 e2) e3
   with ex -> 
+      let _ = print_string (h^"\n") in
       let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
       let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
       let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
       let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
       raise ex in
-  let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
-  let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
-  let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
-  let _ = print_string (s^" out :"^(pr_o r)^"\n") in
-  r
-  
-let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
-    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  if not(test r) then r else
+    let _ = print_string (s^"\n") in
+    let _ = print_string (s^" inp1 :"^(pr1 e1)^"\n") in
+    let _ = print_string (s^" inp2 :"^(pr2 e2)^"\n") in
+    let _ = print_string (s^" inp3 :"^(pr3 e3)^"\n") in
+    let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+    r
+
+let ho_debug_3_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (test:'z -> bool) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  ho_debug_3_opt_aux false s pr1 pr2 pr3 pr_o test f e1 e2 e3
+
+let ho_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  ho_debug_3_opt_aux false s pr1 pr2 pr3 pr_o (fun _ -> true) f e1 e2 e3
+
+let loop_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  ho_debug_3_opt_aux true s pr1 pr2 pr3 pr_o (fun _ -> true) f e1 e2 e3
+
+let no_debug_3 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string) (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+  f e1 e2 e3
+
+let ho_debug_4_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) (test:'z->bool)
+      (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
   let r = try
     f e1 e2 e3 e4
   with ex -> 
@@ -397,9 +466,18 @@ let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
     r
   else
     r
-let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
-               (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
-    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
+
+let ho_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
+    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+  ho_debug_4_opt s pr1 pr2 pr3 pr4 pr_o (fun _ -> true) f e1 e2 e3 e4
+
+let no_debug_4 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
+    (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
+   f e1 e2 e3 e4
+
+let ho_debug_5_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+      (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
+      (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
   let r = try
     f e1 e2 e3 e4 e5
   with ex -> 
@@ -421,9 +499,19 @@ let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   else 
     r
 
-let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
-               (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
-    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
+let ho_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
+  ho_debug_5_opt s pr1 pr2 pr3 pr4 pr5 pr_o (fun _ -> true) f e1 e2 e3 e4 e5
+
+let no_debug_5 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+               (pr5:'e->string) (pr_o:'z->string) (test:'z->bool)
+    (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
+   f e1 e2 e3 e4 e5
+
+let ho_debug_6_opt (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+      (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+      (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
   let r = try
     f e1 e2 e3 e4 e5 e6
   with ex -> 
@@ -447,6 +535,16 @@ let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr
   else 
     r
 
+let ho_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+      (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+      (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
+  ho_debug_6_opt s pr1 pr2 pr3 pr4 pr5 pr6 pr_o (fun _ -> true) f e1 e2 e3 e4 e5 e6
+
+let no_debug_6 (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
+      (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+      (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
+  f e1 e2 e3 e4 e5 e6
+
 let ho_debug_3a_list (s:string) (pr:'a->string) f e1 e2 e3 : 'z =
   ho_debug_3 s (string_of_list pr) (string_of_list pr) (fun _ -> "?") (fun _ -> "?") f e1 e2 e3 
 
@@ -469,37 +567,37 @@ let trim_quotes s =
 
 let unescaped s =
   let n = ref 0 in
-    for i = 0 to String.length s - 1 do
-      n := !n +
+  for i = 0 to String.length s - 1 do
+    n := !n +
         (match String.unsafe_get s i with
-           '\\' when String.unsafe_get s (i+1) != '\\' ->
-             (match String.unsafe_get s (i+1) with
-               'n' -> 0
-             | 't' -> 0
-             | _ -> 1)
-        | _ -> 1)
-    done;
-    if !n = String.length s then s else begin
-      let s' = String.create !n in
-      n := 0;
-      let skip = ref 0 in
-      (try (for i = 0 to String.length s - 1 do
-        begin
-          if (i + !skip) = String.length s then raise Bail;
-          match String.unsafe_get s (i + !skip) with
+            '\\' when String.unsafe_get s (i+1) != '\\' ->
+                (match String.unsafe_get s (i+1) with
+                    'n' -> 0
+                  | 't' -> 0
+                  | _ -> 1)
+          | _ -> 1)
+  done;
+  if !n = String.length s then s else begin
+    let s' = String.create !n in
+    n := 0;
+    let skip = ref 0 in
+    (try (for i = 0 to String.length s - 1 do
+      begin
+        if (i + !skip) = String.length s then raise Bail;
+        match String.unsafe_get s (i + !skip) with
           | '\\' when String.unsafe_get s (i+ !skip+1) != '\\' ->
-              (match String.unsafe_get s (i+ !skip+1) with
-                'n' -> String.unsafe_set s' !n '\n'; incr skip
-              | 'r' -> String.unsafe_set s' !n '\r'; incr skip
-              | 't' -> String.unsafe_set s' !n '\t'; incr skip
-              | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
-              | _ -> raise Bad_string)
+                (match String.unsafe_get s (i+ !skip+1) with
+                    'n' -> String.unsafe_set s' !n '\n'; incr skip
+                  | 'r' -> String.unsafe_set s' !n '\r'; incr skip
+                  | 't' -> String.unsafe_set s' !n '\t'; incr skip
+                  | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
+                  | _ -> raise Bad_string)
           | c -> String.unsafe_set s' !n c
-        end;
+      end;
         incr n
-      done) with Bail -> ());
-      Str.first_chars s' (String.length s - !skip)
-    end
+    done) with Bail -> ());
+    Str.first_chars s' (String.length s - !skip)
+  end
 
 let trim_str input =
   let start_idx = ref 0 in
@@ -514,7 +612,7 @@ let trim_str input =
 	  end_idx := !end_idx - 1
 	done in
   let res = String.sub input !start_idx (!end_idx - !start_idx + 1) in
-	res
+  res
 
 
 (** namespace mangling stuff *)
@@ -607,7 +705,6 @@ let amsg s = print_string s; flush_all ()
 (** print only if -v *)
 let msg s = if !verbose then amsg s
 
-  
 (** removing 'option' types *)
 let unsome : 'a option -> 'a = 
   function
@@ -630,14 +727,14 @@ let string_of_file (fname : string) =
     (close_in chn; str)
   else
     (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
-     "")
+    "")
 
 let fileLine (fn:string) : string =
   begin
     let chn = open_in fn in
-      let str = input_line chn in
-      close_in chn;
-      str
+    let str = input_line chn in
+    close_in chn;
+    str
   end
 
 (** Use timed_command utility to run an external process with a timeout. *)
@@ -667,17 +764,17 @@ let break_lines (input : string) : string =
   let i = ref 0 in
   let cnt = ref 0 in
   let l = String.length input in
-    while !i < l do
-      Buffer.add_char buf input.[!i];
+  while !i < l do
+    Buffer.add_char buf input.[!i];
       cnt := !cnt + 1;
       if !cnt > 80 && (is_breakable input.[!i]) then begin
 		Buffer.add_string buf new_line_str;
 		cnt := 0
 	  end;
       i := !i + 1
-    done;
-    Buffer.contents buf
-	  
+  done;
+  Buffer.contents buf
+
 let rec gen_list (n : int) (v : 'a) : 'a list =
   if n = 0 then
 	[]
@@ -692,17 +789,17 @@ let rec split_at (xs : 'a list) (i : int) : ('a list * 'a list) =
   if i = 0 then ([], xs)
   else
 	let a, b = split_at (List.tl xs) (i-1) in
-	  ((List.hd xs) :: a, b) 
+	((List.hd xs) :: a, b) 
 
 let rec split3 (l : ('a * 'b * 'c) list) : 'a list * 'b list * 'c list = match l with
   | (h1, h2, h3) :: rest ->
-	  let l1, l2, l3 = split3 rest in
+	    let l1, l2, l3 = split3 rest in
 		(h1::l1, h2::l2, h3::l3)
   | [] -> ([], [], [])
 
 let rec combine3 a b c = match (a, b, c) with
   | (ah::arest, bh::brest, ch::crest) ->
-	  let l = combine3 arest brest crest in
+	    let l = combine3 arest brest crest in
 		(ah, bh, ch)::l
   | ([], [], []) -> []
   | _ -> failwith ("combine3: combining lists with different lengths")
@@ -710,7 +807,7 @@ let rec combine3 a b c = match (a, b, c) with
 let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list = 
   match (a0, bs, cs) with
 	| (a :: r1, b :: r2, c :: r3) ->
-		let r = map3 f r1 r2 r3 in
+		  let r = map3 f r1 r2 r3 in
 		  (f a b c) :: r
 	| [], [], [] -> []
 	| _ -> failwith ("map3: mapping lists with different lengths.")
@@ -718,7 +815,7 @@ let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c l
 let rec map4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a0 : 'a list) (bs : 'b list) (cs : 'c list) (ds : 'd list) : 'e list = 
   match (a0, bs, cs, ds) with
 	| (a :: r1, b :: r2, c :: r3, d:: r4) ->
-		let r = map4 f r1 r2 r3 r4 in
+		  let r = map4 f r1 r2 r3 r4 in
 		  (f a b c d) :: r
 	| [], [], [], [] -> []
 	| _ -> failwith ("map4: mapping lists with different lengths.")
@@ -734,82 +831,84 @@ let copy_keys (keys : 'a list) (fr_tab : ('a, 'b) Hashtbl.t) (to_tab : ('a, 'b) 
   let cp_key (k : 'a) = 
 	try
 	  let v = Hashtbl.find fr_tab k in
-		Hashtbl.add to_tab k v
+	  Hashtbl.add to_tab k v
 	with
 	  | Not_found -> () 
   in
-	ignore (List.map cp_key keys)
+  ignore (List.map cp_key keys)
 
 let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
-	Hashtbl.fold append_val tab []
+  Hashtbl.fold append_val tab []
 
 let counters = ref (Hashtbl.create 10)
 
 let add_to_counter (s:string) i = 
   if !Globals.enable_counters then
-  try
-    let r = Hashtbl.find !counters s in
-    Hashtbl.replace !counters s (r+i)
-  with
-  | Not_found -> Hashtbl.add !counters s i
+    try
+      let r = Hashtbl.find !counters s in
+      Hashtbl.replace !counters s (r+i)
+    with
+      | Not_found -> Hashtbl.add !counters s i
   else ()
 let inc_counter (s:string) = add_to_counter s 1
-  
+
 let string_of_counters () = 
   let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
   let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
   "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
-	
+
 let profiling_stack = ref []
 let tasks = ref (Hashtbl.create 10)  
 
 let get_time () = 
 	let r = Unix.times () in
-	(*let _ = print_string ("\n"^(string_of_float r.Unix.tms_utime)^"-"^(string_of_float r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n") in*)
+	(*let _ = print_string ("\n"^(string_of_float
+	  r.Unix.tms_utime)^"-"^(string_of_float
+	  r.Unix.tms_stime)^"-"^(string_of_float r.Unix.tms_cutime)^"\n")
+	  in*)
 	(*time_list := (r.Unix.tms_utime , r.Unix.tms_stime , r.Unix.tms_cutime , r.Unix.tms_cstime):: !time_list ;*)
 	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
-	
+
 let add_task_instance msg time = 	
- try 
+  try 
 	let (t1,cnt1,max1) = Hashtbl.find !tasks msg in
 	Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
- with Not_found -> 
-	Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
+  with Not_found -> 
+	  Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
+
 let push_time_no_cnt msg = 
 if (!Globals.profiling) then
  let timer = get_time () in
-	profiling_stack := (msg, timer,true) :: !profiling_stack
+	profiling_stack := (msg, timer,true) :: !profiling_stack 
 else ()
 
 let push_time msg = 
-if (!Globals.profiling) then
- (inc_counter ("cnt_"^msg);
- let timer = get_time () in
+  if (!Globals.profiling) then
+    (inc_counter ("cnt_"^msg);
+    let timer = get_time () in
 	profiling_stack := (msg, timer,true) :: !profiling_stack)
-else ()
-	
+  else ()
+
 let pop_time msg = 
-	if (!Globals.profiling) then
-		let m1,t1,_ = List.hd !profiling_stack in
-		if (String.compare m1 msg)==0 then 
-			let t2 = get_time () in
-			 if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
-			else
-			profiling_stack := List.tl !profiling_stack;
-			if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) !profiling_stack) then begin
-				(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
-				(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
-				(* 	print_string ("\n double accounting for "^msg^"\n") *)
-                (* print_string ("\n skip double accounting for "^msg^"\n")  *)
-				end	
-            else add_task_instance m1 (t2-.t1) 
-			 
-		else 
-			Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
-	else ()
-  
-let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
+  if (!Globals.profiling) then
+	let m1,t1,_ = List.hd !profiling_stack in
+	if (String.compare m1 msg)==0 then 
+	  let t2 = get_time () in
+	  if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
+	  else
+		profiling_stack := List.tl !profiling_stack;
+	  if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) !profiling_stack) then begin
+		(* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
+		(* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
+		(* 	print_string ("\n double accounting for "^msg^"\n") *)
+        (* print_string ("\n skip double accounting for "^msg^"\n")  *)
+	  end	
+      else add_task_instance m1 (t2-.t1) 
+	else 
+	  Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
+  else ()
+  let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
   try
     push_time s;
       let r=f e in
@@ -863,7 +962,7 @@ let pop_spec_counter = ref 1
 let gen_time_msg _  = 
   pop_spec_counter := !pop_spec_counter+1;
   "time_stk_"^ (string_of_int !pop_spec_counter)
-  
+
 let pop_time_to_s_no_count  msg = 
 	if (!Globals.profiling) then
 		let rec helper l = match l with
@@ -872,92 +971,107 @@ let pop_time_to_s_no_count  msg =
 			else t in
     profiling_stack := helper !profiling_stack 
 	else ()
-	
+
 let print_tasks unit : unit  = 
   let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !tasks [] in
   let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
-    let f a = (string_of_float ((floor(100. *.a))/.100.)) in
-    let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-    let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+  let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+  let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+  let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+  let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
       let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
-      (if (List.length l)>0 then 
-        let l = (List.sort compare l) in		
-        (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
-      else "")^"],  "^(fp (t/.ot))^"%)") in
-    ((a1+1),r) 
-    ) (0,"") str_list in
+          (if (List.length l)>0 then 
+            let l = (List.sort compare l) in		
+            (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+          else "")^"],  "^(fp (t/.ot))^"%)") in
+      ((a1+1),r) 
+  ) (0,"") str_list in
   print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) 
-  
-	
+
 let add_index l = 
-	let rec ff i l = match l with
-		| [] -> []
-		| a::b-> (i,a)::(ff (i+1) b) in
-	(ff 0 l)
+  let rec ff i l = match l with
+	| [] -> []
+	| a::b-> (i,a)::(ff (i+1) b) in
+  (ff 0 l)
 
+(*
+let counters = ref (Hashtbl.create 10)
+
+let add_to_counter (s:string) i = 
+  if !Globals.enable_counters then
+  try
+    let r = Hashtbl.find !counters s in
+    Hashtbl.replace !counters s (r+i)
+  with
+  | Not_found -> Hashtbl.add !counters s i
+  else ()
+let inc_counter (s:string) = add_to_counter s 1
+  
+let string_of_counters () = 
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+  "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+*)
 	
+(*hairy stuff for exception numbering*)
 
-(*hairy stuff for excep tion numbering*)
-			
  let exc_list = ref ([]:(string * string * Globals.nflow ) list)
-  			 
+
  let get_hash_of_exc (f:string): Globals.nflow = 
-	if ((String.compare f Globals.stub_flow)==0) then 
-		Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error found stub flow")}
-	else
-	let rec get (lst:(string*string*Globals.nflow)list):Globals.nflow = match lst with
-		| [] -> Globals.false_flow_int
-		| (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
-						else get rst in
-    (get !exc_list)
-	
-	
+   if ((String.compare f Globals.stub_flow)==0) then 
+	 Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error found stub flow")}
+   else
+	 let rec get (lst:(string*string*Globals.nflow)list):Globals.nflow = match lst with
+	   | [] -> Globals.false_flow_int
+	   | (a,_,(b,c))::rst -> if (String.compare f a)==0 then (b,c)
+		 else get rst in
+     (get !exc_list)
+
   (*t1 is a subtype of t2*)
  let exc_sub_type (t1 : Globals.constant_flow) (t2 : Globals.constant_flow): bool = 
-	let r11,r12 = get_hash_of_exc t1 in
-	if ((r11==0) && (r12==0)) then false
-	else
-	let r21,r22 = get_hash_of_exc t2 in
-	if ((r21==0) && (r22==0)) then true
-	else
-	((r11>=r21)&&(r12<=r22))
-	
+   let r11,r12 = get_hash_of_exc t1 in
+   if ((r11==0) && (r12==0)) then false
+   else
+	 let r21,r22 = get_hash_of_exc t2 in
+	 if ((r21==0) && (r22==0)) then true
+	 else
+	   ((r11>=r21)&&(r12<=r22))
+
 (*let exc_int_sub_type ((t11,t12):Globals.nflow)	((t21,t22):Globals.nflow):bool = if (t11==0 && t12==0) then true else ((t11>=t21)&&(t12<=t22))*)
 
-let get_closest ((min,max):Globals.nflow):(string) = 
-	 let rec get (lst:(string*string*Globals.nflow) list):string*Globals.nflow = match lst  with
-		| [] -> (Globals.false_flow,Globals.false_flow_int)
-		| (a,b,(c,d)):: rest-> if (c==min && d==max) then (a,(c,d)) (*a fits perfect*)
-							else let r,(minr,maxr) = (get rest) in
-										if (minr==c && maxr==d)||(c>min)||(d<max) then (r,(minr,maxr)) (*the rest fits perfect or a is incompatible*)
-											else if (minr>min)||(maxr<max) then (a,(c,d)) (*the rest is incompatible*)
-											else if ((min-minr)<=(min-c) && (maxr-max)<=(d-max)) then (r,(minr,maxr))
-											else (a,(c,d)) in
-	let r,_ = (get !exc_list) in r
- 
+ let get_closest ((min,max):Globals.nflow):(string) = 
+   let rec get (lst:(string*string*Globals.nflow) list):string*Globals.nflow = match lst  with
+	 | [] -> (Globals.false_flow,Globals.false_flow_int)
+	 | (a,b,(c,d)):: rest-> if (c==min && d==max) then (a,(c,d)) (*a fits perfect*)
+	   else let r,(minr,maxr) = (get rest) in
+	   if (minr==c && maxr==d)||(c>min)||(d<max) then (r,(minr,maxr)) (*the rest fits perfect or a is incompatible*)
+	   else if (minr>min)||(maxr<max) then (a,(c,d)) (*the rest is incompatible*)
+	   else if ((min-minr)<=(min-c) && (maxr-max)<=(d-max)) then (r,(minr,maxr))
+	   else (a,(c,d)) in
+   let r,_ = (get !exc_list) in r
+
  (*constructs the mapping between class/data def names and interval types*) 
- let c_h () = 								
-	let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
-		let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
-		if ((List.length l1)==0) then let i = (Globals.fresh_int()) in let j = (Globals.fresh_int()) in ([(f1,f2,(i,j))],(i,j))
-			else let ll,(mn,mx) = List.fold_left (fun (t,(o_min,o_max)) (a,b,(c,d))-> let temp_l,(n_min, n_max) = (lrr a b) in 
-																			(temp_l@t,((if ((o_min== -1)||(n_min<o_min)) then n_min else o_min),(if (o_max<n_max) then n_max else o_max)))			
-			) ([],(-1,-1)) l1 in
-				( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
-	let r,_ = (lrr Globals.top_flow "") in
-	let _ = exc_list := r in
-	Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
-	Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);	
-	Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);	
-	Globals.top_flow_int := (get_hash_of_exc Globals.top_flow);
-	Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow)
+ let c_h () =
+   let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
+	 let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
+	 if ((List.length l1)==0) then let i = (Globals.fresh_int()) in let j = (Globals.fresh_int()) in ([(f1,f2,(i,j))],(i,j))
+	 else let ll,(mn,mx) = List.fold_left (fun (t,(o_min,o_max)) (a,b,(c,d))-> let temp_l,(n_min, n_max) = (lrr a b) in 
+	 (temp_l@t,((if ((o_min== -1)||(n_min<o_min)) then n_min else o_min),(if (o_max<n_max) then n_max else o_max)))			
+	 ) ([],(-1,-1)) l1 in
+	 ( ((f1,f2,(mn,mx))::ll) ,(mn,mx)) in
+   let r,_ = (lrr Globals.top_flow "") in
+   let _ = exc_list := r in
+   Globals.n_flow_int := (get_hash_of_exc Globals.n_flow);
+   Globals.ret_flow_int := (get_hash_of_exc Globals.ret_flow);	
+   Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);	
+   Globals.top_flow_int := (get_hash_of_exc Globals.top_flow);
+   Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow)
 	(*let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in*)
-	 
+
  let add_edge(n1:string)(n2:string):bool =
 	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in
 	true
-	
+
  let clean_duplicates ()= 
 	exc_list := remove_dups !exc_list
 
@@ -967,12 +1081,8 @@ let has_cycles ():bool =
 		if (List.exists (fun c-> (List.exists (fun d->((String.compare c d)==0)) visited)) sons) then true
 			else (List.exists (fun c-> (cc c (c::visited))) sons) in	
 	(cc Globals.top_flow [Globals.top_flow])
-  
-  
-  
 let print_profiling_info () = if (!Globals.profiling) then  print_tasks () else ()
-  
-  
+
 (*aliasing structures*)
 type ('a,'k) e_map =  ('a * 'k) list
 type 'a e_set =  ('a,'a list) e_map
@@ -983,7 +1093,7 @@ type 'a eq_set =  ('a,'a list) e_map * ('a -> 'a -> bool)
 
 let string_of_a_list (f:'a->string) (el:'a list) : string =
   "["^ (String.concat ", "(List.map f el))^"]\n"
-         
+
 let string_of_a_list_no_newline (f:'a->string) (el:'a list) : string =
   "["^ (String.concat ", "(List.map f el))^"]"
 
@@ -995,20 +1105,19 @@ let string_of_a_list_of_list (f:'a->string) (el:'a list list) : string =
 
 (* converts (a e_set) to [[a]] *)
 let partition (s: 'a e_set) : 'a list list =
- let rec insert (a,k) lst = match lst with
-      | [] -> [(k,[a])]
-      | (k2,ls)::xs -> 
-        if k==k2 then (k,a::ls)::xs
+  let rec insert (a,k) lst = match lst with
+    | [] -> [(k,[a])]
+    | (k2,ls)::xs -> 
+          if k==k2 then (k,a::ls)::xs
           else (k2,ls)::(insert (a,k) xs) in
- let r = List.fold_left (fun lst x ->  insert x lst) [] s in
- List.map ( fun (_,b) -> b) r
+  let r = List.fold_left (fun lst x ->  insert x lst) [] s in
+  List.map ( fun (_,b) -> b) r
 
 let string_of_e_set (f:'a->string) (e:'a e_set) : string =
   let ll=partition e in 
   "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
 let string_of_eq_set (f:'a->string) ((e,_):'a eq_set) : string = string_of_e_set f e
-
 
 (* converts (a eq_set) to [[a]] *)
 let partition_eq ((s,_): 'a eq_set) : 'a list list =
@@ -1026,8 +1135,6 @@ let un_partition (ll:'a list list) : 'a e_set =
     if (List.length xs>1) then List.map (fun x -> (x,y)) xs 
     else [] in
   List.concat (List.map (fun x -> flat x x) ll)
-
-
 
 let empty_aset  : 'a e_set = []
 
@@ -1064,7 +1171,6 @@ let find (s : 'a e_set) (e:'a) : 'a list  = find_eq2 (=) s e
 
 (* find key of e in eq_set s *)
 let find_eq ((s,eq) : 'a eq_set) (e:'a) : 'a list  = find_eq2 eq s e 
-
 
 (* find key of e in s and return remainder after
    all elements equivalent to e is removed *)
@@ -1134,6 +1240,9 @@ let add_equiv_raw (s: 'a e_set) (x:'a) (y:'a) : 'a e_set =
 let add_equiv_eq_raw  ((s,eq): 'a eq_set) (x:'a) (y:'a) : 'a eq_set = 
   let ns=add_equiv_eq2_raw eq s x y in (ns,eq)
 
+let build_aset_eq (eq:'a->'a->bool) (xs:('a *'a) list) :  'a eq_set =
+  List.fold_right (fun (x,y) eqs -> add_equiv_eq_raw eqs x y) xs (empty_a_set_eq eq)
+
 let find_name_str (f:'a->string) (nmap:'a e_name) (e:'a) : (string * 'a e_name) =
   try 
      (List.assoc e nmap,nmap)
@@ -1141,9 +1250,9 @@ let find_name_str (f:'a->string) (nmap:'a e_name) (e:'a) : (string * 'a e_name) 
 
 let find_elem_str (nmap:'a e_name) (n:string)  : 'a =
   try 
-     fst(List.find (fun (_,s) -> n=s) nmap)
+    fst(List.find (fun (_,s) -> n=s) nmap)
   with _ -> Error.report_error {Error.error_loc = Globals.no_pos; 
-                  Error.error_text = ("find_elem_str : elem not found")}
+  Error.error_text = ("find_elem_str : elem not found")}
 
 (* add x=y to e-set_str *)
 let add_equiv_str ((s,f,nm): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
@@ -1157,16 +1266,16 @@ let add_equiv_str ((s,f,nm): 'a e_set_str) (x:'a) (y:'a) : 'a e_set_str =
 (* split out sub-lists in l which overlaps with x *)
 let split_partition (eq:'a->'a->bool) (x:'a list) (l:'a list list): ('a list list * 'a list list) =
  List.fold_left ( fun (r1,r2) y -> if (overlap_eq eq x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
- 
+
 (* merge l1 /\ l2 to [[a]] *)
 let rec merge_partition (eq:'a->'a->bool) (l1:'a list list) (l2:'a list list) : 'a list list = match l1 with
   | [] -> l2
   | x::xs ->
-    let (y,ys)=split_partition eq x l2 in
-    if empty y then x::(merge_partition eq xs l2)
-    else merge_partition eq xs ((x@(List.concat y))::ys)
+        let (y,ys)=split_partition eq x l2 in
+        if empty y then x::(merge_partition eq xs l2)
+        else merge_partition eq xs ((x@(List.concat y))::ys)
    (*remove dupl of x*)
-         
+
 (* return the domain of e-set *)
 let domain (s: ('a,'k) e_map) : 'a list = List.map fst s
 
@@ -1196,7 +1305,6 @@ let merge_set_eq2 (eq:'a->'a->bool) (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
   let (t1,t2) = order_two s1 s2 in
   List.fold_left (fun a (p1,p2) -> add_equiv_eq2_raw eq a p1 p2) t2 (get_equiv_raw t1)
 
-
 let merge_set_eq  ((s1,eq): 'a eq_set) ((s2,_): 'a eq_set): 'a eq_set =
  let ax = merge_set_eq2 eq s1 s2 in
  (ax,eq)
@@ -1214,7 +1322,6 @@ let merge_set (s1: 'a e_set) (s2: 'a e_set): 'a e_set =
 (* merge two equivalence set_str s1 /\ s2 *)
 let merge_set_str ((s1,f,nm1): 'a e_set_str) ((s2,_,nm2): 'a e_set_str): 'a e_set_str =
  (merge_set s1 s2,f,nm1@nm2)
-
 
 (* remove vs elements from e_set - used by existential elimination 
 let elim_elems_list (s:'a e_set) (vs:'a list) : 'a e_set = 
@@ -1244,7 +1351,6 @@ let find_equiv_all_eq2_raw  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a list  =
   if (r1==[]) then []
   else List.map fst (List.filter (fun (a,k) -> k==r1) s) 
 
-
 (* return a distinct element equal to e *)
 let find_equiv_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  =
   let ls=find_equiv_all_eq2_raw eq e s in
@@ -1261,7 +1367,6 @@ let find_equiv_eq2  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  =
     | [] -> None 
     | (x,_)::_ -> Some x
 *)
-
 
 (* return a distinct element equal to e *)
 let find_equiv  (eq:'a->'a->bool) (e:'a) (s:'a e_set) : 'a option  = find_equiv_eq2 (=) e s 
@@ -1349,7 +1454,7 @@ let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set =
     let ns = add_equiv s fv tv in
     elim_elems_one ns fv
 *)
- 
+
 (* returns true if s contains no duplicates *)
 let check_no_dupl_eq eq (s:'a list) : bool =
   let rec helper s = match s with
@@ -1368,8 +1473,6 @@ let is_one2one_eq (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : b
     if (check_no_dupl_eq eq l) then true
     else (print_string ("duplicates here :"^(string_of_a_list pr l)^"\n") ; false) 
 
-
-
 (* check f is 1-to-1 map assuming s contains no duplicates *)
 let is_one2one (f:'a -> 'a) (s:'a list) : bool = is_one2one_eq (fun x -> "?") (=) f s
 
@@ -1379,7 +1482,7 @@ let rename_eset_eq2 (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) 
   let b = is_one2one_eq pr eq f (get_elems s) in
   if b then  List.map (fun (e,k) -> (f e,k)) s
   else Error.report_error {Error.error_loc = Globals.no_pos; 
-                  Error.error_text = ("rename_eset : f is not 1-to-1 map")}
+  Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
 (* s - from var; t - to var *)
 let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
@@ -1395,7 +1498,7 @@ let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
     | (a1,b1)::((a2,b2)::xs) -> (a1,a2)::(mkeq ((a2,b2)::xs))
     | _ -> [] in
   let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
-     eqlst
+  eqlst
 
 let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set =
   let sl = get_elems s in
@@ -1423,10 +1526,10 @@ let rename_eset_eq_with_pr_allow_clash (pr:'a -> string) (f:'a -> 'a) ((s,eq):'a
   let r=rename_eset_eq2_allow_clash pr (eq) f s in
   (r,eq)
 
-let rename_eset_eq_debug (pr:'a->string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
+let rename_eset_eq_debug (pr:'a-> string) (f:'a -> 'a) ((s,eq):'a eq_set) : 'a eq_set = 
   ho_debug_1 "rename_eset_eq" 
-    (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c)
-    (fun c-> rename_eset_eq f c) (s,eq)
+      (fun (c,_) -> string_of_e_set pr c) (fun (c,_) -> string_of_e_set pr c)
+      (fun c-> rename_eset_eq f c) (s,eq)
 
 (* return list of elements in e_set_str *)
 let get_elems_str ((_,_,nm):'a e_set_str) : 'a list = List.map (fst) nm
@@ -1455,8 +1558,44 @@ let rename_eset_str (re:'a -> 'a) ((s,f,nm):'a e_set_str) : 'a e_set_str =
   (s_new,f,nm_new)
 
 
+(* bag of addresses*)
+type 'a baga =  ('a list) 
+
+let empty_baga () : 'a baga = []
+
+(* a singleton bag *)
+let singleton_baga (e:'a) : 'a baga = [e]
 
 
+let rec is_dupl_baga (eq:'a->'a->bool) (xs:'a baga) : bool = 
+  match xs with
+    | [] -> false
+    | x::xs1 -> match xs1 with
+        | [] -> false
+        | _ -> if (List.exists (eq x) xs1) then true else is_dupl_baga eq xs1
+
+(* false result denotes contradiction *)
+let is_sat_baga (eq:'a->'a->bool) (xs:'a baga) : bool = not(is_dupl_baga eq xs)
+
+(*
+[d1,d2] & [d3,d4] = [d1,d2,d3,d4]
+[d1,d2] | [d3,d4] = [d1|d3,d1|d4,d2|d3,d2|d4]
+d1|d3 = d1 \cap d3
+  
+*)
+
+(* star conjunction of two bag of addresses *)
+let star_baga (x:'a baga) (y:'a baga) : 'a baga = x@y
+
+(* conjunction of two bag of addresses *)
+let conj_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
+
+(* disjunction of two bag of addresses *)
+let or_baga (eq:'a->'a->bool) (xs:'a baga) (ys:'a baga) : 'a baga = intersect_fct eq xs ys
+
+
+
+(**  disjointness: **)
 (* disjointness structures*)
 type 'a d_set =  ('a list) list
 
@@ -1469,11 +1608,17 @@ let empty_dset () : 'a d_set = []
 (* an empty difference set *)
 let empty_dset_str (f:'a->string) : 'a d_set_str = ([],f)
 
+(* one list difference set *)
+let one_list_dset (e:'a list) : 'a d_set = [e]
+
 (* a singleton difference set *)
 let singleton_dset (e:'a) : 'a d_set = [[e]]
 
 (* a singleton difference set *)
 let singleton_dset_str (f:'a->string) (e:'a) : 'a d_set_str = ([[f e]],f)
+
+let is_dupl_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = 
+     List.exists (is_dupl_baga eq) xs
 
 (* returns a list of difference sets for element e *)
 let find_diff (eq:'a->'a->bool) (s: 'a d_set) (e:'a) : 'a d_set =
@@ -1502,6 +1647,22 @@ let is_disj_str (eq_str:string->string->bool)  ((s,f): 'a d_set_str)  (x:'a) (y:
 (*  returns s1/\s2 *)
 let merge_disj_set (s1: 'a d_set) (s2: 'a d_set): 'a d_set =
  s1@s2
+
+(*  returns d1*d2 *)
+let star_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = (* d1@d2 *)
+  let helper d1 d2 = List.concat (List.map (fun x -> List.map (fun y -> x@y) d2 ) d1) in
+  match d1,d2 with
+    | [],[] -> []
+    | [],d2 -> d2
+    | d1,[] -> d1
+    | d1,d2 -> helper d1 d2
+
+(*  returns d1/\d2 *)
+let conj_disj_set (d1: 'a d_set) (d2: 'a d_set): 'a d_set = d1@d2
+
+(*  returns d1\/d2 *)
+let or_disj_set (eq:'a->'a->bool) (d1: 'a d_set) (d2: 'a d_set): 'a d_set = 
+  List.concat (List.map (fun x1 -> List.map (fun x2-> intersect_fct eq x1 x2) d2) d1) 
 
 (*  returns s1/\s2 *)
 let merge_disj_set_str ((s1,f1): 'a d_set_str) ((s2,_): 'a d_set_str): 'a d_set_str =
@@ -1542,8 +1703,41 @@ let is_conflict (eq:'a -> 'a -> bool) (s: 'a d_set) : bool =
 let is_conflict_str (eq_str:string -> string -> bool) ((s,_): 'a d_set_str) : bool =
  is_conflict eq_str s
 
+(* false result denotes contradiction *)
+let is_sat_dset (eq:'a->'a->bool) (xs:'a d_set) : bool = 
+  not(is_dupl_dset eq xs)
+
+let string_of_e_set f e = "["^ (String.concat " \n " (List.map(fun (c,cl)-> (f c)^"->" ^(String.concat ", "(List.map f cl))) e))^"]"
+(** **)
+
 let rec list_find (f:'a -> 'b option) l = match l with 
     | [] -> None
     | x::xs -> match f x with
       | None -> list_find f xs
       | Some s -> Some s
+
+
+(**  disjointness: **)
+(* new disjointness structure*)
+type 'a one_dset =    
+  | Disj of ('a list)
+  | DisjMinus of ('a list * 'a * 'a)
+
+type 'a disj_set = (('a one_dset) list * ('a ->'a->int))
+
+(*
+let empty_dj_set (cp:'a->'a->int) : 'a disj_set = ([],cp)
+
+add_one_bag  ((d,cp):'a disj_set) (b:'a list) = (b::d,cp 
+add_one_ineq ((d,cp):'a disj_set) (x:'a) (y:'a)  = ([x,y]::d,cp
+is_ineq  (eq:'a->'a->bool) ((d,cp):'a disj_set) (x:'a) (y:'a)  : bool = false
+norm_dj_set ((d,cp):'a disj_set) : ((d,cp):'a disj_set) = ..
+ (* remove singleton; sort by size; combine where possible *)
+star_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+conj_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+or_dj_set ((d1,cp):'a disj_set) ((d2,cp_):'a disj_set) : 'a disj_set = ..
+
+*)
+
+
+

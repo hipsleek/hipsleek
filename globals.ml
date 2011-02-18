@@ -42,9 +42,9 @@ type mode =
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
+let nonef v = None
 let voidf e = ()
 let voidf2 e f = ()
-let nonef v = None
 let somef v = Some v
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
@@ -102,7 +102,13 @@ let this = "this"
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
+(* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
+ * moved here from iparser.mly *)
+let input_file_name = ref ""
+
 (* command line options *)
+
+let instantiation_variants = ref 0
 
 let omega_simpl = ref true
 
@@ -119,6 +125,8 @@ let elim_unsat = ref false
 let lemma_heuristic = ref false
 
 let elim_exists = ref true
+
+let allow_imm = ref false
 
 let print_proc = ref false
 
@@ -224,7 +232,6 @@ let enable_incremental_proving = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
   
-
 let add_count (t: int ref) = 
 	t := !t+1
 
@@ -241,7 +248,7 @@ let imply_timeout = ref 10.
 let report_error (pos : loc) (msg : string) =
   print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
-  failwith "Error detected"
+  failwith "Error detected - globals.ml"
 
 let branch_point_id = ref 0
 
