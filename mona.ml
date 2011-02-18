@@ -11,7 +11,8 @@ let mona_pid = ref 0
 (* let channels = ref (stdin, stdout, stdin) *)
 let last_test_number = ref 0
 let test_number = ref 0
-let timeout = ref 20.0 (* default timeout is 20 seconds *)
+let mona_cycle = ref 1
+let timeout = ref 10.0 (* default timeout is 10 seconds *)
 let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
 let set_timer tsecs =
   ignore (Unix.setitimer Unix.ITIMER_REAL
@@ -768,24 +769,25 @@ and print_b_formula b f = match b with
 (* ######################################################################################################### unique process*)
 
 let rec get_answer chn : string =
-    let chr = input_char chn in
-    match chr with
-      |'\n' ->  ""
-      | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
-      | _ -> "" ^ get_answer chn
+  let chr = input_char chn in
+      match chr with
+        |'\n' ->  ""
+        | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
+        | _ -> "" ^ get_answer chn
 
 let send_cmd_with_answer str timeout =
-  (* let _ = (print_string ("\nsned_cmd_with_asnwer " ^ str ^"- end string\n"); flush stdout) in *)
+  (* let _ = (print_string ("\nsend_cmd_with_asnwer " ^ str ^"- end string\n timeout: "^(string_of_float timeout) ^"\n"); flush stdout) in *)
+  (* let _ = (print_string ("\nsend_cmd_with_asnwer \n"); flush stdout) in *)
   if!log_all_flag==true then
     output_string log_all str;
   let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
   let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
   set_timer timeout;
-
-  let _ = (output_string !process.outchannel str; flush !process.outchannel) in
+  let _ = (output_string !process.outchannel str;
+           flush !process.outchannel) in
   let answ = get_answer !process.inchannel in
   set_timer 0.0;
-  reset_sigalrm () ;
+  reset_sigalrm ();
   answ
 
 (* modify mona for not sending answers *)
@@ -812,7 +814,7 @@ let start_mona () =
             )
         with
           | e -> begin
-              let _ = print_string ("Unexpected exception : " ^ (Printexc.to_string e)) in
+              let _ = print_string ("\n[mona.ml ]Unexpected exception : " ^ (Printexc.to_string e)) in
               flush stdout; flush stderr;
               if !log_all_flag then begin
                   output_string log_all ("[mona.ml]: >> Error while starting mona!\n");
@@ -822,36 +824,47 @@ let start_mona () =
           end
     end
 
+let close_pipes () : unit = 
+    let _ = Unix.close (Unix.descr_of_out_channel (!process.outchannel)) in
+    let _ = Unix.close (Unix.descr_of_in_channel (!process.inchannel)) in
+    let _ = Unix.close (Unix.descr_of_in_channel (!process.errchannel)) in
+    ()
+
 let stop_mona () = 
   if !is_mona_running then begin
     let num_tasks = !test_number - !last_test_number in
     (* print_string ("Stop Mona... "^(string_of_int num_tasks)^" invocations "); flush stdout; *)
 	(if !log_all_flag then 
       (output_string log_all ("[omega.ml]: >> Stop Mona after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
-    let _ = Unix.close (Unix.descr_of_out_channel (!process.outchannel)) in
-    let _ = Unix.close (Unix.descr_of_in_channel (!process.inchannel)) in
-    let _ = Unix.close (Unix.descr_of_in_channel (!process.errchannel)) in
-
+    close_pipes ();
     Unix.kill !mona_pid 2;
     ignore (Unix.waitpid [] !process.pid);
     is_mona_running := false;
-    (* Hashtbl.clear fv_cache;  *)
-    (* !process.pid := 0; *)
   end
 
 let restart_mona reason =
   if !is_mona_running then begin
-    let num_tasks = !test_number - !last_test_number in
-    ((* print_string ("\nRestarting Mona ... "); flush stdout; *)
-	if !log_all_flag then 
-      output_string log_all ("[mona.ml]: >> " ^ reason ^ " Restarting Mona after ... "^(string_of_int num_tasks)^" invocations \n") );
-    stop_mona();
-    start_mona();
+      let num_tasks = !test_number - !last_test_number in
+      (* print_string ("\nRestarting Mona ... "); flush stdout; *)
+	  if   !log_all_flag then 
+        output_string log_all ("[mona.ml]: >> " ^ reason ^ " Restarting Mona after ... "^(string_of_int num_tasks)^" invocations \n") ;
+      stop_mona();
+      start_mona();
   end
 
+let check_if_mona_is_alive () : bool = 
+  try
+      Unix.kill !mona_pid 0;
+      true
+  with
+    | e -> 
+        ignore e;
+        false
+
 let check_answer answ = 
-  let err= "Error in file " in 
-  let answer =  
+  let err= "Error in file " in
+  (* let _ = (print_string ("\nAnswer: "^answ^"\n\n"); flush stdout) in *)
+  let answer =
     match answ with
       | "Formula is valid" ->
           begin
@@ -860,6 +873,15 @@ let check_answer answ =
                   output_string log_all "[mona.ml]: imply --> true\n";
               end;
               true;
+          end
+      | "" -> 
+          begin
+              (* process might have died. maybe BDD was too large - restart mona*)
+              (* print_string "MONA aborted execution! Restarting..."; *)
+              restart_mona "mona aborted execution";
+              if !log_all_flag == true then
+		        output_string log_all "[mona.ml]: imply --> false (from mona failure)\n";
+              false
           end
       | _ -> 
           let l = String.length err in
@@ -875,7 +897,51 @@ let check_answer answ =
   in
   answer
 
-let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
+let check_answer_sat answ = 
+  let err= "Error in file " in 
+  (* let _ = (print_string ("\nAnswer:"^answ^"\n\n"); flush stdout) in *)
+  let answer =  
+    match answ with
+      | "Formula is valid" ->
+          begin
+              if !log_all_flag==true then begin
+                  output_string log_all (" [mona.ml]: --> SUCCESS\n");
+                  output_string log_all "[mona.ml]: sat --> true\n";
+              end;
+              true;
+          end
+      | "Formula is unsatisfiable" -> 
+           if !log_all_flag == true then
+		          output_string log_all "[mona.ml]: sat --> false \n";
+          false;
+      | "" -> 
+          begin
+              (* process might have died. maybe BDD was too large*)
+              (* print_string "MONA aborted execution! Restarting..."; *)
+              restart_mona "mona aborted execution";
+              if !log_all_flag == true then
+		        output_string log_all "[mona.ml]: sat --> true (from mona failure)\n";
+              true
+          end
+      | _ ->
+          let l = String.length err in
+          if ((String.length answ) >=l) && String.compare err (String.sub answ 0 l)=0 then
+            (print_string "MONA translation failure!";
+             Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^answ)})
+          else
+            begin
+    	        if !log_all_flag == true then
+		          output_string log_all "[mona.ml]: sat --> true (from unknown)\n";
+                true;
+            end
+  in
+  answer
+
+let maybe_restart_mona () : unit =
+  let num_tasks = !test_number - !last_test_number in
+  if num_tasks >=(!mona_cycle) then restart_mona "upper limit reached"
+
+let rec imply_helper timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
   first_order_vars := [];
   second_order_vars := [];
@@ -892,59 +958,28 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
   let all_fv = CP.remove_dups_svl (ante_fv @ conseq_fv) in
   let vs = Hashtbl.create 10 in
-  (* let split_fv fv_list =  *)
-  (*   let part1 = [] in *)
-  (*   let part2 = [] in *)
-  (*   let fun0 sv = begin     *)
-  (*       let ifo = is_firstorder_mem !tmp_form (CP.Var(sv, no_pos)) vs in *)
-  (*       let (ifo_str, part) = match ifo with *)
-  (*         |true ->  ("VAR1", ref part1) *)
-  (*         |false -> ("VAR2", ref part2) in *)
 
-  (*       match sv with *)
-  (*         | CP.SpecVar(_, sv1, _) -> *)
-  (*             begin *)
-  (*                 try *)
-  (*                    (\*spec_var is already declared*\) *)
-  (*                    let ifo_existing_sv = (Hashtbl.find fv_cache sv1) in *)
-  (*                    if not (ifo == ifo_existing_sv) then *)
-  (*                      (\*types (var1-->true or var2-->false) are different*\) *)
-  (*                      let renamed_sv = sv1^ifo_str in *)
-  (*                      try *)
-  (*                         (\*check if this variable was already renamed and declared in a previous declaration*\) *)
-  (*                         Hashtbl.find fv_cache sv1 *)
-  (*                      with Not_found ->  *)
-  (*                          begin *)
-  (*                              renamed_sv::part; *)
-  (*                              Hashtbl.add fv_cache renamed_sv ifo *)
-  (*                          end *)
-  (*                 with Not_found ->  *)
-  (*                     begin *)
-  (*                         sv::part; *)
-  (*                         Hashtbl.add fv_cache sv1 ifo *)
-  (*                     end *)
-  (*             end *)
-  (*         | _ -> ()  *)
-  (*   end in *)
-  (*   let _ = List.iter fun0 all_fv in *)
-  (*   (part1, part2) *)
-  (* in *)
-  (* let (part1, part2) = split_fv all_fv in *)
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
     if Util.empty part1 then ""
-    else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n" in
+    else "all1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) in
   let second_order_var_decls =
     if Util.empty part2 then ""
-    else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) ^ ";\n" in
+    else "all2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) in
   try 
       begin
+          let cmd_to_send = ref "" in
+          cmd_to_send := mona_of_formula tmp_form tmp_form vs;
           if not (Util.empty part1) then
-            send_cmd_no_answer first_order_var_decls timeout;
+            cmd_to_send := " ( " ^ first_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
           if not (Util.empty part2) then
-            send_cmd_no_answer second_order_var_decls timeout;
-          let answer = (send_cmd_with_answer ((mona_of_formula tmp_form tmp_form vs)^";\n") timeout) in
-          check_answer answer 
+            cmd_to_send := " ( " ^ second_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
+          cmd_to_send := !cmd_to_send ^ ";\n";
+          (* print_string ("imply send cmd:  " ^ !cmd_to_send); flush stdout; *)
+          (* print_string ("imply:  " ^ imp_no); flush stdout; *)
+          let _ = maybe_restart_mona () in
+          let answer = (send_cmd_with_answer !cmd_to_send timeout) in
+          check_answer answer
       end
   with
     |Timeout ->
@@ -954,53 +989,78 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
             false
 		end
     | exc -> 
-        print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
-        stop_mona (); raise exc 
+        print_string ("\n[mona.ml]:Unexpected exception sat\n"); flush stdout;
+        stop_mona (); raise exc
+        (* restart_mona ("\nBuffer Overflow detected\n");  *)
+        (* imply_helper timeout ante conseq imp_no  *)
 end
 
-let make_initial_declarations timeout = 
-  begin
-    (* send_cmd_no_answer ("# auxiliary predicates\n"); *)
-    send_cmd_no_answer ("pred xor(var0 x,y) = x&~y | ~x&y;\n") timeout;
-    send_cmd_no_answer ("pred at_least_two(var0 x,y,z) = x&y | x&z | y&z;\n") timeout;
-    (* send_cmd_no_answer ("# addition relation (P + q = r)\n"); *)
-    send_cmd_no_answer ("pred plus(var2 p,q,r) = ex2 c: 0 notin c & all1 t:(t+1 in c <=> at_least_two(t in p, t in q, t in c)) & (t in r <=> xor(xor(t in p, t in q), t in c));\n") timeout;
-    (* send_cmd_no_answer ("# less-than relation (p<q)\n"); *)
-    send_cmd_no_answer ("pred less(var2 p,q) = ex2 t: t ~= empty & plus(p,t,q);\n") timeout;
-    (* send_cmd_no_answer ("# less-or-equal than relation (p<=q)\n"); *)
-    send_cmd_no_answer ("pred lessEq(var2 p, q) = less(p, q) | (p=q);\n") timeout;
-    (* send_cmd_no_answer ("# greater-than relation (p>q)\n"); *)
-    send_cmd_no_answer ("pred greater(var2 p, q) = less(q, p);\n") timeout;
-    (* send_cmd_no_answer ("# greater-or-equal than relation (p>=q)\n"); *)
-    send_cmd_no_answer ("pred greaterEq(var2 p, q) = greater(p, q) | (p = q); \n") timeout;
-  end
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = 
-  let _ = start_mona () in
+  if not !is_mona_running then
+        start_mona();
   (* let _ = make_initial_declarations timeout in *)
-  let answ = imply timeout ante conseq imp_no in
-  let _ = stop_mona () in
+  let answ = imply_helper timeout ante conseq imp_no in
+  (* let _ = stop_mona () in *)
   answ
+
+let rec is_sat_helper timeout (f: CP.formula) (sat_no: string): bool = begin
+    mona_file_number.contents <- !mona_file_number + 1;
+    first_order_vars := [];
+    second_order_vars := [];
+    incr test_number;
+    let f = CP.arith_simplify f in
+    let simp_f = (break_presburger f true) in
+    let f_fv = CP.fv simp_f in
+    let all_fv = CP.remove_dups_svl f_fv in
+    let vs = Hashtbl.create 10 in
+    let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem simp_f (CP.Var(sv, no_pos)) vs)) all_fv) in
+    let first_order_var_decls =
+      if Util.empty part1 then ""
+      else "ex1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) in
+    let second_order_var_decls =
+      if Util.empty part2 then ""
+      else "ex2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) in
+    try 
+        begin
+            let cmd_to_send = ref "" in
+            cmd_to_send := mona_of_formula simp_f simp_f vs;
+            if not (Util.empty part1) then
+              cmd_to_send := " ( " ^ first_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
+            if not (Util.empty part2) then
+              cmd_to_send := " ( " ^ second_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
+            cmd_to_send := !cmd_to_send ^ ";\n";
+            (* print_string ("sat send cmd:  " ^ !cmd_to_send); flush stdout; *)
+            (* print_string ("sat send:  " ^ sat_no); flush stdout; *)
+            let _ = maybe_restart_mona () in
+            let answer = send_cmd_with_answer !cmd_to_send timeout in
+            check_answer_sat answer
+        end
+    with
+      |Timeout ->
+	      begin
+              print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
+              restart_mona ("Timeout when checking #imply " ^ sat_no ^ "!");
+              true;
+		  end
+      | exc -> 
+          (* ignore exc; *)
+          (* restart_mona ("\nBuffer Overflow detected\n");  *)
+          (* is_sat_helper timeout f sat_no  *)
+          print_string ("\n[mona.ml]:Unexpected exception sat\n"); flush stdout;
+          stop_mona (); raise exc
+end
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
+  if not !is_mona_running then
+        start_mona();
   sat_optimize := true;
-  let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
+  let tmp_form = (is_sat_helper !Globals.sat_timeout f  ("from sat#" ^ sat_no)) in
+  (* let _ = stop_mona () in *)
   sat_optimize := false;
-  match tmp_form with
-  | true ->
-	  begin
-		if !log_all_flag == true then
-		  output_string log_all "[mona.ml]: is_sat --> false\n";
-		false;
-	  end
-  | false ->
-	  begin
-		if !log_all_flag == true then
-		  output_string log_all "[mona.ml]: is_sat --> true\n";
-		true;
-	  end
+  tmp_form
 ;;
 
 (* ######################################################################################################### *)

@@ -1256,22 +1256,23 @@ let print_stats () =
 let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
   match !tp with
-  | Coq -> Coq.start_prover ()
-  | Redlog | RM -> 
-     begin
-      Redlog.start_red ();
-	  Omega.start_omega ();
-	 end
-  | Cvc3 -> 
-     begin
-       provers_process := Some (Cvc3.cvc3_create_process ());
-       let _ = match !provers_process with 
-         |Some proc ->  !incremMethodsO#set_process proc
-         | _ -> () in
-	  Omega.start_omega ();
-	 end
-
-  | _ -> Omega.start_omega ()
+    | Coq -> Coq.start_prover ()
+    | Redlog | RM -> 
+        begin
+            Redlog.start_red ();
+	        Omega.start_omega ();
+	    end
+    | Cvc3 -> 
+        begin
+            provers_process := Some (Cvc3.cvc3_create_process ());
+            let _ = match !provers_process with 
+              |Some proc ->  !incremMethodsO#set_process proc
+              | _ -> () in
+	        Omega.start_omega ();
+	    end
+    | Mona ->
+        Mona.start_mona()
+    | _ -> Omega.start_omega ()
   
 let stop_prover () =
   match !tp with
@@ -1288,6 +1289,7 @@ let stop_prover () =
               |_ -> ();
 	        Omega.stop_omega ();
 	      end
+    | Mona -> Mona.stop_mona();
     | _ -> Omega.stop_omega ();;
 
 
