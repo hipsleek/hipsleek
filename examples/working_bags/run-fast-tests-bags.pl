@@ -31,8 +31,8 @@ if($root){
 }
 	else
 	{
-		$exempl_path = "";
-		$exec_path = '.';
+		$exempl_path = ".";
+        $exec_path = '../..';
 	}
 	
 if($prover){
@@ -170,29 +170,29 @@ $output_file = "log";
 # list of file, nr of functions, function name, output, function name, output......
 %hip_files=(
 	"hip" =>[
-        ["avl-all-1.ss", "SUCCESS"],
-        ["avl-all.ss", "SUCCESS"],
-        ["avl-modular-2.ss", "SUCCESS"],
-        ["avl-modular-3.ss", "SUCCESS"],
-        ["avl-modular-hei.ss", "SUCCESS"],
-        ["avl-modular-new3.ss", "SUCCESS"],
-        ["avl-modular-set.ss", "SUCCESS"],
-        ["avl-modular-siz.ss", "SUCCESS"],
-        ["avl-modular.ss", "SUCCESS"],
-        ["avl.scp.ss", "SUCCESS"],
-        ["avl.ss", "SUCCESS"],
-        ["bubble.ss", "SUCCESS"],
-        ["cll.ss", "SUCCESS"],
-        ["dll.ss", "SUCCESS"],
-        ["insertion.ss", "SUCCESS"],
-        ["ll.ss", "SUCCESS"],
-        ["merge-modular.ss", "SUCCESS"],
-        ["merge.ss", "SUCCESS"],
-        ["qsort.ss", "SUCCESS"],
-        ["rb_bags.ss", "SUCCESS" ],
-        ["rb.scp.ss", "SUCCESS" ],
-        ["selection.ss", "SUCCESS"],
-        ["trees.ss", "SUCCESS" ]]
+        ["avl-all-1.ss"],
+        ["avl-all.ss"],
+        ["avl-modular-2.ss"],
+        ["avl-modular-3.ss"],
+        ["avl-modular-hei.ss"],
+        ["avl-modular-new3.ss"],
+        ["avl-modular-set.ss"],
+        ["avl-modular-siz.ss"],
+        ["avl-modular.ss"],
+        ["avl.scp.ss"],
+        ["avl.ss"],
+        ["bubble.ss"],
+        ["cll.ss"],
+        ["dll.ss"],
+        ["insertion.ss"],
+        ["ll.ss"],
+        ["merge-modular.ss"],
+        ["merge.ss"],
+        ["qsort.ss"],
+        ["rb_bags.ss"],
+        ["rb.scp.ss"],
+        ["selection.ss"],
+        ["trees.ss"]]
   );
 # list of file, string with result of each entailment....
 %sleek_files=(
@@ -217,18 +217,19 @@ if($timings){
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 print "Starting hip tests:\n";
-	hip_process_file();
+hip_process_file();
 close(LOGFILE);
 
 if ($fails_count > 0) {
-    print "Total number of fails: $error_count in files:\n $fail_files.\n";
-    print "Total number of success: $success_count\n";
+    print "\nProcedure verification failures: $fails_count \n$fail_files\n";
 }
-elsif ($fatal_errors > 0){
-    print "Total number of fatal_error: $fatal_error in files:\n $fatal_error_files.\n";
-    print "Total number of success: $success_count\n";
+if ($fatal_errors > 0){
+    print "\nProgram fatal errors: $fatal_errors:\n$fatal_error_files\n";
 }
-else {print "All test results were as expected.\n";}
+if (($fails_count > 0 || $fatal_errors > 0) && $success_count > 0) {
+    print "Total number of procedures verified with success: $success_count\n\n";
+}
+elsif ($sunccess_count > 0) {print "All test results were as expected.\n";}
 
 if($home21){
 	chdir("/home") or die "Can't chdir to $target_dir $!";
@@ -296,30 +297,41 @@ sub hip_process_file {
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
-			$output = `$hip $script_arguments $exempl_path/hip/$test->[0] | grep Proc 2>&1`;
-            # print LOGFILE "\n======================================\n";
-			# print LOGFILE "$output";
-            open(RESULT,"$output");
-            # my $fails = 0;
-            # my $successes = 0;
-            while (<RESULT>){
-                if($_ =~ m/Fatal error/){
-                    $fatal_error++;
+            if($timings) {
+                @output = `$hip $script_arguments $exempl_path/$test->[0] | grep -e "Proc" -e "time" -e "Time" -e "false contexts" 2>&1`;}
+            else{
+                @output = `$hip $script_arguments $exempl_path/$test->[0] | grep -e "Proc" 2>&1`;    
+            }
+            my $fails = 0;
+            my $successes = 0;
+            if (@output){
+                foreach $line (@output)
+                {
+                    if($line =~ m/FAIL/){
+                        $fails++;
+                        $fails_count++;
+                        # chomp $line;
+                        # print $line;
+                        $line =~ m/Procedure(.*)\$/; 
+                        # my $proc = '$1';
+                        $fail_files=$fail_files." fail: $test->[0]: $1\n";
+                        print "  error at: $test->[0] $1\n";
+                    }
+                    elsif($line =~ m/SUCCESS/){
+                        $sucess++;
+                        $success_count++;
+                    }
+                }
+                if ($fails == 0 && $success == 0){
+                    $fatal_errors++;
                     $fatal_error_files=$fatal_error_files." $test->[0] \n";
                 }
-                elsif($_ =~ m/FAIL/){
-                    $fails_count++;
-                    $_ =~ m/Procedure (.*) \@/;
-                    my $proc = "$1";
-                    $fail_files=$fail_files." fail: $test->[0]: $proc\n";
-                }
-                elsif($_ =~ m/SUCCESS/){
-                    $success_count++;
-                }
+                $fails_count = $fails_count + $fails;
+                $success_count = $success_count + $success;
             }
-             if($timings) {
+            if($timings) {
                 log_one_line_of_timings ($test->[0], $output);
-             }
+            }
 		}
     }
 }
