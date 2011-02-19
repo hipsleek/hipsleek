@@ -89,7 +89,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	typechecker.cmo \
 	globalvars.cmo \
 	scriptarguments.cmo\
-	main.cmo
+	main.cmo slices.cmo
 
 
 PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
