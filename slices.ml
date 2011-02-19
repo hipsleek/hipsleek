@@ -65,7 +65,7 @@ module Set =
      end;;
  
 
-module Flex_Partition =
+module Flexi_Partition =
     (* this supports dynamic slices *)
    functor (Elt: ORDERED_TYPE) ->
    functor (Res: ASSOC_TYPE with type v=Elt.t) ->
@@ -80,7 +80,7 @@ module Flex_Partition =
            | [] -> (vs,r)
            | (v1,r1)::xs -> combine xs (X.union v1 vs) (Res.join r1 r)
        let merge (x:many_p) (y:many_p) : many_p = (* merge two many_p into one *)
-         let rec helper x y = match x with
+         let rec helper x y = match y with
            | [] -> x
            | (vs,r)::ys -> let (plist1,plist2) = List.partition (fun (s,_) -> X.overlaps s vs) x in
              let one_p = combine plist1 vs r in
@@ -108,8 +108,8 @@ module Fixed_Partition =
        let merge (x:many_p) (y:many_p) : many_p = 
          let rec helper x y =
            match x,y with
-             | [],ys -> ys
-             | xs,[] -> xs
+             | [],_ -> y
+             | _,[] -> x
              | ((l1,r1)::xs),((l2,r2)::ys) -> match Elt.compare l1 l2 with
                  | Equal -> (l1,Res.join r1 r2)::(helper xs ys)
                  | Less -> (l1,r1)::(helper xs y)
