@@ -200,6 +200,75 @@ struct
 
 end;;
 
+exception Stack_Error
+
+class ['a] ostack x_init  =
+   object 
+     val mutable stk = []
+     val emp_val = x_init
+     method push (i:'a) = stk <- i::stk
+     method get  = stk (* return content of stack *)
+     method override newstk  = stk <- newstk (* set to a new stack *)
+     method pop = match stk with 
+       | [] -> print_string "ERROR : popping empty stack"; 
+               raise Stack_Error
+       | x::xs -> stk <- xs
+     method pop_no_exc = match stk with 
+       | [] -> () 
+       | x::xs -> stk <- xs
+     method top : 'a = match stk with 
+       | [] -> print_string "ERROR : top of empty stack"; 
+               raise Stack_Error
+       | x::xs -> x
+     method top_no_exc : 'a = match stk with 
+       | [] ->  emp_val
+       | x::xs -> x
+     method len = List.length stk
+   end;;
+
+class counter x_init =
+   object 
+     val mutable ctr = x_init
+     method get = ctr
+     method inc = ctr <- ctr + 1
+     method reset = ctr <- 0
+   end;;
+
+module ErrorUtil =
+struct
+(** Error-handling functions. *)
+
+let error_list = new ostack "error - stack underflow"
+
+let no_errors () = (error_list#len = 0)
+
+let err loc msg = 
+  error_list#push (loc ^ ": error: "^msg)
+
+let error msg = (print_string (msg ^"\n"); flush_all(); err "" msg)
+let print_errors () = 
+  List.iter (function x -> print_string (x ^ "\n")) error_list#get;
+  print_string (string_of_int (error_list#len)^" errors.\n");
+  print_string "The program is INVALID\n";
+  exit 2
+
+let warning_no  = new counter 0
+let warn msg = 
+  warning_no #inc;
+  print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
+
+let warn_if_none ov msg = match ov with
+  | None -> warn msg
+  | Some _ -> ()
+
+let fail s =   
+  print_string (s ^ "\n"); 
+  Printf.printf "There were %d warnings.\n" warning_no#get;
+  flush_all();
+  failwith s
+
+end;;
+
 module EqMap =
     functor (Elt : EQ_TYPE) ->
 struct
@@ -246,7 +315,6 @@ struct
   let find_remove (s : emap) (e:elem) : key * emap  = 
     let r1 = find_aux s e [] in
     (r1, if r1==[] then s else List.filter (fun (e2,_)-> not(eq e e2)) s)
-
 
   (* returns s |- x=y *)
   let is_equiv (s: emap)  (x:elem) (y:elem) : bool =
@@ -419,47 +487,52 @@ module IntCtr =
           let zero = Elt.zero
           let ctr = ref zero
           let reset () = ctr := zero
-          let increment () : vtype = 
-            let v = Elt.inc (!ctr) in (ctr:=v); v
+          let increment () : unit = 
+            let v = Elt.inc (!ctr) in (ctr:=v)
     end;;
+
+
+type elem = int
+
+(* class [’a] refa x_init =  *)
+(*    object  *)
+(*      val mutable x = (x_init : ’a) *)
+(*      method get = x *)
+(*      method set y = x <- y *)
+(*    end;; *)
+
 
 module StackTrace =
 struct 
   (* keep track of calls being traced by ho_debug *)
-  module CTR = IntCtr(INT)
+  let ctr = new counter 0
  
-  type stack = CTR.vtype list
-
-  (* counter *)
-  let ctr = CTR.ctr
-
+  (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let stk = ref ([]: stack)
+  let stk = new ostack (-1)
 
   (* pop last element from call stack of ho debug *)
-  let pop () =
-    match !stk with
-      | [] -> () (* error *)
-      | v::rest -> stk := rest
+  let pop () = stk # pop
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_ho (f:'a->'b) (e:'a) : 'b =
     let r = try 
       f e
-    with exc -> pop(); raise exc
-    in pop(); r
+    with exc -> stk#pop; raise exc
+    in stk#pop; r
 
   (* string representation of call stack of ho_debug *)
-  let string_of_stk () : string =
-    let h = !stk in
+  let string_of () : string =
+    let h = stk#get in
     String.concat "@" (List.map string_of_int h)
 
   (* returns @n and @n1;n2;.. for a new call being debugged *)
   let push (os:string) : (string * string) = 
-    ctr := !ctr+1 ; 
-    stk := !ctr::!stk;
-    let s = os^"@"^(string_of_int !ctr) in
-    let h = os^"@"^string_of_stk() in
+    ctr#inc;
+    let v = ctr#get in
+    let _ = stk#push v in
+    let s = os^"@"^(string_of_int v) in
+    let h = os^"@"^string_of() in
     s,h
 end;;
 
@@ -817,7 +890,9 @@ module DisjPtr0 = DisjSet(PtrSV0)
 module Profiling =
 struct
   let counters = ref (Hashtbl.create 10)
-  let profiling_stack = ref []
+
+  let profiling_stack = new ostack ("illegal -stack underflow",0.,false)
+
   let tasks = ref (Hashtbl.create 10)  
 
   let add_to_counter (s:string) i = 
@@ -849,25 +924,26 @@ struct
   let push_time_no_cnt msg = 
     if (!Globals.profiling) then
       let timer = get_time () in
-	  profiling_stack := (msg, timer,true) :: !profiling_stack 
+	  profiling_stack # push (msg, timer,true) 
     else ()
 
   let push_time msg = 
     if (!Globals.profiling) then
       (inc_counter ("cnt_"^msg);
       let timer = get_time () in
-	  profiling_stack := (msg, timer,true) :: !profiling_stack)
+	  profiling_stack#push (msg, timer,true) )
+	  (* profiling_stack := (msg, timer,true) :: !profiling_stack) *)
     else ()
 
   let pop_time msg = 
     if (!Globals.profiling) then
-	  let m1,t1,_ = List.hd !profiling_stack in
+	  let m1,t1,_ = profiling_stack # top in
 	  if (String.compare m1 msg)==0 then 
 	    let t2 = get_time () in
 	    if (t2-.t1)< 0. then Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("negative time")}
 	    else
-		  profiling_stack := List.tl !profiling_stack;
-	    if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) !profiling_stack) then begin
+		  profiling_stack # pop;
+	    if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0) profiling_stack#get) then begin
 		  (* if (List.exists (fun (c1,_,b1)-> (String.compare c1 msg)=0&&b1) !profiling_stack) then begin *)
 		  (* 	profiling_stack :=List.map (fun (c1,t1,b1)->if (String.compare c1 msg)=0 then (c1,t1,false) else (c1,t1,b1)) !profiling_stack; *)
 		  (* 	print_string ("\n double accounting for "^msg^"\n") *)
@@ -941,7 +1017,7 @@ struct
         | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error special poping "^msg^"from the stack")}
         | (m1,_,_)::t ->  if not ((String.compare m1 msg)==0) then helper t			
 		  else t in
-      profiling_stack := helper !profiling_stack 
+      profiling_stack#override (helper profiling_stack#get) 
 	else ()
 
   let print_tasks unit : unit  = 
