@@ -326,7 +326,7 @@ end;;
 
 exception Stack_Error
 
-class ['a] ostack x_init  =
+class ['a] stack x_init  =
    object 
      val emp_val = x_init
      val mutable stk = []
@@ -369,7 +369,7 @@ module ErrorUtil =
 struct
   (** Error-handling functions. *)
 
-  let error_list = new ostack "error - stack underflow"
+  let error_list = new stack "error - stack underflow"
 
   let no_errors () = (error_list#len = 0)
 
@@ -643,7 +643,7 @@ struct
     
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let stk = new ostack (-1)
+  let stk = new stack (-1)
 
   (* pop last element from call stack of ho debug *)
   let pop () = stk # pop
@@ -869,15 +869,15 @@ struct
   let star_union x y = x@y
 end;;
 
-module PtrSV0 =
-struct
-  include SV
-  type tlist = t list
-  module X = BasicListEQ(SV)
-  let overlap = eq
-  let intersect (x:tlist)  (y:tlist) = X.intersect x y
-  let star_union x y = x@y
-end;;
+(* module PtrSV0 = *)
+(* struct *)
+(*   include SV *)
+(*   type tlist = t list *)
+(*   module X = BasicListEQ(SV) *)
+(*   let overlap = eq *)
+(*   let intersect (x:tlist)  (y:tlist) = X.intersect x y *)
+(*   let star_union x y = x@y *)
+(* end;; *)
 
 module PtrSV = Ptr(SV)
 
@@ -1022,14 +1022,14 @@ struct
 end;;
 
 module DisjPtr = DisjSet(PtrSV)
-module DisjPtr0 = DisjSet(PtrSV0)
+(* module DisjPtr0 = DisjSet(PtrSV0) *)
 
 
 module Profiling =
 struct
   let counters = ref (Hashtbl.create 10)
 
-  let profiling_stack = new ostack ("stack underflow",0.,false)
+  let profiling_stack = new stack ("stack underflow",0.,false)
 
   let tasks = ref (Hashtbl.create 10)  
 
