@@ -908,7 +908,8 @@ let pop_time msg =
 	else 
 	  Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
   else ()
-  let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
+
+let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
   try
     push_time s;
       let r=f e in
@@ -1084,6 +1085,7 @@ let has_cycles ():bool =
 let print_profiling_info () = if (!Globals.profiling) then  print_tasks () else ()
 
 (*aliasing structures*)
+
 type ('a,'k) e_map =  ('a * 'k) list
 type 'a e_set =  ('a,'a list) e_map
 type 'a e_name = ('a * string) list (* map of name to string used *)
@@ -1565,7 +1567,6 @@ let empty_baga () : 'a baga = []
 
 (* a singleton bag *)
 let singleton_baga (e:'a) : 'a baga = [e]
-
 
 let rec is_dupl_baga (eq:'a->'a->bool) (xs:'a baga) : bool = 
   match xs with
