@@ -1,17 +1,150 @@
 type comparison = Less | Equal | Greater
 
 module type ORDERED_TYPE =
-   sig
-     type t
-     val compare: t -> t -> comparison (* string compare *)
-   end;;
+sig
+  type t
+  val compare: t -> t -> comparison (* string compare *)
+end;;
 
 module type LABEL_TYPE =
-   sig
-     type t
-     val compare: t -> t -> comparison (* string.compare *)
-     val subtype: t -> t -> bool  (* substring test *)
-   end;;
+sig
+  include ORDERED_TYPE
+  val subtype: t -> t -> bool  (* substring test *)
+end;;
+
+
+module type TY_TYPE =
+sig
+  include Gen.EQ_TYPE
+end;;
+
+module TY =
+struct
+  type t=int
+  let eq v1 v2 = true
+  let string_of v1 = "?"
+end;;
+
+module type VAR_TYPE =
+sig
+  type ty 
+  type v
+  include Gen.EQ_TYPE with type t=v
+  type vlist = v list
+  val fresh_var : string * t -> v
+  val rename_var : v -> v  (* with a fresh name generator *)
+  val rename_var_list :  vlist -> vlist
+  val type_of : v -> ty
+  val change_type : v -> ty -> v
+end;;
+
+(* module type V_TYPE = VAR_TYPE(TY);;  *)
+
+module type EXPR_TYPE =
+sig
+  type v 
+  type ty
+  include Gen.EQ_TYPE 
+  type rv = (v * v) (* renaming *)
+  type sv = (v * t) (* substitution *)
+  type slist = sv list (* subs list *)
+  type rlist = rv list (* rename list *)
+  type vlist = v list (* var list *)
+  val mkVar : v -> t
+  val isVar : t -> bool
+  val getVar : t -> v option
+  val vars : t -> vlist (* may contain duplicates *)
+  val subs : slist -> t -> t
+  val rename : rlist -> t -> t (* only on the free vars *)
+  val rename_fresh :  t -> t * rlist
+  val norm : t -> t (* syntactic *)
+  val type_of : t -> t
+end;;
+
+module type ATOM_FORMULA_TYPE =
+sig
+  include EXPR_TYPE
+  type st (* status of atomic formula *)
+  val mkTrue : t
+  val mkFalse : t
+  val isTrue : t -> bool
+  val isFalse : t -> bool
+  val get_status : t -> st
+  val change_status : t -> st -> t
+end;;
+
+module type FORMULA_TYPE =
+sig
+  include ATOM_FORMULA_TYPE
+  type tlist = t list
+  type ans (* true, false, unknown *)
+  val is_sat : t -> ans (* mutable *)
+  val imply : vlist -> t -> t -> ans (* mutable *)
+  val syn_imply : vlist -> t -> t -> ans  
+  val syn_is_sat : t -> ans
+  val simplify : t -> t (* may use a prover *)
+
+  val push_exists : vlist -> t -> t (* may fail with exception *)
+  val elim_exists : vlist -> t -> t (* may fail with exception *)
+  val push_exists_safe : vlist -> t -> (vlist * t) 
+  val elim_exists_safe : vlist -> t -> (vlist * t) 
+
+  val join : t -> t -> t  (* AND operation *)
+  val split : t -> t * t
+  val split_with_evars : t -> t * t * vlist (* through existential *)
+  val join_list : tlist -> t
+  val split_list : t -> tlist 
+  val split_list_with_evars : t -> tlist * vlist 
+end;;
+
+module type DISJ_FORMULA_TYPE =
+sig
+  include FORMULA_TYPE
+  val disj_join : t -> t -> t
+  val disj_split : t -> (t * t)
+  val disj_join_list : tlist -> t
+  val disj_split_list : t -> tlist 
+end;;
+
+module type LAB_TYPE =
+sig
+  type l 
+  val is_compatible : l -> l -> bool
+  val combine : l -> l -> l option
+   (* pre : compatible label; post : new label *)
+   (* may not be possible for fixed label *)
+  val subtype : l -> l -> bool
+end;;
+
+module type SLICE_TYPE =
+sig
+  include FORMULA_TYPE
+  type at (* atomic formula *)
+  type l (* label *) 
+  type one_p = l * t
+  type many_p = one_p list 
+  val get_label : at -> l
+  val conv_to_atoms :  t -> at list
+  val add_atom :  at -> one_p -> one_p 
+    (* throw exception if incompatible *)
+  val add_atom_part :  at -> many_p -> many_p
+    (* may not normalise for flexi-slice *)
+  val add_atom_list_part :  at list -> many_p -> many_p
+   (* may not normalise for flexi-slice *)
+  val merge : many_p -> many_p -> many_p 
+    (* may not normalise for flexi-slice *)
+  val collapse : many_p -> t
+end;;
+
+module type FLEXI_SLICE_TYPE =
+sig
+  include SLICE_TYPE
+  val add_atom_part_norm :  at -> many_p -> many_p  
+  val merge_norm : many_p -> many_p -> many_p 
+   (* with normalization *)
+  val norm_part :  many_p -> many_p
+end;;
+
 
 module type ASSOC_TYPE =
    (* this is to support pure formula *)
@@ -94,6 +227,7 @@ module Flexi_Partition =
            | (_,r)::es -> Res.join r (helper es) in
          helper x
      end;;
+
 
 module Fixed_Partition =
     (* this supports fixed slices *)
@@ -180,7 +314,7 @@ module MemoFormula =
      } (* and two memoised group *)
      let vars x  = x.MP.memo_group_fv  (* free vars of memoised group *)
      let unit =  { MP.memo_group_fv = [];
-			       MP.memo_group_cons = [];
+	       MP.memo_group_cons = [];
 			       MP.memo_group_slice = [];
 			       MP.memo_group_changed = false;
 			       MP.memo_group_aset = MP.empty_var_aset;}

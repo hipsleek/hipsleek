@@ -841,13 +841,14 @@ sig
   val intersect : tlist -> tlist -> tlist
 end;;
 
-(* module type EQ_PTR_TYPE = *)
-(*     functor (Elt:EQ_TYPE) -> *)
-(*     sig *)
-(*       open Elt *)
-(*       type tlist = t list *)
-(*       val intersect : tlist -> tlist -> tlist *)
-(*     end;; *)
+module type EQ_PTR_TYPE =
+    functor (Elt:EQ_TYPE) ->
+    sig
+      open Elt
+      type a =Elt.t
+      type tlist = t list
+      val intersect : tlist -> tlist -> tlist
+    end;;
 
 module CP = Cpure
 
