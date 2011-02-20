@@ -111,6 +111,7 @@ and coq_of_exp e0 =
 	  | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
 	  end
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+	| CP.ArrayAt _ -> failwith ("Arrays are not supported in Coq") (* An Hoa *)
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
@@ -152,6 +153,7 @@ and coq_of_b_formula b =
   | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
   | CP.BagMin _
   | CP.BagMax _ -> failwith ("No bags in Coq yet")
+	| CP.RelForm _ -> failwith ("No relations in Coq yet") (* An Hoa *)
 
 (* pretty printing for formulas *)
 and coq_of_formula f =

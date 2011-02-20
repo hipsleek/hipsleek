@@ -128,12 +128,39 @@ type smtprover =
   | Yices
 
 let command_for prover = 
-  let helper s = s ^ infile ^ " | tail -n 1 > " ^ outfile in
+  let helper s = s ^ infile ^ (* " | tail -n 1 > " *) " > " ^ outfile in
   match prover with
   | Z3 -> helper "z3 -smt2 "
   | Cvc3 -> helper "cvc3 -lang smt "
   | Yices -> helper "yices "
 
+(** An Hoa
+ * Get the type of a spec_var
+ *)
+let extract_type sv = 
+	match sv with
+		| CP.SpecVar (t,_,_) -> t
+
+(** An Hoa
+ * Get the name of a spec_var
+ *)
+let extract_name sv = 
+	match sv with
+		| CP.SpecVar (_,n,_) -> n
+
+(** An Hoa : 
+ * Find the SMT corresponding of typ
+ *)
+let rec smt_of_typ t = 
+	match t with
+		| CP.Prim pt -> begin match pt with
+			| Bool -> "Bool"
+		  | Float -> "Real"
+		  | Int -> "Int"
+		  | Void | Bag | List -> "" (* Fail! *)
+		end
+		| CP.OType _ -> "" (* Fail! *)
+		| CP.Array et -> "(Array Int " ^ smt_of_typ et ^ ")"
 
 (**
  * smt of spec_var
@@ -180,7 +207,7 @@ let rec smt_of_exp a qvars =
   | CP.ListReverse _ -> failwith ("[smtsolver.ml]: ERROR in constraints (lists should not appear here)")
   | CP.ArrayAt (a, i, l) -> 
           (* An Hoa : TODO EDIT APPROPRIATELY *)
-          "(select " ^ (smt_of_spec_var a (Some qvars)) ^ (smt_of_exp i qvars) ^ ")"
+          "(select " ^ (smt_of_spec_var a (Some qvars)) ^ " " ^ (smt_of_exp i qvars) ^ ")"
 
 let rec smt_of_b_formula b qvars =
   let smt_of_spec_var v = smt_of_spec_var v (Some qvars) in
@@ -238,40 +265,19 @@ let rec smt_of_formula f qvars =
       (* see smt_of_spec_var for explanations of the qvars set *)
       let varname = smt_of_spec_var sv None in
       let qvars = StringSet.add varname qvars in
-      "(forall (?" ^ varname ^ " Int) " ^ (smt_of_formula p qvars) ^ ")"
+      "(forall (?" ^ varname ^ " " ^ (smt_of_typ (extract_type sv)) ^ ") " (* " Int) " *) ^ (smt_of_formula p qvars) ^ ")"
   | CP.Exists (sv, p, _,_) ->
       (* see smt_of_spec_var for explanations of the qvars set *)
       let varname = smt_of_spec_var sv None in
       let qvars = StringSet.add varname qvars in
-      "(exists (?" ^ varname ^ " Int) " ^ (smt_of_formula p qvars) ^ ")"
+      "(exists (?" ^ varname ^ " " ^ (smt_of_typ (extract_type sv)) ^ ") " (* " Int) " *) ^ (smt_of_formula p qvars) ^ ")"
 
-(** An Hoa : 
- * Find the SMT corresponding of typ
- *)
-let rec smt_of_typ t = 
-	match t with
-		| CP.Prim pt -> begin match pt with
-			| Bool -> "Bool"
-		  | Float -> "Real"
-		  | Int -> "Int"
-		  | Void | Bag | List -> "" (* Fail! *)
-		end
-		| CP.OType _ -> "" (* Fail! *)
-		| CP.Array et -> "(Array Int " ^ smt_of_typ et ^ ")" (* Only allow array of integer values *)
 
 (* An Hoa : get the corresponding typed variable. For instance, *)
 
 let smt_typed_var_of_spec_var sv = 
 	match sv with
 		| CP.SpecVar (t, id, _) -> "(" ^ (smt_of_spec_var sv None) ^ " " ^ (smt_of_typ t) ^ ")"
-
-let extract_type sv = 
-	match sv with
-		| CP.SpecVar (t,_,_) -> t
-
-let extract_name sv = 
-	match sv with
-		| CP.SpecVar (_,n,_) -> n
 
 (**
  * Axiomatize the relation from the definition.
@@ -294,7 +300,7 @@ let to_smt_v2 ante conseq logic fvars =
   let rec decfuns vars = match vars with
     (* let's assume all vars are Int *)
     | [] -> ""
-    | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () Int)\n" ^ (decfuns rest)
+    | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
   in 
 	let rel_def_ax = (String.concat "" (List.map smt_of_rel_def !rel_defs)) in
 	 ("(set-logic " ^ (string_of_logic logic) ^ ")\n" ^ 
@@ -373,10 +379,11 @@ let run prover input =
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
 	(* An Hoa : Print the output for debugging purpose *)
-	let _ = print_string input in
+	let _ = print_string ("SMT input :\n" ^ input) in
 	let _ = flush stdout in
 	(* An Hoa : Debug *)
   let output = run prover input in
+	let _ = print_string ("SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in
   res
 

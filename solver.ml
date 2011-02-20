@@ -2936,7 +2936,15 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no
   (* let _ = print_string ("\n\nimply_mix_formula" ^ (string_of_int !imp_no)^"\n") in *)
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
-    | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
+    | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
+			(* An Hoa : before passing on to TP *)
+			(* let _ = print_string ("imply_mix_formula :: " ^ Cprinter.string_of_pure_formula a0 ^ "\n") in 
+			let _ = print_string ("imply_mix_formula :: " ^ Cprinter.string_of_pure_formula a1 ^ "\n") in
+			let _ = print_string ("imply_mix_formula :: " ^ Cprinter.string_of_pure_formula c ^ "\n") in
+			let a0s = (TP.split_disjunctions a0) in
+			let _ = print_string ("imply_mix_formula :: Split antecedent " ^ (String.concat "," (List.map Cprinter.string_of_pure_formula a0s)) ^ "\n") in
+			let cs = (TP.split_conjunctions c) in
+			let _ = print_string ("imply_mix_formula :: Split antecedent " ^ (String.concat "," (List.map Cprinter.string_of_pure_formula cs)) ^ "\n") in *)
           CP.imply_conj_orig 
               (TP.split_disjunctions a0) 
               (TP.split_disjunctions a1) 

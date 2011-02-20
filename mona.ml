@@ -655,6 +655,7 @@ and mona_of_b_formula b f vs =
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
+	| CP.RelForm _ -> failwith ("Relations are not supported in Mona") (* An Hoa *) 
   in
   ret
 
@@ -744,7 +745,7 @@ and print_b_formula b f = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Mona")
-
+  | CP.RelForm _ -> failwith ("Arrays are not supported in Mona") (* An Hoa *)
 
 
 (*let set_timer tsecs =
