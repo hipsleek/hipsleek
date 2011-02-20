@@ -1,119 +1,123 @@
 module Basic =
-    struct
+struct
 
-exception Bad_string
-exception Bail
-let rec restart f arg =
-  try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
+  exception Bad_string
+  exception Bail
 
-let fnone (c:'a):'a option = None
+  let rec restart f arg =
+    try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
-let empty l = match l with [] -> true | _ -> false
+  let fnone (c:'a):'a option = None
 
-let spacify i = 
-  let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
-  function [] -> ""
-    | [x] -> x
-    | x::xs -> x ^ (s' xs)
+  let empty l = match l with [] -> true | _ -> false
 
-let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
-  let rec helper xs n = match xs with
-	| e :: rest -> 
-		  if f e then (n, e)
-		  else helper rest (n + 1)
-	| _ -> raise Not_found
-  in
-  helper xs0 0
+  let string_of_list (f:'a->string) (ls:'a list) : string = 
+    ("["^(String.concat "," (List.map f ls))^"]")
 
-let rec list_last l = match l with
-  | h::[] -> h
-  | _::t -> (list_last t)
-  | [] -> failwith "Util.list_last: empty list"
+  let spacify i = 
+    let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
+    function [] -> ""
+      | [x] -> x
+      | x::xs -> x ^ (s' xs)
 
-(** Split the list of length k>=1 into a pair consisting of
-   the list of first k-1 elements and the last element. *)
-let rec firsts_last xs = match xs with
-  | [] -> failwith "Util.first_lasts: empty list"
-  | [x] -> ([],x)
-  | x::xs1 ->
-        let (fs,l) = firsts_last xs1 in
-        (x::fs,l)
+  let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
+    let rec helper xs n = match xs with
+	  | e :: rest -> 
+		    if f e then (n, e)
+		    else helper rest (n + 1)
+	  | _ -> raise Not_found
+    in
+    helper xs0 0
 
-let rec take n l  = if n<=0 then [] else 
-  match l with
-    | h::t -> h::(take (n-1) t)
-    | [] -> []
-    
-let rec drop n l  = if n<=0 then l else
-  match l with
-    | h::t -> (drop (n-1) t)
-    | [] -> []
+  let rec list_last l = match l with
+    | h::[] -> h
+    | _::t -> (list_last t)
+    | [] -> failwith "Util.list_last: empty list"
 
-(*
-  first component of returned value contains the first i values from the list
-  second component contains the rest
-*)
-let rec split_at (xs : 'a list) (i : int) : ('a list * 'a list) =
-  if i = 0 then ([], xs)
-  else
-	let a, b = split_at (List.tl xs) (i-1) in
-	((List.hd xs) :: a, b) 
+  (** Split the list of length k>=1 into a pair consisting of
+      the list of first k-1 elements and the last element. *)
+  let rec firsts_last xs = match xs with
+    | [] -> failwith "Util.first_lasts: empty list"
+    | [x] -> ([],x)
+    | x::xs1 ->
+          let (fs,l) = firsts_last xs1 in
+          (x::fs,l)
 
-let rec split3 (l : ('a * 'b * 'c) list) : 'a list * 'b list * 'c list = match l with
-  | (h1, h2, h3) :: rest ->
-	    let l1, l2, l3 = split3 rest in
-		(h1::l1, h2::l2, h3::l3)
-  | [] -> ([], [], [])
+  let rec take n l  = if n<=0 then [] else 
+    match l with
+      | h::t -> h::(take (n-1) t)
+      | [] -> []
+            
+  let rec drop n l  = if n<=0 then l else
+    match l with
+      | h::t -> (drop (n-1) t)
+      | [] -> []
 
-let rec combine3 a b c = match (a, b, c) with
-  | (ah::arest, bh::brest, ch::crest) ->
-	    let l = combine3 arest brest crest in
-		(ah, bh, ch)::l
-  | ([], [], []) -> []
-  | _ -> failwith ("combine3: combining lists with different lengths")
+  (*
+    first component of returned value contains the first i values from the list
+    second component contains the rest
+  *)
+  let rec split_at (xs : 'a list) (i : int) : ('a list * 'a list) =
+    if i = 0 then ([], xs)
+    else
+	  let a, b = split_at (List.tl xs) (i-1) in
+	  ((List.hd xs) :: a, b) 
 
-let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list = 
-  match (a0, bs, cs) with
-	| (a :: r1, b :: r2, c :: r3) ->
-		  let r = map3 f r1 r2 r3 in
-		  (f a b c) :: r
-	| [], [], [] -> []
-	| _ -> failwith ("map3: mapping lists with different lengths.")
+  let rec split3 (l : ('a * 'b * 'c) list) : 'a list * 'b list * 'c list = match l with
+    | (h1, h2, h3) :: rest ->
+	      let l1, l2, l3 = split3 rest in
+		  (h1::l1, h2::l2, h3::l3)
+    | [] -> ([], [], [])
 
-let rec map4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a0 : 'a list) (bs : 'b list) (cs : 'c list) (ds : 'd list) : 'e list = 
-  match (a0, bs, cs, ds) with
-	| (a :: r1, b :: r2, c :: r3, d:: r4) ->
-		  let r = map4 f r1 r2 r3 r4 in
-		  (f a b c d) :: r
-	| [], [], [], [] -> []
-	| _ -> failwith ("map4: mapping lists with different lengths.")
+  let rec combine3 a b c = match (a, b, c) with
+    | (ah::arest, bh::brest, ch::crest) ->
+	      let l = combine3 arest brest crest in
+		  (ah, bh, ch)::l
+    | ([], [], []) -> []
+    | _ -> failwith ("combine3: combining lists with different lengths")
+
+  let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list = 
+    match (a0, bs, cs) with
+	  | (a :: r1, b :: r2, c :: r3) ->
+		    let r = map3 f r1 r2 r3 in
+		    (f a b c) :: r
+	  | [], [], [] -> []
+	  | _ -> failwith ("map3: mapping lists with different lengths.")
+
+  let rec map4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a0 : 'a list) (bs : 'b list) (cs : 'c list) (ds : 'd list) : 'e list = 
+    match (a0, bs, cs, ds) with
+	  | (a :: r1, b :: r2, c :: r3, d:: r4) ->
+		    let r = map4 f r1 r2 r3 r4 in
+		    (f a b c d) :: r
+	  | [], [], [], [] -> []
+	  | _ -> failwith ("map4: mapping lists with different lengths.")
 
 
-let rec repeat (v : 'a) (n : int) : 'a list =
-  if n <= 0 then []
-  else v :: (repeat v (n-1))
+  let rec repeat (v : 'a) (n : int) : 'a list =
+    if n <= 0 then []
+    else v :: (repeat v (n-1))
 
-    end;;
+end;;
 
 module HashUtil =
-    struct
-(* Hashtable stuff *)
+struct
+  (* Hashtable stuff *)
 
-let copy_keys (keys : 'a list) (fr_tab : ('a, 'b) Hashtbl.t) (to_tab : ('a, 'b) Hashtbl.t) =
-  let cp_key (k : 'a) = 
-	try
-	  let v = Hashtbl.find fr_tab k in
-	  Hashtbl.add to_tab k v
-	with
-	  | Not_found -> () 
-  in
-  ignore (List.map cp_key keys)
+  let copy_keys (keys : 'a list) (fr_tab : ('a, 'b) Hashtbl.t) (to_tab : ('a, 'b) Hashtbl.t) =
+    let cp_key (k : 'a) = 
+	  try
+	    let v = Hashtbl.find fr_tab k in
+	    Hashtbl.add to_tab k v
+	  with
+	    | Not_found -> () 
+    in
+    ignore (List.map cp_key keys)
 
-let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
-  let append_val k v vl = v::vl in
-  Hashtbl.fold append_val tab []
+  let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
+    let append_val k v vl = v::vl in
+    Hashtbl.fold append_val tab []
 
-    end;;
+end;;
 
 
 (* module type CTR_TYPE = *)
@@ -144,8 +148,8 @@ struct
 
   (* List-handling stuff *)
 
-(** Split the list of length k>=1 into a pair consisting of
-   the list of first k-1 elements and the last element. *)
+  (** Split the list of length k>=1 into a pair consisting of
+      the list of first k-1 elements and the last element. *)
   let rec firsts_last xs = match xs with
     | [] -> failwith "Util.first_lasts: empty list"
     | [x] -> ([],x)
@@ -157,7 +161,7 @@ struct
     match l with
       | h::t -> h::(take (n-1) t)
       | [] -> []
-    
+            
   let rec drop n l  = if n<=0 then l else
     match l with
       | h::t -> (drop (n-1) t)
@@ -219,7 +223,7 @@ struct
     | _::t -> (list_last t)
     | [] -> failwith "Util.list_last: empty list"
 
- let remove_elem_eq eq e l = List.filter (fun x -> not(eq x e)) l 
+  let remove_elem_eq eq e l = List.filter (fun x -> not(eq x e)) l 
 
   let mem_eq eq x l = List.exists (eq x) l
 
@@ -255,7 +259,7 @@ struct
   let mem_eq eq x ls =
     List.exists (fun e -> eq x e) ls
 
- 
+        
   let intersect_eq eq l1 l2 =
     List.filter (fun x -> List.exists (eq x) l2) l1  
 
@@ -319,26 +323,31 @@ exception Stack_Error
 
 class ['a] ostack x_init  =
    object 
-     val mutable stk = []
      val emp_val = x_init
+     val mutable stk = []
+     val mutable elem_pr : 'a -> string 
+       = (fun _ -> "elem printer not initialised!")
      method push (i:'a) = stk <- i::stk
-     method get  = stk (* return content of stack *)
-     method override newstk  = stk <- newstk (* set to a new stack *)
+     method get  = stk (* return entire content of stack *)
+     method override newstk  = stk <- newstk 
+       (* override with a new stack *)
      method pop = match stk with 
        | [] -> print_string "ERROR : popping empty stack"; 
                raise Stack_Error
-       | x::xs -> stk <- xs
-     method pop_no_exc = match stk with 
-       | [] -> () 
        | x::xs -> stk <- xs
      method top : 'a = match stk with 
        | [] -> print_string "ERROR : top of empty stack"; 
                raise Stack_Error
        | x::xs -> x
+     method pop_no_exc = match stk with 
+       | [] -> () 
+       | x::xs -> stk <- xs
      method top_no_exc : 'a = match stk with 
        | [] ->  emp_val
        | x::xs -> x
      method len = List.length stk
+     method set_pr f = elem_pr <- f
+     method string_of = Basic.string_of_list elem_pr stk
    end;;
 
 class counter x_init =
@@ -346,41 +355,43 @@ class counter x_init =
      val mutable ctr = x_init
      method get = ctr
      method inc = ctr <- ctr + 1
+     method add i = ctr <- ctr + i
      method reset = ctr <- 0
+     method string_of = (string_of_int ctr)
    end;;
 
 module ErrorUtil =
 struct
-(** Error-handling functions. *)
+  (** Error-handling functions. *)
 
-let error_list = new ostack "error - stack underflow"
+  let error_list = new ostack "error - stack underflow"
 
-let no_errors () = (error_list#len = 0)
+  let no_errors () = (error_list#len = 0)
 
-let err loc msg = 
-  error_list#push (loc ^ ": error: "^msg)
+  let err loc msg = 
+    error_list#push (loc ^ ": error: "^msg)
 
-let error msg = (print_string (msg ^"\n"); flush_all(); err "" msg)
-let print_errors () = 
-  List.iter (function x -> print_string (x ^ "\n")) error_list#get;
-  print_string (string_of_int (error_list#len)^" errors.\n");
-  print_string "The program is INVALID\n";
-  exit 2
+  let error msg = (print_string (msg ^"\n"); flush_all(); err "" msg)
+  let print_errors () = 
+    List.iter (function x -> print_string (x ^ "\n")) error_list#get;
+    print_string (string_of_int (error_list#len)^" errors.\n");
+    print_string "The program is INVALID\n";
+    exit 2
 
-let warning_no  = new counter 0
-let warn msg = 
-  warning_no #inc;
-  print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
+  let warning_no  = new counter 0
+  let warn msg = 
+    warning_no #inc;
+    print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
 
-let warn_if_none ov msg = match ov with
-  | None -> warn msg
-  | Some _ -> ()
+  let warn_if_none ov msg = match ov with
+    | None -> warn msg
+    | Some _ -> ()
 
-let fail s =   
-  print_string (s ^ "\n"); 
-  Printf.printf "There were %d warnings.\n" warning_no#get;
-  flush_all();
-  failwith s
+  let fail s =   
+    print_string (s ^ "\n"); 
+    Printf.printf "There were %d warnings.\n" warning_no#get;
+    flush_all();
+    failwith s
 
 end;;
 
@@ -439,8 +450,8 @@ struct
       let r2 = find s y in
       (r1==r2 && not(r1==[]))
 
-(* add x=y to e-set s and returning a new e-set with
-   extra elements added *)
+  (* add x=y to e-set s and returning a new e-set with
+     extra elements added *)
   let add_equiv  (s: emap) (x:elem) (y:elem) : emap = 
     if (eq x y) then s
     else
@@ -468,28 +479,28 @@ struct
   let overlap l1 l2 = 
     List.exists (fun x -> (mem x l2)) l1
 
-(* this method is used to merge two partitions 
-   which may have different keys *)
-(* split out sub-lists in l which overlaps with x *)
+  (* this method is used to merge two partitions 
+     which may have different keys *)
+  (* split out sub-lists in l which overlaps with x *)
   let split_partition (x:elist) (l:epart): (epart * epart) =
     List.fold_left ( fun (r1,r2) y -> if (overlap x y) then (y::r1,r2) else (r1,y::r2)) ([],[]) l
 
-(* merge l1 /\ l2 to [[a]] *)
+  (* merge l1 /\ l2 to [[a]] *)
   let rec merge_partition (l1:epart) (l2:epart) : epart = match l1 with
     | [] -> l2
     | x::xs ->
           let (y,ys)=split_partition x l2 in
           if y==[] then x::(merge_partition xs l2)
           else merge_partition xs ((x@(List.concat y))::ys)
-   (*remove dupl of x*)
+            (*remove dupl of x*)
 
-(* return the domain of e-set *)
+  (* return the domain of e-set *)
   let domain (s: emap) : elist = List.map fst s
 
-(* return list of elements in e_set *)
+  (* return list of elements in e_set *)
   let get_elems (s:emap) : elist = domain s
 
-(* return pairs of equivalent elements from e_set *)
+  (* return pairs of equivalent elements from e_set *)
   let get_equiv (s:emap) : epair = 
     let ll = partition s in
     let make_p l = match l with
@@ -534,8 +545,8 @@ struct
       | [(x,_)] -> (Some x, ls2)
       | (x,_)::_ -> (Some x, s1)
 
-(* make fv=tv and then eliminate fv *)
-(* fv should never be constant *)
+  (* make fv=tv and then eliminate fv *)
+  (* fv should never be constant *)
   let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap = 
     if (eq fv tv) then s
     else
@@ -545,7 +556,7 @@ struct
         let ns = add_equiv s fv tv in
         elim_elems_one ns fv
 
-(* returns true if s contains no duplicates *)
+  (* returns true if s contains no duplicates *)
   let check_no_dupl (s:elist) : bool =
     let rec helper s = match s with
       | [] -> true
@@ -554,21 +565,21 @@ struct
             else helper xs in
     helper s
 
-(* check f is 1-to-1 map assuming s contains no duplicates *)
+  (* check f is 1-to-1 map assuming s contains no duplicates *)
   let is_one2one (f:elem -> elem) (s:elist) : bool =
     let l = List.map f s in
     if (check_no_dupl l) then true
     else (print_string ("duplicates here :"^(Util.string_of_a_list string_of l)^"\n") ; false) 
 
-(* rename the elements of e_set *)
-(* pre : f must be 1-to-1 map *)
+  (* rename the elements of e_set *)
+  (* pre : f must be 1-to-1 map *)
   let rename_eset (f:elem -> elem) (s:emap) : emap = 
     let b = is_one2one f (get_elems s) in
     if b then  List.map (fun (e,k) -> (f e,k)) s
     else Error.report_error {Error.error_loc = Globals.no_pos; 
     Error.error_text = ("rename_eset : f is not 1-to-1 map")}
 
-(* s - from var; t - to var *)
+  (* s - from var; t - to var *)
   let norm_subs_eq (subs:epair) : epair =
     let rec add (f,t) acc = match acc with
       | [] -> [[(f,t)]]
@@ -588,23 +599,23 @@ struct
 end;;
 
 module INT =
-    struct
-      type t = int
-      let zero = 0
-      let inc x = 1+x
-    end;;
+struct
+  type t = int
+  let zero = 0
+  let inc x = 1+x
+end;;
 
 module IntCtr =
     functor (Elt : INC_TYPE) ->
-        struct
-          type vtype = Elt.t
-          type reftype = vtype ref
-          let zero = Elt.zero
-          let ctr = ref zero
-          let reset () = ctr := zero
-          let increment () : unit = 
-            let v = Elt.inc (!ctr) in (ctr:=v)
-    end;;
+struct
+  type vtype = Elt.t
+  type reftype = vtype ref
+  let zero = Elt.zero
+  let ctr = ref zero
+  let reset () = ctr := zero
+  let increment () : unit = 
+    let v = Elt.inc (!ctr) in (ctr:=v)
+end;;
 
 
 type elem = int
@@ -621,7 +632,7 @@ module StackTrace =
 struct 
   (* keep track of calls being traced by ho_debug *)
   let ctr = new counter 0
- 
+    
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
   let stk = new ostack (-1)
@@ -708,47 +719,47 @@ struct
     let f  = f e1 in
     ho_aux loop_d test s [a1;a2] pr_o f e2
 
-    let ho_3_opt_aux (loop_d:bool) (test:'z -> bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string)  (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
-      let a1 = pr1 e1 in
-      let a2 = pr2 e2 in
-      let a3 = pr3 e3 in
-      let f  = f e1 e2 in
-      ho_aux loop_d test s [a1;a2;a3] pr_o f e3
+  let ho_3_opt_aux (loop_d:bool) (test:'z -> bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr_o:'z->string)  (f:'a -> 'b -> 'c -> 'z) (e1:'a) (e2:'b) (e3:'c) : 'z =
+    let a1 = pr1 e1 in
+    let a2 = pr2 e2 in
+    let a3 = pr3 e3 in
+    let f  = f e1 e2 in
+    ho_aux loop_d test s [a1;a2;a3] pr_o f e3
 
 
   let ho_4_opt_aux (loop_d:bool) (test:'z->bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd-> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d): 'z =
-      let a1 = pr1 e1 in
-      let a2 = pr2 e2 in
-      let a3 = pr3 e3 in
-      let a4 = pr4 e4 in
-      let f  = f e1 e2 e3 in
-      ho_aux loop_d test s [a1;a2;a3;a4] pr_o f e4
+    let a1 = pr1 e1 in
+    let a2 = pr2 e2 in
+    let a3 = pr3 e3 in
+    let a4 = pr4 e4 in
+    let f  = f e1 e2 e3 in
+    ho_aux loop_d test s [a1;a2;a3;a4] pr_o f e4
 
 
   let ho_5_opt_aux (loop_d:bool) (test:'z -> bool)  (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
         (pr5:'e->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd -> 'e -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) : 'z =
-      let a1 = pr1 e1 in
-      let a2 = pr2 e2 in
-      let a3 = pr3 e3 in
-      let a4 = pr4 e4 in
-      let a5 = pr5 e5 in
-      let f  = f e1 e2 e3 e4 in
-      ho_aux loop_d test s [a1;a2;a3;a4;a5] pr_o f e5
+    let a1 = pr1 e1 in
+    let a2 = pr2 e2 in
+    let a3 = pr3 e3 in
+    let a4 = pr4 e4 in
+    let a5 = pr5 e5 in
+    let f  = f e1 e2 e3 e4 in
+    ho_aux loop_d test s [a1;a2;a3;a4;a5] pr_o f e5
 
 
   let ho_6_opt_aux (loop_d:bool) (test:'z->bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
         (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
         (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
-      let a1 = pr1 e1 in
-      let a2 = pr2 e2 in
-      let a3 = pr3 e3 in
-      let a4 = pr4 e4 in
-      let a5 = pr5 e5 in
-      let a6 = pr6 e6 in
-      let f  = f e1 e2 e3 e4 e5 in
-      ho_aux loop_d test s [a1;a2;a3;a4;a5;a6] pr_o f e6
+    let a1 = pr1 e1 in
+    let a2 = pr2 e2 in
+    let a3 = pr3 e3 in
+    let a4 = pr4 e4 in
+    let a5 = pr5 e5 in
+    let a6 = pr6 e6 in
+    let f  = f e1 e2 e3 e4 e5 in
+    ho_aux loop_d test s [a1;a2;a3;a4;a5;a6] pr_o f e6
 
   let ho_1_opt f = ho_1_opt_aux false f
   let ho_2_opt f = ho_2_opt_aux false f
@@ -802,25 +813,25 @@ end;;
 
 
 module type MEM_TYPE =
-    sig
-      type t
-      val eq : t -> t -> bool
-      val overlap : t -> t -> bool
-      val intersect : t list -> t list -> t list (* /\ *)
-         (* under approx or-ing *)
-      val star_union : t list -> t list -> t list (* @ *)
-         (* combine by star *)
-      val to_string : t -> string
-    end;;
+sig
+  type t
+  val eq : t -> t -> bool
+  val overlap : t -> t -> bool
+  val intersect : t list -> t list -> t list (* /\ *)
+    (* under approx or-ing *)
+  val star_union : t list -> t list -> t list (* @ *)
+    (* combine by star *)
+  val to_string : t -> string
+end;;
 
 module type PTR_TYPE =
-    sig
-      type t
-      type tlist = t list
-      val eq : t -> t -> bool
-      val string_of : t -> string
-      val intersect : tlist -> tlist -> tlist
-    end;;
+sig
+  type t
+  type tlist = t list
+  val eq : t -> t -> bool
+  val string_of : t -> string
+  val intersect : tlist -> tlist -> tlist
+end;;
 
 (* module type EQ_PTR_TYPE = *)
 (*     functor (Elt:EQ_TYPE) -> *)
@@ -833,168 +844,168 @@ module type PTR_TYPE =
 module CP = Cpure
 
 module SV =
-    struct 
-      type t = CP.spec_var
-      let eq = CP.eq_spec_var
-      let string_of = Cformula.string_of_spec_var
+struct 
+  type t = CP.spec_var
+  let eq = CP.eq_spec_var
+  let string_of = Cformula.string_of_spec_var
 end;;
 
 module Ptr =
     functor (Elt:EQ_TYPE) ->
-    struct
-      include Elt
-      type tlist = t list
-      module X = BasicListEQ(Elt)
-      let overlap = eq
-      let intersect (x:tlist)  (y:tlist) = X.intersect x y
-      let star_union x y = x@y
-    end;;
+struct
+  include Elt
+  type tlist = t list
+  module X = BasicListEQ(Elt)
+  let overlap = eq
+  let intersect (x:tlist)  (y:tlist) = X.intersect x y
+  let star_union x y = x@y
+end;;
 
 module PtrSV0 =
-    struct
-      include SV
-      type tlist = t list
-      module X = BasicListEQ(SV)
-      let overlap = eq
-      let intersect (x:tlist)  (y:tlist) = X.intersect x y
-      let star_union x y = x@y
-    end;;
+struct
+  include SV
+  type tlist = t list
+  module X = BasicListEQ(SV)
+  let overlap = eq
+  let intersect (x:tlist)  (y:tlist) = X.intersect x y
+  let star_union x y = x@y
+end;;
 
 module PtrSV = Ptr(SV)
 
 module Baga =
     functor (Elt : MEM_TYPE) ->
-  struct
-    type ptr = Elt.t
-    type baga = ptr list
+struct
+  type ptr = Elt.t
+  type baga = ptr list
 
-    let empty_baga () : baga = []
-    let eq = Elt.eq
-    let overlap = Elt.overlap
-    let intersect = Elt.intersect
-    let star_union = Elt.star_union
+  let empty_baga () : baga = []
+  let eq = Elt.eq
+  let overlap = Elt.overlap
+  let intersect = Elt.intersect
+  let star_union = Elt.star_union
 
-    (* a singleton bag *)
-    let singleton_baga (e:ptr) : baga = [e]
+  (* a singleton bag *)
+  let singleton_baga (e:ptr) : baga = [e]
 
-    let rec is_dupl_baga (xs:baga) : bool = 
-      match xs with
-        | [] -> false
-        | x::xs1 -> match xs1 with
-            | [] -> false
-            | _ -> if (List.exists (overlap x) xs1) then true else is_dupl_baga xs1
+  let rec is_dupl_baga (xs:baga) : bool = 
+    match xs with
+      | [] -> false
+      | x::xs1 -> match xs1 with
+          | [] -> false
+          | _ -> if (List.exists (overlap x) xs1) then true else is_dupl_baga xs1
 
-    (* false result denotes contradiction *)
-    let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
+  (* false result denotes contradiction *)
+  let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
 
-    (*
-      [d1,d2] & [d3,d4] = [d1,d2,d3,d4]
-      [d1,d2] | [d3,d4] = [d1|d3,d1|d4,d2|d3,d2|d4]
-      d1|d3 = d1 \cap d3
-    *)
+  (*
+    [d1,d2] & [d3,d4] = [d1,d2,d3,d4]
+    [d1,d2] | [d3,d4] = [d1|d3,d1|d4,d2|d3,d2|d4]
+    d1|d3 = d1 \cap d3
+  *)
 
-    (* star conjunction of two bag of addresses *)
-    let star_baga (x:baga) (y:baga) : baga = star_union x y
+  (* star conjunction of two bag of addresses *)
+  let star_baga (x:baga) (y:baga) : baga = star_union x y
 
-    (* conjunction of two bag of addresses *)
-    let conj_baga (xs:baga) (ys:baga) : baga = intersect xs ys
+  (* conjunction of two bag of addresses *)
+  let conj_baga (xs:baga) (ys:baga) : baga = intersect xs ys
 
-    (* disjunction of two bag of addresses *)
-    let or_baga (xs:baga) (ys:baga) : baga = intersect xs ys
+  (* disjunction of two bag of addresses *)
+  let or_baga (xs:baga) (ys:baga) : baga = intersect xs ys
 
 end;;
 
 module DisjSet =
     functor (Elt : PTR_TYPE) ->
-  struct
-    type ptr = Elt.t
+struct
+  type ptr = Elt.t
 
-    (* disjointness structures*)
-    type dlist = (ptr list) 
-    type dpart = dlist list
-        (* module BG = Baga(Elt) *)
-    let eq = Elt.eq
-    let intersect = Elt.intersect
-    let is_dupl_baga _ = true
+  (* disjointness structures*)
+  type dlist = (ptr list) 
+  type dpart = dlist list
+      (* module BG = Baga(Elt) *)
+  let eq = Elt.eq
+  let intersect = Elt.intersect
+  let is_dupl_baga _ = true
 
-    (* an empty difference set *)
-    let empty_dset () : dpart = []
+  (* an empty difference set *)
+  let empty_dset () : dpart = []
 
-    (* an empty difference set *)
-    let empty (d:dpart) : bool = (d==[])
+  (* an empty difference set *)
+  let empty (d:dpart) : bool = (d==[])
 
-    (* one list difference set *)
-    let one_list_dset (e:dlist) : dpart = [e]
+  (* one list difference set *)
+  let one_list_dset (e:dlist) : dpart = [e]
 
-    (* a singleton difference set *)
-    let singleton_dset (e:ptr) : dpart = [[e]]
+  (* a singleton difference set *)
+  let singleton_dset (e:ptr) : dpart = [[e]]
 
-    let is_dupl_dset (xs:dpart) : bool = 
-      List.exists (is_dupl_baga) xs
+  let is_dupl_dset (xs:dpart) : bool = 
+    List.exists (is_dupl_baga) xs
 
-    (* returns a list of difference sets for element e *)
-    let find_diff (s: dpart) (e:ptr) : dpart =
-      (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
+  (* returns a list of difference sets for element e *)
+  let find_diff (s: dpart) (e:ptr) : dpart =
+    (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
 
-    (* returns checks if l1/\l2 !=null based on physical equality *)
-    let overlap_q l1 l2 = 
-      List.exists (fun x -> (List.memq x l2)) l1
+  (* returns checks if l1/\l2 !=null based on physical equality *)
+  let overlap_q l1 l2 = 
+    List.exists (fun x -> (List.memq x l2)) l1
 
-    (* checks s |- x!=y *)
-    let is_disj  (s: dpart)  (x:ptr) (y:ptr) : bool =
-      if (eq x y) then false 
-      else
-        let l1 = find_diff s x in
-        let l2 = find_diff s y in
-        (overlap_q l1 l2)
+  (* checks s |- x!=y *)
+  let is_disj  (s: dpart)  (x:ptr) (y:ptr) : bool =
+    if (eq x y) then false 
+    else
+      let l1 = find_diff s x in
+      let l2 = find_diff s y in
+      (overlap_q l1 l2)
 
-    (* returns s1/\s2 *)
-    let merge_disj_set (s1: dpart) (s2: dpart): dpart =
-      s1@s2
+  (* returns s1/\s2 *)
+  let merge_disj_set (s1: dpart) (s2: dpart): dpart =
+    s1@s2
 
-    (*  returns d1*d2 *)
-    let star_disj_set (d1: dpart) (d2: dpart): dpart = (* d1@d2 *)
-      let helper d1 d2 = List.concat (List.map (fun x -> List.map (fun y -> x@y) d2 ) d1) in
-      match d1,d2 with
-        | [],[] -> []
-        | [],d2 -> d2
-        | d1,[] -> d1
-        | d1,d2 -> helper d1 d2
+  (*  returns d1*d2 *)
+  let star_disj_set (d1: dpart) (d2: dpart): dpart = (* d1@d2 *)
+    let helper d1 d2 = List.concat (List.map (fun x -> List.map (fun y -> x@y) d2 ) d1) in
+    match d1,d2 with
+      | [],[] -> []
+      | [],d2 -> d2
+      | d1,[] -> d1
+      | d1,d2 -> helper d1 d2
 
-    (* returns d1/\d2 *)
-    let conj_disj_set (d1: dpart) (d2: dpart): dpart = d1@d2
+  (* returns d1/\d2 *)
+  let conj_disj_set (d1: dpart) (d2: dpart): dpart = d1@d2
 
-    (*  returns d1\/d2 *)
-    let or_disj_set (d1: dpart) (d2: dpart): dpart = 
-      List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) d2) d1) 
+  (*  returns d1\/d2 *)
+  let or_disj_set (d1: dpart) (d2: dpart): dpart = 
+    List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) d2) d1) 
 
-    (* returns s1*s2 *)
-    let star_disj_set (s1: dpart) (s2: dpart): dpart =
-      if empty s1 then s2
-      else if empty s2 then s1
-      else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
+  (* returns s1*s2 *)
+  let star_disj_set (s1: dpart) (s2: dpart): dpart =
+    if empty s1 then s2
+    else if empty s2 then s1
+    else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
 
-    (*  returns s1\/s2 *)
-    let or_disj_set (s1: dpart) (s2: dpart): dpart =
-      List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
+  (*  returns s1\/s2 *)
+  let or_disj_set (s1: dpart) (s2: dpart): dpart =
+    List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
 
-    (* check if there was a conflict in a difference list *)
-    let  is_conflict_list (l:dlist) :bool =
-      let rec helper l =
-        match l with
-          | [] -> false
-          | x::xs -> let b=List.exists (eq x) xs in
-            if b then true
-            else helper xs
-      in helper l
+  (* check if there was a conflict in a difference list *)
+  let  is_conflict_list (l:dlist) :bool =
+    let rec helper l =
+      match l with
+        | [] -> false
+        | x::xs -> let b=List.exists (eq x) xs in
+          if b then true
+          else helper xs
+    in helper l
 
-    (* check if there was a conflict in a set of difference lists *)
-    let is_conflict (s: dpart) : bool =
-      List.exists (is_conflict_list) s
+  (* check if there was a conflict in a set of difference lists *)
+  let is_conflict (s: dpart) : bool =
+    List.exists (is_conflict_list) s
 
-    (* false result denotes contradiction *)
-    let is_sat_dset (xs:dpart) : bool = 
-      not(is_dupl_dset xs)
+  (* false result denotes contradiction *)
+  let is_sat_dset (xs:dpart) : bool = 
+    not(is_dupl_dset xs)
 
 end;;
 
@@ -1006,7 +1017,7 @@ module Profiling =
 struct
   let counters = ref (Hashtbl.create 10)
 
-  let profiling_stack = new ostack ("illegal -stack underflow",0.,false)
+  let profiling_stack = new ostack ("stack underflow",0.,false)
 
   let tasks = ref (Hashtbl.create 10)  
 
@@ -1121,10 +1132,11 @@ struct
   let no_5_num n s f =  f
   let no_6_num n s f =  f
 
-  let pop_spec_counter = ref 1
+  let spec_counter = new counter 1
+
   let gen_time_msg _  = 
-    pop_spec_counter := !pop_spec_counter+1;
-    "time_stk_"^ (string_of_int !pop_spec_counter)
+    spec_counter#inc;
+    "time_stk_"^ (spec_counter#string_of)
 
   let pop_time_to_s_no_count  msg = 
 	if (!Globals.profiling) then
@@ -1163,174 +1175,171 @@ end;;
 
 module SysUtil =
 
-    struct
-
-      open Basic
+struct
+  open Basic
 
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
  * but put helper files in another (/usr/share/module-language),
    here's what you need to change! *)
 
-let qualify_helper_fn n =
-  let d =  Filename.dirname Sys.executable_name ^ "/" in
-  Sys.getcwd() ^ "/" ^ d ^ n
+  let qualify_helper_fn n =
+    let d =  Filename.dirname Sys.executable_name ^ "/" in
+    Sys.getcwd() ^ "/" ^ d ^ n
 
 
-let lib_name n =
-  try (let d = Filename.dirname Sys.executable_name ^ "/../lib/" in
-	 Sys.getcwd() ^ "/" ^ d ^ n)
-  with Sys_error _ -> n
+  let lib_name n =
+    try (let d = Filename.dirname Sys.executable_name ^ "/../lib/" in
+	Sys.getcwd() ^ "/" ^ d ^ n)
+    with Sys_error _ -> n
 
-let tmp_name n =
-  try (let d = Filename.dirname Sys.executable_name ^ "/../tmp/" in    
-	 Sys.getcwd() ^ "/" ^ d ^ n)
-  with Sys_error _ -> n
+  let tmp_name n =
+    try (let d = Filename.dirname Sys.executable_name ^ "/../tmp/" in    
+	Sys.getcwd() ^ "/" ^ d ^ n)
+    with Sys_error _ -> n
 
-(** filename handling; returns the inverse of Filename.chop_extension *)
-let extension n =
-  let d = String.rindex n '.' in
-  String.sub n d (String.length n - d)
+  (** filename handling; returns the inverse of Filename.chop_extension *)
+  let extension n =
+    let d = String.rindex n '.' in
+    String.sub n d (String.length n - d)
 
-let get_path s = 
-  if String.contains s '/' then
-    let i = String.rindex s '/' in
-    String.sub s 0 (i+1)
-  else ""
+  let get_path s = 
+    if String.contains s '/' then
+      let i = String.rindex s '/' in
+      String.sub s 0 (i+1)
+    else ""
+
+  let spacify i = 
+    let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
+    function [] -> ""
+      | [x] -> x
+      | x::xs -> x ^ (s' xs)
+
+  let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
+    let rec helper xs n = match xs with
+	  | e :: rest -> 
+		    if f e then (n, e)
+		    else helper rest (n + 1)
+	  | _ -> raise Not_found
+    in
+    helper xs0 0
+
+  (** String-handling utility functions. *)
+
+  let trim_quotes s = 
+    let trim_last s' = if String.get s' ((String.length s')-1) = '"' then
+      String.sub s' 0 ((String.length s')-1) else s' in
+    if String.get s 0 = '"' then 
+      (trim_last (String.sub s 1 ((String.length s) - 1)))
+    else
+      trim_last s
+
+  let unescaped s =
+    let n = ref 0 in
+    for i = 0 to String.length s - 1 do
+      n := !n +
+          (match String.unsafe_get s i with
+              '\\' when String.unsafe_get s (i+1) != '\\' ->
+                  (match String.unsafe_get s (i+1) with
+                      'n' -> 0
+                    | 't' -> 0
+                    | _ -> 1)
+            | _ -> 1)
+    done;
+    if !n = String.length s then s else begin
+      let s' = String.create !n in
+      n := 0;
+      let skip = ref 0 in
+      (try (for i = 0 to String.length s - 1 do
+        begin
+          if (i + !skip) = String.length s then raise Bail;
+          match String.unsafe_get s (i + !skip) with
+            | '\\' when String.unsafe_get s (i+ !skip+1) != '\\' ->
+                  (match String.unsafe_get s (i+ !skip+1) with
+                      'n' -> String.unsafe_set s' !n '\n'; incr skip
+                    | 'r' -> String.unsafe_set s' !n '\r'; incr skip
+                    | 't' -> String.unsafe_set s' !n '\t'; incr skip
+                    | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
+                    | _ -> raise Bad_string)
+            | c -> String.unsafe_set s' !n c
+        end;
+          incr n
+      done) with Bail -> ());
+      Str.first_chars s' (String.length s - !skip)
+    end
+
+  let trim_str input =
+    let start_idx = ref 0 in
+    let len = String.length input in
+    let _ = 
+	  while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
+	    start_idx := !start_idx + 1
+	  done in
+    let end_idx = ref (len - 1) in
+    let _ = 
+	  while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
+	    end_idx := !end_idx - 1
+	  done in
+    let res = String.sub input !start_idx (!end_idx - !start_idx + 1) in
+    res
 
 
-let spacify i = 
-  let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
-  function [] -> ""
-    | [x] -> x
-    | x::xs -> x ^ (s' xs)
+  (** namespace mangling stuff *)
 
-let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
-  let rec helper xs n = match xs with
-	| e :: rest -> 
-		  if f e then (n, e)
-		  else helper rest (n + 1)
-	| _ -> raise Not_found
-  in
-  helper xs0 0
+  let qualify_if_needed mname n =
+    if String.contains n '.' then n else (mname ^ "." ^ n)
 
-(** String-handling utility functions. *)
+  let unqualify_getting_module s =
+    if String.contains s '.' then
+      let i = String.rindex s '.' in
+      String.sub s 0 i
+    else ""
 
-let trim_quotes s = 
-  let trim_last s' = if String.get s' ((String.length s')-1) = '"' then
-    String.sub s' 0 ((String.length s')-1) else s' in
-  if String.get s 0 = '"' then 
-    (trim_last (String.sub s 1 ((String.length s) - 1)))
-  else
-    trim_last s
+  let unqualify s =
+    if String.contains s '.' then
+      let i = String.rindex s '.' in
+      String.sub s (i+1) (String.length s - i - 1)
+    else s
 
-let unescaped s =
-  let n = ref 0 in
-  for i = 0 to String.length s - 1 do
-    n := !n +
-        (match String.unsafe_get s i with
-            '\\' when String.unsafe_get s (i+1) != '\\' ->
-                (match String.unsafe_get s (i+1) with
-                    'n' -> 0
-                  | 't' -> 0
-                  | _ -> 1)
-          | _ -> 1)
-  done;
-  if !n = String.length s then s else begin
-    let s' = String.create !n in
-    n := 0;
-    let skip = ref 0 in
-    (try (for i = 0 to String.length s - 1 do
-      begin
-        if (i + !skip) = String.length s then raise Bail;
-        match String.unsafe_get s (i + !skip) with
-          | '\\' when String.unsafe_get s (i+ !skip+1) != '\\' ->
-                (match String.unsafe_get s (i+ !skip+1) with
-                    'n' -> String.unsafe_set s' !n '\n'; incr skip
-                  | 'r' -> String.unsafe_set s' !n '\r'; incr skip
-                  | 't' -> String.unsafe_set s' !n '\t'; incr skip
-                  | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
-                  | _ -> raise Bad_string)
-          | c -> String.unsafe_set s' !n c
-      end;
-        incr n
-    done) with Bail -> ());
-    Str.first_chars s' (String.length s - !skip)
-  end
+  let unprime s =
+    let l = String.length s in 
+    if l = 0 then s else 
+      if (String.get s (l-1)) = '\'' then
+        String.sub s 0 (l-1) else s
 
-let trim_str input =
-  let start_idx = ref 0 in
-  let len = String.length input in
-  let _ = 
-	while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
-	  start_idx := !start_idx + 1
-	done in
-  let end_idx = ref (len - 1) in
-  let _ = 
-	while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
-	  end_idx := !end_idx - 1
-	done in
-  let res = String.sub input !start_idx (!end_idx - !start_idx + 1) in
-  res
+  let is_primed s =
+    let l = String.length s in 
+    if l = 0 then false else 
+      (String.get s (l-1) = '\'')
 
+  let replace_dot_with_uscore s =
+    let dot = Str.regexp "\\." in
+    let caret = Str.regexp "\\^" in
+    Str.global_replace dot "_" 
+        (Str.global_replace caret "$" s)
 
-(** namespace mangling stuff *)
+  let replace_minus_with_uscore s =
+    let minus = Str.regexp "-" in
+    let caret = Str.regexp "\\^" in
+    Str.global_replace minus "_" 
+        (Str.global_replace caret "$" s)
 
-let qualify_if_needed mname n =
-  if String.contains n '.' then n else (mname ^ "." ^ n)
+  let replace_path_sep_with_uscore s =
+    let path_sep = Str.regexp "/" in
+    let caret = Str.regexp "\\^" in
+    Str.global_replace path_sep "_" 
+        (Str.global_replace caret "$" s)
 
-let unqualify_getting_module s =
-  if String.contains s '.' then
-    let i = String.rindex s '.' in
-    String.sub s 0 i
-  else ""
+  let split_by sep s =
+    let sep_regexp = Str.regexp (Str.quote sep) in
+    Str.split sep_regexp s
 
-let unqualify s =
-  if String.contains s '.' then
-    let i = String.rindex s '.' in
-    String.sub s (i+1) (String.length s - i - 1)
-  else s
-
-let unprime s =
-  let l = String.length s in 
-  if l = 0 then s else 
-  if (String.get s (l-1)) = '\'' then
-    String.sub s 0 (l-1) else s
-
-let is_primed s =
-  let l = String.length s in 
-  if l = 0 then false else 
-  (String.get s (l-1) = '\'')
-
-let replace_dot_with_uscore s =
-  let dot = Str.regexp "\\." in
-  let caret = Str.regexp "\\^" in
-  Str.global_replace dot "_" 
-    (Str.global_replace caret "$" s)
-
-let replace_minus_with_uscore s =
-  let minus = Str.regexp "-" in
-  let caret = Str.regexp "\\^" in
-  Str.global_replace minus "_" 
-    (Str.global_replace caret "$" s)
-
-let replace_path_sep_with_uscore s =
-  let path_sep = Str.regexp "/" in
-  let caret = Str.regexp "\\^" in
-  Str.global_replace path_sep "_" 
-    (Str.global_replace caret "$" s)
-
-let split_by sep s =
-  let sep_regexp = Str.regexp (Str.quote sep) in
-  Str.split sep_regexp s
-
-    end;;
+end;;
 
 module ExceptionNumber =
 struct
 
   (*hairy stuff for exception numbering*)
-
 
   let exc_list = ref ([]:(string * string * Globals.nflow ) list)
 
@@ -1356,7 +1365,7 @@ struct
 	  else
 	    ((r11>=r21)&&(r12<=r22))
 
-(*let exc_int_sub_type ((t11,t12):Globals.nflow)	((t21,t22):Globals.nflow):bool = if (t11==0 && t12==0) then true else ((t11>=t21)&&(t12<=t22))*)
+  (*let exc_int_sub_type ((t11,t12):Globals.nflow)	((t21,t22):Globals.nflow):bool = if (t11==0 && t12==0) then true else ((t11>=t21)&&(t12<=t22))*)
 
   let get_closest ((min,max):Globals.nflow):(string) = 
     let rec get (lst:(string*string*Globals.nflow) list):string*Globals.nflow = match lst  with
@@ -1369,7 +1378,7 @@ struct
 	    else (a,(c,d)) in
     let r,_ = (get !exc_list) in r
 
- (*constructs the mapping between class/data def names and interval types*) 
+  (*constructs the mapping between class/data def names and interval types*) 
   let c_h () =
     let rec lrr (f1:string)(f2:string):(((string*string*Globals.nflow) list)*Globals.nflow) =
 	  let l1 = List.find_all (fun (_,b1,_)-> ((String.compare b1 f1)==0)) !exc_list in
@@ -1385,7 +1394,7 @@ struct
     Globals.spec_flow_int := (get_hash_of_exc Globals.spec_flow);	
     Globals.top_flow_int := (get_hash_of_exc Globals.top_flow);
     Globals.exc_flow_int := (get_hash_of_exc Globals.abnormal_flow)
-	(*let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in*)
+	    (*let _ = print_string ((List.fold_left (fun a (c1,c2,(c3,c4))-> a ^ " (" ^ c1 ^ " : " ^ c2 ^ "="^"["^(string_of_int c3)^","^(string_of_int c4)^"])\n") "" r)) in*)
 
   let add_edge(n1:string)(n2:string):bool =
 	let _ =  exc_list := !exc_list@ [(n1,n2,Globals.false_flow_int)] in
@@ -1404,118 +1413,118 @@ struct
 end;;
 
 module Stackable =
-    struct
-type 'a tag_elem = ('a * (int list))
+struct
+  type 'a tag_elem = ('a * (int list))
 
-type 'a tag_list = ('a tag_elem) list
+  type 'a tag_list = ('a tag_elem) list
 
-type ('a,'b) stackable =  ('a * (('b list) list))
+  type ('a,'b) stackable =  ('a * (('b list) list))
 
-type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
+  type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
 
-open Basic
+  open Basic
 
-(* this imp_list is not pop-pable *)
+  (* this imp_list is not pop-pable *)
 
-type 'a ilist = ('a list) ref
+  type 'a ilist = ('a list) ref
 
-let new_ilist () : 'a ilist 
- = ref []
+  let new_ilist () : 'a ilist 
+        = ref []
 
-let add_ilist (x:'a list) (imp:'a ilist) : 'a ilist
-= imp := x@(!imp) ; imp
+  let add_ilist (x:'a list) (imp:'a ilist) : 'a ilist
+        = imp := x@(!imp) ; imp
 
-let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
-  = (i,[]::stk)
+  let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+        = (i,[]::stk)
 
-let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
-  = match stk with
-    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
-    | lvl::stk -> let (new_i,v)=f i 
-                 in (new_i,(v@lvl)::stk)
+  let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+        = match stk with
+          | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+          | lvl::stk -> let (new_i,v)=f i 
+            in (new_i,(v@lvl)::stk)
 
-let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
-  = match stk with
-    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
-    | lvl::stk -> (i,(lst@lvl)::stk)
+  let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+        = match stk with
+          | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+          | lvl::stk -> (i,(lst@lvl)::stk)
 
-let close_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
-  = match stk with
-    | lvl::(lvl2::stk) -> (i, (lvl@lvl2)::stk)
-    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("close level requires at least two levels")}
+  let close_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+        = match stk with
+          | lvl::(lvl2::stk) -> (i, (lvl@lvl2)::stk)
+          | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("close level requires at least two levels")}
 
-let collapsef_stack  (f:'a -> ('b list) -> 'a)  ((i,stk):('a,'b) stackable) : 'a
-  = f i (List.concat stk)
+  let collapsef_stack  (f:'a -> ('b list) -> 'a)  ((i,stk):('a,'b) stackable) : 'a
+        = f i (List.concat stk)
 
-let popf_level (f:'a -> ('b list) -> ('a * ('b list))) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
-  = match stk with
-    | lvl::stk -> let (newi,lst)=(f i lvl) in
-      if (empty lst) then (newi, stk)
-      else (add_level lst (newi,stk))
-    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
+  let popf_level (f:'a -> ('b list) -> ('a * ('b list))) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+        = match stk with
+          | lvl::stk -> let (newi,lst)=(f i lvl) in
+            if (empty lst) then (newi, stk)
+            else (add_level lst (newi,stk))
+          | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
 
-let init_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
-  = List.map (init_level) xs
+  let init_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+        = List.map (init_level) xs
 
-let pushf_add_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
-  = List.map (pushf_add_level f) xs
-
-
-let collapsef_stack_list (f:'a ->'b list -> 'a) (xs : ('a,'b) list_of_stackable) : 'a list
-  = List.map (collapsef_stack f) xs
-
-let close_level_list  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
-  = List.map (close_level) xs
+  let pushf_add_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+        = List.map (pushf_add_level f) xs
 
 
-let popf_level_list  (f:'a -> ('b list) -> ('a * ('b list))) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
-  = List.map (popf_level f) xs
+  let collapsef_stack_list (f:'a ->'b list -> 'a) (xs : ('a,'b) list_of_stackable) : 'a list
+        = List.map (collapsef_stack f) xs
 
-let push_tag (xs : 'a tag_list) : ('a tag_list) =
-  let rec helper xs (n:int) =
-    match xs with
-      | [] ->  []
-      | (x,t) :: xs -> (x,(n::t))::(helper xs (n+1))
-  in (helper xs 1)
+  let close_level_list  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+        = List.map (close_level) xs
 
-let check_sorted_tag (xs: 'a tag_list) : bool =
-  let rec helper xs no =
-    match xs with
-      | [] -> true
-      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
-      | ((x,n::t)::xs1) -> 
-            if (n<no) then false
-            else if (n==no) then helper xs1 no
-            else helper xs1 n
-  in helper xs 1
 
-(* if check_sorted_tag fail, will need to sort the tag before grouping *)
-let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
-  let rec helper xs acc no =
-    match xs with
-      | [] -> if (empty acc) then [] else [(List.rev acc,no)]
-      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
-      | ((x,n::t)::xs1) -> 
-            if (n==no) then helper xs1 ((x,t)::acc) no
-            else 
-              let rs=helper xs [] (no+1) in
-              if (empty acc) then rs
-              else (List.rev acc,no)::rs
-  in let r=check_sorted_tag xs in
-  if r then helper xs acc 1 
-  else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+  let popf_level_list  (f:'a -> ('b list) -> ('a * ('b list))) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+        = List.map (popf_level f) xs
 
-let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
-  let rec helper xs ys =
-    match xs with
-      | [] -> []
-      | ((x,n1)::xs1) -> 
-            match ys with
-              | [] -> []
-              | ((y,n2)::ys1) -> 
-                    if (n1==n2) then (f x y)::helper xs ys1
-                    else if (n1<n2) then helper xs1 ys
-                    else helper xs ys1
-  in helper xs ys
+  let push_tag (xs : 'a tag_list) : ('a tag_list) =
+    let rec helper xs (n:int) =
+      match xs with
+        | [] ->  []
+        | (x,t) :: xs -> (x,(n::t))::(helper xs (n+1))
+    in (helper xs 1)
 
-    end;;
+  let check_sorted_tag (xs: 'a tag_list) : bool =
+    let rec helper xs no =
+      match xs with
+        | [] -> true
+        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
+        | ((x,n::t)::xs1) -> 
+              if (n<no) then false
+              else if (n==no) then helper xs1 no
+              else helper xs1 n
+    in helper xs 1
+
+  (* if check_sorted_tag fail, will need to sort the tag before grouping *)
+  let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
+    let rec helper xs acc no =
+      match xs with
+        | [] -> if (empty acc) then [] else [(List.rev acc,no)]
+        | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
+        | ((x,n::t)::xs1) -> 
+              if (n==no) then helper xs1 ((x,t)::acc) no
+              else 
+                let rs=helper xs [] (no+1) in
+                if (empty acc) then rs
+                else (List.rev acc,no)::rs
+    in let r=check_sorted_tag xs in
+    if r then helper xs acc 1 
+    else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+
+  let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
+    let rec helper xs ys =
+      match xs with
+        | [] -> []
+        | ((x,n1)::xs1) -> 
+              match ys with
+                | [] -> []
+                | ((y,n2)::ys1) -> 
+                      if (n1==n2) then (f x y)::helper xs ys1
+                      else if (n1<n2) then helper xs1 ys
+                      else helper xs ys1
+    in helper xs ys
+
+end;;
