@@ -9,6 +9,10 @@ exception Bail
 let rec restart f arg =
   try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
+let fnone (c:'a):'a option = None
+
+let empty l = match l with [] -> true | _ -> false
+
 type 'a tag_elem = ('a * (int list))
 
 type 'a tag_list = ('a tag_elem) list
@@ -16,10 +20,6 @@ type 'a tag_list = ('a tag_elem) list
 type ('a,'b) stackable =  ('a * (('b list) list))
 
 type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
-
-let fnone (c:'a):'a option = None
-
-let empty l = match l with [] -> true | _ -> false
 
 (* this imp_list is not pop-pable *)
 

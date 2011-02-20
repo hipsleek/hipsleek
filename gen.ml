@@ -1,4 +1,119 @@
+module Basic =
+    struct
 
+exception Bad_string
+exception Bail
+let rec restart f arg =
+  try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
+
+let fnone (c:'a):'a option = None
+
+let empty l = match l with [] -> true | _ -> false
+
+let spacify i = 
+  let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
+  function [] -> ""
+    | [x] -> x
+    | x::xs -> x ^ (s' xs)
+
+let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
+  let rec helper xs n = match xs with
+	| e :: rest -> 
+		  if f e then (n, e)
+		  else helper rest (n + 1)
+	| _ -> raise Not_found
+  in
+  helper xs0 0
+
+let rec list_last l = match l with
+  | h::[] -> h
+  | _::t -> (list_last t)
+  | [] -> failwith "Util.list_last: empty list"
+
+(** Split the list of length k>=1 into a pair consisting of
+   the list of first k-1 elements and the last element. *)
+let rec firsts_last xs = match xs with
+  | [] -> failwith "Util.first_lasts: empty list"
+  | [x] -> ([],x)
+  | x::xs1 ->
+        let (fs,l) = firsts_last xs1 in
+        (x::fs,l)
+
+let rec take n l  = if n<=0 then [] else 
+  match l with
+    | h::t -> h::(take (n-1) t)
+    | [] -> []
+    
+let rec drop n l  = if n<=0 then l else
+  match l with
+    | h::t -> (drop (n-1) t)
+    | [] -> []
+
+(*
+  first component of returned value contains the first i values from the list
+  second component contains the rest
+*)
+let rec split_at (xs : 'a list) (i : int) : ('a list * 'a list) =
+  if i = 0 then ([], xs)
+  else
+	let a, b = split_at (List.tl xs) (i-1) in
+	((List.hd xs) :: a, b) 
+
+let rec split3 (l : ('a * 'b * 'c) list) : 'a list * 'b list * 'c list = match l with
+  | (h1, h2, h3) :: rest ->
+	    let l1, l2, l3 = split3 rest in
+		(h1::l1, h2::l2, h3::l3)
+  | [] -> ([], [], [])
+
+let rec combine3 a b c = match (a, b, c) with
+  | (ah::arest, bh::brest, ch::crest) ->
+	    let l = combine3 arest brest crest in
+		(ah, bh, ch)::l
+  | ([], [], []) -> []
+  | _ -> failwith ("combine3: combining lists with different lengths")
+
+let rec map3 (f : 'a -> 'b -> 'c -> 'd) (a0 : 'a list) (bs : 'b list) (cs : 'c list) : 'd list = 
+  match (a0, bs, cs) with
+	| (a :: r1, b :: r2, c :: r3) ->
+		  let r = map3 f r1 r2 r3 in
+		  (f a b c) :: r
+	| [], [], [] -> []
+	| _ -> failwith ("map3: mapping lists with different lengths.")
+
+let rec map4 (f : 'a -> 'b -> 'c -> 'd -> 'e) (a0 : 'a list) (bs : 'b list) (cs : 'c list) (ds : 'd list) : 'e list = 
+  match (a0, bs, cs, ds) with
+	| (a :: r1, b :: r2, c :: r3, d:: r4) ->
+		  let r = map4 f r1 r2 r3 r4 in
+		  (f a b c d) :: r
+	| [], [], [], [] -> []
+	| _ -> failwith ("map4: mapping lists with different lengths.")
+
+
+let rec repeat (v : 'a) (n : int) : 'a list =
+  if n <= 0 then []
+  else v :: (repeat v (n-1))
+
+    end;;
+
+module HashUtil =
+    struct
+(* Hashtable stuff *)
+
+let copy_keys (keys : 'a list) (fr_tab : ('a, 'b) Hashtbl.t) (to_tab : ('a, 'b) Hashtbl.t) =
+  let cp_key (k : 'a) = 
+	try
+	  let v = Hashtbl.find fr_tab k in
+	  Hashtbl.add to_tab k v
+	with
+	  | Not_found -> () 
+  in
+  ignore (List.map cp_key keys)
+
+let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
+  let append_val k v vl = v::vl in
+  Hashtbl.fold append_val tab []
+
+    end;;
 
 
 (* module type CTR_TYPE = *)
@@ -1046,6 +1161,170 @@ struct
 
 end;;
 
+module SysUtil =
+
+    struct
+
+      open Basic
+
+(* Qualify helper file name *)
+(* if you want to install the executable in one directory (e.g. /usr/bin),
+ * but put helper files in another (/usr/share/module-language),
+   here's what you need to change! *)
+
+let qualify_helper_fn n =
+  let d =  Filename.dirname Sys.executable_name ^ "/" in
+  Sys.getcwd() ^ "/" ^ d ^ n
+
+
+let lib_name n =
+  try (let d = Filename.dirname Sys.executable_name ^ "/../lib/" in
+	 Sys.getcwd() ^ "/" ^ d ^ n)
+  with Sys_error _ -> n
+
+let tmp_name n =
+  try (let d = Filename.dirname Sys.executable_name ^ "/../tmp/" in    
+	 Sys.getcwd() ^ "/" ^ d ^ n)
+  with Sys_error _ -> n
+
+(** filename handling; returns the inverse of Filename.chop_extension *)
+let extension n =
+  let d = String.rindex n '.' in
+  String.sub n d (String.length n - d)
+
+let get_path s = 
+  if String.contains s '/' then
+    let i = String.rindex s '/' in
+    String.sub s 0 (i+1)
+  else ""
+
+
+let spacify i = 
+  let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
+  function [] -> ""
+    | [x] -> x
+    | x::xs -> x ^ (s' xs)
+
+let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
+  let rec helper xs n = match xs with
+	| e :: rest -> 
+		  if f e then (n, e)
+		  else helper rest (n + 1)
+	| _ -> raise Not_found
+  in
+  helper xs0 0
+
+(** String-handling utility functions. *)
+
+let trim_quotes s = 
+  let trim_last s' = if String.get s' ((String.length s')-1) = '"' then
+    String.sub s' 0 ((String.length s')-1) else s' in
+  if String.get s 0 = '"' then 
+    (trim_last (String.sub s 1 ((String.length s) - 1)))
+  else
+    trim_last s
+
+let unescaped s =
+  let n = ref 0 in
+  for i = 0 to String.length s - 1 do
+    n := !n +
+        (match String.unsafe_get s i with
+            '\\' when String.unsafe_get s (i+1) != '\\' ->
+                (match String.unsafe_get s (i+1) with
+                    'n' -> 0
+                  | 't' -> 0
+                  | _ -> 1)
+          | _ -> 1)
+  done;
+  if !n = String.length s then s else begin
+    let s' = String.create !n in
+    n := 0;
+    let skip = ref 0 in
+    (try (for i = 0 to String.length s - 1 do
+      begin
+        if (i + !skip) = String.length s then raise Bail;
+        match String.unsafe_get s (i + !skip) with
+          | '\\' when String.unsafe_get s (i+ !skip+1) != '\\' ->
+                (match String.unsafe_get s (i+ !skip+1) with
+                    'n' -> String.unsafe_set s' !n '\n'; incr skip
+                  | 'r' -> String.unsafe_set s' !n '\r'; incr skip
+                  | 't' -> String.unsafe_set s' !n '\t'; incr skip
+                  | '\\' -> String.unsafe_set s' !n '\\'; incr skip;
+                  | _ -> raise Bad_string)
+          | c -> String.unsafe_set s' !n c
+      end;
+        incr n
+    done) with Bail -> ());
+    Str.first_chars s' (String.length s - !skip)
+  end
+
+let trim_str input =
+  let start_idx = ref 0 in
+  let len = String.length input in
+  let _ = 
+	while (!start_idx < len) && ((String.get input !start_idx) = ' ') do
+	  start_idx := !start_idx + 1
+	done in
+  let end_idx = ref (len - 1) in
+  let _ = 
+	while (!end_idx > !start_idx) && ((String.get input !end_idx) = ' ') do
+	  end_idx := !end_idx - 1
+	done in
+  let res = String.sub input !start_idx (!end_idx - !start_idx + 1) in
+  res
+
+
+(** namespace mangling stuff *)
+
+let qualify_if_needed mname n =
+  if String.contains n '.' then n else (mname ^ "." ^ n)
+
+let unqualify_getting_module s =
+  if String.contains s '.' then
+    let i = String.rindex s '.' in
+    String.sub s 0 i
+  else ""
+
+let unqualify s =
+  if String.contains s '.' then
+    let i = String.rindex s '.' in
+    String.sub s (i+1) (String.length s - i - 1)
+  else s
+
+let unprime s =
+  let l = String.length s in 
+  if l = 0 then s else 
+  if (String.get s (l-1)) = '\'' then
+    String.sub s 0 (l-1) else s
+
+let is_primed s =
+  let l = String.length s in 
+  if l = 0 then false else 
+  (String.get s (l-1) = '\'')
+
+let replace_dot_with_uscore s =
+  let dot = Str.regexp "\\." in
+  let caret = Str.regexp "\\^" in
+  Str.global_replace dot "_" 
+    (Str.global_replace caret "$" s)
+
+let replace_minus_with_uscore s =
+  let minus = Str.regexp "-" in
+  let caret = Str.regexp "\\^" in
+  Str.global_replace minus "_" 
+    (Str.global_replace caret "$" s)
+
+let replace_path_sep_with_uscore s =
+  let path_sep = Str.regexp "/" in
+  let caret = Str.regexp "\\^" in
+  Str.global_replace path_sep "_" 
+    (Str.global_replace caret "$" s)
+
+let split_by sep s =
+  let sep_regexp = Str.regexp (Str.quote sep) in
+  Str.split sep_regexp s
+
+    end;;
 
 module ExceptionNumber =
 struct
@@ -1123,3 +1402,120 @@ struct
 	(cc Globals.top_flow [Globals.top_flow])
 
 end;;
+
+module Stackable =
+    struct
+type 'a tag_elem = ('a * (int list))
+
+type 'a tag_list = ('a tag_elem) list
+
+type ('a,'b) stackable =  ('a * (('b list) list))
+
+type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
+
+open Basic
+
+(* this imp_list is not pop-pable *)
+
+type 'a ilist = ('a list) ref
+
+let new_ilist () : 'a ilist 
+ = ref []
+
+let add_ilist (x:'a list) (imp:'a ilist) : 'a ilist
+= imp := x@(!imp) ; imp
+
+let init_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = (i,[]::stk)
+
+let pushf_add_level (f:'a -> 'a * ('b list))  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+    | lvl::stk -> let (new_i,v)=f i 
+                 in (new_i,(v@lvl)::stk)
+
+let add_level (lst:'b list)  ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | [] -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("pushf_add_level on empty stack")}
+    | lvl::stk -> (i,(lst@lvl)::stk)
+
+let close_level ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | lvl::(lvl2::stk) -> (i, (lvl@lvl2)::stk)
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("close level requires at least two levels")}
+
+let collapsef_stack  (f:'a -> ('b list) -> 'a)  ((i,stk):('a,'b) stackable) : 'a
+  = f i (List.concat stk)
+
+let popf_level (f:'a -> ('b list) -> ('a * ('b list))) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
+  = match stk with
+    | lvl::stk -> let (newi,lst)=(f i lvl) in
+      if (empty lst) then (newi, stk)
+      else (add_level lst (newi,stk))
+    | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
+
+let init_level_list (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (init_level) xs
+
+let pushf_add_level_list (f:'a -> 'a * ('b list))  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (pushf_add_level f) xs
+
+
+let collapsef_stack_list (f:'a ->'b list -> 'a) (xs : ('a,'b) list_of_stackable) : 'a list
+  = List.map (collapsef_stack f) xs
+
+let close_level_list  (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (close_level) xs
+
+
+let popf_level_list  (f:'a -> ('b list) -> ('a * ('b list))) (xs : ('a,'b) list_of_stackable) : ('a,'b) list_of_stackable
+  = List.map (popf_level f) xs
+
+let push_tag (xs : 'a tag_list) : ('a tag_list) =
+  let rec helper xs (n:int) =
+    match xs with
+      | [] ->  []
+      | (x,t) :: xs -> (x,(n::t))::(helper xs (n+1))
+  in (helper xs 1)
+
+let check_sorted_tag (xs: 'a tag_list) : bool =
+  let rec helper xs no =
+    match xs with
+      | [] -> true
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("tag missing during ehc_sorted_tag")}
+      | ((x,n::t)::xs1) -> 
+            if (n<no) then false
+            else if (n==no) then helper xs1 no
+            else helper xs1 n
+  in helper xs 1
+
+(* if check_sorted_tag fail, will need to sort the tag before grouping *)
+let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
+  let rec helper xs acc no =
+    match xs with
+      | [] -> if (empty acc) then [] else [(List.rev acc,no)]
+      | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
+      | ((x,n::t)::xs1) -> 
+            if (n==no) then helper xs1 ((x,t)::acc) no
+            else 
+              let rs=helper xs [] (no+1) in
+              if (empty acc) then rs
+              else (List.rev acc,no)::rs
+  in let r=check_sorted_tag xs in
+  if r then helper xs acc 1 
+  else Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("need to sort group_tag!")}
+
+let zip_tag (f: 'a -> 'b -> 'c) (xs: ('a * int) list) (ys:('b * int) list) : ('c list) =
+  let rec helper xs ys =
+    match xs with
+      | [] -> []
+      | ((x,n1)::xs1) -> 
+            match ys with
+              | [] -> []
+              | ((y,n2)::ys1) -> 
+                    if (n1==n2) then (f x y)::helper xs ys1
+                    else if (n1<n2) then helper xs1 ys
+                    else helper xs ys1
+  in helper xs ys
+
+    end;;
