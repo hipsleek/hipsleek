@@ -1,4 +1,5 @@
 module Basic =
+(* basic utilities that can be opened *)
 struct
 
   exception Bad_string
@@ -11,8 +12,6 @@ struct
 
   let empty l = match l with [] -> true | _ -> false
 
-  let string_of_list (f:'a->string) (ls:'a list) : string = 
-    ("["^(String.concat "," (List.map f ls))^"]")
 
   let spacify i = 
     let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
@@ -147,6 +146,9 @@ module BasicList =
 struct
 
   (* List-handling stuff *)
+
+  let string_of_list_f (f:'a->string) (ls:'a list) : string = 
+    ("["^(String.concat "," (List.map f ls))^"]")
 
   (** Split the list of length k>=1 into a pair consisting of
       the list of first k-1 elements and the last element. *)
@@ -284,6 +286,9 @@ struct
 
   let mem x l = List.exists (eq x) l
 
+  let string_of_list (ls:'a list) : string 
+        = string_of_list_f string_of ls
+
   let rec remove_dups n = 
     match n with
         [] -> []
@@ -347,17 +352,17 @@ class ['a] ostack x_init  =
        | x::xs -> x
      method len = List.length stk
      method set_pr f = elem_pr <- f
-     method string_of = Basic.string_of_list elem_pr stk
+     method string_of = BasicList.string_of_list_f elem_pr stk
    end;;
 
 class counter x_init =
    object 
      val mutable ctr = x_init
-     method get = ctr
+     method get : int = ctr
      method inc = ctr <- ctr + 1
-     method add i = ctr <- ctr + i
+     method add (i:int) = ctr <- ctr + i
      method reset = ctr <- 0
-     method string_of = (string_of_int ctr)
+     method string_of : string= (string_of_int ctr)
    end;;
 
 module ErrorUtil =
@@ -556,14 +561,17 @@ struct
         let ns = add_equiv s fv tv in
         elim_elems_one ns fv
 
+
   (* returns true if s contains no duplicates *)
-  let check_no_dupl (s:elist) : bool =
-    let rec helper s = match s with
-      | [] -> true
-      | x::xs -> 
-            if mem x xs then false
-            else helper xs in
-    helper s
+  (* let check_no_dupl (s:elist) : bool = *)
+  (*   let rec helper s = match s with *)
+  (*     | [] -> true *)
+  (*     | x::xs ->  *)
+  (*           if mem x xs then false *)
+  (*           else helper xs in *)
+  (*   helper s *)
+
+  let check_no_dupl (s:elist) : bool = not(BasicList.check_dups_eq eq s)
 
   (* check f is 1-to-1 map assuming s contains no duplicates *)
   let is_one2one (f:elem -> elem) (s:elist) : bool =
@@ -613,7 +621,7 @@ struct
   let zero = Elt.zero
   let ctr = ref zero
   let reset () = ctr := zero
-  let increment () : unit = 
+  let inc () : unit = 
     let v = Elt.inc (!ctr) in (ctr:=v)
 end;;
 
@@ -879,7 +887,7 @@ struct
   type ptr = Elt.t
   type baga = ptr list
 
-  let empty_baga () : baga = []
+  let mkEmpty_baga : baga = []
   let eq = Elt.eq
   let overlap = Elt.overlap
   let intersect = Elt.intersect
@@ -899,7 +907,7 @@ struct
   let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
 
   (*
-    [d1,d2] & [d3,d4] = [d1,d2,d3,d4]
+\    [d1,d2] & [d3,d4] = [d1,d2,d3,d4]
     [d1,d2] | [d3,d4] = [d1|d3,d1|d4,d2|d3,d2|d4]
     d1|d3 = d1 \cap d3
   *)
@@ -926,7 +934,11 @@ struct
       (* module BG = Baga(Elt) *)
   let eq = Elt.eq
   let intersect = Elt.intersect
-  let is_dupl_baga _ = true
+
+  module BL_EQ = BasicListEQ(Elt)
+  open BL_EQ
+
+  (* let is_dupl_baga _ = true *)
 
   (* an empty difference set *)
   let empty_dset () : dpart = []
@@ -941,7 +953,7 @@ struct
   let singleton_dset (e:ptr) : dpart = [[e]]
 
   let is_dupl_dset (xs:dpart) : bool = 
-    List.exists (is_dupl_baga) xs
+    List.exists (check_dups) xs
 
   (* returns a list of difference sets for element e *)
   let find_diff (s: dpart) (e:ptr) : dpart =
