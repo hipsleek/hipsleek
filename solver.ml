@@ -3926,12 +3926,12 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	   - if the equality is solved -> remove it from conseq 
     *)
 
-and solve_ineq_debug a m c = Util.ho_debug_2 "solve_ineq "
+and solve_ineq a m c = Util.ho_debug_2 "solve_ineq "
   (Cprinter.string_of_mem_formula)
   (Cprinter.string_of_mix_formula) 
-  (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq a m c) m c
+  (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq_x a m c) m c
 
-and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
+and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
       (conseq : MCP.mix_formula) : MCP.mix_formula =
   (* let memset = {mem_formula_mset = [[Cpure.SpecVar (Cpure.Prim Int, "x", Unprimed);Cpure.SpecVar (Cpure.Prim Int, "y", Unprimed)]]} in *)
   match ante_m0,conseq with
@@ -3948,14 +3948,14 @@ and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
     |  _ ->  Error.report_error 
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
-and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
 Util.ho_debug_3 "solve_ineq_pure_formula "
   (Cprinter.string_of_pure_formula)
   (Cprinter.string_of_mem_formula) 
   (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
-  (fun ante memset conseq -> solve_ineq_pure_formula ante memset conseq ) ante memset conseq
+  (fun ante memset conseq -> solve_ineq_pure_formula_x ante memset conseq ) ante memset conseq
 
-and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula_x (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with

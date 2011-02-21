@@ -53,7 +53,7 @@ C2: lhs = heap; rhs = empty_heap; over app. heap of lhs to pure??
 C3: lhs = heap; rhs = heap; over app. heap of lhs to pure, rhs to pure, cmp heap of lhs and rhs??
 */
 //C3.1
-//checkentail x::ll<n> |- x=null.
+checkentail x::ll<n> |- x=null.
 //res: MUST error: (lhs ~ (n >=0)) and (rhs ~ n=0)
 //            and (n >=0  |- n=0: SAT) and (n>=0 |- not (n=0): SAT), cex x::node<m>, ex x=null))
 //-------------------------------------
