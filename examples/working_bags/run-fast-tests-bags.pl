@@ -317,17 +317,16 @@ sub hip_process_file {
                         print "  error at: $test->[0] $1\n";
                     }
                     elsif($line =~ m/SUCCESS/){
-                        $sucess++;
+                        $successes++;
                     }
                 }
-                if ($fails == 0 && $success == 0){
+            }
+            $fails_count = $fails_count + $fails;
+            $success_count = $success_count + $successes;
+            if ($fails == 0 && $successes == 0){
                     $fatal_errors++;
                     $fatal_error_files=$fatal_error_files."  $test->[0] \n";
                 }
-                
-            }
-            $fails_count = $fails_count + $fails;
-            $success_count = $success_count + $success;
             if($timings) {
                 log_one_line_of_timings ($test->[0], $output);
             }

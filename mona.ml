@@ -813,7 +813,7 @@ let check fd timeout pid : bool =
     end else 
       let r = input_line fd in
       let err= "Error in file " in 
-      let err2= "BDD too large" in 
+      (* let err2= "BDD too large" in  *)
       let ans1= "A counter-example of lea" in
       let ans2= "Formula is unsatisfiable" in
       match r with
@@ -849,30 +849,7 @@ let check_debug fd timeout pid : bool =
 let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   let mona_file_name = "test" ^ (string_of_int !mona_file_number) ^ ".mona" in
   let mona_file = open_out mona_file_name in
-  (* output_string mona_file ("include \"mona_predicates.mona\";\n"); *)
-  output_string mona_file ("# auxiliary predicates\n");
-  output_string mona_file ("pred xor(var0 x,y) = x&~y | ~x&y;\n");
-  output_string mona_file ("pred at_least_two(var0 x,y,z) = x&y | x&z | y&z;\n\n");
-  output_string mona_file ("# addition relation (P + q = r)\n");
-  output_string mona_file ("pred plus(var2 p,q,r) =\n");
-  output_string mona_file ("ex2 c: \n");
-  output_string mona_file ("\t0 notin c\n");
-  output_string mona_file ("& all1 t:\n");
-  output_string mona_file ("\t(t+1 in c <=> at_least_two(t in p, t in q, t in c))\n");
-  output_string mona_file ("\t& (t in r <=> xor(xor(t in p, t in q), t in c));\n\n");
-  output_string mona_file ("# less-than relation (p<q)\n");
-  output_string mona_file ("pred less(var2 p,q) = \n");
-  output_string mona_file ("ex2 t: t ~= empty & plus(p,t,q);\n\n");
-  output_string mona_file ("# less-or-equal than relation (p<=q)\n");
-  output_string mona_file ("pred lessEq(var2 p, q) = \n");
-  output_string mona_file ("less(p, q) | (p=q);\n\n");
-  output_string mona_file ("# greater-than relation (p>q)\n");
-  output_string mona_file ("pred greater(var2 p, q) = \n");
-  output_string mona_file ("less(q, p);\n\n");
-  output_string mona_file ("# greater-or-equal than relation (p>=q)\n");
-  output_string mona_file ("pred greaterEq(var2 p, q) = \n");
-  output_string mona_file ("greater(p, q) | (p=q);\n\n");
-  output_string mona_file ("pred nequal(var2 p,q) = p ~= q ;\n");
+  output_string mona_file ("include \"mona_predicates.mona\";\n");
   let fstr = 
     let _ = print_string ("\n==========="^var_decls^"===="^(Cprinter.string_of_pure_formula pe)^"=======\n") in
     try (var_decls ^(mona_of_formula pe pe vs))
@@ -909,7 +886,7 @@ let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   | _ -> ()
   end;
 (*  print_endline "Mona died."; flush stdout;*)
-  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
+  (* Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona"); *)
   begin match res with
   | true ->
 	  begin

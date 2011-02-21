@@ -628,7 +628,7 @@ let rec pr_pure_formula  (e:P.formula) =
           pr_list_op op_or f_b args
     | P.Not (f, lbl, l) -> 
           pr_formula_label_opt lbl; 
-          fmt_string "!";f_b f 
+          fmt_string "!(";f_b f;fmt_string ")"
     | P.Forall (x, f,lbl, l) -> 
           pr_formula_label_opt lbl; 
 	      fmt_string "forall("; pr_spec_var x; fmt_string ":";
