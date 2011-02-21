@@ -3,17 +3,12 @@ OCAMLBUILD = ocamlbuild
 # number of parallel jobs, 0 means unlimited.
 JOBS = 0
 
-LIBS = unix,str,graph,xml-light
-INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml
+LIBS = unix,str,graph,xml-light,lablgtk,lablgtksourceview2
+INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2
 FLAGS = $(INCLUDES),-g
 OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -yaccflag -v -j $(JOBS)
 
-GUI_LIBS = $(LIBS),lablgtk,lablgtksourceview2
-GUI_INCLUDES = $(INCLUDES),-I,+lablgtk2
-GUI_FLAGS = $(GUI_INCLUDES),-g
-OB_GUI_FLAGS = -no-links -libs $(GUI_LIBS) -cflags $(GUI_FLAGS) -lflags $(GUI_FLAGS) -yaccflag -v -j $(JOBS)
-
-all: native
+all: native gui
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
 gui: ghip.native gsleek.native
@@ -41,19 +36,19 @@ sleek.native:
 	cp _build/sleek.native sleek
 
 gsleek.byte:
-	$(OCAMLBUILD) $(OB_GUI_FLAGS) gsleek.byte
+	$(OCAMLBUILD) $(OB_FLAGS) gsleek.byte
 	cp _build/gsleek.byte .
 
 gsleek.native:
-	$(OCAMLBUILD) $(OB_GUI_FLAGS) gsleek.native
+	$(OCAMLBUILD) $(OB_FLAGS) gsleek.native
 	cp _build/gsleek.native gsleek
 
 ghip.byte:
-	$(OCAMLBUILD) $(OB_GUI_FLAGS) ghip.byte
+	$(OCAMLBUILD) $(OB_FLAGS) ghip.byte
 	cp _build/ghip.byte .
 
 ghip.native:
-	$(OCAMLBUILD) $(OB_GUI_FLAGS) ghip.native
+	$(OCAMLBUILD) $(OB_FLAGS) ghip.native
 	cp _build/ghip.native ghip
 
 # Clean up
