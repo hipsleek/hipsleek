@@ -3,7 +3,7 @@
  *)
 
 open GEntailmentList
-open GSleekSourceView
+open GSourceViewX
 open GUtil
 
 module SU = SourceUtil

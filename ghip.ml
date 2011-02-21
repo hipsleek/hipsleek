@@ -4,7 +4,7 @@
 
 
 open GProcList
-open GHipSourceView
+open GSourceViewX
 open GUtil
 open SourceUtil
 
@@ -110,9 +110,14 @@ class mainwindow () =
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
       ignore (source_view#source_buffer#connect#end_user_action
         ~callback:self#source_changed_handler);
+      ignore (source_view#connect#undo ~callback:self#source_changed_handler);
+      ignore (source_view#connect#redo ~callback:self#source_changed_handler);
       ignore (proc_list#selection#connect#changed ~callback:self#check_selected_proc);
       ignore (source_view#event#connect#focus_out
-        ~callback:(fun _ -> self#update_proc_list (); false));
+        ~callback:(fun _ ->
+          let _ = if source_view#source_buffer#modified then
+            self#update_proc_list () in
+          false));
       proc_list#set_checkall_handler self#run_all_handler;
 
 
@@ -319,6 +324,7 @@ class mainwindow () =
     method private newfile_handler () =
       if self#file_closing_check () then begin
         current_file <- None;
+        self#update_win_title ();
         self#replace_source ""
       end
 
