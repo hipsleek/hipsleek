@@ -67,7 +67,7 @@ open Globals
     if stree_eq x y then true
     else match x with
       | Leaf _ -> false
-      | Node (l,r) -> (subtree l)&&(subtree r)
+      | Node (l,r) -> (can_divide l y)&&(can_divide r y)
     
   let rec divide x y = 
     if stree_eq x y then top
@@ -78,12 +78,16 @@ open Globals
   (*can_subtract*)
   let rec contains x y = match x,y with
     | Leaf true, _ ->  true
-    | Leaf false, Leaf false -> true
+    | _, Leaf false -> true
+    | Leaf false, _ -> false
     | Node(l1,r1), Node(l2,r2) -> (contains l1 l2)&&(contains r1 r2)
+    | Node _, Leaf true -> false
     
   let subtract x y = 
     let rec helper x y = match x,y with
       | Leaf true, _ -> neg_tree y
       | Leaf false, _ -> y
-      | Node(l1,r1), Node(l2,r2) -> mkNode (helper l1 l2) (helper r1 r2) in      
+      | Node(l1,r1), Node(l2,r2) -> mkNode (helper l1 l2) (helper r1 r2) 
+      | Node _ , Leaf false -> x
+      | Node _ , Leaf true -> report_error no_pos "missmatch in contains" in      
    if contains x y then helper x y else bot
