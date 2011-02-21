@@ -859,7 +859,8 @@ let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
 		   let prog = case_normalize_program prog in
 		   let tmp_views = order_views prog.I.prog_view_decls in
 		   let cviews = List.map (trans_view prog) tmp_views in
-                   let local_var_list = List.map (fun i -> proceed_proc_body i.I.proc_body) prog.I.prog_proc_decls in
+           let local_var_list = List.map (fun i -> proceed_proc_body i.I.proc_body) prog.I.prog_proc_decls in
+           (*err_msg*)
 		   all_var_name_list := Util.remove_dups !all_var_name_list @ (List.flatten local_var_list);
 		   let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 		   let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in

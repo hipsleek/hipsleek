@@ -10,9 +10,22 @@ pred ll2<n> == case { self=null -> [] n=0;
 
 pred ll3<n> == self::node<next = r> * r::ll2<n-1>
 	inv n >= 1.
+
+/********************************************************
+Reason:
+  1. Basic (lhs = /\ form):
+      - Exception: MAY/MUST
+      - Entail fails: MAY/MUST
+         - pre is too strength
+         - bugs in program
+    + Core failure: pos(use interpolation/enumeration with SMT-Solver)
+    + Sugesstion: weaken post
+  2. AND
+********************************************************/
+
 /********************************************************/
 /*
-C1: lhs = pure; rhs = p
+C1: lhs = pure; rhs = pure
 */
 //C1.1
 //checkentail n > 3 |- n > 5.
@@ -37,7 +50,7 @@ C2: lhs = heap; rhs = empty_heap; over app. heap of lhs to pure??
 //             and (n >=1  |- n=0: UNSAT) and (n>=1 |- not (n=0): SAT))
 /********************************************************/
 /*
-C3: lhs = heap; rhs = heap; over app. heap of lhs, rhs to pure??
+C3: lhs = heap; rhs = heap; over app. heap of lhs to pure, rhs to pure, cmp heap of lhs and rhs??
 */
 //C3.1
 //checkentail x::ll<n> |- x=null.
@@ -45,8 +58,8 @@ C3: lhs = heap; rhs = heap; over app. heap of lhs, rhs to pure??
 //            and (n >=0  |- n=0: SAT) and (n>=0 |- not (n=0): SAT), cex x::node<m>, ex x=null))
 //-------------------------------------
 //C3.2
-checkentail x::node<_,null> |- x::ll<n> & n>2.
-//res: MUST error: (lhs ~ (n =0)) and (rhs ~ n>2)
+checkentail x=null|- x::ll<n> & n>2.
+//res: MUST error: (lhs ~ (n =1)) and (rhs ~ n>2)
 //            and (n =0  |- n>2: UNSAT) and (n=0 |- not (n>2): SAT))
 //-------------------------------------
 

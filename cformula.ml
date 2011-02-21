@@ -1756,6 +1756,7 @@ and steps = string list
 
 and fail_context = {
   fc_prior_steps : steps; (* prior steps in reverse order *)
+  fc_kind : string; (*may/must*)
   fc_message : string;          (* error message *)
   fc_current_lhs : entail_state;     (* LHS context with success points *)
   fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)

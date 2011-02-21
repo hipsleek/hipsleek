@@ -1285,6 +1285,7 @@ let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_p
 let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
   pr_wrap_test_nocut "fc_prior_steps: " U.empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;
+  pr_vwrap "fc_kind: "  fmt_string es.fc_kind;
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
   pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;
   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq;
