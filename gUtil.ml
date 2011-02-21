@@ -40,12 +40,14 @@ module FileUtil = struct
   (** Read a text file and then return it's content as a string 
    *)
   let read_from_file (fname: string) : string =
-    let ic = open_in fname in
-    let size = in_channel_length ic in
-    let buf = String.create size in
-    really_input ic buf 0 size;
-    close_in ic;
-    buf
+    if Sys.file_exists fname then begin
+      let ic = open_in fname in
+      let size = in_channel_length ic in
+      let buf = String.create size in
+      really_input ic buf 0 size;
+      close_in ic;
+      buf
+    end else ""
 
   (** Write text to a file 
    *)
@@ -328,8 +330,11 @@ module HipHelper = struct
     eap: bool;
   }
 
-  let infile = "/tmp/hip.in." ^ (string_of_int (Unix.getpid ()))
-  let outfile = "/tmp/hip.out." ^ (string_of_int (Unix.getpid ()))
+  let infile = "hip.in." ^ (string_of_int (Unix.getpid ()))
+  let outfile = "hip.out." ^ (string_of_int (Unix.getpid ()))
+  let errfile = "hip.err." ^ (string_of_int (Unix.getpid ()))
+  let debug_log_buffer = Buffer.create 1024
+  let prover_log_buffer = Buffer.create 1024
 
   let default_args = {
     tp = TP.OmegaCalc;
@@ -338,15 +343,16 @@ module HipHelper = struct
   }
 
   let build_args_string (args: hip_args) =
-    let tp = " -tp " ^ (TP.string_of_tp args.tp) in
+    let tp = "-tp " ^ (TP.string_of_tp args.tp) in
     let eps = if args.eps then " --eps" else "" in
     let eap = if args.eap then " --eap" else "" in
     let res = tp ^ eps ^ eap in
     res
 
   let hip_command (args: hip_args) (proc_name: string) =
-    let args_string = build_args_string args in
-    Printf.sprintf "./hip %s -p %s %s > %s" args_string proc_name infile outfile
+    let args = build_args_string args in
+    let hip = "./hip -dd --log-cvc3 --log-omega --log-coq --log-mona --log-redlog" in
+    Printf.sprintf "%s %s -p %s %s>%s 2>%s" hip args proc_name infile outfile errfile
 
   (** run hip with source text and return result string *)
   let run_hip ?(args = default_args) (src: string) (proc_name: string) =
@@ -355,8 +361,14 @@ module HipHelper = struct
     log ("Executing: " ^ cmd);
     ignore (Sys.command cmd);
     let res = FileUtil.read_from_file outfile in
+    Buffer.clear debug_log_buffer;
+    Buffer.add_string debug_log_buffer (FileUtil.read_from_file errfile);
+    Buffer.clear prover_log_buffer;
+    let tp_log_file = TP.log_file_of_tp args.tp in
+    Buffer.add_string prover_log_buffer (FileUtil.read_from_file tp_log_file);
     Sys.remove infile;
     Sys.remove outfile;
+    Sys.remove errfile;
     res
 
   let parse_result (res: string) =
@@ -370,6 +382,12 @@ module HipHelper = struct
   let check_proc_external ?args (src: string) (p: procedure) =
     let res = run_hip ?args src p.name in
     parse_result res
+
+  let get_debug_log () =
+    Buffer.contents debug_log_buffer
+
+  let get_prover_log () =
+    Buffer.contents prover_log_buffer
 
 end (* HipHelper *)
 

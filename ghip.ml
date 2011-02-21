@@ -278,7 +278,7 @@ class mainwindow () =
         end
 
     method show_debug_log () =
-      let log = Debug.get_debug_log () in
+      let log = HH.get_debug_log () in
       let win = match debug_log_window with
         | Some win-> 
             win#set_log log;
@@ -292,8 +292,8 @@ class mainwindow () =
       win#present ()
 
     method show_prover_log () =
-      let log = TP.get_prover_log () in
-      let title = (TP.get_current_tp_name ()) ^ " Log" in
+      let log = HH.get_prover_log () in
+      let title = "Back-end Prover Log" in
       let win = match prover_log_window with
         | Some win-> 
             win#set_log log;

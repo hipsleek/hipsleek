@@ -310,6 +310,15 @@ let name_of_tp tp = match tp with
   | Redlog -> "Redlog"
   | RM -> "Redlog and Mona"
 
+let log_file_of_tp tp = match tp with
+  | OmegaCalc -> "allinput.oc"
+  | Cvc3 -> "allinput.cvc3"
+  | Isabelle -> "allinput.thy"
+  | Mona -> "allinput.mona"
+  | Coq -> "allinput.v"
+  | Redlog -> "allinput.rl"
+  | _ -> ""
+
 let get_current_tp_name () = name_of_tp !tp
 
 let omega_count = ref 0
