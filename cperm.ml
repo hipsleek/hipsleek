@@ -11,7 +11,7 @@ type frac_perm = P.spec_var option * share
 type perm_formula = 
   | And of (perm_formula * perm_formula * loc)
   | Or  of (perm_formula * perm_formula * loc)
-  | Join of (frac_perm*frac_perm*frac_perm * loc)
+  | Join of (frac_perm*frac_perm*frac_perm * loc) (*v1+v2 = v3*)
   | Eq of (frac_perm*frac_perm *loc)
   | Exists of (P.spec_var  list * perm_formula *loc)
   | PTrue of loc
@@ -20,6 +20,8 @@ type perm_formula =
 let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
 let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
   
+let fresh_perm_var () = P.SpecVar (P.OType perm,fresh_name(),Unprimed)
+
 let top_share = Ts.Share.top
 
 let split = Ts.Share.split
@@ -51,12 +53,10 @@ let mkAnd f1 f2 pos = match f1 with
         
 let mkEq f1 f2 pos = Eq (f1,f2,pos)
 
-let freshPermVar () = P.SpecVar (P.OType "perm", fresh_name (), Unprimed) 
-
 let is_full_frac t = Ts.Share.eq_dec t Ts.Share.top 
 
 let mkFullVar () : (P.spec_var * perm_formula) = 
-  let nv = freshPermVar() in
+  let nv = fresh_perm_var() in
   (nv,mkEq (frac_of_var nv) (mkPFull ()) no_pos)
 
 let mkJoin v1 v2 v3 pos = Join (v1,v2,v3,pos)
@@ -123,17 +123,60 @@ and apply_subs (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_
       Exists (nv,nf,p)
   | _ -> f 
   
-(*elim exists*)
+(*elim exists*)(*TODO*)
 let elim_exists_perm w f pos = f
-(*elim perm exists if any*)
+(*elim perm exists if any*)(*TODO*)
 let elim_exists_perm_exists f = f
-
+(*TODO*)
+let elim_exists_exp_perm f = f
+(*TODO*)
 let simpl_perm_formula f = f
-(*imply*)
+
+(*imply*)(*TODO*)
 let imply f1 f2 = true
-(*sat*)
+(*TODO*)
+let match_imply l_v r_v l_f r_f l_node :(bool * P.spec_var * P.spec_var * 'a * 'b * 'c) option = 
+    Some (false,l_v, r_v, l_f, r_f, l_node)
+
+let does_match p = match p with
+  | Some _ -> true
+  | None -> false
+  
+let needs_split p = match p with
+  | Some (true,_,_,_,_,_)-> true
+  | _ -> false
+  
+(*sat*)(*TODO*)
 let is_sat f = true
+
+
+let heap_partial_imply l_h l_pr perm_imply mkStarH h_apply_one pos = match perm_imply with
+  | Some (b,l_v,r_v,l_f,r_f,l_node)->
+    if b then 
+      let s1 = fresh_perm_var () in
+      let s2 = fresh_perm_var () in
+      let l_node' = h_apply_one (l_v,s1) l_node in
+      let l_h' = mkStarH l_node' l_h pos in
+      let pr_eq = mkJoin (frac_of_var l_v) (frac_of_var s1) (frac_of_var s2) pos in
+      let l_pr'= mkAnd l_pr pr_eq pos in
+      (l_h',l_pr',[s1;s2],(r_v,s2))
+    else (l_h,l_pr,[],(r_v,l_v))
+  | None -> 
+    let f = fresh_perm_var () in
+    let t = fresh_perm_var () in
+    (l_h,l_pr,[],(f,t))
+
+and get_eqns_free ((fr,t) : P.spec_var * P.spec_var) (evars : P.spec_var list) (expl_inst : P.spec_var list) 
+      (struc_expl_inst : P.spec_var list) pos : perm_formula*perm_formula * (P.spec_var * P.spec_var) list = 
+	if (P.mem fr evars) || (P.mem fr expl_inst) then (mkTrue pos, mkTrue pos,[(fr, t)])
+  else if (P.mem fr struc_expl_inst) then (mkTrue pos, mkEq (frac_of_var fr) (frac_of_var t) pos,[])
+  else (mkEq (frac_of_var fr) (frac_of_var t) pos, mkTrue pos, [])
+
+
 (*transformers*)
+
+let get_subst_equation_perm_formula f qvars = ([],f)
+
 
 let transform_frac f (e:frac_perm) : frac_perm = match f e with
     | Some e -> e

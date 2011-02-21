@@ -29,6 +29,7 @@ let init_files () =
 
 let omega_of_spec_var (sv : spec_var):string = match sv with
   | SpecVar (t, v, p) -> 
+    let _ = if is_perm_var t then report_error no_pos "oemga: found perm vars in pure formulas" in
 		let r = match (List.filter (fun (a,b,_)-> ((String.compare v b)==0) )!Ocparser.subst_lst) with
 				  | []->           
             let ln = (String.length v) in  

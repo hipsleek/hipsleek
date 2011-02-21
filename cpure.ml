@@ -99,6 +99,9 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 
 let remove_dups_svl vl = Util.remove_dups_f vl eq_spec_var
 
+let is_perm_var sv = match sv with
+  | OType p -> (String.compare p perm)==0
+  | _ -> false
      
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with

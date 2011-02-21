@@ -1096,8 +1096,9 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                   else vdef.I.view_data_name in
   (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = Known (CP.OType data_name);id = fresh_int () };
-   H.add stab (IPr.name_of_frac "un initialized view share var" vdef.I.view_perm) { sv_info_kind = Known (CP.OType "perm");id = fresh_int () };
-   let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+   let perm_name = (IPr.name_of_frac "un initialized view share var" vdef.I.view_perm) in
+   H.add stab perm_name { sv_info_kind = Known (CP.OType perm);id = fresh_int () };
+   let cf = trans_struc_formula prog true (self :: perm_name :: vdef.I.view_vars) vdef.I.view_formula stab false in
    let (inv, inv_b,inv_perm) = vdef.I.view_invariant in
    let pf = trans_pure_formula inv stab in
    let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
@@ -1119,7 +1120,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
      let view_perm_var = trans_perm_must_var true vdef.I.view_perm stab pos in
      let self_c_var = Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed) in
      let _ = 
-      let ffv = Util.difference (CF.struc_fv cf) (self_c_var::view_sv_vars) in
+      let ffv = Util.difference (CF.struc_fv cf) (view_perm_var::self_c_var::view_sv_vars) in
       if (ffv!=[]) then 
         Error.report_error { 
           Err.error_loc = no_pos; 
@@ -3235,7 +3236,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
 	                
 and trans_perm_must_var in_vdef pr stab pos = match pr with
   | (Some v, []) -> trans_var v stab pos
-  | (None,[]) when in_vdef -> CPr.freshPermVar () 
+  | (None,[]) when in_vdef -> CPr.fresh_perm_var () 
   | _ ->  Err.report_error{
             Err.error_loc = pos;
             Err.error_text = "permission formula floating error";} 
@@ -3781,7 +3782,7 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
   end
       
 and collect_type_info_frac_perm pf stab = match pf with 
-  | (Some (v,_),_ ) -> collect_type_info_var v stab (Known (CP.OType "perm")) no_pos
+  | (Some (v,_),_ ) -> collect_type_info_var v stab (Known (CP.OType perm)) no_pos
   | _ -> ()
       
 and collect_type_info_perm pf stab = match pf with
@@ -4617,14 +4618,15 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
       Iast.proc_body = nb;
   }
 
+and normalize_view_perm_var name perm =  match perm with  
+              | Some v, []-> v
+              | None,[] -> (("flted_"^(fresh_trailer ())),Unprimed)
+              | _-> report_error no_pos ("share var in view "^name^" not properly defined")
+  
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = order_views prog.I.prog_view_decls in
   let tmp_views = List.map (fun c-> 
-            let v_share_var = match c.I.view_perm with  
-              | Some v, []-> v
-              | None,[] -> (("flted_"^(fresh_trailer ())),Unprimed)
-              | _-> report_error no_pos ("share var in view "^c.I.view_name^" not properly defined") in
-              
+            let v_share_var = normalize_view_perm_var c.I.view_name c.I.view_perm in              
 			      let h = (fst v_share_var,Unprimed)::(self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
 			      let p = (fst v_share_var,Primed)::(self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
 			      let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
@@ -4879,7 +4881,7 @@ and view_prune_inv_inference cp vd =
   let f_branches = CF.get_view_branches  vd.C.view_formula in 
   let branches = snd (List.split f_branches) in
   let pure_ui = MCP.drop_pf ((fun (c,_,_) ->c) vd.C.view_user_inv) in
-  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches pure_ui no_pos in    
+  let conds, invs = prune_inv_inference_formula cp (vd.C.view_perm_var :: sf::vd.C.view_vars) f_branches pure_ui no_pos in    
   let v' = { vd with  
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 

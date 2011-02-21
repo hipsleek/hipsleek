@@ -21,7 +21,7 @@ type perm_formula =
   | PFalse of loc
 
 let print_perm_f = ref (fun (c:perm_formula)-> " printing not initialized")
-let print_frac_f = ref (fun b (c:frac_perm)-> "printing not initialized")
+let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
   
 let frac_of_var v = (Some v,[])
   
@@ -54,10 +54,10 @@ let mkAnd f1 f2 pos = match f1 with
         | _ -> And (f1,f2,pos)
         
 let mkEq f1 f2 pos = 
-  let _ = print_string ("f1: "^(!print_frac_f true f1)^"\n") in 
-  let _ = print_string ("f2: "^(!print_frac_f true f2)^"\n") in 
+ (* let _ = print_string ("f1: "^(!print_frac_f true f1)^"\n") in 
+  let _ = print_string ("f2: "^(!print_frac_f true f2)^"\n") in *)
   let r = Eq (f1,f2,pos) in
-  let _ = print_string ("r: "^(!print_perm_f r)^"\n") in 
+  (*let _ = print_string ("r: "^(!print_perm_f r)^"\n") in *)
   r
 
 let frac_fv f= match (fst f) with | Some v -> [v] | _ -> []

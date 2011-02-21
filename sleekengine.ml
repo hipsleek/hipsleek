@@ -13,6 +13,7 @@ module CP = Cpure
 module IF = Iformula
 module IP = Ipure
 module AS = Astsimp
+module IPr = Iperm
 
 module XF = Xmlfront
 module NF = Nativefront
@@ -88,10 +89,11 @@ let process_pred_def pdef =
   if check_data_pred_name pdef.I.view_name then
 	let tmp = iprog.I.prog_view_decls in
 	  try
-		let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
-		let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
+    let v_share_var = AS.normalize_view_perm_var pdef.I.view_name pdef.I.view_perm in   
+		let h = (fst v_share_var,Unprimed)::(self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) pdef.Iast.view_vars ) in
+		let p = (fst v_share_var,Primed)::(self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) pdef.Iast.view_vars ) in
 		let wf,_ = AS.case_normalize_struc_formula iprog h p pdef.Iast.view_formula false false [] in
-		let new_pdef = {pdef with Iast.view_formula = wf} in
+		let new_pdef = {pdef with Iast.view_formula = wf; I.view_perm = IPr.frac_of_var v_share_var} in
 		iprog.I.prog_view_decls <- ( new_pdef :: iprog.I.prog_view_decls);
 		(*let tmp_views = order_views iprog.I.prog_view_decls in*)
 		(*let _ = print_string ("\n------ "^(Iprinter.string_of_struc_formula "\t" pdef.Iast.view_formula)^"\n normalized:"^(Iprinter.string_of_struc_formula "\t" wf)^"\n") in*)
