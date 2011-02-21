@@ -2,7 +2,7 @@ open Globals
 module P = Cpure
 module Ts = Tree_shares
 
-type share = Ts.Share.coq_ShareTree
+type share = Ts.stree
 
 type frac_perm = P.spec_var option * share
 
@@ -22,13 +22,13 @@ let print_frac_f = ref (fun (b:bool) (c:frac_perm)-> "printing not initialized")
   
 let fresh_perm_var () = P.SpecVar (P.OType perm,fresh_name(),Unprimed)
 
-let top_share = Ts.Share.top
+let top_share = Ts.top
 
-let split = Ts.Share.split
+let split = Ts.split
 
-let frac_of_var v :frac_perm = (Some v,Ts.Share.top)
+let frac_of_var v :frac_perm = (Some v,Ts.top)
   
-let mkPFull () :frac_perm = (None,Ts.Share.top)
+let mkPFull () :frac_perm = (None,Ts.top)
 
 let mkPerm posib_var splint :frac_perm = (posib_var,splint)
 
@@ -53,7 +53,7 @@ let mkAnd f1 f2 pos = match f1 with
         
 let mkEq f1 f2 pos = Eq (f1,f2,pos)
 
-let is_full_frac t = Ts.Share.eq_dec t Ts.Share.top 
+let is_full_frac t = Ts.stree_eq t Ts.top 
 
 let mkFullVar () : (P.spec_var * perm_formula) = 
   let nv = fresh_perm_var() in
@@ -125,7 +125,7 @@ and apply_subs (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_
   
 (*elim exists*)(*TODO*)
 let elim_exists_perm w f pos = f
-(*elim perm exists if any*)(*TODO*)
+(*elim perm exists if any otherwise push*)(*TODO*)
 let elim_exists_perm_exists f = f
 (*TODO*)
 let elim_exists_exp_perm f = f
@@ -135,7 +135,8 @@ let simpl_perm_formula f = f
 (*imply*)(*TODO*)
 let imply f1 f2 = true
 (*TODO*)
-let match_imply l_v r_v l_f r_f l_node :(bool * P.spec_var * P.spec_var * 'a * 'b * 'c) option = 
+let match_imply l_v r_v l_f r_f l_node e_vars :(bool * P.spec_var * P.spec_var * 'a * 'b * 'c) option = 
+
     Some (false,l_v, r_v, l_f, r_f, l_node)
 
 let does_match p = match p with
@@ -260,7 +261,7 @@ let eq_fperm_var v1 v2  = match v1,v2 with
   | None,None -> true
   | _ -> false
  
-let eq_fperm (v1,f1) (v2,f2) =(eq_fperm_var v1 v2)&& (Ts.Share.eq_dec f1 f2) 
+let eq_fperm (v1,f1) (v2,f2) =(eq_fperm_var v1 v2)&& (Ts.stree_eq f1 f2) 
  
 let rec eq_perm_formula (f1 : perm_formula) (f2 : perm_formula) : bool = match (f1,f2) with
   | And (f11,f12,_), And (f21,f22,_)
@@ -331,14 +332,3 @@ let find_rel_constraints (f:perm_formula) desired :perm_formula =
    let fixp = helper desired in
    let pairs = List.filter (fun (c,_) -> (List.length (Util.intersect_fct P.eq_spec_var c fixp))>0) lf_pair in
    conj_of_list (snd (List.split pairs))
-  
-  
- 
- 
-let rec string_of_tree_share ts = match ts with
-  | Ts.Share.Leaf true -> "T"
-  | Ts.Share.Leaf false -> ""
-  | Ts.Share.Node (t1,t2) -> 
-    let s1 = string_of_tree_share t1 in
-    let s2 = string_of_tree_share t2 in
-    "("^s1^","^s2^")"

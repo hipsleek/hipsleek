@@ -423,7 +423,7 @@ let pr_spec_var x = fmt_string (string_of_spec_var x)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
         
-let string_of_splint l = CPr.string_of_tree_share l
+let string_of_splint l = Tree_shares.string_of_tree_share l
   (*if (l==[]) then ""
   else ("+"^(String.concat "" (List.map (fun c-> match c with | PLeft-> "L" | _ -> "R") l)))*)
 

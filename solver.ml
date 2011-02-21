@@ -2178,7 +2178,6 @@ and heap_entail_conjunct_lhs_struc
 	        (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
             (* print_endline ("XXX helper of inner entailer"^Cprinter.string_of_prior_steps (CF.get_prior_steps ctx)); *)
             let ctx = add_to_context ctx "case rule" in
-            let _ = print_string "got here3\n" in
 	        if (List.length b.formula_case_exists)>0 then 
 	          let ws = CP.fresh_spec_vars b.formula_case_exists in
 	          let st = List.combine b.formula_case_exists ws in
@@ -2817,7 +2816,7 @@ and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.m
   
 and heap_entail_build_perm_formula_check (evars : CP.spec_var list) (ante : CPr.perm_formula) (conseq : CPr.perm_formula) pos : (CPr.perm_formula * CPr.perm_formula) =
   let avars = CPr.fv ante in
-  let outer_vars, inner_vars = List.partition (fun v -> CP.mem v avars) evars in
+  let inner_vars = List.partition (fun v -> not (CP.mem v avars)) evars in
   let tmp1 =  CPr.elim_exists_perm inner_vars conseq no_pos in
   (ante,tmp1)
       
@@ -3394,7 +3393,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
                                univ vars can be used to prune the necesary branch then add those conditions to the right
                                and do the prune*)
                             let subsumes, (*to_be_proven*)_ = prune_branches_subsume(*_debug*) prog estate.es_ivars anode ln2 in
-                            let perm_imply = CPr.match_imply prv1 r_pr lhs_pr rhs_pr anode in
+                            let perm_imply = CPr.match_imply prv1 r_pr lhs_pr rhs_pr anode (estate.es_evars@estate.es_gen_expl_vars) in
                             if (not subsumes || not (CPr.does_match perm_imply)) then 
                               (CF.mkFailCtx_in (Basic_Reason ({
                                   fc_message = "there is a mismatch in branches ";
@@ -4299,6 +4298,7 @@ let normalize_perm_d prog (c:formula):formula =
     | Or f -> (f0,false) 
     | Base _ 
     | Exists _ ->  
+        (*let _ = print_string ("nda: "^(Cprinter.string_of_formula f0)^"\n") in*)
         let qvs,rf = split_quantifiers f0 in
         let h, p, pr, fl, b, t = split_components rf in        
         let lin_h = heap_lin h in
@@ -4309,7 +4309,8 @@ let normalize_perm_d prog (c:formula):formula =
           | h::[]-> (mkStarH ah h no_pos, apr, ap,avars,did_m)
           | h::tl -> 
             let name = get_node_name h in
-            (*let _ = print_string ("nodes: "^(String.concat ";" (List.map get_node_name c))^"\n") in*)
+            (*let _ = print_string ("nodes: "^(String.concat ";" (List.map get_node_name c))^"\n") in
+            let _ = print_string ("nodes: "^(String.concat ";" (List.map Cprinter.string_of_h_formula c))^"\n") in*)
             let _ = if (List.exists (fun c-> (String.compare(get_node_name c) name)<>0) tl) then 
             Error.report_error { Error.error_loc = no_pos; Error.error_text =" heap consistency issue"}else ()in
             let prl,args = List.fold_left (fun (a1,a2) c-> match c with
@@ -4359,7 +4360,7 @@ let normalize_perm_d prog (c:formula):formula =
         r in      
         
   if not !allow_frac_perm then c
-  else fix_merges true (fix_unfold c)
+  else fix_merges true c(*(fix_unfold c)*)
   
 let normalize_perm prog f = normalize_perm_d prog f
  (*Util.ho_debug_1 "normalize_perm " Cprinter.string_of_formula Cprinter.string_of_formula (fun c-> normalize_perm_d prog c) f *)
