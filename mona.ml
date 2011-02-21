@@ -426,7 +426,7 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = 
-  Util.no_debug_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+  Util.ho_debug_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
       (fun e0 -> mona_of_exp_x e0 f) e0
 
 (* pretty printing for expressions *)
@@ -464,7 +464,7 @@ and mona_of_exp_x e0 f =
   in
   helper e0
 
-and mona_of_exp_secondorder e0 f = 	match e0 with
+and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
   | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
@@ -498,8 +498,18 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
+  | CP.Bag (elist, _) -> ((List.map (fun x -> mona_of_exp x f) elist),"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
+(* failwith ("0 Bags are not supported in Mona") *)
+  | CP.BagUnion (_, _) -> ([], mona_of_exp e0 f, "")
+(* failwith ("1 Union is not supported in Mona") *)
+  | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
+(* failwith ("2 Intersect is not supported in Mona") *)
+  (* | CP.Neq _ -> failwith ("!!!! TRans Failure: NOT") *)
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
+and mona_of_exp_secondorder e0 f =
+   Util.ho_debug_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+      (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
 and mona_of_formula_exp_list l f = match l with
@@ -567,7 +577,7 @@ and mona_of_b_formula b f vs =
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
       | CP.Neq (a1, a2, _) ->
-	        if (is_firstorder_mem f a1 vs)(* && (is_firstorder_mem f a2 vs) *) then
+	        if (is_firstorder_mem f a1 vs)&& (is_firstorder_mem f a2 vs) then
 	          begin
 	            if CP.is_null a2 then
 	              "(" ^ (mona_of_exp a1 f) ^ " > 0)"
@@ -706,7 +716,7 @@ and equation a1 a2 f sec_order_symbol first_order_symbol vs =
   end
 
 and mona_of_formula f initial_f vs = 
-  Util.no_debug_2 "mona_of_formula" Cprinter.string_of_pure_formula
+  Util.ho_debug_2 "mona_of_formula" Cprinter.string_of_pure_formula
       Cprinter.string_of_pure_formula 
       (fun x -> x) (fun f initial_f -> mona_of_formula_x f initial_f vs) 
       f initial_f 
@@ -836,7 +846,7 @@ let check_debug fd timeout pid : bool =
       (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)
-let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
+let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   let mona_file_name = "test" ^ (string_of_int !mona_file_number) ^ ".mona" in
   let mona_file = open_out mona_file_name in
   (* output_string mona_file ("include \"mona_predicates.mona\";\n"); *)
@@ -864,10 +874,11 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   output_string mona_file ("greater(p, q) | (p=q);\n\n");
   output_string mona_file ("pred nequal(var2 p,q) = p ~= q ;\n");
   let fstr = 
-    try (var_decls ^ (mona_of_formula pe pe vs))
+    let _ = print_string ("\n==========="^var_decls^"===="^(Cprinter.string_of_pure_formula pe)^"=======\n") in
+    try (var_decls ^(mona_of_formula pe pe vs))
     with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); "" 
   in
-  output_string mona_file (fstr ^ ";\n" );
+  if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
   flush mona_file;
   close_out mona_file;
   
@@ -913,6 +924,10 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   end;
   flush log_file;
   res
+
+let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
+  Util.ho_debug_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
+     (fun var_decls pe ->  write_x var_decls pe vs timeout) var_decls pe
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
@@ -966,7 +981,6 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  let f = CP.arith_simplify 10 f in 
   let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with

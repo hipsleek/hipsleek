@@ -309,7 +309,6 @@ sub hip_process_file {
                 {
                     if($line =~ m/FAIL/){
                         $fails++;
-                        $fails_count++;
                         # chomp $line;
                         # print $line;
                         $line =~ m/Procedure(.*)\$/; 
@@ -319,16 +318,16 @@ sub hip_process_file {
                     }
                     elsif($line =~ m/SUCCESS/){
                         $sucess++;
-                        $success_count++;
                     }
                 }
                 if ($fails == 0 && $success == 0){
                     $fatal_errors++;
-                    $fatal_error_files=$fatal_error_files." $test->[0] \n";
+                    $fatal_error_files=$fatal_error_files."  $test->[0] \n";
                 }
-                $fails_count = $fails_count + $fails;
-                $success_count = $success_count + $success;
+                
             }
+            $fails_count = $fails_count + $fails;
+            $success_count = $success_count + $success;
             if($timings) {
                 log_one_line_of_timings ($test->[0], $output);
             }
