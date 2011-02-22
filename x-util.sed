@@ -10,28 +10,36 @@ s/Util.\(string_of_counters\)/Gen.Profiling.\1/gp
 s/Util.\(gen_time_msg\)/Gen.Profiling.\1/gp
 s/Util.\(list_last\)/Gen.Profiling.\1/gp
 s/Util.\(add_index\)/Gen.Profiling.\1/gp
+s/Util.\(repeat\)/Gen.Profiling.\1/gp
 
 s/Util.restart/Gen.Basic.restart/gp
 s/Util.split_by/Gen.split_by/gp
+s/Util.\(split_at\)/Gen.\1/gp
 s/Util.\(empty\)/Gen.is_\1/gp
 s/Util.\(break_lines\)/Gen.\1/gp
 s/Util.\(unsome\)/Gen.\1/gp
 s/Util.\(is_some\)/Gen.\1/gp
 s/Util.\(replace_minus_with_uscore\)/Gen.\1/gp
+s/Util.\(replace_dot_with_uscore\)/Gen.\1/gp
+s/Util.\(replace_path_sep_with_uscore\)/Gen.\1/gp
 s/Util.\(trim_str\)/Gen.\1/gp
 s/Util.\(map4\)/Gen.\1/gp
 s/Util.\(new_line_str\)/Gen.\1/gp
-
+s/Util.\(combine3\)/Gen.\1/gp
+s/Util.\(find_one_dup\)/Gen.BList.find_one_dup_eq\1/gp 
 s/Util.\(list_equal\) /Gen.BList.\1_eq = /gp
 s/Util.\(list_find\)/Gen.BList.\1/gp
 s/Util.\(subset\) /Gen.BList.\1_eq = /gp
-s/Util.\(remove_elem\) /Gen.BList.\1_eq = /gp
-s/Util.\(remove_dups\) /Gen.BList.\1_eq = /gp
-s/Util.\(remove_dups_eq\) /Gen.BList.\1 /gp
+s/Util.\(remove_elem\)/Gen.BList.\1_eq =/gp
+s/Util.\(remove_dups\)/Gen.BList.\1_eq =/gp
+s/Util.\(remove_dups_eq\)/Gen.BList.\1/gp
 s/Util.\(remove_dups\)_f/Gen.BList.\1_eq =/gp
+s/Util.\(check_dups_eq\)/Gen.BList.\1/gp
 s/Util.\(intersect\) /Gen.BList.\1_eq = /gp
 s/Util.\(mem\) /Gen.BList.\1_eq = /gp
 s/Util.\(find_dups\)_f/Gen.BList.\1_eq/gp
+s/Util.\(take\)/Gen.BList.\1/gp
+s/Util.\(drop\)/Gen.BList.\1/gp
 s/Util.intersect_fct/Gen.BList.intersect_eq/gp
 s/Util.difference_fct/Gen.BList.difference_eq/gp
 s/Util.difference_f/Gen.BList.difference_eq/gp
@@ -48,6 +56,7 @@ s/Util.\(subs_eset\)_eq/Gen.EqMap(Slices.SV).\1/gp
 s/Util.\(find_equiv_elim\)_eq/Gen.EqMap(Slices.SV).\1/gp
 s/Util.\(is_empty\)_aset_eq/Gen.EqMap(Slices.SV).\1/gp
 s/Util.\(un_partition\)/Gen.EqMap(Slices.SV).\1/gp
+s/Util.\(partition\)_eq/Gen.EqMap(Slices.SV).\1/gp
 
 s/Util.empty_a_set_eq \<.*\>/Gen.EqMap(Slices.SV).mkEmpty/gp
 
@@ -92,6 +101,5 @@ s/Util.\(exc_sub_type\)/Gen.ExcNumbering.\1/gp
 
 s/Util.\(tag_list\)/Gen.Stackable.\1/gp
  
-
-
-
+s/Util.\(list_of_hash_values\)/Gen.HashUtil.\1/gp
+s/Util.\(copy_keys\)/Gen.HashUtil.\1/gp
