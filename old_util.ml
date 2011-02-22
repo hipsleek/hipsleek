@@ -9,6 +9,10 @@ exception Bail
 let rec restart f arg =
   try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
+let fnone (c:'a):'a option = None
+
+let empty l = match l with [] -> true | _ -> false
+
 type 'a tag_elem = ('a * (int list))
 
 type 'a tag_list = ('a tag_elem) list
@@ -16,10 +20,6 @@ type 'a tag_list = ('a tag_elem) list
 type ('a,'b) stackable =  ('a * (('b list) list))
 
 type ('a,'b) list_of_stackable =  (('a,'b) stackable) list
-
-let fnone (c:'a):'a option = None
-
-let empty l = match l with [] -> true | _ -> false
 
 (* this imp_list is not pop-pable *)
 
@@ -280,7 +280,7 @@ let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) =
 let rec list_last l = match l with
   | h::[] -> h
   | _::t -> (list_last t)
-  | [] -> failwith "Util.list_last: empty list"
+  | [] -> failwith "Gen.Profiling.list_last: empty list"
 
 (** Split the list of length k>=1 into a pair consisting of
    the list of first k-1 elements and the last element. *)
@@ -841,20 +841,20 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
   Hashtbl.fold append_val tab []
 
-let counters = ref (Hashtbl.create 10)
+let counters = Hashtbl.create 10
 
 let add_to_counter (s:string) i = 
   if !Globals.enable_counters then
     try
-      let r = Hashtbl.find !counters s in
-      Hashtbl.replace !counters s (r+i)
+      let r = Hashtbl.find counters s in
+      Hashtbl.replace counters s (r+i)
     with
-      | Not_found -> Hashtbl.add !counters s i
+      | Not_found -> Hashtbl.add counters s i
   else ()
 let inc_counter (s:string) = add_to_counter s 1
 
 let string_of_counters () = 
-  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) counters [] in
   let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
   "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 
@@ -908,7 +908,8 @@ let pop_time msg =
 	else 
 	  Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
   else ()
-  let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
+
+let prof_1 (s:string) (f:'a -> 'z) (e:'a) : 'z =
   try
     push_time s;
       let r=f e in
@@ -1084,6 +1085,7 @@ let has_cycles ():bool =
 let print_profiling_info () = if (!Globals.profiling) then  print_tasks () else ()
 
 (*aliasing structures*)
+
 type ('a,'k) e_map =  ('a * 'k) list
 type 'a e_set =  ('a,'a list) e_map
 type 'a e_name = ('a * string) list (* map of name to string used *)
@@ -1456,7 +1458,7 @@ let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set =
 *)
 
 (* returns true if s contains no duplicates *)
-let check_no_dupl_eq eq (s:'a list) : bool =
+let check_no_dups_eq eq (s:'a list) : bool =
   let rec helper s = match s with
     | [] -> true
     | x::xs -> 
@@ -1465,12 +1467,12 @@ let check_no_dupl_eq eq (s:'a list) : bool =
   helper s
 
 (* returns true if s contains no duplicates *)
-let check_no_dupl (s:'a list) : bool = check_no_dupl_eq (=) s
+let check_no_dups (s:'a list) : bool = check_no_dups_eq (=) s
 
 (* check f is 1-to-1 map assuming s contains no duplicates *)
 let is_one2one_eq (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : bool =
   let l = List.map f s in
-    if (check_no_dupl_eq eq l) then true
+    if (check_no_dups_eq eq l) then true
     else (print_string ("duplicates here :"^(string_of_a_list pr l)^"\n") ; false) 
 
 (* check f is 1-to-1 map assuming s contains no duplicates *)
@@ -1503,7 +1505,7 @@ let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
 let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set =
   let sl = get_elems s in
   let tl = List.map f sl in
-  if (check_no_dupl_eq eq tl) then
+  if (check_no_dups_eq eq tl) then
     List.map (fun (e,k) -> (f e,k)) s
   else
   let s1 = List.combine sl tl in
@@ -1565,7 +1567,6 @@ let empty_baga () : 'a baga = []
 
 (* a singleton bag *)
 let singleton_baga (e:'a) : 'a baga = [e]
-
 
 let rec is_dupl_baga (eq:'a->'a->bool) (xs:'a baga) : bool = 
   match xs with

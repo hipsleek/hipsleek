@@ -7,7 +7,6 @@ open Globals
 
 module Err = Error
 module CP = Cpure
-module U = Util
 
 type ('a,'b,'c) f =  ('a list * 'b list * 'c )
 

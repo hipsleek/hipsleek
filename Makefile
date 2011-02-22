@@ -68,7 +68,7 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLLEX) rllexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
-MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
+MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -89,10 +89,10 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 	typechecker.cmo \
 	globalvars.cmo \
 	scriptarguments.cmo\
-	main.cmo
+	slices.cmo main.cmo 
 
 
-PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
+PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -104,7 +104,7 @@ PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
-GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.cmo debug.cmo \
+GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iparser.cmo ilexer.cmo \
@@ -127,10 +127,9 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo util.
 
 
 
-SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
+SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
-	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
@@ -138,8 +137,9 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
-  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
   sleekcommons.cmo \
+	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
+  tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
 	drawing.cmo \
 	env.cmo checks.cmo \
@@ -155,7 +155,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 SLEEK_FILES_OPT := $(SLEEK_FILES:.cmo=.cmx)
 
 
-MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
+MAIN_FILES_2=debug.cmo globals.cmo \
 	ipure.cmo iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo
@@ -163,7 +163,7 @@ MAIN_FILES_2=util.cmo debug.cmo globals.cmo \
 MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
 
 
-PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
+PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -186,7 +186,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo util.cmo debug.cmo \
 
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
-WEB_FILES=globals.cmo error.cmo util.cmo debug.cmo \
+WEB_FILES=globals.cmo error.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -268,12 +268,12 @@ sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT)
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
 
-CRISTINA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
+CRISTINA_FILES=debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo cformula.cmo cast.cmo
 
 cristina: $(CRISTINA_FILES)
 
-TEST_OO_FILES=util.cmo debug.cmo globals.cmo error.cmo \
+TEST_OO_FILES= gen.cmo debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	checks.cmo \
@@ -295,7 +295,7 @@ oo: $(TEST_OO_FILES)
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(TEST_OO_FILES)
 
 
-JAVA_FILES=util.cmo debug.cmo globals.cmo error.cmo \
+JAVA_FILES=debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iprinter.cmo \
 	iparser.cmo ilexer.cmo \

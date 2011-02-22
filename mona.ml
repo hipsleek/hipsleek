@@ -426,7 +426,7 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = 
-  Util.no_debug_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+  Gen.Debug.no_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
       (fun e0 -> mona_of_exp_x e0 f) e0
 
 (* pretty printing for expressions *)
@@ -503,7 +503,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
-   Util.no_debug_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+   Gen.Debug.no_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
       (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
@@ -645,7 +645,7 @@ and mona_of_b_formula b f vs =
               let a2str = mona_of_exp a2 f in
               let a3str = mona_of_exp a3 f in	  
               "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-              ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
+              ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str
             else
               let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a3 f in
               (*str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str*)
@@ -656,14 +656,14 @@ and mona_of_b_formula b f vs =
 	    let a2str = mona_of_exp_secondorder a2 f in
 	    let a3str = mona_of_exp_secondorder a3 f in
 	    "((lessEq(" ^ a3str ^ ", " ^ a2str ^ ") & " ^ a1str ^ " = " ^ a3str ^ ") | (less("
-		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str*)
+		^ a2str ^ ", " ^ a3str ^ ") & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
       | CP.EqMax (a1, a2, a3, _) ->	 
 	        if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
               let a1str = mona_of_exp a1 f in
               let a2str = mona_of_exp a2 f in
               let a3str = mona_of_exp a3 f in
               "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
-              ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str
+              ^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str
             else
               let (a1name,a2name,a3name,str,end_str) = second_order_composite a1 a2 a3 f in
               (*str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str*)
@@ -711,7 +711,7 @@ and equation a1 a2 f sec_order_symbol first_order_symbol vs =
   end
 
 and mona_of_formula f initial_f vs = 
-  Util.no_debug_2 "mona_of_formula" Cprinter.string_of_pure_formula
+  Gen.Debug.no_2 "mona_of_formula" Cprinter.string_of_pure_formula
       Cprinter.string_of_pure_formula 
       (fun x -> x) (fun f initial_f -> mona_of_formula_x f initial_f vs) 
       f initial_f 
@@ -802,7 +802,7 @@ let continue f arg tsecs =
 (* checking the result given by Mona *)
 let check fd timeout pid : bool =
   try begin
-    let tup = Util.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
+    let tup = Gen.Basic.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
     if tup (*Unix.select [Unix.descr_of_in_channel fd] [] [] timeout)*) = ([],[],[]) then begin
       print_endline "\nMona timeout reached."; flush stdout; false
     end else 
@@ -837,7 +837,7 @@ let check fd timeout pid : bool =
 	  End_of_file -> false
 
 let check_debug fd timeout pid : bool =
-  Util.no_debug_1 "check" string_of_float string_of_bool 
+  Gen.Debug.ho_1 "check" string_of_float string_of_bool 
       (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)
@@ -860,7 +860,7 @@ let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   (* if log_all_flag is on -> writing the formula in the mona log file  *)
   if !log_all_flag == true then
 	begin
-	  output_string log_file ("test" ^ string_of_int !mona_file_number ^ Util.new_line_str);
+	  output_string log_file ("test" ^ string_of_int !mona_file_number ^ Gen.new_line_str);
       	  output_string log_file (fstr ^ ";\n");
 	  flush log_file;
 	end;
@@ -898,7 +898,7 @@ let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   res
 
 let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
-  Util.no_debug_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
+  Gen.Debug.no_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
      (fun var_decls pe ->  write_x var_decls pe vs timeout) var_decls pe
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
@@ -915,10 +915,10 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
         let vs = Hashtbl.create 10 in
         let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
         let first_order_var_decls =
-        if Util.empty (*!first_order_vars*) part1 then ""
+        if Gen.is_empty (*!first_order_vars*) part1 then ""
         else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var (*(!first_order_vars)*)part1)) ^ ";\n" in
         let second_order_var_decls =
-        if Util.empty (*!second_order_vars*) part2 then ""
+        if Gen.is_empty (*!second_order_vars*) part2 then ""
         else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var (*!second_order_vars*) part2)) ^ ";\n" in
         let var_decls = first_order_var_decls ^ second_order_var_decls in
   (*let tmp_form = CP.mkOr (CP.mkNot ante no_pos) conseq no_pos in*)
@@ -939,10 +939,10 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   let vs = Hashtbl.create 10 in
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
-    if Util.empty (*!first_order_vars*) part1 then ""
+    if Gen.is_empty (*!first_order_vars*) part1 then ""
     else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var (*(!first_order_vars)*)part1)) ^ ";\n" in
   let second_order_var_decls =
-    if Util.empty (*!second_order_vars*) part2 then ""
+    if Gen.is_empty (*!second_order_vars*) part2 then ""
     else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var (*!second_order_vars*) part2)) ^ ";\n" in
   let var_decls = first_order_var_decls ^ second_order_var_decls in
   if (timeout = 0.) then (write var_decls tmp_form vs (-1.))

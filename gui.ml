@@ -3,7 +3,6 @@ open Solver
 open Cast
 
 
-module U = Util
 module CP = Cpure
 module CF = Cformula
 
@@ -607,7 +606,7 @@ end
 
  let check_proc (w:mainwindow) (prog : prog_decl) (proc : proc_decl)  =
    let unmin_name = unmingle_name proc.proc_name in
-   let check_flag = ((U.empty !procs_verified) || List.mem unmin_name !procs_verified)
+   let check_flag = ((Gen.is_empty !procs_verified) || List.mem unmin_name !procs_verified)
      && not (List.mem unmin_name !Inliner.inlined_procs)
    in
      if check_flag then begin
@@ -631,7 +630,7 @@ end
 
 
 let check_data (w:mainwindow) (prog : prog_decl) (cdef : data_decl) =
-  if not (U.empty cdef.data_methods) then
+  if not (Gen.is_empty cdef.data_methods) then
     ignore(List.map (check_proc w prog) cdef.data_methods)
 
 let check_prog (w:mainwindow) (prog : prog_decl) =
