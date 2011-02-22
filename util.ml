@@ -1458,7 +1458,7 @@ let subs_eset ((fv,tv):'a * 'a) (s:'a e_set) : 'a e_set =
 *)
 
 (* returns true if s contains no duplicates *)
-let check_no_dupl_eq eq (s:'a list) : bool =
+let check_no_dups_eq eq (s:'a list) : bool =
   let rec helper s = match s with
     | [] -> true
     | x::xs -> 
@@ -1467,12 +1467,12 @@ let check_no_dupl_eq eq (s:'a list) : bool =
   helper s
 
 (* returns true if s contains no duplicates *)
-let check_no_dupl (s:'a list) : bool = check_no_dupl_eq (=) s
+let check_no_dups (s:'a list) : bool = check_no_dups_eq (=) s
 
 (* check f is 1-to-1 map assuming s contains no duplicates *)
 let is_one2one_eq (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a list) : bool =
   let l = List.map f s in
-    if (check_no_dupl_eq eq l) then true
+    if (check_no_dups_eq eq l) then true
     else (print_string ("duplicates here :"^(string_of_a_list pr l)^"\n") ; false) 
 
 (* check f is 1-to-1 map assuming s contains no duplicates *)
@@ -1505,7 +1505,7 @@ let norm_subs_eq (eq:'b->'b->bool) (subs:('a * 'b) list) : ('a * 'a) list =
 let rename_eset_eq2_allow_clash (pr:'a->string) (eq:'a->'a->bool) (f:'a -> 'a) (s:'a e_set) : 'a e_set =
   let sl = get_elems s in
   let tl = List.map f sl in
-  if (check_no_dupl_eq eq tl) then
+  if (check_no_dups_eq eq tl) then
     List.map (fun (e,k) -> (f e,k)) s
   else
   let s1 = List.combine sl tl in

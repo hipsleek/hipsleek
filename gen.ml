@@ -239,6 +239,8 @@ struct
       | [] -> false
       | q::qs -> if (List.exists (fun c-> eq q c) qs) then true  else check_dups_eq eq qs 
 
+  let check_no_dups_eq eq n = not(check_dups_eq eq n)
+
   let subset_eq eq l1 l2 =
     List.for_all (fun x -> (mem_eq eq x l2)) l1
 
@@ -270,6 +272,12 @@ struct
   let list_equal_eq eq l1 l2 = 
     let l = (List.length (intersect_eq eq l1 l2)) in
     ((List.length l1) =  l) && (l = (List.length l2))
+
+  let rec list_find (f:'a -> 'b option) l = match l with 
+    | [] -> None
+    | x::xs -> match f x with
+        | None -> list_find f xs
+        | Some s -> Some s
 
 end;;
 
@@ -411,7 +419,8 @@ struct
   type epair = ((elem * elem) list) 
 
   let eq = Elt.eq 
-  let string_of = Elt.string_of 
+  let string_of_elem = Elt.string_of 
+
 
   let partition (s: emap) : epart =
     let rec insert (a,k) lst = match lst with
@@ -421,6 +430,11 @@ struct
             else (k2,ls)::(insert (a,k) xs) in
     let r = List.fold_left (fun lst x ->  insert x lst) [] s in
     List.map ( fun (_,b) -> b) r
+
+  let string_of (e: emap) : string =
+    let f = string_of_elem in
+    let ll=partition e in 
+    "[@"^ (String.concat " \n " (List.map (fun cl -> "{"^(String.concat ", "(List.map f cl))^"}") ll))^"]"
 
   let un_partition (ll:epart) : emap =
     let flat xs y = 
@@ -550,6 +564,13 @@ struct
       | [(x,_)] -> (Some x, ls2)
       | (x,_)::_ -> (Some x, s1)
 
+(* return a distinct element equal to e and elim e from e_set if found *)
+  let find_equiv_elim (e:elem) (s:emap) : (elem * emap) option  = 
+    let (ne,ns) = find_equiv_elim_sure e s in
+    match ne with
+      | None -> None
+      | Some x -> Some (x, ns) 
+
   (* make fv=tv and then eliminate fv *)
   (* fv should never be constant *)
   let subs_eset   ((fv,tv):elem * elem) (s:emap) : emap = 
@@ -571,13 +592,14 @@ struct
   (*           else helper xs in *)
   (*   helper s *)
 
-  let check_no_dupl (s:elist) : bool = not(BList.check_dups_eq eq s)
+  let check_no_dups (s:elist) : bool = not(BList.check_dups_eq eq s)
 
   (* check f is 1-to-1 map assuming s contains no duplicates *)
   let is_one2one (f:elem -> elem) (s:elist) : bool =
     let l = List.map f s in
-    if (check_no_dupl l) then true
-    else (print_string ("duplicates here :"^(Util.string_of_a_list string_of l)^"\n") ; false) 
+    if (check_no_dups l) then true
+    else (print_string ("duplicates here :"^(Util.string_of_a_list string_of_elem l)^"\n") ; false) 
+
 
   (* rename the elements of e_set *)
   (* pre : f must be 1-to-1 map *)
@@ -603,6 +625,17 @@ struct
     let eqlst = List.fold_left (fun l x -> (mkeq x) @ l) [] pp in
     eqlst
 
+let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
+  let pr = string_of_elem in
+  let sl = get_elems s in
+  let tl = List.map f sl in
+  if (BList.check_no_dups_eq eq tl) then
+    List.map (fun (e,k) -> (f e,k)) s
+  else
+  let s1 = List.combine sl tl in
+  let e2= norm_subs_eq s1 in
+  let ns = List.fold_left (fun s (a1,a2) -> add_equiv s a1 a2) s e2 in
+    List.map (fun (e,k) -> (f e,k)) ns
 
 end;;
 
