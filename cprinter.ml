@@ -628,7 +628,7 @@ let rec pr_pure_formula  (e:P.formula) =
           pr_list_op op_or f_b args
     | P.Not (f, lbl, l) -> 
           pr_formula_label_opt lbl; 
-          fmt_string "!";f_b f 
+          fmt_string "!(";f_b f;fmt_string ")"
     | P.Forall (x, f,lbl, l) -> 
           pr_formula_label_opt lbl; 
 	      fmt_string "forall("; pr_spec_var x; fmt_string ":";
@@ -877,6 +877,9 @@ let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
 let pr_list_formula (e:list_formula) = pr_list_op_none " " (wrap_box ("B",0) pr_formula) e
 
 let string_of_list_formula (e:list_formula) : string =  poly_string_of_pr  pr_list_formula e
+
+let string_of_list_f (f:'a->string) (e:'a list) : string =  
+  "["^(String.concat "," (List.map f e))^"]"
 
 let printer_of_list_formula (fmt: Format.formatter) (e:list_formula) : unit = 
   poly_printer_of_pr fmt pr_list_formula e
@@ -1208,7 +1211,7 @@ let pr_view_decl v =
       let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
       let b = string_of_spec_var_list ba in
       let d = String.concat ";" (List.map string_of_b_formula c2) in
-      fmt_string ("{"^s^"} -> "^b^"=["^d^"]")) c) v.view_prune_invariants;
+      fmt_string ("{"^s^"} -> {"^b^"} ["^d^"]")) c) v.view_prune_invariants;
   fmt_close_box ();
   pr_mem:=true
 
@@ -1561,3 +1564,4 @@ Cast.print_b_formula := string_of_b_formula;;
 Cast.print_exp := string_of_formula_exp;;
 Cast.print_formula := string_of_pure_formula;;
 Cast.print_svl := string_of_spec_var_list;;
+Omega.print_pure := string_of_pure_formula;;

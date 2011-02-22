@@ -362,7 +362,7 @@ and memo_f_neg (f: b_formula): b_formula = match f with
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoized negation: unexpected constraint type"}
       
 and memo_arith_simplify (f:memo_pure) : memo_pure = 
-  List.map (fun c-> { c with memo_group_slice = List.map arith_simplify c.memo_group_slice}) f
+  List.map (fun c-> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice}) f
     
 (******************************************************************************************************************
 														   Utilities for memoized formulas
@@ -679,7 +679,7 @@ and split_mem_grp (g:memoised_group): memo_pure =
 (* both with_const and no_const needed *)
 (*finds eq overlap with qv and substitutes the equalities into grp, returns the qv vars that have not
  been substituted and the memo_pure with the substitution performed*)  
-and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
+and memo_pure_push_exists_eq_x (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
  
      let split_eqs eq_list qv  = 
         let aliases  = List.map (fun c-> (c,Util.find_equiv_all_eq_raw c eq_list)) qv in
@@ -719,9 +719,9 @@ and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure*
     (a1@ngrp, nqv)) ([],qv) f0 in
    res
   
-and memo_pure_push_exists_eq_debug (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
- Util.ho_debug_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
- (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq qv f0 pos) qv f0
+and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
+ Util.no_debug_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
+ (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq_x qv f0 pos) qv f0
   
 (*pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
   a formula*)
@@ -758,15 +758,15 @@ and memo_pure_push_exists_slice  (f_simp,do_split) (qv:spec_var list) (f0:memo_p
 (*pushes exists qv over f0. It takes two steps: first searches for substitutions in the eq set, this avoids some 
    simplify calls, pushes the rest of the qv vars through memo_pure_push_exists_slice which picks relevant constraints
    ands them and sends them to simplify  *)
-and memo_pure_push_exists_all (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
+and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
   if qv==[] then f0
   else
     let (f0,nqv) = memo_pure_push_exists_eq qv f0 pos in
     memo_pure_push_exists_slice (f_simp,do_split) nqv f0 pos
  
-and memo_pure_push_exists_all_debug fs qv f0 pos =
-  Util.ho_debug_3 "pure_push_all" !print_sv_l_f !print_mp_f (fun _ -> "") 
-  !print_mp_f (memo_pure_push_exists_all fs) qv f0 pos
+and memo_pure_push_exists_all fs qv f0 pos =
+  Util.no_debug_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "") 
+  !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 
 (*and memo_pure_push_exists_eq_debug qv f0 pos =
   Util.ho_debug_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
@@ -1364,7 +1364,7 @@ let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
  
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
-  | OnePF f -> OnePF (arith_simplify f)
+  | OnePF f -> OnePF (arith_simplify 6 f)
  
 let memo_arith_simplify_debug f = 
   Util.ho_debug_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 

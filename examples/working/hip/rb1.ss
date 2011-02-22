@@ -388,11 +388,15 @@ void dep(ref node  x, int a)
 					x.left.color = 0;
 				x = x.left;
 			}
-			else assume false;
+			else { //assume false;
+            }
 		}
-		else assume false;        
+		else{ // assume false; 
+        }
    }
-  else {dprint; assert x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h or x'::rb<n, cl, bh>; assume false;}
+  else {dprint; assert x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= h or x'::rb<n, cl, bh>; 
+    //assume false;
+  }
 }
 
 /*

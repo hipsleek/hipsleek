@@ -19,9 +19,10 @@ let webserver = ref false
 let parallelize num =
   num_para := num
 
-let rec check_specs_debug prog proc ctx spec_list e0 = Util.ho_debug_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+let rec check_specs prog proc ctx spec_list e0 = 
+  Util.no_debug_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
 
-and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0
+(* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
   
 (* assumes the pre, and starts the symbolic execution*)
 and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec_list:CF.struc_formula) e0 : bool = 
@@ -84,9 +85,9 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
   in	
   List.for_all do_spec_verification spec_list
 
-and check_exp_debug prog proc ctx e0 label = Util.ho_debug_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
+and check_exp prog proc ctx e0 label = Util.no_debug_3 "check_exp" (fun proc -> proc.proc_name) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_exp) (Cprinter.string_of_list_failesc_context) (fun proc ctx e0 -> check_exp_a prog proc ctx e0 label) proc ctx e0
 
-and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label
+(* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
   if (exp_to_check e0) then  
@@ -350,7 +351,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let proc = look_up_proc_def pos prog.prog_proc_decls mn in
 	        let farg_types, farg_names = List.split proc.proc_args in
 	        let farg_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) farg_names farg_types in
-	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in	
+	        let actual_spec_vars = List.map2 (fun n t -> CP.SpecVar (t, n, Unprimed)) vs farg_types in
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
 			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
@@ -396,6 +397,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
             if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
+	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
+              Util.no_debug_1 "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
+                  (fun s ->  check_pre_post org_spec s) sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
 		
@@ -484,7 +488,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       ((check_exp1 failesc) @ fl)
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  Util.prof_2 "check_post" (check_post_x prog proc ctx post) pos pid
+  Util.no_debug_1 "check_post" (fun _ -> "?") (fun _ -> "?")
+      (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
@@ -692,7 +697,7 @@ let check_proc_wrapper_map prog (proc,num) =
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
-      raise e
+      raise e 
 
 let check_proc_wrapper_map_net prog (proc,num) =
   try

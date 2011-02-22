@@ -464,13 +464,12 @@ and mona_of_exp_x e0 f =
   in
   helper e0
 
-and mona_of_exp_secondorder e0 f = 	match e0 with
+and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
   | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
-        (*      print_endline ("\nCCC: " ^ tmp); *)
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
         let (exs2, a2name, a2str) = mona_of_exp_secondorder a2 f in
         let add_string = " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ tmp ^ ")" in
@@ -498,8 +497,14 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
+  | CP.Bag (elist, _) -> ([],"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
+  | CP.BagUnion (_, _) -> ([], mona_of_exp e0 f, "")
+  | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
+and mona_of_exp_secondorder e0 f =
+   Util.no_debug_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+      (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
 and mona_of_formula_exp_list l f = match l with
@@ -567,7 +572,7 @@ and mona_of_b_formula b f vs =
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
       | CP.Neq (a1, a2, _) ->
-	        if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) then
+	        if (is_firstorder_mem f a1 vs)&& (is_firstorder_mem f a2 vs) then
 	          begin
 	            if CP.is_null a2 then
 	              "(" ^ (mona_of_exp a1 f) ^ " > 0)"
@@ -799,65 +804,53 @@ let check fd timeout pid : bool =
   try begin
     let tup = Util.restart  (Unix.select [Unix.descr_of_in_channel fd] [] []) timeout in
     if tup (*Unix.select [Unix.descr_of_in_channel fd] [] [] timeout)*) = ([],[],[]) then begin
-        print_endline "\nMona timeout reached."; flush stdout; false
+      print_endline "\nMona timeout reached."; flush stdout; false
     end else 
-    let r = input_line fd in
-    let err= "Error in file " in 
-    match r with
-    | "Formula is valid" ->
-      begin
-            if !log_all_flag==true then
-            output_string log_file (" [mona.ml]: --> SUCCESS\n");
-            true;
-          end
-    | _ -> 
-      let l = String.length err in
-      if ((String.length r) >=l) && String.compare err (String.sub r 0 l)=0 then
-        (print_string "MONA translation failure!";
-        Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)})
-      else
-        false
-    end
+      let r = input_line fd in
+      let err= "Error in file " in 
+      (* let err2= "BDD too large" in  *)
+      let ans1= "A counter-example of lea" in
+      let ans2= "Formula is unsatisfiable" in
+      match r with
+        | "Formula is valid" ->
+              begin
+                if !log_all_flag==true then
+                  output_string log_file (" [mona.ml]: --> SUCCESS\n");
+                true;
+              end
+        | _ -> 
+              let l = String.length err in
+              if ((String.length r) >=l) && String.compare err (String.sub r 0 l)=0 then
+                (print_string "MONA translation failure!";
+                Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^r)})
+              else
+                (* print_string ("***:"^r^"\n"); *)
+                let mona_file_name = "test" ^ (string_of_int !mona_file_number) ^ ".mona" in
+                let l = String.length ans1 in
+                if ((String.length r) >=l) && String.compare ans1 (String.sub r 0 l)=0 then false
+                else if ((String.length r) >=l) && String.compare ans2 (String.sub r 0 l)=0 then false
+                else
+                  (print_string ("MONA failure : maybe BDD too large!"^mona_file_name^r^"\n");
+                  false)
+  end
   with
-	End_of_file -> false
+	  End_of_file -> false
 
 let check_debug fd timeout pid : bool =
-  Util.ho_debug_1 "check" string_of_float string_of_bool 
+  Util.no_debug_1 "check" string_of_float string_of_bool 
       (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)
-let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
+let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   let mona_file_name = "test" ^ (string_of_int !mona_file_number) ^ ".mona" in
   let mona_file = open_out mona_file_name in
-  (* output_string mona_file ("include \"mona_predicates.mona\";\n"); *)
-  output_string mona_file ("# auxiliary predicates\n");
-  output_string mona_file ("pred xor(var0 x,y) = x&~y | ~x&y;\n");
-  output_string mona_file ("pred at_least_two(var0 x,y,z) = x&y | x&z | y&z;\n\n");
-  output_string mona_file ("# addition relation (P + q = r)\n");
-  output_string mona_file ("pred plus(var2 p,q,r) =\n");
-  output_string mona_file ("ex2 c: \n");
-  output_string mona_file ("\t0 notin c\n");
-  output_string mona_file ("& all1 t:\n");
-  output_string mona_file ("\t(t+1 in c <=> at_least_two(t in p, t in q, t in c))\n");
-  output_string mona_file ("\t& (t in r <=> xor(xor(t in p, t in q), t in c));\n\n");
-  output_string mona_file ("# less-than relation (p<q)\n");
-  output_string mona_file ("pred less(var2 p,q) = \n");
-  output_string mona_file ("ex2 t: t ~= empty & plus(p,t,q);\n\n");
-  output_string mona_file ("# less-or-equal than relation (p<=q)\n");
-  output_string mona_file ("pred lessEq(var2 p, q) = \n");
-  output_string mona_file ("less(p, q) | (p=q);\n\n");
-  output_string mona_file ("# greater-than relation (p>q)\n");
-  output_string mona_file ("pred greater(var2 p, q) = \n");
-  output_string mona_file ("less(q, p);\n\n");
-  output_string mona_file ("# greater-or-equal than relation (p>=q)\n");
-  output_string mona_file ("pred greaterEq(var2 p, q) = \n");
-  output_string mona_file ("greater(p, q) | (p=q);\n\n");
-  output_string mona_file ("pred nequal(var2 p,q) = p ~= q ;\n");
+  output_string mona_file ("include \"mona_predicates.mona\";\n");
   let fstr = 
-    try (var_decls ^ (mona_of_formula pe pe vs))
+    (* let _ = print_string ("\n==========="^var_decls^"===="^(Cprinter.string_of_pure_formula pe)^"=======\n") in *)
+    try (var_decls ^(mona_of_formula pe pe vs))
     with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); "" 
   in
-  output_string mona_file (fstr ^ ";\n" );
+  if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
   flush mona_file;
   close_out mona_file;
   
@@ -888,7 +881,7 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   | _ -> ()
   end;
 (*  print_endline "Mona died."; flush stdout;*)
-  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
+  (* Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona"); *)
   begin match res with
   | true ->
 	  begin
@@ -903,6 +896,10 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   end;
   flush log_file;
   res
+
+let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
+  Util.no_debug_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
+     (fun var_decls pe ->  write_x var_decls pe vs timeout) var_decls pe
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
@@ -931,10 +928,10 @@ let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : 
   (* try 02.04.09 *)
   (* ante *)
   
+  let ante = CP.arith_simplify 8 ante in
+  let conseq = CP.arith_simplify 9 conseq in
   let simp_ante = (break_presburger ante true) in
   let simp_conseq = (break_presburger conseq false) in
-  let simp_ante = CP.arith_simplify simp_ante in
-  let simp_conseq = CP.arith_simplify simp_conseq in
   let ante_fv = CP.fv simp_ante in
   let conseq_fv = CP.fv simp_conseq in
   let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
@@ -956,7 +953,6 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  (* let f = CP.arith_simplify f in *)
   let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with
