@@ -36,14 +36,16 @@ let parse (input : string) : command =
 		  let ldef = Sparser.coercion_decl (Slexer.tokenizer "interactive") inlex in
 			LemmaDef ldef
 	  | "checkentail" ->
-		  let [a_str; c_str] = Util.split_by "|-" dat in
+		  let [a_str; c_str] = Gen.split_by "|-" dat in
+		  let [a_str; c_str] = Gen.split_by "|-" dat in
 		  let a_lex = Lexing.from_string a_str in
 		  let c_lex = Lexing.from_string c_str in
 		  let a_f = Sparser.constr (Slexer.tokenizer "interactive") a_lex in
 		  let c_f = Sparser.constr (Slexer.tokenizer "interactive") c_lex in
 			EntailCheck (a_f, c_f)
 	  | "print" ->
-		  Print (Util.trim_str dat)
+		  Print (Gen.trim_str dat)
+		  Print (Gen.trim_str dat)
 	  | _ -> failwith ("Unsupported command: " ^ cmd)
 *)
 

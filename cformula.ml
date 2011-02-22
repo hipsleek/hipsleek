@@ -88,7 +88,8 @@ and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pos : loc }
 
 and mem_formula = { 
-  mem_formula_mset : CP.spec_var Util.d_set ; (* list of disjoint vars *)
+  mem_formula_mset : Gen.DisjSet(Slices.PtrSV).dlist ; (* list of disjoint vars *)
+  mem_formula_mset : Gen.DisjSet(Slices.PtrSV).dlist ; (* list of disjoint vars *)
 }
 
 and formula_or = {  formula_or_f1 : formula;
@@ -200,7 +201,8 @@ and string_of_spec_var = function
 (* returns false if unsatisfiable *)
 let is_sat_mem_formula (mf:mem_formula) : bool =
   let d = mf.mem_formula_mset in
-  (Util.is_sat_dset CP.eq_spec_var d)
+  (Gen.DisjSet(Slices.PtrSV).is_sat_dset CP.eq_spec_var d)
+  (Gen.DisjSet(Slices.PtrSV).is_sat_dset CP.eq_spec_var d)
 
 let rec formula_of_heap h pos = mkBase h (MCP.mkMTrue pos) TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_heap_fl h fl pos = mkBase h (MCP.mkMTrue pos) TypeTrue fl [] pos
@@ -540,7 +542,8 @@ and mkAndFlow (fl1:flow_formula) (fl2:flow_formula) flow_tr :flow_formula =
 				else {formula_flow_interval = false_flow_int; formula_flow_link = None} in
 	(*let string_of_flow_formula f c = 
 	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	")="^(Util.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
+	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
+	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}" in
 
 	let _ = print_string ("\n"^(string_of_flow_formula "f1 " fl1)^"\n"^
 							   (string_of_flow_formula "f2 " fl2)^"\n"^
@@ -752,8 +755,14 @@ and mkExists_w_lbl (svs : CP.spec_var list) (h : h_formula) (p : MCP.mix_formula
            formula_base_label = lbl;
 				   formula_base_pos = pos} in
   let fvars = fv (Base tmp_b) in
-  let qvars = U.intersect svs fvars in (* used only these for the quantified formula *)
-	if U.empty qvars then Base tmp_b 
+  let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
+  let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
+  let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
+  let qvars = Gen.BList.intersect_eq (=) svs fvars in (* used only these for the quantified formula *)
+	if Gen.is_empty qvars then Base tmp_b 
+	if Gen.is_empty qvars then Base tmp_b 
+	if Gen.is_empty qvars then Base tmp_b 
+	if Gen.is_empty qvars then Base tmp_b 
 	else
 	  Exists ({formula_exists_qvars = qvars; 
 			   formula_exists_heap =  h; 
@@ -858,13 +867,15 @@ and pos_of_formula (f : formula) : loc = match f with
 and struc_fv (f: struc_formula) : CP.spec_var list = 
 	let rec ext_fv (f:ext_formula): CP.spec_var list = match f with
 		| ECase b -> 
-		Util.difference_f CP.eq_spec_var
+		Gen.BList.difference_eq CP.eq_spec_var
+		Gen.BList.difference_eq CP.eq_spec_var
       (CP.remove_dups_svl (List.concat (List.map (fun (c1,c2) -> (CP.fv c1)@(struc_fv c2) ) b.formula_case_branches)))
       b.formula_case_exists
 		| EBase b -> 
 			let e = struc_fv b.formula_ext_continuation in
 			let be = fv b.formula_ext_base in
-			Util.difference_f CP.eq_spec_var (CP.remove_dups_svl (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
+			Gen.BList.difference_eq CP.eq_spec_var (CP.remove_dups_svl (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
+			Gen.BList.difference_eq CP.eq_spec_var (CP.remove_dups_svl (e@be)) (b.formula_ext_explicit_inst @ b.formula_ext_implicit_inst@ b.formula_ext_exists)				
 		| EAssume (x,b,_) -> fv b
 		| EVariance b ->
 			let measures_fv = (List.concat (List.map (fun (expr, bound) -> match bound with
@@ -872,7 +883,8 @@ and struc_fv (f: struc_formula) : CP.spec_var list =
 														| Some b_expr -> (CP.afv expr)@(CP.afv b_expr)) b.formula_var_measures)) in
 			let escapes_fv = (List.concat (List.map (fun f -> CP.fv f) b.formula_var_escape_clauses)) in
 			let continuation_fv = struc_fv b.formula_var_continuation in
-			Util.remove_dups (measures_fv@escapes_fv@continuation_fv)
+			Gen.BList.remove_dups_eq (=) (measures_fv@escapes_fv@continuation_fv)
+			Gen.BList.remove_dups_eq (=) (measures_fv@escapes_fv@continuation_fv)
 	in CP.remove_dups_svl (List.fold_left (fun a c-> a@(ext_fv c)) [] f)
 	
 and struc_post_fv (f:struc_formula):Cpure.spec_var list =
@@ -909,7 +921,8 @@ and fv (f : formula) : CP.spec_var list = match f with
                formula_base_branches = br;
                formula_base_label = lbl;
 							 formula_base_pos = pos})) in
-	  let res = Util.difference_f CP.eq_spec_var fvars qvars in
+	  let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
+	  let res = Gen.BList.difference_eq CP.eq_spec_var fvars qvars in
 		res
 		  
 and h_fv (h : h_formula) : CP.spec_var list = match h with
@@ -918,10 +931,12 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	   h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
   | Conj ({h_formula_conj_h1 = h1; 
 	   h_formula_conj_h2 = h2; 
-	   h_formula_conj_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+	   h_formula_conj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
+	   h_formula_conj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | Phase ({h_formula_phase_rd = h1; 
 	    h_formula_phase_rw = h2; 
-	    h_formula_phase_pos = pos}) -> Util.remove_dups (h_fv h1 @ h_fv h2)
+	    h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
+	    h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v; 
 	       h_formula_data_arguments = vs0}) ->
       (*let vs = List.tl (List.tl vs0) in*)
@@ -1556,11 +1571,13 @@ and compose_formula (delta : formula) (phi : formula) (x : CP.spec_var list) flo
 	
 and view_node_types (f:formula):ident list = 
 	let rec helper (f:h_formula):ident list =  match f with
-		| Star b -> Util.remove_dups ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
+		| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
+		| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
 		| ViewNode b -> [b.h_formula_view_name]
 		| _ -> [] in
 	match f with
-	| Or b-> Util.remove_dups ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
+	| Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
+	| Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
 	| Base b -> helper b.formula_base_heap
 	| Exists b -> helper b.formula_exists_heap
 
@@ -1779,7 +1796,8 @@ and list_partial_context = partial_context list
  
 and list_failesc_context = failesc_context list
   
-and list_failesc_context_tag = failesc_context Util.tag_list
+and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
+and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = Globals.fresh_int () in
@@ -1883,7 +1901,8 @@ and or_context_list (cl10 : context list) (cl20 : context list) : context list =
 		  tmp2 @ tmp1 
 	| [] -> []
   in
-	if Util.empty cl20 then
+	if Gen.is_empty cl20 then
+	if Gen.is_empty cl20 then
 	  []
 	else
 	  let tmp = helper cl10 cl20 in
@@ -2013,10 +2032,16 @@ and isFailCtx cl = match cl with
 
 
 and isFailPartialCtx (fs,ss) =
-if (U.empty ss) then true else false
+if (Gen.is_empty ss) then true else false
+if (Gen.is_empty ss) then true else false
+if (Gen.is_empty ss) then true else false
+if (Gen.is_empty ss) then true else false
 
 and isFailFailescCtx (fs,es,ss) =
-if (U.empty ss)&&(U.empty (colapse_esc_stack es)) then true else false
+if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false
+if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false
+if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false
+if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false
 
 and isFailListPartialCtx cl =
   List.for_all isFailPartialCtx cl 
@@ -2025,10 +2050,16 @@ and isFailListFailescCtx cl =
   List.for_all isFailFailescCtx cl 
   
 and isSuccessPartialCtx (fs,ss) =
-if (U.empty fs) then true else false
+if (Gen.is_empty fs) then true else false
+if (Gen.is_empty fs) then true else false
+if (Gen.is_empty fs) then true else false
+if (Gen.is_empty fs) then true else false
 
 and isSuccessFailescCtx (fs,_,_) =
-if (U.empty fs) then true else false
+if (Gen.is_empty fs) then true else false
+if (Gen.is_empty fs) then true else false
+if (Gen.is_empty fs) then true else false
+if (Gen.is_empty fs) then true else false
 
 and isSuccessListPartialCtx cl =
   List.exists isSuccessPartialCtx cl 
@@ -2060,7 +2091,13 @@ and list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_contex
 
 and select n l = 
   if n<=0 then l 
-    else (U.take n l) @(List.filter (fun c-> (rank c)==1.) (U.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Util.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
+    else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
 
 and list_partial_context_union_n (l1:list_partial_context) (l2:list_partial_context) n :list_partial_context = 
     select n  (List.sort (fun a1 a2 -> truncate (((rank a2)-.(rank a1))*.1000.)) (l1 @ l2))
@@ -2254,7 +2291,8 @@ and combine_and (f1:formula) (f2:MCP.mix_formula) :formula*bool = match f1 with
 			(Base{b with formula_base_pure = r1;}, r2)					 
 	| Exists ({formula_exists_qvars = evars;
 			   formula_exists_pure = p ;} as b) -> 
-			if (List.length (Util.intersect (MCP.mfv f2) evars))=0 then
+			if (List.length (Gen.BList.intersect_eq (=) (MCP.mfv f2) evars))=0 then
+			if (List.length (Gen.BList.intersect_eq (=) (MCP.mfv f2) evars))=0 then
 				let r1,r2 = combine_and_pure f1 p f2 in
 				(Exists {b with formula_exists_pure = r1;},r2)	  
 				else 
@@ -2312,12 +2350,14 @@ and list_formula_of_list_context (ctx : list_context) : list_formula =  match ct
 
 (* filter out partial failure first *)
 and list_formula_of_list_partial_context (ls : list_partial_context) : list_formula =  
-  let ls = List.filter (fun (f,s) -> Util.empty f) ls in
+  let ls = List.filter (fun (f,s) -> Gen.is_empty f) ls in
+  let ls = List.filter (fun (f,s) -> Gen.is_empty f) ls in
   List.map (formula_of_partial_context) ls
 
 (* assumes that all are successes, may need to filter *)
 and list_formula_of_list_failesc_context (ls : list_failesc_context) : list_formula =  
-  let ls = List.filter (fun (f,es,s) -> Util.empty f) ls in
+  let ls = List.filter (fun (f,es,s) -> Gen.is_empty f) ls in
+  let ls = List.filter (fun (f,es,s) -> Gen.is_empty f) ls in
   List.map (formula_of_failesc_context) ls
 
 and formula_of_list_partial_context (ls : list_partial_context) : formula =  
@@ -2555,7 +2595,8 @@ and formula_to_struc_formula (f:formula):struc_formula =
 and plug_ref_vars (f0:struc_formula) (w:Cpure.spec_var list):struc_formula = 
 	let rec filter_quantifiers w f = match f with
 	| Base _ -> f
-	| Exists b -> Exists {b with formula_exists_qvars = Util.difference b.formula_exists_qvars w;}
+	| Exists b -> Exists {b with formula_exists_qvars = Gen.BList.difference_eq (=) b.formula_exists_qvars w;}
+	| Exists b -> Exists {b with formula_exists_qvars = Gen.BList.difference_eq (=) b.formula_exists_qvars w;}
 	| Or b -> Or {b with 
 						formula_or_f1 = filter_quantifiers w b.formula_or_f1;
 						formula_or_f2 = filter_quantifiers w b.formula_or_f2;}in
@@ -2577,11 +2618,13 @@ and find_false_ctx ctx pos =
    | FailCtx _ -> ()
    | SuccCtx ctx ->
 	if (List.exists isAnyFalseCtx ctx) then 
-    false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) else ()
+    false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) else ()
+    false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) else ()
 
 and find_false_list_failesc_ctx (ctx:list_failesc_context) pos =
     if (List.exists isAnyFalseFailescCtx ctx) then 
-      false_ctx_line_list := Util.remove_dups (pos::!false_ctx_line_list) 
+      false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
+      false_ctx_line_list := Gen.BList.remove_dups_eq (=) (pos::!false_ctx_line_list) 
     else ()
     
 	(*
@@ -2595,10 +2638,13 @@ and filter_node (c: context) (p1:spec_var):context =
 		| Ctx c -> Ctx {c with es_formula = (helper_filter c.es_formula)}
 *)
 
-and guard_vars f = Util.remove_dups (List.fold_left (fun a f-> a@(match f with
+and guard_vars f = Gen.BList.remove_dups_eq (=) (List.fold_left (fun a f-> a@(match f with
+and guard_vars f = Gen.BList.remove_dups_eq (=) (List.fold_left (fun a f-> a@(match f with
 	| ECase b-> 
-      Util.remove_dups (List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(guard_vars c2)) [] b.formula_case_branches)
-	| EBase b -> Util.difference (guard_vars b.formula_ext_continuation) b.formula_ext_exists
+      Gen.BList.remove_dups_eq (=) (List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(guard_vars c2)) [] b.formula_case_branches)
+      Gen.BList.remove_dups_eq (=) (List.fold_left (fun a (c1,c2)-> a@(Cpure.fv c1)@(guard_vars c2)) [] b.formula_case_branches)
+	| EBase b -> Gen.BList.difference_eq (=) (guard_vars b.formula_ext_continuation) b.formula_ext_exists
+	| EBase b -> Gen.BList.difference_eq (=) (guard_vars b.formula_ext_continuation) b.formula_ext_exists
 	| EAssume b-> []
 	| EVariance b -> guard_vars b.formula_var_continuation
 	)) [] f)
@@ -2674,14 +2720,16 @@ and res_retrieve stab clean_res fl =
 	if clean_res then  
 		try 
 			let r = Some (Hashtbl.find stab res) in
-			(if (subsume_flow !exc_flow_int (Util.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
+			(if (subsume_flow !exc_flow_int (Gen.ExcNumbering.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
+			(if (subsume_flow !exc_flow_int (Gen.ExcNumbering.get_hash_of_exc fl)) then (Hashtbl.remove stab res) else ());
 			r
 		with Not_found -> None
 	else None
 
 	
 and res_replace stab rl clean_res fl =
-	if clean_res&&(subsume_flow !exc_flow_int (Util.get_hash_of_exc fl)) then 
+	if clean_res&&(subsume_flow !exc_flow_int (Gen.ExcNumbering.get_hash_of_exc fl)) then 
+	if clean_res&&(subsume_flow !exc_flow_int (Gen.ExcNumbering.get_hash_of_exc fl)) then 
 		((Hashtbl.remove stab res);
 		match rl with 
 			| None -> () 
@@ -2693,13 +2741,15 @@ and get_start_label ctx = match ctx with
   | FailCtx _ -> ""
   | SuccCtx sl -> 
     let rec helper c= match c with
-      | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Util.list_last e.es_path_label))
+      | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Gen.Profiling.list_last e.es_path_label))
+      | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Gen.Profiling.list_last e.es_path_label))
       | OCtx (c1,c2) -> helper c1 in
 	helper (List.hd sl)
 
 and get_start_partial_label (ctx:list_partial_context) =
   let rec helper c= match c with
-    | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Util.list_last e.es_path_label))
+    | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Gen.Profiling.list_last e.es_path_label))
+    | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Gen.Profiling.list_last e.es_path_label))
     | OCtx (c1,c2) -> helper c1 in
   let pc = List.hd ctx in
     if (rank pc) < 1. then ""
@@ -3171,9 +3221,12 @@ and erase_propagated f =
 
 and pop_expl_impl_context (expvars : CP.spec_var list) (impvars : CP.spec_var list) (ctx : list_context)  : list_context = 
   transform_list_context ((fun es -> Ctx{es with 
-				es_gen_expl_vars = Util.difference_fct CP.eq_spec_var es.es_gen_expl_vars expvars; 
-				es_gen_impl_vars = Util.difference_fct CP.eq_spec_var es.es_gen_impl_vars impvars;
-				es_evars = Util.difference es.es_evars expvars;
+				es_gen_expl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_expl_vars expvars; 
+				es_gen_expl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_expl_vars expvars; 
+				es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_impl_vars impvars;
+				es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var es.es_gen_impl_vars impvars;
+				es_evars = Gen.BList.difference_eq (=) es.es_evars expvars;
+				es_evars = Gen.BList.difference_eq (=) es.es_evars expvars;
 				}), fun c->c) ctx
 
 and push_exists_list_context (qvars : CP.spec_var list) (ctx : list_context) : list_context = 
@@ -3263,7 +3316,8 @@ let normalize_max_renaming_list_failesc_context f pos b ctx =
     if !Globals.max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx =
-  Util.prof_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
+  Gen.Profiling.prof_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
+  Gen.Profiling.prof_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
 let normalize_max_renaming f pos b ctx = 
   if !Globals.max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
@@ -3492,7 +3546,8 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
     | Base {formula_base_label = lbl} 
     | Exists {formula_exists_label = lbl} -> (match lbl with
       | None -> Err.report_error { Err.error_loc = no_pos;Err.error_text = "view is unlabeled\n"} 
-      | Some lbl -> if (List.mem lbl br) then (Util.inc_counter "total_unfold_disjs";[f]) else (Util.inc_counter "saved_unfolds";[]))
+      | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
+      | Some lbl -> if (List.mem lbl br) then (Gen.Profiling.inc_counter "total_unfold_disjs";[f]) else (Gen.Profiling.inc_counter "saved_unfolds";[]))
     | Or b -> 
       ((filter_formula b.formula_or_f1)@(filter_formula b.formula_or_f2)) in    
   let filter_ext (f:ext_formula):ext_formula list = match f with

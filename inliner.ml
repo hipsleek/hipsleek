@@ -7,7 +7,8 @@ open Iast
 let inlined_procs = ref ([] : string list)
 
 let set_inlined arg =
-  let procs = Util.split_by "," arg in
+  let procs = Gen.split_by "," arg in
+  let procs = Gen.split_by "," arg in
 	inlined_procs := procs @ !inlined_procs
 
 (*
@@ -26,7 +27,8 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 		if List.exists (fun p -> p.param_mod = RefMod) pdef.proc_args then
 		  Error.report_error { Error.error_text = "inline: ref parameter is not supported now";
 							   Error.error_loc = pos }
-		else if not (Util.is_some pdef.proc_body) then
+		else if not (Gen.is_some pdef.proc_body) then
+		else if not (Gen.is_some pdef.proc_body) then
 		  Error.report_error { Error.error_text = "inline: can't inline primitive";
 							   Error.error_loc = pos }
 		else
@@ -51,7 +53,8 @@ let rec inline (prog : prog_decl) (pdef : proc_decl) (e0 : exp) : exp = match e0
 											exp_var_decl_pos = pos } in
 		  let var_defs = List.map2 mkvar pdef.proc_args fresh_names in
 
-		  let new_proc_body = remove_return (Util.unsome pdef.proc_body) in
+		  let new_proc_body = remove_return (Gen.unsome pdef.proc_body) in
+		  let new_proc_body = remove_return (Gen.unsome pdef.proc_body) in
 		  let seq1 = List.fold_left (fun s -> fun vd -> mkSeq vd s pos) new_proc_body var_defs in
 			(* make a block to localize formal args *)
 		  let block1 = Block { exp_block_body = seq1;

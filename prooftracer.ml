@@ -303,8 +303,10 @@ let rec string_of_proof prf0 : string =
 			  pure_step_gist = gist_f }) -> begin
 		Buffer.add_string buffer "<Pure>\n";
 		Buffer.add_string buffer (if success then "Success\n" else "Failure\n");
-		if Util.is_some gist_f then begin
-		  let gf = Util.unsome gist_f in
+		if Gen.is_some gist_f then begin
+		if Gen.is_some gist_f then begin
+		  let gf = Gen.unsome gist_f in
+		  let gf = Gen.unsome gist_f in
 			Buffer.add_string buffer ("<![CDATA[" ^ (Cprinter.string_of_pure_formula gf) ^ "]]>")
 		end;
 		Buffer.add_string buffer "</Pure>\n";

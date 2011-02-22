@@ -170,7 +170,8 @@ and remove_quantif f quant_list  = match f with
   - set/bag vars
 *)
 and split_vars (vars : CP.spec_var list) = 
-	if Util.empty vars then 
+	if Gen.is_empty vars then 
+	if Gen.is_empty vars then 
 		begin
 			([], [], [])
 		end
@@ -186,18 +187,22 @@ and split_vars (vars : CP.spec_var list) =
 		end
 		
 and flatten_output ints bools bags : string =  
-	if (Util.empty ints && Util.empty bools && Util.empty bags) then ""
+	if (Gen.is_empty ints && Gen.is_empty bools && Gen.is_empty bags) then ""
+	if (Gen.is_empty ints && Gen.is_empty bools && Gen.is_empty bags) then ""
 	else
 		let ints_vars_list =
-			if Util.empty ints then []
+			if Gen.is_empty ints then []
+			if Gen.is_empty ints then []
 			else let ints_str = (String.concat ", " (List.map cvc3_of_spec_var ints)) ^ " : INT" in				
 				ints_str :: [] in
 		let bags_vars_list =
-			if Util.empty bags then ints_vars_list
+			if Gen.is_empty bags then ints_vars_list
+			if Gen.is_empty bags then ints_vars_list
 			else let bags_str = (String.concat ", " (List.map cvc3_of_spec_var bags)) ^ " : SET" in				
 				bags_str :: ints_vars_list in
 		let all_quantif_vars_list =
-			if Util.empty bools then bags_vars_list
+			if Gen.is_empty bools then bags_vars_list
+			if Gen.is_empty bools then bags_vars_list
 			else let bools_str = (String.concat ", " (List.map cvc3_of_spec_var bools)) ^ " : INT" in
 				bools_str :: bags_vars_list in 
 		"EXISTS (" ^ (String.concat ", " all_quantif_vars_list) ^ ") : "
@@ -205,16 +210,20 @@ and flatten_output ints bools bags : string =
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = Util.remove_dups (ante_fv @ conseq_fv) in
+  let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
+  let all_fv = Gen.BList.remove_dups_eq (=) (ante_fv @ conseq_fv) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
-	if Util.empty bag_vars then "" 
+	if Gen.is_empty bag_vars then "" 
+	if Gen.is_empty bag_vars then "" 
 	else (String.concat ", " (List.map cvc3_of_spec_var bag_vars)) ^ ": SET;\n" in
   let int_var_decls = 
-	if Util.empty int_vars then "" 
+	if Gen.is_empty int_vars then "" 
+	if Gen.is_empty int_vars then "" 
 	else (String.concat ", " (List.map cvc3_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
-	if Util.empty bool_vars then ""
+	if Gen.is_empty bool_vars then ""
+	if Gen.is_empty bool_vars then ""
 	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in 
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   let ante_str =
@@ -227,7 +236,8 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let quantif_vars_str = flatten_output ints bools bags in
   let conseq_str =  "QUERY (" ^ quantif_vars_str ^ " ( " ^ (cvc3_of_formula flatted_conseq) ^ "));\n" in
 	(* talk to CVC3 *)
-  let f_cvc3 = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
+  let f_cvc3 = Gen.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
+  let f_cvc3 = Gen.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
 	if !log_cvc3_formula then begin
 	output_string !cvc3_log "%%% imply\n";
 	output_string !cvc3_log (!print_pure ante);
@@ -297,23 +307,28 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let all_fv = Util.remove_dups (CP.fv f) in
+  let all_fv = Gen.BList.remove_dups_eq (=) (CP.fv f) in
+  let all_fv = Gen.BList.remove_dups_eq (=) (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
-	if Util.empty bag_vars then "" 
+	if Gen.is_empty bag_vars then "" 
+	if Gen.is_empty bag_vars then "" 
 	else (String.concat ", " (List.map cvc3_of_spec_var bag_vars)) ^ ": SET;\n" in
   let int_var_decls = 
-	if Util.empty int_vars then "" 
+	if Gen.is_empty int_vars then "" 
+	if Gen.is_empty int_vars then "" 
 	else (String.concat ", " (List.map cvc3_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
-	if Util.empty bool_vars then ""
+	if Gen.is_empty bool_vars then ""
+	if Gen.is_empty bool_vars then ""
 	else (String.concat ", " (List.map cvc3_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   (* let quant_list = [] in *)
   let f_str = cvc3_of_formula f in
   let query_str = "CHECKSAT (" ^ f_str ^ ");\n" in
 	(* talk to CVC3 *)
-  let f_cvc3 = Util.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
+  let f_cvc3 = Gen.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
+  let f_cvc3 = Gen.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
 	if !log_cvc3_formula then begin
 	  output_string !cvc3_log ("%%% is_sat " ^ sat_no ^ "\n");
 	  output_string !cvc3_log f_cvc3;

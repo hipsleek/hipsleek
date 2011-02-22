@@ -15,9 +15,11 @@ and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
 
-type baga_sv = spec_var Util.baga
+type baga_sv = Gen.Baga(Slices.PtrSV).baga
+type baga_sv = Gen.Baga(Slices.PtrSV).baga
 
-type var_aset = spec_var Util.eq_set
+type var_aset = Gen.EqMap(Slices.SV).emap
+type var_aset = Gen.EqMap(Slices.SV).emap
 
 type formula =
   | BForm of (b_formula *(formula_label option))
@@ -108,7 +110,8 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 		   We need only to compare names and primedness *)
 	    v1 = v2 & p1 = p2
 
-let remove_dups_svl vl = Util.remove_dups_f vl eq_spec_var
+let remove_dups_svl vl = Gen.BList.remove_dups_eq (=)_f vl eq_spec_var
+let remove_dups_svl vl = Gen.BList.remove_dups_eq (=)_f vl eq_spec_var
 
      
 (* TODO: determine correct type of an exp *)
@@ -162,10 +165,12 @@ let is_void_type t = match t with | Prim Void -> true | _ -> false
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
 
-  let res = Util.remove_dups_f tmp eq_spec_var in
+  let res = Gen.BList.remove_dups_eq (=)_f tmp eq_spec_var in
+  let res = Gen.BList.remove_dups_eq (=)_f tmp eq_spec_var in
   res
 and check_dups_svl ls = 
-  let b=(Util.check_dups_eq eq_spec_var ls) in
+  let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
+  let b=(Gen.BList.check_dups_eq eq_spec_var ls) in
   (if b then print_string ("!!!!ERROR==>duplicated vars:>>"^(!print_svl ls)^"!!")); b 
 and fv_helper (f : formula) : spec_var list = match f with
   | BForm (b,_) -> bfv b
@@ -182,7 +187,8 @@ and combine_pvars p1 p2 =
 
 and remove_qvar qid qf =
   let qfv = fv_helper qf in
-  Util.difference_f eq_spec_var qfv [qid]
+  Gen.BList.difference_eq eq_spec_var qfv [qid]
+  Gen.BList.difference_eq eq_spec_var qfv [qid]
 
 and bfv (bf : b_formula) = match bf with
   | BConst _ -> []
@@ -839,7 +845,8 @@ and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
   | _ -> r)
   | _ -> r in 
   let tmp = BForm ((tt relop ae a pos),lbl) in
-  if Util.empty rest then
+  if Gen.is_empty rest then
+  if Gen.is_empty rest then
   tmp
   else
   let tmp1 = helper1 ae rest in
@@ -849,7 +856,8 @@ and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
   let a = List.hd alist1 in
   let rest = List.tl alist1 in
   let tmp = helper1 a alist2 in
-  if Util.empty rest then
+  if Gen.is_empty rest then
+  if Gen.is_empty rest then
   tmp
   else
   let tmp1 = helper2 rest alist2 in
@@ -894,7 +902,8 @@ and build_relation relop alist10 alist20 lbl pos=
             | _ -> r)
         | _ -> r in  
     let tmp = BForm ((tt relop ae a pos),lbl) in
-    if Util.empty rest then
+    if Gen.is_empty rest then
+    if Gen.is_empty rest then
       tmp
     else
       let tmp1 = helper1 ae rest in
@@ -904,7 +913,8 @@ and build_relation relop alist10 alist20 lbl pos=
     let a = List.hd alist1 in
     let rest = List.tl alist1 in
     let tmp = helper1 a alist2 in
-    if Util.empty rest then
+    if Gen.is_empty rest then
+    if Gen.is_empty rest then
       tmp
     else
       let tmp1 = helper2 rest alist2 in
@@ -1027,7 +1037,8 @@ and eq_spec_var_list (sv1 : spec_var list) (sv2 : spec_var list) =
   in
   (eq_spec_var_list_helper sv1 sv2) & (eq_spec_var_list_helper sv2 sv1)
 
-and remove_dups_spec_var_list vl = Util.remove_dups_eq eq_spec_var vl
+and remove_dups_spec_var_list vl = Gen.BList.remove_dups_eq (=)_eq eq_spec_var vl
+and remove_dups_spec_var_list vl = Gen.BList.remove_dups_eq (=)_eq eq_spec_var vl
 
 and remove_spec_var (sv : spec_var) (vars : spec_var list) =
   List.filter (fun v -> not (eq_spec_var sv v)) vars
@@ -1593,7 +1604,8 @@ and  get_subst_equation_formula_vv (f0 : formula) (v : spec_var):((spec_var * sp
 and get_subst_equation_formula (f0 : formula) (v : spec_var) only_vars: ((spec_var * exp) list * formula) = match f0 with
   | And (f1, f2, pos) ->
     let st1, rf1 = get_subst_equation_formula f1 v only_vars in
-    if not (Util.empty st1) then
+    if not (Gen.is_empty st1) then
+    if not (Gen.is_empty st1) then
       (st1, mkAnd rf1 f2 pos)
     else
       let st2, rf2 = get_subst_equation_formula f2 v only_vars in
@@ -1848,7 +1860,8 @@ and elim_exists (f0 : formula) : formula =
 	    let with_qvars = conj_of_list with_qvars_list pos in
 	    (* now eliminate the top existential variable. *)
 	    let st, pp1 = get_subst_equation_formula with_qvars qvar false in
-	    if not (Util.empty st) then
+	    if not (Gen.is_empty st) then
+	    if not (Gen.is_empty st) then
 	      let new_qf = subst_term st pp1 in
 	      let new_qf = mkExists qvars0 new_qf lbl pos in
 	      let tmp3 = helper new_qf in
@@ -1885,8 +1898,10 @@ and elim_exists (f0 : formula) : formula =
   helper f0
 
 
-let eq_spec_var_aset (aset: spec_var Util.eq_set ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
-  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv_eq aset sv1 sv2 
+let eq_spec_var_aset (aset: Gen.EqMap(Slices.SV).emap ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+let eq_spec_var_aset (aset: Gen.EqMap(Slices.SV).emap ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Gen.EqMap(Slices.SV).is_equiv aset sv1 sv2 
+  | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Gen.EqMap(Slices.SV).is_equiv aset sv1 sv2 
         
 
 let equalFormula_aset aset (f1:formula)(f2:formula):bool = equalFormula_f (eq_spec_var_aset aset)  f1 f2
@@ -1932,7 +1947,8 @@ and eq_exp_list aset (e1 : exp list) (e2 : exp list) : bool =
   (eq_exp_list_helper e1 e2) & (eq_exp_list_helper e2 e1)
 *)
 
-let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp (Util.empty_a_set_eq eq_spec_var) e1 e2        
+let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp (Gen.is_empty_a_set_eq eq_spec_var) e1 e2        
+let eq_exp_no_aset (e1 : exp) (e2 : exp) : bool = eq_exp (Gen.is_empty_a_set_eq eq_spec_var) e1 e2        
 
 let eq_b_formula aset (b1 : b_formula) (b2 : b_formula) : bool =  equalBFormula_aset aset b1 b2
 (*
@@ -1963,7 +1979,8 @@ match (b1, b2) with
   | _ -> false
 *)
 
-let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula (Util.empty_a_set_eq eq_spec_var ) b1 b2
+let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula (Gen.is_empty_a_set_eq eq_spec_var ) b1 b2
+let eq_b_formula_no_aset (b1 : b_formula) (b2 : b_formula) : bool = eq_b_formula (Gen.is_empty_a_set_eq eq_spec_var ) b1 b2
 
 
 let rec eq_pure_formula (f1 : formula) (f2 : formula) : bool = equalFormula f1 f2 
@@ -2135,12 +2152,14 @@ let find_rel_constraints (f:formula) desired :formula =
    let lf_pair = List.map (fun c-> ((fv c),c)) lf in
    let var_list = fst (List.split lf_pair) in
    let rec helper (fl:spec_var list) : spec_var list = 
-    let nl = List.filter (fun c-> (Util.intersect c fl)!=[]) var_list in
+    let nl = List.filter (fun c-> (Gen.BList.intersect_eq (=) c fl)!=[]) var_list in
+    let nl = List.filter (fun c-> (Gen.BList.intersect_eq (=) c fl)!=[]) var_list in
     let nl = List.concat nl in
     if (List.length fl)=(List.length nl) then fl
     else helper nl in
    let fixp = helper desired in
-   let pairs = List.filter (fun (c,_) -> (List.length (Util.intersect c fixp))>0) lf_pair in
+   let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq (=) c fixp))>0) lf_pair in
+   let pairs = List.filter (fun (c,_) -> (List.length (Gen.BList.intersect_eq (=) c fixp))>0) lf_pair in
    join_conjunctions (snd (List.split pairs))
 
   
@@ -2339,7 +2358,8 @@ let combine_branch b (f, l) =
 ;;
 (*
 let merge_branches_with_common l1 l2 cf =
-  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
       let l1 = List.assoc branch l1 in
@@ -2354,7 +2374,8 @@ let merge_branches_with_common l1 l2 cf =
 
 
 let merge_branches_with_common l1 l2 cf evars =
-  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let wrap_exists (l,f) = (l, mkExists evars f None no_pos) in 
   let map_fun branch =
     try 
@@ -2370,7 +2391,8 @@ let merge_branches_with_common l1 l2 cf evars =
 
 
 let merge_branches l1 l2 =
-  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
       let l1 = List.assoc branch l1 in
@@ -2384,7 +2406,8 @@ let merge_branches l1 l2 =
 ;;
 
 let or_branches_old l1 l2 =
-  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
       let l1 = List.assoc branch l1 in
@@ -2398,7 +2421,8 @@ let or_branches_old l1 l2 =
 ;;
 
 let or_branches l1 l2 =
-  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
       let l1 = List.assoc branch l1 in
@@ -3031,7 +3055,8 @@ and b_form_simplify (b:b_formula) :b_formula =
 *)  
 
 and arith_simplify (i:int) (pf : formula) :  formula =   
-  Util.no_debug_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
+  Gen.Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
+  Gen.Debug.no_1 ("arith_simplify LHS"^(string_of_int i)) !print_formula !print_formula 
       arith_simplify_x pf
 
 
@@ -3501,7 +3526,8 @@ let rename_labels  e=
 let remove_dup_constraints (f:formula):formula = 
   (*let f = elim_idents f in*)
   let l_conj = split_conjunctions f in
-  let prun_l = Util.remove_dups_f l_conj equalFormula in
+  let prun_l = Gen.BList.remove_dups_eq (=)_f l_conj equalFormula in
+  let prun_l = Gen.BList.remove_dups_eq (=)_f l_conj equalFormula in
   join_conjunctions prun_l
 
 let rec get_head e = match e with 
@@ -3677,7 +3703,8 @@ let const_prefix_len = String.length(const_prefix)
 
 (* get string name of var e *)
 let string_of_var_eset e : string =
-  Util.string_of_eq_set full_name_of_spec_var e
+  Gen.EqMap(Slices.SV).string_of full_name_of_spec_var e
+  Gen.EqMap(Slices.SV).string_of full_name_of_spec_var e
 
 
 let get_sub_debug s n m =
@@ -3820,7 +3847,8 @@ let add_equiv_eq a v1 v2 =
     Error.report_error  {
         Error.error_loc = no_pos;
         Error.error_text =  "add_equiv_eq bug : adding an equality with a constant"; }
- else Util.add_equiv_eq_raw a v1 v2
+ else Gen.EqMap(Slices.SV).add_equiv_eq_raw a v1 v2
+ else Gen.EqMap(Slices.SV).add_equiv_eq_raw a v1 v2
 
 let add_equiv_eq_debug a v1 v2 = 
   let _ = print_string ("add_equiv_eq inp1 :"^(string_of_var_eset a)^"\n") in
@@ -3831,7 +3859,8 @@ let add_equiv_eq_debug a v1 v2 =
 
 (* constant may be added to map*)
 let add_equiv_eq_with_const a v1 v2 = 
- Util.add_equiv_eq_raw a v1 v2
+ Gen.EqMap(Slices.SV).add_equiv_eq_raw a v1 v2
+ Gen.EqMap(Slices.SV).add_equiv_eq_raw a v1 v2
 
 let add_equiv_eq_with_const_debug a v1 v2 = 
   let _ = print_string ("add_equiv_eq_with_const inp1 :"^(string_of_var_eset a)^"\n") in
@@ -3856,12 +3885,14 @@ let get_formula_eq_args_debug_chk bf =
 
 (* get var elements from a eq-map but remove constants *)
 let get_elems_eq aset =
-  let vl=Util.get_elems_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_elems aset in
+  let vl=Gen.EqMap(Slices.SV).get_elems aset in
     List.filter (fun v -> not(is_const v)) vl
 
 (* get var elements from a eq-map allowing constants *)
 let get_elems_eq_with_const aset =
-  let vl=Util.get_elems_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_elems aset in
+  let vl=Gen.EqMap(Slices.SV).get_elems aset in
     List.filter (fun v -> true) vl
 
 (* let get_elems_eq_with_const_debug aset = *)
@@ -3869,7 +3900,8 @@ let get_elems_eq_with_const aset =
 
 (* get var elements from a eq-map allowing null *)
 let get_elems_eq_with_null aset =
-  let vl=Util.get_elems_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_elems aset in
+  let vl=Gen.EqMap(Slices.SV).get_elems aset in
     List.filter (fun v -> not(is_int_const v)) vl
 
 (* below is for Andreea to implement,
@@ -3879,7 +3911,8 @@ let get_elems_eq_with_null aset =
 
 (* creates a false aset*)
 let mkFalse_var_aset eq = 
-  let es= Util.empty_a_set_eq eq in
+  let es= Gen.is_empty_a_set_eq eq in
+  let es= Gen.is_empty_a_set_eq eq in
     add_equiv_eq_with_const es (mk_sp_const 0) (mk_sp_const 3)
 
 (**)	
@@ -3899,7 +3932,8 @@ let get_bform_eq_vars (bf:b_formula) : (spec_var * spec_var) option =
 *)
 
 let normalise_eq_aux ((_,eq) as aset : var_aset) : var_aset * bool * bool= 
-  let plst = Util.partition_eq aset in
+  let plst = Gen.EqMap(Slices.SV).partition aset in
+  let plst = Gen.EqMap(Slices.SV).partition aset in
   let (nlst,flag) = List.fold_left 
     (fun (rl,f) l -> 
        let nl=remove_dups_svl l in
@@ -3917,7 +3951,8 @@ let normalise_eq_aux ((_,eq) as aset : var_aset) : var_aset * bool * bool=
   in
     if is_conflict then (mkFalse_var_aset eq, true, true)
     else
-      ((Util.un_partition nlst2,eq),flag2, false)
+      ((Gen.EqMap(Slices.SV).un_partition nlst2,eq),flag2, false)
+      ((Gen.EqMap(Slices.SV).un_partition nlst2,eq),flag2, false)
 
 
 (* return the normalized eq *)
@@ -3925,7 +3960,8 @@ let normalise_eq (aset : var_aset) : var_aset =
   let (r, _, _) = normalise_eq_aux aset in r
 
 (* print if there was a change in state check - *)
-let normalise_eq_debug (aset : var_aset) : spec_var Util.eq_set =
+let normalise_eq_debug (aset : var_aset) : Gen.EqMap(Slices.SV).emap =
+let normalise_eq_debug (aset : var_aset) : Gen.EqMap(Slices.SV).emap =
  let ax, change, _ = normalise_eq_aux aset in
  (if change then
 	let _ = print_string ("normalise_eq inp :"^(string_of_var_eset aset)^"\n") in
@@ -3955,7 +3991,8 @@ let is_false_eq (aset : var_aset) : bool =
 (* check if v is a constant*)
 (* return a list with all constant having the same key as v*)
 let get_all_const_eq (aset : var_aset) (v : spec_var) : spec_var list =
-  let nlst = Util.find_equiv_all_eq_raw v aset in
+  let nlst = Gen.EqMap(Slices.SV).find_equiv_all v aset in
+  let nlst = Gen.EqMap(Slices.SV).find_equiv_all v aset in
   List.filter (is_const) nlst
 
 (* check if v is an int constant and return its value, if so - to implement *)
@@ -3972,7 +4009,8 @@ let conv_var_to_exp_eq (aset : var_aset) (v:spec_var) : exp =
 let conv_exp_to_exp_eq aset e : exp =
   match e with
     | Var(v,_) -> let r = conv_var_to_exp_eq aset v in
-      if not(r==e) then ((Util.add_to_counter "var_changed_2_const" 1); r)
+      if not(r==e) then ((Gen.Profiling.add_to_counter "var_changed_2_const" 1); r)
+      if not(r==e) then ((Gen.Profiling.add_to_counter "var_changed_2_const" 1); r)
       else r
     | _ -> e
 
@@ -3983,36 +4021,43 @@ let is_null_var_eq (aset : var_aset) (v:spec_var) : bool =
 
 
 let string_of_var_list l : string =
-  Util.string_of_a_list name_of_spec_var l
+  Gen.BList.string_of_f name_of_spec_var l
+  Gen.BList.string_of_f name_of_spec_var l
 
 let string_of_p_var_list l : string =
-  Util.string_of_a_list (fun (v1,v2) -> "("^(full_name_of_spec_var v1)^","^(full_name_of_spec_var v2)^")") l
+  Gen.BList.string_of_f (fun (v1,v2) -> "("^(full_name_of_spec_var v1)^","^(full_name_of_spec_var v2)^")") l
+  Gen.BList.string_of_f (fun (v1,v2) -> "("^(full_name_of_spec_var v1)^","^(full_name_of_spec_var v2)^")") l
 
 (* get two lists - no_const & with_const *)
 let get_equiv_eq_split aset =
-  let vl=Util.get_equiv_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
     List.partition (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
 
 (* get eq pairs without const *)
 let get_equiv_eq_no_const aset =
-  let vl=Util.get_equiv_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
   List.filter (fun (v1,v2) -> not(is_const v1) && not(is_const v2) ) vl
 
 (* get all eq pairs *)
 let get_equiv_eq_all aset =
-  let vl=Util.get_equiv_eq_raw aset in vl
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in vl
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in vl
 
 (* get eq pairs without const *)
 let get_equiv_eq aset = get_equiv_eq_no_const  aset
 
 (* get eq pairs without int const *)
 let get_equiv_eq_with_null aset =
-  let vl=Util.get_equiv_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
     List.filter (fun (v1,v2) -> not(is_int_const v1) && not(is_int_const v2) ) vl
 
 (* get eq pairs without int const *)
 let get_equiv_eq_with_const aset =
-  let vl=Util.get_equiv_eq_raw aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
+  let vl=Gen.EqMap(Slices.SV).get_equiv aset in
     List.filter (fun (v1,v2) -> true ) vl
 
 let get_equiv_eq_with_const_debug aset =
@@ -4123,20 +4168,24 @@ let check_eq_bform eq lhs rhs failval =
 
 let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
   (*let _ = print_string "\n fast_imply \n" in*)
-  (* let _ = Util.push_time "fast_imply" in *)
+  (* let _ = Gen.Profiling.push_time "fast_imply" in *)
+  (* let _ = Gen.Profiling.push_time "fast_imply" in *)
   (*normalize lhs and rhs*)
   let simp e = conv_exp_to_exp_eq aset e in
   let normsimp lhs rhs =
-    let _ = Util.push_time "fi-normsimp" in
+    let _ = Gen.Profiling.push_time "fi-normsimp" in
+    let _ = Gen.Profiling.push_time "fi-normsimp" in
     let lhs = List.map (fun e -> norm_bform_a(simp_bform simp e)) lhs in
     let rhs = norm_bform_a( simp_bform simp rhs) in
-    let _ = Util.pop_time "fi-normsimp" in
+    let _ = Gen.Profiling.pop_time "fi-normsimp" in
+    let _ = Gen.Profiling.pop_time "fi-normsimp" in
     (lhs,rhs) in
   let lhs,rhs = if !Globals.enable_norm_simp then normsimp lhs rhs 
   else (lhs,rhs)
   in
   let r = 
-    let eq x y = Util.is_equiv_eq aset x y in
+    let eq x y = Gen.EqMap(Slices.SV).is_equiv aset x y in
+    let eq x y = Gen.EqMap(Slices.SV).is_equiv aset x y in
     let r1=check_eq_bform eq lhs rhs 0 in
     if (r1>0) then r1
     else 
@@ -4150,10 +4199,13 @@ let fast_imply (aset: var_aset) (lhs: b_formula list) (rhs: b_formula) : int =
               let _ = print_string "warning fast_imply : not normalised"
               in 0
         | _ -> (* use just syntactic checking *) 0 in
-  let _ = if r>0 then (Util.add_to_counter "fast_imply_success" 1) else () in
-  (* let _  = Util.pop_time "fast_imply" in *) r
+  let _ = if r>0 then (Gen.Profiling.add_to_counter "fast_imply_success" 1) else () in
+  let _ = if r>0 then (Gen.Profiling.add_to_counter "fast_imply_success" 1) else () in
+  (* let _  = Gen.Profiling.pop_time "fast_imply" in *) r
+  (* let _  = Gen.Profiling.pop_time "fast_imply" in *) r
 
-let fast_imply a l r = Util.prof_3 "fast_imply" fast_imply a l r
+let fast_imply a l r = Gen.Profiling.prof_3 "fast_imply" fast_imply a l r
+let fast_imply a l r = Gen.Profiling.prof_3 "fast_imply" fast_imply a l r
 
 
 
@@ -4161,8 +4213,10 @@ let fast_imply a l r = Util.prof_3 "fast_imply" fast_imply a l r
 let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
   let r = fast_imply aset lhs rhs in
   (*if (r<=0) then r else*)
-    let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
-    let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
+    let _ = print_string ("fast imply aset :"^(Gen.EqMap(Slices.SV).string_of full_name_of_spec_var aset)^"\n") in
+    let _ = print_string ("fast imply aset :"^(Gen.EqMap(Slices.SV).string_of full_name_of_spec_var aset)^"\n") in
+    let _ = print_string ("fast imply inp :"^(Gen.BList.string_of_f !print_b_formula lhs) )in
+    let _ = print_string ("fast imply inp :"^(Gen.BList.string_of_f !print_b_formula lhs) )in
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
@@ -4805,7 +4859,8 @@ module ArithNormalizer = struct
     map_formula f (nonef, norm_b_formula, fun e -> Some (norm_exp e)) 
 
   let norm_formula(*_debug*) f =
-    Util.no_debug_1 "cpure::norm_formula" string_of_formula string_of_formula
+    Gen.Debug.no_1 "cpure::norm_formula" string_of_formula string_of_formula
+    Gen.Debug.no_1 "cpure::norm_formula" string_of_formula string_of_formula
         norm_formula_0 f
 
 end (* of ArithNormalizer module's definition *)
@@ -4868,11 +4923,15 @@ let elim_exists_with_simpl simpl (f0 : formula) : formula =
   inner_simplify simpl f
 
 let elim_exists_with_simpl simpl (f0 : formula) : formula = 
-  Util.no_debug_1 "elim_exists_with_simpl" !print_formula !print_formula 
+  Gen.Debug.no_1 "elim_exists_with_simpl" !print_formula !print_formula 
+  Gen.Debug.no_1 "elim_exists_with_simpl" !print_formula !print_formula 
     (fun f0 -> elim_exists_with_simpl simpl f0) f0
 
 (* result of xpure with baga and memset/diffset *)
-type xp_res_type = (spec_var Util.baga * spec_var Util.d_set * formula)
+type xp_res_type = (Gen.Baga(Slices.PtrSV).baga * Gen.DisjSet(Slices.PtrSV).dlist * formula)
+type xp_res_type = (Gen.Baga(Slices.PtrSV).baga * Gen.DisjSet(Slices.PtrSV).dlist * formula)
+type xp_res_type = (Gen.Baga(Slices.PtrSV).baga * Gen.DisjSet(Slices.PtrSV).dlist * formula)
+type xp_res_type = (Gen.Baga(Slices.PtrSV).baga * Gen.DisjSet(Slices.PtrSV).dlist * formula)
 
 (*
 (S1,D1,P1) * (S2,D2,P2)  =   (S1+S2, D1&D2,P1&P2)
@@ -4886,22 +4945,32 @@ type xp_res_type = (spec_var Util.baga * spec_var Util.d_set * formula)
 *)
 
 let star_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
-  (Util.star_baga b1 b2, Util.star_disj_set d1 d2, mkAnd p1 p2 no_pos)
+  (Gen.Baga(Slices.PtrSV).star_baga b1 b2, Gen.DisjSet(Slices.PtrSV).star_disj_set d1 d2, mkAnd p1 p2 no_pos)
+  (Gen.Baga(Slices.PtrSV).star_baga b1 b2, Gen.DisjSet(Slices.PtrSV).star_disj_set d1 d2, mkAnd p1 p2 no_pos)
+  (Gen.Baga(Slices.PtrSV).star_baga b1 b2, Gen.DisjSet(Slices.PtrSV).star_disj_set d1 d2, mkAnd p1 p2 no_pos)
+  (Gen.Baga(Slices.PtrSV).star_baga b1 b2, Gen.DisjSet(Slices.PtrSV).star_disj_set d1 d2, mkAnd p1 p2 no_pos)
 
 let conj_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
-  let nb = Util.conj_baga eq b1 b2 in
-  let nd = Util.conj_disj_set (b1::d1) (b2::d2) in
-  let np = if (Util.is_sat_baga eq b1) && (Util.is_sat_baga eq b1) then  mkAnd p1 p2 no_pos  else mkFalse no_pos in
+  let nb = Gen.Baga(Slices.PtrSV).conj_baga eq b1 b2 in
+  let nb = Gen.Baga(Slices.PtrSV).conj_baga eq b1 b2 in
+  let nd = Gen.DisjSet(Slices.PtrSV).conj_disj_set (b1::d1) (b2::d2) in
+  let nd = Gen.DisjSet(Slices.PtrSV).conj_disj_set (b1::d1) (b2::d2) in
+  let np = if (Gen.Baga(Slices.PtrSV).is_sat_baga eq b1) && (Gen.Baga(Slices.PtrSV).is_sat_baga eq b1) then  mkAnd p1 p2 no_pos  else mkFalse no_pos in
+  let np = if (Gen.Baga(Slices.PtrSV).is_sat_baga eq b1) && (Gen.Baga(Slices.PtrSV).is_sat_baga eq b1) then  mkAnd p1 p2 no_pos  else mkFalse no_pos in
   (nb,nd,np)
 
 let or_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
-  let nb = Util.or_baga eq b1 b2 in
-  let (np1,nd1) = if (Util.is_sat_baga eq b1) then (p1,Some (b1::d1)) else (mkFalse no_pos,None) in
-  let (np2,nd2) = if (Util.is_sat_baga eq b2) then (p2,Some (b2::d2)) else (mkFalse no_pos,None) in
+  let nb = Gen.Baga(Slices.PtrSV).or_baga eq b1 b2 in
+  let nb = Gen.Baga(Slices.PtrSV).or_baga eq b1 b2 in
+  let (np1,nd1) = if (Gen.Baga(Slices.PtrSV).is_sat_baga eq b1) then (p1,Some (b1::d1)) else (mkFalse no_pos,None) in
+  let (np1,nd1) = if (Gen.Baga(Slices.PtrSV).is_sat_baga eq b1) then (p1,Some (b1::d1)) else (mkFalse no_pos,None) in
+  let (np2,nd2) = if (Gen.Baga(Slices.PtrSV).is_sat_baga eq b2) then (p2,Some (b2::d2)) else (mkFalse no_pos,None) in
+  let (np2,nd2) = if (Gen.Baga(Slices.PtrSV).is_sat_baga eq b2) then (p2,Some (b2::d2)) else (mkFalse no_pos,None) in
   let nd = match nd1,nd2 with
     | None,None -> []
     | None,Some nd2 -> nd2
     | Some nd1,None -> nd1
-    | Some nd1,Some nd2 ->  Util.or_disj_set (b1::d1) (b2::d2) in
+    | Some nd1,Some nd2 ->  Gen.DisjSet(Slices.PtrSV).or_disj_set (b1::d1) (b2::d2) in
+    | Some nd1,Some nd2 ->  Gen.DisjSet(Slices.PtrSV).or_disj_set (b1::d1) (b2::d2) in
     (nb,nd, mkOr np1 np2 None no_pos)
 

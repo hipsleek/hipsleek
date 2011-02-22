@@ -210,7 +210,8 @@ let string_of_flow_store l = (String.concat " " (List.map (fun h-> (h.formula_st
 
 let rec string_of_flow_formula f c = 
 	"{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
-	")="^(Util.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
+	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
+	")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
 	
 
 
@@ -447,7 +448,8 @@ let rec string_of_exp = function
   | Unfold ({exp_unfold_var = sv}) -> "unfold " ^ (string_of_spec_var sv)
   | Try b -> 
 	let c = b.exp_catch_clause.exp_catch_flow_type in
-	"try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Util.get_closest c)^ 
+	"try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Gen.ExcNumbering.get_closest c)^ 
+	"try \n"^(string_of_exp b.exp_try_body)^"\n catch ("^ (string_of_int (fst c))^","^(string_of_int (snd c))^")="^(Gen.ExcNumbering.get_closest c)^ 
 				(match b.exp_catch_clause.exp_catch_flow_var with 
 					| Some c -> (" @"^c^" ")
 					| _ -> " ")^
@@ -492,7 +494,10 @@ let string_of_proc_decl p =
   in  (string_of_typ p.proc_return) ^ " " ^ p.proc_name ^ "(" ^ (string_of_decl_list p.proc_args ",") ^ ")\n" 
   ^ "static " ^ (string_of_struc_formula p.proc_static_specs) ^ "\n"
   ^ "dynamic " ^ (string_of_struc_formula p.proc_dynamic_specs) ^ "\n"
-  ^ (if U.empty p.proc_by_name_params then "" 
+  ^ (if Gen.is_empty p.proc_by_name_params then "" 
+  ^ (if Gen.is_empty p.proc_by_name_params then "" 
+  ^ (if Gen.is_empty p.proc_by_name_params then "" 
+  ^ (if Gen.is_empty p.proc_by_name_params then "" 
 	 else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
   ^ (match p.proc_body with 
        | Some e -> (string_of_exp e) ^ "\n\n"

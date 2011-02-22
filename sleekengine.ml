@@ -71,7 +71,8 @@ let process_data_def ddef =
       try
 	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
 	let _ = Iast.build_exc_hierarchy true iprog in
-	let _ = Util.c_h () in
+	let _ = Gen.ExcNumbering.c_h () in
+	let _ = Gen.ExcNumbering.c_h () in
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls

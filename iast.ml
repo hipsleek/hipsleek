@@ -859,9 +859,11 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 		  let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
 		  let n1 = get_name_from_heap h1 in
 		  let n2 = get_name_from_heap h2 in
-		  if Util.is_some n1 && Util.is_some n2 then
+		  if Gen.is_some n1 && Gen.is_some n2 then
+		  if Gen.is_some n1 && Gen.is_some n2 then
 			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
-		  else if Util.is_some n1 then
+		  else if Gen.is_some n1 then
+		  else if Gen.is_some n1 then
 			n1
 		  else
 			n2
@@ -871,14 +873,18 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 		  let f1, f2, pos = f.F.formula_or_f1, f.F.formula_or_f2, f.F.formula_or_pos in
 		  let n1 = get_name f1 in
 		  let n2 = get_name f2 in
-		  if Util.is_some n1 && Util.is_some n2 then
-			let nn1 = Util.unsome n1 in
-			let nn2 = Util.unsome n2 in
+		  if Gen.is_some n1 && Gen.is_some n2 then
+		  if Gen.is_some n1 && Gen.is_some n2 then
+			let nn1 = Gen.unsome n1 in
+			let nn1 = Gen.unsome n1 in
+			let nn2 = Gen.unsome n2 in
+			let nn2 = Gen.unsome n2 in
 			if nn1 = nn2 then
 			  Some nn1
 			else
 			  report_error pos ("two branches define self with different node types")
-		  else if Util.is_some n1 then
+		  else if Gen.is_some n1 then
+		  else if Gen.is_some n1 then
 			n1
 		  else
 			n2
@@ -933,7 +939,10 @@ and contains_field2 (e0 : exp) : bool = match e0 with
   | Null _ -> false
   | Return e -> 
 	    let ret_val = e.exp_return_val in
-		if Util.is_some ret_val then contains_field2 (Util.unsome ret_val) else false
+		if Gen.is_some ret_val then contains_field2 (Gen.unsome ret_val) else false
+		if Gen.is_some ret_val then contains_field2 (Gen.unsome ret_val) else false
+		if Gen.is_some ret_val then contains_field2 (Gen.unsome ret_val) else false
+		if Gen.is_some ret_val then contains_field2 (Gen.unsome ret_val) else false
   | Seq e -> (contains_field2 e.exp_seq_exp1) || (contains_field2 e.exp_seq_exp2)
   | This e -> false
   | Unary e -> contains_field2 e.exp_unary_exp
@@ -1063,19 +1072,32 @@ let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 let build_exc_hierarchy (clean:bool)(prog : prog_decl) =
   (* build the class hierarchy *)
     
-  let _ = (Util.add_edge c_flow top_flow) in
-  let _ = (Util.add_edge "__abort" top_flow) in
-  let _ = (Util.add_edge n_flow c_flow) in
-  let _ = (Util.add_edge abnormal_flow c_flow) in
-  let _ = (Util.add_edge raisable_class abnormal_flow) in
-  let _ = (Util.add_edge "__others" abnormal_flow) in
-  let _ = (Util.add_edge ret_flow "__others") in
-  let _ = (Util.add_edge cont_top "__others") in
-  let _ = (Util.add_edge brk_top "__others") in
-  let _ = (Util.add_edge spec_flow "__others") in
-  let _ = List.map (fun c-> (Util.add_edge c.data_name c.data_parent_name)) prog.prog_data_decls in
-  let _ = if clean then (Util.clean_duplicates ()) in
-	if (Util.has_cycles ()) then begin
+  let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
+  let _ = (Gen.ExcNumbering.add_edge c_flow top_flow) in
+  let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
+  let _ = (Gen.ExcNumbering.add_edge "__abort" top_flow) in
+  let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
+  let _ = (Gen.ExcNumbering.add_edge n_flow c_flow) in
+  let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
+  let _ = (Gen.ExcNumbering.add_edge abnormal_flow c_flow) in
+  let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
+  let _ = (Gen.ExcNumbering.add_edge raisable_class abnormal_flow) in
+  let _ = (Gen.ExcNumbering.add_edge "__others" abnormal_flow) in
+  let _ = (Gen.ExcNumbering.add_edge "__others" abnormal_flow) in
+  let _ = (Gen.ExcNumbering.add_edge ret_flow "__others") in
+  let _ = (Gen.ExcNumbering.add_edge ret_flow "__others") in
+  let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
+  let _ = (Gen.ExcNumbering.add_edge cont_top "__others") in
+  let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
+  let _ = (Gen.ExcNumbering.add_edge brk_top "__others") in
+  let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
+  let _ = (Gen.ExcNumbering.add_edge spec_flow "__others") in
+  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) prog.prog_data_decls in
+  let _ = List.map (fun c-> (Gen.ExcNumbering.add_edge c.data_name c.data_parent_name)) prog.prog_data_decls in
+  let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
+  let _ = if clean then (Gen.ExcNumbering.clean_duplicates ()) in
+	if (Gen.ExcNumbering.has_cycles ()) then begin
+	if (Gen.ExcNumbering.has_cycles ()) then begin
 	  print_string ("Error: Exception hierarchy has cycles\n");
 	  failwith ("Exception hierarchy has cycles\n");
 	end 

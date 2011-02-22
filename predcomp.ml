@@ -152,7 +152,8 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 	let atype = Named cls_name in
 	  ((atype, v), pos) in
   let pb_fields = List.map helper2 pbvars in
-  let normal_vvars = Util.difference_f CP.eq_spec_var field_vars pbvars in
+  let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
+  let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
 	pb_fields @ normal_fields
 
@@ -599,7 +600,10 @@ and gen_input_object (prog : C.prog_decl) (h0 : h_formula) (ivar : ident) (var_a
 		   h_formula_star_h2 = h2;
 		   h_formula_star_pos = pos}) ->
 	  let s1 = gen_input_object prog h1 ivar var_alias in
-		if U.is_some s1 then s1
+		if Gen.is_some s1 then s1
+		if Gen.is_some s1 then s1
+		if Gen.is_some s1 then s1
+		if Gen.is_some s1 then s1
 		else gen_input_object prog h2 ivar var_alias
   | DataNode ({h_formula_data_node = p;
 			   h_formula_data_name = c;
@@ -607,7 +611,8 @@ and gen_input_object (prog : C.prog_decl) (h0 : h_formula) (ivar : ident) (var_a
 			   h_formula_data_pos = pos}) -> begin
 	  if CP.name_of_spec_var p = ivar then
 		try
-		  let i = U.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in
+		  let i = Util.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in
+		  let i = Util.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in
 		  let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
 		  let fname = snd (List.nth ddef.C.data_fields ((fst i) - 2)) in (* minus the first two parameters *)
 		  let base = Var ({exp_var_name = ivar;
@@ -1076,7 +1081,8 @@ and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (v
 	    [(pname, vname)]
 	else 
 	  [] in
-      let tmp1 = Util.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
+      let tmp1 = Gen.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
+      let tmp1 = Gen.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
       let tmp2 = List.concat tmp1 in
 	tmp2
     end
@@ -1884,7 +1890,8 @@ and gen_partially_bound_params (output_vars : CP.spec_var list) (f0 : formula) :
   | Base ({formula_base_pure = p})
   | Exists ({formula_exists_pure = p}) ->
 	  let bound_vars = gen_bound_params output_vars (MCP.fold_mem_lst (CP.mkTrue no_pos) true true p) in
-	  let partially_bounds = Util.difference_f CP.eq_spec_var output_vars bound_vars in
+	  let partially_bounds = Gen.BList.difference_eq CP.eq_spec_var output_vars bound_vars in
+	  let partially_bounds = Gen.BList.difference_eq CP.eq_spec_var output_vars bound_vars in
 		partially_bounds
 
 (*

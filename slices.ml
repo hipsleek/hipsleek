@@ -353,7 +353,8 @@ module MemoFormula =
 	     MP.memo_group_cons = x.MP.memo_group_cons @ y.MP.memo_group_cons;
          MP.memo_group_slice = x.MP.memo_group_slice @ y.MP.memo_group_slice;
          MP.memo_group_changed = x.MP.memo_group_changed || y.MP.memo_group_changed;
-         MP.memo_group_aset = Util.merge_set_eq x.MP.memo_group_aset y.MP.memo_group_aset;
+         MP.memo_group_aset = Gen.EqMap(Slices.SV).merge_eset x.MP.memo_group_aset y.MP.memo_group_aset;
+         MP.memo_group_aset = Gen.EqMap(Slices.SV).merge_eset x.MP.memo_group_aset y.MP.memo_group_aset;
      } (* and two memoised group *)
      let vars x  = x.MP.memo_group_fv  (* free vars of memoised group *)
      let unit =  { MP.memo_group_fv = [];

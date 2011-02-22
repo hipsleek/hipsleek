@@ -23,10 +23,12 @@ let parse_file_full file_name =
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
 		print_string "Parsing...\n";
-        let _ = Util.push_time "Parsing" in
+        let _ = Gen.Profiling.push_time "Parsing" in
+        let _ = Gen.Profiling.push_time "Parsing" in
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
-         let _ = Util.pop_time "Parsing" in
+         let _ = Gen.Profiling.pop_time "Parsing" in
+         let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
 		  let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
@@ -36,14 +38,17 @@ let parse_file_full file_name =
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n");
-  let _ = Util.push_time "Preprocessing" in
+  let _ = Gen.Profiling.push_time "Preprocessing" in
+  let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
     if !to_java then begin
       print_string ("Converting to Java...");
       let tmp = Filename.chop_extension (Filename.basename source) in
-      let main_class = Util.replace_minus_with_uscore tmp in
+      let main_class = Gen.replace_minus_with_uscore tmp in
+      let main_class = Gen.replace_minus_with_uscore tmp in
       let java_str = Java.convert_to_java prog main_class in
-      let tmp2 = Util.replace_minus_with_uscore (Filename.chop_extension source) in
+      let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
+      let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
       let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
 	output_string jfile java_str;
 	close_out jfile;
@@ -51,21 +56,25 @@ let process_source_full source =
 	exit 0
     end;
     if (!Scriptarguments.parse_only) then 
-      let _ = Util.pop_time "Preprocessing" in
+      let _ = Gen.Profiling.pop_time "Preprocessing" in
+      let _ = Gen.Profiling.pop_time "Preprocessing" in
 	print_string (Iprinter.string_of_program prog)
     else 
 
       (* Global variables translating *)
-      let _ = Util.push_time "Translating global var" in
+      let _ = Gen.Profiling.push_time "Translating global var" in
+      let _ = Gen.Profiling.push_time "Translating global var" in
       let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
       let intermediate_prog = Globalvars.trans_global_to_param prog in
       let intermediate_prog = Iast.label_procs_prog intermediate_prog in
       let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
-      let _ = Util.pop_time "Translating global var" in
+      let _ = Gen.Profiling.pop_time "Translating global var" in
+      let _ = Gen.Profiling.pop_time "Translating global var" in
 	(* Global variables translated *)
 	(* let ptime1 = Unix.times () in
 	   let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in *)
-      let _ = Util.push_time "Translating to Core" in
+      let _ = Gen.Profiling.push_time "Translating to Core" in
+      let _ = Gen.Profiling.push_time "Translating to Core" in
       let _ = print_string ("Translating to core language...\n"); flush stdout in
       let cprog = Astsimp.trans_prog intermediate_prog in
       let _ = print_string (" done\n"); flush stdout in
@@ -75,7 +84,8 @@ let process_source_full source =
 	  let tmp = Cast.procs_to_verify cprog !Globals.procs_verified in
 	    Globals.procs_verified := tmp
 	end in
-      let _ = Util.pop_time "Translating to Core" in
+      let _ = Gen.Profiling.pop_time "Translating to Core" in
+      let _ = Gen.Profiling.pop_time "Translating to Core" in
 	(* let ptime2 = Unix.times () in
 	   let t2 = ptime2.Unix.tms_utime +. ptime2.Unix.tms_cutime in
 	   let _ = print_string (" done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n") in *)
@@ -104,7 +114,8 @@ let process_source_full source =
 	  exit 0
 	end
       in
-      let _ = Util.pop_time "Preprocessing" in
+      let _ = Gen.Profiling.pop_time "Preprocessing" in
+      let _ = Gen.Profiling.pop_time "Preprocessing" in
 	if !Gui.enable_gui then begin
 	  ignore (Gui.check_prog (Gui.get_win ()) cprog)
 	end
@@ -138,9 +149,11 @@ let main_gui () =
       Globals.source_files := ["examples/test5.ss"]
     end;
     let _ = Gui.set_win (new Gui.mainwindow "HIP VIEWER" (List.hd !Globals.source_files)) in 
-      Util.push_time "Overall";
+      Gen.Profiling.push_time "Overall";
+      Gen.Profiling.push_time "Overall";
       ignore (List.map process_source_full !Globals.source_files);
-      Util.pop_time "Overall";
+      Gen.Profiling.pop_time "Overall";
+      Gen.Profiling.pop_time "Overall";
       (Gui.get_win ())#show ();
       GMain.Main.main ()
 
@@ -158,9 +171,11 @@ let main1 () =
 	Globals.procs_verified := ["f3"];
 	Globals.source_files := ["examples/test5.ss"]
   end;
-  let _ = Util.push_time "Overall" in
+  let _ = Gen.Profiling.push_time "Overall" in
+  let _ = Gen.Profiling.push_time "Overall" in
   let _ = List.map process_source_full !Globals.source_files in
-  let _ = Util.pop_time "Overall" in
+  let _ = Gen.Profiling.pop_time "Overall" in
+  let _ = Gen.Profiling.pop_time "Overall" in
 	(* Tpdispatcher.print_stats (); *)
 	()
 	  
@@ -179,7 +194,9 @@ let _ =
     let _ = print_string ("stack height: "^(string_of_int (List.length !Util.profiling_stack))^"\n") in
     let _ = print_string ("get time length: "^(string_of_int (List.length !Util.time_list))^" "^
     (string_of_bool (check_sorted !Util.time_list))^"\n" ) in*)
-  let _ = print_string (Util.string_of_counters ()) in
-  let _ = Util.print_profiling_info () in
+  let _ = print_string (Gen.Profiling.string_of_counters ()) in
+  let _ = print_string (Gen.Profiling.string_of_counters ()) in
+  let _ = Gen.Profiling.print_info () in
+  let _ = Gen.Profiling.print_info () in
   ()
   
