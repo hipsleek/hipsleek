@@ -147,7 +147,7 @@ struct
 
   (* List-handling stuff *)
 
-  let string_of_list_f (f:'a->string) (ls:'a list) : string = 
+  let string_of_f (f:'a->string) (ls:'a list) : string = 
     ("["^(String.concat "," (List.map f ls))^"]")
 
   (** Split the list of length k>=1 into a pair consisting of
@@ -287,14 +287,14 @@ struct
   type elem = Elt.t
   type elist = elem list
   let eq = Elt.eq
-  let string_of = Elt.string_of
+  let string_of_elem = Elt.string_of
 
   include BList
 
   let mem x l = List.exists (eq x) l
 
-  let string_of_list (ls:'a list) : string 
-        = string_of_list_f string_of ls
+  let string_of (ls:'a list) : string 
+        = string_of_f string_of_elem ls
 
   let rec remove_dups n = 
     match n with
@@ -442,7 +442,7 @@ struct
       else [] in
     List.concat (List.map (fun x -> flat x x) ll)
 
-  let empty : emap = []
+  let mkEmpty : emap = []
 
   let is_empty (m:emap) = match m with | [] -> true | _ -> false
 
@@ -598,8 +598,7 @@ struct
   let is_one2one (f:elem -> elem) (s:elist) : bool =
     let l = List.map f s in
     if (check_no_dups l) then true
-    else (print_string ("duplicates here :"^(Util.string_of_a_list string_of_elem l)^"\n") ; false) 
-
+    else (print_string ("duplicates here :"^(BList.string_of_list_f string_of l)^"\n") ; false) 
 
   (* rename the elements of e_set *)
   (* pre : f must be 1-to-1 map *)
