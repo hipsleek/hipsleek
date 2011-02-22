@@ -4020,7 +4020,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
           let increm_funct = 
-            if !Globals.enable_incremental_proving then Some TP.incremMethodsO
+            if !Globals.enable_incremental_proving then Some !TP.incremMethodsO
             else None in
           CP.imply_disj
               (TP.split_disjunctions a0) (* list with xpure0 antecedent disjunctions *)
