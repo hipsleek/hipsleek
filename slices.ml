@@ -14,7 +14,7 @@ module type EQ_TYPE = Gen.EQ_TYPE
 (*   let star_union x y = x@y *)
 (* end;; *)
 
-module DisjPtr = Gen.DisjSet(PtrSV)
+module DisjPtr = Gen.DisjSet(CP.PtrSV)
 (* module DisjPtr0 = DisjSet(PtrSV0) *)
 
 module type ORDERED_TYPE =
@@ -332,7 +332,7 @@ module MemoFormula =
 	     MP.memo_group_cons = x.MP.memo_group_cons @ y.MP.memo_group_cons;
          MP.memo_group_slice = x.MP.memo_group_slice @ y.MP.memo_group_slice;
          MP.memo_group_changed = x.MP.memo_group_changed || y.MP.memo_group_changed;
-         MP.memo_group_aset = Util.merge_set_eq x.MP.memo_group_aset y.MP.memo_group_aset;
+         MP.memo_group_aset = CP.EMapSV.merge_eset x.MP.memo_group_aset y.MP.memo_group_aset;
      } (* and two memoised group *)
      let vars x  = x.MP.memo_group_fv  (* free vars of memoised group *)
      let unit =  { MP.memo_group_fv = [];

@@ -586,7 +586,6 @@ struct
     eqlst
 
 let rename_eset_allow_clash (f:elem -> elem) (s:emap) : emap =
-  let pr = string_of_elem in
   let sl = get_elems s in
   let tl = List.map f sl in
   if (BList.check_no_dups_eq eq tl) then

@@ -360,11 +360,11 @@ let rec h_fv (f:h_formula):(ident*primed) list = match f with
 	   h_formula_phase_pos = pos}) 
   | Star ({h_formula_star_h1 = h1; 
 	   h_formula_star_h2 = h2; 
-	   h_formula_star_pos = pos}) ->  Util.remove_dups ((h_fv h1)@(h_fv h2))
+	   h_formula_star_pos = pos}) ->  Gen.BList.remove_dups_eq (=) ((h_fv h1)@(h_fv h2))
   | HeapNode {h_formula_heap_node = name ; 
-	      h_formula_heap_arguments = b} -> Util.remove_dups (name:: (List.concat (List.map Ipure.afv b)))
+	      h_formula_heap_arguments = b} -> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map Ipure.afv b)))
   | HeapNode2 { h_formula_heap2_node = name ;
-		h_formula_heap2_arguments = b}-> Util.remove_dups (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
+		h_formula_heap2_arguments = b}-> Gen.BList.remove_dups_eq (=) (name:: (List.concat (List.map (fun c-> (Ipure.afv (snd c))) b) ))
   | HTrue -> [] 
   | HFalse -> [] 
 ;;
@@ -390,14 +390,14 @@ let rec h_arg_fv (f:h_formula):(ident*primed) list =
   | HTrue -> ([],[]) 
   | HFalse -> ([],[]) in
 	let r1,r2 = helper f in
-	Util.remove_dups r1 (*(Util.difference r1 r2)*)
+	Gen.BList.remove_dups_eq (=) r1 (*(Gen.BList.difference_eq (=) r1 r2)*)
 ;;*)
 
 
 
 let rec struc_hp_fv (f:struc_formula): (ident*primed) list = 
-						let rec helper (f:ext_formula):(ident*primed) list = Util.remove_dups ( match f with
-							| EBase b-> Util.difference 
+						let rec helper (f:ext_formula):(ident*primed) list = Gen.BList.remove_dups_eq (=) ( match f with
+							| EBase b-> Gen.BList.difference_eq (=) 
 													((struc_hp_fv b.formula_ext_continuation)@(heap_fv b.formula_ext_base)) 
 													(b.formula_ext_explicit_inst@b.formula_ext_implicit_inst)
 							| ECase b-> List.fold_left (fun a (c1,c2)->
@@ -409,27 +409,27 @@ let rec struc_hp_fv (f:struc_formula): (ident*primed) list =
 
 and heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> h_fv b.formula_base_heap
-	| Exists b-> Util.difference (Util.remove_dups ( h_fv b.formula_exists_heap)) b.formula_exists_qvars 
-	| Or b-> Util.remove_dups ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
+	| Exists b-> Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) ( h_fv b.formula_exists_heap)) b.formula_exists_qvars 
+	| Or b-> Gen.BList.remove_dups_eq (=) ((heap_fv b.formula_or_f1)@(heap_fv b.formula_or_f2))
 	
 	
 and unbound_heap_fv (f:formula):(ident*primed) list = match f with
 	| Base b-> h_fv b.formula_base_heap
 	| Exists b-> 
-		Util.difference (h_fv b.formula_exists_heap) b.formula_exists_qvars
-	| Or b-> Util.remove_dups ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
+		Gen.BList.difference_eq (=) (h_fv b.formula_exists_heap) b.formula_exists_qvars
+	| Or b-> Gen.BList.remove_dups_eq (=) ((unbound_heap_fv b.formula_or_f1)@(unbound_heap_fv b.formula_or_f2))
 
 and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list= 
 	let helper f = match f with
 		| EBase b -> 
 					let fvb = all_fv b.formula_ext_base in
 					let fvc = struc_free_vars b.formula_ext_continuation with_inst in
-					Util.remove_dups (Util.difference (fvb@fvc) 
+					Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) (fvb@fvc) 
            ( (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists))
 		| ECase b -> 
 				let fvc = List.fold_left (fun a (c1,c2)-> 
 				a@(struc_free_vars c2 with_inst)@(Ipure.fv c1)) [] b.formula_case_branches in
-				Util.remove_dups fvc		
+				Gen.BList.remove_dups_eq (=) fvc		
 		| EAssume (b,_)-> all_fv b
 		| EVariance b ->
 			let fv_ec = (List.fold_left (fun res x -> res@(Ipure.fv x)) [] b.formula_var_escape_clauses) in
@@ -437,8 +437,8 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 											| None -> res@(Ipure.afv expr)
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
 			let fv_co = struc_free_vars b.formula_var_continuation with_inst in
-			Util.remove_dups (fv_ex@fv_ec@fv_co)
-	in Util.remove_dups (List.concat (List.map helper f0))
+			Gen.BList.remove_dups_eq (=) (fv_ex@fv_ec@fv_co)
+	in Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f0))
  
 and struc_split_fv_debug f0 wi =
   Gen.Debug.ho_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
@@ -452,13 +452,13 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 					let fvb = all_fv b.formula_ext_base in
 					let prc,psc = struc_split_fv_a b.formula_ext_continuation with_inst in
           let rm = (if with_inst then [] else b.formula_ext_explicit_inst@ b.formula_ext_implicit_inst) @ b.formula_ext_exists in
-					(Util.remove_dups (Util.difference (fvb@prc) rm),(Util.difference psc rm))
+					(Gen.BList.remove_dups_eq (=) (Gen.BList.difference_eq (=) (fvb@prc) rm),(Gen.BList.difference_eq (=) psc rm))
 		| ECase b -> 
 				let prl,psl = List.fold_left (fun (a1,a2) (c1,c2)-> 
               let prc, psc = struc_split_fv_a c2 with_inst in
               ((a1@prc@(Ipure.fv c1)),psc@a2)
           ) ([],[]) b.formula_case_branches in
-				(Util.remove_dups prl,Util.remove_dups psl)		
+				(Gen.BList.remove_dups_eq (=) prl,Gen.BList.remove_dups_eq (=) psl)		
 		| EAssume (b,_)-> ([],all_fv b)
 		| EVariance b ->
 			let prc, psc = struc_split_fv_a b.formula_var_continuation with_inst in
@@ -466,23 +466,23 @@ and struc_split_fv_a (f0:struc_formula) with_inst:((ident*primed) list) * ((iden
 			let fv_ex = (List.fold_left (fun res (expr, bound) -> match bound with
 											| None -> res@(Ipure.afv expr)
 											| Some b_expr -> res@(Ipure.afv expr)@(Ipure.afv b_expr)) [] b.formula_var_measures) in
-			  (Util.remove_dups prc@fv_ec@fv_ex, Util.remove_dups psc)
+			  (Gen.BList.remove_dups_eq (=) prc@fv_ec@fv_ex, Gen.BList.remove_dups_eq (=) psc)
 			
 	in
   let vl = List.map helper f0 in
   let prl, pcl = List.split vl in
-	(Util.remove_dups (List.concat prl), Util.remove_dups (List.concat pcl))
+	(Gen.BList.remove_dups_eq (=) (List.concat prl), Gen.BList.remove_dups_eq (=) (List.concat pcl))
  
 
 and all_fv (f:formula):(ident*primed) list = match f with
-	| Base b-> Util.remove_dups 
+	| Base b-> Gen.BList.remove_dups_eq (=) 
 			(List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_base_heap)@(Ipure.fv b.formula_base_pure))
 							b.formula_base_branches )
 	| Exists b-> 
 		let r = List.fold_left ( fun a (c1,c2)-> a@ (Ipure.fv c2)) ((h_fv b.formula_exists_heap)@(Ipure.fv b.formula_exists_pure))
 							b.formula_exists_branches in
-		Util.difference (Util.remove_dups r) b.formula_exists_qvars 
-	| Or b-> Util.remove_dups ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))
+		Gen.BList.difference_eq (=) (Gen.BList.remove_dups_eq (=) r) b.formula_exists_qvars 
+	| Or b-> Gen.BList.remove_dups_eq (=) ((all_fv b.formula_or_f1)@(all_fv b.formula_or_f2))
 	
 and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = match f with
   | Base ({ formula_base_heap = h; 
@@ -496,7 +496,7 @@ and add_quantifiers (qvars : (ident*primed) list) (f : formula) : formula = matc
              formula_exists_flow = f;
              formula_exists_branches = b;
              formula_exists_pos = pos}) -> 
-	  let new_qvars = Util.remove_dups (qvs @ qvars) in
+	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
 		mkExists new_qvars h p f b pos
   | _ -> failwith ("add_quantifiers: invalid argument")
 	
@@ -651,7 +651,7 @@ and rename_bound_vars (f : formula) =
 			 formula_exists_flow = fl;
 			 formula_exists_branches = br;  
 			 formula_exists_pos = pos}) -> 
-	  let new_qvars = Util.remove_dups (qvs @ qvars) in
+	  let new_qvars = Gen.BList.remove_dups_eq (=) (qvs @ qvars) in
 		mkExists new_qvars h p fl br pos
   | _ -> failwith ("add_quantifiers: invalid argument") in		
 	match f with
@@ -1329,16 +1329,16 @@ and view_node_types_struc (f:struc_formula):ident list =
 	| EAssume (b,_) -> view_node_types b
 	| EVariance b -> view_node_types_struc b.formula_var_continuation
 	in
-	Util.remove_dups (List.concat (List.map helper f))
+	Gen.BList.remove_dups_eq (=) (List.concat (List.map helper f))
 		
 and view_node_types (f:formula):ident list = 
 	let rec helper (f:h_formula):ident list =  match f with
-		| Star b -> Util.remove_dups ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
+		| Star b -> Gen.BList.remove_dups_eq (=) ((helper b.h_formula_star_h1)@(helper b.h_formula_star_h2))
 		| HeapNode b -> [b.h_formula_heap_name]
 		| HeapNode2 b -> [b.h_formula_heap2_name]
 		| _ -> [] in
 	match f with
-	| Or b-> Util.remove_dups ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
+	| Or b-> Gen.BList.remove_dups_eq (=) ((view_node_types b.formula_or_f1) @ (view_node_types b.formula_or_f2))
 	| Base b -> helper b.formula_base_heap
 	| Exists b -> helper b.formula_exists_heap
 	

@@ -163,7 +163,7 @@ module Netprover = struct
         else begin
           (* show_info "pmap" (Printf.sprintf "wait %d results" (num_jobs -          *)
           (* !num_results));                                                         *)
-          let in_fds, _, _ = Util.restart  (Unix.select [wait_fd] [] []) time_left in
+          let in_fds, _, _ = Gen.Basic.restart  (Unix.select [wait_fd] [] []) time_left in
           (* let in_fds, _, _ = Unix.select [wait_fd] [] [] time_left in *)
           if in_fds <> [] then begin
             incr num_results;
@@ -557,18 +557,18 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
   if !Globals.no_cache_formula then
     tp_is_sat_no_cache f sat_no
   else
-    (*let _ = Util.push_time "cache overhead" in*)
+    (*let _ = Gen.Profiling.push_time "cache overhead" in*)
     let sf = simplify_var_name f in
     let fstring = Cprinter.string_of_pure_formula sf in
-    (*let _ = Util.pop_time "cache overhead" in*)
+    (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
     let res =
       try
         Hashtbl.find !sat_cache fstring
       with Not_found ->
         let r = tp_is_sat_no_cache(*_debug*) f sat_no in
-        (*let _ = Util.push_time "cache overhead" in*)
+        (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !sat_cache fstring r in
-        (*let _ = Util.pop_time "cache overhead" in*)
+        (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
         r
     in res
 
@@ -576,7 +576,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) =
 let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
-    Util.inc_counter "sat_cache_count";
+    Gen.Profiling.inc_counter "sat_cache_count";
     let s = (!print_pure f) in
     try 
       let r = Hashtbl.find prune_sat_cache s in
@@ -585,7 +585,7 @@ let tp_is_sat (f: CP.formula) (sat_no: string) do_cache =
     with Not_found -> 
         let r = tp_is_sat_no_cache f sat_no in
         (Hashtbl.add prune_sat_cache s r ;
-        Util.inc_counter "sat_proof_count";
+        Gen.Profiling.inc_counter "sat_proof_count";
         r))
   else  
     tp_is_sat f sat_no
@@ -605,7 +605,7 @@ let simplify (f : CP.formula) : CP.formula =
         Some res -> res
       | None -> f
   else
-    (Util.push_time "simplify";
+    (Gen.Profiling.push_time "simplify";
     try
 	  let r = match !tp with
         | Isabelle -> Isabelle.simplify f
@@ -634,7 +634,7 @@ let simplify (f : CP.formula) : CP.formula =
               else
                 Redlog.simplify f
         | _ -> Omega.simplify f in
-      Util.pop_time "simplify";
+      Gen.Profiling.pop_time "simplify";
 	  (*let _ = print_string ("\nsimplify: f after"^(Cprinter.string_of_pure_formula r)) in*)
       r
     with | _ -> f)
@@ -666,7 +666,7 @@ let simplify_a (s:int) (f:CP.formula): CP.formula =
   (*      with _ -> print_string ("BACKTRACE"^(Printexc.get_backtrace())) *)
   (*   end); *)
   let pf = Cprinter.string_of_pure_formula in
-  Util.no_debug_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
+  Gen.Debug.no_1 ("TP.simplify"^(string_of_int s)) pf pf simplify f
 
 
 let hull (f : CP.formula) : CP.formula = match !tp with
@@ -826,7 +826,7 @@ let add_conseq_to_cache s =
     let _ = Hashtbl.find impl_conseq_cache s in ()
   with
     | Not_found -> 
-          (Util.inc_counter "impl_conseq_count";
+          (Gen.Profiling.inc_counter "impl_conseq_count";
           Hashtbl.add impl_conseq_cache s ()
           )
           
@@ -834,19 +834,19 @@ let tp_imply ante conseq imp_no timeout process =
   if !Globals.no_cache_formula then
     tp_imply_no_cache ante conseq imp_no timeout process
   else
-    (*let _ = Util.push_time "cache overhead" in*)
+    (*let _ = Gen.Profiling.push_time "cache overhead" in*)
     let f = CP.mkOr conseq (CP.mkNot ante None no_pos) None no_pos in
     let sf = simplify_var_name f in
     let fstring = Cprinter.string_of_pure_formula sf in
-    (*let _ = Util.pop_time "cache overhead" in*)
+    (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
     let res = 
       try
         Hashtbl.find !impl_cache fstring
       with Not_found ->
         let r = tp_imply_no_cache ante conseq imp_no timeout process in
-        (*let _ = Util.push_time "cache overhead" in*)
+        (*let _ = Gen.Profiling.push_time "cache overhead" in*)
         let _ = Hashtbl.add !impl_cache fstring r in
-        (*let _ = Util.pop_time "cache overhead" in*)
+        (*let _ = Gen.Profiling.pop_time "cache overhead" in*)
         r
     in res
 
@@ -855,7 +855,7 @@ let tp_imply ante conseq imp_no timeout do_cache process =
   (* let _ = print_string ("\nTPdispatcher.ml: tp_imply") in *)
   if !Globals.enable_prune_cache (*&& do_cache*) then
     (
-    Util.inc_counter "impl_cache_count";
+    Gen.Profiling.inc_counter "impl_cache_count";
     add_conseq_to_cache (!print_pure conseq) ;
     let s_rhs = !print_pure conseq in
     let s = (!print_pure ante)^"/"^ s_rhs in
@@ -867,7 +867,7 @@ let tp_imply ante conseq imp_no timeout do_cache process =
         let r = tp_imply_no_cache ante conseq imp_no timeout process in
         (Hashtbl.add imply_cache s r ;
          (*print_string ("s rhs: "^s_rhs^"\n");*)
-         Util.inc_counter "impl_proof_count";
+         Gen.Profiling.inc_counter "impl_proof_count";
         r))
   else  
     tp_imply ante conseq imp_no timeout process
@@ -1069,7 +1069,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) (*result+successfull matches+ possible fail*)
   = let pf = Cprinter.string_of_pure_formula in
-  Util.no_debug_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
+  Gen.Debug.no_2 "imply_timeout" pf pf (fun (b,_,_) -> string_of_bool b)
       (fun a c -> imply_timeout a c imp_no timeout do_cache process) ante0 conseq0
 (*
 let imply_timeout_original (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache
@@ -1124,10 +1124,10 @@ let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
 
 let imply_timeout ante0 conseq0 imp_no timeout do_cache process =
   let s = "imply" in
-  let _ = Util.push_time s in
+  let _ = Gen.Profiling.push_time s in
   let (res1,res2,res3) = imply_timeout ante0 conseq0 imp_no timeout do_cache process in
-  let _ = Util.pop_time s in
-  if res1  then Util.inc_counter "true_imply_count" else Util.inc_counter "false_imply_count" ; 
+  let _ = Gen.Profiling.pop_time s in
+  if res1  then Gen.Profiling.inc_counter "true_imply_count" else Gen.Profiling.inc_counter "false_imply_count" ; 
   (res1,res2,res3)
 let disj_cnt a c s =
   if (!Globals.enable_counters)then
@@ -1138,10 +1138,10 @@ let disj_cnt a c s =
 		  | CP.And (f1,f2,_) -> (or_f_size f1)*(or_f_size f2)
 		  | CP.Or (f1,f2,_,_) -> (or_f_size f1)+(or_f_size f2)
 		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> or_f_size f in
-            (*Util.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
-            Util.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
-            Util.inc_counter "imply_count";
-            Util.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
+            (*Gen.Profiling.add_to_counter "imply_disj_count_ante" (or_f_size ante0);
+            Gen.Profiling.add_to_counter "imply_disj_count_conseq" (or_f_size conseq0);
+            Gen.Profiling.inc_counter "imply_count";
+            Gen.Profiling.add_to_counter "imply_size_count" ((p_f_size ante0)+(p_f_size conseq0))*) 
     let rec add_or_f_size f = match f with
       | CP.BForm _ -> 0
 		  | CP.And (f1,f2,_) -> (add_or_f_size f1)+(add_or_f_size f2)
@@ -1149,35 +1149,35 @@ let disj_cnt a c s =
 		  | CP.Not (f,_,_) | CP.Forall (_,f,_,_ ) | CP.Exists (_,f,_,_) -> add_or_f_size f in
     match c with
       | None -> 
-          Util.inc_counter ("stat_count"^s);
-          Util.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a));
-          Util.add_to_counter ("stat_disj_count"^s) (or_f_size a);
-          Util.add_to_counter ("stat_size_count"^s) (p_f_size a)
+          Gen.Profiling.inc_counter ("stat_count"^s);
+          Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a));
+          Gen.Profiling.add_to_counter ("stat_disj_count"^s) (or_f_size a);
+          Gen.Profiling.add_to_counter ("stat_size_count"^s) (p_f_size a)
       | Some c-> 
-          Util.inc_counter ("stat_count"^s);
-          Util.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a)); 
-          Util.add_to_counter ("stat_disj_count"^s) ((or_f_size a)+(or_f_size c));
-          Util.add_to_counter ("stat_size_count"^s) ((p_f_size a)+(p_f_size c)) ;
+          Gen.Profiling.inc_counter ("stat_count"^s);
+          Gen.Profiling.add_to_counter ("z_stat_disj_"^s) (1+(add_or_f_size a)); 
+          Gen.Profiling.add_to_counter ("stat_disj_count"^s) ((or_f_size a)+(or_f_size c));
+          Gen.Profiling.add_to_counter ("stat_size_count"^s) ((p_f_size a)+(p_f_size c)) ;
     )
   else ()
 
 
 let imply_timeout a c i t dc process=
   disj_cnt a (Some c) "imply";
-  Util.prof_5 "TP.imply_timeout" imply_timeout a c i t dc process
+  Gen.Profiling.do_5 "TP.imply_timeout" imply_timeout a c i t dc process
 
 let memo_imply_timeout ante0 conseq0 imp_no timeout = 
   (* let _ = print_string ("\nTPdispatcher.ml: memo_imply_timeout") in *)
-  let _ = Util.push_time "memo_imply" in
+  let _ = Gen.Profiling.push_time "memo_imply" in
   let r = List.fold_left (fun (r1,r2,r3) c->
     if not r1 then (r1,r2,r3)
     else 
-      let l = List.filter (fun d-> (List.length (Util.intersect_fct CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
+      let l = List.filter (fun d-> (List.length (Gen.BList.intersect_eq CP.eq_spec_var c.MCP.memo_group_fv d.MCP.memo_group_fv))>0) ante0 in
       let ant = MCP.fold_mem_lst_m (CP.mkTrue no_pos) true (*!no_LHS_prop_drop*) true l in
       let con = MCP.fold_mem_lst_m (CP.mkTrue no_pos) !no_RHS_prop_drop false [c] in
       let r1',r2',r3' = imply_timeout ant con imp_no timeout false None in 
       (r1',r2@r2',r3')) (true, [], None) conseq0 in
-  let _ = Util.pop_time "memo_imply" in
+  let _ = Gen.Profiling.pop_time "memo_imply" in
   r
 ;;
 
@@ -1210,7 +1210,7 @@ let is_sat f sat_no do_cache =
       | None -> false
   else  begin   
     disj_cnt f None "sat";
-    Util.prof_1 "is_sat" (is_sat f sat_no) do_cache
+    Gen.Profiling.do_1 "is_sat" (is_sat f sat_no) do_cache
   end
 ;;
 let sat_no = ref 1
@@ -1232,7 +1232,7 @@ let is_sat_sub_no_with_slicing (f:CP.formula) sat_subno : bool =
     | [] -> (false,[]) 
     | (fvs, fs)::t ->  
       let b,l = group_conj t in
-      let l1,l2 = List.partition (fun (c,_)-> not((Util.intersect_fct CP.eq_spec_var fvs c)==[])) l in
+      let l1,l2 = List.partition (fun (c,_)-> not((Gen.BList.intersect_eq CP.eq_spec_var fvs c)==[])) l in
       if l1==[] then (b,(fvs,fs)::l) 
       else 
         let vars,nfs = List.split l1 in 
@@ -1267,9 +1267,9 @@ let is_sat_mix_sub_no (f : MCP.mix_formula) sat_subno with_dupl with_inv : bool 
 
 let is_sat_msg_no_no prof_lbl (f:CP.formula) do_cache :bool = 
   let sat_subno = ref 0 in
-  let _ = Util.push_time prof_lbl in
+  let _ = Gen.Profiling.push_time prof_lbl in
   let sat = is_sat_sub_no_c f sat_subno do_cache in
-  let _ = Util.pop_time prof_lbl in
+  let _ = Gen.Profiling.pop_time prof_lbl in
   sat
   
 let imply_sub_no ante0 conseq0 imp_no do_cache=
@@ -1278,9 +1278,9 @@ let imply_sub_no ante0 conseq0 imp_no do_cache=
   imply ante0 conseq0 imp_no do_cache
 
 let imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache =
-  let _ = Util.push_time prof_lbl in  
+  let _ = Gen.Profiling.push_time prof_lbl in  
   let r = imply_sub_no ante0 conseq0 imp_no do_cache in
-  let _ = Util.pop_time prof_lbl in
+  let _ = Gen.Profiling.pop_time prof_lbl in
   r
 let imply_msg_no_no_debug ante0 conseq0 imp_no prof_lbl do_cache process =
 Gen.Debug.ho_6 "imply_msg_no_no " 

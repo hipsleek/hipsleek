@@ -52,7 +52,7 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
       let eqns = MCP.ptr_equations_without_null f in
       let r_asets = alias eqns in
       let a_vars = lhs_fv @ v in
-      let fltr = List.map (fun c-> Util.intersect c a_vars) r_asets in
+      let fltr = List.map (fun c-> Gen.BList.intersect_eq (=) c a_vars) r_asets in
       let colaps l = List.fold_left (fun a c -> match a with 
                                                   | [] -> [(c,c)]
                                                   | h::_-> (c,(fst h))::a) [] l in
@@ -63,7 +63,7 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
 	let paset = get_aset asets p in (* find the alias set containing p *)
 
 
-    if U.empty paset then 
+    if Gen.is_empty paset then 
       begin 
 	(* no alias *)
 	failwith ("choose_context: Error in getting aliases for " ^ (Cprinter.string_of_spec_var p))
