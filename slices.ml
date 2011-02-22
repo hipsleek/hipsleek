@@ -2,25 +2,7 @@ type comparison = Less | Equal | Greater
 
 module CP = Cpure
 
-module SV =
-struct 
-  type t = CP.spec_var
-  let eq = CP.eq_spec_var
-  let string_of = Cformula.string_of_spec_var
-end;;
-
 module type EQ_TYPE = Gen.EQ_TYPE
-
-module Ptr =
-    functor (Elt:Gen.EQ_TYPE) ->
-struct
-  include Elt
-  type tlist = t list
-  module X = Gen.BListEQ(Elt)
-  let overlap = eq
-  let intersect (x:tlist)  (y:tlist) = X.intersect x y
-  let star_union x y = x@y
-end;;
 
 (* module PtrSV0 = *)
 (* struct *)
