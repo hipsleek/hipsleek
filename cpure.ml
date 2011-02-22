@@ -1902,6 +1902,10 @@ struct
 end;;
 
 module PtrSV = Ptr(SV);;
+
+module BagaSV = Gen.Baga(PtrSV);;
+module EMapSV = Gen.EqMap(SV);;
+module DisjSetSV = Gen.DisjSet(PtrSV);;
  
 type baga_sv = Gen.Baga(PtrSV).baga
 

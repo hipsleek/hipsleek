@@ -49,46 +49,46 @@ s/Util.difference/Gen.BList.difference_eq (=)/g
 s/Util.string_of_a_list/Gen.BList.string_of_f/g
 s/Util.string_of_list/Gen.BList.string_of_f/g
 
-s/Util.\(find_equiv_all\)_eq_raw/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(get_equiv\)_eq_raw/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(get_elems\)_eq_raw/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(add_equiv\)_eq_raw/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(add_equiv\)/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(is_equiv\)_eq/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(subs_eset\)_eq/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(find_equiv_elim\)_eq/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(is_empty\)_aset_eq/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(un_partition\)/(Gen.EqMap(CP.SV)).\1/g
-s/Util.\(partition\)_eq/(Gen.EqMap(CP.SV)).\1/g
+s/Util.\(find_equiv_all\)_eq_raw/EMapSV.\1/g
+s/Util.\(get_equiv\)_eq_raw/EMapSV.\1/g
+s/Util.\(get_elems\)_eq_raw/EMapSV.\1/g
+s/Util.\(add_equiv\)_eq_raw/EMapSV.\1/g
+s/Util.\(add_equiv\)/EMapSV.\1/g
+s/Util.\(is_equiv\)_eq/EMapSV.\1/g
+s/Util.\(subs_eset\)_eq/EMapSV.\1/g
+s/Util.\(find_equiv_elim\)_eq/EMapSV.\1/g
+s/Util.\(is_empty\)_aset_eq/EMapSV.\1/g
+s/Util.\(un_partition\)/EMapSV.\1/g
+s/Util.\(partition\)_eq/EMapSV.\1/g
 
-s/Util.empty_a_set_eq \<.*\>/(Gen.EqMap(CP.SV)).mkEmpty/g
+s/Util.empty_a_set_eq \<.*\>/EMapSV.mkEmpty/g
 
-s/Util.empty_aset/(Gen.EqMap(CP.SV)).mkEmpty/g
-s/Util.build_aset_eq CP.eq_spec_var/(Gen.EqMap(CP.SV)).build_eset/g
-s/Util.merge_set_eq/(Gen.EqMap(CP.SV)).merge_eset/g
-s/Util.string_of_eq_set/(Gen.EqMap(CP.SV)).string_of/g
-s/Util.rename_eset_eq_with_pr_allow_clash/(Gen.EqMap(CP.SV)).rename_eset_allow_clash/g
+s/Util.empty_aset/EMapSV.mkEmpty/g
+s/Util.build_aset_eq CP.eq_spec_var/EMapSV.build_eset/g
+s/Util.merge_set_eq/EMapSV.merge_eset/g
+s/Util.string_of_eq_set/EMapSV.string_of/g
+s/Util.rename_eset_eq_with_pr_allow_clash/EMapSV.rename_eset_allow_clash/g
 s/spec_var Util.eq_set/Gen.EqMap(CP.SV).emap/g
 
-s/Util.is_disj eq/(Gen.DisjSet(CP.PtrSV)).is_disj/g
-s/Util.\(one_list_dset\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(singleton_dset\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(merge_disj_set\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(star_disj_set\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(conj_disj_set\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(or_disj_set\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(is_sat_dset\)/(Gen.DisjSet(CP.PtrSV)).\1/g
-s/Util.\(empty_dset\)/(Gen.DisjSet(CP.PtrSV)).mkEmpty/g
+s/Util.is_disj eq/DisjSetSV.is_disj/g
+s/Util.\(one_list_dset\)/DisjSetSV.\1/g
+s/Util.\(singleton_dset\)/DisjSetSV.\1/g
+s/Util.\(merge_disj_set\)/DisjSetSV.\1/g
+s/Util.\(star_disj_set\)/DisjSetSV.\1/g
+s/Util.\(conj_disj_set\)/DisjSetSV.\1/g
+s/Util.\(or_disj_set\)/DisjSetSV.\1/g
+s/Util.\(is_sat_dset\)/DisjSetSV.\1/g
+s/Util.\(empty_dset\)/DisjSetSV.mkEmpty/g
 
 s/CP.spec_var Util.d_set/Gen.DisjSet(CP.PtrSV).dlist/g
 s/spec_var Util.d_set/Gen.DisjSet(CP.PtrSV).dlist/g
 
 
-s/Util.\(empty_baga\)/(Gen.Baga(CP.PtrSV)).mkEmpty/g
-s/Util.\(is_sat_baga\)/(Gen.Baga(CP.PtrSV)).\1/g
-s/Util.\(or_baga\)/(Gen.Baga(CP.PtrSV)).\1/g
-s/Util.\(conj_baga\)/(Gen.Baga(CP.PtrSV)).\1/g
-s/Util.\(star_baga\)/(Gen.Baga(CP.PtrSV)).\1/g
+s/Util.\(empty_baga\)/BagaSV.mkEmpty/g
+s/Util.\(is_sat_baga\)/BagaSV.\1/g
+s/Util.\(or_baga\)/BagaSV.\1/g
+s/Util.\(conj_baga\)/BagaSV.\1/g
+s/Util.\(star_baga\)/BagaSV.\1/g
 
 s/CP.spec_var Util.baga/Gen.Baga(CP.PtrSV).baga/g
 s/P.spec_var Util.baga/Gen.Baga(P.PtrSV).baga/g
