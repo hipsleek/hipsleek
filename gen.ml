@@ -32,40 +32,7 @@ struct
       | [x] -> x
       | x::xs -> x ^ (s' xs)
 
-  let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
-    let rec helper xs n = match xs with
-	  | e :: rest -> 
-		    if f e then (n, e)
-		    else helper rest (n + 1)
-	  | _ -> raise Not_found
-    in
-    helper xs0 0
-
-  let rec list_last l = match l with
-    | h::[] -> h
-    | _::t -> (list_last t)
-    | [] -> failwith "Gen.list_last: empty list"
-
-  (** Split the list of length k>=1 into a pair consisting of
-      the list of first k-1 elements and the last element. *)
-  let rec firsts_last xs = match xs with
-    | [] -> failwith "Gen.first_lasts: empty list"
-    | [x] -> ([],x)
-    | x::xs1 ->
-          let (fs,l) = firsts_last xs1 in
-          (x::fs,l)
-
-  let rec take n l  = if n<=0 then [] else 
-    match l with
-      | h::t -> h::(take (n-1) t)
-      | [] -> []
-
-  let rec drop n l  = if n<=0 then l else
-    match l with
-      | h::t -> (drop (n-1) t)
-      | [] -> []
-
-  (*
+   (*
     first component of returned value contains the first i values from the list
     second component contains the rest
   *)
@@ -111,7 +78,7 @@ struct
 
 end;;
 
-module HashUtil =
+module HashUti =
 struct
   (* Hashtable stuff *)
 
@@ -204,12 +171,6 @@ struct
   (*   let l = (List.length (intersect l1 l2)) in *)
   (*   ((List.length l1) =  l) && (l = (List.length l2)) *)
 
-
-  let spacify i = 
-    let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
-    function [] -> ""
-      | [x] -> x
-      | x::xs -> x ^ (s' xs)
 
   let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
     let rec helper xs n = match xs with
@@ -372,7 +333,7 @@ class counter x_init =
      method string_of : string= (string_of_int ctr)
    end;;
 
-module ErrorUtil =
+module ErrorUti =
 struct
   (** Error-handling functions. *)
 
@@ -1201,11 +1162,11 @@ struct
 
 end;;
 
-module SysUtil =
+module SysUti =
 
 struct
   open Basic
-  open ErrorUtil
+  open ErrorUti
 
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
@@ -1236,21 +1197,6 @@ struct
       let i = String.rindex s '/' in
       String.sub s 0 (i+1)
     else ""
-
-  let spacify i = 
-    let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
-    function [] -> ""
-      | [x] -> x
-      | x::xs -> x ^ (s' xs)
-
-  let find_index (f : 'a -> bool) (xs0 : 'a list) : (int * 'a) = 
-    let rec helper xs n = match xs with
-	  | e :: rest -> 
-		    if f e then (n, e)
-		    else helper rest (n + 1)
-	  | _ -> raise Not_found
-    in
-    helper xs0 0
 
   (** String-handling utility functions. *)
 
@@ -1636,4 +1582,4 @@ struct
 
 end;;
 include Basic
-include SysUtil
+include SysUti

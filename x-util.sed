@@ -101,5 +101,5 @@ s/Util.\(exc_sub_type\)/Gen.ExcNumbering.\1/gp
 
 s/Util.\(tag_list\)/Gen.Stackable.\1/gp
  
-s/Util.\(list_of_hash_values\)/Gen.HashUtil.\1/gp
-s/Util.\(copy_keys\)/Gen.HashUtil.\1/gp
+s/Util.\(list_of_hash_values\)/Gen.HashUti.\1/gp
+s/Util.\(copy_keys\)/Gen.HashUti.\1/gp
