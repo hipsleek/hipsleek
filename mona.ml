@@ -426,7 +426,7 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = 
-  Util.ho_debug_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+  Util.no_debug_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
       (fun e0 -> mona_of_exp_x e0 f) e0
 
 (* pretty printing for expressions *)
@@ -470,7 +470,6 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
-        (*      print_endline ("\nCCC: " ^ tmp); *)
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
         let (exs2, a2name, a2str) = mona_of_exp_secondorder a2 f in
         let add_string = " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ tmp ^ ")" in
@@ -498,17 +497,13 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
-  | CP.Bag (elist, _) -> ((List.map (fun x -> mona_of_exp x f) elist),"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
-(* failwith ("0 Bags are not supported in Mona") *)
+  | CP.Bag (elist, _) -> ([],"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
   | CP.BagUnion (_, _) -> ([], mona_of_exp e0 f, "")
-(* failwith ("1 Union is not supported in Mona") *)
   | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
-(* failwith ("2 Intersect is not supported in Mona") *)
-  (* | CP.Neq _ -> failwith ("!!!! TRans Failure: NOT") *)
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
-   Util.ho_debug_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+   Util.no_debug_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
       (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
@@ -716,7 +711,7 @@ and equation a1 a2 f sec_order_symbol first_order_symbol vs =
   end
 
 and mona_of_formula f initial_f vs = 
-  Util.ho_debug_2 "mona_of_formula" Cprinter.string_of_pure_formula
+  Util.no_debug_2 "mona_of_formula" Cprinter.string_of_pure_formula
       Cprinter.string_of_pure_formula 
       (fun x -> x) (fun f initial_f -> mona_of_formula_x f initial_f vs) 
       f initial_f 
@@ -842,7 +837,7 @@ let check fd timeout pid : bool =
 	  End_of_file -> false
 
 let check_debug fd timeout pid : bool =
-  Util.ho_debug_1 "check" string_of_float string_of_bool 
+  Util.no_debug_1 "check" string_of_float string_of_bool 
       (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)
@@ -851,7 +846,7 @@ let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   let mona_file = open_out mona_file_name in
   output_string mona_file ("include \"mona_predicates.mona\";\n");
   let fstr = 
-    let _ = print_string ("\n==========="^var_decls^"===="^(Cprinter.string_of_pure_formula pe)^"=======\n") in
+    (* let _ = print_string ("\n==========="^var_decls^"===="^(Cprinter.string_of_pure_formula pe)^"=======\n") in *)
     try (var_decls ^(mona_of_formula pe pe vs))
     with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); "" 
   in
@@ -903,7 +898,7 @@ let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   res
 
 let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
-  Util.ho_debug_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
+  Util.no_debug_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
      (fun var_decls pe ->  write_x var_decls pe vs timeout) var_decls pe
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
