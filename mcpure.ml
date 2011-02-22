@@ -195,8 +195,8 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
   let r = List.map (helper st1) f_l in
     regroup_memo_group r
 
-and subst_avoid_capture_memo_debug (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure =
-  Util.ho_debug_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l
+(* and subst_avoid_capture_memo_debug (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure = *)
+(*   Gen.Debug.ho_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l *)
 
     
 and memo_cons_subst sst (f_l : memoised_constraint list): memoised_constraint list = 
@@ -572,7 +572,7 @@ and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure =
        Util.pop_time "add_pure"; r)
     
 and memoise_add_pure_aux_debug l p status : memo_pure = 
-  Util.ho_debug_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
+  Gen.Debug.ho_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
 
   
 and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
@@ -628,7 +628,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
     r
       
 and create_memo_group_debug ll l2 = 
-  Util.ho_debug_3 "create_memo_group " (Util.string_of_list (fun (c,_) -> !print_bf_f c)) (Util.string_of_list !print_p_f_f) (fun _ -> "?")
+  Gen.Debug.ho_3 "create_memo_group " (Util.string_of_list (fun (c,_) -> !print_bf_f c)) (Util.string_of_list !print_p_f_f) (fun _ -> "?")
     (!print_mp_f) create_memo_group ll l2
 
     
@@ -769,7 +769,7 @@ and memo_pure_push_exists_all fs qv f0 pos =
   !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 
 (*and memo_pure_push_exists_eq_debug qv f0 pos =
-  Util.ho_debug_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
+  Gen.Debug.ho_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
   (fun (c1,c2) -> (!print_mp_f c1)^"\n remaining: "^(String.concat ", " (List.map !print_sv_f c2)) ) memo_pure_push_exists_eq qv f0 pos*)
 
   
@@ -1120,7 +1120,7 @@ let replace_memo_pure_label nl f =
  (* imply functions *)
 
 let rec mimply_process_ante_debug with_disj ante_disj conseq str str_time t_imply imp_no =
- Util.ho_debug_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+ Gen.Debug.ho_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
  (fun with_disj ante_disj conseq -> mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
     
@@ -1154,10 +1154,9 @@ let mimply_one_conj ante_memo0 conseq  t_imply imp_no =
   else (Util.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
 let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
-  Util.ho_debug_4_opt "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
+  Gen.Debug.ho_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
-  (fun (x,_,_) -> not x)
   mimply_one_conj ante_memo0 conseq_conj t_imply imp_no
 
   
@@ -1177,7 +1176,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
     | [] -> (true,[],None)
 
 let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
- Util.ho_debug_2 "imply_memo_x" (!print_mp_f)
+ Gen.Debug.ho_2 "imply_memo_x" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no)ante_memo0 conseq_memo
@@ -1312,7 +1311,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   
   
 let merge_mems_debug f1 f2 slice_dup = 
-  Util.ho_debug_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
+  Gen.Debug.ho_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
   
   
@@ -1367,7 +1366,7 @@ let memo_arith_simplify f = match f with
   | OnePF f -> OnePF (arith_simplify 6 f)
  
 let memo_arith_simplify_debug f = 
-  Util.ho_debug_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
+  Gen.Debug.ho_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
 
 let memo_is_member_pure sp f = match f with
   | MemoF f -> memo_is_member_pure sp f

@@ -841,20 +841,20 @@ let list_of_hash_values (tab : ('a, 'b) Hashtbl.t) : 'b list =
   let append_val k v vl = v::vl in
   Hashtbl.fold append_val tab []
 
-let counters = ref (Hashtbl.create 10)
+let counters = Hashtbl.create 10
 
 let add_to_counter (s:string) i = 
   if !Globals.enable_counters then
     try
-      let r = Hashtbl.find !counters s in
-      Hashtbl.replace !counters s (r+i)
+      let r = Hashtbl.find counters s in
+      Hashtbl.replace counters s (r+i)
     with
-      | Not_found -> Hashtbl.add !counters s i
+      | Not_found -> Hashtbl.add counters s i
   else ()
 let inc_counter (s:string) = add_to_counter s 1
 
 let string_of_counters () = 
-  let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
+  let s = Hashtbl.fold (fun k v a-> (k,v)::a) counters [] in
   let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
   "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
 

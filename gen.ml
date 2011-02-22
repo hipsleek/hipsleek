@@ -1,3 +1,17 @@
+module type INC_TYPE =
+    sig
+      type t
+      val zero : t
+      val inc : t -> t
+    end;;
+
+module type EQ_TYPE =
+    sig
+      type t
+      val eq : t -> t -> bool
+      val string_of : t -> string
+    end;;
+
 module Basic =
 (* basic utilities that can be opened *)
 struct
@@ -11,7 +25,6 @@ struct
   let fnone (c:'a):'a option = None
 
   let empty l = match l with [] -> true | _ -> false
-
 
   let spacify i = 
     let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
@@ -46,7 +59,7 @@ struct
     match l with
       | h::t -> h::(take (n-1) t)
       | [] -> []
-            
+
   let rec drop n l  = if n<=0 then l else
     match l with
       | h::t -> (drop (n-1) t)
@@ -128,21 +141,8 @@ end;;
 (*       val reset : unit -> unit *)
 (*     end;; *)
 
-module type INC_TYPE =
-    sig
-      type t
-      val zero : t
-      val inc : t -> t
-    end;;
 
-module type EQ_TYPE =
-    sig
-      type t
-      val eq : t -> t -> bool
-      val string_of : t -> string
-    end;;
-
-module BasicList =
+module BList =
 struct
 
   (* List-handling stuff *)
@@ -261,7 +261,6 @@ struct
   let mem_eq eq x ls =
     List.exists (fun e -> eq x e) ls
 
-        
   let intersect_eq eq l1 l2 =
     List.filter (fun x -> List.exists (eq x) l2) l1  
 
@@ -274,7 +273,7 @@ struct
 
 end;;
 
-module BasicListEQ =
+module BListEQ =
     functor (Elt : EQ_TYPE) ->
 struct
   type elem = Elt.t
@@ -282,7 +281,7 @@ struct
   let eq = Elt.eq
   let string_of = Elt.string_of
 
-  include BasicList
+  include BList
 
   let mem x l = List.exists (eq x) l
 
@@ -352,7 +351,7 @@ class ['a] stack x_init  =
        | x::xs -> x
      method len = List.length stk
      method set_pr f = elem_pr <- f
-     method string_of = BasicList.string_of_list_f elem_pr stk
+     method string_of = BList.string_of_list_f elem_pr stk
    end;;
 
 class counter x_init =
@@ -371,6 +370,8 @@ struct
 
   let error_list = new stack "error - stack underflow"
 
+  let warning_no  = new counter 0
+
   let no_errors () = (error_list#len = 0)
 
   let err loc msg = 
@@ -383,7 +384,6 @@ struct
     print_string "The program is INVALID\n";
     exit 2
 
-  let warning_no  = new counter 0
   let warn msg = 
     warning_no #inc;
     print_string ("*** Warning: "^ msg ^ "\n"); flush_all()
@@ -475,7 +475,7 @@ struct
             let r3=r1@r2 in
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
-  let build_aset (xs:(elem * elem) list) :  emap =
+  let build_eset (xs:(elem * elem) list) :  emap =
     List.fold_right (fun (x,y) eqs -> add_equiv eqs x y) xs (empty)
 
   let mem x ls =
@@ -518,7 +518,7 @@ struct
     else (l1,l2)
 
   (* merge two equivalence sets s1 /\ s2 *)
-  let merge_set (s1: emap) (s2: emap): emap =
+  let merge_eset (s1: emap) (s2: emap): emap =
     let (t1,t2) = order_two s1 s2 in
     List.fold_left (fun a (p1,p2) -> add_equiv a p1 p2) t2 (get_equiv t1)
 
@@ -571,7 +571,7 @@ struct
   (*           else helper xs in *)
   (*   helper s *)
 
-  let check_no_dupl (s:elist) : bool = not(BasicList.check_dups_eq eq s)
+  let check_no_dupl (s:elist) : bool = not(BList.check_dups_eq eq s)
 
   (* check f is 1-to-1 map assuming s contains no duplicates *)
   let is_one2one (f:elem -> elem) (s:elist) : bool =
@@ -850,37 +850,6 @@ module type EQ_PTR_TYPE =
       val intersect : tlist -> tlist -> tlist
     end;;
 
-module CP = Cpure
-
-module SV =
-struct 
-  type t = CP.spec_var
-  let eq = CP.eq_spec_var
-  let string_of = Cformula.string_of_spec_var
-end;;
-
-module Ptr =
-    functor (Elt:EQ_TYPE) ->
-struct
-  include Elt
-  type tlist = t list
-  module X = BasicListEQ(Elt)
-  let overlap = eq
-  let intersect (x:tlist)  (y:tlist) = X.intersect x y
-  let star_union x y = x@y
-end;;
-
-(* module PtrSV0 = *)
-(* struct *)
-(*   include SV *)
-(*   type tlist = t list *)
-(*   module X = BasicListEQ(SV) *)
-(*   let overlap = eq *)
-(*   let intersect (x:tlist)  (y:tlist) = X.intersect x y *)
-(*   let star_union x y = x@y *)
-(* end;; *)
-
-module PtrSV = Ptr(SV)
 
 module Baga =
     functor (Elt : MEM_TYPE) ->
@@ -888,7 +857,7 @@ struct
   type ptr = Elt.t
   type baga = ptr list
 
-  let mkEmpty_baga : baga = []
+  let mkEmpty : baga = []
   let eq = Elt.eq
   let overlap = Elt.overlap
   let intersect = Elt.intersect
@@ -936,13 +905,13 @@ struct
   let eq = Elt.eq
   let intersect = Elt.intersect
 
-  module BL_EQ = BasicListEQ(Elt)
+  module BL_EQ = BListEQ(Elt)
   open BL_EQ
 
   (* let is_dupl_baga _ = true *)
 
   (* an empty difference set *)
-  let empty_dset () : dpart = []
+  let mkEmpty : dpart = []
 
   (* an empty difference set *)
   let empty (d:dpart) : bool = (d==[])
@@ -1022,43 +991,72 @@ struct
 
 end;;
 
-module DisjPtr = DisjSet(PtrSV)
-(* module DisjPtr0 = DisjSet(PtrSV0) *)
+class mult_counters =
+object (self)
+  val ctrs = Hashtbl.create 10
+  method get (s:string) : int = 
+    try
+      let r = Hashtbl.find ctrs s in r
+    with
+      | Not_found -> 0
+  method add (s:string) (i:int) = 
+    try
+      let r = Hashtbl.find ctrs s in
+      Hashtbl.replace ctrs  s (r+i)
+    with
+      | Not_found -> Hashtbl.add ctrs s i
+  method inc (s:string) = self # add s 1
+  method string_of : string= 
+    let s = Hashtbl.fold (fun k v a-> (k,v)::a) ctrs [] in
+    let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
+    "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+end;;
+
+class task_table =
+object 
+  val tasks = Hashtbl.create 10
+  method add_task_instance msg time = 	
+    let m = if (time>Globals.profile_threshold) then  [time] else [] in
+    try 
+	  let (t1,cnt1,max1) = Hashtbl.find tasks msg in
+	  Hashtbl.replace tasks msg (t1+.time,cnt1+1,m@max1)
+    with Not_found -> 
+	    Hashtbl.add tasks msg (time,1,m)
+
+  method print : unit = 
+    let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) tasks [] in
+    let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
+    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
+    let f a = (string_of_float ((floor(100. *.a))/.100.)) in
+    let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
+    let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
+        let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
+            (if (List.length l)>0 then 
+              let l = (List.sort compare l) in		
+              (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
+            else "")^"],  "^(fp (t/.ot))^"%)") in
+        ((a1+1),r) 
+    ) (0,"") str_list in
+    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) 
+end;;
 
 
 module Profiling =
 struct
-  let counters = ref (Hashtbl.create 10)
-
+  let counters = new mult_counters
+  let tasks = new task_table
   let profiling_stack = new stack ("stack underflow",0.,false)
 
-  let tasks = ref (Hashtbl.create 10)  
-
   let add_to_counter (s:string) i = 
-    if !Globals.enable_counters then
-      try
-        let r = Hashtbl.find !counters s in
-        Hashtbl.replace !counters s (r+i)
-      with
-        | Not_found -> Hashtbl.add !counters s i
+    if !Globals.enable_counters then counters#add s i
     else ()
   let inc_counter (s:string) = add_to_counter s 1
 
-  let string_of_counters () = 
-    let s = Hashtbl.fold (fun k v a-> (k,v)::a) !counters [] in
-    let s = List.sort (fun (a1,_) (a2,_)-> String.compare a1 a2) s in
-    "Counters: \n "^ (String.concat "\n" (List.map (fun (k,v) -> k^" = "^(string_of_int v)) s))^"\n"
+  let string_of_counters () =  counters#string_of
 
   let get_time () = 
 	let r = Unix.times () in
 	r.Unix.tms_utime +. r.Unix.tms_stime +. r.Unix.tms_cutime +. r.Unix.tms_cstime
-
-  let add_task_instance msg time = 	
-    try 
-	  let (t1,cnt1,max1) = Hashtbl.find !tasks msg in
-	  Hashtbl.replace !tasks msg (t1+.time,cnt1+1, (if (time>Globals.profile_threshold) then  time::max1 else max1))
-    with Not_found -> 
-	    Hashtbl.add !tasks msg (time,1,(if (time>Globals.profile_threshold) then  [time] else []))
 
   let push_time_no_cnt msg = 
     if (!Globals.profiling) then
@@ -1088,10 +1086,12 @@ struct
 		  (* 	print_string ("\n double accounting for "^msg^"\n") *)
           (* print_string ("\n skip double accounting for "^msg^"\n")  *)
 	    end	
-        else add_task_instance m1 (t2-.t1) 
+        else tasks # add_task_instance m1 (t2-.t1) 
 	  else 
-	    Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error poping "^msg^"from the stack")}
+	    Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("Error popping "^msg^"from the stack")}
     else ()
+
+ let print_info () = if (!Globals.profiling) then  tasks # print else ()
 
   let prof_aux (s:string) (f:'a -> 'z) (e:'a) : 'z =
     try
@@ -1160,29 +1160,12 @@ struct
       profiling_stack#override (helper profiling_stack#get) 
 	else ()
 
-  let print_tasks unit : unit  = 
-    let str_list = Hashtbl.fold (fun c1 (t,cnt,l) a-> (c1,t,cnt,l)::a) !tasks [] in
-    let str_list = List.sort (fun (c1,_,_,_)(c2,_,_,_)-> String.compare c1 c2) str_list in
-    let (_,ot,_,_) = List.find (fun (c1,_,_,_)-> (String.compare c1 "Overall")=0) str_list in
-    let f a = (string_of_float ((floor(100. *.a))/.100.)) in
-    let fp a = (string_of_float ((floor(10000. *.a))/.100.)) in
-    let (cnt,str) = List.fold_left (fun (a1,a2) (c1,t,cnt,l)  -> 
-        let r = (a2^" \n("^c1^","^(f t)^","^(string_of_int cnt)^","^ (f (t/.(float_of_int cnt)))^",["^
-            (if (List.length l)>0 then 
-              let l = (List.sort compare l) in		
-              (List.fold_left (fun a c -> a^","^(f c)) (f (List.hd l)) (List.tl l) )
-            else "")^"],  "^(fp (t/.ot))^"%)") in
-        ((a1+1),r) 
-    ) (0,"") str_list in
-    print_string ("\n profile results: there where " ^(string_of_int cnt)^" keys \n"^str^"\n" ) 
-
   let add_index l = 
     let rec ff i l = match l with
 	  | [] -> []
 	  | a::b-> (i,a)::(ff (i+1) b) in
     (ff 0 l)
 
- let print_profiling_info () = if (!Globals.profiling) then  print_tasks () else ()
 
 end;;
 
@@ -1190,6 +1173,7 @@ module SysUtil =
 
 struct
   open Basic
+  open ErrorUtil
 
 (* Qualify helper file name *)
 (* if you want to install the executable in one directory (e.g. /usr/bin),
@@ -1199,7 +1183,6 @@ struct
   let qualify_helper_fn n =
     let d =  Filename.dirname Sys.executable_name ^ "/" in
     Sys.getcwd() ^ "/" ^ d ^ n
-
 
   let lib_name n =
     try (let d = Filename.dirname Sys.executable_name ^ "/../lib/" in
@@ -1347,9 +1330,88 @@ struct
     let sep_regexp = Str.regexp (Str.quote sep) in
     Str.split sep_regexp s
 
+(** Printing notifications [msg, amsg, etc] *)
+let verbose = ref false
+
+(** always print this message *)
+let amsg s = print_string s; flush_all ()
+
+(** print only if -v *)
+let msg s = if !verbose then amsg s
+
+(** removing 'option' types *)
+let unsome : 'a option -> 'a = 
+  function
+	| Some x -> x
+	| None   -> failwith "[util] tried to deoptionify None"
+
+let is_some : 'a option -> bool =
+  function
+	| Some x -> true
+	| None -> false
+
+
+(** Read the given file into a string. *)
+let string_of_file (fname : string) =
+  if Sys.file_exists fname then
+    let chn = open_in fname in
+    let len = in_channel_length chn in
+    let str = String.make len ' ' in
+    let _ = really_input chn str 0 len in
+    (close_in chn; str)
+  else
+    (warn ("Could not read file " ^ fname ^ "; assuming empty content.");
+    "")
+
+let fileLine (fn:string) : string =
+  begin
+    let chn = open_in fn in
+    let str = input_line chn in
+    close_in chn;
+    str
+  end
+
+(** Use timed_command utility to run an external process with a timeout. *)
+
+let timed_command = qualify_helper_fn "timed_command"
+
+let run_with_timeout (prog : string) (seconds : int) : int =
+  (* msg ("Running with timeout: " ^ prog ^ "\n"); *)
+  Sys.command (timed_command ^ Printf.sprintf " %d " seconds ^ prog)
+
+let is_breakable c =  match c with
+  | '(' | ')' | ' ' | '+' | ':' -> true
+  | _ -> false
+
+let new_line_str = "\n"
+(*
+  if Sys.os_type = "Cygwin" then
+	let t = Buffer.create 1 in
+	  Buffer.add_char t (char_of_int 0x0A);
+	  let tmp = Buffer.contents t in
+		tmp
+  else "\n"
+*)
+
+let break_lines (input : string) : string =
+  let buf = Buffer.create 4096 in
+  let i = ref 0 in
+  let cnt = ref 0 in
+  let l = String.length input in
+  while !i < l do
+    Buffer.add_char buf input.[!i];
+      cnt := !cnt + 1;
+      if !cnt > 80 && (is_breakable input.[!i]) then begin
+		Buffer.add_string buf new_line_str;
+		cnt := 0
+	  end;
+      i := !i + 1
+  done;
+  Buffer.contents buf
+
 end;;
 
-module ExceptionNumber =
+module ExcNumbering =
 struct
 
   (*hairy stuff for exception numbering*)
@@ -1541,3 +1603,5 @@ struct
     in helper xs ys
 
 end;;
+include Basic
+include SysUtil

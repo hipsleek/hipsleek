@@ -2638,7 +2638,7 @@ and trans_type (prog : I.prog_decl) (t : I.typ) (pos : loc) : CP.typ =
 and
 
       flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
-  Util.ho_debug_2 "flatten_to_bind " 
+  Gen.Debug.ho_2 "flatten_to_bind " 
       (Iprinter.string_of_exp) 
       (fun x -> match x with
         | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
@@ -4735,7 +4735,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     Util.remove_dups_f r CP.eq_b_formula_no_aset in
 
   let filter_pure_conj_list_x l = 
-    Util.ho_debug_1 "filter_pure_conj_list" 
+    Gen.Debug.ho_1 "filter_pure_conj_list" 
       (fun l -> String.concat "; "(List.map (fun (c1,c2)->(string_of_bool c1) ^"--"^ (Cprinter.string_of_b_formula c2)) l))
   (fun c-> String.concat "; "(List.map Cprinter.string_of_b_formula c)) filter_pure_conj_list l in
     

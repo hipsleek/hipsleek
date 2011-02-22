@@ -441,7 +441,7 @@ and struc_free_vars (f0:struc_formula) with_inst:(ident*primed) list=
 	in Util.remove_dups (List.concat (List.map helper f0))
  
 and struc_split_fv_debug f0 wi =
-  Util.ho_debug_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
+  Gen.Debug.ho_2 "struc_split_fv" (!print_struc_formula) string_of_bool 
       (fun (l1,l2) -> (string_of_spec_var_list l1)^"|"^(string_of_spec_var_list l2)) struc_split_fv_a f0 wi
 
 and struc_split_fv f0 wi = struc_split_fv_a f0 wi

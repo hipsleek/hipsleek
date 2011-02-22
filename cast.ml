@@ -561,7 +561,7 @@ let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Util.ho_debug_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      Gen.Debug.ho_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with

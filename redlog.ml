@@ -216,7 +216,7 @@ let run_with_timeout func err_msg =
   res
 
 let run_with_timeout_debug func err_msg =
-  Util.ho_debug_2 "run_with_timeout" (fun _ -> "?") (fun x -> x)
+  Gen.Debug.ho_2 "run_with_timeout" (fun _ -> "?") (fun x -> x)
   (fun x -> "Out")
      run_with_timeout func err_msg
 

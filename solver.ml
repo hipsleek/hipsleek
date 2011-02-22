@@ -132,7 +132,7 @@ let rec filter_formula_memo f (simp_b:bool)=
       Exists {e with formula_exists_pure = nmem;}
 
 let filter_formula_memo_debug f (simp_b:bool)= 
-  Util.ho_debug_1 "filter_formula_memo" Cprinter.string_of_formula Cprinter.string_of_formula 
+  Gen.Debug.ho_1 "filter_formula_memo" Cprinter.string_of_formula Cprinter.string_of_formula 
    (fun f -> filter_formula_memo f simp_b) f
 
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
@@ -197,8 +197,8 @@ let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a ->
   end
 
 let prune_branches_subsume_debug prog univ_vars lhs_node rhs_node = 
-  Util.ho_debug_4_opt "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
-  (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None))) (fun _ -> true)
+  Gen.Debug.ho_4 "pr_branches_subsume " (fun _ -> "?") (fun _ -> "?") Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  (fun (c,d)-> (string_of_bool c) ^ " " ^(string_of_bool (d==None))) 
   prune_branches_subsume prog univ_vars lhs_node rhs_node
 
 let clear_entailment_history_es (es :entail_state) :context = 
@@ -282,11 +282,11 @@ let rec formula_2_mem (f : CF.formula) prog : CF.mem_formula =
   in helper f
 
 and formula_2_mem_debug (f : formula) prog : CF.mem_formula = 
-  Util.ho_debug_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
+  Gen.Debug.ho_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
       (fun f -> formula_2_mem f prog) f
 
 and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
-  Util.ho_debug_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
+  Gen.Debug.ho_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
       (fun f -> h_formula_2_mem f evars prog) f
 
 and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
@@ -362,7 +362,7 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_lab
     (a, b, [], c)
 
 and xpure_heap_debug (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
-      = Util.ho_debug_1 "xpure_heap" Cprinter.string_of_h_formula (fun (_,_,_,m) -> Cprinter.string_of_mem_formula m) 
+      = Gen.Debug.ho_1 "xpure_heap" Cprinter.string_of_h_formula (fun (_,_,_,m) -> Cprinter.string_of_mem_formula m) 
   (fun h0 -> xpure_heap prog h0 which_xpure) h0 
 
 and xpure_heap (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
@@ -581,10 +581,11 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
 
 
 and xpure_heap_symbolic(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
-  Util.no_debug_1_opt "xpure_heap_symbolic" Cprinter.string_of_h_formula 
+  Gen.Debug.no_1_opt 
+      (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
+      "xpure_heap_symbolic" Cprinter.string_of_h_formula 
       (fun (p1,_,p3,p4) -> (Cprinter.string_of_mix_formula p1)^"#"^(string_of_spec_var_list p3)^"#"^(Cprinter.string_of_mem_formula p4)
           ^string_of_bool(is_sat_mem_formula p4)) 
-      (fun (p1,_,_,p4) -> not(is_sat_mem_formula p4)) 
       (fun h0 -> xpure_heap_symbolic_x prog h0 which_xpure) h0
 
 and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) = 
@@ -595,7 +596,7 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
   else (MCP.mkMFalse no_pos, pb, pa, memset)  
 
 and xpure_heap_symbolic_i_debug (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
-  Util.ho_debug_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula (fun (_,_,vl) -> Cprinter.string_of_spec_var_list vl)
+  Gen.Debug.ho_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula (fun (_,_,vl) -> Cprinter.string_of_spec_var_list vl)
       (fun h0 -> xpure_heap_symbolic_i prog h0 i) h0
 
 
@@ -1295,7 +1296,7 @@ and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) 
 
 and unfold_nth(*_debug*) n (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula =
   unfold_x prog f v do_unsat pos
-      (* Util.ho_debug_1_nth n "unfold" string_of_bool (fun _ -> "?") (fun d -> unfold_x prog f v d pos) do_unsat
+      (* Gen.Debug.ho_1_nth n "unfold" string_of_bool (fun _ -> "?") (fun d -> unfold_x prog f v d pos) do_unsat
       *)
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = match f with
@@ -1412,7 +1413,7 @@ and split_universal_debug ((f0 : CP.formula), f0b) (evars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
       =
   let vv = evars (*impl_inst_vars*) in
-  Util.ho_debug_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
+  Gen.Debug.ho_2 "split_universal" (fun (f,_)->Cprinter.string_of_pure_formula f)
       (fun _ -> (Cprinter.string_of_spec_var_list evars)^"/I="^(Cprinter.string_of_spec_var_list impl_inst_vars)^"/E="^(Cprinter.string_of_spec_var_list expl_inst_vars)^"/"^ (Cprinter.string_of_spec_var_list vvars)) (fun ((f1,_),(f2,_),_) -> (Cprinter.string_of_pure_formula f1)^"/"^ (Cprinter.string_of_pure_formula f2)) (fun f vv -> split_universal f evars expl_inst_vars impl_inst_vars vvars pos)
       (f0,f0b) vv
       (*
@@ -1661,7 +1662,7 @@ and fold p c v pu u loc =
   Util.prof_2 "fold" (fold_x(*debug_2*) p c v pu) u loc
 
 and fold_debug_2 p c v pu u loc = 
-  Util.ho_debug_2 "fold " (fun c -> match c with
+  Gen.Debug.ho_2 "fold " (fun c -> match c with
     | Ctx c -> Cprinter.string_of_formula c.es_formula
     | _ -> "CtxOR!") 
       Cprinter.string_of_h_formula 
@@ -1669,7 +1670,7 @@ and fold_debug_2 p c v pu u loc =
       (fun c v -> fold_x p c v pu u loc) c v
 
 and fold_debug p c v pu u loc = 
-  Util.ho_debug_2 "fold " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
+  Gen.Debug.ho_2 "fold " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
       (fun c v -> fold_x p c v pu u loc) c v
       (**************************************************************)
       (**************************************************************)
@@ -1850,7 +1851,8 @@ and elim_exists_pure_formula (f0:CP.formula) =
     | _ -> f0
 
 and elim_exists_pure_formula_debug (f0:CP.formula) =
-  Util.ho_debug_1_opt "elim_exists_pure_formula" Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula (fun r -> not(r==f0))
+  Gen.Debug.ho_1_opt (fun r -> not(r==f0)) "elim_exists_pure_formula" 
+      Cprinter.string_of_pure_formula Cprinter.string_of_pure_formula
       elim_exists_pure_formula f0
 
 
@@ -1936,7 +1938,7 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	      (nf1@nf2,nf1n@nf2n)
 
 and is_unsat_with_branches_debug xpure_f qvars hf mix br pos sat_subno=
-  Util.ho_debug_2 "is_unsat_with_branches" 
+  Gen.Debug.ho_2 "is_unsat_with_branches" 
       (fun h -> (Cprinter.string_of_h_formula h)^"\n"^Cprinter.string_of_mix_formula(fst( xpure_f hf)))
       Cprinter.string_of_mix_formula string_of_bool
       (fun hf mix -> is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno) hf mix
@@ -1972,7 +1974,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   unsat_base_x prog sat_subno f
-      (* Util.ho_debug_3_nth n "unsat_base" (fun _ -> "?") (fun x-> (string_of_int !x)) 
+      (* Gen.Debug.ho_3_nth n "unsat_base" (fun _ -> "?") (fun x-> (string_of_int !x)) 
          Cprinter.string_of_formula string_of_bool
          unsat_base_x prog sat_subno f
       *)    
@@ -2018,7 +2020,7 @@ and elim_unsat_all prog (f : formula): formula = match f with
 
 
 and elim_unsat_all_debug prog (f : formula): formula = 
-  Util.ho_debug_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
+  Gen.Debug.ho_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
 
 (* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
 (*NOTE: should (fr,t) be added for (CP.mem fr expl_inst)*)
@@ -2282,7 +2284,7 @@ and heap_entail_one_context_struc_nth n p i1 i2 hp cl cs pos pid =
   Util.prof_3_nth n str (heap_entail_one_context_struc_x(*_debug*) p i1 i2 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_debug p i1 i2 hp cl cs pos pid =
-  Util.ho_debug_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 i2 hp cl cs pos pid) cl
+  Gen.Debug.ho_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 i2 hp cl cs pos pid) cl
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
@@ -2346,7 +2348,7 @@ and sem_imply_add prog is_folding is_universal ctx (p:CP.formula) only_syn:(cont
 and heap_entail_conjunct_lhs_struc_debug
       p is_folding is_universal has_post ctx conseq 
       pos pid : (list_context * proof) = 
-  Util.ho_debug_2 "heap_entail_conjunct_lhs_struc!!!!!"
+  Gen.Debug.ho_2 "heap_entail_conjunct_lhs_struc!!!!!"
       (Cprinter.string_of_context)
       (Cprinter.string_of_struc_formula)
       (fun _ -> "?")
@@ -2369,7 +2371,7 @@ and heap_entail_conjunct_lhs_struc
 	      else false 
 
   (*and inner_entailer_debug ctx conseq =
-	Util.ho_debug_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq*)
+	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq*)
 
   and inner_entailer ctx conseq = inner_entailer_a ctx conseq
 
@@ -2555,7 +2557,7 @@ and heap_entail_init (prog : prog_decl) (is_folding : bool) (is_universal : bool
 and heap_entail_debug
       p is_folding is_universal cl conseq 
       pos : (list_context * proof) = 
-  Util.ho_debug_2 "heap_entail---------\n\n"
+  Gen.Debug.ho_2 "heap_entail---------\n\n"
       (Cprinter.string_of_list_context)
       (Cprinter.string_of_formula)
       (fun _ -> "?")
@@ -2574,7 +2576,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl
             (heap_entail_one_context prog is_folding is_universal (List.hd cl) conseq pos)
 
 and heap_entail_one_context_debug prog is_folding is_universal ctx conseq pos =
-  Util.ho_debug_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) (fun ctx conseq -> heap_entail_one_context_a prog is_folding is_universal ctx conseq pos) ctx conseq
+  Gen.Debug.ho_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) (fun ctx conseq -> heap_entail_one_context_a prog is_folding is_universal ctx conseq pos) ctx conseq
 
 and heap_entail_one_context prog is_folding is_universal ctx conseq pos = heap_entail_one_context_a prog is_folding is_universal ctx conseq pos
 
@@ -2624,7 +2626,7 @@ and heap_entail_after_sat prog is_folding is_universal ctx conseq pos
 
 (*
   and heap_entail_conjunct_lhs prog is_folding is_universal (ctx:context) conseq pos : (list_context * proof) 
-  = Util.ho_debug_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
+  = Gen.Debug.ho_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
   (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding is_universal ctx conseq pos) ctx 
 *)
 
@@ -2843,12 +2845,12 @@ and fv_rhs (lhs : CF.formula) (rhs : CF.formula) : CP.spec_var list =
 
 (*__________________*)
 
-and split_phase_debug_lhs h = Util.ho_debug_1 "split_phase(lhs)"
+and split_phase_debug_lhs h = Gen.Debug.ho_1 "split_phase(lhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
 
-and split_phase_debug_rhs h = Util.ho_debug_1 "split_phase(rhs)"
+and split_phase_debug_rhs h = Gen.Debug.ho_1 "split_phase(rhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
@@ -2892,7 +2894,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 (* and heap_entail_split_rhs_phases_debug *)
 (*     p is_folding is_universal ctx0 conseq d *)
 (*     pos : (list_context * proof) = *)
-(*   Util.ho_debug_2 "heap_entail_split_rhs_phases" *)
+(*   Gen.Debug.ho_2 "heap_entail_split_rhs_phases" *)
 (*     (fun _ -> "LHS") *)
 (* (\* (Cprinter.string_of_context) *\) *)
 (*     (Cprinter.string_of_formula) *)
@@ -3184,7 +3186,7 @@ and heap_entail_rhs_nested_phase prog is_folding is_universal after_wr_ctx after
 
 (* some helper methods *)
 and insert_ho_frame_in2_formula_debug f ho = 
-  Util.ho_debug_2 "insert_ho_frame_in2_formula"
+  Gen.Debug.ho_2 "insert_ho_frame_in2_formula"
 	  Cprinter.string_of_formula
 	  (*Cprinter.string_of_h_formula*)
 	  (fun _ -> "?")
@@ -3724,13 +3726,13 @@ and heap_entail_build_mix_formula_check (evars : CP.spec_var list) (ante : MCP.m
   let tmp1 = (*MCP.memo_pure_push_exists*) elim_exists_mix_formula inner_vars conseq no_pos in
   (ante,tmp1)
 and heap_entail_build_mix_formula_check_debug (evars : CP.spec_var list) (ante : MCP.mix_formula) (conseq : MCP.mix_formula) pos : (MCP.mix_formula * MCP.mix_formula) =
-  Util.ho_debug_3 "heap_entail_build_mix_formula_check_debug"  (fun l -> Cprinter.string_of_spec_var_list l) 
+  Gen.Debug.ho_3 "heap_entail_build_mix_formula_check_debug"  (fun l -> Cprinter.string_of_spec_var_list l) 
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula (fun (_,c )-> Cprinter.string_of_mix_formula c)
       ( fun c1 ante c2 -> heap_entail_build_mix_formula_check c1 ante c2 pos) evars ante conseq       
 
 
 and heap_entail_build_pure_check ev an cq pos =
-  Util.ho_debug_1 "heap_entail_build_pure_check" 
+  Gen.Debug.ho_1 "heap_entail_build_pure_check" 
       Cprinter.string_of_pure_formula 
       (fun (f1,f2) -> "f1 = " ^ (Cprinter.string_of_pure_formula f1) ^ "; f2 = " ^ (Cprinter.string_of_pure_formula f2) ^ "\n") 
       (fun cq -> heap_entail_build_pure_check_a ev an cq pos) cq
@@ -3784,7 +3786,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
   else res 
 
 and heap_entail_empty_rhs_heap_debug p i_f i_u es lhs rhs rhsb pos =
-  Util.ho_debug_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula (fun _ -> "?")
+  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula (fun _ -> "?")
       (fun lhs rhs -> heap_entail_empty_rhs_heap p i_f i_u es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -3908,7 +3910,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	   - if the equality is solved -> remove it from conseq 
     *)
 
-and solve_ineq_debug a m c = Util.ho_debug_2 "solve_ineq "
+and solve_ineq_debug a m c = Gen.Debug.ho_2 "solve_ineq "
   (Cprinter.string_of_mem_formula)
   (Cprinter.string_of_mix_formula) 
   (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq a m c) m c
@@ -3931,7 +3933,7 @@ and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
 and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
-  Util.ho_debug_3 "solve_ineq_pure_formula "
+  Gen.Debug.ho_3 "solve_ineq_pure_formula "
       (Cprinter.string_of_pure_formula)
       (Cprinter.string_of_mem_formula) 
       (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
@@ -4032,7 +4034,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula_debug ante_m0 ante_m1 conseq_m imp_no memset =
-  Util.ho_debug_4 "imply_mix_formula" Cprinter.string_of_mix_formula
+  Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
@@ -4061,7 +4063,7 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
 and imply_mix_formula_no_memo_debug new_ante new_conseq imp_no imp_subno timeout memset =   
-  Util.ho_debug_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
+  Gen.Debug.ho_3 "imply_mix_formula_no_memo" Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r) 
       (fun new_ante new_conseq memset -> imply_mix_formula_no_memo new_ante new_conseq imp_no imp_subno timeout memset) 
       new_ante new_conseq memset 
@@ -4171,7 +4173,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
 	      | Ctx c -> (None,Some c)
 
 and do_base_case_unfold_debug prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding is_universal pid pos fold_f = 
-  Util.ho_debug_4 "base_case_unfold" 
+  Gen.Debug.ho_4 "base_case_unfold" 
       Cprinter.string_of_formula 
       Cprinter.string_of_formula 
       Cprinter.string_of_spec_var 
@@ -4357,7 +4359,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 		    (fold_rs, fold_prf)
 	      end in
 	    (*let do_fold_w_ctx_debug ctx var = 
-	      Util.ho_debug_2 
+	      Gen.Debug.ho_2 
           "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var
           (fun (c,_) -> Cprinter.string_of_list_context c) do_fold_w_ctx ctx var in*)
 
@@ -4459,7 +4461,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 		      (* start of check_aliased_node *)
 		      (*****************************************************************************************************************************)
 		      (* let rec check_aliased_node_debug (a,r) resth1 =  *)
-		      (* Util.ho_debug_2 "check_aliased_node" *)
+		      (* Gen.Debug.ho_2 "check_aliased_node" *)
 		      (*   (fun (x, y) -> Cprinter.string_of_h_formula x) *)
 		      (*   (Cprinter.string_of_h_formula) *)
 		      (*   (fun (x,y) -> Cprinter.string_of_list_context x) *)

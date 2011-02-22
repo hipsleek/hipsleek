@@ -832,7 +832,7 @@ let check fd timeout pid : bool =
 	  End_of_file -> false
 
 let check_debug fd timeout pid : bool =
-  Util.ho_debug_1 "check" string_of_float string_of_bool 
+  Gen.Debug.ho_1 "check" string_of_float string_of_bool 
       (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)

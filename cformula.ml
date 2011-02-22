@@ -686,7 +686,7 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 
 and mkStar_combine_debug (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  Util.ho_debug_2 "mkstar_combine"
+  Gen.Debug.ho_2 "mkstar_combine"
     (!print_formula)
     (!print_formula)
     (!print_formula)
@@ -1410,7 +1410,7 @@ and rename_bound_vars (f : formula) = rename_bound_vars_x f
 
 (*
 and rename_bound_vars (f : formula) = 
-  Util.ho_debug_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
+  Gen.Debug.ho_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
 *)
 
 and rename_bound_vars_x (f : formula) = match f with
@@ -1624,7 +1624,7 @@ and contains_immutable (f : formula) : bool =
 *)
  
 and contains_immutable_debug f = 
-  Util.ho_debug_1 "contains_immutable"
+  Gen.Debug.ho_1 "contains_immutable"
     (!print_formula)
     (string_of_bool)
     contains_immutable f
@@ -1638,7 +1638,7 @@ and contains_immutable (f : formula) : bool =  match f with
       (contains_immutable f1) or (contains_immutable f2)
  
 and contains_immutable_h_formula_debug f = 
-  Util.ho_debug_1 "contains_immutable_h_formula"
+  Gen.Debug.ho_1 "contains_immutable_h_formula"
     (!print_h_formula)
     (string_of_bool)
     contains_immutable_h_formula f
@@ -1670,7 +1670,7 @@ and contains_immutable_h_formula (f : h_formula) : bool =  match f with
 
 
 and contains_phase_debug (f : h_formula) : bool =  
-  Util.ho_debug_1 "contains_phase"
+  Gen.Debug.ho_1 "contains_phase"
     (!print_h_formula) 
     (string_of_bool)
     (contains_phase)
@@ -3466,7 +3466,7 @@ and string_of_list_of_pair_formula ls =
 and split_struc_formula f0 = split_struc_formula_a f0
 
 and split_struc_formula_debug f0 =
-  Util.ho_debug_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
+  Gen.Debug.ho_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
 (* split the struc_formula into the list of pre/post pairs *)  
 and split_struc_formula_a (f0:struc_formula):(formula*formula) list = 
 	let rec ext_to_formula (f:ext_formula):(formula*formula) list = match f with

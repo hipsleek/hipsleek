@@ -87,13 +87,12 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
 spatial context
 *)
     
-and spatial_ctx_extract_debug p f a i = Util.ho_debug_4_opt "spatial_context_extract " (fun _ -> "?") 
+and spatial_ctx_extract_debug p f a i = Gen.Debug.ho_4 "spatial_context_extract " (fun _ -> "?") 
 (Cprinter.string_of_h_formula) 
 (fun _ -> "?") 
 (string_of_bool)
 (fun _ -> "?")
 (*(fun l -> List.fold_left (fun x (a,b,c,d,e,f,g) -> x ^ "frame: " ^ (Cprinter.string_of_h_formula a) ^ "\n; rest_heap__lhs: " ^ (Cprinter.string_of_h_formula b) ^ "\n; anode = " ^ (Cprinter.string_of_h_formula d)) "" l)*)
-(fun _ -> true) 
 spatial_ctx_extract p f a i
 
 

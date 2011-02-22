@@ -1,5 +1,43 @@
 type comparison = Less | Equal | Greater
 
+module CP = Cpure
+
+module SV =
+struct 
+  type t = CP.spec_var
+  let eq = CP.eq_spec_var
+  let string_of = Cformula.string_of_spec_var
+end;;
+
+module type EQ_TYPE = Gen.EQ_TYPE
+
+module Ptr =
+    functor (Elt:Gen.EQ_TYPE) ->
+struct
+  include Elt
+  type tlist = t list
+  module X = Gen.BListEQ(Elt)
+  let overlap = eq
+  let intersect (x:tlist)  (y:tlist) = X.intersect x y
+  let star_union x y = x@y
+end;;
+
+(* module PtrSV0 = *)
+(* struct *)
+(*   include SV *)
+(*   type tlist = t list *)
+(*   module X = BasicListEQ(SV) *)
+(*   let overlap = eq *)
+(*   let intersect (x:tlist)  (y:tlist) = X.intersect x y *)
+(*   let star_union x y = x@y *)
+(* end;; *)
+
+module PtrSV = Ptr(SV)
+
+
+module DisjPtr = Gen.DisjSet(PtrSV)
+(* module DisjPtr0 = DisjSet(PtrSV0) *)
+
 module type ORDERED_TYPE =
 sig
   type t
@@ -32,10 +70,15 @@ sig
   include Gen.EQ_TYPE with type t=v
   type vlist = v list
   val fresh_var : string * t -> v
-  val rename_var : v -> v  (* with a fresh name generator *)
+    (* fresh id with given prefix *)
+  val rename_var : v -> v  
+    (* with a fresh name generator *)
   val rename_var_list :  vlist -> vlist
+    (* a list of fresh name mapping *)
   val type_of : v -> ty
-  val change_type : v -> ty -> v
+    (* type of a variable *)
+  val add_type : v -> ty -> v
+    (* add type to a variable *)
 end;;
 
 (* module type V_TYPE = VAR_TYPE(TY);;  *)
@@ -80,6 +123,7 @@ sig
   type ans (* true, false, unknown *)
   val is_sat : t -> ans (* mutable *)
   val imply : vlist -> t -> t -> ans (* mutable *)
+
   val syn_imply : vlist -> t -> t -> ans  
   val syn_is_sat : t -> ans
   val simplify : t -> t (* may use a prover *)
@@ -258,7 +302,6 @@ module Fixed_Partition =
          helper x
      end;;
 
-module CP = Cpure
 module CF = Cformula
 module MP = Mcpure
 
