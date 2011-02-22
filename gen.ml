@@ -359,7 +359,7 @@ class ['a] stack x_init  =
        | x::xs -> x
      method len = List.length stk
      method set_pr f = elem_pr <- f
-     method string_of = BList.string_of_list_f elem_pr stk
+     method string_of = BList.string_of_f elem_pr stk
    end;;
 
 class counter x_init =
@@ -490,7 +490,7 @@ struct
             List.map (fun (a,b) -> if (b==r1 or b==r2) then (a,r3) else (a,b)) s
 
   let build_eset (xs:(elem * elem) list) :  emap =
-    List.fold_right (fun (x,y) eqs -> add_equiv eqs x y) xs (empty)
+    List.fold_right (fun (x,y) eqs -> add_equiv eqs x y) xs (mkEmpty)
 
   let mem x ls =
     List.exists (fun e -> eq x e) ls
@@ -598,7 +598,7 @@ struct
   let is_one2one (f:elem -> elem) (s:elist) : bool =
     let l = List.map f s in
     if (check_no_dups l) then true
-    else (print_string ("duplicates here :"^(BList.string_of_list_f string_of l)^"\n") ; false) 
+    else (print_string ("duplicates here :"^(BList.string_of_f string_of_elem l)^"\n") ; false) 
 
   (* rename the elements of e_set *)
   (* pre : f must be 1-to-1 map *)
@@ -995,8 +995,8 @@ struct
 
   (* returns s1*s2 *)
   let star_disj_set (s1: dpart) (s2: dpart): dpart =
-    if empty s1 then s2
-    else if empty s2 then s1
+    if is_empty s1 then s2
+    else if is_empty s2 then s1
     else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
 
   (*  returns s1\/s2 *)
@@ -1450,7 +1450,7 @@ struct
 
   let exc_list = ref ([]:(string * string * Globals.nflow ) list)
 
-  let remove_dups n = BList.remove_dups n
+  let remove_dups1 n = BList.remove_dups_eq (=) n
 
   let get_hash_of_exc (f:string): Globals.nflow = 
     if ((String.compare f Globals.stub_flow)==0) then 
@@ -1508,7 +1508,7 @@ struct
 	true
 
   let clean_duplicates ()= 
-	exc_list := remove_dups !exc_list
+	exc_list := remove_dups1 !exc_list
 
   let has_cycles ():bool =
 	let rec cc (crt:string)(visited:string list):bool = 
@@ -1566,7 +1566,7 @@ struct
   let popf_level (f:'a -> ('b list) -> ('a * ('b list))) ((i,stk):('a,'b) stackable) : ('a,'b) stackable
         = match stk with
           | lvl::stk -> let (newi,lst)=(f i lvl) in
-            if (empty lst) then (newi, stk)
+            if (is_empty lst) then (newi, stk)
             else (add_level lst (newi,stk))
           | _ -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("popf_level on empty stack")}
 
@@ -1609,13 +1609,13 @@ struct
   let group_tag (xs: 'a tag_list) (acc:'a tag_list) : ('a tag_list * int) list =
     let rec helper xs acc no =
       match xs with
-        | [] -> if (empty acc) then [] else [(List.rev acc,no)]
+        | [] -> if (is_empty acc) then [] else [(List.rev acc,no)]
         | ((x,[])::xs1) -> Error.report_error {Error.error_loc = Globals.no_pos; Error.error_text = ("cannot happen!")}
         | ((x,n::t)::xs1) -> 
               if (n==no) then helper xs1 ((x,t)::acc) no
               else 
                 let rs=helper xs [] (no+1) in
-                if (empty acc) then rs
+                if (is_empty acc) then rs
                 else (List.rev acc,no)::rs
     in let r=check_sorted_tag xs in
     if r then helper xs acc 1 

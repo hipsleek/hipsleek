@@ -27,23 +27,23 @@ s/Util.\(map4\)/Gen.\1/gp
 s/Util.\(new_line_str\)/Gen.\1/gp
 s/Util.\(combine3\)/Gen.\1/gp
 s/Util.\(find_one_dup\)/Gen.BList.find_one_dup_eq\1/gp 
-s/Util.\(list_equal\) /Gen.BList.\1_eq = /gp
+s/Util.\(list_equal\) /Gen.BList.\1_eq (=) /gp
 s/Util.\(list_find\)/Gen.BList.\1/gp
-s/Util.\(subset\) /Gen.BList.\1_eq = /gp
-s/Util.\(remove_elem\)/Gen.BList.\1_eq =/gp
-s/Util.\(remove_dups\)/Gen.BList.\1_eq =/gp
+s/Util.\(subset\) /Gen.BList.\1_eq (=) /gp
+s/Util.\(remove_elem\)/Gen.BList.\1_eq (=)/gp
+s/Util.\(remove_dups\)/Gen.BList.\1_eq (=)/gp
 s/Util.\(remove_dups_eq\)/Gen.BList.\1/gp
-s/Util.\(remove_dups\)_f/Gen.BList.\1_eq =/gp
+s/Util.\(remove_dups\)_f/Gen.BList.\1_eq (=)/gp
 s/Util.\(check_dups_eq\)/Gen.BList.\1/gp
-s/Util.\(intersect\) /Gen.BList.\1_eq = /gp
-s/Util.\(mem\) /Gen.BList.\1_eq = /gp
+s/Util.\(intersect\) /Gen.BList.\1_eq (=) /gp
+s/Util.\(mem\) /Gen.BList.\1_eq (=) /gp
 s/Util.\(find_dups\)_f/Gen.BList.\1_eq/gp
 s/Util.\(take\)/Gen.BList.\1/gp
 s/Util.\(drop\)/Gen.BList.\1/gp
 s/Util.intersect_fct/Gen.BList.intersect_eq/gp
 s/Util.difference_fct/Gen.BList.difference_eq/gp
 s/Util.difference_f/Gen.BList.difference_eq/gp
-s/Util.difference/Gen.BList.difference_eq =/gp
+s/Util.difference/Gen.BList.difference_eq (=)/gp
 s/Util.string_of_a_list/Gen.BList.string_of_f/gp
 s/Util.string_of_list/Gen.BList.string_of_f/gp
 
