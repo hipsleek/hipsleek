@@ -918,7 +918,7 @@ struct
     List.exists (check_dups) xs
 
   (* returns a list of difference sets for element e *)
-  let find_diff (s: dpart) (e:ptr) : dpart =
+  let find_diff (eq:'a->'a->bool) (s: dpart) (e:ptr) : dpart =
     (List.filter (fun l -> List.exists (fun x -> eq e x) l) s)
 
   (* returns checks if l1/\l2 !=null based on physical equality *)
@@ -926,11 +926,11 @@ struct
     List.exists (fun x -> (List.memq x l2)) l1
 
   (* checks s |- x!=y *)
-  let is_disj  (s: dpart)  (x:ptr) (y:ptr) : bool =
+  let is_disj (eq:'a->'a->bool) (s: dpart)  (x:ptr) (y:ptr) : bool =
     if (eq x y) then false 
     else
-      let l1 = find_diff s x in
-      let l2 = find_diff s y in
+      let l1 = find_diff eq s x in
+      let l2 = find_diff eq s y in
       (overlap_q l1 l2)
 
   (* returns s1/\s2 *)
@@ -958,10 +958,6 @@ struct
     if is_empty s1 then s2
     else if is_empty s2 then s1
     else List.concat (List.map (fun x1 -> List.map (fun x2-> x1@x2) s2) s1) 
-
-  (*  returns s1\/s2 *)
-  let or_disj_set (s1: dpart) (s2: dpart): dpart =
-    List.concat (List.map (fun x1 -> List.map (fun x2-> intersect x1 x2) s2) s1) 
 
   (* check if there was a conflict in a difference list *)
   let  is_conflict_list (l:dlist) :bool =

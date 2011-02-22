@@ -1087,8 +1087,8 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut (); fmt_string "Fail Context: "; pr_fail_type ft; fmt_cut () 
-    | SuccCtx sc -> fmt_cut (); fmt_string "Success Context: "; pr_context_list sc; fmt_cut ()
+    | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
+    | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
 
@@ -1141,7 +1141,7 @@ let pr_partial_context ((l1,l2): partial_context) =
 (*   pr_seq "" (fun (lbl,fs)-> fmt_cut (); fmt_string " Lbl : "; pr_path_trace lbl; fmt_cut (); *)
 (* 	       fmt_string " State: "; pr_fail_type fs) l1; *)
 (*   fmt_cut (); *)
-(*   fmt_string "Succesfull States: "; *)
+(*   fmt_string "Succesful States: "; *)
 (*    pr_seq "" (fun (lbl,fs)-> fmt_cut (); fmt_string " Lbl : "; pr_path_trace lbl; fmt_cut (); *)
 (* 	       fmt_string " State: "; pr_context fs) l2; *)
 (*   fmt_close_box () *)

@@ -47,9 +47,9 @@ void insert(node x, int v)
 	node tmp;
 
 	tmp = new node(v, x.next);
-
+    //dprint;
 	x.next = tmp;
-	dprint;
+	//dprint;
 	//assert x'::hd<m>;
 	//assume false;
 }

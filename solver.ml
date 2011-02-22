@@ -3941,6 +3941,8 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
   helper conseq
 
 and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formula) (conseq : MCP.memo_pure) : MCP.memo_pure =
+  let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.ptr_equations_aux_mp false ante) in
+  let eq x y = Util.is_equiv_eq eqset x y in
   let f_memo x = None in
   let f_aset x = None in
   let f_formula x = None in
@@ -3948,7 +3950,7 @@ and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formul
     | CP.Neq (e1,e2,_) -> 	if (CP.is_var e1) && (CP.is_var e2) then
 	    let v1 = CP.to_var e1 in
 	    let v2 = CP.to_var e2 in
-	    let discharge = CP.DisjSetSV.is_disj memset.Cformula.mem_formula_mset v1 v2 in
+	    let discharge = CP.DisjSetSV.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
 	    let ans = (if discharge then CP.BConst(true,no_pos) else e) in 
         Some ans 
       else None
@@ -3981,9 +3983,10 @@ and solve_ineq_b_formula sem_eq memset conseq : Cpure.formula =
   match conseq with
     | Cpure.Neq (e1, e2, pos) -> 
 	      if (CP.is_var e1) && (CP.is_var e2) then
+	        let eq = (fun x y -> sem_eq x y) in
 	        let v1 = CP.to_var e1 in
 	        let v2 = CP.to_var e2 in
-	        let discharge = CP.DisjSetSV.is_disj memset.Cformula.mem_formula_mset v1 v2 in
+	        let discharge = CP.DisjSetSV.is_disj eq memset.Cformula.mem_formula_mset v1 v2 in
 	        if discharge then 
 		      (* remove the diseq from the conseq *)
 		      CP.mkTrue no_pos
@@ -4342,10 +4345,10 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			^ (Cprinter.string_of_mix_formula rhs_p)) pos;
 		    (fold_rs, fold_prf)
 	      end in
-	    (*let do_fold_w_ctx_debug ctx var = 
+	    let do_fold_w_ctx_debug ctx var = 
 	      Gen.Debug.ho_2 
           "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var
-          (fun (c,_) -> Cprinter.string_of_list_context c) do_fold_w_ctx ctx var in*)
+          (fun (c,_) -> Cprinter.string_of_list_context c) do_fold_w_ctx ctx var in
 
 	    let do_fold (var_to_fold : CP.spec_var) =
 	      let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with 
@@ -4366,7 +4369,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
               es_path_label = estate.es_path_label;
 			  es_var_measures = estate.es_var_measures;
 			  es_var_label = estate.es_var_label} in
-	      do_fold_w_ctx(*_debug*) fold_ctx var_to_fold  in
+	      do_fold_w_ctx(* _debug *) fold_ctx var_to_fold  in
 
 	    (****************************************************************************************************************************************)
 	    (* end do_fold *)
