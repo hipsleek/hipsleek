@@ -1,0 +1,969 @@
+
+
+[mona.ml]: #is_sat 1
+
+
+[mona.ml]: imply # from sat#1
+test1
+var2 S, self;
+ (~((((pconst(0) = self)) & ((S = {}))) & ((self = pconst(0))))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 101
+
+
+[mona.ml]: imply # from sat#101
+test2
+var2 S;
+( nequal(S, {}) 
+);
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 102
+
+
+[mona.ml]: imply # from sat#102
+test3
+var2 S, bh;
+ (~ (ex1 v: (ex2 l: (ex2 S1: (ex2 r: (ex2 S2:((((S = S1 union S2 union {v})) & (((((((pconst(0) = l)) & ((bh = pconst(1)))) & (( 0  = 0))) & ((S1 = {}))) | ((((( (ex1 v: (ex2 S1_3057: (ex2 S2:((S1 = S1_3057 union S2 union {v}))) ) )  & ( lessEq(pconst(1), bh))) & (( 0  = 1))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(l, pconst(0))))) | ((( (ex1 v: (ex2 S1_3056: (ex2 S2:((S1 = S1_3056 union S2 union {v}))) ) )  & (ex2 v_int_14_3061 : ( lessEq(v_int_14_3061, bh) &  plus(pconst(1), pconst(1), v_int_14_3061)))) & (( 0  = 0))) & ( greater(l, pconst(0)))))) & (((((((pconst(0) = r)) & ((bh = pconst(1)))) & (( 0  = 0))) & ((S2 = {}))) | ((((( (ex1 v: (ex2 S1: (ex2 S2_3059:((S2 = S1 union S2_3059 union {v}))) ) )  & ( lessEq(pconst(1), bh))) & (( 0  = 1))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(r, pconst(0))))) | ((( (ex1 v: (ex2 S1: (ex2 S2_3058:((S2 = S1 union S2_3058 union {v}))) ) )  & (ex2 v_int_14_3060 : ( lessEq(v_int_14_3060, bh) &  plus(pconst(1), pconst(1), v_int_14_3060)))) & (( 0  = 0))) & ( greater(r, pconst(0))))))) ) ) ) ) ) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 105
+
+
+[mona.ml]: imply # from sat#105
+test4
+var2 S, bh;
+ (~ (ex2 Anon_11: (ex2 Anon_12: (ex1 v: (ex2 l: (ex2 S1: (ex2 r: (ex2 S2:((((S = S1 union S2 union {v})) & (((((((pconst(0) = r)) & ( plus(pconst(1), pconst(1), bh) 
+)) & ((Anon_12 = pconst(0)))) & ((S2 = {}))) | ((((( (ex1 v: (ex2 S1: (ex2 S2_3065:((S2 = S1 union S2_3065 union {v}))) ) )  & (ex2 v_int_14_3071 : ( lessEq(v_int_14_3071, bh) &  plus(pconst(1), pconst(1), v_int_14_3071)))) & ((Anon_12 = pconst(1)))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(r, pconst(0))))) | ((( (ex1 v: (ex2 S1: (ex2 S2_3064:((S2 = S1 union S2_3064 union {v}))) ) )  & (ex2 v_int_14_3069 : (ex2 v_int_0_3070 : ( lessEq(v_int_14_3069, bh) &  plus(pconst(1), v_int_0_3070, v_int_14_3069) &  plus(pconst(1), pconst(1), v_int_0_3070))))) & ((Anon_12 = pconst(0)))) & ( greater(r, pconst(0)))))) & (((((((pconst(0) = l)) & ( plus(pconst(1), pconst(1), bh) 
+)) & ((Anon_11 = pconst(0)))) & ((S1 = {}))) | ((((( (ex1 v: (ex2 S1_3063: (ex2 S2:((S1 = S1_3063 union S2 union {v}))) ) )  & (ex2 v_int_14_3068 : ( lessEq(v_int_14_3068, bh) &  plus(pconst(1), pconst(1), v_int_14_3068)))) & ((Anon_11 = pconst(1)))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(l, pconst(0))))) | ((( (ex1 v: (ex2 S1_3062: (ex2 S2:((S1 = S1_3062 union S2 union {v}))) ) )  & (ex2 v_int_14_3066 : (ex2 v_int_0_3067 : ( lessEq(v_int_14_3066, bh) &  plus(pconst(1), v_int_0_3067, v_int_14_3066) &  plus(pconst(1), pconst(1), v_int_0_3067))))) & ((Anon_11 = pconst(0)))) & ( greater(l, pconst(0))))))) ) ) ) ) ) ) ) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 112
+
+
+[mona.ml]: imply # from sat#112
+test5
+var1 v;
+var2 l, bhr, r, S, S1, S2;
+ (~(((((((((pconst(0) = l)) & ((bhr = pconst(1)))) & (( 0  = 0))) & ((S1 = {}))) | ((((( (ex1 v: (ex2 S1_3073: (ex2 S2:((S1 = S1_3073 union S2 union {v}))) ) )  & ( lessEq(pconst(1), bhr))) & (( 0  = 1))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(l, pconst(0))))) | ((( (ex1 v: (ex2 S1_3072: (ex2 S2:((S1 = S1_3072 union S2 union {v}))) ) )  & (ex2 v_int_14_3077 : ( lessEq(v_int_14_3077, bhr) &  plus(pconst(1), pconst(1), v_int_14_3077)))) & (( 0  = 0))) & ( greater(l, pconst(0))))) & (((((((pconst(0) = r)) & ((bhr = pconst(1)))) & (( 0  = 0))) & ((S2 = {}))) | ((((( (ex1 v: (ex2 S1: (ex2 S2_3075:((S2 = S1 union S2_3075 union {v}))) ) )  & ( lessEq(pconst(1), bhr))) & (( 0  = 1))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(r, pconst(0))))) | ((( (ex1 v: (ex2 S1: (ex2 S2_3074:((S2 = S1 union S2_3074 union {v}))) ) )  & (ex2 v_int_14_3076 : ( lessEq(v_int_14_3076, bhr) &  plus(pconst(1), pconst(1), v_int_14_3076)))) & (( 0  = 0))) & ( greater(r, pconst(0)))))) & ((S = S1 union S2 union {v})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 115
+
+
+[mona.ml]: imply # from sat#115
+test6
+var1 v;
+var2 r, l, bhr, bh, S, S1, S2;
+ (~(( (ex2 Anon_11: (ex2 Anon_12:((((((((pconst(0) = r)) & ((bhr = pconst(1)))) & ((Anon_12 = pconst(0)))) & ((S2 = {}))) | ((((( (ex1 v: (ex2 S1: (ex2 S2_3081:((S2 = S1 union S2_3081 union {v}))) ) )  & ( lessEq(pconst(1), bhr))) & ((Anon_12 = pconst(1)))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(r, pconst(0))))) | ((( (ex1 v: (ex2 S1: (ex2 S2_3080:((S2 = S1 union S2_3080 union {v}))) ) )  & (ex2 v_int_14_3084 : ( lessEq(v_int_14_3084, bhr) &  plus(pconst(1), pconst(1), v_int_14_3084)))) & ((Anon_12 = pconst(0)))) & ( greater(r, pconst(0))))) & (((((((pconst(0) = l)) & ((bhr = pconst(1)))) & ((Anon_11 = pconst(0)))) & ((S1 = {}))) | ((((( (ex1 v: (ex2 S1_3079: (ex2 S2:((S1 = S1_3079 union S2 union {v}))) ) )  & ( lessEq(pconst(1), bhr))) & ((Anon_11 = pconst(1)))) & ((0<= 1 ))) & ((0<= 1 ))) & ( greater(l, pconst(0))))) | ((( (ex1 v: (ex2 S1_3078: (ex2 S2:((S1 = S1_3078 union S2 union {v}))) ) )  & (ex2 v_int_14_3083 : ( lessEq(v_int_14_3083, bhr) &  plus(pconst(1), pconst(1), v_int_14_3083)))) & ((Anon_11 = pconst(0)))) & ( greater(l, pconst(0))))))) )  &  (ex2 v_int_13_3082:(( plus(pconst(1), bhr, v_int_13_3082) 
+) & ((bh = v_int_13_3082)))) ) & ((S = S1 union S2 union {v})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 120.1
+test7
+var2 S;
+((S = {}));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 127
+test8
+var1 v;
+var2 S, S2, S1;
+(( nequal(S, S1 union S2 union {v}) 
+) | ( nequal(S1, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 130
+test9
+var1 v;
+var2 S, S2, S1;
+(( nequal(S, S1 union S2 union {v}) 
+) | ((S1 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 134
+test10
+var1 v;
+var2 S, S1, S2;
+(( nequal(S, S1 union S2 union {v}) 
+) | ( nequal(S2, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 137
+test11
+var1 v;
+var2 S, S1, S2;
+(( nequal(S, S1 union S2 union {v}) 
+) | ((S2 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 147
+test12
+var1 v;
+var2 S, S1, S2;
+((S = S1 union S2 union {v}));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 225
+test13
+var1 v;
+var2 S, S1;
+(( nequal(S1, S union {v}) 
+) | ( nequal(S1, {}) 
+));
+ [mona.ml]: --> SUCCESS
+[mona.ml]: imply --> true
+
+
+[mona.ml]: imply # 231
+test14
+var1 v;
+var2 S1, S;
+(((S1 = {})) | ((S1 = S union {v})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 244
+test15
+var1 a;
+var2 S1, S2;
+(( nequal(S1, S2 union {a}) 
+) | ( nequal(S2, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 247
+test16
+var1 a;
+var2 S1, S2;
+(( nequal(S1, S2 union {a}) 
+) | ((S2 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 255
+test17
+var1 a;
+var2 S1, S2;
+((S1 = S2 union {a}));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 275
+test18
+var2 S1_128;
+(( nequal(S1_128, S1_128) 
+) | ( nequal(S1_128, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 278
+test19
+var2 S1_128;
+(( nequal(S1_128, S1_128) 
+) | ((S1_128 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 300
+test20
+var1 res;
+var2 S1, S2;
+(( nequal(S1, S2 union {res}) 
+) | ( nequal(S2, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 303
+test21
+var1 res;
+var2 S1, S2;
+(( nequal(S1, S2 union {res}) 
+) | ((S2 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 311
+test22
+var1 res;
+var2 S1, S2;
+((S1 = S2 union {res}));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 317
+test23
+var1 res;
+var2 S1, S3;
+(( nequal(S1, S3 union {res}) 
+) | ( nequal(S3, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 320
+test24
+var1 res;
+var2 S1, S3;
+(( nequal(S1, S3 union {res}) 
+) | ((S3 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 326
+test25
+var1 res;
+var2 S1, S3;
+((S1 = S3 union {res}));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 339
+test26
+var2 S1;
+( nequal(S1, {}) 
+);
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 342
+test27
+var2 S1, S2, S3, S4;
+(( nequal(S4, S1 union S2 union S3 union {0} union {0}) 
+) | ( nequal(S4, {}) 
+));
+ [mona.ml]: --> SUCCESS
+[mona.ml]: imply --> true
+
+
+[mona.ml]: imply # 348
+test28
+var2 S4, S1, S2, S3;
+(((S4 = {})) | ((S4 = S1 union S2 union S3 union {0} union {0})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 402
+test29
+var2 S2;
+( nequal(S2, {}) 
+);
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 409
+test30
+var2 S3;
+( nequal(S3, {}) 
+);
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 540
+test31
+var2 S1, S2, S3, S4, S5;
+(( nequal(S5, S1 union S2 union S3 union S4 union {0} union {0} union {0}) 
+) | ( nequal(S5, {}) 
+));
+ [mona.ml]: --> SUCCESS
+[mona.ml]: imply --> true
+
+
+[mona.ml]: imply # 546
+test32
+var2 S5, S1, S2, S3, S4;
+(((S5 = {})) | ((S5 = S1 union S2 union S3 union S4 union {0} union {0} union {0})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 769
+test33
+var2 S1, S2, S3, S5;
+(( nequal(S5, S1 union S2 union S3 union {0} union {0}) 
+) | ( nequal(S5, {}) 
+));
+ [mona.ml]: --> SUCCESS
+[mona.ml]: imply --> true
+
+
+[mona.ml]: imply # 775
+test34
+var2 S5, S1, S2, S3;
+(((S5 = {})) | ((S5 = S1 union S2 union S3 union {0} union {0})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 822
+test35
+var2 S_334;
+(( nequal(S_334, S_334) 
+) | ( nequal(S_334, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 825
+test36
+var2 S_334;
+(( nequal(S_334, S_334) 
+) | ((S_334 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 832
+test37
+var2 S_337;
+(( nequal(S_337, S_337) 
+) | ( nequal(S_337, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 835
+test38
+var2 S_337;
+(( nequal(S_337, S_337) 
+) | ((S_337 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 850
+test39
+var2 S_340;
+(( nequal(S_340, S_340) 
+) | ( nequal(S_340, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 853
+test40
+var2 S_340;
+(( nequal(S_340, S_340) 
+) | ((S_340 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 860
+test41
+var2 S_343;
+(( nequal(S_343, S_343) 
+) | ( nequal(S_343, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 863
+test42
+var2 S_343;
+(( nequal(S_343, S_343) 
+) | ((S_343 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: #is_sat 1021
+
+
+[mona.ml]: imply # from sat#1021
+test43
+var2 S2;
+((S2 = {}));
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 1026
+
+
+[mona.ml]: imply # from sat#1026
+test44
+var2 S3;
+((S3 = {}));
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 1032
+test45
+var1 v_3231;
+var2 S2, S2_3237, S1_3234;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3234 union S2_3237 union {v_3231}))))  | ((S1_3234 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1033
+test46
+var1 v_3231;
+var2 S2, S2_3237, S1_3234;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3234 union S2_3237 union {v_3231}))))  | ( nequal(S1_3234, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1036
+test47
+var1 v_3231;
+var2 S2, S1_3234, S2_3237;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3234 union S2_3237 union {v_3231}))))  | ((S2_3237 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1037
+test48
+var1 v_3231;
+var2 S2, S1_3234, S2_3237;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3234 union S2_3237 union {v_3231}))))  | ( nequal(S2_3237, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: #is_sat 1055
+
+
+[mona.ml]: imply # from sat#1055
+test49
+var1 v_3241;
+var2 S1_3244, S2_3247, S2;
+ (~(((S2 = S1_3244 union S2_3247 union {v_3241})) & ( nequal(S2, {}) 
+))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 1070
+
+
+[mona.ml]: imply # from sat#1070
+test50
+var1 v_3241;
+var2 S2, S1_3244, S2_3247;
+ (~((( nequal(S2_3247, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S2 = S1_3244 union S2_3247 union {v_3241})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 1078
+test51
+var1 v_3241;
+var2 S2, S2_3247, S1_3244;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3244 union S2_3247 union {v_3241}))))  | ((S1_3244 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1080
+test52
+var1 v_3241;
+var2 S2, S2_3247, S1_3244;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3244 union S2_3247 union {v_3241}))))  | ( nequal(S1_3244, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1084
+test53
+var1 v_3241;
+var2 S2, S1_3244, S2_3247;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3244 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1086
+test54
+var1 v_3241;
+var2 S2, S1_3244, S2_3247;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S1_3244 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1094
+test55
+var1 v_3241;
+var2 S2, S2_3247, S1_3244;
+( (~((( nequal(S2, {}) 
+) & ( nequal(S2_3247, {}) 
+)) & ((S2 = S1_3244 union S2_3247 union {v_3241}))))  | ((S1_3244 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1096
+test56
+var1 v_3241;
+var2 S2, S2_3247, S1_3244;
+( (~((( nequal(S2, {}) 
+) & ( nequal(S2_3247, {}) 
+)) & ((S2 = S1_3244 union S2_3247 union {v_3241}))))  | ( nequal(S1_3244, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: #is_sat 1110
+
+
+[mona.ml]: imply # from sat#1110
+test57
+var1 v_3241;
+var2 S2, S1_3244, S2_3247;
+ (~(( nequal(S2, {}) 
+) & ((S2 = S1_3244 union S2_3247 union {v_3241})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 1127
+
+
+[mona.ml]: imply # from sat#1127
+test58
+var1 v_3241;
+var2 S1_3244, S2, S2_3247;
+ (~((((S2 = S1_3244 union S2_3247 union {v_3241})) & ( nequal(S2, {}) 
+)) & ( nequal(S2_3247, {}) 
+))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 1137
+
+
+[mona.ml]: imply # from sat#1137
+test59
+var1 v_3241;
+var2 S_3278, S2_3247, S2;
+ (~(((S2 = S_3278 union S2_3247 union {v_3241})) & ( nequal(S2, {}) 
+))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 1153
+
+
+[mona.ml]: imply # from sat#1153
+test60
+var1 v_3241;
+var2 S2, S_3275, S2_3247;
+ (~((( nequal(S_3275, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S2 = S_3275 union S2_3247 union {v_3241})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 1171
+test61
+var1 v_3241;
+var2 S2, S_3278, S2_3247;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3278 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1172
+test62
+var1 v_3241;
+var2 S2, S_3278, S2_3247;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3278 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1175
+test63
+var1 v_3241;
+var2 S2, S2_3247, S_3278;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3278 union S2_3247 union {v_3241}))))  | ((S_3278 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1177
+test64
+var1 v_3241;
+var2 S2, S2_3247, S_3278;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3278 union S2_3247 union {v_3241}))))  | ( nequal(S_3278, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1185
+test65
+var1 v_3241;
+var2 S2, S_3275, S2_3247;
+( (~((( nequal(S2, {}) 
+) & ( nequal(S_3275, {}) 
+)) & ((S2 = S_3275 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1186
+test66
+var1 v_3241;
+var2 S2, S_3275, S2_3247;
+( (~((( nequal(S2, {}) 
+) & ( nequal(S_3275, {}) 
+)) & ((S2 = S_3275 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: #is_sat 1191
+
+
+[mona.ml]: imply # from sat#1191
+test67
+var1 v_3241;
+var2 S2, S_3270, S2_3247;
+ (~(( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: #is_sat 1208
+
+
+[mona.ml]: imply # from sat#1208
+test68
+var1 v_3241;
+var2 S2_3247, S2, S_3270;
+ (~((((S2 = S_3270 union S2_3247 union {v_3241})) & ( nequal(S2, {}) 
+)) & ( nequal(S_3270, {}) 
+))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 1227
+test69
+var1 v_3241;
+var2 S2, S_3270, S2_3247;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1228
+test70
+var1 v_3241;
+var2 S2, S_3270, S2_3247;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1231
+test71
+var1 v_3241;
+var2 S2, S2_3247, S_3270;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ((S_3270 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1233
+test72
+var1 v_3241;
+var2 S2, S2_3247, S_3270;
+( (~(( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ( nequal(S_3270, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: #is_sat 1263
+
+
+[mona.ml]: imply # from sat#1263
+test73
+var1 v_3241;
+var2 S1, S2_3286, S3_3287, S4_3306, S2;
+ (~(((((S4_3306 = S1 union S2_3286 union S3_3287 union {0} union {0})) & ((S2 = S2_3286 union S3_3287 union {v_3241}))) & ( nequal(S4_3306, {}) 
+)) & ( nequal(S2, {}) 
+))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 1275
+test74
+var1 v_3351, v_3241;
+var2 S1_3354, S2_3357, S2, S_3270, S2_3247;
+( (~(((( nequal(S_3270, {}) 
+) & ((S_3270 = S1_3354 union S2_3357 union {v_3351}))) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1276
+test75
+var1 v_3351, v_3241;
+var2 S1_3354, S2_3357, S2, S_3270, S2_3247;
+( (~(((( nequal(S_3270, {}) 
+) & ((S_3270 = S1_3354 union S2_3357 union {v_3351}))) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1279
+test76
+var1 v_3241, v_3351;
+var2 S2, S2_3247, S_3270, S2_3357, S1_3354;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3354 union S2_3357 union {v_3351}))))  | ((S1_3354 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1280
+test77
+var1 v_3241, v_3351;
+var2 S2, S2_3247, S_3270, S2_3357, S1_3354;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3354 union S2_3357 union {v_3351}))))  | ( nequal(S1_3354, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1283
+test78
+var1 v_3241, v_3351;
+var2 S2, S2_3247, S_3270, S1_3354, S2_3357;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3354 union S2_3357 union {v_3351}))))  | ((S2_3357 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1284
+test79
+var1 v_3241, v_3351;
+var2 S2, S2_3247, S_3270, S1_3354, S2_3357;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3354 union S2_3357 union {v_3351}))))  | ( nequal(S2_3357, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1292
+test80
+var1 v_3361, v_3241;
+var2 S1_3364, S2_3367, S2, S_3270, S2_3247;
+( (~(((( nequal(S2, {}) 
+) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))) & ( nequal(S_3270, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1293
+test81
+var1 v_3361, v_3241;
+var2 S1_3364, S2_3367, S2, S_3270, S2_3247;
+( (~(((( nequal(S2, {}) 
+) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))) & ( nequal(S_3270, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1296
+test82
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S2_3367, S1_3364;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ((S1_3364 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1298
+test83
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S2_3367, S1_3364;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ( nequal(S1_3364, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1302
+test84
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S1_3364, S2_3367;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ((S2_3367 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1303
+test85
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S1_3364, S2_3367;
+( (~(((( nequal(S2, {}) 
+) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ( nequal(S_3270, {}) 
+)) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ( nequal(S2_3367, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1311
+test86
+var1 v_3361, v_3241;
+var2 S1_3364, S2_3367, S2, S_3270, S2_3247;
+( (~(((( nequal(S_3270, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1312
+test87
+var1 v_3361, v_3241;
+var2 S1_3364, S2_3367, S2, S_3270, S2_3247;
+( (~(((( nequal(S_3270, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1315
+test88
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S2_3367, S1_3364;
+( (~(((( nequal(S_3270, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ((S1_3364 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1317
+test89
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S2_3367, S1_3364;
+( (~(((( nequal(S_3270, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ( nequal(S1_3364, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1321
+test90
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S1_3364, S2_3367;
+( (~(((( nequal(S_3270, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ((S2_3367 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1322
+test91
+var1 v_3241, v_3361;
+var2 S2, S2_3247, S_3270, S1_3364, S2_3367;
+( (~(((( nequal(S_3270, {}) 
+) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))))  | ( nequal(S2_3367, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1330
+test92
+var1 v_3361, v_3241;
+var2 S1_3364, S2_3367, S2, S_3270, S2_3247;
+( (~(((( nequal(S_3270, {}) 
+) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ((S2_3247 = {})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1331
+test93
+var1 v_3361, v_3241;
+var2 S1_3364, S2_3367, S2, S_3270, S2_3247;
+( (~(((( nequal(S_3270, {}) 
+) & ((S_3270 = S1_3364 union S2_3367 union {v_3361}))) & ( nequal(S2, {}) 
+)) & ((S2 = S_3270 union S2_3247 union {v_3241}))))  | ( nequal(S2_3247, {}) 
+));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: #is_sat 1391
+
+
+[mona.ml]: imply # from sat#1391
+test94
+var1 v_3241, v_3361;
+var2 S1, S4, S2, S5_3426, S1_3244, S1_3364, S2_3367;
+ (~(((((((S5_3426 = S1 union S1_3364 union S2_3367 union S4 union {0} union {0} union {0})) & ((S2 = S1_3244 union S4 union {v_3241}))) & ( nequal(S1_3244, {}) 
+)) & ( nequal(S2, {}) 
+)) & ( nequal(S5_3426, {}) 
+)) & ((S1_3244 = S1_3364 union S2_3367 union {v_3361})))) ;
+[mona.ml]: imply --> false
+[mona.ml]: is_sat --> true
+
+
+[mona.ml]: imply # 1406
+test95
+var1 v_3241;
+var2 S2_3286, S3_3287, S4_3473, S1_3285, S2, S3;
+( (~(((( nequal(S3, {}) 
+) & ((S4_3473 = S1_3285 union S2_3286 union S3_3287 union {0} union {0}))) & ((S2 = S2_3286 union S3_3287 union {v_3241}))) & ( nequal(S2, {}) 
+)))  | ((S4_3473 union S3 union {0} = S1_3285 union S2 union S3 union {0} union {0})));
+[mona.ml]: imply --> false
+
+
+[mona.ml]: imply # 1418
+test96
+var1 v_3361, v_3241;
+var2 S1_3244, S1_3364, S2_3367, S4, S5_3503, S1, S2, S3;
+( (~(((((( nequal(S1_3244, {}) 
+) & ((S1_3244 = S1_3364 union S2_3367 union {v_3361}))) & ( nequal(S3, {}) 
+)) & ((S2 = S1_3244 union S4 union {v_3241}))) & ( nequal(S2, {}) 
+)) & ((S5_3503 = S1 union S1_3364 union S2_3367 union S4 union {0} union {0} union {0}))))  | ((S5_3503 union S3 union {0} = S1 union S2 union S3 union {0} union {0})));
+[mona.ml]: imply --> false
