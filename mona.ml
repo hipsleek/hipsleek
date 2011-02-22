@@ -881,7 +881,7 @@ let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   | _ -> ()
   end;
 (*  print_endline "Mona died."; flush stdout;*)
-  (* Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona"); *)
+  Sys.remove ("test" ^ (string_of_int !mona_file_number) ^ ".mona");
   begin match res with
   | true ->
 	  begin
