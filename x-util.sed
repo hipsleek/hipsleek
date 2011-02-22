@@ -38,8 +38,10 @@ s/Util.\(check_dups_eq\)/Gen.BList.\1/gp
 s/Util.\(intersect\) /Gen.BList.\1_eq (=) /gp
 s/Util.\(mem\) /Gen.BList.\1_eq (=) /gp
 s/Util.\(find_dups\)_f/Gen.BList.\1_eq/gp
+s/Util.\(find_dups\)/Gen.BList.\1_eq (=)/gp
 s/Util.\(take\)/Gen.BList.\1/gp
 s/Util.\(drop\)/Gen.BList.\1/gp
+s/Util.\(find_index\)/Gen.BList.\1/gp
 s/Util.intersect_fct/Gen.BList.intersect_eq/gp
 s/Util.difference_fct/Gen.BList.difference_eq/gp
 s/Util.difference_f/Gen.BList.difference_eq/gp
