@@ -53,6 +53,15 @@ class procedure_list_model ?(src = "") () =
       let stock_id = self#stock_id_of_bool valid in
       delegate#set ~row ~column:col_validity stock_id
 
+    method get_procedure_validity path : bool option =
+      let row = delegate#get_iter path in
+      let valid_string = delegate#get ~row ~column:col_validity in
+      let res = 
+        if valid_string = "gtk-yes" then Some true
+        else if valid_string = "gtk-no" then Some false
+        else None
+      in res
+
     method private stock_id_of_bool b =
       if b then "gtk-yes" else "gtk-no"
 
@@ -119,6 +128,12 @@ class procedure_list ?(model = new procedure_list_model ()) () =
       match rows with
       | [row] ->model#set_procedure_validity row valid
       | _ -> ()
+
+    method get_selected_procedure_validity () =
+      let rows = self#selection#get_selected_rows in
+      match rows with
+      | [row] -> model#get_procedure_validity row
+      | _ -> None
 
     method check_all (func: procedure -> bool) : unit =
       model#check_all func

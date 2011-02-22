@@ -241,6 +241,7 @@ class mainwindow () =
         true
 
     method open_file (fname: string): unit =
+      log ("Opening " ^ fname);
       current_file <- (Some fname);
       self#replace_source (FU.read_from_file fname);
       self#update_win_title ()
@@ -264,18 +265,21 @@ class mainwindow () =
       let tp = List.nth provers id in
       args <- {args with HH.tp = tp};
       let tp_name = TP.name_of_tp tp in
-      log (Printf.sprintf "Use %s as backend prover." tp_name)
+      log (Printf.sprintf "Now using %s as backend prover." tp_name)
 
     method check_selected_proc () =
       let proc = proc_list#get_selected_procedure () in
       match proc with
       | None -> ()
-      | Some p -> begin
-          let src = self#get_text () in
-          let valid = HH.check_proc_external ~args src p in
-          proc_list#set_selected_procedure_validity valid;
-          source_view#hl_proc p
-        end
+      | Some p ->
+          source_view#hl_proc p;
+          let current_validity = proc_list#get_selected_procedure_validity () in
+          (*if source_view#source_buffer#modified || current_validity = None then*)
+          if current_validity = None then
+            let _ = log ("Checking procedure " ^ p.name) in
+            let src = self#get_text () in
+            let valid = HH.check_proc_external ~args src p in
+            proc_list#set_selected_procedure_validity valid
 
     method show_debug_log () =
       let log = HH.get_debug_log () in
@@ -323,6 +327,7 @@ class mainwindow () =
 
     method private newfile_handler () =
       if self#file_closing_check () then begin
+        log "New source file.";
         current_file <- None;
         self#update_win_title ();
         self#replace_source ""
@@ -345,18 +350,26 @@ class mainwindow () =
       let text = source_view#source_buffer#get_text () in
       match current_file with
       | Some name ->
-          FU.write_to_file name text;
-          source_view#source_buffer#set_modified false;
-          self#update_win_title ();
-          true
+          let _ = if source_view#source_buffer#modified then begin
+            log ("Saving source to " ^ name);
+            FU.write_to_file name text;
+            source_view#source_buffer#set_modified false;
+            self#update_win_title ()
+          end
+          in true
       | None ->
           let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
           match fname with
           | None -> false
-          | Some fname -> FU.write_to_file fname text; true
+          | Some fname -> begin
+              log ("Saving source to " ^ fname);
+              FU.write_to_file fname text; 
+              true
+            end
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
+      log "Checking all procedures.";
       let src = self#get_text () in
       proc_list#check_all (HH.check_proc_external ~args src)
 
@@ -375,10 +388,11 @@ class mainwindow () =
         source_view#hl_error ~msg pos
 
     method private quit () =
-      if self#file_closing_check () then
-        let _ = GMain.quit () in
+      if self#file_closing_check () then begin
+        log ("Quit.");
+        GMain.quit ();
         false
-      else
+      end else
         true
 
   end

@@ -21,7 +21,7 @@ let create_scrolled_win child =
 
 (**/**)
 let log_func = ref (fun _ -> raise Not_found)
-let verbose_flag = ref false
+let verbose_flag = ref true
 (**/**)
 (** Print msg to stdout if verbose flag is on *)
 let log msg =
@@ -375,7 +375,7 @@ module HipHelper = struct
     let regexp = Str.regexp_string "SUCCESS" in
     try
       ignore (Str.search_forward regexp res 0);
-      log "Success";
+      log "Success.";
       true
     with Not_found -> (log "FAIL!"; false)
 
