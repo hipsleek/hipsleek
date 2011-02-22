@@ -25,7 +25,6 @@ open Globals
 open Cformula
 open Iast
 
-module U = Util
 module CP = Cpure
 module C = Cast
 module Err = Error

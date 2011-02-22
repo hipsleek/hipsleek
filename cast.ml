@@ -11,7 +11,6 @@ module F = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
-module U = Util
 
 type typed_ident = (P.typ * ident)
 

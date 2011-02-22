@@ -11,7 +11,6 @@
 open Globals
 
 module H = Hashtbl
-module U = Util
 module I = Iast
 module C = Cast
 

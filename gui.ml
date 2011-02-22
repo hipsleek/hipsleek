@@ -3,7 +3,6 @@ open Solver
 open Cast
 
 
-module U = Util
 module CP = Cpure
 module CF = Cformula
 

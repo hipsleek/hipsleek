@@ -26,7 +26,7 @@ type tp_type =
 
 let tp = ref OmegaCalc
 let proof_no = ref 0
-let prover_process = None
+let provers_process = ref None
 
 type prove_type = Sat of CP.formula | Simplify of CP.formula | Imply of CP.formula * CP.formula
 type result_type = Timeout | Result of string | Failure of string
@@ -219,15 +219,83 @@ module Netprover = struct
    
 end
 
-(*reads the prompt that cvc3 outputs when running in incremental mode *)
-let rec read_answer (process: Globals.prover_process) : string =
-  try
-    let chr = input_char process.inchannel in
-    match chr with
-      |'\n' -> "" 
-      | _ -> (Char.escaped chr) ^ read_answer process
-  with
-    |  _ ->   (print_string ("\nexception while reading cvc3 promp \n" ); flush stdout); ""
+(* ##################################################################### *)
+
+(* class used for keeping prover's functions needed for the incremental proving*)
+class incremMethods : [CP.formula] Globals.incremMethodsType = object
+
+  (*keeps track of the number of saved states of the current process*)
+  val push_no = ref 0
+    (*variable used to archives all the assumptions send to the current process *)
+  val process_context = ref []
+    (*variable used to archive all the declared variables in the current process context *)
+  val declarations = ref [] (* (stack_no * var_name * var_type) list*)
+    (* prover process *)
+  val process = ref None
+
+  (*creates a new proving process *)
+  method start_p () : Globals.prover_process_t =
+    let proc = 
+      match !tp with
+      | Cvc3 -> Cvc3.cvc3_create_process()
+      | _ -> Cvc3.cvc3_create_process() (* to be completed for the rest of provers that support incremental proving *) 
+    in 
+    process := Some proc;
+    proc
+
+  (*stops the proving process*)
+  method stop_p (process: Globals.prover_process_t): unit =
+    match !tp with
+      | Cvc3 -> Cvc3.cvc3_stop_process process
+      | _ -> () (* to be completed for the rest of provers that support incremental proving *)
+
+  (*saves the state of the process and its context *)
+  method push (process: Globals.prover_process_t): unit = 
+    push_no := !push_no + 1;
+      match !tp with
+        | Cvc3 -> Cvc3.cvc3_push process
+        | _ -> () (* to be completed for the rest of provers that support incremental proving *)
+
+  (*returns the process to the state it was before the push call *)
+  method pop (process: Globals.prover_process_t): unit = 
+    match !tp with
+      | Cvc3 -> Cvc3.cvc3_pop process
+      | _ -> () (* to be completed for the rest of provers that support incremental proving *)
+
+  (*returns the process to the state it was before the push call on stack n *)
+  method popto (process: Globals.prover_process_t) (n: int): unit = 
+    let n = 
+      if ( n > !push_no) then begin
+        Debug.devel_pprint ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no)) no_pos;
+        !push_no 
+      end
+      else n in
+    match !tp with
+      | Cvc3 -> Cvc3.cvc3_popto process n
+      | _ -> () (* to be completed for the rest of provers that support incremental proving *)
+
+  method imply (process: (Globals.prover_process_t option * bool) option) (ante: CP.formula) (conseq: CP.formula) (imp_no: string): bool = true
+    (* let _ = match proceess with  *)
+    (*   | Some (Some proc, send_ante) -> if (send_ante) then  *)
+    (*       else *)
+    (*      imply process ante conseq imp_no *)
+
+    (*adds active assumptions to the current process*)
+    (* method private add_to_context assertion: unit = *)
+    (*     process_context := [assertion]@(!process_context) *)
+
+  method set_process (proc: Globals.prover_process_t) =
+    process := Some proc
+
+  method get_process () : Globals.prover_process_t option =
+    !process 
+
+end
+
+let incremMethodsO = ref (new incremMethods)
+
+
+(* ##################################################################### *)
 
 let rec check_prover_existence prover_cmd_str =
   match prover_cmd_str with
@@ -483,7 +551,13 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
         (Omega.is_sat f sat_no);
       end
   | CvcLite -> Cvclite.is_sat f sat_no
-  | Cvc3 -> Cvc3.is_sat f sat_no
+    | Cvc3 -> 
+          begin
+            match !provers_process with
+              |Some proc -> Cvc3.is_sat_increm !provers_process f sat_no
+              | _ -> Cvc3.is_sat f sat_no
+                    (* Cvc3.is_sat f sat_no *)
+          end
   | Z3 -> Smtsolver.is_sat f sat_no
   | Isabelle -> Isabelle.is_sat f sat_no
   | Coq -> (*Coq.is_sat f sat_no*)
@@ -766,11 +840,12 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
-    | Cvc3 -> 
-          if !Globals.enable_incremental_proving then
-            Cvc3.imply_increm process ante conseq imp_no
-          else
-            Cvc3.imply ante conseq imp_no
+    | Cvc3 -> begin
+          match process with
+            | Some (Some proc, _) -> Cvc3.imply_increm process ante conseq imp_no
+            | _ -> Cvc3.imply_increm (Some (!provers_process,true)) ante conseq imp_no
+            (* Cvc3.imply ante conseq imp_no *)
+      end
   | Z3 -> Smtsolver.imply ante conseq
   | Isabelle -> Isabelle.imply ante conseq imp_no
     | Coq -> (* Coq.imply ante conseq *)
@@ -1032,7 +1107,7 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
             let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
             let ante = CP.remove_dup_constraints ante in
             match process with
-              | Some (Some proc, send_ante) -> (ante, cons)
+              | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
               | _ -> filter ante cons) split_conseq in
 		let pairs_length = List.length pairs in
 		let imp_sub_no = ref 0 in
@@ -1306,6 +1381,16 @@ let start_prover () =
       Redlog.start_red ();
 	  Omega.start_omega ();
 	 end
+    | Cvc3 -> 
+        begin
+            provers_process := Some (Cvc3.cvc3_create_process ());
+            let _ = match !provers_process with 
+              |Some proc ->  !incremMethodsO#set_process proc
+              | _ -> () in
+	        Omega.start_omega ();
+	    end
+    (* | Mona -> *)
+    (*     Mona.start_mona() *)
   | _ -> Omega.start_omega ()
   
 let stop_prover () =
@@ -1320,62 +1405,13 @@ let stop_prover () =
             Redlog.stop_red ();
 	        Omega.stop_omega ();
 	      end
+    | Cvc3 -> 
+          begin
+            match !provers_process with
+              |Some proc ->  Cvc3.cvc3_stop_process proc;
+              |_ -> ();
+	        Omega.stop_omega ();
+	      end
+    (* | Mona -> Mona.stop_mona(); *)
     | _ -> Omega.stop_omega ();;
-
-(* class used for keeping prover's functions needed for the incremental proving*)
-class incremMethods : [CP.formula] Globals.incremMethodsType = object
-
-  (*keeps track of the number of saved states of the current process*)
-  val push_no = ref 0
-    (*variable used to archives all the assumptions send to the current process *)
-  val process_context = ref []
-    (*variable used to archive all the declared variables in the current process context *)
-  val declarations = ref [] (* (stack_no * var_name * var_type) list*)
-
-  (*creates a new proving process *)
-  method start_p () : Globals.prover_process =
-    match !tp with
-      | Cvc3 -> Cvc3.cvc3_create_process()
-      | _ -> Cvc3.cvc3_create_process() (* to be completed for the rest of provers that support incremental proving *)
-
-  (*stops the proving process*)
-  method stop_p (process: Globals.prover_process): unit =
-    match !tp with
-      | Cvc3 -> Cvc3.cvc3_stop_process process
-      | _ -> () (* to be completed for the rest of provers that support incremental proving *)
-
-  (*saves the state of the process and its context *)
-  method push (process: Globals.prover_process): unit = 
-    push_no := !push_no + 1;
-      match !tp with
-        | Cvc3 -> Cvc3.cvc3_push process
-        | _ -> () (* to be completed for the rest of provers that support incremental proving *)
-
-  (*returns the process to the state it was before the push call *)
-  method pop (process: Globals.prover_process): unit = 
-    match !tp with
-      | Cvc3 -> Cvc3.cvc3_pop process
-      | _ -> () (* to be completed for the rest of provers that support incremental proving *)
-
-  (*returns the process to the state it was before the push call on stack n *)
-  method popto (process: Globals.prover_process) (n: int): unit = 
-    let n = 
-      if ( n > !push_no) then begin
-        Debug.devel_pprint ("\nCannot pop to " ^ (string_of_int n) ^ ": no such stack. Will pop to stack no. " ^ (string_of_int !push_no)) no_pos;
-        !push_no 
-      end
-      else n in
-    match !tp with
-      | Cvc3 -> Cvc3.cvc3_popto process n
-      | _ -> () (* to be completed for the rest of provers that support incremental proving *)
-
-  method imply (proc: Globals.prover_process) (ante: CP.formula) (conseq: CP.formula) (imp_no: string): bool = true
-    (*adds active assumptions to the current process*)
-    (* method private add_to_context assertion: unit = *)
-    (*     process_context := [assertion]@(!process_context) *)
-
-end
-
-let incremMethodsO = new incremMethods
-
 

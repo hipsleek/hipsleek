@@ -464,13 +464,12 @@ and mona_of_exp_x e0 f =
   in
   helper e0
 
-and mona_of_exp_secondorder e0 f = 	match e0 with
+and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | CP.Null _ -> ([], "pconst(0)", "")
   | CP.Var (sv, _) -> ([], mona_of_spec_var sv, "")
   | CP.IConst (i, _) -> ([], ("pconst(" ^ (string_of_int i) ^ ")"), "")
   | CP.Add (a1, a2, pos) ->  
         let tmp = fresh_var_name "int" pos.start_pos.Lexing.pos_lnum in
-        (*      print_endline ("\nCCC: " ^ tmp); *)
         let (exs1, a1name, a1str) = mona_of_exp_secondorder a1 f in
         let (exs2, a2name, a2str) = mona_of_exp_secondorder a2 f in
         let add_string = " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ tmp ^ ")" in
@@ -498,8 +497,14 @@ and mona_of_exp_secondorder e0 f = 	match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Mona")
+  | CP.Bag (elist, _) -> ([],"{"^ (mona_of_formula_exp_list elist f) ^ "}", "")
+  | CP.BagUnion (_, _) -> ([], mona_of_exp e0 f, "")
+  | CP.BagIntersect ([], _) -> ([], mona_of_exp e0 f, "")
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
+and mona_of_exp_secondorder e0 f =
+   Gen.Debug.no_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+      (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
 and mona_of_formula_exp_list l f = match l with
@@ -567,7 +572,7 @@ and mona_of_b_formula b f vs =
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
       | CP.Neq (a1, a2, _) ->
-	        if (is_firstorder_mem f a1 vs)(* && (is_firstorder_mem f a2 vs) *) then
+	        if (is_firstorder_mem f a1 vs)&& (is_firstorder_mem f a2 vs) then
 	          begin
 	            if CP.is_null a2 then
 	              "(" ^ (mona_of_exp a1 f) ^ " > 0)"
@@ -803,6 +808,7 @@ let check fd timeout pid : bool =
     end else 
       let r = input_line fd in
       let err= "Error in file " in 
+      (* let err2= "BDD too large" in  *)
       let ans1= "A counter-example of lea" in
       let ans2= "Formula is unsatisfiable" in
       match r with
@@ -835,38 +841,16 @@ let check_debug fd timeout pid : bool =
       (fun timeout -> check fd timeout pid) timeout
 
 (* writing the Mona file *)
-let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
+let write_x (var_decls:string) (pe : CP.formula) vs timeout : bool =
   let mona_file_name = "test" ^ (string_of_int !mona_file_number) ^ ".mona" in
   let mona_file = open_out mona_file_name in
-  (* output_string mona_file ("include \"mona_predicates.mona\";\n"); *)
-  output_string mona_file ("# auxiliary predicates\n");
-  output_string mona_file ("pred xor(var0 x,y) = x&~y | ~x&y;\n");
-  output_string mona_file ("pred at_least_two(var0 x,y,z) = x&y | x&z | y&z;\n\n");
-  output_string mona_file ("# addition relation (P + q = r)\n");
-  output_string mona_file ("pred plus(var2 p,q,r) =\n");
-  output_string mona_file ("ex2 c: \n");
-  output_string mona_file ("\t0 notin c\n");
-  output_string mona_file ("& all1 t:\n");
-  output_string mona_file ("\t(t+1 in c <=> at_least_two(t in p, t in q, t in c))\n");
-  output_string mona_file ("\t& (t in r <=> xor(xor(t in p, t in q), t in c));\n\n");
-  output_string mona_file ("# less-than relation (p<q)\n");
-  output_string mona_file ("pred less(var2 p,q) = \n");
-  output_string mona_file ("ex2 t: t ~= empty & plus(p,t,q);\n\n");
-  output_string mona_file ("# less-or-equal than relation (p<=q)\n");
-  output_string mona_file ("pred lessEq(var2 p, q) = \n");
-  output_string mona_file ("less(p, q) | (p=q);\n\n");
-  output_string mona_file ("# greater-than relation (p>q)\n");
-  output_string mona_file ("pred greater(var2 p, q) = \n");
-  output_string mona_file ("less(q, p);\n\n");
-  output_string mona_file ("# greater-or-equal than relation (p>=q)\n");
-  output_string mona_file ("pred greaterEq(var2 p, q) = \n");
-  output_string mona_file ("greater(p, q) | (p=q);\n\n");
-  output_string mona_file ("pred nequal(var2 p,q) = p ~= q ;\n");
+  output_string mona_file ("include \"mona_predicates.mona\";\n");
   let fstr = 
-    try (var_decls ^ (mona_of_formula pe pe vs))
+    (* let _ = print_string ("\n==========="^var_decls^"===="^(Cprinter.string_of_pure_formula pe)^"=======\n") in *)
+    try (var_decls ^(mona_of_formula pe pe vs))
     with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); "" 
   in
-  output_string mona_file (fstr ^ ";\n" );
+  if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
   flush mona_file;
   close_out mona_file;
   
@@ -912,6 +896,10 @@ let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
   end;
   flush log_file;
   res
+
+let write (var_decls:string) (pe : CP.formula) vs timeout : bool =
+  Gen.Debug.no_2 "write" (fun x -> x) Cprinter.string_of_pure_formula string_of_bool
+     (fun var_decls pe ->  write_x var_decls pe vs timeout) var_decls pe
 
 let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
@@ -965,7 +953,6 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_file ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
-  let f = CP.arith_simplify 10 f in 
   let tmp_form = (imply !Globals.sat_timeout f (CP.BForm(CP.BConst(false, no_pos),None)) ("from sat#" ^ sat_no)) in
   sat_optimize := false;
   match tmp_form with

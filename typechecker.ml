@@ -4,7 +4,6 @@ open Cast
 
 module CF = Cformula
 module CP = Cpure
-module U = Util
 module TP = Tpdispatcher
 module PTracer = Prooftracer
 

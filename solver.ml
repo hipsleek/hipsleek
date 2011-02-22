@@ -3941,8 +3941,8 @@ and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formul
   helper conseq
 
 and solve_ineq_memo_formula (ante : MCP.memo_pure) (memset : Cformula.mem_formula) (conseq : MCP.memo_pure) : MCP.memo_pure =
-  let eqset = Util.build_aset_eq CP.eq_spec_var (MCP.ptr_equations_aux_mp false ante) in
-  let eq x y = Util.is_equiv_eq eqset x y in
+  let eqset = CP.EMapSV.build_eset (MCP.ptr_equations_aux_mp false ante) in
+  let eq x y = CP.EMapSV.is_equiv eqset x y in
   let f_memo x = None in
   let f_aset x = None in
   let f_formula x = None in
@@ -4009,7 +4009,7 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
     | MCP.MemoF a, _, MCP.MemoF c -> MCP.imply_memo a c TP.imply imp_no
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c -> 
           let increm_funct = 
-            if !Globals.enable_incremental_proving then Some TP.incremMethodsO
+            if !Globals.enable_incremental_proving then Some !TP.incremMethodsO
             else None in
           CP.imply_disj
               (TP.split_disjunctions a0) (* list with xpure0 antecedent disjunctions *)

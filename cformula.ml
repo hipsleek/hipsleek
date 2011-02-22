@@ -9,7 +9,6 @@ open Globals
 module Err = Error
 module CP = Cpure
 module MCP = Mcpure
-module U = Util
 
 type typed_ident = (CP.typ * ident)
 

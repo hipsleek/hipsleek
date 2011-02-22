@@ -27,7 +27,6 @@ open Predcomp
 
 module CF = Cformula
 module CP = Cpure
-module U = Util
 module C = Cast
 module I = Iast
 
