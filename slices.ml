@@ -14,9 +14,6 @@ module type EQ_TYPE = Gen.EQ_TYPE
 (*   let star_union x y = x@y *)
 (* end;; *)
 
-module PtrSV = Ptr(SV)
-
-
 module DisjPtr = Gen.DisjSet(PtrSV)
 (* module DisjPtr0 = DisjSet(PtrSV0) *)
 

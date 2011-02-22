@@ -822,7 +822,7 @@ sig
     (* under approx or-ing *)
   val star_union : t list -> t list -> t list (* @ *)
     (* combine by star *)
-  val to_string : t -> string
+  val string_of : t -> string
 end;;
 
 module type PTR_TYPE =

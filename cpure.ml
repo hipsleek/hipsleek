@@ -1880,6 +1880,32 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+let string_of_spec_var (sv: spec_var) = match sv with
+    | SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+  
+module SV =
+struct 
+  type t = spec_var
+  let eq = eq_spec_var
+  let string_of = string_of_spec_var
+end;;
+
+module Ptr =
+    functor (Elt:Gen.EQ_TYPE) ->
+struct
+  include Elt
+  type tlist = t list
+  module X = Gen.BListEQ(Elt)
+  let overlap = eq
+  let intersect (x:tlist)  (y:tlist) = X.intersect x y
+  let star_union x y = x@y
+end;;
+
+module PtrSV = Ptr(SV);;
+ 
+type baga_sv = Gen.Baga(PtrSV).baga
+
+type var_aset = Gen.EqMap(SV).emap
 
 let eq_spec_var_aset (aset: spec_var Util.eq_set ) (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
   | (SpecVar (t1, v1, p1), SpecVar (t2, v2, p2)) -> Util.is_equiv_eq aset sv1 sv2 
@@ -4576,9 +4602,6 @@ module ArithNormalizer = struct
   (* 
    * Printing functions, mainly here for debugging purposes
    *)
-  let string_of_spec_var (sv: spec_var) = match sv with
-    | SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
-
   let rec string_of_exp e0 =
     let need_parentheses e = match e with
       | Add _ | Subtract _ -> true
@@ -4900,26 +4923,3 @@ let or_xp_res  eq ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
     | Some nd1,None -> nd1
     | Some nd1,Some nd2 ->  Util.or_disj_set (b1::d1) (b2::d2) in
     (nb,nd, mkOr np1 np2 None no_pos)
-
- 
-module SV =
-struct 
-  type t = spec_var
-  let eq = eq_spec_var
-  let string_of = string_of_spec_var
-end;;
-
-module Ptr =
-    functor (Elt:Gen.EQ_TYPE) ->
-struct
-  include Elt
-  type tlist = t list
-  module X = Gen.BListEQ(Elt)
-  let overlap = eq
-  let intersect (x:tlist)  (y:tlist) = X.intersect x y
-  let star_union x y = x@y
-end;;
-  
-type baga_sv = Gen.Baga(PtrSV).baga
-
-type var_aset = Gen.EqMap(CP.SV).emap
