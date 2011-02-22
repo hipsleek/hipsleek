@@ -24,7 +24,7 @@ struct
 
   let fnone (c:'a):'a option = None
 
-  let empty l = match l with [] -> true | _ -> false
+  let is_empty l = match l with [] -> true | _ -> false
 
   let spacify i = 
     let s' z = List.fold_left (fun x y -> x ^ i ^ y) "" z in
@@ -44,12 +44,12 @@ struct
   let rec list_last l = match l with
     | h::[] -> h
     | _::t -> (list_last t)
-    | [] -> failwith "Util.list_last: empty list"
+    | [] -> failwith "Gen.list_last: empty list"
 
   (** Split the list of length k>=1 into a pair consisting of
       the list of first k-1 elements and the last element. *)
   let rec firsts_last xs = match xs with
-    | [] -> failwith "Util.first_lasts: empty list"
+    | [] -> failwith "Gen.first_lasts: empty list"
     | [x] -> ([],x)
     | x::xs1 ->
           let (fs,l) = firsts_last xs1 in
@@ -149,11 +149,11 @@ struct
 
   let string_of_f (f:'a->string) (ls:'a list) : string = 
     ("["^(String.concat "," (List.map f ls))^"]")
-
+    
   (** Split the list of length k>=1 into a pair consisting of
       the list of first k-1 elements and the last element. *)
   let rec firsts_last xs = match xs with
-    | [] -> failwith "Util.first_lasts: empty list"
+    | [] -> failwith "Gen.first_lasts: empty list"
     | [x] -> ([],x)
     | x::xs1 ->
           let (fs,l) = firsts_last xs1 in
@@ -223,7 +223,7 @@ struct
   let rec list_last l = match l with
     | h::[] -> h
     | _::t -> (list_last t)
-    | [] -> failwith "Util.list_last: empty list"
+    | [] -> failwith "Gen.list_last: empty list"
 
   let remove_elem_eq eq e l = List.filter (fun x -> not(eq x e)) l 
 
@@ -946,7 +946,7 @@ struct
   let mkEmpty : dpart = []
 
   (* an empty difference set *)
-  let empty (d:dpart) : bool = (d==[])
+  let is_empty (d:dpart) : bool = (d==[])
 
   (* one list difference set *)
   let one_list_dset (e:dlist) : dpart = [e]
@@ -1450,7 +1450,7 @@ struct
 
   let exc_list = ref ([]:(string * string * Globals.nflow ) list)
 
-  let remove_dups n = Util.remove_dups n
+  let remove_dups n = BList.remove_dups n
 
   let get_hash_of_exc (f:string): Globals.nflow = 
     if ((String.compare f Globals.stub_flow)==0) then 
