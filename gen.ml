@@ -1576,5 +1576,54 @@ struct
     in helper xs ys
 
 end;;
+
+module type ORDERED_TYPE =
+sig
+  open Globals
+  type t
+  val compare: t -> t -> comparison (* string compare *)
+end;;
+
+module Set =
+   functor (Elt: ORDERED_TYPE) ->
+     struct
+       open Globals
+       type element = Elt.t
+       type set = element list
+       let empty = []
+       let rec add (x:element) (s:set) : set =
+         match s with
+           [] -> [x]
+         | hd::tl ->
+            match Elt.compare x hd with
+              Equal   -> s         (* x is already in s *)
+            | Less    -> x :: s    (* x is smaller than all elements of s *)
+            | Greater -> hd :: add x tl
+       let rec member (x:element) (s:set) : bool =
+         match s with
+           [] -> false
+         | hd::tl ->
+             match Elt.compare x hd with
+               Equal   -> true     (* x belongs to s *)
+             | Less    -> false    (* x is smaller than all elements of s *)
+             | Greater -> member x tl
+       let rec overlaps (x:set) (y:set) : bool =  (* checks if two sets overlap *)
+         match x,y with
+           | [],_ -> false
+           | _,[] -> false
+           | (x1::xs),(y1::ys) -> match Elt.compare x1 y1 with
+               | Equal -> true
+               | Less -> overlaps xs y
+               | Greater -> overlaps x ys
+       let rec union (x:set) (y:set) : set = (* union of two sets without duplicates *)
+         match x,y with 
+           | [],ys -> ys
+           | xs,[] -> xs
+           | (x1::xs),(y1::ys) -> match Elt.compare x1 y1 with
+               | Equal -> x1::(union xs ys)
+               | Less -> x1::(union xs y)
+               | Greater -> y1::(union x ys)
+     end;;
+ 
 include Basic
 include SysUti

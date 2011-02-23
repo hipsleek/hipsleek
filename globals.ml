@@ -1,5 +1,7 @@
 (* global types and utility functions *)
 
+type comparison = Less | Equal | Greater
+
 type ident = string
 type constant_flow = ident
 

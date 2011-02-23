@@ -1,12 +1,34 @@
 module CF = Cformula
 module MP = Mcpure
 
-module SpecVar =
+module TYP =
+struct
+
+  type ty = CPure.typ
+  let eq = (=)
+  (* pretty printing for primitive types *)
+  let string_of_prim = function 
+    | Bool          -> "boolean"
+    | Float         -> "float"
+    | Int           -> "int"
+    | Void          -> "void"
+    | Bag           -> "multiset"
+    | List          -> "list"
+  ;;
+
+  (* pretty printing for types *)
+  let string_of = function 
+    | P.Prim t -> string_of_prim_type t 
+    | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+  ;;
+end;;
+
+module SV =
    struct
 	 open Globals
 	 open Type
 	   
-	 type spec_var = SpecVar of (typ * ident * primed)
+	 type v = Cpure.spec_var
 		 
      let compare x y = 
        let v = String.compare (string_of x) (string_of y) in
@@ -33,24 +55,7 @@ module SpecVar =
  	   | SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
    end;;
 
-module Type =
-  struct
-	open Globals
 
-	type typ =
-	  | Prim of prim_type
-	  | OType of ident
-
-    let string_of t = match t with
-	  | Prim pt -> match pt with
-		  | Bool -> "Bool"
-		  | Float -> "Float"
-		  | Int -> "Int"
-		  | Void -> "Void"
-		  | Bag -> "Bag"
-		  | List -> "List"
-	  | OType id -> id 
-  end;;
  
 module SpecVarSet = Set(SpecVar);;
 

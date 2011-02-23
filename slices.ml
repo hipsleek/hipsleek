@@ -1,4 +1,4 @@
-type comparison = Less | Equal | Greater
+open Globals
 
 module CP = Cpure
 
@@ -17,15 +17,11 @@ module type EQ_TYPE = Gen.EQ_TYPE
 module DisjPtr = Gen.DisjSet(CP.PtrSV)
 (* module DisjPtr0 = DisjSet(PtrSV0) *)
 
-module type ORDERED_TYPE =
-sig
-  type t
-  val compare: t -> t -> comparison (* string compare *)
-end;;
+
 
 module type LABEL_TYPE =
 sig
-  include ORDERED_TYPE
+  include Gen.ORDERED_TYPE
   val subtype: t -> t -> bool  (* substring test *)
 end;;
 
@@ -63,9 +59,11 @@ end;;
 (* module type V_TYPE = VAR_TYPE(TY);;  *)
 
 module type EXPR_TYPE =
+    (* functor (E1:Typ_TYPE) -> *)
+    (* functor (E2:Var_TYPE with ty=E1.ty) -> *)
 sig
   type v 
-  type ty
+  type ty 
   include Gen.EQ_TYPE 
   type rv = (v * v) (* renaming *)
   type sv = (v * t) (* substitution *)
@@ -180,53 +178,13 @@ module type ASSOC_TYPE =
      val unit: t (* same as true *)
    end;;
 
-module Set =
-   functor (Elt: ORDERED_TYPE) ->
-     struct
-       type element = Elt.t
-       type set = element list
-       let empty = []
-       let rec add (x:element) (s:set) : set =
-         match s with
-           [] -> [x]
-         | hd::tl ->
-            match Elt.compare x hd with
-              Equal   -> s         (* x is already in s *)
-            | Less    -> x :: s    (* x is smaller than all elements of s *)
-            | Greater -> hd :: add x tl
-       let rec member (x:element) (s:set) : bool =
-         match s with
-           [] -> false
-         | hd::tl ->
-             match Elt.compare x hd with
-               Equal   -> true     (* x belongs to s *)
-             | Less    -> false    (* x is smaller than all elements of s *)
-             | Greater -> member x tl
-       let rec overlaps (x:set) (y:set) : bool =  (* checks if two sets overlap *)
-         match x,y with
-           | [],_ -> false
-           | _,[] -> false
-           | (x1::xs),(y1::ys) -> match Elt.compare x1 y1 with
-               | Equal -> true
-               | Less -> overlaps xs y
-               | Greater -> overlaps x ys
-       let rec union (x:set) (y:set) : set = (* union of two sets without duplicates *)
-         match x,y with 
-           | [],ys -> ys
-           | xs,[] -> xs
-           | (x1::xs),(y1::ys) -> match Elt.compare x1 y1 with
-               | Equal -> x1::(union xs ys)
-               | Less -> x1::(union xs y)
-               | Greater -> y1::(union x ys)
-     end;;
- 
 
 module Flexi_Partition =
     (* this supports dynamic slices *)
-   functor (Elt: ORDERED_TYPE) ->
+   functor (Elt: Gen.ORDERED_TYPE) ->
    functor (Res: ASSOC_TYPE with type v=Elt.t) ->
      struct
-        module X = Set(Elt) (* with Elt.set=Res.v *)
+        module X = Gen.Set(Elt) (* with Elt.set=Res.v *)
        type vset = X.set
        type form = Res.t
        type one_p = vset * form
@@ -294,7 +252,7 @@ module SpecVar =
        else Less
    end;;
  
-module SpecVarSet = Set(SpecVar);;
+module SpecVarSet = Gen.Set(SpecVar);;
 
 (* this is a hierachical labelling based on strings *)
 (* "AB" is a subtype of "A" *) 
