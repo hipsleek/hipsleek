@@ -4703,8 +4703,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       | _ -> false) pc in
     let r = List.map (fun (c1,c2) -> 
         if c1 then match c2 with
-          | CP.Gt (e1,e2,l) -> CP.Lte (e2,e1,l)
-          | CP.Gte (e1,e2,l) -> CP.Lt (e2,e1,l)
+          | CP.Gt (e1,e2,l) -> CP.Lt (e2,e1,l)
+          | CP.Gte (e1,e2,l) -> CP.Lte (e2,e1,l)
           | _ -> c2
         else match c2 with
           | CP.Lt (e1,e2,l) -> CP.Lte (e2,e1,l)
@@ -4732,14 +4732,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       | _ -> c) r in
     Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset r in
 
-  let filter_pure_conj_list_x l = 
-    Gen.Debug.ho_1 "filter_pure_conj_list" 
-        (fun l -> String.concat "; "(List.map (fun (c1,c2)->(string_of_bool c1) ^"--"^ (Cprinter.string_of_b_formula c2)) l))
-        (fun c-> String.concat "; "(List.map Cprinter.string_of_b_formula c)) filter_pure_conj_list l in
-  
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let rec helper acc e_v_l : CP.formula list = match e_v_l with
-      | [] ->[TP.hull (CP.mkExists acc f None no_pos)]
+      | [] ->
+        (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists acc f None no_pos))^"\n") in*)
+        [TP.hull (CP.mkExists acc f None no_pos)]
       | h::t -> (helper acc t)@(helper (h::acc) t) in
     helper [] v_l in
   
@@ -4750,8 +4747,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
     let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
     let ev = (Gen.BList.difference_eq (=) (CP.fv n_f) v_l) in
-    (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists ev n_f None no_pos))^"\n") in*)
-    let r = hull_invs v_l (TP.simplify_omega (CP.mkExists ev n_f None no_pos)) in   
+    let to_s = CP.mkExists ev n_f None no_pos in
+    (*let _ = print_string ("\n to_s:: "^(Cprinter.string_of_pure_formula to_s)^"\n") in*)
+    let from_s =  TP.simplify_omega to_s in
+    (*let _ = print_string ("\n from_s:: "^(Cprinter.string_of_pure_formula from_s)^"\n") in*)
+    let r = hull_invs v_l from_s in   
     (*let r = TP.hull r in*)
     if r=[] then [neq] 
     else List.map (fun c-> CP.mkAnd c neq no_pos) r in
@@ -4895,7 +4895,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     in  Gen.BList.string_of_f (Gen.string_of_pair (fun x -> (Cprinter.string_of_formula_label) x "") pr ) l in
     let pr2 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
     in  Gen.BList.string_of_f (Gen.string_of_pair (Gen.BList.string_of_f (fun x -> (Cprinter.string_of_formula_label) x "")) pr ) l in
-    Gen.Debug.ho_2 "compute_invariants"  
+    Gen.Debug.no_2 "compute_invariants"  
         pr0 pr1 pr2 compute_invariants v_l pure_list in
   
   (*actual case inference*)
@@ -4913,6 +4913,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let pc = filter_pure_conj_list pc in
       (*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
       let prop_pc = propagate_constraints pc [] in
+      (*let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in*)
       let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in          
       let pp = MCP.memo_norm_wrapper pp in
       (lbl,(ba,pp))) init_form_lst in  
@@ -4934,7 +4935,8 @@ and view_prune_inv_inference cp vd =
   (*let v_f = CF.label_view vd.C.view_formula in *)
   let f_branches = CF.get_view_branches  vd.C.view_formula in 
   let branches = snd (List.split f_branches) in
-  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf (fst vd.C.view_user_inv)) no_pos in    
+  let u_inv = List.fold_left (fun a (_,c)-> MCP.memoise_add_pure_N a c) (fst vd.C.view_user_inv) (snd vd.C.view_user_inv) in
+  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf u_inv) no_pos in    
   let v' = { vd with  
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 
