@@ -1,13 +1,13 @@
-module CF = Cformula
+module CP = Cpure
 module MP = Mcpure
 
 module TYP =
 struct
-
-  type ty = CPure.typ
+  open Globals
+  type ty = CP.typ
   let eq = (=)
   (* pretty printing for primitive types *)
-  let string_of_prim = function 
+  let string_of_prim (x:prim_type) : string = match x with
     | Bool          -> "boolean"
     | Float         -> "float"
     | Int           -> "int"
@@ -18,51 +18,66 @@ struct
 
   (* pretty printing for types *)
   let string_of = function 
-    | P.Prim t -> string_of_prim_type t 
-    | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+    | CP.Prim t -> string_of_prim t 
+    | CP.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
   ;;
 end;;
 
 module SV =
-   struct
-	 open Globals
-	 open Type
-	   
-	 type v = Cpure.spec_var
-		 
-     let compare x y = 
-       let v = String.compare (string_of x) (string_of y) in
-       if v==0 then Equal 
-       else if v>0 then Greater
-       else Less
+struct
+  open Globals
+  open TYP
+	  
+  type v = Cpure.spec_var
+  type t = v
 
-	 let name_of sv = match sv with
-	   | SpecVar (_, v, _) -> v
+  let is_primed sv = match sv with
+	|  CP.SpecVar (_, _, p) -> p = Primed
 
-	 let full_name_of sv = match sv with
-	   | SpecVar (_, v, p) -> if (is_primed sv) then (v ^ "\'") else v
+  let string_of sv = match sv with
+ 	|  CP.SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
 
-	 let type_of sv = match sv with
-	   | SpecVar (t, _, _) -> t
-		 
-	 let is_primed sv = match sv with
-	   | SpecVar (_, _, p) -> p = Primed
+  let compare (x:v) (y:v) = 
+    let v = String.compare (string_of x) (string_of y) in
+    if v==0 then Equal 
+    else if v>0 then Greater
+    else Less
 
-     let is_unprimed sv = match sv with
-	   | SpecVar (_, _, p) -> p = Unprimed
+  let name_of sv = match sv with
+	| CP.SpecVar (_, v, _) -> v
 
-	 let string_of sv = match sv with
- 	   | SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
-   end;;
 
+  let full_name_of sv = match sv with
+	|  CP.SpecVar (_, v, p) -> if (is_primed sv) then (v ^ "\'") else v
+
+  let type_of sv = match sv with
+	|  CP.SpecVar (t, _, _) -> t
+		   
+
+  let is_unprimed sv = match sv with
+	|  CP.SpecVar (_, _, p) -> p = Unprimed
+
+  let eq = CP.eq_spec_var
+
+
+end;;
+
+(* module SV = *)
+(* struct *)
+(*   include Globals *)
+(*   type  *)
+(*   let eq = eq_spec_var *)
+(*   let string_of = string_of_spec_var *)
+(* end;; *)
 
  
-module SpecVarSet = Set(SpecVar);;
+module SpecVarSet = Gen.Set(SV);;
 
 (* this is a hierachical labelling based on strings *)
 (* "AB" is a subtype of "A" *) 
 module StringLabel =
     struct
+      open Globals
       type t=String
       let compare x y = let v = String.compare x y in
       if v==0 then Equal else if v<0 then Less else Greater
@@ -105,13 +120,6 @@ module MemoFormula =
 			       MP.memo_group_aset = MP.empty_var_aset;}
    end;;
 
-module SV =
-struct
-  include Globals
-  type 
-  let eq = eq_spec_var
-  let string_of = string_of_spec_var
-end;;
 
 module Ptr =
     functor (Elt:Gen.EQ_TYPE) ->
