@@ -27,10 +27,17 @@ class mainwindow () =
         <menu action='TheoremProverMenu'>\
           <menuitem action='Omega'/>\
           <menuitem action='Mona'/>\
+          <menuitem action='Cvc3'/>\
           <menuitem action='Redlog'/>\
+          <menuitem action='Coq'/>\
         </menu>\
-        <menuitem action='EPS'/>\
-        <menuitem action='EAP'/>\
+        <menuitem action='eps'/>\
+        <menuitem action='eap'/>\
+        <menuitem action='esn'/>\
+        <menuitem action='esi'/>\
+        <menuitem action='efp'/>\
+        <menuitem action='cache'/>\
+        <menuitem action='increm'/>\
       </menu>\
       <menu action='HelpMenu'>\
         <menuitem action='About'/>\
@@ -145,14 +152,26 @@ class mainwindow () =
           ~callback:(fun _ -> ignore (self#show_about_dialog ()));
         a "Execute" ~stock:`EXECUTE ~tooltip:"Check all procedures"
           ~callback:(fun _ -> self#run_all_handler ());
-        ta "EPS" ~label:"Enable Predicate Specialization"
+        ta "eps" ~label:"Predicate Specialization"
           ~callback:(fun act -> args <- {args with HH.eps = act#get_active});
-        ta "EAP" ~label:"Enable Aggressive Prunning"
+        ta "eap" ~label:"Aggressive Prunning"
           ~callback:(fun act -> args <- {args with HH.eap = act#get_active});
+        ta "esn" ~label:"Simplifier in Fast Imply"
+          ~callback:(fun act -> args <- {args with HH.esn = act#get_active});
+        ta "esi" ~label:"Strong Predicate Invariant"
+          ~callback:(fun act -> args <- {args with HH.esi = act#get_active});
+        ta "efp" ~label:"Fast Imply Only for Prunning"
+          ~callback:(fun act -> args <- {args with HH.efp = act#get_active});
+        ta "cache" ~label:"Cached Checking" ~active:true
+          ~callback:(fun act -> args <- {args with HH.cache = act#get_active});
+        ta "increm" ~label:"Incremental Proving"
+          ~callback:(fun act -> args <- {args with HH.increm = act#get_active});
         radio ~init_value:0 ~callback:self#set_theorem_prover [
           ra "Omega" 0 ~label:"_Omega";
           ra "Mona" 1 ~label:"_Mona";
-          ra "Redlog" 2 ~label:"_Redlog";
+          ra "Cvc3" 2 ~label:"_Cvc3";
+          ra "Redlog" 3 ~label:"_Redlog";
+          ra "Coq" 4 ~label:"Co_q";
         ];
       ];
       let ui = GAction.ui_manager () in
@@ -261,7 +280,7 @@ class mainwindow () =
     method get_text () = source_view#source_buffer#get_text ()
 
     method set_theorem_prover id =
-      let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog] in
+      let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.Coq] in
       let tp = List.nth provers id in
       args <- {args with HH.tp = tp};
       let tp_name = TP.name_of_tp tp in

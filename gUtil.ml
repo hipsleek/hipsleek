@@ -213,6 +213,11 @@ module SleekHelper = struct
     tp: TP.tp_type;
     eps: bool;
     eap: bool;
+    esn: bool;
+    esi: bool;
+    efp: bool;
+    cache: bool;
+    increm: bool;
   }
 
   let infile = "/tmp/sleek.in." ^ (string_of_int (Unix.getpid ()))
@@ -222,13 +227,23 @@ module SleekHelper = struct
     tp = TP.OmegaCalc;
     eps = false;
     eap = false;
+    esn = false;
+    esi = false;
+    efp = false;
+    cache = true;
+    increm = false;
   }
 
   let build_args_string (args: sleek_args) =
     let tp = " -tp " ^ (TP.string_of_tp args.tp) in
     let eps = if args.eps then " --eps" else "" in
     let eap = if args.eap then " --eap" else "" in
-    let res = tp ^ eps ^ eap in
+    let esn = if args.esn then " --esn" else "" in
+    let esi = if args.esi then " --esi" else "" in
+    let efp = if args.efp then " --efp" else "" in
+    let cache = if not args.cache then " --no-cache" else "" in
+    let increm = if not args.increm then " --increm" else "" in
+    let res = tp ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
     res
 
   let sleek_command (args: sleek_args) = 
@@ -320,6 +335,11 @@ module SleekHelper = struct
 
 end (* SleekHelper *)
 
+
+(**
+   Helper for interacting with Hip script
+   Command calling, process management, parsing of result,...
+ *)
 module HipHelper = struct
 
   open SourceUtil
@@ -328,6 +348,11 @@ module HipHelper = struct
     tp: TP.tp_type;
     eps: bool;
     eap: bool;
+    esn: bool;
+    esi: bool;
+    efp: bool;
+    cache: bool;
+    increm: bool;
   }
 
   let infile = "hip.in." ^ (string_of_int (Unix.getpid ()))
@@ -340,19 +365,30 @@ module HipHelper = struct
     tp = TP.OmegaCalc;
     eps = false;
     eap = false;
+    esn = false;
+    esi = false;
+    efp = false;
+    cache = true;
+    increm = false;
   }
 
   let build_args_string (args: hip_args) =
-    let tp = "-tp " ^ (TP.string_of_tp args.tp) in
+    let tp_name = TP.string_of_tp args.tp in
+    let tp = "-tp " ^ tp_name in
+    let log = " --log-" ^ tp_name in
     let eps = if args.eps then " --eps" else "" in
     let eap = if args.eap then " --eap" else "" in
-    let res = tp ^ eps ^ eap in
+    let esn = if args.esn then " --esn" else "" in
+    let esi = if args.esi then " --esi" else "" in
+    let efp = if args.efp then " --efp" else "" in
+    let cache = if not args.cache then " --no-cache" else "" in
+    let increm = if not args.increm then " --increm" else "" in
+    let res = tp ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
     res
 
   let hip_command (args: hip_args) (proc_name: string) =
     let args = build_args_string args in
-    let hip = "./hip -dd --log-cvc3 --log-omega --log-coq --log-mona --log-redlog" in
-    Printf.sprintf "%s %s -p %s %s>%s 2>%s" hip args proc_name infile outfile errfile
+    Printf.sprintf "./hip -dd %s -p %s %s>%s 2>%s" args proc_name infile outfile errfile
 
   (** run hip with source text and return result string *)
   let run_hip ?(args = default_args) (src: string) (proc_name: string) =
