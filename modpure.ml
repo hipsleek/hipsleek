@@ -14,13 +14,12 @@ struct
     | Void          -> "void"
     | Bag           -> "multiset"
     | List          -> "list"
-  ;;
 
   (* pretty printing for types *)
   let string_of = function 
     | CP.Prim t -> string_of_prim t 
     | CP.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
-  ;;
+		
 end;;
 
 module SV =
@@ -31,11 +30,9 @@ struct
   type v = Cpure.spec_var
   type t = v
 
-  let is_primed sv = match sv with
-	|  CP.SpecVar (_, _, p) -> p = Primed
+  let is_primed = CP.is_primed
 
-  let string_of sv = match sv with
- 	|  CP.SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+  let string_of = CP.string_of_spec_var
 
   let compare (x:v) (y:v) = 
     let v = String.compare (string_of x) (string_of y) in
@@ -43,34 +40,18 @@ struct
     else if v>0 then Greater
     else Less
 
-  let name_of sv = match sv with
-	| CP.SpecVar (_, v, _) -> v
+  let name_of = CP.name_of_spec_var
 
+  let full_name_of  = CP.full_name_of_spec_var
+	
+  let type_of = CP.type_of_spec_var
 
-  let full_name_of sv = match sv with
-	|  CP.SpecVar (_, v, p) -> if (is_primed sv) then (v ^ "\'") else v
-
-  let type_of sv = match sv with
-	|  CP.SpecVar (t, _, _) -> t
-		   
-
-  let is_unprimed sv = match sv with
-	|  CP.SpecVar (_, _, p) -> p = Unprimed
-
+  let is_unprimed = CP.is_unprimed
+	
   let eq = CP.eq_spec_var
-
 
 end;;
 
-(* module SV = *)
-(* struct *)
-(*   include Globals *)
-(*   type  *)
-(*   let eq = eq_spec_var *)
-(*   let string_of = string_of_spec_var *)
-(* end;; *)
-
- 
 module SpecVarSet = Gen.Set(SV);;
 
 (* this is a hierachical labelling based on strings *)
