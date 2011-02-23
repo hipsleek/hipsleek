@@ -1094,7 +1094,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       if (ffv!=[]) then 
         Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def"^vdef.I.view_name} in
+          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" "} in
      let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
      let _ = vdef.I.view_typed_vars <- typed_vars in
      let mvars = [] in
@@ -1482,7 +1482,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name} in
+          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
 	  let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_args = args;
@@ -4830,6 +4830,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       propagate_constraints p_c n
     else nl in
   
+
   let compute_invariants v_l (pure_list:(formula_label * (CP.baga_sv * CP.b_formula list)) list) : (formula_label list * (CP.baga_sv * CP.b_formula list)) list= 
     let combine_pures (l1:CP.b_formula list) (l2:CP.b_formula list) :CP.b_formula list = 
       let split_neq l = List.partition (fun c1 -> match c1 with | CP.Neq _ -> true | _ -> false) l in
@@ -4883,6 +4884,19 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         let n_list = List.concat n_list1 in 
         comp (i+1) (crt_lst@n_list) n_list in        
     (comp 2 start start) in
+
+
+
+  let compute_invariants v_l (pure_list:(formula_label * (CP.baga_sv * CP.b_formula list)) list) 
+        : (formula_label list * (CP.baga_sv * CP.b_formula list)) list= 
+    let pr0 = Gen.BList.string_of_f (CP.SV.string_of) in
+    let pr x = Gen.BList.string_of_f Cprinter.string_of_b_formula x in
+    let pr1 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
+    in  Gen.BList.string_of_f (Gen.string_of_pair (fun x -> (Cprinter.string_of_formula_label) x "") pr ) l in
+    let pr2 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
+    in  Gen.BList.string_of_f (Gen.string_of_pair (Gen.BList.string_of_f (fun x -> (Cprinter.string_of_formula_label) x "")) pr ) l in
+    Gen.Debug.ho_2 "compute_invariants"  
+        pr0 pr1 pr2 compute_invariants v_l pure_list in
   
   (*actual case inference*)
   let guard_list = List.map (fun (c,lbl)-> 
