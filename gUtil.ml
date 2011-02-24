@@ -242,7 +242,7 @@ module SleekHelper = struct
     let esi = if args.esi then " --esi" else "" in
     let efp = if args.efp then " --efp" else "" in
     let cache = if not args.cache then " --no-cache" else "" in
-    let increm = if not args.increm then " --increm" else "" in
+    let increm = if args.increm then " --increm" else "" in
     let res = tp ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
     res
 
@@ -382,8 +382,8 @@ module HipHelper = struct
     let esi = if args.esi then " --esi" else "" in
     let efp = if args.efp then " --efp" else "" in
     let cache = if not args.cache then " --no-cache" else "" in
-    let increm = if not args.increm then " --increm" else "" in
-    let res = tp ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
+    let increm = if args.increm then " --increm" else "" in
+    let res = tp ^ log ^ eps ^ eap ^ esn ^ esi ^ efp ^ cache ^ increm in
     res
 
   let hip_command (args: hip_args) (proc_name: string) =
