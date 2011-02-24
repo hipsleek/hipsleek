@@ -10,6 +10,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
+
 type typed_ident = (CP.typ * ident)
 
 type t_formula = (* type constraint *)
@@ -75,12 +76,13 @@ and formula =
   | Base of formula_base
   | Or of formula_or
   | Exists of formula_exists
+
 and list_formula = formula list
 
 and formula_base = {  formula_base_heap : h_formula;
                       formula_base_pure : MCP.mix_formula;
                       formula_base_type : t_formula; (* a collection ot subtype information *)
-		      (* formula_base_imm : bool; *)
+		              (* formula_base_imm : bool; *)
                       formula_base_flow : flow_formula;
                       formula_base_branches : (branch_label * CP.formula) list;
                       formula_base_label : formula_label option;
@@ -98,7 +100,7 @@ and formula_exists = {  formula_exists_qvars : CP.spec_var list;
                         formula_exists_heap : h_formula;
                         formula_exists_pure : MCP.mix_formula;
                         formula_exists_type : t_formula;
-			(* formula_exists_imm : bool; *)
+			            (* formula_exists_imm : bool; *)
                         formula_exists_flow : flow_formula;
                         formula_exists_branches : (branch_label * CP.formula) list;
                         formula_exists_label : formula_label option;
@@ -126,6 +128,7 @@ and h_formula = (* heap formula *)
   | HTrue
   | HFalse
           
+
 and h_formula_star = {  h_formula_star_h1 : h_formula;
                         h_formula_star_h2 : h_formula;
                         h_formula_star_pos : loc }
@@ -140,7 +143,7 @@ h_formula_phase_pos : loc }
 
 and h_formula_data = {  h_formula_data_node : CP.spec_var;
                         h_formula_data_name : ident;
-			h_formula_data_imm : bool;
+			            h_formula_data_imm : bool;
                         h_formula_data_arguments : CP.spec_var list;
                         h_formula_data_label : formula_label option;
                         h_formula_data_remaining_branches :  (formula_label list) option;
@@ -149,7 +152,7 @@ and h_formula_data = {  h_formula_data_node : CP.spec_var;
 
 and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_name : ident;
-			h_formula_view_imm : bool;
+			            h_formula_view_imm : bool;
                         h_formula_view_arguments : CP.spec_var list;
                         h_formula_view_modes : mode list;
                         h_formula_view_coercible : bool;
@@ -160,6 +163,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
                         h_formula_view_label : formula_label option;
                         h_formula_view_pos : loc }
+
 and approx_disj = 
   | ApproxBase of approx_disj_base
   | ApproxOr of approx_disj_or
@@ -214,11 +218,11 @@ and struc_formula_of_heap h pos = [EBase {
 		 
 and struc_formula_of_formula f pos = [EBase { 
 		formula_ext_explicit_inst = [];	 
-     formula_ext_implicit_inst = []; 
-     formula_ext_exists = [];
-		 formula_ext_base = f;
-		 formula_ext_continuation = [];
-		 formula_ext_pos = pos}]
+        formula_ext_implicit_inst = []; 
+        formula_ext_exists = [];
+		formula_ext_base = f;
+		formula_ext_continuation = [];
+		formula_ext_pos = pos}]
 		 
 		 
 and mkTrueFlow () = 
@@ -229,6 +233,9 @@ and mkFalseFlow = {formula_flow_interval = false_flow_int; formula_flow_link = N
 
 and mkNormalFlow () = { formula_flow_interval = !n_flow_int; formula_flow_link = None;}
 
+and mkFlow nfl = { formula_flow_interval = nfl; formula_flow_link = None;}
+
+and formula_of_pure p pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 and formula_of_mix_formula (p:MCP.mix_formula) (pos:loc) :formula= mkBase HTrue p TypeTrue (mkTrueFlow ()) [] pos
 
 and formula_of_pure_aux (p:CP.formula) (status:int) (pos:loc) :formula=
@@ -257,6 +264,10 @@ and formula_of_pure_with_branches_fl_aux p br fl status pos =
   mkBase HTrue mp TypeTrue fl br pos
 
 and formula_of_pure_with_branches_fl_N p br fl pos = formula_of_pure_with_branches_fl_aux p br fl 1 pos
+
+and formula_of_pure_fl p fl pos = mkBase HTrue p TypeTrue fl [] pos
+
+and formula_of_pure_with_branches p br pos = mkBase HTrue p TypeTrue (mkTrueFlow ()) br pos
 
 and formula_of_pure_with_branches_fl_P p br fl pos = formula_of_pure_with_branches_fl_aux p br fl (-1) pos
   
@@ -563,8 +574,8 @@ and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse;
 						 formula_base_type = TypeFalse;
 						 (* formula_base_imm = false; *)
 						 formula_base_flow = flowt (*mkFalseFlow*); (*Cpure.flow_eqs any_flow pos;*)
-             formula_base_branches = [];
-             formula_base_label = None;
+                         formula_base_branches = [];
+                         formula_base_label = None;
 						 formula_base_pos = pos})
 						 
 and mkEFalse flowt pos = EBase({
@@ -610,8 +621,8 @@ and mkBase_w_lbl (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flo
 		   formula_base_type = t;
 		   (* formula_base_imm = contains_immutable_h_formula h; *)
 		   formula_base_flow = fl;
-       formula_base_branches = b;
-       formula_base_label = lbl;
+           formula_base_branches = b;
+           formula_base_label = lbl;
 		   formula_base_pos = pos})
 and mkBase (h : h_formula) (p : MCP.mix_formula) (t : t_formula) (fl : flow_formula) b (pos : loc) : formula= 
   mkBase_w_lbl h p t fl b pos None
@@ -1109,7 +1120,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	     h_formula_conj_pos = pos})
   | ViewNode ({h_formula_view_node = x; 
 			   h_formula_view_name = c; 
-                           h_formula_view_imm = imm; 
+               h_formula_view_imm = imm; 
 			   h_formula_view_arguments = svs; 
 			   h_formula_view_modes = modes;
 			   h_formula_view_coercible = coble;
@@ -1120,7 +1131,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 			   h_formula_view_pos = pos}) -> 
       ViewNode ({h_formula_view_node = subst_var s x; 
 				 h_formula_view_name = c; 
-                                 h_formula_view_imm = imm;  
+                 h_formula_view_imm = imm;  
 				 h_formula_view_arguments = List.map (subst_var s) svs;
 				 h_formula_view_modes = modes;
 				 h_formula_view_coercible = coble;
@@ -1131,7 +1142,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 				 h_formula_view_pos = pos})
   | DataNode ({h_formula_data_node = x; 
 			   h_formula_data_name = c; 
-                           h_formula_data_imm = imm; 
+               h_formula_data_imm = imm; 
 			   h_formula_data_arguments = svs; 
 			   h_formula_data_label = lbl;
          h_formula_data_remaining_branches = ann;
@@ -1139,7 +1150,7 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 			   h_formula_data_pos = pos}) -> 
       DataNode ({h_formula_data_node = subst_var s x; 
 				 h_formula_data_name = c; 
-    	                         h_formula_data_imm = imm;  
+    	         h_formula_data_imm = imm;  
 				 h_formula_data_arguments = List.map (subst_var s) svs;
 				 h_formula_data_label = lbl;
          h_formula_data_remaining_branches = ann;
@@ -1744,6 +1755,7 @@ and steps = string list
 
 and fail_context = {
   fc_prior_steps : steps; (* prior steps in reverse order *)
+  fc_kind : string; (*may/must*)
   fc_message : string;          (* error message *)
   fc_current_lhs : entail_state;     (* LHS context with success points *)
   fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
@@ -2360,6 +2372,44 @@ and set_flow_in_context_override f_f ctx = match ctx with
 	| Ctx es -> Ctx {es with es_formula = (set_flow_in_formula_override f_f es.es_formula)}
 	| OCtx (c1,c2) -> OCtx ((set_flow_in_context_override f_f c1),(set_flow_in_context_override f_f c2))
 
+(**************************************************************************************************************
+ * Nov 2010
+ * Get flow formula from list of fail escape context
+***************************************************************************************************************)
+
+let rec get_flow_from_list_failesc_context (lfc : list_failesc_context) : string =
+    match lfc with
+    | [] -> ""
+    | (_,_,br_ctx)::[] -> (get_flow_from_branch_context br_ctx)
+    | (_,_,br_ctx)::tl -> (get_flow_from_branch_context br_ctx)^". "^(get_flow_from_list_failesc_context tl)
+
+and get_flow_from_branch_context (br_ctx : branch_ctx list) : string =
+    match br_ctx with
+    | [] -> ""
+    | hd::[] -> (get_flow_from_context (snd hd))
+    | hd::tl -> (get_flow_from_context (snd hd))^". "^(get_flow_from_branch_context tl)
+
+and get_flow_from_context (ctx : context) : string = 
+   match ctx with
+   | Ctx es -> get_flow_from_entail_state es
+   | OCtx (ctx1, ctx2) -> (get_flow_from_context ctx1)^", "^(get_flow_from_context ctx2)
+
+and get_flow_from_entail_state (es : entail_state) : string =
+    get_flow_from_formula es.es_formula
+
+and get_flow_from_formula (f : formula) : string =
+    match f with
+    | Base fb -> get_flow_from_flow_formula fb.formula_base_flow
+    | Or fo -> (get_flow_from_formula fo.formula_or_f1)^" OR "^(get_flow_from_formula fo.formula_or_f2)
+    | Exists fe -> get_flow_from_flow_formula fe.formula_exists_flow
+
+and get_flow_from_flow_formula (ff : flow_formula) : string =
+    let flow_name = Gen.ExcNumbering.get_closest ff.formula_flow_interval in
+    (if (flow_name = "__NullPointerErr") then "Null Pointer Error"
+     else "") 
+    
+(**************************************************************************************************************)
+ 
 
 
 (* order nodes in topological order *)
@@ -3258,12 +3308,14 @@ let add_path_id_ctx_failesc_list (c:list_failesc_context) (pi1,pi2) : list_faile
 let normalize_max_renaming_list_partial_context f pos b ctx = 
     if !Globals.max_renaming then transform_list_partial_context ((normalize_es f pos b),(fun c->c)) ctx
       else transform_list_partial_context ((normalize_clash_es f pos b),(fun c->c)) ctx
+
 let normalize_max_renaming_list_failesc_context f pos b ctx = 
     if !Globals.max_renaming then transform_list_failesc_context (idf,idf,(normalize_es f pos b)) ctx
       else transform_list_failesc_context (idf,idf,(normalize_clash_es f pos b)) ctx
 let normalize_max_renaming_list_failesc_context f pos b ctx =
   Gen.Profiling.do_2 "normalize_max_renaming_list_failesc_context" (normalize_max_renaming_list_failesc_context f pos) b ctx
       
+    
 let normalize_max_renaming f pos b ctx = 
   if !Globals.max_renaming then transform_list_context ((normalize_es f pos b),(fun c->c)) ctx
   else transform_list_context ((normalize_clash_es f pos b),(fun c->c)) ctx

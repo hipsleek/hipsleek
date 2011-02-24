@@ -24,7 +24,7 @@ ll<n> == self = null & n = 0
       //assert x!=null; 
        // success or not?
       assert true; //'
-      assert true & flow e1;
+     assert true & flow e1;
    }
 /*
 
@@ -42,7 +42,7 @@ ll<n> == self = null & n = 0
 (6, ):assert (6, ):: true & true & {FLOW,(15,16)=__Exc,} 
  // why isn't e1 reflected? instead __Exc was usesd..
 
-*/
+ */
 
   void nonnull(node x)
    case {

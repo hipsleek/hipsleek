@@ -106,7 +106,9 @@ let eq_spec_var (sv1 : spec_var) (sv2 : spec_var) = match (sv1, sv2) with
 
 let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 
-     
+let get_specvar_type (sv : spec_var) : typ = match sv with
+  | SpecVar (t, _, _) -> t
+
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> OType ""
@@ -578,7 +580,12 @@ and mkNeqVar (sv1 : spec_var) (sv2 : spec_var) pos=
 and mkEqVarInt (sv : spec_var) (i : int) pos =
   BForm ((Eq (Var (sv, pos), IConst (i, pos), pos)),None)
 
+and mkEqVarNull (sv : spec_var) pos =
+  BForm ((Eq (Var (sv, pos), Null pos, pos)), None)
 
+and mkNEqVarNull (sv : spec_var) pos =
+  BForm ((Neq (Var (sv, pos), Null pos, pos)), None)
+  
 (*
   and mkEqualAExp (ae1 : exp) (ae2 : exp) = match (ae1, ae2) with
   | (AVar (SVar sv1), AVar (SVar sv2)) ->

@@ -220,7 +220,11 @@ let clear_entailment_history_partial_list (ctx : list_partial_context) : list_pa
 
 let fail_ctx_stk = ref ([]:fail_type list)
 let previous_failure () = not(Gen.is_empty !fail_ctx_stk)
-
+   
+(*
+let failure_msg = ref ("" : string)
+let may_must_list = ref ([] : string list)
+*)
 
 let enable_distribution = ref true
 let imp_no = ref 1
@@ -2289,7 +2293,10 @@ and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool) (is_u
         if isAnyFalseCtx ctx then
         ([false_ctx pos], UnsatAnte)
         else*)
+      (*let _ = may_must_list := [] in*)
       let result, prf = heap_entail_after_sat_struc prog is_folding is_universal has_post ctx conseq pos pid []  in
+      (*let _ = if (List.mem "may" !may_must_list) then
+                      failure_msg := "May failure. " else failure_msg := "Must failure. " in*)
       (result, prf)
 
 and heap_entail_after_sat_struc prog is_folding is_universal has_post
@@ -3637,7 +3644,9 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool) (is_unive
 						    ^ (Cprinter.string_of_context ctx0)
 						    ^ "\nconseq:\n"
 						    ^ (Cprinter.string_of_formula conseq)) pos;
-			                (CF.mkFailCtx_in (Basic_Reason ({fc_message ="incompatible flow type"; 
+			                (CF.mkFailCtx_in (Basic_Reason ({
+                            fc_kind = "should be updated-may/must/exception";
+                            fc_message ="incompatible flow type"; 
 							fc_current_lhs = estate;
 							fc_orig_conseq = struc_formula_of_formula conseq pos;
 							fc_prior_steps = estate.es_prior_steps;
@@ -3778,6 +3787,9 @@ and heap_entail_empty_rhs_heap_debug p i_f i_u es lhs rhs rhsb pos =
 
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
+  (*let sat_subno = ref 1 in*)
+  let fc_kind = ref"" in
+  let fc_msg = ref "" in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
   let lhs_t = lhs.formula_base_type in
@@ -3812,34 +3824,41 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
           (* use the previous conseq , reset the error flag *)
           memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos 
 	    else new_conseq0 in
-      let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
-	  (* <<<<<<< solver.ml *)
-	  (*       let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in *)
-	  (*       let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in *)
-	  (*       let split_ante1 = Tpdispatcher.split_disjunctions new_ante in *)
-	  (* 	  (\* first try for xpure 0 and see what conjuncts can be discharged *\) *)
-	  (*       let res1,res2,res3 = if (CP.isConstTrue rhs_p) then (true,[],None) else (imply_conj split_ante0 split_ante1 split_conseq memset) in	 *)
-	  (* 	  (\* added by cezary  for branches *\) *)
-	  (*       let res1,res2,re3 =  *)
-	  (* ======= *)
+      (*let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
+      let _ = print_string ("\n"^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_ante0))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_conseq0))) in*)
+      
+     (* let new_pformula = CP.mkAnd (MCP.pure_of_mix new_ante1) (MCP.pure_of_mix new_conseq1) no_pos in
+      let res_sat = TP.is_sat_sub_no new_pformula sat_subno in
+      let _ = if res_sat then may_must_list := !may_must_list @ ["may"] else may_must_list := !may_must_list @ ["must"] in *)
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
       let split_ante1 = new_ante1 in
-      let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then (true,[],None) 
-      else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in	
-      let res1,res2,re3 = 
+      let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then ((true,[],None) )
+      else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in
+      let (res1,res2,re3) =
         if res1 = false && branch_id = "" then
-	      let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
+
+          (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)
+          let new_pformula = CP.mkAnd (MCP.pure_of_mix split_ante1) (MCP.pure_of_mix split_conseq) no_pos in
+          let res_sat = TP.is_sat_sub_no new_pformula imp_no in
+          if res_sat then 
+           begin
+             fc_kind := "MAY";
+             fc_msg :=  (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": HOLD ---" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
+           end else 
+           begin
+             fc_kind :=  "MUST";
+             fc_msg :=  (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": not HOLD ---" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
+            end ;
+          let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
           let fold_fun (is_ok,a2,a3) branch_id_added =
             if is_ok then (is_ok,a2,a3) else
 	          let tmp1 = MCP.merge_mems (MCP.combine_mix_branch branch_id_added (xpure_lhs_h1, xpure_lhs_h1_b)) 
                 (MCP.combine_mix_branch branch_id_added (lhs_p, lhs_b)) false in
 	          let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
+           let _ = print_string ("Before mix_imply: -----------------\n  ante:"^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_ante))^"\n  ante1: "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^"\n  conseq: "^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix new_conseq)) ^ "\n")in
+
 		      imp_subno := !imp_subno+1; 
-		      (* <<<<<<< solver.ml *)
-		      (* 		      Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos; *)
-		      (* 		      TP.imply new_ante new_conseq memset ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) *)
-		      (* ======= *)
 		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
 		      (* -- to remove --*)
 		      (*		      new_conseq = solve_ineq new_conseq memset in
@@ -3847,15 +3866,15 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 				              ---*)
 		      (imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno None memset)
           in
-          List.fold_left fold_fun (false,[],None) branches
-        else (res1,res2,res3)
+          (List.fold_left fold_fun (false,[],None) branches)
+        else ((res1,res2,res3))
       in
 	  (imp_no := !imp_no+1;
 	  (res1,res2@succs,res3))  in
 
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   let memo_r_br = List.map (fun (c1,c2)-> (c1,MCP.memoise_add_pure_N (MCP.mkMTrue pos) c2)) rhs_p_br in
-  let (r_rez,r_succ_match, r_fail_match) = List.fold_left fold_fun  (true,[],None) (("", rhs_p) :: memo_r_br) in
+  let (r_rez,r_succ_match, r_fail_match) = List.fold_left fold_fun  ((true,[],None)) (("", rhs_p) :: memo_r_br) in
   if r_rez then begin
     let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
 	if is_folding then begin
@@ -3881,7 +3900,8 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   end else begin
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (CF.mkFailCtx_in (Basic_Reason ({
-		fc_message = "failed in entailing pure formula(s) in conseq";
+        fc_kind = !fc_kind;
+		fc_message = !fc_msg;(*"failed in entailing pure formula(s) in conseq";*)
 		fc_current_lhs  = estate;
 		fc_prior_steps = estate.es_prior_steps;
 		fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br pos) pos;
@@ -3897,12 +3917,12 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	   - if the equality is solved -> remove it from conseq 
     *)
 
-and solve_ineq_debug a m c = Gen.Debug.ho_2 "solve_ineq "
+and solve_ineq a m c = Gen.Debug.no_2 "solve_ineq "
   (Cprinter.string_of_mem_formula)
   (Cprinter.string_of_mix_formula) 
-  (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq a m c) m c
+  (Cprinter.string_of_mix_formula) (fun m c -> solve_ineq_x a m c) m c
 
-and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
+and solve_ineq_x (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula) 
       (conseq : MCP.mix_formula) : MCP.mix_formula =
   (* let memset = {mem_formula_mset = [[Cpure.SpecVar (Cpure.Prim Int, "x", Unprimed);Cpure.SpecVar (Cpure.Prim Int, "y", Unprimed)]]} in *)
   match ante_m0,conseq with
@@ -3919,14 +3939,14 @@ and solve_ineq (ante_m0:MCP.mix_formula) (memset : Cformula.mem_formula)
     |  _ ->  Error.report_error 
            {Error.error_loc = Globals.no_pos; Error.error_text = ("antecedent and consequent mismatch")}
 
-and solve_ineq_pure_formula_debug (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
-  Gen.Debug.ho_3 "solve_ineq_pure_formula "
+and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+  Gen.Debug.no_3 "solve_ineq_pure_formula "
       (Cprinter.string_of_pure_formula)
       (Cprinter.string_of_mem_formula) 
       (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula)
-      (fun ante memset conseq -> solve_ineq_pure_formula ante memset conseq ) ante memset conseq
+      (fun ante memset conseq -> solve_ineq_pure_formula_x ante memset conseq ) ante memset conseq
 
-and solve_ineq_pure_formula (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
+and solve_ineq_pure_formula_x (ante : Cpure.formula) (memset : Cformula.mem_formula) (conseq : Cpure.formula) : Cpure.formula =
   let eqset = CP.EMapSV.build_eset (MCP.pure_ptr_equations ante) in
   let rec helper (conseq : Cpure.formula) =
     match conseq with
@@ -4020,15 +4040,15 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_debug ante_m0 ante_m1 conseq_m imp_no memset =
+and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
   Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
-      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset)
+      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
       ante_m0 ante_m1 conseq_m memset
 
-and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset 
+and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
@@ -4114,6 +4134,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
 		es_var_label = estate.es_var_label} in
     let na,prf = match vd.view_base_case with
       | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
+            fc_kind = "should be updated. may/must";
 			fc_message ="failure 1 ?? when checking for aliased node";
 			fc_current_lhs = estate;
 			fc_prior_steps = estate.es_prior_steps;
@@ -4135,6 +4156,7 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
 		        let ctx = unfold_context (prog, Some (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
 		        (ctx,TrueConseq)
               else  (CF.mkFailCtx_in(Basic_Reason  ( { 
+                  fc_kind = "should be updated. may/must";
 				  fc_message ="failure 2 ?? when checking for aliased node";
 				  fc_current_lhs = estate;
 				  fc_prior_steps = estate.es_prior_steps;
@@ -4390,6 +4412,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 		        (* let _ = print_string("Matching result: Failed -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
 
 		        (CF.mkFailCtx_in (Continuation ( {
+                    fc_kind = "should be updated. may/must";
 					fc_message = "failed 1 ?? to find a match";
 					fc_current_lhs = estate;
 					fc_prior_steps = estate.es_prior_steps;
@@ -4398,15 +4421,15 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 					fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) (* p2 is not mentioned in LHS, failure *)
 	      | NoMatch -> begin (* p2 is mentioned in LHS, but no matching
 				                node/predicate is found *)
-		      (* let _ = print_string("no match\n") in *)
-		      if is_data ln2 then begin (* fail *)
-		        (* let _ = print_string("Matching result: NoMatch -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
-
+              if is_data ln2 then begin (* fail *)
+               (*may-must*)
+                (* may_must_list := !may_must_list @ ["must"];*)
                 Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
 				^ "no aliased node for data node "
 				^ (Cprinter.string_of_h_formula ln2)
 				^ " is found in LHS\n") pos;
                 (CF.mkFailCtx_in (Continuation ( {
+                    fc_kind = "should be updated. may/must";
 					fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
 					fc_current_lhs = estate;
 					fc_prior_steps = estate.es_prior_steps;
@@ -4419,6 +4442,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			    if (estate.es_cont != []) then
 			      (* let _ = print_string("try the cont!!!\n\n") in *)
 			      (CF.mkFailCtx_in (Continuation ( {
+                      fc_kind = "should be updated. may/must";
 					  fc_message = "try the continuation";
 					  fc_current_lhs = estate;
 					  fc_prior_steps = estate.es_prior_steps;
@@ -4469,6 +4493,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			                let subsumes, (*to_be_proven*)_ = prune_branches_subsume(*_debug*) prog estate.es_ivars anode ln2 in
 				            if not subsumes then 
 				              (CF.mkFailCtx_in (Basic_Reason ({
+                                  fc_kind = "should be updated. may/must";
 								  fc_message = "there is a mismatch in branches ";
 								  fc_current_lhs = estate;
 								  fc_prior_steps = estate.es_prior_steps;
@@ -4581,6 +4606,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 						                        begin
 						                          Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "can't reduce, fold, unfold") pos;
 						                          (CF.mkFailCtx_in (Basic_Reason ( {
+                                                      fc_kind = "should be updated. may/must";
 										              fc_message = "can't reduce, fold, unfold";
 										              fc_current_lhs = estate;
 										              fc_prior_steps = estate.es_prior_steps;
@@ -4600,6 +4626,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			              end
 			            else
 			              (CF.mkFailCtx_in (Basic_Reason ({
+                              fc_kind = "should be updated. may/must";
 							  fc_message = "there is a match at some node, not at root";
 							  fc_current_lhs = estate;
 							  fc_prior_steps = estate.es_prior_steps;
@@ -4776,6 +4803,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 	      then
 		    (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; 
 		    (CF.mkFailCtx_in(Basic_Reason( { 
+                fc_kind = "should be updated. may/must";
 				fc_message ="failed coercion application";
 				fc_current_lhs = estate;
 				fc_prior_steps = estate.es_prior_steps;
@@ -4816,6 +4844,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		    end
 	    end
 	  | _ -> (CF.mkFailCtx_in(Basic_Reason ( { 
+            fc_kind = "should be updated. may/must";
 			fc_message ="failed coercion application, found data expected view";
 			fc_current_lhs = estate;
 			fc_prior_steps = estate.es_prior_steps;
@@ -4944,6 +4973,7 @@ and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_
   (*******************************************************************************************************************************************************************************************)
   flush stdout;
     if Gen.is_empty coer.coercion_univ_vars then (CF.mkFailCtx_in ( Basic_Reason (  {
+        fc_kind = "should be updated. may/must";
 		fc_message = "failed apply_universal";
 		fc_current_lhs = estate;
 		fc_prior_steps = estate.es_prior_steps;
@@ -5039,6 +5069,7 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lh
     in
 	(res, [prf])
   end else (CF.mkFailCtx_in( Basic_Reason ( { 
+      fc_kind = "should be updated. may/must";
 	  fc_message ="failed coercion application";
 	  fc_current_lhs = estate;
 	  fc_prior_steps = estate.es_prior_steps;
@@ -5063,13 +5094,17 @@ and apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t rhs
 	    coer.coercion_body tmp_prf  coer.coercion_name
 	  in
 	  (res, [prf])
-	end else (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
+	end else (CF.mkFailCtx_in(Basic_Reason ( {
+    fc_kind = "should be updated. may/must";
+    fc_message ="failed right coercion application";
 	fc_current_lhs = estate;
 	fc_prior_steps = estate.es_prior_steps;
 	fc_orig_conseq = estate.es_orig_conseq;
 	fc_current_conseq = CF.formula_of_heap HFalse pos;
 	fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
-  else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application";
+  else (CF.mkFailCtx_in(Basic_Reason ({
+  fc_kind = "should be updated. may/must";
+  fc_message ="failed right coercion application";
   fc_current_lhs = estate;
   fc_prior_steps = estate.es_prior_steps;
   fc_orig_conseq = estate.es_orig_conseq;

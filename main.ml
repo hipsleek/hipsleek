@@ -25,7 +25,7 @@ let parse_file_full file_name =
      *)
 		print_string "Parsing...\n"; flush stdout;
         let _ = Gen.Profiling.push_time "Parsing" in
-        Globals.input_file_name := file_name;
+    Iparser.file_name := file_name;
 		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
@@ -36,10 +36,40 @@ let parse_file_full file_name =
     with
 		End_of_file -> exit 0	  
 
+(* Parse all prelude files declared by user.*)
+let rec process_primitives file_list =
+  match file_list with
+  | [] -> []
+  | hd::tl ->
+        let header_filename = String.sub hd 1 ((String.length hd) - 2) in
+        let new_filename = (Gen.get_path Sys.executable_name) ^ header_filename in
+        let primitives = parse_file_full new_filename in
+                primitives :: (process_primitives tl)
+
+(* Process all intermediate primitives which receive after parsing *)
+let rec process_intermediate_prims prims_list =
+  match prims_list with
+  | [] -> []
+  | hd::tl ->
+        let iprims = Globalvars.trans_global_to_param hd in
+        let iprims = Iast.label_procs_prog iprims in
+                iprims :: (process_intermediate_prims tl)
+
+(* Process prelude pragma *)
+let rec process_header_with_pragma hlist plist =
+  match plist with
+  | [] -> hlist
+  | hd::tl ->
+        let new_hlist = if (hd = "NoImplicitPrelude") then [] else hlist in
+            process_header_with_pragma new_hlist tl
+
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
   let _ = Gen.Profiling.push_time "Preprocessing" in
   let prog = parse_file_full source in
+  let header_files = Gen.BList.remove_dups_eq (=) !Globals.header_file_list in (* Remove all duplicated declared prelude *)
+  let new_h_files = process_header_with_pragma header_files !Globals.pragma_list in
+  let prims_list = process_primitives new_h_files in
   if !to_java then begin
     print_string ("Converting to Java..."); flush stdout;
     let tmp = Filename.chop_extension (Filename.basename source) in
@@ -61,8 +91,10 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
-    let intermediate_prog =IastUtil.pre_process_of_iprog prog in 
-
+    (* Append all primitives in list into one only *)
+     let iprims_list = process_intermediate_prims prims_list in
+     let iprims = Iast.append_iprims_list_head iprims_list in 
+     let intermediate_prog = Globalvars.trans_global_to_param prog in
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in
@@ -72,7 +104,7 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating to Core" in
     let _ = print_string ("Translating to core language...\n"); flush stdout in
     (*let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in*)
-    let cprog = Astsimp.trans_prog intermediate_prog in
+    let cprog = Astsimp.trans_prog intermediate_prog iprims in
     let _ = print_string (" done\n"); flush stdout in
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 

@@ -218,7 +218,7 @@ hip.norm: decidez.vo $(MAIN_FILES)
 
 hip: $(MAIN_FILES_OPT) decidez.vo
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
-#	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
+#[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)

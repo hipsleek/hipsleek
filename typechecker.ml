@@ -14,6 +14,7 @@ let flow_store = ref ([] : CF.flow_store list)
 let num_para = ref (1)
 let sort_input = ref false
 let webserver = ref false
+let nullptr_msg = ref ""
 
 let parallelize num =
   num_para := num
@@ -89,11 +90,20 @@ and check_exp prog proc ctx e0 label = Gen.Debug.no_3 "check_exp" (fun proc -> p
 (* and check_exp prog proc ctx e0 label = check_exp_a prog proc ctx e0 label *)
 
 and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_context) e0 (post_start_label:formula_label) : CF.list_failesc_context = 
-  if (exp_to_check e0) then  
-    (* let _ = if (List.exists CF.isAnyFalseFailescCtx ctx) then *)
-    (*   print_string ("\n false at :"^(Cprinter.string_of_exp e0))  *)
-    (* else () in *)
-    CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0) 
+  if (exp_to_check e0) then
+   begin 
+    let epos = Cast.pos_of_exp e0 in
+    let _  = CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0) in
+    let flow_info = CF.get_flow_from_list_failesc_context ctx in
+    if (flow_info = "") then ()
+    else
+      begin
+        nullptr_msg := ("line "^(string_of_int epos.Globals.start_pos.Lexing.pos_lnum)^", col "^
+		   (string_of_int (epos.Globals.start_pos.Lexing.pos_cnum-epos.Globals.start_pos.Lexing.pos_bol))
+            ^": "^flow_info^".\n");
+        CF.find_false_list_failesc_ctx ctx (Cast.pos_of_exp e0)
+      end
+   end
   else ();
 	let check_exp1 (ctx : CF.list_failesc_context) : CF.list_failesc_context = 
       match e0 with

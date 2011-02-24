@@ -57,93 +57,7 @@ type trans_exp_type =
 (************************************************************
 Primitives handling stuff
 ************************************************************)
-let prim_str =
-  "int add___(int a, int b) requires true ensures res = a + b;
-int minus___(int a, int b) requires true ensures res = a - b;
-int mult___(int a, int b) requires true ensures res = a * b;
-
-int div___(int a, int b) case {
-  a >= 0 -> case {
-    b >= 1 -> requires true ensures (exists r: a = b*res + r & res >= 0 & 0 <= r <= b-1);
-    b <= -1 -> requires true ensures (exists r: a = b*res + r & res <= 0 & 0 <= r <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-    }
-  a < 0 -> case {
-    b >= 1 -> requires true ensures (exists r: a = b*res + r & res <= -1 & 0 <= r <= b-1);
-    b <= -1 -> requires true ensures (exists r: a = b*res + r & res >= 1 & 0 <= r <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-    }
-}
-
-int mod___(int a, int b) case {
-  a >= 0 -> case {
-    b >= 1 -> requires true ensures (exists q: a = b*q + res & q >= 0 & 0 <= res <= b-1);
-    b <= -1 -> requires true ensures (exists q: a = b*q + res & q <= 0 & 0 <= res <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-  }
-  a < 0 -> case {
-    b >= 1 -> requires true ensures (exists q: a = b*q + res & q <= -1 & 0 <= res <= b-1);
-    b <= -1 -> requires true ensures (exists q: a = b*q + res & q >= 1 & 0 <= res <= -b-1);
-    -1 < b < 1 -> requires false ensures false;
-  }
-}
-
-float add___(float a, float b) requires true ensures res = a + b;
-float minus___(float a, float b) requires true ensures res = a - b;
-float mult___(float a, float b) requires true ensures res = a * b;
-float div___(float a, float b) requires b != 0.0 ensures res = a / b;
-bool eq___(int a, int b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(bool a, bool b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool eq___(float a, float b) case {
-    a = b -> requires true ensures res;
-    a != b -> requires true ensures !res;}
-bool neq___(int a, int b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(bool a, bool b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool neq___(float a, float b) case {
-    a = b -> requires true ensures !res;
-    a != b -> requires true ensures res;}
-bool lt___(int a, int b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lt___(float a, float b) case {
-    a <  b -> requires true ensures  res;
-    a >= b -> requires true ensures !res;}
-bool lte___(int a, int b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool lte___(float a, float b) case {
-    a <= b -> requires true ensures  res;
-    a >  b -> requires true ensures !res;}
-bool gt___(int a, int b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gt___(float a, float b) case {
-    a >  b -> requires true ensures  res;
-    a <= b -> requires true ensures !res;}
-bool gte___(int a, int b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool gte___(float a, float b) case {
-    a >= b -> requires true ensures  res;
-    a <  b -> requires true ensures !res;}
-bool land___(bool a, bool b) case {
-  a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}
-  !a -> requires true ensures !res;}
-bool lor___(bool a, bool b) case {
-  a -> requires true ensures res;
-  !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
-bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
-int pow___(int a, int b) requires true ensures true;
-"
-and string_of_stab stab = Hashtbl.fold 
+let string_of_stab stab = Hashtbl.fold 
 		(fun c1 c2 a -> 
 			a^"; ("^c1^" "^
 			(match c2.sv_info_kind with 
@@ -156,7 +70,9 @@ and string_of_var_kind k = (match k with
 		| Known d-> 
 	("known "^(Cprinter.string_of_typ d)) )
 let prim_buffer = Buffer.create 1024
-	  
+
+let binded_data : (string list) ref = ref []
+  
 (* search prog and generate all eq, neq for all the data declaration,      *)
 (* along with the ones in prim_str                                         *)
 let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
@@ -193,13 +109,11 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
            helper rest)
     | [] -> ()
   in
-    (
-     (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-     Buffer.add_string prim_buffer prim_str;
-     helper prog.I.prog_data_decls;
+    (helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
+     (*let _ = print_string ("\n all primitives: "^all_prims^"\n") in*)
      let input = Lexing.from_string all_prims in
-     input_file_name := "primitives";
+     Iparser.file_name := "primitives";
      let prog = Iparser.program (Ilexer.tokenizer "primitives") input
      in 
 	 (*let _ = print_string ("\n primitives: "^(Iprinter.string_of_program prog)^"\n") in*)
@@ -542,6 +456,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
         let (r1, r2) = reorder_views view_decls0 !view_names in r1 @ r2))
   
 let loop_procs : (C.proc_decl list) ref = ref []
+let bind_procs : (C.proc_decl list) ref = ref []
    
 let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
@@ -886,8 +801,7 @@ and need_break_continue lb ne non_generated_label :bool =
 					(*let _ = print_string ("\n needed: "^(string_of_bool (need_break_continue nl b.I.exp_while_body b_rez))^"\n") in*)
 					I.While {b with I.exp_while_body = continue_try;I.exp_while_wrappings= Some break_try}
 				else I.While {b with I.exp_while_body = while_labelling (label_breaks nl b.I.exp_while_body);I.exp_while_wrappings= None} in
-				r
-						
+				r	
    
 and prepare_labels (fct: I.proc_decl): I.proc_decl = match fct.I.proc_body with
 	| None -> fct
@@ -898,16 +812,30 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 	
 
-let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
-  let _ = I.build_exc_hierarchy false prog3 in
+let rec trans_prog (prog4 : I.prog_decl) (iprims : I.prog_decl): C.prog_decl =
+  let _ = I.build_exc_hierarchy false prog4 in  (* Exceptions - defined by users *)
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
+  let _ = I.build_exc_hierarchy false iprims in (* Errors - defined in prelude.ss*)
+  let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in
+  let _ = (Gen.ExcNumbering.add_edge error_flow "Object") in
+  let prog3 = 
+          { prog4 with I.prog_data_decls = iprims.I.prog_data_decls @ prog4.I.prog_data_decls;
+                       I.prog_proc_decls = iprims.I.prog_proc_decls @ prog4.I.prog_proc_decls;
+          }
+  in
   let prog2 = { prog3 with I.prog_data_decls = 
-          ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
-          ::prog3.I.prog_data_decls;} in  
-  let prog0 = { prog2 with			
-	  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
-	  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
-  (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
+      ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+      ::({I.data_name = error_flow;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
+      :: prog3.I.prog_data_decls;} in  
+
+  let prog1 = { prog2 with			
+		  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
+		  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
+  
+  let prog0 = { prog1 with 
+                  I.prog_data_decls = I.remove_dup_obj prog1.I.prog_data_decls;} in
+
+    (*let _ = print_string ("--> input \n"^(Iprinter.string_of_program prog0)^"\n") in*)
   let _ = I.build_hierarchy prog0 in
   let check_overridding = Chk.overridding_correct prog0 in
   let check_field_dup = Chk.no_field_duplication prog0 in
@@ -925,14 +853,17 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
                    (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
     let dups = Gen.BList.find_dups_eq (=) all_names in
     if not (Gen.is_empty dups) then
-		 (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
+		 (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected")
     else (
 		   let prog = case_normalize_program prog in
 		   let tmp_views = order_views prog.I.prog_view_decls in
 		   let cviews = List.map (trans_view prog) tmp_views in
+           let local_var_list = List.map (fun i -> proceed_proc_body i.I.proc_body) prog.I.prog_proc_decls in
+           (*err_msg*)
+		   all_var_name_list := Gen.BList.remove_dups_eq (=) !all_var_name_list @ (List.flatten local_var_list);
 		   let cdata =  List.map (trans_data prog) prog.I.prog_data_decls in
 		   let cprocs1 = List.map (trans_proc prog) prog.I.prog_proc_decls in
-		   let cprocs = !loop_procs @ cprocs1 in
+		   let cprocs = !loop_procs @ !bind_procs @ cprocs1 in
 		   let (l2r_coers, r2l_coers) = trans_coercions prog in
 		   let cprog =   {
                        C.prog_data_decls = cdata;
@@ -950,12 +881,34 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
       let cprog2 = sat_warnings cprog1 in        
       let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
       let cprog4 = (add_pre_to_cprog cprog3) in
-	  let cprog5 = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
-	  let c = (mark_recursive_call prog cprog5) in 
+			let c = if !Globals.enable_case_inference then case_inference prog cprog4 else cprog4 in
 			let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
 			  c)))
 	end)
   else failwith "Error detected"
+
+(************************************************************************************
+* Sept 2010
+* Collect all local variables of a scope
+************************************************************************************)
+
+and proceed_proc_body (e0 : I.exp option) : ident list =
+	match e0 with
+	| None -> []
+	| Some e1 -> collect_local_var e1
+
+and collect_local_var (e1 : I.exp) : ident list =
+	match e1 with
+	| I.Bind (bind_exp) -> [(bind_exp.I.exp_bind_bound_var)]
+	| I.Cond (cond_exp) -> (collect_local_var cond_exp.I.exp_cond_then_arm) @ (collect_local_var cond_exp.I.exp_cond_else_arm)
+	| I.Seq (seq_exp) -> (collect_local_var seq_exp.I.exp_seq_exp1) @ (collect_local_var seq_exp.I.exp_seq_exp2)
+	| I.Try (try_exp) -> (collect_local_var try_exp.I.exp_try_block)
+	| I.Var (var_exp) -> [(var_exp.I.exp_var_name)]
+	| I.VarDecl (vardecl_exp) -> List.map (fun (i,e,l) -> i) vardecl_exp.I.exp_var_decl_decls
+	| I.While (while_exp) -> collect_local_var while_exp.I.exp_while_body
+	| _ -> []
+
+(*************************************************************************************)
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 
@@ -1422,11 +1375,20 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     Err.report_error{
       Err.error_loc = p.I.param_loc;
       Err.error_text = "parameter " ^ (p.I.param_name ^ " is duplicated");})
-  else if not (check_return proc) then
-    Err.report_error {
-      Err.error_loc = proc.I.proc_loc;
-      Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }
-  else
+  else 
+    begin
+      (********************* Aug 2010: Collect all free vars in spec ***************)
+      let param_name_list = List.map (fun i -> i.I.param_name) proc.I.proc_args in (* list of all parameters in procedure *)
+      let static_struc_fv_list = Iformula.struc_free_vars_with_insts proc.I.proc_static_specs in (* list of static free vars in spec *)
+      let dynamic_struc_fv_list = Iformula.struc_free_vars_with_insts proc.I.proc_dynamic_specs in (*list of dynamic free vars in spec *)
+      let fv_name_list = List.map (fun i -> fst i) (static_struc_fv_list@dynamic_struc_fv_list) in (* list of all free vars in spec *)
+      (*err_msg*)
+      all_var_name_list := Gen.BList.remove_dups_eq (=) (!all_var_name_list@param_name_list@fv_name_list);
+     if not (check_return proc) then
+     Err.report_error {
+       Err.error_loc = proc.I.proc_loc;
+       Err.error_text = "not all paths of " ^ (proc.I.proc_name ^ " contain a return"); }
+   else
    (E.push_scope ();
     (let all_args = 
         if Gen.is_some proc.I.proc_data_decl then
@@ -1495,6 +1457,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
           C.proc_file = proc.I.proc_file;
           C.proc_loc = proc.I.proc_loc;} in 
 	  (E.pop_scope (); cproc))))
+   end
 
 and trans_coercions (prog : I.prog_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
@@ -1806,14 +1769,10 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               let vt = trans_type prog vi.E.var_type pos in
                               let (ce, te) = trans_exp prog proc e in
                               let _ = E.pop_scope ()in
-                              ((C.Bind {
-                                  C.exp_bind_type = te;
-                                  C.exp_bind_bound_var = (vt, v);
-                                  C.exp_bind_fields = List.combine vs_types vs;
-                                  C.exp_bind_body = ce;
-                                  C.exp_bind_imm = false; (* can it be true? *)
-				                  C.exp_bind_pos = pos;
-                                  C.exp_bind_path_id = pid; }), te)))
+                              let fields_list = List.combine vs_types vs in
+                              let new_bind_e = convert_to_bind_spec prog proc te vt v fields_list ce pid pos in
+                                (new_bind_e, te)))
+
                       | I.Prim _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
                       | I.Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";})
               | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
@@ -2654,6 +2613,12 @@ and
               | C.Var { C.exp_var_name = v } -> (v, false)
               | _ -> let fn2 = (fresh_var_name (Cprinter.string_of_typ base_t) pos.start_pos.Lexing.pos_lnum) in (fn2, true)) in
           let fn_decl = if new_var then
+            let itype = trans_type_back base_t in
+           let alpha = E.alpha_name fn in
+            E.add fn (E.VarInfo{
+                        E.var_name = fn;
+                        E.var_alpha = alpha;
+                        E.var_type = itype; }); 
             C.VarDecl {
                 C.exp_var_decl_type = base_t;
                 C.exp_var_decl_name = fn;
@@ -2696,20 +2661,14 @@ and
                     let rhs_t = C.type_of_exp rhs_e in
                     if (Gen.is_some rhs_t) && (sub_type (Gen.unsome rhs_t) ct) then
                       ((C.Assign {
-                          C.exp_assign_lhs = fresh_v;
-                          C.exp_assign_rhs = rhs_e;
-                          C.exp_assign_pos = pos;}), C.void_type)
+                        C.exp_assign_lhs = fresh_v;
+                        C.exp_assign_rhs = rhs_e;
+                        C.exp_assign_pos = pos;}), C.void_type)
                     else Err.report_error {
-                        Err.error_loc = pos;
-                        Err.error_text = "lhs and rhs do not match"; } in
-            let bind_e = C.Bind {
-                C.exp_bind_type = bind_type;
-                C.exp_bind_bound_var = ((CP.OType dname), fn);
-                C.exp_bind_fields = List.combine field_types fresh_names;
-                C.exp_bind_body = bind_body;
-				C.exp_bind_imm = imm;
-                C.exp_bind_pos = pos;
-                C.exp_bind_path_id = pid;} in
+                            Err.error_loc = pos;
+                            Err.error_text = "lhs and rhs do not match"; } in
+            let fields_list = List.combine field_types fresh_names in        
+            let bind_e = convert_to_bind_spec prog proc bind_type base_t fn fields_list bind_body pid pos in
             let seq1 = C.mkSeq bind_type init_fn bind_e pos in
             let seq2 = C.mkSeq bind_type fn_decl seq1 pos in
             if new_var then
@@ -2720,6 +2679,7 @@ and
                   C.exp_block_pos = pos;}),bind_type)
             else (seq2, bind_type))
     | [] -> trans_exp prog proc base
+
 and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
       (rhs : C.exp option) pid imm pos : trans_exp_type =
   match fs with
@@ -2794,8 +2754,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
                   {
 			          C.exp_bind_type = bind_type;
 			          C.exp_bind_bound_var = ((CP.OType dname), v);
-			          C.exp_bind_fields =
-                          List.combine field_types fresh_names;
+			          C.exp_bind_fields = List.combine field_types fresh_names;
 			          C.exp_bind_body = bind_body;
 			          C.exp_bind_path_id = pid;
 					  C.exp_bind_imm = imm;
@@ -2810,6 +2769,255 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 		                  Err.error_text = "can't follow field " ^ f;
 		              })
     | [] -> failwith "convert_to_bind: empty field list"
+
+(********************************************************************************
+ * Nov 2010
+ * Automatically generate binding specification procedure
+ *  - Capture the data structure from input program.
+ *  - Generate binding specification for that data structure.
+ *  - Use for checking Null Pointer Error.
+********************************************************************************)
+
+and create_bind_method (vt : CP.typ) (fields_list : C.typed_ident list) : C.proc_decl list =
+  let ds_type = CP.name_of_type vt in
+  (* Create name for 2 methods. (Bind_ or Form_) + data structure's name *)
+  let bind_proc_name = "bind_" ^ ds_type in
+  let form_proc_name = "form_" ^ ds_type in
+  let data_type = CP.OType ds_type in
+  let typ_ds = (data_type, "x") in
+  (* Create new name for each parameter in 2 methods *)
+  let field_arg_list = List.map (fun (t, i) -> (t, ("b_" ^ i))) fields_list in
+  (* Arguments list which is used in bind & form method *)
+  let bind_proc_args = [typ_ds] @ field_arg_list in
+  (* Ref-parameters list *)
+  let ref_list = List.map (fun (t, i) -> CP.SpecVar (t, i, Unprimed)) field_arg_list in
+  let sv_x = CP.SpecVar ((fst typ_ds), (snd typ_ds), Unprimed) in
+  (* Bind procedure *)
+  let bind_proc =
+  {
+     C.proc_name = bind_proc_name;
+     C.proc_args = bind_proc_args;
+     C.proc_return = CP.void_type;
+     C.proc_static_specs = create_static_bind_spec ref_list sv_x;
+     C.proc_static_specs_with_pre = [];
+     C.proc_dynamic_specs = [];
+     C.proc_by_name_params = ref_list;
+     C.proc_body = None;
+     C.proc_file = "";
+     C.proc_loc = no_pos;
+  } in
+  (*let _ = print_string ("BIND:\n" ^ (Cprinter.string_of_proc_decl bind_proc)) in*)
+  (* Form procedure *)
+  let form_proc =
+  {
+     C.proc_name = form_proc_name;
+     C.proc_args = bind_proc_args;
+     C.proc_return = CP.void_type;
+     C.proc_static_specs = create_static_form_spec ref_list sv_x;
+     C.proc_static_specs_with_pre = [];
+     C.proc_dynamic_specs = [];
+     C.proc_by_name_params = ref_list;
+     C.proc_body = None;
+     C.proc_file = "";
+     C.proc_loc = no_pos;
+  } in
+  (*let _ = print_string ("FORM:\n" ^ (Cprinter.string_of_proc_decl form_proc)) in*)
+    [bind_proc; form_proc]
+
+(*******************************************************************************
+ * Nov 2010
+ * Create static specification for binding and forming method.
+*******************************************************************************)
+
+(* Generate static binding specification *)
+and create_static_bind_spec (ref_list : CP.spec_var list) (sv_x : CP.spec_var): CF.struc_formula = 
+  let data_type = CP.get_specvar_type sv_x in
+  let pure_case_1 = CP.mkEqVarNull sv_x no_pos in
+  let exc_flow = CF.mkFlow (Gen.ExcNumbering.get_hash_of_exc nullptr_flow) in
+  let norm_flow = CF.mkNormalFlow () in
+  let null_case_formula = CF.formula_of_heap_fl CF.HTrue exc_flow no_pos in
+  let flbl_1 = fresh_formula_label "" in
+  let struc_case_1 = [CF.EAssume (ref_list, null_case_formula, flbl_1)] in
+  let pure_case_2 = CP.mkNEqVarNull sv_x no_pos in
+  let inst_list = create_inst_list 0 ref_list in
+  let flbl_2 = fresh_formula_label "" in
+  let primed_ref_list = List.map (fun i -> CP.to_primed i) ref_list in
+  let ens_pure_case_2 = make_bind_pure_formula primed_ref_list inst_list in
+  let ens_base_case_2 = CF.formula_of_pure_fl (MCP.OnePF ens_pure_case_2) norm_flow no_pos in
+  let ens_struc_case_2 = CF.EAssume (ref_list, ens_base_case_2, flbl_2) in  
+  let struc_case_2 = make_bind_case_ebase_formula inst_list sv_x data_type ens_struc_case_2 in
+  let all_branches = [(pure_case_1, struc_case_1);(pure_case_2, [struc_case_2])] in
+  let bind_spec = CF.ECase {
+        CF.formula_case_branches = all_branches;
+        CF.formula_case_exists = ref_list;
+        CF.formula_case_pos = no_pos;
+     }
+  in [bind_spec]
+
+(* Generate static forming specification *)
+and create_static_form_spec (ref_list : CP.spec_var list) (sv_x : CP.spec_var) : CF.struc_formula =
+   let norm_flow = CF.mkNormalFlow () in 
+   let data_type = CP.get_specvar_type sv_x in
+   let req_formula = CF.formula_of_heap_fl CF.HTrue norm_flow no_pos in
+   let flbl = fresh_formula_label "" in
+   let inst_list = create_inst_list 0 ref_list in
+   let ens_h_formula = make_h_formula inst_list sv_x data_type in
+   let ens_pure_formula = make_bind_pure_formula inst_list ref_list in
+   let ens_exist_formula = CF.mkExists inst_list ens_h_formula (MCP.OnePF ens_pure_formula) CF.TypeTrue norm_flow [] no_pos in
+   let ens_formula = CF.EAssume (ref_list, ens_exist_formula, flbl) in
+   let form_formula =
+      CF.EBase  {
+        CF.formula_ext_explicit_inst = [];
+        CF.formula_ext_implicit_inst = [];
+        CF.formula_ext_exists = [];
+        CF.formula_ext_base = req_formula;
+        CF.formula_ext_continuation = [ens_formula]; 
+        CF.formula_ext_pos = no_pos;
+      } in
+   [form_formula]   
+  
+and create_inst_list (count : int) (ref_list : CP.spec_var list) : CP.spec_var list =
+  match ref_list with
+  | hd::tl -> 
+      let inst_name = "v_" ^ (string_of_int count) in
+      let inst_sv = CP.SpecVar ((CP.get_specvar_type hd), inst_name, Unprimed) in
+             [inst_sv] @ (create_inst_list (count+1) tl)
+  | [] -> []
+
+(* Create pure formula for binding and forming methods *)
+and make_bind_pure_formula (primed_ref_list : CP.spec_var list) (inst_list : CP.spec_var list) : CP.formula =
+  let eq_pair = List.rev (List.combine primed_ref_list inst_list) in
+  let rec helper lst = match lst with
+         | hd::tl -> 
+             let var_1 = CP.mkVar (fst hd) no_pos in
+             let var_2 = CP.mkVar (snd hd) no_pos in
+             let eq_bformula = CP.mkEq var_1 var_2 no_pos in
+             let eq_formula = CP.BForm (eq_bformula, None) in
+                 CP.mkAnd (helper tl) eq_formula no_pos
+         | [] -> CP.mkTrue no_pos
+  in
+  helper eq_pair 
+
+(* Create heap formula *)
+and make_h_formula (inst_list : CP.spec_var list) (x_node : CP.spec_var) (dtype : CP.typ) : CF.h_formula =
+  let dtype_name = match dtype with
+     | CP.Prim _ -> ""
+     | CP.OType type_name -> type_name
+  in
+     CF.DataNode {
+        CF.h_formula_data_node = x_node;
+        CF.h_formula_data_name = dtype_name;
+        CF.h_formula_data_imm = false;
+        CF.h_formula_data_arguments = inst_list;
+        CF.h_formula_data_remaining_branches = None;
+        CF.h_formula_data_pruning_conditions = [];
+        CF.h_formula_data_label = None;
+        CF.h_formula_data_pos = no_pos;
+     }
+(* Create EBase formula for case x != null *)
+and make_bind_case_ebase_formula (inst_list : CP.spec_var list) (x_node : CP.spec_var) (dtype : CP.typ) (cont_struc : CF.ext_formula) : CF.ext_formula =
+   let hf = make_h_formula inst_list x_node dtype in
+   let f_flow = CF.mkNormalFlow () in
+   let bf = CF.formula_of_heap_fl hf f_flow no_pos in
+      CF.EBase  {
+        CF.formula_ext_explicit_inst = [];
+        CF.formula_ext_implicit_inst = inst_list;
+        CF.formula_ext_exists = [];
+        CF.formula_ext_base = bf;
+        CF.formula_ext_continuation = [cont_struc]; 
+        CF.formula_ext_pos = no_pos;
+      }           
+     
+(********************************************************************************
+ * Nov 2010
+ * Convert from normal bind to bind with specification.
+********************************************************************************)
+
+and convert_to_bind_spec prog proc (te : CP.typ) (vt : CP.typ) (v : ident)
+       (fields_list : C.typed_ident list) (ce : C.exp) pid pos : C.exp =
+  let type_name = CP.name_of_type vt in
+  let _ = 
+         if (List.exists (fun i -> type_name = i) !binded_data) then ()   
+         else 
+         (  bind_procs := !bind_procs @ (create_bind_method vt fields_list);
+           binded_data := !binded_data @ [type_name] )
+  in
+  let arg_list = [v] @ (List.map (fun (_, i) -> i)) fields_list in
+  (* Convert from bind keyword to bind_node function *)
+  let bind_call_e = C.SCall {
+         C.exp_scall_type = CP.void_type;
+         C.exp_scall_method_name = ("bind_" ^ (CP.name_of_type vt));
+         C.exp_scall_path_id = pid;
+         C.exp_scall_arguments = arg_list;
+         C.exp_scall_is_rec = false;
+         C.exp_scall_pos = pos; } in
+  (* After that, form the node again *)
+  let form_call_e = C.SCall {
+         C.exp_scall_type = CP.void_type;
+         C.exp_scall_method_name = ("form_" ^ (CP.name_of_type vt));
+         C.exp_scall_arguments = arg_list;
+         C.exp_scall_is_rec = false;
+         C.exp_scall_path_id = pid;
+         C.exp_scall_pos = pos; } in
+  let local_vars = ref [] in
+  let seq_exp =
+     (* Block returns a value *)
+     (if (not (CP.is_void_type te)) then
+       ( let result_id = "res_" ^ (CP.name_of_type te) ^ "_" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ fresh_trailer() in
+         local_vars := !local_vars @ [(te, result_id)];
+         let cvar = C.Var {
+             C.exp_var_type = te;
+             C.exp_var_name = result_id;
+             C.exp_var_pos = pos;
+           } in
+         let cassign = C.Assign {
+             C.exp_assign_lhs = result_id;
+             C.exp_assign_rhs = ce;
+             C.exp_assign_pos = pos;
+           } in
+         let cseq1 = C.Seq {
+             C.exp_seq_type = CP.void_type;
+             C.exp_seq_exp1 = bind_call_e;
+             C.exp_seq_exp2 = cassign;
+             C.exp_seq_pos = pos;
+           } in
+         let cseq2 = C.Seq {
+             C.exp_seq_type = CP.void_type;
+             C.exp_seq_exp1 = cseq1;
+             C.exp_seq_exp2 = form_call_e;
+             C.exp_seq_pos = pos;
+           } in
+         let cseq3 = C.Seq {
+             C.exp_seq_type = te;
+             C.exp_seq_exp1 = cseq2;
+             C.exp_seq_exp2 = cvar;
+             C.exp_seq_pos = pos;
+           } in
+         cseq3 )
+     else
+     (* Block doesn't return any value *)
+        ( let cseq1 = C.Seq {
+             C.exp_seq_type = CP.void_type;
+             C.exp_seq_exp1 = bind_call_e;
+             C.exp_seq_exp2 = ce;
+             C.exp_seq_pos = pos;
+           } in
+         let cseq2 = C.Seq {
+             C.exp_seq_type = CP.void_type;
+             C.exp_seq_exp1 = cseq1;
+             C.exp_seq_exp2 = form_call_e;
+             C.exp_seq_pos = pos;
+           } in 
+         cseq2 )) in
+         (local_vars := !local_vars @ fields_list;
+             C.Block {
+                C.exp_block_type = te;
+                C.exp_block_body = seq_exp;
+                C.exp_block_local_vars = !local_vars;
+                C.exp_block_pos = pos;
+           }) 
+
+(********************************************************************************)
 
 and trans_type_back (te : CP.typ) : I.typ =
   match te with | CP.Prim p -> I.Prim p | CP.OType n -> I.Named n
@@ -3131,7 +3339,7 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
 	      (Cformula.res_replace stab rl clean_res fl);ch)
           
           
-and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_table) =		
+and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =		
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
       | (e, label) :: rest ->
@@ -3149,7 +3357,7 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
         | IF.HeapNode{
               IF.h_formula_heap_node = (v, p);
               IF.h_formula_heap_name = c;
-	          IF.h_formula_heap_imm = imm;
+	      IF.h_formula_heap_imm = imm;
               IF.h_formula_heap_arguments = exps;
               IF.h_formula_heap_full = full;
               IF.h_formula_heap_pos = pos;
@@ -3185,8 +3393,8 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
                       let new_h = CF.DataNode {
                           CF.h_formula_data_node = new_v;
                           CF.h_formula_data_name = c;
-		                  CF.h_formula_data_imm = imm;
-		                  CF.h_formula_data_arguments = hvars;
+		              CF.h_formula_data_imm = imm;
+		              CF.h_formula_data_arguments = hvars;
                           CF.h_formula_data_label = pi;
                           CF.h_formula_data_remaining_branches = None;
                           CF.h_formula_data_pruning_conditions = [];
@@ -4159,10 +4367,11 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
             let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
             let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in  
             let all_expl = Gen.BList.remove_dups_eq (=) (new_expl @ init_expl) in
-            let new_strad_vs = Gen.BList.difference_eq (=) strad_vs new_expl in   
+            let new_strad_vs = Gen.BList.difference_eq (=) strad_vs new_expl in        
             let all_vars = Gen.BList.remove_dups_eq (=) (h@all_expl) in          
             let posib_impl = Gen.BList.difference_eq (=)(Iformula.heap_fv onb) all_vars in
             let h1prm = Gen.BList.remove_dups_eq (=) (all_vars@posib_impl) in
+          (*err_msg*)
             let _ = if (not allow_primes)&&(List.length (List.filter (fun (c1,c2)-> c2==Primed) (all_expl@posib_impl)))>0 then
               Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "should not have prime vars"} else () in
             let _ = if (List.length (Gen.BList.intersect_eq (=) (all_expl@posib_impl) p))>0 then 	
@@ -4210,7 +4419,7 @@ and subid (ren:(ident*ident) list) (i:ident) :ident =
   let nl = List.filter (fun (c1,c2)-> (String.compare c1 i)==0) ren in
   if (List.length nl )> 0 then let _,l2 = List.hd nl in l2
   else i 			
-    
+
 and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp = 
   
   let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
@@ -4837,6 +5046,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let l1_n, l1r = split_neq l1 in
       let l2_n, l2r = split_neq l2 in
       let to_be_added = Gen.BList.intersect_eq CP.eq_b_formula_no_aset l1_n l2_n in
+      (* let _ = print_string ("tba : "^
+         (Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) to_be_added))^"\n") in
+         let _ = print_string ("l1r : "^(Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) l1r))^"\n") in
+         let _ = print_string ("l2r : "^(Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None,None)) no_pos) (CP.mkTrue no_pos) l2r))^"\n") in*)
+      
       let lr = match (List.length l1r),(List.length l2r) with 
         | 0,0 | _,0 | 0,_ -> CP.mkTrue no_pos        
         (* | _,_ -> CP.mkOr  *)
@@ -4862,6 +5076,9 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       to_be_added @ (Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset lr) in      
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
+    (*let _ = print_string ("invs from: "^(String.concat "\n"(List.map (fun (_,c)->
+      Cprinter.string_of_pure_formula (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) c))start))^"\n") in*)
+    
     let all = 
       if (!Globals.enable_strong_invariant) then
         List.fold_left 
@@ -5357,4 +5574,3 @@ and callgraph_of_prog prog : NG.t =
   List.iter (addin_callgraph_of_proc cg) prog.Cast.prog_proc_decls;
   cg
 *)
-		

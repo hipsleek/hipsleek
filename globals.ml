@@ -84,6 +84,28 @@ let false_flow = "__false"
 let abnormal_flow = "__abnormal"
 let stub_flow = "__stub"
 
+(* Control flow *)
+let raisable_class = "__Exc" (*raisable exception*)
+let local_flow = "__local"
+
+(* Local flow *)
+let n_flow = "__norm"
+let other_flow = "__others"
+let cont_top = "__Cont_top"
+let brk_top = "__Brk_top"
+let ret_flow = "__Ret"
+let spec_flow = "__Spec"
+
+(* Abort flow *)
+let abort_flow = "__abort"
+let halt_flow = "__halt"
+let hang_flow = "__hang"
+let error_flow = "__Error"
+
+(* Error flow *)
+let nullptr_flow = "__NullPointerErr"
+
+(* Control flow *)
 let n_flow_int = ref ((-1,-1):nflow)
 let ret_flow_int = ref ((-1,-1):nflow)
 let spec_flow_int = ref ((-1,-1):nflow)
@@ -91,12 +113,19 @@ let top_flow_int = ref ((-2,-2):nflow)
 let exc_flow_int = ref ((-2,-2):nflow) (*abnormal flow*)
 let false_flow_int = (0,0)
 (*let stub_flow_int = (-3,-3)*)
+let all_var_name_list = ref ([]: string list) (* list of all variables' name in a procedure and its specification *)
 
 let res = "res"
 
 let self = "self"
 
 let this = "this"
+
+(* Header filename list
+ * Use in 'include' preprocessing *)
+
+let header_file_list  = ref (["\"prelude.ss\""] : string list)
+let pragma_list = ref ([] : string list)
 
 (*in case the option of saving provers temp files to a different directory is enabled, the value of 
   this variable is going to be changed accordingly in method set_tmp_files_path *)
@@ -389,23 +418,40 @@ let path_trace_gt p1 p2 =
     | ((a1,_),b1)::zt1,((a2,_),b2)::zt2 -> (a1>a2) || (a1=a2 && b1>b2) || (a1=a2 & b1=b2 && gt zt1 zt2)
   in gt (List.rev p1) (List.rev p2)
 
- 
+ (* check a pid is in current es path trace or not *)
+let rec isInPathTrace (pid : control_path_id_strict option) (pt : path_trace) : (bool * int) =
+	match pid with
+	| None -> (true, 0)
+	| Some p ->
+		let lbl = fst p in
+		let fpt = List.map (fun ((i, s), l) -> (i, lbl, l)) pt in
+			isFormulaLabel fpt
+
+and isFormulaLabel fpt : (bool * int) =
+	match fpt with
+	| [] -> (false, 0)
+	| head::rest ->
+		match head with
+		| (i, l, p) ->
+			if i = l then (true, p)
+			else isFormulaLabel rest
+
 let dummy_exception () = ()
 
 (* convert a tree-like binary object into a list of objects *)
 let bin_op_to_list (op:string)
-  (fn : 'a -> (string * ('a list)) option) 
+  (fn : 'a -> (string * ('a list)) option)
   (t:'a) : ('a list) =
   let rec helper t =
     match (fn t) with
       | None -> [t]
-      | Some (op2, xs) -> 
-          if (op=op2) then 
+      | Some (op2, xs) ->
+          if (op=op2) then
             List.concat (List.map helper xs)
           else [t]
   in (helper t)
 
-let bin_to_list (fn : 'a -> (string * ('a list)) option) 
+let bin_to_list (fn : 'a -> (string * ('a list)) option)
   (t:'a) : string * ('a list) =
   match (fn t) with
     | None -> "", [t]
