@@ -792,12 +792,12 @@ struct
   let ho_5_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_5 str
   let ho_6_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_6 str
 
-  let no_1_num (i:int) s _ _ _ f  =  f
-  let no_2_num (i:int) s _ _ _ _ f =  f
-  let no_3_num (i:int) s _ _ _ _ _ f =  f
-  let no_4_num (i:int) s _ _ _ _ _ _ f =  f
-  let no_5_num (i:int) s _ _ _ _ _ _ _ f =  f
-  let no_6_num (i:int) s _ _ _ _ _ _ _ _ f =  f
+  let no_1_num (i:int) s _ _ f  =  f
+  let no_2_num (i:int) s _ _ _ f =  f
+  let no_3_num (i:int) s _ _ _ _ f =  f
+  let no_4_num (i:int) s _ _ _ _ _ f =  f
+  let no_5_num (i:int) s _ _ _ _ _ _ f =  f
+  let no_6_num (i:int) s _ _ _ _ _ _ _ f =  f
 
   let no_1 _ _ _ f = f
   let no_2 _ _ _ _ f = f

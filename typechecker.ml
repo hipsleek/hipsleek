@@ -531,7 +531,7 @@ and check_proc (prog : prog_decl) (proc : proc_decl) : bool =
 	  | Some body -> begin
 	      if !Globals.print_proc then
 	        print_string ("Procedure " ^ proc.proc_name ^ ":\n"
-			^ (Cprinter.string_of_proc_decl proc) ^ "\n\n");
+			^ (Cprinter.string_of_proc_decl 3 proc) ^ "\n\n");
 	      print_string (("Checking procedure ") ^ proc.proc_name ^ "... "); flush stdout;
 	      Debug.devel_pprint (("Checking procedure ") ^ proc.proc_name ^ "... ") proc.proc_loc;
 	      Debug.devel_pprint ("Specs :\n" ^ Cprinter.string_of_struc_formula proc.proc_static_specs) proc.proc_loc;
