@@ -65,6 +65,7 @@ class mainwindow () =
     val residue_view = create_residue_view ()
     (* data *)
     val mutable current_file = None
+    val mutable original_digest = ""
     val mutable debug_log_window = None
     val mutable prover_log_window = None
       
@@ -92,7 +93,7 @@ class mainwindow () =
           ~label:"Check Entailment"
           ~packing:buttons#add
           () in
-        ignore (check_btn#connect#clicked ~callback:self#check_selected_entailment);
+        ignore (check_btn#connect#clicked ~callback:(self#check_selected_entailment ~force:true));
         let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
@@ -132,6 +133,10 @@ class mainwindow () =
       ignore (self#event#connect#delete ~callback:(fun _ -> self#quit ()));
       ignore (source_view#source_buffer#connect#end_user_action
         ~callback:self#source_changed_handler);
+      ignore (source_view#connect#undo ~callback:self#source_changed_handler);
+      ignore (source_view#connect#redo ~callback:self#source_changed_handler);
+      ignore (source_view#event#connect#focus_out
+        ~callback:(fun _ -> self#update_entailment_list (); false));
       ignore (entailment_list#selection#connect#changed
         ~callback:self#check_selected_entailment);
       entailment_list#set_checkall_handler self#run_all_handler;
@@ -238,6 +243,7 @@ class mainwindow () =
       source_view#source_buffer#set_text new_src;
       source_view#source_buffer#set_modified false;
       source_view#source_buffer#end_not_undoable_action ();
+      self#update_original_digest ();
       entailment_list#update_source new_src;
       residue_view#buffer#set_text ""
       
@@ -261,7 +267,7 @@ class mainwindow () =
       let fname = self#string_of_current_file () in
       let fname = Filename.basename fname in
       let prefix = 
-        if source_view#source_buffer#modified then
+        if self#source_modified then
           "*"
         else
           ""
@@ -271,6 +277,13 @@ class mainwindow () =
         
     method get_text () = source_view#source_buffer#get_text ()
 
+    method update_original_digest () =
+      original_digest <- Digest.string (self#get_text ())
+
+    method source_modified =
+      let digest = Digest.string (self#get_text ()) in
+      original_digest <> digest
+
     method set_theorem_prover id =
       let provers = [TP.OmegaCalc; TP.Mona; TP.Redlog] in
       let tp = List.nth provers id in
@@ -278,16 +291,19 @@ class mainwindow () =
       let tp_name = TP.name_of_tp tp in
       log (Printf.sprintf "Use %s as backend prover." tp_name)
 
-    method check_selected_entailment () =
+    method check_selected_entailment ?(force=false) () =
       let entail = entailment_list#get_selected_entailment () in
       match entail with
       | None -> ()
       | Some e -> begin
-          let src = self#get_text () in
-          let valid, residue = SH.checkentail src e in
-          entailment_list#set_selected_entailment_validity valid;
-          residue_view#buffer#set_text residue;
-          source_view#hl_entailment e
+          source_view#hl_entailment e;
+          let current_validity = entailment_list#get_selected_entailment_validity () in
+          if current_validity = None || force then begin
+            let src = self#get_text () in
+            let valid, residue = SH.checkentail src e in
+            entailment_list#set_selected_entailment_validity valid;
+            residue_view#buffer#set_text residue
+          end
         end
 
     method show_debug_log () =
@@ -337,6 +353,7 @@ class mainwindow () =
     method private newfile_handler () =
       if self#file_closing_check () then begin
         current_file <- None;
+        self#update_win_title ();
         self#replace_source ""
       end
 
@@ -350,22 +367,25 @@ class mainwindow () =
       else
         true
 
+    method private save text fname =
+      log ("Saving source to " ^ fname);
+      FU.write_to_file fname text;
+      self#update_original_digest ();
+      self#update_win_title ()
+
     (* Toolbar's Save button clicked 
      * return true if file is saved successfully
      * return false if user don't select a file to save *)
     method private save_handler () : bool =
-      let text = source_view#source_buffer#get_text () in
+      let text = self#get_text () in
       match current_file with
       | Some name ->
-          FU.write_to_file name text;
-          source_view#source_buffer#set_modified false;
-          self#update_win_title ();
-          true
+          (if self#source_modified then self#save text name; true)
       | None ->
           let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
           match fname with
           | None -> false
-          | Some fname -> FU.write_to_file fname text; true
+          | Some fname -> (self#save text fname; true)
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
@@ -375,10 +395,16 @@ class mainwindow () =
 
     (* Source buffer modified *)
     method private source_changed_handler () =
-      log (self#get_text ());
-      entailment_list#update_source (self#get_text ());
-      source_view#clear_highlight ();
-      self#update_win_title ()
+      self#update_win_title ();
+      source_view#clear_highlight ()
+
+    method private update_entailment_list () =
+      entailment_list#misc#set_sensitive true;
+      let source = self#get_text () in
+      let digest = Digest.string source in
+      if entailment_list#source_digest <> digest then begin
+        entailment_list#update_source (self#get_text ())
+      end
 
     method private quit () =
       if self#file_closing_check () then

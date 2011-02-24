@@ -19,6 +19,9 @@ class entailment_list ?(model = new procedure_list_model ()) () =
     method set_selected_entailment_validity valid =
       super#set_selected_procedure_validity valid
 
+    method get_selected_entailment_validity () =
+      super#get_selected_procedure_validity ()
+
     method update_source (src: string) : unit =
       model#update_source ~parse_func:parse_entailment_list src
 

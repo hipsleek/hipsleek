@@ -2,7 +2,7 @@
   GUI frontend for HIP
  *)
 
-
+open Globals
 open GProcList
 open GSourceViewX
 open GUtil
@@ -65,6 +65,7 @@ class mainwindow () =
     val proc_list = new procedure_list ()
     (* data *)
     val mutable current_file = None
+    val mutable original_digest = ""
     val mutable args = HH.default_args
     val mutable debug_log_window = None
     val mutable prover_log_window = None
@@ -81,7 +82,7 @@ class mainwindow () =
           ~label:"Check Procedure"
           ~packing:buttons#add
           () in
-        ignore (check_btn#connect#clicked ~callback:self#check_selected_proc);
+        ignore (check_btn#connect#clicked ~callback:(self#check_selected_proc ~force:true));
         let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
@@ -121,10 +122,7 @@ class mainwindow () =
       ignore (source_view#connect#redo ~callback:self#source_changed_handler);
       ignore (proc_list#selection#connect#changed ~callback:self#check_selected_proc);
       ignore (source_view#event#connect#focus_out
-        ~callback:(fun _ ->
-          let _ = if source_view#source_buffer#modified then
-            self#update_proc_list () in
-          false));
+        ~callback:(fun _ -> self#update_proc_list (); false));
       proc_list#set_checkall_handler self#run_all_handler;
 
 
@@ -242,6 +240,7 @@ class mainwindow () =
       source_view#source_buffer#set_text new_src;
       source_view#source_buffer#set_modified false;
       source_view#source_buffer#end_not_undoable_action ();
+      self#update_original_digest ();
       try
         proc_list#update_source (self#get_text ())
       with Syntax_error (msg, pos) ->
@@ -254,7 +253,7 @@ class mainwindow () =
       | None -> "Unsaved Document"
 
     method file_closing_check (): bool =
-      if source_view#source_buffer#modified then
+      if self#source_modified then
         self#ask_for_saving ()
       else
         true
@@ -269,7 +268,7 @@ class mainwindow () =
       let fname = self#string_of_current_file () in
       let fname = Filename.basename fname in
       let prefix = 
-        if source_view#source_buffer#modified then
+        if self#source_modified then
           "*"
         else
           ""
@@ -279,6 +278,13 @@ class mainwindow () =
         
     method get_text () = source_view#source_buffer#get_text ()
 
+    method update_original_digest () =
+      original_digest <- Digest.string (self#get_text ())
+
+    method source_modified =
+      let digest = Digest.string (self#get_text ()) in
+      original_digest <> digest
+
     method set_theorem_prover id =
       let provers = [TP.OmegaCalc; TP.Mona; TP.Cvc3; TP.Redlog; TP.Coq] in
       let tp = List.nth provers id in
@@ -286,7 +292,7 @@ class mainwindow () =
       let tp_name = TP.name_of_tp tp in
       log (Printf.sprintf "Now using %s as backend prover." tp_name)
 
-    method check_selected_proc () =
+    method check_selected_proc ?(force = false) () =
       let proc = proc_list#get_selected_procedure () in
       match proc with
       | None -> ()
@@ -294,7 +300,7 @@ class mainwindow () =
           source_view#hl_proc p;
           let current_validity = proc_list#get_selected_procedure_validity () in
           (*if source_view#source_buffer#modified || current_validity = None then*)
-          if current_validity = None then
+          if current_validity = None || force then
             let _ = log ("Checking procedure " ^ p.name) in
             let src = self#get_text () in
             let valid = HH.check_proc_external ~args src p in
@@ -362,29 +368,26 @@ class mainwindow () =
       else
         true
 
+    method private save text fname =
+      log ("Saving source to " ^ fname);
+      FU.write_to_file fname text;
+      self#update_original_digest ();
+      self#update_win_title ()
+
     (* Toolbar's Save button clicked 
      * return true if file is saved successfully
      * return false if user don't select a file to save *)
     method private save_handler () : bool =
-      let text = source_view#source_buffer#get_text () in
+      let text = self#get_text () in
       match current_file with
       | Some name ->
-          let _ = if source_view#source_buffer#modified then begin
-            log ("Saving source to " ^ name);
-            FU.write_to_file name text;
-            source_view#source_buffer#set_modified false;
-            self#update_win_title ()
-          end
-          in true
+          if self#source_modified then self#save text name;
+          true
       | None ->
           let fname = self#show_file_chooser ~title:"Save As..." `SAVE in
           match fname with
           | None -> false
-          | Some fname -> begin
-              log ("Saving source to " ^ fname);
-              FU.write_to_file fname text; 
-              true
-            end
+          | Some fname -> (self#save text fname; true)
 
     (* Toolbar's Run all button clicked or Validity column header clicked *)
     method private run_all_handler () =
@@ -399,12 +402,16 @@ class mainwindow () =
       source_view#clear_highlight ()
 
     method private update_proc_list () =
-      try
-        proc_list#update_source (self#get_text ());
-        proc_list#misc#set_sensitive true
-      with Syntax_error (msg, pos) ->
-        proc_list#misc#set_sensitive false;
-        source_view#hl_error ~msg pos
+      proc_list#misc#set_sensitive true;
+      let source = self#get_text () in
+      let digest = Digest.string source in
+      if proc_list#source_digest <> digest then begin
+        try
+          proc_list#update_source (self#get_text ());
+        with Syntax_error (msg, pos) ->
+          proc_list#misc#set_sensitive false;
+          source_view#hl_error ~msg pos
+      end
 
     method private quit () =
       if self#file_closing_check () then begin
@@ -427,6 +434,15 @@ let arguments = [
 
 let _ =
   (*GUtil.initialize ();*)
+  Globals.reporter := (fun loc msg ->
+    let pos = {
+      SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
+      SourceUtil.stop_char = loc.end_pos.Lexing.pos_cnum;
+      SourceUtil.start_line = loc.start_pos.Lexing.pos_lnum;
+      SourceUtil.stop_line = loc.end_pos.Lexing.pos_lnum;
+    } in
+    raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg, pos))
+  );
   ignore (GtkMain.Main.init ());
   let win = new mainwindow () in
   Arg.parse arguments win#open_file usage_msg;

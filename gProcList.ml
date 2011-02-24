@@ -20,11 +20,13 @@ class procedure_list_model ?(src = "") () =
     val mutable procedure_list = []
     val mutable modified_times = []
     val mutable count = 0
+    val mutable source_digest = ""
 
     initializer
       self#update_source src
     
     method coerce = delegate#coerce
+    method source_digest = source_digest
 
     method append_one_procedure (e: procedure) =
       let iter = delegate#append () in
@@ -37,6 +39,7 @@ class procedure_list_model ?(src = "") () =
     method update_source ?(parse_func = parse_procedure_list) (src: string) =
       try begin
         procedure_list <- parse_func src;
+        source_digest <- Digest.string src;
         delegate#clear ();
         count <- 0;
         List.iter self#append_one_procedure procedure_list
@@ -112,6 +115,7 @@ class procedure_list ?(model = new procedure_list_model ()) () =
     method coerce = view#coerce
     method selection = view#selection
     method misc = view#misc
+    method source_digest = model#source_digest
 
     method set_model new_model =
       model <- new_model;
