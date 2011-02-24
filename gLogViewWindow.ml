@@ -76,7 +76,7 @@ class log_view_window ?(title="Log") log () =
      * ****************)
 
     method private update_search () =
-      let trimmed = Util.trim_str search_field#text in
+      let trimmed = Gen.SysUti.trim_str search_field#text in
       if String.length trimmed > 0 then
         let found = self#find_all (search_field#text) in
         if found then

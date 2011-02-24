@@ -197,7 +197,7 @@ let start_prover () =
   print_string "Coq started\n"; flush stdout
 
 let start_prover_debug () =
-  Util.ho_debug_1 "stack coq prover" (fun () -> "") (fun () -> "") start_prover ()
+  Gen.Debug.ho_1 "stack coq prover" (fun () -> "") (fun () -> "") start_prover ()
 
 (* stopping Coq *)
 let stop_prover () =
@@ -211,7 +211,7 @@ let stop_prover () =
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
-  Util.ho_debug_1 "stop coq prover" (fun () -> "") (fun () -> "") stop_prover ()
+  Gen.Debug.ho_1 "stop coq prover" (fun () -> "") (fun () -> "") stop_prover ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
@@ -249,7 +249,7 @@ let rec send_formula (f : string) (nr : int) : bool =
 let write (ante : CP.formula) (conseq : CP.formula) : bool =
 (*  print_string "*"; flush stdout; *)
 (*  print_endline ("formula " ^ string_of_int !coq_file_number ^ ": " ^ (Cprinter.string_of_pure_formula ante) ^ " -> " ^ (Cprinter.string_of_pure_formula conseq)); *)
-  let vstr = coq_of_var_list (Util.remove_dups ((CP.fv ante) @ (CP.fv conseq))) in
+  let vstr = coq_of_var_list (Gen.BList.remove_dups_eq (=) ((CP.fv ante) @ (CP.fv conseq))) in
   let astr = coq_of_formula ante in
   let cstr = coq_of_formula conseq in
   

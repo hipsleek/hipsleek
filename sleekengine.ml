@@ -62,7 +62,7 @@ let clear_cprog () =
 let clear_all () =
   Debug.clear_debug_log ();
   Tpdispatcher.clear_prover_log ();
-  Util.clear_exc_list ();
+  Gen.ExcNumbering.clear_exc_list ();
   clear_var_table ();
   clear_iprog ();
   clear_cprog ();
@@ -88,7 +88,7 @@ let process_data_def ddef =
     try
       iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
       Iast.build_exc_hierarchy true iprog;
-      Util.c_h ();
+      Gen.ExcNumbering.c_h ();
       let cddef = AS.trans_data iprog ddef in
       if !Globals.print_core then 
         print_string (Cprinter.string_of_data_decl cddef ^"\n");

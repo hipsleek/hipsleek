@@ -10,8 +10,6 @@ module Err = Error
    
 module I = Iast
   
-module U = Util
-  
 module IF = Iformula
   
 module IP = Ipure
@@ -752,8 +750,8 @@ and need_break_continue lb ne non_generated_label :bool =
 	if (need_break_continue nl b.I.exp_block_body b_rez) then
 		let ne = while_labelling (label_breaks nl b.I.exp_block_body) in
 		let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
-		let _  = Util.add_edge nb brk_top in
-		let _  = Util.add_edge nc cont_top in
+		let _  = Gen.ExcNumbering.add_edge nb brk_top in
+		let _  = Gen.ExcNumbering.add_edge nc cont_top in
 		let nl = fresh_branch_point_id "" in
 		let nl2 = fresh_branch_point_id "" in
 		let nit= I.Try ({
@@ -861,8 +859,8 @@ and need_break_continue lb ne non_generated_label :bool =
 				let (nb,nc) = ("brk_"^nl,"cnt_"^nl) in
 				let r = if (need_break_continue nl b.I.exp_while_body b_rez) then				
 					 let ne  = while_labelling (label_breaks nl b.I.exp_while_body) in
-					 let _  = Util.add_edge nb brk_top in
-					 let _  = Util.add_edge nc cont_top in 
+					 let _  = Gen.ExcNumbering.add_edge nb brk_top in
+					 let _  = Gen.ExcNumbering.add_edge nc cont_top in 
 					 let continue_try = I.Try ({
 						I.exp_try_block = ne;
 						I.exp_try_path_id = nl1;	
@@ -902,7 +900,7 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 
 let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   let _ = I.build_exc_hierarchy false prog3 in
-  let _ = (Util.add_edge raisable_class "Object") in
+  let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
   let prog2 = { prog3 with I.prog_data_decls = 
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
           ::prog3.I.prog_data_decls;} in  
@@ -918,15 +916,15 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
-	  Util.c_h (); 
+	  Gen.ExcNumbering.c_h (); 
 	  let prims = gen_primitives prog0 in
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
     (set_mingled_name prog;
     let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
                   ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
                    (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
-    let dups = U.find_dups all_names in
-    if not (U.empty dups) then
+    let dups = Gen.BList.find_dups_eq (=) all_names in
+    if not (Gen.is_empty dups) then
 		 (print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
     else (
 		   let prog = case_normalize_program prog in
@@ -1013,7 +1011,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 	  (Cprinter.string_of_formula  vdef.Cast.view_un_struc_formula)^"\n\n\n"^
 	  (Cprinter.string_of_pure_formula xform')^"\n\n\n");flush stdout in	*)
     (*let xform' = TP.simplify  xform' in*)
-    let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' TP.simplify in
+    let xform = MCP.simpl_memo_pure_formula Solver.simpl_b_formula Solver.simpl_pure_formula xform' (TP.simplify_a 10) in
     (*let _  = print_string ("before memo simpl x pure: "^(Cprinter.string_of_memoised_list xform')^"\n") in
       let _  = print_string ("after memo simpl x pure: "^(Cprinter.string_of_memoised_list xform)^"\n") in
     *)let formula1 = CF.replace_branches xform_b (CF.formula_of_mix_formula xform pos) in
@@ -1078,7 +1076,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
    let pf = trans_pure_formula inv stab in
    let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
    let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
-   let pf = Cpure.arith_simplify pf in
+   let pf = Cpure.arith_simplify 1 pf in
    let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
    let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
    if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) then
@@ -1092,11 +1090,11 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
      let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) stab pos) vdef.I.view_vars in
      let self_c_var = Cpure.SpecVar ((Cpure.OType data_name), self, Unprimed) in
      let _ = 
-      let ffv = Util.difference (CF.struc_fv cf) (self_c_var::view_sv_vars) in
+      let ffv = Gen.BList.difference_eq (=) (CF.struc_fv cf) (self_c_var::view_sv_vars) in
       if (ffv!=[]) then 
         Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def"^vdef.I.view_name} in
+          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" "} in
      let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
      let _ = vdef.I.view_typed_vars <- typed_vars in
      let mvars = [] in
@@ -1139,7 +1137,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
                C.view_un_struc_formula = n_un_str;
                C.view_base_case = bc;
-               C.view_case_vars = Util.intersect view_sv_vars (Cformula.guard_vars cf);
+               C.view_case_vars = Gen.BList.intersect_eq (=) view_sv_vars (Cformula.guard_vars cf);
                C.view_raw_base_case = rbc;
                C.view_prune_branches = [];
                C.view_prune_conditions = [];
@@ -1162,11 +1160,11 @@ and rec_grp prog :ident list =
   let sccs = List.fold_left (fun a (c1,c2)-> if (List.mem c1 c2) then c1::a else a) [] r in
   let rec trans_cl (l:ident list):ident list =
     let int_l = List.fold_left (fun a (c1,c2)-> if (List.exists (fun c-> List.mem c l) c2) then c1::a else a) l r in
-    let int_l = Util.remove_dups int_l in
+    let int_l = Gen.BList.remove_dups_eq (=) int_l in
     if (List.length int_l)=(List.length l) then int_l
     else trans_cl int_l in
   let recs = trans_cl sccs in
-  let recs = Util.difference recs (List.map (fun c-> c.Iast.data_name)prog.Iast.prog_data_decls) in
+  let recs = Gen.BList.difference_eq (=) recs (List.map (fun c-> c.Iast.data_name)prog.Iast.prog_data_decls) in
   (*let _ = print_string ("\n recs: "^(Cprinter.string_of_ident_list recs " ")^"\n") in*)
   recs
       
@@ -1287,9 +1285,9 @@ and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   (while not !quit_loop do 
     ef := Solver.expand_all_preds prog !ef false;		
       (let tmp1 = find_mvars prog params !ef in
-      let tmp2 = Util.remove_dups_f (tmp1 @ !all_mvars) CP.eq_spec_var in
-      let tmp3 = Util.difference_f CP.eq_spec_var tmp2 !all_mvars
-      in if U.empty tmp3 then quit_loop := true else all_mvars := tmp3)
+      let tmp2 = Gen.BList.remove_dups_eq CP.eq_spec_var (tmp1 @ !all_mvars) in
+      let tmp3 = Gen.BList.difference_eq CP.eq_spec_var tmp2 !all_mvars
+      in if Gen.is_empty tmp3 then quit_loop := true else all_mvars := tmp3)
   done;
   !all_mvars)
 
@@ -1299,7 +1297,7 @@ and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
     | CF.Or { CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 } ->
 	      let mvars1 = find_mvars prog params f1 in
 	      let mvars2 = find_mvars prog params f2 in
-	      let mvars = Util.remove_dups_f (mvars1 @ mvars2) CP.eq_spec_var in
+	      let mvars = Gen.BList.remove_dups_eq CP.eq_spec_var (mvars1 @ mvars2) in
 	      let tmp = CP.intersect mvars params in 
 	      tmp
     | CF.Base { CF.formula_base_heap = hf; CF.formula_base_pure = pf } ->
@@ -1313,7 +1311,7 @@ and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
                 CF.formula_exists_pure = pf
 	        } ->
 	      let mvars1 = find_mvars_heap prog params hf pf in
-	      let mvars = Util.difference_f CP.eq_spec_var mvars1 qvars in
+	      let mvars = Gen.BList.difference_eq CP.eq_spec_var mvars1 qvars in
 	      let tmp = CP.intersect mvars params in 
 	      tmp
 
@@ -1399,10 +1397,10 @@ and set_pre_flow f =
       
 and check_valid_flows f = 
   let rec check_valid_flows_f f = match f with
-    | Iformula.Base b -> if ((Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_base_flow))&&
+    | Iformula.Base b -> if ((Cformula.is_false_flow (Gen.ExcNumbering.get_hash_of_exc b.Iformula.formula_base_flow))&&
 		  ((String.compare b.Iformula.formula_base_flow false_flow)<>0))then 
 	    Error.report_error {Error.error_loc = b.Iformula.formula_base_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_base_flow;}
-    | Iformula.Exists b -> if (Cformula.is_false_flow (Util.get_hash_of_exc b.Iformula.formula_exists_flow))&&
+    | Iformula.Exists b -> if (Cformula.is_false_flow (Gen.ExcNumbering.get_hash_of_exc b.Iformula.formula_exists_flow))&&
 	    ((String.compare b.Iformula.formula_exists_flow false_flow)<>0)then 
 	      Error.report_error {Error.error_loc = b.Iformula.formula_exists_pos;Error.error_text = "undefined flow type "^b.Iformula.formula_exists_flow;}
     | Iformula.Or b-> (check_valid_flows_f b.Iformula.formula_or_f1);(check_valid_flows_f b.Iformula.formula_or_f2)
@@ -1418,8 +1416,8 @@ and check_valid_flows f =
       
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
-  let dup_names = U.find_one_dup (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
-  if not (U.empty dup_names) then
+  let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
+  if not (Gen.is_empty dup_names) then
     (let p = List.hd dup_names in
     Err.report_error{
       Err.error_loc = p.I.param_loc;
@@ -1431,8 +1429,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   else
    (E.push_scope ();
     (let all_args = 
-        if U.is_some proc.I.proc_data_decl then
-          (let cdef = U.unsome proc.I.proc_data_decl in
+        if Gen.is_some proc.I.proc_data_decl then
+          (let cdef = Gen.unsome proc.I.proc_data_decl in
            let this_arg ={
                     I.param_type = I.Named cdef.I.data_name;
                     I.param_name = this;
@@ -1458,8 +1456,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	      let _ = check_valid_flows proc.I.proc_dynamic_specs in
 	      let static_specs_list = set_pre_flow (trans_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
 	      let dynamic_specs_list = set_pre_flow (trans_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
-	      let exc_list = (List.map Util.get_hash_of_exc proc.I.proc_exceptions) in
-	      let r_int = Util.get_hash_of_exc abnormal_flow in
+	      let exc_list = (List.map Gen.ExcNumbering.get_hash_of_exc proc.I.proc_exceptions) in
+	      let r_int = Gen.ExcNumbering.get_hash_of_exc abnormal_flow in
 		(if (List.exists CF.is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
 		     Error.report_error {Err.error_loc = proc.I.proc_loc;Err.error_text =" can not throw an instance of a non throwable class"}
 		 else ()) ;
@@ -1475,28 +1473,28 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 		let static_specs_list  = Cformula.plug_ref_vars static_specs_list by_names in
 		let dynamic_specs_list = Cformula.plug_ref_vars dynamic_specs_list by_names in
 		let final_static_specs_list =
-		  if U.empty static_specs_list then Cast.mkEAssume proc.I.proc_loc
+		  if Gen.is_empty static_specs_list then Cast.mkEAssume proc.I.proc_loc
 		  else static_specs_list in
 		let final_dynamic_specs_list = dynamic_specs_list in
     let _ = 
       let cmp x (_,y) = (String.compare (CP.name_of_spec_var x) y) == 0in
-      let ffv = Util.difference_fct cmp (CF.struc_fv final_static_specs_list) ((cret_type,res)::args) in
-      if (ffv!=[]) then 
-        Error.report_error { 
+    let ffv = Gen.BList.difference_eq cmp (CF.struc_fv final_static_specs_list) ((cret_type,res)::args) in
+    if (ffv!=[]) then 
+      Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name} in
-		let cproc ={
-      C.proc_name = proc.I.proc_mingled_name;
-      C.proc_args = args;
-      C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
-      C.proc_static_specs = final_static_specs_list;
-      C.proc_dynamic_specs = final_dynamic_specs_list;
-      C.proc_static_specs_with_pre =  [];
-      C.proc_by_name_params = by_names;
-      C.proc_body = body;
-      C.proc_file = proc.I.proc_file;
-      C.proc_loc = proc.I.proc_loc;} in 
-		  (E.pop_scope (); cproc))))
+          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
+	  let cproc ={
+          C.proc_name = proc.I.proc_mingled_name;
+          C.proc_args = args;
+          C.proc_return = trans_type prog proc.I.proc_return proc.I.proc_loc;
+          C.proc_static_specs = final_static_specs_list;
+          C.proc_dynamic_specs = final_dynamic_specs_list;
+          C.proc_static_specs_with_pre =  [];
+          C.proc_by_name_params = by_names;
+          C.proc_body = body;
+          C.proc_file = proc.I.proc_file;
+          C.proc_loc = proc.I.proc_loc;} in 
+	  (E.pop_scope (); cproc))))
 
 and trans_coercions (prog : I.prog_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
@@ -1518,11 +1516,11 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
     let h, p, _,_, _ = CF.split_components c_lhs in
     let pvars =MCP.mfv p in
     let hvars = CF.h_fv h in
-    let univ_vars = Util.difference_f CP.eq_spec_var pvars hvars in 
-    Util.remove_dups_f univ_vars CP.eq_spec_var in
+    let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
+    Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in
   let univ_vars = compute_univ () in
-  let lhs_fnames = Util.difference lhs_fnames (List.map CP.name_of_spec_var univ_vars) in
-  let c_rhs = trans_formula prog (U.empty univ_vars) (self :: lhs_fnames) false coer.I.coercion_body stab false in
+  let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames (List.map CP.name_of_spec_var univ_vars) in
+  let c_rhs = trans_formula prog (Gen.is_empty univ_vars) (self :: lhs_fnames) false coer.I.coercion_body stab false in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
   let c_lhs_exist = trans_formula prog true (self :: rhs_fnames) false coer.I.coercion_head stab false in
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
@@ -1555,75 +1553,75 @@ and find_view_name (f0 : CF.formula) (v : ident) pos =
           CF.formula_base_pure = _;
           CF.formula_base_pos = _ } 
     | CF.Exists {
-		CF.formula_exists_qvars = _;
-		CF.formula_exists_heap = h;
-		CF.formula_exists_pure = _;
+		  CF.formula_exists_qvars = _;
+		  CF.formula_exists_heap = h;
+		  CF.formula_exists_pure = _;
           CF.formula_exists_pos = _ } ->
-	let rec find_view_heap h0 =
-          (match h0 with
-             | CF.Star
-		 {
-		   CF.h_formula_star_h1 = h1;
-		   CF.h_formula_star_h2 = h2;
-		   CF.h_formula_star_pos = _
-		 } 
-             | CF.Conj
-		 {
-		   CF.h_formula_conj_h1 = h1;
-		   CF.h_formula_conj_h2 = h2;
-		   CF.h_formula_conj_pos = _
-		 } 
-             | CF.Phase
-		 {
-		   CF.h_formula_phase_rd = h1;
-		   CF.h_formula_phase_rw = h2;
-		   CF.h_formula_phase_pos = _
-		 } ->
-		 let name1 = find_view_heap h1 in
-		 let name2 = find_view_heap h2
-		 in
-		   if name1 = ""
-		   then name2
-		   else
-                     if name2 = ""
-                     then name1
-                     else
-                       Err.report_error
-			 {
-			   Err.error_loc = pos;
-			   Err.error_text = v ^ " must point to only one view";
-			 }
-             | CF.DataNode
-		 {
-		   CF.h_formula_data_node = p;
-		   CF.h_formula_data_name = c;
-		   CF.h_formula_data_arguments = _;
-		   CF.h_formula_data_pos = _
-		 } ->
-		 if (CP.name_of_spec_var p) = v
-		 then
-		   Err.report_error
-                     {
-                       Err.error_loc = pos;
-                       Err.error_text = v ^ " must point to a view";
-                     }
-		 else ""
-             | CF.ViewNode
-		 {
-		   CF.h_formula_view_node = p;
-		   CF.h_formula_view_name = c;
-		   CF.h_formula_view_arguments = _;
-		   CF.h_formula_view_pos = _
-		 } -> if (CP.name_of_spec_var p) = v then c else ""
-             | CF.HTrue | CF.HFalse | CF.Hole _ -> "")
-	in find_view_heap h
+	      let rec find_view_heap h0 =
+            (match h0 with
+              | CF.Star
+		              {
+		                  CF.h_formula_star_h1 = h1;
+		                  CF.h_formula_star_h2 = h2;
+		                  CF.h_formula_star_pos = _
+		              } 
+              | CF.Conj
+		              {
+		                  CF.h_formula_conj_h1 = h1;
+		                  CF.h_formula_conj_h2 = h2;
+		                  CF.h_formula_conj_pos = _
+		              } 
+              | CF.Phase
+		              {
+		                  CF.h_formula_phase_rd = h1;
+		                  CF.h_formula_phase_rw = h2;
+		                  CF.h_formula_phase_pos = _
+		              } ->
+		            let name1 = find_view_heap h1 in
+		            let name2 = find_view_heap h2
+		            in
+		            if name1 = ""
+		            then name2
+		            else
+                      if name2 = ""
+                      then name1
+                      else
+                        Err.report_error
+			                {
+			                    Err.error_loc = pos;
+			                    Err.error_text = v ^ " must point to only one view";
+			                }
+              | CF.DataNode
+		              {
+		                  CF.h_formula_data_node = p;
+		                  CF.h_formula_data_name = c;
+		                  CF.h_formula_data_arguments = _;
+		                  CF.h_formula_data_pos = _
+		              } ->
+		            if (CP.name_of_spec_var p) = v
+		            then
+		              Err.report_error
+                          {
+                              Err.error_loc = pos;
+                              Err.error_text = v ^ " must point to a view";
+                          }
+		            else ""
+              | CF.ViewNode
+		              {
+		                  CF.h_formula_view_node = p;
+		                  CF.h_formula_view_name = c;
+		                  CF.h_formula_view_arguments = _;
+		                  CF.h_formula_view_pos = _
+		              } -> if (CP.name_of_spec_var p) = v then c else ""
+              | CF.HTrue | CF.HFalse | CF.Hole _ -> "")
+	      in find_view_heap h
     | CF.Or _ ->
-	Err.report_error
-          {
-            Err.error_loc = pos;
-            Err.error_text =
-              "Pre- and post-conditions of coercion rules must not be disjunctive";
-          }
+	      Err.report_error
+              {
+                  Err.error_loc = pos;
+                  Err.error_text =
+                      "Pre- and post-conditions of coercion rules must not be disjunctive";
+              }
 
 and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
       trans_exp_type =
@@ -1712,9 +1710,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                               C.exp_var_pos = pos;
                           } in
                           let (tmp_e, tmp_t) =
-			      flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
-			  in
-			  
+			                flatten_to_bind prog proc base_e (List.rev fs) (Some fn_var) pid false pos 
+			              in
+			              
                           let fn_decl = if new_var then C.VarDecl {
                               C.exp_var_decl_type = rhs_t;
                               C.exp_var_decl_name = fn;
@@ -1814,7 +1812,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_bind_fields = List.combine vs_types vs;
                                   C.exp_bind_body = ce;
                                   C.exp_bind_imm = false; (* can it be true? *)
-				  C.exp_bind_pos = pos;
+				                  C.exp_bind_pos = pos;
                                   C.exp_bind_path_id = pid; }), te)))
                       | I.Prim _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
                       | I.Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";})
@@ -1859,131 +1857,131 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           let mingled_mn = C.mingle_name mn cts in
           let class_name = C.name_of_type crecv_t in
           (try
-             let cdef = I.look_up_data_def pos prog.I.prog_data_decls class_name in
-             let all_methods = I.look_up_all_methods prog cdef in
-             let pdef = I.look_up_proc_def_mingled_name all_methods mingled_mn in
-               if ( != ) (List.length args) (List.length pdef.I.proc_args) then
-                  Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
-               else
-                  (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
-                    if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                      Err.report_error{ Err.error_loc = pos;Err.error_text = "argument types do not match";}
-                    else
-                      (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
-                       let positions = List.map I.get_exp_pos args in
-                       let (local_vars, init_seq, arg_vars) = trans_args (U.combine3 cargs cts positions) in
-                       let call_e = C.ICall{
-                             C.exp_icall_type = ret_ct;
-                             C.exp_icall_receiver = recv_ident;
-                             C.exp_icall_receiver_type = crecv_t;
-                             C.exp_icall_method_name = mingled_mn;
-                             C.exp_icall_arguments = arg_vars;
-							 C.exp_icall_is_rec = false; (* default value - it will be set later in trans_prog *)
-                             C.exp_icall_path_id = pi;
-                             C.exp_icall_pos = pos;} in
-                       let seq1 = C.mkSeq ret_ct init_seq call_e pos in
-                       let seq2 = C.mkSeq ret_ct recv_init seq1 pos in
-                       let blk =C.Block{
-                             C.exp_block_type = ret_ct;
-                             C.exp_block_body = seq2;
-                             C.exp_block_local_vars = (if new_recv_ident then [ (crecv_t, recv_ident) ] else []) @ local_vars;
-                             C.exp_block_pos = pos;} in 
-                       (blk, ret_ct)))
-           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");}
-		   )
+            let cdef = I.look_up_data_def pos prog.I.prog_data_decls class_name in
+            let all_methods = I.look_up_all_methods prog cdef in
+            let pdef = I.look_up_proc_def_mingled_name all_methods mingled_mn in
+            if ( != ) (List.length args) (List.length pdef.I.proc_args) then
+              Err.report_error{ Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
+            else
+              (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
+              if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
+                Err.report_error{ Err.error_loc = pos;Err.error_text = "argument types do not match";}
+              else
+                (let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+                let positions = List.map I.get_exp_pos args in
+                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                let call_e = C.ICall{
+                    C.exp_icall_type = ret_ct;
+                    C.exp_icall_receiver = recv_ident;
+                    C.exp_icall_receiver_type = crecv_t;
+                    C.exp_icall_method_name = mingled_mn;
+                    C.exp_icall_arguments = arg_vars;
+					C.exp_icall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                    C.exp_icall_path_id = pi;
+                    C.exp_icall_pos = pos;} in
+                let seq1 = C.mkSeq ret_ct init_seq call_e pos in
+                let seq2 = C.mkSeq ret_ct recv_init seq1 pos in
+                let blk =C.Block{
+                    C.exp_block_type = ret_ct;
+                    C.exp_block_body = seq2;
+                    C.exp_block_local_vars = (if new_recv_ident then [ (crecv_t, recv_ident) ] else []) @ local_vars;
+                    C.exp_block_pos = pos;} in 
+                (blk, ret_ct)))
+          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");}
+		  )
     | I.CallNRecv {
           I.exp_call_nrecv_method = mn;
           I.exp_call_nrecv_arguments = args;
           I.exp_call_nrecv_path_id = pi;
           I.exp_call_nrecv_pos = pos } ->
-            let tmp = List.map (trans_exp prog proc) args in
-            let (cargs, cts) = List.split tmp in
-            let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
-            let this_recv = 
-                if U.is_some proc.I.proc_data_decl then
-                    (let cdef = U.unsome proc.I.proc_data_decl in
-                     let tmp1 = I.look_up_all_methods prog cdef in
-                     let tmp2 =List.exists (fun p -> p.I.proc_mingled_name = mingled_mn) tmp1 in tmp2)
-                else false in
-            if this_recv then (let call_recv = I.CallRecv {
-                   I.exp_call_recv_receiver = I.This { I.exp_this_pos = pos; };
-                   I.exp_call_recv_method = mingled_mn;
-                   I.exp_call_recv_arguments = args;
-                   I.exp_call_recv_path_id = pi;
-                   I.exp_call_recv_pos = pos; } in trans_exp prog proc call_recv)
-            else (try 
-                    let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
-                    if ( != ) (List.length args) (List.length pdef.I.proc_args) then
-                        Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
-                    else
-                      (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
-                       if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
-                          Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
-                       else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in trans_exp prog proc inlined_exp)
-                       else 
-                         ( let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
-                           let positions = List.map I.get_exp_pos args in
-                           let (local_vars, init_seq, arg_vars) = trans_args (U.combine3 cargs cts positions) in
-                           let call_e = C.SCall {
-                                           C.exp_scall_type = ret_ct;
-                                           C.exp_scall_method_name = mingled_mn;
-                                           C.exp_scall_arguments = arg_vars;
-										   C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
-                                           C.exp_scall_pos = pos;
-                                           C.exp_scall_path_id = pi; } in
-                           let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
-                             ((C.Block {
-                                   C.exp_block_type = ret_ct;
-                                   C.exp_block_body = seq_1;
-                                   C.exp_block_local_vars = local_vars;
-                                   C.exp_block_pos = pos; }),ret_ct)))
-                  with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");})
-     | I.Catch { I.exp_catch_var = cv;
-			  I.exp_catch_flow_type = cvt;
-			  I.exp_catch_flow_var = cfv;
-			  I.exp_catch_body = cb;	
-			  I.exp_catch_pos = pos}->	
-      if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
-								    Err.error_text = "can not catch a not raisable object" }
-      else begin
-		match cv with
-		  | Some x ->
-			  if (String.compare cvt c_flow)=0 then  begin
-			E.push_scope();
-			let new_bd, ct2 = trans_exp prog proc cb in
-			  E.pop_scope();
-			 ( C.Catch{C.exp_catch_flow_type = (Util.get_hash_of_exc c_flow);
-			   C.exp_catch_flow_var = cfv;
-			   C.exp_catch_var = Some (Cpure.Prim Void,x);
-			   C.exp_catch_body = new_bd;																					   
-			   C.exp_catch_pos = pos;},ct2) end
-			  else begin
-			E.push_scope();
-			let alpha = E.alpha_name x in
-			  E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
-			  (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
-			  let new_bd, ct2 = trans_exp prog proc cb in
-				(*let _ = print_string ("\n rrr2 -> \n") in*)
-			  let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
-				E.pop_scope();
-				let r = C.Catch {C.exp_catch_flow_type = (match ct with 
-								| CP.OType ot-> (Util.get_hash_of_exc ot) 
-								| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
-					 C.exp_catch_flow_var = cfv;
-					 C.exp_catch_var = Some (ct,alpha);
-					 C.exp_catch_body = new_bd;																					   
-					 C.exp_catch_pos = pos;
-					} in (r,ct2) end
-		  | None ->  
-			  E.push_scope();
-			  let new_bd, ct2 = trans_exp prog proc cb in
-			E.pop_scope();
-			(C.Catch{	C.exp_catch_flow_type = Util.get_hash_of_exc cvt;
-						C.exp_catch_flow_var = cfv;
-						C.exp_catch_var = None;
-						C.exp_catch_body = new_bd;																					   
-						C.exp_catch_pos = pos;},ct2)
-	  end
+          let tmp = List.map (trans_exp prog proc) args in
+          let (cargs, cts) = List.split tmp in
+          let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
+          let this_recv = 
+            if Gen.is_some proc.I.proc_data_decl then
+              (let cdef = Gen.unsome proc.I.proc_data_decl in
+              let tmp1 = I.look_up_all_methods prog cdef in
+              let tmp2 =List.exists (fun p -> p.I.proc_mingled_name = mingled_mn) tmp1 in tmp2)
+            else false in
+          if this_recv then (let call_recv = I.CallRecv {
+              I.exp_call_recv_receiver = I.This { I.exp_this_pos = pos; };
+              I.exp_call_recv_method = mingled_mn;
+              I.exp_call_recv_arguments = args;
+              I.exp_call_recv_path_id = pi;
+              I.exp_call_recv_pos = pos; } in trans_exp prog proc call_recv)
+          else (try 
+            let pdef = I.look_up_proc_def_mingled_name prog.I.prog_proc_decls mingled_mn in
+            if ( != ) (List.length args) (List.length pdef.I.proc_args) then
+              Err.report_error { Err.error_loc = pos; Err.error_text = "number of arguments does not match"; }
+            else
+              (let parg_types = List.map (fun p -> trans_type prog p.I.param_type p.I.param_loc) pdef.I.proc_args in
+              if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
+                Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match"; }
+              else if Inliner.is_inlined mn then (let inlined_exp = Inliner.inline prog pdef ie in trans_exp prog proc inlined_exp)
+              else 
+                ( let ret_ct = trans_type prog pdef.I.proc_return pdef.I.proc_loc in
+                let positions = List.map I.get_exp_pos args in
+                let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
+                let call_e = C.SCall {
+                    C.exp_scall_type = ret_ct;
+                    C.exp_scall_method_name = mingled_mn;
+                    C.exp_scall_arguments = arg_vars;
+					C.exp_scall_is_rec = false; (* default value - it will be set later in trans_prog *)
+                    C.exp_scall_pos = pos;
+                    C.exp_scall_path_id = pi; } in
+                let seq_1 = C.mkSeq ret_ct init_seq call_e pos in
+                ((C.Block {
+                    C.exp_block_type = ret_ct;
+                    C.exp_block_body = seq_1;
+                    C.exp_block_local_vars = local_vars;
+                    C.exp_block_pos = pos; }),ret_ct)))
+          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = "procedure " ^ (mingled_mn ^ " is not found");})
+    | I.Catch { I.exp_catch_var = cv;
+	  I.exp_catch_flow_type = cvt;
+	  I.exp_catch_flow_var = cfv;
+	  I.exp_catch_body = cb;	
+	  I.exp_catch_pos = pos}->	
+          if not (Gen.ExcNumbering.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
+		  Err.error_text = "can not catch a not raisable object" }
+          else begin
+		    match cv with
+		      | Some x ->
+			        if (String.compare cvt c_flow)=0 then  begin
+			          E.push_scope();
+			          let new_bd, ct2 = trans_exp prog proc cb in
+			          E.pop_scope();
+			          ( C.Catch{C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
+			          C.exp_catch_flow_var = cfv;
+			          C.exp_catch_var = Some (Cpure.Prim Void,x);
+			          C.exp_catch_body = new_bd;																					   
+			          C.exp_catch_pos = pos;},ct2) end
+			        else begin
+			          E.push_scope();
+			          let alpha = E.alpha_name x in
+			          E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
+			          (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
+			          let new_bd, ct2 = trans_exp prog proc cb in
+				      (*let _ = print_string ("\n rrr2 -> \n") in*)
+			          let ct = if (Gen.ExcNumbering.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
+				      E.pop_scope();
+				      let r = C.Catch {C.exp_catch_flow_type = (match ct with 
+						| CP.OType ot-> (Gen.ExcNumbering.get_hash_of_exc ot) 
+						| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
+					  C.exp_catch_flow_var = cfv;
+					  C.exp_catch_var = Some (ct,alpha);
+					  C.exp_catch_body = new_bd;																					   
+					  C.exp_catch_pos = pos;
+					  } in (r,ct2) end
+		      | None ->  
+			        E.push_scope();
+			        let new_bd, ct2 = trans_exp prog proc cb in
+			        E.pop_scope();
+			        (C.Catch{	C.exp_catch_flow_type = Gen.ExcNumbering.get_hash_of_exc cvt;
+					C.exp_catch_flow_var = cfv;
+					C.exp_catch_var = None;
+					C.exp_catch_body = new_bd;																					   
+					C.exp_catch_pos = pos;},ct2)
+	      end
 	| I.Cond {
           I.exp_cond_condition = e1;
           I.exp_cond_then_arm = e2;
@@ -2057,11 +2055,11 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_member_pos = pos } -> 
           (*let _ = print_string ("before: "^(Iprinter.string_of_exp ie)) in*)
           let r = 
-	    if (!Globals.allow_imm) then
-	      flatten_to_bind prog proc e (List.rev fs) None pid true pos
-	    else
-	      flatten_to_bind prog proc e (List.rev fs) None pid false pos
-	  in
+	        if (!Globals.allow_imm) then
+	          flatten_to_bind prog proc e (List.rev fs) None pid true pos
+	        else
+	          flatten_to_bind prog proc e (List.rev fs) None pid false pos
+	      in
           (*let _ = print_string ("after: "^(Cprinter.string_of_exp (fst r))) in*)
           r
     | I.New {
@@ -2080,8 +2078,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             let parg_types = List.map (fun ft -> trans_type prog ft pos) field_types in
             if List.exists2 (fun t1 t2 -> not (sub_type t1 t2)) cts parg_types then
               Err.report_error { Err.error_loc = pos; Err.error_text = "argument types do not match";}
-            else ( let positions = U.repeat pos nargs in
-            let (local_vars, init_seq, arg_vars) = trans_args (U.combine3 cargs cts positions) in
+            else ( let positions = Gen.repeat pos nargs in
+            let (local_vars, init_seq, arg_vars) = trans_args (Gen.combine3 cargs cts positions) in
             let new_e = C.New {
                 C.exp_new_class_name = c;
                 C.exp_new_parent_name = data_def.I.data_parent_name;
@@ -2156,8 +2154,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               C.exp_seq_exp2 = ce2;
               C.exp_seq_pos = pos; }), te2)
     | I.This { I.exp_this_pos = pos } ->
-          if U.is_some proc.I.proc_data_decl then
-            (let cdef = U.unsome proc.I.proc_data_decl in
+          if Gen.is_some proc.I.proc_data_decl then
+            (let cdef = Gen.unsome proc.I.proc_data_decl in
             let ct = CP.OType cdef.I.data_name in 
             ((C.This { C.exp_this_type = ct; C.exp_this_pos = pos; }), ct))
           else
@@ -2173,95 +2171,95 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       I.exp_call_nrecv_path_id = pid;
                       I.exp_call_nrecv_pos = pos;} in trans_exp prog proc call_e
             | I.OpPostInc ->
-               let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
-               let fn_decl = I.VarDecl{
-                               I.exp_var_decl_type = I.int_type;
-                               I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
-                               I.exp_var_decl_pos = pos; } in
-               let add1_e = I.Binary {
-                               I.exp_binary_op = I.OpPlus;
-                               I.exp_binary_oper1 = e;
-                               I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
-                               I.exp_binary_path_id = pid;
-                               I.exp_binary_pos = pos; } in
-               let assign_e = I.Assign {
-                               I.exp_assign_op = I.OpAssign;
-                               I.exp_assign_lhs = e;
-                               I.exp_assign_rhs = add1_e;
-                               I.exp_assign_path_id = None;
-                               I.exp_assign_pos = pos; } in
-               let seq1 = I.Seq {
-                     I.exp_seq_exp1 = assign_e;
-                     I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
-                     I.exp_seq_pos = pos; } in
-               let seq2 = I.Seq {
-                     I.exp_seq_exp1 = fn_decl;
-                     I.exp_seq_exp2 = seq1;
-                     I.exp_seq_pos = pos; } in
-               trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
+                  let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
+                  let fn_decl = I.VarDecl{
+                      I.exp_var_decl_type = I.int_type;
+                      I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
+                      I.exp_var_decl_pos = pos; } in
+                  let add1_e = I.Binary {
+                      I.exp_binary_op = I.OpPlus;
+                      I.exp_binary_oper1 = e;
+                      I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                      I.exp_binary_path_id = pid;
+                      I.exp_binary_pos = pos; } in
+                  let assign_e = I.Assign {
+                      I.exp_assign_op = I.OpAssign;
+                      I.exp_assign_lhs = e;
+                      I.exp_assign_rhs = add1_e;
+                      I.exp_assign_path_id = None;
+                      I.exp_assign_pos = pos; } in
+                  let seq1 = I.Seq {
+                      I.exp_seq_exp1 = assign_e;
+                      I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
+                      I.exp_seq_pos = pos; } in
+                  let seq2 = I.Seq {
+                      I.exp_seq_exp1 = fn_decl;
+                      I.exp_seq_exp2 = seq1;
+                      I.exp_seq_pos = pos; } in
+                  trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2; I.exp_block_jump_label = I.NoJumpLabel; I.exp_block_pos = pos;})
             | I.OpPostDec -> 
-               let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
-               let fn_decl = I.VarDecl {
-                     I.exp_var_decl_type = I.int_type;
-                     I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
-                     I.exp_var_decl_pos = pos; } in
-               let sub1_e = I.Binary {
-                     I.exp_binary_op = I.OpMinus;
-                     I.exp_binary_oper1 = e;
-                     I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
-                     I.exp_binary_path_id = pid;
-                     I.exp_binary_pos = pos;} in
-               let assign_e = I.Assign {
-                     I.exp_assign_op = I.OpAssign;
-                     I.exp_assign_lhs = e;
-                     I.exp_assign_rhs = sub1_e;
-                     I.exp_assign_path_id = None;
-                     I.exp_assign_pos = pos; } in
-               let seq1 = I.Seq {
-                     I.exp_seq_exp1 = assign_e;
-                     I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
-                     I.exp_seq_pos = pos; } in
-               let seq2 = I.Seq {
-                     I.exp_seq_exp1 = fn_decl;
-                     I.exp_seq_exp2 = seq1;
-                     I.exp_seq_pos = pos; } in
-                trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                  let fn = (fresh_var_name "int" pos.start_pos.Lexing.pos_lnum) in
+                  let fn_decl = I.VarDecl {
+                      I.exp_var_decl_type = I.int_type;
+                      I.exp_var_decl_decls = [ (fn, (Some e), pos) ];
+                      I.exp_var_decl_pos = pos; } in
+                  let sub1_e = I.Binary {
+                      I.exp_binary_op = I.OpMinus;
+                      I.exp_binary_oper1 = e;
+                      I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                      I.exp_binary_path_id = pid;
+                      I.exp_binary_pos = pos;} in
+                  let assign_e = I.Assign {
+                      I.exp_assign_op = I.OpAssign;
+                      I.exp_assign_lhs = e;
+                      I.exp_assign_rhs = sub1_e;
+                      I.exp_assign_path_id = None;
+                      I.exp_assign_pos = pos; } in
+                  let seq1 = I.Seq {
+                      I.exp_seq_exp1 = assign_e;
+                      I.exp_seq_exp2 = I.Var { I.exp_var_name = fn; I.exp_var_pos = pos; };
+                      I.exp_seq_pos = pos; } in
+                  let seq2 = I.Seq {
+                      I.exp_seq_exp1 = fn_decl;
+                      I.exp_seq_exp2 = seq1;
+                      I.exp_seq_pos = pos; } in
+                  trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq2;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | I.OpPreInc ->
-               let add1_e = I.Binary {
-                     I.exp_binary_op = I.OpPlus;
-                     I.exp_binary_oper1 = e;
-                     I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
-                     I.exp_binary_path_id = pid;
-                     I.exp_binary_pos = pos; } in
-               let assign_e = I.Assign {
-                     I.exp_assign_op = I.OpAssign;
-                     I.exp_assign_lhs = e;
-                     I.exp_assign_rhs = add1_e;
-                     I.exp_assign_path_id = None;
-                     I.exp_assign_pos = pos; } in
-               let seq = I.Seq {
-                     I.exp_seq_exp1 = assign_e;
-                     I.exp_seq_exp2 = e;
-                     I.exp_seq_pos = pos;} in
-               trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                  let add1_e = I.Binary {
+                      I.exp_binary_op = I.OpPlus;
+                      I.exp_binary_oper1 = e;
+                      I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                      I.exp_binary_path_id = pid;
+                      I.exp_binary_pos = pos; } in
+                  let assign_e = I.Assign {
+                      I.exp_assign_op = I.OpAssign;
+                      I.exp_assign_lhs = e;
+                      I.exp_assign_rhs = add1_e;
+                      I.exp_assign_path_id = None;
+                      I.exp_assign_pos = pos; } in
+                  let seq = I.Seq {
+                      I.exp_seq_exp1 = assign_e;
+                      I.exp_seq_exp2 = e;
+                      I.exp_seq_pos = pos;} in
+                  trans_exp prog proc (I.Block { I.exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | I.OpPreDec ->
-               let sub1_e = I.Binary {
-                     I.exp_binary_op = I.OpMinus;
-                     I.exp_binary_oper1 = e;
-                     I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
-                     I.exp_binary_path_id = pid;
-                     I.exp_binary_pos = pos; } in
-               let assign_e = I.Assign {
-                     I.exp_assign_op = I.OpAssign;
-                     I.exp_assign_lhs = e;
-                     I.exp_assign_rhs = sub1_e;
-                     I.exp_assign_path_id = None;
-                     I.exp_assign_pos = pos; } in
-               let seq = I.Seq {
-                     I.exp_seq_exp1 = assign_e;
-                     I.exp_seq_exp2 = e;
-                     I.exp_seq_pos = pos; } in
-               trans_exp prog proc (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
+                  let sub1_e = I.Binary {
+                      I.exp_binary_op = I.OpMinus;
+                      I.exp_binary_oper1 = e;
+                      I.exp_binary_oper2 = I.IntLit { I.exp_int_lit_val = 1; I.exp_int_lit_pos = pos; };
+                      I.exp_binary_path_id = pid;
+                      I.exp_binary_pos = pos; } in
+                  let assign_e = I.Assign {
+                      I.exp_assign_op = I.OpAssign;
+                      I.exp_assign_lhs = e;
+                      I.exp_assign_rhs = sub1_e;
+                      I.exp_assign_path_id = None;
+                      I.exp_assign_pos = pos; } in
+                  let seq = I.Seq {
+                      I.exp_seq_exp1 = assign_e;
+                      I.exp_seq_exp2 = e;
+                      I.exp_seq_pos = pos; } in
+                  trans_exp prog proc (I.Block { exp_block_local_vars = [];I.exp_block_body = seq;I.exp_block_jump_label = I.NoJumpLabel;  I.exp_block_pos = pos;})
             | _ -> failwith "u_op not supported yet")
     | I.Var { I.exp_var_name = v; I.exp_var_pos = pos } ->
           (try
@@ -2286,46 +2284,46 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_var_decl_type = t;
           I.exp_var_decl_decls = decls;
           I.exp_var_decl_pos = tpos } ->
-            let ct = trans_type prog t tpos in
-            let rec helper ds = (match ds with
-             | [ (v, oe, pos) ] ->
-                if E.name_clash v then
-                  Err.report_error{Err.error_loc = pos;Err.error_text = v ^ " is already declared";}
-                else (let alpha = E.alpha_name v in
-                      (E.add v (E.VarInfo{
-                                    E.var_name = v;
-                                    E.var_alpha = alpha;
-                                    E.var_type = t; });
-                       let init_val = match oe with
-                          | Some e ->
-                            let (tmp_e, tmp_t) = trans_exp prog proc e in
-                            if sub_type tmp_t ct then tmp_e
-                            else Err.report_error {
-                                       Err.error_loc = pos;
-                                       Err.error_text = "initializer doesn't match variable type";}
-                          | None -> default_value ct pos in
-                            let init_e = C.Assign {
-                                   C.exp_assign_lhs = alpha;
-                                   C.exp_assign_rhs = init_val;
-                                   C.exp_assign_pos = pos; } in
-                            let var_decl = C.VarDecl {
-                                   C.exp_var_decl_type = ct;
-                                   C.exp_var_decl_name = alpha;
-                                   C.exp_var_decl_pos = pos; } in
-                      C.Seq {
-                             C.exp_seq_type = C.void_type;
-                             C.exp_seq_exp1 = var_decl;
-                             C.exp_seq_exp2 = init_e;
-                             C.exp_seq_pos = pos; }))
-             | (v, oe, pos) :: rest ->
-                let crest = helper rest in
-                let ce = helper [ (v, oe, pos) ] in
-                C.Seq {
-                       C.exp_seq_type = C.void_type;
-                       C.exp_seq_exp1 = ce;
-                       C.exp_seq_exp2 = crest;
-                       C.exp_seq_pos = pos;}
-             | [] -> failwith "trans_exp: VarDecl has an empty declaration list") in 
+          let ct = trans_type prog t tpos in
+          let rec helper ds = (match ds with
+            | [ (v, oe, pos) ] ->
+                  if E.name_clash v then
+                    Err.report_error{Err.error_loc = pos;Err.error_text = v ^ " is already declared";}
+                  else (let alpha = E.alpha_name v in
+                  (E.add v (E.VarInfo{
+                      E.var_name = v;
+                      E.var_alpha = alpha;
+                      E.var_type = t; });
+                  let init_val = match oe with
+                    | Some e ->
+                          let (tmp_e, tmp_t) = trans_exp prog proc e in
+                          if sub_type tmp_t ct then tmp_e
+                          else Err.report_error {
+                              Err.error_loc = pos;
+                              Err.error_text = "initializer doesn't match variable type";}
+                    | None -> default_value ct pos in
+                  let init_e = C.Assign {
+                      C.exp_assign_lhs = alpha;
+                      C.exp_assign_rhs = init_val;
+                      C.exp_assign_pos = pos; } in
+                  let var_decl = C.VarDecl {
+                      C.exp_var_decl_type = ct;
+                      C.exp_var_decl_name = alpha;
+                      C.exp_var_decl_pos = pos; } in
+                  C.Seq {
+                      C.exp_seq_type = C.void_type;
+                      C.exp_seq_exp1 = var_decl;
+                      C.exp_seq_exp2 = init_e;
+                      C.exp_seq_pos = pos; }))
+            | (v, oe, pos) :: rest ->
+                  let crest = helper rest in
+                  let ce = helper [ (v, oe, pos) ] in
+                  C.Seq {
+                      C.exp_seq_type = C.void_type;
+                      C.exp_seq_exp1 = ce;
+                      C.exp_seq_exp2 = crest;
+                      C.exp_seq_pos = pos;}
+            | [] -> failwith "trans_exp: VarDecl has an empty declaration list") in 
           ((helper decls), C.void_type)
     | I.While{
           I.exp_while_condition = cond;
@@ -2334,61 +2332,61 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_while_wrappings = wrap;
           I.exp_while_path_id = pi;
           I.exp_while_pos = pos } ->
-            let tvars = E.visible_names () in
-            let tvars = Util.remove_dups tvars in
-            let w_args = List.map (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; }) tvars in
-            let fn3 = fresh_name () in  
-            let w_name = fn3 ^ ("_" ^ (U.replace_path_sep_with_uscore
-                  (U.replace_dot_with_uscore (string_of_loc pos)))) in
-            let w_body_1 = body in
-            let w_body_2 = I.Block {
-                    I.exp_block_jump_label = I.NoJumpLabel; 
-                    I.exp_block_body = I.Seq{
-                          I.exp_seq_exp1 = w_body_1;                     
-                          I.exp_seq_exp2 = I.CallNRecv {
-                                I.exp_call_nrecv_method = w_name;
-                                I.exp_call_nrecv_arguments = w_args;
-                                I.exp_call_nrecv_pos = pos;
-                                I.exp_call_nrecv_path_id = pi; };
-                    I.exp_seq_pos = pos; };
-                    I.exp_block_local_vars = [];
-                    I.exp_block_pos = pos;} in
-            let w_body = I.Block {
-                    I.exp_block_jump_label = I.NoJumpLabel; 
-                    I.exp_block_body = I.Cond {
-                          I.exp_cond_condition = cond;
-                          I.exp_cond_then_arm = w_body_2;
-                          I.exp_cond_else_arm = I.Empty pos;
-                          I.exp_cond_pos = pos;
-                          I.exp_cond_path_id = pi;};
-                    I.exp_block_local_vars = [];
-                    I.exp_block_pos = pos;} in
-            let w_formal_args = List.map (fun tv ->{
-                                           I.param_type = fst tv;
-                                           I.param_name = snd tv;
-                                           I.param_mod = I.RefMod;
-                                           I.param_loc = pos; }) tvars in
-            let w_proc ={
-                I.proc_name = w_name;
-                I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
-                I.proc_data_decl = proc.I.proc_data_decl;
-                I.proc_constructor = false;
-                I.proc_args = w_formal_args;
-                I.proc_return = I.void_type;
-                I.proc_static_specs = prepost;
-                I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
-                I.proc_dynamic_specs = [];
-                I.proc_body = Some w_body;
-                I.proc_file = proc.I.proc_file;
-                I.proc_loc = pos; } in
-            let temp_call =  I.CallNRecv {
-                I.exp_call_nrecv_method = w_name;
-                I.exp_call_nrecv_arguments = w_args;
-                I.exp_call_nrecv_pos = pos;
-                I.exp_call_nrecv_path_id = pi; } in
-            let w_call = match wrap with
-              | None -> temp_call
-              | Some e -> (*let e,et = trans_exp prog proc e in*)
+          let tvars = E.visible_names () in
+          let tvars = Gen.BList.remove_dups_eq (=) tvars in
+          let w_args = List.map (fun tv -> I.Var { I.exp_var_name = snd tv; I.exp_var_pos = pos; }) tvars in
+          let fn3 = fresh_name () in  
+          let w_name = fn3 ^ ("_" ^ (Gen.replace_path_sep_with_uscore
+              (Gen.replace_dot_with_uscore (string_of_loc pos)))) in
+          let w_body_1 = body in
+          let w_body_2 = I.Block {
+              I.exp_block_jump_label = I.NoJumpLabel; 
+              I.exp_block_body = I.Seq{
+                  I.exp_seq_exp1 = w_body_1;                     
+                  I.exp_seq_exp2 = I.CallNRecv {
+                      I.exp_call_nrecv_method = w_name;
+                      I.exp_call_nrecv_arguments = w_args;
+                      I.exp_call_nrecv_pos = pos;
+                      I.exp_call_nrecv_path_id = pi; };
+                  I.exp_seq_pos = pos; };
+              I.exp_block_local_vars = [];
+              I.exp_block_pos = pos;} in
+          let w_body = I.Block {
+              I.exp_block_jump_label = I.NoJumpLabel; 
+              I.exp_block_body = I.Cond {
+                  I.exp_cond_condition = cond;
+                  I.exp_cond_then_arm = w_body_2;
+                  I.exp_cond_else_arm = I.Empty pos;
+                  I.exp_cond_pos = pos;
+                  I.exp_cond_path_id = pi;};
+              I.exp_block_local_vars = [];
+              I.exp_block_pos = pos;} in
+          let w_formal_args = List.map (fun tv ->{
+              I.param_type = fst tv;
+              I.param_name = snd tv;
+              I.param_mod = I.RefMod;
+              I.param_loc = pos; }) tvars in
+          let w_proc ={
+              I.proc_name = w_name;
+              I.proc_mingled_name = mingle_name_enum prog w_name (List.map fst tvars);
+              I.proc_data_decl = proc.I.proc_data_decl;
+              I.proc_constructor = false;
+              I.proc_args = w_formal_args;
+              I.proc_return = I.void_type;
+              I.proc_static_specs = prepost;
+              I.proc_exceptions = [brk_top]; (*should be ok, other wise while will have a throws set and this does not seem ergonomic*)
+              I.proc_dynamic_specs = [];
+              I.proc_body = Some w_body;
+              I.proc_file = proc.I.proc_file;
+              I.proc_loc = pos; } in
+          let temp_call =  I.CallNRecv {
+              I.exp_call_nrecv_method = w_name;
+              I.exp_call_nrecv_arguments = w_args;
+              I.exp_call_nrecv_pos = pos;
+              I.exp_call_nrecv_path_id = pi; } in
+          let w_call = match wrap with
+            | None -> temp_call
+            | Some e -> (*let e,et = trans_exp prog proc e in*)
                   match e with
                     | I.Try b -> I.Try{b with I.exp_try_block  = temp_call}
                     | _ ->  Err.report_error { Err.error_loc = pos; Err.error_text = "Translation of loop break wrapping failed";} in
@@ -2397,7 +2395,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           let cw_proc = trans_proc new_prog w_proc in 
           (loop_procs := cw_proc :: !loop_procs; (iw_call, C.void_type))
     | Iast.FloatLit {I.exp_float_lit_val = fval; I.exp_float_lit_pos = pos} -> 
-        (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
+          (C.FConst {C.exp_fconst_val = fval; C.exp_fconst_pos = pos}, C.float_type)
     | Iast.Finally b ->  Err.report_error { Err.error_loc = b.I.exp_finally_pos; Err.error_text = "Translation of finally failed";} 
     | Iast.ConstDecl _ -> failwith (Iprinter.string_of_exp ie)
     | Iast.Cast _ -> failwith (Iprinter.string_of_exp ie)
@@ -2417,7 +2415,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_sharp_flow_type = (
                         match ot with 
                           | I.Const_flow c -> (C.Sharp_ct 
-                                {CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
+                                {CF.formula_flow_interval = (Gen.ExcNumbering.get_hash_of_exc c); CF.formula_flow_link = None})
                           | I.Var_flow c -> (C.Sharp_v c));
                     C.exp_sharp_val = Cast.Sharp_finally 
                             (match oe with	
@@ -2429,7 +2427,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   else
                     let e_pos = Iast.get_exp_pos oe in
                     let ce, ct = trans_exp prog proc oe in						
-                    if Util.exc_sub_type (C.name_of_type ct) raisable_class then 							 
+                    if Gen.ExcNumbering.exc_sub_type (C.name_of_type ct) raisable_class then 							 
                       let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
                       let vd = C.VarDecl { C.exp_var_decl_type = ct;
                       C.exp_var_decl_name = fn;
@@ -2441,7 +2439,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                           C.exp_sharp_type = C.void_type;
                           C.exp_sharp_flow_type = C.Sharp_ct (
                               match ct with 
-                                | CP.OType ot ->  {CF.formula_flow_interval = (Util.get_hash_of_exc ot); CF.formula_flow_link = None}
+                                | CP.OType ot ->  {CF.formula_flow_interval = (Gen.ExcNumbering.get_hash_of_exc ot); CF.formula_flow_link = None}
                                 | _ -> Error.report_error {Error.error_loc = pos; Error.error_text = ("malfunction, primitive thrown type ")} );
                           C.exp_sharp_unpack = false;
                           C.exp_sharp_val = Cast.Sharp_prog_var (ct,fn);
@@ -2463,7 +2461,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               C.exp_sharp_flow_type = (
                   match ot with 
                     | I.Const_flow c -> (C.Sharp_ct 
-                          {CF.formula_flow_interval = (Util.get_hash_of_exc c); CF.formula_flow_link = None})
+                          {CF.formula_flow_interval = (Gen.ExcNumbering.get_hash_of_exc c); CF.formula_flow_link = None})
                     | I.Var_flow c -> (C.Sharp_v c));
               C.exp_sharp_val = Cast.Sharp_no_val;
               C.exp_sharp_pos = pos;
@@ -2495,13 +2493,13 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_try_path_id = fresh_strict_branch_point_id "";
                     C.exp_try_pos = pos;
                     C.exp_catch_clause =
-                           C.Catch ({ c with C.exp_catch_body =
+                            C.Catch ({ c with C.exp_catch_body =
                                     C.Try({C.exp_try_type = CP.Prim Void;
                                     C.exp_try_path_id = fresh_strict_branch_point_id "";
                                     C.exp_try_body = c.C.exp_catch_body;
                                     C.exp_try_pos = c.C.exp_catch_pos;		   
                                     C.exp_catch_clause = C.Catch{
-                                        C.exp_catch_flow_type = Util.get_hash_of_exc c_flow;
+                                        C.exp_catch_flow_type = Gen.ExcNumbering.get_hash_of_exc c_flow;
                                         C.exp_catch_flow_var = Some fl_var;
                                         C.exp_catch_var = None;
                                         C.exp_catch_body = C.Sharp({
@@ -2524,72 +2522,72 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				C.exp_try_body = r1;
 				C.exp_try_path_id = pid;
 				C.exp_catch_clause = C.Catch{
-				  C.exp_catch_flow_type = !spec_flow_int;
-				  C.exp_catch_flow_var = None (*Some (fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum)*);
-				  C.exp_catch_var = None;
-				  C.exp_catch_body = C.Sharp({
-							       C.exp_sharp_type = (CP.Prim Void);
-							       C.exp_sharp_flow_type = C.Sharp_ct 
-								 {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
-							       C.exp_sharp_val = Cast.Sharp_no_val;
-							       C.exp_sharp_unpack = true;
-							       C.exp_sharp_pos = pos;
-							       C.exp_sharp_path_id = None (*stub_branch_point_id "_spec_catch"*);
-							     });
-				  C.exp_catch_pos = pos;};
+				    C.exp_catch_flow_type = !spec_flow_int;
+				    C.exp_catch_flow_var = None (*Some (fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum)*);
+				    C.exp_catch_var = None;
+				    C.exp_catch_body = C.Sharp({
+						C.exp_sharp_type = (CP.Prim Void);
+						C.exp_sharp_flow_type = C.Sharp_ct 
+							{CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
+						C.exp_sharp_val = Cast.Sharp_no_val;
+						C.exp_sharp_unpack = true;
+						C.exp_sharp_pos = pos;
+						C.exp_sharp_path_id = None (*stub_branch_point_id "_spec_catch"*);
+					});
+				    C.exp_catch_pos = pos;};
 				C.exp_try_pos = pos};) in
 		        (r, C.void_type)
 	        )
-	          (*  
-and translate_catch prog proc pos c :C.exp_catch = match c with 
-  | { I.exp_catch_var = cv;
-    I.exp_catch_flow_type = cvt;
-    I.exp_catch_flow_var = cfv;
-    I.exp_catch_body = cb;	
-    I.exp_catch_pos = pos}->	
-        if not (Util.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
-		Err.error_text = "can not catch a not raisable object" }
-        else begin
-	      match cv with
-	        | Some x ->
-	              if (String.compare cvt c_flow)=0 then  begin
+	            (*  
+                    and translate_catch prog proc pos c :C.exp_catch = match c with 
+                    | { I.exp_catch_var = cv;
+                    I.exp_catch_flow_type = cvt;
+                    I.exp_catch_flow_var = cfv;
+                    I.exp_catch_body = cb;	
+                    I.exp_catch_pos = pos}->	
+                    if not (Gen.ExcNumbering.exc_sub_type cvt c_flow) then Err.report_error { Err.error_loc = pos; 
+		            Err.error_text = "can not catch a not raisable object" }
+                    else begin
+	                match cv with
+	                | Some x ->
+	                if (String.compare cvt c_flow)=0 then  begin
 		            E.push_scope();
 		            let new_bd, ct2 = trans_exp prog proc cb in
 		            E.pop_scope();
-		            {C.exp_catch_flow_type = (Util.get_hash_of_exc c_flow);
+		            {C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
 		            C.exp_catch_flow_var = cfv;
 		            C.exp_catch_var = Some (Cpure.Prim Void,x);
 		            C.exp_catch_body = new_bd;																					   
 		            C.exp_catch_pos = pos;} end
-	              else begin
+	                else begin
 		            E.push_scope();
 		            let alpha = E.alpha_name x in
 		            E.add x (E.VarInfo {E.var_name = x; E.var_alpha = alpha; E.var_type = (I.Named cvt)});
-		            (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
+		        (*let _ = print_string ("\n rrr1 -> \n"^Iprinter.string_of_exp cb^"\n") in*)
 		            let new_bd, ct2 = trans_exp prog proc cb in
-		            (*let _ = print_string ("\n rrr2 -> \n") in*)
-		            let ct = if (Util.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
+		        (*let _ = print_string ("\n rrr2 -> \n") in*)
+		            let ct = if (Gen.ExcNumbering.exc_sub_type cvt raisable_class) then trans_type prog (I.Named cvt) pos else CP.OType cvt in
 		            E.pop_scope();
 		            let r = {C.exp_catch_flow_type = (match ct with 
-					  | CP.OType ot-> (Util.get_hash_of_exc ot) 
-					  | _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
+					| CP.OType ot-> (Gen.ExcNumbering.get_hash_of_exc ot) 
+					| _->  Error.report_error { Error.error_loc = pos; Error.error_text = "malfunction, catch translation error"});
 			        C.exp_catch_flow_var = cfv;
 			        C.exp_catch_var = Some (ct,alpha);
 			        C.exp_catch_body = new_bd;																					   
 			        C.exp_catch_pos = pos;
 			        } in r end
-	        | None ->  
-	              E.push_scope();
-	              let new_bd, ct2 = trans_exp prog proc cb in
-		          E.pop_scope();
-		          {	C.exp_catch_flow_type = Util.get_hash_of_exc cvt;
-			      C.exp_catch_flow_var = cfv;
-			      C.exp_catch_var = None;
-			      C.exp_catch_body = new_bd;																					   
-			      C.exp_catch_pos = pos;}
-        end
-	      (*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
-	      *)
+	                | None ->  
+	                E.push_scope();
+	                let new_bd, ct2 = trans_exp prog proc cb in
+		            E.pop_scope();
+		            {	C.exp_catch_flow_type = Gen.ExcNumbering.get_hash_of_exc cvt;
+			        C.exp_catch_flow_var = cfv;
+			        C.exp_catch_var = None;
+			        C.exp_catch_body = new_bd;																					   
+			        C.exp_catch_pos = pos;}
+                    end
+	            (*| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = "translation failed, catch clause got mistranslated" }*)
+	            *)
 and default_value (t : CP.typ) pos : C.exp =
   match t with
     | CP.Prim Int -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
@@ -2637,16 +2635,16 @@ and trans_type (prog : I.prog_decl) (t : I.typ) (pos : loc) : CP.typ =
               }
 and
 
-  flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
-  Util.ho_debug_2 "flatten_to_bind " 
-    (Iprinter.string_of_exp) 
-    (fun x -> match x with
-       | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
-    (fun _ -> "?")
-    (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
+      flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
+  Gen.Debug.ho_2 "flatten_to_bind " 
+      (Iprinter.string_of_exp) 
+      (fun x -> match x with
+        | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
+      (fun _ -> "?")
+      (fun b rhs_o -> flatten_to_bind prog proc b r rhs_o pid imm pos) b rhs_o
 
 and
-  flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
+      flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
           (rhs_o : C.exp option) (pid:control_path_id) (imm : bool) pos =
   match rev_fs with
     | f :: rest ->
@@ -2682,12 +2680,12 @@ and
           let all_fields = I.look_up_all_fields prog ddef in
           let field_types = List.map (fun f -> trans_type prog (fst (fst f)) pos) all_fields in
           let (tmp1, fresh_names) = gen_names f (List.map fst all_fields)	in
-          if not (U.is_some tmp1) then
+          if not (Gen.is_some tmp1) then
             Err.report_error {
                 Err.error_loc = pos;
                 Err.error_text = "field " ^ (f ^ " is not accessible");}
           else
-            (let (vt, fresh_v) = U.unsome tmp1 in
+            (let (vt, fresh_v) = Gen.unsome tmp1 in
             let ct = trans_type prog vt pos in
             let (bind_body, bind_type) = match rhs_o with
               | None -> ((C.Var {
@@ -2696,7 +2694,7 @@ and
                     C.exp_var_pos = pos; }), ct)
               | Some rhs_e ->
                     let rhs_t = C.type_of_exp rhs_e in
-                    if (U.is_some rhs_t) && (sub_type (U.unsome rhs_t) ct) then
+                    if (Gen.is_some rhs_t) && (sub_type (Gen.unsome rhs_t) ct) then
                       ((C.Assign {
                           C.exp_assign_lhs = fresh_v;
                           C.exp_assign_rhs = rhs_e;
@@ -2718,7 +2716,7 @@ and
               ((C.Block {
                   C.exp_block_type = bind_type;
                   C.exp_block_body = seq2;
-		  C.exp_block_local_vars = [ (base_t, fn) ];
+		          C.exp_block_local_vars = [ (base_t, fn) ];
                   C.exp_block_pos = pos;}),bind_type)
             else (seq2, bind_type))
     | [] -> trans_exp prog proc base
@@ -2746,7 +2744,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
             let (tmp1, fresh_names) =
               gen_names f (List.map fst ddef.I.data_fields)
             in
-            if not (U.is_some tmp1)
+            if not (Gen.is_some tmp1)
             then
               Err.report_error
 		          {
@@ -2754,10 +2752,10 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
                       Err.error_text = "can't follow field " ^ f;
 		          }
             else
-              (let (vt, fresh_v) = U.unsome tmp1 in
+              (let (vt, fresh_v) = Gen.unsome tmp1 in
 		      let ct = trans_type prog vt pos in
 		      let (bind_body, bind_type) =
-                if U.empty rest
+                if Gen.is_empty rest
                 then
                   (match rhs with
                     | None ->
@@ -2772,8 +2770,8 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 			              let rhs_t = C.type_of_exp rhs_e
 			              in
                           if
-                            (U.is_some rhs_t) &&
-				                (sub_type (U.unsome rhs_t) ct)
+                            (Gen.is_some rhs_t) &&
+				                (sub_type (Gen.unsome rhs_t) ct)
                           then
                             ((C.Assign
 				                {
@@ -2800,7 +2798,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
                           List.combine field_types fresh_names;
 			          C.exp_bind_body = bind_body;
 			          C.exp_bind_path_id = pid;
-						C.exp_bind_imm = imm;
+					  C.exp_bind_imm = imm;
 			          C.exp_bind_pos = pos;
                   }),
               bind_type))
@@ -2886,7 +2884,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
           C.exp_seq_exp2 = ce2;
           C.exp_seq_pos = pos
       } ->
-        let new_ce2 = insert_dummy_vars ce2 pos in
+          let new_ce2 = insert_dummy_vars ce2 pos in
           C.Seq
               {
                   C.exp_seq_type = t;
@@ -2895,31 +2893,31 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
                   C.exp_seq_pos = pos;
               }
     | _ ->
-	(match C.type_of_exp ce with
-	   | None -> ce
-	   | Some t -> if CP.are_same_types t C.void_type then ce
-      else
-		 (let fn = fresh_var_name (Cprinter.string_of_typ t) pos.start_pos.Lexing.pos_lnum in
-		  let fn_decl = C.VarDecl {
-                        C.exp_var_decl_type = t;
-                        C.exp_var_decl_name = fn;
-                        C.exp_var_decl_pos = pos; } in
-		  let assign_e = C.Assign {
-                        C.exp_assign_lhs = fn;
-                        C.exp_assign_rhs = ce;
-                        C.exp_assign_pos = pos; } in
-		  let local_vars = [ (t, fn) ] in
-		  let seq = C.Seq {
-                  C.exp_seq_type = C.void_type;
-                  C.exp_seq_exp1 = fn_decl;
-                  C.exp_seq_exp2 = assign_e;
-                  C.exp_seq_pos = pos;} in
-		  let block_e = C.Block {
-                        C.exp_block_type = C.void_type;
-                        C.exp_block_body = seq;
-                        C.exp_block_local_vars = local_vars;
-                        C.exp_block_pos = pos; }
-		  in block_e))
+	      (match C.type_of_exp ce with
+	        | None -> ce
+	        | Some t -> if CP.are_same_types t C.void_type then ce
+              else
+		        (let fn = fresh_var_name (Cprinter.string_of_typ t) pos.start_pos.Lexing.pos_lnum in
+		        let fn_decl = C.VarDecl {
+                    C.exp_var_decl_type = t;
+                    C.exp_var_decl_name = fn;
+                    C.exp_var_decl_pos = pos; } in
+		        let assign_e = C.Assign {
+                    C.exp_assign_lhs = fn;
+                    C.exp_assign_rhs = ce;
+                    C.exp_assign_pos = pos; } in
+		        let local_vars = [ (t, fn) ] in
+		        let seq = C.Seq {
+                    C.exp_seq_type = C.void_type;
+                    C.exp_seq_exp1 = fn_decl;
+                    C.exp_seq_exp2 = assign_e;
+                    C.exp_seq_pos = pos;} in
+		        let block_e = C.Block {
+                    C.exp_block_type = C.void_type;
+                    C.exp_block_body = seq;
+                    C.exp_block_local_vars = local_vars;
+                    C.exp_block_pos = pos; }
+		        in block_e))
 
 and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool =
   let sat_subno  = ref 0 in
@@ -2933,7 +2931,7 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
     | Cformula.ECase b -> 
 	      let r1,r2 = List.split b.Cformula.formula_case_branches in
 	      let all = List.fold_left (fun a c->(Cpure.mkOr a c None no_pos) ) (Cpure.mkFalse b.Cformula.formula_case_pos) r1  in
-	      let _ = if not(Util.subset (Cpure.fv all) instant) then 
+	      let _ = if not(Gen.BList.subset_eq (=) (Cpure.fv all) instant) then 
 	        let _ = print_string (
 	            (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "\nall:" (Cpure.fv all))^"\n"^
 	                (List.fold_left (fun a c1-> a^" "^ (Cprinter.string_of_spec_var c1)) "instant:" instant)^"\n")in			
@@ -2942,9 +2940,9 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 	      let _ = 
 	        let sat = Tpdispatcher.is_sat_sub_no (Cpure.Not (all,None,no_pos)) sat_subno in
 	        if sat then 
-            let s = (Cprinter.string_of_struc_formula f) in
-            Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
-            Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} 	in
+              let s = (Cprinter.string_of_struc_formula f) in
+              Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
+              Err.error_text = "the guards don't cover the whole domain for : "^s^"\n";} 	in
 	      
 	      let rec p_check (p:Cpure.formula list):bool = match p with
 	        | [] -> false 
@@ -2953,9 +2951,9 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
 				  a ||sat) false p2 ) then true else p_check p2 in
 	      
 	      let _ = if (p_check r1) then 
-          let s = (Cprinter.string_of_struc_formula f) in
-          Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
-          Err.error_text = "the guards are not disjoint : "^s^"\n";} in
+            let s = (Cprinter.string_of_struc_formula f) in
+            Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
+            Err.error_text = "the guards are not disjoint : "^s^"\n";} in
 	      
 	      let _ = List.map (case_coverage instant) r2 in true
 	| Cformula.EVariance b -> case_coverage instant b.Cformula.formula_var_continuation
@@ -3000,8 +2998,8 @@ and add_pre (prog :C.prog_decl) (f:Cformula.struc_formula):Cformula.struc_formul
 	    | Cformula.EAssume (ref_vars, bf,y) ->
 	          Cformula.EAssume (ref_vars, (Cformula.normalize bf (CF.replace_branches branches (CF.formula_of_pure_N pf no_pos)) no_pos),y)
 		| Cformula.EVariance b -> Cformula.EVariance {b with
-										Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
-								  }
+			  Cformula.formula_var_continuation = inner_add_pre pf branches b.Cformula.formula_var_continuation;
+		  }
     in	List.map (helper pf branches ) f 
   in inner_add_pre (Cpure.mkTrue no_pos) [] f
          
@@ -3024,7 +3022,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
       | Iformula.ECase b-> 	
             Cformula.ECase {
                 Cformula.formula_case_exists = [];
-                Cformula.formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.arith_simplify (trans_pure_formula c1 stab)),
+                Cformula.formula_case_branches = List.map (fun (c1,c2)-> ((Cpure.arith_simplify 2 (trans_pure_formula c1 stab)),
                 (trans_struc_formula_hlp c2 fvars))) b.Iformula.formula_case_branches;          
                 Cformula.formula_case_pos = b.Iformula.formula_case_pos}			
       | Iformula.EBase b-> 			
@@ -3044,9 +3042,9 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
 	  | Iformula.EVariance b -> Cformula.EVariance {
 		    Cformula.formula_var_label = b.Iformula.formula_var_label;
 			Cformula.formula_var_measures = List.map (fun (expr, bound) -> match bound with
-														| None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
-														| Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_var_measures;
-			Cformula.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify (trans_pure_formula f stab)) b.Iformula.formula_var_escape_clauses;
+			  | None -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.IConst(0, no_pos))) (* Normalize the measures of variance spec *)
+			  | Some b_expr -> ((Cpure.norm_exp (trans_pure_exp expr stab)), Some (Cpure.norm_exp (trans_pure_exp b_expr stab)))) b.Iformula.formula_var_measures;
+			Cformula.formula_var_escape_clauses = List.map (fun f -> Cpure.arith_simplify 3 (trans_pure_formula f stab)) b.Iformula.formula_var_escape_clauses;
 			Cformula.formula_var_continuation = trans_struc_formula_hlp b.Iformula.formula_var_continuation fvars;
 			Cformula.formula_var_pos = b.Iformula.formula_var_pos
 		}
@@ -3061,7 +3059,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
   let _ = case_coverage cfvhp r in
   let tmp_vars  =  (Cformula.struc_post_fv r) in 
   let post_fv = List.map CP.name_of_spec_var tmp_vars in
-  let pre_fv = List.map CP.name_of_spec_var (Util.difference (Cformula.struc_fv r) tmp_vars) in
+  let pre_fv = List.map CP.name_of_spec_var (Gen.BList.difference_eq (=) (Cformula.struc_fv r) tmp_vars) in
   let r = if ((List.mem self pre_fv) || (List.mem self post_fv))&&sp then
     Err.report_error { Err.error_loc = Cformula.pos_of_struc_formula r; Err.error_text ="self is not allowed in pre/postcondition";}
   else if List.mem res pre_fv then
@@ -3096,9 +3094,9 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
             if sep_collect then (
                 if quantify then
                   (let tmp_stab = H.create 103 in
-                  (U.copy_keys fvars stab tmp_stab;
+                  (Gen.HashUti.copy_keys fvars stab tmp_stab;
                   H.clear stab;
-                  U.copy_keys fvars tmp_stab stab;))
+                  Gen.HashUti.copy_keys fvars tmp_stab stab;))
                 else ()) 
             else () in 
           (Cformula.res_replace stab rl clean_res fl);ch)
@@ -3125,14 +3123,14 @@ and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) se
             (if quantify then
               (let tmp_stab = H.create 103 in
               let fvars = (List.map fst qvars) @ fvars in
-			  (U.copy_keys fvars stab tmp_stab;
+			  (Gen.HashUti.copy_keys fvars stab tmp_stab;
 			  H.clear stab;
-			  U.copy_keys fvars tmp_stab stab;))
+			  Gen.HashUti.copy_keys fvars tmp_stab stab;))
 			else ())
           else () in
 	      (Cformula.res_replace stab rl clean_res fl);ch)
- 
-            
+          
+          
 and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_table) =		
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
@@ -3146,92 +3144,92 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
       | [] -> [] in
   let rec linearize_heap (f : IF.h_formula) pos : ( CF.h_formula * CF.t_formula) =    
     let res = 
-    match f with
-    | IF.HeapNode2 h2 -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = "malfunction with convert to heap node"; }
-    | IF.HeapNode{
-          IF.h_formula_heap_node = (v, p);
-          IF.h_formula_heap_name = c;
-	  IF.h_formula_heap_imm = imm;
-          IF.h_formula_heap_arguments = exps;
-          IF.h_formula_heap_full = full;
-          IF.h_formula_heap_pos = pos;
-          IF.h_formula_heap_label = pi;} ->
-          (try
-            let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
-            let labels = vdef.I.view_labels in
-            let hvars = match_exp (List.combine exps labels) pos in
-            let c0 =
-              if vdef.I.view_data_name = "" then 
-                (fill_view_param_types prog vdef;
-                vdef.I.view_data_name)
-              else vdef.I.view_data_name in
-            let new_v = CP.SpecVar (CP.OType c0, v, p) in
-            let new_h = CF.ViewNode {
-                CF.h_formula_view_node = new_v;
-                CF.h_formula_view_name = c;
-		CF.h_formula_view_imm = imm;
-                CF.h_formula_view_arguments = hvars;
-                CF.h_formula_view_modes = vdef.I.view_modes;
-                CF.h_formula_view_coercible = true;
-                CF.h_formula_view_origins = [];
-                CF.h_formula_view_label = pi;
-                CF.h_formula_view_pruning_conditions = [];
-                CF.h_formula_view_remaining_branches = None;
-                CF.h_formula_view_pos = pos;}
-            in (new_h, CF.TypeTrue)
-          with
-            | Not_found ->
-                  let labels = List.map (fun _ -> "") exps in
-                  let hvars = match_exp (List.combine exps labels) pos in
-                  let new_v = CP.SpecVar (CP.OType c, v, p) in
-                  let new_h = CF.DataNode {
-                      CF.h_formula_data_node = new_v;
-                      CF.h_formula_data_name = c;
-		      CF.h_formula_data_imm = imm;
-		      CF.h_formula_data_arguments = hvars;
-                      CF.h_formula_data_label = pi;
-                      CF.h_formula_data_remaining_branches = None;
-                      CF.h_formula_data_pruning_conditions = [];
-                      CF.h_formula_data_pos = pos;} 
-                  in ( new_h, CF.TypeTrue))
-    | IF.Star {
-          IF.h_formula_star_h1 = f1;
-          IF.h_formula_star_h2 = f2;
-          IF.h_formula_star_pos = pos
-        } ->
-        let (lf1, type1) = linearize_heap f1 pos in
-        let (lf2, type2) = linearize_heap f2 pos in
-        let tmp_h = CF.mkStarH lf1 lf2 pos in
-        let tmp_type = CF.mkAndType type1 type2 in 
-	  (tmp_h, tmp_type)
-    | IF.Phase
-        {
-          IF.h_formula_phase_rd = f1;
-          IF.h_formula_phase_rw = f2;
-          IF.h_formula_phase_pos = pos
-        } ->
-        let (lf1, type1) = linearize_heap f1 pos in
-        let (lf2, type2) = linearize_heap f2 pos in
-        let tmp_h = CF.mkPhaseH lf1 lf2 pos in
-        let tmp_type = CF.mkAndType type1 type2 in 
-	  (tmp_h, tmp_type)
-   | IF.Conj
-        {
-          IF.h_formula_conj_h1 = f1;
-          IF.h_formula_conj_h2 = f2;
-          IF.h_formula_conj_pos = pos
-        } ->
-        let (lf1, type1) = linearize_heap f1 pos in
-        let (lf2, type2) = linearize_heap f2 pos in
-        let tmp_h = CF.mkConjH lf1 lf2 pos in
-        let tmp_type = CF.mkAndType type1 type2 in 
-	  (tmp_h, tmp_type)
-    | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
-    | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
-  in 
-  (* let normalized_res = CF.normalize_h_formula (fst res) in *)
-  (* let _ = print_string("f = " ^ (Cprinter.string_of_h_formula (fst res)) ^ "\n") in *)
-  (* let _ = print_string("normalize f = " ^ (Cprinter.string_of_h_formula normalized_res) ^ "\n") in *)
+      match f with
+        | IF.HeapNode2 h2 -> Err.report_error { Err.error_loc = (Iformula.pos_of_formula f0); Err.error_text = "malfunction with convert to heap node"; }
+        | IF.HeapNode{
+              IF.h_formula_heap_node = (v, p);
+              IF.h_formula_heap_name = c;
+	          IF.h_formula_heap_imm = imm;
+              IF.h_formula_heap_arguments = exps;
+              IF.h_formula_heap_full = full;
+              IF.h_formula_heap_pos = pos;
+              IF.h_formula_heap_label = pi;} ->
+              (try
+                let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c in
+                let labels = vdef.I.view_labels in
+                let hvars = match_exp (List.combine exps labels) pos in
+                let c0 =
+                  if vdef.I.view_data_name = "" then 
+                    (fill_view_param_types prog vdef;
+                    vdef.I.view_data_name)
+                  else vdef.I.view_data_name in
+                let new_v = CP.SpecVar (CP.OType c0, v, p) in
+                let new_h = CF.ViewNode {
+                    CF.h_formula_view_node = new_v;
+                    CF.h_formula_view_name = c;
+		            CF.h_formula_view_imm = imm;
+                    CF.h_formula_view_arguments = hvars;
+                    CF.h_formula_view_modes = vdef.I.view_modes;
+                    CF.h_formula_view_coercible = true;
+                    CF.h_formula_view_origins = [];
+                    CF.h_formula_view_label = pi;
+                    CF.h_formula_view_pruning_conditions = [];
+                    CF.h_formula_view_remaining_branches = None;
+                    CF.h_formula_view_pos = pos;}
+                in (new_h, CF.TypeTrue)
+              with
+                | Not_found ->
+                      let labels = List.map (fun _ -> "") exps in
+                      let hvars = match_exp (List.combine exps labels) pos in
+                      let new_v = CP.SpecVar (CP.OType c, v, p) in
+                      let new_h = CF.DataNode {
+                          CF.h_formula_data_node = new_v;
+                          CF.h_formula_data_name = c;
+		                  CF.h_formula_data_imm = imm;
+		                  CF.h_formula_data_arguments = hvars;
+                          CF.h_formula_data_label = pi;
+                          CF.h_formula_data_remaining_branches = None;
+                          CF.h_formula_data_pruning_conditions = [];
+                          CF.h_formula_data_pos = pos;} 
+                      in ( new_h, CF.TypeTrue))
+        | IF.Star {
+              IF.h_formula_star_h1 = f1;
+              IF.h_formula_star_h2 = f2;
+              IF.h_formula_star_pos = pos
+          } ->
+              let (lf1, type1) = linearize_heap f1 pos in
+              let (lf2, type2) = linearize_heap f2 pos in
+              let tmp_h = CF.mkStarH lf1 lf2 pos in
+              let tmp_type = CF.mkAndType type1 type2 in 
+	          (tmp_h, tmp_type)
+        | IF.Phase
+                {
+                    IF.h_formula_phase_rd = f1;
+                    IF.h_formula_phase_rw = f2;
+                    IF.h_formula_phase_pos = pos
+                } ->
+              let (lf1, type1) = linearize_heap f1 pos in
+              let (lf2, type2) = linearize_heap f2 pos in
+              let tmp_h = CF.mkPhaseH lf1 lf2 pos in
+              let tmp_type = CF.mkAndType type1 type2 in 
+	          (tmp_h, tmp_type)
+        | IF.Conj
+                {
+                    IF.h_formula_conj_h1 = f1;
+                    IF.h_formula_conj_h2 = f2;
+                    IF.h_formula_conj_pos = pos
+                } ->
+              let (lf1, type1) = linearize_heap f1 pos in
+              let (lf2, type2) = linearize_heap f2 pos in
+              let tmp_h = CF.mkConjH lf1 lf2 pos in
+              let tmp_type = CF.mkAndType type1 type2 in 
+	          (tmp_h, tmp_type)
+        | IF.HTrue ->  (CF.HTrue, CF.TypeTrue)
+        | IF.HFalse -> (CF.HFalse, CF.TypeFalse) 
+    in 
+    (* let normalized_res = CF.normalize_h_formula (fst res) in *)
+    (* let _ = print_string("f = " ^ (Cprinter.string_of_h_formula (fst res)) ^ "\n") in *)
+    (* let _ = print_string("normalize f = " ^ (Cprinter.string_of_h_formula normalized_res) ^ "\n") in *)
     res
 
   in
@@ -3244,10 +3242,10 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
     let pos = base.IF.formula_base_pos in
     let (new_h, type_f) = linearize_heap h pos in
     let new_p = trans_pure_formula p stab in
-    let new_p = Cpure.arith_simplify new_p in
+    let new_p = Cpure.arith_simplify 5 new_p in
     let new_fl = trans_flow_formula fl pos in
     let new_br = List.map (fun (l, f) -> (l, (trans_pure_formula f stab))) br in
-    let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify f)) new_br in
+    let new_br = List.map (fun (l, f) -> (l, Cpure.arith_simplify 6 f)) new_br in
     (new_h, new_p, type_f, new_fl, new_br) in
   match f0 with
     | IF.Or {
@@ -3282,7 +3280,7 @@ and linearize_formula (prog : I.prog_decl) (f0 : IF.formula) (stab : spec_var_ta
 	          
 
 and trans_flow_formula (f0:Iformula.flow_formula) pos : CF.flow_formula = 
-  { Cformula.formula_flow_interval = Util.get_hash_of_exc f0;
+  { Cformula.formula_flow_interval = Gen.ExcNumbering.get_hash_of_exc f0;
   Cformula.formula_flow_link = None} 
       
 and trans_pure_formula (f0 : IP.formula) stab : CP.formula =
@@ -3785,11 +3783,11 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
       | Iformula.EBase b ->  let _ = collect_type_info_formula prog b.Iformula.formula_ext_base stab false in
 	    let _ = inner_collector b.Iformula.formula_ext_continuation in ()								
 	  | Iformula.EVariance b ->
-		  let _ = List.map (fun (expr, bound) -> match bound with
-							  | None -> (collect_type_info_arith expr stab)
-							  | Some b_expr -> let _ = (collect_type_info_arith expr stab) in (collect_type_info_arith b_expr stab)) b.Iformula.formula_var_measures in
-		  let _ = List.map (fun f -> collect_type_info_pure f stab) b.Iformula.formula_var_escape_clauses in
-		  let _ = inner_collector b.Iformula.formula_var_continuation in ()
+		    let _ = List.map (fun (expr, bound) -> match bound with
+			  | None -> (collect_type_info_arith expr stab)
+			  | Some b_expr -> let _ = (collect_type_info_arith expr stab) in (collect_type_info_arith b_expr stab)) b.Iformula.formula_var_measures in
+		    let _ = List.map (fun f -> collect_type_info_pure f stab) b.Iformula.formula_var_escape_clauses in
+		    let _ = inner_collector b.Iformula.formula_var_continuation in ()
     in
     let _ = List.map helper f0 in 
     () in
@@ -3804,25 +3802,25 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 and collect_type_info_heap prog (h0 : IF.h_formula) stab =
   match h0 with
     | IF.Star
-	{
-          IF.h_formula_star_h1 = h1;
-          IF.h_formula_star_h2 = h2;
-          IF.h_formula_star_pos = pos
-	} 
+	        {
+                IF.h_formula_star_h1 = h1;
+                IF.h_formula_star_h2 = h2;
+                IF.h_formula_star_pos = pos
+	        } 
     | IF.Conj
-	{
-          IF.h_formula_conj_h1 = h1;
-          IF.h_formula_conj_h2 = h2;
-          IF.h_formula_conj_pos = pos
-	} 
+	        {
+                IF.h_formula_conj_h1 = h1;
+                IF.h_formula_conj_h2 = h2;
+                IF.h_formula_conj_pos = pos
+	        } 
     | IF.Phase
-	{
-          IF.h_formula_phase_rd = h1;
-          IF.h_formula_phase_rw = h2;
-          IF.h_formula_phase_pos = pos
-	} ->
-	(collect_type_info_heap prog h1 stab;
-	 collect_type_info_heap prog h2 stab)
+	        {
+                IF.h_formula_phase_rd = h1;
+                IF.h_formula_phase_rw = h2;
+                IF.h_formula_phase_pos = pos
+	        } ->
+	      (collect_type_info_heap prog h1 stab;
+	      collect_type_info_heap prog h2 stab)
     | IF.HeapNode2 h2 ->
 	      let h = node2_to_node prog h2 in
 	      let fh = IF.HeapNode h in collect_type_info_heap prog fh stab
@@ -3839,7 +3837,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
               in
 	          let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types prog vdef in
 	          (*let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in*)
-              (if not (U.empty vdef.I.view_typed_vars)
+              (if not (Gen.is_empty vdef.I.view_typed_vars)
 		      then
                 (let rec helper exps tvars =
                   match (exps, tvars) with
@@ -3976,7 +3974,7 @@ and case_normalize_pure_formula hp b f = f
 
 (*moved the liniarization to case_normalize_renamed_formula*)
 and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_expl (f:Iformula.formula):
-    Iformula.formula* ((ident*primed)list) * ((ident*primed)list) = 
+      Iformula.formula* ((ident*primed)list) * ((ident*primed)list) = 
   (*existential wrapping and other magic tricks, avail_vars -> program variables, function arguments...*)
   (*returns the new formula, used variables and vars to be explicitly instantiated*)
   let rec match_exp (used_names : (ident*primed) list) (hargs : (IP.exp * branch_label) list) pos :
@@ -4008,66 +4006,66 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     match f with
       | IF.HeapNode2 b -> Error.report_error {Error.error_loc = b.Iformula.h_formula_heap2_pos; Error.error_text = "malfunction: heap node 2 still present"}  
       | IF.HeapNode b ->
-	  let pos = b.Iformula.h_formula_heap_pos in
-	  let labels = try
-	    let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
-	      vdef.I.view_labels
-	  with
-	    | Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments in	
-	  let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
-	    Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
-	  in
-	  let (new_used_names, hvars, evars, (link_f, link_f_br)) =
-	    match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
-	  let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
-	  let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
-	  in (new_used_names, evars, new_h, (link_f, link_f_br))
+	        let pos = b.Iformula.h_formula_heap_pos in
+	        let labels = try
+	          let vdef = I.look_up_view_def_raw prog.I.prog_view_decls b.IF.h_formula_heap_name in
+	          vdef.I.view_labels
+	        with
+	          | Not_found ->List.map (fun _ -> "") b.Iformula.h_formula_heap_arguments in	
+	        let _ = if (List.length b.Iformula.h_formula_heap_arguments) != (List.length labels) then
+	          Error.report_error {Error.error_loc = pos; Error.error_text = "predicate "^b.IF.h_formula_heap_name^" does not have the correct number of arguments"}  
+	        in
+	        let (new_used_names, hvars, evars, (link_f, link_f_br)) =
+	          match_exp used_names (List.combine b.Iformula.h_formula_heap_arguments labels) pos in
+	        let hvars = List.map (fun c-> Ipure.Var (c,pos)) hvars in
+	        let new_h = IF.HeapNode{ b with IF.h_formula_heap_arguments = hvars}
+	        in (new_used_names, evars, new_h, (link_f, link_f_br))
       | IF.Star
-	  {
-	    IF.h_formula_star_h1 = f1;
-	    IF.h_formula_star_h2 = f2;
-	    IF.h_formula_star_pos = pos
-	  } ->
-	  let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	    linearize_heap used_names f1 in
-	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	    linearize_heap new_used_names1 f2 in
-	  let tmp_h = IF.mkStar lf1 lf2 pos in
-	  let tmp_link = IP.mkAnd link1 link2 pos in
-	  let tmp_link_br = IP.merge_branches link1_br link2_br in
-	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+	          {
+	              IF.h_formula_star_h1 = f1;
+	              IF.h_formula_star_h2 = f2;
+	              IF.h_formula_star_pos = pos
+	          } ->
+	        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
+	          linearize_heap used_names f1 in
+	        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
+	          linearize_heap new_used_names1 f2 in
+	        let tmp_h = IF.mkStar lf1 lf2 pos in
+	        let tmp_link = IP.mkAnd link1 link2 pos in
+	        let tmp_link_br = IP.merge_branches link1_br link2_br in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
 
       | IF.Conj
-	  {
-	    IF.h_formula_conj_h1 = f1;
-	    IF.h_formula_conj_h2 = f2;
-	    IF.h_formula_conj_pos = pos
-	  } ->
-	  let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	    linearize_heap used_names f1 in
-	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	    linearize_heap new_used_names1 f2 in
-	  let tmp_h = IF.mkConj lf1 lf2 pos in
-	  let tmp_link = IP.mkAnd link1 link2 pos in
-	  let tmp_link_br = IP.merge_branches link1_br link2_br in
-	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+	          {
+	              IF.h_formula_conj_h1 = f1;
+	              IF.h_formula_conj_h2 = f2;
+	              IF.h_formula_conj_pos = pos
+	          } ->
+	        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
+	          linearize_heap used_names f1 in
+	        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
+	          linearize_heap new_used_names1 f2 in
+	        let tmp_h = IF.mkConj lf1 lf2 pos in
+	        let tmp_link = IP.mkAnd link1 link2 pos in
+	        let tmp_link_br = IP.merge_branches link1_br link2_br in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
       | IF.Phase
-	  {
-	    IF.h_formula_phase_rd = f1;
-	    IF.h_formula_phase_rw = f2;
-	    IF.h_formula_phase_pos = pos
-	  } ->
-	  let (new_used_names1, qv1, lf1, (link1, link1_br)) =
-	    linearize_heap used_names f1 in
-	  let (new_used_names2, qv2, lf2, (link2, link2_br)) =
-	    linearize_heap new_used_names1 f2 in
-	  let tmp_h = IF.mkPhase lf1 lf2 pos in
-	  let tmp_link = IP.mkAnd link1 link2 pos in
-	  let tmp_link_br = IP.merge_branches link1_br link2_br in
-	    (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
+	          {
+	              IF.h_formula_phase_rd = f1;
+	              IF.h_formula_phase_rw = f2;
+	              IF.h_formula_phase_pos = pos
+	          } ->
+	        let (new_used_names1, qv1, lf1, (link1, link1_br)) =
+	          linearize_heap used_names f1 in
+	        let (new_used_names2, qv2, lf2, (link2, link2_br)) =
+	          linearize_heap new_used_names1 f2 in
+	        let tmp_h = IF.mkPhase lf1 lf2 pos in
+	        let tmp_link = IP.mkAnd link1 link2 pos in
+	        let tmp_link_br = IP.merge_branches link1_br link2_br in
+	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
       | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
       | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
- 
+  
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
     let heap = Iformula.normalize_h_formula heap in 
@@ -4077,35 +4075,35 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
     let new_br = IP.merge_branches new_br link_f_br in
     let tmp_evars, to_expl =
       (let init_evars = (h_evars@evs) in
-       let to_evars = Util.difference init_evars posib_expl in
-       let to_expl = Util.intersect init_evars posib_expl in       
-       (to_evars,to_expl))in
+      let to_evars = Gen.BList.difference_eq (=) init_evars posib_expl in
+      let to_expl = Gen.BList.intersect_eq (=) init_evars posib_expl in       
+      (to_evars,to_expl))in
     let result = Iformula.mkExists tmp_evars new_h new_p fl new_br pos in
-    let used_vars = Util.difference nu tmp_evars in
-      if not (Util.empty tmp_evars)  then 
-        Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
-      else ();
-      (result,used_vars,to_expl)  in  
-    
+    let used_vars = Gen.BList.difference_eq (=) nu tmp_evars in
+    if not (Gen.is_empty tmp_evars)  then 
+      Debug.pprint ("linearize_constraint: " ^ ((String.concat ", " (List.map fst tmp_evars)) ^ " are quantified\n")) pos
+    else ();
+    (result,used_vars,to_expl)  in  
+  
   let rec helper (f:Iformula.formula):Iformula.formula* ((ident*primed)list)* ((ident*primed)list) = match f with
     | Iformula.Or b -> 
-      let f1,l1,expl1 = (helper b.Iformula.formula_or_f1) in
-      let f2,l2,expl2 = (helper b.Iformula.formula_or_f2) in
-        (Iformula.Or {b with Iformula.formula_or_f1 = f1; Iformula.formula_or_f2 = f2}, 
-         Util.remove_dups (l1@l2),(Util.remove_dups (expl1@expl2)))
+          let f1,l1,expl1 = (helper b.Iformula.formula_or_f1) in
+          let f2,l2,expl2 = (helper b.Iformula.formula_or_f2) in
+          (Iformula.Or {b with Iformula.formula_or_f1 = f1; Iformula.formula_or_f2 = f2}, 
+          Gen.BList.remove_dups_eq (=) (l1@l2),(Gen.BList.remove_dups_eq (=) (expl1@expl2)))
     | Iformula.Base b -> normalize_base   b.Iformula.formula_base_heap 
-                                          b.Iformula.formula_base_pure 
-                                          b.Iformula.formula_base_flow
-                                          b.Iformula.formula_base_branches 
-                                          []
-                                          b.Iformula.formula_base_pos
+          b.Iformula.formula_base_pure 
+              b.Iformula.formula_base_flow
+              b.Iformula.formula_base_branches 
+              []
+              b.Iformula.formula_base_pos
     | Iformula.Exists b-> normalize_base b.Iformula.formula_exists_heap 
-                                         b.Iformula.formula_exists_pure
-                                         b.Iformula.formula_exists_flow
-                                         b.Iformula.formula_exists_branches 
-                                         b.Iformula.formula_exists_qvars 
-                                         b.Iformula.formula_exists_pos in
-    helper f    
+          b.Iformula.formula_exists_pure
+              b.Iformula.formula_exists_flow
+              b.Iformula.formula_exists_branches 
+              b.Iformula.formula_exists_qvars 
+              b.Iformula.formula_exists_pos in
+  helper f    
 
 and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)	
@@ -4117,12 +4115,12 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Ifor
   f
       
 and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
-  strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
+      strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
   let ilinearize_formula (f:Iformula.formula)(h:(ident*primed) list): Iformula.formula = 
-    let need_quant = Util.difference (Iformula.all_fv f) h in
+    let need_quant = Gen.BList.difference_eq (=) (Iformula.all_fv f) h in
     let _ = if not (List.for_all(fun (c1,c2)->c2==Unprimed)need_quant) then Err.report_error{ 
-      Err.error_loc = Iformula.pos_of_formula f; 
-      Err.error_text = "existential vars should not be primed"; } in
+        Err.error_loc = Iformula.pos_of_formula f; 
+        Err.error_text = "existential vars should not be primed"; } in
     let _ = if (List.length need_quant)>0 then 
       print_string ("\n warning "^(string_of_loc (Iformula.pos_of_formula f))^" quantifying: "^(Iprinter.string_of_var_list need_quant)^"\n") in
     Iformula.push_exists need_quant f in
@@ -4131,78 +4129,78 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
   let nf = Iformula.float_out_struc_min_max nf in
   (*let _ = print_string ("\n b rename "^(Iprinter.string_of_struc_formula "" nf))in*)
   let nf = Iformula.rename_bound_var_struc_formula nf in
-    (*let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula "" nf)^"\n") in*)
-    (*convert anonym to exists*)
+  (*let _ = print_string ("\n after ren: "^(Iprinter.string_of_struc_formula "" nf)^"\n") in*)
+  (*convert anonym to exists*)
   let rec helper (h:(ident*primed) list)(f0:Iformula.struc_formula) strad_vs :Iformula.struc_formula* ((ident*primed)list) = 
     let helper1 (f:Iformula.ext_formula):Iformula.ext_formula * ((ident*primed)list) = match f with
       | Iformula.EAssume (b,y)-> 
-          let onb = convert_anonym_to_exist b in
-          let hp = (Util.remove_dups(h@p))in
-          let nb,nh,_ = case_normalize_renamed_formula prog hp strad_vs onb in
-          let nb = ilinearize_formula nb hp in
-          let vars_list = Iformula.all_fv nb in
-	    (Iformula.EAssume (nb,y),(Util.difference vars_list p)) 
+            let onb = convert_anonym_to_exist b in
+            let hp = (Gen.BList.remove_dups_eq (=)(h@p))in
+            let nb,nh,_ = case_normalize_renamed_formula prog hp strad_vs onb in
+            let nb = ilinearize_formula nb hp in
+            let vars_list = Iformula.all_fv nb in
+	        (Iformula.EAssume (nb,y),(Gen.BList.difference_eq (=) vars_list p)) 
       | Iformula.ECase b->
-          let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
-              let r12 = Util.intersect (Ipure.fv c1) h in
-              let r21,r22 = helper h c2 strad_vs in
+            let r1,r2 = List.fold_left (fun (a1,a2)(c1,c2)->
+                let r12 = Gen.BList.intersect_eq (=) (Ipure.fv c1) h in
+                let r21,r22 = helper h c2 strad_vs in
                 (((c1,r21)::a1),r12::r22::a2)
-                 ) ([],[]) b.Iformula.formula_case_branches in				
-          (Iformula.ECase ({
-			       Iformula.formula_case_branches = r1;
-			       Iformula.formula_case_pos = b.Iformula.formula_case_pos
-			     }),(Util.remove_dups (List.concat r2)))			
+            ) ([],[]) b.Iformula.formula_case_branches in				
+            (Iformula.ECase ({
+			    Iformula.formula_case_branches = r1;
+			    Iformula.formula_case_pos = b.Iformula.formula_case_pos
+			}),(Gen.BList.remove_dups_eq (=) (List.concat r2)))			
       | Iformula.EBase b->		
-          let init_expl = b.Iformula.formula_ext_explicit_inst in
-          let _ = if (List.length (Util.intersect h init_expl))>0 then 
-            Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos;
+            let init_expl = b.Iformula.formula_ext_explicit_inst in
+            let _ = if (List.length (Gen.BList.intersect_eq (=) h init_expl))>0 then 
+              Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos;
               Error.error_text = "the late instantiation variables collide with the used vars"}
-          else true in
-          let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
-          let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in  
-          let all_expl = Util.remove_dups (new_expl @ init_expl) in
-          let new_strad_vs = Util.difference strad_vs new_expl in   
-          let all_vars = Util.remove_dups (h@all_expl) in          
-          let posib_impl = Util.difference(Iformula.heap_fv onb) all_vars in
-          let h1prm = Util.remove_dups (all_vars@posib_impl) in
-          let _ = if (not allow_primes)&&(List.length (List.filter (fun (c1,c2)-> c2==Primed) (all_expl@posib_impl)))>0 then
-            Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "should not have prime vars"} else () in
-          let _ = if (List.length (Util.intersect (all_expl@posib_impl) p))>0 then 	
-            Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "post variables should not appear here"} else () in
-          let nc,h2 = helper h1prm b.Iformula.formula_ext_continuation new_strad_vs in	
-          let implvar = (*if lax_implicit then *) Util.difference (Iformula.unbound_heap_fv onb) all_vars (*else Util.difference h2 all_vars*) in
-          (*let nb,ex = ilinearize_formula nb (h@implvar@all_expl) in*)
-          (*let h3 = Util.difference h3 ex in*)
-          let _ = if (List.length (Util.difference implvar ((Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc))))>0 then 
+            else true in
+            let onb = convert_anonym_to_exist b.Iformula.formula_ext_base in
+            let nb,h3,new_expl = case_normalize_renamed_formula prog h strad_vs onb in  
+            let all_expl = Gen.BList.remove_dups_eq (=) (new_expl @ init_expl) in
+            let new_strad_vs = Gen.BList.difference_eq (=) strad_vs new_expl in   
+            let all_vars = Gen.BList.remove_dups_eq (=) (h@all_expl) in          
+            let posib_impl = Gen.BList.difference_eq (=)(Iformula.heap_fv onb) all_vars in
+            let h1prm = Gen.BList.remove_dups_eq (=) (all_vars@posib_impl) in
+            let _ = if (not allow_primes)&&(List.length (List.filter (fun (c1,c2)-> c2==Primed) (all_expl@posib_impl)))>0 then
+              Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "should not have prime vars"} else () in
+            let _ = if (List.length (Gen.BList.intersect_eq (=) (all_expl@posib_impl) p))>0 then 	
+              Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = "post variables should not appear here"} else () in
+            let nc,h2 = helper h1prm b.Iformula.formula_ext_continuation new_strad_vs in	
+            let implvar = (*if lax_implicit then *) Gen.BList.difference_eq (=) (Iformula.unbound_heap_fv onb) all_vars (*else Gen.BList.difference_eq (=) h2 all_vars*) in
+            (*let nb,ex = ilinearize_formula nb (h@implvar@all_expl) in*)
+            (*let h3 = Gen.BList.difference_eq (=) h3 ex in*)
+            let _ = if (List.length (Gen.BList.difference_eq (=) implvar ((Iformula.heap_fv onb)@(Iformula.struc_hp_fv nc))))>0 then 
               Error.report_error {Error.error_loc = b.Iformula.formula_ext_pos; Error.error_text = ("malfunction: some implicit vars are not heap_vars\n")} else true in
-          let r = (Iformula.EBase ({
-                   Iformula.formula_ext_base = nb;
-                   Iformula.formula_ext_implicit_inst =implvar;					
-                   Iformula.formula_ext_explicit_inst = all_expl;
-                   Iformula.formula_ext_exists = [];
-                   Iformula.formula_ext_continuation = nc;
-                   Iformula.formula_ext_pos = b.Iformula.formula_ext_pos}),(Util.remove_dups (h2@h3)))in
+            let r = (Iformula.EBase ({
+                Iformula.formula_ext_base = nb;
+                Iformula.formula_ext_implicit_inst =implvar;					
+                Iformula.formula_ext_explicit_inst = all_expl;
+                Iformula.formula_ext_exists = [];
+                Iformula.formula_ext_continuation = nc;
+                Iformula.formula_ext_pos = b.Iformula.formula_ext_pos}),(Gen.BList.remove_dups_eq (=) (h2@h3)))in
             (*let _ = print_string ("\n normalized: "^(Iprinter.string_of_ext_formula (fst r))^"\n before: "^(Iprinter.string_of_ext_formula f)^"\n") in*)
             r
 	  | Iformula.EVariance b -> (Iformula.EVariance ({b with
 			Iformula.formula_var_continuation = fst (helper h b.Iformula.formula_var_continuation strad_vs)
 		}), [])
-		in
-      if (List.length f0)=0 then
-	([],[])
-      else
-	let ll1,ll2 = List.split (List.map helper1 f0) in
-	  (ll1, (Util.remove_dups (List.concat ll2))) in	
-    (helper h nf strad_vs) 
-  
+	in
+    if (List.length f0)=0 then
+	  ([],[])
+    else
+	  let ll1,ll2 = List.split (List.map helper1 f0) in
+	  (ll1, (Gen.BList.remove_dups_eq (=) (List.concat ll2))) in	
+  (helper h nf strad_vs) 
+      
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
-    { Iast.coercion_type = cd.Iast.coercion_type;
-      Iast.coercion_name = cd.Iast.coercion_name;
-      Iast.coercion_head = nch;
-      Iast.coercion_body = ncb;
-      Iast.coercion_proof = cd.Iast.coercion_proof}
+  { Iast.coercion_type = cd.Iast.coercion_type;
+  Iast.coercion_name = cd.Iast.coercion_name;
+  Iast.coercion_head = nch;
+  Iast.coercion_body = ncb;
+  Iast.coercion_proof = cd.Iast.coercion_proof}
       
 and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*ident) list) = 
   let fl2 = fst (List.split l2) in
@@ -4210,44 +4208,44 @@ and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*
 
 and subid (ren:(ident*ident) list) (i:ident) :ident = 
   let nl = List.filter (fun (c1,c2)-> (String.compare c1 i)==0) ren in
-    if (List.length nl )> 0 then let _,l2 = List.hd nl in l2
-    else i 			
+  if (List.length nl )> 0 then let _,l2 = List.hd nl in l2
+  else i 			
     
 and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp = 
   
   let rec helper (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =   match f with
     | Iast.Label (pid, b) -> Iast.Label (pid, (helper ren b))
     | Iast.Assert b ->
-      let subst_list = 
-        List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren in
-      let assert_formula = match b.Iast.exp_assert_asserted_formula with
-					  | None -> None
-						| Some (f1,f2)-> Some (Iformula.subst_struc subst_list f1,f2) in
-      let assume_formula = match b.Iast.exp_assert_assumed_formula with
-							 | None -> None
-							 | Some f -> Some (Iformula.subst subst_list f) in
-      (*let r =*) Iast.Assert{
-        Iast.exp_assert_asserted_formula = assert_formula;
-		    Iast.exp_assert_assumed_formula = assume_formula;
-		    Iast.exp_assert_pos = b.Iast.exp_assert_pos;
-		    Iast.exp_assert_path_id = b.Iast.exp_assert_path_id} (*in
-      let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
-      let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
-      r*)
+          let subst_list = 
+            List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren in
+          let assert_formula = match b.Iast.exp_assert_asserted_formula with
+			| None -> None
+			| Some (f1,f2)-> Some (Iformula.subst_struc subst_list f1,f2) in
+          let assume_formula = match b.Iast.exp_assert_assumed_formula with
+			| None -> None
+			| Some f -> Some (Iformula.subst subst_list f) in
+          (*let r =*) Iast.Assert{
+              Iast.exp_assert_asserted_formula = assert_formula;
+		      Iast.exp_assert_assumed_formula = assume_formula;
+		      Iast.exp_assert_pos = b.Iast.exp_assert_pos;
+		      Iast.exp_assert_path_id = b.Iast.exp_assert_path_id} (*in
+                                                                     let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
+                                                                     let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
+                                                                     r*)
     | Iast.Assign b->
-        Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
-           Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
-           Iast.exp_assign_rhs = helper ren b.Iast.exp_assign_rhs;
-           Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
-           Iast.exp_assign_pos = b.Iast.exp_assign_pos}
+          Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
+          Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
+          Iast.exp_assign_rhs = helper ren b.Iast.exp_assign_rhs;
+          Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
+          Iast.exp_assign_pos = b.Iast.exp_assign_pos}
     | Iast.Binary b->
-        Iast.Binary { b with  
-          Iast.exp_binary_oper1 = helper ren b.Iast.exp_binary_oper1;
-          Iast.exp_binary_oper2 = helper ren b.Iast.exp_binary_oper2;}
+          Iast.Binary { b with  
+              Iast.exp_binary_oper1 = helper ren b.Iast.exp_binary_oper1;
+              Iast.exp_binary_oper2 = helper ren b.Iast.exp_binary_oper2;}
     | Iast.Bind b->
           let nren = ren_list_concat ren (List.map (fun c-> (c,Ipure.fresh_old_name c)) b.Iast.exp_bind_fields) in	 
-            let new_bound_var = subid ren b.Iast.exp_bind_bound_var in
-            Iast.Bind { b with 
+          let new_bound_var = subid ren b.Iast.exp_bind_bound_var in
+          Iast.Bind { b with 
               Iast.exp_bind_bound_var = new_bound_var;
               Iast.exp_bind_fields = List.map (fun c-> subid nren c) b.Iast.exp_bind_fields;
               Iast.exp_bind_body = helper nren b.Iast.exp_bind_body}
@@ -4266,357 +4264,357 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
     | Iast.BoolLit _ -> f
     | Iast.VarDecl b -> 
           Iast.VarDecl {b with Iast.exp_var_decl_decls = List.map (fun (c1,c2,c3)-> (c1, 
-                               (match c2 with 
-                                  | None-> None
-                                  | Some e-> Some (helper ren e)), c3)) b.Iast.exp_var_decl_decls }
+          (match c2 with 
+            | None-> None
+            | Some e-> Some (helper ren e)), c3)) b.Iast.exp_var_decl_decls }
     | Iast.CallRecv b -> Iast.CallRecv{b with
-					 Iast.exp_call_recv_receiver = helper ren b.Iast.exp_call_recv_receiver;
-					 Iast.exp_call_recv_arguments = List.map (helper ren) b.Iast.exp_call_recv_arguments}
+		  Iast.exp_call_recv_receiver = helper ren b.Iast.exp_call_recv_receiver;
+		  Iast.exp_call_recv_arguments = List.map (helper ren) b.Iast.exp_call_recv_arguments}
     | Iast.CallNRecv b -> Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = List.map (helper ren) b.Iast.exp_call_nrecv_arguments}
 	| Iast.Catch b-> Iast.Catch {b with
-                         Iast.exp_catch_flow_var = (match b.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
-                         Iast.exp_catch_var = (match b.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
-                         Iast.exp_catch_body = helper ren b.Iast.exp_catch_body;}
+          Iast.exp_catch_flow_var = (match b.Iast.exp_catch_flow_var with | None-> None |Some e-> Some (subid ren e));
+          Iast.exp_catch_var = (match b.Iast.exp_catch_var with | None-> None |Some e-> Some (subid ren e));
+          Iast.exp_catch_body = helper ren b.Iast.exp_catch_body;}
     | Iast.Cast b -> Iast.Cast{b with Iast.exp_cast_body =  helper ren b.Iast.exp_cast_body}
     | Iast.Cond b -> Iast.Cond {b with 
-				  Iast.exp_cond_condition = helper ren b.Iast.exp_cond_condition;
-				  Iast.exp_cond_then_arm = helper ren b.Iast.exp_cond_then_arm;
-				  Iast.exp_cond_else_arm = helper ren b.Iast.exp_cond_else_arm}	  
+		  Iast.exp_cond_condition = helper ren b.Iast.exp_cond_condition;
+		  Iast.exp_cond_then_arm = helper ren b.Iast.exp_cond_then_arm;
+		  Iast.exp_cond_else_arm = helper ren b.Iast.exp_cond_else_arm}	  
 	| Iast.Finally b-> Iast.Finally {b with Iast.exp_finally_body = helper ren b.Iast.exp_finally_body}
     | Iast.Member b ->
-              Iast.Member {b with 
-                 Iast.exp_member_base = helper ren b.Iast.exp_member_base;
-                 Iast.exp_member_fields = List.map (subid ren ) b.Iast.exp_member_fields}
+          Iast.Member {b with 
+              Iast.exp_member_base = helper ren b.Iast.exp_member_base;
+              Iast.exp_member_fields = List.map (subid ren ) b.Iast.exp_member_fields}
     | Iast.New b-> 
-              Iast.New {b with Iast.exp_new_arguments = List.map (helper ren) b.Iast.exp_new_arguments}
+          Iast.New {b with Iast.exp_new_arguments = List.map (helper ren) b.Iast.exp_new_arguments}
     | Iast.Return b ->  Iast.Return {b with Iast.exp_return_val = match b.Iast.exp_return_val with
-				       | None -> None
-				       | Some f -> Some (rename_exp ren f)}
+		| None -> None
+		| Some f -> Some (rename_exp ren f)}
     | Iast.Seq b -> Iast.Seq 
-                { Iast.exp_seq_exp1 = rename_exp ren b.Iast.exp_seq_exp1;
-                  Iast.exp_seq_exp2 =rename_exp ren b.Iast.exp_seq_exp2;
-                  Iast.exp_seq_pos = b.Iast.exp_seq_pos }	  	  
+          { Iast.exp_seq_exp1 = rename_exp ren b.Iast.exp_seq_exp1;
+          Iast.exp_seq_exp2 =rename_exp ren b.Iast.exp_seq_exp2;
+          Iast.exp_seq_pos = b.Iast.exp_seq_pos }	  	  
     | Iast.Unary b-> Iast.Unary {b with Iast.exp_unary_exp = rename_exp ren b.Iast.exp_unary_exp}
     | Iast.Unfold b-> Iast.Unfold{b with Iast.exp_unfold_var = ((subid ren (fst b.Iast.exp_unfold_var)),(snd b.Iast.exp_unfold_var))}
     | Iast.Var b -> Iast.Var{b with Iast.exp_var_name = subid ren b.Iast.exp_var_name}
     | Iast.While b-> 
-        let nw = match b.Iast.exp_while_wrappings with
+          let nw = match b.Iast.exp_while_wrappings with
             | None -> None
             | Some e -> Some (rename_exp ren e)  in
-                Iast.While{
-                  Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
-                  Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
-                  Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
-                  Iast.exp_while_f_name = b.Iast.exp_while_f_name;
-                  Iast.exp_while_wrappings = nw;
-                  Iast.exp_while_specs = Iformula.subst_struc (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) b.Iast.exp_while_specs;
-                  Iast.exp_while_path_id = b.Iast.exp_while_path_id;
-                  Iast.exp_while_pos = b.Iast.exp_while_pos;}
+          Iast.While{
+              Iast.exp_while_condition = rename_exp ren b.Iast.exp_while_condition;
+              Iast.exp_while_body = rename_exp ren b.Iast.exp_while_body;
+              Iast.exp_while_jump_label = b.Iast.exp_while_jump_label;
+              Iast.exp_while_f_name = b.Iast.exp_while_f_name;
+              Iast.exp_while_wrappings = nw;
+              Iast.exp_while_specs = Iformula.subst_struc (List.fold_left(fun a (c1,c2)-> ((c1,Unprimed),(c2,Unprimed))::((c1,Primed),(c2,Primed))::a) [] ren) b.Iast.exp_while_specs;
+              Iast.exp_while_path_id = b.Iast.exp_while_path_id;
+              Iast.exp_while_pos = b.Iast.exp_while_pos;}
     | Iast.Time _ ->f
     | Iast.Try b -> 
-        Iast.Try { b with
-               Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
-               Iast.exp_catch_clauses = List.map (rename_exp ren) b.Iast.exp_catch_clauses;
-               Iast.exp_finally_clause = List.map (rename_exp ren) b.Iast.exp_finally_clause;}
+          Iast.Try { b with
+              Iast.exp_try_block = rename_exp ren b.Iast.exp_try_block;
+              Iast.exp_catch_clauses = List.map (rename_exp ren) b.Iast.exp_catch_clauses;
+              Iast.exp_finally_clause = List.map (rename_exp ren) b.Iast.exp_finally_clause;}
     | Iast.Raise b-> 
-        Iast.Raise {b with
-                Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
-                      | None -> None 
-                      | Some e -> Some (rename_exp ren e));
-                Iast.exp_raise_type = (match b.Iast.exp_raise_type with
-                       | Iast.Const_flow _ -> b.Iast.exp_raise_type
-                       | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))} in
-    helper ren f 
+          Iast.Raise {b with
+              Iast.exp_raise_val = (match b.Iast.exp_raise_val with 
+                | None -> None 
+                | Some e -> Some (rename_exp ren e));
+              Iast.exp_raise_type = (match b.Iast.exp_raise_type with
+                | Iast.Const_flow _ -> b.Iast.exp_raise_type
+                | Iast.Var_flow vf -> Iast.Var_flow (subid ren vf))} in
+  helper ren f 
 
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
-      | Iast.Assert _ -> (f,[])
-      | Iast.Assign b -> 
-            (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
-              Iast.exp_assign_lhs = fst(case_rename_var_decls b.Iast.exp_assign_lhs);
-              Iast.exp_assign_rhs = fst(case_rename_var_decls b.Iast.exp_assign_rhs);
-              Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
-              Iast.exp_assign_pos = b.Iast.exp_assign_pos},[])
-      | Iast.Binary b->
-            (Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
-              Iast.exp_binary_oper1 = fst (case_rename_var_decls b.Iast.exp_binary_oper1);
-              Iast.exp_binary_oper2 = fst (case_rename_var_decls b.Iast.exp_binary_oper2);
-              Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
-              Iast.exp_binary_pos = b.Iast.exp_binary_pos},[])
-      | Iast.Bind b ->
-            (Iast.Bind {b with Iast.exp_bind_body = fst (case_rename_var_decls b.Iast.exp_bind_body)},[])  
-      | Iast.Block b->
-            (Iast.Block { b with Iast.exp_block_body = fst (case_rename_var_decls b.Iast.exp_block_body)},[])
-      
-      | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _ 
-      | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _
-      | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.This _  | Iast.Time _
-      | Iast.Break _ -> (f,[])
-      
-      | Iast.CallNRecv b ->
-          let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_arguments in
-            (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },[]) 
-      | Iast.CallRecv b->
-          let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_recv_arguments in
-            (Iast.CallRecv{b with 
-                 Iast.exp_call_recv_receiver = fst (case_rename_var_decls b.Iast.exp_call_recv_receiver);
-                 Iast.exp_call_recv_arguments = nl},[])
-      | Iast.Cast b->
-            (Iast.Cast {b with Iast.exp_cast_body= fst (case_rename_var_decls b.Iast.exp_cast_body)},[])
-	  | Iast.Catch b->
-			  let ncv,ren = match b.Iast.exp_catch_var with
-                | None -> (None,[])
-                | Some e-> 
-                  let nn = (Ipure.fresh_old_name e) in
-                    ((Some nn),[(e,nn)])in
-              let ncfv,ren = match b.Iast.exp_catch_flow_var with
-                | None -> (None,ren)
-                | Some e-> 
-                  let nn = (Ipure.fresh_old_name e) in
-                    ((Some nn),(e,nn)::ren)in								
-              (Iast.Catch{b with 
-                   Iast.exp_catch_var = ncv ;
-                   Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
-                   Iast.exp_catch_flow_var = ncfv;
-                   Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren b.Iast.exp_catch_body));},[])
-      | Iast.Cond b->
-          let ncond,r = case_rename_var_decls b.Iast.exp_cond_condition in	
-            (Iast.Cond {b with 
-              Iast.exp_cond_condition= ncond;
-              Iast.exp_cond_then_arm= fst (case_rename_var_decls b.Iast.exp_cond_then_arm);
-              Iast.exp_cond_else_arm= fst (case_rename_var_decls b.Iast.exp_cond_else_arm);},r)
-      | Iast.ConstDecl b->
-          let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
-                     let nn = (Ipure.fresh_old_name c1) in
-                     let ne,_ = case_rename_var_decls c2 in
-                       ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_const_decl_decls in
-            (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nren)
-	  | Iast.Finally b -> (Iast.Finally {b with Iast.exp_finally_body = fst(case_rename_var_decls b.Iast.exp_finally_body)},[])
-      | Iast.Label (pid,b)-> (Iast.Label (pid, fst (case_rename_var_decls b)),[])
-      | Iast.Member b ->
-          (Iast.Member {b with Iast.exp_member_base = fst (case_rename_var_decls b.Iast.exp_member_base)},[]) 
-      | Iast.New b->
-          let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_new_arguments in
-            (Iast.New  {b with Iast.exp_new_arguments =nl},[])
-      | Iast.Return b -> 
-          (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with 
+  | Iast.Assert _ -> (f,[])
+  | Iast.Assign b -> 
+        (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
+        Iast.exp_assign_lhs = fst(case_rename_var_decls b.Iast.exp_assign_lhs);
+        Iast.exp_assign_rhs = fst(case_rename_var_decls b.Iast.exp_assign_rhs);
+        Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
+        Iast.exp_assign_pos = b.Iast.exp_assign_pos},[])
+  | Iast.Binary b->
+        (Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
+        Iast.exp_binary_oper1 = fst (case_rename_var_decls b.Iast.exp_binary_oper1);
+        Iast.exp_binary_oper2 = fst (case_rename_var_decls b.Iast.exp_binary_oper2);
+        Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
+        Iast.exp_binary_pos = b.Iast.exp_binary_pos},[])
+  | Iast.Bind b ->
+        (Iast.Bind {b with Iast.exp_bind_body = fst (case_rename_var_decls b.Iast.exp_bind_body)},[])  
+  | Iast.Block b->
+        (Iast.Block { b with Iast.exp_block_body = fst (case_rename_var_decls b.Iast.exp_block_body)},[])
+            
+  | Iast.Continue _  | Iast.Debug _ | Iast.Dprint _ | Iast.Empty _ 
+  | Iast.FloatLit _  | Iast.IntLit _  | Iast.Java _  | Iast.BoolLit _
+  | Iast.Null _   | Iast.Unfold _  | Iast.Var _ | Iast.This _  | Iast.Time _
+  | Iast.Break _ -> (f,[])
+        
+  | Iast.CallNRecv b ->
+        let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_nrecv_arguments in
+        (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },[]) 
+  | Iast.CallRecv b->
+        let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_call_recv_arguments in
+        (Iast.CallRecv{b with 
+            Iast.exp_call_recv_receiver = fst (case_rename_var_decls b.Iast.exp_call_recv_receiver);
+            Iast.exp_call_recv_arguments = nl},[])
+  | Iast.Cast b->
+        (Iast.Cast {b with Iast.exp_cast_body= fst (case_rename_var_decls b.Iast.exp_cast_body)},[])
+  | Iast.Catch b->
+		let ncv,ren = match b.Iast.exp_catch_var with
+          | None -> (None,[])
+          | Some e-> 
+                let nn = (Ipure.fresh_old_name e) in
+                ((Some nn),[(e,nn)])in
+        let ncfv,ren = match b.Iast.exp_catch_flow_var with
+          | None -> (None,ren)
+          | Some e-> 
+                let nn = (Ipure.fresh_old_name e) in
+                ((Some nn),(e,nn)::ren)in								
+        (Iast.Catch{b with 
+            Iast.exp_catch_var = ncv ;
+            Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
+            Iast.exp_catch_flow_var = ncfv;
+            Iast.exp_catch_body = fst (case_rename_var_decls (rename_exp ren b.Iast.exp_catch_body));},[])
+  | Iast.Cond b->
+        let ncond,r = case_rename_var_decls b.Iast.exp_cond_condition in	
+        (Iast.Cond {b with 
+            Iast.exp_cond_condition= ncond;
+            Iast.exp_cond_then_arm= fst (case_rename_var_decls b.Iast.exp_cond_then_arm);
+            Iast.exp_cond_else_arm= fst (case_rename_var_decls b.Iast.exp_cond_else_arm);},r)
+  | Iast.ConstDecl b->
+        let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)-> 
+            let nn = (Ipure.fresh_old_name c1) in
+            let ne,_ = case_rename_var_decls c2 in
+            ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_const_decl_decls in
+        (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nren)
+  | Iast.Finally b -> (Iast.Finally {b with Iast.exp_finally_body = fst(case_rename_var_decls b.Iast.exp_finally_body)},[])
+  | Iast.Label (pid,b)-> (Iast.Label (pid, fst (case_rename_var_decls b)),[])
+  | Iast.Member b ->
+        (Iast.Member {b with Iast.exp_member_base = fst (case_rename_var_decls b.Iast.exp_member_base)},[]) 
+  | Iast.New b->
+        let nl = List.map (fun c-> fst (case_rename_var_decls c)) b.Iast.exp_new_arguments in
+        (Iast.New  {b with Iast.exp_new_arguments =nl},[])
+  | Iast.Return b -> 
+        (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with 
+          | None -> None 
+          | Some f -> Some (fst (case_rename_var_decls f))},[])
+  | Iast.Seq b -> 
+        let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
+        let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in          
+        let l2 = rename_exp ren l2 in      
+        let aux_ren = (ren_list_concat ren ren2) in
+        (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
+  | Iast.Unary b -> 
+        (Iast.Unary {b with Iast.exp_unary_exp = fst (case_rename_var_decls b.Iast.exp_unary_exp)},[])
+  | Iast.VarDecl b -> 		
+        let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
+            let nn = (Ipure.fresh_old_name c1) in
+            let ne = match c2 with
               | None -> None 
-              | Some f -> Some (fst (case_rename_var_decls f))},[])
-      | Iast.Seq b -> 
-          let l1,ren = case_rename_var_decls b.Iast.exp_seq_exp1 in
-          let l2,ren2 = case_rename_var_decls b.Iast.exp_seq_exp2 in          
-          let l2 = rename_exp ren l2 in      
-          let aux_ren = (ren_list_concat ren ren2) in
-         (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }),aux_ren)
-      | Iast.Unary b -> 
-          (Iast.Unary {b with Iast.exp_unary_exp = fst (case_rename_var_decls b.Iast.exp_unary_exp)},[])
-      | Iast.VarDecl b -> 		
-          let ndecl,nren = List.fold_left (fun (a1,a2) (c1,c2,c3)->
-                 let nn = (Ipure.fresh_old_name c1) in
-                 let ne = match c2 with
-                   | None -> None 
-                   | Some f-> Some (fst (case_rename_var_decls f)) in
-                   ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_var_decl_decls in
-            (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nren)		
-      | Iast.While b->
+              | Some f-> Some (fst (case_rename_var_decls f)) in
+            ((nn,ne,c3)::a1,(c1,nn)::a2)) ([],[]) b.Iast.exp_var_decl_decls in
+        (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nren)		
+  | Iast.While b->
         (Iast.While {b with 
-              Iast.exp_while_condition= fst (case_rename_var_decls b.Iast.exp_while_condition); 
-              Iast.exp_while_body= fst (case_rename_var_decls b.Iast.exp_while_body);},[])
-      | Iast.Try b-> 
-          let nfl = List.map (fun c-> fst(case_rename_var_decls c)) b.Iast.exp_finally_clause in
-            (Iast.Try {b with 
-               Iast.exp_try_block = fst (case_rename_var_decls b.Iast.exp_try_block);
-               Iast.exp_catch_clauses = List.map (fun c-> fst (case_rename_var_decls c))b.Iast.exp_catch_clauses;
-               Iast.exp_finally_clause = nfl;
-                },[])
-      | Iast.Raise b-> (Iast.Raise {b with 
-				      Iast.exp_raise_val = match b.Iast.exp_raise_val with
-							      | None -> None
-							      | Some e -> Some (fst (case_rename_var_decls e))},[])
+            Iast.exp_while_condition= fst (case_rename_var_decls b.Iast.exp_while_condition); 
+            Iast.exp_while_body= fst (case_rename_var_decls b.Iast.exp_while_body);},[])
+  | Iast.Try b-> 
+        let nfl = List.map (fun c-> fst(case_rename_var_decls c)) b.Iast.exp_finally_clause in
+        (Iast.Try {b with 
+            Iast.exp_try_block = fst (case_rename_var_decls b.Iast.exp_try_block);
+            Iast.exp_catch_clauses = List.map (fun c-> fst (case_rename_var_decls c))b.Iast.exp_catch_clauses;
+            Iast.exp_finally_clause = nfl;
+        },[])
+  | Iast.Raise b-> (Iast.Raise {b with 
+		Iast.exp_raise_val = match b.Iast.exp_raise_val with
+		  | None -> None
+		  | Some e -> Some (fst (case_rename_var_decls e))},[])
 
 
 and err_prim_l_vars s l pos= 
   List.iter (fun (c1,c2)-> match c2 with
-        | Primed  -> Error.report_error { 
-                              Error.error_loc = pos;
-                              Error.error_text = c1^"' "^s}
-        | Unprimed -> () ) l
-                    
+    | Primed  -> Error.report_error { 
+          Error.error_loc = pos;
+          Error.error_text = c1^"' "^s}
+    | Unprimed -> () ) l
+      
 and check_eprim_in_formula s f = match f with
   | IF.Or o -> (check_eprim_in_formula s o.IF.formula_or_f1; check_eprim_in_formula s o.IF.formula_or_f2 )
   | IF.Base b-> ()
   | IF.Exists e-> err_prim_l_vars s e.IF.formula_exists_qvars e.IF.formula_exists_pos
-                    
+        
 and check_eprim_in_struc_formula s f = 
- let helper f = match f with
-   | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula s c2) b.IF.formula_case_branches
-   | IF.EBase b-> 
-        (err_prim_l_vars s b.IF.formula_ext_exists b.IF.formula_ext_pos; 
-         check_eprim_in_formula s b.IF.formula_ext_base;
-         check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
-   | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
-   | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
- in
-List.iter helper f
+  let helper f = match f with
+    | IF.ECase b-> List.iter (fun (_,c2)-> check_eprim_in_struc_formula s c2) b.IF.formula_case_branches
+    | IF.EBase b-> 
+          (err_prim_l_vars s b.IF.formula_ext_exists b.IF.formula_ext_pos; 
+          check_eprim_in_formula s b.IF.formula_ext_base;
+          check_eprim_in_struc_formula s b.IF.formula_ext_continuation)
+    | IF.EAssume (b,_) -> check_eprim_in_formula " is not a ref param " b
+    | IF.EVariance b -> check_eprim_in_struc_formula s b.IF.formula_var_continuation
+  in
+  List.iter helper f
 
 and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:Iast.exp) :
-    Iast.exp*((ident*primed) list)*((ident*primed) list) =  match f with
-      | Iast.Assert b->
-          let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
-            | None -> (None,h)
-            | Some asserted_f -> 
-          let r, _ = case_normalize_struc_formula prog h p (fst asserted_f) true false [] in
-          let _ = check_eprim_in_struc_formula " is not a valid program variable " r in
-            (Some (r,(snd asserted_f)),h) in
-          let assm_nf  = match b.Iast.exp_assert_assumed_formula with
-            | None-> None 
-            | Some f -> 
-              let r = case_normalize_formula prog nh f in 
-              let _ = check_eprim_in_formula " is not a valid program variable " r in
-              Some r in
-          let rez_assert = Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
-               Iast.exp_assert_assumed_formula = assm_nf;
-               Iast.exp_assert_pos = b.Iast.exp_assert_pos;
-               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
-            (rez_assert, h, p)
-      | Iast.Assign b-> 
-          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
-          let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
-            (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
+      Iast.exp*((ident*primed) list)*((ident*primed) list) =  match f with
+        | Iast.Assert b->
+              let asrt_nf,nh = match b.Iast.exp_assert_asserted_formula with
+                | None -> (None,h)
+                | Some asserted_f -> 
+                      let r, _ = case_normalize_struc_formula prog h p (fst asserted_f) true false [] in
+                      let _ = check_eprim_in_struc_formula " is not a valid program variable " r in
+                      (Some (r,(snd asserted_f)),h) in
+              let assm_nf  = match b.Iast.exp_assert_assumed_formula with
+                | None-> None 
+                | Some f -> 
+                      let r = case_normalize_formula prog nh f in 
+                      let _ = check_eprim_in_formula " is not a valid program variable " r in
+                      Some r in
+              let rez_assert = Iast.Assert { Iast.exp_assert_asserted_formula = asrt_nf;
+              Iast.exp_assert_assumed_formula = assm_nf;
+              Iast.exp_assert_pos = b.Iast.exp_assert_pos;
+              Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
+              (rez_assert, h, p)
+        | Iast.Assign b-> 
+              let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
+              let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
+              (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
               Iast.exp_assign_lhs = l1;
               Iast.exp_assign_rhs = l2;
               Iast.exp_assign_path_id = b.Iast.exp_assign_path_id;
               Iast.exp_assign_pos = b.Iast.exp_assign_pos},h,p)
-      | Iast.Binary b->
-          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper1 in
-          let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper2 in
-            (Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
+        | Iast.Binary b->
+              let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper1 in
+              let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_binary_oper2 in
+              (Iast.Binary {Iast.exp_binary_op = b.Iast.exp_binary_op;
               Iast.exp_binary_oper1 = l1;
               Iast.exp_binary_oper2 = l2;
               Iast.exp_binary_path_id = b.Iast.exp_binary_path_id;
               Iast.exp_binary_pos = b.Iast.exp_binary_pos},h,p)
-      | Iast.Bind b ->
-          let r,nh,np =   case_normalize_exp prog h p b.Iast.exp_bind_body in
-            (Iast.Bind {b with Iast.exp_bind_body =r},h,p)  
-      | Iast.Block b->
-          let r,_,_ = case_normalize_exp prog h p b.Iast.exp_block_body in
-            (Iast.Block { b with Iast.exp_block_body = r},h,p)
-      | Iast.Continue _ 
-      | Iast.Debug _ 
-      | Iast.Dprint _ 
-      | Iast.Empty _ 
-      | Iast.FloatLit _ 
-      | Iast.IntLit _ 
-      | Iast.Java _ 
-      | Iast.BoolLit _
-      | Iast.Null _  
-      | Iast.Unfold _ 
-      | Iast.Var _
-      | Iast.This _ 
-      | Iast.Time _
-      | Iast.Break _ -> (f,h,p)
-      | Iast.CallNRecv b ->
-          let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
-            (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },h,p) 
-      | Iast.CallRecv b->
-          let a1,_,_ = case_normalize_exp prog h p b.Iast.exp_call_recv_receiver in
-          let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_recv_arguments in
-            (Iast.CallRecv{b with 
-                 Iast.exp_call_recv_receiver = a1;
-                 Iast.exp_call_recv_arguments = nl},h,p)
-      | Iast.Cast b->
-          let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_cast_body in
-            (Iast.Cast {b with Iast.exp_cast_body= nb},h,p)
-	  | Iast.Catch b ->
-	    let ncv,nh,np = match b.Iast.exp_catch_var with
+        | Iast.Bind b ->
+              let r,nh,np =   case_normalize_exp prog h p b.Iast.exp_bind_body in
+              (Iast.Bind {b with Iast.exp_bind_body =r},h,p)  
+        | Iast.Block b->
+              let r,_,_ = case_normalize_exp prog h p b.Iast.exp_block_body in
+              (Iast.Block { b with Iast.exp_block_body = r},h,p)
+        | Iast.Continue _ 
+        | Iast.Debug _ 
+        | Iast.Dprint _ 
+        | Iast.Empty _ 
+        | Iast.FloatLit _ 
+        | Iast.IntLit _ 
+        | Iast.Java _ 
+        | Iast.BoolLit _
+        | Iast.Null _  
+        | Iast.Unfold _ 
+        | Iast.Var _
+        | Iast.This _ 
+        | Iast.Time _
+        | Iast.Break _ -> (f,h,p)
+        | Iast.CallNRecv b ->
+              let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_nrecv_arguments in
+              (Iast.CallNRecv{b with Iast.exp_call_nrecv_arguments = nl },h,p) 
+        | Iast.CallRecv b->
+              let a1,_,_ = case_normalize_exp prog h p b.Iast.exp_call_recv_receiver in
+              let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_call_recv_arguments in
+              (Iast.CallRecv{b with 
+                  Iast.exp_call_recv_receiver = a1;
+                  Iast.exp_call_recv_arguments = nl},h,p)
+        | Iast.Cast b->
+              let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_cast_body in
+              (Iast.Cast {b with Iast.exp_cast_body= nb},h,p)
+	    | Iast.Catch b ->
+	          let ncv,nh,np = match b.Iast.exp_catch_var with
                 | None -> (None,h,p)
                 | Some e-> ((Some e),(e,Primed)::h,(e,Primed)::p)in
-        let ncfv,nh,np = match b.Iast.exp_catch_flow_var with
+              let ncfv,nh,np = match b.Iast.exp_catch_flow_var with
                 | None -> (None,nh,np)
                 | Some e->
-                    ((Some e),(e,Primed)::nh,(e,Primed)::np) in	
-        let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_catch_body in									
-        (Iast.Catch {b with 
-                   Iast.exp_catch_var = ncv ;
-                   Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
-                   Iast.exp_catch_flow_var = ncfv;
-                   Iast.exp_catch_body = nb;},nh,np)
-	  
-      | Iast.Cond b->
-          let ncond,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_condition in	
-          let nthen,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_then_arm in
-          let nelse,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_else_arm in
-            (Iast.Cond {b with 
-              Iast.exp_cond_condition= ncond;
-              Iast.exp_cond_then_arm= nthen;
-              Iast.exp_cond_else_arm= nelse;},h,p)
-      | Iast.ConstDecl b->
-          let ndecl = List.fold_left (fun a1 (c1,c2,c3)-> 
-              let ne,_,_ = case_normalize_exp prog h p c2 in
-              (c1,ne,c3)::a1) [] b.Iast.exp_const_decl_decls in
-          let nvl = List.map (fun (c1,_,_)-> c1) ndecl in
-          let nvlprm = List.map (fun c-> (c,Primed)) nvl in
-          let nh = nvlprm@h in
-          let np = (List.map (fun c->(c,Primed))nvl)@p in
-            (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nh,np)
-	  | Iast.Finally b-> 
-		  let nf,h,p = case_normalize_exp prog h p b.Iast.exp_finally_body in
-		  (Iast.Finally {b with Iast.exp_finally_body= nf},h,p)
-      | Iast.Label (pid,b)-> 
-          let nb,_,_ =  case_normalize_exp prog h p b in 
-          (Iast.Label (pid, nb),h,p)
-      | Iast.Member b ->
-          let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_member_base in
-          (Iast.Member {b with Iast.exp_member_base = nb},h,p) 
-      | Iast.New b->
-          let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_new_arguments in
-            (Iast.New  {b with Iast.exp_new_arguments =nl},h,p)
-      | Iast.Return b -> 
-          (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with | None -> None | Some f -> 
-           let r,_,_ = (case_normalize_exp prog h p f) in Some r},h,p)
-      | Iast.Seq b -> 
-          let l1,nh,np = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
-          let l2 ,nh,np = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in          
-          (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np)
-      | Iast.Unary b -> 
-          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_unary_exp in
-          (Iast.Unary {b with Iast.exp_unary_exp = l1},h,p)
-      | Iast.VarDecl b -> 		
-          let ndecl = List.fold_left (fun a1 (c1,c2,c3)->
-                 let ne = match c2 with
-                   | None -> None 
-                   | Some f-> let ne,_,_ = case_normalize_exp prog h p f in Some ne in
-                   (c1,ne,c3)::a1) [] b.Iast.exp_var_decl_decls in
-          let nvl = List.map (fun (c1,_,_)-> c1) ndecl in
-          let nvlprm = List.map (fun c-> (c,Primed)) nvl in
-          let nh = nvlprm@h in
-          let np = (List.map (fun c->(c,Primed))nvl)@p in
-            (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nh,np)		
-      | Iast.While b->
-          let nc,nh,np = case_normalize_exp prog h p b.Iast.exp_while_condition in
-          let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_while_body in
-          let strad = 
-            let pr,pst = IF.struc_split_fv b.Iast.exp_while_specs false in
-            Util.intersect pr pst in
-          let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in
-            (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
-      | Iast.Try b-> 
-          let nb,nh,np = case_normalize_exp prog h p b.Iast.exp_try_block in
-		  let f l =  List.map (fun c-> let nf,_,_ = case_normalize_exp prog nh np c in nf) l in
-          (Iast.Try {b with 
-             Iast.exp_try_block = nb;
-             Iast.exp_catch_clauses = f b.Iast.exp_catch_clauses;
-             Iast.exp_finally_clause = f b.Iast.exp_finally_clause;
-                },h,p)
-      | Iast.Raise b-> (Iast.Raise {b with 
-				      Iast.exp_raise_val = (match b.Iast.exp_raise_val with
-							      | None -> None
-							      | Some e -> let nc,_,_ = (case_normalize_exp prog h p e) in
-								  Some nc)},h,p)
+                      ((Some e),(e,Primed)::nh,(e,Primed)::np) in	
+              let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_catch_body in									
+              (Iast.Catch {b with 
+                  Iast.exp_catch_var = ncv ;
+                  Iast.exp_catch_flow_type = b.Iast.exp_catch_flow_type;
+                  Iast.exp_catch_flow_var = ncfv;
+                  Iast.exp_catch_body = nb;},nh,np)
+	              
+        | Iast.Cond b->
+              let ncond,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_condition in	
+              let nthen,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_then_arm in
+              let nelse,_,_ = case_normalize_exp prog h p b.Iast.exp_cond_else_arm in
+              (Iast.Cond {b with 
+                  Iast.exp_cond_condition= ncond;
+                  Iast.exp_cond_then_arm= nthen;
+                  Iast.exp_cond_else_arm= nelse;},h,p)
+        | Iast.ConstDecl b->
+              let ndecl = List.fold_left (fun a1 (c1,c2,c3)-> 
+                  let ne,_,_ = case_normalize_exp prog h p c2 in
+                  (c1,ne,c3)::a1) [] b.Iast.exp_const_decl_decls in
+              let nvl = List.map (fun (c1,_,_)-> c1) ndecl in
+              let nvlprm = List.map (fun c-> (c,Primed)) nvl in
+              let nh = nvlprm@h in
+              let np = (List.map (fun c->(c,Primed))nvl)@p in
+              (Iast.ConstDecl {b with Iast.exp_const_decl_decls = ndecl;},nh,np)
+	    | Iast.Finally b-> 
+		      let nf,h,p = case_normalize_exp prog h p b.Iast.exp_finally_body in
+		      (Iast.Finally {b with Iast.exp_finally_body= nf},h,p)
+        | Iast.Label (pid,b)-> 
+              let nb,_,_ =  case_normalize_exp prog h p b in 
+              (Iast.Label (pid, nb),h,p)
+        | Iast.Member b ->
+              let nb,_,_ = case_normalize_exp prog h p b.Iast.exp_member_base in
+              (Iast.Member {b with Iast.exp_member_base = nb},h,p) 
+        | Iast.New b->
+              let nl = List.map (fun c-> let r1,_,_ = case_normalize_exp prog h p c in r1) b.Iast.exp_new_arguments in
+              (Iast.New  {b with Iast.exp_new_arguments =nl},h,p)
+        | Iast.Return b -> 
+              (Iast.Return {b with Iast.exp_return_val= match b.Iast.exp_return_val with | None -> None | Some f -> 
+                  let r,_,_ = (case_normalize_exp prog h p f) in Some r},h,p)
+        | Iast.Seq b -> 
+              let l1,nh,np = case_normalize_exp prog h p b.Iast.exp_seq_exp1 in
+              let l2 ,nh,np = case_normalize_exp prog nh np b.Iast.exp_seq_exp2 in          
+              (Iast.Seq ({ Iast.exp_seq_exp1 = l1; Iast.exp_seq_exp2 = l2; Iast.exp_seq_pos = b.Iast.exp_seq_pos }), nh, np)
+        | Iast.Unary b -> 
+              let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_unary_exp in
+              (Iast.Unary {b with Iast.exp_unary_exp = l1},h,p)
+        | Iast.VarDecl b -> 		
+              let ndecl = List.fold_left (fun a1 (c1,c2,c3)->
+                  let ne = match c2 with
+                    | None -> None 
+                    | Some f-> let ne,_,_ = case_normalize_exp prog h p f in Some ne in
+                  (c1,ne,c3)::a1) [] b.Iast.exp_var_decl_decls in
+              let nvl = List.map (fun (c1,_,_)-> c1) ndecl in
+              let nvlprm = List.map (fun c-> (c,Primed)) nvl in
+              let nh = nvlprm@h in
+              let np = (List.map (fun c->(c,Primed))nvl)@p in
+              (Iast.VarDecl {b with Iast.exp_var_decl_decls = ndecl;},nh,np)		
+        | Iast.While b->
+              let nc,nh,np = case_normalize_exp prog h p b.Iast.exp_while_condition in
+              let nb,nh,np = case_normalize_exp prog nh np b.Iast.exp_while_body in
+              let strad = 
+                let pr,pst = IF.struc_split_fv b.Iast.exp_while_specs false in
+                Gen.BList.intersect_eq (=) pr pst in
+              let ns,_ = case_normalize_struc_formula prog h p b.Iast.exp_while_specs false false strad in
+              (Iast.While {b with Iast.exp_while_condition=nc; Iast.exp_while_body=nb;Iast.exp_while_specs = ns},h,p)
+        | Iast.Try b-> 
+              let nb,nh,np = case_normalize_exp prog h p b.Iast.exp_try_block in
+		      let f l =  List.map (fun c-> let nf,_,_ = case_normalize_exp prog nh np c in nf) l in
+              (Iast.Try {b with 
+                  Iast.exp_try_block = nb;
+                  Iast.exp_catch_clauses = f b.Iast.exp_catch_clauses;
+                  Iast.exp_finally_clause = f b.Iast.exp_finally_clause;
+              },h,p)
+        | Iast.Raise b-> (Iast.Raise {b with 
+			  Iast.exp_raise_val = (match b.Iast.exp_raise_val with
+				| None -> None
+				| Some e -> let nc,_,_ = (case_normalize_exp prog h p e) in
+				  Some nc)},h,p)
 
 and case_normalize_data prog (f:Iast.data_decl):Iast.data_decl =
   let h = List.map (fun (c1,_)-> ((snd c1),Unprimed) ) f.Iast.data_fields in  
-    {f with Iast.data_invs = List.map (case_normalize_formula prog h) f.Iast.data_invs}
+  {f with Iast.data_invs = List.map (case_normalize_formula prog h) f.Iast.data_invs}
 
 and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl = 
   let gl_v_l = List.map (fun c-> List.map (fun (v,_,_)-> (c.I.exp_var_decl_type,v)) c.I.exp_var_decl_decls) prog.I.prog_global_var_decls in
@@ -4627,22 +4625,22 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
   let p = (res,Unprimed)::(List.map (fun c1-> (c1.Iast.param_name,Primed)) (List.filter (fun c-> c.Iast.param_mod == Iast.RefMod) gl_proc_args)) in
   let strad_s = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
-    Util.intersect pr pst in
+    Gen.BList.intersect_eq (=) pr pst in
   let nst,h11 = case_normalize_struc_formula prog h p f.Iast.proc_static_specs false false strad_s in
   let _ = check_eprim_in_struc_formula " is not allowed in precond " nst in 
   let strad_d = 
     let pr,pst = IF.struc_split_fv f.Iast.proc_static_specs false in
-    Util.intersect pr pst in
+    Gen.BList.intersect_eq (=) pr pst in
   let ndn, h12 = case_normalize_struc_formula prog h p f.Iast.proc_dynamic_specs false false strad_d in
   let _ = check_eprim_in_struc_formula "is not allowed in precond " ndn in
-  let h1 = Util.remove_dups (h11@h12) in 
-  let h2 = Util.remove_dups (h@h_prm@(Util.difference h1 h)@ (IF.struc_free_vars nst true)) in
+  let h1 = Gen.BList.remove_dups_eq (=) (h11@h12) in 
+  let h2 = Gen.BList.remove_dups_eq (=) (h@h_prm@(Gen.BList.difference_eq (=) h1 h)@ (IF.struc_free_vars nst true)) in
   let nb = match f.Iast.proc_body with 
-    None -> None 
+      None -> None 
     | Some f->
-      let f,_ = case_rename_var_decls f in
-      let r,_,_ = (case_normalize_exp prog h2 [(res,Unprimed)] f) in
-      Some r in
+          let f,_ = case_rename_var_decls f in
+          let r,_,_ = (case_normalize_exp prog h2 [(res,Unprimed)] f) in
+          Some r in
   {f with Iast.proc_static_specs =nst;
       Iast.proc_dynamic_specs = ndn;			
       Iast.proc_body = nb;
@@ -4651,26 +4649,33 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   let tmp_views = order_views prog.I.prog_view_decls in
   let tmp_views = List.map (fun c-> 
-			      let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
-			      let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
-			      let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
-				{ c with Iast.view_formula = 	wf;}) tmp_views in
+	  let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
+	  let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in
+	  let wf,_ = case_normalize_struc_formula prog h p c.Iast.view_formula false false [] in
+	  { c with Iast.view_formula = 	wf;}) tmp_views in
   let prog = {prog with Iast.prog_view_decls = tmp_views} in
   let cdata = List.map (case_normalize_data prog) prog.I.prog_data_decls in
   let prog = {prog with Iast.prog_data_decls = cdata} in
   let procs1 = List.map (case_normalize_proc prog) prog.I.prog_proc_decls in
   let prog = {prog with Iast.prog_proc_decls = procs1} in
   let coer1 = List.map (case_normalize_coerc prog) prog.Iast.prog_coercion_decls in	 
-    {  Iast.prog_data_decls = cdata;
-       Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
-       Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
-       Iast.prog_view_decls = tmp_views;
-       Iast.prog_proc_decls = procs1;
-       Iast.prog_coercion_decls = coer1 }
-      
-and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos: 
+  {  Iast.prog_data_decls = cdata;
+  Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
+  Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
+  Iast.prog_view_decls = tmp_views;
+  Iast.prog_proc_decls = procs1;
+  Iast.prog_coercion_decls = coer1 }
+
+and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos:
       ((Cpure.b_formula * (formula_label list)) list)*
-      ((formula_label list * (CP.spec_var Util.baga * Cpure.b_formula list)) list) = 
+      ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list) ) list)
+      = Gen.Debug.no_1 "prune_inv_inference_formula" Cprinter.string_of_spec_var_list
+  (fun (lb,_) -> "?")
+  (fun v_l -> prune_inv_inference_formula_x cp v_l init_form_lst u_baga u_inv pos) v_l
+
+and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos: 
+      ((Cpure.b_formula * (formula_label list)) list)*
+      ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list)) list) = 
   (*print_string ("sent to case inf: "^(Cprinter.string_of_formula init_form)^"\n");*)
   (*aux functions for case inference*)
   let rec get_or_list (f: CF.formula):CF.formula list = match f with
@@ -4698,8 +4703,8 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       | _ -> false) pc in
     let r = List.map (fun (c1,c2) -> 
         if c1 then match c2 with
-          | CP.Gt (e1,e2,l) -> CP.Lte (e2,e1,l)
-          | CP.Gte (e1,e2,l) -> CP.Lt (e2,e1,l)
+          | CP.Gt (e1,e2,l) -> CP.Lt (e2,e1,l)
+          | CP.Gte (e1,e2,l) -> CP.Lte (e2,e1,l)
           | _ -> c2
         else match c2 with
           | CP.Lt (e1,e2,l) -> CP.Lte (e2,e1,l)
@@ -4725,27 +4730,38 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
           | CP.Bag (l,p) , CP.Var _ -> if (List.length l)>0 then CP.Neq (e2, CP.Bag ([],p),p) else c
           | _-> c) 
       | _ -> c) r in
-    Util.remove_dups_f r CP.eq_b_formula_no_aset in
+    Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset r in
 
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let rec helper acc e_v_l : CP.formula list = match e_v_l with
-      | [] ->[TP.hull (CP.mkExists acc f None no_pos)]
+      | [] ->
+        (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists acc f None no_pos))^"\n") in*)
+        [TP.hull (CP.mkExists acc f None no_pos)]
       | h::t -> (helper acc t)@(helper (h::acc) t) in
     helper [] v_l in
   
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-      let l = get_pure_conj_list f in
-      let l = filter_pure_conj_list l in      
-      let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
-      let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
-      let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
-      let ev = (Util.difference (CP.fv n_f) v_l) in
-      (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists ev n_f None no_pos))^"\n") in*)
-      let r = hull_invs v_l (TP.simplify_omega (CP.mkExists ev n_f None no_pos)) in   
-      (*let r = TP.hull r in*)
-      if r=[] then [neq] 
-      else List.map (fun c-> CP.mkAnd c neq no_pos) r in
-  
+    let l = get_pure_conj_list f in
+    let l = filter_pure_conj_list l in      
+    let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
+    let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
+    let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
+    let ev = (Gen.BList.difference_eq (=) (CP.fv n_f) v_l) in
+    let to_s = CP.mkExists ev n_f None no_pos in
+    (*let _ = print_string ("\n to_s:: "^(Cprinter.string_of_pure_formula to_s)^"\n") in*)
+    let from_s =  TP.simplify_omega to_s in
+    (*let _ = print_string ("\n from_s:: "^(Cprinter.string_of_pure_formula from_s)^"\n") in*)
+    let r = hull_invs v_l from_s in   
+    (*let r = TP.hull r in*)
+    if r=[] then [neq] 
+    else List.map (fun c-> CP.mkAnd c neq no_pos) r in
+
+  let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
+    Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula 
+        Cprinter.string_of_spec_var_list
+        (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
+        simplify_pures f v_l in
+
   let constr_union (f1:CP.b_formula) (f2:CP.b_formula) :CP.b_formula list=     
     match f1 with    
       | CP.Lt (e1,e2,l)  -> 
@@ -4805,36 +4821,45 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       | hd::tl -> 
             let r =List.map (fun c-> (constr_union hd c)@(constr_union c hd)) tl in        
             (List.concat r)@(new_con_list tl) in        
-    let r = Util.remove_dups_f (new_con_list (p_c@nl)) CP.eq_b_formula_no_aset in    
+    let r = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset (new_con_list (p_c@nl)) in    
     let r1 = List.filter ( fun c-> not (List.exists (CP.eq_b_formula_no_aset c) (p_c@nl) ) ) r in
     if (List.length r1)>0 then 
-      let n = Util.remove_dups_f (r1@nl) CP.eq_b_formula_no_aset in    
+      let n = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset  (r1@nl)in    
       (*print_string ("\n init: "^(String.concat " " (List.map Cprinter.string_of_b_formula p_c))^"\n");
         print_string ("\n new: "^(String.concat " " (List.map Cprinter.string_of_b_formula n))^"\n");*)        
       propagate_constraints p_c n
     else nl in
   
+
   let compute_invariants v_l (pure_list:(formula_label * (CP.baga_sv * CP.b_formula list)) list) : (formula_label list * (CP.baga_sv * CP.b_formula list)) list= 
     let combine_pures (l1:CP.b_formula list) (l2:CP.b_formula list) :CP.b_formula list = 
       let split_neq l = List.partition (fun c1 -> match c1 with | CP.Neq _ -> true | _ -> false) l in
       let l1_n, l1r = split_neq l1 in
       let l2_n, l2r = split_neq l2 in
-      let to_be_added = Util.intersect_fct CP.eq_b_formula_no_aset l1_n l2_n in
+      let to_be_added = Gen.BList.intersect_eq CP.eq_b_formula_no_aset l1_n l2_n in
       let lr = match (List.length l1r),(List.length l2r) with 
         | 0,0 | _,0 | 0,_ -> CP.mkTrue no_pos        
-        | _,_ -> CP.mkOr 
-              (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r) 
-                  (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in
+        (* | _,_ -> CP.mkOr  *)
+              (* (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm
+                 (c,None)) no_pos) (CP.mkTrue no_pos) l1r) *)
+              (*     (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in *)
+(* Cristian's fixes which seem very slow *)
+        | _,_ ->
+              let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
+              let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
+              let tpi = fun f1 f2 -> TP.imply f1 f2 "" false None in
+              if ((fun (c,_,_)-> c) (tpi f1r f2r)) then f2r
+              else if ((fun (c,_,_)-> c) (tpi f2r f1r)) then f1r
+              else  CP.mkOr f1r f2r None no_pos in
       (*let _ = print_string ("before hull: "^(Cprinter.string_of_pure_formula lr)^"\n") in*)
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-        | CP.BForm (l, _) -> [l]
-        | CP.And (f1,f2,_) -> (r f1)@(r f2)
-        | _ -> [] in 
-      List.concat (List.map r lr) in  
-      to_be_added @ (Util.remove_dups_f lr CP.eq_b_formula_no_aset) in      
-    
+          | CP.BForm (l, _) -> [l]
+          | CP.And (f1,f2,_) -> (r f1)@(r f2)
+          | _ -> [] in 
+        List.concat (List.map r lr) in  
+      to_be_added @ (Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset lr) in      
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
     let all = 
@@ -4842,7 +4867,7 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
         List.fold_left 
             (fun (a1,(b1,a2))(c1,(b2,c2))-> 
                 if a1=[] then ([c1],(b2,c2))
-                else (c1::a1, (Util.or_baga CP.eq_spec_var b1 b2, combine_pures c2 a2))) ([],(Util.empty_baga(),[])) pure_list
+                else (c1::a1, (CP.BagaSV.or_baga b1 b2, combine_pures c2 a2))) ([],(CP.BagaSV.mkEmpty,[])) pure_list
       else ((fst (List.split pure_list)),
       (u_baga,List.concat (List.map (fun c->List.map (fun c-> c.MCP.memo_formula) c.MCP.memo_group_cons)u_inv))) in
     let rec comp i (crt_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) (last_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) =
@@ -4854,11 +4879,24 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
                 let rem = List.filter (fun (d1,_)-> 
                     (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&
                         ((fst h)>(fst d1))) pure_list in
-                List.map (fun (d1,(b2,d2))->(d1::c1, (Util.or_baga CP.eq_spec_var b1 b2,combine_pures c2 d2))) rem 
+                List.map (fun (d1,(b2,d2))->(d1::c1, (CP.BagaSV.or_baga b1 b2,combine_pures c2 d2))) rem 
         ) last_lst in          
         let n_list = List.concat n_list1 in 
         comp (i+1) (crt_lst@n_list) n_list in        
     (comp 2 start start) in
+
+
+
+  let compute_invariants v_l (pure_list:(formula_label * (CP.baga_sv * CP.b_formula list)) list) 
+        : (formula_label list * (CP.baga_sv * CP.b_formula list)) list= 
+    let pr0 = Gen.BList.string_of_f (CP.SV.string_of) in
+    let pr x = Gen.BList.string_of_f Cprinter.string_of_b_formula x in
+    let pr1 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
+    in  Gen.BList.string_of_f (Gen.string_of_pair (fun x -> (Cprinter.string_of_formula_label) x "") pr ) l in
+    let pr2 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
+    in  Gen.BList.string_of_f (Gen.string_of_pair (Gen.BList.string_of_f (fun x -> (Cprinter.string_of_formula_label) x "")) pr ) l in
+    Gen.Debug.no_2 "compute_invariants"  
+        pr0 pr1 pr2 compute_invariants v_l pure_list in
   
   (*actual case inference*)
   let guard_list = List.map (fun (c,lbl)-> 
@@ -4875,12 +4913,13 @@ and prune_inv_inference_formula cp (v_l : CP.spec_var list) (init_form_lst: (CF.
       let pc = filter_pure_conj_list pc in
       (*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
       let prop_pc = propagate_constraints pc [] in
-      let pp = List.filter (fun c-> (CP.bfv c)!=[] && Util.subset (CP.bfv c) v_l) (prop_pc @pc) in          
+      (*let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in*)
+      let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in          
       let pp = MCP.memo_norm_wrapper pp in
       (lbl,(ba,pp))) init_form_lst in  
   (*r -> list of triples, one for each disjunct(propagated constraints, initial formula , label)*)
   let invariant_list = compute_invariants v_l guard_list in  
-  let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(Util.conj_baga CP.eq_spec_var v_l b1,MCP.memo_norm_wrapper c2))) invariant_list in
+  let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.conj_baga v_l b1,MCP.memo_norm_wrapper c2))) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, (_,c_l))-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
   let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
       let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula_no_aset constr c) a in
@@ -4896,7 +4935,8 @@ and view_prune_inv_inference cp vd =
   (*let v_f = CF.label_view vd.C.view_formula in *)
   let f_branches = CF.get_view_branches  vd.C.view_formula in 
   let branches = snd (List.split f_branches) in
-  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf (fst vd.C.view_user_inv)) no_pos in    
+  let u_inv = List.fold_left (fun a (_,c)-> MCP.memoise_add_pure_N a c) (fst vd.C.view_user_inv) (snd vd.C.view_user_inv) in
+  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf u_inv) no_pos in    
   let v' = { vd with  
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 
@@ -4905,68 +4945,68 @@ and view_prune_inv_inference cp vd =
       
 and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else 
   begin 
-  let add_brs v_def brs f = 
-    let rec add_h_brs h_f = match h_f with
-      | CF.ViewNode v-> 
-            if (String.compare self (CP.name_of_spec_var v.CF.h_formula_view_node))=0 &&
-              (String.compare v_def.C.view_name v.CF.h_formula_view_name)=0 then 
-                let fr_vars = (CP.SpecVar (CP.OType v_def.C.view_data_name, self, Unprimed)):: v_def.C.view_vars in
-                let to_vars = v.CF.h_formula_view_node :: v.CF.h_formula_view_arguments in
-                let zip = List.combine fr_vars to_vars in
-                let new_pc = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.C.view_prune_conditions in  
-                CF.ViewNode {v with
-                    CF.h_formula_view_remaining_branches = Some brs;
-                    CF.h_formula_view_pruning_conditions = new_pc;}
-            else h_f
-      | CF.Star h-> CF.Star {h with 
-            CF.h_formula_star_h1= add_h_brs h.CF.h_formula_star_h1; 
-            CF.h_formula_star_h2= add_h_brs h.CF.h_formula_star_h2;}
-      | _ -> h_f in
-    let rec add_f_brs f = match f with
-      | CF.Base b -> CF.Base{b with CF.formula_base_heap = add_h_brs b.CF.formula_base_heap;}
-      | CF.Exists e -> CF.Exists{e with CF.formula_exists_heap = add_h_brs e.CF.formula_exists_heap;}
-      | CF.Or o -> CF.Or {o with CF.formula_or_f1 = add_f_brs o.CF.formula_or_f1; CF.formula_or_f2 = add_f_brs o.CF.formula_or_f2;} in       
-    add_f_brs f in
-  
-  let rec find_h_args h_h =match h_h with
-    | CF.ViewNode ({ CF.h_formula_view_node = p1;
-      CF.h_formula_view_arguments = ps1}) -> if (String.compare self (CP.name_of_spec_var p1))=0 then ps1 else []
-    | CF.Star {CF.h_formula_star_h1=h1; CF.h_formula_star_h2=h2;} -> (find_h_args h1)@(find_h_args h2)
-    | _ -> [] (*Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: lemma specialization mismatch"}*) in
-  let h_f,b_f,h_v = 
+    let add_brs v_def brs f = 
+      let rec add_h_brs h_f = match h_f with
+        | CF.ViewNode v-> 
+              if (String.compare self (CP.name_of_spec_var v.CF.h_formula_view_node))=0 &&
+                (String.compare v_def.C.view_name v.CF.h_formula_view_name)=0 then 
+                  let fr_vars = (CP.SpecVar (CP.OType v_def.C.view_data_name, self, Unprimed)):: v_def.C.view_vars in
+                  let to_vars = v.CF.h_formula_view_node :: v.CF.h_formula_view_arguments in
+                  let zip = List.combine fr_vars to_vars in
+                  let new_pc = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.C.view_prune_conditions in  
+                  CF.ViewNode {v with
+                      CF.h_formula_view_remaining_branches = Some brs;
+                      CF.h_formula_view_pruning_conditions = new_pc;}
+              else h_f
+        | CF.Star h-> CF.Star {h with 
+              CF.h_formula_star_h1= add_h_brs h.CF.h_formula_star_h1; 
+              CF.h_formula_star_h2= add_h_brs h.CF.h_formula_star_h2;}
+        | _ -> h_f in
+      let rec add_f_brs f = match f with
+        | CF.Base b -> CF.Base{b with CF.formula_base_heap = add_h_brs b.CF.formula_base_heap;}
+        | CF.Exists e -> CF.Exists{e with CF.formula_exists_heap = add_h_brs e.CF.formula_exists_heap;}
+        | CF.Or o -> CF.Or {o with CF.formula_or_f1 = add_f_brs o.CF.formula_or_f1; CF.formula_or_f2 = add_f_brs o.CF.formula_or_f2;} in       
+      add_f_brs f in
+    
+    let rec find_h_args h_h =match h_h with
+      | CF.ViewNode ({ CF.h_formula_view_node = p1;
+        CF.h_formula_view_arguments = ps1}) -> if (String.compare self (CP.name_of_spec_var p1))=0 then ps1 else []
+      | CF.Star {CF.h_formula_star_h1=h1; CF.h_formula_star_h2=h2;} -> (find_h_args h1)@(find_h_args h2)
+      | _ -> [] (*Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: lemma specialization mismatch"}*) in
+    let h_f,b_f,h_v = 
       if is_l then (c.C.coercion_head,c.C.coercion_body,c.C.coercion_head_view) 
       else (c.C.coercion_body, c.C.coercion_head,c.C.coercion_body_view)in
-  let v_def = C.look_up_view_def no_pos prog.C.prog_view_decls h_v in
-  let v_invs = v_def.C.view_prune_invariants in
-  let h_h, _, _, _, _ = CF.split_components h_f in
-  let to_vars = find_h_args h_h in 
-  let subst_vars = List.combine v_def.C.view_vars to_vars in
-  let fvs = Util.intersect (CF.fv h_f) (CF.fv b_f) in  
-  let free_v, quant_v = List.partition (fun (_,c)-> (List.mem c fvs)) subst_vars in
-  let quant_v = snd (List.split quant_v) in
-  let r_l = List.map (fun (brs,(ba,c_inv))-> 
-      let c_inv_f = CP.conj_of_list (List.map (fun c-> CP.BForm (c,None)) c_inv) no_pos in
-      let c_inv_s = CP.apply_subs subst_vars c_inv_f in
-      let c_inv_s_e = CP.mkExists quant_v c_inv_s None no_pos in
-      let c_inv_simp = TP.simplify_omega c_inv_s_e in
-      let inv_f = CF.formula_of_pure_N c_inv_simp no_pos in
-      let n_h_f = CF.normalize inv_f (add_brs v_def brs h_f) no_pos in
-      let n_b_f = CF.normalize inv_f (add_brs v_def brs b_f)  no_pos in
-      (*let _ = print_string ("coer head: "^(Cprinter.string_of_formula n_h_f)^"\n\n") in*)
-      let prun_h_f = Solver.prune_preds prog true n_h_f in
-      (*let _ = print_string ("coer pruned head: "^(Cprinter.string_of_formula prun_h_f)^"\n\n") in
-        let _ = print_string ("coer body: "^(Cprinter.string_of_formula n_b_f)^"\n\n") in*)
-      let prun_b_f = Solver.prune_preds prog true n_b_f in
-      (*let _ = print_string ("coer pruned body: "^(Cprinter.string_of_formula prun_b_f)^"\n\n") in*)
-      (prun_h_f,prun_b_f)) v_invs in   
-  if is_l then 
-    List.map (fun (c1,c2) -> {c with C.coercion_head=c1; C.coercion_body=c2;}) r_l
-  else
-    List.map (fun (c1,c2) -> {c with C.coercion_head=c2; C.coercion_body=c1;}) r_l
+    let v_def = C.look_up_view_def no_pos prog.C.prog_view_decls h_v in
+    let v_invs = v_def.C.view_prune_invariants in
+    let h_h, _, _, _, _ = CF.split_components h_f in
+    let to_vars = find_h_args h_h in 
+    let subst_vars = List.combine v_def.C.view_vars to_vars in
+    let fvs = Gen.BList.intersect_eq (=) (CF.fv h_f) (CF.fv b_f) in  
+    let free_v, quant_v = List.partition (fun (_,c)-> (List.mem c fvs)) subst_vars in
+    let quant_v = snd (List.split quant_v) in
+    let r_l = List.map (fun (brs,(ba,c_inv))-> 
+        let c_inv_f = CP.conj_of_list (List.map (fun c-> CP.BForm (c,None)) c_inv) no_pos in
+        let c_inv_s = CP.apply_subs subst_vars c_inv_f in
+        let c_inv_s_e = CP.mkExists quant_v c_inv_s None no_pos in
+        let c_inv_simp = TP.simplify_omega c_inv_s_e in
+        let inv_f = CF.formula_of_pure_N c_inv_simp no_pos in
+        let n_h_f = CF.normalize inv_f (add_brs v_def brs h_f) no_pos in
+        let n_b_f = CF.normalize inv_f (add_brs v_def brs b_f)  no_pos in
+        (*let _ = print_string ("coer head: "^(Cprinter.string_of_formula n_h_f)^"\n\n") in*)
+        let prun_h_f = Solver.prune_preds prog true n_h_f in
+        (*let _ = print_string ("coer pruned head: "^(Cprinter.string_of_formula prun_h_f)^"\n\n") in
+          let _ = print_string ("coer body: "^(Cprinter.string_of_formula n_b_f)^"\n\n") in*)
+        let prun_b_f = Solver.prune_preds prog true n_b_f in
+        (*let _ = print_string ("coer pruned body: "^(Cprinter.string_of_formula prun_b_f)^"\n\n") in*)
+        (prun_h_f,prun_b_f)) v_invs in   
+    if is_l then 
+      List.map (fun (c1,c2) -> {c with C.coercion_head=c1; C.coercion_body=c2;}) r_l
+    else
+      List.map (fun (c1,c2) -> {c with C.coercion_head=c2; C.coercion_body=c1;}) r_l
   end   
-        
+      
 and pred_prune_inference (cp:C.prog_decl):C.prog_decl =      
-  Util.push_time "pred_inference";
+  Gen.Profiling.push_time "pred_inference";
     let preds = List.map (fun c-> view_prune_inv_inference cp c) cp.C.prog_view_decls in
     let prog_views_inf = {cp with C.prog_view_decls  = preds;} in
     let preds = List.map (fun c-> 
@@ -4995,11 +5035,11 @@ and pred_prune_inference (cp:C.prog_decl):C.prog_decl =
         C.prog_proc_decls  = procs;(* C.prog_data_decls = datas;*)
         C.prog_left_coercions  = l_coerc;
         C.prog_right_coercions = r_coerc;} in
-    Util.pop_time "pred_inference" ;r
-    
+    Gen.Profiling.pop_time "pred_inference" ;r
+        
 
 and line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_rel*(int* Cpure.b_formula *(Cpure.spec_var list))) list)
-    :Cpure.b_formula*int list * int list =
+      :Cpure.b_formula*int list * int list =
   (*let _ = print_string ("\n line split start "^(Cprinter.string_of_b_formula cons)^"\n") in*)
   try
     let line = List.map (fun (c1,(c2,c3,_))-> (c1,c2,c3)) line in
@@ -5007,53 +5047,53 @@ and line_split (br_cnt:int)(br_n:int)(cons:CP.b_formula)(line:(Cpure.constraint_
     let branches = if (List.length arr)=0 then []
     else 
       let (c1,c2,c3) = List.hd arr in
-	List.fold_left (fun crt_list (c1,c2,c3)-> 
-			  let crt_n,crt_br_list = List.hd crt_list in
-			    if (c2=crt_n) then 
-			      (crt_n,(c1,c3)::crt_br_list)::(List.tl crt_list)
-			    else (c2,[(c1,c3)])::crt_list) [(c2,[(c1,c3)])] (List.tl arr) in
-      
+	  List.fold_left (fun crt_list (c1,c2,c3)-> 
+		  let crt_n,crt_br_list = List.hd crt_list in
+		  if (c2=crt_n) then 
+			(crt_n,(c1,c3)::crt_br_list)::(List.tl crt_list)
+		  else (c2,[(c1,c3)])::crt_list) [(c2,[(c1,c3)])] (List.tl arr) in
+    
     (*let _ = print_string ("\n line split: "^
       (List.fold_left (fun a (c1,c2)-> a^"\n"^(string_of_int c1)^"-> "^
       (List.fold_left (fun a (c1,c2)->a^", ("^(Cprinter.string_of_constraint_relation c1)^","^
       (Cprinter.string_of_b_formula c2)^")") "" c2)) "" branches)^"\n") in*)
     let l1,l2,n = List.fold_left (fun (l1,l2,n) (br_index,br_list)-> 
-				    if (br_index=br_cnt) then (br_index::l1,l2,n)
-				    else (*consistencies with relations of a single branch*)
-				      let (contr,con_f) = List.fold_left (fun (a1,a2)(rel,con) -> match rel with
-									    | Cpure.Unknown -> (a1,a2)
-									    | Cpure.Subsumed 
-									    | Cpure.Subsuming -> raise Not_found
-									    | Cpure.Equal -> begin match a1 with
-										| None -> (Some false,a2) 
-										| Some false -> (a1,a2)
-										| Some true -> raise Not_found end
-									    | Cpure.Contradicting -> begin match a1 with
-										| None -> (Some true,Some con) 
-										| Some false ->  raise Not_found 
-										| Some true -> match a2 with
-										    | None -> raise Not_found 
-										    | Some s-> if (Cpure.equalBFormula con s) then (a1,a2)
-										      else raise Not_found end										
-									 ) (None,None) br_list in
-					(*consistencies across all branches*)
-					match contr with
-					  | None -> raise Not_found
-					  | Some false -> (br_index::l1,l2,n)
-					  | Some true -> 
-					      match (n,con_f) with
-						| None, Some s -> (l1,br_index::l2, Some s)
-						| _, None ->  raise Not_found
-						| Some s1, Some s2 -> if (Cpure.equalBFormula s1 s2) then  (l1,br_index::l2, n)
-						  else raise Not_found
-				 ) ([],[],None) branches in	
-      match n with
-	| None -> (cons, [],[])
-	| Some n -> (n, l1,l2)
+		if (br_index=br_cnt) then (br_index::l1,l2,n)
+		else (*consistencies with relations of a single branch*)
+		  let (contr,con_f) = List.fold_left (fun (a1,a2)(rel,con) -> match rel with
+			| Cpure.Unknown -> (a1,a2)
+			| Cpure.Subsumed 
+			| Cpure.Subsuming -> raise Not_found
+			| Cpure.Equal -> begin match a1 with
+				| None -> (Some false,a2) 
+				| Some false -> (a1,a2)
+				| Some true -> raise Not_found end
+			| Cpure.Contradicting -> begin match a1 with
+				| None -> (Some true,Some con) 
+				| Some false ->  raise Not_found 
+				| Some true -> match a2 with
+					| None -> raise Not_found 
+					| Some s-> if (Cpure.equalBFormula con s) then (a1,a2)
+					  else raise Not_found end										
+		  ) (None,None) br_list in
+		  (*consistencies across all branches*)
+		  match contr with
+			| None -> raise Not_found
+			| Some false -> (br_index::l1,l2,n)
+			| Some true -> 
+				  match (n,con_f) with
+					| None, Some s -> (l1,br_index::l2, Some s)
+					| _, None ->  raise Not_found
+					| Some s1, Some s2 -> if (Cpure.equalBFormula s1 s2) then  (l1,br_index::l2, n)
+					  else raise Not_found
+	) ([],[],None) branches in	
+    match n with
+	  | None -> (cons, [],[])
+	  | Some n -> (n, l1,l2)
   with _ -> (cons, [],[])
 
-    
- 
+      
+      
 and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.spec_var list) : Cformula.struc_formula list =
   (*let _ = print_string ("\n splitter got: "^(
     List.fold_left (fun a (c1,c2)-> a^"\n"^(Cprinter.string_of_pure_formula c1)^"--"^
@@ -5065,160 +5105,159 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
     | 0 -> raise Not_found
     | 1 -> [[(snd (List.hd f_list_init))]]
     | _ ->
-	let crt_v = List.hd v1 in
-	let rest_vars = List.tl v1 in	
-	let br_cnt = List.length f_list_init in
-	let f_list = List.map (fun (c1,c2)-> 
-				 let aset = Context.get_aset ( Context.alias ((crt_v, crt_v) :: (MCP.pure_ptr_equations c1))) crt_v in
-				 let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
-				 let eqs = (Solver.get_equations_sets c1 aset)in
-				 let eqs = (Solver.transform_null eqs) in
-				   (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
-				     let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
-				   (c1,c2,aset,eqs)) f_list_init in
-	let f_a_list = Util.add_index f_list in
-	let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->
-						   List.map (fun c-> (x,c,c3)) c4) f_a_list) in
-	let constr_list = Util.remove_dups_f constr_list 
-	  (fun (x1,c1,_)(x2,c2,_)-> (x1=x2)&&(Cpure.equalBFormula c1 c2)) in
-	let constr_array = Array.of_list constr_list in
-	let sz = Array.length constr_array in
-	let matr = Array.make_matrix sz sz Cpure.Unknown in
+	      let crt_v = List.hd v1 in
+	      let rest_vars = List.tl v1 in	
+	      let br_cnt = List.length f_list_init in
+	      let f_list = List.map (fun (c1,c2)-> 
+			  let aset = Context.get_aset ( Context.alias ((crt_v, crt_v) :: (MCP.pure_ptr_equations c1))) crt_v in
+			  let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
+			  let eqs = (Solver.get_equations_sets c1 aset)in
+			  let eqs = (Solver.transform_null eqs) in
+			  (*let _ = print_string ("\n aset: "^(Cprinter.string_of_spec_var_list aset)) in
+				let _ = print_string ("\n eqs: "^(List.fold_left (fun a c-> a^" -- "^(Cprinter.string_of_b_formula c)) "" eqs )) in*)
+			  (c1,c2,aset,eqs)) f_list_init in
+	      let f_a_list = Gen.Profiling.add_index f_list in
+	      let constr_list = List.concat (List.map (fun (x,(c1,c2,c3,c4))->
+			  List.map (fun c-> (x,c,c3)) c4) f_a_list) in
+	      let constr_list = Gen.BList.remove_dups_eq (fun (x1,c1,_)(x2,c2,_)-> (x1=x2)&&(Cpure.equalBFormula c1 c2)) constr_list in
+	      let constr_array = Array.of_list constr_list in
+	      let sz = Array.length constr_array in
+	      let matr = Array.make_matrix sz sz Cpure.Unknown in
 
-	let filled_matr = 
-	  Array.mapi(fun x c->(Array.mapi (fun y c->
-					     if (x>y) then 
-					       Cpure.compute_constraint_relation 
-						 (constr_array.(x)) 
-						 (constr_array.(y)) 
-					     else if x=y then 
-					       Cpure.Equal else 
-						 matr.(x).(y) 
-					  ) c)) matr in
-	let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
-							     if (x<y) then filled_matr.(y).(x)
-							     else filled_matr.(x).(y)) c)) filled_matr in
-	  (*
-	    let _ = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
-	    (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
-	    (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
-	    let _ = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
-	    Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
-	    ) filled_matr "")^"\n") in*)
-	  
-	let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
-						  let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
-						  let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
-						  let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
-						  let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
-						    ((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
-					       ) constr_array in
-	  
-	  
-	  
-	let splitting_constraints = 
-	  List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0)) (Array.to_list splitting_constraints) in
-	  if (List.length splitting_constraints)>0 then
-	    List.concat (List.map (fun (constr,neg_constr,l1,l2)->
-				     let nf1 = splitter l1 rest_vars in
-				     let nf2 = splitter l2 rest_vars in
-				       List.concat (List.map (fun c1-> List.map (fun c2-> 
-										   [Cformula.ECase{					
-										      Cformula.formula_case_branches =[(constr,c1);(neg_constr,c2)];
-										      Cformula.formula_case_exists = [];
-										      Cformula.formula_case_pos = no_pos;
-										    }]) nf2) nf1)					
-				  ) splitting_constraints)
-	  else splitter f_list_init rest_vars
+	      let filled_matr = 
+	        Array.mapi(fun x c->(Array.mapi (fun y c->
+				if (x>y) then 
+				  Cpure.compute_constraint_relation 
+					  (constr_array.(x)) 
+					  (constr_array.(y)) 
+				else if x=y then 
+				  Cpure.Equal else 
+					matr.(x).(y) 
+			) c)) matr in
+	      let filled_matr = Array.mapi(fun x c->(Array.mapi (fun y c->
+			  if (x<y) then filled_matr.(y).(x)
+			  else filled_matr.(x).(y)) c)) filled_matr in
+	      (*
+	        let _ = print_string ("\n constr_array: "^(List.fold_left (fun a (x,c,c3)-> a^" \n( "^
+	        (string_of_int x)^","^(Cprinter.string_of_b_formula c)^",   "^
+	        (Cprinter.string_of_spec_var_list c3))"" constr_list)^"\n") in
+	        let _ = print_string ("\n matr: "^( Array.fold_right (fun c a-> a^(
+	        Array.fold_right (fun c a-> a^" "^(Cprinter.string_of_constraint_relation c )) c "\n ")
+	        ) filled_matr "")^"\n") in*)
+	      
+	      let splitting_constraints = Array.mapi (fun x (br_n,cons,_)->
+			  let line_pair =List.combine (Array.to_list filled_matr.(x)) constr_list in
+			  let neg_cons,l1,l2 = line_split br_cnt br_n cons line_pair in
+			  let l1_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l1 in
+			  let l2_br = List.map (fun c1-> let (_,(v1,v2,_,_))=List.find (fun c2->(fst c2)=c1) f_a_list in (v1,v2)) l2 in
+			  ((Cpure.BForm (cons, None)),(Cpure.BForm (neg_cons, None)),l1_br,l2_br)
+		  ) constr_array in
+	      
+	      
+	      
+	      let splitting_constraints = 
+	        List.filter (fun (_,_,l1,l2)-> ((List.length l2)>0 && (List.length l1)>0)) (Array.to_list splitting_constraints) in
+	      if (List.length splitting_constraints)>0 then
+	        List.concat (List.map (fun (constr,neg_constr,l1,l2)->
+				let nf1 = splitter l1 rest_vars in
+				let nf2 = splitter l2 rest_vars in
+				List.concat (List.map (fun c1-> List.map (fun c2-> 
+					[Cformula.ECase{					
+						Cformula.formula_case_branches =[(constr,c1);(neg_constr,c2)];
+						Cformula.formula_case_exists = [];
+						Cformula.formula_case_pos = no_pos;
+					}]) nf2) nf1)					
+			) splitting_constraints)
+	      else splitter f_list_init rest_vars
 
 (* TODO *)
 and move_instantiations (f:Cformula.struc_formula):Cformula.struc_formula*(Cpure.spec_var list) = 
   let rec helper (f:Cformula.ext_formula):Cformula.ext_formula*(Cpure.spec_var list) = match f with
     | Cformula.EBase b->
-	let nc, vars = move_instantiations b.Cformula.formula_ext_continuation in
-	let qvars, nf = Cformula.split_quantifiers b.Cformula.formula_ext_base in
-	let global_ex, imp_inst = (b.Cformula.formula_ext_exists, b.Cformula.formula_ext_implicit_inst) in
-	let n_qvars = Util.difference qvars vars in
-	let n_globals = Util.difference global_ex vars in
-	let inst_from_qvars = Util.difference vars qvars in
-	let inst_from_global = Util.difference vars global_ex in
-	  (Cformula.EBase {b with 
-			     Cformula.formula_ext_continuation = nc;
-			     Cformula.formula_ext_base = Cformula.push_exists n_qvars nf ;
-			     Cformula.formula_ext_exists = n_globals;
-			     Cformula.formula_ext_implicit_inst = b.Cformula.formula_ext_implicit_inst @ inst_from_global @ inst_from_qvars;
-			  },(Util.difference vars (inst_from_qvars@inst_from_global)))
+	      let nc, vars = move_instantiations b.Cformula.formula_ext_continuation in
+	      let qvars, nf = Cformula.split_quantifiers b.Cformula.formula_ext_base in
+	      let global_ex, imp_inst = (b.Cformula.formula_ext_exists, b.Cformula.formula_ext_implicit_inst) in
+	      let n_qvars = Gen.BList.difference_eq (=) qvars vars in
+	      let n_globals = Gen.BList.difference_eq (=) global_ex vars in
+	      let inst_from_qvars = Gen.BList.difference_eq (=) vars qvars in
+	      let inst_from_global = Gen.BList.difference_eq (=) vars global_ex in
+	      (Cformula.EBase {b with 
+			  Cformula.formula_ext_continuation = nc;
+			  Cformula.formula_ext_base = Cformula.push_exists n_qvars nf ;
+			  Cformula.formula_ext_exists = n_globals;
+			  Cformula.formula_ext_implicit_inst = b.Cformula.formula_ext_implicit_inst @ inst_from_global @ inst_from_qvars;
+		  },(Gen.BList.difference_eq (=) vars (inst_from_qvars@inst_from_global)))
     | Cformula.ECase b-> 
-	let new_cases, var_list = 
-	  List.split 
-	    (List.map 
-	       (fun (c1,c2)-> 
-		  let nf , vars = move_instantiations c2 in
-		    ((c1,nf), (vars@(Cpure.fv c1)))
-	       ) 
-	       b.Cformula.formula_case_branches) in
-	  (
-	    (Cformula.ECase {b with 
-			       Cformula.formula_case_branches = new_cases}),
-	    (List.concat var_list))			
+	      let new_cases, var_list = 
+	        List.split 
+	            (List.map 
+	                (fun (c1,c2)-> 
+		                let nf , vars = move_instantiations c2 in
+		                ((c1,nf), (vars@(Cpure.fv c1)))
+	                ) 
+	                b.Cformula.formula_case_branches) in
+	      (
+	          (Cformula.ECase {b with 
+			      Cformula.formula_case_branches = new_cases}),
+	          (List.concat var_list))			
     | Cformula.EAssume b-> (f,[])
 	| Cformula.EVariance b ->
-		let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
-										 | None -> Cpure.afv e1
-										 | Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.Cformula.formula_var_measures in
-		let e_var_list = List.fold_left (fun rs f -> rs@(Cpure.fv f)) [] b.Cformula.formula_var_escape_clauses in
-		let new_cont, c_var_list = move_instantiations b.Cformula.formula_var_continuation in
-		(Cformula.EVariance {b with Cformula.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
+		  let m_var_list = List.fold_left (fun rs (e1, e2) -> rs@(match e2 with
+			| None -> Cpure.afv e1
+			| Some e -> (Cpure.afv e1)@(Cpure.afv e))) [] b.Cformula.formula_var_measures in
+		  let e_var_list = List.fold_left (fun rs f -> rs@(Cpure.fv f)) [] b.Cformula.formula_var_escape_clauses in
+		  let new_cont, c_var_list = move_instantiations b.Cformula.formula_var_continuation in
+		  (Cformula.EVariance {b with Cformula.formula_var_continuation = new_cont}, (m_var_list@e_var_list@c_var_list))
   in
   let forms, vars = List.split (List.map helper f) in
-    (forms, (List.concat vars))
-    
-    
+  (forms, (List.concat vars))
+      
+      
 and formula_case_inference cp (f_ext:Cformula.struc_formula)(v1:Cpure.spec_var list) : Cformula.struc_formula = 
   (*let _ = print_string (" case inference, this feature needs to be revisited \n") in*)
   let r = try 
     let f_list = List.map (fun c->
-			     let d = match c with
-			       | Cformula.EBase b-> if (List.length b.Cformula.formula_ext_continuation)>0 then
-				   Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
-				 else b.Cformula.formula_ext_base 
-			       | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
-			     in
-			     let not_fact,nf_br, _, memset = (Solver.xpure_symbolic cp d) in
-			     let fact =  Solver.normalize_to_CNF (MCP.pure_of_mix not_fact) no_pos in
-			     let fact = Cpure.drop_disjunct fact in
-			     let fact = Cpure.rename_top_level_bound_vars fact in
-			     let fact,_,_(*all,exist*) = Cpure.float_out_quantif fact in
-			     let fact = Cpure.check_not fact in
-			       (fact,c)
-			  ) f_ext in
-      
+		let d = match c with
+		  | Cformula.EBase b-> if (List.length b.Cformula.formula_ext_continuation)>0 then
+			  Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+			else b.Cformula.formula_ext_base 
+		  | _ -> Error.report_error { Error.error_loc = no_pos; Error.error_text ="malfunction: trying to infer case guard on a struc formula"}
+		in
+		let not_fact,nf_br, _, memset = (Solver.xpure_symbolic cp d) in
+		let fact =  Solver.normalize_to_CNF (MCP.pure_of_mix not_fact) no_pos in
+		let fact = Cpure.drop_disjunct fact in
+		let fact = Cpure.rename_top_level_bound_vars fact in
+		let fact,_,_(*all,exist*) = Cpure.float_out_quantif fact in
+		let fact = Cpure.check_not fact in
+		(fact,c)
+	) f_ext in
+    
     let r = List.hd (splitter f_list v1) in
-      fst (move_instantiations  r(*(Cformula.clean_case_guard_redundancy r [])*))
-	
+    fst (move_instantiations  r(*(Cformula.clean_case_guard_redundancy r [])*))
+	    
   with _ -> f_ext in
-    (*let _ = print_string ("final f: "^(Cprinter.string_of_struc_formula r)^"\n") in*)
-    r
+  (*let _ = print_string ("final f: "^(Cprinter.string_of_struc_formula r)^"\n") in*)
+  r
       
 and view_case_inference cp (ivl:Iast.view_decl list) (cv:Cast.view_decl):Cast.view_decl = 
   try
     let iv = List.find (fun c->c.Iast.view_name = cv.Cast.view_name) ivl in
-      if (iv.Iast.try_case_inference) then
-	let sf = (CP.SpecVar (CP.OType cv.Cast.view_data_name, self, Unprimed)) in
-  (*TODO: disallow variables that are not instantiated in the case guards, more specifically, 
-   view parameters should not be in case guards*)
-	let f = formula_case_inference cp cv.Cast.view_formula [sf] in
+    if (iv.Iast.try_case_inference) then
+	  let sf = (CP.SpecVar (CP.OType cv.Cast.view_data_name, self, Unprimed)) in
+      (*TODO: disallow variables that are not instantiated in the case guards, more specifically, 
+        view parameters should not be in case guards*)
+	  let f = formula_case_inference cp cv.Cast.view_formula [sf] in
 	  {cv with 
 
 
-	     Cast.view_formula = f; 
-	     Cast.view_case_vars =Util.intersect (sf::cv.C.view_vars) (Cformula.guard_vars f); }
-      else cv
+	      Cast.view_formula = f; 
+	      Cast.view_case_vars =Gen.BList.intersect_eq (=) (sf::cv.C.view_vars) (Cformula.guard_vars f); }
+    else cv
   with _ -> cv 	
-    
+      
 and case_inference (ip: Iast.prog_decl) (cp:Cast.prog_decl):Cast.prog_decl = 
   {cp with Cast.prog_view_decls = List.map (view_case_inference cp ip.Iast.prog_view_decls) cp.Cast.prog_view_decls}
-	
+	  
 (* Recursive call detection *)
 (* irf = is_rec_field *)	
 and mark_recursive_call (ip: Iast.prog_decl) (cp: Cast.prog_decl) : Cast.prog_decl =
@@ -5234,22 +5273,22 @@ and find_scc_group (ip: Iast.prog_decl) (pname: Globals.ident) (scc_list: IastUt
 
 and is_found (ip: Iast.prog_decl) (pname: Globals.ident) (scc: IastUtil.IG.V.t list) : bool =
   (* let _ = printf "The scc group:\n"; List.iter (fun s -> print_string (" "^s)) scc; printf "**********\n" in
-  let _ = print_string ("The proc name: "^pname^"\n") in *)
+     let _ = print_string ("The proc name: "^pname^"\n") in *)
   match scc with
     | [] -> false
 	| x::xs -> let mingled_name = (Iast.look_up_proc_def_raw ip.Iast.prog_proc_decls x).Iast.proc_mingled_name in
-		(* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
-		if (mingled_name = pname) then true else (is_found ip pname xs)
+	  (* let _ = print_string ("The proc mingled name: "^mingled_name^"\n") in *)
+	  if (mingled_name = pname) then true else (is_found ip pname xs)
 
 and irf_traverse_prog (ip: Iast.prog_decl) (cp: Cast.prog_decl) (scc_list: IastUtil.IG.V.t list list) : Cast.prog_decl = 
-   {cp with
-		Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc ip proc (find_scc_group ip proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
-   }
+  {cp with
+	  Cast.prog_proc_decls = List.map (fun proc -> irf_traverse_proc ip proc (find_scc_group ip proc.Cast.proc_name scc_list)) cp.Cast.prog_proc_decls
+  }
 
 and irf_traverse_proc (ip: Iast.prog_decl) (proc: Cast.proc_decl) (scc: IastUtil.IG.V.t list) : Cast.proc_decl =
   {proc with
-	 Cast.proc_body = 
-		match proc.Cast.proc_body with
+	  Cast.proc_body = 
+		  match proc.Cast.proc_body with
 			| None -> None
 			| Some body -> Some (irf_traverse_exp ip body scc)
   }

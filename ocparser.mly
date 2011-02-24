@@ -3,7 +3,7 @@
   open Cpure
 
   module Err = Error
-  
+
   (*let get_pos p = Parsing.rhs_start_pos p*)
   let get_pos x = 
 				{start_pos = Parsing.symbol_start_pos ();

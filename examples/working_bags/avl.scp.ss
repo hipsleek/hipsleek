@@ -12,11 +12,11 @@ data node {
 
 /**** for omega and mona ****/
 avl<m, n> == self = null & m = 0 & n = 0 
-	or self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = m1+m2+1 & n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1 
+  or (exists n3,tmp:self::node<_, n, p, q> * p::avl<m1, n1> * q::avl<m2, n2> & m = m1+m2+1 & n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1)
 	inv m >= 0 & n >= 0;
 
 avl1<n> == self = null & n = 0 
-	or self::node<_, n, p, q> * p::avl1<n1> * q::avl1<n2> & n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1 
+  or (exists n3,tmp: self::node<_, n, p, q> * p::avl1<n1> * q::avl1<n2> & n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1) 
 	inv n >= 0;
 
 /*avl2<n, S> == self = null & S = {} & n = 0 

@@ -102,7 +102,8 @@ let this = "this"
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
-(* *GLOBAL_VAR* input filename, used by Astsimp and Main *)
+(* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
+ * moved here from iparser.mly *)
 let input_file_name = ref ""
 
 (* command line options *)
@@ -426,16 +427,19 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
     | Some (op, _) -> op,(bin_op_to_list op fn t)
 
 (*type of process used for communicating with the prover*)
-type prover_process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+type prover_process_t = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
 
 (*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
 class type ['a] incremMethodsType = object
-  method start_p: unit -> prover_process
-  method stop_p:  prover_process -> unit
-  method push: prover_process -> unit
-  method pop: prover_process -> unit
-  method popto: prover_process -> int -> unit
-  method imply: prover_process -> 'a -> 'a -> string -> bool
+  val process: prover_process_t option ref
+  method start_p: unit -> prover_process_t
+  method stop_p:  prover_process_t -> unit
+  method push: prover_process_t -> unit
+  method pop: prover_process_t -> unit
+  method popto: prover_process_t -> int -> unit
+  method imply: (prover_process_t option * bool) option -> 'a -> 'a -> string -> bool
+  method set_process: prover_process_t -> unit
+  method get_process: unit -> prover_process_t option
   (* method add_to_context: 'a -> unit *)
 end
 

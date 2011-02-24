@@ -30,6 +30,8 @@ let log msg =
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
+let print_pure = ref (fun (c:formula)-> " printing not initialized")
+
 let init_files () =
   begin
 	infilename := "input.oc." ^ (string_of_int (Unix.getpid ()));
@@ -264,7 +266,7 @@ let check_formula f timeout=
     let _ = incr omega_call_count in
     let new_f = 
       if String.length f > 1024 then
-	(Util.break_lines f)
+	(Gen.break_lines f)
       else
 	f
     in
@@ -307,7 +309,7 @@ let rec send_and_receive f timeout=
   let _ = incr omega_call_count in
   let new_f = 
   if String.length f > 1024 then
-     (Util.break_lines f)
+     (Gen.break_lines f)
   else
       f
   in
@@ -342,7 +344,7 @@ let get_vars_formula (p : formula) =
 *)
 
 let is_sat (pe : formula)  (sat_no : string): bool =
-  (*print_endline (Util.new_line_str^"#is_sat " ^ sat_no ^ Util.new_line_str);*)
+  (*print_endline (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);*)
   incr test_number;
   begin
         (*  Cvclite.write_CVCLite pe; *)
@@ -350,14 +352,14 @@ let is_sat (pe : formula)  (sat_no : string): bool =
 	omega_subst_lst := [];
     let fstr = omega_of_formula pe in
     let pvars = get_vars_formula pe in
-    let vstr = omega_of_var_list (Util.remove_dups pvars) in
-    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+    let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
+    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
     (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
 	(*test*)
-	(*print_endline (Util.break_lines fomega);*)
+	(*print_endline (Gen.break_lines fomega);*)
 
-    log (Util.new_line_str^"#is_sat " ^ sat_no ^ Util.new_line_str);
-    log (Util.break_lines fomega);
+    log (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);
+    log (Gen.break_lines fomega);
  
 	let sat =
       try
@@ -393,14 +395,14 @@ let is_valid (pe : formula) timeout: bool =
   begin
 	omega_subst_lst := [];
     let fstr = omega_of_formula pe in
-    let vstr = omega_of_var_list (Util.remove_dups (get_vars_formula pe)) in
-    let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Util.new_line_str in
+    let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
+    let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
     (*test*)
-	(*print_endline (Util.break_lines fomega);*)
+	(*print_endline (Gen.break_lines fomega);*)
 	
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-    log (Util.new_line_str^"#is_valid" ^Util.new_line_str);
-    log (Util.break_lines fomega);
+    log (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);
+    log (Gen.break_lines fomega);
 	
 	let sat = 
       try
@@ -470,6 +472,7 @@ let rec match_vars (vars_list0 : spec_var list) rel = match rel with
     let tmp = mkOr f1 f2 None no_pos in
     tmp
 
+
 let simplify (pe : formula) : formula =
  (* print_endline "LOCLE: simplify";*)
   (*let _ = print_string ("\nomega_simplify: f before"^(omega_of_formula pe)) in*)
@@ -477,14 +480,14 @@ let simplify (pe : formula) : formula =
     omega_subst_lst := [];
     let fstr = omega_of_formula pe in
     let vars_list = get_vars_formula pe in
-    let vstr = omega_of_var_list (Util.remove_dups vars_list) in
-    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+    let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	(*test*)
-	(*print_endline (Util.break_lines fomega);*)
+	(*print_endline (Gen.break_lines fomega);*)
 	
 (*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-    log ("#simplify" ^ Util.new_line_str ^ Util.new_line_str);
-    log ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+    log ("#simplify" ^ Gen.new_line_str ^ Gen.new_line_str);
+    log ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
 	
     let simp_f = 
 	try
@@ -505,20 +508,24 @@ let simplify (pe : formula) : formula =
     simp_f
   end
 
+let simplify (pe : formula) : formula =
+  let pf = !print_pure in
+  Gen.Debug.no_1 "Omega.simplify" pf pf simplify pe
+
 let pairwisecheck (pe : formula) : formula =
   (*print_endline "LOCLE: pairwisecheck";*)
   begin
 		omega_subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
-    let vstr = omega_of_var_list (Util.remove_dups vars_list) in
-    let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+    let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+    let fomega =  "pairwisecheck {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	
 	(*test*)
-	(*print_endline (Util.break_lines fomega);*)
+	(*print_endline (Gen.break_lines fomega);*)
 	
-    log ("#pairwisecheck" ^ Util.new_line_str ^ Util.new_line_str);
-    log ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+    log ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
+    log ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
     let rel = send_and_receive fomega 0. in
 	  match_vars (fv pe) rel 
   end
@@ -529,14 +536,14 @@ let hull (pe : formula) : formula =
 		omega_subst_lst := [];
     let fstr = omega_of_formula pe in
         let vars_list = get_vars_formula pe in
-    let vstr = omega_of_var_list (Util.remove_dups vars_list) in
-     let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Util.new_line_str in
+    let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) vars_list) in
+     let fomega =  "hull {[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	
 	(*test*)
-	(*print_endline (Util.break_lines fomega);*)
+	(*print_endline (Gen.break_lines fomega);*)
 	
-     log ("#hull" ^ Util.new_line_str ^ Util.new_line_str);
-     log ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+     log ("#hull" ^ Gen.new_line_str ^ Gen.new_line_str);
+     log ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
     let rel = send_and_receive fomega 0. in
 	  match_vars (fv pe) rel
   end
@@ -551,14 +558,14 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 				let l1 = List.map omega_of_spec_var vars_list  in
     let vstr = String.concat "," l1  in
     let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
-            ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Util.new_line_str
+            ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str
         in
-        log ("#gist" ^ Util.new_line_str ^ Util.new_line_str);
-        log ((Util.break_lines fomega) ^ Util.new_line_str ^ Util.new_line_str);
+        log ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
+        log ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
     let rel = send_and_receive fomega 0. in
 	  match_vars vars_list rel
   end
 
 let log_mark (mark : string) =
-  log ("#mark: " ^ mark ^ Util.new_line_str ^ Util.new_line_str);
+  log ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str);
 
