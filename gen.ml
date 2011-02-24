@@ -297,12 +297,12 @@ end;;
 
 exception Stack_Error
 
-class ['a] stack x_init  =
+class ['a] stack (x_init:'a) (epr:'a->string)  =
    object 
      val emp_val = x_init
      val mutable stk = []
-     val mutable elem_pr : 'a -> string 
-       = (fun _ -> "elem printer not initialised!")
+     val elem_pr = epr 
+       (* = (fun _ -> "elem printer not initialised!") *)
      method push (i:'a) = stk <- i::stk
      method get  = stk (* return entire content of stack *)
      method override newstk  = stk <- newstk 
@@ -322,7 +322,7 @@ class ['a] stack x_init  =
        | [] ->  emp_val
        | x::xs -> x
      method len = List.length stk
-     method set_pr f = elem_pr <- f
+     (* method set_pr f = elem_pr <- f *)
      method string_of = BList.string_of_f elem_pr stk
    end;;
 
@@ -340,7 +340,7 @@ module ErrorUti =
 struct
   (** Error-handling functions. *)
 
-  let error_list = new stack "error - stack underflow"
+  let error_list = new stack "error - stack underflow" (fun x -> x)
 
   let warning_no  = new counter 0
 
@@ -638,7 +638,7 @@ struct
     
   (* type stack = int list *)
   (* stack of calls being traced by ho_debug *)
-  let stk = new stack (-1)
+  let stk = new stack (-1) string_of_int
 
   (* pop last element from call stack of ho debug *)
   let pop () = stk # pop
@@ -1036,7 +1036,8 @@ module Profiling =
 struct
   let counters = new mult_counters
   let tasks = new task_table
-  let profiling_stack = new stack ("stack underflow",0.,false)
+  let profiling_stack = new stack ("stack underflow",0.,false) 
+    (fun (s,v,b)-> "("^s^","^(string_of_float v)^","^(string_of_bool b) ^")")
 
   let add_to_counter (s:string) i = 
     if !Globals.enable_counters then counters#add s i
