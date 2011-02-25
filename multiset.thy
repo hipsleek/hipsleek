@@ -1,2 +1,2 @@
-theory multiset = Multiset + Main:
-end
+theory multiset imports Multiset Main begin
+ end

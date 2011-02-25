@@ -1880,9 +1880,17 @@ and elim_exists (f0 : formula) : formula =
       | BForm _ -> f0 in
   helper f0
 
+(* pretty printing for types *)
+let string_of_typ = function 
+  | Prim t -> string_of_prim_type t 
+  | OType ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot)
+
 let string_of_spec_var (sv: spec_var) = match sv with
-    | SpecVar (_, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
-  
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")
+ 
+let string_of_spec_var_type (sv: spec_var) = match sv with
+    | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")^":"^(string_of_typ t)
+ 
 module SV =
 struct 
   type t = spec_var

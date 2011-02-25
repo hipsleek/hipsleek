@@ -40,6 +40,14 @@ type mode =
   | ModeIn
   | ModeOut
 
+let string_of_prim_type = function 
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | Bag           -> "multiset"
+  | List          -> "list"
+;;
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None

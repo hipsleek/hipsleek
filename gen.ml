@@ -322,6 +322,7 @@ class ['a] stack (x_init:'a) (epr:'a->string)  =
        | [] ->  emp_val
        | x::xs -> x
      method len = List.length stk
+     method reverse = stk <- List.rev stk
      (* method set_pr f = elem_pr <- f *)
      method string_of = BList.string_of_f elem_pr stk
    end;;
