@@ -371,6 +371,7 @@ class mainwindow () =
     method private save text fname =
       log ("Saving source to " ^ fname);
       FU.write_to_file fname text;
+      current_file <- Some fname;
       self#update_original_digest ();
       self#update_win_title ()
 

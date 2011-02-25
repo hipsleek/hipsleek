@@ -97,9 +97,11 @@ class sleek_source_view ?(text = "") () =
   let get_sleek_lang () =
     let lang_mime_type = "text/x-sleek" in
     let language_manager = GSourceView2.source_language_manager ~default:true in
-    match language_manager#guess_language ~content_type:lang_mime_type () with
-    | None -> failwith ("no language for " ^ lang_mime_type)
-    | Some lang -> lang
+    language_manager#set_search_path ("." :: language_manager#search_path);
+    let res = match language_manager#guess_language ~content_type:lang_mime_type () with
+      | None -> failwith ("no language for " ^ lang_mime_type)
+      | Some lang -> lang
+    in res
   in
 
   object (self)
@@ -132,9 +134,11 @@ class hip_source_view ?(text = "") () =
     (* TODO: syntax definition for hip *)
     let lang_mime_type = "text/x-sleek" in
     let language_manager = GSourceView2.source_language_manager ~default:true in
-    match language_manager#guess_language ~content_type:lang_mime_type () with
-    | None -> failwith ("no language for " ^ lang_mime_type)
-    | Some lang -> lang
+    language_manager#set_search_path ("." :: language_manager#search_path);
+    let res = match language_manager#guess_language ~content_type:lang_mime_type () with
+      | None -> failwith ("no language for " ^ lang_mime_type)
+      | Some lang -> lang
+    in res
   in
 
   object (self)
