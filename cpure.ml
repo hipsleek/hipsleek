@@ -261,7 +261,7 @@ and afv (af : exp) : spec_var list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
-	| ArrayAt (a, i, _) -> afv i (* An Hoa *)
+	| ArrayAt (a, i, _) -> remove_dups_svl (a :: afv i) (* An Hoa *)
 
 and afv_list (alist : exp list) : spec_var list = match alist with
   |[] -> []
@@ -4105,7 +4105,7 @@ let rec replace_pure_formula_label nl f = match f with
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
-(* An Hoa : Main function to change *) 
+  
 let rec imply_disj_orig ante_disj conseq t_imply imp_no =
   match ante_disj with
     | h :: rest -> 
@@ -4116,7 +4116,6 @@ let rec imply_disj_orig ante_disj conseq t_imply imp_no =
 	    else (r1,r2,r3)
     | [] -> (true,[],None)
   
-(* An Hoa : Modified this to accomodate array & relations *)
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no = 
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
   let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
@@ -4129,7 +4128,6 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
 	xp1
   else (xp01,xp02,xp03)	
 
-(* An Hoa : Modified to allow relations and array access *)
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
    : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   match conseq_conj with

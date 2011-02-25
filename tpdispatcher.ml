@@ -352,8 +352,7 @@ let is_mix_list_constraint f = match f with
   | MCP.OnePF f -> is_list_constraint f  
   
 let elim_exists_flag = ref true
-(* let filtering_flag = ref true *)
-let filtering_flag = ref false (* An Hoa : Temporarily changed to default false *)
+let filtering_flag = ref true
 
 let elim_exists (f : CP.formula) : CP.formula =
   let ef = if !elim_exists_flag then CP.elim_exists f else f in
@@ -686,10 +685,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
             Cvc3.imply_increm process ante conseq imp_no
           else
             Cvc3.imply ante conseq imp_no
-    | Z3 -> 
-			(* let _ = print_string ("dispatch --> " ^ Cprinter.string_of_pure_formula ante ^ "\n") in
-		  let _ = print_string ("dispatch --> " ^ Cprinter.string_of_pure_formula conseq ^ "\n") in *)
-			Smtsolver.imply ante conseq
+    | Z3 -> Smtsolver.imply ante conseq
     | Isabelle -> Isabelle.imply ante conseq imp_no
     | Coq -> (* Coq.imply ante conseq *)
           if (is_list_constraint ante) || (is_list_constraint conseq) then
@@ -920,18 +916,10 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
     tp_is_sat f sat_no do_cache
 ;;
 
-(* An Hoa : MAIN IMPLICATION CHECKING FUNCTION
- *
- * TODO MODIFY THIS FUNCTION: WE NEED THE RELATIONS DEFINITIONS HERE!
- * ==> EITHER ADD THE RELATIONAL DEFINITIONS IN THE ANTE OR THE WHOLE PROGRAM
- *
- * *)
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
   (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout begining") in *)
-	(*let _ = print_string ("imply_timeout :: ante = " ^ Cprinter.string_of_pure_formula ante0 ^ "\n") in
-	let _ = print_string ("imply_timeout :: conseq = " ^ Cprinter.string_of_pure_formula conseq0 ^ "\n") in *)
-	proof_no := !proof_no + 1 ; 
+  proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
   (* let _ = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *)
   Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
@@ -944,38 +932,27 @@ let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) 
   else begin 
 	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
 	let conseq = if CP.should_simplify conseq0 then simplify conseq0 else conseq0 in
-	(* let _ = print_string ("imply_timeout :: simplify conseq = " ^ Cprinter.string_of_pure_formula conseq ^ "\n") in *)
 	if CP.isConstTrue conseq0 then (true, [],None)
 	else
       let ante = if CP.should_simplify ante0 then simplify ante0 else ante0 in
-			(* let _ = print_string ("imply_timeout :: simplify ante = " ^ Cprinter.string_of_pure_formula ante ^ "\n") in *)
 	  if CP.isConstFalse ante0 || CP.isConstFalse ante then (true,[],None)
 	  else
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout bef elim exist ante") in *)
 		let ante = elim_exists ante in
-		(* let _ = print_string ("imply_timeout :: eliminate exists in ante = " ^ Cprinter.string_of_pure_formula ante ^ "\n") in *)
         (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout after elim exist ante") in *)
 		let conseq = elim_exists conseq in
-		(* let _ = print_string ("imply_timeout :: eliminate exists in conseq = " ^ Cprinter.string_of_pure_formula conseq ^ "\n") in *)
 		let split_conseq = split_conjunctions conseq in
-		(* let _ = print_string ("imply_timeout :: split conjunctions in conseq = " ^ (String.concat "," (List.map Cprinter.string_of_pure_formula split_conseq)) ^ "\n") in *)
 		let pairs = List.map (fun cons -> 
             let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
             let ante = CP.remove_dup_constraints ante in
-						(* let _ = print_string ("imply_timeout :: ante no dup = " ^ Cprinter.string_of_pure_formula ante ^ "\n") in *)
             match process with
               | Some (Some proc, send_ante) -> (ante, cons)
-              | _ -> filter ante cons (* An Hoa TODO CHECK THE FILTER FUNCTION *)) split_conseq in
+              | _ -> filter ante cons) split_conseq in
 		let pairs_length = List.length pairs in
-		(* let _ = print_string ("imply_timeout :: ") in
-		let _ = print_int pairs_length in
-		let _ = print_string (" pairs\n") in *)
 		let imp_sub_no = ref 0 in
         (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
 		let fold_fun (res1,res2,res3) (ante, conseq) =
 		  (incr imp_sub_no;
-			(* let _ = print_string ("imply_timeout :: fold_fun :: ante = " ^ Cprinter.string_of_pure_formula ante ^ "\n") in
-			let _ = print_string ("imply_timeout :: fold_fun :: conseq = " ^ Cprinter.string_of_pure_formula conseq ^ "\n") in *)
 		  if res1 then 
             (*<< for log - numbering *)
 			let imp_no = 
@@ -1120,7 +1097,6 @@ let mix_imply_timeout ante0 conseq0 imp_no timeout =
     | MCP.OnePF a, MCP.OnePF c -> imply_timeout a c imp_no timeout false None
     | _ -> report_error no_pos ("mix_imply_timeout: mismatched mix formulas ")
 
-(* An Hoa : Main implication function ==> MODIFY THIS *)
 let imply ante0 conseq0 imp_no do_cache process = imply_timeout ante0 conseq0 imp_no 0. do_cache process
 ;;
 

@@ -114,6 +114,7 @@ and aug_class_name (t : CP.typ) = match t with
   | CP.Prim Void -> "void"
   | CP.Prim Bag -> "Set"
   | CP.Prim List -> "List"
+	| CP.Array et -> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*
   split view parameters according to their modes:
@@ -139,9 +140,13 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
   let rec helper vvars = match vvars with
 	| var :: rest1 -> begin
 		let rest_result = helper rest1 in
-		let t = match CP.type_of_spec_var var with
-		  | CP.Prim p -> Prim p
-		  | CP.OType c -> Named c in
+		(* An Hoa MARKED *)
+		let rec ityp_of_ctyp ct = match ct with
+			| CP.Prim p -> Prim p
+			| CP.OType c -> Named c
+			| CP.Array et -> ityp_of_ctyp et in
+		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
+		(* An Hoa END *)
 		let fld = ((t, CP.name_of_spec_var var), pos) in
 		  fld :: rest_result
 	  end

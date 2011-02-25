@@ -262,9 +262,9 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try
 		
 		(* An Hoa : PRINT OUT THE INPUT *)
-		let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in
+		(* let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in
 		let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in
-		let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in
+		let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
 		
     let _ = residues := None in
     let stab = H.create 103 in

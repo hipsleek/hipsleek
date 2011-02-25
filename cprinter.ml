@@ -1342,6 +1342,10 @@ let rec string_of_exp = function
 	    str1 ^ " " ^ str2
 	end in
 	string_of_formula_label pid s 
+	| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_name = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+      a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *)
+	| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+      (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
       id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 

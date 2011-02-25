@@ -166,6 +166,11 @@ and assign_op =
   | OpDivAssign
   | OpModAssign
 
+(* An Hoa : v[i] where v is an identifier and i is an expression *)
+and exp_arrayat = { exp_arrayat_array_name : ident;
+	     exp_arrayat_index : exp;
+			 exp_arrayat_pos : loc; }
+
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
@@ -315,6 +320,7 @@ and exp_unfold = { exp_unfold_var : (string * primed);
 		   exp_unfold_pos : loc } 
 
 and exp =
+	| ArrayAt of exp_arrayat (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
   | Binary of exp_binary
@@ -441,6 +447,7 @@ let is_var (e : exp) : bool = match e with
   | _ ->false
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
+	| ArrayAt e -> e.exp_arrayat_pos (* An Hoa *)
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
@@ -597,6 +604,9 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Time _ 
           | Unfold _ 
           | Var _ -> (e,zero)
+					| ArrayAt b -> (* An Hoa *)
+								let e1,r1 = helper n_arg b.exp_arrayat_index in
+								(ArrayAt {b with exp_arrayat_index = e1},r1)
           | Assign b ->
                 let e1,r1 = helper n_arg b.exp_assign_lhs  in
                 let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -1099,6 +1109,7 @@ let rec label_e e =
   let rec helper e = match e with
     | Catch e -> Error.report_error   {Err.error_loc = e.exp_catch_pos; Err.error_text = "unexpected catch clause"}  
     | Block _
+		| ArrayAt _ (* AN HOA : no label for array access *)
     | Cast _
     | ConstDecl _ 
     | BoolLit _ 

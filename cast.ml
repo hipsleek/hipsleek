@@ -109,7 +109,18 @@ and sharp_val =
   | Sharp_no_val 
   | Sharp_finally of ident
   | Sharp_prog_var of typed_ident
-      
+
+(* An Hoa : v[i] where v is an identifier and i is an expression *)
+and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
+				exp_arrayat_array_name : ident; (* Name of the array *)
+				exp_arrayat_index : exp; (* Integer valued expression for the index *)
+				exp_arrayat_pos : loc; }
+
+(* An Hoa : The exp_assign in core representation does not allow lhs to be another expression so array modification statement is necessary *)
+and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
+		   exp_arraymod_rhs : exp; 
+			 exp_arraymod_pos : loc }
+						
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
@@ -118,7 +129,7 @@ and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 and exp_assign = { exp_assign_lhs : ident;
 		   exp_assign_rhs : exp;
 		   exp_assign_pos : loc }
-
+			
 and exp_bconst = { exp_bconst_val : bool;
 		   exp_bconst_pos : loc }
 
@@ -250,6 +261,8 @@ and exp = (* expressions keep their types *)
   | CheckRef of exp_check_ref
   | Java of exp_java
       (* standard expressions *)
+	| ArrayAt of exp_arrayat (* An Hoa *)
+	| ArrayMod of exp_arraymod (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -304,6 +317,10 @@ let fold_proc (prog:prog_decl)
 let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
 
+let arrayat_of_exp e = match e with
+	| ArrayAt t -> t
+	| _ -> failwith "arrayat_of_exp :: input is not case ArrayAt of exp"
+
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
@@ -338,11 +355,16 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | Assign b ->
 		            let e1,r1 = helper n_arg b.exp_assign_rhs in
 		            (Assign { b with exp_assign_rhs = e1; }, r1)
-
+						| ArrayAt b -> (* An Hoa *)
+		            let e1,r1 = helper n_arg b.exp_arrayat_index in
+		            (ArrayAt { b with exp_arrayat_index = e1; }, r1)
+						| ArrayMod b ->
+								let e1,r1 = helper n_arg (ArrayAt b.exp_arraymod_lhs) in
+		            let e2,r2 = helper n_arg b.exp_arraymod_rhs in
+		            (ArrayMod { b with exp_arraymod_lhs = (arrayat_of_exp e1); exp_arraymod_rhs = e2; }, comb_f [r1;r2])
 	          | Bind b ->
 		            let e1,r1 = helper n_arg b.exp_bind_body  in
 		            (Bind { b with exp_bind_body = e1; }, r1)
-
 	          | Block b ->
 		            let e1,r1 = helper n_arg b.exp_block_body in
 		            (Block { b with exp_block_body = e1; }, r1)		         
@@ -461,8 +483,10 @@ let mkSeq t e1 e2 pos = match e1 with
 
 let is_var (e : exp) = match e with Var _ -> true | _ -> false
 
-let get_var (e : exp) = match e with Var ({exp_var_type = _; exp_var_name = v; exp_var_pos = _}) -> 
-  v | _ -> failwith ("get_var: can't get identifier")
+(* An Hoa : for array access a[i], the var is a *)
+let get_var (e : exp) = match e with 
+	| Var ({exp_var_type = _; exp_var_name = v; exp_var_pos = _}) -> v
+	| _ -> failwith ("get_var: can't get identifier")
 
 let is_block (e : exp) : bool = match e with Block _ -> true | _ -> false
 
@@ -479,6 +503,8 @@ let rec type_of_exp (e : exp) = match e with
   | CheckRef _ -> None
   | Java _ -> None
   | Assert _ -> None
+	| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)
+	| ArrayMod _ -> Some void_type (* An Hoa *)
   | Assign _ -> Some void_type
   | BConst _ -> Some bool_type
   | Bind ({exp_bind_type = t; 
@@ -558,6 +584,11 @@ let unmingle_name (m : ident) =
 
 let rec look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+  | [] -> raise Not_found
+
+(* An Hoa *)
+let rec look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
 let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = match defs with
@@ -658,7 +689,16 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | CheckRef _ -> []
   | Java _ -> []
   | Assert _ -> []
-  | Assign ({exp_assign_lhs = _;
+	(* AN HOA *)
+	| ArrayAt ({exp_arrayat_type = _;
+			 exp_arrayat_array_name = _;
+			 exp_arrayat_index = e;
+			 exp_arrayat_pos = _; }) -> callees_of_exp e
+	| ArrayMod ({exp_arraymod_lhs = l;
+			 exp_arraymod_rhs = r;
+			 exp_arraymod_pos = _}) -> U.remove_dups (callees_of_exp (ArrayAt l) @ callees_of_exp r)
+  (* AN HOA *)
+	| Assign ({exp_assign_lhs = _;
 			 exp_assign_rhs = e;
 			 exp_assign_pos = _}) -> callees_of_exp e
   | BConst _ -> []
@@ -917,6 +957,8 @@ and exp_to_check (e:exp) :bool = match e with
   | Java _ -> false
   
   | BConst _
+	| ArrayAt _ (* An Hoa TODO NO IDEA *)
+	| ArrayMod _ (* An Hoa TODO NO IDEA *)
   | Assign _
   | ICall _
   | IConst _
@@ -932,6 +974,8 @@ and exp_to_check (e:exp) :bool = match e with
   
   
 let rec pos_of_exp (e:exp) :loc = match e with
+	| ArrayAt b -> b.exp_arrayat_pos (* An Hoa *)
+	| ArrayMod b -> b.exp_arraymod_pos (* An Hoa *)
   | CheckRef b -> b.exp_check_ref_pos
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos

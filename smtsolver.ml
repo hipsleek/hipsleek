@@ -36,13 +36,15 @@ let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
  * @author An Hoa
  * Relation definitions. To be appended by process_rel_def appropriately.
  *)
-let rel_defs = ref []
+let rel_defs = ref ([] : relation_definition list)
 
 (**
  * Add a new relation definition. 
  * Notice that we have to add the relation at the end in order to preserve the order of appearance of the relations.
  *)
 let add_rel_def rdef =
+	(* let rn = match rdef with RelDefn (a,_,_) -> a in
+	let _ = print_string ("Smtsolver :: add relation definition - " ^ rn ^ "\n") in *) 
 	rel_defs := !rel_defs @ [rdef]
 
 (******************
@@ -127,6 +129,9 @@ type smtprover =
   | Cvc3
   | Yices
 
+(**
+ An Hoa : Remove the "tail -n 1" because the new version of z3 solver prints the result on the first line following by the error / warning message. 
+ *)
 let command_for prover = 
   let helper s = s ^ infile ^ (* " | tail -n 1 > " *) " > " ^ outfile in
   match prover with
@@ -154,12 +159,12 @@ let extract_name sv =
 let rec smt_of_typ t = 
 	match t with
 		| CP.Prim pt -> begin match pt with
-			| Bool -> "Bool"
+			| Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
 		  | Float -> "Real"
 		  | Int -> "Int"
 		  | Void | Bag | List -> "" (* Fail! *)
 		end
-		| CP.OType _ -> "" (* Fail! *)
+		| CP.OType _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ CP.name_of_type t) *)
 		| CP.Array et -> "(Array Int " ^ smt_of_typ et ^ ")"
 
 (**
@@ -280,7 +285,9 @@ let smt_typed_var_of_spec_var sv =
 		| CP.SpecVar (t, id, _) -> "(" ^ (smt_of_spec_var sv None) ^ " " ^ (smt_of_typ t) ^ ")"
 
 (**
- * Axiomatize the relation from the definition.
+ * Process the relation definition
+ * @return A pair of two strings: the first being declare-fun relation declaration and the second
+ *         be the axiomatization.
  *)				
 let smt_of_rel_def (rdef : relation_definition) =
 	match rdef with
@@ -290,9 +297,9 @@ let smt_of_rel_def (rdef : relation_definition) =
 			let rel_params = String.concat " " (List.map extract_name rv) in
 				(* Declare the relation in form of a function --> Bool *)
 				(* Axiomatize the relation using an assertion*)
-				"(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n" ^ 
-				"(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n"
-
+				("(declare-fun " ^ rn ^ " (" ^ rel_signature ^ ") Bool)\n",
+				 "(assert (forall " ^ rel_typed_vars ^ " (= (" ^ rn ^ " " ^ rel_params ^ ") " ^ (smt_of_formula rf StringSet.empty) ^ ")))\n")
+	 		
 (**
  * output for smt-lib v2.0 format
  *)
@@ -302,9 +309,11 @@ let to_smt_v2 ante conseq logic fvars =
     | [] -> ""
     | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
   in 
-	let rel_def_ax = (String.concat "" (List.map smt_of_rel_def !rel_defs)) in
+	let rds = (List.map smt_of_rel_def !rel_defs) in
+	let rel_def_df = (String.concat "" (List.map fst rds)) in
+	let rel_def_ax = (String.concat "" (List.map snd rds)) in
 	 ("(set-logic " ^ (string_of_logic logic) ^ ")\n" ^ 
-    (decfuns fvars) ^ rel_def_ax ^
+    (decfuns fvars) ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
     "(assert " ^ ante ^ ")\n" ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
@@ -378,12 +387,9 @@ let run prover input =
  *)
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
-	(* An Hoa : Print the output for debugging purpose *)
-	let _ = print_string ("SMT input :\n" ^ input) in
-	let _ = flush stdout in
-	(* An Hoa : Debug *)
+	(* let _ = print_string ("Generated SMT input :\n" ^ input) in *)
   let output = run prover input in
-	let _ = print_string ("SMT output : " ^ output ^ "\n") in
+	let _ = print_string ("==> SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in
   res
 
@@ -398,11 +404,9 @@ let imply ante conseq = smt_imply ante conseq Z3
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   let input = to_smt f None prover in
-	(* An Hoa : Print the output for debugging purpose *)
-	let _ = print_string input in
-	let _ = flush stdout in
-	(* An Hoa : Debug *)
+	(* let _ = print_string ("Generated SMT input :\n" ^ input) in *)
   let output = run prover input in
+	let _ = print_string ("==> SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in
   not res
 

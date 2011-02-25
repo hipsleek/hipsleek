@@ -377,6 +377,9 @@ let need_parenthesis2 = function
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
+	| ArrayAt ({exp_arrayat_array_name = a;
+	     exp_arrayat_index = e}) ->
+				a ^ "[" ^ (string_of_exp e) ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
   | Label ((pid,_),e) -> 

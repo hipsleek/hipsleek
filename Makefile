@@ -1,4 +1,4 @@
-OCAMLC=ocamlc
+OCAMLC=ocamlc.opt
 OCAMLOPT=ocamlopt.opt
 OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
