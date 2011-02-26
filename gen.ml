@@ -22,6 +22,9 @@ struct
   let rec restart f arg =
     try f arg with Unix.Unix_error(Unix.EINTR,_,_) -> print_string"#!Unix_error#";(restart f arg)
 
+  let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string = 
+    "("^(p1 a)^","^(p2 b)^")"
+
   let fnone (c:'a):'a option = None
 
   let is_empty l = match l with [] -> true | _ -> false

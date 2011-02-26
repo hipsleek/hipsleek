@@ -9,10 +9,10 @@ data node {
 }
 
 /* view for avl trees */
-/**** for omega and mona ****/
+/**** for omega nd mona ****/
 avl2<n, S> == self = null & S = {} & n = 0 
-	or self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & S = union(S1, S2, {v}) & 
-    n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1 
+  or (exists n3,tmp: self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & S = union(S1, S2, {v}) & 
+      n3 =  max(n1-n2, n2-n1) & n3 <= 1 & tmp = max(n1, n2) & n = tmp + 1) 
 	inv n >= 0;
 
 /**** for isabelle */ 
@@ -28,7 +28,7 @@ avl1<n> == self = null & n = 0
 	inv n >= 0;
 
 avl2<n, S> == self = null & n = 0 & S = {}
-	or self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & n3 + n2 = n1 & n1 >= n2 & n3 <= 1 & n = n1+1 & S = union(S1, S2, {v})
+	or self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & n3 + n2 =meld n1 & n1 >= n2 & n3 <= 1 & n = n1+1 & S = union(S1, S2, {v})
 	or self::node<v, n, p, q> * p::avl2<n1, S1> * q::avl2<n2, S2> & n3 + n2 = n1 & n1 < n2 & n3 >= -1 & n = n2+1 & S = union(S1, S2, {v})
 	inv n >= 0;*/
 
