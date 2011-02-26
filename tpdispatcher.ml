@@ -393,16 +393,27 @@ let rec is_memo_bag_constraint (f:MCP.memo_pure): bool =
       (List.exists (fun c-> match is_bag_b_constraint c.MCP.memo_formula with | Some b-> b |_ -> false) c.MCP.memo_group_cons)
   ) f
 
+open Modpure
+(*
+open Modpure.EXP
+
+open Modpure.B_FORMULA
+
+open Modpure.FORMULA
+*)
+open Cpure
+	
   (* Method checking whether a formula contains list constraints *)
-let rec is_list_exp e = match e with
-    | CP.List _
-    | CP.ListCons _
-    | CP.ListHead _
-    | CP.ListTail _
-    | CP.ListLength _
-    | CP.ListAppend _
-    | CP.ListReverse _ 
+let rec is_list_exp (e:EXP.t) = match e with
+    | List _
+    | ListCons _
+    | ListHead _
+    | ListTail _
+    | ListLength _
+    | ListAppend _
+    | ListReverse _ 
         -> Some true
+	(*
 	| CP.Add (e1,e2,_)
 	| CP.Subtract (e1,e2,_)
 	| CP.Mult (e1,e2,_)
@@ -419,6 +430,18 @@ let rec is_list_exp e = match e with
 		-> (List.fold_left (fun res exp -> match res with
 											| Some true -> Some true
 											| _ -> is_list_exp exp) (Some false) el)
+	*)
+	| Add _
+	| Subtract _
+	| Mult _
+	| Div _
+	| Max _
+	| Min _
+	| BagDiff _
+	| Bag _
+	| BagUnion _
+	| BagIntersect _
+		-> None
     | _ -> Some false
 	  
 (*let f_e e = Gen.Debug.ho_1 "f_e" (Cprinter.string_of_formula_exp) (fun s -> match s with
@@ -426,12 +449,13 @@ let rec is_list_exp e = match e with
 	| _ -> "") f_e_1 e
 *)	
 
-let is_list_b_formula bf = match bf with
-    | CP.BConst _ 
-    | CP.BVar _
-	| CP.BagMin _ 
-    | CP.BagMax _
-		-> Some false    
+let is_list_b_formula (bf:B_FORMULA.t) = match bf with
+    | BConst _ 
+    | BVar _
+	| BagMin _ 
+    | BagMax _
+		-> Some false
+    (*
     | CP.Lt (e1,e2,_) 
     | CP.Lte (e1,e2,_) 
     | CP.Gt (e1,e2,_)
@@ -452,16 +476,30 @@ let is_list_b_formula bf = match bf with
     | CP.BagIn (_,e,_) 
     | CP.BagNotIn (_,e,_)
 		-> is_list_exp e
-    | CP.ListIn _ 
-    | CP.ListNotIn _
-    | CP.ListAllN _ 
-    | CP.ListPerm _
+	*)
+	| Lt _ 
+    | Lte _ 
+    | Gt _
+    | Gte _
+	| Eq _
+	| Neq _
+	| BagSub _
+	| EqMax _
+    | EqMin _
+	| BagIn _ 
+    | BagNotIn _
+		-> None
+    | ListIn _ 
+    | ListNotIn _
+    | ListAllN _ 
+    | ListPerm _
         -> Some true  
 	  
-let is_list_constraint (e: CP.formula) : bool =
+let is_list_constraint (e:FORMULA.t) : bool =
  
   let or_list = List.fold_left (||) false in
-  CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list
+  (*CP.fold_formula e (nonef, is_list_b_formula, is_list_exp) or_list*)
+  FORMULA.fold e (nonef, is_list_b_formula, is_list_exp) or_list
 
 let is_list_constraint_a (e: CP.formula) : bool =
   (*Gen.Debug.ho_1_opt "is_list_constraint" Cprinter.string_of_pure_formula string_of_bool (fun r -> not(r)) is_list_constraint e*)
