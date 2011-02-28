@@ -111,15 +111,15 @@ and sharp_val =
   | Sharp_prog_var of typed_ident
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
-and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
+(* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
 				exp_arrayat_array_name : ident; (* Name of the array *)
 				exp_arrayat_index : exp; (* Integer valued expression for the index *)
-				exp_arrayat_pos : loc; }
+				exp_arrayat_pos : loc; } *)
 
 (* An Hoa : The exp_assign in core representation does not allow lhs to be another expression so array modification statement is necessary *)
-and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
+(* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
 		   exp_arraymod_rhs : exp; 
-			 exp_arraymod_pos : loc }
+			 exp_arraymod_pos : loc } *)
 						
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 		   exp_assert_assumed_formula : F.formula option;
@@ -261,8 +261,8 @@ and exp = (* expressions keep their types *)
   | CheckRef of exp_check_ref
   | Java of exp_java
       (* standard expressions *)
-	| ArrayAt of exp_arrayat (* An Hoa *)
-	| ArrayMod of exp_arraymod (* An Hoa *)
+	(* | ArrayAt of exp_arrayat (* An Hoa *) *)
+	(* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -317,9 +317,9 @@ let fold_proc (prog:prog_decl)
 let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
 
-let arrayat_of_exp e = match e with
+(*let arrayat_of_exp e = match e with
 	| ArrayAt t -> t
-	| _ -> failwith "arrayat_of_exp :: input is not case ArrayAt of exp"
+	| _ -> failwith "arrayat_of_exp :: input is not case ArrayAt of exp"*)
 
 let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:'a list -> 'a) (zero:'a) :(exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
@@ -355,13 +355,13 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | Assign b ->
 		            let e1,r1 = helper n_arg b.exp_assign_rhs in
 		            (Assign { b with exp_assign_rhs = e1; }, r1)
-						| ArrayAt b -> (* An Hoa *)
+						(* | ArrayAt b -> (* An Hoa *)
 		            let e1,r1 = helper n_arg b.exp_arrayat_index in
-		            (ArrayAt { b with exp_arrayat_index = e1; }, r1)
-						| ArrayMod b ->
+		            (ArrayAt { b with exp_arrayat_index = e1; }, r1) *)
+						(* | ArrayMod b ->
 								let e1,r1 = helper n_arg (ArrayAt b.exp_arraymod_lhs) in
 		            let e2,r2 = helper n_arg b.exp_arraymod_rhs in
-		            (ArrayMod { b with exp_arraymod_lhs = (arrayat_of_exp e1); exp_arraymod_rhs = e2; }, comb_f [r1;r2])
+		            (ArrayMod { b with exp_arraymod_lhs = (arrayat_of_exp e1); exp_arraymod_rhs = e2; }, comb_f [r1;r2]) *)
 	          | Bind b ->
 		            let e1,r1 = helper n_arg b.exp_bind_body  in
 		            (Bind { b with exp_bind_body = e1; }, r1)
@@ -503,8 +503,8 @@ let rec type_of_exp (e : exp) = match e with
   | CheckRef _ -> None
   | Java _ -> None
   | Assert _ -> None
-	| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)
-	| ArrayMod _ -> Some void_type (* An Hoa *)
+	(*| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)*)
+	(*| ArrayMod _ -> Some void_type (* An Hoa *)*)
   | Assign _ -> Some void_type
   | BConst _ -> Some bool_type
   | Bind ({exp_bind_type = t; 
@@ -690,13 +690,13 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Java _ -> []
   | Assert _ -> []
 	(* AN HOA *)
-	| ArrayAt ({exp_arrayat_type = _;
+	(*| ArrayAt ({exp_arrayat_type = _;
 			 exp_arrayat_array_name = _;
 			 exp_arrayat_index = e;
-			 exp_arrayat_pos = _; }) -> callees_of_exp e
-	| ArrayMod ({exp_arraymod_lhs = l;
+			 exp_arrayat_pos = _; }) -> callees_of_exp e*)
+	(*| ArrayMod ({exp_arraymod_lhs = l;
 			 exp_arraymod_rhs = r;
-			 exp_arraymod_pos = _}) -> U.remove_dups (callees_of_exp (ArrayAt l) @ callees_of_exp r)
+			 exp_arraymod_pos = _}) -> U.remove_dups (callees_of_exp (ArrayAt l) @ callees_of_exp r)*)
   (* AN HOA *)
 	| Assign ({exp_assign_lhs = _;
 			 exp_assign_rhs = e;
@@ -957,8 +957,8 @@ and exp_to_check (e:exp) :bool = match e with
   | Java _ -> false
   
   | BConst _
-	| ArrayAt _ (* An Hoa TODO NO IDEA *)
-	| ArrayMod _ (* An Hoa TODO NO IDEA *)
+	(*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
+	(*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
   | Assign _
   | ICall _
   | IConst _
@@ -974,8 +974,8 @@ and exp_to_check (e:exp) :bool = match e with
   
   
 let rec pos_of_exp (e:exp) :loc = match e with
-	| ArrayAt b -> b.exp_arrayat_pos (* An Hoa *)
-	| ArrayMod b -> b.exp_arraymod_pos (* An Hoa *)
+	(*| ArrayAt b -> b.exp_arrayat_pos (* An Hoa *)*)
+	(*| ArrayMod b -> b.exp_arraymod_pos (* An Hoa *)*)
   | CheckRef b -> b.exp_check_ref_pos
   | BConst b -> b.exp_bconst_pos
   | Bind b -> b.exp_bind_pos

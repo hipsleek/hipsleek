@@ -31,6 +31,7 @@ type relation_definition =
  *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
+let print_input = ref true
 
 (**
  * @author An Hoa
@@ -64,6 +65,7 @@ let rec is_linear_exp exp = match exp with
         | _, CP.IConst _ -> is_linear_exp e1
         | _, _ -> false
       in res
+	| CP.ArrayAt (a, i,_) -> is_linear_exp i (* v[i] is linear <==> i is linear*)
   | _ -> false
 
 let is_linear_bformula b = match b with
@@ -75,6 +77,9 @@ let is_linear_bformula b = match b with
       (is_linear_exp e1) && (is_linear_exp e2)
   | CP.EqMax (e1, e2, e3, _) | CP.EqMin (e1, e2, e3, _) -> 
       (is_linear_exp e1) && (is_linear_exp e2) && (is_linear_exp e3)
+	| CP.RelForm (r, args, _) -> (* An Hoa : Relation is linear <==> the parameters are all linear *)
+			let al = List.map is_linear_exp args in
+				not (List.mem false al) (* Check if any of args is not linear *)
   | _ -> false
   
 let rec is_linear_formula f0 = match f0 with
@@ -85,15 +90,35 @@ let rec is_linear_formula f0 = match f0 with
       (is_linear_formula f1) && (is_linear_formula f2)
 
 (**
+ * Collect the relations that we use
+ *)
+let collect_relation_names_bformula b = match b with
+	| CP.RelForm (r,_,_) -> [r]
+  | _ -> []
+
+(**
+ * Collect the relations that we use
+ *)
+let rec collect_relation_names_formula f0 = match f0 with
+  | CP.BForm (b, _) -> collect_relation_names_bformula b
+  | CP.Not (f, _, _) | CP.Forall (_,f,_,_) | CP.Exists (_,f,_,_)-> collect_relation_names_formula f
+  | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
+      (collect_relation_names_formula f1) @ (collect_relation_names_formula f2)
+
+(**
  * Checking whether a formula is quantifier-free or not
  *)
 let rec is_quantifier_free_formula f0 = match f0 with
-  | CP.BForm _ -> true
+  | CP.BForm (b,_) -> (* true *)(* An Hoa *)
+		begin 
+			match b with
+  		| CP.RelForm _ -> false (* Contain relation ==> we need to use forall to axiomatize ==> not quantifier free! *)
+			| _ -> true 
+		end
   | CP.Not (f, _, _) -> is_quantifier_free_formula f
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) ->
       (is_quantifier_free_formula f1) && (is_quantifier_free_formula f2)
   | CP.Forall _ | CP.Exists _ -> false
-
 
 (**
  * Logic types for smt solvers
@@ -116,8 +141,8 @@ let logic_for_formulas f1 f2 =
   let linear = (is_linear_formula f1) && (is_linear_formula f2) in
   let quantifier_free = (is_quantifier_free_formula f1) && (is_quantifier_free_formula f2) in
   match linear, quantifier_free with
-  | true, true -> QF_LIA
-  | false, true -> QF_NIA
+  | true, true -> QF_LIA 
+  | false, true -> QF_NIA 
   | true, false -> AUFLIA (* should I use UFNIA instead? *)
   | false, false -> UFNIA
 
@@ -258,7 +283,15 @@ let rec smt_of_b_formula b qvars =
       failwith ("smt_of_b_formula: ListIn ListNotIn ListAllN ListPerm should not appear here.\n")
   | CP.RelForm (r, args, l) ->
           (* An Hoa : TODO EDIT APPROPRIATELY *)
-          "(" ^ r ^ " " ^ (String.concat " " (List.map smt_of_exp args)) ^ ")"
+					let smt_args = List.map smt_of_exp args in 
+					if (r = "update_array") then
+						let orig_array = List.nth smt_args 0 in
+						let index = List.nth smt_args 1 in
+						let value = List.nth smt_args 2 in
+						let new_array = List.nth smt_args 3 in
+						"(= " ^ new_array ^ " (store " ^ orig_array ^ " " ^ index ^ " " ^ value ^ "))"
+					else
+          	"(" ^ r ^ " " ^ (String.concat " " smt_args) ^ ")"
 
 let rec smt_of_formula f qvars =
   match f with
@@ -303,17 +336,20 @@ let smt_of_rel_def (rdef : relation_definition) =
 (**
  * output for smt-lib v2.0 format
  *)
-let to_smt_v2 ante conseq logic fvars =
+let to_smt_v2 ante conseq logic fvars used_rels_defs =
   let rec decfuns vars = match vars with
     (* let's assume all vars are Int *)
     | [] -> ""
     | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
   in 
-	let rds = (List.map smt_of_rel_def !rel_defs) in
+	let rds = (List.map smt_of_rel_def used_rels_defs) in
 	let rel_def_df = (String.concat "" (List.map fst rds)) in
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
-	 ("(set-logic " ^ (string_of_logic logic) ^ ")\n" ^ 
+	 ("(set-logic AUFNIA" ^ (* (string_of_logic logic) ^*) ")\n" ^ 
     (decfuns fvars) ^ rel_def_df ^ rel_def_ax ^ (* Collect the declare-fun first and then do the axiomatization to prevent missing function error *)
+		(*"(declare-fun update_array ((Array Int Int) Int Int (Array Int Int)) Bool)" ^
+		"(assert (forall (a (Array Int Int)) (i Int) (v Int) (r (Array Int Int)) 
+		         (= (update_array a i v r) (= r (store a i v)))))" ^*)
     "(assert " ^ ante ^ ")\n" ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
@@ -353,8 +389,12 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
   let ante_str = smt_of_formula ante StringSet.empty in
   let conseq_str = smt_of_formula conseq StringSet.empty in
   let logic = logic_for_formulas ante conseq in
-  let res = match prover with
-    | Z3 ->  to_smt_v2 ante_str conseq_str logic all_fv
+	(* relations that appears in the ante and conseq *)
+	let used_rels = (collect_relation_names_formula ante) @ (collect_relation_names_formula conseq) in
+	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
+	let used_rels_defs = List.concat used_rels_defs in
+	let res = match prover with
+    | Z3 ->  to_smt_v2 ante_str conseq_str logic all_fv used_rels_defs
     | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
   in res
 
@@ -387,7 +427,7 @@ let run prover input =
  *)
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
-	(* let _ = print_string ("Generated SMT input :\n" ^ input) in *)
+	let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
   let output = run prover input in
 	let _ = print_string ("==> SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in
@@ -404,7 +444,7 @@ let imply ante conseq = smt_imply ante conseq Z3
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
   let input = to_smt f None prover in
-	(* let _ = print_string ("Generated SMT input :\n" ^ input) in *)
+	let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
   let output = run prover input in
 	let _ = print_string ("==> SMT output : " ^ output ^ "\n") in
   let res = output = "unsat" in

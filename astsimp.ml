@@ -145,7 +145,12 @@ bool lor___(bool a, bool b) case {
   !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
 bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
 int pow___(int a, int b) requires true ensures true;
+/* relation update_array(int[] a, int i, int v, int[] r) == true. */
+int array_get_elm_at___(int[] a, int i) requires true ensures res = a[i];
+int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,res);
 "
+(* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
+
 and string_of_stab stab = Hashtbl.fold 
 		(fun c1 c2 a -> 
 			a^"; ("^c1^" "^
@@ -220,7 +225,17 @@ let _ =
       (I.OpLogicalOr, "lor___"); (I.OpIsNull, "is_null___");
       (I.OpIsNotNull, "is_not_null___");
     ]
-  
+
+(**
+ * Function of signature 
+ *     T[] update(T[] array, int index, T value)
+ *     T   array_get_elm_at(T[] array, int index)
+ * that returns an array identical to array except the value at "index" is "value"
+ * and returns the value of array[index]
+ *)
+let array_update_call = "update___"
+let array_access_call = "array_get_elm_at___"
+	  
 let get_binop_call (bop : I.bin_op) : ident =
   try Hashtbl.find op_map bop
   with
@@ -546,8 +561,8 @@ let loop_procs : (C.proc_decl list) ref = ref []
 let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Label b -> C.Label {b with C.exp_label_exp = seq_elim b.C.exp_label_exp;}
   | C.Assert _ -> e
-	| C.ArrayAt b -> C.ArrayAt {b with C.exp_arrayat_index = (seq_elim b.C.exp_arrayat_index); } (* An Hoa *)
-	| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *) 
+	(*| C.ArrayAt b -> C.ArrayAt {b with C.exp_arrayat_index = (seq_elim b.C.exp_arrayat_index); } (* An Hoa *)*)
+	(*| C.ArrayMod b -> C.ArrayMod {b with C.exp_arraymod_lhs = C.arrayat_of_exp (seq_elim (C.ArrayAt b.C.exp_arraymod_lhs)); C.exp_arraymod_rhs = (seq_elim b.C.exp_arraymod_rhs); } (* An Hoa *)*) 
   | C.Assign b -> C.Assign {b with C.exp_assign_rhs = (seq_elim b.C.exp_assign_rhs); }  
   | C.Bind b ->  C.Bind {b with C.exp_bind_body = (seq_elim b.C.exp_bind_body);}
   | C.ICall _ -> e
@@ -1159,7 +1174,6 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   )
 
 (* An Hoa : trans_rel *)
-(* TODO implement immitate the trans_view *)
 and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
 	let pos = IP.pos_of_formula rdef.I.rel_formula in
 	let rel_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) rdef.I.rel_typed_vars in
@@ -1716,9 +1730,17 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           }), C.void_type)
 		(* An Hoa MARKED *)
 		| I.ArrayAt { I.exp_arrayat_array_name = a; 
-									I.exp_arrayat_index = i;
+									I.exp_arrayat_index = index;
 									I.exp_arrayat_pos = pos } ->
-          (try
+				(* Array variable *)
+				let array_var = I.Var { I.exp_var_name = a; I.exp_var_pos = pos } in
+				let new_e = I.CallNRecv {
+					I.exp_call_nrecv_method = array_access_call; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+					I.exp_call_nrecv_arguments = [array_var; index];
+					I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
+					I.exp_call_nrecv_pos = pos;} in 
+	        	trans_exp prog proc new_e
+          (*(try
             let vinfo_tmp = E.look_up a in (* look up the array variable *)
 						let ci,_ = trans_exp prog proc i in (* translate the index exp *)
             match vinfo_tmp with
@@ -1733,7 +1755,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 											| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
 										end 
               | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
-          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })
+          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })*)
 		(* An Hoa END *)
     | I.Assert{
           I.exp_assert_asserted_formula = assert_f_o;
@@ -1797,15 +1819,31 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_seq_exp1 = ce1;
                                   C.exp_seq_exp2 = assign_e;
                                   C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
-										(* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE *)
-										| I.ArrayAt { I.exp_arrayat_array_name = _; I.exp_arrayat_index = _; I.exp_arrayat_pos = pos } ->
-														let (ce1, te1) = trans_exp prog proc lhs in
+										(* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
+										(* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
+										| I.ArrayAt { I.exp_arrayat_array_name = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
+														(* Array variable *)
+														let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in
+														let new_rhs = I.CallNRecv {
+			                					I.exp_call_nrecv_method = array_update_call; (* Update call *)
+																(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+			                					I.exp_call_nrecv_arguments = [new_lhs; index; rhs];
+			                					I.exp_call_nrecv_path_id = pid;
+			                					I.exp_call_nrecv_pos = I.get_exp_pos rhs;} in 
+														let new_e = I.Assign {
+																I.exp_assign_op = I.OpAssign;
+		   													I.exp_assign_lhs = new_lhs;
+															  I.exp_assign_rhs = new_rhs;
+															  I.exp_assign_path_id = pid;
+															  I.exp_assign_pos = pos_a;} in
+			            							trans_exp prog proc new_e
+														(* let (ce1, te1) = trans_exp prog proc lhs in
 	                          let (ce2, te2) = trans_exp prog proc rhs in
 														if not (sub_type te2 te1) then  Err.report_error {
                               Err.error_loc = pos;
                               Err.error_text = "lhs and rhs do not match";  }
                          	 	else
-															(C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type)
+															(C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type) *)
 										(* AN HOA END *)
                     | I.Member {
                           I.exp_member_base = base_e;
@@ -5348,8 +5386,8 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.Java e -> Cast.Java e
 	| Cast.Assert e -> Cast.Assert e
 	(* An Hoa MARKED *)
-	| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}
-	| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}
+	(*| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}*)
+	(*| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}*)
 	(* An Hoa END *)
 	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp ip e.Cast.exp_assign_rhs scc)}
 	| Cast.BConst e -> Cast.BConst e
