@@ -13,7 +13,7 @@
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-    | Hopred of unit
+    | Hopred of hopred_decl
 		
   type decl = 
     | Type of type_decl
@@ -273,6 +273,7 @@ program
 			| Data ddef -> data_defs := ddef :: !data_defs
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
+            | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
            
 		end
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
@@ -322,7 +323,7 @@ type_decl
   | class_decl { Data $1 }
   | enum_decl { Enum $1 }
   | view_decl { View $1 }
-  | ho_pred  {Hopred $1 }
+  | hopred_decl  {Hopred $1 }
 ;
 
 /***************** Global_variable **************/
@@ -481,20 +482,53 @@ enumerator
     : {}
     | ho_pred ho_pred_list {}
 ;*/
-ho_pred 
-	: HPRED hpred_header EXTENDS ext_form {}
-	| HPRED hpred_header  REFINES  ext_form {}
-	| HPRED hpred_header  JOIN  split_combine {}
-	| HPRED hpred_header  EQEQ shape opt_inv SEMICOLON {}
+hopred_decl 
+	: HPRED hpred_header EXTENDS ext_form
+     {{   hopred_name = (fst (fst $2));
+          hopred_mode = "extends";
+          hopred_mode_headers = [(fst $4)];
+          hopred_typed_vars = (snd (fst $2));
+          hopred_typed_args = (fst (snd $2));
+          hopred_fct_args = (snd (snd $2));
+          hopred_shape    = (snd $4);
+          hopred_invariant = (P.mkTrue no_pos ,("Inv", P.mkTrue no_pos))}
+     }
+	| HPRED hpred_header  REFINES  ext_form {{   
+          hopred_name = (fst (fst $2));
+          hopred_mode = "refines";
+          hopred_mode_headers = [(fst $4)];
+          hopred_typed_vars = (snd (fst $2));
+          hopred_typed_args = (fst (snd $2));
+          hopred_fct_args = (snd (snd $2));
+          hopred_shape    = (snd $4);
+          hopred_invariant = (P.mkTrue no_pos ,("Inv", P.mkTrue no_pos))}}
+    | HPRED hpred_header  JOIN  split_combine {{   
+          hopred_name = (fst (fst $2));
+          hopred_mode = "split_combine";
+          hopred_mode_headers = [];
+          hopred_typed_vars = [];
+          hopred_typed_args = [];
+          hopred_fct_args = [];
+          hopred_shape    = [];
+          hopred_invariant = (P.mkTrue no_pos ,("Inv", P.mkTrue no_pos))}}
+	| HPRED hpred_header  EQEQ shape opt_inv SEMICOLON {{    
+          hopred_name = (fst (fst $2));
+          hopred_mode = "pure_higherorder_pred";
+          hopred_mode_headers = [];
+          hopred_typed_vars = (snd (fst $2));
+          hopred_typed_args = (fst (snd $2));
+          hopred_fct_args = (snd (snd $2));
+          hopred_shape    = [$4];
+          hopred_invariant = $5 }}
 ;	
-shape :  formulas {}
+shape :  formulas {$1}
 ;
 split_combine 
 	: HPRED {}
 	| hpred_header SPLIT split_combine {}
 	| hpred_header COMBINE split_combine {}
 ;			
-ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {}
+ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {($1,$4)}
 ;
 ho_fct_header 
 	: IDENTIFIER OPAREN fct_arg_list CPAREN {}
@@ -507,7 +541,7 @@ ho_fct_def_list
 	| ho_fct_def ho_fct_def_list {}
 ;
 hpred_header
-	: IDENTIFIER opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {}
+	: IDENTIFIER opt_type_var_list LT opt_typed_arg_list GT opt_fct_list {(($1,$2),($4,$6))}
 ;
 
 typed_arg

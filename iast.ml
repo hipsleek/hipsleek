@@ -50,11 +50,13 @@ and view_decl = { view_name : ident;
 		  try_case_inference: bool}
 
 and hopred_decl = { hopred_name : ident;
-          hopred_typed_arg_list : ident list;
-          hopred_fct_arg_list : ident list;
-          hopred_opt_typed_arg_list : ident list;
-          hopred_opt_type_var_list : ident list;
-          hopred_opt_fct_list : ident list;          
+          hopred_mode : branch_label;
+          hopred_mode_headers : ident list;
+          hopred_typed_vars: (CP.typ * ident) list;
+          hopred_typed_args : (CP.typ * ident) list;
+          hopred_fct_args : ident list;
+          hopred_shape    : Iformula.struc_formula list;
+          hopred_invariant :(P.formula * (branch_label * P.formula))
 }
 
 and enum_decl = { enum_name : ident;
