@@ -428,10 +428,10 @@ let string_of_splint l = Tree_shares.string_of_tree_share l
   else ("+"^(String.concat "" (List.map (fun c-> match c with | PLeft-> "L" | _ -> "R") l)))*)
 
 let string_of_perm allow_full (x1,x2) = match x1 with
-  |Some v -> "@"^(string_of_spec_var v)^(string_of_splint x2)
+  |Some v -> "@"^(string_of_spec_var v)^(if CPr.is_full_frac x2 then "" else ( "*"^(string_of_splint x2)))
   |None -> 
-      if (CPr.is_full_frac x2) then if allow_full then "@1" else ""
-      else ("@"^(string_of_splint x2))
+      if (CPr.is_full_frac x2) then if allow_full then "T" else ""
+      else (string_of_splint x2)
 
  
 let perm_formula_wo_paren (e:Pr.perm_formula) = match e with

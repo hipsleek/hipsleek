@@ -1194,7 +1194,7 @@ and split_universal ((f0 : CP.formula), f0b,(f0perm:CPr.perm_formula)) (evars : 
       (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)
       (vvars : CP.spec_var list) (pos : loc) 
       = let ((a,b,c),x,y)=split_universal_a (f0,f0b,f0perm) evars expl_inst_vars impl_inst_vars vvars pos in
-      ((elim_exists_pure_formula a,b,CPr.elim_exists_perm_exists c),x,y)
+      ((elim_exists_pure_formula a,b,CPr.elim_exists_exp_perm c),x,y)
 
 and split_universal_debug ((f0 : CP.formula), f0b, f0perm) (evars : CP.spec_var list) 
       (expl_inst_vars : CP.spec_var list)(impl_inst_vars : CP.spec_var list)

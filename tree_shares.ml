@@ -70,10 +70,16 @@ open Globals
       | Node (l,r) -> (can_divide l y)&&(can_divide r y)
     
   let rec divide x y = 
-    if stree_eq x y then top
-      else match x with
+    if (empty x) || (empty y) then bot
+    else if stree_eq x y then top
+    else match x with
         | Leaf _ -> report_error no_pos "perm division by non subtree"
         | Node (l,r) -> mkNode (divide l y) (divide r y)
+  
+  let safe_divide x y = 
+    if can_divide x y then (true,divide x y)
+    else if can_divide y x then (false, divide y x)
+    else (true,bot)
   
   (*can_subtract*)
   let rec contains x y = match x,y with
@@ -86,7 +92,8 @@ open Globals
   let subtract x y = 
     let rec helper x y = match x,y with
       | Leaf true, _ -> neg_tree y
-      | Leaf false, _ -> y
+      | Leaf false, Leaf false -> y
+      | Leaf false, _ -> report_error no_pos "missmatch in contains"
       | Node(l1,r1), Node(l2,r2) -> mkNode (helper l1 l2) (helper r1 r2) 
       | Node _ , Leaf false -> x
       | Node _ , Leaf true -> report_error no_pos "missmatch in contains" in      

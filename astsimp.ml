@@ -3241,14 +3241,15 @@ and trans_perm_must_var in_vdef pr stab pos = match pr with
             Err.error_loc = pos;
             Err.error_text = "permission formula floating error";} 
               
-and trans_splint s : CPr.share = List.fold_left (fun a c-> match c with
+and trans_splint s : CPr.share = 
+  let t = List.fold_left (fun a c-> match c with
   | PLeft -> fst (CPr.split a) 
-  | PRight -> snd (CPr.split a)) CPr.top_share s 
+  | PRight -> snd (CPr.split a)) CPr.top_share s in
+  t
               
 and trans_frac_perm_formula (f:IPr.frac_perm) stab pos: CPr.frac_perm = match f with
-  | (Some v, r) -> (Some (trans_var v stab pos),
-    (trans_splint r))
-  | (None, r) -> (None, (trans_splint r))
+  | (Some v, r) -> (Some (trans_var v stab pos),trans_splint r)
+  | (None, r) -> (None, trans_splint r)
             
 and trans_perm_formula (f:IPr.perm_formula) stab pos : CPr.perm_formula = match f with
   | IPr.And (f1,f2,p)-> CPr.mkAnd (trans_perm_formula f1 stab p) (trans_perm_formula f2 stab p) pos 

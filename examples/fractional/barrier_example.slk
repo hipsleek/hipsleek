@@ -11,5 +11,5 @@ checkentail x::node@[+L]<_,_> |- x::node@[+L,R]<_,_>.
 
 checkentail x::node@[+L]<_,_> |- x::node@[+L]<_,_>.
 
-checkentail x::node@[e+L]<_,_> &p e=r |- x::node@[r+L,R]<_,_>.
+checkentail x::node@[r+L]<_,_> |- x::node@[r+L,R]<_,_>.
 

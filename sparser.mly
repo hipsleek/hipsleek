@@ -592,8 +592,8 @@ core_constr
 flows_and_branches 
   : opt_branches { (Pr.mkTrue (get_pos 1), stub_flow, $1)};
   | flow_constraints opt_branches { (Pr.mkTrue(get_pos 1), $1, $2)};
- /* | ANDP permission_constraints opt_branches { ($2, stub_flow, $3)};
-  | ANDP permission_constraints flow_constraints opt_branches { ($2, $3, $4)};*/
+  | ANDP permission_constraints opt_branches { report_error (get_pos 1) "permission formulae currently unsupported"(*($2, stub_flow, $3)*)};
+  | ANDP permission_constraints flow_constraints opt_branches { report_error (get_pos 1) "permission formulae currently unsupported" (*($2, $3, $4)*)};
   
 permission_constraints
   : permission_constraints AND one_p_const{Pr.mkAnd $1 $3 (get_pos 2)}

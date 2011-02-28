@@ -26,9 +26,9 @@ let top_share = Ts.top
 
 let split = Ts.split
 
-let frac_of_var v :frac_perm = (Some v,Ts.top)
+let frac_of_var v :frac_perm = (Some v,top_share)
   
-let mkPFull () :frac_perm = (None,Ts.top)
+let mkPFull () :frac_perm = (None,top_share)
 
 let mkPerm posib_var splint :frac_perm = (posib_var,splint)
 
@@ -85,17 +85,24 @@ and subst_perm (fr, t) (o1,o2) = match o1 with
   | Some s -> (Some (P.subst_var (fr,t) s) , o2)
   | _ -> (o1,o2)
   
-let rec apply_one (fr,t) f = match f with
-  | And (f1,f2,p) -> And (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
-  | Or (f1,f2,p) -> Or (apply_one (fr,t) f1,apply_one (fr,t) f2, p)
-  | Join (f1,f2,f3,p) -> Join (subst_perm (fr,t) f1, subst_perm (fr,t) f2, subst_perm (fr,t) f3, p)
-  | Eq (f1,f2,p) -> Eq (subst_perm (fr,t) f1, subst_perm (fr,t) f2, p)
+and subst_perm_expr (fr, (t,v)) (o1,o2) = match o1 with
+  | Some s -> if (P.eq_spec_var s fr) then (Some t , Ts.multiply v o2) else (o1,o2)
+  | _ -> (o1,o2)
+  
+let rec apply_one_gen (fr,t) f f_s= match f with
+  | And (f1,f2,p) -> mkAnd (apply_one_gen (fr,t) f1 f_s) (apply_one_gen (fr,t) f2 f_s ) p
+  | Or (f1,f2,p) -> Or (apply_one_gen (fr,t) f1 f_s ,apply_one_gen (fr,t) f2 f_s , p)
+  | Join (f1,f2,f3,p) -> Join (f_s (fr,t) f1, f_s (fr,t) f2, f_s (fr,t) f3, p)
+  | Eq (f1,f2,p) -> Eq (f_s (fr,t) f1, f_s (fr,t) f2, p)
   | Exists (qsv,f1,p) ->  
       if Util.mem_eq P.eq_spec_var fr qsv then f 
-      else Exists (qsv, apply_one (fr,t) f1, p)
+      else Exists (qsv, apply_one_gen (fr,t) f1 f_s , p)
   | _ -> f
 
-and subst (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_formula = match sst with
+let apply_one s f = apply_one_gen s f subst_perm
+let apply_one_exp s f = apply_one_gen s f subst_perm_expr
+  
+let rec subst (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_formula = match sst with
   | s::ss -> subst ss (apply_one s f) 				(* applies one substitution at a time *)
   | [] -> f
 
@@ -108,7 +115,7 @@ and apply_subs_frac sst f = match f with
   | (Some v, x) -> (Some (P.subs_one sst v),x)
   | _ -> f
   
-and apply_subs (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_formula = match f with
+and apply_subs (sst : (P.spec_var * 'b) list) (f : perm_formula) : perm_formula = match f with
   | And (f1,f2,p) -> And (apply_subs sst f1,apply_subs sst f2, p)
   | Or (f1,f2,p) -> Or (apply_subs sst f1,apply_subs sst f2, p)
   | Join (f1,f2,f3,p) -> Join (apply_subs_frac sst f1, apply_subs_frac sst f2, apply_subs_frac sst f3, p)
@@ -123,10 +130,78 @@ and apply_subs (sst : (P.spec_var * P.spec_var) list) (f : perm_formula) : perm_
       Exists (nv,nf,p)
   | _ -> f 
   
-(*elim exists*)(*TODO*)
-let elim_exists_perm w f pos = f
-(*elim perm exists if any otherwise push*)(*TODO*)
-let elim_exists_perm_exists f = f
+let eq_fperm_var v1 v2  = match v1,v2 with
+  | Some v1,Some v2 -> P.eq_spec_var v1 v2 
+  | None,None -> true
+  | _ -> false
+ 
+let eq_fperm (v1,f1) (v2,f2) =(eq_fperm_var v1 v2)&& (Ts.stree_eq f1 f2)
+ 
+let rec eq_perm_formula (f1 : perm_formula) (f2 : perm_formula) : bool = match (f1,f2) with
+  | And (f11,f12,_), And (f21,f22,_)
+  | Or  (f11,f12,_), Or (f21,f22,_) -> 
+      ((eq_perm_formula f11 f21) && (eq_perm_formula f12 f22))||((eq_perm_formula f11 f22) && (eq_perm_formula f12 f21))
+  | Join (f11,f12,f13,_), Join (f21,f22,f23,_) -> 
+      ((eq_fperm f11 f21)&&(eq_fperm f12 f22)&&(eq_fperm f13 f23)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21)&&(eq_fperm f13 f23))
+  | Eq (f11,f12,_) , Eq(f21,f22,_) -> ((eq_fperm f11 f21)&&(eq_fperm f12 f22)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21))
+  | Exists (l1,f1,_), Exists (l2,f2,_) -> (List.length l1 = List.length l2 ) && (List.for_all2 P.eq_spec_var l1 l2) && (eq_perm_formula f1 f2)
+  | PTrue _, PTrue _
+  | PFalse _, PFalse _ -> true
+  | _ -> false
+ 
+
+let rec list_of_conjs (f:perm_formula): perm_formula list = match f with
+  | And (f1,f2,_) -> (list_of_conjs f1) @ (list_of_conjs f2)
+  | _ -> [f]
+  
+let conj_of_list l = List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l
+
+let rec factor_comm f = match f with
+  | Or (f1,f2,p)->  
+    let f1 = factor_comm f1 in
+    let f2 = factor_comm f2 in
+    let l1 = list_of_conjs f1 in
+    let l2 = list_of_conjs f2 in
+    let com,ncom1,ncom2 = List.fold_left (fun (comm,ncomm,l2) c -> 
+      let l1,l2 = List.partition (fun c1-> eq_perm_formula c1 c) l2 in
+      match l1 with
+        | [] -> (comm,c::ncomm,l2)
+        | _ -> (c::comm,ncomm,l2)) ([],[],l2) l1 in
+    conj_of_list ((mkOr (conj_of_list ncom1) (conj_of_list ncom2) p)::com)
+  | And (f1,f2,p)-> mkAnd (factor_comm f1) (factor_comm f2) p 
+  | Join _ -> f
+  | Eq _ -> f
+  | Exists (v,f,p)-> mkExists v (factor_comm f) p
+  | _ -> f
+  
+let var_get_subst f1 f2 v pos = match f1,f2 with 
+  | (Some v1,r1) , (Some v2, r2) -> 
+      if P.eq_spec_var v v1 then ([(v,(r1,f2))],mkTrue pos)
+      else if P.eq_spec_var v v2 then ([(v,(r2,f1))],mkTrue pos)
+      else ([],mkEq f1 f2 pos)
+  | (Some v1,r1), _ -> if P.eq_spec_var v v1 then ([(v,(r1,f2))],mkTrue pos) else ([],mkEq f1 f2 pos)
+  | _ ,(Some v2,r2) -> if P.eq_spec_var v v2 then ([(v,(r2,f1))],mkTrue pos) else ([],mkEq f1 f2 pos)
+  | ((None,_),(None,_)) -> ([],mkEq f1 f2 pos)
+  
+let rec get_subst_eq_f f v = match f with
+  | And (f1,f2,p) -> 
+    let st1, rf1 = get_subst_eq_f f1 v in
+		if not (Util.empty st1) then  (st1, mkAnd rf1 f2 p)
+		else
+		  let st2, rf2 = get_subst_eq_f f2 v in
+		  (st2, mkAnd f1 rf2 p)
+  | Eq(f1,f2,p)-> var_get_subst f1 f2 v p
+  | _ -> [],f
+  
+(*elim exists*)(*TODO*) 
+(*try and eliminate vars from w, what can not be done, push as existentials*)
+let elim_exists_perm w f1 pos = f1
+  (*let f = factor_comm f1 in
+  List.fold_left (fun (a1,a2) c->
+    let s,nf = get_subst_eq_f a2 c in
+    if (Util.empty s) then (w::a1,a2)
+    else (a1,apply_subs s nf)) ([],f) w *)
+    
 (*TODO*)
 let elim_exists_exp_perm f = f
 (*TODO*)
@@ -136,7 +211,6 @@ let simpl_perm_formula f = f
 let imply f1 f2 = true
 (*TODO*)
 let match_imply l_v r_v l_f r_f l_node e_vars :(bool * P.spec_var * P.spec_var * 'a * 'b * 'c) option = 
-
     Some (false,l_v, r_v, l_f, r_f, l_node)
 
 let does_match p = match p with
@@ -256,26 +330,6 @@ let trans_perm (e:perm_formula) (arg: 'a) f f_arg f_comb_a : (perm_formula * 'b)
       | PFalse _ -> (e, f_comb []) in
  foldr_f arg e
 
-let eq_fperm_var v1 v2  = match v1,v2 with
-  | Some v1,Some v2 -> P.eq_spec_var v1 v2 
-  | None,None -> true
-  | _ -> false
- 
-let eq_fperm (v1,f1) (v2,f2) =(eq_fperm_var v1 v2)&& (Ts.stree_eq f1 f2) 
- 
-let rec eq_perm_formula (f1 : perm_formula) (f2 : perm_formula) : bool = match (f1,f2) with
-  | And (f11,f12,_), And (f21,f22,_)
-  | Or  (f11,f12,_), Or (f21,f22,_) -> 
-      ((eq_perm_formula f11 f21) && (eq_perm_formula f12 f22))||((eq_perm_formula f11 f22) && (eq_perm_formula f12 f21))
-  | Join (f11,f12,f13,_), Join (f21,f22,f23,_) -> 
-      ((eq_fperm f11 f21)&&(eq_fperm f12 f22)&&(eq_fperm f13 f23)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21)&&(eq_fperm f13 f23))
-  | Eq (f11,f12,_) , Eq(f21,f22,_) -> ((eq_fperm f11 f21)&&(eq_fperm f12 f22)) || ((eq_fperm f11 f22)&&(eq_fperm f12 f21))
-  | Exists (l1,f1,_), Exists (l2,f2,_) -> (List.length l1 = List.length l2 ) && (List.for_all2 P.eq_spec_var l1 l2) && (eq_perm_formula f1 f2)
-  | PTrue _, PTrue _
-  | PFalse _, PFalse _ -> true
-  | _ -> false
- 
-
 let rec normalize_to_CNF (f : perm_formula) pos : perm_formula = match f with
   | Or (f1, f2, p) ->
         let conj, disj1, disj2 = (find_common_conjs f1 f2 p) in
@@ -288,11 +342,6 @@ let rec normalize_to_CNF (f : perm_formula) pos : perm_formula = match f with
    - the formula representing what's left of f1
    - the formula representing what's left of f2
 *)
- and list_of_conjs (f:perm_formula): perm_formula list = match f with
-  | And (f1,f2,_) -> (list_of_conjs f1) @ (list_of_conjs f2)
-  | _ -> [f]
-  
- and conj_of_list l = List.fold_left (fun a c-> mkAnd a c no_pos) (mkTrue no_pos) l
   
  and find_common_conjs (f1 : perm_formula) (f2 : perm_formula) pos : (perm_formula * perm_formula * perm_formula) = match f1 with
   | Eq _ 
