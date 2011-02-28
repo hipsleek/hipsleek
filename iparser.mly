@@ -493,7 +493,7 @@ hopred_decl
           hopred_typed_args = (fst (snd $2));
           hopred_fct_args = (snd (snd $2));
           hopred_shape    = (snd $4);
-          hopred_invariant = (P.mkTrue no_pos ,("Inv", P.mkTrue no_pos))}
+          hopred_invariant = (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])}
      }
 	| HPRED hpred_header  REFINES  ext_form {{   
           hopred_name = (fst (fst $2));
@@ -503,7 +503,7 @@ hopred_decl
           hopred_typed_args = (fst (snd $2));
           hopred_fct_args = (snd (snd $2));
           hopred_shape    = (snd $4);
-          hopred_invariant = (P.mkTrue no_pos ,("Inv", P.mkTrue no_pos))}}
+          hopred_invariant = (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])}}
     | HPRED hpred_header  JOIN  split_combine {{   
           hopred_name = (fst (fst $2));
           hopred_mode = "split_combine";
@@ -512,7 +512,7 @@ hopred_decl
           hopred_typed_args = [];
           hopred_fct_args = [];
           hopred_shape    = [];
-          hopred_invariant = (P.mkTrue no_pos ,("Inv", P.mkTrue no_pos))}}
+          hopred_invariant = (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])}}
 	| HPRED hpred_header  EQEQ shape opt_inv SEMICOLON {{    
           hopred_name = (fst (fst $2));
           hopred_mode = "pure_higherorder_pred";
@@ -523,14 +523,14 @@ hopred_decl
           hopred_shape    = [$4];
           hopred_invariant = $5 }}
 ;	
-shape :  formulas {$1}
+shape :  formulas {fst $1}
 ;
 split_combine 
 	: HPRED {}
 	| hpred_header SPLIT split_combine {}
 	| hpred_header COMBINE split_combine {}
 ;			
-ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {($1,$4)}
+ext_form : hpred_header	WITH OBRACE ho_fct_def_list CBRACE {("",[])(*($1,$4)*)}
 ;
 ho_fct_header 
 	: IDENTIFIER OPAREN fct_arg_list CPAREN {}
@@ -567,29 +567,32 @@ type_var_lst
 	| typ COMMA type_var_lst {}
 ;
 opt_typed_arg_list
-	: {}
-    | typed_arg_list {}
+	: {[]}
+    | typed_arg_list {[]}
 ;
 type_var_list
     : OSQUARE type_var_lst CSQUARE {}
 ; 
  opt_type_var_list
-	: type_var_list {}
-    | {}
+	: type_var_list {[]}
+    | {[]}
 ;
 fct_arg_list
     : cid {}
     | cid COMMA fct_arg_list {}
 ;
 opt_fct_list
-    : {}
-	| OSQUARE fct_arg_list CSQUARE {}
+    : {[]}
+	| OSQUARE fct_arg_list CSQUARE {[]}
 ;
 /********** Views **********/
 
 view_decl
   : view_header EQEQ view_body opt_inv SEMICOLON {
-	{ $1 with view_formula = (fst $3); view_invariant = $4; try_case_inference = (snd $3)}
+	{ $1 with 
+    view_formula = (fst $3); 
+    view_invariant = $4; 
+    try_case_inference = (snd $3)}
   }
   | view_header EQ error {
 	  report_error (get_pos 2) ("use == to define a view")

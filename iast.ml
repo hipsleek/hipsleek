@@ -56,7 +56,7 @@ and hopred_decl = { hopred_name : ident;
           hopred_typed_args : (CP.typ * ident) list;
           hopred_fct_args : ident list;
           hopred_shape    : Iformula.struc_formula list;
-          hopred_invariant :(P.formula * (branch_label * P.formula))
+          hopred_invariant :(P.formula * (branch_label * P.formula) list)
 }
 
 and enum_decl = { enum_name : ident;
