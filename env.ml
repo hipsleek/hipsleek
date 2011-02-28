@@ -11,7 +11,6 @@
 open Globals
 
 module H = Hashtbl
-module U = Util
 module I = Iast
 module C = Cast
 
@@ -47,7 +46,7 @@ let push_scope () =
 	scopes := new_scope :: !scopes
 
 let pop_scope () =
-  if U.empty !scopes then
+  if Gen.is_empty !scopes then
 	failwith ("no more scope to pop")
 	  (* note that this error shouldn't happen for a well-formed input,
 		 so if it does happen, there must be something wrong with the analyzer *)
@@ -65,7 +64,7 @@ let clear_names (names : ident list) =
    raises Not_found if v is not present *)
 let rec look_up (v : ident) : ident_info =
   let rec helper cur_scopes = 
-	if U.empty cur_scopes then
+	if Gen.is_empty cur_scopes then
 	  raise Not_found
 	else
 	  let top_scope = List.hd cur_scopes in
@@ -77,7 +76,7 @@ let rec look_up (v : ident) : ident_info =
 	helper !scopes
 
 and add (v : ident) (i : ident_info) =
-  if U.empty !scopes then
+  if Gen.is_empty !scopes then
 	failwith ("no scope to add")
 	  (* note that this error shouldn't happen for a well-formed input,
 		 so if it does happen, there must be something wrong with the analyzer *)  else
@@ -109,7 +108,7 @@ and alpha_name (v : ident) : ident =
 (* returns true if there is a name clash, i.e. v is
    already in the top scope *)
 and name_clash (v : ident) : bool =
-  if U.empty !scopes then
+  if Gen.is_empty !scopes then
 	false
   else
 	let top_scope = List.hd !scopes in
@@ -130,15 +129,15 @@ and name_clash (v : ident) : bool =
 *)
 
 and names_on_top () : I.typed_ident list = 
-  if U.empty !scopes then
+  if Gen.is_empty !scopes then
 	[]
   else
-	let top_infos = U.list_of_hash_values (List.hd !scopes) in
+	let top_infos = Gen.HashUti.list_of_hash_values (List.hd !scopes) in
 	let top_names = List.map name_of_info top_infos in
 	  top_names
 
 and visible_names () : I.typed_ident list = 
-  let all_infos = List.concat (List.map U.list_of_hash_values !scopes) in
+  let all_infos = List.concat (List.map Gen.HashUti.list_of_hash_values !scopes) in
   let all_names = List.map name_of_info all_infos in
 	all_names
 

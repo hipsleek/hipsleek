@@ -211,30 +211,47 @@ let is_bool_f = function
 (* pretty printing for a heap formula *)
 let rec string_of_h_formula = function 
   | F.Star ({F.h_formula_star_h1 = f1;
-			 F.h_formula_star_h2 = f2;
-			 F.h_formula_star_pos = l} ) -> 
-	  if is_bool_f f1 then 
-		if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
+	     F.h_formula_star_h2 = f2;
+	     F.h_formula_star_pos = l} ) -> 
+      if is_bool_f f1 then 
+	if is_bool_f f2 then (string_of_h_formula f1) ^ " * " ^ (string_of_h_formula f2)
         else (string_of_h_formula f1) ^ " * (" ^ (string_of_h_formula f2) ^ ")" 
-	  else
-		"(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"    
+      else
+	"(" ^ (string_of_h_formula f1) ^ ") * (" ^ (string_of_h_formula f2) ^ ")"    
+  | F.Conj ({F.h_formula_conj_h1 = f1;
+	     F.h_formula_conj_h2 = f2;
+	     F.h_formula_conj_pos = l} ) -> 
+      if is_bool_f f1 then 
+	if is_bool_f f2 then (string_of_h_formula f1) ^ " & " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " & (" ^ (string_of_h_formula f2) ^ ")" 
+      else
+	"(" ^ (string_of_h_formula f1) ^ ") & (" ^ (string_of_h_formula f2) ^ ")"    
+  | F.Phase ({F.h_formula_phase_rd = f1;
+	     F.h_formula_phase_rw = f2;
+	     F.h_formula_phase_pos = l} ) -> 
+      if is_bool_f f1 then 
+	if is_bool_f f2 then (string_of_h_formula f1) ^ " ; " ^ (string_of_h_formula f2)
+        else (string_of_h_formula f1) ^ " ; (" ^ (string_of_h_formula f2) ^ ")" 
+      else
+	"(" ^ (string_of_h_formula f1) ^ ") ; (" ^ (string_of_h_formula f2) ^ ")"    
+
   | F.HeapNode ({F.h_formula_heap_node = x;
-				 F.h_formula_heap_name = id;
-				 F.h_formula_heap_arguments = pl;
-				 F.h_formula_heap_label = pi;
-				 F.h_formula_heap_pos = l}) -> 				 
-				 string_of_formula_label_opt pi				 
-				 ((fst x)^(if (snd x)=Primed then  "'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
-									
-	| F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
-									F.h_formula_heap2_name = id;
-									F.h_formula_heap2_label = pi;
-									F.h_formula_heap2_arguments = args}) ->
-			let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
-			let tmp2 = String.concat ", " tmp1 in
-				string_of_formula_label_opt pi
-				(v ^ (if p = Primed then "'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
-  | F.HTrue                         -> ""                                                                                                (* ?? is it ok ? *)
+		 F.h_formula_heap_name = id;
+		 F.h_formula_heap_arguments = pl;
+		 F.h_formula_heap_label = pi;
+		 F.h_formula_heap_pos = l}) -> 				 
+      string_of_formula_label_opt pi				 
+	((fst x)^(if (snd x)=Primed then  "'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
+	
+  | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
+		  F.h_formula_heap2_name = id;
+		  F.h_formula_heap2_label = pi;
+		  F.h_formula_heap2_arguments = args}) ->
+      let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
+      let tmp2 = String.concat ", " tmp1 in
+	string_of_formula_label_opt pi
+	  (v ^ (if p = Primed then "'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
+  | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 ;;
  
@@ -300,6 +317,18 @@ let rec string_of_ext_formula = function
 				let c = (List.fold_left (fun a d -> a^"\n"^(string_of_ext_formula d)) "{" cont)^"}" in
 				"["^l1^"]["^l2^"]"^b^" "^c
 	| Iformula.EAssume (b,(n1,n2))-> "EAssume "^(string_of_int n1)^","^n2^":"^(string_of_formula b)
+    | Iformula.EVariance {
+			Iformula.formula_var_label = label;
+			Iformula.formula_var_measures = measures;
+			Iformula.formula_var_escape_clauses = escape_clauses;
+			Iformula.formula_var_continuation = continuation;
+	  } ->
+		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
+																			| None -> rs^(string_of_formula_exp expr)^" "
+																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
+		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
+		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
+		  "EVariance ("^(string_of_int label)^") "^"[ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
@@ -627,6 +656,6 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
-
-
+Iformula.print_formula :=string_of_formula;;
+Iformula.print_struc_formula :=string_of_struc_formula;;
 

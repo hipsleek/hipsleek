@@ -62,7 +62,7 @@ node get_next(node x)
 {
   //dprint;
 	node tmp = x.next;
-  assume false;
+    //assume false;
 	x.next = null;
 	return tmp;
 }
@@ -163,7 +163,7 @@ node create_list(int a)
 	node tmp;
 
 	if (a == 0) {
-  assume false;
+      // assume false;
 		return null;
 	}
 	else {    

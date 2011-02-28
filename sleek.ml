@@ -62,7 +62,7 @@ let parse_file (parse) (source_file : string) =
 								 | LemmaDef ldef -> process_lemma ldef
 								 | PrintCmd pcmd -> process_print_command pcmd
 								 | LetDef (lvar, lbody) -> put_var lvar lbody
-                 | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
+                 | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
 								 | EmptyCmd -> ())) cmd) in ()
 	with
 	  | End_of_file ->
@@ -79,7 +79,7 @@ let main () =
                 I.prog_hopred_decls = [];
   } in
   let _ = Iast.build_exc_hierarchy true iprog in
-  let _ = Util.c_h () in
+  let _ = Gen.ExcNumbering.c_h () in
   let quit = ref false in
   let parse =
     match !Scriptarguments.fe with
@@ -111,7 +111,7 @@ let main () =
                      | LemmaDef ldef -> process_lemma ldef
                      | PrintCmd pcmd -> process_print_command pcmd
                      | LetDef (lvar, lbody) -> put_var lvar lbody
-                     | Time (b,s,_) -> if b then Util.push_time s else Util.pop_time s
+                     | Time (b,s,_) -> if b then Gen.Profiling.push_time s else Gen.Profiling.pop_time s
                      | EmptyCmd -> ());
                   Buffer.clear buffer;
                   if !inter then
@@ -140,10 +140,11 @@ let _ =
 	print_version ()
   end else
     (Tpdispatcher.start_prover ();
-    Util.push_time "Overall";
+    Gen.Profiling.push_time "Overall";
     main ();
-    Util.pop_time "Overall";
+    Gen.Profiling.pop_time "Overall";
     let _ = 
       if (!Globals.profiling && not !inter) then 
-        ( Util.print_profiling_info (); print_string (Util.string_of_counters ())) in
-    Tpdispatcher.stop_prover ())
+        ( Gen.Profiling.print_info (); print_string (Gen.Profiling.string_of_counters ())) in
+    Tpdispatcher.stop_prover ();
+    print_string "\n")

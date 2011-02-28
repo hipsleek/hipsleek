@@ -25,7 +25,6 @@ open Globals
 open Cformula
 open Iast
 
-module U = Util
 module CP = Cpure
 module C = Cast
 module Err = Error
@@ -152,7 +151,7 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 	let atype = Named cls_name in
 	  ((atype, v), pos) in
   let pb_fields = List.map helper2 pbvars in
-  let normal_vvars = Util.difference_f CP.eq_spec_var field_vars pbvars in
+  let normal_vvars = Gen.BList.difference_eq CP.eq_spec_var field_vars pbvars in
   let normal_fields = helper normal_vvars in
 	pb_fields @ normal_fields
 
@@ -599,7 +598,7 @@ and gen_input_object (prog : C.prog_decl) (h0 : h_formula) (ivar : ident) (var_a
 		   h_formula_star_h2 = h2;
 		   h_formula_star_pos = pos}) ->
 	  let s1 = gen_input_object prog h1 ivar var_alias in
-		if U.is_some s1 then s1
+		if Gen.is_some s1 then s1
 		else gen_input_object prog h2 ivar var_alias
   | DataNode ({h_formula_data_node = p;
 			   h_formula_data_name = c;
@@ -607,7 +606,7 @@ and gen_input_object (prog : C.prog_decl) (h0 : h_formula) (ivar : ident) (var_a
 			   h_formula_data_pos = pos}) -> begin
 	  if CP.name_of_spec_var p = ivar then
 		try
-		  let i = U.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in
+		  let i = Gen.BList.find_index (fun v -> List.mem (CP.name_of_spec_var v) var_alias) vs in
 		  let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
 		  let fname = snd (List.nth ddef.C.data_fields ((fst i) - 2)) in (* minus the first two parameters *)
 		  let base = Var ({exp_var_name = ivar;
@@ -1027,53 +1026,60 @@ let rec gen_bindings_pure (pure : CP.formula) (unbound_vars : CP.spec_var list) 
 
 and gen_bindings_heap prog (h0 : h_formula) (unbound_vars : CP.spec_var list) (vmap : var_map) : var_order = match h0 with
   | Star ({h_formula_star_h1 = h1;
-		   h_formula_star_h2 = h2;
-		   h_formula_star_pos = pos}) -> begin
-	  let o1 = gen_bindings_heap prog h1 unbound_vars vmap in
-	  let o2 = gen_bindings_heap prog h2 unbound_vars vmap in
-		o1 @ o2
-	end
+	   h_formula_star_h2 = h2;
+	   h_formula_star_pos = pos})
+  | Conj ({h_formula_conj_h1 = h1;
+	   h_formula_conj_h2 = h2;
+	   h_formula_conj_pos = pos})
+  | Phase ({h_formula_phase_rd = h1;
+	   h_formula_phase_rw = h2;
+	   h_formula_phase_pos = pos}) -> begin
+      let o1 = gen_bindings_heap prog h1 unbound_vars vmap in
+      let o2 = gen_bindings_heap prog h2 unbound_vars vmap in
+	o1 @ o2
+    end
   | DataNode ({h_formula_data_node = p;
-			   h_formula_data_name = c;
-			   h_formula_data_arguments = vs;
-			   h_formula_data_pos = pos}) -> begin
-	  let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
-	  let pname = CP.name_of_spec_var p in
-	  let vnames = List.map CP.name_of_spec_var (List.tl (List.tl vs)) in
-	  let field_names = List.map snd ddef.C.data_fields in
-	  let helper v f = 
-		(* 
-		   v : exists. var, f: corresponding field, 
-		   object fields can never be partially bound
-		*)
-		H.add vmap v (HExp (pname, f, false))
-	  in
-		ignore (List.map2 helper vnames field_names);
-		List.map (fun v -> (pname, v)) vnames (* all variables in vs are dependent on p *)
-	end
+	       h_formula_data_name = c;
+	       h_formula_data_arguments = vs;
+	       h_formula_data_pos = pos}) -> begin
+      let ddef = C.look_up_data_def pos prog.C.prog_data_decls c in
+      let pname = CP.name_of_spec_var p in
+      let vnames = List.map CP.name_of_spec_var (List.tl (List.tl vs)) in
+      let field_names = List.map snd ddef.C.data_fields in
+      let helper v f = 
+	(* 
+	   v : exists. var, f: corresponding field, 
+	   object fields can never be partially bound
+	*)
+	H.add vmap v (HExp (pname, f, false))
+      in
+	ignore (List.map2 helper vnames field_names);
+	List.map (fun v -> (pname, v)) vnames (* all variables in vs are dependent on p *)
+    end
   | ViewNode ({h_formula_view_node = p;
-			   h_formula_view_name = c;
-			   h_formula_view_arguments = vs;
-			   h_formula_view_modes = modes;
-			   h_formula_view_pos = pos}) -> begin
-	  (* 
-		 map each variable v in vs to p.f where f is the view parameter
-		 corresponding positionally to v.
-	  *)
-	  let pname = CP.name_of_spec_var p in
-	  let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
-	  let helper v vp m pb =
-		if m = ModeOut then
-		  let vname = CP.name_of_spec_var v in
-		  let vpname = CP.name_of_spec_var vp in
-			H.add vmap vname (HExp (pname, vpname, pb));
-			[(pname, vname)]
-		else 
-		  [] in
-	  let tmp1 = Util.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
-	  let tmp2 = List.concat tmp1 in
-		tmp2
-	end
+	       h_formula_view_name = c;
+	       h_formula_view_arguments = vs;
+	       h_formula_view_modes = modes;
+	       h_formula_view_pos = pos}) -> begin
+      (* 
+	 map each variable v in vs to p.f where f is the view parameter
+	 corresponding positionally to v.
+      *)
+      let pname = CP.name_of_spec_var p in
+      let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
+      let helper v vp m pb =
+	if m = ModeOut then
+	  let vname = CP.name_of_spec_var v in
+	  let vpname = CP.name_of_spec_var vp in
+	    H.add vmap vname (HExp (pname, vpname, pb));
+	    [(pname, vname)]
+	else 
+	  [] in
+      let tmp1 = Gen.map4 helper vs vdef.C.view_vars modes vdef.C.view_partially_bound_vars in
+      let tmp2 = List.concat tmp1 in
+	tmp2
+    end
+  | Hole _ -> []
   | HTrue -> []
   | HFalse -> [] (* what to do here? *)
 
@@ -1432,130 +1438,136 @@ and gen_pure_bform (bf0 : CP.b_formula) (vmap : var_map) (unbound_vars : CP.spec
 *)
 and gen_heap prog (h0 : h_formula) (vmap : var_map) (unbound_vars : CP.spec_var list) : exp = match h0 with
   | Star ({h_formula_star_h1 = h1;
-		   h_formula_star_h2 = h2;
-		   h_formula_star_pos = pos}) -> begin
-	  (*
-		<code for h1>
-		<code for h2>
-	  *)
-	  let e1 = gen_heap prog h1 vmap unbound_vars in
-	  let e2 = gen_heap prog h2 vmap unbound_vars in
-	  let seq = mkSeq e1 e2 pos in
-		seq
-	end
+	   h_formula_star_h2 = h2;
+	   h_formula_star_pos = pos})
+  | Conj ({h_formula_conj_h1 = h1;
+	   h_formula_conj_h2 = h2;
+	   h_formula_conj_pos = pos})
+  | Phase ({h_formula_phase_rd = h1;
+	    h_formula_phase_rw = h2;
+	    h_formula_phase_pos = pos}) -> begin
+      (*
+	<code for h1>
+	<code for h2>
+      *)
+      let e1 = gen_heap prog h1 vmap unbound_vars in
+      let e2 = gen_heap prog h2 vmap unbound_vars in
+      let seq = mkSeq e1 e2 pos in
+	seq
+    end
   | DataNode ({h_formula_data_node = p;
-			   h_formula_data_name = c;
-			   h_formula_data_arguments = vs;
-			   h_formula_data_pos = pos}) -> begin
-	  (*
-		p::c<vs>
+	       h_formula_data_name = c;
+	       h_formula_data_arguments = vs;
+	       h_formula_data_pos = pos}) -> begin
+      (*
+	p::c<vs>
 
-		if (p.color == curColor) p.color = newColor;
-		else return false;
-	  *)
-	  let pvar = Var ({exp_var_name = CP.name_of_spec_var p;
-					   exp_var_pos = pos}) in
-	  let pcolor = Member ({exp_member_base = pvar;
-							exp_member_fields = ["color"];
-							exp_member_path_id = (fresh_branch_point_id "");
-							exp_member_pos = pos}) in
-	  let pnewcolor = Assign ({exp_assign_op = OpAssign;
-							   exp_assign_lhs = pcolor;
-							   exp_assign_rhs = new_color_exp pos;
-							   exp_assign_path_id = None;
-							   exp_assign_pos = pos}) in
-		(* now for the test *)
-	  let test = Binary ({exp_binary_op = OpEq;
-						  exp_binary_oper1 = pcolor;
-						  exp_binary_oper2 = cur_color_exp pos;
-						  exp_binary_path_id = None;
-						  exp_binary_pos = pos}) in
-	  let cond = Cond ({exp_cond_condition = test;
-						exp_cond_then_arm = pnewcolor;
-						exp_cond_else_arm = return_false pos;
-						exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
-						exp_cond_pos = pos}) 
-	  in
-		cond
-	end
+	if (p.color == curColor) p.color = newColor;
+	else return false;
+      *)
+      let pvar = Var ({exp_var_name = CP.name_of_spec_var p;
+		       exp_var_pos = pos}) in
+      let pcolor = Member ({exp_member_base = pvar;
+			    exp_member_fields = ["color"];
+			    exp_member_path_id = (fresh_branch_point_id "");
+			    exp_member_pos = pos}) in
+      let pnewcolor = Assign ({exp_assign_op = OpAssign;
+			       exp_assign_lhs = pcolor;
+			       exp_assign_rhs = new_color_exp pos;
+			       exp_assign_path_id = None;
+			       exp_assign_pos = pos}) in
+	(* now for the test *)
+      let test = Binary ({exp_binary_op = OpEq;
+			  exp_binary_oper1 = pcolor;
+			  exp_binary_oper2 = cur_color_exp pos;
+			  exp_binary_path_id = None;
+			  exp_binary_pos = pos}) in
+      let cond = Cond ({exp_cond_condition = test;
+			exp_cond_then_arm = pnewcolor;
+			exp_cond_else_arm = return_false pos;
+			exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
+			exp_cond_pos = pos}) 
+      in
+	cond
+    end
   | ViewNode ({h_formula_view_node = p;
-			   h_formula_view_name = c;
-			   h_formula_view_arguments = vs;
-			   h_formula_view_modes = modes;
-			   h_formula_view_pos = pos}) -> begin
-	  (*
-		Make a call. Set up inputs and all that.
-		Now how to do that?
+	       h_formula_view_name = c;
+	       h_formula_view_arguments = vs;
+	       h_formula_view_modes = modes;
+	       h_formula_view_pos = pos}) -> begin
+      (*
+	Make a call. Set up inputs and all that.
+	Now how to do that?
 
-		c_checker ckr = new c_checker();
-		ckr.root = p;
-		if (!ckr.traverse(curColor, newColor)) return false;
-	  *)
-	  let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
-	  let cls = class_name_of_view c in
-	  let new_checker = New ({exp_new_class_name = cls;
-							  exp_new_arguments = [];
-							  exp_new_pos = pos}) in
-	  let new_checker_name = CP.name_of_spec_var p in
-	  let new_checker_var = Var ({exp_var_name = new_checker_name;
-								  exp_var_pos = pos}) in
-	  let new_checker_decl = VarDecl ({exp_var_decl_type = Named cls;
-									   exp_var_decl_decls = 
-										  [(new_checker_name, Some new_checker, pos)];
-									   exp_var_decl_pos = no_pos}) in		
-		(* Call checker and test for result *)
-	  let call_checker = CallRecv ({exp_call_recv_receiver = new_checker_var;
-									exp_call_recv_method = "traverse";
-									exp_call_recv_arguments = 
-									   [cur_color_exp pos; new_color_exp pos];
-									exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
-									exp_call_recv_pos = pos}) in
-	  let neg_call = Unary ({exp_unary_op = OpNot;
-							 exp_unary_exp = call_checker;
-							 exp_unary_path_id = None;
-							 exp_unary_pos = pos}) in
-	  let call_cond = Cond ({exp_cond_condition = neg_call;
-							 exp_cond_then_arm = return_false pos;
-							 exp_cond_else_arm = Empty pos;
-							 exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
-							 exp_cond_pos = pos}) in
-		(* Set up inputs *)
-		(* helper: Constructs a list of assignments to set up inputs *)
-	  let rec helper fargs params modes : exp list = match fargs, params, modes with
-		| (farg :: rest1, param :: rest2, m :: rest3) -> begin
-			let rest = helper rest1 rest2 rest3 in
-			  if m = ModeIn then
-				let param_e = CP.Var (param, pos) in
-				let e, _ = gen_pure_exp param_e vmap unbound_vars in
-				let lhs = Member ({exp_member_base = new_checker_var;
-								   exp_member_fields = [CP.name_of_spec_var farg];
-								   exp_member_path_id = (fresh_branch_point_id "");
-								   exp_member_pos = pos}) in
-				let assignment = Assign ({exp_assign_op = OpAssign;
-										  exp_assign_lhs = lhs;
-										  exp_assign_rhs = e;
-										  exp_assign_path_id = None;
-										  exp_assign_pos = pos}) in
-				  assignment :: rest
-			  else rest
-		  end
-		| [], [], [] -> [] 
-		| _ -> failwith ("gen_heap: params and modes are supposed to be lists with the same length.") in
-		(* gen inputs *)
-	  let self_var = CP.SpecVar (CP.OType vdef.C.view_data_name, self, Unprimed) in
-	  let tmp1 = helper (self_var :: vdef.C.view_vars) (p :: vs) (ModeIn :: vdef.C.view_modes) in
-	  let helper2 e1 e2 = mkSeq e2 e1 pos in
-	  let init_inputs = List.fold_left helper2 call_cond tmp1 in
-		(* *)
-	  let seq1 = Seq ({exp_seq_exp1 = new_checker_decl;
-					   exp_seq_exp2 = init_inputs;
-					   exp_seq_pos = pos}) in
-		seq1
-	end
-  | HTrue ->
-	  Empty no_pos
+	c_checker ckr = new c_checker();
+	ckr.root = p;
+	if (!ckr.traverse(curColor, newColor)) return false;
+      *)
+      let vdef = C.look_up_view_def_raw prog.C.prog_view_decls c in
+      let cls = class_name_of_view c in
+      let new_checker = New ({exp_new_class_name = cls;
+			      exp_new_arguments = [];
+			      exp_new_pos = pos}) in
+      let new_checker_name = CP.name_of_spec_var p in
+      let new_checker_var = Var ({exp_var_name = new_checker_name;
+				  exp_var_pos = pos}) in
+      let new_checker_decl = VarDecl ({exp_var_decl_type = Named cls;
+				       exp_var_decl_decls = 
+					  [(new_checker_name, Some new_checker, pos)];
+				       exp_var_decl_pos = no_pos}) in		
+	(* Call checker and test for result *)
+      let call_checker = CallRecv ({exp_call_recv_receiver = new_checker_var;
+				    exp_call_recv_method = "traverse";
+				    exp_call_recv_arguments = 
+				       [cur_color_exp pos; new_color_exp pos];
+				    exp_call_recv_path_id = stub_branch_point_id "pred_comp_generated";
+				    exp_call_recv_pos = pos}) in
+      let neg_call = Unary ({exp_unary_op = OpNot;
+			     exp_unary_exp = call_checker;
+			     exp_unary_path_id = None;
+			     exp_unary_pos = pos}) in
+      let call_cond = Cond ({exp_cond_condition = neg_call;
+			     exp_cond_then_arm = return_false pos;
+			     exp_cond_else_arm = Empty pos;
+			     exp_cond_path_id = stub_branch_point_id "pred_comp_generated";
+			     exp_cond_pos = pos}) in
+	(* Set up inputs *)
+	(* helper: Constructs a list of assignments to set up inputs *)
+      let rec helper fargs params modes : exp list = match fargs, params, modes with
+	| (farg :: rest1, param :: rest2, m :: rest3) -> begin
+	    let rest = helper rest1 rest2 rest3 in
+	      if m = ModeIn then
+		let param_e = CP.Var (param, pos) in
+		let e, _ = gen_pure_exp param_e vmap unbound_vars in
+		let lhs = Member ({exp_member_base = new_checker_var;
+				   exp_member_fields = [CP.name_of_spec_var farg];
+				   exp_member_path_id = (fresh_branch_point_id "");
+				   exp_member_pos = pos}) in
+		let assignment = Assign ({exp_assign_op = OpAssign;
+					  exp_assign_lhs = lhs;
+					  exp_assign_rhs = e;
+					  exp_assign_path_id = None;
+					  exp_assign_pos = pos}) in
+		  assignment :: rest
+	      else rest
+	  end
+	| [], [], [] -> [] 
+	| _ -> failwith ("gen_heap: params and modes are supposed to be lists with the same length.") in
+	(* gen inputs *)
+      let self_var = CP.SpecVar (CP.OType vdef.C.view_data_name, self, Unprimed) in
+      let tmp1 = helper (self_var :: vdef.C.view_vars) (p :: vs) (ModeIn :: vdef.C.view_modes) in
+      let helper2 e1 e2 = mkSeq e2 e1 pos in
+      let init_inputs = List.fold_left helper2 call_cond tmp1 in
+	(* *)
+      let seq1 = Seq ({exp_seq_exp1 = new_checker_decl;
+		       exp_seq_exp2 = init_inputs;
+		       exp_seq_pos = pos}) in
+	seq1
+    end
+  | Hole _ | HTrue ->
+      Empty no_pos
   | HFalse -> 
-	  return_false no_pos
+      return_false no_pos
 
 (*
   Compiling disjunct:
@@ -1871,7 +1883,7 @@ and gen_partially_bound_params (output_vars : CP.spec_var list) (f0 : formula) :
   | Base ({formula_base_pure = p})
   | Exists ({formula_exists_pure = p}) ->
 	  let bound_vars = gen_bound_params output_vars (MCP.fold_mem_lst (CP.mkTrue no_pos) true true p) in
-	  let partially_bounds = Util.difference_f CP.eq_spec_var output_vars bound_vars in
+	  let partially_bounds = Gen.BList.difference_eq CP.eq_spec_var output_vars bound_vars in
 		partially_bounds
 
 (*

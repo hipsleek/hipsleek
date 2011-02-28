@@ -85,11 +85,11 @@ let rec fv (f : formula) : (ident * primed) list = match f with
 and combine_pvars p1 p2 = 
   let fv1 = fv p1 in
   let fv2 = fv p2 in
-    Util.remove_dups (fv1 @ fv2)
+    Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
 	
 and remove_qvar qid qf =
   let qfv = fv qf in
-    Util.remove_elem qid qfv
+    Gen.BList.remove_elem_eq (=) qid qfv
 
 and bfv (bf : b_formula) = match bf with
   | BConst _ -> []
@@ -104,42 +104,42 @@ and bfv (bf : b_formula) = match bf with
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 	  let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2 @ fv3)
   | EqMin (a1, a2, a3, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 	  let fv3 = afv a3 in
-		Util.remove_dups (fv1 @ fv2 @ fv3)
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2 @ fv3)
   | BagIn (v, a, _) -> 
 		let fv = afv a in
-		Util.remove_dups ([v] @ fv)
+		Gen.BList.remove_dups_eq (=) ([v] @ fv)
   | BagNotIn (v, a, _) -> 
 		let fv = afv a in
-		Util.remove_dups ([v] @ fv)	
+		Gen.BList.remove_dups_eq (=) ([v] @ fv)	
   | BagSub (a1, a2, _) -> combine_avars a1 a2
-  | BagMax (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
-  | BagMin (sv1, sv2, _) -> Util.remove_dups ([sv1] @ [sv2])
+  | BagMax (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
+  | BagMin (sv1, sv2, _) -> Gen.BList.remove_dups_eq (=) ([sv1] @ [sv2])
   | ListIn (a1, a2, _) -> 
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
   | ListNotIn (a1, a2, _) -> 
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
   | ListAllN (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
   | ListPerm (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
   let fv2 = afv a2 in
-    Util.remove_dups (fv1 @ fv2)
+    Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
 
 and afv (af : exp) : (ident * primed) list = match af with
   | Null _ -> []
@@ -154,14 +154,14 @@ and afv (af : exp) : (ident * primed) list = match af with
   | BagDiff (a1,a2,_) ->  combine_avars a1 a2
   | Bag(d,_)
   | BagIntersect (d,_)
-  | BagUnion (d,_) ->  Util.remove_dups (List.fold_left (fun a c-> a@(afv c)) [] d)
+  | BagUnion (d,_) ->  Gen.BList.remove_dups_eq (=) (List.fold_left (fun a c-> a@(afv c)) [] d)
   (*| BagDiff _|BagIntersect _|BagUnion _|Bag _ -> failwith ("afv: bag constraints are not expected")*)
   | List (d, _)
-  | ListAppend (d, _) -> Util.remove_dups (List.fold_left (fun a c -> a@(afv c)) [] d)
+  | ListAppend (d, _) -> Gen.BList.remove_dups_eq (=) (List.fold_left (fun a c -> a@(afv c)) [] d)
   | ListCons (a1, a2, _) ->
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
-		Util.remove_dups (fv1 @ fv2)  
+		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)  
   | ListHead (a, _)
   | ListTail (a, _)
   | ListLength (a, _)
@@ -374,7 +374,7 @@ and build_relation relop alist10 alist20 pos =
 	let a = List.hd alist in
 	let rest = List.tl alist in
 	let tmp = BForm ((relop ae a pos),None) in
-	  if Util.empty rest then
+	  if Gen.is_empty rest then
 		tmp
 	  else
 		let tmp1 = helper1 ae rest in
@@ -384,7 +384,7 @@ and build_relation relop alist10 alist20 pos =
 	let a = List.hd alist1 in
 	let rest = List.tl alist1 in
 	let tmp = helper1 a alist2 in
-	  if Util.empty rest then
+	  if Gen.is_empty rest then
 		tmp
 	  else
 		let tmp1 = helper2 rest alist2 in
@@ -526,7 +526,18 @@ and e_apply_one (fr, t) e = match e with
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
   |a :: rest -> (e_apply_one (fr, t) a) :: (e_apply_one_list (fr, t) rest)
-	
+
+(* apply_one function for the formula_ext_measures of ext_variance_formula *)
+and e_apply_one_list_of_pair (fr, t) list_of_pair = match list_of_pair with
+  | [] -> []
+  | (expr, bound)::rest -> match bound with
+							| None -> ((e_apply_one (fr, t) expr), None)::(e_apply_one_list_of_pair (fr, t) rest)
+							| Some b_expr ->  ((e_apply_one (fr, t) expr), Some (e_apply_one (fr, t) b_expr))::(e_apply_one_list_of_pair (fr, t) rest)
+
+and subst_list_of_pair sst ls = match sst with
+  | [] -> ls
+  | s::rest -> subst_list_of_pair rest (e_apply_one_list_of_pair s ls)
+			 						
 
 and look_for_anonymous_exp_list (args : exp list) :
   (ident * primed) list =
@@ -588,7 +599,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   
 let merge_branches l1 l2 =
-  let branches = Util.remove_dups (fst (List.split l1) @ (fst (List.split l2))) in
+  let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in
   let map_fun branch =
     try 
       let l1 = List.assoc branch l1 in

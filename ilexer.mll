@@ -55,6 +55,7 @@
 	 ("head", HEAD);
      ("ho_pred",HPRED);
 	 ("if", IF);
+	 ("@I", IMM);
 	 ("implies",IMPLIES);
 	 ("import", IMPORT);
 	 ("in", IN);
@@ -75,7 +76,7 @@
 	 ("off", OFF);
 	 ("on", ON);
 	 ("or", ORWORD);
-   ("perm", PERM);
+     ("perm", PERM);
 	 ("dprint", PRINT);
 	 ("ref", REF);
      ("refines", REFINES);
@@ -91,17 +92,18 @@
 	 ("tail", TAIL);
 	 ("then", THEN);
 	 ("this", THIS "this");
-   ("time", DTIME);
+     ("time", DTIME);
 	 ("to", TO);
 	 ("true", TRUE);
 	 ("unfold", UNFOLD);
 	 ("union", UNION);
+	 ("variance", VARIANCE);
 	 ("view", VIEW);
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
      ("with", WITH);
-   ("global", GLOBAL);
+     ("global", GLOBAL);
 	 (*exception related*)
 	 (flow, FLOW flow);
 	 ("try", TRY);
@@ -127,6 +129,7 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
+  | "@I" {IMM}
   | '}' { CBRACE }
   | ':' { COLON }
   | "::" { COLONCOLON }
@@ -171,6 +174,7 @@ rule tokenizer file_name = parse
   | ';' { SEMICOLON }
   | '*' { STAR }
   | '/' { DIV }
+  | "==>" { ESCAPE }
   | intnum as numstr { LITERAL_INTEGER (int_of_string numstr) }
   | fnum as numstr { LITERAL_FLOAT (float_of_string numstr) }
   | alpha(alpha | digit)* as idstr 
