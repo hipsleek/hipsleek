@@ -47,7 +47,7 @@ let string_of_prim_type = function
   | Void          -> "void"
   | Bag           -> "multiset"
   | List          -> "list"
-;;
+
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None

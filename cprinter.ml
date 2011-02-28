@@ -21,9 +21,11 @@ let string_of_prim_type = function
 ;;
 
 (* pretty printing for types *)
+(* changing it may affect Omega prover whose var names 
+   may be based on types used !! *)
 let string_of_typ = function 
   | P.Prim t -> string_of_prim_type t 
-  | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot)
+  | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
 ;;
 
 (** the formatter that fmt- commands will use *)
