@@ -16,7 +16,7 @@ let bag_flag = ref false
 (* pretty printing for primitive types *)
 let isabelle_of_prim_type = function
   | Bool          -> "int"
-  | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. *)
+  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
   | Bag		  ->
@@ -255,8 +255,10 @@ and isabelle_of_formula f =
 
 (* checking the result given by Isabelle *)
 let rec check fd isabelle_file_name : bool=
+  let stk = new Gen.stack "" (fun x -> x^"\n") in
   try while true do
     let line = input_line fd in
+    stk#push line;
     if line = "No subgoals!" then raise Exit else ()
   done; false
   with Exit -> 
@@ -266,7 +268,8 @@ let rec check fd isabelle_file_name : bool=
     true
   | _ ->
 	  if !log_all_flag==true then
-		output_string log_file (" [isabelle.ml]: --> Error in file " ^ isabelle_file_name ^ "\n");
+		(output_string log_file (" [isabelle.ml]: --> Error in file " ^ isabelle_file_name ^ "\n");
+        stk#reverse ; print_string (stk#string_of));
 	  (*ignore (Sys.remove isabelle_file_name);	*)
 	  false
 ;;

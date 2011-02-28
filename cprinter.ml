@@ -21,6 +21,8 @@ let string_of_prim_type = function
 ;;
 
 (* pretty printing for types *)
+(* changing it may affect Omega prover whose var names 
+   may be based on types used !! *)
 let string_of_typ = function 
   | P.Prim t -> string_of_prim_type t 
   | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
@@ -598,8 +600,8 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = ("{"^(string_of_int i)^"}"^s2)
-let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^", "^s^"):"^s2)
+let string_of_formula_label (i,s) s2:string = ((string_of_int i)^s2)
+let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
@@ -981,7 +983,7 @@ let string_of_prior_steps pt =
   (String.concat "\n " (List.rev pt))
 
 
-let pr_path_trace  pt =
+let pr_path_trace  (pt:((int * 'a) * int) list) =
   pr_seq "" (fun (c1,c3)-> fmt_string "("; (pr_op_adhoc (fun () -> pr_formula_label c1)  "," (fun () -> fmt_int c3)); fmt_string ")") pt  
 let string_of_path_trace  (pt : path_trace) = poly_string_of_pr  pr_path_trace pt
 let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =  poly_printer_of_pr fmt pr_path_trace pt
@@ -1480,8 +1482,11 @@ let string_of_proc_decl p =
 	  else ("\nref " ^ (String.concat ", " (List.map string_of_spec_var p.proc_by_name_params)) ^ "\n"))
       ^ (match p.proc_body with 
         | Some e -> (string_of_exp e) ^ "\n\n"
-	    | None -> "\n") ^ locstr
+	    | None -> "") ^ locstr^"\n"
 ;; 
+
+let string_of_proc_decl i p =
+  Gen.Debug.no_1_num  i "string_of_proc_decl " (fun p -> p.proc_name) (fun x -> x) string_of_proc_decl p
 
 (* pretty printing for a list of data_decl *)
 let rec string_of_data_decl_list l = match l with 
@@ -1493,9 +1498,12 @@ let rec string_of_data_decl_list l = match l with
 (* pretty printing for a list of proc_decl *)
 let rec string_of_proc_decl_list l = match l with 
   | [] -> ""
-  | h::[] -> (string_of_proc_decl h) 
-  | h::t -> (string_of_proc_decl h) ^ "\n" ^ (string_of_proc_decl_list t)
+  | h::[] -> (string_of_proc_decl 1 h) 
+  | h::t -> (string_of_proc_decl 2 h) ^ "\n" ^ (string_of_proc_decl_list t)
 ;;
+
+let string_of_proc_decl_list l =
+  Gen.Debug.no_1 " string_of_proc_decl_list" (fun _ -> "?") (fun _ -> "?") string_of_proc_decl_list l
 
 (* pretty printing for a list of view_decl *)
 let rec string_of_view_decl_list l = match l with 

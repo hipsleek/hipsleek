@@ -2920,10 +2920,15 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
 		        in block_e))
 
 and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool =
+  Gen.Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_spec_var_type)  
+      Cprinter.string_of_struc_formula string_of_bool
+      case_coverage_x instant f
+
+and case_coverage_x (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool =
   let sat_subno  = ref 0 in
   let rec ext_case_coverage (instant:Cpure.spec_var list)(f1:Cformula.ext_formula):bool = match f1 with
     | Cformula.EAssume b ->  true
-    | Cformula.EBase b -> case_coverage (instant@
+    | Cformula.EBase b -> case_coverage_x (instant@
 		  (b.Cformula.formula_ext_explicit_inst)@
 		  (b.Cformula.formula_ext_implicit_inst)@
 		  (b.Cformula.formula_ext_exists)
@@ -2955,8 +2960,8 @@ and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool 
             Error.report_error {  Err.error_loc = b.Cformula.formula_case_pos;
             Err.error_text = "the guards are not disjoint : "^s^"\n";} in
 	      
-	      let _ = List.map (case_coverage instant) r2 in true
-	| Cformula.EVariance b -> case_coverage instant b.Cformula.formula_var_continuation
+	      let _ = List.map (case_coverage_x instant) r2 in true
+	| Cformula.EVariance b -> case_coverage_x instant b.Cformula.formula_var_continuation
   in
   let _ = List.map (ext_case_coverage instant) f in true
 

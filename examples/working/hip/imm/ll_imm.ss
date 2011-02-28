@@ -31,7 +31,7 @@ void append(node x, node y)
 //  requires x::ll<n1> * y::ll<n2>@I & n1>0 
 //  fails for requires x::ll<n1>@I * y::ll<n2>@I & n1>0 
 //  ensures x::ll<n1+n2>@I;
-  requires x::lseg<p,n>@I*p::node<v,null>
+  requires x::lseg<p,n>@I * p::node<v,null>
   ensures p::node<v,y>;
 {
 	if (x.next == null)
