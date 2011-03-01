@@ -23,7 +23,9 @@ node append_bll(node x, node y)
 
 {
         node xn; 
-        if (x==null) return x; /* segmentation BUG when returning null */
+        if (x==null) return x; /* segmentation BUG when returning null 
+           with cvc3, redlog and omega */
+        /* guard error with mona */
         /* correct answer is return y */
         else {
          xn = append_bll(x.next,y);
