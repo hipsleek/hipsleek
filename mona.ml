@@ -966,6 +966,17 @@ let maybe_restart_mona () : unit =
   let num_tasks = !test_number - !last_test_number in
   if num_tasks >=(!mona_cycle) then restart_mona "upper limit reached"
 
+let prepare_formula_for_mona (f: CP.formula) (break_presp: bool) (test_no: int): CP.spec_var list * CP.formula =
+  let simp_f = CP.arith_simplify 8 f in
+  let simp_f = (break_presburger simp_f break_presp) in
+  let f_fv = CP.fv simp_f in
+  let rename_spec_vars_fnct sv = 
+    let new_name = ((CP.name_of_spec_var sv)^"_r"^(string_of_int test_no)) in
+    CP.SpecVar (CP.type_of_spec_var sv, new_name, if CP.is_primed sv then Primed else Unprimed) in
+  let renamed_f_fv = List.map rename_spec_vars_fnct f_fv in
+  let renamed_f = CP.subst_avoid_capture f_fv renamed_f_fv simp_f in
+  (renamed_f_fv, renamed_f)
+
 let rec imply_helper timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = begin
   mona_file_number.contents <- !mona_file_number + 1;
   first_order_vars := [];
@@ -973,32 +984,26 @@ let rec imply_helper timeout (ante : CP.formula) (conseq : CP.formula) (imp_no :
   incr test_number;
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
-  
-  let ante = CP.arith_simplify 8 ante in
-  let conseq = CP.arith_simplify 9 conseq in
-  let simp_ante = (break_presburger ante true) in
-  let simp_conseq = (break_presburger conseq false) in
-  let ante_fv = CP.fv simp_ante in
-  let conseq_fv = CP.fv simp_conseq in
-  let tmp_form = CP.mkOr (CP.mkNot simp_ante None no_pos) simp_conseq None no_pos in
+  let (ante_fv, ante) = prepare_formula_for_mona ante true !test_number in
+  let (conseq_fv, conseq) = prepare_formula_for_mona conseq false !test_number in
+  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let all_fv = CP.remove_dups_svl (ante_fv @ conseq_fv) in
   let vs = Hashtbl.create 10 in
-
   let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem tmp_form (CP.Var(sv, no_pos)) vs)) all_fv) in
   let first_order_var_decls =
     if Gen.is_empty part1 then ""
-    else "all1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) in
+    else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ "; " in
   let second_order_var_decls =
     if Gen.is_empty part2 then ""
-    else "all2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) in
-  try 
+    else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) ^ "; "in
+  try
       begin
           let cmd_to_send = ref "" in
           cmd_to_send := mona_of_formula tmp_form tmp_form vs;
-          if not (Gen.is_empty part1) then
-            cmd_to_send := " ( " ^ first_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
           if not (Gen.is_empty part2) then
-            cmd_to_send := " ( " ^ second_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
+            cmd_to_send := second_order_var_decls ^ (!cmd_to_send) ;
+          if not (Gen.is_empty part1) then
+            cmd_to_send := first_order_var_decls  ^ (!cmd_to_send) ;
           cmd_to_send := !cmd_to_send ^ ";\n";
           (* print_string ("imply send cmd:  " ^ !cmd_to_send); flush stdout; *)
           (* print_string ("imply:  " ^ imp_no); flush stdout; *)
@@ -1013,14 +1018,14 @@ let rec imply_helper timeout (ante : CP.formula) (conseq : CP.formula) (imp_no :
             restart_mona ("Timeout when checking #imply " ^ imp_no ^ "!");
             false
 		end
-    | exc -> 
+    | exc ->
         print_string ("\n[mona.ml]:Unexpected exception sat\n"); flush stdout;
         stop_mona (); raise exc
         (* restart_mona ("\nBuffer Overflow detected\n");  *)
         (* imply_helper timeout ante conseq imp_no  *)
 end
 
-let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool = 
+let imply timeout (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if not !is_mona_running then
         start_mona();
   (* let _ = make_initial_declarations timeout in *)
@@ -1033,27 +1038,24 @@ let rec is_sat_helper timeout (f: CP.formula) (sat_no: string): bool = begin
     first_order_vars := [];
     second_order_vars := [];
     incr test_number;
-    let f = CP.arith_simplify 16 f in
-    let simp_f = (break_presburger f true) in
-    let new_f = simp_f in
-    let f_fv = CP.fv simp_f in
+    let (f_fv, f) = prepare_formula_for_mona f true !test_number in
     let all_fv = CP.remove_dups_svl f_fv in
     let vs = Hashtbl.create 10 in
-    let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem simp_f (CP.Var(sv, no_pos)) vs)) all_fv) in
+    let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem f (CP.Var(sv, no_pos)) vs)) all_fv) in
     let first_order_var_decls =
       if Gen.is_empty part1 then ""
-      else "ex1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) in
+      else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1))^"; " in
     let second_order_var_decls =
       if Gen.is_empty part2 then ""
-      else "ex2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) in
+      else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var part2))^"; " in
     try 
         begin
             let cmd_to_send = ref "" in
-            cmd_to_send := mona_of_formula simp_f simp_f vs;
-            if not (Gen.is_empty part1) then
-              cmd_to_send := " ( " ^ first_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
+            cmd_to_send := mona_of_formula f f vs;
             if not (Gen.is_empty part2) then
-              cmd_to_send := " ( " ^ second_order_var_decls ^ " : " ^ (!cmd_to_send) ^ " ) ";
+              cmd_to_send := second_order_var_decls ^ (!cmd_to_send);
+            if not (Gen.is_empty part1) then
+              cmd_to_send := first_order_var_decls ^ (!cmd_to_send);
             cmd_to_send := !cmd_to_send ^ ";\n";
             (* print_string ("sat send cmd:  " ^ !cmd_to_send); flush stdout; *)
             (* print_string ("sat send:  " ^ sat_no); flush stdout; *)
@@ -1065,7 +1067,7 @@ let rec is_sat_helper timeout (f: CP.formula) (sat_no: string): bool = begin
       |Timeout ->
 	      begin
               print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
-              restart_mona ("Timeout when checking #imply " ^ sat_no ^ "!");
+              restart_mona ("Timeout when checking #imply from sat" ^ sat_no ^ "!");
               true;
 		  end
       | exc -> 
@@ -1082,7 +1084,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if not !is_mona_running then
         start_mona();
   sat_optimize := true;
-  let tmp_form = (is_sat_helper !Globals.sat_timeout f  ("from sat#" ^ sat_no)) in
+  let tmp_form = (is_sat_helper !Globals.sat_timeout f  sat_no) in
   (* let _ = stop_mona () in *)
   sat_optimize := false;
   tmp_form
