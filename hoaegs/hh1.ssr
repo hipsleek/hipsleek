@@ -1,0 +1,240 @@
+
+Processing file "hoahipex1.ss"
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+ done
+Procedure f_r_177_hoahipex1_ss_26_1$int~int~int~int[]:
+void f_r_177_hoahipex1_ss_26_1$int~int~int~int[](  int k_38,  int j,  int i,  int[] a)
+static  EBase true & i<=k_38 & k_38<=(1+j) & zeros(,a,i,k_38 - 1) &
+       {FLOW,(16,17)=__norm,}
+         EAssume ref [k_38;j;i;a]
+           true & k_38'=1+j & zeros(,a',i,k_38' - 1) & {FLOW,(16,17)=__norm,}
+dynamic  
+
+ref k_38, j, i, a
+{
+boolean v_bool_26_185;
+v_bool_26_185 = {
+lte___$int~int(k_38,j)
+};
+if (v_bool_26_185) {
+a = {
+int v_int_30_183;
+v_int_30_183 = 0;
+update___$int[]~int~int(a,k_38,v_int_30_183)
+};
+k_38 = {
+int v_int_31_184;
+v_int_31_184 = 1;
+add___$int~int(k_38,v_int_31_184)
+};
+{
+f_r_177_hoahipex1_ss_26_1$int~int~int~int[](k_38,j,i,a)
+}
+}
+else 
+
+}
+
+{(26,1),(32,2)}
+
+Checking procedure f_r_177_hoahipex1_ss_26_1$int~int~int~int[]... ==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unsat
+==> SMT output : unknown
+
+procedure call:hoahipex1.ss:26: 1: Proving precondition in method f_r_177_hoahipex1_ss_26_1$int~int~int~int[] for spec:
+ EBase true & i'<=k_38' & k_38'<=(1+j') & zeros(,a',i',k_38' - 1) &
+       {FLOW,(16,17)=__norm,}
+         EAssume ref [k_38;j;i;a]
+           true & k_38'=1+j & zeros(,a',i,k_38' - 1) & {FLOW,(16,17)=__norm,} has failed 
+
+==> SMT output : unsat
+==> SMT output : unsat
+
+File "hoahipex1.ss", line 28, col 10: Post condition  true & k_38'=1+j & zeros(,a',i,k_38' - 1) & {FLOW,(16,17)=__norm,} cannot be derived by the system.
+ By :  List of Partial Context: [(1, 1  [(,1 )])]
+Failed States:
+[Label: [(,0 )]
+ State:{fc_prior_steps: para OR on conseq
+ case rule
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+        fc_message: failed in entailing pure formula(s) in conseq
+        fc_current_lhs: 
+         es_formula: 
+          true & j'=j & i'=i & i<=k_38 & k_38<=(1+j) & zeros(,a,i,k_38 -
+          1) & k_38<=j' & v_bool_26_185' & k_38<=j' & v_bool_26_185' & 
+          update_array(,a,k_38,0,a') & k_38'=1+k_38 & {FLOW,(16,17)=__norm,}
+         es_pure: true
+         es_orig_conseq: EBase true & true & {FLOW,(16,29)=__flow,}
+         es_heap: true
+         es_path_label: [(,23 ); (,80 ); (,58 ); (,-1 )]
+         es_var_label: 0
+        fc_orig_conseq: 
+         EBase true & i'<=k_38' & k_38'<=(1+j') & zeros(,a',i',k_38' - 1) &
+               {FLOW,(16,29)=__flow,}
+        fc_failure_pts: []}]
+Successful States:
+[Label: [(,1 )]
+ State:es_formula: 
+        true & k_38'=k_38 & j'=j & i'=i & a'=a & i<=k_38 & k_38<=(1+j) & 
+        zeros(,a,i,k_38 - 1) & j'<k_38' & !v_bool_26_185' & j'<k_38' & 
+        !v_bool_26_185' & {FLOW,(16,17)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(16,29)=__flow,}
+       es_heap: true
+       es_path_label: [(,59 ); (,-1 )]
+       es_var_label: 0]
+ fail ctx:  List of Partial Context: [(1, 1  [(,1 )])]
+Failed States:
+[Label: [(,0 )]
+ State:{fc_prior_steps: para OR on conseq
+ case rule
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+        fc_message: failed in entailing pure formula(s) in conseq
+        fc_current_lhs: 
+         es_formula: 
+          true & j'=j & i'=i & i<=k_38 & k_38<=(1+j) & zeros(,a,i,k_38 -
+          1) & k_38<=j' & v_bool_26_185' & k_38<=j' & v_bool_26_185' & 
+          update_array(,a,k_38,0,a') & k_38'=1+k_38 & {FLOW,(16,17)=__norm,}
+         es_pure: true
+         es_orig_conseq: EBase true & true & {FLOW,(16,29)=__flow,}
+         es_heap: true
+         es_path_label: [(,23 ); (,80 ); (,58 ); (,-1 )]
+         es_var_label: 0
+        fc_orig_conseq: 
+         EBase true & i'<=k_38' & k_38'<=(1+j') & zeros(,a',i',k_38' - 1) &
+               {FLOW,(16,29)=__flow,}
+        fc_failure_pts: []}]
+Successful States:
+[Label: [(,1 )]
+ State:es_formula: 
+        true & k_38'=k_38 & j'=j & i'=i & a'=a & i<=k_38 & k_38<=(1+j) & 
+        zeros(,a,i,k_38 - 1) & j'<k_38' & !v_bool_26_185' & j'<k_38' & 
+        !v_bool_26_185' & {FLOW,(16,17)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(16,29)=__flow,}
+       es_heap: true
+       es_path_label: [(,59 ); (,-1 )]
+       es_var_label: 0]
+
+Procedure f_r_177_hoahipex1_ss_26_1$int~int~int~int[] FAIL
+
+Error(s) detected when checking procedure f_r_177_hoahipex1_ss_26_1$int~int~int~int[]
+Procedure initloop$int[]~int~int:
+void initloop$int[]~int~int(  int[] a,  int i,  int j)
+static  EBase true & 0<=i & 0<=j & i<=j & {FLOW,(16,17)=__norm,}
+         EAssume ref [a]
+           true & zeros(,a',i,j) & {FLOW,(16,17)=__norm,}
+dynamic  
+
+ref a
+int k_38;
+k_38 = i;
+{
+f_r_177_hoahipex1_ss_26_1$int~int~int~int[](k_38,j,i,a)
+}
+
+{(21,0),(33,1)}
+
+Checking procedure initloop$int[]~int~int... ==> SMT output : sat
+==> SMT output : unsat
+==> SMT output : unsat
+==> SMT output : unsat
+==> SMT output : unknown
+==> SMT output : unsat
+
+Procedure initloop$int[]~int~int SUCCESS
+Procedure initright$int[]~int~int:
+void initright$int[]~int~int(  int[] a,  int i,  int j)
+static  EBase true & true & {FLOW,(16,17)=__norm,}
+         EAssume ref [a]
+           true & identicalzeroes(,a',a,i,j) & {FLOW,(16,17)=__norm,}
+dynamic  
+
+ref a
+boolean v_bool_14_193;
+v_bool_14_193 = {
+lte___$int~int(i,j)
+};
+if (v_bool_14_193) LABEL! 16,0: a = {
+int v_int_16_190;
+v_int_16_190 = 0;
+update___$int[]~int~int(a,i,v_int_16_190)
+};
+{
+int v_int_17_192;
+v_int_17_192 = {
+int v_int_17_191;
+v_int_17_191 = 1;
+add___$int~int(i,v_int_17_191)
+};
+initright$int[]~int~int(a,v_int_17_192,j) rec
+}
+else LABEL! 16,1: 
+
+
+{(10,0),(19,1)}
+
+Checking procedure initright$int[]~int~int... ==> SMT output : sat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : unsat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : unsat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unsat
+
+Procedure initright$int[]~int~int SUCCESS
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.86 second(s)
+	Time spent in main process: 0.24 second(s)
+	Time spent in child processes: 0.62 second(s)
+Counters: 
+ false_imply_count = 2
+impl_cache_count = 12
+impl_conseq_count = 11
+impl_proof_count = 11
+sat_cache_count = 25
+sat_proof_count = 25
+stat_countimply = 12
+stat_countsat = 25
+stat_disj_countimply = 24
+stat_disj_countsat = 25
+stat_size_countimply = 115
+stat_size_countsat = 206
+true_imply_count = 10
+z_stat_disj_imply = 12
+z_stat_disj_sat = 25

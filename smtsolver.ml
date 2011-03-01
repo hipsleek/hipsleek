@@ -31,7 +31,7 @@ type relation_definition =
  *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let print_input = ref true
+let print_input = ref false(*true*)
 
 (**
  * @author An Hoa

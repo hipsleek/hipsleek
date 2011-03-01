@@ -1,0 +1,102 @@
+
+Processing file "hoahipex2.ss"
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+ done
+Procedure max_value_of_array$int[]~int~int:
+int max_value_of_array$int[]~int~int(  int[] a,  int i,  int j)
+static  EBase true & i<=j & {FLOW,(13,14)=__norm,}
+         EAssume 
+           true & upperbnd(,a,i,j,res) & {FLOW,(13,14)=__norm,}
+dynamic  
+boolean v_bool_32_179;
+v_bool_32_179 = {
+eq___$int~int(i,j)
+};
+if (v_bool_32_179) LABEL! 5,0: int v_int_33_172;
+v_int_33_172 = {
+array_get_elm_at___$int[]~int(a,i)
+};
+return v_int_33_172
+else LABEL! 5,1: int m_35;
+m_35 = {
+int v_int_35_174;
+v_int_35_174 = {
+int v_int_35_173;
+v_int_35_173 = 1;
+add___$int~int(i,v_int_35_173)
+};
+max_value_of_array$int[]~int~int(a,v_int_35_174,j) rec
+};
+boolean v_bool_36_178;
+v_bool_36_178 = {
+int v_int_36_175;
+v_int_36_175 = {
+array_get_elm_at___$int[]~int(a,i)
+};
+gt___$int~int(m_35,v_int_36_175)
+};
+if (v_bool_36_178) LABEL! 8,0: int v_int_37_176;
+v_int_37_176 = m_35;
+return v_int_37_176
+else LABEL! 8,1: int v_int_39_177;
+v_int_39_177 = {
+array_get_elm_at___$int[]~int(a,i)
+};
+return v_int_39_177
+
+
+
+{(28,0),(41,1)}
+
+Checking procedure max_value_of_array$int[]~int~int... ==> SMT output : sat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : unsat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : unsat
+==> SMT output : sat
+==> SMT output : sat
+==> SMT output : unsat
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unknown
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unknown
+==> SMT output : unsat
+==> SMT output : unsat
+==> SMT output : unsat
+
+Procedure max_value_of_array$int[]~int~int SUCCESS
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.6 second(s)
+	Time spent in main process: 0.18 second(s)
+	Time spent in child processes: 0.42 second(s)
+Counters: 
+ impl_cache_count = 4
+impl_conseq_count = 4
+impl_proof_count = 4
+sat_cache_count = 22
+sat_proof_count = 22
+stat_countimply = 4
+stat_countsat = 22
+stat_disj_countimply = 8
+stat_disj_countsat = 22
+stat_size_countimply = 44
+stat_size_countsat = 213
+true_imply_count = 4
+z_stat_disj_imply = 4
+z_stat_disj_sat = 22

@@ -1,0 +1,19 @@
+/**
+ Example: sum of elements of an array.
+ **/
+
+relation sumarray(int[] a, int i, int j, int s) == 
+      (i > j & s = 0 
+      | i <= j & exists(t:sumarray(a,i+1,j,t) & s = t + a[i])).
+
+int sigma(int[] a, int i, int j) 
+	requires true
+	ensures sumarray(a, i, j, res);
+{
+	int r;
+	if (i > j)
+		r = 0;
+	else 
+		r = a[i] + sigma(a, i+1, j);
+	return r;
+}

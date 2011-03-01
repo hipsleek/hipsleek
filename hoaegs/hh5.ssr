@@ -1,0 +1,225 @@
+
+Processing file "hoahipex5.ss"
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+ done
+Procedure reduction$int:
+void reduction$int(  int n)
+static  EBase true & 0<=n & {FLOW,(12,13)=__norm,}
+         EAssume ref [n]
+           true & n'=0 & {FLOW,(12,13)=__norm,}
+dynamic  
+
+ref n
+int k_34;
+k_34 = n;
+int t_35;
+t_35 = n;
+k_34 = {
+int v_int_13_163;
+v_int_13_163 = 1;
+add___$int~int(k_34,v_int_13_163)
+};
+k_34 = {
+int v_int_14_164;
+v_int_14_164 = 2;
+mult___$int~int(v_int_14_164,k_34)
+};
+k_34 = {
+int v_int_15_165;
+v_int_15_165 = 4;
+mult___$int~int(v_int_15_165,k_34)
+};
+t_35 = {
+add___$int~int(t_35,k_34)
+};
+t_35 = {
+int v_int_17_167;
+v_int_17_167 = {
+int v_int_17_166;
+v_int_17_166 = 2;
+mult___$int~int(v_int_17_166,n)
+};
+add___$int~int(t_35,v_int_17_167)
+};
+n = {
+int v_int_18_168;
+v_int_18_168 = {
+add___$int~int(n,k_34)
+};
+add___$int~int(v_int_18_168,t_35)
+}
+
+{(7,0),(23,1)}
+
+Checking procedure reduction$int... Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun n () Int)
+(assert (<= 0 n))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun res () Int)
+(declare-fun n () Int)
+(assert (and (<= 0 n) (= res (+ 1 n))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun n () Int)
+(declare-fun res () Int)
+(declare-fun k_34' () Int)
+(assert (and (and (<= 0 n) (= k_34' (+ 1 n))) (= res ( * 2 k_34'))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun n () Int)
+(declare-fun res () Int)
+(declare-fun k_34' () Int)
+(assert (and (and (<= 0 n) (= k_34' ( * 2 (+ 1 n)))) (= res ( * 4 k_34'))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun res () Int)
+(declare-fun k_34' () Int)
+(declare-fun n () Int)
+(assert (and (and (<= 0 n) (= k_34' ( * 4 ( * 2 (+ 1 n))))) (= res (+ k_34' n))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun t_35' () Int)
+(declare-fun k_34' () Int)
+(declare-fun res () Int)
+(declare-fun n () Int)
+(assert (and (and (and (<= 0 n) (= k_34' ( * 4 ( * 2 (+ 1 n))))) (= t_35' (+ k_34' n))) (= res ( * 2 n))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun k_34' () Int)
+(declare-fun n () Int)
+(declare-fun res () Int)
+(declare-fun v_int_17_167' () Int)
+(declare-fun t_35' () Int)
+(assert (and (and (and (and (<= 0 n) (= k_34' ( * 4 ( * 2 (+ 1 n))))) (= t_35' (+ k_34' n))) (= v_int_17_167' ( * 2 n))) (= res (+ v_int_17_167' t_35'))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun t_35' () Int)
+(declare-fun res () Int)
+(declare-fun k_34' () Int)
+(declare-fun n () Int)
+(assert (and (and (and (<= 0 n) (= k_34' ( * 4 ( * 2 (+ 1 n))))) (= t_35' (+ ( * 2 n) (+ k_34' n)))) (= res (+ k_34' n))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun k_34' () Int)
+(declare-fun n () Int)
+(declare-fun res () Int)
+(declare-fun t_35' () Int)
+(declare-fun v_int_18_168' () Int)
+(assert (and (and (and (and (<= 0 n) (= k_34' ( * 4 ( * 2 (+ 1 n))))) (= t_35' (+ ( * 2 n) (+ k_34' n)))) (= v_int_18_168' (+ k_34' n))) (= res (+ t_35' v_int_18_168'))))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun t_35' () Int)
+(declare-fun k_34' () Int)
+(declare-fun n () Int)
+(declare-fun n' () Int)
+(assert (and (and (and (<= 0 n) (= k_34' ( * 4 ( * 2 (+ 1 n))))) (= t_35' (+ ( * 2 n) (+ k_34' n)))) (= n' (+ t_35' (+ k_34' n)))))
+(assert (not (= n' 0)))
+(check-sat)
+==> SMT output : sat
+
+File "hoahipex5.ss", line 9, col 9: Post condition  true & n'=0 & {FLOW,(12,13)=__norm,} cannot be derived by the system.
+ By :  List of Partial Context: [(0, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: 
+        true & 0<=n & k_34'=4*2*(1+n) & t_35'=(2*n)+k_34'+n & n'=t_35'+k_34'+
+        n & {FLOW,(12,13)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+       es_heap: true
+       es_path_label: [(,30 ); (,30 ); (,30 ); (,32 ); (,30 ); (,32 ); (,32
+                      ); (,30 ); (,-1 )]
+       es_var_label: 0]
+ fail ctx:  List of Partial Context: [(1, 0 )]
+Failed States:
+[Label: []
+ State:{fc_prior_steps: para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+ para OR on conseq
+        fc_message: failed in entailing pure formula(s) in conseq
+        fc_current_lhs: 
+         es_formula: 
+          true & 0<=n & k_34'=4*2*(1+n) & t_35'=(2*n)+k_34'+n & n'=t_35'+
+          k_34'+n & {FLOW,(12,13)=__norm,}
+         es_pure: true
+         es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+         es_heap: true
+         es_path_label: [(,30 ); (,30 ); (,30 ); (,32 ); (,30 ); (,32 ); (,32
+                        ); (,30 ); (,-1 )]
+         es_var_label: 0
+        fc_orig_conseq: EBase true & n'=0 & {FLOW,(12,25)=__flow,}
+        fc_failure_pts: []}]
+Successful States:
+[]
+
+Procedure reduction$int FAIL
+
+Error(s) detected when checking procedure reduction$int
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.24 second(s)
+	Time spent in main process: 0.13 second(s)
+	Time spent in child processes: 0.11 second(s)
+Counters: 
+ false_imply_count = 2
+impl_cache_count = 2
+impl_conseq_count = 1
+impl_proof_count = 1
+sat_cache_count = 9
+sat_proof_count = 9
+stat_countimply = 2
+stat_countsat = 9
+stat_disj_countimply = 4
+stat_disj_countsat = 9
+stat_size_countimply = 10
+stat_size_countsat = 48
+z_stat_disj_imply = 2
+z_stat_disj_sat = 9

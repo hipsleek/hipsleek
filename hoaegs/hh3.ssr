@@ -1,0 +1,88 @@
+
+Processing file "hoahipex3.ss"
+Parsing...
+Starting Omega... 
+Translating global variables to procedure parameters...
+Translating to core language...
+ done
+Procedure insertion_sort$int[]~int:
+void insertion_sort$int[]~int(  int[] a,  int n)
+static  EBase true & true & {FLOW,(12,13)=__norm,}
+         EAssume 
+           true & sorted(,a,0,n - 1) & {FLOW,(12,13)=__norm,}
+dynamic  
+
+
+{(7,0),(11,1)}
+
+Checking procedure insertion_sort$int[]~int... Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun n () Int)
+(assert (= n n))
+(assert (not false))
+(check-sat)
+==> SMT output : sat
+Generated SMT input :
+(set-logic AUFNIA)
+(declare-fun a () (Array Int Int))
+(declare-fun n () Int)
+(declare-fun sorted ((Array Int Int) Int Int) Bool)
+(assert (forall (a (Array Int Int)) (i Int) (j Int) (= (sorted a i j) (or (>= i j) (and (and (< i j) (< (select a i) (select a (+ i 1)))) (sorted a (+ i 1) j))))))
+(assert true)
+(assert (not (sorted a 0 (- n 1))))
+(check-sat)
+==> SMT output : unknown
+
+File "hoahipex3.ss", line 9, col 9: Post condition  true & sorted(,a,0,n - 1) & {FLOW,(12,13)=__norm,} cannot be derived by the system.
+ By :  List of Partial Context: [(0, 1  [])]
+Failed States:
+[]
+Successful States:
+[Label: []
+ State:es_formula: true & true & {FLOW,(12,13)=__norm,}
+       es_pure: true
+       es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+       es_heap: true
+       es_path_label: [(,-1 )]
+       es_var_label: 0]
+ fail ctx:  List of Partial Context: [(1, 0 )]
+Failed States:
+[Label: []
+ State:{
+        fc_message: failed in entailing pure formula(s) in conseq
+        fc_current_lhs: 
+         es_formula: true & true & {FLOW,(12,13)=__norm,}
+         es_pure: true
+         es_orig_conseq: EBase true & true & {FLOW,(12,25)=__flow,}
+         es_heap: true
+         es_path_label: [(,-1 )]
+         es_var_label: 0
+        fc_orig_conseq: EBase true & sorted(,a,0,n - 1) & {FLOW,(12,25)=__flow,}
+        fc_failure_pts: []}]
+Successful States:
+[]
+
+Procedure insertion_sort$int[]~int FAIL
+
+Error(s) detected when checking procedure insertion_sort$int[]~int
+Stop Omega... 0 invocations 
+0 false contexts at: ()
+
+Total verification time: 0.1 second(s)
+	Time spent in main process: 0.05 second(s)
+	Time spent in child processes: 0.05 second(s)
+Counters: 
+ false_imply_count = 2
+impl_cache_count = 2
+impl_conseq_count = 1
+impl_proof_count = 1
+sat_cache_count = 1
+sat_proof_count = 1
+stat_countimply = 2
+stat_countsat = 1
+stat_disj_countimply = 4
+stat_disj_countsat = 1
+stat_size_countimply = 4
+stat_size_countsat = 2
+z_stat_disj_imply = 2
+z_stat_disj_sat = 1

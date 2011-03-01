@@ -1018,6 +1018,10 @@ unary_cexp
   | LENGTH OPAREN cexp CPAREN {
 	  P.ListLength ($3, get_pos 1)
 	}
+  /* An Hoa : array */
+  | cid OSQUARE cexp CSQUARE {
+    P.ArrayAt ($1, $3, get_pos 1)
+  }
 ;
 
 opt_cexp_list
