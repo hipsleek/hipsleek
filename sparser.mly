@@ -721,6 +721,10 @@ simple_pure_constr
   | NOT cid {
 	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None )) None (get_pos 1)
 	}
+	/* An Hoa: add negation of a formula which is essential */
+	| NOT OPAREN pure_constr CPAREN {
+		P.mkNot $3 None (get_pos 1)
+	} 
 ;
 
 lbconstr

@@ -1194,7 +1194,7 @@ and e_apply_subs sst e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_subs sst a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_subs sst a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_subs sst a, pos)
-	| ArrayAt (a, i, pos) -> ArrayAt (a, e_apply_subs sst i, pos) (* An Hoa *)
+	| ArrayAt (a, i, pos) -> ArrayAt (subs_one sst a, e_apply_subs sst i, pos) (* An Hoa : bug detected, replace a by subone sst a*)
 
 and e_apply_subs_list sst alist = List.map (e_apply_subs sst) alist
 
@@ -1281,7 +1281,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a, pos) -> ListTail (e_apply_one (fr, t) a, pos)
   | ListLength (a, pos) -> ListLength (e_apply_one (fr, t) a, pos)
   | ListReverse (a, pos) -> ListReverse (e_apply_one (fr, t) a, pos)
-	| ArrayAt (a, i, pos) -> ArrayAt (a, e_apply_one (fr, t) i, pos) (* An Hoa CHECK *)
+	| ArrayAt (a, i, pos) -> ArrayAt ((if eq_spec_var a fr then t else a), e_apply_one (fr, t) i, pos) (* An Hoa CHECK: BUG DETECTED must compare fr and a, in case we want to replace a[i] by a'[i] *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -1396,7 +1396,11 @@ and a_apply_par_term (sst : (spec_var * exp) list) e = match e with
   | ListTail (a1, pos) -> ListTail (a_apply_par_term sst a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_par_term sst a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_par_term sst a1, pos)
-	| ArrayAt (a, i, pos) -> ArrayAt (a, a_apply_par_term sst i, pos) (* An Hoa : CHECK *) 
+	| ArrayAt (a, i, pos) -> (* An Hoa : CHECK BUG DETECTED - substitute a as well *)
+		let a1 = subs_one_term sst a (Var (a,pos)) in
+		(match a1 with
+			| Var (a2,_) -> ArrayAt (a2, a_apply_par_term sst i, pos) 
+			| _ -> failwith "Cannot substitute an array variable by a non variable!\n")  
 
 and a_apply_par_term_list sst alist = match alist with
   |[] -> []
@@ -1462,7 +1466,13 @@ and a_apply_one_term ((fr, t) : (spec_var * exp)) e = match e with
   | ListTail (a1, pos) -> ListTail (a_apply_one_term (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (a_apply_one_term (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (a_apply_one_term (fr, t) a1, pos)
-	| ArrayAt (a, i, pos) -> ArrayAt (a, a_apply_one_term (fr, t) i, pos) (* An Hoa *) 
+	| ArrayAt (a, i, pos) -> 
+		let a1 = if eq_spec_var a fr then 
+			(match t with
+				| Var (a2, _) -> a2
+				| _ -> failwith "Cannot apply a non-variable term to an array variable.")
+				else a in
+		ArrayAt (a1, a_apply_one_term (fr, t) i, pos) (* An Hoa *) 
 
 
 and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*exp) = 
@@ -1539,7 +1549,7 @@ and a_apply_one_term_selective variance ((fr, t) : (spec_var * exp)) e : (bool*e
     | ListReverse (a1, pos) -> 
           let b1,r1 = (helper crt_var a1) in
           (b1,ListReverse (r1, pos))
-		| ArrayAt (a, i, pos) -> (* An Hoa *)
+		| ArrayAt (a, i, pos) -> (* An Hoa CHECK THIS! *)
 					let b1,i1 = (helper crt_var i) in
           (b1,ArrayAt (a, i1, pos)) in
   (helper true e)
@@ -2309,7 +2319,11 @@ and e_apply_one_exp (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one_exp (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one_exp (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one_exp (fr, t) a1, pos)
-	| ArrayAt (a, i, pos) -> ArrayAt (a, e_apply_one_exp (fr, t) i, pos) (* An Hoa *)
+	| ArrayAt (a, i, pos) -> 
+            let a1 = if eq_spec_var a fr then (match t with 
+               | Var (s,_) -> s
+               | _ -> failwith "Can only substitute array variable by array variable\n")  else a in
+              ArrayAt (a1, e_apply_one_exp (fr, t) i, pos) (* An Hoa : BUG DETECTED *)
 
 and e_apply_one_list_exp (fr, t) alist = match alist with
 	|[] -> []

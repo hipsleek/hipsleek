@@ -228,6 +228,10 @@ and exp_var = { exp_var_type : P.typ;
 		exp_var_name : ident;
 		exp_var_pos : loc }
 
+(* An Hoa : Empty array - only for initialization purpose *)		
+and exp_emparray = { exp_emparray_type : P.typ;
+		exp_emparray_pos : loc }
+
 and exp_var_decl = { exp_var_decl_type : P.typ;
 		     exp_var_decl_name : ident;
 		     exp_var_decl_pos : loc }
@@ -284,6 +288,7 @@ and exp = (* expressions keep their types *)
   | IConst of exp_iconst
   | New of exp_new
   | Null of loc
+	| EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
   | Print of (int * loc)
       (* | Return of exp_return*)
   | SCall of exp_scall
@@ -339,6 +344,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | IConst _
 	          | New _
 	          | Null _
+						| EmptyArray _ (* An Hoa *)
 	          | Print _
 	          | SCall _
 	          | This _
@@ -538,6 +544,7 @@ let rec type_of_exp (e : exp) = match e with
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (P.OType c) (*---- ok? *)
   | Null _ -> Some (P.OType "")
+	| EmptyArray b -> Some (P.Array b.exp_emparray_type) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
 			 exp_return_val = _; 
@@ -731,6 +738,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | IConst _ -> []
   | New _ -> []
   | Null _ -> []
+	| EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
   | Print _ -> []
   | Sharp b -> []
   | SCall ({exp_scall_type = _;
@@ -966,6 +974,7 @@ and exp_to_check (e:exp) :bool = match e with
   | This _
   | Var _
   | Null _
+	| EmptyArray _ (* An Hoa : NO IDEA *)
   | New _
   | Sharp _
   | SCall _
@@ -996,6 +1005,7 @@ let rec pos_of_exp (e:exp) :loc = match e with
   | Time (_,_,p)-> p
   | Var b -> b.exp_var_pos
   | Null b -> b
+	| EmptyArray b -> b.exp_emparray_pos (* An Hoa *)
   | Cond b -> b.exp_cond_pos
   | Block b -> b.exp_block_pos
   | Java b  -> b.exp_java_pos

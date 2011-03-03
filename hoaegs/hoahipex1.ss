@@ -32,13 +32,13 @@ void initloop(ref int[] a, int i, int j)
 	}
 }
 
-/* void init_left(int[] a, int i, int j) 
-	requires 0 <= i & 0 <= j
-	ensures zeros(a, i, j);
+void initleft(ref int[] a, int i, int j) 
+	requires true
+	ensures identicalzeroes(a',a,i,j);
 {
-	a[j] = 0;
-	if (1 <= j && i < j)
+       	if (i <= j)
 	{
-		init_left(a, i, j-1);
+         a[j] = 0;
+		initleft(a, i, j-1);
 	}
-} */
+}

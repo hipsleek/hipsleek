@@ -1400,6 +1400,7 @@ let rec string_of_exp = function
 	  exp_new_pos = l}) -> 
       "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
+	| EmptyArray b -> "Empty Array" (* An Hoa *)
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
 	    exp_sharp_val = eo;

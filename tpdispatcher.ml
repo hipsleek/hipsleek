@@ -677,6 +677,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
+  let _ = print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   match !tp with
     | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
     | CvcLite -> Cvclite.imply ante conseq

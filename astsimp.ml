@@ -582,6 +582,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
   | C.Java _ -> e
   | C.New _ -> e
   | C.Null _ -> e
+	| C.EmptyArray _ -> e (* An Hoa *)
   | C.Sharp _ -> e
   | C.Seq b -> if (!seq_to_try) then 
 					  C.Try ({	C.exp_try_type = b.C.exp_seq_type;
@@ -2748,8 +2749,9 @@ and default_value (t : CP.typ) pos : C.exp =
     | CP.Prim List ->
           failwith "default_value: list can only be used for constraints"
     | CP.OType c -> C.Null pos
-		| CP.Array t -> (* An Hoa : TODO add empty array *)
-					failwith "default_value: array cannot be used here!"
+		| CP.Array t -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
+									(* An Hoa : TODO add empty array *)
+									(* failwith "default_value: array cannot be used here!"*)
 
 and sub_type (t1 : CP.typ) (t2 : CP.typ) =
   let it1 = trans_type_back t1 in
@@ -3193,7 +3195,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
   let cfvhp1 = List.map (fun c-> trans_var (c,Primed) stab (Iformula.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun c-> trans_var (c,Unprimed) stab (Iformula.pos_of_struc_formula f0)) fvars in
   let cfvhp = cfvhp1@cfvhp2 in
-  (* let _ = case_coverage cfvhp r in *) (* AN HOA : TEMPORARILY COMMENT *)
+  let _ = case_coverage cfvhp r in (* AN HOA : TEMPORARILY COMMENT *)
   let tmp_vars  =  (Cformula.struc_post_fv r) in 
   let post_fv = List.map CP.name_of_spec_var tmp_vars in
   let pre_fv = List.map CP.name_of_spec_var (Util.difference (Cformula.struc_fv r) tmp_vars) in
@@ -5402,6 +5404,7 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.IConst e -> Cast.IConst e
 	| Cast.New e -> Cast.New e
 	| Cast.Null e -> Cast.Null e
+	| Cast.EmptyArray e -> Cast.EmptyArray e (* An Hoa *)
 	| Cast.Print e -> Cast.Print e
 	| Cast.Seq e -> Cast.Seq {e with Cast.exp_seq_exp1 = (irf_traverse_exp ip e.Cast.exp_seq_exp1 scc); Cast.exp_seq_exp2 = (irf_traverse_exp ip e.Cast.exp_seq_exp2 scc)}
 	| Cast.This e -> Cast.This e

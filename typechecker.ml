@@ -321,6 +321,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
+				| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
         | SCall ({exp_scall_type = ret_t;
                   exp_scall_method_name = mn;
                   exp_scall_arguments = vs;
