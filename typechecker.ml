@@ -511,12 +511,37 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let rs, prf = heap_entail_list_partial_context_init prog false false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then rs
-  else
-	Err.report_error {Err.error_loc = pos;
-	Err.error_text = "Post condition "
-	        ^ (Cprinter.string_of_formula post)
-	        ^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
-	        ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
+  else begin
+    (* get source code posistion of failed branches *)
+    let string_of_control_path_id_strict pid =
+      let i,s = pid in
+      Printf.sprintf "{%d, %s}" i s
+    in
+    let rec print_ctx_list lst = match lst with
+      | [] -> ()
+      | ctx::rest ->
+          let failed_branches = fst ctx in
+          let path_traces = List.map fst failed_branches in
+          let locs_list = List.map locs_of_path_trace path_traces in
+          let print (pid, plbl, loc) =
+            let spid = string_of_control_path_id_strict pid in
+            let splbl = string_of_int plbl in
+            let sloc = string_of_full_loc loc in
+            Printf.printf "\nPath ID: %s, Path label: %s, Loc: %s" spid splbl sloc
+          in
+          List.iter (fun x -> List.iter print x) locs_list;
+          print_ctx_list rest
+    in
+    print_ctx_list rs;
+    Err.report_error {
+      Err.error_loc = pos;
+      Err.error_text = Printf.sprintf
+        "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s"
+        (Cprinter.string_of_formula post)
+        (Cprinter.string_of_list_partial_context final_state)
+        (Cprinter.string_of_list_partial_context rs)
+    }
+  end
 
 
 (* checking procedure *)

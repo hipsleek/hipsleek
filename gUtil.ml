@@ -64,6 +64,7 @@ end (* FileUtil *)
 (**
    Quick & dirty parsing functions of sleek file
    based on simple regular expressions
+   TODO: use sleek parser for parsing
  *)
 module SourceUtil = struct
 
@@ -175,9 +176,9 @@ module SourceUtil = struct
       let curr_p = lexbuf.Lexing.lex_curr_p in
       let pos = {
         start_char = start_p.Lexing.pos_cnum;
-        stop_char = curr_p.Lexing.pos_cnum;
+        stop_char = 0;
         start_line = start_p.Lexing.pos_lnum;
-        stop_line = start_p.Lexing.pos_lnum;
+        stop_line = curr_p.Lexing.pos_lnum + 1;
       } in
       log (Printf.sprintf "Syntax error at line %d" start_p.Lexing.pos_lnum);
       raise (Syntax_error ("Syntax error", pos))

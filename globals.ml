@@ -269,7 +269,28 @@ let branch_point_id = ref 0
 
 let reset_formula_point_id () = () (*branch_point_id:=0*)
 
-let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label) list)*loc) list)
+let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label*loc) list)*loc) list)
+
+let locs_of_path_trace (pt: path_trace): (control_path_id_strict * path_label * loc) list =
+  let eq_path_id pid1 pid2 = match pid1, pid2 with
+    | Some _, None -> false
+    | None, Some _ -> false
+    | None, None -> true
+    | Some (i1, s1), Some (i2, s2) -> i1 = i2
+  in
+  let path_label_list_of_id pid =
+    let _, _, label_list, _ = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
+    label_list
+  in
+  let loc_of_label plbl ref_list =
+    let _, _, loc = List.find (fun (_, lbl, _) -> plbl = lbl) ref_list in
+    loc
+  in
+  let find_loc pid plbl = 
+    let label_list = path_label_list_of_id pid in
+    loc_of_label plbl label_list
+  in
+  List.map (fun (pid, plbl) -> (pid, plbl, find_loc (Some pid) plbl)) pt
 
 
 let fresh_formula_label (s:string) :formula_label = 

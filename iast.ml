@@ -1148,7 +1148,9 @@ let rec label_e e =
 			  exp_call_nrecv_path_id = nl;}
     | Cond e -> 
 		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"cond",[(nl,0);(nl,1)],e.exp_cond_pos) ::!iast_label_table;
+      let then_pos = get_exp_pos e.exp_cond_then_arm in
+      let else_pos = get_exp_pos e.exp_cond_else_arm in
+		  iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
 		  Cond {e with 
 			  exp_cond_condition = label_e e.exp_cond_condition;
 			  exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
@@ -1181,8 +1183,11 @@ let rec label_e e =
 			  exp_return_path_id = nl;}  
     | Try e -> 
 		  let nl = fresh_branch_point_id "" in
-		  let rec lbl_list_constr n = if n==0 then [] else (nl,n)::(lbl_list_constr (n-1)) in
-		  iast_label_table:= (nl,"try",(lbl_list_constr (List.length e.exp_catch_clauses)),e.exp_try_pos)::!iast_label_table;
+      let rec lbl_list_constr id cclauses = match cclauses with
+        | [] -> []
+        | exp::rest -> (nl, id, get_exp_pos exp)::(lbl_list_constr (id+1) rest)
+      in
+		  iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
 		  let lbl_c n d = 
 			let d = get_catch_of_exp d in
 			Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in

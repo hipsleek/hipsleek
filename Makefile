@@ -5,7 +5,7 @@ JOBS = 0
 
 LIBS = unix,str,graph,xml-light,lablgtk,lablgtksourceview2
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml,-I,+lablgtk2
-FLAGS = $(INCLUDES),-g
+FLAGS = $(INCLUDES),-g,-annot
 OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -yaccflag -v -j $(JOBS)
 
 all: native gui
