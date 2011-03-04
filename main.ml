@@ -120,7 +120,8 @@ let process_source_full source =
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
  
-    let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in
+    (* print mapping table control path id and loc *)
+    (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in

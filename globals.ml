@@ -271,7 +271,7 @@ let reset_formula_point_id () = () (*branch_point_id:=0*)
 
 let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label*loc) list)*loc) list)
 
-let locs_of_path_trace (pt: path_trace): (control_path_id_strict * path_label * loc) list =
+let locs_of_path_trace (pt: path_trace): loc list =
   let eq_path_id pid1 pid2 = match pid1, pid2 with
     | Some _, None -> false
     | None, Some _ -> false
@@ -290,7 +290,14 @@ let locs_of_path_trace (pt: path_trace): (control_path_id_strict * path_label * 
     let label_list = path_label_list_of_id pid in
     loc_of_label plbl label_list
   in
-  List.map (fun (pid, plbl) -> (pid, plbl, find_loc (Some pid) plbl)) pt
+  List.map (fun (pid, plbl) -> find_loc (Some pid) plbl) pt
+
+
+let locs_of_partial_context ctx =
+  let failed_branches = fst ctx in
+  let path_traces = List.map fst failed_branches in
+  let loc_list_list = List.map locs_of_path_trace path_traces in
+  List.flatten loc_list_list
 
 
 let fresh_formula_label (s:string) :formula_label = 
@@ -383,6 +390,20 @@ let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^
 ;;
 
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
+
+let string_of_loc_list locs =
+  let string_of_loc loc =
+    let start_line = loc.start_pos.Lexing.pos_lnum in
+    let end_line = loc.end_pos.Lexing.pos_lnum in
+    if start_line = end_line then
+      Printf.sprintf "%d(%d:%d)" start_line 
+      (loc.start_pos.Lexing.pos_cnum - loc.start_pos.Lexing.pos_bol)
+      (loc.end_pos.Lexing.pos_cnum - loc.end_pos.Lexing.pos_bol)
+    else
+      Printf.sprintf "%d-%d" start_line end_line
+  in
+  List.fold_left (fun res l -> res ^ (string_of_loc l) ^ ", ") "" locs
+
 
 let seq_local_number = ref 0
 
