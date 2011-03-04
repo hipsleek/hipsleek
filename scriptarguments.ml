@@ -73,8 +73,7 @@ let common_arguments = [
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
     "Log all CVC Lite formula to specified log file");
 	(* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
-	("--log-cvc3", Arg.Unit Cvc3.set_log_file,
-    "Log all formulae sent to CVC3 in file allinput.cvc3");
+	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,

@@ -1,5 +1,6 @@
 (*
-  Create the input file for Isabelle
+  Create the input file for Isabelle.
+  When running Isabelle for the first time, use --build-image option under hip/sleek
 *)
 
 open Globals
