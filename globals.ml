@@ -391,19 +391,10 @@ let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^
 
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
-let string_of_loc_list locs =
-  let string_of_loc loc =
-    let start_line = loc.start_pos.Lexing.pos_lnum in
-    let end_line = loc.end_pos.Lexing.pos_lnum in
-    if start_line = end_line then
-      Printf.sprintf "%d(%d:%d)" start_line 
-      (loc.start_pos.Lexing.pos_cnum - loc.start_pos.Lexing.pos_bol)
-      (loc.end_pos.Lexing.pos_cnum - loc.end_pos.Lexing.pos_bol)
-    else
-      Printf.sprintf "%d-%d" start_line end_line
-  in
-  List.fold_left (fun res l -> res ^ (string_of_loc l) ^ ", ") "" locs
-
+let string_of_loc_by_char_num (l : loc) = 
+  Printf.sprintf "(%d-%d)"
+    l.start_pos.Lexing.pos_cnum
+    l.end_pos.Lexing.pos_cnum
 
 let seq_local_number = ref 0
 

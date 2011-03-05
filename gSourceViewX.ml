@@ -10,6 +10,8 @@ class source_view ?(text = "") () =
   let error = "error" in
   let highlight = "highlight" in
   let font_name = "Monospace 11" in
+  let color_red = GDraw.color (`RGB (0xee*257, 0xd3*257, 0xd0*257)) in
+  let color_highlight_bg = GDraw.color (`RGB (0xd5*257, 0xe5*257, 0xe3*257)) in
 
   object (self)
     val delegate = GSourceView2.source_view ()
@@ -19,6 +21,7 @@ class source_view ?(text = "") () =
     initializer
       status_lbl#set_use_markup true;
       delegate#set_show_line_numbers true;
+      delegate#set_highlight_current_line true;
       delegate#set_auto_indent true;
       delegate#set_tab_width 4;
       delegate#set_insert_spaces_instead_of_tabs true;
@@ -28,9 +31,10 @@ class source_view ?(text = "") () =
       buffer#set_text text;
       panel#pack status_lbl#coerce;
       panel#pack ~expand:true (create_scrolled_win delegate)#coerce;
-      delegate#set_mark_category_background ~category:highlight (Some (GDraw.color (`NAME "light gray")));
-      delegate#set_mark_category_background ~category:error (Some (GDraw.color (`NAME "red")));
-      let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `DIALOG_INFO in
+      ignore (buffer#create_tag ~name:highlight []);
+      ignore (buffer#create_tag ~name:error [`BACKGROUND_GDK color_red]);
+      delegate#set_mark_category_background ~category:highlight (Some color_highlight_bg);
+      let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `HOME in
       delegate#set_mark_category_pixbuf ~category:highlight (Some pixbuf);
       let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `DIALOG_ERROR in
       delegate#set_mark_category_pixbuf ~category:error (Some pixbuf);
@@ -54,23 +58,35 @@ class source_view ?(text = "") () =
       let start = self#source_buffer#get_iter_at_char pos.start_char in
       ignore (self#source_buffer#create_source_mark ~category start)
 
+    method private apply_tag (tag: string) (pos: seg_pos) =
+      let start = self#source_buffer#get_iter_at_char pos.start_char in
+      let stop = self#source_buffer#get_iter_at_char pos.stop_char in
+      self#source_buffer#apply_tag_by_name tag start stop
+
     (** highlight part of the source and scroll to it *)
     method hl_segment ?(clear_previous_highlight = false) ?(scroll = false) (pos: seg_pos) =
       if clear_previous_highlight then self#clear_highlight ();
       self#create_mark highlight pos;
+      self#apply_tag highlight pos;
       if scroll then self#scroll_to_pos pos
 
-    method hl_error ?(msg = "Error in source document") (pos: seg_pos) =
-      self#create_mark error pos;
+    method hl_error ?(msg = "Error in source document") ?(mark = true) (pos: seg_pos) =
+      if mark then self#create_mark error pos;
+      self#apply_tag error pos;
       self#scroll_to_pos pos;
-      let msg = Printf.sprintf "<b>%s</b>" msg in
-      self#set_status msg
+      if msg <> "" then
+        let msg = Printf.sprintf 
+          "<span font_variant='smallcaps' font_weight='bold' color='#fff' bgcolor='#b24c40'>  %s  </span>"
+          msg in
+        self#set_status msg
 
     (** clear current highlight
        by removing checkentail tag in current source code *)
     method clear_highlight () =
       let start = self#source_buffer#get_iter `START in
       let stop = self#source_buffer#get_iter `END in
+      self#source_buffer#remove_tag_by_name highlight start stop;
+      self#source_buffer#remove_tag_by_name error start stop;
       self#source_buffer#remove_source_marks ~category:error ~start ~stop ();
       self#source_buffer#remove_source_marks ~category:highlight ~start ~stop ();
 

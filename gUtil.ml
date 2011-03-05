@@ -91,6 +91,11 @@ module SourceUtil = struct
   let string_of_entailment (e: entailment) =
     Printf.sprintf "(%d,%d): %s" e.pos.start_line e.pos.stop_line e.name
 
+  let string_of_seg_pos pos =
+    Printf.sprintf "(%d-%d, line %d-%d)" 
+      pos.start_char pos.stop_char
+      pos.start_line pos.stop_line
+
   (** return a list of all positions of "new line" char in src *)
   let get_new_line_positions (src: string) : int list =
     let rec new_line_pos (start: int): int list =
@@ -181,7 +186,7 @@ module SourceUtil = struct
         stop_line = curr_p.Lexing.pos_lnum + 1;
       } in
       log (Printf.sprintf "Syntax error at line %d" start_p.Lexing.pos_lnum);
-      raise (Syntax_error ("Syntax error", pos))
+      raise (Syntax_error ("Syntax error!", pos))
 
   (** search for all substring in a string *)
   let search (doc: string) (sub: string) : seg_pos list =
@@ -359,8 +364,10 @@ module HipHelper = struct
   let infile = "hip.in." ^ (string_of_int (Unix.getpid ()))
   let outfile = "hip.out." ^ (string_of_int (Unix.getpid ()))
   let errfile = "hip.err." ^ (string_of_int (Unix.getpid ()))
+
   let debug_log_buffer = Buffer.create 1024
   let prover_log_buffer = Buffer.create 1024
+  let error_positions = ref ([]: seg_pos list)
 
   let default_args = {
     tp = TP.OmegaCalc;
@@ -398,33 +405,62 @@ module HipHelper = struct
     log ("Executing: " ^ cmd);
     ignore (Sys.command cmd);
     let res = FileUtil.read_from_file outfile in
+    (* save log messages for later use *)
     Buffer.clear debug_log_buffer;
     Buffer.add_string debug_log_buffer (FileUtil.read_from_file errfile);
     Buffer.clear prover_log_buffer;
     let tp_log_file = TP.log_file_of_tp args.tp in
     Buffer.add_string prover_log_buffer (FileUtil.read_from_file tp_log_file);
+    (* remove temp files *)
     Sys.remove infile;
     Sys.remove outfile;
     Sys.remove errfile;
+    (* return output *)
     res
 
-  let parse_result (res: string) =
+  let parse_locs_line (line: string) : seg_pos list =
+    let parse loc =
+      let regexp = Str.regexp "(\\([0-9]+\\)-\\([0-9]+\\))" in
+      let _ = Str.string_match regexp loc 0 in
+      { start_char = int_of_string (Str.matched_group 1 loc);
+        stop_char = int_of_string (Str.matched_group 2 loc);
+        start_line = 0; (* ignore for now *)
+        stop_line = 0; (* ignore for now *)
+      }
+    in
+    let locs = Str.split (Str.regexp ",") line in
+    List.map parse locs
+
+  let parse_result (hip_output: string) =
+    let err_pos = 
+      try
+        let regexp = Str.regexp "Possible locations of failures: \\([^\\.]+\\)\\." in
+        let _ = Str.search_forward regexp hip_output 0 in
+        let locs_line = Str.matched_group 1 hip_output in
+        log ("Failed branches location: " ^ locs_line);
+        parse_locs_line locs_line;
+      with Not_found -> []
+    in
+    error_positions := err_pos;
     let regexp = Str.regexp_string "SUCCESS" in
-    try
-      ignore (Str.search_forward regexp res 0);
-      log "Success.";
-      true
-    with Not_found -> (log "FAIL!"; false)
+    let res = 
+      try
+        ignore (Str.search_forward regexp hip_output 0);
+        log "Success.";
+        true
+      with Not_found -> (log "FAIL!"; false)
+    in
+    res
 
   let check_proc_external ?args (src: string) (p: procedure) =
     let res = run_hip ?args src p.name in
     parse_result res
 
-  let get_debug_log () =
-    Buffer.contents debug_log_buffer
+  let get_debug_log () = Buffer.contents debug_log_buffer
 
-  let get_prover_log () =
-    Buffer.contents prover_log_buffer
+  let get_prover_log () = Buffer.contents prover_log_buffer
+
+  let get_error_positions () = !error_positions
 
 end (* HipHelper *)
 
@@ -439,7 +475,7 @@ let initialize () =
       SourceUtil.start_line = loc.start_pos.Lexing.pos_lnum;
       SourceUtil.stop_line = loc.end_pos.Lexing.pos_lnum;
     } in
-    raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg, pos))
+    raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
   );
   TP.enable_log_for_all_provers ();
   TP.start_prover ()

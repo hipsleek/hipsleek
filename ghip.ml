@@ -70,19 +70,19 @@ class mainwindow () =
     val mutable debug_log_window = None
     val mutable prover_log_window = None
       
+    val check_btn = GButton.button ~label:"Check Procedure" ()
+
     initializer
       (* initialize components *)
+      check_btn#misc#set_sensitive false;
+      ignore (check_btn#connect#clicked ~callback:(self#check_selected_proc ~force:true));
       let proc_panel =
         let list_scrolled = create_scrolled_win proc_list in
         let buttons = GPack.button_box 
           `HORIZONTAL ~layout:`START
           ~border_width:10
           () in
-        let check_btn = GButton.button
-          ~label:"Check Procedure"
-          ~packing:buttons#add
-          () in
-        ignore (check_btn#connect#clicked ~callback:(self#check_selected_proc ~force:true));
+        buttons#pack check_btn#coerce;
         let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
@@ -295,16 +295,27 @@ class mainwindow () =
     method check_selected_proc ?(force = false) () =
       let proc = proc_list#get_selected_procedure () in
       match proc with
-      | None -> ()
+      | None -> check_btn#misc#set_sensitive false; ()
       | Some p ->
+          check_btn#misc#set_sensitive true;
           source_view#hl_proc p;
           let current_validity = proc_list#get_selected_procedure_validity () in
           (*if source_view#source_buffer#modified || current_validity = None then*)
-          if current_validity = None || force then
-            let _ = log ("Checking procedure " ^ p.name) in
+          if current_validity = None || force then begin
+            log ("Checking procedure " ^ p.name);
             let src = self#get_text () in
             let valid = HH.check_proc_external ~args src p in
-            proc_list#set_selected_procedure_validity valid
+            proc_list#set_selected_procedure_validity valid;
+            let err_pos = HH.get_error_positions () in
+            match err_pos with
+            | [] -> ()
+            | pos::_ -> source_view#hl_error 
+                (* highlight only the first failure's location *)
+                ~msg:"Not all branches are successful!"
+                pos
+            (*if err_pos <> [] then source_view#clear_highlight ();*)
+            (*List.iter (fun pos -> source_view#hl_error ~msg:"" ~mark:false pos) err_pos*)
+          end
 
     method show_debug_log () =
       let log = HH.get_debug_log () in
