@@ -207,6 +207,26 @@ module SourceUtil = struct
 end (* SourceUtil *)
 
 
+let initialize () =
+  ignore (GtkMain.Main.init ());
+  Debug.devel_debug_on := true;
+  Debug.log_devel_debug := true;
+  Globals.reporter := (fun loc msg ->
+    let pos = {
+      SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
+      SourceUtil.stop_char = loc.end_pos.Lexing.pos_cnum;
+      SourceUtil.start_line = loc.start_pos.Lexing.pos_lnum;
+      SourceUtil.stop_line = loc.end_pos.Lexing.pos_lnum;
+    } in
+    raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
+  );
+  TP.enable_log_for_all_provers ();
+  TP.start_prover ()
+
+let finalize () =
+  TP.stop_prover ()
+
+
 (**
    Helper for interacting with Sleek script
    Command calling, process management, parsing of result,...
@@ -464,22 +484,38 @@ module HipHelper = struct
 
 end (* HipHelper *)
 
-let initialize () =
-  ignore (GtkMain.Main.init ());
-  Debug.devel_debug_on := true;
-  Debug.log_devel_debug := true;
-  Globals.reporter := (fun loc msg ->
-    let pos = {
-      SourceUtil.start_char = loc.start_pos.Lexing.pos_cnum;
-      SourceUtil.stop_char = loc.end_pos.Lexing.pos_cnum;
-      SourceUtil.start_line = loc.start_pos.Lexing.pos_lnum;
-      SourceUtil.stop_line = loc.end_pos.Lexing.pos_lnum;
-    } in
-    raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
-  );
-  TP.enable_log_for_all_provers ();
-  TP.start_prover ()
 
-let finalize () =
-  TP.stop_prover ()
+module RecentDocuments = struct
 
+  let home_dir = Sys.getenv "HOME"
+  let history_file = home_dir ^ "/.hip_recent"
+
+  let get_recent_documents ?(limit=0) () =
+    let rec nhd n lst =
+      (* return first n items of a list, n must be less than length of the list *)
+      if n = 0 then []
+      else (List.hd lst)::(nhd (n-1) (List.tl lst))
+    in
+    if Sys.file_exists history_file then
+      let file_content = FileUtil.read_from_file history_file in
+      let lines = Str.split (Str.regexp "\n") file_content in
+      let res = 
+        if List.length lines < limit || limit = 0 then lines 
+        else nhd limit lines in
+      res
+    else []
+
+  let rec string_join (delim: string) (eles: string list) =
+    match eles with
+    | [] -> ""
+    | [e] -> e
+    | e::rest -> e ^ delim ^ (string_join delim eles)
+
+  let add_to_recent_documents (fname: string) =
+    let current = get_recent_documents () in
+    let filtered = List.filter (fun x -> x <> fname) current in
+    let new_list = fname::filtered in
+    let text = string_join "\n" new_list in
+    FileUtil.write_to_file history_file text
+
+end (* RecentDocuments *)

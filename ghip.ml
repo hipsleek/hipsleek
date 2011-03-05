@@ -262,7 +262,13 @@ class mainwindow () =
       log ("Opening " ^ fname);
       current_file <- (Some fname);
       self#replace_source (FU.read_from_file fname);
-      self#update_win_title ()
+      self#update_win_title ();
+      let absolute_fname =
+        if Filename.is_relative fname then
+          Printf.sprintf "%s/%s" (Sys.getcwd ()) fname
+        else fname
+      in
+      RecentDocuments.add_to_recent_documents absolute_fname
 
     method update_win_title () =
       let fname = self#string_of_current_file () in
