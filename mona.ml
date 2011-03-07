@@ -831,7 +831,7 @@ let start_mona () =
 	    (if !log_all_flag then
               output_string log_all ("[mona.ml]: >> Starting Mona...\n"));
         try
-            let inchn, outchn, errchn, npid = Unix_add.open_process_full "/home/andreeac/Mona/exec/bin/mona" [|"/home/andreeac/Mona/exec/bin/mona"; "-v";|] in
+            let inchn, outchn, errchn, npid = Unix_add.open_process_full "mona" [|"mona"; "-v";|] in
             (process := {pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn}; 
              is_mona_running := true;
              mona_pid := npid;
@@ -862,7 +862,7 @@ let stop_mona () =
     let num_tasks = !test_number - !last_test_number in
     (* print_string ("Stop Mona... "^(string_of_int num_tasks)^" invocations "); flush stdout; *)
 	(if !log_all_flag then 
-      (output_string log_all ("[omega.ml]: >> Stop Mona after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
+      (output_string log_all ("[mona.ml]: >> Stop Mona after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
     close_pipes ();
     Unix.kill !mona_pid 2;
     ignore (Unix.waitpid [] !process.pid);

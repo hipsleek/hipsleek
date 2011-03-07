@@ -1381,7 +1381,7 @@ let start_prover () =
       Redlog.start_red ();
 	  Omega.start_omega ();
 	 end
-    | Cvc3 -> 
+  | Cvc3 -> 
         begin
             provers_process := Some (Cvc3.cvc3_create_process ());
             let _ = match !provers_process with 
@@ -1389,8 +1389,13 @@ let start_prover () =
               | _ -> () in
 	        Omega.start_omega ();
 	    end
-    (* | Mona -> *)
-    (*     Mona.start_mona() *)
+  | Mona ->
+        Mona.start_mona()
+  | Isabelle ->
+     begin
+      Isabelle.start_isabelle ();
+	  Omega.start_omega ();
+     end
   | _ -> Omega.start_omega ()
   
 let stop_prover () =
@@ -1412,6 +1417,11 @@ let stop_prover () =
               |_ -> ();
 	        Omega.stop_omega ();
 	      end
-    (* | Mona -> Mona.stop_mona(); *)
+    | Isabelle -> 
+          begin
+            Isabelle.stop_isabelle ();
+	        Omega.stop_omega ();
+	      end
+    | Mona -> Mona.stop_mona();
     | _ -> Omega.stop_omega ();;
 
