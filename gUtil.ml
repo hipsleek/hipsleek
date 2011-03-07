@@ -485,6 +485,7 @@ module HipHelper = struct
 end (* HipHelper *)
 
 
+(** List of recent documents opened by gHip *)
 module RecentDocuments = struct
 
   let home_dir = Sys.getenv "HOME"

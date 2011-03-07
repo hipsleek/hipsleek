@@ -21,7 +21,7 @@ class source_view ?(text = "") () =
     initializer
       status_lbl#set_use_markup true;
       delegate#set_show_line_numbers true;
-      delegate#set_highlight_current_line true;
+      (*delegate#set_highlight_current_line true;*)
       delegate#set_auto_indent true;
       delegate#set_tab_width 4;
       delegate#set_insert_spaces_instead_of_tabs true;
@@ -29,12 +29,12 @@ class source_view ?(text = "") () =
       delegate#set_show_line_marks true;
       let buffer = delegate#source_buffer in
       buffer#set_text text;
-      panel#pack status_lbl#coerce;
       panel#pack ~expand:true (create_scrolled_win delegate)#coerce;
+      panel#pack status_lbl#coerce;
       ignore (buffer#create_tag ~name:highlight []);
       ignore (buffer#create_tag ~name:error [`BACKGROUND_GDK color_red]);
       delegate#set_mark_category_background ~category:highlight (Some color_highlight_bg);
-      let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `HOME in
+      let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `GO_FORWARD in
       delegate#set_mark_category_pixbuf ~category:highlight (Some pixbuf);
       let pixbuf =  delegate#misc#render_icon ~size:`DIALOG `DIALOG_ERROR in
       delegate#set_mark_category_pixbuf ~category:error (Some pixbuf);

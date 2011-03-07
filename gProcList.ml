@@ -18,7 +18,7 @@ class procedure_list_model ?(src = "") () =
   object (self)
     val delegate = GTree.list_store cols
     val mutable procedure_list = []
-    val mutable modified_times = []
+    val mutable error_postions = []
     val mutable count = 0
     val mutable source_digest = ""
 
@@ -40,6 +40,7 @@ class procedure_list_model ?(src = "") () =
       try begin
         procedure_list <- parse_func src;
         source_digest <- Digest.string src;
+        error_postions <- [];
         delegate#clear ();
         count <- 0;
         List.iter self#append_one_procedure procedure_list

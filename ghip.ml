@@ -262,13 +262,7 @@ class mainwindow () =
       log ("Opening " ^ fname);
       current_file <- (Some fname);
       self#replace_source (FU.read_from_file fname);
-      self#update_win_title ();
-      let absolute_fname =
-        if Filename.is_relative fname then
-          Printf.sprintf "%s/%s" (Sys.getcwd ()) fname
-        else fname
-      in
-      RecentDocuments.add_to_recent_documents absolute_fname
+      self#update_win_title ()
 
     method update_win_title () =
       let fname = self#string_of_current_file () in
@@ -305,6 +299,7 @@ class mainwindow () =
       | Some p ->
           check_btn#misc#set_sensitive true;
           source_view#hl_proc p;
+          source_view#clear_status ();
           let current_validity = proc_list#get_selected_procedure_validity () in
           (*if source_view#source_buffer#modified || current_validity = None then*)
           if current_validity = None || force then begin
@@ -427,7 +422,7 @@ class mainwindow () =
         try
           proc_list#update_source (self#get_text ());
         with Syntax_error (msg, pos) ->
-          proc_list#misc#set_sensitive false;
+          (*proc_list#misc#set_sensitive false;*)
           source_view#hl_error ~msg pos
       end
 
