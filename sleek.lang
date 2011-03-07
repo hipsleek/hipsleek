@@ -25,12 +25,11 @@
           <end>$</end>
         </context>
 
-        <context id="comment-multiline"
-          style-ref="comment">
+        <context id="comment-multiline" style-ref="comment">
           <start>\/\*</start>
           <end>\*\/</end>
           <include>
-            <context ref="def:in-comment"/>
+            <context ref="comment-multiline"/>
           </include>
         </context>
 

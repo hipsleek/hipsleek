@@ -65,10 +65,11 @@ class mainwindow () =
     val proc_list = new procedure_list ()
     (* data *)
     val mutable current_file = None
-    val mutable original_digest = ""
+    val mutable original_digest = Digest.string ""
     val mutable args = HH.default_args
     val mutable debug_log_window = None
     val mutable prover_log_window = None
+    val mutable console_log_window = None
       
     val check_btn = GButton.button ~label:"Check Procedure" ()
 
@@ -79,10 +80,15 @@ class mainwindow () =
       let proc_panel =
         let list_scrolled = create_scrolled_win proc_list in
         let buttons = GPack.button_box 
-          `HORIZONTAL ~layout:`START
-          ~border_width:10
+          `HORIZONTAL ~layout:`END
+          ~child_height:35 ~border_width:10
           () in
         buttons#pack check_btn#coerce;
+        let show_console_log_btn = GButton.button
+          ~label:"Show Console Output"
+          ~packing:buttons#add
+          () in
+        ignore (show_console_log_btn#connect#clicked ~callback:self#show_console_log);
         let show_debug_log_btn = GButton.button
           ~label:"Show Debug Log"
           ~packing:buttons#add
@@ -343,6 +349,20 @@ class mainwindow () =
         | None ->
             let win = new GLogViewWindow.log_view_window ~title log () in
             prover_log_window <- Some win;
+            win
+      in
+      win#present ()
+
+    method show_console_log () =
+      let log = HH.get_console_log () in
+      let win = match console_log_window with
+        | Some win-> 
+            win#set_log log;
+            win
+        | None ->
+            let win = new GLogViewWindow.log_view_window
+              ~title:"Console Output Log" log () in
+            debug_log_window <- Some win;
             win
       in
       win#present ()

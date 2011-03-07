@@ -169,11 +169,20 @@ let main1 () =
       (* Tpdispatcher.print_stats (); *)
       ()
 	  
+let finalize () =
+  Tpdispatcher.stop_prover ()
+
 let _ = 
-  main1 ();
-  let _ = print_string (Gen.Profiling.string_of_counters ()) in
-  let _ = Gen.Profiling.print_info () in
-  ()
+  try
+    main1 ();
+    let _ = print_string (Gen.Profiling.string_of_counters ()) in
+    let _ = Gen.Profiling.print_info () in
+    ()
+  with _ as e -> begin
+    finalize ();
+    print_string ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string ("\nError(s) detected at main \n");
+  end
 
 
   

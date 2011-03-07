@@ -387,6 +387,7 @@ module HipHelper = struct
 
   let debug_log_buffer = Buffer.create 1024
   let prover_log_buffer = Buffer.create 1024
+  let console_log_buffer = Buffer.create 1024
   let error_positions = ref ([]: seg_pos list)
 
   let default_args = {
@@ -431,6 +432,8 @@ module HipHelper = struct
     Buffer.clear prover_log_buffer;
     let tp_log_file = TP.log_file_of_tp args.tp in
     Buffer.add_string prover_log_buffer (FileUtil.read_from_file tp_log_file);
+    Buffer.clear console_log_buffer;
+    Buffer.add_string console_log_buffer (FileUtil.read_from_file outfile);
     (* remove temp files *)
     Sys.remove infile;
     Sys.remove outfile;
@@ -479,6 +482,8 @@ module HipHelper = struct
   let get_debug_log () = Buffer.contents debug_log_buffer
 
   let get_prover_log () = Buffer.contents prover_log_buffer
+
+  let get_console_log () = Buffer.contents console_log_buffer
 
   let get_error_positions () = !error_positions
 
