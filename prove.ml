@@ -28,7 +28,7 @@ module Utils = struct
     let start = Unix.gettimeofday () in
     while (Unix.gettimeofday ()) -. start < f do
       (* let _ = Unix.select [] [] [Unix.stderr] f in (); *)
-      let _ = Util.restart  (Unix.select [] [] [Unix.stderr]) f in ();
+      let _ = Gen.Basic.restart  (Unix.select [] [] [Unix.stderr]) f in ();
     done  
   
   (** [time_used f a] applies the [f] to argument [a] and returns the result with duration it takes. *)
@@ -512,7 +512,7 @@ module Manager = struct
         send_jobs_to_slaves ();
         let busy_fds = get_busy_fds () in
         show_info (" wait " ^ (string_of_int (List.length busy_fds))); incr progress_dots;
-        let (in_fds, _, _) = Util.restart  (Unix.select (manager_in_fd::busy_fds) [] []) (1.0) in
+        let (in_fds, _, _) = Gen.Basic.restart  (Unix.select (manager_in_fd::busy_fds) [] []) (1.0) in
         if in_fds <> [] then begin
           List.iter (fun fd ->
                   if fd = manager_in_fd then begin

@@ -190,16 +190,16 @@ and split_vars (vars : CP.spec_var list) = match vars with
 and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
   let ante_fv = CP.fv ante in
   let conseq_fv = CP.fv conseq in
-  let all_fv = Util.remove_dups_f (ante_fv @ conseq_fv) CP.eq_spec_var in
+  let all_fv = Gen.BList.remove_dups_eq CP.eq_spec_var (ante_fv @ conseq_fv) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
-	if Util.empty bag_vars then "" 
+	if Gen.is_empty bag_vars then "" 
 	else (String.concat ", " (List.map cvcl_of_spec_var bag_vars)) ^ ": SET;\n" in
   let int_var_decls = 
-	if Util.empty int_vars then "" 
+	if Gen.is_empty int_vars then "" 
 	else (String.concat ", " (List.map cvcl_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
-	if Util.empty bool_vars then ""
+	if Gen.is_empty bool_vars then ""
 	else (String.concat ", " (List.map cvcl_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
   let ante_str = (* (cvcl_of_formula_decl ante) ^ (cvcl_of_formula_decl conseq) ^ *)
@@ -208,7 +208,7 @@ and imply_raw (ante : CP.formula) (conseq : CP.formula) : bool option =
 		=> (" ^ (cvcl_of_formula conseq) ^ ");\n" in *)
   let conseq_str =  "QUERY (" ^ (cvcl_of_formula conseq ) ^ ");\n" in
 	(* talk to CVC Lite *)
-  let f_cvcl = Util.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
+  let f_cvcl = Gen.break_lines ((*predicates ^*) var_decls ^ ante_str ^ conseq_str) in
 	if !log_cvcl_formula then begin
 	  output_string !cvcl_log "%%% imply\n";
 	  output_string !cvcl_log f_cvcl;
@@ -269,16 +269,16 @@ and imply (ante : CP.formula) (conseq : CP.formula) : bool =
 	result
 
 and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
-  let all_fv = Util.remove_dups_f (CP.fv f) CP.eq_spec_var in
+  let all_fv = Gen.BList.remove_dups_eq CP.eq_spec_var (CP.fv f) in
   let int_vars, bool_vars, bag_vars = split_vars all_fv in
   let bag_var_decls = 
-	if Util.empty bag_vars then "" 
+	if Gen.is_empty bag_vars then "" 
 	else (String.concat ", " (List.map cvcl_of_spec_var bag_vars)) ^ ": SET;\n" in
   let int_var_decls = 
-	if Util.empty int_vars then "" 
+	if Gen.is_empty int_vars then "" 
 	else (String.concat ", " (List.map cvcl_of_spec_var int_vars)) ^ ": INT;\n" in
   let bool_var_decls =
-	if Util.empty bool_vars then ""
+	if Gen.is_empty bool_vars then ""
 	else (String.concat ", " (List.map cvcl_of_spec_var bool_vars)) ^ ": INT;\n" in (* BOOLEAN *)
   let var_decls = bool_var_decls ^ bag_var_decls ^ int_var_decls in
 (*
@@ -289,7 +289,7 @@ and is_sat_raw (f : CP.formula) (sat_no : string) : bool option =
   let f_str = cvcl_of_formula f  in
   let query_str = "CHECKSAT (" ^ f_str ^ ");\n" in
 	(* talk to CVC Lite *)
-  let f_cvcl = Util.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
+  let f_cvcl = Gen.break_lines ( (*predicates ^*) var_decls (* ^ f_str *) ^ query_str) in
 	if !log_cvcl_formula then begin
 	  output_string !cvcl_log ("%%% is_sat " ^ sat_no ^ "\n");
 	  output_string !cvcl_log f_cvcl;
@@ -360,7 +360,7 @@ and is_sat (f : CP.formula) (sat_no : string) : bool =
 
 (*
 and cvcl_of_formula f =
-  let body = Util.break_lines (cvcl_of_formula_helper f) in
+  let body = Gen.break_lines (cvcl_of_formula_helper f) in
   let fvars = Presburger.fv f in
 	if List.length fvars > 0 then
 	  let fvarsstr = String.concat ", " (List.map string_of_spec_var fvars) in

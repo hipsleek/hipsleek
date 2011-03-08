@@ -176,7 +176,7 @@ and build_constructor (ddef : data_decl) : unit =
 	Buffer.add_string java_code ") {\n";
 	Buffer.add_string java_code (String.concat "\n" assignments);
 	Buffer.add_string java_code "\n}\n";
-	if not (Util.empty ddef.data_fields) then begin
+	if not (Gen.is_empty ddef.data_fields) then begin
 	  (* also add empty constructor *)
 	  Buffer.add_char java_code '\n';
 	  Buffer.add_string java_code ddef.data_name;
@@ -205,7 +205,7 @@ and convert_methods main_class (pdefs : proc_decl list) =
 
 and convert_method (pdef : proc_decl) = 
   if (pdef.proc_name = "main") then begin
-	if Util.empty pdef.proc_args && pdef.proc_return = void_type then begin
+	if Gen.is_empty pdef.proc_args && pdef.proc_return = void_type then begin
 	  Buffer.add_string java_code "public static void main(String[] args) {\n";
 	  (match pdef.proc_body with
 		| Some e -> Buffer.add_string java_code (java_of_exp e)

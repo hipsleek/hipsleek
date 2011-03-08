@@ -81,6 +81,7 @@
 %token ASSERT
 %token ASSUME
 %token AT
+%token ATT
 %token BIND
 %token BOOL
 %token BREAK
@@ -128,6 +129,7 @@
 %token HASH
 %token <string> IDENTIFIER
 %token IF
+%token IMM
 %token IMPLIES
 %token IMPLY
 %token IMPORT
@@ -203,6 +205,7 @@
 %nonassoc ELSE
 
 /*%nonassoc LOWER_THAN_SEMICOLON*/
+%left CPAREN
 %left SEMICOLON
 %left OR
 %left AND
@@ -211,6 +214,7 @@
 %left PLUS MINUS
 %left STAR
 %left UMINUS
+%left AT
 
 %nonassoc LOWER_THAN_DOT_OP
 %nonassoc OP_DEC OP_INC
@@ -647,14 +651,58 @@ opt_formula_label : AT DOUBLEQUOTE IDENTIFIER DOUBLEQUOTE {(fresh_branch_point_i
 |{(fresh_branch_point_id "")}
 
 heap_constr
-  : simple_heap_constr { $1 }
-  | heap_constr STAR simple_heap_constr { F.mkStar $1 $3 (get_pos 2) }
+  : OPAREN heap_rd CPAREN SEMICOLON heap_rw {F.mkPhase $2 $5 (get_pos 2)}
+  | OPAREN heap_rd CPAREN {F.mkPhase $2 F.HTrue (get_pos 2)}
+  | heap_rw {F.mkPhase F.HTrue $1 (get_pos 2)}
+
+heap_rd
+  : heap_rd STAR simple_heap_constr_imm { F.mkStar $1 $3 (get_pos 2) }
+  | heap_rd AND simple_heap_constr_imm { F.mkConj $1 $3 (get_pos 2) }
+  | simple_heap_constr_imm {$1}
+
+heap_rw
+  : heap_wr STAR OPAREN heap_constr CPAREN { F.mkStar $1 $4 (get_pos 2) }
+  | heap_wr {F.mkPhase F.HTrue $1 (get_pos 2)}
+
+heap_wr
+  : heap_wr STAR simple_heap_constr {F.mkStar $1 $3 (get_pos 2)}
+  | heap_wr STAR simple_heap_constr_imm {F.mkStar $1 $3 (get_pos 2)}
+  | simple_heap_constr {$1}
+  | simple_heap_constr_imm {$1}
+;
+
+simple_heap_constr_imm
+  : cid COLONCOLON IDENTIFIER LT heap_arg_list GT IMM opt_formula_label{
+	let h = F.HeapNode { F.h_formula_heap_node = $1;
+						 F.h_formula_heap_name = $3;
+						 F.h_formula_heap_imm = true;
+						 F.h_formula_heap_full = false;
+						 F.h_formula_heap_with_inv = false;
+						 F.h_formula_heap_pseudo_data = false;
+						 F.h_formula_heap_arguments = $5;
+						 F.h_formula_heap_label = $8;
+						 F.h_formula_heap_pos = get_pos 2 } in
+	  h
+  }
+  | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT IMM opt_formula_label{
+	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
+							F.h_formula_heap2_name = $3;
+							F.h_formula_heap2_imm = true;
+							F.h_formula_heap2_full = false;
+							F.h_formula_heap2_with_inv = false;
+							F.h_formula_heap2_pseudo_data = false;
+							F.h_formula_heap2_arguments = $5;
+							F.h_formula_heap2_label = $8;
+							F.h_formula_heap2_pos = get_pos 2 } in
+		h
+	}
 ;
 
 simple_heap_constr
   : cid COLONCOLON IDENTIFIER LT heap_arg_list GT opt_formula_label{
 	let h = F.HeapNode { F.h_formula_heap_node = $1;
 						 F.h_formula_heap_name = $3;
+						 F.h_formula_heap_imm =  false;
 						 F.h_formula_heap_full = false;
 						 F.h_formula_heap_with_inv = false;
 						 F.h_formula_heap_pseudo_data = false;
@@ -666,6 +714,7 @@ simple_heap_constr
   | cid COLONCOLON IDENTIFIER LT opt_heap_arg_list2 GT opt_formula_label{
 	  let h = F.HeapNode2 { F.h_formula_heap2_node = $1;
 							F.h_formula_heap2_name = $3;
+							F.h_formula_heap2_imm = false;
 							F.h_formula_heap2_full = false;
 							F.h_formula_heap2_with_inv = false;
 							F.h_formula_heap2_pseudo_data = false;
@@ -676,15 +725,16 @@ simple_heap_constr
 	}
 ;
 
+
 pure_constr
   : simple_pure_constr opt_formula_label { match $1 with 
-	| P.BForm (b,_) -> P.BForm (b,$2)
-    | P.And _ -> $1
-    | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
-    | P.Not (b1,_,l) -> P.Not(b1,$2,l)
-    | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
-    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
-  | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
+			| P.BForm (b,_) -> P.BForm (b,$2)
+		        | P.And _ -> $1
+			| P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
+	                | P.Not (b1,_,l) -> P.Not(b1,$2,l)
+	                | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
+			| P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
+                        | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
 disjunctive_pure_constr

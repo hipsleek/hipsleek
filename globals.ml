@@ -40,11 +40,19 @@ type mode =
   | ModeIn
   | ModeOut
 
+let string_of_prim_type = function 
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | Bag           -> "multiset"
+  | List          -> "list"
+
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
+let nonef v = None
 let voidf e = ()
 let voidf2 e f = ()
-let nonef v = None
 let somef v = Some v
 let or_list = List.fold_left (||) false
 let and_list = List.fold_left (&&) true
@@ -102,7 +110,13 @@ let this = "this"
   this variable is going to be changed accordingly in method set_tmp_files_path *)
 (*let tmp_files_path = "/tmp/"*)
 
+(* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
+ * moved here from iparser.mly *)
+let input_file_name = ref ""
+
 (* command line options *)
+
+let instantiation_variants = ref 0
 
 let omega_simpl = ref true
 
@@ -119,6 +133,8 @@ let elim_unsat = ref false
 let lemma_heuristic = ref false
 
 let elim_exists = ref true
+
+let allow_imm = ref false
 
 let print_proc = ref false
 
@@ -224,7 +240,6 @@ let enable_incremental_proving = ref false
   let no_RHS_prop_drop = ref false
   let do_sat_slice = ref false
   
-
 let add_count (t: int ref) = 
 	t := !t+1
 
@@ -241,7 +256,7 @@ let imply_timeout = ref 10.
 let report_error (pos : loc) (msg : string) =
   print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
 	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
-  failwith "Error detected"
+  failwith "Error detected - globals.ml"
 
 let branch_point_id = ref 0
 
@@ -405,16 +420,19 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
     | Some (op, _) -> op,(bin_op_to_list op fn t)
 
 (*type of process used for communicating with the prover*)
-type prover_process = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+type prover_process_t = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
 
 (*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
 class type ['a] incremMethodsType = object
-  method start_p: unit -> prover_process
-  method stop_p:  prover_process -> unit
-  method push: prover_process -> unit
-  method pop: prover_process -> unit
-  method popto: prover_process -> int -> unit
-  method imply: prover_process -> 'a -> 'a -> string -> bool
+  val process: prover_process_t option ref
+  method start_p: unit -> prover_process_t
+  method stop_p:  prover_process_t -> unit
+  method push: prover_process_t -> unit
+  method pop: prover_process_t -> unit
+  method popto: prover_process_t -> int -> unit
+  method imply: (prover_process_t option * bool) option -> 'a -> 'a -> string -> bool
+  method set_process: prover_process_t -> unit
+  method get_process: unit -> prover_process_t option
   (* method add_to_context: 'a -> unit *)
 end
 

@@ -16,7 +16,7 @@ let bag_flag = ref false
 (* pretty printing for primitive types *)
 let isabelle_of_prim_type = function
   | Bool          -> "int"
-  | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. *)
+  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
   | Bag		  ->
@@ -147,25 +147,25 @@ and isabelle_of_b_formula b = match b with
 	  (*"((" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")) & ("
           ^ a1str ^ " >= " ^ a2str ^ ") & (" ^ a1str ^ " >= " ^ a3str ^ ")"*)
 	  (*"((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a1str ^ " >= " ^ a2str ^ ") | ("
-	  ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str*)
+	  ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
           (*"((" ^ a1str ^ " = " ^ a2str  ^ ") | ("
-	  ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " < " ^ a3str ^ "))" ^ Util.new_line_str*)
+	  ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " < " ^ a3str ^ "))" ^ Gen.new_line_str*)
 	  (*if !max_flag = false then
 	    max_flag := true;
 	  if !choice = 1 then
 	    begin*)
 	      (*print_string ("found max in test" ^ (string_of_int !isabelle_file_number) ^ " \n");*)
 	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | ("
-	      ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str;
+	      ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str;
 
 	      (*"((" ^ a2str ^ " < " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
-	      ^ a2str ^ " >= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str*)
+	      ^ a2str ^ " >= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
 	    (*end
 	  else
 	    begin
 	      (*max_flag := false;*)
 	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " >= " ^ a2str ^ ") | ("
-	      ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str;
+	      ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str;
 	    end*)
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
@@ -174,11 +174,11 @@ and isabelle_of_b_formula b = match b with
 	  (*"((min " ^ a2str ^ " " ^ a3str ^ ") = " ^ a1str ^ ")\n" *)
 	  (*"(" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")" *)
           "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " >= " ^ a3str ^ ") | ("
-	   ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str
+	   ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str
           (*---"((" ^ a2str ^ " > " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
-	   ^ a2str ^ " <= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Util.new_line_str*)
+	   ^ a2str ^ " <= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
 	  (* "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-		(*^ a2str ^ " < " ^ a3str ^ " & "*) ^ a1str ^ " = " ^ a2str ^ "))" ^ Util.new_line_str*)
+		(*^ a2str ^ " < " ^ a3str ^ " & "*) ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
   | CP.BagIn (v, e, l)	->
       if !bag_flag then
 	"(" ^  (isabelle_of_spec_var v) ^ ":#" ^ (isabelle_of_exp e) ^ ")"
@@ -258,8 +258,10 @@ and isabelle_of_formula f =
 
 (* checking the result given by Isabelle *)
 let rec check fd isabelle_file_name : bool=
+  let stk = new Gen.stack "" (fun x -> x^"\n") in
   try while true do
     let line = input_line fd in
+    stk#push line;
     if line = "No subgoals!" then raise Exit else ()
   done; false
   with Exit -> 
@@ -269,7 +271,8 @@ let rec check fd isabelle_file_name : bool=
     true
   | _ ->
 	  if !log_all_flag==true then
-		output_string log_file (" [isabelle.ml]: --> Error in file " ^ isabelle_file_name ^ "\n");
+		(output_string log_file (" [isabelle.ml]: --> Error in file " ^ isabelle_file_name ^ "\n");
+        stk#reverse ; print_string (stk#string_of));
 	  (*ignore (Sys.remove isabelle_file_name);	*)
 	  false
 ;;
@@ -349,18 +352,18 @@ let write (pe : CP.formula) (timeout : float) : bool =
   		isabelle_file_number.contents <- !isabelle_file_number + 1;
   		let isabelle_file_name = "test" ^ string_of_int !isabelle_file_number ^ ".thy" in
   		let isabelle_file = open_out isabelle_file_name in
-        let vstr = isabelle_of_var_list (Util.remove_dups (get_vars_formula pe)) in
+        let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
 		let fstr = vstr ^ isabelle_of_formula pe in
     		begin
     		(* creating the theory file *)
 
 		if !bag_flag then
 		  begin
-		    output_string isabelle_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Multiset Main begin" ^ Util.new_line_str);
+		    output_string isabelle_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Multiset Main begin" ^ Gen.new_line_str);
     		    output_string isabelle_file ("declare union_ac [simp]\n");
 		  end
 		else
-		  output_string isabelle_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Main begin" ^ Util.new_line_str);
+		  output_string isabelle_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Main begin" ^ Gen.new_line_str);
     		output_string isabelle_file ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n done\n end\n\n" );
 		flush isabelle_file;
 		close_out isabelle_file;
@@ -370,11 +373,11 @@ let write (pe : CP.formula) (timeout : float) : bool =
 		begin
 		   if !bag_flag then
 		   begin
-		     output_string log_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Multiset Main begin" ^ Util.new_line_str);
+		     output_string log_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Multiset Main begin" ^ Gen.new_line_str);
 		     output_string log_file ("declare union_ac [simp]\n");
 		   end
 		   else
-		     output_string log_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Main begin" ^ Util.new_line_str);
+		     output_string log_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Main begin" ^ Gen.new_line_str);
     		   output_string log_file ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n done\n end\n" );
 		   flush log_file;
 		end;

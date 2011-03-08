@@ -52,6 +52,7 @@
 	 ("forall", FORALL);
 	 ("head", HEAD);
 	 ("if", IF);
+	 ("@I", IMM);
 	 ("implies", IMPLIES);
 	 ("import", IMPORT);
 	 ("in", IN);
@@ -122,6 +123,7 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
+  | "@I" {IMM}
   | '}' { CBRACE }
   | ':' { COLON }
   | "::" { COLONCOLON }

@@ -151,7 +151,7 @@ and compute_fo_b_formula (bf0 : b_formula list) var_map : unit =
 					  let tmp1 = afv e1 in
 					  let tmp2 = afv e2 in
 					  let tmp3 = afv e3 in
-					  let svs = Util.remove_dups (tmp1 @ tmp2 @ tmp3) in
+					  let svs = Gen.BList.remove_dups_eq (=) (tmp1 @ tmp2 @ tmp3) in
 					  let res = to_fo svs var_map in
 						if res then
 						  cont := true
@@ -503,7 +503,7 @@ and flatten_list (es0 : exp list) : (exp * formula * spec_var list) =
 		  let sv = SpecVar (Prim Int, fn, Unprimed) in
 		  let new_e = Var (sv, pos) in
 		  let additional_e = BForm (Eq (new_e, Add (e1, e2, pos), pos) , None) in
-			if Util.empty rest then
+			if Gen.is_empty rest then
 			  (new_e, additional_e, [sv])
 			else
 			  let new_es = new_e :: rest in
@@ -714,7 +714,7 @@ let run_mona (input : string) : unit =
   let chn = open_out !infilename in
 	if !log_all_flag then
 	  (output_string log_all "\n#setmona:\n"; output_string log_all input; flush log_all);
-	output_string chn (Util.break_lines input);
+	output_string chn (Gen.break_lines input);
 	close_out chn;
 	ignore (Sys.command mona_command)
 
@@ -775,9 +775,9 @@ let imply (ante : formula) (conseq : formula) : bool =
   let tmp_vars = fv tmptmp in
   let fvars, svars = compute_vars tmp_vars in
   let var_decls =
-	(if Util.empty fvars then ""
+	(if Gen.is_empty fvars then ""
 	 else "var1 " ^ (String.concat ", " fvars) ^ ";\n")
-	^ (if Util.empty svars then ""
+	^ (if Gen.is_empty svars then ""
 	   else "var2 " ^ (String.concat ", " svars) ^ ";\n") in
   let ante_str = mona_of_formula ante in
   let conseq_str = mona_of_formula conseq in

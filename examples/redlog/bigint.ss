@@ -4,8 +4,8 @@ data node {
 }
 
 bigint<v> == self = null & v = 0 or
-     self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p & v>0
-     inv v >= 0;
+             self::node<p, q> * q::bigint<v1> & 0 <= p <= 9 & v = 10*v1 + p
+             inv v >= 0;
 
 node clone(node x)
   requires x::bigint<v>
@@ -150,7 +150,6 @@ node mult(node x, node y)
   }
 }
 
-/*
 node karatsuba_mult(node x, node y)
   requires x::bigint<v1> * y::bigint<v2>
   ensures res::bigint<v1*v2> * x::bigint<v1> * y::bigint<v2>;
@@ -171,7 +170,6 @@ node karatsuba_mult(node x, node y)
   // x * y = A*100 + K*10 + B
   return add(shift_left(shift_left(A)), add(shift_left(K), B));
 }
-*/
 
 bool is_zero(node x)
   requires x::bigint<v>

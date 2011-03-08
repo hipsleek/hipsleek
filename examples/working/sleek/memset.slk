@@ -1,0 +1,35 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+checkentail x::ll<n> & n > 1 |- x::ll<m> & m > 2.
+print residue.
+// fail - OK
+
+checkentail x::ll<n> * y::ll<n> & n > 0 |- x!=y.
+print residue.
+// succeed, except --eps
+
+checkentail x::ll<n> * y::ll<n> |- x!=y.
+print residue.
+// fail - OK
+
+checkentail x::ll<n> * x::ll<n> |- n=0.
+print residue.
+// fail but should succeed
+
+checkentail x::ll<n> * x::ll<n> & n>0 |- 1=5.
+print residue.
+// fail but should succeed
+
+checkentail x::node<_,_> * x::node<_,_> |- 1=4.
+print residue.
+// fail but should succeed
+
+checkentail x::ll<n> * y::node<_,_> & n=1 |- x!=y.
+// succeeded with imm but failed for --eps
+
+checkentail x::ll<n> * y::node<_,_> & n=0 |- x!=y.
+// succeed for --eps but failed for others

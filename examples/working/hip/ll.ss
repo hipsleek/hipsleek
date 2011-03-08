@@ -163,7 +163,7 @@ node create_list(int a)
 	node tmp;
 
 	if (a == 0) {
-  assume false;
+      // assume false;
 		return null;
 	}
 	else {    

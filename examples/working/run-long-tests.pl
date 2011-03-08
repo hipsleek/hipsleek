@@ -229,7 +229,7 @@ if ($aux!=0){
 		close(LOGFILE);
 		exit(0);		
 	}
-$aux =system "cd $module; make hip.opt;make sleek.opt";
+$aux =system "cd $module; make hip;make sleek";
 if ($aux!=0){
 		print LOGFILE "error making sleekex\n";
 		cleanup();
@@ -239,26 +239,26 @@ if ($aux!=0){
 	}
 	
 #if ($optimized) {
-$hip = "$hip".'.opt';
-$sleek ="$sleek".'.opt -ee -filter';
+$hip = "$hip";
+$sleek ="$sleek".' -ee -filter';
 #}
 
 $error_count = 0;
 $error_files = "";
 
 print LOGFILE "Making... OK\n Starting sleek tests:\n";
-$sleek = "../../../sleek.opt";
+$sleek = "../../../sleek";
 $pth = "$examples_path_working/sleek";
 call_find_s();
 
 print LOGFILE "Starting hip tests:\n";
-$hip = "../../../hip.opt";
+$hip = "../../../hip";
 $tp = "omega";$pth = "$examples_path_working/hip";
 call_find_h();
 $tp = "mona"; $pth = "$examples_path_working/hip";
 call_find_h();
 
-$hip = "../../hip.opt";
+$hip = "../../hip";
 $tp = "mona";$pth = "$examples_path_working_bags";
 call_find_h();
 $tp = "isabelle";$pth = "$examples_path_working_bags";

@@ -217,7 +217,7 @@ let rec float_var_decl (e:exp) : exp  =
     | Block b->
       let e = float_var_decl b.exp_block_body in
       let decl_list = local_var_decl e in
-      let ldups = Util.find_dups_f (fun (c1,_,_)(c2,_,_)-> (String.compare c1 c2)=0) decl_list in
+      let ldups = Gen.BList.find_dups_eq (fun (c1,_,_)(c2,_,_)-> (String.compare c1 c2)=0) decl_list in
       let _ = if ldups<>[] then 
           Error.report_error 
             {Err.error_loc = b.exp_block_pos; 
@@ -323,7 +323,7 @@ let check_use_before_declare (e:exp) : () =
           (match e with
             | None -> ()
             | Some s -> helper s); decl_lst := c::!decl_lst) b.exp_var_decl_decls 
-      | Block b ->  check_use_before_declare b.exp_block_local_var (Util.difference (prev_decl_lst@decl_lst) block_var)
+      | Block b ->  check_use_before_declare b.exp_block_local_var (Gen.BList.difference_eq (=) (prev_decl_lst@decl_lst) block_var)
       | Bind b -> 
          let _ = if (List.mem b.exp_bind_bound_var l) && (not (List.mem b.exp_bind_bound_var (prev_decl_lst @!decl_lst))) then
          Error.report_error 
@@ -956,7 +956,6 @@ module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
-
 
 let ngs_union gs = 
   List.fold_left IGO.union IG.empty gs 
