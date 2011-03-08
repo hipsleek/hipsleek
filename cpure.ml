@@ -1925,9 +1925,10 @@ and elim_exists (f0 : formula) : formula =
   helper f0
 
 (* pretty printing for types *)
-let string_of_typ = function 
+let rec string_of_typ = function 
   | Prim t -> string_of_prim_type t 
   | OType ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot)
+  | Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
 
 let string_of_spec_var (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")

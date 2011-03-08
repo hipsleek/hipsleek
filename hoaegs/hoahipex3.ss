@@ -18,14 +18,14 @@ relation sorted(int[] a, int i, int j) == (i >= j | forall (k : (k < i | k >= j 
 //relation sorted(int[] a, int i, int j) == (i >= j | i < j & a[i] <= a[i+1] & sorted(a,i+1,j)).
 //relation sorted(int[] a, int i, int j) == (i >= j | i < j & a[j-1] <= a[j] & sorted(a,i,j-1)).
 
-void swapelm(ref int[] a, int i, int j)
+/*void swapelm(ref int[] a, int i, int j)
 	requires true
 	ensures a'[i] = a[j] & a'[j] = a[i] & idexptwopts(a,a',i,j);
 {
 	int temp = a[i];
 	a[i] = a[j];
 	a[j] = temp;
-}
+}*/
 
 // Assume that a[0..n-1] is sorted. We want to insert a[n] between a[0..n-1] (and shift the array) in order to make a[0..n] sorted
 void insertelm(ref int[] a, int n)
@@ -33,7 +33,7 @@ void insertelm(ref int[] a, int n)
 	ensures sorted(a',0,n) & idexc(a,a',0,n) & (a'[n] = a[n] | a'[n] = a[n-1]);
 {
 	// n <= 0 or a[n] >= a[n-1] : nothing to do because a[0..n] is already sorted
-	if (n > 1 && a[n] < a[n-1]) {
+	if (n > 0 && a[n] < a[n-1]) {
 		//a[n] is out of place, swap a[n] and a[n-1]: note that a[n-1] is the maximum value amongst a[0..n]
 		//swapelm(a,n-1,n);
 		// State: H = {sorted(a,0,n-1), n > 0, a[n] < a[n-1]}
