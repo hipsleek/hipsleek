@@ -104,7 +104,7 @@ module Make (Token : SleekTokenS)
   let warn error loc = Format.eprintf "Warning: %a: %a@." Loc.print loc Error.print error
 
  let sleek_keywords = Hashtbl.create 100
- 
+ let comment_level = ref 0
  let _ = List.map (fun ((k,t):(string*sleek_token)) -> Hashtbl.add sleek_keywords k t)
 	[("assert", ASSERT);
 	 ("assume", ASSUME);
@@ -231,21 +231,21 @@ rule tokenizer file_name = parse
           with Failure _ -> err (Literal_overflow "nativeint") (Loc.of_lexbuf lexbuf) }
   | "'\\" (_ as c)
         { err (Illegal_escape (String.make 1 c)) (Loc.of_lexbuf lexbuf)         }
-  | "/*"
-        { store file_name; COMMENT(parse_nested comment (in_comment file_name)) }
+  | "/*" { comment_level := 0; comment file_name lexbuf }
+  | "//" { line_comment file_name lexbuf }
   | "/*/"
-        { warn Comment_start (Loc.of_lexbuf lexbuf)                             ;
-          parse comment (in_comment file_name); COMMENT (buff_contents file_name)}
+        { warn Comment_start (Loc.of_lexbuf lexbuf);   
+          comment_level := 0;
+          comment file_name lexbuf}
   | "*/"
         { warn Comment_not_end (Loc.of_lexbuf lexbuf)                           ;
           move_start_p (-1) file_name; STAR                                      }
-  | "//" { COMMENT(parse_nested line_comment file_name) }
   | '"'
         { with_curr_loc string file_name;
           let s = buff_contents file_name in STRING (Camlp4.Struct.Token.Eval.string s, s)     }
-    | "'" (newline as x) "'"
+  | "'" (newline as x) "'"
         { update_loc file_name None 1 false 1; CHAR_LIT (Camlp4.Struct.Token.Eval.char x, x)       }
-    | "'" ( [^ '\\' '\010' '\013']
+  | "'" ( [^ '\\' '\010' '\013']
             | '\\' (['\\' '"' 'n' 't' 'b' 'r' ' ' '\'']
                 |['0'-'9'] ['0'-'9'] ['0'-'9']
                 |'x' hexa_char hexa_char)
@@ -324,20 +324,24 @@ and java file_name = parse
   | newline    { update_loc file_name None 1 false 0; store_parse java file_name}
   | _                                              { store_parse java file_name }
   
-and comment c = parse
-      "/*"
-        { store c; with_curr_loc comment c; parse comment c                     }
-    | "*/"                                                            { store c }
-    | ident                                             { store_parse comment c }
-    | eof
-      { err Unterminated_comment (loc c)                                        }
-    | newline
-      { update_loc c None 1 false 0; store_parse comment c                      }
-    | _                                                 { store_parse comment c }
-   
-and line_comment c = parse
-  | newline { update_loc c None 1 false 0; store c }
-  | _ { store_parse line_comment c }
+and comment file_name = parse
+  | "*/" { 
+	  if !comment_level = 0 then
+		tokenizer file_name lexbuf 
+	  else begin
+		comment_level := !comment_level - 1;
+		comment file_name lexbuf
+	  end	}
+  | "/*" {
+	  comment_level := !comment_level + 1;
+	  comment file_name lexbuf}
+  | newline { update_loc file_name None 1 false 0; comment file_name lexbuf }
+  | _  { comment file_name lexbuf }
+
+and line_comment file_name = parse
+  | newline { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
+  | _ { line_comment file_name lexbuf }
+  
 
 and string c = parse
       '"'                                                       { set_start_p c }

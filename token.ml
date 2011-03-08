@@ -6,7 +6,7 @@ type sleek_token =
   | FLOAT_LIT     of float * string
   | CHAR_LIT      of char * string
   | STRING        of string * string
-  | COMMENT       of string
+  (*| COMMENT       of string*)
   | EOF 
   | JAVA          of string
   (*keywords*)
@@ -54,7 +54,7 @@ module Token = struct
 
   let to_string k = match k with 
     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s)-> s
-    | COMMENT s -> "/* "^s^" */"
+    (*| COMMENT s -> "/* "^s^" */"*)
     | EOF -> ""
     | JAVA s-> s
     | ASSERT -> "assert" | ASSUME -> "assume" | ALLN-> "alln" | APPEND -> "app" | BIND -> "bind"| BOOL -> "bool" | BREAK ->"break" | BAGMAX ->"bagmax" | BAGMIN->"bagmin"
@@ -83,7 +83,7 @@ module Token = struct
   let match_keyword kwd _ = false 
     
   let extract_string t = match t with
-     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s) | COMMENT s | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
+     | IDENTIFIER s | INT_LITER (_,s) | FLOAT_LIT (_,s)  | CHAR_LIT (_,s) | STRING (_,s) (*| COMMENT s*) | JAVA s | RES s | SELFT s | THIS s | FLOW s -> s
      | _ -> ""
      
     
