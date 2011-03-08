@@ -1540,7 +1540,7 @@ and check_valid_flows f =
       
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
-	(* let _ = print_string ("trans_proc :: procedure " ^ proc.I.proc_name ^ "\n")in *) 
+	(*let _ = print_string ("trans_proc :: procedure " ^ proc.I.proc_name ^ "\n") in*) 
   let dup_names = U.find_one_dup (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
   if not (U.empty dup_names) then
     (let p = List.hd dup_names in
@@ -1568,18 +1568,13 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
                E.var_alpha = p.I.param_name;
                E.var_type = p.I.param_type; } in
     let vinfos = List.map p2v all_args in
-		(* let _ = print_string "trans_proc :: get var info from params PASSED \n" in *)
     let _ = List.map (fun v -> E.add v.E.var_name (E.VarInfo v)) vinfos in
-		(* let _ = print_string "trans_proc :: add params to proc local variables PASSED \n" in *)
     let cret_type = trans_type prog proc.I.proc_return proc.I.proc_loc in
-		(* let _ = print_string "trans_proc :: determine proc return type PASSED \n" in *)
     let free_vars = List.map (fun p -> p.I.param_name) all_args in
-		(* let _ = print_string "trans_proc :: Free variables PASSED \n" in *)
     let stab = H.create 103 in
     let add_param p = H.add stab p.I.param_name {
                  sv_info_kind = Known (trans_type prog p.I.param_type p.I.param_loc);
                  id = fresh_int () } in
-		(* let _ = print_string "trans_proc :: add parameters PASSED \n" in *)
     (ignore (List.map add_param all_args);
 	      let _ = H.add stab res { sv_info_kind = Known cret_type;id = fresh_int () } in
 	      let _ = check_valid_flows proc.I.proc_static_specs in
@@ -1615,7 +1610,6 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
         Error.report_error { 
           Err.error_loc = no_pos; 
           Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name} in
-		(* let _ = print_string "trans_proc :: finished PASSED \n" in *)
 		let cproc ={
       C.proc_name = proc.I.proc_mingled_name;
       C.proc_args = args;
@@ -2776,7 +2770,7 @@ and trans_type (prog : I.prog_decl) (t : I.typ) (pos : loc) : CP.typ =
 			                      Err.error_loc = pos;
 			                      Err.error_text = c ^ " is neither data nor enum type";
 			                  }))
-    | I.Array (t, i) -> CP.Array (trans_type prog t pos) (* An Hoa *)
+    | I.Array (et, _) -> CP.Array (trans_type prog et pos) (* An Hoa *)
 	      (* Err.report_error
               {
                   Err.error_loc = pos;
@@ -3151,7 +3145,7 @@ and add_pre_debug prog f =
 and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
-    (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula "" f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
+    (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)
             (*let _ = H.add stab res { sv_info_kind = Known cret_type; } in*)
@@ -3195,7 +3189,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
   let cfvhp1 = List.map (fun c-> trans_var (c,Primed) stab (Iformula.pos_of_struc_formula f0)) fvars in
   let cfvhp2 = List.map (fun c-> trans_var (c,Unprimed) stab (Iformula.pos_of_struc_formula f0)) fvars in
   let cfvhp = cfvhp1@cfvhp2 in
-  let _ = case_coverage cfvhp r in (* AN HOA : TEMPORARILY COMMENT *)
+  let _ = case_coverage cfvhp r in
   let tmp_vars  =  (Cformula.struc_post_fv r) in 
   let post_fv = List.map CP.name_of_spec_var tmp_vars in
   let pre_fv = List.map CP.name_of_spec_var (Util.difference (Cformula.struc_fv r) tmp_vars) in
@@ -4021,7 +4015,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
               | CP.Prim Float -> collect_type_info_arith ie st (Known C.float_type)
               | CP.Prim _ -> ()
               | CP.OType _ -> collect_type_info_pointer ie (Known t) st
-							| CP.Array et -> collect_type_info_arith ie st (Known et)); (* An Hoa TODO : add a collect_type_info_array instead *)
+							| CP.Array et -> collect_type_info_arith ie st (Known (CP.Array et))); (* An Hoa BUG DETECTED Replace (Known et) by (Known (CP.Array et)) TODO : add a collect_type_info_array instead *)
             st)
 	      in
 	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)

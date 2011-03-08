@@ -1,5 +1,5 @@
 /**
- Example: array sorting.
+ Example: array sorting using insertion sort.
  **/
 
 // Two array are identical except between i & j
@@ -29,16 +29,11 @@ void swapelm(ref int[] a, int i, int j)
 
 // Assume that a[0..n-1] is sorted. We want to insert a[n] between a[0..n-1] (and shift the array) in order to make a[0..n] sorted
 void insertelm(ref int[] a, int n)
-
 	requires sorted(a,0,n-1)
-case {
-n <= 0 -> ensures a' = a;
-n > 0 -> ensures sorted(a',0,n) & idexc(a,a',0,n) & (a'[n] = a[n] | a'[n] = a[n-1]);
-}
-
+	ensures sorted(a',0,n) & idexc(a,a',0,n) & (a'[n] = a[n] | a'[n] = a[n-1]);
 {
 	// n <= 0 or a[n] >= a[n-1] : nothing to do because a[0..n] is already sorted
-	if (n >= 1 && a[n] < a[n-1]) {
+	if (n > 1 && a[n] < a[n-1]) {
 		//a[n] is out of place, swap a[n] and a[n-1]: note that a[n-1] is the maximum value amongst a[0..n]
 		//swapelm(a,n-1,n);
 		// State: H = {sorted(a,0,n-1), n > 0, a[n] < a[n-1]}
@@ -74,3 +69,39 @@ void insertion_sort(ref int[] a, int n)
 		insertelm(a,n);
 	}
 }
+
+/*
+void insertion_sort_loop(ref int[] a, int n)
+	requires 0 <= n
+	ensures sorted(a',0,n);
+{
+	int k = 1;
+	while (k < n)
+		requires 1 <= k & sorted(a,0,k-1)
+		ensures k' = n & sorted(a',0,k'-1);
+	{
+		// determine the position to put a[k] so that a[0..k] is sorted
+		int j = k;
+		while (0 <= j && a[k] < a[j-1])
+			requires 0 <= j & j <= k & sorted(a,0,k-1) & strlowerbnd(a, j, k-1, a[k])
+			ensures 0 <= j' & j' <= k & upperbnd(a,0,j'-1,a[k]) & strlowerbnd(a,j',k-1,a[k]);
+		{ 
+			j = j - 1;
+		}
+		
+		// shift the array a[j..k-1] to a[j+1..k] and assign a[j] = a[k]
+		int t = a[k];
+		int l = j;
+		while (l < k)
+			requires sorted(a, j+1, l)
+			ensures sorted(a', j+1, k);
+		{
+			a[l+1] = a[l];
+		}
+		a[j] = t;
+		
+		// increment k for the next round
+		k = k + 1;		
+	}
+}
+*/

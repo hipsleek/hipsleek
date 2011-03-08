@@ -1,5 +1,5 @@
 /**
- Example: array sorting.
+ Example: array sorting using selection sort.
  **/
 
 // Identical except between i & j
@@ -34,7 +34,7 @@ int array_index_of_max(int[] a, int i, int j)
 
 void selection_sort(ref int[] a, int i, int j)
 	requires 0<=i & 0<=j
-	ensures sorted(a',i,j) & idexc(a',a,i,j) & upperbndprev(a,a',i,j);
+	ensures idexc(a',a,i,j) & upperbndprev(a,a',i,j) & sorted(a',i,j);
 {
 	if (i < j)
 	{
@@ -45,5 +45,25 @@ void selection_sort(ref int[] a, int i, int j)
 		a[j] = temp;
 		// and sort the remaining part
 		selection_sort(a, i, j-1);
+                assert upperbnd(a,i,j-1,temp);
+                // Z3 fail to see that upperbnd(a,i,j-1,temp)!
+                // Z3 can prove upperbnd(a,i,j-1,temp), but it does not know that it should prove this property!
+                // After proving that the resulting array is sorted, it can add that to the hypothesis to derive a'[j] = a[j] = max a = max a' and hence, prove the upper bound preserving property.
+	}
+}
+
+void selection_sort_b(ref int[] a, int i, int j)
+	requires 0<=i & 0<=j
+	ensures upperbnd(a,i,j,a'[j]) & upperbnd(a',i,j,a'[j]) & sorted(a',i,j) & idexc(a',a,i,j) & upperbndprev(a,a',i,j);
+{
+	if (i < j)
+	{
+		int k = array_index_of_max(a,i,j);
+		// swap a[k] & a[j] so that a[j] now hold the maximum
+		int temp = a[k];
+		a[k] = a[j];
+		a[j] = temp;
+		// and sort the remaining part
+		selection_sort_b(a, i, j-1);
 	}
 }

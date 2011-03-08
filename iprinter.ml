@@ -30,10 +30,10 @@ let string_of_prim_type = function
 ;;
 
 (* pretty printing for types *)
-let string_of_typ = function 
+let rec string_of_typ = function 
   | Prim t        -> string_of_prim_type t 
   | Named ot      -> ot ^ " "
-  | Array _ -> "array"
+  | Array (t,_) -> (string_of_typ t) ^ "[]" (* "array" *) (* AN HOA *)
 ;;
 
 (* pretty printing for unary operators *)
