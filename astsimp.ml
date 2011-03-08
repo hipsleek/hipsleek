@@ -198,12 +198,7 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
      Buffer.add_string prim_buffer prim_str;
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
-     let input = Lexing.from_string all_prims in
-     input_file_name := "primitives";
-     let prog = Iparser.program (Ilexer.tokenizer "primitives") input
-     in 
-	 (*let _ = print_string ("\n primitives: "^(Iprinter.string_of_program prog)^"\n") in*)
-	 
+     let prog = Parser.parse_hip_string "primitives" all_prims in 	 
 	 prog.I.prog_proc_decls)
   
 let op_map = Hashtbl.create 19

@@ -574,8 +574,38 @@ and mkSpecTrue pos = Iformula.mkETrue pos
 		srequires_pos = pos
 		}]	*)
 		
-		
+    
+    
+and mkHoPred  n m mh tv ta fa s i=
+      {   hopred_name = n;
+          hopred_mode = m;
+          hopred_mode_headers = mh;
+          hopred_typed_vars = tv;
+          hopred_typed_args = ta;
+          hopred_fct_args = fa;
+          hopred_shape    = s;
+          hopred_invariant = i}
+	
+let mkProc id n dd c ot ags r ss ds pos bd=
+    { proc_name = id;
+		  proc_mingled_name = n; 
+		  proc_data_decl = dd;
+		  proc_constructor = c;
+		  proc_exceptions = ot;
+		  proc_args = ags;
+		  proc_return = r;
+		  proc_static_specs = ss;
+		  proc_dynamic_specs = ds;
+		  proc_loc = pos;
+      proc_file = !input_file_name;
+		  proc_body = bd }	
 
+let mkAssert asrtf assmf pid pos =
+      Assert { exp_assert_asserted_formula = asrtf;
+               exp_assert_assumed_formula = assmf;
+               exp_assert_path_id = pid;
+               exp_assert_pos = pos }
+      
 let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:exp -> 'a list -> 'a) :(exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with

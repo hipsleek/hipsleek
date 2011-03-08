@@ -18,15 +18,14 @@ let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_fil
 
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
-  let input = Lexing.from_channel org_in_chnl in
     try
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-		print_string "Parsing...\n"; flush stdout;
-        let _ = Gen.Profiling.push_time "Parsing" in
-        Globals.input_file_name := file_name;
-		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
+      print_string "Parsing...\n"; flush stdout;
+      let _ = Gen.Profiling.push_time "Parsing" in
+      Globals.input_file_name:= file_name;
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in

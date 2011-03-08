@@ -1095,7 +1095,7 @@ bconstr
 ;
 
 /* constraint expressions */
-
+--->line 1098
 cexp
   : additive_cexp { $1 }
   /* bags */

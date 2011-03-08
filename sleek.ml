@@ -49,6 +49,7 @@ let inter = Scriptarguments.inter
 
 let prompt = ref "SLEEK> "
 let terminator = '.'
+module M = Lexer.Make(Token.Token)
 
 let parse_file (parse) (source_file : string) =
 	try
@@ -67,6 +68,11 @@ let parse_file (parse) (source_file : string) =
 	with
 	  | End_of_file ->
 		  print_string ("\n")
+    | M.Loc.Exc_located (_,t)-> 
+      (print_string ("gig: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      (*(print_string ("gigi\n"^(Format.ErrorHandler.print t))*)
+      failwith "dd")
+    
 
 
 let main () = 
