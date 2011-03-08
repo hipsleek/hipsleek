@@ -33,6 +33,8 @@ let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 let print_input = ref false
 
+let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
+
 (**
  * @author An Hoa
  * Relation definitions. To be appended by process_rel_def appropriately.
@@ -479,6 +481,9 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3
+
+let is_sat f sat_no = Gen.Debug.loop_2 "is_sat" (!print_pure) (fun x->x) string_of_bool is_sat f sat_no
+
 
 (**
  * To be implemented

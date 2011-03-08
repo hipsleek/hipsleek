@@ -280,7 +280,7 @@ program : {
 	prog_global_var_decls = [];
 	prog_enum_decls = [];
 	prog_view_decls = [];
-  	prog_rel_decls = []; (* An Hoa *)
+  	Iast.prog_rel_decls = []; (* An Hoa *)
 	prog_proc_decls = [];
 	prog_coercion_decls = []; }
 }

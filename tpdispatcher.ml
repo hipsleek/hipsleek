@@ -456,8 +456,9 @@ let is_list_b_formula bf = match bf with
     | CP.ListNotIn _
     | CP.ListAllN _ 
     | CP.ListPerm _
-        -> Some true  
-	  
+        -> Some true
+    | _ -> None
+ 
 let is_list_constraint (e: CP.formula) : bool =
  
   let or_list = List.fold_left (||) false in

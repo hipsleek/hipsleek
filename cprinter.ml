@@ -1580,3 +1580,4 @@ Cast.print_exp := string_of_formula_exp;;
 Cast.print_formula := string_of_pure_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Omega.print_pure := string_of_pure_formula;;
+Smtsolver.print_pure := string_of_pure_formula;;
