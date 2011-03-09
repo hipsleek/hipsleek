@@ -5,17 +5,17 @@ pred lseg<n, p> == self = p & n = 0
          or self::node<next = r> * r::lseg<n - 1, p>
          inv n >= 0.
 
-checkentail x::node<_,_> * x::lseg<n, p> & x=null|- n=0.
+checkentail x::node<_,_> * x::lseg<n, p> |- n=0.
 // fail but should be valid
 // bug (1) --pcp shows that pruning did not happen
 // bug (2) false not detected
-
+/*
 checkentail x::node<_,_> * x::lseg<n, p> & n=0 |- n=0.
 // OK
 
 checkentail x::node<_,_> * x::lseg<n, p>  |- n=0.
 // OK
-
+*/
 
 // --pcp shows that pruning did not happen
 
