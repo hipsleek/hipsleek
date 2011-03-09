@@ -954,15 +954,15 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_for
                     with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
               ) ([],[], old_mem) prun_cond in
               
-            let l_prune = 
+            let l_prune' = 
               let aliases = MCP.memo_get_asets ba_crt new_mem2 in
-              let ba_crt=  ba_crt in
+              let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
               let n_l = List.filter (fun c-> 
                 let c_ba,_ = List.find (fun (_,d)-> c=d) v_def.view_prune_conditions_baga in
                 let c_ba = List.map (CP.subs_one zip) c_ba in
                 not (Gen.BList.disjoint_eq CP.eq_spec_var ba_crt c_ba)) rem_br in
               Gen.BList.remove_dups_eq (=) (l_prune@n_l) in
-            
+            let l_prune = if (List.length l_prune')=(List.length rem_br) then l_prune else l_prune' in
             
             (*l_prune : branches that will be dropped*)
             (*l_no_prune: constraints that overlap with the implied set or are part of the unknown, remaining prune conditions *)
