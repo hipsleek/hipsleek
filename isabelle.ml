@@ -131,19 +131,18 @@ and isabelle_of_b_formula b = match b with
   | CP.Gte (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " >= " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Eq (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Neq (a1, a2, _) -> "( " ^ (isabelle_of_exp a1) ^ " ~= " ^ (isabelle_of_exp a2) ^ ")"
- (* optimization below is not working for isabelle due to incompletness *)
-  (*| CP.Eq (a1, a2, _) -> begin
-        if CP.is_null a2 then	(isabelle_of_exp a1)^ " < 1"
-        else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < 1"
-        else (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2)
-  end
-  | CP.Neq (a1, a2, _) -> begin
-        if CP.is_null a2 then
-        	(isabelle_of_exp a1) ^ " > 0"
-        else if CP.is_null a1 then						
-        	(isabelle_of_exp a2) ^ " > 0"
-        else (isabelle_of_exp a1)^ " ~= " ^ (isabelle_of_exp a2)
-  end*)
+  (* | CP.Eq (a1, a2, _) -> begin *)
+  (*       if CP.is_null a2 then	(isabelle_of_exp a1)^ " < (1::int)" *)
+  (*       else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < (1::int)" *)
+  (*       else (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) *)
+  (* end *)
+  (* | CP.Neq (a1, a2, _) -> begin *)
+  (*       if CP.is_null a2 then *)
+  (*       	(isabelle_of_exp a1) ^ " > (0::int)" *)
+  (*       else if CP.is_null a1 then *)
+  (*       	(isabelle_of_exp a2) ^ " > (0::int)" *)
+  (*       else (isabelle_of_exp a1)^ " ~= " ^ (isabelle_of_exp a2) *)
+  (* end *)
   | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
 	  let a2str = isabelle_of_exp a2 in
@@ -162,7 +161,7 @@ and isabelle_of_b_formula b = match b with
 	    begin*)
 	      (*print_string ("found max in test" ^ (string_of_int !isabelle_file_number) ^ " \n");*)
 	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | ("
-	      ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str;
+	      ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" (* ^ Gen.new_line_str!!!!!!!!!!!!!!!!! *);
 
 	      (*"((" ^ a2str ^ " < " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
 	      ^ a2str ^ " >= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
@@ -180,7 +179,7 @@ and isabelle_of_b_formula b = match b with
 	  (*"((min " ^ a2str ^ " " ^ a3str ^ ") = " ^ a1str ^ ")\n" *)
 	  (*"(" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")" *)
           "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " >= " ^ a3str ^ ") | ("
-	   ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str
+	   ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" (* ^ Gen.new_line_str!!!!!!!!!!!!!!!!!! *)
           (*---"((" ^ a2str ^ " > " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
 	   ^ a2str ^ " <= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
 	  (* "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
@@ -326,7 +325,8 @@ let prelude () =
       let _ = read_prompt() in 
       output_string ochn ("declare union_ac [simp]\n");
       let _ = read_until "declare#" ichn in (*declare#*)
-      ()
+      if!log_all_flag==true then
+        output_string log_all ("theory isabelle_proofs imports Multiset Main\nbegin\ndeclare union_ac [simp]\n")
     )
   else
     (output_string ochn "theory isabelle_proofs imports Main\n"; flush ochn;
@@ -335,7 +335,9 @@ let prelude () =
      output_string ochn "begin\n"; flush ochn;
      let _ = get_answer ichn in (*reads "theory isabelle_proofs"*) 
      let _ = read_prompt() in 
-    ())
+     if!log_all_flag==true then
+       output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
+    )
 
 (* checking the result given by Isabelle *)
 let rec check str : bool=
@@ -352,26 +354,27 @@ let rec check str : bool=
 
 let write (pe : CP.formula) (timeout : float) : bool =
   begin
+      incr test_number;
       let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
 	  let fstr = vstr ^ isabelle_of_formula pe in
       let ichn = !process.inchannel in
       let ochn = !process.outchannel in
       begin
-          let _ = (print_string ("\nlemma \"" ^ fstr ^ "\"\n"); flush stdout) in
+          (* let _ = (print_string ("\nlemma \"" ^ fstr ^ "\"\n"); flush stdout) in *)
     	  output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
-          let _ = (print_string ("\nafter sending lemma\n"); flush stdout) in
+          (* let _ = (print_string ("\nafter sending lemma\n"); flush stdout) in *)
           let _ = get_answer ichn in (*lemma#*)
-          let _ = (print_string ("\nafter reading lemma\n"); flush stdout) in
+          (* let _ = (print_string ("\nafter reading lemma\n"); flush stdout) in *)
           let _ = input_char ichn in (*space*)
 
-          let _ = (print_string ("\napply(auto)\n"); flush stdout) in
+          (* let _ = (print_string ("\napply(auto)\n"); flush stdout) in *)
           output_string ochn "apply(auto)\n"; flush ochn;
           let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
 
-          let _ = (print_string ("\noops\n"); flush stdout) in
+          (* let _ = (print_string ("\noops\n"); flush stdout) in *)
           output_string ochn "oops\n"; flush ochn;
           let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
-          let _ = (print_string ("\n!!!!"^str); flush stdout) in
+          (* let _ = (print_string ("\n!!!!"^str); flush stdout) in *)
 
 		  if !log_all_flag == true then
     		output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
@@ -383,7 +386,7 @@ let write (pe : CP.formula) (timeout : float) : bool =
 
 let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
   if !log_all_flag == true then
-	output_string log_all ("\n\n[isabelle.ml]: imply#from sat#" ^ sat_no ^ "\n");
+	output_string log_all ("imply#from sat#" ^ sat_no ^ "\n");
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
@@ -391,7 +394,7 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if !log_all_flag == true then
-	output_string log_all ("\n\n[isabelle.ml]: imply#" ^ imp_no ^ "\n");
+	output_string log_all ("\n\nimply#" ^ imp_no ^ "\n");
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
@@ -400,7 +403,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
 
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
-				output_string log_all ("\n\n[isabelle.ml]: #is_sat " ^ sat_no ^ "\n");
+				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
 	let tmp_form = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
 		match tmp_form with
 			| true ->
@@ -423,6 +426,9 @@ let start_isabelle () =
   let _ = print_string ("\nStarting Isabelle\n") in
   let inchn, outchn, errchn, npid = Unix_add.open_process_full "isabelle-process" [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|] in
   process := {inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid };
+  isabelle_pid := npid;
+  is_isabelle_running := true;
+  last_test_number := !test_number;
   prelude ()
 
 let close_pipes () : unit = 
@@ -434,13 +440,14 @@ let close_pipes () : unit =
 let stop_isabelle () = 
   if !is_isabelle_running then begin
       let num_tasks = !test_number - !last_test_number in
+      output_string !process.outchannel ("end\n");flush !process.outchannel;
+      print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n");
 	  (if !log_all_flag then 
             (output_string log_all ("[isabelle.ml]: >> Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
       close_pipes ();
       Unix.kill !isabelle_pid 2;
       ignore (Unix.waitpid [] !process.pid);
       is_isabelle_running := false;
-  (*!!!!!!!! send "end" at the end of mona process !!!!!!!*)
   end
 
 (* restart isabelle system *)

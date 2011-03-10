@@ -864,6 +864,7 @@ let stop_mona () =
 	(if !log_all_flag then 
       (output_string log_all ("[mona.ml]: >> Stop Mona after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
     close_pipes ();
+    print_string ("\nStop mona " ^ (string_of_int !mona_pid)) ; 
     Unix.kill !mona_pid 2;
     ignore (Unix.waitpid [] !process.pid);
     is_mona_running := false;
