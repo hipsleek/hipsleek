@@ -1,6 +1,8 @@
 (*
   Create the input file for Isabelle.
-  When running Isabelle for the first time, use --build-image option under hip/sleek
+
+  !!! When running Isabelle for the first time, use --build-image option under hip/sleek
+
 *)
 
 open Globals
@@ -129,61 +131,30 @@ and isabelle_of_b_formula b = match b with
   | CP.Lte (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " <= " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " > " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Gte (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " >= " ^ (isabelle_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) ^ ")"
-  | CP.Neq (a1, a2, _) -> "( " ^ (isabelle_of_exp a1) ^ " ~= " ^ (isabelle_of_exp a2) ^ ")"
-  (* | CP.Eq (a1, a2, _) -> begin *)
-  (*       if CP.is_null a2 then	(isabelle_of_exp a1)^ " < (1::int)" *)
-  (*       else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < (1::int)" *)
-  (*       else (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) *)
-  (* end *)
-  (* | CP.Neq (a1, a2, _) -> begin *)
-  (*       if CP.is_null a2 then *)
-  (*       	(isabelle_of_exp a1) ^ " > (0::int)" *)
-  (*       else if CP.is_null a1 then *)
-  (*       	(isabelle_of_exp a2) ^ " > (0::int)" *)
-  (*       else (isabelle_of_exp a1)^ " ~= " ^ (isabelle_of_exp a2) *)
-  (* end *)
+  (* | CP.Eq (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) ^ ")" *)
+  (* | CP.Neq (a1, a2, _) -> "( " ^ (isabelle_of_exp a1) ^ " ~= " ^ (isabelle_of_exp a2) ^ ")" *)
+  | CP.Eq (a1, a2, _) -> begin
+        if CP.is_null a2 then	(isabelle_of_exp a1)^ " < (1::int)"
+        else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < (1::int)"
+        else (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2)
+  end
+  | CP.Neq (a1, a2, _) -> begin
+        if CP.is_null a2 then
+        	(isabelle_of_exp a1) ^ " > (0::int)"
+        else if CP.is_null a1 then
+        	(isabelle_of_exp a2) ^ " > (0::int)"
+        else (isabelle_of_exp a1)^ " ~= " ^ (isabelle_of_exp a2)
+  end
   | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
 	  let a2str = isabelle_of_exp a2 in
 	  let a3str = isabelle_of_exp a3 in
-	  (*"((max " ^ a2str ^ " " ^ a3str ^ ") = " ^ a1str ^ ")\n" *)
-	  (*"(" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")" *)
-	  (*"((" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")) & ("
-          ^ a1str ^ " >= " ^ a2str ^ ") & (" ^ a1str ^ " >= " ^ a3str ^ ")"*)
-	  (*"((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a1str ^ " >= " ^ a2str ^ ") | ("
-	  ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
-          (*"((" ^ a1str ^ " = " ^ a2str  ^ ") | ("
-	  ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " < " ^ a3str ^ "))" ^ Gen.new_line_str*)
-	  (*if !max_flag = false then
-	    max_flag := true;
-	  if !choice = 1 then
-	    begin*)
-	      (*print_string ("found max in test" ^ (string_of_int !isabelle_file_number) ^ " \n");*)
-	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | ("
-	      ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" (* ^ Gen.new_line_str!!!!!!!!!!!!!!!!! *);
-
-	      (*"((" ^ a2str ^ " < " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
-	      ^ a2str ^ " >= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
-	    (*end
-	  else
-	    begin
-	      (*max_flag := false;*)
-	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " >= " ^ a2str ^ ") | ("
-	      ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str;
-	    end*)
+      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | (" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" 
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
 	  let a2str = isabelle_of_exp a2 in
 	  let a3str = isabelle_of_exp a3 in
-	  (*"((min " ^ a2str ^ " " ^ a3str ^ ") = " ^ a1str ^ ")\n" *)
-	  (*"(" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")" *)
-          "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " >= " ^ a3str ^ ") | ("
-	   ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" (* ^ Gen.new_line_str!!!!!!!!!!!!!!!!!! *)
-          (*---"((" ^ a2str ^ " > " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
-	   ^ a2str ^ " <= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
-	  (* "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-		(*^ a2str ^ " < " ^ a3str ^ " & "*) ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
+	  "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " >= " ^ a3str ^ ") | (" ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | CP.BagIn (v, e, l)	->
       if !bag_flag then
 	"(" ^  (isabelle_of_spec_var v) ^ ":#" ^ (isabelle_of_exp e) ^ ")"
@@ -260,8 +231,6 @@ and isabelle_of_formula f =
                 else ""
 
 
-
-
 let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)
 
 let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ ". ") l)
@@ -281,8 +250,6 @@ let continue f arg tsecs : bool =
     Sys.set_signal Sys.sigalrm oldsig; true
   with Exit ->
     Sys.set_signal Sys.sigalrm oldsig; false
-	
-(* ############################################################################################### *)
 
 (*creates a new "isabelle-process " process*)
 let rec get_answer chn : string =
@@ -360,37 +327,22 @@ let write (pe : CP.formula) (timeout : float) : bool =
       let ichn = !process.inchannel in
       let ochn = !process.outchannel in
       begin
-          (* let _ = (print_string ("\nlemma \"" ^ fstr ^ "\"\n"); flush stdout) in *)
     	  output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
-          (* let _ = (print_string ("\nafter sending lemma\n"); flush stdout) in *)
           let _ = get_answer ichn in (*lemma#*)
-          (* let _ = (print_string ("\nafter reading lemma\n"); flush stdout) in *)
           let _ = input_char ichn in (*space*)
 
-          (* let _ = (print_string ("\napply(auto)\n"); flush stdout) in *)
           output_string ochn "apply(auto)\n"; flush ochn;
           let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
 
-          (* let _ = (print_string ("\noops\n"); flush stdout) in *)
           output_string ochn "oops\n"; flush ochn;
           let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
-          (* let _ = (print_string ("\n!!!!"^str); flush stdout) in *)
-
+          
 		  if !log_all_flag == true then
     		output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
 		  (* verifying the result returned by Isabelle *)
 		  check str
 	  end
   end
-
-
-let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
-  if !log_all_flag == true then
-	output_string log_all ("imply#from sat#" ^ sat_no ^ "\n");
-  max_flag := false;
-  choice := 1;
-  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-    (write tmp_form timeout)
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if !log_all_flag == true then
@@ -400,6 +352,14 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let res =  write tmp_form 0. in
 	res
+
+let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
+  if !log_all_flag == true then
+	output_string log_all ("imply#from sat#" ^ sat_no ^ "\n");
+  max_flag := false;
+  choice := 1;
+  let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
+    (write tmp_form timeout)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
@@ -461,7 +421,6 @@ let restart_isabelle reason =
       start_isabelle();
   end
 
-(* ############################################################################################### *)
 
 (* building the multiset theory image -  so that it won't be loaded for each theory that needs to be proved *)
 (* there is an option when running the system --build-image which creates the heap image *)

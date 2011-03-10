@@ -853,7 +853,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
 		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-  | Mona | MonaH -> Mona.imply timeout ante conseq imp_no 
+  | Mona | MonaH -> Mona.imply ante conseq imp_no 
   | CO -> 
       begin
             let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
@@ -866,7 +866,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | CM -> 
       begin
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          Mona.imply timeout ante conseq imp_no
+          Mona.imply ante conseq imp_no
         else
               let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
           match result1 with
@@ -877,7 +877,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       end
   | OM ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
+		(called_prover :="mona " ; Mona.imply ante conseq imp_no)
 	  else
 		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
   | OI ->
@@ -889,7 +889,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | Redlog -> Redlog.imply ante conseq imp_no 
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-        Mona.imply timeout ante conseq imp_no
+        Mona.imply ante conseq imp_no
       else
         Redlog.imply ante conseq imp_no
 ;;
