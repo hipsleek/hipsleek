@@ -26,7 +26,7 @@ let test_number = ref 0
 (* pretty printing for primitive types *)
 let isabelle_of_prim_type = function
   | Bool          -> "int"
-  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. !!! But you have real*)
+  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
   | Bag		  ->
@@ -405,7 +405,7 @@ let stop_isabelle () =
 	  (if !log_all_flag then 
             (output_string log_all ("[isabelle.ml]: >> Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
       close_pipes ();
-      Unix.kill !isabelle_pid 2;
+      Unix.kill !isabelle_pid 3;
       ignore (Unix.waitpid [] !process.pid);
       is_isabelle_running := false;
   end
