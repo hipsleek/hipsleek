@@ -26,7 +26,7 @@ let test_number = ref 0
 (* pretty printing for primitive types *)
 let isabelle_of_prim_type = function
   | Bool          -> "int"
-  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. *)
+  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. !!! But you have real*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
   | Bag		  ->

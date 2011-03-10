@@ -586,7 +586,27 @@ and xpure_heap_symbolic_i_debug (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_
   Gen.Debug.ho_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula (fun (_,_,vl) -> Cprinter.string_of_spec_var_list vl)
       (fun h0 -> xpure_heap_symbolic_i prog h0 i) h0
 
-
+and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list = 
+  let rec helper h0 = match h0 with
+    | DataNode ({ h_formula_data_node = p;}) ->[p]
+    | ViewNode ({ h_formula_view_node = p;
+                  h_formula_view_name = c;
+                  h_formula_view_arguments = vs;
+                  h_formula_view_remaining_branches = lbl_lst;
+                  h_formula_view_pos = pos}) ->
+          (match lbl_lst with
+            | None -> look_up_view_baga prog c p vs
+            | Some ls ->  
+                let vdef = look_up_view_def pos prog.prog_view_decls c in
+                let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+                let to_svs = p :: vs in
+                lookup_view_baga_with_subs ls vdef from_svs to_svs )
+    | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
+    | Phase ({ h_formula_phase_rd = h1;h_formula_phase_rw = h2;}) 
+    | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;}) -> (helper h1) @ (helper h2)
+    | HTrue | Hole _ | HFalse -> [] in
+  helper h0
+      
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
@@ -811,30 +831,36 @@ and prune_preds_debug  prog (simp_b:bool) (f:formula):formula =
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
-        let r1,r2,r3 = heap_prune_preds prog hp f in
+        let r1,r2,r3 = heap_prune_preds prog hp f [] in
         (r1, MCP.MemoF r2, r3)
   | MCP.OnePF _ -> (hp,old_mem,false)
 
-and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP.memo_pure*bool)= 
+and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_formula*MCP.memo_pure*bool)= 
   match hp with
     | Star s ->
-          let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_star_h1 old_mem in
-          let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_star_h2 mem1 in
+          let ba1 =ba_crt@(heap_baga prog s.h_formula_star_h1) in
+          let ba2 =ba_crt@(heap_baga prog s.h_formula_star_h2) in
+          let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_star_h1 old_mem ba2 in
+          let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_star_h2 mem1 ba1 in
           (mkStarH h1 h2 s.h_formula_star_pos , mem2 , (changed1 or changed2))
               (*(Star {  
                 h_formula_star_h1 = h1;
                 h_formula_star_h2 = h2;
                 h_formula_star_pos = s.h_formula_star_pos }, mem2, (changed1 or changed2) )*)
     | Conj s ->
-          let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_conj_h1 old_mem in
-          let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_conj_h2 mem1 in
+          let ba1 =ba_crt@(heap_baga prog s.h_formula_conj_h1) in
+          let ba2 =ba_crt@(heap_baga prog s.h_formula_conj_h2) in
+          let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_conj_h1 old_mem ba2 in
+          let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_conj_h2 mem1 ba1 in
           (Conj {  
               h_formula_conj_h1 = h1;
               h_formula_conj_h2 = h2;
               h_formula_conj_pos = s.h_formula_conj_pos }, mem2, (changed1 or changed2) )
     |Phase  s ->
-         let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_phase_rd old_mem in
-         let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_phase_rw mem1 in
+         let ba1 =ba_crt@(heap_baga prog s.h_formula_phase_rd) in
+         let ba2 =ba_crt@(heap_baga prog s.h_formula_phase_rw) in
+         let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_phase_rd old_mem ba2 in
+         let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_phase_rw mem1 ba1 in
          (Phase {  
              h_formula_phase_rd = h1;
              h_formula_phase_rw = h2;
@@ -927,6 +953,17 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure): (h_formula*MCP
                                 else (yes_prune,(p_cond, pr_branches)::no_prune,new_mem)
                     with | Not_found -> (yes_prune, (p_cond, pr_branches)::no_prune, new_mem)
               ) ([],[], old_mem) prun_cond in
+              
+            let l_prune' = 
+              let aliases = MCP.memo_get_asets ba_crt new_mem2 in
+              let ba_crt = ba_crt@(List.concat(List.map (fun c->CP.EMapSV.find_equiv_all c aliases ) ba_crt)) in
+              let n_l = List.filter (fun c-> 
+                let c_ba,_ = List.find (fun (_,d)-> c=d) v_def.view_prune_conditions_baga in
+                let c_ba = List.map (CP.subs_one zip) c_ba in
+                not (Gen.BList.disjoint_eq CP.eq_spec_var ba_crt c_ba)) rem_br in
+              Gen.BList.remove_dups_eq (=) (l_prune@n_l) in
+            let l_prune = if (List.length l_prune')=(List.length rem_br) then l_prune else l_prune' in
+            
             (*l_prune : branches that will be dropped*)
             (*l_no_prune: constraints that overlap with the implied set or are part of the unknown, remaining prune conditions *)
             (*rem_br : formula_label list  -> remaining branches *)         
@@ -1960,11 +1997,11 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
           is_unsat_with_branches (fun f-> let a,b,_,_ = xpure_heap prog f 1 in (a,b)) qvars qh qp br pos sat_subno
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
-  unsat_base_x prog sat_subno f
-      (* Gen.Debug.ho_3_nth n "unsat_base" (fun _ -> "?") (fun x-> (string_of_int !x)) 
+  (*unsat_base_x prog sat_subno f*)
+       Gen.Debug.no_3 "unsat_base" (fun _ -> "?") (fun x-> (string_of_int !x)) 
          Cprinter.string_of_formula string_of_bool
          unsat_base_x prog sat_subno f
-      *)    
+          
 
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es

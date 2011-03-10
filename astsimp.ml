@@ -1141,6 +1141,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
                C.view_raw_base_case = rbc;
                C.view_prune_branches = [];
                C.view_prune_conditions = [];
+               C.view_prune_conditions_baga = [];
                C.view_prune_invariants = []} in
        (Debug.devel_pprint ("\n" ^ (Cprinter.string_of_view_decl cvdef)) (CF.pos_of_struc_formula cf);
         cvdef)
@@ -4672,14 +4673,14 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   Iast.prog_coercion_decls = coer1 }
 
 and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos:
-      ((Cpure.b_formula * (formula_label list)) list)*
+      ((Cpure.b_formula * (formula_label list)) list)* (C.ba_prun_cond list) *
       ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list) ) list)
       = Gen.Debug.no_1 "prune_inv_inference_formula" Cprinter.string_of_spec_var_list
   (fun (lb,_) -> "?")
   (fun v_l -> prune_inv_inference_formula_x cp v_l init_form_lst u_baga u_inv pos) v_l
 
 and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos: 
-      ((Cpure.b_formula * (formula_label list)) list)*
+      ((Cpure.b_formula * (formula_label list)) list)* (C.ba_prun_cond list) *
       ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list)) list) = 
   (*print_string ("sent to case inf: "^(Cprinter.string_of_formula init_form)^"\n");*)
   (*aux functions for case inference*)
@@ -4926,12 +4927,13 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let invariant_list = compute_invariants v_l guard_list in  
   let norm_inv_list = List.map (fun (c1,(b1,c2))-> (c1,(CP.BagaSV.conj_baga v_l b1,MCP.memo_norm_wrapper c2))) invariant_list in
   let ungrouped_g_l = List.concat (List.map (fun (lbl, (_,c_l))-> List.map (fun c-> (lbl,c)) c_l) guard_list) in
+  let ungrouped_b_l = List.map (fun (lbl, (b,_))-> (b,lbl)) guard_list in
   let prune_conds = List.fold_left (fun a (f_lbl, constr)-> 
       let leq,lneq = List.partition (fun (c,_)-> CP.eq_b_formula_no_aset constr c) a in
       let rest_lbls = match (List.length leq) with | 0 -> [] | 1 -> snd (List.hd leq) | _ -> [] in
       (constr,f_lbl::rest_lbls)::lneq) [] ungrouped_g_l in
   let prune_conds = List.filter (fun (c1,c2)-> (List.length init_form_lst)>(List.length c2)) prune_conds in 
-  (prune_conds, norm_inv_list)
+  (prune_conds,ungrouped_b_l, norm_inv_list)
       
 (*usefull: disjunct_count, disjunct_list *)
 
@@ -4941,10 +4943,11 @@ and view_prune_inv_inference cp vd =
   let f_branches = CF.get_view_branches  vd.C.view_formula in 
   let branches = snd (List.split f_branches) in
   let u_inv = List.fold_left (fun a (_,c)-> MCP.memoise_add_pure_N a c) (fst vd.C.view_user_inv) (snd vd.C.view_user_inv) in
-  let conds, invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf u_inv) no_pos in    
+  let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf u_inv) no_pos in    
   let v' = { vd with  
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 
+      C.view_prune_conditions_baga = baga_cond;
       C.view_prune_invariants = invs;} in 
   v'    
       
