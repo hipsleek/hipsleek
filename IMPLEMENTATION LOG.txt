@@ -254,6 +254,8 @@ ENHANCEMENTS
 
  + [cpure.ml] : cache the dependent relations to prevent redundant computations
 
+ + [scriptarguments.ml] : add argument to choose whether to dump the SMT input
+
 BUGS
  
  + [cpure.ml] : function [afv] forgets to collect the array variable in array access expression as free variable

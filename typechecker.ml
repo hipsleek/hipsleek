@@ -516,8 +516,8 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	Err.report_error {Err.error_loc = pos;
 	Err.error_text = "Post condition "
 	        ^ (Cprinter.string_of_formula post)
-	        ^ " cannot be derived by the system.\n By : "^(Cprinter.string_of_list_partial_context final_state)
-	        ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
+	        ^ " cannot be derived by the system.\n By : " (* AN HOA - TEMPORARILY COMMENTED ^(Cprinter.string_of_list_partial_context final_state)
+	        ^ "\n fail ctx: " ^(Cprinter.string_of_list_partial_context rs) *)}
 
 
 (* checking procedure *)
