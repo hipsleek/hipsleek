@@ -34,8 +34,12 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-    ("--smtout", Arg.Set Smtsolver.print_input,
-    "Print all the generated SMT input"); (* An Hoa *)
+    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+    "Print the antecedent and consequence for each implication check."); (* An Hoa *)
+    ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
+    "Print the original output given by the SMT solver."); (* An Hoa *)
+    ("--smtinp", Arg.Set Smtsolver.print_input,
+    "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,

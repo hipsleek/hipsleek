@@ -254,7 +254,7 @@ ENHANCEMENTS
 
  + [cpure.ml] : cache the dependent relations to prevent redundant computations
 
- + [scriptarguments.ml] : add argument to choose whether to dump the SMT input
+ + [scriptarguments.ml] : add new hip/sleek switches "--smtinp", "--imply-calls" and "--smtout" argument to choose whether to dump the generated SMT input, output or the implication formula.
 
 BUGS
  
