@@ -16,11 +16,15 @@ relation upperbndprev(int[] a, int[] b) == forall(i,j,s : (!(strupperbnd(a,i,j,s
 
 relation lowerbndprev(int[] a, int[] b) == forall(i,j,s : (!(strlowerbnd(a,i,j,s)) | strlowerbnd(b,i,j,s))).
 
+relation bnd(int[] a, int i, int j, int low, int high) == (i > j | forall ( k : (k < i | k > j | low <= a[k] <= s))).
+// above could be used to replace both strlowerbnd and strupperbnd.
+// is there a need for "strict"? 
+
 // FUNCTION arraypart
 // Partition the array a[i..j] into three parts
 // a[i..k] contains elements < x
 // a[k+1..t-1] contains only x's.
-// a[t..j] contains elements > x
+// a[t..j] contains elements > x 
 
 void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	case {
