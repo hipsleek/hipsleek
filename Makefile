@@ -37,7 +37,7 @@ lexer.ml: lexer.mll token.ml
 	$(OCAMLLEX) lexer.mll
  
 parser.cmo: lexer.ml
-	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of.opt -c -g parser.ml
+	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -c -g parser.ml
 
 parser.cmx : lexer.ml
 	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -c -g parser.ml

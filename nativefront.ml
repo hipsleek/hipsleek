@@ -51,6 +51,6 @@ let parse (input : string) : command =  Parser.parse_sleek_int "sleek string" in
 let list_parse (input_file) : command list =
   let org_in_chnl = open_in input_file in
   Globals.input_file_name:= input_file;
-  let cmd = Parser.parse_sleek "sleek" (Stream.of_channel org_in_chnl) in
+  let cmd = Parser.parse_sleek input_file (Stream.of_channel org_in_chnl) in
   close_in org_in_chnl;
 	cmd
