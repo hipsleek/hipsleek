@@ -16,7 +16,7 @@ relation upperbndprev(int[] a, int[] b) == forall(i,j,s : (!(strupperbnd(a,i,j,s
 
 relation lowerbndprev(int[] a, int[] b) == forall(i,j,s : (!(strlowerbnd(a,i,j,s)) | strlowerbnd(b,i,j,s))).
 
-relation bnd(int[] a, int i, int j, int low, int high) == (i > j | forall ( k : (k < i | k > j | low <= a[k] <= s))).
+relation bnd(int[] a, int i, int j, int low, int high) == (i > j | forall ( k : (k < i | k > j | low <= a[k] <= high))).
 // above could be used to replace both strlowerbnd and strupperbnd.
 // is there a need for "strict"? 
 
