@@ -30,7 +30,7 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 	case {
 		i > j -> ensures k' = i - 1 & t' = j + 1 & a' = a;
 		i <= j -> requires bnd(a,i,j,l,h)
-ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 & bnd(a', t', j, x+1,h) & idexc(a', a, i, j);
+     ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 & bnd(a', t', j, x+1,h) & idexc(a', a, i, j);
 	} //'
 {
 	if (i <= j)
@@ -79,8 +79,17 @@ ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, 
 }
 
 void qsort(ref int[] a, int i, int j,int l,int h)
-   requires i>=j 
+/*
+ requires i>=j 
    ensures sorted(a',i,j) & idexc(a',a,i,j); //'
+*/
+	case {
+		i > j -> ensures sorted(a',i,j) & idexc(a',a,i,j);
+		i = j -> //requires bnd(a,i,j,l,h)
+                 ensures sorted(a',i,j) & idexc(a',a,i,j);
+        i < j -> requires bnd(a,i,j,l,h)
+          ensures sorted(a',i,j) & idexc(a',a,i,j);
+    }
     /*
    requires i<j 
    ensures sorted(a',i,j) & idexc(a',a,i,j); //'
@@ -91,14 +100,16 @@ void qsort(ref int[] a, int i, int j,int l,int h)
           ensures sorted(a',i,j) & idexc(a',a,i,j);
     }
 */
+
 {
 	if (i < j)
 	{
 		int k, t;
         int x =a[i];
 		arraypart(a, i, j, x, k, t,l,h);
-        //dprint;
+        dprint;
 		qsort(a, i, k,l,x-1);
+        // assume t<j or t>=j;
         dprint;
 		qsort(a, t, j,x+1,h);
 		// Don't know how to solve this problem!!!
