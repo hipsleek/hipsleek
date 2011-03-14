@@ -4,8 +4,7 @@
 
 relation idexc(int[] a, int[] b, int i, int j) == forall(k : (i<=k & k<=j | a[k] = b[k])).
 
-
-  relation sorted(int[] a, int i, int j) == (i >= j  | i<j & forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
+relation sorted(int[] a, int i, int j) == (i >= j  | i<j & forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
 
 relation strupperbnd(int[] a, int i, int j, int s) == (i > j | forall ( k : (k < i | k > j | a[k] < s))).
 
@@ -105,10 +104,10 @@ void qsort(ref int[] a, int i, int j,int l,int h)
 		int k, t;
         int x =a[i];
 		arraypart(a, i, j, x, k, t,l,h);
-        dprint;
+        //dprint;
 		qsort(a, i, k,l,x-1);
         // assume t<j or t>=j;
-        dprint;
+        //dprint;
 		qsort(a, t, j,x+1,h);
 		// Don't know how to solve this problem!!!
 		//assume upperbndprev(a,a') & lowerbndprev(a,a');
