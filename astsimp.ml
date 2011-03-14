@@ -1122,7 +1122,7 @@ and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       if (ffv!=[]) then 
         Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" "} in
+          Err.error_text = "error 1: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def "^vdef.I.view_name^" "} in
      let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
      let _ = vdef.I.view_typed_vars <- typed_vars in
      let mvars = [] in
@@ -1218,7 +1218,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
       if (ffv!=[]) then 
         Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def"^vdef.I.view_name} in
+          Err.error_text = "error 2: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in view def"^vdef.I.view_name} in
      let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
      let _ = vdef.I.view_typed_vars <- typed_vars in
      let mvars = [] in
@@ -1609,7 +1609,7 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
     if (ffv!=[]) then 
       Error.report_error { 
           Err.error_loc = no_pos; 
-          Err.error_text = "error: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
+          Err.error_text = "error 3: free variables "^(Cprinter.string_of_spec_var_list ffv)^" in proc "^proc.I.proc_name^" "} in
 	  let cproc ={
           C.proc_name = proc.I.proc_mingled_name;
           C.proc_args = args;

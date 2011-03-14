@@ -32,10 +32,10 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 // a[k+1..t-1] contains only x's.
 // a[t..j] contains elements > x 
 
-  void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t, int l, int h)
+  void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	case {
 		i > j -> ensures k' = i - 1 & t' = j + 1 & a' = a;
-		i <= j -> requires bnd(a,i,j,l,h)
+		i <= j ->  requires [l,h] bnd(a,i,j,l,h)
      ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 
                   & bnd(a', t', j, x+1,h) & idexc(a', a, i, j) & bnd(a',i,j,l,h);
 	} //'
@@ -45,7 +45,7 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 		if (a[i] < x)
 			// Since a[i] is in the correct partition,
 			// we only need to partition the rest.
-          arraypart(a, i + 1, j, x, k, t,l,h);
+          arraypart(a, i + 1, j, x, k, t);
 		else if (a[i] > x)
 		{
 			// a[i] should be in the third partition,
@@ -53,14 +53,14 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 			int temp = a[i];
 			a[i] = a[j];
 			a[j] = temp;
-			arraypart(a, i, j - 1, x, k, t,l,h);
+			arraypart(a, i, j - 1, x, k, t);
 		}
 		else // a[i] == x
 		{
 			// we cannot decide the position of a[i]
 			// hence, delay this task and first partition 
 			// the remaining part of the array
-          arraypart(a, i + 1, j, x, k, t,l,h);
+          arraypart(a, i + 1, j, x, k, t);
 
 			// after this the array should look like
 			// i  i+1 ... k k+1 ... t-1 t ... j
@@ -85,13 +85,13 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 	}
 }
 
-void qsort(ref int[] a, int i, int j,int l,int h)
+void qsort(ref int[] a, int i, int j)
 /* requires i>=j 
  ensures true;
 */
 	case {
 		i >= j -> ensures a=a';
-        i < j -> requires bnd(a,i,j,l,h)
+        i < j -> requires [l,h] bnd(a,i,j,l,h)
           ensures  bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
     }
     /*
@@ -110,12 +110,12 @@ void qsort(ref int[] a, int i, int j,int l,int h)
 	{
 		int k, t;
         int x =a[i];
-		arraypart(a, i, j, x, k, t,l,h);
+		arraypart(a, i, j, x, k, t);
         //dprint;
-		qsort(a, i, k,l,x-1);
+		qsort(a, i, k); /* l,x-1 */
         // assume t<j or t>=j;
         //dprint;
-		qsort(a, t, j,x+1,h);
+		qsort(a, t, j); /* x+1,h */
 		// Don't know how to solve this problem!!!
 		//assume upperbndprev(a,a') & lowerbndprev(a,a');
 	}

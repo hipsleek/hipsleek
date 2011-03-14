@@ -29,7 +29,7 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | forall ( k : 
 void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	case {
 		i > j -> ensures k' = i - 1 & t' = j + 1 & a' = a;
-		i <= j -> ensures i - 1 <= k'  & k' <= j & strupperbnd(a', i, k', x) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 & strlowerbnd(a', t', j, x) & idexc(a', a, i, j);
+		i <= j -> ensures i - 1 <= k'  & k' <= j & strupperbnd(a', i, k', x) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 & strlowerbnd(a', t', j, x) & idexc(a', a, i, j) ; // & upperbndprev(a,a') & lowerbndprev(a,a') ;
 	}
 {
 	if (i <= j)
