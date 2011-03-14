@@ -295,6 +295,7 @@ struct
 
 end;;
 
+
 exception Stack_Error
 
 class ['a] stack (x_init:'a) (epr:'a->string)  =
@@ -337,9 +338,80 @@ class counter x_init =
      method string_of : string= (string_of_int ctr)
    end;;
 
+class ['a] stack2 xinit =
+   object 
+	val def = xinit
+	val mutable stk = []
+	method push (i:'a) = stk <- i::stk
+	method pop = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> stk <- xs
+   method top : 'a = match stk with 
+       | [] -> def
+       | x::xs -> x
+	method len = List.length stk
+end;;
+
+class ['a] stack3  =
+   object 
+	val mutable stk = []
+	method push (i:'a) = stk <- i::stk
+	method pop = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> stk <- xs
+   method top : 'a = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> x
+	method len = List.length stk
+end;;
+
+module Stack4  =
+   struct 
+    type a 
+	let push (i:'a) stk = i::!stk
+	let pop stk  = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> xs
+    let top stk  = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> x
+    let len stk : int = List.length stk
+end;;
+
+module type EQType = sig
+   type a
+	val eq: a -> a -> bool
+	val string_of : a -> string
+end;;
+
+module EQInt : EQType = struct
+   type a = int
+	let eq x y = (x==y)
+	let string_of x = string_of_int x
+end;;
+
+module EQList =
+ functor (Elt: EQType) ->
+   struct 
+   type a = Elt.a list
+   let rec eq x y = match x,y with
+      | [],[] -> true
+      | x::xs,y::ys -> (Elt.eq x y) && (eq xs ys)
+      | _,_ -> false
+   let string_of xs = 
+     let o = List.map (Elt.string_of) xs
+     in "["^(String.concat "," o)^"]"
+end;;
+
+module EQListInt : EQType = EQList(EQInt);;
+
 module ErrorUti =
 struct
   (** Error-handling functions. *)
+
+  let (stkint:int stack2) = new stack2 (-1)
+
+ let (stkint:int stack3) = new stack3 
 
   let error_list = new stack "error - stack underflow" (fun x -> x)
 
@@ -819,22 +891,28 @@ end;;
 module type MEM_TYPE =
 sig
   type t
-  val eq : t -> t -> bool
+  type ef = t -> t -> bool
+  type tlist = t list
+  val eq : ef
   val overlap : t -> t -> bool
-  val intersect : t list -> t list -> t list (* /\ *)
+  val intersect : tlist -> tlist -> tlist (* /\ *)
     (* under approx or-ing *)
-  val star_union : t list -> t list -> t list (* @ *)
-    (* combine by star *)
+  val overlap_eq : ef -> t -> t -> bool
+  val intersect_eq : ef -> tlist -> tlist -> tlist (* /\ *)
+  val star_union : tlist -> tlist -> tlist (* @ *)
+    (* combine by star, without normalization *)
   val string_of : t -> string
 end;;
 
 module type PTR_TYPE =
 sig
   type t
+  type ef = t -> t -> bool
   type tlist = t list
-  val eq : t -> t -> bool
-  val string_of : t -> string
+  val eq : ef
+  val intersect_eq : ef -> tlist -> tlist -> tlist
   val intersect : tlist -> tlist -> tlist
+  val string_of : t -> string
 end;;
 
 module type EQ_PTR_TYPE =
@@ -843,7 +921,9 @@ module type EQ_PTR_TYPE =
       open Elt
       type a =Elt.t
       type tlist = t list
+      type ef = t -> t -> bool
       val intersect : tlist -> tlist -> tlist
+      val intersect_eq : ef -> tlist -> tlist -> tlist
     end;;
 
 
@@ -857,17 +937,27 @@ struct
   let eq = Elt.eq
   let overlap = Elt.overlap
   let intersect = Elt.intersect
+  let overlap_eq = Elt.overlap_eq
+  let intersect_eq = Elt.intersect_eq
   let star_union = Elt.star_union
+
+  (* need a semantic overlap operator that takes
+     aliasing into account *)
 
   (* a singleton bag *)
   let singleton_baga (e:ptr) : baga = [e]
 
-  let rec is_dupl_baga (xs:baga) : bool = 
+  let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
       | x::xs1 -> match xs1 with
           | [] -> false
-          | _ -> if (List.exists (overlap x) xs1) then true else is_dupl_baga xs1
+          | _ -> if (List.exists (overlap_eq eq x) xs1) then true else is_dupl_baga_eq eq xs1
+
+  let is_dupl_baga (xs:baga) : bool = is_dupl_baga_eq eq xs
+
+  (* false result denotes contradiction *)
+  let is_sat_baga_eq eq (xs:baga) : bool = not(is_dupl_baga_eq eq xs)
 
   (* false result denotes contradiction *)
   let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
@@ -882,10 +972,17 @@ struct
   let star_baga (x:baga) (y:baga) : baga = star_union x y
 
   (* conjunction of two bag of addresses *)
+  let conj_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys
+
+  (* conjunction of two bag of addresses *)
   let conj_baga (xs:baga) (ys:baga) : baga = intersect xs ys
 
   (* disjunction of two bag of addresses *)
   let or_baga (xs:baga) (ys:baga) : baga = intersect xs ys
+
+  (* disjunction of two bag of addresses *)
+  let or_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys
+
 
 end;;
 

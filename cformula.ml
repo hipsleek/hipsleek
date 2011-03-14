@@ -18,6 +18,7 @@ type t_formula = (* type constraint *)
 	   | TypeSub of t_formula_sub_type (* for t <: C *)
 	   | TypeSuper of t_formula_sub_type (* for t < C *)
 	*)
+
   | TypeAnd of t_formula_and
   | TypeTrue
   | TypeFalse

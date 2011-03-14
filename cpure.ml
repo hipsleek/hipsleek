@@ -1903,7 +1903,10 @@ module Ptr =
 struct
   include Elt
   type tlist = t list
+  type ef = t -> t -> bool
   module X = Gen.BListEQ(Elt)
+  let overlap_eq eq = eq
+  let intersect_eq eq (x:tlist)  (y:tlist) = Gen.BList.intersect_eq eq x y
   let overlap = eq
   let intersect (x:tlist)  (y:tlist) = X.intersect x y
   let star_union x y = x@y
