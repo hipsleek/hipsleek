@@ -274,21 +274,14 @@ let cvc3_popto (process: Globals.prover_process_t) (n: int) =
 (*creates a new "cvc3 +int" process*)
 let start () : Globals.prover_process_t =
   let _ = print_string ("\nStarting CVC3\n") in
-  let inchn, outchn, errchn, npid = Unix_add.open_process_full "cvc3" [|"cvc3"; "+int";(* "+printResults"*)|] in
-  let nProcess = {name = "cvc3"; inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid } in
-  let _ = cvc3_push nProcess in
-  nProcess
+  let (process, _) = Gen.PrvComms.start !log_cvc3_formula !cvc3_log ("cvc3", "cvc3", [|"cvc3"; "+int";(* "+printResults"*)|]) (fun a -> ()) (fun ()->()) in
+  let _ = cvc3_push process in
+  process
 
 (*stop the "cvc3 +int" process*)
 let stop (process: Globals.prover_process_t) : unit = 
-  let _ = print_string ("\nCVC3 stop process: " ^ (string_of_int !test_number) ^ "invocations \n") in
-  let _ = flush process.outchannel in
-  let _ = flush stdout in
-  let _ = Unix.close (Unix.descr_of_out_channel process.outchannel) in
-  let _ = Unix.close (Unix.descr_of_in_channel process.errchannel) in
-  let _ = Unix.close (Unix.descr_of_in_channel process.inchannel) in
-  let _ = Unix.kill process.pid 9 in
-  let _ =  ignore (Unix.waitpid [] process.pid) in
+  let _ = Gen.PrvComms.stop !log_cvc3_formula !cvc3_log process !test_number 9 (fun () -> ()) in
+  let _ = print_string ("\nCVC3 stop process: " ^ (string_of_int !test_number) ^ " invocations \n") in 
   ()
 
 (*all the formulas that shall be send to cvc3 process have to be transformed in cvc3 input language *)

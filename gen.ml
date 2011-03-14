@@ -1622,10 +1622,10 @@ struct
         let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
         set_process process;
         prelude ();
-        true (*prover is running*)
+        (process, true) (*prover is running*)
     with
       | e -> begin
-          let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception : " ^ (Printexc.to_string e)) in
+          let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^": " ^ (Printexc.to_string e)) in
           flush stdout; flush stderr;
           if log_all_flag then begin
               output_string log_all ("["^prover_name^".ml]: >> Error while starting "^prover_name^"!\n");

@@ -3,13 +3,10 @@
 *)
 open Globals
 open Cpure
-exception Timeout
 
-let channels = ref (stdin, stdout)
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let timeout = ref 15.0 (* default timeout is 15 seconds *)
-let omega_pid = ref 0
 
 (***********)
 let test_number = ref 0
@@ -23,6 +20,8 @@ let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpi
 let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid())))
 
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
+
+let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let init_files () =
   begin
@@ -118,83 +117,47 @@ and omega_of_formula f  = match f with
 let omegacalc = "oc"(* TODO: fix oc path *)
 (*let omegacalc = "/home/locle/workspace/hg/omega_incremental/sleekex/omega_modified/omega_calc/obj/oc"*)
 
-let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
 let start_with str prefix =
   (String.length str >= String.length prefix) && (String.sub str 0 (String.length prefix) = prefix) 
 let send_cmd cmd =
-  if !is_omega_running then output_string (snd !channels) (cmd ^ "\n")
+  if !is_omega_running then output_string (!process.outchannel) (cmd ^ "\n")
 
-let set_timer tsecs =
-  ignore (Unix.setitimer Unix.ITIMER_REAL
-            { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+let set_process (proc: Globals.prover_process_t) = 
+  process := proc
 
-
-(* start omega system in a separated process and load redlog package *)
-let start() =
- try
-  if not !is_omega_running then begin
-    print_string "Starting Omega... \n"; flush stdout;
-    last_test_number := !test_number;
-	(if !log_all_flag then
-        output_string log_all ("[omega.ml]: >> Starting Omega...\n") );
-
-    let inchanel, outchanel, errchanel, pid = Unix_add.open_process_full omegacalc [||]  (*omegacalc [|omegacalc|]*) in
-	(*let pid = Unix.create_process omegacalc  [|omegacalc|] (Unix.stdin) (snd channels) Unix.stderr in (*open_process*) *)
-	(*let inchanel, outchanel = Unix.open_process (omegacalc) in*)
-	(*not use err chanel, close it*)
-	close_in errchanel;
-	(***************)
-    channels := inchanel, outchanel;
-    
-    is_omega_running := true;
-    omega_pid := pid;
-
-    let finished = ref false in
-    while not !finished do
-      let line = input_line (fst !channels) in
+let prelude () =
+  let finished = ref false in
+  while not !finished do
+    let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	  (if !log_all_flag then
-        output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
-      if (start_with line "#") then finished := true;
-    done;
+	(if !log_all_flag then
+          output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
+    if (start_with line "#") then finished := true;
+  done
 
-    (*print_endline "OC is running!"; flush stdout*)
+  (* start omega system in a separated process and load redlog package *)
+let start() =
+  if not !is_omega_running then begin
+      print_string "Starting Omega... \n"; flush stdout;
+      last_test_number := !test_number;
+      let (_, is_running) = Gen.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
+      is_omega_running := is_running;
   end
-with |  Unix.Unix_error (id, _, _)  ->
-		     begin
-		       print_string ("Start Omega... Exception: " ^ (Unix.error_message id) ^ "\n"); flush stdout;
-			 end
-  | e ->
-     Printf.eprintf "Unexpected exception : %s" (Printexc.to_string e)
 
 (* stop Omega system *)
 let stop () =
   if !is_omega_running then begin
-    (*send_cmd "quit;"; flush (snd !channels);*)
     let num_tasks = !test_number - !last_test_number in
     print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
-	(if !log_all_flag then
-        output_string log_all ("[omega.ml]: >> Stop Omega after ... "^(string_of_int num_tasks)^" invocations\n") );
-
-    Unix.kill !omega_pid Sys.sigkill;
-    ignore (Unix.waitpid [] !omega_pid);
-	(*close fd to avoid lacking resources*)
-    close_in (fst !channels);
-	close_out (snd !channels);
-	
+    let _ = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
-    omega_pid := 0;
   end
 
 (* restart Omega system *)
 let restart reason =
   if !is_omega_running then begin
-    let num_tasks = !test_number - !last_test_number in
-    print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ");
-	(if !log_all_flag then
-        output_string log_all ("[omega.ml]: >> " ^ reason ^ " Restarting Omega after ... "^(string_of_int num_tasks)^" invocations \n") );
-    stop();
-    start();
+    let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
+    Gen.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
 
 (*
@@ -251,82 +214,71 @@ let read_last_line_from_in_channel chn : string =
 let check_formula f timeout=
   (*  try*)
   begin
-    if not !is_omega_running then start ()
-    else if (!omega_call_count = !omega_restart_interval) then
-      begin
-	    restart("Regularly restart:1 ");
-	    omega_call_count := 0;
-      end;
-  (*timer*)
-    let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-    let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-    set_timer timeout;
-    
-  (*let _ = print_endline "check" in*)
-    let _ = incr omega_call_count in
-    let new_f = 
-      if String.length f > 1024 then
-	(Gen.break_lines f)
-      else
-	f
-    in
-    output_string (snd !channels) new_f;
-    flush (snd !channels);
-    
-    let result = ref true in
-    let str = read_last_line_from_in_channel (fst !channels) in
-    let n = String.length str in
-    if n > 7 then
-      begin
-	let lastchars = String.sub str (n - 7) 7 in
-	if lastchars = "FALSE }" then
-	  begin
-            result := false;
-	  end;
-      end;
-  (*turn off timer*)
-    set_timer 0.0;
-    reset_sigalrm () ;
-    !result
+      if not !is_omega_running then start ()
+      else if (!omega_call_count = !omega_restart_interval) then
+        begin
+	        restart("Regularly restart:1 ");
+	        omega_call_count := 0;
+        end;
+      let fnc () = 
+        (*let _ = print_endline "check" in*)
+        let _ = incr omega_call_count in
+        let new_f = 
+          if String.length f > 1024 then
+	        (Gen.break_lines f)
+          else
+	        f
+        in
+        output_string (!process.outchannel) new_f;
+        flush (!process.outchannel);
+        
+        let result = ref true in
+        let str = read_last_line_from_in_channel (!process.inchannel) in
+        let n = String.length str in
+        if n > 7 then
+          begin
+	          let lastchars = String.sub str (n - 7) 7 in
+	          if lastchars = "FALSE }" then
+	            begin
+                    result := false;
+	            end;
+          end;
+        !result
+      in
+      let res = Gen.PrvComms.maybe_raise_timeout fnc () timeout in 
+      res
   end
 
 (* linear optimization with omega *)
 let rec send_and_receive f timeout=
- begin
-  if not !is_omega_running then
-    start (); 
-  if (!omega_call_count = !omega_restart_interval) then
-    begin
-    restart ("Regularly restart:2");
-	omega_call_count := 0;
-	end;
-	
-  (*timer*)
-  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  set_timer timeout;
-  
-  let _ = incr omega_call_count in
-  let new_f = 
-  if String.length f > 1024 then
-     (Gen.break_lines f)
-  else
-      f
-  in
-    output_string (snd !channels) new_f;
-    flush (snd !channels);
-	let str = read_from_in_channel (fst !channels) in
-		
-    let lex_buf = Lexing.from_string str in
-	(*print_string (line^"\n"); flush stdout;*)
-    let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
-
-    (*turn off timer*)
-    set_timer 0.0;
-    reset_sigalrm () ;	
-
-    rel 
-  
+  begin
+      if not !is_omega_running then
+        start (); 
+      if (!omega_call_count = !omega_restart_interval) then
+        begin
+            restart ("Regularly restart:2");
+	        omega_call_count := 0;
+	    end;
+      let fnc () =
+        let _ = incr omega_call_count in
+        let new_f = 
+          if String.length f > 1024 then
+            (Gen.break_lines f)
+          else
+            f
+        in
+        output_string (!process.outchannel) new_f;
+        flush (!process.outchannel);
+	    let str = read_from_in_channel (!process.inchannel) in
+	    
+        let lex_buf = Lexing.from_string str in
+	  (*print_string (line^"\n"); flush stdout;*)
+        let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
+        rel
+      in
+      let answ = Gen.PrvComms.maybe_raise_timeout fnc () timeout in
+      answ
+          
   end
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -369,7 +321,7 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       try
         check_formula fomega !timeout
       with
-      | Timeout ->
+      | Gen.PrvComms.Timeout ->
 	      begin
            restart ("Timeout when checking #is_sat " ^ sat_no ^ "!");
            true
@@ -411,7 +363,7 @@ let is_valid (pe : formula) timeout: bool =
       try
         not (check_formula (fomega ^ "\n") timeout)
       with
-      | Timeout ->
+      | Gen.PrvComms.Timeout ->
           (*log ERROR ("TIMEOUT");*)
           restart ("Timeout when checking #is_valid ");
           true
@@ -501,7 +453,7 @@ let simplify (pe : formula) : formula =
 	   match_vars (fv pe) rel
 	  end
 	with
-      | Timeout ->
+      | Gen.PrvComms.Timeout ->
           (*log ERROR ("TIMEOUT");*)
           restart ("Timeout when checking #simplify ");
           pe

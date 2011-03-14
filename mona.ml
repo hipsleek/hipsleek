@@ -821,7 +821,7 @@ let set_process (proc: Globals.prover_process_t) =
   process := proc
 
 let start () = 
-  let is_running = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-v";|]) set_process prelude in
+  let (_,is_running) = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-v";|]) set_process prelude in
   is_mona_running := is_running;
   last_test_number := !test_number
 
