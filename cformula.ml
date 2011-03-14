@@ -1753,9 +1753,18 @@ and context =
 
 and steps = string list
 
+and failure_kind =
+  | Failure_May
+  | Failure_Must
+  | Failure_None
+
+and fail_explaining = {
+  fe_kind: failure_kind (*may/must*)
+(*  fe_sugg = struc_formula *)
+}
+
 and fail_context = {
   fc_prior_steps : steps; (* prior steps in reverse order *)
-  fc_kind : string; (*may/must*)
   fc_message : string;          (* error message *)
   fc_current_lhs : entail_state;     (* LHS context with success points *)
   fc_orig_conseq : struc_formula;     (* RHS conseq at the point of failure *)
@@ -1764,16 +1773,16 @@ and fail_context = {
 }  
     
 and fail_type =
-  | Basic_Reason of fail_context
+  | Basic_Reason of (fail_context * fail_explaining)
   | Trivial_Reason of string
   | Or_Reason of (fail_type * fail_type)
-  | And_Reason of (fail_type * fail_type)
+  | And_Reason of (fail_type * fail_type * fail_explaining)
   | Continuation of fail_context    
   | Or_Continuation of (fail_type * fail_type)
 
       
 and list_context = 
-  | FailCtx of fail_type 
+  | FailCtx of fail_type
   | SuccCtx of context list
       
 and branch_fail = path_trace * fail_type
@@ -1900,7 +1909,7 @@ and or_context_list (cl10 : context list) (cl20 : context list) : context list =
 	  let tmp = helper cl10 cl20 in
 		tmp
   
-and mkFailCtx_in (ft:fail_type) = FailCtx ft
+and mkFailCtx_in (ft:fail_type)  = FailCtx ft
 
 and mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
@@ -1993,10 +2002,68 @@ and is_cont t =
     | _ -> false
 
 and fold_context_left c_l = union_context_left c_l 
-  
-  (*list_context or*)
+
+ (*list_context or*)
+and get_explaining t =
+  match t with
+  | Basic_Reason (f, fe) -> Some fe
+  | Trivial_Reason _ -> None
+  | Or_Reason _ -> None
+  | And_Reason (f1, f2, fe) -> Some fe
+  | Continuation _ -> None
+  | Or_Continuation _ -> None
+
+and or_list_failure_explaining fc1 fc2 =
+match (get_explaining fc1, get_explaining fc2) with
+  | None, None ->
+    {
+      fe_kind = Failure_None
+    }
+  | None, Some fe -> fe
+  | Some fe, None -> fe
+  | Some fe1, Some fe2 ->
+      begin
+        match fe1.fe_kind, fe2.fe_kind with
+          | Failure_May, Failure_Must -> (*C1*)
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_Must, Failure_May ->
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_May, Failure_None ->  (*C2*)
+            {
+              fe_kind = Failure_May
+            }
+           | Failure_None, Failure_May ->
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_May, Failure_May -> (*C3*)
+            {
+              fe_kind = Failure_May
+            }
+          | Failure_Must, Failure_Must -> (*C4*)
+            {
+              fe_kind = Failure_Must
+            }
+          | Failure_Must, Failure_None -> (*C5*)
+            {
+              fe_kind = Failure_May
+            }
+           | Failure_None, Failure_Must ->
+            {
+              fe_kind = Failure_May
+            }
+          | _ ->
+            {
+              fe_kind = Failure_None
+            }
+      end
+
 and or_list_context c1 c2 = match c1,c2 with
-     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2, or_list_failure_explaining t1 t2))
      | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
      | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
@@ -2083,7 +2150,8 @@ and merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail list *
     | (l1,b1)::z1,(l2,b2)::z2 -> 
 	if path_trace_eq l1 l2 then 
 	  let res,pt = merge_fail z1 z2 in
-	    ((l1,And_Reason (b1,b2))::res, l1::pt)
+      let fe = {fe_kind = Failure_None} in
+	    ((l1,And_Reason (b1,b2,fe))::res, l1::pt)
 	else if path_trace_lt l1 l2 then 
 	  let res,pt = merge_fail z1 f2 in
 	    ((l1,b1)::res, l1::pt)
@@ -3102,11 +3170,11 @@ let rec trans_context (c: context) (arg: 'a)
 and transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason s -> c
-    | Basic_Reason br -> Basic_Reason (f br)
+    | Basic_Reason (br,fe) -> Basic_Reason ((f br), fe)
     | Continuation br -> Continuation (f br)
     | Or_Reason (ft1,ft2) -> Or_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
-    | And_Reason (ft1,ft2) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
+    | And_Reason (ft1,ft2, fe) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2),fe)
   
 and transform_list_context f (c:list_context):list_context = 
   let f_c,f_f = f in
@@ -3145,7 +3213,7 @@ and fold_fail_context f (c:fail_type) =
     | Continuation br -> f c []
     | Or_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     | Or_Continuation (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
-    | And_Reason (ft1,ft2) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
+    | And_Reason (ft1,ft2,fe) -> f c [(fold_fail_context f ft1);(fold_fail_context f ft2)]
     
 (*let rec fold_list_context f (c:list_context) = 
   let f_f,f_c = f in

@@ -514,7 +514,7 @@ let formula_wo_paren (e:formula) =
 let ft_assoc_op (e:fail_type) : (string * fail_type list) option = 
   match e with
     | Or_Reason (f1,f2) -> Some (op_or_short,[f1;f2])
-    | And_Reason (f1,f2) -> Some (op_and_short,[f1;f2])
+    | And_Reason (f1,f2, fe) -> Some (op_and_short,[f1;f2])
     | _ -> None
 
 (* check if exp can be printed without a parenthesis,
@@ -614,7 +614,7 @@ let rec pr_pure_formula  (e:P.formula) =
   let f_b e =  pr_bracket pure_formula_wo_paren pr_pure_formula e 
   in
   match e with 
-    | P.BForm (bf,lbl) -> pr_formula_label_opt lbl; pr_b_formula bf
+    | P.BForm (bf,lbl) -> (*pr_formula_label_opt lbl;*) pr_b_formula bf
     | P.And (f1, f2, l) ->  
           let arg1 = bin_op_to_list op_and_short pure_formula_assoc_op f1 in
           let arg2 = bin_op_to_list op_and_short pure_formula_assoc_op f2 in
@@ -1152,12 +1152,12 @@ and proceed_br_ctx br_ctx : branch_ctx =
 and proceed_fail_type failtype : fail_type =
   match failtype with
   | Trivial_Reason _ -> failtype
-  | Basic_Reason (failctx) -> 
-		Basic_Reason {failctx with fc_current_lhs = (proceed_entail_state failctx.fc_current_lhs)}
+  | Basic_Reason (failctx, fe) -> 
+		Basic_Reason ({failctx with fc_current_lhs = (proceed_entail_state failctx.fc_current_lhs)},fe)
   | Or_Reason (f_type1, f_type2) ->
 		Or_Reason (proceed_fail_type f_type1, proceed_fail_type f_type2)
-  | And_Reason (f_type1, f_type2) ->
-		And_Reason (proceed_fail_type f_type1, proceed_fail_type f_type2)
+  | And_Reason (f_type1, f_type2, e) ->
+		And_Reason (proceed_fail_type f_type1, proceed_fail_type f_type2, e)
 
 and proceed_context succ_ctx : context =
 	match succ_ctx with
@@ -1285,10 +1285,21 @@ let pr_estate (es : entail_state) =
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
 let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_printer_of_pr fmt pr_estate es
 
+and string_of_failure_kind e_kind=
+match e_kind with
+  | Failure_May -> "MAY"
+  | Failure_Must -> "MUST"
+  | Failure_None -> "None"
+
+let string_of_fail_explaining fe=
+  fmt_open_vbox 1; 
+  pr_vwrap "fe_kind: " fmt_string (string_of_failure_kind fe.fe_kind);
+(*  fe_sugg = struc_formula *)
+  fmt_close ()
+
 let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
   pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps;
-  pr_vwrap "fc_kind: "  fmt_string es.fc_kind;
   pr_vwrap "fc_message: "  fmt_string es.fc_message;
   pr_vwrap "fc_current_lhs: " pr_estate es.fc_current_lhs;
   pr_vwrap "fc_orig_conseq: " pr_struc_formula es.fc_orig_conseq;
@@ -1326,7 +1337,7 @@ let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
-    | Basic_Reason br ->  pr_fail_estate br
+    | Basic_Reason (br, fe) ->  (string_of_fail_explaining fe); (pr_fail_estate br)
     | Continuation br ->  fmt_string (" Continuation ! "); pr_fail_estate br
     | Or_Reason _ -> 
           let args = bin_op_to_list op_or_short ft_assoc_op e in
@@ -1345,7 +1356,13 @@ let printer_of_fail_type (fmt: Format.formatter) (e:fail_type) : unit =
 
 let pr_list_context (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
+    | FailCtx ft ->
+          (match ft with
+            | Basic_Reason (_, fe) -> (string_of_fail_explaining fe) (*useful: MUST - OK*)
+            | And_Reason (_, _, fe) -> (string_of_fail_explaining fe)
+            | _ -> fmt_string "");
+          fmt_cut ();
+          fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx

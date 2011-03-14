@@ -3644,14 +3644,15 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool) (is_unive
 						    ^ (Cprinter.string_of_context ctx0)
 						    ^ "\nconseq:\n"
 						    ^ (Cprinter.string_of_formula conseq)) pos;
+                            let fe = { fe_kind = Failure_Must
+                            } in
 			                (CF.mkFailCtx_in (Basic_Reason ({
-                            fc_kind = "should be updated-may/must/exception";
                             fc_message ="incompatible flow type"; 
 							fc_current_lhs = estate;
 							fc_orig_conseq = struc_formula_of_formula conseq pos;
 							fc_prior_steps = estate.es_prior_steps;
 							fc_current_conseq = CF.formula_of_heap HFalse pos;
-							fc_failure_pts =[];})), UnsatConseq) 
+							fc_failure_pts =[];}, fe)), UnsatConseq) 
 			              end
 			              else 
 			                match h2 with
@@ -3788,7 +3789,8 @@ and heap_entail_empty_rhs_heap_debug p i_f i_u es lhs rhs rhsb pos =
 and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   (*let sat_subno = ref 1 in*)
-  let fc_kind = ref"" in
+  let fe = ref { fe_kind =  CF.Failure_None
+           } in
   let fc_msg = ref "" in
   let lhs_h = lhs.formula_base_heap in
   let lhs_p = lhs.formula_base_pure in
@@ -3843,11 +3845,11 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
           let res_sat = TP.is_sat_sub_no new_pformula imp_no in
           if res_sat then 
            begin
-             fc_kind := "MAY";
+              fe := {!fe with fe_kind = CF.Failure_May};
              fc_msg :=  (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": HOLD ---" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
            end else 
            begin
-             fc_kind :=  "MUST";
+             fe :=  {!fe with fe_kind = CF.Failure_Must};
              fc_msg :=  (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": not HOLD ---" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
             end ;
           let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
@@ -3900,13 +3902,12 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   end else begin
     Debug.devel_pprint ("heap_entail_empty_rhs_heap: formula is not valid\n") pos;
     (CF.mkFailCtx_in (Basic_Reason ({
-        fc_kind = !fc_kind;
 		fc_message = !fc_msg;(*"failed in entailing pure formula(s) in conseq";*)
 		fc_current_lhs  = estate;
 		fc_prior_steps = estate.es_prior_steps;
 		fc_orig_conseq  = struc_formula_of_formula (formula_of_mix_formula_with_branches rhs_p rhs_p_br pos) pos;
 		fc_current_conseq = CF.formula_of_heap HFalse pos;
-		fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];})), prf)
+		fc_failure_pts = match r_fail_match with | Some s -> [s]| None-> [];}, !fe)), prf)
   end
     (****************************************************************)  
     (* utilities for splitting the disjunctions in the antecedent and the conjunctions in the consequent *)
@@ -4133,14 +4134,16 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
 		es_var_measures = estate.es_var_measures;
 		es_var_label = estate.es_var_label} in
     let na,prf = match vd.view_base_case with
-      | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
-            fc_kind = "should be updated. may/must";
+      | None ->
+          let fe = { fe_kind = CF.Failure_Must
+                   } in
+            (CF.mkFailCtx_in(Basic_Reason ( {
 			fc_message ="failure 1 ?? when checking for aliased node";
 			fc_current_lhs = estate;
 			fc_prior_steps = estate.es_prior_steps;
 			fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 			fc_current_conseq = conseq;
-			fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), UnsatConseq)
+			fc_failure_pts = match pid with | Some s-> [s] | _ -> [];},fe)), UnsatConseq)
       | Some (bc1,(base1,branches1)) -> 
 	        begin
               (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
@@ -4155,14 +4158,16 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
 		        (*let _ = print_string ("successful base case guard proof \n ") in*)
 		        let ctx = unfold_context (prog, Some (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
 		        (ctx,TrueConseq)
-              else  (CF.mkFailCtx_in(Basic_Reason  ( { 
-                  fc_kind = "should be updated. may/must";
+              else
+                  let fe = { fe_kind = CF.Failure_Must
+                   } in
+                  (CF.mkFailCtx_in(Basic_Reason  ( {
 				  fc_message ="failure 2 ?? when checking for aliased node";
 				  fc_current_lhs = estate;
 				  fc_prior_steps = estate.es_prior_steps;
 				  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 				  fc_current_conseq = conseq;
-				  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
+				  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];}, fe)),TrueConseq)
             end in
     let _ = Gen.Profiling.pop_time "empty_predicate_testing" in
     if (isFailCtx na) then (None,None)
@@ -4410,9 +4415,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 	    match fnode_results with 
 	      | Failed -> 
 		        (* let _ = print_string("Matching result: Failed -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
-
+               (* let fe = { fe_kind = CF.Failure_Must
+                   } in*)
 		        (CF.mkFailCtx_in (Continuation ( {
-                    fc_kind = "should be updated. may/must";
 					fc_message = "failed 1 ?? to find a match";
 					fc_current_lhs = estate;
 					fc_prior_steps = estate.es_prior_steps;
@@ -4428,8 +4433,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				^ "no aliased node for data node "
 				^ (Cprinter.string_of_h_formula ln2)
 				^ " is found in LHS\n") pos;
+               (*  let fe = { fe_kind = CF.Failure_Must
+                   } in*)
                 (CF.mkFailCtx_in (Continuation ( {
-                    fc_kind = "should be updated. may/must";
 					fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
 					fc_current_lhs = estate;
 					fc_prior_steps = estate.es_prior_steps;
@@ -4441,8 +4447,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			    (* there is a continuation to try *)
 			    if (estate.es_cont != []) then
 			      (* let _ = print_string("try the cont!!!\n\n") in *)
+                 (*  let fe = { fe_kind = CF.Failure_Must
+                   } in *)
 			      (CF.mkFailCtx_in (Continuation ( {
-                      fc_kind = "should be updated. may/must";
 					  fc_message = "try the continuation";
 					  fc_current_lhs = estate;
 					  fc_prior_steps = estate.es_prior_steps;
@@ -4492,14 +4499,15 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				               and do the prune*)
 			                let subsumes, (*to_be_proven*)_ = prune_branches_subsume(*_debug*) prog estate.es_ivars anode ln2 in
 				            if not subsumes then 
+                              let fe = { fe_kind = CF.Failure_Must
+                                       } in
 				              (CF.mkFailCtx_in (Basic_Reason ({
-                                  fc_kind = "should be updated. may/must";
 								  fc_message = "there is a mismatch in branches ";
 								  fc_current_lhs = estate;
 								  fc_prior_steps = estate.es_prior_steps;
 								  fc_orig_conseq = estate.es_orig_conseq;
 								  fc_current_conseq = CF.formula_of_heap HFalse pos;
-								  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
+								  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];}, fe)), NoAlias)
 				            else
 				              (*match to_be_proven with
 				                | Some l ->
@@ -4605,15 +4613,16 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 						                      end else 
 						                        begin
 						                          Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: " ^ "can't reduce, fold, unfold") pos;
+                                                  let fe = { fe_kind = CF.Failure_Must
+                                                           } in
 						                          (CF.mkFailCtx_in (Basic_Reason ( {
-                                                      fc_kind = "should be updated. may/must";
 										              fc_message = "can't reduce, fold, unfold";
 										              fc_current_lhs = estate;
 										              fc_prior_steps = estate.es_prior_steps;
 										              fc_orig_conseq = estate.es_orig_conseq;
 										              fc_current_conseq = CF.formula_of_heap HFalse pos;
 										              fc_failure_pts =match pid with | Some s-> [s] | _ -> []; 
-										          })), Failure)
+										          }, fe)), Failure)
 						                        end
 			                end (*end for c1 not equal c2*)
 			            end (*end of match at root*)
@@ -4625,14 +4634,15 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 				            (res, prf)
 			              end
 			            else
+                          let fe = { fe_kind = CF.Failure_Must
+                                   } in
 			              (CF.mkFailCtx_in (Basic_Reason ({
-                              fc_kind = "should be updated. may/must";
 							  fc_message = "there is a match at some node, not at root";
 							  fc_current_lhs = estate;
 							  fc_prior_steps = estate.es_prior_steps;
 							  fc_orig_conseq = estate.es_orig_conseq;
 							  fc_current_conseq = conseq;
-							  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
+							  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];}, fe)), NoAlias)
 		                      (* | Hole _ -> report_error pos *)
 		                      (* 	  ("heap_entail_conjunct: hole in the context") *)
 		                      (* | Star _ -> report_error pos *)
@@ -4801,15 +4811,16 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 			        && (not(!enable_distribution) 		(* distributive coercion is not allowed *)
 				    or not(is_distributive coer))))) 	(* coercion is not distributive *)
 	      then
-		    (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; 
-		    (CF.mkFailCtx_in(Basic_Reason( { 
-                fc_kind = "should be updated. may/must";
+		    (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos;
+            let fe = { fe_kind = CF.Failure_Must
+                     } in
+		    (CF.mkFailCtx_in(Basic_Reason( {
 				fc_message ="failed coercion application";
 				fc_current_lhs = estate;
 				fc_prior_steps = estate.es_prior_steps;
 				fc_orig_conseq = estate.es_orig_conseq;
 				fc_current_conseq = CF.formula_of_heap HFalse pos;
-				fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), Failure))
+				fc_failure_pts = match pid with | Some s-> [s] | _ -> [];}, fe)), Failure))
 	      else	(* we can apply coercion *)
 		    begin
 		      if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
@@ -4843,14 +4854,16 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		      (res, prf)
 		    end
 	    end
-	  | _ -> (CF.mkFailCtx_in(Basic_Reason ( { 
-            fc_kind = "should be updated. may/must";
+	  | _ ->
+            let fe = { fe_kind = CF.Failure_Must
+                     } in
+            (CF.mkFailCtx_in(Basic_Reason ( {
 			fc_message ="failed coercion application, found data expected view";
 			fc_current_lhs = estate;
 			fc_prior_steps = estate.es_prior_steps;
 			fc_orig_conseq = estate.es_orig_conseq;
 			fc_current_conseq = CF.formula_of_heap HFalse pos;
-			fc_failure_pts = [];})), Failure)
+			fc_failure_pts = [];}, fe)), Failure)
   end
       (*
         Rewrites f by matching node with coer_lhs to obtain a substitution.
@@ -4972,15 +4985,16 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos pid =
   (*******************************************************************************************************************************************************************************************)
   flush stdout;
+    let fe = { fe_kind = CF.Failure_Must
+             } in
     if Gen.is_empty coer.coercion_univ_vars then (CF.mkFailCtx_in ( Basic_Reason (  {
-        fc_kind = "should be updated. may/must";
 		fc_message = "failed apply_universal";
 		fc_current_lhs = estate;
 		fc_prior_steps = estate.es_prior_steps;
 		fc_orig_conseq = estate.es_orig_conseq;
 		fc_current_conseq = CF.formula_of_heap HFalse pos; 
 		fc_failure_pts = match pid with | Some s-> [s] | _ -> [];
-	})), Failure)
+	}, fe)), Failure)
     else begin
       let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in(* Assume coercions have no branches *)
       let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: apply_universal: "	^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos in
@@ -5068,14 +5082,16 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lh
 	  coer.coercion_body tmp_prf coer.coercion_name
     in
 	(res, [prf])
-  end else (CF.mkFailCtx_in( Basic_Reason ( { 
-      fc_kind = "should be updated. may/must";
+  end else
+      let fe = { fe_kind = CF.Failure_Must
+               } in
+      (CF.mkFailCtx_in( Basic_Reason ( {
 	  fc_message ="failed coercion application";
 	  fc_current_lhs = estate;
 	  fc_prior_steps = estate.es_prior_steps;
 	  fc_orig_conseq = estate.es_orig_conseq;
 	  fc_current_conseq = CF.formula_of_heap HFalse pos; 
-	  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
+	  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];}, fe)), [])
     (*******************************************************************************************************************************************************************************************)
     (* apply_right_coercion *)
     (*******************************************************************************************************************************************************************************************)
@@ -5094,22 +5110,26 @@ and apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t rhs
 	    coer.coercion_body tmp_prf  coer.coercion_name
 	  in
 	  (res, [prf])
-	end else (CF.mkFailCtx_in(Basic_Reason ( {
-    fc_kind = "should be updated. may/must";
+	end else
+    let fe = { fe_kind = CF.Failure_Must
+             } in
+    (CF.mkFailCtx_in(Basic_Reason ( {
     fc_message ="failed right coercion application";
 	fc_current_lhs = estate;
 	fc_prior_steps = estate.es_prior_steps;
 	fc_orig_conseq = estate.es_orig_conseq;
 	fc_current_conseq = CF.formula_of_heap HFalse pos;
-	fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
-  else (CF.mkFailCtx_in(Basic_Reason ({
-  fc_kind = "should be updated. may/must";
+	fc_failure_pts = match pid with | Some s-> [s] | _ -> [];}, fe)), [])
+  else
+  let fe = { fe_kind = CF.Failure_Must
+           } in
+  (CF.mkFailCtx_in(Basic_Reason ({
   fc_message ="failed right coercion application";
   fc_current_lhs = estate;
   fc_prior_steps = estate.es_prior_steps;
   fc_orig_conseq = estate.es_orig_conseq;
   fc_current_conseq = CF.formula_of_heap HFalse pos;
-  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) 
+  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];}, fe)), []) 
     (*************************************************************************************************************************
 															                                                                  05.06.2008:
 															                                                                  Utilities for existential quantifier elimination:
