@@ -4,6 +4,7 @@
 
 relation idexc(int[] a, int[] b, int i, int j) == forall(k : (i<=k & k<=j | a[k] = b[k])).
 
+
   relation sorted(int[] a, int i, int j) == (i >= j  | i<j & forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
 
 relation strupperbnd(int[] a, int i, int j, int s) == (i > j | forall ( k : (k < i | k > j | a[k] < s))).
@@ -30,7 +31,7 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 	case {
 		i > j -> ensures k' = i - 1 & t' = j + 1 & a' = a;
 		i <= j -> requires bnd(a,i,j,l,h)
-     ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 & bnd(a', t', j, x+1,h) & idexc(a', a, i, j);
+     ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 & bnd(a', t', j, x+1,h) & idexc(a', a, i, j) & bnd(a',i,j,l,h);
 	} //'
 {
 	if (i <= j)
@@ -79,16 +80,13 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 }
 
 void qsort(ref int[] a, int i, int j,int l,int h)
-/*
- requires i>=j 
-   ensures sorted(a',i,j) & idexc(a',a,i,j); //'
+/* requires i>=j 
+ ensures true;
 */
 	case {
-		i > j -> ensures sorted(a',i,j) & idexc(a',a,i,j);
-		i = j -> //requires bnd(a,i,j,l,h)
-                 ensures sorted(a',i,j) & idexc(a',a,i,j);
+		i >= j -> ensures a=a';
         i < j -> requires bnd(a,i,j,l,h)
-          ensures sorted(a',i,j) & idexc(a',a,i,j);
+          ensures  bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
     }
     /*
    requires i<j 
