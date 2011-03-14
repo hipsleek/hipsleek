@@ -4,19 +4,14 @@
 
 open Globals
 module CP = Cpure
-exception Timeout
 
 let is_mona_running = ref false
-let mona_pid = ref 0
 (* let channels = ref (stdin, stdout, stdin) *)
 let last_test_number = ref 0
 let test_number = ref 0
 let mona_cycle = ref 90
 let timeout = ref 11.0 (* default timeout is 10 seconds *)
-let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
-let set_timer tsecs =
-  ignore (Unix.setitimer Unix.ITIMER_REAL
-              { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+
 let result_file_name = "res"
 let log_all_flag = ref false
 let log_all = open_out "allinput.mona"
@@ -29,8 +24,10 @@ let automaton_completed = ref false
 let cycle = ref false
 let sat_optimize = ref false
 
+let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
-let process = ref {pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+
+
 (* pretty printing for primitive types *)
 let mona_of_prim_type = function
   | Bool          -> "int"
@@ -802,14 +799,13 @@ let rec get_answer chn : string =
 let send_cmd_with_answer str =
   if!log_all_flag==true then
     output_string log_all str;
-  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  set_timer !timeout;
-  let _ = (output_string !process.outchannel str;
-           flush !process.outchannel) in
-  let answ = get_answer !process.inchannel in
-  set_timer 0.0;
-  reset_sigalrm ();
+  let fnc () = 
+    let _ = (output_string !process.outchannel str;
+             flush !process.outchannel) in
+    let str = get_answer !process.inchannel in
+    str 
+  in 
+  let answ = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in
   answ
 
 (* modify mona for not sending answers *)
@@ -818,62 +814,31 @@ let send_cmd_no_answer str =
   let _ = send_cmd_with_answer str in
   ()
 
-let start_mona () = 
-  if not !is_mona_running then 
-    begin
-      (* print_string "\nStarting Mona... \n"; *)
-        last_test_number := !test_number;
-	    (if !log_all_flag then
-              output_string log_all ("[mona.ml]: >> Starting Mona...\n"));
-        try
-            let inchn, outchn, errchn, npid = Unix_add.open_process_full "mona" [|"mona"; "-v";|] in
-            (process := {pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn}; 
-             is_mona_running := true;
-             mona_pid := npid;
-             send_cmd_no_answer ("include \"mona_predicates.mona\";\n");
-             if !log_all_flag then
-               output_string log_all ("[mona.ml]: >> Mona is running!\n");
-            )
-        with
-          | e -> begin
-              let _ = print_string ("\n[mona.ml ]Unexpected exception : " ^ (Printexc.to_string e)) in
-              flush stdout; flush stderr;
-              if !log_all_flag then begin
-                  output_string log_all ("[mona.ml]: >> Error while starting mona!\n");
-                  flush log_all; 
-              end;
-              ignore e
-          end
-    end
+let prelude () = 
+  send_cmd_no_answer ("include \"mona_predicates.mona\";\n")
 
-let close_pipes () : unit = 
-    let _ = Unix.close (Unix.descr_of_out_channel (!process.outchannel)) in
-    let _ = Unix.close (Unix.descr_of_in_channel (!process.inchannel)) in
-    let _ = Unix.close (Unix.descr_of_in_channel (!process.errchannel)) in
-    ()
+let set_process (proc: Globals.prover_process_t) = 
+  process := proc
 
-let stop_mona () = 
+let start () = 
+  let is_running = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-v";|]) set_process prelude in
+  is_mona_running := is_running;
+  last_test_number := !test_number
+
+let stop () = 
   if !is_mona_running then begin
     let num_tasks = !test_number - !last_test_number in
-	(if !log_all_flag then 
-      (output_string log_all ("[mona.ml]: >> Stop Mona after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
-    close_pipes ();
-    Unix.kill !mona_pid 2;
-    ignore (Unix.waitpid [] !process.pid);
+    let _ = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks 2 (fun () -> ()) in
     is_mona_running := false;
   end
 
-let restart_mona reason =
-  if !is_mona_running then begin
-	  if   !log_all_flag then 
-        output_string log_all ("[mona.ml]: >> " ^ reason ^ " Restarting Mona\n") ;
-      stop_mona();
-      start_mona();
-  end
+let restart reason =
+  if !is_mona_running then 
+    Gen.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let check_if_mona_is_alive () : bool = 
   try
-      Unix.kill !mona_pid 0;
+      Unix.kill !process.pid 0;
       true
   with
     | e -> 
@@ -899,7 +864,7 @@ let check_answer (answ: string) (is_sat_b: bool)=
       | "" ->
           (* process might have died. maybe BDD was too large - restart mona*)
           (* print_string "MONA aborted execution! Restarting..."; *)
-          restart_mona "mona aborted execution";
+          restart "mona aborted execution";
           if !log_all_flag == true then
 		    output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
           is_sat_b
@@ -920,7 +885,7 @@ let check_answer (answ: string) (is_sat_b: bool)=
 
 let maybe_restart_mona () : unit =
   let num_tasks = !test_number - !last_test_number in
-  if num_tasks >=(!mona_cycle) then restart_mona "upper limit reached"
+  if num_tasks >=(!mona_cycle) then restart "upper limit reached"
 
 let prepare_formula_for_mona (f: CP.formula) (break_presp: bool) (test_no: int): CP.spec_var list * CP.formula =
   let simp_f = CP.arith_simplify 8 f in
@@ -957,19 +922,19 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           check_answer answer is_sat_b
       end
   with
-    |Timeout ->
+    |Gen.PrvComms.Timeout ->
 	    begin
             print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
-            restart_mona ("Timeout when checking #" ^ imp_no ^ "!");
+            restart ("Timeout when checking #" ^ imp_no ^ "!");
             is_sat_b
 		end
     | exc ->
         print_string ("\n[mona.ml]:Unexpected exception\n"); flush stdout;
-        stop_mona (); raise exc
+        stop(); raise exc
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if not !is_mona_running then
-    start_mona();
+    start();
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   first_order_vars := [];
@@ -984,7 +949,7 @@ let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   if not !is_mona_running then
-        start_mona();
+        start();
   sat_optimize := true;
  first_order_vars := [];
  second_order_vars := [];

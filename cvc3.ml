@@ -272,15 +272,15 @@ let cvc3_popto (process: Globals.prover_process_t) (n: int) =
   send_cmd process cmd
 
 (*creates a new "cvc3 +int" process*)
-let cvc3_create_process () : Globals.prover_process_t =
+let start () : Globals.prover_process_t =
   let _ = print_string ("\nStarting CVC3\n") in
   let inchn, outchn, errchn, npid = Unix_add.open_process_full "cvc3" [|"cvc3"; "+int";(* "+printResults"*)|] in
-  let nProcess = {inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid } in
+  let nProcess = {name = "cvc3"; inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid } in
   let _ = cvc3_push nProcess in
   nProcess
 
 (*stop the "cvc3 +int" process*)
-let cvc3_stop_process (process: Globals.prover_process_t) : unit = 
+let stop (process: Globals.prover_process_t) : unit = 
   let _ = print_string ("\nCVC3 stop process: " ^ (string_of_int !test_number) ^ "invocations \n") in
   let _ = flush process.outchannel in
   let _ = flush stdout in
@@ -392,9 +392,9 @@ let imply_helper (process: Globals.prover_process_t) (send_ante: bool) (ante : C
 
 (*creates a new cvc3 process, sends the query command to the freshly created"process", stops the process and returns the answer given by cvc3*)
 let imply_helper_separate_process (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool option =
-  let process = cvc3_create_process () in  
+  let process = start () in  
   let answer = imply_helper process true ante conseq imp_no in
-  let _ = cvc3_stop_process process in
+  let _ = stop process in
   answer
 
 (*checks implication when in incremental running mode.*)
@@ -427,9 +427,9 @@ let is_sat_helper (process: Globals.prover_process_t) (f : CP.formula) (sat_no :
   answer
 
 let is_sat_helper_separate_process (f : CP.formula) (sat_no : string) : bool option =
-  let process = cvc3_create_process () in
+  let process = start () in
   let answer = is_sat_helper process f sat_no in
-  let _ = cvc3_stop_process process in 
+  let _ = stop process in 
   answer
 
 let is_sat_increm (process: Globals.prover_process_t option) (f : CP.formula) (sat_no : string) : bool =

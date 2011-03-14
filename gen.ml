@@ -1581,5 +1581,74 @@ struct
     in helper xs ys
 
 end;;
+
+(* type prover_process_t = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel } *)
+(* provers common methods *)
+module PrvComms = 
+struct
+  open Globals
+
+  type proc = Globals.prover_process_t
+
+  exception Timeout
+
+  let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
+
+  let set_timer tsecs =
+    ignore (Unix.setitimer Unix.ITIMER_REAL
+                { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+
+  let maybe_raise_timeout (fnc: 'a) (arg: 'b) (tsec:float) : 'c =
+    let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+    let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+    set_timer tsec;
+    let answ = fnc arg in
+    set_timer 0.0;
+    reset_sigalrm ();
+    answ 
+  
+  let close_pipes (process: proc) : unit =
+    let _ = Unix.close (Unix.descr_of_out_channel process.outchannel) in
+    let _ = Unix.close (Unix.descr_of_in_channel process.inchannel) in
+    let _ = Unix.close (Unix.descr_of_in_channel process.errchannel) in
+    ()
+
+  let start (log_all_flag: bool) (log_all: out_channel) (prover: string * string * string array) set_process prelude= 
+    let (prover_name, prover_proc, prover_arg_array) = prover in
+    if log_all_flag then
+      output_string log_all ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n");
+    try
+        let inchn, outchn, errchn, npid = Unix_add.open_process_full prover_proc prover_arg_array in
+        let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
+        set_process process;
+        prelude ();
+        true (*prover is running*)
+    with
+      | e -> begin
+          let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception : " ^ (Printexc.to_string e)) in
+          flush stdout; flush stderr;
+          if log_all_flag then begin
+              output_string log_all ("["^prover_name^".ml]: >> Error while starting "^prover_name^"!\n");
+              flush log_all; 
+          end;
+          raise e
+      end
+
+  let stop (log_all_flag: bool) (log_all: out_channel) (process:proc) (invocations: int) (killing_signal: int) ending_function =
+    let _ = ending_function () in
+    (if log_all_flag then 
+          (output_string log_all ("\n[isabelle.ml]: >> Stop "^process.name^" after ... "^(string_of_int invocations)^" invocations\n"); flush log_all;) );
+    close_pipes process;
+    Unix.kill process.pid killing_signal;
+    ignore (Unix.waitpid [] process.pid)
+
+  let restart (log_all_flag: bool) (log_all: out_channel) (reason:string) (prover_name: string) start stop =
+	  (if log_all_flag then 
+            output_string log_all ("["^prover_name^".ml]: >> Restarting "^prover_name^" because of: "^reason) );
+      stop ();
+      start ()
+
+end;;
+
 include Basic
 include SysUti

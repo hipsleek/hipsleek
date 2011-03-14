@@ -86,7 +86,7 @@ let send_cmd cmd =
     ()
 
 (* start Reduce system in a separated process and load redlog package *)
-let start_red () =
+let start () =
   if not !is_reduce_running then begin
     print_endline "Starting Reduce... "; flush stdout;
     let inchannel, outchannel, errchannel, pid = Unix_add.open_process_full "redcsl" [|"-w"; "-b";"-l reduce.log"|] in
@@ -101,7 +101,7 @@ let start_red () =
   end
 
 (* stop Reduce system *)
-let stop_red () = 
+let stop () = 
   if !is_reduce_running then begin
     let outchannel = snd !channels in
     output_string outchannel "quit;\n"; flush outchannel;
@@ -121,12 +121,12 @@ let stop_red () =
   log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
   log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
   
-let restart_red reason =
+let restart reason =
   if !is_reduce_running then begin
     print_string reason;
     print_endline " Restarting Reduce... "; flush stdout;
-    stop_red();
-    start_red();
+    stop();
+    start();
   end
 
 (*
@@ -143,7 +143,7 @@ let send_and_receive f =
         Timeout -> raise Timeout
       | ex ->
         print_endline (Printexc.to_string ex);
-        restart_red "Reduce crashed or something really bad happenned!";
+        restart "Reduce crashed or something really bad happenned!";
         ""
   else
     ""
@@ -206,9 +206,9 @@ let run_with_timeout func err_msg =
     | Timeout ->
         log ERROR ("TIMEOUT");
         log ERROR err_msg;
-        restart_red ("After timeout"^err_msg);
+        restart ("After timeout"^err_msg);
         None
-    | exc -> print_endline "Unknown error"; stop_red (); raise exc 
+    | exc -> print_endline "Unknown error"; stop (); raise exc 
   in
   ignore (Unix.setitimer Unix.ITIMER_REAL 
         {Unix.it_interval = 0.0; Unix.it_value = 0.0});

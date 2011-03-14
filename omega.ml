@@ -130,7 +130,7 @@ let set_timer tsecs =
 
 
 (* start omega system in a separated process and load redlog package *)
-let start_omega () =
+let start() =
  try
   if not !is_omega_running then begin
     print_string "Starting Omega... \n"; flush stdout;
@@ -168,7 +168,7 @@ with |  Unix.Unix_error (id, _, _)  ->
      Printf.eprintf "Unexpected exception : %s" (Printexc.to_string e)
 
 (* stop Omega system *)
-let stop_omega () =
+let stop () =
   if !is_omega_running then begin
     (*send_cmd "quit;"; flush (snd !channels);*)
     let num_tasks = !test_number - !last_test_number in
@@ -187,14 +187,14 @@ let stop_omega () =
   end
 
 (* restart Omega system *)
-let restart_omega reason =
+let restart reason =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
     print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ");
 	(if !log_all_flag then
         output_string log_all ("[omega.ml]: >> " ^ reason ^ " Restarting Omega after ... "^(string_of_int num_tasks)^" invocations \n") );
-    stop_omega();
-    start_omega();
+    stop();
+    start();
   end
 
 (*
@@ -251,10 +251,10 @@ let read_last_line_from_in_channel chn : string =
 let check_formula f timeout=
   (*  try*)
   begin
-    if not !is_omega_running then start_omega ()
+    if not !is_omega_running then start ()
     else if (!omega_call_count = !omega_restart_interval) then
       begin
-	    restart_omega ("Regularly restart:1 ");
+	    restart("Regularly restart:1 ");
 	    omega_call_count := 0;
       end;
   (*timer*)
@@ -294,10 +294,10 @@ let check_formula f timeout=
 let rec send_and_receive f timeout=
  begin
   if not !is_omega_running then
-    start_omega (); 
+    start (); 
   if (!omega_call_count = !omega_restart_interval) then
     begin
-    restart_omega ("Regularly restart:2");
+    restart ("Regularly restart:2");
 	omega_call_count := 0;
 	end;
 	
@@ -371,14 +371,14 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       with
       | Timeout ->
 	      begin
-           restart_omega ("Timeout when checking #is_sat " ^ sat_no ^ "!");
+           restart ("Timeout when checking #is_sat " ^ sat_no ^ "!");
            true
 		  end
       | exc ->
           begin
            (* Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);*)
 
-            stop_omega (); raise exc
+            stop (); raise exc
           end
     in
   (*   let post_time = Unix.gettimeofday () in *)
@@ -413,12 +413,12 @@ let is_valid (pe : formula) timeout: bool =
       with
       | Timeout ->
           (*log ERROR ("TIMEOUT");*)
-          restart_omega ("Timeout when checking #is_valid ");
+          restart ("Timeout when checking #is_valid ");
           true
       | exc ->
           begin
             
-            stop_omega (); raise exc
+            stop (); raise exc
           end
     in
   (*   let post_time = Unix.gettimeofday () in *)
@@ -503,9 +503,9 @@ let simplify (pe : formula) : formula =
 	with
       | Timeout ->
           (*log ERROR ("TIMEOUT");*)
-          restart_omega ("Timeout when checking #simplify ");
+          restart ("Timeout when checking #simplify ");
           pe
-      | exc -> stop_omega (); raise exc 
+      | exc -> stop (); raise exc 
     in
   (*   let post_time = Unix.gettimeofday () in *)
   (*   let time = (post_time -. pre_time) *. 1000. in *)

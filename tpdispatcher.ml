@@ -18,7 +18,7 @@ type tp_type =
   | OM
   | OI
   | SetMONA
-  | CM (* CVC Lite then MONA *)
+  | CM (* CVC3 then MONA *)
   | Coq
   | Z3
   | Redlog
@@ -237,8 +237,8 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
   method start_p () : Globals.prover_process_t =
     let proc = 
       match !tp with
-      | Cvc3 -> Cvc3.cvc3_create_process()
-      | _ -> Cvc3.cvc3_create_process() (* to be completed for the rest of provers that support incremental proving *) 
+      | Cvc3 -> Cvc3.start()
+      | _ -> Cvc3.start() (* to be completed for the rest of provers that support incremental proving *) 
     in 
     process := Some proc;
     proc
@@ -246,7 +246,7 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
   (*stops the proving process*)
   method stop_p (process: Globals.prover_process_t): unit =
     match !tp with
-      | Cvc3 -> Cvc3.cvc3_stop_process process
+      | Cvc3 -> Cvc3.stop process
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*saves the state of the process and its context *)
@@ -305,6 +305,7 @@ let rec check_prover_existence prover_cmd_str =
         if exit_code > 0 then
           let _ = print_string ("Command for starting the prover (" ^ prover ^ ") not found\n") in
           exit 0
+        else check_prover_existence rest
 
 let set_tp tp_str =
   prover_arg := tp_str;  
@@ -1373,55 +1374,55 @@ let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
   match !tp with
   | Coq -> begin
-      Coq.start_prover ();
-	  Omega.start_omega ();
+      Coq.start ();
+	  Omega.start ();
 	 end
   | Redlog | RM -> 
      begin
-      Redlog.start_red ();
-	  Omega.start_omega ();
+      Redlog.start ();
+	  Omega.start ();
 	 end
   | Cvc3 -> 
         begin
-            provers_process := Some (Cvc3.cvc3_create_process ());
+            provers_process := Some (Cvc3.start ()); (* because of incremental *)
             let _ = match !provers_process with 
               |Some proc ->  !incremMethodsO#set_process proc
               | _ -> () in
-	        Omega.start_omega ();
+	        Omega.start ();
 	    end
   | Mona ->
-        Mona.start_mona()
+        Mona.start()
   | Isabelle ->
      begin
-      Isabelle.start_isabelle ();
-	  Omega.start_omega ();
+      Isabelle.start();
+	  Omega.start();
      end
-  | _ -> Omega.start_omega ()
+  | _ -> Omega.start()
   
 let stop_prover () =
   match !tp with
     | Coq -> (* Coq.stop_prover () *)
           begin
-            Coq.stop_prover ();
-	        Omega.stop_omega ();
+            Coq.stop ();
+	        Omega.stop();
 	      end
     | Redlog | RM -> 
           begin
-            Redlog.stop_red ();
-	        Omega.stop_omega ();
+            Redlog.stop();
+	        Omega.stop();
 	      end
     | Cvc3 -> 
           begin
             match !provers_process with
-              |Some proc ->  Cvc3.cvc3_stop_process proc;
+              |Some proc ->  Cvc3.stop proc;
               |_ -> ();
-	        Omega.stop_omega ();
+	        Omega.stop();
 	      end
     | Isabelle -> 
           begin
-            Isabelle.stop_isabelle ();
-	        Omega.stop_omega ();
+            Isabelle.stop();
+	        Omega.stop();
 	      end
-    | Mona -> Mona.stop_mona();
-    | _ -> Omega.stop_omega ();;
+    | Mona -> Mona.stop();
+    | _ -> Omega.stop();;
 

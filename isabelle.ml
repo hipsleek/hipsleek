@@ -16,9 +16,7 @@ let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
 
-let process= ref {inchannel = stdin; outchannel = stdout; errchannel = stdin; pid = 0 }
-let is_isabelle_running = ref false
-let isabelle_pid = ref 0
+let process= ref {name="isabelle"; inchannel = stdin; outchannel = stdout; errchannel = stdin; pid = 0 }
 let last_test_number = ref 0
 let test_number = ref 0
 
@@ -237,30 +235,13 @@ let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ "
 
 let isabelle_command isabelle_file_name = ("isabelle-process -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
 
-let set_timer tsecs =
-  ignore (Unix.setitimer Unix.ITIMER_REAL
-            { Unix.it_interval = 0.0; Unix.it_value = tsecs })
-
-let continue f arg tsecs : bool =
-  let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in
-  try
-    set_timer tsecs;
-    ignore (f arg);
-    set_timer 0.0;
-    Sys.set_signal Sys.sigalrm oldsig; true
-  with Exit ->
-    Sys.set_signal Sys.sigalrm oldsig; false
-
 (*creates a new "isabelle-process " process*)
 let rec get_answer chn : string =
-  try
     let chr = input_char chn in
     match chr with
       |'\n' -> "\n"
       | '#' ->  "#"
       | _ -> (Char.escaped chr) ^get_answer chn
-  with
-      _ ->   (print_string ("\n[isabelle.ml] -> Exception while getting the answer \n" ); flush stdout); ""
 
 let rec read_until substr chn : string =
   let str = get_answer chn in
@@ -277,12 +258,11 @@ let read_prompt () =
   let _ = input_char chn in (*reades space*)
   ()
 
-let prelude () =
+let prelude ()  =
   let ichn = !process.inchannel in 
   let ochn = !process.outchannel in 
   let _ = read_until "Welcome to Isabelle" ichn in (*welcome text*)
   let _ = read_prompt () in
-  
   if !bag_flag then
     ( output_string ochn "theory isabelle_proofs imports Multiset Main\n"; flush ochn;
       let _ = get_answer ichn in (*reads "theory#"*)
@@ -306,6 +286,30 @@ let prelude () =
        output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
     )
 
+let set_process (proc: Globals.prover_process_t) =
+  process := proc
+
+(* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
+   and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
+let start () =
+  let _ = Gen.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude in
+  last_test_number := !test_number
+
+let ending_remarks () = 
+  output_string !process.outchannel "end\n"; 
+  flush !process.outchannel
+
+let stop () = 
+  let num_tasks = !test_number - !last_test_number in
+  let _  = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
+  print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
+
+
+(* restart isabelle system *)
+let restart reason =
+  print_string ("Restarting Isabelle because of: "^reason^"\n");
+  Gen.PrvComms.restart !log_all_flag log_all "isabelle" reason start stop
+
 (* checking the result given by Isabelle *)
 let rec check str : bool=
   try
@@ -319,29 +323,39 @@ let rec check str : bool=
 		      output_string log_all (" [isabelle.ml]: --> fail \n"));
         false
 
-let write (pe : CP.formula) (timeout : float) : bool =
+let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
   begin
       incr test_number;
       let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
 	  let fstr = vstr ^ isabelle_of_formula pe in
+      if !log_all_flag == true then
+    		    output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
       let ichn = !process.inchannel in
       let ochn = !process.outchannel in
-      begin
-    	  output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
-          let _ = get_answer ichn in (*lemma#*)
-          let _ = input_char ichn in (*space*)
+      try
+          begin
+              let fnc () = 
+    	        output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
+                let _ = get_answer ichn in (*lemma#*)
+                let _ = input_char ichn in (*space*)
 
-          output_string ochn "apply(auto)\n"; flush ochn;
-          let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
+                output_string ochn "apply(auto)\n"; flush ochn;
+                let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
 
-          output_string ochn "oops\n"; flush ochn;
-          let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
-          
-		  if !log_all_flag == true then
-    		output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
-		  (* verifying the result returned by Isabelle *)
-		  check str
-	  end
+                output_string ochn "oops\n"; flush ochn;
+                let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
+                str
+		      in
+              let answ = Gen.PrvComms.maybe_raise_timeout fnc () timeout in
+		      check answ
+	      end
+      with
+        |Gen.PrvComms.Timeout ->
+            begin
+                print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
+                restart ("Timeout!");
+                is_sat_b
+		    end
   end
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
@@ -350,8 +364,10 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  let res =  write tmp_form 0. in
-	res
+  let res =  write tmp_form !Globals.sat_timeout false in
+  if !log_all_flag == true then
+	output_string log_all ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n");
+  res
 
 let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
   if !log_all_flag == true then
@@ -359,68 +375,16 @@ let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_n
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-    (write tmp_form timeout)
+    (write tmp_form timeout false)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
 				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
-	let tmp_form = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
-		match tmp_form with
-			| true ->
-				begin
-				if !log_all_flag == true then
-					output_string log_all "[isabelle.ml]: is_sat --> false\n";
-				false;
-				end
-			| false ->
-				begin
-				if !log_all_flag == true then
-					output_string log_all "[isabelle.ml]: is_sat --> true\n";
-				true;
-				end
+	let answ = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
+    if !log_all_flag == true then
+	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
+    (not answ)
 	end
-
-(* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
-   and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
-let start_isabelle () =
-  let _ = print_string ("\nStarting Isabelle\n") in
-  let inchn, outchn, errchn, npid = Unix_add.open_process_full "isabelle-process" [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|] in
-  process := {inchannel = inchn; outchannel = outchn; errchannel = errchn; pid = npid };
-  isabelle_pid := npid;
-  is_isabelle_running := true;
-  last_test_number := !test_number;
-  prelude ()
-
-let close_pipes () : unit = 
-  let _ = Unix.close (Unix.descr_of_out_channel (!process.outchannel)) in
-  let _ = Unix.close (Unix.descr_of_in_channel (!process.inchannel)) in
-  let _ = Unix.close (Unix.descr_of_in_channel (!process.errchannel)) in
-  ()
-
-let stop_isabelle () = 
-  if !is_isabelle_running then begin
-      let num_tasks = !test_number - !last_test_number in
-      output_string !process.outchannel ("end\n");flush !process.outchannel;
-      print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n");
-	  (if !log_all_flag then 
-            (output_string log_all ("[isabelle.ml]: >> Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n"); flush log_all;) );
-      close_pipes ();
-      Unix.kill !isabelle_pid 3;
-      ignore (Unix.waitpid [] !process.pid);
-      is_isabelle_running := false;
-  end
-
-(* restart isabelle system *)
-let restart_isabelle reason =
-  if !is_isabelle_running then begin
-      let num_tasks = !test_number - !last_test_number in
-      print_string (reason^" Restarting Isabelle after ... "^(string_of_int num_tasks)^" invocations ");
-	  (if !log_all_flag then 
-            output_string log_all ("[isabelle.ml]: >> " ^ reason ^ " Restarting Isabelle after ... "^(string_of_int num_tasks)^" invocations \n") );
-      stop_isabelle();
-      start_isabelle();
-  end
-
 
 (* building the multiset theory image -  so that it won't be loaded for each theory that needs to be proved *)
 (* there is an option when running the system --build-image which creates the heap image *)
