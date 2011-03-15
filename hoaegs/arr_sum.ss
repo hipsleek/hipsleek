@@ -5,6 +5,8 @@
 // right recursive definition of the sum
 relation sumarray(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & ex ( t : sumarray(a,i+1,j,t) & s = t + a[i])).
 
+relation sumarrayL(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & ex ( t : sumarrayL(a,i,j-1,t) & s = t + a[j])).
+
 /**
  Compute \sum_{k=i..j}{a[i]} by a[i] + (a[i+1] + (a[i+2] + ... + a[j]))...)
  **/
@@ -76,7 +78,7 @@ Together with the hypothesis
  **/
 int sigmaleft(int[] a, int i, int j) 
 	requires true
-	ensures sumarray(a, i, j, res);
+	ensures sumarrayL(a, i, j, res);
 {
 	int r;
 	if (i > j)
