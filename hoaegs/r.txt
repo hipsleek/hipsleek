@@ -1,0 +1,29 @@
+-rw-r--r-- 1 chinwn chinwn  226 2011-03-11 04:09 hoahipex0.ss
+-rw-r--r-- 1 chinwn chinwn  465 2011-03-11 04:09 hoahipex10.ss
+           arr_rev.ss
+-rw-r--r-- 1 chinwn chinwn  424 2011-03-11 17:54 hoahipex11.ss
+           arr_double.ss
+-rw-r--r-- 1 chinwn chinwn 3952 2011-03-15 02:50 hoahipex12a.ss
+           arr_qsort.ss
+-rw-r--r-- 1 chinwn chinwn 3465 2011-03-15 02:50 hoahipex12b.ss
+-rw-r--r-- 1 chinwn chinwn 3177 2011-03-15 02:50 hoahipex12.ss
+-rw-r--r-- 1 chinwn chinwn  907 2011-03-11 17:54 hoahipex13.ss
+           arr_bsort.ss
+-rw-r--r-- 1 chinwn chinwn 1011 2011-03-11 04:09 hoahipex1.ss
+           arr_init.ss
+-rw-r--r-- 1 chinwn chinwn  883 2011-03-11 04:09 hoahipex2.ss
+           arr_max2.ss
+-rw-r--r-- 1 chinwn chinwn 3737 2011-03-11 04:09 hoahipex3.ss
+           arr_insert_sort.ss
+-rw-r--r-- 1 chinwn chinwn 2804 2011-03-11 04:09 hoahipex4.ss
+           arr_sum.ss
+-rw-r--r-- 1 chinwn chinwn 2875 2011-03-11 04:09 hoahipex5.ss
+           arr_max.ss
+-rw-r--r-- 1 chinwn chinwn 2077 2011-03-11 04:09 hoahipex6.ss
+           arr_vec.ss
+-rw-r--r-- 1 chinwn chinwn  655 2011-03-11 04:09 hoahipex7.ss
+           arr_maxsubseq.ss
+-rw-r--r-- 1 chinwn chinwn  737 2011-03-11 04:09 hoahipex8.ss
+           arr_mergesort.ss
+-rw-r--r-- 1 chinwn chinwn 2164 2011-03-11 04:09 hoahipex9.ss
+           arr_setops.ss
