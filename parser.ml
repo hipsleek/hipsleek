@@ -424,7 +424,7 @@ cexp_w :
      | `PERM; `OPAREN; lc=cexp_w; `COMMA; cl=cexp_w; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos 2))) lc cl ]
      
   | "pure_paren" 
-   [ `OPAREN; dc=cexp_w; `CPAREN       -> dc] 
+   [ `OPAREN; dc=cexp_w; `CPAREN -> dc ] 
     
 (* constraint expressions *)
   | "gen"
