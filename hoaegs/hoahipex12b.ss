@@ -23,8 +23,7 @@ relation lowerbndprev(int[] a, int[] b) == forall(i,j,s : (!(strlowerbnd(a,i,j,s
 
 // low,high are the lower and upper bound for i,j
 relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
-// above could be used to replace both strlowerbnd and strupperbnd.
-// is there a need for "strict"? 
+
 
 // FUNCTION arraypart
 // Partition the array a[i..j] into three parts
@@ -34,11 +33,15 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 
   void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	case {
-		i > j -> ensures k' = i - 1 & t' = j + 1 & a' = a;
-		i <= j ->  requires [l,h] bnd(a,i,j,l,h)
-     ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 
-                  & bnd(a', t', j, x+1,h) & idexc(a', a, i, j) & bnd(a',i,j,l,h);
+		i > j  -> ensures k' = i - 1 & t' = j + 1 & a' = a;
+		i <= j -> requires [l,h] bnd(a,i,j,l,h)
+                  ensures i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 
+                   & bnd(a', t', j, x+1,h) & idexc(a', a, i, j) & bnd(a',i,j,l,h);
 	} //'
+
+// i,k --> l,x-1
+// t,j --> x+1,h
+
 {
 	if (i <= j)
 	{
@@ -86,24 +89,12 @@ relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall
 }
 
 void qsort(ref int[] a, int i, int j)
-/* requires i>=j 
- ensures true;
-*/
+
 	case {
 		i >= j -> ensures a=a';
         i < j -> requires [l,h] bnd(a,i,j,l,h)
           ensures  bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
     }
-    /*
-   requires i<j 
-   ensures sorted(a',i,j) & idexc(a',a,i,j); //'
-	case {
-		i >= j -> sorted(a',i,j) & idexc(a',a,i,j);
-        i < j ->
-          requires bnd(a,i,j,l,h) 
-          ensures sorted(a',i,j) & idexc(a',a,i,j);
-    }
-*/
 
 {
 	if (i < j)
@@ -111,12 +102,9 @@ void qsort(ref int[] a, int i, int j)
 		int k, t;
         int x =a[i];
 		arraypart(a, i, j, x, k, t);
-        //dprint;
+// i,k --> l,x-1
+// t,j --> x+1,h
 		qsort(a, i, k); /* l,x-1 */
-        // assume t<j or t>=j;
-        //dprint;
 		qsort(a, t, j); /* x+1,h */
-		// Don't know how to solve this problem!!!
-		//assume upperbndprev(a,a') & lowerbndprev(a,a');
 	}
 }
