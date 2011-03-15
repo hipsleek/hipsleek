@@ -820,17 +820,28 @@ let prelude () =
 let set_process (proc: Globals.prover_process_t) = 
   process := proc
 
+let rec check_prover_existence prover_cmd_str: bool =
+  let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
+  if exit_code > 0 then
+    let _ = print_string ("Command for starting mona interactively (" ^prover_cmd_str^ ") not found\n") in
+    false
+  else true
+
 let start () = 
-  let (_,is_running) = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-v";|]) set_process prelude in
-  is_mona_running := is_running;
-  last_test_number := !test_number
+  last_test_number := !test_number;
+  if(check_prover_existence "mona_inter") then begin
+      let (_,is_running) = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+      is_mona_running := is_running
+  end
 
 let stop () = 
-  if !is_mona_running then begin
-    let num_tasks = !test_number - !last_test_number in
-    let _ = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks 2 (fun () -> ()) in
-    is_mona_running := false;
-  end
+  let killing_signal = 
+    match !is_mona_running with
+      |true -> is_mona_running := false;  2
+      |false -> 9 in
+  let num_tasks = !test_number - !last_test_number in
+  let _ = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
+  is_mona_running := false
 
 let restart reason =
   if !is_mona_running then 
@@ -884,8 +895,10 @@ let check_answer (answ: string) (is_sat_b: bool)=
   answer
 
 let maybe_restart_mona () : unit =
-  let num_tasks = !test_number - !last_test_number in
-  if num_tasks >=(!mona_cycle) then restart "upper limit reached"
+  if !is_mona_running then begin
+    let num_tasks = !test_number - !last_test_number in
+    if num_tasks >=(!mona_cycle) then restart "upper limit reached"
+  end
 
 let prepare_formula_for_mona (f: CP.formula) (break_presp: bool) (test_no: int): CP.spec_var list * CP.formula =
   let simp_f = CP.arith_simplify 8 f in
@@ -897,6 +910,69 @@ let prepare_formula_for_mona (f: CP.formula) (break_presp: bool) (test_no: int):
   let renamed_f_fv = List.map rename_spec_vars_fnct f_fv in
   let renamed_f = CP.subst_avoid_capture f_fv renamed_f_fv simp_f in
   (renamed_f_fv, renamed_f)
+
+let read_from_file chn: string = 
+  let answ =  ref "" in
+  try
+      while true do
+        let line = input_line chn in
+        let rec search_str str_lst line =
+          match str_lst with
+            | [] -> ""
+            | h::t -> 
+                try 
+                  let _ = Str.search_forward (Str.regexp h) line 0 in
+                  answ := h;
+                  raise End_of_file
+                with
+                  | Not_found -> search_str t line;
+        in
+        answ := search_str ["Formula is valid"; "Formula is unsatisfiable";"Error in file"] line
+      done;
+      !answ
+  with 
+    | End_of_file ->  close_in chn; !answ
+
+let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) : bool =
+  let mona_filename = "test" ^ imp_no ^ ".mona" in
+  let mona_file = open_out mona_filename in
+  output_string mona_file ("include \"mona_predicates.mona\";\n");
+  let fstr =
+    try 
+        begin
+            let all_fv = CP.remove_dups_svl fv in
+            let vs = Hashtbl.create 10 in
+            let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem f (CP.Var(sv, no_pos)) vs)) all_fv) in
+            let first_order_var_decls =
+              if Gen.is_empty part1 then ""
+              else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n " in
+            let second_order_var_decls =
+              if Gen.is_empty part2 then ""
+              else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) ^ "; \n"in
+            let var_decls = first_order_var_decls ^ second_order_var_decls in
+            var_decls ^(mona_of_formula f f vs)
+        end
+    with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); ""
+  in
+  if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
+  flush mona_file;
+  close_out mona_file;
+  if !log_all_flag == true then
+	begin
+	    output_string log_all (mona_filename ^ Gen.new_line_str);
+      	output_string log_all (fstr ^ ";\n");
+	    flush log_all;
+	end;
+  let (_,_) = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
+  let fnc () =
+    let mona_answ = read_from_file !process.inchannel in
+    let res = check_answer mona_answ is_sat_b in
+    res
+  in
+  let res = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in 
+  Sys.remove mona_filename;
+  stop();
+  res
 
 let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) : bool =
   let all_fv = CP.remove_dups_svl fv in
@@ -933,8 +1009,6 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
         stop(); raise exc
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  if not !is_mona_running then
-    start();
   if !log_all_flag == true then
     output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   first_order_vars := [];
@@ -943,21 +1017,26 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   let (ante_fv, ante) = prepare_formula_for_mona ante true !test_number in
   let (conseq_fv, conseq) = prepare_formula_for_mona conseq false !test_number in
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no
+  if not !is_mona_running then
+    write_to_file false (ante_fv @ conseq_fv) tmp_form imp_no
+  else
+    imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
   if !log_all_flag == true then
 	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
-  if not !is_mona_running then
-        start();
   sat_optimize := true;
- first_order_vars := [];
- second_order_vars := [];
- incr test_number;
- let (f_fv, f) = prepare_formula_for_mona f true !test_number in
- let sat = imply_sat_helper true f_fv f sat_no in
- sat_optimize := false;
- sat
+  first_order_vars := [];
+  second_order_vars := [];
+  incr test_number;
+  let (f_fv, f) = prepare_formula_for_mona f true !test_number in
+  let sat = 
+    if not !is_mona_running then
+      write_to_file true f_fv f sat_no 
+    else
+      imply_sat_helper true f_fv f sat_no in
+  sat_optimize := false;
+  sat
 ;;
 
 (*let imply = imply (-1.);;*)

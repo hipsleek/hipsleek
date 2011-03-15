@@ -1704,10 +1704,12 @@ struct
   
   (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =
-    let _ = Unix.close (Unix.descr_of_out_channel process.outchannel) in
-    let _ = Unix.close (Unix.descr_of_in_channel process.inchannel) in
-    let _ = Unix.close (Unix.descr_of_in_channel process.errchannel) in
-    ()
+    try
+        Unix.close (Unix.descr_of_out_channel process.outchannel);
+        Unix.close (Unix.descr_of_in_channel process.inchannel);
+        Unix.close (Unix.descr_of_in_channel process.errchannel);
+    with
+      | _ -> ()
 
   (* Starts a specific prover (creating a new process). Parameters have the following meaning:
    ** log_all_flag - flag which tells whether to log proving evolution
@@ -1744,10 +1746,18 @@ struct
   let stop (log_all_flag: bool) (log_all: out_channel) (process:proc) (invocations: int) (killing_signal: int) ending_function =
     let _ = ending_function () in
     if log_all_flag then 
-      (output_string log_all ("\n[isabelle.ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n"); flush log_all ); 
+      (output_string log_all ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n"); 
+       flush log_all ); 
     close_pipes process;
-    Unix.kill process.pid killing_signal;
-    ignore (Unix.waitpid [] process.pid)
+    (try Unix.kill process.pid killing_signal;
+             ignore (Unix.waitpid [] process.pid)
+     with
+       | e -> begin 
+           ignore e;
+           if log_all_flag then
+             (output_string log_all ("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"); 
+              flush log_all);
+       end)
 
   (* Restarts the prover. Parameters have the following meaning:
    ** log_all_flag - flag which tells whether to log proving evolution
