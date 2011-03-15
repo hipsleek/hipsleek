@@ -1679,37 +1679,42 @@ struct
 
 end;;
 
-(* type prover_process_t = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel } *)
 (* provers common methods *)
 module PrvComms = 
 struct
+
   open Globals
-
   type proc = Globals.prover_process_t
-
   exception Timeout
 
   let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
-
   let set_timer tsecs =
-    ignore (Unix.setitimer Unix.ITIMER_REAL
-                { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+    ignore (Unix.setitimer Unix.ITIMER_REAL { Unix.it_interval = 0.0; Unix.it_value = tsecs })
 
+  (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
+    Otherwise, this method returns the result after calling fnc. *)
   let maybe_raise_timeout (fnc: 'a) (arg: 'b) (tsec:float) : 'c =
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-    set_timer tsec;
+    let _ = set_timer tsec in
     let answ = fnc arg in
     set_timer 0.0;
     reset_sigalrm ();
     answ 
   
+  (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =
     let _ = Unix.close (Unix.descr_of_out_channel process.outchannel) in
     let _ = Unix.close (Unix.descr_of_in_channel process.inchannel) in
     let _ = Unix.close (Unix.descr_of_in_channel process.errchannel) in
     ()
 
+  (* Starts a specific prover (creating a new process). Parameters have the following meaning:
+   ** log_all_flag - flag which tells whether to log proving evolution
+   ** log-all - descriptor of the file where the log is written
+   ** prover - tuple: (name of the prover, command to start the prover, arguments passed to the prover starting command)
+   ** set_process - method that assigns the newly created process to the process ref used in prover_name.ml 
+   ** prelude - method which prepares the prover for interactive use (first commands sent, first lines printed, etc)*)
   let start (log_all_flag: bool) (log_all: out_channel) (prover: string * string * string array) set_process prelude= 
     let (prover_name, prover_proc, prover_arg_array) = prover in
     if log_all_flag then
@@ -1724,26 +1729,38 @@ struct
       | e -> begin
           let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^": " ^ (Printexc.to_string e)) in
           flush stdout; flush stderr;
-          if log_all_flag then begin
-              output_string log_all ("["^prover_name^".ml]: >> Error while starting "^prover_name^"!\n");
-              flush log_all; 
-          end;
+          if log_all_flag then
+            output_string log_all ("["^prover_name^".ml]: >> Error while starting "^prover_name^"!\n");
           raise e
       end
 
+  (* Kills the provers process. Parameters have the following meaning:
+   ** log_all_flag - flag which tells whether to log proving evolution
+   ** log-all - descriptor of the file where the log is written
+   ** process - record with details about the process that needs to be killed (pid, in/out/errchannel, name)
+   ** invocations - number of calls to this prover
+   ** killing_signal - signal that kills the process. For most of provers, 2 should be enough to kill the process
+   ** ending_function - function containing some final disposition for the prover (many provers don't need this, so one can just send (fun ()->() ) ) *)
   let stop (log_all_flag: bool) (log_all: out_channel) (process:proc) (invocations: int) (killing_signal: int) ending_function =
     let _ = ending_function () in
-    (if log_all_flag then 
-          (output_string log_all ("\n[isabelle.ml]: >> Stop "^process.name^" after ... "^(string_of_int invocations)^" invocations\n"); flush log_all;) );
+    if log_all_flag then 
+      (output_string log_all ("\n[isabelle.ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n"); flush log_all ); 
     close_pipes process;
     Unix.kill process.pid killing_signal;
     ignore (Unix.waitpid [] process.pid)
 
+  (* Restarts the prover. Parameters have the following meaning:
+   ** log_all_flag - flag which tells whether to log proving evolution
+   ** log-all - descriptor of the file where the log is written
+   ** reason - reason for restarting the prover
+   ** prover_name - string containing the name of teh prover taht si restarted
+   ** start - start method to be invoked when starting this prover 
+   ** stop - stop method to be invoked when stoping this prover *)
   let restart (log_all_flag: bool) (log_all: out_channel) (reason:string) (prover_name: string) start stop =
-	  (if log_all_flag then 
-            output_string log_all ("["^prover_name^".ml]: >> Restarting "^prover_name^" because of: "^reason) );
-      stop ();
-      start ()
+	if log_all_flag then 
+      output_string log_all ("[" ^ prover_name ^ ".ml]: >> Restarting " ^ prover_name ^ " because of: " ^ reason) ;
+    stop ();
+    start ()
 
 end;;
 
