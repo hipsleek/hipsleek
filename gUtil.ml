@@ -85,8 +85,6 @@ module SourceUtil = struct
   exception Syntax_error of string * seg_pos
 
   let checkentail_re = Str.regexp "checkentail \\([^\\.]+\\)\\."
-  let print_re = Str.regexp "print [^\\.]+\\."
-  let new_line_re = Str.regexp "^"
 
   let string_of_entailment (e: entailment) =
     Printf.sprintf "(%d,%d): %s" e.pos.start_line e.pos.stop_line e.name
@@ -98,6 +96,7 @@ module SourceUtil = struct
 
   (** return a list of all positions of "new line" char in src *)
   let get_new_line_positions (src: string) : int list =
+    let new_line_re = Str.regexp "^" in
     let rec new_line_pos (start: int): int list =
       try
         let pos = Str.search_forward new_line_re src start in
@@ -124,6 +123,7 @@ module SourceUtil = struct
 
   (** remove all print command from source *)
   let remove_print (src: string) : string =
+    let print_re = Str.regexp "print [^\\.]+\\." in
     Str.global_replace print_re "" src
 
   let clean (src: string) : string =
@@ -181,9 +181,9 @@ module SourceUtil = struct
       let curr_p = lexbuf.Lexing.lex_curr_p in
       let pos = {
         start_char = start_p.Lexing.pos_cnum;
-        stop_char = 0;
+        stop_char = curr_p.Lexing.pos_cnum;
         start_line = start_p.Lexing.pos_lnum;
-        stop_line = curr_p.Lexing.pos_lnum + 1;
+        stop_line = curr_p.Lexing.pos_lnum;
       } in
       log (Printf.sprintf "Syntax error at line %d" start_p.Lexing.pos_lnum);
       raise (Syntax_error ("Syntax error!", pos))
