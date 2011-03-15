@@ -32,6 +32,8 @@ and data_decl = { data_name : ident;
 		  data_invs : F.formula list;
 		  data_methods : proc_decl list }
     
+and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
+    
 and view_decl = { view_name : ident; 
 				  view_vars : P.spec_var list;
 				  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
@@ -49,6 +51,7 @@ and view_decl = { view_name : ident;
 				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
+          view_prune_conditions_baga: ba_prun_cond list;
 				  view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list ;
           view_raw_base_case: Cformula.formula option;}
 

@@ -935,8 +935,16 @@ let memo_change_status cons l =
     )grp lcns
   ) l
   
-let memo_find_relevant_slice fv l = List.find (fun d-> Gen.BList.subset_eq (=) fv d.memo_group_fv) l 
+let memo_find_relevant_slice fv l = List.find (fun d-> Gen.BList.subset_eq eq_spec_var fv d.memo_group_fv) l 
 
+let memo_find_relevant_slices fv l = List.filter (fun d->  Gen.BList.overlap_eq eq_spec_var fv d.memo_group_fv) l
+
+let memo_get_asets fv l = 
+  let r= memo_find_relevant_slices fv l in
+  match r with
+    | [] -> empty_var_aset
+    | h::t -> List.fold_left (fun a c-> EMapSV.merge_eset a c.memo_group_aset) h.memo_group_aset t 
+    
 let memo_changed d = d.memo_group_changed 
 
 (* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)
