@@ -24,7 +24,6 @@ relation lowerbndprev(int[] a, int[] b) == forall(i,j,s : (!(strlowerbnd(a,i,j,s
 // low,high are the lower and upper bound for i,j
 relation bnd(int[] a, int i, int j, int low, int high) == (i > j | i<=j & forall ( k : (k < i | k > j | low <= a[k] <= high))).
 
-
 // FUNCTION arraypart
 // Partition the array a[i..j] into three parts
 // a[i..k] contains elements < x
