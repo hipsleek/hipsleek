@@ -1,0 +1,47 @@
+data node { int val ; node next }.
+
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n - 1>
+	inv n >= 0.
+
+pred ll2<n> == case { self=null -> [] n=0;
+           self!=null ->  [] self::node<_,r> * r::ll2<n-1>;}
+	inv n >= 0.
+
+pred ll3<n> == self::node<next = r> * r::ll2<n-1>
+	inv n >= 1.
+
+/*
+C1:
+   a1 |- b: must
+   a2 |- b: may
+*/
+
+/*
+C2:
+   a1 |- b: may
+   a2 |- b: OK
+*/
+
+
+/*
+C3:
+   a1 |- b: may
+   a2 |- b: may
+*/
+
+
+/*
+C4:
+   a1 |- b: must
+   a2 |- b: must
+*/
+
+
+/*
+C5:
+   a1 |- b: must
+   a2 |- b: OK
+*/
+checkentail x::ll<n> |-n>0.
+//MUST ERROR:  (x=null & n = 0 |- n > 0: UNSAT) and  (n > 3 |- not(n <1): SAT)

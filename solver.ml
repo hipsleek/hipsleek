@@ -3835,22 +3835,25 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
       let split_ante1 = new_ante1 in
-      let res1,res2,res3 = if (MCP.isConstMTrue rhs_p) then ((true,[],None) )
+      let res1,res2,res3,res4 = if (MCP.isConstMTrue rhs_p) then ((true,[],None, None) )
       else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in
       let (res1,res2,re3) =
         if res1 = false && branch_id = "" then
-
+          let elim_option e = match e with
+            |Some f -> f
+            | _ -> CP.mkTrue no_pos
+          in let res4 = elim_option res4 in
           (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)
-          let new_pformula = CP.mkAnd (MCP.pure_of_mix split_ante1) (MCP.pure_of_mix split_conseq) no_pos in
+          let new_pformula = CP.mkAnd (res4(*MCP.pure_of_mix split_ante1*)) (MCP.pure_of_mix split_conseq) no_pos in
           let res_sat = TP.is_sat_sub_no new_pformula imp_no in
           if res_sat then 
            begin
               fe := {!fe with fe_kind = CF.Failure_May};
-             fc_msg :=  (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": HOLD ---" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
+             fc_msg :=  (Cprinter.string_of_pure_formula res4)^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": HOLD ---" ^ (Cprinter.string_of_pure_formula res4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
            end else 
            begin
              fe :=  {!fe with fe_kind = CF.Failure_Must};
-             fc_msg :=  (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": not HOLD ---" ^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
+             fc_msg :=  (Cprinter.string_of_pure_formula res4(*(MCP.pure_of_mix split_ante1)*))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": not HOLD ---" ^ (Cprinter.string_of_pure_formula res4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
             end ;
           let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
           let fold_fun (is_ok,a2,a3) branch_id_added =
@@ -4045,18 +4048,20 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
   Gen.Debug.ho_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
-      (fun (r,_,_) -> string_of_bool r)
+      (fun (r,_,_,_) -> string_of_bool r)
       (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
       ante_m0 ante_m1 conseq_m memset
 
 and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
-      :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
+      :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option
+       * CP.formula option =
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
     | MCP.MemoF a, _, MCP.MemoF c ->
           begin
             (*print_endline "imply_mix_formula: first";*)
-            MCP.imply_memo a c TP.imply imp_no
+              let (a,b,c) = MCP.imply_memo a c TP.imply imp_no in
+                (a,b,c,None)
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin

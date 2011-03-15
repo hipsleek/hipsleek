@@ -4206,20 +4206,37 @@ let rec replace_pure_formula_label nl f = match f with
   | Forall (b1,b2,b3,b4) -> Forall (b1,(replace_pure_formula_label nl b2),(nl()),b4)
   | Exists (b1,b2,b3,b4) -> Exists (b1,(replace_pure_formula_label nl b2),(nl()),b4)
 
-  
+
+let rec string_of_ls_pure_formula ls =
+ match ls with
+   | [] -> ""
+   | p::[] -> !print_formula p
+   | p::ps -> (!print_formula p) ^ " or\n" ^ (string_of_ls_pure_formula ps)
+
+let string_of_res (r,_,_,f) =
+  let b = string_of_bool r in
+      match f with
+        | Some a -> b ^ (!print_formula a)
+        | None -> b
+
 let rec imply_disj_orig ante_disj conseq t_imply imp_no =
+ Gen.Debug.ho_2 "imply_disj_orig"  string_of_ls_pure_formula !print_formula
+   string_of_res
+ (fun a c -> imply_disj_orig_x a c t_imply imp_no) ante_disj conseq
+
+and imply_disj_orig_x ante_disj conseq t_imply imp_no =
   match ante_disj with
-    | h :: rest -> 
+    | h :: rest ->
 	    let r1,r2,r3 = (t_imply h conseq (string_of_int !imp_no) true None) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_disj_orig rest conseq t_imply imp_no) in
-	      (r1,r2@r22,r23)
-	    else (r1,r2,r3)
-    | [] -> (true,[],None)
+	      let r1,r22,r23,r24 = (imply_disj_orig rest conseq t_imply imp_no) in
+	      (r1,r2@r22,r23, r24)
+	    else (r1,r2,r3, Some h)
+    | [] -> (true,[],None, None)
   
 let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no = 
   (*let _ = print_string ("\nSplitting the antecedent for xpure0:\n") in*)
-  let xp01,xp02,xp03 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
+  let xp01,xp02,xp03,xp04 = imply_disj_orig ante_disj0 conseq t_imply imp_no in  
   (*let _ = print_string ("\nDone splitting the antecedent for xpure0:\n") in*)
   if (not(xp01) (*&& (ante_disj0 <> ante_disj1)*)) then
     let _ = Debug.devel_pprint ("\nSplitting the antecedent for xpure1:\n") in
@@ -4227,18 +4244,19 @@ let rec imply_one_conj_orig ante_disj0 ante_disj1 conseq t_imply imp_no =
     let xp1 = imply_disj_orig ante_disj1 conseq t_imply imp_no in
     let _ = Debug.devel_pprint ("\nDone splitting the antecedent for xpure1:\n") in
 	xp1
-  else (xp01,xp02,xp03)	
+  else (xp01,xp02,xp03,xp04)
   
 let rec imply_conj_orig ante_disj0 ante_disj1 conseq_conj t_imply imp_no
-   : bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
+   : bool * (Globals.formula_label option * Globals.formula_label option) list * 
+     Globals.formula_label option * formula option=
   match conseq_conj with
     | h :: rest -> 
-	    let (r1,r2,r3)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
+	    let (r1,r2,r3,r4)=(imply_one_conj_orig ante_disj0 ante_disj1 h t_imply imp_no) in
 	    if r1 then 
-	      let r1,r22,r23 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
-	      (r1,r2@r22,r23)
-	    else (r1,r2,r3)
-    | [] -> (true,[],None)
+	      let r1,r22,r23,r24 = (imply_conj_orig ante_disj0 ante_disj1 rest t_imply imp_no) in
+	      (r1,r2@r22,r23,r24)
+	    else (r1,r2,r3,r4)
+    | [] -> (true,[],None, None)
 (*###############################################################################  incremental_testing*)
 (*check implication having a single formula on the lhs and a conjuction of formulas on the rhs*)
 let rec imply_conj (send_ante: bool) ante conseq_conj t_imply (increm_funct :(formula) Globals.incremMethodsType option) process imp_no =
