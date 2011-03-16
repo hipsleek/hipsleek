@@ -17,8 +17,8 @@ C1:
    a2 |- b: may
 bug: just check the first fail-> sufficient??
 */
-checkentail x::ll<n> |-n > 3.
-
+//checkentail x::ll<n> & m > 0|-n > 3.
+//checkentail n>0 & m > 0 |-n > 3.
 /*
 C2:
    a1 |- b: may
@@ -45,7 +45,6 @@ C5:
    a1 |- b: must
    a2 |- b: OK
 */
-//checkentail x::ll<n> |-n>0.
-//checkentail x::ll<n> |-n=0.
+checkentail x::ll<n> |-n>0.
 //MUST ERROR:  (x=null & n = 0 |- n > 0: UNSAT) and  (n > 3 |- not(n <1): SAT)
-//x=null is redundant, should be elim
+//checkentail x::ll<n> |-n=0.

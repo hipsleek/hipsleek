@@ -3839,21 +3839,21 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_univ
       else (imply_mix_formula split_ante0 split_ante1 split_conseq imp_no memset) in
       let (res1,res2,re3) =
         if res1 = false && branch_id = "" then
-          let elim_option e = match e with
-            |Some f -> f
-            | _ -> CP.mkTrue no_pos
-          in let res4 = elim_option res4 in
+          let elim_option ant cons = match ant with
+            |Some f -> TP.filter f cons
+            | _ -> CP.mkTrue no_pos, cons
+          in let ante4, cons4 = elim_option res4 (MCP.pure_of_mix split_conseq) in
           (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)
-          let new_pformula = CP.mkAnd (res4(*MCP.pure_of_mix split_ante1*)) (MCP.pure_of_mix split_conseq) no_pos in
+          let new_pformula = CP.mkAnd (ante4(*MCP.pure_of_mix split_ante1*)) cons4(*MCP.pure_of_mix split_conseq*) no_pos in
           let res_sat = TP.is_sat_sub_no new_pformula imp_no in
           if res_sat then 
            begin
               fe := {!fe with fe_kind = CF.Failure_May};
-             fc_msg :=  (Cprinter.string_of_pure_formula res4)^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": HOLD ---" ^ (Cprinter.string_of_pure_formula res4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
+             fc_msg :=  (Cprinter.string_of_pure_formula ante4)^" |- "^(Cprinter.string_of_pure_formula cons4) ^ ": HOLD ---" ^ (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^(Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD"
            end else 
            begin
              fe :=  {!fe with fe_kind = CF.Failure_Must};
-             fc_msg :=  (Cprinter.string_of_pure_formula res4(*(MCP.pure_of_mix split_ante1)*))^" |- "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq)) ^ ": not HOLD ---" ^ (Cprinter.string_of_pure_formula res4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_conseq))  ^ ") :HOLD"
+             fc_msg :=  (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- "^(Cprinter.string_of_pure_formula cons4) ^ ": not HOLD ---" ^ (Cprinter.string_of_pure_formula ante4(*(MCP.pure_of_mix split_ante1)*))^" |- not("^(Cprinter.string_of_pure_formula cons4)  ^ ") :HOLD"
             end ;
           let branches = Gen.BList.remove_dups_eq (=) (List.map (fun (bid, _) -> bid) (xpure_lhs_h1_b @ lhs_b)) in
           let fold_fun (is_ok,a2,a3) branch_id_added =
