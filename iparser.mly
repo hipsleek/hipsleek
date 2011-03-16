@@ -795,13 +795,13 @@ simple_heap_constr
 
 pure_constr
   : simple_pure_constr opt_formula_label { match $1 with 
-	| P.BForm (b,_) -> P.BForm (b,$2)
-    | P.And _ -> $1
-    | P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
-    | P.Not (b1,_,l) -> P.Not(b1,$2,l)
-    | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
-    | P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
-	| pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
+			| P.BForm (b,_) -> P.BForm (b,$2)
+		        | P.And _ -> $1
+			| P.Or  (b1,b2,_,l) -> P.Or(b1,b2,$2,l)
+	                | P.Not (b1,_,l) -> P.Not(b1,$2,l)
+	                | P.Forall (q,b1,_,l)-> P.Forall(q,b1,$2,l)
+			| P.Exists (q,b1,_,l)-> P.Exists(q,b1,$2,l)}
+                        | pure_constr AND simple_pure_constr { P.mkAnd $1 $3 (get_pos 2) }
 ;
 
 disjunctive_pure_constr
@@ -1060,7 +1060,7 @@ proc_header
 		  proc_static_specs = $7;
 		  proc_dynamic_specs = [];
 		  proc_loc = get_pos 1;
-          proc_file = !file_name;
+      proc_file = !input_file_name;
 		  proc_body = None }
 	}
   | VOID IDENTIFIER OPAREN opt_formal_parameter_list CPAREN opt_throws opt_spec_list {
@@ -1220,7 +1220,7 @@ spec
 					Iformula.formula_var_continuation = [$7];
 					Iformula.formula_var_pos = get_pos 1;
 			  }
-		}	}
+		}
 ;	
 
 measures

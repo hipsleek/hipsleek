@@ -110,6 +110,7 @@ rule tokenizer file_name = parse
   | '&' { AND }
   | "&&" { ANDAND }
   | "@" { AT }
+  | "@I" {IMM}
   | '}' { CBRACE }
   | ':' { COLON }
   | "::" { COLONCOLON }

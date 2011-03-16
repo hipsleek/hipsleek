@@ -1,0 +1,40 @@
+data node { int val ; node next }.
+pred ll<n> == self = null & n = 0
+	or self::node<next = r> * r::ll<n-1> 
+	inv n >= 0.
+
+
+// testing folding
+
+/*
+checkentail (y::node<_,_>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m>) |- (y::ll<n>@I).
+//print residue.
+// Fail.
+*/
+
+checkentail (y::node<_,null>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m> )  |- (y::node<_,q>@I*q::ll<n>@I).
+print residue.
+// Valid
+
+/*
+checkentail (y::node<_,q>@I *q::node<_,null>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m> )  |- (y::ll<n>@I).
+print residue.
+
+checkentail (y::node<_,null>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m> )  |- (y::node<v,r>@I).
+print residue.
+// Valid
+
+
+checkentail (y::ll<_>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m> )  |- (y::ll<n>@I).
+print residue.
+// Valid
+
+
+checkentail (y::node<_,null>@I); x::ll<m> * ((t::ll<a>@I); z::ll<m> )  |- y::ll<n>.
+print residue.
+// Valid
+*/
+
+
+
+

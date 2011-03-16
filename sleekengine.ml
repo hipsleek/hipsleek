@@ -71,7 +71,7 @@ let process_data_def ddef =
       try
 	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
 	let _ = Iast.build_exc_hierarchy true iprog in
-	let _ = Util.c_h () in
+	let _ = Gen.ExcNumbering.c_h () in
 	let cddef = AS.trans_data iprog ddef in
 	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
 	  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls
@@ -204,7 +204,7 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
     (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
     (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
     let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
-    (*let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in*)
+    let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
     (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
     let rs1, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
     let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in

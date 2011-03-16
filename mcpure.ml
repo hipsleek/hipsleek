@@ -7,9 +7,9 @@ open Cpure
  -ememo will enable memoizing
  -eslice will enable slicing
 *)
-type var_aset = spec_var Util.eq_set 
+type var_aset = Gen.EqMap(SV).emap 
 
-let empty_var_aset = Util.empty_a_set_eq eq_spec_var 
+let empty_var_aset = EMapSV.mkEmpty 
 
 
 (* with const for get_equiv_eq + form_formula__eq *)
@@ -47,15 +47,17 @@ and prune_status =
 let print_mp_f = ref (fun (c:memo_pure)-> " printing not initialized")
 let print_mc_f = ref (fun (c:memoised_constraint)-> "printing not initialized")
 let print_sv_f = ref (fun (c:spec_var)-> "spec var printing not initialized")
+let print_sv_l_f = ref (fun (c:spec_var list)-> "spec var list printing not initialized")
 let print_bf_f = ref (fun (c:b_formula)-> "b formula printing not initialized")
 let print_p_f_f = ref (fun (c:formula)-> " formula printing not initialized")
 let print_exp_f = ref(fun (c:exp) -> "exp_printing") 
+(* let print_mix_f = ref (fun (c:mix_formula)-> " printing not initialized") *)
 
 let print_p_f_l l = String.concat "; " (List.map !print_p_f_f l)
 
-let print_alias_set aset = Util.string_of_eq_set !print_sv_f aset
+let print_alias_set aset = EMapSV.string_of aset
     
-let rec mfv (m: memo_pure) : spec_var list = Util.remove_dups_f (List.concat (List.map (fun c-> c.memo_group_fv) m)) eq_spec_var
+let rec mfv (m: memo_pure) : spec_var list = Gen.BList.remove_dups_eq eq_spec_var (List.concat (List.map (fun c-> c.memo_group_fv) m))
 
 and pcond_fv (p:memoised_constraint) : spec_var list = bfv p.memo_formula
 
@@ -72,14 +74,14 @@ and isConstMTrue f =
     | 1 ->
         let r = List.hd f in
         (match ((List.length r.memo_group_cons),(List.length r.memo_group_slice)) with
-            | 0,1 -> isConstTrue (List.hd r.memo_group_slice) && (Util.is_empty_aset_eq r.memo_group_aset)
-            | 1,0 -> isConstMConsTrue (List.hd r.memo_group_cons) && (Util.is_empty_aset_eq r.memo_group_aset)
+            | 0,1 -> isConstTrue (List.hd r.memo_group_slice) && (EMapSV.is_empty r.memo_group_aset)
+            | 1,0 -> isConstMConsTrue (List.hd r.memo_group_cons) && (EMapSV.is_empty r.memo_group_aset)
             | _ -> false)
     | _ -> false
       
 and isConstGroupTrue (f:memoised_group) : bool = match f.memo_group_slice with
-  | [] -> f.memo_group_cons == [] && (Util.is_empty_aset_eq f.memo_group_aset) 
-  | x::[] -> f.memo_group_cons == [] && (Util.is_empty_aset_eq f.memo_group_aset) && (isConstTrue x)
+  | [] -> f.memo_group_cons == [] && (EMapSV.is_empty f.memo_group_aset) 
+  | x::[] -> f.memo_group_cons == [] && (EMapSV.is_empty f.memo_group_aset) && (isConstTrue x)
   | _ -> false
   
       
@@ -88,8 +90,8 @@ and isConstMFalse f =
     | 1 ->
         let r = List.hd f in
         (match ((List.length r.memo_group_cons),(List.length r.memo_group_slice)) with
-            | 0,1 -> isConstFalse (List.hd r.memo_group_slice)&& (Util.is_empty_aset_eq r.memo_group_aset)
-            | 1,0 -> isConstMConsFalse (List.hd r.memo_group_cons) && (Util.is_empty_aset_eq r.memo_group_aset)
+            | 0,1 -> isConstFalse (List.hd r.memo_group_slice)&& (EMapSV.is_empty r.memo_group_aset)
+            | 1,0 -> isConstMConsFalse (List.hd r.memo_group_cons) && (EMapSV.is_empty r.memo_group_aset)
             | _ -> false)
     | _ -> false
   
@@ -107,6 +109,8 @@ and filter_mem_triv lst =
 		    | _ -> true) lst
     
 and group_mem_by_fv (lst: memo_pure):memo_pure = 
+  if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem " ;failwith "multi slice problem" );lst)
+  else
   let n_l = List.fold_left (fun a d-> 
 			      let n_l = List.map (fun c->((bfv c.memo_formula),[(Some c, None,None)])) d.memo_group_cons in
 			      let n_l_f = List.map (fun f->((fv f),[(None, Some f, None)])) d.memo_group_slice in
@@ -115,15 +119,15 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
     
   let r = List.fold_left (fun acc (v_list, mem) -> 
 			    let l_merged, l_unmerged = List.partition (fun (v_l,_)-> 
-									 (List.length (Util.intersect_fct eq_spec_var v_l v_list))>0) acc in
+									 (List.length (Gen.BList.intersect_eq eq_spec_var v_l v_list))>0) acc in
 			    let l_v,l_m = List.fold_left (fun (a1,a2)(c1,c2)-> (a1@c1,c2@a2)) (v_list,mem) l_merged in
-			      ((Util.remove_dups_f l_v eq_spec_var),l_m)::l_unmerged ) [] n_l in
+			      ((Gen.BList.remove_dups_eq eq_spec_var l_v),l_m)::l_unmerged ) [] n_l in
     
     List.map (fun (v_l,m_l)-> 
 		let mc_l, f_l,a_l = List.fold_left (fun (a1,a2,a3) c -> match c with
 						      | None, Some f , None -> (a1,f::a2,a3)
 						      | Some f, None , None -> (f::a1,a2,a3)
-						      | None, None, Some f -> (a1,a2,Util.merge_set_eq(*_debug !print_sv_f*) f a3)
+						      | None, None, Some f -> (a1,a2,EMapSV.merge_eset(*_debug !print_sv_f*) f a3)
 						      | _ -> (a1,a2,a3)) ([],[], empty_var_aset ) m_l in      
 		  { memo_group_fv = v_l; 
 		    memo_group_changed = true ; 
@@ -132,8 +136,10 @@ and group_mem_by_fv (lst: memo_pure):memo_pure =
 		    memo_group_aset = a_l}) r  
       
 and regroup_memo_group (lst : memo_pure) : memo_pure = 
+ if !f_1_slice then (if (List.length lst)>1  then (print_string "multi slice problem " ;failwith "multi slice problem" );lst) 
+  else
   let rec f_rec fv a = 
-    let r1,r2 = List.partition (fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) a in
+    let r1,r2 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) a in
       if r1 = [] then ([],r2)
       else
 	let n_fv = List.fold_left (fun ac c-> ac@c.memo_group_fv) fv r1 in
@@ -148,38 +154,49 @@ and regroup_memo_group (lst : memo_pure) : memo_pure =
 				      memo_group_slice = a.memo_group_slice @c.memo_group_slice;
 				      memo_group_cons =  a.memo_group_cons  @c.memo_group_cons;
 				      memo_group_changed = true;
-				      memo_group_aset = Util.merge_set_eq(*_debug !print_sv_f*) a.memo_group_aset c.memo_group_aset;}) h h_merged in
-	let r_h = {h_m with memo_group_fv = Util.remove_dups_f h_m.memo_group_fv eq_spec_var;} in      
+				      memo_group_aset = EMapSV.merge_eset(*_debug !print_sv_f*) a.memo_group_aset c.memo_group_aset;}) h h_merged in
+	let r_h = {h_m with memo_group_fv = Gen.BList.remove_dups_eq eq_spec_var h_m.memo_group_fv;} in      
 	let r = helper h_not_merged in
 	  r_h::r in
     helper lst
       
       
-
+(*
 and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure=
   let fresh_fr = fresh_spec_vars fr in
   let st1 = List.combine fr fresh_fr in
   let st2 = List.combine fresh_fr t in
   let helper  (s:(spec_var*spec_var) list) f  = 
-    let r = Util.rename_eset_eq (subs_one s) f.memo_group_aset in
+    let r = EMapSV.rename_eset_allow_clash(*_debug*) !print_sv_f (subs_one s) f.memo_group_aset in
       (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
-	let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
+	let _ = print_string1 ("rapp2: "^(print_alias_set r)^"\n") in*)
       {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
        memo_group_changed = f.memo_group_changed;
        memo_group_cons = List.map (fun d->{d with memo_formula = List.fold_left (fun a c-> b_apply_one c a) d.memo_formula s;}) f.memo_group_cons;
        memo_group_slice = List.map (subst s) f.memo_group_slice; 
        memo_group_aset = r} in
+  let _ = (check_dups_svl t) in
   let r = List.map (helper st1) f_l in
     regroup_memo_group (List.map (helper st2) r)
+*)
 
-and subst_avoid_capture_memo_debug1 (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure =
-  Util.ho_debug_3a_list "1 subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l
+and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure=
+  let st1 = List.combine fr t in
+  (* let st2 = List.combine fresh_fr t in *)
+  let helper  (s:(spec_var*spec_var) list) f  = 
+    let r = EMapSV.rename_eset_allow_clash (subs_one s) f.memo_group_aset in
+      (*let _ = print_string ("rapp1: "^(print_alias_set f.memo_group_aset)^"\n") in
+	let _ = print_string ("rapp2: "^(print_alias_set r)^"\n") in*)
+      {memo_group_fv = List.map (fun v-> subs_one s v) f.memo_group_fv;
+       memo_group_changed = f.memo_group_changed;
+       memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_subs s d.memo_formula;}) f.memo_group_cons;
+       memo_group_slice = List.map (par_subst s) f.memo_group_slice; 
+       memo_group_aset = r} in
+  let r = List.map (helper st1) f_l in
+    regroup_memo_group r
 
-and subst_avoid_capture_memo_debug2 (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure =
-  Util.ho_debug_3a_list "2 subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l
-
-and subst_avoid_capture_memo_debug3 (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure =
-  Util.ho_debug_3a_list "3 subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l
+(* and subst_avoid_capture_memo_debug (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure = *)
+(*   Gen.Debug.ho_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l *)
 
     
 and memo_cons_subst sst (f_l : memoised_constraint list): memoised_constraint list = 
@@ -195,8 +212,8 @@ and memo_subst (sst : (spec_var * spec_var) list) (f_l : memo_pure) =
       
 and m_apply_one (s:spec_var * spec_var) f = 
   let r1 = List.map (fun c -> 
-		       let r = Util.subs_eset_eq(*_debug !print_sv_f*) s c.memo_group_aset in
-			 {memo_group_fv = List.map (fun v-> subst_var s v) c.memo_group_fv;
+		       let r = EMapSV.subs_eset(*_debug !print_sv_f*) s c.memo_group_aset in
+			 {memo_group_fv = Gen.BList.remove_dups_eq (=) (List.map (fun v-> subst_var s v) c.memo_group_fv);
 			  memo_group_changed = c.memo_group_changed;
 			  memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one s d.memo_formula;}) c.memo_group_cons;
 			  memo_group_slice = List.map (apply_one s) c.memo_group_slice; 
@@ -225,14 +242,15 @@ and pure_ptr_equations (f:formula) : (spec_var * spec_var) list =
 (* returns a list of ptr eqns v1=v2 that can be found in memo_pure
    and called during matching of predicates
 *)
-and ptr_equations (f : memo_pure) : (spec_var * spec_var) list =  
+and ptr_equations_aux_mp with_null (f : memo_pure) : (spec_var * spec_var) list =  
   let helper f = 
     let r = List.fold_left (fun a c-> (a@ b_f_ptr_equations c.memo_formula)) [] f.memo_group_cons in
     let r = List.fold_left (fun a c-> a@(pure_ptr_equations c)) r f.memo_group_slice in
-      r @ (get_equiv_eq_with_null f.memo_group_aset) in
+    let eqs = (if !enulalias(*with_null*) then get_equiv_eq_with_null else get_equiv_eq) f.memo_group_aset in
+      r @ eqs in
     List.concat (List.map helper f)
 
-(*and alias_of_ptr_eqs s = List.fold_left (fun a (c1,c2) -> Util.add_equiv a c1 c2) Util.empty_aset s*)
+(*and alias_of_ptr_eqs s = List.fold_left (fun a (c1,c2) -> EMapSV.add_equiv a c1 c2) Gen.is_empty_aset s*)
       
 (*and b_formula_alias (f:b_formula):var_aset = alias_of_ptr_eqs (b_f_ptr_equations f)*)
 (*and pure_alias (f:formula) : var_aset = alias_of_ptr_eqs (pure_ptr_equations f)*)
@@ -271,7 +289,7 @@ and get_subst_equation_memo_formula (f0 : memo_pure) (v : spec_var) only_vars: (
 								      if (r1=[]) then (a1,c::a2) else (r1,a2)) ([],[]) c.memo_group_cons in
 				
 			      let acl_aset, nas = if not(acl_cons=[]) then (acl_cons,c.memo_group_aset)
-			      else match Util.find_equiv_elim_eq v c.memo_group_aset with
+			      else match EMapSV.find_equiv_elim v c.memo_group_aset with
                 | None -> (acl_cons,c.memo_group_aset)
                 | Some (s,nas) -> 
                     (*let _ = print_string ("subs_fr: "^(!print_sv_f v)^"\n") in
@@ -316,10 +334,14 @@ and memo_apply_one_exp (s:spec_var * exp) (mem:memoised_group list) : memo_pure 
   let r = List.map (fun c -> 
 		      let eqs = get_equiv_eq_with_const c.memo_group_aset in
 		      let tbm,rem = conv eqs in
-			{ c with 
-			    memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one_exp s d.memo_formula}) c.memo_group_cons;
-			    memo_group_slice = tbm @ (List.map (apply_one_exp s) c.memo_group_slice);
-			    memo_group_aset = rem}) mem in
+			    let r = { c with           
+            memo_group_cons = List.map (fun d->{d with memo_formula = b_apply_one_exp s d.memo_formula}) c.memo_group_cons;
+            memo_group_slice = tbm @ (List.map (apply_one_exp s) c.memo_group_slice);
+            memo_group_aset = rem} in
+          let r_fv = (get_elems_eq r.memo_group_aset) @ 
+                     (List.concat (List.map (fun c-> bfv c.memo_formula) r.memo_group_cons)) @
+                     (List.concat (List.map fv r.memo_group_slice)) in
+          {r with memo_group_fv=  remove_dups_svl r_fv}) mem in
     (*let _ = print_string ("pre got slices: "^(string_of_int (List.length r))^"\n") in*)
   let r_group = group_mem_by_fv r in
     (*let _ = print_string ("pre got slices: "^(string_of_int (List.length r_group))^"\n") in  *)
@@ -340,7 +362,7 @@ and memo_f_neg (f: b_formula): b_formula = match f with
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "memoized negation: unexpected constraint type"}
       
 and memo_arith_simplify (f:memo_pure) : memo_pure = 
-  List.map (fun c-> { c with memo_group_slice = List.map arith_simplify c.memo_group_slice}) f
+  List.map (fun c-> { c with memo_group_slice = List.map (arith_simplify 5) c.memo_group_slice}) f
     
 (******************************************************************************************************************
 														   Utilities for memoized formulas
@@ -353,7 +375,6 @@ and mkMFalse pos :memo_pure =
     memo_group_cons = [];
     memo_group_slice = [mkFalse pos];
     memo_group_aset = empty_var_aset}]
-    
 
 and memo_is_member_pure p mm = 
   List.exists (fun c-> 
@@ -362,7 +383,7 @@ and memo_is_member_pure p mm =
 				   (match p with | BForm (r,_)-> equalBFormula_aset c.memo_group_aset r d.memo_formula | _ -> false)) c.memo_group_cons) in
 		   if r then true
 		   else match p with
-		     | BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> Util.is_equiv_eq c.memo_group_aset v1 v2
+		     | BForm (Eq(Var(v1,_),Var(v2,_),_), _) -> EMapSV.is_equiv c.memo_group_aset v1 v2
 		     | _ -> false ) mm
     
 (* below with_const *)
@@ -438,9 +459,9 @@ and filter_merged_cons aset l=
 				    let r1,r2 = keep q c in
 				      (b&&r1,if r2 then c::r else r)) (true,[])qs in
 	  if b then q::(remove_d r) else (remove_d r) in
-    Util.push_time "filter_dupl_memo";
+    Gen.Profiling.push_time "filter_dupl_memo";
     let r = remove_d (List.concat l) in 
-      Util.pop_time "filter_dupl_memo";
+      Gen.Profiling.pop_time "filter_dupl_memo";
       r
 	
 and mkOr_mems (l1: memo_pure) (l2: memo_pure) (*with_dupl with_inv*) : memo_pure = 
@@ -458,11 +479,22 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
   let r=  if (isConstMFalse l1)||(isConstMTrue l2) then l1
   else if (isConstMFalse l2)||(isConstMTrue l1) then l2
   else
+   if !f_1_slice then 
+      (if (List.length l1)>1 || (List.length l2)>1  then (print_string "multi slice problem " ;failwith "multi slice problem" );      
+        let h1,h2 = (List.hd l1, List.hd l2) in
+        let na =EMapSV.merge_eset h1.memo_group_aset h2.memo_group_aset in
+        [{memo_group_fv = remove_dups_svl (h1.memo_group_fv @ h2.memo_group_fv); 
+			   memo_group_cons = filter_merged_cons na [h1.memo_group_cons ;h2.memo_group_cons];
+			   memo_group_changed = true;
+			   memo_group_slice = h1.memo_group_slice @ h2.memo_group_slice;
+			   memo_group_aset = na;
+			  }])
+  else
     List.fold_left (fun a c-> 
-		      let merged, un_merged = List.partition (fun d-> (List.length(Util.intersect_fct eq_spec_var d.memo_group_fv c.memo_group_fv))>0) a in
+		      let merged, un_merged = List.partition (fun d-> (List.length(Gen.BList.intersect_eq eq_spec_var d.memo_group_fv c.memo_group_fv))>0) a in
 		      let n1, n2, n3, n4 = List.fold_left 
 			(fun (a1,a2,a3,a4) d-> 
-			   let r = (Util.merge_set_eq(*_debug !print_sv_f*) a4 d.memo_group_aset) in
+			   let r = (EMapSV.merge_eset(*_debug !print_sv_f*) a4 d.memo_group_aset) in
 			     (d.memo_group_fv@a1,
 			      d.memo_group_cons::a2, 
 			      d.memo_group_slice::a3, 
@@ -476,11 +508,11 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
 			let n3 = List.concat n3 in
 			let n_slc = if (not slice_check_dups) then n3 
 			else 
-			  (Util.push_time "merge_mems_r_dups";
-			   let r = Util.remove_dups_f n3 eq_pure_formula in
-			     Util.pop_time "merge_mems_r_dups";
-			     r)in
-			  {memo_group_fv = Util.remove_dups n1; 
+			  (Gen.Profiling.push_time "merge_mems_r_dups";
+			   let r = Gen.BList.remove_dups_eq eq_pure_formula n3 in
+			     Gen.Profiling.pop_time "merge_mems_r_dups";
+			     r) in
+			  {memo_group_fv = remove_dups_svl n1; 
 			   memo_group_cons = filter_merged_cons n4 n2;
 			   memo_group_changed = true;
 			   memo_group_slice = n_slc;
@@ -495,18 +527,18 @@ and merge_mems (l1: memo_pure) (l2: memo_pure) slice_check_dups: memo_pure =
   false: add only cm 
   and memoise_add_memo (l_init: memo_pure) (cm:memoised_constraint) : memo_pure =
   let fv = bfv cm.memo_formula in
-  let merged,un_merged = List.partition (fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) l_init in
+  let merged,un_merged = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) l_init in
   let n_cm_lst = [cm] in
   let n1,n2,n3,n4 = List.fold_left 
   (fun (a1,a2,a3,a4) d-> 
   (d.memo_group_fv@a1,
   d.memo_group_cons::a2,
   d.memo_group_slice::a3, 
-  Util.merge_set_eq(*_debug !print_sv_f*) a4 d.memo_group_aset))
+  EMapSV.merge_eset(*_debug !print_sv_f*) a4 d.memo_group_aset))
   (fv,[n_cm_lst],[], empty_var_aset) merged in   
   let l = if (List.length merged)>0 then 
   let ng = {memo_group_cons =  filter_merged_cons (empty_var_aset) n2; 
-  memo_group_fv = Util.remove_dups n1;
+  memo_group_fv = remove_dups_svl n1;
   memo_group_changed = true;
   memo_group_slice = List.concat n3;
   memo_group_aset = n4} in
@@ -530,17 +562,17 @@ and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure =
   if (isConstTrue p)||(isConstMFalse l) then l 
   else if (isConstFalse p) then mkMFalse no_pos
   else 
-    (Util.push_time "add_pure";  
+    (Gen.Profiling.push_time "add_pure";  
      let disjs, rests = List.fold_left (fun (a1,a2) c-> match c with 
 					  | BForm x -> (x::a1,a2) 
 					  | _ -> (a1,c::a2))  ([],[]) (list_of_conjs p) in
      let m2 = create_memo_group(*_debug*) disjs rests status in
      let r = merge_mems l m2 true in
        (*let r = List.concat (List.map split_mem_grp r) in*)
-       Util.pop_time "add_pure"; r)
+       Gen.Profiling.pop_time "add_pure"; r)
     
 and memoise_add_pure_aux_debug l p status : memo_pure = 
-  Util.ho_debug_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
+  Gen.Debug.ho_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
 
   
 and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
@@ -559,14 +591,15 @@ and anon_partition (l1:(b_formula *(formula_label option)) list) =
 and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula list) status :memo_pure = 
   let l1, to_slice2 = anon_partition l1 in
   let l1, to_slice1 = memo_norm l1 in
-  let l1 = Util.remove_dups l1 in
+  (* let l1 = Gen.BList.remove_dups_eq (=) l1 in -- seems expensive TODO*)
   let l2 = to_slice1 @ to_slice2 @ l2 in
   let l2 = List.map (fun c-> (None, Some c)) l2 in
   let l1 = List.map (fun c-> (Some c,None)) l1 in  
   let ll  = List.fold_left ( fun a f->
 			       let fv = match f with | None, Some c-> fv c | Some c, None -> bfv c | _-> [] in
 			       let rec f_rec fv a = 
-				 let r1,r2 = List.partition (fun (v,_,_)-> (List.length (Util.intersect_fct eq_spec_var fv v))>0) a in
+                let r1,r2 = if !f_1_slice then (a,[]) else
+                    List.partition (fun (v,_,_)-> (List.length (Gen.BList.intersect_eq eq_spec_var fv v))>0) a in
 				   if r1 = [] then ([],r2)
 				   else
 				     let n_fv = List.fold_left (fun ac (v,_,_)-> ac@v) fv r1 in
@@ -574,7 +607,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
 				       (r1@x1,x2) in
 			       let to_merge, no_merge = f_rec fv a in
 			       let merg_fv,merg_bf, merg_f  = List.fold_left (fun (a1,a2,a3)(c1,c2,c3)-> (a1@c1,a2@c2,a3@c3)) ([],[],[]) to_merge in
-			       let merg_fv = Util.remove_dups (merg_fv@fv) in
+			       let merg_fv = remove_dups_svl (merg_fv@fv) in
 				 match f with 
 				   | None, Some c -> (merg_fv,merg_bf,c::merg_f)::no_merge 
 				   | Some c, None -> (merg_fv,c::merg_bf,merg_f)::no_merge 
@@ -595,7 +628,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
     r
       
 and create_memo_group_debug ll l2 = 
-  Util.ho_debug_3 "create_memo_group " (Util.string_of_list (fun (c,_) -> !print_bf_f c)) (Util.string_of_list !print_p_f_f) (fun _ -> "?")
+  Gen.Debug.ho_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
     (!print_mp_f) create_memo_group ll l2
 
     
@@ -605,22 +638,24 @@ and create_memo_group_debug ll l2 =
   the constraints are disjoint.
 *)
 and split_mem_grp (g:memoised_group): memo_pure =   
+  if !f_1_slice then [g]
+  else
   let leq_all = get_equiv_eq_with_const g.memo_group_aset in
   let leq = get_equiv_eq g.memo_group_aset in
   let l1 = List.map fv g.memo_group_slice in
   let l2 = List.map (fun c-> bfv c.memo_formula) g.memo_group_cons in
   let l3 = List.map (fun (c1,c2) -> [c1;c2]) leq in
   let needs_split = List.fold_left (fun a c-> 
-				      let n_unite,unite = List.partition (fun d-> (Util.intersect_fct eq_spec_var d c)=[]) a in
+				      let n_unite,unite = List.partition (fun d-> (Gen.BList.intersect_eq eq_spec_var d c)=[]) a in
 					(List.fold_left (fun a c-> a@c) c unite)::n_unite ) [] (l1@l2@l3) in
     if (List.length needs_split)>1 then
       (
-	Util.inc_counter "need_split";
+	Gen.Profiling.inc_counter "need_split";
 	List.map (fun c-> {
 		    memo_group_fv = c;
 		    memo_group_changed = g.memo_group_changed;
-		    memo_group_cons = List.filter (fun d-> not((Util.intersect c (bfv d.memo_formula))=[])) g.memo_group_cons;
-		    memo_group_slice = List.filter (fun d-> not((Util.intersect c (fv d))=[])) g.memo_group_slice;
+		    memo_group_cons = List.filter (fun d-> not((Gen.BList.intersect_eq (=) c (bfv d.memo_formula))=[])) g.memo_group_cons;
+		    memo_group_slice = List.filter (fun d-> not((Gen.BList.intersect_eq (=) c (fv d))=[])) g.memo_group_slice;
 		    memo_group_aset = List.fold_left (fun a (c1,c2) -> 
 							if (List.exists (eq_spec_var c1) c) or (List.exists (eq_spec_var c2) c) then add_equiv_eq_with_const a c1 c2
 							else a) empty_var_aset leq_all;
@@ -632,11 +667,6 @@ and split_mem_grp (g:memoised_group): memo_pure =
 	let r = split_mem_grp g in
 	if (List.length r)>1 then *)
       
-and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
-  if qv==[] then c
-  else
-    memo_pure_push_exists_aux ((fun w f p-> mkExists w f None p),false) qv c no_pos
-    
 (* this pushes an exist into a memo-pure;
    it is probably useful consider qv in aset for elimination.
    proc : 
@@ -647,32 +677,107 @@ and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure =
    (iii) normalise aset
 *)
 (* both with_const and no_const needed *)
-and memo_pure_push_exists_aux  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
-  let helper c =
-    if (List.length (Util.intersect_fct eq_spec_var qv c.memo_group_fv)=0) then [c] 
-    else 
-      let nas, drp3 = List.partition (fun (c1,c2)->
-					(List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) (get_equiv_eq_with_const c.memo_group_aset) in
-      let r,drp1 = List.partition 
-	(fun c-> (List.length (Util.intersect_fct eq_spec_var (bfv c.memo_formula) qv))>0) c.memo_group_cons in
+(*finds eq overlap with qv and substitutes the equalities into grp, returns the qv vars that have not
+ been substituted and the memo_pure with the substitution performed*)  
+and memo_pure_push_exists_eq_x (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
+ 
+     let split_eqs eq_list qv  = 
+        let aliases  = List.map (fun c-> (c,EMapSV.find_equiv_all c eq_list)) qv in
+        let rec find_subst r l = match l with
+         | [] -> r
+         | (c1,[])::t -> find_subst r t
+         | (c1,c2)::t -> 
+          try
+            let s = List.find (fun c-> not(Gen.BList.mem_eq eq_spec_var c qv)) c2 in
+            find_subst ((c1,s)::r) t
+          with _ -> 
+           try
+            let nc2 = List.find (fun c -> not (eq_spec_var c1 c)) c2 in
+            let new_t  = List.map (fun (q1,q2)-> (q1,List.filter (fun c-> not (eq_spec_var c1 c)) q2)) t in
+            find_subst ((c1,nc2)::r) new_t
+          with _ -> find_subst r t
+        in
+        find_subst [] aliases 
+     in
+     
+     let memo_pure_push_eqs_grp qv (grp:memoised_group) :(memo_pure*spec_var list) =
+       let to_subst = split_eqs grp.memo_group_aset qv in
+       (*let _ = print_string ("subst: "^(String.concat ", " (List.map (fun (c1,c2)-> "("^(!print_sv_f c1)^","^(!print_sv_f c2)^")") to_subst))) in*)
+       let subst_vars = fst (List.split to_subst) in
+       let r_v = Gen.BList.difference_eq eq_spec_var qv subst_vars in
+       let r = List.fold_left (fun a (c1,c2) -> 
+         let l = conv_var_to_exp c2 in
+         match l with
+          | Null _
+          | IConst _ ->  memo_apply_one_exp (c1,l) a
+          | Var (v,_) -> m_apply_one (c1,v) a
+          | _ -> a) [grp] to_subst in
+          (r,r_v)
+     in
+   let res = List.fold_left (fun (a1,a2) c -> 
+    let ngrp, nqv = memo_pure_push_eqs_grp a2 c in
+    (a1@ngrp, nqv)) ([],qv) f0 in
+   res
+  
+and memo_pure_push_exists_eq (qv:spec_var list) (f0:memo_pure) pos : (memo_pure* spec_var list)  = 
+ Gen.Debug.no_2 "memo_pure_push_exists_eq" !print_sv_l_f !print_mp_f
+ (fun (c, vl)-> !print_mp_f c ^"\n to be q vars: "^(!print_sv_l_f vl)) (fun qv f0 -> memo_pure_push_exists_eq_x qv f0 pos) qv f0
+  
+(*pushes the exists into the individual groups, picks the simple and complex constraints related to qv, combines them into
+  a formula*)
+and memo_pure_push_exists_slice  (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
+  
+  (*builds a formula to be simplified with the constraints related to qv*) 
+  let pick_rel_constraints slice cons aset =
+      let equiv_lst = get_equiv_eq_with_const aset in
+      let nas, drp3 = List.partition (fun (c1,c2)-> (List.exists (eq_spec_var c1) qv) or (List.exists (eq_spec_var c2) qv)) equiv_lst in
+      let r,drp1 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var (bfv c.memo_formula) qv))>0) cons in
       let r = List.filter (fun c-> not (c.memo_status=Implied_R)) r in
-      let ns,drp2 = List.partition (fun c-> (List.length (Util.intersect_fct eq_spec_var (fv c) qv))>0) c.memo_group_slice in
+      let ns,drp2 = List.partition (fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var (fv c) qv))>0) slice in 
       let aset = List.fold_left  ( fun a (c1,c2) -> add_equiv_eq_with_const a c1 c2) empty_var_aset drp3 in 
       let fand1 = List.fold_left (fun a c-> mkAnd a (BForm (c.memo_formula, None)) pos) (mkTrue pos) r in
       let fand2 = List.fold_left (fun a c-> mkAnd a c pos) fand1 ns in
-	(* below may contain v=c *)
-      let fand3 = List.fold_left (fun a (c1,c2)-> 
-				    mkAnd a (BForm ((form_bform_eq_with_const c1 c2),None))  no_pos)
-        fand2 nas in
-      let fand4 = f_simp qv fand3 pos in
-      let r = {memo_group_fv = Util.difference c.memo_group_fv qv;
+      let fand3 =List.fold_left (fun a (c1,c2)-> mkAnd a (BForm ((form_bform_eq_with_const c1 c2),None))  no_pos) fand2 nas in
+      (fand3, drp1, drp2, aset)
+  in
+      
+  let helper c =
+    if (List.length (Gen.BList.intersect_eq eq_spec_var qv c.memo_group_fv)=0) then [c] 
+    else 
+      let (to_simpl, rem_cons, rem_slice, rem_aset) = pick_rel_constraints  c.memo_group_slice c.memo_group_cons c.memo_group_aset in
+      let after_simpl = f_simp qv to_simpl pos in
+      let after_elim_trues = List.filter (fun c-> not (isConstTrue c))(split_conjunctions after_simpl) in
+
+      let r = {memo_group_fv = Gen.BList.difference_eq (=) c.memo_group_fv qv;
 	       memo_group_changed = true;
-	       memo_group_cons = drp1;
-	       memo_group_slice = drp2 @(split_conjunctions fand4);
-	       memo_group_aset = aset;} in
+	       memo_group_cons = rem_cons;
+	       memo_group_slice = rem_slice @after_elim_trues;
+	       memo_group_aset = rem_aset;} in
 	if do_split then split_mem_grp r else [r] in
     List.concat (List.map helper f0)  
-      
+(*pushes exists qv over f0. It takes two steps: first searches for substitutions in the eq set, this avoids some 
+   simplify calls, pushes the rest of the qv vars through memo_pure_push_exists_slice which picks relevant constraints
+   ands them and sends them to simplify  *)
+and memo_pure_push_exists_all_x (f_simp,do_split) (qv:spec_var list) (f0:memo_pure) pos : memo_pure=
+  if qv==[] then f0
+  else
+    let (f0,nqv) = memo_pure_push_exists_eq qv f0 pos in
+    memo_pure_push_exists_slice (f_simp,do_split) nqv f0 pos
+ 
+and memo_pure_push_exists_all fs qv f0 pos =
+  Gen.Debug.no_3 "memo_pure_push_exists_all" !print_sv_l_f !print_mp_f (fun _ -> "") 
+  !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
+
+(*and memo_pure_push_exists_eq_debug qv f0 pos =
+  Gen.Debug.ho_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
+  (fun (c1,c2) -> (!print_mp_f c1)^"\n remaining: "^(String.concat ", " (List.map !print_sv_f c2)) ) memo_pure_push_exists_eq qv f0 pos*)
+
+  
+and memo_pure_push_exists (qv:spec_var list) (c:memo_pure):memo_pure = 
+  if qv==[] then c
+  else
+    memo_pure_push_exists_all ((fun w f p-> mkExists w f None p),false) qv c no_pos
+    
 and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * formula list = 
   let rec get_head e = match e with 
     | Null _ -> "Null"
@@ -759,12 +864,12 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
 	| EqMin _ |  BagSub _ | BagMin _ 
 	| BagMax _ | ListAllN _ | ListPerm _ -> None in*)
     
-    Util.push_time "memo_norm";
+    Gen.Profiling.push_time "memo_norm";
     let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
 			      match norm_bform_option(*_debug*) c1 with
 				| Some c1 -> (c1::a1,a2)
 				| None -> (a1,(BForm(c1,c2))::a2)) ([],[]) l in
-      Util.pop_time "memo_norm";l
+      Gen.Profiling.pop_time "memo_norm";l
 
 (*
   let l = List.fold_left (fun (a1,a2) (c1,c2)-> 
@@ -815,7 +920,7 @@ let memo_change_status cons l =
   let lcns = List.map (fun cns-> (bfv cns, cns)) cons in
   List.map (fun grp-> 
     List.fold_left (fun a (vcns,cns)-> 
-      if ((List.length (Util.intersect_fct eq_spec_var vcns grp.memo_group_fv))<=0) then a
+      if ((List.length (Gen.BList.intersect_eq eq_spec_var vcns grp.memo_group_fv))<=0) then a
       else 
         let ncns = List.map 
           (fun c-> 
@@ -826,8 +931,16 @@ let memo_change_status cons l =
     )grp lcns
   ) l
   
-let memo_find_relevant_slice fv l = List.find (fun d-> Util.subset fv d.memo_group_fv) l 
+let memo_find_relevant_slice fv l = List.find (fun d-> Gen.BList.subset_eq eq_spec_var fv d.memo_group_fv) l 
 
+let memo_find_relevant_slices fv l = List.filter (fun d->  Gen.BList.overlap_eq eq_spec_var fv d.memo_group_fv) l
+
+let memo_get_asets fv l = 
+  let r= memo_find_relevant_slices fv l in
+  match r with
+    | [] -> empty_var_aset
+    | h::t -> List.fold_left (fun a c-> EMapSV.merge_eset a c.memo_group_aset) h.memo_group_aset t 
+    
 let memo_changed d = d.memo_group_changed 
 
 (* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)
@@ -846,7 +959,7 @@ let memo_check_syn_prun_imply (p,pn,pr_branches) crt_br corr  =
           if equalBFormula_f f x.memo_formula p then Some []
           else if equalBFormula_f f x.memo_formula pn then Some pr_branches
           else None in
-    Util.list_find f_f corr.memo_group_cons
+    Gen.BList.list_find f_f corr.memo_group_cons
 
 
 let memo_check_syn_prun p c corr =  memo_check_syn_prun_imply p c corr
@@ -903,28 +1016,31 @@ let cons_filter (g:memo_pure) (f:memoised_constraint->bool) : memo_pure =
     List.map (fun c-> {c with memo_group_cons = List.filter f c.memo_group_cons}) g
 
 let slow_imply impl nf rhs =
-  let x = Util.gen_time_msg () in
+  let x = Gen.Profiling.gen_time_msg () in
   try 
-    (Util.push_time x;
-    Util.push_time "slow_imply");
+    (Gen.Profiling.push_time_no_cnt x;
+    Gen.Profiling.push_time "slow_imply");
       let r = impl nf rhs in
-      (Util.pop_time "slow_imply";
-      Util.pop_time_to_s_no_count x);
+      (Gen.Profiling.pop_time "slow_imply";
+      Gen.Profiling.pop_time_to_s_no_count x);
       r                   
-  with _ -> (Util.pop_time_to_s_no_count x ;false) 
+  with _ -> (Gen.Profiling.pop_time_to_s_no_count x ;false) 
 
+(*
 let fast_imply_debug_cmp impl aset (lhs:b_formula list) (rhs:b_formula) : int =
   let lhs_f = join_conjunctions (List.map (fun c-> (BForm (c,None))) lhs) in
   let rhs_f = BForm (rhs,None) in
   let r = fast_imply aset lhs rhs in
   let s = slow_imply impl lhs_f rhs_f in
   if s && (r<=0) then 
-    let _ = print_string ("fast imply aset :"^(Util.string_of_eq_set full_name_of_spec_var aset)^"\n") in
-    let _ = print_string ("fast imply inp :"^(Util.string_of_a_list !print_b_formula lhs) )in
+    let _ = print_string ("fast imply aset :"^(EMapSV.string_of full_name_of_spec_var aset)^"\n") in
+    let _ = print_string ("fast imply inp :"^(Gen.BList.string_of_f !print_b_formula lhs) )in
     let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
     let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
     r
   else r
+*)
+
 
 let elim_redundant_cons(*_slow*) impl aset asetf pn =  
   let rec helper pn s r e f = match pn with
@@ -934,28 +1050,29 @@ let elim_redundant_cons(*_slow*) impl aset asetf pn =
           else 
             let conj_cs = join_conjunctions (List.map (fun c-> (BForm (c.memo_formula,None))) cs) in
             let nf = mkAnd f conj_cs no_pos in
-            let b =  Util.push_time "erc_imply";
+            let b =  Gen.Profiling.push_time "erc_imply";
               let r = slow_imply impl nf (BForm (c.memo_formula,None)) in
-              (Util.pop_time "erc_imply"; r)   in                
+              (Gen.Profiling.pop_time "erc_imply"; r)   in                
             if b then
               helper cs s ({c with memo_status = Implied_R}::r) e f
             else helper cs (c::s) r e (mkAnd f (BForm (c.memo_formula,None)) no_pos) in
   helper pn [] [] [] asetf
 
-let elim_redundant_cons_fast impl aset asetf pn =  
+(*
+let elim_redundant_cons_fast_x impl aset asetf pn =  
   let rec helper pn mc s r e f = match pn,mc with
     | [],_ -> (s,r,e)
     | (c::cs),(m::ms) -> 
       let b = 
-        (Util.push_time "erc_imply";
+        (Gen.Profiling.push_time "erc_imply";
         let r = fast_imply(*_debug_cmp impl*) aset (ms@f) m in
-          (Util.pop_time "erc_imply";r>0)) in
+          (Gen.Profiling.pop_time "erc_imply";r>0)) in
         if b then  helper cs ms s ({c with memo_status = Implied_R}::r) e f
         else helper cs ms (c::s) r e (m::f) 
     | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "elim_redundant_cons_fast: unexpected pattern"} in       
   let mc=List.map (fun x -> x.memo_formula) pn in    
   helper pn  mc [] [] [] []
-
+*)
 
 (* let elim_redundant_slice impl (f:memoised_group): memoised_group*memoised_group = *)
 
@@ -978,9 +1095,9 @@ let elim_redundant_aux impl (f:memo_pure): memo_pure*memo_pure =
   
 let elim_redundant impl (f:memo_pure): memo_pure = 
   if (not !Globals.disable_elim_redundant_ctr) then 
-    (Util.push_time "elim_redundant_ctr";
+    (Gen.Profiling.push_time "elim_redundant_ctr";
     let r = fst (elim_redundant_aux impl f) in
-    Util.pop_time "elim_redundant_ctr";
+    Gen.Profiling.pop_time "elim_redundant_ctr";
     r)
   else f
   
@@ -1009,43 +1126,51 @@ let replace_memo_pure_label nl f =
   List.map (fun c-> {c with memo_group_slice = List.map (replace_pure_formula_label nl) c.memo_group_slice;}) f
  
  (* imply functions *)
- 
+
+let rec mimply_process_ante_debug with_disj ante_disj conseq str str_time t_imply imp_no =
+ Gen.Debug.ho_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+  (fun (c,_,_)-> string_of_bool c) 
+ (fun with_disj ante_disj conseq -> mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
     
-let mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
-  let fv = fv conseq in
-  let n_ante = List.filter(fun c-> (List.length (Util.intersect_fct eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
+and mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no =
+  let fv = fv conseq in 
+  let n_ante = List.filter(fun c-> (List.length (Gen.BList.intersect_eq eq_spec_var fv c.memo_group_fv))>0) ante_disj in 
+  (*check lhs is false*)
+ (* let n_ante = if (isConstMFalse  ante_disj) then n_ante @ (mkMFalse no_pos) else n_ante in*)
+  (* let _ = print_endline ("mimply_process_ante: n_ante 1"^ (!print_mp_f n_ante) )in*)
   let r = match with_disj with  
-    | 0 -> fold_mem_lst_gen (mkTrue no_pos) false true false true n_ante
-    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) false true n_ante
-    | _ -> fold_mem_lst (mkTrue no_pos) false true n_ante in
+    | 0 -> fold_mem_lst_gen (mkTrue no_pos) !no_LHS_prop_drop true false true n_ante
+    | 1 -> fold_mem_lst_no_disj (mkTrue no_pos) !no_LHS_prop_drop true n_ante
+    | _ -> fold_mem_lst (mkTrue no_pos) !no_LHS_prop_drop true n_ante in
   let _ = Debug.devel_pprint str no_pos in
-  (Util.push_time str_time; 
-  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false in
-  Util.pop_time str_time;
+ 
+  (Gen.Profiling.push_time str_time;
+  let r = t_imply r conseq ("imply_process_ante"^(string_of_int !imp_no)) false None in
+  Gen.Profiling.pop_time str_time;
   r)
  
 let mimply_one_conj ante_memo0 conseq  t_imply imp_no = 
   let xp01,xp02,xp03 = mimply_process_ante 0 ante_memo0 conseq 
-    ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0 no complex") 
+    (*("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^*) " with XPure0 no complex")*) "" 
     "imply_proc_one_ncplx" t_imply imp_no in  
   if not xp01  then  
     let xp01,xp02,xp03 = mimply_process_ante 2 ante_memo0 conseq 
-      ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int 1(*!imp_subno*)) ^ " with XPure0") 
+     (* ("IMP #" ^ (string_of_int !imp_no) ^ (*"." ^ (string_of_int 1(*!imp_subno*)) ^ *)" with XPure0")*) ""
       "imply_proc_one_full" t_imply imp_no in  
-    if not xp01 then (Util.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
-    else (Util.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
-  else (Util.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
+    if not xp01 then (Gen.Profiling.inc_counter "with_disj_cnt_2_f";(xp01,xp02,xp03)	)
+    else (Gen.Profiling.inc_counter "with_disj_cnt_2_s";(xp01,xp02,xp03)	)
+  else (Gen.Profiling.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
 let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
-  Util.ho_debug_4 "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
+  Gen.Debug.ho_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
-  (fun (x,_,_) -> not x)
   mimply_one_conj ante_memo0 conseq_conj t_imply imp_no
 
   
  
 let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no = 
+  (*let _ = print_string ("\nMcpure.ml: mimply_conj " ^ (string_of_int !imp_no)) in*)
   match conseq_conj with
     | h :: rest -> 
 	      let (r1,r2,r3)=(mimply_one_conj(*_debug*) ante_memo0 h t_imply imp_no) in
@@ -1057,20 +1182,56 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
               (CP.fold_mem_lst (CP.mkTrue no_pos ) false ante_memo0))^"\t |- \t"^(Cprinter.string_of_pure_formula h)^"\n") in      *)
             (r1,r2,r3)
     | [] -> (true,[],None)
-   
-    
-let rec imply_memo ante_memo0 conseq_memo t_imply imp_no 
+
+let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
+ Gen.Debug.ho_2 "imply_memo_x" (!print_mp_f)
+      (!print_mp_f)
+      (fun (r,_,_) -> string_of_bool r)
+      (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no)ante_memo0 conseq_memo
+
+and  imply_memo_x ante_memo0 conseq_memo t_imply imp_no 
     :  bool * (Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option = 
   match conseq_memo with
     | h :: rest -> 
-          let r = fold_mem_lst_to_lst(*_debug*) [h] false false true in
+          let r = fold_mem_lst_to_lst(*_debug*) [h] !no_RHS_prop_drop false true in
           let r = List.concat (List.map list_of_conjs r) in
 	      let (r1,r2,r3)=(mimply_conj ante_memo0 r t_imply imp_no) in
 	      if r1 then 
-	        let r1,r22,r23 = (imply_memo ante_memo0 rest t_imply imp_no) in
+	        let r1,r22,r23 = (imply_memo_x ante_memo0 rest t_imply imp_no) in
 	        (r1,r2@r22,r23)
 	      else (r1,r2,r3)
     | [] -> (true,[],None)
+          let imply_memo ante_memo0 conseq_memo t_imply imp_no =
+  let ante_memo0 = 
+    if !f_2_slice then match ante_memo0 with
+       | [] -> []
+       | [h] -> [h]
+       | h::t -> [List.fold_left (fun a c-> 
+          let na =EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
+            {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
+             memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
+             memo_group_changed = true;
+             memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
+             memo_group_aset = na;}) h t]
+    else ante_memo0 in
+  imply_memo_x ante_memo0 conseq_memo t_imply imp_no
+          
+let imply_memo ante_memo0 conseq_memo t_imply imp_no =
+  if (isConstMFalse ante_memo0) then (true,[],None)
+  else 
+  let ante_memo0 = 
+    if !f_2_slice then match ante_memo0 with
+       | [] -> []
+       | [h] -> [h]
+       | h::t -> [List.fold_left (fun a c->
+          let na =EMapSV.merge_eset a.memo_group_aset c.memo_group_aset in
+            {memo_group_fv = remove_dups_svl (a.memo_group_fv @ c.memo_group_fv); 
+             memo_group_cons = filter_merged_cons na [a.memo_group_cons ;c.memo_group_cons];
+             memo_group_changed = true;
+             memo_group_slice = a.memo_group_slice @ c.memo_group_slice;
+             memo_group_aset = na;}) h t]
+    else ante_memo0 in
+  imply_memo_x ante_memo0 conseq_memo t_imply imp_no
           
 (*let imply_memo_debug ante_memo conseq_memo t_imply =
   let (r1,r2,r3)= imply_memo ante_memo conseq_memo in  
@@ -1102,8 +1263,6 @@ let trans_memo_formula (e: memo_pure) (arg: 'a) f f_arg f_comb : (memo_pure * 'b
   let ne, vals = List.split (List.map trans_memo_gr e) in
   (ne, f_comb vals)
  
- 
- 
 type mix_formula = 
   | MemoF of memo_pure
   | OnePF of formula
@@ -1118,6 +1277,7 @@ let pure_of_mix f = match f with
   | OnePF f-> f
   | MemoF f-> fold_mem_lst (mkTrue no_pos) false true f 
   
+let mkMFalse_no_mix = mkMFalse
   
 let mkMTrue pos = 
     if (!Globals.allow_pred_spec) then  MemoF (mkMTrue pos)
@@ -1159,7 +1319,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   
   
 let merge_mems_debug f1 f2 slice_dup = 
-  Util.ho_debug_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
+  Gen.Debug.ho_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
   
   
@@ -1175,10 +1335,13 @@ let merge_mems_debug f1 f2 slice_dup =
   | MemoF f -> MemoF (memo_pure_push_exists qv f)
   | OnePF f -> OnePF (mkExists qv f None no_pos)
  
- let ptr_equations f = match f with
-  | MemoF f -> ptr_equations f
+ let ptr_equations_aux with_null f = match f with
+  | MemoF f -> ptr_equations_aux_mp with_null f
   | OnePF f -> pure_ptr_equations f
  
+ let ptr_equations_with_null f = ptr_equations_aux true f
+ 
+ let ptr_equations_without_null f = ptr_equations_aux false f
  
  let filter_useless_memo_pure sim_f b fv f = match f with
   | MemoF f -> MemoF (filter_useless_memo_pure sim_f b fv f)
@@ -1193,6 +1356,8 @@ let fold_mem_lst init_f with_dupl with_inv f :formula= match f with
  let memoise_add_pure_N (f:mix_formula) (pf:formula) = match f with
   | MemoF f -> MemoF (memoise_add_pure_N f pf)
   | OnePF f -> OnePF (mkAnd f pf no_pos)
+
+let memoise_add_pure (f:mix_formula) (pf:formula) = memoise_add_pure_N f pf
  
 let memoise_add_pure_P_m = memoise_add_pure_P
 let memoise_add_pure_P (f:mix_formula) (pf:formula) = match f with
@@ -1202,12 +1367,15 @@ let memoise_add_pure_P (f:mix_formula) (pf:formula) = match f with
   
 let simpl_memo_pure_formula b_f_f p_f_f f tp_simp = match f with
   | MemoF f -> MemoF (simpl_memo_pure_formula b_f_f p_f_f f tp_simp)
-  | OnePF f -> OnePF (p_f_f f)
+  | OnePF f -> OnePF ((*p_f_f*) tp_simp f)
  
 let memo_arith_simplify f = match f with
   | MemoF f -> MemoF (memo_arith_simplify f)
-  | OnePF f -> OnePF (arith_simplify f)
+  | OnePF f -> OnePF (arith_simplify 6 f)
  
+let memo_arith_simplify_debug f = 
+  Gen.Debug.ho_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
+
 let memo_is_member_pure sp f = match f with
   | MemoF f -> memo_is_member_pure sp f
   | OnePF f -> is_member_pure sp f
@@ -1218,7 +1386,7 @@ let mkOr_mems (f1: mix_formula) (f2: mix_formula) : mix_formula = match f1,f2 wi
   | _ -> Error.report_error {Error.error_loc = no_pos;Error.error_text = "mkOr_mems: wrong mix of memo and pure formulas"}
   
 let subst_avoid_capture_memo from t f = match f with
-  | MemoF f -> MemoF (subst_avoid_capture_memo from t f)
+  | MemoF f -> MemoF (subst_avoid_capture_memo(*_debug*) from t f)
   | OnePF f -> OnePF (subst_avoid_capture from t f)
   
 let memo_subst s f = match f with
@@ -1289,5 +1457,5 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
     
     
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
-  | MemoF f -> MemoF (List.filter (fun c-> not ((Util.intersect_fct eq_spec_var c.memo_group_fv v_l )==[]))f)
+  | MemoF f -> MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
   | OnePF f -> OnePF (find_rel_constraints f v_l)

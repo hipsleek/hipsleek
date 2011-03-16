@@ -10,7 +10,7 @@ let set_source_file arg =
   Globals.source_files := arg :: !Globals.source_files
 
 let set_proc_verified arg =
-  let procs = Util.split_by "," arg in
+  let procs = Gen.split_by "," arg in
 	Globals.procs_verified := procs @ !Globals.procs_verified
 	
 let process_cmd_line () = Arg.parse [

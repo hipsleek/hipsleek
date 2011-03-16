@@ -65,7 +65,7 @@ let log level msg =
  * return every lines read
  *)
 let rec read_till_prompt (channel: in_channel) : string = 
-  let line = Util.trim_str (input_line channel) in
+  let line = Gen.trim_str (input_line channel) in
   let match_prompt = Str.string_match prompt_regexp line 0 in
   if match_prompt then ""
   else line ^ (read_till_prompt channel)
@@ -147,7 +147,6 @@ let send_and_receive f =
         ""
   else
     ""
-
 	(* send formula to reduce/redlog and receive result *)
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
@@ -191,11 +190,15 @@ let call_redlog func =
  * also print err_msg when timeout happen
  * func must be lazy
  *)
+
+
 let run_with_timeout func err_msg =
+  (* let _ = print_string "inside run_with_timeout" in *)
   let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout) in
   let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
   let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  ignore (Unix.alarm !timeout);
+  ignore (Unix.setitimer Unix.ITIMER_REAL 
+        {Unix.it_interval = 0.0; Unix.it_value = (float_of_int !timeout)});
   let res = 
     try
       Some (Lazy.force func)
@@ -203,13 +206,20 @@ let run_with_timeout func err_msg =
     | Timeout ->
         log ERROR ("TIMEOUT");
         log ERROR err_msg;
-        restart_red err_msg;
+        restart_red ("After timeout"^err_msg);
         None
     | exc -> print_endline "Unknown error"; stop_red (); raise exc 
   in
+  ignore (Unix.setitimer Unix.ITIMER_REAL 
+        {Unix.it_interval = 0.0; Unix.it_value = 0.0});
   reset_sigalrm ();
   res
- 
+
+let run_with_timeout_debug func err_msg =
+  Gen.Debug.ho_2 "run_with_timeout" (fun _ -> "?") (fun x -> x)
+  (fun x -> "Out")
+     run_with_timeout func err_msg
+
 (**************************
  * cpure to reduce/redlog *
  **************************)
@@ -437,6 +447,13 @@ let rec is_linear_formula f0 =
     | CP.And (f1, f2, _) | CP.Or (f1, f2, _,_) ->
         (is_linear_formula f1) && (is_linear_formula f2)
 
+let has_var_exp e0 =
+  let f e = match e with
+    | CP.Var _ -> Some true
+    | _ -> None
+  in
+  CP.fold_exp e0 f or_list 
+
 let is_linear2 f0 =
   let f_bf bf = 
     if CP.is_bag_bform bf || CP.is_list_bform bf then
@@ -449,8 +466,7 @@ let is_linear2 f0 =
     else
       match e with
       | CP.Mult (e1, e2, _) -> 
-          if not (CP.is_num e1 || CP.is_num e2) then
-            (* FIXME: should check that e1 or e2 can be reduced to const *)
+          if (has_var_exp e1 && has_var_exp e2) then
             Some false
           else None
       | CP.Div (e1, e2, _) -> Some false
@@ -581,7 +597,7 @@ let find_bound_linear_b_formula v f0 =
       (* parse the result string from redlog *)
       if s.[0] = '{' then
         let end_pos = String.index s ',' in
-        let num = Util.trim_str (String.sub s 1 (end_pos - 1)) in
+        let num = Gen.trim_str (String.sub s 1 (end_pos - 1)) in
         let res = float_of_string num in
         if (abs_float res) = infinity then
           None
@@ -642,7 +658,7 @@ let rec find_bound v f0 =
 and get_subst_min f0 v = match f0 with
   | CP.And (f1, f2, pos) ->
     let st1, rf1 = get_subst_min f1 v in
-    if not (Util.empty st1) then
+    if not (Gen.is_empty st1) then
       (st1, CP.mkAnd rf1 f2 pos)
     else
       let st2, rf2 = get_subst_min f2 v in
@@ -663,7 +679,7 @@ and get_subst_min_b_formula (bf,lbl) v = match bf with
 and get_subst_max f0 v = match f0 with
   | CP.And (f1, f2, pos) ->
     let st1, rf1 = get_subst_max f1 v in
-    if not (Util.empty st1) then
+    if not (Gen.is_empty st1) then
       (st1, CP.mkAnd rf1 f2 pos)
     else
       let st2, rf2 = get_subst_max f2 v in
@@ -746,7 +762,7 @@ let rec get_subst_equation f0 v =
   match f0 with
   | CP.And (f1, f2, pos) ->
 	  let st1, rf1 = get_subst_equation f1 v in
-		if not (Util.empty st1) then
+		if not (Gen.is_empty st1) then
 		  (st1, CP.mkAnd rf1 f2 pos)
 		else
 		  let st2, rf2 = get_subst_equation f2 v in
@@ -828,7 +844,7 @@ let rec elim_exists_with_eq f0 =
     let with_qvars = CP.conj_of_list with_qvars_list pos in
     (* now eliminate the top existential variable. *)
     let st, pp1 = get_subst_equation with_qvars qvar in
-    if not (Util.empty st) then
+    if not (Gen.is_empty st) then
       let new_qf = CP.subst_term st pp1 in
       let new_qf = CP.mkExists qvars0 new_qf lbl pos in
       let tmp3 = elim_exists_with_eq new_qf in
@@ -850,7 +866,7 @@ and elim_exists_min f0 =
     let no_qvars_f = CP.conj_of_list no_qvars_list pos in
     let with_qvars_f = CP.conj_of_list with_qvars_list pos in
     let st, pp1 = get_subst_min with_qvars_f qvar in
-    if not (Util.empty st) then
+    if not (Gen.is_empty st) then
       let v, e1, e2 = List.hd st in
       let tmp1 = 
         CP.mkOr 
@@ -878,7 +894,7 @@ and elim_exists_max f0 =
     let no_qvars_f = CP.conj_of_list no_qvars_list pos in
     let with_qvars_f = CP.conj_of_list with_qvars_list pos in
     let st, pp1 = get_subst_max with_qvars_f qvar in
-    if not (Util.empty st) then
+    if not (Gen.is_empty st) then
       let v, e1, e2 = List.hd st in
       let tmp1 = 
         CP.mkOr 

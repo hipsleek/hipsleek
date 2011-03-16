@@ -11,7 +11,6 @@ module F = Cformula
 module P = Cpure
 module MP = Mcpure
 module Err = Error
-module U = Util
 
 type typed_ident = (P.typ * ident)
 
@@ -32,6 +31,8 @@ and data_decl = { data_name : ident;
 		  data_invs : F.formula list;
 		  data_methods : proc_decl list }
     
+and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
+    
 and view_decl = { view_name : ident; 
 				  view_vars : P.spec_var list;
 				  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
@@ -43,12 +44,14 @@ and view_decl = { view_name : ident;
 				  view_formula : F.struc_formula;
 				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
 				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+                  mutable view_baga : Gen.Baga(P.PtrSV).baga;
 				  mutable view_addr_vars : P.spec_var list;
 				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
 				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
 				  view_prune_branches: formula_label list;
 				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
-				  view_prune_invariants : (formula_label list * P.b_formula list) list ;
+          view_prune_conditions_baga: ba_prun_cond list;
+				  view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list ;
           view_raw_base_case: Cformula.formula option;}
   
 and proc_decl = { proc_name : ident;
@@ -105,6 +108,7 @@ and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct
 		 exp_bind_bound_var : typed_ident;
 		 exp_bind_fields : typed_ident list;
 		 exp_bind_body : exp;
+		 exp_bind_imm : bool;
 		 exp_bind_path_id : control_path_id;
 		 exp_bind_pos : loc }
 
@@ -263,6 +267,11 @@ and exp = (* expressions keep their types *)
   | While of exp_while
   | Sharp of exp_sharp
   | Try of exp_try
+
+let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
+let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
+let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
@@ -545,6 +554,18 @@ let rec look_up_view_def (pos : loc) (defs : view_decl list) (name : ident) = ma
   | [] -> Error.report_error {Error.error_loc = pos;
 							  Error.error_text = name ^ " is not a view definition"}
 
+let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+  let vdef = look_up_view_def no_pos prog.prog_view_decls c in
+  let ba = vdef.view_baga in
+  (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
+  let from_svs = P.SpecVar (P.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+  let to_svs = root :: args in
+  P.subst_var_list_avoid_capture from_svs to_svs ba
+
+let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
+      Gen.Debug.ho_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      (fun r a ->  look_up_view_baga prog c r a) root args
+
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
   | d :: rest -> 
 	  if d.data_name = name then d 
@@ -610,9 +631,21 @@ let rec look_up_distributive_def_raw coers (c : ident) : (F.formula * F.formula)
 *)
 let lookup_view_invs rem_br v_def = 
   try 
-    snd (List.find (fun (c1,_)-> Util.list_equal c1 rem_br) v_def.view_prune_invariants)
+    snd(snd (List.find (fun (c1,_)-> Gen.BList.list_equal_eq (=) c1 rem_br) v_def.view_prune_invariants))
   with | Not_found -> []
 
+
+let lookup_view_invs_with_subs rem_br v_def zip  = 
+  try 
+    let v=snd(snd (List.find (fun (c1,_)-> Gen.BList.list_equal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
+    List.map (P.b_apply_subs zip) v
+  with | Not_found -> []
+
+let lookup_view_baga_with_subs rem_br v_def from_v to_v  = 
+  try 
+    let v=fst(snd (List.find (fun (c1,_)-> Gen.BList.list_equal_eq (=) c1 rem_br) v_def.view_prune_invariants)) in
+    P.subst_var_list_avoid_capture from_v to_v v
+  with | Not_found -> []
 
 let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
   | p :: rest -> begin
@@ -655,7 +688,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = e1;
 		   exp_cond_else_arm = e2;
-		   exp_cond_pos = _}) -> U.remove_dups (callees_of_exp e1 @ callees_of_exp e2)
+		   exp_cond_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
   | Debug _ -> []
   | Dprint _ -> []
   | FConst _ -> []
@@ -678,7 +711,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
   | Seq ({exp_seq_type = _;
 		  exp_seq_exp1 = e1;
 		  exp_seq_exp2 = e2;
-		  exp_seq_pos = _}) -> U.remove_dups (callees_of_exp e1 @ callees_of_exp e2)
+		  exp_seq_pos = _}) -> Gen.BList.remove_dups_eq (=) (callees_of_exp e1 @ callees_of_exp e2)
   | This _ -> []
   | Time _ -> []
   | Var _ -> []
@@ -688,13 +721,13 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_while_body = e;
 			exp_while_spec = _;
 			exp_while_pos = _ }) -> callees_of_exp e (*-----???*)
-  | Try b -> U.remove_dups ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
+  | Try b -> Gen.BList.remove_dups_eq (=) ((callees_of_exp b.exp_try_body)@(callees_of_exp b.exp_catch_clause))
   | Unfold _ -> []
 
 let procs_to_verify (prog : prog_decl) (names : ident list) : ident list =
   let tmp1 = List.map (callees_of_proc prog) names in
   let tmp2 = names @ (List.concat tmp1) in
-  let tmp3 = U.remove_dups tmp2 in
+  let tmp3 = Gen.BList.remove_dups_eq (=) tmp2 in
 	tmp3
 
 
@@ -767,7 +800,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 		   head node with extensions *)
 	  let heap_args = List.tl (List.tl subnode.F.h_formula_data_arguments) in
 	  let n = List.length cdef1.data_fields in
-	  let to_sup, rest_fields = U.split_at heap_args n in
+	  let to_sup, rest_fields = Gen.split_at heap_args n in
 	  let ext_name = gen_ext_name subnode.F.h_formula_data_name cdef1.data_name in
 	  (*--- 09.05.2000 *)
 	  let fn1 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
@@ -776,6 +809,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
+							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 							   F.h_formula_data_arguments = sub_tvar :: sup_ext_var :: to_sup;
 							   F.h_formula_data_label = subnode.F.h_formula_data_label;
                  F.h_formula_data_remaining_branches = None;
@@ -785,11 +819,12 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let rec gen_exts top_p link_p args cdefs : F.h_formula = match cdefs with
 		| cdef1 :: cdef2 :: rest -> begin
 			let i = List.length cdef2.data_fields in
-			let to_ext, rest_fields = U.split_at args i in
+			let to_ext, rest_fields = Gen.split_at args i in
 			let ext_name = gen_ext_name cdef1.data_name cdef2.data_name in
-			  if U.empty rest then
+			  if Gen.is_empty rest then
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
@@ -805,6 +840,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
+										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
 										 F.h_formula_data_arguments = ext_link_p :: to_ext;
 										 F.h_formula_data_label = subnode.F.h_formula_data_label;
                      F.h_formula_data_remaining_branches = None;
@@ -835,12 +871,12 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
   let v2 = CH.V.create {ch_node_name = c2; ch_node_class = None; ch_node_coercion = None} in
 	try
 	  let path, _ = PathCH.shortest_path class_hierarchy v1 v2 in
-		(true, List.rev (List.map (fun e -> U.unsome ((CH.E.dst e).ch_node_class)) path))
+		(true, List.rev (List.map (fun e -> Gen.unsome ((CH.E.dst e).ch_node_class)) path))
 	with
 	  | Not_found -> 
 		  try
 			let path, _ = PathCH.shortest_path class_hierarchy v2 v1 in
-			  (false, List.rev (List.map (fun e -> U.unsome ((CH.E.dst e).ch_node_class)) path))
+			  (false, List.rev (List.map (fun e -> Gen.unsome ((CH.E.dst e).ch_node_class)) path))
 		  with
 			| Not_found -> failwith ("find_classes: " ^ c1 ^ " and " ^ c2 ^ " are not related!")
 
@@ -941,7 +977,7 @@ let get_catch_of_exp e = match e with
   
 let rec check_proper_return cret_type exc_list f = 
 	let overlap_flow_type fl res_t = match res_t with 
-		| Cpure.OType ot -> F.overlapping fl (Util.get_hash_of_exc ot)
+		| Cpure.OType ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
 		| _ -> false in
 	let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->
@@ -959,7 +995,7 @@ let rec check_proper_return cret_type exc_list f =
 				Err.report_error{Err.error_loc = b.F.formula_base_pos;Err.error_text ="result type does not correspond (overlap) with the flow type";}
 				else ()			
 		else 
-			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
+			(*let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
 									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
 			if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
 				Error.report_error {Err.error_loc = b.F.formula_base_pos; Err.error_text ="no return in a non void function or for a non normal flow"}
@@ -979,7 +1015,7 @@ let rec check_proper_return cret_type exc_list f =
 				Err.report_error{Err.error_loc = b.F.formula_exists_pos;Err.error_text ="result type does not correspond with the flow type";}
 				else ()			
 		else 
-			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Util.get_closest fl_int)^
+			(* let _ =print_string ("\n ("^(string_of_int (fst fl_int))^" "^(string_of_int (snd fl_int))^"="^(Gen.ExcNumbering.get_closest fl_int)^
 									(string_of_bool (Cpure.is_void_type res_t))^"\n") in*)
 			 if not(((F.equal_flow_interval !n_flow_int fl_int)&&(Cpure.is_void_type res_t))|| (not (F.equal_flow_interval !n_flow_int fl_int))) then 
 				Error.report_error {Err.error_loc = b.F.formula_exists_pos;Err.error_text ="no return in a non void function or for a non normal flow"}

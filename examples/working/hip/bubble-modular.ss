@@ -62,7 +62,7 @@ bool bubble(node xs)
 }
 
 void bsort(node xs)
-	requires xs::bnd<n, _,_,S> & n>10 & ["Sb": Sb!={}] or xs::ll<n,_> & n >0
+	requires xs::bnd<n, _,_,Sb> & n>10 & ["Sb": Sb!={}] or xs::ll<n,_> & n >0
 	ensures xs::sll<n, _, _,Sb>;
 {
 	bool b;

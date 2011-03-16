@@ -27,7 +27,6 @@ open Predcomp
 
 module CF = Cformula
 module CP = Cpure
-module U = Util
 module C = Cast
 module I = Iast
 
@@ -52,13 +51,13 @@ let primitives =
 let no_pp = ref ([] : string list)
   
 let set_nopp arg = 
-  let procs = U.split_by "," arg in
+  let procs = Gen.split_by "," arg in
 	no_pp := procs @ !no_pp
 
 let no_field = ref ([] : string list)
 
 let set_nofield arg =
-  let flds = U.split_by "," arg in
+  let flds = Gen.split_by "," arg in
 	no_field := flds @ !no_field
 
 (*
@@ -113,13 +112,13 @@ let rec compile_prog (prog : C.prog_decl) source : unit =
 	(* Compile bodies *)
 	(* add class declaration *)
   let tmp = Filename.chop_extension (Filename.basename source) in
-  let main_class = Util.replace_minus_with_uscore tmp in
+  let main_class = Gen.replace_minus_with_uscore tmp in
   let _ = Buffer.add_string java_code ("public class " ^ main_class ^ " {\n") in
   let _ = List.map 
 	(fun pdef -> compile_proc_body prog pdef java_code) 
 	prog.C.prog_proc_decls in
   let _ = Buffer.add_string java_code ("\n}\n") in
-  let tmp2 = Util.replace_minus_with_uscore (Filename.chop_extension source) in
+  let tmp2 = Gen.replace_minus_with_uscore (Filename.chop_extension source) in
 	write_to_file java_code (tmp2 ^ ".java")
 
 and compile_data prog ddef java_code : unit = 
@@ -155,8 +154,8 @@ and compile_partially_bound_vars (pbvars : CP.spec_var list) java_code : unit =
 	write_to_file java_code ("AugClasses.java")
 
 and compile_proc_body (prog : C.prog_decl) (proc : C.proc_decl) java_code : unit =
-  if Util.is_some proc.C.proc_body then begin
-	let body = Util.unsome proc.C.proc_body in
+  if Gen.is_some proc.C.proc_body then begin
+	let body = Gen.unsome proc.C.proc_body in
 	let cbody = compile_exp prog proc body in
 	let cproc = {proc with 
 				   C.proc_name = C.unmingle_name proc.C.proc_name;
@@ -202,7 +201,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 	let farg_spec_vars = List.map2 
 	  (fun n -> fun t -> CP.SpecVar (t, n, Unprimed)) 
 	  farg_names farg_types in
-	let output_vars = Util.difference_f CP.eq_spec_var pre_fv farg_spec_vars in
+	let output_vars = Gen.BList.difference_eq CP.eq_spec_var pre_fv farg_spec_vars in
 	  (* build vmap *)
 	let vmap = H.create 103 in
 	let _ = List.map 
@@ -213,7 +212,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 	let _ = Predcomp.precond_output := [] in
 	  (* generate fields *)
 	let pbvars = get_partially_bound_vars prog pre in
-	let fields_tmp = Util.remove_dups_f (farg_spec_vars @ pre_fv) CP.eq_spec_var in
+	let fields_tmp = CP.remove_dups_spec_var_list (farg_spec_vars @ pre_fv) in
 	let fields = gen_fields fields_tmp pbvars pos in
 	  (* parameters for traverse *)
 	let check_proc = { I.proc_name = "traverse";
@@ -275,9 +274,9 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 	let res = CP.SpecVar (proc.C.proc_return, "res", Unprimed) in
 	let fields_tmp = 
 	  if proc.C.proc_return = C.void_type then
-		Util.remove_dups_f (farg_spec_vars @ post_fv @ pre_outvars) CP.eq_spec_var
+		CP.remove_dups_spec_var_list (farg_spec_vars @ post_fv @ pre_outvars)
 	  else
-		Util.remove_dups_f (res :: farg_spec_vars @ post_fv @ pre_outvars) CP.eq_spec_var
+		CP.remove_dups_spec_var_list (res :: farg_spec_vars @ post_fv @ pre_outvars) 
 	in
 (*
 	let _ = print_string ("Compiling " ^ proc.C.proc_name ^ "\n") in
@@ -371,7 +370,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 			  if result = "" then
 				normal_compile ()
 			  else
-				let res_type = Util.unsome (C.type_of_exp rhs) in
+				let res_type = Gen.unsome (C.type_of_exp rhs) in
 				let result_decl = C.VarDecl ({C.exp_var_decl_type = res_type;
 											  C.exp_var_decl_name = result;
 											  C.exp_var_decl_pos = pos}) in
@@ -417,7 +416,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 		  let fargs = pdef.C.proc_args in
 		  let farg_names = List.map snd fargs in
 		  let pre_fv_names = List.map CP.name_of_spec_var pre_fv in
-		  let output_vars = Util.difference pre_fv_names farg_names in
+		  let output_vars = Gen.BList.difference_eq (=) pre_fv_names farg_names in
 			(*
 			  Create precondition checker.
 			*)

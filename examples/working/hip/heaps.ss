@@ -192,8 +192,13 @@ int deleteoneel(ref node t)
 int deleteone(ref int m1, ref int  m2, ref node l, ref node r)
 
 	requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
+	ensures l'::pq<m1', mx3> * r'::pq<m2', mx4> & m1' + m2' + 1 = m1 + m2 & 0 <= m1' - m2'<= 1 
+		& mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
+  /*  
+    requires l::pq<m1, mx1> * r::pq<m2, mx2> & m1 + m2 > 0 & 0 <= m1 - m2 <=1
 	ensures l'::pq<n3, mx3> * r'::pq<n4, mx4> & n3 + n4 + 1 = m1 + m2 & 0 <= n3 - n4 <= 1 & 
 		m1' = n3 & m2' = n4 & mx3 <= mx1 & mx4 <= mx2 & maxi = max(mx1, mx2) & 0 <= res <= maxi;
+    */
 {
 	if (m1 > m2)
 	{
@@ -237,7 +242,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 
 {
 	if (m1 == 0)
-	{
+      { //assume false;
 		if (m2 == 0)
 		{
 			d = v;
@@ -247,6 +252,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 	{
 		if (m2 == 0)
 		{
+          //assume false;
 			if (v >= l.val)
 				d = v;
 			else
@@ -262,7 +268,7 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= l.val)
 					d = v;
 				else 
-				{
+                  {   //assume false;
 					d = l.val;
 					ripple(l.val, v, l.nleft, l.nright, l.left, l.right);
 				}
@@ -272,8 +278,8 @@ void ripple(ref int d, int v, int m1, int m2, node l, node r)
 				if (v >= r.val)
 					d = v;
 				else
-				{
-
+                  {  //assume false;
+                    dprint;
 					d = r.val;
 					ripple(r.val, v, r.nleft, r.nright, r.left, r.right);
 				}
@@ -356,7 +362,9 @@ int deletemax(ref node t)
 	{
 		bind t to (tval, tnleft, tnright, tleft, tright) in {
 			v = deleteone(tnleft, tnright, tleft, tright);
-			tmp = tval;
+			dprint;
+      tmp = tval;
+      
 			ripple(tval, v, tnleft, tnright, tleft, tright);
 		}
 		return tmp;
