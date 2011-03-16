@@ -31,5 +31,5 @@ case {
 		if (x < 0)
 			return 0;
 		else
-			return f(x - 1);
+			return f(x - 2);
 }
