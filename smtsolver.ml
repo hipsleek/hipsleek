@@ -33,6 +33,7 @@ let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 let print_input = ref false
 let print_original_solver_output = ref false
+let timeout = ref 10.0
 
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 
@@ -438,7 +439,11 @@ let run prover input =
   let cmd = command_for prover in
   let _ = Sys.command cmd in
   let in_stream = open_in outfile in
-  let res = input_line in_stream in
+  let fnc () = 
+    let res = input_line in_stream in
+    res
+  in
+  let res = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in
   close_in in_stream;
   (*
   Sys.remove infile;
