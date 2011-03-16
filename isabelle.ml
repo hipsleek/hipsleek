@@ -37,6 +37,7 @@ let isabelle_of_prim_type = function
 let isabelle_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (CP.Prim(t), v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_prim_type t ^ ")"
   | CP.SpecVar (CP.OType(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+	| CP.SpecVar (CP.Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
 
 (* pretty printing for spec_vars without types *)
 (*let isabelle_of_spec_var_no_type (sv : CP.spec_var) = match sv with
@@ -111,6 +112,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Isabelle")
+	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with
@@ -183,6 +185,7 @@ and isabelle_of_b_formula b = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
+	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)
 and isabelle_of_formula f =

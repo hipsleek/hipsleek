@@ -69,6 +69,8 @@ and cvc3_of_exp a = match a with
   	    failwith ("[cvc3.ml]: ERROR in constraints (set should not appear here)");
   | CP.List _ | CP.ListCons _ | CP.ListHead _ | CP.ListTail _ | CP.ListLength _ | CP.ListAppend _ | CP.ListReverse _ ->
         failwith ("Lists are not supported in cvc3")
+	| CP.ArrayAt _ -> (* An Hoa *)
+        failwith ("Arrays are not supported in cvc3")
 
 and cvc3_of_b_formula b = match b with
   (* | CP.BConst (c, _) -> if c then "(TRUE)" else "(FALSE)" *)
@@ -113,6 +115,7 @@ and cvc3_of_b_formula b = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in cvc3")
+	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
 	    
 and cvc3_of_sv_type sv = match sv with
   | CP.SpecVar (CP.Prim Bag, _, _) -> "SET"

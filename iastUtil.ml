@@ -38,6 +38,9 @@ let transform_exp
       | Time _ 
       | Unfold _ 
       | Var _ -> (e,zero)
+			| ArrayAt b -> (* An Hoa *)
+				let e1,r1 = helper n_arg b.exp_arrayat_index  in
+				(ArrayAt { b with exp_arrayat_index = e1;},r1)
       | Assign b ->
         let e1,r1 = helper n_arg b.exp_assign_lhs  in
         let e2,r2 = helper n_arg b.exp_assign_rhs  in

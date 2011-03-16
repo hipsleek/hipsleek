@@ -1,0 +1,267 @@
+SLEEK: 
+
+1/ Support arrays and relation in parsers
+
+ + [slexer.mll] & [ilexer.mll]: add token REL for relation
+
+ + [sparser.mly]: add new fields to the changed types & add rule for relation and arrays
+
+%type <Iast.rel_decl> rel_decl
+
+non_empty_command
+  : rel_decl {
+      RelDef $1
+    }
+;
+
+rel_decl
+  : rel_header EQEQ rel_body DOT{
+	{ $1 with rel_formula = $3;}
+  }
+  | rel_header EQ error {
+	  report_error (get_pos 2) ("use == to define a relation")
+	}  
+;
+
+typed_id_list_opt
+	: { [] }
+	| typ IDENTIFIER { 
+		[($1,$2)]
+		}
+	| typ IDENTIFIER COMMA typed_id_list_opt { 
+		($1,$2) :: $4 
+		}
+;
+
+rel_header
+  : REL IDENTIFIER OPAREN typed_id_list_opt CPAREN {
+		  { rel_name = $2;
+			rel_typed_vars = $4;
+			rel_formula = P.mkTrue (get_pos 1); }
+  }
+;
+
+rel_body
+  : pure_constr { $1 }
+;
+
+ + [sleekcommons.ml]: add new case of in command type.
+
+type command =
+  | ...
+  | RelDef of I.rel_decl (* An Hoa *)
+  | ...
+
+2/ Change the input representation and core representation.
+
+ + [iast.ml]:
+
+	Add field 
+
+{ mutable prog_rel_decls : rel_decl list } 
+
+to type program.
+	
+	Create type for relation declaration:
+
+rel_decl = { rel_name : ident;
+			 rel_typed_vars : (typ * ident) list;
+			 rel_formula : P.formula ; }
+
+ + [ipure.ml] :
+	Add case [ArrayAt] to type [exp] to handle array access
+	Add case [RelForm] to type [bformula] to handle array access
+	Handle new cases in functions.
+
+ + [cast.ml] : Similar changes as in [iast.ml]
+
+ + [cpure.ml] :
+	Add array type in the type [typ] and fix related functions (for instance, [get_exp_type])
+	Add case [ArrayAt] to type [exp] to handle array access
+	Add case [RelForm] to type [bformula] to handle array access
+	Handle new cases in functions.
+
+3/ Process relation definitions: Translate input representation to core representation.
+
+ + [astsimp.ml] : trans_pure_exp
+
+4/ Generate SMT formula for relation and array in entailment checking.
+
+ + [smtsolver.ml]
+
+5/ Eradicate remaining warnings generated from unmatched rules in other files: [mcpure.ml,coq.ml,cvclite.ml,cvc.ml,...]
+
+6/ Pretty printing for relation and array.
+
+ + [cprinter.ml]
+
+ + [iprinter.ml]
+
+7/ Extend type checking system.
+
+ + [astsimp.ml] : make changes to [collect_type_info_pure], [collect_type_info...] to account for array and relations
+
+8/ Handle relation declaration in sleek executable.
+
+ + [smtsolver.ml] : add an internal type [relation_definition] for relations, a global field [rel_defs] to store the relations and a function [add_rel_def] to add new relation into this module.
+
+type relation_definition = 
+	| RelDefn of (ident * CP.spec_var list * CP.formula)
+
+let rel_defs = ref ([] : relation_definition list)
+
+let add_rel_def rdef =
+	rel_defs := !rel_defs @ [rdef]
+
+ + [astsimp.ml] : handle translation of input relation [Iast.rel_decl] to core representation in [Cast.rel_decl] by adding function [trans_rel].
+
+ + [sleekengine.ml] : add function [process_rel_def] to process relation declarations - 3 things to handle: add the relation declaration to the input storage, translate to core representation and store, and request the instance of smtsolver module to store the relation
+
+let process_rel_def rdef =
+  if check_data_pred_name rdef.I.rel_name then
+	let tmp = iprog.I.prog_rel_decls in
+	  try
+		iprog.I.prog_rel_decls <- ( rdef :: iprog.I.prog_rel_decls);
+		let crdef = AS.trans_rel iprog rdef in cprog.C.prog_rel_decls <- (crdef :: cprog.C.prog_rel_decls);
+		Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.C.rel_name,crdef.C.rel_vars,crdef.C.rel_formula));
+	  with
+		| _ ->  dummy_exception() ; iprog.I.prog_rel_decls <- tmp
+  else
+		print_string (rdef.I.rel_name ^ " is already defined.\n")
+
+ + [sleekengine.ml] : change [check_data_pred_name] to take care of relation as well
+
+ + [sleek.ml] : dispatch the parsed relation declaration to [sleekengine] for processing.
+
+9/ Test examples.
+
+HIP:
+
+1/ Parser 
+
+2/ Input & core representation
+
+ + [iast.ml]
+	
+	Add new type [exp_arrayat] and new case for type [exp]
+
+exp_arrayat = { exp_arrayat_array_name : ident;
+	        exp_arrayat_index : exp;
+		exp_arrayat_pos : loc; }
+
+exp =
+	| ArrayAt of exp_arrayat
+	| ...
+
+ + [cast.ml]
+
+	I choose not to modify core AST because it will then take huge effort to solve the cascade changes in verification system. Instead, I choose to allocate the [exp::SCall] with 
+
+exp_scall_method_name="update_array___" 
+
+and 
+
+exp_scall_method_name="get_element_array___"
+
+for array updation and access. This minimizes the amount of changes as latter on, there is no need to change the existing context transformation mechanism and verification engine in [typechecker.ml].
+
+ + [ipure.ml,cpure.ml]
+	
+	No change: HIP only works on programs, not formulas.
+
+3/ AST simplification
+
+ + [astsimp.ml]
+
+	[prim_str] : append the primitive functions with new primitives for array access and update
+
+int array_get_elm_at___(int[] a, int i) requires true ensures res = a[i];
+int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,res);
+
+	[trans_exp] : Handle the case of the array access and array value assignment instructions in function [trans_exp]. For array access, replace it by the predefined [cast] SCall instruction "get_element_array___" and for array assignment (under assignment instruction i.e. case I.Assign, subcase I.AssignOp), replace by a [cast] SCall instruction "update_array___". Then to translate an array assignment, we first make it
+
+(IAST)    a[i] = v;
+
+in to the equivalent function call
+
+(IAST)    a = update___(a, i, v)
+
+And call the existing trans_exp to make it into an SCall:
+
+(CAST)    exp::Assign{a,exp::SCall{update___,[a,i,v]}}
+
+Similarly, array access instruction a[i] will be made into
+
+(IAST)    a =  array_get_elm_at___(a, i, v)
+
+and then to
+
+(CAST)    exp::Assign{a,[exp::Scall]{array_get_elm_at___[a, i, v]}}
+
+	Thus, no work needs to be done except the transformation from the original IAST [exp] to the equivalent IAST function call.
+
+	[get_type_name_for_mingling] : 
+
+	[trans_prog] : We also translate relations in case of the function 
+
+	[trans_exp] : translate input representation of instruction [Iast.exp] to core representation [Cast.exp]
+
+	[trans_type]
+
+4/ Handle the predefined relation in SMT solver.
+
+ + [smtsolver.ml] : In case [CP.RelForm] of [smt_of_b_formula], we need to handle the relation "update_array" separately: There is no definition from the user for this relation! It is for our internal convenient only.
+
+let rec smt_of_b_formula b qvars =
+  | ...
+  | CP.RelForm (r, args, l) ->
+					let smt_args = List.map smt_of_exp args in 
+					if (r = "update_array") then
+						let orig_array = List.nth smt_args 0 in
+						let index = List.nth smt_args 1 in
+						let value = List.nth smt_args 2 in
+						let new_array = List.nth smt_args 3 in
+						"(= " ^ new_array ^ " (store " ^ orig_array ^ " " ^ index ^ " " ^ value ^ "))"
+					else
+          	"(" ^ r ^ " " ^ (String.concat " " smt_args) ^ ")"
+
+5/ Pretty printing for array access expressions.
+
+6/ Add dummy empty array to serve as a default value for array variable. Without this, one cannot declare arrays inside functions.
+
+ + [cast.ml] : add type [exp_emparray] and new case [EmptyArray] for type [exp]
+
+exp_emparray = { exp_emparray_type : P.typ;
+		exp_emparray_pos : loc }
+exp = 
+  | ...
+  | EmptyArray of exp_emparray
+  | ...
+
+ + [astsimp.ml] : Change [default_value] to return an EmptyArray for the type array.
+
+and default_value (t : CP.typ) pos : C.exp = match t with
+  | ...
+  | CP.Array t -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos}
+
+ + [typechecker.ml] : handle the case [EmptyArray] in function [checkexp_a]::[checkexp1] - similar to case [Null] - just ignore! We do not care whether the array is empty or not.
+
+7/ 
+
+ENHANCEMENTS
+
+ + [smtsolver.ml] : Enhancement - In many cases, putting unused relation definitions and axiomatizations make it difficult for the SMT solver to deduce the satisfiability. So we perform a filtering of used relations
+
+ + [cpure.ml] : cache the dependent relations to prevent redundant computations
+
+ + [scriptarguments.ml] : add new hip/sleek switches "--smtinp", "--imply-calls" and "--smtout" argument to choose whether to dump the generated SMT input, output or the implication formula.
+
+BUGS
+ 
+ + [cpure.ml] : function [afv] forgets to collect the array variable in array access expression as free variable
+
+ + [smtsolver.ml] : New version of Z3 does not print "success" and only print "sat/unsat/unknown" results for each (check-sat) command. After that it will print the warning/errors. Sometimes errors are printed before the sat/unsat. Hence, it is safer to read the entire output and check for instances of "sat" or "unsat" or "unknown" instead of reading the first/last line.
+
+ + [smtsolver.ml] : Bug detected in used relations filtering - on encountering a relation, we need to collect all relations that it depends on as well.
+
+ + [cpure.ml] : Error in formula substitution and application for case [ArrayAt] - need to substitute the array variable whenever applicable.

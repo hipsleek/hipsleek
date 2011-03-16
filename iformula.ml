@@ -886,7 +886,7 @@ and float_out_min_max (f :  formula) :  formula =
         }
 
 and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string list) ) option) = match e with 
-	| Ipure.Null _ -> (e, None)
+  | Ipure.Null _ -> (e, None)
   | Ipure.Var _ -> (e, None)
   | Ipure.IConst _ -> (e, None)
   | Ipure.FConst _ -> (e, None)
@@ -1025,6 +1025,10 @@ and float_out_exp_min_max (e: Ipure.exp): (Ipure.exp * (Ipure.formula * (string 
   | Ipure.ListReverse (e, l) -> 
 			let ne1, np1 = float_out_exp_min_max e in
 			(Ipure.ListReverse (ne1, l), np1)
+	(* An Hoa : get rid of min/max in a[i] *)
+  | Ipure.ArrayAt (a, i, l) ->
+			let ne, np = float_out_exp_min_max i in
+			(Ipure.ArrayAt (a, ne, l), np)
 
 and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 		
@@ -1036,7 +1040,22 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 							| None -> (r, ev)
 							| Some (p1, ev1) -> (Ipure.And(r, p1, l), (List.rev_append ev1 ev)) in 
 		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, None,l))) r ev2 in
-							
+		
+		(* An Hoa : produce exists x_1 exists x_2 ... exists x_n t *)	
+		(*let add_exists (t: Ipure.formula) (nps: (Ipure.formula * (string list))option list) l: Ipure.formula = 			
+			let r, ev = match np1 with
+							| None -> (t,[])
+							| Some (p1, ev1) -> (Ipure.And (t, p1, l), ev1) in
+			let r, ev2 = match np2 with 
+							| None -> (r, ev)
+							| Some (p1, ev1) -> (Ipure.And(r, p1, l), (List.rev_append ev1 ev)) in
+		  List.fold_left (fun fml np -> let r, ev = match np1 with
+							| None -> fml
+							| Some (p, ev) -> (Ipure.And (t, p1, l), ev))
+				 t
+				 nps
+		  List.fold_left (fun a c -> (Ipure.Exists ((c, Unprimed), a, None,l))) r ev2 in *)							
+		(* End add_exists *)
 				
 		let rec float_out_b_formula_min_max (b: Ipure.b_formula) lbl: Ipure.formula = match b with
 			| Ipure.BConst _ -> Ipure.BForm (b,lbl)
@@ -1178,6 +1197,13 @@ and float_out_pure_min_max (p : Ipure.formula) : Ipure.formula =
 					let ne2, np2 = float_out_exp_min_max e2 in
 					let t = Ipure.BForm (Ipure.ListPerm (ne1, ne2, l),lbl) in
 					add_exists t np1 np2 l
+			(* An Hoa : handle relation *)
+			(* TODO Have to add the existential before the formula! Add a add_exists with a list instead *)
+			| Ipure.RelForm (r, args, l) ->
+					let nargs = List.map float_out_exp_min_max args in
+					let nargse = List.map fst nargs in
+					let t = Ipure.BForm (Ipure.RelForm (r, nargse, l), lbl) in
+					t
 			in		 
 		match p with
 			| Ipure.BForm (b,lbl) -> (float_out_b_formula_min_max b lbl)
