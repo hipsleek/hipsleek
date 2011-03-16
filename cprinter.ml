@@ -1289,7 +1289,7 @@ and string_of_failure_kind e_kind=
 match e_kind with
   | Failure_May -> "MAY"
   | Failure_Must -> "MUST"
-  | Failure_None -> "None"
+  | Failure_None -> "Success"
 
 let string_of_fail_explaining fe=
   fmt_open_vbox 1; 
@@ -1337,7 +1337,8 @@ let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
-    | Basic_Reason (br, fe) ->  (string_of_fail_explaining fe); (pr_fail_estate br)
+    | Basic_Reason (br, fe) ->  (string_of_fail_explaining fe);
+          if fe.fe_kind=Failure_None then () else (pr_fail_estate br)
     | Continuation br ->  fmt_string (" Continuation ! "); pr_fail_estate br
     | Or_Reason _ -> 
           let args = bin_op_to_list op_or_short ft_assoc_op e in

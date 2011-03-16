@@ -1801,6 +1801,7 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = Globals.fresh_int () in
     (Hole(hole_id), hole_id)
@@ -1840,7 +1841,20 @@ let rec empty_es flowt pos =
 
 }
 
-and empty_ctx flowt pos = Ctx (empty_es flowt pos)
+let mk_none_fail_type=
+Basic_Reason ({
+  fc_prior_steps = [];
+  fc_message = "Sucess";
+  fc_current_lhs =  empty_es (mkTrueFlow ()) no_pos;
+  fc_orig_conseq =  [mkETrue  (mkTrueFlow ()) no_pos];
+  fc_failure_pts = [];
+  fc_current_conseq = mkTrue (mkTrueFlow ()) no_pos
+}, {
+fe_kind = Failure_None
+}
+)
+
+let rec  empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
 and false_ctx flowt pos = 
 	let x = mkFalse flowt pos in
@@ -2064,8 +2078,12 @@ match (get_explaining fc1, get_explaining fc2) with
 
 and or_list_context c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2, or_list_failure_explaining t1 t2))
-     | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
-     | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
+     | FailCtx t1 ,SuccCtx t2 ->
+         let t21 = mk_none_fail_type in
+        FailCtx (And_Reason (t1,t21, or_list_failure_explaining t1 t21))
+     | SuccCtx t1 ,FailCtx t2 ->
+         let t11 = mk_none_fail_type in
+        FailCtx (And_Reason (t11,t2, or_list_failure_explaining t11 t2))
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
 
 and list_context_union c1 c2 = match c1,c2 with

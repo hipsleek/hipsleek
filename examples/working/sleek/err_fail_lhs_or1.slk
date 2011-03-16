@@ -34,5 +34,5 @@ C5:
    a1 |- b: must
    a2 |- b: OK
 */
-//checkentail n > 3 or n < 0 |- n <1.
-//MUST ERROR:  (n > 3 or n < 0|- n < 1: SAT) and  (n > 3 or n < 5|- not(n <1): SAT) ???MUST or MAY
+checkentail n < 0 or n > 3 |- n <1.
+//MAY ERROR:  (n > 3 |- n < 1: SAT) and  (n > 3 |- not(n <1): SAT) ???MUST or MAY

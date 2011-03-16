@@ -3782,11 +3782,11 @@ and xpure_imply (prog : prog_decl) (is_folding : bool) (is_universal : bool)  lh
 	List.fold_left fold_fun2 false branches
   else res 
 
-and heap_entail_empty_rhs_heap_debug p i_f i_u es lhs rhs rhsb pos =
+and heap_entail_empty_rhs_heap p i_f i_u es lhs rhs rhsb pos =
   Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula (fun _ -> "?")
-      (fun lhs rhs -> heap_entail_empty_rhs_heap p i_f i_u es lhs rhs rhsb pos) lhs rhs
+      (fun lhs rhs -> heap_entail_empty_rhs_heap_x p i_f i_u es lhs rhs rhsb pos) lhs rhs
 
-and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
+and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
   let imp_subno = ref 1 in
   (*let sat_subno = ref 1 in*)
   let fe = ref { fe_kind =  CF.Failure_None
@@ -3802,7 +3802,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
-  let fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
+  let fold_fun_rhs (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
     if (is_ok = false) then (is_ok,succs,fails) else 
       let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
       let tmp2 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
@@ -3861,14 +3861,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	          let tmp1 = MCP.merge_mems (MCP.combine_mix_branch branch_id_added (xpure_lhs_h1, xpure_lhs_h1_b)) 
                 (MCP.combine_mix_branch branch_id_added (lhs_p, lhs_b)) false in
 	          let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
-           let _ = print_string ("Before mix_imply: -----------------\n  ante:"^(Cprinter.string_of_pure_formula (MCP.pure_of_mix new_ante))^"\n  ante1: "^(Cprinter.string_of_pure_formula (MCP.pure_of_mix split_ante1))^"\n  conseq: "^ (Cprinter.string_of_pure_formula (MCP.pure_of_mix new_conseq)) ^ "\n")in
-
-		      imp_subno := !imp_subno+1; 
-		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
-		      (* -- to remove --*)
-		      (*		      new_conseq = solve_ineq new_conseq memset in
-				              TP.mix_imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
-				              ---*)
+               imp_subno := !imp_subno+1;
 		      (imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno None memset)
           in
           (List.fold_left fold_fun (false,[],None) branches)
@@ -3879,7 +3872,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 
   let prf = mkPure estate (CP.mkTrue no_pos) (CP.mkTrue no_pos) true None in
   let memo_r_br = List.map (fun (c1,c2)-> (c1,MCP.memoise_add_pure_N (MCP.mkMTrue pos) c2)) rhs_p_br in
-  let (r_rez,r_succ_match, r_fail_match) = List.fold_left fold_fun  ((true,[],None)) (("", rhs_p) :: memo_r_br) in
+  let (r_rez,r_succ_match, r_fail_match) = List.fold_left fold_fun_rhs  ((true,[],None)) (("", rhs_p) :: memo_r_br) in
   if r_rez then begin
     let res_delta = mkBase lhs_h lhs_p lhs_t lhs_fl lhs_b no_pos in
 	if is_folding then begin
