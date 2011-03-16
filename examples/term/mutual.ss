@@ -12,7 +12,7 @@ case {
 	else
 		if (x < 0)
 			return 0;
-		else
+		else // 0<=x<=10
 			return g(x + 1);
 }
 
@@ -33,3 +33,15 @@ case {
 		else
 			return f(x - 2);
 }
+
+/*
+f(2) --> f(1)
+f(1) --> g(2)
+     --> g(1)
+g(2) --> g(1)
+     -->
+g(1) --> f(1)
+     --> g(1)
+
+f(1)=g(2)=g(1)=f(1)
+*/
