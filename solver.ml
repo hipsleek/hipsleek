@@ -3840,7 +3840,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool) (is_univ
       let (res1,res2,re3) =
         if res1 = false && branch_id = "" then
           let elim_option ant cons = match ant with
-            |Some f -> TP.filter f cons
+            |Some f -> (CP.filter_redundant f cons, cons) (*TP.filter f*)
             | _ -> CP.mkTrue no_pos, cons
           in let ante4, cons4 = elim_option res4 (MCP.pure_of_mix split_conseq) in
           (* Check MAY/MUST: if being invalid and (exists (ante & conseq)) = true then that's MAY failure, otherwise MUST failure *)

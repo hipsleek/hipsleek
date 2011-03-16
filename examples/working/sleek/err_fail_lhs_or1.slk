@@ -42,3 +42,9 @@ eliminate irrelavant in causation
 basic: DNF
 */
 checkentail n > 3 & m>2 |- n <1.
+
+/*
+eliminate irrelavant in causation
+arbitrary form
+*/
+checkentail n > 3 & t>2 & x>2|- n <1.

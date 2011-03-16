@@ -1638,6 +1638,117 @@ and list_of_conjs (f0 : formula) : formula list =
   in
   helper f0 []
 
+(*collect all bformula of f0*)
+and list_of_bformula (f0:formula) ls: formula list =
+match f0 with
+  | BForm f -> f0::ls
+  | And (f1,f2,_) ->
+        let new_ls = list_of_bformula f1 ls in
+        list_of_bformula f2 new_ls
+  | Or (f1,f2,_,_) ->
+        let new_ls = list_of_bformula f1 ls in
+        list_of_bformula f2 new_ls
+  | Not (f1,_,_) ->
+        list_of_bformula f1 ls
+  | Forall _ -> f0::ls (*should be improved*)
+  | Exists _ -> f0::ls (*should be improved*)
+
+and  check_dependent f ls_working: bool=
+  let ls_var = fv f in
+  let ls_varset = List.flatten (List.map fv ls_working) in
+  let rec helper_check ls_lvarset =
+   match ls_lvarset with
+    | [] -> false
+    | v::vs ->
+      begin
+          if List.mem v ls_var then
+            true
+          else
+           helper_check vs
+      end
+  in
+   helper_check ls_varset
+
+and list_of_irr_bformula (ls_lhs:formula list) ls_working: ((formula list)*(formula list))=
+  let rec helper_loop ls_llhs ls_lworking ls_lhs_rem =
+   match ls_llhs with
+    | [] ->  [], ls_lworking, ls_lhs_rem
+    | f ::fs ->
+      begin
+       (*
+          for each f2 in ls_lhs do
+          if  depent(f2,f) then 
+           - remove f2 out of ls_lhs;
+           - add f2 into ls_working
+       *)
+        match (check_dependent f ls_lworking) with
+          | true -> helper_loop fs (ls_lworking @ [f]) ls_lhs_rem
+          | false -> helper_loop fs ls_lworking (ls_lhs_rem @ [f])
+      end
+  in
+  let new_ls_lhs,new_ls_working, new_ls_lhs_rem = helper_loop ls_lhs ls_working [] in
+  if ((List.length new_ls_lhs_rem) = (List.length ls_lhs)) then
+  (*fixpoint*)
+    ls_lhs,ls_working
+  else
+   list_of_irr_bformula new_ls_lhs_rem new_ls_working
+
+and elim_of_bformula (f0:formula) ls: formula  =
+match f0 with
+  | BForm f ->
+      begin
+        if List.mem f0 ls then
+          BForm (BConst (true,no_pos), snd f)
+        else
+          f0
+      end
+  | And (f1,f2,p) ->
+      begin
+        let new_f1 = elim_of_bformula f1 ls in
+        let new_f2 = elim_of_bformula f2 ls in
+        match new_f1, new_f2 with
+          | (BForm (BConst _, _), BForm (BConst _, _)) -> BForm (BConst (true,no_pos), None)
+          | (BForm (BConst _, _), _) -> (* let _ = print_endline "And 2" in*) new_f2
+          | (_, BForm (BConst _, _))->  new_f1
+          | (_,_) -> And (new_f1,new_f2,p)
+      end
+  | Or (f1,f2,l,p) ->
+      begin
+        let new_f1 = elim_of_bformula f1 ls in
+        let new_f2 = elim_of_bformula f2 ls in
+        match new_f1, new_f2 with
+          | (BForm (BConst _, _), BForm (BConst _, _)) -> BForm (BConst (true,no_pos), l)
+          | (BForm (BConst _, _), _) -> new_f2
+          | (_, BForm (BConst _, _))-> new_f1
+          | (_,_) -> Or (new_f1,new_f2,l,p)
+      end
+  | Not (f1,l,p) ->
+      begin
+          let new_f1 = elim_of_bformula f1 ls in
+         match (new_f1) with
+           | BForm (BConst _, _) -> BForm (BConst (true,no_pos), l)
+           | _ -> Not (new_f1,l,p)
+      end
+  | Forall _ -> f0 (*should be improved*)
+  | Exists _ -> f0 (*should be improved*)
+
+and string_of_ls_pure_formula ls =
+match ls with
+  | [] -> ""
+  | f::[] ->  (!print_formula f)
+  | f::fs -> (!print_formula f) ^ "\n" ^ (string_of_ls_pure_formula fs)
+
+and filter_redundant ante cons =
+  let ls_ante = list_of_bformula ante [] in
+ (* let _ = print_endline ("ls_ante:" ^ (string_of_ls_pure_formula ls_ante)) in*)
+  let ls_cons = list_of_bformula cons [] in
+(*  let _ = print_endline ("ls_cons:" ^ (string_of_ls_pure_formula ls_cons)) in *)
+  let ls_irr,_= list_of_irr_bformula ls_ante ls_cons in
+(* let _ = print_endline ("ls_irr:" ^ (string_of_ls_pure_formula ls_irr)) in*)
+ let new_ante = elim_of_bformula ante ls_irr in
+(* let _ = print_endline ("new_ante:" ^ (!print_formula new_ante)) in *)
+   new_ante
+
 (* 
    Make a formula from a list of conjuncts, namely
    [F1,F2,..,FN]  ==> F1 & F2 & .. & Fn 
