@@ -34,6 +34,8 @@ let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
 let print_input = ref false
 let print_original_solver_output = ref false
 let timeout = ref 10.0
+let prover_pid = ref 0
+let prover_process = ref {name = "smtsolver"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 
@@ -186,13 +188,12 @@ type smtprover =
 
 (**
  An Hoa : Remove the "tail -n 1" because the new version of z3 solver prints the result on the first line following by the error / warning message. 
- *)
-let command_for prover = 
-  let helper s = s ^ infile ^ (* " | tail -n 1 > " *) " > " ^ outfile in
+*)
+let command_for prover =
   match prover with
-  | Z3 -> helper "z3 -smt2 "
-  | Cvc3 -> helper "cvc3 -lang smt "
-  | Yices -> helper "yices "
+    | Z3 -> ("z3", [|"z3"; "-smt2"; infile; ("> "^ outfile) |] )
+    | Cvc3 -> ("cvc3", [|"cvc3"; " -lang smt"; infile; ("> "^ outfile)|])
+    | Yices -> ("yices", [|"yices"; infile; ("> "^ outfile)|])
 
 (** An Hoa
  * Get the type of a spec_var
@@ -429,6 +430,26 @@ let to_smt (ante : CP.formula) (conseq : CP.formula option) (prover: smtprover) 
     | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
   in res
 
+let open_proc cmd args out_file:int  =
+  match Unix.fork() with
+    0 -> begin 
+			let output = Unix.openfile out_file [Unix.O_CREAT; Unix.O_TRUNC; Unix.O_WRONLY] 0o666 in
+			Unix.dup2 output Unix.stdout; Unix.close output;
+
+            let out_stream = open_out out_file in
+            while true do () done;
+            close_out out_stream;
+
+			try Unix.execvp cmd args with _ -> exit 127 end
+  | id -> id
+
+let rec get_answer chn : string =
+  let chr = input_char chn in
+      match chr with
+        |'\n' ->  ""
+        | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
+        | _ -> "" ^ get_answer chn
+
 (**
  * Runs the specified prover and returns output
  *)
@@ -436,21 +457,14 @@ let run prover input =
   let out_stream = open_out infile in
   output_string out_stream input;
   close_out out_stream;
-  let cmd = command_for prover in
-  let _ = Sys.command cmd in
-  let in_stream = open_in outfile in
+  let (cmd, cmd_arg) = command_for prover in
+  let set_process proc = prover_process := proc in
   let fnc () = 
-    let res = input_line in_stream in
-    res
-  in
+    let _ = Gen.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
+    get_answer !prover_process.inchannel in
   let res = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in
-  close_in in_stream;
-  (*
-  Sys.remove infile;
-  Sys.remove outfile;
-  *)
+  let _ = Gen.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
   res
-
 
 (**
  * Test for validity
@@ -461,12 +475,30 @@ let run prover input =
  * We also consider unknown is the same as sat
  *)
 let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover) : bool =
-  let input = to_smt ante (Some conseq) prover in
-	let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
-  let output = run prover input in
-	let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
-  let res = output = "unsat" in
-  res
+  try
+      let input = to_smt ante (Some conseq) prover in
+	  let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+      let output = run prover input in
+	  let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
+      let res = output = "unsat" in
+      res
+  with 
+    |Gen.PrvComms.Timeout ->
+	    begin
+            let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from timeout exc)\n") in
+            print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
+            Unix.kill !prover_process.pid 9;
+            ignore (Unix.waitpid [] !prover_process.pid);
+            false
+		end
+    | e -> 
+        begin 
+            let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from exc)\n") in
+            print_string ("\n[smtsolver.ml]:Unxexpected exception => not valid\n"); flush stdout; 
+            Unix.kill !prover_process.pid 9;
+            ignore (Unix.waitpid [] !prover_process.pid);
+            false
+        end
 
 (* For backward compatibility, use Z3 as default *
  * Probably, a better way is modify the tpdispatcher.ml to call imply with a
@@ -478,12 +510,30 @@ let imply ante conseq = smt_imply ante conseq Z3
  * We also consider unknown is the same as sat
  *)
 let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool =
-  let input = to_smt f None prover in
-	let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
-  let output = run prover input in
-	let _ = if !print_original_solver_output then print_string ("=2=> SMT output : " ^ output ^ "\n") in
-  let res = output = "unsat" in
-  not res
+  try
+      let input = to_smt f None prover in
+	  let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+      let output = run prover input in
+	  let _ = if !print_original_solver_output then print_string ("=2=> SMT output : " ^ output ^ "\n") in
+      let res = output = "unsat" in
+      not res
+  with 
+    |Gen.PrvComms.Timeout ->
+	    begin
+            let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from timeout exc)\n") in
+            print_string ("\n[smtsolver.ml]:Timeout exception => sat\n"); flush stdout;
+            Unix.kill !prover_process.pid 9;
+            ignore (Unix.waitpid [] !prover_process.pid);
+            true
+		end
+    | e -> 
+        begin 
+            let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from exc)\n") in
+            print_string ("\n[smtsolver.ml]:Unexpected exception => sat\n"); flush stdout; 
+            Unix.kill !prover_pid 9;
+            ignore (Unix.waitpid [] !prover_process.pid);
+            true
+        end
 
 (* see imply *)
 let is_sat f sat_no = smt_is_sat f sat_no Z3

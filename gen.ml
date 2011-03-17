@@ -1711,7 +1711,7 @@ struct
     with
       | _ -> ()
 
-  (* Starts a specific prover (creating a new process). Parameters have the following meaning:
+  (* Starts a specific prover (creating a new process using pipes and redirecting all it's channels). Parameters have the following meaning:
    ** log_all_flag - flag which tells whether to log proving evolution
    ** log-all - descriptor of the file where the log is written
    ** prover - tuple: (name of the prover, command to start the prover, arguments passed to the prover starting command)
