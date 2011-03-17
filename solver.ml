@@ -207,7 +207,9 @@ let clear_entailment_history_es (es :entail_state) :context =
 	es_path_label = es.es_path_label;
 	es_prior_steps= es.es_prior_steps;
 	es_var_measures = es.es_var_measures;
-	es_var_label = es.es_var_label} 
+	es_var_label = es.es_var_label;
+    es_var_ctx_lhs = es.es_var_ctx_lhs;
+    es_var_ctx_rhs = es.es_var_ctx_rhs} 
 
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
@@ -2394,12 +2396,10 @@ and heap_entail_conjunct_lhs_struc
 	      if (sintactic_search c.es_formula p) then true
 	      else false 
 
-  (*and inner_entailer_debug ctx conseq =
-	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq*)
+  and inner_entailer ctx conseq =
+	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq
 
-  and inner_entailer ctx conseq = inner_entailer_a ctx conseq
-
-  and inner_entailer_a (ctx : context) (conseq : struc_formula): list_context * proof = 
+  and inner_entailer_a (ctx : context) (conseq : struc_formula): list_context * proof =
     let rec helper (ctx : context) (f:ext_formula) : list_context * proof = match f with
       | ECase b   -> 
 	        (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
@@ -2424,11 +2424,13 @@ and heap_entail_conjunct_lhs_struc
 	          let r = helper b.formula_case_branches in
 	          let r = match r with
 	            | None -> begin
-		            List.map (fun (c1,c2)-> 
+		            List.map (fun (c1,c2)->
 			            let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue pos) c1) in 
                         (*this unsat check is essential for completeness of result*)
 				        if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
-				        else 
+				        else
+						  let n_ctx = CF.transform_context (fun es -> let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in
+																	  CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx  in
                           let n_ctx = prune_ctx prog n_ctx in
                           inner_entailer n_ctx c2 ) b.formula_case_branches 
 		          end
@@ -2497,15 +2499,31 @@ and heap_entail_conjunct_lhs_struc
 	        ) in*)
 	      ((SuccCtx [rs4]),TrueConseq)
 	  | EVariance e ->
-		    (*let _ = print_string "innner_entailer: EVariance\n" in*)
 		    let _ = (* Termination checking *)
-			  (*print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
-			    print_string ("\ninner_entailer: EVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n");*)
+			    print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
+			    print_string ("\ninner_entailer: EVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n");
 			  let loc = e.formula_var_pos in
 			  let es = match ctx with
 			    | Ctx c -> c
 			    | OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n"^(Cprinter.string_of_context ctx))
               in
+			  
+			  (*let _ = print_string ("innner_entailer: ctx_lhs@EVariance: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ "\n") in
+			  let _ = print_string ("innner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in*)
+			  let _ = print_string (List.fold_left (fun rs (v1,v2,mn) -> rs ^ " (" ^ (Cprinter.string_of_spec_var v1) ^ "," ^ (Cprinter.string_of_spec_var v2) ^ "@" ^ mn ^ ")") "innner_entailer: var_subst@EVariance: " es.CF.es_var_subst) in
+			  let string_ctx_lhs = Cprinter.string_of_pure_formula es.es_var_ctx_lhs in
+			  let str_var_subst  = List.map (fun (v1,v2,mn) -> ((Cprinter.string_of_spec_var v1), (Cprinter.string_of_spec_var v2))) es.CF.es_var_subst in
+			  let f = List.map (fun (v,_,_) -> v) es.CF.es_var_subst in
+			  let t = List.map (fun (_,v,_) -> v)) es.CF.es_var_subst in
+			  
+			  let rec string_of_and_ctx pformula =
+				match pformula with
+				  | CP.And (f1, f2, _) -> (string_of_and_ctx f1) ^ " & " ^ (Cprinter.string_of_pure_formula (CP.subst_avoid_capture f t f2))
+				  | _ ->  Cprinter.string_of_pure_formula (CP.subst_avoid_capture f t pformula) in
+			  let _ = print_string ("\ninnner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
+			  let _ = print_string ("\ninnner_entailer: ctx_rhs@EVariance: " ^ (string_of_and_ctx es.es_var_ctx_rhs) ^ "\n") in
+			  
+			  
 			  if es.es_var_label = e.formula_var_label then
 			    (*let lhs_measures = List.map (fun exp -> CP.transform_exp (fun e -> match e with
 				  | CP.Var (x,l) -> Some (CP.Var (CP.to_primed x,l))
@@ -4148,7 +4166,9 @@ and do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding
         es_prior_steps = estate.es_prior_steps;
         es_path_label = estate.es_path_label;
 		es_var_measures = estate.es_var_measures;
-		es_var_label = estate.es_var_label} in
+		es_var_label = estate.es_var_label;
+	    es_var_ctx_lhs = estate.es_var_ctx_lhs;
+		es_var_ctx_rhs = estate.es_var_ctx_rhs} in
     let na,prf = match vd.view_base_case with
       | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
 			fc_message ="failure 1 ?? when checking for aliased node";
@@ -4401,7 +4421,9 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			  es_prior_steps = estate.es_prior_steps;
               es_path_label = estate.es_path_label;
 			  es_var_measures = estate.es_var_measures;
-			  es_var_label = estate.es_var_label} in
+			  es_var_label = estate.es_var_label;
+		      es_var_ctx_lhs = estate.es_var_ctx_lhs;
+		      es_var_ctx_rhs = estate.es_var_ctx_rhs} in
 	      do_fold_w_ctx(* _debug *) fold_ctx var_to_fold  in
 
 	    (****************************************************************************************************************************************)

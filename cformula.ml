@@ -1725,6 +1725,9 @@ type entail_state = {
   (*es_cache_no_list : formula_cache_no_list;*)
   es_var_measures : CP.exp list;
   es_var_label : int;
+  es_var_ctx_lhs : CP.formula;
+  es_var_ctx_rhs : CP.formula;
+  es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
   (* for immutability *)
 (*  es_frame : (h_formula * int) list; *)
   es_cont : h_formula list;
@@ -1809,6 +1812,9 @@ let rec empty_es flowt pos =
   es_prior_steps  = [];
   es_var_measures = [];
   es_var_label = 0;
+  es_var_ctx_lhs = CP.mkTrue pos;
+  es_var_ctx_rhs = CP.mkTrue pos;
+  es_var_subst = [];
   (*es_cache_no_list = [];*)
   es_cont = [];
   es_crt_holes = [];
@@ -3279,8 +3285,7 @@ let normalize_max_renaming_s f pos b ctx =
 *)
 let clear_entailment_history_es (es :entail_state) :context = 
   Ctx {(empty_es (mkTrueFlow ()) no_pos) with es_formula =
-      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_var_measures = es.es_var_measures; es_var_label = es.es_var_label} 
- 
+      es.es_formula; es_path_label = es.es_path_label;es_prior_steps= es.es_prior_steps;es_var_measures = es.es_var_measures; es_var_label = es.es_var_label;es_var_ctx_lhs = es.es_var_ctx_lhs;es_var_ctx_rhs = es.es_var_ctx_rhs} 
 let clear_entailment_history (ctx : context) : context =  
   transform_context clear_entailment_history_es ctx
   

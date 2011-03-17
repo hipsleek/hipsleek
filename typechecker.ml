@@ -32,7 +32,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     match spec with
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) ctx in
+		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs c1 pos_spec}) ctx  in  
+			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 			let r = check_specs prog proc nctx c2 e0 in
 			(*let _ = Debug.devel_pprint ("\nProving done... Result: " ^ (string_of_bool r) ^ "\n") pos_spec in*)
@@ -354,6 +355,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
 			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: org_spec" ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n") in
 			  let stripped_spec = if ir then org_spec else
 				let rec strip_variance ls = match ls with
 				  | [] -> []
@@ -375,13 +377,32 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                 else (Cformula.rename_struc_clash_bound_vars stripped_spec(*org_spec*) (CF.formula_of_list_failesc_context sctx))
 	          in
 	          let st1 = List.combine pre_free_vars pre_free_vars_fresh in
+			  (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
 	          let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
 	          let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
+			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, mn)) to_vars fr_vars in
+			  let sctx = List.map
+				(fun fctx -> let (lb,estk,lbctx) = fctx in
+							 let nlbctx = List.map
+							   (fun bctx -> let (pt,ctx) = bctx in
+											let nctx = CF.transform_context
+											  (fun es -> CF.Ctx {es with CF.es_var_subst = es.CF.es_var_subst @ var_subst}) ctx in (pt,nctx)) lbctx in
+				             (lb,estk,nlbctx)) sctx in
+
+			  
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
 	          let renamed_spec = CF.subst_struc st1 renamed_spec in
-	          let renamed_spec= CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+			  
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec2: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: fr_vars: " ^ (Cprinter.string_of_spec_var_list fr_vars) ^ "\n") in
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: to_vars: " ^ (Cprinter.string_of_spec_var_list to_vars) ^ "\n") in				
+	          let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
+
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec3: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
 	          let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 	          let pre2 = CF.subst_struc_pre st2 renamed_spec in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in
 			  (* Termination checking *)
 			  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
 				Debug.devel_pprint (str_debug_variance ^ "\n") pos;
@@ -397,8 +418,8 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              Gen.Debug.no_1 "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
-                  (fun s ->  check_pre_post org_spec s) sctx in
+              Gen.Debug.ho_2 "check_pre_post" (Cprinter.string_of_struc_formula) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_list_failesc_context)
+                  check_pre_post org_spec sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
 		
