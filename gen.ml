@@ -1693,7 +1693,7 @@ struct
 
   (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
     Otherwise, this method returns the result after calling fnc. *)
-  let maybe_raise_timeout (fnc: 'a) (arg: 'b) (tsec:float) : 'c =
+  let maybe_raise_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
     let _ = set_timer tsec in
@@ -1701,7 +1701,15 @@ struct
     set_timer 0.0;
     reset_sigalrm ();
     answ 
-  
+
+  let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: 'c -> 'b): 'b =
+    try
+        let res = maybe_raise_timeout fnc arg tsec in
+        res
+    with 
+      |Timeout ->
+          with_timeout ()
+
   (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =
     try

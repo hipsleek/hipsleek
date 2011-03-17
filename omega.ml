@@ -211,7 +211,7 @@ let read_last_line_from_in_channel chn : string =
 	!line
   
 (* send formula to omega and receive result -true/false*)
-let check_formula f timeout=
+let check_formula f timeout =
   (*  try*)
   begin
       if not !is_omega_running then start ()
@@ -245,7 +245,10 @@ let check_formula f timeout=
           end;
         !result
       in
-      let res = Gen.PrvComms.maybe_raise_timeout fnc () timeout in 
+      let fail_with_timeout () = 
+        restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
+        true (* it was checking for sat*) in
+      let res = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in 
       res
   end
 
@@ -306,12 +309,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     let pvars = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-    (*    Debug.devel_print ("fomega:\n" ^ fomega ^ "\n"); *)
-	(*test*)
-	(*print_endline (Gen.break_lines fomega);*)
 
     if !log_all_flag then begin
-(*      output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
       output_string log_all (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);
       output_string log_all (Gen.break_lines fomega);
       flush log_all;
@@ -321,11 +320,6 @@ let is_sat (pe : formula)  (sat_no : string): bool =
       try
         check_formula fomega !timeout
       with
-      | Gen.PrvComms.Timeout ->
-	      begin
-           restart ("Timeout when checking #is_sat " ^ sat_no ^ "!");
-           true
-		  end
       | exc ->
           begin
            (* Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);*)
@@ -363,10 +357,6 @@ let is_valid (pe : formula) timeout: bool =
       try
         not (check_formula (fomega ^ "\n") timeout)
       with
-      | Gen.PrvComms.Timeout ->
-          (*log ERROR ("TIMEOUT");*)
-          restart ("Timeout when checking #is_valid ");
-          true
       | exc ->
           begin
             

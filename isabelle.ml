@@ -332,33 +332,29 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
       let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
 	  let fstr = vstr ^ isabelle_of_formula pe in
       if !log_all_flag == true then
-    		    output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
+    	output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
       let ichn = !process.inchannel in
       let ochn = !process.outchannel in
-      try
-          begin
-              let fnc () = 
-    	        output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
-                let _ = get_answer ichn in (*lemma#*)
-                let _ = input_char ichn in (*space*)
 
-                output_string ochn "apply(auto)\n"; flush ochn;
-                let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
+      let fnc () = 
+        (* communication protocol with interactive isabelle *)
+    	output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
+        let _ = get_answer ichn in (*lemma#*)
+        let _ = input_char ichn in (*space*)
 
-                output_string ochn "oops\n"; flush ochn;
-                let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
-                str
-		      in
-              let answ = Gen.PrvComms.maybe_raise_timeout fnc () timeout in
-		      check answ
-	      end
-      with
-        |Gen.PrvComms.Timeout ->
-            begin
-                print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
-                restart ("Timeout!");
-                is_sat_b
-		    end
+        output_string ochn "apply(auto)\n"; flush ochn;
+        let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
+
+        output_string ochn "oops\n"; flush ochn;
+        let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
+		check str
+	  in
+      let fail_with_timeout () =   
+        print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
+        restart ("Timeout!");
+        is_sat_b in
+      let answ = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in
+      answ
   end
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
