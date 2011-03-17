@@ -1681,12 +1681,12 @@ and list_of_irr_bformula (ls_lhs:formula list) ls_working: ((formula list)*(form
            - remove f2 out of ls_lhs;
            - add f2 into ls_working
        *)
-        match (check_dependent f ls_lworking) with
+        match (check_dependent f ls_working) with
           | true -> helper_loop fs (ls_lworking @ [f]) ls_lhs_rem
           | false -> helper_loop fs ls_lworking (ls_lhs_rem @ [f])
       end
   in
-  let new_ls_lhs,new_ls_working, new_ls_lhs_rem = helper_loop ls_lhs ls_working [] in
+  let new_ls_lhs,new_ls_working, new_ls_lhs_rem = helper_loop ls_lhs [] [] in
   if ((List.length new_ls_lhs_rem) = (List.length ls_lhs)) then
   (*fixpoint*)
     ls_lhs,ls_working
