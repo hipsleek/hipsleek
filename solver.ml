@@ -2241,6 +2241,13 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is
 
 and heap_entail_struc_failesc_context (prog : prog_decl) (is_folding : bool) (is_universal : bool)
       (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
+  Gen.Debug.loop_1 "heap_entail_struc_failesc_context" (fun _ -> "?") (fun _ -> "?") (fun x -> 
+      heap_entail_struc_failesc_context_x prog is_folding (is_universal)
+      (has_post)(cl) (conseq) pos (pid) f to_string) conseq
+
+
+and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool) (is_universal : bool)
+      (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
   (* print_string "\ncalling struct_partial_context .."; *)
   Debug.devel_pprint ("heap_entail_struc_failesc_context:"
   ^ "\nctx:\n" ^ (Cprinter.string_of_failesc_context cl)
@@ -3578,7 +3585,10 @@ and heap_entail_split_lhs_phases_x
 (* snd res is the constraint that causes  *)
 (* the check to fail.                     *)
 
-and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
+and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) = Gen.Debug.loop_1 "heap_entail_conjunct" Cprinter.string_of_formula (fun _ -> "?")
+  (fun c -> heap_entail_conjunct_x prog is_folding is_universal ctx0 c pos) conseq
+
+and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_conjunct:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
