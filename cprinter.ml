@@ -148,13 +148,19 @@ let pr_list_open_sep (f_open:unit -> unit)
     (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
     (f_elem:'a -> unit) (xs:'a list) : unit =
   let rec helper xs = match xs with
-    | [] -> failwith "cannot be [] (pr_list_open_sep)"
+    | [] -> failwith "impossible to be [] in pr_list_open_sep"
     | [x] -> (f_elem x)
     | y::ys -> (f_elem y; f_sep(); helper ys) 
   in match xs with
     | [] -> f_empty()
     | xs -> f_open(); (helper xs); f_close() 
 
+let pr_list_open_sep (f_open:unit -> unit) 
+    (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
+    (f_elem:'a -> unit) (xs:'a list) : unit =
+  Gen.Debug.no_1 "pr_list_open_sep" string_of_int (fun _ -> "?") (fun _ -> pr_list_open_sep  (f_open:unit -> unit) 
+    (f_close:unit -> unit) (f_sep:unit->unit) (f_empty:unit->unit)
+    (f_elem:'a -> unit) xs) (List.length xs)
 
 (** @param sep = "SAB"-space-cut-after-before,"SA"-space cut-after,"SB" -space-before 
  "AB"-cut-after-before,"A"-cut-after,"B"-cut-before, "S"-space, "" no-cut, no-space*)
@@ -229,7 +235,7 @@ let pr_args_gen f_empty box_opt sep_opt op open_str close_str sep_str f xs =
 
  (** invoke pr_args_gen  *)   
 let pr_args box_opt sep_opt op open_str close_str sep_str f xs =
-  pr_args_gen (fun () -> fmt_string (open_str^close_str)) box_opt sep_opt op open_str close_str sep_str f xs
+  pr_args_gen (fun () -> fmt_string (open_str^close_str) ) box_opt sep_opt op open_str close_str sep_str f xs
 
  (** invoke pr_args_gen and print nothing when xs  is empty  *)      
 let pr_args_option box_opt sep_opt op open_str close_str sep_str f xs =
@@ -600,7 +606,7 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = ((string_of_int i)^s2)
+let string_of_formula_label (i,s) s2:string = s2 (* ((string_of_int i)^":"^s2) *)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
@@ -1067,18 +1073,22 @@ let string_of_context_list ctx : string =  poly_string_of_pr  pr_context_list ct
 let printer_of_context_list (fmt: Format.formatter) (ctx: context list) : unit =  poly_printer_of_pr fmt pr_context_list ctx  
 
 let rec pr_fail_type (e:fail_type) =
+  fmt_string (" Fail-type printing suppressed : due to looping bug e.g. bug_qsort.ss ")
+
+(* infinite loop with list_open_args for some examples, e.g. bug_qsort.ss *)
+let rec pr_fail_type_bug (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason br ->  pr_fail_estate br
     | Continuation br ->  fmt_string (" Continuation ! "); pr_fail_estate br
-    | Or_Reason _ -> 
+    | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_OR " f_b args
-    | Or_Continuation _ -> 
+    | Or_Continuation _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
-          pr_list_vbox_wrap "CONTINUATION_OR " f_b args 
-    | And_Reason _ -> 
+          pr_list_vbox_wrap "CONTINUATION_OR " f_b args
+    | And_Reason _ ->
           let args = bin_op_to_list op_and_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_AND " f_b args
 
@@ -1130,10 +1140,10 @@ let pr_partial_context ((l1,l2): partial_context) =
   fmt_open_vbox 0;
   pr_vwrap_naive_nocut "Failed States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_fail_type fs)) l1;
+    	  pr_vwrap "State:" pr_fail_type fs)) l1;
   pr_vwrap_naive "Successful States:"
       (pr_seq_vbox "" (fun (lbl,fs)-> pr_vwrap_nocut "Label: " pr_path_trace lbl;
-		  pr_vwrap "State:" pr_context fs)) l2;
+    	  pr_vwrap "State:" pr_context fs)) l2;
   fmt_close_box ()
 
 
@@ -1164,7 +1174,8 @@ let pr_list_failesc_context (lc : list_failesc_context) =
    fmt_cut (); pr_list_none pr_failesc_context lc
 
 let pr_list_partial_context (lc : list_partial_context) =
-   fmt_string ("List of Partial Context: "^(summary_list_partial_context lc));
+    (* fmt_string ("XXXX "^(string_of_int (List.length lc)));  *)
+   fmt_string ("List of Partial Context: " ^(summary_list_partial_context lc) );
    fmt_cut (); pr_list_none pr_partial_context lc
 
 let string_of_list_partial_context (lc: list_partial_context) =  poly_string_of_pr pr_list_partial_context lc
