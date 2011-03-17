@@ -696,7 +696,7 @@ struct
         | a::args -> (print_string (s^" inp"^(string_of_int i)^" :"^a^"\n");(helper (i+1) args)) in
       helper 1 xs in
     let s,h = push s in
-    (if loop_d then print_string (h^" inp :"^(List.hd args)^"\n"));
+    (if loop_d then print_string ("\n"^h^" entry :"^(List.hd args)^"\n"));
     let r = try
       pop_ho f e
     with ex -> 

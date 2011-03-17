@@ -4281,6 +4281,9 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     (res_es1,prf1)
 
 and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
+  Gen.Debug.loop_1 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula (fun _ -> "?") (fun c -> heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos) conseq
+
+and heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   let lhs_h = lhs_b.formula_base_heap in
   let lhs_p = lhs_b.formula_base_pure in
   let lhs_t = lhs_b.formula_base_type in
@@ -4379,7 +4382,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			^ "to:ln2: "
 			^ (Cprinter.string_of_h_formula ln2)
 			^ "\nrhs_p: "
-			^ (Cprinter.string_of_mix_formula rhs_p)) pos;
+			^ (Cprinter.string_of_mix_formula rhs_p) ^"..end") pos;
 		    (fold_rs, fold_prf)
 	      end in
 
