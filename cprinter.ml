@@ -1072,22 +1072,22 @@ let pr_context_list ctx =  pr_seq "" pr_context ctx
 let string_of_context_list ctx : string =  poly_string_of_pr  pr_context_list ctx
 let printer_of_context_list (fmt: Format.formatter) (ctx: context list) : unit =  poly_printer_of_pr fmt pr_context_list ctx  
 
-let rec pr_fail_type (e:fail_type) =
+let rec pr_fail_type_x (e:fail_type) =
   fmt_string (" Fail-type printing suppressed : due to looping bug e.g. bug_qsort.ss ")
 
 (* infinite loop with list_open_args for some examples, e.g. bug_qsort.ss *)
-let rec pr_fail_type_bug (e:fail_type) =
+let rec pr_fail_type (e:fail_type) =
   let f_b e =  pr_bracket ft_wo_paren pr_fail_type e in
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason br ->  pr_fail_estate br
-    | Continuation br ->  fmt_string (" Continuation ! "); pr_fail_estate br
+    | Continuation br ->  fmt_string (" Continuation ! ") (* ; pr_fail_estate br *)
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_OR " f_b args
-    | Or_Continuation _ ->
-          let args = bin_op_to_list op_or_short ft_assoc_op e in
-          pr_list_vbox_wrap "CONTINUATION_OR " f_b args
+    | Or_Continuation _ -> fmt_string (" Or Continuation ! ") 
+          (* let args = bin_op_to_list op_or_short ft_assoc_op e in *)
+          (* pr_list_vbox_wrap "CONTINUATION_OR " f_b args *)
     | And_Reason _ ->
           let args = bin_op_to_list op_and_short ft_assoc_op e in
           pr_list_vbox_wrap "FAIL_AND " f_b args
