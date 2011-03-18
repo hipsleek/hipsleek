@@ -51,7 +51,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	  | Cformula.EVariance b ->
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
 		    (*let _ = print_string "check_specs: EVariance: before nctx\n" in*)
-			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures; Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
+			let nctx = CF.transform_context (fun es -> CF.Ctx {es with Cformula.es_var_measures = List.map (fun (e,b) -> e) b.Cformula.formula_var_measures;
+			  Cformula.es_var_label = b.Cformula.formula_var_label}) ctx in
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,b,y) ->
@@ -767,8 +768,18 @@ let scc_numbering g =
 let variance_numbering ls f =
   let helper ele =
 	let (es,e) = ele in
-	let nes = {es with CF.es_var_label = f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs)} in
-	let ne = {e with CF.formula_var_label = f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs)}
+	let nes = {es with CF.es_var_label =
+		let user_defined_var_label_lhs = es.CF.es_var_label in
+		match user_defined_var_label_lhs with
+		  | None -> Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))
+		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_lhs
+			          else Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))} in
+	let ne = {e with CF.formula_var_label =
+		let user_defined_var_label_rhs = e.CF.formula_var_label in
+		match user_defined_var_label_rhs with
+		  | None -> Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))
+		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_rhs
+			          else Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))}
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
 	

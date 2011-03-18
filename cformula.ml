@@ -64,7 +64,7 @@ and ext_base_formula =
 
 and ext_variance_formula =
 	{
-		formula_var_label : int;
+		formula_var_label : int option;
 		formula_var_measures : (Cpure.exp * (Cpure.exp option)) list; (* variance expression and bound *)
 		formula_var_escape_clauses : Cpure.formula list;
 	    formula_var_continuation : struc_formula;
@@ -1724,7 +1724,7 @@ type entail_state = {
   es_prior_steps : steps; (* prior steps in reverse order *)
   (*es_cache_no_list : formula_cache_no_list;*)
   es_var_measures : CP.exp list;
-  es_var_label : int;
+  es_var_label : int option;
   es_var_ctx_lhs : CP.formula;
   es_var_ctx_rhs : CP.formula;
   es_var_subst : (CP.spec_var * CP.spec_var * ident) list;
@@ -1811,7 +1811,7 @@ let rec empty_es flowt pos =
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = [];
-  es_var_label = 0;
+  es_var_label = None;
   es_var_ctx_lhs = CP.mkTrue pos;
   es_var_ctx_rhs = CP.mkTrue pos;
   es_var_subst = [];

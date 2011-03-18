@@ -1223,23 +1223,30 @@ spec
 						Iformula.formula_case_pos = get_pos 1; 
 				}
 			}
-	| VARIANCE var_label var_measures escape_conditions spec
+	| VARIANCE OPAREN integer_literal CPAREN var_measures escape_conditions spec
 		{
 			Iformula.EVariance
 			  {
-					Iformula.formula_var_label = $2;
-					Iformula.formula_var_measures = $3;
-					Iformula.formula_var_escape_clauses = $4;
-					Iformula.formula_var_continuation = [$5];
+					Iformula.formula_var_label = Some $3;
+					Iformula.formula_var_measures = $5;
+					Iformula.formula_var_escape_clauses = $6;
+					Iformula.formula_var_continuation = [$7];
 					Iformula.formula_var_pos = get_pos 1;
 			  }
 		}
-;	
+	| VARIANCE var_measures escape_conditions spec
+		{
+			Iformula.EVariance
+			  {
+					Iformula.formula_var_label = None;
+					Iformula.formula_var_measures = $2;
+					Iformula.formula_var_escape_clauses = $3;
+					Iformula.formula_var_continuation = [$4];
+					Iformula.formula_var_pos = get_pos 1;
+			  }
+		}
 
-var_label
-    : {0}
-	| OPAREN integer_literal CPAREN {$2}
-	;
+;	
 
 var_measures
 	: {[]}

@@ -323,12 +323,15 @@ let rec string_of_ext_formula = function
 			Iformula.formula_var_escape_clauses = escape_clauses;
 			Iformula.formula_var_continuation = continuation;
 	  } ->
+	    let string_of_label = match label with
+		  | None -> ""
+		  | Some i -> "(" ^ (string_of_int i) ^ ")" in
 		let string_of_measures = List.fold_left (fun rs (expr, bound) -> match bound with
 																			| None -> rs^(string_of_formula_exp expr)^" "
 																			| Some bexpr -> rs^(string_of_formula_exp expr)^"@"^(string_of_formula_exp bexpr)^" ") "" measures in
 		let string_of_escape_clauses =  List.fold_left (fun rs f -> rs^(string_of_pure_formula f)) "" escape_clauses in
 		let string_of_continuation = (List.fold_left (fun b cont -> b^"\n"^(string_of_ext_formula cont)) "{" continuation)^"}" in
-		  "EVariance ("^(string_of_int label)^") "^"[ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
+		  "EVariance "^(string_of_label)^" [ "^string_of_measures^"] "^(if string_of_escape_clauses == "" then "" else "==> "^"[ "^string_of_escape_clauses^" ] ")^string_of_continuation 
 ;;
 
 let string_of_struc_formula d =  List.fold_left  (fun a c -> a ^"\n "^(string_of_ext_formula c )) "" d 
