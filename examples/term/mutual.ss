@@ -18,7 +18,7 @@ case {
 
 int g (int x)
 case {
-	x > 5 -> variance (2) [x] ensures true;
+	x > 5 -> variance (1) [x] ensures true;
 	x <= 5 -> case {
 					x < 0 -> variance (0) ensures true;
 					x >= 0 -> variance (1) [2*x] ensures true;

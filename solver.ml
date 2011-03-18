@@ -27,6 +27,8 @@ module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
+
+let graph = ref []
   
 let count_br_specialized prog cl = 
 let helper prog h_node = match h_node with	
@@ -2360,7 +2362,7 @@ and heap_entail_after_sat_struc prog is_folding is_universal has_post
         (*let es = {es with es_formula = prune_preds prog es.es_formula } in*)
         let es = (CF.add_to_estate_with_steps es ss) in
         let tmp, prf = heap_entail_conjunct_lhs_struc prog is_folding is_universal has_post (Ctx es) conseq pos pid in
-	    (filter_set tmp, prf)
+		(filter_set tmp, prf)
       end
 
 and sem_imply_add prog is_folding is_universal ctx (p:CP.formula) only_syn:(context*bool) = match ctx with
@@ -2398,9 +2400,8 @@ and syn_imply1 ctx p :bool = match ctx with
 	      else false 
 	
 and build_state_trans_graph prog (ctx : context) (conseq : struc_formula) (graph:IG.t): IG.t =
-	let vg = IG.empty in
     let rec helper (ctx : context) (f:ext_formula) (g:IG.t) : IG.t = match f with
-      | ECase b   -> 
+      | ECase b -> 
 	        if (List.length b.formula_case_exists)>0 then 
 	          let ws = CP.fresh_spec_vars b.formula_case_exists in
 	          let st = List.combine b.formula_case_exists ws in
@@ -2457,6 +2458,7 @@ and build_state_trans_graph prog (ctx : context) (conseq : struc_formula) (graph
 		  in
 		  let v1 = Cprinter.string_of_pure_formula es.es_var_ctx_lhs in
 		  let v2 = Cprinter.string_of_pure_formula filtered_ctx_rhs in
+		  let _ = print_string ("State transition graph: " ^ v1 ^ "->" ^ v2 ^ "\n") in 
 		  let ng1 = IG.add_vertex g v1 in
 		  let ng2 = IG.add_vertex ng1 v2 in
 		  let ng3 = IG.add_edge ng2 v1 v2 in 
@@ -2464,7 +2466,7 @@ and build_state_trans_graph prog (ctx : context) (conseq : struc_formula) (graph
     in
     if (List.length conseq) > 0 then	
 	  let ng = List.fold_left (fun g cons -> helper ctx cons g) graph conseq in ng
-	  else 
+	else 
 	  graph
 
 and heap_entail_conjunct_lhs_struc
@@ -2475,11 +2477,13 @@ and heap_entail_conjunct_lhs_struc
       (ctx : context) 
       (conseq : struc_formula) pos pid : (list_context * proof) =
 
+  (*
   let g = IG.empty in
 	let g = build_state_trans_graph prog ctx conseq g in
 	let scc_list = IGC.scc_list g in
 	let _ = print_string ("The scc list of state transitions: " ^ (List.fold_left (fun rsl l -> rsl ^ "\n" ^ (List.fold_left (fun rse e -> rse ^ "," ^ e) "" l)) "" scc_list)) in
-
+  *)
+  
   let rec syn_imply ctx p :bool = match ctx with
     | OCtx _ -> report_error no_pos ("syn_imply: OCtx encountered \n")
     | Ctx c -> 
@@ -2487,9 +2491,10 @@ and heap_entail_conjunct_lhs_struc
 	      else false 
 			
   and inner_entailer ctx conseq =
-	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq
+	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p))
+	  (fun ctx cons -> inner_entailer_a ctx cons) ctx conseq
 
-  and inner_entailer_a (ctx : context) (conseq : struc_formula): list_context * proof =
+  and inner_entailer_a (ctx : context) (conseq : struc_formula) : list_context * proof =
 	let rec helper (ctx : context) (f:ext_formula) : list_context * proof = match f with
       | ECase b   -> 
 	        (*let _ = print_string ("\nstart case:"^(Cprinter.string_of_ext_formula f)^"\n") in*)
@@ -2522,7 +2527,7 @@ and heap_entail_conjunct_lhs_struc
 						  let n_ctx = CF.transform_context (fun es -> let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in
 																	  CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx  in
                           let n_ctx = prune_ctx prog n_ctx in
-                          inner_entailer n_ctx c2 ) b.formula_case_branches 
+                          inner_entailer n_ctx c2) b.formula_case_branches 
 		          end
 	            | Some (p,e) -> begin [inner_entailer ctx e]end in
 	          let rez1,rez2 = List.split r in
@@ -2619,10 +2624,12 @@ and heap_entail_conjunct_lhs_struc
 				in filter es.es_var_ctx_rhs
 			  in 
 			  
-			  let _ = print_string ("\ninnner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
-			  let _ = print_string ("\ninnner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
+			  let _ = print_string ("\ninner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
+			  let _ = print_string ("\ninner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
 
-			  
+			  let _ = print_string ("\ninner_entailer: call graph adding: " ^ string_ctx_lhs ^ " ->" ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
+
+			  graph := !graph @ [(es.es_var_ctx_lhs, filtered_ctx_rhs)];
 			  
 			  
 			  if es.es_var_label = e.formula_var_label then
@@ -2676,8 +2683,9 @@ and heap_entail_conjunct_lhs_struc
 	  let l1,l2 = List.split r in
 	  ((fold_context_left l1),(mkCaseStep ctx conseq l2))
     else 
-	  ((SuccCtx [ctx]),TrueConseq)in
+	  ((SuccCtx [ctx]),TrueConseq) in
   let r = inner_entailer ctx conseq in
+  (*let _ = print_string ("\nheap_entail_conjunct_lhs_struc: call graph:\n" ^ (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !graph) ^ "\n") in*)
   r
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =

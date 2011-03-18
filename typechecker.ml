@@ -414,6 +414,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false false true sctx pre2 pos pid in
 		        let _ = PTracer.log_proof prf in
             (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
+				
             if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
@@ -730,6 +731,17 @@ let check_proc_wrapper_map_net prog (proc,num) =
     end else
       raise e
 
+module IdentComp = struct
+  type t = string
+  let compare = compare
+  let hash = Hashtbl.hash
+  let equal = (=)
+end
+module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IGO = Graph.Oper.P(IG)
+module IGC = Graph.Components.Make(IG)
+module IGP = Graph.Path.Check(IG)
+		
 let check_prog (prog : prog_decl) =
   if !Globals.check_coercions then begin
     print_string "Checking coercions... ";
@@ -738,6 +750,22 @@ let check_prog (prog : prog_decl) =
   end else begin
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
+	print_string ("\ncheck_prog: call graph:\n" ^
+								 (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");
+
+	let gr = IG.empty in
+	let g = List.fold_left (fun g (f1,f2) ->
+	                          let v1 = Cprinter.string_of_pure_formula f1 in
+		                      let v2 = Cprinter.string_of_pure_formula f2 in
+		                      let ng1 = IG.add_vertex g v1 in
+		                      let ng2 = IG.add_vertex ng1 v2 in
+		                      let ng3 = IG.add_edge ng2 v1 v2 in
+							  ng3
+		                   ) gr !Solver.graph in
+	let scc_list = IGC.scc_list g in
+	let (n,f) = IGC.scc g in
+	print_string ("The scc list of state transitions: " ^ (List.fold_left (fun rsl l -> rsl ^ "\n" ^ (List.fold_left (fun rse e -> rse ^ "," ^ e ^ ":" ^ (string_of_int (f e))) "" l)) "" scc_list));
+	    
     (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
       let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
       let num_list = numbers (List.length filtered_proc) in
