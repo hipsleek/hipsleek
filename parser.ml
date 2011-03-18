@@ -133,8 +133,15 @@ let peek_try =
  SHGram.Entry.of_parser "peek_try" 
     (fun strm -> 
        match Stream.npeek 2 strm with 
-         | [cid;  IN_T, _]  -> ()
-         | [cid; NOTIN, _] -> ()
+         | [cid;  IN_T,_]  -> ()
+         | [cid; NOTIN,_] -> ()
+         | [GT,_;STAR,_] -> raise Stream.Failure
+         | [GT,_;INV,_] -> raise Stream.Failure
+         | [GT,_;AND,_] -> raise Stream.Failure
+         | [GT,_;OR,_] -> raise Stream.Failure
+         | [GT,_;DOT,_] -> raise Stream.Failure
+         | [GT,_;DERIVE,_] -> raise Stream.Failure
+         | [GT,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
 
   
@@ -363,7 +370,7 @@ heap_constr:
 simple2:  [[ t=opt_type_var_list; `LT -> ()]];
    
 simple_heap_constr_imm:
-  [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT; `IMM; ofl=opt_formula_label ->
+  [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT; `IMM; ofl= opt_formula_label ->
      match hl with
         | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2)
         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2)]];
@@ -422,7 +429,8 @@ cexp_w :
     [  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl
      | lc=SELF (*LEVEL "gen"*); `EQ;    cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos 2)) lc cl 
      | lc=SELF; `LTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos 2)) lc cl 
-     | lc=SELF; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl 
+     | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos 2)) lc cl
+     | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl
      | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos 2)) lc cl   
      | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos 2))) cl 
      | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos 2))) cl  
@@ -445,7 +453,7 @@ cexp_w :
    | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN  
                                                                    -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos 1) ) c1 c2
    | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos 1)) 
-   | c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos 2)) c1 c2 
+   |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos 2)) c1 c2 
    | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos 1)) c1
    | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos 1))
    | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos 1)) c1 
@@ -457,14 +465,14 @@ cexp_w :
      (*| t =cexp_w LEVEL "mul"                                        -> t*)]
      
    | "mul"
-     [(*  t1=SELF ; `STAR; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos 2)) t1 t2   *)
-     (* | *) t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2  
+     [ t1=SELF ; `STAR; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos 2)) t1 t2
+     | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
    | "una"
      [ t=cid                -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))   
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
-     | `FLOAT_LIT (f,_)                          -> Pure_c (P.FConst (f, get_pos 1))
+     | peek_try; `FLOAT_LIT (f,_)                          -> Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t 
      | `NULL                                     -> Pure_c (P.Null (get_pos 1))
      | `MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c
