@@ -696,18 +696,18 @@ struct
         | a::args -> (print_string (s^" inp"^(string_of_int i)^" :"^a^"\n");(helper (i+1) args)) in
       helper 1 xs in
     let s,h = push s in
-    (if loop_d then print_string (h^" inp :"^(List.hd args)^"\n"));
+    (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
     let r = try
       pop_ho f e
     with ex -> 
         let _ = print_string (h^"\n") in
         let _ = pr_args args in
-        let _ = print_string (s^" Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+        let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
         raise ex in
     if not(test r) then r else
       let _ = print_string (s^"\n") in
       let _ = pr_args args in
-      let _ = print_string (s^" out :"^(pr_o r)^"\n") in
+      let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
       r
 
   let ho_1_opt_aux (loop_d:bool) (test:'z -> bool) (s:string) (pr1:'a->string) (pr_o:'z->string)  (f:'a -> 'z) (e1:'a) : 'z =
