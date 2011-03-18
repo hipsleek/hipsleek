@@ -2586,7 +2586,7 @@ and heap_entail_variance
   let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e -> let str = Cprinter.string_of_formula_exp e in
 																if rs = "" then str else rs ^ ", " ^ str) "" el) ^ "]" in
 
-  Debug.print_info "termination" ("Translation from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc;
+  Debug.print_info "termination" ("Transition from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc;
   
   if es.es_var_label = e.formula_var_label then
 	let lhs_measures = es.es_var_measures in
