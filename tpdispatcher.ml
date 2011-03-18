@@ -701,6 +701,7 @@ let simplify (f : CP.formula) : CP.formula =
         | CM ->
               if is_bag_constraint f then Mona.simplify f
               else Omega.simplify f
+        | Z3 -> Smtsolver.simplify f
         | Redlog -> Redlog.simplify f
         | RM -> 
               if is_bag_constraint f then
@@ -763,6 +764,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.hull f
 	  else Omega.hull f
+  | Z3 -> Smtsolver.hull f
   | Redlog -> Redlog.hull f
   | RM ->
       if is_bag_constraint f then
@@ -797,6 +799,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.pairwisecheck f
 	  else Omega.pairwisecheck f
+  | Z3 -> Smtsolver.pairwisecheck f
   | Redlog -> Redlog.pairwisecheck f
   | RM ->
       if is_bag_constraint f then Mona.pairwisecheck f
