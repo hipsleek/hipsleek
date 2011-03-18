@@ -523,6 +523,7 @@ let ft_assoc_op (e:fail_type) : (string * fail_type list) option =
   match e with
     | Or_Reason (f1,f2) -> Some (op_or_short,[f1;f2])
     | And_Reason (f1,f2) -> Some (op_and_short,[f1;f2])
+    | Or_Continuation (f1,f2) -> Some (op_or_short,[f1;f2])
     | _ -> None
 
 (* check if exp can be printed without a parenthesis,
@@ -1081,16 +1082,19 @@ let rec pr_fail_type (e:fail_type) =
   match e with
     | Trivial_Reason s -> fmt_string (" Trivial fail : "^s)
     | Basic_Reason br ->  pr_fail_estate br
-    | Continuation br ->  fmt_string (" Continuation ! ") (* ; pr_fail_estate br *)
+    | Continuation br ->  pr_fail_estate br
     | Or_Reason _ ->
           let args = bin_op_to_list op_or_short ft_assoc_op e in
-          pr_list_vbox_wrap "FAIL_OR " f_b args
-    | Or_Continuation _ -> fmt_string (" Or Continuation ! ") 
-          (* let args = bin_op_to_list op_or_short ft_assoc_op e in *)
-          (* pr_list_vbox_wrap "CONTINUATION_OR " f_b args *)
+          if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Reason")
+          else pr_list_vbox_wrap "FAIL_OR " f_b args
+    | Or_Continuation _ -> (* fmt_string (" Or Continuation ! ") *)
+          let args = bin_op_to_list op_or_short ft_assoc_op e in
+          if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type OR_Continuation")
+          else  pr_list_vbox_wrap "CONT_OR " f_b args
     | And_Reason _ ->
           let args = bin_op_to_list op_and_short ft_assoc_op e in
-          pr_list_vbox_wrap "FAIL_AND " f_b args
+          if ((List.length args) < 2) then fmt_string ("Illegal pr_fail_type AND_Reason")
+          else pr_list_vbox_wrap "FAIL_AND " f_b args
 
 let string_of_fail_type (e:fail_type) : string =  poly_string_of_pr  pr_fail_type e
 
