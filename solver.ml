@@ -29,6 +29,7 @@ module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 
 let graph = ref []
+let var_checked_list = ref []
   
 let count_br_specialized prog cl = 
 let helper prog h_node = match h_node with	
@@ -2393,82 +2394,6 @@ and heap_entail_conjunct_lhs_struc_debug
       (fun _ -> "?")
       (fun ctx conseq -> heap_entail_conjunct_lhs_struc p is_folding is_universal has_post ctx conseq pos pid) ctx conseq
 
-and syn_imply1 ctx p :bool = match ctx with
-    | OCtx _ -> report_error no_pos ("syn_imply: OCtx encountered \n")
-    | Ctx c -> 
-	      if (sintactic_search c.es_formula p) then true
-	      else false 
-	
-and build_state_trans_graph prog (ctx : context) (conseq : struc_formula) (graph:IG.t): IG.t =
-    let rec helper (ctx : context) (f:ext_formula) (g:IG.t) : IG.t = match f with
-      | ECase b -> 
-	        if (List.length b.formula_case_exists)>0 then 
-	          let ws = CP.fresh_spec_vars b.formula_case_exists in
-	          let st = List.combine b.formula_case_exists ws in
-	          let new_struc = subst_struc st [(ECase {b with formula_case_exists = []})]in
-	          let new_ctx = push_exists_context ws ctx in
-	          let ng = build_state_trans_graph prog new_ctx new_struc g in 
-	          ng
-	        else if (List.length b.formula_case_branches ) = 0 then g
-	        else 
-	          let rec helper l = match l with
-	            | [] -> None
-	            | (p,e)::t -> 
-		              let tt = (syn_imply1 ctx p) in
-		              if tt then Some (p,e) else helper t  in
-	          let r = helper b.formula_case_branches in
-	          let ng = match r with
-	            | None -> begin
-		            List.fold_left (fun rg (c1,c2) ->
-			            let n_ctx = combine_context_and_unsat_now prog (ctx) (MCP.memoise_add_pure_N (MCP.mkMTrue no_pos) c1) in 
-                        (*this unsat check is essential for completeness of result*)
-				        if (isAnyFalseCtx n_ctx) then g
-				        else
-						  let n_ctx = CF.transform_context
-							(fun es -> CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 no_pos}) n_ctx  in
-                          let n_ctx = prune_ctx prog n_ctx in
-                          build_state_trans_graph prog n_ctx c2 rg) g b.formula_case_branches 
-		          end
-	            | Some (p,e) -> build_state_trans_graph prog ctx e g in
-	          ng
-      | EBase _  -> g 
-      | EAssume (ref_vars, post,(i,y)) ->
-		 let rs = clear_entailment_history ctx in
-	      g
-	  | EVariance e ->
-		  let loc = e.formula_var_pos in
-		  let es = match ctx with
-			    | Ctx c -> c
-			    | OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n"^(Cprinter.string_of_context ctx))
-          in
-		  let f = List.map (fun (v,_,_) -> v) es.CF.es_var_subst in
-		  let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in
-
-		  let filtered_ctx_rhs =
-		  let rec filter pformula =
-			match pformula with
-			  | CP.And (f1, f2, pos) -> let nf2 = CP.subst_avoid_capture f t f2 in
-										let nf1 = filter f1 in
-										  if (CP.equalFormula_f CP.eq_spec_var f2 nf2) then nf1
-										  else CP.mkAnd nf1 nf2 pos
-			  | _ -> let nf = CP.subst_avoid_capture f t pformula in
-					   if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
-					   else nf
-			in filter es.es_var_ctx_rhs
-		  in
-		  let v1 = Cprinter.string_of_pure_formula es.es_var_ctx_lhs in
-		  let v2 = Cprinter.string_of_pure_formula filtered_ctx_rhs in
-		  let _ = print_string ("State transition graph: " ^ v1 ^ "->" ^ v2 ^ "\n") in 
-		  let ng1 = IG.add_vertex g v1 in
-		  let ng2 = IG.add_vertex ng1 v2 in
-		  let ng3 = IG.add_edge ng2 v1 v2 in 
-		  build_state_trans_graph prog ctx e.Cformula.formula_var_continuation ng3
-    in
-    if (List.length conseq) > 0 then	
-	  let ng = List.fold_left (fun g cons -> helper ctx cons g) graph conseq in ng
-	else 
-	  graph
-
 and heap_entail_conjunct_lhs_struc
       (prog : prog_decl) 
       (is_folding : bool) 
@@ -2491,7 +2416,7 @@ and heap_entail_conjunct_lhs_struc
 	      else false 
 			
   and inner_entailer ctx conseq =
-	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p))
+	Gen.Debug.no_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p))
 	  (fun ctx cons -> inner_entailer_a ctx cons) ctx conseq
 
   and inner_entailer_a (ctx : context) (conseq : struc_formula) : list_context * proof =
@@ -2524,7 +2449,7 @@ and heap_entail_conjunct_lhs_struc
                         (*this unsat check is essential for completeness of result*)
 				        if (isAnyFalseCtx n_ctx) then (SuccCtx[n_ctx],UnsatAnte)
 				        else
-						  let n_ctx = CF.transform_context (fun es -> let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in
+						  let n_ctx = CF.transform_context (fun es -> (*let _ = print_string ("innner_entailer: ctx_rhs@Ecase: before updating: " ^ (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs) ^ "\n") in*)
 																	  CF.Ctx {es with CF.es_var_ctx_rhs = CP.mkAnd es.CF.es_var_ctx_rhs c1 pos}) n_ctx  in
                           let n_ctx = prune_ctx prog n_ctx in
                           inner_entailer n_ctx c2) b.formula_case_branches 
@@ -2594,85 +2519,49 @@ and heap_entail_conjunct_lhs_struc
 	        ) in*)
 	      ((SuccCtx [rs4]),TrueConseq)
 	  | EVariance e ->
-		    let _ = (* Termination checking *)
-			    print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
-			    print_string ("\ninner_entailer: EVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n");
-			  let loc = e.formula_var_pos in
-			  let es = match ctx with
-			    | Ctx c -> c
-			    | OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n"^(Cprinter.string_of_context ctx))
-              in
-			  
-			  (*let _ = print_string ("innner_entailer: ctx_lhs@EVariance: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ "\n") in
-			  let _ = print_string ("innner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs) ^ "\n") in*)
-			  let _ = print_string (List.fold_left (fun rs (v1,v2,mn) -> rs ^ " (" ^ (Cprinter.string_of_spec_var v1) ^ "," ^ (Cprinter.string_of_spec_var v2) ^ "@" ^ mn ^ ")") "innner_entailer: var_subst@EVariance: " es.CF.es_var_subst) in
-			  let string_ctx_lhs = Cprinter.string_of_pure_formula es.es_var_ctx_lhs in
-			  let str_var_subst  = List.map (fun (v1,v2,mn) -> ((Cprinter.string_of_spec_var v1), (Cprinter.string_of_spec_var v2))) es.CF.es_var_subst in
-			  let f = List.map (fun (v,_,_) -> v) es.CF.es_var_subst in
-			  let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in
+		    (*let _ = print_string ("\ninner_entailer: EVariance: LHS: "^(Cprinter.string_of_context ctx)^"\n");
+			        print_string ("\ninner_entailer: EVariance: RHS: "^(Cprinter.string_of_ext_formula f)^"\n")
+			in*) 
+			
+			let es = match ctx with
+			  | Ctx c -> c
+			  | OCtx _ -> report_error no_pos ("inner_entailer: OCtx encountered \n"^(Cprinter.string_of_context ctx))
+            in
+			
+            (*
+			let _ = print_string (List.fold_left (fun rs (v1,v2,mn) -> rs ^ " (" ^ (Cprinter.string_of_spec_var v1) ^ "," ^ (Cprinter.string_of_spec_var v2) ^ "@" ^ mn ^ ")") "innner_entailer: var_subst@EVariance: " es.CF.es_var_subst) in
+			let string_ctx_lhs = Cprinter.string_of_pure_formula es.es_var_ctx_lhs in
+			let str_var_subst  = List.map (fun (v1,v2,mn) -> ((Cprinter.string_of_spec_var v1), (Cprinter.string_of_spec_var v2))) es.CF.es_var_subst in
+			*)
+			let f = List.map (fun (v,_,_) -> v) es.CF.es_var_subst in
+			let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in
+			(*let t = List.map (fun (_,v,mn) -> let CP.SpecVar (t,i,p) = CP.to_unprimed v in CP.SpecVar (t, i^"@"^mn, p)) es.CF.es_var_subst in*)
 
-			  let filtered_ctx_rhs =
-				let rec filter pformula =
-				  match pformula with
-					| CP.And (f1, f2, pos) -> let nf2 = CP.subst_avoid_capture f t f2 in
+			let filtered_ctx_rhs =
+			  let rec filter pformula =
+				match pformula with
+				  | CP.And (f1, f2, pos) -> let nf2 = CP.subst_avoid_capture f t f2 in
 											let nf1 = filter f1 in
 											if (CP.equalFormula_f CP.eq_spec_var f2 nf2) then nf1
 											else CP.mkAnd nf1 nf2 pos
-					| _ -> let nf = CP.subst_avoid_capture f t pformula	in
+				  | _ -> let nf = CP.subst_avoid_capture f t pformula in
 						   if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
 						   else nf
-				in filter es.es_var_ctx_rhs
-			  in 
-			  
-			  let _ = print_string ("\ninner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
-			  let _ = print_string ("\ninner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
+		      in filter es.es_var_ctx_rhs
+			in 
 
-			  let _ = print_string ("\ninner_entailer: call graph adding: " ^ string_ctx_lhs ^ " ->" ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
+			let nes = {es with CF.es_var_ctx_rhs = filtered_ctx_rhs} in
+			(*
+			let _ = print_string ("\ninner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
+			let _ = print_string ("\ninner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
 
-			  graph := !graph @ [(es.es_var_ctx_lhs, filtered_ctx_rhs)];
+			let _ = print_string ("\ninner_entailer: call graph adding: " ^ string_ctx_lhs ^ " ->" ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
+            *)
+
+			graph := !graph @ [(es.es_var_ctx_lhs, filtered_ctx_rhs)];
+			var_checked_list := !var_checked_list @ [(nes,e)];
 			  
 			  
-			  if es.es_var_label = e.formula_var_label then
-			    (*let lhs_measures = List.map (fun exp -> CP.transform_exp (fun e -> match e with
-				  | CP.Var (x,l) -> Some (CP.Var (CP.to_primed x,l))
-				  | _ -> None) exp) es.es_var_measures*)
-			    let lhs_measures = es.es_var_measures in
-			    let rhs_measures = e.formula_var_measures in
-			    let rec binding lhs_m rhs_m =
-				  if ((List.length lhs_m) != (List.length rhs_m)) then report_error no_pos ("inner_entailer: variance checking: LHS does not match RHS \n")
-				  else match lhs_m with
-					| [] -> []
-					| h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
-			    let binding_measures = binding lhs_measures rhs_measures in
-			    let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m2>n2 & m2>=lb*) 
-				  let term_formula = 
-					List.fold_right (fun (l,r) (flag,res) -> if flag then
-					  let lower_bound = match (snd r) with
-						| None -> report_error no_pos ("inner_entailer: error with lower bound in termination checking \n")
-						| Some exp -> exp in
-					  let boundedness_checking_formula = CP.BForm (CP.mkGte l lower_bound loc, None) in
-					  let lexico_ranking_formula = CP.BForm (CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None) in
-					  (false, CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc)
-					else
-					  (false, CP.mkAnd (CP.BForm (CP.mkEq l (fst r) loc, None)) res loc)) lst_measures (true, CP.mkTrue loc)
-				  in
-				  (*let _ = print_string ("\ninner_intailer: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
-				  (inner_entailer ctx [mkEBase (snd term_formula) loc])  
-			    in
-			    let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
-				  List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
-			    in
-			    let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
-				if (List.exists (fun (rs,prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
-				  Debug.print_info "variance" ("checking termination by variance " ^ (string_of_int e.formula_var_label) ^ " : ok") loc
-				else
-				  Debug.print_info "variance" ("checking termination by variance " ^ (string_of_int e.formula_var_label) ^ " : failed") loc;
-			  else if (es.es_var_label > e.formula_var_label) then
-			    (* Already checked UNSAT(D) at heap_entail_one_context_struc *)
-			    Debug.print_info "variance" ("transition from variance " ^ (string_of_int es.es_var_label) ^ " to " ^ (string_of_int e.formula_var_label) ^ " : safe") loc  		
-			  else
-			    Debug.print_info "variance" ("transition from variance " ^ (string_of_int es.es_var_label) ^ " to " ^ (string_of_int e.formula_var_label) ^ " : invalid") loc
-		    in
 		    inner_entailer ctx e.Cformula.formula_var_continuation
     in
     (*let _ = print_string ("\n inner entailer: "^(string_of_int (List.length conseq))^"\n") in
@@ -2687,6 +2576,56 @@ and heap_entail_conjunct_lhs_struc
   let r = inner_entailer ctx conseq in
   (*let _ = print_string ("\nheap_entail_conjunct_lhs_struc: call graph:\n" ^ (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !graph) ^ "\n") in*)
   r
+
+and heap_entail_variance
+      (prog : prog_decl) 
+      (es : entail_state) 
+      (e : ext_variance_formula) =
+  let loc = e.formula_var_pos in
+
+  let string_of_es_var_measure el = "[" ^ (List.fold_left (fun rs e -> let str = Cprinter.string_of_formula_exp e in
+																if rs = "" then str else rs ^ ", " ^ str) "" el) ^ "]" in
+
+  Debug.print_info "termination" ("Translation from state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_lhs) ^ " to state " ^ (Cprinter.string_of_pure_formula es.es_var_ctx_rhs)) loc;
+  
+  if es.es_var_label = e.formula_var_label then
+	let lhs_measures = es.es_var_measures in
+	let rhs_measures = e.formula_var_measures in
+	let rec binding lhs_m rhs_m =
+	  if ((List.length lhs_m) != (List.length rhs_m)) then
+		report_error no_pos ("termination: variance checking: LHS does not match RHS \n")
+	  else match lhs_m with
+		| [] -> []
+		| h::t -> (h, (List.hd rhs_m))::(binding t (List.tl rhs_m)) in
+	let binding_measures = binding lhs_measures rhs_measures in
+	let fun_check_term lst_measures = (* [(m1,n1),(m2,n2)] -> m1=n1 & m2>n2 & m2>=lb*) 
+	  let term_formula = 
+		List.fold_right (fun (l,r) (flag,res) -> if flag then
+			let lower_bound = match (snd r) with
+			  | None -> report_error no_pos ("termination: variance checking: error with lower bound in termination checking \n")
+			  | Some exp -> exp in
+			let boundedness_checking_formula = CP.BForm (CP.mkGte l lower_bound loc, None) in
+			let lexico_ranking_formula = CP.BForm (CP.mkGt (CP.mkSubtract l (fst r) loc) (CP.mkIConst 0 loc) loc, None) in
+			(false, CP.mkAnd lexico_ranking_formula boundedness_checking_formula loc)
+		  else
+			(false, CP.mkAnd (CP.BForm (CP.mkEq l (fst r) loc, None)) res loc)) lst_measures (true, CP.mkTrue loc)
+	  in
+      (*let _ = print_string ("\ntermination: term checking formula: "^(Cprinter.string_of_struc_formula [mkEBase (snd term_formula) loc])) in*)
+	  (heap_entail_conjunct_lhs_struc prog false false false (CF.Ctx es) [mkEBase (snd term_formula) loc] no_pos None)  
+	in
+	let lexico_measures = (* [(m1,n1),(m2,n2)] -> [[(m1,n1)],[(m1,n1),(m2,n2)]] *)
+	  List.fold_right (fun bm res -> [bm]::(List.map (fun e -> bm::e) res)) binding_measures []	
+	in
+	let lst_res = List.map (fun lm -> fun_check_term lm) lexico_measures in
+	if (List.exists (fun (rs,prf) -> let _ = Prooftracer.log_proof prf in not (CF.isFailCtx rs)) lst_res) then
+	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : ok") loc
+	else
+	  Debug.print_info "termination" ("checking termination by variance " ^ (string_of_es_var_measure es.es_var_measures) ^ " : failed") loc;
+  else if (es.es_var_label > e.formula_var_label) then
+	(* Already checked UNSAT(D) at heap_entail_one_context_struc *)
+	Debug.print_info "termination" ("transition from variance " ^ (string_of_int es.es_var_label) ^ " to " ^ (string_of_int e.formula_var_label) ^ " : safe") loc  		
+  else
+	Debug.print_info "termination" ("transition from variance " ^ (string_of_int es.es_var_label) ^ " to " ^ (string_of_int e.formula_var_label) ^ " : invalid") loc
 
 and heap_entail_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_context) (conseq : formula) pos : (list_context * proof) =
   match cl with

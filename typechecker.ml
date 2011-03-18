@@ -355,7 +355,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
 			  (* Stripping the "variance" feature from org_spec if the call is not a recursive call *)
 			  (*print_string ("\ncheck_specs: SCall: " ^ (if ir then "is rec: " else "") ^ "org_spec: " ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n");*)
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: org_spec" ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n") in
+			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: org_spec" ^ (Cprinter.string_of_struc_formula org_spec) ^ "\n") in*)
 			  let stripped_spec = if ir then org_spec else
 				let rec strip_variance ls = match ls with
 				  | [] -> []
@@ -390,19 +390,19 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 				             (lb,estk,nlbctx)) sctx in
 
 			  
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
+			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec1: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
 	          let renamed_spec = CF.subst_struc st1 renamed_spec in
 			  
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec2: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
+			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec2: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
 			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: fr_vars: " ^ (Cprinter.string_of_spec_var_list fr_vars) ^ "\n") in
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: to_vars: " ^ (Cprinter.string_of_spec_var_list to_vars) ^ "\n") in				
+			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: to_vars: " ^ (Cprinter.string_of_spec_var_list to_vars) ^ "\n") in*)				
 	          let renamed_spec = CF.subst_struc_avoid_capture fr_vars to_vars renamed_spec in
 
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec3: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in
+			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: renamed_spec3: " ^ (Cprinter.string_of_struc_formula renamed_spec) ^ "\n") in*)
 	          let st2 = List.map (fun v -> (CP.to_unprimed v, CP.to_primed v)) actual_spec_vars in
 	          let pre2 = CF.subst_struc_pre st2 renamed_spec in
               let new_spec = (Cprinter.string_of_struc_formula pre2) in
-			  let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in
+			  (*let _ = print_string ("\ncheck_pre_post@SCall@check_exp: new_spec: " ^ new_spec ^ "\n") in*)
 			  (* Termination checking *)
 			  let str_debug_variance = if (ir) then "Checking the termination of the recursive call " ^ mn ^ " in method " ^ proc.proc_name ^ ": " ^ (Cprinter.string_of_pos pos) ^ "\n" else "" in
 				Debug.devel_pprint (str_debug_variance ^ "\n") pos;
@@ -419,7 +419,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              Gen.Debug.ho_2 "check_pre_post" (Cprinter.string_of_struc_formula) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_list_failesc_context)
+              Gen.Debug.no_2 "check_pre_post" (Cprinter.string_of_struc_formula) (Cprinter.string_of_list_failesc_context) (Cprinter.string_of_list_failesc_context)
                   check_pre_post org_spec sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
@@ -741,6 +741,37 @@ module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
+
+let build_state_trans_graph ls =
+  (*print_string ("\ncheck_prog: call graph:\n" ^
+	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");*)
+
+  let gr = IG.empty in
+  let g = List.fold_left (fun g (f1,f2) ->
+	                          let v1 = Cprinter.string_of_pure_formula f1 in
+		                      let v2 = Cprinter.string_of_pure_formula f2 in
+		                      let ng1 = IG.add_vertex g v1 in
+		                      let ng2 = IG.add_vertex ng1 v2 in
+		                      let ng3 = IG.add_edge ng2 v1 v2 in
+							  ng3
+	                     ) gr ls in
+  g
+
+let scc_numbering g =
+  let (_,f) = IGC.scc g in
+  (*print_string ("The scc list of state transitions: " ^
+	(List.fold_left (fun rsl l -> rsl ^ "\n" ^
+	   (List.fold_left (fun rse e -> rse ^ "," ^ e ^ ":" ^ (string_of_int (f e))) "" l)) "" scc_list));*)
+  f
+
+let variance_numbering ls f =
+  let helper ele =
+	let (es,e) = ele in
+	let nes = {es with CF.es_var_label = f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs)} in
+	let ne = {e with CF.formula_var_label = f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs)}
+	in (nes,ne)
+  in List.map (fun e -> helper e) ls
+	
 		
 let check_prog (prog : prog_decl) =
   if !Globals.check_coercions then begin
@@ -750,21 +781,11 @@ let check_prog (prog : prog_decl) =
   end else begin
     ignore (List.map (check_data prog) prog.prog_data_decls);
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
-	print_string ("\ncheck_prog: call graph:\n" ^
-								 (List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");
 
-	let gr = IG.empty in
-	let g = List.fold_left (fun g (f1,f2) ->
-	                          let v1 = Cprinter.string_of_pure_formula f1 in
-		                      let v2 = Cprinter.string_of_pure_formula f2 in
-		                      let ng1 = IG.add_vertex g v1 in
-		                      let ng2 = IG.add_vertex ng1 v2 in
-		                      let ng3 = IG.add_edge ng2 v1 v2 in
-							  ng3
-		                   ) gr !Solver.graph in
-	let scc_list = IGC.scc_list g in
-	let (n,f) = IGC.scc g in
-	print_string ("The scc list of state transitions: " ^ (List.fold_left (fun rsl l -> rsl ^ "\n" ^ (List.fold_left (fun rse e -> rse ^ "," ^ e ^ ":" ^ (string_of_int (f e))) "" l)) "" scc_list));
+	let g = build_state_trans_graph !Solver.graph in
+	let f = scc_numbering g in
+	let cl = variance_numbering !Solver.var_checked_list f in
+	List.iter (fun (es,e) -> heap_entail_variance prog es e) cl
 	    
     (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in
       let filtered_proc = (List.filter (fun p -> p.proc_body <> None) prog.prog_proc_decls) in
