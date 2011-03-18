@@ -11,7 +11,7 @@ GUIINCLUDES=-I +lablgtk2
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
 OCAMLFLAGS=  $(INCLUDES) # add other options for ocamlc here
 GUIOCAMLFLAGS= $(OCAMLFLAGS) $(GUIINCLUDES) #
-OCAMLOPTFLAGS= -dtypes $(INCLUDES) # add other options for ocamlopt here
+OCAMLOPTFLAGS= -annot $(INCLUDES) # add other options for ocamlopt here
 # removed -p from above as it seems related to profiling..
 OCAMLYACC=ocamlyacc
 OCAMLYACCFLAGS=-v
@@ -37,10 +37,10 @@ lexer.ml: lexer.mll token.ml
 	$(OCAMLLEX) lexer.mll
  
 parser.cmo: lexer.ml
-	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -c -g parser.ml
+	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
 parser.cmx : lexer.ml
-	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -c -g parser.ml
+	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
 ocparser.cmo ocparser.ml: ocparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly

@@ -105,7 +105,7 @@ type pure_double =
   
 let apply_pure_form1 fct form = match form with
   | Pure_f f -> Pure_f (fct f)
-  | _ -> report_error (get_pos 1) "expected pure_form, found cexp"
+  | _ -> report_error (get_pos 1) "with 1 expected pure_form, found cexp"
 
 let apply_cexp_form1 fct form = match form with
   | Pure_c f -> Pure_c (fct f)
@@ -114,7 +114,7 @@ let apply_cexp_form1 fct form = match form with
   
 let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
-  | _ -> report_error (get_pos 1) "expected pure_form, found cexp"
+  | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
@@ -127,7 +127,16 @@ let cexp_to_pure1 fct f = match f with
 let cexp_to_pure2 fct f1 f2= match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> Pure_f (P.BForm(fct f1 f2,None))
   | _ -> report_error (get_pos 1) "expected cexp, found pure_form"
-  
+
+(* Use the Stream.npeek to look ahead the TOKENS *)
+let peek_try = 
+ SHGram.Entry.of_parser "peek_try" 
+    (fun strm -> 
+       match Stream.npeek 2 strm with 
+         | [cid;  IN_T, _]  -> ()
+         | [cid; NOTIN, _] -> ()
+         | _ -> raise Stream.Failure  ) 
+
   
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
@@ -223,7 +232,7 @@ view_header:
 			}]];
       
 cid: 
-  [[ `IDENTIFIER t         -> (print_string ("id"^t^"\n");(t, Unprimed))
+  [[ `IDENTIFIER t         -> (print_string ("id:"^t^"\n");(t, Unprimed))
    | `IDENTIFIER t; `PRIME -> (t, Primed)
    | `RES _                 -> (res, Unprimed)
    | `SELFT _               -> (self, Unprimed)
@@ -282,19 +291,23 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l ->
 			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos 1) ("anonimous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
+
 disjunctive_constr:
   [ "disj_or" LEFTA
     [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos 2)]   
   | "disj_base"
    [ cc=core_constr             -> cc
-	 | `OPAREN; `EXISTS; ocl=opt_cid_list; `COLON; cc=core_constr; `CPAREN -> 
+	 | `EXISTS; ocl= cid_list; `COLON; cc=core_constr   -> 
 	  match cc with
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
                F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos 1)
       | _ -> report_error (get_pos 4) ("only Base is expected here.")
-  ]];
+     (* | `OPAREN ;  dc=SELF ; `CPAREN -> dc *)
+
+  ]
+  ];
       
 core_constr:
   [[ hc=opt_heap_constr; pc=opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
@@ -311,50 +324,62 @@ opt_label: [[t= OPT label-> un_option t ""]];
 
 label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> id]];
 
-opt_pure_label :[[t=OPT pure_label -> un_option t (fresh_branch_point_id "")]];
+(* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
 pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id]];
 
 formula_label: [[ `AT; `DOUBLEQUOTE; `IDENTIFIER id ; `DOUBLEQUOTE ->(fresh_branch_point_id id)]];
 
 opt_heap_constr: 
-  [[ t=heap_constr -> t
-   | `TRUE -> F.HTrue]];
+  [[ t =  heap_constr ->  t  
+      | `TRUE -> F.HTrue]];
 
 heap_constr:
-  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
-   | hrw=heap_rw                                            ->F.mkPhase F.HTrue hrw (get_pos 2)]];
+  [ [ hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos 2)]
+   |[ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_heap_arg_list; `GT; ofl = opt_formula_label -> 
+                   F.mkHeapNode c id false false false false hal ofl (get_pos 2) ]
+   ];
 
-heap_rd:
-  [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos 2)
-   | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos 2)
-   | shi=simple_heap_constr_imm                  -> shi ]];
+(* heap_constr: *)
+(*   [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2) *)
+(*    | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2) *)
+(*    | hrw = heap_rw                                            ->F.mkPhase F.HTrue hrw (get_pos 2)]]; *)
 
-heap_rw:
-  [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos 2)
-   | hwr=heap_wr                                          -> F.mkPhase F.HTrue hwr (get_pos 2)]];
+(* heap_rd: *)
+(*   [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos 2) *)
+(*    | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos 2) *)
+(*    | shi=simple_heap_constr_imm                  -> shi ]]; *)
 
-heap_wr:
-  [[ shc=simple_heap_constr; `STAR; hw=SELF     -> F.mkStar shc hw (get_pos 2)
-   | shi=simple_heap_constr_imm; `STAR; hw=SELF -> F.mkStar shi hw (get_pos 2)
-   | shc=simple_heap_constr                     -> shc
-   | shi=simple_heap_constr_imm                 -> shi ]];
+(* heap_rw: *)
+(*   [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos 2) *)
+(*    | hwr=heap_wr                                          -> F.mkPhase F.HTrue hwr (get_pos 2)]]; *)
+
+(* heap_wr: *)
+(*   [[ shc=simple_heap_constr; `STAR; hw=SELF     -> F.mkStar shc hw (get_pos 2) *)
+(*    | shi=simple_heap_constr_imm; `STAR; hw=SELF -> F.mkStar shi hw (get_pos 2) *)
+(*    | shc=simple_heap_constr                     -> shc *)
+(*    | shi=simple_heap_constr_imm                 -> shi ]]; *)
 
 simple2:  [[ t=opt_type_var_list; `LT -> ()]];
    
 simple_heap_constr_imm:
-  [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl=opt_general_h_args; `GT; `IMM; ofl=opt_formula_label ->
+  [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT; `IMM; ofl=opt_formula_label ->
      match hl with
         | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2)
         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2)]];
 
+(* simple_heap_constr_imm: *)
+(*   [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl=opt_general_h_args; `GT; `IMM; ofl=opt_formula_label -> *)
+(*      match hl with *)
+(*         | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2) *)
+(*         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2)]]; *)
+
 simple_heap_constr:
-  [[ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl=opt_formula_label -> 
+  [[ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos 2))
-   | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1) ]];
+   (* | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)  *)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];  
         
@@ -364,8 +389,8 @@ opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];
   |[ `IDENTIFIER id ; `EQ; i=cexp ; t=opt_heap_arg_list2 -> ([],(id,i)::t)]
   ];*)
 general_h_args:
-  [[ t=opt_heap_arg_list -> (t,[])]
-  |[ t=opt_heap_arg_list2 -> ([],t)]];  
+  [[ t= opt_heap_arg_list -> (t,[])]
+  |[ t= opt_heap_arg_list2 -> ([],t)]];  
 
   
               
@@ -378,93 +403,98 @@ and_pure_constr: [[`AND; t=pure_constr -> t]];
 pure_constr: [[t=cexp_w -> match t with
                     | Pure_f f -> f
                     | _ ->  report_error (get_pos 1) "expected pure_constr, found cexp"]];
-                                      
+
 cexp: [[t=cexp_w -> match t with
                     | Pure_c f -> f
                     | _ -> report_error (get_pos 1) "expected cexp, found pure_constr"]];
-                                      
+
 cexp_w :
   [ "pure_lbl"
-    [ofl=opt_pure_label ; spc=cexp_w              -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
+    [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)              -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
   
-  | "pure_or" RIGHTA
-   [ pc1=cexp_w; `OR; pc2=cexp_w             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos 2)) pc1 pc2]
+  | "pure_or"  RIGHTA
+   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos 2)) pc1 pc2]
   
   | "pure_and" RIGHTA
-   [ pc1=cexp_w; `AND; pc2=cexp_w              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos 2)) pc1 pc2]
-  
-  | "pure_base" 
-   [   `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
-     | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
-     | t=cid                             -> Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
-     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
-     | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=cexp_w; `CPAREN 
-                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
-     | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=cexp_w; `CPAREN 
-                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos 1)) c ocl) pc
-     | h=ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
-     | lc=cexp_w LEVEL "bconstr"    -> lc
-     ]
-     
+   [ pc1=SELF; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos 2)) pc1 pc2]
+
   | "bconstr"
-    [  lc=cexp_w; `NEQ;    cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl
-     | lc=cexp_w; `EQ;     cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos 2)) lc cl 
-     | lc=cexp_w; `LT;     cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos 2)) lc cl 
-     | lc=cexp_w; `LTE;    cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos 2)) lc cl 
-     | lc=cexp_w; `GT;     cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl 
-     | lc=cexp_w; `GTE;    cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos 2)) lc cl 
-     | lc=cid; `IN_T;   cl=cexp_w                               -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos 2))) cl 
-     | lc=cid; `NOTIN;  cl=cexp_w                               -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos 2))) cl 
-     | lc=cexp_w; `SUBSET; cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos 2))) lc cl 
+    [  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl
+     | lc=SELF (*LEVEL "gen"*); `EQ;    cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos 2)) lc cl 
+     | lc=SELF; `LTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos 2)) lc cl 
+     | lc=SELF; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl 
+     | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos 2)) lc cl   
+     | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos 2))) cl 
+     | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos 2))) cl  
+     | lc=SELF; `SUBSET; cl=SELF                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos 2))) lc cl 
      | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMax (c1, c2, (get_pos 2)), None))
-     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMin (c1, c2, (get_pos 2)), None))
-     | lc=cexp_w; `INLIST; cl=cexp_w                            -> cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos 2))) lc cl 
-     | lc=cexp_w; `NOTINLIST; cl=cexp_w                         -> cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos 2))) lc cl 
-     | `ALLN; `OPAREN; lc=cexp_w; `COMMA; cl=cexp_w; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos 2))) lc cl 
-     | `PERM; `OPAREN; lc=cexp_w; `COMMA; cl=cexp_w; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos 2))) lc cl ]
+     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMin (c1, c2, (get_pos 2)), None))  
+     | lc=SELF; `INLIST; cl=SELF                -> cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos 2))) lc cl 
+     | lc=SELF; `NOTINLIST; cl=SELF             -> cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos 2))) lc cl 
+     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos 2))) lc cl  
+     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos 2))) lc cl  ]
      
   | "pure_paren" 
-   [ `OPAREN; dc=cexp_w; `CPAREN -> dc ] 
-    
-(* constraint expressions *)
-  | "gen"
-   [ `OBRACE; c=opt_cexp_list; `CBRACE                             -> Pure_c (P.Bag (c, get_pos 1))
-   | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos 1))
-   | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos 1))
-   | `DIFF; `OPAREN; c1=cexp_w LEVEL "gen"; `COMMA; c2=cexp_w LEVEL "gen"; `CPAREN 
-                                                                   -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos 1) ) c1 c2
-   | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos 1))
-   | c1=cexp_w LEVEL "gen"; `COLONCOLONCOLON; c2=cexp_w LEVEL "gen" -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos 2)) c1 c2
-   | `TAIL; `OPAREN; c1=cexp_w LEVEL "gen"; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos 1)) c1
-   | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos 1))
-   | `REVERSE; `OPAREN; c1=cexp_w LEVEL "gen"; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos 1)) c1
-   | t=cexp_w LEVEL "addit" -> t]
+         [ `OPAREN; dc=SELF; `CPAREN -> dc ] 
    
+(* constraint expressions *)
+   | "gen"
+   [ `OBRACE; c=opt_cexp_list; `CBRACE                             -> Pure_c (P.Bag (c, get_pos 1)) 
+   | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos 1))
+   | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos 1)) 
+   | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN  
+                                                                   -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos 1) ) c1 c2
+   | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos 1)) 
+   | c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos 2)) c1 c2 
+   | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos 1)) c1
+   | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos 1))
+   | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos 1)) c1 
+   (* | t=cexp_w LEVEL "addit" -> t *) ]
+ 
    | "addit"
-     [ c1=cexp_w LEVEL "mul"; `PLUS; c2=cexp_w LEVEL "addit"       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos 2)) c1 c2
-     | c1=cexp_w LEVEL "mul"; `MINUS; c2=cexp_w LEVEL "addit"      -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos 2)) c1 c2
-     | t =cexp_w LEVEL "mul"                                       -> t]
+     [ c1=SELF ; `PLUS; c2=SELF       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos 2)) c1 c2  
+     | c1=SELF ; `MINUS; c2=SELF      -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos 2)) c1 c2
+     (*| t =cexp_w LEVEL "mul"                                        -> t*)]
      
    | "mul"
-     [ t1=cexp_w LEVEL "una"; `STAR; t2=cexp_w LEVEL "mul"         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos 2)) t1 t2
-     | t1=cexp_w LEVEL "una"; `DIV ; t2=cexp_w LEVEL "mul"         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2
-     | t =cexp_w                                                   -> t ]
-   
+     [(*  t1=SELF ; `STAR; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos 2)) t1 t2   *)
+     (* | *) t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2  
+     (*| t =cexp_w                                                 -> t *)]
+
    | "una"
-     [ t=cid                                     -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))
+     [ t=cid                -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))   
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
      | `FLOAT_LIT (f,_)                          -> Pure_c (P.FConst (f, get_pos 1))
-     | `OPAREN; t=cexp_w; `CPAREN                -> t
+     | `OPAREN; t=SELF; `CPAREN                -> t 
      | `NULL                                     -> Pure_c (P.Null (get_pos 1))
-     | `MINUS; c=cexp_w LEVEL "una"              -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c
-     | `MAX; `OPAREN; c1=cexp_w; `COMMA; c2=cexp_w; `CPAREN 
+     | `MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c
+     | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos 1)) c1 c2
-     | `MIN; `OPAREN; c1=cexp_w; `COMMA; c2=cexp_w; `CPAREN 
+     | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos 1)) c1 c2
-     | `HEAD; `OPAREN; c=cexp_w; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos 1)) c
-     | `LENGTH; `OPAREN; c=cexp_w; `CPAREN       -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos 1)) c ]
+     | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos 1)) c
+     | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos 1)) c ]
+
+   | "pure_base"
+     [ `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
+     | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
+
+     (*| t=NEXT                            -> (match t with
+                                                  | Pure_f f -> t (*Pure_f (P.BForm (P.mkBVar t (get_pos 1), None )) *)
+                                                  | _ -> report_error (get_pos 1) "expected pure_constr, found cexp") *)
+
+     | t=cid                            -> (print_string ("pure_form:"^(fst t)^"\n"); Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))) 
+     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
+     | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
+                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
+     | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
+                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos 1)) c ocl) pc
+     | h=ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
+     (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
+     ]
    ];
     
+
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]];
 
 (*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
