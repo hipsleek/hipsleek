@@ -17,7 +17,7 @@ C1:
    a2 |- b: may
 bug: just check the first fail-> sufficient??
 */
-checkentail x::ll<n> & m > 0|-n > 3.
+//checkentail x::ll<n> & m > 0|-n > 3.
 
 //checkentail n>0 & m > 0 |-n > 3.
 
@@ -52,4 +52,4 @@ C5:
 //checkentail x::ll<n> |-n=0.
 
 //sleek in default fail, but oc is ok
-//checkentail n>m & m>5 |- n > 3.
+checkentail m<5 & n<m |- n > 3.
