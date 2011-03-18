@@ -3,7 +3,7 @@ C1:
    a1 |- b: must
    a2 |- b: may
 */
-//checkentail n > 3 or n < 5 |- n <1.
+checkentail n > 3 or n < 5 |- n <1.
 //MAY ERROR:  (n > 3 |- n < 1: UNSAT) and  (n > 3 |- not(n <1): SAT)
 /*
 C2:

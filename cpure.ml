@@ -4331,7 +4331,7 @@ let string_of_res (r,_,_,f) =
         | None -> b
 
 let rec imply_disj_orig ante_disj conseq t_imply imp_no =
- Gen.Debug.ho_2 "imply_disj_orig"  string_of_ls_pure_formula !print_formula
+ Gen.Debug.no_2 "imply_disj_orig"  string_of_ls_pure_formula !print_formula
    string_of_res
  (fun a c -> imply_disj_orig_x a c t_imply imp_no) ante_disj conseq
 
