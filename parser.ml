@@ -156,7 +156,7 @@ EXTEND SHGram
   GLOBAL: sprog hprog sprog_int;
   sprog:[[ t = command_list; `EOF -> t ]];
   sprog_int:[[ t = command; `EOF -> t ]];
-  hprog:[[ t = hprogn; `EOF -> t ]];
+  hprog:[[ t = hprogn; `EOF ->  t ]];
   
 command_list: [[ t = LIST0 non_empty_command_dot -> t ]];
   
@@ -185,7 +185,7 @@ data_decl:
 with_typed_var: [[`OSQUARE; typ; `CSQUARE -> ()]];
 
 data_header:
-    [[ `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
+    [[ `DATA; `IDENTIFIER t; OPT with_typed_var ->print_string ("here \n"); t ]];
 
 data_body: 
     [[  `OBRACE; fl=field_list; `CBRACE             -> fl
@@ -646,7 +646,7 @@ opt_fct_list: [[ t= OPT fct_arg_list  -> [] ]];
  (*end of sleek part*)   
  (*start of hip part*)
 hprogn: 
-  [[ t = opt_decl_list ->  
+  [[ t = opt_decl_list ->
       let data_defs = ref ([] : data_decl list) in
       let global_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
@@ -693,7 +693,7 @@ decl:
   | `COERCION; c=coercion_decl    -> Coercion c ]];
 
 type_decl: 
-  [[ t=data_decl  -> Data t
+  [[ t= data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
    | v=view_decl  -> View v
@@ -1259,7 +1259,7 @@ member_name :
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
-let parse_hip n s = SHGram.parse hprog (PreCast.Loc.mk n) s
+let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 
