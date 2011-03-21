@@ -135,12 +135,15 @@ let peek_try =
        match Stream.npeek 2 strm with 
          | [cid;  IN_T,_]  -> ()
          | [cid; NOTIN,_] -> ()
+         | [OPAREN,_; EXISTS,_ ] -> raise Stream.Failure
          | [GT,_;STAR,_] -> raise Stream.Failure
          | [GT,_;INV,_] -> raise Stream.Failure
          | [GT,_;AND,_] -> raise Stream.Failure
          | [GT,_;OR,_] -> raise Stream.Failure
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
+         | [GT,_;LEFTARROW,_] -> raise Stream.Failure
+         | [GT,_;CPAREN,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
 
@@ -304,14 +307,14 @@ disjunctive_constr:
     [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos 2)]   
   | "disj_base"
    [ cc=core_constr             -> cc
-	 | `EXISTS; ocl= cid_list; `COLON; cc=core_constr   -> 
-	  match cc with
+   | `EXISTS; ocl= cid_list; `COLON; cc=core_constr   -> 
+	  (match cc with
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
                F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos 1)
-      | _ -> report_error (get_pos 4) ("only Base is expected here.")
-     (* | `OPAREN ;  dc=SELF ; `CPAREN -> dc *)
+      | _ -> report_error (get_pos 4) ("only Base is expected here."))
+   | `OPAREN;  dc=SELF; `CPAREN -> dc 
 
   ]
   ];
@@ -348,8 +351,8 @@ opt_heap_constr:
 (*    ]; *)
 
 heap_constr:
-  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
+  [[ peek_try; `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
+   | peek_try; `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
    | hrw = heap_rw                                            ->F.mkPhase F.HTrue hrw (get_pos 2)]];
 
 heap_rd:
