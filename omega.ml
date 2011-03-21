@@ -140,8 +140,8 @@ let start() =
   if not !is_omega_running then begin
       print_string "Starting Omega... \n"; flush stdout;
       last_test_number := !test_number;
-      let (_, is_running) = Gen.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
-      is_omega_running := is_running;
+      let _ = Gen.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
+      is_omega_running := true;
   end
 
 (* stop Omega system *)

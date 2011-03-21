@@ -1692,7 +1692,7 @@ struct
     ignore (Unix.setitimer Unix.ITIMER_REAL { Unix.it_interval = 0.0; Unix.it_value = tsecs })
 
   (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
-    Otherwise, this method returns the result after calling fnc. *)
+    Otherwise, this method returns the result given by fnc. *)
   let maybe_raise_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
     let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
     let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
@@ -1702,6 +1702,7 @@ struct
     reset_sigalrm ();
     answ 
 
+  (* same as maybe_raise_timoeut just that it treat the timeout exception with teh with_timeout function *)
   let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: 'c -> 'b): 'b =
     try
         let res = maybe_raise_timeout fnc arg tsec in
@@ -1719,11 +1720,11 @@ struct
     with
       | _ -> ()
 
-  (* Starts a specific prover (creating a new process using pipes and redirecting all it's channels). Parameters have the following meaning:
-   ** log_all_flag - flag which tells whether to log proving evolution
+  (* Starts a specific prover (createa new process using pipes). Parameters have the following meaning:
+   ** log_all_flag - flag which tells whether to log proofs
    ** log-all - descriptor of the file where the log is written
    ** prover - tuple: (name of the prover, command to start the prover, arguments passed to the prover starting command)
-   ** set_process - method that assigns the newly created process to the process ref used in prover_name.ml 
+   ** set_process - method that assigns the newly created process to the process ref used in <prover_name>.ml 
    ** prelude - method which prepares the prover for interactive use (first commands sent, first lines printed, etc)*)
   let start (log_all_flag: bool) (log_all: out_channel) (prover: string * string * string array) set_process prelude= 
     let (prover_name, prover_proc, prover_arg_array) = prover in
@@ -1733,8 +1734,7 @@ struct
         let inchn, outchn, errchn, npid = Unix_add.open_process_full prover_proc prover_arg_array in
         let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
         set_process process;
-        prelude ();
-        (process, true) (*prover is running*)
+        prelude ()
     with
       | e -> begin
           let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^": " ^ (Printexc.to_string e)) in

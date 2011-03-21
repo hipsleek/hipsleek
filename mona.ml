@@ -831,8 +831,8 @@ let rec check_prover_existence prover_cmd_str: bool =
 let start () = 
   last_test_number := !test_number;
   if(check_prover_existence "mona_inter") then begin
-      let (_,is_running) = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
-      is_mona_running := is_running
+      let _ = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+      is_mona_running := true
   end
 
 let stop () = 
@@ -964,7 +964,7 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
       	output_string log_all (fstr ^ ";\n");
 	    flush log_all;
 	end;
-  let (_,_) = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
+  let _ = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let res = check_answer mona_answ is_sat_b in

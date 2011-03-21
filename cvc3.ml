@@ -277,9 +277,11 @@ let cvc3_popto (process: Globals.prover_process_t) (n: int) =
 (*creates a new "cvc3 +int" process*)
 let start () : Globals.prover_process_t =
   let _ = print_string ("\nStarting CVC3\n") in
-  let (process, _) = Gen.PrvComms.start !log_cvc3_formula !cvc3_log ("cvc3", "cvc3", [|"cvc3"; "+int";(* "+printResults"*)|]) (fun a -> ()) (fun ()->()) in
-  let _ = cvc3_push process in
-  process
+  let proc = ref {name = "cvc3"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin} in
+  let set_process nproc = proc := nproc in
+  let _ = Gen.PrvComms.start !log_cvc3_formula !cvc3_log ("cvc3", "cvc3", [|"cvc3"; "+int";(* "+printResults"*)|]) set_process (fun ()->()) in
+  let _ = cvc3_push !proc in
+  !proc
 
 (*stop the "cvc3 +int" process*)
 let stop (process: Globals.prover_process_t) : unit = 
