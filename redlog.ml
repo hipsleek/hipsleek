@@ -5,7 +5,6 @@
 
 open Globals
 module CP = Cpure
-exception Timeout
 
 (* options *)
 let is_presburger = ref false
@@ -131,14 +130,19 @@ let restart reason =
  * assume result is the next line read from inchannel
  * return empty string if reduce is not running
  *)
-
 let send_and_receive f =
   if !is_reduce_running then
     try
-      let _ = send_cmd f in
-      input_line !process.inchannel
+        let fnc () =
+          let _ = send_cmd f in
+          input_line !process.inchannel
+        in
+        let fail_with_timeout () =
+          restart "Timeout!";
+          "" in
+        let answ = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
+        answ
     with
-        Timeout -> raise Timeout
       | ex ->
         print_endline (Printexc.to_string ex);
         restart "Reduce crashed or something really bad happenned!";
@@ -146,25 +150,6 @@ let send_and_receive f =
   else
     ""
 
-(* let send_and_receive f = *)
-(*   if !is_reduce_running then *)
-(*     try *)
-(*         let fnc () = *)
-(*           let _ = send_cmd f in *)
-(*           input_line !process.inchannel *)
-(*         in *)
-(*         let fail_with_timeout () = *)
-(*           restart "Timeout!"; *)
-(*           "" in *)
-(*         let answ = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in *)
-(*         answ *)
-(*     with *)
-(*       | ex -> *)
-(*         print_endline (Printexc.to_string ex); *)
-(*         restart "Reduce crashed or something really bad happenned!"; *)
-(*         "" *)
-(*   else *)
-(*     "" *)
 	(* send formula to reduce/redlog and receive result *)
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
@@ -208,44 +193,14 @@ let call_redlog func =
  * also print err_msg when timeout happen
  * func must be lazy
  *)
-
 let run_with_timeout func err_msg =
-  (* let _ = print_string "inside run_with_timeout" in *)
-  let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout) in
-  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  ignore (Unix.setitimer Unix.ITIMER_REAL
-        {Unix.it_interval = 0.0; Unix.it_value = !timeout});
-  let res =
-    try
-      Some (Lazy.force func)
-    with
-    | Timeout ->
-        log ERROR ("TIMEOUT");
-        log ERROR err_msg;
-        restart ("After timeout"^err_msg);
-        None
-    | exc -> print_endline "Unknown error"; stop (); raise exc
+  let fail_with_timeout () = log ERROR ("TIMEOUT");
+    log ERROR err_msg;
+    restart ("After timeout"^err_msg);
+    None
   in
-  ignore (Unix.setitimer Unix.ITIMER_REAL
-        {Unix.it_interval = 0.0; Unix.it_value = 0.0});
-  reset_sigalrm ();
+  let res = Gen.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
   res
-
-
-(* let run_with_timeout func err_msg = *)
-(*   let fail_with_timeout () = log ERROR ("TIMEOUT"); *)
-(*     log ERROR err_msg; *)
-(*     restart ("After timeout"^err_msg); *)
-(*     None *)
-(*   in *)
-(*   let res = Gen.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in *)
-(*   res *)
-
-(* let run_with_timeout_debug func err_msg = *)
-(*   Gen.Debug.ho_2 "run_with_timeout" (fun _ -> "?") (fun x -> x) *)
-(*   (fun x -> "Out") *)
-(*      run_with_timeout func err_msg *)
 
 (**************************
  * cpure to reduce/redlog *
@@ -1024,26 +979,12 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
     let sf = if !no_pseudo_ops then f else strengthen_formula f in
     let frl = rl_of_formula sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
-    let runner = lazy (check_formula rl_input) in
+    let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
-    let proc = lazy (run_with_timeout runner err_msg) in
+    let proc =  lazy (run_with_timeout runner err_msg) in
     let res, time = call_redlog proc in
-    let sat = options_to_bool res true in (* default is SAT *)
+    let sat = options_to_bool (Some res) true in (* default is SAT *)
     (sat, time)
-
-(* let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float = *)
-(*   if is_linear_formula f then *)
-(*     call_omega (lazy (Omega.is_sat f sat_no)) *)
-(*   else *)
-(*     let sf = if !no_pseudo_ops then f else strengthen_formula f in *)
-(*     let frl = rl_of_formula sf in *)
-(*     let rl_input = "rlex(" ^ frl ^ ")" in *)
-(*     let runner () = check_formula rl_input in *)
-(*     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in *)
-(*     let proc =  lazy (run_with_timeout runner err_msg) in *)
-(*     let res, time = call_redlog proc in *)
-(*     let sat = options_to_bool (Some res) true in (\* default is SAT *\) *)
-(*     (sat, time) *)
 
 let is_sat f sat_no =
   let sf = simplify_var_name (normalize_formula f) in
@@ -1072,23 +1013,12 @@ let is_valid f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula f in
   let rl_input = "rlall(" ^ frl ^")" in
-  let runner = lazy (check_formula rl_input) in
+  let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
   let res, time = call_redlog proc in
-  let valid = options_to_bool res false in (* default is INVALID *)
+  let valid = options_to_bool (Some res) false in (* default is INVALID *)
   (valid, time)
-
-(* let is_valid f imp_no =  *)
-(*   let f = normalize_formula f in *)
-(*   let frl = rl_of_formula f in *)
-(*   let rl_input = "rlall(" ^ frl ^")" in *)
-(*   let runner () = check_formula rl_input in *)
-(*   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in *)
-(*   let proc = lazy (run_with_timeout runner err_msg) in *)
-(*   let res, time = call_redlog proc in *)
-(*   let valid = options_to_bool (Some res) false in (\* default is INVALID *\) *)
-(*   (valid, time) *)
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
   let has_eq f = has_existential_quantifier f false in

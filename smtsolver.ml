@@ -450,6 +450,12 @@ let rec get_answer chn : string =
         | 'a'..'z' | 'A'..'Z' | ' ' -> (Char.escaped chr) ^ get_answer chn (*save only alpha characters*)
         | _ -> "" ^ get_answer chn
 
+let remove_file filename =
+  try
+      Sys.remove filename;
+  with
+    | e -> ignore e
+
 (**
  * Runs the specified prover and returns output
  *)
@@ -464,6 +470,8 @@ let run prover input =
     get_answer !prover_process.inchannel in
   let res = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in
   let _ = Gen.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
+  remove_file infile;
+  remove_file outfile;
   res
 
 (**
