@@ -3,14 +3,29 @@
  **/
 
 // s is a set with n elements
-//relation isset(int[] s, int n) == forall(i,j: (i < 0 | i >= n | j < 0 | j >= n | i = j | i != j & a[i] != a[j])).
+relation isset(int[] s, int n) == 0 <= n &
+     forall(i,j: (i < 0 | i >= n | j < 0 | j >= n | i = j |
+           i != j & s[i] != s[j])).
+
+relation idbwn(int[] s, int[] t, int i, int j) ==
+     forall(k : (k < i | k > j | s[k] = t[k])).
+
+// s is a subset of t
+relation issubset(int[] s, int n, int[] t, int nt) ==
+     //(n = 0 | n > 0 & issubset(s,n-1,t,nt) & member(t,0,nt-1,s[n-1])).
+     forall(i : (i < 0 | i >= n | member(t,0,nt-1,s[i]))).
+
+// u is the union of a & b
+relation isunion(int[] u, int n, int[] a, int na, int[] b, int nb) ==
+     issubset(a,na,u,n) & issubset(b,nb,u,n).
 
 // x in s where |s| = n
-relation eps(int[] s, int i, int j, int x) == exists(k: i <= k & k <= j & s[k] = x).
+relation member(int[] s, int i, int j, int x) == 
+        exists(k: i <= k & k <= j & s[k] = x).
 
 bool contain(int[] S, int i, int j, int x)
 	requires true
-	ensures (!res | eps(S,i,j,x));
+        ensures (res | !(member(S,i,j,x))) & (!res | member(S,i,j,x));
 {
 	if (i <= j)
 	{
@@ -27,13 +42,15 @@ bool contain(int[] S, int i, int j, int x)
  Modify the pair (S,n) to get the set S U {x}
  **/
 void insert(ref int[] S, ref int n, int x)
-	requires true
-	ensures true 
+	requires isset(S,n)
+	ensures isset(S',n') & member(S',0,n'-1,x) & idbwn(S,S',0,n-1) & issubset(S,n,S',n');
 {
-	if (!contain(S,n,x))
+	if (!contain(S,0,n-1,x))
 	{
 		S[n] = x;
 		n = n + 1;
+                assert (!(idbwn(S,S',0,n-1)) | n' < n | issubset(S,n,S',n'));
+                assume (!(idbwn(S,S',0,n-1)) | n' < n | issubset(S,n,S',n'));
 	}
 }
 
@@ -42,7 +59,7 @@ void insert(ref int[] S, ref int n, int x)
  **/
 int getindex(int[] S, int i, int j, int x)
 	requires true
-	ensures (res = -1 | i <= res & res <= j & S[res] = x);
+	ensures (res = -1 & !(member(S,i,j,x)) | i <= res & res <= j & S[res] = x);
 {
 	if (i > j)
 		return -1;
@@ -56,8 +73,8 @@ int getindex(int[] S, int i, int j, int x)
  Modify the pair (S,n) to get the set S \ {x}
  **/
 void remove(ref int[] S, ref int n, int x)
-	requires true
-	ensures true
+	requires isset(S,n)
+	ensures !(member(S',0,n'-1,x));
 {
 	int k = getindex(S,0,n-1,x);
 	if (k != -1)
@@ -70,29 +87,32 @@ void remove(ref int[] S, ref int n, int x)
 /**
  Modify the pair (S,n) to get the set S U T
  **/
-void union(ref int[] S, ref int n, int[] T, int nT)
-	requires true
-	ensures true;
+void unionsets(ref int[] S, ref int n, int[] T, int nT)
+	requires isset(S,n) & isset(T,nT)
+	ensures isset(S',n') & isunion(S',n',S,n,T,nT);
 {
 	if (nT > 0)
 	{
-		insert(S,n,T[nT-1]);
-		union(S,n,T,nT-1,B);
+		unionsets(S,n,T,nT-1);
+                insert(S,n,T[nT-1]);
 	}
 }
 
 /**
  Modify the pair (S,n) to get the set S Intersect T
  **/
-void intersect(ref int[] S, ref int n, int[] T, int nT)
-	requires true
-	ensures 
+void intersectsets(ref int[] S, ref int n, int[] T, int nT)
+	requires isset(S,n) & isset(T,nT)
+	ensures isset(S',n') & issubset(S',n,S,n) & issubset(S',n,T,nT);
 {
-	if (nT == 0)
-	{
-		n = 0;
-	}
-	else 
+ if (n > 0)
+ {
+  int k = n-1;
+  int t = S[n-1];
+  intersectsets(S,k,T,nT); // take intersection of n-1 elements
+  n = k;
+  if (contain(T,0,nT-1,t)) insert(S,n,t);
+ }
 }
 
 /* data Set {

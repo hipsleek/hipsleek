@@ -89,6 +89,6 @@ void qsort(ref int[] a, int i, int j)
 		qsort(a, t, j);
 
 		// Don't know how to solve this problem!!!
-		assume upperbndprev(a,a') & lowerbndprev(a,a');
+		//assume upperbndprev(a,a') & lowerbndprev(a,a');
 	}
 }

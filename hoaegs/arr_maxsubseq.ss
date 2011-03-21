@@ -14,6 +14,8 @@ int maxsubsequencesum(int[] a, int n)
 	int t = 0; // a candidate maximum sum
 	int k = 0; // running variable
 	while (k < n)
+		requires true
+		ensures k' = n & maxsubsum(a,0,k-1,m);
 	{
 		int h = t + a[k];
 		if (h < 0)
