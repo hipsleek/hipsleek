@@ -21,11 +21,11 @@ let string_of_prim_type = function
 ;;
 
 (* pretty printing for types *)
-(* changing it may affect Omega prover whose var names 
-   may be based on types used !! *)
-let string_of_typ = function 
+let rec string_of_typ = function 
+   (* may be based on types used !! *)
   | P.Prim t -> string_of_prim_type t 
   | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+	| P.Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
 ;;
 
 (** the formatter that fmt- commands will use *)
@@ -570,6 +570,7 @@ let rec pr_formula_exp (e:P.exp) =
     | P.ListTail (e, l)     -> fmt_string ("tail("); pr_formula_exp e; fmt_string  (")")
     | P.ListLength (e, l)   -> fmt_string ("len("); pr_formula_exp e; fmt_string  (")")
     | P.ListReverse (e, l)  -> fmt_string ("rev("); pr_formula_exp e; fmt_string  (")")
+		| P.ArrayAt (a, i, l) -> fmt_string (string_of_spec_var a); fmt_string ("["); pr_formula_exp i; fmt_string  ("]") (* An Hoa *)
 
 (** print a b_formula  to formatter *)
 let rec pr_b_formula (e:P.b_formula) =
@@ -603,6 +604,7 @@ let rec pr_b_formula (e:P.b_formula) =
     | P.ListNotIn (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <Lnotin> "  (fun ()-> pr_formula_exp e2)
     | P.ListAllN (e1, e2, l) ->  pr_op_adhoc (fun ()->pr_formula_exp e1) " <allN> "  (fun ()-> pr_formula_exp e2)
     | P.ListPerm (e1, e2, l) -> pr_op_adhoc (fun ()->pr_formula_exp e1) " <perm> "  (fun ()-> pr_formula_exp e2)
+			| P.RelForm (r, args, l) -> fmt_string (r ^ "("); let _ = List.map (fun x -> fmt_string (","); pr_formula_exp x) args in fmt_string ")" (* An Hoa *) 
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
@@ -1366,6 +1368,10 @@ let rec string_of_exp = function
 	        str1 ^ " " ^ str2
 	      end in
 	    string_of_formula_label pid s 
+	(*| ArrayAt ({exp_arrayat_type = _; exp_arrayat_array_name = a; exp_arrayat_index = i; exp_arrayat_pos = l}) -> 
+      a ^ "[" ^ (string_of_exp i) ^ "]" (* An Hoa *) *)
+	(*| ArrayMod ({exp_arraymod_lhs = a; exp_arraymod_rhs = r; exp_arraymod_pos = l}) -> 
+      (string_of_exp (ArrayAt a)) ^ " = " ^ (string_of_exp r) (* An Hoa *)*)
   | Assign ({exp_assign_lhs = id; exp_assign_rhs = e; exp_assign_pos = l}) -> 
         id ^ " = " ^ (string_of_exp e)
   | BConst ({exp_bconst_val = b; exp_bconst_pos = l}) -> 
@@ -1420,6 +1426,7 @@ let rec string_of_exp = function
 	exp_new_pos = l}) -> 
         "new" ^ id ^ "(" ^ (string_of_ident_list (snd (List.split idl)) ",") ^ ")"
   | Null l -> "null"
+	| EmptyArray b -> "Empty Array" (* An Hoa *)
   | Print (i, l)-> "print " ^ (string_of_int i) 
   | Sharp ({exp_sharp_flow_type = st;
 	exp_sharp_val = eo;
@@ -1591,3 +1598,4 @@ Cast.print_exp := string_of_formula_exp;;
 Cast.print_formula := string_of_pure_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Omega.print_pure := string_of_pure_formula;;
+Smtsolver.print_pure := string_of_pure_formula;;

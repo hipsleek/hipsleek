@@ -111,6 +111,7 @@ and coq_of_exp e0 =
 	  | a::t -> "( ZSets.inter " ^ (coq_of_exp a) ^ " " ^ (coq_of_exp (CP.BagIntersect (t, pos))) ^ ")"
 	  end
   | CP.BagDiff (a1, a2, _) -> " ( ZSets.diff " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ ")"
+	| CP.ArrayAt _ -> failwith ("Arrays are not supported in Coq") (* An Hoa *)
 
 (* pretty printing for a list of expressions *)
 and coq_of_formula_exp_list l = match l with
@@ -152,6 +153,7 @@ and coq_of_b_formula b =
   | CP.BagSub (a1, a2, _) -> " ( ZSets.subset " ^ (coq_of_exp a1) ^ " " ^ (coq_of_exp a2) ^ " = true)"
   | CP.BagMin _
   | CP.BagMax _ -> failwith ("No bags in Coq yet")
+	| CP.RelForm _ -> failwith ("No relations in Coq yet") (* An Hoa *)
 
 (* pretty printing for formulas *)
 and coq_of_formula f =
@@ -191,16 +193,16 @@ let rec check fd coq_file_name : bool=
 let coq_of_var_list l = String.concat "" (List.map (fun sv -> "forall " ^ (coq_of_spec_var sv) ^ ":" ^ (coq_type_of_spec_var sv) ^ ", ") l)
 
 (* starting Coq in interactive mode *)
-let start_prover () =
+let start () =
   coq_channels := Unix.open_process "coqtop -require decidez 2> /dev/null";
   coq_running := true;
   print_string "Coq started\n"; flush stdout
 
 let start_prover_debug () =
-  Gen.Debug.ho_1 "stack coq prover" (fun () -> "") (fun () -> "") start_prover ()
+  Gen.Debug.ho_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
 
 (* stopping Coq *)
-let stop_prover () =
+let stop () =
   (* print_string "stopping \n";  *) (* without this prover stops early*)
   output_string (snd !coq_channels) ("Quit.\n"); flush (snd !coq_channels);
   ignore (Unix.close_process !coq_channels);
@@ -209,7 +211,7 @@ let stop_prover () =
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
-  Gen.Debug.ho_1 "stop coq prover" (fun () -> "") (fun () -> "") stop_prover ()
+  Gen.Debug.ho_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =
@@ -240,7 +242,7 @@ let rec send_formula (f : string) (nr : int) : bool =
 	_ -> ignore (Unix.close_process !coq_channels);
 		coq_running := false;
 		print_string "\nCoq crashed\n"; flush stdout;
-		start_prover ();
+		start ();
 		if nr > 1 then send_formula f (nr - 1) else false
   
 (* writing the Coq file *)
@@ -252,7 +254,7 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
   let cstr = coq_of_formula conseq in
   
   coq_file_number.contents <- !coq_file_number + 1;
-  if !coq_running == false then start_prover ();
+  if !coq_running == false then start ();
 
   (* if log_all_flag is on -> writing the formula in the coq log file  *)
   if !log_all_flag == true then	begin

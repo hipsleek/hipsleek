@@ -295,6 +295,7 @@ struct
 
 end;;
 
+
 exception Stack_Error
 
 class ['a] stack (x_init:'a) (epr:'a->string)  =
@@ -337,9 +338,80 @@ class counter x_init =
      method string_of : string= (string_of_int ctr)
    end;;
 
+class ['a] stack2 xinit =
+   object 
+	val def = xinit
+	val mutable stk = []
+	method push (i:'a) = stk <- i::stk
+	method pop = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> stk <- xs
+   method top : 'a = match stk with 
+       | [] -> def
+       | x::xs -> x
+	method len = List.length stk
+end;;
+
+class ['a] stack3  =
+   object 
+	val mutable stk = []
+	method push (i:'a) = stk <- i::stk
+	method pop = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> stk <- xs
+   method top : 'a = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> x
+	method len = List.length stk
+end;;
+
+module Stack4  =
+   struct 
+    type a 
+	let push (i:'a) stk = i::!stk
+	let pop stk  = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> xs
+    let top stk  = match stk with 
+       | [] -> raise Stack_Error
+       | x::xs -> x
+    let len stk : int = List.length stk
+end;;
+
+module type EQType = sig
+   type a
+	val eq: a -> a -> bool
+	val string_of : a -> string
+end;;
+
+module EQInt : EQType = struct
+   type a = int
+	let eq x y = (x==y)
+	let string_of x = string_of_int x
+end;;
+
+module EQList =
+ functor (Elt: EQType) ->
+   struct 
+   type a = Elt.a list
+   let rec eq x y = match x,y with
+      | [],[] -> true
+      | x::xs,y::ys -> (Elt.eq x y) && (eq xs ys)
+      | _,_ -> false
+   let string_of xs = 
+     let o = List.map (Elt.string_of) xs
+     in "["^(String.concat "," o)^"]"
+end;;
+
+module EQListInt : EQType = EQList(EQInt);;
+
 module ErrorUti =
 struct
   (** Error-handling functions. *)
+
+  let (stkint:int stack2) = new stack2 (-1)
+
+ let (stkint:int stack3) = new stack3 
 
   let error_list = new stack "error - stack underflow" (fun x -> x)
 
@@ -819,22 +891,28 @@ end;;
 module type MEM_TYPE =
 sig
   type t
-  val eq : t -> t -> bool
+  type ef = t -> t -> bool
+  type tlist = t list
+  val eq : ef
   val overlap : t -> t -> bool
-  val intersect : t list -> t list -> t list (* /\ *)
+  val intersect : tlist -> tlist -> tlist (* /\ *)
     (* under approx or-ing *)
-  val star_union : t list -> t list -> t list (* @ *)
-    (* combine by star *)
+  val overlap_eq : ef -> t -> t -> bool
+  val intersect_eq : ef -> tlist -> tlist -> tlist (* /\ *)
+  val star_union : tlist -> tlist -> tlist (* @ *)
+    (* combine by star, without normalization *)
   val string_of : t -> string
 end;;
 
 module type PTR_TYPE =
 sig
   type t
+  type ef = t -> t -> bool
   type tlist = t list
-  val eq : t -> t -> bool
-  val string_of : t -> string
+  val eq : ef
+  val intersect_eq : ef -> tlist -> tlist -> tlist
   val intersect : tlist -> tlist -> tlist
+  val string_of : t -> string
 end;;
 
 module type EQ_PTR_TYPE =
@@ -843,7 +921,9 @@ module type EQ_PTR_TYPE =
       open Elt
       type a =Elt.t
       type tlist = t list
+      type ef = t -> t -> bool
       val intersect : tlist -> tlist -> tlist
+      val intersect_eq : ef -> tlist -> tlist -> tlist
     end;;
 
 
@@ -857,17 +937,27 @@ struct
   let eq = Elt.eq
   let overlap = Elt.overlap
   let intersect = Elt.intersect
+  let overlap_eq = Elt.overlap_eq
+  let intersect_eq = Elt.intersect_eq
   let star_union = Elt.star_union
+
+  (* need a semantic overlap operator that takes
+     aliasing into account *)
 
   (* a singleton bag *)
   let singleton_baga (e:ptr) : baga = [e]
 
-  let rec is_dupl_baga (xs:baga) : bool = 
+  let rec is_dupl_baga_eq eq (xs:baga) : bool = 
     match xs with
       | [] -> false
       | x::xs1 -> match xs1 with
           | [] -> false
-          | _ -> if (List.exists (overlap x) xs1) then true else is_dupl_baga xs1
+          | _ -> if (List.exists (overlap_eq eq x) xs1) then true else is_dupl_baga_eq eq xs1
+
+  let is_dupl_baga (xs:baga) : bool = is_dupl_baga_eq eq xs
+
+  (* false result denotes contradiction *)
+  let is_sat_baga_eq eq (xs:baga) : bool = not(is_dupl_baga_eq eq xs)
 
   (* false result denotes contradiction *)
   let is_sat_baga (xs:baga) : bool = not(is_dupl_baga xs)
@@ -882,10 +972,17 @@ struct
   let star_baga (x:baga) (y:baga) : baga = star_union x y
 
   (* conjunction of two bag of addresses *)
+  let conj_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys
+
+  (* conjunction of two bag of addresses *)
   let conj_baga (xs:baga) (ys:baga) : baga = intersect xs ys
 
   (* disjunction of two bag of addresses *)
   let or_baga (xs:baga) (ys:baga) : baga = intersect xs ys
+
+  (* disjunction of two bag of addresses *)
+  let or_baga_eq eq (xs:baga) (ys:baga) : baga = intersect_eq eq xs ys
+
 
 end;;
 
@@ -1581,5 +1678,104 @@ struct
     in helper xs ys
 
 end;;
+
+(* provers common methods *)
+module PrvComms = 
+struct
+
+  open Globals
+  type proc = Globals.prover_process_t
+  exception Timeout
+
+  let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout)
+  let set_timer tsecs =
+    ignore (Unix.setitimer Unix.ITIMER_REAL { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+
+  (*checks for timeout when calling the fnc function (fnc has one argument - arg). If fnc runs for more than tsec seconds, a Timeout exception will be raised. 
+    Otherwise, this method returns the result given by fnc. *)
+  let maybe_raise_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
+    let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
+    let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
+    let _ = set_timer tsec in
+    let answ = fnc arg in
+    set_timer 0.0;
+    reset_sigalrm ();
+    answ 
+
+  (* same as maybe_raise_timoeut just that it treat the timeout exception with teh with_timeout function *)
+  let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: 'c -> 'b): 'b =
+    try
+        let res = maybe_raise_timeout fnc arg tsec in
+        res
+    with 
+      |Timeout ->
+          with_timeout ()
+
+  (* closes the pipes of the named process *)
+  let close_pipes (process: proc) : unit =
+    try
+        Unix.close (Unix.descr_of_out_channel process.outchannel);
+        Unix.close (Unix.descr_of_in_channel process.inchannel);
+        Unix.close (Unix.descr_of_in_channel process.errchannel);
+    with
+      | _ -> ()
+
+  let log_to_file flag file_descr str =
+    if flag then
+      output_string file_descr str
+
+  (* Starts a specific prover (creating new process using pipes). Parameters have the following meaning:
+   ** log_all_flag - flag which tells whether to log proofs
+   ** log-all - descriptor of the file where the log is written
+   ** prover - 3tuple: (name of the prover, command to start the prover, process arguments as an array of strings)
+   ** set_process - method that assigns the newly created process to the process ref used in <prover_name>.ml 
+   ** prelude - method which prepares the prover for interactive use (first commands sent, first lines printed, etc)*)
+  let start (log_all_flag: bool) (log_file: out_channel) (prover: string * string * string array) set_process prelude= 
+    let (prover_name, prover_proc, prover_arg_array) = prover in
+    let _ = log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
+    try
+        let inchn, outchn, errchn, npid = Unix_add.open_process_full prover_proc prover_arg_array in
+        let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
+        set_process process;
+        prelude ()
+    with
+      | e -> begin
+          let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^ "\n") in
+          flush stdout; flush stderr;
+          log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
+          raise e
+      end
+
+  (* Kills the prover process. Parameters have the following meaning:
+   ** process - record with details about the process that needs to be killed (pid, in/out/errchannel, name)
+   ** invocations - number of calls to this prover
+   ** killing_signal - signal that kills the process. For most of provers, 2 should be enough to kill the process
+   ** ending_function - function containing some final disposition for the prover (many provers don't need this, so one can just send (fun ()->() ) ) *)
+  let stop (log_all_flag: bool) (log_file: out_channel) (process:proc) (invocations: int) (killing_signal: int) ending_function =
+    let _ = ending_function () in
+    let _ = log_to_file log_all_flag log_file ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
+    flush log_file;
+    close_pipes process;
+    try 
+        Unix.kill process.pid killing_signal;
+        ignore (Unix.waitpid [] process.pid)
+    with
+      | e -> 
+          (ignore e;
+           log_to_file log_all_flag log_file("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"); 
+           flush log_file)
+
+  (* Restarts the prover. Parameters have the following meaning:
+   ** reason - reason for restarting the prover
+   ** prover_name - string containing the name of teh prover taht si restarted
+   ** start - start method to be invoked when starting this prover 
+   ** stop - stop method to be invoked when stoping this prover *)
+  let restart (log_all_flag: bool) (log_file: out_channel) (reason:string) (prover_name: string) start stop =
+    log_to_file log_all_flag log_file ("[" ^ prover_name ^ ".ml]: >> Restarting " ^ prover_name ^ " because of: " ^ reason) ;
+    stop ();
+    start ()
+
+end;;
+
 include Basic
 include SysUti

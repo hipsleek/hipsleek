@@ -68,14 +68,14 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLLEX) rllexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
-MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
 	iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo\
@@ -104,12 +104,12 @@ PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
-GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   rlparser.cmo rllexer.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
@@ -127,13 +127,13 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo gen.c
 
 
 
-SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
@@ -163,14 +163,14 @@ MAIN_FILES_2=debug.cmo globals.cmo \
 MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
 
 
-PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
+PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-  ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
+  ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo\
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
@@ -186,14 +186,14 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
-WEB_FILES=globals.cmo error.cmo gen.cmo debug.cmo \
+WEB_FILES=globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
 	iprinter.cmo \
   iastUtil.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
   net.cmo \
 	cvclite.cmo cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
@@ -273,7 +273,7 @@ CRISTINA_FILES=debug.cmo globals.cmo error.cmo \
 
 cristina: $(CRISTINA_FILES)
 
-TEST_OO_FILES= gen.cmo debug.cmo globals.cmo error.cmo \
+TEST_OO_FILES= unix_add.cmo gen.cmo debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	checks.cmo \
@@ -282,7 +282,7 @@ TEST_OO_FILES= gen.cmo debug.cmo globals.cmo error.cmo \
 	iastUtil.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
 	rlparser.cmo rllexer.cmo \
-	ocparser.cmo oclexer.cmo unix_add.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
+	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
 	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo \
 	context.cmo \
 	solver.cmo \

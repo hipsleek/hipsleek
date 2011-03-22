@@ -235,6 +235,8 @@ and java_of_proc_decl p =
 	^ "\n" ^ body
 
 and java_of_exp = function
+	| ArrayAt ({exp_arrayat_array_name = a;
+	     exp_arrayat_index = e;}) -> a ^ "[" ^ (java_of_exp e) ^ "]" (* An Hoa *)
   | Label (_,b) -> java_of_exp b
   | Unfold _ -> ""
   | Java ({exp_java_code = code}) -> code

@@ -19,7 +19,7 @@ let parallelize num =
   num_para := num
 
 let rec check_specs prog proc ctx spec_list e0 = 
-  Gen.Debug.loop_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
+  Gen.Debug.no_2 "check_specs" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (string_of_bool) (fun ctx spec_list -> (check_specs_a prog proc ctx spec_list e0)) ctx spec_list
 
 (* and check_specs prog proc ctx spec_list e0 = check_specs_a prog proc ctx spec_list e0 *)
   
@@ -341,6 +341,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure p) pos in
 	          let res = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res
+				| EmptyArray _ -> ctx (* An Hoa : no change in context for empty array *)
         | SCall ({exp_scall_type = ret_t;
                   exp_scall_method_name = mn;
                   exp_scall_arguments = vs;
@@ -517,7 +518,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
 	Err.error_text = "Post condition "
 	        ^ (Cprinter.string_of_formula post)
 	        ^ " cannot be derived by the system.\n By : "(* ^(Cprinter.string_of_list_partial_context final_state) *)
-	        ^ "\n fail ctx: "^(Cprinter.string_of_list_partial_context rs)}
+	        ^ "\n fail ctx: " ^(Cprinter.string_of_list_partial_context rs) }
 
 
 (* checking procedure *)

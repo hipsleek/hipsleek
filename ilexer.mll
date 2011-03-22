@@ -75,6 +75,7 @@
      ("perm", PERM);
 	 ("dprint", PRINT);
 	 ("ref", REF);
+     ("relation",REL); (* An Hoa *)
 	 ("requires", REQUIRES);
 	 ("res", RES "res");
 	 ("rev", REVERSE);

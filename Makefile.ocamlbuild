@@ -1,14 +1,14 @@
 OCAMLBUILD = ocamlbuild
 
 # number of parallel jobs, 0 means unlimited.
-JOBS = 0
+JOBS = 4
 
 LIBS = unix,str,graph,xml-light
 INCLUDES = -I,+ocamlgraph,-I,$(CURDIR)/xml
 FLAGS = $(INCLUDES)
 OB_FLAGS = -no-links -libs $(LIBS) -cflags $(FLAGS) -lflags $(FLAGS) -j $(JOBS)
 
-all: byte
+all: native
 byte: hip.byte sleek.byte
 native: hip.native sleek.native
 

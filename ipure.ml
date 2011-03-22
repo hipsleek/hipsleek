@@ -37,6 +37,7 @@ and b_formula =
   | ListNotIn of (exp * exp * loc)
   | ListAllN of (exp * exp * loc)
   | ListPerm of (exp * exp * loc)
+  | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)
 and exp = 
@@ -65,6 +66,7 @@ and exp =
   | ListLength of (exp * loc)
   | ListAppend of (exp list * loc)
   | ListReverse of (exp * loc)
+  | ArrayAt of ((ident * primed) * exp  * loc)      (* An Hoa : array access *)
 
 
 and relation = (* for obtaining back results from Omega Calculator. Will see if it should be here*)
@@ -135,6 +137,9 @@ and bfv (bf : b_formula) = match bf with
 	  let fv1 = afv a1 in
 	  let fv2 = afv a2 in
 		Gen.BList.remove_dups_eq (=) (fv1 @ fv2)
+  | RelForm (_,args,_) -> (* An Hoa *)
+		let args_fv = List.concat (List.map afv args) in
+		Gen.BList.remove_dups_eq (=) args_fv
  
 and combine_avars (a1 : exp) (a2 : exp) : (ident * primed) list = 
   let fv1 = afv a1 in
@@ -166,6 +171,7 @@ and afv (af : exp) : (ident * primed) list = match af with
   | ListTail (a, _)
   | ListLength (a, _)
   | ListReverse (a, _) -> afv a
+  | ArrayAt (a, i, _) -> Gen.BList.remove_dups_eq (=) (a :: (afv i)) (* An Hoa *)
 
 and is_max_min a = match a with
   | Max _ | Min _ -> true
@@ -396,6 +402,19 @@ and build_relation relop alist10 alist20 pos =
 	  helper2 alist10 alist20
 	end
 
+ (* An Hoa *)
+and pos_of_formula (f : formula) = match f with 
+	| BForm (b,_) -> begin match b with
+		  | BConst (_,p) | BVar (_,p)
+		  | Lt (_,_,p) | Lte (_,_,p) | Gt (_,_,p) | Gte (_,_,p) | Eq (_,_,p) | Neq (_,_,p)
+		  | EqMax (_,_,_,p) | EqMin (_,_,_,p) 
+			| BagIn (_,_,p) | BagNotIn (_,_,p) | BagSub (_,_,p) | BagMin (_,_,p) | BagMax (_,_,p)	
+		  | ListIn (_,_,p) | ListNotIn (_,_,p) | ListAllN (_,_,p) | ListPerm (_,_,p)
+		  | RelForm (_,_,p) -> p
+	end
+  | And (_,_,p) | Or (_,_,_,p) | Not (_,_,p)
+  | Forall (_,_,_,p) -> p | Exists (_,_,_,p) -> p
+
 and pos_of_exp (e : exp) = match e with
   | Null pos -> pos
   | Var (_, p) -> p
@@ -418,6 +437,7 @@ and pos_of_exp (e : exp) = match e with
   | ListTail (_, p) -> p
   | ListLength (_, p) -> p
   | ListReverse (_, p) -> p
+  | ArrayAt (_ ,_ , p) -> p (* An Hoa *)
   
 	
 	
@@ -492,6 +512,9 @@ and b_apply_one (fr, t) bf = match bf with
   | ListNotIn (a1, a2, pos) -> ListNotIn (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListAllN (a1, a2, pos) -> ListAllN (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
   | ListPerm (a1, a2, pos) -> ListPerm (e_apply_one (fr, t) a1, e_apply_one (fr, t) a2, pos)
+  | RelForm (r, args, pos) -> 
+          (* An Hoa : apply to every arguments, alternatively, use e_apply_one_list *)
+          RelForm (r, (List.map (fun x -> e_apply_one (fr, t) x) args), pos) 
 
 and e_apply_one (fr, t) e = match e with
   | Null _ | IConst _ -> e
@@ -522,6 +545,7 @@ and e_apply_one (fr, t) e = match e with
   | ListTail (a1, pos) -> ListTail (e_apply_one (fr, t) a1, pos)
   | ListLength (a1, pos) -> ListLength (e_apply_one (fr, t) a1, pos)
   | ListReverse (a1, pos) -> ListReverse (e_apply_one (fr, t) a1, pos)
+  | ArrayAt (a, ind, pos) -> ArrayAt (a, (e_apply_one (fr, t) ind), pos) (* An Hoa *)
 
 and e_apply_one_list (fr, t) alist = match alist with
   |[] -> []
@@ -597,6 +621,7 @@ and look_for_anonymous_b_formula (f : b_formula) : (ident * primed) list = match
   | ListNotIn (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListAllN (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
   | ListPerm (b1, b2, _) -> (look_for_anonymous_exp b1) @ (look_for_anonymous_exp b2)
+  | RelForm _ -> [] (* An Hoa : TODO implement *)
   
 let merge_branches l1 l2 =
   let branches = Gen.BList.remove_dups_eq (=) (fst (List.split l1) @ (fst (List.split l2))) in

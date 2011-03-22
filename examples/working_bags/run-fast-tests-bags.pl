@@ -16,25 +16,27 @@ GetOptions( "stop"  => \$stop,
 			"root=s" => \$root,
 			"tp=s" => \$prover,
 			"flags=s" => \$flags,
-			"copy-to-home21" => \$home21 
+			"copy-to-home21" => \$home21,
+            "log-timings" => \$timings,
+            "log-string=s" => \$str_log
 			);
 
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
 {
-	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]  [-copy-to-home21]\n";
+	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|hip_imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
 if($root){
-	$exempl_path = "$root/examples/working_bags";
+	$exempl_path = "$root/examples/working";
 	$exec_path = "$root";
 }
 	else
 	{
 		$exempl_path = ".";
-        $exec_path = '../..';
+		$exec_path = '../..';
 	}
-	
+
 if($prover){
 	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
@@ -304,6 +306,7 @@ sub hip_process_file {
             }
             my $fails = 0;
             my $successes = 0;
+            my $output_str = "";
             if (@output){
                 foreach $line (@output)
                 {
@@ -319,6 +322,7 @@ sub hip_process_file {
                     elsif($line =~ m/SUCCESS/){
                         $successes++;
                     }
+                    $output_str = $output_str.$line;
                 }
             }
             $fails_count = $fails_count + $fails;
@@ -328,7 +332,7 @@ sub hip_process_file {
                     $fatal_error_files=$fatal_error_files."  $test->[0] \n";
                 }
             if($timings) {
-                log_one_line_of_timings ($test->[0], $output);
+                log_one_line_of_timings ($test->[0], $output_str);
             }
 		}
     }
