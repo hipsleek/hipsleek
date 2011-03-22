@@ -12,7 +12,7 @@ let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref false
-let timeout = ref 30.0 (* default timeout is 15 seconds *)
+let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
