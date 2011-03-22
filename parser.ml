@@ -185,18 +185,19 @@ data_decl:
 with_typed_var: [[`OSQUARE; typ; `CSQUARE -> ()]];
 
 data_header:
-    [[ `DATA; `IDENTIFIER t; OPT with_typed_var ->print_string ("here \n"); t ]];
+    [[ `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
 
 data_body: 
-    [[  `OBRACE; fl=field_list; `CBRACE             -> fl
-      | `OBRACE; fl=field_list; `SEMICOLON; `CBRACE -> fl
+    [[  (* `OBRACE; fl=field_list; `CBRACE             -> fl *)
+       `OBRACE; fl=field_list; `SEMICOLON; `CBRACE -> fl
       | `OBRACE;`CBRACE                             -> []]];
   
 field_list:[[fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos 1)]];
 
 one_field: 
   [[ t=typ; `IDENTIFIER n  -> ((t, n), get_pos 1)
-   | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos 1)]];
+   | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos 1)
+    ]];
   
   
  (********** Views **********)
@@ -435,7 +436,7 @@ cexp_w :
      | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos 2)) lc cl
      | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl
      | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos 2)) lc cl   
-     | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos 2))) cl 
+     | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos 2))) cl
      | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos 2))) cl  
      | lc=SELF; `SUBSET; cl=SELF                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos 2))) lc cl 
      | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMax (c1, c2, (get_pos 2)), None))
@@ -1259,7 +1260,11 @@ member_name :
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
+let parse_sleek n s = 
+  Gen.Debug.loop_1 "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
+let parse_hip n s =  
+  Gen.Debug.loop_1 "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 

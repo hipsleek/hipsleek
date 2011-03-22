@@ -138,6 +138,9 @@ let main () =
     with
       | End_of_file -> print_string ("\n")
 
+let main () = 
+  Gen.Debug.loop_1 "main" (fun () -> "?") (fun () -> "?") main ()
+
 let _ = 
   wrap_exists_implicit_explicit := false ;
   process_cmd_line ();

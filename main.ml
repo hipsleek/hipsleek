@@ -164,6 +164,9 @@ let main1 () =
     let _ = Gen.Profiling.pop_time "Overall" in
       (* Tpdispatcher.print_stats (); *)
       ()
+
+let main1 () =
+  Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 ()
 	  
 let _ = 
   main1 ();
