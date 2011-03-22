@@ -18,12 +18,21 @@ sll<n, sm, lg> ==
 node append_bll(node x, node y)
     requires y::sll<m,s2,b2> & x=null 
     ensures res::sll<m,s2,b2>;
-	requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2
-	ensures res::sll<nn+m, s0, b2>;
+	/* requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2 */
+	/* ensures res::sll<nn+m, s0, b2>; */
 
 {
         node xn; 
-        if (x==null) return x; /* segmentation BUG when returning null 
+        if (x==null) {
+          dprint;
+          /*
+       120y::sll<m,s2,b2>@M & x'=x & y'=y & x=null & xn_49'=null & 
+        115x'=null & 112v_bool_26_206' & 113x'=null & v_bool_26_206' &
+        several duplications above!
+          */ 
+          //assume false;
+          return x;
+        }/* segmentation BUG when returning null 
            with cvc3, redlog and omega */
         /* guard error with mona */
         /* correct answer is return y */

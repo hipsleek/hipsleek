@@ -2199,6 +2199,12 @@ and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool
 
 and heap_entail_struc_list_failesc_context (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_failesc_context)
       (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
+  Gen.Debug.no_1 "heap_entail_struc_list_failesc_context" (fun _ -> "?") (fun _ -> "?") 
+      (fun _ -> heap_entail_struc_list_failesc_context_x prog is_folding is_universal has_post cl 
+      (conseq) pos pid f to_string) 0
+
+and heap_entail_struc_list_failesc_context_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) (has_post: bool)(cl : list_failesc_context)
+      (conseq) pos (pid:control_path_id) f to_string : (list_failesc_context * proof) =           
   (* print_string ("\ncalling struct_list_partial_context .."^string_of_int(List.length cl)); *)
   (* print_string (Cprinter.string_of_list_partial_context cl); *)
   let l = List.map 
@@ -2240,6 +2246,13 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool) (is
     (res, proof)
 
 and heap_entail_struc_failesc_context (prog : prog_decl) (is_folding : bool) (is_universal : bool)
+      (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
+  Gen.Debug.no_1 "heap_entail_struc_failesc_context" (fun _ -> "?") (fun _ -> "?") (fun x -> 
+      heap_entail_struc_failesc_context_x prog is_folding (is_universal)
+      (has_post)(cl) (conseq) pos (pid) f to_string) conseq
+
+
+and heap_entail_struc_failesc_context_x (prog : prog_decl) (is_folding : bool) (is_universal : bool)
       (has_post: bool)(cl : failesc_context) (conseq:'a) pos (pid:control_path_id) f to_string: (list_failesc_context * proof) = 
   (* print_string "\ncalling struct_partial_context .."; *)
   Debug.devel_pprint ("heap_entail_struc_failesc_context:"
@@ -3578,7 +3591,10 @@ and heap_entail_split_lhs_phases_x
 (* snd res is the constraint that causes  *)
 (* the check to fail.                     *)
 
-and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
+and heap_entail_conjunct (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) = Gen.Debug.no_1 "heap_entail_conjunct" Cprinter.string_of_formula (fun _ -> "?")
+  (fun c -> heap_entail_conjunct_x prog is_folding is_universal ctx0 c pos) conseq
+
+and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool) (is_universal : bool) (ctx0 : context) (conseq : formula) pos : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_conjunct:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
@@ -4281,6 +4297,9 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     (res_es1,prf1)
 
 and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
+  Gen.Debug.no_1 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula (fun _ -> "?") (fun c -> heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos) conseq
+
+and heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   let lhs_h = lhs_b.formula_base_heap in
   let lhs_p = lhs_b.formula_base_pure in
   let lhs_t = lhs_b.formula_base_type in
@@ -4379,7 +4398,7 @@ and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante
 			^ "to:ln2: "
 			^ (Cprinter.string_of_h_formula ln2)
 			^ "\nrhs_p: "
-			^ (Cprinter.string_of_mix_formula rhs_p)) pos;
+			^ (Cprinter.string_of_mix_formula rhs_p) ^"..end") pos;
 		    (fold_rs, fold_prf)
 	      end in
 
@@ -5330,6 +5349,11 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
   let entail_fct = (fun c-> heap_entail_prefix_init prog is_folding is_universal false c 
       conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)) in
   heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx c) cl_after_prune 
+
+let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_partial_context)
+        (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
+  Gen.Debug.no_1 "heap_entail_list_partial_context_init" (Cprinter.string_of_formula) (fun _ -> "?")
+      (fun c -> heap_entail_list_partial_context_init prog is_folding is_universal cl c pos pid) conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool) (is_universal : bool) (cl : list_failesc_context)
         (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
