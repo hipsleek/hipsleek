@@ -220,7 +220,7 @@ let initialize () =
     } in
     raise (SourceUtil.Syntax_error ("Syntax error: " ^ msg ^ "!", pos))
   );
-  TP.enable_log_for_all_provers ();
+  (*TP.enable_log_for_all_provers ();*)
   TP.start_prover ()
 
 let finalize () =

@@ -18,6 +18,7 @@ type t_formula = (* type constraint *)
 	   | TypeSub of t_formula_sub_type (* for t <: C *)
 	   | TypeSuper of t_formula_sub_type (* for t < C *)
 	*)
+
   | TypeAnd of t_formula_and
   | TypeTrue
   | TypeFalse
@@ -3587,3 +3588,4 @@ and propagate_imm_struc_formula e =
   let f_p_t5 e = Some e in
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
+

@@ -39,8 +39,11 @@ node mult(node x, node y)
   ensures res::bigint<v1*v2>;
 
 node karatsuba_mult(node x, node y)
-  requires (x::bigint<v1>@I & y::bigint<v2>@I) & true
+  requires x::bigint<v1>@I * y::bigint<v2>@I & true
   ensures res::bigint<v1*v2> ;// x::bigint<v1> * y::bigint<v2>;
+  /* requires (x::bigint<v1>@I & y::bigint<v2>@I) & true */
+  /* ensures res::bigint<v1*v2> ; */
+  // x::bigint<v1> * y::bigint<v2>;
 {
   if (x == null || y == null) return null;
   if (x.next == null || y.next == null) return mult(x, y);

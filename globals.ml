@@ -40,6 +40,14 @@ type mode =
   | ModeIn
   | ModeOut
 
+let string_of_prim_type = function 
+  | Bool          -> "boolean"
+  | Float         -> "float"
+  | Int           -> "int"
+  | Void          -> "void"
+  | Bag           -> "multiset"
+  | List          -> "list"
+
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None
@@ -460,7 +468,7 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
     | Some (op, _) -> op,(bin_op_to_list op fn t)
 
 (*type of process used for communicating with the prover*)
-type prover_process_t = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+type prover_process_t = {name:string; pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
 
 (*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
 class type ['a] incremMethodsType = object

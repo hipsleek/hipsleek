@@ -22,6 +22,7 @@ print residue.
 // x * y
 
 
+
 checkentail x::ll<n> * y::ll<m> & n>0 & m>0  |- y::ll<m1> * x::ll<n1> & y!=x.
 print residue.
 // true

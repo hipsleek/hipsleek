@@ -18,7 +18,7 @@ type tp_type =
   | OM
   | OI
   | SetMONA
-  | CM (* CVC Lite then MONA *)
+  | CM (* CVC3 then MONA *)
   | Coq
   | Z3
   | Redlog
@@ -237,8 +237,8 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
   method start_p () : Globals.prover_process_t =
     let proc = 
       match !tp with
-      | Cvc3 -> Cvc3.cvc3_create_process()
-      | _ -> Cvc3.cvc3_create_process() (* to be completed for the rest of provers that support incremental proving *) 
+      | Cvc3 -> Cvc3.start()
+      | _ -> Cvc3.start() (* to be completed for the rest of provers that support incremental proving *) 
     in 
     process := Some proc;
     proc
@@ -246,7 +246,7 @@ class incremMethods : [CP.formula] Globals.incremMethodsType = object
   (*stops the proving process*)
   method stop_p (process: Globals.prover_process_t): unit =
     match !tp with
-      | Cvc3 -> Cvc3.cvc3_stop_process process
+      | Cvc3 -> Cvc3.stop process
       | _ -> () (* to be completed for the rest of provers that support incremental proving *)
 
   (*saves the state of the process and its context *)
@@ -305,6 +305,7 @@ let rec check_prover_existence prover_cmd_str =
         if exit_code > 0 then
           let _ = print_string ("Command for starting the prover (" ^ prover ^ ") not found\n") in
           exit 0
+        else check_prover_existence rest
 
 let set_tp tp_str =
   prover_arg := tp_str;  
@@ -501,8 +502,9 @@ let is_list_b_formula bf = match bf with
     | CP.ListNotIn _
     | CP.ListAllN _ 
     | CP.ListPerm _
-        -> Some true  
-	  
+        -> Some true
+    | _ -> None
+ 
 let is_list_constraint (e: CP.formula) : bool =
  
   let or_list = List.fold_left (||) false in
@@ -746,6 +748,7 @@ let simplify (f : CP.formula) : CP.formula =
         | CM ->
               if is_bag_constraint f then Mona.simplify f
               else Omega.simplify f
+        | Z3 -> Smtsolver.simplify f
         | Redlog -> Redlog.simplify f
         | RM -> 
               if is_bag_constraint f then
@@ -808,6 +811,7 @@ let hull (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.hull f
 	  else Omega.hull f
+  | Z3 -> Smtsolver.hull f
   | Redlog -> Redlog.hull f
   | RM ->
       if is_bag_constraint f then
@@ -842,6 +846,7 @@ let pairwisecheck (f : CP.formula) : CP.formula = match !tp with
   | CM ->
 	  if is_bag_constraint f then Mona.pairwisecheck f
 	  else Omega.pairwisecheck f
+  | Z3 -> Smtsolver.pairwisecheck f
   | Redlog -> Redlog.pairwisecheck f
   | RM ->
       if is_bag_constraint f then Mona.pairwisecheck f
@@ -876,12 +881,13 @@ let rec split_disjunctions = function
 ;;
 
 let called_prover = ref ""
-
+let print_implication = ref false (* An Hoa *)
 let tp_imply_no_cache ante conseq imp_no timeout process =
   (* let _ = print_string ("XXX"^(Cprinter.string_of_pure_formula ante)^"//"
      ^(Cprinter.string_of_pure_formula conseq)^"\n") in
   *)
   (* let _ = print_string ("\nTpdispatcher.ml: tp_imply_no_cache") in *)
+  let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
   | CvcLite -> Cvclite.imply ante conseq
@@ -898,7 +904,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
 		    (called_prover :="coq " ; Coq.imply ante conseq)
 	      else
 		    (called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
-  | Mona | MonaH -> Mona.imply timeout ante conseq imp_no 
+  | Mona | MonaH -> Mona.imply ante conseq imp_no 
   | CO -> 
       begin
             let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
@@ -911,7 +917,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | CM -> 
       begin
         if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-          Mona.imply timeout ante conseq imp_no
+          Mona.imply ante conseq imp_no
         else
               let result1 = Cvc3.imply_helper_separate_process ante conseq imp_no in
           match result1 with
@@ -922,7 +928,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
       end
   | OM ->
 	  if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-		(called_prover :="mona " ; Mona.imply timeout ante conseq imp_no)
+		(called_prover :="mona " ; Mona.imply ante conseq imp_no)
 	  else
 		(called_prover :="omega " ; Omega.imply ante conseq imp_no timeout)
   | OI ->
@@ -934,7 +940,7 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   | Redlog -> Redlog.imply ante conseq imp_no 
   | RM -> 
       if (is_bag_constraint ante) || (is_bag_constraint conseq) then
-        Mona.imply timeout ante conseq imp_no
+        Mona.imply ante conseq imp_no
       else
         Redlog.imply ante conseq imp_no
 ;;
@@ -1418,46 +1424,59 @@ let start_prover () =
   (* let _ = print_string ("\n Tpdispatcher: start_prover \n") in *)
   match !tp with
   | Coq -> begin
-      Coq.start_prover ();
-	  Omega.start_omega ();
+      Coq.start ();
+	  Omega.start ();
 	 end
   | Redlog | RM -> 
     begin
-      Omega.start_omega ();
-      Redlog.start_red ();
-    end
-    | Cvc3 -> 
+      Redlog.start ();
+	  Omega.start ();
+	 end
+  | Cvc3 -> 
         begin
-            provers_process := Some (Cvc3.cvc3_create_process ());
+            provers_process := Some (Cvc3.start ()); (* because of incremental *)
             let _ = match !provers_process with 
               |Some proc ->  !incremMethodsO#set_process proc
               | _ -> () in
-	        Omega.start_omega ();
+	        Omega.start ();
 	    end
-    (* | Mona -> *)
-    (*     Mona.start_mona() *)
-  | _ -> Omega.start_omega ()
+  | Mona ->
+        Mona.start()
+  | Isabelle ->
+     begin
+      Isabelle.start();
+	  Omega.start();
+     end
+  | _ -> Omega.start()
   
 let stop_prover () =
-  Coq.stop_prover ();
-  Redlog.stop_red ();
-  Omega.stop_omega ();
-  if !tp = Cvc3 then
-    let _ = match !provers_process with
-      | Some proc ->  Cvc3.cvc3_stop_process proc
-      | _ -> ()
-    in ()
+  match !tp with
+    | Coq -> (* Coq.stop_prover () *)
+          begin
+            Coq.stop ();
+	        Omega.stop();
+	      end
+    | Redlog | RM -> 
+          begin
+            Redlog.stop();
+	        Omega.stop();
+	      end
+    | Cvc3 -> 
+          begin
+            match !provers_process with
+              |Some proc ->  Cvc3.stop proc;
+              |_ -> ();
+	        Omega.stop();
+	      end
+    | Isabelle -> 
+          begin
+            Isabelle.stop();
+	        Omega.stop();
+	      end
+    | Mona -> Mona.stop();
+    | _ -> Omega.stop();;
 
 let prover_log = Buffer.create 5096
-
-let enable_log_for_all_provers () =
-  let log_func = fun msg -> Buffer.add_string prover_log msg in
-  Omega.log_all_flag := true;
-  Omega.log_all := log_func;
-  Redlog.is_log_all := true;
-  Redlog.log_all := log_func;
-  Mona.log_all_flag := true;
-  Mona.log_all := log_func
 
 let get_prover_log () = Buffer.contents prover_log
 let clear_prover_log () = Buffer.clear prover_log

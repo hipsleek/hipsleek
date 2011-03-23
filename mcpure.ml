@@ -788,7 +788,9 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
     | Max (e,_,_) | Min (e,_,_) | BagDiff (e,_,_) | ListCons (e,_,_)| ListHead (e,_) 
     | ListTail (e,_)| ListLength (e,_) | ListReverse (e,_)  -> get_head e
     | Bag (e_l,_) | BagUnion (e_l,_) | BagIntersect (e_l,_) | List (e_l,_) | ListAppend (e_l,_)-> 
-	if (List.length e_l)>0 then get_head (List.hd e_l) else "[]" in
+				if (List.length e_l)>0 then get_head (List.hd e_l) else "[]"
+		| ArrayAt (a,i,_) -> (name_of_spec_var a) ^ "[" ^ (get_head i) ^ "]" (* An Hoa *)    
+	in
     
   let e_cmp e1 e2 =  String.compare (get_head e1) (get_head e2) in
     
@@ -810,7 +812,8 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
 	else let (lp1,ln1),(ln2,lp2) = get_lists e1 disc, get_lists e2 disc in
 	  (lp1@lp2,ln1@ln2) 
     | Null _ | Var _ | IConst _ | FConst _ | Max _  | Min _ | Bag _ | BagUnion _ | BagIntersect _ 
-    | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ -> ([e],[]) in
+    | BagDiff _ | List _ | ListCons _ | ListHead _ | ListTail _ | ListLength _ | ListAppend _ | ListReverse _ 
+		| ArrayAt _ -> ([e],[]) (* An Hoa *) in
     
   let rec norm_expr e = match e with
     | Null _ | Var _ | IConst _ | FConst _ -> e
@@ -834,7 +837,8 @@ and memo_norm (l:(b_formula *(formula_label option)) list): b_formula list * for
     | ListTail (e,l)-> ListTail(norm_expr e, l)      
     | ListLength (e,l)-> ListLength(norm_expr e, l)
     | ListAppend (e,l) -> ListAppend ( List.sort e_cmp (List.map norm_expr e), l)    
-    | ListReverse (e,l)-> ListReverse(norm_expr e, l)  
+    | ListReverse (e,l)-> ListReverse(norm_expr e, l)
+		| ArrayAt (a,i,l) -> ArrayAt (a, norm_expr i, l) (* An Hoa *)
 	
   and cons_lsts (e:exp) (disc:int) cons1 cons2 (nel:exp) : exp=     
     let lp,ln = get_lists e disc in
@@ -931,8 +935,16 @@ let memo_change_status cons l =
     )grp lcns
   ) l
   
-let memo_find_relevant_slice fv l = List.find (fun d-> Gen.BList.subset_eq (=) fv d.memo_group_fv) l 
+let memo_find_relevant_slice fv l = List.find (fun d-> Gen.BList.subset_eq eq_spec_var fv d.memo_group_fv) l 
 
+let memo_find_relevant_slices fv l = List.filter (fun d->  Gen.BList.overlap_eq eq_spec_var fv d.memo_group_fv) l
+
+let memo_get_asets fv l = 
+  let r= memo_find_relevant_slices fv l in
+  match r with
+    | [] -> empty_var_aset
+    | h::t -> List.fold_left (fun a c-> EMapSV.merge_eset a c.memo_group_aset) h.memo_group_aset t 
+    
 let memo_changed d = d.memo_group_changed 
 
 (* checks wether the p_cond constraint can be syntactically dismissed (equal to a contradiction)

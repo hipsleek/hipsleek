@@ -14,9 +14,10 @@
 		
   type decl = 
     | Type of type_decl
+		| Rel of rel_decl (* An Hoa *)
     | Global_var of exp_var_decl
     | Proc of proc_decl
-	| Coercion of coercion_decl
+		| Coercion of coercion_decl
 		
   type member = 
 	| Field of (typed_ident * loc)
@@ -193,6 +194,7 @@
 %token PRIME
 %token PRINT
 %token REF
+%token REL /* An Hoa */
 %token REVERSE
 %token REQUIRES
 %token <string> RES
@@ -254,6 +256,7 @@ program
     let global_var_defs = ref ([] : exp_var_decl list) in
 	let enum_defs = ref ([] : enum_decl list) in
 	let view_defs = ref ([] : view_decl list) in
+	let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
     let proc_defs = ref ([] : proc_decl list) in
 	let coercion_defs = ref ([] : coercion_decl list) in
     let choose d = match d with
@@ -263,9 +266,10 @@ program
 			| Enum edef -> enum_defs := edef :: !enum_defs
 			| View vdef -> view_defs := vdef :: !view_defs
 		end
+			| Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
       | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
       | Proc pdef -> proc_defs := pdef :: !proc_defs 
-	  | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
+	  	| Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
     let _ = List.map choose $1 in
 	let obj_def = { data_name = "Object";
 					data_fields = [];
@@ -279,10 +283,11 @@ program
 					   data_methods = [] } in
       { prog_data_decls = obj_def :: string_def :: !data_defs;
         prog_global_var_decls = !global_var_defs;
-		prog_enum_decls = !enum_defs;
-		prog_view_decls = !view_defs;
-		prog_proc_decls = !proc_defs;
-		prog_coercion_decls = !coercion_defs; }
+				prog_enum_decls = !enum_defs;
+				prog_view_decls = !view_defs;
+				prog_rel_decls = !rel_defs; (* An Hoa *)
+				prog_proc_decls = !proc_defs;
+				prog_coercion_decls = !coercion_defs; }
   }
 ;
 
@@ -298,6 +303,7 @@ decl_list
 
 decl
   : type_decl { Type $1 }
+	| rel_decl { Rel $1 } /* An Hoa */
   | global_var_decl { Global_var $1 }
   | proc_decl { Proc $1 }
   | coercion_decl { Coercion $1 }
@@ -849,6 +855,10 @@ simple_pure_constr
   | NOT cid {
 	  P.mkNot (P.BForm (P.mkBVar $2 (get_pos 2), None )) None (get_pos 1)
 	}
+	/* An Hoa: add negation of a formula which is essential */
+	| NOT OPAREN pure_constr CPAREN {
+		P.mkNot $3 None (get_pos 1)
+	} 
 ;
 
 lbconstr
@@ -929,6 +939,10 @@ bconstr
   | PERM OPAREN cexp COMMA cexp CPAREN {
 	  (P.BForm (P.ListPerm ($3, $5, get_pos 1),None), None)
 	}
+	| IDENTIFIER OPAREN opt_cexp_list CPAREN {
+   (* AnHoa *)
+   (P.BForm (P.RelForm ($1, $3, get_pos 1), None), None)
+  }
 ;
 
 /* constraint expressions */
@@ -964,6 +978,10 @@ cexp
   | REVERSE OPAREN cexp CPAREN {
 	  P.ListReverse ($3, get_pos 1)
 	}
+	/* An Hoa : array */
+	| cid OSQUARE cexp CSQUARE {
+    P.ArrayAt ($1, $3, get_pos 1)
+  }
 ;
 
 additive_cexp 
@@ -1017,6 +1035,10 @@ unary_cexp
   | LENGTH OPAREN cexp CPAREN {
 	  P.ListLength ($3, get_pos 1)
 	}
+	/* An Hoa : array */
+	| cid OSQUARE cexp CSQUARE {
+    P.ArrayAt ($1, $3, get_pos 1)
+  }
 ;
 
 opt_cexp_list
@@ -1049,6 +1071,50 @@ cexp_list_rec_p
   | COMMA cexp cexp_list_rec_p {$2::$3}
   ;
 */
+
+/************ An Hoa :: Relations ************/
+rel_decl
+  : rel_header EQEQ rel_body /* opt_inv */ DOT{
+	{ $1 with rel_formula = $3 (* (fst $3) *); (* rel_invariant = $4; *)}
+  }
+  | rel_header EQ error {
+	  report_error (get_pos 2) ("use == to define a relation")
+	}  
+;
+
+typed_id_list_opt
+	: { [] }
+	| typ IDENTIFIER { 
+		[($1,$2)]
+		}
+	| typ IDENTIFIER COMMA typed_id_list_opt { 
+		($1,$2) :: $4 
+		}
+;
+
+rel_header
+  : REL IDENTIFIER OPAREN typed_id_list_opt /* opt_ann_cid_list */ CPAREN {
+    (* let cids, anns = List.split $4 in
+    let cids, br_labels = List.split cids in
+	  if List.exists 
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	  then
+		report_error (get_pos 1) 
+		  ("variables in view header are not allowed to be primed")
+	  else
+		let modes = get_modes anns in *)
+		  { rel_name = $2;
+			rel_typed_vars = $4;
+			rel_formula = P.mkTrue (get_pos 1); (* F.mkETrue top_flow (get_pos 1); *)			
+			}
+  }
+;
+
+rel_body
+: /* formulas { 
+    ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) } */
+	pure_constr { $1 } /* Only allow pure constraint in relation definition. */
+;
 
 /********** Procedures and Coercion **********/
 
@@ -2061,6 +2127,17 @@ primary_expression_no_parenthesis
   | member_access { $1 }
   | invocation_expression { $1 }
   | new_expression { $1}
+	| arrayaccess_expression { $1 } /* An Hoa */
+;
+
+/* An Hoa : array access expression */
+arrayaccess_expression
+  : IDENTIFIER OSQUARE expression CSQUARE { 
+			ArrayAt { 
+				exp_arrayat_array_name = $1; 
+				exp_arrayat_index = $3; 
+				exp_arrayat_pos = get_pos 1 }
+		}
 ;
 
 member_name

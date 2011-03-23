@@ -6,24 +6,20 @@
 open Globals
 module CP = Cpure
 
-exception Timeout
-
 (* options *)
 let is_presburger = ref false
 let no_pseudo_ops = ref false
 let no_elim_exists = ref false
 let no_simplify = ref false
 let no_cache = ref false
-let timeout = ref 15 (* default timeout is 15 seconds *)
+let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
 (* logging *)
 let is_log_all = ref false
-let log_all = ref (fun _ -> raise Not_found)
-let channels = ref (stdin, stdout)
+let log_file = open_out "allinput.rl"
 
 (* process management *)
 let is_reduce_running = ref false
-let reduce_pid = ref 0
 
 (* cache *)
 let sat_cache = ref (Hashtbl.create 100)
@@ -42,6 +38,8 @@ let cached_count = ref 0
 
 let prompt_regexp = Str.regexp "^[0-9]+:$"
 
+let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+
 (**********************
  * auxiliari function *
  **********************)
@@ -55,13 +53,7 @@ type log_level =
   | DEBUG
 
 let log level msg = 
-  let write_msg () = 
-    try !log_all msg
-    with Not_found ->
-      let out = open_out "allinput.rl" in
-      log_all := (fun msg -> output_string out (msg ^ "\n"); flush out);
-      !log_all msg
-  in
+  let write_msg () = output_string log_file (msg ^ "\n") in
   match level with
     | ERROR -> write_msg ()
     | DEBUG -> if !is_log_all then write_msg ()
@@ -84,55 +76,53 @@ let rec read_till_prompt (channel: in_channel) : string =
  *)
 let send_cmd cmd =
   if !is_reduce_running then 
-    let inchannel, outchannel = !channels in
     let cmd = cmd ^ ";\n" in
-    let _ = output_string outchannel cmd in
-    let _ = flush outchannel in
-    let _ = read_till_prompt inchannel in
+    let _ = output_string !process.outchannel cmd in
+    let _ = flush !process.outchannel in
+    let _ = read_till_prompt !process.inchannel in
     ()
 
 (* start Reduce system in a separated process and load redlog package *)
-let start_red () =
+let start () =
   if not !is_reduce_running then begin
-    log DEBUG "Starting Reduce... "; flush stdout;
-    let inchannel, outchannel, errchannel, pid = Unix_add.open_process_full "redcsl" [|"-w"; "-b";"-l reduce.log"|] in
-    channels := inchannel, outchannel;
-    is_reduce_running := true;
-    reduce_pid := pid;
-    send_cmd "off nat";
-    send_cmd "linelength 10000";
-    send_cmd "load_package redlog";
-    send_cmd "rlset ofsf";
-    send_cmd "on rlnzden";
+      let prelude () =    
+        is_reduce_running := true;
+        send_cmd "off nat";
+        send_cmd "linelength 10000";
+        send_cmd "load_package redlog";
+        send_cmd "rlset ofsf";
+        send_cmd "on rlnzden";
+      in
+      let set_process proc = process := proc in
+      let _ = Gen.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
+      print_endline "Starting Reduce... "; flush stdout
   end
 
 (* stop Reduce system *)
-let stop_red () = 
+let stop () = 
   if !is_reduce_running then begin
-    let outchannel = snd !channels in
-    output_string outchannel "quit;\n"; flush outchannel;
-    log DEBUG "Halting Reduce... "; flush stdout;
-    Unix.kill !reduce_pid 9;
-    ignore (Unix.waitpid [] !reduce_pid);
-    is_reduce_running := false;
-    reduce_pid := 0;
-    (* some logging *)
-    log DEBUG "\n***************";
-    log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
-    log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
-    log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
-    log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
-    log DEBUG ("Number of cached hit: " ^ (string_of_int !cached_count));
-    log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
-    log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
+      let ending_fnc () = 
+        let outchannel = !process.outchannel in
+        output_string outchannel "quit;\n"; flush outchannel;
+        print_endline "Halting Reduce... "; flush stdout;
+        log DEBUG "\n***************";
+        log DEBUG ("Number of Omega calls: " ^ (string_of_int !omega_call_count));
+        log DEBUG ("Number of Redlog calls: " ^ (string_of_int !redlog_call_count));
+        log DEBUG ("Number of formulas that need ee: " ^ (string_of_int !ee_call_count));
+        log DEBUG ("Number of successful ee calls: " ^ (string_of_int !success_ee_count));
+        log DEBUG ("Number of cached hit: " ^ (string_of_int !cached_count));
+        log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
+        log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
+      in
+      let _ = Gen.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      is_reduce_running := false
   end
-  
-let restart_red reason =
+
+let restart reason =
   if !is_reduce_running then begin
     print_string reason;
-    log DEBUG " Restarting Reduce... "; flush stdout;
-    stop_red();
-    start_red();
+    print_endline " Restarting Reduce... "; flush stdout;
+    Gen.PrvComms.restart !is_log_all log_file "redlog" reason start stop
   end
 
 (*
@@ -143,16 +133,23 @@ let restart_red reason =
 let send_and_receive f =
   if !is_reduce_running then
     try
-      let _ = send_cmd f in
-      input_line (fst !channels)
-    with 
-        Timeout -> raise Timeout
+        let fnc () =
+          let _ = send_cmd f in
+          input_line !process.inchannel
+        in
+        let fail_with_timeout () =
+          restart "Timeout!";
+          "" in
+        let answ = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
+        answ
+    with
       | ex ->
         print_endline (Printexc.to_string ex);
-        restart_red "Reduce crashed or something really bad happenned!";
+        restart "Reduce crashed or something really bad happenned!";
         ""
   else
     ""
+
 	(* send formula to reduce/redlog and receive result *)
 let check_formula f =
   let res = send_and_receive ("rlqe " ^ f) in
@@ -196,35 +193,14 @@ let call_redlog func =
  * also print err_msg when timeout happen
  * func must be lazy
  *)
-
-
 let run_with_timeout func err_msg =
-  (* let _ = print_string "inside run_with_timeout" in *)
-  let sigalrm_handler = Sys.Signal_handle (fun _ -> raise Timeout) in
-  let old_handler = Sys.signal Sys.sigalrm sigalrm_handler in
-  let reset_sigalrm () = Sys.set_signal Sys.sigalrm old_handler in
-  ignore (Unix.setitimer Unix.ITIMER_REAL 
-        {Unix.it_interval = 0.0; Unix.it_value = (float_of_int !timeout)});
-  let res = 
-    try
-      Some (Lazy.force func)
-    with
-    | Timeout ->
-        log ERROR ("TIMEOUT");
-        log ERROR err_msg;
-        restart_red ("After timeout"^err_msg);
-        None
-    | exc -> print_endline "Unknown error"; stop_red (); raise exc 
+  let fail_with_timeout () = log ERROR ("TIMEOUT");
+    log ERROR err_msg;
+    restart ("After timeout"^err_msg);
+    None
   in
-  ignore (Unix.setitimer Unix.ITIMER_REAL 
-        {Unix.it_interval = 0.0; Unix.it_value = 0.0});
-  reset_sigalrm ();
+  let res = Gen.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
   res
-
-let run_with_timeout_debug func err_msg =
-  Gen.Debug.ho_2 "run_with_timeout" (fun _ -> "?") (fun x -> x)
-  (fun x -> "Out")
-     run_with_timeout func err_msg
 
 (**************************
  * cpure to reduce/redlog *
@@ -997,18 +973,18 @@ let options_to_bool opts default =
   | None -> default
 
 let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
-  if is_linear_formula f then 
+  if is_linear_formula f then
     call_omega (lazy (Omega.is_sat f sat_no))
   else
     let sf = if !no_pseudo_ops then f else strengthen_formula f in
     let frl = rl_of_formula sf in
     let rl_input = "rlex(" ^ frl ^ ")" in
-    let runner = lazy (check_formula rl_input) in
+    let runner () = check_formula rl_input in
     let err_msg = "Timeout when checking #is_sat " ^ sat_no ^ "!" in
-    let proc = lazy (run_with_timeout runner err_msg) in
+    let proc =  lazy (run_with_timeout runner err_msg) in
     let res, time = call_redlog proc in
-    let sat = options_to_bool res true in (* default is SAT *)
-    (sat, time) 
+    let sat = options_to_bool (Some res) true in (* default is SAT *)
+    (sat, time)
 
 let is_sat f sat_no =
   let sf = simplify_var_name (normalize_formula f) in
@@ -1037,11 +1013,11 @@ let is_valid f imp_no =
   let f = normalize_formula f in
   let frl = rl_of_formula f in
   let rl_input = "rlall(" ^ frl ^")" in
-  let runner = lazy (check_formula rl_input) in
+  let runner () = check_formula rl_input in
   let err_msg = "Timeout when checking #imply " ^ imp_no ^ "!" in
   let proc = lazy (run_with_timeout runner err_msg) in
   let res, time = call_redlog proc in
-  let valid = options_to_bool res false in (* default is INVALID *)
+  let valid = options_to_bool (Some res) false in (* default is INVALID *)
   (valid, time)
 
 let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
@@ -1054,7 +1030,7 @@ let imply_no_cache (f : CP.formula) (imp_no: string) : bool * float =
     is_valid wf imp_no    in
    let res = 
     if is_linear_formula f then
-      call_omega (lazy (Omega.is_valid f (float_of_int !timeout)))
+      call_omega (lazy (Omega.is_valid f !timeout))
     else
       if has_eq f then
         let eef = elim_eq f in

@@ -88,7 +88,7 @@ node2 append(node2 x, node2 y)
 }
 
 /* append 2 doubly linked lists */
-node2 append(node2 x, node2 y)
+node2 append2(node2 x, node2 y)
 	requires x::dll<q, m> * y::dll<p, n>
 	ensures res::dll<_, m+n>;
 {

@@ -34,6 +34,12 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
+    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+    "Print the antecedent and consequence for each implication check."); (* An Hoa *)
+    ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
+    "Print the original output given by the SMT solver."); (* An Hoa *)
+    ("--smtinp", Arg.Set Smtsolver.print_input,
+    "Print the program generated SMT input."); (* An Hoa *)
 	("--no-omega-simpl", Arg.Clear Globals.omega_simpl,
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
@@ -73,8 +79,7 @@ let common_arguments = [
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
     "Log all CVC Lite formula to specified log file");
 	(* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
-	("--log-cvc3", Arg.Unit Cvc3.set_log_file,
-    "Log all formulae sent to CVC3 in file allinput.cvc3");
+	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
 	("--log-omega", Arg.Set Omega.log_all_flag,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
 	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
@@ -159,7 +164,7 @@ let common_arguments = [
     "Do not try to simplify non-linear formulas with Redlog");
     ("--rl-no-cache", Arg.Set Redlog.no_cache,
     "Do not use cache for unsatisfiability and implication's checking with Redlog");
-	("--rl-timeout", Arg.Set_int Redlog.timeout, 
+	("--rl-timeout", Arg.Set_float Redlog.timeout, 
 	"Set timeout (in seconds) for is_sat or imply with Redlog");
 	("--failure-analysis",Arg.Set Globals.failure_analysis, 
 	"Turn on failure analysis");
@@ -173,7 +178,7 @@ let common_arguments = [
     (*("--redlog-ee", Arg.Set Redlog.is_ee, "enable Redlog existential quantifier elimination");
     *)
     ("--redlog-presburger", Arg.Set Redlog.is_presburger, "use presburger arithmetic for redlog");
-    ("--redlog-timeout", Arg.Set_int Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
+    ("--redlog-timeout", Arg.Set_float Redlog.timeout, "<sec> checking a formula using redlog with a timeout after <sec> seconds");
     (*("--redlog-manual", Arg.Set Redlog.manual_mode, " manual config for reduce/redlog");*)
     ("--dpc", Arg.Clear Globals.enable_prune_cache,"disable prune caching");
     ("--delimrc", Arg.Set Globals.disable_elim_redundant_ctr, "disable redundant constraint elimination in memo pure");

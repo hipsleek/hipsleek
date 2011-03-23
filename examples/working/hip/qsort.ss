@@ -6,16 +6,17 @@ data node {
 }
 
 bnd<n, sm, bg> == self = null & n = 0 or 
-  self::node<d, p> * p::bnd<n1, sm, bg> & n= n1+1 & sm <= d < bg 
-  inv n >= 0;
+      self::node<d, p> * p::bnd<n-1, sm, bg> & sm <= d < bg 
+      inv n >= 0;
 
-sll<n, sm, lg> == self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 or 
-  self::node<sm, q> * q::sll<n1, qs, lg> & n= n1+1 &  sm <= qs 
-  inv n >= 1 & sm <= lg & self!=null ;
+sll<n, sm, lg> == 
+     self::node<qmin, null> & qmin = sm & qmin = lg & n = 1 
+  or self::node<sm, q> * q::sll<n-1, qs, lg> &  sm <= qs 
+      inv n >= 1 & sm <= lg & self!=null ;
 
 node partition(ref node xs, int c)
   requires xs::bnd<n, sm, bg> & sm <= c <= bg
-  ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
+    ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
 {
 	node tmp1;
 	int v; 
@@ -44,15 +45,14 @@ node partition(ref node xs, int c)
 
 /* function to append 2 bounded lists */
 node append_bll(node x, node y)
-        requires y::sll<m,s2,b2> & x=null 
-        ensures res::sll<m,s2,b2>;
+    requires y::sll<m,s2,b2> & x=null 
+    ensures res::sll<m,s2,b2>;
 	requires x::sll<nn, s0, b0> * y::sll<m, s2, b2> & b0 <= s2
 	ensures res::sll<nn+m, s0, b2>;
 
 {
         node xn; 
-
-        if (x==null) return y;
+        if (x==null) return y; /* segmentation bug when returning null */
         else {
          xn = append_bll(x.next,y);
          x.next = xn;
