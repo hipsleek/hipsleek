@@ -350,6 +350,51 @@ let set_tp tp_str =
 	();
   check_prover_existence !prover_str
 
+let string_of_tp tp = match tp with
+  | OmegaCalc -> "omega"
+  | CvcLite -> "cvcl"
+  | Cvc3 -> "cvc3"
+  | CO -> "co"
+  | Isabelle -> "isabelle"
+  | Mona -> "mona"
+  | MonaH -> "monah"
+  | OM -> "om"
+  | OI -> "oi"
+  | SetMONA -> "set"
+  | CM -> "cm"
+  | Coq -> "coq"
+  | Z3 -> "z3"
+  | Redlog -> "redlog"
+  | RM -> "rm"
+
+let name_of_tp tp = match tp with
+  | OmegaCalc -> "Omega Calculator"
+  | CvcLite -> "CVC Lite"
+  | Cvc3 -> "CVC3"
+  | CO -> "CVC Lite and Omega"
+  | Isabelle -> "Isabelle"
+  | Mona -> "Mona"
+  | MonaH -> "MonaH"
+  | OM -> "Omega and Mona"
+  | OI -> "Omega and Isabelle"
+  | SetMONA -> "Set Mona"
+  | CM -> "CVC Lite and Mona"
+  | Coq -> "Coq"
+  | Z3 -> "Z3"
+  | Redlog -> "Redlog"
+  | RM -> "Redlog and Mona"
+
+let log_file_of_tp tp = match tp with
+  | OmegaCalc -> "allinput.oc"
+  | Cvc3 -> "allinput.cvc3"
+  | Isabelle -> "allinput.thy"
+  | Mona -> "allinput.mona"
+  | Coq -> "allinput.v"
+  | Redlog -> "allinput.rl"
+  | _ -> ""
+
+let get_current_tp_name () = name_of_tp !tp
+
 let omega_count = ref 0
 
 (* Method checking whether a formula contains bag constraints *)
@@ -1383,7 +1428,7 @@ let start_prover () =
 	  Omega.start ();
 	 end
   | Redlog | RM -> 
-     begin
+    begin
       Redlog.start ();
 	  Omega.start ();
 	 end
@@ -1431,3 +1476,12 @@ let stop_prover () =
     | Mona -> Mona.stop();
     | _ -> Omega.stop();;
 
+let prover_log = Buffer.create 5096
+
+let get_prover_log () = Buffer.contents prover_log
+let clear_prover_log () = Buffer.clear prover_log
+
+let change_prover prover =
+  clear_prover_log ();
+  tp := prover;
+  start_prover ()

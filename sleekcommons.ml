@@ -83,6 +83,8 @@ let string_of_meta_formula (mf : meta_formula) =
   | MetaEForm sf -> Iprinter.string_of_struc_formula sf
   | MetaCompose _ -> "" (* TODO Implement *)
 
+let clear_var_table () = H.clear var_tab
+
 (*
   let get_var (v : ident) : let_body =
   H.find var_tab v

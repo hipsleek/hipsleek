@@ -513,12 +513,24 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then 
      rs
-  else
-	Err.report_error {Err.error_loc = pos;
-	Err.error_text = "Post condition "
-	        ^ (Cprinter.string_of_formula post)
-	        ^ " cannot be derived by the system.\n By : "(* ^(Cprinter.string_of_list_partial_context final_state) *)
-	        ^ "\n fail ctx: " ^(Cprinter.string_of_list_partial_context rs) }
+  else begin
+    (* get source code posistion of failed branches *)
+    let locs_of_failures = 
+      List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
+    in
+    let string_of_loc_list locs =
+      List.fold_left (fun res l -> res ^ (string_of_loc_by_char_num l) ^ ",") "" locs
+    in
+    Err.report_error {
+      Err.error_loc = pos;
+      Err.error_text = Printf.sprintf
+        "Post condition %s cannot be derived by the system.\n By: %s \n fail ctx: %s\nPossible locations of failures: %s."
+        (Cprinter.string_of_formula post)
+        (Cprinter.string_of_list_partial_context final_state)
+        (Cprinter.string_of_list_partial_context rs)
+        (string_of_loc_list locs_of_failures)
+    }
+  end
 
 
 (* checking procedure *)

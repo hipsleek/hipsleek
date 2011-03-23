@@ -615,6 +615,20 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
+let string_of_iast_label_table table =
+  let string_of_row row =
+    let string_of_label_loc (_, path_label, loc) =
+      Printf.sprintf "%d: %s" path_label (string_of_full_loc loc)
+    in
+    let path_id, desc, labels, loc = row in
+    Printf.sprintf "\nid: %s; labels: %s; loc: %s" 
+      (string_of_control_path_id_opt path_id desc)
+      (List.fold_left (fun s label_loc -> s ^ (string_of_label_loc label_loc) ^ ", ") "" labels)
+      (string_of_full_loc loc)
+  in
+  List.fold_right (fun row res -> (string_of_row row) ^ res) table ""
+
+
 let pr_formula_label_br l = fmt_string (string_of_formula_label_pr_br l "")
 let pr_formula_label l  = fmt_string (string_of_formula_label l "")
 let pr_formula_label_list l  = fmt_string ("{"^(String.concat "," (List.map (fun (i,_)-> (string_of_int i)) l))^"}")

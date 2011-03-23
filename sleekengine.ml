@@ -50,6 +50,28 @@ let cprog = { C.prog_data_decls = [];
 
 let residues = ref (None : CF.list_context option)
 
+let clear_iprog () =
+  iprog.I.prog_data_decls <- [iobj_def];
+  iprog.I.prog_view_decls <- [];
+  iprog.I.prog_rel_decls <- [];
+  iprog.I.prog_coercion_decls <- []
+
+let clear_cprog () =
+  cprog.C.prog_data_decls <- [];
+  cprog.C.prog_view_decls <- [];
+  cprog.C.prog_rel_decls <- [];
+  cprog.C.prog_left_coercions <- [];
+  cprog.C.prog_right_coercions <- []
+
+let clear_all () =
+  Debug.clear_debug_log ();
+  Tpdispatcher.clear_prover_log ();
+  Gen.ExcNumbering.clear_exc_list ();
+  clear_var_table ();
+  clear_iprog ();
+  clear_cprog ();
+  residues := None
+
 let check_data_pred_name name : bool =
   try 
 	let _ = I.look_up_data_def_raw iprog.I.prog_data_decls name in
@@ -72,25 +94,23 @@ let check_data_pred_name name : bool =
 	  end
 
 let process_data_def ddef =
-  (*
-    print_string (Iprinter.string_of_data_decl ddef);
-    print_string ("\n"); 
-  *)
+  (*print_endline (Iprinter.string_of_data_decl ddef);*)
   if check_data_pred_name ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
-      try
-	iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
-	let _ = Iast.build_exc_hierarchy true iprog in
-	let _ = Gen.ExcNumbering.c_h () in
-	let cddef = AS.trans_data iprog ddef in
-	let _ = if !Globals.print_core then print_string (Cprinter.string_of_data_decl cddef ^"\n") else () in
-	  cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls
-      with
-	| _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
-      else begin
-        dummy_exception() ;
-	print_string (ddef.I.data_name ^ " is already defined.\n")
-      end
+    try
+      iprog.I.prog_data_decls <- ddef :: iprog.I.prog_data_decls;
+      Iast.build_exc_hierarchy true iprog;
+      Gen.ExcNumbering.c_h ();
+      let cddef = AS.trans_data iprog ddef in
+      if !Globals.print_core then 
+        print_string (Cprinter.string_of_data_decl cddef ^"\n");
+      cprog.C.prog_data_decls <- cddef :: cprog.C.prog_data_decls
+    with
+    | _ -> dummy_exception() ; iprog.I.prog_data_decls <- tmp
+  else begin
+    dummy_exception() ;
+    print_string (ddef.I.data_name ^ " is already defined.\n")
+  end
 
 let process_pred_def pdef = 
     
@@ -258,46 +278,52 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
     end
   | MetaEForm _ -> report_error no_pos ("can not have structured formula in antecedent")
 	  
-let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
-  try
+let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		
 		(* An Hoa : PRINT OUT THE INPUT *)
 		(* let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in
 		let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in
 		let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
 		
-    let _ = residues := None in
-    let stab = H.create 103 in
-    let ante = meta_to_formula iante0 false [] stab in
-		let ante = Solver.prune_preds cprog true ante in
-    let fvs = CF.fv ante in
-    let fv_idents = List.map CP.name_of_spec_var fvs in
-    let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
-    let conseq = Solver.prune_pred_struc cprog true conseq in
-    (*let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in*)
-    let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
-    let ctx = CF.build_context ectx ante no_pos in
-    (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
-    (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
+  let _ = residues := None in
+  let stab = H.create 103 in
+  let ante = meta_to_formula iante0 false [] stab in    
+  let ante = Solver.prune_preds cprog true ante in
+  let fvs = CF.fv ante in
+  let fv_idents = List.map CP.name_of_spec_var fvs in
+  let conseq = meta_to_struc_formula iconseq0 false fv_idents stab in
+  let conseq = Solver.prune_pred_struc cprog true conseq in
+  (*let conseq = (Cformula.substitute_flow_in_struc_f !n_flow_int !top_flow_int conseq ) in*)
+  let ectx = CF.empty_ctx (CF.mkTrueFlow ()) no_pos in
+  let ctx = CF.build_context ectx ante no_pos in
+  (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
+  (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
     (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
-    let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in
-    (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-    let rs1, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
-    let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
-    residues := Some rs;
-    if CF.isFailCtx rs then begin 
-	  print_string ("Fail.\n");
-      if !Globals.print_err_sleek  then
-        print_string ("printing here"^(Cprinter.string_of_list_context rs)) 
-    end 
-    else
-	  print_string ("Valid.\n")
-      (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
-  with
-    | _ ->  
+  let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  (*let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in*)
+  (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
+  let rs1, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
+  let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
+  residues := Some rs;
+  (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
+  flush stdout;
+  let res = not (CF.isFailCtx rs) in
+  res, rs
+
+let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
+  try 
+    let valid, rs = run_entail_check iante0 iconseq0 in
+    if not valid then begin
+      print_string ("Fail.\n");
+      if !Globals.print_err_sleek then
+        print_string ("printing here"^(Cprinter.string_of_list_context rs))
+    end
+      else print_string ("Valid.\n");
+  with _ ->
     Printexc.print_backtrace stdout;
-    dummy_exception() ; (print_string "exception in entail check\n")	
-	
+    dummy_exception() ; 
+    print_string "exception in entail check\n"
+
 let old_process_capture_residue (lvar : ident) = 
 	let flist = match !residues with 
       | None -> (CF.mkTrue (CF.mkTrueFlow()) no_pos)
@@ -337,3 +363,10 @@ let process_print_command pcmd0 = match pcmd0 with
               (CF.list_formula_of_list_context s))^"\n")
 		else
 			print_string ("unsupported print command: " ^ pcmd)
+
+let get_residue () =
+  !residues
+  (*match !residues with*)
+    (*| None -> ""*)
+    (*| Some s -> Cprinter.string_of_list_formula (CF.list_formula_of_list_context s)*)
+

@@ -1820,15 +1820,15 @@ let rec empty_es flowt pos =
 
 }
 
-and empty_ctx flowt pos = Ctx (empty_es flowt pos)
+let empty_ctx flowt pos = Ctx (empty_es flowt pos)
 
-and false_ctx flowt pos = 
+let false_ctx flowt pos = 
 	let x = mkFalse flowt pos in
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
 
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
 
-and contains_immutable_ctx (ctx : context) : bool =
+let rec contains_immutable_ctx (ctx : context) : bool =
   match ctx with
     | Ctx(es) -> contains_immutable es.es_formula
     | OCtx(c1, c2) -> (contains_immutable_ctx c1) or (contains_immutable_ctx c2)
@@ -1837,33 +1837,33 @@ and contains_immutable_ctx (ctx : context) : bool =
   | Ctx es -> isStrictConstFalse es.es_formula
   | _ -> false*)
 
-and isAnyFalseCtx ctx = match ctx with
+let isAnyFalseCtx ctx = match ctx with
   | Ctx es -> isAnyConstFalse es.es_formula
   | _ -> false  
 
-and isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
+let isAnyFalsePartialCtx (fc,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
 
-and isAnyFalseFailescCtx (fc,ec,sc) = (fc=[]) &&
+let isAnyFalseFailescCtx (fc,ec,sc) = (fc=[]) &&
   List.for_all (fun (_,s) -> isAnyFalseCtx s) sc
 
-and isAnyFalseListCtx ctx = match ctx with
+let isAnyFalseListCtx ctx = match ctx with
   | SuccCtx lc ->List.exists isAnyFalseCtx lc
   | FailCtx _ -> false
   
-and isStrictTrueCtx ctx = match ctx with
+let isStrictTrueCtx ctx = match ctx with
   | Ctx es -> isStrictConstTrue es.es_formula
   | _ -> false
 
-and isAnyTrueCtx ctx = match ctx with
+let isAnyTrueCtx ctx = match ctx with
   | Ctx es -> isAnyConstTrue es.es_formula
   | _ -> false
   
-and allFalseCtx ctx = match ctx with
+let rec allFalseCtx ctx = match ctx with
 	| Ctx es -> isAnyFalseCtx ctx
 	| OCtx (c1,c2) -> (allFalseCtx c1) && (allFalseCtx c2)
 
-and mkOCtx ctx1 ctx2 pos =
+let mkOCtx ctx1 ctx2 pos =
   (*if (isFailCtx ctx1) || (isFailCtx ctx2) then or_fail_ctx ctx1 ctx2
   else*)  (* if isStrictTrueCtx ctx1 || isStrictTrueCtx ctx2 then *)
   (* true_ctx (mkTrueFlow ()) pos *)  (* not much point in checking
@@ -1873,9 +1873,9 @@ and mkOCtx ctx1 ctx2 pos =
   else if isAnyFalseCtx ctx2 then ctx1
   else OCtx (ctx1,ctx2) 
 
-and or_context c1 c2 = mkOCtx c1 c2 no_pos 
+let or_context c1 c2 = mkOCtx c1 c2 no_pos 
   
-and or_context_list (cl10 : context list) (cl20 : context list) : context list = 
+let rec or_context_list (cl10 : context list) (cl20 : context list) : context list = 
   let rec helper cl1 cl2 = match cl1 with
 	| c1 :: rest ->
 		let tmp1 = or_context_list rest cl2 in
@@ -1889,23 +1889,23 @@ and or_context_list (cl10 : context list) (cl20 : context list) : context list =
 	  let tmp = helper cl10 cl20 in
 		tmp
   
-and mkFailCtx_in (ft:fail_type) = FailCtx ft
+let mkFailCtx_in (ft:fail_type) = FailCtx ft
 
-and mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
+let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
 
 (* let mk_partial_context (c:context) : (partial_context) = ([], [ ([], c) ] )  *)
 
-and mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
-and mk_failesc_context (c:context) (lab:path_trace) : (failesc_context) = ([], [],[ (lab, c) ] ) 
+let mk_partial_context (c:context) (lab:path_trace) : (partial_context) = ([], [ (lab, c) ] ) 
+let mk_failesc_context (c:context) (lab:path_trace) : (failesc_context) = ([], [],[ (lab, c) ] ) 
 
-and is_empty_esc_stack (e:esc_stack) : bool = match e with
+let rec is_empty_esc_stack (e:esc_stack) : bool = match e with
   | [] -> false
   | (_,[])::t -> is_empty_esc_stack t
   | (_,h::t)::_ -> true
   
-and colapse_esc_stack (e:esc_stack) : branch_ctx list = List.fold_left (fun a (_,c)-> a@c) [] e
+let colapse_esc_stack (e:esc_stack) : branch_ctx list = List.fold_left (fun a (_,c)-> a@c) [] e
 
-and push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack = 
+let push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack = 
   match b with 
   | [] -> e
   | _ ->
@@ -1913,14 +1913,14 @@ and push_esc_elem  (e:esc_stack) (b:branch_ctx list): esc_stack =
     | [] -> [((0,""),b)]
     | (lbl,h)::t-> (lbl,b@h)::t 
   
-and push_esc_level (e:esc_stack) lbl : esc_stack = (lbl,[])::e
+let push_esc_level (e:esc_stack) lbl : esc_stack = (lbl,[])::e
 
-and pop_esc_level (e:esc_stack) lbl : (esc_stack * branch_ctx list) = match e with
+let pop_esc_level (e:esc_stack) lbl : (esc_stack * branch_ctx list) = match e with
   | (lbl,s)::t -> (t,s)
   | _ -> Error.report_error {Err.error_loc = no_pos;  
               Err.error_text = "error in popping exception contexts \n"}
        
-and merge_success s1 s2 = match s1,s2 with
+let rec merge_success s1 s2 = match s1,s2 with
     | [],xs | xs,[] -> xs   
         (* List.filter (fun (l,_) -> not (List.mem l pt_fail_list)) xs *)
     | (l1,b1)::z1,(l2,b2)::z2 -> 
@@ -1933,28 +1933,34 @@ and merge_success s1 s2 = match s1,s2 with
 	else let res = merge_success s1 z2 in
 	  (l2,b2)::res
        
-and pop_esc_level_list (l:list_failesc_context) lbl : list_failesc_context = 
+let pop_esc_level_list (l:list_failesc_context) lbl : list_failesc_context = 
   List.map (fun (fl,el,sl)-> 
     let ne,el = pop_esc_level el lbl in 
     (fl,ne, merge_success el sl)) l
  
-and mk_list_partial_context_label (c:list_context) (lab:path_trace): (list_partial_context) =
+let mk_list_partial_context_label (c:list_context) (lab:path_trace): (list_partial_context) =
   match c with
     | FailCtx fr ->  [( [(lab,fr)] ,[])]
     | SuccCtx cl -> List.map (fun c -> mk_partial_context c lab) cl
 
-and mk_list_partial_context (c:list_context) : (list_partial_context) =
+let mk_list_partial_context (c:list_context) : (list_partial_context) =
   mk_list_partial_context_label c []
 
 
 
-and repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
+let repl_label_list_partial_context (lab:path_trace) (cl:list_partial_context) : list_partial_context 
     = List.map (fun (fl,sl) -> (fl, List.map (fun (_,c) -> (lab,c)) sl)) cl
   
   
   (*context set union*)
 
-and union_context_left c_l = match (List.length c_l) with
+let is_cont t = 
+  match t with
+    | Continuation _ -> true
+    | Or_Continuation _ -> true
+    | _ -> false
+
+let union_context_left c_l = match (List.length c_l) with
   | 0 ->  Err.report_error {Err.error_loc = no_pos;  
               Err.error_text = "folding empty context list \n"}
   | 1 -> (List.hd c_l)
@@ -1975,16 +1981,10 @@ and union_context_left c_l = match (List.length c_l) with
      | SuccCtx t1,FailCtx t2 -> SuccCtx t1
      | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l)
 
-and is_cont t = 
-  match t with
-    | Continuation _ -> true
-    | Or_Continuation _ -> true
-    | _ -> false
-
-and fold_context_left c_l = union_context_left c_l 
+let fold_context_left c_l = union_context_left c_l 
   
   (*list_context or*)
-and or_list_context c1 c2 = match c1,c2 with
+let or_list_context c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
      | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
@@ -2012,40 +2012,40 @@ and isFailCtx cl = match cl with
 	| SuccCtx _ -> false
 
 
-and isFailPartialCtx (fs,ss) =
+let isFailPartialCtx (fs,ss) =
 if (Gen.is_empty ss) then true else false
 
-and isFailFailescCtx (fs,es,ss) =
+let isFailFailescCtx (fs,es,ss) =
 if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false
 
-and isFailListPartialCtx cl =
+let isFailListPartialCtx cl =
   List.for_all isFailPartialCtx cl 
 
-and isFailListFailescCtx cl =
+let isFailListFailescCtx cl =
   List.for_all isFailFailescCtx cl 
   
-and isSuccessPartialCtx (fs,ss) =
+let isSuccessPartialCtx (fs,ss) =
 if (Gen.is_empty fs) then true else false
 
-and isSuccessFailescCtx (fs,_,_) =
+let isSuccessFailescCtx (fs,_,_) =
 if (Gen.is_empty fs) then true else false
 
-and isSuccessListPartialCtx cl =
+let isSuccessListPartialCtx cl =
   List.exists isSuccessPartialCtx cl 
   
-and isSuccessListFailescCtx cl =
+let isSuccessListFailescCtx cl =
   List.exists isSuccessFailescCtx cl 
   
-and isNonFalseListPartialCtx cl = 
+let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
 
-and isNonFalseListFailescCtx cl = 
+let isNonFalseListFailescCtx cl = 
  List.exists (fun (_,el,ss)-> 
   let ess = (colapse_esc_stack el)@ss in
   ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess )) cl
 
  
-and rank (t:partial_context):float = match t with
+let rank (t:partial_context):float = match t with
   | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}
   | ( [] , _ ) -> 1.
   | ( _  ,[] ) -> 0.
@@ -2053,19 +2053,19 @@ and rank (t:partial_context):float = match t with
     let fn,sn =float (List.length(l1)), float(List.length(l2)) in
     sn /.(fn +. sn)
   
-and list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = l1 @ l2
+let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = l1 @ l2
 
-and list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = l1 @ l2
+let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = l1 @ l2
 
 
-and select n l = 
+let select n l = 
   if n<=0 then l 
     else (Gen.BList.take n l) @(List.filter (fun c-> (rank c)==1.) (Gen.BList.drop n l))
 
-and list_partial_context_union_n (l1:list_partial_context) (l2:list_partial_context) n :list_partial_context = 
+let list_partial_context_union_n (l1:list_partial_context) (l2:list_partial_context) n :list_partial_context = 
     select n  (List.sort (fun a1 a2 -> truncate (((rank a2)-.(rank a1))*.1000.)) (l1 @ l2))
 
-and merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail list * path_trace list) =
+let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail list * path_trace list) =
   match f1,f2 with
     | [],xs -> xs, (List.map (fun (p,_)->p) xs)
     | xs,[] -> xs, (List.map (fun (p,_)->p) xs)
@@ -2079,7 +2079,7 @@ and merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail list *
 	else let res,pt = merge_fail f1 z2 in
 	  ((l2,b2)::res, l2::pt)
     
-and merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context) : partial_context =
+let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context) : partial_context =
   let (res_f,pt_fail_list) = merge_fail f1 f2 in  
   let res_s = merge_success s1 s2 in
     (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
@@ -2087,7 +2087,7 @@ and merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context)
     (* print_string ("\nAfter :"^(Cprinter.summary_partial_context (res_f,res_s))); *)
     (res_f,res_s)
     
-and merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
+let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
   let (res_f,pt_fail_list) = merge_fail f1 f2 in
   let res_s = merge_success s1 s2 in
   let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in
@@ -2109,54 +2109,54 @@ and merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_
     (res_f,res_e,res_s)
 
 (* this should be applied to merging also and be improved *)
-and count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
+let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
 
-and remove_dupl_false (sl:branch_ctx list) = 
+let remove_dupl_false (sl:branch_ctx list) = 
   let nf = count_false sl in
     if (nf=0) then sl
     else let n = List.length sl in
       if (nf=n) then [List.hd(sl)]
       else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl)
 
-and remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
-and remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
+let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
+let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
 
-and simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  remove_dupl_false ((snd pc1)@(snd pc2)) ) 
+let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  remove_dupl_false ((snd pc1)@(snd pc2)) ) 
 
-and list_partial_context_or_naive (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
+let list_partial_context_or_naive (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1)
   (* List.concat (List.map (fun pc1-> (List.map (merge_partial_context_or pc1) l2)) l1) *)
 
-and list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
+let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   (* List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1) *)
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_pc (merge_partial_context_or pc1 pc2)) l2)) l1)
 
-and list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
+let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
 
 
-and add_cond_label_partial_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,sl):partial_context) =
+let add_cond_label_partial_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,sl):partial_context) =
   let sl_1 = List.map (fun (pt,ctx) -> (((c_pid,c_opt)::pt),ctx) ) sl in
     (fl,sl_1)
 
-and add_cond_label_failesc_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,esc,sl):failesc_context) =
+let add_cond_label_failesc_context (c_pid: control_path_id_strict) (c_opt: path_label) ((fl,esc,sl):failesc_context) =
   let sl_1 = List.map (fun (pt,ctx) -> (((c_pid,c_opt)::pt),ctx) ) sl in
     (fl,esc,sl_1)
 
 
-and add_cond_label_list_partial_context (c_pid: control_path_id) (c_opt: path_label) (lpc:list_partial_context) =
+let add_cond_label_list_partial_context (c_pid: control_path_id) (c_opt: path_label) (lpc:list_partial_context) =
 match c_pid with
   | None -> (print_string "empty c_pid here"; lpc)
   | Some pid -> List.map (add_cond_label_partial_context pid c_opt) lpc
 
   
-and add_cond_label_list_failesc_context (c_pid: control_path_id) (c_opt: path_label) (lpc:list_failesc_context) =
+let add_cond_label_list_failesc_context (c_pid: control_path_id) (c_opt: path_label) (lpc:list_failesc_context) =
 match c_pid with
   | None -> (print_string "empty c_pid here"; lpc)
   | Some pid -> List.map (add_cond_label_failesc_context pid c_opt) lpc
 
   
-and build_context ctx f pos = match f with
+let rec build_context ctx f pos = match f with
   | Base _ | Exists _ -> 
 	  let es = estate_of_context ctx pos in
 		Ctx ({es with es_formula = f;es_unsat_flag =false})
@@ -2357,7 +2357,7 @@ and find_type_var (tc : h_formula) (v : ident) : CP.spec_var option = match tc w
   | ViewNode _ | HTrue | HFalse -> None
 *)
 
-and set_flow_in_context_override f_f ctx = match ctx with
+let rec set_flow_in_context_override f_f ctx = match ctx with
 	| Ctx es -> Ctx {es with es_formula = (set_flow_in_formula_override f_f es.es_formula)}
 	| OCtx (c1,c2) -> OCtx ((set_flow_in_context_override f_f c1),(set_flow_in_context_override f_f c2))
 
@@ -2689,7 +2689,7 @@ and res_replace stab rl clean_res fl =
 	else ()
 	
 (* start label - can be simplified *)	
-and get_start_label ctx = match ctx with
+let get_start_label ctx = match ctx with
   | FailCtx _ -> ""
   | SuccCtx sl -> 
     let rec helper c= match c with
@@ -2697,7 +2697,7 @@ and get_start_label ctx = match ctx with
       | OCtx (c1,c2) -> helper c1 in
 	helper (List.hd sl)
 
-and get_start_partial_label (ctx:list_partial_context) =
+let get_start_partial_label (ctx:list_partial_context) =
   let rec helper c= match c with
     | Ctx e -> if (List.length e.es_path_label)==0 then "" else snd(fst (Gen.BList.list_last e.es_path_label))
     | OCtx (c1,c2) -> helper c1 in
@@ -2707,7 +2707,7 @@ and get_start_partial_label (ctx:list_partial_context) =
       helper (snd (List.hd ls))
 
 	
-and replace_heap_formula_label nl f = match f with
+let rec replace_heap_formula_label nl f = match f with
   | Star b -> Star {b with 
 		      h_formula_star_h1 = replace_heap_formula_label nl b.h_formula_star_h1; 
 		      h_formula_star_h2 = replace_heap_formula_label nl b.h_formula_star_h2; }
@@ -2744,7 +2744,7 @@ and replace_formula_label1 nl f = match f with
 			formula_or_f1 = replace_formula_label1 nl b.formula_or_f1;
 			formula_or_f2 = replace_formula_label1 nl b.formula_or_f2;	}
 			
-and replace_struc_formula_label1 nl f = List.map (fun f-> match f with
+let rec replace_struc_formula_label1 nl f = List.map (fun f-> match f with
 	| EBase b -> EBase {b with 
 			formula_ext_base = replace_formula_label1 nl b.formula_ext_base;
 			formula_ext_continuation = replace_struc_formula_label1 nl b.formula_ext_continuation}
@@ -2777,14 +2777,14 @@ and residue_labels_in_formula f =
 	| Exists b->residue_labels_in_heap b.formula_exists_heap
 	| Or b -> (residue_labels_in_formula b.formula_or_f1) @ (residue_labels_in_formula b.formula_or_f2)
 
-and get_node_label n =  match n with
+let get_node_label n =  match n with
 	| DataNode b -> b.h_formula_data_label
 	| ViewNode b -> b.h_formula_view_label
 	| _ -> None
 	
 
 (* generic transform for heap formula *)
-and trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
+let trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) option) 
       (f_args:'a->h_formula->'a)(f_comb:'b list -> 'b) :(h_formula * 'b) =
   let rec helper (e:h_formula) (arg:'a) =
     let r =  f arg e in 
@@ -2815,27 +2815,27 @@ and trans_h_formula (e:h_formula) (arg:'a) (f:'a->h_formula->(h_formula * 'b) op
           | HFalse -> (e, f_comb []) 
   in (helper e arg)
 
-and map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
+let map_h_formula_args (e:h_formula) (arg:'a) (f:'a -> h_formula -> h_formula option) (f_args: 'a -> h_formula -> 'a) : h_formula =
   let f1 ac e = push_opt_void_pair (f ac e) in
   fst (trans_h_formula e arg f1 f_args voidf)
 	
   (*this maps an expression without passing an argument*)
-and map_h_formula (e:h_formula) (f:h_formula->h_formula option) : h_formula = 
+let map_h_formula (e:h_formula) (f:h_formula->h_formula option) : h_formula = 
   map_h_formula_args e () (fun _ e -> f e) idf2 
 
   (*this computes a result from expression passing an argument*)
-and fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option) (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) : 'b =
+let fold_h_formula_args (e:h_formula) (init_a:'a) (f:'a -> h_formula-> 'b option) (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) : 'b =
   let f1 ac e = match (f ac e) with
     | Some r -> Some (e,r)
     | None ->  None in
   snd(trans_h_formula e init_a f1 f_args comb_f)
  
   (*this computes a result from expression without passing an argument*)
-and fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) : 'b =
+let fold_h_formula (e:h_formula) (f:h_formula-> 'b option) (comb_f: 'b list->'b) : 'b =
   fold_h_formula_args e () (fun _ e-> f e) voidf2 comb_f 
 
 (* transform heap formula *)
-and transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
+let rec transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formula = 
   let r =  f e in 
     match r with
       | Some e1 -> e1
@@ -2861,7 +2861,7 @@ and transform_h_formula (f:h_formula -> h_formula option) (e:h_formula):h_formul
    f_h_f : heap formula
 *)
 
-and transform_formula f (e:formula):formula =
+let rec transform_formula f (e:formula):formula =
 	let (_, f_f, f_h_f, f_p_t) = f in
 	let r =  f_f e in 
 	match r with
@@ -2882,7 +2882,7 @@ and transform_formula f (e:formula):formula =
                 formula_exists_branches = 
                   List.map (fun (c1,c2) -> (c1, (CP.transform_formula f_p_t c2))) e.formula_exists_branches;}
 
-and trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
+let trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   let f_ext_f, f_f, f_heap_f, f_pure, f_memo = f in
   let f_ext_f_arg, f_f_arg, f_heap_f_arg, f_pure_arg, f_memo_arg = f_arg in
   let trans_heap (e: h_formula) (arg: 'a) : (h_formula * 'b) =
@@ -2937,7 +2937,7 @@ and trans_formula (e: formula) (arg: 'a) f f_arg f_comb: (formula * 'b) =
   in
   trans_f e arg
 
-and transform_ext_formula f (e:ext_formula) :ext_formula = 
+let rec transform_ext_formula f (e:ext_formula) :ext_formula = 
   let (f_e_f, f_f, f_h_f, f_p_t) = f in
 	let r = f_e_f e in 
 	match r with
@@ -2963,7 +2963,7 @@ and transform_ext_formula f (e:ext_formula) :ext_formula =
 and transform_struc_formula f (e:struc_formula)	:struc_formula = 
 	List.map (transform_ext_formula f) e
 		
-and trans_ext_formula (e: ext_formula) (arg: 'a) f f_arg f_comb : (ext_formula * 'b) =
+let rec trans_ext_formula (e: ext_formula) (arg: 'a) f f_arg f_comb : (ext_formula * 'b) =
   let f_ext_f, f_f, f_h_formula, f_pure, f_memo = f in
   let f_ext_f_arg, f_f_arg, f_h_f_arg, f_pure_arg, f_memo_arg = f_arg in
   let trans_pure (e: CP.formula) (arg: 'a) : (CP.formula * 'b) =
@@ -3025,12 +3025,12 @@ and trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc_for
   let ne, vals = List.split (List.map trans_ext e) in
   (ne, f_comb vals)
     
-and transform_context f (c:context):context = 
+let rec transform_context f (c:context):context = 
 	match c with
 	| Ctx e -> (f e)
 	| OCtx (c1,c2) -> mkOCtx (transform_context f c1)(transform_context f c2) no_pos
 		
-let rec trans_context (c: context) (arg: 'a) 
+let trans_context (c: context) (arg: 'a) 
         (f: 'a -> context -> (context * 'b) option) 
         (f_arg: 'a -> context -> 'a)
         (f_comb: 'b list -> 'b)
@@ -3050,7 +3050,7 @@ let rec trans_context (c: context) (arg: 'a)
   in
   trans_c c arg
 
-and transform_fail_ctx f (c:fail_type) : fail_type = 
+let rec transform_fail_ctx f (c:fail_type) : fail_type = 
   match c with
     | Trivial_Reason s -> c
     | Basic_Reason br -> Basic_Reason (f br)
@@ -3059,36 +3059,36 @@ and transform_fail_ctx f (c:fail_type) : fail_type =
     | Or_Continuation (ft1,ft2) -> Or_Continuation ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
     | And_Reason (ft1,ft2) -> And_Reason ((transform_fail_ctx f ft1),(transform_fail_ctx f ft2))
   
-and transform_list_context f (c:list_context):list_context = 
+let transform_list_context f (c:list_context):list_context = 
   let f_c,f_f = f in
   match c with
     | FailCtx fc -> FailCtx (transform_fail_ctx f_f fc)
     | SuccCtx sc -> SuccCtx ((List.map (transform_context f_c)) sc)
     
-and transform_partial_context f ((fail_c, succ_c):partial_context) : partial_context = 
+let transform_partial_context f ((fail_c, succ_c):partial_context) : partial_context = 
   let f_c,f_f = f in
   let f_res = List.map (fun (lbl, f_t) -> (lbl, transform_fail_ctx f_f f_t )) fail_c in
   let s_res = List.map (fun (lbl, ctx) -> (lbl, transform_context f_c ctx) ) succ_c in
     (f_res,s_res)
 	
-and transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context = 
+let transform_failesc_context f ((fail_c,esc_c, succ_c):failesc_context): failesc_context = 
   let ff,fe,fs = f in
   let rf = List.map (fun (lbl, ctx) -> (lbl, transform_fail_ctx ff ctx) ) fail_c in
   let re = fe esc_c in
   let rs = List.map (fun (lbl, ctx) -> (lbl, transform_context fs ctx) ) succ_c in
   (rf, re,rs)
     
-and transform_list_partial_context f (c:list_partial_context):list_partial_context = 
+let transform_list_partial_context f (c:list_partial_context):list_partial_context = 
   List.map (transform_partial_context f) c
     
-and transform_list_failesc_context f (c:list_failesc_context): list_failesc_context = 
+let transform_list_failesc_context f (c:list_failesc_context): list_failesc_context = 
   List.map (transform_failesc_context f) c
 
   (*use with care, it destroyes the information about exception stacks , preferably do not use except in check specs*)
-and list_failesc_to_partial (c:list_failesc_context): list_partial_context =
+let list_failesc_to_partial (c:list_failesc_context): list_partial_context =
 	List.map (fun (fl,el,sl) -> (fl,(colapse_esc_stack el)@sl)) c 
     
-and fold_fail_context f (c:fail_type) = 
+let rec fold_fail_context f (c:fail_type) = 
   (*let f_br,f_or,f_and = f in*)
   match c with
     | Trivial_Reason br -> f c []
@@ -3103,8 +3103,8 @@ and fold_fail_context f (c:fail_type) =
   match c with
     | FailCtx fc -> fold_fail_context f_f fc
     | SuccCtx sc -> List.map (fold_context f_c) sc*)
-	
-and rename_labels transformer e =
+    
+let rename_labels transformer e =
 	let n_l_f n_l = match n_l with
 				| None -> (fresh_branch_point_id "")
 				| Some (_,s) -> (fresh_branch_point_id s) in	
@@ -3135,8 +3135,8 @@ and rename_labels transformer e =
 
 let rename_labels_struc (e:struc_formula):struc_formula = rename_labels transform_struc_formula e
 let rename_labels_formula (e:formula):formula = rename_labels transform_formula e
-  
-and rename_labels_formula_ante  e=
+		 		
+let rename_labels_formula_ante  e=
 	let n_l_f n_l = match n_l with
 				| None -> (fresh_branch_point_id "")
 				| Some (_,s) -> (fresh_branch_point_id s) in	
@@ -3158,7 +3158,7 @@ and rename_labels_formula_ante  e=
 	let f_p_f e = Some e in			
 	transform_formula (f_e_f,f_f,f_h_f,(f_m,f_a,f_p_f,f_b,f_e)) e
 			 
-and erase_propagated f = 
+let erase_propagated f = 
   let f_e_f e = None in
 	let f_f e = None in
 	let rec f_h_f e =  None in
@@ -3387,7 +3387,7 @@ let splitter_failesc_context  (nf:nflow) (cvar:typed_ident option) (fn_esc:conte
 						let re,rs = List.split r in
 						(fl,push_esc_elem el (List.concat re),(List.concat rs))) pl 
 	
-let rec splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
+let splitter_partial_context  (nf:nflow) (cvar:typed_ident option)   
     (fn:  path_trace -> context ->  list_partial_context) (fn_esc:context -> context) 
 	(elim_ex_fn: context -> context) ((fl,sl):partial_context) : list_partial_context = 
 	
@@ -3406,28 +3406,28 @@ let rec splitter_partial_context  (nf:nflow) (cvar:typed_ident option)
   in
    list_partial_context_or [ (fl, []) ] (fold_partial_context_left_or r)
 
-and add_to_steps (ss:steps) (s:string) = s::ss 
+let add_to_steps (ss:steps) (s:string) = s::ss 
 
-and get_prior_steps (c:context) = 
+let get_prior_steps (c:context) = 
   match c with
     | Ctx es -> es.es_prior_steps 
-    | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] 
+    | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] ;;
 
-and add_to_context (c:context) (s:string) = 
+let add_to_context (c:context) (s:string) = 
   match c with
     | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
-    | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c 
+    | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c ;;
 
-and add_to_estate (es:entail_state) (s:string) = 
+let add_to_estate (es:entail_state) (s:string) = 
   {es with es_prior_steps = s::es.es_prior_steps; }
 
-and overwrite_estate_with_steps (es:entail_state) (ss:steps) = 
+let overwrite_estate_with_steps (es:entail_state) (ss:steps) = 
   {es with es_prior_steps = ss; }
 
-and add_to_estate_with_steps (es:entail_state) (ss:steps) = 
+let add_to_estate_with_steps (es:entail_state) (ss:steps) = 
   {es with es_prior_steps = ss@es.es_prior_steps; }
 
-and add_post post f = List.map (fun c-> match c with
+let rec add_post post f = List.map (fun c-> match c with
   | EBase b -> 
       let fec = if (List.length b.formula_ext_continuation)>0 then 
                   add_post post b.formula_ext_continuation
@@ -3454,7 +3454,7 @@ and add_post post f = List.map (fun c-> match c with
 ) f
 
 (* TODO *)
-and string_of_list_of_pair_formula ls =
+let rec string_of_list_of_pair_formula ls =
   match ls with
 	| [] -> ""
 	| (f1,f2)::[] -> (!print_formula f1)^"*"^(!print_formula f2)

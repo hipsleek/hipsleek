@@ -15,7 +15,7 @@ sll<n, sm, lg> ==
       inv n >= 1 & sm <= lg & self!=null ;
 
 node partition(ref node xs, int c)
-	requires xs::bnd<n, sm, bg> & sm <= c <= bg
+  requires xs::bnd<n, sm, bg> & sm <= c <= bg
     ensures xs'::bnd<a, sm, c> * res::bnd<b, c, bg> & n = a+b;
 {
 	node tmp1;

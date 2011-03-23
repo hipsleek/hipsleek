@@ -124,6 +124,9 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
+ 
+    (* print mapping table control path id and loc *)
+    (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
@@ -171,11 +174,20 @@ let main1 () =
       (* Tpdispatcher.print_stats (); *)
       ()
 	  
+let finalize () =
+  Tpdispatcher.stop_prover ()
+
 let _ = 
-  main1 ();
-  let _ = print_string (Gen.Profiling.string_of_counters ()) in
-  let _ = Gen.Profiling.print_info () in
-  ()
+  try
+    main1 ();
+    let _ = print_string (Gen.Profiling.string_of_counters ()) in
+    let _ = Gen.Profiling.print_info () in
+    ()
+  with _ as e -> begin
+    finalize ();
+    print_string ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string ("\nError(s) detected at main \n");
+  end
 
 
   

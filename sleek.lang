@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language SYSTEM "language.dtd">
+<language id="sleek" _name="Sleek's input" version="2.0" _section="Others">
+  <metadata>
+    <property name="mimetypes">text/x-sleek</property>
+    <property name="globs">*.slk</property>
+    <property name="line-comment-start">//</property>
+    <property name="block-comment-start">/*</property>
+    <property name="block-comment-end">*/</property>
+  </metadata>
+
+  <styles>
+    <style id="comment" _name="Comment" map-to="def:comment"/>
+    <style id="keyword" _name="Keyword" map-to="def:keyword"/>
+    <style id="type" _name="Data Type" map-to="def:type"/>
+  </styles>
+
+  <definitions>
+
+    <context id="sleek">
+      <include>
+
+        <context id="comment" style-ref="comment">
+          <start>\/\/</start>
+          <end>$</end>
+        </context>
+
+        <context id="comment-multiline" style-ref="comment">
+          <start>\/\*</start>
+          <end>\*\/</end>
+          <include>
+            <context ref="comment-multiline"/>
+          </include>
+        </context>
+
+        <context id="keywords" style-ref="keyword">
+          <keyword>assert</keyword>
+          <keyword>assume</keyword>
+          <keyword>bind</keyword>
+          <keyword>break</keyword>
+          <keyword>by</keyword>
+          <keyword>case</keyword>
+          <keyword>checkentail</keyword>
+          <keyword>capture_residue</keyword>
+          <keyword>coercion</keyword>
+          <keyword>compose</keyword>
+          <keyword>conseq</keyword>
+          <keyword>const</keyword>
+          <keyword>continue</keyword>
+          <keyword>debug</keyword>
+          <keyword>diff</keyword>
+          <keyword>else</keyword>
+          <keyword>ensures</keyword>
+          <keyword>ex</keyword>
+          <keyword>exists</keyword>
+          <keyword>extends</keyword>
+          <keyword>fold</keyword>
+          <keyword>forall</keyword>
+          <keyword>if</keyword>
+          <keyword>implies</keyword>
+          <keyword>import</keyword>
+          <keyword>in</keyword>
+          <keyword>intersect</keyword>
+          <keyword>inv</keyword>
+          <keyword>let</keyword>
+          <keyword>max</keyword>
+          <keyword>min</keyword>
+          <keyword>bagmax</keyword>
+          <keyword>bagmin</keyword>
+          <keyword>new</keyword>
+          <keyword>notin</keyword>
+          <keyword>off</keyword>
+          <keyword>on</keyword>
+          <keyword>or</keyword>
+          <keyword>print</keyword>
+          <keyword>ref</keyword>
+          <keyword>requires</keyword>
+          <keyword>res</keyword>
+          <keyword>return</keyword>
+          <keyword>self</keyword>
+          <keyword>split</keyword>
+          <keyword>subset</keyword>
+          <keyword>then</keyword>
+          <keyword>this</keyword>
+          <keyword>time</keyword>
+          <keyword>to</keyword>
+          <keyword>unfold</keyword>
+          <keyword>union</keyword>
+          <keyword>view</keyword>
+          <keyword>where</keyword>
+          <keyword>while</keyword>
+          <keyword>flow</keyword>
+          <keyword>|-</keyword>
+        </context>
+
+        <context id="types" style-ref="type">
+          <keyword>bool</keyword>
+          <keyword>class</keyword>
+          <keyword>data</keyword>
+          <keyword>dynamic</keyword>
+          <keyword>enum</keyword>
+          <keyword>float</keyword>
+          <keyword>int</keyword>
+          <keyword>lemma</keyword>
+          <keyword>null</keyword>
+          <keyword>pred</keyword>
+          <keyword>static</keyword>
+          <keyword>void</keyword>
+        </context>
+
+      </include>
+    </context>
+  </definitions>
+</language>
