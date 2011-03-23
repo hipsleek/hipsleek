@@ -135,6 +135,7 @@ let peek_try =
        match Stream.npeek 2 strm with 
          | [cid;  IN_T,_]  -> ()
          | [cid; NOTIN,_] -> ()
+         | [SEMICOLON,_; CBRACE,_] -> raise Stream.Failure
          | [OPAREN,_; EXISTS,_ ] -> raise Stream.Failure
          | [GT,_;STAR,_] -> raise Stream.Failure
          | [GT,_;INV,_] -> raise Stream.Failure
@@ -145,6 +146,7 @@ let peek_try =
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
          | [GT,_;CPAREN,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
+         | [SEMICOLON,_;typ] -> ()
          | _ -> raise Stream.Failure  ) 
 
 
@@ -188,18 +190,36 @@ data_header:
     [[ `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
 
 data_body: 
-    [[  (* `OBRACE; fl=field_list; `CBRACE             -> fl *)
-       `OBRACE; fl=field_list; `SEMICOLON; `CBRACE -> fl
-      | `OBRACE;`CBRACE                             -> []]];
-  
-field_list:[[fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos 1)]];
+      [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl 
+      | `OBRACE; fl=field_list2; `CBRACE   -> List.rev fl
+      | `OBRACE; `CBRACE                             -> []] ];
+ 
+(* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos 1) *)
+(*            ]];  *)
 
-one_field: 
-  [[ t=typ; `IDENTIFIER n  -> ((t, n), get_pos 1)
-   | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos 1)
-    ]];
-  
-  
+
+field_list2:[[ 
+       fl = SELF;  peek_try; `SEMICOLON; t=typ; `IDENTIFIER n ->(  
+			if List.mem n (List.map (fun f -> snd (fst f)) fl) then
+				report_error (get_pos 4) (n ^ " is duplicated")
+			else
+				((t, n), get_pos 3) :: fl )
+		
+  | fl = SELF; peek_try; `SEMICOLON; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> 
+			(if List.mem n (List.map (fun f -> snd (fst f)) fl) then
+				report_error (get_pos 4) (n ^ " is duplicated")
+			else
+				((t1, n), get_pos 3) :: fl )]
+  | [t=typ; `IDENTIFIER n -> [((t,n),get_pos 1)]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos 1)] 
+		
+]];
+
+(* one_field:   *)
+(*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos 1) *)
+(*    | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos 1)  *)
+(*    ]];  *)
+
  (********** Views **********)
 
 view_decl: 
@@ -1260,11 +1280,11 @@ member_name :
 END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
-let parse_sleek n s = 
-  Gen.Debug.loop_1 "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n
+(* let parse_sleek n s =  *)
+(*   Gen.Debug.loop_1 "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n *)
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
-let parse_hip n s =  
-  Gen.Debug.loop_1 "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n
+(* let parse_hip n s =   *)
+(*   Gen.Debug.loop_1 "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n *)
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 

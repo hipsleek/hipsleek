@@ -2,6 +2,7 @@
 (******************************************)
 (* command line processing                *)
 (******************************************)
+module M = Lexer.Make(Token.Token)
 
 let to_java = ref false
 
@@ -33,7 +34,10 @@ let parse_file_full file_name =
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
 			prog 
     with
-		End_of_file -> exit 0	  
+		End_of_file -> exit 0	 
+    | M.Loc.Exc_located (l,t)-> 
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      raise t) 
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
@@ -165,8 +169,8 @@ let main1 () =
       (* Tpdispatcher.print_stats (); *)
       ()
 
-let main1 () =
-  Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 ()
+(* let main1 () = *)
+(*   Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let _ = 
   main1 ();
