@@ -140,7 +140,7 @@ let start() =
   if not !is_omega_running then begin
       print_string "Starting Omega... \n"; flush stdout;
       last_test_number := !test_number;
-      let _ = Gen.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
       is_omega_running := true;
   end
 
@@ -149,7 +149,7 @@ let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
     print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
-    let _ = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
+    let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
     is_omega_running := false;
   end
 
@@ -157,7 +157,7 @@ let stop () =
 let restart reason =
   if !is_omega_running then begin
     let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
-    Gen.PrvComms.restart !log_all_flag log_all reason "omega" start stop
+    Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
 
 (*
@@ -248,7 +248,7 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in 
+      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in 
       res
   end
 
@@ -279,7 +279,7 @@ let rec send_and_receive f timeout=
         let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
         rel
       in
-      let answ = Gen.PrvComms.maybe_raise_timeout fnc () timeout in
+      let answ = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
       answ
           
   end
@@ -443,7 +443,7 @@ let simplify (pe : formula) : formula =
 	   match_vars (fv pe) rel
 	  end
 	with
-      | Gen.PrvComms.Timeout ->
+      | Procutils.PrvComms.Timeout ->
           (*log ERROR ("TIMEOUT");*)
           restart ("Timeout when checking #simplify ");
           pe
