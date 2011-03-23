@@ -68,7 +68,7 @@ rllexer.cmo rllexer.ml: rllexer.mll rlparser.ml
 	$(OCAMLLEX) rllexer.mll
 	$(OCAMLC) $(OCAMLFLAGS) -c -g rllexer.ml
 
-MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
+MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -104,7 +104,7 @@ PP_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo gen.cmo debug.cmo \
 MAIN_FILES_OPT := $(MAIN_FILES:.cmo=.cmx)
 
 
-GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
+GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo iastUtil.cmo \
 	iparser.cmo ilexer.cmo \
@@ -127,7 +127,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo unix_
 
 
 
-SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
+SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iprinter.cmo \
@@ -163,7 +163,7 @@ MAIN_FILES_2=debug.cmo globals.cmo \
 MAIN_FILES_2_OPT := $(MAIN_FILES_2:.cmo=.cmx)
 
 
-PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
+PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -186,7 +186,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo unix_add.cmo gen.cmo 
 
 PROVE_FILES_OPT := $(PROVE_FILES:.cmo=.cmx)
 
-WEB_FILES=globals.cmo error.cmo unix_add.cmo gen.cmo debug.cmo \
+WEB_FILES=globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	iparser.cmo ilexer.cmo \
@@ -273,7 +273,7 @@ CRISTINA_FILES=debug.cmo globals.cmo error.cmo \
 
 cristina: $(CRISTINA_FILES)
 
-TEST_OO_FILES= unix_add.cmo gen.cmo debug.cmo globals.cmo error.cmo \
+TEST_OO_FILES= procutils.cmo gen.cmo debug.cmo globals.cmo error.cmo \
 	cpure.cmo mcpure.cmo ipure.cmo \
 	iformula.cmo iast.cmo \
 	checks.cmo \

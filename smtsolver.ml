@@ -466,10 +466,10 @@ let run prover input =
   let (cmd, cmd_arg) = command_for prover in
   let set_process proc = prover_process := proc in
   let fnc () = 
-    let _ = Gen.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
+    let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
     get_answer !prover_process.inchannel in
-  let res = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in
-  let _ = Gen.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
+  let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
+  let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
   remove_file infile;
   remove_file outfile;
   res
@@ -491,7 +491,7 @@ let smt_imply (ante : Cpure.formula) (conseq : Cpure.formula) (prover: smtprover
       let res = output = "unsat" in
       res
   with 
-    |Gen.PrvComms.Timeout ->
+    |Procutils.PrvComms.Timeout ->
 	    begin
             let _ = if !print_original_solver_output then print_string ("=1=> SMT output : unsat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => not valid\n"); flush stdout;
@@ -526,7 +526,7 @@ let smt_is_sat (f : Cpure.formula) (sat_no : string) (prover: smtprover) : bool 
       let res = output = "unsat" in
       not res
   with 
-    |Gen.PrvComms.Timeout ->
+    |Procutils.PrvComms.Timeout ->
 	    begin
             let _ = if !print_original_solver_output then print_string ("=2=> SMT output : sat (from timeout exc)\n") in
             print_string ("\n[smtsolver.ml]:Timeout exception => sat\n"); flush stdout;

@@ -289,13 +289,13 @@ let prelude ()  =
        output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
     )
 
-let set_process (proc: Globals.prover_process_t) =
+let set_process proc =
   process := proc
 
 (* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
    and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
 let start () =
-  let _ = Gen.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude in
+  let _ = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude in
   last_test_number := !test_number
 
 let ending_remarks () = 
@@ -304,14 +304,14 @@ let ending_remarks () =
 
 let stop () = 
   let num_tasks = !test_number - !last_test_number in
-  let _  = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
+  let _  = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
   print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
 
 
 (* restart isabelle system *)
 let restart reason =
   print_string ("Restarting Isabelle because of: "^reason^"\n");
-  Gen.PrvComms.restart !log_all_flag log_all "isabelle" reason start stop
+  Procutils.PrvComms.restart !log_all_flag log_all "isabelle" reason start stop
 
 (* checking the result given by Isabelle *)
 let rec check str : bool=
@@ -353,7 +353,7 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
         print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
         restart ("Timeout!");
         is_sat_b in
-      let answ = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in
+      let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in
       answ
   end
 

@@ -806,7 +806,7 @@ let send_cmd_with_answer str =
     let str = get_answer !process.inchannel in
     str 
   in 
-  let answ = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in
+  let answ = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
   answ
 
 (* modify mona for not sending answers *)
@@ -831,7 +831,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 let start () = 
   last_test_number := !test_number;
   if(check_prover_existence "mona_inter") then begin
-      let _ = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end
 
@@ -841,12 +841,12 @@ let stop () =
       |true -> is_mona_running := false;  2
       |false -> 9 in
   let num_tasks = !test_number - !last_test_number in
-  let _ = Gen.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
+  let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
   is_mona_running := false
 
 let restart reason =
   if !is_mona_running then 
-    Gen.PrvComms.restart !log_all_flag log_all reason "mona" start stop
+    Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
 
 let check_if_mona_is_alive () : bool = 
   try
@@ -964,13 +964,13 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
       	output_string log_all (fstr ^ ";\n");
 	    flush log_all;
 	end;
-  let _ = Gen.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
+  let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let res = check_answer mona_answ is_sat_b in
     res
   in
-  let res = Gen.PrvComms.maybe_raise_timeout fnc () !timeout in 
+  let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in 
   Sys.remove mona_filename;
   stop();
   res
@@ -999,7 +999,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
           check_answer answer is_sat_b
       end
   with
-    |Gen.PrvComms.Timeout ->
+    |Procutils.PrvComms.Timeout ->
 	    begin
             print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
             restart ("Timeout when checking #" ^ imp_no ^ "!");

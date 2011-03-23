@@ -94,7 +94,7 @@ let start () =
         send_cmd "on rlnzden";
       in
       let set_process proc = process := proc in
-      let _ = Gen.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
+      let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
       print_endline "Starting Reduce... "; flush stdout
   end
 
@@ -114,7 +114,7 @@ let stop () =
         log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
         log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
       in
-      let _ = Gen.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
       is_reduce_running := false
   end
 
@@ -122,7 +122,7 @@ let restart reason =
   if !is_reduce_running then begin
     print_string reason;
     print_endline " Restarting Reduce... "; flush stdout;
-    Gen.PrvComms.restart !is_log_all log_file "redlog" reason start stop
+    Procutils.PrvComms.restart !is_log_all log_file "redlog" reason start stop
   end
 
 (*
@@ -140,7 +140,7 @@ let send_and_receive f =
         let fail_with_timeout () =
           restart "Timeout!";
           "" in
-        let answ = Gen.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
+        let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () !timeout fail_with_timeout in
         answ
     with
       | ex ->
@@ -199,7 +199,7 @@ let run_with_timeout func err_msg =
     restart ("After timeout"^err_msg);
     None
   in
-  let res = Gen.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout func () !timeout fail_with_timeout in
   res
 
 (**************************
