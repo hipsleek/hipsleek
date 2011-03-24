@@ -3,7 +3,8 @@
  **/
 
 // right recursive definition of the sum
-relation sumarray(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & ex ( t : sumarray(a,i+1,j,t) & s = t + a[i])).
+//relation sumarray(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & ex ( t : sumarray(a,i+1,j,t) & s = t + a[i])).
+relation sumarray(int[] a, int i, int j, int s) == (i > j & s = 0 | i = j & s = a[i] | i < j & ex ( t : sumarray(a,i+1,j-1,t) & s = a[i] + t + a[j])).
 
 relation sumarrayL(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & ex ( t : sumarrayL(a,i,j-1,t) & s = t + a[j])).
 

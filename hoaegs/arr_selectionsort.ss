@@ -41,7 +41,7 @@ int array_index_of_max(int[] a, int i, int j)
 
 void selection_sort(ref int[] a, int i, int j)
 	requires 0<=i & 0<=j
-	ensures sorted(a',i,j) & idexc(a',a,i,j) & upperbndprev(a,a',i,j) & arrayperm(a',i,j,a,i,j);
+	ensures sorted(a',i,j) & idexc(a',a,i,j) & upperbndprev(a,a',i,j); // & arrayperm(a',i,j,a,i,j);
 {
 	if (i < j)
 	{
