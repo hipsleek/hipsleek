@@ -799,7 +799,6 @@ and equalBFormula (f1:b_formula)(f2:b_formula):bool = equalBFormula_f eq_spec_va
 
 and eqExp (f1:exp)(f2:exp):bool = eqExp_f eq_spec_var  f1 f2
 
-
 (*
 (* build relation from list of expressions, for example a,b,c < d,e, f *)
   and build_relation relop alist10 alist20 lbl pos=

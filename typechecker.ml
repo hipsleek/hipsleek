@@ -732,6 +732,11 @@ let check_proc_wrapper_map_net prog (proc,num) =
     end else
       raise e
 
+
+let equalpf f1 f2 = let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
+					let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
+					r1 & r2  
+		
 module IdentComp = struct
   type t = string
   let compare = compare
@@ -740,6 +745,7 @@ module IdentComp = struct
 end
 module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
 module IGO = Graph.Oper.P(IG)
+module IGN = Graph.Oper.Neighbourhood(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 
@@ -760,26 +766,28 @@ let build_state_trans_graph ls =
 
 let scc_numbering g =
   let (_,f) = IGC.scc g in
-  (*print_string ("The scc list of state transitions: " ^
+  print_string ("The scc list of state transitions: " ^
 	(List.fold_left (fun rsl l -> rsl ^ "\n" ^
-	   (List.fold_left (fun rse e -> rse ^ "," ^ e ^ ":" ^ (string_of_int (f e))) "" l)) "" scc_list));*)
+	   (List.fold_left (fun rse e -> rse ^ "," ^ e ^ ":" ^ (string_of_int (f e))) "" l)) "" (IGC.scc_list g)));
   f
 
-let variance_numbering ls f =
+let variance_numbering ls g =
+  let f = scc_numbering g in
+  let nf = fun v -> if ((List.length (IGN.list_from_vertex g v)) = 0) then 0 else (f v) in
   let helper ele =
 	let (es,e) = ele in
 	let nes = {es with CF.es_var_label =
 		let user_defined_var_label_lhs = es.CF.es_var_label in
 		match user_defined_var_label_lhs with
-		  | None -> Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))
+		  | None -> Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))
 		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_lhs
-			          else Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))} in
+			          else Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))} in
 	let ne = {e with CF.formula_var_label =
 		let user_defined_var_label_rhs = e.CF.formula_var_label in
 		match user_defined_var_label_rhs with
-		  | None -> Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))
+		  | None -> Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))
 		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_rhs
-			          else Some (f (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))}
+			          else Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))}
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
 	
@@ -794,8 +802,7 @@ let check_prog (prog : prog_decl) =
     ignore (List.map (check_proc_wrapper prog) prog.prog_proc_decls);
 
 	let g = build_state_trans_graph !Solver.graph in
-	let f = scc_numbering g in
-	let cl = variance_numbering !Solver.var_checked_list f in
+	let cl = variance_numbering !Solver.var_checked_list g in
 	List.iter (fun (es,e) -> heap_entail_variance prog es e) cl
 	    
     (*let rec numbers num = if num = 1 then [0] else (numbers (num-1))@[(num-1)]in

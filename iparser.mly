@@ -1239,6 +1239,7 @@ spec
 var_label
     : {None}
 	| OPAREN integer_literal CPAREN {Some $2}
+	| OPAREN MINUS integer_literal CPAREN {Some (-$3)}
 	;
 
 var_measures

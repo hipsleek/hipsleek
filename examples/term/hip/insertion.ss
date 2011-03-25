@@ -5,16 +5,27 @@ data node {
 	node next; 
 }
 
+/*
+bnd<n, sm, bg, b> == self = null & n = 0 & b = {} or 
+                  self::node<d, p> * p::bnd<n-1, sm, bg, b1> & sm <= d < bg & b=union(b1,{d})
+               inv n >= 0;
+
+
+sll<n, sm, lg, b> == self::node<sm, null> & sm = lg & n = 1 & b = {sm} or 
+                  self::node<sm, q> * q::sll<n-1, qs, lg, b1> & q != null & sm <= qs & b = union(b1,{sm})
+               inv n >= 1 & sm <= lg; 
+*/
 
 bnd<n, sm, bg> == self = null & n = 0 or 
-                  self::node<d, p> * p::bnd<n-1, sm, bg> & sm <= d < bg
+                  self::node<d, p> * p::bnd<n-1, sm, bg> & sm <= d <= bg
                inv n >= 0;
 
 
 sll<n, sm, lg> == self::node<sm, null> & sm = lg & n = 1 or 
                   self::node<sm, q> * q::sll<n-1, qs, lg> & q != null & sm <= qs
                inv n >= 1 & sm <= lg; 
-     
+
+
 /* function to insert an element in a sorted list */
 node insert(node x, int v)
 	requires x::sll<n, xs, xl> & n > 0
