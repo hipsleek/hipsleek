@@ -733,43 +733,101 @@ let check_proc_wrapper_map_net prog (proc,num) =
       raise e
 
 
-let equalpf f1 f2 = let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
-					let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
-					r1 & r2  
+let rec equalpf_a f1 f2 =
+  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
+  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
+  r1 & r2
+
+and equalpf f1 f2 = Gen.Debug.ho_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
+
+and comparepf_a f1 f2 =
+  let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
+  let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
+  if (r1 & r2) then 0
+  else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
+	
+and comparepf f1 f2 = Gen.Debug.ho_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
+
 		
-module IdentComp = struct
-  type t = string
-  let compare = compare
+module FComp = struct
+  type t = CP.formula
+  let compare = comparepf
   let hash = Hashtbl.hash
-  let equal = (=)
+  let equal = equalpf
 end
-module IG = Graph.Persistent.Digraph.Concrete(IdentComp)
+module IG = Graph.Persistent.Digraph.Concrete(FComp)
 module IGO = Graph.Oper.P(IG)
 module IGN = Graph.Oper.Neighbourhood(IG)
 module IGC = Graph.Components.Make(IG)
 module IGP = Graph.Path.Check(IG)
 
+module IComp = struct
+  type t = int
+  let compare = compare
+  let hash = Hashtbl.hash
+  let equal = (=)
+end
+module GS = Graph.Persistent.Digraph.Concrete(IComp)
+module GSO = Graph.Oper.P(GS)
+module GSN = Graph.Oper.Neighbourhood(GS)
+module GSC = Graph.Components.Make(GS)
+module GSP = Graph.Path.Check(GS)
+
+  
 let build_state_trans_graph ls =
-  (*print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");*)
+  print_string ("\ncheck_prog: call graph:\n" ^
+	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");
 
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
-	                          let v1 = Cprinter.string_of_pure_formula f1 in
-		                      let v2 = Cprinter.string_of_pure_formula f2 in
-		                      let ng1 = IG.add_vertex g v1 in
-		                      let ng2 = IG.add_vertex ng1 v2 in
-		                      let ng3 = IG.add_edge ng2 v1 v2 in
-							  ng3
-	                     ) gr ls in
+    let ng1 = IG.add_vertex g f1 in
+	let _ = print_string (if (ng1 = g) then (Cprinter.string_of_pure_formula f1) ^ ": not added\n" else (Cprinter.string_of_pure_formula f1) ^ ": added\n") in
+	let ng2 = IG.add_vertex ng1 f2 in
+	let _ = print_string (if (ng2 = ng1) then (Cprinter.string_of_pure_formula f2) ^ ": not added\n" else (Cprinter.string_of_pure_formula f2) ^ ": added\n") in
+	let ng3 = IG.add_edge ng2 f1 f2 in
+	let _ = print_string (let edge = "Edge " ^ (Cprinter.string_of_pure_formula f1) ^ "->" ^ (Cprinter.string_of_pure_formula f2) in
+						  if (ng3 = ng2) then edge ^ ": not added\n" else edge ^ ": added\n") in
+	ng3) gr ls in
   g
 
 let scc_numbering g =
-  let (_,f) = IGC.scc g in
-  print_string ("The scc list of state transitions: " ^
-	(List.fold_left (fun rsl l -> rsl ^ "\n" ^
-	   (List.fold_left (fun rse e -> rse ^ "," ^ e ^ ":" ^ (string_of_int (f e))) "" l)) "" (IGC.scc_list g)));
-  f
+  let _ = print_string "List of vertices:\n" in
+  let _ = IG.iter_vertex (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "\n")) g in
+  
+  let scc_list = IGC.scc_list g in
+  
+  let _ = print_string ("The number of scc: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
+  let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in
+
+  let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
+
+  let _ = print_string ("New scc list: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
+  let _ = List.iter (fun (n,ls) -> print_string ((string_of_int n) ^ ": "); List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in
+  
+  let scc_graph = GS.empty in
+
+  let mem e ls = List.fold_left (fun rs e1 -> if (equalpf e e1) then true else rs) false ls in
+
+  let meml ls1 ls2 = List.fold_left (fun rs e -> if (mem e ls2) then true else rs) false ls1 in
+
+  let scc_graph = List.fold_left (fun sg (n,_) -> GS.add_vertex sg n) scc_graph scc_list in
+
+  let scc_graph = List.fold_left (fun sg (n,l) ->
+	let neighbours = IGN.list_from_vertices g l in
+	List.fold_left (fun nsg (n1,l1) -> if (meml l1 neighbours) then GS.add_edge nsg n n1 else nsg) sg scc_list 
+  ) scc_graph scc_list in
+
+  let (nscc, fscc) = GSC.scc scc_graph in
+
+  let lscc = GSC.scc_list scc_graph in
+
+  let _ = print_string ("The number of transformed scc: " ^ (string_of_int nscc) ^ "\n") in
+  let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((string_of_int v) ^ "; "); print_string "\n") ls) lscc in
+  let _ = print_string ("The mapping from label to scc number: \n") in
+  let _ = List.iter (fun (n,_) -> print_string ((string_of_int n) ^ "->" ^ (string_of_int (fscc n)) ^ "\n")) scc_list in
+
+  fun v -> List.fold_left (fun rs (n,l) -> if (mem v l) then (fscc n) else rs) 0 scc_list
+  
 
 let variance_numbering ls g =
   let f = scc_numbering g in
@@ -779,18 +837,17 @@ let variance_numbering ls g =
 	let nes = {es with CF.es_var_label =
 		let user_defined_var_label_lhs = es.CF.es_var_label in
 		match user_defined_var_label_lhs with
-		  | None -> Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))
+		  | None -> Some (nf es.CF.es_var_ctx_lhs)
 		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_lhs
-			          else Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_lhs))} in
+			          else Some (nf es.CF.es_var_ctx_lhs)} in
 	let ne = {e with CF.formula_var_label =
 		let user_defined_var_label_rhs = e.CF.formula_var_label in
 		match user_defined_var_label_rhs with
-		  | None -> Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))
+		  | None -> Some (nf es.CF.es_var_ctx_rhs)
 		  | Some i -> if (i = 0 || i = -1) then user_defined_var_label_rhs
-			          else Some (nf (Cprinter.string_of_pure_formula es.CF.es_var_ctx_rhs))}
+			          else Some (nf es.CF.es_var_ctx_rhs)}
 	in (nes,ne)
   in List.map (fun e -> helper e) ls
-	
 		
 let check_prog (prog : prog_decl) =
   if !Globals.check_coercions then begin

@@ -2454,7 +2454,7 @@ and heap_entail_conjunct_lhs_struc
                           let n_ctx = prune_ctx prog n_ctx in
                           inner_entailer n_ctx c2) b.formula_case_branches 
 		          end
-	            | Some (p,e) -> begin [inner_entailer ctx e]end in
+	            | Some (p,e) -> begin [inner_entailer ctx e] end in
 	          let rez1,rez2 = List.split r in
               let rez1 = List.fold_left (fun a c->or_list_context a c) (List.hd rez1) (List.tl rez1) in
 	          (rez1,(mkCaseStep ctx [f] rez2))
@@ -2537,12 +2537,12 @@ and heap_entail_conjunct_lhs_struc
 			let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in
 			(*let t = List.map (fun (_,v,mn) -> let CP.SpecVar (t,i,p) = CP.to_unprimed v in CP.SpecVar (t, i^"@"^mn, p)) es.CF.es_var_subst in*)
 
-			let filtered_ctx_rhs =
+			let normalize_ctx_rhs =
 			  let rec filter pformula =
 				match pformula with
 				  | CP.And (f1, f2, pos) -> let nf2 = CP.subst_avoid_capture f t f2 in
 											let nf1 = filter f1 in
-											if (CP.equalFormula_f CP.eq_spec_var f2 nf2) then nf1
+											if (CP.equalFormula f2 nf2) then nf1
 											else CP.mkAnd nf1 nf2 pos
 				  | _ -> let nf = CP.subst_avoid_capture f t pformula in
 						   if (CP.equalFormula_f CP.eq_spec_var pformula nf) then CP.mkTrue no_pos
@@ -2550,7 +2550,7 @@ and heap_entail_conjunct_lhs_struc
 		      in filter es.es_var_ctx_rhs
 			in 
 
-			let nes = {es with CF.es_var_ctx_rhs = filtered_ctx_rhs} in
+			let nes = {es with CF.es_var_ctx_rhs = normalize_ctx_rhs} in
 			(*
 			let _ = print_string ("\ninner_entailer: ctx_lhs@EVariance: " ^ string_ctx_lhs ^ "\n") in
 			let _ = print_string ("\ninner_entailer: ctx_rhs@EVariance: " ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
@@ -2558,7 +2558,7 @@ and heap_entail_conjunct_lhs_struc
 			let _ = print_string ("\ninner_entailer: call graph adding: " ^ string_ctx_lhs ^ " ->" ^ (Cprinter.string_of_pure_formula filtered_ctx_rhs) ^ "\n") in
             *)
 
-			graph := !graph @ [(es.es_var_ctx_lhs, filtered_ctx_rhs)];
+			graph := !graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
 			var_checked_list := !var_checked_list @ [(nes,e)];
 			  
 			  
