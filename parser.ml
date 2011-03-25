@@ -149,6 +149,46 @@ let peek_try =
          | [SEMICOLON,_;typ] -> ()
          | _ -> raise Stream.Failure  ) 
 
+ let peek_try_st = 
+ SHGram.Entry.of_parser "peek_try_st" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [_; DOT,_] -> ()
+          | [_; OP_INC,_] -> ()
+          | [_; OP_DEC,_] -> ()
+          | _ -> raise Stream.Failure)
+		  
+ let peek_invocation = 
+ SHGram.Entry.of_parser "peek_invocation" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [_; OPAREN,_] -> ()
+          | _ -> raise Stream.Failure)
+		  
+ let peek_member_name = 
+ SHGram.Entry.of_parser "peek_member_name" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [IDENTIFIER n,_;DOT,_] -> raise Stream.Failure
+          | _ -> ())
+		  
+ let peek_exp_st = 
+ SHGram.Entry.of_parser "peek_exp_st" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [PRINT,_;_] -> raise Stream.Failure
+          | _ -> ())	
+		  
+ let peek_try_declarest = 
+ SHGram.Entry.of_parser "peek_try_declarest" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [CONST,_;_] -> ()
+          | [INT,_;IDENTIFIER n,_] -> ()
+          | [FLOAT,_;IDENTIFIER n,_] -> ()
+          | [BOOL,_;IDENTIFIER n,_] -> ()
+          | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
+          |  _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
@@ -873,7 +913,7 @@ proc_body: [[t=block-> t]];
 (*********** Statements ***************)
 
 block: 
-  [[ `OBRACE; t=opt_statement_list; `CBRACE ->   
+  [[ `OBRACE; t=statement_list; `CBRACE -> 
 	  match t with
 	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
                          exp_block_jump_label = NoJumpLabel;
@@ -882,7 +922,15 @@ block:
 	  | _ -> Block { exp_block_body = t;
                    exp_block_jump_label = NoJumpLabel;
                    exp_block_local_vars = [];
-                   exp_block_pos = get_pos 1 }]];
+                   exp_block_pos = get_pos 1 }
+				   ]];
+
+statement_list: 
+[[ s=statement; sl=SELF -> Seq { exp_seq_exp1 = s;
+									 exp_seq_exp2 = sl;
+									 exp_seq_pos = get_pos 1 }
+  | s = statement -> s
+]];
 
 opt_statement_list: [[ t= LIST0 statement SEP `SEMICOLON -> 
     match t with 
@@ -890,26 +938,26 @@ opt_statement_list: [[ t= LIST0 statement SEP `SEMICOLON ->
      | h::t -> List.fold_left (fun a c-> Seq {exp_seq_exp1 = a; exp_seq_exp2=c; exp_seq_pos =get_pos 1}) h t ]];
   
 statement:
-  [[ t=declaration_statement -> t
+  [[ t=declaration_statement; `SEMICOLON -> t
    | t=labeled_valid_declaration_statement -> t]];
 
 declaration_statement:
-  [[ t=local_variable_declaration -> t
-   | t=local_constant_declaration -> t]];
+  [[peek_try_declarest; t=local_variable_declaration -> t
+   |peek_try_declarest; t=local_constant_declaration -> t]];
 
-local_variable_type: [[ t=typ -> t]];
+local_variable_type: [[ t= typ -> t]];
 
-local_variable_declaration: [[ t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos 1)]];
+local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos 1)]];
 
 local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos 1)]];
 	
 variable_declarators: [[ t= LIST1 variable_declarator SEP `COMMA -> t]];
   
 variable_declarator:
-  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (id, Some t, get_pos 1)
-   | `IDENTIFIER id -> (id, None, get_pos 1) ]];
+  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> print_string ("Identifier : "^id^"\n"); (id, Some t, get_pos 1)
+   | `IDENTIFIER id -> print_string ("Identifier : "^id^"\n");(id, None, get_pos 1) ]];
 
-variable_initializer: [[t=expression -> t]];
+variable_initializer: [[t= expression ->t]];
 
 constant_declarators: [[t=LIST1 constant_declarator SEP `COMMA -> t]];
 
@@ -921,18 +969,19 @@ labeled_valid_declaration_statement:
       | Block	b -> Block { b with exp_block_jump_label = JumpLabel id; }
       | While b -> While { b with exp_while_jump_label = JumpLabel id; }	
       | _ -> report_error (get_pos 1) ("only blocks try and while statements can have labels"))		
-	 | t= OPT valid_declaration_statement -> un_option t (Empty (get_pos 1) ) ]];
+	 (* | t= OPT valid_declaration_statement -> un_option t (Empty (get_pos 1) ) *)
+      | t = valid_declaration_statement -> t ]];
   
 valid_declaration_statement:
   [[ t=block -> t
-  | t=expression_statement -> t
+  | t=expression_statement;`SEMICOLON ->t
   | t=selection_statement -> t
   | t=iteration_statement -> t
   | t=try_statement -> t
   | t=java_statement -> t
-  | t=jump_statement -> t
+  | t=jump_statement;`SEMICOLON  -> t
   | t=assert_statement -> t
-  | t=dprint_statement -> t
+  | t=dprint_statement;`SEMICOLON  -> t
   | t=debug_statement -> t
   | t=time_statement -> t
   | t=bind_statement -> t
@@ -970,16 +1019,19 @@ bind_statement:
 
 java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos 1 }]];
 
-expression_statement: [[t=statement_expression -> t]];
+expression_statement: [[(* t=statement_expression -> t *)
+        t= invocation_expression -> t
+      | t=object_creation_expression -> t
+      | peek_exp_st;t=assignment_expression -> t
+      | t=post_increment_expression -> t
+      | t=post_decrement_expression -> t
+      | t=pre_increment_expression -> t  
+      | t=pre_decrement_expression -> t]]; 
 
-statement_expression:
-  [[ t=invocation_expression -> t
-   | t=object_creation_expression -> t
-   | t=assignment_expression -> t
-   | t=post_increment_expression -> t
-   | t=post_decrement_expression -> t
-   | t=pre_increment_expression -> t
-   | t=pre_decrement_expression -> t]];
+(*statement_expression:
+  [[
+      
+  ]];*)
 
 selection_statement: [[t=if_statement -> t]];
 
@@ -991,8 +1043,8 @@ if_statement:
            exp_cond_then_arm = es;
            exp_cond_else_arm = Empty (get_pos 1);
            exp_cond_path_id = None; 
-           exp_cond_pos = get_pos 1 }
-  | `IF; 
+           exp_cond_pos = get_pos 1 } 	   
+  |`IF; 
   `OPAREN; bc=boolean_expression; 
   `CPAREN; tb=embedded_statement; 
   `ELSE_TT; eb=embedded_statement ->
@@ -1115,7 +1167,7 @@ constant_expression: [[t=expression -> t]];
 boolean_expression:  [[t=expression -> t]];
 
 assignment_expression:
-  [[ t1=prefixed_unary_expression; `EQ;  t2=expression            -> mkAssign OpAssign t1 t2 (get_pos 2)
+  [[ t1= prefixed_unary_expression; `EQ;  t2=expression            -> mkAssign OpAssign t1 t2 (get_pos 2)
 	 | t1=prefixed_unary_expression; `OP_MULT_ASSIGN;t2=expression  -> mkAssign OpMultAssign t1 t2 (get_pos 2)
    | t1=prefixed_unary_expression; `OP_DIV_ASSIGN; t2=expression  -> mkAssign OpDivAssign t1 t2 (get_pos 2)
    | t1=prefixed_unary_expression; `OP_MOD_ASSIGN; t2=expression  -> mkAssign OpModAssign t1 t2 (get_pos 2)
@@ -1155,7 +1207,7 @@ relational_expression :
  [[ t=shift_expression                 -> t
   | t1=SELF; `LT; t2=shift_expression  -> mkBinary OpLt t1 t2 (get_pos 2)
   | t1=SELF; `GT; t2=shift_expression  -> mkBinary OpGt t1 t2 (get_pos 2)
-	| t1=SELF; `LTE; t2=shift_expression -> mkBinary OpLte t1 t2 (get_pos 2)
+  | t1=SELF; `LTE; t2=shift_expression -> mkBinary OpLte t1 t2 (get_pos 2)
   | t1=SELF; `GTE; t2=shift_expression -> mkBinary OpGte t1 t2 (get_pos 2)]];
 
 shift_expression: [[t=additive_expression -> t]];
@@ -1177,9 +1229,9 @@ pre_increment_expression: [[`OP_INC; t=prefixed_unary_expression -> mkUnary OpPr
 
 pre_decrement_expression: [[`OP_DEC; t=prefixed_unary_expression -> mkUnary OpPreDec t (get_pos 1)]];
 
-post_increment_expression: [[ t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos 2)]];
+post_increment_expression: [[peek_try_st; t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos 2)]];
 
-post_decrement_expression: [[ t=primary_expression; `OP_DEC -> mkUnary OpPostDec t (get_pos 2)]];
+post_decrement_expression: [[ peek_try_st; t=primary_expression; `OP_DEC -> mkUnary OpPostDec t (get_pos 2)]];
 
 unary_expression: 
  [[ t=unary_expression_not_plusminus -> t
@@ -1225,7 +1277,7 @@ cast_expression:
              exp_cast_pos = get_pos 1 }]];
 
 invocation_expression:
- [[ qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
+ [[ peek_invocation; qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
 	  CallRecv { exp_call_recv_receiver = fst qi;
                exp_call_recv_method = snd qi;
                exp_call_recv_arguments = oal;
@@ -1237,13 +1289,16 @@ invocation_expression:
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = get_pos 1 }]];
 
-qualified_identifier: [[t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
+qualified_identifier: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
 
-member_access: [[t=primary_expression; `DOT; `IDENTIFIER id ->
+member_access: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id ->
 	Member { exp_member_base = t;
            exp_member_fields = [id];
            exp_member_path_id = None ;
-           exp_member_pos = get_pos 3 }]];
+           exp_member_pos = get_pos 3 }]
+		   | [ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+			| `THIS _ -> This{exp_this_pos = get_pos 1}]
+		   ];
 
 literal:
  [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos 1 }
@@ -1263,17 +1318,25 @@ primary_expression :
  [[ t=parenthesized_expression -> t
   | t=primary_expression_no_parenthesis -> t]];
 
-parenthesized_expression : [[`OPAREN; e=expression; `CPAREN -> e]];
+parenthesized_expression : [[`OPAREN; e= expression; `CPAREN -> e]];
 
 primary_expression_no_parenthesis :
- [[ t=literal -> t
-  | t=member_name -> t
-  | t=member_access -> t
-  | t=invocation_expression -> t
-  | t=new_expression -> t ]];
+ [[ t= literal -> t
+  (*| t= member_access -> t*)
+  (*| t= member_name -> t*) 
+  | t=SELF; `DOT; `IDENTIFIER id ->
+	Member { exp_member_base = t;
+           exp_member_fields = [id];
+           exp_member_path_id = None ;
+           exp_member_pos = get_pos 3 }
+  | `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+  | `THIS _ -> This{exp_this_pos = get_pos 1}
+  | t= invocation_expression -> t
+  | t= new_expression -> t
+			]];
 
 member_name :
- [[ `IDENTIFIER id -> Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+ [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 }
   | `THIS _ -> This{exp_this_pos = get_pos 1}]];
  
  (*end of hip part*)
