@@ -926,10 +926,10 @@ block:
 				   ]];
 
 statement_list: 
-[[ s=statement; sl=SELF -> Seq { exp_seq_exp1 = s;
-									 exp_seq_exp2 = sl;
+[[ s = statement -> s
+  | sl=SELF; s=statement  -> Seq { exp_seq_exp1 = sl;
+									 exp_seq_exp2 = s;
 									 exp_seq_pos = get_pos 1 }
-  | s = statement -> s
 ]];
 
 opt_statement_list: [[ t= LIST0 statement SEP `SEMICOLON -> 
