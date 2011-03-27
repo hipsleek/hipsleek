@@ -32,7 +32,21 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
     match spec with
 	  | Cformula.ECase b -> List.for_all (fun (c1,c2)-> 
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context ctx) ^ "\n") in*)
-		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs c1 pos_spec}) ctx  in  
+		let mn = Cast.unmingle_name (proc.Cast.proc_name) in
+        let f_formula = fun f -> None in
+		let f_b_formula = function
+		  | CP.BVar (CP.SpecVar (t,i,p), loc) -> Some (CP.BVar ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+		  | _ -> None
+		in
+		let f_exp = function
+		  | CP.Var (CP.SpecVar (t,i,p), loc) -> Some (CP.Var ((CP.SpecVar (t,i^"_"^mn,p)), loc))
+		  | _ -> None
+		in
+		let new_c1 = CP.transform_formula (true,true,f_formula,f_b_formula,f_exp) c1 in
+		let _ = print_string ("c1: " ^ (Cprinter.string_of_pure_formula c1) ^ "\n") in
+		let _ = print_string ("new c1: " ^ (Cprinter.string_of_pure_formula new_c1) ^ "\n") in
+		
+		    let nctx = CF.transform_context (fun es -> CF.Ctx {es with CF.es_var_ctx_lhs = CP.mkAnd es.CF.es_var_ctx_lhs new_c1 pos_spec}) ctx  in  
 			let nctx = CF.transform_context (combine_es_and prog (MCP.mix_of_pure c1) true) nctx in
 			(*let _ = print_string ("check_specs: ECase: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 			let r = check_specs prog proc nctx c2 e0 in
@@ -381,7 +395,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 			  (*let _ = print_string (List.fold_left (fun res (p1, p2) -> res ^ "(" ^ (Cprinter.string_of_spec_var p1) ^ "," ^ (Cprinter.string_of_spec_var p2) ^ ") ") "\ncheck_spec: mapping org_spec to new_spec: \n" st1) in*)
 	          let fr_vars = farg_spec_vars @ (List.map CP.to_primed farg_spec_vars) in
 	          let to_vars = actual_spec_vars @ (List.map CP.to_primed actual_spec_vars) in
-			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, mn)) to_vars fr_vars in
+
+			  (*let l = (String.index mn '$') in
+              let new_mn = String.create l in
+			  let _ = print_string ("mn: " ^ mn ^ "\n") in
+			  let _ = String.blit mn 0 new_mn 0 l in
+			  let _ = print_string ("New mn: " ^ new_mn ^ "\n") in*)
+			  let var_subst = List.map2 (fun e1 e2 -> (e1, e2, (Cast.unmingle_name mn))) to_vars fr_vars in
 			  let sctx = List.map
 				(fun fctx -> let (lb,estk,lbctx) = fctx in
 							 let nlbctx = List.map
@@ -738,7 +758,7 @@ let rec equalpf_a f1 f2 =
   let r2,_,_ = (Tpdispatcher.imply f2 f1 "" false None) in
   r1 & r2
 
-and equalpf f1 f2 = Gen.Debug.ho_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
+and equalpf f1 f2 = Gen.Debug.no_2 "equalpf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_bool) equalpf_a f1 f2
 
 and comparepf_a f1 f2 =
   let r1,_,_ = (Tpdispatcher.imply f1 f2 "" false None) in
@@ -746,9 +766,8 @@ and comparepf_a f1 f2 =
   if (r1 & r2) then 0
   else compare (Cprinter.string_of_pure_formula f1) (Cprinter.string_of_pure_formula f2)
 	
-and comparepf f1 f2 = Gen.Debug.ho_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
+and comparepf f1 f2 = Gen.Debug.no_2 "comparepf" (Cprinter.string_of_pure_formula) (Cprinter.string_of_pure_formula) (string_of_int) comparepf_a f1 f2
 
-		
 module FComp = struct
   type t = CP.formula
   let compare = comparepf
@@ -775,41 +794,40 @@ module GSP = Graph.Path.Check(GS)
 
   
 let build_state_trans_graph ls =
-  print_string ("\ncheck_prog: call graph:\n" ^
-	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");
+  (*print_string ("\ncheck_prog: call graph:\n" ^
+	(List.fold_left (fun rs (f1,f2) -> rs ^ "\n" ^ (Cprinter.string_of_pure_formula f1) ^ " ->" ^ (Cprinter.string_of_pure_formula f2)) "" !Solver.graph) ^ "\n");*)
 
   let gr = IG.empty in
   let g = List.fold_left (fun g (f1,f2) ->
     let ng1 = IG.add_vertex g f1 in
-	let _ = print_string (if (ng1 = g) then (Cprinter.string_of_pure_formula f1) ^ ": not added\n" else (Cprinter.string_of_pure_formula f1) ^ ": added\n") in
+	(*let _ = print_string (if (ng1 = g) then (Cprinter.string_of_pure_formula f1) ^ ": not added\n" else (Cprinter.string_of_pure_formula f1) ^ ": added\n") in*)
 	let ng2 = IG.add_vertex ng1 f2 in
-	let _ = print_string (if (ng2 = ng1) then (Cprinter.string_of_pure_formula f2) ^ ": not added\n" else (Cprinter.string_of_pure_formula f2) ^ ": added\n") in
+	(*let _ = print_string (if (ng2 = ng1) then (Cprinter.string_of_pure_formula f2) ^ ": not added\n" else (Cprinter.string_of_pure_formula f2) ^ ": added\n") in*)
 	let ng3 = IG.add_edge ng2 f1 f2 in
-	let _ = print_string (let edge = "Edge " ^ (Cprinter.string_of_pure_formula f1) ^ "->" ^ (Cprinter.string_of_pure_formula f2) in
-						  if (ng3 = ng2) then edge ^ ": not added\n" else edge ^ ": added\n") in
+	(*let _ = print_string (let edge = "Edge " ^ (Cprinter.string_of_pure_formula f1) ^ "->" ^ (Cprinter.string_of_pure_formula f2) in
+						  if (ng3 = ng2) then edge ^ ": not added\n" else edge ^ ": added\n") in*)
 	ng3) gr ls in
   g
 
 let scc_numbering g =
-  let _ = print_string "List of vertices:\n" in
-  let _ = IG.iter_vertex (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "\n")) g in
+  (*let _ = print_string "List of vertices:\n" in
+  let _ = IG.iter_vertex (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "\n")) g in*)
   
   let scc_list = IGC.scc_list g in
   
-  let _ = print_string ("The number of scc: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
-  let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in
+  (*let _ = print_string ("The number of scc: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
+  let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in*)
 
   let scc_list = snd (List.fold_left (fun (n,rs) l -> (n+1, rs @ [(n,l)])) (0,[]) scc_list) in
 
-  let _ = print_string ("New scc list: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
-  let _ = List.iter (fun (n,ls) -> print_string ((string_of_int n) ^ ": "); List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in
-  
-  let scc_graph = GS.empty in
+  (*let _ = print_string ("New scc list: " ^ (string_of_int (List.length scc_list)) ^ "\n") in
+  let _ = List.iter (fun (n,ls) -> print_string ((string_of_int n) ^ ": "); List.iter (fun v -> print_string ((Cprinter.string_of_pure_formula v) ^ "; "); print_string "\n") ls) scc_list in*)
 
   let mem e ls = List.fold_left (fun rs e1 -> if (equalpf e e1) then true else rs) false ls in
-
   let meml ls1 ls2 = List.fold_left (fun rs e -> if (mem e ls2) then true else rs) false ls1 in
-
+  
+  let scc_graph = GS.empty in
+  
   let scc_graph = List.fold_left (fun sg (n,_) -> GS.add_vertex sg n) scc_graph scc_list in
 
   let scc_graph = List.fold_left (fun sg (n,l) ->
@@ -819,12 +837,12 @@ let scc_numbering g =
 
   let (nscc, fscc) = GSC.scc scc_graph in
 
-  let lscc = GSC.scc_list scc_graph in
+  (*let lscc = GSC.scc_list scc_graph in*)
 
-  let _ = print_string ("The number of transformed scc: " ^ (string_of_int nscc) ^ "\n") in
+  (*let _ = print_string ("The number of transformed scc: " ^ (string_of_int nscc) ^ "\n") in
   let _ = List.iter (fun ls -> List.iter (fun v -> print_string ((string_of_int v) ^ "; "); print_string "\n") ls) lscc in
   let _ = print_string ("The mapping from label to scc number: \n") in
-  let _ = List.iter (fun (n,_) -> print_string ((string_of_int n) ^ "->" ^ (string_of_int (fscc n)) ^ "\n")) scc_list in
+  let _ = List.iter (fun (n,_) -> print_string ((string_of_int n) ^ "->" ^ (string_of_int (fscc n)) ^ "\n")) scc_list in*)
 
   fun v -> List.fold_left (fun rs (n,l) -> if (mem v l) then (fscc n) else rs) 0 scc_list
   

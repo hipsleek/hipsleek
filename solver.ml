@@ -2534,8 +2534,11 @@ and heap_entail_conjunct_lhs_struc
 			let str_var_subst  = List.map (fun (v1,v2,mn) -> ((Cprinter.string_of_spec_var v1), (Cprinter.string_of_spec_var v2))) es.CF.es_var_subst in
 			*)
 			let f = List.map (fun (v,_,_) -> v) es.CF.es_var_subst in
-			let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in
-			(*let t = List.map (fun (_,v,mn) -> let CP.SpecVar (t,i,p) = CP.to_unprimed v in CP.SpecVar (t, i^"@"^mn, p)) es.CF.es_var_subst in*)
+			(*let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in*)
+			let t = List.map (fun (_,v,mn) -> let CP.SpecVar (t,i,p) = v in
+							                  let nid = i^"_"^mn in
+											  let _ = print_string ("New ident: " ^ nid ^ "\n") in
+											  CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
 
 			let normalize_ctx_rhs =
 			  let rec filter pformula =
