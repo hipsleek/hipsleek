@@ -2537,7 +2537,7 @@ and heap_entail_conjunct_lhs_struc
 			(*let t = List.map (fun (_,v,_) -> CP.to_unprimed v) es.CF.es_var_subst in*)
 			let t = List.map (fun (_,v,mn) -> let CP.SpecVar (t,i,p) = v in
 							                  let nid = i^"_"^mn in
-											  let _ = print_string ("New ident: " ^ nid ^ "\n") in
+											  (*let _ = print_string ("New ident: " ^ nid ^ "\n") in*)
 											  CP.to_unprimed (CP.SpecVar (t, nid, p))) es.CF.es_var_subst in
 
 			let normalize_ctx_rhs =
@@ -2563,7 +2563,6 @@ and heap_entail_conjunct_lhs_struc
 
 			graph := !graph @ [(es.es_var_ctx_lhs, normalize_ctx_rhs)];
 			var_checked_list := !var_checked_list @ [(nes,e)];
-			  
 			  
 		    inner_entailer ctx e.Cformula.formula_var_continuation
     in
