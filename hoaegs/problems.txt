@@ -1,0 +1,20 @@
+
+- array bounds & memory safety
+
+- left & right recursion
+
+- existential instantiation
+
+- multi-sets
+
+- array as heap memory 
+
+- pointer arithmetic
+
+- nested array & multi-dimensional ?
+
+- concurrent programs?
+
+- automatic frame condition?
+
+- termination (variance + non-termination)
