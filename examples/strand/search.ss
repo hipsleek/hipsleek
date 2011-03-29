@@ -10,7 +10,7 @@ ll1<S> == self = null & S = {}
 
 sll1<S> == self = null & S = {}
 	or self::node<v2, r> * r::sll1<S1> & S = union(S1, {v2}) & 
-	forall(x: (x in S1 | v2 <= x));
+	forall(x: (x notin S1 | v2 <= x));
 
 
 bool search(node x, int d)
@@ -30,6 +30,13 @@ bool search(node x, int d)
 }
 
 node search1(node x, int d)
+  requires x::sll1<S> & d in S
+  ensures res::node<d,_>;
+  requires x::sll1<S> & d notin S
+  ensures x::sll1<S> & res=null;
+
+
+/*
   requires x::sll1<S>@I & d in S
   ensures res::node<d,_>@I;
   requires x::sll1<S>@I & d notin S
@@ -38,6 +45,7 @@ node search1(node x, int d)
   ensures res::node<d,_>;
   requires x::sll1<S> & d notin S
   ensures x::sll1<S> & res=null;
+*/
 {
 
 
@@ -45,9 +53,10 @@ node search1(node x, int d)
 	else
 	{
       if (x.val == d) return x;
+      else if (x.val>d) return null;
       else return search1(x.next,d);
 	}
-    return null;
+    //return null;
 }
 
 
