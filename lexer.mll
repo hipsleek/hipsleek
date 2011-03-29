@@ -164,7 +164,7 @@ module Make (Token : SleekTokenS)
 	 ("or", ORWORD);
    ("perm",PERM);
 	 ("pred", PRED);
-	 ("print", PRINT);
+	 ("dprint", DPRINT);
    ("raise", RAISE);
 	 ("ref", REF);
 	 ("requires", REQUIRES);

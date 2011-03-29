@@ -145,6 +145,7 @@ let peek_try =
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
          | [GT,_;CPAREN,_] -> raise Stream.Failure 
+         | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;_] -> ()
          | [SEMICOLON,_;typ] -> ()
          | _ -> raise Stream.Failure  ) 
@@ -175,9 +176,9 @@ let peek_try =
  let peek_exp_st = 
  SHGram.Entry.of_parser "peek_exp_st" 
      (fun strm ->
-       match Stream.npeek 2 strm with
-          | [PRINT,_;_] -> raise Stream.Failure
-          | _ -> ())	
+       match Stream.npeek 1 strm with
+          | [DPRINT,_] -> raise Stream.Failure
+          | _ -> ())
 		  
  let peek_try_declarest = 
  SHGram.Entry.of_parser "peek_try_declarest" 
@@ -189,6 +190,13 @@ let peek_try =
           | [BOOL,_;IDENTIFIER n,_] -> ()
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
           |  _ -> raise Stream.Failure)
+
+ let peek_ensures = 
+ SHGram.Entry.of_parser "peek_ensures" 
+     (fun strm ->
+       match Stream.npeek 3 strm with
+          | [ENSURES,_;i,_;j,_]-> print_string((Token.to_string i)^(Token.to_string j));()
+          | _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
@@ -382,7 +390,7 @@ disjunctive_constr:
       
 core_constr:
   [[ hc=opt_heap_constr; pc=opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
-   (*| pc=pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos 1))*)
+   | pc=pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos 1))
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
@@ -391,9 +399,9 @@ flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]];
 
 opt_formula_label: [[t=OPT formula_label -> un_option t (fresh_branch_point_id "")]];		
 
-opt_label: [[t= OPT label-> un_option t ""]];
+opt_label: [[t= OPT label->un_option t ""]];
 
-label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> id]];
+label : [[  `STRING (_,id); `COLON -> id]];
 
 (* opt_pure_label :[[t=Opure_label -> un_option t (fresh_branch_point_id "")]]; *)
 
@@ -444,7 +452,7 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos 2))
-   (* | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)  *)]];
+   | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];  
         
@@ -551,11 +559,6 @@ cexp_w :
    | "pure_base"
      [ `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
      | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
-
-     (*| t=NEXT                            -> (match t with
-                                                  | Pure_f f -> t (*Pure_f (P.BForm (P.mkBVar t (get_pos 1), None )) *)
-                                                  | _ -> report_error (get_pos 1) "expected pure_constr, found cexp") *)
-
      | t=cid                            -> (print_string ("pure_form:"^(fst t)^"\n"); Pure_f (P.BForm (P.mkBVar t (get_pos 1), None )))
      | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
      | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
@@ -588,8 +591,8 @@ compose_cmd:
    | `COMPOSE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN -> ([], mc1, mc2)]];
 
 print_cmd:
-  [[ `PRINT; `IDENTIFIER id           -> PCmd id
-   | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
+  [[ `DPRINT; `IDENTIFIER id           -> PCmd id
+   | `DPRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
 
 time_cmd:
   [[ `DTIME; `ON; `IDENTIFIER id   -> Time(true, id, get_pos 1)
@@ -820,19 +823,19 @@ spec:
 			 Iformula.formula_ext_base = (F.subst_stub_flow n_flow dc);
 			 Iformula.formula_ext_continuation = [s];
 			 Iformula.formula_ext_pos = (get_pos 1)}
-	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->		
-			Iformula.EBase {
-			 Iformula.formula_ext_explicit_inst =cl;
-			 Iformula.formula_ext_implicit_inst = [];
-			 Iformula.formula_ext_exists = [];
-			 Iformula.formula_ext_base =  (F.subst_stub_flow n_flow dc);
-			 Iformula.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos 1) "spec must contain ensures"
-																							else sl;
-			 Iformula.formula_ext_pos = (get_pos 1)}
+	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
+	    	Iformula.EBase {
+	    	 Iformula.formula_ext_explicit_inst =cl;
+	    	 Iformula.formula_ext_implicit_inst = [];
+	    	 Iformula.formula_ext_exists = [];
+	    	 Iformula.formula_ext_base =  (F.subst_stub_flow n_flow dc);
+	    	 Iformula.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos 1) "spec must contain ensures"
+	    																					else sl;
+	    	 Iformula.formula_ext_pos = (get_pos 1)}
        
-	 | `ENSURES; ol=opt_label; dc=disjunctive_constr; `SEMICOLON ->
+	 | peek_ensures; `ENSURES; ol= opt_label; dc=disjunctive_constr; `SEMICOLON ->
       Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
-	 | `CASE; `OBRACE; bl=branch_list; `CBRACE ->
+	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
 			Iformula.ECase {
 						Iformula.formula_case_branches = bl; 
 						Iformula.formula_case_pos = get_pos 1; }
@@ -862,7 +865,7 @@ condition_list: [[t=pure_constr ->[t]]];
   
 branch_list: [[t=LIST1 spec_branch -> t]];
 
-spec_branch: [[ pc=pure_constr; `LEFTARROW; sl=spec_list -> (pc,sl)]];
+spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 	 
  
  (***********Proc decls ***********)
@@ -932,10 +935,10 @@ statement_list:
 									 exp_seq_pos = get_pos 1 }
 ]];
 
-opt_statement_list: [[ t= LIST0 statement SEP `SEMICOLON -> 
-    match t with 
-     | [] ->  Empty no_pos
-     | h::t -> List.fold_left (fun a c-> Seq {exp_seq_exp1 = a; exp_seq_exp2=c; exp_seq_pos =get_pos 1}) h t ]];
+(* opt_statement_list: [[ t= LIST0 statement SEP `SEMICOLON ->  *)
+(*     match t with  *)
+(*      | [] ->  Empty no_pos *)
+(*      | h::t -> List.fold_left (fun a c-> Seq {exp_seq_exp1 = a; exp_seq_exp2=c; exp_seq_pos =get_pos 1}) h t ]]; *)
   
 statement:
   [[ t=declaration_statement; `SEMICOLON -> t
@@ -980,7 +983,7 @@ valid_declaration_statement:
   | t=try_statement -> t
   | t=java_statement -> t
   | t=jump_statement;`SEMICOLON  -> t
-  | t=assert_statement -> t
+  | t=assert_statement;`SEMICOLON -> t
   | t=dprint_statement;`SEMICOLON  -> t
   | t=debug_statement -> t
   | t=time_statement -> t
@@ -1006,8 +1009,8 @@ time_statement:
    | `DTIME; `OFF; `IDENTIFIER id -> I.Time (false,id,get_pos 1)]];
 
 dprint_statement:
-  [[ `PRINT  -> Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos 1)})
-   | `PRINT; `DOUBLEQUOTE; `IDENTIFIER id;  `DOUBLEQUOTE  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos 1)})]];
+  [[ `DPRINT  ->print_string("heren \n"); Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos 1)})
+   | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos 1)})]];
    
 bind_statement:
   [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b=block ->
@@ -1022,7 +1025,7 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos 1 
 expression_statement: [[(* t=statement_expression -> t *)
         t= invocation_expression -> t
       | t=object_creation_expression -> t
-      | peek_exp_st;t=assignment_expression -> t
+      |peek_exp_st; t=assignment_expression -> t
       | t=post_increment_expression -> t
       | t=post_decrement_expression -> t
       | t=pre_increment_expression -> t  
@@ -1291,14 +1294,14 @@ invocation_expression:
 
 qualified_identifier: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
 
-member_access: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id ->
-	Member { exp_member_base = t;
-           exp_member_fields = [id];
-           exp_member_path_id = None ;
-           exp_member_pos = get_pos 3 }]
-		   | [ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 }
-			| `THIS _ -> This{exp_this_pos = get_pos 1}]
-		   ];
+(* member_access: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id -> *)
+(* 	Member { exp_member_base = t; *)
+(*            exp_member_fields = [id]; *)
+(*            exp_member_path_id = None ; *)
+(*            exp_member_pos = get_pos 3 }] *)
+(* 		   | [ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 } *)
+(* 			| `THIS _ -> This{exp_this_pos = get_pos 1}] *)
+(* 		   ]; *)
 
 literal:
  [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos 1 }
@@ -1335,9 +1338,9 @@ primary_expression_no_parenthesis :
   | t= new_expression -> t
 			]];
 
-member_name :
- [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 }
-  | `THIS _ -> This{exp_this_pos = get_pos 1}]];
+(* member_name : *)
+(*  [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 } *)
+(*   | `THIS _ -> This{exp_this_pos = get_pos 1}]]; *)
  
  (*end of hip part*)
 END;;

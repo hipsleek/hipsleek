@@ -36,7 +36,7 @@ let parse_file_full file_name =
     with
 		End_of_file -> exit 0	 
     | M.Loc.Exc_located (l,t)-> 
-      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
       raise t) 
 
 let process_source_full source =
