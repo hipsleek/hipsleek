@@ -23,6 +23,8 @@ let substitution_list = ref ([] : CP.b_formula list)
 let automaton_completed = ref false
 let cycle = ref false
 let sat_optimize = ref false
+let mona_pred_file = "mona_predicates.mona"
+let mona_pred_file_alternative_path = "/usr/lib/"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
@@ -815,8 +817,38 @@ let send_cmd_no_answer str =
   let _ = send_cmd_with_answer str in
   ()
 
-let prelude () = 
-  send_cmd_no_answer ("include \"mona_predicates.mona\";\n")
+let write_to_mona_predicates_file mona_filename =
+  let filename = open_out mona_filename in
+  output_string filename ("pred xor(var0 x,y) = x&~y | ~x&y;\n");
+  output_string filename ("pred at_least_two(var0 x,y,z) = x&y | x&z | y&z;\n");
+  output_string filename ("pred plus(var2 p,q,r) = ex2 c: 0 notin c & all1 t:(t+1 in c <=> at_least_two(t in p, t in q, t in c)) & (t in r <=> xor(xor(t in p, t in q), t in c));\n");
+  output_string filename ("pred less(var2 p,q) = ex2 t: t ~= empty & plus(p,t,q);\n");
+  output_string filename ("pred lessEq(var2 p, q) = less(p, q) | (p=q);\n");
+  output_string filename ("pred greater(var2 p, q) = less(q, p);\n");
+  output_string filename ("pred greaterEq(var2 p, q) = greater(p, q) | (p=q);\n");
+  output_string filename ("pred nequal(var2 p,q) = p ~= q ;\n");
+  flush filename;
+  close_out filename
+
+let get_mona_predicates_file () : string =
+  if Sys.file_exists mona_pred_file then 
+    mona_pred_file
+  else
+    begin
+        let _ = print_string ("\n WARNING: File " ^ mona_pred_file ^ " was not found in current directory. Searching in alternative path: " ^ mona_pred_file_alternative_path) in
+        let alternative = mona_pred_file_alternative_path ^ mona_pred_file in
+        if Sys.file_exists alternative then 
+          alternative
+        else
+          let _ = print_string ("\n WARNING: File " ^ alternative ^ " was not found. Creating " ^ mona_pred_file ^ " file in current directory... ") in
+          let _ = write_to_mona_predicates_file mona_pred_file in
+          let _ = print_string (" done!\n") in
+          mona_pred_file
+    end
+
+let prelude () =
+   let mona_pred_file_x = get_mona_predicates_file () in
+   send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
 
 let set_process (proc: Globals.prover_process_t) = 
   process := proc
@@ -824,7 +856,7 @@ let set_process (proc: Globals.prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string ("Command for starting mona interactively (" ^prover_cmd_str^ ") not found\n") in
+    let _ = print_string ("Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found\n") in
     false
   else true
 
@@ -937,7 +969,8 @@ let read_from_file chn: string =
 let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_no: string) : bool =
   let mona_filename = "test" ^ imp_no ^ ".mona" in
   let mona_file = open_out mona_filename in
-  output_string mona_file ("include \"mona_predicates.mona\";\n");
+  let mona_pred_file_x = get_mona_predicates_file () in
+  output_string mona_file ("include \""^ mona_pred_file_x ^"\";\n");
   let fstr =
     try 
         begin
