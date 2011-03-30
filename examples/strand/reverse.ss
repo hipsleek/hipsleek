@@ -17,9 +17,10 @@ rsll1<S> == self = null & S = {}
 	forall(x: (x notin S1 | v2 >= x));
 
 
-void reverse(ref node xs, ref node ys)
-	requires xs::sll1<S1> * ys::sll1<S2>
-  ensures true;//ys'::rsll1<S> & xs' = null;// & S = union(S1, S2); //STRAND can not express S = S1 + S2
+node reverse(ref node xs, node ys,int z)
+  requires xs::sll1<S1> * ys::rsll1<S2> & 
+  forall(x: (x notin S1 | x>=z & forall (y:(y notin S2 | x>=y))))
+  ensures res::rsll1<S> & S = union(S1, S2);//ys'::rsll1<S> // & S = union(S1, S2); //STRAND can not express S = S1 + S2
 {
 	if (xs != null) {
 		node tmp;
@@ -27,11 +28,29 @@ void reverse(ref node xs, ref node ys)
     //dprint;
 		xs.next = ys;
 		ys = xs;
-		xs = tmp;
     //dprint;
-		reverse(xs, ys);
-	}
+		return reverse(tmp, ys,z);
+
+	} else return ys;
 }
+
+void reverse1(ref node xs, ref node ys,int z)
+  requires xs::sll1<S1> * ys::rsll1<S2> & 
+    forall(x: (x notin S1 | x>=z & forall (y:(y notin S2 | x>=y))))
+  ensures ys'::rsll1<S> & S = union(S1, S2);//ys'::rsll1<S> // & S = union(S1, S2); //STRAND can not express S = S1 + S2
+{
+	if (xs != null) {
+		node tmp;
+		tmp = xs.next;
+    //dprint;
+		xs.next = ys;
+		ys = xs;
+    //dprint;
+		reverse1(tmp, ys,z);
+
+	} //else return ys;
+}
+
 
 
 
