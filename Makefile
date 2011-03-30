@@ -308,6 +308,13 @@ j: $(JAVA_FILES)
 decidez.vo:
 	coqtop -compile decidez
 
+install:
+	cp mona_predicates.mona /usr/local/lib/mona_predicates.mona
+	coqtop -compile decidez
+	cp decidez.vo /usr/local/lib/decidez.vo
+	./hip --build-image true
+	cp MyImage /usr/local/lib/MyImage
+
 # ------------------------------------------------------------
 # Common rules
 # ------------------------------------------------------------
