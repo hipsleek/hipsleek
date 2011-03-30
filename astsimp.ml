@@ -3665,7 +3665,7 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
 	      else collect_type_info_pure prog qf stab
 
 and collect_type_info_b_formula prog b0 stab =
-  Gen.Debug.ho_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "?")
+  Gen.Debug.no_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "?")
      (collect_type_info_b_formula_x prog) b0 stab
 
       
@@ -3705,10 +3705,10 @@ and collect_type_info_b_formula_x prog b0 stab =
               | _ -> helper Unknown
 	      end
     | IP.BagIn ((v, p), e, pos) ->
-	      (collect_type_info_var v stab Unknown pos;
+	      (collect_type_info_var v stab (Known C.int_type) pos;
 	      collect_type_info_bag e stab)
     | IP.BagNotIn ((v, p), e, pos) ->
-	      (collect_type_info_var v stab Unknown pos;
+	      (collect_type_info_var v stab (Known C.int_type) pos;
 	      collect_type_info_bag e stab)
     | IP.BagSub (e1, e2, pos) ->
 	      (collect_type_info_bag e1 stab; collect_type_info_bag e2 stab)
