@@ -33,7 +33,7 @@ let devel_print s =
     if !log_devel_debug then 
       Buffer.add_string debug_log msg
     else
-      (prerr_string msg; flush stderr)
+      (print_string msg; flush stdout)
   else ()
 
 let devel_pprint msg (pos:loc) = 

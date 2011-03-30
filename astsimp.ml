@@ -1762,35 +1762,35 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
               C.exp_unfold_var = CP.SpecVar (CP.OType "", v, p);
               C.exp_unfold_pos = pos;
           }), C.void_type)
-		(* An Hoa MARKED *)
-		| I.ArrayAt { I.exp_arrayat_array_name = a; 
-									I.exp_arrayat_index = index;
-									I.exp_arrayat_pos = pos } ->
-				(* Array variable *)
-				let array_var = I.Var { I.exp_var_name = a; I.exp_var_pos = pos } in
-				let new_e = I.CallNRecv {
-					I.exp_call_nrecv_method = array_access_call; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-					I.exp_call_nrecv_arguments = [array_var; index];
-					I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
-					I.exp_call_nrecv_pos = pos;} in 
-	        	trans_exp prog proc new_e
-          (*(try
-            let vinfo_tmp = E.look_up a in (* look up the array variable *)
-						let ci,_ = trans_exp prog proc i in (* translate the index exp *)
-            match vinfo_tmp with
-              | E.VarInfo vi ->
-                    let ct = trans_type prog vi.E.var_type pos in
-										begin match ct with
-											| CP.Array et -> ((C.ArrayAt {
-	                        C.exp_arrayat_type = et;
-													C.exp_arrayat_array_name = a;
-	                        C.exp_arrayat_index = ci;
-	                        C.exp_arrayat_pos = pos; }),et)
-											| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
-										end 
-              | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
-          with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })*)
-		(* An Hoa END *)
+		      (* An Hoa MARKED *)
+	| I.ArrayAt { I.exp_arrayat_array_name = a; 
+	  I.exp_arrayat_index = index;
+	  I.exp_arrayat_pos = pos } ->
+		  (* Array variable *)
+		  let array_var = I.Var { I.exp_var_name = a; I.exp_var_pos = pos } in
+		  let new_e = I.CallNRecv {
+			  I.exp_call_nrecv_method = array_access_call; (* Update call *)					(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+			  I.exp_call_nrecv_arguments = [array_var; index];
+			  I.exp_call_nrecv_path_id = None; (* No path_id is necessary because there is only one path *)
+			  I.exp_call_nrecv_pos = pos;} in 
+	      trans_exp prog proc new_e
+              (*(try
+                let vinfo_tmp = E.look_up a in (* look up the array variable *)
+				let ci,_ = trans_exp prog proc i in (* translate the index exp *)
+                match vinfo_tmp with
+                | E.VarInfo vi ->
+                let ct = trans_type prog vi.E.var_type pos in
+				begin match ct with
+				| CP.Array et -> ((C.ArrayAt {
+	            C.exp_arrayat_type = et;
+				C.exp_arrayat_array_name = a;
+	            C.exp_arrayat_index = ci;
+	            C.exp_arrayat_pos = pos; }),et)
+				| _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
+				end 
+                | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not an array variable"; }
+                with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = a ^ " is not defined"; })*)
+		      (* An Hoa END *)
     | I.Assert{
           I.exp_assert_asserted_formula = assert_f_o;
           I.exp_assert_assumed_formula = assume_f_o;
@@ -1828,15 +1828,15 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_assign_rhs = rhs;
           I.exp_assign_path_id = pid;
           I.exp_assign_pos = pos_a	} ->
-					(* let _ = print_string ("trans_exp :: case Assign with lhs = " ^ Iprinter.string_of_exp lhs ^ " and rhs = " ^ Iprinter.string_of_exp rhs ^ "\n") in *)
+		  (* let _ = print_string ("trans_exp :: case Assign with lhs = " ^ Iprinter.string_of_exp lhs ^ " and rhs = " ^ Iprinter.string_of_exp rhs ^ "\n") in *)
           (match aop with
             | I.OpAssign ->
                   (match lhs with
                     | I.Var { I.exp_var_name = v0; I.exp_var_pos = pos } -> 
                           let (ce1, te1) = trans_exp prog proc lhs in
-													(* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
+						  (* let _ = print_string ("trans_exp :: lhs = " ^ Cprinter.string_of_exp ce1 ^ "\n") in *)
                           let (ce2, te2) = trans_exp prog proc rhs in
-													(* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
+						  (* let _ = print_string ("trans_exp :: rhs = " ^ Cprinter.string_of_exp ce2 ^ "\n") in *)
                           if not (sub_type te2 te1) then  Err.report_error {
                               Err.error_loc = pos;
                               Err.error_text = "lhs and rhs do not match";  }
@@ -1853,32 +1853,32 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_seq_exp1 = ce1;
                                   C.exp_seq_exp2 = assign_e;
                                   C.exp_seq_pos = pos;} in (seq_e, C.void_type)))
-										(* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
-										(* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
-										| I.ArrayAt { I.exp_arrayat_array_name = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
-														(* Array variable *)
-														let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in
-														let new_rhs = I.CallNRecv {
-			                					I.exp_call_nrecv_method = array_update_call; (* Update call *)
-																(* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
-			                					I.exp_call_nrecv_arguments = [new_lhs; index; rhs];
-			                					I.exp_call_nrecv_path_id = pid;
-			                					I.exp_call_nrecv_pos = I.get_exp_pos rhs;} in 
-														let new_e = I.Assign {
-																I.exp_assign_op = I.OpAssign;
-		   													I.exp_assign_lhs = new_lhs;
-															  I.exp_assign_rhs = new_rhs;
-															  I.exp_assign_path_id = pid;
-															  I.exp_assign_pos = pos_a;} in
-			            							trans_exp prog proc new_e
-														(* let (ce1, te1) = trans_exp prog proc lhs in
-	                          let (ce2, te2) = trans_exp prog proc rhs in
-														if not (sub_type te2 te1) then  Err.report_error {
-                              Err.error_loc = pos;
-                              Err.error_text = "lhs and rhs do not match";  }
-                         	 	else
-															(C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type) *)
-										(* AN HOA END *)
+								(* AN HOA MARKED : THE CASE LHS IS AN ARRAY ACCESS IS SIMILAR TO VARIABLE & BINARY - WE NEED TO CONVERT THIS INTO A FUNCTION *)
+								(* (Iast) a[i] = v    ===>     (Iast) a = update___(a,i,v);   ===>   (Cast) Scall {a = update___(a,i,v)} *)
+					| I.ArrayAt { I.exp_arrayat_array_name = a; I.exp_arrayat_index = index; I.exp_arrayat_pos = pos_lhs } ->
+						  (* Array variable *)
+						  let new_lhs = I.Var { I.exp_var_name = a; I.exp_var_pos = pos_lhs } in
+						  let new_rhs = I.CallNRecv {
+			                  I.exp_call_nrecv_method = array_update_call; (* Update call *)
+							  (* TODO CHECK IF THE ORDER IS CORRECT! IT MIGHT BE IN REVERSE ORDER *)
+			                  I.exp_call_nrecv_arguments = [new_lhs; index; rhs];
+			                  I.exp_call_nrecv_path_id = pid;
+			                  I.exp_call_nrecv_pos = I.get_exp_pos rhs;} in 
+						  let new_e = I.Assign {
+							  I.exp_assign_op = I.OpAssign;
+		   					  I.exp_assign_lhs = new_lhs;
+							  I.exp_assign_rhs = new_rhs;
+							  I.exp_assign_path_id = pid;
+							  I.exp_assign_pos = pos_a;} in
+			              trans_exp prog proc new_e
+							  (* let (ce1, te1) = trans_exp prog proc lhs in
+	                             let (ce2, te2) = trans_exp prog proc rhs in
+								 if not (sub_type te2 te1) then  Err.report_error {
+                                 Err.error_loc = pos;
+                                 Err.error_text = "lhs and rhs do not match";  }
+                         	 	 else
+								 (C.ArrayMod { C.exp_arraymod_lhs = (C.arrayat_of_exp ce1); C.exp_arraymod_rhs = ce2; C.exp_arraymod_pos = pos; }, C.void_type) *)
+							  (* AN HOA END *)
                     | I.Member {
                           I.exp_member_base = base_e;
                           I.exp_member_fields = fs;
@@ -2080,7 +2080,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_call_nrecv_arguments = args;
           I.exp_call_nrecv_path_id = pi;
           I.exp_call_nrecv_pos = pos } ->
-						(* let _ = print_string "trans_exp :: case CallNRecv\n" in *)
+		  (* let _ = print_string "trans_exp :: case CallNRecv\n" in *)
           let tmp = List.map (trans_exp prog proc) args in
           let (cargs, cts) = List.split tmp in
           let mingled_mn = C.mingle_name mn cts in (* signature of the function *)
@@ -2175,7 +2175,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           I.exp_cond_else_arm = e3;
           I.exp_cond_path_id = pi;
           I.exp_cond_pos = pos } ->
-					(* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
+		  (* let _ = print_string ("trans_exp :: cond = " ^ Iprinter.string_of_exp e1 ^ " then branch = " ^ Iprinter.string_of_exp e2 ^ " else branch = " ^ Iprinter.string_of_exp e3 ^ "\n") in *) 
           let (ce1, te1) = trans_exp prog proc e1 in
           if not (CP.are_same_types te1 C.bool_type) then
             Err.report_error { Error.error_loc = pos; Error.error_text = "conditional expression is not bool";}
@@ -2791,9 +2791,9 @@ and default_value (t : CP.typ) pos : C.exp =
     | CP.Prim List ->
           failwith "default_value: list can only be used for constraints"
     | CP.OType c -> C.Null pos
-		| CP.Array t -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
-									(* An Hoa : TODO add empty array *)
-									(* failwith "default_value: array cannot be used here!"*)
+	| CP.Array t -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
+		  (* An Hoa : TODO add empty array *)
+		  (* failwith "default_value: array cannot be used here!"*)
 
 and sub_type (t1 : CP.typ) (t2 : CP.typ) =
   let it1 = trans_type_back t1 in
@@ -2820,10 +2820,10 @@ and trans_type (prog : I.prog_decl) (t : I.typ) (pos : loc) : CP.typ =
 			                  }))
     | I.Array (et, _) -> CP.Array (trans_type prog et pos) (* An Hoa *)
 	      (* Err.report_error
-              {
-                  Err.error_loc = pos;
-                  Err.error_text = "trans_type: array is not supported yet";
-              } *)
+             {
+             Err.error_loc = pos;
+             Err.error_text = "trans_type: array is not supported yet";
+             } *)
 and
 
       flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
@@ -3044,8 +3044,8 @@ and get_type_name_for_mingling (prog : I.prog_decl) (t : I.typ) : ident =
 	      (try let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c in "int"
 	      with | Not_found -> c)
     | I.Array (t,_) ->  (* An Hoa *) 
-				(get_type_name_for_mingling prog t ^ "[]")
-	      (* failwith "get_type_name_for_mingling: array is not supported yet" *)
+		  (get_type_name_for_mingling prog t ^ "[]")
+	          (* failwith "get_type_name_for_mingling: array is not supported yet" *)
 
 and mingle_name_enum prog (m : ident) (targs : I.typ list) =
   let param_tnames =
@@ -3557,7 +3557,7 @@ and trans_pure_b_formula (b0 : IP.b_formula) stab : CP.b_formula =
     | IP.RelForm (r, args, pos) ->
           let cpargs = trans_pure_exp_list args stab in
           CP.RelForm (r, cpargs, pos) (* An Hoa : Translate IP.RelForm to CP.RelForm *)
-          
+              
 
 and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
   match e0 with
@@ -3583,10 +3583,10 @@ and trans_pure_exp (e0 : IP.exp) stab : CP.exp =
     | IP.ListLength (e, pos) -> CP.ListLength (trans_pure_exp e stab, pos)
     | IP.ListReverse (e, pos) -> CP.ListReverse (trans_pure_exp e stab, pos)
     | IP.ArrayAt ((a, p), ind, pos) -> 
-            (* An Hoa : translate IP.ArrayAt to CP.ArrayAt *)
-            let cpind = trans_pure_exp ind stab in
-            (* Currently, only allow single dimensional array of int => TODO Use the correct type *)
-            CP.ArrayAt (CP.SpecVar ((CP.Array C.int_type), a, p), cpind, pos)
+          (* An Hoa : translate IP.ArrayAt to CP.ArrayAt *)
+          let cpind = trans_pure_exp ind stab in
+          (* Currently, only allow single dimensional array of int => TODO Use the correct type *)
+          CP.ArrayAt (CP.SpecVar ((CP.Array C.int_type), a, p), cpind, pos)
 
 and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
   match elist with
@@ -3602,18 +3602,18 @@ and unify_var_kind (k1 : spec_var_kind) (k2 : spec_var_kind) :
     	| Known t2 -> (match t1 with
     		| CP.Prim _ -> if t1 = t2 then Some k1 else None
     		| CP.OType c1 -> (match t2 with
-					| CP.OType c2 -> 
-						if c1 = "" then Some k2
-						else if c2 = "" then Some k1
-						else if c1 = c2 then Some k1
-						else if sub_type t1 t2 then Some k1
-						else if sub_type t2 t1 then Some k2 
-						else None
-					| _ -> None) (* An Hoa *)
-				| CP.Array et1 -> match t2 with (* An Hoa *)
-					| CP.Array et2 -> if (et1 = et2) then Some k1 else None
-					| _ -> None))
-										
+				| CP.OType c2 -> 
+					  if c1 = "" then Some k2
+					  else if c2 = "" then Some k1
+					  else if c1 = c2 then Some k1
+					  else if sub_type t1 t2 then Some k1
+					  else if sub_type t2 t1 then Some k2 
+					  else None
+				| _ -> None) (* An Hoa *)
+			| CP.Array et1 -> match t2 with (* An Hoa *)
+				| CP.Array et2 -> if (et1 = et2) then Some k1 else None
+				| _ -> None))
+		  
 
 and get_var_kind (var : ident) (stab : spec_var_table) =
   try let r = H.find stab var in r.sv_info_kind with | Not_found -> Unknown
@@ -3644,7 +3644,7 @@ and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
 	  | Some tmp_k -> k.sv_info_kind <- tmp_k
 	  | None -> 
 	        ((print_stab stab);
-	        report_error pos (var ^ " is used inconsistently: "^(print_spec_var_kind k.sv_info_kind)^" "^(print_spec_var_kind var_kind)^"\n"))
+	        report_error pos (var ^ " is used inconsistently: "^(string_of_spec_var_kind k.sv_info_kind)^" "^(string_of_spec_var_kind var_kind)^"\n"))
   with | Not_found -> H.add stab var { sv_info_kind = var_kind; id = fresh_int ()}
 
 (* An Hoa : add argument prog *)
@@ -3665,6 +3665,12 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
 	      else collect_type_info_pure prog qf stab
 
 and collect_type_info_b_formula prog b0 stab =
+  Gen.Debug.ho_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "?")
+     (collect_type_info_b_formula_x prog) b0 stab
+
+      
+
+and collect_type_info_b_formula_x prog b0 stab =
   match b0 with
     | IP.BConst _ -> ()
     | IP.BVar ((bv, bp), pos) ->
@@ -3724,16 +3730,16 @@ and collect_type_info_b_formula prog b0 stab =
     | IP.ListPerm (e1, e2, pos) ->
           (collect_type_info_list e1 stab;
           collect_type_info_list e2 stab)
-		(* An Hoa : TODO IMPLEMENT IMMEDIATELY *)			
-		| IP.RelForm (r, args, pos) ->
-					(try 
-						let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
-						let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
-						let args_exp_types = List.map (fun t -> (Known t)) args_ctypes in
-						let _ = List.map2 (fun x y -> collect_type_info_arith x stab y) args args_exp_types in ()
-					with
-						| Not_found -> ())
-		(* An Hoa *)
+		      (* An Hoa : TODO IMPLEMENT IMMEDIATELY *)			
+	| IP.RelForm (r, args, pos) ->
+		  (try 
+			let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
+			let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
+			let args_exp_types = List.map (fun t -> (Known t)) args_ctypes in
+			let _ = List.map2 (fun x y -> collect_type_info_arith x stab y) args args_exp_types in ()
+		  with
+			| Not_found -> ())
+		      (* An Hoa *)
     | IP.Eq (a1, a2, pos) | IP.Neq (a1, a2, pos) ->
 	      let _ = 
 	        if (IP.is_var a1) && (IP.is_var a2)
@@ -3818,7 +3824,7 @@ and collect_type_info_b_formula prog b0 stab =
 			                        (Iprinter.string_of_b_formula b0);
                         } in
 	      (*let _ = print_string ("\n new stab: "^(string_of_stab stab)^"\n") in *)()
-	
+	      
 and guess_type_of_exp_arith a0 stab =
   match a0 with
     | IP.Null _ -> Unknown
@@ -3878,16 +3884,16 @@ and collect_type_info_arith a0 stab expected_type =
     | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
           failwith "collect_type_info_arith: encountered list constraint"
     | IP.ArrayAt ((a,p),i,pos) -> 
-            (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
-						(* and hence, accessing the element at position i, we get the value of expected_type*)
-						(* Furthermore, the expression of the index must be of type integer.*)
-						let a_exp_type = match expected_type with
-							| Unknown -> Unknown
-							| Known t -> Known (CP.Array t)
-						in
-						collect_type_info_var a stab a_exp_type pos;
-						collect_type_info_arith i stab (Known C.int_type)
-						
+          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
+		  (* and hence, accessing the element at position i, we get the value of expected_type*)
+		  (* Furthermore, the expression of the index must be of type integer.*)
+		  let a_exp_type = match expected_type with
+			| Unknown -> Unknown
+			| Known t -> Known (CP.Array t)
+		  in
+		  collect_type_info_var a stab a_exp_type pos;
+		  collect_type_info_arith i stab (Known C.int_type)
+			  
 
 and collect_type_info_bag_content a0 stab =
   match a0 with
@@ -3911,8 +3917,8 @@ and collect_type_info_bag_content a0 stab =
     | IP.ListTail _ | IP.ListReverse _ | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
           failwith "collect_type_info_bag_content: encountered list constraint"
     | IP.ArrayAt _ -> 
-            (* An Hoa *)
-            failwith "collect_type_info_bag_content: encountered array access" 
+          (* An Hoa *)
+          failwith "collect_type_info_bag_content: encountered array access" 
 
 and collect_type_info_bag (e0 : IP.exp) stab =
   match e0 with
@@ -4018,7 +4024,7 @@ and collect_type_info_struc_f prog (f0:Iformula.struc_formula) stab =
 		    let _ = List.map (fun (expr, bound) -> match bound with
 			  | None -> (collect_type_info_arith expr stab)
 			  | Some b_expr -> let _ = (collect_type_info_arith expr stab) in (collect_type_info_arith b_expr stab)) b.Iformula.formula_var_measures in
-		  let _ = List.map (fun f -> collect_type_info_pure prog f stab) b.Iformula.formula_var_escape_clauses in
+		    let _ = List.map (fun f -> collect_type_info_pure prog f stab) b.Iformula.formula_var_escape_clauses in
 		    let _ = inner_collector b.Iformula.formula_var_continuation in ()
     in
     let _ = List.map helper f0 in 
@@ -4126,7 +4132,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
               | CP.Prim Float -> collect_type_info_arith ie st (Known C.float_type)
               | CP.Prim _ -> ()
               | CP.OType _ -> collect_type_info_pointer ie (Known t) st
-							| CP.Array et -> collect_type_info_arith ie st (Known (CP.Array et))); (* An Hoa BUG DETECTED Replace (Known et) by (Known (CP.Array et)) TODO : add a collect_type_info_array instead *)
+			  | CP.Array et -> collect_type_info_arith ie st (Known (CP.Array et))); (* An Hoa BUG DETECTED Replace (Known et) by (Known (CP.Array et)) TODO : add a collect_type_info_array instead *)
             st)
 	      in
 	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)
@@ -4194,14 +4200,23 @@ and get_spec_var_stab (v : ident) stab pos =
 	      Err.report_error
               { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
 
-and print_spec_var_kind (k : spec_var_kind) =
+
+
+and string_of_spec_var_kind (k : spec_var_kind) =
   match k with | Unknown -> "Unk" | Known t -> (Cprinter.string_of_typ t)^" "
+
 
 and print_stab (stab : spec_var_table) =
   let p k i =
     print_string
-        (k ^ (" --> " ^ ((print_spec_var_kind i.sv_info_kind) ^ "\n")))
+        (k ^ (" --> " ^ ((string_of_spec_var_kind i.sv_info_kind) ^ "\n")))
   in (print_string "\n"; H.iter p stab; print_string "\n")
+
+(* and string_of_stab (stab : spec_var_table)  : string = *)
+(*   let p k i s = *)
+(*     ("("^k^"-->"^(string_of_spec_var_kind i.sv_info_kind)^") ") *)
+(*   in H.fold p stab "\n" *)
+
 
 and case_normalize_pure_formula hp b f = f
 
@@ -4341,17 +4356,17 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 (* AN HOA : TODO CHECK *)
 and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Iformula.formula = 
   (*called for data invariants and assume formulas ... rename bound, convert_struc2 float out exps from heap struc*)
-	(* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
-	let f = convert_heap2 prog f in
-	(* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  (* let _ = print_string ("case_normalize_formula :: Input formula = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  let f = convert_heap2 prog f in
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 1 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.float_out_exps_from_heap f in
-	(* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 2 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.float_out_min_max f in
-	(* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 3 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f = Iformula.rename_bound_vars f in
-	(* let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 4 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   let f,_,_ = case_normalize_renamed_formula prog h [] f in
-	(* let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
+  (* let _ = print_string ("case_normalize_formula :: CHECK POINT 5 ==> f = " ^ Iprinter.string_of_formula f ^ "\n") in *)
   f
       
 and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
@@ -4472,12 +4487,12 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
                                                                      let _ = print_string (" before ren assert: "^(Iprinter.string_of_exp f)^"\n") in 
                                                                      let _ = print_string (" after ren assert: "^(Iprinter.string_of_exp r)^"\n") in 
                                                                      r*)
-		(* An Hoa MARKED *)
-		| Iast.ArrayAt b->
-        Iast.ArrayAt	{  Iast.exp_arrayat_array_name = subid ren b.Iast.exp_arrayat_array_name; (* substitute the new name for array name if it is in ren *)
-           Iast.exp_arrayat_index = helper ren b.Iast.exp_arrayat_index;
-           Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos}
-		(* An Hoa END *)
+		  (* An Hoa MARKED *)
+	| Iast.ArrayAt b->
+          Iast.ArrayAt	{  Iast.exp_arrayat_array_name = subid ren b.Iast.exp_arrayat_array_name; (* substitute the new name for array name if it is in ren *)
+          Iast.exp_arrayat_index = helper ren b.Iast.exp_arrayat_index;
+          Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos}
+		      (* An Hoa END *)
     | Iast.Assign b->
           Iast.Assign	{  Iast.exp_assign_op = b.Iast.exp_assign_op;
           Iast.exp_assign_lhs = helper ren b.Iast.exp_assign_lhs;
@@ -4575,11 +4590,11 @@ and rename_exp (ren:(ident*ident) list) (f:Iast.exp):Iast.exp =
 
 and case_rename_var_decls (f:Iast.exp) : (Iast.exp * ((ident*ident) list)) =  match f with
   | Iast.Assert _ -> (f,[])
-			(* An Hoa MARKED *)
-			| Iast.ArrayAt b -> 
-            (Iast.ArrayAt { Iast.exp_arrayat_array_name = b.Iast.exp_arrayat_array_name;
-              Iast.exp_arrayat_index = fst(case_rename_var_decls b.Iast.exp_arrayat_index);
-              Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},[])
+		(* An Hoa MARKED *)
+  | Iast.ArrayAt b -> 
+        (Iast.ArrayAt { Iast.exp_arrayat_array_name = b.Iast.exp_arrayat_array_name;
+        Iast.exp_arrayat_index = fst(case_rename_var_decls b.Iast.exp_arrayat_index);
+        Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},[])
 			(* An Hoa END *)
   | Iast.Assign b -> 
         (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
@@ -4729,14 +4744,14 @@ and case_normalize_exp prog (h: (ident*primed) list) (p: (ident*primed) list)(f:
               Iast.exp_assert_pos = b.Iast.exp_assert_pos;
               Iast.exp_assert_path_id = b.Iast.exp_assert_path_id;} in
               (rez_assert, h, p)
-			(* An Hoa MARKED *)
-			| Iast.ArrayAt b-> 
-          let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_arrayat_index in
-            (Iast.ArrayAt { Iast.exp_arrayat_array_name = b.Iast.exp_arrayat_array_name;
+			      (* An Hoa MARKED *)
+		| Iast.ArrayAt b-> 
+              let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_arrayat_index in
+              (Iast.ArrayAt { Iast.exp_arrayat_array_name = b.Iast.exp_arrayat_array_name;
               Iast.exp_arrayat_index = l1;
               Iast.exp_arrayat_pos = b.Iast.exp_arrayat_pos},h,p)
-      (* An Hoa END *)
-			| Iast.Assign b-> 
+                  (* An Hoa END *)
+		| Iast.Assign b-> 
               let l1,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_lhs in
               let l2,_,_ = case_normalize_exp prog h p b.Iast.exp_assign_rhs in
               (Iast.Assign{ Iast.exp_assign_op = b.Iast.exp_assign_op;
@@ -4923,7 +4938,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   Iast.prog_global_var_decls = prog.Iast.prog_global_var_decls; 
   Iast.prog_enum_decls = prog.Iast.prog_enum_decls;
   Iast.prog_view_decls = tmp_views;
-       Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
+  Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
   Iast.prog_proc_decls = procs1;
   Iast.prog_coercion_decls = coer1 }
 
@@ -4996,8 +5011,8 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let rec helper acc e_v_l : CP.formula list = match e_v_l with
       | [] ->
-        (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists acc f None no_pos))^"\n") in*)
-        [TP.hull (CP.mkExists acc f None no_pos)]
+            (*let _ = print_string ("\n pures:: "^(Cprinter.string_of_pure_formula (CP.mkExists acc f None no_pos))^"\n") in*)
+            [TP.hull (CP.mkExists acc f None no_pos)]
       | h::t -> (helper acc t)@(helper (h::acc) t) in
     helper [] v_l in
   
@@ -5100,11 +5115,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let to_be_added = Gen.BList.intersect_eq CP.eq_b_formula_no_aset l1_n l2_n in
       let lr = match (List.length l1r),(List.length l2r) with 
         | 0,0 | _,0 | 0,_ -> CP.mkTrue no_pos        
-        (* | _,_ -> CP.mkOr  *)
+              (* | _,_ -> CP.mkOr  *)
               (* (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm
                  (c,None)) no_pos) (CP.mkTrue no_pos) l1r) *)
               (*     (List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r) None no_pos in *)
-(* Cristian's fixes which seem very slow *)
+              (* Cristian's fixes which seem very slow *)
         | _,_ ->
               let f1r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l1r in
               let f2r = List.fold_left (fun a c-> CP.mkAnd a (CP.BForm (c,None)) no_pos) (CP.mkTrue no_pos) l2r in
@@ -5116,10 +5131,10 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let lr = hull_invs v_l lr in
       (*let _ = print_string ("after hull: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula lr))^"\n") in*)
       let lr = let rec r f = match f with
-          | CP.BForm (l, _) -> [l]
-          | CP.And (f1,f2,_) -> (r f1)@(r f2)
-          | _ -> [] in 
-        List.concat (List.map r lr) in  
+        | CP.BForm (l, _) -> [l]
+        | CP.And (f1,f2,_) -> (r f1)@(r f2)
+        | _ -> [] in 
+      List.concat (List.map r lr) in  
       to_be_added @ (Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset lr) in      
     let l = List.length pure_list in
     let start = List.map (fun (c1,c2) -> ([c1],c2)) pure_list in
@@ -5562,10 +5577,10 @@ and irf_traverse_exp (ip: Iast.prog_decl) (exp: Cast.exp) (scc: IastUtil.IG.V.t 
 	| Cast.CheckRef e -> Cast.CheckRef e
 	| Cast.Java e -> Cast.Java e
 	| Cast.Assert e -> Cast.Assert e
-	(* An Hoa MARKED *)
-	(*| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}*)
-	(*| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}*)
-	(* An Hoa END *)
+	      (* An Hoa MARKED *)
+	      (*| Cast.ArrayAt e -> Cast.ArrayAt {e with Cast.exp_arrayat_index = (irf_traverse_exp ip e.Cast.exp_arrayat_index scc)}*)
+	      (*| Cast.ArrayMod e -> Cast.ArrayMod {e with Cast.exp_arraymod_lhs = Cast.arrayat_of_exp (irf_traverse_exp ip (Cast.ArrayAt e.Cast.exp_arraymod_lhs) scc); Cast.exp_arraymod_rhs = (irf_traverse_exp ip e.Cast.exp_arraymod_rhs scc)}*)
+	      (* An Hoa END *)
 	| Cast.Assign e -> Cast.Assign {e with Cast.exp_assign_rhs = (irf_traverse_exp ip e.Cast.exp_assign_rhs scc)}
 	| Cast.BConst e -> Cast.BConst e
 	| Cast.Bind e -> Cast.Bind {e with Cast.exp_bind_body = (irf_traverse_exp ip e.Cast.exp_bind_body scc)}
