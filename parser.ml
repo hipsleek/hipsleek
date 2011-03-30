@@ -146,6 +146,7 @@ let peek_try =
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
          | [GT,_;CPAREN,_] -> raise Stream.Failure 
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
+         | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;_] -> ()
          | [SEMICOLON,_;typ] -> ()
          | _ -> raise Stream.Failure  ) 
@@ -191,12 +192,19 @@ let peek_try =
           | [IDENTIFIER n,_;IDENTIFIER id,_] -> () 
           |  _ -> raise Stream.Failure)
 
- let peek_ensures = 
- SHGram.Entry.of_parser "peek_ensures" 
-     (fun strm ->
-       match Stream.npeek 3 strm with
-          | [ENSURES,_;i,_;j,_]-> print_string((Token.to_string i)^(Token.to_string j));()
-          | _ -> raise Stream.Failure)
+ (* let peek_ensures =  *)
+ (* SHGram.Entry.of_parser "peek_ensures"  *)
+ (*     (fun strm -> *)
+ (*       match Stream.npeek 3 strm with *)
+ (*          | [ENSURES,_;i,_;j,_]-> print_string((Token.to_string i)^(Token.to_string j));() *)
+ (*          | _ -> raise Stream.Failure) *)
+
+ let peek_and = 
+   SHGram.Entry.of_parser "peek_and"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [AND,_;FLOW i,_] -> raise Stream.Failure
+             | _ -> ())
 
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
@@ -490,7 +498,7 @@ cexp_w :
    [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos 2)) pc1 pc2]
   
   | "pure_and" RIGHTA
-   [ pc1=SELF; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos 2)) pc1 pc2]
+   [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos 2)) pc1 pc2]
 
   |"bconstrp" RIGHTA
     [  lc=SELF; `NEQ;  cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl
@@ -815,7 +823,7 @@ opt_spec_list: [[t = LIST0 spec -> t]];
 spec_list : [[t= LIST1 spec -> t ]];
 
 spec: 
-  [[ `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; s=spec ->
+  [[ `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; s=SELF ->
 		 Iformula.EBase {
 			 Iformula.formula_ext_explicit_inst =cl;
 			 Iformula.formula_ext_implicit_inst = [];
@@ -833,13 +841,13 @@ spec:
 	    																					else sl;
 	    	 Iformula.formula_ext_pos = (get_pos 1)}
        
-	 | peek_ensures; `ENSURES; ol= opt_label; dc=disjunctive_constr; `SEMICOLON ->
+	 | `ENSURES; ol= opt_label; dc=disjunctive_constr; `SEMICOLON ->
       Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
 			Iformula.ECase {
 						Iformula.formula_case_branches = bl; 
 						Iformula.formula_case_pos = get_pos 1; }
-	 | `VARIANCE; `OPAREN; il=integer_literal; `CPAREN; m=opt_measures; ec=opt_escape_conditions; s=spec ->
+	 | `VARIANCE; `OPAREN; il=integer_literal; `CPAREN; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
 			Iformula.EVariance {
 					Iformula.formula_var_label = il;
 					Iformula.formula_var_measures = m;
