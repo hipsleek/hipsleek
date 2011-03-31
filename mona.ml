@@ -24,7 +24,7 @@ let automaton_completed = ref false
 let cycle = ref false
 let sat_optimize = ref false
 let mona_pred_file = "mona_predicates.mona"
-let mona_pred_file_alternative_path = "/usr/lib/"
+let mona_pred_file_alternative_path = "/usr/local/lib/"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
