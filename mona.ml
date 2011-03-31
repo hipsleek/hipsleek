@@ -840,10 +840,12 @@ let get_mona_predicates_file () : string =
         if Sys.file_exists alternative then 
           alternative
         else
-          let _ = print_string ("\n WARNING: File " ^ alternative ^ " was not found. Creating " ^ mona_pred_file ^ " file in current directory... ") in
-          let _ = write_to_mona_predicates_file mona_pred_file in
-          let _ = print_string (" done!\n") in
-          mona_pred_file
+          let _ = print_string ("\n WARNING: File " ^ alternative ^ " was not found. Aborting execution ...\n") in 
+          (* Creating " ^ mona_pred_file ^ " file in current directory... " in" *)
+          (* let _ = write_to_mona_predicates_file mona_pred_file in *)
+          (* let _ = print_string (" done!\n") in *)
+          (* mona_pred_file *)
+          exit(0)
     end
 
 let prelude () =
