@@ -30,10 +30,10 @@ let string_of_prim_type = function
 ;;
 
 (* pretty printing for types *)
-let string_of_typ = function 
+let rec string_of_typ = function 
   | Prim t        -> string_of_prim_type t 
   | Named ot      -> ot ^ " "
-  | Array _ -> "array"
+  | Array (t,_) -> (string_of_typ t) ^ "[]" (* "array" *) (* AN HOA *)
 ;;
 
 (* pretty printing for unary operators *)
@@ -140,7 +140,13 @@ let rec string_of_formula_exp = function
   | P.ListTail (e, l)		-> "tail(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListLength (e, l)		-> "len(" ^ (string_of_formula_exp e) ^ ")"
   | P.ListReverse (e, l)	-> "rev(" ^ (string_of_formula_exp e) ^ ")"
-	| _ -> "bag constraint"
+  | P.ArrayAt ((a, p), i, _)     ->  
+          (* An Hoa : print the array access *)
+          a ^ (match p with 
+                | Primed -> "'["
+                | Unprimed -> "[") 
+          ^ (string_of_formula_exp i) ^ "]"
+ | _ -> "bag constraint"  
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
@@ -186,8 +192,14 @@ let string_of_b_formula = function
   | P.ListNotIn (e1, e2, l)		-> (string_of_formula_exp e1) ^ " notinlist " ^ (string_of_formula_exp e2)
   | P.ListAllN (e1, e2, l)		-> "alln(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
   | P.ListPerm (e1, e2, l)		-> "perm(" ^ (string_of_formula_exp e1) ^ ", " ^ (string_of_formula_exp e2) ^ ")"
+  | P.RelForm (r, args, _) ->
+          (* An Hoa : relations *)
+          r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
   | _ -> "bag constraint"
 ;;
+
+let concat_string_list_string strings =
+    ""
 
 (* pretty printing for a pure formula *)
 let rec string_of_pure_formula = function 
@@ -385,6 +397,9 @@ let need_parenthesis2 = function
 
 (* pretty printing for expressions *)
 let rec string_of_exp = function 
+	| ArrayAt ({exp_arrayat_array_name = a;
+	     exp_arrayat_index = e}) ->
+				a ^ "[" ^ (string_of_exp e) ^ "]" (* An Hoa *)
   | Unfold ({exp_unfold_var = (v, p)}) -> "unfold " ^ v
   | Java ({exp_java_code = code}) -> code
   | Label ((pid,_),e) -> 

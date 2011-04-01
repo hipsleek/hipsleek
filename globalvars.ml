@@ -130,7 +130,8 @@ let addp (p : primed) ((id1,id2) : ident*ident) : (ident*primed)*(ident*primed) 
 let rec find_read_write_global_var 
 	(global_vars : IdentSet.t) (local_vars : IdentSet.t) (block : I.exp) : (IdentSet.t * IdentSet.t) =
   match block with
-	I.Assert _ 
+    | I.ArrayAt _ (*to be modified*)
+	|I.Assert _ 
   | I.BoolLit _ 
   | I.Break _ 
   | I.Continue _ 
@@ -520,7 +521,8 @@ and change_args (temp_procs : I.proc_decl list) (params : I.param list) (args : 
 	@return new body of the procedure *)
 and extend_body (temp_procs : I.proc_decl list) (exp : I.exp) : I.exp =
   match exp with
-	I.Assert _
+    |I.ArrayAt _ (*to be modified*)
+	|I.Assert _
   | I.BoolLit _
   | I.Break _
   | I.Continue _
@@ -685,7 +687,8 @@ let create_new_params (global_vars : IdentSet.t) (p : I.param) : I.param =
 	@return a new expression *)
 let rec check_and_change (global_vars : IdentSet.t) (exp : I.exp) : I.exp =
   match exp with
-	I.Assert _
+    |I.ArrayAt _ (*to be modified*)
+	|I.Assert _
   | I.BoolLit _
   | I.Break _
   | I.ConstDecl _

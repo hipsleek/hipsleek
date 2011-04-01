@@ -1,0 +1,7 @@
+relation sum(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & exists ( s1 : sum(a,i+1,j,s1) & s = s1 + a[i])).
+checkentail a[0]=1 & a[1]=2 & a[2]=3 & sum(a,0,2,s) |- s = 6.
+checkentail i < j & sum(a,i,j,s) |- sum(a,i,j-1,s-a[j]).
+checkentail i < j & sum(a,i,j,s) |- sum(a,i+1,j,s-a[i]).
+relation sum2(int[] a, int i, int j, int s) == (i > j & s = 0 | i <= j & exists ( s1 : sum2(a,i,j-1,s1) & s = s1 + a[j])).
+checkentail i < j & sum2(a,i,j,s) |- sum2(a,i,j-1,s-a[j]).
+

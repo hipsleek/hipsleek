@@ -36,6 +36,7 @@ exception SLEEK_Exception
 type command =
   | DataDef of I.data_decl
   | PredDef of I.view_decl
+  | RelDef of I.rel_decl (* An Hoa *)
   | LemmaDef of I.coercion_decl
   | LetDef of (ident * meta_formula)
   | EntailCheck of (meta_formula * meta_formula)
@@ -71,6 +72,18 @@ let var_tab : var_table_t = H.create 10240
 let put_var (v : ident) (info : meta_formula) = H.add var_tab v info
 
 let get_var (v : ident) : meta_formula = H.find var_tab v
+
+(* An Hoa : String representation of meta_formula *)
+let string_of_meta_formula (mf : meta_formula) = 
+	match mf with
+  | MetaVar i -> i
+  | MetaForm f -> Iprinter.string_of_formula f
+  | MetaFormCF cf -> Cprinter.string_of_formula cf
+  | MetaFormLCF lf -> "" (* TODO Implement *)
+  | MetaEForm sf -> Iprinter.string_of_struc_formula sf
+  | MetaCompose _ -> "" (* TODO Implement *)
+
+let clear_var_table () = H.clear var_tab
 
 (*
   let get_var (v : ident) : let_body =

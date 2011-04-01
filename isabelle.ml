@@ -1,5 +1,8 @@
 (*
-  Create the input file for Isabelle
+  Create the input file for Isabelle.
+
+  !!! When running Isabelle for the first time, use --build-image option under hip/sleek
+
 *)
 
 open Globals
@@ -8,15 +11,20 @@ module CP = Cpure
 let isabelle_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
-let log_file = open_out "allinput.thy"
+let log_all = open_out "allinput.thy"
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
 
+let process= ref {name="isabelle"; inchannel = stdin; outchannel = stdout; errchannel = stdin; pid = 0 }
+let last_test_number = ref 0
+let test_number = ref 0
+
+
 (* pretty printing for primitive types *)
 let isabelle_of_prim_type = function
   | Bool          -> "int"
-  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle. *)
+  | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
   | Bag		  ->
@@ -29,6 +37,7 @@ let isabelle_of_prim_type = function
 let isabelle_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (CP.Prim(t), v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_prim_type t ^ ")"
   | CP.SpecVar (CP.OType(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+	| CP.SpecVar (CP.Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
 
 (* pretty printing for spec_vars without types *)
 (*let isabelle_of_spec_var_no_type (sv : CP.spec_var) = match sv with
@@ -103,6 +112,7 @@ let rec isabelle_of_exp e0 = match e0 with
   | CP.ListLength _
   | CP.ListAppend _
   | CP.ListReverse _ -> failwith ("Lists are not supported in Isabelle")
+	| CP.ArrayAt _ ->  failwith ("Arrays are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for a list of expressions *)
 and isabelle_of_formula_exp_list l = match l with
@@ -121,62 +131,30 @@ and isabelle_of_b_formula b = match b with
   | CP.Lte (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " <= " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Gt (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " > " ^ (isabelle_of_exp a2) ^ ")"
   | CP.Gte (a1, a2, _) -> "(" ^ (isabelle_of_exp a1) ^ " >= " ^ (isabelle_of_exp a2) ^ ")"
-  | CP.Eq (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) ^ ")"
-  | CP.Neq (a1, a2, _) -> "( " ^ (isabelle_of_exp a1) ^ " ~= " ^ (isabelle_of_exp a2) ^ ")"
- (* optimization below is not working for isabelle due to incompletness *)
-  (*| CP.Eq (a1, a2, _) -> begin
-        if CP.is_null a2 then	(isabelle_of_exp a1)^ " < 1"
-        else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < 1"
+  (* | CP.Eq (a1, a2, _) -> " ( " ^ (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2) ^ ")" *)
+  (* | CP.Neq (a1, a2, _) -> "( " ^ (isabelle_of_exp a1) ^ " ~= " ^ (isabelle_of_exp a2) ^ ")" *)
+  | CP.Eq (a1, a2, _) -> begin
+        if CP.is_null a2 then	(isabelle_of_exp a1)^ " < (1::int)"
+        else if CP.is_null a1 then (isabelle_of_exp a2) ^ " < (1::int)"
         else (isabelle_of_exp a1) ^ " = " ^ (isabelle_of_exp a2)
   end
   | CP.Neq (a1, a2, _) -> begin
         if CP.is_null a2 then
-        	(isabelle_of_exp a1) ^ " > 0"
-        else if CP.is_null a1 then						
-        	(isabelle_of_exp a2) ^ " > 0"
+        	(isabelle_of_exp a1) ^ " > (0::int)"
+        else if CP.is_null a1 then
+        	(isabelle_of_exp a2) ^ " > (0::int)"
         else (isabelle_of_exp a1)^ " ~= " ^ (isabelle_of_exp a2)
-  end*)
+  end
   | CP.EqMax (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
 	  let a2str = isabelle_of_exp a2 in
 	  let a3str = isabelle_of_exp a3 in
-	  (*"((max " ^ a2str ^ " " ^ a3str ^ ") = " ^ a1str ^ ")\n" *)
-	  (*"(" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")" *)
-	  (*"((" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")) & ("
-          ^ a1str ^ " >= " ^ a2str ^ ") & (" ^ a1str ^ " >= " ^ a3str ^ ")"*)
-	  (*"((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a1str ^ " >= " ^ a2str ^ ") | ("
-	  ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
-          (*"((" ^ a1str ^ " = " ^ a2str  ^ ") | ("
-	  ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " < " ^ a3str ^ "))" ^ Gen.new_line_str*)
-	  (*if !max_flag = false then
-	    max_flag := true;
-	  if !choice = 1 then
-	    begin*)
-	      (*print_string ("found max in test" ^ (string_of_int !isabelle_file_number) ^ " \n");*)
-	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | ("
-	      ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str;
-
-	      (*"((" ^ a2str ^ " < " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
-	      ^ a2str ^ " >= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
-	    (*end
-	  else
-	    begin
-	      (*max_flag := false;*)
-	      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " >= " ^ a2str ^ ") | ("
-	      ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str;
-	    end*)
+      "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a3str ^ " > " ^ a2str ^ ") | (" ^ a2str ^ " >= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" 
   | CP.EqMin (a1, a2, a3, _) ->
 	  let a1str = isabelle_of_exp a1 in
 	  let a2str = isabelle_of_exp a2 in
 	  let a3str = isabelle_of_exp a3 in
-	  (*"((min " ^ a2str ^ " " ^ a3str ^ ") = " ^ a1str ^ ")\n" *)
-	  (*"(" ^ a1str ^ " = " ^ a2str ^ ") | (" ^ a1str ^ " = " ^ a3str ^ ")" *)
-          "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " >= " ^ a3str ^ ") | ("
-	   ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str
-          (*---"((" ^ a2str ^ " > " ^ a3str ^ " | " ^ a1str ^ " = " ^ a2str  ^ ") & ("
-	   ^ a2str ^ " <= " ^ a3str ^ " | " ^ a1str ^ " = " ^ a3str ^ "))" ^ Gen.new_line_str*)
-	  (* "((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a3str ^ ") | ("
-		(*^ a2str ^ " < " ^ a3str ^ " & "*) ^ a1str ^ " = " ^ a2str ^ "))" ^ Gen.new_line_str*)
+	  "((" ^ a1str ^ " = " ^ a3str ^ " & " ^ a2str ^ " >= " ^ a3str ^ ") | (" ^ a2str ^ " <= " ^ a3str ^ " & " ^ a1str ^ " = " ^ a2str ^ "))"
   | CP.BagIn (v, e, l)	->
       if !bag_flag then
 	"(" ^  (isabelle_of_spec_var v) ^ ":#" ^ (isabelle_of_exp e) ^ ")"
@@ -207,6 +185,7 @@ and isabelle_of_b_formula b = match b with
   | CP.ListNotIn _
   | CP.ListAllN _
   | CP.ListPerm _ -> failwith ("Lists are not supported in Isabelle")
+	| CP.RelForm _ -> failwith ("Relations are not supported in Isabelle") (* An Hoa *)
   
 (* pretty printing for formulas *)
 and isabelle_of_formula f =
@@ -253,192 +232,157 @@ and isabelle_of_formula f =
                 else ""
 
 
-(* checking the result given by Isabelle *)
-let rec check fd isabelle_file_name : bool=
-  let stk = new Gen.stack "" (fun x -> x^"\n") in
-  try while true do
-    let line = input_line fd in
-    stk#push line;
-    if line = "No subgoals!" then raise Exit else ()
-  done; false
-  with Exit -> 
-    if !log_all_flag==true then
-      output_string log_file (" [isabelle.ml]: --> SUCCESS\n");
-    (*ignore (Sys.remove isabelle_file_name);*)
-    true
-  | _ ->
-	  if !log_all_flag==true then
-		(output_string log_file (" [isabelle.ml]: --> Error in file " ^ isabelle_file_name ^ "\n");
-        stk#reverse ; print_string (stk#string_of));
-	  (*ignore (Sys.remove isabelle_file_name);	*)
-	  false
-;;
-
-	(*
-	try begin
-		let line = input_line fd
-		in
-			begin
-			match line with
-			| "*** Failed to finish proof (after successful terminal method)" ->
-				begin
-				if !log_all_flag==true then
-					output_string log_file (" [isabelle.ml]: --> Unable to prove theory " ^ isabelle_file_name ^ "\n");
-				ignore (Sys.remove isabelle_file_name);
-				false;
-				end
-			| "*** Type error in application: Incompatible operand type" ->
-				begin
-				if !log_all_flag==true then
-					output_string log_file (" [isabelle.ml]: --> Type error in theory " ^ isabelle_file_name ^ "\n");
-				print_string (" [isabelle.ml]: --> Type error in theory " ^ isabelle_file_name ^ "\n");
-				ignore (Sys.remove isabelle_file_name);
-				false;
-				end
-			| "Exception- ERROR raised" ->
-				begin
-				print_string ("\n [isabelle.ml]: --> Syntax error in file " ^ isabelle_file_name ^ "\n");
-				if !log_all_flag==true then
-					output_string log_file (" [isabelle.ml]: --> Syntax error in file " ^ isabelle_file_name ^ "\n");
-				ignore (Sys.remove isabelle_file_name);
-				false;
-				end
-			| "lemma" ->
-				begin
-      		if !log_all_flag==true then
-      			output_string log_file (" [isabelle.ml]: --> SUCCESS\n");
-      		ignore (Sys.remove isabelle_file_name);
-      		true;
-      	end
-			| _ -> check fd isabelle_file_name
-			end
-		end
-	with
-      End_of_file ->
-      	begin
-      		if !log_all_flag==true then
-      			output_string log_file (" [isabelle.ml]: --> SUCCESS\n");
-      		ignore (Sys.remove isabelle_file_name);
-      		true;
-      	end
-	*)
-
 let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)
 
 let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ ". ") l)
 
 let isabelle_command isabelle_file_name = ("isabelle-process -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
 
-let set_timer tsecs =
-  ignore (Unix.setitimer Unix.ITIMER_REAL
-            { Unix.it_interval = 0.0; Unix.it_value = tsecs })
+(*creates a new "isabelle-process " process*)
+let rec get_answer chn : string =
+    let chr = input_char chn in
+    match chr with
+      |'\n' -> "\n"
+      | '#' ->  "#"
+      | _ -> (Char.escaped chr) ^get_answer chn
 
-let continue f arg tsecs : bool =
-  let oldsig = Sys.signal Sys.sigalrm (Sys.Signal_handle (fun _ -> raise Exit)) in
+let rec read_until substr chn : string =
+  let str = get_answer chn in
   try
-    set_timer tsecs;
-    ignore (f arg);
-    set_timer 0.0;
-    Sys.set_signal Sys.sigalrm oldsig; true
-  with Exit ->
-    Sys.set_signal Sys.sigalrm oldsig; false
-	
-(* writing the Isabelle's theory file *)
-let write (pe : CP.formula) (timeout : float) : bool =
+      if (Str.search_forward (Str.regexp substr) str 0 >= 0) then str 
+      else str ^ read_until substr chn
+  with
+    | Not_found ->  str^read_until substr chn
+    | e -> ignore e; print_string "[isabelle.ml] -> Exception while reading initial prompt"; str
+
+let read_prompt () = 
+  let chn = !process.inchannel in 
+  let _ = input_char chn in (*reads '>'*)
+  let _ = input_char chn in (*reades space*)
+  ()
+
+let prelude ()  =
+  let ichn = !process.inchannel in 
+  let ochn = !process.outchannel in 
+  let _ = read_until "Welcome to Isabelle" ichn in (*welcome text*)
+  let _ = read_prompt () in
+  if !bag_flag then
+    ( output_string ochn "theory isabelle_proofs imports Multiset Main\n"; flush ochn;
+      let _ = get_answer ichn in (*reads "theory#"*)
+      let _ = input_char ichn in (*reads space*)
+      output_string ochn "begin\n"; flush ochn;
+      let _ = get_answer ichn in (*reads "theory isabelle_proofs"*) 
+      let _ = read_prompt() in 
+      output_string ochn ("declare union_ac [simp]\n");
+      let _ = read_until "declare#" ichn in (*declare#*)
+      if!log_all_flag==true then
+        output_string log_all ("theory isabelle_proofs imports Multiset Main\nbegin\ndeclare union_ac [simp]\n")
+    )
+  else
+    (output_string ochn "theory isabelle_proofs imports Main\n"; flush ochn;
+     let _ = get_answer ichn in (*reads "theory#"*)
+     let _ = input_char ichn in (*reads space*)
+     output_string ochn "begin\n"; flush ochn;
+     let _ = get_answer ichn in (*reads "theory isabelle_proofs"*) 
+     let _ = read_prompt() in 
+     if!log_all_flag==true then
+       output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
+    )
+
+let set_process proc =
+  process := proc
+
+(* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
+   and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
+let start () =
+  let _ = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude in
+  last_test_number := !test_number
+
+let ending_remarks () = 
+  output_string !process.outchannel "end\n"; 
+  flush !process.outchannel
+
+let stop () = 
+  let num_tasks = !test_number - !last_test_number in
+  let _  = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
+  print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
+
+
+(* restart isabelle system *)
+let restart reason =
+  print_string ("Restarting Isabelle because of: "^reason^"\n");
+  Procutils.PrvComms.restart !log_all_flag log_all "isabelle" reason start stop
+
+(* checking the result given by Isabelle *)
+let rec check str : bool=
+  try
+      let _ = Str.search_forward (Str.regexp "No subgoals") str 0 in
+      if!log_all_flag==true then
+        output_string log_all (" [isabelle.ml]: --> SUCCESS\n");
+      true
+  with
+    | Not_found -> 
+        (if !log_all_flag==true then
+		      output_string log_all (" [isabelle.ml]: --> fail \n"));
+        false
+
+let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
   begin
-  		isabelle_file_number.contents <- !isabelle_file_number + 1;
-  		let isabelle_file_name = "test" ^ string_of_int !isabelle_file_number ^ ".thy" in
-  		let isabelle_file = open_out isabelle_file_name in
-        let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
-		let fstr = vstr ^ isabelle_of_formula pe in
-    		begin
-    		(* creating the theory file *)
+      incr test_number;
+      let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
+	  let fstr = vstr ^ isabelle_of_formula pe in
+      if !log_all_flag == true then
+    	output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
+      let ichn = !process.inchannel in
+      let ochn = !process.outchannel in
 
-		if !bag_flag then
-		  begin
-		    output_string isabelle_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Multiset Main begin" ^ Gen.new_line_str);
-    		    output_string isabelle_file ("declare union_ac [simp]\n");
-		  end
-		else
-		  output_string isabelle_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Main begin" ^ Gen.new_line_str);
-    		output_string isabelle_file ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n done\n end\n\n" );
-		flush isabelle_file;
-		close_out isabelle_file;
+      let fnc () = 
+        (* communication protocol with interactive isabelle *)
+    	output_string ochn ("lemma \"" ^ fstr ^ "\"\n");flush ochn;
+        let _ = get_answer ichn in (*lemma#*)
+        let _ = input_char ichn in (*space*)
 
-		(* if log_all_flag is on -> writing the formula in the isabelle log file  *)
-		if !log_all_flag == true then
-		begin
-		   if !bag_flag then
-		   begin
-		     output_string log_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Multiset Main begin" ^ Gen.new_line_str);
-		     output_string log_file ("declare union_ac [simp]\n");
-		   end
-		   else
-		     output_string log_file ("theory " ^ "test" ^ string_of_int !isabelle_file_number ^ " imports Main begin" ^ Gen.new_line_str);
-    		   output_string log_file ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n done\n end\n" );
-		   flush log_file;
-		end;
+        output_string ochn "apply(auto)\n"; flush ochn;
+        let _ = read_until "apply#" ichn in (*proof...+goal+.....+apply#*)
 
-
-		(* running Isabelle for the newly created theory file *)
-		(* creating the ROOT.ML file *)
-		let root_file = open_out "ROOT.ML" in
-		begin
-		   (*output_string root_file ("use_thy \"multiset\"; \n");*)
-		   output_string root_file ("use_thy " ^ "\"test" ^ string_of_int !isabelle_file_number ^ "\"\n");
-		   flush root_file;
-		   close_out root_file;
-	        end;
-		(*ignore(Sys.command "isabelle -u -q > res");*)
-		(* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
- 		and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
-		(*ignore(Sys.command ("isabelle -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null"));*)
-
-		if (continue Sys.command (isabelle_command isabelle_file_name) timeout) then  
-			(* verifying the result returned by Isabelle *)
-			let result_file = open_in (result_file_name) in
-				check result_file isabelle_file_name
-		else 
-			let _ = print_string("Timeout while sat checking\n") in
-				true	
-		end
+        output_string ochn "oops\n"; flush ochn;
+        let str = read_until "oops#" ichn in (*proof...+goal+.....+oops#*)
+		check str
+	  in
+      let fail_with_timeout () =   
+        print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
+        restart ("Timeout!");
+        is_sat_b in
+      let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in
+      answ
   end
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
   if !log_all_flag == true then
-	output_string log_file ("\n\n[isabelle.ml]: imply#" ^ imp_no ^ "\n");
+	output_string log_all ("\n\nimply#" ^ imp_no ^ "\n");
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-  let res =  write tmp_form 0. in
-	res
-
+  let res =  write tmp_form !Globals.sat_timeout false in
+  if !log_all_flag == true then
+	output_string log_all ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n");
+  res
 
 let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
   if !log_all_flag == true then
-	output_string log_file ("\n\n[isabelle.ml]: imply#from sat#" ^ sat_no ^ "\n");
+	output_string log_all ("imply#from sat#" ^ sat_no ^ "\n");
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
-    (write tmp_form timeout)
+    (write tmp_form timeout false)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
 	if !log_all_flag == true then
-				output_string log_file ("\n\n[isabelle.ml]: #is_sat " ^ sat_no ^ "\n");
-	let tmp_form = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
-		match tmp_form with
-			| true ->
-				begin
-				if !log_all_flag == true then
-					output_string log_file "[isabelle.ml]: is_sat --> false\n";
-				false;
-				end
-			| false ->
-				begin
-				if !log_all_flag == true then
-					output_string log_file "[isabelle.ml]: is_sat --> true\n";
-				true;
-				end
+				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
+	let answ = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
+    if !log_all_flag == true then
+	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
+    (not answ)
 	end
 
 (* building the multiset theory image -  so that it won't be loaded for each theory that needs to be proved *)

@@ -253,16 +253,59 @@ let seq_number = ref 10
 let sat_timeout = ref 10.
 let imply_timeout = ref 10.
   
+let reporter = ref (fun _ -> raise Not_found)
+
 let report_error (pos : loc) (msg : string) =
-  print_string ("\n" ^ pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^":"^(string_of_int 
-	(pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol))^ ": " ^ msg ^ "\n");
-  failwith "Error detected - globals.ml"
+  let _ =
+    try !reporter pos msg
+    with Not_found ->
+      let report pos msg =
+        let output = Printf.sprintf "\n%s:%d:%d: %s\n"
+          pos.start_pos.Lexing.pos_fname
+          pos.start_pos.Lexing.pos_lnum
+          (pos.start_pos.Lexing.pos_cnum - pos.start_pos.Lexing.pos_bol)
+          msg
+        in
+        print_endline output
+      in
+      reporter := report;
+      report pos msg
+  in
+  failwith "Error detected"
 
 let branch_point_id = ref 0
 
 let reset_formula_point_id () = () (*branch_point_id:=0*)
 
-let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label) list)*loc) list)
+let iast_label_table = ref ([]:(control_path_id*string*((control_path_id*path_label*loc) list)*loc) list)
+
+let locs_of_path_trace (pt: path_trace): loc list =
+  let eq_path_id pid1 pid2 = match pid1, pid2 with
+    | Some _, None -> false
+    | None, Some _ -> false
+    | None, None -> true
+    | Some (i1, s1), Some (i2, s2) -> i1 = i2
+  in
+  let path_label_list_of_id pid =
+    let _, _, label_list, _ = List.find (fun (id, _, _ , _) -> eq_path_id pid id) !iast_label_table in
+    label_list
+  in
+  let loc_of_label plbl ref_list =
+    let _, _, loc = List.find (fun (_, lbl, _) -> plbl = lbl) ref_list in
+    loc
+  in
+  let find_loc pid plbl = 
+    let label_list = path_label_list_of_id pid in
+    loc_of_label plbl label_list
+  in
+  List.map (fun (pid, plbl) -> find_loc (Some pid) plbl) pt
+
+
+let locs_of_partial_context ctx =
+  let failed_branches = fst ctx in
+  let path_traces = List.map fst failed_branches in
+  let loc_list_list = List.map locs_of_path_trace path_traces in
+  List.flatten loc_list_list
 
 
 let fresh_formula_label (s:string) :formula_label = 
@@ -356,6 +399,11 @@ let string_of_pos (p : Lexing.position) = "("^string_of_int(p.Lexing.pos_lnum) ^
 
 let string_of_full_loc (l : loc) = "{"^(string_of_pos l.start_pos)^","^(string_of_pos l.end_pos)^"}";;
 
+let string_of_loc_by_char_num (l : loc) = 
+  Printf.sprintf "(%d-%d)"
+    l.start_pos.Lexing.pos_cnum
+    l.end_pos.Lexing.pos_cnum
+
 let seq_local_number = ref 0
 
 let fresh_local_int () =
@@ -420,7 +468,7 @@ let bin_to_list (fn : 'a -> (string * ('a list)) option)
     | Some (op, _) -> op,(bin_op_to_list op fn t)
 
 (*type of process used for communicating with the prover*)
-type prover_process_t = { pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
+type prover_process_t = {name:string; pid: int; inchannel: in_channel; outchannel: out_channel; errchannel: in_channel }
 
 (*methods that need to be defined in order to use a prover incrementally - if the prover provides this functionality*)
 class type ['a] incremMethodsType = object

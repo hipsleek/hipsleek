@@ -74,6 +74,7 @@
 	 ("pred", PRED);
 	 ("print", PRINT);
 	 ("ref", REF);
+     ("relation",REL); (* An Hoa *)
 	 ("requires", REQUIRES);
 	 ("res", RES "res");
 	 ("return", RETURN);

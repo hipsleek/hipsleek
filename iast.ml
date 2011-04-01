@@ -23,6 +23,8 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_global_var_decls : exp_var_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
+                   mutable prog_rel_decls : rel_decl list; 
+                   (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
 
@@ -47,6 +49,15 @@ and view_decl = { view_name : ident;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
 		  try_case_inference: bool}
+
+(* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
+and rel_decl = { rel_name : ident; 
+		  (* rel_vars : ident list; *)
+		  (* rel_labels : branch_label list; *)
+			rel_typed_vars : (typ * ident) list;
+		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
+		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
+		  (* try_case_inference: bool *)}
 
 and enum_decl = { enum_name : ident;
 		  enum_fields : (ident * int option) list } 
@@ -155,6 +166,11 @@ and assign_op =
   | OpMultAssign
   | OpDivAssign
   | OpModAssign
+
+(* An Hoa : v[i] where v is an identifier and i is an expression *)
+and exp_arrayat = { exp_arrayat_array_name : ident;
+	     exp_arrayat_index : exp;
+			 exp_arrayat_pos : loc; }
 
 and exp_assert = { exp_assert_asserted_formula : (F.struc_formula*bool) option;
 		   exp_assert_assumed_formula : F.formula option;
@@ -305,6 +321,7 @@ and exp_unfold = { exp_unfold_var : (string * primed);
 		   exp_unfold_pos : loc } 
 
 and exp =
+	| ArrayAt of exp_arrayat (* An Hoa *)
   | Assert of exp_assert
   | Assign of exp_assign
   | Binary of exp_binary
@@ -431,6 +448,7 @@ let is_var (e : exp) : bool = match e with
   | _ ->false
   
 let rec get_exp_pos (e0 : exp) : loc = match e0 with
+	| ArrayAt e -> e.exp_arrayat_pos (* An Hoa *)
   | Label (_,e) -> get_exp_pos e
   | Assert e -> e.exp_assert_pos
   | Assign e -> e.exp_assign_pos
@@ -587,6 +605,9 @@ let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->ex
           | Time _ 
           | Unfold _ 
           | Var _ -> (e,zero)
+					| ArrayAt b -> (* An Hoa *)
+								let e1,r1 = helper n_arg b.exp_arrayat_index in
+								(ArrayAt {b with exp_arrayat_index = e1},r1)
           | Assign b ->
                 let e1,r1 = helper n_arg b.exp_assign_lhs  in
                 let e2,r2 = helper n_arg b.exp_assign_rhs  in
@@ -763,6 +784,11 @@ and look_up_data_def_raw (defs : data_decl list) (name : ident) = match defs wit
 
 and look_up_view_def_raw (defs : view_decl list) (name : ident) = match defs with
   | d :: rest -> if d.view_name = name then d else look_up_view_def_raw rest name
+  | [] -> raise Not_found
+
+(* An Hoa *)
+and look_up_rel_def_raw (defs : rel_decl list) (name : ident) = match defs with
+  | d :: rest -> if d.rel_name = name then d else look_up_rel_def_raw rest name
   | [] -> raise Not_found
 
 and look_up_enum_def pos (defs : enum_decl list) (name : ident) = match defs with
@@ -1084,6 +1110,7 @@ let rec label_e e =
   let rec helper e = match e with
     | Catch e -> Error.report_error   {Err.error_loc = e.exp_catch_pos; Err.error_text = "unexpected catch clause"}  
     | Block _
+		| ArrayAt _ (* AN HOA : no label for array access *)
     | Cast _
     | ConstDecl _ 
     | BoolLit _ 
@@ -1148,7 +1175,9 @@ let rec label_e e =
 			  exp_call_nrecv_path_id = nl;}
     | Cond e -> 
 		  let nl = fresh_branch_point_id "" in
-		  iast_label_table:= (nl,"cond",[(nl,0);(nl,1)],e.exp_cond_pos) ::!iast_label_table;
+      let then_pos = get_exp_pos e.exp_cond_then_arm in
+      let else_pos = get_exp_pos e.exp_cond_else_arm in
+		  iast_label_table:= (nl,"cond",[(nl,0,then_pos);(nl,1,else_pos)],e.exp_cond_pos) ::!iast_label_table;
 		  Cond {e with 
 			  exp_cond_condition = label_e e.exp_cond_condition;
 			  exp_cond_then_arm  = Label ((nl,0),(label_e e.exp_cond_then_arm));
@@ -1181,8 +1210,11 @@ let rec label_e e =
 			  exp_return_path_id = nl;}  
     | Try e -> 
 		  let nl = fresh_branch_point_id "" in
-		  let rec lbl_list_constr n = if n==0 then [] else (nl,n)::(lbl_list_constr (n-1)) in
-		  iast_label_table:= (nl,"try",(lbl_list_constr (List.length e.exp_catch_clauses)),e.exp_try_pos)::!iast_label_table;
+      let rec lbl_list_constr id cclauses = match cclauses with
+        | [] -> []
+        | exp::rest -> (nl, id, get_exp_pos exp)::(lbl_list_constr (id+1) rest)
+      in
+		  iast_label_table:= (nl,"try",(lbl_list_constr 0 e.exp_catch_clauses),e.exp_try_pos)::!iast_label_table;
 		  let lbl_c n d = 
 			let d = get_catch_of_exp d in
 			Catch {d with	exp_catch_body = Label((nl,n),label_e d.exp_catch_body);} in

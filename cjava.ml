@@ -51,9 +51,10 @@ let string_of_prim_type = function
   | List          -> "list"
 
 (* pretty printing for types *)
-let string_of_typ = function 
+let rec string_of_typ = function 
   | P.Prim t        -> string_of_prim_type t 
   | P.OType ot      -> ot ^ " "
+	| P.Array et      -> string_of_typ et ^ "[]" (* An Hoa *)
 
 (* functions to decide if an expression needs parenthesis *)
 let need_parenthesis e = match e with 

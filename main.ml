@@ -61,9 +61,11 @@ let process_source_full source =
     let _ = Gen.Profiling.push_time "Translating global var" in
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
-    let intermediate_prog =IastUtil.pre_process_of_iprog prog in 
+    let intermediate_prog =IastUtil.pre_process_of_iprog prog in
+		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in *) 
 
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
+		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
     let _ = Gen.Profiling.pop_time "Translating global var" in
     (* Global variables translated *)
@@ -73,7 +75,10 @@ let process_source_full source =
     let _ = print_string ("Translating to core language...\n"); flush stdout in
     (*let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in*)
     let cprog = Astsimp.trans_prog intermediate_prog in
+		(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
+		let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
     let _ = print_string (" done\n"); flush stdout in
+		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 
       if !Globals.verify_callees then begin
@@ -119,6 +124,9 @@ let process_source_full source =
     end);
     (* Stopping the prover *)
     let _ = Tpdispatcher.stop_prover () in
+ 
+    (* print mapping table control path id and loc *)
+    (*let _ = print_endline (Cprinter.string_of_iast_label_table !Globals.iast_label_table) in*)
     
     let ptime4 = Unix.times () in
     let t4 = ptime4.Unix.tms_utime +. ptime4.Unix.tms_cutime +. ptime4.Unix.tms_stime +. ptime4.Unix.tms_cstime   in
@@ -166,11 +174,20 @@ let main1 () =
       (* Tpdispatcher.print_stats (); *)
       ()
 	  
+let finalize () =
+  Tpdispatcher.stop_prover ()
+
 let _ = 
-  main1 ();
-  let _ = print_string (Gen.Profiling.string_of_counters ()) in
-  let _ = Gen.Profiling.print_info () in
-  ()
+  try
+    main1 ();
+    let _ = print_string (Gen.Profiling.string_of_counters ()) in
+    let _ = Gen.Profiling.print_info () in
+    ()
+  with _ as e -> begin
+    finalize ();
+    print_string ("\nException occurred: " ^ (Printexc.to_string e));
+    print_string ("\nError(s) detected at main \n");
+  end
 
 
   
