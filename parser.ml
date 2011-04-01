@@ -255,13 +255,13 @@ data_body:
 
 
 field_list2:[[ 
-       fl = SELF;  peek_try; `SEMICOLON; t=typ; `IDENTIFIER n ->(  
+       t=typ; `IDENTIFIER n;  peek_try; `SEMICOLON; fl = SELF ->(  
 			if List.mem n (List.map (fun f -> snd (fst f)) fl) then
 				report_error (get_pos 4) (n ^ " is duplicated")
 			else
 				((t, n), get_pos 3) :: fl )
 		
-  | fl = SELF; peek_try; `SEMICOLON; t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> 
+  | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 			(if List.mem n (List.map (fun f -> snd (fst f)) fl) then
 				report_error (get_pos 4) (n ^ " is duplicated")
 			else
@@ -405,9 +405,9 @@ opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
 
 flow_constraints: [[ `AND; `FLOW _; `IDENTIFIER id -> id]]; 
 
-opt_formula_label: [[t=OPT formula_label -> un_option t (fresh_branch_point_id "")]];		
+opt_formula_label: [[t=OPT formula_label -> un_option t None]];		
 
-opt_label: [[t= OPT label->un_option t ""]];
+opt_label: [[t= OPT label->un_option t ""]]; 
 
 label : [[  `STRING (_,id); `COLON -> id]];
 
@@ -415,7 +415,7 @@ label : [[  `STRING (_,id); `COLON -> id]];
 
 pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_branch_point_id id]];
 
-formula_label: [[ `AT; `DOUBLEQUOTE; `IDENTIFIER id ; `DOUBLEQUOTE ->(fresh_branch_point_id id)]];
+formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id)]];
 
 opt_heap_constr: 
   [[ t =  heap_constr ->  t  
@@ -1017,7 +1017,7 @@ time_statement:
    | `DTIME; `OFF; `IDENTIFIER id -> I.Time (false,id,get_pos 1)]];
 
 dprint_statement:
-  [[ `DPRINT  ->print_string("heren \n"); Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos 1)})
+  [[ `DPRINT  -> Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos 1)})
    | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos 1)})]];
    
 bind_statement:
