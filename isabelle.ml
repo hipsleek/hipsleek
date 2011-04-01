@@ -236,7 +236,7 @@ let get_vars_formula p = List.map isabelle_of_spec_var (CP.fv p)
 
 let isabelle_of_var_list l = String.concat "" (List.map (fun s -> "ALL " ^ s ^ ". ") l)
 
-let isabelle_command isabelle_file_name = ("isabelle-process -I -r MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
+let isabelle_command isabelle_file_name = ("isabelle-process -I -r /usr/local/bin/MyImage < " ^ isabelle_file_name ^ " > res 2> /dev/null")
 
 (*creates a new "isabelle-process " process*)
 let rec get_answer chn : string =
@@ -402,7 +402,7 @@ let building_image flag = begin
 		flush root_file;
 		close_out root_file;
 	  end;
-		ignore(Sys.command "isabelle usedir -b HOL MyImage");
+		ignore(Sys.command "isabelle usedir -b HOL /usr/local/bin/MyImage");
 	end
 end
 
