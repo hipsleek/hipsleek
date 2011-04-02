@@ -12,6 +12,8 @@ let isabelle_file_number = ref 0
 let result_file_name = "res"
 let log_all_flag = ref false
 let log_all = open_out "allinput.thy"
+let image_path_lst = ["MyImage"; "/usr/local/bin/MyImage"]
+let isabelle_image = ref "MyImage"
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
@@ -292,10 +294,22 @@ let prelude ()  =
 let set_process proc =
   process := proc
 
+let rec check_image_existence image_lst =
+  match image_lst with
+    | [] -> let _ = print_string ("\n WARNING: Isabelle's Image was not found. Aborting execution ...\n") in 
+            exit(0)
+    | img::imgs ->   
+        if Sys.file_exists img then 
+          isabelle_image := img
+        else 
+          let _ = print_string ("\n WARNING: " ^ img ^ " was not found. Searching for the image in the next path...\n") in 
+          check_image_existence imgs
+
 (* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
    and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
 let start () =
-  let _ = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude in
+  let _ = check_image_existence image_path_lst in
+  let _ = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; !isabelle_image;"2> /dev/null"|]) set_process prelude in
   last_test_number := !test_number
 
 let ending_remarks () = 
@@ -402,7 +416,7 @@ let building_image flag = begin
 		flush root_file;
 		close_out root_file;
 	  end;
-		ignore(Sys.command "isabelle usedir -b HOL /usr/local/bin/MyImage");
+	  ignore(Sys.command "isabelle usedir -b HOL /usr/local/bin/MyImage");
 	end
 end
 
