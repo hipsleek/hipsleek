@@ -236,6 +236,13 @@ let peek_try =
              | [AND,_;FLOW i,_] -> raise Stream.Failure
              | _ -> ())
 
+ let peek_heap_args = 
+   SHGram.Entry.of_parser "peek_heap_args"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [IDENTIFIER n,_;EQ,_] ->  ()
+             | _ -> raise Stream.Failure)
+
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -364,9 +371,9 @@ view_body:
 
 opt_heap_arg_list: [[t=LIST0 cexp SEP `COMMA -> t]];
 
-opt_heap_arg_list2:[[t=LIST0 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
+opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
   
-heap_arg2: [[`IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]];
+heap_arg2: [[peek_heap_args; `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]];
 
 opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
 
@@ -500,8 +507,8 @@ opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];
   |[ `IDENTIFIER id ; `EQ; i=cexp ; t=opt_heap_arg_list2 -> ([],(id,i)::t)]
   ];*)
 general_h_args:
-  [[ t= opt_heap_arg_list -> (t,[])]
-  |[ t= opt_heap_arg_list2 -> ([],t)]];  
+  [[ t= opt_heap_arg_list2 -> ([],t)
+  | t= opt_heap_arg_list -> (t,[])]];  
 
   
               
@@ -586,7 +593,7 @@ cexp_w :
    | "una"
      [  t= cid                -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))   
      |`INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
-     | `FLOAT_LIT (f,_)                          -> Pure_c (P.FConst (f, get_pos 1))
+     | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
      | `NULL                                     -> Pure_c (P.Null (get_pos 1))
     
@@ -632,8 +639,8 @@ compose_cmd:
    | `COMPOSE; `OPAREN; mc1=meta_constr; `SEMICOLON; mc2=meta_constr; `CPAREN -> ([], mc1, mc2)]];
 
 print_cmd:
-  [[ `DPRINT; `IDENTIFIER id           -> PCmd id
-   | `DPRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
+  [[ `PRINT; `IDENTIFIER id           -> PCmd id
+   | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
 
 time_cmd:
   [[ `DTIME; `ON; `IDENTIFIER id   -> Time(true, id, get_pos 1)

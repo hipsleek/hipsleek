@@ -164,6 +164,7 @@ module Make (Token : SleekTokenS)
 	 ("or", ORWORD);
    ("perm",PERM);
 	 ("pred", PRED);
+     ("print", PRINT);
 	 ("dprint", DPRINT);
    ("raise", RAISE);
 	 ("ref", REF);
@@ -209,7 +210,7 @@ module Make (Token : SleekTokenS)
   let oct_literal = '0' ['o' 'O'] ['0'-'7'] ['0'-'7' '_']*
   let bin_literal = '0' ['b' 'B'] ['0'-'1'] ['0'-'1' '_']*
   let int_literal = decimal_literal | hex_literal | oct_literal | bin_literal
-  let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.' ['0'-'9' '_']* )? (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
+  let float_literal = ['0'-'9'] ['0'-'9' '_']* ('.') ['0'-'9' '_']+  (['e' 'E'] ['+' '-']? ['0'-'9'] ['0'-'9' '_']*)?
   
 rule tokenizer file_name = parse
   | newline                            { update_loc file_name None 1 false 0; tokenizer file_name lexbuf }
