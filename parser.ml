@@ -216,6 +216,12 @@ let peek_try =
  (*          | [ENSURES,_;i,_;j,_]-> print_string((Token.to_string i)^(Token.to_string j));() *)
  (*          | _ -> raise Stream.Failure) *)
 
+let peek_print = 
+SHGram.Entry.of_parser "peek_print"
+	(fun strm -> 
+		match Stream.npeek 3 strm with
+		| [_;i,_;j,_]-> print_string((Token.to_string i)^"  "^(Token.to_string j)^"\n");()
+		| _ -> raise Stream.Failure)
  let peek_and = 
    SHGram.Entry.of_parser "peek_and"
        (fun strm -> 
@@ -808,7 +814,7 @@ type_decl:
   [[ t= data_decl  -> Data t
    | c=class_decl -> Data c
    | e=enum_decl  -> Enum e
-   | v=view_decl  -> View v
+   | v=view_decl; `SEMICOLON -> View v
    | h=hopred_decl-> Hopred h ]];
 
    
@@ -948,7 +954,7 @@ constructor_header:
 	
 
 
-opt_formal_parameter_list: [[t= LIST1 fixed_parameter SEP `COMMA -> t]];
+opt_formal_parameter_list: [[t= LIST0 fixed_parameter SEP `COMMA -> t]];
   
 fixed_parameter:
   [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
@@ -1212,6 +1218,12 @@ new_expression: [[t=object_or_delegate_creation_expression -> t]];
 
 opt_argument_list : [[t= LIST0 argument SEP `COMMA -> t]];
 
+(* opt_argument_list : [[ t = OPT argument_list -> un_option t [] ]];
+
+argument_list : [[  t = expression -> [t]
+				  | arg_list = SELF; `COMMA; t = expression -> t::arg_list
+			    ]]; *)
+
 argument: [[t=expression -> t]];
 
 expression:
@@ -1385,11 +1397,12 @@ primary_expression_no_parenthesis :
            exp_member_fields = [id];
            exp_member_path_id = None ;
            exp_member_pos = get_pos 3 }
-  | `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+  | t = invocation_expression -> t
+  | t = new_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos 1}
-  | t= invocation_expression -> t
-  | t= new_expression -> t
-			]];
+			]
+  | [`IDENTIFIER id -> print_string ("Variable Id : "^id^"\n"); Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+]];
 
 (* member_name : *)
 (*  [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 } *)
