@@ -109,7 +109,7 @@ let apply_pure_form1 fct form = match form with
 
 let apply_cexp_form1 fct form = match form with
   | Pure_c f -> Pure_c (fct f)
-  | _ -> report_error (get_pos 1) "expected cexp, found pure_form"
+  | _ -> report_error (get_pos 1) "with 1 expected cexp, found pure_form"
   
   
 let apply_pure_form2 fct form1 form2 = match (form1,form2) with
@@ -118,15 +118,32 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
   | Pure_c f1, Pure_c f2 -> Pure_c (fct f1 f2)
-  | _ -> report_error (get_pos 1) "expected cexp, found pure_form"
+  | _ -> report_error (get_pos 1) "with 2 expected cexp, found pure_form"
 
 let cexp_to_pure1 fct f = match f with
   | Pure_c f -> Pure_f (P.BForm(fct f,None))
-  | _ -> report_error (get_pos 1) "expected cexp, found pure_form"
+  | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
-let cexp_to_pure2 fct f1 f2= match (f1,f2) with
+let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> Pure_f (P.BForm(fct f1 f2,None))
-  | _ -> report_error (get_pos 1) "expected cexp, found pure_form"
+  | Pure_f f1 , Pure_c f2 -> (match f1  with 
+						    | P.BForm(b,oe) -> (match b with 
+                                               | P.Lt (a1, a2, _) ->  let tmp = P.BForm(fct a2 f2,None) in 
+                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | P.Lte (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in
+                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | P.Gt (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in
+                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | P.Gte (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
+                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | P.Eq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
+                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | P.Neq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
+                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
+                            |  _ -> report_error (get_pos 1) "error should be a binary exp" )
+  | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
+
 
 (* Use the Stream.npeek to look ahead the TOKENS *)
 let peek_try = 
@@ -201,6 +218,19 @@ let peek_try =
 
  let peek_and = 
    SHGram.Entry.of_parser "peek_and"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [AND,_;FLOW i,_] -> raise Stream.Failure
+             | _ -> ())
+ let peek_pure = 
+   SHGram.Entry.of_parser "peek_pure"
+       (fun strm -> 
+           match Stream.npeek 2 strm with
+             | [_;COLONCOLON,_] -> raise Stream.Failure
+             | _ -> ())
+
+ let peek_and_pure = 
+   SHGram.Entry.of_parser "peek_and_pure"
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
@@ -355,7 +385,7 @@ ann:
       else report_error (get_pos 2) ("unrecognized mode: " ^ id) end
    | `AT ; `IN_T       -> AnnMode ModeIn]];
       
-sq_clist: [[ `OSQUARE; l=opt_cid_list; `CSQUARE -> l ]];
+sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
 
 formulas:
   [[ ec=extended_l     ->(ec,false)
@@ -397,8 +427,8 @@ disjunctive_constr:
   ];
       
 core_constr:
-  [[ hc=opt_heap_constr; pc=opt_pure_constr; fc= opt_flow_constraints; fb=opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
-   | pc=pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos 1))
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos 1))
+    | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
@@ -418,8 +448,8 @@ pure_label : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON -> fresh_bran
 formula_label: [[ `AT; `STRING (_,id) ->(fresh_branch_point_id id)]];
 
 opt_heap_constr: 
-  [[ t =  heap_constr ->  t  
-      | `TRUE -> F.HTrue]];
+  [[ t = heap_constr -> t
+     | `TRUE -> F.HTrue]];
 
 (* heap_constr: *)
 (*   [ [ hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos 2)] *)
@@ -477,12 +507,13 @@ general_h_args:
               
 opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
-and_pure_constr: [[`AND; t=pure_constr -> t]];
+and_pure_constr: [[peek_and_pure; `AND; t=pure_constr -> t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[t=cexp_w -> match t with
+pure_constr: [[peek_pure; t=cexp_w -> match t with
                     | Pure_f f -> f
+                    | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos 1), None )
                     | _ ->  report_error (get_pos 1) "expected pure_constr, found cexp"]];
 
 cexp: [[t=cexp_w -> match t with
@@ -508,7 +539,7 @@ cexp_w :
   | "bconstr"
     [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl *)
      (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos 2)) lc cl  *)
-     (* |  *)lc=SELF; `LTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos 2)) lc cl 
+     (* |  *)lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos 2)) lc cl 
      | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos 2)) lc cl
      | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl
      | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos 2)) lc cl   
@@ -550,20 +581,22 @@ cexp_w :
      | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
+   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c] 
+
    | "una"
-     [ t=cid                -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))   
-     | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
+     [  t= cid                -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))   
+     |`INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
      | `FLOAT_LIT (f,_)                          -> Pure_c (P.FConst (f, get_pos 1))
-     | `OPAREN; t=SELF; `CPAREN                -> t 
+     | `OPAREN; t=SELF; `CPAREN                -> t  
      | `NULL                                     -> Pure_c (P.Null (get_pos 1))
-     | `MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c
+    
      | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos 1)) c1 c2
      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos 1)) c1 c2
      | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos 1)) c
      | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos 1)) c ]
-
+ 
    | "pure_base"
      [ `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
      | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
@@ -577,7 +610,7 @@ cexp_w :
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
 
-
+  
    ];
 
 
@@ -756,7 +789,7 @@ hprogn:
       prog_coercion_decls = !coercion_defs; 
       prog_hopred_decls = !hopred_defs;} ]];
 
-opt_decl_list: [[t=LIST0 decl SEP `SEMICOLON -> t]];
+opt_decl_list: [[t=LIST0 decl -> t]];
   
 decl:
   [[ t=type_decl                  -> Type t
@@ -823,7 +856,7 @@ opt_spec_list: [[t = LIST0 spec -> t]];
 spec_list : [[t= LIST1 spec -> t ]];
 
 spec: 
-  [[ `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; s=SELF ->
+  [[ `REQUIRES; cl= opt_sq_clist; dc= disjunctive_constr; s=SELF ->
 		 Iformula.EBase {
 			 Iformula.formula_ext_explicit_inst =cl;
 			 Iformula.formula_ext_implicit_inst = [];
@@ -988,7 +1021,7 @@ valid_declaration_statement:
   | t=expression_statement;`SEMICOLON ->t
   | t=selection_statement -> t
   | t=iteration_statement -> t
-  | t=try_statement -> t
+  | t=try_statement; `SEMICOLON -> t
   | t=java_statement -> t
   | t=jump_statement;`SEMICOLON  -> t
   | t=assert_statement;`SEMICOLON -> t
@@ -996,7 +1029,12 @@ valid_declaration_statement:
   | t=debug_statement -> t
   | t=time_statement -> t
   | t=bind_statement -> t
-  | t=unfold_statement -> t]];
+  | t=unfold_statement -> t]
+
+  | [t= empty_statement -> t]
+];
+
+empty_statement: [[`SEMICOLON -> Empty (get_pos 1) ]];
 
 unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos 1 }]];
  
