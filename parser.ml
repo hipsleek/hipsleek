@@ -15,7 +15,7 @@ open Sleekcommons
 	| Data of data_decl
 	| Enum of enum_decl
 	| View of view_decl
-  | Hopred of hopred_decl
+    | Hopred of hopred_decl
 		
   type decl = 
     | Type of type_decl
@@ -362,7 +362,7 @@ view_header:
 			}]];
       
 cid: 
-  [[ `IDENTIFIER t         -> (print_string ("id:"^t^"\n");(t, Unprimed))
+  [[ `IDENTIFIER t         -> (* (print_string ("id:"^t^"\n"); *)(t, Unprimed)
    | `IDENTIFIER t; `PRIME -> (t, Primed)
    | `RES _                 -> (res, Unprimed)
    | `SELFT _               -> (self, Unprimed)
@@ -377,9 +377,9 @@ view_body:
 
 opt_heap_arg_list: [[t=LIST0 cexp SEP `COMMA -> t]];
 
-opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
+opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
   
-heap_arg2: [[peek_heap_args; `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]];
+heap_arg2: [[ peek_heap_args; `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]]; 
 
 opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
 
@@ -597,7 +597,7 @@ cexp_w :
    | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c] 
 
    | "una"
-     [  t= cid                -> (print_string ("cexp:"^(fst t)^"\n");Pure_c (P.Var (t, get_pos 1)))   
+     [  t= cid                -> (* (print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
      |`INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
@@ -613,7 +613,7 @@ cexp_w :
    | "pure_base"
      [ `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
      | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
-     | t=cid                            -> (print_string ("pure_form:"^(fst t)^"\n"); Pure_f (P.BForm (P.mkBVar t (get_pos 1), None )))
+     | t=cid                            -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
      | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
      | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
@@ -1011,8 +1011,8 @@ local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_decl
 variable_declarators: [[ t= LIST1 variable_declarator SEP `COMMA -> t]];
   
 variable_declarator:
-  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> print_string ("Identifier : "^id^"\n"); (id, Some t, get_pos 1)
-   | `IDENTIFIER id -> print_string ("Identifier : "^id^"\n");(id, None, get_pos 1) ]];
+  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (* print_string ("Identifier : "^id^"\n"); *) (id, Some t, get_pos 1)
+   | `IDENTIFIER id -> (* print_string ("Identifier : "^id^"\n"); *)(id, None, get_pos 1) ]];
 
 variable_initializer: [[t= expression ->t]];
 
@@ -1401,7 +1401,7 @@ primary_expression_no_parenthesis :
   | t = new_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos 1}
 			]
-  | [`IDENTIFIER id -> print_string ("Variable Id : "^id^"\n"); Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *) Var { exp_var_name = id; exp_var_pos = get_pos 1 }
 ]];
 
 (* member_name : *)
