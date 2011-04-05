@@ -114,6 +114,8 @@ let this = "this"
  * moved here from iparser.mly *)
 let input_file_name = ref ""
 
+let empty_log = "NoLog"
+
 (* command line options *)
 
 let instantiation_variants = ref 0

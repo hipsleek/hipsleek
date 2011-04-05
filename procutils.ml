@@ -81,19 +81,15 @@ struct
     with
       | _ -> ()
 
-  let log_to_file flag file_descr str =
-    if flag then
-      output_string file_descr str
-
   (* Starts a specific prover (creating new process using pipes). Parameters have the following meaning:
    ** log_all_flag - flag which tells whether to log proofs
    ** log-all - descriptor of the file where the log is written
    ** prover - 3tuple: (name of the prover, command to start the prover, process arguments as an array of strings)
    ** set_process - method that assigns the newly created process to the process ref used in <prover_name>.ml 
    ** prelude - method which prepares the prover for interactive use (first commands sent, first lines printed, etc)*)
-  let start (log_all_flag: bool) (log_file: out_channel) (prover: string * string * string array) set_process prelude= 
+  let start (prover: string * string * string array) set_process prelude logging = 
     let (prover_name, prover_proc, prover_arg_array) = prover in
-    let _ = log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
+    let _ = logging ("["^prover_name^".ml]: >> Starting "^prover_name^"...\n") in
     try
         let inchn, outchn, errchn, npid = open_process_full prover_proc prover_arg_array in
         let process = {name = prover_name; pid = npid; inchannel = inchn; outchannel = outchn; errchannel = errchn} in
@@ -103,7 +99,7 @@ struct
       | e -> begin
           let _ = print_string ("\n["^prover_name^".ml ]Unexpected exception while starting prover "^ prover_name ^ "\n") in
           flush stdout; flush stderr;
-          log_to_file log_all_flag log_file ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
+          logging ("["^prover_name^".ml]: >> Error while starting "^prover_name ^ "\n");
           raise e
       end
 
@@ -112,10 +108,9 @@ struct
    ** invocations - number of calls to this prover
    ** killing_signal - signal that kills the process. For most of provers, 2 should be enough to kill the process
    ** ending_function - function containing some final disposition for the prover (many provers don't need this, so one can just send (fun ()->() ) ) *)
-  let stop (log_all_flag: bool) (log_file: out_channel) (process:proc) (invocations: int) (killing_signal: int) ending_function =
+  let stop (process:proc) (invocations: int) (killing_signal: int) ending_function logging =
     let _ = ending_function () in
-    let _ = log_to_file log_all_flag log_file ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
-    flush log_file;
+    let _ = logging ("\n[" ^ process.name  ^ ".ml]: >> Stop " ^ process.name ^ " after ... " ^ (string_of_int invocations) ^ " invocations\n") in
     close_pipes process;
     try 
         Unix.kill process.pid killing_signal;
@@ -123,16 +118,15 @@ struct
     with
       | e -> 
           (ignore e;
-           log_to_file log_all_flag log_file("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"); 
-           flush log_file)
+           logging ("\n[" ^ process.name  ^ ".ml]: >> Exception while closing process\n"))
 
   (* Restarts the prover. Parameters have the following meaning:
    ** reason - reason for restarting the prover
    ** prover_name - string containing the name of teh prover taht si restarted
    ** start - start method to be invoked when starting this prover 
    ** stop - stop method to be invoked when stoping this prover *)
-  let restart (log_all_flag: bool) (log_file: out_channel) (reason:string) (prover_name: string) start stop =
-    log_to_file log_all_flag log_file ("[" ^ prover_name ^ ".ml]: >> Restarting " ^ prover_name ^ " because of: " ^ reason) ;
+  let restart (reason:string) (prover_name: string) start stop logging =
+    logging ("[" ^ prover_name ^ ".ml]: >> Restarting " ^ prover_name ^ " because of: " ^ reason) ;
     stop ();
     start ()
 

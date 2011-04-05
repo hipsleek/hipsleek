@@ -4,7 +4,7 @@ OCAMLDEP=ocamldep
 OCAMLDOC=ocamldoc
 
 DIRS=.
-INCLUDES=-I ./xml -I +ocamlgraph
+INCLUDES=-I ./xml -I +ocamlgraph -I +bolt -pp 'camlp4o /usr/local/lib/ocaml/bolt/bolt_pp.cmo'
 GUIINCLUDES=-I +lablgtk2
 #OCAMLFLAGS=-dtypes $(INCLUDES)    # add other options for ocamlc here
 #OCAMLOPTFLAGS=-dtypes $(INCLUDES) # add other options for ocamlopt here
@@ -219,6 +219,9 @@ hip.norm: decidez.vo $(MAIN_FILES)
 hip: $(MAIN_FILES_OPT) decidez.vo
 	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
+
+hip.bolt: $(MAIN_FILES) decidez.vo
+	$(OCAMLC) -g -o hipbolt -I +bolt -pp 'camlp4o /usr/local/lib/ocaml/bolt/bolt_pp.cmo' $(OCAMLFLAGS) bolt.cma unix.cma str.cma graph.cma $(MAIN_FILES)
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)

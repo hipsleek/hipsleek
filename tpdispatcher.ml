@@ -1130,64 +1130,57 @@ let is_sat (f : CP.formula) (sat_no : string) do_cache: bool =
 
 let imply_timeout (ante0 : CP.formula) (conseq0 : CP.formula) (imp_no : string) timeout do_cache process
 	  : bool*(formula_label option * formula_label option )list * (formula_label option) = (*result+successfull matches+ possible fail*)
-  (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout begining") in *)
   proof_no := !proof_no + 1 ; 
   let imp_no = (string_of_int !proof_no) in
-  (* let _ = print_string ("\nTPdispatcher.ml: imply_timeout:" ^ imp_no) in *)
   Debug.devel_pprint ("IMP #" ^ imp_no) no_pos;  
   Debug.devel_pprint ("ante: " ^ (!print_pure ante0)) no_pos;
   Debug.devel_pprint ("conseq: " ^ (!print_pure conseq0)) no_pos;
   if !external_prover then 
     match Netprover.call_prover (Imply (ante0,conseq0)) with
-        Some res -> (res,[],None)       
+            Some res -> (res,[],None)       
       | None -> (false,[],None)
   else begin 
-	(*let _ = print_string ("Imply: => " ^(Cprinter.string_of_pure_formula ante0)^"\n==> "^(Cprinter.string_of_pure_formula conseq0)^"\n") in*)
-	let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
-	if CP.isConstTrue conseq then (true, [],None)
-	else
-      let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
-	  if (* CP.isConstFalse ante0 || *) CP.isConstFalse ante then (true,[],None)
+	  let conseq = if CP.should_simplify conseq0 then simplify_a 12 conseq0 else conseq0 in
+	  if CP.isConstTrue conseq then (true, [],None)
 	  else
-        (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout bef elim exist ante") in *)
-		let ante = elim_exists ante in
-        (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout after elim exist ante") in *)
-		let conseq = elim_exists conseq in
-		let split_conseq = split_conjunctions conseq in
-		let pairs = List.map (fun cons -> 
-            let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
-            let ante = CP.remove_dup_constraints ante in
-            match process with
-              | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
-              | _ -> filter ante cons) split_conseq in
-		let pairs_length = List.length pairs in
-		let imp_sub_no = ref 0 in
-        (* let _ = (let _ = print_string("\n!!!!!!! bef\n") in flush stdout ;) in *)
-		let fold_fun (res1,res2,res3) (ante, conseq) =
-		  (incr imp_sub_no;
-		  if res1 then 
-            (*<< for log - numbering *)
-			let imp_no = 
-			  if pairs_length > 1 then ( (* let _ = print_string("\n!!!!!!! \n") in flush stdout ; *) (imp_no ^ "." ^ string_of_int (!imp_sub_no)))
-			  else imp_no in
-            (*>> for log - numbering *)
-            (*<< test the pair for implication - implication result is saved in res1*)
-			let res1 =
-			  if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
-				let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache process in
-				if res1 then res1
-				else tp_imply(*_debug*) ante conseq imp_no timeout do_cache process
-			  else tp_imply(*_debug*) ante conseq imp_no timeout do_cache process in
-			let l1 = CP.get_pure_label ante in
-            let l2 = CP.get_pure_label conseq in
-             (* let _ = print_string ("\n!!! " ^ (* (Cprinter.string_of_formula_label l1 "") *) str^ " \n") in *)
-			if res1 then (res1,(l1,l2)::res2,None)
-			else (res1,res2,l2)
-            (*>> test the pair for implication - implication result is saved in res1*)
-		  else (res1,res2,res3) )
-		in
-        (* let _ = print_string ("\nTpdispatcher.ml: imply_timeout end") in *)
-		List.fold_left fold_fun (true,[],None) pairs
+        let ante = if CP.should_simplify ante0 then simplify_a 13 ante0 else ante0 in
+	    if (* CP.isConstFalse ante0 || *) CP.isConstFalse ante then (true,[],None)
+	    else
+		  let ante = elim_exists ante in
+		  let conseq = elim_exists conseq in
+		  let split_conseq = split_conjunctions conseq in
+		  let pairs = List.map (fun cons -> 
+              let (ante,cons) = simpl_pair false (requant ante, requant cons) in 
+              let ante = CP.remove_dup_constraints ante in
+              match process with
+                | Some (Some proc, true) -> (ante, cons) (* don't filter when in incremental mode - need to send full ante to prover *)
+                | _ -> filter ante cons) split_conseq in
+		  let pairs_length = List.length pairs in
+		  let imp_sub_no = ref 0 in
+		  let fold_fun (res1,res2,res3) (ante, conseq) =
+            begin
+		        incr imp_sub_no;
+		        if res1 then
+                  begin
+			          let imp_no = 
+			            if pairs_length > 1 then imp_no ^ "." ^ string_of_int (!imp_sub_no)
+                        else imp_no 
+                      in
+                      let res1 =
+                        if (not (CP.is_formula_arith ante))&& (CP.is_formula_arith conseq) then 
+	                      let res1 = tp_imply(*_debug*) (CP.drop_bag_formula ante) conseq imp_no timeout do_cache process in
+	                      if res1 then res1
+	                      else tp_imply(*_debug*) ante conseq imp_no timeout do_cache process
+                        else tp_imply(*_debug*) ante conseq imp_no timeout do_cache process in
+                      let l1 = CP.get_pure_label ante in
+                      let l2 = CP.get_pure_label conseq in
+                      if res1 then (res1,(l1,l2)::res2,None)
+                      else (res1,res2,l2)
+                  end
+                else (res1,res2,res3) 
+            end
+          in
+          List.fold_left fold_fun (true,[],None) pairs
   end;
 
 ;;

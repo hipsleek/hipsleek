@@ -3598,7 +3598,6 @@ and heap_entail_conjunct_x (prog : prog_decl) (is_folding : bool) (is_universal 
   Debug.devel_pprint ("heap_entail_conjunct:"
   ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0)
   ^ "\nconseq:\n" ^ (Cprinter.string_of_formula conseq)) pos;
-    (* <<<<<<< solver.ml *)
     heap_entail_conjunct_helper prog is_folding is_universal ctx0 conseq pos
         (* check the entailment of two conjuncts  *)
         (* return value: if fst res = true, then  *)
@@ -3866,15 +3865,6 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
           memo_normalize_to_CNF_new (MCP.memo_arith_simplify simp_conseq1) pos 
 	    else new_conseq0 in
       let _ = Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) (*^ "." ^ (string_of_int !imp_subno) ^ " with XPure0"*)) no_pos in
-	  (* <<<<<<< solver.ml *)
-	  (*       let split_conseq = Tpdispatcher.split_conjunctions new_conseq0 in *)
-	  (*       let split_ante0 = Tpdispatcher.split_disjunctions new_ante0 in *)
-	  (*       let split_ante1 = Tpdispatcher.split_disjunctions new_ante in *)
-	  (* 	  (\* first try for xpure 0 and see what conjuncts can be discharged *\) *)
-	  (*       let res1,res2,res3 = if (CP.isConstTrue rhs_p) then (true,[],None) else (imply_conj split_ante0 split_ante1 split_conseq memset) in	 *)
-	  (* 	  (\* added by cezary  for branches *\) *)
-	  (*       let res1,res2,re3 =  *)
-	  (* ======= *)
       let split_conseq = (*Tpdispatcher.split_conjunctions*) new_conseq0 in
       let split_ante0 = (*Tpdispatcher.split_disjunctions*) new_ante0 in
       let split_ante1 = new_ante1 in
@@ -3889,15 +3879,6 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
                 (MCP.combine_mix_branch branch_id_added (lhs_p, lhs_b)) false in
 	          let new_ante, new_conseq = heap_entail_build_mix_formula_check (estate.es_evars@estate.es_gen_expl_vars) tmp1 rhs_p pos in
 		      imp_subno := !imp_subno+1; 
-		      (* <<<<<<< solver.ml *)
-		      (* 		      Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos; *)
-		      (* 		      TP.imply new_ante new_conseq memset ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) *)
-		      (* ======= *)
-		      (*Debug.devel_pprint ("IMP #" ^ (string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno)) no_pos;*)
-		      (* -- to remove --*)
-		      (*		      new_conseq = solve_ineq new_conseq memset in
-				              TP.mix_imply new_ante new_conseq ((string_of_int !imp_no) ^ "." ^ (string_of_int !imp_subno))
-				              ---*)
 		      (imply_mix_formula_no_memo new_ante new_conseq !imp_no !imp_subno None memset)
           in
           List.fold_left fold_fun (false,[],None) branches
