@@ -220,7 +220,7 @@ let peek_print =
 SHGram.Entry.of_parser "peek_print"
 	(fun strm -> 
 		match Stream.npeek 3 strm with
-		| [_;i,_;j,_]-> print_string((Token.to_string i)^"  "^(Token.to_string j)^"\n");()
+		| [i,_;j,_;k,_]-> print_string((Token.to_string i)^" "^(Token.to_string j)^" "^(Token.to_string k)^"\n");()
 		| _ -> raise Stream.Failure)
  let peek_and = 
    SHGram.Entry.of_parser "peek_and"
@@ -386,7 +386,7 @@ opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
 opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
   
-heap_arg2: [[ peek_heap_args; `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]]; 
+heap_arg2: [[  `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]]; 
 
 opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
 
@@ -496,7 +496,7 @@ heap_wr:
    | shi=simple_heap_constr_imm; `STAR; hw=SELF -> F.mkStar shi hw (get_pos 2)
    | shc=simple_heap_constr                     -> shc
    | shi=simple_heap_constr_imm                 -> shi ]];
-
+ 
 simple2:  [[ t=opt_type_var_list; `LT -> ()]];
    
 simple_heap_constr_imm:
@@ -519,6 +519,7 @@ opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];
   [ i = cexp ; t=opt_heap_arg_list -> (i::t,[])]
   |[ `IDENTIFIER id ; `EQ; i=cexp ; t=opt_heap_arg_list2 -> ([],(id,i)::t)]
   ];*)
+
 general_h_args:
   [[ t= opt_heap_arg_list2 -> ([],t)
   | t= opt_heap_arg_list -> (t,[])]];  
