@@ -292,7 +292,7 @@ rule tokenizer file_name = parse
   | "-=" { OP_SUB_ASSIGN }
   | '|' { OR }
   | "||" { OROR }
-  | "|-" { (print_string "der\n";DERIVE) }
+  | "|-" { (* (print_string "der\n"; *)DERIVE }
   | '[' { OSQUARE }
   | '%' { PERCENT }
   | '+' { PLUS }

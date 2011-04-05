@@ -249,6 +249,13 @@ SHGram.Entry.of_parser "peek_print"
              | [IDENTIFIER n,_;EQ,_] ->  ()
              | _ -> raise Stream.Failure)
 
+ let peek_extended = 
+   SHGram.Entry.of_parser "peek_extended"
+       (fun strm -> 
+           match Stream.npeek 3 strm with
+             | [OSQUARE,_;_;ORWORD,_] -> ()
+             | _ -> raise Stream.Failure)
+
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -375,7 +382,7 @@ view_body:
   
 (********** Constraints **********)
 
-opt_heap_arg_list: [[t=LIST0 cexp SEP `COMMA -> t]];
+opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
 
 opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
   
@@ -405,7 +412,7 @@ formulas:
 	 | dc=disjunctive_constr  -> ((Iformula.formula_to_struc_formula dc),true)]];
    
 extended_l:
-  [[ `OSQUARE; h=extended_constr ; `ORWORD; t=LIST1 extended_constr SEP `ORWORD; `CSQUARE -> h::t 
+  [[ peek_extended; `OSQUARE; h=extended_constr ; `ORWORD; t=LIST1 extended_constr SEP `ORWORD; `CSQUARE -> h::t 
    | h=extended_constr -> [h]]];
    
 extended_constr:
@@ -427,7 +434,7 @@ disjunctive_constr:
     [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos 2)]   
   | "disj_base"
    [ cc=core_constr             -> cc
-   | `EXISTS; ocl= cid_list; `COLON; cc=core_constr   -> 
+   | `EXISTS; ocl= cid_list; `COLON; cc= core_constr   -> 
 	  (match cc with
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
@@ -657,7 +664,7 @@ let_decl:
   
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
-   | f=formulas              -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
+   | f= formulas              -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
 	 | c=compose_cmd           -> MetaCompose c]];
    
 meta_constr:
