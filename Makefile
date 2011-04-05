@@ -221,7 +221,7 @@ hip: $(MAIN_FILES_OPT) decidez.vo
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip.bolt: $(MAIN_FILES) decidez.vo
-	$(OCAMLC) -g -o hipbolt -I +bolt -pp 'camlp4o /usr/local/lib/ocaml/bolt/bolt_pp.cmo' $(OCAMLFLAGS) bolt.cma unix.cma str.cma graph.cma $(MAIN_FILES)
+	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS)  -I +bolt bolt.cma unix.cma str.cma graph.cma $(MAIN_FILES)
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)

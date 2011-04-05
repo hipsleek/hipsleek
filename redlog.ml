@@ -14,10 +14,6 @@ let no_simplify = ref false
 let no_cache = ref false
 let timeout = ref 10.0 (* default timeout is 15 seconds *)
 
-(* logging *)
-let is_log_all = ref false
-let log_file = open_out "allinput.rl"
-
 (* process management *)
 let is_reduce_running = ref false
 
@@ -40,6 +36,15 @@ let prompt_regexp = Str.regexp "^[0-9]+:$"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
+let log_fnc = ref (fun str -> ())
+
+let logging str = 
+  LOG "%s" str NAME "RedlogL" LEVEL TRACE
+
+let set_log () :  unit=
+  log_fnc := logging
+
+
 (**********************
  * auxiliari function *
  **********************)
@@ -53,10 +58,10 @@ type log_level =
   | DEBUG
 
 let log level msg = 
-  let write_msg () = output_string log_file (msg ^ "\n") in
+  let write_msg () = !log_fnc (msg ^ "\n") in
   match level with
     | ERROR -> write_msg ()
-    | DEBUG -> if !is_log_all then write_msg ()
+    | DEBUG -> write_msg ()
 
 (*
  * read from input channel until we found the reduce's prompt
@@ -94,7 +99,7 @@ let start () =
         send_cmd "on rlnzden";
       in
       let set_process proc = process := proc in
-      let _ = Procutils.PrvComms.start !is_log_all log_file ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude in
+      let _ = Procutils.PrvComms.start ("redlog", "redcsl",  [|"-w"; "-b";"-l reduce.log"|] ) set_process prelude !log_fnc in
       print_endline "Starting Reduce... "; flush stdout
   end
 
@@ -114,7 +119,7 @@ let stop () =
         log DEBUG ("Nonlinear verification time: " ^ (string_of_float !nonlinear_time));
         log DEBUG ("Linear verification time: " ^ (string_of_float !linear_time))
       in
-      let _ = Procutils.PrvComms.stop !is_log_all log_file !process  !redlog_call_count 9 ending_fnc in
+      let _ = Procutils.PrvComms.stop !process  !redlog_call_count 9 ending_fnc !log_fnc in
       is_reduce_running := false
   end
 
@@ -122,7 +127,7 @@ let restart reason =
   if !is_reduce_running then begin
     print_string reason;
     print_endline " Restarting Reduce... "; flush stdout;
-    Procutils.PrvComms.restart !is_log_all log_file "redlog" reason start stop
+    Procutils.PrvComms.restart "redlog" reason start stop !log_fnc
   end
 
 (*

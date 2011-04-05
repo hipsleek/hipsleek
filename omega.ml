@@ -11,9 +11,7 @@ let timeout = ref 15.0 (* default timeout is 15 seconds *)
 (***********)
 let test_number = ref 0
 let last_test_number = ref 0
-let log_all_flag = ref false
 let omega_restart_interval = ref (-1)
-let log_all = open_out ("allinput.oc" (* ^ (string_of_int (Unix.getpid ())) *) )
 
 (* currently not used --should be removed*)
 let infilename = ref (!tmp_files_path ^ "input.oc." ^ (string_of_int (Unix.getpid ())))
@@ -22,6 +20,14 @@ let resultfilename = ref (!tmp_files_path ^ "result.txt." ^ (string_of_int (Unix
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
 
 let process = ref {name = "omega"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
+
+let log_fnc = ref (fun str -> ())
+
+let logging str = 
+  LOG "%s" str NAME "OmegaL" LEVEL TRACE
+
+let set_log () :  unit=
+  log_fnc := logging
 
 let init_files () =
   begin
@@ -130,8 +136,7 @@ let prelude () =
   while not !finished do
     let line = input_line (!process.inchannel) in
 	  (*let _ = print_endline line in *)
-	(if !log_all_flag then
-          output_string log_all ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") );
+	let _ = !log_fnc ("[omega.ml]: >> " ^ line ^ "\nOC is running\n") in
     if (start_with line "#") then finished := true;
   done
 
@@ -140,7 +145,7 @@ let start() =
   if not !is_omega_running then begin
       print_string "Starting Omega... \n"; flush stdout;
       last_test_number := !test_number;
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("omega", omegacalc, [||]) set_process prelude in
+      let _ = Procutils.PrvComms.start ("omega", omegacalc, [||]) set_process prelude !log_fnc in
       is_omega_running := true;
   end
 
@@ -149,7 +154,7 @@ let stop () =
   if !is_omega_running then begin
     let num_tasks = !test_number - !last_test_number in
     print_string ("Stop Omega... "^(string_of_int !omega_call_count)^" invocations "); flush stdout;
-    let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks Sys.sigkill (fun () -> ()) in
+    let _ = Procutils.PrvComms.stop !process num_tasks Sys.sigkill (fun () -> ()) !log_fnc in
     is_omega_running := false;
   end
 
@@ -157,7 +162,7 @@ let stop () =
 let restart reason =
   if !is_omega_running then begin
     let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
-    Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
+    Procutils.PrvComms.restart reason "omega" start stop !log_fnc
   end
 
 (*
@@ -173,8 +178,7 @@ let read_from_in_channel chn : string =
       let n = String.length line in
         if n > 0 then begin
 		 (* print_string (line^"\n"); flush stdout;*)
-          (if !log_all_flag then
-            output_string log_all ("[omega.ml]: >> "^line^"\n") );
+            let _ = !log_fnc ("[omega.ml]: >> "^line^"\n") in
           if line.[0] != '#' then
 		    begin
               res := !res ^ line;
@@ -193,22 +197,20 @@ let read_from_in_channel chn : string =
 let read_last_line_from_in_channel chn : string =
   let line = ref "" in
   let quitloop = ref false in
-     while not !quitloop do
-	  line := (input_line chn);
+  while not !quitloop do
+	line := (input_line chn);
       let n = String.length !line in
-        if n > 0 then begin
-		 (* print_string (line^"\n"); flush stdout;*)
-          (if !log_all_flag then 
-            output_string log_all ("[omega.ml]: >> "^(!line)^"\n") );
+      if n > 0 then begin
+		    (* print_string (line^"\n"); flush stdout;*)
+          let _ = !log_fnc ("[omega.ml]: >> "^(!line)^"\n")  in
           if !line.[0] != '#' then
-		    begin   
-              
-              if (!line.[n-1] == '}') then
-		         quitloop := true;			  
+		    begin
+                if (!line.[n-1] == '}') then
+		          quitloop := true;
             end;
-        end;
-    done;
-	!line
+      end;
+  done;
+  !line
   
 (* send formula to omega and receive result -true/false*)
 let check_formula f timeout =
@@ -309,13 +311,9 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     let pvars = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
+    let _ = !log_fnc (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str) in
+    let _ = !log_fnc (Gen.break_lines fomega) in
 
-    if !log_all_flag then begin
-      output_string log_all (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str);
-      output_string log_all (Gen.break_lines fomega);
-      flush log_all;
-    end;
- 
 	let sat =
       try
         check_formula fomega !timeout
@@ -329,10 +327,8 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     in
   (*   let post_time = Unix.gettimeofday () in *)
   (*   let time = (post_time -. pre_time) *. 1000. in *)
-
-    if !log_all_flag = true then begin
-      if sat then output_string log_all ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n") else output_string log_all ("[omega.ml]: sat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
-    end else ();
+    if sat then !log_fnc ("[omega.ml]: unsat "^sat_no ^(string_of_int !test_number)^" --> FAIL\n")
+    else !log_fnc ("[omega.ml]: sat "^sat_no^(string_of_int !test_number)^" --> SUCCESS\n");
     sat
   end
 
@@ -345,14 +341,8 @@ let is_valid (pe : formula) timeout: bool =
     let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
     (*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-	
-    if !log_all_flag then begin
-(*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-                output_string log_all (Gen.new_line_str^"#is_valid" ^Gen.new_line_str);
-                output_string log_all (Gen.break_lines fomega);
-                flush log_all;
-            end;
-	
+	let _ = !log_fnc (Gen.new_line_str^"#is_valid" ^Gen.new_line_str) in
+    let _ = !log_fnc (Gen.break_lines fomega) in
 	let sat = 
       try
         not (check_formula (fomega ^ "\n") timeout)
@@ -381,12 +371,10 @@ let imply (ante : formula) (conseq : formula) (imp_no : string) timeout : bool =
   let tmp_form = mkOr (mkNot ante None no_pos) conseq None no_pos in
   	
   let result = is_valid tmp_form  timeout in
-  if !log_all_flag = true then begin
-    if result then 
-      output_string log_all ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
-    else 
-      output_string log_all ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
-  end else ();
+  if result then 
+    !log_fnc ("[omega.ml]: imp #" ^ imp_no ^ "-- test #" ^(string_of_int !test_number)^" --> SUCCESS\n") 
+  else 
+    !log_fnc ("[omega.ml]: imp "^imp_no^(string_of_int !test_number)^" --> FAIL\n");
   result
   
 let rec match_vars (vars_list0 : spec_var list) rel = match rel with
@@ -428,14 +416,8 @@ let simplify (pe : formula) : formula =
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-	
-    if !log_all_flag then begin
-(*                output_string log_all ("YYY" ^ (Cprinter.string_of_pure_formula pe) ^ "\n");*)
-      output_string log_all ("#simplify" ^ Gen.new_line_str ^ Gen.new_line_str);
-      output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
-      flush log_all;
-    end;
-	
+    let _ = !log_fnc ("#simplify" ^ Gen.new_line_str ^ Gen.new_line_str) in
+    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
     let simp_f = 
 	try
       begin	
@@ -470,12 +452,8 @@ let pairwisecheck (pe : formula) : formula =
 	
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-	
-    if !log_all_flag then begin
-       output_string log_all ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str);
-       output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
-       flush log_all;
-    end;
+    let _ = !log_fnc ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str) in
+    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
     let rel = send_and_receive fomega 0. in
 	  match_vars (fv pe) rel 
   end
@@ -491,13 +469,9 @@ let hull (pe : formula) : formula =
 	
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-	
-    if !log_all_flag then begin
-       output_string log_all ("#hull" ^ Gen.new_line_str ^ Gen.new_line_str);
-       output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
-       flush log_all;
-    end;
-    let rel = send_and_receive fomega 0. in
+     let _ = !log_fnc ("#hull" ^ Gen.new_line_str ^ Gen.new_line_str) in
+     let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
+     let rel = send_and_receive fomega 0. in
 	  match_vars (fv pe) rel
   end
 
@@ -511,20 +485,13 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
 				let l1 = List.map omega_of_spec_var vars_list  in
     let vstr = String.concat "," l1  in
     let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
-            ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str
-        in
-            if !log_all_flag then begin
-                output_string log_all ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str);
-                output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
-                flush log_all;
-            end;
+      ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
+    let _ = !log_fnc ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str) in
+    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
     let rel = send_and_receive fomega 0. in
 	  match_vars vars_list rel
   end
 
 let log_mark (mark : string) =
-  if !log_all_flag then begin
-    output_string log_all ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str);
-    flush log_all;
-  end;
-
+  !log_fnc ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str)
+  

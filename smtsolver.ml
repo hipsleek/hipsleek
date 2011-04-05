@@ -37,6 +37,8 @@ let timeout = ref 10.0
 let prover_pid = ref 0
 let prover_process = ref {name = "smtsolver"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
+let log_fnc = ref (fun str -> ())
+
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 
 (**
@@ -466,10 +468,10 @@ let run prover input =
   let (cmd, cmd_arg) = command_for prover in
   let set_process proc = prover_process := proc in
   let fnc () = 
-    let _ = Procutils.PrvComms.start false stdout (cmd, cmd, cmd_arg) set_process (fun () -> ()) in
+    let _ = Procutils.PrvComms.start (cmd, cmd, cmd_arg) set_process (fun () -> ()) !log_fnc in
     get_answer !prover_process.inchannel in
   let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
-  let _ = Procutils.PrvComms.stop false stdout !prover_process 0 9 (fun () -> ()) in
+  let _ = Procutils.PrvComms.stop !prover_process 0 9 (fun () -> ()) !log_fnc in
   remove_file infile;
   remove_file outfile;
   res

@@ -10,8 +10,8 @@ module CP = Cpure
 
 let isabelle_file_number = ref 0
 let result_file_name = "res"
-let log_all_flag = ref false
-let log_all = open_out "allinput.thy"
+(* let log_all_flag = ref false *)
+(* let log_all = open_out "allinput.thy" *)
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
@@ -20,6 +20,13 @@ let process= ref {name="isabelle"; inchannel = stdin; outchannel = stdout; errch
 let last_test_number = ref 0
 let test_number = ref 0
 
+let log_fnc = ref (fun str -> ())
+
+let logging str = 
+  LOG "%s" str NAME "IsabelleL" LEVEL TRACE
+
+let set_log () :  unit=
+  log_fnc := logging
 
 (* pretty printing for primitive types *)
 let isabelle_of_prim_type = function
@@ -275,8 +282,7 @@ let prelude ()  =
       let _ = read_prompt() in 
       output_string ochn ("declare union_ac [simp]\n");
       let _ = read_until "declare#" ichn in (*declare#*)
-      if!log_all_flag==true then
-        output_string log_all ("theory isabelle_proofs imports Multiset Main\nbegin\ndeclare union_ac [simp]\n")
+      !log_fnc ("theory isabelle_proofs imports Multiset Main\nbegin\ndeclare union_ac [simp]\n")
     )
   else
     (output_string ochn "theory isabelle_proofs imports Main\n"; flush ochn;
@@ -285,8 +291,7 @@ let prelude ()  =
      output_string ochn "begin\n"; flush ochn;
      let _ = get_answer ichn in (*reads "theory isabelle_proofs"*) 
      let _ = read_prompt() in 
-     if!log_all_flag==true then
-       output_string log_all ("theory isabelle_proofs imports Main\nbegin\n")
+     !log_fnc ("theory isabelle_proofs imports Main\nbegin\n")
     )
 
 let set_process proc =
@@ -295,7 +300,7 @@ let set_process proc =
 (* We suppose there exists a so-called heap image called MyImage. This heap image contains the preloaded Multiset
    and Main theories. When invoking Isabelle, everything that is already loaded is instantly available.*)
 let start () =
-  let _ = Procutils.PrvComms.start !log_all_flag log_all ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude in
+  let _ = Procutils.PrvComms.start ("isabelle", "isabelle-process", [|"isabelle-process"; "-I"; "-r"; "MyImage";"2> /dev/null"|]) set_process prelude !log_fnc in
   last_test_number := !test_number
 
 let ending_remarks () = 
@@ -304,26 +309,24 @@ let ending_remarks () =
 
 let stop () = 
   let num_tasks = !test_number - !last_test_number in
-  let _  = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks 3 ending_remarks in
+  let _  = Procutils.PrvComms.stop !process num_tasks 3 ending_remarks !log_fnc in
   print_string ("Stop Isabelle after ... "^(string_of_int num_tasks)^" invocations\n")
 
 
 (* restart isabelle system *)
 let restart reason =
   print_string ("Restarting Isabelle because of: "^reason^"\n");
-  Procutils.PrvComms.restart !log_all_flag log_all "isabelle" reason start stop
+  Procutils.PrvComms.restart "isabelle" reason start stop !log_fnc
 
 (* checking the result given by Isabelle *)
 let rec check str : bool=
   try
       let _ = Str.search_forward (Str.regexp "No subgoals") str 0 in
-      if!log_all_flag==true then
-        output_string log_all (" [isabelle.ml]: --> SUCCESS\n");
+      !log_fnc (" [isabelle.ml]: --> SUCCESS\n");
       true
   with
     | Not_found -> 
-        (if !log_all_flag==true then
-		      output_string log_all (" [isabelle.ml]: --> fail \n"));
+        let _ = !log_fnc (" [isabelle.ml]: --> fail \n") in
         false
 
 let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
@@ -331,8 +334,7 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
       incr test_number;
       let vstr = isabelle_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
 	  let fstr = vstr ^ isabelle_of_formula pe in
-      if !log_all_flag == true then
-    	output_string log_all ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" );
+      let _ = !log_fnc ("lemma \"" ^ fstr ^ "\"\n" ^ " apply(auto)\n oops\n" ) in
       let ichn = !process.inchannel in
       let ochn = !process.outchannel in
 
@@ -358,30 +360,25 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
   end
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  if !log_all_flag == true then
-	output_string log_all ("\n\nimply#" ^ imp_no ^ "\n");
+  let _ = !log_fnc ("\n\nimply#" ^ imp_no ^ "\n") in
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
   let res =  write tmp_form !Globals.sat_timeout false in
-  if !log_all_flag == true then
-	output_string log_all ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n");
+  let _ = !log_fnc ("[isabelle.ml]: imply --> "^(string_of_bool res)^"\n") in
   res
 
 let imply_sat (ante : CP.formula) (conseq : CP.formula) (timeout : float) (sat_no :  string) : bool =
-  if !log_all_flag == true then
-	output_string log_all ("imply#from sat#" ^ sat_no ^ "\n");
+  let _ = !log_fnc  ("imply#from sat#" ^ sat_no ^ "\n") in 
   max_flag := false;
   choice := 1;
   let tmp_form = CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos in
     (write tmp_form timeout false)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool = begin
-	if !log_all_flag == true then
-				output_string log_all ("\n\n#is_sat " ^ sat_no ^ "\n");
+    let _ = !log_fnc ("\n\n#is_sat " ^ sat_no ^ "\n") in
 	let answ = (imply_sat f (CP.BForm(CP.BConst(false, no_pos), None)) !Globals.sat_timeout sat_no) in
-    if !log_all_flag == true then
-	  output_string log_all ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n");
+    let _ = !log_fnc ("[isabelle.ml]: is_sat --> "^(string_of_bool (not answ)) ^"\n") in
     (not answ)
 	end
 

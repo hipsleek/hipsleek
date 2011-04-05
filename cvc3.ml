@@ -1,12 +1,10 @@
 open Globals
 module CP = Cpure
 
-(* let log_cvc3_formula = ref false *)
 let _valid = true
 let _invalid = false
 let _sat = true
 let _unsat = false
-let cvc3_log = ref stdout
 let infilename = !tmp_files_path ^ "input.cvc3." ^ (string_of_int (Unix.getpid ()))
 let resultfilename = !tmp_files_path ^ "result.txt." ^ (string_of_int (Unix.getpid()))
 let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
@@ -14,24 +12,12 @@ let cvc3_command = "cvc3 " ^ infilename ^ " > " ^ resultfilename
 let print_pure = ref (fun (c:CP.formula)-> " printing not initialized")
 let test_number = ref 0
 
-(* let set_log_file fn = *)
-(*   log_cvc3_formula := true; *)
-(*   if fn = "" then *)
-(* 	cvc3_log := open_out "formula.cvc" *)
-(*   else (\*if Sys.file_exists fn then *)
-(* 	failwith "--log-cvc3: file exists" *)
-(*   else*\) *)
-(* 	begin *)
-(* 		cvc3_log := open_out fn (\* opens fn for writing and returns an output channel for fn - cvc3_log is the output channel*\); *)
-(* 		(\* output_string !cvc3_log cvc3_command *\) *)
-(* 	end *)
-
 let log_fnc = ref (fun str -> ())
 
 let logging str = 
   LOG "%s" str NAME "Cvc3L" LEVEL TRACE
 
-let set_log_file () :  unit=
+let set_log () :  unit=
   log_fnc := logging
 
 let run_cvc3 (input : string) : unit =
@@ -41,13 +27,6 @@ let run_cvc3 (input : string) : unit =
 	  close_out chn;
 	  ignore (Sys.command cvc3_command)
   end
-
-(* let log_answer_cvc3 (answer : string) : unit = *)
-(* 	 if !log_cvc3_formula then *)
-(* 	  begin *)
-(* 		output_string !cvc3_log answer; *)
-(* 		flush !cvc3_log *)
-(* 	  end *)
 
 let return_answer (inchn: in_channel) (answer_to_log: string) (answer:bool option): bool option =
   let _ = close_in inchn in
@@ -283,7 +262,7 @@ let start () : Globals.prover_process_t =
 
 (*stop the "cvc3 +int" process*)
 let stop (process: Globals.prover_process_t) : unit = 
-  let _ = Procutils.PrvComms.stop process !test_number 9 (fun () -> ()) log_fnc() in
+  let _ = Procutils.PrvComms.stop process !test_number 9 (fun () -> ()) !log_fnc in
   let _ = print_string ("\nCVC3 stop process: " ^ (string_of_int !test_number) ^ " invocations \n") in 
   ()
 
@@ -355,7 +334,7 @@ let cvc3_restart_query (process: Globals.prover_process_t) (f: CP.formula) : boo
   let restart_str = "RESTART ( "^ n_f ^ " );\n" in 
   let _ = !log_fnc restart_str in
   let answer = send_cmd_with_answer process restart_str in
-  let _ = (!log_fnc  ("%%% Res: " ^ answer ^ " \n\n");  flush !cvc3_log) in
+  let _ = !log_fnc  ("%%% Res: " ^ answer ^ " \n\n") in
   let r = match answer with
     | "Valid" -> Some _valid
     | "Invalid" -> Some _invalid
@@ -383,7 +362,7 @@ let imply_helper (process: Globals.prover_process_t) (send_ante: bool) (ante : C
       cvc3_assert process ante
     else cvc3_declare_vars_of_formula process (conseq) in
   let (answer, answer_str) = cvc3_query process conseq in
-  let _ = (!log_fnc  ("%%% Res: " ^ answer_str ^ " \n\n");  flush !cvc3_log) in
+  let _ = !log_fnc  ("%%% Res: " ^ answer_str ^ " \n\n") in
   answer
 
 (*creates a new cvc3 process, sends the query command to the freshly created"process", stops the process and returns the answer given by cvc3*)
@@ -401,7 +380,7 @@ let imply_increm (process: (Globals.prover_process_t option * bool) option) (ant
   let result = match result0 with
 	| Some f -> f
 	| None -> begin
-        (!log_fnc   "%%% imply --> invalid (from unknown)\n\n";  flush !cvc3_log); 
+        !log_fnc   "%%% imply --> invalid (from unknown)\n\n";
 		_invalid  (* unknown is assumed to be false *)
 		    (*failwith "CVC3 is unable to perform implication check"*)
 	  end
@@ -419,7 +398,7 @@ let is_sat_helper (process: Globals.prover_process_t) (f : CP.formula) (sat_no :
   let _ = cvc3_push process in
   let _ = cvc3_declare_vars_of_formula process f in
   let (answer, answer_str) = cvc3_checksat process f in
-  let _ = (!log_fnc  ("%%% Res: " ^ answer_str ^ " \n\n");  flush !cvc3_log) in
+  let _ = !log_fnc  ("%%% Res: " ^ answer_str ^ " \n\n") in
   answer
 
 let is_sat_helper_separate_process (f : CP.formula) (sat_no : string) : bool option =
@@ -436,7 +415,7 @@ let is_sat_increm (process: Globals.prover_process_t option) (f : CP.formula) (s
   let result = match result0 with
 	| Some f -> f
 	| None -> begin
-        (!log_fnc   "%%% is_sat --> true (from unknown)\n\n";  flush !cvc3_log);
+        !log_fnc   "%%% is_sat --> true (from unknown)\n\n";
 	  	(*failwith "CVC3 is unable to perform satisfiability check"*)
 	  	_sat
       end

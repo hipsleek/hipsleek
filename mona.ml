@@ -13,8 +13,6 @@ let mona_cycle = ref 90
 let timeout = ref 11.0 (* default timeout is 10 seconds *)
 
 let result_file_name = "res"
-let log_all_flag = ref false
-let log_all = open_out "allinput.mona"
 let first_order_vars = ref ([] : CP.spec_var list)
 let second_order_vars = ref ([] : CP.spec_var list)
 let additional_vars = ref ([] : CP.spec_var list)
@@ -28,7 +26,13 @@ let mona_pred_file_alternative_path = "/usr/local/lib/"
 
 let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdout; errchannel = stdin}
 
+let log_fnc = ref (fun str -> ())
 
+let logging str = 
+  LOG "%s" str NAME "MonaL" LEVEL TRACE
+
+let set_log () : unit=
+  log_fnc := logging
 
 (* pretty printing for primitive types *)
 let mona_of_prim_type = function
@@ -800,8 +804,7 @@ let rec get_answer chn : string =
 
 
 let send_cmd_with_answer str =
-  if!log_all_flag==true then
-    output_string log_all str;
+  let _ = !log_fnc str in
   let fnc () = 
     let _ = (output_string !process.outchannel str;
              flush !process.outchannel) in
@@ -865,7 +868,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 let start () = 
   last_test_number := !test_number;
   if(check_prover_existence "mona_inter") then begin
-      let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
+      let _ = Procutils.PrvComms.start ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude !log_fnc in
       is_mona_running := true
   end
 
@@ -875,12 +878,12 @@ let stop () =
       |true -> is_mona_running := false;  2
       |false -> 9 in
   let num_tasks = !test_number - !last_test_number in
-  let _ = Procutils.PrvComms.stop !log_all_flag log_all !process num_tasks killing_signal (fun () -> ()) in
+  let _ = Procutils.PrvComms.stop !process num_tasks killing_signal (fun () -> ()) !log_fnc in
   is_mona_running := false
 
 let restart reason =
   if !is_mona_running then 
-    Procutils.PrvComms.restart !log_all_flag log_all reason "mona" start stop
+    Procutils.PrvComms.restart reason "mona" start stop !log_fnc 
 
 let check_if_mona_is_alive () : bool = 
   try
@@ -898,21 +901,17 @@ let check_answer (answ: string) (is_sat_b: bool)=
   let answer =
     match answ with
       | "Formula is valid" ->
-          if !log_all_flag==true then begin
-              output_string log_all (" [mona.ml]: --> SUCCESS\n");
-              output_string log_all ("[mona.ml]: " ^ imp_sat_str ^ " --> true\n");
-          end;
+          let _ = !log_fnc "[mona.ml]: --> SUCCESS\n" in
+          let _ = !log_fnc ("[mona.ml]: " ^ imp_sat_str ^ " --> true\n") in
           true
       | "Formula is unsatisfiable" -> 
-          if !log_all_flag == true then
-		    output_string log_all ("[mona.ml]:" ^ imp_sat_str ^" --> false \n");
+          let _ = !log_fnc ("[mona.ml]:" ^ imp_sat_str ^" --> false \n") in
           false;
       | "" ->
           (* process might have died. maybe BDD was too large - restart mona*)
           (* print_string "MONA aborted execution! Restarting..."; *)
           restart "mona aborted execution";
-          if !log_all_flag == true then
-		    output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
+          let _ = !log_fnc ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n") in
           is_sat_b
       | _ -> 
           try
@@ -921,11 +920,8 @@ let check_answer (answ: string) (is_sat_b: bool)=
                Error.report_error { Error.error_loc = no_pos; Error.error_text =("Mona translation failure!!\n"^answ)})
           with
             | Not_found ->
-                begin
-    	            if !log_all_flag == true then
-		              output_string log_all ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n");
-                    is_sat_b;
-                end
+                let _ = !log_fnc ("[mona.ml]: "^ imp_sat_str ^" --> " ^(string_of_bool is_sat_b) ^"(from mona failure)\n") in
+                is_sat_b;
   in
   answer
 
@@ -993,13 +989,9 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
   flush mona_file;
   close_out mona_file;
-  if !log_all_flag == true then
-	begin
-	    output_string log_all (mona_filename ^ Gen.new_line_str);
-      	output_string log_all (fstr ^ ";\n");
-	    flush log_all;
-	end;
-  let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
+  let _ = !log_fnc (mona_filename ^ Gen.new_line_str) in
+  let _ = !log_fnc (fstr ^ ";\n") in 
+  let _ = Procutils.PrvComms.start ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) !log_fnc in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
     let res = check_answer mona_answ is_sat_b in
@@ -1045,8 +1037,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
         stop(); raise exc
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  if !log_all_flag == true then
-    output_string log_all ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
+  !log_fnc ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
   first_order_vars := [];
   second_order_vars := [];
   incr test_number;
@@ -1059,8 +1050,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
     imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
-  if !log_all_flag == true then
-	output_string log_all ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
+  !log_fnc ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
   sat_optimize := true;
   first_order_vars := [];
   second_order_vars := [];

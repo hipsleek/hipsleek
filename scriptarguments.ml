@@ -79,16 +79,16 @@ let common_arguments = [
 	("--log-cvcl", Arg.String Cvclite.set_log_file,
     "Log all CVC Lite formula to specified log file");
 	(* ("--log-cvc3", Arg.String Cvc3.set_log_file, *)
-	("--log-cvc3", Arg.Unit Cvc3.set_log_file,    "Log all formulae sent to CVC3 in file allinput.cvc3");
-	("--log-omega", Arg.Set Omega.log_all_flag,
+	("--log-cvc3", Arg.Unit Cvc3.set_log,    "Log all formulae sent to CVC3 in file allinput.cvc3");
+	("--log-omega",  Arg.Unit Omega.set_log,
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
-	("--log-isabelle", Arg.Set Isabelle.log_all_flag,
+	("--log-isabelle", Arg.Unit Isabelle.set_log,
 	"Log all formulae sent to Isabelle in file allinput.thy");
 	("--log-coq", Arg.Set Coq.log_all_flag,
 	"Log all formulae sent to Coq in file allinput.v");
-	("--log-mona", Arg.Set Mona.log_all_flag,
+	("--log-mona",  Arg.Unit Mona.set_log,
 	"Log all formulae sent to Mona in file allinput.mona");
-	("--log-redlog", Arg.Set Redlog.is_log_all,
+	("--log-redlog",  Arg.Unit Redlog.set_log,
     "Log all formulae sent to Reduce/Redlog in file allinput.rl");
 	("--use-isabelle-bag", Arg.Set Isabelle.bag_flag,
 	"Use the bag theory from Isabelle, instead of the set theory");
