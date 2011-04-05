@@ -221,7 +221,7 @@ hip: $(MAIN_FILES_OPT) decidez.vo
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip.bolt: $(MAIN_FILES) decidez.vo
-	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS)  -I +bolt bolt.cma unix.cma str.cma graph.cma $(MAIN_FILES)
+	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
@@ -231,8 +231,8 @@ prdebug: $(PP_FILES)
 #	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 
-hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
-	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
+#hipgui: $(GUI_FILES) decidez.vo scriptarguments.ml gui.ml maingui.ml
+#	$(OCAMLC) -g -o $@ $(GUIOCAMLFLAGS) unix.cma str.cma graph.cma lablgtk.cma lablgtksourceview2.cma $(GUI_FILES) scriptarguments.ml gui.ml maingui.ml
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 #hip.opt: $(MAIN_FILES:*.cmo=*.cmx) 
@@ -337,7 +337,7 @@ install:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe hipgui prdebug ss ss.exe ss.norm
+	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe prdebug ss ss.exe ss.norm #hipgui
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml
