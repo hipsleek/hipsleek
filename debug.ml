@@ -10,6 +10,9 @@ let debug_log = Buffer.create 5096
 let clear_debug_log () = Buffer.clear debug_log
 let get_debug_log () = Buffer.contents debug_log
 
+let logging str = 
+  LOG "%s" str NAME "DebugL" LEVEL DEBUG
+
 (* debugging facility for user *)
 
 (* used to enable the printing of the original consequent while devel debugging. By default, orig_conseq is disabled*)
@@ -33,7 +36,8 @@ let devel_print s =
     if !log_devel_debug then 
       Buffer.add_string debug_log msg
     else
-      (print_string msg; flush stdout)
+      ( logging msg;
+        print_string msg; flush stdout)
   else ()
 
 let devel_pprint msg (pos:loc) = 
