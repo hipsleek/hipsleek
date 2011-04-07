@@ -217,11 +217,11 @@ hip.norm: decidez.vo $(MAIN_FILES)
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip: $(MAIN_FILES_OPT) decidez.vo
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(MAIN_FILES_OPT)
+	$(OCAMLOPT) -o hiph $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(MAIN_FILES_OPT)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
-hip.bolt: $(MAIN_FILES) decidez.vo
-	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
+#hip.bolt: $(MAIN_FILES) decidez.vo
+#	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
 
 mytop: $(MAIN_FILES) decidez.vo
 	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
@@ -315,7 +315,7 @@ install:
 	cp mona_predicates.mona /usr/local/lib/mona_predicates.mona
 	coqtop -compile decidez
 	cp decidez.vo /usr/local/lib/decidez.vo
-	./hip --build-image true
+	./hiph --build-image true
 	cp MyImage /usr/local/lib/MyImage
 
 # ------------------------------------------------------------
@@ -337,7 +337,7 @@ install:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe prdebug ss ss.exe ss.norm #hipgui
+	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hiph hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe prdebug ss ss.exe ss.norm #hipgui
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

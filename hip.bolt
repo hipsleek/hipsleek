@@ -1,6 +1,0 @@
-#!/bin/bash
-
-PATH_TMP=`dirname $0`
-
-BOLT_FILE=$PATH_TMP"/config" $PATH_TMP"/hipbolt" $@
-
