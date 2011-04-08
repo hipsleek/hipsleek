@@ -207,13 +207,13 @@ WEB_FILES=globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	typechecker.cmo \
 	web.cmo
 hip1: $(MAIN_FILES_2) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES_2)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES_2)
 
 hipc:
 	make clean; make hip
 
 hip.norm: decidez.vo $(MAIN_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip: $(MAIN_FILES_OPT) decidez.vo
@@ -224,10 +224,10 @@ hip: $(MAIN_FILES_OPT) decidez.vo
 #	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
 
 mytop: $(MAIN_FILES) decidez.vo
-	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(MAIN_FILES)
+	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
 
 prdebug: $(PP_FILES) 
-	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PP_FILES)
+	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(PP_FILES)
 #	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 
@@ -240,15 +240,15 @@ prdebug: $(PP_FILES)
 
 
 prover.norm: $(PROVE_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(PROVE_FILES)
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES_OPT)
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(PROVE_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(PROVE_FILES_OPT)
 
 
 web: $(WEB_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(WEB_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(WEB_FILES)
 
 #$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
@@ -262,11 +262,11 @@ xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
 sleek.norm: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma $(SLEEK_FILES)
+	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma dynlink.cma -I +bolt bolt.cma $(SLEEK_FILES)
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
 sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa $(SLEEK_FILES_OPT)
+	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(SLEEK_FILES_OPT)
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
