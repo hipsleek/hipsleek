@@ -3,42 +3,42 @@ level=trace
 filter=all
 layout=simple
 output=file
-name=allinput.oc
+name=allinput_oc
 
 [MonaL]
 level=trace
 filter=all
 layout=simple
 output=file
-name=allinput.mona
+name=allinput_mona
 
 [RedlogL]
 level=trace
 filter=all
 layout=simple
 output=file
-name=allinput.rl
+name=allinput_rl
 
 [IsabelleL]
 level=trace
 filter=all
 layout=simple
 output=file
-name=allinput.thy
+name=allinput_thy
 
 [Cvc3L]
 level=trace
 filter=all
 layout=simple
 output=file
-name=allinput.cvc3
+name=allinput_cvc3
 
 [CoqL]
 level=trace
 filter=all
 layout=simple
 output=file
-name=allinput.v
+name=allinput_v
 
 [DebugL]
 level=debug
@@ -52,6 +52,6 @@ level=trace
 filter=none
 layout=simple
 output=file
-name=allinput.none
+name=allinput_none
 
 
