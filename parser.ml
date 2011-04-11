@@ -125,7 +125,11 @@ let cexp_to_pure1 fct f = match f with
   | _ -> report_error (get_pos 1) "with 1 convert expected cexp, found pure_form"
 
 let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
-  | Pure_c f1 , Pure_c f2 -> Pure_f (P.BForm(fct f1 f2,None))
+  | Pure_c f1 , Pure_c f2 -> (match f1 with
+                             | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct c f2, None)) explist
+                               in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 pos) (List.hd tmp) (List.tl tmp)
+                               in Pure_f(res) 
+                             | _ -> Pure_f (P.BForm(fct f1 f2,None)))
   | Pure_f f1 , Pure_c f2 -> (match f1  with 
 						    | P.BForm(b,oe) -> (match b with 
                                                | P.Lt (a1, a2, _) ->  let tmp = P.BForm(fct a2 f2,None) in 
@@ -161,11 +165,12 @@ let peek_try =
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
+         | [GT,_;EQUIV,_] -> raise Stream.Failure
          | [GT,_;CPAREN,_] -> raise Stream.Failure 
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;_] -> ()
-         | [SEMICOLON,_;typ] -> ()
+         | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
 
  let peek_try_st = 
@@ -256,6 +261,13 @@ SHGram.Entry.of_parser "peek_print"
              | [OSQUARE,_;_;ORWORD,_] -> ()
              | _ -> raise Stream.Failure)
 
+ let peek_cexp_list = 
+   SHGram.Entry.of_parser "peek_cexp_list"
+       (fun strm ->
+           match Stream.npeek 4 strm with 
+             | [_;COMMA,_;_;GTE,_] -> ()
+             | _ -> raise Stream.Failure)
+
 let sprog = SHGram.Entry.mk "sprog"
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
@@ -275,7 +287,7 @@ non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 non_empty_command:
     [[  t=data_decl           ->DataDef t
       | `PRED;t=view_decl     ->PredDef t
-      | `LEMMA;t=coercion_decl-> LemmaDef t
+      | `LEMMA;t= coercion_decl -> LemmaDef t
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
       | t=captureresidue_cmd  -> CaptureResidue t
@@ -296,8 +308,8 @@ data_header:
     [[ `DATA; `IDENTIFIER t; OPT with_typed_var -> t ]];
 
 data_body: 
-      [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl 
-      | `OBRACE; fl=field_list2; `CBRACE   -> List.rev fl
+      [[`OBRACE; fl=field_list2;`SEMICOLON; `CBRACE -> fl
+      | `OBRACE; fl=field_list2; `CBRACE   ->  fl
       | `OBRACE; `CBRACE                             -> []] ];
  
 (* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos 1) *)
@@ -305,21 +317,19 @@ data_body:
 
 
 field_list2:[[ 
-       t=typ; `IDENTIFIER n;  peek_try; `SEMICOLON; fl = SELF ->(  
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos 1)]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos 1)]
+  |   
+       t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
 			if List.mem n (List.map (fun f -> snd (fst f)) fl) then
 				report_error (get_pos 4) (n ^ " is duplicated")
 			else
 				((t, n), get_pos 3) :: fl )
-		
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 			(if List.mem n (List.map (fun f -> snd (fst f)) fl) then
 				report_error (get_pos 4) (n ^ " is duplicated")
 			else
-				((t1, n), get_pos 3) :: fl )]
-  | [t=typ; `IDENTIFIER n -> [((t,n),get_pos 1)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos 1)] 
-		
-]];
+				((t1, n), get_pos 3) :: fl ) ]];
 
 (* one_field:   *)
 (*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos 1) *)
@@ -422,9 +432,9 @@ extended_constr:
           Iformula.formula_case_pos = (get_pos 3) }
 	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> Iformula.mkEBase sl [] [] oc (un_option rc [])(get_pos 2)]];	
   
-impl_list:[[t=LIST1 impl SEP `SEMICOLON -> t]];
+impl_list:[[t=LIST1 impl -> t]];
 
-impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l ->
+impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos 1) ("anonimous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
@@ -472,17 +482,18 @@ opt_heap_constr:
      | `TRUE -> F.HTrue]];
 
 (* heap_constr: *)
-(*   [ [ hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos 2)] *)
-(*     | [shc = simple_heap_constr -> shc](\* [ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_heap_arg_list; `GT; ofl = opt_formula_label ->  *\) *)
-(*     (\*                F.mkHeapNode c id false false false false hal ofl (get_pos 2) ] *\) *)
-(*    ]; *)
+(*   [[    hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos 2)]  *)
+(* (\*      |[ shc = simple_heap_constr -> shc]  *\) *)
+(*      |[ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_heap_arg_list; `GT; ofl = opt_formula_label ->   *)
+(*                     F.mkHeapNode c id false false false false hal ofl (get_pos 2)  *)
+(*   ]];  *)
 
 heap_constr:
   [[ peek_try; `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
    | peek_try; `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
-   | hrw = heap_rw                                            ->F.mkPhase F.HTrue hrw (get_pos 2)]];
+   | hrw = heap_rw                                            ->F.mkPhase F.HTrue hrw (get_pos 2)]]; 
 
-heap_rd:
+heap_rd: 
   [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos 2)
    | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos 2)
    | shi=simple_heap_constr_imm                  -> shi ]];
@@ -510,9 +521,9 @@ simple_heap_constr:
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos 2))
-   | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)]];
+  | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)]];
   
-opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];  
+opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
 (*general_h_args:
   [
@@ -521,7 +532,7 @@ opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];
   ];*)
 
 general_h_args:
-  [[ t= opt_heap_arg_list2 -> ([],t)
+  [[ t= opt_heap_arg_list2 -> ([],t) 
   | t= opt_heap_arg_list -> (t,[])]];  
 
   
@@ -605,8 +616,10 @@ cexp_w :
    | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c] 
 
    | "una"
-     [  t= cid                -> (* (print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
-     |`INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1))
+     [ 
+       peek_cexp_list; ocl = opt_cid_list -> let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in Pure_c(P.List(tmp, get_pos 1)) 
+     | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
+     | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
      | `NULL                                     -> Pure_c (P.Null (get_pos 1))
@@ -637,7 +650,7 @@ cexp_w :
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]]; 
 
-(*cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]];*)
+(* cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; *)
 
 (********** Procedures and Coercion **********)
 
