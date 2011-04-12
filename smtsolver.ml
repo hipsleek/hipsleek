@@ -92,7 +92,9 @@ let rec is_linear_formula f0 = match f0 with
   | CP.And (f1, f2, _) | CP.Or (f1, f2, _, _) -> 
       (is_linear_formula f1) && (is_linear_formula f2)
 
-let rec get_formula_of_rel_with_name rn rdefs = match rdefs with
+let rec get_formula_of_rel_with_name rn rdefs =
+  if (rn = "dom") then (CP.mkTrue Globals.no_pos) else
+  match rdefs with
 	| [] -> failwith ("Relation " ^ rn ^ " is not found!")
 	| h :: t -> match h with RelDefn (r,_,f) -> if (r = rn) then f else get_formula_of_rel_with_name rn t
 		

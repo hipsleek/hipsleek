@@ -142,9 +142,14 @@ bool lor___(bool a, bool b) case {
   !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
 bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
 int pow___(int a, int b) requires true ensures true;
-/* relation update_array(int[] a, int i, int v, int[] r) == true. */
-int array_get_elm_at___(int[] a, int i) requires true ensures res = a[i];
-int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,res);
+
+int array_get_elm_at___(int[] a, int i) 
+	requires [k,t] dom(a,k,t) & k<=i & i<=t
+	ensures res = a[i];
+
+int[] update___(int[] a, int i, int v) 
+	requires [k,t] dom(a,k,t) & k<=i & i<=t 
+	ensures dom(res,k,t) & update_array(a,i,v,res);
 "
 (* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
 
