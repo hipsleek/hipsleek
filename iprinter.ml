@@ -77,7 +77,7 @@ let string_of_assign_op = function
 
 let string_of_primed = function 
 	| Unprimed -> ""
-	| Primed -> "'";;
+	| Primed -> "#'";;
 
 (* function used to decide if parentrhesis are needed or not *)
 let need_parenthesis = function 
@@ -95,7 +95,7 @@ let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s 
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
-let string_of_var (c1,c2) = c1^(match c2 with | Primed -> "'"| _ -> "");;
+let string_of_var (c1,c2) = c1^(match c2 with | Primed -> "#'"| _ -> "");;
 
 let string_of_var_list vl = String.concat " " (List.map string_of_var vl);;
 
@@ -105,7 +105,7 @@ let rec string_of_formula_exp = function
   | P.Null l                  -> "null"
   | P.Var (x, l)        -> (match x with 
 															|(id, p) -> id ^ (match p with 
-																									| Primed    -> "'" 
+																									| Primed    -> "#'" 
 																									| Unprimed  -> "" ))
   | P.IConst (i, l)           -> string_of_int i
   | P.FConst (f, _) -> string_of_float f
@@ -160,7 +160,7 @@ let string_of_b_formula = function
   | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
   | P.BVar (x, l)               -> (match x with 
     |(id, p) -> id ^ (match p with 
-      | Primed    -> "'" 
+      | Primed    -> "#'" 
       | Unprimed  -> "" ))
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
@@ -208,10 +208,10 @@ let rec string_of_pure_formula = function
   | P.Or (f1, f2,lbl, l)              -> "(" ^ (string_of_pure_formula f1) ^ ") | (" ^ (string_of_pure_formula f2) ^ ")"
   | P.Not (f,lbl, l)                  -> "!(" ^ (string_of_pure_formula f) ^ ")"
   | P.Forall (x, f,lbl, l)            -> "all " ^ (match x with (id, p) -> id ^ (match p with 
-    | Primed    -> "'"
+    | Primed    -> "#'"
     | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
   | P.Exists (x, f,lbl, l)            -> "ex " ^ (match x with (id, p) -> id ^ (match p with 
-    | Primed    -> "'"
+    | Primed    -> "#'"
     | Unprimed  -> "")) ^ " (" ^ (string_of_pure_formula f) ^ ")"
 ;;    
 
@@ -253,7 +253,7 @@ let rec string_of_h_formula = function
 		 F.h_formula_heap_label = pi;
 		 F.h_formula_heap_pos = l}) -> 				 
       string_of_formula_label_opt pi				 
-	((fst x)^(if (snd x)=Primed then  "'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
+	((fst x)^(if (snd x)=Primed then  "#'" else "") ^ "::" ^ id ^ "<" ^ (string_of_formula_exp_list pl) ^ ">")
 	
   | F.HeapNode2 ({F.h_formula_heap2_node = (v, p);
 		  F.h_formula_heap2_name = id;
@@ -262,12 +262,12 @@ let rec string_of_h_formula = function
       let tmp1 = List.map (fun (f, e) -> f ^ "=" ^ (string_of_formula_exp e)) args in
       let tmp2 = String.concat ", " tmp1 in
 	string_of_formula_label_opt pi
-	  (v ^ (if p = Primed then "'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
+	  (v ^ (if p = Primed then "#'" else "") ^ "::" ^ id ^ "<" ^ tmp2 ^ ">")
   | F.HTrue                         -> "true"                                                                                                (* ?? is it ok ? *)
   | F.HFalse                        -> "false"
 ;;
  
-let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "'" | Unprimed -> "");; 
+let string_of_identifier (d1,d2) = d1^(match d2 with | Primed -> "#'" | Unprimed -> "");; 
 
 (* pretty printing for formulae *) 
 let rec string_of_formula = function 
@@ -468,7 +468,7 @@ let rec string_of_exp = function
 			exp_while_body = e2;
 			exp_while_jump_label = lb;
 			exp_while_specs = li}) -> 
-        (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ "{\n"^ (string_of_exp e2) ^ "\n}"          
+        (string_of_label lb)^" while " ^ (parenthesis (string_of_exp e1)) ^ " \n" ^ (string_of_struc_formula li)^" \n"^ "{\n"^ (string_of_exp e2) ^ "\n}"          
   | Return ({exp_return_val = v; exp_return_path_id = pid})  -> 
         string_of_control_path_id_opt pid ("return " ^ 
           (match v with 
