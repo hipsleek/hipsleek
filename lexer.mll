@@ -136,7 +136,7 @@ module Make (Token : SleekTokenS)
 	 ("exists", EXISTS);
 	 ("extends", EXTENDS);
 	 ("false", FALSE);
-   ("finalize", FINALIZE);
+   ("finalizes", FINALIZE);
    ("finally", FINALLY);
 	 ("float", FLOAT);
 	 ("forall", FORALL);

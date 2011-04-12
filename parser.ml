@@ -127,21 +127,16 @@ let cexp_to_pure1 fct f = match f with
 let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
   | Pure_c f1 , Pure_c f2 -> (match f1 with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct c f2, None)) explist
-                               in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 pos) (List.hd tmp) (List.tl tmp)
+                               in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                in Pure_f(res) 
                              | _ -> Pure_f (P.BForm(fct f1 f2,None)))
   | Pure_f f1 , Pure_c f2 -> (match f1  with 
 						    | P.BForm(b,oe) -> (match b with 
-                                               | P.Lt (a1, a2, _) ->  let tmp = P.BForm(fct a2 f2,None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | P.Lte (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | P.Gt (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | P.Gte (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | P.Eq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
-                                                 Pure_f (P.mkAnd f1 tmp (get_pos 2))
+                                               | P.Lt (a1, a2, _) 
+                                               | P.Lte (a1, a2, _) 
+                                               | P.Gt (a1, a2, _) 
+                                               | P.Gte (a1, a2, _)
+                                               | P.Eq (a1, a2, _) 
                                                | P.Neq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
                                                  Pure_f (P.mkAnd f1 tmp (get_pos 2))
                                                | _ -> report_error (get_pos 1) "error should be an equality exp" )
@@ -238,6 +233,7 @@ SHGram.Entry.of_parser "peek_print"
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [_;COLONCOLON,_] -> raise Stream.Failure
+             | [_;OPAREN,_] -> raise Stream.Failure 
              | _ -> ())
 
  let peek_and_pure = 
@@ -266,6 +262,13 @@ SHGram.Entry.of_parser "peek_print"
        (fun strm ->
            match Stream.npeek 4 strm with 
              | [_;COMMA,_;_;GTE,_] -> ()
+             | _ -> raise Stream.Failure)
+
+ let peek_heap = 
+   SHGram.Entry.of_parser "peek_heap"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[_;COLONCOLON,_] -> ()
              | _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog"
@@ -386,8 +389,9 @@ cid:
    | `THIS _               -> (this, Unprimed) ]];
 
 view_body:
-  [[ t=formulas -> ((F.subst_stub_flow_struc top_flow (fst t)),(snd t))
-   | `FINALIZE; hpred_header -> report_error (get_pos 1) ("here") ]];
+  [[ t = formulas -> ((F.subst_stub_flow_struc top_flow (fst t)),(snd t))
+   | `FINALIZE; t = split_combine -> ([],false) 
+  ]];
   
   
 (********** Constraints **********)
@@ -508,7 +512,7 @@ heap_wr:
    | shc=simple_heap_constr                     -> shc
    | shi=simple_heap_constr_imm                 -> shi ]];
  
-simple2:  [[ t=opt_type_var_list; `LT -> ()]];
+simple2:  [[ t= opt_type_var_list; `LT -> ()]];
    
 simple_heap_constr_imm:
   [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT; `IMM; ofl= opt_formula_label ->
@@ -517,11 +521,11 @@ simple_heap_constr_imm:
         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2)]];
 
 simple_heap_constr:
-  [[ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos 2))
-  | t=ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)]];
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
@@ -543,7 +547,7 @@ and_pure_constr: [[peek_and_pure; `AND; t=pure_constr -> t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[peek_pure; t=cexp_w -> match t with
+pure_constr: [[ peek_pure; t=cexp_w -> match t with
                     | Pure_f f -> f
                     | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos 1), None )
                     | _ ->  report_error (get_pos 1) "expected pure_constr, found cexp"]];
@@ -616,8 +620,8 @@ cexp_w :
    | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c] 
 
    | "una"
-     [ 
-       peek_cexp_list; ocl = opt_cid_list -> let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in Pure_c(P.List(tmp, get_pos 1)) 
+     [  h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
+     | peek_cexp_list; ocl = opt_cid_list -> let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in Pure_c(P.List(tmp, get_pos 1)) 
      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
@@ -640,7 +644,6 @@ cexp_w :
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
      | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos 1)) c ocl) pc
-     | h=ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
 
@@ -739,19 +742,19 @@ hopred_decl:
       -> mkHoPred  (fst (fst h)) "refines" [(fst b)] (snd (fst h)) (fst (snd h)) (snd (snd h)) (snd b) (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])
   | `HPRED; h=hpred_header; `JOIN; s=split_combine 
       -> mkHoPred (fst (fst h)) "split_combine" [] [] [] [] [] (P.mkTrue no_pos ,[("Inv", P.mkTrue no_pos)])
-	| `HPRED; h=hpred_header;  `EQEQ; s=shape; oi=opt_inv; `SEMICOLON 
+	| `HPRED; h=hpred_header;  `EQEQ; s=shape; oi= opt_inv; `SEMICOLON 
       -> mkHoPred (fst (fst h)) "pure_higherorder_pred" [] (snd (fst h)) (fst (snd h)) (snd (snd h)) [s] oi]];
       
-shape: [[ t=formulas -> fst t]];
+shape: [[ t= formulas -> fst t]];
 
 split_combine: 
-  [[ `HPRED -> ()
+  [[ h=hpred_header -> ()
    | h=hpred_header; `SPLIT; t=SELF -> ()
-	 | h=hpred_header; `COMBINE; t=SELF -> ()]];
+   | h=hpred_header; `COMBINE; t=SELF -> ()]];
    
 ext_form: [[ h=hpred_header;	`WITH; `OBRACE; t=ho_fct_def_list; `CBRACE ->("",[])]];
   
-ho_fct_header: [[`IDENTIFIER id; `OPAREN; f=fct_arg_list; `CPAREN -> ()]];
+ho_fct_header: [[`IDENTIFIER id; `OPAREN; f=fct_arg_list; `CPAREN -> f]];
 
 ho_fct_def:	[[ h=ho_fct_header; `EQ; s=shape -> ()]];
 
@@ -765,12 +768,12 @@ typed_arg:
     | `SET;  `OSQUARE; t=typ;  `CSQUARE; `COLON; t3=SELF -> ()
     | t=typ; `OSQUARE; t2=typ; `CSQUARE -> ()
     | t=typ; `OSQUARE; t2=typ; `CSQUARE; `COLON; t3=SELF -> ()
-	  | t=typ; `COLON;   t2=SELF -> ()]];
+    | t=typ; `COLON;   t2=SELF -> ()]];
 
 opt_typed_arg_list: [[t=LIST0 typed_arg SEP `COMMA -> [] ]];
 
 type_var: 
-   [[ t=typ -> ()
+   [[ t= typ -> ()
     | `SET; `OSQUARE; t=typ; `CSQUARE -> ()
     | t=typ; `OSQUARE; t2=typ; `CSQUARE -> ()]];
 
@@ -778,9 +781,11 @@ type_var_list: [[`OSQUARE; t= LIST1 type_var SEP `COMMA; `CSQUARE -> ()]];
 
 opt_type_var_list: [[ t= OPT type_var_list -> [] ]];
 
-fct_arg_list: [[`OSQUARE; t=LIST1 cid SEP `COMMA; `CSQUARE -> t]];
+fct_arg_list: [[ t=LIST1 cid SEP `COMMA -> t]];
 
-opt_fct_list: [[ t= OPT fct_arg_list  -> [] ]];
+fct_list: [[ `OSQUARE; t=fct_arg_list; `CSQUARE -> [] ]];
+
+opt_fct_list:[[ t = OPT fct_list -> []]];
   
  (*end of sleek part*)   
  (*start of hip part*)

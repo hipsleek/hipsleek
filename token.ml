@@ -76,7 +76,7 @@ module Token = struct
     | DERIVE -> "|-" | OSQUARE -> "[" | PERCENT ->"%" | PLUS -> "+" | PRIME -> "'" | SEMICOLON -> ";" | STAR -> "*"
     | RAISE -> "raise" | THROWS -> "throws" | FINALLY -> "finally" | COMBINE -> "combine" | WITH -> "with" | JOIN -> "join" | REFINES -> "refines"
     | HPRED -> "ho_pred" | ESCAPE -> "escape" | VARIANCE -> "variance" | GLOBAL -> "global" | TAIL -> "tail" | SET -> "set" | REVERSE -> "reverse"
-    | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalize" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"
+    | PERM -> "perm" | NOTINLIST -> "notinlist" | CATCH -> "catch" | TRY -> "try" | FINALIZE -> "finalizes" | LENGTH -> "len" | INLIST -> "inlist" | HEAD -> "head"
     
   let print ppf x = pp_print_string ppf (to_string x)
 
