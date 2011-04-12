@@ -268,12 +268,14 @@ clean:
 	rm -f decidez.glob decidez.vo slexer.ml ilexer.ml lexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hip hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe hipgui prdebug ss ss.exe ss.norm
 
 # Dependencies
-beforedepend: parser.ml iparser.ml ocparser.ml
+#beforedepend: parser.ml iparser.ml ocparser.ml
+beforedepend: ocparser.ml
 
 depend: beforedepend
+	mv parser.ml p_x_x_x
 	(for d in $(DIRS); \
 	do $(OCAMLDEP) $(INCLUDES) $$d/*.mli $$d/*.ml; \
 	done) > .depend
-
+	mv p_x_x_x parser.ml
 -include .depend
 # DO NOT DELETE
