@@ -231,9 +231,10 @@ SHGram.Entry.of_parser "peek_print"
  let peek_pure = 
    SHGram.Entry.of_parser "peek_pure"
        (fun strm -> 
-           match Stream.npeek 2 strm with
-             | [_;COLONCOLON,_] -> raise Stream.Failure
-             | [_;OPAREN,_] -> raise Stream.Failure 
+           match Stream.npeek 3 strm with
+             | [_;COLONCOLON,_;_] -> raise Stream.Failure
+             | [_;OPAREN,_;_] -> raise Stream.Failure 
+             | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_and_pure = 
@@ -267,8 +268,9 @@ SHGram.Entry.of_parser "peek_print"
  let peek_heap = 
    SHGram.Entry.of_parser "peek_heap"
        (fun strm ->
-           match Stream.npeek 2 strm with
-             |[_;COLONCOLON,_] -> ()
+           match Stream.npeek 3 strm with
+             |[_;COLONCOLON,_;_] -> ()
+             |[_;PRIME,_;COLONCOLON,_] -> ()
              | _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog"
@@ -382,8 +384,9 @@ view_header:
 			}]];
       
 cid: 
-  [[ `IDENTIFIER t         -> (* (print_string ("id:"^t^"\n"); *)(t, Unprimed)
-   | `IDENTIFIER t; `PRIME -> (t, Primed)
+  [[ 
+     `IDENTIFIER t; `PRIME -> print_string ("primed id:"^t^"\n");(t, Primed)
+   | `IDENTIFIER t         -> (* print_string ("id:"^t^"\n"); *)(t, Unprimed)
    | `RES _                 -> (res, Unprimed)
    | `SELFT _               -> (self, Unprimed)
    | `THIS _               -> (this, Unprimed) ]];
@@ -913,7 +916,7 @@ spec:
 	    																					else sl;
 	    	 Iformula.formula_ext_pos = (get_pos 1)}
        
-	 | `ENSURES; ol= opt_label; dc=disjunctive_constr; `SEMICOLON ->
+	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
 			Iformula.ECase {
