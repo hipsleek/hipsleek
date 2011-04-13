@@ -14,3 +14,14 @@ int sigmaright(int[] a, int i, int j)
 	}
 }
 
+int sigmaleft(int[] a, int i, int j) 
+	requires dom(a,i,j)
+	ensures sumarray(a,i,j,res);
+{
+	if (i > j)
+		return 0;
+	else 
+	{
+		return sigmaleft(a, i, j-1) + a[j];
+	}
+}

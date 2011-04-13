@@ -3962,20 +3962,23 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
   let lhs_b = lhs.formula_base_branches in
 	(* An Hoa : INSTANTIATION OF THE EXISTENTIAL VARIABLES! *)
 	let evarstoi = estate.es_gen_expl_vars in
-	(*let _ = print_string ("\n\nAn Hoa :: Variables to be instantiated : ") in
-	let _ = print_string ((String.concat "," (List.map Cprinter.string_of_spec_var evarstoi)) ^ "\n") in*)
-	let lhs_pp = (match lhs_p with
-		| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
-		| MCP.OnePF f -> f) in
-	let rhs_pp = (match rhs_p with
-		| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
-		| MCP.OnePF f -> f) in
-	(*let _ = print_string ("An Hoa :: Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp ^ "\n") in 
-	let _ = print_string ("An Hoa :: Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp ^ "\n") in*)
-	let inst = pure_match evarstoi lhs_pp rhs_pp in
-	let lhs_pp = CP.mkAnd lhs_pp inst no_pos in
-	let lhs_p = (MCP.OnePF lhs_pp) in
-	(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
+	let lhs_p = if (evarstoi = []) then lhs_p else
+		(*let _ = print_string ("\n\nAn Hoa :: Variables to be instantiated : ") in
+		let _ = print_string ((String.concat "," (List.map Cprinter.string_of_spec_var evarstoi)) ^ "\n") in*)
+		let lhs_pp = (match lhs_p with
+			| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
+			| MCP.OnePF f -> f) in
+		let rhs_pp = (match rhs_p with
+			| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
+			| MCP.OnePF f -> f) in
+		(*let _ = print_string ("An Hoa :: Original LHS := " ^ Cprinter.string_of_pure_formula lhs_pp ^ "\n") in 
+		let _ = print_string ("An Hoa :: Original RHS := " ^ Cprinter.string_of_pure_formula rhs_pp ^ "\n") in*)
+		let inst = pure_match evarstoi lhs_pp rhs_pp in
+		let lhs_pp = CP.mkAnd lhs_pp inst no_pos in
+		let lhs_p = (MCP.OnePF lhs_pp) in
+		(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
+		lhs_p
+	in
 	(* An Hoa : END OF INSTANTIATION *)
   let _ = reset_int2 () in
   let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 0 in

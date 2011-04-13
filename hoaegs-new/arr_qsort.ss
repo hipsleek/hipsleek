@@ -25,8 +25,9 @@ relation matchinp(int x, int y) == true.
 void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 	case {
 		i > j  -> ensures k' = i - 1 & t' = j + 1 & a' = a;
-		i <= j -> requires [/*u,v,*/l,h] /*dom(a,u,v) & i<=u & j<=v &*/ matchinp(l,h) & bnd(a,i,j,l,h)
-                  ensures /*dom(a',u,v) &*/ i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) 
+		i <= j -> requires [u,v,l,h] dom(a,u,v) & u<=i & j<=v 
+					& matchinp(l,h) & bnd(a,i,j,l,h)
+                  ensures dom(a',u,v) & i - 1 <= k'  & k' <= j & bnd(a', i, k', l,x-1) 
                   & alleqs(a', k'+1, t'-1, x) & i <= t' & t' <= j + 1 
                   & bnd(a', t', j, x+1,h) & idexc(a', a, i, j) & bnd(a',i,j,l,h);
 	}
@@ -36,25 +37,17 @@ void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 		t = j + 1;
 	}
 	else {
-		assume dom(a',i,j);
 		if (a[i] < x) {
-			/*assume bnd(a',i',j',l,h);
-			assume dom(a',i,j);*/
 			arraypart(a, i + 1, j, x, k, t);
-			assume dom(a',i,j);
 		}
 		else if (a[i] > x) {
-			/*assume dom(a',i,j);*/
 			int temp = a[i];
 			a[i] = a[j];
 			a[j] = temp;
 			arraypart(a, i, j - 1, x, k, t);
-			assume dom(a',i,j);
 		}
 		else {
-			/*assume dom(a',i,j);*/
 			arraypart(a, i + 1, j, x, k, t);
-			assume dom(a',i,j);
 			a[i] = a[k];
 			a[k] = x;
 			k = k - 1;
@@ -65,18 +58,15 @@ void arraypart(ref int[] a, int i, int j, int x, ref int k, ref int t)
 void qsort(ref int[] a, int i, int j)
 	case {
 		i >= j -> ensures a=a';
-        i < j -> requires [l,h] bnd(a,i,j,l,h)
-          ensures bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
+        i < j -> requires [u,v,l,h] dom(a,u,v) & u<=i & j<=v & bnd(a,i,j,l,h)
+          ensures dom(a',u,v) & bnd(a',i,j,l,h) & sorted(a',i,j) & idexc(a',a,i,j);
     }
 {
 	if (i < j)
 	{
 		int k, t;
-		assume dom(a',i,j);
         int x = a[i];
-        assume bnd(a',i',j',l,h);
 		arraypart(a, i, j, x, k, t);
-		assume bnd(a',i,k',l,x-1);
 		qsort(a, i, k);
 		assume bnd(a',t',j,x+1,h);
 		qsort(a, t, j);
