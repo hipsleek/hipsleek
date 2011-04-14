@@ -164,6 +164,7 @@ let peek_try =
          | [GT,_;CPAREN,_] -> raise Stream.Failure 
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
+         | [GT,_;IMM,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
          | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
@@ -235,7 +236,15 @@ SHGram.Entry.of_parser "peek_print"
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;OPAREN,_;_] -> raise Stream.Failure 
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
+             | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
              | _ -> ())
+
+let peek_dc = 
+   SHGram.Entry.of_parser "peek_dc"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             | [OPAREN,_;EXISTS,_] -> ()
+             | _ -> raise Stream.Failure)
 
  let peek_and_pure = 
    SHGram.Entry.of_parser "peek_and_pure"
@@ -273,7 +282,15 @@ SHGram.Entry.of_parser "peek_print"
              |[_;PRIME,_;COLONCOLON,_] -> ()
              | _ -> raise Stream.Failure)
 
-let sprog = SHGram.Entry.mk "sprog"
+let peek_star = 
+   SHGram.Entry.of_parser "peek_star"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[STAR,_;OPAREN,_] -> raise Stream.Failure
+             | _ -> ())
+
+
+let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
 let sprog_int = SHGram.Entry.mk "sprog_int"
 
@@ -385,7 +402,7 @@ view_header:
       
 cid: 
   [[ 
-     `IDENTIFIER t; `PRIME -> print_string ("primed id:"^t^"\n");(t, Primed)
+     `IDENTIFIER t; `PRIME -> (* print_string ("primed id:"^t^"\n"); *)(t, Primed)
    | `IDENTIFIER t         -> (* print_string ("id:"^t^"\n"); *)(t, Unprimed)
    | `RES _                 -> (res, Unprimed)
    | `SELFT _               -> (self, Unprimed)
@@ -448,7 +465,8 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos 2)]   
+    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos 2)]    
+  |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
    [ cc=core_constr             -> cc
    | `EXISTS; ocl= cid_list; `COLON; cc= core_constr   -> 
@@ -458,14 +476,13 @@ disjunctive_constr:
                F.formula_base_flow = fl;
                F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos 1)
       | _ -> report_error (get_pos 4) ("only Base is expected here."))
-   | `OPAREN;  dc=SELF; `CPAREN -> dc 
-
-  ]
+  
+   ]
   ];
       
 core_constr:
   [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos 1))
-    | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
@@ -496,9 +513,9 @@ opt_heap_constr:
 (*   ]];  *)
 
 heap_constr:
-  [[ peek_try; `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
-   | peek_try; `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
-   | hrw = heap_rw                                            ->F.mkPhase F.HTrue hrw (get_pos 2)]]; 
+  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
+   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
+   | hrw = heap_rw                                          -> F.mkPhase F.HTrue hrw (get_pos 2)]]; 
 
 heap_rd: 
   [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos 2)
@@ -510,21 +527,28 @@ heap_rw:
    | hwr=heap_wr                                          -> F.mkPhase F.HTrue hwr (get_pos 2)]];
 
 heap_wr:
-  [[ shc=simple_heap_constr; `STAR; hw=SELF     -> F.mkStar shc hw (get_pos 2)
-   | shi=simple_heap_constr_imm; `STAR; hw=SELF -> F.mkStar shi hw (get_pos 2)
-   | shc=simple_heap_constr                     -> shc
-   | shi=simple_heap_constr_imm                 -> shi ]];
+  [[   
+     shc=SELF; peek_star; `STAR;  hw=simple_heap_constr     -> F.mkStar shc hw (get_pos 2)
+   | shc=simple_heap_constr        -> shc
+   (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos 2) *)
+   (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos 2) *)
+  ]];
  
 simple2:  [[ t= opt_type_var_list; `LT -> ()]];
    
 simple_heap_constr_imm:
-  [[ c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT; `IMM; ofl= opt_formula_label ->
+  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
      match hl with
         | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2)
         | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2)]];
 
 simple_heap_constr:
-  [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
+  [[ 
+    peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
+    (match hl with
+        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2)
+        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2))
+  | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
     (match hal with
       | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos 2)
       | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos 2))
@@ -594,7 +618,7 @@ cexp_w :
 
    
   | "pure_paren" 
-         [ `OPAREN; dc=SELF; `CPAREN -> dc ] 
+         [peek_pure; `OPAREN;  dc=SELF; `CPAREN -> dc ] 
    
 (* constraint expressions *)
    | "gen"
@@ -1072,7 +1096,6 @@ valid_declaration_statement:
   | t=time_statement -> t
   | t=bind_statement -> t
   | t=unfold_statement -> t]
-
   | [t= empty_statement -> t]
 ];
 
