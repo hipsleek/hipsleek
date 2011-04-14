@@ -114,6 +114,9 @@ let apply_cexp_form1 fct form = match form with
   
 let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
+  | Pure_f f1 , Pure_c f2 -> (match f2 with 
+                             | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (P.mkBVar v (get_pos 1), None )))
+                             | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp" )
   | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
@@ -129,7 +132,12 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                              | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct c f2, None)) explist
                                in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
                                in Pure_f(res) 
-                             | _ -> Pure_f (P.BForm(fct f1 f2,None)))
+                             | _ -> (match f2 with
+                                    | P.List(explist,pos) -> let tmp = List.map (fun c -> P.BForm (fct f1 c, None)) explist
+                                      in let res = List.fold_left (fun c1 c2 -> P.mkAnd c1 c2 (get_pos 2)) (List.hd tmp) (List.tl tmp)
+                                      in Pure_f(res) 
+                                    | _ -> Pure_f (P.BForm(fct f1 f2,None)))
+                             )
   | Pure_f f1 , Pure_c f2 -> (match f1  with 
 						    | P.BForm(b,oe) -> (match b with 
                                                | P.Lt (a1, a2, _) 
@@ -157,6 +165,7 @@ let peek_try =
          | [GT,_;INV,_] -> raise Stream.Failure
          | [GT,_;AND,_] -> raise Stream.Failure
          | [GT,_;OR,_] -> raise Stream.Failure
+         | [GT,_;ORWORD,_] -> raise Stream.Failure
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
@@ -165,6 +174,7 @@ let peek_try =
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
+         | [GT,_;CASE,_] -> raise Stream.Failure 
          | [GT,_;_] -> ()
          | [SEMICOLON,_;_] -> ()
          | _ -> raise Stream.Failure  ) 
@@ -173,9 +183,21 @@ let peek_try =
  SHGram.Entry.of_parser "peek_try_st" 
      (fun strm ->
        match Stream.npeek 2 strm with
-          | [_; DOT,_] -> ()
-          | [_; OP_INC,_] -> ()
           | [_; OP_DEC,_] -> ()
+          | _ -> raise Stream.Failure)
+
+ let peek_try_st_in = 
+ SHGram.Entry.of_parser "peek_try_st_in" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [_; OP_INC,_] -> ()
+          | _ -> raise Stream.Failure)
+
+ let peek_try_st_qi = 
+ SHGram.Entry.of_parser "peek_try_st_qi" 
+     (fun strm ->
+       match Stream.npeek 2 strm with
+          | [_; DOT,_] -> ()
           | _ -> raise Stream.Failure)
 		  
  let peek_invocation = 
@@ -270,8 +292,10 @@ let peek_dc =
  let peek_cexp_list = 
    SHGram.Entry.of_parser "peek_cexp_list"
        (fun strm ->
-           match Stream.npeek 4 strm with 
-             | [_;COMMA,_;_;GTE,_] -> ()
+           match Stream.npeek 6 strm with 
+             | [_;COMMA,_;_;GTE,_;_;_] -> ()
+             | [_;COMMA,_;_;AND,_;_;_] -> ()
+             | [_;COMMA,_;_;COMMA,_;_;SEMICOLON,_] -> ()
              | _ -> raise Stream.Failure)
 
  let peek_heap = 
@@ -416,7 +440,8 @@ view_body:
   
 (********** Constraints **********)
 
-opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t]];
+opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t
+]];
 
 opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
   
@@ -622,7 +647,7 @@ cexp_w :
    
 (* constraint expressions *)
    | "gen"
-   [ `OBRACE; c=opt_cexp_list; `CBRACE                             -> Pure_c (P.Bag (c, get_pos 1)) 
+   [ `OBRACE; c= opt_cexp_list; `CBRACE                             -> Pure_c (P.Bag (c, get_pos 1)) 
    | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos 1))
    | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos 1)) 
    | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN  
@@ -648,7 +673,7 @@ cexp_w :
 
    | "una"
      [  h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
-     | peek_cexp_list; ocl = opt_cid_list -> let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in Pure_c(P.List(tmp, get_pos 1)) 
+     | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in *) Pure_c(P.List(ocl, get_pos 1)) 
      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
@@ -677,10 +702,17 @@ cexp_w :
   
    ];
 
+opt_comma_list:[[t = LIST0 opt_comma SEP `COMMA -> t
+]];
+
+opt_comma:[[t = cid ->  P.Var (t, get_pos 1)
+  | `INT_LITER (i,_) ->  P.IConst (i, get_pos 1)
+  | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos 1)
+   ]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]]; 
 
-(* cexp_list: [[t=LIST1 cexp SEP `COMMA -> t]]; *)
+(* cexp_list: [[t=LIST1 cexp_w SEP `COMMA -> t]]; *)
 
 (********** Procedures and Coercion **********)
 
@@ -861,7 +893,7 @@ decl:
   [[ t=type_decl                  -> Type t
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
-  | `COERCION; c=coercion_decl    -> Coercion c ]];
+  | `COERCION; c=coercion_decl; `SEMICOLON    -> Coercion c ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t
@@ -970,7 +1002,7 @@ escape_conditions: [[ `ESCAPE; `OSQUARE; t=condition_list; `CSQUARE -> t]];
 
 condition_list: [[t=pure_constr ->[t]]];
   
-branch_list: [[t=LIST1 spec_branch -> t]];
+branch_list: [[t=LIST1 spec_branch -> List.rev t]];
 
 spec_branch: [[ pc=pure_constr; `LEFTARROW; sl= spec_list -> (pc,sl)]];
 	 
@@ -1136,11 +1168,11 @@ java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos 1 
 expression_statement: [[(* t=statement_expression -> t *)
         t= invocation_expression -> t
       | t=object_creation_expression -> t
-      |peek_exp_st; t=assignment_expression -> t
-      | t=post_increment_expression -> t
-      | t=post_decrement_expression -> t
-      | t=pre_increment_expression -> t  
-      | t=pre_decrement_expression -> t]]; 
+      | t= post_increment_expression -> t
+      | t= post_decrement_expression -> t
+      | t= pre_increment_expression -> t  
+      | t= pre_decrement_expression -> t
+      | peek_exp_st; t= assignment_expression -> t]]; 
 
 (*statement_expression:
   [[
@@ -1349,7 +1381,7 @@ pre_increment_expression: [[`OP_INC; t=prefixed_unary_expression -> mkUnary OpPr
 
 pre_decrement_expression: [[`OP_DEC; t=prefixed_unary_expression -> mkUnary OpPreDec t (get_pos 1)]];
 
-post_increment_expression: [[peek_try_st; t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos 2)]];
+post_increment_expression: [[peek_try_st_in; t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos 2)]];
 
 post_decrement_expression: [[ peek_try_st; t=primary_expression; `OP_DEC -> mkUnary OpPostDec t (get_pos 2)]];
 
@@ -1409,7 +1441,7 @@ invocation_expression:
                 exp_call_nrecv_path_id = None;
                 exp_call_nrecv_pos = get_pos 1 }]];
 
-qualified_identifier: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
+qualified_identifier: [[peek_try_st_qi; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
 
 (* member_access: [[peek_try_st; t=primary_expression; `DOT; `IDENTIFIER id -> *)
 (* 	Member { exp_member_base = t; *)
