@@ -867,13 +867,13 @@ let set_process (proc: Globals.prover_process_t) =
 let rec check_prover_existence prover_cmd_str: bool =
   let exit_code = Sys.command ("which "^prover_cmd_str^">/dev/null") in
   if exit_code > 0 then
-    let _ = print_string ("Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found\n") in
+    let _ = print_string ("WARNING: Command for starting mona interactively (" ^ prover_cmd_str ^ ") not found!\n") in
     false
   else true
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inte1r") then begin
+  if(check_prover_existence "mona_inter") then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end
