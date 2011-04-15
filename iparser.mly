@@ -1190,7 +1190,7 @@ constructor_header
 coercion_decl
   : COERCION opt_name disjunctive_constr coercion_direction disjunctive_constr SEMICOLON {  
 	{ coercion_type = $4;
-	  coercion_name = $2;
+	  coercion_name = (let v=$2 in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
 	  coercion_head =  (F.subst_stub_flow top_flow $3);
 	  coercion_body =  (F.subst_stub_flow top_flow $5);
 	  coercion_proof = Return ({ exp_return_val = None;

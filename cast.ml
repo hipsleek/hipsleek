@@ -89,7 +89,9 @@ and proc_decl = { proc_name : ident;
 
 (*TODO: does lemma need struc formulas?*)
 
-and coercion_decl = { coercion_name : ident;
+(* TODO : coercion type ->, <-, <-> just added *)
+and coercion_decl = { coercion_type : coercion_type;
+              coercion_name : ident;
 		      coercion_head : F.formula;
 		      coercion_body : F.formula;
 		      coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
@@ -99,10 +101,10 @@ and coercion_decl = { coercion_name : ident;
 		      (* the name of the predicate where this coercion can be applied *)
 		      coercion_body_view : ident  (* used for cycles checking *) }
 
-and coercion_type = 
-  | Left
-  | Equiv
-  | Right
+and coercion_type = Iast.coercion_type
+  (* | Left *)
+  (* | Equiv *)
+  (* | Right *)
       
 and sharp_flow = 
   | Sharp_ct of F.flow_formula

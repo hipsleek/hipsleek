@@ -1662,7 +1662,8 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
             Err.error_text = "root pointer of node on LHS must be self";
         }
   else
-    (let c_coer ={ C.coercion_name = coer.I.coercion_name;
+    (let c_coer ={ C.coercion_type = coer.I.coercion_type;
+    C.coercion_name = coer.I.coercion_name;
     C.coercion_head = c_lhs;
     C.coercion_body = c_rhs;
     C.coercion_univ_vars = univ_vars;

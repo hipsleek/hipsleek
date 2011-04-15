@@ -801,15 +801,23 @@ and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
   | _ -> failwith ("get_view_imm: not a view")
 
-and h_add_origins (h : h_formula) origs = match h with
+and h_add_origins (h : h_formula) origs = 
+  let pr = !print_h_formula in
+  let pr2 x = "?" in
+  Gen.Debug.ho_2 "h_add_origins" pr pr2 pr h_add_origins_a h origs
+
+and h_add_origins_a (h : h_formula) origs = 
+  let rec helper h = match h with
   | Star ({h_formula_star_h1 = h1;
 		   h_formula_star_h2 = h2;
 		   h_formula_star_pos = pos}) ->
-	  Star ({h_formula_star_h1 = h_add_origins h1 origs;
-			 h_formula_star_h2 = h_add_origins h2 origs;
+	  Star ({h_formula_star_h1 = helper h1;
+			 h_formula_star_h2 = helper h2;
 			 h_formula_star_pos = pos})
   | ViewNode vn -> ViewNode {vn with h_formula_view_origins = origs @ vn.h_formula_view_origins}
-  | _ -> h
+  | _ -> h 
+  in helper h
+  
   
 and add_origins (f : formula) origs = match f with
   | Or ({formula_or_f1 = f1;

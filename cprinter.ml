@@ -438,6 +438,10 @@ let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
 let pr_imm x = fmt_string (string_of_imm x)
 
+let string_of_ident x = x
+
+let pr_ident x = fmt_string (string_of_ident x)
+
 
 (** check if top operator of e is associative and 
    return its list of arguments if so *)
@@ -788,7 +792,7 @@ let rec pr_h_formula h =
       h_formula_view_name = c; 
 	  h_formula_view_imm = imm;
       h_formula_view_arguments = svs; 
-      h_formula_view_origins = _;
+      h_formula_view_origins = origs;
       h_formula_view_label = pid;
       h_formula_view_remaining_branches = ann;
       h_formula_view_pruning_conditions = pcond;
@@ -799,6 +803,7 @@ let rec pr_h_formula h =
           fmt_string "::"; 
           pr_angle c pr_spec_var svs;
 	      pr_imm imm;
+          if origs!=[] then pr_seq "#O" pr_ident origs; (* origins of lemma coercion *)
           pr_remaining_branches ann; 
           pr_prunning_conditions ann pcond;
           fmt_close()
@@ -1509,7 +1514,10 @@ let rec string_of_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
-let string_of_coerc c lft = (string_of_formula c.coercion_head)^(if lft then "<=" else "=>")^(string_of_formula c.coercion_body) ;;
+let string_of_coerc c lft = "\""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(if lft then "<=" else "=>")^(string_of_formula c.coercion_body)
+  ^"{head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}" ;;
+
+let string_of_coercion c = string_of_coerc c false ;;
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 

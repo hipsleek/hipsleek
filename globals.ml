@@ -366,7 +366,11 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
-		
+
+let fresh_any_name (any:string) = 
+  let str = string_of_int (fresh_int ()) in
+    any ^"_"^ str
+
 let fresh_name () = 
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str

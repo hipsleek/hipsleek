@@ -2745,11 +2745,15 @@ and obtain_subst l =
     | _::r -> ((fst (obtain_subst r)), (snd (obtain_subst r)))
     | [] -> ([],[])
 
+and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.formula) (lhs : CF.formula) : bool =
+  Gen.Debug.ho_2 "coer_target" Cprinter.string_of_coercion Cprinter.string_of_h_formula string_of_bool 
+  (fun coer node -> coer_target_a prog coer node rhs lhs) coer node
+
 (* check whether the target of a coercion is in the RHS of the entailment *)
 (* coer: the coercion lemma to be applied *)
 (* node: the node to which the coercion applies *)
 (* lhs and rhs - the antecedent and consequent, respectively *)
-and coer_target prog (coer : coercion_decl) node (rhs : CF.formula) (lhs : CF.formula) : bool =
+and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.formula) (lhs : CF.formula) : bool =
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
   let coer_lhs_heap, coer_lhs_guard,coer_lhs_flow, coer_lhs_branches, _ = split_components coer_lhs in
@@ -4817,7 +4821,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		h_formula_view_remaining_branches = br2;
 		h_formula_view_arguments = ps2}) when c1=c2 && (br_match br1 br2)-> begin
 	      (* the lemma application heuristic:
-	         - if the flag 	lemma_heuristic in true then we use both coerce& match - each lemma application must be followed by a match  - and history
+	         - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
 	         - if the flag is false, we only use coerce&distribute&match
 	      *)
 	      let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b) (CF.formula_of_base lhs_b)) in
@@ -4825,7 +4829,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		      (not(apply_coer) 					(* the target is not present *)
 		      or (get_estate_must_match estate))  (* must match *)
 		  && (List.mem coer.coercion_body_view origs
-		  or List.mem coer.coercion_head_view origs))  (* there is a cycle *)
+		  or List.mem (* coer.coercion_head_view *) coer.coercion_name origs))  (* there is a cycle *)
 		    or 	(not(!Globals.lemma_heuristic) &&   (* use coerce&distribute&match*)
 			    (not(apply_coer) or 				(* the target is not present *)
 			        ((get_estate_must_match estate) 	(* must match *)
@@ -4848,7 +4852,8 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		      let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
 		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in
 		      let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
-		      let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in
+		      (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
+		      let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name :: origs) in
 		      let _ = reset_int2 () in
 		      (*let xpure_lhs = xpure prog f in*)
 		      (*************************************************************************************************************************************************************************)
@@ -4953,7 +4958,8 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 		        let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
 		        (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in*)
 		        let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
-		        let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in
+		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
+		        let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name :: origs) in
 		        let _ = reset_int2 () in
 		        let xpure_lhs, xpure_lhs_b, _, memset = xpure prog f in
 		        let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
