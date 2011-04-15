@@ -157,8 +157,8 @@ let peek_try =
  SHGram.Entry.of_parser "peek_try" 
     (fun strm -> 
        match Stream.npeek 2 strm with 
-         | [cid;  IN_T,_]  -> ()
-         | [cid; NOTIN,_] -> ()
+         | [_;IN_T,_]  -> ()
+         | [_;NOTIN,_] -> ()
          | [SEMICOLON,_; CBRACE,_] -> raise Stream.Failure
          | [OPAREN,_; EXISTS,_ ] -> raise Stream.Failure
          | [GT,_;STAR,_] -> raise Stream.Failure
@@ -255,6 +255,9 @@ SHGram.Entry.of_parser "peek_print"
    SHGram.Entry.of_parser "peek_pure"
        (fun strm -> 
            match Stream.npeek 3 strm with
+             | [FORALL,_;OPAREN,_;_] -> ()
+             | [EXISTS,_;OPAREN,_;_] -> ()
+             | [UNION,_;OPAREN,_;_] -> ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;OPAREN,_;_] -> raise Stream.Failure 
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
@@ -475,7 +478,7 @@ extended_l:
    | h=extended_constr -> [h]]];
    
 extended_constr:
-	[[ `CASE; `OBRACE; il=impl_list; `CBRACE -> 
+	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
       Iformula.ECase {
           Iformula.formula_case_branches = il;
           Iformula.formula_case_pos = (get_pos 3) }
@@ -595,7 +598,7 @@ general_h_args:
               
 opt_pure_constr: [[t=OPT and_pure_constr -> un_option t (P.mkTrue no_pos)]];
     
-and_pure_constr: [[peek_and_pure; `AND; t=pure_constr -> t]];
+and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr -> t]];
     
 (* (formula option , expr option )   *)
     
@@ -669,16 +672,19 @@ cexp_w :
      | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
-   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c] 
+   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c
+
+] 
 
    | "una"
      [  h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
+     | `NULL                                     -> Pure_c (P.Null (get_pos 1))
      | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in *) Pure_c(P.List(ocl, get_pos 1)) 
      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
-     | `NULL                                     -> Pure_c (P.Null (get_pos 1))
+
     
      | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos 1)) c1 c2
@@ -690,12 +696,13 @@ cexp_w :
    | "pure_base"
      [ `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
      | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
-     | t=cid                            -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
-     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
      | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
      | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos 1)) c ocl) pc
+     | t=cid                            -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
+     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
+    
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
 
@@ -765,7 +772,7 @@ coercion_direction:
 
 opt_name: [[t= OPT name-> un_option t ""]];
 
-name:[[`DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE -> id]];
+name:[[ `STRING(_,id)  -> id]];
 
 typ:
   [[ t=non_array_type -> t
@@ -893,7 +900,7 @@ decl:
   [[ t=type_decl                  -> Type t
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
-  | `COERCION; c=coercion_decl; `SEMICOLON    -> Coercion c ]];
+  | `COERCION; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
 
 type_decl: 
   [[ t= data_decl  -> Data t

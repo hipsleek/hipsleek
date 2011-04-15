@@ -38,6 +38,6 @@ with
     Rec (S,Sl,Sr,v,n,l,r) =  S = union(Sl, Sr, {v}) & forall (x : (x notin Sl | x <= v)) & forall (y : (y notin Sr | y >= v))
   }
   
-avl<m,n,S> == finalizes avl_S[int]<S> 
+avl<m,n,S> == finalizes avl_S[int]<S>; 
 
 

@@ -10,24 +10,24 @@ data node3[b] {
 // TODO: to check the intermediate value... sometimes I just put 0, 0
 
 
-pred dll_shape[t,b]<a:t>
+ho_pred dll_shape[t,b]<a:t>
   == Base(a,self)
       or self::node2[b]<v,p,q>* q::dll_shape[t,b]<aq>* Rec(a,aq,self,v,p,q)
       inv Inv(a,self);
 
-pred tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
-	or self::node3[b]<_,_,l,m,r>* l::tree_shape(al)*m::tree2_3[t,b](am) * r::tree_shape[t,b](ar)* Rec1(a,al,ar,am,self,l,m,r);
+ho_pred tree_shape[t,b]<a:t>[Base,Rec,Inv]== Base(a,self)
+	or self::node3[b]<_,_,l,m,r> * l::tree_shape<al> * m::tree2_3[t,b]<am> * r::tree_shape[t,b]<ar> * Rec1(a,al,ar,am,self,l,m,r)
 	inv Inv(a);
 
-pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<a>
+ho_pred tree_23[b,b]<a:b> [Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<a>
   with { 
       Base(a,self) = a=0 & self= null
       Rec(a,al,am,ar,self,l,m,r) = (r != null & al = am & al = ar & a = al + 1 & Rec1(a,al,am,ar,self,l,m,r)  |
                                     r = null & al = am & a = al + 1 & Rec2(a,al,am,ar,self,l,m,r))
-      Inv (a) = a>=0;
+      Inv (a) = a>=0
        }
 
-pred tree2_3<n> finalizes tree_23[int]
+tree2_3<n> == finalizes tree_23[int]<>;
 
 
 
