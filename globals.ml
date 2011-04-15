@@ -29,7 +29,7 @@ and prim_type =
   | Float
   | Int
   | Void
-  | Bag
+  (* | Bag *)
   | List
 
 (*

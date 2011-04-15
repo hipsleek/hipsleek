@@ -289,6 +289,8 @@ and is_first_order (f : CP.formula) (elem_list : CP.exp list) : bool =
 	                end
     | _ -> false
 
+(* TODO : What is the role of initial_f? and the relation between
+   f and initial_f *)
 and is_first_order_a (f : CP.formula) (elem_list : CP.exp list) (initial_f : CP.formula) : bool =
   match f with
     | CP.And(f1, f2, _)
@@ -420,6 +422,9 @@ and is_inside_bag_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
   | _ -> begin false; end
 
 and is_firstorder_mem f e vs =
+  Gen.Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
+
+and is_firstorder_mem_a f e vs =
   match e with
     | CP.Var(sv1, _) ->
           begin try Hashtbl.find vs sv1
@@ -427,7 +432,7 @@ and is_firstorder_mem f e vs =
               let ret = is_first_order f [e] in
               Hashtbl.replace vs sv1 ret; ret
           end
-    | CP.IConst _ -> true
+    | CP.IConst _ | CP.Null _ -> true
     | _ -> false
 
 (* pretty printing for spec_vars *)
@@ -700,6 +705,10 @@ and mona_of_b_formula b f vs =
   ret
 
 and equation a1 a2 f sec_order_symbol first_order_symbol vs =
+   Gen.Debug.no_2 "equation" Cprinter.string_of_formula_exp Cprinter.string_of_formula_exp (fun x -> x)
+   (fun a1 a2 -> equation_a a1 a2 f sec_order_symbol first_order_symbol vs) a1 a2
+
+and equation_a a1 a2 f sec_order_symbol first_order_symbol vs =
   if (is_firstorder_mem f a1 vs && is_firstorder_mem f a2 vs) then begin
     match a1 with
       | CP.IConst(i1, _) ->
@@ -864,7 +873,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter") then begin
+  if(check_prover_existence "mona_inte1r") then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end
