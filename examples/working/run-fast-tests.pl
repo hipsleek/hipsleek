@@ -398,7 +398,8 @@ $output_file = "log";
 				["qsort.ss",3,	"partition","SUCCESS",
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
-#				["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS","partition1","SUCCESS"],
+        # goes into a loop with combined-lemma-heuristics still
+				#["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS","partition1","SUCCESS"],
 				["rb.ss",18,"rotate_case_3","SUCCESS",
 							"case_2","SUCCESS",
 							"rotate_case_3r","SUCCESS",
@@ -470,9 +471,10 @@ $output_file = "log";
 					["sleek3.slk","Valid.Fail.Valid."],
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
+                    # imm error for sleek7.slk and loop for sleek8.slk
 					#["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-				        #["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
-					["sleek9.slk","Valid."],
+				    #["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+					["sleek9.slk","Valid.Fail.Valid.Valid."],
                                         ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
 			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],
 			                ["imm/imm2.slk","Fail.Valid.Fail.Valid.Fail."],
