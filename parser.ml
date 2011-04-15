@@ -344,7 +344,7 @@ data_decl:
     [[ dh=data_header ; db = data_body 
         -> {data_name = dh;
             data_fields = db;
-            data_parent_name="Object";
+            data_parent_name="Object"; (* Object; *)
             data_invs = [];
             data_methods = [];} ]];
 
