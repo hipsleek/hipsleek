@@ -27,7 +27,12 @@ inv n >= 0;
 
 coercion "ll_tail2lseg" self::ll_tail<n, t, sm, lg> <-> self::lseg<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg;
 
-coercion "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2;
+/*
+coercion "lsegmb" self::lseg<n, p, sm, lg> <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & n=n1+n2 & lg1<=sm2; 
+*/
+
+coercion "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> self::lseg<n1, q, sm, lg1> * q::lseg<n2, p, sm2, lg> & lg1<=sm2;
+
 
 void qsort(ref node x, ref node tx)
 	requires x::bnd_tail<n, tx, sm, lg> & n>0
@@ -35,6 +40,7 @@ void qsort(ref node x, ref node tx)
 {
 	if (x == null) return; // not needed
 	else if (x.next == null) {
+        assume false;
 		return;
 	}
 	else {
@@ -55,6 +61,7 @@ void qsort(ref node x, ref node tx)
 			qsort(y, ty);
 
 		if (x == null) {
+            assume false;
 			x = y;
 			tx = ty;
 			return;
@@ -62,6 +69,8 @@ void qsort(ref node x, ref node tx)
 		else if (y != null) {
 			tx.next = y;
 			tx = ty;
+            //            dprint;
+            // assume false;
 			return;
 		}
 	}

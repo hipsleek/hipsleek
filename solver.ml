@@ -2746,7 +2746,7 @@ and obtain_subst l =
     | [] -> ([],[])
 
 and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.formula) (lhs : CF.formula) : bool =
-  Gen.Debug.ho_2 "coer_target" Cprinter.string_of_coercion Cprinter.string_of_h_formula string_of_bool 
+  Gen.Debug.no_2 "coer_target" Cprinter.string_of_coercion Cprinter.string_of_h_formula string_of_bool 
   (fun coer node -> coer_target_a prog coer node rhs lhs) coer node
 
 (* check whether the target of a coercion is in the RHS of the entailment *)
@@ -4853,7 +4853,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in
 		      let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
 		      (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
-		      let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name :: origs) in
+		      let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
 		      let _ = reset_int2 () in
 		      (*let xpure_lhs = xpure prog f in*)
 		      (*************************************************************************************************************************************************************************)
@@ -4889,7 +4889,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 
 
 and is_cycle_coer (c:coercion_decl) (origs:ident list) : bool =  
-  Gen.Debug.ho_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
+  Gen.Debug.no_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
       is_cycle_coer_a c origs
 
 (* this checks if node is being applied a second time with same coercion rule *)
@@ -4971,7 +4971,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 		        (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in*)
 		        let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
-		        let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_name :: origs) in
+		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
 		        let _ = reset_int2 () in
 		        let xpure_lhs, xpure_lhs_b, _, memset = xpure prog f in
 		        let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
@@ -5015,8 +5015,14 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
     | _ -> (false, mkTrue (mkTrueFlow ()) no_pos)
 	      (*end	*)
 
-(*******************************************************************************************************************************************************************************************)
 and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos pid =
+      Gen.Debug.ho_5 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_formula (fun x -> x) (fun x -> x) (fun x -> "?") 
+      (fun _ _ _ _ _ -> apply_universal_a prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos pid)
+        anode resth1 conseq c1 c2
+ (* anode - chosen node, resth1 - rest of heap *)
+
+(*******************************************************************************************************************************************************************************************)
+and apply_universal_a prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 c2 conseq is_folding pos pid =
   (*******************************************************************************************************************************************************************************************)
   flush stdout;
     if Gen.is_empty coer.coercion_univ_vars then (CF.mkFailCtx_in ( Basic_Reason (  {
@@ -5074,39 +5080,66 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t 
       let right_prf = List.concat right_prf in
       Some (right_res,right_prf)
     else None in
-    match univ_r,left_r,right_r with
-	    (* | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), []) *)
-      | None,None,None -> (CF.mkFailCtx_in(Trivial_Reason "cannot find matching node in antecedent (do coercion)"), [])
-	        (* (CF.mkFailCtx_in(Basic_Reason ( { *)
-	        (* fc_message ="cannot find matching node in antecedent (do coercion) "; *)
-	        (* fc_current_lhs = estate; *)
-	        (* fc_orig_conseq = struc_formula_of_formula conseq pos; *)
-	        (* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) *)
-      | Some (c1,c2), None, None 
-      | None, Some (c1,c2), None  
-      | None, None, Some (c1,c2) -> ((fold_context_left c1),c2)
-      | Some (c1,c2),Some(d1,d2),None
-      | Some (c1,c2),None,Some(d1,d2)
-      | None,Some (c1,c2),Some(d1,d2) -> 
-            let c1 = (fold_context_left c1) in
-            let d1 = (fold_context_left d1) in
-            let r = (fold_context_left [c1;d1]) in
-            let prf = (if (isFailCtx r)==(isFailCtx c1) then c2 else [])@
-              (if (isFailCtx r)==(isFailCtx d1) then d2 else [])in
-            (r,prf)
-      | Some (c1,c2),Some(d1,d2),Some (e1,e2) ->
-            let c1 = (fold_context_left c1) in
-            let d1 = (fold_context_left d1) in
-            let e1 = (fold_context_left e1) in
-            let r = (fold_context_left [c1;d1;e1]) in
-            let prf = (if (isFailCtx r)==(isFailCtx c1) then c2 else [])@
-              (if (isFailCtx r)==(isFailCtx d1) then d2 else [])@
-              (if (isFailCtx r)==(isFailCtx e1) then e2 else [])in
-            (r,prf)
+    let proc lst = 
+      let r1 = List.map (fun (c,p) -> (fold_context_left c,p)) lst in
+      let (r2,p) = List.split r1 in
+      let res = fold_context_left r2 in
+      let final_res = (isFailCtx res) in
+      let prf = List.concat (List.map (fun (c,p) -> if final_res==(isFailCtx c) then p else []) r1) in
+      (res,prf) in
+    let m = List.fold_right (fun x r -> match x with None -> r | Some x -> x::r ) [univ_r;left_r;right_r] [] in
+    if m==[] then (CF.mkFailCtx_in(Trivial_Reason "cannot find matching node in antecedent (do coercion)"), [])
+    else proc m
+    (* match univ_r,left_r,right_r with *)
+	(*     (\* | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), []) *\) *)
+    (*   | None,None,None -> (CF.mkFailCtx_in(Trivial_Reason "cannot find matching node in antecedent (do coercion)"), []) *)
+	(*         (\* (CF.mkFailCtx_in(Basic_Reason ( { *\) *)
+	(*         (\* fc_message ="cannot find matching node in antecedent (do coercion) "; *\) *)
+	(*         (\* fc_current_lhs = estate; *\) *)
+	(*         (\* fc_orig_conseq = struc_formula_of_formula conseq pos; *\) *)
+	(*         (\* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) *\) *)
+    (*   | Some (c1,c2), None, None  *)
+    (*   | None, Some (c1,c2), None   *)
+    (*   | None, None, Some (c1,c2) -> ((fold_context_left c1),c2) *)
+    (*   | Some (c1,c2),Some(d1,d2),None *)
+    (*   | Some (c1,c2),None,Some(d1,d2) *)
+    (*   | None,Some (c1,c2),Some(d1,d2) ->  *)
+    (*         let c1 = (fold_context_left c1) in *)
+    (*         let d1 = (fold_context_left d1) in *)
+    (*         let r = (fold_context_left [c1;d1]) in *)
+    (*         let prf = (if (isFailCtx r)==(isFailCtx c1) then c2 else [])@ *)
+    (*           (if (isFailCtx r)==(isFailCtx d1) then d2 else [])in *)
+    (*         (r,prf) *)
+    (*   | Some (c1,c2),Some(d1,d2),Some (e1,e2) -> *)
+    (*         let c1 = (fold_context_left c1) in *)
+    (*         let d1 = (fold_context_left d1) in *)
+    (*         let e1 = (fold_context_left e1) in *)
+    (*         let r = (fold_context_left [c1;d1;e1]) in *)
+    (*         let prf = (if (isFailCtx r)==(isFailCtx c1) then c2 else [])@ *)
+    (*           (if (isFailCtx r)==(isFailCtx d1) then d2 else [])@ *)
+    (*           (if (isFailCtx r)==(isFailCtx e1) then e2 else [])in *)
+    (*         (r,prf) *)
 	            (*******************************************************************************************************************************************************************************************)
 	            (* apply_left_coercion *)
 	            (*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 is_folding pos pid=
+    Gen.Debug.ho_2 "apply_left_coercion" Cprinter.string_of_formula (fun x -> x) (fun x -> "?") 
+      (fun conseq c1 -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 is_folding pos pid)
+        conseq c1
+(* anode - LHS matched node
+   resth1 - LHS remainder
+   lhs_p - lhs mix pure
+   lhs_t - type of formula? (for OO)
+   lhs_fl - flow 
+   lhs_br - lhs branches
+   lhs_b - lhs base
+   rhs_b - rhs base
+   c1 - lhs pred name
+   is_folding
+   pos 
+   pid - ?id
+*)
+and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_b rhs_b c1 is_folding pos pid=
   (*let _ = print_string("left coercion\n") in*)
   let f = mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos in
   let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
@@ -5132,7 +5165,24 @@ and apply_left_coercion estate coer prog conseq ctx0 resth1 anode lhs_p lhs_t lh
     (*******************************************************************************************************************************************************************************************)
     (* apply_right_coercion *)
     (*******************************************************************************************************************************************************************************************)
-and apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 rhs_p rhs_t rhs_fl lhs_b rhs_b c2 is_folding pos pid =
+and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 rhs_p rhs_t rhs_fl lhs_b rhs_b (c2:ident) is_folding pos pid =
+  Gen.Debug.ho_5 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion Cprinter.string_of_formula (fun x -> x) (fun x -> "?") 
+      (fun _ _ _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 rhs_p rhs_t rhs_fl lhs_b rhs_b (c2:ident) is_folding pos pid) ln2 resth2 coer conseq c2
+
+(* ln2 - RHS matched node
+   resth2 - RHS remainder
+   rhs_p - lhs mix pure
+   rhs_t - type of formula? (for OO)
+   rhs_fl - flow 
+   ?rhs_br - not present? why?
+   lhs_b - lhs base
+   rhs_b - rhs base
+   c2 - rhs pred name
+   is_folding
+   pos 
+   pid - ?id
+*)
+and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 rhs_p rhs_t rhs_fl lhs_b rhs_b (c2:ident) is_folding pos pid =
   (*let _ = print_string("right coercion\n") in*)
   let f = mkBase resth2 rhs_p rhs_t rhs_fl [] pos in
   let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
