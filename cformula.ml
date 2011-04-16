@@ -183,6 +183,7 @@ approx_formula_and_a2 : approx_formula }
 
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
+let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -803,7 +804,7 @@ and get_view_imm (h : h_formula) = match h with
 
 and h_add_origins (h : h_formula) origs = 
   let pr = !print_h_formula in
-  let pr2 x = "?" in
+  let pr2 = !print_ident_list in
   Gen.Debug.ho_2 "h_add_origins" pr pr2 pr h_add_origins_a h origs
 
 and h_add_origins_a (h : h_formula) origs = 

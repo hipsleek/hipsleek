@@ -1277,6 +1277,7 @@ let rec string_of_ident_list l c = match l with
   | h::t -> h ^ c ^ (string_of_ident_list t c)
 ;;
 
+let str_ident_list l = string_of_ident_list l "" ;;
 let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
@@ -1514,7 +1515,12 @@ let rec string_of_decl_list l c = match l with
 let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_list d.data_fields "\n") ^ "\n}"
 ;;
 
-let string_of_coerc c lft = "\""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(if lft then "<=" else "=>")^(string_of_formula c.coercion_body)
+let string_of_coercion_type (t:Cast.coercion_type) = match t with
+  | Iast.Left -> "=>"
+  | Iast.Right -> "<="
+  | Iast.Equiv -> "<=>" ;;
+
+let string_of_coerc c lft = "\""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type)^(string_of_formula c.coercion_body)
   ^"{head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}" ;;
 
 let string_of_coercion c = string_of_coerc c false ;;
@@ -1611,6 +1617,7 @@ Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
+Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;

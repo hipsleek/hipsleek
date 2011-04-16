@@ -1672,7 +1672,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
     C.coercion_body_view = rhs_name;} in
     match coer.I.coercion_type with
       | I.Left -> ([ c_coer ], [])
-      | I.Equiv -> ([ c_coer ], [ c_coer ])
+      | I.Equiv -> ([ c_coer ], [ c_coer  ])
       | I.Right -> ([], [ c_coer ]))
 
 and find_view_name (f0 : CF.formula) (v : ident) pos =

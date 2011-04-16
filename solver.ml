@@ -4829,7 +4829,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 		      (not(apply_coer) 					(* the target is not present *)
 		      or (get_estate_must_match estate))  (* must match *)
 		  && (List.mem coer.coercion_body_view origs
-		  or List.mem (* coer.coercion_head_view *) coer.coercion_name origs))  (* there is a cycle *)
+		  or is_cycle_coer coer origs)) (* there is a cycle *)
 		    or 	(not(!Globals.lemma_heuristic) &&   (* use coerce&distribute&match*)
 			    (not(apply_coer) or 				(* the target is not present *)
 			        ((get_estate_must_match estate) 	(* must match *)
@@ -4886,6 +4886,15 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
 			fc_current_conseq = CF.formula_of_heap HFalse pos;
 			fc_failure_pts = [];})), Failure)
   end
+
+
+and is_cycle_coer (c:coercion_decl) (origs:ident list) : bool =  
+  Gen.Debug.ho_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
+      is_cycle_coer_a c origs
+
+(* this checks if node is being applied a second time with same coercion rule *)
+and is_cycle_coer_a (c:coercion_decl) (origs:ident list) : bool =  List.mem c.coercion_name origs
+
       (*
         Rewrites f by matching node with coer_lhs to obtain a substitution.
         The substitution is then applied to coer_rhs, which is then *-joined
@@ -4898,6 +4907,7 @@ and do_universal prog estate node f coer anode lhs_b rhs_b conseq is_folding pos
       (*******************************************************************************************************************************************************************************************)
       (* rewrite_coercion *)
       (*******************************************************************************************************************************************************************************************)
+
 and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * formula) =
   (* This function also needs to add the name and the origin list
      of the source view to the origin list of the target view. It
@@ -4944,7 +4954,9 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 	        *)
 	        if (!Globals.lemma_heuristic && 
                 (not(apply_coer) (* coerce&match+history *) or (get_estate_must_match estate)) && 
-                (List.mem coer.coercion_body_view origs or List.mem coer.coercion_head_view origs))
+                (List.mem coer.coercion_body_view origs 
+                or (* List.mem coer.coercion_head_view origs *)  (is_cycle_coer coer origs))
+            )
 	          or (not(!Globals.lemma_heuristic) && (* coerce&distribute&match *)
 		          (not(apply_coer) or 	(* the target is not present *)
 			          ((get_estate_must_match estate) (* must match *) && (not(!enable_distribution) (* distributive coercion is not allowed *)
@@ -5026,8 +5038,16 @@ and apply_universal prog estate coer resth1 anode lhs_p lhs_t lhs_fl lhs_br lhs_
 (* do_coercion *)
 (*******************************************************************************************************************************************************************************)
 and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
+  let pr x = "?" in
+  let prid x = x in
+  Gen.Debug.ho_2 "do_coercion" prid Cprinter.string_of_h_formula pr (fun c1 anode -> do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid) c1 anode
+
+and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
   Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
+    (* get origins of a node *)
+    let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
     let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in
+    let coers1 = List.filter (fun c -> not(is_cycle_coer c origs)) coers1  in (* keep only non-cyclic coercion rule *)
     let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
     (* universal coercions *)
     (*let _ = print_string("[do_coercion]: number of univ coer " ^ (string_of_int (List.length univ_coers)) ^ "--> call apply universal \n") in*)
