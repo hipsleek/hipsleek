@@ -25,6 +25,14 @@ struct
   let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string = 
     "("^(p1 a)^","^(p2 b)^")"
 
+  let opt_to_list o = match o with
+    | None -> []
+    | Some a -> [a]
+
+  let opt_list_to_list o = match o with
+    | None -> []
+    | Some a -> a
+
   let fnone (c:'a):'a option = None
 
   let is_empty l = match l with [] -> true | _ -> false
@@ -233,9 +241,18 @@ struct
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
-  let list_equal_eq eq l1 l2 = 
-    let l = (List.length (intersect_eq eq l1 l2)) in
-    ((List.length l1) =  l) && (l = (List.length l2))
+  let list_subset_eq eq l1 l2 = 
+    let l = (List.length (difference_eq eq l1 l2)) in
+    l==0
+
+  (* change name to setequal *)
+  let list_setequal_eq eq l1 l2 = 
+    (list_subset_eq eq l1 l2) && (list_subset_eq eq l2 l1) 
+
+  let list_equiv_eq eq l1 l2 = 
+    try
+      List.for_all2 eq l1 l2
+    with _ -> false
 
   let rec list_find (f:'a -> 'b option) l = match l with 
     | [] -> None

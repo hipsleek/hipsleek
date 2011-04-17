@@ -721,10 +721,12 @@ let pr_memoise_group m_gr = match !Globals.memo_verbosity with
   | _ -> pr_memoise_group_standard true  m_gr (*standard*)
       
 let pr_remaining_branches s = match s with 
-  | None -> ()
+  | None -> () (* fmt_string "None" *)
   | Some s -> 
         fmt_cut();
         wrap_box ("B",1) (fun s->fmt_string "@ rem br[" ; pr_formula_label_list s; fmt_string "]") s
+
+let string_of_remaining_branches c = poly_string_of_pr pr_remaining_branches c
 
 let pr_prunning_conditions cnd pcond = match cnd with 
   | None -> ()
