@@ -1091,6 +1091,11 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
   else ()
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
+  let pr x = "?" in
+  let pr_r = Cprinter.string_of_view_decl in
+  Gen.Debug.ho_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+
+and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
   let _ = Iformula.has_top_flow_struc view_formula1 in
@@ -1633,8 +1638,14 @@ and trans_coercions (prog : I.prog_decl) :
   let (tmp1, tmp2) = List.split tmp in
   let tmp3 = List.concat tmp1 in let tmp4 = List.concat tmp2 in (tmp3, tmp4)
 
-(* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
+      ((C.coercion_decl list) * (C.coercion_decl list)) =
+  let pr x = "?" in
+  let pr2 (r1,r2) = Cprinter.string_of_coercion (List.hd (r1@r2)) in
+  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+
+(* TODO : add lemma name to self node to avoid cycle*)
+and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let stab = H.create 103 in
   let _ = collect_type_info_formula prog coer.I.coercion_head stab false in
@@ -1642,7 +1653,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
   (*let _ = print_string ("\n"^(string_of_stab stab)^"\n") in*)
   let c_lhs = trans_formula prog false [ self ] false coer.I.coercion_head stab false in
   let c_lhs = CF.add_origs_to_node self c_lhs [coer.I.coercion_name] in
-  let lhs_fnames = List.map CP.name_of_spec_var (CF.fv c_lhs) in
+  let lhs_fnames0 = List.map CP.name_of_spec_var (CF.fv c_lhs) in (* free vars in the LHS *)
   let compute_univ () =
     let h, p, _,_, _ = CF.split_components c_lhs in
     let pvars =MCP.mfv p in
@@ -1650,11 +1661,16 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
     let univ_vars = Gen.BList.difference_eq CP.eq_spec_var pvars hvars in 
     Gen.BList.remove_dups_eq CP.eq_spec_var univ_vars in
   let univ_vars = compute_univ () in
-  let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames (List.map CP.name_of_spec_var univ_vars) in
-  let c_rhs = trans_formula prog (Gen.is_empty univ_vars) (self :: lhs_fnames) false coer.I.coercion_body stab false in
+  let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
+  let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
   let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
+  (* free vars in RHS but not LHS *)
+  let ex_vars = Gen.BList.remove_dups_eq CP.eq_spec_var 
+    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames) ) (CF.fv c_rhs)) in 
+  (* wrap exists for RHS - no implicit instantiation*)
+  let c_rhs = CF.push_exists ex_vars c_rhs in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
-  let c_lhs_exist = trans_formula prog true (self :: rhs_fnames) false coer.I.coercion_head stab false in
+  let c_lhs_exist = trans_formula prog true ((* self ::  *)rhs_fnames) false coer.I.coercion_head stab false in  (* why not lhs_fnames?*)
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
   let rhs_name =
     try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
@@ -3271,70 +3287,77 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
   let _ = type_store_clean_up r stab in
   r
 
-(* AN HOA : TODO CHECK *)
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
-  match f0 with
-    | IF.Or { 
-          IF.formula_or_f1 = f1; 
-          IF.formula_or_f2 = f2; 
-          IF.formula_or_pos = pos} ->
-          let tf1 = trans_formula prog quantify fvars sep_collect f1 stab clean_res in
-          let tf2 = trans_formula prog quantify fvars sep_collect f2 stab clean_res
-          in CF.mkOr tf1 tf2 pos
-    | IF.Base {
-          IF.formula_base_heap = h;
-          IF.formula_base_pure = p;
-          IF.formula_base_flow = fl;
-          IF.formula_base_branches = br;
-          IF.formula_base_pos = pos} ->(
-          let rl = Cformula.res_retrieve stab clean_res fl in
-          let _ = if sep_collect then 
-            (collect_type_info_pure prog (IF.flatten_branches p br) stab;
-            collect_type_info_heap prog h stab) else () in 					
-          let ch = linearize_formula prog f0 stab in					
-          (*let ch1 = linearize_formula prog false [] f0 stab in*)
-          let _ = 
-            if sep_collect then (
-                if quantify then
-                  (let tmp_stab = H.create 103 in
-                  (Gen.HashUti.copy_keys fvars stab tmp_stab;
-                  H.clear stab;
-                  Gen.HashUti.copy_keys fvars tmp_stab stab;))
-                else ()) 
-            else () in 
-          (Cformula.res_replace stab rl clean_res fl);ch)
-    | IF.Exists	{
-          IF.formula_exists_qvars = qvars;
-          IF.formula_exists_heap = h;
-          IF.formula_exists_pure = p;
-          IF.formula_exists_flow = fl;
-          IF.formula_exists_branches = br;
-          IF.formula_exists_pos = pos} -> (
-          let rl = Cformula.res_retrieve stab clean_res fl in
-          let _ = if sep_collect then (collect_type_info_pure prog (IF.flatten_branches p br) stab;
-          collect_type_info_heap prog h stab) else () in 
-          let f1 = IF.Base {
-              IF.formula_base_heap = h;
-              IF.formula_base_pure = p;
-              IF.formula_base_flow = fl;
-              IF.formula_base_branches = br;
-              IF.formula_base_pos = pos; } in
-          let ch = linearize_formula prog f1 stab in
-          let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
-          let ch = CF.push_exists qsvars ch in
-          let _ = if sep_collect then
-            (if quantify then
-              (let tmp_stab = H.create 103 in
-              let fvars = (List.map fst qvars) @ fvars in
-			  (Gen.HashUti.copy_keys fvars stab tmp_stab;
-			  H.clear stab;
-			  Gen.HashUti.copy_keys fvars tmp_stab stab;))
-			else ())
-          else () in
-	      (Cformula.res_replace stab rl clean_res fl);ch)
-          
-          
+  let prb = string_of_bool in
+  Gen.Debug.ho_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
+      (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
+          (f0 : IF.formula) stab (clean_res:bool)) stab quantify clean_res fvars f0
+
+(* AN HOA : TODO CHECK *)
+and trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
+      (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
+  let rec helper f0 =
+    match f0 with
+      | IF.Or { 
+            IF.formula_or_f1 = f1; 
+            IF.formula_or_f2 = f2; 
+            IF.formula_or_pos = pos} ->
+            let tf1 = helper f1 in 
+            let tf2 = helper f2 in CF.mkOr tf1 tf2 pos
+      | IF.Base {
+            IF.formula_base_heap = h;
+            IF.formula_base_pure = p;
+            IF.formula_base_flow = fl;
+            IF.formula_base_branches = br;
+            IF.formula_base_pos = pos} ->(
+            let rl = Cformula.res_retrieve stab clean_res fl in
+            let _ = if sep_collect then 
+              (collect_type_info_pure prog (IF.flatten_branches p br) stab;
+              collect_type_info_heap prog h stab) else () in 					
+            let ch = linearize_formula prog f0 stab in					
+            (*let ch1 = linearize_formula prog false [] f0 stab in*)
+            let _ = 
+              if sep_collect then (
+                  if quantify then
+                    (let tmp_stab = H.create 103 in
+                    (Gen.HashUti.copy_keys fvars stab tmp_stab;
+                    H.clear stab;
+                    Gen.HashUti.copy_keys fvars tmp_stab stab;))
+                  else ()) 
+              else () in 
+            (Cformula.res_replace stab rl clean_res fl);ch)
+      | IF.Exists	{
+            IF.formula_exists_qvars = qvars;
+            IF.formula_exists_heap = h;
+            IF.formula_exists_pure = p;
+            IF.formula_exists_flow = fl;
+            IF.formula_exists_branches = br;
+            IF.formula_exists_pos = pos} -> (
+            let rl = Cformula.res_retrieve stab clean_res fl in
+            let _ = if sep_collect then (collect_type_info_pure prog (IF.flatten_branches p br) stab;
+            collect_type_info_heap prog h stab) else () in 
+            let f1 = IF.Base {
+                IF.formula_base_heap = h;
+                IF.formula_base_pure = p;
+                IF.formula_base_flow = fl;
+                IF.formula_base_branches = br;
+                IF.formula_base_pos = pos; } in
+            let ch = linearize_formula prog f1 stab in
+            let qsvars = List.map (fun qv -> trans_var qv stab pos) qvars in
+            let ch = CF.push_exists qsvars ch in
+            let _ = if sep_collect then
+              (if quantify then
+                (let tmp_stab = H.create 103 in
+                let fvars = (List.map fst qvars) @ fvars in
+		        (Gen.HashUti.copy_keys fvars stab tmp_stab;
+		        H.clear stab;
+		        Gen.HashUti.copy_keys fvars tmp_stab stab;))
+		      else ())
+            else () in
+	        (Cformula.res_replace stab rl clean_res fl);ch) 
+  in helper f0
+
 and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_table) =
   let rec match_exp (hargs : (IP.exp * branch_label) list) pos : (CP.spec_var list) =
     match hargs with
@@ -3672,7 +3695,7 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
 
 and collect_type_info_b_formula prog b0 stab =
   Gen.Debug.no_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "?")
-     (collect_type_info_b_formula_x prog) b0 stab
+      (collect_type_info_b_formula_x prog) b0 stab
 
       
 

@@ -1279,7 +1279,8 @@ let rec string_of_ident_list l c = match l with
   | h::t -> h ^ c ^ (string_of_ident_list t c)
 ;;
 
-let str_ident_list l = string_of_ident_list l "" ;;
+let str_ident_list l = string_of_ident_list l "," ;;
+let str_ident_list l = "["^(string_of_ident_list l ",")^"]" ;;
 let string_of_pos p = " "^(string_of_int p.start_pos.Lexing.pos_lnum)^":"^
 				(string_of_int (p.start_pos.Lexing.pos_cnum - p.start_pos.Lexing.pos_bol));;
 
@@ -1525,7 +1526,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<=>" ;;
 
 let string_of_coerc c lft = "\""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type)^(string_of_formula c.coercion_body)
-  ^"{head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}" ;;
+  ^"{lhs exists:"^(string_of_formula c.coercion_head_exist)^"head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}" ;;
 
 let string_of_coercion c = string_of_coerc c false ;;
 

@@ -5071,27 +5071,27 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
         let coer_rhs = coer.coercion_body in
         let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
         let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) true true lhs_guard in
-        let br_match br1 br2 = match br1,br2 with
-          | None,None -> true
-          | Some br1,Some br2 -> (Gen.BList.list_setequal_eq (=) br1 br2)
-                (*if (Gen.BList.list_setequal_eq (=) br1 br2) then true (*(weaken&&(Gen.BList.subset_eq (=) br1 br2))||(not weaken && (Gen.BList.subset_eq (=) br2 br1))*)
-                  else (print_string("miss: "^(String.concat ","(List.map (fun (c,_)-> (string_of_int c)) br1))^" then "^
-                  (String.concat ","(List.map (fun (c,_)-> (string_of_int c)) br2))^"\n");false)*)
-          | _ -> 
-                let _ = print_string ("mal: "^(Cprinter.string_of_coerc coer weaken)^"\n lhs: "^(Cprinter.string_of_formula (CF.formula_of_base lhs_b))^
-			        " rhs: "^(Cprinter.string_of_formula (CF.formula_of_base rhs_b))^"\n") in
-                Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: specialization mismatch in lemma application"}   in
+        (* let br_match br1 br2 = match br1,br2 with *)
+        (*   | None,None -> true *)
+        (*   | Some br1,Some br2 -> (Gen.BList.list_setequal_eq (=) br1 br2) *)
+        (*         (\*if (Gen.BList.list_setequal_eq (=) br1 br2) then true (\*(weaken&&(Gen.BList.subset_eq (=) br1 br2))||(not weaken && (Gen.BList.subset_eq (=) br2 br1))*\) *)
+        (*           else (print_string("miss: "^(String.concat ","(List.map (fun (c,_)-> (string_of_int c)) br1))^" then "^ *)
+        (*           (String.concat ","(List.map (fun (c,_)-> (string_of_int c)) br2))^"\n");false)*\) *)
+        (*   | _ ->  *)
+        (*         let _ = print_string ("mal: "^(Cprinter.string_of_coerc coer weaken)^"\n lhs: "^(Cprinter.string_of_formula (CF.formula_of_base lhs_b))^ *)
+		(* 	        " rhs: "^(Cprinter.string_of_formula (CF.formula_of_base rhs_b))^"\n") in *)
+        (*         Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: specialization mismatch in lemma application"}   in *)
         match node, lhs_heap with
           | ViewNode ({ h_formula_view_node = p1;
             h_formula_view_name = c1;
             h_formula_view_origins = origs;
             h_formula_view_remaining_branches = br1;
-            h_formula_view_arguments = ps1}),
+            h_formula_view_arguments = ps1} as h1),
 	        ViewNode ({ h_formula_view_node = p2;
             h_formula_view_name = c2;
             h_formula_view_remaining_branches = br2;
-            h_formula_view_arguments = ps2}) 
-                when (c1=c2 && (br_match br1 br2))-> begin
+            h_formula_view_arguments = ps2} as h2) 
+                when CF.is_eq_view_spec h1 h2  (* c1=c2 && (br_match br1 br2) *)-> begin
 	              (*
 	                let _ = print_string ("body_view: " ^ coer.coercion_body_view ^ "\n") in
 	                let _ = print_string ("head_view: " ^ coer.coercion_head_view ^ "\n") in
@@ -5229,7 +5229,9 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_
     else None in
     (* a quick hack *)
     (* right coercions *)
+    let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
     let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
+    let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (* keep only non-cyclic coercion rule *)
     let right_r = if (List.length coers2)>0 then
       let tmp2 = List.map (fun coer -> apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b c2 is_folding pos pid) coers2 in
       let right_res, right_prf = List.split tmp2 in
@@ -5313,7 +5315,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
           in
 	      (res, [prf])
         end else (CF.mkFailCtx_in( Basic_Reason ( { 
-	        fc_message ="failed coercion application";
+	        fc_message ="failed left coercion application";
 	        fc_current_lhs = estate;
 	        fc_prior_steps = estate.es_prior_steps;
 	        fc_orig_conseq = estate.es_orig_conseq;
@@ -5340,15 +5342,15 @@ and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*
    pid - ?id
 *)
 and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos pid =
-        let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
+        let (_,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
         (*let _ = print_string("right coercion\n") in*)
         let f = mkBase resth2 rhs_p rhs_t rhs_fl [] pos in
         let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
         ^ "right_coercion: c2 = "
         ^ c2 ^ "\n") pos in
-        if is_coercible ln2 then
+        (* if is_coercible ln2 then *)
           let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b false pos in
-	      if ok then begin
+	      if ok && (is_coercible ln2)  then begin
 	        let new_ctx = SuccCtx [(set_context_must_match ctx0)] in
 	        let res, tmp_prf = heap_entail prog is_folding false new_ctx new_rhs pos in
 	        let prf = mkCoercionRight ctx0 conseq coer.coercion_head
@@ -5361,12 +5363,12 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
 	      fc_orig_conseq = estate.es_orig_conseq;
 	      fc_current_conseq = CF.formula_of_heap HFalse pos;
 	      fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
-        else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application";
-        fc_current_lhs = estate;
-        fc_prior_steps = estate.es_prior_steps;
-        fc_orig_conseq = estate.es_orig_conseq;
-        fc_current_conseq = CF.formula_of_heap HFalse pos;
-        fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), []) 
+        (* else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application"; *)
+        (* fc_current_lhs = estate; *)
+        (* fc_prior_steps = estate.es_prior_steps; *)
+        (* fc_orig_conseq = estate.es_orig_conseq; *)
+        (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
+        (* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])  *)
           (*************************************************************************************************************************
 															                                                                        05.06.2008:
 															                                                                        Utilities for existential quantifier elimination:

@@ -101,7 +101,7 @@ and coercion_decl = {
     coercion_body : F.formula;
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)
-    coercion_head_exist : F.formula;
+    coercion_head_exist : F.formula;  (* same as head except for annotation to self node? *)
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *) 
