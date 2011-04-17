@@ -1332,11 +1332,13 @@ let rec string_of_formulae_list l = match l with
 ;;
 
 (* pretty printing for a spec_var list *)
-let rec string_of_spec_var_list l = match l with 
+let rec string_of_spec_var_list_noparen l = match l with 
   | [] -> ""
   | h::[] -> string_of_spec_var h 
-  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list t)
+  | h::t -> (string_of_spec_var h) ^ "," ^ (string_of_spec_var_list_noparen t)
 ;;
+
+let string_of_spec_var_list l = "["^(string_of_spec_var_list_noparen l)^"]" ;;
 
 (*
 let rec string_of_spec = function

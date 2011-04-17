@@ -25,6 +25,12 @@ struct
   let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string = 
     "("^(p1 a)^","^(p2 b)^")"
 
+  let pr_id x = x
+
+  let pr_no x = "?"
+
+  let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
+
   let opt_to_list o = match o with
     | None -> []
     | Some a -> [a]

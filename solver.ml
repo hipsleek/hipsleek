@@ -7,6 +7,7 @@ open Globals
 open Cast
 open Cformula
 open Prooftracer
+open Gen.Basic
 
 module CP = Cpure
 module MCP = Mcpure
@@ -1700,27 +1701,26 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
-and fold p c v pu u loc =
-        Gen.Profiling.do_2 "fold" (fold_x(*debug_2*) p c v pu) u loc
+and fold_op p c v u loc =
+        Gen.Profiling.do_2 "fold" (fold_op_x(*debug_2*) p c v) u loc
 
-and fold_debug_2 p c v pu u loc = 
-        Gen.Debug.ho_2 "fold " (fun c -> match c with
+and fold_debug_2 p c v u loc = 
+        Gen.Debug.ho_2 "fold_op " (fun c -> match c with
           | Ctx c -> Cprinter.string_of_formula c.es_formula
           | _ -> "CtxOR!") 
             Cprinter.string_of_h_formula 
             (fun (c,_) -> match c with | FailCtx _ -> "Fail" | _ -> "Success")
-            (fun c v -> fold_x p c v pu u loc) c v
+            (fun c v -> fold_op_x p c v u loc) c v
 
-and fold_debug p c v pu u loc = 
-        Gen.Debug.ho_2 "fold " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
-            (fun c v -> fold_x p c v pu u loc) c v
+and fold_debug p c v u loc = 
+        Gen.Debug.ho_2 "fold_op " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
+            (fun c v -> fold_op_x p c v u loc) c v
             (**************************************************************)
             (**************************************************************)
             (**************************************************************)
 
-(* fold some constraints in f1 to view v under pure pointer *)
-(* constraint pp and Presburger constraint pres             *)
-and fold_x prog (ctx : context) (view : h_formula) (pure : CP.formula) use_case (pos : loc): (list_context * proof) = match view with
+(* fold some constraints in ctx to view  *)
+and fold_op_x prog (ctx : context) (view : h_formula) (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
   | ViewNode ({ h_formula_view_node = p;
 	h_formula_view_name = c;
 	h_formula_view_imm = imm;
@@ -4323,11 +4323,13 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
 and heap_entail_non_empty_rhs_heap prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
         Gen.Debug.no_1 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula (fun _ -> "?") (fun c -> heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate ante conseq lhs_b rhs_b pos) conseq
 
-and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq p2 v2 c2 ln2 resth2 r_p_cond r_rem_brs   rhs_t rhs_p rhs_fl rhs_br is_folding pos pos2 pid = 
-	    (* let _ = print_string("in do_fold\n") in *)
-	    let estate = estate_of_context fold_ctx pos2 in
-	    (*************************** existential_eliminator_helper *************************************************)
-	    let existential_eliminator_helper = 
+and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr p = pr_pair pr_svl string_of_bool p in
+  Gen.Debug.ho_3 "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
+      (fun _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2
+
+and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
 	      let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
 	      let pure = rhs_p in
 	      let ptr_eq = MCP.ptr_equations_with_null pure in
@@ -4346,9 +4348,59 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq p2 v2 c2 ln2 resth2 r_p_
 				  else c2
 				else c2					
 			) subs_vars),true)
-		  with | Not_found -> (var_to_fold::v2,false) in
+		  with | Not_found -> (var_to_fold::v2,false) 
+
+(*
+  ln2 = p2 (node) c2 (name) v2 (arguments) r_rem_brs (remaining branches) r_p_cond (pruning conditions) pos2 (pos)
+  resth2 = rhs_h - ln2
+  ctx0?
+  is_folding?
+*)
+and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p rhs_fl rhs_br is_folding pos = 
+  let (p2,c2,v2,pid,r_rem_brs,r_p_cond,pos2) = 
+        match ln2 with
+          | DataNode ({ h_formula_data_node = p2;
+            h_formula_data_name = c2;
+	        h_formula_data_imm = imm2;
+            h_formula_data_arguments = v2;
+            h_formula_data_label = pid;
+            h_formula_data_remaining_branches =r_rem_brs;
+            h_formula_data_pruning_conditions = r_p_cond;
+            h_formula_data_pos = pos2})
+          | ViewNode ({ h_formula_view_node = p2;
+            h_formula_view_name = c2;
+	        h_formula_view_imm = imm2;
+            h_formula_view_arguments = v2;
+            h_formula_view_label = pid;
+            h_formula_view_remaining_branches = r_rem_brs;
+            h_formula_view_pruning_conditions = r_p_cond;
+            h_formula_view_pos = pos2}) -> (p2,c2,v2,pid,r_rem_brs,r_p_cond,pos2)
+          | _ -> report_error no_pos ("do_fold_w_ctx: data/view expected but instead ln2 is "^(Cprinter.string_of_h_formula ln2) ) in
+	    (* let _ = print_string("in do_fold\n") in *)
+	    let estate = estate_of_context fold_ctx pos2 in
+	    (*************************** existential_eliminator_helper *************************************************)
+	    (* let existential_eliminator_helper =  *)
+	    (*   let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in *)
+	    (*   let pure = rhs_p in *)
+	    (*   let ptr_eq = MCP.ptr_equations_with_null pure in *)
+	    (*   let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in *)
+	    (*   let asets = Context.alias ptr_eq in *)
+		(*   try *)
+		(*     let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in *)
+		(*     let subs_vars = List.combine vdef.view_vars v2 in *)
+		(*     let sf = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed)) in *)
+		(*     let subs_vars = (sf,var_to_fold)::subs_vars in *)
+		(*     ((List.map (fun (c1,c2)->  *)
+		(* 		if (List.exists (comparator c1) vdef.view_case_vars) then *)
+		(* 		  if (List.exists (comparator c2) estate.es_evars) then *)
+		(* 		    let paset = Context.get_aset asets c2 in *)
+		(* 			List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset  *)
+		(* 		  else c2 *)
+		(* 		else c2					 *)
+		(* 	) subs_vars),true) *)
+		(*   with | Not_found -> (var_to_fold::v2,false) in *)
 	    (*************************** end existential_eliminator_helper *************************************************)	
-	    let (new_v2,use_case) = existential_eliminator_helper in
+	    let (new_v2,use_case) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
 	    let view_to_fold = ViewNode ({  
 			h_formula_view_node = List.hd new_v2 (*var_to_fold*);
 			h_formula_view_name = c2;
@@ -4361,7 +4413,7 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq p2 v2 c2 ln2 resth2 r_p_
 			h_formula_view_remaining_branches = r_rem_brs;
 			h_formula_view_pruning_conditions = r_p_cond;
 			h_formula_view_pos = pos2}) in
-	    let fold_rs, fold_prf = fold prog fold_ctx view_to_fold (P.mkTrue pos) use_case pos in
+	    let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold use_case pos in
 	    if not (CF.isFailCtx fold_rs) then
 		  let b = { formula_base_heap = resth2;
 		  formula_base_pure = rhs_p;
@@ -4428,69 +4480,72 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate an
 	          (************************************************************************************************************************************)
 	          (* do_fold *)
 	          (************************************************************************************************************************************)
-	          let do_fold_w_ctx fold_ctx var_to_fold = 
-	            (* let _ = print_string("in do_fold\n") in *)
-	            let estate = estate_of_context fold_ctx pos2 in
-	            (*************************** existential_eliminator_helper *************************************************)
-	            let existential_eliminator_helper = 
-	              let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in
-	              let pure = rhs_p in
-	              let ptr_eq = MCP.ptr_equations_with_null pure in
-	              let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in
-	              let asets = Context.alias ptr_eq in
-		          try
-		            let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in
-		            let subs_vars = List.combine vdef.view_vars v2 in
-		            let sf = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed)) in
-		            let subs_vars = (sf,var_to_fold)::subs_vars in
-		            ((List.map (fun (c1,c2)-> 
-				        if (List.exists (comparator c1) vdef.view_case_vars) then
-				          if (List.exists (comparator c2) estate.es_evars) then
-				            let paset = Context.get_aset asets c2 in
-					        List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset 
-				          else c2
-				        else c2					
-			        ) subs_vars),true)
-		          with | Not_found -> (var_to_fold::v2,false) in
-	            (*************************** end existential_eliminator_helper *************************************************)	
-	            let (new_v2,use_case) = existential_eliminator_helper in
-	            let view_to_fold = ViewNode ({  
-			        h_formula_view_node = List.hd new_v2 (*var_to_fold*);
-			        h_formula_view_name = c2;
-			        h_formula_view_imm = get_view_imm ln2;
-			        h_formula_view_arguments = List.tl new_v2;
-			        h_formula_view_modes = get_view_modes ln2;
-			        h_formula_view_coercible = true;
-			        h_formula_view_origins = get_view_origins ln2;
-			        h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
-			        h_formula_view_remaining_branches = r_rem_brs;
-			        h_formula_view_pruning_conditions = r_p_cond;
-			        h_formula_view_pos = pos2}) in
-	            let fold_rs, fold_prf = fold prog fold_ctx view_to_fold (P.mkTrue pos) use_case pos in
-	            if not (CF.isFailCtx fold_rs) then
-		          let b = { formula_base_heap = resth2;
-			      formula_base_pure = rhs_p;
-			      formula_base_type = rhs_t;
-			      (* formula_base_imm = contains_immutable_h_formula resth2; *)
-			      formula_base_branches = rhs_br;
-			      formula_base_flow = rhs_fl;		
-			      formula_base_label = None;   
-			      formula_base_pos = pos } in
-		          let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
-		          let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
-		          (tmp, prf)
-	            else begin
-		          Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: unable to fold:\n"
-			      ^ (Cprinter.string_of_context ctx0) ^ "\n"
-			      ^ "to:ln2: "
-			      ^ (Cprinter.string_of_h_formula ln2)
-			      ^ "\nrhs_p: "
-			      ^ (Cprinter.string_of_mix_formula rhs_p) ^"..end") pos;
-		          (fold_rs, fold_prf)
-	            end in
-	          let do_fold_w_ctx fold_ctx var_to_fold = 
-                let pr (x,_) = Cprinter.string_of_list_context x in
-                Gen.Debug.ho_2 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr do_fold_w_ctx fold_ctx var_to_fold in
+
+          	  let do_fold_w_ctx fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p rhs_fl rhs_br is_folding pos in
+(* let do_fold_w_ctx fold_ctx var_to_fold =  *)
+	          (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
+	          (*   (\* let _ = print_string("in do_fold\n") in *\) *)
+	          (*   let estate = estate_of_context fold_ctx pos2 in *)
+	          (*   (\*************************** existential_eliminator_helper *************************************************\) *)
+	          (*   let existential_eliminator_helper =  *)
+	          (*     let comparator v1 v2 = (String.compare (Cpure.name_of_spec_var v1) (Cpure.name_of_spec_var v2))==0 in *)
+	          (*     let pure = rhs_p in *)
+	          (*     let ptr_eq = MCP.ptr_equations_with_null pure in *)
+	          (*     let ptr_eq = (List.map (fun c->(c,c)) v2) @ ptr_eq in *)
+	          (*     let asets = Context.alias ptr_eq in *)
+		      (*     try *)
+		      (*       let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in *)
+		      (*       let subs_vars = List.combine vdef.view_vars v2 in *)
+		      (*       let sf = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed)) in *)
+		      (*       let subs_vars = (sf,var_to_fold)::subs_vars in *)
+		      (*       ((List.map (fun (c1,c2)->  *)
+			  (*           if (List.exists (comparator c1) vdef.view_case_vars) then *)
+			  (*             if (List.exists (comparator c2) estate.es_evars) then *)
+			  (*               let paset = Context.get_aset asets c2 in *)
+			  (*   	        List.find (fun c -> not (List.exists (comparator c) estate.es_evars )) paset  *)
+			  (*             else c2 *)
+			  (*           else c2					 *)
+			  (*       ) subs_vars),true) *)
+		      (*     with | Not_found -> (var_to_fold::v2,false) in *)
+	          (*   (\*************************** end existential_eliminator_helper *************************************************\)	 *)
+	          (*   let (new_v2,use_case) = existential_eliminator_helper in *)
+	          (*   let view_to_fold = ViewNode ({   *)
+			  (*       h_formula_view_node = List.hd new_v2 (\*var_to_fold*\); *)
+			  (*       h_formula_view_name = c2; *)
+			  (*       h_formula_view_imm = get_view_imm ln2; *)
+			  (*       h_formula_view_arguments = List.tl new_v2; *)
+			  (*       h_formula_view_modes = get_view_modes ln2; *)
+			  (*       h_formula_view_coercible = true; *)
+			  (*       h_formula_view_origins = get_view_origins ln2; *)
+			  (*       h_formula_view_label = pid;           (\*TODO: the other alternative is to use none*\) *)
+			  (*       h_formula_view_remaining_branches = r_rem_brs; *)
+			  (*       h_formula_view_pruning_conditions = r_p_cond; *)
+			  (*       h_formula_view_pos = pos2}) in *)
+	          (*   let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold use_case pos in *)
+	          (*   if not (CF.isFailCtx fold_rs) then *)
+		      (*     let b = { formula_base_heap = resth2; *)
+			  (*     formula_base_pure = rhs_p; *)
+			  (*     formula_base_type = rhs_t; *)
+			  (*     (\* formula_base_imm = contains_immutable_h_formula resth2; *\) *)
+			  (*     formula_base_branches = rhs_br; *)
+			  (*     formula_base_flow = rhs_fl;		 *)
+			  (*     formula_base_label = None;    *)
+			  (*     formula_base_pos = pos } in *)
+		      (*     let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in *)
+		      (*     let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in *)
+		      (*     (tmp, prf) *)
+	          (*   else begin *)
+		      (*     Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: unable to fold:\n" *)
+			  (*     ^ (Cprinter.string_of_context ctx0) ^ "\n" *)
+			  (*     ^ "to:ln2: " *)
+			  (*     ^ (Cprinter.string_of_h_formula ln2) *)
+			  (*     ^ "\nrhs_p: " *)
+			  (*     ^ (Cprinter.string_of_mix_formula rhs_p) ^"..end") pos; *)
+		      (*     (fold_rs, fold_prf) *)
+	          (*   end in *)
+	          (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
+              (*   let pr (x,_) = Cprinter.string_of_list_context x in *)
+              (*   Gen.Debug.ho_2 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr do_fold_w_ctx fold_ctx var_to_fold in *)
 
 	          let do_fold (var_to_fold : CP.spec_var) =
 	            let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with 
@@ -4511,7 +4566,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate an
                     es_path_label = estate.es_path_label;
 			        es_var_measures = estate.es_var_measures;
 			        es_var_label = estate.es_var_label} in
-	            do_fold_w_ctx(* _debug *) fold_ctx var_to_fold  in
+	            do_fold_w_ctx(* _debug *) fold_ctx var_to_fold in
 
 	          (****************************************************************************************************************************************)
 	          (* end do_fold *)
