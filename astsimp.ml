@@ -1673,7 +1673,8 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
     C.coercion_univ_vars = univ_vars;
     C.coercion_head_exist = c_lhs_exist;
     C.coercion_head_view = lhs_name;
-    C.coercion_body_view = rhs_name;} in
+    C.coercion_body_view = rhs_name;
+    C.coercion_simple_lhs = (CF.is_simple_formula c_lhs) } in
     match coer.I.coercion_type with
       | I.Left -> ([ c_coer ], [])
       | I.Equiv -> ([ c_coer ], [ c_coer  ])

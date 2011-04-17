@@ -17,99 +17,105 @@ type typed_ident = (P.typ * ident)
 
 
 and prog_decl = { 
-          mutable prog_data_decls : data_decl list;
-				  mutable prog_view_decls : view_decl list;
-					mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
-				  prog_proc_decls : proc_decl list;
-				  mutable prog_left_coercions : coercion_decl list;
-				  mutable prog_right_coercions : coercion_decl list }
+    mutable prog_data_decls : data_decl list;
+	mutable prog_view_decls : view_decl list;
+	mutable prog_rel_decls : rel_decl list; (* An Hoa : relation definitions *)
+	prog_proc_decls : proc_decl list;
+	mutable prog_left_coercions : coercion_decl list;
+	mutable prog_right_coercions : coercion_decl list; }
 	
 and prog_or_branches = (prog_decl * (MP.mix_formula * ((string*P.formula)list)*(P.spec_var list)) option )
 	
-and data_decl = { data_name : ident;
-		  data_fields : typed_ident list;
-		  data_parent_name : ident;
-		  data_invs : F.formula list;
-		  data_methods : proc_decl list }
+and data_decl = { 
+    data_name : ident;
+    data_fields : typed_ident list;
+    data_parent_name : ident;
+    data_invs : F.formula list;
+    data_methods : proc_decl list; }
     
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
     
-and view_decl = { view_name : ident; 
-				  view_vars : P.spec_var list;
-				  view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
-				  view_labels : branch_label list;
-				  view_modes : mode list;
-				  mutable view_partially_bound_vars : bool list;
-				  mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
-				  view_data_name : ident;
-				  view_formula : F.struc_formula;
-				  view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-				  mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
-                  mutable view_baga : Gen.Baga(P.PtrSV).baga;
-				  mutable view_addr_vars : P.spec_var list;
-				  view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
-				  view_prune_branches: formula_label list;
-				  view_prune_conditions: (P.b_formula * (formula_label list)) list;
-          view_prune_conditions_baga: ba_prun_cond list;
-				  view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list ;
-          view_raw_base_case: Cformula.formula option;}
+and view_decl = { 
+    view_name : ident; 
+    view_vars : P.spec_var list;
+    view_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of view_vars*)
+    view_labels : branch_label list;
+    view_modes : mode list;
+    mutable view_partially_bound_vars : bool list;
+    mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
+    view_data_name : ident;
+    view_formula : F.struc_formula;
+    view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+    mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+    mutable view_baga : Gen.Baga(P.PtrSV).baga;
+    mutable view_addr_vars : P.spec_var list;
+    view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+    view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+    view_prune_branches: formula_label list;
+    view_prune_conditions: (P.b_formula * (formula_label list)) list;
+    view_prune_conditions_baga: ba_prun_cond list;
+    view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list ;
+    view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					
-and rel_decl = { rel_name : ident; 
-				  rel_vars : P.spec_var list;
-					rel_formula : P.formula;
-				  (* rel_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of rel_vars*)
-				  rel_labels : branch_label list;
-				  rel_modes : mode list;
-				  mutable rel_partially_bound_vars : bool list;
-				  mutable rel_materialized_vars : P.spec_var list; (* rel vars that can point to objects *)
-				  rel_formula : F.struc_formula;
-				  rel_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
-				  mutable rel_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
-				  mutable rel_addr_vars : P.spec_var list;
-				  rel_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
-				  rel_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
-				  rel_prune_branches: formula_label list;
-				  rel_prune_conditions: (P.b_formula * (formula_label list)) list;
-				  rel_prune_invariants : (formula_label list * P.b_formula list) list ;
-          rel_raw_base_case: Cformula.formula option; *)}
-  
-and proc_decl = { proc_name : ident;
-				  proc_args : typed_ident list;
-				  proc_return : P.typ;
-				  proc_static_specs : Cformula.struc_formula;
-				  proc_static_specs_with_pre : Cformula.struc_formula;
-				  proc_dynamic_specs : Cformula.struc_formula;
-				  (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
-				  proc_by_name_params : P.spec_var list;
-				  proc_body : exp option;
-          proc_file : string;
-				  proc_loc : loc }
+and rel_decl = { 
+    rel_name : ident; 
+    rel_vars : P.spec_var list;
+    rel_formula : P.formula;
+    (* rel_case_vars : P.spec_var list; (* predicate parameters that are bound to guard of case, but excluding self; subset of rel_vars*)
+       rel_labels : branch_label list;
+       rel_modes : mode list;
+       mutable rel_partially_bound_vars : bool list;
+       mutable rel_materialized_vars : P.spec_var list; (* rel vars that can point to objects *)
+       rel_formula : F.struc_formula;
+       rel_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
+       mutable rel_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
+       mutable rel_addr_vars : P.spec_var list;
+       rel_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
+       rel_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
+       rel_prune_branches: formula_label list;
+       rel_prune_conditions: (P.b_formula * (formula_label list)) list;
+       rel_prune_invariants : (formula_label list * P.b_formula list) list ;
+       rel_raw_base_case: Cformula.formula option; *)}
+    
+and proc_decl = { 
+    proc_name : ident;
+    proc_args : typed_ident list;
+    proc_return : P.typ;
+    proc_static_specs : Cformula.struc_formula;
+    proc_static_specs_with_pre : Cformula.struc_formula;
+    proc_dynamic_specs : Cformula.struc_formula;
+    (*proc_dynamic_specs_with_pre : Cformula.struc_formula;*)
+    proc_by_name_params : P.spec_var list;
+    proc_body : exp option;
+    proc_file : string;
+    proc_loc : loc; }
 
 (*TODO: does lemma need struc formulas?*)
 
 (* TODO : coercion type ->, <-, <-> just added *)
-and coercion_decl = { coercion_type : coercion_type;
-              coercion_name : ident;
-		      coercion_head : F.formula;
-		      coercion_body : F.formula;
-		      coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
-		      (* coercion_proof : exp; *)
-		      coercion_head_exist : F.formula;
-		      coercion_head_view : ident; 
-		      (* the name of the predicate where this coercion can be applied *)
-		      coercion_body_view : ident  (* used for cycles checking *) }
+and coercion_decl = { 
+    coercion_type : coercion_type;
+    coercion_name : ident;
+    coercion_head : F.formula;
+    coercion_body : F.formula;
+    coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
+    (* coercion_proof : exp; *)
+    coercion_head_exist : F.formula;
+    coercion_head_view : ident; 
+    (* the name of the predicate where this coercion can be applied *)
+    coercion_body_view : ident;  (* used for cycles checking *) 
+    coercion_simple_lhs :bool;}
 
 and coercion_type = Iast.coercion_type
-  (* | Left *)
-  (* | Equiv *)
-  (* | Right *)
-      
+    (* | Left *)
+    (* | Equiv *)
+    (* | Right *)
+    
 and sharp_flow = 
   | Sharp_ct of F.flow_formula
   | Sharp_v of ident
-      
+        
 and sharp_val = 
   | Sharp_no_val 
   | Sharp_finally of ident
@@ -117,162 +123,187 @@ and sharp_val =
 
 (* An Hoa : v[i] where v is an identifier and i is an expression *)
 (* and exp_arrayat = { exp_arrayat_type : P.typ; (* Type of the array element *)
-				exp_arrayat_array_name : ident; (* Name of the array *)
-				exp_arrayat_index : exp; (* Integer valued expression for the index *)
-				exp_arrayat_pos : loc; } *)
+   exp_arrayat_array_name : ident; (* Name of the array *)
+   exp_arrayat_index : exp; (* Integer valued expression for the index *)
+   exp_arrayat_pos : loc; } *)
 
 (* An Hoa : The exp_assign in core representation does not allow lhs to be another expression so array modification statement is necessary *)
 (* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
-		   exp_arraymod_rhs : exp; 
-			 exp_arraymod_pos : loc } *)
-						
-and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
-		   exp_assert_assumed_formula : F.formula option;
-		   exp_assert_path_id : formula_label;
-		   exp_assert_pos : loc }
+   exp_arraymod_rhs : exp; 
+   exp_arraymod_pos : loc } *)
+		
+and exp_assert = { 
+    exp_assert_asserted_formula : F.struc_formula option;
+    exp_assert_assumed_formula : F.formula option;
+    exp_assert_path_id : formula_label;
+    exp_assert_pos : loc }
 
-and exp_assign = { exp_assign_lhs : ident;
-		   exp_assign_rhs : exp;
-		   exp_assign_pos : loc }
-			
-and exp_bconst = { exp_bconst_val : bool;
-		   exp_bconst_pos : loc }
+and exp_assign = 
+    { exp_assign_lhs : ident;
+    exp_assign_rhs : exp;
+    exp_assign_pos : loc }
+	    
+and exp_bconst = { 
+    exp_bconst_val : bool;
+    exp_bconst_pos : loc }
 
-and exp_bind = { exp_bind_type : P.typ; (* the type of the entire bind construct, i.e. the type of the body *)
-		 exp_bind_bound_var : typed_ident;
-		 exp_bind_fields : typed_ident list;
-		 exp_bind_body : exp;
-		 exp_bind_imm : bool;
-		 exp_bind_path_id : control_path_id;
-		 exp_bind_pos : loc }
+and exp_bind = { 
+    exp_bind_type : P.typ; (* the type of the entire bind construct, i.e. the type of the body *)
+    exp_bind_bound_var : typed_ident;
+    exp_bind_fields : typed_ident list;
+    exp_bind_body : exp;
+    exp_bind_imm : bool;
+    exp_bind_path_id : control_path_id;
+    exp_bind_pos : loc }
 
-and exp_block = { exp_block_type : P.typ;
-		  exp_block_body : exp;
-		  exp_block_local_vars : typed_ident list;
-		  exp_block_pos : loc }
+and exp_block = { 
+    exp_block_type : P.typ;
+    exp_block_body : exp;
+    exp_block_local_vars : typed_ident list;
+    exp_block_pos : loc }
 
-and exp_cast = { exp_cast_target_type : P.typ;
-		 exp_cast_body : exp;
-		 exp_cast_pos : loc }
+and exp_cast = { 
+    exp_cast_target_type : P.typ;
+    exp_cast_body : exp;
+    exp_cast_pos : loc }
 
-and exp_cond = { exp_cond_type : P.typ;
-		 exp_cond_condition : ident;
-		 exp_cond_then_arm : exp;
-		 exp_cond_else_arm : exp;
-		 exp_cond_path_id : control_path_id;
-		 exp_cond_pos : loc }
+and exp_cond = { 
+    exp_cond_type : P.typ;
+    exp_cond_condition : ident;
+    exp_cond_then_arm : exp;
+    exp_cond_else_arm : exp;
+    exp_cond_path_id : control_path_id;
+    exp_cond_pos : loc }
 
-and exp_debug = { exp_debug_flag : bool;
-		  exp_debug_pos : loc }
+and exp_debug = { 
+    exp_debug_flag : bool;
+    exp_debug_pos : loc }
 
-and exp_fconst = { exp_fconst_val : float;
-		   exp_fconst_pos : loc }
+and exp_fconst = { 
+    exp_fconst_val : float;
+    exp_fconst_pos : loc }
 	
 (* instance call *)
-and exp_icall = { exp_icall_type : P.typ;
-		  exp_icall_receiver : ident;
-		  exp_icall_receiver_type : P.typ;
-		  exp_icall_method_name : ident;
-		  exp_icall_arguments : ident list;
-		  exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
-		  (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
-		  exp_icall_path_id : control_path_id;
-		  exp_icall_pos : loc }
+and exp_icall = { 
+    exp_icall_type : P.typ;
+    exp_icall_receiver : ident;
+    exp_icall_receiver_type : P.typ;
+    exp_icall_method_name : ident;
+    exp_icall_arguments : ident list;
+    exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
+    (*exp_icall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+    exp_icall_path_id : control_path_id;
+    exp_icall_pos : loc }
 
-and exp_iconst = { exp_iconst_val : int;
-		   exp_iconst_pos : loc }
+and exp_iconst = { 
+    exp_iconst_val : int;
+    exp_iconst_pos : loc }
 
-and exp_new = { exp_new_class_name : ident;
-		exp_new_parent_name : ident;
-		exp_new_arguments : typed_ident list;
-		exp_new_pos : loc }
+and exp_new = { 
+    exp_new_class_name : ident;
+    exp_new_parent_name : ident;
+    exp_new_arguments : typed_ident list;
+    exp_new_pos : loc }
 
-and exp_return = { exp_return_type : P.typ;
-		   exp_return_val : ident option;
-		   exp_return_pos : loc }
+and exp_return = { 
+    exp_return_type : P.typ;
+    exp_return_val : ident option;
+    exp_return_pos : loc }
 
 (* static call *)
-and exp_scall = { exp_scall_type : P.typ;
-		  exp_scall_method_name : ident;
-		  exp_scall_arguments : ident list;
-		  exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
-		  (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
-		  exp_scall_path_id : control_path_id;
-		  exp_scall_pos : loc }
+and exp_scall = { 
+    exp_scall_type : P.typ;
+    exp_scall_method_name : ident;
+    exp_scall_arguments : ident list;
+    exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
+    (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
+    exp_scall_path_id : control_path_id;
+    exp_scall_pos : loc }
 
-and exp_seq = { exp_seq_type : P.typ;
-		exp_seq_exp1 : exp;
-		exp_seq_exp2 : exp;
-		exp_seq_pos : loc }
+and exp_seq = { 
+    exp_seq_type : P.typ;
+    exp_seq_exp1 : exp;
+    exp_seq_exp2 : exp;
+    exp_seq_pos : loc }
     
 and exp_sharp = {
-  exp_sharp_type : P.typ;
-  exp_sharp_flow_type :sharp_flow;(*the new flow*)
-  exp_sharp_val :sharp_val;(*returned value*)
-  exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
-  exp_sharp_path_id : control_path_id;
-  exp_sharp_pos : loc;
+    exp_sharp_type : P.typ;
+    exp_sharp_flow_type :sharp_flow;(*the new flow*)
+    exp_sharp_val :sharp_val;(*returned value*)
+    exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
+    exp_sharp_path_id : control_path_id;
+    exp_sharp_pos : loc;
 }
     
 and exp_catch = { 
-  exp_catch_flow_type : nflow ;
-  exp_catch_flow_var : ident option;
-  exp_catch_var : typed_ident option;
-  exp_catch_body : exp;			
-  exp_catch_pos : loc }
+    exp_catch_flow_type : nflow ;
+    exp_catch_flow_var : ident option;
+    exp_catch_var : typed_ident option;
+    exp_catch_body : exp;			
+    exp_catch_pos : loc }
     
-and exp_try = { exp_try_type : P.typ;
-				exp_try_body : exp;
-				exp_try_path_id : control_path_id_strict;
-				exp_catch_clause : exp ;
-				exp_try_pos : loc }
+and exp_try = { 
+    exp_try_type : P.typ;
+    exp_try_body : exp;
+    exp_try_path_id : control_path_id_strict;
+    exp_catch_clause : exp ;
+    exp_try_pos : loc }
 
-and exp_this = { exp_this_type : P.typ;
-		 exp_this_pos : loc }
+and exp_this = { 
+    exp_this_type : P.typ;
+    exp_this_pos : loc }
 
-and exp_var = { exp_var_type : P.typ;
-		exp_var_name : ident;
-		exp_var_pos : loc }
+and exp_var = { 
+    exp_var_type : P.typ;
+    exp_var_name : ident;
+    exp_var_pos : loc }
 
 (* An Hoa : Empty array - only for initialization purpose *)		
-and exp_emparray = { exp_emparray_type : P.typ;
-		exp_emparray_pos : loc }
+and exp_emparray = { 
+    exp_emparray_type : P.typ;
+    exp_emparray_pos : loc }
 
-and exp_var_decl = { exp_var_decl_type : P.typ;
-		     exp_var_decl_name : ident;
-		     exp_var_decl_pos : loc }
+and exp_var_decl = { 
+    exp_var_decl_type : P.typ;
+    exp_var_decl_name : ident;
+    exp_var_decl_pos : loc }
 
-and exp_while = { exp_while_condition : ident;
-		  exp_while_body : exp;
-		  exp_while_spec : Cformula.struc_formula (*multi_spec*);
-		  exp_while_path_id : control_path_id;
-		  exp_while_pos : loc }
+and exp_while = { 
+    exp_while_condition : ident;
+    exp_while_body : exp;
+    exp_while_spec : Cformula.struc_formula (*multi_spec*);
+    exp_while_path_id : control_path_id;
+    exp_while_pos : loc }
 
-and exp_dprint = { exp_dprint_string : ident;
-		   exp_dprint_visible_names : ident list;
-		   exp_dprint_pos : loc }
+and exp_dprint = { 
+    exp_dprint_string : ident;
+    exp_dprint_visible_names : ident list;
+    exp_dprint_pos : loc }
 
-and exp_unfold = { exp_unfold_var : P.spec_var;
-		   exp_unfold_pos : loc }
+and exp_unfold = { 
+    exp_unfold_var : P.spec_var;
+    exp_unfold_pos : loc }
 
-and exp_check_ref = { exp_check_ref_var : ident;
-		      exp_check_ref_pos : loc }
+and exp_check_ref = { 
+    exp_check_ref_var : ident;
+    exp_check_ref_pos : loc }
 
-and exp_java = { exp_java_code : string;
-		 exp_java_pos : loc}
+and exp_java = { 
+    exp_java_code : string;
+    exp_java_pos : loc}
 and exp_label = {
-  exp_label_type : P.typ;
-  exp_label_path_id : (control_path_id * path_label);
-  exp_label_exp: exp;}
+    exp_label_type : P.typ;
+    exp_label_path_id : (control_path_id * path_label);
+    exp_label_exp: exp;}
     
 and exp = (* expressions keep their types *)
     (* for runtime checking *)
   | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
-      (* standard expressions *)
-	(* | ArrayAt of exp_arrayat (* An Hoa *) *)
-	(* | ArrayMod of exp_arraymod (* An Hoa *) *)
+        (* standard expressions *)
+	    (* | ArrayAt of exp_arrayat (* An Hoa *) *)
+	    (* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
   | Assign of exp_assign
   | BConst of exp_bconst
@@ -284,19 +315,19 @@ and exp = (* expressions keep their types *)
   | Debug of exp_debug
   | Dprint of exp_dprint
   | FConst of exp_fconst
-      (*
-	| FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
-      (* v.f --> (type of f, v, (f, position of f in field list), pos *)
-	| FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
-      (* field assignment is flattened to form x.f = y only *)
-      *)
+        (*
+	      | FieldRead of (P.typ * (ident * P.typ) * (ident * int) * loc) 
+        (* v.f --> (type of f, v, (f, position of f in field list), pos *)
+	      | FieldWrite of ((ident * P.typ) * (ident * int) * ident * loc) 
+        (* field assignment is flattened to form x.f = y only *)
+        *)
   | ICall of exp_icall
   | IConst of exp_iconst
   | New of exp_new
   | Null of loc
-	| EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
+  | EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
   | Print of (int * loc)
-      (* | Return of exp_return*)
+        (* | Return of exp_return*)
   | SCall of exp_scall
   | Seq of exp_seq
   | This of exp_this
@@ -314,6 +345,7 @@ let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 
+let is_simple_formula x = true
 (* transform each proc by a map function *)
 let map_proc (prog:prog_decl)
   (f_p : proc_decl -> proc_decl) : prog_decl =
