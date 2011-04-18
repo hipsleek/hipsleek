@@ -1,0 +1,37 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma self::lseg<n, p> <- (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u,p2] x::lseg<u, p2>.
+
+print residue.
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u] x::lseg<u, p>.
+
+print residue.
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u] x::lseg<u, p2>.
+
+print residue.
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<u, p2>.
+print residue.
+// missing a case from right folding.
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- x::lseg<u, p>.
+// valid but fail
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- (exists q: x::lseg<u, q> & q=p).
+// valid but fail
+
+checkentail x::lseg<n1, r> * r::lseg<n2,p> |- (exists u,q: x::lseg<u, q> & q=p).
+
+

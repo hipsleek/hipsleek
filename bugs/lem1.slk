@@ -13,7 +13,7 @@ print residue.
 // valid but fail
 
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2,p> & n1 = 3 & n2=3.
-//print residue.
+print residue.
 
 checkentail x::lseg<n, p> & n = 7 |- x::lseg<n1, r1> * r1::lseg<n2,p1> & n1 = 3 & n2=4.
 

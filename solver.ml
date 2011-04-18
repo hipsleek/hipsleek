@@ -5346,7 +5346,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
           (* apply_right_coercion *)
           (*******************************************************************************************************************************************************************************************)
 and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos pid =
-        Gen.Debug.ho_5 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion Cprinter.string_of_formula (fun x -> x) (fun x -> "?") 
+        Gen.Debug.no_5 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion Cprinter.string_of_formula (fun x -> x) (fun x -> "?") 
             (fun _ _ _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos pid) ln2 resth2 coer conseq c2
 
 (* ln2 - RHS matched node

@@ -1,3 +1,7 @@
+Add:
+  check_continue |- ?.
+  This will use residue to continue with more checking.
+
 qs-bug-eps.ss
   qsort-tail.ss goes into a loop under --eps --combined-lemma-heuristic
 
