@@ -31,6 +31,10 @@ struct
 
   let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
 
+  let pr_lst f xs = String.concat "," (List.map f xs)
+
+ let pr_list f xs = "["^(pr_lst f xs)^"]"
+
   let opt_to_list o = match o with
     | None -> []
     | Some a -> [a]

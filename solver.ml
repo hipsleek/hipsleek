@@ -2094,11 +2094,13 @@ and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evar
   - remove the variables already instantiated from ivars
   - expl_vars will contain the vars that are next to be explicitly instantiated: for each equation ivar = v, it adds v to the list of vars that will be explicitly instantiated later
 *)
-and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_var list) (*(expl_vars : CP.spec_var list) *)pos : (CP.formula list * CP.spec_var list * CP.spec_var list) = match st with
+and get_eqns_expl_inst_x (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_var list) (*(expl_vars : CP.spec_var list) *)pos 
+      : (CP.formula list * CP.spec_var list (*remaining ivar*) * CP.spec_var list) = 
+  let rec helper st ivars = match st with
   | (fr, t) :: rest ->
         if (CP.mem fr ivars) then
 	      let ivars' = (List.filter (fun x -> not(CP.eq_spec_var fr x)) ivars) in
-	      let (rest_eqns, ivars_new, expl_vars_new) = get_eqns_expl_inst rest ivars' pos in
+	      let (rest_eqns, ivars_new, expl_vars_new) = helper rest ivars' in
 	      let tmp = CP.mkEqVar fr t pos in
 	      let res = [tmp]@rest_eqns in
 	      (*let _ = print_string ("expl_inst: " ^ (Cprinter.string_of_pure_formula tmp) ^ "\n") in*)
@@ -2106,15 +2108,25 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
         else (
 	        if (CP.mem t ivars) then
 	          let ivars' = (List.filter (fun x -> not(CP.eq_spec_var t x)) ivars) in
-	          let (rest_eqns, ivars_new, expl_vars_new) = get_eqns_expl_inst rest ivars' pos in
+	          let (rest_eqns, ivars_new, expl_vars_new) = helper  rest ivars'  in
 	          let tmp = CP.mkEqVar t fr pos in
 	          let res = [tmp]@rest_eqns in
 	          (*let _ = print_string ("expl_inst: " ^ (Cprinter.string_of_pure_formula tmp) ^ "\n") in*)
 	          (res, ivars_new, fr::expl_vars_new)
 	        else
-	          (get_eqns_expl_inst rest ivars pos)
+	          (helper  rest ivars)
         )
   | [] -> ([], ivars, [])
+  in helper st ivars
+
+and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_var list) (*(expl_vars : CP.spec_var list) *)pos : (CP.formula list * CP.spec_var list * CP.spec_var list) = 
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr_lf xs = pr_list Cprinter.string_of_pure_formula xs in
+  let pr_r (lf,l1,l2)  = "("^(pr_lf lf)^","^(pr_svl l1)^","^(pr_svl l2)^")" in
+  let pr_sv = Cprinter.string_of_spec_var in
+  let pr2 xs = pr_list (pr_pair pr_sv pr_sv) xs in
+  Gen.Debug.ho_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars 
+
 
 
 
@@ -2728,7 +2740,7 @@ and heap_entail_conjunct_lhs_x prog is_folding is_universal (ctx:context) conseq
    - add the existential vars from the conseq to the existential vars from the antecedent
    - f represents the consequent
 *)
-and move_lemma_expl_inst_ctx_list (ctx : list_context) (f : formula) : list_context =
+and move_lemma_expl_inst_ctx_list_x (ctx : list_context) (f : formula) : list_context =
         let fct es = 
           let new_es = (pop_exists_estate es.es_expl_vars es) in
           Ctx{new_es with(* existential vars from conseq are made existential in the entecedent *)			
@@ -2738,8 +2750,20 @@ and move_lemma_expl_inst_ctx_list (ctx : list_context) (f : formula) : list_cont
 	      } in  
         transform_list_context ( fct,(fun c->c)) ctx
 
+and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:formula):list_context =
+        let pr1 = Cprinter.string_of_list_context in
+        let pr2 = Cprinter.string_of_formula in
+  Gen.Debug.ho_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1 
+      move_lemma_expl_inst_ctx_list_x ctx f
 
-and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = 
+
+and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
+        let pr1 = Cprinter.string_of_list_context in
+        let pr2 = Cprinter.string_of_mix_formula in
+  Gen.Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
+      move_expl_inst_ctx_list_x ctx f
+
+and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
         let fct es = 
           let f = MCP.find_rel_constraints f es.es_gen_expl_vars in
           let nf = 
