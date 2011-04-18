@@ -2125,7 +2125,7 @@ and get_eqns_expl_inst (st : (CP.spec_var * CP.spec_var) list) (ivars : CP.spec_
   let pr_r (lf,l1,l2)  = "("^(pr_lf lf)^","^(pr_svl l1)^","^(pr_svl l2)^")" in
   let pr_sv = Cprinter.string_of_spec_var in
   let pr2 xs = pr_list (pr_pair pr_sv pr_sv) xs in
-  Gen.Debug.ho_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars 
+  Gen.Debug.no_2 "get_eqns_expl_inst" pr2 pr_svl pr_r (fun _ _ -> get_eqns_expl_inst_x st ivars pos) st ivars 
 
 
 
@@ -2753,14 +2753,14 @@ and move_lemma_expl_inst_ctx_list_x (ctx : list_context) (f : formula) : list_co
 and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:formula):list_context =
         let pr1 = Cprinter.string_of_list_context in
         let pr2 = Cprinter.string_of_formula in
-  Gen.Debug.ho_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1 
+  Gen.Debug.no_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1 
       move_lemma_expl_inst_ctx_list_x ctx f
 
 
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
         let pr1 = Cprinter.string_of_list_context in
         let pr2 = Cprinter.string_of_mix_formula in
-  Gen.Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
+  Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
       move_expl_inst_ctx_list_x ctx f
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
@@ -5190,7 +5190,7 @@ and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * fo
 	            (*end	*)
 
 and apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos pid =
-        Gen.Debug.ho_5 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_formula (fun x -> x) (fun x -> x) (fun x -> "?") 
+        Gen.Debug.no_5 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_formula (fun x -> x) (fun x -> x) (fun x -> "?") 
             (fun _ _ _ _ _ -> apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos pid)
             anode resth1 conseq c1 c2
             (* anode - chosen node, resth1 - rest of heap *)
