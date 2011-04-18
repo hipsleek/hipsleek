@@ -1642,7 +1642,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
   let pr2 (r1,r2) = Cprinter.string_of_coercion (List.hd (r1@r2)) in
-  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -1666,7 +1666,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
   (* free vars in RHS but not LHS *)
   let ex_vars = Gen.BList.remove_dups_eq CP.eq_spec_var 
-    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames) ) (CF.fv c_rhs)) in 
+    (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (CF.fv c_rhs)) in 
   (* wrap exists for RHS - no implicit instantiation*)
   let c_rhs = CF.push_exists ex_vars c_rhs in
   let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
