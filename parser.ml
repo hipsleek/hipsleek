@@ -225,6 +225,7 @@ let peek_try =
  SHGram.Entry.of_parser "peek_try_declarest" 
      (fun strm ->
        match Stream.npeek 2 strm with
+          | [_;EQ,_] -> raise Stream.Failure 
           | [CONST,_;_] -> ()
           | [INT,_;IDENTIFIER n,_] -> ()
           | [FLOAT,_;IDENTIFIER n,_] -> ()
@@ -1092,7 +1093,7 @@ statement:
 
 declaration_statement:
   [[peek_try_declarest; t=local_variable_declaration -> t
-   |peek_try_declarest; t=local_constant_declaration -> t]];
+   | peek_try_declarest; t=local_constant_declaration -> t]];
 
 local_variable_type: [[ t= typ -> t]];
 
