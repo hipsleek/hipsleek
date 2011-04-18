@@ -4721,8 +4721,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding is_universal ctx0 estate an
 						                    (* try coercion as well *)
 						                    (*******************************************************************************************************************************************************************************************)
 					                        let ans =	
-						                      if is_view anode then
-						                        (Debug.devel_pprint ("do_coercion for " ^ (Cprinter.string_of_h_formula anode) ^ "\n") pos;
+						                      if (is_view anode) || (is_view ln2) then
+						                        (Debug.devel_pprint ("do_coercion for LHS:" ^ (Cprinter.string_of_h_formula anode) ^" RHS:"^(Cprinter.string_of_h_formula ln2)^ "\n") pos;
 						                        Some (do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid))
 						                            (* else (CF.SuccCtx [], []) in - this does not work! *)
 						                      else None in

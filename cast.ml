@@ -91,7 +91,8 @@ and proc_decl = {
     proc_file : string;
     proc_loc : loc; }
 
-(*TODO: does lemma need struc formulas?*)
+(*TODO: should we change lemma need struc formulas?
+  would this help with lemma folding later? *)
 
 (* TODO : coercion type ->, <-, <-> just added *)
 and coercion_decl = { 

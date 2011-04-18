@@ -1093,7 +1093,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr x = "?" in
   let pr_r = Cprinter.string_of_view_decl in
-  Gen.Debug.ho_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Gen.Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
@@ -1642,7 +1642,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
   let pr2 (r1,r2) = Cprinter.string_of_coercion (List.hd (r1@r2)) in
-  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -3290,7 +3290,7 @@ and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident li
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
+  Gen.Debug.no_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
           (f0 : IF.formula) stab (clean_res:bool)) stab quantify clean_res fvars f0
 
