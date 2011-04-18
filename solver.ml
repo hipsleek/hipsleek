@@ -2741,13 +2741,10 @@ and move_lemma_expl_inst_ctx_list (ctx : list_context) (f : formula) : list_cont
 
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = 
         let fct es = 
-          let f = MCP.find_rel_constraints f (es.es_gen_impl_vars@es.es_evars) in
+          let f = MCP.find_rel_constraints f es.es_gen_expl_vars in
           let nf = 
-            let v_l = es.es_gen_impl_vars@es.es_evars in
-	        if (v_l = []) then es.es_formula
-	        else 
-              let f1 = formula_of_mix_formula (elim_exists_mix_formula(*_debug*) v_l f no_pos) no_pos in
-              CF.mkStar es.es_formula f1 Flow_combine no_pos in
+           let f2 = if (es.es_evars = []) then f else (elim_exists_mix_formula(*_debug*) es.es_evars f no_pos) in
+           CF.mkStar es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
           (*let f1 = formula_of_memo_pure (MCP.memo_pure_push_exists (es.es_gen_impl_vars@es.es_evars) f ) no_pos in*)
           Ctx {es with
 	          es_gen_impl_vars = [];
