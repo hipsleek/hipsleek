@@ -865,8 +865,8 @@ and h_add_origs_to_node (v:string) (h : h_formula) origs =
     | ViewNode vn -> if not((CP.name_of_spec_var vn.h_formula_view_node) = v) then h
       else ViewNode {vn with h_formula_view_origins = origs @ vn.h_formula_view_origins}
     | _ -> h 
-  in helper h
-
+  in helper h  
+  
 and add_origs_to_node (v:string) (f : formula) origs = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
@@ -3658,3 +3658,14 @@ and propagate_imm_struc_formula e =
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
 
+and add_origs_to_node_struc (v:string) (e : struc_formula) origs = 
+  let f_e_f e = None  in
+  let f_f e = Some (add_origs_to_node v e origs)in
+  let f_h_f f = Some f in
+  let f_p_t1 e = Some e in
+  let f_p_t2 e = Some e in
+  let f_p_t3 e = Some e in
+  let f_p_t4 e = Some e in
+  let f_p_t5 e = Some e in
+  let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
+    transform_struc_formula f e

@@ -1526,7 +1526,7 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Equiv -> "<=>" ;;
 
 let string_of_coerc c lft = "\""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type)^(string_of_formula c.coercion_body)
-  ^"{lhs exists:"^(string_of_formula c.coercion_head_exist)^"head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}" ;;
+  ^"{lhs exists:"^(string_of_formula c.coercion_head_exist)^"head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}"^"\n coerc_body_struct "^(string_of_struc_formula c.coercion_body_struc) ;;
 
 let string_of_coercion c = string_of_coerc c false ;;
 

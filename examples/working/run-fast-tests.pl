@@ -472,8 +472,8 @@ $output_file = "log";
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
                     # imm error for sleek7.slk and loop for sleek8.slk
-					#["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-				    #["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
+				  ["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid.Fail.Valid.Valid."],
                                         ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
 			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],

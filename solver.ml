@@ -2740,19 +2740,23 @@ and heap_entail_conjunct_lhs_x prog is_folding is_universal (ctx:context) conseq
    - add the existential vars from the conseq to the existential vars from the antecedent
    - f represents the consequent
 *)
-and move_lemma_expl_inst_ctx_list_x (ctx : list_context) (f : formula) : list_context =
-        let fct es = 
-          let new_es = (pop_exists_estate es.es_expl_vars es) in
-          Ctx{new_es with(* existential vars from conseq are made existential in the entecedent *)			
-	          es_ante_evars = new_es.es_ante_evars @ new_es.es_evars;
-	          es_formula = (CF.mkStar new_es.es_formula f Flow_combine no_pos);
-	          es_unsat_flag = false;
-	      } in  
-        transform_list_context ( fct,(fun c->c)) ctx
+and move_lemma_expl_inst_ctx_list_x (ctx : list_context) (f : MCP.mix_formula) : list_context =
+  let fct es = 
+    let f = MCP.find_rel_constraints f es.es_expl_vars in
+    let new_es = (pop_exists_estate es.es_expl_vars es) in
+    let nf = 
+      let f2 = if (new_es.es_evars = []) then f else (elim_exists_mix_formula(*_debug*) new_es.es_evars f no_pos) in
+      CF.mkStar new_es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
+    Ctx {new_es with
+          es_gen_impl_vars = [];
+	        es_ante_evars = new_es.es_ante_evars @ new_es.es_evars;
+	        es_formula = nf;
+	        es_unsat_flag = false; } in
+    transform_list_context (fct,(fun c->c)) ctx
 
-and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:formula):list_context =
+and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
         let pr1 = Cprinter.string_of_list_context in
-        let pr2 = Cprinter.string_of_formula in
+        let pr2 = Cprinter.string_of_mix_formula in
   Gen.Debug.no_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1 
       move_lemma_expl_inst_ctx_list_x ctx f
 
@@ -3765,7 +3769,7 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool) (is_unive
 				                  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding is_universal estate b1 p2 br2 pos in
 				                  let new_ctx =
-				                    if is_universal then ((*print_string ("YES Expl inst!!\n");*) move_lemma_expl_inst_ctx_list ctx conseq)
+				                    if is_universal then ((*print_string ("YES Expl inst!!\n");*) move_lemma_expl_inst_ctx_list ctx p2)
 				                    else ((*print_string ("NO Expl inst!!\n");*) ctx )
 				                  in
 				                  let new_ctx = move_expl_inst_ctx_list new_ctx p2 in
@@ -4308,6 +4312,7 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     let new_consumed = 
       if not(get_imm r_node)
       then mkStarH l_node estate.es_heap pos 
+      else  estate.es_heap
       else  estate.es_heap
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
@@ -5371,7 +5376,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
         ^ c2 ^ "\n") pos in
         (* if is_coercible ln2 then *)
           let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b false pos in
-	      if ok && (is_coercible ln2)  then begin
+	      if (is_coercible ln2)&&ok  then begin
 	        let new_ctx = SuccCtx [(set_context_must_match ctx0)] in
 	        let res, tmp_prf = heap_entail prog is_folding false new_ctx new_rhs pos in
 	        let prf = mkCoercionRight ctx0 conseq coer.coercion_head
@@ -5391,12 +5396,12 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
         (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
         (* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])  *)
           (*************************************************************************************************************************
-															                                                                        05.06.2008:
-															                                                                        Utilities for existential quantifier elimination:
-															                                                                        - before we were only searching for substitutions of the form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
-															                                                                        - now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part
-															                                                                        (due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
-															                                                                        - also check that v1 is not contained in FV(exp2)
+  05.06.2008:
+  Utilities for existential quantifier elimination:
+  - before we were only searching for substitutions of the form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
+  - now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part
+  (due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
+  - also check that v1 is not contained in FV(exp2)
           *************************************************************************************************************************)
 
 (* apply elim_exist_exp_loop until no change *)

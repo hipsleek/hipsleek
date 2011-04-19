@@ -1664,6 +1664,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
   let lhs_fnames = Gen.BList.difference_eq (=) lhs_fnames0 (List.map CP.name_of_spec_var univ_vars) in
   let c_rhs = trans_formula prog (Gen.is_empty univ_vars) ((* self :: *) lhs_fnames) false coer.I.coercion_body stab false in
   let c_rhs = CF.add_origs_to_node self c_rhs [coer.I.coercion_name] in
+  let c_rhs_struc = trans_struc_formula prog true lhs_fnames0 coer.I.coercion_body_struc stab false in
+  let c_rhs_struc = CF.add_origs_to_node_struc self c_rhs_struc [coer.I.coercion_name] in
   (* free vars in RHS but not LHS *)
   let ex_vars = Gen.BList.remove_dups_eq CP.eq_spec_var 
     (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (CF.fv c_rhs)) in 
@@ -1686,6 +1688,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     C.coercion_name = coer.I.coercion_name;
     C.coercion_head = c_lhs;
     C.coercion_body = c_rhs;
+    C.coercion_body_struc = c_rhs_struc;
     C.coercion_univ_vars = univ_vars;
     C.coercion_head_exist = c_lhs_exist;
     C.coercion_head_view = lhs_name;
@@ -3230,6 +3233,14 @@ and add_pre_debug prog f =
       
 and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
+  let prb = string_of_bool in
+  Gen.Debug.no_eff_5 "trans_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+      (fun _ _ _ _ _ -> trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+          (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
+
+      
+and trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+      (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
     (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
@@ -4480,10 +4491,15 @@ and case_normalize_struc_formula prog (h:(ident*primed) list)(p:(ident*primed) l
 and case_normalize_coerc prog (cd: Iast.coercion_decl):Iast.coercion_decl = 
   let nch = case_normalize_formula prog [] cd.Iast.coercion_head in
   let ncb = case_normalize_formula prog [] cd.Iast.coercion_body in
+  let lhs_fv = Iformula.all_fv cd.Iast.coercion_head in
+  let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (fst c,Unprimed)) lhs_fv) in
+	let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (fst  c,Primed)) lhs_fv) in
+  let ncbs,_ = case_normalize_struc_formula prog h p cd.Iast.coercion_body_struc false false [] in
   { Iast.coercion_type = cd.Iast.coercion_type;
   Iast.coercion_name = cd.Iast.coercion_name;
   Iast.coercion_head = nch;
   Iast.coercion_body = ncb;
+  Iast.coercion_body_struc = ncbs;
   Iast.coercion_proof = cd.Iast.coercion_proof}
       
 and ren_list_concat (l1:((ident*ident) list)) (l2:((ident*ident) list)):((ident*ident) list) = 
@@ -5299,17 +5315,19 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
         let inv_f = CF.formula_of_pure_N c_inv_simp no_pos in
         let n_h_f = CF.normalize inv_f (add_brs v_def brs h_f) no_pos in
         let n_b_f = CF.normalize inv_f (add_brs v_def brs b_f)  no_pos in
+        let n_b_s_f = c.C.coercion_body_struc in
         (*let _ = print_string ("coer head: "^(Cprinter.string_of_formula n_h_f)^"\n\n") in*)
         let prun_h_f = Solver.prune_preds prog true n_h_f in
         (*let _ = print_string ("coer pruned head: "^(Cprinter.string_of_formula prun_h_f)^"\n\n") in
           let _ = print_string ("coer body: "^(Cprinter.string_of_formula n_b_f)^"\n\n") in*)
         let prun_b_f = Solver.prune_preds prog true n_b_f in
+        let prun_b_s_f = Solver.prune_pred_struc prog true n_b_s_f in
         (*let _ = print_string ("coer pruned body: "^(Cprinter.string_of_formula prun_b_f)^"\n\n") in*)
-        (prun_h_f,prun_b_f)) v_invs in   
+        (prun_h_f,prun_b_f,prun_b_s_f)) v_invs in   
     if is_l then 
-      List.map (fun (c1,c2) -> {c with C.coercion_head=c1; C.coercion_body=c2;}) r_l
+      List.map (fun (c1,c2,c3) -> {c with C.coercion_head=c1; C.coercion_body=c2;C.coercion_body_struc = c3}) r_l
     else
-      List.map (fun (c1,c2) -> {c with C.coercion_head=c2; C.coercion_body=c1;}) r_l
+      List.map (fun (c1,c2,c3) -> {c with C.coercion_head=c2; C.coercion_body=c1;C.coercion_body_struc = c3}) r_l
   end   
       
 and pred_prune_inference (cp:C.prog_decl):C.prog_decl =      
