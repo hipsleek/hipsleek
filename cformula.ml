@@ -1028,7 +1028,7 @@ and get_formula_pos (f : formula) = match f with
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
-  Gen.Debug.ho_3 "subst_avoid_capture" !print_svl !print_svl !print_formula !print_formula
+  Gen.Debug.no_3 "subst_avoid_capture" !print_svl !print_svl !print_formula !print_formula
       (fun _ _ _ -> subst_avoid_capture_x fr t f) fr t f
 
 and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
@@ -2261,7 +2261,12 @@ and get_estate_must_match (es : entail_state) : bool =
 and set_estate_must_match (es: entail_state) : entail_state = 	
 	let es_new = {es with es_must_match = true} in
 		es_new
-	
+
+and moving_ivars_to_evars (estate:entail_state) (anode:h_formula) : entail_state =
+    let arg_vars = h_fv anode in
+    let (removed_ivars,remaining_ivars) = List.partition (fun v -> CP.mem v arg_vars) estate.es_ivars in
+    {estate with es_evars = estate.es_evars@removed_ivars; es_ivars = remaining_ivars; } 
+
 and set_context_must_match (ctx : context) : context = match ctx with 
   | Ctx (es) -> Ctx(set_estate_must_match es)
   | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2))

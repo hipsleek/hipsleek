@@ -867,15 +867,9 @@ let rec string_of_flow_formula f c =
   "{"^f^",("^(string_of_int (fst c.formula_flow_interval))^","^(string_of_int (snd c.formula_flow_interval))^
 	  ")="^(Gen.ExcNumbering.get_closest c.formula_flow_interval)^","^(match c.formula_flow_link with | None -> "" | Some e -> e)^"}"
 
-let rec pr_formula e =
-  let f_b e =  pr_bracket formula_wo_paren pr_formula e in
+let rec pr_formula_base e =
   match e with
-    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
-	      let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
-          let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
-          let args = arg1@arg2 in
-	      pr_list_vbox_wrap "or " f_b args
-    | Base ({formula_base_heap = h;
+    | ({formula_base_heap = h;
 	  formula_base_pure = p;
 	  formula_base_branches = b;
 	  formula_base_type = t;
@@ -885,6 +879,26 @@ let rec pr_formula e =
           (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
+
+let rec pr_formula e =
+  let f_b e =  pr_bracket formula_wo_paren pr_formula e in
+  match e with
+    | Or ({formula_or_f1 = f1; formula_or_f2 = f2; formula_or_pos = pos}) ->
+	      let arg1 = bin_op_to_list op_f_or_short formula_assoc_op f1 in
+          let arg2 = bin_op_to_list op_f_or_short formula_assoc_op f2 in
+          let args = arg1@arg2 in
+	      pr_list_vbox_wrap "or " f_b args
+    | Base e -> pr_formula_base e
+      (*     ({formula_base_heap = h; *)
+	  (* formula_base_pure = p; *)
+	  (* formula_base_branches = b; *)
+	  (* formula_base_type = t; *)
+	  (* formula_base_flow = fl; *)
+      (* formula_base_label = lbl; *)
+	  (* formula_base_pos = pos}) -> *)
+      (*     (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->")); *)
+      (*     pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b); *)
+      (*     pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl) *)
     | Exists ({formula_exists_qvars = svs;
 	  formula_exists_heap = h;
 	  formula_exists_pure = p;
@@ -900,6 +914,8 @@ let rec pr_formula e =
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
 
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
+
+let string_of_formula_base (e:formula_base) : string =  poly_string_of_pr  pr_formula_base e
 
 let printer_of_formula (fmt: Format.formatter) (e:formula) : unit
     = poly_printer_of_pr fmt pr_formula e
