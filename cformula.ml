@@ -1027,6 +1027,10 @@ and get_formula_pos (f : formula) = match f with
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
+  Gen.Debug.ho_1 "subst_avoid_capture" !print_formula !print_formula
+      (fun _ -> subst_avoid_capture_x fr t f) f
+
+and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
   (*--- 09.05.2000 *)
   (*let _ = (print_string ("\n[cformula.ml, line 307]: fresh name = " ^ (string_of_spec_var_list fresh_fr) ^ "!!!!!!!!!!!\n")) in*)
@@ -1776,7 +1780,7 @@ type entail_state = {
   es_evars : CP.spec_var list;
   (*used by lemmas*)
   es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
-  es_expl_vars : CP.spec_var list; (* vars to be explicit instantiated *)
+  (* es_expl_vars : CP.spec_var list; (\* vars to be explicit instantiated *\) *)
   es_ante_evars : CP.spec_var list;
   es_must_match : bool;
   (*used by late instantiation*)
@@ -1863,7 +1867,7 @@ let rec empty_es flowt pos =
   es_evars = [];
   es_must_match = false;
   es_ivars = [];
-  es_expl_vars = [];
+  (* es_expl_vars = []; *)
   es_ante_evars = [];
   es_gen_expl_vars = []; 
   es_gen_impl_vars = []; 

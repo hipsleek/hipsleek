@@ -2064,13 +2064,25 @@ and elim_unsat_all prog (f : formula): formula = match f with
 and elim_unsat_all_debug prog (f : formula): formula = 
         Gen.Debug.ho_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
 
-(* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
-(*NOTE: should (fr,t) be added for (CP.mem fr expl_inst)*)
 and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
     (struc_expl_inst : CP.spec_var list) pos : (CP.formula * (branch_label * CP.formula) list)*(CP.formula * (branch_label * CP.formula) list)*
-    (CP.spec_var * CP.spec_var) list = match st with
+    (CP.spec_var * CP.spec_var) list = 
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr_p =  Cprinter.string_of_pure_formula in
+  let pr_st l  = pr_list (fun (c,_)-> pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var c) l in
+  let pr_st2 l  = pr_list (pr_pair Cprinter.string_of_spec_var Cprinter.string_of_spec_var) l in
+  let pr ((lhs,_),(rhs,_),s) = (pr_pair pr_p pr_p (lhs,rhs))^"subst:"^(pr_st2 s) in
+  Gen.Debug.ho_3 "get_eqns_free" pr_st pr_svl pr_svl  pr (fun _ _ _ -> get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+    (struc_expl_inst : CP.spec_var list) pos) st evars expl_inst
+
+(* extracts those involve free vars from a set of equations  - here free means that it is not existential and it is not meant for explicit instantiation *)
+(*NOTE: should (fr,t) be added for (CP.mem fr expl_inst)*)
+and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
+    (struc_expl_inst : CP.spec_var list) pos : (CP.formula * (branch_label * CP.formula) list)*(CP.formula * (branch_label * CP.formula) list)*
+    (CP.spec_var * CP.spec_var) list = 
+  match st with
       | ((fr, t), br_label) :: rest ->
-	        let ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list) = get_eqns_free rest evars expl_inst struc_expl_inst pos in
+	        let ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),s_list) = get_eqns_free_x rest evars expl_inst struc_expl_inst pos in
 	        if (CP.mem fr evars) || (CP.mem fr expl_inst)  (*TODO: should this be uncommented? || List.mem t evars *) then
 	          ((rest_left_eqns, rest_left_eqns_br),(rest_right_eqns, rest_right_eqns_br),(fr, t)::s_list)
 	        else if (CP.mem fr struc_expl_inst) then
@@ -2740,31 +2752,31 @@ and heap_entail_conjunct_lhs_x prog is_folding is_universal (ctx:context) conseq
    - add the existential vars from the conseq to the existential vars from the antecedent
    - f represents the consequent
 *)
-and move_lemma_expl_inst_ctx_list_x (ctx : list_context) (f : MCP.mix_formula) : list_context =
-  let fct es = 
-    let f = MCP.find_rel_constraints f es.es_expl_vars in
-    let new_es = (pop_exists_estate es.es_expl_vars es) in
-    let nf = 
-      let f2 = if (new_es.es_evars = []) then f else (elim_exists_mix_formula(*_debug*) new_es.es_evars f no_pos) in
-      CF.mkStar new_es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in
-    Ctx {new_es with
-          es_gen_impl_vars = [];
-	        es_ante_evars = new_es.es_ante_evars @ new_es.es_evars;
-	        es_formula = nf;
-	        es_unsat_flag = false; } in
-    transform_list_context (fct,(fun c->c)) ctx
+(* and move_lemma_expl_inst_ctx_list_x (ctx : list_context) (f : MCP.mix_formula) : list_context = *)
+(*   let fct es =  *)
+(*     let f = MCP.find_rel_constraints f es.es_expl_vars in *)
+(*     let new_es = (pop_exists_estate es.es_expl_vars es) in *)
+(*     let nf =  *)
+(*       let f2 = if (new_es.es_evars = []) then f else (elim_exists_mix_formula(\*_debug*\) new_es.es_evars f no_pos) in *)
+(*       CF.mkStar new_es.es_formula (formula_of_mix_formula f2 no_pos) Flow_combine no_pos in *)
+(*     Ctx {new_es with *)
+(*           es_gen_impl_vars = []; *)
+(* 	        es_ante_evars = new_es.es_ante_evars @ new_es.es_evars; *)
+(* 	        es_formula = nf; *)
+(* 	        es_unsat_flag = false; } in *)
+(*     transform_list_context (fct,(fun c->c)) ctx *)
 
-and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
-        let pr1 = Cprinter.string_of_list_context in
-        let pr2 = Cprinter.string_of_mix_formula in
-  Gen.Debug.no_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1 
-      move_lemma_expl_inst_ctx_list_x ctx f
+(* and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = *)
+(*         let pr1 = Cprinter.string_of_list_context in *)
+(*         let pr2 = Cprinter.string_of_mix_formula in *)
+(*   Gen.Debug.ho_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1  *)
+(*       move_lemma_expl_inst_ctx_list_x ctx f *)
 
 
 and move_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context =
         let pr1 = Cprinter.string_of_list_context in
         let pr2 = Cprinter.string_of_mix_formula in
-  Gen.Debug.no_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
+  Gen.Debug.ho_2 "move_expl_inst_ctx_list" pr1 pr2 pr1 
       move_expl_inst_ctx_list_x ctx f
 
 and move_expl_inst_ctx_list_x (ctx:list_context)(f:MCP.mix_formula):list_context = 
@@ -3768,11 +3780,11 @@ and heap_entail_conjunct_helper (prog : prog_decl) (is_folding : bool) (is_unive
 				                  (* Remark: for universal lemmas we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
 				                  (*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*)
 				                  let ctx, proof = heap_entail_empty_rhs_heap prog is_folding is_universal estate b1 p2 br2 pos in
-				                  let new_ctx =
-				                    if is_universal then ((*print_string ("YES Expl inst!!\n");*) move_lemma_expl_inst_ctx_list ctx p2)
-				                    else ((*print_string ("NO Expl inst!!\n");*) ctx )
-				                  in
-				                  let new_ctx = move_expl_inst_ctx_list new_ctx p2 in
+				                  (* let new_ctx = *)
+				                  (*   if is_universal then ((\*print_string ("YES Expl inst!!\n");*\) move_lemma_expl_inst_ctx_list ctx p2) *)
+				                  (*   else ((\*print_string ("NO Expl inst!!\n");*\) ctx ) *)
+				                  (* in *)
+				                  let new_ctx = move_expl_inst_ctx_list ctx p2 in
 				                  (new_ctx, proof)
 				                end
 			                  | _ -> begin
@@ -4274,6 +4286,14 @@ and do_base_case_unfold_debug prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_f
 
 and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos : 
     list_context *proof =
+  let pr (e,_) = Cprinter.string_of_list_context e in
+  let pr_h = Cprinter.string_of_h_formula in 
+  Gen.Debug.ho_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
+      (fun _ _ _ _ -> do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos)
+      l_node r_node estate rhs
+
+and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos : 
+    list_context *proof =
         Debug.devel_pprint ("do_match: using " ^
 	        (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	        (Cprinter.string_of_h_formula r_node)) pos;
@@ -4288,7 +4308,7 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
     let rho = List.combine rho label_list in
     let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
-      get_eqns_free rho estate.es_evars (estate.es_expl_vars@expl_vars') estate.es_gen_expl_vars pos in
+      get_eqns_free rho estate.es_evars ((* estate.es_expl_vars@ *)expl_vars') estate.es_gen_expl_vars pos in
     (*********************************************************************)
     (* handle both explicit and implicit instantiation *)
     (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -4313,7 +4333,6 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
       if not(get_imm r_node)
       then mkStarH l_node estate.es_heap pos 
       else  estate.es_heap
-      else  estate.es_heap
     in
     let n_es_res,n_es_succ = match ((get_node_label l_node),(get_node_label r_node)) with
       |Some s1, Some s2 -> ((Gen.BList.remove_elem_eq (=) s1 estate.es_residue_pts),((s1,s2)::estate.es_success_pts))
@@ -4322,10 +4341,12 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
       | None, None -> (estate.es_residue_pts, estate.es_success_pts)in 
     let new_es = {estate with es_formula = new_ante;
         (* add the new vars to be explicitly instantiated *)
-        es_expl_vars = estate.es_expl_vars@expl_vars';
+        (* transferring expl_vars' from gen_impl_vars,evars ==> gen_expl_vars *)
+        es_gen_expl_vars = estate.es_gen_expl_vars@expl_vars';
         (* update ivars - basically, those univ vars for which binsings have been found will be removed:
            for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
-        es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars lhs_vars ;
+        es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars (lhs_vars@expl_vars') ;
+        es_evars = Gen.BList.difference_eq CP.eq_spec_var estate.es_evars expl_vars' ;
         es_ivars = ivars';
         es_heap = new_consumed;
         es_residue_pts = n_es_res;
@@ -4335,8 +4356,8 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
     let new_subst = (obtain_subst expl_inst) in
     (* apply the explicit instantiations to the consequent *)
     let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in
-    (* for each expl inst vi = wi: make wi existential + remove vi from the exist vars *)
-    let new_es' = {new_es with es_evars = new_es.es_evars @ (snd new_subst); es_must_match = false} in
+    (* for each expl inst  vi = wi: make wi existential + remove vi from the exist vars *)
+    let new_es' = {new_es with (* es_evars = new_es.es_evars @ (snd new_subst); *) es_must_match = false} in
     let new_es = pop_exists_estate (fst new_subst) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
     Debug.devel_pprint ("do_match: "^ "new_ctx after matching: "
