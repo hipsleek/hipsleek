@@ -2102,6 +2102,43 @@ and get_eqns_free_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (ev
       | [] -> ((CP.mkTrue pos, []),(CP.mkTrue pos, []),[])
 
 (*
+ivar -> tvar (tvar in impl_var);
+  expl_var += {ivar}
+  evar -= {tvar}
+  impl_var -= {tvar}
+ivar -> tvar (tvar in expl_var);
+ivar -> tvar (tvar in evar)
+
+ returns  [(tvar->ivar)] [fvar->tvar]
+*)
+
+and subs_to_inst_vars (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (ivars : CP.spec_var list) 
+      (impl_vars: CP.spec_var list) pos 
+      : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* branch_label) list) =
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr_sv = Cprinter.string_of_spec_var in
+  let pr_subs xs = pr_list (pr_pair pr_sv pr_sv) xs in
+  let pr_lf xs = pr_list Cprinter.string_of_pure_formula xs in
+  let pr2 xs = pr_list (fun (c,_) -> pr_pair pr_sv pr_sv c) xs in
+  let pr_r ((l1,l2,s1),s2)  = "("^(pr_svl l1)^","^(pr_svl l2)^","^(pr_subs s1)^","^(pr2 s2)^")" in
+  Gen.Debug.ho_2 "subs_to_inst_vars" pr2 pr_svl pr_r (fun _ _ -> subs_to_inst_vars_x st ivars impl_vars pos) st ivars 
+
+and subs_to_inst_vars_x (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (ivars : CP.spec_var list) 
+      (impl_vars: CP.spec_var list) pos 
+      : (( CP.spec_var list * CP.spec_var list * (CP.spec_var * CP.spec_var) list) *   ((CP.spec_var * CP.spec_var)* branch_label) list) =
+  let rec helper st nsubs iv impl_v = match st with
+  | ((rv, lv),_) :: rest ->
+        let f = helper rest ((lv,rv)::nsubs) (lv::iv) in
+        if (CP.mem rv impl_vars) then
+          f (rv::impl_v)  
+        else (* t in ex_vars || t in expl_vars *)
+          f impl_v 
+  | [] -> (impl_v,iv,nsubs) in 
+  (* impl_v to subtract from e_var and add to expl_var *) 
+  let (i_st, r_st) = List.partition (fun ((_,lv),_) -> CP.mem lv ivars) st  in
+   (helper i_st [] [] [] ,r_st)
+
+(*
   - extract the equations for the variables that are to be explicitly instantiated
   - remove the variables already instantiated from ivars
   - expl_vars will contain the vars that are next to be explicitly instantiated: for each equation ivar = v, it adds v to the list of vars that will be explicitly instantiated later
@@ -4303,12 +4340,18 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
       let vdef = Cast.look_up_view_def_raw prog.prog_view_decls l_node_name in
       vdef.Cast.view_labels
     with Not_found -> List.map (fun _ -> "") l_args in
-    let rho = List.combine r_args l_args in
-    let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho estate.es_ivars pos) in
+    let rho_0 = List.combine r_args l_args in (* without branch label *)
+    let rho = List.combine rho_0 label_list in (* with branch label *)
+    let ((impl_tvars, ivars, ivar_subs_to_conseq),other_subs) = subs_to_inst_vars rho estate.es_ivars estate.es_gen_impl_vars pos in
+    let subtract = Gen.BList.difference_eq CP.eq_spec_var in
+    let new_impl_vars = subtract estate.es_gen_impl_vars impl_tvars in
+    let new_exist_vars = subtract (estate.es_evars) ivars in
+    let new_expl_vars = estate.es_gen_expl_vars@impl_tvars in
+    let new_ivars = subtract estate.es_ivars ivars in
+    (* let (expl_inst, ivars', expl_vars') = (get_eqns_expl_inst rho_0 estate.es_ivars pos) in *)
     (* to_lhs only contains bindings for free vars that are not to be explicitly instantiated *)
-    let rho = List.combine rho label_list in
     let (to_lhs, to_lhs_br),(to_rhs,to_rhs_br),ext_subst = 
-      get_eqns_free rho estate.es_evars ((* estate.es_expl_vars@ *)expl_vars') estate.es_gen_expl_vars pos in
+      get_eqns_free other_subs new_exist_vars impl_tvars (* estate.es_evars *) (* estate.es_expl_vars@ *) estate.es_gen_expl_vars pos in
     (*********************************************************************)
     (* handle both explicit and implicit instantiation *)
     (* for the universal vars from universal lemmas, we use the explicit instantiation mechanism,  while, for the rest of the cases, we use implicit instantiation *)
@@ -4321,10 +4364,9 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
 
     let lhs_vars = ((CP.fv to_lhs) @(List.concat (List.map (fun (_,c)-> CP.fv c) to_lhs_br))) in
     (* apply the new bindings to the consequent *)
-    let r_subs, l_sub = List.split ext_subst in
+    let r_subs, l_sub = List.split (ivar_subs_to_conseq@ext_subst) in
     (*IMPORTANT TODO: global existential not took into consideration*)
     let tmp_conseq' = subst_avoid_capture r_subs l_sub tmp_conseq in
-
 
     let tmp_h2, tmp_p2, tmp_fl2, tmp_b2, _ = split_components tmp_conseq' in
     let new_conseq = mkBase tmp_h2 tmp_p2 r_t r_fl tmp_b2 pos in
@@ -4342,23 +4384,23 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
     let new_es = {estate with es_formula = new_ante;
         (* add the new vars to be explicitly instantiated *)
         (* transferring expl_vars' from gen_impl_vars,evars ==> gen_expl_vars *)
-        es_gen_expl_vars = estate.es_gen_expl_vars@expl_vars';
+        es_gen_expl_vars = new_expl_vars (* estate.es_gen_expl_vars@expl_vars' *);
         (* update ivars - basically, those univ vars for which binsings have been found will be removed:
            for each new binding uvar = x, uvar will be removed from es_ivars and x will be added to the es_expl_vars *)
-        es_gen_impl_vars = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars (lhs_vars@expl_vars') ;
-        es_evars = Gen.BList.difference_eq CP.eq_spec_var estate.es_evars expl_vars' ;
-        es_ivars = ivars';
+        es_gen_impl_vars = new_impl_vars (* Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars (lhs_vars@expl_vars') *) ;
+        es_evars = new_exist_vars (* Gen.BList.difference_eq CP.eq_spec_var estate.es_evars expl_vars' *) ;
+        es_ivars = new_ivars (*ivars'*);
         es_heap = new_consumed;
         es_residue_pts = n_es_res;
         es_success_pts = n_es_succ; 
 		es_subst = ((fst estate.es_subst)@r_subs, (snd estate.es_subst)@l_sub);
 	} in
-    let new_subst = (obtain_subst expl_inst) in
+    (* let new_subst = (obtain_subst expl_inst) in *)
     (* apply the explicit instantiations to the consequent *)
-    let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in
+    (* let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in *)
     (* for each expl inst  vi = wi: make wi existential + remove vi from the exist vars *)
     let new_es' = {new_es with (* es_evars = new_es.es_evars @ (snd new_subst); *) es_must_match = false} in
-    let new_es = pop_exists_estate (fst new_subst) new_es' in
+    let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
     Debug.devel_pprint ("do_match: "^ "new_ctx after matching: "
 	^ (Cprinter.string_of_spec_var r_var) ^ "\n"^ (Cprinter.string_of_context new_ctx)) pos;

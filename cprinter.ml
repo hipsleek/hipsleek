@@ -1622,6 +1622,7 @@ Cpure.print_formula := string_of_pure_formula;;
 Cpure.print_svl := string_of_spec_var_list;;
 Cformula.print_formula := string_of_formula;;
 Cformula.print_h_formula := string_of_h_formula;;
+Cformula.print_svl := string_of_spec_var_list;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cvc3.print_pure := string_of_pure_formula;;

@@ -186,6 +186,7 @@ approx_formula_and_a2 : approx_formula }
 let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
+let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -1027,8 +1028,8 @@ and get_formula_pos (f : formula) = match f with
 (* substitution *)
 
 and subst_avoid_capture (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
-  Gen.Debug.ho_1 "subst_avoid_capture" !print_formula !print_formula
-      (fun _ -> subst_avoid_capture_x fr t f) f
+  Gen.Debug.ho_3 "subst_avoid_capture" !print_svl !print_svl !print_formula !print_formula
+      (fun _ _ _ -> subst_avoid_capture_x fr t f) fr t f
 
 and subst_avoid_capture_x (fr : CP.spec_var list) (t : CP.spec_var list) (f : formula) =
   let fresh_fr = CP.fresh_spec_vars fr in
