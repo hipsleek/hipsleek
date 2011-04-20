@@ -1047,7 +1047,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
       CF.build_context (CF.true_ctx ( CF.mkTrueFlow ()) pos) formula1 pos in
     let formula = CF.replace_branches (snd vdef.C.view_user_inv) (CF.formula_of_mix_formula (fst vdef.C.view_user_inv) pos) in
     let (rs, _) =
-      Solver.heap_entail_init prog false false (CF.SuccCtx [ ctx ]) formula pos
+      Solver.heap_entail_init prog false (CF.SuccCtx [ ctx ]) formula pos
     in
 	(* Solver.entail_hist := ((vdef.C.view_name^" view invariant"),rs):: !Solver.entail_hist ; *)
     (* let _ = print_string ("\nAstsimp.ml: bef error") in *)
