@@ -346,6 +346,7 @@ let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been in
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
+let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 
 let is_simple_formula x = true
 (* transform each proc by a map function *)

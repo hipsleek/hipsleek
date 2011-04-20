@@ -187,6 +187,7 @@ let print_formula = ref(fun (c:formula) -> "printer not initialized")
 let print_h_formula = ref(fun (c:h_formula) -> "printer not initialized")
 let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
+let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
@@ -212,6 +213,10 @@ let is_eq_view_name a b =
   match a,b with
     | {h_formula_view_name = c1;}, {h_formula_view_name = c2;}-> c1=c2
 
+let is_eq_view_name a b =
+  Gen.Debug.ho_2 "is_eq_view_name" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_name a b) 
+      a.h_formula_view_name b.h_formula_view_name
+
 let is_eq_view_ann a b =
   match a,b with
     | {h_formula_view_imm = c1;}, {h_formula_view_imm = c2;}-> c1=c2
@@ -225,6 +230,10 @@ let is_eq_view_spec a b =
   (is_eq_view_name a b) &&
   (match a,b with
     | {h_formula_view_remaining_branches = c1;}, {h_formula_view_remaining_branches = c2;}-> br_match c1 c2)
+
+let is_eq_view_spec a b =
+  Gen.Debug.ho_2 "is_eq_view_spec" (fun x->x) (fun x->x) string_of_bool (fun _ _ ->  is_eq_view_spec a b) 
+      a.h_formula_view_name b.h_formula_view_name
 
 (* returns false if unsatisfiable *)
 let is_sat_mem_formula (mf:mem_formula) : bool =
@@ -362,9 +371,13 @@ and is_complex_heap (h : h_formula) : bool = match h with
   | HTrue | HFalse -> false
   | _ -> true
 
-and is_coercible (h : h_formula) : bool = match h with
+and is_coercible_x (h : h_formula) : bool = match h with
   | ViewNode ({h_formula_view_coercible = c}) -> c
   | _ -> false
+
+and is_coercible (h : h_formula) : bool =
+  Gen.Debug.ho_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
+
 
 (*
   for immutability 
