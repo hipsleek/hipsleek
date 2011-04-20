@@ -2887,7 +2887,7 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.form
 	          | [] -> false
 	        in
 	        (* need to find at least one target *)
-	        true (* (find_one_target all_targets) *)
+	        (* true  *)(find_one_target all_targets)
 	      end
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction coer_target recieved non views"}
 	      (* given a spec var -> return the entire node *)
@@ -5348,7 +5348,7 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_
     (* let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in  *)
     (* let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in *)
     (* let coers1 = List.filter (fun c -> not(is_cycle_coer c origs)) coers1  in (\* keep only non-cyclic coercion rule *\) *)
-    let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
+    (* let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in *)
     (* universal coercions *)
     (*let _ = print_string("[do_coercion]: number of univ coer " ^ (string_of_int (List.length univ_coers)) ^ "--> call apply universal \n") in*)
     let univ_r = if (List.length univ_coers)>0 then
