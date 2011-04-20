@@ -118,7 +118,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               | Some c1 ->
                     let to_print = "Proving assert/assume in method " ^ proc.proc_name ^ " for spec: \n" ^ !log_spec ^ "\n" in	
                     Debug.devel_pprint(*print_info "assert"*) to_print pos;
-                    let rs,prf = heap_entail_struc_list_failesc_context_init prog false false false ts c1 pos None in
+                    let rs,prf = heap_entail_struc_list_failesc_context_init prog false false ts c1 pos None in
                     let _ = PTracer.log_proof prf in                    
                     Debug.pprint(*print_info "assert"*) ("assert condition:\n" ^ (Cprinter.string_of_struc_formula c1)) pos;
                     if CF.isSuccessListFailescCtx rs then 
@@ -208,7 +208,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        Debug.devel_pprint to_print pos;
 			if (Gen.is_empty unfolded) then unfolded
 			else 
-	        let rs_prim, prf = heap_entail_list_failesc_context_init prog false false  unfolded vheap pos pid in
+	        let rs_prim, prf = heap_entail_list_failesc_context_init prog false  unfolded vheap pos pid in
 	        let _ = PTracer.log_proof prf in
 	        let rs = CF.clear_entailment_history_failesc_list rs_prim in
 	        if (CF.isSuccessListFailescCtx unfolded) && not(CF.isSuccessListFailescCtx rs) then   
@@ -391,7 +391,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	          let to_print = "Proving precondition in method " ^ proc.proc_name ^ " for spec:\n" ^ new_spec
                   (*!log_spec*) in
 	          Debug.devel_pprint (to_print^"\n") pos;
-	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false false true sctx pre2 pos pid in
+	          let rs,prf = heap_entail_struc_list_failesc_context_init prog false true sctx pre2 pos pid in
 		        let _ = PTracer.log_proof prf in
             (*let _ = print_string ((Cprinter.string_of_list_failesc_context rs)^"\n") in*)
             if (CF.isSuccessListFailescCtx sctx) && (CF.isFailListFailescCtx rs) then
@@ -509,7 +509,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;	
-  let rs, prf = heap_entail_list_partial_context_init prog false false final_state post pos (Some pid) in
+  let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then 
      rs
@@ -628,7 +628,7 @@ let check_coercion (prog : prog_decl) =
   let check_entailment c_lhs c_rhs =
     let pos = CF.pos_of_formula c_lhs in
     let ctx = CF.build_context (CF.empty_ctx (CF.mkTrueFlow ()) pos) c_lhs pos in
-    let rs, prf = heap_entail_init prog false false (CF.SuccCtx [ctx]) c_rhs pos in
+    let rs, prf = heap_entail_init prog false (CF.SuccCtx [ctx]) c_rhs pos in
     let _ = PTracer.log_proof prf in
       (* Solver.entail_hist := (" coercion check",rs):: !Solver.entail_hist ; *)
       if not(CF.isFailCtx rs) then begin
