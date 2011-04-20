@@ -1931,7 +1931,6 @@ and entail_state_elim_exists es =
   let f = elim_exists_exp f_prim in
   let qvar, base = CF.split_quantifiers f in
   let h, p, fl, b, t = CF.split_components base in
-  
   let simpl_p =	
     if !Globals.simplify_pure then 
       MCP.simpl_memo_pure_formula simpl_b_formula simpl_pure_formula p (TP.simplify_a 1)
@@ -5301,12 +5300,25 @@ and apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*
 (* do_coercion *)
 (*******************************************************************************************************************************************************************************)
 and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
-
   let pr (e,_) = Cprinter.string_of_list_context e in
   let prid x = x in
   Gen.Debug.ho_6 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ _ -> do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid) (* c1 c2  *)anode resth1 ln2 resth2 conseq rhs_b
+
+
+(*
+let univ_to_right_coercion (c:coercion_decl) : coercion_decl =
+      (* assumes univ_vars != [] *)
+      let (c_hd,c_guard)=split_guard c.coercion_head in
+      let new_body = MkAnd c.coercion_body  c_guard
+      let new_body = push_exists c.coercion_univ_vars   in
+      { c with coercion_type = Right'
+              coercion_head = c_hd;
+              coercion_body = new_body;
+              coercion_univ_vars = [];
+      }
+*)
 
 and find_coercions_x c1 c2 prog anode ln2 =
     let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
@@ -5315,19 +5327,21 @@ and find_coercions_x c1 c2 prog anode ln2 =
     let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
     let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
     let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (* keep only non-cyclic coercion rule *)
-    (coers1,coers2)
+    let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
+    let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in
+    ((coers1,coers2),univ_coers)
 
 and find_coercions c1 c2 prog anode ln2 =
   let p1 = Cprinter.string_of_h_formula in
   let p = (fun l -> string_of_int (List.length l)) in 
-  let p2 = pr_pair p p in
+  let p2 (v,_) = pr_pair p p v in
   Gen.Debug.ho_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
 and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
   (* let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in *)
   (* let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in *)
-  let (coers1,coers2) = find_coercions c1 c2 prog anode ln2 in 
-  if ((coers1@coers2)=[]) then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
+  let ((coers1,coers2),univ_coers) = find_coercions c1 c2 prog anode ln2 in 
+  if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0  ) then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
   else begin 
     Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
     (* get origins of a node *)
