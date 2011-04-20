@@ -5297,14 +5297,26 @@ and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t 
   let prid x = x in
   Gen.Debug.ho_4 "do_coercion" prid prid Cprinter.string_of_h_formula Cprinter.string_of_h_formula pr (fun _ _ _ _ -> do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid) c1 c2 anode resth1
 
-and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
-  (* let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in *)
-  (* let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in *)
-  Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
-    (* get origins of a node *)
+and find_coercions c1 c2 prog anode ln2 =
     let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
     let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in
     let coers1 = List.filter (fun c -> not(is_cycle_coer c origs)) coers1  in (* keep only non-cyclic coercion rule *)
+    let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
+    let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
+    let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (* keep only non-cyclic coercion rule *)
+    (coers1,coers2)
+
+and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
+  (* let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in *)
+  (* let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in *)
+  let (coers1,coers2) = find_coercions c1 c2 prog anode ln2 in 
+  if ((coers1@coers2)=[]) then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
+  else begin 
+    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
+    (* get origins of a node *)
+    (* let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in  *)
+    (* let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in *)
+    (* let coers1 = List.filter (fun c -> not(is_cycle_coer c origs)) coers1  in (\* keep only non-cyclic coercion rule *\) *)
     let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
     (* universal coercions *)
     (*let _ = print_string("[do_coercion]: number of univ coer " ^ (string_of_int (List.length univ_coers)) ^ "--> call apply universal \n") in*)
@@ -5324,9 +5336,9 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_
     else None in
     (* a quick hack *)
     (* right coercions *)
-    let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
-    let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
-    let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (* keep only non-cyclic coercion rule *)
+    (* let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in  *)
+    (* let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in *)
+    (* let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (\* keep only non-cyclic coercion rule *\) *)
     let right_r = if (List.length coers2)>0 then
       let tmp2 = List.map (fun coer -> apply_right_coercion estate coer prog conseq ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b c2 is_folding pos pid) coers2 in
       let right_res, right_prf = List.split tmp2 in
@@ -5343,6 +5355,7 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_
     let m = List.fold_right (fun x r -> match x with None -> r | Some x -> x::r ) [univ_r;left_r;right_r] [] in
     if m==[] then (CF.mkFailCtx_in(Trivial_Reason "cannot find matching node in antecedent (do coercion)"), [])
     else proc m
+      end
       (* match univ_r,left_r,right_r with *)
 	  (*     (\* | None,None,None -> (CF.mkFailCtx_in(Basic_Reason None), []) *\) *)
       (*   | None,None,None -> (CF.mkFailCtx_in(Trivial_Reason "cannot find matching node in antecedent (do coercion)"), []) *)
