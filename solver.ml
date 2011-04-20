@@ -4334,8 +4334,7 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
   let pr_h = Cprinter.string_of_h_formula in 
   Gen.Debug.no_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
       (fun _ _ _ _ -> do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding  r_var pos)
-      (fun _ _ -> do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos)
-      l_node r_node (* estate rhs *)
+      l_node r_node estate rhs
 
 and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding  r_var pos : 
       list_context *proof =
