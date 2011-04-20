@@ -362,9 +362,13 @@ and is_complex_heap (h : h_formula) : bool = match h with
   | HTrue | HFalse -> false
   | _ -> true
 
-and is_coercible (h : h_formula) : bool = match h with
+and is_coercible_x (h : h_formula) : bool = match h with
   | ViewNode ({h_formula_view_coercible = c}) -> c
   | _ -> false
+
+and is_coercible (h : h_formula) : bool =
+  Gen.Debug.ho_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
+
 
 (*
   for immutability 

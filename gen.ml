@@ -874,7 +874,7 @@ struct
 
 
   let ho_6_opt_aux (flags:bool list) (loop_d:bool) (test:'z->bool) (s:string) (pr1:'a->string) (pr2:'b->string) (pr3:'c->string) (pr4:'d->string)
-        (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) (test:'z->bool)
+        (pr5:'e->string) (pr6:'f->string) (pr_o:'z->string) 
         (f:'a -> 'b -> 'c -> 'd -> 'e -> 'f -> 'z) (e1:'a) (e2:'b) (e3:'c) (e4:'d) (e5:'e) (e6:'f): 'z =
     let a1 = pr1 e1 in
     let a2 = pr2 e2 in
