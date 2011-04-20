@@ -2838,8 +2838,9 @@ and obtain_subst l =
     | [] -> ([],[])
 
 and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.formula) (lhs : CF.formula) : bool =
-  Gen.Debug.no_2 "coer_target" Cprinter.string_of_coercion Cprinter.string_of_h_formula string_of_bool 
-      (fun coer node -> coer_target_a prog coer node rhs lhs) coer node
+  Gen.Debug.ho_3 "coer_target" (* Cprinter.string_of_coercion  *)
+      Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool 
+      (fun _ _ _ -> coer_target_a prog coer node rhs lhs) node lhs rhs
 
 (* check whether the target of a coercion is in the RHS of the entailment *)
 (* coer: the coercion lemma to be applied *)
@@ -2883,7 +2884,7 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.form
 	          | [] -> false
 	        in
 	        (* need to find at least one target *)
-	        (find_one_target all_targets)
+	        true (* (find_one_target all_targets) *)
 	      end
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction coer_target recieved non views"}
 	      (* given a spec var -> return the entire node *)
@@ -4327,9 +4328,10 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
       list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in 
-  Gen.Debug.ho_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
-      (fun _ _ _ _ -> do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos)
-      l_node r_node estate rhs
+  Gen.Debug.ho_2 "do_match" pr_h pr_h (* Cprinter.string_of_estate Cprinter.string_of_formula *) 
+      pr 
+      (fun _ _ -> do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos)
+      l_node r_node (* estate rhs *)
 
 and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding is_universal r_var pos : 
       list_context *proof =
