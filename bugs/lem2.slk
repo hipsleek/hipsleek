@@ -11,7 +11,7 @@ lemma self::lseg<n, p> -> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b)
 
 //checkentail x::lseg<a, r> |- x::lseg<n, p1>.
 
-checkentail x::lseg<a, r> * r::lseg<b,p> |- x::lseg<n, p1>.
+//checkentail x::lseg<a, r> * r::lseg<b,p> |- x::lseg<n, p1>.
 
 
 //checkentail x::lseg<a, r> * r::lseg<b,p> |- [n] x::lseg<n, p1>.
