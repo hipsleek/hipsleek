@@ -1390,6 +1390,7 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 	  h_formula_view_imm = imm;       
 	  h_formula_view_name = c;
 	  h_formula_view_origins = origs;
+	  h_formula_view_original = original;
 	  h_formula_view_label = v_lbl;
 	  h_formula_view_remaining_branches = brs;
 	  h_formula_view_arguments = vs}) ->(*!!Attention: there might be several nodes pointed to by the same pointer as long as they are empty*)
@@ -1414,6 +1415,8 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 			        (*let _ = print_string ("unfold pre subst: "^(Cprinter.string_of_formula renamed_view_formula)^"\n") in
 			          let _ = print_string ("unfold post subst: "^(Cprinter.string_of_formula res_form)^"\n") in *)
 	                let res_form = add_origins res_form origs in
+			(* set original to the value it had in the node to be unfolded*)
+			let res_form = add_original res_form original in
 		            (*let res_form = struc_to_formula res_form in*)
 	                CF.replace_formula_label v_lbl res_form
 	          | Some (base , br, to_vars) -> 
@@ -2887,7 +2890,7 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.form
 	          | [] -> false
 	        in
 	        (* need to find at least one target *)
-	        (* true  *)(find_one_target all_targets)
+	         (find_one_target all_targets) 
 	      end
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction coer_target recieved non views"}
 	      (* given a spec var -> return the entire node *)
@@ -4474,6 +4477,10 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p r
         h_formula_view_pos = pos2}) -> (p2,c2,v2,pid,r_rem_brs,r_p_cond,pos2)
       | _ -> report_error no_pos ("do_fold_w_ctx: data/view expected but instead ln2 is "^(Cprinter.string_of_h_formula ln2) ) in
   (* let _ = print_string("in do_fold\n") in *)
+  let original2 = 
+    if (is_view ln2) then (get_view_original ln2)
+    else true
+  in
   let estate = estate_of_context fold_ctx pos2 in
   (*************************** existential_eliminator_helper *************************************************)
   (* let existential_eliminator_helper =  *)
@@ -4506,6 +4513,7 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p r
 	  h_formula_view_modes = get_view_modes ln2;
 	  h_formula_view_coercible = true;
 	  h_formula_view_origins = get_view_origins ln2;
+	  h_formula_view_original = original2;
 	  h_formula_view_label = pid;           (*TODO: the other alternative is to use none*)
 	  h_formula_view_remaining_branches = r_rem_brs;
 	  h_formula_view_pruning_conditions = r_p_cond;
@@ -5143,6 +5151,16 @@ and is_cycle_coer (c:coercion_decl) (origs:ident list) : bool =
 (* this checks if node is being applied a second time with same coercion rule *)
 and is_cycle_coer_a (c:coercion_decl) (origs:ident list) : bool =  List.mem c.coercion_name origs
 
+and is_original_match_a anode ln2 = 
+   (get_view_original anode) || (get_view_original ln2)
+
+and is_original_match anode ln2 = 
+  let p = Cprinter.string_of_h_formula in
+  Gen.Debug.ho_2 "is_original_match"
+    p p
+    string_of_bool
+    (fun _ _ -> is_original_match_a anode ln2) anode ln2
+
 (*
   Rewrites f by matching node with coer_lhs to obtain a substitution.
   The substitution is then applied to coer_rhs, which is then *-joined
@@ -5184,6 +5202,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * 
     | ViewNode ({ h_formula_view_node = p1;
       h_formula_view_name = c1;
       h_formula_view_origins = origs;
+      h_formula_view_original = original;
       h_formula_view_remaining_branches = br1;
       h_formula_view_arguments = ps1} as h1),
 	  ViewNode ({ h_formula_view_node = p2;
@@ -5323,10 +5342,10 @@ let univ_to_right_coercion (c:coercion_decl) : coercion_decl =
 and find_coercions_x c1 c2 prog anode ln2 =
     let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
     let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in
-    let coers1 = List.filter (fun c -> not(is_cycle_coer c origs)) coers1  in (* keep only non-cyclic coercion rule *)
+    let coers1 = List.filter (fun c -> not(is_cycle_coer c origs) (* || (is_original_match anode ln2) *) ) coers1  in (* keep only non-cyclic coercion rule *)
     let origs2 = try get_view_origins ln2 with _ -> print_string "exception get_view_origins\n"; [] in 
     let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
-    let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2)) coers2  in (* keep only non-cyclic coercion rule *)
+    let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) (* || (is_original_match anode ln2) *)) coers2  in (* keep only non-cyclic coercion rule *)
     let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
     let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in
     ((coers1,coers2),univ_coers)
@@ -5341,7 +5360,9 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_
   (* let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in *)
   (* let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in *)
   let ((coers1,coers2),univ_coers) = find_coercions c1 c2 prog anode ln2 in 
-  if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0  ) then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
+  if ((List.length coers1)=0 && (List.length coers2)=0  && (List.length univ_coers)=0 )
+    || not(is_original_match anode ln2)
+  then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
   else begin 
     Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
     (* get origins of a node *)

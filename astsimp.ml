@@ -3410,6 +3410,7 @@ and linearize_formula (prog : I.prog_decl)  (f0 : IF.formula)(stab : spec_var_ta
                     CF.h_formula_view_modes = vdef.I.view_modes;
                     CF.h_formula_view_coercible = true;
                     CF.h_formula_view_origins = [];
+		    CF.h_formula_view_original = true;
                     CF.h_formula_view_label = pi;
                     CF.h_formula_view_pruning_conditions = [];
                     CF.h_formula_view_remaining_branches = None;
