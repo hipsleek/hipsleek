@@ -5467,7 +5467,8 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
   if (is_coercible ln2)&&ok  then begin
 	let new_ctx = SuccCtx [(set_context_must_match ctx0)] in
 	let res, tmp_prf = heap_entail prog is_folding new_ctx new_rhs pos in
-	let prf = mkCoercionRight ctx0 conseq coer.coercion_head coer.coercion_body tmp_prf  coer.coercion_name
+	let prf = mkCoercionRight ctx0 conseq coer.coercion_head
+	  coer.coercion_body tmp_prf  coer.coercion_name
 	in
 	(res, [prf])
   end else (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";

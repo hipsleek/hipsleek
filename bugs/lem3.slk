@@ -7,7 +7,7 @@ pred lseg<n, p> == self = p & n = 0
 
 //lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
 
-lemma self::lseg<n, p> <-> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
 //checkentail x::lseg<n1, r> * r::lseg<n2,p> |- [u,p2] x::lseg<u, p2>.
 
