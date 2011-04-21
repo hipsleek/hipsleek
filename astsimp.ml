@@ -1687,17 +1687,27 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     (let c_coer ={ C.coercion_type = coer.I.coercion_type;
     C.coercion_name = coer.I.coercion_name;
     C.coercion_head = c_lhs;
-    C.coercion_body = c_rhs;
-    C.coercion_body_struc = c_rhs_struc;
+    C.coercion_body = c_rhs_struc;
+    C.coercion_body_unstruc = c_rhs;
     C.coercion_univ_vars = univ_vars;
     C.coercion_head_exist = c_lhs_exist;
     C.coercion_head_view = lhs_name;
     C.coercion_body_view = rhs_name;
     C.coercion_simple_lhs = (CF.is_simple_formula c_lhs) } in
+    let change_univ c = match c.C.coercion_univ_vars with
+      | [] -> c
+      | v -> 
+        let c_hd, c_guard ,c_fl ,c_b ,c_t = CF.split_components c.C.coercion_head in
+        let new_body = Solver.combine_struc c.C.coercion_body (CF.formula_to_struc_formula (CF.formula_of_mix_formula c_guard no_pos)) in
+        let new_body = CF.push_struc_exists c.C.coercion_univ_vars new_body in
+        {c with
+          C.coercion_head = CF.mkBase c_hd (MCP.mkMTrue no_pos) c_t c_fl c_b no_pos;
+          C.coercion_body = new_body;
+          C.coercion_univ_vars = [];} in
     match coer.I.coercion_type with
       | I.Left -> ([ c_coer ], [])
-      | I.Equiv -> ([ c_coer ], [ c_coer  ])
-      | I.Right -> ([], [ c_coer ]))
+      | I.Equiv -> ([ c_coer ], [change_univ c_coer])
+      | I.Right -> ([], [ change_univ c_coer]))
 
 and find_view_name (f0 : CF.formula) (v : ident) pos =
   match f0 with
@@ -5298,8 +5308,8 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
       | CF.Star {CF.h_formula_star_h1=h1; CF.h_formula_star_h2=h2;} -> (find_h_args h1)@(find_h_args h2)
       | _ -> [] (*Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: lemma specialization mismatch"}*) in
     let h_f,b_f,h_v = 
-      if is_l then (c.C.coercion_head,c.C.coercion_body,c.C.coercion_head_view) 
-      else (c.C.coercion_body, c.C.coercion_head,c.C.coercion_body_view)in
+      if is_l then (c.C.coercion_head,c.C.coercion_body_unstruc,c.C.coercion_head_view) 
+      else (c.C.coercion_body_unstruc, c.C.coercion_head,c.C.coercion_body_view)in
     let v_def = C.look_up_view_def no_pos prog.C.prog_view_decls h_v in
     let v_invs = v_def.C.view_prune_invariants in
     let h_h, _, _, _, _ = CF.split_components h_f in
@@ -5316,7 +5326,7 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
         let inv_f = CF.formula_of_pure_N c_inv_simp no_pos in
         let n_h_f = CF.normalize inv_f (add_brs v_def brs h_f) no_pos in
         let n_b_f = CF.normalize inv_f (add_brs v_def brs b_f)  no_pos in
-        let n_b_s_f = c.C.coercion_body_struc in
+        let n_b_s_f = c.C.coercion_body in
         (*let _ = print_string ("coer head: "^(Cprinter.string_of_formula n_h_f)^"\n\n") in*)
         let prun_h_f = Solver.prune_preds prog true n_h_f in
         (*let _ = print_string ("coer pruned head: "^(Cprinter.string_of_formula prun_h_f)^"\n\n") in
@@ -5326,9 +5336,9 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
         (*let _ = print_string ("coer pruned body: "^(Cprinter.string_of_formula prun_b_f)^"\n\n") in*)
         (prun_h_f,prun_b_f,prun_b_s_f)) v_invs in   
     if is_l then 
-      List.map (fun (c1,c2,c3) -> {c with C.coercion_head=c1; C.coercion_body=c2;C.coercion_body_struc = c3}) r_l
+      List.map (fun (c1,c2,c3) -> {c with C.coercion_head=c1; C.coercion_body_unstruc = c2; C.coercion_body=c3}) r_l
     else
-      List.map (fun (c1,c2,c3) -> {c with C.coercion_head=c2; C.coercion_body=c1;C.coercion_body_struc = c3}) r_l
+      List.map (fun (c1,c2,c3) -> {c with C.coercion_head=c2; C.coercion_body_unstruc = c1; C.coercion_body=c3}) r_l
   end   
       
 and pred_prune_inference (cp:C.prog_decl):C.prog_decl =      

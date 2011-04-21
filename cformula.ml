@@ -1049,6 +1049,13 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
   | HTrue | HFalse | Hole _ -> []
 
+and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list = 
+  let helper f = match f with
+  | ECase c-> List.concat (List.map (fun (_,c) -> f_top_level_vars_struc c) c.formula_case_branches)
+  | EBase b -> 	(f_top_level_vars b.formula_ext_base) @ (f_top_level_vars_struc b.formula_ext_continuation)
+  | EAssume _ -> []
+  | EVariance _ -> [] in
+  List.concat (List.map helper f)
         
 and f_top_level_vars (f : formula) : CP.spec_var list = match f with
   | Base ({formula_base_heap = h}) -> (top_level_vars h)

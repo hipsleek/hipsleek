@@ -2854,7 +2854,7 @@ and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.formul
 (* lhs and rhs - the antecedent and consequent, respectively *)
 and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.formula) (lhs : CF.formula) : bool =
   let coer_lhs = coer.coercion_head in
-  let coer_rhs = coer.coercion_body in
+  let coer_rhs = coer.coercion_body_unstruc in
   let coer_lhs_heap, coer_lhs_guard,coer_lhs_flow, coer_lhs_branches, _ = split_components coer_lhs in
   let rhs_heap, rhs_pure, rhs_flow, rhs_branches, _ = split_components rhs in
   let lhs_heap, lhs_pure, lhs_flow, lhs_branches, _ = split_components lhs in
@@ -2884,13 +2884,7 @@ and coer_target_a prog (coer : coercion_decl) (node:CF.h_formula) (rhs : CF.form
 	        let coer_rhs_h, _,_, _, _ = split_components coer_rhs_new in
 	        (* check for each target if it appears in the consequent *)
 	        let all_targets = (List.map (fun x -> (check_one_target prog x lhs_pure rhs_pure rhs_heap coer_rhs_h)) target) in
-	        let rec find_one_target all_targets = match all_targets with
-	          | true :: r -> true
-	          | false :: r -> (find_one_target r)
-	          | [] -> false
-	        in
-	        (* need to find at least one target *)
-	         (find_one_target all_targets) 
+          List.exists(fun c->c) all_targets
 	      end
     | _ -> Error.report_error {Error.error_loc = no_pos; Error.error_text = "malfunction coer_target recieved non views"}
 	      (* given a spec var -> return the entire node *)
@@ -2961,7 +2955,7 @@ and check_one_target prog (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (r
 (* checks whether a coercion is distributive *)
 and is_distributive	(coer : coercion_decl) : bool =
   let coer_lhs = coer.coercion_head in
-  let coer_rhs = coer.coercion_body in
+  let coer_rhs = coer.coercion_body_unstruc in
   let coer_lhs_heap, _,_, _, _ = split_components coer_lhs in
   let coer_rhs_heap, _,_, _, _ = split_components coer_rhs in
   let top_level_lhs = top_level_vars coer_lhs_heap in
@@ -5047,7 +5041,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
     (*let _ = print_string ("[do_univ]: rename the univ boudn vars: " ^ (String.concat ", " (List.map CP.name_of_spec_var f_univ_vars)) ^ "\n") in	*)
     let tmp_rho = List.combine coer.coercion_univ_vars f_univ_vars in
     let coer_lhs = CF.subst tmp_rho coer.coercion_head in
-    let coer_rhs = CF.subst tmp_rho coer.coercion_body in
+    let coer_rhs = CF.subst tmp_rho coer.coercion_body_unstruc in
     (************************************************************************)
     (* also rename the free vars from the rhs that do not appear in the lhs *)
     let lhs_fv = (fv_rhs coer_lhs coer_rhs) in
@@ -5057,15 +5051,6 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
     let coer_rhs = CF.subst tmp_rho coer_rhs in
     let lhs_heap, lhs_guard,lhs_fl, lhs_branches, _  = split_components coer_lhs in
     let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) true true lhs_guard in
-    (* let br_match br1 br2 = match br1,br2 with *)
-    (*   | None,None -> true *)
-    (*   | Some br1,Some br2 ->(Gen.BList.list_setequal_eq (=) br1 br2) *)
-    (*   | _ -> let _ = print_string ("mal: "^(Cprinter.string_of_coerc coer true)^ *)
-    (*         "\n lhs: "^(Cprinter.string_of_formula (CF.formula_of_base lhs_b))^ *)
-    (*         " rhs: "^(Cprinter.string_of_formula (CF.formula_of_base rhs_b))^"\n") in *)
-    (*     Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: specialization mismatch in lemma application"}   in    *)
-    (* let pr = Cprinter.string_of_remaining_branches in *)
-    (* let br_match br1 br2 = Gen.Debug.ho_2 "br_match" pr pr (string_of_bool) br_match br1 br2 in *)
     match node, lhs_heap with
 	  | ViewNode ({ h_formula_view_node = p1;
 		h_formula_view_name = c1;
@@ -5173,12 +5158,12 @@ and is_original_match anode ln2 =
 (*******************************************************************************************************************************************************************************************)
 (* rewrite_coercion *)
 (*******************************************************************************************************************************************************************************************)
-and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * formula) =
+and rewrite_coercion prog estate node f coer lhs_b rhs_b weaken pos : (bool * struc_formula) =
   let p1 = Cprinter.string_of_formula in
-  let p2 = pr_pair string_of_bool Cprinter.string_of_formula in
+  let p2 = pr_pair string_of_bool Cprinter.string_of_struc_formula in
   Gen.Debug.ho_2 "rewrite_coercion" Cprinter.string_of_h_formula  p1 p2 (fun _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos) node f 
 
-and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * formula) =
+and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * struc_formula) =
   (* This function also needs to add the name and the origin list
      of the source view to the origin list of the target view. It
      needs to check if the target view in coer_rhs belongs to the
@@ -5186,18 +5171,9 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * 
   (******************** here it was the test for coerce&match *************************)
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
+  let struc_f = formula_to_struc_formula f in
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
   let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) true true lhs_guard in
-  (* let br_match br1 br2 = match br1,br2 with *)
-  (*   | None,None -> true *)
-  (*   | Some br1,Some br2 -> (Gen.BList.list_setequal_eq (=) br1 br2) *)
-  (*         (\*if (Gen.BList.list_setequal_eq (=) br1 br2) then true (\*(weaken&&(Gen.BList.subset_eq (=) br1 br2))||(not weaken && (Gen.BList.subset_eq (=) br2 br1))*\) *)
-  (*           else (print_string("miss: "^(String.concat ","(List.map (fun (c,_)-> (string_of_int c)) br1))^" then "^ *)
-  (*           (String.concat ","(List.map (fun (c,_)-> (string_of_int c)) br2))^"\n");false)*\) *)
-  (*   | _ ->  *)
-  (*         let _ = print_string ("mal: "^(Cprinter.string_of_coerc coer weaken)^"\n lhs: "^(Cprinter.string_of_formula (CF.formula_of_base lhs_b))^ *)
-  (* 	        " rhs: "^(Cprinter.string_of_formula (CF.formula_of_base rhs_b))^"\n") in *)
-  (*         Err.report_error { Err.error_loc = no_pos; Err.error_text ="malfunction: specialization mismatch in lemma application"}   in *)
   match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
       h_formula_view_name = c1;
@@ -5210,11 +5186,6 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * 
       h_formula_view_remaining_branches = br2;
       h_formula_view_arguments = ps2} as h2) 
           when CF.is_eq_view_spec h1 h2  (* c1=c2 && (br_match br1 br2) *)-> begin
-	        (*
-	          let _ = print_string ("body_view: " ^ coer.coercion_body_view ^ "\n") in
-	          let _ = print_string ("head_view: " ^ coer.coercion_head_view ^ "\n") in
-	          let _ = print_string ("origs: " ^ (String.concat ", " origs) ^ "\n") in
-	        *)
 	        (*************************************************************)
 	        (* replace with the coerce&match mechanism *)
 	        (*************************************************************)
@@ -5233,16 +5204,16 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * 
 			          ((get_estate_must_match estate) (* must match *) && (not(!enable_distribution) (* distributive coercion is not allowed *)
 					  or not(is_distributive coer))))) (* coercion is not distributive *)
 	        then
-		      (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; (false, mkTrue (mkTrueFlow ())no_pos))
+		      (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!") pos; (false, [mkETrue (mkTrueFlow ())no_pos]))
 	        else
 		      (* we can apply coercion *)
 		      begin
 		        (* apply \rho (G)	and \rho(B) *)
 		        let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
 		        (*let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in*)
-		        let coer_rhs_new1 = subst_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
+		        let coer_rhs_new1 = subst_struc_avoid_capture (p2 :: ps2) (p1 :: ps1) coer_rhs in
 		        (* let coer_rhs_new = add_origins coer_rhs_new1 (coer.coercion_head_view :: origs) in *)
-		        let coer_rhs_new = add_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
+		        let coer_rhs_new = add_struc_origins coer_rhs_new1 ((* coer.coercion_name ::  *)origs) in
 		        let _ = reset_int2 () in
 		        let xpure_lhs, xpure_lhs_b, _, memset = xpure prog f in
 		        let xpure_lhs = MCP.fold_mem_lst (CP.mkTrue no_pos) true true xpure_lhs in 
@@ -5255,7 +5226,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * 
 		        (* ok because of TP.imply*)
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
-		          let new_f = normalize coer_rhs_new f pos in
+		          let new_f = combine_struc coer_rhs_new struc_f in
 			      (if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
 			        ((*print_string("disable distribution\n"); *)enable_distribution := false);
 			      (true, new_f))
@@ -5275,15 +5246,15 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b weaken pos : (bool * 
 		          let new_f = mkOr f1 f2 pos in
 			      if (not(!Globals.lemma_heuristic) && (get_estate_must_match estate)) then
 			        ((*print_string("disable distribution\n"); *)enable_distribution := false);
-			      (true, new_f)
+			      (true, formula_to_struc_formula new_f)
 		        end else begin
 		          Debug.devel_pprint
 		              ("rewrite_coercion: guard is not satisfied, " ^ "no splitting.\n") pos;
-		          (false, mkTrue (mkTrueFlow ()) no_pos)
+		          (false, [mkETrue (mkTrueFlow ()) no_pos])
 		        end
 		      end
           end
-    | _ -> (false, mkTrue (mkTrueFlow ()) no_pos)
+    | _ -> (false, [mkETrue (mkTrueFlow ()) no_pos])
 	      (*end	*)
 
 and apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos pid =
@@ -5320,24 +5291,9 @@ and apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*
 (*******************************************************************************************************************************************************************************)
 and do_coercion c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  let prid x = x in
   Gen.Debug.ho_6 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ _ -> do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_t lhs_fl lhs_br rhs_p rhs_t rhs_fl*) lhs_b rhs_b ln2 is_folding pos pid) (* c1 c2  *)anode resth1 ln2 resth2 conseq rhs_b
-
-
-(*
-let univ_to_right_coercion (c:coercion_decl) : coercion_decl =
-      (* assumes univ_vars != [] *)
-      let (c_hd,c_guard)=split_guard c.coercion_head in
-      let new_body = MkAnd c.coercion_body  c_guard
-      let new_body = push_exists c.coercion_univ_vars   in
-      { c with coercion_type = Right'
-              coercion_head = c_hd;
-              coercion_body = new_body;
-              coercion_univ_vars = [];
-      }
-*)
 
 and find_coercions_x c1 c2 prog anode ln2 =
     let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in 
@@ -5347,7 +5303,7 @@ and find_coercions_x c1 c2 prog anode ln2 =
     let coers2 = look_up_coercion_def_raw prog.prog_right_coercions c2 in
     let coers2 = List.filter (fun c -> not(is_cycle_coer c origs2) (* || (is_original_match anode ln2) *)) coers2  in (* keep only non-cyclic coercion rule *)
     let coers1, univ_coers = List.partition (fun c -> Gen.is_empty c.coercion_univ_vars) coers1 in
-    let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in
+   (* let coers2 = (* (List.map univ_to_right_coercion univ_coers)@ *)coers2 in*)
     ((coers1,coers2),univ_coers)
 
 and find_coercions c1 c2 prog anode ln2 =
@@ -5465,14 +5421,15 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
   let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
   ^ "left_coercion: c1 = "
   ^ c1 ^ "\n") pos in
-  let ok, new_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b true pos in
+  let ok, news_lhs = rewrite_coercion prog estate anode f coer lhs_b rhs_b true pos in
+  let new_lhs = struc_to_formula news_lhs in 
   if ok then begin
     let new_ctx1 = build_context ctx0 new_lhs pos in
 	(* let new_ctx = set_context_formula ctx0 new_lhs in *)
     let new_ctx = SuccCtx[(set_context_must_match new_ctx1)] in
     let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
     let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
-	  coer.coercion_body tmp_prf coer.coercion_name
+	  coer.coercion_body_unstruc tmp_prf coer.coercion_name
     in
 	(res, [prf])
   end else (CF.mkFailCtx_in( Basic_Reason ( { 
@@ -5515,9 +5472,8 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b false pos in
   if (is_coercible ln2)&&ok  then begin
 	let new_ctx = SuccCtx [(set_context_must_match ctx0)] in
-	let res, tmp_prf = heap_entail prog is_folding new_ctx new_rhs pos in
-	let prf = mkCoercionRight ctx0 conseq coer.coercion_head
-	  coer.coercion_body tmp_prf  coer.coercion_name
+	let res, tmp_prf = heap_entail_struc prog is_folding false new_ctx new_rhs pos pid in
+	let prf = mkCoercionRight ctx0 conseq coer.coercion_head coer.coercion_body tmp_prf  coer.coercion_name
 	in
 	(res, [prf])
   end else (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";

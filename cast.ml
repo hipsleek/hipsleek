@@ -99,8 +99,8 @@ and coercion_decl = {
     coercion_type : coercion_type;
     coercion_name : ident;
     coercion_head : F.formula;
-    coercion_body : F.formula;
-    coercion_body_struc: F.struc_formula;
+    coercion_body : F.struc_formula;
+    coercion_body_unstruc: F.formula;
     coercion_univ_vars : P.spec_var list; (* list of universally quantified variables. *)
     (* coercion_proof : exp; *)
     coercion_head_exist : F.formula;  (* same as head except for annotation to self node? *)
