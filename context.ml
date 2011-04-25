@@ -29,7 +29,7 @@ and phase_type =
 and match_type =
   | Root
   | MaterializedArg
-  | Arg
+  | WArg
 (*
 and ctx_type = 
   | SpatialImm
@@ -138,9 +138,9 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 		else if List.exists (fun v -> ((CP.mem v aset) && (subtype imm imm1))) vs1 then
 		  if imm then
 		    let hole_no = Globals.fresh_int() in 
-		      [(Hole hole_no, f, [(f, hole_no)], Arg)]
+		      [(Hole hole_no, f, [(f, hole_no)], WArg)]
 		  else
-		    [(HTrue, f, [], Arg)]
+		    [(HTrue, f, [], WArg)]
 		else
 		  []
 	    )

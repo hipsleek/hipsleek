@@ -814,7 +814,7 @@ let rec pr_h_formula h =
           fmt_close()
     | HTrue -> fmt_bool true
     | HFalse -> fmt_bool false
-    | Hole m -> fmt_string ("[" ^ (string_of_int m) ^ "]")
+    | Hole m -> fmt_string ("Hole[" ^ (string_of_int m) ^ "]")
 
 (** convert formula exp to a string via pr_formula_exp *)
 let string_of_formula_exp (e:P.exp) : string =  poly_string_of_pr  pr_formula_exp e
@@ -1147,6 +1147,15 @@ let pr_list_context (ctx:list_context) =
   match ctx with
     | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
+
+let pr_int i = fmt_int i
+
+let pr_pair pr_1 pr_2 (a,b) =
+  fmt_string "(";
+  pr_1 a; fmt_string ",";
+  pr_2 b; fmt_string ")"
+
+
 
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
 
