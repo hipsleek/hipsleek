@@ -842,11 +842,11 @@ and get_node_imm (h : h_formula) = match h with
 
 and get_view_origins (h : h_formula) = match h with
   | ViewNode ({h_formula_view_origins = origs}) -> origs
-  | _ -> failwith ("get_view_origins: not a view")
+  | _ -> [] (* failwith ("get_view_origins: not a view") *)
 
 and get_view_original (h : h_formula) = match h with
   | ViewNode ({h_formula_view_original = original}) -> original
-  | _ -> failwith ("get_view_original: not a view")
+  | _ -> true (* failwith ("get_view_original: not a view") *)
 
 and get_view_modes (h : h_formula) = match h with
   | ViewNode ({h_formula_view_modes = modes}) -> modes

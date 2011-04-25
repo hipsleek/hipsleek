@@ -19,14 +19,14 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
 //checkentail x::ll_tail<tx,n> |- x::node<v,q>.
 
-//checkentail x::ll_tail<tx,n> & n=1 |- x::node<v,q>.
+//checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
 
-checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
-/*
- apply_left_coercion@3 EXIT ExceptionFailure("get_view_original: not a view")Occurred!
- exception in entail check
-*/
+//checkentail x::lseg<n,t>*t::node<_,null> |- x::ll_tail<tx,m>.
 
-checkentail x::ll_tail<tx,n> |- tx::node<v,q>.
+// checkentail x::lseg<a,t>*t::node<_,y>*y::ll_tail<ty,b> |- x::ll_tail<ty,m>.
+// fail
+
+checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null>
+  |- x::ll_tail<ty,m>.
 
 print residue.

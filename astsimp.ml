@@ -1406,7 +1406,7 @@ and set_materialized_vars prog cdef =
   in
   (cdef.C.view_materialized_vars <- mvars; cdef)
 
-and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
+and find_materialized_vars_x prog params (f0 : CF.formula) : CP.spec_var list =
   let tmp0 = find_mvars prog params f0 in
   let all_mvars = ref tmp0 in
   let ef = ref f0 in
@@ -1420,6 +1420,12 @@ and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
       in if Gen.is_empty tmp3 then quit_loop := true else all_mvars := tmp3)
   done;
   !all_mvars)
+
+and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
+  let pr1 = Cprinter.string_of_spec_var_list in 
+  let pr2 = Cprinter.string_of_formula in 
+  Gen.Debug.ho_2 "find_materialized_vars" pr1 pr2 pr1 (fun _ _ -> find_materialized_vars_x prog params (f0 : CF.formula)) params f0
+
 
 and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
       CP.spec_var list =
