@@ -128,7 +128,6 @@ and coercion_decl = { coercion_type : coercion_type;
 		      coercion_name : ident;
 		      coercion_head : F.formula;
 		      coercion_body : F.formula;
-          coercion_body_struc : F.struc_formula;
 		      coercion_proof : exp }
 and coercion_type = 
   | Left

@@ -103,15 +103,11 @@ and pure_step = { pure_step_estate : CF.entail_state;
 				  pure_step_conseq : CP.formula;
 				  pure_step_success : bool;
 				  pure_step_gist : CP.formula option }
-
-and coercion_rhs = 
-  | Right_d of CF.struc_formula
-  | Left_d of CF.formula 
-  
+ 
 and coercion_step = { coercion_step_name : ident;
 					  coercion_step_ante : CF.context;
 					  coercion_step_conseq : CF.formula;
-					  coercion_step_coercion : (CF.formula * coercion_rhs);
+					  coercion_step_coercion : (CF.formula * CF.formula);
 					  coercion_step_proof : proof }
 
 and coercion2_step = { coercion2_step_ante : CF.context;
@@ -141,13 +137,13 @@ and eex_step = {eex_context: CF.context;
 let mkCoercionLeft ctx conseq clhs crhs prf name = CoercionLeft { coercion_step_name = name;
 																  coercion_step_ante = ctx;
 																  coercion_step_conseq = conseq;
-																  coercion_step_coercion = (clhs, Left_d crhs);
+																  coercion_step_coercion = (clhs, crhs);
 																  coercion_step_proof = prf }
   
 let mkCoercionRight ctx conseq clhs crhs prf name = CoercionRight { coercion_step_name = name;
 																	coercion_step_ante = ctx;
 																	coercion_step_conseq = conseq;
-																	coercion_step_coercion = (clhs, Right_d crhs);
+																	coercion_step_coercion = (clhs, crhs);
 																	coercion_step_proof = prf }
 
 let mkCoercion2 ctx conseq prfs = Coercion2 { coercion2_step_ante = ctx;
