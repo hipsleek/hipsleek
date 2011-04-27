@@ -4733,6 +4733,20 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 			  es_var_label = estate.es_var_label} in
 	      do_fold_sh_def(* _debug *) vd fold_ctx var_to_fold in
 
+	    let do_base_fold (var_to_fold : CP.spec_var) ln2 =
+          let vd = (vdef_fold_use_bc prog ln2) in
+          if (vd==None) then   (CF.mkFailCtx_in (Basic_Reason ({
+                                  fc_message = "No base-case for folding";
+                                  fc_current_lhs = estate;
+                                  fc_prior_steps = estate.es_prior_steps;
+                                  fc_orig_conseq = estate.es_orig_conseq;
+                                  fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
+
+          else do_fold var_to_fold vd in 
+
+	    let do_full_fold (var_to_fold : CP.spec_var) = do_fold var_to_fold None in
+
 	    (****************************************************************************************************************************************)
 	    (* end do_fold *)
 	    (****************************************************************************************************************************************)
@@ -4799,7 +4813,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) 
 					^ "\nln2:\n" ^ (Cprinter.string_of_h_formula ln2)
 					^ "\nrhs_p:\n" ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
-              do_fold p2 (vdef_fold_use_bc prog ln2)
+              do_base_fold p2 ln2
               (* p2 is mentioned in LHS, p2 can be fold target *)
               (* var_to_fold *)
 		          end (* end of emty anodes case *)
@@ -4871,9 +4885,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 							                      (list_context_union res_es2 res_es0, Prooftracer.Unknown)
 						                else (res_es0,prf0) in
                             let res_es1, prf1 = 
-                              let bc = (vdef_fold_use_bc prog ln2)  in
-                              if (* false *) (is_view ln2) && not(bc==None) then  
-                              let res_empty_fold, prf_empty_fold = do_fold p2 (vdef_fold_use_bc prog ln2) in
+                              if (* false *) (is_view ln2)  then  
+                              let res_empty_fold, prf_empty_fold = do_base_fold p2 ln2 in
                               combine_results (res_es1,prf1) (res_empty_fold,prf_empty_fold)
                             else (res_es1,prf1) in
                             
@@ -4922,7 +4935,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 							      ^ (Cprinter.string_of_h_formula ln2)
 							      ^ "\nrhs_p:\n"
 							      ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
-				                  do_fold p2 None
+				                  do_full_fold p2 
 				                end else if is_data ln2 && is_view anode then 
 				                  begin (* unfold *)
 				                    (* TODO : ADD dd debug message for unfolding *)

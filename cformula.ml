@@ -2151,7 +2151,7 @@ let isFailCtx cl = match cl with
 	| SuccCtx _ -> false
 
 let list_context_union_x c1 c2 = 
-  let simplify x = (*context_list_simplify*) x in
+  let simplify x = (* context_list_simplify *) x in
 match c1,c2 with
   | FailCtx t1 ,FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
       if ((is_cont t1) && not(is_cont t2))
