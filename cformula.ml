@@ -1912,6 +1912,8 @@ and list_failesc_context = failesc_context list
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
+let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
+
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = Globals.fresh_int () in
     (Hole(hole_id), hole_id)
@@ -2091,37 +2093,11 @@ let is_cont t =
     | Or_Continuation _ -> true
     | _ -> false
 
-let union_context_left c_l = match (List.length c_l) with
-  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
-              Err.error_text = "folding empty context list \n"}
-  | 1 -> (List.hd c_l)
-  | _ ->  List.fold_left (fun a c-> 
-    match a,c with
-     | FailCtx t1 ,FailCtx t2 -> 
-	 if ((is_cont t1) && not(is_cont t2))
-	 then FailCtx(t1)
-	 else
-	   if ((is_cont t2) && not(is_cont t1))
-	   then FailCtx(t2)
-	   else
-	     if (is_cont t1) && (is_cont t2) then
-	       FailCtx (Or_Continuation (t1,t2))  
-	     else
-	       FailCtx (Or_Reason (t1,t2))  
-     | FailCtx t1,SuccCtx t2 -> SuccCtx t2
-     | SuccCtx t1,FailCtx t2 -> SuccCtx t1
-     | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l)
+let isFailCtx cl = match cl with 
+	| FailCtx _ -> true
+	| SuccCtx _ -> false
 
-let fold_context_left c_l = union_context_left c_l 
-  
-  (*list_context or*)
-let or_list_context c1 c2 = match c1,c2 with
-     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
-     | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
-     | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
-     | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
-
-and list_context_union c1 c2 = match c1,c2 with
+let list_context_union_x c1 c2 = match c1,c2 with
   | FailCtx t1 ,FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
       if ((is_cont t1) && not(is_cont t2))
       then FailCtx(t1)
@@ -2133,14 +2109,47 @@ and list_context_union c1 c2 = match c1,c2 with
 	    FailCtx (Or_Continuation (t1,t2))  
 	  else
 	    FailCtx (Or_Reason (t1,t2))  
-
   | FailCtx t1 ,SuccCtx t2 -> SuccCtx t2
   | SuccCtx t1 ,FailCtx t2 -> SuccCtx t1
   | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (t1@t2)
-          
-and isFailCtx cl = match cl with 
-	| FailCtx _ -> true
-	| SuccCtx _ -> false
+
+let list_context_union c1 c2 =
+  let pr = !print_list_context_short in
+  Gen.Debug.ho_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
+      pr pr pr
+      list_context_union_x c1 c2 
+
+let rec union_context_left c_l = match (List.length c_l) with
+  | 0 ->  Err.report_error {Err.error_loc = no_pos;  
+              Err.error_text = "folding empty context list \n"}
+  | 1 -> (List.hd c_l)
+  | _ ->  List.fold_left list_context_union (List.hd c_l) (List.tl c_l)
+    (* match a,c with *)
+    (*  | FailCtx t1 ,FailCtx t2 ->  *)
+	(*  if ((is_cont t1) && not(is_cont t2)) *)
+	(*  then FailCtx(t1) *)
+	(*  else *)
+	(*    if ((is_cont t2) && not(is_cont t1)) *)
+	(*    then FailCtx(t2) *)
+	(*    else *)
+	(*      if (is_cont t1) && (is_cont t2) then *)
+	(*        FailCtx (Or_Continuation (t1,t2))   *)
+	(*      else *)
+	(*        FailCtx (Or_Reason (t1,t2))   *)
+    (*  | FailCtx t1,SuccCtx t2 -> SuccCtx t2 *)
+    (*  | SuccCtx t1,FailCtx t2 -> SuccCtx t1 *)
+    (*  | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l) *)
+
+and fold_context_left c_l = union_context_left c_l 
+  
+  (*list_context or*)
+and or_list_context c1 c2 = match c1,c2 with
+     | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
+     | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
+     | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
+     | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+
+(* can remove redundancy here? *)
 
 
 let isFailPartialCtx (fs,ss) =
