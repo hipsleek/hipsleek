@@ -1164,7 +1164,7 @@ and find_node_one prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info pos 
     | None -> "None"
     | Some p -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_spec_var_list p in
   let pr = string_of_node_res in
-  Gen.Debug.ho_3 "find_node_one" Cprinter.string_of_h_formula  Cprinter.string_of_spec_var pr1 pr
+  Gen.Debug.loop_3 "find_node_one" Cprinter.string_of_h_formula  Cprinter.string_of_spec_var pr1 pr
       (fun _ _ _ -> find_node_one_x  prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info pos)
       lhs_h p rhs_info
 
@@ -4646,6 +4646,15 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 	    (* do_fold *)
 	    (************************************************************************************************************************************)
         let do_fold_sh_def vd fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
+        let do_base_fold_sh_def vd fold_ctx var_to_fold = 
+          if (vd==None) then   (CF.mkFailCtx_in (Basic_Reason ({
+                                  fc_message = "No base-case for folding";
+                                  fc_current_lhs = estate;
+                                  fc_prior_steps = estate.es_prior_steps;
+                                  fc_orig_conseq = estate.es_orig_conseq;
+                                  fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
+           else do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
         let do_fold_sh fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 None resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
         (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
 	    (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
@@ -4859,7 +4868,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 				            else
 				              (    
                         let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding 
-                                 pid pos do_fold_sh_def 
+                                 pid pos do_base_fold_sh_def 
                                  (*should use def version as it is always folding against base case
                                   probably considerable speed gain*) in
                         match ans with 
@@ -4947,7 +4956,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					                (res_rs, prf)
 				                  end else 
 				                    (* TODO : ADD dd debug message base-unfolding; indicates when it fails after folding! *)
-				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_fold_sh_def in
+				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_base_fold_sh_def in
 					                match ans with 
 					                  | Some x, _ -> x
 					                  | None, _->                          

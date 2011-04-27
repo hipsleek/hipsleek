@@ -2057,23 +2057,21 @@ let mkOCtx ctx1 ctx2 pos =
 
 let or_context c1 c2 = mkOCtx c1 c2 no_pos 
   
-let rec or_context_list (cl10 : context list) (cl20 : context list) : context list = 
-  let rec helper cl1 cl2 = match cl1 with
+let or_context_list (cl10 : context list) (cl20 : context list) : context list = 
+  let rec helper cl1 = match cl1 with
 	| c1 :: rest ->
-		let tmp1 = or_context_list rest cl2 in
-		let tmp2 = List.map (or_context c1) cl2 in
+		let tmp1 = helper rest in
+		let tmp2 = List.map (or_context c1) cl20 in
 		  tmp2 @ tmp1 
 	| [] -> []
   in
 	if Gen.is_empty cl20 then
 	  []
-	else
-	  let tmp = helper cl10 cl20 in
-		tmp
-  
+	else helper cl10 
+
 let or_context_list cl10 cl20 =
   let pr = !print_context_list_short in
-  Gen.Debug.ho_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
+  Gen.Debug.no_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
   
 let mkFailCtx_in (ft:fail_type) = FailCtx ft
 
@@ -2170,7 +2168,7 @@ match c1,c2 with
 
 let list_context_union c1 c2 =
   let pr = !print_list_context_short in
-  Gen.Debug.ho_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
+  Gen.Debug.no_2_opt (fun _ -> not(isFailCtx c1 ||  isFailCtx c2) )  "list_context_union" 
       pr pr pr
       list_context_union_x c1 c2 
 
