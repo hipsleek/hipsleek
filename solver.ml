@@ -1755,7 +1755,17 @@ and fold_op p c vd v u loc =
       (**************************************************************)
 
 (* fold some constraints in ctx to view  *)
-and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
+and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) =
+  let pr x = "?" in
+  let pr2 x = match x with
+    | None -> "None"
+    | Some f -> Cprinter.string_of_struc_formula f.view_formula in
+ Gen.Debug.ho_1 "fold_op_x" 
+   pr2 pr
+  (fun _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc)) vd
+
+
+and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
   | ViewNode ({ h_formula_view_node = p;
                 h_formula_view_name = c;
                 h_formula_view_imm = imm;
@@ -4480,10 +4490,13 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   with | Not_found -> (var_to_fold::v2,false) 
 
 and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos = 
+  let pr2 x = match x with
+    | None -> "None"
+    | Some f -> Cprinter.string_of_struc_formula f.view_formula in
           let pr (x,_) = Cprinter.string_of_list_context x in
-  Gen.Debug.ho_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var Cprinter.string_of_h_formula pr
+  Gen.Debug.ho_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr2 (* Cprinter.string_of_h_formula  *)pr
       (fun _ _ _ -> do_fold_w_ctx_x fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 rhs_b is_folding pos) 
-      fold_ctx var_to_fold ln2
+      fold_ctx var_to_fold vd
 (*
   ln2 = p2 (node) c2 (name) v2 (arguments) r_rem_brs (remaining branches) r_p_cond (pruning conditions) pos2 (pos)
   resth2 = rhs_h - ln2
@@ -4858,7 +4871,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 							                      (list_context_union res_es2 res_es0, Prooftracer.Unknown)
 						                else (res_es0,prf0) in
                             let res_es1, prf1 = 
-                              if (is_view ln2) then  
+                              let bc = (vdef_fold_use_bc prog ln2)  in
+                              if (* false *) (is_view ln2) && not(bc==None) then  
                               let res_empty_fold, prf_empty_fold = do_fold p2 (vdef_fold_use_bc prog ln2) in
                               combine_results (res_es1,prf1) (res_empty_fold,prf_empty_fold)
                             else (res_es1,prf1) in

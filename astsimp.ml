@@ -1149,7 +1149,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
       if (CF.is_complex_heap b.CF.formula_exists_heap) then 
         (CF.mkFalse b.CF.formula_exists_flow b.CF.formula_exists_pos) 
       else f in
-     let rbc = List.fold_left (fun a (c,_)-> 
+     let rbc = List.fold_left (fun a (c,l)-> 
         let fc = f_tr_base c in
         if (CF.isAnyConstFalse fc) then a 
         else match a with 

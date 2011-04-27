@@ -3757,6 +3757,17 @@ let rec get_view_branches (f0:struc_formula):(formula * formula_label) list=
 	in	
   List.concat (List.map ext_formula_br f0)
 
+let get_view_branches (f0:struc_formula):(formula * formula_label) list=
+  let rec add_label f l = match f with
+    | Base b -> Base { b with formula_base_label = Some l}
+    | Exists b -> Exists  {b with formula_exists_label = Some l}
+    | Or b -> f in
+(* Or { b with formula_or_f1 = add_label b.formula_or_f1 l; *)
+(*                          formula_or_f2 = add_label b.formula_or_f2 l} in *)
+  let res = get_view_branches f0 in
+  List.map (fun (f,lbl) -> ((add_label f lbl),lbl)) res
+ 
+
 let mkEBase (pf:CP.formula) loc : ext_formula =
   EBase	{
 	formula_ext_explicit_inst = [];

@@ -879,7 +879,7 @@ let rec pr_formula_base e =
 	  formula_base_flow = fl;
       formula_base_label = lbl;
 	  formula_base_pos = pos}) ->
-          (match lbl with | None -> () | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
+          (match lbl with | None -> fmt_string "<NoLabel>" | Some l -> fmt_string ("{"^(string_of_int (fst l))^"}->"));
           pr_h_formula h ; pr_cut_after "&" ; pr_mix_formula_branches(p,b);
           pr_cut_after  "&" ;  fmt_string (string_of_flow_formula "FLOW" fl)
 
@@ -1163,7 +1163,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_string "FailCtx"
+    | FailCtx ft -> fmt_string "failCtx"
     | SuccCtx sc -> pr_context_list_short sc
     
 let pr_entail_state_short e = 
@@ -1689,6 +1689,7 @@ Cformula.print_struc_formula :=string_of_struc_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_exp := string_of_formula_exp;;
 Cast.print_formula := string_of_pure_formula;;
+Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
 Omega.print_pure := string_of_pure_formula;;

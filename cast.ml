@@ -344,6 +344,7 @@ and exp = (* expressions keep their types *)
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
+let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
 
@@ -1163,3 +1164,10 @@ let vdef_fold_use_bc prog ln2  = match ln2 with
     with  
     | Not_found -> report_error no_pos ("fold: view def not found:"^vn.F.h_formula_view_name^"\n"))
   | _ -> None
+
+let vdef_fold_use_bc prog ln2  = 
+  let pr1 x = "?" in
+  let pr2 x = match x with
+    | None -> "None"
+    | Some f -> !print_struc_formula f.view_formula in
+  Gen.Debug.ho_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
