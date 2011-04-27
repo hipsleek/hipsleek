@@ -46,10 +46,10 @@ lemma self::ll_tail<t, n> <- self::lseg<n-1,t> * t::node<_, null>.
 // |- x::lseg<m,t2>.
 // some cases missing/ some duplicated
 
-//checkentail x::lseg<a,t>*t::node<_,y>  |- z::lseg<m,t2>.
+checkentail x::lseg<a,t>*t::node<_,y>  |- z::lseg<m,t2>.
 // succeed with one answer
 
-checkentail x::lseg<a,t>*t::node<_,y>  |- x::lseg<m,t2>.
+//checkentail x::lseg<a,t>*t::node<_,y>  |- x::lseg<m,t2>.
 //incomplete and duplicated
 
 print residue.

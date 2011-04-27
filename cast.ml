@@ -1151,3 +1151,15 @@ let rec check_proper_return cret_type exc_list f =
 
   
 let formula_of_unstruc_view_f vd = F.formula_of_disjuncts (fst (List.split vd.view_un_struc_formula))
+
+
+let vdef_fold_use_bc prog ln2  = match ln2 with
+  | F.ViewNode vn -> 
+    (try 
+      let vd = look_up_view_def_raw prog.prog_view_decls vn.F.h_formula_view_name in
+      match vd.view_raw_base_case with
+        | None -> None
+        | Some f-> Some {vd with view_formula = F.formula_to_struc_formula f}
+    with  
+    | Not_found -> report_error no_pos ("fold: view def not found:"^vn.F.h_formula_view_name^"\n"))
+  | _ -> None

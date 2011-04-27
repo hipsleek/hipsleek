@@ -4616,8 +4616,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 	    (************************************************************************************************************************************)
 	    (* do_fold *)
 	    (************************************************************************************************************************************)
-        let do_fold_sh_def fold_ctx var_to_fold vd = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 (Some vd) resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
-        let do_fold_sh fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 None resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
+        let do_fold_sh_def vd fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
+        (*let do_fold_sh fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 None resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in*)
         (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
 	    (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
 	    (*   (\* let _ = print_string("in do_fold\n") in *\) *)
@@ -4683,7 +4683,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
         (*   let pr (x,_) = Cprinter.string_of_list_context x in *)
         (*   Gen.Debug.ho_2 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr do_fold_w_ctx fold_ctx var_to_fold in *)
 
-	    let do_fold (var_to_fold : CP.spec_var) =
+	    let do_fold (var_to_fold : CP.spec_var) vd =
 	      let fold_ctx = Ctx {(empty_es (mkTrueFlow () ) pos) with 
 			  es_formula = ante;
 			  es_heap = estate.es_heap;
@@ -4702,7 +4702,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
               es_path_label = estate.es_path_label;
 			  es_var_measures = estate.es_var_measures;
 			  es_var_label = estate.es_var_label} in
-	      do_fold_sh(* _debug *) fold_ctx var_to_fold in
+	      do_fold_sh_def(* _debug *) vd fold_ctx var_to_fold in
 
 	    (****************************************************************************************************************************************)
 	    (* end do_fold *)
@@ -4770,8 +4770,9 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) 
 					^ "\nln2:\n" ^ (Cprinter.string_of_h_formula ln2)
 					^ "\nrhs_p:\n" ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
-                    do_fold p2 (* p2 is mentioned in LHS, p2 can be fold target *)
-                        (* var_to_fold *)
+              do_fold p2 (vdef_fold_use_bc prog ln2)
+              (* p2 is mentioned in LHS, p2 can be fold target *)
+              (* var_to_fold *)
 		          end (* end of emty anodes case *)
 		    end
 	      | Match (matches) -> begin
@@ -4806,34 +4807,26 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 			                let subsumes, (*to_be_proven*)_ = prune_branches_subsume(*_debug*) prog estate.es_ivars anode ln2 in
 				            if not subsumes then 
 				              (CF.mkFailCtx_in (Basic_Reason ({
-								  fc_message = "there is a mismatch in branches ";
-								  fc_current_lhs = estate;
-								  fc_prior_steps = estate.es_prior_steps;
-								  fc_orig_conseq = estate.es_orig_conseq;
-								  fc_current_conseq = CF.formula_of_heap HFalse pos;
-								  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
+                                  fc_message = "there is a mismatch in branches ";
+                                  fc_current_lhs = estate;
+                                  fc_prior_steps = estate.es_prior_steps;
+                                  fc_orig_conseq = estate.es_orig_conseq;
+                                  fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
 				            else
-				              (*match to_be_proven with
-				                | Some l ->
-				                let f_l = formula_of_pure_N l pos   in
-				                let new_es_f = normalize estate.es_formula f_l pos in
-				                let new_es = {estate with es_formula = prune_preds prog false new_es_f } in 
-				                let new_ctx = Ctx new_es in
-				                let new_conseq = normalize conseq f_l pos in
-				                heap_entail_conjunct prog is_folding  new_ctx new_conseq pos 
-				                | None ->*)
-				              (    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding 
-                                 pid pos do_fold_sh(*_debug*) in
-					          match ans with 
-                                | Some x, _ -> x
-					            | None, y->  
+				              (    
+                        let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding 
+                                 pid pos (do_fold_sh_def (vdef_fold_use_bc prog ln2)) in
+                        match ans with 
+                          | Some x, _ -> x
+                          | None, y->  
+                            let res_empty_fold, prf_empty_fold = do_fold p2 (vdef_fold_use_bc prog ln2) in
 					                  let new_estate = 
-						                match y with 
-                                          | Some x-> x 
-						                  | None -> (* let _ = print_string("need to match \n resth1 = " ^ (Cprinter.string_of_h_formula resth1) ^"\n") in *) {estate with es_formula = (mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos)} in
+                              match y with 
+                                | Some x-> x 
+                                | None -> {estate with es_formula = (mkBase resth1 lhs_p lhs_t lhs_fl lhs_br pos)} in
 					                  let res_es0, prf0 = do_match prog new_estate v1 v2 c1 c2 anode ln2 
                                         (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) is_folding  p2 pos in
-					                  (* let _ = print_string("after do_match res_es0 = " ^ (Cprinter.string_of_list_context res_es0) ^ "\n") in *)
 					                  let res_es1, prf1 = 
 						                if (!Globals.exhaust_match) then 
 						                  let n_rhs = return_base_cases prog c2 v2 p2 ln2 (mkBase resth2 rhs_p rhs_t rhs_fl rhs_br pos) pos in
@@ -4842,13 +4835,11 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 						                    | Some s ->
 							                      (* let _ = print_string ("\n now entailing \n") in  *)
 							                      let new_estate2 = impl_to_expl estate v2 in                            
-							                      let res_es2, prf2 = (*heap_entail_split_rhs_phases*) heap_entail_conjunct prog is_folding  (Ctx new_estate2) s pos in
+							                      let res_es2, prf2 = heap_entail_conjunct prog is_folding  (Ctx new_estate2) s pos in
 							                      (*TODO: move back the explicits as implicits after this heap_entail*)
 							                      (* let res_es2 = transform_list_context_expl_to_impl p2 v2 in*)
-							                      (* let _ = print_string ("res_es2: "^(Cprinter.string_of_list_context res_es2)^"\n") in *)
 							                      (list_context_union res_es2 res_es0, Prooftracer.Unknown)
 						                else (res_es0,prf0) in
-						              (* let _ = print_string ("res_es0 = " ^ (Cprinter.string_of_list_context res_es0) ^ "\n") in  *)
 					                  let copy_enable_distribution = !enable_distribution in
 						              (*******************************************************************************************************************************************************************************************)
 						              (* call to do_coercion *)
@@ -4891,7 +4882,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 							      ^ (Cprinter.string_of_h_formula ln2)
 							      ^ "\nrhs_p:\n"
 							      ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
-				                  do_fold p2
+				                  do_fold p2 None
 				                end else if is_data ln2 && is_view anode then 
 				                  begin (* unfold *)
 				                    (* TODO : ADD dd debug message for unfolding *)
@@ -4903,7 +4894,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					                (res_rs, prf)
 				                  end else 
 				                    (* TODO : ADD dd debug message base-unfolding; indicates when it fails after folding! *)
-				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_fold_sh(*_debug*) in
+				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos (do_fold_sh_def (vdef_fold_use_bc prog ln2)) in
 					                match ans with 
 					                  | Some x, _ -> x
 					                  | None, _->                          
