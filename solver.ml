@@ -1736,26 +1736,26 @@ and discard_uninteresting_constraint (f : CP.formula) (vvars: CP.spec_var list) 
   | CP.Not(f1, lbl, l) -> CP.Not(discard_uninteresting_constraint f1 vvars, lbl, l)
   | _ -> f
 
-and fold_op p c v u loc =
-  Gen.Profiling.do_2 "fold" (fold_op_x(*debug_2*) p c v) u loc
+and fold_op p c vd v u loc =
+  Gen.Profiling.do_2 "fold" (fold_op_x(*debug_2*) p c vd v) u loc
 
-and fold_debug_2 p c v u loc = 
-  Gen.Debug.ho_2 "fold_op " (fun c -> match c with
-    | Ctx c -> Cprinter.string_of_formula c.es_formula
-    | _ -> "CtxOR!") 
-      Cprinter.string_of_h_formula 
-      (fun (c,_) -> match c with | FailCtx _ -> "Fail" | _ -> "Success")
-      (fun c v -> fold_op_x p c v u loc) c v
+(* and fold_debug_2 p c vd v u loc =  *)
+(*   Gen.Debug.ho_2 "fold_op " (fun c -> match c with *)
+(*     | Ctx c -> Cprinter.string_of_formula c.es_formula *)
+(*     | _ -> "CtxOR!")  *)
+(*       Cprinter.string_of_h_formula  *)
+(*       (fun (c,_) -> match c with | FailCtx _ -> "Fail" | _ -> "Success") *)
+(*       (fun c v -> fold_op_x p c v u loc) c v *)
 
-and fold_debug p c v u loc = 
-  Gen.Debug.ho_2 "fold_op " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c)
-      (fun c v -> fold_op_x p c v u loc) c v
+(* and fold_debug p c v u loc =  *)
+(*   Gen.Debug.ho_2 "fold_op " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c) *)
+(*       (fun c v -> fold_op_x p c v u loc) c v *)
       (**************************************************************)
       (**************************************************************)
       (**************************************************************)
 
 (* fold some constraints in ctx to view  *)
-and fold_op_x prog (ctx : context) (view : h_formula) (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
+and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
   | ViewNode ({ h_formula_view_node = p;
                 h_formula_view_name = c;
                 h_formula_view_imm = imm;
@@ -1763,7 +1763,9 @@ and fold_op_x prog (ctx : context) (view : h_formula) (* (p : CP.formula) *) (us
                 h_formula_view_remaining_branches = r_brs;
                 h_formula_view_arguments = vs}) -> begin
       try
-        let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c in
+        let vdef = match vd with 
+          | None -> look_up_view_def_raw prog.Cast.prog_view_decls c 
+          | Some vd -> vd in
         let brs = filter_branches r_brs vdef.Cast.view_formula in
         let form = if use_case then brs else Cformula.case_to_disjunct brs in
         let renamed_view_formula = rename_struc_bound_vars form in
@@ -4476,13 +4478,19 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
 	) subs_vars),true)
   with | Not_found -> (var_to_fold::v2,false) 
 
+and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos = 
+          let pr (x,_) = Cprinter.string_of_list_context x in
+  Gen.Debug.ho_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var Cprinter.string_of_h_formula pr
+      (fun _ _ _ -> do_fold_w_ctx_x fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 rhs_b is_folding pos) 
+      fold_ctx var_to_fold ln2
 (*
   ln2 = p2 (node) c2 (name) v2 (arguments) r_rem_brs (remaining branches) r_p_cond (pruning conditions) pos2 (pos)
   resth2 = rhs_h - ln2
   ctx0?
   is_folding?
 *)
-and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p rhs_fl rhs_br is_folding pos = 
+and do_fold_w_ctx_x fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos = 
+  let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
   let (p2,c2,v2,pid,r_rem_brs,r_p_cond,pos2) = 
     match ln2 with
       | DataNode ({ h_formula_data_node = p2;
@@ -4541,7 +4549,7 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p r
 	  h_formula_view_remaining_branches = r_rem_brs;
 	  h_formula_view_pruning_conditions = r_p_cond;
 	  h_formula_view_pos = pos2}) in
-  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold use_case pos in
+  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold vd use_case pos in
   if not (CF.isFailCtx fold_rs) then
 	let b = { formula_base_heap = resth2;
 	formula_base_pure = rhs_p;
@@ -4608,8 +4616,8 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 	    (************************************************************************************************************************************)
 	    (* do_fold *)
 	    (************************************************************************************************************************************)
-
-        let do_fold_w_ctx fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 resth2 rhs_t rhs_p rhs_fl rhs_br is_folding pos in
+        let do_fold_sh_def fold_ctx var_to_fold vd = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 (Some vd) resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
+        let do_fold_sh fold_ctx var_to_fold = do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 None resth2 (*rhs_t rhs_p rhs_fl rhs_br*) rhs_b is_folding pos in
         (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
 	    (* let do_fold_w_ctx fold_ctx var_to_fold =  *)
 	    (*   (\* let _ = print_string("in do_fold\n") in *\) *)
@@ -4694,7 +4702,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
               es_path_label = estate.es_path_label;
 			  es_var_measures = estate.es_var_measures;
 			  es_var_label = estate.es_var_label} in
-	      do_fold_w_ctx(* _debug *) fold_ctx var_to_fold in
+	      do_fold_sh(* _debug *) fold_ctx var_to_fold in
 
 	    (****************************************************************************************************************************************)
 	    (* end do_fold *)
@@ -4815,7 +4823,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 				                heap_entail_conjunct prog is_folding  new_ctx new_conseq pos 
 				                | None ->*)
 				              (    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding 
-                                 pid pos do_fold_w_ctx(*_debug*) in
+                                 pid pos do_fold_sh(*_debug*) in
 					          match ans with 
                                 | Some x, _ -> x
 					            | None, y->  
@@ -4895,7 +4903,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					                (res_rs, prf)
 				                  end else 
 				                    (* TODO : ADD dd debug message base-unfolding; indicates when it fails after folding! *)
-				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_fold_w_ctx(*_debug*) in
+				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_fold_sh(*_debug*) in
 					                match ans with 
 					                  | Some x, _ -> x
 					                  | None, _->                          
