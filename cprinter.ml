@@ -916,6 +916,8 @@ let rec pr_formula e =
           pr_mix_formula_branches(p,b); pr_cut_after  "&" ; 
           fmt_string ((string_of_flow_formula "FLOW" fl) ^  ")") 
 
+let pr_formula_wrap e = (wrap_box ("H",1) pr_formula) e
+
 let string_of_formula (e:formula) : string =  poly_string_of_pr  pr_formula e
 
 let string_of_formula_base (e:formula_base) : string =  poly_string_of_pr  pr_formula_base e
@@ -1148,6 +1150,18 @@ let pr_list_context (ctx:list_context) =
     | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 
+let pr_list_context_short (ctx:list_context) =
+  let rec f xs = match xs with
+    | Ctx e -> [e.es_formula]
+    | OCtx (x1,x2) -> (f x1) @ (f x2) in
+  let lls = match ctx with
+    | FailCtx ft -> []
+    | SuccCtx sc -> List.map f sc in
+  let pr_disj ls = 
+    if (List.length ls == 1) then pr_formula (List.hd ls)
+  else pr_seq "or" pr_formula_wrap ls in
+  pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
+
 let pr_int i = fmt_int i
 
 let pr_pair pr_1 pr_2 (a,b) =
@@ -1155,7 +1169,7 @@ let pr_pair pr_1 pr_2 (a,b) =
   pr_1 a; fmt_string ",";
   pr_2 b; fmt_string ")"
 
-
+let string_of_list_context_short (ctx:list_context): string =  poly_string_of_pr pr_list_context_short ctx
 
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
 
@@ -1266,7 +1280,7 @@ let pr_view_decl v =
   wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_mix_formula (fst v.view_user_inv);
-  pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)->pr_formula c))) v.view_un_struc_formula;
+  pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
   pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with 
@@ -1654,6 +1668,7 @@ Cformula.print_svl := string_of_spec_var_list;;
 Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
+Cformula.print_list_context_short := string_of_list_context_short;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
