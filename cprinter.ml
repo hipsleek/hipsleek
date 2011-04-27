@@ -1150,18 +1150,26 @@ let pr_list_context (ctx:list_context) =
     | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 
-let pr_list_context_short (ctx:list_context) =
+    
+let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
     | Ctx e -> [e.es_formula]
     | OCtx (x1,x2) -> (f x1) @ (f x2) in
-  let lls = match ctx with
-    | FailCtx ft -> []
-    | SuccCtx sc -> List.map f sc in
+  let lls = List.map f ctx in
   let pr_disj ls = 
     if (List.length ls == 1) then pr_formula (List.hd ls)
   else pr_seq "or" pr_formula_wrap ls in
-  pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
-
+   pr_seq_vbox "" (wrap_box ("H",1) pr_disj) lls
+    
+let pr_list_context_short (ctx:list_context) =
+  match ctx with
+    | FailCtx ft -> fmt_string "FailCtx"
+    | SuccCtx sc -> pr_context_list_short sc
+    
+let pr_entail_state_short e = 
+  (pr_seq "" pr_spec_var) e.es_ante_evars;
+  pr_formula_wrap e.es_formula
+    
 let pr_int i = fmt_int i
 
 let pr_pair pr_1 pr_2 (a,b) =
@@ -1171,7 +1179,11 @@ let pr_pair pr_1 pr_2 (a,b) =
 
 let string_of_list_context_short (ctx:list_context): string =  poly_string_of_pr pr_list_context_short ctx
 
+let string_of_context_list_short (ctx:context list): string =  poly_string_of_pr pr_context_list_short ctx
+
 let string_of_list_context (ctx:list_context): string =  poly_string_of_pr pr_list_context ctx
+
+let string_of_entail_state_short (e:entail_state):string = poly_string_of_pr pr_entail_state_short e
 
 let printer_of_list_context (fmt: Format.formatter) (ctx: list_context) : unit =
   poly_printer_of_pr fmt pr_list_context ctx 
@@ -1669,6 +1681,8 @@ Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
+Cformula.print_context_list_short := string_of_context_list_short;;
+Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;

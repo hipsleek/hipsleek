@@ -251,6 +251,9 @@ struct
   let difference_eq eq l1 l2 =
     List.filter (fun x -> not (List.exists (eq x) l2)) l1
 
+  let diff_split_eq eq l1 l2 = 
+    List.partition (fun x -> not (List.exists (eq x) l2)) l1
+    
   let list_subset_eq eq l1 l2 = 
     let l = (List.length (difference_eq eq l1 l2)) in
     l==0

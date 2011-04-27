@@ -848,10 +848,14 @@ and get_view_original (h : h_formula) = match h with
   | ViewNode ({h_formula_view_original = original}) -> original
   | _ -> true (* failwith ("get_view_original: not a view") *)
 
-and get_view_modes (h : h_formula) = match h with
+and get_view_modes_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_modes = modes}) -> modes
   | _ -> failwith ("get_view_modes: not a view")
 
+and get_view_modes (h : h_formula) =
+  let pr l = string_of_int (List.length l) in 
+  Gen.Debug.ho_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
+  
 and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
   | _ -> failwith ("get_view_imm: not a view")
@@ -1009,7 +1013,7 @@ and fv (f : formula) : CP.spec_var list = match f with
 	formula_base_pure = p;
 	formula_base_branches = br;
 	formula_base_type = t}) -> 
-	    CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) (h_fv h @ MCP.mfv p) br)
+      br_fv br (h_fv h @ MCP.mfv p)
   | Exists ({formula_exists_qvars = qvars; 
 	formula_exists_heap = h; 
 	formula_exists_pure = p; 
@@ -1049,6 +1053,9 @@ and h_fv (h : h_formula) : CP.spec_var list = match h with
 	h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
   | HTrue | HFalse | Hole _ -> []
 
+and br_fv br init_l: CP.spec_var list =
+  CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)
+  
 and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list = 
   let helper f = match f with
   | ECase c-> List.concat (List.map (fun (_,c) -> f_top_level_vars_struc c) c.formula_case_branches)
@@ -1913,6 +1920,48 @@ and list_failesc_context = failesc_context list
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
+let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
+let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
+
+let es_simplify (e1:entail_state):entail_state = 
+  let pusher f vl = 
+    if (vl==[]) then (f,[])
+      else
+        let h, p , fl , br , t  = split_components f in
+        let hfv = h_fv h in
+        let brfv = br_fv br [] in 
+        let rv1 = Gen.BList.difference_eq (CP.eq_spec_var) vl hfv in
+        let rvp,rvb = Gen.BList.diff_split_eq (CP.eq_spec_var) rv1 brfv in
+        if (rv1==[]) then (f,[])
+        else 
+          let rp = 
+            if (rvp==[]) then p
+          else MCP.memo_pure_push_exists rvp p in
+          (mkExists rvb h rp t fl br no_pos, [])  in
+
+  let formula_simplify f aev= match f with 
+    | Exists e ->
+      let vl = e.formula_exists_qvars @ aev in
+      pusher f vl
+    | Base _ -> pusher f aev
+    | Or c-> Err.report_error { Err.error_loc = no_pos; Err.error_text ="unexpected Or formula in es_simplify"} in
+  let nf, naev = formula_simplify e1.es_formula e1.es_ante_evars in
+  {e1 with es_formula = nf; es_ante_evars =naev}
+  
+let es_simplify e1 = 
+  let pr  = !print_entail_state in
+  Gen.Debug.ho_1 "es_simplify" pr pr es_simplify e1
+  
+let rec context_simplify (c:context):context  = match c with
+  | Ctx e -> Ctx (es_simplify e)
+  | OCtx (c1,c2) -> OCtx ((context_simplify c1), (context_simplify c2))
+  
+let context_list_simplify (l:context list):context list = List.map context_simplify l
+
+let list_context_simplify (l : list_context) : list_context = match l with
+  | FailCtx _-> l
+  | SuccCtx sc -> SuccCtx (List.map context_simplify sc)
+
 
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = Globals.fresh_int () in
@@ -2022,6 +2071,10 @@ let rec or_context_list (cl10 : context list) (cl20 : context list) : context li
 	  let tmp = helper cl10 cl20 in
 		tmp
   
+let or_context_list cl10 cl20 =
+  let pr = !print_context_list_short in
+  Gen.Debug.ho_2 "or_context_list" pr pr pr (fun _ _ -> or_context_list cl10 cl20) cl10 cl20
+  
 let mkFailCtx_in (ft:fail_type) = FailCtx ft
 
 let mk_fail_partial_context_label (ft:fail_type) (lab:path_trace) : (partial_context) = ([(lab,ft)], []) 
@@ -2097,7 +2150,9 @@ let isFailCtx cl = match cl with
 	| FailCtx _ -> true
 	| SuccCtx _ -> false
 
-let list_context_union_x c1 c2 = match c1,c2 with
+let list_context_union_x c1 c2 = 
+  let simplify x = (*context_list_simplify*) x in
+match c1,c2 with
   | FailCtx t1 ,FailCtx t2 -> (*FailCtx (Or_Reason (t1,t2))*)
       if ((is_cont t1) && not(is_cont t2))
       then FailCtx(t1)
@@ -2109,9 +2164,9 @@ let list_context_union_x c1 c2 = match c1,c2 with
 	    FailCtx (Or_Continuation (t1,t2))  
 	  else
 	    FailCtx (Or_Reason (t1,t2))  
-  | FailCtx t1 ,SuccCtx t2 -> SuccCtx t2
-  | SuccCtx t1 ,FailCtx t2 -> SuccCtx t1
-  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (t1@t2)
+  | FailCtx t1 ,SuccCtx t2 -> SuccCtx (simplify t2)
+  | SuccCtx t1 ,FailCtx t2 -> SuccCtx (simplify t1)
+  | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (simplify(t1@t2))
 
 let list_context_union c1 c2 =
   let pr = !print_list_context_short in
@@ -3745,3 +3800,4 @@ and add_origs_to_node_struc (v:string) (e : struc_formula) origs =
   let f_p_t5 e = Some e in
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
+

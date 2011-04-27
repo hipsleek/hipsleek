@@ -55,6 +55,7 @@ type proof =
   | PEBase of base_step
   | PEAssume of assume_step
   | PEEx of eex_step
+  | Search of proof list
   | Unknown 
 
 and ex_step = { ex_step_ante : CF.context;
