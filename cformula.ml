@@ -1963,6 +1963,14 @@ let list_context_simplify (l : list_context) : list_context = match l with
   | FailCtx _-> l
   | SuccCtx sc -> SuccCtx (List.map context_simplify sc)
 
+let failesc_context_simplify ((l,a,cs) : failesc_context) : failesc_context = 
+        let newcs = List.map (fun (p,c) -> (p,context_simplify c)) cs in
+        (l,a,newcs)
+
+let list_failesc_context_simplify (l : list_failesc_context) : list_failesc_context = 
+  List.map failesc_context_simplify l
+
+
 
 let mk_empty_frame () : (h_formula * int ) = 
   let hole_id = Globals.fresh_int () in
