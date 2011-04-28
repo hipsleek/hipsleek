@@ -1304,6 +1304,15 @@ and rec_grp prog :ident list =
 *)
 and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
       :(Cpure.formula * (MCP.mix_formula*(string*Cpure.formula)list)) option = 
+  let pr1 = Cprinter.string_of_struc_formula in
+  let pr2 = Cprinter.string_of_spec_var in
+  let pr3 x = match x with
+    | None -> "none"
+    | Some (f,_) -> Cprinter.string_of_pure_formula f in
+  Gen.Debug.ho_2 "flatten_base_case" pr1 pr2 pr3 flatten_base_case_x f self
+
+and flatten_base_case_x  (f:Cformula.struc_formula)(self:Cpure.spec_var)
+      :(Cpure.formula * (MCP.mix_formula*(string*Cpure.formula)list)) option = 
   let sat_subno = ref 0 in
   let rec get_pure (f:CF.formula):(MCP.mix_formula*((string*Cpure.formula) list)) = match f with
     | Cformula.Or b->
@@ -1367,7 +1376,10 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
 
 and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
   let pr = Cprinter.string_of_struc_formula in
-  Gen.Debug.ho_1 "compute_base_case" pr pr compute_base_case_x cf
+  let pr2 x= match x with
+    | None -> "None"
+    | Some f -> Cprinter.string_of_struc_formula f in
+  Gen.Debug.ho_1 "compute_base_case" pr pr2 compute_base_case_x cf
 
 and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
   (*let isRec (d:Cformula.formula): bool = 
@@ -1375,7 +1387,7 @@ and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_fo
   let rec helper (cf:Cformula.ext_formula) : Cformula.struc_formula option = match cf with
     | Cformula.ECase b -> 
 	      let l = List.fold_left (fun a (c1,c2) -> 
-			  match (compute_base_case c2 ) with
+			  match (compute_base_case_x c2 ) with
 				| None -> a (*(c1,[(Cformula.mkEFalse pos)]) *)
 				| Some s ->(c1,s)::a) [] b.Cformula.formula_case_branches in
 	      if ((List.length l) > 0) then Some [(Cformula.ECase {b with Cformula.formula_case_branches = [List.hd l]})]
@@ -1385,13 +1397,13 @@ and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_fo
 	      | None -> None
 	      | Some d-> 
 	            if (List.length b.Cformula.formula_ext_continuation )>0 then
-                  match (compute_base_case b.Cformula.formula_ext_continuation ) with
+                  match (compute_base_case_x b.Cformula.formula_ext_continuation ) with
                     | None -> None
                     | Some s -> Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = s; Cformula.formula_ext_base=d })]
 	            else Some [(Cformula.EBase {b with Cformula.formula_ext_continuation = []; Cformula.formula_ext_base=d })]
       end
     | Cformula.EAssume b-> Err.report_error{ Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
-	| Cformula.EVariance b -> compute_base_case b.Cformula.formula_var_continuation
+	| Cformula.EVariance b -> compute_base_case_x b.Cformula.formula_var_continuation
   in
   match (List.length cf) with
     | 0 -> None
