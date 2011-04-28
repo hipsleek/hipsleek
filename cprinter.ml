@@ -1163,7 +1163,7 @@ let pr_context_list_short (ctx : context list) =
     
 let pr_list_context_short (ctx:list_context) =
   match ctx with
-    | FailCtx ft -> fmt_string "failCtx"
+    | FailCtx ft -> fmt_string "failctx"
     | SuccCtx sc -> pr_context_list_short sc
     
 let pr_entail_state_short e = 
