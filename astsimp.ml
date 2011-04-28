@@ -1309,7 +1309,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
   let pr3 x = match x with
     | None -> "none"
     | Some (f,_) -> Cprinter.string_of_pure_formula f in
-  Gen.Debug.ho_2 "flatten_base_case" pr1 pr2 pr3 flatten_base_case_x f self
+  Gen.Debug.no_2 "flatten_base_case" pr1 pr2 pr3 flatten_base_case_x f self
 
 and flatten_base_case_x  (f:Cformula.struc_formula)(self:Cpure.spec_var)
       :(Cpure.formula * (MCP.mix_formula*(string*Cpure.formula)list)) option = 
@@ -1379,7 +1379,7 @@ and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_form
   let pr2 x= match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f in
-  Gen.Debug.ho_1 "compute_base_case" pr pr2 compute_base_case_x cf
+  Gen.Debug.no_1 "compute_base_case" pr pr2 compute_base_case_x cf
 
 and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
   (*let isRec (d:Cformula.formula): bool = 
@@ -1440,7 +1440,7 @@ and find_materialized_vars_x prog params (f0 : CF.formula) : CP.spec_var list =
 and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   let pr1 = Cprinter.string_of_spec_var_list in 
   let pr2 = Cprinter.string_of_formula in 
-  Gen.Debug.ho_2 "find_materialized_vars" pr1 pr2 pr1 (fun _ _ -> find_materialized_vars_x prog params (f0 : CF.formula)) params f0
+  Gen.Debug.no_2 "find_materialized_vars" pr1 pr2 pr1 (fun _ _ -> find_materialized_vars_x prog params (f0 : CF.formula)) params f0
 
 
 and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :

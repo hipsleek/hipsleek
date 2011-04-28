@@ -1954,7 +1954,7 @@ let es_simplify e1 =
   Gen.Debug.ho_1 "es_simplify" pr pr es_simplify e1
   
 let rec context_simplify (c:context):context  = match c with
-  | Ctx e -> Ctx (es_simplify e)
+  | Ctx e -> Ctx ((*es_simplify*) e)
   | OCtx (c1,c2) -> OCtx ((context_simplify c1), (context_simplify c2))
   
 let context_list_simplify (l:context list):context list = List.map context_simplify l
@@ -2202,14 +2202,23 @@ let rec union_context_left c_l = match (List.length c_l) with
     (*  | SuccCtx t1,FailCtx t2 -> SuccCtx t1 *)
     (*  | SuccCtx t1,SuccCtx t2 -> SuccCtx (t1@t2)) (List.hd c_l) (List.tl c_l) *)
 
-and fold_context_left c_l = union_context_left c_l 
+and fold_context_left_x c_l = union_context_left c_l 
+
+and fold_context_left c_l = 
+  let pr = !print_list_context_short in
+  let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
+  Gen.Debug.ho_1 "fold_context_left" pr1 pr fold_context_left_x c_l
   
   (*list_context or*)
-and or_list_context c1 c2 = match c1,c2 with
+and or_list_context_x c1 c2 = match c1,c2 with
      | FailCtx t1 ,FailCtx t2 -> FailCtx (And_Reason (t1,t2))
      | FailCtx t1 ,SuccCtx t2 -> FailCtx t1
      | SuccCtx t1 ,FailCtx t2 -> FailCtx t2
      | SuccCtx t1 ,SuccCtx t2 -> SuccCtx (or_context_list t1 t2)
+     
+and or_list_context c1 c2 = 
+  let pr = !print_list_context_short in
+  Gen.Debug.ho_2 "or_list_context" pr pr pr or_list_context_x c1 c2
 
 (* can remove redundancy here? *)
 

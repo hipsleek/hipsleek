@@ -917,6 +917,14 @@ struct
   let loop_5 s = ho_5_opt_aux [] true (fun _ -> true) s
   let loop_6 s = ho_6_opt_aux [] true (fun _ -> true) s
 
+  let loop_1_no _ _ _ s = s
+  let loop_2_no _ _ _ _ s = s
+  let loop_3_no _ _ _ _ _ s = s
+  let loop_4_no _ _ _ _ _ _ s = s
+  let loop_5_no _ _ _ _ _ _ _ s = s
+  let loop_6_no _ _ _ _ _ _ _ _ s = s
+
+  
   let ho_1_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_1 str
   let ho_2_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_2 str
   let ho_3_num (i:int) s =  let str=(s^"#"^(string_of_int i)) in ho_3 str

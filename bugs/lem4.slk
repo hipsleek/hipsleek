@@ -1,9 +1,13 @@
 data node { int val ; node next }.
 
 
-pred lseg<n, p> == self = p & n = 0
-         or (exists r2: self::node<next = r2> * r2::lseg<n - 1, p>)
+pred lseg<n, p> == 
+   case { n=0 -> [] self = p & n = 0 ;
+          n!=0 -> [] self::node<next = r2> * r2::lseg<n - 1, p> ;
+          }
          inv n >= 0.
+
+//lemma self::lseg<n,p> <- self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
 
 /*
 pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
@@ -21,6 +25,13 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
 //checkentail x::lseg<n,t> & n=0 |- x::lseg<m,s>.
 
-checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
 
+
+
+//checkentail x::node<_,null> |- x::lseg<m,null>.
+
+//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::node<_,null>.
+
+checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
 print residue.
