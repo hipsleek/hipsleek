@@ -1,0 +1,43 @@
+
+
+  x::node<..> * R  |- x::node<..> * Q
+    ===> mandatory match
+
+
+  x::pred<..> * R  |- x::node<..> * Q
+    ===> mandatory unfold
+
+  y::ll_tail<.,x> * R  |- x::node<..> * Q
+    ===>  x must materialised as a node,
+         then mandatory unfold or left-lemma
+
+  x::pred1<..> * R  |- x::pred2<..> * Q
+    ===> mandatory base-case unfold on x
+
+
+  tx::node<..>  |- x::pred1<..,tx> * Q
+    ===> mandatory right-lemma or fold
+
+  y::pred1<..,tx>  |- x::pred2<..,tx> * Q
+    ===> mandatory unfold of y::pred1
+
+
+===========================================
+
+  x::node<...>   |-  x::pred<..>
+
+   // base-case fold
+   // or full-fold
+
+  x::pred<...>   |-  x::pred<..>
+   // match 
+   // or base-case fold
+   // or left-lemma (distr) with cycle detection & derived nodes
+   // or right-lemma (distr)
+
+  x::pred1<...>   |-  x::pred2<..>
+   // or base-case fold
+   // or left-lemma(s) with cycle detection
+   // or right-lemma(s)
+
+
