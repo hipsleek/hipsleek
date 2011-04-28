@@ -1924,11 +1924,12 @@ let print_context_list_short = ref(fun (c:context list) -> "printer not initiali
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
 let es_simplify (e1:entail_state):entail_state = 
+  let hfv0 = h_fv e1.es_heap in
   let pusher f vl = 
     if (vl==[]) then (f,[])
       else
         let h, p , fl , br , t  = split_components f in
-        let hfv = h_fv h in
+        let hfv = (h_fv h)@hfv0 in
         let brfv = br_fv br [] in 
         let rv1 = Gen.BList.difference_eq (CP.eq_spec_var) vl hfv in
         let rvp,rvb = Gen.BList.diff_split_eq (CP.eq_spec_var) rv1 brfv in

@@ -2424,7 +2424,8 @@ and heap_entail_struc_init (prog : prog_decl) (is_folding : bool)  (has_post: bo
 				es_orig_conseq = conseq ;}in	
 	        let cl_new = transform_list_context ( (fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
             let entail_fct = fun c-> heap_entail_struc prog is_folding  has_post c conseq pos pid in
-            heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new 
+            let (ans,prf) = heap_entail_agressive_prunning entail_fct (prune_list_ctx prog) (fun (c,_)-> not (isFailCtx c)) cl_new in
+            (CF.list_context_simplify ans,prf)
 
 (* check entailment:                                          *)
 (* each entailment should produce one proof, be it failure or *)
