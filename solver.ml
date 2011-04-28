@@ -4370,6 +4370,70 @@ and do_base_case_unfold_debug prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_f
           do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos fold_f ) 
       ante conseq p1 p2
 
+and do_base_case_unfold_only prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos _  =
+  if (is_data ln2) then (None,None)
+  else
+    (* let sh_vd = vdef_fold_use_bc prog ln2 in *)
+    let _ = Gen.Profiling.push_time "empty_predicate_testing" in
+    let vd = (look_up_view_def_raw prog.prog_view_decls c1) in
+    let fold_ctx = Ctx {(empty_es (mkTrueFlow ()) pos) with es_formula = ante;
+        es_heap = estate.es_heap;
+        es_evars = estate.es_evars;
+        es_gen_expl_vars = estate.es_gen_expl_vars; 
+        es_gen_impl_vars = estate.es_gen_impl_vars; 
+        es_ante_evars = estate.es_ante_evars;
+        es_unsat_flag = false;
+        es_prior_steps = estate.es_prior_steps;
+        es_path_label = estate.es_path_label;
+		es_var_measures = estate.es_var_measures;
+		es_var_label = estate.es_var_label} in
+    let na,prf = match vd.view_base_case with
+      | None ->  (CF.mkFailCtx_in(Basic_Reason ( { 
+			fc_message ="failure 1 ?? when checking for aliased node";
+			fc_current_lhs = estate;
+			fc_prior_steps = estate.es_prior_steps;
+			fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+			fc_current_conseq = conseq;
+			fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), UnsatConseq)
+      | Some (bc1,(base1,branches1)) -> 
+	        begin
+              (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
+              let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+              let to_vars = p1 :: v1 in
+              (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
+              let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
+              let branches = List.map (fun (c1,c2)-> (c1,Cpure.subst_avoid_capture fr_vars to_vars c2)) branches1 in
+              let bc1 = Cpure.subst_avoid_capture fr_vars to_vars bc1 in
+              let (nctx,b) = sem_imply_add prog is_folding  fold_ctx bc1 !Globals.enable_syn_base_case in
+              if b then 
+		        (*let _ = print_string ("successful base case guard proof \n ") in*)
+		        let ctx = unfold_context (prog, Some (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
+		        (ctx,TrueConseq)
+              else  (CF.mkFailCtx_in(Basic_Reason  ( { 
+				  fc_message ="failure 2 ?? when checking for aliased node";
+				  fc_current_lhs = estate;
+				  fc_prior_steps = estate.es_prior_steps;
+				  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+				  fc_current_conseq = conseq;
+				  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})),TrueConseq)
+            end in
+    let _ = Gen.Profiling.pop_time "empty_predicate_testing" in
+    if (isFailCtx na) then (None,None)
+    else 
+	  let cx = match na with | SuccCtx l -> List.hd l |_ -> report_error pos("do_base_case_unfold_only: something wrong has happened with the context") in
+	  (* let _ = Gen.Profiling.push_time "fold_after_base_case" in *)
+	  (* (\*let _ = print_string ("ctx before fold: "^(Cprinter.string_of_context cx)^"\n") in*\) *)
+	  (* let do_fold_result,prf = fold_f sh_vd cx p2 in *)
+	  (* let _ = Gen.Profiling.pop_time "fold_after_base_case" in *)
+	  (*let _ = print_string ("after base case fold \n") in*)
+	  (* if not(isFailCtx do_fold_result) then  *)
+	  (*   (\*let _ = print_string "succeded in base case unfolding and then folding \n" in*\) *)
+	  (*   (Some(do_fold_result,prf),None) *)
+	  (* else                          *)
+	    match cx with
+	      | OCtx (c1,c2) ->  (None,None)
+	      | Ctx c -> (None,Some c)
+
 and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding  r_var pos : 
       list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
@@ -4868,7 +4932,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
                                   fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
 				            else
 				              (    
-                        let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding 
+                        let ans = do_base_case_unfold_only prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding 
                                  pid pos do_base_fold_sh_def 
                                  (*should use def version as it is always folding against base case
                                   probably considerable speed gain*) in
@@ -4957,7 +5021,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					                (res_rs, prf)
 				                  end else 
 				                    (* TODO : ADD dd debug message base-unfolding; indicates when it fails after folding! *)
-				                    let ans = do_base_case_unfold prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_base_fold_sh_def in
+				                    let ans = do_base_case_unfold_only prog ante conseq estate c1 c2 v1 v2 p1 p2 ln2 is_folding  pid pos do_base_fold_sh_def in
 					                match ans with 
 					                  | Some x, _ -> x
 					                  | None, _->                          
@@ -5763,7 +5827,7 @@ and transform_null (eqs) :(CP.b_formula list) = List.map (fun c-> match c with
 and check_unsat_struc prog (cf:struc_formula):bool = 
 		let rec inner (f:formula) (cf:struc_formula):bool =
 			let rec helper (f:formula) (cf:ext_formula):bool = match cf with
-				| EAssume b -> 
+			| EAssume b -> 
 					 let pf, pfb = xpure prog f in
 					(not(Tpdispatcher.is_sat pf false)) || (List.exists (fun (_,c2) -> not(Tpdispatcher.is_sat (Cpure.And (pf,c2,no_pos)) false)) pfb)
 				| EBase b -> inner (normalize f b.formula_ext_base no_pos) b.formula_ext_continuation 
