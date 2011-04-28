@@ -33,9 +33,9 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
 //checkentail x::node<_,null> |- x::lseg<m,null>.
 
-checkentail x::node<_,null> |- x::lseg<m,p>.
+//checkentail x::node<_,null> |- x::lseg<m,p>.
 
-//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::node<_,null>.
+checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::node<_,null>.
 
 //checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
 print residue.

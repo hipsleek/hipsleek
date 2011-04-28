@@ -2581,7 +2581,7 @@ and heap_entail_conjunct_lhs_struc
 		          end
 	            | Some (p,e) -> begin [inner_entailer ctx e]end in
 	          let rez1,rez2 = List.split r in
-              let rez1 = List.fold_left (fun a c->or_list_context a c) (List.hd rez1) (List.tl rez1) in
+              let rez1 = List.fold_left (fun a c-> list_context_union a c) (List.hd rez1) (List.tl rez1) in
 	          (rez1,(mkCaseStep ctx [f] rez2))
       | EBase ({
 		    formula_ext_explicit_inst =expl_inst;
