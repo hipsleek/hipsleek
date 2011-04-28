@@ -582,7 +582,8 @@ let rec name_of_type (t : P.typ) = match t with
   | P.Prim Bool -> "bool"
   | P.Prim Void -> "void"
   | P.Prim Float -> "float"
-  | P.Prim (BagT _) -> "bag"
+  | P.Prim (BagT t) -> "bag("^(name_of_type (P.Prim t))^")"
+  | P.Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
   | P.Prim List -> "list"
   | P.OType c -> c
 	| P.Array et -> (name_of_type et) ^ "[]" (* An hoa *) 

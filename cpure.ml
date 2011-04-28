@@ -961,7 +961,8 @@ and name_of_type (t : typ) : ident = match t with
   | Prim Bool -> "boolean"
   | Prim Void -> "void"
   | Prim Float -> "float"
-  | Prim (Globals.BagT _) -> "bag"
+  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")"
   | Prim Globals.List -> "list"
   | OType c -> c
   | Array et -> name_of_type et ^ "[]" (* An Hoa *)

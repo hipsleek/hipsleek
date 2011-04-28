@@ -4,6 +4,7 @@
 
 open Globals
 module CP = Cpure
+module Err = Error
 
 let coq_file_number = ref 0
 let result_file_name = "res"
@@ -17,12 +18,15 @@ let coq_channels = ref (stdin, stdout)
 
 
 (* pretty printing for primitive types *)
-let coq_of_prim_type = function
+let rec coq_of_prim_type = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
-  | BagT _		      -> "int set"
+ | (TVar i)       ->   (* type var not supported *)
+        Error.report_error {Err.error_loc = no_pos; 
+        Err.error_text = "type var not supported for Coq"}
+   | BagT t		      -> "("^(coq_of_prim_type t) ^") set"
   | List		  -> "list"
 ;;
 

@@ -25,6 +25,7 @@ and primed =
   | Unprimed
 
 and prim_type = 
+  | TVar of int
   | Bool
   | Float
   | Int
@@ -45,6 +46,7 @@ let rec string_of_prim_type = function
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
+  | TVar i       -> "TVar["^(string_of_int i)^"]"
   | BagT t        -> "bag("^(string_of_prim_type t)^")"
   | List          -> "list"
 

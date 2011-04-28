@@ -2783,6 +2783,9 @@ and default_value (t : CP.typ) pos : C.exp =
 	      C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
     | CP.Prim Float ->
 	      C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
+    | CP.Prim (TVar _) ->
+	      failwith
+              "default_value: typevar in variable declaration should have been rejected"
     | CP.Prim Void ->
 	      failwith
               "default_value: void in variable declaration should have been rejected by parser"

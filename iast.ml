@@ -422,12 +422,13 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
 
 let set_proc_data_decl (p : proc_decl) (d : data_decl) = p.proc_data_decl <- Some d
 
-let name_of_type (t : typ) = match t with
+let rec name_of_type (t : typ) = match t with
   | Prim Int -> "int"
   | Prim Bool -> "bool"
   | Prim Void -> "void"
   | Prim Float -> "float"
-  | Prim (BagT _) -> "bag"
+  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | Prim (BagT t) -> "bag("^(name_of_type (Prim t)) ^")"
   | Prim List -> "list"
   | Named c -> c
   | Array _ -> "Array"

@@ -24,15 +24,20 @@ let test_number = ref 0
 
 
 (* pretty printing for primitive types *)
-let isabelle_of_prim_type = function
+let rec isabelle_of_prim_type = function
   | Bool          -> "int"
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | BagT	_	  ->
-      if !bag_flag then "int multiset"
-      else "int set"
-  | List           -> "list"	(* lists are not supported *)
+  | BagT	t	  ->
+      if !bag_flag then "("^(isabelle_of_prim_type t) ^") multiset"
+      else "("^(isabelle_of_prim_type t) ^") set"
+  | (TVar i)       ->   (* type var not supported *)
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "type var not supported for Isabelle"}
+  | List           -> 	(* lists are not supported *)
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "list not supported for Isabelle"}
 ;;
 
 (* pretty printing for spec_vars *)

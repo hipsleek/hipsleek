@@ -16,7 +16,8 @@ let string_of_prim_type = function
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | BagT _           -> "multiset"
+  | BagT t        -> "bag("^(string_of_prim_type t)^")"
+  | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List          -> "list"
 ;;
 

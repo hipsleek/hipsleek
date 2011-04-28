@@ -111,7 +111,8 @@ and aug_class_name (t : CP.typ) = match t with
   | CP.Prim Bool -> "BoolAug"
   | CP.Prim Float -> "FloatAug"
   | CP.Prim Void -> "void"
-  | CP.Prim (BagT _) -> "Set"
+  | CP.Prim (BagT t) -> "Set("^(aug_class_name (CP.Prim t))^")"
+ | CP.Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
   | CP.Prim List -> "List"
 	| CP.Array et -> aug_class_name et ^ "[]" (* An Hoa *)
 

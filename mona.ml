@@ -31,12 +31,12 @@ let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdo
 
 
 (* pretty printing for primitive types *)
-let mona_of_prim_type = function
+let rec mona_of_prim_type = function
   | Bool          -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | BagT _		  -> "int set"
+  | BagT i		  -> "("^(mona_of_prim_type i)^") set"
   | List          -> "list"	(* lists are not supported *)
 
 
@@ -422,7 +422,7 @@ and is_inside_bag_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
   | _ -> begin false; end
 
 and is_firstorder_mem f e vs =
-  Gen.Debug.ho_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
+  Gen.Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
 
 and is_firstorder_mem_a f e vs =
   match e with
@@ -442,15 +442,15 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = 
-  Gen.Debug.ho_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+  Gen.Debug.no_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
       (fun e0 -> mona_of_exp_x e0 f) e0
 
 (* pretty printing for expressions *)
 and mona_of_exp_x e0 f = 
   let rec helper e0 =
     match e0 with
-        (*| CP.Null _ -> " 0 "*)
-      | CP.Null _ -> "pconst(0)"
+        | CP.Null _ -> " 0 "
+      (* | CP.Null _ -> "pconst(0)" *)
       | CP.Var (sv, _) -> mona_of_spec_var sv
       | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
             (*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
@@ -519,7 +519,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
-   Gen.Debug.ho_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+   Gen.Debug.no_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
       (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
@@ -531,7 +531,12 @@ and mona_of_formula_exp_list l f = match l with
   | h::t       -> (mona_of_exp h f) ^ ", " ^ (mona_of_formula_exp_list t f)
 
 (* pretty printing for boolean vars *)
-and mona_of_b_formula b f vs =
+and mona_of_b_formula b f vs = 
+  Gen.Debug.no_1 "mona_of_b_formula" Cprinter.string_of_b_formula (fun x -> x)
+      (fun _ -> mona_of_b_formula_x b f vs) b
+
+(* pretty printing for boolean vars *)
+and mona_of_b_formula_x b f vs =
   let second_order_composite a1 a2 a3 f = 
     let (a1ex, a1name, a1str) = (mona_of_exp_secondorder a1 f) in
     let (a2ex, a2name, a2str) = (mona_of_exp_secondorder a2 f) in

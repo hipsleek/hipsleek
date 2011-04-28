@@ -25,7 +25,8 @@ let string_of_prim_type = function
   | Float         -> "float "
   | Int           -> "int "
   | Void          -> "void "
-  | BagT _           -> "bag "
+  | (BagT t) -> "bag("^(string_of_prim_type t) ^")"
+  | (TVar i) -> "TVar["^(string_of_int i)^"]"
   | List          -> "list "
 ;;
 
