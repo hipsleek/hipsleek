@@ -1364,8 +1364,12 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
             Some(c1,(symp_struc_to_formula c2))
     | _ -> Error.report_error 
           { Err.error_loc = no_pos; Err.error_text = "error: view definitions should not contain assume formulas"}
-	          
+
 and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
+  let pr = Cprinter.string_of_struc_formula in
+  Gen.Debug.ho_1 "compute_base_case" pr pr compute_base_case_x cf
+
+and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
   (*let isRec (d:Cformula.formula): bool = 
     (List.length(List.filter (fun c -> List.mem c recs)(Cformula.view_node_types d)))>0 in*)
   let rec helper (cf:Cformula.ext_formula) : Cformula.struc_formula option = match cf with
