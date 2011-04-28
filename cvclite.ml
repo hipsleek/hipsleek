@@ -146,7 +146,7 @@ and cvcl_of_b_formula b = match b with
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvclite") 
 	  
 and cvcl_of_sv_type sv = match sv with
-  | CP.SpecVar (CP.Prim Bag, _, _) -> "SET"
+  | CP.SpecVar (CP.Prim (BagT _), _, _) -> "SET"
   | CP.SpecVar (CP.Prim Bool, _, _) -> "INT" (* "BOOLEAN" *)
   | _ -> "INT"
 

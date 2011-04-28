@@ -36,7 +36,7 @@ let mona_of_prim_type = function
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		  -> "int set"
+  | BagT _		  -> "int set"
   | List          -> "list"	(* lists are not supported *)
 
 
@@ -422,7 +422,7 @@ and is_inside_bag_exp (e : CP.exp) (elem : CP.exp) : bool = match e with
   | _ -> begin false; end
 
 and is_firstorder_mem f e vs =
-  Gen.Debug.no_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
+  Gen.Debug.ho_1 "is_firstorder_mem" Cprinter.string_of_formula_exp string_of_bool (fun e -> is_firstorder_mem_a f e vs) e
 
 and is_firstorder_mem_a f e vs =
   match e with
@@ -442,7 +442,7 @@ and mona_of_spec_var (sv : CP.spec_var) = match sv with
 
 (* pretty printing for expressions *)
 and mona_of_exp e0 f = 
-  Gen.Debug.no_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
+  Gen.Debug.ho_1 "mona_of_exp" Cprinter.string_of_formula_exp (fun x -> x)
       (fun e0 -> mona_of_exp_x e0 f) e0
 
 (* pretty printing for expressions *)
@@ -519,7 +519,7 @@ and mona_of_exp_secondorder_x e0 f = 	match e0 with
   | _ -> failwith ("mona.mona_of_exp_secondorder: mona doesn't support subtraction/mult/..."^(Cprinter.string_of_formula_exp e0))
 
 and mona_of_exp_secondorder e0 f =
-   Gen.Debug.no_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
+   Gen.Debug.ho_1 "mona_of_exp_secondorder" Cprinter.string_of_formula_exp (fun (x_str_lst, y_str, z_str) -> y_str) 
       (fun e0 -> mona_of_exp_secondorder_x e0 f) e0
 
 (* pretty printing for a list of expressions *)
@@ -873,7 +873,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter") then begin
+  if(check_prover_existence "mona_inter0")then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end

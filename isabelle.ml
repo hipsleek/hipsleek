@@ -29,7 +29,7 @@ let isabelle_of_prim_type = function
   | Float         -> "int"	(* Can I really receive float? What do I do then? I don't have float in Isabelle.*)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		  ->
+  | BagT	_	  ->
       if !bag_flag then "int multiset"
       else "int set"
   | List           -> "list"	(* lists are not supported *)

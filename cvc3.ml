@@ -118,7 +118,7 @@ and cvc3_of_b_formula b = match b with
 	| CP.RelForm _ -> failwith ("Relations are not supported in cvc3") (* An Hoa *)
 	    
 and cvc3_of_sv_type sv = match sv with
-  | CP.SpecVar (CP.Prim Bag, _, _) -> "SET"
+  | CP.SpecVar (CP.Prim (BagT _), _, _) -> "SET"
   | CP.SpecVar (CP.Prim Bool, _, _) -> "INT" (* "BOOLEAN" *)
   | _ -> "INT"
 
@@ -204,7 +204,7 @@ and split_vars (vars : CP.spec_var list) =
 	  (*let _ = print_string ("!!!!!!! " ^ string_of_int (List.length ints) ^ "   " ^ string_of_int (List.length vars) ^ "\n" ) (*^ (String.concat ", " (List.map cvc3_of_spec_var ints)) ^ "/n" *)in*)
 	  let var = List.hd vars in
 	  match var with
-		| CP.SpecVar (CP.Prim Bag, _, _) -> (ints, bools, var :: bags)
+		| CP.SpecVar (CP.Prim (BagT _), _, _) -> (ints, bools, var :: bags)
 		| CP.SpecVar (CP.Prim Bool, _, _) -> (var :: ints, bools, bags)
 		| _ -> (var :: ints, bools, bags)
 	end

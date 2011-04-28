@@ -2786,7 +2786,7 @@ and default_value (t : CP.typ) pos : C.exp =
     | CP.Prim Void ->
 	      failwith
               "default_value: void in variable declaration should have been rejected by parser"
-    | CP.Prim Bag ->
+    | CP.Prim (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
     | CP.Prim List ->
           failwith "default_value: list can only be used for constraints"

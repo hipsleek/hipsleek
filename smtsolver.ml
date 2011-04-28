@@ -218,7 +218,7 @@ let rec smt_of_typ t =
 			| Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
 		  | Float -> "Real"
 		  | Int -> "Int"
-		  | Void | Bag | List -> "" (* Fail! *)
+		  | Void | (BagT _) | List -> "" (* Fail! *)
 		end
 		| CP.OType _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ CP.name_of_type t) *)
 		| CP.Array et -> "(Array Int " ^ smt_of_typ et ^ ")"

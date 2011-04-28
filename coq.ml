@@ -22,7 +22,7 @@ let coq_of_prim_type = function
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
-  | Bag		      -> "int set"
+  | BagT _		      -> "int set"
   | List		  -> "list"
 ;;
 

@@ -25,7 +25,7 @@ let string_of_prim_type = function
   | Float         -> "float "
   | Int           -> "int "
   | Void          -> "void "
-  | Bag           -> "bag "
+  | BagT _           -> "bag "
   | List          -> "list "
 ;;
 

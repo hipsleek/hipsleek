@@ -29,7 +29,7 @@ and prim_type =
   | Float
   | Int
   | Void
-  | Bag
+  | BagT of prim_type
   | List
 
 (*
@@ -40,12 +40,12 @@ type mode =
   | ModeIn
   | ModeOut
 
-let string_of_prim_type = function 
+let rec string_of_prim_type = function 
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | Bag           -> "multiset"
+  | BagT t        -> "bag("^(string_of_prim_type t)^")"
   | List          -> "list"
 
 let idf (x:'a) : 'a = x

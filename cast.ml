@@ -474,7 +474,7 @@ let float_type = P.Prim Float
 
 let bool_type = P.Prim Bool
 
-let bag_type = P.Prim Bag
+let bag_type = P.Prim (BagT Int)
 
 let list_type = P.Prim List
 
@@ -582,7 +582,7 @@ let rec name_of_type (t : P.typ) = match t with
   | P.Prim Bool -> "bool"
   | P.Prim Void -> "void"
   | P.Prim Float -> "float"
-  | P.Prim Bag -> "bag"
+  | P.Prim (BagT _) -> "bag"
   | P.Prim List -> "list"
   | P.OType c -> c
 	| P.Array et -> (name_of_type et) ^ "[]" (* An hoa *) 

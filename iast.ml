@@ -427,7 +427,7 @@ let name_of_type (t : typ) = match t with
   | Prim Bool -> "bool"
   | Prim Void -> "void"
   | Prim Float -> "float"
-  | Prim Bag -> "bag"
+  | Prim (BagT _) -> "bag"
   | Prim List -> "list"
   | Named c -> c
   | Array _ -> "Array"
