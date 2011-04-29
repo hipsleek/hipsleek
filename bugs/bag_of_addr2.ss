@@ -19,6 +19,6 @@ global node q1s, q1t, q2;
 // type error : could not infer for c.
 
 void treeRemove() 
-  requires q1t::treep<null, B> 
+  requires q1t::treep<null, B>  
   ensures q1t'::treep<null, B1> & B = union(B1, {c}) 
   or q1t'::treep<null, B>;

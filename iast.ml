@@ -15,7 +15,8 @@ type typ =
   | Prim of prim_type
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int option) (* base type and optional dimension *)
-	  
+  | BagT of typ
+
 and typed_ident = (typ * ident)
 
 
@@ -432,6 +433,7 @@ let rec name_of_type (t : typ) = match t with
   | Prim List -> "list"
   | Named c -> c
   | Array _ -> "Array"
+  | BagT _ -> "BagT"
 
 let are_same_type (t1 : typ) (t2 : typ) = t1 = t2 (*TODO: this function should be removed, use the one in Cast instead *)
 
