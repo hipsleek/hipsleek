@@ -20,9 +20,7 @@ pred ll_k<tx, n> == self::node<_, tx> * tx::node<_,null> & n=0.
 
 //lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
-//checkentail x::ll_tail<tx,n> |- x::node<v,q>.
-
-checkentail x::ll_tail<tx,n> |- tx::node<v,q>.
+checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
 
 //checkentail x::ll_tail<tx,n> |- tx::node<v,q>.
 
