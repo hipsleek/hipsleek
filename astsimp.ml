@@ -3906,7 +3906,7 @@ and collect_type_info_bag_content a0 stab =
                   Err.error_loc = pos;
                   Err.error_text = "null is not allowed in arithmetic term";
               }
-    | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab (Known C.int_type) pos
+    | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab Unknown pos
     | IP.IConst _ -> ()
     | IP.FConst _ -> ()
     | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
