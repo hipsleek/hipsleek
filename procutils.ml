@@ -74,12 +74,16 @@ struct
 
   (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =
-    try
-        Unix.close (Unix.descr_of_out_channel process.outchannel);
-        Unix.close (Unix.descr_of_in_channel process.inchannel);
-        Unix.close (Unix.descr_of_in_channel process.errchannel);
-    with
-      | _ -> ()
+    (try
+         flush process.outchannel;
+         Unix.close (Unix.descr_of_out_channel process.outchannel);
+         Unix.close (Unix.descr_of_in_channel process.errchannel)
+     with
+       | e -> () );
+    (try
+         Unix.close (Unix.descr_of_in_channel process.inchannel)
+     with
+       | e -> () )
 
   let log_to_file flag file_descr str =
     if flag then
