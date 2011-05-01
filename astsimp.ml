@@ -1356,7 +1356,7 @@ and compute_base_case prog cf vars = (*flatten_base_case cf s self_c_var *)
       List.for_all (fun d-> not (TP.is_sat_sub_no (CP.mkAnd c d no_pos) sat_subno)) co ) bcg in
     match bcg with
       | []-> None
-      | _ -> Some (CP.join_conjunctions bcg,cases)
+      | _ -> Some (CP.disj_of_list bcg no_pos,cases)
      
 
 and set_materialized_vars prog cdef =

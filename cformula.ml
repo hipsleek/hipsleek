@@ -854,7 +854,7 @@ and get_view_modes_x (h : h_formula) = match h with
 
 and get_view_modes (h : h_formula) =
   let pr l = string_of_int (List.length l) in 
-  Gen.Debug.ho_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
+  Gen.Debug.no_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
   
 and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
@@ -2207,7 +2207,7 @@ and fold_context_left_x c_l = union_context_left c_l
 and fold_context_left c_l = 
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
-  Gen.Debug.ho_1 "fold_context_left" pr1 pr fold_context_left_x c_l
+  Gen.Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
   
   (*list_context or*)
 and or_list_context_x c1 c2 = match c1,c2 with
@@ -2218,7 +2218,7 @@ and or_list_context_x c1 c2 = match c1,c2 with
      
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
-  Gen.Debug.ho_2 "or_list_context" pr pr pr or_list_context_x c1 c2
+  Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
 
 (* can remove redundancy here? *)
 

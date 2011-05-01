@@ -1839,7 +1839,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
 and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pr1 = Cprinter.string_of_list_context_short in
   let pr2 x = pr1 (fst x) in
-  Gen.Debug.ho_1 "process_fold_result" pr1 pr2 (fun _ -> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  fold_rs0
+  Gen.Debug.no_1 "process_fold_result" pr1 pr2 (fun _ -> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  fold_rs0
       
 and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
@@ -4445,7 +4445,7 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
       list_context *proof =
   let pr (e,_) = Cprinter.string_of_list_context e in
   let pr_h = Cprinter.string_of_h_formula in 
-  Gen.Debug.ho_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
+  Gen.Debug.no_4 "do_match" pr_h pr_h Cprinter.string_of_estate Cprinter.string_of_formula pr 
       (fun _ _ _ _ -> do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding  r_var pos)
       l_node r_node estate rhs
 
@@ -4566,7 +4566,7 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rh
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
   let pr (x,_) = Cprinter.string_of_list_context x in
-  Gen.Debug.ho_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr2 (* Cprinter.string_of_h_formula  *)pr
+  Gen.Debug.no_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr2 (* Cprinter.string_of_h_formula  *)pr
       (fun _ _ _ -> do_fold_w_ctx_x fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 rhs_b is_folding pos) 
       fold_ctx var_to_fold vd
       (*
@@ -4721,7 +4721,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 	    let do_full_fold (var_to_fold : CP.spec_var) =
           let pr1 = Cprinter.string_of_spec_var in
           let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-          Gen.Debug.ho_1 "do_full_fold" pr1 pr2 do_full_fold var_to_fold in
+          Gen.Debug.no_1 "do_full_fold" pr1 pr2 do_full_fold var_to_fold in
 	    (****************************************************************************************************************************************)
 	    (* end do_fold *)
 	    (****************************************************************************************************************************************)
