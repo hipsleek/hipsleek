@@ -537,18 +537,6 @@ and xpure_symbolic (prog : prog_decl) (f0 : formula) :
           let ipf1, pf1b, avars1 = xpure_symbolic_helper prog f1 in
           let ipf2, pf2b, avars2 = xpure_symbolic_helper prog f2 in
           let br = CP.or_branches pf1b pf2b in
-          (* let branches = Gen.BList.remove_dups_eq (=) (fst (List.split pf1b) @ (fst (List.split pf2b))) in *)
-          (* let map_fun branch = *)
-          (*   try  *)
-          (*     let l1 = List.assoc branch pf1b in *)
-          (*       try *)
-          (*         let l2 = List.assoc branch pf2b in *)
-	      (*   CP.mkOr l1 l2 None pos *)
-          (*       with Not_found -> CP.mkTrue pos *)
-          (*   with Not_found -> CP.mkTrue pos *)
-          (* in *)
-          (* let map_fun b = (b, map_fun b) in *)
-          (* let br = (List.map map_fun branches) in *)
           let res_form = MCP.mkOr_mems ipf1 ipf2  in
           (res_form, br, (avars1 @ avars2))
     | Base ({ formula_base_heap = h;
