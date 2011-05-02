@@ -1249,6 +1249,10 @@ and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_fo
   let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
   TP.incr_sat_no () ; r
 
+and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
+  let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) ctx in
+  TP.incr_sat_no () ; r
+
 (*
   and combine_list_partial_context_and_unsat_now prog (ctx : list_partial_context) (f : MCP.mix_formula) : list_partial_context = 
   let r = transform_list_partial_context ((combine_es_and prog f true),(fun c->c)) ctx in
@@ -1269,6 +1273,11 @@ and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : c
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
 
+and context_and_unsat_now prog (ctx : context)  : context = 
+  let r = transform_context (elim_unsat_es prog (ref 1)) ctx in
+  TP.incr_sat_no () ; r
+      (* expand all predicates in a definition *)
+
 and expand_all_preds prog f0 do_unsat: formula = 
   match f0 with
     | Or (({formula_or_f1 = f1;
@@ -1281,7 +1290,7 @@ and expand_all_preds prog f0 do_unsat: formula =
 	  formula_base_pure = p;
 	  formula_base_pos =pos}) -> begin
         let proots = find_pred_roots_heap h in 
-        let ef0 = List.fold_left (fun f -> fun v -> unfold_nth "3" (prog,None) f v do_unsat pos ) f0 proots in
+        let ef0 = List.fold_left (fun f -> fun v -> unfold_nth 3 (prog,None) f v do_unsat pos ) f0 proots in
         ef0
       end
     | Exists ({ formula_exists_qvars = qvars;
@@ -1300,7 +1309,7 @@ and expand_all_preds prog f0 do_unsat: formula =
 		formula_base_branches = [];
 		formula_base_label = lbl;
 		formula_base_pos = pos}) in
-        let ef = List.fold_left (fun f -> fun v -> unfold_nth "4" (prog,None) f v do_unsat pos  ) f proots in
+        let ef = List.fold_left (fun f -> fun v -> unfold_nth 4 (prog,None) f v do_unsat pos  ) f proots in
         let ef0 = push_exists qvars ef in
         ef0
       end
@@ -1344,10 +1353,15 @@ and find_pred_roots_heap h0 =
     | ViewNode ({h_formula_view_node = p}) -> [p]
     | DataNode _ | HTrue | HFalse | Hole _ -> []
 
+(* unfold then unsat *)
+and unfold_context_unsat_now prog0 (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (pos : loc) : list_context =
+		        let ctx = unfold_context prog ctx v false pos in
+		        list_context_and_unsat_now prog0 ctx
+
 (* unfolding *)
 and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_context =
   let fct es = 
-    let unfolded_f = unfold_nth "5" prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth 5 prog es.es_formula v do_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if do_unsat then set_unsat_flag res true
     else res in 
@@ -1355,7 +1369,7 @@ and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var
 
 and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_partial_context =
   let fct es = 
-    let unfolded_f = unfold_nth "6" prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth 6 prog es.es_formula v do_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if do_unsat then set_unsat_flag res true
     else res in 
@@ -1364,16 +1378,16 @@ and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) 
 and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_failesc_context =
   let fct es = 
     (* this came from unfolding for bind mostly *)
-    let unfolded_f = unfold_nth "7" prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth 7 prog es.es_formula v do_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
     if do_unsat then set_unsat_flag res true
     else res in 
   transform_list_failesc_context (idf,idf,fct) ctx
 
-and unfold_nth(*_debug*) n (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula =
-  unfold_x prog f v do_unsat pos
-      (* Gen.Debug.ho_1_nth n "unfold" string_of_bool (fun _ -> "?") (fun d -> unfold_x prog f v d pos) do_unsat
-      *)
+and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula =
+  (* unfold_x prog f v do_unsat pos *)
+  let pr = Cprinter.string_of_formula in
+      Gen.Debug.ho_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v do_unsat pos) do_unsat f
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = match f with
   | Base ({ formula_base_heap = h;
@@ -1757,12 +1771,14 @@ and fold_op p c vd v u loc =
 (* fold some constraints in ctx to view  *)
 and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) =
   let pr x = "?" in
+  let id x = x in
+  let ans = ("use-case : "^string_of_bool use_case)^"\n context:"^(Cprinter.string_of_context ctx)^"\n rhs:"^(Cprinter.string_of_h_formula view) in
   let pr2 x = match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
-  Gen.Debug.no_1 "fold_op_x" 
-      pr2 pr
-      (fun _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc)) vd
+  Gen.Debug.ho_2 "fold_op" 
+      pr2 id pr
+      (fun _ _ -> fold_op_x1  prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc)) vd ans
 
 
 and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) = match view with
@@ -1776,8 +1792,10 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
         let vdef = match vd with 
           | None -> look_up_view_def_raw prog.Cast.prog_view_decls c 
           | Some vd -> vd in
+        (* is there a benefit for using case-construct during folding? *)
         let brs = filter_branches r_brs vdef.Cast.view_formula in
         let form = if use_case then brs else Cformula.case_to_disjunct brs in
+        let form = Cformula.case_to_disjunct brs in
         let renamed_view_formula = rename_struc_bound_vars form in
 	    (****)  
         let renamed_view_formula = 
@@ -2070,12 +2088,17 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Gen.Debug.no_3 "unsat_base" (fun _ -> "?") (fun x-> (string_of_int !x)) 
+  Gen.Debug.ho_1 "unsat_base" 
       Cprinter.string_of_formula string_of_bool
-      unsat_base_x prog sat_subno f
+      (fun _ -> unsat_base_x prog sat_subno f) f
       
 
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
+  let pr1 = Cprinter.string_of_entail_state in
+  let pr2 = Cprinter.string_of_context in
+  Gen.Debug.ho_1 "elim_unsat_es_x" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
+ 
+and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
   else 
     let f = es.es_formula in
@@ -2581,7 +2604,7 @@ and heap_entail_conjunct_lhs_struc
 		          end
 	            | Some (p,e) -> begin [inner_entailer ctx e]end in
 	          let rez1,rez2 = List.split r in
-              let rez1 = List.fold_left (fun a c-> list_context_union a c) (List.hd rez1) (List.tl rez1) in
+              let rez1 = List.fold_left (fun a c-> or_list_context (*list_context_union*) a c) (List.hd rez1) (List.tl rez1) in
 	          (rez1,(mkCaseStep ctx [f] rez2))
       | EBase ({
 		    formula_ext_explicit_inst =expl_inst;
@@ -4419,7 +4442,9 @@ and do_base_case_unfold_only_x prog ante conseq estate c1 v1 p1 anode ln2 is_fol
               let (nctx,b) = sem_imply_add prog is_folding  fold_ctx bc1 !Globals.enable_syn_base_case in
               if b then 
 		        (*let _ = print_string ("successful base case guard proof \n ") in*)
-		        let ctx = unfold_context (prog, Some (base,branches, v1)) (SuccCtx[nctx]) p1 true pos in
+                (* TODO : need to trigger UNSAT checking here *)
+		        let ctx = unfold_context_unsat_now prog (prog, Some (base,branches, v1)) (SuccCtx[nctx]) p1 pos in
+
 		        Debug.devel_pprint ("do_base_case_unfold : successful : " ^
                     "\n Start Ante :"^(Cprinter.string_of_formula ante)^
 	                "\n New Ante :"^(Cprinter.string_of_list_context_short ctx)) pos; 
@@ -4548,7 +4573,7 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr p = pr_pair pr_svl string_of_bool p in
   let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in
-  Gen.Debug.no_3_opt t "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
+  Gen.Debug.ho_3(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
       (fun _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2
 
 (* this helper does not seem to eliminate anything *)
@@ -4625,7 +4650,7 @@ and do_fold_w_ctx_x fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t 
 	  h_formula_view_remaining_branches = r_rem_brs;
 	  h_formula_view_pruning_conditions = r_p_cond;
 	  h_formula_view_pos = pos2}) in
-  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold vd use_case pos in
+  let fold_rs, fold_prf = fold_op prog fold_ctx view_to_fold vd (* false *) use_case pos in
   if not (CF.isFailCtx fold_rs) then
 	let b = { formula_base_heap = resth2;
 	formula_base_pure = rhs_p;
@@ -4909,7 +4934,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 				                end else if is_data ln2 && is_view anode then 
 				                  begin (* unfold *)
 				                    (* TODO : ADD dd debug message for unfolding *)
-					                let delta1 = unfold_nth "1" (prog,None) ante p1 true pos in
+					                let delta1 = unfold_nth 1 (prog,None) ante p1 true pos in
 				                    let ctx1 = build_context ctx0 delta1 pos in
 				                    let ctx1 = set_unsat_flag ctx1 true in
 				                    let res_rs, prf1 = heap_entail_one_context prog is_folding  ctx1 conseq pos in
@@ -5304,7 +5329,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          let f0 = normalize f (formula_of_heap node pos) pos in
 		          let f1 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			      (* unfold the case with the negation of the guard. *)
-		          let f1 = unfold_nth "2" (prog,None) f1 p1 true pos in
+		          let f1 = unfold_nth 2 (prog,None) f1 p1 true pos in
 		          let f2 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			      (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		          let new_f = mkOr f1 f2 pos in

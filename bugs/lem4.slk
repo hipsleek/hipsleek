@@ -49,12 +49,16 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
 //checkentail x::lseg2<n,t> * t::node<_,null> & n=0  |- x::lseg2<m,q>.
 
-//checkentail x::lseg2<n,t> * t::node<_,null> & x=null  |- x::lseg2<m,q>.
-// works!
+//checkentail  t::node<_,null> & x=null & x=t  |- x::lseg2<m,q>.
+// false detected above
+
+checkentail x::lseg2<n,t> * t::node<_,null> & x=null  |- x::lseg2<m,q>.
+// works but false not detected when non-case used?
+// false only detected with case?
 
 //checkentail x::lseg<n,t> * t::node<_,null> & n=0  |- x::lseg<m,q>.
 
-checkentail x::lseg<n,t> * t::node<_,null> & x=null  |- x::lseg<m,q>.
+//checkentail x::lseg<n,t> * t::node<_,null> & x=null  |- x::lseg<m,q>.
 
 
 print residue.

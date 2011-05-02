@@ -639,14 +639,14 @@ let check_coercion (prog : prog_decl) =
     (*let unfold_head_pred hname f0 : int = *)
   let check_left_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
-    let lhs = unfold_nth "c1" (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
-    let rhs = unfold_nth "c2" (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let lhs = unfold_nth 9 (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let rhs = unfold_nth 10 (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
       check_entailment lhs rhs in
     (* check_entailment lhs coer.coercion_body in *)
   let check_right_coercion coer =
     let pos = CF.pos_of_formula coer.coercion_head in
-    let rhs = unfold_nth "c3" (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
-    let lhs = unfold_nth "c4" (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let rhs = unfold_nth 11 (prog,None) coer.coercion_head (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
+    let lhs = unfold_nth 12 (prog,None) coer.coercion_body (CP.SpecVar (CP.OType "", self, Unprimed)) true pos in
       check_entailment lhs rhs
 	(* check_entailment coer.coercion_body rhs *)
   in
