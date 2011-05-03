@@ -1359,60 +1359,60 @@ and unfold_context_unsat_now prog0 (prog:prog_or_branches) (ctx : list_context) 
 		        list_context_and_unsat_now prog0 ctx
 
 (* unfolding *)
-and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_context =
+and unfold_context (prog:prog_or_branches) (ctx : list_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_context =
   let fct es = 
-    let unfolded_f = unfold_nth 5 prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth 5 prog es.es_formula v already_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
-    if do_unsat then set_unsat_flag res true
+    if already_unsat then set_unsat_flag res true
     else res in 
   transform_list_context (fct,(fun c->c)) ctx 
 
-and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_partial_context =
+and unfold_partial_context (prog:prog_or_branches) (ctx : list_partial_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_partial_context =
   let fct es = 
-    let unfolded_f = unfold_nth 6 prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth 6 prog es.es_formula v already_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
-    if do_unsat then set_unsat_flag res true
+    if already_unsat then set_unsat_flag res true
     else res in 
   transform_list_partial_context (fct,(fun c->c)) ctx 
 
-and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (do_unsat:bool)(pos : loc) : list_failesc_context =
+and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) (v : CP.spec_var) (already_unsat:bool)(pos : loc) : list_failesc_context =
   let fct es = 
     (* this came from unfolding for bind mostly *)
-    let unfolded_f = unfold_nth 7 prog es.es_formula v do_unsat pos in
+    let unfolded_f = unfold_nth 7 prog es.es_formula v already_unsat pos in
     let res = build_context (Ctx es) unfolded_f pos in
-    if do_unsat then set_unsat_flag res true
+    if already_unsat then set_unsat_flag res true
     else res in 
   transform_list_failesc_context (idf,idf,fct) ctx
 
-and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula =
-  (* unfold_x prog f v do_unsat pos *)
+and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (pos : loc) : formula =
+  (* unfold_x prog f v already_unsat pos *)
   let pr = Cprinter.string_of_formula in
-      Gen.Debug.ho_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v do_unsat pos) do_unsat f
+      Gen.Debug.ho_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v already_unsat pos) already_unsat f
 
-and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (do_unsat:bool) (pos : loc) : formula = match f with
+and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (pos : loc) : formula = match f with
   | Base ({ formula_base_heap = h;
 	formula_base_pure = p;
 	formula_base_branches = b;
 	formula_base_flow = fl;
 	formula_base_pos = pos}) -> 
         (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-        unfold_baref prog h p fl v pos b [] do_unsat 
+        unfold_baref prog h p fl v pos b [] already_unsat 
   | Exists _ -> (*report_error pos ("malfunction: trying to unfold in an existentially quantified formula!!!")*)
         let rf = rename_bound_vars f in
         let qvars, baref = split_quantifiers rf in
         let h, p, fl, b, t = split_components baref in
         (*let _ = print_string ("\n memo before unfold: "^(Cprinter.string_of_memoised_list mem)^"\n")in*)
-        let uf = unfold_baref prog h p fl v pos b qvars do_unsat in
+        let uf = unfold_baref prog h p fl v pos b qvars already_unsat in
         uf
   | Or ({formula_or_f1 = f1;
 	formula_or_f2 = f2;
 	formula_or_pos = pos}) ->
-        let uf1 = unfold_x prog f1 v do_unsat pos in
-        let uf2 = unfold_x prog f2 v do_unsat pos in
+        let uf1 = unfold_x prog f1 v already_unsat pos in
+        let uf2 = unfold_x prog f2 v already_unsat pos in
         let resform = mkOr uf1 uf2 pos in
         resform
 
-and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v : CP.spec_var) pos b qvars do_unsat : formula =
+and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v : CP.spec_var) pos b qvars already_unsat : formula =
   let asets = Context.alias (MCP.ptr_equations_with_null p) in
   let aset' = Context.get_aset asets v in
   let aset = if CP.mem v aset' then aset' else v :: aset' in
@@ -1422,7 +1422,7 @@ and unfold_baref prog (h : h_formula) (p : MCP.mix_formula) (fl:flow_formula) (v
   let tmp_form = Cformula.set_flow_in_formula_override fl tmp_form_norm in
   let resform = if (List.length qvars) >0 then push_exists qvars tmp_form else tmp_form in
   (*let res_form = elim_unsat prog resform in*)
-  if do_unsat then match (snd prog) with 
+  if already_unsat then match (snd prog) with 
     | None -> 
           (Gen.Profiling.push_time "unfold_unsat";
           let r = elim_unsat_for_unfold (fst prog) resform in

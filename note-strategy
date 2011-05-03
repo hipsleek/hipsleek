@@ -1,5 +1,4 @@
 
-
   x::node<..> * R  |- x::node<..> * Q
     ===> mandatory match
 
@@ -43,4 +42,7 @@
    // or left-lemma(s) with pred2 target
    // or right-lemma(s) with pred1 target
 
+  y::ll_tail<.,x> * R  |- x::node<..> * Q
+    ===>  x may materialised as a node,
+    // unfold search
 
