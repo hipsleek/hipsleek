@@ -9,7 +9,6 @@ module MCP = Mcpure
 
 type tp_type =
   | OmegaCalc
-  | CvcLite
   | Cvc3
   | CO (* CVC3 then Omega combination *)
   | Isabelle
@@ -312,8 +311,6 @@ let set_tp tp_str =
   let prover_str = ref [] in
   if tp_str = "omega" then
 	(tp := OmegaCalc; prover_str := "oc"::!prover_str;)
-  else if tp_str = "cvcl" then 
-	(tp := CvcLite; prover_str := "cvcl"::!prover_str;)
   else if tp_str = "cvc3" then 
 	(tp := Cvc3; prover_str := "cvc3"::!prover_str;)
   else if tp_str = "co" then
@@ -352,7 +349,6 @@ let set_tp tp_str =
 
 let string_of_tp tp = match tp with
   | OmegaCalc -> "omega"
-  | CvcLite -> "cvcl"
   | Cvc3 -> "cvc3"
   | CO -> "co"
   | Isabelle -> "isabelle"
@@ -369,16 +365,15 @@ let string_of_tp tp = match tp with
 
 let name_of_tp tp = match tp with
   | OmegaCalc -> "Omega Calculator"
-  | CvcLite -> "CVC Lite"
   | Cvc3 -> "CVC3"
-  | CO -> "CVC Lite and Omega"
+  | CO -> "CVC3 and Omega"
   | Isabelle -> "Isabelle"
   | Mona -> "Mona"
   | MonaH -> "MonaH"
   | OM -> "Omega and Mona"
   | OI -> "Omega and Isabelle"
   | SetMONA -> "Set Mona"
-  | CM -> "CVC Lite and Mona"
+  | CM -> "CVC3 and Mona"
   | Coq -> "Coq"
   | Z3 -> "Z3"
   | Redlog -> "Redlog"
@@ -597,8 +592,7 @@ let tp_is_sat_no_cache (f : CP.formula) (sat_no : string) =
       begin
         (Omega.is_sat f sat_no);
       end
-  | CvcLite -> Cvclite.is_sat f sat_no
-    | Cvc3 -> 
+  | Cvc3 -> 
           begin
             match !provers_process with
               |Some proc -> Cvc3.is_sat_increm !provers_process f sat_no
@@ -890,7 +884,6 @@ let tp_imply_no_cache ante conseq imp_no timeout process =
   let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (Cprinter.string_of_pure_formula ante) ^ " |- " ^ (Cprinter.string_of_pure_formula conseq) ^ "\n") in
   match !tp with
   | OmegaCalc -> (Omega.imply ante conseq (imp_no^"XX") timeout)
-  | CvcLite -> Cvclite.imply ante conseq
     | Cvc3 -> begin
           match process with
             | Some (Some proc, _) -> Cvc3.imply_increm process ante conseq imp_no

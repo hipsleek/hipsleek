@@ -77,7 +77,7 @@ MAIN_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo 
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo\
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
@@ -112,7 +112,7 @@ GUI_FILES=typeclass.cmo monads.cmo monadicinterp.cmo globals.cmo error.cmo procu
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
   rlparser.cmo rllexer.cmo \
   net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo\
 	prooftracer.cmo context.cmo solver.cmo \
@@ -135,7 +135,7 @@ SLEEK_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvc3.cmo smtsolver.cmo \
 	cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   sleekcommons.cmo \
 	sparser.cmo slexer.cmo iparser.cmo ilexer.cmo \
@@ -172,7 +172,7 @@ PROVE_FILES=typeclass.cmo monads.cmo globals.cmo error.cmo procutils.cmo gen.cmo
 	rlparser.cmo rllexer.cmo \
   ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo redlog.cmo \
     net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo\
+	cvc3.cmo smtsolver.cmo\
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
@@ -195,7 +195,7 @@ WEB_FILES=globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo setmona.cmo \
   net.cmo \
-	cvclite.cmo cvc3.cmo smtsolver.cmo \
+	cvc3.cmo smtsolver.cmo \
   cformula.cmo cast.cmo cprinter.cmo mona.cmo \
   tpdispatcher.cmo paralib1.cmo paralib1v2.cmo \
 	prooftracer.cmo context.cmo solver.cmo \
@@ -304,7 +304,7 @@ TEST_OO_FILES= procutils.cmo gen.cmo debug.cmo globals.cmo error.cmo \
 	cformula.cmo cast.cmo cprinter.cmo \
 	rlparser.cmo rllexer.cmo \
 	ocparser.cmo oclexer.cmo isabelle.cmo coq.cmo omega.cmo mona.cmo\
-	cvclite.cmo cvc3.cmo smtsolver.cmo tpdispatcher.cmo \
+	cvc3.cmo smtsolver.cmo tpdispatcher.cmo \
 	context.cmo \
 	solver.cmo \
 	env.cmo astsimp.cmo \
