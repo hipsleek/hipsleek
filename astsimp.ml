@@ -1140,8 +1140,14 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
        | CF.Base b -> mf f b.CF.formula_base_heap b.CF.formula_base_flow b.CF.formula_base_pos
        | CF.Exists b -> mf f b.CF.formula_exists_heap b.CF.formula_exists_flow b.CF.formula_exists_pos
        | CF.Or b -> CF.mkOr (f_tr_base b.CF.formula_or_f1) (f_tr_base b.CF.formula_or_f2) no_pos in
-     let rbc = CF.join_conjunct_opt (List.map (fun (c,_) -> f_tr_base c) n_un_str) in
-     let cvdef ={
+     (*let rbc = CF.join_conjunct_opt (List.map (fun (c,_) -> f_tr_base c) n_un_str) in*)
+      let rbc = List.fold_left (fun a (c,l)-> 
+        let fc = f_tr_base c in
+        if (CF.isAnyConstFalse fc) then a 
+        else match a with 
+          | Some f1  -> Some (CF.mkOr f1 fc no_pos)
+          | None -> Some fc) None n_un_str in
+      let cvdef ={
                C.view_name = vdef.I.view_name;
                C.view_vars = view_sv_vars;
                C.view_labels = vdef.I.view_labels;
