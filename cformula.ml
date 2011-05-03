@@ -1035,24 +1035,33 @@ and fv (f : formula) : CP.spec_var list = match f with
 		res
 		    
 and h_fv (h : h_formula) : CP.spec_var list = match h with
-  | Star ({h_formula_star_h1 = h1; 
-	h_formula_star_h2 = h2; 
-	h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
-  | Conj ({h_formula_conj_h1 = h1; 
-	h_formula_conj_h2 = h2; 
-	h_formula_conj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
+  | Star ({ h_formula_star_h1 = h1; 
+            h_formula_star_h2 = h2; 
+            h_formula_star_pos = pos}) -> CP.remove_dups_svl (h_fv h1 @ h_fv h2)
+  | Conj ({ h_formula_conj_h1 = h1; 
+            h_formula_conj_h2 = h2; 
+            h_formula_conj_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | Phase ({h_formula_phase_rd = h1; 
-	h_formula_phase_rw = h2; 
-	h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
+            h_formula_phase_rw = h2; 
+            h_formula_phase_pos = pos}) -> Gen.BList.remove_dups_eq (=) (h_fv h1 @ h_fv h2)
   | DataNode ({h_formula_data_node = v; 
-	h_formula_data_arguments = vs0}) ->
-        (*let vs = List.tl (List.tl vs0) in*)
+               h_formula_data_arguments = vs0}) ->
         let vs = vs0 in
 	    if List.mem v vs then vs else v :: vs
-  | ViewNode ({h_formula_view_node = v; 
-	h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
+  | ViewNode ({ h_formula_view_node = v; 
+                h_formula_view_arguments = vs}) -> if List.mem v vs then vs else v :: vs
   | HTrue | HFalse | Hole _ -> []
 
+and hn_fv w_v h =  
+ let rec helper h = match h with
+    | Star h -> Gen.BList.remove_dups_eq (=) (helper h.h_formula_star_h1  @ helper h.h_formula_star_h2)
+    | Conj h -> Gen.BList.remove_dups_eq (=) (helper h.h_formula_conj_h1  @ helper h.h_formula_conj_h2)
+    | Phase h-> Gen.BList.remove_dups_eq (=) (helper h.h_formula_phase_rd @ helper h.h_formula_phase_rw)
+    | DataNode h-> [h.h_formula_data_node]
+    | DataView h -> if w_v then [h.h_formula_view_node] else []
+    | _ -> [] in
+  helper h
+  
 and br_fv br init_l: CP.spec_var list =
   CP.remove_dups_svl (List.fold_left (fun a (c1,c2)-> (CP.fv c2)@a) init_l br)
   

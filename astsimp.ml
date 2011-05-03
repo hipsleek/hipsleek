@@ -1392,7 +1392,7 @@ and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
     | CF.Or { CF.formula_or_f1 = f1; CF.formula_or_f2 = f2 } ->
 	      let mvars1 = find_mvars prog params f1 in
 	      let mvars2 = find_mvars prog params f2 in
-	      let mvars = Gen.BList.remove_dups_eq CP.eq_spec_var (mvars1 @ mvars2) in
+	      let mvars = Gen.BList.remove_dups_eq CP.eq_spec_var (mvars1 @ mvars2) in (*union?*)
 	      let tmp = CP.intersect mvars params in 
 	      tmp
     | CF.Base { CF.formula_base_heap = hf; CF.formula_base_pure = pf } ->
@@ -1414,11 +1414,12 @@ and find_mvars_heap prog params hf pf : CP.spec_var list =
   match hf with
     | CF.HTrue | CF.HFalse -> []
     | _ ->
+        let hv = CF.hn_fv false h in 
 	      let eqns = MCP.ptr_equations_with_null pf in
 	      let asets = Context.alias eqns in
-	      let self_aset =
-            Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))
-	      in self_aset
+	      (*let self_aset = Context.get_aset asets  in*)
+        let a_sets = List.map (Context.get_aset asets) hv in
+        List.concat  a_sets (*self_aset*)
 
 and all_paths_return (e0 : I.exp) : bool =
   match e0 with

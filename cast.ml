@@ -42,7 +42,7 @@ and view_decl = {
     view_labels : branch_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
-    mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
+    mutable view_materialized_vars : P.spec_var list; (* view vars that point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula;
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)

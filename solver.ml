@@ -1069,57 +1069,42 @@ and split_linear_node_guided (vars : CP.spec_var list) (h : h_formula) : (h_form
 (* split h into (h1,h2) with one node from h1 and the rest in h2 *)
 and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_formula * h_formula) = 
   (*  let _ = print_string("in split_linear_node_guided with h = " ^ (Cprinter.string_of_h_formula h) ^ "\n") in*)
-  let rec helper h =
+  let rec splitter h1 h2 constr pos=  match h1 with
+	  | HTrue -> print_string ("\n\n!!!This shouldn't happen!!!\n\n"); helper h2 (* this shouldn't happen anyway *)
+	  | _ ->
+	    let ln1, r1 = helper h1 in
+	    match ln1 with
+	      | HTrue -> 
+          let ln2, r2 = helper h2 in
+			    (ln2, constr h1 r2 pos)
+        | ViewNode _ -> 
+          (
+            let ln2, r2 = helper h2 in
+            match ln2 with
+              | DataNode _ -> (ln2, constr h1 r2 pos)
+              | _ -> (ln1, constr r1 h2 pos)
+          )
+	      | _     ->  (ln1, constr r1 h2 pos)
+        
+  and helper h =
     match h with
       | HTrue -> (HTrue, HTrue)
       | HFalse -> (HFalse, HFalse)
       | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
-      | DataNode {h_formula_data_node = root; h_formula_data_imm = imm} 
+      | DataNode {h_formula_data_node = root; h_formula_data_imm = imm} -> 
       | ViewNode {h_formula_view_node = root; h_formula_view_imm = imm} ->
 	        (* overwrite the default -> should not be needed once all the rules are implementes *)
-
             if (vars==[]) || (List.exists (CP.eq_spec_var root) vars) then (h, HTrue)
             else (HTrue,h)
       | Conj ({h_formula_conj_h1 = h1;
-	    h_formula_conj_h2 = h2;
-	    h_formula_conj_pos = pos}) ->
-            begin
-	          match h1 with
-	            | HTrue -> print_string ("\n\n!!!This shouldn't happen!!!\n\n"); helper h2 (* this shouldn't happen anyway *)
-	            | _ ->
-	                  let ln1, r1 = helper h1 in
-	                  match ln1 with
-	                    | HTrue -> let ln2, r2 = helper h2 in
-			              (ln2, mkConjH h1 r2 pos)
-	                    | _     ->  (ln1, mkConjH r1 h2 pos)
-            end
+               h_formula_conj_h2 = h2;
+               h_formula_conj_pos = pos}) -> splitter h1 h2 mkConjH pos
       | Phase ({h_formula_phase_rd = h1;
-	    h_formula_phase_rw = h2;
-	    h_formula_phase_pos = pos}) ->
-            begin
-	          match h1 with
-	            | HTrue -> print_string ("\n\n!!!This shouldn't happen!!!\n\n"); helper h2 (* this shouldn't happen anyway *)
-	            | _ ->
-	                  let ln1, r1 = helper h1 in
-	                  match ln1 with
-	                    | HTrue -> let ln2, r2 = helper h2 in
-			              (ln2, mkPhaseH h1 r2 pos)
-	                    | _     ->  (ln1, mkPhaseH r1 h2 pos)
-            end
-
+                h_formula_phase_rw = h2;
+                h_formula_phase_pos = pos}) -> splitter h1 h2 mkPhaseH pos
       | Star ({h_formula_star_h1 = h1;
-	    h_formula_star_h2 = h2;
-	    h_formula_star_pos = pos}) -> 
-            begin
-	          match h1 with
-	            | HTrue -> print_string ("\n\n!!!This shouldn't happen!!!\n\n"); helper h2 (* this shouldn't happen anyway *)
-	            | _ ->
-	                  let ln1, r1 = helper h1 in
-	                  match ln1 with
-	                    | HTrue -> let ln2, r2 = helper h2 in
-			              (ln2, mkStarH h1 r2 pos)
-	                    | _     ->  (ln1, mkStarH r1 h2 pos)
-            end in
+               h_formula_star_h2 = h2;
+               h_formula_star_pos = pos}) -> splitter h1 h2 mkStarH pos in
   helper h
 
 (* find a node from the left hand side *)
@@ -1162,7 +1147,7 @@ and find_node_one_x prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info po
   let matches = Context.choose_context prog lhs_h lhs_p p imm rhs_info pos in 
   if Gen.is_empty matches then NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Match (matches)
-
+(*
 and h_mvars prog (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
@@ -1183,7 +1168,7 @@ and h_mvars prog (h : h_formula) : CP.spec_var list = match h with
       mvars
     end
   | HTrue | HFalse | Hole _ -> []
-
+*)
 and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP.b_formula list) = match f with
   | CP.And (f1, f2, pos) -> 
         let l1 = get_equations_sets f1 interest_vars in
@@ -4654,9 +4639,8 @@ and  combine_results ((res_es1,prf1): list_context * Prooftracer.proof)
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
   let (rhs_h,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
-  let ln2, resth2 = split_linear_node_guided ( CP.remove_dups_svl (h_fv lhs_h @ MCP.mfv lhs_p)) rhs_h in
-  let ln2, resth2 = if (Cformula.is_complex_heap ln2) then (ln2, resth2)
-  else split_linear_node rhs_h in
+  let ln2, resth2 = split_linear_node_guided ( CP.remove_dups_svl ((hn_fv true lhs_h) @ MCP.mfv lhs_p)) rhs_h in
+  let ln2, resth2 = if (Cformula.is_complex_heap ln2) then (ln2, resth2) else split_linear_node rhs_h in
 
   match ln2 with
     | DataNode ({ h_formula_data_node = p2;
@@ -4738,7 +4722,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 
 	    let posib_r_alias = (estate.es_evars @ estate.es_gen_impl_vars @ estate.es_gen_expl_vars) in
 	    let fnode_results = find_node_one prog lhs_h lhs_p p2 imm2 (Some (rhs_p,posib_r_alias)) pos in
-
+      let _ = print_string "gug\n" in
 	    (************************* match_all_nodes ******************)
 	    match fnode_results with 
 	      | Failed -> 
@@ -4809,13 +4793,13 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 		      let rec check_aliased_node (anode, r_flag) resth1 : (list_context * proof) =
 		        match anode with 
 		          | ViewNode ({ h_formula_view_node = p1;
-				    h_formula_view_name = c1;
-				    h_formula_view_arguments = v1;
-				    h_formula_view_pos = pos1})
+                            h_formula_view_name = c1;
+                            h_formula_view_arguments = v1;
+                            h_formula_view_pos = pos1})
 		          | DataNode ({ h_formula_data_node = p1;
-				    h_formula_data_name = c1;
-				    h_formula_data_arguments = v1;
-				    h_formula_data_pos = pos1}) ->
+                            h_formula_data_name = c1;
+                            h_formula_data_arguments = v1;
+                            h_formula_data_pos = pos1}) ->
 			            if r_flag = Context.Root then begin (* matching occurs at root *)
 			              if c1 = c2 then 
 
@@ -4823,15 +4807,15 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 				               univ vars can be used to prune the necesary branch then add those conditions to the right
 				               and do the prune*)
 			                let subsumes, (*to_be_proven*)_ = prune_branches_subsume(*_debug*) prog estate.es_ivars anode ln2 in
-				            if not subsumes then 
-				              (CF.mkFailCtx_in (Basic_Reason ({
-                                  fc_message = "there is a mismatch in branches ";
-                                  fc_current_lhs = estate;
-                                  fc_prior_steps = estate.es_prior_steps;
-                                  fc_orig_conseq = estate.es_orig_conseq;
-                                  fc_current_conseq = CF.formula_of_heap HFalse pos;
-                                  fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
-				            else
+                      if not subsumes then 
+                        (CF.mkFailCtx_in (Basic_Reason ({
+                                    fc_message = "there is a mismatch in branches ";
+                                    fc_current_lhs = estate;
+                                    fc_prior_steps = estate.es_prior_steps;
+                                    fc_orig_conseq = estate.es_orig_conseq;
+                                    fc_current_conseq = CF.formula_of_heap HFalse pos;
+                                    fc_failure_pts =match pid with | Some s-> [s] | _ -> [];})), NoAlias)
+                      else
 				              (  
                                   let ans = do_base_case_unfold_only prog ante conseq estate c1 v1 p1 anode ln2 is_folding pid pos rhs_b in
                                   (*should use def version as it is always folding against base case
