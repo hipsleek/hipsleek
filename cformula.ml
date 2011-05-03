@@ -2717,6 +2717,10 @@ let rec split_conjuncts (f:formula):formula list = match f with
   | _ -> [f] 
   
 let list_of_disjuncts f = split_conjuncts f
+
+let join_conjunct_opt l = match l with
+  | [] -> None
+  | h::t -> Some (List.fold_left (fun a c-> mkOr c a no_pos) h t)
   
 let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
   let ifo = (struc_to_formula_gen f0) in

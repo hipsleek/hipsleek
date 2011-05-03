@@ -138,6 +138,7 @@ let process_pred_def pdef =
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
         ignore (AS.set_materialized_prop cpdef);
+	let cpdef = AS.fill_one_base_case cprog cpdef in 
     let cpdef = 
       if !Globals.enable_case_inference then 
         AS.view_case_inference cprog iprog.I.prog_view_decls cpdef else cpdef in
