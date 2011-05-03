@@ -7,14 +7,19 @@ module CP = Cpure
 
 let coq_file_number = ref 0
 let result_file_name = "res"
-let log_all_flag = ref false
-let log_file = open_out "allinput.v"
 let max_flag = ref false
 let choice = ref 1
 let bag_flag = ref false
 let coq_running = ref false
 let coq_channels = ref (stdin, stdout)
 
+let log_fnc = ref (fun str -> ())
+
+let logging str = 
+  LOG "%s" str NAME "CoqL" LEVEL TRACE
+
+let set_log () :  unit=
+  log_fnc := logging
 
 (* pretty printing for primitive types *)
 let coq_of_prim_type = function
@@ -180,13 +185,11 @@ let rec check fd coq_file_name : bool=
     if line = "No subgoals!" then raise Exit else ()
   done; false
   with Exit -> 
-    if !log_all_flag==true then
-      output_string log_file ("[coq.ml]: --> SUCCESS\n");
+     !log_fnc ("[coq.ml]: --> SUCCESS");
     (*ignore (Sys.remove coq_file_name);*)
     true
   | _ ->
-	  if !log_all_flag==true then
-		output_string log_file ("[coq.ml]: --> Error in file " ^ coq_file_name ^ "\n");
+	  !log_fnc ("[coq.ml]: --> Error in file " ^ coq_file_name );
 	  (*ignore (Sys.remove coq_file_name);	*)
 	  false
 ;;
@@ -226,17 +229,17 @@ let rec send_formula (f : string) (nr : int) : bool =
 	  let finished = ref false in  
 	  while not !finished do 
         let line = input_line (fst !coq_channels) in
-        if !log_all_flag==true then output_string log_file ("[coq.ml]: >>"^line^"\n");
+        !log_fnc ("[coq.ml]: >>"^line);
         if line = "test" ^ string_of_int !coq_file_number ^ " is defined" then begin
           result := true;
           finished := true;
-          if !log_all_flag==true then output_string log_file ("[coq.ml]: --> SUCCESS\n");
+          !log_fnc ("[coq.ml]: --> SUCCESS");
         end else if String.length line > 5 && String.sub line 0 5 = "Error" then begin
           result := false;
           finished := true;
           output_string (snd !coq_channels) ("Abort.\n");
           flush (snd !coq_channels);
-          if !log_all_flag==true then output_string log_file ("[coq.ml]: --> FAIL\n");
+          !log_fnc ("[coq.ml]: --> FAIL");
         end;
 	  done;
 	  !result
@@ -258,49 +261,40 @@ let write (ante : CP.formula) (conseq : CP.formula) : bool =
   coq_file_number.contents <- !coq_file_number + 1;
   if !coq_running == false then start ();
 
-  (* if log_all_flag is on -> writing the formula in the coq log file  *)
-  if !log_all_flag == true then	begin
-    output_string log_file ("  Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n");
-	flush log_file;
-  end;
+  let _ = !log_fnc ("  Lemma test" ^ (string_of_int !coq_file_number) ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.") in
 
   send_formula ("Lemma test" ^ string_of_int !coq_file_number ^ " : (" ^ vstr ^ astr ^ " -> " ^ cstr ^ ")%Z.\n") 2
   
 let imply (ante : CP.formula) (conseq : CP.formula) : bool =
-  if !log_all_flag == true then
-	output_string log_file "\n[coq.ml]: #imply\n";
+  !log_fnc "[coq.ml]: #imply";
   max_flag := false;
   choice := 1;
     write ante conseq
     (*write (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos)*)
 
 let is_sat (f : CP.formula) (sat_no : string) : bool =
-  if !log_all_flag == true then
-	output_string log_file ("\n[coq.ml]: #is_sat " ^ sat_no ^ "\n");
+  !log_fnc ("[coq.ml]: #is_sat " ^ sat_no);
   let tmp_form = (imply f (CP.BForm(CP.BConst(false, no_pos), None))) in
   match tmp_form with
   | true ->
-	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> false\n";
+	  !log_fnc "[coq.ml]: is_sat --> false\n";
 	  false
   | false ->
-	  if !log_all_flag == true then output_string log_file "[coq.ml]: is_sat --> true\n";
+	  !log_fnc "[coq.ml]: is_sat --> true\n";
 	  true
 
 let building_image _ = ()
 
 (* TODO: implement the following procedures; now they are only dummies *)
 let hull (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n[coq.ml]: #hull\n";
+	!log_fnc "[coq.ml]: #hull";
 	pe
 	end
 let pairwisecheck (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n[coq.ml]: #pairwisecheck\n";
+    !log_fnc "[coq.ml]: #pairwisecheck";
 	pe
 	end
 let simplify (pe : CP.formula) : CP.formula = begin
-	if !log_all_flag == true then
-	  output_string log_file "\n[coq.ml]: #simplify\n";
+	!log_fnc "[coq.ml]: #simplify";
 	pe
 	end

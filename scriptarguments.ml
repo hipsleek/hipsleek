@@ -84,7 +84,7 @@ let common_arguments = [
 	"Log all formulae sent to Omega Calculator in file allinput.oc");
 	("--log-isabelle", Arg.Unit Isabelle.set_log,
 	"Log all formulae sent to Isabelle in file allinput.thy");
-	("--log-coq", Arg.Set Coq.log_all_flag,
+	("--log-coq", Arg.Unit Coq.set_log,
 	"Log all formulae sent to Coq in file allinput.v");
 	("--log-mona",  Arg.Unit Mona.set_log,
 	"Log all formulae sent to Mona in file allinput.mona");

@@ -206,6 +206,7 @@ WEB_FILES=globals.cmo error.cmo procutils.cmo gen.cmo debug.cmo \
 	java.cmo cjava.cmo predcomp.cmo rtc.cmo \
 	typechecker.cmo \
 	web.cmo
+
 hip1: $(MAIN_FILES_2) 
 	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES_2)
 
@@ -213,21 +214,29 @@ hipc:
 	make clean; make hip
 
 hip.norm: decidez.vo $(MAIN_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
+	$(OCAMLC) -g -o hiph.norm $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/hiph.norm/' > hip.norm
+	chmod 775 hip.norm
 #[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 hip: $(MAIN_FILES_OPT) decidez.vo
 	$(OCAMLOPT) -o hiph $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(MAIN_FILES_OPT)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/hiph/' > hip
+	chmod 775 hip
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 #hip.bolt: $(MAIN_FILES) decidez.vo
 #	$(OCAMLC) -g -o hipbolt  $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
 
 mytop: $(MAIN_FILES) decidez.vo
-	ocamlmktop -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
+	ocamlmktop -o mytoph $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(MAIN_FILES)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/mytoph/' > mytop
+	chmod 775 mytop
 
 prdebug: $(PP_FILES) 
-	 $(OCAMLC) -a -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(PP_FILES)
+	 $(OCAMLC) -a -o prdebuh $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(PP_FILES)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/prdebugh/' > prdebug
+	chmod 775 prdebug
 #	 [ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 
@@ -240,15 +249,20 @@ prdebug: $(PP_FILES)
 
 
 prover.norm: $(PROVE_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(PROVE_FILES)
+	$(OCAMLC) -g -o proverh.norm $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(PROVE_FILES)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/proverh.norm/' > prover.norm
+	chmod 775 prover.norm
 #	[ -d $(TMP_FILES_PATH) ] && true || mkdir -p $(TMP_FILES_PATH)  
 
 prover: $(PROVE_FILES_OPT)
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(PROVE_FILES_OPT)
-
+	$(OCAMLOPT) -o proverh $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(PROVE_FILES_OPT)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/proverh/' > prover
+	chmod 775 prover
 
 web: $(WEB_FILES)
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(WEB_FILES)
+	$(OCAMLC) -g -o webh $(OCAMLFLAGS) unix.cma str.cma graph.cma dynlink.cma -I +bolt bolt.cma $(WEB_FILES)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/webh/' > web
+	chmod 775 web
 
 #$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma $(PROVE_FILES)
 
@@ -262,11 +276,15 @@ xml/xml-light.cmxa:
 	make -C xml xml-light.cmxa
 
 sleek.norm: xml/xml-light.cma decidez.vo $(SLEEK_FILES) 
-	$(OCAMLC) -g -o $@ $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma dynlink.cma -I +bolt bolt.cma $(SLEEK_FILES)
+	$(OCAMLC) -g -o sleekh.norm $(OCAMLFLAGS) unix.cma str.cma graph.cma xml-light.cma dynlink.cma -I +bolt bolt.cma $(SLEEK_FILES)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/sleekh.norm/' > sleek.norm
+	chmod 775 sleek.norm
 #	[ ! -d $(TMP_FILES_PATH) ] && mkdir -p $(TMP_FILES_PATH) 
 
 sleek: xml/xml-light.cmxa decidez.vo $(SLEEK_FILES_OPT) 
-	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(SLEEK_FILES_OPT)
+	$(OCAMLOPT) -o sleekh $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa xml-light.cmxa dynlink.cmxa -I +bolt bolt.cmxa $(SLEEK_FILES_OPT)
+	cat script_pattern.sh | sed -e 's/EXECUTABLE_NAME/sleekh/' > sleek
+	chmod 775 sleek
 
 #sleek.opt: xml/xml-light.cmxa $(SLEEK_FILES:*.cmo=*.cmx) 
 #	$(OCAMLOPT) -o $@ $(OCAMLOPTFLAGS) unix.cmxa str.cmxa graph.cmxa $(SLEEK_FILES:*.cmo=*.cmx)
@@ -337,7 +355,7 @@ install:
 
 # Clean up
 clean: 
-	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hiph hip.norm sleek.norm sleek sleek.exe prover prover.norm web *~ oo oo.exe prdebug ss ss.exe ss.norm #hipgui
+	rm -f decidez.glob decidez.vo slexer.ml sparser.ml ilexer.ml iparser.ml oclexer.ml ocparser.ml rlparser.ml rllexer.ml *.cmo *.cmi *.cmx *.o *.mli *.output *.annot hip.exe hiph hip hiph.norm hip.norm sleekh.norm sleek.norm sleekh sleek sleek.exe proverh prover proverh.norm prover.norm web *~ oo oo.exe prdebugh prdebug ss ss.exe ss.norm #hipgui
 
 # Dependencies
 beforedepend: iparser.ml ocparser.ml

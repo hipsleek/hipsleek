@@ -806,7 +806,7 @@ let rec get_answer chn : string =
 let send_cmd_with_answer str =
   let _ = !log_fnc str in
   let fnc () = 
-    let _ = (output_string !process.outchannel str;
+    let _ = (output_string !process.outchannel (str ^ Gen.new_line_str);
              flush !process.outchannel) in
     let str = get_answer !process.inchannel in
     str 
@@ -853,7 +853,7 @@ let get_mona_predicates_file () : string =
 
 let prelude () =
    let mona_pred_file_x = get_mona_predicates_file () in
-   send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";\n")
+   send_cmd_no_answer ("include \"" ^ mona_pred_file_x ^ "\";")
 
 let set_process (proc: Globals.prover_process_t) = 
   process := proc
@@ -901,7 +901,7 @@ let check_answer (answ: string) (is_sat_b: bool)=
   let answer =
     match answ with
       | "Formula is valid" ->
-          let _ = !log_fnc "[mona.ml]: --> SUCCESS\n" in
+          let _ = !log_fnc "[mona.ml]: --> SUCCESS" in
           let _ = !log_fnc ("[mona.ml]: " ^ imp_sat_str ^ " --> true\n") in
           true
       | "Formula is unsatisfiable" -> 
@@ -989,8 +989,8 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
   flush mona_file;
   close_out mona_file;
-  let _ = !log_fnc (mona_filename ^ Gen.new_line_str) in
-  let _ = !log_fnc (fstr ^ ";\n") in 
+  let _ = !log_fnc (mona_filename ) in
+  let _ = !log_fnc (fstr) in 
   let _ = Procutils.PrvComms.start ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) !log_fnc in
   let fnc () =
     let mona_answ = read_from_file !process.inchannel in
@@ -1020,7 +1020,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
             cmd_to_send := second_order_var_decls ^ (!cmd_to_send) ;
           if not (Gen.is_empty part1) then
             cmd_to_send := first_order_var_decls  ^ (!cmd_to_send) ;
-          cmd_to_send := !cmd_to_send ^ ";\n";
+          cmd_to_send := !cmd_to_send ^ ";";
           let _ = maybe_restart_mona () in
           let answer = send_cmd_with_answer !cmd_to_send in
           check_answer answer is_sat_b
@@ -1028,7 +1028,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
   with
     |Procutils.PrvComms.Timeout ->
 	    begin
-            print_string ("\n[mona.ml]:Timeout exception\n"); flush stdout;
+            print_string ("[mona.ml]:Timeout exception"); flush stdout;
             restart ("Timeout when checking #" ^ imp_no ^ "!");
             is_sat_b
 		end
@@ -1037,7 +1037,7 @@ let imply_sat_helper (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (im
         stop(); raise exc
 
 let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
-  !log_fnc ("\n\n[mona.ml]: imply # " ^ imp_no ^ "\n");
+  !log_fnc ("[mona.ml]: imply # " ^ imp_no);
   first_order_vars := [];
   second_order_vars := [];
   incr test_number;
@@ -1050,7 +1050,7 @@ let imply (ante : CP.formula) (conseq : CP.formula) (imp_no : string) : bool =
     imply_sat_helper false (ante_fv @ conseq_fv) tmp_form imp_no
 
 let is_sat (f : CP.formula) (sat_no :  string) : bool =
-  !log_fnc ("\n\n[mona.ml]: #is_sat " ^ sat_no ^ "\n");
+  !log_fnc ("[mona.ml]: #is_sat " ^ sat_no );
   sat_optimize := true;
   first_order_vars := [];
   second_order_vars := [];

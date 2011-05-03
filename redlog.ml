@@ -58,7 +58,7 @@ type log_level =
   | DEBUG
 
 let log level msg = 
-  let write_msg () = !log_fnc (msg ^ "\n") in
+  let write_msg () = !log_fnc msg in
   match level with
     | ERROR -> write_msg ()
     | DEBUG -> write_msg ()
@@ -994,7 +994,7 @@ let is_sat_no_cache (f: CP.formula) (sat_no: string) : bool * float =
 let is_sat f sat_no =
   let sf = simplify_var_name (normalize_formula f) in
   let fstring = string_of_formula sf in
-  log DEBUG ("\n#is_sat " ^ sat_no);
+  log DEBUG ("#is_sat " ^ sat_no);
   log DEBUG fstring;
   let res = 
     if !no_cache then
@@ -1011,7 +1011,7 @@ let is_sat f sat_no =
           Hashtbl.add !sat_cache fstring res 
         in res
   in
-  log DEBUG (if res then "SAT" else "UNSAT");
+  log DEBUG (if res then "SAT\n" else "UNSAT\n");
   res
 
 let is_valid f imp_no =
@@ -1053,7 +1053,7 @@ let imply ante conseq imp_no =
   let f = normalize_formula (CP.mkOr (CP.mkNot ante None no_pos) conseq None no_pos) in
   let sf = simplify_var_name f in
   let fstring = string_of_formula sf in
-  log DEBUG ("\n#imply " ^ imp_no);
+  log DEBUG ("#imply " ^ imp_no);
   log DEBUG ("ante: " ^ (string_of_formula ante));
   log DEBUG ("conseq: " ^ (string_of_formula conseq));
   let res = 
@@ -1071,7 +1071,7 @@ let imply ante conseq imp_no =
           Hashtbl.add !impl_cache fstring res
         in res
   in
-  log DEBUG (if res then "VALID" else "INVALID");
+  log DEBUG (if res then "VALID\n" else "INVALID\n");
   res
 
 let simplify (f: CP.formula) : CP.formula =

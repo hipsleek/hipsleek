@@ -143,7 +143,7 @@ let prelude () =
   (* start omega system in a separated process and load redlog package *)
 let start() =
   if not !is_omega_running then begin
-      print_string "Starting Omega... \n"; flush stdout;
+      print_string "Starting Omega... "; flush stdout;
       last_test_number := !test_number;
       let _ = Procutils.PrvComms.start ("omega", omegacalc, [||]) set_process prelude !log_fnc in
       is_omega_running := true;
@@ -178,7 +178,7 @@ let read_from_in_channel chn : string =
       let n = String.length line in
         if n > 0 then begin
 		 (* print_string (line^"\n"); flush stdout;*)
-            let _ = !log_fnc ("[omega.ml]: >> "^line^"\n") in
+            let _ = !log_fnc ("[omega.ml]: >> "^line) in
           if line.[0] != '#' then
 		    begin
               res := !res ^ line;
@@ -202,7 +202,7 @@ let read_last_line_from_in_channel chn : string =
       let n = String.length !line in
       if n > 0 then begin
 		    (* print_string (line^"\n"); flush stdout;*)
-          let _ = !log_fnc ("[omega.ml]: >> "^(!line)^"\n")  in
+          let _ = !log_fnc ("[omega.ml]: >> "^(!line))  in
           if !line.[0] != '#' then
 		    begin
                 if (!line.[n-1] == '}') then
@@ -310,10 +310,10 @@ let is_sat (pe : formula)  (sat_no : string): bool =
     let fstr = omega_of_formula pe in
     let pvars = get_vars_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) pvars) in
-    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
-    let _ = !log_fnc (Gen.new_line_str^"#is_sat " ^ sat_no ^ Gen.new_line_str) in
+    let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" in
+    let _ = !log_fnc ("#is_sat " ^ sat_no ) in
     let _ = !log_fnc (Gen.break_lines fomega) in
-
+    let fomega =  fomega ^ Gen.new_line_str in
 	let sat =
       try
         check_formula fomega !timeout
@@ -338,11 +338,10 @@ let is_valid (pe : formula) timeout: bool =
 	omega_subst_lst := [];
     let fstr = omega_of_formula pe in
     let vstr = omega_of_var_list (Gen.BList.remove_dups_eq (=) (get_vars_formula pe)) in
-    let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";" ^ Gen.new_line_str in
-    (*test*)
-	(*print_endline (Gen.break_lines fomega);*)
-	let _ = !log_fnc (Gen.new_line_str^"#is_valid" ^Gen.new_line_str) in
+    let fomega =  "complement {[" ^ vstr ^ "] : (" ^ fstr ^ ")}" ^ ";"  in
+	let _ = !log_fnc ("#is_valid") in
     let _ = !log_fnc (Gen.break_lines fomega) in
+    let fomega =  fomega ^ Gen.new_line_str in
 	let sat = 
       try
         not (check_formula (fomega ^ "\n") timeout)
@@ -416,8 +415,8 @@ let simplify (pe : formula) : formula =
     let fomega =  "{[" ^ vstr ^ "] : (" ^ fstr ^ ")};" ^ Gen.new_line_str in
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-    let _ = !log_fnc ("#simplify" ^ Gen.new_line_str ^ Gen.new_line_str) in
-    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
+    let _ = !log_fnc ("#simplify" ^ Gen.new_line_str ) in
+    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str) in
     let simp_f = 
 	try
       begin	
@@ -452,8 +451,8 @@ let pairwisecheck (pe : formula) : formula =
 	
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-    let _ = !log_fnc ("#pairwisecheck" ^ Gen.new_line_str ^ Gen.new_line_str) in
-    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
+    let _ = !log_fnc ("#pairwisecheck" ^ Gen.new_line_str) in
+    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str) in
     let rel = send_and_receive fomega 0. in
 	  match_vars (fv pe) rel 
   end
@@ -469,8 +468,8 @@ let hull (pe : formula) : formula =
 	
 	(*test*)
 	(*print_endline (Gen.break_lines fomega);*)
-     let _ = !log_fnc ("#hull" ^ Gen.new_line_str ^ Gen.new_line_str) in
-     let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
+     let _ = !log_fnc ("#hull" ^ Gen.new_line_str) in
+     let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str) in
      let rel = send_and_receive fomega 0. in
 	  match_vars (fv pe) rel
   end
@@ -486,12 +485,12 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
     let vstr = String.concat "," l1  in
     let fomega =  "gist {[" ^ vstr ^ "] : (" ^ fstr1
       ^ ")} given {[" ^ vstr ^ "] : (" ^ fstr2 ^ ")};" ^ Gen.new_line_str in
-    let _ = !log_fnc ("#gist" ^ Gen.new_line_str ^ Gen.new_line_str) in
-    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str) in
+    let _ = !log_fnc ("#gist" ^ Gen.new_line_str) in
+    let _ = !log_fnc ((Gen.break_lines fomega) ^ Gen.new_line_str) in
     let rel = send_and_receive fomega 0. in
 	  match_vars vars_list rel
   end
 
 let log_mark (mark : string) =
-  !log_fnc ("#mark: " ^ mark ^ Gen.new_line_str ^ Gen.new_line_str)
+  !log_fnc ("#mark: " ^ mark ^ Gen.new_line_str)
   
