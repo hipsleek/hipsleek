@@ -1,5 +1,4 @@
 
-
   x::node<..> * R  |- x::node<..> * Q
     ===> mandatory match
 
@@ -10,24 +9,27 @@
   y::ll_tail<.,x> * R  |- x::node<..> * Q
     ===>  x must materialised as a node,
          then mandatory unfold or left-lemma
+     - materialised wrt defn
+     - materialized wrt to a given lemma
 
   x::pred1<..> * R  |- x::pred2<..> * Q
-    ===> mandatory base-case unfold on x
+    ===> mandatory base-case unfold on x, if applicable
 
 
   tx::node<..>  |- x::pred1<..,tx> * Q
-    ===> mandatory right-lemma or fold
+    ===> mandatory right-lemma, if tx materialised wrt to lemma
+         mandatory fold, if tx materialised by defn?
 
   y::pred1<..,tx>  |- x::pred2<..,tx> * Q
-    ===> mandatory unfold of y::pred1
+    ===> mandatory unfold of y::pred1, if tx is materalised by defn
+    ===> mandatory lemma on y::pred1, if tx is materalised by lemma
 
 
 ===========================================
 
   x::node<...>   |-  x::pred<..>
-
-   // base-case fold
-   // or full-fold
+   // full-fold
+   // or right-distr lemma
 
   x::pred<...>   |-  x::pred<..>
    // match 
@@ -37,7 +39,10 @@
 
   x::pred1<...>   |-  x::pred2<..>
    // or base-case fold
-   // or left-lemma(s) with cycle detection
-   // or right-lemma(s)
+   // or left-lemma(s) with pred2 target
+   // or right-lemma(s) with pred1 target
 
+  y::ll_tail<.,x> * R  |- x::node<..> * Q
+    ===>  x may materialised as a node,
+    // unfold search
 

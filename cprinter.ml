@@ -1081,6 +1081,8 @@ let pr_estate (es : entail_state) =
 let string_of_estate (es : entail_state) : string =  poly_string_of_pr  pr_estate es
 let printer_of_estate (fmt: Format.formatter) (es: entail_state) : unit = poly_printer_of_pr fmt pr_estate es
 
+let string_of_entail_state  =  string_of_estate
+
 let pr_fail_estate (es:fail_context) =
   fmt_open_vbox 1; fmt_string "{";
   (* pr_wrap_test_nocut "fc_prior_steps: " Gen.is_empty (fun x -> fmt_string (string_of_prior_steps x)) es.fc_prior_steps; *)
