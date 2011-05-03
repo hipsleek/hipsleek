@@ -93,8 +93,14 @@ let check_data_pred_name name : bool =
 		  	end
 	  end
 
+let check_data_pred_name name :bool = 
+  let pr1 x = x in
+  let pr2 = string_of_bool in 
+  Gen.Debug.loop_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
+    
 let process_data_def ddef =
-  (*print_endline (Iprinter.string_of_data_decl ddef);*)
+  print_endline (Iprinter.string_of_data_decl ddef);
+  flush stdout;
   if check_data_pred_name ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
     try
