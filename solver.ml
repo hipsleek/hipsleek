@@ -1174,7 +1174,7 @@ and find_node_one_x prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info po
   let matches = Context.choose_context prog lhs_h lhs_p p imm rhs_info pos in 
   if Gen.is_empty matches then NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Match (matches)
-
+(*
 and h_mvars prog (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1;
 	h_formula_star_h2 = h2;
@@ -1195,7 +1195,7 @@ and h_mvars prog (h : h_formula) : CP.spec_var list = match h with
       mvars
     end
   | HTrue | HFalse | Hole _ -> []
-
+*)
 and get_equations_sets (f : CP.formula) (interest_vars:Cpure.spec_var list): (CP.b_formula list) = match f with
   | CP.And (f1, f2, pos) -> 
         let l1 = get_equations_sets f1 interest_vars in

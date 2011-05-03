@@ -11,7 +11,11 @@ pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 
 pred ll_k<tx, n> == self::node<_, tx> * tx::node<_,null> & n=0.
 
-//lemma self::lseg<n,p> <-> self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
+pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
+	or self::node<_, r> * r::ll_k2<tx, n-1>
+  inv self!=null.
+
+lemma self::lseg<n,p> <-> self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
 
 lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
@@ -20,7 +24,27 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
 //lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
-checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
+//checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
+
+//checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<tx,n>.
+
+//checkentail x::lseg<_,tx> * tx::node<_,null> |- x::ll_tail<tx,n>.
+
+//checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- [m] x::ll_tail<tx,m>.
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- x::lseg<m,tx>*tx::node<_,null>.
+
+// /checkentail q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- q::lseg<m2,tx>*tx::node<_,null>.
+
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n>  |- [m] x::lseg<m-1,tx>*tx::node<_,null>.
+
+
+//checkentail x::lseg<_,tx> * tx::node<_,null> |- x::ll_tail<tx,n>.
 
 //checkentail x::ll_tail<tx,n> |- tx::node<v,q>.
 

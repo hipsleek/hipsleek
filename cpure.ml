@@ -4425,6 +4425,8 @@ let gen_add_iconst (c:int) : add_term_list =
 (* to be implemented *)
 let eq_exp e1 e2 = false
 
+let spec_var_cmp v1 v2 = String.compare (full_name_of_spec_var v1) (full_name_of_spec_var v2)
+
 let cmp_term x y = match x,y with
     | C _, C _ -> 0
     | C _, _ -> -1

@@ -973,7 +973,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
 				   C.prog_proc_decls = List.map substitute_seq cprog.C.prog_proc_decls;
 				   C.prog_data_decls = List.map (fun c-> {c with C.data_methods = List.map substitute_seq c.C.data_methods;}) cprog.C.prog_data_decls; } in  
       (ignore (List.map (fun vdef -> compute_view_x_formula cprog vdef !Globals.n_xpure) cviews);
-      ignore (List.map (fun vdef -> set_materialized_vars cprog vdef) cviews);
+      ignore (List.map (fun vdef -> set_materialized_prop vdef) cviews);
       ignore (C.build_hierarchy cprog1);
       let cprog2 = sat_warnings cprog1 in        
       let cprog3 = if (!Globals.enable_case_inference or !Globals.allow_pred_spec) then pred_prune_inference cprog2 else cprog2 in
@@ -1416,6 +1416,75 @@ and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_fo
 	    | 1 -> Some l
 	    | _ -> None
 
+and set_materialized_prop cdef =
+  let args = (CP.SpecVar (CP.OType "", self, Unprimed))::cdef.C.view_vars in
+  let mvars =
+    find_materialized_prop args (*cdef.C.view_formula*) (C.formula_of_unstruc_view_f cdef)
+  in
+  (cdef.C.view_materialized_vars <- mvars; cdef)
+      
+and find_m_prop_heap eq_f h = 
+  let pr = Cprinter.string_of_h_formula in
+  let prr x = string_of_int (List.length x) in
+  Gen.Debug.ho_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x eq_f h) h
+      
+and find_m_prop_heap_x eq_f h = match h with
+  | CF.DataNode h ->
+      let l = eq_f h.CF.h_formula_data_node in
+      List.map (fun v -> C.mk_mater_prop v true []) l 
+  | CF.ViewNode h -> 
+      let l = eq_f h.CF.h_formula_view_node in
+      List.map (fun v -> C.mk_mater_prop v true [ h.CF.h_formula_view_name]) l 
+  | CF.Star h -> (find_m_prop_heap_x eq_f h.CF.h_formula_star_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_star_h2)
+  | CF.Conj h -> (find_m_prop_heap_x eq_f h.CF.h_formula_conj_h1)@(find_m_prop_heap_x eq_f h.CF.h_formula_conj_h2)
+  | CF.Phase h -> (find_m_prop_heap_x eq_f h.CF.h_formula_phase_rd)@(find_m_prop_heap_x eq_f h.CF.h_formula_phase_rw)  
+  | CF.Hole _ 
+  | CF.HTrue 
+  | CF.HFalse -> []
+
+and param_alias_sets p params = 
+  let eqns = MCP.ptr_equations_with_null p in
+	let asets = Context.alias eqns in
+  let aset_get x = x:: (Context.get_aset asets x) in
+  List.map (fun c-> ( aset_get c,c)) params
+  
+and find_materialized_prop params (f0 : CF.formula) : C.mater_property list = 
+  let f_l = CF.list_of_disjuncts f0 in
+  let is_member (aset :(CP.spec_var list * CP.spec_var)list) v = 
+      let l = List.filter (fun (l,_) -> List.exists (CP.eq_spec_var v) l) aset in
+      snd (List.split l) in
+  let find_m_one f = match f with
+    | CF.Base b ->    
+        let has = param_alias_sets b.CF.formula_base_pure params in
+        find_m_prop_heap (is_member has) b.CF.formula_base_heap
+    | CF.Exists b->
+        let has = param_alias_sets b.CF.formula_exists_pure params in
+        find_m_prop_heap (is_member has) b.CF.formula_exists_heap      
+    | _ -> Error.report_error 
+        {Error.error_loc = no_pos; Error.error_text = "find_materialized_prop: unexpected disjunction"} in
+  let lm = List.map find_m_one f_l in
+  let rec elim_dups l = match l with
+    | [] -> []
+    | x::[] -> l
+    | x::y::t -> 
+      if (C.mater_prop_cmp x y) ==0 then
+        elim_dups ((C.merge_mater_props x y) ::t)
+       else x:: (elim_dups (y::t)) in
+  let lm = List.map (fun c -> elim_dups (List.sort C.mater_prop_cmp c)) lm in
+  let to_partial l = List.map (fun c-> {c with C.mater_full_flag = false}) l in
+  let rec merge_mater_lists l1 l2 = match l1,l2 with 
+    | [], _ -> to_partial l2
+    | _ , [] -> to_partial l1 
+    | x::t1,y::t2 -> 
+      let r = C.mater_prop_cmp x y in 
+      if r<0 then {x with C.mater_full_flag = false} ::(merge_mater_lists t1 l2)
+      else if r>0 then {y with C.mater_full_flag = false}:: (merge_mater_lists l1 t2)
+      else (C.merge_mater_props x y)::(merge_mater_lists t1 t2) in
+  if  (List.length lm ==0) then []
+  else 
+    List.fold_left (fun a c -> merge_mater_lists a c)(List.hd lm) (List.tl lm)
+    
+      (*
 and set_materialized_vars prog cdef =
   let mvars =
     find_materialized_vars prog cdef.C.view_vars (*cdef.C.view_formula*) (C.formula_of_unstruc_view_f cdef)
@@ -1476,7 +1545,7 @@ and find_mvars_heap prog params hf pf : CP.spec_var list =
 	      let self_aset =
             Context.get_aset asets (CP.SpecVar (CP.OType "", self, Unprimed))
 	      in self_aset
-
+*)
 and all_paths_return (e0 : I.exp) : bool =
   match e0 with
 		| I.ArrayAt _ -> false (* An Hoa *)
@@ -1706,7 +1775,10 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
             Err.error_text = "root pointer of node on LHS must be self";
         }
   else
-    (let c_coer ={ C.coercion_type = coer.I.coercion_type;
+    (  
+    let args = CF.fv_simple_formula c_lhs in 
+    let m_vars = find_materialized_prop args c_rhs in
+    let c_coer ={ C.coercion_type = coer.I.coercion_type;
     C.coercion_name = coer.I.coercion_name;
     C.coercion_head = c_lhs;
     C.coercion_body = c_rhs;
@@ -1714,6 +1786,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     C.coercion_head_exist = c_lhs_exist;
     C.coercion_head_view = lhs_name;
     C.coercion_body_view = rhs_name;
+    C.coercion_mater_vars = m_vars;
     C.coercion_simple_lhs = (CF.is_simple_formula c_lhs) } in
     let change_univ c = match c.C.coercion_univ_vars with
       | [] -> c

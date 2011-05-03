@@ -699,6 +699,14 @@ and is_simple_formula (f:formula) =
     | DataNode _ -> true
     | ViewNode _ -> true
     | _ -> false
+    
+and fv_simple_formula (f:formula) = 
+  let h, _, _, _, _ = split_components f in
+  match h with
+    | HTrue | HFalse -> []
+    | DataNode h ->  h.h_formula_data_node::h.h_formula_data_arguments
+    | ViewNode h ->  h.h_formula_view_node::h.h_formula_view_arguments
+    | _ -> []
 
 and mkStar (f1 : formula) (f2 : formula) flow_tr (pos : loc) =
   let h1, p1, fl1, b1, t1 = split_components f1 in
@@ -2707,6 +2715,8 @@ let struc_to_formula f0 :formula = formula_of_disjuncts (fst (List.split (struc_
 let rec split_conjuncts (f:formula):formula list = match f with 
   | Or b -> (split_conjuncts b.formula_or_f1)@(split_conjuncts b.formula_or_f2)
   | _ -> [f] 
+  
+let list_of_disjuncts f = split_conjuncts f
   
 let rec struc_to_view_un_s (f0:struc_formula):(formula*formula_label) list = 
   let ifo = (struc_to_formula_gen f0) in

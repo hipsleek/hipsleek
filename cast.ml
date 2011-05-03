@@ -35,6 +35,13 @@ and data_decl = {
     
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
     
+and mater_property = {
+  mater_var : P.spec_var;
+  mater_full_flag : bool;
+  mater_target_view : ident list; (*the view to which it materializes*)
+  }
+  
+    
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -42,7 +49,7 @@ and view_decl = {
     view_labels : branch_label list;
     view_modes : mode list;
     mutable view_partially_bound_vars : bool list;
-    mutable view_materialized_vars : P.spec_var list; (* view vars that can point to objects *)
+    mutable view_materialized_vars : mater_property list; (* view vars that can point to objects *)
     view_data_name : ident;
     view_formula : F.struc_formula;
     view_user_inv : (MP.mix_formula * (branch_label * P.formula) list); (* XPURE 0 -> revert to P.formula*)
@@ -106,6 +113,7 @@ and coercion_decl = {
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *) 
+    coercion_mater_vars : mater_property list;
     coercion_simple_lhs :bool;}
 
 and coercion_type = Iast.coercion_type
@@ -347,6 +355,7 @@ let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initia
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:P.spec_var list) -> "cpure printer has not been initialized")
 let print_sv = ref (fun (c:P.spec_var) -> "cpure printer has not been initialized")
+let print_mater_prop = ref (fun (c:mater_property) -> "cast printer has not been initialized")
 
 let is_simple_formula x = true
 (* transform each proc by a map function *)
@@ -356,6 +365,28 @@ let map_proc (prog:prog_decl)
       prog_proc_decls = List.map (f_p) prog.prog_proc_decls;
   }
 
+let mk_mater_prop v ff tv = {mater_var=v; mater_full_flag = ff; mater_target_view = tv}
+let mater_prop_cmp c1 c2 = P.spec_var_cmp c1.mater_var c2.mater_var
+let merge_mater_views v1 v2 = match v1,v2 with
+  | [],[] -> ([],true) 
+  | [],_ -> ([],false)
+  | _ ,[] -> ([],false)
+  | _ -> 
+    if (List.length v1 == 1 && List.length v2 == 1) then
+      if (String.compare (List.hd v1)(List.hd v2) == 0) then (v1,true)
+      else (v1@v2,false)
+    else (v1@v2,false)
+  
+let merge_mater_props_x x y = 
+  let nl,flag = merge_mater_views x.mater_target_view y.mater_target_view in
+  mk_mater_prop x.mater_var (x.mater_full_flag && y.mater_full_flag && flag)  nl
+
+let merge_mater_props x y =
+  let pr = !print_mater_prop in
+  Gen.Debug.ho_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
+  
+let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
+  
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)
@@ -1170,4 +1201,4 @@ let vdef_fold_use_bc prog ln2  =
   let pr2 x = match x with
     | None -> "None"
     | Some f -> !print_struc_formula f.view_formula in
-  Gen.Debug.ho_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
+  Gen.Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2

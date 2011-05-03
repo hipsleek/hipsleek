@@ -35,7 +35,7 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
 //checkentail x::lseg<n,t> & n=0 |- x::lseg<m,s>.
 
-//checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
+checkentail x::lseg<n,t> * t::node<_,null> & n=0 |- x::lseg<m,null>.
 
 //checkentail x::node<_,null> |- x::lseg<m,null>.
 
@@ -52,7 +52,7 @@ lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 //checkentail  t::node<_,null> & x=null & x=t  |- x::lseg2<m,q>.
 // false detected above
 
-checkentail x::lseg2<n,t> * t::node<_,null> & x=null  |- x::lseg2<m,q>.
+//checkentail x::lseg2<n,t> * t::node<_,null> & x=null  |- x::lseg2<m,q>.
 // works but false not detected when non-case used?
 // false only detected with case?
 

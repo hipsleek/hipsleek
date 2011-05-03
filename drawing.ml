@@ -100,7 +100,8 @@ and gen_nodes prog n h0 buffer = match h0 with
 	       h_formula_view_arguments = args;
 	       h_formula_view_name = c}) ->
       let vdef = Cast.look_up_view_def no_pos prog.Cast.prog_view_decls c in
-      let mvars = subst_var_list_avoid_capture vdef.Cast.view_vars args vdef.Cast.view_materialized_vars in
+      let mvars = subst_var_list_avoid_capture vdef.Cast.view_vars args 
+        (Cast.mater_props_to_sv_list vdef.Cast.view_materialized_vars) in
       let pname = (dot_of_spec_var p) ^ "__" ^ (string_of_int n) in
 	(*
 	  materialized parameters are input paramters. External pointers will

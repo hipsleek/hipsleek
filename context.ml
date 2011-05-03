@@ -127,7 +127,7 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 	    else
 	      let vdef = look_up_view_def_raw prog.prog_view_decls c in
 	      let mvs = CP.subst_var_list_avoid_capture vdef.view_vars vs1
-		vdef.view_materialized_vars
+		(mater_props_to_sv_list vdef.view_materialized_vars)
 	      in
 		if List.exists (fun v -> ((CP.mem v aset) && (subtype imm imm1))) mvs then
 		  if imm then

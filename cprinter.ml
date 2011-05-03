@@ -1279,7 +1279,23 @@ let string_of_list_list_partial_context (lc:list_partial_context list) =
 let printer_of_list_list_partial_context (fmt: Format.formatter) (ctx: list_partial_context list) : unit =
   poly_printer_of_pr fmt pr_list_list_partial_context ctx
 
+let pr_mater_prop (x:mater_property) : unit = 
+    fmt_string "(";
+    pr_spec_var x.mater_var;
+    fmt_string ",";
+    (match x.mater_full_flag with
+      | true -> fmt_string "full"
+      | false -> fmt_string "partial");
+    fmt_string ",";
+    pr_seq "" fmt_string x.mater_target_view;
+    fmt_string ")"
+      
+let string_of_mater_property p : string = poly_string_of_pr pr_mater_prop p
+      
+let pr_mater_prop_list (l: mater_property list) : unit =  pr_seq "" pr_mater_prop l
 
+let string_of_mater_prop_list l : string = poly_string_of_pr pr_mater_prop_list l
+  
 (* pretty printing for a view *)
 let pr_view_decl v =
   pr_mem:=false;
@@ -1296,7 +1312,7 @@ let pr_view_decl v =
   pr_vwrap  "inv: "  pr_mix_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
   pr_vwrap  "xform: " pr_mix_formula (fst v.view_x_formula);
-  pr_vwrap  "materialized vars: " pr_list_of_spec_var v.view_materialized_vars;
+  pr_vwrap  "materialized vars: " pr_mater_prop_list v.view_materialized_vars;
   pr_vwrap  "bag of addr: " pr_list_of_spec_var v.view_baga;
   (match v.view_raw_base_case with 
     | None -> ()
@@ -1582,8 +1598,8 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Right -> "<="
   | Iast.Equiv -> "<=>" ;;
 
-let string_of_coerc c lft = "\""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type)^(string_of_formula c.coercion_body)
-  ^"{lhs exists:"^(string_of_formula c.coercion_head_exist)^"head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}" ;;
+let string_of_coerc c lft = "Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type)^(string_of_formula c.coercion_body)
+  ^"{lhs exists:"^(string_of_formula c.coercion_head_exist)^"head:"^c.coercion_head_view^",cycle:"^c.coercion_body_view^"}\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars) ;;
 
 let string_of_coercion c = string_of_coerc c false ;;
 
@@ -1695,5 +1711,6 @@ Cast.print_formula := string_of_pure_formula;;
 Cast.print_struc_formula := string_of_struc_formula;;
 Cast.print_svl := string_of_spec_var_list;;
 Cast.print_sv := string_of_spec_var;;
+Cast.print_mater_prop := string_of_mater_property;;
 Omega.print_pure := string_of_pure_formula;;
 Smtsolver.print_pure := string_of_pure_formula;;
