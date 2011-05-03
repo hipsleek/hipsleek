@@ -1058,7 +1058,7 @@ and hn_fv w_v h =
     | Conj h -> Gen.BList.remove_dups_eq (=) (helper h.h_formula_conj_h1  @ helper h.h_formula_conj_h2)
     | Phase h-> Gen.BList.remove_dups_eq (=) (helper h.h_formula_phase_rd @ helper h.h_formula_phase_rw)
     | DataNode h-> [h.h_formula_data_node]
-    | DataView h -> if w_v then [h.h_formula_view_node] else []
+    | ViewNode h -> if w_v then [h.h_formula_view_node] else []
     | _ -> [] in
   helper h
   

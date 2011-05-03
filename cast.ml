@@ -35,6 +35,13 @@ and data_decl = {
     
 and ba_prun_cond = Gen.Baga(P.PtrSV).baga * formula_label
     
+and mater_property = {
+  mater_var : P.spec_var;
+  mater_full_flag : bool;
+  mater_target_view : ident option; (*the view to which it materializes*)
+  }
+  
+    
 and view_decl = { 
     view_name : ident; 
     view_vars : P.spec_var list;
@@ -106,6 +113,7 @@ and coercion_decl = {
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *) 
+   (*coercion_mater_vars : mater_property list;*)
     coercion_simple_lhs :bool;}
 
 and coercion_type = Iast.coercion_type

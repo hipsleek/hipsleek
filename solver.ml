@@ -1091,7 +1091,7 @@ and split_linear_node_guided_x (vars : CP.spec_var list) (h : h_formula) : (h_fo
       | HTrue -> (HTrue, HTrue)
       | HFalse -> (HFalse, HFalse)
       | Hole _ -> report_error no_pos "[solver.ml]: Immutability hole annotation encountered\n"	
-      | DataNode {h_formula_data_node = root; h_formula_data_imm = imm} -> 
+      | DataNode {h_formula_data_node = root; h_formula_data_imm = imm} 
       | ViewNode {h_formula_view_node = root; h_formula_view_imm = imm} ->
 	        (* overwrite the default -> should not be needed once all the rules are implementes *)
             if (vars==[]) || (List.exists (CP.eq_spec_var root) vars) then (h, HTrue)
