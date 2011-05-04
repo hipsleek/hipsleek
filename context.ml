@@ -1,4 +1,3 @@
-
 open Cformula
 open Cast
 
@@ -26,9 +25,14 @@ and phase_type =
   | Spatial
   | Classic
 *)
+
+and mater_source = 
+  | View_mater
+  | Coerc_mater of Globals.ident
+
 and match_type =
   | Root
-  | MaterializedArg
+  | MaterializedArg of (mater_property*mater_source) 
   | WArg
 (*
 and ctx_type = 
@@ -48,7 +52,7 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
 	let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns = match rhs_info with
-    | Some (f,v)-> 
+    | Some (f,v,_)-> 
       let eqns = MCP.ptr_equations_without_null f in
       let r_asets = alias eqns in
       let a_vars = lhs_fv @ v in
@@ -78,8 +82,7 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
 	else 
 	  (* before: let anodes = context_get_aliased_node prog lhs_h paset in *)
 	  (* choose the type of context *)
-	  let anodes = (spatial_ctx_extract prog lhs_h paset imm) 
-          in		  
+	  let anodes = (spatial_ctx_extract prog lhs_h paset imm) in		  
 	    anodes
       end	
 
@@ -96,6 +99,37 @@ and spatial_ctx_extract_debug p f a i = Gen.Debug.ho_4 "spatial_context_extract 
 spatial_ctx_extract p f a i
 
 
+and view_mater_match prog c vs1 aset imm f =
+  let vdef = look_up_view_def_raw prog.prog_view_decls c in
+  let mvs = subst_mater_list vdef.view_vars vs1 vdef.view_materialized_vars in
+  try
+    let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
+    if imm then
+      let hole_no = Globals.fresh_int() in
+      [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
+    else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
+  with 
+    _ ->  
+      if List.exists (fun v -> CP.mem v aset) vs1 then
+        if imm then
+          let hole_no = Globals.fresh_int() in 
+            [(Hole hole_no, f, [(f, hole_no)], WArg)]
+        else [(HTrue, f, [], WArg)]
+      else []
+      
+and coerc_mater_match prog l_vname l_vargs r_aset imm lhs_f = 
+  let coercs = prog.prog_left_coercions in
+  let pos_coercs = List.filter (fun c-> c.coercion_simple_lhs && c.coercion_head_view == l_vname) coercs in
+  let pos_coercs = List.fold_left 
+    (fun a c-> 
+      let args = fv_simple_formula c.coercion_head in 
+      let lmv = subst_mater_list args l_vargs c.coercion_mater_vars in
+      try
+        let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
+        (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a
+      with  _ ->  a) [] pos_coercs in
+  if imm then [] else pos_coercs
+    
 and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) : match_res list  =
   (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (Cprinter.string_of_h_formula f0) ^ "\n") in  *)
   let rec helper f = match f with
@@ -125,25 +159,10 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 	      else
 		[(HTrue, f, [], Root)]
 	    else
-	      let vdef = look_up_view_def_raw prog.prog_view_decls c in
-	      let mvs = CP.subst_var_list_avoid_capture vdef.view_vars vs1
-		(mater_props_to_sv_list vdef.view_materialized_vars)
-	      in
-		if List.exists (fun v -> ((CP.mem v aset) && (subtype imm imm1))) mvs then
-		  if imm then
-		    let hole_no = Globals.fresh_int() in
-		      [(Hole hole_no, f, [(f, hole_no)], MaterializedArg)]
-		  else
-		    [(HTrue, f, [], MaterializedArg)]
-		else if List.exists (fun v -> ((CP.mem v aset) && (subtype imm imm1))) vs1 then
-		  if imm then
-		    let hole_no = Globals.fresh_int() in 
-		      [(Hole hole_no, f, [(f, hole_no)], WArg)]
-		  else
-		    [(HTrue, f, [], WArg)]
-		else
-		  []
-	    )
+        let vmm = view_mater_match prog c vs1 aset imm f in
+        let cmm = coerc_mater_match prog c vs1 aset imm f in
+        vmm@cmm
+      )
 	  else []
     | Star ({h_formula_star_h1 = f1;
 	     h_formula_star_h2 = f2;

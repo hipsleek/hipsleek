@@ -387,6 +387,10 @@ let merge_mater_props x y =
   
 let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
   
+let subst_mater_list fr t l = 
+  let lsv = List.combine fr t in
+  List.map (fun c-> {c with mater_var = P.subs_one lsv c.mater_var}) l
+  
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)

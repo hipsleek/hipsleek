@@ -1084,8 +1084,8 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
   if (String.length vdef.I.view_data_name) = 0 then
     (
-        report_error no_pos ("fill_view_param_types error!");
-        let r = I.data_name_of_view prog.I.prog_view_decls vdef.I.view_formula in
+        report_error no_pos ("fill_view_param_types error!")
+      (*; let r = I.data_name_of_view prog.I.prog_view_decls vdef.I.view_formula in
 	    vdef.I.view_data_name<- r;	
 	    let pos = IF.pos_of_struc_formula vdef.I.view_formula in
 	    let nstab = H.create 103 in
@@ -1094,7 +1094,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
         let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) nstab pos) vdef.I.view_vars in
 	    let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
 	    let _ = H.clear nstab in
-        let _ = vdef.I.view_typed_vars <- typed_vars in
+        let _ = vdef.I.view_typed_vars <- typed_vars in*)
 	    ())
   else ()
 
@@ -1428,7 +1428,7 @@ and compute_base_case prog cf vars =
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 _ = "?" in
-  Gen.Debug.ho_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Gen.Debug.no_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in
@@ -1485,7 +1485,7 @@ and set_materialized_prop cdef =
 and find_m_prop_heap eq_f h = 
   let pr = Cprinter.string_of_h_formula in
   let prr x = string_of_int (List.length x) in
-  Gen.Debug.ho_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x eq_f h) h
+  Gen.Debug.no_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x eq_f h) h
       
 and find_m_prop_heap_x eq_f h = match h with
   | CF.DataNode h ->
