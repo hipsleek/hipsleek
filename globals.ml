@@ -48,6 +48,14 @@ let string_of_prim_type = function
   | Bag           -> "multiset"
   | List          -> "list"
 
+let rec s_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> h 
+  | h::t -> h ^ c ^ (s_i_list t c)
+;;
+
+let string_of_ident_list l = "["^(s_i_list l ",")^"]"
+
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None

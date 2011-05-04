@@ -438,7 +438,8 @@ $output_file = "log";
 							"del_2","SUCCESS",
 							#"del_2r","SUCCESS",
 							#"bh","SUCCESS",
-							#"remove_min","SUCCESS", #looping here!
+							#"remove_min","SUCCESS", #looping here  with --eps!
+                              #ExceptionFailure("Buffer.add: cannot grow buffer")Occurred!
 							"del","SUCCESS",
 							#"test_insert","SUCCESS",
 							#"node_error","SUCCESS",
@@ -471,9 +472,9 @@ $output_file = "log";
 					["sleek3.slk","Valid.Fail.Valid."],
 					["sleek4.slk","Valid.Valid."],
 					["sleek6.slk","Valid.Valid."],
-                    # imm error for sleek7.slk and loop for sleek8.slk
 					["sleek7.slk","Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid."],
-				  ["sleek8.slk","Valid.Fail.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
+                  # slow in sleek8.slk due to search
+				  ["sleek8.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Fail.Valid.Valid.Valid.Valid.Fail.Valid.Fail."],
 					["sleek9.slk","Valid.Fail.Valid.Valid."],
                                         ["imm/imm1.slk","Fail.Valid.Valid.Valid.Valid.Valid."],
 			                #["imm/imm2.slk","Valid.Fail.Valid.Valid.Valid.Fail.Valid.Fail."],

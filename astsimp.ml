@@ -1,6 +1,7 @@
 (* Created 21 Feb 2006 Simplify Iast to Cast *)
 open Globals
 open Printf
+open Gen.Basic
   
 module C = Cast
   
@@ -555,6 +556,10 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
                 ((n_view @ rest_views), new_rest_decls)
           | [] -> ([], view_decls) in
         let (r1, r2) = reorder_views view_decls0 !view_names in r1 @ r2))
+
+let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
+  let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
+  Gen.Debug.ho_1 "order_views" pr pr order_views  view_decls0
   
 let loop_procs : (C.proc_decl list) ref = ref []
    
@@ -951,6 +956,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
     else (
 		   let prog = case_normalize_program prog in
 		   let tmp_views = order_views prog.I.prog_view_decls in
+		   let _ = Iast.set_check_fixpt prog.I.prog_data_decls tmp_views in
 		   let cviews = List.map (trans_view prog) tmp_views in
 			 (* let _ = print_string "trans_prog :: trans_view PASSED\n" in *)
 			 let crels = List.map (trans_rel prog) prog.I.prog_rel_decls in (* An Hoa *)
@@ -1078,6 +1084,7 @@ and compute_view_x_formula (prog : C.prog_decl) (vdef : C.view_decl) (n : int) =
 and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
   if (String.length vdef.I.view_data_name) = 0 then
     (
+        report_error no_pos ("fill_view_param_types error!");
         let r = I.data_name_of_view prog.I.prog_view_decls vdef.I.view_formula in
 	    vdef.I.view_data_name<- r;	
 	    let pos = IF.pos_of_struc_formula vdef.I.view_formula in
@@ -1092,27 +1099,28 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
   else ()
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
-  let pr x = "?" in
+  let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
   Gen.Debug.loop_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
   let view_formula1 = vdef.I.view_formula in
-  let _ = Iformula.has_top_flow_struc view_formula1 in
-  (*let recs = rec_grp prog in*)
-  let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.data_name_of_view prog.I.prog_view_decls view_formula1
+   let _ = Iformula.has_top_flow_struc view_formula1 in
+   (*let recs = rec_grp prog in*)
+  let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.incr_fixpt_view  prog.I.prog_data_decls prog.I.prog_view_decls
                   else vdef.I.view_data_name in
-  (vdef.I.view_data_name <- data_name;
+   (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = Known (CP.OType data_name);id = fresh_int () };
-   let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
-   let (inv, inv_b) = vdef.I.view_invariant in
+    let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+    let (inv, inv_b) = vdef.I.view_invariant in
    let pf = trans_pure_formula inv stab in
-   let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
+    let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
    let pf_b_fvs = List.flatten (List.map (fun (n, f) -> List.map CP.name_of_spec_var (CP.fv pf)) pf_b) in
    let pf = Cpure.arith_simplify 1 pf in
    let cf_fv = List.map CP.name_of_spec_var (CF.struc_fv cf) in
    let pf_fv = List.map CP.name_of_spec_var (CP.fv pf) in
+
    if (List.mem res cf_fv) || (List.mem res pf_fv) || (List.mem res pf_b_fvs) then
            Err.report_error
              {
@@ -4567,7 +4575,7 @@ and case_normalize_formula prog (h:(ident*primed) list)(f:Iformula.formula):Ifor
       
 and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
-  let pr1 x = "?" in
+  let pr1 = Iprinter.string_of_struc_formula in
   let pr2 x = "?" in
 Gen.Debug.loop_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
       
@@ -5124,7 +5132,7 @@ and case_normalize_proc prog (f:Iast.proc_decl):Iast.proc_decl =
 
 (* AN HOA : WHAT IS THIS FUNCTION SUPPOSED TO DO ? *)
 and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
-  let tmp_views = order_views prog.I.prog_view_decls in
+  let tmp_views = (* order_views *) prog.I.prog_view_decls in
   let tmp_views = List.map (fun c-> 
 	  let h = (self,Unprimed)::(res,Unprimed)::(List.map (fun c-> (c,Unprimed)) c.Iast.view_vars ) in
 	  let p = (self,Primed)::(res,Primed)::(List.map (fun c-> (c,Primed)) c.Iast.view_vars ) in

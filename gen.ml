@@ -25,7 +25,14 @@ struct
   let string_of_pair (p1:'a->string) (p2:'b->string) ((a,b):'a * 'b) : string = 
     "("^(p1 a)^","^(p2 b)^")"
 
+  let rec remove_dups n = 
+    match n with
+        [] -> []
+      | q::qs -> if (List.mem q qs) then remove_dups qs else q::(remove_dups qs)
+
   let pr_id x = x
+
+  let print_flush s = print_string (s^"\n"); flush stdout
 
   let pr_no x = "?"
 
@@ -290,10 +297,6 @@ struct
   let string_of (ls:'a list) : string 
         = string_of_f string_of_elem ls
 
-  let rec remove_dups n = 
-    match n with
-        [] -> []
-      | q::qs -> if (mem q qs) then remove_dups qs else q::(remove_dups qs)
 
   let rec check_dups n = 
     match n with
@@ -806,6 +809,7 @@ struct
       helper xs in
     let s,h = push s in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
+    flush stdout;
     let r = try
       pop_ho f e
     with ex -> 
@@ -813,12 +817,14 @@ struct
         let _ = pr_args args in
         let _ = pr_lazy_res lz in
         let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
+        flush stdout;
         raise ex in
     if not(test r) then r else
       let _ = print_string ("\n"^h^"\n") in
       let _ = pr_args args in
       let _ = pr_lazy_res lz in
       let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
+      flush stdout;
       r
 
   let choose bs xs = 

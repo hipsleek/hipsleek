@@ -376,6 +376,7 @@ view_header
 			view_typed_vars = [];
 			view_formula = F.mkETrue top_flow (get_pos 1);
 			view_invariant = (P.mkTrue (get_pos 1), []);
+			view_pt_by_self  = [];
 			try_case_inference = false;
 			}
   }

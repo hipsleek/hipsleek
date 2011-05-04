@@ -1,6 +1,7 @@
 open Globals
 open Solver
 open Cast
+open Gen.Basic
 
 module CF = Cformula
 module CP = Cpure
@@ -398,7 +399,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              Gen.Debug.no_1 "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
+              Gen.Debug.loop_1 "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
                   (fun s ->  check_pre_post org_spec s) sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
@@ -488,7 +489,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       ((check_exp1 failesc) @ fl)
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  Gen.Debug.no_1 "check_post" (fun _ -> "?") (fun _ -> "?")
+  Gen.Debug.loop_1 "check_post" (fun _ -> "?") (fun _ -> "?")
       (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
@@ -496,20 +497,30 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
+  let _ = print_flush "1\n" in
   let r = proc.proc_by_name_params in
+  let _ = print_flush "1\n" in
   let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
     (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
+  let _ = print_flush "1a\n" in
   let final_state = 
-    if !Globals.elim_exists then elim_exists_partial_ctx_list final_state_prim else final_state_prim in
+    if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
+  let _ = print_flush "1b" in
   Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n");
-  Debug.devel_print ("Final state after existential quantifier elimination:\n"
+  let _ = print_flush "1b\n" in
+   Debug.devel_print ("Final state after existential quantifier elimination:\n"
   ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n");
+   let _ = print_flush "1b\n" in
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
+  let _ = print_flush "1c\n" in
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
-  Debug.devel_pprint to_print pos;	
+  Debug.devel_pprint to_print pos;
+  let _ = print_flush "2\n" in	
+  let _ = print_flush "2a\n" in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
+  let _ = print_flush "3\n" in
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then 
      rs

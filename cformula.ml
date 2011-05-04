@@ -2215,7 +2215,7 @@ and fold_context_left_x c_l = union_context_left c_l
 and fold_context_left c_l = 
   let pr = !print_list_context_short in
   let pr1 x = String.concat "\n" (List.map !print_list_context_short x) in
-  Gen.Debug.ho_1 "fold_context_left" pr1 pr fold_context_left_x c_l
+  Gen.Debug.no_1 "fold_context_left" pr1 pr fold_context_left_x c_l
   
   (*list_context or*)
 and or_list_context_x c1 c2 = match c1,c2 with
@@ -2226,7 +2226,7 @@ and or_list_context_x c1 c2 = match c1,c2 with
      
 and or_list_context c1 c2 = 
   let pr = !print_list_context_short in
-  Gen.Debug.ho_2 "or_list_context" pr pr pr or_list_context_x c1 c2
+  Gen.Debug.no_2 "or_list_context" pr pr pr or_list_context_x c1 c2
 
 (* can remove redundancy here? *)
 
@@ -3696,7 +3696,7 @@ let rec string_of_list_of_pair_formula ls =
 and split_struc_formula f0 = split_struc_formula_a f0
 
 and split_struc_formula_debug f0 =
-  Gen.Debug.ho_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
+  Gen.Debug.no_1 "split_struc_formula" (!print_struc_formula) (string_of_list_of_pair_formula) split_struc_formula_a f0
 (* split the struc_formula into the list of pre/post pairs *)  
 and split_struc_formula_a (f0:struc_formula):(formula*formula) list = 
 	let rec ext_to_formula (f:ext_formula):(formula*formula) list = match f with
