@@ -322,11 +322,11 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     if not valid then begin
-      print_string ("Fail.\n");
+      print_string ("Entail=Fail.\n");
       if !Globals.print_err_sleek then
         print_string ("printing here"^(Cprinter.string_of_list_context rs))
     end
-      else print_string ("Valid.\n");
+      else print_string ("Entail=Valid.\n");
   with _ ->
     Printexc.print_backtrace stdout;
     dummy_exception() ; 
