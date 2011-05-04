@@ -421,7 +421,7 @@ $output_file = "log";
 								"delete","SUCCESS",
 								#"delete1","SUCCESS"
 								],
-				["rb2.ss",18,"rotate_case_3","SUCCESS",
+				["rb.ss",18,"rotate_case_3","SUCCESS",
 							"case_2","SUCCESS",
 							"rotate_case_3r","SUCCESS",
 							"case_2r","SUCCESS",
@@ -438,8 +438,7 @@ $output_file = "log";
 							"del_2","SUCCESS",
 							#"del_2r","SUCCESS",
 							#"bh","SUCCESS",
-							#"remove_min","SUCCESS", #looping here  with --eps!
-                              #ExceptionFailure("Buffer.add: cannot grow buffer")Occurred!
+							"remove_min","SUCCESS", #fixed duplicated false
 							"del","SUCCESS",
 							#"test_insert","SUCCESS",
 							#"node_error","SUCCESS",

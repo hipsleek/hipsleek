@@ -862,7 +862,7 @@ and get_view_modes_x (h : h_formula) = match h with
 
 and get_view_modes (h : h_formula) =
   let pr l = string_of_int (List.length l) in 
-  Gen.Debug.ho_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
+  Gen.Debug.no_1 "get_view_modes" !print_h_formula pr (fun _ -> get_view_modes_x h) h
   
 and get_view_imm (h : h_formula) = match h with
   | ViewNode ({h_formula_view_imm = imm}) -> imm
@@ -1915,7 +1915,8 @@ and branch_fail = path_trace * fail_type
 
 and branch_ctx =  path_trace * context
 
-and partial_context = (branch_fail list) * (branch_ctx list)
+and partial_context = (branch_fail list) * (branch_ctx list)  
+    (* disjunct of failures and success *)
 
 and esc_stack = ((control_path_id_strict * branch_ctx list) list)
 
@@ -1923,7 +1924,8 @@ and failesc_context = (branch_fail list) * esc_stack * (branch_ctx list)
 
 and list_partial_context = partial_context list
  
-and list_failesc_context = failesc_context list
+and list_failesc_context = failesc_context list 
+    (* conjunct of contexts *)
   
 and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
@@ -2258,12 +2260,50 @@ let isSuccessListFailescCtx cl =
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
 
+
 let isNonFalseListFailescCtx cl = 
  List.exists (fun (_,el,ss)-> 
   let ess = (colapse_esc_stack el)@ss in
   ((List.length ess) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ess )) cl
 
+(* this should be applied to merging also and be improved *)
+let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
+
+let remove_dupl_false (sl:branch_ctx list) = 
+  let nf = count_false sl in
+    if (nf=0) then sl
+    else let n = List.length sl in
+      if (nf=n) then [List.hd(sl)]
+      else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl)
+
+let remove_dupl_false (sl:branch_ctx list) = 
+  let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
+  if (List.length nl)==0 then 
+    if (sl==[]) then []
+    else [List.hd(sl)]
+  else nl
+
+let isFalseBranchCtxL (ss:branch_ctx list) = 
+   (ss!=[]) && (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )
+
+let remove_dupl_false (sl:branch_ctx list) = 
+  let pr n = string_of_int(List.length n) in
+  Gen.Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
+
+let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
+let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
+
+
+let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
+  let ns = List.filter (fun (fl,sl) -> fl==[] && isFalseBranchCtxL sl) fs_list in
+  if ns==[] then fs_list
+  else [List.hd ns]
  
+let remove_dupl_false_fe_list (fs_list:list_failesc_context) = 
+  let ns = List.filter (fun (fl,_,sl) -> fl==[] && isFalseBranchCtxL sl) fs_list in
+  if ns==[] then fs_list
+  else [List.hd ns]
+
 let rank (t:partial_context):float = match t with
   | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}
   | ( [] , _ ) -> 1.
@@ -2272,9 +2312,17 @@ let rank (t:partial_context):float = match t with
     let fn,sn =float (List.length(l1)), float(List.length(l2)) in
     sn /.(fn +. sn)
   
-let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = l1 @ l2
+let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = remove_dupl_false_pc_list (l1 @ l2)
 
-let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = l1 @ l2
+let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = remove_dupl_false_fe_list (l1 @ l2)
+
+let list_partial_context_union (l1:list_partial_context) (l2:list_partial_context):list_partial_context = 
+  let pr x = string_of_int(List.length x) in
+  Gen.Debug.no_2 "list_partial_context_union" pr pr pr list_partial_context_union l1 l2
+
+let list_failesc_context_union (l1:list_failesc_context) (l2:list_failesc_context):list_failesc_context = 
+  let pr x = string_of_int(List.length x) in
+  Gen.Debug.no_2 "list_failesc_context_union" pr pr pr list_failesc_context_union l1 l2
 
 
 let select n l = 
@@ -2299,6 +2347,8 @@ let rec merge_fail (f1:branch_fail list) (f2:branch_fail list) : (branch_fail li
 	  ((l2,b2)::res, l2::pt)
     
 let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context) : partial_context =
+  let s1 = remove_dupl_false s1 in
+  let s2 = remove_dupl_false s2 in
   let (res_f,pt_fail_list) = merge_fail f1 f2 in  
   let res_s = merge_success s1 s2 in
     (* print_string ("\nBefore :"^(Cprinter.summary_partial_context (f1,s1))); *)
@@ -2307,7 +2357,9 @@ let merge_partial_context_or ((f1,s1):partial_context) ((f2,s2):partial_context)
     (res_f,res_s)
     
 let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_context) : failesc_context =
-  let (res_f,pt_fail_list) = merge_fail f1 f2 in
+  let s1 = remove_dupl_false s1 in
+  let s2 = remove_dupl_false s2 in
+   let (res_f,pt_fail_list) = merge_fail f1 f2 in
   let res_s = merge_success s1 s2 in
   let e1 = match e1 with | [] -> [((0,""),[])] | _-> e1 in
   let e2 = match e2 with | [] -> [((0,""),[])] | _-> e2 in
@@ -2327,18 +2379,6 @@ let merge_failesc_context_or f ((f1,e1,s1):failesc_context) ((f2,e2,s2):failesc_
     (* print_string ("\nAfter :"^(Cprinter.summary_partial_context (res_f,res_s))); *)
     (res_f,res_e,res_s)
 
-(* this should be applied to merging also and be improved *)
-let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
-
-let remove_dupl_false (sl:branch_ctx list) = 
-  let nf = count_false sl in
-    if (nf=0) then sl
-    else let n = List.length sl in
-      if (nf=n) then [List.hd(sl)]
-      else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl)
-
-let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
-let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
 
 let simple_or pc1 pc2 =  ( (fst pc1)@(fst pc2),  remove_dupl_false ((snd pc1)@(snd pc2)) ) 
 

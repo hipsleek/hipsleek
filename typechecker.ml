@@ -502,19 +502,21 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   let _ = print_flush "1\n" in
   let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
     (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
+  let _ = print_flush ("length ctx:"^(string_of_int (List.length ctx))) in
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
   let _ = print_flush "1a\n" in
+  let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in
   let final_state = 
     if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
   let _ = print_flush "1b" in
-  Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n");
-  let _ = print_flush "1b\n" in
-   Debug.devel_print ("Final state after existential quantifier elimination:\n"
-  ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n");
-   let _ = print_flush "1b\n" in
+  (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
+  let _ = print_flush "1ba" in
+  (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
+  (* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *)
+   let _ = print_flush "1bb" in
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
-  let _ = print_flush "1c\n" in
+  let _ = print_flush "1c" in
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
   let _ = print_flush "2\n" in	
