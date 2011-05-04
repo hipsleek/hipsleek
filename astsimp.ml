@@ -5430,7 +5430,14 @@ and view_prune_inv_inference cp vd =
       C.view_prune_conditions_baga = baga_cond;
       C.view_prune_invariants = invs;} in 
   v'    
-      
+  
+and coerc_spec prog is_l c = 
+  if not !Globals.allow_pred_spec then [c] 
+    else 
+      let prun_f = Solver.prune_preds prog true  in
+      [{c with C.coercion_head = prun_f c.C.coercion_head; C.coercion_body = prun_f c.C.coercion_body}]
+  
+(*      
 and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else 
   begin 
     let add_brs v_def brs f = 
@@ -5487,11 +5494,12 @@ and coerc_spec prog is_l c = if not !Globals.allow_pred_spec then [c] else
         let prun_b_f = Solver.prune_preds prog true n_b_f in
         (*let _ = print_string ("coer pruned body: "^(Cprinter.string_of_formula prun_b_f)^"\n\n") in*)
         (prun_h_f,prun_b_f)) v_invs in   
+    let prun_f = Solver.prune_preds prog true  in
     if is_l then 
-      List.map (fun (c1,c2) -> {c with C.coercion_head=c1; C.coercion_body = c2}) r_l
+      List.map (fun (c1,c2) -> {c with C.coercion_head = prun_f c1; C.coercion_body = prun_f c2}) r_l
     else
-      List.map (fun (c1,c2) -> {c with C.coercion_head=c2; C.coercion_body = c1}) r_l
-  end   
+      List.map (fun (c1,c2) -> {c with C.coercion_head = prun_f c2; C.coercion_body = prun_f c1}) r_l
+  end *)  
       
 and pred_prune_inference (cp:C.prog_decl):C.prog_decl =      
   Gen.Profiling.push_time "pred_inference";

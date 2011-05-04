@@ -139,7 +139,7 @@ let filter_formula_memo_debug f (simp_b:bool)=
 
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
-let prune_branches_subsume_x prog univ_vars lhs_node rhs_node = match lhs_node,rhs_node with
+let prune_branches_subsume_x prog lhs_node rhs_node :(bool*CP.formula option)= match lhs_node,rhs_node with
   | DataNode dn1, DataNode dn2-> 
     (match (dn1.h_formula_data_remaining_branches,dn2.h_formula_data_remaining_branches) with
       | None,None -> (true, None)
@@ -154,19 +154,22 @@ let prune_branches_subsume_x prog univ_vars lhs_node rhs_node = match lhs_node,r
         if (Gen.BList.subset_eq (=) l1 l2) then (true, None)
         else if (Gen.BList.subset_eq (=) l2 l1) then 
           let need_prunning = Gen.BList.difference_eq (=) l1 l2 in
-          let v_def = look_up_view_def no_pos prog.prog_view_decls vn1.h_formula_view_name in
-          let to_vars = vn1.h_formula_view_node:: vn1.h_formula_view_arguments in
-          let self_v = CP.SpecVar (CP.OType v_def.view_data_name, self, if (CP.is_primed vn1.h_formula_view_node) then Primed else Unprimed) in
+          let v_def = look_up_view_def no_pos prog.prog_view_decls vn2.h_formula_view_name in
+          let to_vars = vn2.h_formula_view_node:: vn2.h_formula_view_arguments in
+          let self_v = CP.SpecVar (CP.OType v_def.view_data_name, self, if (CP.is_primed vn2.h_formula_view_node) then Primed else Unprimed) in
           let from_vars = self_v::v_def.view_vars in
           let subst_vars = List.combine from_vars to_vars in
           let new_cond = List.map (fun (c1,c2)-> (CP.b_subst subst_vars c1,c2)) v_def.view_prune_conditions in         
-          let new_cond = List.filter (fun (c1,c2)-> 
-                (Gen.BList.subset_eq (=) (CP.bfv c1) univ_vars)&&((List.length (Gen.BList.intersect_eq (=) need_prunning c2))>0)) new_cond in
+          let new_cond = List.filter (fun (_,c2)-> (List.length (Gen.BList.intersect_eq (=) need_prunning c2))>0) new_cond in
           if (Gen.BList.subset_eq (=) need_prunning (List.concat (List.map snd new_cond))) then
-            let inst_forms = CP.conj_of_list (List.map (fun (c,_)-> CP.BForm ((MCP.memo_f_neg c),None)) new_cond) no_pos in
+            let ll = List.map (fun c -> List.filter (fun (_,c1)-> List.exists ((=) c) c1) new_cond) need_prunning in (*posib prunning cond for each branch*)
+            let wrap_f (c,_) = CP.BForm ((MCP.memo_f_neg c),None) in
+            let ll = List.map (fun l -> List.fold_left (fun a c-> CP.mkOr a (wrap_f c) None no_pos) (wrap_f (List.hd l)) (List.tl l)) ll in
+            let inst_forms = CP.conj_of_list ll no_pos in
+            (*let inst_forms = CP.conj_of_list (List.map (fun (c,_)-> CP.BForm ((MCP.memo_f_neg c),None)) new_cond) no_pos in*)
             (true, Some inst_forms)
-          else (false, None)
-        else (false, None)
+          else (print_string "h11\n";(false, None))
+        else (print_string "h22\n";(false, None))
       | None, Some _ ->
         Debug.print_info "Warning: " "left hand side node is not specialized!" no_pos;
         (false, None)
@@ -176,13 +179,13 @@ let prune_branches_subsume_x prog univ_vars lhs_node rhs_node = match lhs_node,r
       )
   | _ -> (false, None)      
 
-let prune_branches_subsume prog univ_vars lhs_node rhs_node = 
+let prune_branches_subsume prog lhs_node rhs_node = 
   let pr2 (c,d)= (string_of_bool c) ^ " " ^(
     match d with
       | None-> "None"
       | Some p -> Cprinter.string_of_pure_formula p) in
   let pr = Cprinter.string_of_h_formula in
-  Gen.Debug.ho_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog univ_vars lhs_node rhs_node) lhs_node rhs_node
+  Gen.Debug.ho_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
 
   
 let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a -> 'a) (res_checker:'b-> bool) (argument:'a) :'b =
@@ -4875,10 +4878,10 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 			            if r_flag = Context.Root then begin (* matching occurs at root *)
 			              if c1 = c2 then 
 
-			                (* try and make sure the branches match, if not and if some conditions involving only 
-				               univ vars can be used to prune the necesary branch then add those conditions to the right
+			                (* try and make sure the branches match, if not and if some conditions
+                        can be used to prune the necesary branch then add those conditions to the right
 				               and do the prune*)
-			                let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog estate.es_ivars anode ln2 in
+			                let subsumes, to_be_proven = prune_branches_subsume(*_debug*) prog anode ln2 in
 				            if not subsumes then  
 				              (CF.mkFailCtx_in (Basic_Reason ({
                                   fc_message = "there is a mismatch in branches ";
@@ -5159,7 +5162,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
         ViewNode ({ h_formula_view_node = p2;
 		h_formula_view_name = c2;
 		h_formula_view_remaining_branches = br2;
-		h_formula_view_arguments = ps2} as h2) when CF.is_eq_view_spec h1 h2 (*c1=c2 && (br_match br1 br2) *) -> begin
+		h_formula_view_arguments = ps2} as h2) when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2 (*c1=c2 && (br_match br1 br2) *) -> begin
 	      (* the lemma application heuristic:
 	         - if the flag lemma_heuristic is true then we use both coerce& match - each lemma application must be followed by a match  - and history
 	         - if the flag is false, we only use coerce&distribute&match
@@ -5290,7 +5293,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
       h_formula_view_name = c2;
       h_formula_view_remaining_branches = br2;
       h_formula_view_arguments = ps2} as h2) 
-          when CF.is_eq_view_spec h1 h2  (* c1=c2 && (br_match br1 br2) *)-> begin
+          when CF.is_eq_view_name(*is_eq_view_spec*) h1 h2  (* c1=c2 && (br_match br1 br2) *)-> begin
 	        (*************************************************************)
 	        (* replace with the coerce&match mechanism *)
 	        (*************************************************************)
@@ -5349,6 +5352,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          Debug.devel_pprint
 		              ("rewrite_coercion: guard is not satisfied, " ^ "splitting.\n") pos;
 		          let neg_guard = CP.mkNot lhs_guard_new None pos in
+              let node = ViewNode{h1 with h_formula_view_remaining_branches=None; h_formula_view_pruning_conditions=[];} in
 		          let f0 = normalize f (formula_of_heap node pos) pos in
 		          let f1 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure neg_guard) pos) pos in
 			      (* unfold the case with the negation of the guard. *)
