@@ -319,18 +319,34 @@ and isAnyConstFalse f = match f with
         (h = HFalse || MCP.isConstMFalse p || (List.filter (fun (_,f) -> CP.isConstFalse f) br <> []))||
 			(is_false_flow fl.formula_flow_interval)
   | _ -> false
-        
-and isConstETrue f = 
-  if (List.length f)<>1 then false
-  else match (List.hd f) with
-	| EBase b -> (isStrictConstTrue b.formula_ext_base) &&(List.length b.formula_ext_continuation)==0
-	| _ -> false
-          
-and isConstEFalse f = 
-  if (List.length f)<>1 then false
-  else match (List.hd f) with
+
+and isConstDFalse f = 
+  match f with
 	| EBase b -> (isAnyConstFalse b.formula_ext_base)  
 	| _ -> false
+
+and isConstDTrue f = 
+  match f with
+	| EBase b -> (isStrictConstTrue b.formula_ext_base) &&(List.length b.formula_ext_continuation)==0
+	| _ -> false
+
+and isConstETrue f = 
+  List.exists isConstDTrue f
+          
+and isConstEFalse f = 
+  List.for_all isConstDFalse f
+
+(* and isConstETrue f =  *)
+(*   if (List.length f)<>1 then false *)
+(*   else match (List.hd f) with *)
+(* 	| EBase b -> (isStrictConstTrue b.formula_ext_base) &&(List.length b.formula_ext_continuation)==0 *)
+(* 	| _ -> false *)
+          
+(* and isConstEFalse f =  *)
+(*   if (List.length f)<>1 then false *)
+(*   else match (List.hd f) with *)
+(* 	| EBase b -> (isAnyConstFalse b.formula_ext_base)   *)
+(* 	| _ -> false *)
 
 and isConstETrueSpecs f = 
   if (List.length f)<>1 then false
@@ -2915,6 +2931,10 @@ and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
 
   
 and case_to_disjunct f  =
+  let pr = !print_struc_formula in
+  Gen.Debug.ho_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
+
+and case_to_disjunct_x f  =
   let rec push_pure c f =  match f with
     | ECase _ -> f (*this should never occur*) 
     | EBase b-> EBase {b with formula_ext_base = 
@@ -2933,9 +2953,9 @@ and case_to_disjunct f  =
   and helper f = match f with
     | ECase b-> 
         (List.concat (List.map (fun (c1,c2)-> 
-          let f = case_to_disjunct c2 in 
+          let f = case_to_disjunct_x c2 in 
           List.map (push_pure c1) f) b.formula_case_branches))
-    | EBase b-> [EBase {b with formula_ext_continuation = (case_to_disjunct b.formula_ext_continuation)}]
+    | EBase b-> [EBase {b with formula_ext_continuation = (case_to_disjunct_x b.formula_ext_continuation)}]
     | _ -> [f] in
 List.concat (List.map helper f)
 
@@ -3786,6 +3806,13 @@ let rec filter_branches (br:formula_label list option) (f0:struc_formula) :struc
   match br with
     | None -> f0
     | Some l -> filter_helper l f0
+
+let filter_branches (br:formula_label list option) (f0:struc_formula) :struc_formula =
+  let pr = !print_struc_formula in
+  let pr1 x = match x with
+    | None -> "None"
+    | Some l -> "Some"^string_of_int(List.length l) in
+  Gen.Debug.ho_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
   
 let rec label_view (f0:struc_formula):struc_formula = 
   let rec label_formula (f:formula):formula = match f with

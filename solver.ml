@@ -1770,7 +1770,7 @@ and fold_op p c vd v u loc =
 
 (* fold some constraints in ctx to view  *)
 and fold_op_x prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *) (use_case:bool) (pos : loc): (list_context * proof) =
-  let pr x = "?" in
+  let pr (x,_) = Cprinter.string_of_list_context x in
   let id x = x in
   let ans = ("use-case : "^string_of_bool use_case)^"\n context:"^(Cprinter.string_of_context ctx)^"\n rhs:"^(Cprinter.string_of_h_formula view) in
   let pr2 x = match x with
@@ -1794,7 +1794,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
           | Some vd -> vd in
         (* is there a benefit for using case-construct during folding? *)
         let brs = filter_branches r_brs vdef.Cast.view_formula in
-        let form = if use_case then brs else Cformula.case_to_disjunct brs in
+       (* let form = if use_case then brs else Cformula.case_to_disjunct brs in*)
         let form = Cformula.case_to_disjunct brs in
         let renamed_view_formula = rename_struc_bound_vars form in
 	    (****)  
@@ -2727,7 +2727,10 @@ and heap_entail_conjunct_lhs_struc
 	  let l1,l2 = List.split r in
 	  ((fold_context_left l1),(mkCaseStep ctx conseq l2))
     else 
-	  ((SuccCtx [ctx]),TrueConseq)in
+      (* TODO : can do a stronger falsity check on LHS *)
+	  (CF.mkFailCtx_in(Trivial_Reason "struc conseq is [] meaning false") , UnsatConseq)
+       (* ((SuccCtx [ctx]),TrueConseq) *)
+  in
   let r = inner_entailer ctx conseq in
   r
 
@@ -4603,7 +4606,7 @@ and do_fold_w_ctx fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 (*rhs_t rh
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
   let pr (x,_) = Cprinter.string_of_list_context x in
-  Gen.Debug.ho_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr2 (* Cprinter.string_of_h_formula  *)pr
+  Gen.Debug.loop_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_spec_var pr2 (* Cprinter.string_of_h_formula  *)pr
       (fun _ _ _ -> do_fold_w_ctx_x fold_ctx var_to_fold prog ctx0 conseq ln2 vd resth2 rhs_b is_folding pos) 
       fold_ctx var_to_fold vd
       (*
