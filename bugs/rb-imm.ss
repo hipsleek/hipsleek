@@ -285,30 +285,40 @@ node del_2r(node a, node b, node c)
 
 /* not working, waiting for all the others to work to check the pbs*/ 
 /* primitive for the black height */
-int bh(node x) requires true ensures false;
+//int bh(node x) requires true ensures false;
+
 /*
-int bh(node x) 
+-- below loses too much information
+int bh(node x)
   requires x::rb<n,cl,bh>
   ensures x::rb<n,cl,bh> & res=bh;
 */
+
+int bh(node x) 
+  requires x::rb<n,cl,h>@I
+  ensures res=h;
+/* TODO : implement code here */
+
 /* function to delete the smalles element in a rb and then rebalance */
 int remove_min(ref node x)
 
+/*
 	requires x::rb<n, cl, bh> & x != null & 0 <= cl <= 1
 	ensures x'::rb<n-1, cl2, bh> & cl = 1 & 0 <= cl2 <= 1
 		or x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh & cl = 0;
-        /*
+*/ 
+
 	requires x::rb<n, cl, bh> & x != null 
     case { cl=1 -> ensures x'::rb<n-1, cl2, bh>;
            cl=0 -> ensures x'::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh;
            (cl<0 | cl>1) -> ensures false;
     }
-*/
 {
 	int v1;
 
 	if (x.left == null)
 	{
+      assume false;
 		int tmp = x.val;
 
 		if (is_red(x.right))
@@ -318,15 +328,18 @@ int remove_min(ref node x)
 		return tmp;
 	}
 	else 
-	{
-		v1 = remove_min(x.left);
-
+	{	v1 = remove_min(x.left);
 		//rebalance 
-		if (bh(x.left) < bh(x.right))
+      dprint;
+      int lh = bh(x.left);
+      assume false;
+      int rh = bh(x.right);
+
+		if (lh < rh)
 		{
+          assume false;
 			if (is_black(x.left))
-			{
-				if (is_red(x.right))
+			{	if (is_red(x.right))
 				{
 					if (x.right.left != null)
                                         {
