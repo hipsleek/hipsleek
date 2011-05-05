@@ -961,7 +961,8 @@ let pr_case_guard c =
   fmt_string "}"
 
 let rec pr_struc_formula (e:struc_formula) =
-  pr_list_op_none "|| " (wrap_box ("B",0) pr_ext_formula) e
+  if e==[] then fmt_string "[]" 
+  else pr_list_op_none "|| " (wrap_box ("B",0) pr_ext_formula) e
 
 and pr_ext_formula  (e:ext_formula) =
   match e with

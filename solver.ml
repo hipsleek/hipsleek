@@ -4512,9 +4512,11 @@ and do_match prog estate l_args r_args l_node_name r_node_name l_node r_node rhs
 
 and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node rhs is_folding  r_var pos : 
       list_context *proof =
-  Debug.devel_pprint ("do_match: using " ^
+    Debug.devel_pprint ("do_match: using " ^
 	  (Cprinter.string_of_h_formula l_node)	^ " to prove " ^
 	  (Cprinter.string_of_h_formula r_node)) pos;
+    (* Debug.devel_pprint ("do_match: source LHS: "^ (Cprinter.string_of_entail_state estate)) pos; *)
+    (* Debug.devel_pprint ("do_match: source RHS: "^ (Cprinter.string_of_formula rhs)) pos; *)
     let l_h,l_p,l_fl,l_b,l_t = split_components estate.es_formula in
     let r_h,r_p,r_fl,r_b,r_t = split_components rhs in
     let label_list = try 
@@ -4583,9 +4585,8 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
     let new_es' = {new_es with (* es_evars = new_es.es_evars @ (snd new_subst); *) es_must_match = false} in
     let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
-    Debug.devel_pprint ("do_match: "^ "new_ctx after matching: "
-	^ (Cprinter.string_of_spec_var r_var) ^ "\n"^ (Cprinter.string_of_context new_ctx)) pos;
-    Debug.devel_pprint ("do_match: "^ "new_conseq after matching:\n"
+    Debug.devel_pprint ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx)) pos;
+    Debug.devel_pprint ("do_match (after): RHS:"
 	^ (Cprinter.string_of_formula new_conseq)) pos;
     let res_es1, prf1 = (*heap_entail_split_rhs_phases*) heap_entail_conjunct prog is_folding  new_ctx new_conseq pos in
     (res_es1,prf1)
