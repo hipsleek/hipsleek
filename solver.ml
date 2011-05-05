@@ -1830,7 +1830,9 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
         let view_form = add_struc_origins view_form (get_view_origins view) in
         let view_form = CF.replace_struc_formula_label pid view_form in
-        Debug.devel_pprint ("fold: view_form:\n" ^ (Cprinter.string_of_struc_formula view_form)) pos;
+        Debug.devel_pprint ("do_fold: LHS ctx:" ^ (Cprinter.string_of_context_short ctx)) pos;
+        Debug.devel_pprint ("do_fold: RHS view: " ^ (Cprinter.string_of_h_formula view)) pos;
+        Debug.devel_pprint ("do_fold: view_form: " ^ (Cprinter.string_of_struc_formula view_form)) pos;
         let estate = estate_of_context ctx pos in
         let new_es = {estate with es_evars = vs (*Gen.BList.remove_dups_eq (=) (vs @ estate.es_evars)*)} in
         let new_ctx = Ctx new_es in
@@ -5436,7 +5438,8 @@ and do_coercion_x c1 c2 prog estate conseq ctx0 resth1 resth2 anode (*lhs_p lhs_
     || not(is_original_match anode ln2)
   then (CF.mkFailCtx_in(Trivial_Reason "no lemma found in both LHS and RHS nodes (do coercion)"), [])
   else begin 
-    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
+    Debug.devel_pprint ("do_coercion: estate :" ^ (Cprinter.string_of_entail_state estate) ^ "\n") pos;
+    Debug.devel_pprint ("do_coercion: " ^ "c1 = " ^ c1 ^ ", c2 = " ^ c2 ^ "\n") pos;
     (* get origins of a node *)
     (* let origs = try get_view_origins anode with _ -> print_string "exception get_view_origins\n"; [] in  *)
     (* let coers1 = look_up_coercion_def_raw prog.prog_left_coercions c1 in *)

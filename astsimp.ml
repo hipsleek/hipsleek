@@ -1085,17 +1085,18 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
   if (String.length vdef.I.view_data_name) = 0 then
     (
         report_error no_pos ("fill_view_param_types error!")
-      (*; let r = I.data_name_of_view prog.I.prog_view_decls vdef.I.view_formula in
-	    vdef.I.view_data_name<- r;	
-	    let pos = IF.pos_of_struc_formula vdef.I.view_formula in
-	    let nstab = H.create 103 in
-	    let _ = H.add nstab self { sv_info_kind = Known (CP.OType vdef.I.view_data_name);id = fresh_int ()} in
-	    let _ = collect_type_info_struc_f prog vdef.I.view_formula nstab in
-        let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) nstab pos) vdef.I.view_vars in
-	    let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in
-	    let _ = H.clear nstab in
-        let _ = vdef.I.view_typed_vars <- typed_vars in*)
-	    ())
+       (* ; let r = I.data_name_of_view prog.I.prog_view_decls vdef.I.view_formula in *)
+	   (*  vdef.I.view_data_name<- r;	 *)
+	   (*  let pos = IF.pos_of_struc_formula vdef.I.view_formula in *)
+	   (*  let nstab = H.create 103 in *)
+	   (*  let _ = H.add nstab self { sv_info_kind = Known (CP.OType vdef.I.view_data_name);id = fresh_int ()} in *)
+	   (*  let _ = collect_type_info_struc_f prog vdef.I.view_formula nstab in *)
+       (*  let view_sv_vars = List.map (fun c-> trans_var (c,Unprimed) nstab pos) vdef.I.view_vars in *)
+	   (*  let typed_vars = List.map ( fun (Cpure.SpecVar (c1,c2,c3))-> (c1,c2)) view_sv_vars in *)
+	   (*  let _ = H.clear nstab in *)
+       (*  let _ = vdef.I.view_typed_vars <- typed_vars in *)
+	   (*  () *)
+    )
   else ()
 
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =

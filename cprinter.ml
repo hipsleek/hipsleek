@@ -1152,7 +1152,15 @@ let pr_list_context (ctx:list_context) =
     | FailCtx ft -> fmt_cut (); fmt_string "Bad Context: "; pr_fail_type ft; fmt_cut () 
     | SuccCtx sc -> fmt_cut (); fmt_string "Good Context: "; pr_context_list sc; fmt_cut ()
 
-    
+let pr_context_short (ctx : context) = 
+  let rec f xs = match xs with
+    | Ctx e -> [e.es_formula]
+    | OCtx (x1,x2) -> (f x1) @ (f x2) in
+  let pr_disj ls = 
+    if (List.length ls == 1) then pr_formula (List.hd ls)
+    else pr_seq "or" pr_formula_wrap ls in
+   (pr_disj (f ctx))
+
 let pr_context_list_short (ctx : context list) = 
   let rec f xs = match xs with
     | Ctx e -> [e.es_formula]
@@ -1178,6 +1186,8 @@ let pr_pair pr_1 pr_2 (a,b) =
   fmt_string "(";
   pr_1 a; fmt_string ",";
   pr_2 b; fmt_string ")"
+
+let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 
 let string_of_list_context_short (ctx:list_context): string =  poly_string_of_pr pr_list_context_short ctx
 
