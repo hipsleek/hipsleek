@@ -287,7 +287,8 @@ let rec pr_action_res a = match a with
   | Context.M_base_case_unfold -> PR.fmt_string "Mandatory base case unfold"
   | Context.M_base_case_fold -> PR.fmt_string "Mandatory base case fold"
   | Context.M_rd_lemma -> PR.fmt_string "Mandatory right distributive lemma"
-  | Context.M_lemma -> PR.fmt_string "Mandatory lemma"
+  | Context.M_lemma s -> PR.fmt_string "Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s)
+  | Context.M_Nothing_to_do -> PR.fmt_string "Nothing can be done"
   | Context.Seq_action l -> PR.pr_seq "" pr_action_res l
 
 let rec pr_node_res (e:find_node_result) =
@@ -1166,22 +1167,27 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                     | DataNode dl, DataNode dr -> Context.M_match
                     | ViewNode vl, ViewNode vr -> 
                       let l1 = [Context.M_base_case_unfold] in
-                      let l2 = 
-                          if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match;Context.M_lemma]
-                          else [Context.M_lemma] in
-                      Context.Seq_action (l1@l2)
+                      let l2 = if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match] else [] in
+                      let l3 = [Context.M_lemma None] in
+                      Context.Seq_action (l1@l2@l3)
                     | DataNode dl, ViewNode vr -> Context.Seq_action [Context.M_fold;Context.M_rd_lemma]
                     | ViewNode vl, DataNode dr -> Context.M_unfold
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
               )
-                      
-            | Context.MaterializedArg (mv,ms) -> 
-                  (match h2,rhs_node with
-                    | DataNode dl, DataNode dr -> Context.Undefined_action
-                    | ViewNode vl, ViewNode vr -> Context.Undefined_action
-                    | DataNode dl, ViewNode vr -> Context.Undefined_action
-                    | ViewNode vl, DataNode dr -> Context.Undefined_action
-                    | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
+            | Context.MaterializedArg (mv,ms) ->
+              (match h2,rhs_node with
+                | DataNode dl, _ -> Context.M_Nothing_to_do
+                | ViewNode vl, ViewNode vr -> 
+                  let a1 = (match ms with
+                    | Context.View_mater -> Context.M_unfold 
+                    | Coerc_mater s -> Context.M_lemma (Some s)) in
+                  (match mv.mater_full_flag with
+                    | true -> a1
+                    | false -> a1
+                      (*let a2 = in
+                      Context.Seq_action (a1::a2)*))
+                | ViewNode vl, DataNode dr -> Context.Undefined_action
+                | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
               )
             | Context.WArg -> Context.Undefined_action in
   let _ = print_string ((string_of_match_res (h1,h2,nl,mt)) ^ "==>" ^ (string_of_action_res r) ^ "\n") in

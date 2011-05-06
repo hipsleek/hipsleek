@@ -42,8 +42,9 @@ and action =
   | M_base_case_unfold
   | M_base_case_fold
   | M_rd_lemma
-  | M_lemma
+  | M_lemma of string Option
   | Undefined_action  
+  | M_Nothing_to_do
   | Seq_action of action list
   
 (*
