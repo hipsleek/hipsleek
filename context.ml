@@ -1,5 +1,6 @@
 open Cformula
 open Cast
+open Gen.Basic
 
 
 type match_res = (h_formula (* lhs formula - contains holes in place of matched immutable nodes/views *)
@@ -60,7 +61,7 @@ and ctx_type =
 *)
 
 (*  (resth1, anode, r_flag, phase, ctx) *)   
-let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos :  match_res list =
+let rec choose_context_x prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (Cprinter.string_of_h_formula lhs_h) ^ "\n") in *)
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
 	let eqns' = MCP.ptr_equations_without_null lhs_p in
@@ -98,6 +99,12 @@ let rec choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info 
 	  let anodes = (spatial_ctx_extract prog lhs_h paset imm) in		  
 	    anodes
       end	
+
+and choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos :  match_res list =
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in
+  Gen.Debug.ho_3 "choose_context" Cprinter.string_of_spec_var pr1 (pr_option pr2) pr_no 
+      (fun _ _ _ -> choose_context_x prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos) p lhs_h rhs_info
 
 (*
 spatial context

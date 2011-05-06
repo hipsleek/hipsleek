@@ -1920,10 +1920,10 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
   let type2 = base2.formula_base_type in
   let branches2 = base2.formula_base_branches in
   let flow2 = base2.formula_base_flow in
-  let rec process_one (ss:CF.steps) fold_rs1 = match fold_rs1 with
+  let rec process_one_x (ss:CF.steps) fold_rs1 = match fold_rs1 with
     | OCtx (c1, c2) ->
-	      let tmp1, prf1 = process_one (add_to_steps ss "left OR 4 in ante") c1 in
-	      let tmp2, prf2 = process_one  (add_to_steps ss "right OR 4 in ante") c2 in
+	      let tmp1, prf1 = process_one_x (add_to_steps ss "left OR 4 in ante") c1 in
+	      let tmp2, prf2 = process_one_x  (add_to_steps ss "right OR 4 in ante") c2 in
 	      let tmp3 = or_list_context tmp1 tmp2 in
 	      let prf3 = Prooftracer.mkOrLeft fold_rs1 (Base base2) [prf1; prf2] in 
 	      (tmp3, prf3)
@@ -1946,7 +1946,7 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
               es_evars = new_evars;
               es_unsat_flag =false;
               es_gen_impl_vars = new_impl_vars;
-              es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos} in
+              (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_conseq pos *)} in
 	      let new_ctx = (Ctx new_es) in
 	      Debug.devel_pprint ("process_fold_result: new_ctx after folding: "
 		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
@@ -1965,7 +1965,11 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
 	      Debug.devel_pprint ("process_fold_result: context at end fold: "
 		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
 		  ^ (Cprinter.string_of_list_context rest_rs)) pos;
-	      (rest_rs, prf) in
+	      (add_aux_conseq_to_result rest_rs to_conseq pos, prf) in
+  let process_one (ss:CF.steps) fold_rs1 = 
+    let pr1 = Cprinter.string_of_context  in
+    let pr2 (c,_) = Cprinter.string_of_list_context c in
+    Gen.Debug.ho_1 "process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
   match fold_rs0 with
     | FailCtx _ -> report_error no_pos ("process_fold_result: FailCtx encountered solver.ml\n")
     | SuccCtx fold_rs0 -> 
@@ -3151,13 +3155,12 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 and heap_entail_split_rhs_phases
       (prog : prog_decl) 
       (is_folding : bool) 
-      
       (ctx0 : context) 
       (conseq : formula) 
       (drop_read_phase : bool)
       pos : (list_context * proof) =
 
-  let rec helper ctx0 h p (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
+  let rec helper ctx0 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     let ctx0 = (Cformula.transform_context
     	(fun es ->
     		Ctx{es with
@@ -3178,7 +3181,7 @@ and heap_entail_split_rhs_phases
 	    (* only one phase is not emp *)
 	    heap_n_pure_entail prog is_folding  ctx0 conseq (choose_not_true_heap h1 h2 h3) p func drop_read_phase pos
       else
-	    if ((is_true h1) && (is_true h2)) then
+	    if ((is_true h1) && (is_true h2)) then (* does split_phase allow this *)
 	      let new_conseq = func h3 p in
 	      if not(contains_phase h3) then
 	        (* h3 is the only non empty phase and it does not contain any nested phases *)
@@ -5207,11 +5210,11 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 				  (* the new universal vars to be instantiated *)
 				  es_ivars = f_univ_vars @ estate.es_ivars;
 				  es_formula = new_f;
-				  es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_aux_conseq pos;
+				  (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_aux_conseq pos; *)
 				  es_must_match = true} in
 		      let new_ctx = Ctx new_estate in
 		      let res, prf = heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
-		      (res, prf)
+		      (add_aux_conseq_to_result res to_aux_conseq pos, prf)
 		    end
 	    end
 	  | _ -> (CF.mkFailCtx_in(Basic_Reason ( { 
