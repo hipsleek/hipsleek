@@ -34,6 +34,18 @@ and match_type =
   | Root
   | MaterializedArg of (mater_property*mater_source) 
   | WArg
+  
+and action = 
+  | M_match
+  | M_fold
+  | M_unfold
+  | M_base_case_unfold
+  | M_base_case_fold
+  | M_rd_lemma
+  | M_lemma
+  | Undefined_action  
+  | Seq_action of action list
+  
 (*
 and ctx_type = 
   | SpatialImm

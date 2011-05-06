@@ -258,7 +258,7 @@ let entail_hist = new entailhist
 type find_node_result =
   | Failed (* p2 (of p2::c2<V2> coming from the RHS) is not in FV(LHS) *)
   | NoMatch (* p2 \in FV(LHS), but no aliased node is found *)
-  | Match of (Context.match_res (*(h_formula * h_formula * Context.match_type * Context.phase_type option * h_formula * int)*) list) (* found p1::c1<V1> such that p1=p2 *)
+  | Match of ((Context.match_res * Context.action) list) (* found p1::c1<V1> such that p1=p2 *)
 
 let pr_mater_source ms = match ms with
   | Context.View_mater -> PR.fmt_string "view_defn_mater"
@@ -279,13 +279,24 @@ let pr_match_res ((h1,h2,lst,mt):Context.match_res) =
   pr_match_type mt;
   PR.fmt_string ")"
 
+let rec pr_action_res a = match a with
+  | Context.Undefined_action -> PR.fmt_string "Undefined_action"
+  | Context.M_match -> PR.fmt_string "Mandatory match"
+  | Context.M_fold -> PR.fmt_string "Mandatory fold"
+  | Context.M_unfold -> PR.fmt_string "Mandatory unfold"
+  | Context.M_base_case_unfold -> PR.fmt_string "Mandatory base case unfold"
+  | Context.M_base_case_fold -> PR.fmt_string "Mandatory base case fold"
+  | Context.M_rd_lemma -> PR.fmt_string "Mandatory right distributive lemma"
+  | Context.M_lemma -> PR.fmt_string "Mandatory lemma"
+  | Context.Seq_action l -> PR.pr_seq "" pr_action_res l
 
 let rec pr_node_res (e:find_node_result) =
   match e with
     | Failed -> PR.fmt_string "Failed"
     | NoMatch -> PR.fmt_string "NoMatch"
-    | Match l -> PR.pr_seq "Match" pr_match_res l
+    | Match l -> PR.pr_seq "Match" (fun (c1,c2)-> (pr_match_res c1); (pr_action_res c2)) l
 
+let string_of_action_res e = PR.poly_string_of_pr pr_action_res e
 let string_of_node_res e = PR.poly_string_of_pr pr_node_res e
 let string_of_match_res e = PR.poly_string_of_pr pr_match_res e
 
@@ -1145,37 +1156,43 @@ and find_node prog lhs_h (lhs_p : MCP.mix_formula) (ps : CP.spec_var list) pos :
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
-and process_one_match rhs_info (h1,h2,nl,mt) =
-  let _ = print_string (string_of_match_res (h1,h2,nl,mt)) in
-  let pr x = print_string (" ==> " ^ x) in
-  match rhs_info with
-    | None -> print_string "after the new strategy this should not occur \n" 
+and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
+  let r = match rhs_info with
+    | None -> print_string "after the new strategy this should not occur \n";Context.Undefined_action
     | Some (_,_,rhs_node) -> 
           match mt with 
             | Context.Root ->
                   (match h2,rhs_node with
-                    | DataNode dl, DataNode dr -> pr "mandatory match"
+                    | DataNode dl, DataNode dr -> Context.M_match
                     | ViewNode vl, ViewNode vr -> 
-                          pr "mandatory base_case unfold";
-                          if (vl.h_formula_view_name ==vl.h_formula_view_name) then
-                            pr "possibly match or lemma"
-                          else pr "mandatory lemma"                    
-                    | DataNode dl, ViewNode vr -> pr "mandatory fold or right-distr lemma"
-                    | ViewNode vl, DataNode dr -> pr "mandatory unfold"
+                      let l1 = [Context.M_base_case_unfold] in
+                      let l2 = 
+                          if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match;Context.M_lemma]
+                          else [Context.M_lemma] in
+                      Context.Seq_action (l1@l2)
+                    | DataNode dl, ViewNode vr -> Context.Seq_action [Context.M_fold;Context.M_rd_lemma]
+                    | ViewNode vl, DataNode dr -> Context.M_unfold
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
-                  ) 
+              )
                       
             | Context.MaterializedArg (mv,ms) -> 
                   (match h2,rhs_node with
-                    | DataNode dl, DataNode dr -> pr ""
-                    | ViewNode vl, ViewNode vr -> pr ""
-                    | DataNode dl, ViewNode vr -> pr ""
-                    | ViewNode vl, DataNode dr -> pr ""
+                    | DataNode dl, DataNode dr -> Context.Undefined_action
+                    | ViewNode vl, ViewNode vr -> Context.Undefined_action
+                    | DataNode dl, ViewNode vr -> Context.Undefined_action
+                    | ViewNode vl, DataNode dr -> Context.Undefined_action
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
-                  ) 
-            | Context.WArg -> pr "others" 
-                  
-
+              )
+            | Context.WArg -> Context.Undefined_action in
+  let _ = print_string ((string_of_match_res (h1,h2,nl,mt)) ^ "==>" ^ (string_of_action_res r) ^ "\n") in
+  r
+          
+and process_matches rhs_info matches =
+  let _ = print_string "\n got matches: \n" in 
+  List.map (fun c -> 
+    let act = process_one_match rhs_info c in
+    (c,act)) matches 
+          
 and find_node_one prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info pos : find_node_result =
   let pr1 x = match x with
     | None -> "None"
@@ -1189,8 +1206,7 @@ and find_node_one_x prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info po
   (* let _ = print_string("find_node_one: find match for node " ^ (Cprinter.string_of_spec_var p) ^ "\n") in *)
   (* let _ = print_string("lhs = " ^ (Cprinter.string_of_h_formula lhs_h) ^ "\n") in *)
   let matches = Context.choose_context prog lhs_h lhs_p p imm rhs_info pos in 
-  let _ = print_string "\n got matches: \n" in 
-  let _ = List.map (process_one_match rhs_info) matches in
+  let matches = process_matches rhs_info matches in
   if Gen.is_empty matches then NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Match (matches)
     (*
@@ -3023,7 +3039,7 @@ and check_one_target prog (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (t
 	  | Match (matches) ->
 	        begin
 	          match matches with
-		        | (resth1, anode, holes_list, r_flag) :: rest -> 
+		        | ((resth1, anode, holes_list, r_flag),_) :: rest -> 
 		              begin
 		                (* update the current phase *)
 			            (* crt_phase := phase; *)
@@ -3032,16 +3048,10 @@ and check_one_target prog (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (t
 		                let _ = Debug.devel_pprint ("Target match: " ^ (Cprinter.string_of_h_formula anode) ^ "\n") no_pos in
 			            begin
 			              match target_node, anode with
-			                | ViewNode ({h_formula_view_node = p1;
-					          h_formula_view_name = c1}),
-			                  ViewNode ({h_formula_view_node = p2;
-					          h_formula_view_name = c2}) when c1=c2 ->
-				                  (true)
-			                | DataNode ({h_formula_data_node = p1;
-					          h_formula_data_name = c1}),
-				                  DataNode ({h_formula_data_node = p2;
-					              h_formula_data_name = c2}) when c1=c2 ->
-				                  (true)
+			                | ViewNode ({h_formula_view_node = p1; h_formula_view_name = c1}),
+			                  ViewNode ({h_formula_view_node = p2; h_formula_view_name = c2}) when c1=c2 ->(true)
+			                | DataNode ({h_formula_data_node = p1; h_formula_data_name = c1}),
+				                DataNode ({h_formula_data_node = p2; h_formula_data_name = c2}) when c1=c2 ->(true)
 			                | _ ->	false
 			            end
 		              end
@@ -4813,23 +4823,18 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 					fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
 					fc_current_conseq = Base(rhs_b);
 					fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) (* p2 is not mentioned in LHS, failure *)
-	      | NoMatch -> begin (* p2 is mentioned in LHS, but no matching
-				                node/predicate is found *)
-		      (* let _ = print_string("no match\n") in *)
+	      | NoMatch -> begin (* p2 is mentioned in LHS, but no matching node/predicate is found *)
+              (* let _ = print_string("no match\n") in *)
 		      if is_data ln2 then begin (* fail *)
 		        (* let _ = print_string("Matching result: NoMatch -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
-
-                Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
-				^ "no aliased node for data node "
-				^ (Cprinter.string_of_h_formula ln2)
-				^ " is found in LHS\n") pos;
-                (CF.mkFailCtx_in (Continuation ( {
-					fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
-					fc_current_lhs = estate;
-					fc_prior_steps = estate.es_prior_steps;
-					fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
-					fc_current_conseq = Base(rhs_b);
-					fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) 
+            Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: no aliased node for data node " ^ (Cprinter.string_of_h_formula ln2)^ " is found in LHS\n") pos;
+            (CF.mkFailCtx_in (Continuation ( {
+                  fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
+                  fc_current_lhs = estate;
+                  fc_prior_steps = estate.es_prior_steps;
+                  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+                  fc_current_conseq = Base(rhs_b);
+                  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) 
 		      end
 		      else
 			    (* there is a continuation to try *)
@@ -4845,14 +4850,9 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 			    else
 			      (* there is no continuation to try *)
 			      begin (* attempting to fold against the base case *)
-                    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
-					^ "folding with no node on lhs: " ^ (Cprinter.string_of_spec_var p2)
-					^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) 
-					^ "\nln2:\n" ^ (Cprinter.string_of_h_formula ln2)
-					^ "\nrhs_p:\n" ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
-                    do_base_fold p2 ln2
-                        (* p2 is mentioned in LHS, p2 can be fold target *)
-                        (* var_to_fold *)
+              Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: folding with no node on lhs: " ^ (Cprinter.string_of_spec_var p2)
+              ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nln2:\n" ^ (Cprinter.string_of_h_formula ln2) ^ "\nrhs_p:\n" ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
+              do_base_fold p2 ln2 (* p2 is mentioned in LHS, p2 can be fold target var_to_fold *)
 		          end (* end of emty anodes case *)
 		    end
 	      | Match (matches) -> begin
@@ -4868,16 +4868,16 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 		      (*   (fun (x,y) -> Cprinter.string_of_list_context x) *)
 		      (*   check_aliased_node *)
 		      (*   (a,r) resth1 *)
-		      let rec check_aliased_node (anode, r_flag) resth1 : (list_context * proof) =
+		      let rec check_aliased_node (anode, r_flag) resth1 act: (list_context * proof) =
 		        match anode with 
 		          | ViewNode ({ h_formula_view_node = p1;
-				    h_formula_view_name = c1;
-				    h_formula_view_arguments = v1;
-				    h_formula_view_pos = pos1})
+                            h_formula_view_name = c1;
+                            h_formula_view_arguments = v1;
+                            h_formula_view_pos = pos1})
 		          | DataNode ({ h_formula_data_node = p1;
-				    h_formula_data_name = c1;
-				    h_formula_data_arguments = v1;
-				    h_formula_data_pos = pos1}) ->
+                            h_formula_data_name = c1;
+                            h_formula_data_arguments = v1;
+                            h_formula_data_pos = pos1}) ->
 			            if r_flag = Context.Root then begin (* matching occurs at root *)
 			              if c1 = c2 then 
 
@@ -5034,44 +5034,17 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 		      (* check_node_helper *)
  		      (*****************************************************************************************************************************************)
 		      (* check one match *)
-		      let rec check_node_helper (all_nodes : Context.match_res (*(h_formula * h_formula * Context.match_type * Context.phase_type option * h_formula * int)*) list) : (list_context * proof list) =
-		        (* let _ = print_string("check_node_helper\n") in *)
+		      let rec check_node_helper (all_nodes : (Context.match_res*Context.action) list) : (list_context * proof list) =
 		        match all_nodes with
-		          | (rest_heap, anode, holes, r_flag) :: rest ->
-			            (* let _ = print_string("check_node_helper: rest_heap = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in *)
-			            (* let _ = print_string("check_node_helper: frame = " ^ (Cprinter.string_of_h_formula frame) ^ "\n") in *)
-			            (* let _ = print_string("check_node_helper: anode = " ^ (Cprinter.string_of_h_formula anode) ^ "\n") in *)
-			            (* let _ = print_string("crt context = " ^ (Cprinter.string_of_context ctx0) ^ "\n") in *)
-
-			            (* drop read phase when needed *)
-		                (*	  let frame =
-				              (if not(imm2) then
-				              Cformula.drop_read_phase frame
-				              else frame)
-			                  in
-		                *)
-			            (* let _ = print_string("check_node_helper: frame after = " ^ (Cprinter.string_of_h_formula frame) ^ "\n") in *)
-		                (*let _ = print_string("check alias for " ^ (Cprinter.string_of_h_formula anode) ^ "and rest_heap = " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in*)
-		                let rs1, prf1 = check_aliased_node (anode, r_flag) rest_heap in
+		          | ((rest_heap, anode, holes, r_flag),act) :: rest ->
+			              let rs1, prf1 = check_aliased_node (anode, r_flag) rest_heap act in
 		                (* push the current holes in the estate *)
 		                let rs1 = Context.push_crt_holes_list_ctx rs1 holes in 
-
 		                (* update the ctx frame *)
-		                (*    let rs1 = 
-		                      if (Context.is_hole_heap_frame frame) then rs1
-		                      else Context.update_list_ctx_frame rs1 (frame, hole_id) 
-		                      in 
-		                *)		  
-                        (* let _ = print_string("the new ctx rs1 " ^ (Cprinter.string_of_list_context rs1) ^ "\n") in *)
-
-		                (* let _ = print_string("rest_aheap after check alias is " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in *)
-		                (*	let _ = print_string("result of check alias: " ^ (Cprinter.string_of_context_list rs1) ^ "\n") in *)
 		                if rest=[] then (rs1,[prf1])
 		                else  
-			              if !Globals.use_set then (* use_set denotes set of state
-						                              searching *)
+			              if !Globals.use_set then (* use_set denotes set of state searching *)
 			                let rs2,prfs2 = check_node_helper rest in
-			                (* let _ = print_string("rest_heap after check_node_helper is " ^ (Cprinter.string_of_h_formula rest_heap) ^ "\n") in *)
 			                (fold_context_left [rs1;rs2],prf1 :: prfs2)               
 			              else (rs1,[prf1])
 	              | [] -> (CF.mkFailCtx_in(Trivial_Reason "impossible here : end of check_node_helper"),[]) in
