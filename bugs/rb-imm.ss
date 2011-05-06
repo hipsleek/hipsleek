@@ -8,10 +8,17 @@ data node {
 }
 
 /* view for red-black trees */
+/* 0 - black; 1 - red */
 rb<n, cl, bh> == self = null & n=0 & bh = 1 & cl = 0 
 	or self::node<v, 1, l, r> * l::rb<nl, 0, bhl> * r::rb<nr, 0, bhr> & cl = 1 & n = 1 + nl + nr & bhl = bh & bhr = bh
 	or self::node<v, 0, l, r> * l::rb<nl, _, bhl> * r::rb<nr, _, bhr> & cl = 0 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
+
+
+/**
+ Number of black nodes in any path starting from this node.
+ The input node is NOT counted!
+ */
 
 
 /* rotation case 3 */
@@ -78,10 +85,8 @@ node case_2r(node a, node b, node c, node d)
 /* function to check if a node is red */
 bool is_red(node x)
 	
-	requires x::rb<n, cl, bh>
-	ensures x::rb<n, cl, bh> & cl = 1 & res
-		or x::rb<n, cl, bh> & cl = 0 & !res;
-
+	requires x::rb<n, cl, bh>@I
+	ensures cl = 1 & res or cl = 0 & !res;
 {
 
 	if (x == null)
@@ -96,11 +101,8 @@ bool is_red(node x)
 
 /* function to check if a node is black */
 bool is_black(node x)
-
-	requires x::rb<n, cl, bh>
-	ensures x::rb<n, cl, bh> & cl = 1 & !res
-		or x::rb<n, cl, bh> & cl = 0 & res;
-
+	requires x::rb<n, cl, bh>@I
+	ensures cl = 1 & !res or cl = 0 & res;
 {
 	if (x == null)
 		return true; 
@@ -298,7 +300,37 @@ int bh(node x)
   requires x::rb<n,cl,h>@I
   ensures res=h;
 /* TODO : implement code here */
+{
+        int r = bh_helper(x);
+        if (is_black(x))
+                return r ;
+       else
+                return r;
+}
 
+
+/**
+ Number of black nodes in any path starting from this node.
+ This node IS COUNTED if it is a black node.
+ */
+int bh_helper(node x)
+       requires x::rb<n,cl,h>@I
+       ensures  res = h ;
+//       ensures cl = 1 & res=h or cl = 0 & res = h ;
+{
+  if (x == null) {
+                return 1;
+  }
+        else {
+                 if (is_black(x)) {
+
+                        return 1 + bh_helper(x.left);
+                }
+                else {
+                        return bh_helper(x.left);
+                }
+        }
+}
 /* function to delete the smalles element in a rb and then rebalance */
 int remove_min(ref node x)
 
