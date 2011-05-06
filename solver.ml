@@ -287,7 +287,7 @@ let rec pr_action_res a = match a with
   | Context.M_base_case_unfold -> PR.fmt_string "Mandatory base case unfold"
   | Context.M_base_case_fold -> PR.fmt_string "Mandatory base case fold"
   | Context.M_rd_lemma -> PR.fmt_string "Mandatory right distributive lemma"
-  | Context.M_lemma s -> PR.fmt_string "Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s)
+  | Context.M_lemma s -> PR.fmt_string ("Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
   | Context.M_Nothing_to_do -> PR.fmt_string "Nothing can be done"
   | Context.Seq_action l -> PR.pr_seq "" pr_action_res l
 
@@ -1180,7 +1180,7 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                 | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | Context.View_mater -> Context.M_unfold 
-                    | Coerc_mater s -> Context.M_lemma (Some s)) in
+                    | Context.Coerc_mater s -> Context.M_lemma (Some s)) in
                   (match mv.mater_full_flag with
                     | true -> a1
                     | false -> a1
