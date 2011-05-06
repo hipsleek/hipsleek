@@ -42,9 +42,9 @@ let rec isabelle_of_prim_type = function
 
 (* pretty printing for spec_vars *)
 let isabelle_of_spec_var (sv : CP.spec_var) = match sv with
-  | CP.SpecVar (CP.Prim(t), v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_prim_type t ^ ")"
-  | CP.SpecVar (CP.OType(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
-	| CP.SpecVar (CP.Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
+  | CP.SpecVar (Prim(t), v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_prim_type t ^ ")"
+  | CP.SpecVar (Named(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
+	| CP.SpecVar (Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
 
 (* pretty printing for spec_vars without types *)
 (*let isabelle_of_spec_var_no_type (sv : CP.spec_var) = match sv with

@@ -33,6 +33,12 @@ and prim_type =
   | BagT of prim_type
   | List
 
+(* TODO : move typ here in future *)
+type typ =
+  | Prim of prim_type
+  | Named of ident (* named type, could be enumerated or object *)
+  | Array of (typ * int option) (* base type and optional dimension *)
+
 (*
   Data types for code gen
 *)

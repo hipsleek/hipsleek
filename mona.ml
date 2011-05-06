@@ -37,6 +37,7 @@ let rec mona_of_prim_type = function
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_prim_type i)^") set"
+  | TVar i        -> "TVar["^(string_of_int i)^"]"
   | List          -> "list"	(* lists are not supported *)
 
 
@@ -114,10 +115,10 @@ and mona_of_exp_break e0 =
   | CP.Subtract( CP.IConst(i1, _), CP.IConst(i2, _), l3) ->
       begin
         let tmp = fresh_var_name "int" 0 in
-		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
-		additional_vars := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
-		additional_vars_ := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
-        CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), l3);
+		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
+		additional_vars := CP.SpecVar(Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
+		additional_vars_ := CP.SpecVar(Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
+        CP.Var(CP.SpecVar(Prim Int, tmp, Globals.Unprimed), l3);
       end
   | CP.Add (a1, a2, l1) -> CP.Add((mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* Removed an outer recursive call to mona_of_exp_break *)
   | CP.Subtract(a1, a2, l1) -> CP.Subtract( (mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* As above *)
@@ -193,19 +194,19 @@ let hd list = match list with
 
 let string_of_type (t) =
   match t with
-  | CP.Prim Int -> "int"
-  | CP.Prim Bool -> "bool"
-  | CP.Prim Void -> "void"
-  | CP.OType c -> "otype " ^ c
+  | Prim Int -> "int"
+  | Prim Bool -> "bool"
+  | Prim Void -> "void"
+  | Named c -> "otype " ^ c
   | _ -> "smth else"
 
 
-let equal_types (t1:CP.typ) (t2:CP.typ) : bool =
+let equal_types (t1: typ) (t2: typ) : bool =
       match t1 with
-      | CP.OType _ ->
+      | Named  _ ->
 	  begin
 	    match t2 with
-	    | CP.OType _ -> true
+	    | Named _ -> true
 	    | _ -> false
 	  end
       | _ -> (t1 = t2)

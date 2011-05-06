@@ -10,13 +10,6 @@ open Globals
 type spec_var =
   | SpecVar of (typ * ident * primed)
 
-  
-and typ =
-  | Prim of prim_type
-  | OType of ident (* object type. enum type is already converted to int *)
-  | Array of typ (* An Hoa : Array whose elements are all of type typ ==> this will allow us to have higher dimensional array, but we do not handle this now *)
-  (* | BagTyp of typ *)
-
 type formula =
   | BForm of (b_formula *(formula_label option))
   | And of (formula * formula * loc)
@@ -113,7 +106,7 @@ let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
      
 (* TODO: determine correct type of an exp *)
 let rec get_exp_type (e : exp) : typ = match e with
-  | Null _ -> OType ""
+  | Null _ -> Named ""
   | Var (SpecVar (t, _, _), _) -> t
   | IConst _ -> Prim Int
   | FConst _ -> Prim Float
@@ -131,8 +124,8 @@ let rec get_exp_type (e : exp) : typ = match e with
   | ArrayAt (SpecVar (t, a, _), _, _) ->
           (* Type of a[i] is the type of the element of array a *)
           match t with
-          | Array et -> et
-          | _ -> let _ = failwith "Cpure.get_exp_type : " ^ a ^ " is not an array variable" in OType "" 
+          | Array (et,_) -> et
+          | _ -> let _ = failwith "Cpure.get_exp_type : " ^ a ^ " is not an array variable" in Named "" 
 
 (* *GLOBAL_VAR* substitutions list, used by omega.ml and ocparser.mly
  * moved here from ocparser.mly *)
@@ -154,7 +147,7 @@ let void_type = Prim Void
 
 (* free variables *)
 
-let null_var = SpecVar (OType "", "null", Unprimed)
+let null_var = SpecVar (Named "", "null", Unprimed)
 
 let flow_var = SpecVar ((Prim Int), flow , Unprimed)
 
@@ -367,11 +360,11 @@ and get_alias (e : exp) : spec_var = match e with
   | _ -> failwith ("get_alias: argument is neither a variable nor null")
 
 and is_object_var (sv : spec_var) = match sv with
-  | SpecVar (OType _, _, _) -> true
+  | SpecVar (Named _, _, _) -> true
   | _ -> false
         
 and exp_is_object_var (sv : exp) = match sv with
-  | Var(SpecVar (OType _, _, _),_) -> true
+  | Var(SpecVar (Named _, _, _),_) -> true
   | _ -> false
         
 and is_bag (e : exp) : bool = match e with
@@ -425,7 +418,7 @@ and is_float_type (t : typ) = match t with
   | _ -> false
 
 and is_object_type (t : typ) = match t with
-  | OType _ -> true
+  | Named _ -> true
   | _ -> false
 
 and should_simplify (f : formula) = match f with
@@ -942,18 +935,18 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
 
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with
   | Prim _ -> t1 = t2
-  | OType c1 -> begin match t2 with
+  | Named c1 -> begin match t2 with
 	    (* | Prim _ -> false *)
-      | OType c2 -> c1 = c2 || c1 = "" || c2 = ""
+      | Named c2 -> c1 = c2 || c1 = "" || c2 = ""
 	  | _ -> false (* An Hoa *)
 	end
-  | Array et1 -> begin match t2 with 
-	  | Array et2 -> are_same_types et1 et2
+  | Array (et1, _) -> begin match t2 with 
+	  | Array (et2, _) -> are_same_types et1 et2
 	  | _ -> false  
             end
 		
 and is_otype (t : typ) : bool = match t with
-  | OType _ -> true
+  | Named _ -> true
   | _ -> false (* | Prim _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = match t with
@@ -964,8 +957,8 @@ and name_of_type (t : typ) : ident = match t with
   | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
   | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")"
   | Prim Globals.List -> "list"
-  | OType c -> c
-  | Array et -> name_of_type et ^ "[]" (* An Hoa *)
+  | Named c -> c
+  | Array (et, _) -> name_of_type et ^ "[]" (* An Hoa *)
 
 and pos_of_exp (e : exp) = match e with
   | Null pos -> pos
@@ -1929,8 +1922,8 @@ and elim_exists (f0 : formula) : formula =
 (* pretty printing for types *)
 let rec string_of_typ = function 
   | Prim t -> string_of_prim_type t 
-  | OType ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot)
-  | Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
+  | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot)
+  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
 
 let string_of_spec_var (sv: spec_var) = match sv with
     | SpecVar (t, v, _) -> v ^ (if is_primed sv then "PRMD" else "")

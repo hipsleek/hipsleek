@@ -106,7 +106,7 @@ let inIdentSet (set : IdentSet.t) (decl : ident * I.exp option * loc) : bool =
 	@param pos position of the variables in the program 
 	@param decl an identifier declaration 
 	@return the variable declaration expression constructed from the inputs *)
-let to_var_decl (t : I.typ) (pos : loc) (decl : ident * I.exp option * loc) : I.exp_var_decl =
+let to_var_decl (t : typ) (pos : loc) (decl : ident * I.exp option * loc) : I.exp_var_decl =
   { I.exp_var_decl_type = t; I.exp_var_decl_decls = [decl]; I.exp_var_decl_pos = pos }
 
   

@@ -147,7 +147,16 @@ let rec string_of_formula_exp = function
                 | Primed -> "'["
                 | Unprimed -> "[") 
           ^ (string_of_formula_exp i) ^ "]"
- | _ -> "bag constraint"  
+  | P.Bag (el, l)		-> "Bag("^(string_of_formula_exp_list el) ^ ")"
+  | P.BagUnion (el, l)		-> "BagUnion("^(string_of_formula_exp_list el) ^ ")"
+  | P.BagIntersect (el, l)		-> "BagIntersect("^(string_of_formula_exp_list el) ^ ")"
+  | P.BagDiff (e1, e2, l)         -> "BagDiff(" ^ (string_of_formula_exp e1) ^ "," ^ (string_of_formula_exp e2) ^ ")"
+ (* | _ -> "bag constraint"   *)
+
+  (* | Bag of (exp list * loc) *)
+  (* | BagUnion of (exp list * loc) *)
+  (* | BagIntersect of (exp list * loc) *)
+  (* | BagDiff of (exp * exp * loc) *)
 
 (* pretty printing for a list of pure formulae *)
 and string_of_formula_exp_list l = match l with 
@@ -155,14 +164,19 @@ and string_of_formula_exp_list l = match l with
   | h::[]                      -> string_of_formula_exp h
   | h::t                       -> (string_of_formula_exp h) ^ ", " ^ (string_of_formula_exp_list t)
 ;;
-  
+let string_of_id (id,p) = id ^ (match p with 
+      | Primed    -> "#'" 
+      | Unprimed  -> "" )
+;;
+   
 (* pretty printing for boolean constraints *)
 let string_of_b_formula = function 
   | P.BConst (b,l)              -> if b <> true then string_of_bool b else ""
-  | P.BVar (x, l)               -> (match x with 
-    |(id, p) -> id ^ (match p with 
-      | Primed    -> "#'" 
-      | Unprimed  -> "" ))
+  | P.BVar (x, l)               -> string_of_id x
+(* (match x with  *)
+(*     |(id, p) -> id ^ (match p with  *)
+(*       | Primed    -> "#'"  *)
+(*       | Unprimed  -> "" )) *)
   | P.Lt (e1, e2, l)            -> if need_parenthesis e1 
                                    then if need_parenthesis e2 then "(" ^ (string_of_formula_exp e1) ^ ") < (" ^ (string_of_formula_exp e2) ^ ")"
                                                                else "(" ^ (string_of_formula_exp e1) ^ ") < " ^ (string_of_formula_exp e2)
@@ -196,8 +210,21 @@ let string_of_b_formula = function
   | P.RelForm (r, args, _) ->
           (* An Hoa : relations *)
           r ^ "(" ^ (String.concat "," (List.map string_of_formula_exp args)) ^ ")"
-  | _ -> "bag constraint"
+  | P.BagIn (i, e , l) -> "BagIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
+  | P.BagNotIn (i, e , l) -> "BagNotIn("^(string_of_id i)^","^(string_of_formula_exp e)^")"
+  | P.BagMin (i1, i2 , l) -> "BagMin("^(string_of_id i1)^","^(string_of_id i2)^")"
+  | P.BagMax (i1, i2 , l) -> "BagMax("^(string_of_id i1)^","^(string_of_id i2)^")"
+  | P.BagSub (e1, e2 , l) -> "BagSub("^(string_of_formula_exp e1)^","^(string_of_formula_exp e2)^")"
+   (* | _ -> "bag constraint" *)
 ;;
+
+(*  | BagIn of ((ident * primed) * exp * loc)
+  | BagNotIn of ((ident * primed) * exp * loc)
+  | BagSub of (exp * exp * loc)
+  | BagMin of ((ident * primed) * (ident * primed) * loc)
+  | BagMax of ((ident * primed) * (ident * primed) * loc)	
+	  (* lists and list formulae *)
+*)
 
 let concat_string_list_string strings =
     ""

@@ -36,9 +36,9 @@ let coq_of_spec_var (sv : CP.spec_var) = match sv with
 
 let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (t, _, _) -> begin match t with
-    | CP.Prim List -> "list Z"
-    | _ -> "Z"
-	end
+        | Prim List -> "list Z"
+        | _ -> "Z"
+  end
 
 (*----------------------------------*)
 (* checking if exp contains bags *)

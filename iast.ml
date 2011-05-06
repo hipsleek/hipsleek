@@ -11,12 +11,7 @@ module P = Ipure
 module Err = Error
 module CP = Cpure
 
-type typ =
-  | Prim of prim_type
-  | Named of ident (* named type, could be enumerated or object *)
-  | Array of (typ * int option) (* base type and optional dimension *)
-
-and typed_ident = (typ * ident)
+type typed_ident = (typ * ident)
 
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
@@ -45,7 +40,7 @@ and view_decl = { view_name : ident;
 		  view_vars : ident list;
 		  view_labels : branch_label list;
 		  view_modes : mode list;
-		  mutable view_typed_vars : (CP.typ * ident) list;
+		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
 		  try_case_inference: bool}

@@ -10,7 +10,7 @@ module Err = Error
 module CP = Cpure
 module MCP = Mcpure
 
-type typed_ident = (CP.typ * ident)
+type typed_ident = (typ * ident)
 
 type t_formula = (* type constraint *)
 	(* commented out on 09.06.08 : we have decided to remove for now the type information related to the OO extension
@@ -1568,15 +1568,15 @@ and view_node_types (f:formula):ident list =
   Other utilities.
 *)
 
-and get_var_type v (f: formula): (CP.typ*bool) = 
+and get_var_type v (f: formula): (typ * bool) = 
 	let fv_list = fv f in
 	let res_list = CP.remove_dups_svl (List.filter (fun c-> ((String.compare v (CP.name_of_spec_var c))==0)) fv_list) in
 	match List.length res_list with
-	| 0 -> (CP.Prim Void,false)
+	| 0 -> (Prim Void,false)
 	| 1 -> (CP.type_of_spec_var (List.hd res_list),true)
 	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "could not find a coherent "^v^" type"}
 
-and get_result_type (f: formula): (CP.typ*bool) = get_var_type res f
+and get_result_type (f: formula): (typ * bool) = get_var_type res f
 
 	
 and disj_count (f0 : formula) = match f0 with
