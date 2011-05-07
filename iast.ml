@@ -885,7 +885,7 @@ and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list
   else (dl,el)
 
 and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
-  let vl = List.map (fun v -> v.view_name) view_decls in
+  (*let vl = List.map (fun v -> v.view_name) view_decls in*)
   let dl = List.map (fun v -> v.data_name) data_decls in
   let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
   let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
@@ -909,7 +909,7 @@ and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
     else true in
   let check a1 a2 c = 
     let pr (_,a,_) = string_of_ident_list a in
-    Gen.Debug.ho_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in 
+    Gen.Debug.no_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in 
   let change = List.fold_right2 check r view_ans false in 
   if change then fixpt_data_name_x r
   else r

@@ -185,7 +185,7 @@ let prune_branches_subsume prog lhs_node rhs_node =
       | None-> "None"
       | Some p -> Cprinter.string_of_pure_formula p) in
   let pr = Cprinter.string_of_h_formula in
-  Gen.Debug.ho_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
+  Gen.Debug.no_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
 
   
 let heap_entail_agressive_prunning (crt_heap_entailer:'a -> 'b) (prune_fct:'a -> 'a) (res_checker:'b-> bool) (argument:'a) :'b =
@@ -289,7 +289,8 @@ let rec pr_action_res a = match a with
   | Context.M_rd_lemma -> PR.fmt_string "Mandatory right distributive lemma"
   | Context.M_lemma s -> PR.fmt_string ("Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
   | Context.M_Nothing_to_do -> PR.fmt_string "Nothing can be done"
-  | Context.Seq_action l -> PR.pr_seq "" pr_action_res l
+  | Context.Seq_action l -> PR.fmt_string "seq:"; PR.pr_seq "" pr_action_res l
+  | Context.Search_action l -> PR.fmt_string "search:"; PR.pr_seq "" pr_action_res l
 
 let rec pr_node_res (e:find_node_result) =
   match e with
@@ -1166,11 +1167,12 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                   (match h2,rhs_node with
                     | DataNode dl, DataNode dr -> Context.M_match
                     | ViewNode vl, ViewNode vr -> 
-                      let l1 = [Context.M_base_case_unfold] in
+                      let l1 = Context.M_base_case_unfold in
                       let l2 = if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match] else [] in
                       let l3 = [Context.M_lemma None] in
-                      Context.Seq_action (l1@l2@l3)
-                    | DataNode dl, ViewNode vr -> Context.Seq_action [Context.M_fold;Context.M_rd_lemma]
+                      let src = Context.Search_action (l2@l3) in
+                      Context.Seq_action [l1;src]
+                    | DataNode dl, ViewNode vr -> Context.Search_action [Context.M_fold;Context.M_rd_lemma]
                     | ViewNode vl, DataNode dr -> Context.M_unfold
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
               )
@@ -1185,19 +1187,20 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                     | true -> a1
                     | false -> a1
                       (*let a2 = in
-                      Context.Seq_action (a1::a2)*))
+                      Context.Search_action (a1::a2)*))
                 | ViewNode vl, DataNode dr -> Context.Undefined_action
                 | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
               )
             | Context.WArg -> Context.Undefined_action in
-  let _ = print_string ((string_of_match_res (h1,h2,nl,mt)) ^ "==>" ^ (string_of_action_res r) ^ "\n") in
   r
-          
+  
+and process_matches_x rhs_info matches  = List.map (fun c -> (c,process_one_match rhs_info c)) matches 
+    
 and process_matches rhs_info matches =
-  let _ = print_string "\n got matches: \n" in 
-  List.map (fun c -> 
-    let act = process_one_match rhs_info c in
-    (c,act)) matches 
+  let pr1 x = match x with | None -> "None" |Some (_,_,rn)-> ("Some " ^ Cprinter.string_of_h_formula rn) in
+  let pr2 x = PR.poly_string_of_pr (Cprinter.pr_seq "" (fun (c1,c2) -> pr_match_res c1;Cprinter.fmt_string "==>"; pr_action_res c2)) x in
+  Gen.Debug.ho_1 "process_matches" pr1 pr2 (fun _ -> process_matches_x rhs_info matches) rhs_info
+  
           
 and find_node_one prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info pos : find_node_result =
   let pr1 x = match x with
@@ -1428,7 +1431,7 @@ and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) 
 and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (pos : loc) : formula =
   (* unfold_x prog f v already_unsat pos *)
   let pr = Cprinter.string_of_formula in
-  Gen.Debug.ho_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v already_unsat pos) already_unsat f
+  Gen.Debug.no_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v already_unsat pos) already_unsat f
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (pos : loc) : formula = match f with
   | Base ({ formula_base_heap = h;
@@ -2131,7 +2134,7 @@ and unsat_base_x prog (sat_subno:  int ref) f  : bool=
 
 and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool = 
   (*unsat_base_x prog sat_subno f*)
-  Gen.Debug.ho_1 "unsat_base" 
+  Gen.Debug.no_1 "unsat_base" 
       Cprinter.string_of_formula string_of_bool
       (fun _ -> unsat_base_x prog sat_subno f) f
       
@@ -2139,7 +2142,7 @@ and unsat_base_nth(*_debug*) n prog (sat_subno:  int ref) f  : bool =
 and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   let pr1 = Cprinter.string_of_entail_state in
   let pr2 = Cprinter.string_of_context in
-  Gen.Debug.ho_1 "elim_unsat_es_x" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
+  Gen.Debug.no_1 "elim_unsat_es_x" pr1 pr2 (fun _ -> elim_unsat_es_x prog sat_subno es) es
       
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
@@ -4614,7 +4617,7 @@ and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:i
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr p = pr_pair pr_svl string_of_bool p in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.ho_3(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
+  Gen.Debug.no_3(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
       (fun _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2
 
 (* this helper does not seem to eliminate anything *)
