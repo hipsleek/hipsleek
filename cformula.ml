@@ -3909,3 +3909,29 @@ and add_origs_to_node_struc (v:string) (e : struc_formula) origs =
   let f=(f_e_f,f_f,f_h_f,(f_p_t1,f_p_t2,f_p_t3,f_p_t4,f_p_t5)) in
     transform_struc_formula f e
 
+and add_to_aux_conseq lctx to_aux_conseq pos =
+  match lctx with
+    | FailCtx _ -> lctx
+    | SuccCtx cl ->
+      let new_cl = List.map (fun c ->
+      (transform_context
+    	(fun es ->
+    		Ctx{es with
+    		    (* add to the aux conseq *)
+    		    es_aux_conseq = CP.mkAnd es.es_aux_conseq to_aux_conseq pos;
+    		})) c) cl
+      in SuccCtx(new_cl)
+
+and add_to_subst lctx r_subst l_subst =
+  match lctx with
+    | FailCtx _ -> lctx
+    | SuccCtx cl ->
+      let new_cl = List.map (fun c ->
+      (transform_context
+    	(fun es ->
+    		Ctx{es with
+    		    (* add to the substitution list *)
+		    es_subst = ((fst es.es_subst)@r_subst, (snd es.es_subst)@l_subst);
+    		})) c) cl
+      in SuccCtx(new_cl)
+    

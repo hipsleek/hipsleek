@@ -1965,7 +1965,7 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
 	      Debug.devel_pprint ("process_fold_result: context at end fold: "
 		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
 		  ^ (Cprinter.string_of_list_context rest_rs)) pos;
-	      (add_aux_conseq_to_result rest_rs to_conseq pos, prf) in
+	      (add_to_aux_conseq rest_rs to_conseq pos, prf) in
   let process_one (ss:CF.steps) fold_rs1 = 
     let pr1 = Cprinter.string_of_context  in
     let pr2 (c,_) = Cprinter.string_of_list_context c in
@@ -3161,13 +3161,13 @@ and heap_entail_split_rhs_phases
       pos : (list_context * proof) =
 
   let rec helper ctx0 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
-    let ctx0 = (Cformula.transform_context
-    	(fun es ->
-    		Ctx{es with
-    			(* reset the substitution list *)
-    		    es_subst = ([], []);
-    		})) ctx0
-    in
+    (* let ctx0 = (Cformula.transform_context *)
+    (* 	(fun es -> *)
+    (* 		Ctx{es with *)
+    (* 			(\* reset the substitution list *\) *)
+    (* 		    es_subst = ([], []); *)
+    (* 		})) ctx0 *)
+    (* in *)
 
     let h1, h2, h3 = split_phase(*_debug_rhs*) h in
     if(is_true h1) && (is_true h2) && (is_true h3) then
@@ -4595,7 +4595,7 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
         es_heap = new_consumed;
         es_residue_pts = n_es_res;
         es_success_pts = n_es_succ; 
-		es_subst = ((fst estate.es_subst)@r_subs, (snd estate.es_subst)@l_sub);
+		(* es_subst = ((fst estate.es_subst)@r_subs, (snd estate.es_subst)@l_sub); *)
 	} in
     (* let new_subst = (obtain_subst expl_inst) in *)
     (* apply the explicit instantiations to the consequent *)
@@ -4608,7 +4608,7 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
     Debug.devel_pprint ("do_match (after): RHS:"
 	^ (Cprinter.string_of_formula new_conseq)) pos;
     let res_es1, prf1 = (*heap_entail_split_rhs_phases*) heap_entail_conjunct prog is_folding  new_ctx new_conseq pos in
-    (res_es1,prf1)
+    (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   Gen.Debug.no_2 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
@@ -5214,7 +5214,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 				  es_must_match = true} in
 		      let new_ctx = Ctx new_estate in
 		      let res, prf = heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
-		      (add_aux_conseq_to_result res to_aux_conseq pos, prf)
+		      (add_to_aux_conseq res to_aux_conseq pos, prf)
 		    end
 	    end
 	  | _ -> (CF.mkFailCtx_in(Basic_Reason ( { 
