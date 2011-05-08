@@ -2468,10 +2468,23 @@ and moving_ivars_to_evars (estate:entail_state) (anode:h_formula) : entail_state
     let (removed_ivars,remaining_ivars) = List.partition (fun v -> CP.mem v arg_vars) estate.es_ivars in
     {estate with es_evars = estate.es_evars@removed_ivars; es_ivars = remaining_ivars; } 
 
-and set_context_must_match (ctx : context) : context = match ctx with 
-  | Ctx (es) -> Ctx(set_estate_must_match es)
-  | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2))
+(* and set_context_must_match (ctx : context) : context = match ctx with  *)
+(*   | Ctx (es) -> Ctx(set_estate_must_match es) *)
+(*   | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2)) *)
 
+and set_context_must_match (ctx : context) : context = 
+  set_context (fun es -> {es with es_must_match = true}) ctx
+
+and set_estate f (es: entail_state) : entail_state = 	
+	f es 
+
+and set_context f (ctx : context) : context = match ctx with 
+  | Ctx (es) -> Ctx(set_estate f es)
+  | OCtx (ctx1, ctx2) -> OCtx((set_context f ctx1), (set_context f ctx2))
+
+and set_list_context f (ctx : list_context) : list_context = match ctx with
+  | FailCtx f -> ctx
+  | SuccCtx l -> let nl = List.map (set_context f) l in SuccCtx nl
 
 and estate_of_context (ctx : context) (pos : loc) = match ctx with
   | Ctx es -> es

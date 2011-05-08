@@ -1166,39 +1166,39 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                   (match h2,rhs_node with
                     | DataNode dl, DataNode dr -> Context.M_match
                     | ViewNode vl, ViewNode vr -> 
-                      let l1 = [Context.M_base_case_unfold] in
-                      let l2 = if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match] else [] in
-                      let l3 = [Context.M_lemma None] in
-                      Context.Seq_action (l1@l2@l3)
+                          let l1 = [Context.M_base_case_unfold] in
+                          let l2 = if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match] else [] in
+                          let l3 = [Context.M_lemma None] in
+                          Context.Seq_action (l1@l2@l3)
                     | DataNode dl, ViewNode vr -> Context.Seq_action [Context.M_fold;Context.M_rd_lemma]
                     | ViewNode vl, DataNode dr -> Context.M_unfold
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
-              )
+                  )
             | Context.MaterializedArg (mv,ms) ->
-              (match h2,rhs_node with
-                | DataNode dl, _ -> Context.M_Nothing_to_do
-                | ViewNode vl, ViewNode vr -> 
-                  let a1 = (match ms with
-                    | Context.View_mater -> Context.M_unfold 
-                    | Context.Coerc_mater s -> Context.M_lemma (Some s)) in
-                  (match mv.mater_full_flag with
-                    | true -> a1
-                    | false -> a1
-                      (*let a2 = in
-                      Context.Seq_action (a1::a2)*))
-                | ViewNode vl, DataNode dr -> Context.Undefined_action
-                | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
-              )
+                  (match h2,rhs_node with
+                    | DataNode dl, _ -> Context.M_Nothing_to_do
+                    | ViewNode vl, ViewNode vr -> 
+                          let a1 = (match ms with
+                            | Context.View_mater -> Context.M_unfold 
+                            | Context.Coerc_mater s -> Context.M_lemma (Some s)) in
+                          (match mv.mater_full_flag with
+                            | true -> a1
+                            | false -> a1
+                                  (*let a2 = in
+                                    Context.Seq_action (a1::a2)*))
+                    | ViewNode vl, DataNode dr -> Context.Undefined_action
+                    | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
+                  )
             | Context.WArg -> Context.Undefined_action in
   let _ = print_string ((string_of_match_res (h1,h2,nl,mt)) ^ "==>" ^ (string_of_action_res r) ^ "\n") in
   r
-          
+      
 and process_matches rhs_info matches =
   let _ = print_string "\n got matches: \n" in 
   List.map (fun c -> 
-    let act = process_one_match rhs_info c in
-    (c,act)) matches 
-          
+      let act = process_one_match rhs_info c in
+      (c,act)) matches 
+      
 and find_node_one prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info pos : find_node_result =
   let pr1 x = match x with
     | None -> "None"
@@ -2901,10 +2901,12 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) conseq pos : (list
 	        else
 	          (filter_set rs1, prf1)
     | _ -> begin
-        Debug.devel_pprint ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases") pos;
         let r1,p1 =
 	      if !Globals.allow_imm (*(contains_immutable_ctx ctx) or (contains_immutable conseq)*) then
-	        heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
+            begin
+              Debug.devel_pprint ("heap_entail_conjunct_lhs: invoking heap_entail_split_rhs_phases") pos;
+	          heap_entail_split_rhs_phases prog is_folding  ctx conseq false pos     
+            end
 	      else
 	        heap_entail_conjunct prog is_folding  ctx conseq pos     
         in
@@ -3061,7 +3063,7 @@ and check_one_target prog (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (t
 			                | ViewNode ({h_formula_view_node = p1; h_formula_view_name = c1}),
 			                  ViewNode ({h_formula_view_node = p2; h_formula_view_name = c2}) when c1=c2 ->(true)
 			                | DataNode ({h_formula_data_node = p1; h_formula_data_name = c1}),
-				                DataNode ({h_formula_data_node = p2; h_formula_data_name = c2}) when c1=c2 ->(true)
+				                  DataNode ({h_formula_data_node = p2; h_formula_data_name = c2}) when c1=c2 ->(true)
 			                | _ ->	false
 			            end
 		              end
@@ -4062,7 +4064,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
       let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
       let tmp2 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h0, xpure_lhs_h0_b)) true in
       let tmp3 = MCP.merge_mems m_lhs (MCP.combine_mix_branch branch_id (xpure_lhs_h1, xpure_lhs_h1_b)) true in
-      let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars@estate.es_gen_impl_vars in
+      let exist_vars = estate.es_evars@estate.es_gen_expl_vars@estate.es_ivars(* @estate.es_gen_impl_vars *) in
       let new_ante0, new_conseq0 = heap_entail_build_mix_formula_check exist_vars tmp2 rhs_p pos in
       let new_ante1, new_conseq1 = heap_entail_build_mix_formula_check exist_vars tmp3 rhs_p pos in
 	  (* 26.03.2009 simplify the pure part *) 		 
@@ -4836,14 +4838,14 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
               (* let _ = print_string("no match\n") in *)
 		      if is_data ln2 then begin (* fail *)
 		        (* let _ = print_string("Matching result: NoMatch -> setting continuation to " ^ (Cprinter.string_of_formula (Base(rhs_b))) ^ "\n") in *)
-            Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: no aliased node for data node " ^ (Cprinter.string_of_h_formula ln2)^ " is found in LHS\n") pos;
-            (CF.mkFailCtx_in (Continuation ( {
-                  fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
-                  fc_current_lhs = estate;
-                  fc_prior_steps = estate.es_prior_steps;
-                  fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
-                  fc_current_conseq = Base(rhs_b);
-                  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) 
+                Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: no aliased node for data node " ^ (Cprinter.string_of_h_formula ln2)^ " is found in LHS\n") pos;
+                (CF.mkFailCtx_in (Continuation ( {
+                    fc_message = "failed to find a match in conseq for "^Cprinter.string_of_h_formula(ln2);
+                    fc_current_lhs = estate;
+                    fc_prior_steps = estate.es_prior_steps;
+                    fc_orig_conseq = struc_formula_of_formula conseq pos; (* estate.es_orig_conseq; *)
+                    fc_current_conseq = Base(rhs_b);
+                    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), NoAlias) 
 		      end
 		      else
 			    (* there is a continuation to try *)
@@ -4859,9 +4861,9 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 			    else
 			      (* there is no continuation to try *)
 			      begin (* attempting to fold against the base case *)
-              Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: folding with no node on lhs: " ^ (Cprinter.string_of_spec_var p2)
-              ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nln2:\n" ^ (Cprinter.string_of_h_formula ln2) ^ "\nrhs_p:\n" ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
-              do_base_fold p2 ln2 (* p2 is mentioned in LHS, p2 can be fold target var_to_fold *)
+                    Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: folding with no node on lhs: " ^ (Cprinter.string_of_spec_var p2)
+                    ^ "\ncontext:\n" ^ (Cprinter.string_of_context ctx0) ^ "\nln2:\n" ^ (Cprinter.string_of_h_formula ln2) ^ "\nrhs_p:\n" ^ (Cprinter.string_of_mix_formula rhs_p)) pos;
+                    do_base_fold p2 ln2 (* p2 is mentioned in LHS, p2 can be fold target var_to_fold *)
 		          end (* end of emty anodes case *)
 		    end
 	      | Match (matches) -> begin
@@ -4880,13 +4882,13 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 		      let rec check_aliased_node (anode, r_flag) resth1 act: (list_context * proof) =
 		        match anode with 
 		          | ViewNode ({ h_formula_view_node = p1;
-                            h_formula_view_name = c1;
-                            h_formula_view_arguments = v1;
-                            h_formula_view_pos = pos1})
+                    h_formula_view_name = c1;
+                    h_formula_view_arguments = v1;
+                    h_formula_view_pos = pos1})
 		          | DataNode ({ h_formula_data_node = p1;
-                            h_formula_data_name = c1;
-                            h_formula_data_arguments = v1;
-                            h_formula_data_pos = pos1}) ->
+                    h_formula_data_name = c1;
+                    h_formula_data_arguments = v1;
+                    h_formula_data_pos = pos1}) ->
 			            if r_flag = Context.Root then begin (* matching occurs at root *)
 			              if c1 = c2 then 
 
@@ -5046,7 +5048,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 		      let rec check_node_helper (all_nodes : (Context.match_res*Context.action) list) : (list_context * proof list) =
 		        match all_nodes with
 		          | ((rest_heap, anode, holes, r_flag),act) :: rest ->
-			              let rs1, prf1 = check_aliased_node (anode, r_flag) rest_heap act in
+			            let rs1, prf1 = check_aliased_node (anode, r_flag) rest_heap act in
 		                (* push the current holes in the estate *)
 		                let rs1 = Context.push_crt_holes_list_ctx rs1 holes in 
 		                (* update the ctx frame *)
@@ -5570,38 +5572,47 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
   let (_,rhs_p,rhs_t,rhs_fl,rhs_br) = CF.extr_formula_base rhs_b in
   (*let _ = print_string("right coercion\n") in*)
   let f = mkBase resth2 rhs_p rhs_t rhs_fl [] pos in
-  let _ = Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: "
-  ^ "right_coercion: c2 = "
+  let _ = Debug.devel_pprint ("do_right_coercion : c2 = "
   ^ c2 ^ "\n") pos in
   (* if is_coercible ln2 then *)
   let ok, new_rhs = rewrite_coercion prog estate ln2 f coer lhs_b rhs_b lhs_b false pos in
   if (is_coercible ln2)&&ok  then begin
-	let new_ctx = SuccCtx [(set_context_must_match ctx0)] in
+    (* need to make implicit var become explicit *)
+    let vl = Gen.BList.intersect_eq CP.eq_spec_var estate.es_gen_impl_vars (h_fv ln2) in
+    let new_iv = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars vl in
+    let _ = if not(vl==[]) then Debug.devel_pprint ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n") pos in
+    let nctx = set_context (fun es -> {es with es_must_match = true;
+        es_gen_impl_vars = new_iv; es_gen_expl_vars =  (es.es_gen_expl_vars@vl)}) ctx0 in
+	let new_ctx = SuccCtx [nctx] (* (set_context_must_match ctx0)] *) in
 	let res, tmp_prf = heap_entail prog is_folding new_ctx new_rhs pos in
+    let res = set_list_context (fun es -> {es with es_must_match = estate.es_must_match;
+      es_gen_impl_vars = estate.es_gen_impl_vars; es_gen_expl_vars =  estate.es_gen_expl_vars}) res in
 	let prf = mkCoercionRight ctx0 conseq coer.coercion_head
 	  coer.coercion_body tmp_prf  coer.coercion_name
 	in
 	(res, [prf])
-  end else (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
-  fc_current_lhs = estate;
-  fc_prior_steps = estate.es_prior_steps;
-  fc_orig_conseq = estate.es_orig_conseq;
-  fc_current_conseq = CF.formula_of_heap HFalse pos;
-  fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
-    (* else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application"; *)
-    (* fc_current_lhs = estate; *)
-    (* fc_prior_steps = estate.es_prior_steps; *)
-    (* fc_orig_conseq = estate.es_orig_conseq; *)
-    (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
-    (* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])  *)
-    (*************************************************************************************************************************
-                                                                                                                              05.06.2008:
-                                                                                                                              Utilities for existential quantifier elimination:
-                                                                                                                              - before we were only searching for substitutions of the form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
-                                                                                                                              - now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part
-                                                                                                                              (due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
-                                                                                                                              - also check that v1 is not contained in FV(exp2)
-    *************************************************************************************************************************)
+  end else 
+    let _ = Debug.devel_pprint ("do_right_coercion :  " ^ c2 ^ "failed \n") pos in
+    (CF.mkFailCtx_in(Basic_Reason ( {fc_message ="failed right coercion application";
+    fc_current_lhs = estate;
+    fc_prior_steps = estate.es_prior_steps;
+    fc_orig_conseq = estate.es_orig_conseq;
+    fc_current_conseq = CF.formula_of_heap HFalse pos;
+    fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])
+        (* else (CF.mkFailCtx_in(Basic_Reason ({fc_message ="failed right coercion application"; *)
+        (* fc_current_lhs = estate; *)
+        (* fc_prior_steps = estate.es_prior_steps; *)
+        (* fc_orig_conseq = estate.es_orig_conseq; *)
+        (* fc_current_conseq = CF.formula_of_heap HFalse pos; *)
+        (* fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), [])  *)
+        (*************************************************************************************************************************
+                                                                                                                                  05.06.2008:
+                                                                                                                                  Utilities for existential quantifier elimination:
+                                                                                                                                  - before we were only searching for substitutions of the form v1 = v2 and then substitute ex v1. P(v1) --> P(v2)
+                                                                                                                                  - now, we want to be more aggressive and search for substitutions of the form v1 = exp2; however, we can only apply these substitutions to the pure part
+                                                                                                                                  (due to the way shape predicates are recorded --> root pointer and args are suppose to be spec vars)
+                                                                                                                                  - also check that v1 is not contained in FV(exp2)
+        *************************************************************************************************************************)
 
 (* apply elim_exist_exp_loop until no change *)
 and elim_exists_exp (f0 : formula) : (formula) =
