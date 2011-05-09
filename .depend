@@ -44,8 +44,6 @@
 ./env.cmx: iast.cmx globals.cmx gen.cmx cast.cmx
 ./error.cmo: globals.cmo
 ./error.cmx: globals.cmx
-./fact.cmo:
-./fact.cmx:
 ./gEntailmentList.cmo: gUtil.cmo gProcList.cmo
 ./gEntailmentList.cmx: gUtil.cmx gProcList.cmx
 ./gLogViewWindow.cmo: gen.cmo gUtil.cmo
@@ -138,10 +136,6 @@
 ./ocparser.cmx: globals.cmx error.cmx cpure.cmx
 ./old-cprinter.cmo: globals.cmo gen.cmo cpure.cmo cformula.cmo cast.cmo
 ./old-cprinter.cmx: globals.cmx gen.cmx cpure.cmx cformula.cmx cast.cmx
-./old-sparser.cmo: sleekcommons.cmo ipure.cmo iformula.cmo iast.cmo \
-    globals.cmo
-./old-sparser.cmx: sleekcommons.cmx ipure.cmx iformula.cmx iast.cmx \
-    globals.cmx
 ./old_util.cmo: globals.cmo error.cmo
 ./old_util.cmx: globals.cmx error.cmx
 ./omega.cmo: procutils.cmo ocparser.cmo oclexer.cmo globals.cmo gen.cmo \
