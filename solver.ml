@@ -5142,7 +5142,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
     let coer_lhs = CF.subst tmp_rho coer_lhs in
     let coer_rhs = CF.subst tmp_rho coer_rhs in
     let lhs_heap, lhs_guard,lhs_fl, lhs_branches, _  = split_components coer_lhs in
-    let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) true true lhs_guard in
+    let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in
     match node, lhs_heap with
 	  | ViewNode ({ h_formula_view_node = p1;
 		h_formula_view_name = c1;
@@ -5275,7 +5275,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
   let coer_lhs = coer.coercion_head in
   let coer_rhs = coer.coercion_body in
   let lhs_heap, lhs_guard, lhs_flow, lhs_branches, _ = split_components coer_lhs in
-  let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) true false lhs_guard in  (* TODO : check with_dupl, with_inv *)
+  let lhs_guard = MCP.fold_mem_lst (CP.mkTrue no_pos) false false (* true true *) lhs_guard in  (* TODO : check with_dupl, with_inv *)
   match node, lhs_heap with
     | ViewNode ({ h_formula_view_node = p1;
       h_formula_view_name = c1;
@@ -5589,7 +5589,7 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
 	let new_ctx = SuccCtx [nctx] (* (set_context_must_match ctx0)] *) in
 	let res, tmp_prf = heap_entail prog is_folding new_ctx new_rhs pos in
     let res = set_list_context (fun es -> {es with es_must_match = estate.es_must_match;
-      es_gen_impl_vars = estate.es_gen_impl_vars; es_gen_expl_vars =  estate.es_gen_expl_vars}) res in
+      (* es_gen_impl_vars = estate.es_gen_impl_vars;  *)es_gen_expl_vars =  estate.es_gen_expl_vars}) res in
 	let prf = mkCoercionRight ctx0 conseq coer.coercion_head
 	  coer.coercion_body tmp_prf  coer.coercion_name
 	in
