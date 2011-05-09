@@ -12,9 +12,24 @@ lemma self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>
 // valid
 
 //checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- (exists n,p1: x::lseg<n, p1> & n = 8 & p1=p).
+
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> & n = 6.
 checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> & n = 7.
-// valid : after lemma folding fixed
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, r> & n = 6.
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> & n = 8.
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, r> & n = 8.
+// fail for --imm & --eps
 //print residue.
+
+//checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> .
+// valid for --eps and valid for --imm
+// remove guard of inv0
+// add other guards to RHS for proving since split-RHS_stage do not have info
+
+// x::ls<n,r> <-- x::node<..,q>*q::ls<n-1,r> & n>0
+
+// x::ls<n,r> & n=a+b & a>=0 & b>=0 <-- x::ls<a,q>*q::ls<b,r> 
+// x::ls<n,r> <-- x::ls<a,q>*q::ls<b,r>  & n=a+b & a>=0 & b>=0
 
 //checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, r> & n = 6.
 // valid : after lemma folding fixed
