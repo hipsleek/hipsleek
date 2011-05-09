@@ -36,6 +36,10 @@ struct
 
   let pr_no x = "?"
 
+  let pr_option f x = match x with
+    | None -> "None"
+    | Some v -> "Some("^(f v)^")"
+
   let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
 
   let pr_lst f xs = String.concat "," (List.map f xs)
