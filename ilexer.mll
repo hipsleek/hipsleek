@@ -33,6 +33,7 @@
 	 ("case",CASE);
 	 ("class", CLASS);
 	 ("coercion", COERCION);
+     ("combine", COMBINE);
 	 ("conseq", CONSEQ);
 	 ("const", CONST);
 	 ("continue", CONTINUE);
@@ -50,16 +51,19 @@
 	 ("float", FLOAT);
 	 ("fold", FOLD);
 	 ("forall", FORALL);
+     ("finalizes",FINALIZES);
 	 ("head", HEAD);
+     ("ho_pred",HPRED);
 	 ("if", IF);
 	 ("@I", IMM);
-	 ("implies", IMPLIES);
+	 ("implies",IMPLIES);
 	 ("import", IMPORT);
 	 ("in", IN);
 	 ("inlist", INLIST);
 	 ("int", INT);
 	 ("intersect", INTERSECT);
 	 ("inv", INV);
+     ("join",JOIN);
 	 ("len", LENGTH);
 	 ("max", MAX);
 	 ("min", MIN);
@@ -76,11 +80,13 @@
 	 ("dprint", PRINT);
 	 ("ref", REF);
      ("relation",REL); (* An Hoa *)
+     ("refines", REFINES);
 	 ("requires", REQUIRES);
 	 ("res", RES "res");
 	 ("rev", REVERSE);
 	 ("return", RETURN);
 	 ("self", SELF "self");
+     ("set", SET);
 	 ("split", SPLIT);
 	 ("subset", SUBSET);
 	 ("static", STATIC);
@@ -97,6 +103,7 @@
 	 ("void", VOID);
 	 ("where", WHERE);
 	 ("while", WHILE);
+     ("with", WITH);
      ("global", GLOBAL);
 	 (*exception related*)
 	 (flow, FLOW flow);

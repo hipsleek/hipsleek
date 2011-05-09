@@ -258,6 +258,14 @@ and mkEOr f1 f2 pos =
   else if isEConstFalse f2 then f1
   else List.rev_append f1 f2
 
+and mkEBase ei ii e b c l= EBase {
+						 	formula_ext_explicit_inst = ei;
+						 	formula_ext_implicit_inst = ii;
+							formula_ext_exists = e;
+						 	formula_ext_base = b;				
+						 	formula_ext_continuation = c;
+						 	formula_ext_pos = l;}
+  
 and mkOr f1 f2 pos =
   if isConstTrue f1 || isConstTrue f2 then
 	mkTrue top_flow pos
@@ -327,7 +335,28 @@ and mkPhase f1 f2 pos =
 					h_formula_phase_rw = f2;
 					h_formula_phase_pos = pos }
 
-
+and mkHeapNode c id i f inv pd hl ofl l= HeapNode { 
+                   h_formula_heap_node = c;
+                   h_formula_heap_name = id;
+                   h_formula_heap_imm = i;
+                   h_formula_heap_full = f;
+                   h_formula_heap_with_inv = inv;
+                   h_formula_heap_pseudo_data = pd;
+                   h_formula_heap_arguments = hl;
+                   h_formula_heap_label = ofl;
+                   h_formula_heap_pos = l }
+          
+and mkHeapNode2 c id i f inv pd ohl ofl l = HeapNode2 { 
+                    h_formula_heap2_node = c;
+                    h_formula_heap2_name = id;
+                    h_formula_heap2_imm = i;
+                    h_formula_heap2_full = f;
+                    h_formula_heap2_with_inv = inv;
+                    h_formula_heap2_pseudo_data = pd;
+                    h_formula_heap2_arguments = ohl;
+                    h_formula_heap2_label = ofl;
+                    h_formula_heap2_pos = l}
+          
 and pos_of_formula f0 = match f0 with
   | Base f -> f.formula_base_pos
   | Or f -> f.formula_or_pos

@@ -203,12 +203,7 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
      Buffer.add_string prim_buffer prim_str;
      helper prog.I.prog_data_decls;
      let all_prims = Buffer.contents prim_buffer in
-     let input = Lexing.from_string all_prims in
-     input_file_name := "primitives";
-     let prog = Iparser.program (Ilexer.tokenizer "primitives") input
-     in 
-	 (*let _ = print_string ("\n primitives: "^(Iprinter.string_of_program prog)^"\n") in*)
-	 
+     let prog = Parser.parse_hip_string "primitives" all_prims in 	 
 	 prog.I.prog_proc_decls)
   
 let op_map = Hashtbl.create 19
@@ -922,6 +917,7 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   let _ = I.build_exc_hierarchy false prog3 in
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
+  let _ = print_string "\n X1" in
   let prog2 = { prog3 with I.prog_data_decls = 
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
           ::prog3.I.prog_data_decls;} in  
@@ -984,6 +980,9 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
 			  c)))
 	end)
   else failwith "Error detected"
+
+(* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
+(*   Gen.Debug.loop_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 
@@ -1539,7 +1538,9 @@ and check_valid_flows f =
   in
   List.iter helper f
       
-      
+(* and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl = *)
+(*   Gen.Debug.loop_1 "trans_proc" (fun _ -> "?") (fun _ -> "?") (trans_proc_x prog) proc *)
+    
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
   let dup_names = Gen.BList.find_one_dup_eq (fun a1 a2 -> a1.I.param_name = a2.I.param_name) proc.I.proc_args in
@@ -4940,7 +4941,9 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
   Iast.prog_view_decls = tmp_views;
   Iast.prog_rel_decls = prog.Iast.prog_rel_decls; (* An Hoa TODO implement*)
   Iast.prog_proc_decls = procs1;
-  Iast.prog_coercion_decls = coer1 }
+       Iast.prog_coercion_decls = coer1;
+       Iast.prog_hopred_decls = prog.Iast.prog_hopred_decls;     
+    }
 
 and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos:
       ((Cpure.b_formula * (formula_label list)) list)* (C.ba_prun_cond list) *
