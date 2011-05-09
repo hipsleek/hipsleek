@@ -288,6 +288,9 @@ and java_of_exp = function
 			   exp_call_recv_method = id;
 			   exp_call_recv_arguments = el}) -> 
 	  (java_of_exp recv) ^ "." ^ id ^ "(" ^ (String.concat ", " (List.map java_of_exp el)) ^ ")"
+	| ArrayAlloc ({exp_aalloc_etype_name = elm_type;
+		  exp_aalloc_dimensions = dims}) -> 
+	  "new " ^ elm_type ^ "[" ^ (String.concat ", " (List.map java_of_exp dims)) ^ "]"
   | New ({exp_new_class_name = id;
 		  exp_new_arguments = el}) -> 
 	  "new " ^ id ^ "(" ^ (String.concat ", " (List.map java_of_exp el)) ^ ")" 

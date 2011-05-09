@@ -123,7 +123,21 @@ and sharp_val =
 (* and exp_arraymod = { exp_arraymod_lhs : exp_arrayat; (* v[i] *)
 		   exp_arraymod_rhs : exp; 
 			 exp_arraymod_pos : loc } *)
-						
+
+(**
+ An Hoa : Memory allocation.
+ NOTE : <exp_aalloc_dimension> is an <exp>, not a list
+        because we use nested arrays to handle the case
+				of multidimensional arrays.
+				
+				This time, we should not take advantage of scall
+				because the type might be different; but it still
+				works!
+ 
+and exp_aalloc = { exp_aalloc_etype : P.typ;
+	     exp_aalloc_dimension : exp;
+			 exp_aalloc_pos : loc; }*)
+			
 and exp_assert = { exp_assert_asserted_formula : F.struc_formula option;
 		   exp_assert_assumed_formula : F.formula option;
 		   exp_assert_path_id : formula_label;
@@ -268,7 +282,7 @@ and exp = (* expressions keep their types *)
   | Label of exp_label
   | CheckRef of exp_check_ref
   | Java of exp_java
-      (* standard expressions *)
+  (* standard expressions *)
 	(* | ArrayAt of exp_arrayat (* An Hoa *) *)
 	(* | ArrayMod of exp_arraymod (* An Hoa *) *)
   | Assert of exp_assert
@@ -290,6 +304,7 @@ and exp = (* expressions keep their types *)
       *)
   | ICall of exp_icall
   | IConst of exp_iconst
+	(*| ArrayAlloc of exp_aalloc *) (* An Hoa *)
   | New of exp_new
   | Null of loc
 	| EmptyArray of exp_emparray (* An Hoa : add empty array as default value for array declaration *)
@@ -351,6 +366,7 @@ let transform_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b
 	          | FConst _
 	          | ICall _
 	          | IConst _
+						(* | ArrayAlloc _ *) (* An Hoa *)
 	          | New _
 	          | Null _
 						| EmptyArray _ (* An Hoa *)
@@ -549,6 +565,10 @@ let rec type_of_exp (e : exp) = match e with
 	  (*| FieldRead (t, _, _, _) -> Some t*)
 	  (*| FieldWrite _ -> Some void_type*)
   | IConst _ -> Some int_type
+	(* An Hoa *)
+	(* | ArrayAlloc ({exp_aalloc_etype = t; 
+		  exp_aalloc_dimension = _; 
+		  exp_aalloc_pos = _}) -> Some (P.Array t) *)
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (P.OType c) (*---- ok? *)
@@ -769,6 +789,7 @@ and callees_of_exp (e0 : exp) : ident list = match e0 with
 			exp_icall_arguments = _;
 			exp_icall_pos = _}) -> [unmingle_name n] (* to be fixed: look up n, go down recursively *)
   | IConst _ -> []
+	(*| ArrayAlloc _ -> []*)
   | New _ -> []
   | Null _ -> []
 	| EmptyArray _ -> [] (* An Hoa : empty array has no callee *)
@@ -1011,6 +1032,7 @@ and exp_to_check (e:exp) :bool = match e with
   | Var _
   | Null _
 	| EmptyArray _ (* An Hoa : NO IDEA *)
+	(*| ArrayAlloc _*) (* An Hoa : NO IDEA *)
   | New _
   | Sharp _
   | SCall _

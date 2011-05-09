@@ -3965,6 +3965,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 	let lhs_p = if (evarstoi = []) then lhs_p else
 		(*let _ = print_string ("\n\nAn Hoa :: Variables to be instantiated : ") in
 		let _ = print_string ((String.concat "," (List.map Cprinter.string_of_spec_var evarstoi)) ^ "\n") in*)
+		let _ = (Smtsolver.suppress_print_implication := true) in (* Temporarily suppress output of implication checking *)
 		let lhs_pp = (match lhs_p with
 			| MCP.MemoF _ -> failwith "heap_entail_empty_rhs_heap :: lhs should not be mixed with memory!"
 			| MCP.OnePF f -> f) in
@@ -3976,6 +3977,7 @@ and heap_entail_empty_rhs_heap (prog : prog_decl) (is_folding : bool) (is_univer
 		let inst = pure_match evarstoi lhs_pp rhs_pp in
 		let lhs_pp = CP.mkAnd lhs_pp inst no_pos in
 		let lhs_p = (MCP.OnePF lhs_pp) in
+		let _ = (Smtsolver.suppress_print_implication := false) in (* Unsuppress *)
 		(*let _ = print_string ("An Hoa :: New LHS with instantiation : " ^ (Cprinter.string_of_mix_formula lhs_p) ^ "\n\n") in*)
 		lhs_p
 	in

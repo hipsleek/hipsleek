@@ -14,7 +14,12 @@ type spec_var =
 and typ =
   | Prim of prim_type
   | OType of ident (* object type. enum type is already converted to int *)
-  | Array of typ (* An Hoa : Array whose elements are all of type typ ==> this will allow us to have higher dimensional array, but we do not handle this now *)
+	(** An Hoa : Array whose elements are all of type typ.
+      In principle, this is 1D array. To have higher 
+			dimensional array, but we need to use nested arrays.
+			It seems inefficient to me; but simpler to do!
+	 *)
+  | Array of typ 
 
 type formula =
   | BForm of (b_formula *(formula_label option))

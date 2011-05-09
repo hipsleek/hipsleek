@@ -1,7 +1,6 @@
 /**
  Example: Array doubling
  **/
-relation dom(int[] a, int low, int high) == (dom(a,low-1,high) | dom(a,low,high+1)).
 
 relation idexc(int[] a, int[] b, int i, int j) == forall(k : (i<=k & k<=j | a[k] = b[k])).
 

@@ -31,9 +31,30 @@ type relation_definition =
  *)
 let infile = "/tmp/in" ^ (string_of_int (Unix.getpid ())) ^ ".smt"
 let outfile = "/tmp/out" ^ (string_of_int (Unix.getpid ()))
-let print_input = ref false
-let print_original_solver_output = ref false
 
+(**
+ An Hoa : control printing of SMT input code
+ *)
+let print_input = ref (false : bool)
+
+(**
+ An Hoa : control printing of SMT original output (sat, unsat, unknown)
+ *)
+let print_original_solver_output = ref (false : bool)
+
+(**
+ An Hoa : control printing of the implication problem
+ *)
+let print_implication = ref (false : bool)
+
+(**
+ An Hoa : control temporary suppression of all printing
+ *)
+let suppress_print_implication = ref (false : bool)
+
+(**
+ An Hoa : function to print formula
+ *)
 let print_pure = ref (fun (c:formula)-> " printing not initialized")
 
 (**
@@ -373,6 +394,10 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
     | [] -> ""
     | var::rest -> "(declare-fun " ^ (smt_of_spec_var var None) ^ " () " ^ (smt_of_typ (extract_type var)) ^ ")\n" (* " () Int)\n" *) ^ (decfuns rest) (* An Hoa : modify the declare-fun *) 
   in 
+	(* An Hoa : split /\ into small asserts *)
+	let ante_clauses = split_conjunctions ante in
+	let ante_strs = List.map (fun x -> "(assert " ^ (smt_of_formula x StringSet.empty) ^")\n") ante_clauses in
+	let ante_str = String.concat "" ante_strs in
 	let rds = (List.map smt_of_rel_def used_rels_defs) in
 	let rel_def_df = (String.concat "" (List.map fst rds)) in
 	let rel_def_ax = (String.concat "" (List.map snd rds)) in
@@ -381,7 +406,7 @@ let to_smt_v2 ante conseq logic fvars used_rels_defs =
 		(*"(declare-fun update_array ((Array Int Int) Int Int (Array Int Int)) Bool)" ^
 		"(assert (forall (a (Array Int Int)) (i Int) (v Int) (r (Array Int Int)) 
 		         (= (update_array a i v r) (= r (store a i v)))))" ^*)
-    "(assert " ^ ante ^ ")\n" ^
+    ante_str (*"(assert " ^ ante ^ ")\n"*) ^
     "(assert (not " ^ conseq ^ "))\n" ^
     "(check-sat)\n")
 	
@@ -426,7 +451,7 @@ let to_smt (ante : formula) (conseq : formula option) (prover: smtprover) : stri
 	let used_rels_defs = List.map (fun x -> match x with | RelDefn (rn,_,_) -> if List.mem rn used_rels then [x] else []) !rel_defs in
 	let used_rels_defs = List.concat used_rels_defs in
 	let res = match prover with
-    | Z3 ->  to_smt_v2 ante_str conseq_str logic all_fv used_rels_defs
+    | Z3 ->  to_smt_v2 ante (* An Hoa : pass the ante instead of ante_str! *) conseq_str logic all_fv used_rels_defs
     | Cvc3 | Yices ->  to_smt_v1 ante_str conseq_str logic all_fv
   in res
 
@@ -451,7 +476,7 @@ let run prover input =
 (** An Hoa
  * Switch to choose whether to do induction.
  *)
-let try_induction = ref true
+let try_induction = ref false
 let max_induction_level = ref 0
 
 (** An Hoa
@@ -474,12 +499,9 @@ let rec collect_induction_value_candidates (ante : formula) (conseq : formula) :
  * Select the value to do induction on.
  * A simple approach : induct on the length of an array.
  *)
-and choose_induction_value (ante : formula) (conseq : formula) : exp =
-	(*let _ = print_string ("choose_induction_value :: ante = " ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
-	let vals = collect_induction_value_candidates ante (mkAnd ante conseq no_pos) in
-	(*let _ = List.map (fun x -> print_string (smt_of_exp x StringSet.empty)) vals in*)
-	(*let _ = print_string ("Induction value : " ^ (smt_of_exp (List.hd vals) StringSet.empty) ^ "\n") in*)
-		List.hd vals
+and choose_induction_value (ante : formula) (conseq : formula) (vals : exp list) : exp =
+	(* TODO Implement the main heuristic here! *)	
+	List.hd vals
 
 (** An Hoa
  * Create a variable totally different from the ones in vlist.
@@ -546,18 +568,21 @@ and gen_induction_formulas (ante : formula) (conseq : formula) (indval : exp) :
  *)
 and smt_imply_with_induction (ante : formula) (conseq : formula) (prover: smtprover) : bool =
 	(*let _ = print_string ("An Hoa :: smt_imply_with_induction : ante = "  ^ (!print_pure ante) ^ "\nconseq = " ^ (!print_pure conseq) ^ "\n") in*)
-	let indval = choose_induction_value ante conseq in
-	let bc,ic = gen_induction_formulas ante conseq indval in
-	let a0 = fst bc in
-	let c0 = snd bc in
-	(* check the base case first *)
-	let bcv = smt_imply a0 c0 prover in
-		if bcv then (* base case is valid *)
-			let a1 = fst ic in
-			let c1 = snd ic in
-			smt_imply a1 c1 prover (* check induction case *)
-		else false
-
+	let vals = collect_induction_value_candidates ante (mkAnd ante conseq no_pos) in
+	if (vals = []) then false (* No possible value to do induction on *)
+	else
+		let indval = choose_induction_value ante conseq vals in
+		let bc,ic = gen_induction_formulas ante conseq indval in
+		let a0 = fst bc in
+		let c0 = snd bc in
+		(* check the base case first *)
+		let bcv = smt_imply a0 c0 prover in
+			if bcv then (* base case is valid *)
+				let a1 = fst ic in
+				let c1 = snd ic in
+				smt_imply a1 c1 prover (* check induction case *)
+			else false
+	
 (**
  * Test for validity
  * To check the implication P -> Q, we check the satisfiability of
@@ -568,11 +593,15 @@ and smt_imply_with_induction (ante : formula) (conseq : formula) (prover: smtpro
  *)
 and smt_imply (ante : formula) (conseq : formula) (prover: smtprover) : bool =
   let input = to_smt ante (Some conseq) prover in
-	let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
   let output = run prover input in
-	let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in
-  let res = output = "unsat" in
-		if res then
+	let res = output = "unsat" in
+	(* Only do printing in case there is no suppression and output is not unsat *)
+	(*let _ = print_string (string_of_bool !suppress_print_implication) in*)
+	let _ = if (not !suppress_print_implication) && (not res) then
+						let _ = if !print_implication then print_string ("CHECK IMPLICATION:\n" ^ (!print_pure ante) ^ " |- " ^ (!print_pure conseq) ^ "\n") in
+						let _ = if !print_input then print_string ("Generated SMT input :\n" ^ input) in
+						let _ = if !print_original_solver_output then print_string ("=1=> SMT output : " ^ output ^ "\n") in ()
+	in if res then
 			res
 		else 
 			(*let _ = print_string "An Hoa :: smt_imply : try induction\n" in*) 

@@ -34,7 +34,9 @@ let set_frontend fe_str = match fe_str  with
 
 (* arguments/flags that might be used both by sleek and hip *)
 let common_arguments = [
-    ("--imply-calls", Arg.Set Tpdispatcher.print_implication,
+	  ("--ahwytdi", Arg.Set Smtsolver.try_induction,
+		"Try induction in case of failure implication."); (* An Hoa *)
+    ("--smtimply", Arg.Set Smtsolver.print_implication,
     "Print the antecedent and consequence for each implication check."); (* An Hoa *)
     ("--smtout", Arg.Set Smtsolver.print_original_solver_output,
     "Print the original output given by the SMT solver."); (* An Hoa *)

@@ -1,5 +1,3 @@
-relation dom(int[] a, int low, int high) == (dom(a,low-1,high) | dom(a,low,high+1)).
-
 relation zeros(int[] a, int i, int j) == (i > j | forall ( k : (k < i | k > j | i <= k & k <= j & a[k] = 0))).
 
 /* a and b are identical except a[k] = 0 for all i <= k <= j */ 

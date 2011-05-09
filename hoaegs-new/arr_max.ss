@@ -2,8 +2,6 @@
  Example: maximum value of the array.
  **/
 
-relation dom(int[] a, int low, int high) == (dom(a,low-1,high) | dom(a,low,high+1)).
-
 relation nonzero(int a) == exists (b : b < a).
 
 relation upperbnd(int[] a, int i, int j, int s) == (i > j | forall ( k : (k < i | k > j | i <= k & k <= j & a[k] <= s))).  
