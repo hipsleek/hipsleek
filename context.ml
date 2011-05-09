@@ -47,6 +47,7 @@ and action =
   | Undefined_action  
   | M_Nothing_to_do
   | Seq_action of action list
+  | Search_action of action list
   
 (*
 and ctx_type = 

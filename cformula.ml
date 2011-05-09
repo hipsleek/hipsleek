@@ -2945,7 +2945,7 @@ and set_es_evars (c:context)(v:Cpure.spec_var list):context = match c with
   
 and case_to_disjunct f  =
   let pr = !print_struc_formula in
-  Gen.Debug.ho_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
+  Gen.Debug.no_1 "case_to_disjunct" pr pr case_to_disjunct_x f 
 
 and case_to_disjunct_x f  =
   let rec push_pure c f =  match f with
@@ -3825,7 +3825,7 @@ let filter_branches (br:formula_label list option) (f0:struc_formula) :struc_for
   let pr1 x = match x with
     | None -> "None"
     | Some l -> "Some"^string_of_int(List.length l) in
-  Gen.Debug.ho_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
+  Gen.Debug.no_2 "filter_branches" pr1 pr pr (fun _ _ -> filter_branches (br:formula_label list option) (f0:struc_formula)) br f0
   
 let rec label_view (f0:struc_formula):struc_formula = 
   let rec label_formula (f:formula):formula = match f with

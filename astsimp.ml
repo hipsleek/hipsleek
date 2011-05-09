@@ -1102,7 +1102,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Gen.Debug.loop_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Gen.Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
@@ -4578,7 +4578,7 @@ and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) 
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 x = "?" in
-Gen.Debug.loop_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
+Gen.Debug.no_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
       
 and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
