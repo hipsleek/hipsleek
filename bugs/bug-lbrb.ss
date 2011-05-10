@@ -14,12 +14,12 @@ data node {
 
 /* view for red-black trees */
 rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
-	or self::node<v, 0, l, r, _> * l::rb<nl, 1, bhl> * r::rb<nr, 1, bhr>
+	or self::node<v, 0, l, r, bh> * l::rb<nl, 1, bhl> * r::rb<nr, 1, bhr>
        & cl = 0 & n = 1 + nl + nr & bhl = bh & bhr = bh
 	// if left is black, right is black due to left-leaning!
-	or self::node<v, 1, l, r, _> * l::rb<nl, 1, bhl> * r::rb<nr, 1, bhr>
+	or self::node<v, 1, l, r, bh> * l::rb<nl, 1, bhl> * r::rb<nr, 1, bhr>
        & cl = 1 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
-	or self::node<v, 1, l, r, _> * l::rb<nl, 0, bhl> * r::rb<nr, _, bhr>
+	or self::node<v, 1, l, r, bh> * l::rb<nl, 0, bhl> * r::rb<nr, _, bhr>
        & cl = 1 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
 
@@ -95,22 +95,19 @@ node insert(node h, int v)
 	if (h == null) { // leaf
 		return new node(v, 0, null, null, 1);
 	}
-    node lt = h.left;
-    node rt = h.right;
 	// to make sure that there is no 4-node!
-    if (lt != null && rt != null) { 
-		if (is_red(lt) && is_red(rt)) {
+    if (h.left != null && h.right != null) { 
+		if (is_red(h.left) && is_red(h.right)) {
 			color_flip(h);
-            //assert h'::rb<_,_,_>;
 		}
         } 
-    //assert h'::rb<n,_,_>;
+    assert h'::rb<_,_,_>;
     //assume false;
 	if (v <= h.val) // accept duplicates!
 		h.left = insert(h.left, v);
 	else
 		h.right = insert(h.right, v);
-    //assume false;
+    assume false;
 
 	if (is_red(h.right)) h = rotate_left(h);
 	
