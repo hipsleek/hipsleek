@@ -53,6 +53,10 @@ and action =
   | Seq_action of (match_res * action list)
   | Search_action of (match_res option * action list) (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   
+let is_search_action a = match a with
+  | Search_action _ -> true
+  | _ -> false
+  
 let pr_mater_source ms = match ms with
   | View_mater -> fmt_string "view_defn_mater"
   | Coerc_mater v -> fmt_string ("coerc_defn_mater: "^v)
@@ -112,6 +116,11 @@ let action_get_holes a = match a with
   | Seq_action (e,_)-> Some e.match_res_holes
   | M_Nothing_to_do _  
   | Search_action (None,_) ->None
+   
+let action_get_holes (a:action):(h_formula*int) list option = 
+  let pr1 = string_of_action_res in
+  let pr2 = pr_option pr_no in
+  Gen.Debug.ho_1 "action_get_holes" pr1 pr2 action_get_holes a
    
 (*
 and ctx_type = 
@@ -310,10 +319,10 @@ and process_one_match (c:match_res) :action=
                       let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                         then [M_lemma (c,None)]
                         else [] in
-                      let l4 = 
-                        if get_view_original rhs_node then 
+                      let l4 = []
+                        (*if get_view_original rhs_node then 
                           [M_base_case_fold c] 
-                         else [] in
+                         else [] *)in
                       let src = Search_action (Some c,(l1@l2@l3@l4)) in
                       src (*Seq_action (c,[l1;src])*)
                     | DataNode dl, ViewNode vr -> Search_action (Some c,[M_fold c;M_rd_lemma c])
@@ -357,7 +366,10 @@ and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action =
   match r with 
     | [] -> M_Nothing_to_do "no nodes to match"
     | x::[]-> process_matches lhs_h x
-    | _ -> Search_action (None,(List.map (process_matches lhs_h) r))
+    | _ -> 
+      let r = List.map (process_matches lhs_h) r in
+      List.hd r (*Search_action (None,r)*)
+      
     
     
 and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
@@ -525,6 +537,11 @@ and pop_cont_es (es : entail_state) : (h_formula * entail_state) =
 (* utilities for handling lhs holes *)
 (* push *)
 and push_crt_holes_list_ctx (ctx : list_context) (holes : (h_formula * int) list) : list_context = 
+  let pr1 = Cprinter.string_of_list_context in
+  let pr2 = pr_no (* pr_list (pr_pair string_of_h_formula string_of_int ) *) in
+  Gen.Debug.ho_2 "push_crt_holes_list_ctx" pr1 pr2 pr1 (fun _ _-> push_crt_holes_list_ctx_x ctx holes) ctx holes
+  
+and push_crt_holes_list_ctx_x (ctx : list_context) (holes : (h_formula * int) list) : list_context = 
   match ctx with
     | FailCtx _ -> ctx
     | SuccCtx(cl) ->

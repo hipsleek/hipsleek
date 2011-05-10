@@ -1886,7 +1886,7 @@ type entail_state = {
   es_ivars : CP.spec_var list; (* ivars are the variables to be instantiated (for the universal lemma application)  *)
   (* es_expl_vars : CP.spec_var list; (\* vars to be explicit instantiated *\) *)
   es_ante_evars : CP.spec_var list;
-  es_must_match : bool;
+  (* es_must_match : bool; *)
   (*used by late instantiation*)
   es_gen_expl_vars: CP.spec_var list; 
   es_gen_impl_vars: CP.spec_var list; 
@@ -2024,7 +2024,7 @@ let rec empty_es flowt pos =
   es_heap = HTrue;
   es_pure = (MCP.mkMTrue pos , []);
   es_evars = [];
-  es_must_match = false;
+  (* es_must_match = false; *)
   es_ivars = [];
   (* es_expl_vars = []; *)
   es_ante_evars = [];
@@ -2429,6 +2429,10 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
   (* List.concat (List.map (fun pc1-> (List.map (simple_or pc1) l2)) l1) *)
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_pc (merge_partial_context_or pc1 pc2)) l2)) l1)
 
+let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
+  let pr x = string_of_int (List.length x) in 
+  Gen.Debug.loop_2 "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)
 
@@ -2479,12 +2483,12 @@ and set_context_formula (ctx : context) (f : formula) : context = match ctx with
 	  let nc2 = set_context_formula c2 f in
 		mkOCtx nc1 nc2 (pos_of_formula f) 
 
-and get_estate_must_match (es : entail_state) : bool = 
-	es.es_must_match
+(* and get_estate_must_match (es : entail_state) : bool =  *)
+(* 	es.es_must_match *)
 
-and set_estate_must_match (es: entail_state) : entail_state = 	
-	let es_new = {es with es_must_match = true} in
-		es_new
+(* and set_estate_must_match (es: entail_state) : entail_state = 	 *)
+(* 	let es_new = {es with es_must_match = true} in *)
+(* 		es_new *)
 
 and moving_ivars_to_evars (estate:entail_state) (anode:h_formula) : entail_state =
     let arg_vars = h_fv anode in
@@ -2495,8 +2499,8 @@ and moving_ivars_to_evars (estate:entail_state) (anode:h_formula) : entail_state
 (*   | Ctx (es) -> Ctx(set_estate_must_match es) *)
 (*   | OCtx (ctx1, ctx2) -> OCtx((set_context_must_match ctx1), (set_context_must_match ctx2)) *)
 
-and set_context_must_match (ctx : context) : context = 
-  set_context (fun es -> {es with es_must_match = true}) ctx
+(* and set_context_must_match (ctx : context) : context =  *)
+(*   set_context (fun es -> {es with es_must_match = true}) ctx *)
 
 and set_estate f (es: entail_state) : entail_state = 	
 	f es 

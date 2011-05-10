@@ -184,7 +184,7 @@ $output_file = "log";
 #		 "karatsuba_mult", "SUCCESS",
 		 "is_zero", "SUCCESS",
 		 "is_equal", "SUCCESS",
-		 "compare", "SUCCESS",
+		 "compare", "SUCCESS", #loop?
 		 "compare_int", "SUCCESS",
 		 "div_with_remainder", "SUCCESS"],
         ["imm/bigint_imm.ss",18,
