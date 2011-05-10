@@ -425,7 +425,7 @@ and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj ls
       
 and fold_mem_lst_no_disj (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true false lst
   
-and fold_mem_lst (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true true lst
+and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) :formula= fold_mem_lst_gen f_init with_dupl with_inv true true lst
   
 (*folds just the pruning constraints, ignores the memo_group_slice*) 
 and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula = 
