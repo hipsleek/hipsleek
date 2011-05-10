@@ -5,7 +5,7 @@
 *)
 
 open Globals
-
+open Gen.Basic
 
 module F = Cformula
 module P = Cpure
@@ -391,8 +391,20 @@ let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
   
 let subst_mater_list fr t l = 
   let lsv = List.combine fr t in
-  List.map (fun c-> {c with mater_var = P.subs_one lsv c.mater_var}) l
-  
+  List.map (fun c-> 
+      {c with mater_var = P.subs_one lsv c.mater_var
+              (* ; mater_var = P.subs_one lsv c.mater_var *)
+      }) l
+
+let subst_mater_list_nth i fr t l = 
+  let pr_svl = !print_svl in
+  Gen.Debug.ho_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+
+let subst_coercion fr t (c:coercion_decl) = 
+      {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
+              ; coercion_body = F.subst_avoid_capture fr t c.coercion_body
+      }
+ 
 (* process each proc into some data which are then combined,
    e.g. verify each method and collect the failure points
 *)

@@ -28,9 +28,10 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 //checkentail tx::lseg<n1,_>*tx::lseg<n2,_> & n1=0 & n2=0 |- tx::lseg<_,_>.
 
 checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
-// fails without lemma
+// succeed now ... fails without lemma
 
-checkentail x::ll_tail<tx,n> |- tx::node<v,q>.
+checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
+// if full-materialized present, should avoid search..
 
 //checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<tx,n>.
 

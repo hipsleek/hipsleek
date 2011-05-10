@@ -176,7 +176,7 @@ and spatial_ctx_extract_debug p f a i =
 
 and view_mater_match prog c vs1 aset imm f =
   let vdef = look_up_view_def_raw prog.prog_view_decls c in
-  let mvs = subst_mater_list vdef.view_vars vs1 vdef.view_materialized_vars in
+  let mvs = subst_mater_list_nth 1 vdef.view_vars vs1 vdef.view_materialized_vars in
   try
     let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) aset) mvs in
     if imm then
@@ -191,20 +191,46 @@ and view_mater_match prog c vs1 aset imm f =
               [(Hole hole_no, f, [(f, hole_no)], WArg)]
             else [(HTrue, f, [], WArg)]
           else []
-            
-and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
-  let coercs = prog.prog_left_coercions in
-  let pos_coercs = List.filter (fun c-> c.coercion_simple_lhs && c.coercion_head_view == l_vname) coercs in
-  let pos_coercs = List.fold_left 
-    (fun a c-> 
-        let args = fv_simple_formula c.coercion_head in 
-        let lmv = subst_mater_list args l_vargs c.coercion_mater_vars in
+
+and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
+  if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
+  else 
+        let args = List.tl (fv_simple_formula c.coercion_head) in 
+        let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
         try
           let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
-          (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a
-        with  _ ->  a) [] pos_coercs in
-  if imm then [] else pos_coercs
-    
+          Some (c,mv)
+        with  _ ->  None
+
+and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  let pr (c,_) = string_of_coercion c in
+  Gen.Debug.ho_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
+
+and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
+  let coercs = prog.prog_left_coercions in
+  let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
+    | None ->  a 
+    | Some t -> t::a) coercs [] in
+  let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))) pos_coercs in
+  (* let pos_coercs = List.fold_left  *)
+  (*   (fun a c->  *)
+  (*       let args = List.tl (fv_simple_formula c.coercion_head) in  *)
+  (*       let lmv = subst_mater_list_nth 3 args l_vargs c.coercion_mater_vars in *)
+  (*       try *)
+  (*         let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in *)
+  (*         (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a *)
+  (*       with  _ ->  a) [] pos_coercs in *)
+  if imm then [] else res
+
+and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
+  let pr = Cprinter.string_of_h_formula in
+  let pr4 (h1,h2,l,mt) = pr_pair pr pr (h1,h2) in
+  let pr2 ls = pr_list pr4 ls in
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  Gen.Debug.ho_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
+      (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
+ 
 and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
   (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (string_of_h_formula f0) ^ "\n") in  *)
   let rec helper f = match f with
