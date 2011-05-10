@@ -115,7 +115,8 @@ and coercion_decl = {
     (* the name of the predicate where this coercion can be applied *)
     coercion_body_view : ident;  (* used for cycles checking *) 
     coercion_mater_vars : mater_property list;
-    coercion_simple_lhs :bool;}
+    coercion_simple_lhs :bool; (* signify if LHS is simple or complex *)
+}
 
 and coercion_type = Iast.coercion_type
     (* | Left *)

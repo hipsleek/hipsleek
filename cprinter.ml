@@ -10,6 +10,14 @@ module P = Cpure
 module MP = Mcpure
 
 
+
+let is_short n = (n==2);;
+
+let is_medium n = (n==1);;
+
+let is_long n = (n==0);;
+
+
 (* pretty printing for primitive types *)
 let string_of_prim_type = function 
   | Bool          -> "boolean"
@@ -1614,11 +1622,36 @@ let string_of_coercion_type (t:Cast.coercion_type) = match t with
   | Iast.Right -> "<="
   | Iast.Equiv -> "<=>" ;;
 
-let string_of_coerc c lft = "Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type)^(string_of_formula c.coercion_body)
-  (* ^"\n lhs exists:"^(string_of_formula c.coercion_head_exist) *)
-  ^"\n head:"^c.coercion_head_view^"\n cycle:"^c.coercion_body_view^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars) ;;
 
-let string_of_coercion c = string_of_coerc c false ;;
+let string_of_coerc_opt op c = 
+  let s1="Lemma \""^c.coercion_name^"\": "^(string_of_formula c.coercion_head)^(string_of_coercion_type c.coercion_type) in
+  if is_short op then s1
+  else let s2 = s1^(string_of_formula c.coercion_body) in
+  if is_medium op then s2
+  else s2
+    ^"\n head match:"^c.coercion_head_view
+    ^"\n body cycle:"^c.coercion_body_view
+    ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
+  
+let string_of_coerc_short c = string_of_coerc_opt 2 c;;
+
+let string_of_coerc_med c = string_of_coerc_opt 1 c;;
+
+let string_of_coerc_long c = string_of_coerc_opt 0 c;;
+
+(* let string_of_coerc c = (string_of_coerc_short c) *)
+(*   ^ (string_of_formula c.coercion_body) *)
+(*   ;; *)
+
+(* let string_of_coerc_long c = (string_of_coerc c) *)
+(*  (\* ^"\n lhs exists:"^(string_of_formula c.coercion_head_exist) *\) *)
+(*   ^"\n head match:"^c.coercion_head_view *)
+(*   ^"\n body cycle:"^c.coercion_body_view *)
+(*   ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";; *)
+
+let string_of_coercion c = string_of_coerc_long c ;;
+
+let string_of_coerc c = string_of_coercion c ;;
 
 (* pretty printing for a procedure *)
 let string_of_proc_decl p = 
@@ -1660,17 +1693,17 @@ let rec string_of_view_decl_list l = match l with
   | h::t -> (string_of_view_decl h) ^ "\n" ^ (string_of_view_decl_list t)
 ;;
 
-let rec string_of_coerc_decl_list l lft = match l with
+let rec string_of_coerc_decl_list l = match l with
   | [] -> ""
-  | h::[] -> string_of_coerc h lft
-  | h::t -> (string_of_coerc h lft) ^ "\n" ^ (string_of_coerc_decl_list t lft)
+  | h::[] -> string_of_coerc h
+  | h::t -> (string_of_coerc h) ^ "\n" ^ (string_of_coerc_decl_list t)
 ;;
 
 (* pretty printing for a program written in core language *)
 let string_of_program p = "\n" ^ (string_of_data_decl_list p.prog_data_decls) ^ "\n\n" ^ 
   (string_of_view_decl_list p.prog_view_decls) ^ "\n\n" ^ 
-  (string_of_coerc_decl_list p.prog_left_coercions true)^"\n\n"^
-  (string_of_coerc_decl_list p.prog_right_coercions false)^"\n\n"^
+  (string_of_coerc_decl_list p.prog_left_coercions)^"\n\n"^
+  (string_of_coerc_decl_list p.prog_right_coercions)^"\n\n"^
   (string_of_proc_decl_list p.prog_proc_decls) ^ "\n"
 ;;
 
