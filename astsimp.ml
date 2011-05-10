@@ -1822,8 +1822,8 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     (List.filter (fun v -> not(List.mem (CP.name_of_spec_var v) lhs_fnames0) ) (CF.fv c_rhs)) in 
   (* wrap exists for RHS - no implicit instantiation*)
   let c_rhs = CF.push_exists ex_vars c_rhs in
-  let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in
-  let c_lhs_exist = trans_formula prog true ((* self ::  *)rhs_fnames) false coer.I.coercion_head stab false in  (* why not lhs_fnames?*)
+  (* let rhs_fnames = List.map CP.name_of_spec_var (CF.fv c_rhs) in *)
+  (* let c_lhs_exist = trans_formula prog true ((\* self ::  *\)rhs_fnames) false coer.I.coercion_head stab false in  (\* why not lhs_fnames?*\) *)
   let lhs_name = find_view_name c_lhs self (IF.pos_of_formula coer.I.coercion_head) in
   let rhs_name =
     try find_view_name c_rhs self (IF.pos_of_formula coer.I.coercion_body)
@@ -1843,7 +1843,7 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     C.coercion_head = c_lhs;
     C.coercion_body = c_rhs;
     C.coercion_univ_vars = univ_vars;
-    C.coercion_head_exist = c_lhs_exist;
+    (* C.coercion_head_exist = c_lhs_exist; *)
     C.coercion_head_view = lhs_name;
     C.coercion_body_view = rhs_name;
     C.coercion_mater_vars = m_vars;

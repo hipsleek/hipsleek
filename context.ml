@@ -27,7 +27,7 @@ type context = (h_formula (* frame with a hole *)
 
 (*
 and phase_type = 
-  | Spatial
+  | Spatial  
   | Classic
 *)
 
@@ -147,6 +147,12 @@ and choose_context prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos 
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
   Gen.Debug.no_2 "choose_context" pr1 pr1 pr2 
       (fun _ _ -> choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node
+
+and choose_context prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos :  match_res list =
+  let pr1 = Cprinter.string_of_h_formula in
+  let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in
+  Gen.Debug.ho_3 "choose_context" Cprinter.string_of_spec_var pr1 (pr_option pr2) pr_no 
+      (fun _ _ _ -> choose_context_x prog lhs_h lhs_p (p : CP.spec_var) (imm : bool) rhs_info pos) p lhs_h rhs_info
  
 (*
 spatial context
