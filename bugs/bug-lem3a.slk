@@ -1,0 +1,28 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+lemma self::lseg<n, p> <-> (exists a,b,r: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+
+checkentail x::lseg<n1, r> * r::node<_,p> |- x::lseg<u, p1> & p1=p.
+// true & r_810=p & r_810=p1 & u=0+1+n1 & {FLOW,(143,144)=__norm,}
+
+print residue.
+/*
+Seems to have many redundant/repeated solutions, when
+ exists a,b,r: used instead of exists a,b,r WHY?
+Valid.
+ EXISTS(b_221,a_220: true & n1=b_221+a_220 & r_284=p & r_284=p1 & u=0+1+
+ b_221+a_220 & {FLOW,(143,144)=__norm,})
+ true & r_330=p & r_330=p1 & u=0+1+n1 & {FLOW,(143,144)=__norm,}
+ EXISTS(b_365,a_364: true & n1=b_365+a_364 & r_412=p & r_412=p1 & u=0+1+
+ b_365+a_364 & {FLOW,(143,144)=__norm,})
+*/
