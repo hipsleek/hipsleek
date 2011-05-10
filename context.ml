@@ -6,7 +6,7 @@ open Gen.Basic
 
 
 type match_res = {
-    match_res_lhs_node : h_formula; (* node from the extracted formula *)                                                                                          
+    match_res_lhs_node : h_formula; (* node from the extracted formula *)                                                                                        
     match_res_lhs_rest : h_formula; (* lhs formula - contains holes in place of matched immutable nodes/views *)
     match_res_holes : (h_formula * int) list; (* imm node/view that have been replaced in lhs together with their corresponding hole id *)
     match_res_type : match_type; (* indicator of what type of matching *)
@@ -73,21 +73,30 @@ let pr_match_res (c:match_res):unit =
   fmt_string "\n match_res_rhs_node "; pr_h_formula c.match_res_rhs_node;
   fmt_string "\n match_res_rhs_rest "; pr_h_formula c.match_res_rhs_rest;
   fmt_string "}"
+  
+let pr_simpl_match_res (c:match_res):unit = 
+fmt_string "(";
+  fmt_string "\n match_res_lhs_node "; pr_h_formula c.match_res_lhs_node;
+  fmt_string "\n match_res_rhs_node "; pr_h_formula c.match_res_rhs_node;
+  fmt_string ")"
 
-let rec pr_action_res a = match a with
-  | Undefined_action e -> pr_match_res e; fmt_string "==> Undefined_action"
-  | M_match e -> pr_match_res e; fmt_string "==> Mandatory match"
-  | M_fold e -> pr_match_res e; fmt_string "==> Mandatory fold"
-  | M_unfold e -> pr_match_res e; fmt_string "==> Mandatory unfold"
-  | M_base_case_unfold e -> pr_match_res e; fmt_string "==> Mandatory base case unfold"
-  | M_base_case_fold e -> pr_match_res e; fmt_string "==> Mandatory base case fold"
-  | M_rd_lemma e -> pr_match_res e; fmt_string "==> Mandatory right distributive lemma"
-  | M_lemma (e,s) -> pr_match_res e; fmt_string ("==> Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
+let rec pr_action_res pr_mr a = match a with
+  | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
+  | M_match e -> pr_mr e; fmt_string "==> Mandatory match"
+  | M_fold e -> pr_mr e; fmt_string "==> Mandatory fold"
+  | M_unfold e -> pr_mr e; fmt_string "==> Mandatory unfold"
+  | M_base_case_unfold e -> pr_mr e; fmt_string "==> Mandatory base case unfold"
+  | M_base_case_fold e -> pr_mr e; fmt_string "==> Mandatory base case fold"
+  | M_rd_lemma e -> pr_mr e; fmt_string "==> Mandatory right distributive lemma"
+  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
-  | Seq_action (_,l) -> fmt_string "seq:"; pr_seq "" pr_action_res l
-  | Search_action (_,l) -> fmt_string "search:"; pr_seq "" pr_action_res l
+  | Seq_action (_,l) -> fmt_string "seq:"; pr_seq "" (pr_action_res pr_mr) l
+  | Search_action (_,l) -> fmt_string "search:"; pr_seq "" (pr_action_res pr_mr) l
 
-let string_of_action_res e = poly_string_of_pr pr_action_res e
+let string_of_action_res_simpl e = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
+let string_of_action_res e = poly_string_of_pr (pr_action_res pr_match_res) e
+
+
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
    
 let action_get_holes a = match a with
@@ -286,7 +295,7 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
-and process_one_match c :action=
+and process_one_match (c:match_res) :action=
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
@@ -298,8 +307,13 @@ and process_one_match c :action=
                     | ViewNode vl, ViewNode vr -> 
                       let l1 = [M_base_case_unfold c] in
                       let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [M_match c] else [] in
-                      let l3 = [M_lemma (c,None)] in
-                      let l4 = [M_base_case_fold c] in
+                      let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
+                        then [M_lemma (c,None)]
+                        else [] in
+                      let l4 = 
+                        if get_view_original rhs_node then 
+                          [M_base_case_fold c] 
+                         else [] in
                       let src = Search_action (Some c,(l1@l2@l3@l4)) in
                       src (*Seq_action (c,[l1;src])*)
                     | DataNode dl, ViewNode vr -> Search_action (Some c,[M_fold c;M_rd_lemma c])
@@ -325,14 +339,15 @@ and process_one_match c :action=
   r
   
 and process_matches lhs_h (l,(rhs_node,rhs_rest)) = match l with
-  | [] -> if (is_view rhs_node) then
-            M_base_case_fold { 
+  | [] -> if (is_view rhs_node && get_view_original rhs_node) then
+            let r = M_base_case_fold { 
               match_res_lhs_node = HTrue; 
               match_res_lhs_rest = lhs_h; 
               match_res_holes = [];
               match_res_type = Root;
               match_res_rhs_node = rhs_node;
-              match_res_rhs_rest = rhs_rest;}
+              match_res_rhs_rest = rhs_rest;} in
+            r
           else M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node))
   | x::[] -> process_one_match x 
   | _ -> Search_action (None,(List.map process_one_match l))
@@ -347,8 +362,8 @@ and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action =
     
 and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in
-  let pr2 = string_of_action_res in
-  Gen.Debug.no_1 "compute_actions" pr1 pr2 (fun _ -> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) rhs_lst
+  let pr2 = string_of_action_res_simpl in
+  Gen.Debug.ho_1 "compute_actions" pr1 pr2 (fun _ -> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) rhs_lst
 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =

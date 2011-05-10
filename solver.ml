@@ -4761,7 +4761,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos = match a w
 and process_action prog estate conseq lhs_b rhs_b a is_folding pos =
   let pr1 = Context.string_of_action_res in
   let pr2 x = "?" in
-  Gen.Debug.no_1 "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
+  Gen.Debug.loop_1 "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
       
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
