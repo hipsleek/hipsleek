@@ -1,0 +1,10 @@
+A node with Derived became Original after lemma folding! which example?
+
+view_unfold_num should be made into a verifier option
+
+view_original should be changed from bool to integer
+  0 -> original
+  1,2,.. -> derived
+
+
+

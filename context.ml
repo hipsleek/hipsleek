@@ -195,7 +195,7 @@ and view_mater_match prog c vs1 aset imm f =
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
   else 
-        let args = List.tl (fv_simple_formula c.coercion_head) in 
+        let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
         let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
         try
           let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
