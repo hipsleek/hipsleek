@@ -25,10 +25,8 @@ let rec string_of_typ = function
    (* may be based on types used !! *)
   | P.Prim t -> string_of_prim_type t 
   | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
-	| P.Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
+  | P.Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
 
-let string_of_full_typ = function 
-  | P.Prim t -> string_of_prim_type t 
 ;;
 
 (** the formatter that fmt- commands will use *)

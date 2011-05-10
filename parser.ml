@@ -19,9 +19,10 @@ open Sleekcommons
 		
   type decl = 
     | Type of type_decl
+    | Rel of rel_decl (* An Hoa *)
     | Global_var of exp_var_decl
     | Proc of proc_decl
-	  | Coercion of coercion_decl
+    | Coercion of coercion_decl
 		
   type member = 
 	| Field of (typed_ident * loc)
@@ -317,6 +318,12 @@ let peek_star =
              |[STAR,_;OPAREN,_] -> raise Stream.Failure
              | _ -> ())
 
+let peek_array_type = 
+   SHGram.Entry.of_parser "peek_array_type"
+       (fun strm ->
+           match Stream.npeek 2 strm with
+             |[_;OSQUARE,_] -> ()
+             | _ -> raise Stream.Failure)
 
 let sprog = SHGram.Entry.mk "sprog" 
 let hprog = SHGram.Entry.mk "hprog"
@@ -335,8 +342,9 @@ command: [[ t=OPT non_empty_command_dot-> un_option t EmptyCmd]];
 non_empty_command_dot: [[t=non_empty_command; `DOT -> t]];
 
 non_empty_command:
-    [[  t=data_decl           ->DataDef t
-      | `PRED;t=view_decl     ->PredDef t
+    [[  t=data_decl           -> DataDef t
+      | `PRED;t=view_decl     -> PredDef t
+      | t = rel_decl          -> RelDef t
       | `LEMMA;t= coercion_decl -> LemmaDef t
       | t=let_decl            -> t
       | t=checkentail_cmd     -> EntailCheck t
@@ -651,11 +659,12 @@ cexp_w :
    
 (* constraint expressions *)
    | "gen"
-   [ `OBRACE; c= opt_cexp_list; `CBRACE                             -> Pure_c (P.Bag (c, get_pos 1)) 
+   [ `OBRACE; c= opt_cexp_list; `CBRACE                            -> Pure_c (P.Bag (c, get_pos 1)) 
    | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos 1))
    | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos 1)) 
-   | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN  
-                                                                   -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos 1) ) c1 c2
+   | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN             -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos 1) ) c1 c2
+ 
+
    | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos 1)) 
    |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos 2)) c1 c2 
    | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos 1)) c1
@@ -685,8 +694,13 @@ cexp_w :
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
-
-    
+     |  i=cid; `OSQUARE; c=cexp; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos 1))
+     |  `REL; `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN ->
+   (* AnHoa: relation constraint, for instance, given the relation 
+    *  s(a,b,c) == c = a + b.
+    *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
+    *)
+            Pure_f(P.BForm (P.RelForm (id, cl, get_pos 1), None))
      | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos 1)) c1 c2
      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
@@ -701,8 +715,9 @@ cexp_w :
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
      | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
                                          -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos 1)) c ocl) pc
-     | t=cid                            -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
+     | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
      | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
+     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos 1)) 
     
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
@@ -749,7 +764,7 @@ let_decl:
 extended_meta_constr:
   [[ `DOLLAR;`IDENTIFIER id  -> MetaVar id
    | f= formulas              -> MetaEForm (F.subst_stub_flow_struc n_flow (fst f))
-	 | c=compose_cmd           -> MetaCompose c]];
+	 | c = compose_cmd           -> MetaCompose c]];
    
 meta_constr:
   [[ `DOLLAR; `IDENTIFIER id -> MetaVar id
@@ -776,8 +791,8 @@ opt_name: [[t= OPT name-> un_option t ""]];
 name:[[ `STRING(_,id)  -> id]];
 
 typ:
-  [[ t=non_array_type -> t
-   | t=array_type     -> t]];
+  [[ peek_array_type; t=array_type     -> t
+    | t=non_array_type -> t]];
 
 non_array_type:
   [[ `INT                -> int_type
@@ -854,6 +869,41 @@ fct_list: [[ `OSQUARE; t=fct_arg_list; `CSQUARE -> [] ]];
 
 opt_fct_list:[[ t = OPT fct_list -> []]];
   
+
+
+(************ An Hoa :: Relations ************)
+rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
+	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *)}
+  
+  | rh = rel_header; `EQ -> report_error (get_pos 2) ("use == to define a relation")
+]];
+
+typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
+
+typed_id_list_opt: [[ t = LIST0 typed_id_list SEP `COMMA -> t ]];
+
+rel_header:[[
+`REL; `IDENTIFIER id; `OPAREN; tl=typed_id_list_opt; (* opt_ann_cid_list *) `CPAREN  ->
+    (* let cids, anns = List.split $4 in
+    let cids, br_labels = List.split cids in
+	  if List.exists 
+		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
+	  then
+		report_error (get_pos 1) 
+		  ("variables in view header are not allowed to be primed")
+	  else
+		let modes = get_modes anns in *)
+		  { rel_name = id;
+			rel_typed_vars = tl;
+			rel_formula = P.mkTrue (get_pos 1); (* F.mkETrue top_flow (get_pos 1); *)			
+			}
+]];
+
+rel_body:[[ (* formulas { 
+    ((F.subst_stub_flow_struc top_flow (fst $1)),(snd $1)) } *)
+	pc=pure_constr -> pc (* Only allow pure constraint in relation definition. *)
+]];
+
  (*end of sleek part*)   
  (*start of hip part*)
 hprogn: 
@@ -862,6 +912,7 @@ hprogn:
       let global_var_defs = ref ([] : exp_var_decl list) in
       let enum_defs = ref ([] : enum_decl list) in
       let view_defs = ref ([] : view_decl list) in
+	  let rel_defs = ref ([] : rel_decl list) in (* An Hoa *)
       let proc_defs = ref ([] : proc_decl list) in
       let coercion_defs = ref ([] : coercion_decl list) in
       let hopred_defs = ref ([] : hopred_decl list) in
@@ -873,6 +924,7 @@ hprogn:
           | View vdef -> view_defs := vdef :: !view_defs
           | Hopred hpdef -> hopred_defs := hpdef :: !hopred_defs
           end
+        | Rel rdef -> rel_defs := rdef :: !rel_defs (* An Hoa *)
         | Global_var glvdef -> global_var_defs := glvdef :: !global_var_defs 
         | Proc pdef -> proc_defs := pdef :: !proc_defs 
       | Coercion cdef -> coercion_defs := cdef :: !coercion_defs in
@@ -890,8 +942,9 @@ hprogn:
     { prog_data_decls = obj_def :: string_def :: !data_defs;
       prog_global_var_decls = !global_var_defs;
       prog_enum_decls = !enum_defs;
-      prog_rel_decls = []; (* TODO : new field for array parsing *)
+      (* prog_rel_decls = [];  TODO : new field for array parsing *)
       prog_view_decls = !view_defs;
+      prog_rel_decls = !rel_defs; (* An Hoa *)
       prog_proc_decls = !proc_defs;
       prog_coercion_decls = !coercion_defs; 
       prog_hopred_decls = !hopred_defs;} ]];
@@ -900,6 +953,7 @@ opt_decl_list: [[t=LIST0 decl -> t]];
   
 decl:
   [[ t=type_decl                  -> Type t
+  |  r=rel_decl -> Rel r (* An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
   | `COERCION; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
@@ -1493,10 +1547,20 @@ primary_expression_no_parenthesis :
   | t = invocation_expression -> t
   | t = new_expression -> t
   | `THIS _ -> This{exp_this_pos = get_pos 1}
-			]
+			
+  | peek_array_type; t = arrayaccess_expression -> t   (* An Hoa *)]
   | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *) Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+
 ]];
 
+(* An Hoa : array access expression *)
+arrayaccess_expression:[[
+             `IDENTIFIER id; `OSQUARE; ex=expression; `CSQUARE ->
+			ArrayAt { 
+				exp_arrayat_array_name = id; 
+				exp_arrayat_index = ex; 
+				exp_arrayat_pos = get_pos 1 }
+	         ]];
 (* member_name : *)
 (*  [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 } *)
 (*   | `THIS _ -> This{exp_this_pos = get_pos 1}]]; *)
@@ -1512,8 +1576,8 @@ let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
 (*   Gen.Debug.loop_1 "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n *)
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
-let parse_hip_string n s = 
+(* let parse_hip_string n s = 
   let pr x = x in
-  let pr_no x = "?" in Gen.Debug.ho_2 "parse_hip_string" pr pr pr_no parse_hip_string n s
+  let pr_no x = "?" in Gen.Debug.ho_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 
  

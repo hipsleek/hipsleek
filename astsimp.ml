@@ -200,15 +200,15 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
   in
     (
      (*let _ = print_string ("\n primitives: "^prim_str^"\n") in*)
-      let _ = print_string ("\n primitives: X1 ") in
+
      Buffer.add_string prim_buffer prim_str;
-      let _ = print_string ("\n primitives: X1 ") in
+
      helper prog.I.prog_data_decls;
-      let _ = print_string ("\n primitives: X1 ") in
+
      let all_prims = Buffer.contents prim_buffer in
-      let _ = print_string ("\n primitives: X1 ") in
+
      let prog = Parser.parse_hip_string "primitives" all_prims in
-      let _ = print_string ("\n primitives: X1 ") in
+
 	 prog.I.prog_proc_decls)
      (* let input = Lexing.from_string all_prims in *)
      (* input_file_name := "primitives"; *)
@@ -219,9 +219,9 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
 	 (* prog.I.prog_proc_decls) *)
 
 
-let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
-  let pr_no x = "?" in
-  Gen.Debug.ho_1 "gen_primitives" pr_no pr_no gen_primitives prog
+(* let gen_primitives (prog : I.prog_decl) : I.proc_decl list = *)
+(*   let pr_no x = "?" in *)
+(*   Gen.Debug.ho_1 "gen_primitives" pr_no pr_no gen_primitives prog *)
   
 let op_map = Hashtbl.create 19
   
@@ -931,14 +931,12 @@ and substitute_seq (fct: C.proc_decl): C.proc_decl = match fct.C.proc_body with
 	| Some e-> {fct with C.proc_body = Some (seq_elim e)}
 	
 
-let rec  trans_prog_x (prog3 : I.prog_decl) : C.prog_decl =
+let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   let _ = I.build_exc_hierarchy false prog3 in
   let _ = (Gen.ExcNumbering.add_edge raisable_class "Object") in
-  let _ = print_string "\n X1" in
   let prog2 = { prog3 with I.prog_data_decls = 
           ({I.data_name = raisable_class;I.data_fields = [];I.data_parent_name = "Object";I.data_invs = [];I.data_methods = []})
           ::prog3.I.prog_data_decls;} in  
-  let _ = print_string "\n X2" in
   let prog0 = { prog2 with			
 	  I.prog_proc_decls = List.map prepare_labels prog2.I.prog_proc_decls;
 	  I.prog_data_decls = List.map (fun c-> {c with I.data_methods = List.map prepare_labels c.I.data_methods;}) prog2.I.prog_data_decls; } in
@@ -949,26 +947,20 @@ let rec  trans_prog_x (prog3 : I.prog_decl) : C.prog_decl =
   let check_field_dup = Chk.no_field_duplication prog0 in
   let check_method_dup = Chk.no_method_duplication prog0 in
   let check_field_hiding = Chk.no_field_hiding prog0 in
-  let _ = print_string "\n X3" in
   if check_field_dup && (check_method_dup && (check_overridding && check_field_hiding))
   then
     ( begin
 	  Gen.ExcNumbering.c_h (); 
-      let _ = print_string "\n X3a" in
 	  let prims = gen_primitives prog0 in
-      let _ = print_string "\n X3b" in
 	  let prog = { (prog0) with I.prog_proc_decls = prims @ prog0.I.prog_proc_decls;} in
       (set_mingled_name prog;
-      let _ = print_string "\n X3c" in
       let all_names =(List.map (fun p -> p.I.proc_mingled_name) prog0.I.prog_proc_decls) @
         ((List.map (fun ddef -> ddef.I.data_name) prog0.I.prog_data_decls) @
             (List.map (fun vdef -> vdef.I.view_name) prog0.I.prog_view_decls)) in
-      let _ = print_string "\n X4" in
       let dups = Gen.BList.find_dups_eq (=) all_names in
       if not (Gen.is_empty dups) then
 		(print_string ("duplicated top-level name(s): " ^((String.concat ", " dups) ^ "\n")); failwith "Error detected - astsimp")
       else (
-          let _ = print_string "\n X5" in
 		  let prog = case_normalize_program prog in
 		  let tmp_views = order_views prog.I.prog_view_decls in
 		  let cviews = List.map (trans_view prog) tmp_views in
@@ -1003,10 +995,10 @@ let rec  trans_prog_x (prog3 : I.prog_decl) : C.prog_decl =
 		  let _ = if !Globals.print_core then print_string (Cprinter.string_of_program c) else () in
 		  c)))
 	end)
-  else      let _ = print_string "\n X3b" in failwith "Error detected"
+  else   failwith "Error detected"
 
-and trans_prog (prog : I.prog_decl) : C.prog_decl =
-  Gen.Debug.loop_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog
+(* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
+(*   Gen.Debug.loop_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 

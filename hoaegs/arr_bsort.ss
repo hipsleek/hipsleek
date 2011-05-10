@@ -2,7 +2,7 @@
  Example: Bubble sort
  **/
 
-relation sorted(int[] a, int i, int j) == (i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1]))).
+relation sorted(int[] a, int i, int j) == (i >= j | forall (k : (k < i | k >= j | a[k] <= a[k+1])))
 
 // Go through array a[i..j] once and swap adjacent 
 // elements if they are out of increasing order
