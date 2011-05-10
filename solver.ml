@@ -1167,11 +1167,11 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                   (match h2,rhs_node with
                     | DataNode dl, DataNode dr -> Context.M_match
                     | ViewNode vl, ViewNode vr -> 
-                      let l1 = Context.M_base_case_unfold in
+                          let l1 = Context.M_base_case_unfold in
                           let l2 = if (vl.h_formula_view_name ==vl.h_formula_view_name) then [Context.M_match] else [] in
                           let l3 = [Context.M_lemma None] in
-                      let src = Context.Search_action (l2@l3) in
-                      Context.Seq_action [l1;src]
+                          let src = Context.Search_action (l2@l3) in
+                          Context.Seq_action [l1;src]
                     | DataNode dl, ViewNode vr -> Context.Search_action [Context.M_fold;Context.M_rd_lemma]
                     | ViewNode vl, DataNode dr -> Context.M_unfold
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
@@ -1187,20 +1187,20 @@ and process_one_match rhs_info (h1,h2,nl,mt) :Context.action=
                             | true -> a1
                             | false -> a1
                                   (*let a2 = in
-                      Context.Search_action (a1::a2)*))
+                                    Context.Search_action (a1::a2)*))
                     | ViewNode vl, DataNode dr -> Context.Undefined_action
                     | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
                   )
             | Context.WArg -> Context.Undefined_action in
   r
-  
+      
 and process_matches_x rhs_info matches  = List.map (fun c -> (c,process_one_match rhs_info c)) matches 
-    
+  
 and process_matches rhs_info matches =
   let pr1 x = match x with | None -> "None" |Some (_,_,rn)-> ("Some " ^ Cprinter.string_of_h_formula rn) in
   let pr2 x = PR.poly_string_of_pr (Cprinter.pr_seq "" (fun (c1,c2) -> pr_match_res c1;Cprinter.fmt_string "==>"; pr_action_res c2)) x in
   Gen.Debug.ho_1 "process_matches" pr1 pr2 (fun _ -> process_matches_x rhs_info matches) rhs_info
-  
+      
       
 and find_node_one prog lhs_h lhs_p (p : CP.spec_var) (imm : bool)  rhs_info pos : find_node_result =
   let pr1 x = match x with
@@ -4606,7 +4606,7 @@ and do_match_x prog estate l_args r_args l_node_name r_node_name l_node r_node r
     (* apply the explicit instantiations to the consequent *)
     (* let new_conseq = subst_avoid_capture (fst new_subst) (snd new_subst) new_conseq in *)
     (* for each expl inst  vi = wi: make wi existential + remove vi from the exist vars *)
-    let new_es' = {new_es with (* es_evars = new_es.es_evars @ (snd new_subst); *) es_must_match = false} in
+    let new_es' = new_es in (* {new_es with (\* es_evars = new_es.es_evars @ (snd new_subst); *\) es_must_match = false} in *)
     let new_es = pop_exists_estate ivars (* (fst new_subst) *) new_es' in
     let new_ctx = Ctx (CF.add_to_estate new_es "matching of view/node") in
     Debug.devel_pprint ("do_match (after): LHS: "^ (Cprinter.string_of_context_short new_ctx)) pos;
@@ -5158,25 +5158,26 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 	         - if the flag is false, we only use coerce&distribute&match
 	      *)
 	      let apply_coer = (coer_target prog coer anode (CF.formula_of_base rhs_b) (CF.formula_of_base lhs_b)) in
-          let f1=apply_coer in
-          let f2=(get_estate_must_match estate) in
-          let f3=List.mem coer.coercion_body_view origs in
-          let f4=is_cycle_coer coer origs in
-          let f5=is_distributive coer in
-          let f6=(!enable_distribution) in
-	      if (!Globals.lemma_heuristic && 		(* use coerce&match together with the history mechanism *)
-		      (not(apply_coer) 					(* the target is not present *)
-		      or (get_estate_must_match estate))  (* must match *)
-		  && (List.mem coer.coercion_body_view origs
-		  or is_cycle_coer coer origs)) (* there is a cycle *)
-		    or 	(not(!Globals.lemma_heuristic) &&   (* use coerce&distribute&match*)
-			    (not(apply_coer) or 				(* the target is not present *)
-			        ((get_estate_must_match estate) 	(* must match *)
-			        && (not(!enable_distribution) 		(* distributive coercion is not allowed *)
-				    or not(is_distributive coer))))) 	(* coercion is not distributive *)
+          (* let f1=apply_coer in *)
+          (* (\* let f2=(get_estate_must_match estate) in *\) *)
+          (* let f3=List.mem coer.coercion_body_view origs in *)
+          (* let f4=is_cycle_coer coer origs in *)
+          (* let f5=is_distributive coer in *)
+          (* let f6=(!enable_distribution) in *)
+	      (* if (!Globals.lemma_heuristic && 		(\* use coerce&match together with the history mechanism *\) *)
+		  (*     (not(apply_coer) 					(\* the target is not present *\) *)
+		  (*     (\* or (get_estate_must_match estate) *\))  (\* must match *\) *)
+		  (* && (List.mem coer.coercion_body_view origs *)
+		  (* or is_cycle_coer coer origs)) (\* there is a cycle *\) *)
+		  (*   or 	(not(!Globals.lemma_heuristic) &&   (\* use coerce&distribute&match*\) *)
+		  (*       (not(apply_coer) or 				(\* the target is not present *\) *)
+		  (*           ((\* (get_estate_must_match estate) 	(\\* must match *\\) *\) *)
+		  (*           (\* &&  *\)(not(!enable_distribution) 		(\* distributive coercion is not allowed *\) *)
+		  (*   	    or not(is_distributive coer))))) 	(\* coercion is not distributive *\) *)
+          if (not(apply_coer) or (is_cycle_coer coer origs))
 	      then
-            let s = (pr_list string_of_bool [f1;f2;f3;f4;f5;f6]) in
-		    (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!"^s) pos; 
+            (* let s = (pr_list string_of_bool [f1;f3;f4;f5;f6]) in *)
+		    (Debug.devel_pprint("[do_universal]: Coercion cannot be applied!"(* ^s *)) pos; 
 		    (CF.mkFailCtx_in(Basic_Reason( { 
 				fc_message ="failed coercion application";
 				fc_current_lhs = estate;
@@ -5186,7 +5187,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 				fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), Failure))
 	      else	(* we can apply coercion *)
 		    begin
-		      if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
+		      if (not(!Globals.lemma_heuristic) (* && get_estate_must_match estate *)) then
 		        ((*print_string("disable distribution\n");*) enable_distribution := false);
 		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
 		      let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
@@ -5216,7 +5217,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 				  es_ivars = f_univ_vars @ estate.es_ivars;
 				  es_formula = new_f;
 				  (* es_aux_conseq = CP.mkAnd estate.es_aux_conseq to_aux_conseq pos; *)
-				  es_must_match = true} in
+				  (* es_must_match = true *)} in
 		      let new_ctx = Ctx new_estate in
 		      let res, prf = heap_entail prog is_folding (SuccCtx [new_ctx]) new_conseq pos in
 		      (add_to_aux_conseq res to_aux_conseq pos, prf)
@@ -5296,24 +5297,25 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 	           - if the flag 	lemma_heuristic in true then we use both coerce& match and history
 	           - if the flag is false, we only use coerce&distribute&match
 	        *)
-            let f1=apply_coer in
-            let f2=(get_estate_must_match estate) in
-            let f3=List.mem coer.coercion_body_view origs in
-            let f4=is_cycle_coer coer origs in
-            let f5=is_distributive coer in
-            let f6=(!enable_distribution) in
-	        if (!Globals.lemma_heuristic && 
-                (not(apply_coer) (* coerce&match+history *) or (get_estate_must_match estate)) && 
-                (List.mem coer.coercion_body_view origs 
-                or (* List.mem coer.coercion_head_view origs *)  (is_cycle_coer coer origs))
-            )
-	          or (not(!Globals.lemma_heuristic) && (* coerce&distribute&match *)
-		          (not(apply_coer) or 	(* the target is not present *)
-			          (false (* (get_estate_must_match estate) *) (* must match *) && (not(!enable_distribution) (* distributive coercion is not allowed *)
-					  or not(is_distributive coer))))) (* coercion is not distributive *)
+            (* let f1=apply_coer in *)
+            (* (\* let f2=(get_estate_must_match estate) in *\) *)
+            (* let f3=List.mem coer.coercion_body_view origs in *)
+            (* let f4=is_cycle_coer coer origs in *)
+            (* let f5=is_distributive coer in *)
+            (* let f6=(!enable_distribution) in *)
+	        (* if (!Globals.lemma_heuristic &&  *)
+            (*     (not(apply_coer) (\* coerce&match+history *\) (\* or (get_estate_must_match estate) *\)) &&  *)
+            (*     (List.mem coer.coercion_body_view origs  *)
+            (*     or (\* List.mem coer.coercion_head_view origs *\)  (is_cycle_coer coer origs)) *)
+            (* ) *)
+	        (*   or (not(!Globals.lemma_heuristic) && (\* coerce&distribute&match *\) *)
+		    (*       (not(apply_coer) or 	(\* the target is not present *\) *)
+			(*           (false (\* (get_estate_must_match estate) *\) (\* must match *\) && (not(!enable_distribution) (\* distributive coercion is not allowed *\) *)
+			(* 		  or not(is_distributive coer))))) (\* coercion is not distributive *\) *)
+            if (not(apply_coer) or (is_cycle_coer coer origs))
 	        then
-              let s = (pr_list string_of_bool [f1;f2;f3;f4;f5;f6]) in
-		      (Debug.devel_pprint("[rewrite_coercion]: Rewrite cannot be applied!"^s) pos; (false, mkTrue (mkTrueFlow ()) no_pos))
+              (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
+		      (Debug.devel_pprint("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *)) pos; (false, mkTrue (mkTrueFlow ()) no_pos))
 	        else
 		      (* we can apply coercion *)
 		      begin
@@ -5336,7 +5338,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
 		          let new_f = normalize coer_rhs_new f pos in
-			      (if (not(!Globals.lemma_heuristic) && get_estate_must_match estate) then
+			      (if (not(!Globals.lemma_heuristic) (* && get_estate_must_match estate *)) then
 			        ((*print_string("disable distribution\n"); *)enable_distribution := false);
 			      (true, new_f))
 		        else if !Globals.case_split then begin
@@ -5354,7 +5356,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          let f2 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			      (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		          let new_f = mkOr f1 f2 pos in
-			      if (not(!Globals.lemma_heuristic) && (get_estate_must_match estate)) then
+			      if (not(!Globals.lemma_heuristic) (* && (get_estate_must_match estate) *)) then
 			        ((*print_string("disable distribution\n"); *)enable_distribution := false);
 			      (true, new_f)
 		        end else begin
@@ -5536,7 +5538,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
   if ok then begin
     let new_ctx1 = build_context ctx0 new_lhs pos in
 	(* let new_ctx = set_context_formula ctx0 new_lhs in *)
-    let new_ctx = SuccCtx[(set_context_must_match new_ctx1)] in
+    let new_ctx = SuccCtx[((* set_context_must_match *) new_ctx1)] in
     let res, tmp_prf = heap_entail prog is_folding new_ctx conseq pos in
     let prf = mkCoercionLeft ctx0 conseq coer.coercion_head
 	  coer.coercion_body tmp_prf coer.coercion_name
@@ -5584,12 +5586,12 @@ and apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 
     let vl = Gen.BList.intersect_eq CP.eq_spec_var estate.es_gen_impl_vars (h_fv ln2) in
     let new_iv = Gen.BList.difference_eq CP.eq_spec_var estate.es_gen_impl_vars vl in
     let _ = if not(vl==[]) then Debug.devel_pprint ("do_right_coercion : impl to expl vars  " ^ (Cprinter.string_of_spec_var_list vl) ^ "\n") pos in
-    let nctx = set_context (fun es -> {es with es_must_match = true;
+    let nctx = set_context (fun es -> {es with (* es_must_match = true; *)
         es_gen_impl_vars = new_iv; es_gen_expl_vars =  (es.es_gen_expl_vars@vl)}) ctx0 in
 	let new_ctx = SuccCtx [nctx] (* (set_context_must_match ctx0)] *) in
 	let res, tmp_prf = heap_entail prog is_folding new_ctx new_rhs pos in
-    let res = set_list_context (fun es -> {es with es_must_match = estate.es_must_match;
-      (* es_gen_impl_vars = estate.es_gen_impl_vars;  *)es_gen_expl_vars =  estate.es_gen_expl_vars}) res in
+    let res = set_list_context (fun es -> {es with (* es_must_match = estate.es_must_match; *)
+        (* es_gen_impl_vars = estate.es_gen_impl_vars;  *)es_gen_expl_vars =  estate.es_gen_expl_vars}) res in
 	let prf = mkCoercionRight ctx0 conseq coer.coercion_head
 	  coer.coercion_body tmp_prf  coer.coercion_name
 	in
