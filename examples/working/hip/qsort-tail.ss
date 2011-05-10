@@ -70,7 +70,7 @@ void qsort(ref node x, ref node tx)
 			tx.next = y;
 			tx = ty;
             //            dprint;
-            // assume false;
+            assume false;
 			return;
 		}
 	}

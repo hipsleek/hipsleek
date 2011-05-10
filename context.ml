@@ -43,7 +43,7 @@ and match_type =
 and action = 
   | M_match of match_res
   | M_fold of match_res
-  | M_unfold  of match_res
+  | M_unfold  of (match_res * int) (* zero denotes no counting *)
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
   | M_rd_lemma of match_res
@@ -69,8 +69,7 @@ let pr_match_type (e:match_type):unit =
     | WArg -> fmt_string "WArg"
 
 let pr_match_res (c:match_res):unit =
-  fmt_string "{";
-  fmt_string "\n match_res_lhs_node "; pr_h_formula c.match_res_lhs_node;
+  fmt_string "{ match_res_lhs_node "; pr_h_formula c.match_res_lhs_node;
   fmt_string "\n match_res_lhs_rest "; pr_h_formula c.match_res_lhs_rest;
   fmt_string "\n match_res_holes "; pr_seq "" (Cprinter.pr_pair  pr_h_formula pr_int) c.match_res_holes;  
   fmt_string "\n match_res_type "; pr_match_type c.match_res_type;
@@ -88,7 +87,7 @@ let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
   | M_match e -> pr_mr e; fmt_string "==> Mandatory match"
   | M_fold e -> pr_mr e; fmt_string "==> Mandatory fold"
-  | M_unfold e -> pr_mr e; fmt_string "==> Mandatory unfold"
+  | M_unfold (e,i) -> pr_mr e; fmt_string ("==> Mandatory unfold "^(string_of_int i))
   | M_base_case_unfold e -> pr_mr e; fmt_string "==> Mandatory base case unfold"
   | M_base_case_fold e -> pr_mr e; fmt_string "==> Mandatory base case fold"
   | M_rd_lemma e -> pr_mr e; fmt_string "==> Mandatory right distributive lemma"
@@ -97,7 +96,7 @@ let rec pr_action_res pr_mr a = match a with
   | Seq_action (_,l) -> fmt_string "seq:"; pr_seq "" (pr_action_res pr_mr) l
   | Search_action (_,l) -> fmt_string "search:"; pr_seq "" (pr_action_res pr_mr) l
 
-let string_of_action_res_simpl e = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
+let string_of_action_res_simpl (e:action) = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
 let string_of_action_res e = poly_string_of_pr (pr_action_res pr_match_res) e
 
 
@@ -107,7 +106,7 @@ let action_get_holes a = match a with
   | Undefined_action e
   | M_match e
   | M_fold e
-  | M_unfold e
+  | M_unfold (e,_)
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
@@ -141,38 +140,38 @@ let rec choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_res
     | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} |ViewNode{h_formula_view_node=p;h_formula_view_imm=imm}-> (imm,p)
     | _ -> report_error no_pos "choose_context unexpected rhs formula\n" in
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
-	let eqns' = MCP.ptr_equations_without_null lhs_p in
+  let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns =
-      let eqns = MCP.ptr_equations_without_null rhs_p in
-      let r_asets = alias eqns in
-      let a_vars = lhs_fv @ posib_r_aliases in
-      let fltr = List.map (fun c-> Gen.BList.intersect_eq (=) c a_vars) r_asets in
-      let colaps l = List.fold_left (fun a c -> match a with 
-                                                  | [] -> [(c,c)]
-                                                  | h::_-> (c,(fst h))::a) [] l in
-      List.concat (List.map colaps fltr) in
-	let eqns = (p, p) :: eqns' in
-	let asets = alias (eqns@r_eqns) in
-	let paset = get_aset asets p in (* find the alias set containing p *)
+    let eqns = MCP.ptr_equations_without_null rhs_p in
+    let r_asets = alias eqns in
+    let a_vars = lhs_fv @ posib_r_aliases in
+    let fltr = List.map (fun c-> Gen.BList.intersect_eq (=) c a_vars) r_asets in
+    let colaps l = List.fold_left (fun a c -> match a with 
+      | [] -> [(c,c)]
+      | h::_-> (c,(fst h))::a) [] l in
+    List.concat (List.map colaps fltr) in
+  let eqns = (p, p) :: eqns' in
+  let asets = alias (eqns@r_eqns) in
+  let paset = get_aset asets p in (* find the alias set containing p *)
   if Gen.is_empty paset then  failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
   else if not(CP.mem p lhs_fv) || (!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
-	  (Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
-	else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
+	(Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
+  else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
 
 and choose_context prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   let pr1 = Cprinter.string_of_h_formula in
-  let pr2 l = String.concat "\n" (List.map string_of_match_res l) in
+  let pr2 l = pr_list string_of_match_res l in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.no_2 "choose_context" pr1 pr1 pr2 
+  Gen.Debug.ho_2 "choose_context" pr1 pr1 pr2 
       (fun _ _ -> choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node
 
 (*
-spatial context
+  spatial context
 *)
-    
+      
 and spatial_ctx_extract_debug p f a i = 
   let pr x = "?" in
-Gen.Debug.ho_4 "spatial_context_extract " pr string_of_h_formula pr string_of_bool pr spatial_ctx_extract p f a i
+  Gen.Debug.ho_4 "spatial_context_extract " pr string_of_h_formula pr string_of_bool pr spatial_ctx_extract p f a i
 
 
 and view_mater_match prog c vs1 aset imm f =
@@ -185,25 +184,25 @@ and view_mater_match prog c vs1 aset imm f =
       [(Hole hole_no, f, [(f, hole_no)], MaterializedArg (mv,View_mater))]
     else [(HTrue, f, [], MaterializedArg (mv,View_mater))]
   with 
-    _ ->  
-      if List.exists (fun v -> CP.mem v aset) vs1 then
-        if imm then
-          let hole_no = Globals.fresh_int() in 
-            [(Hole hole_no, f, [(f, hole_no)], WArg)]
-        else [(HTrue, f, [], WArg)]
-      else []
-      
-and coerc_mater_match prog l_vname l_vargs r_aset imm lhs_f = 
+      _ ->  
+          if List.exists (fun v -> CP.mem v aset) vs1 then
+            if imm then
+              let hole_no = Globals.fresh_int() in 
+              [(Hole hole_no, f, [(f, hole_no)], WArg)]
+            else [(HTrue, f, [], WArg)]
+          else []
+            
+and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
   let coercs = prog.prog_left_coercions in
   let pos_coercs = List.filter (fun c-> c.coercion_simple_lhs && c.coercion_head_view == l_vname) coercs in
   let pos_coercs = List.fold_left 
     (fun a c-> 
-      let args = fv_simple_formula c.coercion_head in 
-      let lmv = subst_mater_list args l_vargs c.coercion_mater_vars in
-      try
-        let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
-        (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a
-      with  _ ->  a) [] pos_coercs in
+        let args = fv_simple_formula c.coercion_head in 
+        let lmv = subst_mater_list args l_vargs c.coercion_mater_vars in
+        try
+          let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
+          (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))::a
+        with  _ ->  a) [] pos_coercs in
   if imm then [] else pos_coercs
     
 and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
@@ -213,27 +212,27 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
     | HFalse -> []
     | Hole _ -> []
     | DataNode ({h_formula_data_node = p1; 
-		 h_formula_data_imm = imm1}) ->
+	  h_formula_data_imm = imm1}) ->
           if ((CP.mem p1 aset) && (subtype imm imm1)) then 
             if imm then
               let hole_no = Globals.fresh_int() in 
-                [((Hole hole_no), f, [(f, hole_no)], Root)]
+              [((Hole hole_no), f, [(f, hole_no)], Root)]
             else
               [(HTrue, f, [], Root)]
           else 
             []
     | ViewNode ({h_formula_view_node = p1;
-		 h_formula_view_imm = imm1;
-		 h_formula_view_arguments = vs1;
-		 h_formula_view_name = c}) ->
+	  h_formula_view_imm = imm1;
+	  h_formula_view_arguments = vs1;
+	  h_formula_view_name = c}) ->
           if (subtype imm imm1) then
             (if (CP.mem p1 aset)  then
               if imm then
-               let hole_no = Globals.fresh_int() in
-          (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
-          [(Hole hole_no, f, [(f, hole_no)], Root)]
+                let hole_no = Globals.fresh_int() in
+                (*[(Hole hole_no, matched_node, hole_no, f, Root, HTrue, [])]*)
+                [(Hole hole_no, f, [(f, hole_no)], Root)]
               else
-          [(HTrue, f, [], Root)]
+                [(HTrue, f, [], Root)]
             else
               let vmm = view_mater_match prog c vs1 aset imm f in
               let cmm = coerc_mater_match prog c vs1 aset imm f in
@@ -241,8 +240,8 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
             )
           else []
     | Star ({h_formula_star_h1 = f1;
-	     h_formula_star_h2 = f2;
-	     h_formula_star_pos = pos}) ->
+	  h_formula_star_h2 = f2;
+	  h_formula_star_pos = pos}) ->
           let l1 = helper f1 in
           let res1 = List.map (fun (lhs1, node1, hole1, match1) -> (mkStarH lhs1 f2 pos, node1, hole1, match1)) l1 in  
 
@@ -250,52 +249,52 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
           let res2 = List.map (fun (lhs2, node2, hole2, match2) -> (mkStarH f1 lhs2 pos, node2, hole2, match2)) l2 in
           res1 @ res2
     | _ -> 
-      let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in 
-      failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
-    
-                                 (*| Conj ({h_formula_conj_h1 = f1;
-                                       h_formula_conj_h2 = f2;
-                                       h_formula_conj_pos = pos}) -> (* [] *)
-                                  let l1 = helper f1 in
-                                  let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (mkConjH ctx1 f2 pos, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in  
+          let _ = print_string("[context.ml]: There should be no conj/phase in the lhs at this level; lhs = " ^ (string_of_h_formula f) ^ "\n") in 
+          failwith("[context.ml]: There should be no conj/phase in the lhs at this level\n")
+              
+  (*| Conj ({h_formula_conj_h1 = f1;
+    h_formula_conj_h2 = f2;
+    h_formula_conj_pos = pos}) -> (* [] *)
+    let l1 = helper f1 in
+    let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (mkConjH ctx1 f2 pos, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in  
 
-                                  let l2 = helper f2 in
-                                  let res2 = List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (mkConjH f1 ctx2 pos, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2 in
-                                    res1 @ res2
+    let l2 = helper f2 in
+    let res2 = List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (mkConjH f1 ctx2 pos, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2 in
+    res1 @ res2
 
-                                    | Phase ({h_formula_phase_rd = f1;
-                                       h_formula_phase_rw = f2;
-                                       h_formula_phase_pos = pos}) ->
-                                  (* let _ = print_string("in phase with f1 = " ^ (string_of_h_formula f1) ^ "\n") in *)
-                                  (* let _ = print_string("and f2 = " ^ (string_of_h_formula f2) ^ "\n") in *)
-                                  let l1 = helper f1 in		
-                                  let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (mkPhaseH ctx1 f2 pos, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in  
+    | Phase ({h_formula_phase_rd = f1;
+    h_formula_phase_rw = f2;
+    h_formula_phase_pos = pos}) ->
+  (* let _ = print_string("in phase with f1 = " ^ (string_of_h_formula f1) ^ "\n") in *)
+  (* let _ = print_string("and f2 = " ^ (string_of_h_formula f2) ^ "\n") in *)
+    let l1 = helper f1 in		
+    let res1 = List.map (fun (ctx1, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1) -> (mkPhaseH ctx1 f2 pos, hole1, hole_no1, node1, match1, no_read_ctx1, imm_marks1)) l1 in  
 
-                                  let l2 = helper f2 in
-                                  let res2 = 
-                                    if not(imm) && (List.length l2) > 0 then
-                                      (* drop read phase *)
-                                      List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2
-                                    else
-                                      List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (mkPhaseH f1 ctx2 pos, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2
-                                  in
-                                    res1 @ res2
-                                (*	  
-                                  let l2 = helper f2 in
-                                    (*List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> ((*mkPhaseH f1 ctx2 pos*)ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2*)
-                                  List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (mkPhaseH f1 ctx2 pos, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2  
-                                *)
-                                 *)
+    let l2 = helper f2 in
+    let res2 = 
+    if not(imm) && (List.length l2) > 0 then
+  (* drop read phase *)
+    List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2
+    else
+    List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (mkPhaseH f1 ctx2 pos, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2
+    in
+    res1 @ res2
+  (*	  
+    let l2 = helper f2 in
+  (*List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> ((*mkPhaseH f1 ctx2 pos*)ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2*)
+    List.map (fun (ctx2, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2) -> (mkPhaseH f1 ctx2 pos, hole2, hole_no2, node2, match2, no_read_ctx2, imm_marks2)) l2  
+  *)
+  *)
   in
-   let l = helper f0 in
-    List.map (fun (lhs_rest,lhs_node,holes,mt) ->
-          { match_res_lhs_node = lhs_node;
-            match_res_lhs_rest = lhs_rest;
-            match_res_holes = holes;
-            match_res_type = mt;
-            match_res_rhs_node = rhs_node;
-            match_res_rhs_rest = rhs_rest;}) l
-    
+  let l = helper f0 in
+  List.map (fun (lhs_rest,lhs_node,holes,mt) ->
+      { match_res_lhs_node = lhs_node;
+      match_res_lhs_rest = lhs_rest;
+      match_res_holes = holes;
+      match_res_type = mt;
+      match_res_rhs_node = rhs_node;
+      match_res_rhs_rest = rhs_rest;}) l
+      
 
 
 (*
@@ -308,182 +307,194 @@ and process_one_match (c:match_res) :action=
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
-            | Root ->
-                  (match lhs_node,rhs_node with
-                    | DataNode dl, DataNode dr -> 
-                        if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then M_match c
-                        else M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c))
-                    | ViewNode vl, ViewNode vr -> 
-                      let l1 = [M_base_case_unfold c] in
-                      let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [M_match c] else [] in
-                      let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
-                        then [M_lemma (c,None)]
-                        else [] in
-                      let l4 = []
-                        (*if get_view_original rhs_node then 
-                          [M_base_case_fold c] 
-                         else [] *)in
-                      let src = Search_action (Some c,(l1@l2@l3@l4)) in
-                      src (*Seq_action (c,[l1;src])*)
-                    | DataNode dl, ViewNode vr -> Search_action (Some c,[M_fold c;M_rd_lemma c])
-                    | ViewNode vl, DataNode dr -> M_unfold c
-                    | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
-              )
-            | MaterializedArg (mv,ms) ->
-              (match lhs_node,rhs_node with
-                | DataNode dl, _ -> M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node))
-                | ViewNode vl, ViewNode vr -> 
+    | Root ->
+          (match lhs_node,rhs_node with
+            | DataNode dl, DataNode dr -> 
+                  if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then M_match c
+                  else M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c))
+            | ViewNode vl, ViewNode vr -> 
+                  let l1 = [M_base_case_unfold c] in
+                  let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [M_match c] else [] in
+                  let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
+                  then [M_lemma (c,None)]
+                  else [] in
+                  let l4 = []
+                    (*if get_view_original rhs_node then 
+                      [M_base_case_fold c] 
+                      else [] *)in
+                  let src = Search_action (Some c,(l1@l2@l3@l4)) in
+                  src (*Seq_action (c,[l1;src])*)
+            | DataNode dl, ViewNode vr -> Search_action (Some c,[M_fold c;M_rd_lemma c])
+            | ViewNode vl, DataNode dr -> M_unfold (c,0)
+            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
+          )
+    | MaterializedArg (mv,ms) ->
+          (match lhs_node,rhs_node with
+            | DataNode dl, _ -> M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node))
+            | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
-                    | View_mater -> M_unfold c
+                    | View_mater -> M_unfold (c,0)
                     | Coerc_mater s -> M_lemma (c,Some s)) in
                   (match mv.mater_full_flag with
                     | true -> a1
                     | false -> a1
-                      (*let a2 = in
-                      Search_action (a1::a2)*))
-                | ViewNode vl, DataNode dr -> M_Nothing_to_do (string_of_match_res c)
-                | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
-              )
-            | WArg -> M_Nothing_to_do (string_of_match_res c) in
+                          (*let a2 = in
+                            Search_action (a1::a2)*))
+            | ViewNode vl, DataNode dr -> 
+                  let a1 = (match ms with
+                    | View_mater -> M_unfold (c,0) 
+                    | Coerc_mater s -> M_lemma (c,Some s)) in
+                  (match mv.mater_full_flag with
+                    | true -> a1
+                    | false -> M_unfold (c,1)) (* to prevent infinite unfolding *)
+    (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
+                        (* unfold to some depth *)
+                          (* M_Nothing_to_do (string_of_match_res c) *)
+            | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
+          )
+    | WArg -> M_Nothing_to_do (string_of_match_res c) in
   r
-  
-and process_matches lhs_h (l,(rhs_node,rhs_rest)) = match l with
+      
+and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> if (is_view rhs_node && get_view_original rhs_node) then
-            let r = M_base_case_fold { 
-              match_res_lhs_node = HTrue; 
-              match_res_lhs_rest = lhs_h; 
-              match_res_holes = [];
-              match_res_type = Root;
-              match_res_rhs_node = rhs_node;
-              match_res_rhs_rest = rhs_rest;} in
-            r
-          else M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node))
+      let r = M_base_case_fold { 
+          match_res_lhs_node = HTrue; 
+          match_res_lhs_rest = lhs_h; 
+          match_res_holes = [];
+          match_res_type = Root;
+          match_res_rhs_node = rhs_node;
+          match_res_rhs_rest = rhs_rest;} in
+      r
+    else M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node))
   | x::[] -> process_one_match x 
   | _ -> Search_action (None,(List.map process_one_match l))
 
 and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
   let r = List.map (fun (c1,c2)-> (choose_context prog lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
-  match r with 
-    | [] -> M_Nothing_to_do "no nodes to match"
-    | x::[]-> process_matches lhs_h x
-    | _ -> 
-      let r = List.map (process_matches lhs_h) r in
-      List.hd r (*Search_action (None,r)*)
-      
-    
-    
+  (* match r with  *)
+  (*   | [] -> M_Nothing_to_do "no nodes to match" *)
+  (*   | x::[]-> process_matches lhs_h x *)
+  (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
+          let r = List.map (process_matches lhs_h) r in
+          match r with
+            | [] -> M_Nothing_to_do "no nodes on RHS"
+            | x::_ -> x
+
+
 and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
-  let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in
+  let pr = Cprinter.string_of_h_formula   in
+  (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
+  let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_1 "compute_actions" pr1 pr2 (fun _ -> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) rhs_lst
+  Gen.Debug.ho_2 "compute_actions" pr pr1 pr2 (fun _ _ -> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) lhs_h rhs_lst
 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with
     | Base (fb) ->
-	Base{fb with formula_base_heap = input_h_formula_in2_frame (frame, id_hole) fb.formula_base_heap;}
+	      Base{fb with formula_base_heap = input_h_formula_in2_frame (frame, id_hole) fb.formula_base_heap;}
     | Or ({formula_or_f1 = f1;
-	   formula_or_f2 = f2;
-	   formula_or_pos = pos}) -> 
-	Or({formula_or_f1 = (input_formula_in2_frame (frame, id_hole) f1);
-	    formula_or_f2 = (input_formula_in2_frame (frame, id_hole) f2);
-	    formula_or_pos = pos})
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or({formula_or_f1 = (input_formula_in2_frame (frame, id_hole) f1);
+	      formula_or_f2 = (input_formula_in2_frame (frame, id_hole) f2);
+	      formula_or_pos = pos})
     | Exists(fe) ->
-	Exists{fe with formula_exists_heap = input_h_formula_in2_frame (frame, id_hole) fe.formula_exists_heap;}
+	      Exists{fe with formula_exists_heap = input_h_formula_in2_frame (frame, id_hole) fe.formula_exists_heap;}
 
 
 and input_h_formula_in2_frame (frame, id_hole) (to_input : h_formula) : h_formula = 
   match frame with
     | Hole id ->
-	if id = id_hole then to_input
-	else frame
+	      if id = id_hole then to_input
+	      else frame
     | Star ({h_formula_star_h1 = f1;
-	     h_formula_star_h2 = f2;
-	     h_formula_star_pos = pos}) -> 
-	let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
-	let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
-	  Star ({h_formula_star_h1 = new_f1;
-		 h_formula_star_h2 = new_f2;
-		 h_formula_star_pos = pos})  
+	  h_formula_star_h2 = f2;
+	  h_formula_star_pos = pos}) -> 
+	      let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
+	      let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
+	      Star ({h_formula_star_h1 = new_f1;
+		  h_formula_star_h2 = new_f2;
+		  h_formula_star_pos = pos})  
     | Conj ({h_formula_conj_h1 = f1;
-	     h_formula_conj_h2 = f2;
-	     h_formula_conj_pos = pos}) -> 
-	let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
-	let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
-	  Conj ({h_formula_conj_h1 = new_f1;
-		 h_formula_conj_h2 = new_f2;
-		 h_formula_conj_pos = pos})  
+	  h_formula_conj_h2 = f2;
+	  h_formula_conj_pos = pos}) -> 
+	      let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
+	      let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
+	      Conj ({h_formula_conj_h1 = new_f1;
+		  h_formula_conj_h2 = new_f2;
+		  h_formula_conj_pos = pos})  
     | Phase ({h_formula_phase_rd = f1;
-	     h_formula_phase_rw = f2;
-	     h_formula_phase_pos = pos}) -> 
-	let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
-	let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
-	  Phase ({h_formula_phase_rd = new_f1;
-		 h_formula_phase_rw = new_f2;
-		 h_formula_phase_pos = pos})  
+	  h_formula_phase_rw = f2;
+	  h_formula_phase_pos = pos}) -> 
+	      let new_f1 = input_h_formula_in2_frame (f1, id_hole) to_input in 
+	      let new_f2 = input_h_formula_in2_frame (f2, id_hole) to_input in
+	      Phase ({h_formula_phase_rd = new_f1;
+		  h_formula_phase_rw = new_f2;
+		  h_formula_phase_pos = pos})  
     | DataNode _ 
     | ViewNode _
     | HTrue | HFalse -> frame
-  
+          
 
 (* 
-and input_ctx_frame (ctx : Cformula.context) : Cformula.context =
-    match ctx with
-      | Ctx(es) ->
-	  Ctx {es with es_formula = input_formula_in2_frame es.es_frame es.es_formula; es_frame = [];}
-      | OCtx(c1, c2) -> OCtx((input_ctx_frame c1), (input_ctx_frame c2))
+   and input_ctx_frame (ctx : Cformula.context) : Cformula.context =
+   match ctx with
+   | Ctx(es) ->
+   Ctx {es with es_formula = input_formula_in2_frame es.es_frame es.es_formula; es_frame = [];}
+   | OCtx(c1, c2) -> OCtx((input_ctx_frame c1), (input_ctx_frame c2))
 
-and input_list_ctx_frame (ctx : Cformula.list_context) : Cformula.list_context =
-  match ctx with
-      | FailCtx _ -> ctx
-      | SuccCtx (cl) -> SuccCtx(List.map input_ctx_frame cl)
+   and input_list_ctx_frame (ctx : Cformula.list_context) : Cformula.list_context =
+   match ctx with
+   | FailCtx _ -> ctx
+   | SuccCtx (cl) -> SuccCtx(List.map input_ctx_frame cl)
 *)
 (* create an empty context *)
 (*and mk_empty_frame (id_hole : int) : h_formula = Hole(id_hole)*)
 (*
-and mk_empty_frame (): (h_formula * int) = 
+  and mk_empty_frame (): (h_formula * int) = 
   let hole_id = Globals.fresh_int () in
-    (Hole(hole_id), hole_id)
+  (Hole(hole_id), hole_id)
 
 (* check whether a context is empty *)
-and is_empty_frame (frame : formula) : bool = match frame with 
+  and is_empty_frame (frame : formula) : bool = match frame with 
   | Base ({formula_base_heap = fb_h;}) -> is_hole_heap_frame fb_h
   | _  -> failwith "context.ml, is_empty_ctx: check this\n" (* todo: check this *)
 
-and is_hole_heap_frame (frame_h : h_formula) : bool = match frame_h with
+  and is_hole_heap_frame (frame_h : h_formula) : bool = match frame_h with
   | Hole _ -> true
   | _ -> false
 
 *)
 (*------	
-and update_ctx_frame ctx0 (frame, hole_id) = 
+  and update_ctx_frame ctx0 (frame, hole_id) = 
   match ctx0 with
-    | Ctx(es) -> Ctx{es with es_frame = (frame, hole_id)}
-    | OCtx(c1, c2) -> 
-	let update_c1 = update_ctx_frame c1 (frame, hole_id) in
-	let update_c2 = update_ctx_frame c2 (frame, hole_id) in
-	  OCtx(update_c1, update_c2)
+  | Ctx(es) -> Ctx{es with es_frame = (frame, hole_id)}
+  | OCtx(c1, c2) -> 
+  let update_c1 = update_ctx_frame c1 (frame, hole_id) in
+  let update_c2 = update_ctx_frame c2 (frame, hole_id) in
+  OCtx(update_c1, update_c2)
 
-and update_list_ctx_frame ctx0 (frame, hole_id) = 
+  and update_list_ctx_frame ctx0 (frame, hole_id) = 
   match ctx0 with
-    | FailCtx _ -> let _ = print_string("fail with frame " ^ (string_of_h_formula frame) ^ "\n") in ctx0
-    | SuccCtx (cl) -> SuccCtx(List.map (fun x -> update_ctx_frame x (frame, hole_id))cl) 
------*)
+  | FailCtx _ -> let _ = print_string("fail with frame " ^ (string_of_h_formula frame) ^ "\n") in ctx0
+  | SuccCtx (cl) -> SuccCtx(List.map (fun x -> update_ctx_frame x (frame, hole_id))cl) 
+  -----*)
 and update_ctx_es_formula ctx0 f = 
   match ctx0 with
     | Ctx(es) -> Ctx{es with es_formula = f}
     | OCtx(c1, c2) -> 
-	let update_c1 = update_ctx_es_formula c1 f in
-	let update_c2 = update_ctx_es_formula c2 f in
-	  OCtx(update_c1, update_c2)
+	      let update_c1 = update_ctx_es_formula c1 f in
+	      let update_c2 = update_ctx_es_formula c2 f in
+	      OCtx(update_c1, update_c2)
 
 and update_ctx_es_orig_conseq ctx new_conseq = 
   match ctx with
     | Ctx(es) -> Ctx{es with es_orig_conseq = new_conseq}
     | OCtx(c1, c2) -> 
-	let update_c1 = update_ctx_es_orig_conseq c1 new_conseq in
-	let update_c2 = update_ctx_es_orig_conseq c2 new_conseq in
-	  OCtx(update_c1, update_c2)
+	      let update_c1 = update_ctx_es_orig_conseq c1 new_conseq in
+	      let update_c2 = update_ctx_es_orig_conseq c2 new_conseq in
+	      OCtx(update_c1, update_c2)
 
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
@@ -494,16 +505,16 @@ and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =
 	  let av1, rest1 = search v1 rest_sets in
 	  let av2, rest2 = search v2 rest1 in
 	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
-		v1v2_set :: rest2
+	  v1v2_set :: rest2
 	end
   | [] -> []
 
 and get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
   let tmp = List.filter (fun a -> CP.mem v a) aset in
-	match tmp with
-	  | [] -> []
-	  | [s] -> s
-	  | _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
+  match tmp with
+	| [] -> []
+	| [s] -> s
+	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
 
 (* I <: M *)
 (* return true if imm1 <: imm2 *)	
@@ -515,12 +526,12 @@ and push_cont_ctx (cont : h_formula) (ctx : Cformula.context) : Cformula.context
   match ctx with
     | Ctx(es) -> Ctx(push_cont_es cont es)
     | OCtx(c1, c2) ->
-	OCtx(push_cont_ctx cont c1, push_cont_ctx cont c2)
+	      OCtx(push_cont_ctx cont c1, push_cont_ctx cont c2)
 
 and push_cont_es (cont : h_formula) (es : entail_state) : entail_state =  
   {  es with
-        es_cont = cont::es.es_cont;
-   }
+      es_cont = cont::es.es_cont;
+  }
 
 and pop_cont_es (es : entail_state) : (h_formula * entail_state) =  
   let cont = es.es_cont in
@@ -529,10 +540,10 @@ and pop_cont_es (es : entail_state) : (h_formula * entail_state) =
       | h::r -> (h, r)
       | [] -> (HTrue, [])
   in
-    (crt_cont, 
-     {  es with
-          es_cont = cont;
-     })
+  (crt_cont, 
+  {  es with
+      es_cont = cont;
+  })
 
 (* utilities for handling lhs holes *)
 (* push *)
@@ -540,112 +551,112 @@ and push_crt_holes_list_ctx (ctx : list_context) (holes : (h_formula * int) list
   let pr1 = Cprinter.string_of_list_context in
   let pr2 = pr_no (* pr_list (pr_pair string_of_h_formula string_of_int ) *) in
   Gen.Debug.ho_2 "push_crt_holes_list_ctx" pr1 pr2 pr1 (fun _ _-> push_crt_holes_list_ctx_x ctx holes) ctx holes
-  
+      
 and push_crt_holes_list_ctx_x (ctx : list_context) (holes : (h_formula * int) list) : list_context = 
   match ctx with
     | FailCtx _ -> ctx
     | SuccCtx(cl) ->
-	SuccCtx(List.map (fun x -> push_crt_holes_ctx x holes) cl)
+	      SuccCtx(List.map (fun x -> push_crt_holes_ctx x holes) cl)
 
 and push_crt_holes_ctx (ctx : context) (holes : (h_formula * int) list) : context = 
   match ctx with
     | Ctx(es) -> Ctx(push_crt_holes_es es holes)
     | OCtx(c1, c2) ->
-	let nc1 = push_crt_holes_ctx c1 holes in
-	let nc2 = push_crt_holes_ctx c2 holes in
-	  OCtx(nc1, nc2)
+	      let nc1 = push_crt_holes_ctx c1 holes in
+	      let nc2 = push_crt_holes_ctx c2 holes in
+	      OCtx(nc1, nc2)
 
 and push_crt_holes_es (es : Cformula.entail_state) (holes : (h_formula * int) list) : Cformula.entail_state =
   {
-    es with
-      es_crt_holes = holes @ es.es_crt_holes; 
+      es with
+          es_crt_holes = holes @ es.es_crt_holes; 
   }
-  
+      
 and push_holes (es : Cformula.entail_state) : Cformula.entail_state = 
   {  es with
-     es_hole_stk   = es.es_crt_holes::es.es_hole_stk;
-     es_crt_holes = [];
+      es_hole_stk   = es.es_crt_holes::es.es_hole_stk;
+      es_crt_holes = [];
   }
 
 (* pop *)
 
 and pop_holes_es (es : Cformula.entail_state) : Cformula.entail_state = 
-    match es.es_hole_stk with
-      | [] -> es
-      | c2::stk -> {  es with
-			es_hole_stk = stk;
-	                es_crt_holes = es.es_crt_holes @ c2;
-		   }
+  match es.es_hole_stk with
+    | [] -> es
+    | c2::stk -> {  es with
+		  es_hole_stk = stk;
+	      es_crt_holes = es.es_crt_holes @ c2;
+	  }
 
 (* substitute *)
 and subs_crt_holes_list_ctx (ctx : list_context) : list_context = 
   match ctx with
     | FailCtx _ -> ctx
     | SuccCtx(cl) ->
-	SuccCtx(List.map subs_crt_holes_ctx cl)
+	      SuccCtx(List.map subs_crt_holes_ctx cl)
 
 and subs_crt_holes_ctx (ctx : context) : context = 
   match ctx with
     | Ctx(es) -> Ctx(subs_holes_es es)
     | OCtx(c1, c2) ->
-	let nc1 = subs_crt_holes_ctx c1 in
-	let nc2 = subs_crt_holes_ctx c2 in
-	  OCtx(nc1, nc2)
+	      let nc1 = subs_crt_holes_ctx c1 in
+	      let nc2 = subs_crt_holes_ctx c2 in
+	      OCtx(nc1, nc2)
 
 and subs_holes_es (es : Cformula.entail_state) : Cformula.entail_state = 
-(* subs away current hole list *)
-   {  es with
-	es_crt_holes   = [];
+  (* subs away current hole list *)
+  {  es with
+	  es_crt_holes   = [];
       es_formula = apply_subs es.es_crt_holes es.es_formula;
-   }
+  }
 
 and apply_subs (crt_holes : (h_formula * int) list) (f : formula) : formula =
   match f with
     | Base(bf) ->
-	Base{bf with formula_base_heap = apply_subs_h_formula crt_holes bf.formula_base_heap;}
+	      Base{bf with formula_base_heap = apply_subs_h_formula crt_holes bf.formula_base_heap;}
     | Exists(ef) ->
-	Exists{ef with formula_exists_heap = apply_subs_h_formula crt_holes ef.formula_exists_heap;}
+	      Exists{ef with formula_exists_heap = apply_subs_h_formula crt_holes ef.formula_exists_heap;}
     | Or({formula_or_f1 = f1;
-	 formula_or_f2 = f2;
-	 formula_or_pos = pos}) ->
-	let sf1 = apply_subs crt_holes f1 in
-	let sf2 = apply_subs crt_holes f2 in
-	  mkOr sf1  sf2 pos
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) ->
+	      let sf1 = apply_subs crt_holes f1 in
+	      let sf2 = apply_subs crt_holes f2 in
+	      mkOr sf1  sf2 pos
 
 and apply_subs_h_formula crt_holes (h : h_formula) : h_formula = 
   let rec helper (i : int) crt_holes : h_formula = 
     (match crt_holes with
 	  | (h1, i1) :: rest -> 
-	    if i==i1 then h1
-	    else helper i rest
+	        if i==i1 then h1
+	        else helper i rest
 	  | [] -> Hole(i))
   in
   match h with
     | Hole(i) -> helper i crt_holes
     | Star({h_formula_star_h1 = h1;
-	   h_formula_star_h2 = h2;
-	   h_formula_star_pos = pos}) ->
-	let nh1 = apply_subs_h_formula crt_holes h1 in
-	let nh2 = apply_subs_h_formula crt_holes h2 in
-	  Star({h_formula_star_h1 = nh1;
-	       h_formula_star_h2 = nh2;
-	       h_formula_star_pos = pos})
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      let nh1 = apply_subs_h_formula crt_holes h1 in
+	      let nh2 = apply_subs_h_formula crt_holes h2 in
+	      Star({h_formula_star_h1 = nh1;
+	      h_formula_star_h2 = nh2;
+	      h_formula_star_pos = pos})
     | Conj({h_formula_conj_h1 = h1;
-	   h_formula_conj_h2 = h2;
-	   h_formula_conj_pos = pos}) ->
-	let nh1 = apply_subs_h_formula crt_holes h1 in
-	let nh2 = apply_subs_h_formula crt_holes h2 in
-	  Conj({h_formula_conj_h1 = nh1;
-	       h_formula_conj_h2 = nh2;
-	       h_formula_conj_pos = pos})
+	  h_formula_conj_h2 = h2;
+	  h_formula_conj_pos = pos}) ->
+	      let nh1 = apply_subs_h_formula crt_holes h1 in
+	      let nh2 = apply_subs_h_formula crt_holes h2 in
+	      Conj({h_formula_conj_h1 = nh1;
+	      h_formula_conj_h2 = nh2;
+	      h_formula_conj_pos = pos})
     | Phase({h_formula_phase_rd = h1;
-	   h_formula_phase_rw = h2;
-	   h_formula_phase_pos = pos}) ->
-	let nh1 = apply_subs_h_formula crt_holes h1 in
-	let nh2 = apply_subs_h_formula crt_holes h2 in
-	  Phase({h_formula_phase_rd = nh1;
-	       h_formula_phase_rw = nh2;
-	       h_formula_phase_pos = pos})
+	  h_formula_phase_rw = h2;
+	  h_formula_phase_pos = pos}) ->
+	      let nh1 = apply_subs_h_formula crt_holes h1 in
+	      let nh2 = apply_subs_h_formula crt_holes h2 in
+	      Phase({h_formula_phase_rd = nh1;
+	      h_formula_phase_rw = nh2;
+	      h_formula_phase_pos = pos})
     | _ -> h
 
   (*if Gen.is_empty matches then NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)

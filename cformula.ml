@@ -159,6 +159,7 @@ and h_formula_view = {  h_formula_view_node : CP.spec_var;
                            then c is in h_formula_view_origins. Used to avoid loopy coercions *)
                         h_formula_view_origins : ident list;
                         h_formula_view_original : bool;
+                        h_formula_view_unfold_num : int; (* to prevent infinite unfolding *)
                         (* used to indicate a specialised view *)
                         h_formula_view_remaining_branches :  (formula_label list) option;
                         h_formula_view_pruning_conditions :  (CP.b_formula * formula_label list ) list;
@@ -887,6 +888,10 @@ and get_view_original (h : h_formula) = match h with
   | ViewNode ({h_formula_view_original = original}) -> original
   | _ -> true (* failwith ("get_view_original: not a view") *)
 
+and get_view_unfold_num (h : h_formula) = match h with
+  | ViewNode ({h_formula_view_unfold_num = i}) -> i
+  | _ -> 0 
+
 and get_view_modes_x (h : h_formula) = match h with
   | ViewNode ({h_formula_view_modes = modes}) -> modes
   | _ -> failwith ("get_view_modes: not a view")
@@ -925,6 +930,18 @@ and h_add_original (h : h_formula) original =
 		  h_formula_star_h2 = helper h2;
 		  h_formula_star_pos = pos})
     | ViewNode vn -> ViewNode {vn with h_formula_view_original = original}
+    | _ -> h 
+  in helper h
+
+and h_add_unfold_num (h : h_formula) i = 
+  let rec helper h = match h with
+    | Star ({h_formula_star_h1 = h1;
+	  h_formula_star_h2 = h2;
+	  h_formula_star_pos = pos}) ->
+	      Star ({h_formula_star_h1 = helper h1;
+		  h_formula_star_h2 = helper h2;
+		  h_formula_star_pos = pos})
+    | ViewNode vn -> ViewNode {vn with h_formula_view_unfold_num = i}
     | _ -> h 
   in helper h
 
@@ -983,6 +1000,18 @@ and add_original (f : formula) original =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_original e.formula_exists_heap original})
   in helper f
          
+and add_unfold_num (f : formula) uf = 
+  let rec helper f = match f with
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> 
+	      Or ({formula_or_f1 = helper f1;
+		  formula_or_f2 = helper f2;
+		  formula_or_pos = pos})
+    | Base b -> Base ({b with formula_base_heap = h_add_unfold_num b.formula_base_heap uf})
+    | Exists e -> Exists ({e with formula_exists_heap = h_add_unfold_num e.formula_exists_heap uf})
+  in helper f
+
 and add_struc_origins (f:struc_formula) origs = 
   let rec helper (f: struc_formula) =
 	let ext_f (f:ext_formula) = match f with
@@ -1291,22 +1320,25 @@ and h_apply_one ((fr, t) as s : (CP.spec_var * CP.spec_var)) (f : h_formula) = m
 	h_formula_view_coercible = coble;
 	h_formula_view_origins = orgs;
 	h_formula_view_original = original;
+	h_formula_view_unfold_num = i;
 	h_formula_view_label = lbl;
     h_formula_view_remaining_branches = ann;
     h_formula_view_pruning_conditions = pcond;
-	h_formula_view_pos = pos}) -> 
-        ViewNode ({h_formula_view_node = subst_var s x; 
-		h_formula_view_name = c; 
-        h_formula_view_imm = imm;  
+	h_formula_view_pos = pos} as g) -> 
+        ViewNode {g with h_formula_view_node = subst_var s x; 
+		(* h_formula_view_name = c;  *)
+        (* h_formula_view_imm = imm;   *)
 		h_formula_view_arguments = List.map (subst_var s) svs;
-		h_formula_view_modes = modes;
-		h_formula_view_coercible = coble;
-		h_formula_view_origins = orgs;
-		h_formula_view_original = original;
-		h_formula_view_label = lbl;
-        h_formula_view_remaining_branches = ann;
-        h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond;
-		h_formula_view_pos = pos})
+	   (*  h_formula_view_modes = modes; *)
+	   (*  h_formula_view_coercible = coble; *)
+	   (*  h_formula_view_origins = orgs; *)
+	   (*  h_formula_view_original = original; *)
+	   (* h_formula_view_unfold_num = i; *)
+	   (*  h_formula_view_label = lbl; *)
+       (*  h_formula_view_remaining_branches = ann; *)
+        h_formula_view_pruning_conditions = List.map (fun (c,c2)-> (CP.b_apply_one s c,c2)) pcond
+		(* h_formula_view_pos = pos *)
+        }
   | DataNode ({h_formula_data_node = x; 
 	h_formula_data_name = c; 
     h_formula_data_imm = imm; 

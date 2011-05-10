@@ -12,7 +12,7 @@ pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
 
 lemma self::lseg<n,p> <-> self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
 
-lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
+lemma self::ll_tail<t, n> -> self::lseg<n-1,t> * t::node<_, null>.
 
 /*
 pred ll_k<tx, n> == self::node<_, tx> * tx::node<_,null> & n=0.
