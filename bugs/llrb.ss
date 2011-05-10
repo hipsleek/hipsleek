@@ -1,5 +1,5 @@
 /**
- Left-leaned Red Black Tree
+ Left-leaning Red Black Tree
  Modified from RedBlackBST.java
  @author: Vu An Hoa
  */
@@ -9,18 +9,18 @@ data node {
 	int color; /* 0 for red, 1 for black */
 	node left;
 	node right;
-	int black_height; /* black height */
 }
 
 /* view for red-black trees */
 rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
-	or self::node<v, 0, l, r, _> * l::rb<nl, 1, bhl> * r::rb<nr, 1, bhr>
-       & cl = 0 & n = 1 + nl + nr & bhl = bh & bhr = bh
-	// if left is black, right is black due to left-leaning!
-	or self::node<v, 1, l, r, _> * l::rb<nl, 1, bhl> * r::rb<nr, 1, bhr>
-       & cl = 1 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
-	or self::node<v, 1, l, r, _> * l::rb<nl, 0, bhl> * r::rb<nr, _, bhr>
-       & cl = 1 & n = 1 + nl + nr & bhl = bhr & bh = 1 + bhl
+	// self is red, both child must be black
+	or self::node<v, 0, l, r> * l::rb<ln, 1, lbh> * r::rb<rn, 1, rbh>
+	   & cl = 0 & n = 1 + ln + rn & lbh = bh & rbh = bh
+	// if left is black, right must be black due to left-leaning!
+	or self::node<v, 1, l, r> * l::rb<ln, 1, lbh> * r::rb<rn, 1, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
+	or self::node<v, 1, l, r> * l::rb<ln, 0, lbh> * r::rb<rn, _, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
 
 
@@ -34,14 +34,13 @@ rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
 
 
 bool is_red(node h)
-//	requires h::node<_,c,_,_,_>
-//   ensures c != 0 & !res or c = 0 & res;
-  case{
-		h  = null -> ensures !res;
-		h != null -> requires h::node<v,c,l,r,h1>
-		             ensures h::node<v,c,l,r,h1> & c != 0 & !res 
-                          or h::node<v,c,l,r,h1> & c = 0 & res;
-                     } 
+	case{
+		h  = null -> requires true 
+		             ensures !res;
+		h != null -> requires h::node<v,c,l,r>
+		             ensures h::node<v,c,l,r> & c != 0 & !res 
+		                     or h::node<v,c,l,r> & c = 0 & res;
+	}
 {
 	if (h==null)
 		return false;
@@ -50,8 +49,8 @@ bool is_red(node h)
 }
 
 void color_flip(node h)
-	requires h::node<v,c,lt,rt,bh> * lt::node<lv,lc,llt,lrt,lh> * rt::node<rv,rc,rlt,rrt,rh>
-	ensures h::node<v,1-c,lt,rt,bh> * lt::node<lv,1-lc,llt,lrt,lh> * rt::node<rv,1-rc,rlt,rrt,rh>;
+	requires h::node<v,c,l,r> * l::node<lv,lc,ll,lr> * r::node<rv,rc,rl,rr>
+	ensures h::node<v,1-c,l,r> * l::node<lv,1-lc,ll,lr> * r::node<rv,1-rc,rl,rr>;
 {
 	h.color        = 1 - h.color;
 	h.left.color   = 1 - h.left.color;
@@ -60,8 +59,8 @@ void color_flip(node h)
 
 // Make a right-leaning 3-node lean to the left.
 node rotate_left(node h)
-	requires h::node<v,c,lt,rt,bh> * rt::node<rv,0,rlt,rrt,rh>
-	ensures res::node<rv,c,lt1,rrt,rh> * lt1::node<v,0,lt,rlt,bh>;
+	requires h::node<v,c,l,r> * r::node<rv,0,rl,rr>
+	ensures res::node<rv,c,l1,rr> * l1::node<v,0,l,rl>;
 {
 	node x = h.right;
 	h.right = x.left;
@@ -73,8 +72,8 @@ node rotate_left(node h)
 
 // Make a left-leaning 3-node lean to the right.
 node rotate_right(node h)
-	requires h::node<v,c,lt,rt,bh> * lt::node<lv,0,llt,lrt,lh>
-	ensures res::node<lv,c,llt,rt1,lh> * rt1::node<v,0,lrt,rt,bh>;
+	requires h::node<v,c,l,r> * l::node<lv,0,ll,lr>
+	ensures res::node<lv,c,ll,r1> * r1::node<v,0,lr,r>;
 {
 	node x = h.left;
 	h.left = x.right;
@@ -89,32 +88,35 @@ node rotate_right(node h)
 //////////////////////////////////////////
 
 node insert(node h, int v)
-	requires h::rb<n,_,bh> // how to tell h is not 4 node?
-	ensures res::rb<n+1,_,h2> & bh<=h2<=bh+1; // how to find out new bh ?
+	requires h::rb<n,_,bh>
+	ensures res::rb<n+1,_,_>;
 {
 	if (h == null) { // leaf
-		return new node(v, 0, null, null, 1);
+		return new node(v, 0, null, null);
 	}
-    node lt = h.left;
-    node rt = h.right;
-	// to make sure that there is no 4-node!
-    if (lt != null && rt != null) { 
-		if (is_red(lt) && is_red(rt)) {
+
+	// split this node if it is a 4 node
+	if (h.left != null && h.right != null) { 
+		if (is_red(h.left) && is_red(h.right)) {
 			color_flip(h);
-            //assert h'::rb<_,_,_>;
+			assert h'::rb<n,_,_>;
 		}
-        } 
-    //assert h'::rb<n,_,_>;
-    //assume false;
+	}
+	assert h'::rb<n,_,_>;
+	
 	if (v <= h.val) // accept duplicates!
 		h.left = insert(h.left, v);
 	else
 		h.right = insert(h.right, v);
-    //assume false;
-
-	if (is_red(h.right)) h = rotate_left(h);
 	
-	if (is_red(h.left) && is_red(h.left.left)) h = rotate_right(h);
+	if (h.right != null)
+		if (is_red(h.right))
+			h = rotate_left(h);
+	
+	if (h.left != null)
+		if (h.left.left != null)
+			if (is_red(h.left) && is_red(h.left.left))
+				h = rotate_right(h);
 	
 	return h;
 }
@@ -126,18 +128,18 @@ node insert(node h, int v)
 // Assuming that h is red and both h.left and h.left.left
 // are black, make h.left or one of its children red.
 void move_red_left(node h)	
-	requires h::node<v,0,lt,rt,bh> * lt::node<lv,1,llt,lrt,lh> 
-	  * rt::node<rv,rc,rlt,rrt,rh> * llt::node<llv,1,lllt,llrt,llh> 
-	  * rlt::node<rlv,rlc,rllt,rlrt,rlh> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt,rlrh>
+	requires h::node<v,0,lt,rt> * lt::node<lv,1,llt,lrt> 
+	  * rt::node<rv,rc,rlt,rrt> * llt::node<llv,1,lllt,llrt> 
+	  * rlt::node<rlv,rlc,rllt,rlrt> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt>
 	case {
 		rlc = 0
-		-> ensures h::node<v,0,lt,rlrt,bh> * lt::node<lv,1,llt,lrt,lh> 
-			* llt::node<llv,1,lllt,llrt,llh> * rt::node<rv,1-rlrc,rlrt,rrt,rh> 
-			* rlt::node<rlv,0,rllt,rlrt,rlh> * rlrt::node<rlrv,0,rlrlt,rlrrt,rlrh>;
+		-> ensures h::node<v,0,lt,rlrt> * lt::node<lv,1,llt,lrt> 
+			* llt::node<llv,1,lllt,llrt> * rt::node<rv,1-rlrc,rlrt,rrt> 
+			* rlt::node<rlv,0,rllt,rlrt> * rlrt::node<rlrv,0,rlrlt,rlrrt>;
 	    rlc != 0
-	    -> ensures h::node<v,1,lt,rt,bh> * lt::node<lv,0,llt,lrt,lh> 
-	       * rt::node<rv,1-rc,rlt,rrt,rh> * llt::node<llv,1,lllt,llrt,llh> 
-	       * rlt::node<rlv,rlc,rllt,rlrt,rlh> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt,rlrh>; //after color_flip
+	    -> ensures h::node<v,1,lt,rt> * lt::node<lv,0,llt,lrt> 
+	       * rt::node<rv,1-rc,rlt,rrt> * llt::node<llv,1,lllt,llrt> 
+	       * rlt::node<rlv,rlc,rllt,rlrt> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt>; //after color_flip
 	}
 {
 	color_flip(h);
@@ -150,7 +152,7 @@ void move_red_left(node h)
 
 // Fix the invariant
 node fix_up(node h)
-	requires h::node<v,c,lt,rt,bh> * lt::rb<ln,lc,lh> * rt::rb<rn,rc,rh> & lh = rh
+	requires h::node<v,c,lt,rt> * lt::rb<ln,lc,lh> * rt::rb<rn,rc,rh> & lh = rh
 	ensures res::rb<1+ln+rn,c1,lh> & 0 <= c1 <= 1;
 {
 	// ensure left-leaning property
