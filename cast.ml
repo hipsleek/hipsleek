@@ -113,7 +113,7 @@ and coercion_decl = {
     (* same as head except for annotation to self node? *)
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
-    coercion_body_view : ident;  (* used for cycles checking *) 
+    (* coercion_body_view : ident;  (\* used for cycles checking *\)  *)
     coercion_mater_vars : mater_property list;
     coercion_simple_lhs :bool; (* signify if LHS is simple or complex *)
 }

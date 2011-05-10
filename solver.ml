@@ -230,7 +230,7 @@ let fail_ctx_stk = ref ([]:fail_type list)
 let previous_failure () = not(Gen.is_empty !fail_ctx_stk)
 
 
-let enable_distribution = ref true
+(* let enable_distribution = ref true *)
 let imp_no = ref 1
 
 class entailhist =
@@ -4940,7 +4940,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
                                           let res_es1, prf1 = 
                                             if (* false *) (is_view ln2)  then  combine_results (res_es1,prf1) (do_base_fold p2 ln2)
                                             else (res_es1,prf1) in
-                                          let copy_enable_distribution = !enable_distribution in
+                                          (* let copy_enable_distribution = !enable_distribution in *)
 						                  (*******************************************************************************************************************************************************************************************)
 						                  (* call to do_coercion *)
 						                  (* try coercion as well *)
@@ -4955,7 +4955,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 						                  match ans with
 						                    | None -> (res_es1, Search [prf1])
 						                    | Some (res_es2,prf2) -> begin
-						                        enable_distribution := copy_enable_distribution;
+						                        (* enable_distribution := copy_enable_distribution; *)
 						                        let prf1 = mkMatch ctx0 conseq ln2 [prf1] in
                                                 combine_results (res_es1,prf1) (res_es2,(Search prf2))
                                                     (*moved to combine results let prf = match isFailCtx res_es1, isFailCtx res_es2 with | false ,true -> enable_distribution := true; prf1 in (res,prf)*)
@@ -5187,8 +5187,8 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 				fc_failure_pts = match pid with | Some s-> [s] | _ -> [];})), Failure))
 	      else	(* we can apply coercion *)
 		    begin
-		      if (not(!Globals.lemma_heuristic) (* && get_estate_must_match estate *)) then
-		        ((*print_string("disable distribution\n");*) enable_distribution := false);
+		      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
+		      (*   ((\*print_string("disable distribution\n");*\) enable_distribution := false); *)
 		      (* the \rho substitution \rho (B) and  \rho(G) is performed *)
 		      let lhs_guard_new = CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) lhs_guard in
 		      let lhs_branches_new = List.map (fun (s, f) -> (s, (CP.subst_avoid_capture (p2 :: ps2) (p1 :: ps1) f))) lhs_branches in
@@ -5338,9 +5338,9 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		        if ((imply_formula_no_memo xpure_lhs lhs_guard_new !imp_no memset)) then
 		          (*if ((fun (c1,_,_)-> c1) (TP.imply xpure_lhs lhs_guard_new (string_of_int !imp_no) false)) then*)
 		          let new_f = normalize coer_rhs_new f pos in
-			      (if (not(!Globals.lemma_heuristic) (* && get_estate_must_match estate *)) then
-			        ((*print_string("disable distribution\n"); *)enable_distribution := false);
-			      (true, new_f))
+			      (* if (not(!Globals.lemma_heuristic) (\* && get_estate_must_match estate *\)) then *)
+			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
+			      (true, new_f)
 		        else if !Globals.case_split then begin
 		          (*
 		            Doing case splitting based on the guard.
@@ -5356,8 +5356,8 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		          let f2 = normalize f0 (formula_of_mix_formula (MCP.mix_of_pure lhs_guard_new) pos) pos in
 			      (* f2 need no unfolding, since next time coercion is reapplied, the guard is guaranteed to be satisified *)
 		          let new_f = mkOr f1 f2 pos in
-			      if (not(!Globals.lemma_heuristic) (* && (get_estate_must_match estate) *)) then
-			        ((*print_string("disable distribution\n"); *)enable_distribution := false);
+			      (* if (not(!Globals.lemma_heuristic) (\* && (get_estate_must_match estate) *\)) then *)
+			      (*   ((\*print_string("disable distribution\n"); *\)enable_distribution := false); *)
 			      (true, new_f)
 		        end else begin
 		          Debug.devel_pprint

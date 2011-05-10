@@ -1630,7 +1630,7 @@ let string_of_coerc_opt op c =
   if is_medium op then s2
   else s2
     ^"\n head match:"^c.coercion_head_view
-    ^"\n body cycle:"^c.coercion_body_view
+    (* ^"\n body cycle:"^c.coercion_body_view *)
     ^"\n materialized vars: "^(string_of_mater_prop_list c.coercion_mater_vars)^"\n";;
   
 let string_of_coerc_short c = string_of_coerc_opt 2 c;;
