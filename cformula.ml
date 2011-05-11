@@ -1955,11 +1955,15 @@ type entail_state = {
   es_var_measures : CP.exp list;
   es_var_label : int;
   (* for immutability *)
+(* INPUT : this is an alias set for the RHS conseq *)
+(* to be used by matching strategy for imm *)
+  es_rhs_eqset : (CP.spec_var * CP.spec_var) list;
 (*  es_frame : (h_formula * int) list; *)
   es_cont : h_formula list;
   es_crt_holes : (h_formula * int) list;
   es_hole_stk : ((h_formula * int) list) list;
   es_aux_xpure_1 : MCP.mix_formula;
+(* below are being used as OUTPUTS *)
   es_subst :  (CP.spec_var list *  CP.spec_var list) (* from * to *); 
   es_aux_conseq : CP.formula;
 }
@@ -2089,6 +2093,7 @@ let rec empty_es flowt pos =
   es_id = 0 ;
   es_orig_ante = x;
   es_orig_conseq = [mkETrue flowt pos] ;
+  es_rhs_eqset = [];
   es_path_label  =[];
   es_prior_steps  = [];
   es_var_measures = [];

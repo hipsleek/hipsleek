@@ -1504,7 +1504,7 @@ and find_m_prop_heap_x eq_f h = match h with
 
 and param_alias_sets p params = 
   let eqns = MCP.ptr_equations_with_null p in
-	let asets = Context.alias eqns in
+	let asets = Context.alias_nth 10 eqns in
   let aset_get x = x:: (Context.get_aset asets x) in
   List.map (fun c-> ( aset_get c,c)) params
   
@@ -5608,7 +5608,7 @@ and splitter (f_list_init:(Cpure.formula*Cformula.ext_formula) list) (v1:Cpure.s
 	      let rest_vars = List.tl v1 in	
 	      let br_cnt = List.length f_list_init in
 	      let f_list = List.map (fun (c1,c2)-> 
-			  let aset = Context.get_aset ( Context.alias ((crt_v, crt_v) :: (MCP.pure_ptr_equations c1))) crt_v in
+			  let aset = Context.get_aset ( Context.alias_nth 11 ((crt_v, crt_v) :: (MCP.pure_ptr_equations c1))) crt_v in
 			  let aset = List.filter (fun c-> (String.compare "null" (Cpure.name_of_spec_var c))!=0) aset in
 			  let eqs = (Solver.get_equations_sets c1 aset)in
 			  let eqs = (Solver.transform_null eqs) in

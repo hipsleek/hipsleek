@@ -5,6 +5,7 @@ open Globals
 open Lexing 
 open Cast 
 open Cformula
+(* open Gen.Basic *)
 
 module P = Cpure
 module MP = Mcpure
@@ -59,6 +60,14 @@ let fmt_close_box x = pp_close_box (!fmt) x
 let fmt_open x = fmt_open_box x
 let fmt_close x = fmt_close_box x
 (* test cvs commit*)
+
+
+let pr_int i = fmt_int i
+
+let pr_pair pr_1 pr_2 (a,b) =
+  fmt_string "(";
+  pr_1 a; fmt_string ",";
+  pr_2 b; fmt_string ")"
 
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
 (*   if not(Gen.is_empty lst) then f a *)
@@ -1078,6 +1087,7 @@ let pr_estate (es : entail_state) =
   (* pr_wrap_test "es_expl_vars: " Gen.is_empty (pr_seq "" pr_spec_var) es.es_expl_vars; *)
   pr_wrap_test "es_gen_expl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_expl_vars;
   pr_wrap_test "es_gen_impl_vars: " Gen.is_empty  (pr_seq "" pr_spec_var) es.es_gen_impl_vars; 
+  pr_wrap_test "es_rhs_eqset: " Gen.is_empty  (pr_seq "" (pr_pair pr_spec_var pr_spec_var)) (es.es_rhs_eqset); 
   pr_wrap_test "es_subst (from): " Gen.is_empty  (pr_seq "" pr_spec_var) (fst es.es_subst); 
   pr_wrap_test "es_subst (to): " Gen.is_empty  (pr_seq "" pr_spec_var) (snd es.es_subst); 
   pr_vwrap "es_aux_conseq: "  (pr_pure_formula) es.es_aux_conseq; 
@@ -1192,12 +1202,6 @@ let pr_entail_state_short e =
   (pr_seq "" pr_spec_var) e.es_ante_evars;
   pr_formula_wrap e.es_formula
     
-let pr_int i = fmt_int i
-
-let pr_pair pr_1 pr_2 (a,b) =
-  fmt_string "(";
-  pr_1 a; fmt_string ",";
-  pr_2 b; fmt_string ")"
 
 let string_of_context_short (ctx:context): string =  poly_string_of_pr pr_context_short ctx
 

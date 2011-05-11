@@ -153,8 +153,52 @@ and ctx_type =
    The flag associated with each node lets us know if the match is at the root pointer, materialized arg, arg.
 *)
 
+(* computes must-alias sets from equalities, maintains the invariant *)
+(* that these sets form a partition. *)
+let rec alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
+  match ptr_eqs with
+  | (v1, v2) :: rest -> begin
+	  let rest_sets = alias_x rest in
+	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
+	  let av1, rest1 = search v1 rest_sets in
+	  let av2, rest2 = search v2 rest1 in
+	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
+	  v1v2_set :: rest2
+	end
+  | [] -> []
+
+
+(* let alias_x (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list =  *)
+(*   let aset = alias_x ptr_eqs in *)
+(* List.filter (fun l -> List.length l > 1) aset *)
+
+let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = 
+  let psv = Cprinter.string_of_spec_var in
+  let pr1 l = pr_list (pr_pair psv psv) l in
+  let pr2 l = pr_list (pr_list psv) l in
+  Gen.Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+
+let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
+  let tmp = List.filter (fun a -> CP.mem v a) aset in
+  match tmp with
+	| [] -> []
+	| [s] -> s
+	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
+
+let comp_aliases (rhs_p:MCP.mix_formula) : (CP.spec_var) list list =
+    let eqns = MCP.ptr_equations_without_null rhs_p in
+    alias_nth 1 eqns 
+
+let comp_alias_part r_asets a_vars = 
+    (* let a_vars = lhs_fv @ posib_r_aliases in *)
+    let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
+    let colaps l = List.fold_left (fun a c -> match a with 
+      | [] -> [(c,c)]
+      | h::_-> (c,(fst h))::a) [] l in
+    List.concat (List.map colaps fltr) 
+
 (*  (resth1, anode, r_flag, phase, ctx) *)   
-let rec choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
+let rec choose_context_x prog rhs_es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   (* let _ = print_string("choose ctx: lhs_h = " ^ (string_of_h_formula lhs_h) ^ "\n") in *)
   let imm,p = match rhs_node with
     | DataNode{h_formula_data_node=p;h_formula_data_imm=imm} |ViewNode{h_formula_view_node=p;h_formula_view_imm=imm}-> (imm,p)
@@ -162,29 +206,29 @@ let rec choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_res
   let lhs_fv = (h_fv lhs_h) @ (MCP.mfv lhs_p) in
   let eqns' = MCP.ptr_equations_without_null lhs_p in
   let r_eqns =
-    let eqns = MCP.ptr_equations_without_null rhs_p in
-    let r_asets = alias eqns in
+    let eqns = (MCP.ptr_equations_without_null rhs_p)@rhs_es in
+    let r_asets = alias_nth 2 eqns in
     let a_vars = lhs_fv @ posib_r_aliases in
-    let fltr = List.map (fun c-> Gen.BList.intersect_eq (=) c a_vars) r_asets in
+    let fltr = List.map (fun c-> Gen.BList.intersect_eq (CP.eq_spec_var) c a_vars) r_asets in
     let colaps l = List.fold_left (fun a c -> match a with 
       | [] -> [(c,c)]
       | h::_-> (c,(fst h))::a) [] l in
     List.concat (List.map colaps fltr) in
   let eqns = (p, p) :: eqns' in
-  let asets = alias (eqns@r_eqns) in
+  let asets = alias_nth 3 (eqns@r_eqns) in
   let paset = get_aset asets p in (* find the alias set containing p *)
   if Gen.is_empty paset then  failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
   else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
 	(Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
   else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
 
-and choose_context prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
+and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 l = pr_list string_of_match_res l in
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
   Gen.Debug.ho_4 "choose_context" pr1 pr1 pr3 pr3 pr2 
-      (fun _ _ _ _ -> choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p
+      (fun _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p
 
 
 
@@ -368,15 +412,15 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
-                  let l1 = [(1,M_base_case_unfold c)] in
+                  let l1 = [(3,M_base_case_unfold c)] in
                   let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] else [] in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
-                    let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
-                    let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-                    if (left_act==[] && right_act==[]) then [(1,M_lemma (c,None))]
+                    let left_act = List.map (fun l -> (2,M_lemma (c,Some l))) left_ls in
+                    let right_act = List.map (fun l -> (2,M_lemma (c,Some l))) right_ls in
+                    if (left_act==[] && right_act==[]) then [(4,M_lemma (c,None))]
                     else left_act@right_act
                   end
                   else [] in
@@ -447,13 +491,13 @@ and sort_wt (ys: action_wt list) : action list =
           let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
           (rw,Seq_action l)
-    | _ -> if (w == -1) then (0,a) else (w,a) in
+    | _ -> if (w == -1) then (2,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
 
-and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
-  let r = List.map (fun (c1,c2)-> (choose_context prog lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
+and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
+  let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
   (* match r with  *)
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
   (*   | x::[]-> process_matches lhs_h x *)
@@ -461,17 +505,18 @@ and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action =
   let r = List.map (process_matches prog lhs_h) r in
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
-    | xs -> let ys = sort_wt r in List.hd ys
+    | xs -> let ys = sort_wt r in List.hd (ys)
 
 
-and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
+and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
+  let psv = Cprinter.string_of_spec_var in
+  let pr0 = pr_list (pr_pair psv psv) in
   let pr = Cprinter.string_of_h_formula   in
   (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
   let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_4 "compute_actions" pr pr1 pr3 pr3 pr2 (fun _ _ _ _-> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) lhs_h rhs_lst lhs_p rhs_p
-
+  Gen.Debug.ho_5 "compute_actions" pr0 pr pr1 pr3 pr3 pr2 (fun _ _ _ _ _-> compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) es lhs_h rhs_lst lhs_p rhs_p
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =
   match to_input with
@@ -582,23 +627,17 @@ and update_ctx_es_orig_conseq ctx new_conseq =
 
 (* computes must-alias sets from equalities, maintains the invariant *)
 (* that these sets form a partition. *)
-and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = match ptr_eqs with
-  | (v1, v2) :: rest -> begin
-	  let rest_sets = alias rest in
-	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in
-	  let av1, rest1 = search v1 rest_sets in
-	  let av2, rest2 = search v2 rest1 in
-	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in
-	  v1v2_set :: rest2
-	end
-  | [] -> []
+(* and alias (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list list = match ptr_eqs with *)
+(*   | (v1, v2) :: rest -> begin *)
+(* 	  let rest_sets = alias rest in *)
+(* 	  let search (v : CP.spec_var) (asets : CP.spec_var list list) = List.partition (fun aset -> CP.mem v aset) asets in *)
+(* 	  let av1, rest1 = search v1 rest_sets in *)
+(* 	  let av2, rest2 = search v2 rest1 in *)
+(* 	  let v1v2_set = CP.remove_dups_svl (List.concat ([v1; v2] :: (av1 @ av2))) in *)
+(* 	  v1v2_set :: rest2 *)
+(* 	end *)
+(*   | [] -> [] *)
 
-and get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
-  let tmp = List.filter (fun a -> CP.mem v a) aset in
-  match tmp with
-	| [] -> []
-	| [s] -> s
-	| _ -> failwith ((string_of_spec_var v) ^ " appears in more than one alias sets")
 
 (* I <: M *)
 (* return true if imm1 <: imm2 *)	
@@ -760,7 +799,7 @@ let string_of_node_res e = poly_string_of_pr pr_node_res e
   
 let deprecated_find_node_one prog node lhs_h lhs_p rhs_v pos : deprecated_find_node_result =
   let node = match node with | ViewNode v -> ViewNode{v with h_formula_view_node = rhs_v} | _ -> report_error pos "deprecated_find_node_one error" in
-  let matches = choose_context prog lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in 
+  let matches = choose_context prog [] lhs_h lhs_p (MCP.mkMTrue no_pos) [] node HTrue pos in 
   if Gen.is_empty matches then Deprecated_NoMatch	(* can't find an aliased node, but p is mentioned in LHS *)
   else Deprecated_Match matches
 
