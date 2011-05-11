@@ -4028,9 +4028,10 @@ and add_to_subst lctx r_subst l_subst =
 
 
 let reset_original (f : formula) : formula = add_original f true 
+let reset_original_es x = {x with es_formula = (reset_original x.es_formula)} 
 
 let reset_original_list_partial_context (f : list_partial_context) : list_partial_context = 
-  let f1 x= Ctx {x with es_formula = (reset_original x.es_formula)} in
+  let f1 x = Ctx (reset_original_es x) in
   transform_list_partial_context (f1,(fun c->c)) f
   
     

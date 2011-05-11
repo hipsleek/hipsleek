@@ -2255,7 +2255,7 @@ and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool)  (has
 		es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
 		es_orig_ante   = es.es_formula;
 		(*es_orig_conseq = conseq ;*)}in	
-    let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es es)))) cl in
+    let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
     let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq pos pid f to_string in 
     heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
 
@@ -2690,7 +2690,7 @@ and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context)
 			  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
 			  es_orig_ante   = es.es_formula;
 			  es_orig_conseq = struc_formula_of_formula conseq pos;} in	
-	      let cl_new = transform_list_context ((fun es-> Ctx(prepare_es(rename_es es))),(fun c->c)) cl in
+	      let cl_new = transform_list_context ((fun es-> Ctx(prepare_es(rename_es (reset_original_es es)))),(fun c->c)) cl in
 	      let conseq_new = conseq in
 	      heap_entail prog is_folding  cl_new conseq_new pos
 
