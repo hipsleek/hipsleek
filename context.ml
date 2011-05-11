@@ -33,7 +33,7 @@ and phase_type =
 
 and mater_source = 
   | View_mater
-  | Coerc_mater of Globals.ident
+  | Coerc_mater of (Iast.coercion_type * Globals.ident)
 
 and match_type =
   | Root
@@ -47,7 +47,7 @@ and action =
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
   | M_rd_lemma of match_res
-  | M_lemma  of (match_res * string option)
+  | M_lemma  of (match_res * (coercion_type * string) option)
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | Seq_action of action_wt list
@@ -68,7 +68,7 @@ let is_complex_action a = match a with
 
 let pr_mater_source ms = match ms with
   | View_mater -> fmt_string "view_defn_mater"
-  | Coerc_mater v -> fmt_string ("coerc_defn_mater: "^v)
+  | Coerc_mater (d,v) -> fmt_string ("coerc_defn_mater: "^(string_of_coercion_type d)^" "^v)
   
 let pr_match_type (e:match_type):unit =
   match e with
@@ -100,7 +100,7 @@ let rec pr_action_res pr_mr a = match a with
   | M_base_case_unfold e -> pr_mr e; fmt_string "==> Base case unfold"
   | M_base_case_fold e -> pr_mr e; fmt_string "==> Base case fold"
   | M_rd_lemma e -> pr_mr e; fmt_string "==> Right distributive lemma"
-  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
+  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some (d,s)-> "lemma "^(string_of_coercion_type d)^" "^s))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
@@ -208,12 +208,12 @@ and view_mater_match prog c vs1 aset imm f =
 and choose_full_mater_coercion_x l_vname l_vargs r_aset (c:coercion_decl) =
   if not(c.coercion_simple_lhs && c.coercion_head_view = l_vname) then None
   else 
-        let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
-        let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
-        try
-          let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
-          Some (c,mv)
-        with  _ ->  None
+    let args = List.tl (fv_simple_formula c.coercion_head) in (* dropping the self parameter *)
+    let lmv = subst_mater_list_nth 2 args l_vargs c.coercion_mater_vars in
+    try
+      let mv = List.find (fun v -> List.exists (CP.eq_spec_var v.mater_var) r_aset) lmv in
+      Some (c,mv)
+    with  _ ->  None
 
 and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   let pr_svl = Cprinter.string_of_spec_var_list in
@@ -221,11 +221,12 @@ and choose_full_mater_coercion l_vname l_vargs r_aset (c:coercion_decl) =
   Gen.Debug.ho_1 "choose_full_mater_coercion" pr_svl (pr_option pr) (fun _ -> choose_full_mater_coercion_x l_vname l_vargs r_aset c) r_aset
 
 and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula) =
+  (* TODO : how about right coercion, Cristina? *)
   let coercs = prog.prog_left_coercions in
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
     | Some t -> t::a) coercs [] in
-  let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c.coercion_name))) pos_coercs in
+  let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater (Iast.Left,c.coercion_name)))) pos_coercs in
   (* let pos_coercs = List.fold_left  *)
   (*   (fun a c->  *)
   (*       let args = List.tl (fv_simple_formula c.coercion_head) in  *)
@@ -243,7 +244,7 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   let pr_svl = Cprinter.string_of_spec_var_list in
   Gen.Debug.ho_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
- 
+      
 (*
   spatial context
 *)
@@ -345,10 +346,10 @@ and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm :
       match_res_rhs_node = rhs_node;
       match_res_rhs_rest = rhs_rest;}) l
       
-and process_one_match (c:match_res) :action_wt =
+and process_one_match prog (c:match_res) :action_wt =
   let pr1 = string_of_match_res in
   let pr2 = string_of_action_wt_res  in
-  Gen.Debug.ho_1 "process_one_match" pr1 pr2 process_one_match_x c 
+  Gen.Debug.ho_1 "process_one_match" pr1 pr2 (process_one_match_x prog) c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -356,7 +357,7 @@ and process_one_match (c:match_res) :action_wt =
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
-and process_one_match_x (c:match_res) :action_wt =
+and process_one_match_x prog (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
@@ -369,7 +370,14 @@ and process_one_match_x (c:match_res) :action_wt =
                   let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] else [] in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
-                  then [(1,M_lemma (c,None))]
+                  then begin
+                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vl.h_formula_view_name in
+                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vl.h_formula_view_name vl.h_formula_view_name in
+                    let left_act = List.map (fun l -> (1,M_lemma (c,Some (Iast.Left,l.coercion_name)))) left_ls in
+                    let right_act = List.map (fun l -> (1,M_lemma (c,Some (Iast.Right,l.coercion_name)))) right_ls in
+                    if (left_act==[] && right_act==[]) then [(1,M_lemma (c,None))]
+                    else left_act@right_act
+                  end
                   else [] in
                   let l4 = []
                     (*if get_view_original rhs_node then 
@@ -387,7 +395,7 @@ and process_one_match_x (c:match_res) :action_wt =
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | View_mater -> M_unfold (c,0)
-                    | Coerc_mater s -> M_lemma (c,Some s)) in
+                    | Coerc_mater (d,s) -> M_lemma (c,Some (d,s))) in
                   (match mv.mater_full_flag with
                     | true -> (0,a1)
                     | false -> (1,a1)
@@ -398,20 +406,20 @@ and process_one_match_x (c:match_res) :action_wt =
                   let a1 = (match ms with
                     | View_mater -> (i,M_unfold (c,i)) 
                     | Coerc_mater s -> (i,M_lemma (c,Some s))) in
-                 a1
-                  (* (match mv.mater_full_flag with *)
-                  (*   | true -> (0,a1) *)
-                  (*   | false -> (1,M_unfold (c,1)))  *)
+                  a1
+                      (* (match mv.mater_full_flag with *)
+                      (*   | true -> (0,a1) *)
+                      (*   | false -> (1,M_unfold (c,1)))  *)
                       (* to prevent infinite unfolding *)
-    (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
-                        (* unfold to some depth *)
-                          (* M_Nothing_to_do (string_of_match_res c) *)
+                      (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
+                      (* unfold to some depth *)
+                      (* M_Nothing_to_do (string_of_match_res c) *)
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
           )
     | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
       
-and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
+and process_matches prog lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
   | [] -> if (is_view rhs_node && get_view_original rhs_node) then
       let r = M_base_case_fold { 
           match_res_lhs_node = HTrue; 
@@ -422,8 +430,8 @@ and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l wit
           match_res_rhs_rest = rhs_rest;} in
       (1,r)
     else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
-  | x::[] -> process_one_match x 
-  | _ -> (-1,Search_action (List.map process_one_match l))
+  | x::[] -> process_one_match prog x 
+  | _ -> (-1,Search_action (List.map (process_one_match prog) l))
 
 and sort_wt (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
@@ -449,10 +457,10 @@ and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action =
   (*   | [] -> M_Nothing_to_do "no nodes to match" *)
   (*   | x::[]-> process_matches lhs_h x *)
   (*   | _ ->  List.hd r (\*Search_action (None,r)*\) *)
-          let r = List.map (process_matches lhs_h) r in
-          match r with
-            | [] -> M_Nothing_to_do "no nodes on RHS"
-            | xs -> let ys = sort_wt r in List.hd ys
+  let r = List.map (process_matches prog lhs_h) r in
+  match r with
+    | [] -> M_Nothing_to_do "no nodes on RHS"
+    | xs -> let ys = sort_wt r in List.hd ys
 
 
 and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =

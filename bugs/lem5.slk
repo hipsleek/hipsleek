@@ -46,7 +46,7 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 
 //checkentail tx::lseg<n1,_>*tx::lseg<n2,_> & n1=0 & n2=0 |- tx::lseg<_,_>.
 
-//checkentail x::ll_tail0<tx,n> & n=1 |- tx::node<v,q>.
+// checkentail x::ll_tail0<tx,n> & n=1 |- tx::node<v,q>.
 // succeed now 
 
 //checkentail x::ll_tail0<tx,n> & n=2 |- tx::node<v,q>.
@@ -61,13 +61,13 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 //checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<tx,n>.
 // fail
 
-//checkentail x::node<_,tx> * tx::node<_,q> & q=null |- x::ll_tail<tx,n>.
+// checkentail x::node<_,tx> * tx::node<_,q> & q=null |- x::ll_tail<tx,n>.
 // valid
 
 //checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<q,n>.
-//valid
+//valid but 6 answers without imm!
 
-//checkentail x::lseg<_,tx> * tx::node<_,null> |- x::ll_tail<tx,n>.
+checkentail x::lseg<_,tx> * tx::node<_,null> |- x::ll_tail<tx,n>.
 // succeed but has 2 answers -> can reduce to 1 answer!
 
 //checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
@@ -111,13 +111,12 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 // |- x::lseg<n,ty> *ty::node<_,null>.
 //succeed with multiple answers
 
-//checkentail x::lseg<a,t>*t::node<_,y>*y::ll_tail<ty,b> |- x::ll_tail<ty,m>.
+// // checkentail x::lseg<a,t>*t::node<_,y>*y::ll_tail<ty,b> |- x::ll_tail<ty,m>.
 // valid
 
-checkentail x::lsegS<a,t,s1,b1>*t::node<v,y>*y::ll_tailS<b,ty,s2,b2>
- & b1<=v<=s2 |- x::ll_tailS<m,ty,s1,b2>.
+// checkentail x::lsegS<a,t,s1,b1>*t::node<v,y>*y::ll_tailS<b,ty,s2,b2> & b1<=v<=s2 |- x::ll_tailS<m,ty,s1,b2>.
 
-// fail but should be valid
+// valid but fail for -imm
 
 //checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null>
 //  |- x::ll_tail<ty,m>.

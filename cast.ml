@@ -113,7 +113,7 @@ and coercion_decl = {
     (* same as head except for annotation to self node? *)
     coercion_head_view : ident; 
     (* the name of the predicate where this coercion can be applied *)
-    (* coercion_body_view : ident;  (\* used for cycles checking *\)  *)
+    coercion_body_view : ident;  (* used for cycles checking *)
     coercion_mater_vars : mater_property list;
     coercion_simple_lhs :bool; (* signify if LHS is simple or complex *)
 }
@@ -793,13 +793,19 @@ let lookup_view_baga_with_subs rem_br v_def from_v to_v  =
     P.subst_var_list_avoid_capture from_v to_v v
   with | Not_found -> []
 
-let rec look_up_coercion_def_raw coers (c : ident) : coercion_decl list = match coers with
-  | p :: rest -> begin
-	  let tmp = look_up_coercion_def_raw rest c in
-		if p.coercion_head_view = c then p :: tmp
-		else tmp
-	end
-  | [] -> []
+let look_up_coercion_def_raw coers (c : ident) : coercion_decl list = 
+  List.filter (fun p ->  p.coercion_head_view = c ) coers
+  (* match coers with *)
+  (* | p :: rest -> begin *)
+  (*     let tmp = look_up_coercion_def_raw rest c in *)
+  (*   	if p.coercion_head_view = c then p :: tmp *)
+  (*   	else tmp *)
+  (*   end *)
+  (* | [] -> [] *)
+
+
+let  look_up_coercion_with_target coers (c : ident) (t : ident) : coercion_decl list = 
+  List.filter (fun p ->  p.coercion_head_view = c && p.coercion_body_view = t  ) coers
 
 
 let rec callees_of_proc (prog : prog_decl) (name : ident) : ident list =
