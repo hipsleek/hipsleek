@@ -3079,10 +3079,10 @@ and heap_entail_split_rhs_phases_x
       (conseq : formula) 
       (drop_read_phase : bool)
       pos : (list_context * proof) =
-  let ctx_with_rhs =  ctx_0 in
-	(* let (h, p, fl, b, t) = CF.split_components conseq in *)
-    (* let eqns = (MCP.ptr_equations_without_null p) in *)
-    (*  CF.set_context (fun es -> {es with es_rhs_eqset=es.es_rhs_eqset@eqns}) ctx_0 in *)
+  let ctx_with_rhs =  (* ctx_0 in *)
+	let (h, p, fl, b, t) = CF.split_components conseq in
+    let eqns = (MCP.ptr_equations_without_null p) in
+     CF.set_context (fun es -> {es with es_rhs_eqset=es.es_rhs_eqset@eqns}) ctx_0 in
   let helper ctx_00 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     (* let ctx_0 = (Cformula.transform_context *)
     (* 	(fun es -> *)
@@ -5317,7 +5317,9 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 		    (*       (not(apply_coer) or 	(\* the target is not present *\) *)
 			(*           (false (\* (get_estate_must_match estate) *\) (\* must match *\) && (not(!enable_distribution) (\* distributive coercion is not allowed *\) *)
 			(* 		  or not(is_distributive coer))))) (\* coercion is not distributive *\) *)
-            if (not(apply_coer) or (is_cycle_coer coer origs))
+            (* when disabled --imm failed and vice-versa! *)
+            let flag = if !Globals.allow_imm then false else not(apply_coer) in
+            if (flag or(is_cycle_coer coer origs))
 	        then
               (* let s = (pr_list string_of_bool [f1;(\* f2; *\)f3;f4;f5;f6]) in *)
 		      (Debug.devel_pprint("[rewrite_coercion]: Rewrite cannot be applied!"(* ^s *)) pos; (false, mkTrue (mkTrueFlow ()) no_pos))

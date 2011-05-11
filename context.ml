@@ -412,15 +412,15 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
                   else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
-                  let l1 = [(3,M_base_case_unfold c)] in
+                  let l1 = [(1,M_base_case_unfold c)] in
                   let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] else [] in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
                     let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
-                    let left_act = List.map (fun l -> (2,M_lemma (c,Some l))) left_ls in
-                    let right_act = List.map (fun l -> (2,M_lemma (c,Some l))) right_ls in
-                    if (left_act==[] && right_act==[]) then [(4,M_lemma (c,None))]
+                    let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                    let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
+                    if (left_act==[] && right_act==[]) then [(1,M_lemma (c,None))]
                     else left_act@right_act
                   end
                   else [] in
@@ -491,7 +491,7 @@ and sort_wt (ys: action_wt list) : action list =
           let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
           (rw,Seq_action l)
-    | _ -> if (w == -1) then (2,a) else (w,a) in
+    | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
