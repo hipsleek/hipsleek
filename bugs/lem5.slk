@@ -36,7 +36,7 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 //checkentail x::ll_tail0<tx,n> & n=2 |- tx::node<v,q>.
 // fail but can succeed if we increase unfold_num limit
 
-//checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
+checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
 // if full-materialized present, should avoid some search..
 
 //checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
@@ -57,7 +57,7 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 //checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
 // valid
 
-checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::ll_tail<tx,m>.
 // fail but should be valid
 
 //checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- [m] x::ll_tail<tx,m>.

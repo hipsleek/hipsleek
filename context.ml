@@ -50,13 +50,21 @@ and action =
   | M_lemma  of (match_res * string option)
   | Undefined_action of match_res
   | M_Nothing_to_do of string
-  | Seq_action of (match_res * action list)
-  | Search_action of (match_res option * action list) (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
+  | Seq_action of (match_res * action_wt list)
+  | Search_action of (match_res option * action_wt list) (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   
+  (* | Un *)
+  (* | M *)
+  (* | Opt int *)
+
+and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
+
 let is_search_action a = match a with
   | Search_action _ -> true
   | _ -> false
   
+let is_search_action_wt (_,a) = is_search_action a
+
 let pr_mater_source ms = match ms with
   | View_mater -> fmt_string "view_defn_mater"
   | Coerc_mater v -> fmt_string ("coerc_defn_mater: "^v)
@@ -85,19 +93,27 @@ fmt_string "(";
 
 let rec pr_action_res pr_mr a = match a with
   | Undefined_action e -> pr_mr e; fmt_string "==> Undefined_action"
-  | M_match e -> pr_mr e; fmt_string "==> Mandatory match"
-  | M_fold e -> pr_mr e; fmt_string "==> Mandatory fold"
-  | M_unfold (e,i) -> pr_mr e; fmt_string ("==> Mandatory unfold "^(string_of_int i))
-  | M_base_case_unfold e -> pr_mr e; fmt_string "==> Mandatory base case unfold"
-  | M_base_case_fold e -> pr_mr e; fmt_string "==> Mandatory base case fold"
-  | M_rd_lemma e -> pr_mr e; fmt_string "==> Mandatory right distributive lemma"
-  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> Mandatory "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
+  | M_match e -> pr_mr e; fmt_string "==> Match"
+  | M_fold e -> pr_mr e; fmt_string "==> Fold"
+  | M_unfold (e,i) -> pr_mr e; fmt_string ("==> Unfold "^(string_of_int i))
+  | M_base_case_unfold e -> pr_mr e; fmt_string "==> Base case unfold"
+  | M_base_case_fold e -> pr_mr e; fmt_string "==> Base case fold"
+  | M_rd_lemma e -> pr_mr e; fmt_string "==> Right distributive lemma"
+  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
-  | Seq_action (_,l) -> fmt_string "seq:"; pr_seq "" (pr_action_res pr_mr) l
-  | Search_action (_,l) -> fmt_string "search:"; pr_seq "" (pr_action_res pr_mr) l
+  | Seq_action (_,l) -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | Search_action (_,l) -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
+
+and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
+  fmt_string ("(Weigh:"^(string_of_int w)^")")
 
 let string_of_action_res_simpl (e:action) = poly_string_of_pr (pr_action_res pr_simpl_match_res) e
+
+let string_of_action_wt_res_simpl (e:action_wt) = poly_string_of_pr (pr_action_wt_res pr_simpl_match_res) e
+
 let string_of_action_res e = poly_string_of_pr (pr_action_res pr_match_res) e
+
+let string_of_action_wt_res e = poly_string_of_pr (pr_action_wt_res pr_match_res) e
 
 
 let string_of_match_res e = poly_string_of_pr pr_match_res e  
@@ -115,11 +131,14 @@ let action_get_holes a = match a with
   | Seq_action (e,_)-> Some e.match_res_holes
   | M_Nothing_to_do _  
   | Search_action (None,_) ->None
-   
+
+ 
 let action_get_holes (a:action):(h_formula*int) list option = 
   let pr1 = string_of_action_res in
   let pr2 = pr_option pr_no in
   Gen.Debug.ho_1 "action_get_holes" pr1 pr2 action_get_holes a
+
+let action_wt_get_holes (_,a) = action_get_holes a
    
 (*
 and ctx_type = 
@@ -329,56 +348,59 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
-and process_one_match (c:match_res) :action=
+and process_one_match (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
     | Root ->
           (match lhs_node,rhs_node with
             | DataNode dl, DataNode dr -> 
-                  if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then M_match c
-                  else M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c))
+                  if (String.compare dl.h_formula_data_name dr.h_formula_data_name)==0 then (0,M_match c)
+                  else (0,M_Nothing_to_do ("no proper match found for: "^(string_of_match_res c)))
             | ViewNode vl, ViewNode vr -> 
-                  let l1 = [M_base_case_unfold c] in
-                  let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [M_match c] else [] in
+                  let l1 = [(1,M_base_case_unfold c)] in
+                  let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] else [] in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
-                  then [M_lemma (c,None)]
+                  then [(1,M_lemma (c,None))]
                   else [] in
                   let l4 = []
                     (*if get_view_original rhs_node then 
                       [M_base_case_fold c] 
                       else [] *)in
-                  let src = Search_action (Some c,(l1@l2@l3@l4)) in
+                  let src = (-1,Search_action (Some c,(l1@l2@l3@l4))) in
                   src (*Seq_action (c,[l1;src])*)
-            | DataNode dl, ViewNode vr -> Search_action (Some c,[M_fold c;M_rd_lemma c])
-            | ViewNode vl, DataNode dr -> M_unfold (c,0)
+            | DataNode dl, ViewNode vr -> (-1,Search_action (Some c,[(1,M_fold c);(1,M_rd_lemma c)]))
+            | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
     | MaterializedArg (mv,ms) ->
           (match lhs_node,rhs_node with
-            | DataNode dl, _ -> M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node))
+            | DataNode dl, _ -> (1,M_Nothing_to_do ("matching lhs: "^(string_of_h_formula lhs_node)^" with rhs: "^(string_of_h_formula rhs_node)))
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | View_mater -> M_unfold (c,0)
                     | Coerc_mater s -> M_lemma (c,Some s)) in
                   (match mv.mater_full_flag with
-                    | true -> a1
-                    | false -> a1
+                    | true -> (0,a1)
+                    | false -> (1,a1)
                           (*let a2 = in
                             Search_action (a1::a2)*))
             | ViewNode vl, DataNode dr -> 
+                  let i = if mv.mater_full_flag then 0 else 1 in 
                   let a1 = (match ms with
-                    | View_mater -> M_unfold (c,0) 
-                    | Coerc_mater s -> M_lemma (c,Some s)) in
-                  (match mv.mater_full_flag with
-                    | true -> a1
-                    | false -> M_unfold (c,1)) (* to prevent infinite unfolding *)
+                    | View_mater -> (i,M_unfold (c,i)) 
+                    | Coerc_mater s -> (i,M_lemma (c,Some s))) in
+                 a1
+                  (* (match mv.mater_full_flag with *)
+                  (*   | true -> (0,a1) *)
+                  (*   | false -> (1,M_unfold (c,1)))  *)
+                      (* to prevent infinite unfolding *)
     (* M_Nothing_to_do "no unfold for partial materialize as loop otherwise") *)
                         (* unfold to some depth *)
                           (* M_Nothing_to_do (string_of_match_res c) *)
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	 
           )
-    | WArg -> M_Nothing_to_do (string_of_match_res c) in
+    | WArg -> (1,M_Nothing_to_do (string_of_match_res c)) in
   r
       
 and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l with
@@ -390,10 +412,28 @@ and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l wit
           match_res_type = Root;
           match_res_rhs_node = rhs_node;
           match_res_rhs_rest = rhs_rest;} in
-      r
-    else M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node))
+      (0,r)
+    else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
   | x::[] -> process_one_match x 
-  | _ -> Search_action (None,(List.map process_one_match l))
+  | _ -> (-1,Search_action (None,(List.map process_one_match l)))
+
+and sort_wt (ys: action_wt list) : action list =
+  let rec recalibrate_wt (w,a) = match a with
+    | Search l ->
+          let l = List.map recalibrate_wt a in
+          let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
+          let rw = (fst (List.hd sl)) in
+          let rl = snd (List.split sl) in
+          (rw,Search rl)
+    | Seq l ->
+          let l = List.map recalibrate_wt a in
+          let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
+          let rl = snd (List.split sl) in
+          (rw,Seq rl)
+    | _ -> if (w==-1) then (0,a) else (w,a) in
+  let ls = List.map recalibrate_wt ys in
+  let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
+  (snd (List.split sl)) 
 
 and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
   let r = List.map (fun (c1,c2)-> (choose_context prog lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
@@ -404,7 +444,7 @@ and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action =
           let r = List.map (process_matches lhs_h) r in
           match r with
             | [] -> M_Nothing_to_do "no nodes on RHS"
-            | x::_ -> x
+            | xs -> let ys = sort_wt r in List.hd ys
 
 
 and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
