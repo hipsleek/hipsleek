@@ -40,7 +40,7 @@ void qsort(ref node x, ref node tx)
 {
 	if (x == null) return; // not needed
 	else if (x.next == null) {
-        assume false;
+      //assume false;
 		return;
 	}
 	else {
@@ -61,16 +61,18 @@ void qsort(ref node x, ref node tx)
 			qsort(y, ty);
 
 		if (x == null) {
-            assume false;
+          //assume false;
 			x = y;
 			tx = ty;
+            assert x'::ll_tail<n,tx', _, _>;
 			return;
 		}
 		else if (y != null) {
 			tx.next = y;
 			tx = ty;
-            //            dprint;
-            assume false;
+            dprint;
+            assert x'::ll_tail<_, _, _, _>; //'
+              //assume false;
 			return;
 		}
 	}

@@ -2865,7 +2865,7 @@ and obtain_subst l =
     | [] -> ([],[])
 
 and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : CF.formula) (lhs : CF.formula) : bool =
-  Gen.Debug.no_3 "coer_target" (* Cprinter.string_of_coercion  *)
+  Gen.Debug.ho_3 "coer_target" (* Cprinter.string_of_coercion  *)
       Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool 
       (fun _ _ _ -> coer_target_a prog coer node target_rhs lhs) node lhs target_rhs
 
@@ -2928,9 +2928,31 @@ and get_node (sv : CP.spec_var) (f : CF.h_formula) : CF.h_formula =
 	      else HFalse
     | _ -> HFalse
 
+and check_one_target prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
+      : bool =
+  let pr1 = Cprinter.string_of_spec_var in
+  let pr2 = Cprinter.string_of_mix_formula in
+  let pr3 = Cprinter.string_of_h_formula in
+  Gen.Debug.ho_3 "check_one_target" pr1 pr2 pr3 string_of_bool
+      (fun _ _ _ -> check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)) target target_rhs_p target_rhs_h 
+
 (* check whether target appears in rhs *)
 (* we need lhs_pure to compute the alias set of target *)
-and check_one_target prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
+and check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
+      : bool =
+  (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
+  let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
+  let rhs_eqns = MCP.ptr_equations_with_null target_rhs_p in
+  let lhs_asets = Context.alias (lhs_eqns@rhs_eqns) in
+  let lhs_targetasets1 = Context.get_aset lhs_asets target in
+  let lhs_targetasets =
+    if CP.mem target lhs_targetasets1 then lhs_targetasets1
+    else target :: lhs_targetasets1 in
+  let n_l_v =  h_node_list target_rhs_h in
+  let l = Gen.BList.intersect_eq CP.eq_spec_var lhs_targetasets n_l_v in
+ (l!=[])     
+
+and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
       : bool =
   (*let _ = print_string("check_one_target: target: " ^ (Cprinter.string_of_spec_var target) ^ "\n") in*)
   let lhs_eqns = MCP.ptr_equations_with_null lhs_pure in
@@ -5214,7 +5236,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 
 
 and is_cycle_coer (c:coercion_decl) (origs:ident list) : bool =  
-  Gen.Debug.no_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
+  Gen.Debug.ho_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
       is_cycle_coer_a c origs
 
 (* this checks if node is being applied a second time with same coercion rule *)
@@ -5245,7 +5267,7 @@ and is_original_match anode ln2 =
 and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_bool Cprinter.string_of_formula in
-  Gen.Debug.no_2 "rewrite_coercion" Cprinter.string_of_h_formula  p1 p2 (fun _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f 
+  Gen.Debug.ho_2 "rewrite_coercion" Cprinter.string_of_h_formula  p1 p2 (fun _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f 
 
 and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   (* This function also needs to add the name and the origin list
@@ -5383,7 +5405,7 @@ and apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*
 (*******************************************************************************************************************************************************************************)
 and do_coercion prog estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_6 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Gen.Debug.ho_6 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ _ -> do_coercion_x prog estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 conseq rhs_b
 
@@ -5402,7 +5424,7 @@ and find_coercions c1 c2 prog anode ln2 =
   let p1 = Cprinter.string_of_h_formula in
   let p = (fun l -> string_of_int (List.length l)) in 
   let p2 (v,_) = pr_pair p p v in
-  Gen.Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
+  Gen.Debug.ho_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
 and do_coercion_x prog estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   (* let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in *)
@@ -5494,7 +5516,7 @@ and do_coercion_x prog estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_fold
 	(*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.no_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
+  Gen.Debug.ho_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
       (fun _ _ _ -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
       anode resth1 coer
       (* anode - LHS matched node
@@ -5806,6 +5828,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
   Gen.Profiling.push_time "entail_prune";  
+  let cl = reset_original_list_partial_context cl in
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in
   Gen.Profiling.pop_time "entail_prune";

@@ -173,24 +173,18 @@ let rec choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_res
   let asets = alias (eqns@r_eqns) in
   let paset = get_aset asets p in (* find the alias set containing p *)
   if Gen.is_empty paset then  failwith ("choose_context: Error in getting aliases for " ^ (string_of_spec_var p))
-  else if not(CP.mem p lhs_fv) || (!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
+  else if (* not(CP.mem p lhs_fv) ||  *)(!Globals.enable_syn_base_case && (CP.mem CP.null_var paset))	then 
 	(Debug.devel_pprint ("choose_context: " ^ (string_of_spec_var p) ^ " is not mentioned in lhs\n\n") pos; [] )
   else (spatial_ctx_extract prog lhs_h paset imm rhs_node rhs_rest) 
 
 and choose_context prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos :  match_res list =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 l = pr_list string_of_match_res l in
+  let pr3 = Cprinter.string_of_mix_formula in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.ho_2 "choose_context" pr1 pr1 pr2 
-      (fun _ _ -> choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node
+  Gen.Debug.ho_4 "choose_context" pr1 pr1 pr3 pr3 pr2 
+      (fun _ _ _ _ -> choose_context_x prog lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p
 
-(*
-  spatial context
-*)
-      
-and spatial_ctx_extract_debug p f a i = 
-  let pr x = "?" in
-  Gen.Debug.ho_4 "spatial_context_extract " pr string_of_h_formula pr string_of_bool pr spatial_ctx_extract p f a i
 
 
 and view_mater_match prog c vs1 aset imm f =
@@ -250,7 +244,18 @@ and coerc_mater_match prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:C
   Gen.Debug.ho_3 "coerc_mater_match" pr_id pr_svl pr_svl pr2
       (fun _ _ _ -> coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f:Cformula.h_formula)) l_vname l_vargs r_aset
  
-and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
+(*
+  spatial context
+*)
+      
+and spatial_ctx_extract p f a i rn rr = 
+  let pr = pr_list string_of_match_res in
+  let pr_svl = Cprinter.string_of_spec_var_list in
+  (* let pr = pr_no in *)
+  Gen.Debug.ho_4 "spatial_context_extract " string_of_h_formula string_of_bool pr_svl string_of_h_formula pr 
+      (fun _ _ _ _ -> spatial_ctx_extract_x p f a i rn rr) f i a rn
+
+and spatial_ctx_extract_x prog (f0 : h_formula) (aset : CP.spec_var list) (imm : bool) rhs_node rhs_rest : match_res list  =
   (* let _ = print_string("spatial_ctx_extract with f0 = " ^ (string_of_h_formula f0) ^ "\n") in  *)
   let rec helper f = match f with
     | HTrue 
@@ -340,7 +345,10 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
       match_res_rhs_node = rhs_node;
       match_res_rhs_rest = rhs_rest;}) l
       
-
+and process_one_match (c:match_res) :action_wt =
+  let pr1 = string_of_match_res in
+  let pr2 = string_of_action_wt_res  in
+  Gen.Debug.ho_1 "process_one_match" pr1 pr2 process_one_match_x c 
 
 (*
 (* return a list of nodes from heap f that appears in *)
@@ -348,7 +356,7 @@ and spatial_ctx_extract prog (f0 : h_formula) (aset : CP.spec_var list) (imm : b
 (* lets us know if the match is at the root pointer,  *)
 (* or at materialized args,...                        *)
 *)
-and process_one_match (c:match_res) :action_wt =
+and process_one_match_x (c:match_res) :action_wt =
   let rhs_node = c.match_res_rhs_node in
   let lhs_node = c.match_res_lhs_node in
   let r = match c.match_res_type with 
@@ -422,9 +430,10 @@ and sort_wt (ys: action_wt list) : action list =
     | Search_action l ->
           let l = List.map recalibrate_wt l in
           let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
-          let rw = (fst (List.hd sl)) in
-          
-          (rw,Search_action sl)
+          let h = (List.hd sl) in
+          let rw = (fst h) in
+          if (rw==0) then h
+          else (rw,Search_action sl)
     | Seq_action l ->
           let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
@@ -449,9 +458,10 @@ and compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action =
 and compute_actions prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let pr = Cprinter.string_of_h_formula   in
   (* let pr1 x = String.concat ";\n" (List.map (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^" *** "^(Cprinter.string_of_h_formula c2)^")") x) in *)
+  let pr3 = Cprinter.string_of_mix_formula in
   let pr1 x = pr_list (fun (c1,c2)-> "("^(Cprinter.string_of_h_formula c1)^", "^(Cprinter.string_of_h_formula c2)^")") x in
   let pr2 = string_of_action_res_simpl in
-  Gen.Debug.ho_2 "compute_actions" pr pr1 pr2 (fun _ _ -> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) lhs_h rhs_lst
+  Gen.Debug.ho_4 "compute_actions" pr pr1 pr3 pr3 pr2 (fun _ _ _ _-> compute_actions_x prog lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos) lhs_h rhs_lst lhs_p rhs_p
 
 
 and input_formula_in2_frame (frame, id_hole) (to_input : formula) : formula =

@@ -17,6 +17,22 @@ lemma self::lseg<n,p> <-> self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2.
 
 lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
 
+pred lsegS<n, p, sm, lg> == self=p & n=0 & sm<=lg
+		or self::node<sm, r> * r::lsegS<n-1, p, sm1, lg> & sm<=sm1<=lg
+	inv n >= 0 & sm<=lg.
+
+pred ll_tailS<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
+		or self::node<sm, r> * r::ll_tailS<n-1, t, sm1, lg> & r!=null & sm<=sm1
+	inv self!=null & t!=null & n>=1 & sm<=lg.
+
+lemma self::ll_tailS<n, t, sm, lg> <-> self::lsegS<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+
+lemma self::lsegS<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> self::lsegS<n1, q, sm, lg1> * q::lsegS<n2, p, sm2, lg> & lg1<=sm2.
+
+
+// sorted list with tail
+
 /*
 pred ll_k<tx, n> == self::node<_, tx> * tx::node<_,null> & n=0.
 
@@ -36,8 +52,8 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 //checkentail x::ll_tail0<tx,n> & n=2 |- tx::node<v,q>.
 // fail but can succeed if we increase unfold_num limit
 
-checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
-// if full-materialized present, should avoid some search..
+//checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
+// if full-materialized present, 
 
 //checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
 // succeed now 
@@ -58,13 +74,23 @@ checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
 // valid
 
 //checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::ll_tail<tx,m>.
-// fail but should be valid
+// valid
 
 //checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- [m] x::ll_tail<tx,m>.
 
-//checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- x::lseg<m,tx>*tx::node<_,null>.
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::lseg<m,tx>*tx::node<_,null>.
+// valid with 2 answers
 
-// /checkentail q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- q::lseg<m2,tx>*tx::node<_,null>.
+//checkentail x::lseg<a,r> * r::ll_tail<tx,n> |- x::lseg<m,tx>*tx::node<_,null>.
+// valid
+
+//checkentail x::lseg<a,r> * r::ll_tail<tx1,n> |- x::lseg<m,tx>*tx::node<_,null>.
+// fail
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- x::lseg<m,tx>*tx::node<_,null>.
+// valid with 3 answers?
+
+// checkentail q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- q::lseg<m2,tx>*tx::node<_,null>.
 
 
 //checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n>  |- [m] x::lseg<m-1,tx>*tx::node<_,null>.
@@ -86,7 +112,12 @@ checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
 //succeed with multiple answers
 
 //checkentail x::lseg<a,t>*t::node<_,y>*y::ll_tail<ty,b> |- x::ll_tail<ty,m>.
-// fail
+// valid
+
+checkentail x::lsegS<a,t,s1,b1>*t::node<v,y>*y::ll_tailS<b,ty,s2,b2>
+ & b1<=v<=s2 |- x::ll_tailS<m,ty,s1,b2>.
+
+// fail but should be valid
 
 //checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null>
 //  |- x::ll_tail<ty,m>.

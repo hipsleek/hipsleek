@@ -1000,6 +1000,7 @@ and add_original (f : formula) original =
     | Exists e -> Exists ({e with formula_exists_heap = h_add_original e.formula_exists_heap original})
   in helper f
          
+
 and add_unfold_num (f : formula) uf = 
   let rec helper f = match f with
     | Or ({formula_or_f1 = f1;
@@ -1132,12 +1133,18 @@ and f_top_level_vars_struc (f:struc_formula) : CP.spec_var list =
   | EVariance _ -> [] in
   List.concat (List.map helper f)
         
-and f_top_level_vars (f : formula) : CP.spec_var list = match f with
+and f_top_level_vars_x (f : formula) : CP.spec_var list = match f with
   | Base ({formula_base_heap = h}) -> (top_level_vars h)
   | Or ({ formula_or_f1 = f1;
-	formula_or_f2 = f2}) -> (f_top_level_vars f1) @ (f_top_level_vars f2)
+	formula_or_f2 = f2}) -> (f_top_level_vars_x f1) @ (f_top_level_vars_x f2)
   | Exists ({formula_exists_heap = h}) -> (top_level_vars h)
-        
+
+and f_top_level_vars (f : formula) : CP.spec_var list = 
+  let pr1 = !print_formula in
+  let pr2 = !print_svl in
+  Gen.Debug.ho_1 "f_top_level_vars" pr1 pr2 f_top_level_vars_x f 
+
+
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
   | Star ({h_formula_star_h1 = h1; 
 	h_formula_star_h2 = h2}) -> (top_level_vars h1) @ (top_level_vars h2)
@@ -1900,7 +1907,19 @@ and contains_phase (f : h_formula) : bool =  match f with
   | _ -> false
 
 
-(* context functions *)
+and h_node_list (f: h_formula): CP.spec_var list = match f with
+  | DataNode {h_formula_data_node = c}
+  | ViewNode {h_formula_view_node = c} -> [c]
+  | Conj {h_formula_conj_h1 = h1; h_formula_conj_h2 = h2} 
+  | Star {h_formula_star_h1 = h1; h_formula_star_h2 = h2} 
+  | Phase {h_formula_phase_rd = h1; h_formula_phase_rw = h2} 
+  -> (h_node_list h1)@(h_node_list h2)
+  | _ -> []
+
+
+
+
+ (* context functions *)
 	
   
   
@@ -2021,7 +2040,7 @@ let es_simplify (e1:entail_state):entail_state =
     | Or c-> Err.report_error { Err.error_loc = no_pos; Err.error_text ="unexpected Or formula in es_simplify"} in
   let nf, naev = formula_simplify e1.es_formula e1.es_ante_evars in
   {e1 with es_formula = nf; es_ante_evars =naev}
-  
+
 let es_simplify e1 = 
   let pr  = !print_entail_state in
   Gen.Debug.ho_1 "es_simplify" pr pr es_simplify e1
@@ -4006,4 +4025,12 @@ and add_to_subst lctx r_subst l_subst =
 		    es_subst = ((fst es.es_subst)@r_subst, (snd es.es_subst)@l_subst);
     		})) c) cl
       in SuccCtx(new_cl)
+
+
+let reset_original (f : formula) : formula = add_original f true 
+
+let reset_original_list_partial_context (f : list_partial_context) : list_partial_context = 
+  let f1 x= Ctx {x with es_formula = (reset_original x.es_formula)} in
+  transform_list_partial_context (f1,(fun c->c)) f
+  
     
