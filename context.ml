@@ -50,8 +50,8 @@ and action =
   | M_lemma  of (match_res * string option)
   | Undefined_action of match_res
   | M_Nothing_to_do of string
-  | Seq_action of (match_res * action_wt list)
-  | Search_action of (match_res option * action_wt list) (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
+  | Seq_action of action_wt list
+  | Search_action of action_wt list (*the match_res indicates if pushing holes for each action is required or it will be done once, at the end*)
   
   (* | Un *)
   (* | M *)
@@ -59,8 +59,9 @@ and action =
 
 and action_wt = (int * action)  (* -1 : unknown, 0 : mandatory; >0 : optional (lower value has higher priority) *) 
 
-let is_search_action a = match a with
-  | Search_action _ -> true
+let is_complex_action a = match a with
+  | Search_action _ 
+  | Seq_action _ -> true
   | _ -> false
   
 let is_search_action_wt (_,a) = is_search_action a
@@ -101,8 +102,8 @@ let rec pr_action_res pr_mr a = match a with
   | M_rd_lemma e -> pr_mr e; fmt_string "==> Right distributive lemma"
   | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
-  | Seq_action (_,l) -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
-  | Search_action (_,l) -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_res pr_mr) l
+  | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_res pr_mr) l
 
 and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
   fmt_string ("(Weigh:"^(string_of_int w)^")")
@@ -126,11 +127,10 @@ let action_get_holes a = match a with
   | M_rd_lemma e
   | M_lemma (e,_)
   | M_base_case_unfold e
-  | Search_action (Some e,_)
-  | M_base_case_fold e
-  | Seq_action (e,_)-> Some e.match_res_holes
+  | M_base_case_fold e -> Some e.match_res_holes
+  | Seq_action _
   | M_Nothing_to_do _  
-  | Search_action (None,_) ->None
+  | Search_action _ ->None
 
  
 let action_get_holes (a:action):(h_formula*int) list option = 
@@ -367,9 +367,9 @@ and process_one_match (c:match_res) :action_wt =
                     (*if get_view_original rhs_node then 
                       [M_base_case_fold c] 
                       else [] *)in
-                  let src = (-1,Search_action (Some c,(l1@l2@l3@l4))) in
-                  src (*Seq_action (c,[l1;src])*)
-            | DataNode dl, ViewNode vr -> (-1,Search_action (Some c,[(1,M_fold c);(1,M_rd_lemma c)]))
+                  let src = (-1,Search_action (l1@l2@l3@l4)) in
+                  src (*Seq_action [l1;src]*)
+            | DataNode dl, ViewNode vr -> (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)])
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
@@ -415,7 +415,7 @@ and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l wit
       (0,r)
     else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
   | x::[] -> process_one_match x 
-  | _ -> (-1,Search_action (None,(List.map process_one_match l)))
+  | _ -> (-1,Search_action (List.map process_one_match l))
 
 and sort_wt (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
