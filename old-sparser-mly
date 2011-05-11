@@ -282,7 +282,9 @@ program : {
 	prog_view_decls = [];
   	Iast.prog_rel_decls = []; (* An Hoa *)
 	prog_proc_decls = [];
-	prog_coercion_decls = []; }
+	prog_coercion_decls = [];
+    prog_hopred_decls = [];
+  }
 }
 ;
 
