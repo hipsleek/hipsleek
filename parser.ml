@@ -260,6 +260,7 @@ SHGram.Entry.of_parser "peek_print"
              | [FORALL,_;OPAREN,_;_] -> ()
              | [EXISTS,_;OPAREN,_;_] -> ()
              | [UNION,_;OPAREN,_;_] -> ()
+             | [IDENTIFIER id,_;OPAREN,_;_] -> ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;OPAREN,_;_] -> raise Stream.Failure 
              | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
@@ -687,20 +688,23 @@ cexp_w :
 ] 
 
    | "una"
-     [  h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1))
-     | `NULL                                     -> Pure_c (P.Null (get_pos 1))
+     [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1)) *)
+     (* | *) `NULL                                     -> Pure_c (P.Null (get_pos 1))
+
+     | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN -> (* print_string("here"); *)
+    (* AnHoa: relation constraint, for instance, given the relation 
+    *  s(a,b,c) == c = a + b.
+    *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
+    *)  
+            Pure_f(P.BForm (P.RelForm (id, cl, get_pos 1), None))
+
      | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in *) Pure_c(P.List(ocl, get_pos 1)) 
      | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
      | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
      | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
      |  i=cid; `OSQUARE; c=cexp; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos 1))
-     |  `REL; `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN ->
-   (* AnHoa: relation constraint, for instance, given the relation 
-    *  s(a,b,c) == c = a + b.
-    *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
-    *)
-            Pure_f(P.BForm (P.RelForm (id, cl, get_pos 1), None))
+
      | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
                                                  -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos 1)) c1 c2
      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
@@ -953,7 +957,7 @@ opt_decl_list: [[t=LIST0 decl -> t]];
   
 decl:
   [[ t=type_decl                  -> Type t
-  |  r=rel_decl -> Rel r (* An Hoa *)
+  |  r=rel_decl; `DOT -> Rel r (* An Hoa *)
   |  g=global_var_decl            -> Global_var g
   |  p=proc_decl                  -> Proc p
   | `COERCION; c= coercion_decl; `SEMICOLON    -> Coercion c ]];
@@ -1247,7 +1251,7 @@ selection_statement: [[t=if_statement -> t]];
 embedded_statement: [[t=valid_declaration_statement -> t]];
 
 if_statement:
-  [[ `IF; `OPAREN; bc=boolean_expression; `CPAREN; es=embedded_statement ->
+  [[ `IF; `OPAREN; bc = boolean_expression; `CPAREN; es=embedded_statement ->
 	  Cond { exp_cond_condition = bc;
            exp_cond_then_arm = es;
            exp_cond_else_arm = Empty (get_pos 1);
@@ -1463,7 +1467,7 @@ unary_expression:
 
 unary_expression_not_plusminus:
  [[ t=postfix_expression -> t
-  | `NOT; t=prefixed_unary_expression -> mkUnary OpNot t (get_pos 1)
+  | `NOT; t = prefixed_unary_expression -> mkUnary OpNot t (get_pos 1)
   | t=cast_expression -> t]];
 
 postfix_expression: 
