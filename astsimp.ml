@@ -1792,8 +1792,8 @@ and trans_coercions (prog : I.prog_decl) :
 and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
-  let pr2 (r1,r2) = Cprinter.string_of_coercion (List.hd (r1@r2)) in
-  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
+  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -1849,18 +1849,19 @@ and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
     C.coercion_mater_vars = m_vars;
     C.coercion_simple_lhs = (CF.is_simple_formula c_lhs) } in
     let change_univ c = match c.C.coercion_univ_vars with
-      | [] -> c
+      | [] -> {c with C.coercion_type = Iast.Right}
       | v -> 
         let c_hd, c_guard ,c_fl ,c_b ,c_t = CF.split_components c.C.coercion_head in
         let new_body = CF.normalize c.C.coercion_body (CF.formula_of_mix_formula c_guard no_pos) no_pos in
         let new_body = CF.push_exists c.C.coercion_univ_vars new_body in
         {c with
+          C.coercion_type = Iast.Right;
           C.coercion_head = CF.mkBase c_hd (MCP.mkMTrue no_pos) c_t c_fl c_b no_pos;
           C.coercion_body = new_body;
           C.coercion_univ_vars = [];} in
     match coer.I.coercion_type with
       | I.Left -> ([ c_coer ], [])
-      | I.Equiv -> ([ c_coer ], [change_univ c_coer])
+      | I.Equiv -> ([ {c_coer with C.coercion_type = I.Left} ], [change_univ c_coer])
       | I.Right -> ([], [ change_univ c_coer]))
 
 and find_view_name (f0 : CF.formula) (v : ident) pos =

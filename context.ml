@@ -33,7 +33,7 @@ and phase_type =
 
 and mater_source = 
   | View_mater
-  | Coerc_mater of (Iast.coercion_type * Globals.ident)
+  | Coerc_mater of  coercion_decl (* (Iast.coercion_type * Globals.ident) *)
 
 and match_type =
   | Root
@@ -47,7 +47,7 @@ and action =
   | M_base_case_unfold of match_res
   | M_base_case_fold of match_res
   | M_rd_lemma of match_res
-  | M_lemma  of (match_res * (coercion_type * string) option)
+  | M_lemma  of (match_res * (coercion_decl option))
   | Undefined_action of match_res
   | M_Nothing_to_do of string
   | Seq_action of action_wt list
@@ -68,7 +68,7 @@ let is_complex_action a = match a with
 
 let pr_mater_source ms = match ms with
   | View_mater -> fmt_string "view_defn_mater"
-  | Coerc_mater (d,v) -> fmt_string ("coerc_defn_mater: "^(string_of_coercion_type d)^" "^v)
+  | Coerc_mater c -> fmt_string ("coerc_defn_mater: "^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name)
   
 let pr_match_type (e:match_type):unit =
   match e with
@@ -100,7 +100,8 @@ let rec pr_action_res pr_mr a = match a with
   | M_base_case_unfold e -> pr_mr e; fmt_string "==> Base case unfold"
   | M_base_case_fold e -> pr_mr e; fmt_string "==> Base case fold"
   | M_rd_lemma e -> pr_mr e; fmt_string "==> Right distributive lemma"
-  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some (d,s)-> "lemma "^(string_of_coercion_type d)^" "^s))
+  | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some c-> "lemma "
+        ^(string_of_coercion_type c.coercion_type)^" "^c.coercion_name))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
   | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
   | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
@@ -226,7 +227,7 @@ and coerc_mater_match_x prog l_vname (l_vargs:P.spec_var list) r_aset imm (lhs_f
   let pos_coercs = List.fold_right (fun c a -> match (choose_full_mater_coercion l_vname l_vargs r_aset c) with 
     | None ->  a 
     | Some t -> t::a) coercs [] in
-  let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater (Iast.Left,c.coercion_name)))) pos_coercs in
+  let res = List.map (fun (c,mv) -> (HTrue, lhs_f, [], MaterializedArg (mv,Coerc_mater c))) pos_coercs in
   (* let pos_coercs = List.fold_left  *)
   (*   (fun a c->  *)
   (*       let args = List.tl (fv_simple_formula c.coercion_head) in  *)
@@ -371,10 +372,10 @@ and process_one_match_x prog (c:match_res) :action_wt =
                   let l2 = if (String.compare vl.h_formula_view_name vr.h_formula_view_name)==0 then [(1,M_match c)] else [] in
                   let l3 = if (vl.h_formula_view_original || vr.h_formula_view_original)
                   then begin
-                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vl.h_formula_view_name in
-                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vl.h_formula_view_name vl.h_formula_view_name in
-                    let left_act = List.map (fun l -> (1,M_lemma (c,Some (Iast.Left,l.coercion_name)))) left_ls in
-                    let right_act = List.map (fun l -> (1,M_lemma (c,Some (Iast.Right,l.coercion_name)))) right_ls in
+                    let left_ls = look_up_coercion_with_target prog.prog_left_coercions vl.h_formula_view_name vr.h_formula_view_name in
+                    let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
+                    let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
+                    let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
                     if (left_act==[] && right_act==[]) then [(1,M_lemma (c,None))]
                     else left_act@right_act
                   end
@@ -395,7 +396,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
             | ViewNode vl, ViewNode vr -> 
                   let a1 = (match ms with
                     | View_mater -> M_unfold (c,0)
-                    | Coerc_mater (d,s) -> M_lemma (c,Some (d,s))) in
+                    | Coerc_mater s -> M_lemma (c,Some s)) in
                   (match mv.mater_full_flag with
                     | true -> (0,a1)
                     | false -> (1,a1)

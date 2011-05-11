@@ -1618,9 +1618,9 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 ;;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
-  | Iast.Left -> "=>"
-  | Iast.Right -> "<="
-  | Iast.Equiv -> "<=>" ;;
+  | Iast.Left -> "====>"
+  | Iast.Right -> "<==="
+  | Iast.Equiv -> "<===>" ;;
 
 
 let string_of_coerc_opt op c = 
