@@ -4767,7 +4767,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
     | Context.Seq_action l -> 
       (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos)), NoAlias)
     | Context.Search_action l ->
-          let r = List.map (fun a1 -> process_action_x prog estate conseq lhs_b rhs_b a1 is_folding pos) l in
+          let r = List.map (fun (_,a1) -> process_action_x prog estate conseq lhs_b rhs_b a1 is_folding pos) l in
           List.fold_left combine_results (List.hd r) (List.tl r) in
   if (Context.is_complex_action a) then (r1,r2) else(push_hole_action a r1,r2)
     

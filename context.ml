@@ -64,7 +64,7 @@ let is_complex_action a = match a with
   | Seq_action _ -> true
   | _ -> false
   
-let is_search_action_wt (_,a) = is_search_action a
+(* let is_search_action_wt (_,a) = is_complex_action a *)
 
 let pr_mater_source ms = match ms with
   | View_mater -> fmt_string "view_defn_mater"
@@ -102,8 +102,8 @@ let rec pr_action_res pr_mr a = match a with
   | M_rd_lemma e -> pr_mr e; fmt_string "==> Right distributive lemma"
   | M_lemma (e,s) -> pr_mr e; fmt_string ("==> "^(match s with | None -> "any lemma" | Some s-> "lemma "^s))
   | M_Nothing_to_do s -> fmt_string ("Nothing can be done: "^s)
-  | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_res pr_mr) l
-  | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_res pr_mr) l
+  | Seq_action l -> fmt_string "seq:"; pr_seq "" (pr_action_wt_res pr_mr) l
+  | Search_action l -> fmt_string "search:"; pr_seq "" (pr_action_wt_res pr_mr) l
 
 and pr_action_wt_res pr_mr (w,a) = (pr_action_res pr_mr a);
   fmt_string ("(Weigh:"^(string_of_int w)^")")
@@ -412,25 +412,24 @@ and process_matches lhs_h ((l:match_res list),(rhs_node,rhs_rest)) = match l wit
           match_res_type = Root;
           match_res_rhs_node = rhs_node;
           match_res_rhs_rest = rhs_rest;} in
-      (0,r)
+      (1,r)
     else (1,M_Nothing_to_do ("no match found for: "^(string_of_h_formula rhs_node)))
   | x::[] -> process_one_match x 
   | _ -> (-1,Search_action (List.map process_one_match l))
 
 and sort_wt (ys: action_wt list) : action list =
   let rec recalibrate_wt (w,a) = match a with
-    | Search l ->
-          let l = List.map recalibrate_wt a in
+    | Search_action l ->
+          let l = List.map recalibrate_wt l in
           let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) l in
           let rw = (fst (List.hd sl)) in
-          let rl = snd (List.split sl) in
-          (rw,Search rl)
-    | Seq l ->
-          let l = List.map recalibrate_wt a in
+          
+          (rw,Search_action sl)
+    | Seq_action l ->
+          let l = List.map recalibrate_wt l in
           let rw = List.fold_left (fun a (w,_)-> if (a<=w) then w else a) (fst (List.hd l)) (List.tl l) in
-          let rl = snd (List.split sl) in
-          (rw,Seq rl)
-    | _ -> if (w==-1) then (0,a) else (w,a) in
+          (rw,Seq_action l)
+    | _ -> if (w == -1) then (0,a) else (w,a) in
   let ls = List.map recalibrate_wt ys in
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
