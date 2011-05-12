@@ -303,7 +303,7 @@ $output_file = "log";
 	"hip" =>[
 #	["2-3trees.ss",4,"make_node","SUCCESS","insert_left","SUCCESS","insert_middle","SUCCESS","insert_right","SUCCESS","insert","SUCCESS"],
 				["append.ss",1,"append","SUCCESS"],
-#				["append-tail.ss --combined-lemma-heuristic",1,"append","SUCCESS"],
+				["append-tail.ss",1,"append","SUCCESS"],
 				["avl-bind.ss",9,"height","SUCCESS", "rotate_left","SUCCESS", "rotate_right","SUCCESS", "get_max","SUCCESS", "rotate_double_left","SUCCESS",
 					"rotate_double_right","SUCCESS","build_avl1","SUCCESS","build_avl2","SUCCESS","insert","SUCCESS",
 					#"insert_inline","SUCCESS","remove_min","SUCCESS","delete","SUCCESS"
@@ -399,7 +399,7 @@ $output_file = "log";
 								"append_bll","SUCCESS",
 								"qsort","SUCCESS"],
         # goes into a loop with combined-lemma-heuristics still
-				#["qsort-tail.ss --combined-lemma-heuristic",2,"qsort","SUCCESS","partition1","SUCCESS"],
+				["qsort-tail.ss",2,"qsort","SUCCESS","partition1","SUCCESS"],
 				["selection.ss",3,"find_min","SUCCESS",
 								"delete_min","SUCCESS",
 								"selection_sort","SUCCESS"],

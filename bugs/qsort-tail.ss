@@ -16,7 +16,7 @@ lseg<n, p, sm, lg> == self=p & n=0 & sm<=lg
 // sorted list with tail
 ll_tail<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
 		or self::node<sm, r> * r::ll_tail<n-1, t, sm1, lg> & r!=null & sm<=sm1
-	inv n>=0;
+	inv n>=0 & self!=null;
 
 // bounded list with tail
 bnd_tail<n, t, sm, lg> == self = null & n = 0 & t=null & sm <= lg
@@ -35,7 +35,7 @@ coercion "lsegmb" self::lseg<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> self::ls
 
 
 void qsort(ref node x, ref node tx)
-	requires x::bnd_tail<n, tx, sm, lg> & n>0
+	requires x::bnd_tail<n, tx, sm, lg> & n>0 & x!=null
 	ensures x'::ll_tail<m, tx', sm1, lg1> & sm <= sm1 & lg1 <= lg & m = n ;
 {
   if (x == null) { assert false;

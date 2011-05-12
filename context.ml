@@ -176,7 +176,7 @@ let alias_nth i (ptr_eqs : (CP.spec_var * CP.spec_var) list) : CP.spec_var list 
   let psv = Cprinter.string_of_spec_var in
   let pr1 l = pr_list (pr_pair psv psv) l in
   let pr2 l = pr_list (pr_list psv) l in
-  Gen.Debug.no_1_num i "alias" pr1 pr2 alias_x ptr_eqs
+  Gen.Debug.ho_1_num i "alias" pr1 pr2 alias_x ptr_eqs
 
 let get_aset (aset : CP.spec_var list list) (v : CP.spec_var) : CP.spec_var list =
   let tmp = List.filter (fun a -> CP.mem v a) aset in
@@ -227,7 +227,7 @@ and choose_context prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest p
   let pr2 l = pr_list string_of_match_res l in
   let pr3 = Cprinter.string_of_mix_formula in
   (*let pr2 (m,svl,_) = (Cprinter.string_of_spec_var_list svl) ^ ";"^ (Cprinter.string_of_mix_formula m) in*)
-  Gen.Debug.ho_4 "choose_context" pr1 pr1 pr3 pr3 pr2 
+  Gen.Debug.loop_4 "choose_context" pr1 pr1 pr3 pr3 pr2 
       (fun _ _ _ _ -> choose_context_x prog es lhs_h lhs_p rhs_p posib_r_aliases rhs_node rhs_rest pos) lhs_h rhs_node lhs_p rhs_p
 
 

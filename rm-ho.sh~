@@ -1,0 +1,2 @@
+#!/bin/csh -f
+sed -n -f rm-ho.sed astsimp.ml 
