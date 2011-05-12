@@ -46,37 +46,40 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 //lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
 
 //checkentail tx::lseg<n1,_>*tx::lseg<n2,_> & n1=0 & n2=0 |- tx::lseg<_,_>.
+// when into a loop!
 
 //checkentail x::ll_tail0<tx,n> & n=1 |- tx::node<v,q>.
-// succeed now 
+// succeed now for --eps
 
 //checkentail x::ll_tail0<tx,n> & n=2 |- tx::node<v,q>.
 // fail but can succeed if we increase unfold_num limit
 
 //checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
-// if full-materialized present, 
+// if full-materialized present,  (valid for eps)
 
 //checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
-// succeed now 
+// succeed now (valid for eps)
 
 //checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<tx,n>.
-// fail
+// fail (fail for eps too)
 
 //checkentail x::node<_,tx> * tx::node<_,q> & q=null |- x::ll_tail<tx,n>.
-// valid
+// valid but 4 answers (valid for eps)
 
 //checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<q,n>.
-//valid but 6 answers without imm!
+//valid but 6 answers (4 answers with imm!)
 
 //checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<tx,nnnnnnn>.
+// valid for all with two answers
 
 //checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<q,nnnnnnn>.
-// two answers
+// valid with 1 answers
 
 //checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<q,nnnnnnn> & q=tx.
-// valid - one answer
+// valid - 2 answer (1 ans for imm)
 
 //checkentail x::lseg<m,tx> * tx::node<_,null> |- (exists q: x::ll_tail<q,nnnnnnn> & q=tx).
+// valid with 2 ans
 
 //checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<tx,nnnnnnn>.
 
@@ -84,12 +87,12 @@ pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
 // succeed but has 2 answers -> can reduce to 1 answer!
 
 //checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
-// fail for --imm valid
+// valid for all with 1 answ
 
-//checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<t,m>.
-// fail to instantiate t for all!
 
-checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<t,m>.
+
+//checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
 
 //checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::lseg<m,q1> * q1::node<_,null> & q1=tx.
 // fail for imm ; should succeed
