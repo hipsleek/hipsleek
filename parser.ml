@@ -170,6 +170,7 @@ let peek_try =
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
+         | [GT,_;RIGHTARROW,_] -> raise Stream.Failure
          | [GT,_;EQUIV,_] -> raise Stream.Failure
          | [GT,_;CPAREN,_] -> raise Stream.Failure 
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
