@@ -170,8 +170,9 @@ let peek_try =
          | [GT,_;DOT,_] -> raise Stream.Failure
          | [GT,_;DERIVE,_] -> raise Stream.Failure
          | [GT,_;LEFTARROW,_] -> raise Stream.Failure
+         | [GT,_;RIGHTARROW,_] -> raise Stream.Failure
          | [GT,_;EQUIV,_] -> raise Stream.Failure
-         | [GT,_;CPAREN,_] -> raise Stream.Failure 
+         | [GT,_;CPAREN,_] -> raise Stream.Failure  
          | [GT,_;SEMICOLON,_]-> raise Stream.Failure
          | [GT,_;ENSURES,_]-> raise Stream.Failure
          | [GT,_;IMM,_] -> raise Stream.Failure 
@@ -434,6 +435,7 @@ view_header:
           view_typed_vars = [];
           view_formula = F.mkETrue top_flow (get_pos 1);
           view_invariant = (P.mkTrue (get_pos 1), []);
+          view_pt_by_self = [];
           try_case_inference = false;
 			}]];
       
