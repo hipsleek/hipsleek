@@ -120,7 +120,6 @@ let this = "this"
 
 (* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
  * moved here from iparser.mly *)
-let input_file_name = ref ""
 
 (* command line options *)
 
@@ -129,6 +128,8 @@ let instantiation_variants = ref 0
 let omega_simpl = ref true
 
 let source_files = ref ([] : string list)
+
+let input_file_name =ref ""
 
 let procs_verified = ref ([] : string list)
 

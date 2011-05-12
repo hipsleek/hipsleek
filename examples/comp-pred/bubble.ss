@@ -9,29 +9,29 @@ data node [b]{
 // views
 //------------------------------------------------------------------------------------------
 
-pred ll_shape[t,b]<a:t>[Base,Rec]
+ho_pred ll_shape[t,b]<a:t>[Base,Rec]
   == Base(a,self)
       or self::node[b]<v,q>* q::ll_shape[t,b]<aq>* Rec(a,aq,self,v,q)
       inv Inv(a,self);
 
-pred ll_Base[t,b]<a:t>[Base,Rec] refines ll_shape[t,b]<a>
+ho_pred ll_Base[t,b]<a:t>[Base,Rec] refines ll_shape[t,b]<a>
   with 
     {
-      Base(a,self) = self=null;
+      Base(a,self) = self=null
     }
       
-pred ll_S[set[b],b]<S:set[b]>[Base,Rec] extends ll_Base [set[b],b]<S>
-  with { Base(S,_) = S={};  
+ho_pred ll_S[set[b],b]<S:set[b]>[Base,Rec] extends ll_Base [set[b],b]<S>
+  with { Base(S,_) = S={} 
          Rec(S,Sq,self,v,p,q) = S=union(Sq,{v})
        }
 
-pred sll [set[b],b]<S:set[b]>[Base,Rec] refine ll_S [set[b],b]<S>
+ho_pred sll [set[b],b]<S:set[b]>[Base,Rec] refines ll_S [set[b],b]<S>
   with {  
          Rec(S,Sq,self,v,p,q) = forall(x: (x notin Sq | v <= x))
        }
        
-pred ll1<S> finalizes ll_S[int]
-pred sll1<S> finalizes sll[int]
+ll1<S> == finalizes ll_S[int]<>;
+sll1<S> == finalizes sll[int]<>;
 
 
 /*

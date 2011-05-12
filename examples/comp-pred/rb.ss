@@ -8,30 +8,30 @@ data node {
 }
 
 /* view for red-black trees */
-pred tree_shape(a)[Base,Rec,Inv]== self= null & Base(a)
-	or self::node<v,c,l,r>* l::tree_shape(al)* r::tree_shape(ar)* Rec(a,al,ar,v,c,self,l,r);
+ho_pred tree_shape<a>[Base,Rec,Inv]== self= null & Base(a)
+	or self::node<v,c,l,r>* l::tree_shape<al>* r::tree_shape<ar>* Rec(a,al,ar,v,c,self,l,r)
 	inv Inv(a);
 
 
-pred rb_tree[t]<c:int>[Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<c>
-  with {   Base(c,_) = c=0 ;  
-           Rec(c,c1,cr,_,cv,..) as arg = c=cv & (c=1 & cl=0 & cr=0 (Rec1 arg) | c=2 & (Rec2 arg))
-           Inv(c,_) = 0<=c<=1;
+ho_pred rb_tree[t]<c:int>[Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<c>
+  with {   Base(c,_) = c=0 
+           Rec(c,c1,cr,_,cv,...) as arg = c=cv & (c=1 & cl=0 & cr=0 (Rec1 arg) | c=2 & (Rec2 arg))
+           Inv(c,_) = 0<=c<=1
   }
   
-pred height[t]<h:int,c:int>[Base,Rec1,Rec2] extends rb_tree[int,b]<c>
-  with {   Base(h,c,_) = h=1;  
+ho_pred height[t]<h:int,c:int>[Base,Rec1,Rec2] extends rb_tree[int,b]<c>
+  with {   Base(h,c,_) = h=1  
             Rec1(h,hl,hr,...) =  h=hl=hr 
             Rec2(h,hl,hr,...) =  hl=hr & h=1+hl
-            Inv(h,_,_) = h>=1;          
+            Inv(h,_,_) = h>=1          
   }
-pred tree_n[int,b]<n:int>[Base,Rec] extends tree_shape [int,b]<n>
-      with { Base(n,_) = n=0;  
-             Rec(n,nl,nr,v,...) = n=nl+nr+1;  
-             Inv(n,self)= n>=0;
+ho_pred tree_n[int,b]<n:int>[Base,Rec] extends tree_shape [int,b]<n>
+      with { Base(n,_) = n=0  
+             Rec(n,nl,nr,v,...) = n=nl+nr+1
+             Inv(n,self)= n>=0
       }
  
-pred rb1<n,cl,bh> finalizes (tree_n[int]<n> split height[int,int]<cl,bh>)
+rb1<n,cl,bh> == finalizes tree_n[int]<n> split height[int,int]<cl,bh> ;
 
 
 /*

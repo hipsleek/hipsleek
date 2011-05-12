@@ -8,30 +8,30 @@ data node[a1] {
 }
 
 /* view for red-black trees */
-pred tree_shape[t,b]<a:t>[Base,Rec]
+ho_pred tree_shape[t,b]<a:t>[Base,Rec]
   == self= null & Base(a,self)
       or self::node[b]<v,c,l,r>* l::tree_shape[t,b]<al>* r::tree_shape[t,b]<ar>* Rec(a,al,ar,v,c,self,l,r)
       inv Inv(a,self);
 
-pred rb_tree[t]<c:int>[Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<c>
-  with {   Base(c,_) = c=0 ;  
-           Rec(c,c1,cr,_,cv,..) as arg = c=cv & (c=1 & cl=0 & cr=0 (Rec1 arg) | c=2 & (Rec2 arg))
-           Inv(c,_) = 0<=c<=1;
+ho_pred rb_tree[t]<c:int>[Base,Rec1,Rec2,Inv] refines tree_shape[int,b]<c>
+  with {   Base(c,_) = c=0 
+           Rec(c,c1,cr,_,cv,...) as arg = c=cv & (c=1 & cl=0 & cr=0 (Rec1 arg) | c=2 & (Rec2 arg))
+           Inv(c,_) = 0<=c<=1
   }
   
-pred height[t]<c:int,h:int>[Base,Rec1,Rec2] extends rb_tree[int,b]<c>
-  with {   Base(h,c,_) = h=1;  
+ho_pred height[t]<c:int,h:int>[Base,Rec1,Rec2] extends rb_tree[int,b]<c>
+  with {   Base(h,c,_) = h=1 
             Rec1(h,hl,hr,...) =  h=hl=hr 
             Rec2(h,hl,hr,...) =  hl=hr & h=1+hl
-            Inv(h,_,_) = h>=1;          
+            Inv(h,_,_) = h>=1        
   }
-pred tree_set[b]<S:set[b]>[Base,Rec] extends tree_shape [set[b],b]<>
-      with { Base(S,_) = S={};  
-             Rec(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v});   
+ho_pred tree_set[b]<S:set[b]>[Base,Rec] extends tree_shape [set[b],b]<>
+      with { Base(S,_) = S={} 
+             Rec(S,Sl,Sr,v,...) = S = union(Sl, Sr, {v})
       }
  
 /*modular preds*/
-pred rb<cl,bh,S> finalizes (tree_set[int]<S> &_split height[int]<c,h> )
+rb<cl,bh,S>  == finalizes tree_set[int]<S> &_split height[int]<c,h>  ;
           
              
 /*incremental non modular preds -> replace refines by extends*/
