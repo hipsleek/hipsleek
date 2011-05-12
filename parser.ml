@@ -433,9 +433,9 @@ view_header:
           view_labels = br_labels;
           view_modes = modes;
           view_typed_vars = [];
+          view_pt_by_self  = [];
           view_formula = F.mkETrue top_flow (get_pos 1);
           view_invariant = (P.mkTrue (get_pos 1), []);
-          view_pt_by_self = [];
           try_case_inference = false;
 			}]];
       
@@ -780,7 +780,8 @@ meta_constr:
 coercion_decl:
   [[ on=opt_name; dc1=disjunctive_constr; cd=coercion_direction; dc2=disjunctive_constr ->
       { coercion_type = cd;
-        coercion_name = on;
+        coercion_name = (* on; *)
+        (let v=on in (if (String.compare v "")==0 then (fresh_any_name "lem") else v));
         coercion_head = (F.subst_stub_flow top_flow dc1);
         coercion_body = (F.subst_stub_flow top_flow dc2);
         coercion_proof = Return ({ exp_return_val = None;

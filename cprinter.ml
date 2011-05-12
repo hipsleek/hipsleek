@@ -35,7 +35,6 @@ let rec string_of_typ = function
   | P.Prim t -> string_of_prim_type t 
   | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
   | P.Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
-
 ;;
 
 (** the formatter that fmt- commands will use *)
@@ -631,7 +630,7 @@ let rec pr_b_formula (e:P.b_formula) =
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
 let string_of_int_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = ((string_of_int i)^s2)
+let string_of_formula_label (i,s) s2:string = s2 (* ((string_of_int i)^":"^s2) *)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
 let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
