@@ -17,7 +17,6 @@ ll<n> == self = null & n = 0
 lseg<p, n> == self=p & n=0
 	or self::node<_, q> * q::lseg<p, n-1>
 	inv n>=0;
-	
 
 int length (node x) 
 requires x::ll<n>@I

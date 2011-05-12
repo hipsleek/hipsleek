@@ -629,10 +629,10 @@ let rec pr_b_formula (e:P.b_formula) =
 ;;
 
 let string_of_int_label (i,s) s2:string = (string_of_int i)^s2
-let string_of_int_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_int_label s s2
-let string_of_formula_label (i,s) s2:string = s2 (* ((string_of_int i)^":"^s2) *)
+let string_of_int_label_opt h s2:string = match h with | None-> "N "^s2 | Some s -> string_of_int_label s s2
+let string_of_formula_label (i,s) s2:string = (* s2 *) ((string_of_int i)^":"^s2)
 let string_of_formula_label_pr_br (i,s) s2:string = ("("^(string_of_int i)^","^s^"):"^s2)
-let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> string_of_formula_label s s2
+let string_of_formula_label_opt h s2:string = match h with | None-> s2 | Some s -> (string_of_formula_label s s2)
 let string_of_control_path_id (i,s) s2:string = string_of_formula_label (i,s) s2
 let string_of_control_path_id_opt h s2:string = string_of_formula_label_opt h s2
 
@@ -801,6 +801,7 @@ let rec pr_h_formula h =
       h_formula_data_remaining_branches = ann;
       h_formula_data_label = pid})->
           fmt_open_hbox ();
+          (if pid==None then fmt_string "NN " else fmt_string "SS ");
           pr_formula_label_opt pid;
           pr_spec_var sv; fmt_string "::";
           pr_angle c pr_spec_var svs ;
@@ -818,6 +819,7 @@ let rec pr_h_formula h =
       h_formula_view_pruning_conditions = pcond;
       h_formula_view_pos =pos}) ->
           fmt_open_hbox ();
+         (if pid==None then fmt_string "NN " else fmt_string "SS ");
           pr_formula_label_opt pid; 
           pr_spec_var sv; 
           fmt_string "::"; 
@@ -1622,9 +1624,9 @@ let string_of_data_decl d = "data " ^ d.data_name ^ " {\n" ^ (string_of_decl_lis
 ;;
 
 let string_of_coercion_type (t:Cast.coercion_type) = match t with
-  | Iast.Left -> "====>"
+  | Iast.Left -> "==>"
   | Iast.Right -> "<==="
-  | Iast.Equiv -> "<===>" ;;
+  | Iast.Equiv -> "<==>" ;;
 
 
 let string_of_coerc_opt op c = 

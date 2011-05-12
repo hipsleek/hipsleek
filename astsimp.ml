@@ -4472,6 +4472,48 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
             let link_f_br = IP.merge_branches e_link_br rest_link_br in
             (rest_used_names, hvars, evars, (link_f, link_f_br))
       | [] -> (used_names, [], [], ((IP.mkTrue pos), [])) in
+
+  let rec flatten f = match f with
+      | IF.HTrue ->  []
+      | IF.Conj
+	          {  IF.h_formula_conj_h1 = f1;
+	              IF.h_formula_conj_h2 = f2;
+	              IF.h_formula_conj_pos = pos
+	          } 
+      | IF.Phase
+	          {   IF.h_formula_phase_rd = f1;
+	              IF.h_formula_phase_rw = f2;
+	              IF.h_formula_phase_pos = pos
+	          } 
+          -> (flatten f1)@(flatten f2)
+      | _ -> [f]
+  in
+  let rec imm_heap (f : IF.h_formula): IF.h_formula = match f with
+      | IF.Star
+	          {	  IF.h_formula_star_h1 = f1;
+	              IF.h_formula_star_h2 = f2;
+	              IF.h_formula_star_pos = pos
+	          } ->
+              IF.mkStar (imm_heap f1) (imm_heap f2) pos 
+      | IF.Conj
+	          {
+	              IF.h_formula_conj_h1 = f1;
+	              IF.h_formula_conj_h2 = f2;
+	              IF.h_formula_conj_pos = pos
+	          } 
+      | IF.Phase
+	          {
+	              IF.h_formula_phase_rd = f1;
+	              IF.h_formula_phase_rw = f2;
+	              IF.h_formula_phase_pos = pos
+	          } ->
+	        imm_heap_2 f1 f2
+      | _ ->  f
+  and imm_heap_2 (f1 : IF.h_formula) (f2 : IF.h_formula) =
+    let ls = flatten f1 in
+    let r = imm_heap f2 in
+    List.fold_right (fun a r -> IF.mkPhase a r no_pos) ls r
+  in
   
   let rec linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
         (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
@@ -4537,7 +4579,17 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
 	        (new_used_names2, (qv1 @ qv2), tmp_h, (tmp_link, tmp_link_br))
       | IF.HTrue ->  (used_names, [], IF.HTrue, (IP.mkTrue no_pos, []))
       | IF.HFalse -> (used_names, [], IF.HFalse, (IP.mkTrue no_pos, [])) in
-  
+  let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
+        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
+    let (a,b,h,r) = linearize_heap used_names f in
+    (a,b,imm_heap h,r)
+  in
+  let linearize_heap (used_names:((ident*primed) list)) (f : IF.h_formula):
+        (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
+    let pr1 = Iprinter.string_of_h_formula in
+    let pr2 (_,_,h,(p,_)) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
+    Gen.Debug.ho_1 "linearize_heap" pr1 pr2 
+        (fun _ -> linearize_heap used_names f) f  in
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
     let heap = Iformula.normalize_h_formula heap in 
