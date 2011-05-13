@@ -1,2 +1,5 @@
 #!/bin/sh
-sed -n -f rm-ho2.sed $1 
+for i in $*
+do
+    sed -i -f rm-ho.sed $1 
+done

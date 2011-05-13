@@ -10,7 +10,7 @@ temp_file="tmp"
 print "Files that need to be modified:"
 #check which files have the ho-debugging on
 for fname in sorted( dirList):
-    subprocess.call("sed -n -f rm-ho2.sed " + fname + " > " + temp_file, executable="bash", shell=True)
+    subprocess.call("sed -n -f rm-ho-diff.sed " + fname + " > " + temp_file, executable="bash", shell=True)
     b = os.path.getsize(temp_file)
     if b>0 :
         to_modify_files.append(fname)
