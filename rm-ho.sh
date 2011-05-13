@@ -1,2 +1,2 @@
 #!/bin/sh
-sed -n -f rm-ho2.sed $1 
+sed -i -f rm-ho2.sed $1 
