@@ -2019,6 +2019,7 @@ let print_list_context_short = ref(fun (c:list_context) -> "printer not initiali
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
+
 let es_simplify (e1:entail_state):entail_state = 
   let hfv0 = h_fv e1.es_heap in
   let pusher f vl = 
@@ -2115,6 +2116,8 @@ let false_ctx flowt pos =
 	Ctx ({(empty_es flowt pos) with es_formula = x ; es_orig_ante = x; })
 
 and true_ctx flowt pos = Ctx (empty_es flowt pos)
+
+let mkFalse_branch_ctx = ([],false_ctx mkFalseFlow no_pos)
 
 let rec contains_immutable_ctx (ctx : context) : bool =
   match ctx with
@@ -2327,12 +2330,12 @@ and or_list_context c1 c2 =
 
 (* can remove redundancy here? *)
 
-
 let isFailPartialCtx (fs,ss) =
-if (Gen.is_empty ss) then true else false
+  if (Gen.is_empty fs) then false else true
 
 let isFailFailescCtx (fs,es,ss) =
-if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false
+  if (Gen.is_empty fs) then false else true
+(* if (Gen.is_empty ss)&&(Gen.is_empty (colapse_esc_stack es)) then true else false *)
 
 let isFailListPartialCtx cl =
   List.for_all isFailPartialCtx cl 
@@ -2347,10 +2350,10 @@ let isSuccessFailescCtx (fs,_,_) =
 if (Gen.is_empty fs) then true else false
 
 let isSuccessListPartialCtx cl =
-  List.exists isSuccessPartialCtx cl 
+  cl==[] || List.exists isSuccessPartialCtx cl 
   
 let isSuccessListFailescCtx cl =
-  List.exists isSuccessFailescCtx cl 
+  cl==[] || List.exists isSuccessFailescCtx cl 
   
 let isNonFalseListPartialCtx cl = 
  List.exists (fun (_,ss)-> ((List.length ss) >0) && not (List.for_all (fun (_,c) -> isAnyFalseCtx c) ss )) cl
@@ -2364,17 +2367,17 @@ let isNonFalseListFailescCtx cl =
 (* this should be applied to merging also and be improved *)
 let count_false (sl:branch_ctx list) = List.fold_left (fun cnt (_,oc) -> if (isAnyFalseCtx oc) then cnt+1 else cnt) 0 sl
 
-let remove_dupl_false (sl:branch_ctx list) = 
-  let nf = count_false sl in
-    if (nf=0) then sl
-    else let n = List.length sl in
-      if (nf=n) then [List.hd(sl)]
-      else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl)
+(* let remove_dupl_false (sl:branch_ctx list) =  *)
+(*   let nf = count_false sl in *)
+(*     if (nf=0) then sl *)
+(*     else let n = List.length sl in *)
+(*       if (nf=n) then [List.hd(sl)] *)
+(*       else (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) *)
 
 let remove_dupl_false (sl:branch_ctx list) = 
   let nl = (List.filter (fun (_,oc) -> not (isAnyFalseCtx oc) ) sl) in
-  if (List.length nl)==0 then 
-    if (sl==[]) then []
+  if nl==[] then 
+    if (sl==[]) then [mkFalse_branch_ctx]
     else [List.hd(sl)]
   else nl
 
@@ -2386,18 +2389,21 @@ let remove_dupl_false (sl:branch_ctx list) =
   Gen.Debug.no_1 "remove_dupl_false" pr pr remove_dupl_false sl
 
 let remove_dupl_false_pc (fl,sl) = (fl,remove_dupl_false sl)
+
 let remove_dupl_false_fe (fl,ec,sl) = (fl,ec,remove_dupl_false sl)
 
 
 let remove_dupl_false_pc_list (fs_list:list_partial_context) = 
-  let ns = List.filter (fun (fl,sl) -> fl==[] && isFalseBranchCtxL sl) fs_list in
-  if ns==[] then fs_list
-  else [List.hd ns]
+  let ns = List.filter (fun (fl,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
+  if ns==[] then [List.hd fs_list]
+  else ns
  
 let remove_dupl_false_fe_list (fs_list:list_failesc_context) = 
-  let ns = List.filter (fun (fl,_,sl) -> fl==[] && isFalseBranchCtxL sl) fs_list in
-  if ns==[] then fs_list
-  else [List.hd ns]
+  let ns = List.filter (fun (fl,_,sl) -> not(fl==[] && isFalseBranchCtxL sl)) fs_list in
+  if ns==[] then [List.hd fs_list]
+  else ns
+
+  
 
 let rank (t:partial_context):float = match t with
   | ( [] ,[] ) -> Err.report_error {Err.error_loc = no_pos;  Err.error_text = " rank: recieved an empty partial_context\n"}

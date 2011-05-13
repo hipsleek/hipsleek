@@ -58,8 +58,8 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
-		      let _ = print_string ("False precondition detected in procedure "^proc.proc_name^"\n with context: "^
-				  (Cprinter.string_of_context ctx)) in 
+		      let _ = print_string ("\nFalse precondition detected in procedure "^proc.proc_name^"\n with context: "^
+				  (Cprinter.string_of_context_short ctx)) in 
 		      true
 	        else
 		      let _ = Gen.Profiling.push_time ("method "^proc.proc_name) in
@@ -125,7 +125,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
                     if CF.isSuccessListFailescCtx rs then 
 				            (Debug.print_info "assert" (s ^(if (CF.isNonFalseListFailescCtx ts) then " : ok\n" else ": unreachable\n")) pos;
 				             Debug.pprint(*print_info "assert"*) ("Residual:\n" ^ (Cprinter.string_of_list_failesc_context rs)) pos)
-				            else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
+				    else Debug.print_info "assert/assume" (s ^" : failed\n") pos ;
                     rs in 
             let res = match c2 with
                 | None -> ts
@@ -275,7 +275,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
           if str = "" then begin
               let str1 = (Cprinter.string_of_list_failesc_context ctx)  in
 	      (if (Gen.is_empty ctx) then
-               (print_string ("\ndprint: empty context")) 
+               (print_string ("\ndprint: empty/false context")) 
 	      else
                let tmp1 = "\ndprint: " ^ pos.start_pos.Lexing.pos_fname
                 ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": ctx: " ^ str1 ^ "\n" in
@@ -497,32 +497,21 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   (*let _ = print_string ("context before post: "^(Cprinter.string_of_list_partial_context ctx)^"\n") in*)
   let vsvars = List.map (fun p -> CP.SpecVar (fst p, snd p, Unprimed))
     proc.proc_args in
-  let _ = print_flush "1\n" in
   let r = proc.proc_by_name_params in
-  let _ = print_flush "1\n" in
   let w = List.map CP.to_primed (Gen.BList.difference_eq CP.eq_spec_var vsvars r) in
     (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(ctx)));  *)
-  let _ = print_flush ("length ctx:"^(string_of_int (List.length ctx))) in
   let final_state_prim = CF.push_exists_list_partial_context w ctx in
   (* print_string ("\nLength of List Partial Ctx: " ^ (Cprinter.summary_list_partial_context(final_state_prim)));  *)
-  let _ = print_flush "1a\n" in
-  let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in
+  (* let _ = print_flush ("length:"^(string_of_int (List.length final_state_prim))) in *)
   let final_state = 
     if !Globals.elim_exists then (elim_exists_partial_ctx_list final_state_prim) else final_state_prim in
-  let _ = print_flush "1b" in
   (* Debug.devel_print ("Final state:\n" ^ (Cprinter.string_of_list_partial_context final_state_prim) ^ "\n"); *)
-  let _ = print_flush "1ba" in
   (*  Debug.devel_print ("Final state after existential quantifier elimination:\n" *)
   (* ^ (Cprinter.string_of_list_partial_context final_state) ^ "\n"); *)
-   let _ = print_flush "1bb" in
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
-  let _ = print_flush "1c" in
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
-  let _ = print_flush "2\n" in	
-  let _ = print_flush "2a\n" in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
-  let _ = print_flush "3\n" in
   let _ = PTracer.log_proof prf in
   if (CF.isSuccessListPartialCtx rs) then 
      rs

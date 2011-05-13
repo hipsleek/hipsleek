@@ -601,7 +601,7 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
             | None -> look_up_view_baga prog c p vs
             | Some ls ->  
                   let vdef = look_up_view_def pos prog.prog_view_decls c in
-                let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+                  let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                   let to_svs = p :: vs in
                   lookup_view_baga_with_subs ls vdef from_svs to_svs )
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
@@ -2244,8 +2244,12 @@ and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool)  (has
       (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
 	  (f: prog_decl->bool->bool->context->'a -> loc ->control_path_id->(list_context * proof))
 	  ) : (list_failesc_context * proof) = 
-  if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n")
-  else
+  (* if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n") *)
+  (* else *)
+  (* TODO : must avoid empty context *)
+    if (cl==[]) then ([],UnsatAnte)
+    else
+    begin
     reset_formula_point_id();
     let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
     let conseq = rename_f conseq in
@@ -2258,6 +2262,7 @@ and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool)  (has
     let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
     let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq pos pid f to_string in 
     heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
+    end
 
 and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
       (conseq : 'a) pos (pid:control_path_id) ((rename_f: 'a->'a), (to_string:'a->string),
@@ -2265,6 +2270,9 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: b
       : (list_partial_context * proof) = 
   if (List.length cl)<1 then report_error pos ("heap_entail_prefix_init : encountered an empty list_partial_context \n")
   else
+  (* if cl==[] then (cl,UnsatAnte) *)
+  (* else  *)
+    begin
     reset_formula_point_id();
     let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
     let conseq = rename_f conseq in
@@ -2276,6 +2284,7 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: b
 		(*es_orig_conseq = conseq ;*)}in	
     let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
     heap_entail_struc_list_partial_context prog is_folding  has_post cl_new conseq pos pid f to_string
+  end
 
 and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
       (conseq:'a) pos (pid:control_path_id) (f: prog_decl->bool->bool->context->'a -> loc
@@ -2335,7 +2344,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
 		(res, prf)) succ_branches in
     let res_l,prf_l =List.split res in
     let n = string_of_int (List.length res) in
-    print_string ("\nCombining ==> :"^n^" "^(Cprinter.string_of_list_list_partial_context res_l));
+    (* print_string ("\nCombining ==> :"^n^" "^(Cprinter.string_of_list_list_partial_context res_l)); *)
     let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
     (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)
     let proof = ContextList { 
@@ -2950,7 +2959,7 @@ and check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_form
     else target :: lhs_targetasets1 in
   let n_l_v =  h_node_list target_rhs_h in
   let l = Gen.BList.intersect_eq CP.eq_spec_var lhs_targetasets n_l_v in
- (l!=[])     
+  (l!=[])     
 
 and check_one_target_old prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)
       : bool =
@@ -3064,13 +3073,13 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 
 
 and heap_entail_split_rhs_phases
-    p is_folding  ctx0 conseq d
-    pos : (list_context * proof) =
+      p is_folding  ctx0 conseq d
+      pos : (list_context * proof) =
   Gen.Debug.no_2 "heap_entail_split_rhs_phases"
-    (fun x -> Cprinter.string_of_context x)
-    (Cprinter.string_of_formula)
-    (fun (lc,_) -> Cprinter.string_of_list_context lc)
-    (fun _ _ -> heap_entail_split_rhs_phases_x p is_folding  ctx0 conseq d pos) ctx0 conseq
+      (fun x -> Cprinter.string_of_context x)
+      (Cprinter.string_of_formula)
+      (fun (lc,_) -> Cprinter.string_of_list_context lc)
+      (fun _ _ -> heap_entail_split_rhs_phases_x p is_folding  ctx0 conseq d pos) ctx0 conseq
 
 and heap_entail_split_rhs_phases_x
       (prog : prog_decl) 
@@ -3082,7 +3091,7 @@ and heap_entail_split_rhs_phases_x
   let ctx_with_rhs =  (* ctx_0 in *)
 	let (h, p, fl, b, t) = CF.split_components conseq in
     let eqns = (MCP.ptr_equations_without_null p) in
-     CF.set_context (fun es -> {es with es_rhs_eqset=es.es_rhs_eqset@eqns}) ctx_0 in
+    CF.set_context (fun es -> {es with es_rhs_eqset=es.es_rhs_eqset@eqns}) ctx_0 in
   let helper ctx_00 h p (* mix pure *) (func : CF.h_formula -> MCP.mix_formula -> CF.formula) = 
     (* let ctx_0 = (Cformula.transform_context *)
     (* 	(fun es -> *)
@@ -4287,7 +4296,7 @@ and imply_formula_no_memo new_ante new_conseq imp_no memset =
         match vd.view_raw_base_case with 
 	    | None  -> None 
 	    | Some s ->
-	        let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+	    let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
 	    let to_vars = p2 :: v2 in
 	    let to_rhs = subst_avoid_capture fr_vars to_vars s in
 	    let rhs = normalize_combine to_rhs rhs pos in
@@ -4321,7 +4330,7 @@ and imply_formula_no_memo new_ante new_conseq imp_no memset =
         | Some (bc1,(base1,branches1)) -> 
 	    begin
       (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
-              let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+        let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
         let to_vars = p1 :: v1 in
       (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
         let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
@@ -4773,7 +4782,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
           Context.match_res_rhs_node = rhs_node;
           Context.match_res_rhs_rest = rhs_rest;
       } -> 
-          let _ = print_string ("!!! do_coercion should try directly right lemmas ") in
+          (* let _ = print_string ("!!! do_coercion should try directly right lemmas ") in *)
           let r1,r2 = do_coercion prog None estate conseq lhs_rest rhs_rest lhs_node lhs_b rhs_b rhs_node is_folding pos in
           (r1,Search r2)
     | Context.M_lemma  ({
@@ -4790,7 +4799,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
     | Context.Undefined_action mr -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos)), NoAlias)
     | Context.M_Nothing_to_do s -> (CF.mkFailCtx_in (Basic_Reason (mkFailContext s estate (Base rhs_b) None pos)), NoAlias)
     | Context.Seq_action l -> 
-      (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos)), NoAlias)
+          (CF.mkFailCtx_in (Basic_Reason (mkFailContext "undefined action" estate (Base rhs_b) None pos)), NoAlias)
     | Context.Search_action l ->
           let r = List.map (fun (_,a1) -> process_action_x prog estate conseq lhs_b rhs_b a1 is_folding pos) l in
           List.fold_left combine_results (List.hd r) (List.tl r) in
@@ -5842,6 +5851,8 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
          ^ "\nctx:\n" ^ (Cprinter.string_of_list_partial_context cl)
           ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
   Gen.Profiling.push_time "entail_prune";  
+  if cl==[] then ([],UnsatAnte)
+  else begin
   let cl = reset_original_list_partial_context cl in
   let cl_after_prune = prune_ctx_list prog cl in
   let conseq = prune_preds prog false conseq in
@@ -5849,6 +5860,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
   let entail_fct = (fun c-> heap_entail_prefix_init prog is_folding  false c 
       conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)) in
   heap_entail_agressive_prunning entail_fct (prune_ctx_list prog) (fun (c,_)-> isSuccessListPartialCtx c) cl_after_prune 
+  end
 
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
@@ -5857,13 +5869,16 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
       (fun _ _ -> heap_entail_list_partial_context_init prog is_folding  cl conseq pos pid) cl conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)
-        (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
+      (conseq:formula) pos (pid:control_path_id) : (list_failesc_context * proof) = 
   Debug.devel_pprint ("heap_entail_list_failesc_context_init:"
-         ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
-          ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos; 
-  Gen.Profiling.push_time "entail_prune";  
-  let cl_after_prune = prune_ctx_failesc_list prog cl in
-  let conseq = prune_preds prog false conseq in
-  Gen.Profiling.pop_time "entail_prune";
-  heap_entail_failesc_prefix_init prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)  
+  ^ "\nctx:\n" ^ (Cprinter.string_of_list_failesc_context cl)
+  ^ "\nconseq:"^ (Cprinter.string_of_formula conseq) ^"\n") pos;
+  if cl==[] then ([],UnsatAnte)
+  else begin 
+    Gen.Profiling.push_time "entail_prune";  
+    let cl_after_prune = prune_ctx_failesc_list prog cl in
+    let conseq = prune_preds prog false conseq in
+    Gen.Profiling.pop_time "entail_prune";
+    heap_entail_failesc_prefix_init prog is_folding  false cl_after_prune conseq pos pid (rename_labels_formula ,Cprinter.string_of_formula,heap_entail_one_context_new)
+  end
 
