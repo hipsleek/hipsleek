@@ -5274,7 +5274,7 @@ and case_normalize_program (prog: Iast.prog_decl):Iast.prog_decl=
 and prune_inv_inference_formula (cp:C.prog_decl) (v_l : CP.spec_var list) (init_form_lst: (CF.formula*formula_label) list) u_baga u_inv pos:
       ((Cpure.b_formula * (formula_label list)) list)* (C.ba_prun_cond list) *
       ((formula_label list * (Gen.Baga(CP.PtrSV).baga * Cpure.b_formula list) ) list)
-      = Gen.Debug.ho_1 "prune_inv_inference_formula" Cprinter.string_of_spec_var_list
+      = Gen.Debug.no_1 "prune_inv_inference_formula" Cprinter.string_of_spec_var_list
   (fun (lb,_) -> "?")
   (fun v_l -> prune_inv_inference_formula_x cp v_l init_form_lst u_baga u_inv pos) v_l
 
