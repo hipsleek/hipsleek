@@ -44,8 +44,8 @@ let common_arguments = [
 	"Do not use Omega to simplify the arithmetic constraints when using other solver");
 	("--simpl-pure-part", Arg.Set Globals.simplify_pure,
 	"Simplify the pure part of the formulas");
-	("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic,
-	"Use the combined coerce&match + history heuristic for lemma application");
+	(* ("--combined-lemma-heuristic", Arg.Set Globals.lemma_heuristic, *)
+	(* "Use the combined coerce&match + history heuristic for lemma application"); *)
 	("--move-exist-to-LHS", Arg.Set Globals.move_exist_to_LHS,
 	"Move instantiation (containing existential vars) to the LHS at the end of the folding process");
 	("--max-renaming", Arg.Set Globals.max_renaming,

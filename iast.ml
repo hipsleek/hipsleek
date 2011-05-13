@@ -19,6 +19,7 @@ type prog_decl = { mutable prog_data_decls : data_decl list;
                    prog_enum_decls : enum_decl list;
                    mutable prog_view_decls : view_decl list;
                    mutable prog_rel_decls : rel_decl list; 
+                   mutable prog_hopred_decls : hopred_decl list;
                    (* An Hoa: relational declaration *)
                    prog_proc_decls : proc_decl list;
                    mutable prog_coercion_decls : coercion_decl list }
@@ -43,6 +44,8 @@ and view_decl = { view_name : ident;
 		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
+		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
+		  (* view_targets : ident list;  *)(* list of views pointed within declaration *)
 		  try_case_inference: bool}
 
 (* An Hoa: relational declaration, nearly identical to view_decl except for the view_data_name *)
@@ -53,6 +56,16 @@ and rel_decl = { rel_name : ident;
 		  (* rel_invariant : (P.formula * (branch_label * P.formula) list); *)
 		  rel_formula : P.formula (* Iformula.struc_formula *) ; 
 		  (* try_case_inference: bool *)}
+
+and hopred_decl = { hopred_name : ident;
+          hopred_mode : branch_label;
+          hopred_mode_headers : ident list;
+          hopred_typed_vars: (typ * ident) list;
+          hopred_typed_args : (typ * ident) list;
+          hopred_fct_args : ident list;
+          hopred_shape    : Iformula.struc_formula list;
+          hopred_invariant :(P.formula * (branch_label * P.formula) list)
+}
 
 and enum_decl = { enum_name : ident;
 		  enum_fields : (ident * int option) list } 
@@ -366,6 +379,8 @@ let bool_type = Prim Bool
 
 (* utility functions *)
 
+let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
+ 
 (* apply substitution to an id *)
 let apply_subs_to_id (subs:(ident *ident) list) (id:ident) : ident
  = try       
@@ -577,8 +592,38 @@ and mkSpecTrue pos = Iformula.mkETrue pos
 		srequires_pos = pos
 		}]	*)
 		
-		
+    
+    
+and mkHoPred  n m mh tv ta fa s i=
+      {   hopred_name = n;
+          hopred_mode = m;
+          hopred_mode_headers = mh;
+          hopred_typed_vars = tv;
+          hopred_typed_args = ta;
+          hopred_fct_args = fa;
+          hopred_shape    = s;
+          hopred_invariant = i}
+	
+let mkProc id n dd c ot ags r ss ds pos bd=
+    { proc_name = id;
+		  proc_mingled_name = n; 
+		  proc_data_decl = dd;
+		  proc_constructor = c;
+		  proc_exceptions = ot;
+		  proc_args = ags;
+		  proc_return = r;
+		  proc_static_specs = ss;
+		  proc_dynamic_specs = ds;
+		  proc_loc = pos;
+      proc_file = !input_file_name;
+		  proc_body = bd }	
 
+let mkAssert asrtf assmf pid pos =
+      Assert { exp_assert_asserted_formula = asrtf;
+               exp_assert_assumed_formula = assmf;
+               exp_assert_path_id = pid;
+               exp_assert_pos = pos }
+      
 let trans_exp (e:exp) (init_arg:'b)(f:'b->exp->(exp* 'a) option)  (f_args:'b->exp->'b)(comb_f:exp -> 'a list -> 'a) :(exp * 'a) =
   let rec helper (in_arg:'b) (e:exp) :(exp* 'a) =	
     match (f in_arg e) with
@@ -840,7 +885,104 @@ and look_up_all_fields (prog : prog_decl) (c : data_decl) : (typed_ident * loc) 
   If there are conflicts, report as errors.
 *)
 
+and collect_struc (f:Iformula.struc_formula):ident list =  List.concat (List.map collect_ext f)
+
+and collect_ext (f:Iformula.ext_formula):ident list = match f with
+  | Iformula.EAssume (b,_) -> collect_formula b
+  | Iformula.ECase b-> List.concat (List.map (fun (c1,c2) -> collect_struc c2) b.Iformula.formula_case_branches)
+  | Iformula.EBase b-> (collect_formula b.Iformula.formula_ext_base)@ (collect_struc b.Iformula.formula_ext_continuation)
+  | Iformula.EVariance b -> collect_struc b.F.formula_var_continuation
+
+and collect_formula (f0 : F.formula) : ident list = 
+  let rec helper (h0 : F.h_formula) = match h0 with
+	| F.HeapNode h ->
+		  let (v, p), c = h.F.h_formula_heap_node, h.F.h_formula_heap_name in
+		  if v = self then [c] else []
+	| F.Star h ->
+		  let h1, h2, pos = h.F.h_formula_star_h1, h.F.h_formula_star_h2, h.F.h_formula_star_pos in
+		  let n1 = helper h1 in
+		  let n2 = helper h2 in
+          let d1 = List.length n1 in
+          let d2 = List.length n2 in
+		  if d1>0 & d2>0 then
+			report_error pos ("multiple occurrences of self as heap nodes in one branch are not allowed")
+		  else n1@n2
+	| _ -> [] in
+  match f0 with
+    | Iformula.Base f -> helper f.Iformula.formula_base_heap
+    | Iformula.Exists f -> helper f.Iformula.formula_exists_heap
+    | Iformula.Or f -> (collect_formula f.Iformula.formula_or_f1) @ (collect_formula f.Iformula.formula_or_f2)
+
+and find_data_view (dl:ident list) (f:Iformula.struc_formula) pos :  (ident list) * (ident list) =
+  let x = collect_struc f in
+  let (dl,el) = List.partition (fun v -> (List.mem v dl)) x in
+  let dl = Gen.Basic.remove_dups dl in
+  let el = Gen.Basic.remove_dups el in
+  if (List.length dl>1) then report_error pos ("self points to different data node types")
+  else (dl,el)
+
+and syn_data_name  (data_decls : data_decl list)  (view_decls : view_decl list) : (view_decl * (ident list) * (ident list)) list =
+  (*let vl = List.map (fun v -> v.view_name) view_decls in*)
+  let dl = List.map (fun v -> v.data_name) data_decls in
+  let rl = List.map (fun v -> let (a,b)=(find_data_view dl v.view_formula no_pos) in (v, a, b)) view_decls in
+  let _ = List.iter (fun (v,_,tl) -> if List.exists (fun n -> if (v.view_name=n) then true else false) tl 
+  then report_error no_pos ("self points infinitely within definition "^v.view_name) else () )  rl in
+  rl
+
+and fixpt_data_name (view_ans)  =
+  let pr x = "?" in 
+  Gen.Debug.no_1 "fixpt_data_name" pr pr fixpt_data_name_x view_ans
+
+(* TODO : cater to aliasing with SELF; cater to mutual-recursion *)
+
+and fixpt_data_name_x (view_ans:(view_decl * ident list *ident list) list) =
+  let fetch r = List.concat (List.map (fun id -> let (_,a,_)=List.find (fun (v,_,_)-> v.view_name=id) view_ans in a) r) in 
+  let r = List.map (fun (v,a,r) -> (v,Gen.Basic.remove_dups (a@(fetch r)),r)) view_ans in
+  let check (v,a1,_) (_,a2,_) c = 
+    let d1=List.length a1 in
+    let d2=List.length a2 in
+    if d1==d2 then c
+    else if d2>1 then report_error no_pos ("self of "^(v.view_name)^"indirectly points to different data node types")
+    else true in
+  let check a1 a2 c = 
+    let pr (_,a,_) = string_of_ident_list a in
+    Gen.Debug.no_2 "check_fixpt_data_name" pr pr string_of_bool (fun _ _ -> check a1 a2 c) a1 a2 in 
+  let change = List.fold_right2 check r view_ans false in 
+  if change then fixpt_data_name_x r
+  else r
+
+and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  = 
+  let create n = if n="" then [] else [n] in
+  match view_decls with
+    | [] -> ""
+    | vd::vds -> let vans = List.map (fun v -> (v,(create v.view_data_name),v.view_pt_by_self)) vds in
+      let vl = syn_data_name dl [vd] in
+      let vl = fixpt_data_name (vl@vans) in
+      let _ = update_fixpt vl in
+      (List.hd view_decls).view_data_name
+
+and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
+  List.iter (fun (v,a,tl) -> 
+      v.view_pt_by_self<-tl;
+      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^"cannot have its type determined")
+      else v.view_data_name <- List.hd a) vl 
+
+and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
+  let pr x = "?" in 
+  Gen.Debug.no_1 "fixpt_data_name" pr pr (fun _-> set_check_fixpt_x data_decls view_decls )  view_decls
+
+and set_check_fixpt_x  (data_decls : data_decl list) (view_decls : view_decl list)  =
+  let vl = syn_data_name data_decls view_decls in
+  let vl = fixpt_data_name vl in
+  update_fixpt vl
+
+
 and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
+  let pr = !print_struc_formula in
+  Gen.Debug.loop_1_no "data_name_of_view" pr (fun x->x)
+      (fun _ -> data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula)) f0
+
+and data_name_of_view_x (view_decls : view_decl list) (f0 : Iformula.struc_formula) : ident = 
 
   let handle_list_res  (e:string list): string = 
 	let r = List.filter (fun c-> (String.length c)>0) e in
@@ -853,10 +995,10 @@ and data_name_of_view (view_decls : view_decl list) (f0 : Iformula.struc_formula
   
   let rec data_name_in_ext (f:Iformula.ext_formula):ident = match f with
 	| Iformula.EAssume (b,_) -> data_name_of_view1 view_decls b
-	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view  view_decls c2) b.Iformula.formula_case_branches)
+	| Iformula.ECase b-> handle_list_res (List.map (fun (c1,c2) -> data_name_of_view_x  view_decls c2) b.Iformula.formula_case_branches)
 	| Iformula.EBase b-> handle_list_res ([(data_name_of_view1 view_decls b.Iformula.formula_ext_base)]@
-		  [(data_name_of_view view_decls b.Iformula.formula_ext_continuation)])
-	| Iformula.EVariance b -> ""
+		  [(data_name_of_view_x view_decls b.Iformula.formula_ext_continuation)])
+	| Iformula.EVariance b -> data_name_of_view view_decls b.F.formula_var_continuation
   in
   handle_list_res (List.map data_name_in_ext f0) 
 
@@ -872,7 +1014,7 @@ and data_name_of_view1 (view_decls : view_decl list) (f0 : F.formula) : ident =
 			  if String.length (vdef.view_data_name) > 0 then
 				Some vdef.view_data_name
 			  else
-				Some (data_name_of_view view_decls vdef.view_formula)
+				Some (data_name_of_view_x view_decls vdef.view_formula)
 			with
 			  | Not_found -> Some c
 		  else

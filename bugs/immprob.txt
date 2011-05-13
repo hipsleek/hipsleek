@@ -1,0 +1,76 @@
+New  : with new parser
+Old   : prior to merge with the "default" at bugs-lemma4 (1723)
+     1723:97a3d96f20cd to add script to remove ho debug command
+
+
+NEW
+===
+
+ heap_entail_split_rhs_phases@285@284
+heap_entail_split_rhs_phases inp1 : es_formula: 
+<NoLabel>(x::ll<n>@I[Orig] ; (y::ll<m>@I[Orig] & t::ll<a>@I[Orig] ; 
+  z::ll<m_297>@M[Orig])) & 3<n & m_297=m & {FLOW,(142,143)=__norm,}
+ 
+OLD
+===
+
+ heap_entail_split_rhs_phases@285@284
+heap_entail_split_rhs_phases inp1 : es_formula: 
+  <NoLabel>(x::ll<n>@I[Orig] ; (y::ll<m>@I[Orig] ; (t::ll<a>@I[Orig] ; 
+  z::ll<m_297>@M[Orig]))) & 3<n & m_297=m & {FLOW,(142,143)=__norm,}
+
+NEW
+===
+
+trans_struc_formula inp5 :
+ [ m1 n1][](EX  . ((y::ll<m1>) ; (x::ll<n1>))*(y != x)( FLOW __norm)) {}
+trans_struc_formula res1 :; (m int); (n int); (x node); (y node); (m1 int); (n1 int)
+trans_struc_formula@6 EXIT out : EBase exists [](I)[m1; n1][]<NoLabel>(y::ll<m1>@I[Orig] ; 
+       x::ll<n1>@I[Orig]) & y!=x & {FLOW,(142,143)=__norm,}
+
+OLD
+===
+
+trans_struc_formula inp5 :
+ [ m1 n1][](EX  . (((8, ):y::ll<m1>) ; ((9, ):x::ll<n1>))*(y != x)( FLOW __norm)) {}
+trans_struc_formula res1 :; (m int); (n int); (x node); (y node); (m1 int); (n1 int)
+trans_struc_formula@6 EXIT out : EBase exists [](I)[m1; n1][]<NoLabel>(y::ll<m1>@I[Orig] ; 
+       x::ll<n1>@I[Orig]) & y!=x & {FLOW,(142,143)=__norm,}
+
+
+NEW
+===
+
+heap_entail_non_empty_rhs_heap@311@285@284 ENTRY : <NoLabel>y::ll<m>@I[Orig] & t::ll<a>@I[Orig] & 3<n & m_297=m &
+{FLOW,(142,143)=__norm,}
+
+choose_context@313@312@311@285@284 ENTRY : y::ll<m>@I[Orig] & t::ll<a>@I[Orig]
+
+OLD
+===
+
+heap_entail_non_empty_rhs_heap@311@285@284 ENTRY : <NoLabel>y::ll<m>@I[Orig] & 3<n & m_297=m & {FLOW,(142,143)=__norm,}
+
+choose_context@313@312@311@285@284 ENTRY : y::ll<m>@I[Orig]
+
+
+NEW
+===
+
+ [ m1 n1][](EX  . ((y::ll<m1>) ; (x::ll<n1>))*(n1 > 6)( FLOW __norm)) {}
+trans_struc_formula res1 :; (m int); (n int); (t node); (x node); (y node); (z node); (m1 int); (n1 int); (m_285 int); (a int)
+trans_struc_formula@283 EXIT out : EBase exists [](I)[m1; n1][]<NoLabel>(y::ll<m1>@I[Orig] ; 
+       x::ll<n1>@I[Orig]) & 6<n1 & {FLOW,(142,143)=__norm,}
+ EXISTS(m_285: (x::ll<n>@I[Orig] ; (y::ll<m>@I[Orig] & t::ll<a>@I[Orig] ; 
+z::ll<m_285>@M[Orig])) & 3<n & m_285=m & {FLOW,(142,143)=__norm,}) |-  EBase exists [](I)[m1; n1][]<NoLabel>(y::ll<m1>@I[Orig] ; 
+       x::ll<n1>@I[Orig]) & 6<n1 & {FLOW,(142,143)=__norm,}
+
+OLD
+===
+
+ [ m1 n1][](EX  . (((33, ):y::ll<m1>) ; ((34, ):x::ll<n1>))*(n1 > 6)( FLOW __norm)) {}
+trans_struc_formula@283 EXIT out : EBase exists [](I)[m1; n1][]<NoLabel>(y::ll<m1>@I[Orig] ; 
+       x::ll<n1>@I[Orig]) & 6<n1 & {FLOW,(142,143)=__norm,}
+ EXISTS(m_285: (x::ll<n>@I[Orig] ; (y::ll<m>@I[Orig] ; (t::ll<a>@I[Orig] ; 
+z::ll<m_285>@M[Orig]))) & 3<n & m_285=m & {FLOW,(142,143)=__norm,}) |-  EBase exists [](I)[m1; n1][]<NoLabel>(y::ll<m1>@I[Orig] ; 
+       x::ll<n1>@I[Orig]) & 6<n1 & {FLOW,(142,143)=__norm,}

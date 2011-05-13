@@ -1,0 +1,169 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or (exists r2: self::node<next = r2> * r2::lseg<n - 1, p>)
+         inv n >= 0.
+
+pred ll_tail<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+pred ll_tail0<tx, n> == self::node<_, null> & tx=self & n=1
+	or self::node<_, r> * r::ll_tail0<tx, n-1> & r!=null
+	inv self!=null & tx!=null & n>=1.
+
+lemma self::lseg<n,p> <-> (exists n1,n2: self::lseg<n1,q> * q::lseg<n2,p> & n=n1+n2).
+
+lemma self::ll_tail<t, n> <-> self::lseg<n-1,t> * t::node<_, null>.
+
+pred lsegS<n, p, sm, lg> == self=p & n=0 & sm<=lg
+		or self::node<sm, r> * r::lsegS<n-1, p, sm1, lg> & sm<=sm1<=lg
+	inv n >= 0 & sm<=lg.
+
+pred ll_tailS<n, t, sm, lg> == self::node<sm, null> & t=self & n=1 & sm=lg
+		or self::node<sm, r> * r::ll_tailS<n-1, t, sm1, lg> & r!=null & sm<=sm1
+	inv self!=null & t!=null & n>=1 & sm<=lg.
+
+
+lemma self::ll_tailS<n, t, sm, lg> <-> self::lsegS<n-1, t, sm, lg1> * t::node<lg, null> & lg1<=lg.
+
+
+lemma self::lsegS<n, p, sm, lg> & n = n1+n2 & n1,n2 >=0  <-> self::lsegS<n1, q, sm, lg1> * q::lsegS<n2, p, sm2, lg> & lg1<=sm2.
+
+
+// sorted list with tail
+
+/*
+pred ll_k<tx, n> == self::node<_, tx> * tx::node<_,null> & n=0.
+
+pred ll_k2<tx, n> == self::node<_, tx> * tx::node<_,null> & n=2
+	or self::node<_, r> * r::ll_k2<tx, n-1>
+  inv self!=null.
+*/
+//lemma self::lseg<n, p> & n = a + b & a,b >=0 -> self::lseg<a, r> * r::lseg<b, p>.
+
+//lemma self::lseg<n, p> <-> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+//checkentail tx::lseg<n1,_>*tx::lseg<n2,_> & n1=0 & n2=0 |- tx::lseg<_,_>.
+// when into a loop!
+
+//checkentail x::ll_tail0<tx,n> & n=1 |- tx::node<v,q>.
+// succeed now for --eps
+
+//checkentail x::ll_tail0<tx,n> & n=2 |- tx::node<v,q>.
+// fail but can succeed if we increase unfold_num limit
+
+//checkentail x1::ll_tail<tx,n1> |- tx::node<v,q>.
+// if full-materialized present,  (valid for eps)
+
+//checkentail x::ll_tail<tx,n> & n=1 |- tx::node<v,q>.
+// succeed now (valid for eps)
+
+//checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<tx,n>.
+// fail (fail for eps too)
+
+//checkentail x::node<_,tx> * tx::node<_,q> & q=null |- x::ll_tail<tx,n>.
+// valid but 4 answers (valid for eps)
+
+//checkentail x::node<_,tx> * tx::node<_,q> * q::node<_,null> |- x::ll_tail<q,n>.
+//valid but 6 answers (4 answers with imm!)
+
+//checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<tx,nnnnnnn>.
+// valid for all with two answers
+
+//checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<q,nnnnnnn>.
+// valid with 1 answers
+
+//checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<q,nnnnnnn> & q=tx.
+// valid - 2 answer (1 ans for imm)
+
+//checkentail x::lseg<m,tx> * tx::node<_,null> |- (exists q: x::ll_tail<q,nnnnnnn> & q=tx).
+// valid with 2 ans
+
+//checkentail x::lseg<m,tx> * tx::node<_,null> |- x::ll_tail<tx,nnnnnnn>.
+
+
+// succeed but has 2 answers -> can reduce to 1 answer!
+
+//checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+// valid for all with 1 answ
+
+
+checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<t,m>.
+
+//checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+
+//checkentail x::lseg<a,q> * q::ll_tail<tx,n> |- x::lseg<m,q1> * q1::node<_,null> & q1=tx.
+// fail for imm ; should succeed
+
+
+// checkentail x::lseg<a,q> * q::lseg<b,tx>*tx::node<_,null> |- x::lseg<m,q1> * q1::node<_,null> & q1=tx.
+
+//Can be solved by adding eqset to h-formula proving; 
+// as an input to context.
+
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::ll_tail<tx,m>.
+// valid
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- [m] x::ll_tail<tx,m>.
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n> |- x::lseg<m,tx>*tx::node<_,null>.
+// valid with 2 answers
+
+//checkentail x::lseg<a,r> * r::ll_tail<tx,n> |- x::lseg<m,tx>*tx::node<_,null>.
+// valid
+
+//checkentail x::lseg<a,r> * r::ll_tail<tx1,n> |- x::lseg<m,tx>*tx::node<_,null>.
+// fail
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- x::lseg<m,tx>*tx::node<_,null>.
+// valid with 3 answers?
+
+//checkentail q::node<_,r> * r::lseg<n-1,tx>*tx::node<_,null> |- q::lseg<m2,tx>*tx::node<_,null>.
+
+
+//checkentail x::lseg<a,q> * q::node<_,r> * r::ll_tail<tx,n>  |- [m] x::lseg<m-1,tx>*tx::node<_,null>.
+
+
+//checkentail x::lseg<_,tx> * tx::node<_,null> |- x::ll_tail<tx,n>.
+
+//checkentail x::ll_tail<tx,n> |- tx::node<v,q>.
+
+//checkentail x::lseg<n,t>*t::node<_,null> |- x::ll_tail<tx,m>.
+// gives multiple identical answers
+
+//checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>
+//  |- x::lseg<n,ty>.
+//succeed with multiple answers
+
+//checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null>
+// |- x::lseg<n,ty> *ty::node<_,null>.
+//succeed with multiple answers
+
+// //checkentail x::lseg<a,t>*t::node<_,y>*y::ll_tail<ty,b> |- x::ll_tail<ty,m>.
+// valid
+
+//checkentail x::lsegS<a,t,s1,b1>*t::node<v,y>*y::ll_tailS<b,ty,s2,b2> & b1<=v<=s2 |- x::ll_tailS<m,ty,s1,b2>.
+// valid but fail for -imm
+
+//checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null>
+//  |- x::ll_tail<ty,m>.
+// fail
+
+//checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null> 
+// |- x::lseg<m,ty>.
+// succeed with some duplicated
+
+//checkentail x::lseg<a,t>*t::node<_,y>*y::lseg<b,ty>*ty::node<_,null> 
+// |- x::lseg<m,t2>.
+// some duplicated
+
+//checkentail x::lseg<a,t>*t::node<_,y>  |- z::lseg<m,t2>.
+// succeed with one answer
+
+//checkentail x::lseg<a,t>*t::node<_,y>  |- x::lseg<m,t2>.
+//complete and duplicated
+
+print residue.

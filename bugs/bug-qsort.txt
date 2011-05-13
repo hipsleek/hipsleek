@@ -1,0 +1,99 @@
+--eps failed because it has two disjunctive states at 83
+(the first seems to be redundant)
+
+ State:es_formula: 
+        EXISTS(sm1_903,lg1_904,
+        y_905: x'::ll_tail<n1_565,tx',sm1_602,lg1_603>@M[Orig]@ rem br[{148,147}] * 
+        y_78'::ll_tail<n_595,ty_79',sm1_903,lg1_904>@M[Orig]@ rem br[{148,147}] &
+        (
+        ([null=y_78'][x'!=null][v_bool_59_308'][x_604!=null]
+         [n1_565=n_557 & n2_564=n_595 & n_496=n1_565+n2_564 & 1+
+           flted_24_426=n & 1<=flted_24_426 & 0<=n1_565 & 1+
+           flted_24_426=n_496 & 0<=n_496 & 1<=n & 1<=n2_564 & 1<=n1_565 & 
+           0<=n_595]
+         [lg_425=lg & lg_425=lg_498 & lg_425=lg_597 & d_427=temp_81' & 
+           d_427=d_510 & d_427=lg_559 & d_427=sm_596 & sm_424=sm & 
+           sm_424=sm_497 & sm_424=sm_558 & sm_596<=sm1_903 & 
+           sm_558<=sm1_602 & lg1_904<=lg_597 & lg1_603<=lg_559 & 
+           d_510<=lg_498 & sm_497<=d_510 & sm<=lg]
+         [p_428=p_511 & p_428!=null][tx=t_423 & exists1(tx_509:tx_509=t_423)]
+         [x!=null][!(v_bool_41_347')][!(v_bool_44_346')][null=tmp1_80']
+         [y_905!=null][v_bool_62_309'][!(v_bool_65_345')][!(v_bool_74_344')])) &
+        {FLOW,(27,28)=__norm,})
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_var_label: 0;
+ Label: [(,1 ); (,1 ); (,1 ); (,1 ); (,1 ); (,1 ); (,0 ); (,0 ); (,1 ); (,1
+          ); (,1 ); (,1 )]
+ State:es_formula: 
+        EXISTS(sm1_907,lg1_908,
+        x_909: y_78'::bnd_tail<n2_564,ty_79',d_510,lg_498>@M[Orig]@ rem br[{144}] * 
+        x'::ll_tail<n1_565,tx',sm1_907,lg1_908>@M[Orig]@ rem br[{148}] & (
+        ([null=ty_79' & null=y_78'][null=tmp1_80'][!(v_bool_44_346')]
+         [!(v_bool_41_347')][x!=null]
+         [tx=t_423 & exists1(tx_509:tx_509=t_423)][p_428=p_511 & p_428!=null]
+         [d_427=temp_81' & d_427=d_510 & d_427=lg_559 & sm_424=sm & 
+           sm_424=sm_497 & sm_424=sm_558 & lg_425=lg & lg_425=lg_498 & 
+           d_510<=lg_498 & sm_497<=d_510 & sm_558<=sm1_907 & 
+           lg1_908<=lg_559 & sm<=lg]
+         [n1_565=n_557 & 0=n2_564 & 1+flted_24_426=n_496 & 1<=flted_24_426 & 
+           0<=n_496 & 1<=n1_565 & n_496=n1_565+n2_564 & 1<=n & 1+
+           flted_24_426=n]
+         [x_909!=null][v_bool_59_308'][x'!=null][!(v_bool_62_309')]
+         [!(v_bool_65_345')][!(v_bool_74_344')])) &
+        {FLOW,(27,28)=__norm,})
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_var_label: 0]
+
+Similarly, there are two disjuncts in 70; the first one 
+seems to be unsat:
+
+ State:es_formula: 
+        EXISTS(sm1_662,lg1_663,y_664,x_665,
+        tx_661: x_665::ll_tail<n1_565,tx_661,sm1_602,lg1_603>@M[Orig]@ rem br[{148,147}] * 
+        y_78'::ll_tail<n_595,ty_79',sm1_662,lg1_663>@M[Orig]@ rem br[{148,147}] &
+        (
+        ([x'=y_78'][null=x_665][v_bool_59_308'][x_604!=null]
+         [n1_565=n_557 & n2_564=n_595 & n_496=n1_565+n2_564 & 1+
+           flted_24_426=n & 1<=flted_24_426 & 0<=n1_565 & 1+
+           flted_24_426=n_496 & 0<=n_496 & 1<=n & 1<=n2_564 & 1<=n1_565 & 
+           0<=n_595]
+         [lg_425=lg & lg_425=lg_498 & lg_425=lg_597 & d_427=temp_81' & 
+           d_427=d_510 & d_427=lg_559 & d_427=sm_596 & sm_424=sm & 
+           sm_424=sm_497 & sm_424=sm_558 & sm_596<=sm1_662 & 
+           sm_558<=sm1_602 & lg1_663<=lg_597 & lg1_603<=lg_559 & 
+           d_510<=lg_498 & sm_497<=d_510 & sm<=lg]
+         [p_428=p_511 & p_428!=null][tx=t_423 & exists1(tx_509:tx_509=t_423)]
+         [x!=null][!(v_bool_41_347')][!(v_bool_44_346')][null=tmp1_80']
+         [y_664!=null][v_bool_62_309'][v_bool_65_345'][tx'=ty_79'])) &
+        {FLOW,(27,28)=__norm,})
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true
+       es_var_label: 0;
+ Label: [(,0 ); (,0 ); (,0 ); (,0 ); (,1 ); (,1 ); (,1 ); (,1 ); (,1 ); (,1
+          )]
+ State:es_formula: 
+        EXISTS(sm1_667,lg1_668,y_669,
+        tx_666: tx_666::bnd_tail<n1_614,tx_666,sm_497,d_510>@M[Orig]@ rem br[{144}] * 
+        y_78'::ll_tail<n_595,ty_79',sm1_667,lg1_668>@M[Orig]@ rem br[{148}] &
+        (
+        ([v_bool_65_345'][x'=y_78' & y_78'!=null][null=tmp1_80']
+         [!(v_bool_44_346')][!(v_bool_41_347')][x!=null]
+         [tx=t_423 & exists1(tx_509:tx_509=t_423)][p_428=p_511 & p_428!=null]
+         [lg_425=lg & lg_425=lg_498 & lg_425=lg_597 & d_427=temp_81' & 
+           d_427=d_510 & d_427=sm_596 & sm_424=sm & sm_424=sm_497 & 
+           sm_596<=sm1_667 & sm<=lg & lg1_668<=lg_597 & sm_497<=d_510 & 
+           d_510<=lg_498]
+         [n1_614=0 & n2_613=n_595 & 1<=n & n_496=n1_614+n2_613 & 1+
+           flted_24_426=n_496 & 0<=n_496 & 1<=n2_613 & 1<=flted_24_426 & 1+
+           flted_24_426=n]
+         [null=tx_666][y_669!=null][!(v_bool_59_308')][v_bool_62_309']
+         [tx'=ty_79'])) &
+        {FLOW,(27,28)=__norm,})
+       es_pure: (())
+       es_heap: true
+       es_aux_conseq: true

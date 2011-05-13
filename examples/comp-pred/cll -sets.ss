@@ -22,19 +22,19 @@ hd2<n, S> == self = null & n = 0 & S = {}
 	inv n >= 0;
 
 
-int count_rest(node rest, node head)
+int count_rest(node rest, node hd)
 
-	requires rest::cll2<p, n, S> & head = p 
+	requires rest::cll2<p, n, S> & hd = p 
 	ensures rest::cll2<p, n, S> & res = n; 
 
 {
 	int n;
 	
-	if (rest == head)
+	if (rest == hd)
 		return 0; 
 	else
 	{
-		n = count_rest(rest.next, head);
+		n = count_rest(rest.next, hd);
 		n = n + 1;
 
 		return n;

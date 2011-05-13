@@ -33,7 +33,9 @@ let iprog = { I.prog_data_decls = [iobj_def];
 			  I.prog_view_decls = [];
         I.prog_rel_decls = [];
 			  I.prog_proc_decls = [];
-			  I.prog_coercion_decls = [] }
+			  I.prog_coercion_decls = [];
+              I.prog_hopred_decls = [];
+}
 
 let cobj_def = { C.data_name = "Object";
 				 C.data_fields = [];
@@ -93,8 +95,14 @@ let check_data_pred_name name : bool =
 		  	end
 	  end
 
+let check_data_pred_name name :bool = 
+  let pr1 x = x in
+  let pr2 = string_of_bool in 
+  Gen.Debug.no_1 "check_data_pred_name" pr1 pr2 (fun _ -> check_data_pred_name name) name
+    
 let process_data_def ddef =
-  (*print_endline (Iprinter.string_of_data_decl ddef);*)
+  print_endline (Iprinter.string_of_data_decl ddef);
+  flush stdout;
   if check_data_pred_name ddef.I.data_name then
     let tmp = iprog.I.prog_data_decls in
     try
@@ -137,6 +145,8 @@ let process_pred_def pdef =
 		(* used to do this for all preds, due to mutable fields formulas exploded, i see no reason to redo for all: 
 		ignore (List.map (fun vdef -> AS.compute_view_x_formula cprog vdef !Globals.n_xpure) cprog.C.prog_view_decls);*)
 		ignore (AS.compute_view_x_formula cprog cpdef !Globals.n_xpure);
+        ignore (AS.set_materialized_prop cpdef);
+	let cpdef = AS.fill_one_base_case cprog cpdef in 
     let cpdef = 
       if !Globals.enable_case_inference then 
         AS.view_case_inference cprog iprog.I.prog_view_decls cpdef else cpdef in
@@ -281,9 +291,9 @@ let rec meta_to_formula (mf0 : meta_formula) quant fv_idents stab : CF.formula =
 let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
 		
 		(* An Hoa : PRINT OUT THE INPUT *)
-		(* let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in
-		let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in
-		let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in *)
+		(*  let _ = print_string "Call [Sleekengine.process_entail_check] with\n" in *)
+		(* let _ = print_string ("ANTECEDENCE : " ^ (string_of_meta_formula iante0) ^ "\n") in *)
+		(* let _ = print_string ("CONSEQUENCE : " ^ (string_of_meta_formula iconseq0) ^ "\n") in  *)
 		
   let _ = residues := None in
   let stab = H.create 103 in
@@ -299,10 +309,10 @@ let run_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   (*let ctx = List.hd (Cformula.change_flow_ctx  !top_flow_int !n_flow_int [ctx]) in*)
   (*let _ = print_string ("\n checking: "^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") in	*)
     (* An Hoa TODO uncomment let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in *)
-  let _ = if !Globals.print_core then print_string ((Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
+  let _ = if !Globals.print_core then print_string ("\n"^(Cprinter.string_of_formula ante)^" |- "^(Cprinter.string_of_struc_formula conseq)^"\n") else () in
   (*let ctx = CF.transform_context (Solver.elim_unsat_es cprog (ref 1)) ctx in*)
   (*let _ = print_string ("\n checking2: "^(Cprinter.string_of_context ctx)^"\n") in*)
-  let rs1, _ = Solver.heap_entail_struc_init cprog false false false (CF.SuccCtx[ctx]) conseq no_pos None in
+  let rs1, _ = Solver.heap_entail_struc_init cprog false false (CF.SuccCtx[ctx]) conseq no_pos None in
   let rs = CF.transform_list_context (Solver.elim_ante_evars,(fun c->c)) rs1 in
   residues := Some rs;
   (*;print_string ((Cprinter.string_of_list_context rs)^"\n")*)
@@ -314,11 +324,11 @@ let process_entail_check (iante0 : meta_formula) (iconseq0 : meta_formula) =
   try 
     let valid, rs = run_entail_check iante0 iconseq0 in
     if not valid then begin
-      print_string ("Fail.\n");
+      print_string ("Entail=Fail.\n");
       if !Globals.print_err_sleek then
         print_string ("printing here"^(Cprinter.string_of_list_context rs))
     end
-      else print_string ("Valid.\n");
+      else print_string ("Entail=Valid.\n");
   with _ ->
     Printexc.print_backtrace stdout;
     dummy_exception() ; 
@@ -342,7 +352,7 @@ let process_lemma ldef =
   let l2r = List.concat (List.map (fun c-> AS.coerc_spec cprog true c) l2r) in
   let r2l = List.concat (List.map (fun c-> AS.coerc_spec cprog false c) r2l) in
   let _ = if !Globals.print_core then 
-    print_string ((Cprinter.string_of_coerc_decl_list l2r true) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l false) ^"\n") else () in
+    print_string ((Cprinter.string_of_coerc_decl_list l2r) ^"\n"^ (Cprinter.string_of_coerc_decl_list r2l) ^"\n") else () in
 	cprog.C.prog_left_coercions <- l2r @ cprog.C.prog_left_coercions;
 	cprog.C.prog_right_coercions <- r2l @ cprog.C.prog_right_coercions
 

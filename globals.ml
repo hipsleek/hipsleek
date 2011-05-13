@@ -56,6 +56,14 @@ let rec string_of_prim_type = function
   | BagT t        -> "bag("^(string_of_prim_type t)^")"
   | List          -> "list"
 
+let rec s_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> h 
+  | h::t -> h ^ c ^ (s_i_list t c)
+;;
+
+let string_of_ident_list l = "["^(s_i_list l ",")^"]"
+
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
 let nonef v = None
@@ -120,7 +128,6 @@ let this = "this"
 
 (* *GLOBAL_VAR* input filename, used by iparser.mly, astsimp.ml and main.ml
  * moved here from iparser.mly *)
-let input_file_name = ref ""
 
 (* command line options *)
 
@@ -130,6 +137,8 @@ let omega_simpl = ref true
 
 let source_files = ref ([] : string list)
 
+let input_file_name =ref ""
+
 let procs_verified = ref ([] : string list)
 
 let false_ctx_line_list = ref ([] : loc list)
@@ -138,7 +147,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 
-let lemma_heuristic = ref false
+(* let lemma_heuristic = ref false *)
 
 let elim_exists = ref true
 
@@ -374,7 +383,11 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
-		
+
+let fresh_any_name (any:string) = 
+  let str = string_of_int (fresh_int ()) in
+    any ^"_"^ str
+
 let fresh_name () = 
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str

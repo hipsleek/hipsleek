@@ -1005,7 +1005,7 @@ let tp_imply_debug ante conseq imp_no timeout do_cache process =
       Cprinter.string_of_pure_formula 
       Cprinter.string_of_pure_formula
       (fun c-> c) (fun _ -> "?") string_of_bool (fun _ -> "?")
-      string_of_bool (fun x-> true)
+      string_of_bool 
       tp_imply ante conseq imp_no timeout do_cache process
 
 (* renames all quantified variables *)
@@ -1413,7 +1413,7 @@ Gen.Debug.ho_6 "imply_msg_no_no "
   Cprinter.string_of_pure_formula 
   Cprinter.string_of_pure_formula
  (fun c-> c) (fun _ -> "?") string_of_bool (fun _ -> "?")
- (fun (x,_,_)-> string_of_bool x) (fun x-> true)
+ (fun (x,_,_)-> string_of_bool x) 
  imply_msg_no_no ante0 conseq0 imp_no prof_lbl do_cache process
   
 let print_stats () =

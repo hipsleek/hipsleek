@@ -1,17 +1,17 @@
-./2ilexer.cmo: iparser.cmo globals.cmo error.cmo
-./2ilexer.cmx: iparser.cmx globals.cmx error.cmx
 ./astsimp.cmo: tpdispatcher.cmo solver.cmo mcpure.cmo ipure.cmo iprinter.cmo \
-    iparser.cmo inliner.cmo ilexer.cmo iformula.cmo iastUtil.cmo iast.cmo \
-    globals.cmo gen.cmo error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo \
-    context.cmo checks.cmo cformula.cmo cast.cmo
+    inliner.cmo iformula.cmo iastUtil.cmo iast.cmo globals.cmo gen.cmo \
+    error.cmo env.cmo debug.cmo cpure.cmo cprinter.cmo context.cmo checks.cmo \
+    cformula.cmo cast.cmo
 ./astsimp.cmx: tpdispatcher.cmx solver.cmx mcpure.cmx ipure.cmx iprinter.cmx \
-    iparser.cmx inliner.cmx ilexer.cmx iformula.cmx iastUtil.cmx iast.cmx \
-    globals.cmx gen.cmx error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx \
-    context.cmx checks.cmx cformula.cmx cast.cmx
+    inliner.cmx iformula.cmx iastUtil.cmx iast.cmx globals.cmx gen.cmx \
+    error.cmx env.cmx debug.cmx cpure.cmx cprinter.cmx context.cmx checks.cmx \
+    cformula.cmx cast.cmx
 ./bind_inference.cmo: globals.cmo
 ./bind_inference.cmx: globals.cmx
-./cast.cmo: mcpure.cmo globals.cmo gen.cmo error.cmo cpure.cmo cformula.cmo
-./cast.cmx: mcpure.cmx globals.cmx gen.cmx error.cmx cpure.cmx cformula.cmx
+./cast.cmo: mcpure.cmo iast.cmo globals.cmo gen.cmo error.cmo cpure.cmo \
+    cformula.cmo
+./cast.cmx: mcpure.cmx iast.cmx globals.cmx gen.cmx error.cmx cpure.cmx \
+    cformula.cmx
 ./cformula.cmo: mcpure.cmo globals.cmo gen.cmo error.cmo cpure.cmo
 ./cformula.cmx: mcpure.cmx globals.cmx gen.cmx error.cmx cpure.cmx
 ./checks.cmo: iast.cmo globals.cmo
@@ -26,10 +26,10 @@
     cast.cmx
 ./coq.cmo: oclexer.cmo globals.cmo gen.cmo cpure.cmo
 ./coq.cmx: oclexer.cmx globals.cmx gen.cmx cpure.cmx
-./cprinter.cmo: smtsolver.cmo omega.cmo mcpure.cmo globals.cmo gen.cmo \
-    debug.cmo cvc3.cmo cpure.cmo cformula.cmo cast.cmo
-./cprinter.cmx: smtsolver.cmx omega.cmx mcpure.cmx globals.cmx gen.cmx \
-    debug.cmx cvc3.cmx cpure.cmx cformula.cmx cast.cmx
+./cprinter.cmo: smtsolver.cmo omega.cmo mcpure.cmo iast.cmo globals.cmo \
+    gen.cmo debug.cmo cvc3.cmo cpure.cmo cformula.cmo cast.cmo
+./cprinter.cmx: smtsolver.cmx omega.cmx mcpure.cmx iast.cmx globals.cmx \
+    gen.cmx debug.cmx cvc3.cmx cpure.cmx cformula.cmx cast.cmx
 ./cpure.cmo: globals.cmo gen.cmo error.cmo debug.cmo
 ./cpure.cmx: globals.cmx gen.cmx error.cmx debug.cmx
 ./cvc3.cmo: procutils.cmo globals.cmo gen.cmo cpure.cmo
@@ -46,6 +46,8 @@
 ./env.cmx: iast.cmx globals.cmx gen.cmx cast.cmx
 ./error.cmo: globals.cmo
 ./error.cmx: globals.cmx
+./fact.cmo:
+./fact.cmx:
 ./gEntailmentList.cmo: gUtil.cmo gProcList.cmo
 ./gEntailmentList.cmx: gUtil.cmx gProcList.cmx
 ./gLogViewWindow.cmo: gen.cmo gUtil.cmo
@@ -102,14 +104,16 @@
 ./java.cmx: iprinter.cmx iast.cmx globals.cmx gen.cmx error.cmx cpure.cmx
 ./layout.cmo: globals.cmo cpure.cmo
 ./layout.cmx: globals.cmx cpure.cmx
-./main.cmo: typechecker.cmo tpdispatcher.cmo smtsolver.cmo \
-    scriptarguments.cmo rtc.cmo predcomp.cmo java.cmo iprinter.cmo \
-    iparser.cmo ilexer.cmo iastUtil.cmo iast.cmo globals.cmo gen.cmo \
-    cprinter.cmo cast.cmo astsimp.cmo
-./main.cmx: typechecker.cmx tpdispatcher.cmx smtsolver.cmx \
-    scriptarguments.cmx rtc.cmx predcomp.cmx java.cmx iprinter.cmx \
-    iparser.cmx ilexer.cmx iastUtil.cmx iast.cmx globals.cmx gen.cmx \
-    cprinter.cmx cast.cmx astsimp.cmx
+./lexer.cmo: token.cmo globals.cmo
+./lexer.cmx: token.cmx globals.cmx
+./main.cmo: typechecker.cmo tpdispatcher.cmo token.cmo smtsolver.cmo \
+    scriptarguments.cmo rtc.cmo predcomp.cmo lexer.cmo java.cmo iprinter.cmo \
+    iastUtil.cmo iast.cmo globals.cmo gen.cmo cprinter.cmo cast.cmo \
+    astsimp.cmo
+./main.cmx: typechecker.cmx tpdispatcher.cmx token.cmx smtsolver.cmx \
+    scriptarguments.cmx rtc.cmx predcomp.cmx lexer.cmx java.cmx iprinter.cmx \
+    iastUtil.cmx iast.cmx globals.cmx gen.cmx cprinter.cmx cast.cmx \
+    astsimp.cmx
 ./maingui.cmo: typechecker.cmo tpdispatcher.cmo scriptarguments.cmo rtc.cmo \
     predcomp.cmo java.cmo iprinter.cmo iparser.cmo ilexer.cmo iast.cmo \
     gui.cmo globalvars.cmo globals.cmo gen.cmo cprinter.cmo cast.cmo \
@@ -130,10 +134,10 @@
 ./monadicinterp.cmx: typeclass.cmx monads.cmx
 ./monads.cmo: typeclass.cmo
 ./monads.cmx: typeclass.cmx
-./nativefront.cmo: sparser.cmo slexer.cmo sleekcommons.cmo ipure.cmo \
-    iformula.cmo iast.cmo globals.cmo
-./nativefront.cmx: sparser.cmx slexer.cmx sleekcommons.cmx ipure.cmx \
-    iformula.cmx iast.cmx globals.cmx
+./nativefront.cmo: sleekcommons.cmo ipure.cmo iformula.cmo iast.cmo \
+    globals.cmo
+./nativefront.cmx: sleekcommons.cmx ipure.cmx iformula.cmx iast.cmx \
+    globals.cmx
 ./net.cmo:
 ./net.cmx:
 ./oast.cmo:
@@ -188,23 +192,25 @@
     gen.cmx debug.cmx cvclite.cmx cvc3.cmx coq.cmx
 ./setmona.cmo: oclexer.cmo globals.cmo gen.cmo cpure.cmo
 ./setmona.cmx: oclexer.cmx globals.cmx gen.cmx cpure.cmx
-./sleek.cmo: xmlfront.cmo tpdispatcher.cmo sleekengine.cmo sleekcommons.cmo \
-    scriptarguments.cmo nativefront.cmo ipure.cmo iformula.cmo iast.cmo \
-    globals.cmo gen.cmo cpure.cmo cformula.cmo cast.cmo astsimp.cmo
-./sleek.cmx: xmlfront.cmx tpdispatcher.cmx sleekengine.cmx sleekcommons.cmx \
-    scriptarguments.cmx nativefront.cmx ipure.cmx iformula.cmx iast.cmx \
-    globals.cmx gen.cmx cpure.cmx cformula.cmx cast.cmx astsimp.cmx
+./sleek.cmo: xmlfront.cmo tpdispatcher.cmo token.cmo sleekengine.cmo \
+    sleekcommons.cmo scriptarguments.cmo nativefront.cmo lexer.cmo ipure.cmo \
+    iformula.cmo iast.cmo globals.cmo gen.cmo cpure.cmo cformula.cmo cast.cmo \
+    astsimp.cmo
+./sleek.cmx: xmlfront.cmx tpdispatcher.cmx token.cmx sleekengine.cmx \
+    sleekcommons.cmx scriptarguments.cmx nativefront.cmx lexer.cmx ipure.cmx \
+    iformula.cmx iast.cmx globals.cmx gen.cmx cpure.cmx cformula.cmx cast.cmx \
+    astsimp.cmx
 ./sleekcommons.cmo: ipure.cmo iprinter.cmo iformula.cmo iast.cmo globals.cmo \
     cpure.cmo cprinter.cmo cformula.cmo cast.cmo
 ./sleekcommons.cmx: ipure.cmx iprinter.cmx iformula.cmx iast.cmx globals.cmx \
     cpure.cmx cprinter.cmx cformula.cmx cast.cmx
 ./sleekengine.cmo: xmlfront.cmo tpdispatcher.cmo solver.cmo smtsolver.cmo \
-    sleekcommons.cmo nativefront.cmo ipure.cmo iformula.cmo iast.cmo \
-    globals.cmo gen.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
+    sleekcommons.cmo nativefront.cmo ipure.cmo iprinter.cmo iformula.cmo \
+    iast.cmo globals.cmo gen.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
     cformula.cmo cast.cmo astsimp.cmo
 ./sleekengine.cmx: xmlfront.cmx tpdispatcher.cmx solver.cmx smtsolver.cmx \
-    sleekcommons.cmx nativefront.cmx ipure.cmx iformula.cmx iast.cmx \
-    globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
+    sleekcommons.cmx nativefront.cmx ipure.cmx iprinter.cmx iformula.cmx \
+    iast.cmx globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
     cformula.cmx cast.cmx astsimp.cmx
 ./slexer.cmo: sparser.cmo globals.cmo error.cmo
 ./slexer.cmx: sparser.cmx globals.cmx error.cmx
@@ -212,12 +218,12 @@
 ./slices.cmx: mcpure.cmx globals.cmx gen.cmx cpure.cmx cformula.cmx
 ./smtsolver.cmo: procutils.cmo globals.cmo gen.cmo cpure.cmo
 ./smtsolver.cmx: procutils.cmx globals.cmx gen.cmx cpure.cmx
-./solver.cmo: tpdispatcher.cmo prooftracer.cmo mcpure.cmo globals.cmo gen.cmo \
-    error.cmo debug.cmo cpure.cmo cprinter.cmo context.cmo cformula.cmo \
-    cast.cmo
-./solver.cmx: tpdispatcher.cmx prooftracer.cmx mcpure.cmx globals.cmx gen.cmx \
-    error.cmx debug.cmx cpure.cmx cprinter.cmx context.cmx cformula.cmx \
-    cast.cmx
+./solver.cmo: tpdispatcher.cmo prooftracer.cmo mcpure.cmo iast.cmo \
+    globals.cmo gen.cmo error.cmo debug.cmo cpure.cmo cprinter.cmo \
+    context.cmo cformula.cmo cast.cmo
+./solver.cmx: tpdispatcher.cmx prooftracer.cmx mcpure.cmx iast.cmx \
+    globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
+    context.cmx cformula.cmx cast.cmx
 ./sparser.cmo: sleekcommons.cmo ipure.cmo iformula.cmo iast.cmo globals.cmo
 ./sparser.cmx: sleekcommons.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx
 ./test-oo.cmo: iprinter.cmo iparser.cmo ilexer.cmo globals.cmo gen.cmo \
@@ -226,6 +232,8 @@
     debug.cmx cprinter.cmx astsimp.cmx
 ./test.cmo: globals.cmo error.cmo cpure.cmo
 ./test.cmx: globals.cmx error.cmx cpure.cmx
+./token.cmo:
+./token.cmx:
 ./tpdispatcher.cmo: smtsolver.cmo setmona.cmo redlog.cmo omega.cmo net.cmo \
     mona.cmo mcpure.cmo isabelle.cmo globals.cmo gen.cmo debug.cmo \
     cvclite.cmo cvc3.cmo cpure.cmo cprinter.cmo coq.cmo

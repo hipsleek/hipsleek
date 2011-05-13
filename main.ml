@@ -2,6 +2,7 @@
 (******************************************)
 (* command line processing                *)
 (******************************************)
+module M = Lexer.Make(Token.Token)
 
 let to_java = ref false
 
@@ -18,15 +19,14 @@ let process_cmd_line () = Arg.parse Scriptarguments.hip_arguments set_source_fil
 
 let parse_file_full file_name = 
   let org_in_chnl = open_in file_name in
-  let input = Lexing.from_channel org_in_chnl in
     try
     (*let ptime1 = Unix.times () in
 	  let t1 = ptime1.Unix.tms_utime +. ptime1.Unix.tms_cutime in
      *)
-		print_string "Parsing...\n"; flush stdout;
-        let _ = Gen.Profiling.push_time "Parsing" in
-        Globals.input_file_name := file_name;
-		let prog = Iparser.program (Ilexer.tokenizer file_name) input in
+      print_string "Parsing...\n"; flush stdout;
+      let _ = Gen.Profiling.push_time "Parsing" in
+      Globals.input_file_name:= file_name;
+      let prog = Parser.parse_hip file_name (Stream.of_channel org_in_chnl) in
 		  close_in org_in_chnl;
          let _ = Gen.Profiling.pop_time "Parsing" in
     (*		  let ptime2 = Unix.times () in
@@ -34,7 +34,10 @@ let parse_file_full file_name =
 			print_string ("done in " ^ (string_of_float (t2 -. t1)) ^ " second(s)\n"); *)
 			prog 
     with
-		End_of_file -> exit 0	  
+		End_of_file -> exit 0	 
+    | M.Loc.Exc_located (l,t)-> 
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n --error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      raise t) 
 
 let process_source_full source =
   print_string ("\nProcessing file \"" ^ source ^ "\"\n"); flush stdout;
@@ -173,6 +176,9 @@ let main1 () =
     let _ = Gen.Profiling.pop_time "Overall" in
       (* Tpdispatcher.print_stats (); *)
       ()
+
+(* let main1 () = *)
+(*   Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()

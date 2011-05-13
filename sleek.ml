@@ -49,6 +49,7 @@ let inter = Scriptarguments.inter
 
 let prompt = ref "SLEEK> "
 let terminator = '.'
+module M = Lexer.Make(Token.Token)
 
 let parse_file (parse) (source_file : string) =
 	try
@@ -68,6 +69,10 @@ let parse_file (parse) (source_file : string) =
 	with
 	  | End_of_file ->
 		  print_string ("\n")
+    | M.Loc.Exc_located (l,t)-> 
+      (print_string ((Camlp4.PreCast.Loc.to_string l)^"\n error: "^(Printexc.to_string t)^"\n at:"^(Printexc.get_backtrace ()));
+      raise t)
+    
 
 
 let main () = 
@@ -77,7 +82,9 @@ let main () =
                 I.prog_view_decls = [];
                 I.prog_rel_decls = [];
                 I.prog_proc_decls = [];
-                I.prog_coercion_decls = [] } in
+                I.prog_coercion_decls = [];
+                I.prog_hopred_decls = [];
+  } in
   let _ = Iast.build_exc_hierarchy true iprog in
   let _ = Gen.ExcNumbering.c_h () in
   let quit = ref false in
@@ -133,6 +140,9 @@ let main () =
         let _ = List.map (parse_file NF.list_parse) !source_files in ()
     with
       | End_of_file -> print_string ("\n")
+
+(* let main () =  *)
+(*   Gen.Debug.loop_1 "main" (fun () -> "?") (fun () -> "?") main () *)
 
 let _ = 
   wrap_exists_implicit_explicit := false ;

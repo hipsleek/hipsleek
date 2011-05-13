@@ -6,29 +6,29 @@ data node [b]{
 	node[b] next;	
 }
 
-pred ll_shape[t,b]<a:t>[Base,Rec,Inv]= Base(a,self)
-  or self::node[b]<v,q>* q::ll_shape(aq) & Rec(a,aq,v,self,q)
+ho_pred ll_shape[t,b]<a:t>[Base,Rec,Inv] == Base(a,self)
+  or self::node[b]<v,q> * q::ll_shape<aq> * Rec(a,aq,v,self,q)
   inv Inv(a);
 
-pred ll_B [t,b]<a:t>[Base,Rec,Inv] refines ll_shape[t,b]<a>
+ho_pred ll_B [t,b]<a:t>[Base,Rec,Inv] refines ll_shape[t,b]<a>
   with {Base(a,self) = self = null }
   
-pred llS[int,b]<n:int>[Base,Rec,Inv] extends ll_B[int,b]<n>
+ho_pred llS[int,b]<n:int>[Base,Rec,Inv] extends ll_B[int,b]<n>
   with
     {
       Base(n,self) = a=0
       Rec (n,nq,v,self,q) = n=nq+1
     }
        
-pred bndl [(b,b),b]<(a1,a2):(b,b)> [Base,Rec,Inv] extends ll_B[(b,b),b]<(a1,a2)>
+ho_pred bndl [(b,b),b]<(a1,a2):(b,b)> [Base,Rec,Inv] extends ll_B[(b,b),b]<(a1,a2)>
   with
    {
      Base (a1,a2,self) =a1<=a2
      Rec (a1,a2,aq1,aq2,v,self,q) = a1=aq1 & a2=aq2 & a1<=q<=a2
    }
 
-ll<n> finalizes (ll_B[int]<a> split llS[int]<n>)
-pred bndl<n,sm,bg> finalizes (bndl[int]<sm,bg> split ll_B[int]<n>)
+ll<n> == finalizes ll_B[int]<a> split llS[int]<n>;
+bndl<n,sm,bg> == finalizes bndl[int]<sm,bg> split ll_B[int]<n>;
 
 
 
