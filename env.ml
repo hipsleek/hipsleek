@@ -25,14 +25,14 @@ and ident_info =
 
 and var_info = { var_name : ident;
 				 var_alpha : ident;
-				 var_type : I.typ }
+				 var_type : typ }
 
 and const_info = { const_name : ident;
-				   const_type : I.typ;
+				   const_type : typ;
 				   const_value : C.exp } (* this must be a constant value *)
 
 and enum_info = { enum_name : ident; (* name of the enum constant *)
-				  enum_type : I.typ; (* name of the enum type is used in EType *)
+				  enum_type : typ; (* name of the enum type is used in EType *)
 				  enum_value : int } (* enum_name's numeric value *)
 
 
@@ -146,7 +146,7 @@ and name_of_info (i : ident_info) : I.typed_ident = match i with
   | ConstInfo ci -> (ci.const_type, ci.const_name)
   | EnumInfo ei -> (ei.enum_type, ei.enum_name)
 
-and replace_type_info (i : ident_info) (t : I.typ) = match i with
+and replace_type_info (i : ident_info) (t : typ) = match i with
   | VarInfo vi -> VarInfo {vi with var_type = t}
   | ConstInfo ci -> ConstInfo {ci with const_type = t}
   | EnumInfo ei -> EnumInfo {ei with enum_type = t}
@@ -167,7 +167,7 @@ and remove (v : ident) =
 	helper !scopes
 *)
 
-and replace_type (v : ident) (t : I.typ) =
+and replace_type (v : ident) (t : typ) =
   let rec helper scopes = match scopes with
 	| top :: rest -> begin
 		try 

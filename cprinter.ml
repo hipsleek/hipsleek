@@ -25,16 +25,17 @@ let string_of_prim_type = function
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | Bag           -> "multiset"
+  | BagT t        -> "bag("^(string_of_prim_type t)^")"
+  | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List          -> "list"
 ;;
 
 (* pretty printing for types *)
 let rec string_of_typ = function 
    (* may be based on types used !! *)
-  | P.Prim t -> string_of_prim_type t 
-  | P.OType ot -> if ((String.compare ot "") ==0) then "ptr" else ot
-  | P.Array et -> (string_of_typ et) ^ "[]" (* An Hoa *)
+  | Prim t -> string_of_prim_type t 
+  | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
 ;;
 
 (** the formatter that fmt- commands will use *)

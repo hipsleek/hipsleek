@@ -12,7 +12,7 @@ module P = Cpure
 module MP = Mcpure
 module Err = Error
 
-type typed_ident = (P.typ * ident)
+type typed_ident = (typ * ident)
 
 
 
@@ -88,7 +88,7 @@ and rel_decl = {
 and proc_decl = { 
     proc_name : ident;
     proc_args : typed_ident list;
-    proc_return : P.typ;
+				  proc_return : typ;
     proc_static_specs : Cformula.struc_formula;
     proc_static_specs_with_pre : Cformula.struc_formula;
     proc_dynamic_specs : Cformula.struc_formula;
@@ -159,7 +159,7 @@ and exp_bconst = {
     exp_bconst_pos : loc }
 
 and exp_bind = { 
-    exp_bind_type : P.typ; (* the type of the entire bind construct, i.e. the type of the body *)
+    exp_bind_type : typ; (* the type of the entire bind construct, i.e. the type of the body *)
     exp_bind_bound_var : typed_ident;
     exp_bind_fields : typed_ident list;
     exp_bind_body : exp;
@@ -167,19 +167,17 @@ and exp_bind = {
     exp_bind_path_id : control_path_id;
     exp_bind_pos : loc }
 
-and exp_block = { 
-    exp_block_type : P.typ;
+and exp_block = { exp_block_type : typ;
     exp_block_body : exp;
     exp_block_local_vars : typed_ident list;
     exp_block_pos : loc }
 
 and exp_cast = { 
-    exp_cast_target_type : P.typ;
+    exp_cast_target_type : typ;
     exp_cast_body : exp;
     exp_cast_pos : loc }
 
-and exp_cond = { 
-    exp_cond_type : P.typ;
+and exp_cond = { exp_cond_type : typ;
     exp_cond_condition : ident;
     exp_cond_then_arm : exp;
     exp_cond_else_arm : exp;
@@ -195,10 +193,9 @@ and exp_fconst = {
     exp_fconst_pos : loc }
 	
 (* instance call *)
-and exp_icall = { 
-    exp_icall_type : P.typ;
+and exp_icall = { exp_icall_type : typ;
     exp_icall_receiver : ident;
-    exp_icall_receiver_type : P.typ;
+		  exp_icall_receiver_type : typ;
     exp_icall_method_name : ident;
     exp_icall_arguments : ident list;
     exp_icall_is_rec : bool; (* set for each mutual-recursive call *)
@@ -216,29 +213,26 @@ and exp_new = {
     exp_new_arguments : typed_ident list;
     exp_new_pos : loc }
 
-and exp_return = { 
-    exp_return_type : P.typ;
+and exp_return = { exp_return_type : typ;
     exp_return_val : ident option;
     exp_return_pos : loc }
 
 (* static call *)
-and exp_scall = { 
-    exp_scall_type : P.typ;
-    exp_scall_method_name : ident;
+and exp_scall = { exp_scall_type : typ;
+   exp_scall_method_name : ident;
     exp_scall_arguments : ident list;
     exp_scall_is_rec : bool; (* set for each mutual-recursive call *)
     (*exp_scall_visible_names : P.spec_var list;*) (* list of visible names at location the call is made *)
     exp_scall_path_id : control_path_id;
     exp_scall_pos : loc }
 
-and exp_seq = { 
-    exp_seq_type : P.typ;
+and exp_seq = { exp_seq_type : typ;
     exp_seq_exp1 : exp;
     exp_seq_exp2 : exp;
     exp_seq_pos : loc }
     
 and exp_sharp = {
-    exp_sharp_type : P.typ;
+  exp_sharp_type : typ;
     exp_sharp_flow_type :sharp_flow;(*the new flow*)
     exp_sharp_val :sharp_val;(*returned value*)
     exp_sharp_unpack : bool;(*true if it must get the new flow from the second element of the current flow pair*)
@@ -253,29 +247,24 @@ and exp_catch = {
     exp_catch_body : exp;			
     exp_catch_pos : loc }
     
-and exp_try = { 
-    exp_try_type : P.typ;
-    exp_try_body : exp;
+and exp_try = { exp_try_type : typ;
+   exp_try_body : exp;
     exp_try_path_id : control_path_id_strict;
     exp_catch_clause : exp ;
     exp_try_pos : loc }
 
-and exp_this = { 
-    exp_this_type : P.typ;
+and exp_this = { exp_this_type : typ;
     exp_this_pos : loc }
 
-and exp_var = { 
-    exp_var_type : P.typ;
+and exp_var = { exp_var_type : typ;
     exp_var_name : ident;
     exp_var_pos : loc }
 
 (* An Hoa : Empty array - only for initialization purpose *)		
-and exp_emparray = { 
-    exp_emparray_type : P.typ;
+and exp_emparray = { exp_emparray_type : typ;
     exp_emparray_pos : loc }
 
-and exp_var_decl = { 
-    exp_var_decl_type : P.typ;
+and exp_var_decl = { exp_var_decl_type : typ;
     exp_var_decl_name : ident;
     exp_var_decl_pos : loc }
 
@@ -303,7 +292,7 @@ and exp_java = {
     exp_java_code : string;
     exp_java_pos : loc}
 and exp_label = {
-    exp_label_type : P.typ;
+  exp_label_type : typ;
     exp_label_path_id : (control_path_id * path_label);
     exp_label_exp: exp;}
     
@@ -552,17 +541,17 @@ let add_distributive c = distributive_views := c :: !distributive_views
 
 (* type constants *)
 
-let void_type = P.Prim Void
+let void_type = Prim Void
 
-let int_type = P.Prim Int
+let int_type = Prim Int
 
-let float_type = P.Prim Float
+let float_type = Prim Float
 
-let bool_type = P.Prim Bool
+let bool_type = Prim Bool
 
-let bag_type = P.Prim Bag
+let bag_type = Prim (BagT Int)
 
-let list_type = P.Prim List
+let list_type = Prim List
 
 let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
 
@@ -637,9 +626,9 @@ let rec type_of_exp (e : exp) = match e with
   | IConst _ -> Some int_type
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
-		  exp_new_pos = _}) -> Some (P.OType c) (*---- ok? *)
-  | Null _ -> Some (P.OType "")
-	| EmptyArray b -> Some (P.Array b.exp_emparray_type) (* An Hoa *)
+		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
+  | Null _ -> Some (Named "")
+	| EmptyArray b -> Some (Array (b.exp_emparray_type, None)) (* An Hoa *)
   | Print _ -> None
  (* | Return ({exp_return_type = t; 
 			 exp_return_val = _; 
@@ -663,17 +652,18 @@ and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
   | _ -> false
 
-let rec name_of_type (t : P.typ) = match t with
-  | P.Prim Int -> "int"
-  | P.Prim Bool -> "bool"
-  | P.Prim Void -> "void"
-  | P.Prim Float -> "float"
-  | P.Prim Bag -> "bag"
-  | P.Prim List -> "list"
-  | P.OType c -> c
-	| P.Array et -> (name_of_type et) ^ "[]" (* An hoa *) 
+let rec name_of_type (t : typ) = match t with
+  | Prim Int -> "int"
+  | Prim Bool -> "bool"
+  | Prim Void -> "void"
+  | Prim Float -> "float"
+  | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")"
+  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | Prim List -> "list"
+  | Named c -> c
+  | Array (et, _) -> (name_of_type et) ^ "[]" (* An hoa *) 
 
-let mingle_name (m : ident) (targs : P.typ list) = 
+let mingle_name (m : ident) (targs : typ list) = 
   let param_tnames = String.concat "~" (List.map name_of_type targs) in
 	m ^ "$" ^ param_tnames
 
@@ -704,7 +694,7 @@ let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list
   let vdef = look_up_view_def no_pos prog.prog_view_decls c in
   let ba = vdef.view_baga in
   (*let _ = print_endline (" look_up_view_baga: baga= " ^ (!print_svl ba)) in*)
-  let from_svs = P.SpecVar (P.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+  let from_svs = P.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
   let to_svs = root :: args in
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
@@ -969,7 +959,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  let fn1 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
 		(*let _ = (print_string ("\n[cast.ml, line 556]: fresh name = " ^ fn1 ^ "!!!!!!!!!!!\n\n")) in*)
 		(*09.05.2000 ---*)
-	  let sup_ext_var = P.SpecVar (P.OType ext_name, fn1, Unprimed) in
+	  let sup_ext_var = P.SpecVar (Named ext_name, fn1, Unprimed) in
 	  let sup_h = F.DataNode ({F.h_formula_data_node = subnode.F.h_formula_data_node;
 							   F.h_formula_data_name = cdef1.data_name;
 							   F.h_formula_data_imm = subnode.F.h_formula_data_imm;
@@ -1000,7 +990,7 @@ let rec generate_extensions (subnode : F.h_formula_data) cdefs0 (pos:loc) : F.h_
 	  		let fn2 = fresh_var_name ext_name pos.start_pos.Lexing.pos_lnum in
 				(*let _ = (print_string ("\n[cast.ml, line 579]: fresh name = " ^ fn2 ^ "!!!!!!!!!!!\n\n")) in*)
 				(*09.05.2000 ---*)
-				let ext_link_p = P.SpecVar (P.OType ext_link_name, fn2, Unprimed) in
+				let ext_link_p = P.SpecVar (Named ext_link_name, fn2, Unprimed) in
 				let ext_h = F.DataNode ({F.h_formula_data_node = top_p;
 										 F.h_formula_data_name = ext_name;
 										 F.h_formula_data_imm = subnode.F.h_formula_data_imm;
@@ -1044,11 +1034,11 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 			| Not_found -> failwith ("find_classes: " ^ c1 ^ " and " ^ c2 ^ " are not related!")
 
 
-let rec sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
-  | P.Prim _ -> t1 = t2
-  | P.OType c1 -> begin match t2 with
-	  | P.Prim _ | P.Array _ -> false (* An Hoa add P.Array _ *)
-	  | P.OType c2 ->
+let rec sub_type (t1 : typ) (t2 : typ) = match t1 with
+  | Prim _ -> t1 = t2
+  | Named c1 -> begin match t2 with
+	  | Prim _ | Array _ -> false (* An Hoa add P.Array _ *)
+	  | Named c2 ->
 		  if c1 = c2 then true
 		  else if c1 = "" then true (* t1 is null in this case *)
 		  else 
@@ -1065,9 +1055,9 @@ let rec sub_type (t1 : P.typ) (t2 : P.typ) = match t1 with
 				| Not_found -> false
 			end
 	(* An Hoa *)
-	| P.Array et1 -> begin
+	| Array (et1, _) -> begin
 		match t2 with
-			| P.Array et2 -> (sub_type et1 et2)
+			| Array (et2, _) -> (sub_type et1 et2)
 			| _ -> false
 		end
 
@@ -1153,7 +1143,7 @@ let get_catch_of_exp e = match e with
   
 let rec check_proper_return cret_type exc_list f = 
 	let overlap_flow_type fl res_t = match res_t with 
-		| Cpure.OType ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
+		| Named ot -> F.overlapping fl (Gen.ExcNumbering.get_hash_of_exc ot)
 		| _ -> false in
 	let rec check_proper_return_f f0 = match f0 with
 	| F.Base b->

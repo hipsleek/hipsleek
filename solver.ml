@@ -156,7 +156,7 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*CP.formula option)= m
           let need_prunning = Gen.BList.difference_eq (=) l1 l2 in
           let v_def = look_up_view_def no_pos prog.prog_view_decls vn2.h_formula_view_name in
           let to_vars = vn2.h_formula_view_node:: vn2.h_formula_view_arguments in
-          let self_v = CP.SpecVar (CP.OType v_def.view_data_name, self, if (CP.is_primed vn2.h_formula_view_node) then Primed else Unprimed) in
+          let self_v = CP.SpecVar (Named v_def.view_data_name, self, if (CP.is_primed vn2.h_formula_view_node) then Primed else Unprimed) in
           let from_vars = self_v::v_def.view_vars in
           let subst_vars = List.combine from_vars to_vars in
           let new_cond = List.map (fun (c1,c2)-> (CP.b_subst subst_vars c1,c2)) v_def.view_prune_conditions in         
@@ -327,7 +327,7 @@ and h_formula_2_mem (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_for
         h_formula_view_pos = pos}) ->
             let ba = look_up_view_baga prog c p vs in
             let vdef = look_up_view_def pos prog.prog_view_decls c in
-            let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+            let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
             let to_svs = p :: vs in
  	        let new_mset = 
               (match lbl_lst with
@@ -467,7 +467,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
                       | -1 -> (MCP.mkMTrue no_pos, [])
                       | 0 -> vdef.view_user_inv
                       | _ -> vdef.view_x_formula in
-                    let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+                    let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                     let to_svs = p :: vs in
                     let (f, b) = vinv in
                     let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
@@ -601,7 +601,7 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
             | None -> look_up_view_baga prog c p vs
             | Some ls ->  
                   let vdef = look_up_view_def pos prog.prog_view_decls c in
-                  let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+                let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                   let to_svs = p :: vs in
                   lookup_view_baga_with_subs ls vdef from_svs to_svs )
     | Star ({ h_formula_star_h1 = h1;h_formula_star_h2 = h2})
@@ -625,7 +625,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
           (* let _ = print_endline ("xpure_heap_symbolic_i: ViewNode") in*)
           let ba = look_up_view_baga prog c p vs in
           let vdef = look_up_view_def pos prog.prog_view_decls c in
-          let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+          let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
           let to_svs = p :: vs in
           (match lbl_lst with
             | None -> 
@@ -717,7 +717,7 @@ and xpure_consumed_pre_heap (prog : prog_decl) (h0 : h_formula) : (CP.formula * 
         let vdef = look_up_view_def pos prog.prog_view_decls c in
         let vinv, vinv_b = vdef.view_user_inv in (* views have been ordered such that this dependency is respected *)
         let vinv = MCP.fold_mem_lst (CP.mkTrue no_pos) false true vinv in
-        let from_svs = CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
+        let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
         let to_svs = p :: vs in
         let tmp1 = CP.subst_avoid_capture from_svs to_svs vinv in
         let tmp1b = List.map (fun (l,f) -> (l, CP.subst_avoid_capture from_svs to_svs f)) vinv_b in
@@ -885,7 +885,7 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_for
                   (new_hp, new_mem, true))           
     | ViewNode v ->   
           let v_def = look_up_view_def v.h_formula_view_pos prog.prog_view_decls v.h_formula_view_name in
-          let fr_vars = (CP.SpecVar (CP.OType v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
+          let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
           let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
           let zip = List.combine fr_vars to_vars in
           let (rem_br, prun_cond,first_prune) =  
@@ -1391,7 +1391,7 @@ and unfold_heap prog (f : h_formula) (aset : CP.spec_var list) (v : CP.spec_var)
 		            (* propagate the immutability annotation inside the definition *)
 	                let renamed_view_formula = Cformula.propagate_imm_formula renamed_view_formula imm in
 
-	                let fr_vars = (CP.SpecVar (CP.OType vdef.view_data_name, self, Unprimed))
+	                let fr_vars = (CP.SpecVar (Named vdef.view_data_name, self, Unprimed))
 	                  :: vdef.view_vars in
 	                let to_vars = v :: vs in
 	                let res_form = subst_avoid_capture fr_vars to_vars renamed_view_formula in
@@ -1742,7 +1742,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
         in 
 	    (***)
 
-        let fr_vars = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed)):: vdef.view_vars in
+        let fr_vars = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)):: vdef.view_vars in
         let to_vars = p :: vs in
         let view_form = subst_struc_avoid_capture fr_vars to_vars renamed_view_formula in
         let view_form = add_struc_origins view_form (get_view_origins view) in
@@ -4287,7 +4287,7 @@ and imply_formula_no_memo new_ante new_conseq imp_no memset =
         match vd.view_raw_base_case with 
 	    | None  -> None 
 	    | Some s ->
-	    let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+	        let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
 	    let to_vars = p2 :: v2 in
 	    let to_rhs = subst_avoid_capture fr_vars to_vars s in
 	    let rhs = normalize_combine to_rhs rhs pos in
@@ -4321,7 +4321,7 @@ and imply_formula_no_memo new_ante new_conseq imp_no memset =
         | Some (bc1,(base1,branches1)) -> 
 	    begin
       (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
-        let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+              let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
         let to_vars = p1 :: v1 in
       (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
         let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
@@ -4403,7 +4403,7 @@ and do_base_case_unfold_only_x prog ante conseq estate lhs_node rhs_node is_fold
       | Some (bc1,(base1,branches1)) -> 
 	        begin
               (*let _ = print_string ("ante: "^(Cprinter.string_of_formula ante)^"\n conseq "^(Cprinter.string_of_formula conseq)^"\n") in*)
-              let fr_vars = (CP.SpecVar (CP.OType vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
+              let fr_vars = (CP.SpecVar (Named vd.Cast.view_data_name, self, Unprimed)) :: vd.view_vars in			
               let to_vars = p1 :: v1 in
               (*let _ = print_string ("from "^(Cprinter.string_of_spec_var_list fr_vars)^"\n to "^(Cprinter.string_of_spec_var_list to_vars)^"\n") in*)
               let base = MCP.subst_avoid_capture_memo fr_vars to_vars base1 in
@@ -4564,7 +4564,7 @@ and existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2
   try
 	let vdef = look_up_view_def_raw prog.Cast.prog_view_decls c2 in
 	let subs_vars = List.combine vdef.view_vars v2 in
-	let sf = (CP.SpecVar (CP.OType vdef.Cast.view_data_name, self, Unprimed)) in
+	let sf = (CP.SpecVar (Named vdef.Cast.view_data_name, self, Unprimed)) in
 	let subs_vars = (sf,var_to_fold)::subs_vars in
 	((List.map (fun (c1,c2)-> 
 		if (List.exists (comparator c1) vdef.view_case_vars) then
@@ -4618,6 +4618,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
   let unfold_num = (get_view_unfold_num ln2) in
   let estate = estate_of_context fold_ctx pos2 in
   let (new_v2,use_case) = existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p in
+
   let view_to_fold = ViewNode ({  
 	  h_formula_view_node = List.hd new_v2 (*var_to_fold*);
 	  h_formula_view_name = c2;

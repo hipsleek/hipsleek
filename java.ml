@@ -75,7 +75,7 @@ and java_of_data_defs (ddefs : data_decl list) : string =
 and java_of_partially_bound_params (pbvars : CP.spec_var list) : unit = match pbvars with
   | (CP.SpecVar (t, v, p)) :: rest -> begin
 	  match t with
-		| CP.OType c ->
+		| Named c ->
 			Buffer.add_string java_code ("\n\n");
 			(* class header and fields *)
 			Buffer.add_string java_code ("final class " ^ c  ^ "Aug {\n");

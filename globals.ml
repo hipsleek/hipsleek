@@ -25,12 +25,19 @@ and primed =
   | Unprimed
 
 and prim_type = 
+  | TVar of int
   | Bool
   | Float
   | Int
   | Void
-  | Bag
+  | BagT of prim_type
   | List
+
+(* TODO : move typ here in future *)
+type typ =
+  | Prim of prim_type
+  | Named of ident (* named type, could be enumerated or object *)
+  | Array of (typ * int option) (* base type and optional dimension *)
 
 (*
   Data types for code gen
@@ -40,12 +47,13 @@ type mode =
   | ModeIn
   | ModeOut
 
-let string_of_prim_type = function 
+let rec string_of_prim_type = function 
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | Bag           -> "multiset"
+  | TVar i       -> "TVar["^(string_of_int i)^"]"
+  | BagT t        -> "bag("^(string_of_prim_type t)^")"
   | List          -> "list"
 
 let rec s_i_list l c = match l with 

@@ -31,12 +31,13 @@ let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdo
 
 
 (* pretty printing for primitive types *)
-let mona_of_prim_type = function
+let rec mona_of_prim_type = function
   | Bool          -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | Bag		  -> "int set"
+  | BagT i		  -> "("^(mona_of_prim_type i)^") set"
+  | TVar i        -> "TVar["^(string_of_int i)^"]"
   | List          -> "list"	(* lists are not supported *)
 
 
@@ -114,10 +115,10 @@ and mona_of_exp_break e0 =
   | CP.Subtract( CP.IConst(i1, _), CP.IConst(i2, _), l3) ->
       begin
         let tmp = fresh_var_name "int" 0 in
-		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
-		additional_vars := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
-		additional_vars_ := CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
-        CP.Var(CP.SpecVar(CP.Prim Int, tmp, Globals.Unprimed), l3);
+		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
+		additional_vars := CP.SpecVar(Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
+		additional_vars_ := CP.SpecVar(Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
+        CP.Var(CP.SpecVar(Prim Int, tmp, Globals.Unprimed), l3);
       end
   | CP.Add (a1, a2, l1) -> CP.Add((mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* Removed an outer recursive call to mona_of_exp_break *)
   | CP.Subtract(a1, a2, l1) -> CP.Subtract( (mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* As above *)
@@ -193,19 +194,19 @@ let hd list = match list with
 
 let string_of_type (t) =
   match t with
-  | CP.Prim Int -> "int"
-  | CP.Prim Bool -> "bool"
-  | CP.Prim Void -> "void"
-  | CP.OType c -> "otype " ^ c
+  | Prim Int -> "int"
+  | Prim Bool -> "bool"
+  | Prim Void -> "void"
+  | Named c -> "otype " ^ c
   | _ -> "smth else"
 
 
-let equal_types (t1:CP.typ) (t2:CP.typ) : bool =
+let equal_types (t1: typ) (t2: typ) : bool =
       match t1 with
-      | CP.OType _ ->
+      | Named  _ ->
 	  begin
 	    match t2 with
-	    | CP.OType _ -> true
+	    | Named _ -> true
 	    | _ -> false
 	  end
       | _ -> (t1 = t2)
@@ -449,8 +450,8 @@ and mona_of_exp e0 f =
 and mona_of_exp_x e0 f = 
   let rec helper e0 =
     match e0 with
-        (*| CP.Null _ -> " 0 "*)
-      | CP.Null _ -> "pconst(0)"
+        | CP.Null _ -> " 0 "
+      (* | CP.Null _ -> "pconst(0)" *)
       | CP.Var (sv, _) -> mona_of_spec_var sv
       | CP.IConst (i, _) -> " " ^ (string_of_int i) ^ " "
             (*  | CP.IConst (i, _) -> "pconst(" ^ (string_of_int i) ^ ")"*)
@@ -531,7 +532,12 @@ and mona_of_formula_exp_list l f = match l with
   | h::t       -> (mona_of_exp h f) ^ ", " ^ (mona_of_formula_exp_list t f)
 
 (* pretty printing for boolean vars *)
-and mona_of_b_formula b f vs =
+and mona_of_b_formula b f vs = 
+  Gen.Debug.no_1 "mona_of_b_formula" Cprinter.string_of_b_formula (fun x -> x)
+      (fun _ -> mona_of_b_formula_x b f vs) b
+
+(* pretty printing for boolean vars *)
+and mona_of_b_formula_x b f vs =
   let second_order_composite a1 a2 a3 f = 
     let (a1ex, a1name, a1str) = (mona_of_exp_secondorder a1 f) in
     let (a2ex, a2name, a2str) = (mona_of_exp_secondorder a2 f) in
@@ -873,7 +879,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter") then begin
+  if(check_prover_existence "mona_inter0")then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end

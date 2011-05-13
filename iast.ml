@@ -11,12 +11,7 @@ module P = Ipure
 module Err = Error
 module CP = Cpure
 
-type typ =
-  | Prim of prim_type
-  | Named of ident (* named type, could be enumerated or object *)
-  | Array of (typ * int option) (* base type and optional dimension *)
-	  
-and typed_ident = (typ * ident)
+type typed_ident = (typ * ident)
 
 
 type prog_decl = { mutable prog_data_decls : data_decl list;
@@ -46,7 +41,7 @@ and view_decl = { view_name : ident;
 		  view_vars : ident list;
 		  view_labels : branch_label list;
 		  view_modes : mode list;
-		  mutable view_typed_vars : (CP.typ * ident) list;
+		  mutable view_typed_vars : (typ * ident) list;
 		  view_invariant : (P.formula * (branch_label * P.formula) list);
 		  view_formula : Iformula.struc_formula;
 		  mutable view_pt_by_self : ident list; (* list of views pointed by self *)
@@ -65,8 +60,8 @@ and rel_decl = { rel_name : ident;
 and hopred_decl = { hopred_name : ident;
           hopred_mode : branch_label;
           hopred_mode_headers : ident list;
-          hopred_typed_vars: (CP.typ * ident) list;
-          hopred_typed_args : (CP.typ * ident) list;
+          hopred_typed_vars: (typ * ident) list;
+          hopred_typed_args : (typ * ident) list;
           hopred_fct_args : ident list;
           hopred_shape    : Iformula.struc_formula list;
           hopred_invariant :(P.formula * (branch_label * P.formula) list)
@@ -437,12 +432,13 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
 
 let set_proc_data_decl (p : proc_decl) (d : data_decl) = p.proc_data_decl <- Some d
 
-let name_of_type (t : typ) = match t with
+let rec name_of_type (t : typ) = match t with
   | Prim Int -> "int"
   | Prim Bool -> "bool"
   | Prim Void -> "void"
   | Prim Float -> "float"
-  | Prim Bag -> "bag"
+  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | Prim (BagT t) -> "bag("^(name_of_type (Prim t)) ^")"
   | Prim List -> "list"
   | Named c -> c
   | Array _ -> "Array"
