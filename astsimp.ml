@@ -222,7 +222,7 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
 
 (* let gen_primitives (prog : I.prog_decl) : I.proc_decl list = *)
 (*   let pr_no x = "?" in *)
-(*   Gen.Debug.ho_1 "gen_primitives" pr_no pr_no gen_primitives prog *)
+(*   Gen.Debug.no_1 "gen_primitives" pr_no pr_no gen_primitives prog *)
   
 let op_map = Hashtbl.create 19
   
@@ -571,7 +571,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
-  Gen.Debug.ho_1 "order_views" pr pr order_views  view_decls0
+  Gen.Debug.no_1 "order_views" pr pr order_views  view_decls0
   
 let loop_procs : (C.proc_decl list) ref = ref []
    
@@ -1005,7 +1005,7 @@ let rec  trans_prog (prog3 : I.prog_decl) : C.prog_decl =
   else   failwith "Error detected"
 
 (* and trans_prog (prog : I.prog_decl) : C.prog_decl = *)
-(*   Gen.Debug.loop_1 "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
+(*   Gen.Debug.loop_1_no "trans_prog" (fun _ -> "?") (fun _ -> "?") trans_prog_x prog *)
 
 and add_pre_to_cprog cprog = 
   {cprog with C.prog_proc_decls = List.map (fun c-> 
@@ -1711,7 +1711,7 @@ and check_valid_flows f =
   List.iter helper f
       
 (* and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl = *)
-(*   Gen.Debug.loop_1 "trans_proc" (fun _ -> "?") (fun _ -> "?") (trans_proc_x prog) proc *)
+(*   Gen.Debug.loop_1_no "trans_proc" (fun _ -> "?") (fun _ -> "?") (trans_proc_x prog) proc *)
       
 and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
   (*let _ =print_string (Iprinter.string_of_proc_decl proc) in*)
@@ -1810,7 +1810,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -3417,7 +3417,7 @@ and add_pre_debug prog f =
 and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+  Gen.Debug.no_eff_5 "trans_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
       (fun _ _ _ _ _ -> trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
 
@@ -4633,7 +4633,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
         (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
     let pr1 = Iprinter.string_of_h_formula in
     let pr2 (_,_,h,(p,_)) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
-    Gen.Debug.ho_1 "linearize_heap" pr1 pr2 
+    Gen.Debug.no_1 "linearize_heap" pr1 pr2 
         (fun _ -> linearize_heap used_names f) f  in
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
