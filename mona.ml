@@ -879,7 +879,7 @@ let rec check_prover_existence prover_cmd_str: bool =
 
 let start () = 
   last_test_number := !test_number;
-  if(check_prover_existence "mona_inter0")then begin
+  if(check_prover_existence "mona_inter")then begin
       let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona_inter", [|"mona_inter"; "-v";|]) set_process prelude in
       is_mona_running := true
   end

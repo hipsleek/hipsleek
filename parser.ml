@@ -1577,14 +1577,14 @@ END;;
 
 let parse_sleek n s = SHGram.parse sprog (PreCast.Loc.mk n) s
 (* let parse_sleek n s =  *)
-(*   Gen.Debug.loop_1 "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n *)
+(*   Gen.Debug.loop_1_no "parse_sleek" (fun x -> x) (fun _ -> "?") (fun n -> parse_sleek n s) n *)
 let parse_hip n s =  SHGram.parse hprog (PreCast.Loc.mk n) s
 (* let parse_hip n s =   *)
-(*   Gen.Debug.loop_1 "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n *)
+(*   Gen.Debug.loop_1_no "parse_hip" (fun x -> x) (fun _ -> "?") (fun n -> parse_hip n s) n *)
 let parse_sleek_int n s = SHGram.parse_string sprog_int (PreCast.Loc.mk n) s
 let parse_hip_string n s = SHGram.parse_string hprog (PreCast.Loc.mk n) s
 (* let parse_hip_string n s = 
   let pr x = x in
-  let pr_no x = "?" in Gen.Debug.ho_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
+  let pr_no x = "?" in Gen.Debug.no_2 "parse_hip_string" pr pr pr_no parse_hip_string n s *)
 
  

@@ -222,7 +222,7 @@ let gen_primitives (prog : I.prog_decl) : I.proc_decl list =
 
 (* let gen_primitives (prog : I.prog_decl) : I.proc_decl list = *)
 (*   let pr_no x = "?" in *)
-(*   Gen.Debug.ho_1 "gen_primitives" pr_no pr_no gen_primitives prog *)
+(*   Gen.Debug.no_1 "gen_primitives" pr_no pr_no gen_primitives prog *)
   
 let op_map = Hashtbl.create 19
   
@@ -571,7 +571,7 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
-  Gen.Debug.ho_1 "order_views" pr pr order_views  view_decls0
+  Gen.Debug.no_1 "order_views" pr pr order_views  view_decls0
   
 let loop_procs : (C.proc_decl list) ref = ref []
    
@@ -1117,7 +1117,7 @@ and fill_view_param_types (prog : I.prog_decl) (vdef : I.view_decl) =
 and trans_view (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let pr = Iprinter.string_of_view_decl in
   let pr_r = Cprinter.string_of_view_decl in
-  Gen.Debug.ho_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
+  Gen.Debug.no_1 "trans_view" pr pr_r  (fun _ -> trans_view_x prog vdef) vdef
 
 and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let stab = H.create 103 in
@@ -1332,7 +1332,7 @@ and flatten_base_case  (f:Cformula.struc_formula)(self:Cpure.spec_var)
   let pr3 x = match x with
     | None -> "none"
     | Some (f,_) -> Cprinter.string_of_pure_formula f in
-  Gen.Debug.ho_2 "flatten_base_case" pr1 pr2 pr3 flatten_base_case_x f self
+  Gen.Debug.no_2 "flatten_base_case" pr1 pr2 pr3 flatten_base_case_x f self
 
 and flatten_base_case_x  (f:Cformula.struc_formula)(self:Cpure.spec_var)
       :(Cpure.formula * (MCP.mix_formula*(string*Cpure.formula)list)) option = 
@@ -1402,7 +1402,7 @@ and compute_base_case (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_form
   let pr2 x= match x with
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f in
-  Gen.Debug.ho_1 "compute_base_case" pr pr2 compute_base_case_x cf
+  Gen.Debug.no_1 "compute_base_case" pr pr2 compute_base_case_x cf
 
 and compute_base_case_x (*recs*) (cf:Cformula.struc_formula) : Cformula.struc_formula option = 
   (*let isRec (d:Cformula.formula): bool = 
@@ -1444,7 +1444,7 @@ and compute_base_case prog cf vars =
   let pr1 x = Cprinter.string_of_list_formula (fst (List.split x)) in
   let pr2 = Cprinter.string_of_spec_var_list in
   let pr3 _ = "?" in
-  Gen.Debug.ho_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
+  Gen.Debug.no_2 "compute_base_case" pr1 pr2 pr3 (fun _ _ -> compute_base_case_x prog cf vars) cf vars
 
 and compute_base_case_x prog cf vars = (*flatten_base_case cf s self_c_var *)
   let mix2p = MCP.fold_mem_lst (CP.mkTrue no_pos) true true in
@@ -1501,7 +1501,7 @@ and set_materialized_prop cdef =
 and find_m_prop_heap eq_f h = 
   let pr = Cprinter.string_of_h_formula in
   let prr x = string_of_int (List.length x) in
-  Gen.Debug.ho_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x eq_f h) h
+  Gen.Debug.no_1 "find_m_prop_heap" pr prr (fun _ -> find_m_prop_heap_x eq_f h) h
       
 and find_m_prop_heap_x eq_f h = match h with
   | CF.DataNode h ->
@@ -1584,7 +1584,7 @@ and find_materialized_vars_x prog params (f0 : CF.formula) : CP.spec_var list =
 and find_materialized_vars prog params (f0 : CF.formula) : CP.spec_var list =
   let pr1 = Cprinter.string_of_spec_var_list in 
   let pr2 = Cprinter.string_of_formula in 
-  Gen.Debug.ho_2 "find_materialized_vars" pr1 pr2 pr1 (fun _ _ -> find_materialized_vars_x prog params (f0 : CF.formula)) params f0
+  Gen.Debug.no_2 "find_materialized_vars" pr1 pr2 pr1 (fun _ _ -> find_materialized_vars_x prog params (f0 : CF.formula)) params f0
 
 
 and find_mvars prog (params : CP.spec_var list) (f0 : CF.formula) :
@@ -1810,7 +1810,7 @@ and trans_one_coercion (prog : I.prog_decl) (coer : I.coercion_decl) :
       ((C.coercion_decl list) * (C.coercion_decl list)) =
   let pr x = "?" in
   let pr2 (r1,r2) = pr_list Cprinter.string_of_coercion (r1@r2) in
-  Gen.Debug.ho_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
+  Gen.Debug.no_1 "trans_one_coercion" pr pr2 (fun _ -> trans_one_coercion_x prog coer) coer
 
 (* TODO : add lemma name to self node to avoid cycle*)
 and trans_one_coercion_x (prog : I.prog_decl) (coer : I.coercion_decl) :
@@ -3036,7 +3036,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
              } *)
 
 and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
-  Gen.Debug.ho_2 "flatten_to_bind " 
+  Gen.Debug.no_2 "flatten_to_bind " 
       (Iprinter.string_of_exp) 
       (fun x -> match x with
         | Some x1 -> (Cprinter.string_of_exp x1) | None -> "")
@@ -3320,7 +3320,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
 		        in block_e))
 
 and case_coverage (instant:Cpure.spec_var list)(f:Cformula.struc_formula): bool =
-  Gen.Debug.ho_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_spec_var_type)  
+  Gen.Debug.no_2 "case_coverage" (Gen.BList.string_of_f Cpure.string_of_spec_var_type)  
       Cprinter.string_of_struc_formula string_of_bool
       case_coverage_x instant f
 
@@ -3417,7 +3417,7 @@ and add_pre_debug prog f =
 and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+  Gen.Debug.no_eff_5 "trans_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
       (fun _ _ _ _ _ -> trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
 
@@ -3484,7 +3484,7 @@ and trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident 
 and trans_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
       (f0 : IF.formula) stab (clean_res:bool) : CF.formula =
   let prb = string_of_bool in
-  Gen.Debug.ho_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
+  Gen.Debug.no_eff_5 "trans_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_formula Cprinter.string_of_formula 
       (fun _ _ _ _ _ -> trans_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list) sep_collect
           (f0 : IF.formula) stab (clean_res:bool)) stab quantify clean_res fvars f0
 
@@ -3844,7 +3844,7 @@ let pr = string_of_spec_var_kind in
 let pr2 x = match x with 
   | None -> "None"
   | Some v -> "Some "^(pr v) in
-      Gen.Debug.ho_2 "unify_var_kind" pr pr pr2 unify_var_kind_x k1 k2
+      Gen.Debug.no_2 "unify_var_kind" pr pr pr2 unify_var_kind_x k1 k2
 
 
 and get_var_kind (var : ident) (stab : spec_var_table) =
@@ -3867,7 +3867,7 @@ and set_var_kind2 (var1 : ident) (var2 : ident) (k : spec_var_kind) (stab : spec
 	  let _ = List.map (fun c-> Hashtbl.replace stab c a1) a2_keys in ()) in ()
 													                             (*H.find stab var let r = set_var_kind va1 k stab in H.replace stab va2 r*)
 and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
-  Gen.Debug.ho_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "?")
+  Gen.Debug.no_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "?")
      collect_type_info_var_x var stab var_kind pos
 
 and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =
@@ -3900,7 +3900,7 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
 	      else collect_type_info_pure prog qf stab
 
 and collect_type_info_b_formula prog b0 stab =
-  Gen.Debug.ho_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "?")
+  Gen.Debug.no_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "?")
       (collect_type_info_b_formula_x prog) b0 stab
 
 and collect_type_info_b_formula_x prog b0 stab =
@@ -4128,7 +4128,7 @@ and collect_type_info_arith a0 stab expected_type =
 		  collect_type_info_arith i stab (Known C.int_type)
 
 and collect_type_info_bag_content a0 stab =
- Gen.Debug.ho_eff_2 "collect_type_info_bag_content" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
+ Gen.Debug.no_eff_2 "collect_type_info_bag_content" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
     collect_type_info_bag_content_x a0 stab
 
 and collect_type_info_bag_content_x a0 stab =
@@ -4182,7 +4182,7 @@ and collect_type_info_bag_content_x a0 stab =
 (*           failwith "collect_type_info_bag_content: encountered array access"  *)
 
 and collect_type_info_bag (e0 : IP.exp) stab =
- Gen.Debug.ho_eff_2 "collect_type_info_bag" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
+ Gen.Debug.no_eff_2 "collect_type_info_bag" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
     collect_type_info_bag_x e0 stab
 
 and collect_type_info_bag_x (e0 : IP.exp) stab =
@@ -4633,7 +4633,7 @@ and case_normalize_renamed_formula prog (avail_vars:(ident*primed) list) posib_e
         (((ident*primed) list) * ((ident*primed) list) * Iformula.h_formula * (Ipure.formula * (branch_label * Ipure.formula) list)) =
     let pr1 = Iprinter.string_of_h_formula in
     let pr2 (_,_,h,(p,_)) = (Iprinter.string_of_h_formula h)^"&&$"^(Iprinter.string_of_pure_formula p) in
-    Gen.Debug.ho_1 "linearize_heap" pr1 pr2 
+    Gen.Debug.no_1 "linearize_heap" pr1 pr2 
         (fun _ -> linearize_heap used_names f) f  in
   let normalize_base heap cp fl new_br evs pos : Iformula.formula* ((ident*primed)list)* ((ident*primed)list) =
     (* let _ = print_string("heap = " ^ (Iprinter.string_of_h_formula heap) ^ "\n") in *)
@@ -4694,7 +4694,7 @@ and case_normalize_struc_formula  prog (h:(ident*primed) list)(p:(ident*primed) 
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
   let pr1 = Iprinter.string_of_struc_formula in
   let pr2 x = "?" in
-Gen.Debug.ho_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
+Gen.Debug.no_1 "case_normalize_struc_formula" pr1 pr2 (fun _ -> case_normalize_struc_formula_x prog h p f allow_primes lax_implicit strad_vs) f
       
 and case_normalize_struc_formula_x prog (h:(ident*primed) list)(p:(ident*primed) list)(f:Iformula.struc_formula) allow_primes (lax_implicit:bool)
       strad_vs :Iformula.struc_formula* ((ident*primed)list) = 	
@@ -5362,7 +5362,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     else List.map (fun c-> CP.mkAnd c neq no_pos) r in
 
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    Gen.Debug.ho_2 "simplify_pures " Cprinter.string_of_pure_formula 
+    Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula 
         Cprinter.string_of_spec_var_list
         (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
         simplify_pures f v_l in
@@ -5500,7 +5500,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     in  Gen.BList.string_of_f (Gen.string_of_pair (fun x -> (Cprinter.string_of_formula_label) x "") pr ) l in
     let pr2 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
     in  Gen.BList.string_of_f (Gen.string_of_pair (Gen.BList.string_of_f (fun x -> (Cprinter.string_of_formula_label) x "")) pr ) l in
-    Gen.Debug.ho_2 "compute_invariants"  
+    Gen.Debug.no_2 "compute_invariants"  
         pr0 pr1 pr2 compute_invariants v_l pure_list in
   
   (*actual case inference*)

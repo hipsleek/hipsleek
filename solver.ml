@@ -1006,7 +1006,7 @@ and split_linear_node (h : h_formula) : (h_formula * h_formula) list = split_lin
 (* and split_linear_node (h : h_formula) : (h_formula * h_formula) =  *)
 (*         let prh = Cprinter.string_of_h_formula in *)
 (*         let pr (h1,h2) = "("^(prh h1)^","^(prh h2)^")" in *)
-(*         Gen.Debug.ho_1 "split_linear_node" Cprinter.string_of_h_formula pr split_linear_node_x h *)
+(*         Gen.Debug.no_1 "split_linear_node" Cprinter.string_of_h_formula pr split_linear_node_x h *)
 
 (* (\* split conseq to a node to be checked at the next step and *\) *)
 (* (\* a the remaining part to be checked recursively            *\) *)
@@ -1320,7 +1320,7 @@ and unfold_failesc_context (prog:prog_or_branches) (ctx : list_failesc_context) 
 and unfold_nth(*_debug*) (n:int) (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula =
   (* unfold_x prog f v already_unsat pos *)
   let pr = Cprinter.string_of_formula in
-  Gen.Debug.ho_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat f
+  Gen.Debug.no_2_num n "unfold" string_of_bool pr pr (fun _ _ -> unfold_x prog f v already_unsat uf pos) already_unsat f
 
 and unfold_x (prog:prog_or_branches) (f : formula) (v : CP.spec_var) (already_unsat:bool) (uf:int) (pos : loc) : formula = match f with
   | Base ({ formula_base_heap = h;
@@ -1690,7 +1690,7 @@ and fold_op p c vd v u loc =
   Gen.Profiling.no_2 "fold" (fold_op_x(*debug_2*) p c vd v) u loc
 
 (* and fold_debug_2 p c vd v u loc =  *)
-(*   Gen.Debug.ho_2 "fold_op " (fun c -> match c with *)
+(*   Gen.Debug.no_2 "fold_op " (fun c -> match c with *)
 (*     | Ctx c -> Cprinter.string_of_formula c.es_formula *)
 (*     | _ -> "CtxOR!")  *)
 (*       Cprinter.string_of_h_formula  *)
@@ -1698,7 +1698,7 @@ and fold_op p c vd v u loc =
 (*       (fun c v -> fold_op_x p c v u loc) c v *)
 
 (* and fold_debug p c v u loc =  *)
-(*   Gen.Debug.ho_2 "fold_op " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c) *)
+(*   Gen.Debug.no_2 "fold_op " Cprinter.string_of_context Cprinter.string_of_h_formula (fun (c,_) -> Cprinter.string_of_list_context c) *)
 (*       (fun c v -> fold_op_x p c v u loc) c v *)
 (**************************************************************)
 (**************************************************************)
@@ -1807,7 +1807,7 @@ and fold_op_x1 prog (ctx : context) (view : h_formula) vd (* (p : CP.formula) *)
 and process_fold_result prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pr1 = Cprinter.string_of_list_context_short in
   let pr2 x = pr1 (fst x) in
-  Gen.Debug.ho_1 "process_fold_result" pr1 pr2 (fun _ -> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  fold_rs0
+  Gen.Debug.no_1 "process_fold_result" pr1 pr2 (fun _ -> process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos )  fold_rs0
       
 and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 base2 pos : (list_context * proof list) =
   let pure2 = base2.formula_base_pure in
@@ -1864,7 +1864,7 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
   let process_one (ss:CF.steps) fold_rs1 = 
     let pr1 = Cprinter.string_of_context  in
     let pr2 (c,_) = Cprinter.string_of_list_context c in
-    Gen.Debug.ho_1 "process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
+    Gen.Debug.no_1 "process_one" pr1 pr2 (fun _ -> process_one_x (ss:CF.steps) fold_rs1) fold_rs1 in
   match fold_rs0 with
     | FailCtx _ -> report_error no_pos ("process_fold_result: FailCtx encountered solver.ml\n")
     | SuccCtx fold_rs0 -> 
@@ -1994,7 +1994,7 @@ and find_unsat (prog : prog_decl) (f : formula):formula list*formula list =
 	      (nf1@nf2,nf1n@nf2n)
 
 and is_unsat_with_branches_debug xpure_f qvars hf mix br pos sat_subno=
-  Gen.Debug.ho_2 "is_unsat_with_branches" 
+  Gen.Debug.no_2 "is_unsat_with_branches" 
       (fun h -> (Cprinter.string_of_h_formula h)^"\n"^Cprinter.string_of_mix_formula(fst( xpure_f hf)))
       Cprinter.string_of_mix_formula string_of_bool
       (fun hf mix -> is_unsat_with_branches xpure_f qvars hf mix br pos sat_subno) hf mix
@@ -2081,7 +2081,7 @@ and elim_unsat_all prog (f : formula): formula = match f with
 
 
 and elim_unsat_all_debug prog (f : formula): formula = 
-  Gen.Debug.ho_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
+  Gen.Debug.no_2 "elim_unsat " (fun c-> "?") (Cprinter.string_of_formula) (Cprinter.string_of_formula) elim_unsat_all prog f
 
 and get_eqns_free (st : ((CP.spec_var * CP.spec_var) * branch_label) list) (evars : CP.spec_var list) (expl_inst : CP.spec_var list) 
       (struc_expl_inst : CP.spec_var list) pos : (CP.formula * (branch_label * CP.formula) list)*(CP.formula * (branch_label * CP.formula) list)*
@@ -2421,7 +2421,7 @@ and heap_entail_one_context_struc_nth n p i1 hp cl cs pos pid =
   Gen.Profiling.do_3_num n str (heap_entail_one_context_struc_x(*_debug*) p i1 hp cl) cs pos pid
 
 and heap_entail_one_context_struc_debug p i1 hp cl cs pos pid =
-  Gen.Debug.ho_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
+  Gen.Debug.no_1 "heap_entail_one_context_struc" Cprinter.string_of_context (fun _ -> "?") (fun cl -> heap_entail_one_context_struc_x p i1 hp cl cs pos pid) cl
 
 and heap_entail_one_context_struc_x (prog : prog_decl) (is_folding : bool)  has_post (ctx : context) (conseq : struc_formula) pos pid : (list_context * proof) =
   Debug.devel_pprint ("heap_entail_one_context_struc:"
@@ -2485,7 +2485,7 @@ and sem_imply_add prog is_folding  ctx (p:CP.formula) only_syn:(context*bool) = 
 and heap_entail_conjunct_lhs_struc_debug
       p is_folding  has_post ctx conseq 
       pos pid : (list_context * proof) = 
-  Gen.Debug.ho_2 "heap_entail_conjunct_lhs_struc!!!!!"
+  Gen.Debug.no_2 "heap_entail_conjunct_lhs_struc!!!!!"
       (Cprinter.string_of_context)
       (Cprinter.string_of_struc_formula)
       (fun _ -> "?")
@@ -2508,7 +2508,7 @@ and heap_entail_conjunct_lhs_struc
 	      else false 
 
   (*and inner_entailer_debug ctx conseq =
-	Gen.Debug.ho_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq*)
+	Gen.Debug.no_2 "inner_entailer" (Cprinter.string_of_context) (Cprinter.string_of_struc_formula) (fun (l,p) -> (Cprinter.string_of_list_context l)^"\nProof:"^(Prooftracer.string_of_proof p)) inner_entailer_a ctx conseq*)
 
   and inner_entailer ctx conseq = inner_entailer_a ctx conseq
 
@@ -2697,7 +2697,7 @@ and heap_entail_init (prog : prog_decl) (is_folding : bool)  (cl : list_context)
 and heap_entail_debug
       p is_folding  cl conseq 
       pos : (list_context * proof) = 
-  Gen.Debug.ho_2 "heap_entail---------\n\n"
+  Gen.Debug.no_2 "heap_entail---------\n\n"
       (Cprinter.string_of_list_context)
       (Cprinter.string_of_formula)
       (fun _ -> "?")
@@ -2716,7 +2716,7 @@ and heap_entail (prog : prog_decl) (is_folding : bool)  (cl : list_context) (con
             (heap_entail_one_context prog is_folding  (List.hd cl) conseq pos)
 
 and heap_entail_one_context_debug prog is_folding  ctx conseq pos =
-  Gen.Debug.ho_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
+  Gen.Debug.no_2 "heap_entail_one_context" (Cprinter.string_of_context) (Cprinter.string_of_formula) (fun (l,p) -> Cprinter.string_of_list_context l) 
       (fun ctx conseq -> heap_entail_one_context_a prog is_folding  ctx conseq pos) ctx conseq
 
 and heap_entail_one_context prog is_folding  ctx conseq pos = heap_entail_one_context_a prog is_folding  ctx conseq pos
@@ -2767,7 +2767,7 @@ and heap_entail_after_sat prog is_folding  ctx conseq pos
 
 (*
   and heap_entail_conjunct_lhs prog is_folding  (ctx:context) conseq pos : (list_context * proof) 
-  = Gen.Debug.ho_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
+  = Gen.Debug.no_1 "heap_entail_conjunct_lhs" Cprinter.string_of_context (fun _ -> "?") 
   (fun ctx -> heap_entail_conjunct_lhs_x  prog is_folding  ctx conseq pos) ctx 
 *)
 
@@ -2833,7 +2833,7 @@ and heap_entail_conjunct_lhs_x prog is_folding  (ctx:context) conseq pos : (list
 (* and move_lemma_expl_inst_ctx_list (ctx:list_context)(f:MCP.mix_formula):list_context = *)
 (*         let pr1 = Cprinter.string_of_list_context in *)
 (*         let pr2 = Cprinter.string_of_mix_formula in *)
-(*   Gen.Debug.ho_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1  *)
+(*   Gen.Debug.no_2 "move_lemma_expl_inst_ctx_list" pr1 pr2 pr1  *)
 (*       move_lemma_expl_inst_ctx_list_x ctx f *)
 
 
@@ -2865,7 +2865,7 @@ and obtain_subst l =
     | [] -> ([],[])
 
 and coer_target prog (coer : coercion_decl) (node:CF.h_formula) (target_rhs : CF.formula) (lhs : CF.formula) : bool =
-  Gen.Debug.ho_3 "coer_target" (* Cprinter.string_of_coercion  *)
+  Gen.Debug.no_3 "coer_target" (* Cprinter.string_of_coercion  *)
       Cprinter.string_of_h_formula Cprinter.string_of_formula Cprinter.string_of_formula string_of_bool 
       (fun _ _ _ -> coer_target_a prog coer node target_rhs lhs) node lhs target_rhs
 
@@ -2933,7 +2933,7 @@ and check_one_target prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formul
   let pr1 = Cprinter.string_of_spec_var in
   let pr2 = Cprinter.string_of_mix_formula in
   let pr3 = Cprinter.string_of_h_formula in
-  Gen.Debug.ho_3 "check_one_target" pr1 pr2 pr3 string_of_bool
+  Gen.Debug.no_3 "check_one_target" pr1 pr2 pr3 string_of_bool
       (fun _ _ _ -> check_one_target_x prog node (target : CP.spec_var) (lhs_pure : MCP.mix_formula) (target_rhs_p : MCP.mix_formula) (target_rhs_h : CF.h_formula) (coer_rhs_h : CF.h_formula)) target target_rhs_p target_rhs_h 
 
 (* check whether target appears in rhs *)
@@ -3017,12 +3017,12 @@ and fv_rhs (lhs : CF.formula) (rhs : CF.formula) : CP.spec_var list =
 
 (*__________________*)
 
-and split_phase_debug_lhs h = Gen.Debug.ho_1 "split_phase(lhs)"
+and split_phase_debug_lhs h = Gen.Debug.no_1 "split_phase(lhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
 
-and split_phase_debug_rhs h = Gen.Debug.ho_1 "split_phase(rhs)"
+and split_phase_debug_rhs h = Gen.Debug.no_1 "split_phase(rhs)"
   Cprinter.string_of_h_formula 
   (fun (a,b,c) -> "RD = " ^ (Cprinter.string_of_h_formula a) ^ "; WR = " ^ (Cprinter.string_of_h_formula b) ^ "; NEXT = " ^ (Cprinter.string_of_h_formula c) ^ "\n") 
   split_phase h
@@ -3066,7 +3066,7 @@ and split_wr_phase (h : h_formula) : (h_formula * h_formula) =
 and heap_entail_split_rhs_phases
     p is_folding  ctx0 conseq d
     pos : (list_context * proof) =
-  Gen.Debug.ho_2 "heap_entail_split_rhs_phases"
+  Gen.Debug.no_2 "heap_entail_split_rhs_phases"
     (fun x -> Cprinter.string_of_context x)
     (Cprinter.string_of_formula)
     (fun (lc,_) -> Cprinter.string_of_list_context lc)
@@ -3359,7 +3359,7 @@ and heap_entail_rhs_nested_phase prog is_folding  after_wr_ctx after_wr_prfs con
 
 (* some helper methods *)
 and insert_ho_frame_in2_formula_debug f ho = 
-  Gen.Debug.ho_2 "insert_ho_frame_in2_formula"
+  Gen.Debug.no_2 "insert_ho_frame_in2_formula"
 	  Cprinter.string_of_formula
 	  (*Cprinter.string_of_h_formula*)
 	  (fun _ -> "?")
@@ -3965,7 +3965,7 @@ and xpure_imply (prog : prog_decl) (is_folding : bool)   lhs rhs_p timeout : boo
 
 and heap_entail_empty_rhs_heap p i_f es lhs rhs rhsb pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
+  Gen.Debug.no_2 "heap_entail_empty_rhs_heap" (fun c-> Cprinter.string_of_formula(Base c)) Cprinter.string_of_mix_formula pr
       (fun _ _ -> heap_entail_empty_rhs_heap_x p i_f es lhs rhs rhsb pos) lhs rhs
 
 and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate lhs (rhs_p:MCP.mix_formula) rhs_p_br pos : (list_context * proof) =
@@ -4545,13 +4545,13 @@ and do_match_x prog estate l_node r_node rhs is_folding pos :
     (Cformula.add_to_subst res_es1 r_subs l_sub, prf1)
 
 and heap_entail_non_empty_rhs_heap prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
-  Gen.Debug.loop_2 "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
+  Gen.Debug.loop_2_no "heap_entail_non_empty_rhs_heap" Cprinter.string_of_formula_base Cprinter.string_of_formula (fun _ -> "?") (fun _ _ -> heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos) lhs_b conseq
 
 and existential_eliminator_helper prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p = 
   let pr_svl = Cprinter.string_of_spec_var_list in
   let pr p = pr_pair pr_svl string_of_bool p in
   (*let t (r,_) = not(Gen.BList.list_equiv_eq CP.eq_spec_var (var_to_fold::v2) r) in*)
-  Gen.Debug.ho_3(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
+  Gen.Debug.no_3(*_opt t*) "existential_eliminator_helper" Cprinter.string_of_spec_var pr_id Cprinter.string_of_spec_var_list pr 
       (fun _ _ _ -> existential_eliminator_helper_x prog estate (var_to_fold:Cpure.spec_var) (c2:ident) (v2:Cpure.spec_var list) rhs_p) var_to_fold c2 v2
 
 (* this helper does not seem to eliminate anything *)
@@ -4581,7 +4581,7 @@ and do_fold_w_ctx fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_fold
     | None -> "None"
     | Some f -> Cprinter.string_of_struc_formula f.view_formula in
   let pr (x,_) = Cprinter.string_of_list_context x in
-  Gen.Debug.loop_3 "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr
+  Gen.Debug.loop_3_no "do_fold_w_ctx" Cprinter.string_of_context Cprinter.string_of_h_formula pr2 pr
       (fun _ _ _ -> do_fold_w_ctx_x fold_ctx prog estate conseq rhs_node vd rhs_rest rhs_b is_folding pos) 
       fold_ctx rhs_node vd
       (*
@@ -4705,7 +4705,7 @@ and do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
 and do_full_fold prog estate conseq rhs_node rhs_rest rhs_b is_folding pos =
   let pr1 = Cprinter.string_of_h_formula in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Gen.Debug.ho_1 "do_full_fold" pr1 pr2 
+  Gen.Debug.no_1 "do_full_fold" pr1 pr2 
       (fun _ -> do_full_fold_x prog estate conseq rhs_node rhs_rest rhs_b is_folding pos) rhs_node
       
 
@@ -4799,7 +4799,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 and process_action prog estate conseq lhs_b rhs_b a is_folding pos =
   let pr1 = Context.string_of_action_res in
   let pr2 x = Cprinter.string_of_list_context_short (fst x) in
-  Gen.Debug.loop_1 "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
+  Gen.Debug.loop_1_no "process_action" pr1 pr2 (fun _ -> process_action_x prog estate conseq lhs_b rhs_b a is_folding pos) a
       
 and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) =
   let (lhs_h,lhs_p,lhs_t,lhs_fl,lhs_br) = CF.extr_formula_base lhs_b in
@@ -4882,7 +4882,7 @@ and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lh
 (* start of check_aliased_node *)
 (*****************************************************************************************************************************)
 (* let rec check_aliased_node_debug (a,r) resth1 =  *)
-(* Gen.Debug.ho_2 "check_aliased_node" *)
+(* Gen.Debug.no_2 "check_aliased_node" *)
 (*   (fun (x, y) -> Cprinter.string_of_h_formula x) *)
 (*   (Cprinter.string_of_h_formula) *)
 (*   (fun (x,y) -> Cprinter.string_of_list_context x) *)
@@ -5240,7 +5240,7 @@ and do_universal prog estate node rest_of_lhs coer anode lhs_b rhs_b conseq is_f
 
 
 and is_cycle_coer (c:coercion_decl) (origs:ident list) : bool =  
-  Gen.Debug.ho_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
+  Gen.Debug.no_2 "is_cycle_coer" Cprinter.string_of_coercion Cprinter.str_ident_list string_of_bool
       is_cycle_coer_a c origs
 
 (* this checks if node is being applied a second time with same coercion rule *)
@@ -5271,7 +5271,7 @@ and is_original_match anode ln2 =
 and rewrite_coercion prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   let p1 = Cprinter.string_of_formula in
   let p2 = pr_pair string_of_bool Cprinter.string_of_formula in
-  Gen.Debug.ho_2 "rewrite_coercion" Cprinter.string_of_h_formula  p1 p2 (fun _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f 
+  Gen.Debug.no_2 "rewrite_coercion" Cprinter.string_of_h_formula  p1 p2 (fun _ _ -> rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos) node f 
 
 and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos : (bool * formula) =
   (* This function also needs to add the name and the origin list
@@ -5379,7 +5379,7 @@ and rewrite_coercion_x prog estate node f coer lhs_b rhs_b target_b weaken pos :
 
 and apply_universal prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
+  Gen.Debug.no_3 "apply_universal"  Cprinter.string_of_h_formula Cprinter.string_of_h_formula (fun x -> x) pr 
       (fun _ _ _ -> apply_universal_a prog estate coer resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 c2 conseq is_folding pos)
       anode resth1 c2
       (* anode - chosen node, resth1 - rest of heap *)
@@ -5425,11 +5425,11 @@ and find_coercions c1 c2 prog anode ln2 =
   let p1 = Cprinter.string_of_h_formula in
   let p = (fun l -> string_of_int (List.length l)) in 
   let p2 (v,_) = pr_pair p p v in
-  Gen.Debug.ho_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
+  Gen.Debug.no_2 "find_coercions" p1 p1 p2 (fun _ _ -> find_coercions_x c1 c2 prog anode ln2 ) anode ln2
 
 and do_coercion prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos : (CF.list_context * proof list) =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
+  Gen.Debug.no_5 "do_coercion" (* prid prid  *)Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_h_formula 
       Cprinter.string_of_h_formula Cprinter.string_of_formula_base pr
       (fun _ _ _ _ _ -> do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 is_folding pos) anode resth1 ln2 resth2 rhs_b
 
@@ -5530,7 +5530,7 @@ and do_coercion_x prog c_opt estate conseq resth1 resth2 anode lhs_b rhs_b ln2 i
 	(*******************************************************************************************************************************************************************************************)
 and apply_left_coercion estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos=
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
+  Gen.Debug.no_3 "apply_left_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion pr
       (fun _ _ _ -> apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_t lhs_fl lhs_br*) lhs_b rhs_b c1 is_folding pos)
       anode resth1 coer
       (* anode - LHS matched node
@@ -5575,7 +5575,7 @@ and apply_left_coercion_a estate coer prog conseq ctx0 resth1 anode (*lhs_p lhs_
     (*******************************************************************************************************************************************************************************************)
 and apply_right_coercion estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos =
   let pr (e,_) = Cprinter.string_of_list_context e in
-  Gen.Debug.ho_3 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion 
+  Gen.Debug.no_3 "apply_right_coercion" Cprinter.string_of_h_formula Cprinter.string_of_h_formula Cprinter.string_of_coercion 
       (* Cprinter.string_of_formula (fun x -> x)  *)pr
       (fun _ _ _ -> apply_right_coercion_a estate coer prog (conseq:CF.formula) ctx0 resth2 ln2 (*rhs_p rhs_t rhs_fl*) lhs_b rhs_b (c2:ident) is_folding pos) ln2 resth2 coer (* conseq c2 *)
 
@@ -5853,7 +5853,7 @@ let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)
 let heap_entail_list_partial_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_partial_context)
         (conseq:formula) pos (pid:control_path_id) : (list_partial_context * proof) = 
   let pr x = (string_of_int(List.length x))^"length" in
-  Gen.Debug.loop_2 "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
+  Gen.Debug.loop_2_no "heap_entail_list_partial_context_init" pr (Cprinter.string_of_formula) (fun _ -> "?")
       (fun _ _ -> heap_entail_list_partial_context_init prog is_folding  cl conseq pos pid) cl conseq
 
 let heap_entail_list_failesc_context_init (prog : prog_decl) (is_folding : bool)  (cl : list_failesc_context)

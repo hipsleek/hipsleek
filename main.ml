@@ -178,7 +178,7 @@ let main1 () =
       ()
 
 (* let main1 () = *)
-(*   Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
+(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()

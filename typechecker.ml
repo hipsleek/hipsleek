@@ -399,7 +399,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              Gen.Debug.loop_1 "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
+              Gen.Debug.loop_1_no "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
                   (fun s ->  check_pre_post org_spec s) sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
@@ -489,7 +489,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       ((check_exp1 failesc) @ fl)
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  Gen.Debug.loop_1 "check_post" (fun _ -> "?") (fun _ -> "?")
+  Gen.Debug.loop_1_no "check_post" (fun _ -> "?") (fun _ -> "?")
       (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =

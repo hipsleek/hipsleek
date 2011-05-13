@@ -394,7 +394,7 @@ and is_coercible_x (h : h_formula) : bool = match h with
   | _ -> false
 
 and is_coercible (h : h_formula) : bool =
-  Gen.Debug.ho_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
+  Gen.Debug.no_1 "is_coercible" !print_h_formula string_of_bool is_coercible_x h 
 
 
 (*
@@ -762,7 +762,7 @@ and sintactic_search (f:formula)(p:Cpure.formula):bool = match f with
 (* and print_formula = ref(fun (c:formula) -> "Cprinter not initialized") *)
 
 and mkStar_combine_debug (f1 : formula) (f2 : formula) flow_tr (pos : loc) = 
-  Gen.Debug.ho_2 "mkstar_combine"
+  Gen.Debug.no_2 "mkstar_combine"
       (!print_formula)
       (!print_formula)
       (!print_formula)
@@ -1142,7 +1142,7 @@ and f_top_level_vars_x (f : formula) : CP.spec_var list = match f with
 and f_top_level_vars (f : formula) : CP.spec_var list = 
   let pr1 = !print_formula in
   let pr2 = !print_svl in
-  Gen.Debug.ho_1 "f_top_level_vars" pr1 pr2 f_top_level_vars_x f 
+  Gen.Debug.no_1 "f_top_level_vars" pr1 pr2 f_top_level_vars_x f 
 
 
 and top_level_vars (h : h_formula) : CP.spec_var list = match h with
@@ -1626,7 +1626,7 @@ and rename_bound_vars (f : formula) = rename_bound_vars_x f
 
 (*
   and rename_bound_vars (f : formula) = 
-  Gen.Debug.ho_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
+  Gen.Debug.no_1 "rename_bound_vars" (!print_formula) (!print_formula) rename_bound_vars_x f
 *)
 
 and rename_bound_vars_x (f : formula) = match f with
@@ -1840,7 +1840,7 @@ and contains_mutable_h_formula (f : h_formula) : bool =  match f with
 *)
         
 and contains_immutable_debug f = 
-  Gen.Debug.ho_1 "contains_immutable"
+  Gen.Debug.no_1 "contains_immutable"
       (!print_formula)
       (string_of_bool)
       contains_immutable f
@@ -1854,7 +1854,7 @@ and contains_immutable (f : formula) : bool =  match f with
         (contains_immutable f1) or (contains_immutable f2)
             
 and contains_immutable_h_formula_debug f = 
-  Gen.Debug.ho_1 "contains_immutable_h_formula"
+  Gen.Debug.no_1 "contains_immutable_h_formula"
       (!print_h_formula)
       (string_of_bool)
       contains_immutable_h_formula f
@@ -1886,7 +1886,7 @@ and contains_immutable_h_formula (f : h_formula) : bool =  match f with
 
 
 and contains_phase_debug (f : h_formula) : bool =  
-  Gen.Debug.ho_1 "contains_phase"
+  Gen.Debug.no_1 "contains_phase"
       (!print_h_formula) 
       (string_of_bool)
       (contains_phase)
@@ -2047,7 +2047,7 @@ let es_simplify (e1:entail_state):entail_state =
 
 let es_simplify e1 = 
   let pr  = !print_entail_state in
-  Gen.Debug.ho_1 "es_simplify" pr pr es_simplify e1
+  Gen.Debug.no_1 "es_simplify" pr pr es_simplify e1
   
 let rec context_simplify (c:context):context  = match c with
   | Ctx e -> Ctx ((*es_simplify*) e)
@@ -2487,7 +2487,7 @@ let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) 
 
 let list_partial_context_or (l1:list_partial_context) (l2:list_partial_context) : list_partial_context = 
   let pr x = string_of_int (List.length x) in 
-  Gen.Debug.loop_2 "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
+  Gen.Debug.loop_2_no "list_partial_context_or" pr pr pr list_partial_context_or l1 l2 
 
 let list_failesc_context_or f (l1:list_failesc_context) (l2:list_failesc_context) : list_failesc_context = 
   List.concat (List.map (fun pc1-> (List.map (fun pc2 -> remove_dupl_false_fe (merge_failesc_context_or f pc1 pc2)) l2)) l1)

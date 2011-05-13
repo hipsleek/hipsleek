@@ -203,7 +203,7 @@ let start () =
   print_string "Coq started\n"; flush stdout
 
 let start_prover_debug () =
-  Gen.Debug.ho_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
+  Gen.Debug.no_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
 
 (* stopping Coq *)
 let stop () =
@@ -217,7 +217,7 @@ let stop () =
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
-  Gen.Debug.ho_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
+  Gen.Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =

@@ -275,7 +275,7 @@ and is_max_min a = match a with
   | Max _ | Min _ -> true
   | _ -> false
 and isConstTrue_debug (p:formula) =
-  Gen.Debug.ho_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
+  Gen.Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
 
 and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos)),_) -> true
@@ -620,7 +620,7 @@ and mkTrue pos =  BForm ((BConst (true, pos)),None)
 and mkFalse pos = BForm ((BConst (false, pos)),None)
 
 and mkExists_with_simpl_debug simpl (vs : spec_var list) (f : formula) lbl pos = 
-  Gen.Debug.ho_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
+  Gen.Debug.no_2 "mkExists_with_simpl" !print_svl !print_formula !print_formula 
       (fun vs f -> mkExists_with_simpl simpl vs f lbl pos) vs f
 
 and mkExists_with_simpl simpl (vs : spec_var list) (f : formula) lbl pos = 
@@ -3839,7 +3839,7 @@ let conv_var_to_exp (v:spec_var) :exp =
     | None -> Var(v,no_pos)
 
 let conv_var_to_exp_debug (v:spec_var) :exp =
- Gen.Debug.ho_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v
+ Gen.Debug.no_1 "conv_var_to_exp" (full_name_of_spec_var) (!print_exp) conv_var_to_exp v
 
 (* is exp a var  *)
 let is_var (f:exp) = match f with
@@ -3881,7 +3881,7 @@ let get_bform_eq_args_with_const (bf:b_formula) =
    get_bform_eq_args_aux conv_exp_with_const bf
 
 let get_bform_eq_args_with_const_debug (bf:b_formula) =
-   Gen.Debug.ho_1 " get_bform_eq_args_with_const" (!print_b_formula) (fun _ -> "?") get_bform_eq_args_with_const bf
+   Gen.Debug.no_1 " get_bform_eq_args_with_const" (!print_b_formula) (fun _ -> "?") get_bform_eq_args_with_const bf
 
 (* form bformula assuming only vars *)
 let form_bform_eq (v1:spec_var) (v2:spec_var) =
@@ -3967,7 +3967,7 @@ let get_elems_eq_with_const aset =
     List.filter (fun v -> true) vl
 
 (* let get_elems_eq_with_const_debug aset = *)
-(*   Gen.Debug.ho_1_list "get_elems_eq_with_const" (string_of_var_eset) (full_name_of_spec_var) get_elems_eq_with_const aset *)
+(*   Gen.Debug.no_1_list "get_elems_eq_with_const" (string_of_var_eset) (full_name_of_spec_var) get_elems_eq_with_const aset *)
 
 (* get var elements from a eq-map allowing null *)
 let get_elems_eq_with_null aset =
@@ -4203,7 +4203,7 @@ let check_imply_neq eq lhs e1 e2 =
   in if ((eqExp_f eq) e1 e2) then -2
   else helper lhs 
 let check_imply_neq_debug eq lhs e1 e2 = 
-Gen.Debug.ho_3 
+Gen.Debug.no_3 
     "check_imply_neq" 
     (fun c-> String.concat "&" (List.map !print_b_formula c))
     !print_exp 
@@ -4857,7 +4857,7 @@ module ArithNormalizer = struct
     (add_term_list_to_exp lhs_terms), (add_term_list_to_exp rhs_terms)
 
   let norm_two_sides_debug e1 e2 =
-    Gen.Debug.ho_2 "cpure::norm_two_sides" string_of_exp string_of_exp 
+    Gen.Debug.no_2 "cpure::norm_two_sides" string_of_exp string_of_exp 
     (fun (x,y) -> (string_of_exp x) ^ " | " ^ (string_of_exp y))
     norm_two_sides e1 e2
 
@@ -4866,7 +4866,7 @@ module ArithNormalizer = struct
     add_term_list_to_exp term_list
 
   let norm_exp_debug e =
-    Gen.Debug.ho_1 "cpure::norm_exp" string_of_exp string_of_exp norm_exp e
+    Gen.Debug.no_1 "cpure::norm_exp" string_of_exp string_of_exp norm_exp e
 
   let norm_bform_relation rel e1 e2 l makef = match e1, e2 with
     | IConst (i1, _), IConst (i2, _) -> BConst (rel i1 i2, l)

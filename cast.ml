@@ -374,7 +374,7 @@ let merge_mater_props_x x y =
 
 let merge_mater_props x y =
   let pr = !print_mater_prop in
-  Gen.Debug.ho_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
+  Gen.Debug.no_2 "merge_mater_props" pr pr pr merge_mater_props_x x y
   
 let mater_props_to_sv_list l =  List.map (fun c-> c.mater_var) l
   
@@ -387,7 +387,7 @@ let subst_mater_list fr t l =
 
 let subst_mater_list_nth i fr t l = 
   let pr_svl = !print_svl in
-  Gen.Debug.ho_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
+  Gen.Debug.no_2_num i "subst_mater_list" pr_svl pr_svl pr_no (fun _ _ -> subst_mater_list fr t l) fr t 
 
 let subst_coercion fr t (c:coercion_decl) = 
       {c with coercion_head = F.subst_avoid_capture fr t c.coercion_head
@@ -699,7 +699,7 @@ let look_up_view_baga prog (c : ident) (root:P.spec_var) (args : P.spec_var list
   P.subst_var_list_avoid_capture from_svs to_svs ba
 
 let look_up_view_baga_debug  prog (c : ident) (root:P.spec_var) (args : P.spec_var list) : P.spec_var list = 
-      Gen.Debug.ho_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
+      Gen.Debug.no_2 "look_up_view_baga" (fun v -> !print_svl [v]) !print_svl !print_svl 
       (fun r a ->  look_up_view_baga prog c r a) root args
 
 let rec look_up_data_def pos (ddefs : data_decl list) (name : string) = match ddefs with
@@ -1215,4 +1215,4 @@ let vdef_fold_use_bc prog ln2  =
   let pr2 x = match x with
     | None -> "None"
     | Some f -> !print_struc_formula f.view_formula in
-  Gen.Debug.ho_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
+  Gen.Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
