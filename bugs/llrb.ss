@@ -59,8 +59,8 @@ bool is_red(node h)
 	case{
 		h  = null -> ensures !res;
 		h != null -> 
-          requires h::node<v,0,l,r> ensures h::node<v,0,l,r> & res;
-          requires h::node<v,1,l,r> ensures h::node<v,1,l,r> & !res;
+          requires h::node<v,c,l,r>
+          ensures h::node<v,c,l,r> & (c=0 & res | c!=0 & !res);
 	}
 {
 	if (h==null)
@@ -238,19 +238,25 @@ node insert_internal(node h, int v)
 		h = rotate_left(h);
     } 
 	
+    l = h.left;
 	// convert R-R-B into B-R-R
-	if (is_red(h.left)) {
-		if (is_red(h.left.left)) {
+	if (is_red(l)) {
+		if (is_red(l.left)) {
           //assume false;
 			h = rotate_right(h);
 		} 
         else {
-          assume false; // goes into a loop otherwise!
-          //assume true;
+          //int c = l.left.color;
+          //assert c'=1;
+         assume false; // goes into a loop otherwise!
+         assume true;
         }
 	} else {
+      int c = l.color;
+      assert c'=1;
+      //dprint;
       assume false; // goes into a loop otherwise!
-      //assume true;
+      assume true;
     }
     //dprint;
 
