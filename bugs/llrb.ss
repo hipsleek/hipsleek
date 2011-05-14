@@ -233,16 +233,27 @@ node insert_internal(node h, int v)
 	// h.right IS BLACK BEFORE THIS if-then-else. (THE STATEMENT
 	// h.left = insert(l, v);
 	// POTENTIALLY CHANGES THE COLOR OF h.left; BUT NOT h.right!)
-	if (is_red(h.right))
+	if (is_red(h.right)) {
+       //assume false;	
 		h = rotate_left(h);
+    } 
 	
 	// convert R-R-B into B-R-R
 	if (is_red(h.left)) {
 		if (is_red(h.left.left)) {
+          //assume false;
 			h = rotate_right(h);
-		}
-	}
-    assume false;	
+		} 
+        else {
+          assume false; // goes into a loop otherwise!
+          //assume true;
+        }
+	} else {
+      assume false; // goes into a loop otherwise!
+      //assume true;
+    }
+    //dprint;
+
 		
 	return h;
   }
