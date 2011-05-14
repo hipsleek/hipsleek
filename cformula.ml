@@ -3806,9 +3806,14 @@ let get_prior_steps (c:context) =
     | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] ;;
 
 let add_to_context (c:context) (s:string) = 
-  match c with
-    | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
-    | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c ;;
+  set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c
+  (* match c with *)
+  (*   | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; } *)
+  (*   | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c ;; *)
+
+let add_to_context_num i (c:context) (s:string) = 
+  let pr x = match x with Ctx _ -> "Ctx" | OCtx _ -> "OCtx" in  
+  Gen.Debug.no_1_num i "add_to_context" pr pr_no (fun _ -> add_to_context c s) c
 
 let add_to_estate (es:entail_state) (s:string) = 
   {es with es_prior_steps = s::es.es_prior_steps; }

@@ -1063,11 +1063,11 @@ let printer_of_path_trace (fmt: Format.formatter) (pt : path_trace) =  poly_prin
 
 let summary_list_path_trace l =  String.concat "; " (List.map  (fun (lbl,_) -> string_of_path_trace lbl) l)
 
-let summary_partial_context (l1,l2) =  "("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)^" "^(summary_list_path_trace l2)^")"
+let summary_partial_context (l1,l2) =  "PC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2)(* ^" "^(summary_list_path_trace l2) *)^")"
 
 let summary_failesc_context (l1,l2,l3) =  
-	"("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
-	^" "^(summary_list_path_trace l3)^")"
+	"FEC("^string_of_int (List.length l1) ^", "^ string_of_int (List.length l2) ^", "^ string_of_int (List.length l3) 
+	(* ^" "^(summary_list_path_trace l3) *)^")"
 
 let summary_list_partial_context lc =  "["^(String.concat " " (List.map summary_partial_context lc))^"]"
 
