@@ -489,8 +489,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       ((check_exp1 failesc) @ fl)
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  Gen.Debug.loop_1_no "check_post" (fun _ -> "?") (fun _ -> "?")
-      (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
+  let pr = pr_list Cprinter.string_of_partial_context in
+  let pr2 x = "Size of Result "^string_of_int(List.length x) in
+  Gen.Debug.loop_1 "check_post" pr pr  (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)

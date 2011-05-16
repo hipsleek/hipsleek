@@ -37,6 +37,19 @@ rbd<n, cl, d, bh> == self = null & n = 0 & bh = 1 & cl = 1 & d=2
        & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=0 
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= d <=2;
 
+red<n, bh> == self::node<_,0,t1,t2> * t1::rbd<n1,0,_,h1> * t2::rbd<n2,1,_,h2> 
+                   & bh=h1 & bh=h2  & n=1+n1+n2 
+          or  self::node<v, 0, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh> &
+   	              n = 1 + ln + rn & lbh = bh & rbh = bh 
+	inv n >= 1 & bh >= 1;
+
+void inc_rb_ht(node r)
+  requires r::red<n,bh>
+  ensures r::rbd<n,1,_,bh+1>;
+{
+  r.color = 1;
+}
+
 //////////////////////////////////////////
 //          HELPER FUNCTIONS I          //
 //////////////////////////////////////////
@@ -62,11 +75,42 @@ bool is_red(node h)
 void color_flip(node h)
 	requires h::node<v,1,l,r> * l::node<lv,0,ll,lr> * r::node<rv,0,rl,rr>
 	ensures h::node<v,0,l,r> * l::node<lv,1,ll,lr> * r::node<rv,1,rl,rr>;
+	requires h::node<v,0,l,r> * l::node<lv,1,ll,lr> * r::node<rv,1,rl,rr>
+	ensures h::node<v,1,l,r> * l::node<lv,0,ll,lr> * r::node<rv,0,rl,rr>;
 {
 	h.color        = 1 - h.color;
 	h.left.color   = 1 - h.left.color;
 	h.right.color  = 1 - h.right.color;
 }
+
+// R-R-B -> R B R
+node rotate_RRB(node h)
+  requires h::node<v1,0,l,t3> * l::node<v2,0,t1,t2> 
+  ensures res::node<v2,0,t1,r> * r::node<v1,0,t2,t3>; //
+{
+  node L  = h.left;
+  //node T1=L.left;
+  node T2 = L.right;
+  //node T3=h.right;
+  L.right = h;
+  h.left = T2;
+  return L;
+}
+
+// BBR -> BRB 
+node rotate_BBR(node h)
+  requires h::node<v1,1,t1,r> * r::node<v2,0,t2,t3> 
+  ensures res::node<v2,1,l,t3> * l::node<v1,0,t1,t2>; //
+
+
+// R -> B
+void change_R_to_B(node h)
+  requires h::node<v1,0,t1,t2>  
+  ensures h::node<v1,1,t1,t2> ;
+{
+  h.color = 1;
+}
+
 
 // Make a right-leaning 3-node lean to the left.
 // PROBLEM DETECTED: SPECIFICATION FAILURE
@@ -122,9 +166,77 @@ node insert(node h, int v)
   requires h::rbd<n,1,_,bh>
   ensures res::rbd<n+1,1,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
 {
+
 	node r = insert_internal(h,v);
 	if (is_red(r)) r.color = 1;
 	return r;
+}
+
+node insert2(node h, int v)
+//requires h::rbd<n,_,_,bh>
+//ensures res::rbd<n+1,1,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
+  requires h::rbd<n,_,_,bh>
+  ensures res::rbd<n+1,_,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
+{
+  node r = insert_aux(h,v);
+  if (is_red(r)) inc_rb_ht(r);
+  return r;
+}
+
+// Insert a value v to an INTERNAL node of a red-black tree.
+// Remark: NO height increment.
+node insert_aux(node h, int v)
+  case {
+  h=null -> ensures res::rbd<1,0,_,1>; //node<v,0,null,null>;
+   h!=null -> requires h::rbd<n,c,d,bh>
+    case {
+     c=1 -> case {
+       d=0 ->  ensures res::rbd<n+1,1,_,bh>; // false here!
+       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; 
+       }
+     c!=1 -> ensures res::red<n+1,bh>;
+   }
+ }
+{
+  if (h == null) {
+    //assert c=1 & bh=0;
+    node k=new node(v, 0, null, null);
+    //dprint;
+    //assert k'::rbd<1,0,_,1>;
+    return k; //new node(v, 0, null, null); // RED node
+
+  }	else {
+	// split this node if it is a 4 node
+    bool flag=false;
+	if (is_red(h.right)) {
+        color_flip(h);
+        flag=true;
+    }
+	if (v <= h.val) // accept duplicates!
+      { 
+        h.left = insert_aux(h.left, v);
+      }
+	else h.right = insert_aux(h.right, v);
+    if (flag) {
+        color_flip(h);
+        //assume false;
+        return h;
+    }
+    if (is_red(h)) {
+      //assume false;
+      if (is_red(h.left)) h = rotate_RRB(h);
+    } else {
+      //assume false;
+      if (is_red(h.right)) {
+       h=rotate_BBR(h);
+       }
+       else if (is_red(h.left) && is_red(h.left.left)) {
+         assume false;
+       }
+    }
+    assume false;
+    return h;
+  }
 }
 
 // Insert a value v to an INTERNAL node of a red-black tree.
