@@ -1193,6 +1193,12 @@ and list_context_and_unsat_now prog (ctx : list_context) : list_context =
   let r = filter_false_list_partial_context r in
   TP.incr_sat_no () ; r
 *)
+
+and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_failesc_context = 
+  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) ctx in
+  let r = List.map CF.remove_dupl_false_fe r in
+  TP.incr_sat_no () ; r
+
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
   let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) r in
@@ -2042,7 +2048,9 @@ and elim_unsat_es (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) :
       
 and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
   if (es.es_unsat_flag) then Ctx es
-  else 
+  else elim_unsat_es_now prog sat_subno es
+
+and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
     let f = es.es_formula in
     let _ = reset_int2 () in
     let b = unsat_base_nth "1" prog sat_subno f in
@@ -2602,9 +2610,10 @@ and heap_entail_conjunct_lhs_struc_x
 	    else
 	      let rs = clear_entailment_history ctx11 in
 	      (*let _ =print_string ("before post:"^(Cprinter.string_of_context rs)^"\n") in*)
+          (* TOCHECK : why compose_context fail to set unsat_flag? *)
 	      let rs1 = CF.compose_context_formula rs post ref_vars Flow_replace pos in
 	      (*let _ =print_string ("\n after post:"^(Cprinter.string_of_context rs1)^"\n") in*)
-	      let rs2 = CF.transform_context (elim_unsat_es prog (ref 1)) rs1 in
+	      let rs2 = CF.transform_context (elim_unsat_es_now prog (ref 1)) rs1 in
           (*let _ =print_string ("\n after post and unsat:"^(Cprinter.string_of_context rs2)^"\n") in*)
 	      let rs3 = add_path_id rs2 (pid,i) in
           let rs4 = prune_ctx prog rs3 in

@@ -2606,7 +2606,7 @@ and compose_context_formula (ctx : context) (phi : formula) (x : CP.spec_var lis
 			let new_c2 = compose_context_formula ctx phi2 x flow_tr pos in
 			let res = (mkOCtx new_c1 new_c2 pos ) in
 			  res
-		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos;es_unsat_flag =false;}
+		| _ -> Ctx {es with es_formula = compose_formula es.es_formula phi x flow_tr pos; es_unsat_flag =false;}
 	end
   | OCtx (c1, c2) -> 
 	  let new_c1 = compose_context_formula c1 phi x flow_tr pos in
