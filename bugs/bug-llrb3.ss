@@ -4,19 +4,22 @@
  @author: Vu An Hoa
  */
 
-
 /*
-
-Why is UNSAT not triggered at the end of each
-postcondition?
 
 Why can't pure condition of precondition be automatically 
 carried into postcondition? e.g. simple0
 
-RESOLVED : Why the following fail when RED is not coupled with res!=null?
+RESOLVED (problem due to res!=null not captured): 
+Why is UNSAT not triggered at the end of each
+postcondition?
+Temp Resolved by forcing unsat after postcondition.
+
+RESOLVED (bug fixed): 
+Why the following fail when RED is not coupled with res!=null?
 Can't that be inferred, and added automatically.
 
-RESOLVED : For red, why are there two identical prune invariants?
+RESOLVED (bug fixed): 
+For red, why are there two identical prune invariants?
  prune invs: 
    ,[{262} -> {self} [ self!=null; 1<=bh; 1<=n]; 
    {262} -> {self} [ 1<=n; 1<=bh; self!=null]]

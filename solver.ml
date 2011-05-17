@@ -1187,7 +1187,7 @@ and combine_es_and prog (f : MCP.mix_formula) (reset_flag:bool) (es : entail_sta
 
 and combine_list_context_and_unsat_now prog (ctx : list_context) (f : MCP.mix_formula) : list_context = 
   let r = transform_list_context ((combine_es_and prog f true),(fun c->c)) ctx in
-  let r = transform_list_context ((elim_unsat_es prog (ref 1)),(fun c->c)) r in
+  let r = transform_list_context ((elim_unsat_es_now prog (ref 1)),(fun c->c)) r in
   TP.incr_sat_no () ; r
 
 and list_context_and_unsat_now prog (ctx : list_context) : list_context = 
@@ -1209,14 +1209,14 @@ and list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) : list_
 
 and combine_list_failesc_context_and_unsat_now prog (ctx : list_failesc_context) (f : MCP.mix_formula) : list_failesc_context = 
   let r = transform_list_failesc_context (idf,idf,(combine_es_and prog f true)) ctx in
-  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es prog (ref 1))) r in
+  let r = transform_list_failesc_context (idf,idf,(elim_unsat_es_now prog (ref 1))) r in
   let r = List.map CF.remove_dupl_false_fe r in
   TP.incr_sat_no () ; r
 
 
 and combine_context_and_unsat_now prog (ctx : context) (f : MCP.mix_formula) : context = 
   let r = transform_context (combine_es_and prog f true) ctx in
-  let r = transform_context (elim_unsat_es prog (ref 1)) r in
+  let r = transform_context (elim_unsat_es_now prog (ref 1)) r in
   TP.incr_sat_no () ; r
       (* expand all predicates in a definition *)
 

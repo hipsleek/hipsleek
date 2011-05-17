@@ -6,7 +6,7 @@
 
 /* 
 
-RESOLVED : An error message is now being printed.
+RESOLVED (An error message is now being printed.)
 
 Presence of "not" instead of "!" causes the
 following error:
