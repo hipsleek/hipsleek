@@ -9,3 +9,13 @@ view_original should be changed from bool to integer
 When using "not" instead of "!", got a "Not_Found
 exception.
 
+Printing very indented:
+                            [c<=1(IP)& 0<=c(IP)]  [true]  alias set:[@]
+                          [d]:  [d<=2(IP)& 0<=d(IP)]  [true]  alias set:
+                          [@])) &
+                         {FLOW,(52,53)=__norm,}
+                           ECase case {c=1 -> ECase case {d=0 -> EAssume 36:
+                                                                   EXISTS(bh_123,
+                                                                   flted_0_114,
+                                                                   flted_0_115,
+                                                                   flted_0_116: 

@@ -44,7 +44,7 @@ red<n, bh> == self::node<_,0,t1,t2> * t1::rbd<n1,0,_,h1> * t2::rbd<n2,1,_,h2>
 	inv n >= 1 & bh >= 1 & self!=null;
 
 void inc_rb_ht(node r)
-  requires r::red<n,bh> or r::rbd<n,1,_,bh>
+  requires r::red<n,bh> or r::rbd<n,0,_,bh>
   ensures r::rbd<n,1,_,bh+1>;
 {
   r.color = 1;

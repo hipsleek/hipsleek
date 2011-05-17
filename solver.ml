@@ -133,9 +133,11 @@ let rec filter_formula_memo f (simp_b:bool)=
       let nmem = MCP.filter_useless_memo_pure (TP.simplify_a 4) simp_b fv e.formula_exists_pure in
       Exists {e with formula_exists_pure = nmem;}
 
-let filter_formula_memo_debug f (simp_b:bool)= 
-  Gen.Debug.no_1 "filter_formula_memo" Cprinter.string_of_formula Cprinter.string_of_formula 
-   (fun f -> filter_formula_memo f simp_b) f
+(* let filter_formula_memo f (simp_b:bool)=  *)
+(*   let pr = Cprinter.string_of_formula in *)
+(*   Gen.Debug.no_2 "filter_formula_memo"  *)
+(*    pr string_of_bool pr *)
+(*    (fun _ _ -> filter_formula_memo f simp_b) f simp_b *)
 
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
@@ -761,7 +763,7 @@ and pairwise_diff (svars10: P.spec_var list ) (svars20:P.spec_var list) pos =
 
 and prune_ctx prog ctx = match ctx with
   | OCtx (c1,c2)-> mkOCtx (prune_ctx prog c1) (prune_ctx prog c2) no_pos
-  | Ctx es -> Ctx {es with es_formula =prune_preds prog false es.es_formula}
+  | Ctx es -> Ctx {es with es_formula = prune_preds prog false es.es_formula}
 
 and prune_branch_ctx prog (pt,bctx) = 
   let r = prune_ctx prog bctx in
@@ -789,7 +791,7 @@ and prune_pred_struc prog (simp_b:bool) f =
   (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
   List.map helper f
 
-and prune_preds prog (simp_b:bool) (f:formula):formula =   
+and prune_preds_x prog (simp_b:bool) (f:formula):formula =   
   let imply_w f1 f2 = let r,_,_ = TP.imply f1 f2 "elim_rc" false None in r in   
   let f_p_simp c = if simp_b then MCP.elim_redundant(*_debug*) (imply_w,TP.simplify_a 3) c else c in
   let rec fct i op oh = if (i== !Globals.prune_cnt_limit) then (op,oh)
@@ -826,11 +828,10 @@ and prune_preds prog (simp_b:bool) (f:formula):formula =
         Gen.Profiling.pop_time "prune_preds";
         nf)
 
-and prune_preds_debug  prog (simp_b:bool) (f:formula):formula =   
-  let r = prune_preds prog simp_b f in
-  print_string ("prune_preds input: "^(Cprinter.string_of_formula f)^"\n");
-  print_string ("prune_preds output: "^(Cprinter.string_of_formula r)^"\n");
-  r
+and prune_preds  prog (simp_b:bool) (f:formula):formula =   
+  let p1 = string_of_bool in
+  let p2 = Cprinter.string_of_formula in
+   Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
@@ -839,12 +840,18 @@ and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formu
   | MCP.OnePF _ -> (hp,old_mem,false)
 
 and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_formula*MCP.memo_pure*bool)= 
+  let pr = Cprinter.string_of_h_formula in
+  let pr1 = Cprinter.string_of_memo_pure_formula in
+  let pr2 (h,o,r) = pr_triple Cprinter.string_of_h_formula pr1 string_of_bool (h,o,r) in
+  Gen.Debug.no_2 "heap_prune_preds" pr pr1 pr2 (fun _ _ -> heap_prune_preds_x prog hp old_mem ba_crt) hp old_mem
+
+and heap_prune_preds_x prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_formula*MCP.memo_pure*bool)= 
   match hp with
     | Star s ->
           let ba1 =ba_crt@(heap_baga prog s.h_formula_star_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_star_h2) in
-          let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_star_h1 old_mem ba2 in
-          let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_star_h2 mem1 ba1 in
+          let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_star_h1 old_mem ba2 in
+          let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_star_h2 mem1 ba1 in
           (mkStarH h1 h2 s.h_formula_star_pos , mem2 , (changed1 or changed2))
               (*(Star {  
                 h_formula_star_h1 = h1;
@@ -853,8 +860,8 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_for
     | Conj s ->
           let ba1 =ba_crt@(heap_baga prog s.h_formula_conj_h1) in
           let ba2 =ba_crt@(heap_baga prog s.h_formula_conj_h2) in
-          let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_conj_h1 old_mem ba2 in
-          let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_conj_h2 mem1 ba1 in
+          let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_conj_h1 old_mem ba2 in
+          let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_conj_h2 mem1 ba1 in
           (Conj {  
               h_formula_conj_h1 = h1;
               h_formula_conj_h2 = h2;
@@ -862,8 +869,8 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_for
     |Phase  s ->
          let ba1 =ba_crt@(heap_baga prog s.h_formula_phase_rd) in
          let ba2 =ba_crt@(heap_baga prog s.h_formula_phase_rw) in
-         let h1, mem1, changed1  = heap_prune_preds prog s.h_formula_phase_rd old_mem ba2 in
-         let h2, mem2, changed2  = heap_prune_preds prog s.h_formula_phase_rw mem1 ba1 in
+         let h1, mem1, changed1  = heap_prune_preds_x prog s.h_formula_phase_rd old_mem ba2 in
+         let h2, mem2, changed2  = heap_prune_preds_x prog s.h_formula_phase_rw mem1 ba1 in
          (Phase {  
              h_formula_phase_rd = h1;
              h_formula_phase_rw = h2;
@@ -888,20 +895,21 @@ and heap_prune_preds prog (hp:h_formula) (old_mem:MCP.memo_pure) ba_crt : (h_for
           let fr_vars = (CP.SpecVar (Named v_def.view_data_name, self, Unprimed)):: v_def.view_vars in
           let to_vars = v.h_formula_view_node :: v.h_formula_view_arguments in
           let zip = List.combine fr_vars to_vars in
-          let (rem_br, prun_cond,first_prune) =  
+          let (rem_br, prun_cond,first_prune,chg) =  
             match v.h_formula_view_remaining_branches with
               | Some l -> 
+                    let c = if (List.length l)<=1 then false else true in
                     if !no_incremental then
                       let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
-                      (v_def.view_prune_branches,new_cond ,true)
-                    else (l, v.h_formula_view_pruning_conditions,false)
+                      (v_def.view_prune_branches,new_cond ,true,c)
+                    else (l, v.h_formula_view_pruning_conditions,false,c)
               | None ->
                     let new_cond = List.map (fun (c1,c2)-> (CP.b_subst zip c1,c2)) v_def.view_prune_conditions in         
-                    (v_def.view_prune_branches,new_cond ,true) in                   
-          if (List.length rem_br)<=1 then 
-            (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,first_prune)
+                    (v_def.view_prune_branches,new_cond ,true,true) in                   
+          if (not chg) then 
+            (ViewNode{v with h_formula_view_remaining_branches = Some rem_br; h_formula_view_pruning_conditions = [];}, old_mem,false)
           else
-            (*decide which prunes can be activated and drop the onese that are implied while keeping the old unknowns*)
+            (*decide which prunes can be activated and drop the ones that are implied while keeping the old unknowns*)
             let l_prune,l_no_prune, new_mem2 = List.fold_left 
               (fun (yes_prune, no_prune, new_mem) (p_cond, pr_branches)->            
                   if (Gen.BList.subset_eq (=) rem_br pr_branches) then (yes_prune, no_prune,new_mem)
@@ -2351,7 +2359,7 @@ and heap_entail_struc_partial_context (prog : prog_decl) (is_folding : bool)
 		  | SuccCtx ls -> List.map ( fun c-> ([],[(lbl,c)])) ls in
 		(res, prf)) succ_branches in
     let res_l,prf_l =List.split res in
-    let n = string_of_int (List.length res) in
+    (* let n = string_of_int (List.length res) in *)
     (* print_string ("\nCombining ==> :"^n^" "^(Cprinter.string_of_list_list_partial_context res_l)); *)
     let res = List.fold_left list_partial_context_or [(fail_branches,[])] res_l in
     (* print_string ("\nResult of Combining ==> :"^(Cprinter.string_of_list_partial_context res)); *)

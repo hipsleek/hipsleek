@@ -1352,7 +1352,8 @@ let pr_view_decl v =
   pr_vwrap  "prune baga conditions: " 
     (fun c-> fmt_string 
         (String.concat "," (List.map (fun (bl,(lbl,_))-> "("^(string_of_spec_var_list bl)^")-"^(string_of_int lbl)) c))) v.view_prune_conditions_baga;
-  pr_vwrap  "prune invs: " (fun c-> pr_seq "," (fun (c1,(ba,c2))-> 
+  let i = string_of_int(List.length v.view_prune_invariants) in
+  pr_vwrap  ("prune invs:"^i^":") (fun c-> pr_seq "," (fun (c1,(ba,c2))-> 
       let s = String.concat "," (List.map (fun d-> string_of_int_label d "") c1) in
       let b = string_of_spec_var_list ba in
       let d = String.concat ";" (List.map string_of_b_formula c2) in

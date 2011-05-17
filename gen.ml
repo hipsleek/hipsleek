@@ -42,6 +42,8 @@ struct
 
   let pr_pair f1 f2 (x,y) = "("^(f1 x)^","^(f2 y)^")"
 
+  let pr_triple f1 f2 f3 (x,y,z) = "("^(f1 x)^","^(f2 y)^","^(f3 z)^")"
+
   let pr_lst f xs = String.concat "," (List.map f xs)
 
  let pr_list f xs = "["^(pr_lst f xs)^"]"

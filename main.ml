@@ -65,8 +65,7 @@ let process_source_full source =
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
     let intermediate_prog =IastUtil.pre_process_of_iprog prog in
-		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in *) 
-
+		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
