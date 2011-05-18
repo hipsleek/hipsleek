@@ -1,6 +1,8 @@
 /*
 
- --eps failed for example below
+ --eps failed for example kpred below,
+   while non-eps succeeded. 
+   Should we allow complex constraint in the pruning invariant?
 
 */
 

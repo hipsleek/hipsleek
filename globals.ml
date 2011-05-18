@@ -228,7 +228,7 @@ let prune_cnt_limit = ref 2
 let suppress_warning_msg = ref false
 let disable_elim_redundant_ctr = ref false
 
-let enable_strong_invariant = ref false
+let enable_strong_invariant = ref true
 let enable_aggressive_prune = ref false
 let disable_aggressive_prune = ref false
 let prune_with_slice = ref false
