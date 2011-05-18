@@ -32,6 +32,7 @@ data node {
 }
 
 
+
 /* view for red-black trees */
 rbd<n, cl, d, bh> == self = null & n = 0 & bh = 1 & cl = 1 & d=2  
     or self::node<v, 0, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh>
@@ -46,14 +47,39 @@ red<n, bh> == self::node<_,0,t1,t2> * t1::rbd<n1,0,_,h1> * t2::rbd<n2,1,_,h2>
                    & bh=h1 & bh=h2  & n=1+n1+n2 
 	inv n >= 1 & bh >= 1 & self!=null;
 
+kpred<n, z> == self::node<v, 0, l, r> & (n=1 & z=3 | n>1 & z=4)
+  inv n>=1 & 3<=z<=4;
+
+
+void foo(node r)
+  requires r::rbd<n,cl,d,bh> & n>=0
+  ensures r::kpred<_,z> & z=4 ;
+{
+  simple0(r);
+  simple1a(r);
+  //assert r'!=null; //'
+  //assert n>0; //
+  assert r'::kpred<m,z> & z=4;
+  dprint;
+}
+
+void simple5(node r)
+  requires r::rbd<n,cl,d,bh> & n>=0
+  ensures true; //'
+
 void simple0(node r)
-  requires r::rbd<n,cl,d,bh> & n>0
-  ensures r::rbd<n+1,cl,d,bh>;
+  requires r::rbd<n,cl,d,bh> & n>=0
+  ensures r::rbd<n+1,cl,d,bh> /* & r!=null */; //'
 // pure from pre not transferred to post, causing post not to be specialised 
 
 void simple1(node r)
   requires r::rbd<n,cl,d,bh> & n>0
   ensures r::rbd<n+1,cl,d,bh> & n>0;
+// pure from initial inv not transferred to post 
+
+void simple1a(node r)
+  requires r::rbd<n,cl,d,bh> & n>0
+  ensures r::kpred<n+1,z> ;
 // pure from initial inv not transferred to post 
 
 void simple2(node r)
