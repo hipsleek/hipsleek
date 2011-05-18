@@ -1183,6 +1183,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_x_formula = ((MCP.memoise_add_pure_P (MCP.mkMTrue pos) pf), pf_b);
           C.view_addr_vars = [];
           C.view_baga = [];
+          C.view_complex_inv = None;
           C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
           C.view_un_struc_formula = n_un_str;
                C.view_base_case = None;
@@ -5299,7 +5300,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
         |CP.BForm (l,_) ->([(false,l)],CP.mkTrue no_pos) 
         |_ ->([],f))
           (*let l1,l2 = get_pure_conj_list f in
-          ((match l1 with
+            ((match l1 with
             | (b,l)::[] -> [(not b, l)]
             | _ -> []     ),[])*)
     | CP.Forall (_,ff,_,_) 
@@ -5492,25 +5493,25 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
                 else (c1::a1, (CP.BagaSV.or_baga b1 b2, combine_pures c2 a2))) ([],(CP.BagaSV.mkEmpty,[])) pure_list
       else ((fst (List.split pure_list)),
       (u_baga,List.concat (List.map (fun c->List.map (fun c-> c.MCP.memo_formula) c.MCP.memo_group_cons)u_inv))) in
-  (* Globals.formula_label list * (CP.BagaSV.baga * CP.b_formula list) *)
-(* (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list *)
-    let _ = print_endline ("all: "^(Cprinter.string_of_prune_invariants [all])) in
+    (* Globals.formula_label list * (CP.BagaSV.baga * CP.b_formula list) *)
+    (* (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list *)
+    (* let _ = print_endline ("all: "^(Cprinter.string_of_prune_invariants [all])) in *)
     let rec comp i (crt_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) (last_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) =
       if i>l then [all] (* crt_lst   *)(* in case l=1, we just return one answer; not twice*)
       else
-      if i>=l then all :: crt_lst
-      else 
-        let n_list1 = List.map (
-            fun  (c1,(b1,c2)) -> 
-                let h = (List.hd c1) in
-                let rem = List.filter (fun (d1,_)-> 
-                    (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&
-                        ((fst h)>(fst d1))) pure_list in
-                List.map (fun (d1,(b2,d2))->(d1::c1, (CP.BagaSV.or_baga b1 b2,combine_pures c2 d2))) rem 
-        ) last_lst 
-        in          
-        let n_list = List.concat n_list1 in 
-        comp (i+1) (crt_lst@n_list) n_list in        
+        if i>=l then all :: crt_lst
+        else 
+          let n_list1 = List.map (
+              fun  (c1,(b1,c2)) -> 
+                  let h = (List.hd c1) in
+                  let rem = List.filter (fun (d1,_)-> 
+                      (not (List.exists (fun x-> (fst x)=(fst d1)) c1))&
+                          ((fst h)>(fst d1))) pure_list in
+                  List.map (fun (d1,(b2,d2))->(d1::c1, (CP.BagaSV.or_baga b1 b2,combine_pures c2 d2))) rem 
+          ) last_lst 
+          in          
+          let n_list = List.concat n_list1 in 
+          comp (i+1) (crt_lst@n_list) n_list in        
     let comp i (crt_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) (last_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) = 
       let pr x = string_of_int (List.length x) in
       Gen.Debug.no_3 "comp" string_of_int pr pr pr comp i crt_lst last_lst 
@@ -5539,7 +5540,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
           (MCP.fold_mem_lst xp true true p,ba)) (CF.split_components c) in
       (*let _ = print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n")in*)
       let pures = simplify_pures pures v_l in
-(*      let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
+      (*      let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
       let pc = List.concat (List.map (fun c-> fst (get_pure_conj_list c)) pures) in
       let pc = filter_pure_conj_list pc in
       (*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
@@ -5571,7 +5572,13 @@ and view_prune_inv_inference cp vd =
   let branches = snd (List.split f_branches) in
   let u_inv = List.fold_left (fun a (_,c)-> MCP.memoise_add_pure_N a c) (fst vd.C.view_user_inv) (snd vd.C.view_user_inv) in
   let conds, baga_cond ,invs = prune_inv_inference_formula cp (sf::vd.C.view_vars) f_branches vd.C.view_baga (MCP.drop_pf u_inv) no_pos in    
+  let c_inv = 
+    if (List.length branches)=1 then 
+      (* TODO : to compute complex_inv from formula *)
+      Some vd.C.view_x_formula
+    else None in
   let v' = { vd with  
+      C.view_complex_inv = c_inv; 
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 
       C.view_prune_conditions_baga = baga_cond;

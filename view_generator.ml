@@ -170,6 +170,7 @@ and gen_ext_all_view (prog : C.prog_decl) ( c : C.data_decl) : C.view_decl =
 	    C.view_data_name = "";
 	    C.view_formula = formula;
 	    C.view_user_inv = (CP.BForm(CP.BConst(true, no_pos)), []);
+        C.view_complex_inv = None;
 	    C.view_x_formula = (CP.BForm(CP.BConst(true, no_pos)), []);
 	    C.view_addr_vars = []} in
             new_view 

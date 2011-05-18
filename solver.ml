@@ -363,6 +363,9 @@ and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.m
     let a, b, c = xpure_heap_mem_enum prog h0 which_xpure in
     (a, b, [], c)
 
+(* TODO : if no complex & --eps then then return true else xpure1 generated;
+   what if user invariant has a disjunct? *)
+
 and xpure_mem_enum (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) = 
   Gen.Debug.no_1 "xpure_mem_enum" Cprinter.string_of_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
       ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_mem_enum_x prog f0) f0
@@ -462,22 +465,29 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 	                  let res_form = CP.mkAnd non_null rest_f pos in
 	                  res_form
 	            | [] -> CP.mkTrue pos in
-            let inv_flag =  match rm_br with
-              | Some l -> let n=(List.length l) in if n<(List.length vdef.view_prune_branches) || n>1 then false else true
-              | None -> true in
-            if (not inv_flag) then (MCP.mkMTrue no_pos, [])
-            else 
+            let inv_opt =  Cast.get_xpure_one vdef rm_br in
+(* match rm_br with *)
+(*               | Some l -> let n=(List.length l) in   *)
+(*                 if n<(List.length vdef.view_prune_branches) then None *)
+(*                 else (match vdef.view_complex_inv with  *)
+(*                   | None -> None  *)
+(*                   | Some f -> Some f)  (\* unspecialised with a complex_inv *\) *)
+(*               | None -> Some vdef.view_x_formula  *)
+  (* in *)
+  (match inv_opt with
+              | None -> (MCP.mkMTrue no_pos, [])
+              | Some xp1 ->
                     let vinv = match which_xpure with
                       | -1 -> (MCP.mkMTrue no_pos, [])
                       | 0 -> vdef.view_user_inv
-                      | _ -> vdef.view_x_formula in
+                      | _ -> xp1 in
                     let from_svs = CP.SpecVar (Named vdef.view_data_name, self, Unprimed) :: vdef.view_vars in
                     let to_svs = p :: vs in
                     let (f, b) = vinv in
                     let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                     let subst_fun = CP.subst_avoid_capture from_svs to_svs in
                     let tmp1 = subst_m_fun f, List.map (fun (x,y) -> x, subst_fun y) b in
-                    tmp1
+                    tmp1)
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos})
@@ -4001,10 +4011,12 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let lhs_fl = lhs.formula_base_flow in
   let lhs_b = lhs.formula_base_branches in
   let _ = reset_int2 () in
-  let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 0 in
-  let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap prog (mkStarH lhs_h estate.es_heap pos) 1 in
-  (* add the information about the dropped reading phases *)
+  let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
+  let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap prog curr_lhs_h 0 in
+  let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap prog curr_lhs_h 1 in
+   (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
+  let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
   let fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
     if (is_ok = false) then (is_ok,succs,fails) else 
       let m_lhs = MCP.combine_mix_branch branch_id (lhs_p, lhs_b) in
@@ -4255,7 +4267,7 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
           begin
             (*print_endline "imply_mix_formula: first";*)
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
-            if r1 then (r1,r2,r3) 
+            if r1 || not(MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
             else MCP.imply_memo a1 c TP.imply imp_no 
          (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end

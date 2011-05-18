@@ -56,9 +56,11 @@ and view_decl = {
     mutable view_x_formula : (MP.mix_formula * (branch_label * P.formula) list); (*XPURE 1 -> revert to P.formula*)
     mutable view_baga : Gen.Baga(P.PtrSV).baga;
     mutable view_addr_vars : P.spec_var list;
+    (* if view has only a single eqn, then place complex subpart into complex_inv *)  
+    view_complex_inv : (MP.mix_formula * (branch_label * P.formula) list) option; (*COMPLEX INV for --eps option*)
     view_un_struc_formula : (Cformula.formula * formula_label) list ; (*used by the unfold, pre transformed in order to avoid multiple transformations*)
     view_base_case : (P.formula *(MP.mix_formula*((branch_label*P.formula)list))) option; (* guard for base case, base case (common pure, pure branches)*)
-    view_prune_branches: formula_label list;
+    view_prune_branches: formula_label list; (* all the branches of a view *)
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
     view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
@@ -1216,3 +1218,28 @@ let vdef_fold_use_bc prog ln2  =
     | None -> "None"
     | Some f -> !print_struc_formula f.view_formula in
   Gen.Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
+
+let get_xpure_one vdef rm_br  =
+  match rm_br with
+    | Some l -> let n=(List.length l) in  
+      if n<(List.length vdef.view_prune_branches) then None
+      else (match vdef.view_complex_inv with 
+        | None -> None 
+        | Some f -> Some f)  (* unspecialised with a complex_inv *)
+    | None -> Some vdef.view_x_formula 
+
+let any_xpure_1 prog (f:F.h_formula) : bool = 
+  let ff e = match e with
+	| F.ViewNode ({ F.h_formula_view_node = p;
+	  F.h_formula_view_name = c;
+	  F.h_formula_view_remaining_branches = rm_br;
+	  F.h_formula_view_pos = pos}) ->      
+          let vdef = look_up_view_def pos prog.prog_view_decls c in
+          (match get_xpure_one vdef rm_br with
+            | None -> Some false
+            | Some r -> Some true (* check against vdef for complex_inv *)
+          ) 
+    | _ -> None
+  in
+  let comb_f = List.exists (fun x-> x) in
+  F.fold_h_formula f ff comb_f

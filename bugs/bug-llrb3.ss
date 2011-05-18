@@ -6,6 +6,7 @@
 
 /*
 
+IGNORE (seems that info already in pre-state *)
 Why can't pure condition of precondition be automatically 
 carried into postcondition? e.g. simple0
 

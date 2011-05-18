@@ -2,7 +2,9 @@
 
  --eps failed for example kpred below,
    while non-eps succeeded. 
-   Should we allow complex constraint in the pruning invariant?
+
+ SOLN : complex constraint to be added to heap view that
+        has not been specialized yet.
 
 */
 
