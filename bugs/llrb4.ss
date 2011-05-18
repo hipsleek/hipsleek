@@ -45,9 +45,9 @@ red<n, bh> == self::node<_,0,t1,t2> * t1::rbd<n1,0,_,h1> * t2::rbd<n2,1,_,h2>
 
 void inc_rb_ht(node r)
   requires r::red<n,bh> or r::rbd<n,0,_,bh>
-//ensures r::rbd<n,1,_,bh+1>;
-  requires r::node<v,0,l,r>
-  ensures r::node<v,1,l,r>;
+  ensures r::rbd<n,1,_,bh+1>;
+//  requires r::node<v,0,l,r>
+//  ensures r::node<v,1,l,r>;
 
 {
   r.color = 1;
@@ -218,7 +218,7 @@ node insert_aux(node h, int v)
     }
 	if (v <= h.val) // accept duplicates!
       { 
-        h.left = insert_aux(h.left, v); left_flag=true;
+        h.left = insert_aux(h.left, v); 
       }
 	else h.right = insert_aux(h.right, v);
 

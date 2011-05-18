@@ -353,11 +353,11 @@ let rec xpure (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (branch_lab
     let a, b, c = xpure_mem_enum prog f0 in
     (a, b, [], c)
 
-and xpure_heap_debug (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
-      = Gen.Debug.no_1 "xpure_heap" Cprinter.string_of_h_formula (fun (_,_,_,m) -> Cprinter.string_of_mem_formula m) 
-  (fun h0 -> xpure_heap prog h0 which_xpure) h0 
+and xpure_heap (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula)
+      = Gen.Debug.no_2 "xpure_heap" Cprinter.string_of_h_formula string_of_int (fun (mf,_,_,m) -> pr_pair Cprinter.string_of_mix_formula Cprinter.string_of_mem_formula (mf,m)) 
+  (fun _ _ -> xpure_heap_x prog h0 which_xpure) h0 which_xpure
 
-and xpure_heap (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
+and xpure_heap_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list * CF.mem_formula) =
   if (!Globals.allow_imm) then xpure_heap_symbolic prog h0 which_xpure
   else
     let a, b, c = xpure_heap_mem_enum prog h0 which_xpure in
@@ -462,9 +462,11 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 	                  let res_form = CP.mkAnd non_null rest_f pos in
 	                  res_form
 	            | [] -> CP.mkTrue pos in
-            (match rm_br with
-              | Some l -> (MCP.mkMTrue no_pos, [])
-              | None ->
+            let inv_flag =  match rm_br with
+              | Some l -> let n=(List.length l) in if n<(List.length vdef.view_prune_branches) || n>1 then false else true
+              | None -> true in
+            if (not inv_flag) then (MCP.mkMTrue no_pos, [])
+            else 
                     let vinv = match which_xpure with
                       | -1 -> (MCP.mkMTrue no_pos, [])
                       | 0 -> vdef.view_user_inv
@@ -475,8 +477,7 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
                     let subst_m_fun = MCP.subst_avoid_capture_memo(*_debug1*) from_svs to_svs in
                     let subst_fun = CP.subst_avoid_capture from_svs to_svs in
                     let tmp1 = subst_m_fun f, List.map (fun (x,y) -> x, subst_fun y) b in
-                    tmp1)
-
+                    tmp1
       | Star ({h_formula_star_h1 = h1;
 	    h_formula_star_h2 = h2;
 	    h_formula_star_pos = pos})
@@ -4250,10 +4251,13 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
-    | MCP.MemoF a, _, MCP.MemoF c ->
+    | MCP.MemoF a, MCP.MemoF a1, MCP.MemoF c ->
           begin
             (*print_endline "imply_mix_formula: first";*)
-            MCP.imply_memo a c TP.imply imp_no
+            let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
+            if r1 then (r1,r2,r3) 
+            else MCP.imply_memo a1 c TP.imply imp_no 
+         (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin

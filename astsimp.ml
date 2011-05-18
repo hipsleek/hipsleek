@@ -5347,7 +5347,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let filter_pure_conj_list pc =
     let pr1 = pr_list (fun (_,c)-> Cprinter.string_of_b_formula c) in
     let pr2 = pr_list Cprinter.string_of_b_formula in
-    Gen.Debug.ho_1 "filter_pure_conj_list" pr1 pr2 filter_pure_conj_list pc in
+    Gen.Debug.no_1 "filter_pure_conj_list" pr1 pr2 filter_pure_conj_list pc in
 
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let rec helper acc e_v_l : CP.formula list = match e_v_l with
@@ -5360,7 +5360,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let pr2 = Cprinter.string_of_pure_formula in
     let pr3 = pr_list Cprinter.string_of_pure_formula in
-    Gen.Debug.ho_2 "hull_invs" Cprinter.string_of_spec_var_list pr2  pr3 hull_invs v_l f in
+    Gen.Debug.no_2 "hull_invs" Cprinter.string_of_spec_var_list pr2  pr3 hull_invs v_l f in
 
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
     let l1,l2 = get_pure_conj_list f in
@@ -5379,7 +5379,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     else List.map (fun c-> CP.mkAnd c neq no_pos) r in
 
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    Gen.Debug.ho_2 "simplify_pures " Cprinter.string_of_pure_formula 
+    Gen.Debug.no_2 "simplify_pures " Cprinter.string_of_pure_formula 
         Cprinter.string_of_spec_var_list
         (Cprinter.string_of_list_f Cprinter.string_of_pure_formula)
         simplify_pures f v_l in
@@ -5526,7 +5526,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let pr2 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
     in  (string_of_int (List.length inp))^":"^Gen.BList.string_of_f (Gen.string_of_pair (Gen.BList.string_of_f (fun x -> (Cprinter.string_of_formula_label) x "")) pr ) l 
     in
-    Gen.Debug.ho_2 "compute_invariants"  
+    Gen.Debug.no_2 "compute_invariants"  
         pr0 pr1 pr2 compute_invariants v_l pure_list in
   
   (*actual case inference*)
