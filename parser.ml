@@ -123,7 +123,10 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
                              | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (P.mkBVar v (get_pos 1), None )))
-                             | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp" )
+                             | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
+  | Pure_c f1, Pure_f f2 -> (match f1 with 
+                             | P.Var (v,_) -> Pure_f(fct (P.BForm (P.mkBVar v (get_pos 1), None )) f2)
+                             | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
@@ -154,7 +157,7 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                                | P.Eq (a1, a2, _) 
                                                | P.Neq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
                                                  Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
+                                              | _ -> report_error (get_pos 1) "error should be an equality exp" )
                             |  _ -> report_error (get_pos 1) "error should be a binary exp" )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
@@ -259,6 +262,7 @@ SHGram.Entry.of_parser "peek_print"
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_] -> raise Stream.Failure
              | _ -> ())
  let peek_pure = 
    SHGram.Entry.of_parser "peek_pure"
@@ -286,6 +290,7 @@ let peek_dc =
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_heap_args = 
@@ -418,15 +423,15 @@ opt_branches:[[t=OPT branches -> un_option t []]];
 
 branches : [[`AND; `OSQUARE; b=LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> b ]];
 
-one_branch : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON; pc=pure_constr -> (id,pc)]];
+one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (id,pc)]];
 
 opt_branch:[[t=OPT branch -> un_option t ""]];
 
-branch: [[`DOUBLEQUOTE; `IDENTIFIER id ; `DOUBLEQUOTE; `COLON -> id ]];
+branch: [[ `STRING (_,id);`COLON -> id ]];
 
 
 view_header:
-  [[ `IDENTIFIER vn; `LT; l=opt_ann_cid_list; `GT ->
+  [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids, br_labels = List.split cids in
       if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then

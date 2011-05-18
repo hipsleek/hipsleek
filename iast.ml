@@ -61,7 +61,7 @@ and hopred_decl = { hopred_name : ident;
           hopred_mode : branch_label;
           hopred_mode_headers : ident list;
           hopred_typed_vars: (typ * ident) list;
-          hopred_typed_args : (typ * ident) list;
+          mutable hopred_typed_args : (typ * ident) list;
           hopred_fct_args : ident list;
           hopred_shape    : Iformula.struc_formula list;
           hopred_invariant :(P.formula * (branch_label * P.formula) list)
