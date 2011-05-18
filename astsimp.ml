@@ -5288,24 +5288,31 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     | CF.Exists _ -> [f]
     | CF.Or o -> (get_or_list o.CF.formula_or_f1)@(get_or_list o.CF.formula_or_f2) in
   
-  let rec get_pure_conj_list (f:CP.formula):(bool*CP.b_formula) list = match f with
-    | CP.BForm (l,_) -> [(true,l)]
-    | CP.And (f1,f2,_ )-> (get_pure_conj_list f1)@(get_pure_conj_list f2)
-    | CP.Or _ -> []
-    | CP.Not (f,_,_) -> 
-          (match (get_pure_conj_list f) with
+  let rec get_pure_conj_list (f:CP.formula):((bool*CP.b_formula) list* CP.formula) = match f with
+    | CP.BForm (l,_) -> ([(true,l)],CP.mkTrue no_pos )
+    | CP.And (f1,f2,_ )-> 
+          let l1,l2 = (get_pure_conj_list f1) in
+          let r1,r2 = (get_pure_conj_list f2) in
+          (l1@r1, CP.mkAnd l2 r2 no_pos)
+    | CP.Or _ -> ([],f)
+    | CP.Not (nf,_,_) -> (match nf with
+        |CP.BForm (l,_) ->([(false,l)],CP.mkTrue no_pos) 
+        |_ ->([],f))
+          (*let l1,l2 = get_pure_conj_list f in
+          ((match l1 with
             | (b,l)::[] -> [(not b, l)]
-            | _ -> []
-          )
-    | CP.Forall (_,f,_,_) 
-    | CP.Exists (_,f,_,_) -> (get_pure_conj_list f) in
+            | _ -> []     ),[])*)
+    | CP.Forall (_,ff,_,_) 
+    | CP.Exists (_,ff,_,_) -> ([],f) 
+          (*(get_pure_conj_list f)*) in
   
+
   let filter_pure_conj_list pc  =
     let r = List.filter (fun (c1,c2) -> match c2 with 
       | CP.Lt _ | CP.Lte _ | CP.Gt _ | CP.Gte _ | CP.Eq _ 
       | CP.Neq _ | CP.BagIn _ | CP.BagNotIn _ | CP.ListIn _ 
       | CP.ListNotIn _ | CP.EqMax _ | CP.EqMin _-> c1 
-      | _ -> false) pc in
+      | _ -> false ) pc in
     let r = List.map (fun (c1,c2) -> 
         if c1 then match c2 with
           | CP.Gt (e1,e2,l) -> CP.Lt (e2,e1,l)
@@ -5337,6 +5344,11 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       | _ -> c) r in
     Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset r in
 
+  let filter_pure_conj_list pc =
+    let pr1 = pr_list (fun (_,c)-> Cprinter.string_of_b_formula c) in
+    let pr2 = pr_list Cprinter.string_of_b_formula in
+    Gen.Debug.no_1 "filter_pure_conj_list" pr1 pr2 filter_pure_conj_list pc in
+
   let hull_invs v_l (f:CP.formula):CP.formula list =
     let rec helper acc e_v_l : CP.formula list = match e_v_l with
       | [] ->
@@ -5345,12 +5357,17 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       | h::t -> (helper acc t)@(helper (h::acc) t) in
     helper [] v_l in
   
+  let hull_invs v_l (f:CP.formula):CP.formula list =
+    let pr2 = Cprinter.string_of_pure_formula in
+    let pr3 = pr_list Cprinter.string_of_pure_formula in
+    Gen.Debug.no_2 "hull_invs" Cprinter.string_of_spec_var_list pr2  pr3 hull_invs v_l f in
+
   let simplify_pures (f:CP.formula) v_l :(CP.formula list) = 
-    let l = get_pure_conj_list f in
-    let l = filter_pure_conj_list l in      
+    let l1,l2 = get_pure_conj_list f in
+    let l = filter_pure_conj_list l1 in      
     let neq,eq = List.partition (fun c-> match c with | CP.Neq _ -> true |_-> false) l in
     let neq = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) neq in
-    let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) (CP.mkTrue no_pos) eq in
+    let n_f = List.fold_left (fun a c-> (CP.mkAnd a (CP.BForm (c,None)) no_pos)) l2 (*(CP.mkTrue no_pos)*) eq in
     let ev = (Gen.BList.difference_eq (=) (CP.fv n_f) v_l) in
     let to_s = CP.mkExists ev n_f None no_pos in
     (*let _ = print_string ("\n to_s:: "^(Cprinter.string_of_pure_formula to_s)^"\n") in*)
@@ -5475,9 +5492,13 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
                 else (c1::a1, (CP.BagaSV.or_baga b1 b2, combine_pures c2 a2))) ([],(CP.BagaSV.mkEmpty,[])) pure_list
       else ((fst (List.split pure_list)),
       (u_baga,List.concat (List.map (fun c->List.map (fun c-> c.MCP.memo_formula) c.MCP.memo_group_cons)u_inv))) in
+  (* Globals.formula_label list * (CP.BagaSV.baga * CP.b_formula list) *)
+(* (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list *)
+    let _ = print_endline ("all: "^(Cprinter.string_of_prune_invariants [all])) in
     let rec comp i (crt_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) (last_lst: (formula_label list * (CP.baga_sv * CP.b_formula list))list) =
-      if i>l then crt_lst  (* in case l=1, we just return one answer; not twice*)
-      else if i>=l then all :: crt_lst
+      if i>l then [all] (* crt_lst   *)(* in case l=1, we just return one answer; not twice*)
+      else
+      if i>=l then all :: crt_lst
       else 
         let n_list1 = List.map (
             fun  (c1,(b1,c2)) -> 
@@ -5516,16 +5537,17 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
           let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
           let xp = MCP.fold_mem_lst fbr true true cm in
           (MCP.fold_mem_lst xp true true p,ba)) (CF.split_components c) in
-      (*print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n");*)
+      (*let _ = print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n")in*)
       let pures = simplify_pures pures v_l in
-      (*let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
-      let pc = List.concat (List.map get_pure_conj_list pures) in
+(*      let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
+      let pc = List.concat (List.map (fun c-> fst (get_pure_conj_list c)) pures) in
       let pc = filter_pure_conj_list pc in
       (*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
       let prop_pc = propagate_constraints pc [] in
       (*let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in*)
-      let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in          
+      let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in
       let pp = MCP.memo_norm_wrapper pp in
+      let pp = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset pp in
       (lbl,(ba,pp))) init_form_lst in
   
   (*r -> list of triples, one for each disjunct(propagated constraints, initial formula , label)*)

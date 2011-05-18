@@ -248,7 +248,7 @@ node insert_internal(node h, int v)
         }
 	} else {
       int c = l.color;
-      assert c'=1;
+      assert c'=1; //'
       //dprint;
       assume false; // goes into a loop otherwise!
       assume true;

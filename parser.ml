@@ -41,7 +41,13 @@ let get_pos x =
 				{start_pos = Parsing.symbol_start_pos ();
 				 end_pos = Parsing. symbol_end_pos ();
 				 mid_pos = Parsing.rhs_start_pos x;
-				}		
+				}
+let get_pos_camlp4 l x = 
+                          {
+                           start_pos = Camlp4.PreCast.Loc.start_pos l ;
+				           end_pos = Camlp4.PreCast.Loc.stop_pos l ;
+				           mid_pos = Camlp4.PreCast.Loc.start_pos (Camlp4.PreCast.Loc.shift x l);
+                          }
         
 let rec get_mode (anns : ann list) : mode = match anns with
 	| ann :: rest -> begin
@@ -117,7 +123,10 @@ let apply_pure_form2 fct form1 form2 = match (form1,form2) with
   | Pure_f f1 ,Pure_f f2 -> Pure_f (fct f1 f2)
   | Pure_f f1 , Pure_c f2 -> (match f2 with 
                              | P.Var (v,_) -> Pure_f(fct f1 (P.BForm (P.mkBVar v (get_pos 1), None )))
-                             | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp" )
+                             | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp in var" )
+  | Pure_c f1, Pure_f f2 -> (match f1 with 
+                             | P.Var (v,_) -> Pure_f(fct (P.BForm (P.mkBVar v (get_pos 1), None )) f2)
+                             | _ -> report_error (get_pos 1) "with 2 expected pure_form in f1, found cexp")
   | _ -> report_error (get_pos 1) "with 2 expected pure_form, found cexp"
 
 let apply_cexp_form2 fct form1 form2 = match (form1,form2) with
@@ -148,7 +157,7 @@ let cexp_to_pure2 fct f1 f2 = match (f1,f2) with
                                                | P.Eq (a1, a2, _) 
                                                | P.Neq (a1, a2, _) -> let tmp = P.BForm(fct a2 f2,None) in 
                                                  Pure_f (P.mkAnd f1 tmp (get_pos 2))
-                                               | _ -> report_error (get_pos 1) "error should be an equality exp" )
+                                              | _ -> report_error (get_pos 1) "error should be an equality exp" )
                             |  _ -> report_error (get_pos 1) "error should be a binary exp" )
   | _ -> report_error (get_pos 1) "with 2 convert expected cexp, found pure_form" 
 
@@ -253,6 +262,7 @@ SHGram.Entry.of_parser "peek_print"
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_] -> raise Stream.Failure
              | _ -> ())
  let peek_pure = 
    SHGram.Entry.of_parser "peek_pure"
@@ -280,6 +290,7 @@ let peek_dc =
        (fun strm -> 
            match Stream.npeek 2 strm with
              | [AND,_;FLOW i,_] -> raise Stream.Failure
+             | [AND,_;OSQUARE,_] -> raise Stream.Failure
              | _ -> ())
 
  let peek_heap_args = 
@@ -372,28 +383,28 @@ data_body:
       | `OBRACE; fl=field_list2; `CBRACE   ->  fl
       | `OBRACE; `CBRACE                             -> []] ];
  
-(* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos 1) *)
+(* field_list:[[ fl = LIST1 one_field SEP `SEMICOLON -> error_on_dups (fun n1 n2-> (snd (fst n1))==(snd (fst n2))) fl (get_pos_camlp4 _loc 1) *)
 (*            ]];  *)
 
 
 field_list2:[[ 
-     t = typ; `IDENTIFIER n -> [((t,n),get_pos 1)]
-  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos 1)]
+     t = typ; `IDENTIFIER n -> [((t,n),get_pos_camlp4 _loc 1)]
+  |  t = typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> [((t,n), get_pos_camlp4 _loc 1)]
   |   
        t=typ; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF ->(  
 			if List.mem n (List.map (fun f -> snd (fst f)) fl) then
-				report_error (get_pos 4) (n ^ " is duplicated")
+				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t, n), get_pos 3) :: fl )
+				((t, n), get_pos_camlp4 _loc 3) :: fl )
   | t1= typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n; peek_try; `SEMICOLON; fl = SELF -> 
 			(if List.mem n (List.map (fun f -> snd (fst f)) fl) then
-				report_error (get_pos 4) (n ^ " is duplicated")
+				report_error (get_pos_camlp4 _loc 4) (n ^ " is duplicated")
 			else
-				((t1, n), get_pos 3) :: fl ) ]];
+				((t1, n), get_pos_camlp4 _loc 3) :: fl ) ]];
 
 (* one_field:   *)
-(*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos 1) *)
-(*    | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos 1)  *)
+(*   [[ t=typ; `IDENTIFIER n -> ((t, n), get_pos_camlp4 _loc 1) *)
+(*    | t=typ; `OSQUARE; t2=typ; `CSQUARE; `IDENTIFIER n -> ((t,n), get_pos_camlp4 _loc 1)  *)
 (*    ]];  *)
 
  (********** Views **********)
@@ -412,19 +423,19 @@ opt_branches:[[t=OPT branches -> un_option t []]];
 
 branches : [[`AND; `OSQUARE; b=LIST1 one_branch SEP `SEMICOLON ; `CSQUARE -> b ]];
 
-one_branch : [[ `DOUBLEQUOTE; `IDENTIFIER id; `DOUBLEQUOTE; `COLON; pc=pure_constr -> (id,pc)]];
+one_branch : [[ `STRING (_,id); `COLON; pc=pure_constr -> (id,pc)]];
 
 opt_branch:[[t=OPT branch -> un_option t ""]];
 
-branch: [[`DOUBLEQUOTE; `IDENTIFIER id ; `DOUBLEQUOTE; `COLON -> id ]];
+branch: [[ `STRING (_,id);`COLON -> id ]];
 
 
 view_header:
-  [[ `IDENTIFIER vn; `LT; l=opt_ann_cid_list; `GT ->
+  [[ `IDENTIFIER vn; `LT; l= opt_ann_cid_list; `GT ->
       let cids, anns = List.split l in
       let cids, br_labels = List.split cids in
       if List.exists (fun x -> match snd x with | Primed -> true | Unprimed -> false) cids then
-        report_error (get_pos 1) ("variables in view header are not allowed to be primed")
+        report_error (get_pos_camlp4 _loc 1) ("variables in view header are not allowed to be primed")
       else
         let modes = get_modes anns in
         { view_name = vn;
@@ -434,8 +445,8 @@ view_header:
           view_modes = modes;
           view_typed_vars = [];
           view_pt_by_self  = [];
-          view_formula = F.mkETrue top_flow (get_pos 1);
-          view_invariant = (P.mkTrue (get_pos 1), []);
+          view_formula = F.mkETrue top_flow (get_pos_camlp4 _loc 1);
+          view_invariant = (P.mkTrue (get_pos_camlp4 _loc 1), []);
           try_case_inference = false;
 			}]];
       
@@ -458,13 +469,13 @@ view_body:
 opt_heap_arg_list: [[t=LIST1 cexp SEP `COMMA -> t
 ]];
 
-opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
+opt_heap_arg_list2:[[t=LIST1 heap_arg2 SEP `COMMA ->error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
   
 heap_arg2: [[ peek_heap_args; `IDENTIFIER id ; `EQ;  e=cexp -> (id,e)]]; 
 
-opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
+opt_cid_list: [[t=LIST0 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
 
-cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos 1)]];
+cid_list: [[t=LIST1 cid SEP `COMMA -> error_on_dups (fun n1 n2-> (fst n1)==(fst n2)) t (get_pos_camlp4 _loc 1)]];
   
 (* annotated cid list *)
 opt_ann_cid_list: [[t=LIST0 ann_cid SEP `COMMA -> t]];
@@ -476,7 +487,7 @@ opt_ann_list: [[t=LIST0 ann -> t]];
 ann:
   [[ `AT; `IDENTIFIER id -> begin
       if id = "out" then AnnMode ModeOut
-      else report_error (get_pos 2) ("unrecognized mode: " ^ id) end
+      else report_error (get_pos_camlp4 _loc 2) ("unrecognized mode: " ^ id) end
    | `AT ; `IN_T       -> AnnMode ModeIn]];
       
 sq_clist: [[`OSQUARE; l= opt_cid_list; `CSQUARE -> l ]];
@@ -493,19 +504,19 @@ extended_constr:
 	[[ `CASE; `OBRACE; il= impl_list; `CBRACE -> 
       Iformula.ECase {
           Iformula.formula_case_branches = il;
-          Iformula.formula_case_pos = (get_pos 3) }
-	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> Iformula.mkEBase sl [] [] oc (un_option rc [])(get_pos 2)]];	
+          Iformula.formula_case_pos = (get_pos_camlp4 _loc 3) }
+	| sl=sq_clist; oc=disjunctive_constr; rc= OPT extended_l -> Iformula.mkEBase sl [] [] oc (un_option rc [])(get_pos_camlp4 _loc 2)]];	
   
 impl_list:[[t=LIST1 impl -> t]];
 
 impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
-			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos 1) ("anonimous variables in case guard are disalowed")
+			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
 
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos 2)]    
+    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 2)]    
   |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
    [ cc=core_constr             -> cc
@@ -514,15 +525,15 @@ disjunctive_constr:
       | F.Base ({F.formula_base_heap = h;
                F.formula_base_pure = p;
                F.formula_base_flow = fl;
-               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos 1)
-      | _ -> report_error (get_pos 4) ("only Base is expected here."))
+               F.formula_base_branches = b}) -> F.mkExists ocl h p fl b (get_pos_camlp4 _loc 1)
+      | _ -> report_error (get_pos_camlp4 _loc 4) ("only Base is expected here."))
   
    ]
   ];
       
 core_constr:
-  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos 1))
-   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos 2)
+  [[ pc= pure_constr    ; fc= opt_flow_constraints; fb=opt_branches   -> F.replace_branches fb (F.formula_of_pure_with_flow pc fc (get_pos_camlp4 _loc 1))
+   | hc= opt_heap_constr; pc= opt_pure_constr; fc= opt_flow_constraints; fb= opt_branches   -> F.mkBase hc pc fc fb (get_pos_camlp4 _loc 2)
    ]];
 
 opt_flow_constraints: [[t=OPT flow_constraints -> un_option t stub_flow]];
@@ -546,32 +557,32 @@ opt_heap_constr:
      | `TRUE -> F.HTrue]];
 
 (* heap_constr: *)
-(*   [[    hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos 2)]  *)
+(*   [[    hrd=SELF; `STAR; hrw=SELF -> F.mkStar hrd hrw (get_pos_camlp4 _loc 2)]  *)
 (* (\*      |[ shc = simple_heap_constr -> shc]  *\) *)
 (*      |[ c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_heap_arg_list; `GT; ofl = opt_formula_label ->   *)
-(*                     F.mkHeapNode c id false false false false hal ofl (get_pos 2)  *)
+(*                     F.mkHeapNode c id false false false false hal ofl (get_pos_camlp4 _loc 2)  *)
 (*   ]];  *)
 
 heap_constr:
-  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos 2)
-   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos 2)
-   | hrw = heap_rw                                          -> F.mkPhase F.HTrue hrw (get_pos 2)]]; 
+  [[ `OPAREN; hrd=heap_rd; `CPAREN; `SEMICOLON; hrw=heap_rw -> F.mkPhase hrd hrw (get_pos_camlp4 _loc 2)
+   | `OPAREN; hrd=heap_rd; `CPAREN                          -> F.mkPhase hrd F.HTrue (get_pos_camlp4 _loc 2)
+   | hrw = heap_rw                                          -> F.mkPhase F.HTrue hrw (get_pos_camlp4 _loc 2)]]; 
 
 heap_rd: 
-  [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos 2)
-   | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos 2)
+  [[ shi=simple_heap_constr_imm; `STAR; hrd=SELF -> F.mkStar shi hrd (get_pos_camlp4 _loc 2)
+   | shi=simple_heap_constr_imm; `AND; hrd=SELF  -> F.mkConj shi hrd (get_pos_camlp4 _loc 2)
    | shi=simple_heap_constr_imm                  -> shi ]];
 
 heap_rw:
-  [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos 2)
-   | hwr=heap_wr                                          -> F.mkPhase F.HTrue hwr (get_pos 2)]];
+  [[ hrd=heap_wr; `STAR; `OPAREN; hc=heap_constr; `CPAREN -> F.mkStar hrd hc (get_pos_camlp4 _loc 2)
+   | hwr=heap_wr                                          -> F.mkPhase F.HTrue hwr (get_pos_camlp4 _loc 2)]];
 
 heap_wr:
   [[   
-     shc=SELF; peek_star; `STAR;  hw=simple_heap_constr     -> F.mkStar shc hw (get_pos 2)
+     shc=SELF; peek_star; `STAR;  hw=simple_heap_constr     -> F.mkStar shc hw (get_pos_camlp4 _loc 2)
    | shc=simple_heap_constr        -> shc
-   (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos 2) *)
-   (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos 2) *)
+   (* | shi=simple_heap_constr_imm; `STAR;  hw=SELF -> F.mkStar shi hw (get_pos_camlp4 _loc 2) *)
+   (* | shi=simple_heap_constr_imm; `STAR; `OPAREN; hc=heap_constr; `CPAREN  -> F.mkStar shi hc (get_pos_camlp4 _loc 2) *)
   ]];
  
 simple2:  [[ t= opt_type_var_list; `LT -> ()]];
@@ -579,20 +590,20 @@ simple2:  [[ t= opt_type_var_list; `LT -> ()]];
 simple_heap_constr_imm:
   [[ peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; `LT; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
      match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2)]];
+        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2)]];
 
 simple_heap_constr:
   [[ 
     peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hl= opt_general_h_args; `GT;  `IMM; ofl= opt_formula_label ->
     (match hl with
-        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos 2)
-        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos 2))
+        | ([],t) -> F.mkHeapNode2 c id true false false false t ofl (get_pos_camlp4 _loc 2)
+        | (t,_)  -> F.mkHeapNode c id true false false false t ofl (get_pos_camlp4 _loc 2))
   | peek_heap; c=cid; `COLONCOLON; `IDENTIFIER id; simple2; hal=opt_general_h_args; `GT; ofl = opt_formula_label -> 
     (match hal with
-      | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos 2)
-      | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos 2))
-  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos 1)]];
+      | ([],t) -> F.mkHeapNode2 c id false false false false t ofl (get_pos_camlp4 _loc 2)
+      | (t,_)  -> F.mkHeapNode c id false false false false t ofl (get_pos_camlp4 _loc 2))
+  | t = ho_fct_header -> F.mkHeapNode ("",Primed) "" false false false false [] None  (get_pos_camlp4 _loc 1)]];
   
 opt_general_h_args: [[t = OPT general_h_args -> un_option t ([],[])]];   
         
@@ -616,12 +627,12 @@ and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr -> t]];
     
 pure_constr: [[ peek_pure; t=cexp_w -> match t with
                     | Pure_f f -> f
-                    | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos 1), None )
-                    | _ ->  report_error (get_pos 1) "expected pure_constr, found cexp"]];
+                    | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos_camlp4 _loc 1), None )
+                    | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
 
 cexp: [[t=cexp_w -> match t with
                     | Pure_c f -> f
-                    | _ -> report_error (get_pos 1) "expected cexp, found pure_constr"]
+                    | _ -> report_error (get_pos_camlp4 _loc 1) "expected cexp, found pure_constr"]
 ];
 
 cexp_w :
@@ -629,32 +640,32 @@ cexp_w :
     [ofl= pure_label ; spc=SELF (*LEVEL "pure_or"*)          -> apply_pure_form1 (fun c-> label_formula c ofl) spc]   (*apply_cexp*)
   
   | "pure_or" RIGHTA
-   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos 2)) pc1 pc2]
+   [ pc1=SELF; `OR; pc2=SELF             -> apply_pure_form2 (fun c1 c2-> P.mkOr c1 c2 None (get_pos_camlp4 _loc 2)) pc1 pc2]
   
   | "pure_and" RIGHTA
-   [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos 2)) pc1 pc2]
+   [ pc1=SELF; peek_and; `AND; pc2=SELF              -> apply_pure_form2 (fun c1 c2-> P.mkAnd c1 c2 (get_pos_camlp4 _loc 2)) pc1 pc2]
 
   |"bconstrp" RIGHTA
-    [  lc=SELF; `NEQ;  cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl
-     | lc=SELF; `EQ;   cl=SELF  -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos 2)) lc cl 
+    [  lc=SELF; `NEQ;  cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl
+     | lc=SELF; `EQ;   cl=SELF  -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
      
     ]  
   | "bconstr"
-    [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos 2)) lc cl *)
-     (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos 2)) lc cl  *)
-     (* |  *)lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos 2)) lc cl 
-     | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos 2)) lc cl
-     | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos 2)) lc cl
-     | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos 2)) lc cl   
-     | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos 2))) cl
-     | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos 2))) cl  
-     | lc=SELF; `SUBSET; cl=SELF                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos 2))) lc cl 
-     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMax (c1, c2, (get_pos 2)), None))
-     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMin (c1, c2, (get_pos 2)), None))  
-     | lc=SELF; `INLIST; cl=SELF                -> cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos 2))) lc cl 
-     | lc=SELF; `NOTINLIST; cl=SELF             -> cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos 2))) lc cl 
-     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos 2))) lc cl  
-     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos 2))) lc cl  ]
+    [ (*  lc=SELF; `NEQ;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkNeq c1 c2 (get_pos_camlp4 _loc 2)) lc cl *)
+     (* | lc=SELF; `EQ;   cl=SELF   -> cexp_to_pure2 (fun c1 c2-> P.mkEq c1 c2 (get_pos_camlp4 _loc 2)) lc cl  *)
+     (* |  *)lc=SELF; `LTE;    cl=SELF       ->  cexp_to_pure2 (fun c1 c2-> P.mkLte c1 c2 (get_pos_camlp4 _loc 2)) lc cl 
+     | lc=SELF; `LT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkLt c1 c2 (get_pos_camlp4 _loc 2)) lc cl
+     | lc=SELF; peek_try; `GT;     cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGt c1 c2 (get_pos_camlp4 _loc 2)) lc cl
+     | lc=SELF; `GTE;    cl=SELF       -> cexp_to_pure2 (fun c1 c2-> P.mkGte c1 c2 (get_pos_camlp4 _loc 2)) lc cl   
+     | peek_try; lc=cid; `IN_T;   cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagIn (lc,c2,(get_pos_camlp4 _loc 2))) cl
+     | peek_try; lc=cid; `NOTIN;  cl=SELF                      -> cexp_to_pure1 (fun c2-> P.BagNotIn(lc,c2,(get_pos_camlp4 _loc 2))) cl  
+     | lc=SELF; `SUBSET; cl=SELF                            -> cexp_to_pure2 (fun c1 c2-> P.BagSub (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
+     | `BAGMAX; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMax (c1, c2, (get_pos_camlp4 _loc 2)), None))
+     | `BAGMIN; `OPAREN; c1=cid; `COMMA; c2=cid; `CPAREN        -> Pure_f (P.BForm (P.BagMin (c1, c2, (get_pos_camlp4 _loc 2)), None))  
+     | lc=SELF; `INLIST; cl=SELF                -> cexp_to_pure2 (fun c1 c2-> P.ListIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
+     | lc=SELF; `NOTINLIST; cl=SELF             -> cexp_to_pure2 (fun c1 c2-> P.ListNotIn (c1, c2, (get_pos_camlp4 _loc 2))) lc cl 
+     | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  
+     | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  ]
 
    
   | "pure_paren" 
@@ -662,68 +673,68 @@ cexp_w :
    
 (* constraint expressions *)
    | "gen"
-   [ `OBRACE; c= opt_cexp_list; `CBRACE                            -> Pure_c (P.Bag (c, get_pos 1)) 
-   | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos 1))
-   | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos 1)) 
-   | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN             -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos 1) ) c1 c2
+   [ `OBRACE; c= opt_cexp_list; `CBRACE                            -> Pure_c (P.Bag (c, get_pos_camlp4 _loc 1)) 
+   | `UNION; `OPAREN; c=opt_cexp_list; `CPAREN                     -> Pure_c (P.BagUnion (c, get_pos_camlp4 _loc 1))
+   | `INTERSECT; `OPAREN; c=opt_cexp_list; `CPAREN                 -> Pure_c (P.BagIntersect (c, get_pos_camlp4 _loc 1)) 
+   | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN             -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
  
 
-   | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos 1)) 
-   |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos 2)) c1 c2 
-   | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos 1)) c1
-   | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos 1))
-   | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos 1)) c1 
+   | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
+   |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
+   | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1
+   | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
+   | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
    (* | t=cexp_w LEVEL "addit" -> t *) ]
  
    | "addit"
-     [ c1=SELF ; `PLUS; c2=SELF       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos 2)) c1 c2  
-     | c1=SELF ; `MINUS; c2=SELF      -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos 2)) c1 c2
+     [ c1=SELF ; `PLUS; c2=SELF       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
+     | c1=SELF ; `MINUS; c2=SELF      -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos_camlp4 _loc 2)) c1 c2
      (*| t =cexp_w LEVEL "mul"                                        -> t*)]
      
    | "mul"
-     [ t1=SELF ; `STAR; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos 2)) t1 t2
-     | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos 2)) t1 t2  
+     [ t1=SELF ; `STAR; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkMult c1 c2 (get_pos_camlp4 _loc 2)) t1 t2
+     | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
-   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos 1)) c (get_pos 1)) c
+   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
 
 ] 
 
    | "una"
-     [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos 1)) *)
-     (* | *) `NULL                                     -> Pure_c (P.Null (get_pos 1))
+     [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
+     (* | *) `NULL                                     -> Pure_c (P.Null (get_pos_camlp4 _loc 1))
 
      | `IDENTIFIER id; `OPAREN; cl = opt_cexp_list; CPAREN -> (* print_string("here"); *)
     (* AnHoa: relation constraint, for instance, given the relation 
     *  s(a,b,c) == c = a + b.
     *  After this definition, we can have the relation constraint: s(x,1,x+1), s(x,y,x+y), ... in our formula.
     *)  
-            Pure_f(P.BForm (P.RelForm (id, cl, get_pos 1), None))
+            Pure_f(P.BForm (P.RelForm (id, cl, get_pos_camlp4 _loc 1), None))
 
-     | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos 1)) ocl in *) Pure_c(P.List(ocl, get_pos 1)) 
-     | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos 1))
-     | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos 1)) 
-     | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos 1))
+     | peek_cexp_list; ocl = opt_comma_list -> (* let tmp = List.map (fun c -> P.Var(c,get_pos_camlp4 _loc 1)) ocl in *) Pure_c(P.List(ocl, get_pos_camlp4 _loc 1)) 
+     | t = cid                -> (* print_string ("cexp:"^(fst t)^"\n"); *)Pure_c (P.Var (t, get_pos_camlp4 _loc 1))
+     | `INT_LITER (i,_)                          -> Pure_c (P.IConst (i, get_pos_camlp4 _loc 1)) 
+     | `FLOAT_LIT (f,_)                          -> (* (print_string ("FLOAT:"^string_of_float(f)^"\n"); *) Pure_c (P.FConst (f, get_pos_camlp4 _loc 1))
      | `OPAREN; t=SELF; `CPAREN                -> t  
-     |  i=cid; `OSQUARE; c=cexp; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos 1))
+     |  i=cid; `OSQUARE; c=cexp; `CSQUARE                            -> Pure_c (P.ArrayAt (i, c, get_pos_camlp4 _loc 1))
 
      | `MAX; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
-                                                 -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos 1)) c1 c2
+                                                 -> apply_cexp_form2 (fun c1 c2-> P.mkMax c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
      | `MIN; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN 
-                                                 -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos 1)) c1 c2
-     | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos 1)) c
-     | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos 1)) c ]
+                                                 -> apply_cexp_form2 (fun c1 c2-> P.mkMin c1 c2 (get_pos_camlp4 _loc 1)) c1 c2
+     | `HEAD; `OPAREN; c=SELF; `CPAREN         -> apply_cexp_form1 (fun c -> P.ListHead (c, get_pos_camlp4 _loc 1)) c
+     | `LENGTH; `OPAREN; c=SELF; `CPAREN       -> apply_cexp_form1 (fun c -> P.ListLength (c, get_pos_camlp4 _loc 1)) c ]
  
    | "pure_base"
-     [ `TRUE                             -> Pure_f (P.mkTrue (get_pos 1))
-     | `FALSE                            -> Pure_f (P.mkFalse (get_pos 1))
+     [ `TRUE                             -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1))
+     | `FALSE                            -> Pure_f (P.mkFalse (get_pos_camlp4 _loc 1))
      | `EXISTS; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN      
-                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos 1)) c ocl) pc
+                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v ->P.mkExists [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
      | `FORALL; `OPAREN; ocl=opt_cid_list; `COLON; pc=SELF; `CPAREN 
-                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos 1)) c ocl) pc
-     | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos 1), None ))
-     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos 2), None )) None (get_pos 1))
-     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos 1)) 
+                                         -> apply_pure_form1 (fun c-> List.fold_left (fun f v-> P.mkForall [v] f None (get_pos_camlp4 _loc 1)) c ocl) pc
+     | t=cid                             -> (*print_string ("pure_form:"^(fst t)^"\n");*) Pure_f (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 1), None ))
+     | `NOT; t=cid                       -> Pure_f (P.mkNot (P.BForm (P.mkBVar t (get_pos_camlp4 _loc 2), None )) None (get_pos_camlp4 _loc 1))
+     | `NOT; `OPAREN; c=pure_constr; `CPAREN     -> Pure_f (P.mkNot c None (get_pos_camlp4 _loc 1)) 
     
      (*| lc=cexp_w LEVEL "bconstr"    -> lc*)
      ]
@@ -734,9 +745,9 @@ cexp_w :
 opt_comma_list:[[t = LIST0 opt_comma SEP `COMMA -> t
 ]];
 
-opt_comma:[[t = cid ->  P.Var (t, get_pos 1)
-  | `INT_LITER (i,_) ->  P.IConst (i, get_pos 1)
-  | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos 1)
+opt_comma:[[t = cid ->  P.Var (t, get_pos_camlp4 _loc 1)
+  | `INT_LITER (i,_) ->  P.IConst (i, get_pos_camlp4 _loc 1)
+  | `FLOAT_LIT (f,_)  -> P.FConst (f, get_pos_camlp4 _loc 1)
    ]];
 
 opt_cexp_list:[[t=LIST0 cexp SEP `COMMA -> t]]; 
@@ -761,8 +772,8 @@ print_cmd:
    | `PRINT; `DOLLAR; `IDENTIFIER id  -> PVar id]];
 
 time_cmd:
-  [[ `DTIME; `ON; `IDENTIFIER id   -> Time(true, id, get_pos 1)
-   | `DTIME; `OFF; `IDENTIFIER id  -> Time(false, id, get_pos 1)]];
+  [[ `DTIME; `ON; `IDENTIFIER id   -> Time(true, id, get_pos_camlp4 _loc 1)
+   | `DTIME; `OFF; `IDENTIFIER id  -> Time(false, id, get_pos_camlp4 _loc 1)]];
 
 let_decl:
   [[ `LET; `DOLLAR; `IDENTIFIER id; `EQ; mc=meta_constr ->	LetDef (id, mc)]];
@@ -786,7 +797,7 @@ coercion_decl:
         coercion_body = (F.subst_stub_flow top_flow dc2);
         coercion_proof = Return ({ exp_return_val = None;
                      exp_return_path_id = None ;
-                     exp_return_pos = get_pos 1 })}]];
+                     exp_return_pos = get_pos_camlp4 _loc 1 })}]];
 
 coercion_direction:
   [[ `LEFTARROW  -> Left
@@ -882,7 +893,7 @@ opt_fct_list:[[ t = OPT fct_list -> []]];
 rel_decl:[[ rh=rel_header; `EQEQ; rb=rel_body (* opt_inv *) -> 
 	{ rh with rel_formula = rb (* (fst $3) *); (* rel_invariant = $4; *)}
   
-  | rh = rel_header; `EQ -> report_error (get_pos 2) ("use == to define a relation")
+  | rh = rel_header; `EQ -> report_error (get_pos_camlp4 _loc 2) ("use == to define a relation")
 ]];
 
 typed_id_list:[[ t = typ; `IDENTIFIER id ->  (t,id) ]];
@@ -896,13 +907,13 @@ rel_header:[[
 	  if List.exists 
 		(fun x -> match snd x with | Primed -> true | Unprimed -> false) cids 
 	  then
-		report_error (get_pos 1) 
+		report_error (get_pos_camlp4 _loc 1) 
 		  ("variables in view header are not allowed to be primed")
 	  else
 		let modes = get_modes anns in *)
 		  { rel_name = id;
 			rel_typed_vars = tl;
-			rel_formula = P.mkTrue (get_pos 1); (* F.mkETrue top_flow (get_pos 1); *)			
+			rel_formula = P.mkTrue (get_pos_camlp4 _loc 1); (* F.mkETrue top_flow (get_pos_camlp4 _loc 1); *)			
 			}
 ]];
 
@@ -975,7 +986,7 @@ type_decl:
    
 (***************** Global_variable **************)
 global_var_decl:
-  [[ `GLOBAL; lvt=local_variable_type; vd=variable_declarators; `SEMICOLON -> mkGlobalVarDecl lvt vd (get_pos 1)]];
+  [[ `GLOBAL; lvt=local_variable_type; vd=variable_declarators; `SEMICOLON -> mkGlobalVarDecl lvt vd (get_pos_camlp4 _loc 1)]];
 
 (**************** Class ******************)
 
@@ -995,7 +1006,7 @@ extends: [[`EXTENDS; `IDENTIFIER id -> id]];
 member_list_opt: [[t = LIST0 member SEP `SEMICOLON -> t]];
 
 member:
- [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos 2)
+ [[ t=typ; `IDENTIFIER id -> Field ((t, id), get_pos_camlp4 _loc 2)
   | `INV;  dc=disjunctive_constr -> Inv (F.subst_stub_flow top_flow dc) 
   | pd=proc_decl -> Method pd
   | cd=constructor_decl -> Method cd]];
@@ -1031,30 +1042,30 @@ spec:
 			 Iformula.formula_ext_exists = [];
 			 Iformula.formula_ext_base = (F.subst_stub_flow n_flow dc);
 			 Iformula.formula_ext_continuation = [s];
-			 Iformula.formula_ext_pos = (get_pos 1)}
+			 Iformula.formula_ext_pos = (get_pos_camlp4 _loc 1)}
 	 | `REQUIRES; cl=opt_sq_clist; dc=disjunctive_constr; `OBRACE; sl=spec_list; `CBRACE ->
 	    	Iformula.EBase {
 	    	 Iformula.formula_ext_explicit_inst =cl;
 	    	 Iformula.formula_ext_implicit_inst = [];
 	    	 Iformula.formula_ext_exists = [];
 	    	 Iformula.formula_ext_base =  (F.subst_stub_flow n_flow dc);
-	    	 Iformula.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos 1) "spec must contain ensures"
+	    	 Iformula.formula_ext_continuation = if ((List.length sl)==0) then report_error (get_pos_camlp4 _loc 1) "spec must contain ensures"
 	    																					else sl;
-	    	 Iformula.formula_ext_pos = (get_pos 1)}
+	    	 Iformula.formula_ext_pos = (get_pos_camlp4 _loc 1)}
        
 	 | `ENSURES; ol= opt_label; dc= disjunctive_constr; `SEMICOLON ->
       Iformula.EAssume ((F.subst_stub_flow n_flow dc),(fresh_formula_label ol))
 	 | `CASE; `OBRACE; bl= branch_list; `CBRACE ->
 			Iformula.ECase {
 						Iformula.formula_case_branches = bl; 
-						Iformula.formula_case_pos = get_pos 1; }
+						Iformula.formula_case_pos = get_pos_camlp4 _loc 1; }
 	 | `VARIANCE; `OPAREN; il=integer_literal; `CPAREN; m=opt_measures; ec=opt_escape_conditions; s=SELF ->
 			Iformula.EVariance {
 					Iformula.formula_var_label = il;
 					Iformula.formula_var_measures = m;
 					Iformula.formula_var_escape_clauses = ec;
 					Iformula.formula_var_continuation = [s];
-					Iformula.formula_var_pos = get_pos 1;}]];	
+					Iformula.formula_var_pos = get_pos_camlp4 _loc 1;}]];	
           
 opt_measures: [[t=OPT measures -> un_option t []]];
 
@@ -1089,11 +1100,11 @@ proc_decl:
 proc_header:
   [[ t=typ; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs osl in*)
-     mkProc id "" None false ot fpl t osl [] (get_pos 1) None
+     mkProc id "" None false ot fpl t osl [] (get_pos_camlp4 _loc 1) None
      
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc id "" None false ot fpl void_type osl [] (get_pos 1) None]];
+    mkProc id "" None false ot fpl void_type osl [] (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}
@@ -1103,9 +1114,9 @@ constructor_header:
   [[ `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $5 in*)
 		(*if Util.empty dynamic_specs then*)
-      mkProc id "" None true ot fpl (Named id) osl [] (get_pos 1) None
+      mkProc id "" None true ot fpl (Named id) osl [] (get_pos_camlp4 _loc 1) None
     (*	else
-		  report_error (get_pos 1) ("constructors have only static speficiations");*) ]];
+		  report_error (get_pos_camlp4 _loc 1) ("constructors have only static speficiations");*) ]];
 	
 
 
@@ -1115,7 +1126,7 @@ fixed_parameter:
   [[ pm=OPT ref_t; t=typ; `IDENTIFIER id -> 
       { param_mod = un_option pm NoMod;
         param_type = t;
-        param_loc = get_pos 3;
+        param_loc = get_pos_camlp4 _loc 3;
         param_name = id }]];
 
 ref_t: [[REF -> RefMod]];
@@ -1127,27 +1138,27 @@ proc_body: [[t=block-> t]];
 block: 
   [[ `OBRACE; t=statement_list; `CBRACE -> 
 	  match t with
-	  | Empty _ -> Block { exp_block_body = Empty (get_pos 1);
+	  | Empty _ -> Block { exp_block_body = Empty (get_pos_camlp4 _loc 1);
                          exp_block_jump_label = NoJumpLabel;
                          exp_block_local_vars = [];
-                         exp_block_pos = get_pos 1 }
+                         exp_block_pos = get_pos_camlp4 _loc 1 }
 	  | _ -> Block { exp_block_body = t;
                    exp_block_jump_label = NoJumpLabel;
                    exp_block_local_vars = [];
-                   exp_block_pos = get_pos 1 }
+                   exp_block_pos = get_pos_camlp4 _loc 1 }
 				   ]];
 
 statement_list: 
 [[ s = statement -> s
   | sl=SELF; s=statement  -> Seq { exp_seq_exp1 = sl;
 									 exp_seq_exp2 = s;
-									 exp_seq_pos = get_pos 1 }
+									 exp_seq_pos = get_pos_camlp4 _loc 1 }
 ]];
 
 (* opt_statement_list: [[ t= LIST0 statement SEP `SEMICOLON ->  *)
 (*     match t with  *)
 (*      | [] ->  Empty no_pos *)
-(*      | h::t -> List.fold_left (fun a c-> Seq {exp_seq_exp1 = a; exp_seq_exp2=c; exp_seq_pos =get_pos 1}) h t ]]; *)
+(*      | h::t -> List.fold_left (fun a c-> Seq {exp_seq_exp1 = a; exp_seq_exp2=c; exp_seq_pos =get_pos_camlp4 _loc 1}) h t ]]; *)
   
 statement:
   [[ t=declaration_statement; `SEMICOLON -> t
@@ -1159,29 +1170,29 @@ declaration_statement:
 
 local_variable_type: [[ t= typ -> t]];
 
-local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos 1)]];
+local_variable_declaration: [[  t1=local_variable_type; t2=variable_declarators ->  mkVarDecl t1 t2 (get_pos_camlp4 _loc 1)]];
 
-local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos 1)]];
+local_constant_declaration: [[ `CONST; lvt=local_variable_type; cd=constant_declarators ->  mkConstDecl lvt cd (get_pos_camlp4 _loc 1)]];
 	
 variable_declarators: [[ t= LIST1 variable_declarator SEP `COMMA -> t]];
   
 variable_declarator:
-  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (* print_string ("Identifier : "^id^"\n"); *) (id, Some t, get_pos 1)
-   | `IDENTIFIER id -> (* print_string ("Identifier : "^id^"\n"); *)(id, None, get_pos 1) ]];
+  [[ `IDENTIFIER id; `EQ; t=variable_initializer  -> (* print_string ("Identifier : "^id^"\n"); *) (id, Some t, get_pos_camlp4 _loc 1)
+   | `IDENTIFIER id -> (* print_string ("Identifier : "^id^"\n"); *)(id, None, get_pos_camlp4 _loc 1) ]];
 
 variable_initializer: [[t= expression ->t]];
 
 constant_declarators: [[t=LIST1 constant_declarator SEP `COMMA -> t]];
 
-constant_declarator: [[ `IDENTIFIER id; `EQ; ce=constant_expression -> (id, ce, get_pos 1)]];
+constant_declarator: [[ `IDENTIFIER id; `EQ; ce=constant_expression -> (id, ce, get_pos_camlp4 _loc 1)]];
 
 labeled_valid_declaration_statement:
 	[[ `IDENTIFIER id ; `COLON; t=valid_declaration_statement -> 
 		(match t with
       | Block	b -> Block { b with exp_block_jump_label = JumpLabel id; }
       | While b -> While { b with exp_while_jump_label = JumpLabel id; }	
-      | _ -> report_error (get_pos 1) ("only blocks try and while statements can have labels"))		
-	 (* | t= OPT valid_declaration_statement -> un_option t (Empty (get_pos 1) ) *)
+      | _ -> report_error (get_pos_camlp4 _loc 1) ("only blocks try and while statements can have labels"))		
+	 (* | t= OPT valid_declaration_statement -> un_option t (Empty (get_pos_camlp4 _loc 1) ) *)
       | t = valid_declaration_statement -> t ]];
   
 valid_declaration_statement:
@@ -1201,29 +1212,29 @@ valid_declaration_statement:
   | [t= empty_statement -> t]
 ];
 
-empty_statement: [[`SEMICOLON -> Empty (get_pos 1) ]];
+empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
 
-unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos 1 }]];
+unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos_camlp4 _loc 1 }]];
  
 assert_statement:
   [[ `ASSERT; ol=opt_label; f=formulas -> 
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (get_pos 1)
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
-       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos 1)
+       mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
    | `ASSERT; ol=opt_label; f=formulas; `ASSUME; dc=disjunctive_constr ->  
-       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos 1)]];
+       mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)]];
 
 debug_statement:
-  [[ `DDEBUG; `ON -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos 2 }
-   | `DDEBUG; `OFF -> Debug { exp_debug_flag = false; exp_debug_pos = get_pos 2 }]];
+  [[ `DDEBUG; `ON -> Debug { exp_debug_flag = true;	exp_debug_pos = get_pos_camlp4 _loc 2 }
+   | `DDEBUG; `OFF -> Debug { exp_debug_flag = false; exp_debug_pos = get_pos_camlp4 _loc 2 }]];
    
 time_statement:
-  [[ `DTIME; `ON; `IDENTIFIER id -> I.Time (true,id,get_pos 1)
-   | `DTIME; `OFF; `IDENTIFIER id -> I.Time (false,id,get_pos 1)]];
+  [[ `DTIME; `ON; `IDENTIFIER id -> I.Time (true,id,get_pos_camlp4 _loc 1)
+   | `DTIME; `OFF; `IDENTIFIER id -> I.Time (false,id,get_pos_camlp4 _loc 1)]];
 
 dprint_statement:
-  [[ `DPRINT  -> Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos 1)})
-   | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos 1)})]];
+  [[ `DPRINT  -> Dprint ({exp_dprint_string = ""; exp_dprint_pos = (get_pos_camlp4 _loc 1)})
+   | `DPRINT; `STRING(_,id)  -> Dprint ({exp_dprint_string = id;  exp_dprint_pos = (get_pos_camlp4 _loc 1)})]];
    
 bind_statement:
   [[ `BIND; `IDENTIFIER id; `TO; `OPAREN; il = id_list_opt; `CPAREN; `IN_T; b=block ->
@@ -1231,9 +1242,9 @@ bind_statement:
              exp_bind_fields = il;
              exp_bind_body = b;
              exp_bind_path_id = None ;
-             exp_bind_pos = get_pos 1 }]];
+             exp_bind_pos = get_pos_camlp4 _loc 1 }]];
 
-java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos 1 }]];
+java_statement: [[ `JAVA s -> Java { exp_java_code = s;exp_java_pos = get_pos_camlp4 _loc 1 }]];
 
 expression_statement: [[(* t=statement_expression -> t *)
         t= invocation_expression -> t
@@ -1257,9 +1268,9 @@ if_statement:
   [[ `IF; `OPAREN; bc = boolean_expression; `CPAREN; es=embedded_statement ->
 	  Cond { exp_cond_condition = bc;
            exp_cond_then_arm = es;
-           exp_cond_else_arm = Empty (get_pos 1);
+           exp_cond_else_arm = Empty (get_pos_camlp4 _loc 1);
            exp_cond_path_id = None; 
-           exp_cond_pos = get_pos 1 } 	   
+           exp_cond_pos = get_pos_camlp4 _loc 1 } 	   
   |`IF; 
   `OPAREN; bc=boolean_expression; 
   `CPAREN; tb=embedded_statement; 
@@ -1268,7 +1279,7 @@ if_statement:
 			   exp_cond_then_arm = tb;
 			   exp_cond_else_arm = eb;
 			   exp_cond_path_id = None; 
-			   exp_cond_pos = get_pos 1 }]];
+			   exp_cond_pos = get_pos_camlp4 _loc 1 }]];
 
 iteration_statement: [[t=while_statement -> t]];
 
@@ -1276,12 +1287,12 @@ while_statement:
   [[ `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; es=embedded_statement ->
         While { exp_while_condition = bc;
             exp_while_body = es;
-            exp_while_specs = Iast.mkSpecTrue n_flow (get_pos 1);
+            exp_while_specs = Iast.mkSpecTrue n_flow (get_pos_camlp4 _loc 1);
             exp_while_jump_label = NoJumpLabel;
             exp_while_path_id = None ;
             exp_while_f_name = "";
             exp_while_wrappings = None;
-            exp_while_pos = get_pos 1 }
+            exp_while_pos = get_pos_camlp4 _loc 1 }
    | `WHILE; `OPAREN; bc=boolean_expression; `CPAREN; sl=spec_list; es=embedded_statement ->
         While { exp_while_condition = bc;
           exp_while_body = es;
@@ -1290,7 +1301,7 @@ while_statement:
           exp_while_path_id = None ;
           exp_while_f_name = "";
           exp_while_wrappings = None;
-          exp_while_pos = get_pos 1 }]];
+          exp_while_pos = get_pos_camlp4 _loc 1 }]];
 
 jump_statement:
   [[ t=return_statement -> t
@@ -1303,27 +1314,27 @@ break_statement:
         Break {
 				  exp_break_jump_label = NoJumpLabel;
 				  exp_break_path_id = None;
-					exp_break_pos = (get_pos 1);}
+					exp_break_pos = (get_pos_camlp4 _loc 1);}
 	| `BREAK; `IDENTIFIER id  ->
         Break {exp_break_jump_label = (JumpLabel id);
 				  		 exp_break_path_id = None; 
-							exp_break_pos = get_pos 1}]];
+							exp_break_pos = get_pos_camlp4 _loc 1}]];
 
 continue_statement:
   [[ `CONTINUE  ->
       Continue {exp_continue_jump_label = NoJumpLabel;
 							 exp_continue_path_id = None; 
-							 exp_continue_pos = get_pos 1}
+							 exp_continue_pos = get_pos_camlp4 _loc 1}
    | `CONTINUE; `IDENTIFIER  id ->
       Continue {exp_continue_jump_label = (JumpLabel id);
 							 exp_continue_path_id = None;
-							 exp_continue_pos = get_pos 1}]];
+							 exp_continue_pos = get_pos_camlp4 _loc 1}]];
 
 return_statement:
   [[ `RETURN; t=opt_expression ->
       Return { exp_return_val = t;
 			 		     exp_return_path_id = None;
-							 exp_return_pos = get_pos 1 }]];
+							 exp_return_pos = get_pos_camlp4 _loc 1 }]];
 
 raise_statement:
 	[[ `RAISE; t=expression ->
@@ -1331,7 +1342,7 @@ raise_statement:
 						  exp_raise_val = Some t;
               exp_raise_from_final = false;
               exp_raise_path_id = None; 
-              exp_raise_pos = get_pos 1 }]];
+              exp_raise_pos = get_pos_camlp4 _loc 1 }]];
               
 try_statement:
 	[[ `TRY; t=valid_declaration_statement; cl=opt_catch_list; fl=opt_finally->
@@ -1339,7 +1350,7 @@ try_statement:
             exp_catch_clauses = cl;
             exp_finally_clause = fl;
             exp_try_path_id = None;
-            exp_try_pos = get_pos 1 }]];
+            exp_try_pos = get_pos_camlp4 _loc 1 }]];
 
 opt_catch_list: [[t= LIST0 catch_clause -> t]];
 	
@@ -1349,11 +1360,11 @@ catch_clause:
               exp_catch_flow_type = id1;
               exp_catch_flow_var = None;
               exp_catch_body = vds;																					   
-              exp_catch_pos = get_pos 1 }]];
+              exp_catch_pos = get_pos_camlp4 _loc 1 }]];
 
 opt_finally: [[t =OPT finally_c -> un_option t [] ]];
 	
-finally_c: [[`FINALLY; vds=valid_declaration_statement -> [Finally {exp_finally_body = vds;exp_finally_pos = get_pos 1 }]]];
+finally_c: [[`FINALLY; vds=valid_declaration_statement -> [Finally {exp_finally_body = vds;exp_finally_pos = get_pos_camlp4 _loc 1 }]]];
 
 opt_expression: [[t=OPT expression -> t]];
   
@@ -1366,7 +1377,7 @@ object_or_delegate_creation_expression:
   [[ `NEW; `IDENTIFIER id; `OPAREN; al=opt_argument_list; `CPAREN ->
       New { exp_new_class_name = id;
             exp_new_arguments = al;
-            exp_new_pos = get_pos 1 }]];
+            exp_new_pos = get_pos_camlp4 _loc 1 }]];
 
 new_expression: [[t=object_or_delegate_creation_expression -> t]];
 
@@ -1389,12 +1400,12 @@ constant_expression: [[t=expression -> t]];
 boolean_expression:  [[t=expression -> t]];
 
 assignment_expression:
-  [[ t1= prefixed_unary_expression; `EQ;  t2=expression            -> mkAssign OpAssign t1 t2 (get_pos 2)
-	 | t1=prefixed_unary_expression; `OP_MULT_ASSIGN;t2=expression  -> mkAssign OpMultAssign t1 t2 (get_pos 2)
-   | t1=prefixed_unary_expression; `OP_DIV_ASSIGN; t2=expression  -> mkAssign OpDivAssign t1 t2 (get_pos 2)
-   | t1=prefixed_unary_expression; `OP_MOD_ASSIGN; t2=expression  -> mkAssign OpModAssign t1 t2 (get_pos 2)
-	 | t1=prefixed_unary_expression; `OP_ADD_ASSIGN; t2=expression  -> mkAssign OpPlusAssign t1 t2 (get_pos 2)
-	 | t1=prefixed_unary_expression; `OP_SUB_ASSIGN; t2=expression  -> mkAssign OpMinusAssign t1 t2 (get_pos 2)]];
+  [[ t1= prefixed_unary_expression; `EQ;  t2=expression            -> mkAssign OpAssign t1 t2 (get_pos_camlp4 _loc 2)
+	 | t1=prefixed_unary_expression; `OP_MULT_ASSIGN;t2=expression  -> mkAssign OpMultAssign t1 t2 (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_DIV_ASSIGN; t2=expression  -> mkAssign OpDivAssign t1 t2 (get_pos_camlp4 _loc 2)
+   | t1=prefixed_unary_expression; `OP_MOD_ASSIGN; t2=expression  -> mkAssign OpModAssign t1 t2 (get_pos_camlp4 _loc 2)
+	 | t1=prefixed_unary_expression; `OP_ADD_ASSIGN; t2=expression  -> mkAssign OpPlusAssign t1 t2 (get_pos_camlp4 _loc 2)
+	 | t1=prefixed_unary_expression; `OP_SUB_ASSIGN; t2=expression  -> mkAssign OpMinusAssign t1 t2 (get_pos_camlp4 _loc 2)]];
 
 conditional_expression: 
   [[ t= conditional_or_expression -> t
@@ -1403,15 +1414,15 @@ conditional_expression:
              exp_cond_then_arm = e1;
              exp_cond_else_arm = e2;
              exp_cond_path_id = None ;
-             exp_cond_pos = get_pos 2 }*)]];
+             exp_cond_pos = get_pos_camlp4 _loc 2 }*)]];
 
 conditional_or_expression:
   [[ t=conditional_and_expression -> t
-   | t1=SELF; `OROR; t2=conditional_and_expression -> mkBinary OpLogicalOr t1 t2 (get_pos 2)]];
+   | t1=SELF; `OROR; t2=conditional_and_expression -> mkBinary OpLogicalOr t1 t2 (get_pos_camlp4 _loc 2)]];
 	
 conditional_and_expression:
   [[ t=inclusive_or_expression -> t
-   | t1=SELF; `ANDAND; t2=inclusive_or_expression -> mkBinary OpLogicalAnd t1 t2 (get_pos 2)]];
+   | t1=SELF; `ANDAND; t2=inclusive_or_expression -> mkBinary OpLogicalAnd t1 t2 (get_pos_camlp4 _loc 2)]];
 
 (* bitwise *)
 inclusive_or_expression : [[ t=exclusive_or_expression -> t]];
@@ -1422,55 +1433,55 @@ and_expression : [[t=equality_expression -> t]];
 
 equality_expression : 
  [[ t=relational_expression -> t
-  | t1=SELF; `EQEQ; t2=relational_expression -> mkBinary OpEq t1 t2 (get_pos 2)
-  | t1=SELF; `NEQ; t2=relational_expression -> mkBinary OpNeq t1 t2 (get_pos 2)]];
+  | t1=SELF; `EQEQ; t2=relational_expression -> mkBinary OpEq t1 t2 (get_pos_camlp4 _loc 2)
+  | t1=SELF; `NEQ; t2=relational_expression -> mkBinary OpNeq t1 t2 (get_pos_camlp4 _loc 2)]];
 
 relational_expression :
  [[ t=shift_expression                 -> t
-  | t1=SELF; `LT; t2=shift_expression  -> mkBinary OpLt t1 t2 (get_pos 2)
-  | t1=SELF; `GT; t2=shift_expression  -> mkBinary OpGt t1 t2 (get_pos 2)
-  | t1=SELF; `LTE; t2=shift_expression -> mkBinary OpLte t1 t2 (get_pos 2)
-  | t1=SELF; `GTE; t2=shift_expression -> mkBinary OpGte t1 t2 (get_pos 2)]];
+  | t1=SELF; `LT; t2=shift_expression  -> mkBinary OpLt t1 t2 (get_pos_camlp4 _loc 2)
+  | t1=SELF; `GT; t2=shift_expression  -> mkBinary OpGt t1 t2 (get_pos_camlp4 _loc 2)
+  | t1=SELF; `LTE; t2=shift_expression -> mkBinary OpLte t1 t2 (get_pos_camlp4 _loc 2)
+  | t1=SELF; `GTE; t2=shift_expression -> mkBinary OpGte t1 t2 (get_pos_camlp4 _loc 2)]];
 
 shift_expression: [[t=additive_expression -> t]];
 
 additive_expression: 
  [[ t=multiplicative_expression                   -> t
-  | t1=SELF; `PLUS; t2=multiplicative_expression  -> mkBinary OpPlus t1 t2 (get_pos 2)
-	| t1=SELF; `MINUS; t2=multiplicative_expression -> mkBinary OpMinus t1 t2 (get_pos 2)]];
+  | t1=SELF; `PLUS; t2=multiplicative_expression  -> mkBinary OpPlus t1 t2 (get_pos_camlp4 _loc 2)
+	| t1=SELF; `MINUS; t2=multiplicative_expression -> mkBinary OpMinus t1 t2 (get_pos_camlp4 _loc 2)]];
 
 multiplicative_expression:
  [[ t=unary_expression                            -> t 
-  | t1=SELF; `STAR; t2=prefixed_unary_expression  -> mkBinary OpMult t1 t2 (get_pos 2)
-	| t1=SELF; `DIV;  t2=prefixed_unary_expression  -> mkBinary OpDiv t1 t2 (get_pos 2)
-	| t1=SELF; `PERCENT; t2=prefixed_unary_expression -> mkBinary OpMod t1 t2 (get_pos 2)]];
+  | t1=SELF; `STAR; t2=prefixed_unary_expression  -> mkBinary OpMult t1 t2 (get_pos_camlp4 _loc 2)
+	| t1=SELF; `DIV;  t2=prefixed_unary_expression  -> mkBinary OpDiv t1 t2 (get_pos_camlp4 _loc 2)
+	| t1=SELF; `PERCENT; t2=prefixed_unary_expression -> mkBinary OpMod t1 t2 (get_pos_camlp4 _loc 2)]];
 
 prefixed_unary_expression: [[ t=unary_expression -> t]];
 
-pre_increment_expression: [[`OP_INC; t=prefixed_unary_expression -> mkUnary OpPreInc t (get_pos 1)]];
+pre_increment_expression: [[`OP_INC; t=prefixed_unary_expression -> mkUnary OpPreInc t (get_pos_camlp4 _loc 1)]];
 
-pre_decrement_expression: [[`OP_DEC; t=prefixed_unary_expression -> mkUnary OpPreDec t (get_pos 1)]];
+pre_decrement_expression: [[`OP_DEC; t=prefixed_unary_expression -> mkUnary OpPreDec t (get_pos_camlp4 _loc 1)]];
 
-post_increment_expression: [[peek_try_st_in; t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos 2)]];
+post_increment_expression: [[peek_try_st_in; t=primary_expression; `OP_INC -> mkUnary OpPostInc t (get_pos_camlp4 _loc 2)]];
 
-post_decrement_expression: [[ peek_try_st; t=primary_expression; `OP_DEC -> mkUnary OpPostDec t (get_pos 2)]];
+post_decrement_expression: [[ peek_try_st; t=primary_expression; `OP_DEC -> mkUnary OpPostDec t (get_pos_camlp4 _loc 2)]];
 
 unary_expression: 
  [[ t=unary_expression_not_plusminus -> t
   | `PLUS; t=SELF ->
 		let zero = IntLit { exp_int_lit_val = 0;
-                        exp_int_lit_pos = get_pos 1 }in
-		  mkBinary OpPlus zero t (get_pos 1)
+                        exp_int_lit_pos = get_pos_camlp4 _loc 1 }in
+		  mkBinary OpPlus zero t (get_pos_camlp4 _loc 1)
   | `MINUS; t=SELF ->
 		let zero = IntLit { exp_int_lit_val = 0;
-                        exp_int_lit_pos = get_pos 1 }	in
-		  mkBinary OpMinus zero t (get_pos 1)
+                        exp_int_lit_pos = get_pos_camlp4 _loc 1 }	in
+		  mkBinary OpMinus zero t (get_pos_camlp4 _loc 1)
   | t=pre_increment_expression -> t
   | t=pre_decrement_expression -> t]];
 
 unary_expression_not_plusminus:
  [[ t=postfix_expression -> t
-  | `NOT; t = prefixed_unary_expression -> mkUnary OpNot t (get_pos 1)
+  | `NOT; t = prefixed_unary_expression -> mkUnary OpNot t (get_pos_camlp4 _loc 1)
   | t=cast_expression -> t]];
 
 postfix_expression: 
@@ -1483,20 +1494,20 @@ cast_expression:
 	  (match e with
 		| Var v -> Cast { exp_cast_target_type = Named v.exp_var_name; (*TODO: fix this *)
                       exp_cast_body = ue;
-                      exp_cast_pos = get_pos 1 }
-		| _ -> report_error (get_pos 2) ("Expecting a type"))
+                      exp_cast_pos = get_pos_camlp4 _loc 1 }
+		| _ -> report_error (get_pos_camlp4 _loc 2) ("Expecting a type"))
   | `OPAREN; `INT; `CPAREN; t=unary_expression ->
       Cast { exp_cast_target_type = Prim Int;
              exp_cast_body = t;
-             exp_cast_pos = get_pos 1 }
+             exp_cast_pos = get_pos_camlp4 _loc 1 }
   | `OPAREN; `BOOL; `CPAREN; t=unary_expression ->
       Cast { exp_cast_target_type = Prim Bool;
              exp_cast_body = t;
-             exp_cast_pos = get_pos 1 }
+             exp_cast_pos = get_pos_camlp4 _loc 1 }
   | `OPAREN; `FLOAT; `CPAREN; t=unary_expression ->
       Cast { exp_cast_target_type = Prim Float;
              exp_cast_body = t;
-             exp_cast_pos = get_pos 1 }]];
+             exp_cast_pos = get_pos_camlp4 _loc 1 }]];
 
 invocation_expression:
  [[ peek_invocation; qi=qualified_identifier; `OPAREN; oal=opt_argument_list; `CPAREN ->
@@ -1504,12 +1515,12 @@ invocation_expression:
                exp_call_recv_method = snd qi;
                exp_call_recv_arguments = oal;
                exp_call_recv_path_id = None;
-               exp_call_recv_pos = get_pos 1 }
+               exp_call_recv_pos = get_pos_camlp4 _loc 1 }
   | `IDENTIFIER id; `OPAREN; oal=opt_argument_list; `CPAREN ->
     CallNRecv { exp_call_nrecv_method = id;
                 exp_call_nrecv_arguments = oal;
                 exp_call_nrecv_path_id = None;
-                exp_call_nrecv_pos = get_pos 1 }]];
+                exp_call_nrecv_pos = get_pos_camlp4 _loc 1 }]];
 
 qualified_identifier: [[peek_try_st_qi; t=primary_expression; `DOT; `IDENTIFIER id -> (t, id)]];
 
@@ -1517,16 +1528,16 @@ qualified_identifier: [[peek_try_st_qi; t=primary_expression; `DOT; `IDENTIFIER 
 (* 	Member { exp_member_base = t; *)
 (*            exp_member_fields = [id]; *)
 (*            exp_member_path_id = None ; *)
-(*            exp_member_pos = get_pos 3 }] *)
-(* 		   | [ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 } *)
-(* 			| `THIS _ -> This{exp_this_pos = get_pos 1}] *)
+(*            exp_member_pos = get_pos_camlp4 _loc 3 }] *)
+(* 		   | [ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos_camlp4 _loc 1 } *)
+(* 			| `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}] *)
 (* 		   ]; *)
 
 literal:
- [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos 1 }
-  | t=integer_literal -> IntLit { exp_int_lit_val = t;exp_int_lit_pos = get_pos 1 }
-  | t=real_literal -> FloatLit { exp_float_lit_val = t; exp_float_lit_pos = get_pos 1 }
-  | `NULL -> Null (get_pos 1) ]];
+ [[ t=boolean_literal -> BoolLit { exp_bool_lit_val = t; exp_bool_lit_pos = get_pos_camlp4 _loc 1 }
+  | t=integer_literal -> IntLit { exp_int_lit_val = t;exp_int_lit_pos = get_pos_camlp4 _loc 1 }
+  | t=real_literal -> FloatLit { exp_float_lit_val = t; exp_float_lit_pos = get_pos_camlp4 _loc 1 }
+  | `NULL -> Null (get_pos_camlp4 _loc 1) ]];
 
 real_literal:[[ `FLOAT_LIT (t,_) -> t]];
 
@@ -1550,13 +1561,13 @@ primary_expression_no_parenthesis :
 	Member { exp_member_base = t;
            exp_member_fields = [id];
            exp_member_path_id = None ;
-           exp_member_pos = get_pos 3 }
+           exp_member_pos = get_pos_camlp4 _loc 3 }
   | t = invocation_expression -> t
   | t = new_expression -> t
-  | `THIS _ -> This{exp_this_pos = get_pos 1}
+  | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}
 			
   | peek_array_type; t = arrayaccess_expression -> t   (* An Hoa *)]
-  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *) Var { exp_var_name = id; exp_var_pos = get_pos 1 }
+  | [`IDENTIFIER id -> (* print_string ("Variable Id : "^id^"\n"); *) Var { exp_var_name = id; exp_var_pos = get_pos_camlp4 _loc 1 }
 
 ]];
 
@@ -1566,11 +1577,11 @@ arrayaccess_expression:[[
 			ArrayAt { 
 				exp_arrayat_array_name = id; 
 				exp_arrayat_index = ex; 
-				exp_arrayat_pos = get_pos 1 }
+				exp_arrayat_pos = get_pos_camlp4 _loc 1 }
 	         ]];
 (* member_name : *)
-(*  [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos 1 } *)
-(*   | `THIS _ -> This{exp_this_pos = get_pos 1}]]; *)
+(*  [[ `IDENTIFIER id ->   Var { exp_var_name = id; exp_var_pos = get_pos_camlp4 _loc 1 } *)
+(*   | `THIS _ -> This{exp_this_pos = get_pos_camlp4 _loc 1}]]; *)
  
  (*end of hip part*)
 END;;

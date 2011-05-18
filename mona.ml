@@ -581,59 +581,24 @@ and mona_of_b_formula_x b f vs =
             (*| CP.Gte((CP.Subtract(a3, a1, pos1)), a2, pos2) -> (mona_of_b_formula (CP.Gte(a3, CP.Add(a2, a1, pos1), pos2)) f vs)	 
               | CP.Gte(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Gte(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 *)
       | CP.Gte (a1, a2, _) -> (equation a1 a2 f "greaterEq" ">=" vs)
-            (* CP.Neq *)   
-      (* | CP.Neq((CP.Add(a1, a2, l1)), a3, l2) *)
-      (* | CP.Neq(a3, (CP.Add(a1, a2, l1)), l2) *)
-      (*         (\*| CP.Neq((CP.Subtract(a3, a1, l1)), a2, l2) *)
-      (*           | CP.Neq(a2, (CP.Subtract(a3, a1, l1)), l2)*\) *)
-      (*     -> "(~" ^ (mona_of_b_formula (CP.Eq((CP.Subtract(a3, a1, l1)), a2, l2)) f vs) ^ ")" *)
       | CP.Neq (CP.IConst(i, _), a1, _)
       | CP.Neq (a1, CP.IConst(i, _), _) ->
             if (is_firstorder_mem f a1 vs) then
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (string_of_int i) ^ ")"
             else
 	          "(" ^ (mona_of_exp a1 f) ^ " ~= pconst(" ^ (string_of_int i) ^ "))"
+      | CP.Neq (a, CP.Null _, _) 
+      | CP.Neq (CP.Null _, a, _) ->
+           if (is_firstorder_mem f a vs) then
+              "(" ^ (mona_of_exp a f) ^ " > 0)"
+           else
+             " greater(" ^ (mona_of_exp a f) ^ ", pconst(0))"
       | CP.Neq (a1, a2, _) ->
 	        if (is_firstorder_mem f a1 vs)&& (is_firstorder_mem f a2 vs) then
-	          begin
-	            if CP.is_null a2 then
-	              "(" ^ (mona_of_exp a1 f) ^ " > 0)"
-	            else
-	              if CP.is_null a1 then
-	                "(" ^ (mona_of_exp a2 f) ^ " > 0)"
-	              else
 	                "(" ^ (mona_of_exp a1 f) ^ " ~= " ^ (mona_of_exp a2 f) ^ ")"
-	          end
             else
-	          begin
-	            if CP.is_null a2 then
-	              " greater(" ^ (mona_of_exp a1 f) ^ ", pconst(0))"
-	            else
-	              if CP.is_null a1 then
-	                " greater(" ^ (mona_of_exp a2 f) ^ ",  pconst(0))"
-	              else
-                    if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) then
-                      let a1str = (mona_of_exp a1 f) in
-                      let a2str = (mona_of_exp a2 f) in "(" ^ a1str ^ " = " ^ a2str ^ ") "
-                    else
-                      let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
-                      str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
-	          end
-                  (* CP.Eq *)
-                  (*| CP.Eq((CP.Subtract(a1, a2, pos1)), (CP.Subtract(a3, a4, pos2)), pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a4, pos1), CP.Add(a2, a3, pos2), pos3)) f vs)	 
-                    | CP.Eq(a1,CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), pos3)  
-                    | CP.Eq(CP.Add(CP.Subtract(a2, a3, pos1), a4, pos2), a1, pos3) -> (mona_of_b_formula (CP.Eq(CP.Add(a1, a3, pos1), CP.Add(a2, a4, pos2), pos3)) f vs)
-                    | CP.Eq((CP.Subtract(a3, a1, pos1)), a2, pos2)
-                    | CP.Eq(a2, (CP.Subtract(a3, a1, pos1)), pos2) -> (mona_of_b_formula (CP.Eq(CP.Add(a2, a1, pos1), a3, pos2)) f vs)	 
-                  *)
-                  (* try: todo: I think it's not the best place cause the existentials are already introduced *)
-                  (*| CP.Eq(CP.Add(CP.Mult _, _, _), _, _) 
-                    | CP.Eq(CP.Add(_, CP.Mult _, _), _, _) 
-                    | CP.Eq(CP.Add(_, _, _), CP.Mult _, _)
-                    | CP.Eq(CP.Add(CP.Add _, _, _), _, _) 
-                    | CP.Eq(CP.Add(_, CP.Add _, _), _, _) 
-                    | CP.Eq(_, CP.Add(_, CP.Add _ , _), _)
-                    | CP.Eq(_, CP.Add(CP.Add _ , _, _), _)  -> ((*print_string("[mona]: weakening to true\n");*) "true")*)
+              let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
+              str ^ " nequal(" ^ a1name ^ ", " ^ a2name ^ ") "^ end_str
       | CP.Eq((CP.Add(a1, a2, _)), a3, _)
       | CP.Eq(a3, (CP.Add(a1, a2, _)), _) ->
             if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
@@ -649,18 +614,22 @@ and mona_of_b_formula_x b f vs =
               str ^ " plus(" ^ a1name ^ ", " ^ a2name ^ ", " ^ a3name ^ ") "^ end_str
       | CP.Eq (CP.IConst(i, _), a1, _)
       | CP.Eq (a1, CP.IConst(i, _), _) ->
-            if (is_firstorder_mem f a1 vs) then
-	          "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
-            else
-	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
-                  (***********************)
-      | CP.Eq (a1, CP.Null _, _) ->
-            if (is_firstorder_mem f a1 vs) then
-	          "(" ^ (mona_of_exp a1 f) ^ " = 0)"
-            else
-	          "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
-                  (**********************)	
-      | CP.Eq (a1, a2, _) -> "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"	 
+          if (is_firstorder_mem f a1 vs) then
+	        "(" ^ (mona_of_exp a1 f) ^ " = " ^ (string_of_int i) ^ ")"
+          else
+	        "(" ^ (mona_of_exp a1 f) ^ " = pconst(" ^ (string_of_int i) ^ "))"
+      | CP.Eq (a1, CP.Null _, _) 
+      | CP.Eq (CP.Null _, a1, _) ->
+          if (is_firstorder_mem f a1 vs) then
+	        "(" ^ (mona_of_exp a1 f) ^ " = 0)"
+          else
+	        "(" ^ (mona_of_exp a1 f) ^ " = pconst(0))"
+      | CP.Eq (a1, a2, _) -> 
+          if (is_firstorder_mem f a1 vs)&& (is_firstorder_mem f a2 vs) then
+            "(" ^ (mona_of_exp a1 f) ^ " = " ^ (mona_of_exp a2 f) ^ ")"
+          else	 
+            let (a1name,a2name,str,end_str) = second_order_composite2 a1 a2 f in
+            str ^ " " ^ a1name ^ " = " ^ a2name ^ " " ^ end_str
       | CP.EqMin (a1, a2, a3, _) ->
 	        if (is_firstorder_mem f a1 vs) && (is_firstorder_mem f a2 vs) && (is_firstorder_mem f a3 vs) then
               let a1str = mona_of_exp a1 f in
@@ -1114,4 +1083,3 @@ let simplify (pe : CP.formula) : CP.formula = begin
 	  let a3str = (mona_of_exp a3 f) in
 	  ("((" ^ a3str ^ " <= " ^ a2str ^ " & " ^ a1str ^ " = " ^ a2str ^ ") | ("
 		^ a2str ^ " < " ^ a3str ^ " & " ^ a1str ^ " = " ^ a3str ^ "))\n")*)
-

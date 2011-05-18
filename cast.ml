@@ -61,7 +61,7 @@ and view_decl = {
     view_prune_branches: formula_label list;
     view_prune_conditions: (P.b_formula * (formula_label list)) list;
     view_prune_conditions_baga: ba_prun_cond list;
-    view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list)) list ;
+    view_prune_invariants : (formula_label list * (Gen.Baga(P.PtrSV).baga * P.b_formula list )) list ;
     view_raw_base_case: Cformula.formula option;}
 
 (* An Hoa : relation *)					
