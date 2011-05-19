@@ -342,7 +342,9 @@ and exp = (* expressions keep their types *)
   | Sharp of exp_sharp
   | Try of exp_try
 
+let print_mix_formula = ref (fun (c:MP.mix_formula) -> "cpure printer has not been initialized")
 let print_b_formula = ref (fun (c:P.b_formula) -> "cpure printer has not been initialized")
+let print_h_formula = ref (fun (c:F.h_formula) -> "cpure printer has not been initialized")
 let print_exp = ref (fun (c:P.exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:P.formula) -> "cpure printer has not been initialized")
 let print_struc_formula = ref (fun (c:F.struc_formula) -> "cpure printer has not been initialized")
@@ -1219,6 +1221,7 @@ let vdef_fold_use_bc prog ln2  =
     | Some f -> !print_struc_formula f.view_formula in
   Gen.Debug.no_1 "vdef_fold_use_bc" pr1 pr2 (fun _ -> vdef_fold_use_bc prog ln2) ln2
 
+
 let get_xpure_one vdef rm_br  =
   match rm_br with
     | Some l -> let n=(List.length l) in  
@@ -1227,6 +1230,10 @@ let get_xpure_one vdef rm_br  =
         | None -> None 
         | Some f -> Some f)  (* unspecialised with a complex_inv *)
     | None -> Some vdef.view_x_formula 
+
+let get_xpure_one vdef rm_br  =
+  let pr (mf,_) = !print_mix_formula mf in
+  Gen.Debug.ho_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
 let any_xpure_1 prog (f:F.h_formula) : bool = 
   let ff e = match e with
@@ -1243,3 +1250,7 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
   in
   let comb_f = List.exists (fun x-> x) in
   F.fold_h_formula f ff comb_f
+
+let any_xpure_1 prog (f:F.h_formula) : bool =
+  let pr = !print_h_formula in
+  Gen.Debug.ho_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 

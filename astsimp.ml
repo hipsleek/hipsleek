@@ -5575,10 +5575,12 @@ and view_prune_inv_inference cp vd =
   let c_inv = 
     if (List.length branches)=1 then 
       (* TODO : to compute complex_inv from formula *)
+      let (mf,_) =vd.C.view_x_formula in
+      (* let _ = print_endline ("complex inv computed "^(Cprinter.string_of_mix_formula mf)) in *)
       Some vd.C.view_x_formula
     else None in
   let v' = { vd with  
-      C.view_complex_inv = c_inv; 
+      C.view_complex_inv =  c_inv ; 
       C.view_prune_branches = branches; 
       C.view_prune_conditions = conds ; 
       C.view_prune_conditions_baga = baga_cond;
