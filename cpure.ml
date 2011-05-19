@@ -4264,7 +4264,7 @@ let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
 let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
   let pr1 = !print_b_formula in
 (*    let _ = print_string ("fast imply aset :"^(EMapSV.string_of aset)^"\n") in*)
-  Gen.Debug.ho_2 "fast_imply" (pr_list pr1) pr1 string_of_int (fun _ _ -> fast_imply aset lhs rhs) lhs rhs
+  Gen.Debug.no_2 "fast_imply" (pr_list pr1) pr1 string_of_int (fun _ _ -> fast_imply aset lhs rhs) lhs rhs
   
 
 let rec replace_pure_formula_label nl f = match f with

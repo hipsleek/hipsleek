@@ -156,8 +156,8 @@
     cprinter.cmo cformula.cmo cast.cmo
 ./predcomp.cmx: iast.cmx globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx \
     cprinter.cmx cformula.cmx cast.cmx
-./procutils.cmo: globals.cmo
-./procutils.cmx: globals.cmx
+./procutils.cmo: globals.cmo gen.cmo
+./procutils.cmx: globals.cmx gen.cmx
 ./prooftracer.cmo: globals.cmo gen.cmo cpure.cmo cprinter.cmo cformula.cmo
 ./prooftracer.cmx: globals.cmx gen.cmx cpure.cmx cprinter.cmx cformula.cmx
 ./prove.cmo: tpdispatcher.cmo net.cmo gen.cmo

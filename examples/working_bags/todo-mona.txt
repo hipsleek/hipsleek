@@ -1,0 +1,24 @@
+loris@loris-desktop:/home2/loris/hg/sleekex/examples/working_bags$ ../../hip -tp om avl-all.ss | grep Proc
+Processing file "avl-all.ss"
+Procedure main$ SUCCESS
+Procedure delete$node~int FAIL-2
+ExceptionProcutils.PrvComms.TimeoutOccurred!
+Procedure delete_top$node FAIL-2
+ExceptionProcutils.PrvComms.TimeoutOccurred!
+Procedure remove_min$node~myint SUCCESS
+Procedure remove_max_add$node~myint FAIL-2
+ExceptionProcutils.PrvComms.TimeoutOccurred!
+Procedure remove_min_add$node~myint FAIL-2
+ExceptionProcutils.PrvComms.TimeoutOccurred!
+Procedure insert$node~int SUCCESS
+Procedure rotate_double_right$node~node~node~node~int~int~int FAIL-2
+ExceptionProcutils.PrvComms.TimeoutOccurred!
+Procedure rotate_double_left$node~node~node~node~int~int~int FAIL-2
+ExceptionProcutils.PrvComms.TimeoutOccurred!
+Procedure get_max$int~int SUCCESS
+Procedure rotate_right$node~node~node~int~int SUCCESS
+Procedure rotate_left$node~node~node~int~int SUCCESS
+Procedure height$node SUCCESS
+loris@loris-desktop:/home2/loris/hg/sleekex/examples/working_bags$ ../../hip -tp om avl-all.ss --eps | grep Proc
+OK now
+

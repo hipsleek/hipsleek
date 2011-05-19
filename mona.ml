@@ -792,7 +792,7 @@ let send_cmd_with_answer str =
     let str = get_answer !process.inchannel in
     str 
   in 
-  let answ = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in
+  let answ = Procutils.PrvComms.maybe_raise_timeout_num 1 fnc () !timeout in
   answ
 
 (* modify mona for not sending answers *)
@@ -959,19 +959,19 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   output_string mona_file ("include \""^ mona_pred_file_x ^"\";\n");
   let fstr =
     try 
-        begin
-            let all_fv = CP.remove_dups_svl fv in
-            let vs = Hashtbl.create 10 in
-            let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem f (CP.Var(sv, no_pos)) vs)) all_fv) in
-            let first_order_var_decls =
-              if Gen.is_empty part1 then ""
-              else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n " in
-            let second_order_var_decls =
-              if Gen.is_empty part2 then ""
-              else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) ^ "; \n"in
-            let var_decls = first_order_var_decls ^ second_order_var_decls in
-            var_decls ^(mona_of_formula f f vs)
-        end
+      begin
+        let all_fv = CP.remove_dups_svl fv in
+        let vs = Hashtbl.create 10 in
+        let (part1, part2) = (List.partition (fun (sv) -> (is_firstorder_mem f (CP.Var(sv, no_pos)) vs)) all_fv) in
+        let first_order_var_decls =
+          if Gen.is_empty part1 then ""
+          else "var1 " ^ (String.concat ", " (List.map mona_of_spec_var part1)) ^ ";\n " in
+        let second_order_var_decls =
+          if Gen.is_empty part2 then ""
+          else "var2 " ^ (String.concat ", " (List.map mona_of_spec_var part2)) ^ "; \n"in
+        let var_decls = first_order_var_decls ^ second_order_var_decls in
+        var_decls ^(mona_of_formula f f vs)
+      end
     with exc -> print_endline ("\nEXC: " ^ Printexc.to_string exc); ""
   in
   if not (fstr == "") then  output_string mona_file (fstr ^ ";\n" );
@@ -979,9 +979,9 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
   close_out mona_file;
   if !log_all_flag == true then
 	begin
-	    output_string log_all (mona_filename ^ Gen.new_line_str);
-      	output_string log_all (fstr ^ ";\n");
-	    flush log_all;
+	  output_string log_all (mona_filename ^ Gen.new_line_str);
+      output_string log_all (fstr ^ ";\n");
+	  flush log_all;
 	end;
   let _ = Procutils.PrvComms.start !log_all_flag log_all ("mona", "mona", [|"mona"; "-q";  mona_filename|]) set_process (fun () -> ()) in
   let fnc () =
@@ -989,7 +989,14 @@ let write_to_file  (is_sat_b: bool) (fv: CP.spec_var list) (f: CP.formula) (imp_
     let res = check_answer mona_answ is_sat_b in
     res
   in
-  let res = Procutils.PrvComms.maybe_raise_timeout fnc () !timeout in 
+  (* let res = Procutils.PrvComms.maybe_raise_timeout_num 2 fnc () !timeout in  *)
+  let t = (if is_sat_b then "SAT no :" else "IMPLY no :")^imp_no in
+  (* let hproc exc = (print_endline ("Timeout for MONA "^t));true in *)
+  let hproc () =   
+    print_string ("\n[MONA.ml]:Timeout exception "^t^"\n"); flush stdout;
+    restart ("Timeout!");
+    is_sat_b in
+  let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () !timeout hproc in 
   Sys.remove mona_filename;
   stop();
   res

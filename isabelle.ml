@@ -372,7 +372,7 @@ let write (pe : CP.formula) (timeout : float) (is_sat_b: bool) : bool =
         print_string ("\n[isabelle.ml]:Timeout exception\n"); flush stdout;
         restart ("Timeout!");
         is_sat_b in
-      let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in
+      let answ = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () timeout fail_with_timeout in
       answ
   end
 
