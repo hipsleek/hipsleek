@@ -567,8 +567,10 @@ and mkNot f lbl1 pos0 :formula= match f with
         | Gte (e1, e2, pos) -> BForm ((Lt (e1, e2, pos)),lbl)
         | Eq (e1, e2, pos) -> BForm ((Neq (e1, e2, pos)),lbl)
         | Neq (e1, e2, pos) -> BForm ((Eq (e1, e2, pos)),lbl)
+		| BagIn e -> BForm ((BagNotIn e),lbl)
+		| BagNotIn e -> BForm ((BagIn e),lbl)
         | _ -> Not (f, lbl,pos0)
-    end
+	end
   | _ -> Not (f, lbl1,pos0)
         
 and mkEqVar (sv1 : spec_var) (sv2 : spec_var) pos=

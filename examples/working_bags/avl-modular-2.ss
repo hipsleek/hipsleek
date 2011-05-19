@@ -19,8 +19,8 @@ avl<"m":m, "n":n, "S":S> ==
     "n": n = 0; 
     "S": S = {}]
   or self::node<v, n, p, q> * p::avl<m1, n1, S1> * q::avl<m2, n2, S2> & [
-    "m" : m = 1+m1+m2 & m>0 ; 
-    "n" : -1 <= n1 - n2 <= 1 & n = 1 + max(n1, n2) & n>0 ;
+    "m" : m = 1+m1+m2 ; 
+    "n" : -1 <= n1 - n2 <= 1 & n = 1 + max(n1, n2) ;
     "S" : S = union(S1, S2, {v}) & forall (x : (x notin S1 | x <= v)) & forall (y : (y notin S2 | y >= v))]
 
   inv true & [
@@ -550,7 +550,11 @@ node delete(node x, int a)
         //assert tmp'=null; //'
           //assert false; 
         assert tmp'::avl<mm,nn,_> & nn>0;//'
-        assert tmp'::avl<mm,nn,_> & mm>0;//'
+		assert tmp'::avl<mm,nn,_> & mm>0;//'
+		assert tmp'::avl<mm,nn,_> & nn=0;//'
+		assume tmp'=null or tmp'!=null;
+		dprint;
+        //assert tmp'::avl<mm,nn,_> & mm>0;//'
            //dprint;
         assume tmp'=null or tmp'!=null;
         dprint;
