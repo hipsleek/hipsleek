@@ -1776,6 +1776,7 @@ Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
+Cformula.print_ext_formula := string_of_ext_formula;;
 Cast.print_b_formula := string_of_b_formula;;
 Cast.print_h_formula := string_of_h_formula;;
 Cast.print_exp := string_of_formula_exp;;

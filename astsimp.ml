@@ -58,7 +58,7 @@ type trans_exp_type =
 (************************************************************
 Primitives handling stuff
 ************************************************************)
-let prim_str =
+let prim_str_0 =
   "int add___(int a, int b) requires true ensures res = a + b;
 int minus___(int a, int b) requires true ensures res = a - b;
 
@@ -118,7 +118,7 @@ int pow___(int a, int b) requires true ensures true;
 "
 (* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
 
-let prim_str2 =
+let prim_str =
   "int add___(int a, int b) requires true ensures res = a + b;
 int minus___(int a, int b) requires true ensures res = a - b;
 int mult___(int a, int b) requires true ensures res = a * b;
@@ -1186,7 +1186,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   else vdef.I.view_data_name in
    (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = Known (Named data_name);id = fresh_int () };
-  let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+  let cf = transf_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let (inv, inv_b) = vdef.I.view_invariant in
   let pf = trans_pure_formula inv stab in
     let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
@@ -1812,8 +1812,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = H.add stab res { sv_info_kind = Known cret_type;id = fresh_int () } in
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
-	let static_specs_list = set_pre_flow (trans_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
-	let dynamic_specs_list = set_pre_flow (trans_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+	let static_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+	let dynamic_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
 	let exc_list = (List.map Gen.ExcNumbering.get_hash_of_exc proc.I.proc_exceptions) in
 	let r_int = Gen.ExcNumbering.get_hash_of_exc abnormal_flow in
 	(if (List.exists CF.is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
@@ -2073,7 +2073,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   all_names);
           let assert_cf_o =
             (match assert_f_o with
-              | Some f -> Some (trans_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Prim Void) [])*) )
+              | Some f -> Some (transf_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Prim Void) [])*) )
               | None -> None) in
           let assume_cf_o =
             (match assume_f_o with
@@ -3473,15 +3473,15 @@ and add_pre_debug prog f =
   let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in  
   r
       
-and trans_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and transf_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.no_eff_5 "trans_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
-      (fun _ _ _ _ _ -> trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+  Gen.Debug.no_eff_5 "transf_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+      (fun _ _ _ _ _ -> transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
 
       
-and trans_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
     (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
@@ -5641,30 +5641,30 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
   let _ = pick_pures init_form_lst v_l u_inv in
   
   (*actual case inference*)
-  let guard_list = List.map (fun (c,lbl)-> 
-      let pures1,ba = 
-		  let h,p,_,b,_ = CF.split_components c in
-          (*let (cm,br) = (Solver.xpure_heap cp h 0) in *)
-          let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in
-          let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
-          let xp = MCP.fold_mem_lst fbr true true cm in
-          (MCP.fold_mem_lst xp true true p,ba) in
-      (*let _ = print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures1)^"\n")in*)
-      let pures = simplify_pures pures1 v_l in
-      (*let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
-      let pc = List.concat (List.map (fun c-> fst (get_pure_conj_list c)) pures) in
-      let pc = filter_pure_conj_list pc in
-      (*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
-      (*let pc0 = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) 
-         (filter_pure_conj_list (fst (get_pure_conj_list pures1))) in
-      let pc = pc@pc0 in*)
-      (*let _  = print_string ("\n extracted conditions1.5: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
-      let prop_pc = propagate_constraints pc [] in
-      (*let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in*)
-      let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in
-      let pp = MCP.memo_norm_wrapper pp in
-      let pp = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset pp in
-      (lbl,(ba,pp))) init_form_lst in
+  (* let guard_list = List.map (fun (c,lbl)->  *)
+  (*     let pures1,ba =  *)
+  (*   	  let h,p,_,b,_ = CF.split_components c in *)
+  (*         (\*let (cm,br) = (Solver.xpure_heap cp h 0) in *\) *)
+  (*         let cm,br,ba = Solver.xpure_heap_symbolic_i cp h 0 in *)
+  (*         let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in *)
+  (*         let xp = MCP.fold_mem_lst fbr true true cm in *)
+  (*         (MCP.fold_mem_lst xp true true p,ba) in *)
+  (*     (\*let _ = print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures1)^"\n")in*\) *)
+  (*     let pures = simplify_pures pures1 v_l in *)
+  (*     (\*let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*\) *)
+  (*     let pc = List.concat (List.map (fun c-> fst (get_pure_conj_list c)) pures) in *)
+  (*     let pc = filter_pure_conj_list pc in *)
+  (*     (\*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*\) *)
+  (*     (\*let pc0 = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l)  *)
+  (*        (filter_pure_conj_list (fst (get_pure_conj_list pures1))) in *)
+  (*     let pc = pc@pc0 in*\) *)
+  (*     (\*let _  = print_string ("\n extracted conditions1.5: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*\) *)
+  (*     let prop_pc = propagate_constraints pc [] in *)
+  (*     (\*let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in*\) *)
+  (*     let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in *)
+  (*     let pp = MCP.memo_norm_wrapper pp in *)
+  (*     let pp = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset pp in *)
+  (*     (lbl,(ba,pp))) init_form_lst in *)
   (*r -> list of triples, one for each disjunct(propagated constraints, initial formula , label)*)
   let guard_list = pick_pures init_form_lst v_l u_inv in
   let invariant_list = compute_invariants v_l guard_list in  
@@ -5774,8 +5774,11 @@ and coerc_spec prog is_l c =
         else
         List.map (fun (c1,c2) -> {c with C.coercion_head = prun_f c2; C.coercion_body = prun_f c1}) r_l
         end *)  
-        
-and pred_prune_inference (cp:C.prog_decl):C.prog_decl =      
+
+and pred_prune_inference (cp:C.prog_decl):C.prog_decl = 
+  Gen.Debug.no_1 "pred_prune_inference" pr_no pr_no pred_prune_inference_x cp 
+
+and pred_prune_inference_x (cp:C.prog_decl):C.prog_decl =      
   Gen.Profiling.push_time "pred_inference";
     let preds = List.map (fun c-> view_prune_inv_inference cp c) cp.C.prog_view_decls in
     let prog_views_inf = {cp with C.prog_view_decls  = preds;} in

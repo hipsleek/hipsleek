@@ -191,6 +191,7 @@ let print_ident_list = ref(fun (c:ident list) -> "printer not initialized")
 let print_svl = ref(fun (c:CP.spec_var list) -> "printer not initialized")
 let print_sv = ref(fun (c:CP.spec_var) -> "printer not initialized")
 let print_struc_formula = ref(fun (c:struc_formula) -> "printer not initialized")
+let print_ext_formula = ref(fun (c:ext_formula) -> "printer not initialized")
 (*--- 09.05.2000 *)
 (* pretty printing for a spec_var list *)
 let rec string_of_spec_var_list l = match l with 
@@ -3417,6 +3418,13 @@ and trans_struc_formula (e: struc_formula) (arg: 'a) f f_arg f_comb : (struc_for
   let ne, vals = List.split (List.map trans_ext e) in
   (ne, f_comb vals)
     
+(* let fold_struc_formula_args (e:struc_formula) (init_a:'a) (f:'a -> h_formula-> 'b option)  *)
+(*       (f_args: 'a -> h_formula -> 'a) (comb_f: 'b list->'b) : 'b = *)
+(*   let f1 ac e = match (f ac e) with *)
+(*     | Some r -> Some (e,r) *)
+(*     | None ->  None in *)
+(*   snd(trans_struc_formula e init_a f1 f_args comb_f) *)
+
 let rec transform_context f (c:context):context = 
 	match c with
 	| Ctx e -> (f e)
@@ -4049,5 +4057,36 @@ let reset_original_es x = {x with es_formula = (reset_original x.es_formula)}
 let reset_original_list_partial_context (f : list_partial_context) : list_partial_context = 
   let f1 x = Ctx (reset_original_es x) in
   transform_list_partial_context (f1,(fun c->c)) f
+
+let is_no_heap_h_formula (e : h_formula) : bool =
+  let f x = match x with
+	  | DataNode _
+	  | ViewNode _ -> Some false
+	  | _ -> None
+  in
+  fold_h_formula e f (List.for_all (fun x -> x))
+
+let is_no_heap_ext_formula (e : ext_formula) : bool = 
+  let f_ext_f _ _ = None in
+  let f_f _ _ = None in
+  let f_h_formula _ x = Some (x, is_no_heap_h_formula x) in
+  let f_pure = 
+    let f1 _ e = Some (e, true) in
+    (f1,f1,f1) in
+  let f_memo = 
+    let f1 _ e = Some (e, true) in
+    let f2 e _ = (e,true) in
+    let f3 _ e = (e,[]) in
+    (f1,f2,f3,f2,f2) in
+  let f_arg =
+    let f1 e _ = e in
+    let f2 e _ = e in
+    (f1,f1,f1,(f1,f1,f1),f2) in
+  let f = (f_ext_f, f_f, f_h_formula, f_pure, f_memo) in
+    snd(trans_ext_formula e false f f_arg (List.for_all (fun x -> x)))
+
+let is_no_heap_ext_formula (e : ext_formula) : bool = 
+  let pr = !print_ext_formula in
+  Gen.Debug.no_1 "is_no_heap_ext_formula" pr string_of_bool is_no_heap_ext_formula e 
 
     

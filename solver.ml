@@ -466,15 +466,15 @@ and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
 	                  res_form
 	            | [] -> CP.mkTrue pos in
             let inv_opt =  Cast.get_xpure_one vdef rm_br in
-(* match rm_br with *)
-(*               | Some l -> let n=(List.length l) in   *)
-(*                 if n<(List.length vdef.view_prune_branches) then None *)
-(*                 else (match vdef.view_complex_inv with  *)
-(*                   | None -> None  *)
-(*                   | Some f -> Some f)  (\* unspecialised with a complex_inv *\) *)
-(*               | None -> Some vdef.view_x_formula  *)
-  (* in *)
-  (match inv_opt with
+            (* match rm_br with *)
+            (*               | Some l -> let n=(List.length l) in   *)
+            (*                 if n<(List.length vdef.view_prune_branches) then None *)
+            (*                 else (match vdef.view_complex_inv with  *)
+            (*                   | None -> None  *)
+            (*                   | Some f -> Some f)  (\* unspecialised with a complex_inv *\) *)
+            (*               | None -> Some vdef.view_x_formula  *)
+            (* in *)
+            (match inv_opt with
               | None -> (MCP.mkMTrue no_pos, [])
               | Some xp1 ->
                     let vinv = match which_xpure with
@@ -794,12 +794,19 @@ and prune_ctx_failesc_list prog ctx = List.map (fun (c1,c2,c3)->
     (c1,c2,rc3))  ctx
 
 and prune_pred_struc prog (simp_b:bool) f = 
-  let rec helper f =match f with
-    | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc prog simp_b c2)) c.formula_case_branches;}
-    | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_b b.formula_ext_base;
-          formula_ext_continuation = prune_pred_struc prog simp_b b.formula_ext_continuation}
-    | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l)
-    | EVariance v -> EVariance v
+  let pr = Cprinter.string_of_struc_formula in
+  Gen.Debug.no_1 "prune_pred_struc" pr pr (fun _ -> prune_pred_struc_x prog simp_b f) f 
+
+and prune_pred_struc_x prog (simp_b:bool) f = 
+  let rec helper f =
+    if (is_no_heap_ext_formula f) then f
+    else
+      match f with
+        | ECase c -> ECase {c with formula_case_branches = List.map (fun (c1,c2)-> (c1,prune_pred_struc_x prog simp_b c2)) c.formula_case_branches;}
+        | EBase b -> EBase {b with formula_ext_base = prune_preds prog simp_b b.formula_ext_base;
+              formula_ext_continuation = prune_pred_struc_x prog simp_b b.formula_ext_continuation}
+        | EAssume (v,f,l) -> EAssume (v,prune_preds prog simp_b f,l)
+        | EVariance v -> EVariance v
   in    
   (*let _ = print_string ("prunning: "^(Cprinter.string_of_struc_formula f)^"\n") in*)
   List.map helper f
@@ -844,7 +851,7 @@ and prune_preds_x prog (simp_b:bool) (f:formula):formula =
 and prune_preds  prog (simp_b:bool) (f:formula):formula =   
   let p1 = string_of_bool in
   let p2 = Cprinter.string_of_formula in
-   Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
+  Gen.Debug.no_2 "prune_preds" p1 p2 p2 (fun _ _ -> prune_preds_x prog simp_b f) simp_b f
 
 and heap_prune_preds_mix prog (hp:h_formula) (old_mem:MCP.mix_formula): (h_formula*MCP.mix_formula*bool)= match old_mem with
   | MCP.MemoF f -> 
@@ -2072,11 +2079,11 @@ and elim_unsat_es_x (prog : prog_decl) (sat_subno:  int ref) (es : entail_state)
   else elim_unsat_es_now prog sat_subno es
 
 and elim_unsat_es_now (prog : prog_decl) (sat_subno:  int ref) (es : entail_state) : context =
-    let f = es.es_formula in
-    let _ = reset_int2 () in
-    let b = unsat_base_nth "1" prog sat_subno f in
-    if not b then Ctx{es with es_unsat_flag = true } else 
-	  false_ctx (flow_formula_of_formula es.es_formula) no_pos
+  let f = es.es_formula in
+  let _ = reset_int2 () in
+  let b = unsat_base_nth "1" prog sat_subno f in
+  if not b then Ctx{es with es_unsat_flag = true } else 
+	false_ctx (flow_formula_of_formula es.es_formula) no_pos
 
 and elim_unsat_for_unfold (prog : prog_decl) (f : formula) : formula= match f with
   | Or _ -> elim_unsat_all prog f 
@@ -2276,21 +2283,21 @@ and heap_entail_failesc_prefix_init (prog : prog_decl) (is_folding : bool)  (has
   (* if (List.length cl)<1 then report_error pos ("heap_entail_failesc_prefix_init : encountered an empty list_partial_context \n") *)
   (* else *)
   (* TODO : must avoid empty context *)
-    if (cl==[]) then ([],UnsatAnte)
-    else
+  if (cl==[]) then ([],UnsatAnte)
+  else
     begin
-    reset_formula_point_id();
-    let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
-    let conseq = rename_f conseq in
-    let rec prepare_ctx es = {es with 
-		es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-		es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-		es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-		es_orig_ante   = es.es_formula;
-		(*es_orig_conseq = conseq ;*)}in	
-    let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
-    let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq pos pid f to_string in 
-    heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
+      reset_formula_point_id();
+      let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
+      let conseq = rename_f conseq in
+      let rec prepare_ctx es = {es with 
+		  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
+		  es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
+		  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
+		  es_orig_ante   = es.es_formula;
+		  (*es_orig_conseq = conseq ;*)}in	
+      let cl_new = transform_list_failesc_context (idf,idf,(fun es-> Ctx(prepare_ctx (rename_es (reset_original_es es))))) cl in
+      let entail_fct = fun c-> heap_entail_struc_list_failesc_context prog is_folding  has_post c conseq pos pid f to_string in 
+      heap_entail_agressive_prunning entail_fct (prune_ctx_failesc_list prog) (fun (c,_) -> isSuccessListFailescCtx c) cl_new
     end
 
 and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
@@ -2299,21 +2306,21 @@ and heap_entail_prefix_init (prog : prog_decl) (is_folding : bool)  (has_post: b
       : (list_partial_context * proof) = 
   if (List.length cl)<1 then report_error pos ("heap_entail_prefix_init : encountered an empty list_partial_context \n")
   else
-  (* if cl==[] then (cl,UnsatAnte) *)
-  (* else  *)
+    (* if cl==[] then (cl,UnsatAnte) *)
+    (* else  *)
     begin
-    reset_formula_point_id();
-    let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
-    let conseq = rename_f conseq in
-    let rec prepare_ctx es = {es with 
-		es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
-		es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
-		es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
-		es_orig_ante   = es.es_formula;
-		(*es_orig_conseq = conseq ;*)}in	
-    let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
-    heap_entail_struc_list_partial_context prog is_folding  has_post cl_new conseq pos pid f to_string
-  end
+      reset_formula_point_id();
+      let rename_es es = {es with es_formula = rename_labels_formula_ante es.es_formula}in
+      let conseq = rename_f conseq in
+      let rec prepare_ctx es = {es with 
+		  es_success_pts  = ([]: (formula_label * formula_label)  list)  ;(* successful pt from conseq *)
+		  es_residue_pts  = residue_labels_in_formula es.es_formula ;(* residue pts from antecedent *)
+		  es_id      = (fst (fresh_formula_label ""))              ; (* unique +ve id *)
+		  es_orig_ante   = es.es_formula;
+		  (*es_orig_conseq = conseq ;*)}in	
+      let cl_new = transform_list_partial_context ((fun es-> Ctx(prepare_ctx (rename_es es))),(fun c->c)) cl in
+      heap_entail_struc_list_partial_context prog is_folding  has_post cl_new conseq pos pid f to_string
+    end
 
 and heap_entail_struc_list_partial_context (prog : prog_decl) (is_folding : bool)  (has_post: bool)(cl : list_partial_context)
       (conseq:'a) pos (pid:control_path_id) (f: prog_decl->bool->bool->context->'a -> loc
@@ -4016,7 +4023,7 @@ and heap_entail_empty_rhs_heap_x (prog : prog_decl) (is_folding : bool)  estate 
   let curr_lhs_h = (mkStarH lhs_h estate.es_heap pos) in
   let xpure_lhs_h0, xpure_lhs_h0_b, _, memset = xpure_heap prog curr_lhs_h 0 in
   let xpure_lhs_h1, xpure_lhs_h1_b, _, memset = xpure_heap prog curr_lhs_h 1 in
-   (* add the information about the dropped reading phases *)
+  (* add the information about the dropped reading phases *)
   let xpure_lhs_h1 = MCP.merge_mems xpure_lhs_h1 estate.es_aux_xpure_1 true in
   let xpure_lhs_h1 = if (Cast.any_xpure_1 prog curr_lhs_h) then xpure_lhs_h1 else MCP.mkMTrue no_pos in
   let fold_fun (is_ok,succs,fails) ((branch_id, rhs_p):string*MCP.mix_formula) =
@@ -4271,7 +4278,7 @@ and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
             if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
             else MCP.imply_memo a1 c TP.imply imp_no 
-         (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
+              (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end
     | MCP.OnePF a0, MCP.OnePF a1 ,MCP.OnePF c ->
           begin
