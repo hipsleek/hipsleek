@@ -61,6 +61,66 @@ Primitives handling stuff
 let prim_str =
   "int add___(int a, int b) requires true ensures res = a + b;
 int minus___(int a, int b) requires true ensures res = a - b;
+
+
+float add___(float a, float b) requires true ensures res = a + b;
+float minus___(float a, float b) requires true ensures res = a - b;
+bool eq___(int a, int b) case {
+    a = b -> requires true ensures res;
+    a != b -> requires true ensures !res;}
+bool eq___(bool a, bool b) case {
+    a = b -> requires true ensures res;
+    a != b -> requires true ensures !res;}
+bool eq___(float a, float b) case {
+    a = b -> requires true ensures res;
+    a != b -> requires true ensures !res;}
+bool neq___(int a, int b) case {
+    a = b -> requires true ensures !res;
+    a != b -> requires true ensures res;}
+bool neq___(bool a, bool b) case {
+    a = b -> requires true ensures !res;
+    a != b -> requires true ensures res;}
+bool neq___(float a, float b) case {
+    a = b -> requires true ensures !res;
+    a != b -> requires true ensures res;}
+bool lt___(int a, int b) case {
+    a <  b -> requires true ensures  res;
+    a >= b -> requires true ensures !res;}
+bool lt___(float a, float b) case {
+    a <  b -> requires true ensures  res;
+    a >= b -> requires true ensures !res;}
+bool lte___(int a, int b) case {
+    a <= b -> requires true ensures  res;
+    a >  b -> requires true ensures !res;}
+bool lte___(float a, float b) case {
+    a <= b -> requires true ensures  res;
+    a >  b -> requires true ensures !res;}
+bool gt___(int a, int b) case {
+    a >  b -> requires true ensures  res;
+    a <= b -> requires true ensures !res;}
+bool gt___(float a, float b) case {
+    a >  b -> requires true ensures  res;
+    a <= b -> requires true ensures !res;}
+bool gte___(int a, int b) case {
+    a >= b -> requires true ensures  res;
+    a <  b -> requires true ensures !res;}
+bool gte___(float a, float b) case {
+    a >= b -> requires true ensures  res;
+    a <  b -> requires true ensures !res;}
+bool land___(bool a, bool b) case {
+  a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}
+  !a -> requires true ensures !res;}
+bool lor___(bool a, bool b) case {
+  a -> requires true ensures res;
+  !a -> case { b -> requires true ensures res; !b -> requires true ensures !res;}}
+bool not___(bool a) case { a -> requires true ensures !res; !a -> requires true ensures res;}
+int pow___(int a, int b) requires true ensures true;
+"
+(* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
+
+let prim_str2 =
+  "int add___(int a, int b) requires true ensures res = a + b;
+int minus___(int a, int b) requires true ensures res = a - b;
 int mult___(int a, int b) requires true ensures res = a * b;
 
 int div___(int a, int b) case {
@@ -147,8 +207,6 @@ relation update_array(int[] a, int i, int v, int[] r) == true.
 int array_get_elm_at___(int[] a, int i) requires true ensures res = a[i];
 int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,res);
 "
-(* Add a primitive function update___. Note: it is supposed to be dynamically inserted depending on the available types. *)
-
 and string_of_stab stab = Hashtbl.fold 
 		(fun c1 c2 a -> 
 			a^"; ("^c1^" "^
@@ -5527,7 +5585,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
     let pr2 inp = let l= List.map (fun (f,(_,a)) -> (f,a)) inp 
     in  (string_of_int (List.length inp))^":"^Gen.BList.string_of_f (Gen.string_of_pair (Gen.BList.string_of_f (fun x -> (Cprinter.string_of_formula_label) x "")) pr ) l 
     in
-    Gen.Debug.no_2 "compute_invariants"  
+    Gen.Debug.ho_2 "compute_invariants"  
         pr0 pr1 pr2 compute_invariants v_l pure_list in
   
   (*actual case inference*)
@@ -5538,14 +5596,14 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
           let fbr = List.fold_left (fun a (_,c) -> CP.mkAnd a c no_pos) (CP.mkTrue no_pos) (br@b) in
           let xp = MCP.fold_mem_lst fbr true true cm in
           (MCP.fold_mem_lst xp true true p,ba)) (CF.split_components c) in
-      (*let _ = print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n")in*)
+      let _ = print_string ("\n sent: "^(Cprinter.string_of_pure_formula pures)^"\n")in
       let pures = simplify_pures pures v_l in
-      (*      let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in*)
+      let _  = print_string ("\n extracted conditions: "^(String.concat " - " (List.map Cprinter.string_of_pure_formula pures))^"\n") in
       let pc = List.concat (List.map (fun c-> fst (get_pure_conj_list c)) pures) in
       let pc = filter_pure_conj_list pc in
-      (*let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in*)
+      let _  = print_string ("\n extracted conditions1: "^(String.concat ";" (List.map Cprinter.string_of_b_formula pc))^"\n") in
       let prop_pc = propagate_constraints pc [] in
-      (*let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in*)
+      let _  = print_string ("\n extracted conditions2: "^(String.concat ";" (List.map Cprinter.string_of_b_formula prop_pc))^"\n") in
       let pp = List.filter (fun c-> (CP.bfv c)!=[] && Gen.BList.subset_eq (=) (CP.bfv c) v_l) (prop_pc @pc) in
       let pp = MCP.memo_norm_wrapper pp in
       let pp = Gen.BList.remove_dups_eq CP.eq_b_formula_no_aset pp in

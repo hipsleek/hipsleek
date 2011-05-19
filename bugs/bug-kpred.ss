@@ -8,6 +8,7 @@
 
 */
 
+
 data node {
 	int val;
 	int color; /* 0 for red, 1 for black */

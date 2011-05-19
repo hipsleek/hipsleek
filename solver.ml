@@ -598,9 +598,6 @@ and xpure_heap_symbolic_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int)
     (ph, pb, pa, memset)
   else (MCP.mkMFalse no_pos, pb, pa, memset)  
 
-and xpure_heap_symbolic_i_debug (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
-  Gen.Debug.no_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula (fun (_,_,vl) -> Cprinter.string_of_spec_var_list vl)
-      (fun h0 -> xpure_heap_symbolic_i prog h0 i) h0
 
 and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list = 
   let rec helper h0 = match h0 with
@@ -622,8 +619,13 @@ and heap_baga (prog : prog_decl) (h0 : h_formula): CP.spec_var list =
     | Conj ({ h_formula_conj_h1 = h1;h_formula_conj_h2 = h2;}) -> (helper h1) @ (helper h2)
     | HTrue | Hole _ | HFalse -> [] in
   helper h0
-      
+
 and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
+  let pr (mf,bl,_) = pr_pair Cprinter.string_of_mix_formula (pr_list (fun (_,f) -> Cprinter.string_of_pure_formula f)) (mf,bl) in
+  Gen.Debug.ho_1 "xpure_heap_symbolic_i" Cprinter.string_of_h_formula pr
+      (fun h0 -> xpure_heap_symbolic_i_x prog h0 i) h0
+
+and xpure_heap_symbolic_i_x (prog : prog_decl) (h0 : h_formula) xp_no: (MCP.mix_formula * (branch_label * CP.formula) list * CP.spec_var list) = 
   let rec helper h0 = match h0 with
     | DataNode ({ h_formula_data_node = p;
 	  h_formula_data_label = lbl;
@@ -642,7 +644,7 @@ and xpure_heap_symbolic_i (prog : prog_decl) (h0 : h_formula) i: (MCP.mix_formul
           let to_svs = p :: vs in
           (match lbl_lst with
             | None -> 
-                  let vinv, vinv_b = if (i=1) then vdef.view_x_formula else vdef.view_user_inv in       
+                  let vinv, vinv_b = if (xp_no=1) then vdef.view_x_formula else vdef.view_user_inv in       
                   let from_addrs = vdef.view_addr_vars in
                   let to_addrs = CP.fresh_spec_vars from_addrs in
                   let subst_m_fun f =
