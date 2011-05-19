@@ -4251,15 +4251,15 @@ and imply_mix_formula_new ante_m0 ante_m1 conseq_m imp_no memset
               imp_no
     | _ -> report_error no_pos ("imply_mix_formula: mix_formula mismatch")
 
-and imply_mix_formula_debug ante_m0 ante_m1 conseq_m imp_no memset =
+and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset =
   Gen.Debug.no_4 "imply_mix_formula" Cprinter.string_of_mix_formula
       Cprinter.string_of_mix_formula Cprinter.string_of_mix_formula 
       Cprinter.string_of_mem_formula
       (fun (r,_,_) -> string_of_bool r)
-      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset)
+      (fun ante_m0 ante_m1 conseq_m memset -> imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset)
       ante_m0 ante_m1 conseq_m memset
 
-and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset 
+and imply_mix_formula_x ante_m0 ante_m1 conseq_m imp_no memset 
       :bool *(Globals.formula_label option * Globals.formula_label option) list * Globals.formula_label option =
   let conseq_m = solve_ineq ante_m0 memset conseq_m in
   match ante_m0,ante_m1,conseq_m with
@@ -4267,7 +4267,7 @@ and imply_mix_formula ante_m0 ante_m1 conseq_m imp_no memset
           begin
             (*print_endline "imply_mix_formula: first";*)
             let r1,r2,r3 = MCP.imply_memo a c TP.imply imp_no in
-            if r1 || not(MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
+            if r1 || (MCP.isConstMTrue ante_m1) then (r1,r2,r3) 
             else MCP.imply_memo a1 c TP.imply imp_no 
          (* TODO : This to be avoided if a1 is the same as a0; also pick just complex constraints *)
           end

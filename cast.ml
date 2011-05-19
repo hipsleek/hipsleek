@@ -1233,7 +1233,7 @@ let get_xpure_one vdef rm_br  =
 
 let get_xpure_one vdef rm_br  =
   let pr (mf,_) = !print_mix_formula mf in
-  Gen.Debug.ho_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
+  Gen.Debug.no_1 "get_xpure_one" pr_no (pr_option pr) (fun _ -> get_xpure_one vdef rm_br) rm_br
 
 let any_xpure_1 prog (f:F.h_formula) : bool = 
   let ff e = match e with
@@ -1253,4 +1253,4 @@ let any_xpure_1 prog (f:F.h_formula) : bool =
 
 let any_xpure_1 prog (f:F.h_formula) : bool =
   let pr = !print_h_formula in
-  Gen.Debug.ho_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
+  Gen.Debug.no_1 "any_xpure_1" pr string_of_bool (fun _ -> any_xpure_1 prog f) f 
