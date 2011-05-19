@@ -1466,3 +1466,12 @@ MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_grou
   | OnePF f -> OnePF (find_rel_constraints f v_l)
 
 
+  
+  
+let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=[]}) f
+	
+  
+let filter_complex_inv f = match f with
+	| MemoF f -> MemoF (memo_filter_complex_inv f)
+	| OnePF f -> OnePF (filter_complex_inv f)
+  

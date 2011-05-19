@@ -5620,7 +5620,7 @@ and prune_inv_inference_formula_x (cp:C.prog_decl) (v_l : CP.spec_var list) (ini
       let collect_constr (f,(lbl,ba,pl)) : (Globals.formula_label * (Solver.CP.spec_var list * CP.b_formula list)) =  
           let n_c = List.fold_left (fun a (_,(l,_,fl))  ->  
               if ((fst l)=(fst lbl)) then a else 
-                let l_neg = List.map (fun c-> CP.mkNot (CP.BForm (c,None)) None no_pos) fl in 
+                let l_neg = List.map (fun c-> CP.mkNot_norm (CP.BForm (c,None)) None no_pos) fl in 
                 let cand0 = List.filter (fun c-> let r,_,_ = TP.imply f c "" false None in r) l_neg in  
                 let cand = List.concat (List.map (fun c-> filter_pure_conj_list (fst (get_pure_conj_list c))) cand0) in 
                 a@cand ) [] split_br in 
@@ -5690,9 +5690,12 @@ and view_prune_inv_inference cp vd =
   let c_inv = 
     if (List.length branches)=1 then 
       (* TODO : to compute complex_inv from formula *)
-      let (mf,_) =vd.C.view_x_formula in
+      let (mf,bl) =vd.C.view_x_formula in
       (* let _ = print_endline ("complex inv computed "^(Cprinter.string_of_mix_formula mf)) in *)
-      Some vd.C.view_x_formula
+      let mf1 = MCP.filter_complex_inv mf in
+      let bl1 = List.map (fun (l,f) -> (l,CP.filter_complex_inv f))  bl in
+
+      Some (mf1,bl1)
     else None in
   let v' = { vd with  
       C.view_complex_inv =  c_inv ; 

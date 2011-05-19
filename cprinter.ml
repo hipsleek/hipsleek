@@ -70,6 +70,10 @@ let pr_pair pr_1 pr_2 (a,b) =
   pr_1 a; fmt_string ",";
   pr_2 b; fmt_string ")"
 
+let pr_opt f x = match x with
+    | None -> fmt_string "None"
+    | Some v -> (fmt_string "Some("; (f v); fmt_string ")")
+  
 (* let pr_opt lst (f:'a -> ()) x:'a = *)
 (*   if not(Gen.is_empty lst) then f a *)
 (*   else (); *)
@@ -1355,6 +1359,7 @@ let pr_view_decl v =
     | None -> ()
     | Some s -> pr_vwrap  "raw base case: " pr_formula s);  
   f v.view_base_case;
+  pr_vwrap  "view_complex_inv: " (pr_opt pr_mix_formula_branches) v.view_complex_inv;
   pr_vwrap  "prune branches: " (fun c-> pr_seq "," pr_formula_label_br c) v.view_prune_branches;
   pr_vwrap  "prune conditions: " pr_case_guard v.view_prune_conditions;
   pr_vwrap  "prune baga conditions: " 

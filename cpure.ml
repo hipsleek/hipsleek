@@ -5,6 +5,7 @@
 *)
 
 open Globals
+open Gen.Basic
 
 (* spec var *)
 type spec_var =
@@ -4260,15 +4261,11 @@ let fast_imply a l r = Gen.Profiling.do_3 "fast_imply" fast_imply a l r
 
 
 
-let fast_imply_debug aset (lhs:b_formula list) (rhs:b_formula) : int =
-  let r = fast_imply aset lhs rhs in
-  (*if (r<=0) then r else*)
-    let _ = print_string ("fast imply aset :"^(EMapSV.string_of aset)^"\n") in
-    let _ = print_string ("fast imply inp :"^(Gen.BList.string_of_f !print_b_formula lhs) )in
-    let _ = print_string ("fast imply inp :"^" |="^(!print_b_formula rhs)^"\n") in
-    let _ = print_string ("fast imply out : ==> "^(string_of_int r)^"\n") in
-    r
-
+let fast_imply aset (lhs:b_formula list) (rhs:b_formula) : int =
+  let pr1 = !print_b_formula in
+(*    let _ = print_string ("fast imply aset :"^(EMapSV.string_of aset)^"\n") in*)
+  Gen.Debug.ho_2 "fast_imply" (pr_list pr1) pr1 string_of_int (fun _ _ -> fast_imply aset lhs rhs) lhs rhs
+  
 
 let rec replace_pure_formula_label nl f = match f with
   | BForm (bf,_) -> BForm (bf,(nl()))
@@ -5009,3 +5006,43 @@ let or_xp_res  ((b1,d1,p1):xp_res_type) ((b2,d2,p2):xp_res_type) =
     | Some nd1,None -> nd1
     | Some nd1,Some nd2 ->  DisjSetSV.or_disj_set (b1::d1) (b2::d2) in
     (nb,nd, mkOr np1 np2 None no_pos)
+
+	
+let rec filter_complex_inv f = match f with
+  | And (f1,f2,l) -> mkAnd (filter_complex_inv f1) (filter_complex_inv f2) l
+  | Or _ -> f  
+  | Forall _ -> f
+  | Exists _ -> f
+  | Not (_,_,l) -> mkTrue l
+  | BForm (b,l) -> match b with
+	  | BConst _  
+	  | BVar _ 
+	  | BagSub _
+	  | BagMin _
+	  | BagMax _
+	  | ListAllN _
+	  | ListPerm _
+	  | RelForm _ -> f
+	  | _ -> mkTrue no_pos
+	  
+	  
+	  
+
+let mkNot_norm f lbl1 pos0 :formula= match f with
+  | BForm (bf,lbl) -> begin
+      let r = match bf with
+        | BConst (b, pos) -> Some (BConst ((not b), pos))
+        | Lt (e1, e2, pos) -> Some (Gte (e1, e2, pos))
+        | Lte (e1, e2, pos) -> Some(Gt (e1, e2, pos))
+        | Gt (e1, e2, pos) -> Some(Lte (e1, e2, pos))
+        | Gte (e1, e2, pos) -> Some(Lt (e1, e2, pos))
+        | Eq (e1, e2, pos) -> Some(Neq (e1, e2, pos))
+        | Neq (e1, e2, pos) -> Some(Eq (e1, e2, pos))
+		| BagIn e -> Some(BagNotIn e)
+		| BagNotIn e -> Some(BagIn e)
+        | _ -> None in
+	match r with 
+		| None -> Not (f, lbl,pos0)
+		| Some bf -> BForm((norm_bform_aux bf),lbl)
+	end
+  | _ -> Not (f, lbl1,pos0)
