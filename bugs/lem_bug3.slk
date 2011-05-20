@@ -1,0 +1,13 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 <-> self::lseg<a, r> * r::lseg<b, p>.
+
+checkentail x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = 3 & n2 = 4 |- x::lseg<n, p> & n = 7.
+// should be valid but it fails due to the lemma folding which is not weel-done (it simply unfolds the consequent)
+// todo: fix the lemma folding
+//print residue.

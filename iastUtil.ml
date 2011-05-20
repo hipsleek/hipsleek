@@ -7,6 +7,7 @@ module Err = Error
 module CP = Cpure
 
 open Iast
+open Gen.Basic
 
 (********************************)
 let transform_exp 
@@ -1020,7 +1021,12 @@ let create_progfreeht_of_prog prog =
 
 
 let merge0 ht ms : ((ident list) * (IS.t * IS.t)) = 
-  let rs1s, ws1s = List.split (List.map (H.find ht) ms) in
+  let find ht x = 
+    try H.find ht x 
+    with e ->  Error.report_error 
+                 {Err.error_loc = no_pos; 
+                  Err.error_text = "Function \""^x^"\" is not defined within program"} in
+  let rs1s, ws1s = List.split (List.map (find ht) ms) in
   let rws = union_all rs1s, union_all ws1s in
   (*  let fun0 m = H.replace ht m rws in
       List.iter fun0 ms; *)
@@ -1029,6 +1035,12 @@ let merge0 ht ms : ((ident list) * (IS.t * IS.t)) =
 let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) = 
   List.map (merge0 ht) mss
 
+
+let merge1 ht (mss:(string list list)) : (((ident list) * (IS.t * IS.t)) list) = 
+  let pr2 = pr_list (pr_list (fun x -> x)) in
+  let pr3 = pr_list (pr_pair (pr_list (fun x -> x)) pr_no) in
+  Gen.Debug.no_2 "merge1" pr_no pr2 pr3 merge1 ht mss
+ 
 
 let cmbn_rw a b = 
   (IS.union (fst a) (fst b)), (IS.union (snd a) (snd b))
@@ -1170,27 +1182,43 @@ let map_body_of_proc f proc =
 
 let add_globalv_to_mth_prog prog = 
   let cg = callgraph_of_prog prog in
+  (* let _ = print_string "1\n" in *)
   let ht = create_progfreeht_of_prog prog in
+  (* let _ = print_string "2\n" in *)
   let scclist = List.rev (ngscc_list cg) in
+  (* let _ = print_string "2a\n" in *)
   let sccfv = merge1 ht scclist in
+  (* let _ = print_string "3\n" in *)
   let mscc = push_freev1 cg sccfv in
   let _ = update_ht0 ht mscc in
+  (* let _ = print_string "4\n" in *)
   let newsig_procs = 
     List.map (add_free_var_to_proc prog.prog_global_var_decls ht) 
       prog.prog_proc_decls in
+  (* let _ = print_string "5\n" in *)
   let new_procs = 
     List.map (map_body_of_proc (addin_callargs_of_exp ht))
       newsig_procs in
+  (* let _ = print_string "1\n" in *)
   { prog with
       prog_proc_decls = new_procs;
   }
 
+let add_globalv_to_mth_prog prog = 
+  Gen.Debug.no_1 "add_globalv_to_mth_prog" pr_no pr_no add_globalv_to_mth_prog prog
+
   
 let pre_process_of_iprog prog = 
   let prog = float_var_decl_prog prog in
+  (* let _ = print_string "1\n" in *)
   let prog = rename_prog prog in
+  (* let _ = print_string "2\n" in *)
   let prog = add_globalv_to_mth_prog prog in
+  (* let _ = print_string "3\n" in *)
   prog
+
+let pre_process_of_iprog prog = 
+  Gen.Debug.no_1 "pre_process_of_iprog" pr_no pr_no pre_process_of_iprog prog
 
 
 

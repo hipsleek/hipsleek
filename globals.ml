@@ -25,12 +25,19 @@ and primed =
   | Unprimed
 
 and prim_type = 
+  | TVar of int
   | Bool
   | Float
   | Int
   | Void
-  | Bag
+  | BagT of prim_type
   | List
+
+(* TODO : move typ here in future *)
+type typ =
+  | Prim of prim_type
+  | Named of ident (* named type, could be enumerated or object *)
+  | Array of (typ * int option) (* base type and optional dimension *)
 
 (*
   Data types for code gen
@@ -40,13 +47,22 @@ type mode =
   | ModeIn
   | ModeOut
 
-let string_of_prim_type = function 
+let rec string_of_prim_type = function 
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | Bag           -> "multiset"
+  | TVar i       -> "TVar["^(string_of_int i)^"]"
+  | BagT t        -> "bag("^(string_of_prim_type t)^")"
   | List          -> "list"
+
+let rec s_i_list l c = match l with 
+  | [] -> ""
+  | h::[] -> h 
+  | h::t -> h ^ c ^ (s_i_list t c)
+;;
+
+let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 
 let idf (x:'a) : 'a = x
 let idf2 v e = v 
@@ -131,7 +147,7 @@ let verify_callees = ref false
 
 let elim_unsat = ref false
 
-let lemma_heuristic = ref false
+(* let lemma_heuristic = ref false *)
 
 let elim_exists = ref true
 
@@ -367,7 +383,11 @@ let fresh_trailer () =
 	(*let _ = (print_string ("\n[globals.ml, line 103]: fresh name = " ^ str ^ "\n")) in*)
 	(* 09.05.2008 --*)
     "_" ^ str
-		
+
+let fresh_any_name (any:string) = 
+  let str = string_of_int (fresh_int ()) in
+    any ^"_"^ str
+
 let fresh_name () = 
   let str = string_of_int (fresh_int ()) in
     "f_r_" ^ str

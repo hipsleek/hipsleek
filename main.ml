@@ -65,8 +65,7 @@ let process_source_full source =
     let _ = print_string ("Translating global variables to procedure parameters...\n"); flush stdout in
 
     let intermediate_prog =IastUtil.pre_process_of_iprog prog in
-		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in *) 
-
+		(* let _ = print_string "AN HOA :: pre_process_of_iprog PASSED\n" in  *)
     let intermediate_prog = Iast.label_procs_prog intermediate_prog in
 		(* let _ = print_string "AN HOA :: label_procs_prog PASSED\n" in *)
     let _ = if (!Globals.print_input) then print_string (Iprinter.string_of_program intermediate_prog) else () in
@@ -79,7 +78,7 @@ let process_source_full source =
     (* let _ = print_string ("input prog: "^(Iprinter.string_of_program intermediate_prog)^"\n") in *)
     let cprog = Astsimp.trans_prog intermediate_prog in
 		(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
-		let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
+	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
     let _ = print_string (" done\n"); flush stdout in
 		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
@@ -178,7 +177,7 @@ let main1 () =
       ()
 
 (* let main1 () = *)
-(*   Gen.Debug.loop_1 "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
+(*   Gen.Debug.loop_1_no "main1" (fun _ -> "?") (fun _ -> "?") main1 () *)
 	  
 let finalize () =
   Tpdispatcher.stop_prover ()

@@ -62,24 +62,24 @@ let classes_related (prog : I.prog_decl) (c1 : I.data_decl) (c2 : I.data_decl) :
   (inherits prog c1 c2)|| (inherits prog c2 c1) 
 
 (* receives two types and verifies if they are identic *)
-let rec match_type (t1 : I.typ) (t2 : I.typ) : bool = 
+let rec match_type (t1 : typ) (t2 : typ) : bool = 
   match t1 with
-  | I.Prim (p1) -> 
+  | Prim (p1) -> 
       begin 
 	match t2 with
-	| I.Prim (p2) -> (p1 = p2)
+	| Prim (p2) -> (p1 = p2)
 	| _ -> false
       end	      
-  | I.Named (i1) -> 
+  | Named (i1) -> 
       begin 
 	match t2 with
-	| I.Named (i2) -> (i1 = i2)
+	| Named (i2) -> (i1 = i2)
 	| _ -> false
       end	      	
-  | I.Array (t3, o3) -> 
+  | Array (t3, o3) -> 
       begin 
 	match t2 with
-	| I.Array (t4, o4) -> (o3 = o4) && (match_type t3 t4)
+	| Array (t4, o4) -> (o3 = o4) && (match_type t3 t4)
 	| _ -> false
       end	       
 

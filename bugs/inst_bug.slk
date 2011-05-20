@@ -1,0 +1,32 @@
+data node { int val ; node next }.
+
+
+pred lseg<n, p> == self = p & n = 0
+         or self::node<next = r> * r::lseg<n - 1, p>
+         inv n >= 0.
+
+
+
+/*
+lemma self::lseg<n, p> <- self::lseg<a, r> * r::lseg<b, p> & n=a+b.
+
+lemma self::lseg<n, p> -> (exists a,b: self::lseg<a, r> * r::lseg<b, p> & n=a+b).
+
+lemma self::lseg<n, p> -> self::lseg<a, r> * r::lseg<b, p> & n=a+b.
+
+lemma self::lseg<n, p> & n = a + b & a,b >=0 <- self::lseg<a, r> * r::lseg<b, p>.
+
+*/
+
+
+checkentail x::lseg<n1, q> * q::lseg<n2,p> |- [n] x::lseg<n, r>.
+
+print residue.
+
+/*
+Valid.
+ q::lseg<n2,p>@M & true & {FLOW,(141,142)=__norm,}
+*/
+
+
+

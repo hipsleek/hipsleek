@@ -196,7 +196,7 @@ and subst_avoid_capture_memo (fr : spec_var list) (t : spec_var list) (f_l : mem
     regroup_memo_group r
 
 (* and subst_avoid_capture_memo_debug (fr : spec_var list) (t : spec_var list) (f_l : memo_pure) : memo_pure = *)
-(*   Gen.Debug.ho_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l *)
+(*   Gen.Debug.no_3a_list "subst_avoid_capture_memo" (full_name_of_spec_var) subst_avoid_capture_memo fr t f_l *)
 
     
 and memo_cons_subst sst (f_l : memoised_constraint list): memoised_constraint list = 
@@ -425,7 +425,7 @@ and fold_mem_lst_gen (f_init:formula) with_dupl with_inv with_slice with_disj ls
       
 and fold_mem_lst_no_disj (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true false lst
   
-and fold_mem_lst (f_init:formula) with_dupl with_inv lst :formula= fold_mem_lst_gen f_init with_dupl with_inv true true lst
+and fold_mem_lst (f_init:formula) with_dupl with_inv (lst:memo_pure) :formula= fold_mem_lst_gen f_init with_dupl with_inv true true lst
   
 (*folds just the pruning constraints, ignores the memo_group_slice*) 
 and fold_mem_lst_cons init_cond lst with_dupl with_inv with_slice :formula = 
@@ -572,7 +572,7 @@ and memoise_add_pure_aux (l: memo_pure) (p:formula) status : memo_pure =
        Gen.Profiling.pop_time "add_pure"; r)
     
 and memoise_add_pure_aux_debug l p status : memo_pure = 
-  Gen.Debug.ho_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
+  Gen.Debug.no_3 "memoise_add_pure_aux " (fun _ -> "?") !print_p_f_f (fun _ -> "?") (!print_mp_f) memoise_add_pure_aux l p status
 
   
 and memoise_add_pure_N l p = memoise_add_pure_aux(*_debug*) l p Implied_N
@@ -628,7 +628,7 @@ and create_memo_group (l1:(b_formula *(formula_label option)) list) (l2:formula 
     r
       
 and create_memo_group_debug ll l2 = 
-  Gen.Debug.ho_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
+  Gen.Debug.no_3 "create_memo_group " (Gen.BList.string_of_f (fun (c,_) -> !print_bf_f c)) (Gen.BList.string_of_f !print_p_f_f) (fun _ -> "?")
     (!print_mp_f) create_memo_group ll l2
 
     
@@ -769,7 +769,7 @@ and memo_pure_push_exists_all fs qv f0 pos =
   !print_mp_f (memo_pure_push_exists_all_x fs) qv f0 pos
 
 (*and memo_pure_push_exists_eq_debug qv f0 pos =
-  Gen.Debug.ho_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
+  Gen.Debug.no_3 "pure_push_eq" (fun c -> String.concat ", " (List.map !print_sv_f c)) !print_mp_f (fun _ -> "") 
   (fun (c1,c2) -> (!print_mp_f c1)^"\n remaining: "^(String.concat ", " (List.map !print_sv_f c2)) ) memo_pure_push_exists_eq qv f0 pos*)
 
   
@@ -1132,7 +1132,7 @@ let replace_memo_pure_label nl f =
  (* imply functions *)
 
 let rec mimply_process_ante_debug with_disj ante_disj conseq str str_time t_imply imp_no =
- Gen.Debug.ho_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
+ Gen.Debug.no_3 " mimply_process_ante " (fun x -> string_of_int x) (!print_mp_f) (!print_p_f_f)  
   (fun (c,_,_)-> string_of_bool c) 
  (fun with_disj ante_disj conseq -> mimply_process_ante with_disj ante_disj conseq str str_time t_imply imp_no) with_disj ante_disj conseq
     
@@ -1166,7 +1166,7 @@ let mimply_one_conj ante_memo0 conseq  t_imply imp_no =
   else (Gen.Profiling.inc_counter "with_disj_cnt_0_s";(xp01,xp02,xp03)	)
 
 let mimply_one_conj_debug ante_memo0 conseq_conj t_imply imp_no = 
-  Gen.Debug.ho_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
+  Gen.Debug.no_4_opt (fun (x,_,_) -> not x) "mimply_one_conj " (!print_mp_f) (!print_p_f_f) (fun _ -> "?")
   (fun x -> string_of_int !x)
   (fun (c,_,_)-> string_of_bool c) 
   mimply_one_conj ante_memo0 conseq_conj t_imply imp_no
@@ -1188,7 +1188,7 @@ let rec mimply_conj ante_memo0 conseq_conj t_imply imp_no =
     | [] -> (true,[],None)
 
 let rec imply_memo_debug ante_memo0 conseq_memo t_imply imp_no=
- Gen.Debug.ho_2 "imply_memo_x" (!print_mp_f)
+ Gen.Debug.no_2 "imply_memo_x" (!print_mp_f)
       (!print_mp_f)
       (fun (r,_,_) -> string_of_bool r)
       (fun ante_memo0 conseq_memo -> imply_memo_x ante_memo0 conseq_memo t_imply imp_no)ante_memo0 conseq_memo
@@ -1323,7 +1323,7 @@ let merge_mems f1 f2 slice_dup = match (f1,f2) with
   
   
 let merge_mems_debug f1 f2 slice_dup = 
-  Gen.Debug.ho_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
+  Gen.Debug.no_3 "merge_mems " !print_mix_f !print_mix_f (fun x -> "?")
   !print_mix_f merge_mems f1 f2 slice_dup
   
   
@@ -1378,7 +1378,7 @@ let memo_arith_simplify f = match f with
   | OnePF f -> OnePF (arith_simplify 6 f)
  
 let memo_arith_simplify_debug f = 
-  Gen.Debug.ho_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
+  Gen.Debug.no_1 "memo_arith_simplify" (!print_mix_f) (!print_mix_f) memo_arith_simplify f 
 
 let memo_is_member_pure sp f = match f with
   | MemoF f -> memo_is_member_pure sp f
@@ -1461,5 +1461,17 @@ let trans_mix_formula (e: mix_formula) (arg: 'a) f f_arg f_comb : (mix_formula *
     
     
 let find_rel_constraints (f:mix_formula) (v_l :spec_var list):  mix_formula = match f with
-  | MemoF f -> MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
+  | MemoF f -> 
+MemoF (List.filter (fun c-> not ((Gen.BList.intersect_eq eq_spec_var c.memo_group_fv v_l )==[]))f)
   | OnePF f -> OnePF (find_rel_constraints f v_l)
+
+
+  
+  
+let memo_filter_complex_inv f = List.map (fun c-> {c with memo_group_cons = []; memo_group_aset=[]}) f
+	
+  
+let filter_complex_inv f = match f with
+	| MemoF f -> MemoF (memo_filter_complex_inv f)
+	| OnePF f -> OnePF (filter_complex_inv f)
+  

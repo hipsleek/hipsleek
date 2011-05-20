@@ -248,7 +248,7 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout fnc () timeout fail_with_timeout in 
+      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () timeout fail_with_timeout in 
       res
   end
 
@@ -279,7 +279,7 @@ let rec send_and_receive f timeout=
         let rel = Ocparser.oc_output (Oclexer.tokenizer "interactive") lex_buf in
         rel
       in
-      let answ = Procutils.PrvComms.maybe_raise_timeout fnc () timeout in
+      let answ = Procutils.PrvComms.maybe_raise_timeout_num 3 fnc () timeout in
       answ
           
   end

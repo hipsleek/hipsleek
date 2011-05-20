@@ -4,6 +4,7 @@
 
 open Globals
 module CP = Cpure
+module Err = Error
 
 let coq_file_number = ref 0
 let result_file_name = "res"
@@ -17,12 +18,15 @@ let coq_channels = ref (stdin, stdout)
 
 
 (* pretty printing for primitive types *)
-let coq_of_prim_type = function
+let rec coq_of_prim_type = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
-  | Bag		      -> "int set"
+ | (TVar i)       ->   (* type var not supported *)
+        Error.report_error {Err.error_loc = no_pos; 
+        Err.error_text = "type var not supported for Coq"}
+   | BagT t		      -> "("^(coq_of_prim_type t) ^") set"
   | List		  -> "list"
 ;;
 
@@ -32,9 +36,9 @@ let coq_of_spec_var (sv : CP.spec_var) = match sv with
 
 let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (t, _, _) -> begin match t with
-    | CP.Prim List -> "list Z"
-    | _ -> "Z"
-	end
+        | Prim List -> "list Z"
+        | _ -> "Z"
+  end
 
 (*----------------------------------*)
 (* checking if exp contains bags *)
@@ -199,7 +203,7 @@ let start () =
   print_string "Coq started\n"; flush stdout
 
 let start_prover_debug () =
-  Gen.Debug.ho_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
+  Gen.Debug.no_1 "stack coq prover" (fun () -> "") (fun () -> "") start ()
 
 (* stopping Coq *)
 let stop () =
@@ -213,7 +217,7 @@ let stop () =
 
 let stop_prover_debug () =
   print_string "stop coq prover"; 
-  Gen.Debug.ho_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
+  Gen.Debug.no_1 "stop coq prover" (fun () -> "") (fun () -> "") stop ()
 
 (* sending Coq a formula; nr = nr. of retries *)
 let rec send_formula (f : string) (nr : int) : bool =

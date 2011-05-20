@@ -1,0 +1,48 @@
+Add:
+  check_continue |- ?.
+  This will use residue to continue with more checking.
+
+qs-bug-eps.ss
+  qsort-tail.ss goes into a loop under --eps --combined-lemma-heuristic
+
+
+bugs/sleek7.slk
+===============
+loris@loris-desktop:/home2/loris/hg/sleekex$ ./sleek bugs/sleek7.slk --imm
+Starting Omega... 
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Stop Omega... 379 invocations 
+loris@loris-desktop:/home2/loris/hg/sleekex$ ./sleek bugs/sleek7.slk 
+Starting Omega... 
+Valid.
+Valid.
+Valid.
+Valid.
+Valid.
+
+SLEEK8
+======
+oris@loris-desktop:/home2/loris/hg/sleekex$ ./sleek bugs/sleek8.slk --imm
+Starting Omega... 
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+Fail.
+One example also goes into a LOOP:
+//checkentail x::lseg<n, p> * t1::lseg<x1, y1> & n = 6 |- t1::lseg<x2, y2> * x::lseg<n1, r1> * r1::lseg<n2, p> & n1 = n2.
+// valid BUT looping

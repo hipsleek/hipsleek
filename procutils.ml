@@ -1,3 +1,5 @@
+open Gen.Basic
+
 external set_close_on_exec : Unix.file_descr -> unit = "unix_set_close_on_exec";;
 
 let try_set_close_on_exec fd =
@@ -63,23 +65,34 @@ struct
     reset_sigalrm ();
     answ 
 
+  let maybe_raise_timeout_num i (fnc: 'a -> 'b) (arg: 'a) (tsec:float) : 'b =
+    Gen.Debug.no_1_num i "maybe_raise_timeout" string_of_float pr_no (fun _ -> maybe_raise_timeout fnc arg tsec) tsec 
+
   (* same as maybe_raise_timoeut just that it treats the timeout exception with the with_timeout function *)
-  let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: 'c -> 'b): 'b =
+  let maybe_raise_and_catch_timeout (fnc: 'a -> 'b) (arg: 'a) (tsec: float) (with_timeout: unit -> 'b): 'b =
     try
         let res = maybe_raise_timeout fnc arg tsec in
         res
     with 
-      |Timeout ->
+      | Timeout ->
           with_timeout ()
+
+  let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
+    Gen.Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
+        (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
 
   (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =
-    try
-        Unix.close (Unix.descr_of_out_channel process.outchannel);
-        Unix.close (Unix.descr_of_in_channel process.inchannel);
-        Unix.close (Unix.descr_of_in_channel process.errchannel);
-    with
-      | _ -> ()
+    (try
+         flush process.outchannel;
+         Unix.close (Unix.descr_of_out_channel process.outchannel);
+         Unix.close (Unix.descr_of_in_channel process.errchannel)
+     with
+       | e -> () );
+    (try
+         Unix.close (Unix.descr_of_in_channel process.inchannel)
+     with
+       | e -> () )
 
   let log_to_file flag file_descr str =
     if flag then
