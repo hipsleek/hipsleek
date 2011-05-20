@@ -141,7 +141,7 @@ let rec filter_formula_memo f (simp_b:bool)=
 
 (*find what conditions are required in order for the antecedent node to be pruned sufficiently
   to match the conseq, if the conditions relate only to universal variables then move them to the right*)
-let prune_branches_subsume_x prog lhs_node rhs_node :(bool*CP.formula option)= match lhs_node,rhs_node with
+let prune_branches_subsume_x prog lhs_node rhs_node :(bool*(CP.formula*bool) option)= match lhs_node,rhs_node with
   | DataNode dn1, DataNode dn2-> 
     (match (dn1.h_formula_data_remaining_branches,dn2.h_formula_data_remaining_branches) with
       | None,None -> (true, None)
@@ -153,9 +153,9 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*CP.formula option)= m
     (match (vn1.h_formula_view_remaining_branches,vn2.h_formula_view_remaining_branches) with
       | None,None -> (true, None)
       | Some l1, Some l2 -> 
-        if (Gen.BList.subset_eq (=) l1 l2) then (true, None)
-        else if (Gen.BList.subset_eq (=) l2 l1) then 
-          let need_prunning = Gen.BList.difference_eq (=) l1 l2 in
+		let need_prunning = Gen.BList.difference_eq (=) l1 l2 in		
+		if (List.length need_prunning)<=0 then (true,None) (**)
+		else
           let v_def = look_up_view_def no_pos prog.prog_view_decls vn2.h_formula_view_name in
           let to_vars = vn2.h_formula_view_node:: vn2.h_formula_view_arguments in
           let self_v = CP.SpecVar (Named v_def.view_data_name, self, if (CP.is_primed vn2.h_formula_view_node) then Primed else Unprimed) in
@@ -163,15 +163,16 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*CP.formula option)= m
           let subst_vars = List.combine from_vars to_vars in
           let new_cond = List.map (fun (c1,c2)-> (CP.b_subst subst_vars c1,c2)) v_def.view_prune_conditions in         
           let new_cond = List.filter (fun (_,c2)-> (List.length (Gen.BList.intersect_eq (=) need_prunning c2))>0) new_cond in
-          if (Gen.BList.subset_eq (=) need_prunning (List.concat (List.map snd new_cond))) then
+          if (Gen.BList.subset_eq (=) need_prunning (List.concat (List.map snd new_cond))) then 
+			(*i have enough prunning conditions to succeed*)
             let ll = List.map (fun c -> List.filter (fun (_,c1)-> List.exists ((=) c) c1) new_cond) need_prunning in (*posib prunning cond for each branch*)
             let wrap_f (c,_) = CP.BForm ((MCP.memo_f_neg c),None) in
             let ll = List.map (fun l -> List.fold_left (fun a c-> CP.mkOr a (wrap_f c) None no_pos) (wrap_f (List.hd l)) (List.tl l)) ll in
             let inst_forms = CP.conj_of_list ll no_pos in
             (*let inst_forms = CP.conj_of_list (List.map (fun (c,_)-> CP.BForm ((MCP.memo_f_neg c),None)) new_cond) no_pos in*)
-            (true, Some inst_forms)
-          else (print_string "h11\n";(false, None))
-        else (print_string "h22\n";(false, None))
+			let fls = ((List.length need_prunning)=(List.length l1)) in
+            (true, Some (inst_forms,fls))
+          else (print_string "I do not have enough prunning conditions to succeed in this match\n";(false, None)) (*this should not occur though*)
       | None, Some _ ->
         Debug.print_info "Warning: " "left hand side node is not specialized!" no_pos;
         (false, None)
@@ -182,10 +183,8 @@ let prune_branches_subsume_x prog lhs_node rhs_node :(bool*CP.formula option)= m
   | _ -> (false, None)      
 
 let prune_branches_subsume prog lhs_node rhs_node = 
-  let pr2 (c,d)= (string_of_bool c) ^ " " ^(
-    match d with
-      | None-> "None"
-      | Some p -> Cprinter.string_of_pure_formula p) in
+  let pr1 = pr_pair Cprinter.string_of_pure_formula string_of_bool in
+  let pr2 (c,d)= Cprinter.pr_pair string_of_bool (Cprinter.pr_opt pr1) in
   let pr = Cprinter.string_of_h_formula in
   Gen.Debug.no_2 "pr_branches_subsume " pr pr pr2 (fun _ _ -> prune_branches_subsume_x prog lhs_node rhs_node) lhs_node rhs_node
 
@@ -4776,7 +4775,7 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
             let new_estate = {estate with es_formula = Base{lhs_b with formula_base_heap = lhs_rest}} in
             let rhs_p = match to_be_proven with
               | None -> rhs_b.formula_base_pure
-              | Some p -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
+              | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
             let n_rhs_b = Base {rhs_b with formula_base_heap = rhs_rest;formula_base_pure = rhs_p} in
             let res_es0, prf0 = do_match prog new_estate lhs_node rhs_node n_rhs_b is_folding pos in
             (*if (!Globals.exhaust_match) then 

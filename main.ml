@@ -190,6 +190,7 @@ let _ =
     ()
   with _ as e -> begin
     finalize ();
+    print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
   end

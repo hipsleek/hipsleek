@@ -600,6 +600,7 @@ let check_proc_wrapper prog proc =
       (* dummy_exception(); *)
       print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+      Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -729,7 +730,11 @@ let check_proc_wrapper_map_net prog (proc,num) =
       raise e
 
 let check_prog (prog : prog_decl) =
-  if !Globals.check_coercions then begin
+  if (Printexc.backtrace_status ()) then print_string "backtrace active"
+  else print_string "bactrace inactive";
+(*    (print_string "raising\n";
+    raise Not_found);
+*) if !Globals.check_coercions then begin
     print_string "Checking coercions... ";
     ignore (check_coercion prog);
     print_string "DONE."
