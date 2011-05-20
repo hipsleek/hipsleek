@@ -262,7 +262,7 @@ let no_diff = ref false (* if true, then xpure_symbolic will drop the disequalit
 let no_check_outer_vars = ref false 
 
 (*----------------*)
-let rec formula_2_mem (f : CF.formula) prog : CF.mem_formula = 
+let rec formula_2_mem_x (f : CF.formula) prog : CF.mem_formula = 
   (* for formula *)	
   (* let _ = print_string("f = " ^ (Cprinter.string_of_formula f) ^ "\n") in *)
   let rec helper f =
@@ -286,9 +286,9 @@ let rec formula_2_mem (f : CF.formula) prog : CF.mem_formula =
 	        {mem_formula_mset = (CP.DisjSetSV.or_disj_set m1.mem_formula_mset m2.mem_formula_mset)}
   in helper f
 
-and formula_2_mem_debug (f : formula) prog : CF.mem_formula = 
+and formula_2_mem (f : formula) prog : CF.mem_formula = 
   Gen.Debug.no_1 "formula_2_mem" Cprinter.string_of_formula Cprinter.string_of_mem_formula
-      (fun f -> formula_2_mem f prog) f
+      (fun _ -> formula_2_mem_x f prog) f
 
 and h_formula_2_mem_debug (f : h_formula) (evars : CP.spec_var list) prog : CF.mem_formula = 
   Gen.Debug.no_1 "h_formula_2_mem" Cprinter.string_of_h_formula Cprinter.string_of_mem_formula
@@ -434,8 +434,8 @@ and xpure_mem_enum_x (prog : prog_decl) (f0 : formula) : (MCP.mix_formula * (bra
   (pf, pb, mset)
 
 
-and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Gen.Debug.no_1 "xpure_heap_mem_enum" Cprinter.string_of_h_formula (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
-    ^(Cprinter.string_of_mem_formula a3)) (fun f0 -> xpure_heap_mem_enum_x prog f0 which_xpure) h0
+and xpure_heap_mem_enum(*_debug*) (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =  Gen.Debug.no_2 "xpure_heap_mem_enum" Cprinter.string_of_h_formula string_of_int (fun (a1,_,a3)->(Cprinter.string_of_mix_formula a1)^"#"
+    ^(Cprinter.string_of_mem_formula a3)) (fun _ _ -> xpure_heap_mem_enum_x prog h0 which_xpure) h0 which_xpure 
 
 
 and xpure_heap_mem_enum_x (prog : prog_decl) (h0 : h_formula) (which_xpure :int) : (MCP.mix_formula * (branch_label * CP.formula) list * CF.mem_formula) =
