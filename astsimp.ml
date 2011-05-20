@@ -5694,8 +5694,8 @@ and view_prune_inv_inference cp vd =
       (* let _ = print_endline ("complex inv computed "^(Cprinter.string_of_mix_formula mf)) in *)
       let mf1 = MCP.filter_complex_inv mf in
       let bl1 = List.map (fun (l,f) -> (l,CP.filter_complex_inv f))  bl in
-
-      Some (mf1,bl1)
+      let r = (mf1,bl1) in
+      if (MCP.isConstTrueBranch r) then None else Some r
     else None in
   let v' = { vd with  
       C.view_complex_inv =  c_inv ; 
