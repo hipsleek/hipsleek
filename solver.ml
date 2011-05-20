@@ -4773,6 +4773,8 @@ and process_action_x prog estate conseq lhs_b rhs_b a is_folding pos =
 		  if not subsumes then  (CF.mkFailCtx_in (Basic_Reason (mkFailContext "there is a mismatch in branches " estate conseq (get_node_label rhs_node) pos)), NoAlias)
           else
             let new_estate = {estate with es_formula = Base{lhs_b with formula_base_heap = lhs_rest}} in
+			(*TODO: if prunning fails then try unsat on each of the unprunned branches with respect to the context,
+			         if it succeeds and the flag from to_be_proven is true then make current context false*)
             let rhs_p = match to_be_proven with
               | None -> rhs_b.formula_base_pure
               | Some (p,_) -> MCP.memoise_add_pure rhs_b.formula_base_pure p in
