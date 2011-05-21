@@ -401,8 +401,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              Gen.Debug.loop_1_no "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
-                  (fun s ->  check_pre_post org_spec s) sctx in
+              let pr = Cprinter.string_of_list_failesc_context in
+              let pr2 = Cprinter.summary_list_failesc_context in
+              let pr3 = Cprinter.string_of_struc_formula in
+              Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
 		
@@ -492,8 +494,9 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   let pr = pr_list Cprinter.string_of_partial_context in
-  (* let pr2 x = "Size of Result "^string_of_int(List.length x) in *)
-  Gen.Debug.loop_1_no "check_post" pr pr  (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
+  let pr1 x = string_of_int (List.length x) in
+  let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
+  Gen.Debug.loop_1(* _no *) "check_post" pr2 pr2  (fun _ -> check_post_x prog proc ctx post pos pid) ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)

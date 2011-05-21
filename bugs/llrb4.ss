@@ -216,12 +216,13 @@ node insert_aux(node h, int v)
 	if (is_red(h.right)) {
         color_flip(h); flip_flag=true;
     }
+    assert false;
 	if (v <= h.val) // accept duplicates!
       { 
         h.left = insert_aux(h.left, v); 
       }
 	else h.right = insert_aux(h.right, v);
-
+    assert false;
    if (is_red(h)) {
      //dprint;
      //assume false;
@@ -233,6 +234,7 @@ node insert_aux(node h, int v)
      // h was BXB
       node x=h.left;
       node y=h.right;
+      assert false;
       if (is_red(h.left)) {
         // h is BRB
         //dprint;
@@ -240,12 +242,14 @@ node insert_aux(node h, int v)
         //assert x'!=null; //'
         node xleft=x.left;
         node xright=x.right;
+        assert false;
         if (is_red(xleft)) {
           //assert xleft'::rbd<_,0,_,_>; //' ok
           //assert xright'::rbd<_,1,_,_>; //'  ok
           //assert y'::rbd<_,1,_,_>; //'  ok
            //assume false;
            h=double_rotate(h);
+           assert false;
         }
         } 
       else {
@@ -253,11 +257,13 @@ node insert_aux(node h, int v)
         //dprint;
         //assume false;
         //assert x'::rbd<_,1,_,_>; //'  ok
+        assert false;
         if (is_red(h.right)) {
         // h is BBR
           //assert y'::rbd<_,0,_,_>; //' ok
           h=rotate_left(h);
         } 
+        assert false;
         /* else {
           // h is BBB
           //assert y'::rbd<_,1,_,_>; //' ok
@@ -268,6 +274,7 @@ node insert_aux(node h, int v)
          */
        }
  }
+  assert false;
   return h;
   }
 }

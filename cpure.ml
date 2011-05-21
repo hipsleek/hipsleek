@@ -275,8 +275,16 @@ and afv_list (alist : exp list) : spec_var list = match alist with
 and is_max_min a = match a with
   | Max _ | Min _ -> true
   | _ -> false
+
+and string_of_relation (e:relation) : string =
+  match e with
+    | ConstRel b -> if b then "True" else "False"
+    | BaseRel (el,f) -> pr_pair (pr_list !print_exp) !print_formula (el,f)
+    | UnionRel (r1,r2) -> (string_of_relation r1)^"\n"^(string_of_relation r2)^"\n"
+
 and isConstTrue_debug (p:formula) =
   Gen.Debug.no_1 "isConsTrue" !print_formula string_of_bool isConstTrue p
+
 
 and isConstTrue (p:formula) = match p with
   | BForm ((BConst (true, pos)),_) -> true
