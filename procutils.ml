@@ -74,8 +74,9 @@ struct
         let res = maybe_raise_timeout fnc arg tsec in
         res
     with 
-      | Timeout ->
-          with_timeout ()
+      | Timeout ->  
+            Printf.eprintf " maybe_raise_and_catch_timeout : UNEXPECTED Timeout after %s secs" (string_of_float tsec);
+          (with_timeout ())
       | exc -> begin
           Printf.eprintf " maybe_raise_and_catch_timeout : Unexpected exception : %s" (Printexc.to_string exc);
           raise exc
@@ -88,8 +89,8 @@ struct
         (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
 
   let maybe_raise_and_catch_timeout_string_bool (fnc: string -> bool) (arg: string) (tsec: float) (with_timeout: unit -> bool): bool =
-    Gen.Debug.no_2 "maybe_raise_and_catch_timeout" (fun s -> s) string_of_float string_of_bool 
-        (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) arg tsec 
+    Gen.Debug.no_2 "maybe_raise_and_catch_timeout"  string_of_float (fun s -> s) string_of_bool 
+        (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec arg
 
   (* closes the pipes of the named process *)
   let close_pipes (process: proc) : unit =

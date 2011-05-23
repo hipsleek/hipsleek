@@ -1033,7 +1033,7 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 	    let restf = no_change rest pos in
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
-
+ 
 and pos_of_struc_formula (f:struc_formula): loc =
   if (List.length f)==0 then no_pos
   else match (List.hd f) with
@@ -1044,7 +1044,10 @@ and pos_of_struc_formula (f:struc_formula): loc =
 
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
-  | Or ({formula_or_pos = pos}) -> pos
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> pos_of_formula f1
+  (* | Or ({formula_or_pos = pos}) -> pos *)
   | Exists ({formula_exists_pos = pos}) -> pos
 
 and struc_fv (f: struc_formula) : CP.spec_var list = 
@@ -3818,11 +3821,11 @@ let add_to_context (c:context) (s:string) =
   (* set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c *)
   match c with
     | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
-    | OCtx _ ->  let _ = Error.report_warning {
-                  Error.error_loc = !post_pos;
-                  Error.error_text = "[add_to_context] unexpected dealing with OCtx."
-                } in
-      let _ = print_endline (!print_context_short c) in
+    | OCtx _ ->  (* let _ = Error.report_warning { *)
+      (*             Error.error_loc = !post_pos; *)
+      (*             Error.error_text = "[add_to_context] unexpected dealing with OCtx." *)
+      (*           } in *)
+      (* let _ = print_endline (!print_context_short c) in *)
       set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c 
 ;;
 

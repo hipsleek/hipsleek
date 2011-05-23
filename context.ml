@@ -420,7 +420,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
                     let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                     let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-                    if (left_act==[] && right_act==[]) then [(1,M_lemma (c,None))]
+                    if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                     else left_act@right_act
                   end
                   else [] in
@@ -430,7 +430,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       else [] *)in
                   let src = (-1,Search_action (l1@l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
-            | DataNode dl, ViewNode vr -> (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)])
+            | DataNode dl, ViewNode vr -> (0,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )

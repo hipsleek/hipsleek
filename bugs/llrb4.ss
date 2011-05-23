@@ -62,6 +62,14 @@ void inc_rb_ht(node r)
 // llt : lt's left tree; rlt : rt's left tree; ...
 
 bool is_red(node h)
+/*
+	case{
+		h  = null -> ensures !res;
+		h != null -> 
+          requires h::node<v,c,l,r>@I
+          ensures true & (c=0 & res | c!=0 & !res);
+	}
+*/
 	case{
 		h  = null -> ensures !res;
 		h != null -> 
@@ -136,8 +144,10 @@ node rotate_right(node h)
 
 // compute the black height of a red black tree
 int black_height(node h)
+
     requires h::rbd<_,_,_,bh>
 	ensures res = bh;
+
 {
 	if (h == null)
 		return 1;
@@ -170,11 +180,13 @@ node insert(node h, int v)
 node insert_aux(node h, int v)
   case {
   h=null -> ensures res::node<v,0,null,null>;
-   h!=null -> requires h::rbd<n,c,d,bh>
+   h!=null -> requires h::rbd<n,c,d,bh> & h!=null
     case {
      c=1 -> case {
        d=0 ->  ensures res::rbd<n+1,0,1,bh> & res!=null; // R
-       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; // B // loop here
+       d!=0 ->  ensures res::rbd<n+1,1,0,bh> & n>0 ; // B // loop here
+       //res::node<v, 1, l, r> * l::rbd<ln1, _,_, bh-1> * r::rbd<n-ln1, 1,_, bh-1>
+       //or res::node<v, 1, l, r> * l::rbd<ln2, 0,_, bh-1> * r::rbd<n-ln2, 0,_, bh-1>  ;
        }
      c!=1 -> ensures res::red<n+1,bh> & res!=null or res::rbd<n+1,0,1,bh> & res!=null;
    }
@@ -185,15 +197,13 @@ node insert_aux(node h, int v)
     node k=new node(v, 0, null, null);
     return k; 
   }	else {
-     //assume false;
-     //bool orig_red = is_red(h); 
-    //bool flip_flag=false;
+
     if (!is_red(h)) {
 	if (is_red(h.right)) {
       color_flip(h); //flip_flag=true;
     } else {
-      //assume true;
-      assume false;
+      assume true;
+      // assume false;
     }
     }
 	if (v <= h.val) // accept duplicates!
@@ -201,10 +211,7 @@ node insert_aux(node h, int v)
         h.left = insert_aux(h.left, v); 
       }
 	else h.right = insert_aux(h.right, v);
-    //assert false;
    if (is_red(h)) {
-     //dprint;
-     //assume false;
      // RBB or BRR->RBB
      if (is_red(h.right)) {
        h=rotate_left(h);}
@@ -213,47 +220,24 @@ node insert_aux(node h, int v)
      // h was BXB
       node x=h.left;
       node y=h.right;
-      //assert false;
       if (is_red(h.left)) {
         // h is BRB
-        //dprint;
-        //assume false; 
-        //assert x'!=null; //'
         node xleft=x.left;
         node xright=x.right;
-        //assert false;
         if (is_red(xleft)) {
-          //assert xleft'::rbd<_,0,_,_>; //' ok
-          //assert xright'::rbd<_,1,_,_>; //'  ok
-          //assert y'::rbd<_,1,_,_>; //'  ok
-           //assume false;
            h=double_rotate(h);
-           //assert false;
         }
         } 
       else {
-        // h is BBX
-        //dprint;
-        //assume false;
-        //assert x'::rbd<_,1,_,_>; //'  ok
-        //assert false;
         if (is_red(h.right)) {
         // h is BBR
           //assert y'::rbd<_,0,_,_>; //' ok
           h=rotate_left(h);
         } 
-        //assert false;
-        /* else {
-          // h is BBB
-          //assert y'::rbd<_,1,_,_>; //' ok
-           //dprint;
-          assume true;
-          //assume false;
-          } 
-         */
+
        }
  }
-   //assert false;
+   dprint;
   return h;
   }
 }

@@ -513,10 +513,10 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
-
+(* seem _loc 2 is empty *)
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 2)]    
+    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]    
   |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
    [ cc=core_constr             -> cc

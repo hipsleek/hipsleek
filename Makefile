@@ -43,7 +43,7 @@ parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
 parser.cmx : lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml	
 	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
-parser.cmi: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
+parser.cmi: lexer.cmi iast.cmi sleekcommons.cmi globals.cmi error.cmi cast.cmi
 
 ocparser.cmo ocparser.ml: ocparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly

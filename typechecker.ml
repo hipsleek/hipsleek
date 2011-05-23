@@ -77,6 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
+                    let _ = print_endline ("Answer after post :"^(string_of_int (List.length tmp_ctx))) in
 			        (CF.isSuccessListPartialCtx tmp_ctx) 
 		        in
 		        let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
@@ -494,10 +495,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       ((check_exp1 failesc) @ fl)
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
+  (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
   let pr = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.ho_2 "check_post" Cprinter.string_of_pos pr2 pr2  (fun _ _ -> check_post_x prog proc ctx post pos pid) pos ctx
+  Gen.Debug.loop_2 "check_post" Cprinter.string_of_pos pr2 pr2  
+      (fun _ _ -> 
+          let r = check_post_x prog proc ctx post pos pid in
+          (* let r = list_partial_context_and_unsat_now prog r in *)
+      r ) pos ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
@@ -518,13 +524,18 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
+  let _ = print_endline "0" in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
+  let _ = print_endline "1" in
   let _ = PTracer.log_proof prf in
+  let _ = print_endline "2" in
   if (CF.isSuccessListPartialCtx rs) then 
+    let _ = print_endline "3" in
      rs
   else begin
     (* get source code posistion of failed branches *)
-    let locs_of_failures = 
+     let _ = print_endline "4" in
+   let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
     in
     let string_of_loc_list locs =

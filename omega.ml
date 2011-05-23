@@ -161,6 +161,9 @@ let restart reason =
     let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
+  else begin
+    let _ = print_string (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
+    end
 
 (*
   - in: input channel
