@@ -499,7 +499,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let pr = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.loop_2 "check_post" Cprinter.string_of_pos pr2 pr2  
+  Gen.Debug.loop_2_no "check_post" Cprinter.string_of_pos pr2 pr2  
       (fun _ _ -> 
           let r = check_post_x prog proc ctx post pos pid in
           (* let r = list_partial_context_and_unsat_now prog r in *)

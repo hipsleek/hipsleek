@@ -496,6 +496,18 @@ and sort_wt (ys: action_wt list) : action list =
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
 
+and pick_unfold_only ((w,a):action_wt) : action_wt list =
+  match a with
+    | M_unfold _ -> [(w,a)]
+    | Seq_action l -> 
+          if l==[] then [] 
+          else pick_unfold_only (List.hd l)
+    | Search_action l -> List.concat (List.map pick_unfold_only l)
+    | _ -> []
+
+
+(* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
+
 and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
   let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
   (* match r with  *)
@@ -506,7 +518,6 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> let ys = sort_wt r in List.hd (ys)
-
 
 and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let psv = Cprinter.string_of_spec_var in

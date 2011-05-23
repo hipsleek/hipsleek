@@ -620,6 +620,8 @@ formula_base_branches = [];
 formula_base_label = None;
 formula_base_pos = pos})
 
+and mkTrue_nf pos = mkTrue (mkTrueFlow ()) pos
+
 and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse; 
 formula_base_pure = MCP.mkMFalse pos; 
 formula_base_type = TypeFalse;
@@ -4099,4 +4101,25 @@ let is_no_heap_ext_formula (e : ext_formula) : bool =
   let pr = !print_ext_formula in
   Gen.Debug.no_1 "is_no_heap_ext_formula" pr string_of_bool is_no_heap_ext_formula e 
 
+let extr_rhs_b (e:formula) =
+  let h1, p1, fl1, br1, t1 = split_components e in
+  let b1 = { formula_base_heap = h1;
+  formula_base_pure = p1;
+  formula_base_type = t1;
+  formula_base_branches = br1;
+  formula_base_flow = fl1;
+  formula_base_label = None;
+  formula_base_pos = no_pos } in
+  b1
     
+and extr_lhs_b (es:entail_state) =
+  let e = es.es_formula in
+  let h1, p1, fl1, br1, t1 = split_components e in
+  let b1 = { formula_base_heap = h1;
+  formula_base_pure = p1;
+  formula_base_type = t1;
+  formula_base_branches = br1;
+  formula_base_flow = fl1;
+  formula_base_label = None;
+  formula_base_pos = no_pos } in
+  b1
