@@ -84,11 +84,11 @@ struct
               end
 
   let maybe_raise_and_catch_timeout_bool (fnc: 'a -> bool) (arg: 'a) (tsec: float) (with_timeout: unit -> bool): bool =
-    Gen.Debug.ho_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
+    Gen.Debug.no_1 "maybe_raise_and_catch_timeout" string_of_float string_of_bool 
         (fun _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) tsec 
 
   let maybe_raise_and_catch_timeout_string_bool (fnc: string -> bool) (arg: string) (tsec: float) (with_timeout: unit -> bool): bool =
-    Gen.Debug.ho_2 "maybe_raise_and_catch_timeout" (fun s -> s) string_of_float string_of_bool 
+    Gen.Debug.no_2 "maybe_raise_and_catch_timeout" (fun s -> s) string_of_float string_of_bool 
         (fun _ _ -> maybe_raise_and_catch_timeout fnc arg tsec with_timeout) arg tsec 
 
   (* closes the pipes of the named process *)

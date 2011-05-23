@@ -36,11 +36,14 @@ opt: hip sleek prover
 lexer.ml: lexer.mll token.ml
 	$(OCAMLLEX) lexer.mll
  
-parser.cmo: lexer.ml
+# dependencies of parser.ml needs to be manually specified
+parser.cmo: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
 	$(OCAMLC) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
 
-parser.cmx : lexer.ml
+parser.cmx : lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml	
 	$(OCAMLOPT) $(OCAMLFLAGS) -pp camlp4of -annot -c -g parser.ml
+
+parser.cmi: lexer.ml iast.ml sleekcommons.ml globals.ml error.ml cast.ml
 
 ocparser.cmo ocparser.ml: ocparser.mly
 	$(OCAMLYACC) $(OCAMLYACCFLAGS) ocparser.mly

@@ -55,6 +55,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,b,y) ->
+            let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
@@ -496,7 +497,7 @@ and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_cont
   let pr = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
-  Gen.Debug.loop_1(* _no *) "check_post" pr2 pr2  (fun _ -> check_post_x prog proc ctx post pos pid) ctx
+  Gen.Debug.ho_2 "check_post" Cprinter.string_of_pos pr2 pr2  (fun _ _ -> check_post_x prog proc ctx post pos pid) pos ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)

@@ -59,14 +59,14 @@ let rec omega_of_exp e0 = match e0 with
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
             | _ -> 
-                Error.report_warning {
+                Error.report_error {
                   Error.error_loc = l;
                   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
                 }
             in rr
       in r
   | Div (_, _, l) -> 
-      Error.report_warning {
+      Error.report_error {
         Error.error_loc = l;
         Error.error_text ="[omega.ml] Divide is not supported."
       }
@@ -293,7 +293,7 @@ let rec send_and_receive f timeout=
 let send_and_receive f timeout =
   let pr x = x in
   let pr2 = Cpure.string_of_relation in
-  Gen.Debug.ho_2 "send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+  Gen.Debug.no_2 "send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
 
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
@@ -368,7 +368,7 @@ let is_valid (pe : formula) timeout: bool =
 	
 	let sat = 
       try
-        not (check_formula 2 (fomega (* ^ "\n" *)) !timeout2)
+        not (check_formula 2 (fomega ^ "\n") !timeout2)
       with
       | exc ->
           begin

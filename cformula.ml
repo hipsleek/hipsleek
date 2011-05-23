@@ -2018,6 +2018,7 @@ and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
+let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
 
@@ -3814,10 +3815,16 @@ let get_prior_steps (c:context) =
     | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] ;;
 
 let add_to_context (c:context) (s:string) = 
-  set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c
-  (* match c with *)
-  (*   | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; } *)
-  (*   | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c ;; *)
+  (* set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c *)
+  match c with
+    | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
+    | OCtx _ ->  let _ = Error.report_warning {
+                  Error.error_loc = !post_pos;
+                  Error.error_text = "[add_to_context] unexpected dealing with OCtx."
+                } in
+      let _ = print_endline (!print_context_short c) in
+      set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c 
+;;
 
 let add_to_context_num i (c:context) (s:string) = 
   let pr x = match x with Ctx _ -> "Ctx" | OCtx _ -> "OCtx" in  

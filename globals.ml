@@ -94,6 +94,10 @@ let no_pos =
 				   Lexing.pos_cnum = 0 } in
 	{start_pos = no_pos1; mid_pos = no_pos1; end_pos = no_pos1;}
 
+let post_pos = ref no_pos
+
+let set_post_pos p = post_pos := p
+
 let flow = "flow"
 let top_flow = "__flow"
 (*let any_flow = "__Any"*)

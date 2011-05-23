@@ -34,5 +34,5 @@ let report_warning e =
         (e.error_loc.start_pos.Lexing.pos_cnum - e.error_loc.start_pos.Lexing.pos_bol)
         e.error_text;
     flush stdout
-  end else ();
-  failwith "Error detected : error.ml B"
+  end else ()
+  (* failwith "Error detected : error.ml B" *)

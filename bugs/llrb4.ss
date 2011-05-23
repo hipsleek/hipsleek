@@ -86,21 +86,6 @@ void color_flip(node h)
 	h.right.color  = 1 - h.right.color;
 }
 
-// R-R-B -> R B R
-
-node rotate_RRB(node h)
-  requires h::node<v1,0,l,t3> * l::node<v2,0,t1,t2> 
-  ensures res::node<v2,0,t1,r> * r::node<v1,0,t2,t3>; //
-{
-  node L  = h.left;
-  //node T1=L.left;
-  node T2 = L.right;
-  //node T3=h.right;
-  L.right = h;
-  h.left = T2;
-  return L;
-}
-
 // R -> B
 void change_R_to_B(node h)
   requires h::node<v1,0,t1,t2>  
@@ -172,22 +157,11 @@ int black_height(node h)
 node insert(node h, int v)
 //requires h::rbd<n,_,_,bh>
 //ensures res::rbd<n+1,1,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
-  requires h::rbd<n,1,_,bh>
-  ensures res::rbd<n+1,1,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
-{
-	node r = insert_internal(h,v);
-	if (is_red(r)) r.color = 1;
-	return r;
-}
-
-node insert2(node h, int v)
-//requires h::rbd<n,_,_,bh>
-//ensures res::rbd<n+1,1,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
   requires h::rbd<n,_,_,bh>
   ensures res::rbd<n+1,_,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
 {
   node r = insert_aux(h,v);
-  if (is_red(r)) inc_rb_ht(r);
+  if (is_red(r)) change_R_to_B(r); //inc_rb_ht(r);
   return r;
 }
 
@@ -200,29 +174,34 @@ node insert_aux(node h, int v)
     case {
      c=1 -> case {
        d=0 ->  ensures res::rbd<n+1,0,1,bh> & res!=null; // R
-       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; // B
+       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; // B // loop here
        }
      c!=1 -> ensures res::red<n+1,bh> & res!=null or res::rbd<n+1,0,1,bh> & res!=null;
    }
  }
 {
-   bool flip_flag=false;
+  //bool flip_flag=false;
    if (h == null) {
     node k=new node(v, 0, null, null);
     return k; 
   }	else {
+     //assume false;
      //bool orig_red = is_red(h); 
-    bool flip_flag=false;
+    //bool flip_flag=false;
+    if (!is_red(h)) {
 	if (is_red(h.right)) {
-        color_flip(h); flip_flag=true;
+      color_flip(h); //flip_flag=true;
+    } else {
+      //assume true;
+      assume false;
     }
-    assert false;
+    }
 	if (v <= h.val) // accept duplicates!
       { 
         h.left = insert_aux(h.left, v); 
       }
 	else h.right = insert_aux(h.right, v);
-    assert false;
+    //assert false;
    if (is_red(h)) {
      //dprint;
      //assume false;
@@ -234,7 +213,7 @@ node insert_aux(node h, int v)
      // h was BXB
       node x=h.left;
       node y=h.right;
-      assert false;
+      //assert false;
       if (is_red(h.left)) {
         // h is BRB
         //dprint;
@@ -242,14 +221,14 @@ node insert_aux(node h, int v)
         //assert x'!=null; //'
         node xleft=x.left;
         node xright=x.right;
-        assert false;
+        //assert false;
         if (is_red(xleft)) {
           //assert xleft'::rbd<_,0,_,_>; //' ok
           //assert xright'::rbd<_,1,_,_>; //'  ok
           //assert y'::rbd<_,1,_,_>; //'  ok
            //assume false;
            h=double_rotate(h);
-           assert false;
+           //assert false;
         }
         } 
       else {
@@ -257,13 +236,13 @@ node insert_aux(node h, int v)
         //dprint;
         //assume false;
         //assert x'::rbd<_,1,_,_>; //'  ok
-        assert false;
+        //assert false;
         if (is_red(h.right)) {
         // h is BBR
           //assert y'::rbd<_,0,_,_>; //' ok
           h=rotate_left(h);
         } 
-        assert false;
+        //assert false;
         /* else {
           // h is BBB
           //assert y'::rbd<_,1,_,_>; //' ok
@@ -274,111 +253,11 @@ node insert_aux(node h, int v)
          */
        }
  }
-  assert false;
+   //assert false;
   return h;
   }
 }
 
-// Insert a value v to an INTERNAL node of a red-black tree.
-// Remark: NO height increment.
-node insert_internal(node h, int v)
-  case {
-   h=null -> ensures res::rbd<1,0,1,1>;
-   h!=null -> 
-     requires h::rbd<n,c,d,bh>
-    case {
-     c=0 ->  ensures res::rbd<n+1,1,_,bh>; //false; 
-     c!=0 -> case {
-       d=0 ->  ensures res::rbd<n+1,0,_,bh>; // false here!
-       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; 
-              //(d<0 | d>2)  ->  ensures false;
-             //d>3 ->  ensures false;
-            }
-   }
- }
-{
-  if (h == null) {
-    //assert c=1 & bh=0;
-    node k=new node(v, 0, null, null);
-    //dprint;
-    //assert k'::rbd<1,0,_,1>;
-    return k; //new node(v, 0, null, null); // RED node
-
-  }	else {
-    //assume false;
-	node l = h.left;
-	node r = h.right;
-	//dprint;
-	// split this node if it is a 4 node
-	if (is_red(h.left) && is_red(h.right)) {
-      //dprint;
-        //assert h'::node<_,1,_,_> ;
-        //rb<_,0,bh-1> * r'::rb<_,0,bh-1> & l' != null & r' != null;
-        color_flip(h);
-        //assert h'::node<_,0,_,_> ;
-		//h.color        = 0;
-		//h.left.color   = 1;
-		//h.right.color  = 1;
-		//assert h'::rb<n,0,bh>;
-		//assert l'::rb<_,1,bh> * r'::rb<_,1,bh>;
-
-	} 
-	
-	// REMARK: THE COLOR OF THE RESULTING NODE IS DETERMINED HERE
-	// BECAUSE ROTATION DOES NOT CHANGE COLOR OF THE RESULTING NODE!
-	// THUS, h IS RED OR h IS BLACK WITH 2 RED CHILDREN ==> res IS RED
-	// OTHERWISE, res IS A BLACK NODE
-
-	// after splitting 4 nodes, the right branch is ALWAYS BLACK!
-	//assert h'::node<_,_,_,_>;
-	//assert r'::rbd<_,1,_,_>;
-	//dprint;
-	if (v <= h.val) // accept duplicates!
-      { 
-        h.left = insert_internal(h.left, v);
-      }
-	else
-	 h.right = insert_internal(h.right, v);
-		
-	// IF THIS BRANCH IS NOT TAKEN, THE FOLLOWING if IS NEVER EXECUTED
-	// BECAUSE IN SUCH CASE h.right IS NOT MODIFIED. AND WE KNOW THAT
-	// h.right IS BLACK BEFORE THIS if-then-else. (THE STATEMENT
-	// h.left = insert(l, v);
-	// POTENTIALLY CHANGES THE COLOR OF h.left; BUT NOT h.right!)
-	if (is_red(h.right)) {
-       //assume false;	
-		h = rotate_left(h);
-    } 
-	
-    l = h.left;
-    l = h.right;
-	// convert R-R-B into B-R-R
-	if (is_red(l)) {
-		if (is_red(l.left)) {
-            //assume false;
-			h = rotate_right(h);
-		} 
-        else {
-          //int c = l.left.color;
-          //assert c'=1;
-          //    B<-R->?
-         assume false; // goes into a loop otherwise!
-         assume true;
-        }
-	} else {
-      //  1<-B->?
-      int c = l.color;
-      assert c'=1; //'
-      //dprint;
-      assume false; // goes into a loop otherwise!
-      //assume true;
-    }
-    //dprint;
-
-		
-	return h;
-  }
-}
 
 //////////////////////////////////////////
 //         HELPER FUNCTIONS II          //
