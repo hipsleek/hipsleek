@@ -18,7 +18,8 @@ GetOptions( "stop"  => \$stop,
 			"flags=s" => \$flags,
 			"copy-to-home21" => \$home21,
             "log-timings" => \$timings,
-            "log-string=s" => \$str_log
+            "log-string=s" => \$str_log,
+            "bags" => \$bags
 			);
 @param_list = @ARGV;
 if(($help) || (@param_list == ""))
@@ -26,21 +27,22 @@ if(($help) || (@param_list == ""))
 	print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings] [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip|hip_imm|sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 	exit(0);
 }
+
 if($root){
 	$exempl_path = "$root/examples/working";
 	$exec_path = "$root";
 }
-	else
+else
 	{
 		$exempl_path = ".";
 		$exec_path = '../..';
 	}
-	
+
 if($prover){
 	%provers = ('cvcl' => 'cvcl', 'cvc3' => 'cvc3', 'omega' => 'omega', 
 		'co' => 'co', 'isabelle' => 'isabelle', 'coq' => 'coq', 'mona' => 'mona', 'om' => 'om', 
 		'oi' => 'oi', 'set' => 'set', 'cm' => 'cm', 'redlog' => 'redlog', 'rm' => 'rm', 'prm' => 'prm');
-	if (!exists($provers{$prover})){		
+	if (!exists($provers{$prover})){
         print "./run-fast-tests.pl [-help] [-root path_to_sleek] [-tp name_of_prover] [-log-timings]  [-log-string string_to_be_added_to_the_log] [-copy-to-home21] hip_tr|hip sleek [-flags \"arguments to be transmited to hip/sleek \"]\n";
 		print "\twhere name_of_prover should be one of the followings: 'cvcl', 'cvc3', 'omega', 'co', 'isabelle', 'coq', 'mona', 'om', 'oi', 'set', 'cm', 'redlog', 'rm' or 'prm' \n";
 		exit(0);
@@ -459,9 +461,62 @@ $output_file = "log";
 		        ["global-mutual-rec.ss",3,"decrease1","SUCCESS",
                                           "decrease2","SUCCESS",
 										  "main","SUCCESS"]
-				]
+				],
+	"bags" =>[
+        ["avl-all-1.ss", 8, "remove_min", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", 
+         "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
+        ["avl-all.ss", 11, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS","remove_max_add", "SUCCESS", ,"remove_min_add","SUCCESS",
+         "insert", "SUCCESS", "rotate_double_left",  "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
+        ["avl-modular-2.ss", 16, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+         "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
+         "height","SUCCESS"],
+        ["avl-modular-3.ss", 11, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS","remove_max_add", "SUCCESS", ,"remove_min_add","SUCCESS",
+         "insert", "SUCCESS", "rotate_double_left",  "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left", "SUCCESS", "height", "SUCCESS"],
+        ["avl-modular-2.ss", 17, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+         "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
+         "height","SUCCESS"],
+        ["avl-modular-hei.ss", 14, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+         "rotate_left", "SUCCESS", "rotate_right2", "SUCCESS", "rotate_left2", "SUCCESS", "height","SUCCESS"],
+        ["avl-modular-new3.ss", 18, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
+         "insert", "SUCCESS", "is_mem", "SUCCESS","rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+         "rotate_left", "SUCCESS", "diff_h_by_2", "SUCCESS", "diff_h_by_1", "SUCCESS", "eq_h", "SUCCESS", "less_h", "SUCCESS", "get_max_height_add1", "SUCCESS",
+         "height","SUCCESS"],
+        ["avl-modular-set.ss", 3 ,"delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS"],
+        ["avl-modular-siz.ss", 3 ,"delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS"],
+        ["avl-modular.ss", 12, "delete", "SUCCESS", "delete_top", "SUCCESS", "remove_min", "SUCCESS", "remove_max_add", "SUCCESS", "remove_min_add", "SUCCESS", 
+         "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right", "SUCCESS", 
+         "rotate_left", "SUCCESS", "height","SUCCESS"],
+        ["avl.scp.ss", 19 ,"delete", "SUCCESS", "remove_min", "SUCCESS", "insert_inline1", "SUCCESS", "insert_inline", "SUCCESS", "insert1", "SUCCESS", "insert", "SUCCESS",
+         "build_avl2", "SUCCESS", "build_avl1", "SUCCESS", "rotate_double_right1", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left1", "SUCCESS",
+         "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", "rotate_right1", "SUCCESS", "rotate_right", "SUCCESS", "rotate_left1", "SUCCESS", "rotate_left", "SUCCESS",
+         "height1", "SUCCESS", "height", "SUCCESS"],
+        ["avl.ss",  8,"insert_inline", "SUCCESS",  "insert", "SUCCESS", "rotate_double_right", "SUCCESS", "rotate_double_left", "SUCCESS", "get_max", "SUCCESS", 
+         "rotate_right", "SUCCESS", "rotate_left", "SUCCESS","height", "SUCCESS"],
+        ["bubble.ss", 3, "bsort1", "SUCCESS", "bubble1", "SUCCESS", "id1", "SUCCESS"],
+        ["cll.ss", 4, "delete2", "SUCCESS", "delete", "SUCCESS", "count", "SUCCESS", "count_rest", "SUCCESS"],
+        ["dll.ss", 2, "append", "SUCCESS", "insert", "SUCCESS"],
+        ["insertion.ss", 3, "insertion_sort", "SUCCESS", "delete", "SUCCESS", "insert", "SUCCESS"],
+        ["ll.ss", 4, "reverse1", "SUCCESS", "delete1", "SUCCESS", "insert", "SUCCESS", "append", "SUCCESS"],
+        ["merge-modular.ss", 5, "insert1", "SUCCESS", "merge1", "SUCCESS", "merge_sort1", "SUCCESS", "split1", "SUCCESS", "count1", "SUCCESS"],
+        ["merge.ss", 5, "insert1", "SUCCESS", "merge1", "SUCCESS", "merge_sort1", "SUCCESS", "split1", "SUCCESS", "count1", "SUCCESS"],
+        ["qsort.ss", 3, "qsort1", "SUCCESS", "append_bll1", "SUCCESS", "partition1", "SUCCESS"],
+        ["rb_bags.ss", 19, "insert_1", "SUCCESS", "del_1", "SUCCESS", "remove_min_1", "SUCCESS", "del_2r_1", "SUCCESS", "del_2_1", "SUCCESS", "del_3r_1", "SUCCESS",
+         "del_3_1", "SUCCESS", "del_4r_1", "SUCCESS", "del_4_1", "SUCCESS", "del_5r_1", "SUCCESS", "del_5_1", "SUCCESS", "del_6r_1", "SUCCESS", "del_6_1", "SUCCESS",
+         "is_black_1", "SUCCESS", "is_red_1", "SUCCESS", "case_2r_1", "SUCCESS", "rotate_case_3r_1", "SUCCESS", "case_2_1", "SUCCESS", "rotate_case_3_1", "SUCCESS"],
+        ["rb.scp.ss", 38, "insert_1", "SUCCESS", "insert", "SUCCESS", "del_1", "SUCCESS", "del", "SUCCESS", "remove_min_1", "SUCCESS", "remove_min", "SUCCESS", 
+         "del_2r_1", "SUCCESS", "del_2r", "SUCCESS", "del_2_1", "SUCCESS", "del_2", "SUCCESS", "del_3r_1", "SUCCESS", "del_3r", "SUCCESS", "del_3_1", "SUCCESS", 
+         "del_3", "SUCCESS", "del_4r_1", "SUCCESS", "del_4r", "SUCCESS", "del_4_1", "SUCCESS", "del_4", "SUCCESS", "del_5r_1", "SUCCESS", "del_5r", "SUCCESS", 
+         "del_5_1", "SUCCESS", "del_5", "SUCCESS", "del_6r_1", "SUCCESS", "del_6r", "SUCCESS", "del_6_1", "SUCCESS", "del_6", "SUCCESS", "is_black_1", "SUCCESS", 
+         "is_black", "SUCCESS", "is_red_1", "SUCCESS", "is_red", "SUCCESS", "case_2r_1", "SUCCESS", "case_2r", "SUCCESS", "rotate_case_3r_1", "SUCCESS", 
+         "rotate_case_3r", "SUCCESS", "case_2_1", "SUCCESS", "case_2", "SUCCESS", "rotate_case_3_1", "SUCCESS", "rotate_case_3", "SUCCESS"],
+        ["selection.ss", 3, "selection_sort", "SUCCESS", "delete_min", "SUCCESS", "find_min", "SUCCESS"],
+        ["trees.ss", 5, "delete1", "SUCCESS", "remove_min1", "SUCCESS", "insert1", "SUCCESS", "flatten1", "SUCCESS", "append1", "SUCCESS"]]
 
               );
+
 # list of file, string with result of each entailment....
 %sleek_files=(
 		"sleek"=>[["sleek.slk","Valid.Valid.Valid.Fail."],
@@ -482,6 +537,7 @@ $output_file = "log";
 			                ["imm/imm4.slk","Valid.Fail."],
 			                ["imm/imm-hard.slk","Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid.Valid."]]				
 			);
+
 if($timings){
     $mainSum = 0.0;
     $childSum = 0.0;
@@ -491,9 +547,9 @@ if($timings){
 
 open(LOGFILE, "> $output_file") || die ("Could not open $output_file.\n");
 print "Starting sleek tests:\n";
-	sleek_process_file();
+sleek_process_file();
 print "Starting hip tests:\n";
-	hip_process_file();
+hip_process_file();
 close(LOGFILE);
 
 if ($error_count > 0) {
@@ -560,14 +616,19 @@ sub log_one_line_of_timings{
 }
 
 sub hip_process_file {
-  foreach $param (@param_list)
-  {
-		$t_list = $hip_files{$param};	
+    foreach $param (@param_list)
+    {
+        if ("$param" =~ "hip") {
+            $exempl_path_full = "$exempl_path/hip";
+        }elsif("$param" =~ "bags") {
+            $exempl_path_full = "$exempl_path/bags";
+        }
+		$t_list = $hip_files{$param};
 		foreach $test (@{$t_list})
 		{
 			print "Checking $test->[0]\n";
 			#print "$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1 \n";
-			$output = `$hip $script_arguments $exempl_path/hip/$test->[0] 2>&1`;
+			$output = `$hip $script_arguments $exempl_path_full/$test->[0] 2>&1`;
 			print LOGFILE "\n======================================\n";
 			print LOGFILE "$output";
 			$limit = $test->[1]*2+2;
@@ -583,9 +644,9 @@ sub hip_process_file {
 			}
             if($timings) {
                 log_one_line_of_timings ($test->[0],$output);
-		}
-  }
-}
+            }
+        }
+    }
 }
 
 
