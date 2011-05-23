@@ -77,7 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
-                    let _ = print_endline ("Answer after post :"^(string_of_int (List.length tmp_ctx))) in
+                    (* let _ = print_endline ("Answer after post :"^(string_of_int (List.length tmp_ctx))) in *)
 			        (CF.isSuccessListPartialCtx tmp_ctx) 
 		        in
 		        let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
@@ -524,17 +524,12 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
   Debug.devel_pprint ("Post-cond:\n" ^ (Cprinter.string_of_formula  post) ^ "\n") pos;
   let to_print = "Proving postcondition in method " ^ proc.proc_name ^ " for spec\n" ^ !log_spec ^ "\n" in
   Debug.devel_pprint to_print pos;
-  let _ = print_endline "0" in
   let rs, prf = heap_entail_list_partial_context_init prog false final_state post pos (Some pid) in
-  let _ = print_endline "1" in
   let _ = PTracer.log_proof prf in
-  let _ = print_endline "2" in
   if (CF.isSuccessListPartialCtx rs) then 
-    let _ = print_endline "3" in
      rs
   else begin
     (* get source code posistion of failed branches *)
-     let _ = print_endline "4" in
    let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
     in
@@ -746,7 +741,7 @@ let check_proc_wrapper_map_net prog (proc,num) =
 
 let check_prog (prog : prog_decl) =
   if (Printexc.backtrace_status ()) then print_string "backtrace active"
-  else print_string "bactrace inactive";
+  else (* print_string "bactracke inactive"; *)
 (*    (print_string "raising\n";
     raise Not_found);
 *) if !Globals.check_coercions then begin

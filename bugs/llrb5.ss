@@ -180,18 +180,16 @@ node insert(node h, int v)
 node insert_aux(node h, int v)
   case {
   h=null -> ensures res::node<v,0,null,null>;
-  h!=null -> requires h::rbd<n,c,d,bh> //& h!=null
+   h!=null -> requires h::rbd<n,c,d,bh> & h!=null
     case {
      c=1 -> case {
-       d=0 ->  ensures res::rbd<n+1,0,1,bh> ; //& n>0 ; //& res!=null; // R
-       //res::node<_, 0, l, r> * l::rbd<ln, 1,_, bh> * r::rbd<n-ln, 1,_, bh>;
-       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; // & n>0 ; // B // loop here
-       //res::node<_, 1, l, r> * l::rbd<ln1, _,_, bh-1> * r::rbd<n-ln1, 1,_, bh-1>
-       //or res::node<_, 1, l, r> * l::rbd<ln2, 0,_, bh-1> * r::rbd<n-ln2, 0,_, bh-1>  ;
+       d=0 ->  ensures res::rbd<n+1,0,1,bh> ; //& res!=null; // R
+   //res::node<_, 0, l, r> * l::rbd<ln, 1,_, bh> * r::rbd<n-ln, 1,_, bh>;
+       d!=0 ->  ensures //res::rbd<n+1,1,_,bh> & n>0 ; // B // loop here
+ res::node<_, 1, l, r> * l::rbd<ln1, _,_, bh-1> * r::rbd<n-ln1, 1,_, bh-1>
+ or res::node<_, 1, l, r> * l::rbd<ln2, 0,_, bh-1> * r::rbd<n-ln2, 0,_, bh-1>  ;
        }
-     c!=1 -> ensures res::red<n+1,bh> //& res!=null 
-            or res::rbd<n+1,0,1,bh> //& res!=null
-       ;
+     c!=1 -> ensures res::red<n+1,bh> & res!=null or res::rbd<n+1,0,1,bh> & res!=null;
    }
  }
 {

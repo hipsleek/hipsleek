@@ -1894,9 +1894,7 @@ and process_fold_result_x prog is_folding estate (fold_rs0:list_context) p2 vs2 
 	      Debug.devel_pprint ("process_fold_result: context at end fold: "
 		  ^ (Cprinter.string_of_spec_var p2) ^ "\n"
 		  ^ (Cprinter.string_of_list_context rest_rs)) pos;
-          let _ =print_endline "b1" in
           let r = add_to_aux_conseq rest_rs to_conseq pos in
-          let _ =print_endline "b2" in
 	      (r, prf) in
   let process_one (ss:CF.steps) fold_rs1 = 
     let pr1 = Cprinter.string_of_context  in
@@ -4756,9 +4754,7 @@ and do_fold_w_ctx_x fold_ctx prog estate conseq ln2 vd resth2 rhs_b is_folding p
 	formula_base_label = None;   
 	formula_base_pos = pos } in
 	let tmp, tmp_prf = process_fold_result prog is_folding estate fold_rs p2 v2 b pos in
-    let _ = print_endline "c1" in
 	let prf = mkFold ctx0 conseq p2 fold_prf tmp_prf in
-    let _ = print_endline "c2" in
 	(tmp, prf)
   else begin
 	Debug.devel_pprint ("heap_entail_non_empty_rhs_heap: unable to fold:\n"
