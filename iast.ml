@@ -366,16 +366,6 @@ and exp =
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
-  
-(* type constants *)
-
-let void_type = Prim Void
-
-let int_type = Prim Int
-
-let float_type = Prim Float
-
-let bool_type = Prim Bool
 
 (* utility functions *)
 
@@ -431,17 +421,6 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
 
 let set_proc_data_decl (p : proc_decl) (d : data_decl) = p.proc_data_decl <- Some d
-
-let rec name_of_type (t : typ) = match t with
-  | Prim Int -> "int"
-  | Prim Bool -> "bool"
-  | Prim Void -> "void"
-  | Prim Float -> "float"
-  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | Prim (BagT t) -> "bag("^(name_of_type (Prim t)) ^")"
-  | Prim List -> "list"
-  | Named c -> c
-  | Array _ -> "Array"
 
 let are_same_type (t1 : typ) (t2 : typ) = t1 = t2 (*TODO: this function should be removed, use the one in Cast instead *)
 
@@ -1210,8 +1189,8 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
 	List.map (fun e -> (CH.E.dst e).ch_node_name) path
 
 let sub_type (t1 : typ) (t2 : typ) = 
-  let c1 = name_of_type t1 in
-  let c2 = name_of_type t2 in
+  let c1 = string_of_typ t1 in
+  let c2 = string_of_typ t2 in
 	if c1 = c2 || (is_named_type t2 && c1 = "") then true
 	else false
 	  (*

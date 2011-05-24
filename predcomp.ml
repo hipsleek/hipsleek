@@ -107,13 +107,13 @@ and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool =
 
 and aug_class_name (t : typ) = match t with
   | Named c -> c ^ "Aug"
-  | Prim Int -> "IntAug"
-  | Prim Bool -> "BoolAug"
-  | Prim Float -> "FloatAug"
-  | Prim Void -> "void"
-  | Prim (BagT t) -> "Set("^(aug_class_name (Prim t))^")"
-  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | Prim List -> "List"
+  | Int -> "IntAug"
+  | Bool -> "BoolAug"
+  | Float -> "FloatAug"
+  | Void -> "void"
+  | (BagT t) -> "Set("^(aug_class_name t)^")"
+  | (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | List -> "List"
   | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*
@@ -142,9 +142,9 @@ and gen_fields (field_vars : CP.spec_var list) (pbvars : CP.spec_var list) pos :
 		let rest_result = helper rest1 in
 		(* An Hoa MARKED *)
 		let rec ityp_of_ctyp ct = match ct with
-		  | Prim p -> Prim p
 		  | Named c -> Named c
-		  | Array (et, _) -> ityp_of_ctyp et in
+		  | Array (et, _) -> ityp_of_ctyp et 
+		  | p -> p in
 		let t = ityp_of_ctyp (CP.type_of_spec_var var) in
 		(* An Hoa END *)
 		let fld = ((t, CP.name_of_spec_var var), pos) in
@@ -1680,7 +1680,7 @@ and gen_disjunct prog (disj0 : formula) (vmap0 : var_map) (output_vars : CP.spec
 					proc_data_decl = None; (* the class containing the method *)
 					proc_constructor = false;
 					proc_args = [cur_color pos; new_color pos];
-					proc_return = Prim Bool;
+					proc_return = Bool;
 					proc_static_specs = [];
 					proc_dynamic_specs = [];
 					proc_exceptions = [];
@@ -1708,10 +1708,10 @@ and combine_disj_results disj_results pos : exp = match disj_results with
 								  exp_call_nrecv_arguments = [new_color_exp pos; cur_color_exp pos];
 								  exp_call_nrecv_path_id = stub_branch_point_id "pred_comp_generated";
 								  exp_call_nrecv_pos = pos}) in
-	  let undo_call = VarDecl {exp_var_decl_type = Prim Bool;
+	  let undo_call = VarDecl {exp_var_decl_type = Bool;
 							   exp_var_decl_decls = [(fresh_var_name "bool" pos.start_pos.Lexing.pos_lnum, Some undo_call', pos)];
 							   exp_var_decl_pos = pos } in
-	  let call_disj = VarDecl {exp_var_decl_type = Prim Bool;
+	  let call_disj = VarDecl {exp_var_decl_type = Bool;
 							   exp_var_decl_decls = [(bvar_name, Some call, pos)];
 							   exp_var_decl_pos = pos } in
 		(*
@@ -1793,7 +1793,7 @@ and gen_view (prog : C.prog_decl) (vdef : C.view_decl) : (data_decl * CP.spec_va
 					 proc_data_decl = None;
 					 proc_constructor = false;
 					 proc_args = [cur_color pos; new_color pos];
-					 proc_return = Prim Bool;
+					 proc_return = Bool;
 					 proc_static_specs = [];
 					 proc_dynamic_specs = [];
 					 proc_body = Some combined_exp;
@@ -1905,7 +1905,7 @@ and gen_partially_bound_types (pbvars : CP.spec_var list) pos : data_decl list =
 and gen_partially_bound_type ((CP.SpecVar (t, v, p)) : CP.spec_var) pos : data_decl list = match t with
   | Named c ->
 	  let cls_aug = c ^ "Aug" in
-	  let fields = [((Prim Bool, "bound"), pos); ((Named (Cprinter.string_of_typ t), "val"), pos)] in
+	  let fields = [((Bool, "bound"), pos); ((Named (string_of_typ t), "val"), pos)] in
 	  let ddef = { data_name = cls_aug;
 				   data_fields = fields;
 				   data_parent_name = "Object";

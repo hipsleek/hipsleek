@@ -155,7 +155,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        end
         | BConst ({exp_bconst_val = b;
                    exp_bconst_pos = pos}) -> begin
-	        let res_v = CP.mkRes bool_type in
+	        let res_v = CP.mkRes Bool in
 	        let tmp1 = CP.BForm (CP.BVar (res_v, pos), None) in
 	        let tmp2 =
 	          if b then tmp1
@@ -309,13 +309,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | IConst ({exp_iconst_val = i;
                    exp_iconst_pos = pos}) ->
 	          let c_e = CP.IConst (i, pos) in
-	          let res_v = CP.Var (CP.mkRes int_type, pos) in
+	          let res_v = CP.Var (CP.mkRes Int, pos) in
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
         | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
 	          let c_e = CP.FConst (f, pos) in
-	          let res_v = CP.Var (CP.mkRes float_type, pos) in
+	          let res_v = CP.Var (CP.mkRes Float, pos) in
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
@@ -403,7 +403,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              let pr = Cprinter.string_of_list_failesc_context in
+              let _ = Cprinter.string_of_list_failesc_context in
               let pr2 = Cprinter.summary_list_failesc_context in
               let pr3 = Cprinter.string_of_struc_formula in
               Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
@@ -496,7 +496,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
-  let pr = pr_list Cprinter.string_of_partial_context in
+  let _ = pr_list Cprinter.string_of_partial_context in
   let pr1 x = string_of_int (List.length x) in
   let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
   Gen.Debug.loop_2_no "check_post" Cprinter.string_of_pos pr2 pr2  

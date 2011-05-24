@@ -109,19 +109,19 @@ let remove_dups_svl vl = Gen.BList.remove_dups_eq eq_spec_var vl
 let rec get_exp_type (e : exp) : typ = match e with
   | Null _ -> Named ""
   | Var (SpecVar (t, _, _), _) -> t
-  | IConst _ -> Prim Int
-  | FConst _ -> Prim Float
+  | IConst _ -> Int
+  | FConst _ -> Float
   | Add (e1, e2, _) | Subtract (e1, e2, _) | Mult (e1, e2, _)
   | Max (e1, e2, _) | Min (e1, e2, _) ->
       begin
         match get_exp_type e1, get_exp_type e2 with
-        | Prim Int, Prim Int -> Prim Int
-        | _ -> Prim Float
+        | Int, Int -> Int
+        | _ -> Float
       end
-  | Div _ -> Prim Float
-  | ListHead _ | ListLength _ -> Prim Int
-  | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  (Prim (Globals.BagT Globals.Int))  (* Prim Globals.Bag *)
-  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Prim Globals.List
+  | Div _ -> Float
+  | ListHead _ | ListLength _ -> Int
+  | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
+  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List
   | ArrayAt (SpecVar (t, a, _), _, _) ->
           (* Type of a[i] is the type of the element of array a *)
           match t with
@@ -138,25 +138,25 @@ let print_exp = ref (fun (c:exp) -> "cpure printer has not been initialized")
 let print_formula = ref (fun (c:formula) -> "cpure printer has not been initialized")
 let print_svl = ref (fun (c:spec_var list) -> "cpure printer has not been initialized")
 
-let bool_type = Prim Bool
+let bool_type = Bool
 
-let int_type = Prim Int
+let int_type = Int
 
-let float_type = Prim Float
+let float_type = Float
 
-let void_type = Prim Void
+let void_type = Void
 
 (* free variables *)
 
 let null_var = SpecVar (Named "", "null", Unprimed)
 
-let flow_var = SpecVar ((Prim Int), flow , Unprimed)
+let flow_var = SpecVar ((Int), flow , Unprimed)
 
 let full_name_of_spec_var (sv : spec_var) : ident = 
   match sv with
     | SpecVar (_, v, p) -> if (p==Primed) then (v^"\'") else v
 
-let is_void_type t = match t with | Prim Void -> true | _ -> false
+let is_void_type t = match t with | Void -> true | _ -> false
 
 let rec fv (f : formula) : spec_var list =
   let tmp = fv_helper f in
@@ -411,19 +411,19 @@ and is_arith (e : exp) : bool = match e with
   | _ -> false
 
 and is_bag_type (t : typ) = match t with
-  | Prim (Globals.BagT _) -> true
+  | (Globals.BagT _) -> true
   | _ -> false
         
 and is_list_type (t : typ) = match t with
-  | Prim Globals.List  -> true
+  | Globals.List  -> true
   | _ -> false
 
 and is_int_type (t : typ) = match t with
-  | Prim Int -> true
+  | Int -> true
   | _ -> false
 
 and is_float_type (t : typ) = match t with
-  | Prim Float -> true
+  | Float -> true
   | _ -> false
 
 and is_object_type (t : typ) = match t with
@@ -486,7 +486,7 @@ and mkMin a1 a2 pos = Min (a1, a2, pos)
 
 and mkVar sv pos = Var (sv, pos)
 
-and mkBVar v p pos = BVar (SpecVar (Prim Bool, v, p), pos)
+and mkBVar v p pos = BVar (SpecVar (Bool, v, p), pos)
 
 and mkLt a1 a2 pos =
   if is_max_min a1 || is_max_min a2 then
@@ -945,29 +945,29 @@ and intersect (svs1 : spec_var list) (svs2 : spec_var list) =
   List.filter (fun sv -> mem sv svs2) svs1
 
 and are_same_types (t1 : typ) (t2 : typ) = match t1 with
-  | Prim _ -> t1 = t2
   | Named c1 -> begin match t2 with
-	    (* | Prim _ -> false *)
+	    (* | _ -> false *)
       | Named c2 -> c1 = c2 || c1 = "" || c2 = ""
 	  | _ -> false (* An Hoa *)
 	end
   | Array (et1, _) -> begin match t2 with 
 	  | Array (et2, _) -> are_same_types et1 et2
 	  | _ -> false  
-            end
+  end
+  | _ -> t1 = t2
 		
 and is_otype (t : typ) : bool = match t with
   | Named _ -> true
-  | _ -> false (* | Prim _ -> false *) (* An Hoa *)
+  | _ -> false (* | _ -> false *) (* An Hoa *)
 
 and name_of_type (t : typ) : ident = match t with
-  | Prim Int -> "int"
-  | Prim Bool -> "boolean"
-  | Prim Void -> "void"
-  | Prim Float -> "float"
-  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")"
-  | Prim Globals.List -> "list"
+  | Int -> "int"
+  | Bool -> "boolean"
+  | Void -> "void"
+  | Float -> "float"
+  | (TVar i) -> "TVar["^(string_of_int i)^"]"
+  | (BagT t) -> "bag("^(name_of_type (t))^")"
+  | Globals.List -> "list"
   | Named c -> c
   | Array (et, _) -> name_of_type et ^ "[]" (* An Hoa *)
 
@@ -1018,7 +1018,7 @@ and to_unprimed (sv : spec_var) : spec_var = match sv with
   | SpecVar (t, v, _) -> SpecVar (t, v, Unprimed)
 
 and to_int_var (sv : spec_var) : spec_var = match sv with
-  | SpecVar (_, v, p) -> SpecVar (Prim Int, v, p)
+  | SpecVar (_, v, p) -> SpecVar (Int, v, p)
 
 
 and fresh_old_name (s: string):string = 
@@ -1932,7 +1932,7 @@ and elim_exists (f0 : formula) : formula =
 
 (* (\* pretty printing for types *\) *)
 (* let rec string_of_typ = function  *)
-(*   | Prim t -> string_of_prim_type t  *)
+(*   | t -> string_of_prim_type t  *)
 (*   | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ("Object:"^ot) *)
 (*   | Array (et, _) -> (string_of_typ et) ^ "[]" (\* An Hoa *\) *)
 
@@ -3874,7 +3874,7 @@ let get_bform_eq_args (bf:b_formula) =
 
 let mk_sp_const (i:int) = 
           let n= const_prefix^(string_of_int i)
-          in SpecVar ((Prim Int), n , Unprimed) 
+          in SpecVar ((Int), n , Unprimed) 
 
 let conv_exp_to_var (e:exp) : (spec_var * loc) option = 
   match e with

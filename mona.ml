@@ -31,15 +31,17 @@ let process = ref {name = "mona"; pid = 0;  inchannel = stdin; outchannel = stdo
 
 
 (* pretty printing for primitive types *)
-let rec mona_of_prim_type = function
+let rec mona_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* Can I really receive float? What do I do then? I don't have float in Mona. *)
   | Int           -> "int"
   | Void          -> "void" 	(* same as for float *)
-  | BagT i		  -> "("^(mona_of_prim_type i)^") set"
+  | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
   | List          -> "list"	(* lists are not supported *)
-
+  | Named _ | Array _ ->
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "array and named type not supported for mona"}
 
 (*------------------------------------------*)
 let rec mkEq l = match l with
@@ -67,7 +69,7 @@ and mona_of_exp_break e0 =
   match e0 with
   | CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, id1, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := (new_tmp_var :: !additional_vars);
@@ -76,7 +78,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract(CP.Var(CP.SpecVar(t1, id1, p1), _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (string_of_typ t1) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t1, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.Var(CP.SpecVar(t1, tmp, p1), no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -86,7 +88,7 @@ and mona_of_exp_break e0 =
   | CP.Add(CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _) , l3)
   | CP.Add( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, id2, p2), no_pos), no_pos), no_pos) :: !substitution_list;
 		additional_vars := new_tmp_var :: !additional_vars;
@@ -95,7 +97,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.Var(CP.SpecVar(t2, id2, p2), _), CP.IConst(i1, _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.Var(new_tmp_var, no_pos), CP.Add(CP.IConst(i1, no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -104,7 +106,7 @@ and mona_of_exp_break e0 =
       end
   | CP.Subtract( CP.IConst(i1, _), CP.Var(CP.SpecVar(t2, id2, p2), _), l3) ->
       begin
-        let tmp = fresh_var_name (Cprinter.string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
+        let tmp = fresh_var_name (string_of_typ t2) l3.start_pos.Lexing.pos_lnum in
 		let new_tmp_var = CP.SpecVar(t2, tmp, Unprimed) in
 		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.Var(CP.SpecVar(t2, id2 , p2), no_pos), CP.Var(CP.SpecVar(t2, tmp, p2), no_pos), no_pos), no_pos) :: !substitution_list;
         additional_vars := new_tmp_var :: !additional_vars;
@@ -115,10 +117,10 @@ and mona_of_exp_break e0 =
   | CP.Subtract( CP.IConst(i1, _), CP.IConst(i2, _), l3) ->
       begin
         let tmp = fresh_var_name "int" 0 in
-		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(Prim Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
-		additional_vars := CP.SpecVar(Prim Int, tmp, Globals.Unprimed) :: !additional_vars;
-		additional_vars_ := CP.SpecVar(Prim Int, tmp, Globals.Unprimed) :: !additional_vars_;
-        CP.Var(CP.SpecVar(Prim Int, tmp, Globals.Unprimed), l3);
+		substitution_list := CP.Eq(CP.IConst(i1, no_pos), CP.Add(CP.IConst(i2, no_pos), CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), no_pos), no_pos), no_pos) :: !substitution_list;
+		additional_vars := CP.SpecVar(Int, tmp, Globals.Unprimed) :: !additional_vars;
+		additional_vars_ := CP.SpecVar(Int, tmp, Globals.Unprimed) :: !additional_vars_;
+        CP.Var(CP.SpecVar(Int, tmp, Globals.Unprimed), l3);
       end
   | CP.Add (a1, a2, l1) -> CP.Add((mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* Removed an outer recursive call to mona_of_exp_break *)
   | CP.Subtract(a1, a2, l1) -> CP.Subtract( (mona_of_exp_break a1), (mona_of_exp_break a2), l1) (* As above *)
@@ -191,15 +193,6 @@ and mona_of_formula_break (f : CP.formula) (w : bool) : CP.formula =
 let hd list = match list with
  | [] -> failwith "[mona.ml] : Error when applying method head"
  | head :: tail -> head
-
-let string_of_type (t) =
-  match t with
-  | Prim Int -> "int"
-  | Prim Bool -> "bool"
-  | Prim Void -> "void"
-  | Named c -> "otype " ^ c
-  | _ -> "smth else"
-
 
 let equal_types (t1: typ) (t2: typ) : bool =
       match t1 with

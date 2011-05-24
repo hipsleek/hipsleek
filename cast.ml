@@ -543,21 +543,7 @@ let distributive c = List.mem c !distributive_views
 
 let add_distributive c = distributive_views := c :: !distributive_views
 
-(* type constants *)
-
-let void_type = Prim Void
-
-let int_type = Prim Int
-
-let float_type = Prim Float
-
-let bool_type = Prim Bool
-
-let bag_type = Prim (BagT Int)
-
-let list_type = Prim List
-
-let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
+let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 
 (* smart constructors *)
 (*let mkMultiSpec pos = [ SEnsure {
@@ -599,8 +585,8 @@ let rec type_of_exp (e : exp) = match e with
   | Assert _ -> None
 	(*| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)*)
 	(*| ArrayMod _ -> Some void_type (* An Hoa *)*)
-  | Assign _ -> Some void_type
-  | BConst _ -> Some bool_type
+  | Assign _ -> Some Void
+  | BConst _ -> Some Bool
   | Bind ({exp_bind_type = t; 
 		   exp_bind_bound_var = _; 
 		   exp_bind_fields = _;
@@ -616,7 +602,7 @@ let rec type_of_exp (e : exp) = match e with
 			exp_icall_arguments = _;
 			exp_icall_pos = _}) -> Some t
   | Cast ({exp_cast_target_type = t}) -> Some t
-  | Catch _ -> Some void_type
+  | Catch _ -> Some Void
   | Cond ({exp_cond_type = t;
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = _;
@@ -624,10 +610,10 @@ let rec type_of_exp (e : exp) = match e with
 		   exp_cond_pos = _}) -> Some t
   | Debug _ -> None
   | Dprint _ -> None
-  | FConst _ -> Some float_type
+  | FConst _ -> Some Float
 	  (*| FieldRead (t, _, _, _) -> Some t*)
-	  (*| FieldWrite _ -> Some void_type*)
-  | IConst _ -> Some int_type
+	  (*| FieldWrite _ -> Some Void*)
+  | IConst _ -> Some Int
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
@@ -644,11 +630,11 @@ let rec type_of_exp (e : exp) = match e with
   | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
   | This ({exp_this_type = t}) -> Some t
   | Var ({exp_var_type = t; exp_var_name = _; exp_var_pos = _}) -> Some t
-  | VarDecl _ -> Some void_type
-  | Unit _ -> Some void_type
-  | While _ -> Some void_type
-  | Unfold _ -> Some void_type
-  | Try _ -> Some void_type
+  | VarDecl _ -> Some Void
+  | Unit _ -> Some Void
+  | While _ -> Some Void
+  | Unfold _ -> Some Void
+  | Try _ -> Some Void
   | Time _ -> None
   | Sharp b -> Some b.exp_sharp_type
 
@@ -656,19 +642,19 @@ and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
   | _ -> false
 
-let rec name_of_type (t : typ) = match t with
-  | Prim Int -> "int"
-  | Prim Bool -> "bool"
-  | Prim Void -> "void"
-  | Prim Float -> "float"
-  | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")"
-  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | Prim List -> "list"
-  | Named c -> c
-  | Array (et, _) -> (name_of_type et) ^ "[]" (* An hoa *) 
+(* let rec name_of_type (t : typ) = match t with *)
+(*   | Prim Int -> "int" *)
+(*   | Prim Bool -> "bool" *)
+(*   | Prim Void -> "void" *)
+(*   | Prim Float -> "float" *)
+(*   | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")" *)
+(*   | Prim (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | Prim List -> "list" *)
+(*   | Named c -> c *)
+(*   | Array (et, _) -> (name_of_type et) ^ "[]" (\* An hoa *\)  *)
 
 let mingle_name (m : ident) (targs : typ list) = 
-  let param_tnames = String.concat "~" (List.map name_of_type targs) in
+  let param_tnames = String.concat "~" (List.map string_of_typ targs) in
 	m ^ "$" ^ param_tnames
 
 let unmingle_name (m : ident) = 
@@ -1039,34 +1025,33 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 
 
 let rec sub_type (t1 : typ) (t2 : typ) = match t1 with
-  | Prim _ -> t1 = t2
   | Named c1 -> begin match t2 with
-	  | Prim _ | Array _ -> false (* An Hoa add P.Array _ *)
-	  | Named c2 ->
-		  if c1 = c2 then true
-		  else if c1 = "" then true (* t1 is null in this case *)
-		  else 
-			let v1 = CH.V.create {ch_node_name = c1; 
-								  ch_node_class = None; 
-								  ch_node_coercion = None} in
-			let v2 = CH.V.create {ch_node_name = c2; 
-								  ch_node_class = None; 
-								  ch_node_coercion = None} in
+	    | Named c2 -> begin
+		    if c1 = c2 then true
+		    else if c1 = "" then true (* t1 is null in this case *)
+		    else 
+			  let v1 = CH.V.create {ch_node_name = c1; 
+								    ch_node_class = None; 
+								    ch_node_coercion = None} in
+			  let v2 = CH.V.create {ch_node_name = c2; 
+								    ch_node_class = None; 
+								    ch_node_coercion = None} in
 			  try
-				let _ = PathCH.shortest_path class_hierarchy v1 v2 in
+				  let _ = PathCH.shortest_path class_hierarchy v1 v2 in
 				  true
 			  with
 				| Not_found -> false
-			end
+        end
+        | _ -> false (* An Hoa add P.Array _ *)
+  end
 	(* An Hoa *)
-	| Array (et1, _) -> begin
-		match t2 with
-			| Array (et2, _) -> (sub_type et1 et2)
-			| _ -> false
-		end
+  | Array (et1, _) -> begin
+	  match t2 with
+		| Array (et2, _) -> (sub_type et1 et2)
+		| _ -> false
+  end
+  |  _ -> t1 = t2
 
-				
-				
 and exp_to_check (e:exp) :bool = match e with
   | CheckRef _
   | Debug _

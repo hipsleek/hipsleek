@@ -214,16 +214,14 @@ let extract_name sv =
  *)
 let rec smt_of_typ t = 
 	match t with
-		| Prim pt -> begin match pt with
-			| Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
-		  | Float -> "Real"
-		  | Int -> "Int"
-		  | Void | (BagT _) | (TVar _) | List -> 
-        Error.report_error {Error.error_loc = no_pos; 
-        Error.error_text = "spec not supported for SMT"} (* Fail! *)
-		end
-		| Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ CP.name_of_type t) *)
-		| Array (et, _) -> "(Array Int " ^ smt_of_typ et ^ ")"
+	  | Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
+	  | Float -> "Real"
+	  | Int -> "Int"
+	  | Void | (BagT _) | (TVar _) | List -> 
+          Error.report_error {Error.error_loc = no_pos; 
+                              Error.error_text = "spec not supported for SMT"} (* Fail! *)
+      | Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ CP.name_of_type t) *)
+      | Array (et, _) -> "(Array Int " ^ smt_of_typ et ^ ")"
 
 (**
  * smt of spec_var

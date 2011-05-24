@@ -274,7 +274,7 @@ SHGram.Entry.of_parser "peek_print"
              | [IDENTIFIER id,_;OPAREN,_;_] -> ()
              | [_;COLONCOLON,_;_] -> raise Stream.Failure
              | [_;OPAREN,_;_] -> raise Stream.Failure 
-             | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
+             (* | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure *)
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
              | _ -> ())
 
@@ -321,7 +321,7 @@ let peek_dc =
        (fun strm ->
            match Stream.npeek 3 strm with
              |[_;COLONCOLON,_;_] -> ()
-             |[_;PRIME,_;COLONCOLON,_] -> ()
+             (* |[_;PRIME,_;COLONCOLON,_] -> () *)
              | _ -> raise Stream.Failure)
 
 let peek_star = 
@@ -452,7 +452,7 @@ view_header:
       
 cid: 
   [[ 
-     `IDENTIFIER t; `PRIME -> (* print_string ("primed id:"^t^"\n"); *)(t, Primed)
+     `IDENTIFIER t(* ; `PRIME *) -> (* print_string ("primed id:"^t^"\n"); *)(t, Primed)
    | `IDENTIFIER t         -> (* print_string ("id:"^t^"\n"); *)(t, Unprimed)
    | `RES _                 -> (res, Unprimed)
    | `SELFT _               -> (self, Unprimed)
@@ -813,14 +813,14 @@ typ:
     | t=non_array_type -> t]];
 
 non_array_type:
-  [[ `INT                -> int_type
-   | `FLOAT              -> float_type 
-   | `BOOL               -> bool_type
+  [[ `INT                -> Int
+   | `FLOAT              -> Float 
+   | `BOOL               -> Bool
    | `IDENTIFIER id      -> Named id ]];  
 
 array_type:
-  [[ t=array_type; r=rank_specifier -> Array (int_type, None)
-  |  t=non_array_type; r=rank_specifier -> Array (int_type, None)]];
+  [[ t=array_type; r=rank_specifier -> Array (Int, None)
+  |  t=non_array_type; r=rank_specifier -> Array (Int, None)]];
 
 rank_specifier:
   [[`OSQUARE; OPT comma_list; `CSQUARE -> ()]];
@@ -1104,7 +1104,7 @@ proc_header:
      
   | `VOID; `IDENTIFIER id; `OPAREN; fpl=opt_formal_parameter_list; `CPAREN; ot=opt_throws; osl=opt_spec_list ->
     (*let static_specs, dynamic_specs = split_specs $6 in*)
-    mkProc id "" None false ot fpl void_type osl [] (get_pos_camlp4 _loc 1) None]];
+    mkProc id "" None false ot fpl Void osl [] (get_pos_camlp4 _loc 1) None]];
 
 constructor_decl: 
   [[ h=constructor_header; b=proc_body -> {h with proc_body = Some b}

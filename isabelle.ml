@@ -32,22 +32,19 @@ let rec isabelle_of_typ = function
   | BagT	t	  ->
       if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"
       else "("^(isabelle_of_typ t) ^") set"
-  (* | (TVar i)       ->   (\* type var not supported *\) *)
-  (*       Error.report_error {Error.error_loc = no_pos;  *)
-  (*       Error.error_text = "type var not supported for Isabelle"} *)
   | List           -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
   | TVar _ | Named _ | Array _ ->
-        Error.report_error {Err.error_loc = no_pos; 
-        Err.error_text = "type var, array and named type not supported for Coq"}
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "type var, array and named type not supported for Isabelle"}
 ;;
 
 (* pretty printing for spec_vars *)
 let isabelle_of_spec_var (sv : CP.spec_var) = match sv with
-  | CP.SpecVar (Prim(t), v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_typ t ^ ")"
   | CP.SpecVar (Named(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "")
-	| CP.SpecVar (Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
+  | CP.SpecVar (Array(id), v, p) -> v ^ (if CP.is_primed sv then Oclexer.primed_str else "") (* An Hoa *)
+  | CP.SpecVar (t, v, p) -> "(" ^ v ^ (if CP.is_primed sv then Oclexer.primed_str else "") ^ "::" ^ isabelle_of_typ t ^ ")"
 
 (* pretty printing for spec_vars without types *)
 (*let isabelle_of_spec_var_no_type (sv : CP.spec_var) = match sv with

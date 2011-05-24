@@ -4855,7 +4855,7 @@ and advance_unfold_x prog (ctx:context) (conseq:formula list) : (Context.action_
       | Ctx es ->
             let a = List.map (comp_act prog es) r in
             let a = List.map Context.pick_unfold_only a in
-            let b = List.filter (fun x -> not(x==[])) a in
+            let _ = List.filter (fun x -> not(x==[])) a in
             if a==[] then []
             else List.concat a
 

@@ -213,12 +213,12 @@ and string_of_stab stab = Hashtbl.fold
 			(match c2.sv_info_kind with 
 				| Unknown -> "unknown" 
 				| Known d-> 
-			Cprinter.string_of_typ d )^")") stab ""
+			string_of_typ d )^")") stab ""
 	
 and string_of_var_kind k = (match k with 
 		| Unknown -> "unknown" 
 		| Known d-> 
-	("known "^(Cprinter.string_of_typ d)) )
+	("known "^(string_of_typ d)) )
 let prim_buffer = Buffer.create 1024
 	  
 (* search prog and generate all eq, neq for all the data declaration,      *)
@@ -666,7 +666,7 @@ let rec seq_elim (e:C.exp):C.exp = match e with
 								C.exp_catch_clause = (C.Catch{
 														  C.exp_catch_flow_type = !n_flow_int;
 														  C.exp_catch_flow_var = None;
-														  C.exp_catch_var = Some (Prim Void, 
+														  C.exp_catch_var = Some (Void, 
 														  (fresh_var_name "_sq_" b.C.exp_seq_pos.start_pos.Lexing.pos_lnum));
 														  C.exp_catch_body = (seq_elim b.C.exp_seq_exp2);
 														  C.exp_catch_pos = b.C.exp_seq_pos});
@@ -2073,7 +2073,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   all_names);
           let assert_cf_o =
             (match assert_f_o with
-              | Some f -> Some (transf_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Prim Void) [])*) )
+              | Some f -> Some (transf_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
               | None -> None) in
           let assume_cf_o =
             (match assume_f_o with
@@ -2266,7 +2266,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_bind_imm = false; (* can it be true? *)
 				                  C.exp_bind_pos = pos;
                                   C.exp_bind_path_id = pid; }), te)))
-                      | Prim _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
+                      | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
                       | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";})
               | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
@@ -2405,7 +2405,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 			          E.pop_scope();
 			          ( C.Catch{C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
 			          C.exp_catch_flow_var = cfv;
-			          C.exp_catch_var = Some (Prim Void,x);
+			          C.exp_catch_var = Some (Void,x);
 			          C.exp_catch_body = new_bd;																					   
 			          C.exp_catch_pos = pos;},ct2) end
 			        else begin
@@ -2907,7 +2907,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                       C.exp_seq_exp1 = vd;
                       C.exp_seq_exp2 = tmp_e1;
                       C.exp_seq_pos = pos;} in 
-                      (tmp_e2, Prim Void)
+                      (tmp_e2, Void)
                     else Err.report_error { Err.error_loc = pos; 
                     Err.error_text = "can not raise a not raisable object" }
             | None -> (C.Sharp({C.exp_sharp_type = C.void_type;
@@ -2948,7 +2948,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                     C.exp_try_pos = pos;
                     C.exp_catch_clause =
                             C.Catch ({ c with C.exp_catch_body =
-                                    C.Try({C.exp_try_type = Prim Void;
+                                    C.Try({C.exp_try_type = Void;
                                     C.exp_try_path_id = fresh_strict_branch_point_id "";
                                     C.exp_try_body = c.C.exp_catch_body;
                                     C.exp_try_pos = c.C.exp_catch_pos;		   
@@ -2957,7 +2957,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                         C.exp_catch_flow_var = Some fl_var;
                                         C.exp_catch_var = None;
                                         C.exp_catch_body = C.Sharp({
-                                            C.exp_sharp_type = (Prim Void);
+                                            C.exp_sharp_type = (Void);
                                             C.exp_sharp_flow_type = C.Sharp_ct 
                                                 {CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = Some fl_var};
                                             C.exp_sharp_val = Cast.Sharp_no_val;
@@ -2980,7 +2980,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 				    C.exp_catch_flow_var = None (*Some (fresh_var_name "fl" pos.start_pos.Lexing.pos_lnum)*);
 				    C.exp_catch_var = None;
 				    C.exp_catch_body = C.Sharp({
-						C.exp_sharp_type = (Prim Void);
+						C.exp_sharp_type = (Void);
 						C.exp_sharp_flow_type = C.Sharp_ct 
 							{CF.formula_flow_interval = !spec_flow_int; CF.formula_flow_link = None};
 						C.exp_sharp_val = Cast.Sharp_no_val;
@@ -3010,7 +3010,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		            E.pop_scope();
 		            {C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
 		            C.exp_catch_flow_var = cfv;
-		            C.exp_catch_var = Some (Cpure.Prim Void,x);
+		            C.exp_catch_var = Some (Cpure.Void,x);
 		            C.exp_catch_body = new_bd;																					   
 		            C.exp_catch_pos = pos;} end
 	                else begin
@@ -3044,20 +3044,20 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 	            *)
 and default_value (t :typ) pos : C.exp =
   match t with
-    | Prim Int -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
-    | Prim Bool ->
+    | Int -> C.IConst { C.exp_iconst_val = 0; C.exp_iconst_pos = pos; }
+    | Bool ->
 	      C.BConst { C.exp_bconst_val = false; C.exp_bconst_pos = pos; }
-    | Prim Float ->
+    | Float ->
 	      C.FConst { C.exp_fconst_val = 0.0; C.exp_fconst_pos = pos; }
-    | Prim (TVar _) ->
+    | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | Prim Void ->
+    | Void ->
 	      failwith
               "default_value: void in variable declaration should have been rejected by parser"
-    | Prim (BagT _) ->
+    | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
-    | Prim List ->
+    | List ->
           failwith "default_value: list can only be used for constraints"
     | Named c -> C.Null pos
 	| Array (t, _) -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
@@ -3070,7 +3070,7 @@ and sub_type (t1 : typ) (t2 : typ) =
 
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
-    | Prim p -> Prim p
+    | p -> p
     | Named c ->
 	      (try
             let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
@@ -3079,7 +3079,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
 	        | Not_found ->
                   (try
 		            let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c
-		            in Prim Int
+		            in Int
 		          with
 		            | Not_found ->
                           Err.report_error
@@ -3270,7 +3270,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
     | [] -> failwith "convert_to_bind: empty field list"
 
 and trans_type_back (te : typ) : typ =
-  match te with | Prim p -> Prim p | Named n -> Named n | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
+  match te with | p -> p | Named n -> Named n | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
 
 and trans_args (args : (C.exp * typ * loc) list) :
       ((C.typed_ident list) * C.exp * (ident list)) =
@@ -3306,13 +3306,13 @@ and trans_args (args : (C.exp * typ * loc) list) :
 
 and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
   match t with
-    | Prim _ -> I.name_of_type t
     | Named c ->
 	      (try let _ = I.look_up_enum_def_raw prog.I.prog_enum_decls c in "int"
 	      with | Not_found -> c)
     | Array (t,_) ->  (* An Hoa *) 
 		  (get_type_name_for_mingling prog t ^ "[]")
 	          (* failwith "get_type_name_for_mingling: array is not supported yet" *)
+    |t -> I.name_of_type t
 
 and mingle_name_enum prog (m : ident) (targs : typ list) =
   let param_tnames =
@@ -3884,7 +3884,6 @@ and unify_var_kind_x (k1 : spec_var_kind) (k2 : spec_var_kind) :
     | Known t1 -> (match k2 with
     	| Unknown -> Some k1
     	| Known t2 -> (match t1 with
-    		| Prim _ -> if t1 = t2 then Some k1 else None
     		| Named c1 -> (match t2 with
 				| Named c2 -> 
 					  if c1 = "" then Some k2
@@ -3894,9 +3893,10 @@ and unify_var_kind_x (k1 : spec_var_kind) (k2 : spec_var_kind) :
 					  else if sub_type t2 t1 then Some k2 
 					  else None
 				| _ -> None) (* An Hoa *)
-			| Array et1 -> match t2 with (* An Hoa *)
+			| Array et1 -> (match t2 with (* An Hoa *)
 				| Array et2 -> if (et1 = et2) then Some k1 else None
-				| _ -> None))
+				| _ -> None)
+            | _ -> if t1 = t2 then Some k1 else None))
 		  
 and unify_var_kind (k1 : spec_var_kind) (k2 : spec_var_kind) =
   let pr = string_of_spec_var_kind in
@@ -4134,14 +4134,14 @@ and guess_type_of_exp_arith a0 stab =
 	      let t2 = guess_type_of_exp_arith e2 stab in
 	      begin
             match t1, t2 with
-              | Known (Prim Int), Known (Prim Int) -> t1
-              | Known (Prim Int), Unknown -> t1
-              | Unknown, Known (Prim Int) -> t2
-              | Known (Prim Float), Known (Prim Float) -> t1
-              | Known (Prim Float), Unknown -> t1
-              | Unknown, Known (Prim Float) -> t2
-              | Known (Prim Int), Known (Prim Float)
-              | Known (Prim Float), Known (Prim Int) ->
+              | Known (Int), Known (Int) -> t1
+              | Known (Int), Unknown -> t1
+              | Unknown, Known (Int) -> t2
+              | Known (Float), Known (Float) -> t1
+              | Known (Float), Unknown -> t1
+              | Unknown, Known (Float) -> t2
+              | Known (Int), Known (Float)
+              | Known (Float), Known (Int) ->
 		            Err.report_error
 		                {
                             Err.error_loc = pos;
@@ -4149,9 +4149,9 @@ and guess_type_of_exp_arith a0 stab =
 		                }
               | _ -> Unknown
 	      end
-	          (* | IP.Div _ -> Known (Prim Float) *)
-    | IP.IConst _ -> Known (Prim Int)
-    | IP.FConst _ -> Known (Prim Float)
+	          (* | IP.Div _ -> Known (Float) *)
+    | IP.IConst _ -> Known (Int)
+    | IP.FConst _ -> Known (Float)
     | _ -> Unknown
 
 and collect_type_info_arith a0 stab expected_type =
@@ -4446,7 +4446,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
 			                    })) in
 	      let check_ie st ie t =
             ((match t with
-              | Prim Bool ->
+              | Bool ->
 		            if IP.is_var ie
 		            then
                       collect_type_info_var (IP.name_of_var ie) st
@@ -4457,11 +4457,11 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
 			                  Err.error_loc = IP.pos_of_exp ie;
 			                  Err.error_text = "expecting type bool";
                           }
-              | Prim Int -> collect_type_info_arith ie st (Known C.int_type)
-              | Prim Float -> collect_type_info_arith ie st (Known C.float_type)
-              | Prim _ -> ()
+              | Int -> collect_type_info_arith ie st (Known C.int_type)
+              | Float -> collect_type_info_arith ie st (Known C.float_type)
               | Named _ -> collect_type_info_pointer ie (Known t) st
-			  | Array et -> collect_type_info_arith ie st (Known (Array et))); (* An Hoa BUG DETECTED Replace (Known et) by (Known (CP.Array et)) TODO : add a collect_type_info_array instead *)
+			  | Array et -> collect_type_info_arith ie st (Known (Array et))
+              | _ -> ()); (* An Hoa BUG DETECTED Replace (Known et) by (Known (CP.Array et)) TODO : add a collect_type_info_array instead *)
             st)
 	      in
 	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)
