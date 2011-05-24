@@ -1036,33 +1036,36 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 			| Not_found -> failwith ("find_classes: " ^ c1 ^ " and " ^ c2 ^ " are not related!")
 
 
-let rec sub_type (t1 : typ) (t2 : typ) = match t1 with
-  | Named c1 -> begin match t2 with
-	    | Named c2 -> begin
-		    if c1 = c2 then true
-		    else if c1 = "" then true (* t1 is null in this case *)
-		    else 
-			  let v1 = CH.V.create {ch_node_name = c1; 
-								    ch_node_class = None; 
-								    ch_node_coercion = None} in
-			  let v2 = CH.V.create {ch_node_name = c2; 
-								    ch_node_class = None; 
-								    ch_node_coercion = None} in
-			  try
-				  let _ = PathCH.shortest_path class_hierarchy v1 v2 in
-				  true
-			  with
-				| Not_found -> false
-        end
-        | Array _ | _ -> false (* An Hoa add P.Array _ *)
-  end
-	(* An Hoa *)
-  | Array (et1, _) -> begin
-	  match t2 with
-		| Array (et2, _) -> (sub_type et1 et2)
-		| _ -> false
-  end
-  |  _ -> t1 = t2
+(* let rec sub_type (t1 : typ) (t2 : typ) = match t1 with *)
+(*   | Named c1 -> begin match t2 with *)
+(* 	    | Named c2 -> begin *)
+(* 		    if c1 = c2 then true *)
+(* 		    else if c1 = "" then true (\* t1 is null in this case *\) *)
+(* 		    else  *)
+(* 			  let v1 = CH.V.create {ch_node_name = c1;  *)
+(* 								    ch_node_class = None;  *)
+(* 								    ch_node_coercion = None} in *)
+(* 			  let v2 = CH.V.create {ch_node_name = c2;  *)
+(* 								    ch_node_class = None;  *)
+(* 								    ch_node_coercion = None} in *)
+(* 			  try *)
+(* 				  let _ = PathCH.shortest_path class_hierarchy v1 v2 in *)
+(* 				  true *)
+(* 			  with *)
+(* 				| Not_found -> false *)
+(*         end *)
+(*         | Array _ | _ -> false (\* An Hoa add P.Array _ *\) *)
+(*   end *)
+(* 	(\* An Hoa *\) *)
+(*   | Array (et1, _) -> begin *)
+(* 	  match t2 with *)
+(* 		| Array (et2, _) -> (sub_type et1 et2) *)
+(* 		| _ -> false *)
+(*   end *)
+(*   |  _ -> t1 = t2 *)
+
+let sub_type (t1 : typ) (t2 : typ) = 
+  Globals.sub_type t1 t2
 
 and exp_to_check (e:exp) :bool = match e with
   | CheckRef _
@@ -1083,10 +1086,10 @@ and exp_to_check (e:exp) :bool = match e with
   | Try _ 
   | Time _ 
   | Java _ -> false
-  
+        
   | BConst _
-	(*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
-	(*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
+	      (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
+	      (*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
   | Assign _
   | ICall _
   | IConst _
@@ -1094,12 +1097,12 @@ and exp_to_check (e:exp) :bool = match e with
   | This _
   | Var _
   | Null _
-	| EmptyArray _ (* An Hoa : NO IDEA *)
+  | EmptyArray _ (* An Hoa : NO IDEA *)
   | New _
   | Sharp _
   | SCall _
   | Label _
-  -> true
+      -> true
   
   
 let rec pos_of_exp (e:exp) :loc = match e with

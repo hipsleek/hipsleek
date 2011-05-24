@@ -757,9 +757,9 @@ struct
 
   (* call f and pop its trace in call stack of ho debug *)
   let pop_ho (f:'a->'b) (e:'a) : 'b =
-    let r = try 
-      f e
-    with exc -> stk#pop; raise exc
+    let r = (try 
+      (f e)
+    with exc -> (stk#pop; raise exc))
     in stk#pop; r
 
   (* string representation of call stack of ho_debug *)
@@ -816,15 +816,15 @@ struct
     let s,h = push s in
     (if loop_d then print_string ("\n"^h^" ENTRY :"^(List.hd args)^"\n"));
     flush stdout;
-    let r = try
+    let r = (try
       pop_ho f e
     with ex -> 
-        let _ = print_string ("\n"^h^"\n") in
+        (let _ = print_string ("\n"^h^"\n") in
         let _ = pr_args args in
         let _ = pr_lazy_res lz in
         let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
         flush stdout;
-        raise ex in
+        raise ex)) in
     if not(test r) then r else
       let _ = print_string ("\n"^h^"\n") in
       let _ = pr_args args in

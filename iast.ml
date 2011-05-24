@@ -1198,18 +1198,21 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
   let path, _ = PathCH.shortest_path class_hierarchy v1 v2 in
 	List.map (fun e -> (CH.E.dst e).ch_node_name) path
 
-let sub_type (t1 : typ) (t2 : typ) = 
-  let c1 = string_of_typ t1 in
-  let c2 = string_of_typ t2 in
-	if c1 = c2 || (is_named_type t2 && c1 = "ptr") then true
-	else false
-	  (*
-		try
-		let _ = find_classes c1 c2 in
-		true
-		with
-		| Not_found -> false
-	  *)
+(* (\* is t1 a subtype of t2 *\) *)
+(* let sub_type (t1 : typ) (t2 : typ) =  *)
+(*   let c1 = string_of_typ t1 in *)
+(*   let c2 = string_of_typ t2 in *)
+(* 	if c1 = c2 || (is_named_type t2 && c1 = "null") then true *)
+(* 	else false *)
+(* 	  (\* *)
+(* 		try *)
+(* 		let _ = find_classes c1 c2 in *)
+(* 		true *)
+(* 		with *)
+(* 		| Not_found -> false *)
+(* 	  *\) *)
+
+let sub_type t1 t2 = Globals.sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 
