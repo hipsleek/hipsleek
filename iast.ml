@@ -369,6 +369,16 @@ and exp =
 
 (* utility functions *)
 
+let void_type = Void
+
+let int_type = Int
+
+let float_type = Float
+
+let bool_type = Bool
+
+(* utility functions *)
+
 let print_struc_formula = ref (fun (x:F.struc_formula) -> "Uninitialised printer")
  
 (* apply substitution to an id *)
@@ -1191,7 +1201,7 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
 let sub_type (t1 : typ) (t2 : typ) = 
   let c1 = string_of_typ t1 in
   let c2 = string_of_typ t2 in
-	if c1 = c2 || (is_named_type t2 && c1 = "") then true
+	if c1 = c2 || (is_named_type t2 && c1 = "ptr") then true
 	else false
 	  (*
 		try

@@ -543,6 +543,18 @@ let distributive c = List.mem c !distributive_views
 
 let add_distributive c = distributive_views := c :: !distributive_views
 
+let void_type = Void
+
+let int_type = Int
+
+let float_type = Float
+
+let bool_type = Bool
+
+let bag_type = (BagT Int)
+
+let list_type = List
+
 let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 
 (* smart constructors *)
@@ -585,8 +597,8 @@ let rec type_of_exp (e : exp) = match e with
   | Assert _ -> None
 	(*| ArrayAt b -> Some b.exp_arrayat_type (* An Hoa *)*)
 	(*| ArrayMod _ -> Some void_type (* An Hoa *)*)
-  | Assign _ -> Some Void
-  | BConst _ -> Some Bool
+  | Assign _ -> Some void_type
+  | BConst _ -> Some bool_type
   | Bind ({exp_bind_type = t; 
 		   exp_bind_bound_var = _; 
 		   exp_bind_fields = _;
@@ -602,7 +614,7 @@ let rec type_of_exp (e : exp) = match e with
 			exp_icall_arguments = _;
 			exp_icall_pos = _}) -> Some t
   | Cast ({exp_cast_target_type = t}) -> Some t
-  | Catch _ -> Some Void
+  | Catch _ -> Some void_type
   | Cond ({exp_cond_type = t;
 		   exp_cond_condition = _;
 		   exp_cond_then_arm = _;
@@ -610,10 +622,10 @@ let rec type_of_exp (e : exp) = match e with
 		   exp_cond_pos = _}) -> Some t
   | Debug _ -> None
   | Dprint _ -> None
-  | FConst _ -> Some Float
+  | FConst _ -> Some float_type
 	  (*| FieldRead (t, _, _, _) -> Some t*)
 	  (*| FieldWrite _ -> Some Void*)
-  | IConst _ -> Some Int
+  | IConst _ -> Some int_type
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
 		  exp_new_pos = _}) -> Some (Named c) (*---- ok? *)
@@ -630,11 +642,11 @@ let rec type_of_exp (e : exp) = match e with
   | Seq ({exp_seq_type = t; exp_seq_exp1 = _; exp_seq_exp2 = _; exp_seq_pos = _}) -> Some t
   | This ({exp_this_type = t}) -> Some t
   | Var ({exp_var_type = t; exp_var_name = _; exp_var_pos = _}) -> Some t
-  | VarDecl _ -> Some Void
-  | Unit _ -> Some Void
-  | While _ -> Some Void
-  | Unfold _ -> Some Void
-  | Try _ -> Some Void
+  | VarDecl _ -> Some void_type
+  | Unit _ -> Some void_type
+  | While _ -> Some void_type
+  | Unfold _ -> Some void_type
+  | Try _ -> Some void_type
   | Time _ -> None
   | Sharp b -> Some b.exp_sharp_type
 
@@ -1042,7 +1054,7 @@ let rec sub_type (t1 : typ) (t2 : typ) = match t1 with
 			  with
 				| Not_found -> false
         end
-        | _ -> false (* An Hoa add P.Array _ *)
+        | Array _ | _ -> false (* An Hoa add P.Array _ *)
   end
 	(* An Hoa *)
   | Array (et1, _) -> begin

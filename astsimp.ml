@@ -2155,7 +2155,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                             (match rhs_c with
                               | C.Var { C.exp_var_name = v } -> (v, false)
                               | _ -> 
-                                    let fn = (fresh_var_name (Cprinter.string_of_typ rhs_t) pos.start_pos.Lexing.pos_lnum) in (fn, true)) in
+                                    let fn = (fresh_var_name (string_of_typ rhs_t) pos.start_pos.Lexing.pos_lnum) in (fn, true)) in
                           let fn_var = C.Var {
                               C.exp_var_type = rhs_t;
                               C.exp_var_name = fn;
@@ -2266,8 +2266,9 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                                   C.exp_bind_imm = false; (* can it be true? *)
 				                  C.exp_bind_pos = pos;
                                   C.exp_bind_path_id = pid; }), te)))
+                      | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";}
                       | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
-                      | Array _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type";})
+)
               | _ -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not a data type"; }
           with | Not_found -> Err.report_error { Err.error_loc = pos; Err.error_text = v ^ " is not defined"; })
     | I.Block { I.exp_block_body = e; I.exp_block_pos = pos } ->
@@ -2294,7 +2295,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
             (match crecv with
               | C.Var { C.exp_var_name = v } -> (v, (C.Unit pos), false)
               | _ ->
-                    let fname = (fresh_var_name (Cprinter.string_of_typ crecv_t) (pos.start_pos.Lexing.pos_lnum)) in
+                    let fname = (fresh_var_name (string_of_typ crecv_t) (pos.start_pos.Lexing.pos_lnum)) in
                     let fdecl = C.VarDecl {
                         C.exp_var_decl_type = crecv_t;
                         C.exp_var_decl_name = fname;
@@ -2307,7 +2308,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           let tmp = List.map (trans_exp prog proc) args in
           let (cargs, cts) = List.split tmp in
           let mingled_mn = C.mingle_name mn cts in
-          let class_name = C.name_of_type crecv_t in
+          let class_name = string_of_typ crecv_t in
           (try
             let cdef = I.look_up_data_def pos prog.I.prog_data_decls class_name in
             let all_methods = I.look_up_all_methods prog cdef in
@@ -2568,7 +2569,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                 let e_pos = Iast.get_exp_pos e in
                 let ce, ct = trans_exp prog proc e in
                 if sub_type ct cret_type then
-                  let fn = (fresh_var_name (Cprinter.string_of_typ ct) e_pos.start_pos.Lexing.pos_lnum) in
+                  let fn = (fresh_var_name (string_of_typ ct) e_pos.start_pos.Lexing.pos_lnum) in
                   let vd = C.VarDecl { 
                       C.exp_var_decl_type = ct;
                       C.exp_var_decl_name = fn;
@@ -2881,8 +2882,8 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   else
                     let e_pos = Iast.get_exp_pos oe in
                     let ce, ct = trans_exp prog proc oe in						
-                    if Gen.ExcNumbering.exc_sub_type (C.name_of_type ct) raisable_class then 							 
-                      let fn = (fresh_var_name (Cprinter.string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
+                    if Gen.ExcNumbering.exc_sub_type (string_of_typ ct) raisable_class then 							 
+                      let fn = (fresh_var_name (string_of_typ ct) pos.start_pos.Lexing.pos_lnum) in
                       let vd = C.VarDecl { C.exp_var_decl_type = ct;
                       C.exp_var_decl_name = fn;
                       C.exp_var_decl_pos = e_pos;} in
@@ -3010,7 +3011,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
 		            E.pop_scope();
 		            {C.exp_catch_flow_type = (Gen.ExcNumbering.get_hash_of_exc c_flow);
 		            C.exp_catch_flow_var = cfv;
-		            C.exp_catch_var = Some (Cpure.Void,x);
+		            C.exp_catch_var = Some (Void,x);
 		            C.exp_catch_body = new_bd;																					   
 		            C.exp_catch_pos = pos;} end
 	                else begin
@@ -3064,13 +3065,16 @@ and default_value (t :typ) pos : C.exp =
 		  (* An Hoa : TODO add empty array *)
 		  (* failwith "default_value: array cannot be used here!"*)
 
-and sub_type (t1 : typ) (t2 : typ) =
+and sub_type_x (t1 : typ) (t2 : typ) =
   let it1 = trans_type_back t1 in
   let it2 = trans_type_back t2 in I.sub_type it1 it2
 
+and sub_type (t1 : typ) (t2 : typ) =
+  let pr = string_of_typ in
+  Gen.Debug.ho_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
-    | p -> p
     | Named c ->
 	      (try
             let _ = I.look_up_data_def_raw prog.I.prog_data_decls c
@@ -3093,6 +3097,7 @@ and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
              Err.error_loc = pos;
              Err.error_text = "trans_type: array is not supported yet";
              } *)
+    | p -> p
 
 and flatten_to_bind_debug prog proc b r rhs_o pid imm pos =
   Gen.Debug.no_2 "flatten_to_bind " 
@@ -3110,7 +3115,7 @@ and flatten_to_bind prog proc (base : I.exp) (rev_fs : ident list)
           let (fn, new_var) =
             (match cbase with
               | C.Var { C.exp_var_name = v } -> (v, false)
-              | _ -> let fn2 = (fresh_var_name (Cprinter.string_of_typ base_t) pos.start_pos.Lexing.pos_lnum) in (fn2, true)) in
+              | _ -> let fn2 = (fresh_var_name (string_of_typ base_t) pos.start_pos.Lexing.pos_lnum) in (fn2, true)) in
           let fn_decl = if new_var then
             C.VarDecl {
                 C.exp_var_decl_type = base_t;
@@ -3245,7 +3250,7 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
 				                    Err.error_text = "lhs and rhs do not match";
 				                })
                 else
-                  convert_to_bind prog fresh_v (I.name_of_type vt) rest rhs pid imm
+                  convert_to_bind prog fresh_v (string_of_typ vt) rest rhs pid imm
                       pos
 		      in
               ((C.Bind
@@ -3270,7 +3275,10 @@ and convert_to_bind prog (v : ident) (dname : ident) (fs : ident list)
     | [] -> failwith "convert_to_bind: empty field list"
 
 and trans_type_back (te : typ) : typ =
-  match te with | p -> p | Named n -> Named n | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
+  match te with 
+    | Named n -> Named n 
+    | Array (t, _) -> Array (trans_type_back t, None) (* An Hoa *) 
+    | p -> p 
 
 and trans_args (args : (C.exp * typ * loc) list) :
       ((C.typed_ident list) * C.exp * (ident list)) =
@@ -3283,7 +3291,7 @@ and trans_args (args : (C.exp * typ * loc) list) :
 		      },
 		      _, _) -> (rest_local_vars, rest_e, (v :: rest_names))
             | (arg_e, at, pos) ->
-		          let fn = fresh_var_name (Cprinter.string_of_typ at) pos.start_pos.Lexing.pos_lnum in
+		          let fn = fresh_var_name (string_of_typ at) pos.start_pos.Lexing.pos_lnum in
 		          let fn_decl =
 		            C.VarDecl
                         {
@@ -3312,7 +3320,7 @@ and get_type_name_for_mingling (prog : I.prog_decl) (t : typ) : ident =
     | Array (t,_) ->  (* An Hoa *) 
 		  (get_type_name_for_mingling prog t ^ "[]")
 	          (* failwith "get_type_name_for_mingling: array is not supported yet" *)
-    |t -> I.name_of_type t
+    |t -> string_of_typ t
 
 and mingle_name_enum prog (m : ident) (targs : typ list) =
   let param_tnames =
@@ -3356,7 +3364,7 @@ and insert_dummy_vars (ce : C.exp) (pos : loc) : C.exp =
 	        | None -> ce
 	        | Some t -> if CP.are_same_types t C.void_type then ce
               else
-		        (let fn = fresh_var_name (Cprinter.string_of_typ t) pos.start_pos.Lexing.pos_lnum in
+		        (let fn = fresh_var_name (string_of_typ t) pos.start_pos.Lexing.pos_lnum in
 		        let fn_decl = C.VarDecl {
                     C.exp_var_decl_type = t;
                     C.exp_var_decl_name = fn;
@@ -3926,7 +3934,7 @@ and set_var_kind2 (var1 : ident) (var2 : ident) (k : spec_var_kind) (stab : spec
 	  let _ = List.map (fun c-> Hashtbl.replace stab c a1) a2_keys in ()) in ()
 													                             (*H.find stab var let r = set_var_kind va1 k stab in H.replace stab va2 r*)
 and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
-  Gen.Debug.ho_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "?")
+  Gen.Debug.ho_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "()")
       collect_type_info_var_x var stab var_kind pos
 
 and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =
@@ -4532,7 +4540,7 @@ and get_spec_var_stab (v : ident) stab pos =
 
 
 and string_of_spec_var_kind (k : spec_var_kind) =
-  match k with | Unknown -> "Unk" | Known t -> (Cprinter.string_of_typ t)^" "
+  match k with | Unknown -> "Unk" | Known t -> (string_of_typ t)^" "
 
 
 and print_stab (stab : spec_var_table) =

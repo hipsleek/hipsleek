@@ -195,7 +195,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
                 (*     ^ "\n") in *)
 
-	        let c = CP.name_of_type v_t in
+	        let c = string_of_typ v_t in
 	        let vdatanode = CF.DataNode ({
                             CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                             CF.h_formula_data_name = c;
