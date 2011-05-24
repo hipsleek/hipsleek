@@ -3071,7 +3071,7 @@ and sub_type_x (t1 : typ) (t2 : typ) =
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
-  Gen.Debug.ho_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+  Gen.Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
 
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
@@ -3934,7 +3934,7 @@ and set_var_kind2 (var1 : ident) (var2 : ident) (k : spec_var_kind) (stab : spec
 	  let _ = List.map (fun c-> Hashtbl.replace stab c a1) a2_keys in ()) in ()
 													                             (*H.find stab var let r = set_var_kind va1 k stab in H.replace stab va2 r*)
 and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
-  Gen.Debug.ho_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "()")
+  Gen.Debug.no_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "()")
       collect_type_info_var_x var stab var_kind pos
 
 and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =

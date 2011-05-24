@@ -205,7 +205,7 @@ and convert_methods main_class (pdefs : proc_decl list) =
 
 and convert_method (pdef : proc_decl) = 
   if (pdef.proc_name = "main") then begin
-	if Gen.is_empty pdef.proc_args && pdef.proc_return = Void then begin
+	if Gen.is_empty pdef.proc_args && pdef.proc_return = void_type then begin
 	  Buffer.add_string java_code "public static void main(String[] args) {\n";
 	  (match pdef.proc_body with
 		| Some e -> Buffer.add_string java_code (java_of_exp e)

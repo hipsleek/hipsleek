@@ -258,7 +258,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 	  (fun n -> fun t -> CP.SpecVar (t, n, Unprimed)) 
 	  farg_names farg_types in
 	let farg_names =
-	  if proc.C.proc_return = Void then
+	  if proc.C.proc_return = C.void_type then
 		farg_names
 	  else
 		"res" :: farg_names 
@@ -273,7 +273,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 	  (* generate fields *)
 	let res = CP.SpecVar (proc.C.proc_return, "res", Unprimed) in
 	let fields_tmp = 
-	  if proc.C.proc_return = Void then
+	  if proc.C.proc_return = C.void_type then
 		CP.remove_dups_spec_var_list (farg_spec_vars @ post_fv @ pre_outvars)
 	  else
 		CP.remove_dups_spec_var_list (res :: farg_spec_vars @ post_fv @ pre_outvars) 
@@ -355,7 +355,7 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 			else
 			  let chk = C.CheckRef ({C.exp_check_ref_var = bv;
 									 C.exp_check_ref_pos = pos}) in
-			  let seq = C.mkSeq Void chk e pos in
+			  let seq = C.mkSeq C.void_type chk e pos in
 				seq
 		  in
 		  let res = List.fold_left helper e0 bind_vars in
@@ -380,8 +380,8 @@ and compile_exp prog proc (e0 : C.exp) : C.exp = match e0 with
 				let new_assign = C.Assign ({C.exp_assign_lhs = lhs;
 											C.exp_assign_rhs = result_e;
 											C.exp_assign_pos = pos}) in
-				let seq1 = C.mkSeq Void call new_assign pos in
-				let seq2 = C.mkSeq Void result_decl seq1 pos in
+				let seq1 = C.mkSeq C.void_type call new_assign pos in
+				let seq2 = C.mkSeq C.void_type result_decl seq1 pos in
 				  seq2
 		  else
 		  normal_compile ()
@@ -452,7 +452,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			output_vars in
 		  let res = fresh_name () in
 		  let post_init_tmp3 =
-			if pdef.C.proc_return = Void then []
+			if pdef.C.proc_return = C.void_type then []
 			else [post_chkr ^ ".res = " ^ res ^ ";"] in
 		  let post_init = String.concat "\n" 
 			(post_init_tmp3 @ post_init_tmp1 @ post_init_tmp2) in
@@ -472,7 +472,7 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			  the call itself
 			*)
 		  let call, result =
-			if pdef.C.proc_return = Void then
+			if pdef.C.proc_return = C.void_type then
 			  (e0, "")
 			else 
 			  let assign = C.Assign ({C.exp_assign_lhs = res;
@@ -483,8 +483,8 @@ and compile_call prog proc (e0 : C.exp) : (C.exp * ident) = match e0 with
 			(*
 			  Combine them.
 			*)
-		  let seq1 = C.mkSeq Void call java_post pos in
-		  let seq2 = C.mkSeq Void java_pre seq1 pos in
+		  let seq1 = C.mkSeq C.void_type call java_post pos in
+		  let seq2 = C.mkSeq C.void_type java_pre seq1 pos in
 			(seq2, result)
 	end
   | _ -> failwith ("compile_call: " ^ (Cprinter.string_of_exp e0) ^ " unsupported.")

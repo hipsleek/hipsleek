@@ -155,7 +155,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        end
         | BConst ({exp_bconst_val = b;
                    exp_bconst_pos = pos}) -> begin
-	        let res_v = CP.mkRes Bool in
+	        let res_v = CP.mkRes bool_type in
 	        let tmp1 = CP.BForm (CP.BVar (res_v, pos), None) in
 	        let tmp2 =
 	          if b then tmp1
@@ -309,13 +309,13 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
         | IConst ({exp_iconst_val = i;
                    exp_iconst_pos = pos}) ->
 	          let c_e = CP.IConst (i, pos) in
-	          let res_v = CP.Var (CP.mkRes Int, pos) in
+	          let res_v = CP.Var (CP.mkRes int_type, pos) in
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
         | FConst {exp_fconst_val = f; exp_fconst_pos = pos} ->
 	          let c_e = CP.FConst (f, pos) in
-	          let res_v = CP.Var (CP.mkRes Float, pos) in
+	          let res_v = CP.Var (CP.mkRes float_type, pos) in
 	          let f = CF.formula_of_mix_formula (MCP.mix_of_pure (CP.mkEqExp res_v c_e pos)) pos in
 	          let res_ctx = CF.normalize_max_renaming_list_failesc_context f pos true ctx in
 	          res_ctx
