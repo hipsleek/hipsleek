@@ -3926,7 +3926,7 @@ and set_var_kind2 (var1 : ident) (var2 : ident) (k : spec_var_kind) (stab : spec
 	  let _ = List.map (fun c-> Hashtbl.replace stab c a1) a2_keys in ()) in ()
 													                             (*H.find stab var let r = set_var_kind va1 k stab in H.replace stab va2 r*)
 and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
-  Gen.Debug.no_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "?")
+  Gen.Debug.ho_eff_3 "collect_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab string_of_var_kind (fun _ -> "?")
       collect_type_info_var_x var stab var_kind pos
 
 and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =
@@ -3954,7 +3954,7 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
             Err.report_error
                 {
                     Err.error_loc = pos;
-                    Err.error_text = qv ^ " shallows outer name";
+                    Err.error_text = qv ^ " shadows outer name";
                 }
 	      else collect_type_info_pure prog qf stab
 
@@ -3978,7 +3978,7 @@ and collect_type_info_b_formula_x prog b0 stab =
               | Known _, Unknown ->
 		            (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t1)
               | _ ->
-		            (* TODO: check for type consistency *)
+		            (* TODO: check for type consistency - equality of t1 & t2 not captured *)
 		            (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t2)
           end
     | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) ->
@@ -3990,6 +3990,7 @@ and collect_type_info_b_formula_x prog b0 stab =
             collect_type_info_arith a2 stab typ;
             collect_type_info_arith a3 stab typ)
 	      in begin
+            (* TODO : what about two knowns and one unknown ? *)
             match t1, t2, t3 with
               | Known _, Unknown, Unknown -> helper t1
               | Unknown, Known _, Unknown -> helper t2

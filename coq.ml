@@ -18,16 +18,28 @@ let coq_channels = ref (stdin, stdout)
 
 
 (* pretty printing for primitive types *)
-let rec coq_of_prim_type = function
+(* let rec coq_of_prim_type = function *)
+(*   | Bool          -> "int" *)
+(*   | Float         -> "float"	(\* all types will be ints. *\) *)
+(*   | Int           -> "int" *)
+(*   | Void          -> "unit" 	(\* all types will be ints. *\) *)
+(*  | (TVar i)       ->   (\* type var not supported *\) *)
+(*         Error.report_error {Err.error_loc = no_pos;  *)
+(*         Err.error_text = "type var not supported for Coq"} *)
+(*    | BagT t		      -> "("^(coq_of_prim_type t) ^") set" *)
+(*   | List		  -> "list" *)
+(* ;; *)
+
+let rec coq_of_typ = function
   | Bool          -> "int"
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
- | (TVar i)       ->   (* type var not supported *)
-        Error.report_error {Err.error_loc = no_pos; 
-        Err.error_text = "type var not supported for Coq"}
-   | BagT t		      -> "("^(coq_of_prim_type t) ^") set"
+  | BagT t		      -> "("^(coq_of_typ t) ^") set"
   | List		  -> "list"
+  | TVar _ | Named _ | Array _ ->
+        Error.report_error {Err.error_loc = no_pos; 
+        Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
 
 (* pretty printing for spec_vars *)
@@ -36,7 +48,7 @@ let coq_of_spec_var (sv : CP.spec_var) = match sv with
 
 let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (t, _, _) -> begin match t with
-        | Prim List -> "list Z"
+        | List -> "list Z"
         | _ -> "Z"
   end
 

@@ -19,23 +19,23 @@ let rec concatenate_string_list l c = match l with
  | h::t -> h ^ c ^ (concatenate_string_list t c)
 ;;
 
-(* pretty printing for primitive types *)
-let string_of_prim_type = function 
-  | Bool          -> "boolean "
-  | Float         -> "float "
-  | Int           -> "int "
-  | Void          -> "void "
-  | (BagT t) -> "bag("^(string_of_prim_type t) ^")"
-  | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | List          -> "list "
-;;
+(* (\* pretty printing for primitive types *\) *)
+(* let string_of_prim_type = function  *)
+(*   | Bool          -> "boolean " *)
+(*   | Float         -> "float " *)
+(*   | Int           -> "int " *)
+(*   | Void          -> "void " *)
+(*   | (BagT t) -> "bag("^(string_of_prim_type t) ^")" *)
+(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | List          -> "list " *)
+(* ;; *)
 
-(* pretty printing for types *)
-let rec string_of_typ = function 
-  | Prim t        -> string_of_prim_type t 
-  | Named ot      -> ot ^ " "
-  | Array (t,_) -> (string_of_typ t) ^ "[]" (* "array" *) (* AN HOA *)
-;;
+(* (\* pretty printing for types *\) *)
+(* let rec string_of_typ = function  *)
+(*   | Prim t        -> string_of_prim_type t  *)
+(*   | Named ot      -> ot ^ " " *)
+(*   | Array (t,_) -> (string_of_typ t) ^ "[]" (\* "array" *\) (\* AN HOA *\) *)
+(* ;; *)
 
 (* pretty printing for unary operators *)
 let string_of_unary_op = function 

@@ -24,18 +24,25 @@ and primed =
   | Primed
   | Unprimed
 
-and prim_type = 
+(* and prim_type =  *)
+(*   | TVar of int *)
+(*   | Bool *)
+(*   | Float *)
+(*   | Int *)
+(*   | Void *)
+(*   | BagT of prim_type *)
+(*   | List *)
+
+(* TODO : move typ here in future *)
+type typ =
   | TVar of int
   | Bool
   | Float
   | Int
   | Void
-  | BagT of prim_type
   | List
-
-(* TODO : move typ here in future *)
-type typ =
-  | Prim of prim_type
+  | BagT of typ
+  (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
   | Array of (typ * int option) (* base type and optional dimension *)
 
@@ -47,14 +54,29 @@ type mode =
   | ModeIn
   | ModeOut
 
-let rec string_of_prim_type = function 
+(* let rec string_of_prim_type = function  *)
+(*   | Bool          -> "boolean" *)
+(*   | Float         -> "float" *)
+(*   | Int           -> "int" *)
+(*   | Void          -> "void" *)
+(*   | TVar i       -> "TVar["^(string_of_int i)^"]" *)
+(*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
+(*   | List          -> "list" *)
+
+(* pretty printing for types *)
+let rec string_of_typ = function 
+   (* may be based on types used !! *)
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
-  | TVar i       -> "TVar["^(string_of_int i)^"]"
-  | BagT t        -> "bag("^(string_of_prim_type t)^")"
+  | BagT t        -> "bag("^(string_of_typ t)^")"
+  | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List          -> "list"
+  (* | Prim t -> string_of_prim_type t  *)
+  | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ot
+  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
+;;
 
 let rec s_i_list l c = match l with 
   | [] -> ""

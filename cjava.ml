@@ -41,21 +41,21 @@ let _ = List.map (fun (op, func) -> Hashtbl.add primitives_map op func)
    ("is_not_null___", is_not_null_prim)]
 
 
-(* pretty printing for primitive types *)
-let string_of_prim_type = function 
-  | Bool          -> "boolean "
-  | Float         -> "float "
-  | Int           -> "int "
-  | Void          -> "void "
-  | BagT t           -> "multiset("^(string_of_prim_type t)^")"
-  | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | List          -> "list"
+(* (\* pretty printing for primitive types *\) *)
+(* let string_of_prim_type = function  *)
+(*   | Bool          -> "boolean " *)
+(*   | Float         -> "float " *)
+(*   | Int           -> "int " *)
+(*   | Void          -> "void " *)
+(*   | BagT t           -> "multiset("^(string_of_prim_type t)^")" *)
+(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | List          -> "list" *)
 
-(* pretty printing for types *)
-let rec string_of_typ = function 
-  | Prim t        -> string_of_prim_type t 
-  | Named ot      -> ot ^ " "
-  | Array (et, _)      -> string_of_typ et ^ "[]" (* An Hoa *)
+(* (\* pretty printing for types *\) *)
+(* let rec string_of_typ = function  *)
+(*   | Prim t        -> string_of_prim_type t  *)
+(*   | Named ot      -> ot ^ " " *)
+(*   | Array (et, _)      -> string_of_typ et ^ "[]" (\* An Hoa *\) *)
 
 (* functions to decide if an expression needs parenthesis *)
 let need_parenthesis e = match e with 
