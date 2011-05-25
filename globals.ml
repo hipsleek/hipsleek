@@ -74,7 +74,7 @@ let rec string_of_typ = function
   | TVar t        -> "TVar["^(string_of_int t)^"]"
   | List          -> "list"
   (* | Prim t -> string_of_prim_type t  *)
-  | Named ot -> if ((String.compare ot "") ==0) then "null" else ("O_"^ot)
+  | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
 ;;
 
