@@ -35,6 +35,7 @@ and primed =
 
 (* TODO : move typ here in future *)
 type typ =
+  | UNK 
   | TVar of int
   | Bool
   | Float
@@ -66,6 +67,7 @@ type mode =
 (* pretty printing for types *)
 let rec string_of_typ = function 
    (* may be based on types used !! *)
+  | UNK          -> "Unknown"
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
@@ -79,19 +81,21 @@ let rec string_of_typ = function
 ;;
 
 
-let dim_compatible d1 d2 =
+let dim_subtype d1 d2 =
   match d1,d2 with
+    | _, None -> true
+    | None, _ -> false
     | Some i1, Some i2 -> i1==i2
-    | _,_ -> true
 ;;
 
 let rec sub_type (t1 : typ) (t2 : typ) = 
   match t1,t2 with
+    | UNK, _ -> true
     | Named c1, Named c2 ->
           if c1=c2 then true
           else c1=""
     | Array (et1,d1), Array (et2,d2) ->
-          if dim_compatible d1 d2 then sub_type et1 et2
+          if dim_subtype d1 d2 then sub_type et1 et2
           else false
     | BagT et1, BagT et2 -> sub_type et1 et2
     | p1, p2 -> p1=p2
@@ -102,7 +106,6 @@ let rec s_i_list l c = match l with
   | h::[] -> h 
   | h::t -> h ^ c ^ (s_i_list t c)
 ;;
-
 let string_of_ident_list l = "["^(s_i_list l ",")^"]"
 
 let idf (x:'a) : 'a = x

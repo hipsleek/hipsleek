@@ -38,6 +38,9 @@ let rec mona_of_typ = function
   | Void          -> "void" 	(* same as for float *)
   | BagT i		  -> "("^(mona_of_typ i)^") set"
   | TVar i        -> "TVar["^(string_of_int i)^"]"
+  | UNK           -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
   | List          -> "list"	(* lists are not supported *)
   | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 

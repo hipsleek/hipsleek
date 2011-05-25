@@ -52,9 +52,13 @@ type trans_exp_type =
   and spec_var_table =
   (ident, spec_var_info) H.t
 
-  and spec_var_kind =
-  | Known of typ | Unknown
+  and spec_var_kind = typ
+  (* | Known of typ | Unknown *)
+
+let type_table : (spec_var_table ref) = ref (Hashtbl.create 19)
   
+(* let op_map = Hashtbl.create 19 *)
+
 (************************************************************
 Primitives handling stuff
 ************************************************************)
@@ -210,15 +214,18 @@ int[] update___(int[] a, int i, int v) requires true ensures update_array(a,i,v,
 and string_of_stab stab = Hashtbl.fold 
 		(fun c1 c2 a -> 
 			a^"; ("^c1^" "^
-			(match c2.sv_info_kind with 
-				| Unknown -> "unknown" 
-				| Known d-> 
-			string_of_typ d )^")") stab ""
+			(
+                (* match c2.sv_info_kind with  *)
+				(* | Unknown -> "unknown"  *)
+				(* | Known d->  *)
+			string_of_typ c2.sv_info_kind )^")") stab ""
 	
-and string_of_var_kind k = (match k with 
-		| Unknown -> "unknown" 
-		| Known d-> 
-	("known "^(string_of_typ d)) )
+and string_of_var_kind k = string_of_typ k
+  (* (match k with  *)
+  (*   	| Unknown -> "unknown"  *)
+  (*   	| Known d->  *)
+  (*   ("known "^(string_of_typ d)) ) *)
+
 let prim_buffer = Buffer.create 1024
 	  
 (* search prog and generate all eq, neq for all the data declaration,      *)
@@ -1185,7 +1192,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.incr_fixpt_view  prog.I.prog_data_decls prog.I.prog_view_decls
   else vdef.I.view_data_name in
    (vdef.I.view_data_name <- data_name;
-   H.add stab self { sv_info_kind = Known (Named data_name);id = fresh_int () };
+   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
   let cf = transf_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let (inv, inv_b) = vdef.I.view_invariant in
   let pf = trans_pure_formula inv stab in
@@ -1267,7 +1274,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
   let pos = IP.pos_of_formula rdef.I.rel_formula in
   let rel_sv_vars = List.map (fun (var_type, var_name) -> CP.SpecVar (trans_type prog var_type pos, var_name, Unprimed)) rdef.I.rel_typed_vars in
   let stab = H.create 103 in
-  let _ = List.map (fun (var_type, var_name) -> H.add stab var_name { sv_info_kind = Known (trans_type prog var_type pos);id = fresh_int () };) rdef.I.rel_typed_vars in
+  let _ = List.map (fun (var_type, var_name) -> H.add stab var_name { sv_info_kind = (trans_type prog var_type pos);id = fresh_int () };) rdef.I.rel_typed_vars in
   (* Need to collect the type information before translating the formula *)
   let _ = collect_type_info_pure prog rdef.I.rel_formula stab in
   let crf = trans_pure_formula rdef.I.rel_formula stab in
@@ -1281,7 +1288,7 @@ and trans_rel (prog : I.prog_decl) (rdef : I.rel_decl) : C.rel_decl =
          let data_name = if (String.length vdef.I.view_data_name) = 0  then  I.data_name_of_view prog.I.prog_view_decls view_formula1
          else vdef.I.view_data_name in
          (vdef.I.view_data_name <- data_name;
-   H.add stab self { sv_info_kind = Known (Named data_name);id = fresh_int () };
+   H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
          let cf = trans_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
          let (inv, inv_b) = vdef.I.view_invariant in
          let pf = trans_pure_formula inv stab in
@@ -1806,10 +1813,10 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
       let free_vars = List.map (fun p -> p.I.param_name) all_args in
       let stab = H.create 103 in
       let add_param p = H.add stab p.I.param_name {
-        sv_info_kind = Known (trans_type prog p.I.param_type p.I.param_loc);
+        sv_info_kind =  (trans_type prog p.I.param_type p.I.param_loc);
         id = fresh_int () } in
       (ignore (List.map add_param all_args);
-	let _ = H.add stab res { sv_info_kind = Known cret_type;id = fresh_int () } in
+	let _ = H.add stab res { sv_info_kind = cret_type;id = fresh_int () } in
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
 	let static_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
@@ -2069,7 +2076,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
           let stab = H.create 19
           in
           (ignore
-              (List.map (fun (t, n) -> H.add stab n { sv_info_kind = Known t;id = fresh_int () })
+              (List.map (fun (t, n) -> H.add stab n { sv_info_kind = t;id = fresh_int () })
                   all_names);
           let assert_cf_o =
             (match assert_f_o with
@@ -3053,7 +3060,7 @@ and default_value (t :typ) pos : C.exp =
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | Void ->
+    | UNK | Void ->
 	      failwith
               "default_value: void in variable declaration should have been rejected by parser"
     | (BagT _) ->
@@ -3436,13 +3443,15 @@ and trans_var (ve, pe) stab pos =try
   let ve_info = H.find stab ve
   in
   (match ve_info.sv_info_kind with
-    | Known t -> CP.SpecVar (t, ve, pe)
-    | Unknown ->
+    | UNK ->
           Err.report_error
               {
                   Err.error_loc = pos;
                   Err.error_text = "couldn't infer type for " ^ ve^(match pe with |Unprimed->""|Primed -> "'")^" in "^(string_of_stab stab)^"\n";
-              })
+              }
+    | t -> CP.SpecVar (t, ve, pe)
+
+  )
 with Not_found ->   
     Err.report_error
         {
@@ -3495,7 +3504,7 @@ and transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident
     (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
     let rec trans_ext_formula (f0 : IF.ext_formula) stab : CF.ext_formula = match f0 with
       | Iformula.EAssume (b,y)->	(*add res, self*)
-            (*let _ = H.add stab res { sv_info_kind = Known cret_type; } in*)
+            (*let _ = H.add stab res { sv_info_kind = cret_type; } in*)
             let nb = trans_formula prog true (self::res::fvars) false b stab true in				
             (*let _ = H.remove stab res in*)
             Cformula.EAssume ([],nb,y)
@@ -3893,13 +3902,20 @@ and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
     | Some v -> "Some "^(pr v) in
   Gen.Debug.ho_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
 
+and dim_unify d1 d2 =
+  match d1,d2 with
+    | _, None -> Some None
+    | None, _ -> Some None
+    | Some l1, Some l2 -> if (l1==l2) then Some (Some l1)
+      else None
+
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
       spec_var_kind option =
   let rec unify k1 k2 =
     match k1,k2 with
-      | Unknown, _ -> Some k2
-      | _, Unknown -> Some k1
-      | Known t1, Known t2 -> 
+      | UNK, _ -> Some k2
+      | _, UNK -> Some k1
+      | t1, t2  -> 
             if sub_type t1 t2 then Some k2
             else if sub_type t2 t1 then Some k1
             else 
@@ -3908,11 +3924,13 @@ and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
                     (* | TVar i1,TVar i2 -> ? *)
                   | TVar i1,_ -> repl_tvar_in stab i1 k2; Some k2
                   | _,TVar i2 -> repl_tvar_in stab i2 k1; Some k1
-                  | BagT x1,BagT x2 -> unify (Known x1) (Known x2)
+                  | BagT x1,BagT x2 -> (match (unify x1 x2) with
+                      | Some t -> Some (BagT t)
+                      | None -> None)
                   | Array (x1,d1),Array (x2,d2) -> 
-                        if dim_compatible d1 d2 then unify (Known x1) (Known x2)
-                        else Err.report_error{ Err.error_loc = no_pos; 
-                        Err.error_text = "dimension of array is incompatible";}
+                        (match (dim_unify d1 d2), (unify x1 x2) with
+                          | Some d, Some t  -> Some (Array (t,d))
+                          | _,_ -> None)
                   | _,_ -> None
               end
   in unify k1 k2
@@ -3923,26 +3941,27 @@ and repl_tvar_in stab i k =
 
 and unify_var_kind_x (k1 : spec_var_kind) (k2 : spec_var_kind) :
       spec_var_kind option =
-  match k1 with
-    | Unknown -> Some k2
-    | Known t1 -> (match k2 with
-    	| Unknown -> Some k1
-    	| Known t2 -> (match t1 with
-    		| Named c1 -> (match t2 with
-				| Named c2 -> 
-					  if c1 = "" then Some k2
-					  else if c2 = "" then Some k1
-					  else if c1 = c2 then Some k1
-					  else if sub_type t1 t2 then Some k2 (* use more general type *)
-					  else if sub_type t2 t1 then Some k1 
-					  else None
-				| _ -> None) (* An Hoa *)
-			| Array et1 -> (match t2 with (* An Hoa *)
-				| Array et2 -> if (et1 = et2) then Some k1 else None
-				| _ -> None)
-            | _ -> if sub_type t1 t2 then Some k2
-              else if sub_type t2 t1 then Some k1
-              else None))
+  unify_type k1 k2 !type_table
+  (* match k1 with *)
+  (*   | Unknown -> Some k2 *)
+  (*   | Known t1 -> (match k2 with *)
+  (*   	| Unknown -> Some k1 *)
+  (*   	| Known t2 -> (match t1 with *)
+  (*   		| Named c1 -> (match t2 with *)
+  (*   			| Named c2 ->  *)
+  (*   				  if c1 = "" then Some k2 *)
+  (*   				  else if c2 = "" then Some k1 *)
+  (*   				  else if c1 = c2 then Some k1 *)
+  (*   				  else if sub_type t1 t2 then Some k2 (\* use more general type *\) *)
+  (*   				  else if sub_type t2 t1 then Some k1  *)
+  (*   				  else None *)
+  (*   			| _ -> None) (\* An Hoa *\) *)
+  (*   		| Array et1 -> (match t2 with (\* An Hoa *\) *)
+  (*   			| Array et2 -> if (et1 = et2) then Some k1 else None *)
+  (*   			| _ -> None) *)
+  (*           | _ -> if sub_type t1 t2 then Some k2 *)
+  (*             else if sub_type t2 t1 then Some k1 *)
+  (*             else None)) *)
 		  
 and unify_var_kind (k1 : spec_var_kind) (k2 : spec_var_kind) =
   let pr = string_of_spec_var_kind in
@@ -3952,7 +3971,7 @@ and unify_var_kind (k1 : spec_var_kind) (k2 : spec_var_kind) =
   Gen.Debug.no_2 "unify_var_kind" pr pr pr2 unify_var_kind_x k1 k2
 
 and get_var_kind (var : ident) (stab : spec_var_table) =
-  try let r = H.find stab var in r.sv_info_kind with | Not_found -> Unknown
+  try let r = H.find stab var in r.sv_info_kind with | Not_found -> UNK
 
 and set_var_kind (var : ident) (k : spec_var_kind) (stab : spec_var_table) =
   try let r = H.find stab var in (r.sv_info_kind <- k; r)
@@ -3975,23 +3994,23 @@ and collect_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos =
       (fun _ _ _ -> collect_type_info_var_x var stab var_kind pos) var stab var_kind
 
 and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =
-  let _ = gather_type_info_var var stab var_kind pos in
-  ()
-      (* begin *)
-      (* try *)
-      (*   let k = H.find stab var in *)
-      (*   let tmp = unify_var_kind k.sv_info_kind var_kind *)
-      (*   in *)
-      (*   match tmp with *)
-      (*     | Some tmp_k -> k.sv_info_kind <- tmp_k *)
-      (*     | None ->  *)
-      (*           ((print_stab stab); *)
-      (*           report_error pos (var ^ " is used inconsistently: "^(string_of_spec_var_kind k.sv_info_kind)^" "^(string_of_spec_var_kind var_kind)^"\n")) *)
-      (* with | Not_found -> (H.add stab var { sv_info_kind = var_kind; id = fresh_int ()} *)
-      (*     (\* ;print_endline ("added an entry "^var^"\n"); flush stdout *\) *)
-      (*     ) *)
-      (*   | _ -> print_endline "collect_type_info_var : unexpected exception" *)
-      (* end *)
+  (* let _ = gather_type_info_var var stab var_kind pos in *)
+  (* () *)
+      begin
+      try
+        let k = H.find stab var in
+        let tmp = unify_var_kind k.sv_info_kind var_kind
+        in
+        match tmp with
+          | Some tmp_k -> k.sv_info_kind <- tmp_k
+          | None ->
+                ((print_stab stab);
+                report_error pos (var ^ " is used inconsistently: "^(string_of_spec_var_kind k.sv_info_kind)^" "^(string_of_spec_var_kind var_kind)^"\n"))
+      with | Not_found -> (H.add stab var { sv_info_kind = var_kind; id = fresh_int ()}
+          (* ;print_endline ("added an entry "^var^"\n"); flush stdout *)
+          )
+        | _ -> print_endline "collect_type_info_var : unexpected exception"
+      end
 
 and gather_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos : spec_var_kind =
   let pr = string_of_var_kind in
@@ -4023,8 +4042,8 @@ and proc_var_kind e =
   let vk = e.sv_info_kind in
   let i = e.id in
   match vk with
-    | Unknown -> Known (TVar i) (* vk - for unchanged *)
-    | Known t -> vk
+    | UNK -> (TVar i) (* vk - for unchanged *)
+    | _ -> vk
 
 (* An Hoa : add argument prog *)
 and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
@@ -4051,20 +4070,23 @@ and collect_type_info_b_formula_x prog b0 stab =
   match b0 with
     | IP.BConst _ -> ()
     | IP.BVar ((bv, bp), pos) ->
-	      collect_type_info_var bv stab (Known C.bool_type) pos
+	      collect_type_info_var bv stab (C.bool_type) pos
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
           let t1 = guess_type_of_exp_arith a1 stab in
           let t2 = guess_type_of_exp_arith a2 stab in
           begin
             match t1, t2 with
-              | Unknown, Known _ ->
+              | UNK, _ ->
 		            (collect_type_info_arith a1 stab t2; collect_type_info_arith a2 stab t2)
-              | Known _, Unknown ->
+              | _, UNK ->
 		            (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t1)
-              | _ ->
-		            (* TODO: check for type consistency - equality of t1 & t2 not captured *)
-		            (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t2)
+              | _,_ -> (match unify_type t1 t2 stab with
+                  | Some t -> (collect_type_info_arith a1 stab t; collect_type_info_arith a2 stab t)
+                  | None -> report_error pos "Unable to unify arithmetic types")
+              (* | _ -> *)
+		      (*       (\* TODO: check for type consistency - equality of t1 & t2 not captured *\) *)
+		      (*       (collect_type_info_arith a1 stab t1; collect_type_info_arith a2 stab t2) *)
           end
     | IP.EqMin (a1, a2, a3, pos) | IP.EqMax (a1, a2, a3, pos) ->
 	      let t1 = guess_type_of_exp_arith a1 stab in
@@ -4076,34 +4098,39 @@ and collect_type_info_b_formula_x prog b0 stab =
             collect_type_info_arith a3 stab typ)
 	      in begin
             (* TODO : what about two knowns and one unknown ? *)
-            match t1, t2, t3 with
-              | Known _, Unknown, Unknown -> helper t1
-              | Unknown, Known _, Unknown -> helper t2
-              | Unknown, Unknown, Known _ -> helper t3
-              | _ -> helper Unknown
+            if (t1==UNK) then
+              if (t2==UNK) then
+                helper t3
+              else helper t2
+            else helper t1
+            (* match t1, t2, t3 with *)
+            (*   | _, UNK, UNK -> helper t1 *)
+            (*   | , Known _, Unknown -> helper t2 *)
+            (*   | Unknown, Unknown, Known _ -> helper t3 *)
+            (*   | _ -> helper Unknown *)
 	      end
     | IP.BagIn ((v, p), e, pos) ->
-	      (collect_type_info_var v stab (Known C.int_type) pos;
+	      (collect_type_info_var v stab (C.int_type) pos;
 	      collect_type_info_bag e stab)
     | IP.BagNotIn ((v, p), e, pos) ->
-	      (collect_type_info_var v stab (Known C.int_type) pos;
+	      (collect_type_info_var v stab (C.int_type) pos;
 	      collect_type_info_bag e stab)
     | IP.BagSub (e1, e2, pos) ->
 	      (collect_type_info_bag e1 stab; collect_type_info_bag e2 stab)
     | IP.BagMax ((v1, p1), (v2, p2), pos) ->
-	      (collect_type_info_var v1 stab (Known C.int_type) pos;
-	      collect_type_info_var v2 stab (Known C.bag_type) pos)
+	      (collect_type_info_var v1 stab (C.int_type) pos;
+	      collect_type_info_var v2 stab (C.bag_type) pos)
     | IP.BagMin ((v1, p1), (v2, p2), pos) ->
-	      (collect_type_info_var v1 stab (Known C.int_type) pos;
-	      collect_type_info_var v2 stab (Known C.bag_type) pos)
+	      (collect_type_info_var v1 stab (C.int_type) pos;
+	      collect_type_info_var v2 stab (C.bag_type) pos)
     | IP.ListIn (e1, e2, pos) ->
-          (collect_type_info_arith e1 stab Unknown;
+          (collect_type_info_arith e1 stab UNK;
           collect_type_info_list e2 stab)
     | IP.ListNotIn (e1, e2, pos) ->
-          (collect_type_info_arith e1 stab Unknown ;
+          (collect_type_info_arith e1 stab UNK ;
           collect_type_info_list e2 stab)
     | IP.ListAllN (e1, e2, pos) ->
-          (collect_type_info_arith e1 stab Unknown;
+          (collect_type_info_arith e1 stab UNK;
           collect_type_info_list e2 stab)
     | IP.ListPerm (e1, e2, pos) ->
           (collect_type_info_list e1 stab;
@@ -4113,7 +4140,7 @@ and collect_type_info_b_formula_x prog b0 stab =
 		  (try 
 			let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
 			let args_ctypes = List.map (fun (t,n) -> trans_type prog t pos) rdef.I.rel_typed_vars in
-			let args_exp_types = List.map (fun t -> (Known t)) args_ctypes in
+			let args_exp_types = List.map (fun t -> (t)) args_ctypes in
 			let _ = List.map2 (fun x y -> collect_type_info_arith x stab y) args args_exp_types in ()
 		  with
 			| Not_found -> ())
@@ -4151,16 +4178,16 @@ and collect_type_info_b_formula_x prog b0 stab =
                 let (k2, _) =
                   if IP.is_null a2'
                   then
-                    ((Known (Named "")),
-                    (collect_type_info_pointer a1' (Known (Named "")) stab))
+                    (((Named "")),
+                    (collect_type_info_pointer a1' ((Named "")) stab))
                   else
                     if IP.is_bag a2'
-                    then ((Known C.bag_type), (collect_type_info_bag a2' stab))
+                    then ((C.bag_type), (collect_type_info_bag a2' stab))
 			        else if IP.is_list a2'
-                    then ((Known C.list_type), (collect_type_info_list a2' stab))
+                    then ((C.list_type), (collect_type_info_list a2' stab))
                     else   begin
                       let typ = guess_type_of_exp_arith a2' stab in
-                      let a2_typ = if typ = Unknown then k1 else typ in
+                      let a2_typ = if typ = UNK then k1 else typ in
 			          (a2_typ, collect_type_info_arith a2' stab a2_typ)
                     end
                 in
@@ -4191,8 +4218,8 @@ and collect_type_info_b_formula_x prog b0 stab =
                       (collect_type_info_list a1 stab;
                       collect_type_info_list a2 stab)
                     else
-                      (collect_type_info_arith a1 stab Unknown;
-                      collect_type_info_arith a2 stab Unknown)
+                      (collect_type_info_arith a1 stab UNK;
+                      collect_type_info_arith a2 stab UNK)
                   else
 		            Err.report_error
                         {
@@ -4205,13 +4232,13 @@ and collect_type_info_b_formula_x prog b0 stab =
 	      
 and guess_type_of_exp_arith a0 stab =
   match a0 with
-    | IP.Null _ -> Unknown
+    | IP.Null _ -> UNK
     | IP.Var ((sv, sp), pos) ->
 	      begin
             try
               let info = Hashtbl.find stab sv in
               info.sv_info_kind
-            with Not_found -> Unknown
+            with Not_found -> UNK
 	      end
     | IP.Add (e1, e2, pos) | IP.Subtract (e1, e2, pos) | IP.Mult (e1, e2, pos)
     | IP.Max (e1, e2, pos) | IP.Min (e1, e2, pos) | IP.Div (e1, e2, pos) ->
@@ -4219,25 +4246,22 @@ and guess_type_of_exp_arith a0 stab =
 	      let t2 = guess_type_of_exp_arith e2 stab in
 	      begin
             match t1, t2 with
-              | Known (Int), Known (Int) -> t1
-              | Known (Int), Unknown -> t1
-              | Unknown, Known (Int) -> t2
-              | Known (Float), Known (Float) -> t1
-              | Known (Float), Unknown -> t1
-              | Unknown, Known (Float) -> t2
-              | Known (Int), Known (Float)
-              | Known (Float), Known (Int) ->
+              | _, UNK -> t1
+              | UNK, _ -> t2
+              | Float, Float -> t1
+              | Int, Int -> t1
+              | Int, Float | Float, Int  -> 
 		            Err.report_error
 		                {
                             Err.error_loc = pos;
                             Err.error_text = "int<>float: type-mismatch in expression: " ^ (Iprinter.string_of_formula_exp a0);
 		                }
-              | _ -> Unknown
+              | _ -> UNK
 	      end
 	          (* | IP.Div _ -> Known (Float) *)
-    | IP.IConst _ -> Known (Int)
-    | IP.FConst _ -> Known (Float)
-    | _ -> Unknown
+    | IP.IConst _ -> Int
+    | IP.FConst _ -> Float
+    | _ -> UNK
 
 and collect_type_info_arith a0 stab expected_type =
   match a0 with
@@ -4266,11 +4290,11 @@ and collect_type_info_arith a0 stab expected_type =
 		  (* and hence, accessing the element at position i, we get the value of expected_type*)
 		  (* Furthermore, the expression of the index must be of type integer.*)
 		  let a_exp_type = match expected_type with
-			| Unknown -> Unknown
-			| Known t -> Known (Array (t, None))
+			| UNK -> UNK
+			| t -> Array (t, None)
 		  in
 		  collect_type_info_var a stab a_exp_type pos;
-		  collect_type_info_arith i stab (Known C.int_type)
+		  collect_type_info_arith i stab (C.int_type)
 
 and collect_type_info_bag_content a0 stab =
   Gen.Debug.ho_eff_2 "collect_type_info_bag_content" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
@@ -4284,14 +4308,14 @@ and collect_type_info_bag_content_x a0 stab =
                   Err.error_loc = pos;
                   Err.error_text = "null is not allowed in arithmetic term";
               }
-    | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab Unknown pos
+    | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab UNK pos
     | IP.IConst _ -> ()
     | IP.FConst _ -> ()
     | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
 	          IP.Min (a1, a2, pos) ->
-          (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
+          (collect_type_info_arith a1 stab UNK; collect_type_info_arith a2 stab UNK)
     | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) ->
-	      (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown)
+	      (collect_type_info_arith a1 stab UNK; collect_type_info_arith a2 stab UNK)
     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
 	      failwith "collect_type_info_arith: encountered bag constraint"
     | IP.ListHead (a, pos) | IP.ListLength (a, pos) -> (collect_type_info_list a stab)
@@ -4309,14 +4333,14 @@ and collect_type_info_bag_content_x a0 stab =
 (*                   Err.error_loc = pos; *)
 (*                   Err.error_text = "null is not allowed in arithmetic term"; *)
 (*               } *)
-(*     | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab Unknown pos *)
+(*     | IP.Var ((sv, sp), pos) -> collect_type_info_var sv stab UNK pos *)
 (*     | IP.IConst _ -> () *)
 (*     | IP.FConst _ -> () *)
 (*     | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) | *)
 (* 	          IP.Min (a1, a2, pos) -> *)
-(*           (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown) *)
+(*           (collect_type_info_arith a1 stab UNK; collect_type_info_arith a2 stab UNK) *)
 (*     | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) -> *)
-(* 	      (collect_type_info_arith a1 stab Unknown; collect_type_info_arith a2 stab Unknown) *)
+(* 	      (collect_type_info_arith a1 stab UNK; collect_type_info_arith a2 stab UNK) *)
 (*     | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ -> *)
 (* 	      failwith "collect_type_info_arith: encountered bag constraint" *)
 (*     | IP.ListHead (a, pos) | IP.ListLength (a, pos) -> (collect_type_info_list a stab) *)
@@ -4334,7 +4358,7 @@ and collect_type_info_bag_x (e0 : IP.exp) stab =
   let rec helper e0 =
     match e0 with
       | IP.Var ((sv, sp), pos) ->
-	        collect_type_info_var sv stab (Known C.bag_type) pos
+	        collect_type_info_var sv stab (C.bag_type) pos
       | IP.Bag ((a :: rest), pos) ->
 	        (collect_type_info_bag_content a stab;
 	        helper  (IP.Bag (rest, pos)) )
@@ -4365,7 +4389,7 @@ and collect_type_info_bag_x (e0 : IP.exp) stab =
 and collect_type_info_list (e0 : IP.exp) stab =
   match e0 with
     | IP.Var ((sv, sp), pos) ->
-          collect_type_info_var sv stab (Known C.list_type) pos
+          collect_type_info_var sv stab (C.list_type) pos
     | IP.List ((a :: rest), pos) ->
           (collect_type_info_bag_content a stab;
           collect_type_info_list (IP.List (rest, pos)) stab)
@@ -4375,7 +4399,7 @@ and collect_type_info_list (e0 : IP.exp) stab =
           collect_type_info_list (IP.ListAppend (rest, pos)) stab)
     | IP.ListAppend ([], pos) -> ()
     | IP.ListCons (a1, a2, pos) -> 
-          (collect_type_info_arith a1 stab Unknown;
+          (collect_type_info_arith a1 stab UNK;
 	      collect_type_info_list a2 stab)
     | IP.ListTail (a, pos) ->
           (collect_type_info_list a stab)
@@ -4513,7 +4537,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
                 ignore
                     (List.map
                         (fun (t, n) ->
-                            collect_type_info_var n stab (Known t) pos)
+                            collect_type_info_var n stab (t) pos)
                         tmp))
 		      else ();
 		      vdef.I.view_data_name)
@@ -4535,23 +4559,23 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
 		            if IP.is_var ie
 		            then
                       collect_type_info_var (IP.name_of_var ie) st
-                          (Known C.bool_type) (IP.pos_of_exp ie)
+                          (C.bool_type) (IP.pos_of_exp ie)
 		            else
                       Err.report_error
                           {
 			                  Err.error_loc = IP.pos_of_exp ie;
 			                  Err.error_text = "expecting type bool";
                           }
-              | Int -> collect_type_info_arith ie st (Known C.int_type)
-              | Float -> collect_type_info_arith ie st (Known C.float_type)
-              | Named _ -> collect_type_info_pointer ie (Known t) st
-			  | Array et -> collect_type_info_arith ie st (Known (Array et))
-              | _ -> ()); (* An Hoa BUG DETECTED Replace (Known et) by (Known (CP.Array et)) TODO : add a collect_type_info_array instead *)
+              | Int -> collect_type_info_arith ie st (C.int_type)
+              | Float -> collect_type_info_arith ie st (C.float_type)
+              | Named _ -> collect_type_info_pointer ie (t) st
+			  | Array et -> collect_type_info_arith ie st ( (Array et))
+              | _ -> ()); (* An Hoa BUG DETECTED Replace (et) by ((CP.Array et)) TODO : add a collect_type_info_array instead *)
             st)
 	      in
 	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)
           (if not (dname = "")
-          then collect_type_info_var v stab (Known (Named dname)) pos
+          then collect_type_info_var v stab ( (Named dname)) pos
           else ();
           (try
             let ddef = I.look_up_data_def_raw prog.I.prog_data_decls c in
@@ -4605,10 +4629,10 @@ and get_spec_var_stab (v : ident) stab pos =
     let v_info = H.find stab v
     in
     match v_info.sv_info_kind with
-	  | Known t -> let sv = CP.SpecVar (t, v, Unprimed) in sv
-	  | Unknown ->
+	  | UNK ->
             Err.report_error
                 { Err.error_loc = pos; Err.error_text = v ^ " is undefined"; }
+	  | t -> let sv = CP.SpecVar (t, v, Unprimed) in sv
   with
     | Not_found ->
 	      Err.report_error
@@ -4617,7 +4641,8 @@ and get_spec_var_stab (v : ident) stab pos =
 
 
 and string_of_spec_var_kind (k : spec_var_kind) =
-  match k with | Unknown -> "Unk" | Known t -> (string_of_typ t)^" "
+  string_of_typ k
+(* match k with | UNK -> "Unk" | Known t -> (string_of_typ t)^" " *)
 
 
 and print_stab (stab : spec_var_table) =

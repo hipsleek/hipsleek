@@ -32,6 +32,9 @@ let rec isabelle_of_typ = function
   | BagT	t	  ->
       if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"
       else "("^(isabelle_of_typ t) ^") set"
+  | UNK           -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
   | List           -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}

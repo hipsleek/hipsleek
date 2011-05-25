@@ -960,16 +960,18 @@ and is_otype (t : typ) : bool = match t with
   | Named _ -> true
   | _ -> false (* | _ -> false *) (* An Hoa *)
 
-and name_of_type (t : typ) : ident = match t with
-  | Int -> "int"
-  | Bool -> "boolean"
-  | Void -> "void"
-  | Float -> "float"
-  | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | (BagT t) -> "bag("^(name_of_type (t))^")"
-  | Globals.List -> "list"
-  | Named c -> c
-  | Array (et, _) -> name_of_type et ^ "[]" (* An Hoa *)
+and name_of_type (t : typ) : ident = 
+  string_of_typ t
+(* match t with *)
+(*   | Int -> "int" *)
+(*   | Bool -> "boolean" *)
+(*   | Void -> "void" *)
+(*   | Float -> "float" *)
+(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | (BagT t) -> "bag("^(name_of_type (t))^")" *)
+(*   | Globals.List -> "list" *)
+(*   | Named c -> c *)
+(*   | Array (et, _) -> name_of_type et ^ "[]" (\* An Hoa *\) *)
 
 and pos_of_exp (e : exp) = match e with
   | Null pos -> pos
