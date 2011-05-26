@@ -41,8 +41,8 @@ let rec mona_of_typ = function
   | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-  | List          -> "list"	(* lists are not supported *)
-  | Named _ | Array _ ->
+  | List t        -> "("^(mona_of_typ t)^") list"	(* lists are not supported *)
+  | NUM | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "array and named type not supported for mona"}
 

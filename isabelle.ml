@@ -35,10 +35,10 @@ let rec isabelle_of_typ = function
   | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-  | List           -> 	(* lists are not supported *)
+  | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | TVar _ | Named _ | Array _ ->
+  | NUM | TVar _ | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
 ;;

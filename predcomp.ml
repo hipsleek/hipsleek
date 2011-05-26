@@ -113,10 +113,11 @@ and aug_class_name (t : typ) = match t with
   | Int -> "IntAug"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
+  | NUM -> "NUMAug"
   | Void -> "void"
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | List -> "List"
+  | List t -> "List("^(aug_class_name t)^")"
   | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*

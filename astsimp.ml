@@ -3060,12 +3060,12 @@ and default_value (t :typ) pos : C.exp =
     | (TVar _) ->
 	      failwith
               "default_value: typevar in variable declaration should have been rejected"
-    | UNK | Void ->
+    | NUM | UNK | Void ->
 	      failwith
               "default_value: void in variable declaration should have been rejected by parser"
     | (BagT _) ->
 	      failwith "default_value: bag can only be used for constraints"
-    | List ->
+    | List _ ->
           failwith "default_value: list can only be used for constraints"
     | Named c -> C.Null pos
 	| Array (t, _) -> C.EmptyArray { C.exp_emparray_type = t; C.exp_emparray_pos = pos} 
@@ -3894,13 +3894,6 @@ and trans_pure_exp_list (elist : IP.exp list) stab : CP.exp list =
     | [] -> []
     | e :: rest -> (trans_pure_exp e stab) :: (trans_pure_exp_list rest stab)
 
-and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
-      spec_var_kind option =
-  let pr = string_of_spec_var_kind in
-  let pr2 x = match x with 
-    | None -> "None"
-    | Some v -> "Some "^(pr v) in
-  Gen.Debug.ho_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
 
 and dim_unify d1 d2 =
   match d1,d2 with
@@ -3909,14 +3902,41 @@ and dim_unify d1 d2 =
     | Some l1, Some l2 -> if (l1==l2) then Some (Some l1)
       else None
 
-and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
+and must_unify (k1 : typ) (k2 : typ) stab pos : typ  =
+  let pr = string_of_typ in
+  Gen.Debug.ho_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 stab pos) k1 k2
+
+and must_unify_x (k1 : typ) (k2 : typ) stab pos : typ  =
+  let k = unify_type k1 k2 stab in
+  match k with
+    | Some r -> r
+    | None -> report_error pos ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
+          ^" types "^(string_of_typ k1)
+          ^" and "^(string_of_typ k2)^" are inconsistent")
+
+and must_unify_expect (k1 : typ) (k2 : typ) stab pos : typ  =
+  let k = unify_expect k1 k2 stab in
+  match k with
+    | Some r -> r
+    | None -> report_error pos ("TYPE ERROR : at location "^(string_of_full_loc pos)
+          ^", found "^(string_of_typ k1)
+          ^"but expecting "^(string_of_typ k2))
+
+and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
       spec_var_kind option =
+  let pr = string_of_spec_var_kind in
+  let pr2 x = match x with 
+    | None -> "None"
+    | Some v -> "Some "^(pr v) in
+  Gen.Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
+
+and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
   let rec unify k1 k2 =
     match k1,k2 with
       | UNK, _ -> Some k2
       | _, UNK -> Some k1
       | t1, t2  -> 
-            if sub_type t1 t2 then Some k2
+            if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
             else if sub_type t2 t1 then Some k1
             else 
               begin
@@ -3935,6 +3955,34 @@ and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
               end
   in unify k1 k2
 
+and unify_expect (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
+  let rec unify k1 k2 =
+    match k1,k2 with
+      | UNK, _ -> Some k2
+      | _, UNK -> Some k1
+      | Int, NUM -> Some Int (* give refined type *)
+      | Float, NUM -> Some Float (* give refined type *)
+      | t1, t2  -> 
+            if sub_type t1 t2 then Some k2  (* found t1, but expecting t2 *)
+            (* else if sub_type t2 t1 then Some k1 *)
+            else 
+              begin
+                match t1,t2 with
+                    (* | TVar i1,TVar i2 -> ? *)
+                  | TVar i1,_ -> repl_tvar_in stab i1 k2; Some k2
+                  | _,TVar i2 -> repl_tvar_in stab i2 k1; Some k1
+                  | BagT x1,BagT x2 -> (match (unify x1 x2) with
+                      | Some t -> Some (BagT t)
+                      | None -> None)
+                  | Array (x1,d1),Array (x2,d2) -> 
+                        (match (dim_unify d1 d2), (unify x1 x2) with
+                          | Some d, Some t  -> Some (Array (t,d))
+                          | _,_ -> None)
+                  | _,_ -> None
+              end
+  in unify k1 k2
+
+(* TODO : unify and replace *)
 and repl_tvar_in stab i k =
   Hashtbl.iter (fun v en -> 
       if i==en.id then en.sv_info_kind <- k) stab
@@ -4012,39 +4060,98 @@ and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =
         | _ -> print_endline "collect_type_info_var : unexpected exception"
       end
 
-and gather_type_info_var (var : ident) stab (var_kind : spec_var_kind) pos : spec_var_kind =
-  let pr = string_of_var_kind in
+and gather_type_info_var (var : ident) stab (ex_t : typ) pos : typ =
+  let pr = string_of_typ in
   Gen.Debug.ho_eff_3 "gather_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab pr pr 
-      (fun _ _ _ -> gather_type_info_var_x var stab var_kind pos) var stab var_kind
+      (fun _ _ _ -> gather_type_info_var_x var stab ex_t pos) var stab ex_t
 
-and gather_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos : spec_var_kind =
+and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_var_kind =
   begin
     try
       let k = H.find stab var in
-      let tmp = unify_type k.sv_info_kind var_kind stab
-      in
-      match tmp with
-	    | Some tmp_k -> (k.sv_info_kind <- tmp_k; tmp_k)
-	    | None -> 
-	          ((print_stab stab);
-	          report_error pos (var ^ " is used inconsistently: "^(string_of_spec_var_kind k.sv_info_kind)^" "^(string_of_spec_var_kind var_kind)^"\n"))
+      let tmp = must_unify_expect k.sv_info_kind ex_t stab pos in
+      (k.sv_info_kind <- tmp); tmp
     with | Not_found -> 
-        let i = fresh_int () in
-        let r = { sv_info_kind = var_kind; id = i} in
-        let vk = proc_var_kind r in
-        (H.add stab var { sv_info_kind = vk; id = i}; vk
-            (* ;print_endline ("added an entry "^var^"\n"); flush stdout *)
+        let vk = fresh_proc_var_kind ex_t in
+        (H.add stab var vk; vk.sv_info_kind
         )
-      | ex -> 	 report_error pos ("collect_type_info_var : unexpected exception"^(Printexc.to_string ex))
+      | ex -> 	 report_error pos ("gather_type_info_var : unexpected exception"^(Printexc.to_string ex))
   end
 
-and proc_var_kind e = 
-  let vk = e.sv_info_kind in
-  let i = e.id in
-  match vk with
-    | UNK -> (TVar i) (* vk - for unchanged *)
-    | _ -> vk
+and fresh_proc_var_kind et = 
+  let i = match et with
+    | TVar i -> i
+    | _ -> fresh_int () in
+  let r = { sv_info_kind = et; id = i} in
+  r
 
+and fresh_tvar stab = 
+  let i = fresh_int() in TVar i
+
+and must_unify_expect_test _ _ = true
+and subtype_expect_test _ _ = true
+
+and gather_type_info_exp a0 stab et =
+  match a0 with
+    | IP.Null pos -> 
+          let t = null_type in
+          must_unify_expect t et stab pos
+    | IP.Var ((sv, sp), pos) -> 
+          let t = gather_type_info_var sv stab et pos
+          in t
+    | IP.IConst (_,pos) -> 
+          let t = I.int_type in
+          let _ = must_unify_expect t et stab pos in
+          t
+    | IP.FConst (_,pos) -> 
+          let t = I.float_type in
+          let _ = must_unify_expect t et stab pos in
+          t
+    | IP.Add (a1, a2, pos) | IP.Subtract (a1, a2, pos) | IP.Max (a1, a2, pos) |
+	          IP.Min (a1, a2, pos) 
+    | IP.Mult (a1, a2, pos) | IP.Div (a1, a2, pos) -> (* Num t: t -> t -> t *)
+          let _ = must_unify_expect_test NUM et in
+          let new_et = fresh_tvar stab in
+	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
+	      let t2 = gather_type_info_exp a2 stab new_et in
+          let _ = subtype_expect_test t1 NUM in
+          let _ = subtype_expect_test t2 NUM in
+          t2  (* UNK, Int, Float, TVar *)
+    | IP.ListHead (a, pos) ->  (* List t -> t*)
+          let new_et = List et in
+          let lt = gather_type_info_exp a stab new_et in
+          (match lt with
+            | List r -> r
+            | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained"^(string_of_typ lt)))
+    | IP.BagDiff _ | IP.BagIntersect _ | IP.BagUnion _ | IP.Bag _ ->
+          failwith "collect_type_info_arith: encountered bag constraint"
+    | IP.ArrayAt ((a,p),i,pos) -> (* t[] -> int -> t *)
+          (* An Hoa : Assert that the variable (a,p) must be of type expected_type Array*)
+		  (* and hence, accessing the element at position i, we get the value of expected_type*)
+		  (* Furthermore, the expression of the index must be of type integer.*)
+          let new_et = Array (et,None) in
+          let lt = gather_type_info_var a stab new_et pos in
+          let _ = gather_type_info_exp i stab Int in
+          (match lt with
+            | Array (r,_) -> r
+            | _ ->  failwith ("gather_type_info_exp: expecting Array type but obtained"^(string_of_typ lt)))
+		  (* let a_exp_type = match et with *)
+		  (*   | UNK -> UNK *)
+		  (*   | t -> Array (t, None) *)
+		  (* in *)
+		  (* collect_type_info_var a stab a_exp_type pos; *)
+		  (* collect_type_info_arith i stab (C.int_type) *)
+   | IP.ListTail (a,pos)  | IP.ListReverse (a,pos) -> (* List t -> List t  *)
+          let fv = fresh_tvar stab in
+          let lt = List fv in
+          let new_et = must_unify lt et stab pos in
+          let lt = gather_type_info_exp a stab new_et in
+          lt
+    | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
+          failwith ("gather_type_info_exp: list features yet to be handled")
+    | IP.ListLength (a, pos) -> 
+          failwith ("gather_type_info_exp: list features yet to be handled")
+ 
 (* An Hoa : add argument prog *)
 and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with

@@ -40,8 +40,9 @@ type typ =
   | Bool
   | Float
   | Int
+  | NUM
   | Void
-  | List
+  | List of typ
   | BagT of typ
   (* | Prim of prim_type *)
   | Named of ident (* named type, could be enumerated or object *)
@@ -72,19 +73,22 @@ let rec string_of_typ = function
   | Float         -> "float"
   | Int           -> "int"
   | Void          -> "void"
+  | NUM          -> "NUM"
   | BagT t        -> "bag("^(string_of_typ t)^")"
   | TVar t        -> "TVar["^(string_of_int t)^"]"
-  | List          -> "list"
+  | List t        -> "list("^(string_of_typ t)^")"
   (* | Prim t -> string_of_prim_type t  *)
   | Named ot -> if ((String.compare ot "") ==0) then "null" else ot
   | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
 ;;
 
+let null_type = Named ""
+;;
 
 let dim_subtype d1 d2 =
   match d1,d2 with
     | _, None -> true
-    | None, _ -> false
+    | None, Some _ -> false
     | Some i1, Some i2 -> i1==i2
 ;;
 
@@ -98,8 +102,12 @@ let rec sub_type (t1 : typ) (t2 : typ) =
           if dim_subtype d1 d2 then sub_type et1 et2
           else false
     | BagT et1, BagT et2 -> sub_type et1 et2
+    | List et1, List et2 -> sub_type et1 et2
+    | Int, NUM        -> true
+    | Float, NUM        -> true
     | p1, p2 -> p1=p2
 ;;
+
 
 let rec s_i_list l c = match l with 
   | [] -> ""

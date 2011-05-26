@@ -220,7 +220,7 @@ let rec smt_of_typ t =
       | UNK           -> 	
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "unexpected UNKNOWN type"}
-	  | Void | (BagT _) | (TVar _) | List -> 
+	  | NUM | Void | (BagT _) | (TVar _) | List _ -> 
           Error.report_error {Error.error_loc = no_pos; 
                               Error.error_text = "spec not supported for SMT"} (* Fail! *)
       | Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ string_of_typ t) *)
