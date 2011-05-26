@@ -35,6 +35,9 @@ and primed =
 
 (* TODO : move typ here in future *)
 type typ =
+  | TOP
+  | BOT
+  | NUM
   | TVar of int
   | Bool
   | Float
@@ -66,6 +69,9 @@ type mode =
 (* pretty printing for types *)
 let rec string_of_typ = function 
    (* may be based on types used !! *)
+  | TOP          -> "TOP"
+  | BOT          -> "BOT"
+  | NUM          -> "NUM"
   | Bool          -> "boolean"
   | Float         -> "float"
   | Int           -> "int"
@@ -78,15 +84,52 @@ let rec string_of_typ = function
   | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
 ;;
 
-
-let dim_compatible d1 d2 =
-  match d1,d2 with
-    | Some i1, Some i2 -> i1==i2
-    | _,_ -> true
+let unknown = BOT
 ;;
+
+let top_type = TOP
+;;
+
+let null_type = Known (Named "")
+;;
+
+let unify_gen_dim d1 d2 =
+  match d1,d2 with
+    | _, None -> None
+    | None, _ -> None
+    | Some i1, Some i2 -> 
+          if (i1==i2) then Some i1
+          else Err.report_error{ Err.error_loc = no_pos; 
+                Err.error_text = "dimension of array is incompatible";}
+;;
+
+let unify_spec_dim d1 d2 =
+  match d1,d2 with
+    | None, None -> None
+    | None, Some i -> Some i
+    | Some i, None -> Some i
+    | Some i1, Some i2 -> 
+          if (i1==i2) then Some i1
+          else Err.report_error{ Err.error_loc = no_pos; 
+                Err.error_text = "dimension of array is incompatible";}
+;;
+let unify_expect_dim d1 d2 =
+  match d1,d2 with
+    | _, None -> d1 
+    | None, Some i2 -> Err.report_error{ Err.error_loc = no_pos; 
+                Err.error_text = "dimension of array is unexpected";}
+    | Some i1, Some i2 -> 
+          if (i1==i2) then Some i1
+          else Err.report_error{ Err.error_loc = no_pos; 
+                Err.error_text = "dimension of array is unexpected";}
+;;
+
 
 let rec sub_type (t1 : typ) (t2 : typ) = 
   match t1,t2 with
+    | BOT, _ -> true
+    | _, TOP -> true
+    | p, Num -> p==Int || p==Float
     | Named c1, Named c2 ->
           if c1=c2 then true
           else c1=""
