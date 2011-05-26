@@ -1099,7 +1099,7 @@ let ht_of_gvdef gvdefs =
 let param_of_v ht md lc nm = 
   let t = H.find ht nm in
   match t with 
-  | Bool | Float | Int | Void | List  ->
+  | Bool | Float | Int | Void | List _  ->
       { param_type = t;
         param_name = nm;
         param_mod = md;

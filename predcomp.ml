@@ -106,14 +106,18 @@ and is_in_svars (e : CP.exp) (svars : CP.spec_var list) : bool =
 	false
 
 and aug_class_name (t : typ) = match t with
+  | UNK  -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
   | Named c -> c ^ "Aug"
   | Int -> "IntAug"
   | Bool -> "BoolAug"
   | Float -> "FloatAug"
+  | NUM -> "NUMAug"
   | Void -> "void"
   | (BagT t) -> "Set("^(aug_class_name t)^")"
   | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | List -> "List"
+  | List t -> "List("^(aug_class_name t)^")"
   | Array (et, _) -> aug_class_name et ^ "[]" (* An Hoa *)
 
 (*

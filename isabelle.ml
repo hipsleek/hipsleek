@@ -32,10 +32,13 @@ let rec isabelle_of_typ = function
   | BagT	t	  ->
       if !bag_flag then "("^(isabelle_of_typ t) ^") multiset"
       else "("^(isabelle_of_typ t) ^") set"
-  | List           -> 	(* lists are not supported *)
+  | UNK           -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
+  | List _          -> 	(* lists are not supported *)
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "list not supported for Isabelle"}
-  | TVar _ | Named _ | Array _ ->
+  | NUM | TVar _ | Named _ | Array _ ->
         Error.report_error {Error.error_loc = no_pos; 
         Error.error_text = "type var, array and named type not supported for Isabelle"}
 ;;

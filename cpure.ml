@@ -121,7 +121,7 @@ let rec get_exp_type (e : exp) : typ = match e with
   | Div _ -> Float
   | ListHead _ | ListLength _ -> Int
   | Bag _ | BagUnion _ | BagIntersect _ | BagDiff _ ->  ((Globals.BagT Globals.Int))  (* Globals.Bag *)
-  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List
+  | List _ | ListCons _ | ListTail _ | ListAppend _ | ListReverse _ -> Globals.List Globals.Int
   | ArrayAt (SpecVar (t, a, _), _, _) ->
           (* Type of a[i] is the type of the element of array a *)
           match t with
@@ -415,7 +415,7 @@ and is_bag_type (t : typ) = match t with
   | _ -> false
         
 and is_list_type (t : typ) = match t with
-  | Globals.List  -> true
+  | Globals.List _  -> true
   | _ -> false
 
 and is_int_type (t : typ) = match t with
@@ -960,16 +960,18 @@ and is_otype (t : typ) : bool = match t with
   | Named _ -> true
   | _ -> false (* | _ -> false *) (* An Hoa *)
 
-and name_of_type (t : typ) : ident = match t with
-  | Int -> "int"
-  | Bool -> "boolean"
-  | Void -> "void"
-  | Float -> "float"
-  | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | (BagT t) -> "bag("^(name_of_type (t))^")"
-  | Globals.List -> "list"
-  | Named c -> c
-  | Array (et, _) -> name_of_type et ^ "[]" (* An Hoa *)
+and name_of_type (t : typ) : ident = 
+  string_of_typ t
+(* match t with *)
+(*   | Int -> "int" *)
+(*   | Bool -> "boolean" *)
+(*   | Void -> "void" *)
+(*   | Float -> "float" *)
+(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | (BagT t) -> "bag("^(name_of_type (t))^")" *)
+(*   | Globals.List -> "list" *)
+(*   | Named c -> c *)
+(*   | Array (et, _) -> name_of_type et ^ "[]" (\* An Hoa *\) *)
 
 and pos_of_exp (e : exp) = match e with
   | Null pos -> pos

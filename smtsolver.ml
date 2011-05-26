@@ -217,7 +217,10 @@ let rec smt_of_typ t =
 	  | Bool -> "Int" (* Weird but Hip/sleek use integer to represent "Bool" : 0 = false and > 0 is true. *)
 	  | Float -> "Real"
 	  | Int -> "Int"
-	  | Void | (BagT _) | (TVar _) | List -> 
+      | UNK           -> 	
+        Error.report_error {Error.error_loc = no_pos; 
+        Error.error_text = "unexpected UNKNOWN type"}
+	  | NUM | Void | (BagT _) | (TVar _) | List _ -> 
           Error.report_error {Error.error_loc = no_pos; 
                               Error.error_text = "spec not supported for SMT"} (* Fail! *)
       | Named _ -> "Int" (* TODO : RECOVER failwith ("Object types are not supported in Z3! - " ^ string_of_typ t) *)

@@ -35,9 +35,9 @@ let rec coq_of_typ = function
   | Float         -> "float"	(* all types will be ints. *)
   | Int           -> "int"
   | Void          -> "unit" 	(* all types will be ints. *)
-  | BagT t		      -> "("^(coq_of_typ t) ^") set"
-  | List		  -> "list"
-  | TVar _ | Named _ | Array _ ->
+  | BagT t		   -> "("^(coq_of_typ t) ^") set"
+  | List _		  -> "list"
+  | UNK | NUM | TVar _ | Named _ | Array _ ->
         Error.report_error {Err.error_loc = no_pos; 
         Err.error_text = "type var, array and named type not supported for Coq"}
 ;;
@@ -48,7 +48,7 @@ let coq_of_spec_var (sv : CP.spec_var) = match sv with
 
 let coq_type_of_spec_var (sv : CP.spec_var) = match sv with
   | CP.SpecVar (t, _, _) -> begin match t with
-        | List -> "list Z"
+        | List _ -> "list Z"
         | _ -> "Z"
   end
 
