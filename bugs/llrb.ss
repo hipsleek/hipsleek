@@ -158,8 +158,8 @@ node insert_internal(node h, int v)
 		c = 0 -> ensures res::node<v,0,null,null>; //res::rbc<1,0,1,4>;// verified in 2s
 		c = 1 -> ensures res::rbc<n+1,1,bh,1> or res::rbc<n+1,1,bh,2>; // verified in 150s
 		c = 2 -> ensures res::rbc<n+1,1,bh,2> or res::rbc<n+1,1,bh,3>; // verified in 60s
-		c = 3 -> ensures res::rbc<n+1,0,bh,4>; // fail
-		c = 4 -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; // fail
+		c = 3 -> ensures res::rbc<n+1,0,bh,4>; // verfied with additional assumption
+		c = 4 -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>; 
 		(c < 0 | c > 4) -> ensures false; // ensure false as this case cannot happen. F -> F
 	}
 {
@@ -170,23 +170,30 @@ node insert_internal(node h, int v)
 	
 	node l = h.left;
 	node r = h.right;
-	assert l'!=null & r'!=null;
+	//assert l'!=null & r'!=null; // must succeed when c = 3
 	
 	if (is_red(h.left) && is_red(h.right))
 		color_flip(h);
 
-	dprint;
-	assert h'::rbc<_,_,_,_>;
-	assert h'::node<_,0,ll,rr> * ll::rbc<_,1,bh,1> * rr::rbc<_,1,bh,1>;
+	//assert h'::rbc<_,_,_,_>; // fail assertion!
+	// Case c = 3 : verified with this assert and assume
+	assert h'::node<_,0,ll,rr> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
+	assume h'::node<_,0,ll,rr> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
 
-	//assume false;
+	// Additional helper assumes for case c = 4
+	//assert l'::rbc<_,1,bh,lc> * r'::rbc<_,1,bh,rc>;
+	// Fail case: 1-1
+	//assume l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,2>;
+	//assume lc = 0 or lc = 1 or lc = 2 or lc = 3 or lc = 4;
+	//assume rc = 0 or rc = 1 or rc = 2 or rc = 3 or rc = 4;
+	//dprint;
+
 	if (v <= h.val) { // accept duplicates!
 		h.left = insert_internal(h.left, v);
 		if (is_red(h.left))
 			if (is_red(h.left.left))
 				h = rotate_right(h);
 	} else {
-		assume false;
 		h.right = insert_internal(h.right, v);
 		if (is_red(h.right) && !is_red(h.left))
 			h = rotate_left(h);
@@ -254,23 +261,12 @@ node delete_min(node h)
 node delete_min_internal(node h, ref int min_value)
 	requires h::rbc<n,_,bh,c> & c >= 2 & n >= 1
 	case {
-			c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>; // verified in 46s!
-			c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>; // verified in 35s
-			c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3> 
-			                                      or res::rbc<n-1,1,bh,0>;
-			(c < 2 | c > 4) -> ensures false; // verified in 2s
+		c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>; // verified in 46s!
+		c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>; // verified in 35s
+		c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3> 
+												or res::rbc<n-1,1,bh,0>;
+		(c < 2 | c > 4) -> ensures false; // verified in 2s
 	}
-	/*case {
-		n = 1 -> ensures res = null;
-		n > 1 -> // ensures res::rbc<n-1,_,bh,c> or res::rbc<n-1,_,bh,c-1>;
-		case {
-			c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>;
-			c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>;
-			c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3>;
-			(c < 2 | c > 4) -> ensures false;
-		}
-		n < 1 -> ensures false;
-	}*/
 {
 	assume c = 4;
 	
@@ -278,6 +274,14 @@ node delete_min_internal(node h, ref int min_value)
 		min_value = h.val;
 		return null;
 	}
+
+	node l = h.left;
+	assert l'::rbc<_,_,_,lc>;// & 1 <= lc <= 3;
+	assume lc < 1 or lc = 1 or lc = 2 or lc = 3 or lc > 3;
+	// CASE BY CASE CAN BE VERIFIED!
+	//assume l'::rbc<_,_,_,1>; // verified in 3s
+	//assume l'::rbc<_,_,_,2>; // verified in 3s
+	//assume l'::rbc<_,_,_,3>; // verified in 3s
 
 	if (!is_red(h.left) && !is_red(h.left.left))
 		h = move_red_left(h);
@@ -290,15 +294,13 @@ node delete_min_internal(node h, ref int min_value)
 	return h;
 }
 
-/*
+
 //////////////////////////////////////////
 //              DELETION                //
 //////////////////////////////////////////
 
 // Fix the invariant
 node fix_up(node h)
-	requires h::node<v,c,l,r> * l::rb<ln,lc,lh> * rt::rb<rn,rc,rh> & 0 <= c <= 1
-	ensures res::rb<1+ln+rn,c1,lh> & 0 <= c1 <= 1;
 {
 	// ensure left-leaning property
 	if (h != null) {
@@ -325,33 +327,44 @@ void move_red_right(node h)
 {
 	color_flip(h);
 	if (is_red(h.left.left)) { 
-		rotate_right(h);
+		h = rotate_right(h);
 		color_flip(h);
 	}
 }
 
-void delete(node h, int v)
+node delete(node h, int v)
+	requires h::rbc<n,_,bh,c>
+	ensures false;
+{
+	h = delete_internal(h, v);
+	if (is_red(h)) h.color = 1;
+	return h;
+}
+
+node delete_internal(node h, int v)
 	requires h::rbc<n,_,bh,c>
 	ensures false;
 {
 	if (v < h.val) {
 		if (!is_red(h.left) && !is_red(h.left.left))
 			move_red_left(h);
-		delete(h.left, v);
+		delete_internal(h.left, v);
 	} else {
 		if (is_red(h.left))
 			rotate_right(h);
-			
+
 		if (v == h.val && (h.right == null))
 			h = null;
 		if (!is_red(h.right) && !is_red(h.right.left))
 			move_red_right(h); 
 		
 		if (v == h.val)
-			h.val = delete_min(h.right);
+			delete_min(h.right);
 		else 
-			delete(h.right, v);
+			delete_internal(h.right, v);
 	}
 	
 	fix_up(h);
-}*/
+	
+	return h;
+}
