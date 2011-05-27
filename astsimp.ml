@@ -3078,7 +3078,7 @@ and sub_type_x (t1 : typ) (t2 : typ) =
 
 and sub_type (t1 : typ) (t2 : typ) =
   let pr = string_of_typ in
-  Gen.Debug.ho_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
+  Gen.Debug.no_2 "sub_type" pr pr string_of_bool sub_type_x t1 t2 
 
 and trans_type (prog : I.prog_decl) (t : typ) (pos : loc) : typ =
   match t with
@@ -3905,7 +3905,7 @@ and dim_unify d1 d2 =
 
 and must_unify (k1 : typ) (k2 : typ) stab pos : typ  =
   let pr = string_of_typ in
-  Gen.Debug.ho_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 stab pos) k1 k2
+  Gen.Debug.no_2 "must_unify" pr pr pr (fun _ _ -> must_unify_x k1 k2 stab pos) k1 k2
 
 and must_unify_x (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_type k1 k2 stab in
@@ -3919,15 +3919,15 @@ and must_unify_expect (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_expect k1 k2 stab in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : at location "^(string_of_full_loc pos)
-          ^", found "^(string_of_typ (get_type_entire stab k1))
-          ^"but expecting "^(string_of_typ (get_type_entire  stab k2)))
+    | None -> report_error pos ("TYPE ERROR : Found "
+          ^(string_of_typ (get_type_entire stab k1))
+          ^" but expecting "^(string_of_typ (get_type_entire  stab k2)))
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
       spec_var_kind option =
   let pr = string_of_spec_var_kind in
   let pr2 = pr_option pr in
-  Gen.Debug.ho_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
+  Gen.Debug.no_2 "unify_type" pr pr pr2 (fun _ _ -> unify_type_x k1 k2 stab) k1 k2
 
 and unify_type_x (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
   unify_type_modify true k1 k2 stab
@@ -3975,15 +3975,15 @@ and must_unify_expect_test k1 k2 pos =
   let k = unify_expect_modify false k1 k2 !type_table  in
   match k with
     | Some r -> r
-    | None -> report_error pos ("TYPE ERROR : at location "^(string_of_full_loc pos)
-          ^", found "^(string_of_typ (k1))
-          ^"but expecting "^(string_of_typ (k2)))
+    | None -> report_error pos ("TYPE ERROR : Found "
+          ^(string_of_typ (k1))
+          ^" but expecting "^(string_of_typ (k2)))
 
 and subtype_expect_test _ _ = true
 
 and unify_expect_modify (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
   let pr = string_of_typ in
-  Gen.Debug.ho_2 "unify_expect_modify" pr pr (pr_option pr) (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 stab) k1 k2
+  Gen.Debug.no_2 "unify_expect_modify" pr pr (pr_option pr) (fun _ _ -> unify_expect_modify_x modify_flag k1 k2 stab) k1 k2
 
 (* k2 is expected type *)
 and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var_kind) stab : spec_var_kind option =
@@ -4018,7 +4018,7 @@ and unify_expect_modify_x (modify_flag:bool) (k1 : spec_var_kind) (k2 : spec_var
 (* val fold : ('a -> 'b -> 'c -> 'c) -> ('a, 'b) t -> 'c -> 'c *)
 
 and repl_tvar_in unify flag stab i k =
-  Gen.Debug.ho_eff_4 "repl_tvar_in" [false;false;false;true]
+  Gen.Debug.no_eff_4 "repl_tvar_in" [false;false;false;true]
       string_of_bool string_of_int string_of_typ string_of_stab (pr_option string_of_typ)
       (fun _ _ _ _ -> repl_tvar_in_x unify flag stab i k) flag i k stab 
 
@@ -4129,7 +4129,7 @@ and collect_type_info_var_x (var : ident) stab (var_kind : spec_var_kind) pos =
 
 and gather_type_info_var (var : ident) stab (ex_t : typ) pos : typ =
   let pr = string_of_typ in
-  Gen.Debug.ho_eff_3 "gather_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab pr pr 
+  Gen.Debug.no_eff_3 "gather_type_info_var" [false;true] (fun x -> ("ident: "^x)) string_of_stab pr pr 
       (fun _ _ _ -> gather_type_info_var_x var stab ex_t pos) var stab ex_t
 
 and gather_type_info_var_x (var : ident) stab (ex_t : spec_var_kind) pos : spec_var_kind =
@@ -4184,7 +4184,7 @@ and get_type stab i =
   with _ -> report_error no_pos ("UNEXPECTED : Type Var "^key^" cannot be found in stab"))
 
 and gather_type_info_exp a0 stab et =
-  Gen.Debug.ho_eff_3 "gather_type_info_exp" [false;true] 
+  Gen.Debug.no_eff_3 "gather_type_info_exp" [false;true] 
       Iprinter.string_of_formula_exp string_of_stab string_of_typ
       string_of_typ gather_type_info_exp_x a0 stab et
 
@@ -4214,13 +4214,7 @@ and gather_type_info_exp_x a0 stab et =
           let t1 = must_unify_expect t1 NUM stab pos in
           let t2 = must_unify_expect t2 NUM stab pos in
           must_unify t1 t2 stab pos  (* UNK, Int, Float, TVar *)
-    | IP.ListHead (a, pos) ->  (* List t -> t*)
-          let new_et = List et in
-          let lt = gather_type_info_exp_x a stab new_et in
-          (match lt with
-            | List r -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained"^(string_of_typ lt)))
-    | IP.BagDiff (a1,a2,pos) ->
+     | IP.BagDiff (a1,a2,pos) ->
           let el_t = fresh_tvar stab in
           let new_et = must_unify_expect_test (BagT el_t) et pos in 
 	      let t1 = gather_type_info_exp_x a1 stab new_et in 
@@ -4244,7 +4238,7 @@ and gather_type_info_exp_x a0 stab et =
           let _ = gather_type_info_exp_x i stab Int in
           (match lt with
             | Array (r,_) -> r
-            | _ ->  failwith ("gather_type_info_exp: expecting Array type but obtained"^(string_of_typ lt)))
+            | _ ->  failwith ("gather_type_info_exp: expecting Array type but obtained "^(string_of_typ lt)))
 		  (* let a_exp_type = match et with *)
 		  (*   | UNK -> UNK *)
 		  (*   | t -> Array (t, None) *)
@@ -4257,10 +4251,37 @@ and gather_type_info_exp_x a0 stab et =
           let new_et = must_unify lt et stab pos in
           let lt = gather_type_info_exp_x a stab new_et in
           lt
-    | IP.ListAppend _ | IP.ListCons _ | IP.List _ ->
-          failwith ("gather_type_info_exp: list features yet to be handled")
-    | IP.ListLength (a, pos) -> 
-          failwith ("gather_type_info_exp: list features yet to be handled")
+    | IP.ListAppend (es,pos) -> (* [List t] -> List t *)
+          let fv = fresh_tvar stab in
+          let lt = List fv in
+          let new_et = must_unify lt et stab pos in
+          let rs = List.fold_left (fun e l -> gather_type_info_exp_x l stab e) new_et es  in
+           rs
+    | IP.ListHead (a, pos) ->  (* List t -> t*)
+          let new_et = List et in
+          let lt = gather_type_info_exp_x a stab new_et in
+          (match lt with
+            | List r -> r
+            | _ ->  failwith ("gather_type_info_exp: expecting List type but obtained "^(string_of_typ lt)))
+    | IP.ListCons (e,es,pos) -> (* t -> List t -> List t *)
+          let fv = fresh_tvar stab in
+          let e1 = gather_type_info_exp_x e stab fv in
+          let lt = List e1 in
+          let new_et = must_unify lt et stab pos in
+          let lt = gather_type_info_exp_x es stab new_et in
+          lt
+    | IP.List (es,pos) ->
+          let fv = fresh_tvar stab in
+          let r = List.fold_left (fun e l -> gather_type_info_exp_x l stab e) fv es  in
+          let lt = List r in
+          let r = must_unify lt et stab pos in
+           r
+    | IP.ListLength (a, pos) -> (* List t -> Int *)
+          let fv = fresh_tvar stab in
+          let new_et = List fv in
+          let r = must_unify Int et stab pos in
+          let _ = gather_type_info_exp_x a stab new_et in
+          r
  
 and gather_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit =
   match p0 with
@@ -4297,7 +4318,7 @@ and collect_type_info_pure prog (p0 : IP.formula) (stab : spec_var_table) : unit
 
 
 and collect_type_info_b_formula prog b0 stab =
-  Gen.Debug.ho_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "()")
+  Gen.Debug.no_eff_2 "collect_type_info_b_formula" [false;true] (Iprinter.string_of_b_formula) string_of_stab (fun _ -> "()")
       (collect_type_info_b_formula_x prog) b0 stab
 
 and collect_type_info_b_formula_x prog b0 stab =
@@ -4465,7 +4486,7 @@ and collect_type_info_b_formula_x prog b0 stab =
 	      (*let _ = print_string ("\n new stab: "^(string_of_stab stab)^"\n") in *)()
 	    
 and gather_type_info_b_formula prog b0 stab =
-  Gen.Debug.ho_eff_2 "gather_type_info_b_formula" [false;true] 
+  Gen.Debug.no_eff_2 "gather_type_info_b_formula" [false;true] 
       Iprinter.string_of_b_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_b_formula_x prog b0 stab) b0 stab 
   
@@ -4473,7 +4494,7 @@ and gather_type_info_b_formula_x prog b0 stab =
   match b0 with
     | IP.BConst _ -> ()
     | IP.BVar ((bv, bp), pos) ->
-	      let t = gather_type_info_var bv stab (C.bool_type) pos in
+	      let _ = gather_type_info_var bv stab (C.bool_type) pos in
           ()
     | IP.Lt (a1, a2, pos) | IP.Lte (a1, a2, pos) | IP.Gt (a1, a2, pos) |
 	          IP.Gte (a1, a2, pos) ->
@@ -4511,13 +4532,21 @@ and gather_type_info_b_formula_x prog b0 stab =
           let new_et = fresh_tvar stab in
 	      let t1 = gather_type_info_exp a1 stab new_et in (* tvar, Int, Float *)
 	      let t2 = gather_type_info_exp a2 stab new_et in
-          let t = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *) 
+          let _ = must_unify t1 t2 stab pos  in (* UNK, Int, Float, TVar *) 
           ()
     | IP.BagMax ((v1, p1), (v2, p2), pos) 
-    | IP.BagMin ((v1, p1), (v2, p2), pos) ->
-         failwith ("gather_type_info_b_formula: 1 features yet to be handled")
+    | IP.BagMin ((v1, p1), (v2, p2), pos) -> (* V1=BagMin(V2) *)
+          let et = fresh_tvar stab in
+	      let t1 = gather_type_info_var v1 stab et pos in
+          let t = must_unify t1 NUM stab pos  in
+	      let _ = gather_type_info_var v2 stab (BagT t) pos in
+          ()
     | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos) ->
-          failwith ("gather_type_info_b_formula: 2 features yet to be handled")
+          let new_et = fresh_tvar stab in
+          let t1 = gather_type_info_exp e2 stab (List new_et) in
+          let t2 = gather_type_info_exp e1 stab new_et in
+          let _ = must_unify t1 (List t2) stab pos in
+          ()
     | IP.ListAllN (e1, e2, pos) ->
            failwith ("gather_type_info_b_formula: 3 features yet to be handled")
      | IP.ListPerm (e1, e2, pos) ->
@@ -4599,7 +4628,7 @@ and collect_type_info_arith a0 stab expected_type =
 		  collect_type_info_arith i stab (C.int_type)
 
 and collect_type_info_bag_content a0 stab =
-  Gen.Debug.ho_eff_2 "collect_type_info_bag_content" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
+  Gen.Debug.no_eff_2 "collect_type_info_bag_content" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "?")
       collect_type_info_bag_content_x a0 stab
 
 and collect_type_info_bag_content_x a0 stab =
@@ -4653,7 +4682,7 @@ and collect_type_info_bag_content_x a0 stab =
 (*           failwith "collect_type_info_bag_content: encountered array access"  *)
 
 and collect_type_info_bag (e0 : IP.exp) stab =
-  Gen.Debug.ho_eff_2 "collect_type_info_bag" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "()")
+  Gen.Debug.no_eff_2 "collect_type_info_bag" [false;true] (Iprinter.string_of_formula_exp) string_of_stab (fun _ -> "()")
       (fun _ _ -> collect_type_info_bag_x e0 stab) e0 stab
 
 and collect_type_info_bag_x (e0 : IP.exp) stab =
@@ -4761,7 +4790,7 @@ and collect_type_info_formula prog f0 stab filter_res =
 	      (Cformula.res_replace stab rl filter_res b.Iformula.formula_base_flow)
 
 and gather_type_info_formula prog f0 stab filter_res = 
-  Gen.Debug.ho_eff_3 "gather_type_info_formula"
+  Gen.Debug.no_eff_3 "gather_type_info_formula"
       [false;true]
       (Iprinter.string_of_formula) string_of_stab 
       string_of_bool (fun x -> "()")
@@ -5003,7 +5032,7 @@ and collect_type_info_heap prog (h0 : IF.h_formula) stab =
     | IF.HTrue | IF.HFalse -> ()
 
 and gather_type_info_heap prog (h0 : IF.h_formula) stab =
-  Gen.Debug.ho_eff_2 "gather_type_info_heap" [false;true]
+  Gen.Debug.no_eff_2 "gather_type_info_heap" [false;true]
       Iprinter.string_of_h_formula string_of_stab (fun _ -> "()")
       (fun _ _ -> gather_type_info_heap_x prog h0 stab) h0 stab 
 
@@ -5044,7 +5073,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
               let vdef = I.look_up_view_def_raw prog.I.prog_view_decls c
               in
 	          let _ = if (String.length vdef.I.view_data_name) = 0  then fill_view_param_types prog vdef in
-	          let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in
+	          (* let _ = print_string ("\n searching for: "^c^" got: "^vdef.I.view_data_name^"-"^vdef.I.view_name^"-\n") in *)
               (if not (Gen.is_empty vdef.I.view_typed_vars)
 		      then
                 (let rec helper exps tvars =
@@ -5108,7 +5137,7 @@ and gather_type_info_heap_x prog (h0 : IF.h_formula) stab =
 			                  Err.error_text = "check_ie : unexpected type "^(string_of_typ t);
                           } ) in (* An Hoa BUG DETECTED Replace (et) by ((CP.Array et)) TODO : add a collect_type_info_array instead *)
 	      let check_ie ie t =
-            Gen.Debug.ho_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ
+            Gen.Debug.no_eff_3 "check_ie" [false;false;true] Iprinter.string_of_formula_exp string_of_typ string_of_stab string_of_typ
                 (fun _ _ _ -> check_ie ie t) ie t stab
           in 
 	      (*let _ = print_string ("\nlf:"^c^"\nfnd:"^dname) in*)

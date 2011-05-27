@@ -953,7 +953,7 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) -> 
       v.view_pt_by_self<-tl;
-      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^"cannot have its type determined")
+      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =

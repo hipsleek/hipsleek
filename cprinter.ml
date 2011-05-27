@@ -440,17 +440,19 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
  
-let string_of_spec_var x = 
-  match x with
-    | P.SpecVar (t, id, p) -> id (* ^":"^(string_of_typ t) *) ^(match p with 
-	    | Primed -> "'" 
-	    | Unprimed -> "" )
 
 let string_of_typed_spec_var x = 
   match x with
     | P.SpecVar (t, id, p) -> id ^":"^(string_of_typ t) ^(match p with 
 	    | Primed -> "'" 
 	    | Unprimed -> "" )
+
+let string_of_spec_var x = 
+(* string_of_typed_spec_var x *)
+  match x with
+    | P.SpecVar (t, id, p) -> id (* ^":"^(string_of_typ t) *) ^(match p with
+        | Primed -> "'"
+        | Unprimed -> "" )
 
 let string_of_imm imm = 
   if imm then "@I" else "@M"

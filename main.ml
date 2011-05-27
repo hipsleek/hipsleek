@@ -117,7 +117,9 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    (try
+    if (!Scriptarguments.typecheck_only) 
+    then print_string (Cprinter.string_of_program cprog)
+    else (try
     ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");

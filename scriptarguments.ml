@@ -1,5 +1,7 @@
 let parse_only = ref false
 
+let typecheck_only = ref false
+
 let rtc = ref false
 
 let comp_pred = ref false
@@ -105,10 +107,9 @@ let common_arguments = [
     "Turn on unsatisfiable formulae elimination during type-checking");
 	("-nxpure", Arg.Set_int Globals.n_xpure,
     "Number of unfolding using XPure");
-	("-parse", Arg.Set parse_only,
-	"Parse only");
-	("--print-iparams", Arg.Set Globals.print_mvars,
-	"Print input parameters of predicates");
+	("-parse", Arg.Set parse_only,"Parse only");
+	("-core", Arg.Set typecheck_only,"Type-Checking and Core Preprocessing only");
+	("--print-iparams", Arg.Set Globals.print_mvars,"Print input parameters of predicates");
 	("--print-x-inv", Arg.Set Globals.print_x_inv,
 	"Print computed view invariants");
 	("-stop", Arg.Clear Globals.check_all,
