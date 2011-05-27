@@ -55,6 +55,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			(*let _ = print_string ("check_specs: EVariance: " ^ (Cprinter.string_of_context nctx) ^ "\n") in*)
 		    check_specs_a prog proc nctx b.Cformula.formula_var_continuation e0
 	  | Cformula.EAssume (x,b,y) ->
+            let _ = set_post_pos (CF.pos_of_formula b) in
 	        let ctx1 = CF.transform_context (elim_unsat_es prog (ref 1)) ctx in
 	        (*let _ = print_string ("\n pre eli : "^(Cprinter.string_of_context ctx)^"\n post eli: "^(Cprinter.string_of_context ctx1)^"\n") in*)
 	        if (Cformula.isAnyFalseCtx ctx1) then
@@ -76,6 +77,7 @@ and check_specs_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.context) (spec
 			      if (CF.isFailListPartialCtx res_ctx) then false
 			      else
 			        let tmp_ctx = check_post prog proc res_ctx b (Cformula.pos_of_formula b) y in
+                    (* let _ = print_endline ("Answer after post :"^(string_of_int (List.length tmp_ctx))) in *)
 			        (CF.isSuccessListPartialCtx tmp_ctx) 
 		        in
 		        let _ = Gen.Profiling.pop_time ("method "^proc.proc_name) in
@@ -193,7 +195,7 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
 	        (* let _ = print_string ("bind: unfolded context:\n" ^ (Cprinter.string_of_list_failesc_context unfolded) *)
                 (*     ^ "\n") in *)
 
-	        let c = CP.name_of_type v_t in
+	        let c = string_of_typ v_t in
 	        let vdatanode = CF.DataNode ({
                             CF.h_formula_data_node = (if !Globals.large_bind then p else v_prim);
                             CF.h_formula_data_name = c;
@@ -401,8 +403,10 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
               Debug.print_info "procedure call" (to_print^" has failed \n") pos else () ;
             rs in	        
 	        let check_pre_post org_spec (sctx:CF.list_failesc_context):CF.list_failesc_context =
-              Gen.Debug.loop_1_no "check_pre_post" (fun _ -> "?") (fun _ -> "?") 
-                  (fun s ->  check_pre_post org_spec s) sctx in
+              let _ = Cprinter.string_of_list_failesc_context in
+              let pr2 = Cprinter.summary_list_failesc_context in
+              let pr3 = Cprinter.string_of_struc_formula in
+              Gen.Debug.loop_2_no "check_pre_post" pr3 pr2 pr2 (fun _ _ ->  check_pre_post org_spec sctx) org_spec sctx in
 	        let res = if(CF.isFailListFailescCtx ctx) then ctx
                     else check_pre_post proc.proc_static_specs_with_pre ctx in	
 		
@@ -491,9 +495,15 @@ and check_exp_a (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_failesc_con
       ((check_exp1 failesc) @ fl)
     
 and check_post (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
-  let pr = pr_list Cprinter.string_of_partial_context in
-  (* let pr2 x = "Size of Result "^string_of_int(List.length x) in *)
-  Gen.Debug.loop_1_no "check_post" pr pr  (fun ctx -> check_post_x prog proc ctx post pos pid) ctx
+  (* let ctx = list_partial_context_and_unsat_now prog ctx in *)
+  let _ = pr_list Cprinter.string_of_partial_context in
+  let pr1 x = string_of_int (List.length x) in
+  let pr2 x = "List Partial Context "^(pr_list (pr_pair pr1 pr1) x) in
+  Gen.Debug.loop_2_no "check_post" Cprinter.string_of_pos pr2 pr2  
+      (fun _ _ -> 
+          let r = check_post_x prog proc ctx post pos pid in
+          (* let r = list_partial_context_and_unsat_now prog r in *)
+      r ) pos ctx
 
 and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_context) (post : CF.formula) pos (pid:formula_label) : CF.list_partial_context  =
   (*let _ = print_string ("got into check_post on the succCtx branch\n") in*)
@@ -520,7 +530,7 @@ and check_post_x (prog : prog_decl) (proc : proc_decl) (ctx : CF.list_partial_co
      rs
   else begin
     (* get source code posistion of failed branches *)
-    let locs_of_failures = 
+   let locs_of_failures = 
       List.fold_left (fun res ctx -> res @ (locs_of_partial_context ctx)) [] rs 
     in
     let string_of_loc_list locs =
@@ -600,6 +610,7 @@ let check_proc_wrapper prog proc =
       (* dummy_exception(); *)
       print_string ("\nProcedure "^proc.proc_name^" FAIL-2\n");
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
+      Printexc.print_backtrace(stdout);
       print_string ("\nError(s) detected when checking procedure " ^ proc.proc_name ^ "\n");
       false
     end else
@@ -729,7 +740,11 @@ let check_proc_wrapper_map_net prog (proc,num) =
       raise e
 
 let check_prog (prog : prog_decl) =
-  if !Globals.check_coercions then begin
+  if (Printexc.backtrace_status ()) then print_string "backtrace active"
+  else (* print_string "bactracke inactive"; *)
+(*    (print_string "raising\n";
+    raise Not_found);
+*) if !Globals.check_coercions then begin
     print_string "Checking coercions... ";
     ignore (check_coercion prog);
     print_string "DONE."

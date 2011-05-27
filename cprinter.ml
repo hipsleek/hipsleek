@@ -19,24 +19,19 @@ let is_medium n = (n==1);;
 let is_long n = (n==0);;
 
 
-(* pretty printing for primitive types *)
-let string_of_prim_type = function 
-  | Bool          -> "boolean"
-  | Float         -> "float"
-  | Int           -> "int"
-  | Void          -> "void"
-  | BagT t        -> "bag("^(string_of_prim_type t)^")"
-  | TVar t        -> "TVar["^(string_of_int t)^"]"
-  | List          -> "list"
-;;
+(* (\* pretty printing for primitive types *\) *)
+(* let string_of_prim_type = function  *)
+(*   | Bool          -> "boolean" *)
+(*   | Float         -> "float" *)
+(*   | Int           -> "int" *)
+(*   | Void          -> "void" *)
+(*   | BagT t        -> "bag("^(string_of_prim_type t)^")" *)
+(*   | TVar t        -> "TVar["^(string_of_int t)^"]" *)
+(*   | List          -> "list" *)
+(* ;; *)
 
-(* pretty printing for types *)
-let rec string_of_typ = function 
-   (* may be based on types used !! *)
-  | Prim t -> string_of_prim_type t 
-  | Named ot -> if ((String.compare ot "") ==0) then "ptr" else ot
-  | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
-;;
+
+
 
 (** the formatter that fmt- commands will use *)
 let fmt = ref (std_formatter)
@@ -445,16 +440,26 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
 (*          if (precedence op2) > (precedence op) then true *)
 (*          else false *)
  
-let string_of_spec_var x = 
+
+let string_of_typed_spec_var x = 
   match x with
-    | P.SpecVar (t, id, p) -> id ^(*"."^(string_of_typ t) ^*)(match p with 
+    | P.SpecVar (t, id, p) -> id ^":"^(string_of_typ t) ^(match p with 
 	    | Primed -> "'" 
 	    | Unprimed -> "" )
+
+let string_of_spec_var x = 
+(* string_of_typed_spec_var x *)
+  match x with
+    | P.SpecVar (t, id, p) -> id (* ^":"^(string_of_typ t) *) ^(match p with
+        | Primed -> "'"
+        | Unprimed -> "" )
 
 let string_of_imm imm = 
   if imm then "@I" else "@M"
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
+
+let pr_typed_spec_var x = fmt_string (string_of_typed_spec_var x)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
@@ -1348,7 +1353,7 @@ let pr_view_decl v =
 	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_mix_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
@@ -1771,7 +1776,7 @@ Cformula.print_sv := string_of_spec_var;;
 Cformula.print_ident_list := str_ident_list;;
 Cformula.print_struc_formula :=string_of_struc_formula;;
 Cformula.print_list_context_short := string_of_list_context_short;;
-Cformula.print_context_list_short := string_of_context_list_short;;
+Cformula.print_context_short := string_of_context_short;;
 Cformula.print_entail_state := string_of_entail_state_short;;
 Cvc3.print_pure := string_of_pure_formula;;
 Cformula.print_formula :=string_of_formula;;

@@ -513,10 +513,10 @@ impl: [[ pc=pure_constr; `LEFTARROW; ec=extended_l; `SEMICOLON ->
 			if(List.length (Ipure.look_for_anonymous_pure_formula pc))>0 then report_error (get_pos_camlp4 _loc 1) ("anonimous variables in case guard are disalowed")
 		  else (pc,ec)]];
 
-
+(* seem _loc 2 is empty *)
 disjunctive_constr:
   [ "disj_or" LEFTA
-    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 2)]    
+    [ dc=SELF; `ORWORD; oc=SELF   -> F.mkOr dc oc (get_pos_camlp4 _loc 1)]    
   |  [peek_dc; `OPAREN;  dc=SELF; `CPAREN -> dc]
   | "disj_base"
    [ cc=core_constr             -> cc
@@ -1497,15 +1497,15 @@ cast_expression:
                       exp_cast_pos = get_pos_camlp4 _loc 1 }
 		| _ -> report_error (get_pos_camlp4 _loc 2) ("Expecting a type"))
   | `OPAREN; `INT; `CPAREN; t=unary_expression ->
-      Cast { exp_cast_target_type = Prim Int;
+      Cast { exp_cast_target_type = Int;
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }
   | `OPAREN; `BOOL; `CPAREN; t=unary_expression ->
-      Cast { exp_cast_target_type = Prim Bool;
+      Cast { exp_cast_target_type = Bool;
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }
   | `OPAREN; `FLOAT; `CPAREN; t=unary_expression ->
-      Cast { exp_cast_target_type = Prim Float;
+      Cast { exp_cast_target_type = Float;
              exp_cast_body = t;
              exp_cast_pos = get_pos_camlp4 _loc 1 }]];
 

@@ -420,7 +420,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                     let right_ls = look_up_coercion_with_target prog.prog_right_coercions vr.h_formula_view_name vl.h_formula_view_name in
                     let left_act = List.map (fun l -> (1,M_lemma (c,Some l))) left_ls in
                     let right_act = List.map (fun l -> (1,M_lemma (c,Some l))) right_ls in
-                    if (left_act==[] && right_act==[]) then [(1,M_lemma (c,None))]
+                    if (left_act==[] && right_act==[]) then [] (* [(1,M_lemma (c,None))] *) (* only targetted lemma *)
                     else left_act@right_act
                   end
                   else [] in
@@ -430,7 +430,7 @@ and process_one_match_x prog (c:match_res) :action_wt =
                       else [] *)in
                   let src = (-1,Search_action (l1@l2@l3@l4)) in
                   src (*Seq_action [l1;src]*)
-            | DataNode dl, ViewNode vr -> (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)])
+            | DataNode dl, ViewNode vr -> (0,M_fold c)  (* (-1,Search_action [(1,M_fold c);(1,M_rd_lemma c)]) *)
             | ViewNode vl, DataNode dr -> (0,M_unfold (c,0))
             | _ -> report_error no_pos "process_one_match unexpected formulas\n"	
           )
@@ -496,6 +496,18 @@ and sort_wt (ys: action_wt list) : action list =
   let sl = List.sort (fun (w1,_) (w2,_) -> if w1<w2 then -1 else if w1>w2 then 1 else 0 ) ls in
   (snd (List.split sl)) 
 
+and pick_unfold_only ((w,a):action_wt) : action_wt list =
+  match a with
+    | M_unfold _ -> [(w,a)]
+    | Seq_action l -> 
+          if l==[] then [] 
+          else pick_unfold_only (List.hd l)
+    | Search_action l -> List.concat (List.map pick_unfold_only l)
+    | _ -> []
+
+
+(* and heap_entail_non_empty_rhs_heap_x prog is_folding  ctx0 estate ante conseq lhs_b rhs_b pos : (list_context * proof) = *)
+
 and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :action = 
   let r = List.map (fun (c1,c2)-> (choose_context prog es lhs_h lhs_p rhs_p posib_r_alias c1 c2 pos,(c1,c2))) rhs_lst in
   (* match r with  *)
@@ -506,7 +518,6 @@ and compute_actions_x prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos :actio
   match r with
     | [] -> M_Nothing_to_do "no nodes on RHS"
     | xs -> let ys = sort_wt r in List.hd (ys)
-
 
 and compute_actions prog es lhs_h lhs_p rhs_p posib_r_alias rhs_lst pos =
   let psv = Cprinter.string_of_spec_var in

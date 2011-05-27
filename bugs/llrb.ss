@@ -1,4 +1,4 @@
-/**
+/*
  Left-leaning Red Black Tree
  Modified from RedBlackBST.java
  @author: Vu An Hoa
@@ -10,6 +10,7 @@ data node {
 	node left;
 	node right;
 }
+
 
 /* view for red-black trees */
 rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
@@ -23,19 +24,29 @@ rb<n, cl, bh> == self = null & n = 0 & bh = 1 & cl = 1
        & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh
 	inv n >= 0 & bh >= 1 & 0 <= cl <= 1;
 
-/* view for red-black trees */
-rbd<n, cl, d, bh> == self = null & n = 0 & bh = 1 & cl = 1 & d=0
-	// self is red, both child must be black
-    or self::node<v, 0, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh>
-	   & cl = 0 & n = 1 + ln + rn & lbh = bh & rbh = bh & d=1
-   // if left is black, right must be black due to left-leaning!
-   or self::node<v, 1, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh>
-       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=1
-   or self::node<v, 1, l, r> * l::rbd<ln, 0,_, lbh> * r::rbd<rn, 1,_, rbh>
-       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=2
-   or self::node<v, 1, l, r> * l::rbd<ln, 0,_, lbh> * r::rbd<rn, 0,_, rbh>
-       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=3
-	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= d <=3;
+
+/* Red black tree with case analysis */
+// Remark: color information is already known in the case!
+rbc<n, cl, bh, c> == self = null & n = 0 & bh = 1 & cl = 1 & c = 0
+	// c = 1:   B
+	//        B   B
+	or self::node<v, 1, l, r> * l::rbc<ln, 1, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 1
+	// c = 2:   B
+	//        R   B
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 1, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 2
+	// c = 3:   B
+	//        R   R
+    or self::node<v, 1, l, r> * l::rbc<ln, 0, bh - 1, _> * r::rbc<rn, 0, bh - 1, _> & cl = 1 & n = 1 + ln + rn & c = 3
+	// c = 4:   R
+	//        B   B
+	or self::node<v, 0, l, r> * l::rbc<ln, 1, bh, _> * r::rbc<rn, 1, bh, _> & cl = 0 & n = 1 + ln + rn & c = 4
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= c <= 4;
+
+// Special case         R
+//                    R   B
+// that usually occurs.
+rbs<n, bh> == self::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> & ln + rn + 1 = n
+	inv n >= 1 & bh >= 1 & self!=null;
 
 //////////////////////////////////////////
 //          HELPER FUNCTIONS I          //
@@ -47,19 +58,12 @@ rbd<n, cl, d, bh> == self = null & n = 0 & bh = 1 & cl = 1 & d=0
 
 
 bool is_red(node h)
-/*
 	case{
-		h  = null -> ensures !res;
+		h  = null -> requires true 
+		             ensures !res;
 		h != null -> requires h::node<v,c,l,r>
 		             ensures h::node<v,c,l,r> & c != 0 & !res 
 		                     or h::node<v,c,l,r> & c = 0 & res;
-	}
-*/
-	case{
-		h  = null -> ensures !res;
-		h != null -> 
-          requires h::node<v,c,l,r>
-          ensures h::node<v,c,l,r> & (c=0 & res | c!=0 & !res);
 	}
 {
 	if (h==null)
@@ -69,10 +73,8 @@ bool is_red(node h)
 }
 
 void color_flip(node h)
-//requires h::node<v,c,l,r> * l::node<lv,lc,ll,lr> * r::node<rv,rc,rl,rr>
-//	ensures h::node<v,1-c,l,r> * l::node<lv,1-lc,ll,lr> * r::node<rv,1-rc,rl,rr>;
-	requires h::node<v,1,l,r> * l::node<lv,0,ll,lr> * r::node<rv,0,rl,rr>
-	ensures h::node<v,0,l,r> * l::node<lv,1,ll,lr> * r::node<rv,1,rl,rr>;
+	requires h::node<v,c,l,r> * l::node<lv,lc,ll,lr> * r::node<rv,rc,rl,rr>
+	ensures h::node<v,1-c,l,r> * l::node<lv,1-lc,ll,lr> * r::node<rv,1-rc,rl,rr>;
 {
 	h.color        = 1 - h.color;
 	h.left.color   = 1 - h.left.color;
@@ -80,7 +82,6 @@ void color_flip(node h)
 }
 
 // Make a right-leaning 3-node lean to the left.
-// PROBLEM DETECTED: SPECIFICATION FAILURE
 node rotate_left(node h)
 	requires h::node<v,c,l,r> * r::node<rv,0,rl,rr>
 	ensures res::node<rv,c,h,rr> * h::node<v,0,l,rl> & res = r;
@@ -94,7 +95,6 @@ node rotate_left(node h)
 }
 
 // Make a left-leaning 3-node lean to the right.
-// PROBLEM DETECTED: SPECIFICATION FAILURE
 node rotate_right(node h)
 	requires h::node<v,c,l,r> * l::node<lv,0,ll,lr>
 	ensures res::node<lv,c,ll,h> * h::node<v,0,lr,r> & res = l;
@@ -107,11 +107,10 @@ node rotate_right(node h)
 	return x;
 }
 
+/*
 // compute the black height of a red black tree
 int black_height(node h)
 	requires h::rb<_,_,bh>
-	ensures res = bh;
-    requires h::rbd<_,_,_,bh>
 	ensures res = bh;
 {
 	if (h == null)
@@ -122,7 +121,9 @@ int black_height(node h)
 	else
 		return 1 + black_height(h.left);
 }
+*/
 
+/*
 //////////////////////////////////////////
 //              INSERTION               //
 //////////////////////////////////////////
@@ -130,142 +131,82 @@ int black_height(node h)
 // Insert a value v to the ROOT node of a red-black tree
 // Remark: POSSIBLE to have height increment.
 node insert(node h, int v)
-  requires h::rbd<n,_,_,bh>
-  ensures res::rbd<n+1,1,_,bh2> & bh<=bh2<=bh+1; //or res::rb<n+1,1,bh+1>;
+	//requires h::rb<n,_,bh>
+	//ensures res::rb<n+1,1,bh> or res::rb<n+1,1,bh+1>;
+	requires h::rbc<n,_,bh,_>
+	ensures res::rbc<n+1,1,bh,_> or res::rbc<n+1,1,bh+1,_>;
 {
 	node r = insert_internal(h,v);
-	if (is_red(r)) r.color = 1;
+	
+	//assert r != null;	
+	assert     r::node<_,0,null,null>
+	        or r::rbc<n+1,_,bh,_>
+	        //or r::rbc<n+1,0,bh,4>
+			or r::node<_,0,l1,r1> * l1::rbc<ln,0,bh,4> * r1::rbc<rn,1,bh,_> & n = ln + rn;
+	
+//	assert r::rbc<n+1,_,bh,_> & r != null
+//	       or r::node<_,0,l1,r1> * l1::rbc<ln,0,bh,4> * r1::rbc<rn,1,bh,_> & ln + rn = n;
+	
+	r.color = 1;
 	return r;
+}
+
+node testcm(node h)
+	requires h::node<_,0,null,null> ensures res::rbc<1,1,2,1>;
+	requires h::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,_> ensures res::rbc<ln+rn+1,1,bh+1,2>;
+	requires h::rbc<n,0,bh,4> ensures res::rbc<n,1,bh+1,1>;
+	requires h::rbc<n,1,bh,c> ensures res::rbc<n,1,bh,c>;
+{
+	if (h != null) {
+		h.color = 1;
+	}
+	return h;
 }
 
 // Insert a value v to an INTERNAL node of a red-black tree.
 // Remark: NO height increment.
 node insert_internal(node h, int v)
-	// the following is not strong enough
-	//requires h::rb<n,c,bh>
-	//ensures res::rb<n+1,0,bh> or res::node<_,0,l,r> * l::rb<ln,0,bh> * r::rb<rn,1,bh> & ln + rn = n;
-/*
-	requires h::rb<n,c,bh>
+	//the following is not strong enough
+	//requires h::rb<n,c,bh> ensures res::rb<n+1,0,bh> or res::node<_,0,l,r> * l::rb<ln,0,bh> * r::rb<rn,1,bh> & ln + rn = n;
+	requires h::rbc<n,_,bh,c>
 	case {
-		h  = null -> ensures res::rb<1,0,1>;
-		h != null -> requires h::node<_, c, l, r> * l::rb<_,lc,_> * r::rb<_,rc,_>
-		case {
-			c = 1 & lc = 1 & rc = 1 -> ensures res::rb<n+1,1,bh>; // h, l, r are all black nodes
-			c = 1 & lc = 1 & rc != 1 -> ensures false;
-			c = 1 & lc != 1 & rc = 1 -> ensures res::rb<n+1,1,bh>; // h, r are black, l is red
-			c = 1 & lc != 1 & rc != 1 -> ensures res::rb<n+1,0,bh> // h is black with two red children
-			    or res::node<_,0,l1,r1> * l1::rb<ln1,0,bh> * r1::rb<rn1,1,bh> & ln1 + rn1 = n;
-			c != 1 & lc = 1 & rc = 1 -> ensures res::rb<n+1,0,bh> // h is red with two black children
-			    or res::node<_,0,l1,r1> * l1::rb<ln1,0,bh> * r1::rb<rn1,1,bh> & ln1 + rn1 = n;
-			c != 1 & (lc != 1 | rc != 1) -> ensures false;
-		}
+		c = 0 -> ensures res::node<v,0,null,null>;
+		c = 1 -> ensures res::rbc<n+1,1,bh,1> or res::rbc<n+1,1,bh,2>;
+		c = 2 -> ensures res::rbc<n+1,1,bh,2> or res::rbc<n+1,1,bh,3>;
+		(c = 3 | c = 4) -> ensures res::rbc<n+1,0,bh,4> or res::rbs<n+1,bh>;
+		(c < 0 | c > 4) -> ensures false;
 	}
-
-  requires h::rbd<n,c,d,bh> & h=null
-  ensures res::rbd<1,0,_,1>;
-*/
-
-  case {
-   h=null -> ensures res::rbd<1,0,1,1>;
-   h!=null -> 
-    requires h::rbd<n,c,d,bh>
-    case {
-     c=1 -> case {
-             1<=d<=2 ->   ensures res::rbd<n+1,1,_,bh>; /* cannot be proven yet */
-              d=0 ->  ensures res::rbd<n+1,0,_,bh>;
-             (d<0 | d>2)  ->  ensures false;
-             //d>3 ->  ensures false;
-            }
-     c=0 ->  ensures res::rbd<n+1,1,_,bh>; //false; //res::node<_,0,lt,rt> * lt::rbd<_,_,_,_> * rt::rbd<_,_,_,_> ; //& bh<=bh2<=bh+1;
-     (c<0 | c>1)  -> ensures false;
-   }
- }
 {
-  if (h == null) {
-    //assert c=1 & bh=0;
-    node k=new node(v, 0, null, null);
-    //dprint;
-    //assert k'::rbd<1,0,_,1>;
-    return k; //new node(v, 0, null, null); // RED node
-
-  }	else {
-	node l = h.left;
-	node r = h.right;
-	//dprint;
-	// split this node if it is a 4 node
+	if (h == null)
+		return new node(v, 0, null, null); // RED node
+	
 	if (is_red(h.left) && is_red(h.right)) {
-      //dprint;
-        //assert h'::node<_,1,_,_> ;
-        //rb<_,0,bh-1> * r'::rb<_,0,bh-1> & l' != null & r' != null;
-        color_flip(h);
-        //assert h'::node<_,0,_,_> ;
-		//h.color        = 0;
-		//h.left.color   = 1;
-		//h.right.color  = 1;
-		//assert h'::rb<n,0,bh>;
-		//assert l'::rb<_,1,bh> * r'::rb<_,1,bh>;
-
-	} 
+		h.color        = 0;
+		h.left.color   = 1;
+		h.right.color  = 1;
+	}	
 	
-	// REMARK: THE COLOR OF THE RESULTING NODE IS DETERMINED HERE
-	// BECAUSE ROTATION DOES NOT CHANGE COLOR OF THE RESULTING NODE!
-	// THUS, h IS RED OR h IS BLACK WITH 2 RED CHILDREN ==> res IS RED
-	// OTHERWISE, res IS A BLACK NODE
-
-	// after splitting 4 nodes, the right branch is ALWAYS BLACK!
-	//assert h'::node<_,_,_,_>;
-	//assert r'::rbd<_,1,_,_>;
-	//dprint;
-	if (v <= h.val) // accept duplicates!
-      { 
-        h.left = insert_internal(h.left, v);
-      }
-	else
-	 h.right = insert_internal(h.right, v);
-		
-	// IF THIS BRANCH IS NOT TAKEN, THE FOLLOWING if IS NEVER EXECUTED
-	// BECAUSE IN SUCH CASE h.right IS NOT MODIFIED. AND WE KNOW THAT
-	// h.right IS BLACK BEFORE THIS if-then-else. (THE STATEMENT
-	// h.left = insert(l, v);
-	// POTENTIALLY CHANGES THE COLOR OF h.left; BUT NOT h.right!)
-	if (is_red(h.right)) {
-       //assume false;	
-		h = rotate_left(h);
-    } 
-	
-    l = h.left;
-	// convert R-R-B into B-R-R
-	if (is_red(l)) {
-		if (is_red(l.left)) {
-          //assume false;
-			h = rotate_right(h);
-		} 
-        else {
-          //int c = l.left.color;
-          //assert c'=1;
-         assume false; // goes into a loop otherwise!
-         assume true;
-        }
+	if (v <= h.val) { // accept duplicates!
+		h.left = insert_internal(h.left, v);
+		if (is_red(h.left))
+			if (is_red(h.left.left))
+				h = rotate_right(h);
 	} else {
-      int c = l.color;
-      assert c'=1; //'
-      //dprint;
-      assume false; // goes into a loop otherwise!
-      assume true;
-    }
-    //dprint;
-
-		
+		h.right = insert_internal(h.right, v);
+		if (is_red(h.right) && !is_red(h.left))
+			h = rotate_left(h);
+	}
+	
 	return h;
-  }
 }
+*/
 
 //////////////////////////////////////////
 //         HELPER FUNCTIONS II          //
 //////////////////////////////////////////
 
 // Fix the invariant
-node fix_up(node h)
+/*node fix_up(node h)
 	requires h::node<v,c,l,r> * l::rb<ln,lc,lh> * rt::rb<rn,rc,rh> & 0 <= c <= 1
 	ensures res::rb<1+ln+rn,c1,lh> & 0 <= c1 <= 1;
 {
@@ -284,65 +225,86 @@ node fix_up(node h)
 		// push the red upward
 		if (is_red(h.left) && is_red(h.right))
 			color_flip(h);
-	}		
+	}
 	return h;
-}
+}*/
 
 // Assuming that h is red and both h.left and h.left.left
 // are black, make h.left or one of its children red.
-void move_red_left(node h)	
-	requires h::node<v,0,lt,rt> * lt::node<lv,1,llt,lrt> 
-	  * rt::node<rv,rc,rlt,rrt> * llt::node<llv,1,lllt,llrt> 
-	  * rlt::node<rlv,rlc,rllt,rlrt> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt>
-	case {
-		rlc = 0
-		-> ensures h::node<v,0,lt,rlrt> * lt::node<lv,1,llt,lrt> 
-			* llt::node<llv,1,lllt,llrt> * rt::node<rv,1-rlrc,rlrt,rrt> 
-			* rlt::node<rlv,0,rllt,rlrt> * rlrt::node<rlrv,0,rlrlt,rlrrt>;
-	    rlc != 0
-	    -> ensures h::node<v,1,lt,rt> * lt::node<lv,0,llt,lrt> 
-	       * rt::node<rv,1-rc,rlt,rrt> * llt::node<llv,1,lllt,llrt> 
-	       * rlt::node<rlv,rlc,rllt,rlrt> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt>; //after color_flip
-	}
+node move_red_left(node h)
+	requires h::node<_,0,l,r> * l::rbc<ln,1,bh,1> * r::rbc<rn,1,bh,_>
+	ensures res::rbc<n,1,bh,3>
+            or res::node<_,0,resl,resr> * resl::rbc<resln,1,bh,2> * resr::rbc<resrn,1,bh,_> & resln + resrn = ln + rn;
 {
 	color_flip(h);
-	if (is_red(h.right.left)) {		
-		rotate_right(h.right);
-		rotate_left(h);		
+
+	if (is_red(h.right.left)) {
+		h.right = rotate_right(h.right);
+		h = rotate_left(h);
 		color_flip(h);
+		
+		// Ensure left-leaning on the right branch!
+		if (!is_red(h.right.left) && is_red(h.right.right))
+			h.right = rotate_left(h.right);
 	}
+
+	return h;
 }
 
 //////////////////////////////////////////
 //           DELETE MINIMUM             //
 //////////////////////////////////////////
 
+node delete_min(node h)
+	requires h::rbc<n,1,bh,_> & n >= 1
+	ensures res::rbc<n-1,1,bh,_> or res::rbc<n-1,1,bh-1,_>;
+{
+	// NOTE: height change occurs here! At the root level,
+	// convert     B        into     R
+	//           B   B             B   B
+	// to meet the pre-condition of delete_min_internal.
+	if (!is_red(h.left)) h.color = 0;
+
+	int m;
+	h = delete_min_internal(h, m);
+
+	// Convert the RED root back to BLACK.
+	if (is_red(h)) h.color = 1;
+
+	return h;
+}
+
 // Delete the node with minimum value under h
 // and return that minimum value.
-int delete_min(node h)
-	requires h::rb<n, cl, bh> & h != null
-    case {
-    	cl=1 -> ensures h::rb<n-1, cl2, bh>;
-        cl=0 -> ensures h::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh;
-        (cl<0 | cl>1) -> ensures false;
-    }
+// NOTE: NO CHANGE IN HEIGHT
+node delete_min_internal(node h, ref int min_value)
+	requires h::rbc<n,_,bh,c> & c >= 2 & n >= 1
+	case {
+		n = 1 -> ensures res = null;
+		n > 1 -> // ensures res::rbc<n-1,_,bh,c> or res::rbc<n-1,_,bh,c-1>;
+		case {
+			c = 2 -> ensures res::rbc<n-1,1,bh,2> or res::rbc<n-1,1,bh,1>;
+			c = 3 -> ensures res::rbc<n-1,1,bh,3> or res::rbc<n-1,1,bh,2>;
+			c = 4 -> ensures res::rbc<n-1,0,bh,4> or res::rbc<n-1,1,bh,3>;
+			(c < 2 | c > 4) -> ensures false;
+		}
+		n < 1 -> ensures false;
+	}
 {
-	int m;
-	
-	if (h.left == null)
-	{
-		m = h.val;
-		h = null;
+	if (h.left == null) {
+		min_value = h.val;
+		return null;
 	}
 
-	if (!is_red(h.left) && !is_red(h.left.left))
-		move_red_left(h);
-
-	m = delete_min(h.left);
-
-	fix_up(h);
+	assert n > 1;
+	assume n > 1;
 	
-	return m;
+	if (!is_red(h.left) && !is_red(h.left.left))
+		h = move_red_left(h);
+	h.left = delete_min_internal(h.left, min_value);
+	if (is_red(h.right) && !is_red(h.left))
+		h = rotate_left(h);
+	return h;
 }
 
 /*
@@ -388,4 +350,3 @@ void delete(node h, int v)
 	
 	fix_up(h);
 }*/
-

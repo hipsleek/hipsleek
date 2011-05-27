@@ -620,6 +620,8 @@ formula_base_branches = [];
 formula_base_label = None;
 formula_base_pos = pos})
 
+and mkTrue_nf pos = mkTrue (mkTrueFlow ()) pos
+
 and mkFalse (flowt: flow_formula) pos = Base ({formula_base_heap = HFalse; 
 formula_base_pure = MCP.mkMFalse pos; 
 formula_base_type = TypeFalse;
@@ -1033,7 +1035,7 @@ and no_change (svars : CP.spec_var list) (pos : loc) : CP.formula = match svars 
 	    let restf = no_change rest pos in
 		CP.mkAnd f restf pos
   | [] -> CP.mkTrue pos
-
+ 
 and pos_of_struc_formula (f:struc_formula): loc =
   if (List.length f)==0 then no_pos
   else match (List.hd f) with
@@ -1044,7 +1046,10 @@ and pos_of_struc_formula (f:struc_formula): loc =
 
 and pos_of_formula (f : formula) : loc = match f with
   | Base ({formula_base_pos = pos}) -> pos
-  | Or ({formula_or_pos = pos}) -> pos
+    | Or ({formula_or_f1 = f1;
+	  formula_or_f2 = f2;
+	  formula_or_pos = pos}) -> pos_of_formula f1
+  (* | Or ({formula_or_pos = pos}) -> pos *)
   | Exists ({formula_exists_pos = pos}) -> pos
 
 and struc_fv (f: struc_formula) : CP.spec_var list = 
@@ -1789,7 +1794,7 @@ and get_var_type v (f: formula): (typ * bool) =
   let fv_list = fv f in
   let res_list = CP.remove_dups_svl (List.filter (fun c-> ((String.compare v (CP.name_of_spec_var c))==0)) fv_list) in
   match List.length res_list with
-	| 0 -> (Prim Void,false)
+	| 0 -> (Void,false)
 	| 1 -> (CP.type_of_spec_var (List.hd res_list),true)
 	| _ -> Err.report_error { Err.error_loc = no_pos; Err.error_text = "could not find a coherent "^v^" type"}
 
@@ -2018,6 +2023,7 @@ and list_failesc_context_tag = failesc_context Gen.Stackable.tag_list
 
 let print_list_context_short = ref(fun (c:list_context) -> "printer not initialized")
 let print_context_list_short = ref(fun (c:context list) -> "printer not initialized")
+let print_context_short = ref(fun (c:context) -> "printer not initialized")
 let print_entail_state = ref(fun (c:entail_state) -> "printer not initialized")
 
 
@@ -3814,10 +3820,16 @@ let get_prior_steps (c:context) =
     | OCtx _ -> print_string "Warning : OCtx with get_prior_steps "; [] ;;
 
 let add_to_context (c:context) (s:string) = 
-  set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c
-  (* match c with *)
-  (*   | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; } *)
-  (*   | OCtx _ -> print_string "Warning : dealing with OCtx (add to context) "; c ;; *)
+  (* set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c *)
+  match c with
+    | Ctx es -> Ctx {es with es_prior_steps = add_to_steps es.es_prior_steps s; }
+    | OCtx _ ->  (* let _ = Error.report_warning { *)
+      (*             Error.error_loc = !post_pos; *)
+      (*             Error.error_text = "[add_to_context] unexpected dealing with OCtx." *)
+      (*           } in *)
+      (* let _ = print_endline (!print_context_short c) in *)
+      set_context (fun es -> {es with es_prior_steps = add_to_steps es.es_prior_steps s;}) c 
+;;
 
 let add_to_context_num i (c:context) (s:string) = 
   let pr x = match x with Ctx _ -> "Ctx" | OCtx _ -> "OCtx" in  
@@ -4089,4 +4101,25 @@ let is_no_heap_ext_formula (e : ext_formula) : bool =
   let pr = !print_ext_formula in
   Gen.Debug.no_1 "is_no_heap_ext_formula" pr string_of_bool is_no_heap_ext_formula e 
 
+let extr_rhs_b (e:formula) =
+  let h1, p1, fl1, br1, t1 = split_components e in
+  let b1 = { formula_base_heap = h1;
+  formula_base_pure = p1;
+  formula_base_type = t1;
+  formula_base_branches = br1;
+  formula_base_flow = fl1;
+  formula_base_label = None;
+  formula_base_pos = no_pos } in
+  b1
     
+and extr_lhs_b (es:entail_state) =
+  let e = es.es_formula in
+  let h1, p1, fl1, br1, t1 = split_components e in
+  let b1 = { formula_base_heap = h1;
+  formula_base_pure = p1;
+  formula_base_type = t1;
+  formula_base_branches = br1;
+  formula_base_flow = fl1;
+  formula_base_label = None;
+  formula_base_pos = no_pos } in
+  b1

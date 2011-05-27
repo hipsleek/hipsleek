@@ -187,6 +187,11 @@ let mkUnfold ctx conseq node prf = Unfold { unfold_step_ante = ctx;
 											unfold_step_node = node;
 											unfold_step_proof = prf }
 
+let mkUnfold_no_conseq ctx node prf = Unfold { unfold_step_ante = ctx;
+											unfold_step_conseq = CF.mkTrue_nf no_pos;
+											unfold_step_node = node;
+											unfold_step_proof = prf }
+
 let mkFold ctx conseq fnode fold_prf prfs = Fold { fold_step_ante = ctx;
 												   fold_step_conseq = conseq;
 												   fold_step_var = fnode;

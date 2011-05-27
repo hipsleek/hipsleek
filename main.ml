@@ -52,7 +52,7 @@ let process_source_full source =
     let jfile = open_out ("output/" ^ tmp2 ^ ".java") in
     output_string jfile java_str;
     close_out jfile;
-    print_string (" done.\n"); flush stdout;
+    (* print_string (" done-1.\n"); flush stdout; *)
     exit 0
   end;
   if (!Scriptarguments.parse_only) then 
@@ -79,7 +79,7 @@ let process_source_full source =
     let cprog = Astsimp.trans_prog intermediate_prog in
 		(* let _ = print_string ("There are " ^ string_of_int (List.length cprog.Cast.prog_rel_decls) ^ " relations in cprog.\n") in *)
 	let _ = List.map (fun crdef -> Smtsolver.add_rel_def (Smtsolver.RelDefn (crdef.Cast.rel_name,crdef.Cast.rel_vars,crdef.Cast.rel_formula))) cprog.Cast.prog_rel_decls in
-    let _ = print_string (" done\n"); flush stdout in
+    (* let _ = print_string (" done-2\n"); flush stdout in *)
 		(* let _ = print_string "AN HOA :: trans_prog PASSED\n" in *)
     let _ = if (!Globals.print_core) then print_string (Cprinter.string_of_program cprog) else () in
     let _ = 
@@ -106,7 +106,7 @@ let process_source_full source =
 	    ()
 	in
 	ignore (List.map compile_one_view cprog.Cast.prog_view_decls);
-	print_string ("\nDone.\n"); flush stdout;
+	print_string ("\nDone-3.\n"); flush stdout;
 	exit 0
       end 
     in
@@ -117,7 +117,9 @@ let process_source_full source =
       end
     in
     let _ = Gen.Profiling.pop_time "Preprocessing" in
-    (try
+    if (!Scriptarguments.typecheck_only) 
+    then print_string (Cprinter.string_of_program cprog)
+    else (try
     ignore (Typechecker.check_prog cprog);
     with _ as e -> begin
       print_string ("\nException"^(Printexc.to_string e)^"Occurred!\n");
@@ -190,6 +192,7 @@ let _ =
     ()
   with _ as e -> begin
     finalize ();
+    print_string "caught\n"; Printexc.print_backtrace stdout;
     print_string ("\nException occurred: " ^ (Printexc.to_string e));
     print_string ("\nError(s) detected at main \n");
   end

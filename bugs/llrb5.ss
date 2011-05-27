@@ -84,14 +84,10 @@ bool is_red(node h)
 }
 
 void color_flip(node h)
-	requires h::node<v,c1,l,r> * l::node<lv,c2,ll,lr> * r::node<rv,c3,rl,rr>
-	ensures h::node<v,1-c1,l,r> * l::node<lv,1-c2,ll,lr> * r::node<rv,1-c3,rl,rr>;
-/*
- 	requires h::node<v,1,l,r> * l::node<lv,0,ll,lr> * r::node<rv,0,rl,rr>
+	requires h::node<v,1,l,r> * l::node<lv,0,ll,lr> * r::node<rv,0,rl,rr>
 	ensures h::node<v,0,l,r> * l::node<lv,1,ll,lr> * r::node<rv,1,rl,rr>;
 	requires h::node<v,0,l,r> * l::node<lv,1,ll,lr> * r::node<rv,1,rl,rr>
 	ensures h::node<v,1,l,r> * l::node<lv,0,ll,lr> * r::node<rv,0,rl,rr>;
-*/
 {
 	h.color        = 1 - h.color;
 	h.left.color   = 1 - h.left.color;
@@ -184,18 +180,16 @@ node insert(node h, int v)
 node insert_aux(node h, int v)
   case {
   h=null -> ensures res::node<v,0,null,null>;
-  h!=null -> requires h::rbd<n,c,d,bh> //& h!=null
+   h!=null -> requires h::rbd<n,c,d,bh> & h!=null
     case {
      c=1 -> case {
-       d=0 ->  ensures res::rbd<n+1,0,1,bh> ; //& n>0 ; //& res!=null; // R
-       //res::node<_, 0, l, r> * l::rbd<ln, 1,_, bh> * r::rbd<n-ln, 1,_, bh>;
-       d!=0 ->  ensures res::rbd<n+1,1,_,bh>; // & n>0 ; // B // loop here
-       //res::node<_, 1, l, r> * l::rbd<ln1, _,_, bh-1> * r::rbd<n-ln1, 1,_, bh-1>
-       //or res::node<_, 1, l, r> * l::rbd<ln2, 0,_, bh-1> * r::rbd<n-ln2, 0,_, bh-1>  ;
+       d=0 ->  ensures res::rbd<n+1,0,1,bh> ; //& res!=null; // R
+   //res::node<_, 0, l, r> * l::rbd<ln, 1,_, bh> * r::rbd<n-ln, 1,_, bh>;
+       d!=0 ->  ensures //res::rbd<n+1,1,_,bh> & n>0 ; // B // loop here
+ res::node<_, 1, l, r> * l::rbd<ln1, _,_, bh-1> * r::rbd<n-ln1, 1,_, bh-1>
+ or res::node<_, 1, l, r> * l::rbd<ln2, 0,_, bh-1> * r::rbd<n-ln2, 0,_, bh-1>  ;
        }
-     c!=1 -> ensures res::red<n+1,bh> //& res!=null 
-            or res::rbd<n+1,0,1,bh> //& res!=null
-       ;
+     c!=1 -> ensures res::red<n+1,bh> & res!=null or res::rbd<n+1,0,1,bh> & res!=null;
    }
  }
 {
@@ -256,8 +250,7 @@ node insert_aux(node h, int v)
 
 // Fix the invariant
 node fix_up(node h)
-	requires h::node<v,c,l,r> * l::rb<ln,lc,lh> 
-           * rt::rb<rn,rc,rh> & 0 <= c <= 1
+	requires h::node<v,c,l,r> * l::rb<ln,lc,lh> * rt::rb<rn,rc,rh> & 0 <= c <= 1
 	ensures res::rb<1+ln+rn,c1,lh> & 0 <= c1 <= 1;
 {
 	// ensure left-leaning property
@@ -283,13 +276,7 @@ node fix_up(node h)
 // are black, make h.left or one of its children red.
 void move_red_left(node h)	
 	requires h::node<v,0,lt,rt> * lt::node<lv,1,llt,lrt> 
-     * rt::node<rv,1,rlt,rrt> * rlt::rbd<n,c,_,bh>
-    case {
-     c=1 -> ensures  h::node<v,1,lt,rt> * lt::node<lv,0,llt,lrt> 
-                  * rt::node<rv,0,rlt,rrt> * rlt::rbd<n,c,_,bh>;
-     c=0 ->
-
-      * llt::node<llv,1,lllt,llrt> 
+	  * rt::node<rv,rc,rlt,rrt> * llt::node<llv,1,lllt,llrt> 
 	  * rlt::node<rlv,rlc,rllt,rlrt> * rlrt::node<rlrv,rlrc,rlrlt,rlrrt>
 	case {
 		rlc = 0
@@ -317,47 +304,13 @@ void move_red_left(node h)
 // Delete the node with minimum value under h
 // and return that minimum value.
 
-
-
-int delete_min(ref node h)
-  requires h::rbd<n,1,d,bh> & n>=1
-  ensures h'::rbd<n-1,_,_,bh2> & bh-1<=bh2<=bh ; //'
-  requires h::rbd<n,0,d,bh> & n>=1
-  ensures h'::rbd<n-1,_,_,bh2> & bh-1<=bh2<=bh ; //'
-{
-  if (!is_red(h)) {
-      if (!is_red(h.left)) {
-          h.color = 0;
-      }
-  }
-  int v=delete_min_aux(h);
-  if (is_red(h)) {
-    h.color = 1;
-  }
-  return v;
-}
-
-int delete_min_aux(ref node h)
-  requires h::node<_,c,l,r> * l::rbd<n1, c1, _,bh> * r::rbd<n2, c2, _,bh> & 0<=c<=1
-  case {
-    c=0 ->
-      requires c2=1 
-      case {
-        l=null -> ensures h'=null;
-        l!=null -> ensures h'::rbd<n1+n2,_,_,bh> ;
-      }
-    c!=0 ->
-      requires c1=0
-      ensures h'::rbd<n1+n2,_,_,bh+1> or h'::red<n1+n2,bh-1> ; //'
-  }
-/*
-& h != null
+int delete_min(node h)
+	requires h::rb<n, cl, bh> & h != null
     case {
     	cl=1 -> ensures h::rb<n-1, cl2, bh>;
         cl=0 -> ensures h::rb<n-1, 0, bh2> & bh-1 <= bh2 <= bh;
         (cl<0 | cl>1) -> ensures false;
     }
-*/
 {
 	int m;
 	
@@ -365,14 +318,12 @@ int delete_min_aux(ref node h)
 	{
 		m = h.val;
 		h = null;
-        return m;
 	}
-    assume false;
-	if (!is_red(h.left) && !is_red(h.left.left))
-      color_flip(h);
-      //move_red_left(h);
 
-	m = delete_min_aux(h.left);
+	if (!is_red(h.left) && !is_red(h.left.left))
+		move_red_left(h);
+
+	m = delete_min(h.left);
 
 	fix_up(h);
 	

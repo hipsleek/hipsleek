@@ -2,11 +2,13 @@
   Call Omega Calculator, send input to it
 *)
 open Globals
+open Gen.Basic
 open Cpure
 
 let omega_call_count: int ref = ref 0
 let is_omega_running = ref false
 let timeout = ref 15.0 (* default timeout is 15 seconds *)
+let timeout2 = ref 13.0 (* default timeout is 15 seconds *)
 
 (***********)
 let test_number = ref 0
@@ -57,14 +59,14 @@ let rec omega_of_exp e0 = match e0 with
         | _ -> let rr = match a2 with
             | IConst (i, _) -> (string_of_int i) ^ "(" ^ (omega_of_exp a1) ^ ")"
             | _ -> 
-                Error.report_warning {
+                Error.report_error {
                   Error.error_loc = l;
                   Error.error_text = "[omega.ml] Non-linear arithmetic is not supported by Omega."
                 }
             in rr
       in r
   | Div (_, _, l) -> 
-      Error.report_warning {
+      Error.report_error {
         Error.error_loc = l;
         Error.error_text ="[omega.ml] Divide is not supported."
       }
@@ -159,6 +161,9 @@ let restart reason =
     let _ = print_string (reason^" Restarting Omega after ... "^(string_of_int !omega_call_count)^" invocations ") in
     Procutils.PrvComms.restart !log_all_flag log_all reason "omega" start stop
   end
+  else begin
+    let _ = print_string (reason^" not restarting Omega ... "^(string_of_int !omega_call_count)^" invocations ") in ()
+    end
 
 (*
   - in: input channel
@@ -220,7 +225,7 @@ let check_formula f timeout =
 	        restart("Regularly restart:1 ");
 	        omega_call_count := 0;
         end;
-      let fnc () = 
+      let fnc f = 
         (*let _ = print_endline "check" in*)
         let _ = incr omega_call_count in
         let new_f = 
@@ -248,9 +253,13 @@ let check_formula f timeout =
       let fail_with_timeout () = 
         restart ("[omega.ml]Timeout when checking sat!" ^ (string_of_float timeout));
         true (* it was checking for sat*) in
-      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_bool fnc () timeout fail_with_timeout in 
+      let res = Procutils.PrvComms.maybe_raise_and_catch_timeout_string_bool fnc f timeout fail_with_timeout in 
       res
   end
+
+let check_formula i f timeout =
+  Gen.Debug.no_2 "check_formula" (fun x->x) string_of_float string_of_bool
+      check_formula f timeout
 
 (* linear optimization with omega *)
 let rec send_and_receive f timeout=
@@ -283,6 +292,12 @@ let rec send_and_receive f timeout=
       answ
           
   end
+
+let send_and_receive f timeout =
+  let pr x = x in
+  let pr2 = Cpure.string_of_relation in
+  Gen.Debug.no_2 "send_and_receive" pr string_of_float pr2 send_and_receive f timeout 
+
 (********************************************************************)
 let rec omega_of_var_list (vars : ident list) : string = match vars with
   | [] -> ""
@@ -318,13 +333,14 @@ let is_sat (pe : formula)  (sat_no : string): bool =
  
 	let sat =
       try
-        check_formula fomega !timeout
+        check_formula 1 fomega !timeout
       with
       | exc ->
           begin
-           (* Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);*)
-
+            Printf.eprintf "SAT Unexpected exception : %s" (Printexc.to_string exc);
             stop (); raise exc
+            (* restart ("Unexpected exception when doing IMPLY "); *)
+            (* true *)
           end
     in
   (*   let post_time = Unix.gettimeofday () in *)
@@ -355,12 +371,14 @@ let is_valid (pe : formula) timeout: bool =
 	
 	let sat = 
       try
-        not (check_formula (fomega ^ "\n") timeout)
+        not (check_formula 2 (fomega ^ "\n") !timeout2)
       with
       | exc ->
           begin
-            
+            Printf.eprintf "IMPLY : Unexpected exception : %s" (Printexc.to_string exc);
             stop (); raise exc
+            (* restart ("Unexpected exception when doing IMPLY "); *)
+            (* false *)
           end
     in
   (*   let post_time = Unix.gettimeofday () in *)
@@ -439,7 +457,7 @@ let simplify (pe : formula) : formula =
     let simp_f = 
 	try
       begin	
-	   let rel = send_and_receive fomega 0.0 in
+	   let rel = send_and_receive fomega !timeout2 (* 0.0  *)in
 	   match_vars (fv pe) rel
 	  end
 	with
@@ -447,7 +465,12 @@ let simplify (pe : formula) : formula =
           (*log ERROR ("TIMEOUT");*)
           restart ("Timeout when checking #simplify ");
           pe
-      | exc -> stop (); raise exc 
+      | exc -> (* stop (); raise exc  *)
+          begin
+            Printf.eprintf "Unexpected exception : %s" (Printexc.to_string exc);
+            restart ("Unexpected exception when checking #simplify ");
+            pe
+          end
     in
   (*   let post_time = Unix.gettimeofday () in *)
   (*   let time = (post_time -. pre_time) *. 1000. in *)
@@ -476,7 +499,7 @@ let pairwisecheck (pe : formula) : formula =
        output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
        flush log_all;
     end;
-    let rel = send_and_receive fomega 0. in
+    let rel = send_and_receive fomega !timeout2 (* 0. *) in
 	  match_vars (fv pe) rel 
   end
 
@@ -497,7 +520,7 @@ let hull (pe : formula) : formula =
        output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
        flush log_all;
     end;
-    let rel = send_and_receive fomega 0. in
+    let rel = send_and_receive fomega !timeout2 (* 0. *) in
 	  match_vars (fv pe) rel
   end
 
@@ -518,7 +541,7 @@ let gist (pe1 : formula) (pe2 : formula) : formula =
                 output_string log_all ((Gen.break_lines fomega) ^ Gen.new_line_str ^ Gen.new_line_str);
                 flush log_all;
             end;
-    let rel = send_and_receive fomega 0. in
+    let rel = send_and_receive fomega !timeout2 (* 0.  *)in
 	  match_vars vars_list rel
   end
 

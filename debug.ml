@@ -37,7 +37,9 @@ let devel_print s =
   else ()
 
 let devel_pprint msg (pos:loc) = 
-  let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": "^ msg in
+  let tmp = pos.start_pos.Lexing.pos_fname ^ ":" ^ (string_of_int pos.start_pos.Lexing.pos_lnum) ^ ": " ^ (string_of_int (pos.start_pos.Lexing.pos_cnum-pos.start_pos.Lexing.pos_bol)) ^ ": " in
+  let tmp = tmp^"[entail:"^(string_of_int !entail_pos.start_pos.Lexing.pos_lnum)^"]"^"[post:"^(string_of_int !post_pos.start_pos.Lexing.pos_lnum)^"]" in
+  let tmp = tmp^ msg in
 	devel_print tmp
 
 let print_info prefix str (pos:loc) = 

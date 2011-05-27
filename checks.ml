@@ -64,24 +64,19 @@ let classes_related (prog : I.prog_decl) (c1 : I.data_decl) (c2 : I.data_decl) :
 (* receives two types and verifies if they are identic *)
 let rec match_type (t1 : typ) (t2 : typ) : bool = 
   match t1 with
-  | Prim (p1) -> 
-      begin 
-	match t2 with
-	| Prim (p2) -> (p1 = p2)
-	| _ -> false
-      end	      
-  | Named (i1) -> 
-      begin 
-	match t2 with
-	| Named (i2) -> (i1 = i2)
-	| _ -> false
-      end	      	
-  | Array (t3, o3) -> 
-      begin 
-	match t2 with
-	| Array (t4, o4) -> (o3 = o4) && (match_type t3 t4)
-	| _ -> false
-      end	       
+    | Named (i1) -> 
+        begin 
+	        match t2 with
+	          | Named (i2) -> (i1 = i2)
+	          | _ -> false
+        end	      	
+    | Array (t3, o3) -> 
+        begin 
+	        match t2 with
+	          | Array (t4, o4) -> (o3 = o4) && (match_type t3 t4)
+	          | _ -> false
+        end 
+    | _ -> match_type t1 t2
 
 (* receives two procedures and checks if they have matching signatures *)
 let match_signature (p1 : I.proc_decl) (p2 : I.proc_decl) = 

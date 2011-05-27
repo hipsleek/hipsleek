@@ -366,16 +366,16 @@ and exp =
   | Var of exp_var
   | VarDecl of exp_var_decl
   | While of exp_while
-  
-(* type constants *)
 
-let void_type = Prim Void
+(* utility functions *)
 
-let int_type = Prim Int
+let void_type = Void
 
-let float_type = Prim Float
+let int_type = Int
 
-let bool_type = Prim Bool
+let float_type = Float
+
+let bool_type = Bool
 
 (* utility functions *)
 
@@ -431,17 +431,6 @@ let iter_proc (prog:prog_decl) (f_p : proc_decl -> unit) : unit =
   fold_proc prog (f_p) (fun _ _ -> ()) ()
 
 let set_proc_data_decl (p : proc_decl) (d : data_decl) = p.proc_data_decl <- Some d
-
-let rec name_of_type (t : typ) = match t with
-  | Prim Int -> "int"
-  | Prim Bool -> "bool"
-  | Prim Void -> "void"
-  | Prim Float -> "float"
-  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | Prim (BagT t) -> "bag("^(name_of_type (Prim t)) ^")"
-  | Prim List -> "list"
-  | Named c -> c
-  | Array _ -> "Array"
 
 let are_same_type (t1 : typ) (t2 : typ) = t1 = t2 (*TODO: this function should be removed, use the one in Cast instead *)
 
@@ -964,7 +953,7 @@ and incr_fixpt_view (dl:data_decl list) (view_decls: view_decl list)  =
 and update_fixpt (vl:(view_decl * ident list *ident list) list)  = 
   List.iter (fun (v,a,tl) -> 
       v.view_pt_by_self<-tl;
-      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^"cannot have its type determined")
+      if (List.length a==0) then report_error no_pos ("self of "^(v.view_name)^" cannot have its type determined")
       else v.view_data_name <- List.hd a) vl 
 
 and set_check_fixpt (data_decls : data_decl list) (view_decls: view_decl list)  =
@@ -1209,18 +1198,21 @@ let find_classes (c1 : ident) (c2 : ident) : ident list =
   let path, _ = PathCH.shortest_path class_hierarchy v1 v2 in
 	List.map (fun e -> (CH.E.dst e).ch_node_name) path
 
-let sub_type (t1 : typ) (t2 : typ) = 
-  let c1 = name_of_type t1 in
-  let c2 = name_of_type t2 in
-	if c1 = c2 || (is_named_type t2 && c1 = "") then true
-	else false
-	  (*
-		try
-		let _ = find_classes c1 c2 in
-		true
-		with
-		| Not_found -> false
-	  *)
+(* (\* is t1 a subtype of t2 *\) *)
+(* let sub_type (t1 : typ) (t2 : typ) =  *)
+(*   let c1 = string_of_typ t1 in *)
+(*   let c2 = string_of_typ t2 in *)
+(* 	if c1 = c2 || (is_named_type t2 && c1 = "null") then true *)
+(* 	else false *)
+(* 	  (\* *)
+(* 		try *)
+(* 		let _ = find_classes c1 c2 in *)
+(* 		true *)
+(* 		with *)
+(* 		| Not_found -> false *)
+(* 	  *\) *)
+
+let sub_type t1 t2 = Globals.sub_type t1 t2
 
 let compatible_types (t1 : typ) (t2 : typ) = sub_type t1 t2 || sub_type t2 t1
 

@@ -1,0 +1,83 @@
+/**
+ Left-leaning Red Black Tree
+ Modified from RedBlackBST.java
+ @author: Vu An Hoa
+ */
+
+data node {
+	int val;
+	int color; /* 0 for red, 1 for black */
+	node left;
+	node right;
+}.
+
+
+/* view for red-black trees */
+pred rbd<n, cl, d, bh> == self = null & n = 0 & bh = 1 & cl = 1 & d=2  
+    or self::node<v, 0, l, r> * l::rbd<ln, 1,_, lbh> * r::rbd<rn, 1,_, rbh>
+	   & cl = 0 & n = 1 + ln + rn & lbh = bh & rbh = bh & d=1 
+   or self::node<v, 1, l, r> * l::rbd<ln, _,_, lbh> * r::rbd<rn, 1,_, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=1 
+   or self::node<v, 1, l, r> * l::rbd<ln, 0,_, lbh> * r::rbd<rn, 0,_, rbh>
+       & cl = 1 & n = 1 + ln + rn & lbh = rbh & bh = 1 + lbh & d=0 
+	inv n >= 0 & bh >= 1 & 0 <= cl <= 1 & 0 <= d <=2.
+
+pred red<n, bh> == self::node<_,0,t1,t2> * t1::rbd<n1,0,_,h1> * t2::rbd<n2,1,_,h2> 
+                   & bh=h1 & bh=h2  & n=1+n1+n2 
+  //          or  self::node<v, 0, l, r> * l::rbd<n1, 1,_, lbh> * r::rbd<n2, 1,_, rbh> &
+  // 	              n = 1 + n1 + n2 & lbh = bh & rbh = bh 
+	inv n >= 1 & bh >= 1 & self!=null.
+
+  /*
+checkentail q::rbd<n+1,1,_,bh> & n>=0 |-
+  q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2> 
+  or q::node<_, 1, l2, r2> * l2::rbd<c, _,_, bh3> * r2::rbd<d, 1,_, bh4>  .
+
+
+checkentail q::rbd<n+1,1,0,bh> & n>=0 |-
+  q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2> .
+
+checkentail q::rbd<n+1,1,1,bh> & n>=0 |-
+  q::node<_, 1, l2, r2> * l2::rbd<c, _,_, bh3> * r2::rbd<d, 1,_, bh4>.
+
+checkentail q::rbd<n+1,1,d,bh> & n>=0 |-
+  q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2> 
+  or q::node<_, 1, l2, r2> * l2::rbd<c, _,_, bh1> * r2::rbd<d, 1,_, bh2>  .
+  */
+  /*
+checkentail q::rbd<n+1,1,_,bh> & n>=0 |-
+ q::node<_, 1, l, r>  
+ case {
+   true ->  l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2>
+   or  l2::rbd<c, _,_, bh1> * r2::rbd<d, 1,_, bh2> ;
+  }.
+
+
+*/
+
+
+checkentail q::rbd<n+1,1,d,bh> & n>=0 |-
+ case {
+  d=0 -> [] q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2>;
+  d!=0 -> [] q::node<_, 1, l, r> * l::rbd<c, _,_, bh1> * r::rbd<e, 1,_, bh2>;
+ }.
+
+checkentail q::rbd<n+1,1,0,bh> & n>=0 |-
+  q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2>.
+
+checkentail q::rbd<n+1,1,d,bh> & n>=0 |-
+  q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2> 
+  or q::node<_, 1, l2, r2> * l2::rbd<c, _,_, bh1> * r2::rbd<e, 1,_, bh2>  .
+
+checkentail q::rbd<n+1,1,_,bh> & n>=0 |-
+  q::node<_, 1, l, r> * l::rbd<a, 0,_, bh1> * r::rbd<b, 0,_, bh2>.
+
+checkentail q::rbd<n+1,0,_,bh> & n>=0 |-
+  q::node<_, 0, l, r> * l::rbd<a, 1,_, bh1> * r::rbd<b, 1,_, bh2>.
+
+checkentail q::rbd<n,_,_,bh> & n=0 |-
+  q::node<_, 0, l, r> * l::rbd<a, 1,_, bh1> * r::rbd<b, 1,_, bh2>.
+
+checkentail q::rbd<n,_,_,bh> & n=0 |- q=null.
+
+print residue.

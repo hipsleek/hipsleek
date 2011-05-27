@@ -139,7 +139,7 @@ and compile_view prog vdef java_code : (CP.spec_var list) =
 and remove_dup_types (vars : CP.spec_var list) : CP.spec_var list = match vars with
   | (((CP.SpecVar (tv, v, _)) as h) :: rest) ->
 	  if List.exists 
-		(fun (CP.SpecVar (t, _, _)) -> CP.name_of_type t = CP.name_of_type tv) rest
+		(fun (CP.SpecVar (t, _, _)) -> string_of_typ t = CP.name_of_type tv) rest
 	  then
 		remove_dup_types rest
 	  else
@@ -220,7 +220,7 @@ and compile_pre (prog : C.prog_decl) (proc : C.proc_decl) (pre : CF.formula) jav
 					   I.proc_data_decl = None;
 					   I.proc_constructor = false;
 					   I.proc_args = [cur_color pos; new_color pos];
-					   I.proc_return = Prim Bool;
+					   I.proc_return = Bool;
 					   I.proc_static_specs = [];
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;
@@ -289,7 +289,7 @@ and compile_post (prog : C.prog_decl) (proc : C.proc_decl) (post : CF.formula) (
 					   I.proc_data_decl = None;
 					   I.proc_constructor = false;
 					   I.proc_args = [cur_color pos; new_color pos];
-					   I.proc_return = Prim Bool;
+					   I.proc_return = Bool;
 					   I.proc_static_specs = [];
 					   I.proc_dynamic_specs = [];
 					   I.proc_body = Some combined_exp;

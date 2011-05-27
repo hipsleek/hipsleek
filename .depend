@@ -46,8 +46,6 @@
 ./env.cmx: iast.cmx globals.cmx gen.cmx cast.cmx
 ./error.cmo: globals.cmo
 ./error.cmx: globals.cmx
-./fact.cmo:
-./fact.cmx:
 ./gEntailmentList.cmo: gUtil.cmo gProcList.cmo
 ./gEntailmentList.cmx: gUtil.cmx gProcList.cmx
 ./gLogViewWindow.cmo: gen.cmo gUtil.cmo
@@ -56,10 +54,10 @@
 ./gProcList.cmx: gUtil.cmx
 ./gSourceViewX.cmo: gUtil.cmo
 ./gSourceViewX.cmx: gUtil.cmx
-./gUtil.cmo: tpdispatcher.cmo sparser.cmo sleekengine.cmo sleekcommons.cmo \
-    iast.cmo globals.cmo debug.cmo cprinter.cmo cformula.cmo
-./gUtil.cmx: tpdispatcher.cmx sparser.cmx sleekengine.cmx sleekcommons.cmx \
-    iast.cmx globals.cmx debug.cmx cprinter.cmx cformula.cmx
+./gUtil.cmo: tpdispatcher.cmo sleekengine.cmo sleekcommons.cmo iast.cmo \
+    globals.cmo debug.cmo cprinter.cmo cformula.cmo
+./gUtil.cmx: tpdispatcher.cmx sleekengine.cmx sleekcommons.cmx iast.cmx \
+    globals.cmx debug.cmx cprinter.cmx cformula.cmx
 ./gen.cmo: globals.cmo error.cmo
 ./gen.cmx: globals.cmx error.cmx
 ./ghip.cmo: tpdispatcher.cmo globals.cmo gUtil.cmo gSourceViewX.cmo \
@@ -86,8 +84,8 @@
     cpure.cmx
 ./iformula.cmo: ipure.cmo globals.cmo gen.cmo error.cmo
 ./iformula.cmx: ipure.cmx globals.cmx gen.cmx error.cmx
-./inliner.cmo: iprinter.cmo iast.cmo globals.cmo gen.cmo error.cmo
-./inliner.cmx: iprinter.cmx iast.cmx globals.cmx gen.cmx error.cmx
+./inliner.cmo: iast.cmo globals.cmo gen.cmo error.cmo
+./inliner.cmx: iast.cmx globals.cmx gen.cmx error.cmx
 ./iprinter.cmo: ipure.cmo iformula.cmo iast.cmo globals.cmo
 ./iprinter.cmx: ipure.cmx iformula.cmx iast.cmx globals.cmx
 ./ipure.cmo: globals.cmo gen.cmo
@@ -216,8 +214,6 @@
 ./solver.cmx: tpdispatcher.cmx prooftracer.cmx mcpure.cmx iast.cmx \
     globals.cmx gen.cmx error.cmx debug.cmx cpure.cmx cprinter.cmx \
     context.cmx cformula.cmx cast.cmx
-./sparser.cmo: sleekcommons.cmo ipure.cmo iformula.cmo iast.cmo globals.cmo
-./sparser.cmx: sleekcommons.cmx ipure.cmx iformula.cmx iast.cmx globals.cmx
 ./test-oo.cmo: iprinter.cmo globals.cmo gen.cmo debug.cmo cprinter.cmo \
     astsimp.cmo
 ./test-oo.cmx: iprinter.cmx globals.cmx gen.cmx debug.cmx cprinter.cmx \

@@ -543,21 +543,19 @@ let distributive c = List.mem c !distributive_views
 
 let add_distributive c = distributive_views := c :: !distributive_views
 
-(* type constants *)
+let void_type = Void
 
-let void_type = Prim Void
+let int_type = Int
 
-let int_type = Prim Int
+let float_type = Float
 
-let float_type = Prim Float
+let bool_type = Bool
 
-let bool_type = Prim Bool
+let bag_type = (BagT Int)
 
-let bag_type = Prim (BagT Int)
+let list_type = List Int
 
-let list_type = Prim List
-
-let place_holder = P.SpecVar (int_type, "pholder___", Unprimed)
+let place_holder = P.SpecVar (Int, "pholder___", Unprimed)
 
 (* smart constructors *)
 (*let mkMultiSpec pos = [ SEnsure {
@@ -626,7 +624,7 @@ let rec type_of_exp (e : exp) = match e with
   | Dprint _ -> None
   | FConst _ -> Some float_type
 	  (*| FieldRead (t, _, _, _) -> Some t*)
-	  (*| FieldWrite _ -> Some void_type*)
+	  (*| FieldWrite _ -> Some Void*)
   | IConst _ -> Some int_type
   | New ({exp_new_class_name = c; 
 		  exp_new_arguments = _; 
@@ -656,19 +654,19 @@ and is_transparent e = match e with
   | Assert _ | Assign _ | Debug _ | Print _ -> true
   | _ -> false
 
-let rec name_of_type (t : typ) = match t with
-  | Prim Int -> "int"
-  | Prim Bool -> "bool"
-  | Prim Void -> "void"
-  | Prim Float -> "float"
-  | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")"
-  | Prim (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | Prim List -> "list"
-  | Named c -> c
-  | Array (et, _) -> (name_of_type et) ^ "[]" (* An hoa *) 
+(* let rec name_of_type (t : typ) = match t with *)
+(*   | Prim Int -> "int" *)
+(*   | Prim Bool -> "bool" *)
+(*   | Prim Void -> "void" *)
+(*   | Prim Float -> "float" *)
+(*   | Prim (BagT t) -> "bag("^(name_of_type (Prim t))^")" *)
+(*   | Prim (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | Prim List -> "list" *)
+(*   | Named c -> c *)
+(*   | Array (et, _) -> (name_of_type et) ^ "[]" (\* An hoa *\)  *)
 
 let mingle_name (m : ident) (targs : typ list) = 
-  let param_tnames = String.concat "~" (List.map name_of_type targs) in
+  let param_tnames = String.concat "~" (List.map string_of_typ targs) in
 	m ^ "$" ^ param_tnames
 
 let unmingle_name (m : ident) = 
@@ -1038,35 +1036,37 @@ let find_classes (c1 : ident) (c2 : ident) : (bool * data_decl list) =
 			| Not_found -> failwith ("find_classes: " ^ c1 ^ " and " ^ c2 ^ " are not related!")
 
 
-let rec sub_type (t1 : typ) (t2 : typ) = match t1 with
-  | Prim _ -> t1 = t2
-  | Named c1 -> begin match t2 with
-	  | Prim _ | Array _ -> false (* An Hoa add P.Array _ *)
-	  | Named c2 ->
-		  if c1 = c2 then true
-		  else if c1 = "" then true (* t1 is null in this case *)
-		  else 
-			let v1 = CH.V.create {ch_node_name = c1; 
-								  ch_node_class = None; 
-								  ch_node_coercion = None} in
-			let v2 = CH.V.create {ch_node_name = c2; 
-								  ch_node_class = None; 
-								  ch_node_coercion = None} in
-			  try
-				let _ = PathCH.shortest_path class_hierarchy v1 v2 in
-				  true
-			  with
-				| Not_found -> false
-			end
-	(* An Hoa *)
-	| Array (et1, _) -> begin
-		match t2 with
-			| Array (et2, _) -> (sub_type et1 et2)
-			| _ -> false
-		end
+(* let rec sub_type (t1 : typ) (t2 : typ) = match t1 with *)
+(*   | Named c1 -> begin match t2 with *)
+(* 	    | Named c2 -> begin *)
+(* 		    if c1 = c2 then true *)
+(* 		    else if c1 = "" then true (\* t1 is null in this case *\) *)
+(* 		    else  *)
+(* 			  let v1 = CH.V.create {ch_node_name = c1;  *)
+(* 								    ch_node_class = None;  *)
+(* 								    ch_node_coercion = None} in *)
+(* 			  let v2 = CH.V.create {ch_node_name = c2;  *)
+(* 								    ch_node_class = None;  *)
+(* 								    ch_node_coercion = None} in *)
+(* 			  try *)
+(* 				  let _ = PathCH.shortest_path class_hierarchy v1 v2 in *)
+(* 				  true *)
+(* 			  with *)
+(* 				| Not_found -> false *)
+(*         end *)
+(*         | Array _ | _ -> false (\* An Hoa add P.Array _ *\) *)
+(*   end *)
+(* 	(\* An Hoa *\) *)
+(*   | Array (et1, _) -> begin *)
+(* 	  match t2 with *)
+(* 		| Array (et2, _) -> (sub_type et1 et2) *)
+(* 		| _ -> false *)
+(*   end *)
+(*   |  _ -> t1 = t2 *)
 
-				
-				
+let sub_type (t1 : typ) (t2 : typ) = 
+  Globals.sub_type t1 t2
+
 and exp_to_check (e:exp) :bool = match e with
   | CheckRef _
   | Debug _
@@ -1086,10 +1086,10 @@ and exp_to_check (e:exp) :bool = match e with
   | Try _ 
   | Time _ 
   | Java _ -> false
-  
+        
   | BConst _
-	(*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
-	(*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
+	      (*| ArrayAt _ (* An Hoa TODO NO IDEA *)*)
+	      (*| ArrayMod _ (* An Hoa TODO NO IDEA *)*)
   | Assign _
   | ICall _
   | IConst _
@@ -1097,12 +1097,12 @@ and exp_to_check (e:exp) :bool = match e with
   | This _
   | Var _
   | Null _
-	| EmptyArray _ (* An Hoa : NO IDEA *)
+  | EmptyArray _ (* An Hoa : NO IDEA *)
   | New _
   | Sharp _
   | SCall _
   | Label _
-  -> true
+      -> true
   
   
 let rec pos_of_exp (e:exp) :loc = match e with

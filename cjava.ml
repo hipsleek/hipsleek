@@ -41,21 +41,21 @@ let _ = List.map (fun (op, func) -> Hashtbl.add primitives_map op func)
    ("is_not_null___", is_not_null_prim)]
 
 
-(* pretty printing for primitive types *)
-let string_of_prim_type = function 
-  | Bool          -> "boolean "
-  | Float         -> "float "
-  | Int           -> "int "
-  | Void          -> "void "
-  | BagT t           -> "multiset("^(string_of_prim_type t)^")"
-  | (TVar i) -> "TVar["^(string_of_int i)^"]"
-  | List          -> "list"
+(* (\* pretty printing for primitive types *\) *)
+(* let string_of_prim_type = function  *)
+(*   | Bool          -> "boolean " *)
+(*   | Float         -> "float " *)
+(*   | Int           -> "int " *)
+(*   | Void          -> "void " *)
+(*   | BagT t           -> "multiset("^(string_of_prim_type t)^")" *)
+(*   | (TVar i) -> "TVar["^(string_of_int i)^"]" *)
+(*   | List          -> "list" *)
 
-(* pretty printing for types *)
-let rec string_of_typ = function 
-  | Prim t        -> string_of_prim_type t 
-  | Named ot      -> ot ^ " "
-  | Array (et, _)      -> string_of_typ et ^ "[]" (* An Hoa *)
+(* (\* pretty printing for types *\) *)
+(* let rec string_of_typ = function  *)
+(*   | Prim t        -> string_of_prim_type t  *)
+(*   | Named ot      -> ot ^ " " *)
+(*   | Array (et, _)      -> string_of_typ et ^ "[]" (\* An Hoa *\) *)
 
 (* functions to decide if an expression needs parenthesis *)
 let need_parenthesis e = match e with 
@@ -197,7 +197,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
   | Bind ({exp_bind_bound_var = (t, bvar); 
 		   exp_bind_fields = idl;
 		   exp_bind_body = e}) -> 
-	  let ddef = look_up_data_def no_pos prog.prog_data_decls (CP.name_of_type t) in
+	  let ddef = look_up_data_def no_pos prog.prog_data_decls (string_of_typ t) in
 	  let field_names = List.map snd idl in
 		(* add local bind map *)
 	  let _ = List.map2 
@@ -291,12 +291,12 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 	  null_vars
   | VarDecl ({exp_var_decl_type = t;
 			  exp_var_decl_name = var}) -> 
-	  if CP.name_of_type t = "" then
+	  if string_of_typ t = "" then
 		(* the only reason why var has type "" is because 
 		   it was introduced to hold "null" *)
 		IdentSet.add var null_vars
 	  else
-		let _ = Buffer.add_string java_code ((CP.name_of_type t) ^ " " ^ var ^ ";") in
+		let _ = Buffer.add_string java_code ((string_of_typ t) ^ " " ^ var ^ ";") in
 		  null_vars
   | Unit l -> null_vars
   | While ({exp_while_condition = id;
@@ -311,7 +311,7 @@ and java_of_exp prog (bmap : bind_map) (null_vars : IdentSet.t) (e0 : exp) java_
 (*
 and string_of_param_list (params : CP.spec_var list) : string =
   let tmp1 = List.map
-	(fun (CP.SpecVar (t, v, _)) -> (CP.name_of_type t) ^ " " ^ v)
+	(fun (CP.SpecVar (t, v, _)) -> (string_of_typ t) ^ " " ^ v)
 	params in
   let tmp2 = String.concat ", " tmp1 in
 	tmp2
@@ -319,14 +319,14 @@ and string_of_param_list (params : CP.spec_var list) : string =
 
 and params_of_typed_ident_list delim (params : typed_ident list) : string =
   let tmp1 = List.map
-	(fun (t, v) -> (CP.name_of_type t) ^ " " ^ v)
+	(fun (t, v) -> (string_of_typ t) ^ " " ^ v)
 	params in
   let tmp2 = String.concat delim tmp1 in
 	tmp2
 
 and fields_of_typed_ident_list (fields : typed_ident list) : string =
   let tmp1 = List.map
-	(fun (t, v) -> (CP.name_of_type t) ^ " " ^ v ^ ";")
+	(fun (t, v) -> (string_of_typ t) ^ " " ^ v ^ ";")
 	fields in
   let tmp2 = String.concat "\n" tmp1 in
 	tmp2
@@ -337,7 +337,7 @@ and java_of_proc_decl prog p java_code =
 	Buffer.add_string java_code ("\npublic static void main(String args[])")
   else begin
 	Buffer.add_string java_code ("\n\nstatic ");
-	Buffer.add_string java_code (CP.name_of_type p.proc_return);
+	Buffer.add_string java_code (string_of_typ p.proc_return);
 	Buffer.add_char java_code ' ';
 	Buffer.add_string java_code p.proc_name;
 	Buffer.add_char java_code '(';
@@ -367,7 +367,7 @@ and build_constructor (ddef : data_decl) java_code : unit =
   let typs, fnames = List.split ddef.data_fields in
   let pnames = fresh_names n in
   let formals = List.map2 (fun t -> fun name -> 
-							 (CP.name_of_type t) ^ " " ^ name) typs pnames in
+							 (string_of_typ t) ^ " " ^ name) typs pnames in
   let assignments = List.map2 (fun f -> fun p -> (f ^ " = " ^ p ^ ";")) fnames pnames in
 	Buffer.add_string java_code "\n\n";
 	Buffer.add_string java_code ddef.data_name;
@@ -403,7 +403,7 @@ and convert_methods prog (pdefs : proc_decl list) main_class java_code =
 
 and convert_method prog (pdef : proc_decl) java_code = 
   if pdef.proc_name = "main" then begin
-	if Gen.is_empty pdef.proc_args && pdef.proc_return = void_type then begin
+	if Gen.is_empty pdef.proc_args && pdef.proc_return = Void then begin
 	  Buffer.add_string java_code "public static void main(String[] args) {\n";
 	  (match pdef.proc_body with
 		 | Some e -> 
