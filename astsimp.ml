@@ -3912,16 +3912,16 @@ and must_unify_x (k1 : typ) (k2 : typ) stab pos : typ  =
   match k with
     | Some r -> r
     | None -> report_error pos ("UNIFICATION ERROR : at location "^(string_of_full_loc pos)
-          ^" types "^(string_of_typ k1)
-          ^" and "^(string_of_typ k2)^" are inconsistent")
+          ^" types "^(string_of_typ (get_type_entire stab k1))
+          ^" and "^(string_of_typ (get_type_entire stab k2))^" are inconsistent")
 
 and must_unify_expect (k1 : typ) (k2 : typ) stab pos : typ  =
   let k = unify_expect k1 k2 stab in
   match k with
     | Some r -> r
     | None -> report_error pos ("TYPE ERROR : at location "^(string_of_full_loc pos)
-          ^", found "^(string_of_typ k1)
-          ^"but expecting "^(string_of_typ k2))
+          ^", found "^(string_of_typ (get_type_entire stab k1))
+          ^"but expecting "^(string_of_typ (get_type_entire  stab k2)))
 
 and unify_type (k1 : spec_var_kind) (k2 : spec_var_kind) stab :
       spec_var_kind option =
@@ -3976,8 +3976,8 @@ and must_unify_expect_test k1 k2 pos =
   match k with
     | Some r -> r
     | None -> report_error pos ("TYPE ERROR : at location "^(string_of_full_loc pos)
-          ^", found "^(string_of_typ k1)
-          ^"but expecting "^(string_of_typ k2))
+          ^", found "^(string_of_typ (k1))
+          ^"but expecting "^(string_of_typ (k2)))
 
 and subtype_expect_test _ _ = true
 
@@ -4167,7 +4167,21 @@ and update_tvar stab i t =
      en.sv_info_kind <- t
   with _ -> report_error no_pos ("Type Var "^key^" cannot be found in stab")
 
-                             
+and get_type_entire stab t =
+  let rec helper t = match t with
+    | TVar j -> get_type stab j
+    | BagT et -> BagT (helper et)
+    | List et -> List (helper et)
+    | Array (et,d) -> Array (helper et,d)
+    | _ -> t
+  in helper t
+
+and get_type stab i = 
+  let key = "TVar__"^(string_of_int i) in
+  ( try 
+    let en = Hashtbl.find stab key in
+    en.sv_info_kind 
+  with _ -> report_error no_pos ("UNEXPECTED : Type Var "^key^" cannot be found in stab"))
 
 and gather_type_info_exp a0 stab et =
   Gen.Debug.ho_eff_3 "gather_type_info_exp" [false;true] 

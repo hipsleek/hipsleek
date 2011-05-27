@@ -442,7 +442,13 @@ let pr_op (f:'a -> unit) (e1:'a) (op:string) (e2:'a)  =
  
 let string_of_spec_var x = 
   match x with
-    | P.SpecVar (t, id, p) -> id ^(*"."^(string_of_typ t) ^*)(match p with 
+    | P.SpecVar (t, id, p) -> id (* ^":"^(string_of_typ t) *) ^(match p with 
+	    | Primed -> "'" 
+	    | Unprimed -> "" )
+
+let string_of_typed_spec_var x = 
+  match x with
+    | P.SpecVar (t, id, p) -> id ^":"^(string_of_typ t) ^(match p with 
 	    | Primed -> "'" 
 	    | Unprimed -> "" )
 
@@ -450,6 +456,8 @@ let string_of_imm imm =
   if imm then "@I" else "@M"
 
 let pr_spec_var x = fmt_string (string_of_spec_var x)
+
+let pr_typed_spec_var x = fmt_string (string_of_typed_spec_var x)
 
 let pr_list_of_spec_var xs = pr_list_none pr_spec_var xs
   
@@ -1343,7 +1351,7 @@ let pr_view_decl v =
 	            (fun () -> pr_pure_formula s1;fmt_string "->"; pr_mix_formula_branches (s3, s2)) ()
   in
   fmt_open_vbox 1;
-  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_spec_var v.view_vars; fmt_string "= ") ();
+  wrap_box ("B",0) (fun ()-> pr_angle  ("view "^v.view_name) pr_typed_spec_var v.view_vars; fmt_string "= ") ();
   fmt_cut (); wrap_box ("B",0) pr_struc_formula v.view_formula; 
   pr_vwrap  "inv: "  pr_mix_formula (fst v.view_user_inv);
   pr_vwrap  "unstructured formula: "  (pr_list_op_none "|| " (wrap_box ("B",0) (fun (c,_)-> pr_formula c))) v.view_un_struc_formula;
