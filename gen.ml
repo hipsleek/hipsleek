@@ -825,13 +825,13 @@ struct
         let _ = print_string (s^" EXIT Exception"^(Printexc.to_string ex)^"Occurred!\n") in
         flush stdout;
         raise ex)) in
-    if not(test r) then r else
+    (if not(test r) then r else
       let _ = print_string ("\n"^h^"\n") in
       let _ = pr_args args in
       let _ = pr_lazy_res lz in
       let _ = print_string (s^" EXIT out :"^(pr_o r)^"\n") in
       flush stdout;
-      r
+      r)
 
   let choose bs xs = 
     let rec hp bs xs = match bs,xs with

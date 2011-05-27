@@ -82,6 +82,16 @@ let rec string_of_typ = function
   | Array (et, _) -> (string_of_typ et) ^ "[]" (* An Hoa *)
 ;;
 
+let subs_tvar_in_typ t (i:int) nt =
+  let rec helper t = match t with
+    | TVar j -> if i==j then nt else t
+    | BagT et -> BagT (helper et)
+    | List et -> List (helper et)
+    | Array (et,d) -> Array (helper et,d)
+    | _ -> t
+  in helper t
+;;
+
 let null_type = Named ""
 ;;
 
