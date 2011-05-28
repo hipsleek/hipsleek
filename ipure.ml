@@ -35,8 +35,8 @@ and b_formula =
 	  (* lists and list formulae *)
   | ListIn of (exp * exp * loc)
   | ListNotIn of (exp * exp * loc)
-  | ListAllN of (exp * exp * loc)
-  | ListPerm of (exp * exp * loc)
+  | ListAllN of (exp * exp * loc)  (* allN 0 list *)
+  | ListPerm of (exp * exp * loc)  (* perm L2 L2 *)
   | RelForm of (ident * (exp list) * loc)           (* An Hoa: Relational formula to capture relations, for instance, s(a,b,c) or t(x+1,y+2,z+3), etc. *)
 
 (* Expression *)

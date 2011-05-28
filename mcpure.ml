@@ -1475,3 +1475,5 @@ let filter_complex_inv f = match f with
 	| MemoF f -> MemoF (memo_filter_complex_inv f)
 	| OnePF f -> OnePF (filter_complex_inv f)
   
+  
+let isConstTrueBranch (p,bl) = (isConstMTrue p)&& (List.for_all (fun (_,b)-> isConstTrue b) bl)
