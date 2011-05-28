@@ -4541,16 +4541,19 @@ and gather_type_info_b_formula_x prog b0 stab =
           let t = must_unify t1 NUM stab pos  in
 	      let _ = gather_type_info_var v2 stab (BagT t) pos in
           ()
-    | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos) ->
+    | IP.ListIn (e1, e2, pos) | IP.ListNotIn (e1, e2, pos)  | IP.ListAllN (e1, e2, pos) ->
           let new_et = fresh_tvar stab in
           let t1 = gather_type_info_exp e2 stab (List new_et) in
           let t2 = gather_type_info_exp e1 stab new_et in
           let _ = must_unify t1 (List t2) stab pos in
           ()
-    | IP.ListAllN (e1, e2, pos) ->
-           failwith ("gather_type_info_b_formula: 3 features yet to be handled")
-     | IP.ListPerm (e1, e2, pos) ->
-           failwith ("gather_type_info_b_formula: 4 features yet to be handled")
+    | IP.ListPerm (e1, e2, pos) ->
+          let el_t = fresh_tvar stab in
+          let new_et = List el_t in
+	      let t1 = gather_type_info_exp_x e1 stab new_et in 
+	      let t2 = gather_type_info_exp_x e2 stab new_et in
+          let _ = must_unify t1 t2 stab pos in
+          ()
 	| IP.RelForm (r, args, pos) ->
  		  (try
 		    let rdef = I.look_up_rel_def_raw prog.I.prog_rel_decls r in
