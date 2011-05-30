@@ -712,7 +712,7 @@ let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
   List.mem lhs ns
 
 let is_self_rec_rhs (lhs:ident) (rhs:F.struc_formula) : bool =
-  Gen.Debug.ho_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
+  Gen.Debug.no_1 "is_self_rec_rhs" (fun x -> x) (string_of_bool) (fun _ -> is_self_rec_rhs lhs rhs) lhs
 
 (* pre: name exists as a view in prog *)
 let is_rec_view_def prog (name : ident) : bool = 
