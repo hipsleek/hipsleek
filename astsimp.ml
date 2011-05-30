@@ -625,8 +625,8 @@ let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
     let mutrec = List.concat mr in
     let selfstr = pr_list pr_id (Gen.BList.difference_eq (=) selfrec mutrec) in
     (* let _ = print_endline ("Self Rec :"^selfstr) in *)
-    if mr==[] then g
-    else failwith ("View definitionss "^str^" are mutually recursive") 
+    (* if not(mr==[]) then failwith ("View definitions "^str^" are mutually recursive") ;  *)
+    g
     (* if DfsNG.has_cycle g *)
     (* then failwith "View definitions are mutually recursive" *)
     (* else g *)
