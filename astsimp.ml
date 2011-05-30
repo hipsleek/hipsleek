@@ -1236,6 +1236,8 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           else match a with 
             | Some f1  -> Some (CF.mkOr f1 fc no_pos)
             | None -> Some fc) None n_un_str in
+      (* TODO : This has to be generalised to mutual-recursion *)
+      let ir = Cast.is_self_rec_rhs vdef.I.view_name cf in
       let cvdef ={
           C.view_name = vdef.I.view_name;
           C.view_vars = view_sv_vars;
@@ -1252,6 +1254,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
           C.view_user_inv = ((MCP.memoise_add_pure_N (MCP.mkMTrue pos) pf), pf_b);
           C.view_un_struc_formula = n_un_str;
                C.view_base_case = None;
+               C.view_is_rec = ir;
           C.view_case_vars = Gen.BList.intersect_eq (=) view_sv_vars (Cformula.guard_vars cf);
           C.view_raw_base_case = rbc;
           C.view_prune_branches = [];

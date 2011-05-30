@@ -702,4 +702,5 @@ let string_of_program p = (* "\n" ^ (string_of_data_decl_list p.prog_data_decls)
 Iformula.print_formula :=string_of_formula;;
 Iformula.print_struc_formula :=string_of_struc_formula;;
 Iast.print_struc_formula := string_of_struc_formula;;
+Iast.print_view_decl := string_of_view_decl;
 
