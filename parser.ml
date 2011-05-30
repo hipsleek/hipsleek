@@ -278,6 +278,18 @@ SHGram.Entry.of_parser "peek_print"
              | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
              | _ -> ())
 
+ let peek_pure_out = 
+   SHGram.Entry.of_parser "peek_pure_out"
+       (fun strm -> 
+           match Stream.npeek 3 strm with
+             | [FORALL,_;OPAREN,_;_] -> ()
+             | [EXISTS,_;OPAREN,_;_] -> ()
+             | [UNION,_;OPAREN,_;_] -> ()
+             | [IDENTIFIER id,_;OPAREN,_;_] -> ()
+             | [_;COLONCOLON,_;_] -> raise Stream.Failure
+             | [_;PRIME,_;COLONCOLON,_] -> raise Stream.Failure
+             | [OPAREN,_;_;COLONCOLON,_] -> raise Stream.Failure
+             | _ -> ())
 let peek_dc = 
    SHGram.Entry.of_parser "peek_dc"
        (fun strm ->
@@ -625,7 +637,7 @@ and_pure_constr: [[ peek_and_pure; `AND; t=pure_constr -> t]];
     
 (* (formula option , expr option )   *)
     
-pure_constr: [[ peek_pure; t=cexp_w -> match t with
+pure_constr: [[ peek_pure_out; t=cexp_w -> match t with
                     | Pure_f f -> f
                     | Pure_c (P.Var (v,_)) ->  P.BForm (P.mkBVar v (get_pos_camlp4 _loc 1), None )
                     | _ ->  report_error (get_pos_camlp4 _loc 1) "expected pure_constr, found cexp"]];
@@ -667,9 +679,11 @@ cexp_w :
      | `ALLN; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListAllN (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  
      | `PERM; `OPAREN; lc=SELF; `COMMA; cl=SELF; `CPAREN    -> cexp_to_pure2 (fun c1 c2-> P.ListPerm (c1, c2, (get_pos_camlp4 _loc 2))) lc cl  ]
 
+ 
    
   | "pure_paren" 
          [peek_pure; `OPAREN;  dc=SELF; `CPAREN -> dc ] 
+
    
 (* constraint expressions *)
    | "gen"
@@ -679,13 +693,16 @@ cexp_w :
    | `DIFF; `OPAREN; c1=SELF; `COMMA; c2=SELF; `CPAREN             -> apply_cexp_form2 (fun c1 c2-> P.BagDiff (c1, c2, get_pos_camlp4 _loc 1) ) c1 c2
  
 
-   | `OLIST; c1=opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
+   | `OLIST; c1 = opt_cexp_list; `CLIST                              -> Pure_c (P.List (c1, get_pos_camlp4 _loc 1)) 
    |  c1=SELF; `COLONCOLONCOLON; c2=SELF -> apply_cexp_form2 (fun c1 c2-> P.ListCons (c1, c2, get_pos_camlp4 _loc 2)) c1 c2 
-   | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1
+   | `TAIL; `OPAREN; c1=SELF; `CPAREN                -> apply_cexp_form1 (fun c1-> P.ListTail (c1, get_pos_camlp4 _loc 1)) c1 
    | `APPEND; `OPAREN; c1=opt_cexp_list; `CPAREN                   -> Pure_c (P.ListAppend (c1, get_pos_camlp4 _loc 1))
    | `REVERSE; `OPAREN; c1=SELF; `CPAREN             -> apply_cexp_form1 (fun c1-> P.ListReverse (c1, get_pos_camlp4 _loc 1)) c1 
    (* | t=cexp_w LEVEL "addit" -> t *) ]
  
+   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
+
+]
    | "addit"
      [ c1=SELF ; `PLUS; c2=SELF       -> apply_cexp_form2 (fun c1 c2-> P.mkAdd c1 c2 (get_pos_camlp4 _loc 2)) c1 c2  
      | c1=SELF ; `MINUS; c2=SELF      -> apply_cexp_form2 (fun c1 c2-> P.mkSubtract c1 c2 (get_pos_camlp4 _loc 2)) c1 c2
@@ -696,9 +713,6 @@ cexp_w :
      | t1=SELF ; `DIV ; t2=SELF         -> apply_cexp_form2 (fun c1 c2-> P.mkDiv c1 c2 (get_pos_camlp4 _loc 2)) t1 t2  
      (*| t =cexp_w                                                 -> t *)]
 
-   | [`MINUS; c=SELF               -> apply_cexp_form1 (fun c-> P.mkSubtract (P.IConst (0, get_pos_camlp4 _loc 1)) c (get_pos_camlp4 _loc 1)) c
-
-] 
 
    | "una"
      [(*   h = ho_fct_header                   -> Pure_f (P.mkTrue (get_pos_camlp4 _loc 1)) *)
@@ -1217,7 +1231,7 @@ empty_statement: [[`SEMICOLON -> Empty (get_pos_camlp4 _loc 1) ]];
 unfold_statement: [[ `UNFOLD; t=cid  ->	Unfold { exp_unfold_var = t; exp_unfold_pos = get_pos_camlp4 _loc 1 }]];
  
 assert_statement:
-  [[ `ASSERT; ol=opt_label; f=formulas -> 
+  [[ `ASSERT; ol= opt_label; f=formulas -> 
        mkAssert (Some ((F.subst_stub_flow_struc n_flow (fst f)),(snd f))) None (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
    | `ASSUME; ol=opt_label; dc=disjunctive_constr ->
        mkAssert None (Some (F.subst_stub_flow n_flow dc)) (fresh_formula_label ol) (get_pos_camlp4 _loc 1)
