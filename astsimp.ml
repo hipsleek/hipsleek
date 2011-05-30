@@ -28,6 +28,8 @@ module TP = Tpdispatcher
   
 module Chk = Checks
 
+
+
 (* module VG = View_generator *)
 
 (*
@@ -352,7 +354,7 @@ module DfsNG = Graph.Traverse.Dfs(NG)
 
 module NGComponents = Graph.Components.Make(NG)
   
-  
+
 (***********************************************)
 (* 17.04.2008 *)
 (* add existential quantifiers for the anonymous vars - those that start with "Anon_" *)
@@ -563,76 +565,96 @@ and convert_struc2 prog (f0 : Iformula.struc_formula) : Iformula.struc_formula =
 	List.map (convert_ext2 prog ) f0 
 	  
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
-	(* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
-	(* vdef                                                                  *)
+  (* generate pairs (vdef.view_name, v) where v is a view appearing in     *)
+  (* vdef                                                                  *)
   let rec gen_name_pairs_heap vname h =
     match h with
-    | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
-        (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
-    | IF.HeapNode { IF.h_formula_heap_name = c } ->
-        if c = vname
-        then []
-        else
-          (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
-           with | Not_found -> [])
-    | _ -> [] in
+      | IF.Star { IF.h_formula_star_h1 = h1; IF.h_formula_star_h2 = h2 } ->
+            (gen_name_pairs_heap vname h1) @ (gen_name_pairs_heap vname h2)
+      | IF.HeapNode { IF.h_formula_heap_name = c } ->
+            (* if c = vname *)
+            (* then [] *)
+            (* else *)
+              (try let _ = I.look_up_view_def_raw view_decls0 c in [ (vname, c) ]
+              with | Not_found -> [])
+      | _ -> [] in
   let rec gen_name_pairs vname (f : IF.formula) : (ident * ident) list =
     match f with
-    | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
-        (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
-    | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
-        gen_name_pairs_heap vname h
-    | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
-        gen_name_pairs_heap vname h in
-				
-	let rec gen_name_pairs_ext vname (f:Iformula.ext_formula): (ident * ident) list = match f with
-		| Iformula.EAssume (b,_)-> (gen_name_pairs vname b)
-		| Iformula.ECase {Iformula.formula_case_branches = b}-> 
-			List.fold_left (fun d (e1,e2) -> List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c)) d e2) [] b 
-		| Iformula.EBase {Iformula.formula_ext_base =fb;
-		 				 Iformula.formula_ext_continuation = cont}-> List.fold_left 
-									(fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
-		| Iformula.EVariance b -> List.fold_left 
-									(fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
-		 in
-	 	
-	let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
-		List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c) ) [] f 
-		in
-  let tmp =
-    List.map
-      (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
-      view_decls0 in
-  let edges = List.concat tmp in
-  let g = NG.create ()
+      | IF.Or { IF.formula_or_f1 = f1; IF.formula_or_f2 = f2 } ->
+            (gen_name_pairs vname f1) @ (gen_name_pairs vname f2)
+      | IF.Base { IF.formula_base_heap = h; IF.formula_base_pure = p } ->
+            gen_name_pairs_heap vname h
+      | IF.Exists { IF.formula_exists_heap = h; IF.formula_exists_pure = p } ->
+            gen_name_pairs_heap vname h in
+  
+  let rec gen_name_pairs_ext vname (f:Iformula.ext_formula): (ident * ident) list = match f with
+	| Iformula.EAssume (b,_)-> (gen_name_pairs vname b)
+	| Iformula.ECase {Iformula.formula_case_branches = b}-> 
+		  List.fold_left (fun d (e1,e2) -> List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c)) d e2) [] b 
+	| Iformula.EBase {Iformula.formula_ext_base =fb;
+	  Iformula.formula_ext_continuation = cont}-> List.fold_left 
+		  (fun a c -> a@(gen_name_pairs_ext vname c)) (gen_name_pairs vname fb) cont  
+	| Iformula.EVariance b -> List.fold_left 
+		  (fun a c -> a@(gen_name_pairs_ext vname c)) [] b.Iformula.formula_var_continuation
   in
-    (ignore
-       (List.map
-          (fun (v1, v2) -> NG.add_edge g (NG.V.create v1) (NG.V.create v2))
-          edges);
-     if DfsNG.has_cycle g
-     then failwith "View definitions are mutually recursive"
-     else ();
-		(* take out the view names in reverse order *)
-     let view_names = ref ([] : ident list) in
-     let store_name n = view_names := n :: !view_names
-     in
-       (TopoNG.iter store_name g;
-				(* now reorder the views *)
-        let rec
-          reorder_views (view_decls : I.view_decl list)
-                        (ordered_names : ident list) =
-          match ordered_names with
-          | n :: rest ->
-              let (n_view, rest_decls) =
-                List.partition (fun v -> v.I.view_name = n) view_decls in
-              let (rest_views, new_rest_decls) =
-                reorder_views rest_decls rest
-              in
-								(* n_view should contain only one views *)
-                ((n_view @ rest_views), new_rest_decls)
-          | [] -> ([], view_decls) in
-        let (r1, r2) = reorder_views view_decls0 !view_names in r1 @ r2))
+  
+  let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
+	List.fold_left (fun a c -> a@(gen_name_pairs_ext vname c) ) [] f 
+  in
+
+  let gen_name_pairs_struc vname (f:Iformula.struc_formula): (ident * ident) list =
+    Gen.Debug.no_1 "gen_name_pairs_struc" pr_id (pr_list (pr_pair pr_id pr_id)) 
+        (fun _ -> gen_name_pairs_struc vname f) vname in
+
+  let build_graph vdefs =
+    let tmp =
+      List.map
+          (fun vdef -> gen_name_pairs_struc vdef.I.view_name vdef.I.view_formula)
+          vdefs in
+    let selfrec = List.filter (fun l -> List.exists (fun (x,y) -> x=y) l) tmp in
+    let selfrec = List.map (fun l -> fst (List.hd l)) selfrec in
+
+    let edges = List.concat tmp in
+    let g = NG.create () in
+    let _ = (List.map
+        (fun (v1, v2) -> NG.add_edge g (NG.V.create v1) (NG.V.create v2))
+        edges) in
+    let scclist = NGComponents.scc_list g in
+    let mr = List.filter (fun l -> (List.length l)>1) scclist in
+    let str = pr_list (pr_list pr_id) mr in
+    let mutrec = List.concat mr in
+    let selfstr = pr_list pr_id (Gen.BList.difference_eq (=) selfrec mutrec) in
+    (* let _ = print_endline ("Self Rec :"^selfstr) in *)
+    if mr==[] then g
+    else failwith ("View definitionss "^str^" are mutually recursive") 
+    (* if DfsNG.has_cycle g *)
+    (* then failwith "View definitions are mutually recursive" *)
+    (* else g *)
+  in
+
+  let g = build_graph view_decls0 in
+
+  (* take out the view names in reverse order *)
+  let view_names = ref ([] : ident list) in
+  let store_name n = view_names := n :: !view_names in
+  let _ = (TopoNG.iter store_name g) in
+
+  (* now reorder the views *)
+  let rec
+        reorder_views (view_decls : I.view_decl list)
+        (ordered_names : ident list) =
+    match ordered_names with
+      | n :: rest ->
+            let (n_view, rest_decls) =
+              List.partition (fun v -> v.I.view_name = n) view_decls in
+            let (rest_views, new_rest_decls) =
+              reorder_views rest_decls rest
+            in
+			(* n_view should contain only one views *)
+            ((n_view @ rest_views), new_rest_decls)
+      | [] -> ([], view_decls) in
+  let (r1, r2) = reorder_views view_decls0 !view_names 
+  in r1 @ r2
 
 let order_views (view_decls0 : I.view_decl list) : I.view_decl list =
   let pr x = string_of_ident_list (List.map (fun v -> v.I.view_name) x) in 
