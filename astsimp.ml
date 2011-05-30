@@ -1193,7 +1193,7 @@ and trans_view_x (prog : I.prog_decl) (vdef : I.view_decl) : C.view_decl =
   else vdef.I.view_data_name in
    (vdef.I.view_data_name <- data_name;
    H.add stab self { sv_info_kind = (Named data_name);id = fresh_int () };
-  let cf = transf_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
+  let cf = trans_I2C_struc_formula prog true (self :: vdef.I.view_vars) vdef.I.view_formula stab false in
   let (inv, inv_b) = vdef.I.view_invariant in
   let pf = trans_pure_formula inv stab in
     let pf_b = List.map (fun (n, f) -> (n, trans_pure_formula f stab)) inv_b in
@@ -1822,8 +1822,8 @@ and trans_proc (prog : I.prog_decl) (proc : I.proc_decl) : C.proc_decl =
 	let _ = H.add stab res { sv_info_kind = cret_type;id = fresh_int () } in
 	let _ = check_valid_flows proc.I.proc_static_specs in
 	let _ = check_valid_flows proc.I.proc_dynamic_specs in
-	let static_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
-	let dynamic_specs_list = set_pre_flow (transf_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
+	let static_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_static_specs stab true) in
+	let dynamic_specs_list = set_pre_flow (trans_I2C_struc_formula prog true free_vars proc.I.proc_dynamic_specs stab true) in
 	let exc_list = (List.map Gen.ExcNumbering.get_hash_of_exc proc.I.proc_exceptions) in
 	let r_int = Gen.ExcNumbering.get_hash_of_exc abnormal_flow in
 	(if (List.exists CF.is_false_flow exc_list)|| (List.exists (fun c-> not (CF.subsume_flow r_int c)) exc_list) then 
@@ -2083,7 +2083,7 @@ and trans_exp (prog : I.prog_decl) (proc : I.proc_decl) (ie : I.exp) :
                   all_names);
           let assert_cf_o =
             (match assert_f_o with
-              | Some f -> Some (transf_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
+              | Some f -> Some (trans_I2C_struc_formula prog false free_vars (fst f) stab false (*(Cpure.Void) [])*) )
               | None -> None) in
           let assume_cf_o =
             (match assume_f_o with
@@ -3493,15 +3493,15 @@ and add_pre_debug prog f =
   let _ = print_string ("add_pre output: "^(Cprinter.string_of_struc_formula r)^"\n") in  
   r
       
-and transf_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and trans_I2C_struc_formula (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let prb = string_of_bool in
-  Gen.Debug.no_eff_5 "transf_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
-      (fun _ _ _ _ _ -> transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+  Gen.Debug.no_eff_5 "trans_I2C_struc_formula" [true] string_of_stab prb prb Cprinter.str_ident_list Iprinter.string_of_struc_formula Cprinter.string_of_struc_formula 
+      (fun _ _ _ _ _ -> trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
           (f0 : IF.struc_formula) stab (sp:bool)) stab quantify sp fvars f0
 
       
-and transf_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
+and trans_I2C_struc_formula_x (prog : I.prog_decl) (quantify : bool) (fvars : ident list)
       (f0 : Iformula.struc_formula) stab (sp:bool)(*(cret_type:Cpure.typ) (exc_list:Iast.typ list)*): Cformula.struc_formula = 
   let rec trans_struc_formula_hlp (f0 : IF.struc_formula)(fvars : ident list) :CF.struc_formula = 
     (*let _ = print_string ("\n formula: "^(Iprinter.string_of_struc_formula f0)^"\n pre trans stab: "^(string_of_stab stab)^"\n") in*)
