@@ -55,6 +55,16 @@ rbs<n, bh> == self::node<_,0,l,r> * l::rbc<ln,0,bh,4> * r::rbc<rn,1,bh,c> & ln +
 // lt : left tree; rt : right tree
 // llt : lt's left tree; rlt : rt's left tree; ...
 
+void goo(node x)
+  requires x::rbc<_,_,_,c>@I
+  case {
+     c<=0 -> ensures true;
+     c=1 -> ensures true;
+     c=2 -> ensures true;
+     c=3 -> ensures true;
+     c>=4 -> ensures true;
+   }
+
 
 bool is_red(node h)
 	case{
@@ -170,15 +180,17 @@ node insert_internal(node h, int v)
 	
 	node l = h.left;
 	node r = h.right;
-	//assert l'!=null & r'!=null; // must succeed when c = 3
+	assert l'!=null & r'!=null; // must succeed when c = 3
 	
 	if (is_red(h.left) && is_red(h.right))
 		color_flip(h);
 
-	//assert h'::rbc<_,_,_,_>; // fail assertion!
+	assert h'::rbc<_,_,_,_>; // fail assertion!
 	// Case c = 3 : verified with this assert and assume
-	assert h'::node<_,0,ll,rr> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
-	assume h'::node<_,0,ll,rr> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
+	//assert h'::node<_,0,l',r'> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
+	//assume h'::node<_,0,ll,rr> * l'::rbc<_,1,bh,1> * r'::rbc<_,1,bh,1>;
+    //assert false;
+    //foo(h,l,r);
 
 	// Additional helper assumes for case c = 4
 	//assert l'::rbc<_,1,bh,lc> * r'::rbc<_,1,bh,rc>;
@@ -232,6 +244,12 @@ node move_red_left(node h)
 	return h;
 }
 
+void foo(node h, node l, node r)
+  requires h::node<_,0,l,r>@I * l::rbc<_,1,bh,1>@I * r::rbc<_,1,bh,1>@I
+  ensures true;
+  //h::node<_,0,l,r> * l::rbc<_,1,bh,1> * r::rbc<_,1,bh,1>;
+
+
 //////////////////////////////////////////
 //           DELETE MINIMUM             //
 //////////////////////////////////////////
@@ -276,8 +294,10 @@ node delete_min_internal(node h, ref int min_value)
 	}
 
 	node l = h.left;
-	assert l'::rbc<_,_,_,lc>;// & 1 <= lc <= 3;
-	assume lc < 1 or lc = 1 or lc = 2 or lc = 3 or lc > 3;
+    goo(l);
+    dprint;
+	//assert l'::rbc<_,_,_,lc>;// & 1 <= lc <= 3;
+	//assume lc < 1 or lc = 1 or lc = 2 or lc = 3 or lc > 3;
 	// CASE BY CASE CAN BE VERIFIED!
 	//assume l'::rbc<_,_,_,1>; // verified in 3s
 	//assume l'::rbc<_,_,_,2>; // verified in 3s
