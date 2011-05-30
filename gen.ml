@@ -110,6 +110,12 @@ struct
     if n <= 0 then []
     else v :: (repeat v (n-1))
 
+  let report_error pos msg = Error.report_error
+     { Error.error_loc = pos; Error.error_text = msg}
+
+  let report_warning pos msg = Error.report_warning
+     { Error.error_loc = pos; Error.error_text = msg}
+
 end;;
 
 module HashUti =

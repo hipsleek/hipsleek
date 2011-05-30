@@ -4,6 +4,7 @@
 
 open Globals
 open Sleekcommons
+open Gen.Basic
 
 module H = Hashtbl
 module I = Iast

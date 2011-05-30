@@ -3,6 +3,7 @@ open Globals
 open Iast
 open Token
 open Sleekcommons
+open Gen.Basic
 
   module F = Iformula
   module P = Ipure
